@@ -1,6 +1,6 @@
 # PowerShell script to test the TTS API
 
-$url = "https://preschool-learning-4zrjetfsy-allan-brink-vraas-projects.vercel.app/api/tts"
+$url = "https://preschool-learning-blwm99a5m-allan-brink-vraas-projects.vercel.app/api/tts"
 
 # Simple test request
 $body = @{

@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+    <meta charset="UTF-8">
+    <title>Test TTS from App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        button {
+            padding: 15px 30px;
+            margin: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            background: #0070f3;
+            color: white;
+            border: none;
+            border-radius: 8px;
+        }
+        button:hover {
+            background: #0051a0;
+        }
+        .log {
+            background: #f5f5f5;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎙️ Google TTS Test</h1>
+    <p>This tests the Google Cloud TTS API from within the app (same origin).</p>
+    
+    <button onclick="testSimpleText()">Test Simple Text</button>
+    <button onclick="testDanishPhrase()">Test Danish Phrase</button>
+    <button onclick="testSSML()">Test SSML</button>
+    <button onclick="clearLog()">Clear Log</button>
+    
+    <div id="log" class="log">Ready to test...\n</div>
+
+    <script>
+        function log(message) {
+            document.getElementById('log').textContent += `[${new Date().toLocaleTimeString()}] ${message}\n`;
+        }
+
+        function clearLog() {
+            document.getElementById('log').textContent = 'Log cleared...\n';
+        }
+
+        async function testTTS(text, isSSML = false, description = 'Test') {
+            log(`🧪 ${description}: "${text}"`);
+            
+            try {
+                const response = await fetch('/api/tts', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        text: text,
+                        isSSML: isSSML,
+                        voice: {
+                            languageCode: 'da-DK',
+                            name: 'da-DK-Wavenet-A',
+                            ssmlGender: 'FEMALE'
+                        },
+                        audioConfig: {
+                            audioEncoding: 'MP3',
+                            speakingRate: 0.9,
+                            pitch: 1.1,
+                            volumeGainDb: 0,
+                            sampleRateHertz: 24000
+                        }
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    log(`❌ HTTP ${response.status}: ${errorText.substring(0, 100)}...`);
+                    return;
+                }
+
+                const data = await response.json();
+                log(`✅ Success! Audio generated (${data.audioContent.length} chars)`);
+                log(`📝 Voice: ${data.voice.name}, Text: "${data.text}"`);
+                
+                // Try to play the audio
+                const audio = new Audio(`data:audio/mp3;base64,${data.audioContent}`);
+                audio.play().then(() => {
+                    log(`🔊 Audio playing...`);
+                }).catch(err => {
+                    log(`🔇 Audio play failed: ${err.message}`);
+                });
+                
+            } catch (error) {
+                log(`❌ Error: ${error.message}`);
+            }
+        }
+
+        function testSimpleText() {
+            testTTS('Hej! Dette er en test', false, 'Simple Danish');
+        }
+
+        function testDanishPhrase() {
+            testTTS('Find bogstavet A. Godt klaret!', false, 'Learning Phrase');
+        }
+
+        function testSSML() {
+            const ssmlText = '<speak version="1.0" xml:lang="da-DK"><emphasis level="moderate">A</emphasis></speak>';
+            testTTS(ssmlText, true, 'SSML Test');
+        }
+    </script>
+</body>
+</html>
