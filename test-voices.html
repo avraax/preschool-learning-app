@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+    <meta charset="UTF-8">
+    <title>Test Danish Voices</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+        button:hover {
+            background: #2563eb;
+        }
+        .voice-list {
+            background: #f3f4f6;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .controls {
+            margin: 20px 0;
+        }
+        input[type="range"] {
+            width: 200px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Test Danish Text-to-Speech Voices</h1>
+    
+    <div class="controls">
+        <label>Rate: <input type="range" id="rate" min="0.5" max="2" step="0.1" value="0.9"> <span id="rateValue">0.9</span></label><br>
+        <label>Pitch: <input type="range" id="pitch" min="0.5" max="2" step="0.1" value="1.1"> <span id="pitchValue">1.1</span></label><br>
+        <label>Volume: <input type="range" id="volume" min="0" max="1" step="0.1" value="1"> <span id="volumeValue">1</span></label>
+    </div>
+
+    <div class="voice-list">
+        <h3>Available Danish Voices:</h3>
+        <div id="voices"></div>
+    </div>
+
+    <div>
+        <h3>Test Phrases:</h3>
+        <button onclick="speak('Hej! Velkommen til alfabetet')">Welcome Message</button>
+        <button onclick="speak('Find bogstavet A')">Find Letter A</button>
+        <button onclick="speak('Godt klaret! Du er så dygtig!')">Success Message</button>
+        <button onclick="speak('Prøv igen! Du kan det!')">Encouragement</button>
+        <button onclick="speak('To plus tre er lig med fem')">Math Problem</button>
+        <button onclick="speak('A B C D E F G H I J K L M N O P Q R S T U V W X Y Z Æ Ø Å')">Full Alphabet</button>
+        <button onclick="speak('1 2 3 4 5 6 7 8 9 10')">Numbers 1-10</button>
+    </div>
+
+    <script>
+        const synth = window.speechSynthesis;
+        let danishVoices = [];
+
+        function loadVoices() {
+            const voices = synth.getVoices();
+            danishVoices = voices.filter(voice => 
+                voice.lang.startsWith('da') || 
+                voice.lang.includes('DK') ||
+                voice.name.toLowerCase().includes('danish')
+            );
+            
+            const voicesDiv = document.getElementById('voices');
+            voicesDiv.innerHTML = '';
+            
+            if (danishVoices.length === 0) {
+                voicesDiv.innerHTML = '<p>No Danish voices found. Available voices:</p>';
+                voices.forEach(voice => {
+                    voicesDiv.innerHTML += `<button onclick="testVoice('${voice.name}')">${voice.name} (${voice.lang})</button> `;
+                });
+            } else {
+                danishVoices.forEach(voice => {
+                    voicesDiv.innerHTML += `<button onclick="testVoice('${voice.name}')">${voice.name} (${voice.lang})</button> `;
+                });
+            }
+        }
+
+        function testVoice(voiceName) {
+            const voice = synth.getVoices().find(v => v.name === voiceName);
+            if (voice) {
+                const utterance = new SpeechSynthesisUtterance('Hej! Dette er en test af ' + voice.name);
+                utterance.voice = voice;
+                utterance.rate = parseFloat(document.getElementById('rate').value);
+                utterance.pitch = parseFloat(document.getElementById('pitch').value);
+                utterance.volume = parseFloat(document.getElementById('volume').value);
+                synth.speak(utterance);
+            }
+        }
+
+        function speak(text) {
+            const utterance = new SpeechSynthesisUtterance(text);
+            
+            if (danishVoices.length > 0) {
+                utterance.voice = danishVoices[0];
+            }
+            
+            utterance.lang = 'da-DK';
+            utterance.rate = parseFloat(document.getElementById('rate').value);
+            utterance.pitch = parseFloat(document.getElementById('pitch').value);
+            utterance.volume = parseFloat(document.getElementById('volume').value);
+            
+            synth.speak(utterance);
+        }
+
+        // Update value displays
+        document.getElementById('rate').addEventListener('input', e => {
+            document.getElementById('rateValue').textContent = e.target.value;
+        });
+        document.getElementById('pitch').addEventListener('input', e => {
+            document.getElementById('pitchValue').textContent = e.target.value;
+        });
+        document.getElementById('volume').addEventListener('input', e => {
+            document.getElementById('volumeValue').textContent = e.target.value;
+        });
+
+        // Load voices
+        if (synth.getVoices().length > 0) {
+            loadVoices();
+        } else {
+            synth.addEventListener('voiceschanged', loadVoices);
+        }
+    </script>
+</body>
+</html>
