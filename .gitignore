@@ -35,3 +35,4 @@ VERCEL_ENV_VARS.md
 
 # Audio cache
 public/audio-cache/
+.vercel
