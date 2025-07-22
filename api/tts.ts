@@ -11,17 +11,26 @@ function initializeClient() {
     // Get credentials from environment variables
     const projectId = process.env.GOOGLE_CLOUD_PROJECT_ID
     const clientEmail = process.env.GOOGLE_CLOUD_CLIENT_EMAIL
-    const privateKey = process.env.GOOGLE_CLOUD_PRIVATE_KEY
+    let privateKey = process.env.GOOGLE_CLOUD_PRIVATE_KEY
+    const privateKeyBase64 = process.env.GOOGLE_CLOUD_PRIVATE_KEY_BASE64
 
-    if (!projectId || !clientEmail || !privateKey) {
+    if (!projectId || !clientEmail || (!privateKey && !privateKeyBase64)) {
       throw new Error('Missing required Google Cloud environment variables')
+    }
+
+    // Handle base64 encoded private key if provided
+    if (privateKeyBase64 && !privateKey) {
+      privateKey = Buffer.from(privateKeyBase64, 'base64').toString('utf-8')
+    } else if (privateKey) {
+      // Fix common formatting issues
+      privateKey = privateKey.replace(/\\n/g, '\n') // Handle escaped newlines
     }
 
     ttsClient = new TextToSpeechClient({
       projectId,
       credentials: {
         client_email: clientEmail,
-        private_key: privateKey.replace(/\\n/g, '\n'), // Handle escaped newlines
+        private_key: privateKey,
       }
     })
 

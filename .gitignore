@@ -27,6 +27,7 @@ google-cloud-key.json
 *.json
 .env*
 VERCEL_ENV_VARS.md
+private-key-base64.txt
 !package.json
 !package-lock.json
 !tsconfig.json
