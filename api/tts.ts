@@ -79,7 +79,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       input,
       voice: voice || {
         languageCode: 'da-DK',
-        name: 'da-DK-Wavenet-E',
+        name: 'da-DK-Wavenet-F',
         ssmlGender: 'FEMALE'
       },
       audioConfig: audioConfig || {
