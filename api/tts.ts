@@ -107,6 +107,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
 // Export the configuration for Vercel
 export const config = {
-  runtime: 'nodejs18.x',
+  runtime: 'nodejs',
   maxDuration: 10, // 10 seconds should be enough for TTS
 }
