@@ -43,13 +43,21 @@ const MathGame: React.FC<MathGameProps> = ({ onBack }) => {
 
   useEffect(() => {
     const settings = difficultyManager.getCurrentSettings()
-    if (settings.math.includeAddition || settings.math.includeSubtraction) {
-      setGameMode('arithmetic')
-    } else {
-      setGameMode('counting')
-    }
-    generateNewQuestion()
+    const mode = (settings.math.includeAddition || settings.math.includeSubtraction) ? 'arithmetic' : 'counting'
+    setGameMode(mode)
   }, [])
+
+  // Generate question when gameMode is set
+  useEffect(() => {
+    if (gameMode) {
+      generateNewQuestion()
+    }
+    
+    // Cleanup function
+    return () => {
+      audioManager.stopAll()
+    }
+  }, [gameMode])
 
   const generateNewQuestion = () => {
     if (gameMode === 'counting') {
@@ -74,7 +82,7 @@ const MathGame: React.FC<MathGameProps> = ({ onBack }) => {
     setCurrentProblem({ num1: number, num2: 0, operation: '+', answer: number })
     
     setTimeout(() => {
-      audioManager.speakSlowly(`Find tallet ${number}`)
+      audioManager.speakQuizPromptWithRepeat(`Find tallet ${number}`, number.toString())
     }, 500)
   }
 
@@ -101,8 +109,10 @@ const MathGame: React.FC<MathGameProps> = ({ onBack }) => {
   }
 
   const handleAnswerClick = async (selectedAnswer: number) => {
-    if (isPlaying || !currentProblem) return
+    if (!currentProblem) return
     
+    // Stop any currently playing audio
+    audioManager.stopAll()
     setIsPlaying(true)
     
     if (selectedAnswer === currentProblem.answer) {
@@ -113,10 +123,14 @@ const MathGame: React.FC<MathGameProps> = ({ onBack }) => {
         setIsPlaying(false)
       }, 2000)
     } else {
-      await audioManager.announceGameResult(false)
-      setTimeout(() => {
-        setIsPlaying(false)
-      }, 2000)
+      // For wrong answers, allow immediate new clicks
+      try {
+        await audioManager.announceGameResult(false)
+      } catch (error) {
+        console.error('Error playing wrong answer feedback:', error)
+      }
+      // Don't block further clicks - just reset isPlaying immediately
+      setIsPlaying(false)
     }
   }
 
@@ -124,7 +138,7 @@ const MathGame: React.FC<MathGameProps> = ({ onBack }) => {
     if (!currentProblem) return
     
     if (gameMode === 'counting') {
-      audioManager.speakSlowly(`Tallet er ${currentProblem.answer}`)
+      audioManager.speakQuizPromptWithRepeat(`Find tallet ${currentProblem.answer}`, currentProblem.answer.toString())
     } else {
       const problemText = `${currentProblem.num1} ${currentProblem.operation} ${currentProblem.num2} = ?`
       audioManager.speakMathProblem(problemText)
@@ -158,152 +172,58 @@ const MathGame: React.FC<MathGameProps> = ({ onBack }) => {
         background: 'linear-gradient(135deg, #dbeafe 0%, #dcfce7 50%, #fef3c7 100%)'
       }}
     >
-      {/* App Bar with Back Button and Score */}
-      <AppBar position="static" color="transparent" elevation={0}>
-        <Toolbar sx={{ justifyContent: 'space-between', py: 2 }}>
-          <IconButton 
-            onClick={onBack}
+      {/* Navigation - Back Button Only */}
+      <Box sx={{ position: 'absolute', top: 16, left: 16, zIndex: 10 }}>
+        <IconButton 
+          onClick={onBack}
+          color="secondary"
+          size="large"
+          sx={{ 
+            bgcolor: 'white', 
+            boxShadow: 3,
+            '&:hover': { boxShadow: 6 }
+          }}
+        >
+          <ArrowBack />
+        </IconButton>
+      </Box>
+
+      <Container 
+        maxWidth={false}
+        sx={{ 
+          height: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          px: { xs: 2, sm: 3, md: 4 }
+        }}
+      >
+        {/* Audio Control */}
+        <Box sx={{ textAlign: 'center', mb: { xs: 3, md: 4 } }}>
+          <Button 
+            onClick={repeatQuestion}
+            variant="contained"
             color="secondary"
             size="large"
-            sx={{ 
-              bgcolor: 'white', 
-              boxShadow: 3,
-              '&:hover': { boxShadow: 6 }
-            }}
+            startIcon={<VolumeUp />}
+            sx={{ py: 2, px: 4, fontSize: '1.1rem' }}
           >
-            <ArrowBack />
-          </IconButton>
-          
-          <Chip 
-            icon={<Star />}
-            label={`Score: ${score}`}
-            color="secondary"
-            variant="filled"
-            sx={{ 
-              fontSize: '1.25rem',
-              py: 3,
-              px: 2,
-              fontWeight: 700,
-              bgcolor: 'white',
-              color: 'secondary.dark',
-              boxShadow: 3
-            }}
-          />
-        </Toolbar>
-      </AppBar>
-
-      <Container maxWidth="lg" sx={{ py: 4 }}>
-        {/* Game Title */}
-        <Box sx={{ textAlign: 'center', mb: 6 }}>
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-          >
-            <Typography 
-              variant="h2" 
-              sx={{ 
-                color: 'secondary.dark',
-                mb: 2,
-                fontWeight: 700,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 1
-              }}
-            >
-              <Calculate fontSize="large" /> Tal og Regning
-            </Typography>
-          </motion.div>
-          <Typography variant="h5" color="secondary.main" sx={{ mb: 4 }}>
-            {gameMode === 'counting' ? 'Klik på det tal du hører!' : 'Hvad er svaret?'}
-          </Typography>
-
-          {/* Problem Display Card */}
-          <Paper 
-            elevation={8}
-            sx={{ 
-              maxWidth: 500,
-              mx: 'auto',
-              p: 4,
-              borderRadius: 4,
-              border: '2px solid',
-              borderColor: 'secondary.200'
-            }}
-          >
-            {gameMode === 'counting' ? (
-              <Box>
-                <motion.div
-                  animate={{ scale: [1, 1.1, 1] }}
-                  transition={{ duration: 2, repeat: Infinity }}
-                >
-                  <VolumeUp 
-                    sx={{ 
-                      fontSize: '4rem', 
-                      color: 'secondary.main',
-                      mb: 2
-                    }} 
-                  />
-                </motion.div>
-                <Box sx={{ mb: 3, display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: 0.5 }}>
-                  {renderFingers(currentProblem.answer)}
-                </Box>
-              </Box>
-            ) : (
-              <Box>
-                <Typography 
-                  variant="h3" 
-                  color="secondary.dark"
-                  sx={{ mb: 3, fontWeight: 700 }}
-                >
-                  {currentProblem.num1} {currentProblem.operation} {currentProblem.num2} = ?
-                </Typography>
-                <Box sx={{ 
-                  mb: 3, 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'center',
-                  flexWrap: 'wrap',
-                  gap: 2
-                }}>
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center' }}>
-                    {renderFingers(currentProblem.num1)}
-                  </Box>
-                  <Typography variant="h4" color="secondary.main" sx={{ mx: 2 }}>
-                    {currentProblem.operation}
-                  </Typography>
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center' }}>
-                    {renderFingers(currentProblem.num2)}
-                  </Box>
-                </Box>
-              </Box>
-            )}
-            
-            <Button 
-              onClick={repeatQuestion}
-              variant="contained"
-              color="success"
-              size="large"
-              startIcon={<VolumeUp />}
-              sx={{ py: 2, px: 4 }}
-            >
-              Hør igen 🎵
-            </Button>
-          </Paper>
+            Hør igen 🎵
+          </Button>
         </Box>
 
         {/* Answer Options Grid */}
-        <Grid 
-          container 
-          spacing={3} 
-          sx={{ 
-            maxWidth: '800px',
-            mx: 'auto',
-            mb: 6
-          }}
-        >
+        <Box sx={{ display: 'flex', justifyContent: 'center', flex: 1 }}>
+          <Grid 
+            container 
+            spacing={{ xs: 2, sm: 3 }} 
+            sx={{ 
+              maxWidth: { xs: '100%', sm: '600px', md: '800px' },
+              width: 'fit-content'
+            }}
+          >
           {showOptions.map((number, index) => (
-            <Grid size={{ xs: 6, md: 3 }} key={`${number}-${index}`}>
+            <Grid size={{ xs: 6, sm: 4, md: 3 }} key={`${number}-${index}`}>
               <motion.div
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -314,7 +234,7 @@ const MathGame: React.FC<MathGameProps> = ({ onBack }) => {
                 <Card 
                   onClick={() => handleAnswerClick(number)}
                   sx={{ 
-                    minHeight: { xs: 100, md: 120 },
+                    minHeight: { xs: 80, sm: 100, md: 120 },
                     cursor: 'pointer',
                     border: '3px solid',
                     borderColor: 'secondary.200',
@@ -353,17 +273,9 @@ const MathGame: React.FC<MathGameProps> = ({ onBack }) => {
               </motion.div>
             </Grid>
           ))}
-        </Grid>
-
-        {/* Decorative Animation */}
-        <Box sx={{ textAlign: 'center', py: 4 }}>
-          <motion.div
-            animate={{ rotate: [0, 5, -5, 0] }}
-            transition={{ duration: 3, repeat: Infinity }}
-          >
-            <Typography sx={{ fontSize: '4rem' }}>🎯</Typography>
-          </motion.div>
+          </Grid>
         </Box>
+
       </Container>
     </Box>
   )

@@ -287,3 +287,23 @@ npm run dev
 - **Task Killing**: Use PID from netstat with `Stop-Process -Id <PID> -Force`
 
 This documentation provides everything needed to understand, develop, and deploy the Danish preschool learning app using PowerShell on Windows. The codebase is ready for collaborative development and future enhancements.
+
+## Configuration Best Practices
+
+### Code Reuse and DRY Principle
+- **ALWAYS** reuse code and configurations to avoid duplication
+- Create shared configuration files for settings used in multiple places
+- Check for existing patterns before creating new files
+
+### Current Shared Configurations
+- **`tts-config.js`** - Centralized TTS voice and audio settings
+  - Speaking rate: 0.4 (slower for children)
+  - Pitch: 1.1 (slightly higher for friendly tone)
+  - Voice: da-DK-Wavenet-A (Danish female)
+  - Used by both `dev-server.js` and client-side code
+
+### Development Guidelines
+- When updating settings, always check if they're used elsewhere
+- Prefer modifying shared configs over duplicating values
+- Use environment variables for deployment-specific settings
+- Document any new shared configurations here

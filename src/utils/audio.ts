@@ -1,92 +1,29 @@
 import { Howl } from 'howler'
 import { googleTTS, GoogleTTSService } from '../services/googleTTS'
+import { TTS_CONFIG } from '../config/tts-config'
 
 export class AudioManager {
   private sounds: Map<string, Howl> = new Map()
-  private speechSynth: SpeechSynthesis
-  private danishVoice: SpeechSynthesisVoice | null = null
   private googleTTS: GoogleTTSService
-  private useGoogleTTS: boolean = true
-  private fallbackToWebSpeech: boolean = true
 
   constructor() {
-    this.speechSynth = window.speechSynthesis
     this.googleTTS = googleTTS
-    
-    // Configure TTS preferences from environment variables
-    this.useGoogleTTS = (import.meta as any).env?.VITE_TTS_USE_GOOGLE !== 'false'
-    this.fallbackToWebSpeech = (import.meta as any).env?.VITE_TTS_FALLBACK_TO_WEB_SPEECH !== 'false'
-    
-    this.initializeDanishVoice()
     
     // Preload common phrases for better performance
     this.preloadAudio()
   }
 
-  private initializeDanishVoice() {
-    const loadVoices = () => {
-      const voices = this.speechSynth.getVoices()
-      this.danishVoice = voices.find(voice => 
-        voice.lang.startsWith('da') || 
-        voice.lang.startsWith('dk') ||
-        voice.name.toLowerCase().includes('danish')
-      ) || voices[0]
-    }
-
-    if (this.speechSynth.getVoices().length > 0) {
-      loadVoices()
-    } else {
-      this.speechSynth.addEventListener('voiceschanged', loadVoices)
-    }
-  }
-
-  async speak(text: string, rate: number = 0.8, voiceType: 'primary' | 'backup' | 'male' = 'primary', useSSML: boolean = true): Promise<void> {
-    // Try Google TTS first if enabled
-    if (this.useGoogleTTS) {
-      try {
-        await this.googleTTS.synthesizeAndPlay(text, voiceType, useSSML)
-        return
-      } catch (error) {
-        console.warn('⚠️ Google TTS failed, falling back to Web Speech API:', error)
-        console.log('💡 TIP: For local development, Google TTS requires a running API server')
-        
-        // Disable Google TTS temporarily if it fails
-        if (!this.fallbackToWebSpeech) {
-          throw error
-        }
-      }
-    }
-
-    // Fallback to Web Speech API
-    return new Promise((resolve, reject) => {
-      if (!this.speechSynth) {
-        reject(new Error('Speech synthesis not supported'))
-        return
-      }
-
-      const utterance = new SpeechSynthesisUtterance(text)
-      
-      if (this.danishVoice) {
-        utterance.voice = this.danishVoice
-      }
-      
-      utterance.lang = 'da-DK'
-      utterance.rate = rate
-      utterance.pitch = 1.1
-      utterance.volume = 1
-
-      utterance.onend = () => resolve()
-      utterance.onerror = (event) => reject(event.error)
-
-      this.speechSynth.speak(utterance)
-    })
+  async speak(text: string, voiceType: 'primary' | 'backup' | 'male' = 'primary', useSSML: boolean = true, customSpeed?: number): Promise<void> {
+    // Always use Google TTS with config from shared-tts-config.js
+    const customAudioConfig = customSpeed ? { speakingRate: customSpeed } : undefined
+    await this.googleTTS.synthesizeAndPlay(text, voiceType, useSSML, customAudioConfig)
   }
 
   async speakLetter(letter: string) {
-    await this.speak(letter, 0.7)
+    await this.speak(letter)
   }
 
-  async speakNumber(number: number) {
+  async speakNumber(number: number, customSpeed?: number) {
     const danishNumbers = {
       0: 'nul', 1: 'en', 2: 'to', 3: 'tre', 4: 'fire', 5: 'fem',
       6: 'seks', 7: 'syv', 8: 'otte', 9: 'ni', 10: 'ti',
@@ -118,7 +55,7 @@ export class AudioManager {
       numberText = number.toString()
     }
 
-    await this.speak(numberText, 0.8)
+    await this.speak(numberText, 'primary', true, customSpeed)
   }
 
   playSound(soundId: string, src?: string): Promise<void> {
@@ -145,7 +82,7 @@ export class AudioManager {
   }
 
   async playSuccessSound() {
-    await this.speak('Godt klaret!', 1.0)
+    await this.speak('Godt klaret!')
   }
 
   async playEncouragementSound() {
@@ -156,58 +93,34 @@ export class AudioManager {
       'Godt forsøg!'
     ]
     const random = encouragements[Math.floor(Math.random() * encouragements.length)]
-    await this.speak(random, 1.0)
+    await this.speak(random)
   }
 
   // Preload common audio for better performance
   private async preloadAudio(): Promise<void> {
     try {
-      // Only preload if Google TTS is available
-      if (this.useGoogleTTS) {
-        await this.googleTTS.preloadCommonPhrases()
-      }
+      await this.googleTTS.preloadCommonPhrases()
     } catch (error) {
       console.warn('Failed to preload audio:', error)
     }
   }
 
-  // Configure TTS preferences
-  setTTSConfig(options: {
-    useGoogleTTS?: boolean
-    fallbackToWebSpeech?: boolean
-  }): void {
-    if (options.useGoogleTTS !== undefined) {
-      this.useGoogleTTS = options.useGoogleTTS
-    }
-    if (options.fallbackToWebSpeech !== undefined) {
-      this.fallbackToWebSpeech = options.fallbackToWebSpeech
-    }
-  }
-
   // Get current TTS status
   getTTSStatus(): {
-    googleTTSEnabled: boolean
-    webSpeechFallback: boolean
     cacheStats: { size: number; oldestEntry: number; newestEntry: number }
   } {
     return {
-      googleTTSEnabled: this.useGoogleTTS,
-      webSpeechFallback: this.fallbackToWebSpeech,
       cacheStats: this.googleTTS.getCacheStats()
     }
   }
 
   // Enhanced stop method
   stopAll(): void {
-    // Stop Web Speech API
-    this.speechSynth.cancel()
-    
     // Stop Howler.js sounds
     this.sounds.forEach(sound => sound.stop())
     
     // Stop any currently playing Google TTS audio
-    // Note: Individual audio elements created by GoogleTTSService will stop naturally
-    // when the AudioManager is stopped, as they're not persistent
+    this.googleTTS.stopCurrentAudio()
   }
 
   // Clean up audio cache
@@ -218,21 +131,63 @@ export class AudioManager {
   // Specialized methods for child-friendly audio
   async speakWithEnthusiasm(text: string, voiceType: 'primary' | 'backup' | 'male' = 'primary'): Promise<void> {
     const enthusiasticText = `Godt klaret! ${text}!`
-    await this.speak(enthusiasticText, 0.9, voiceType, true)
+    await this.speak(enthusiasticText, voiceType, true)
   }
 
   async speakSlowly(text: string, voiceType: 'primary' | 'backup' | 'male' = 'primary'): Promise<void> {
     // For difficult words or learning content, speak more slowly
-    await this.speak(text, 0.6, voiceType, true)
+    await this.speak(text, voiceType, true)
+  }
+
+  async speakQuizPromptWithRepeat(text: string, repeatWord: string, voiceType: 'primary' | 'backup' | 'male' = 'primary'): Promise<void> {
+    try {
+      // Split text to get the base prompt without the target word
+      // e.g. "Find bogstavet H" -> "Find bogstavet" + "H"
+      const textParts = text.split(` ${repeatWord}`)
+      const basePrompt = textParts[0] // "Find bogstavet"
+      
+      // First: speak base prompt
+      await this.speak(basePrompt, voiceType, false)
+      
+      // Very short pause
+      await new Promise(resolve => setTimeout(resolve, 50))
+      
+      // Second: speak the target word
+      await this.speak(repeatWord, voiceType, false)
+      
+      // Longer pause
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      
+      // Stop any potential lingering audio
+      this.stopAll()
+      await new Promise(resolve => setTimeout(resolve, 100))
+      
+      // Third: repeat the target word
+      await this.speak(repeatWord, voiceType, false)
+    } catch (error) {
+      console.error('Error in speakQuizPromptWithRepeat:', error)
+      // Fallback: just speak the original text
+      try {
+        await this.speak(text, voiceType, false)
+      } catch (fallbackError) {
+        console.error('Fallback also failed:', fallbackError)
+      }
+    }
   }
 
   async speakMathProblem(problem: string, voiceType: 'primary' | 'backup' | 'male' = 'primary'): Promise<void> {
-    // Add SSML specifically for math problems
+    // Use natural speech patterns with pauses for math problems
     const mathText = problem
       .replace(/\+/g, ' plus ')
       .replace(/-/g, ' minus ')
       .replace(/=/g, ' er lig med ')
-    await this.speak(mathText, 0.7, voiceType, true)
+    await this.speak(mathText, voiceType, true)
+  }
+
+  async speakAdditionProblem(num1: number, num2: number, voiceType: 'primary' | 'backup' | 'male' = 'primary'): Promise<void> {
+    // Speak addition problems with natural emphasis through repetition
+    const problemText = `Hvad er ${num1}... ${num1} plus ${num2}... ${num2}?`
+    await this.speak(problemText, voiceType, true)
   }
 
   async announceGameResult(isCorrect: boolean, voiceType: 'primary' | 'backup' | 'male' = 'primary'): Promise<void> {
@@ -253,7 +208,7 @@ export class AudioManager {
         'Kom så! Du er så tæt på!'
       ]
       const phrase = encouragementPhrases[Math.floor(Math.random() * encouragementPhrases.length)]
-      await this.speak(phrase, 0.8, voiceType, true)
+      await this.speak(phrase, voiceType, true)
     }
   }
 }

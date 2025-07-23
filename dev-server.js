@@ -4,6 +4,7 @@ import path from 'path';
 import fs from 'fs';
 import { TextToSpeechClient } from '@google-cloud/text-to-speech';
 import { fileURLToPath } from 'url';
+import { TTS_CONFIG } from './shared-tts-config.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -54,18 +55,8 @@ app.post('/api/tts', async (req, res) => {
     
     const request = {
       input,
-      voice: voice || {
-        languageCode: 'da-DK',
-        name: 'da-DK-Wavenet-A',
-        ssmlGender: 'FEMALE'
-      },
-      audioConfig: audioConfig || {
-        audioEncoding: 'MP3',
-        speakingRate: 0.7,
-        pitch: 1.1,
-        volumeGainDb: 0,
-        sampleRateHertz: 24000
-      }
+      voice: voice || TTS_CONFIG.voice,
+      audioConfig: audioConfig || TTS_CONFIG.audioConfig
     };
 
     const [response] = await client.synthesizeSpeech(request);
@@ -100,5 +91,4 @@ app.get('*', (req, res) => {
 
 app.listen(port, () => {
   console.log(`🚀 Development server running at http://localhost:${port}`);
-  console.log('📝 Make sure to run "npm run build" first!');
 });

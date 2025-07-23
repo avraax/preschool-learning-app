@@ -20,151 +20,18 @@ import {
   Star
 } from '@mui/icons-material'
 import AlphabetGame from './components/alphabet/AlphabetGame'
+import AlphabetSelection from './components/alphabet/AlphabetSelection'
+import AlphabetLearning from './components/alphabet/AlphabetLearning'
 import MathGame from './components/math/MathGame'
-import { DifficultyLevel, difficultyManager, difficultySettings } from './utils/difficulty'
+import MathSelection from './components/math/MathSelection'
+import NumberLearning from './components/math/NumberLearning'
+import AdditionGame from './components/math/AdditionGame'
 
-type AppScreen = 'home' | 'difficulty' | 'alphabet' | 'math'
+type AppScreen = 'home' | 'alphabet-selection' | 'alphabet-quiz' | 'alphabet-learn' | 'math-selection' | 'math-counting' | 'math-numbers' | 'math-addition'
 
 function App() {
   const [currentScreen, setCurrentScreen] = useState<AppScreen>('home')
-  const [currentDifficulty, setCurrentDifficulty] = useState<DifficultyLevel>(
-    difficultyManager.getCurrentLevel()
-  )
 
-  const handleDifficultyChange = (level: DifficultyLevel) => {
-    setCurrentDifficulty(level)
-    difficultyManager.setLevel(level)
-    setCurrentScreen('home')
-  }
-
-  const renderDifficultySelector = () => (
-    <Box 
-      sx={{ 
-        minHeight: '100vh', 
-        background: 'linear-gradient(135deg, #dcfce7 0%, #fef3c7 50%, #fed7aa 100%)',
-        py: 3
-      }}
-    >
-      <Container maxWidth="lg">
-        <Box sx={{ display: 'flex', justifyContent: 'flex-start', mb: 4 }}>
-          <IconButton 
-            onClick={() => setCurrentScreen('home')}
-            color="success"
-            size="large"
-            sx={{ 
-              bgcolor: 'white', 
-              boxShadow: 3,
-              '&:hover': { boxShadow: 6 }
-            }}
-          >
-            <ArrowBack />
-          </IconButton>
-        </Box>
-
-        <Box sx={{ textAlign: 'center', mb: 6 }}>
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-          >
-            <Typography 
-              variant="h2" 
-              sx={{ 
-                color: 'success.dark',
-                mb: 2,
-                fontWeight: 700,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 1
-              }}
-            >
-              <Settings fontSize="large" /> Vælg Sværhedsgrad
-            </Typography>
-          </motion.div>
-          <Typography variant="h5" color="success.main" sx={{ mb: 3 }}>
-            Vælg det niveau der passer til dit barn
-          </Typography>
-        </Box>
-
-        <Grid container spacing={4} sx={{ maxWidth: '1000px', mx: 'auto' }}>
-          {Object.entries(difficultySettings).map(([level, settings]) => (
-            <Grid size={{ xs: 12, md: 4 }} key={level}>
-              <motion.div
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.1 }}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <Card 
-                  onClick={() => handleDifficultyChange(level as DifficultyLevel)}
-                  sx={{ 
-                    minHeight: 300,
-                    cursor: 'pointer',
-                    border: currentDifficulty === level ? 3 : 1,
-                    borderColor: currentDifficulty === level ? 'success.main' : 'grey.300',
-                    bgcolor: currentDifficulty === level ? 'success.50' : 'white',
-                    transition: 'all 0.3s ease',
-                    '&:hover': {
-                      borderColor: 'success.main',
-                      boxShadow: 8
-                    }
-                  }}
-                >
-                  <CardContent sx={{ textAlign: 'center', p: 3 }}>
-                    <Typography 
-                      variant="h1" 
-                      sx={{ 
-                        fontSize: '4rem',
-                        mb: 3,
-                        lineHeight: 1
-                      }}
-                    >
-                      {level === DifficultyLevel.BEGINNER && '🐣'}
-                      {level === DifficultyLevel.INTERMEDIATE && '🐱'}
-                      {level === DifficultyLevel.ADVANCED && '🦁'}
-                    </Typography>
-                    
-                    <Typography 
-                      variant="h4" 
-                      color="success.dark"
-                      sx={{ fontWeight: 700, mb: 2 }}
-                    >
-                      {settings.ageRange}
-                    </Typography>
-                    
-                    <Typography 
-                      variant="body1" 
-                      color="text.secondary"
-                      sx={{ mb: 3, lineHeight: 1.6 }}
-                    >
-                      {settings.description}
-                    </Typography>
-                    
-                    <Paper 
-                      sx={{ 
-                        p: 2, 
-                        bgcolor: 'grey.50',
-                        borderRadius: 2
-                      }}
-                    >
-                      <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                        📚 Bogstaver: <strong>{settings.alphabet.letters.length}</strong>
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        🔢 Tal op til: <strong>{settings.math.maxNumber}</strong>
-                      </Typography>
-                    </Paper>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            </Grid>
-          ))}
-        </Grid>
-      </Container>
-    </Box>
-  )
 
   const renderHome = () => (
     <Box 
@@ -225,7 +92,7 @@ function App() {
         <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
           <Grid container spacing={{ xs: 2, md: 3 }} sx={{ mb: { xs: 2, md: 3 } }}>
             {/* Alphabet Card - Prepared for subcategories */}
-            <Grid size={{ xs: 12, sm: 6, lg: 4 }}>
+            <Grid size={{ xs: 12, sm: 6, lg: 6 }}>
               <motion.div
                 initial={{ opacity: 0, x: -30 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -234,7 +101,7 @@ function App() {
                 whileTap={{ scale: 0.98 }}
               >
                 <Card 
-                  onClick={() => setCurrentScreen('alphabet')}
+                  onClick={() => setCurrentScreen('alphabet-selection')}
                   sx={{ 
                     height: { xs: 200, sm: 240, md: 260 },
                     cursor: 'pointer',
@@ -276,7 +143,7 @@ function App() {
                           fontSize: { xs: '1.25rem', md: '1.5rem' }
                         }}
                       >
-                        Alfabetet
+                        Bogstaver & Ord
                       </Typography>
                       <Typography 
                         variant="body2" 
@@ -286,7 +153,7 @@ function App() {
                           fontSize: { xs: '0.875rem', md: '1rem' }
                         }}
                       >
-                        Bogstaver A-Å
+                        Lær & øv bogstaver
                       </Typography>
                     </Box>
                     <Button 
@@ -306,7 +173,7 @@ function App() {
             </Grid>
 
             {/* Math Card - Prepared for subcategories */}
-            <Grid size={{ xs: 12, sm: 6, lg: 4 }}>
+            <Grid size={{ xs: 12, sm: 6, lg: 6 }}>
               <motion.div
                 initial={{ opacity: 0, y: -30 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -315,7 +182,7 @@ function App() {
                 whileTap={{ scale: 0.98 }}
               >
                 <Card 
-                  onClick={() => setCurrentScreen('math')}
+                  onClick={() => setCurrentScreen('math-selection')}
                   sx={{ 
                     height: { xs: 200, sm: 240, md: 260 },
                     cursor: 'pointer',
@@ -386,82 +253,6 @@ function App() {
               </motion.div>
             </Grid>
 
-            {/* Settings Card - Compact */}
-            <Grid size={{ xs: 12, sm: 12, lg: 4 }}>
-              <motion.div
-                initial={{ opacity: 0, x: 30 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.6, delay: 0.2 }}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <Card 
-                  onClick={() => setCurrentScreen('difficulty')}
-                  sx={{ 
-                    height: { xs: 200, sm: 240, md: 260 },
-                    cursor: 'pointer',
-                    border: '2px solid',
-                    borderColor: 'success.200',
-                    '&:hover': {
-                      borderColor: 'success.main',
-                      boxShadow: 6
-                    }
-                  }}
-                >
-                  <CardContent 
-                    sx={{ 
-                      p: { xs: 2, md: 3 },
-                      height: '100%',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      justifyContent: 'space-between',
-                      textAlign: 'center'
-                    }}
-                  >
-                    <Box>
-                      <Settings sx={{ 
-                        fontSize: { xs: '2.5rem', md: '3.5rem' }, 
-                        color: 'success.main', 
-                        mb: 1 
-                      }} />
-                      <Typography 
-                        variant="h4" 
-                        color="success.dark" 
-                        sx={{ 
-                          mb: 1, 
-                          fontWeight: 700,
-                          fontSize: { xs: '1.25rem', md: '1.5rem' }
-                        }}
-                      >
-                        Sværhedsgrad
-                      </Typography>
-                      <Chip 
-                        label={difficultySettings[currentDifficulty].ageRange}
-                        color="success"
-                        variant="outlined"
-                        size="small"
-                        sx={{ 
-                          fontWeight: 600,
-                          mb: 2,
-                          fontSize: { xs: '0.75rem', md: '0.875rem' }
-                        }}
-                      />
-                    </Box>
-                    <Button 
-                      variant="outlined" 
-                      color="success"
-                      size="small"
-                      sx={{ 
-                        py: 1,
-                        fontSize: { xs: '0.875rem', md: '1rem' }
-                      }}
-                    >
-                      Skift niveau
-                    </Button>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            </Grid>
           </Grid>
 
           {/* Bottom Decoration - Smaller */}
@@ -482,12 +273,44 @@ function App() {
   )
 
   switch (currentScreen) {
-    case 'difficulty':
-      return renderDifficultySelector()
-    case 'alphabet':
-      return <AlphabetGame onBack={() => setCurrentScreen('home')} />
-    case 'math':
-      return <MathGame onBack={() => setCurrentScreen('home')} />
+    case 'alphabet-selection':
+      return (
+        <AlphabetSelection 
+          onBack={() => setCurrentScreen('home')}
+          onSelectExercise={(exerciseType) => {
+            if (exerciseType === 'quiz') {
+              setCurrentScreen('alphabet-quiz')
+            } else if (exerciseType === 'learn') {
+              setCurrentScreen('alphabet-learn')
+            }
+          }}
+        />
+      )
+    case 'alphabet-quiz':
+      return <AlphabetGame onBack={() => setCurrentScreen('alphabet-selection')} />
+    case 'alphabet-learn':
+      return <AlphabetLearning onBack={() => setCurrentScreen('alphabet-selection')} />
+    case 'math-selection':
+      return (
+        <MathSelection 
+          onBack={() => setCurrentScreen('home')}
+          onSelectExercise={(exerciseType) => {
+            if (exerciseType === 'counting') {
+              setCurrentScreen('math-counting')
+            } else if (exerciseType === 'numbers') {
+              setCurrentScreen('math-numbers')
+            } else if (exerciseType === 'addition') {
+              setCurrentScreen('math-addition')
+            }
+          }}
+        />
+      )
+    case 'math-counting':
+      return <MathGame onBack={() => setCurrentScreen('math-selection')} />
+    case 'math-numbers':
+      return <NumberLearning onBack={() => setCurrentScreen('math-selection')} />
+    case 'math-addition':
+      return <AdditionGame onBack={() => setCurrentScreen('math-selection')} />
     default:
       return renderHome()
   }

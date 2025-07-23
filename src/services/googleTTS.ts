@@ -1,4 +1,5 @@
 // Google Cloud TTS client is used in the serverless API function
+import { TTS_CONFIG } from '../config/tts-config'
 
 // Audio cache interface for browser storage
 interface CachedAudio {
@@ -11,14 +12,11 @@ interface CachedAudio {
 export class GoogleTTSService {
   private cache: Map<string, CachedAudio> = new Map()
   private initPromise: Promise<void> | null = null
+  private currentAudio: HTMLAudioElement | null = null
 
-  // Child-friendly voice configurations for Danish
+  // Use shared configuration
   private readonly voiceConfigs = {
-    primary: {
-      languageCode: 'da-DK',
-      name: (import.meta as any).env?.VITE_PREFERRED_DANISH_VOICE || 'da-DK-Wavenet-A', // Try Wavenet-A
-      ssmlGender: 'FEMALE' as const
-    },
+    primary: TTS_CONFIG.voice,
     backup: {
       languageCode: 'da-DK', 
       name: 'da-DK-Wavenet-D', // Another female Wavenet voice
@@ -31,13 +29,16 @@ export class GoogleTTSService {
     }
   }
 
-  // Audio configuration optimized for children
-  private readonly audioConfig = {
-    audioEncoding: 'MP3' as const,
-    speakingRate: parseFloat((import.meta as any).env?.VITE_SPEECH_RATE || '1.0'), // Use env var or normal speed
-    pitch: parseFloat((import.meta as any).env?.VITE_SPEECH_PITCH || '1.2'), // Slightly higher pitch
-    volumeGainDb: 0, // Normal volume
-    sampleRateHertz: 24000 // Good quality for speech
+  // Use shared audio configuration
+  private readonly audioConfig = TTS_CONFIG.audioConfig
+
+  // Stop any currently playing audio
+  stopCurrentAudio(): void {
+    if (this.currentAudio) {
+      this.currentAudio.pause()
+      this.currentAudio.currentTime = 0
+      this.currentAudio = null
+    }
   }
 
   constructor() {
@@ -66,7 +67,9 @@ export class GoogleTTSService {
 
   // Generate cache key for consistent caching
   private generateCacheKey(text: string, voice: string): string {
-    return `${voice}_${text.toLowerCase().replace(/[^a-zæøå0-9]/gi, '_')}`
+    // Include audio config in cache key to bust cache when settings change
+    const configKey = `${this.audioConfig.speakingRate}_${this.audioConfig.pitch}`
+    return `${voice}_${configKey}_${text.toLowerCase().replace(/[^a-zæøå0-9]/gi, '_')}`
   }
 
   // Load cached audio from localStorage
@@ -162,13 +165,15 @@ export class GoogleTTSService {
   async synthesizeSpeech(
     text: string, 
     voiceType: 'primary' | 'backup' | 'male' = 'primary',
-    useSSML: boolean = true
+    useSSML: boolean = true,
+    customAudioConfig?: Partial<typeof TTS_CONFIG.audioConfig>
   ): Promise<string> {
     await this.initializeService()
     
     const voice = this.voiceConfigs[voiceType]
     const inputText = useSSML ? this.createChildFriendlySSML(text) : text
-    const cacheKey = `${text}_${voiceType}_${useSSML}`
+    const finalAudioConfig = customAudioConfig ? { ...this.audioConfig, ...customAudioConfig } : this.audioConfig
+    const cacheKey = `${text}_${voiceType}_${useSSML}_${finalAudioConfig.speakingRate}_${finalAudioConfig.pitch}`
     
     // Check cache first
     const cachedAudio = this.getCachedAudio(cacheKey, voice.name)
@@ -195,7 +200,7 @@ export class GoogleTTSService {
           text: inputText,
           isSSML: useSSML,
           voice,
-          audioConfig: this.audioConfig
+          audioConfig: customAudioConfig ? { ...this.audioConfig, ...customAudioConfig } : this.audioConfig
         })
       })
 
@@ -233,10 +238,20 @@ export class GoogleTTSService {
   // Play audio directly from base64 data
   async playAudioFromData(base64AudioData: string): Promise<void> {
     return new Promise((resolve, reject) => {
-      const audio = this.createAudioFromData(base64AudioData)
+      // Stop any currently playing audio first
+      this.stopCurrentAudio()
       
-      audio.addEventListener('ended', () => resolve())
-      audio.addEventListener('error', (error) => reject(error))
+      const audio = this.createAudioFromData(base64AudioData)
+      this.currentAudio = audio
+      
+      audio.addEventListener('ended', () => {
+        this.currentAudio = null
+        resolve()
+      })
+      audio.addEventListener('error', (error) => {
+        this.currentAudio = null
+        reject(error)
+      })
       
       audio.play().catch(reject)
     })
@@ -246,10 +261,11 @@ export class GoogleTTSService {
   async synthesizeAndPlay(
     text: string, 
     voiceType: 'primary' | 'backup' | 'male' = 'primary',
-    useSSML: boolean = true
+    useSSML: boolean = true,
+    customAudioConfig?: Partial<typeof TTS_CONFIG.audioConfig>
   ): Promise<void> {
     try {
-      const audioData = await this.synthesizeSpeech(text, voiceType, useSSML)
+      const audioData = await this.synthesizeSpeech(text, voiceType, useSSML, customAudioConfig)
       await this.playAudioFromData(audioData)
     } catch (error) {
       console.error('Failed to synthesize and play audio:', error)
