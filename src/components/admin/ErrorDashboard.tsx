@@ -96,9 +96,37 @@ const ErrorDashboard: React.FC = () => {
         params.append('device', deviceFilter)
       }
       
-      const response = await fetch(`/api/log-error?${params}`)
+      const requestUrl = `/api/log-error?${params}`
+      const response = await fetch(requestUrl)
       
       if (!response.ok) {
+        // Enhanced error logging for debugging
+        let errorResponseBody = ''
+        let errorResponseHeaders: { [key: string]: string } = {}
+        
+        try {
+          errorResponseBody = await response.text()
+        } catch (bodyError) {
+          errorResponseBody = `Failed to read response body: ${bodyError}`
+        }
+        
+        response.headers.forEach((value, key) => {
+          errorResponseHeaders[key] = value
+        })
+        
+        const errorInfo = {
+          requestUrl,
+          requestMethod: 'GET',
+          responseStatus: response.status,
+          responseStatusText: response.statusText,
+          responseHeaders: errorResponseHeaders,
+          responseBody: errorResponseBody,
+          timestamp: new Date().toISOString(),
+          userAgent: navigator.userAgent,
+          currentUrl: window.location.href
+        }
+        
+        console.error('❌ Error Dashboard API failed:', errorInfo)
         throw new Error(`HTTP ${response.status}: ${response.statusText}`)
       }
       
@@ -186,6 +214,33 @@ const ErrorDashboard: React.FC = () => {
       })
       
       if (!response.ok) {
+        // Enhanced error logging for debugging
+        let errorResponseBody = ''
+        let errorResponseHeaders: { [key: string]: string } = {}
+        
+        try {
+          errorResponseBody = await response.text()
+        } catch (bodyError) {
+          errorResponseBody = `Failed to read response body: ${bodyError}`
+        }
+        
+        response.headers.forEach((value, key) => {
+          errorResponseHeaders[key] = value
+        })
+        
+        const errorInfo = {
+          requestUrl: '/api/log-error',
+          requestMethod: 'DELETE',
+          responseStatus: response.status,
+          responseStatusText: response.statusText,
+          responseHeaders: errorResponseHeaders,
+          responseBody: errorResponseBody,
+          timestamp: new Date().toISOString(),
+          userAgent: navigator.userAgent,
+          currentUrl: window.location.href
+        }
+        
+        console.error('❌ Clear logs API failed:', errorInfo)
         throw new Error(`Failed to clear logs: ${response.status}`)
       }
       

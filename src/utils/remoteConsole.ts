@@ -164,22 +164,50 @@ class RemoteConsole {
   
   private sendToBackend(entry: LogEntry) {
     // Send directly to API - keep it simple
+    const requestBody = {
+      level: entry.level,
+      message: entry.message,
+      data: entry.data,
+      device: entry.device,
+      url: window.location.href,
+      sessionId: this.getSessionId(),
+      timestamp: new Date(entry.timestamp).toISOString()
+    }
+    
     fetch('/api/log-error', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        level: entry.level,
-        message: entry.message,
-        data: entry.data,
-        device: entry.device,
-        url: window.location.href,
-        sessionId: this.getSessionId(),
-        timestamp: new Date(entry.timestamp).toISOString()
-      })
-    }).catch(() => {
-      // Silent fail - don't create infinite loops
+      body: JSON.stringify(requestBody)
+    }).catch(async (error) => {
+      // Enhanced error logging for debugging - but only if console exists
+      try {
+        const originalConsole = window.console?.error || (() => {})
+        
+        // Try to get more info about the fetch error
+        if (error && typeof error === 'object') {
+          const errorInfo = {
+            requestUrl: '/api/log-error',
+            requestMethod: 'POST',
+            requestBody: {
+              ...requestBody,
+              message: requestBody.message.length > 200 ? 
+                `${requestBody.message.substring(0, 200)}...` : 
+                requestBody.message
+            },
+            errorType: error.constructor?.name || 'Unknown',
+            errorMessage: error.message || error.toString(),
+            timestamp: new Date().toISOString(),
+            userAgent: navigator.userAgent,
+            currentUrl: window.location.href
+          }
+          
+          originalConsole('❌ Remote Console API failed:', errorInfo)
+        }
+      } catch (loggingError) {
+        // If even this fails, give up silently to prevent loops
+      }
     })
   }
   

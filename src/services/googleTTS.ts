@@ -186,30 +186,80 @@ export class GoogleTTSService {
     try {
       // For client-side implementation, we'll call a server endpoint
       // This avoids exposing service account credentials in the browser
+      const requestBody = {
+        text: inputText,
+        isSSML: useSSML,
+        voice,
+        audioConfig: customAudioConfig ? { ...this.audioConfig, ...customAudioConfig } : this.audioConfig
+      }
+      
+      const requestHeaders = {
+        'Content-Type': 'application/json'
+      }
+      
       console.log('🎙️ Attempting Google TTS synthesis:', { 
         voice: voice.name, 
         rate: this.audioConfig.speakingRate,
         pitch: this.audioConfig.pitch,
-        textLength: text.length 
+        textLength: text.length,
+        requestUrl: '/api/tts',
+        requestMethod: 'POST'
       })
       
       const response = await fetch('/api/tts', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          text: inputText,
-          isSSML: useSSML,
-          voice,
-          audioConfig: customAudioConfig ? { ...this.audioConfig, ...customAudioConfig } : this.audioConfig
-        })
+        headers: requestHeaders,
+        body: JSON.stringify(requestBody)
       })
 
       if (!response.ok) {
-        const errorData = await response.text()
-        console.error('❌ TTS API failed:', response.status, errorData)
-        throw new Error(`TTS API failed: ${response.status}`)
+        // Capture comprehensive error information
+        let errorResponseBody = ''
+        let errorResponseHeaders: { [key: string]: string } = {}
+        
+        try {
+          errorResponseBody = await response.text()
+        } catch (bodyError) {
+          errorResponseBody = `Failed to read response body: ${bodyError}`
+        }
+        
+        // Extract response headers
+        response.headers.forEach((value, key) => {
+          errorResponseHeaders[key] = value
+        })
+        
+        const comprehensiveErrorInfo = {
+          // Request information
+          requestUrl: '/api/tts',
+          requestMethod: 'POST',
+          requestHeaders: requestHeaders,
+          requestBody: {
+            ...requestBody,
+            text: inputText.length > 200 ? `${inputText.substring(0, 200)}...` : inputText // Truncate long text
+          },
+          
+          // Response information
+          responseStatus: response.status,
+          responseStatusText: response.statusText,
+          responseHeaders: errorResponseHeaders,
+          responseBody: errorResponseBody,
+          
+          // Context information
+          timestamp: new Date().toISOString(),
+          userAgent: navigator.userAgent,
+          currentUrl: window.location.href,
+          isIOS: isIOS(),
+          voiceType: voiceType,
+          useSSML: useSSML
+        }
+        
+        // Log to console for immediate debugging
+        console.error('❌ TTS API failed with comprehensive error info:', comprehensiveErrorInfo)
+        
+        // Log to remote error tracking
+        logAudioIssue('TTS HTTP Request Failed', `HTTP ${response.status}: ${response.statusText}`, comprehensiveErrorInfo)
+        
+        throw new Error(`TTS API failed: ${response.status} ${response.statusText}`)
       }
 
       const data = await response.json()
