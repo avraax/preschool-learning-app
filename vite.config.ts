@@ -1,9 +1,31 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    VitePWA({
+      registerType: 'autoUpdate',
+      // Use the existing manifest.json file
+      manifestFilename: 'manifest.json',
+      includeAssets: ['favicon.svg', 'apple-touch-icon-*.svg', 'icon-*.svg'],
+      workbox: {
+        // Network-only strategy - no caching
+        runtimeCaching: [
+          {
+            urlPattern: ({ request }) => true, // Match all requests
+            handler: 'NetworkOnly' // Always go to network, no caching
+          }
+        ],
+        skipWaiting: true,
+        clientsClaim: true,
+        // Don't cache anything
+        globPatterns: []
+      }
+    })
+  ],
   server: {
     // Note: API functions are Vercel serverless functions
     // For local development with API testing, use: vercel dev

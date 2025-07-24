@@ -27,6 +27,7 @@ import MathSelection from './components/math/MathSelection'
 import NumberLearning from './components/math/NumberLearning'
 import AdditionGame from './components/math/AdditionGame'
 import ErrorDashboard from './components/admin/ErrorDashboard'
+import PWAInstallPrompt from './components/common/PWAInstallPrompt'
 
 // Admin redirect component for query parameter support
 const AdminRedirectChecker = ({ children }: { children: React.ReactNode }) => {
@@ -331,34 +332,39 @@ function App() {
   }, [])
 
   return (
-    <Routes>
-      {/* Home Routes */}
-      <Route path="/" element={
-        <AdminRedirectChecker>
-          <HomePage />
-        </AdminRedirectChecker>
-      } />
+    <>
+      <Routes>
+        {/* Home Routes */}
+        <Route path="/" element={
+          <AdminRedirectChecker>
+            <HomePage />
+          </AdminRedirectChecker>
+        } />
+        
+        {/* Alphabet Routes */}
+        <Route path="/alphabet" element={<AlphabetSelection />} />
+        <Route path="/alphabet/learn" element={<AlphabetLearning />} />
+        <Route path="/alphabet/quiz" element={<AlphabetGame />} />
+        
+        {/* Math Routes */}
+        <Route path="/math" element={<MathSelection />} />
+        <Route path="/math/counting" element={<MathGame />} />
+        <Route path="/math/numbers" element={<NumberLearning />} />
+        <Route path="/math/addition" element={<AdditionGame />} />
+        
+        {/* Admin Routes */}
+        <Route path="/admin/errors" element={<ErrorDashboard />} />
+        
+        {/* Legacy redirect for old admin access */}
+        <Route path="/admin" element={<Navigate to="/admin/errors" replace />} />
+        
+        {/* 404 Not Found */}
+        <Route path="*" element={<NotFoundPage />} />
+      </Routes>
       
-      {/* Alphabet Routes */}
-      <Route path="/alphabet" element={<AlphabetSelection />} />
-      <Route path="/alphabet/learn" element={<AlphabetLearning />} />
-      <Route path="/alphabet/quiz" element={<AlphabetGame />} />
-      
-      {/* Math Routes */}
-      <Route path="/math" element={<MathSelection />} />
-      <Route path="/math/counting" element={<MathGame />} />
-      <Route path="/math/numbers" element={<NumberLearning />} />
-      <Route path="/math/addition" element={<AdditionGame />} />
-      
-      {/* Admin Routes */}
-      <Route path="/admin/errors" element={<ErrorDashboard />} />
-      
-      {/* Legacy redirect for old admin access */}
-      <Route path="/admin" element={<Navigate to="/admin/errors" replace />} />
-      
-      {/* 404 Not Found */}
-      <Route path="*" element={<NotFoundPage />} />
-    </Routes>
+      {/* PWA Install Prompt - shown globally */}
+      <PWAInstallPrompt />
+    </>
   )
 }
 
