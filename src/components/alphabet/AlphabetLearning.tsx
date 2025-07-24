@@ -2,16 +2,14 @@ import React, { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import {
   Container,
-  Grid,
-  Card,
-  CardContent,
   Button,
   Typography,
   Box,
   IconButton,
   AppBar,
   Toolbar,
-  LinearProgress
+  LinearProgress,
+  Card
 } from '@mui/material'
 import {
   ArrowBack,
@@ -21,6 +19,7 @@ import {
   School
 } from '@mui/icons-material'
 import { audioManager } from '../../utils/audio'
+import LearningGrid from '../common/LearningGrid'
 import { isIOS } from '../../utils/deviceDetection'
 import { logAudioIssue, logIOSIssue } from '../../utils/remoteConsole'
 
@@ -296,75 +295,13 @@ const AlphabetLearning: React.FC<AlphabetLearningProps> = ({ onBack }) => {
           </Box>
         </Box>
 
-        {/* Alphabet Grid - Flexible */}
-        <Box sx={{ 
-          flex: 1, 
-          display: 'flex', 
-          justifyContent: 'center', 
-          overflow: 'hidden',
-          minHeight: 0
-        }}>
-          <Grid 
-            container 
-            spacing={{ xs: 0.5, md: 1 }}
-            sx={{ 
-              maxWidth: '100%',
-              width: 'fit-content',
-              maxHeight: '100%',
-              overflow: 'auto',
-              pr: 1
-            }}
-          >
-          {DANISH_ALPHABET.map((letter, index) => (
-            <Grid size={{ xs: 1.2, sm: 1, md: 0.8 }} key={letter}>
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <Card 
-                  onClick={() => goToLetter(index)}
-                  sx={{ 
-                    minHeight: { xs: 45, md: 50 },
-                    cursor: 'pointer',
-                    border: '2px solid',
-                    borderColor: index === currentIndex ? 'secondary.main' : 'primary.200',
-                    bgcolor: index === currentIndex ? 'secondary.50' : 
-                             index < currentIndex && isAutoPlay ? 'success.50' : 'white',
-                    transition: 'all 0.3s ease',
-                    '&:hover': {
-                      borderColor: 'primary.main',
-                      bgcolor: 'primary.50',
-                      boxShadow: 4
-                    }
-                  }}
-                >
-                  <CardContent 
-                    sx={{ 
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      height: '100%',
-                      p: 1,
-                      '&:last-child': { pb: 1 }
-                    }}
-                  >
-                    <Typography 
-                      variant="body1"
-                      sx={{ 
-                        fontWeight: 700,
-                        color: index === currentIndex ? 'secondary.dark' : 'primary.dark',
-                        fontSize: { xs: '0.8rem', sm: '1rem' }
-                      }}
-                    >
-                      {letter}
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            </Grid>
-          ))}
-          </Grid>
-        </Box>
+        {/* Alphabet Grid - Using Reusable Component */}
+        <LearningGrid
+          items={DANISH_ALPHABET}
+          currentIndex={currentIndex}
+          isAutoPlay={isAutoPlay}
+          onItemClick={goToLetter}
+        />
       </Container>
     </Box>
   )

@@ -19,7 +19,7 @@ const MAX_LOGS = 1000 // Keep last 1000 errors
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Add CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*')
-  res.setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS')
+  res.setHeader('Access-Control-Allow-Methods', 'POST, GET, DELETE, OPTIONS')
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
   
   // Handle preflight request
@@ -104,6 +104,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           info: errorLogs.filter(l => l.level === 'info').length,
           logs: errorLogs.filter(l => l.level === 'log').length
         }
+      })
+      
+    } else if (req.method === 'DELETE') {
+      // Clear all error logs
+      const previousCount = errorLogs.length
+      errorLogs = []
+      
+      console.log(`[ERROR LOG] Cleared ${previousCount} error logs`)
+      
+      return res.status(200).json({ 
+        success: true, 
+        message: `Cleared ${previousCount} error logs`,
+        clearedCount: previousCount
       })
       
     } else {

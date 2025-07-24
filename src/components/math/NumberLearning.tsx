@@ -2,9 +2,6 @@ import React, { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import {
   Container,
-  Grid,
-  Card,
-  CardContent,
   Button,
   Typography,
   Box,
@@ -13,7 +10,8 @@ import {
   Toolbar,
   LinearProgress,
   Alert,
-  Snackbar
+  Snackbar,
+  Card
 } from '@mui/material'
 import {
   ArrowBack,
@@ -25,6 +23,7 @@ import {
 import { audioManager } from '../../utils/audio'
 import { deviceInfo } from '../../utils/deviceDetection'
 import { iosAudioHelper } from '../../utils/iosAudioHelper'
+import LearningGrid from '../common/LearningGrid'
 
 interface NumberLearningProps {
   onBack: () => void
@@ -331,75 +330,13 @@ const NumberLearning: React.FC<NumberLearningProps> = ({ onBack }) => {
           </Box>
         </Box>
 
-        {/* Numbers Grid - Flexible */}
-        <Box sx={{ 
-          flex: 1, 
-          display: 'flex', 
-          justifyContent: 'center', 
-          overflow: 'hidden',
-          minHeight: 0
-        }}>
-          <Grid 
-            container 
-            spacing={{ xs: 0.5, md: 1 }}
-            sx={{ 
-              maxWidth: '100%',
-              width: 'fit-content',
-              maxHeight: '100%',
-              overflow: 'auto',
-              pr: 1
-            }}
-          >
-          {numbers.map((number, index) => (
-            <Grid size={{ xs: 1.2, sm: 1, md: 0.8 }} key={number}>
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <Card 
-                  onClick={() => goToNumber(index)}
-                  sx={{ 
-                    minHeight: { xs: 45, md: 50 },
-                    cursor: 'pointer',
-                    border: '2px solid',
-                    borderColor: index === currentIndex ? 'secondary.main' : 'primary.200',
-                    bgcolor: index === currentIndex ? 'secondary.50' : 
-                             index < currentIndex && isAutoPlay ? 'success.50' : 'white',
-                    transition: 'all 0.3s ease',
-                    '&:hover': {
-                      borderColor: 'primary.main',
-                      bgcolor: 'primary.50',
-                      boxShadow: 4
-                    }
-                  }}
-                >
-                  <CardContent 
-                    sx={{ 
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      height: '100%',
-                      p: 1,
-                      '&:last-child': { pb: 1 }
-                    }}
-                  >
-                    <Typography 
-                      variant="body1"
-                      sx={{ 
-                        fontWeight: 700,
-                        color: index === currentIndex ? 'secondary.dark' : 'primary.dark',
-                        fontSize: { xs: '0.8rem', sm: '1rem' }
-                      }}
-                    >
-                      {number}
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            </Grid>
-          ))}
-          </Grid>
-        </Box>
+        {/* Numbers Grid - Using Reusable Component */}
+        <LearningGrid
+          items={numbers}
+          currentIndex={currentIndex}
+          isAutoPlay={isAutoPlay}
+          onItemClick={goToNumber}
+        />
       </Container>
       
       {/* iOS Audio Error Snackbar */}

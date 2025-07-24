@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
-import { Box, Card, CardContent, Typography, Button, Select, MenuItem, FormControl, InputLabel, Chip, Alert, CircularProgress, Collapse, IconButton, Snackbar } from '@mui/material'
-import { Refresh, Download, ExpandMore, ExpandLess, ContentCopy } from '@mui/icons-material'
+import { Box, Card, CardContent, Typography, Button, Select, MenuItem, FormControl, InputLabel, Chip, Alert, CircularProgress, Collapse, IconButton, Snackbar, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@mui/material'
+import { Refresh, Download, ExpandMore, ExpandLess, ContentCopy, DeleteForever } from '@mui/icons-material'
 
 interface ErrorLogEntry {
   timestamp: string
@@ -36,6 +36,8 @@ const ErrorDashboard: React.FC = () => {
   const [limit, setLimit] = useState<number>(50)
   const [expandedLogs, setExpandedLogs] = useState<Set<number>>(new Set())
   const [copySuccess, setCopySuccess] = useState(false)
+  const [showClearConfirm, setShowClearConfirm] = useState(false)
+  const [clearLoading, setClearLoading] = useState(false)
 
   const fetchLogs = async () => {
     setLoading(true)
@@ -117,6 +119,30 @@ const ErrorDashboard: React.FC = () => {
       newExpanded.add(index)
     }
     setExpandedLogs(newExpanded)
+  }
+
+  const clearAllLogs = async () => {
+    setClearLoading(true)
+    setError(null)
+    
+    try {
+      const response = await fetch('/api/log-error', {
+        method: 'DELETE'
+      })
+      
+      if (!response.ok) {
+        throw new Error(`Failed to clear logs: ${response.status}`)
+      }
+      
+      // Refresh the logs to show empty state
+      await fetchLogs()
+      setShowClearConfirm(false)
+      
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to clear logs')
+    } finally {
+      setClearLoading(false)
+    }
   }
 
   const copyLogToClipboard = (log: ErrorLogEntry) => {
@@ -222,6 +248,16 @@ Copied from Børnelæring Error Dashboard at ${new Date().toISOString()}`
 
             <Button variant="outlined" startIcon={<Download />} onClick={exportLogs} disabled={logs.length === 0}>
               Export
+            </Button>
+
+            <Button 
+              variant="outlined" 
+              color="error"
+              startIcon={<DeleteForever />} 
+              onClick={() => setShowClearConfirm(true)} 
+              disabled={logs.length === 0 || clearLoading}
+            >
+              Clear All
             </Button>
           </Box>
         </CardContent>
@@ -408,6 +444,36 @@ Copied from Børnelæring Error Dashboard at ${new Date().toISOString()}`
           Error details copied to clipboard! ✓
         </Alert>
       </Snackbar>
+
+      {/* Clear Confirmation Dialog */}
+      <Dialog
+        open={showClearConfirm}
+        onClose={() => setShowClearConfirm(false)}
+      >
+        <DialogTitle>Clear All Error Logs?</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to clear all {logs.length} error logs? This action cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button 
+            onClick={() => setShowClearConfirm(false)} 
+            disabled={clearLoading}
+          >
+            Cancel
+          </Button>
+          <Button 
+            onClick={clearAllLogs} 
+            color="error" 
+            variant="contained"
+            disabled={clearLoading}
+            startIcon={clearLoading ? <CircularProgress size={20} /> : <DeleteForever />}
+          >
+            {clearLoading ? 'Clearing...' : 'Clear All'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   )
 }
