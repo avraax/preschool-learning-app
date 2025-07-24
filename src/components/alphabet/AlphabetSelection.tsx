@@ -99,7 +99,7 @@ const AlphabetSelection: React.FC = () => {
                 gap: 1
               }}
             >
-              <School fontSize="large" /> Bogstaver & Ord
+              <School fontSize="large" /> Alfabetet
             </Typography>
           </motion.div>
           <Typography 

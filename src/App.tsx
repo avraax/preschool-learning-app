@@ -158,7 +158,7 @@ const HomePage = () => {
                           fontSize: { xs: '1.25rem', md: '1.5rem' }
                         }}
                       >
-                        Bogstaver & Ord
+                        Alfabetet
                       </Typography>
                       <Typography 
                         variant="body2" 
