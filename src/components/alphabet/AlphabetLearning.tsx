@@ -289,7 +289,7 @@ const AlphabetLearning: React.FC<AlphabetLearningProps> = ({ onBack }) => {
               size="large"
               startIcon={<Replay />}
               disabled={isPlaying || isAutoPlay}
-              sx={{ py: 2, px: 4 }}
+              sx={{ py: { xs: 0.5, md: 1 }, px: { xs: 2, md: 3 }, fontSize: { xs: '0.875rem', md: '1rem' }, minHeight: '44px' }}
             >
               Start Forfra
             </Button>
@@ -311,11 +311,12 @@ const AlphabetLearning: React.FC<AlphabetLearningProps> = ({ onBack }) => {
               maxWidth: '100%',
               width: 'fit-content',
               maxHeight: '100%',
-              overflow: 'auto'
+              overflow: 'auto',
+              pr: 1
             }}
           >
           {DANISH_ALPHABET.map((letter, index) => (
-            <Grid size={{ xs: 2, sm: 1.5, md: 1.2 }} key={letter}>
+            <Grid size={{ xs: 1.2, sm: 1, md: 0.8 }} key={letter}>
               <motion.div
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
@@ -323,7 +324,7 @@ const AlphabetLearning: React.FC<AlphabetLearningProps> = ({ onBack }) => {
                 <Card 
                   onClick={() => goToLetter(index)}
                   sx={{ 
-                    minHeight: { xs: 50, md: 60 },
+                    minHeight: { xs: 45, md: 50 },
                     cursor: 'pointer',
                     border: '2px solid',
                     borderColor: index === currentIndex ? 'secondary.main' : 'primary.200',
@@ -348,11 +349,11 @@ const AlphabetLearning: React.FC<AlphabetLearningProps> = ({ onBack }) => {
                     }}
                   >
                     <Typography 
-                      variant="h5"
+                      variant="body1"
                       sx={{ 
                         fontWeight: 700,
                         color: index === currentIndex ? 'secondary.dark' : 'primary.dark',
-                        fontSize: { xs: '1.2rem', sm: '1.5rem' }
+                        fontSize: { xs: '0.8rem', sm: '1rem' }
                       }}
                     >
                       {letter}
