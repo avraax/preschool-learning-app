@@ -124,7 +124,7 @@ export async function fetchWithErrorLogging(
     url,
     method: options.method || 'GET',
     headers: options.headers as Record<string, string>,
-    body: options.body
+    body: options.body as string | object | undefined
   }
   
   try {
