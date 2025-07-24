@@ -247,6 +247,28 @@ export class GoogleTTSService {
         const audio = this.createAudioFromData(base64AudioData)
         this.currentAudio = audio
         
+        // Add timeout to prevent hanging (especially important for iOS)
+        const playbackTimeout = setTimeout(() => {
+          logAudioIssue('Audio Playback Timeout', 'Audio playback timed out after 10 seconds', {
+            isIOS: isIOS(),
+            audioDataLength: base64AudioData.length
+          })
+          this.currentAudio = null
+          reject(new Error('Audio playback timeout'))
+        }, 10000)
+        
+        const clearTimeoutAndResolve = () => {
+          clearTimeout(playbackTimeout)
+          this.currentAudio = null
+          resolve()
+        }
+        
+        const clearTimeoutAndReject = (error: any) => {
+          clearTimeout(playbackTimeout)
+          this.currentAudio = null
+          reject(error)
+        }
+        
         // iOS-specific event handling
         if (isIOS()) {
           // Use loadstart event for iOS 17.4+ compatibility
@@ -262,8 +284,7 @@ export class GoogleTTSService {
         
         audio.addEventListener('ended', () => {
           logIOSIssue('Audio Playback', 'Audio ended successfully')
-          this.currentAudio = null
-          resolve()
+          clearTimeoutAndResolve()
         })
         
         audio.addEventListener('error', (error) => {
@@ -272,8 +293,7 @@ export class GoogleTTSService {
             audioDataLength: base64AudioData.length,
             userAgent: navigator.userAgent
           })
-          this.currentAudio = null
-          reject(error)
+          clearTimeoutAndReject(error)
         })
         
         // iOS-specific play handling
@@ -285,17 +305,53 @@ export class GoogleTTSService {
                 errorName: playError.name,
                 errorMessage: playError.message
               })
-              reject(playError)
+              clearTimeoutAndReject(playError)
             })
           }, 50)
         } else {
-          audio.play().catch(reject)
+          audio.play().catch((error) => clearTimeoutAndReject(error))
         }
         
       } catch (setupError) {
         logAudioIssue('Audio Setup Error', setupError)
         reject(setupError)
       }
+    })
+  }
+
+  // Fallback to Web Speech API for iOS when Google TTS fails
+  private async fallbackToWebSpeech(text: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      if (!('speechSynthesis' in window)) {
+        logAudioIssue('Web Speech API', 'Speech synthesis not supported')
+        reject(new Error('Speech synthesis not supported'))
+        return
+      }
+
+      // Clean text for Web Speech (remove SSML tags)
+      const cleanText = text.replace(/<[^>]*>/g, '')
+      
+      const utterance = new SpeechSynthesisUtterance(cleanText)
+      utterance.lang = 'da-DK'
+      utterance.rate = 0.8
+      utterance.pitch = 1.1
+
+      // Try to find a Danish voice
+      const voices = window.speechSynthesis.getVoices()
+      const danishVoice = voices.find(voice => voice.lang.startsWith('da'))
+      if (danishVoice) {
+        utterance.voice = danishVoice
+      }
+
+      utterance.onend = () => resolve()
+      utterance.onerror = (error) => {
+        logAudioIssue('Web Speech API Error', error)
+        reject(error)
+      }
+
+      // Stop any current speech
+      window.speechSynthesis.cancel()
+      window.speechSynthesis.speak(utterance)
     })
   }
 
@@ -310,8 +366,25 @@ export class GoogleTTSService {
       const audioData = await this.synthesizeSpeech(text, voiceType, useSSML, customAudioConfig)
       await this.playAudioFromData(audioData)
     } catch (error) {
-      console.error('Failed to synthesize and play audio:', error)
-      throw error
+      logAudioIssue('Google TTS Failed', error, { 
+        text, 
+        voiceType, 
+        useSSML,
+        isIOS: isIOS(),
+        userAgent: navigator.userAgent 
+      })
+      
+      // Fallback to Web Speech API, especially important for iOS
+      try {
+        console.log('🔄 Falling back to Web Speech API')
+        await this.fallbackToWebSpeech(text)
+      } catch (fallbackError) {
+        logAudioIssue('Both TTS methods failed', fallbackError, { 
+          originalError: error,
+          fallbackError: fallbackError 
+        })
+        throw new Error(`Audio synthesis failed: ${error}`)
+      }
     }
   }
 

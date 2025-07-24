@@ -24,7 +24,7 @@ export class AudioManager {
     await this.speak(letter)
   }
 
-  async speakNumber(number: number, customSpeed?: number) {
+  async speakNumber(number: number, customSpeed?: number): Promise<void> {
     const danishNumbers = {
       0: 'nul', 1: 'en', 2: 'to', 3: 'tre', 4: 'fire', 5: 'fem',
       6: 'seks', 7: 'syv', 8: 'otte', 9: 'ni', 10: 'ti',
@@ -56,7 +56,39 @@ export class AudioManager {
       numberText = number.toString()
     }
 
-    await this.speak(numberText, 'primary', true, customSpeed)
+    // Retry logic for number counting - important for auto-play reliability
+    let lastError: Error | null = null
+    const maxRetries = 2
+    
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+      try {
+        await this.speak(numberText, 'primary', true, customSpeed)
+        return // Success, exit the retry loop
+      } catch (error: any) {
+        lastError = error
+        logAudioIssue(`Number speech attempt ${attempt + 1}`, error, { 
+          number, 
+          numberText,
+          isIOS: isIOS(),
+          attempt: attempt + 1 
+        })
+        
+        // Wait a bit before retrying (but not on last attempt)
+        if (attempt < maxRetries - 1) {
+          await new Promise(resolve => setTimeout(resolve, 300))
+        }
+      }
+    }
+    
+    // If all retries failed, throw the last error
+    if (lastError) {
+      logAudioIssue('All number speech attempts failed', lastError, { 
+        number, 
+        numberText,
+        maxRetries 
+      })
+      throw lastError
+    }
   }
 
   playSound(soundId: string, src?: string): Promise<void> {
