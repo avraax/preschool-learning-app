@@ -127,18 +127,6 @@ const AdditionGame: React.FC<AdditionGameProps> = ({ onBack }) => {
     speakProblem(num1, num2)
   }
 
-  // Render visual representation of numbers (finger counting style)
-  const renderFingers = (count: number) => {
-    const fingers = []
-    for (let i = 0; i < count; i++) {
-      fingers.push(
-        <Typography key={i} sx={{ fontSize: '1.5rem', display: 'inline' }}>
-          ✋
-        </Typography>
-      )
-    }
-    return fingers
-  }
 
   return (
     <Box 
@@ -232,39 +220,35 @@ const AdditionGame: React.FC<AdditionGameProps> = ({ onBack }) => {
             }}
           >
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: { xs: 2, md: 3 }, mb: 3 }}>
-              {/* First number with visual */}
+              {/* First number */}
               <Box sx={{ textAlign: 'center' }}>
                 <Typography 
                   variant="h1" 
                   sx={{ 
                     fontSize: { xs: '3rem', md: '4rem' }, 
                     fontWeight: 700, 
-                    color: 'primary.dark',
-                    mb: 1
+                    color: 'primary.dark'
                   }}
                 >
                   {num1}
                 </Typography>
-                <Box>{renderFingers(num1)}</Box>
               </Box>
 
               {/* Plus sign */}
               <Add sx={{ fontSize: { xs: '2.5rem', md: '3rem' }, color: 'secondary.main' }} />
 
-              {/* Second number with visual */}
+              {/* Second number */}
               <Box sx={{ textAlign: 'center' }}>
                 <Typography 
                   variant="h1" 
                   sx={{ 
                     fontSize: { xs: '3rem', md: '4rem' }, 
                     fontWeight: 700, 
-                    color: 'primary.dark',
-                    mb: 1
+                    color: 'primary.dark'
                   }}
                 >
                   {num2}
                 </Typography>
-                <Box>{renderFingers(num2)}</Box>
               </Box>
 
               {/* Equals sign */}
@@ -365,13 +349,11 @@ const AdditionGame: React.FC<AdditionGameProps> = ({ onBack }) => {
                         fontWeight: 700,
                         color: 'primary.dark',
                         userSelect: 'none',
-                        lineHeight: 1,
-                        mb: 1
+                        lineHeight: 1
                       }}
                     >
                       {option}
                     </Typography>
-                    <Box>{renderFingers(option)}</Box>
                   </CardContent>
                 </Card>
               </motion.div>
