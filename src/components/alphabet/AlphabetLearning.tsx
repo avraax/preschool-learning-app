@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
+import { useNavigate } from 'react-router-dom'
 import {
   Container,
   Button,
@@ -23,16 +24,14 @@ import LearningGrid from '../common/LearningGrid'
 import { isIOS } from '../../utils/deviceDetection'
 import { logAudioIssue, logIOSIssue } from '../../utils/remoteConsole'
 
-interface AlphabetLearningProps {
-  onBack: () => void
-}
 
 const DANISH_ALPHABET = [
   'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
   'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'Æ', 'Ø', 'Å'
 ]
 
-const AlphabetLearning: React.FC<AlphabetLearningProps> = ({ onBack }) => {
+const AlphabetLearning: React.FC = () => {
+  const navigate = useNavigate()
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
   const [isAutoPlay, setIsAutoPlay] = useState(false)
@@ -162,7 +161,7 @@ const AlphabetLearning: React.FC<AlphabetLearningProps> = ({ onBack }) => {
       <AppBar position="static" color="transparent" elevation={0}>
         <Toolbar sx={{ justifyContent: 'space-between', py: 2 }}>
           <IconButton 
-            onClick={onBack}
+            onClick={() => navigate('/alphabet')}
             color="primary"
             size="large"
             sx={{ 

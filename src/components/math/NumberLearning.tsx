@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
   Container,
@@ -25,11 +26,9 @@ import { deviceInfo } from '../../utils/deviceDetection'
 import { iosAudioHelper } from '../../utils/iosAudioHelper'
 import LearningGrid from '../common/LearningGrid'
 
-interface NumberLearningProps {
-  onBack: () => void
-}
 
-const NumberLearning: React.FC<NumberLearningProps> = ({ onBack }) => {
+const NumberLearning: React.FC = () => {
+  const navigate = useNavigate()
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
   const [isAutoPlay, setIsAutoPlay] = useState(false)
@@ -197,7 +196,7 @@ const NumberLearning: React.FC<NumberLearningProps> = ({ onBack }) => {
       <AppBar position="static" color="transparent" elevation={0}>
         <Toolbar sx={{ justifyContent: 'space-between', py: 2 }}>
           <IconButton 
-            onClick={onBack}
+            onClick={() => navigate('/math')}
             color="primary"
             size="large"
             sx={{ 

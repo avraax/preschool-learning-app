@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Box, Card, CardContent, Typography, Button, Select, MenuItem, FormControl, InputLabel, Chip, Alert, CircularProgress, Collapse, IconButton, Snackbar, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@mui/material'
 import { Refresh, Download, ExpandMore, ExpandLess, ContentCopy, DeleteForever } from '@mui/icons-material'
+import { useGameParams } from '../../utils/urlParams'
 
 interface ErrorLogEntry {
   timestamp: string
@@ -27,18 +28,21 @@ interface ErrorLogResponse {
 }
 
 const ErrorDashboard: React.FC = () => {
+  const { getLogLevel, setLogLevel, getDevice, setDevice, getLimit, setLimit } = useGameParams()
   const [logs, setLogs] = useState<ErrorLogEntry[]>([])
   const [stats, setStats] = useState({ errors: 0, warnings: 0, info: 0, logs: 0 })
   const [totalCount, setTotalCount] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [levelFilter, setLevelFilter] = useState<string>('all')
-  const [deviceFilter, setDeviceFilter] = useState<string>('all')
-  const [limit, setLimit] = useState<number>(50)
   const [expandedLogs, setExpandedLogs] = useState<Set<number>>(new Set())
   const [copySuccess, setCopySuccess] = useState(false)
   const [showClearConfirm, setShowClearConfirm] = useState(false)
   const [clearLoading, setClearLoading] = useState(false)
+
+  // Get filter values from URL params
+  const levelFilter = getLogLevel() || 'all'
+  const deviceFilter = getDevice() || 'all'
+  const limit = getLimit()
 
   const fetchLogs = async () => {
     setLoading(true)
@@ -332,7 +336,7 @@ Copied from Børnelæring Error Dashboard at ${new Date().toISOString()}`
           <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
             <FormControl sx={{ minWidth: 120 }}>
               <InputLabel>Level</InputLabel>
-              <Select value={levelFilter} onChange={(e) => setLevelFilter(e.target.value)} label="Level">
+              <Select value={levelFilter} onChange={(e) => setLogLevel(e.target.value === 'all' ? undefined : e.target.value)} label="Level">
                 <MenuItem value="all">All</MenuItem>
                 <MenuItem value="error">Error</MenuItem>
                 <MenuItem value="warn">Warning</MenuItem>
@@ -343,7 +347,7 @@ Copied from Børnelæring Error Dashboard at ${new Date().toISOString()}`
 
             <FormControl sx={{ minWidth: 120 }}>
               <InputLabel>Device</InputLabel>
-              <Select value={deviceFilter} onChange={(e) => setDeviceFilter(e.target.value)} label="Device">
+              <Select value={deviceFilter} onChange={(e) => setDevice(e.target.value === 'all' ? undefined : e.target.value)} label="Device">
                 <MenuItem value="all">All</MenuItem>
                 {uniqueDevices.map(device => (
                   <MenuItem key={device} value={device}>{device}</MenuItem>

@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useEffect } from 'react'
+import { Routes, Route, Navigate, useNavigate } from 'react-router-dom'
+import { motion } from 'framer-motion'
 import { logIOSIssue } from './utils/remoteConsole'
 import { deviceInfo } from './utils/deviceDetection'
-import { motion } from 'framer-motion'
 import { 
   Container, 
   Grid, 
@@ -16,6 +17,8 @@ import {
   Calculate,
   Star
 } from '@mui/icons-material'
+
+// Import all page components
 import AlphabetGame from './components/alphabet/AlphabetGame'
 import AlphabetSelection from './components/alphabet/AlphabetSelection'
 import AlphabetLearning from './components/alphabet/AlphabetLearning'
@@ -25,30 +28,24 @@ import NumberLearning from './components/math/NumberLearning'
 import AdditionGame from './components/math/AdditionGame'
 import ErrorDashboard from './components/admin/ErrorDashboard'
 
-type AppScreen = 'home' | 'alphabet-selection' | 'alphabet-quiz' | 'alphabet-learn' | 'math-selection' | 'math-counting' | 'math-numbers' | 'math-addition' | 'admin-errors'
-
-function App() {
-  const [currentScreen, setCurrentScreen] = useState<AppScreen>('home')
-
+// Admin redirect component for query parameter support
+const AdminRedirectChecker = ({ children }: { children: React.ReactNode }) => {
+  const navigate = useNavigate()
+  
   useEffect(() => {
-    // Initialize remote console and log device info
-    console.log('🎈 Børnelæring App Starting')
-    console.log('📱 Device Info:', deviceInfo)
-    
-    // Log any iOS-specific initialization
-    if (deviceInfo.isIOS) {
-      logIOSIssue('App Initialization', 'iOS device detected, enhanced debugging active')
-    }
-    
-    // Check for admin access via URL parameter
     const params = new URLSearchParams(window.location.search)
     if (params.get('admin') === 'errors') {
-      setCurrentScreen('admin-errors')
+      navigate('/admin/errors', { replace: true })
     }
-  }, [])
+  }, [navigate])
+  
+  return <>{children}</>
+}
 
-
-  const renderHome = () => (
+// Home Page Component
+const HomePage = () => {
+  const navigate = useNavigate()
+  return (
     <Box 
       sx={{ 
         minHeight: '100vh', 
@@ -68,7 +65,7 @@ function App() {
           py: { xs: 2, md: 3 }
         }}
       >
-        {/* Header - More Compact */}
+        {/* Header */}
         <Box sx={{ textAlign: 'center', mb: { xs: 3, md: 4 } }}>
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
@@ -103,10 +100,10 @@ function App() {
           </motion.div>
         </Box>
 
-        {/* Main Content - Single Row Layout */}
+        {/* Main Content */}
         <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
           <Grid container spacing={{ xs: 2, md: 3 }} sx={{ mb: { xs: 2, md: 3 } }}>
-            {/* Alphabet Card - Prepared for subcategories */}
+            {/* Alphabet Card */}
             <Grid size={{ xs: 12, sm: 6, lg: 6 }}>
               <motion.div
                 initial={{ opacity: 0, x: -30 }}
@@ -116,7 +113,7 @@ function App() {
                 whileTap={{ scale: 0.98 }}
               >
                 <Card 
-                  onClick={() => setCurrentScreen('alphabet-selection')}
+                  onClick={() => navigate('/alphabet')}
                   sx={{ 
                     height: { xs: 200, sm: 240, md: 260 },
                     cursor: 'pointer',
@@ -187,7 +184,7 @@ function App() {
               </motion.div>
             </Grid>
 
-            {/* Math Card - Prepared for subcategories */}
+            {/* Math Card */}
             <Grid size={{ xs: 12, sm: 6, lg: 6 }}>
               <motion.div
                 initial={{ opacity: 0, y: -30 }}
@@ -197,7 +194,7 @@ function App() {
                 whileTap={{ scale: 0.98 }}
               >
                 <Card 
-                  onClick={() => setCurrentScreen('math-selection')}
+                  onClick={() => navigate('/math')}
                   sx={{ 
                     height: { xs: 200, sm: 240, md: 260 },
                     cursor: 'pointer',
@@ -267,10 +264,9 @@ function App() {
                 </Card>
               </motion.div>
             </Grid>
-
           </Grid>
 
-          {/* Bottom Decoration - Smaller */}
+          {/* Bottom Decoration */}
           <Box sx={{ textAlign: 'center', mt: 'auto', py: 2 }}>
             <motion.div
               animate={{ 
@@ -286,51 +282,84 @@ function App() {
       </Container>
     </Box>
   )
+}
 
-  switch (currentScreen) {
-    case 'alphabet-selection':
-      return (
-        <AlphabetSelection 
-          onBack={() => setCurrentScreen('home')}
-          onSelectExercise={(exerciseType) => {
-            if (exerciseType === 'quiz') {
-              setCurrentScreen('alphabet-quiz')
-            } else if (exerciseType === 'learn') {
-              setCurrentScreen('alphabet-learn')
-            }
-          }}
-        />
-      )
-    case 'alphabet-quiz':
-      return <AlphabetGame onBack={() => setCurrentScreen('alphabet-selection')} />
-    case 'alphabet-learn':
-      return <AlphabetLearning onBack={() => setCurrentScreen('alphabet-selection')} />
-    case 'math-selection':
-      return (
-        <MathSelection 
-          onBack={() => setCurrentScreen('home')}
-          onSelectExercise={(exerciseType) => {
-            if (exerciseType === 'counting') {
-              setCurrentScreen('math-counting')
-            } else if (exerciseType === 'numbers') {
-              setCurrentScreen('math-numbers')
-            } else if (exerciseType === 'addition') {
-              setCurrentScreen('math-addition')
-            }
-          }}
-        />
-      )
-    case 'math-counting':
-      return <MathGame onBack={() => setCurrentScreen('math-selection')} />
-    case 'math-numbers':
-      return <NumberLearning onBack={() => setCurrentScreen('math-selection')} />
-    case 'math-addition':
-      return <AdditionGame onBack={() => setCurrentScreen('math-selection')} />
-    case 'admin-errors':
-      return <ErrorDashboard />
-    default:
-      return renderHome()
-  }
+// 404 Not Found Component
+const NotFoundPage = () => {
+  const navigate = useNavigate()
+  return (
+    <Box 
+      sx={{ 
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'linear-gradient(135deg, #dbeafe 0%, #e9d5ff 50%, #fce7f3 100%)'
+      }}
+    >
+      <Container maxWidth="sm" sx={{ textAlign: 'center' }}>
+        <Typography variant="h1" sx={{ fontSize: '4rem', mb: 2 }}>🎈</Typography>
+        <Typography variant="h4" sx={{ mb: 2, fontWeight: 700 }}>
+          Siden blev ikke fundet
+        </Typography>
+        <Typography variant="body1" sx={{ mb: 4, color: 'text.secondary' }}>
+          Siden du leder efter eksisterer ikke.
+        </Typography>
+        <Button 
+          variant="contained" 
+          color="primary" 
+          size="large"
+          onClick={() => navigate('/')}
+        >
+          Gå til forsiden 🏠
+        </Button>
+      </Container>
+    </Box>
+  )
+}
+
+function App() {
+  useEffect(() => {
+    // Initialize remote console and log device info
+    console.log('🎈 Børnelæring App Starting')
+    console.log('📱 Device Info:', deviceInfo)
+    
+    // Log any iOS-specific initialization
+    if (deviceInfo.isIOS) {
+      logIOSIssue('App Initialization', 'iOS device detected, enhanced debugging active')
+    }
+  }, [])
+
+  return (
+    <Routes>
+      {/* Home Routes */}
+      <Route path="/" element={
+        <AdminRedirectChecker>
+          <HomePage />
+        </AdminRedirectChecker>
+      } />
+      
+      {/* Alphabet Routes */}
+      <Route path="/alphabet" element={<AlphabetSelection />} />
+      <Route path="/alphabet/learn" element={<AlphabetLearning />} />
+      <Route path="/alphabet/quiz" element={<AlphabetGame />} />
+      
+      {/* Math Routes */}
+      <Route path="/math" element={<MathSelection />} />
+      <Route path="/math/counting" element={<MathGame />} />
+      <Route path="/math/numbers" element={<NumberLearning />} />
+      <Route path="/math/addition" element={<AdditionGame />} />
+      
+      {/* Admin Routes */}
+      <Route path="/admin/errors" element={<ErrorDashboard />} />
+      
+      {/* Legacy redirect for old admin access */}
+      <Route path="/admin" element={<Navigate to="/admin/errors" replace />} />
+      
+      {/* 404 Not Found */}
+      <Route path="*" element={<NotFoundPage />} />
+    </Routes>
+  )
 }
 
 export default App

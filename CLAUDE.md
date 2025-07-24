@@ -2,7 +2,7 @@
 
 ## 📋 Project Overview
 
-This is a comprehensive web application designed to teach Danish children aged 3-7 years the alphabet and basic mathematics through interactive games. The app features native Danish audio narration, kid-friendly animations, and adaptive difficulty levels.
+This is a comprehensive web application designed to teach Danish children aged 3-7 years the alphabet and basic mathematics through interactive games. The app features native Danish audio narration, kid-friendly animations, and age-appropriate content.
 
 ## 🎯 Project Purpose & Goals
 
@@ -20,7 +20,7 @@ Create an engaging educational web app that helps Danish preschool children lear
 - ✅ **Audio**: Danish text-to-speech for all content
 - ✅ **Visual Design**: Colorful, animated, kid-friendly interface
 - ✅ **Educational Content**: Playful learning with animals, colors, sounds
-- ✅ **Difficulty Levels**: Age-appropriate content adaptation
+- ✅ **Age-Appropriate**: Fixed settings suitable for 3-7 year olds
 
 ## 🏗️ Technical Architecture
 
@@ -31,8 +31,60 @@ Build Tool: Vite
 Styling: Tailwind CSS v4 + Custom CSS
 Animations: Framer Motion
 Audio: Web Speech API + Howler.js
+Routing: React Router DOM v7
 Deployment: Vercel-ready configuration
 ```
+
+### 🚦 URL Routing Architecture
+
+The app uses **React Router v7** for comprehensive URL-based navigation with full browser history support, bookmarkable URLs, and query parameter state management.
+
+#### Route Structure
+```
+/ (Home page)
+├── /alphabet (Alphabet selection page)
+│   ├── /alphabet/learn (Interactive learning)
+│   └── /alphabet/quiz (Quiz game)
+├── /math (Math selection page)
+│   ├── /math/counting (Counting game)
+│   ├── /math/numbers (Number learning)
+│   └── /math/addition (Addition practice)
+└── /admin/errors?level=error&device=ios&limit=50 (Error dashboard)
+```
+
+#### Query Parameter Support
+- **`level`**: Custom level ranges (e.g., `1-10`, `A-J`)
+- **`range`**: Number ranges for math exercises  
+- **`limit`**: Result pagination (25, 50, 100, 200)
+- **`device`**: Device filtering for admin panel
+
+#### URL Utility Functions
+**Location**: `src/utils/urlParams.ts`
+```typescript
+// Game parameter management
+const { getLevel, setLevel, getRange, setRange } = useGameParams()
+
+// Build URLs programmatically
+const gameUrl = buildGameUrl('/alphabet/quiz', { 
+  level: 'A-M',
+  range: '1-20'
+})
+```
+
+#### Routing Implementation
+- **BrowserRouter**: Set up in `main.tsx` for HTML5 history API
+- **Routes Configuration**: Centralized in `App.tsx`
+- **Navigation**: Uses `useNavigate()` hook instead of callback props
+- **State Persistence**: Game settings maintained through URL parameters
+- **Deep Linking**: All pages support direct URL access
+- **404 Handling**: Custom NotFoundPage component
+
+#### Developer Guidelines
+1. **All new features MUST use URL routing** - No component-level state navigation
+2. **Query parameters recommended** for user settings (filters, ranges, etc.)
+3. **Bookmarkable URLs** - Every unique app state should have a unique URL
+4. **Browser history support** - Back/forward buttons must work correctly
+5. **Deep linking** - Users should be able to share specific exercise URLs
 
 ### Project Structure
 ```
@@ -47,8 +99,7 @@ preschool-learning-app/
 │   │   └── math/
 │   │       └── MathGame.tsx      # Counting & arithmetic game
 │   ├── utils/
-│   │   ├── audio.ts         # Danish audio management system
-│   │   └── difficulty.ts    # Age-based difficulty system
+│   │   └── audio.ts         # Danish audio management system
 │   ├── App.tsx              # Main application router
 │   ├── main.tsx            # React entry point
 │   └── index.css           # Global styles + Tailwind
@@ -73,7 +124,7 @@ preschool-learning-app/
   - Visual letter display with large, kid-friendly fonts
   - 4-option multiple choice interface
   - Score tracking
-  - Adaptive letter sets based on difficulty level
+  - Full Danish alphabet support (A-Å)
 
 #### 2. Math Game (`/src/components/math/MathGame.tsx`)
 - **Purpose**: Teach counting and basic arithmetic
@@ -83,13 +134,13 @@ preschool-learning-app/
 - **Features**:
   - Danish number pronunciation (including special cases)
   - Visual finger counting animations
-  - Progressive difficulty
+  - Fixed settings suitable for all ages
   - Audio math problem narration
 
-### 3. Difficulty System (`/src/utils/difficulty.ts`)
-- **Beginner (3-4 years)**: Letters A-J, counting 1-10
-- **Intermediate (4-6 years)**: Letters A-T, counting 1-50, simple addition
-- **Advanced (6-7 years)**: Full alphabet A-Å, counting 1-100, addition/subtraction
+### 3. Simple Game Settings
+- **Hardcoded for Beginners**: Optimized for youngest children (3-4 years)
+- **Alphabet**: Simple A-J letters only
+- **Math**: Numbers 1-10, basic counting and simple addition (1-5 + 1-5)
 
 ### 4. Audio System (`/src/utils/audio.ts`)
 - **Danish Text-to-Speech**: Web Speech API with Danish locale
@@ -189,7 +240,7 @@ Remove-Item -Recurse -Force node_modules, dist  # Clean build artifacts
 
 ### State Management
 - **Local State**: React useState for component state
-- **Persistence**: localStorage for difficulty settings
+- **Fixed Settings**: No user-adjustable settings needed
 - **No Global State**: Simple prop drilling sufficient for app size
 
 ### Audio Architecture
@@ -208,7 +259,7 @@ Remove-Item -Recurse -Force node_modules, dist  # Clean build artifacts
 
 ### Type Safety
 - **TypeScript**: Strict mode enabled
-- **Custom Types**: Defined for difficulty levels, game states
+- **Custom Types**: Defined for game states, audio management
 - **Component Props**: Fully typed interfaces
 
 ## 🐛 Troubleshooting & Common Issues
@@ -241,8 +292,17 @@ Remove-Item -Recurse -Force node_modules, dist  # Clean build artifacts
 ### Technical Improvements
 - **PWA Features**: Install prompt, offline support
 - **Analytics**: Usage tracking for improvement
-- **A/B Testing**: Difficulty level optimization
+- **A/B Testing**: UI and UX optimization
 - **Accessibility**: Screen reader support, high contrast mode
+
+### 🚦 Future Routing Requirements
+**All new features MUST follow the established routing architecture:**
+- **URL-first design**: Every feature should have dedicated routes
+- **Query parameter persistence**: All user settings via URL params
+- **Deep linking support**: Direct access to specific game states
+- **Shareable URLs**: Parents can bookmark and share specific exercises
+- **Browser history**: Proper back/forward navigation support
+- **SEO optimization**: Clean, descriptive URLs for future search engine indexing
 
 ## 📚 Learning Resources
 

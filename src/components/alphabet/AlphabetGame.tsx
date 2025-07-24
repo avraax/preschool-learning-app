@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
+import { useNavigate } from 'react-router-dom'
 import {
   Container,
   Grid,
@@ -20,13 +21,12 @@ import {
   Star
 } from '@mui/icons-material'
 import { audioManager } from '../../utils/audio'
-import { difficultyManager } from '../../utils/difficulty'
 
-interface AlphabetGameProps {
-  onBack: () => void
-}
+// Simple alphabet for beginners (first 10 letters)
+const SIMPLE_ALPHABET = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
 
-const AlphabetGame: React.FC<AlphabetGameProps> = ({ onBack }) => {
+const AlphabetGame: React.FC = () => {
+  const navigate = useNavigate()
   const [currentLetter, setCurrentLetter] = useState<string>('')
   const [showOptions, setShowOptions] = useState<string[]>([])
   const [score, setScore] = useState(0)
@@ -45,14 +45,15 @@ const AlphabetGame: React.FC<AlphabetGameProps> = ({ onBack }) => {
   }, [])
 
   const generateNewQuestion = () => {
-    const letter = difficultyManager.getRandomLetter()
+    // Pick a random letter from simple alphabet
+    const letter = SIMPLE_ALPHABET[Math.floor(Math.random() * SIMPLE_ALPHABET.length)]
     setCurrentLetter(letter)
     
-    const availableLetters = difficultyManager.getAvailableLetters()
+    // Create 4 options including the correct answer
     const options = [letter]
     
     while (options.length < 4) {
-      const randomLetter = availableLetters[Math.floor(Math.random() * availableLetters.length)]
+      const randomLetter = SIMPLE_ALPHABET[Math.floor(Math.random() * SIMPLE_ALPHABET.length)]
       if (!options.includes(randomLetter)) {
         options.push(randomLetter)
       }
@@ -114,7 +115,7 @@ const AlphabetGame: React.FC<AlphabetGameProps> = ({ onBack }) => {
       <AppBar position="static" color="transparent" elevation={0}>
         <Toolbar sx={{ justifyContent: 'space-between', py: 2 }}>
           <IconButton 
-            onClick={onBack}
+            onClick={() => navigate('/alphabet')}
             color="primary"
             size="large"
             sx={{ 

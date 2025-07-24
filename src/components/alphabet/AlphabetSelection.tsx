@@ -1,5 +1,6 @@
 import React from 'react'
 import { motion } from 'framer-motion'
+import { useNavigate } from 'react-router-dom'
 import {
   Container,
   Grid,
@@ -19,12 +20,8 @@ import {
   PlayArrow
 } from '@mui/icons-material'
 
-interface AlphabetSelectionProps {
-  onBack: () => void
-  onSelectExercise: (exerciseType: 'quiz' | 'learn') => void
-}
-
-const AlphabetSelection: React.FC<AlphabetSelectionProps> = ({ onBack, onSelectExercise }) => {
+const AlphabetSelection: React.FC = () => {
+  const navigate = useNavigate()
   const exercises = [
     {
       id: 'learn',
@@ -59,7 +56,7 @@ const AlphabetSelection: React.FC<AlphabetSelectionProps> = ({ onBack, onSelectE
       <AppBar position="static" color="transparent" elevation={0}>
         <Toolbar sx={{ justifyContent: 'space-between', py: 2 }}>
           <IconButton 
-            onClick={onBack}
+            onClick={() => navigate('/')}
             color="primary"
             size="large"
             sx={{ 
@@ -131,7 +128,7 @@ const AlphabetSelection: React.FC<AlphabetSelectionProps> = ({ onBack, onSelectE
                 whileTap={{ scale: 0.98 }}
               >
                 <Card 
-                  onClick={() => onSelectExercise(exercise.id as 'quiz' | 'learn')}
+                  onClick={() => navigate(`/alphabet/${exercise.id}`)}
                   sx={{ 
                     height: { xs: 200, sm: 240, md: 260 },
                     cursor: 'pointer',

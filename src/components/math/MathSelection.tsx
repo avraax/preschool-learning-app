@@ -1,5 +1,6 @@
 import React from 'react'
 import { motion } from 'framer-motion'
+import { useNavigate } from 'react-router-dom'
 import {
   Container,
   Grid,
@@ -20,12 +21,8 @@ import {
   Add
 } from '@mui/icons-material'
 
-interface MathSelectionProps {
-  onBack: () => void
-  onSelectExercise: (exerciseType: 'counting' | 'numbers' | 'addition') => void
-}
-
-const MathSelection: React.FC<MathSelectionProps> = ({ onBack, onSelectExercise }) => {
+const MathSelection: React.FC = () => {
+  const navigate = useNavigate()
   const exercises = [
     {
       id: 'numbers',
@@ -68,7 +65,7 @@ const MathSelection: React.FC<MathSelectionProps> = ({ onBack, onSelectExercise 
       <AppBar position="static" color="transparent" elevation={0}>
         <Toolbar sx={{ justifyContent: 'space-between', py: 2 }}>
           <IconButton 
-            onClick={onBack}
+            onClick={() => navigate('/')}
             color="primary"
             size="large"
             sx={{ 
@@ -140,7 +137,7 @@ const MathSelection: React.FC<MathSelectionProps> = ({ onBack, onSelectExercise 
                 whileTap={{ scale: 0.98 }}
               >
                 <Card 
-                  onClick={() => onSelectExercise(exercise.id as 'counting' | 'numbers' | 'addition')}
+                  onClick={() => navigate(`/math/${exercise.id}`)}
                   sx={{ 
                     height: { xs: 180, sm: 200, md: 220 },
                     cursor: 'pointer',

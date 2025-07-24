@@ -7,7 +7,6 @@ export interface SubcategoryItem {
   description: string
   icon: string // emoji or icon name
   route: string
-  difficulty?: 'beginner' | 'intermediate' | 'advanced'
   isComingSoon?: boolean
 }
 

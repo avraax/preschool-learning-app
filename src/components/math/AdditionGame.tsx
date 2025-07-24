@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
   Container,
@@ -22,11 +23,9 @@ import {
 } from '@mui/icons-material'
 import { audioManager } from '../../utils/audio'
 
-interface AdditionGameProps {
-  onBack: () => void
-}
 
-const AdditionGame: React.FC<AdditionGameProps> = ({ onBack }) => {
+const AdditionGame: React.FC = () => {
+  const navigate = useNavigate()
   const [num1, setNum1] = useState(0)
   const [num2, setNum2] = useState(0)
   const [correctAnswer, setCorrectAnswer] = useState(0)
@@ -146,7 +145,7 @@ const AdditionGame: React.FC<AdditionGameProps> = ({ onBack }) => {
       <AppBar position="static" color="transparent" elevation={0}>
         <Toolbar sx={{ justifyContent: 'space-between', py: 2 }}>
           <IconButton 
-            onClick={onBack}
+            onClick={() => navigate('/math')}
             color="primary"
             size="large"
             sx={{ 

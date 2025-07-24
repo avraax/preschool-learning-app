@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
   Container,
@@ -20,11 +21,10 @@ import {
   Star
 } from '@mui/icons-material'
 import { audioManager } from '../../utils/audio'
-import { difficultyManager } from '../../utils/difficulty'
 
-interface MathGameProps {
-  onBack: () => void
-}
+// Simple math settings for beginners
+const MAX_NUMBER = 10
+const GAME_MODE = 'counting' // Keep it simple with just counting for now
 
 interface MathProblem {
   num1: number
@@ -33,18 +33,15 @@ interface MathProblem {
   answer: number
 }
 
-const MathGame: React.FC<MathGameProps> = ({ onBack }) => {
+const MathGame: React.FC = () => {
+  const navigate = useNavigate()
   const [currentProblem, setCurrentProblem] = useState<MathProblem | null>(null)
   const [showOptions, setShowOptions] = useState<number[]>([])
   const [score, setScore] = useState(0)
-  const [gameMode, setGameMode] = useState<'counting' | 'arithmetic'>('counting')
+  const [gameMode] = useState<'counting' | 'arithmetic'>(GAME_MODE)
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
 
-  useEffect(() => {
-    const settings = difficultyManager.getCurrentSettings()
-    const mode = (settings.math.includeAddition || settings.math.includeSubtraction) ? 'arithmetic' : 'counting'
-    setGameMode(mode)
-  }, [])
+  // Remove useEffect that set gameMode from difficulty settings
 
   // Generate question when gameMode is set
   useEffect(() => {
@@ -80,11 +77,12 @@ const MathGame: React.FC<MathGameProps> = ({ onBack }) => {
     // Stop any currently playing audio
     audioManager.stopAll()
     
-    const number = difficultyManager.getRandomNumber()
+    // Generate a random number from 1 to MAX_NUMBER
+    const number = Math.floor(Math.random() * MAX_NUMBER) + 1
     const options = [number]
     
     while (options.length < 4) {
-      const randomNum = difficultyManager.getRandomNumber()
+      const randomNum = Math.floor(Math.random() * MAX_NUMBER) + 1
       if (!options.includes(randomNum)) {
         options.push(randomNum)
       }
@@ -113,14 +111,17 @@ const MathGame: React.FC<MathGameProps> = ({ onBack }) => {
     // Stop any currently playing audio
     audioManager.stopAll()
     
-    const problem = difficultyManager.generateMathProblem()
+    // Generate simple addition problem (e.g., 2 + 3 = 5)
+    const num1 = Math.floor(Math.random() * 5) + 1  // 1-5
+    const num2 = Math.floor(Math.random() * 5) + 1  // 1-5
+    const answer = num1 + num2
+    const problem = { num1, num2, operation: '+' as const, answer }
     setCurrentProblem(problem)
     
     const options = [problem.answer]
-    const maxNumber = difficultyManager.getCurrentSettings().math.maxNumber
     
     while (options.length < 4) {
-      const randomNum = Math.floor(Math.random() * maxNumber) + 1
+      const randomNum = Math.floor(Math.random() * MAX_NUMBER) + 1
       if (!options.includes(randomNum)) {
         options.push(randomNum)
       }
@@ -210,7 +211,7 @@ const MathGame: React.FC<MathGameProps> = ({ onBack }) => {
       <AppBar position="static" color="transparent" elevation={0}>
         <Toolbar sx={{ justifyContent: 'space-between', py: 2 }}>
           <IconButton 
-            onClick={onBack}
+            onClick={() => navigate('/math')}
             color="secondary"
             size="large"
             sx={{ 
