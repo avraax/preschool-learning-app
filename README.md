@@ -125,6 +125,24 @@ Get-Process -Name "node" | Stop-Process -Force  # Stop all Node.js processes
 Remove-Item -Recurse -Force node_modules, dist  # Clean project
 ```
 
+## 🚀 Deployment
+
+This project uses **manual-only deployments** for full control over when updates go live.
+
+### Quick Deploy to Production:
+```powershell
+# Use the deployment script (recommended)
+.\deploy-production.ps1
+
+# Or manual commands
+npm run build && npx vercel --prod
+```
+
+### Production URL:
+**https://preschool-learning-app.vercel.app/**
+
+For detailed deployment instructions, see [MANUAL_DEPLOYMENT.md](./MANUAL_DEPLOYMENT.md).
+
 ## 🤝 Contributing
 
 1. Fork the repository
