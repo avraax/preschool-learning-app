@@ -245,17 +245,11 @@ export class AudioManager {
       // Fourth: second number
       await this.speakNumber(num2)
       
-      // Small pause
-      await new Promise(resolve => setTimeout(resolve, 300))
-      
-      // Fifth: question mark tone
-      await this.speak('?', voiceType, false)
-      
       logIOSIssue('Addition Problem', 'Successfully spoke addition problem')
     } catch (error) {
       logAudioIssue('speakAdditionProblem', error, { num1, num2, voiceType })
       // Fallback: speak as single text
-      const fallbackText = `Hvad er ${num1} plus ${num2}?`
+      const fallbackText = `Hvad er ${num1} plus ${num2}`
       await this.speak(fallbackText, voiceType, true)
     }
   }

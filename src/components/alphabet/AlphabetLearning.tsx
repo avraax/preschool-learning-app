@@ -106,6 +106,7 @@ const AlphabetLearning: React.FC<AlphabetLearningProps> = ({ onBack }) => {
 
   const stopAutoPlay = () => {
     setIsAutoPlay(false)
+    setIsPlaying(false)  // Also stop playing state
     audioManager.stopAll()
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current)
