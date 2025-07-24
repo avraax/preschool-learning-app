@@ -108,7 +108,10 @@ const AlphabetGame: React.FC<AlphabetGameProps> = ({ onBack }) => {
   return (
     <Box 
       sx={{ 
-        minHeight: '100vh', 
+        height: '100vh',
+        overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column',
         background: 'linear-gradient(135deg, #f3e8ff 0%, #fce7f3 50%, #dbeafe 100%)'
       }}
     >
@@ -142,9 +145,18 @@ const AlphabetGame: React.FC<AlphabetGameProps> = ({ onBack }) => {
         </Toolbar>
       </AppBar>
 
-      <Container maxWidth="lg" sx={{ py: 4 }}>
-        {/* Game Title */}
-        <Box sx={{ textAlign: 'center', mb: 4 }}>
+      <Container 
+        maxWidth="lg" 
+        sx={{ 
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          py: { xs: 2, md: 3 },
+          overflow: 'hidden'
+        }}
+      >
+        {/* Game Title - Compact */}
+        <Box sx={{ textAlign: 'center', mb: { xs: 2, md: 3 }, flex: '0 0 auto' }}>
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -170,8 +182,8 @@ const AlphabetGame: React.FC<AlphabetGameProps> = ({ onBack }) => {
           </Typography>
         </Box>
 
-        {/* Audio Control */}
-        <Box sx={{ textAlign: 'center', mb: { xs: 3, md: 4 } }}>
+        {/* Audio Control - Compact */}
+        <Box sx={{ textAlign: 'center', mb: { xs: 2, md: 3 }, flex: '0 0 auto' }}>
           <Button 
             onClick={repeatLetter}
             variant="contained"

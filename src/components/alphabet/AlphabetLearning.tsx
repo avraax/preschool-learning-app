@@ -128,7 +128,10 @@ const AlphabetLearning: React.FC<AlphabetLearningProps> = ({ onBack }) => {
   return (
     <Box 
       sx={{ 
-        minHeight: '100vh', 
+        height: '100vh',
+        overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column',
         background: 'linear-gradient(135deg, #f3e8ff 0%, #fce7f3 50%, #dbeafe 100%)'
       }}
     >
@@ -163,52 +166,49 @@ const AlphabetLearning: React.FC<AlphabetLearningProps> = ({ onBack }) => {
         </Toolbar>
       </AppBar>
 
-      <Container maxWidth="lg" sx={{ py: 4 }}>
-        {/* Title */}
-        <Box sx={{ textAlign: 'center', mb: 4 }}>
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
+      <Container 
+        maxWidth="lg" 
+        sx={{ 
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          py: { xs: 1, md: 2 },
+          overflow: 'hidden'
+        }}
+      >
+        {/* Title - Very Compact */}
+        <Box sx={{ textAlign: 'center', mb: { xs: 1, md: 1.5 } }}>
+          <Typography 
+            variant="h5" 
+            sx={{ 
+              fontSize: { xs: '1.25rem', md: '1.5rem' },
+              color: 'primary.dark',
+              fontWeight: 700,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 0.5
+            }}
           >
-            <Typography 
-              variant="h3" 
-              sx={{ 
-                color: 'primary.dark',
-                fontWeight: 700,
-                mb: 2,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 1
-              }}
-            >
-              <School fontSize="large" /> Lær Alfabetet
-            </Typography>
-          </motion.div>
-          <Typography variant="h5" color="primary.main" sx={{ mb: 1 }}>
-            Lær alle bogstaver fra A til Å
-          </Typography>
-          <Typography variant="body1" color="text.secondary">
-            Klik på et bogstav for at høre det! 👆
+            <School sx={{ fontSize: { xs: '1.25rem', md: '1.5rem' } }} /> Lær Alfabetet
           </Typography>
         </Box>
 
-        {/* Current Letter Display */}
-        <Box sx={{ textAlign: 'center', mb: 4 }}>
+        {/* Current Letter Display - Very Compact */}
+        <Box sx={{ textAlign: 'center', mb: { xs: 1, md: 1.5 }, flex: '0 0 auto' }}>
           <motion.div
             key={currentIndex}
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.5 }}
+            transition={{ duration: 0.3 }}
           >
             <Card
               sx={{
-                maxWidth: 300,
+                maxWidth: { xs: 120, md: 150 },
                 mx: 'auto',
-                p: 4,
+                p: { xs: 1, md: 1.5 },
                 bgcolor: isPlaying ? 'secondary.50' : 'white',
-                border: '4px solid',
+                border: '2px solid',
                 borderColor: isPlaying ? 'secondary.main' : 'primary.200',
                 transition: 'all 0.3s ease'
               }}
@@ -216,7 +216,7 @@ const AlphabetLearning: React.FC<AlphabetLearningProps> = ({ onBack }) => {
               <Typography
                 variant="h1"
                 sx={{
-                  fontSize: '8rem',
+                  fontSize: { xs: '2.5rem', md: '3.5rem' },
                   fontWeight: 700,
                   color: 'primary.dark',
                   textAlign: 'center',
@@ -229,9 +229,9 @@ const AlphabetLearning: React.FC<AlphabetLearningProps> = ({ onBack }) => {
           </motion.div>
         </Box>
 
-        {/* Control Buttons */}
-        <Box sx={{ textAlign: 'center', mb: 4 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, flexWrap: 'wrap' }}>
+        {/* Control Buttons - Very Compact */}
+        <Box sx={{ textAlign: 'center', mb: { xs: 1, md: 1.5 }, flex: '0 0 auto' }}>
+          <Box sx={{ display: 'flex', justifyContent: 'center', gap: { xs: 1, md: 2 }, flexWrap: 'wrap' }}>
             {!isAutoPlay ? (
               <Button
                 onClick={startAutoPlay}
@@ -240,7 +240,7 @@ const AlphabetLearning: React.FC<AlphabetLearningProps> = ({ onBack }) => {
                 size="large"
                 startIcon={<PlayArrow />}
                 disabled={isPlaying}
-                sx={{ py: 2, px: 4 }}
+                sx={{ py: { xs: 0.5, md: 1 }, px: { xs: 2, md: 3 }, fontSize: { xs: '0.875rem', md: '1rem' }, minHeight: '44px' }}
               >
                 Afspil Alle
               </Button>
@@ -251,7 +251,7 @@ const AlphabetLearning: React.FC<AlphabetLearningProps> = ({ onBack }) => {
                 color="error"
                 size="large"
                 startIcon={<Pause />}
-                sx={{ py: 2, px: 4 }}
+                sx={{ py: { xs: 0.5, md: 1 }, px: { xs: 2, md: 3 }, fontSize: { xs: '0.875rem', md: '1rem' }, minHeight: '44px' }}
               >
                 Stop
               </Button>
@@ -272,26 +272,34 @@ const AlphabetLearning: React.FC<AlphabetLearningProps> = ({ onBack }) => {
           </Box>
         </Box>
 
-        {/* Alphabet Grid */}
-        <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+        {/* Alphabet Grid - Flexible */}
+        <Box sx={{ 
+          flex: 1, 
+          display: 'flex', 
+          justifyContent: 'center', 
+          overflow: 'hidden',
+          minHeight: 0
+        }}>
           <Grid 
             container 
-            spacing={1} 
+            spacing={{ xs: 0.5, md: 1 }}
             sx={{ 
-              maxWidth: '900px',
-              width: 'fit-content'
+              maxWidth: '100%',
+              width: 'fit-content',
+              maxHeight: '100%',
+              overflow: 'auto'
             }}
           >
           {DANISH_ALPHABET.map((letter, index) => (
             <Grid size={{ xs: 2, sm: 1.5, md: 1.2 }} key={letter}>
               <motion.div
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
               >
                 <Card 
                   onClick={() => goToLetter(index)}
                   sx={{ 
-                    minHeight: 60,
+                    minHeight: { xs: 50, md: 60 },
                     cursor: 'pointer',
                     border: '2px solid',
                     borderColor: index === currentIndex ? 'secondary.main' : 'primary.200',
@@ -331,16 +339,6 @@ const AlphabetLearning: React.FC<AlphabetLearningProps> = ({ onBack }) => {
             </Grid>
           ))}
           </Grid>
-        </Box>
-
-        {/* Decorative Animation */}
-        <Box sx={{ textAlign: 'center', py: 4 }}>
-          <motion.div
-            animate={{ rotate: [0, 5, -5, 0] }}
-            transition={{ duration: 3, repeat: Infinity }}
-          >
-            <Typography sx={{ fontSize: '4rem' }}>🔤</Typography>
-          </motion.div>
         </Box>
       </Container>
     </Box>

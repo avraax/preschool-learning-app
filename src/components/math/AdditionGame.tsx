@@ -143,7 +143,10 @@ const AdditionGame: React.FC<AdditionGameProps> = ({ onBack }) => {
   return (
     <Box 
       sx={{ 
-        minHeight: '100vh', 
+        height: '100vh',
+        overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column',
         background: 'linear-gradient(135deg, #e0f2fe 0%, #f3e5f5 50%, #fff3e0 100%)'
       }}
     >
@@ -177,9 +180,18 @@ const AdditionGame: React.FC<AdditionGameProps> = ({ onBack }) => {
         </Toolbar>
       </AppBar>
 
-      <Container maxWidth="lg" sx={{ py: 4 }}>
-        {/* Game Title */}
-        <Box sx={{ textAlign: 'center', mb: 4 }}>
+      <Container 
+        maxWidth="lg" 
+        sx={{ 
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          py: { xs: 2, md: 3 },
+          overflow: 'hidden'
+        }}
+      >
+        {/* Game Title - Compact */}
+        <Box sx={{ textAlign: 'center', mb: { xs: 2, md: 3 }, flex: '0 0 auto' }}>
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -205,8 +217,8 @@ const AdditionGame: React.FC<AdditionGameProps> = ({ onBack }) => {
           </Typography>
         </Box>
 
-        {/* Problem Display */}
-        <Box sx={{ textAlign: 'center', mb: { xs: 3, md: 4 } }}>
+        {/* Problem Display - Compact */}
+        <Box sx={{ textAlign: 'center', mb: { xs: 2, md: 3 }, flex: '0 0 auto' }}>
           <Paper 
             elevation={8}
             sx={{ 
@@ -294,8 +306,14 @@ const AdditionGame: React.FC<AdditionGameProps> = ({ onBack }) => {
           </Paper>
         </Box>
 
-        {/* Answer Options Grid */}
-        <Box sx={{ display: 'flex', justifyContent: 'center', flex: 1 }}>
+        {/* Answer Options Grid - Flexible */}
+        <Box sx={{ 
+          flex: 1, 
+          display: 'flex', 
+          justifyContent: 'center', 
+          alignItems: 'center',
+          minHeight: 0
+        }}>
           <Grid 
             container 
             spacing={{ xs: 2, sm: 3 }} 

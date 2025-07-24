@@ -127,7 +127,10 @@ const NumberLearning: React.FC<NumberLearningProps> = ({ onBack }) => {
   return (
     <Box 
       sx={{ 
-        minHeight: '100vh', 
+        height: '100vh',
+        overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column',
         background: 'linear-gradient(135deg, #e0f2fe 0%, #f3e5f5 50%, #fff3e0 100%)'
       }}
     >
@@ -163,52 +166,49 @@ const NumberLearning: React.FC<NumberLearningProps> = ({ onBack }) => {
         </Toolbar>
       </AppBar>
 
-      <Container maxWidth="lg" sx={{ py: 4 }}>
-        {/* Title */}
-        <Box sx={{ textAlign: 'center', mb: 4 }}>
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
+      <Container 
+        maxWidth="lg" 
+        sx={{ 
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          py: { xs: 1, md: 2 },
+          overflow: 'hidden'
+        }}
+      >
+        {/* Title - Very Compact */}
+        <Box sx={{ textAlign: 'center', mb: { xs: 1, md: 1.5 } }}>
+          <Typography 
+            variant="h5" 
+            sx={{ 
+              fontSize: { xs: '1.25rem', md: '1.5rem' },
+              color: 'secondary.dark',
+              fontWeight: 700,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 0.5
+            }}
           >
-            <Typography 
-              variant="h3" 
-              sx={{ 
-                color: 'secondary.dark',
-                fontWeight: 700,
-                mb: 2,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 1
-              }}
-            >
-              <School fontSize="large" /> Lær Tal
-            </Typography>
-          </motion.div>
-          <Typography variant="h5" color="secondary.main" sx={{ mb: 1 }}>
-            Lær alle tal fra 1 til 100
-          </Typography>
-          <Typography variant="body1" color="text.secondary">
-            Klik på et tal for at høre det! 👆
+            <School sx={{ fontSize: { xs: '1.25rem', md: '1.5rem' } }} /> Lær Tal
           </Typography>
         </Box>
 
-        {/* Current Number Display */}
-        <Box sx={{ textAlign: 'center', mb: { xs: 3, md: 4 } }}>
+        {/* Current Number Display - Very Compact */}
+        <Box sx={{ textAlign: 'center', mb: { xs: 1, md: 1.5 }, flex: '0 0 auto' }}>
           <motion.div
             key={currentIndex}
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.5 }}
+            transition={{ duration: 0.3 }}
           >
             <Card
               sx={{
-                maxWidth: { xs: 250, md: 300 },
+                maxWidth: { xs: 120, md: 150 },
                 mx: 'auto',
-                p: { xs: 3, md: 4 },
+                p: { xs: 1, md: 1.5 },
                 bgcolor: isPlaying ? 'secondary.50' : 'white',
-                border: '4px solid',
+                border: '2px solid',
                 borderColor: isPlaying ? 'secondary.main' : 'primary.200',
                 transition: 'all 0.3s ease'
               }}
@@ -216,7 +216,7 @@ const NumberLearning: React.FC<NumberLearningProps> = ({ onBack }) => {
               <Typography
                 variant="h1"
                 sx={{
-                  fontSize: { xs: '6rem', md: '8rem' },
+                  fontSize: { xs: '2.5rem', md: '3.5rem' },
                   fontWeight: 700,
                   color: 'primary.dark',
                   textAlign: 'center',
@@ -229,9 +229,9 @@ const NumberLearning: React.FC<NumberLearningProps> = ({ onBack }) => {
           </motion.div>
         </Box>
 
-        {/* Control Buttons */}
-        <Box sx={{ textAlign: 'center', mb: { xs: 3, md: 4 } }}>
-          <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, flexWrap: 'wrap' }}>
+        {/* Control Buttons - Very Compact */}
+        <Box sx={{ textAlign: 'center', mb: { xs: 1, md: 1.5 }, flex: '0 0 auto' }}>
+          <Box sx={{ display: 'flex', justifyContent: 'center', gap: { xs: 1, md: 2 }, flexWrap: 'wrap' }}>
             {!isAutoPlay ? (
               <Button
                 onClick={startAutoPlay}
@@ -240,7 +240,7 @@ const NumberLearning: React.FC<NumberLearningProps> = ({ onBack }) => {
                 size="large"
                 startIcon={<PlayArrow />}
                 disabled={isPlaying}
-                sx={{ py: 2, px: 4, fontSize: '1.1rem' }}
+                sx={{ py: { xs: 0.5, md: 1 }, px: { xs: 2, md: 3 }, fontSize: { xs: '0.875rem', md: '1rem' }, minHeight: '44px' }}
               >
                 Tæl Alle
               </Button>
@@ -251,7 +251,7 @@ const NumberLearning: React.FC<NumberLearningProps> = ({ onBack }) => {
                 color="error"
                 size="large"
                 startIcon={<Pause />}
-                sx={{ py: 2, px: 4, fontSize: '1.1rem' }}
+                sx={{ py: { xs: 0.5, md: 1 }, px: { xs: 2, md: 3 }, fontSize: { xs: '0.875rem', md: '1rem' }, minHeight: '44px' }}
               >
                 Stop
               </Button>
@@ -271,27 +271,35 @@ const NumberLearning: React.FC<NumberLearningProps> = ({ onBack }) => {
           </Box>
         </Box>
 
-        {/* Numbers Grid */}
-        <Box sx={{ display: 'flex', justifyContent: 'center', flex: 1, overflow: 'auto' }}>
+        {/* Numbers Grid - Flexible */}
+        <Box sx={{ 
+          flex: 1, 
+          display: 'flex', 
+          justifyContent: 'center', 
+          overflow: 'hidden',
+          minHeight: 0
+        }}>
           <Grid 
             container 
-            spacing={1} 
+            spacing={{ xs: 0.5, md: 1 }}
             sx={{ 
-              maxWidth: { xs: '100%', sm: '900px', md: '1000px' },
+              maxWidth: '100%',
               width: 'fit-content',
-              height: 'fit-content'
+              maxHeight: '100%',
+              overflow: 'auto',
+              pr: 1
             }}
           >
           {numbers.map((number, index) => (
             <Grid size={{ xs: 1.2, sm: 1, md: 0.8 }} key={number}>
               <motion.div
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
               >
                 <Card 
                   onClick={() => goToNumber(index)}
                   sx={{ 
-                    minHeight: 50,
+                    minHeight: { xs: 45, md: 50 },
                     cursor: 'pointer',
                     border: '2px solid',
                     borderColor: index === currentIndex ? 'secondary.main' : 'primary.200',

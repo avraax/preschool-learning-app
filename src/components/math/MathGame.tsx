@@ -222,7 +222,10 @@ const MathGame: React.FC<MathGameProps> = ({ onBack }) => {
   return (
     <Box 
       sx={{ 
-        minHeight: '100vh', 
+        height: '100vh',
+        overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column',
         background: 'linear-gradient(135deg, #dbeafe 0%, #dcfce7 50%, #fef3c7 100%)'
       }}
     >
@@ -256,9 +259,18 @@ const MathGame: React.FC<MathGameProps> = ({ onBack }) => {
         </Toolbar>
       </AppBar>
 
-      <Container maxWidth="lg" sx={{ py: 4 }}>
-        {/* Game Title */}
-        <Box sx={{ textAlign: 'center', mb: 4 }}>
+      <Container 
+        maxWidth="lg" 
+        sx={{ 
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          py: { xs: 2, md: 3 },
+          overflow: 'hidden'
+        }}
+      >
+        {/* Game Title - Compact */}
+        <Box sx={{ textAlign: 'center', mb: { xs: 2, md: 3 }, flex: '0 0 auto' }}>
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -284,8 +296,8 @@ const MathGame: React.FC<MathGameProps> = ({ onBack }) => {
           </Typography>
         </Box>
 
-        {/* Audio Control */}
-        <Box sx={{ textAlign: 'center', mb: { xs: 3, md: 4 } }}>
+        {/* Audio Control - Compact */}
+        <Box sx={{ textAlign: 'center', mb: { xs: 2, md: 3 }, flex: '0 0 auto' }}>
           <Button 
             onClick={repeatQuestion}
             variant="contained"
@@ -298,8 +310,14 @@ const MathGame: React.FC<MathGameProps> = ({ onBack }) => {
           </Button>
         </Box>
 
-        {/* Answer Options Grid */}
-        <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+        {/* Answer Options Grid - Flexible */}
+        <Box sx={{ 
+          flex: 1, 
+          display: 'flex', 
+          justifyContent: 'center', 
+          alignItems: 'center',
+          minHeight: 0
+        }}>
           <Grid 
             container 
             spacing={{ xs: 2, sm: 3 }} 
