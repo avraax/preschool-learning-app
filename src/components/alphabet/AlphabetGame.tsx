@@ -10,7 +10,6 @@ import {
   Box,
   IconButton,
   Chip,
-  Paper,
   AppBar,
   Toolbar
 } from '@mui/material'
@@ -31,7 +30,6 @@ const AlphabetGame: React.FC<AlphabetGameProps> = ({ onBack }) => {
   const [currentLetter, setCurrentLetter] = useState<string>('')
   const [showOptions, setShowOptions] = useState<string[]>([])
   const [score, setScore] = useState(0)
-  const [isPlaying, setIsPlaying] = useState(false)
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
@@ -78,14 +76,12 @@ const AlphabetGame: React.FC<AlphabetGameProps> = ({ onBack }) => {
   const handleLetterClick = async (selectedLetter: string) => {
     // Stop any currently playing audio
     audioManager.stopAll()
-    setIsPlaying(true)
     
     if (selectedLetter === currentLetter) {
       setScore(score + 1)
       await audioManager.announceGameResult(true)
       setTimeout(() => {
         generateNewQuestion()
-        setIsPlaying(false)
       }, 2000)
     } else {
       // For wrong answers, allow immediate new clicks
@@ -94,8 +90,7 @@ const AlphabetGame: React.FC<AlphabetGameProps> = ({ onBack }) => {
       } catch (error) {
         console.error('Error playing wrong answer feedback:', error)
       }
-      // Don't block further clicks - just reset isPlaying immediately
-      setIsPlaying(false)
+      // Don't block further clicks
     }
   }
 

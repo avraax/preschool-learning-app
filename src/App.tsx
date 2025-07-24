@@ -7,16 +7,11 @@ import {
   CardContent, 
   Button, 
   Typography, 
-  Box,
-  IconButton,
-  Chip,
-  Paper
+  Box
 } from '@mui/material'
 import { 
-  ArrowBack,
   School,
   Calculate,
-  Settings,
   Star
 } from '@mui/icons-material'
 import AlphabetGame from './components/alphabet/AlphabetGame'

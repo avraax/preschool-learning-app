@@ -10,7 +10,6 @@ import {
   Box,
   IconButton,
   Chip,
-  Paper,
   AppBar,
   Toolbar
 } from '@mui/material'
@@ -38,7 +37,6 @@ const MathGame: React.FC<MathGameProps> = ({ onBack }) => {
   const [currentProblem, setCurrentProblem] = useState<MathProblem | null>(null)
   const [showOptions, setShowOptions] = useState<number[]>([])
   const [score, setScore] = useState(0)
-  const [isPlaying, setIsPlaying] = useState(false)
   const [gameMode, setGameMode] = useState<'counting' | 'arithmetic'>('counting')
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
 
@@ -153,7 +151,6 @@ const MathGame: React.FC<MathGameProps> = ({ onBack }) => {
     
     // Stop any currently playing audio
     audioManager.stopAll()
-    setIsPlaying(true)
     
     if (selectedAnswer === currentProblem.answer) {
       setScore(score + 1)
@@ -161,11 +158,9 @@ const MathGame: React.FC<MathGameProps> = ({ onBack }) => {
         await audioManager.announceGameResult(true)
         setTimeout(() => {
           generateNewQuestion()
-          setIsPlaying(false)
         }, 2000)
       } catch (error) {
         console.error('Error playing success feedback:', error)
-        setIsPlaying(false)
       }
     } else {
       // For wrong answers, allow immediate new clicks
@@ -174,8 +169,7 @@ const MathGame: React.FC<MathGameProps> = ({ onBack }) => {
       } catch (error) {
         console.error('Error playing wrong answer feedback:', error)
       }
-      // Don't block further clicks - just reset isPlaying immediately
-      setIsPlaying(false)
+      // Don't block further clicks
     }
   }
 
@@ -199,23 +193,6 @@ const MathGame: React.FC<MathGameProps> = ({ onBack }) => {
     }
   }
 
-  const renderFingers = (number: number) => {
-    const fingers = []
-    for (let i = 0; i < Math.min(number, 10); i++) {
-      fingers.push(
-        <motion.span
-          key={i}
-          initial={{ opacity: 0, scale: 0 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: i * 0.1 }}
-          style={{ fontSize: '2rem', margin: '0 2px' }}
-        >
-          ✋
-        </motion.span>
-      )
-    }
-    return fingers
-  }
 
   if (!currentProblem) return null
 

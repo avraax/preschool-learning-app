@@ -1,6 +1,5 @@
 import { Howl } from 'howler'
 import { googleTTS, GoogleTTSService } from '../services/googleTTS'
-import { TTS_CONFIG } from '../config/tts-config'
 
 export class AudioManager {
   private sounds: Map<string, Howl> = new Map()
