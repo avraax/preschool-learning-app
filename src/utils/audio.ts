@@ -220,9 +220,44 @@ export class AudioManager {
   }
 
   async speakAdditionProblem(num1: number, num2: number, voiceType: 'primary' | 'backup' | 'male' = 'primary'): Promise<void> {
-    // Speak addition problems with natural emphasis through repetition
-    const problemText = `Hvad er ${num1}... ${num1} plus ${num2}... ${num2}?`
-    await this.speak(problemText, voiceType, true)
+    try {
+      logIOSIssue('Addition Problem', `Speaking: ${num1} + ${num2}`)
+      
+      // Speak addition problems with proper separation for iOS compatibility
+      // First: "Hvad er"
+      await this.speak('Hvad er', voiceType, false)
+      
+      // Small pause
+      await new Promise(resolve => setTimeout(resolve, 300))
+      
+      // Second: first number
+      await this.speakNumber(num1)
+      
+      // Small pause
+      await new Promise(resolve => setTimeout(resolve, 200))
+      
+      // Third: "plus"
+      await this.speak('plus', voiceType, false)
+      
+      // Small pause
+      await new Promise(resolve => setTimeout(resolve, 200))
+      
+      // Fourth: second number
+      await this.speakNumber(num2)
+      
+      // Small pause
+      await new Promise(resolve => setTimeout(resolve, 300))
+      
+      // Fifth: question mark tone
+      await this.speak('?', voiceType, false)
+      
+      logIOSIssue('Addition Problem', 'Successfully spoke addition problem')
+    } catch (error) {
+      logAudioIssue('speakAdditionProblem', error, { num1, num2, voiceType })
+      // Fallback: speak as single text
+      const fallbackText = `Hvad er ${num1} plus ${num2}?`
+      await this.speak(fallbackText, voiceType, true)
+    }
   }
 
   async announceGameResult(isCorrect: boolean, voiceType: 'primary' | 'backup' | 'male' = 'primary'): Promise<void> {

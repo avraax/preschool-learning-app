@@ -263,7 +263,7 @@ const NumberLearning: React.FC<NumberLearningProps> = ({ onBack }) => {
               color="primary"
               size="large"
               startIcon={<Replay />}
-              disabled={isPlaying}
+              disabled={isPlaying || isAutoPlay}
               sx={{ py: 2, px: 4, fontSize: '1.1rem' }}
             >
               Start Forfra
