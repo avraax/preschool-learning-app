@@ -62,7 +62,7 @@ export const kidTheme = createTheme({
   },
   
   typography: {
-    fontFamily: '"Comic Sans MS", cursive, "Roboto", "Helvetica", "Arial", sans-serif',
+    fontFamily: '"SF Pro Display", "SF Pro Text", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif',
     
     // Large, kid-friendly font sizes
     h1: {

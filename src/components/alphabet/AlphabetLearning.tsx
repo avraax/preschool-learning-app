@@ -21,6 +21,8 @@ import {
   School
 } from '@mui/icons-material'
 import { audioManager } from '../../utils/audio'
+import { isIOS } from '../../utils/deviceDetection'
+import { logAudioIssue, logIOSIssue } from '../../utils/remoteConsole'
 
 interface AlphabetLearningProps {
   onBack: () => void
@@ -48,27 +50,48 @@ const AlphabetLearning: React.FC<AlphabetLearningProps> = ({ onBack }) => {
   }, [])
 
   const speakCurrentLetter = async () => {
-    if (isPlaying) return
+    if (isPlaying) {
+      logIOSIssue('Alphabet Auto-play', 'Already playing, skipping')
+      return
+    }
+    
+    const currentLetter = DANISH_ALPHABET[currentIndex]
+    logIOSIssue('Alphabet Auto-play', `Starting to speak letter: ${currentLetter} (index: ${currentIndex})`)
     
     setIsPlaying(true)
     audioManager.stopAll()
     
-    const currentLetter = DANISH_ALPHABET[currentIndex]
+    // iOS-specific: Add longer initial pause to ensure audio stops
+    if (isIOS()) {
+      await new Promise(resolve => setTimeout(resolve, 300))
+    }
     
     try {
       await audioManager.speakLetter(currentLetter)
+      logIOSIssue('Alphabet Auto-play', `Successfully spoke letter: ${currentLetter}`)
     } catch (error) {
-      console.error('Error speaking letter:', error)
+      logAudioIssue('Alphabet Letter Speaking', error, { 
+        currentLetter, 
+        currentIndex, 
+        isAutoPlay,
+        isIOS: isIOS()
+      })
     } finally {
       setIsPlaying(false)
       
       // If auto-play is on, move to next letter after a pause
       if (isAutoPlay && currentIndex < DANISH_ALPHABET.length - 1) {
+        // iOS-specific: Use longer pause between letters
+        const autoPlayPause = isIOS() ? 2000 : 1000
+        
+        logIOSIssue('Alphabet Auto-play', `Scheduling next letter in ${autoPlayPause}ms`)
         timeoutRef.current = setTimeout(() => {
+          logIOSIssue('Alphabet Auto-play', `Moving to next letter (${currentIndex + 1})`)
           setCurrentIndex(prev => prev + 1)
-        }, 1000)
+        }, autoPlayPause)
       } else if (isAutoPlay && currentIndex === DANISH_ALPHABET.length - 1) {
         // Finished the alphabet
+        logIOSIssue('Alphabet Auto-play', 'Finished alphabet, stopping auto-play')
         setIsAutoPlay(false)
       }
     }

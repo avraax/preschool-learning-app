@@ -1,5 +1,7 @@
 import { Howl } from 'howler'
 import { googleTTS, GoogleTTSService } from '../services/googleTTS'
+import { isIOS } from './deviceDetection'
+import { logAudioIssue, logIOSIssue } from './remoteConsole'
 
 export class AudioManager {
   private sounds: Map<string, Howl> = new Map()
@@ -140,36 +142,70 @@ export class AudioManager {
 
   async speakQuizPromptWithRepeat(text: string, repeatWord: string, voiceType: 'primary' | 'backup' | 'male' = 'primary'): Promise<void> {
     try {
+      logIOSIssue('Quiz Audio', `Starting speakQuizPromptWithRepeat: "${text}" with repeat word: "${repeatWord}"`)
+      
       // Split text to get the base prompt without the target word
       // e.g. "Find bogstavet H" -> "Find bogstavet" + "H"
       const textParts = text.split(` ${repeatWord}`)
       const basePrompt = textParts[0] // "Find bogstavet"
       
+      // iOS-specific: Ensure all audio is properly stopped before starting
+      if (isIOS()) {
+        this.stopAll()
+        await new Promise(resolve => setTimeout(resolve, 200)) // Longer pause for iOS
+      }
+      
       // First: speak base prompt
+      logIOSIssue('Quiz Audio', `Speaking base prompt: "${basePrompt}"`)
       await this.speak(basePrompt, voiceType, false)
       
-      // Very short pause
-      await new Promise(resolve => setTimeout(resolve, 50))
+      // iOS-specific pause adjustment
+      const shortPause = isIOS() ? 300 : 50
+      await new Promise(resolve => setTimeout(resolve, shortPause))
       
       // Second: speak the target word
+      logIOSIssue('Quiz Audio', `Speaking target word first time: "${repeatWord}"`)
       await this.speak(repeatWord, voiceType, false)
       
-      // Longer pause
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      // iOS-specific pause adjustment
+      const longPause = isIOS() ? 1500 : 1000
+      await new Promise(resolve => setTimeout(resolve, longPause))
       
       // Stop any potential lingering audio
       this.stopAll()
-      await new Promise(resolve => setTimeout(resolve, 100))
+      
+      // iOS-specific longer cleanup pause
+      const stopPause = isIOS() ? 300 : 100
+      await new Promise(resolve => setTimeout(resolve, stopPause))
       
       // Third: repeat the target word
+      logIOSIssue('Quiz Audio', `Speaking target word second time: "${repeatWord}"`)
       await this.speak(repeatWord, voiceType, false)
+      
+      logIOSIssue('Quiz Audio', 'Successfully completed speakQuizPromptWithRepeat')
     } catch (error) {
-      console.error('Error in speakQuizPromptWithRepeat:', error)
-      // Fallback: just speak the original text
-      try {
-        await this.speak(text, voiceType, false)
-      } catch (fallbackError) {
-        console.error('Fallback also failed:', fallbackError)
+      logAudioIssue('speakQuizPromptWithRepeat', error, { text, repeatWord, voiceType })
+      
+      // iOS-specific fallback: try a simpler approach
+      if (isIOS()) {
+        try {
+          // Stop everything and wait
+          this.stopAll()
+          await new Promise(resolve => setTimeout(resolve, 500))
+          
+          // Just speak the full text once on iOS fallback
+          logIOSIssue('Quiz Audio', 'Using iOS fallback: speaking full text once')
+          await this.speak(text, voiceType, false)
+        } catch (iosFallbackError) {
+          logAudioIssue('iOS fallback', iosFallbackError, { text, repeatWord })
+        }
+      } else {
+        // Original fallback for non-iOS
+        try {
+          await this.speak(text, voiceType, false)
+        } catch (fallbackError) {
+          logAudioIssue('General fallback', fallbackError, { text, repeatWord })
+        }
       }
     }
   }

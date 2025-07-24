@@ -1,4 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { logIOSIssue } from './utils/remoteConsole'
+import { deviceInfo } from './utils/deviceDetection'
 import { motion } from 'framer-motion'
 import { 
   Container, 
@@ -26,6 +28,17 @@ type AppScreen = 'home' | 'alphabet-selection' | 'alphabet-quiz' | 'alphabet-lea
 
 function App() {
   const [currentScreen, setCurrentScreen] = useState<AppScreen>('home')
+
+  useEffect(() => {
+    // Initialize remote console and log device info
+    console.log('🎈 Børnelæring App Starting')
+    console.log('📱 Device Info:', deviceInfo)
+    
+    // Log any iOS-specific initialization
+    if (deviceInfo.isIOS) {
+      logIOSIssue('App Initialization', 'iOS device detected, enhanced debugging active')
+    }
+  }, [])
 
 
   const renderHome = () => (

@@ -1,5 +1,7 @@
 // Google Cloud TTS client is used in the serverless API function
 import { TTS_CONFIG } from '../config/tts-config'
+import { isIOS } from '../utils/deviceDetection'
+import { logAudioIssue, logIOSIssue } from '../utils/remoteConsole'
 
 // Audio cache interface for browser storage
 interface CachedAudio {
@@ -238,22 +240,62 @@ export class GoogleTTSService {
   // Play audio directly from base64 data
   async playAudioFromData(base64AudioData: string): Promise<void> {
     return new Promise((resolve, reject) => {
-      // Stop any currently playing audio first
-      this.stopCurrentAudio()
-      
-      const audio = this.createAudioFromData(base64AudioData)
-      this.currentAudio = audio
-      
-      audio.addEventListener('ended', () => {
-        this.currentAudio = null
-        resolve()
-      })
-      audio.addEventListener('error', (error) => {
-        this.currentAudio = null
-        reject(error)
-      })
-      
-      audio.play().catch(reject)
+      try {
+        // Stop any currently playing audio first
+        this.stopCurrentAudio()
+        
+        const audio = this.createAudioFromData(base64AudioData)
+        this.currentAudio = audio
+        
+        // iOS-specific event handling
+        if (isIOS()) {
+          // Use loadstart event for iOS 17.4+ compatibility
+          audio.addEventListener('loadstart', () => {
+            logIOSIssue('Audio Playback', 'Audio loading started (iOS)')
+          })
+          
+          // Listen for canplaythrough as well
+          audio.addEventListener('canplaythrough', () => {
+            logIOSIssue('Audio Playback', 'Audio can play through (iOS)')
+          })
+        }
+        
+        audio.addEventListener('ended', () => {
+          logIOSIssue('Audio Playback', 'Audio ended successfully')
+          this.currentAudio = null
+          resolve()
+        })
+        
+        audio.addEventListener('error', (error) => {
+          logAudioIssue('Audio Playback Error', error, { 
+            isIOS: isIOS(),
+            audioDataLength: base64AudioData.length,
+            userAgent: navigator.userAgent
+          })
+          this.currentAudio = null
+          reject(error)
+        })
+        
+        // iOS-specific play handling
+        if (isIOS()) {
+          // Add a small delay before playing on iOS
+          setTimeout(() => {
+            audio.play().catch((playError) => {
+              logAudioIssue('iOS Audio Play Error', playError, {
+                errorName: playError.name,
+                errorMessage: playError.message
+              })
+              reject(playError)
+            })
+          }, 50)
+        } else {
+          audio.play().catch(reject)
+        }
+        
+      } catch (setupError) {
+        logAudioIssue('Audio Setup Error', setupError)
+        reject(setupError)
+      }
     })
   }
 
