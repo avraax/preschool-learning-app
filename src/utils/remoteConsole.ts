@@ -17,9 +17,18 @@ class RemoteConsole {
   
   constructor() {
     // Auto-enable on iOS devices or when debugging
-    this.isEnabled = deviceInfo.isIOS || window.location.search.includes('debug=true')
+    const debugMode = window.location.search.includes('debug=true')
+    this.isEnabled = deviceInfo.isIOS || debugMode
     
     if (this.isEnabled) {
+      // Show debug info if enabled manually
+      if (debugMode) {
+        const originalLog = window.console?.log || (() => {})
+        originalLog('🐛 Remote Console Debug Mode Enabled')
+        originalLog('📡 Console logs will be intercepted and stored')
+        originalLog('🌐 Visit ?admin=errors to view the error dashboard')
+      }
+      
       this.interceptConsole()
       this.setupErrorHandling()
       this.logDeviceInfo()
@@ -169,6 +178,12 @@ class RemoteConsole {
       return
     }
     
+    // For localhost with debug=true, store in localStorage as fallback
+    if (isLocalhost && debugMode) {
+      this.storeLocalLog(entry)
+      return
+    }
+    
     // Send error to centralized logging API (fire and forget)
     fetch('/api/log-error', {
       method: 'POST',
@@ -185,9 +200,36 @@ class RemoteConsole {
         timestamp: new Date(entry.timestamp).toISOString()
       })
     }).catch(error => {
-      // Silently fail - don't create infinite loops
-      console.warn('Failed to send log to backend:', error)
+      // Don't create infinite loops, but show feedback for debugging
+      if (debugMode) {
+        const originalWarn = window.console?.warn || (() => {})
+        originalWarn('🚨 Failed to send log to backend (API not available in dev mode):', error)
+        originalWarn('💡 To test error logging locally, use: vercel dev')
+      }
     })
+  }
+  
+  private storeLocalLog(entry: LogEntry) {
+    try {
+      const stored = localStorage.getItem('dev-error-logs') || '[]'
+      const logs = JSON.parse(stored)
+      logs.unshift({
+        ...entry,
+        timestamp: new Date(entry.timestamp).toISOString(),
+        url: window.location.href,
+        sessionId: this.getSessionId(),
+        userAgent: navigator.userAgent
+      })
+      
+      // Keep only last 100 logs
+      if (logs.length > 100) {
+        logs.splice(100)
+      }
+      
+      localStorage.setItem('dev-error-logs', JSON.stringify(logs))
+    } catch (error) {
+      // Ignore localStorage errors
+    }
   }
   
   private getSessionId(): string {

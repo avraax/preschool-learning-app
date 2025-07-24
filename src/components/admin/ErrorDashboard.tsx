@@ -44,6 +44,45 @@ const ErrorDashboard: React.FC = () => {
     setError(null)
     
     try {
+      // Check if we're in localhost debug mode
+      const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+      const debugMode = window.location.search.includes('debug=true')
+      
+      if (isLocalhost && debugMode) {
+        // Read from localStorage for development
+        const stored = localStorage.getItem('dev-error-logs') || '[]'
+        const allLogs = JSON.parse(stored) as ErrorLogEntry[]
+        
+        // Apply filters
+        let filteredLogs = allLogs
+        
+        if (levelFilter !== 'all') {
+          filteredLogs = filteredLogs.filter(log => log.level === levelFilter)
+        }
+        
+        if (deviceFilter !== 'all') {
+          filteredLogs = filteredLogs.filter(log => 
+            log.device.toLowerCase().includes(deviceFilter.toLowerCase())
+          )
+        }
+        
+        // Apply limit
+        filteredLogs = filteredLogs.slice(0, limit)
+        
+        // Calculate stats
+        const stats = {
+          errors: allLogs.filter(l => l.level === 'error').length,
+          warnings: allLogs.filter(l => l.level === 'warn').length,  
+          info: allLogs.filter(l => l.level === 'info').length,
+          logs: allLogs.filter(l => l.level === 'log').length
+        }
+        
+        setLogs(filteredLogs)
+        setStats(stats)
+        return
+      }
+      
+      // Production API call
       const params = new URLSearchParams()
       params.append('limit', limit.toString())
       
@@ -126,6 +165,19 @@ const ErrorDashboard: React.FC = () => {
     setError(null)
     
     try {
+      // Check if we're in localhost debug mode
+      const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+      const debugMode = window.location.search.includes('debug=true')
+      
+      if (isLocalhost && debugMode) {
+        // Clear localStorage for development
+        localStorage.removeItem('dev-error-logs')
+        await fetchLogs()
+        setShowClearConfirm(false)
+        return
+      }
+      
+      // Production API call
       const response = await fetch('/api/log-error', {
         method: 'DELETE'
       })

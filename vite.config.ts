@@ -5,12 +5,9 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   server: {
-    proxy: {
-      '/api': {
-        target: 'http://localhost:3001',
-        changeOrigin: true,
-      }
-    }
+    // Note: API functions are Vercel serverless functions
+    // For local development with API testing, use: vercel dev
+    // Or visit production URL for full functionality
   },
   build: {
     // Ensure unique filenames for cache busting
