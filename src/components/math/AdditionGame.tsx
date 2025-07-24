@@ -47,6 +47,15 @@ const AdditionGame: React.FC<AdditionGameProps> = ({ onBack }) => {
     }
   }, [])
 
+  // Speak the problem when numbers are set (after initial render and state updates)
+  useEffect(() => {
+    if (num1 && num2) {
+      timeoutRef.current = setTimeout(() => {
+        speakProblem(num1, num2)
+      }, 800)
+    }
+  }, [num1, num2])
+
   const generateNewProblem = () => {
     // Generate two numbers that add up to max 10
     const firstNum = Math.floor(Math.random() * 6) + 1 // 1-6
@@ -70,11 +79,6 @@ const AdditionGame: React.FC<AdditionGameProps> = ({ onBack }) => {
     }
     
     setOptions(Array.from(answerOptions).sort(() => Math.random() - 0.5))
-    
-    // Speak the problem after a short delay
-    setTimeout(() => {
-      speakProblem(firstNum, secondNum)
-    }, 500)
   }
 
   const speakProblem = async (a: number, b: number) => {

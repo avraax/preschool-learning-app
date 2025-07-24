@@ -161,8 +161,11 @@ class RemoteConsole {
   }
   
   private sendToBackend(entry: LogEntry) {
-    // Don't send to backend if we're in development mode
-    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    // Don't send to backend if we're in development mode, unless debug=true
+    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    const debugMode = window.location.search.includes('debug=true')
+    
+    if (isLocalhost && !debugMode) {
       return
     }
     
