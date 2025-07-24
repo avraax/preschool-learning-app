@@ -124,23 +124,23 @@ preschool-learning-app/
   - Visual letter display with large, kid-friendly fonts
   - 4-option multiple choice interface
   - Score tracking
-  - Full Danish alphabet support (A-Å)
+  - Complete Danish alphabet including Æ, Ø, Å
 
 #### 2. Math Game (`/src/components/math/MathGame.tsx`)
 - **Purpose**: Teach counting and basic arithmetic
 - **Two Modes**:
-  - **Counting Mode**: Number recognition 1-100
-  - **Arithmetic Mode**: Addition/subtraction with visual aids
+  - **Counting Mode**: Number recognition 1-50
+  - **Arithmetic Mode**: Addition problems up to 10+10=20
 - **Features**:
   - Danish number pronunciation (including special cases)
   - Visual finger counting animations
   - Fixed settings suitable for all ages
   - Audio math problem narration
 
-### 3. Simple Game Settings
-- **Hardcoded for Beginners**: Optimized for youngest children (3-4 years)
-- **Alphabet**: Simple A-J letters only
-- **Math**: Numbers 1-10, basic counting and simple addition (1-5 + 1-5)
+### 3. Comprehensive Game Settings
+- **Full Complexity**: Suitable for all children aged 3-7 years
+- **Alphabet**: Complete Danish alphabet A-Å (including æ, ø, å)
+- **Math**: Numbers 1-50 for counting, addition problems up to 10+10=20
 
 ### 4. Audio System (`/src/utils/audio.ts`)
 - **Danish Text-to-Speech**: Web Speech API with Danish locale

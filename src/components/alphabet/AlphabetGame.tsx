@@ -22,8 +22,8 @@ import {
 } from '@mui/icons-material'
 import { audioManager } from '../../utils/audio'
 
-// Simple alphabet for beginners (first 10 letters)
-const SIMPLE_ALPHABET = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
+// Full Danish alphabet including special characters
+const DANISH_ALPHABET = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'Æ', 'Ø', 'Å']
 
 const AlphabetGame: React.FC = () => {
   const navigate = useNavigate()
@@ -45,15 +45,15 @@ const AlphabetGame: React.FC = () => {
   }, [])
 
   const generateNewQuestion = () => {
-    // Pick a random letter from simple alphabet
-    const letter = SIMPLE_ALPHABET[Math.floor(Math.random() * SIMPLE_ALPHABET.length)]
+    // Pick a random letter from full Danish alphabet
+    const letter = DANISH_ALPHABET[Math.floor(Math.random() * DANISH_ALPHABET.length)]
     setCurrentLetter(letter)
     
     // Create 4 options including the correct answer
     const options = [letter]
     
     while (options.length < 4) {
-      const randomLetter = SIMPLE_ALPHABET[Math.floor(Math.random() * SIMPLE_ALPHABET.length)]
+      const randomLetter = DANISH_ALPHABET[Math.floor(Math.random() * DANISH_ALPHABET.length)]
       if (!options.includes(randomLetter)) {
         options.push(randomLetter)
       }
