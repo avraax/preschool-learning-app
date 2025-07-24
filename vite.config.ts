@@ -8,8 +8,55 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      // Use the existing manifest.json file
-      manifestFilename: 'manifest.json',
+      // Use our custom manifest.json from public folder
+      manifest: {
+        name: "Børnelæring - Alfabetet og Tal",
+        short_name: "Børnelæring",
+        description: "Lær alfabetet og tal på dansk for børn 3-7 år. Interaktive spil med dansk lyd og animationer.",
+        start_url: "/",
+        display: "standalone",
+        background_color: "#8B5CF6",
+        theme_color: "#8B5CF6",
+        orientation: "portrait-primary",
+        categories: ["education", "kids", "games"],
+        lang: "da",
+        scope: "/",
+        icons: [
+          {
+            src: "icon-192x192.svg",
+            sizes: "192x192",
+            type: "image/svg+xml",
+            purpose: "any"
+          },
+          {
+            src: "icon-512x512.svg",
+            sizes: "512x512",
+            type: "image/svg+xml",
+            purpose: "any"
+          },
+          {
+            src: "apple-touch-icon-180x180.svg",
+            sizes: "180x180",
+            type: "image/svg+xml",
+            purpose: "any"
+          },
+          {
+            src: "icon-192x192-maskable.svg",
+            sizes: "192x192",
+            type: "image/svg+xml",
+            purpose: "maskable"
+          },
+          {
+            src: "icon-512x512-maskable.svg",
+            sizes: "512x512",
+            type: "image/svg+xml",
+            purpose: "maskable"
+          }
+        ],
+        prefer_related_applications: false,
+        dir: "ltr",
+        display_override: ["standalone", "minimal-ui"]
+      },
       includeAssets: ['favicon.svg', 'apple-touch-icon-*.svg', 'icon-*.svg'],
       workbox: {
         // Network-only strategy - no caching
