@@ -11,22 +11,22 @@ interface LogEntry {
 }
 
 class RemoteConsole {
-  private logs: LogEntry[] = []
-  private maxLogs = 100
   private isEnabled = true
   
   constructor() {
-    // Auto-enable on iOS devices or when debugging
+    // Auto-enable on iOS devices, when debugging, or during development
     const debugMode = window.location.search.includes('debug=true')
-    this.isEnabled = deviceInfo.isIOS || debugMode
+    const isDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    this.isEnabled = deviceInfo.isIOS || debugMode || isDevelopment
     
     if (this.isEnabled) {
-      // Show debug info if enabled manually
-      if (debugMode) {
+      // Show debug info if enabled manually or during development
+      if (debugMode || isDevelopment) {
         const originalLog = window.console?.log || (() => {})
-        originalLog('🐛 Remote Console Debug Mode Enabled')
+        originalLog('🐛 Remote Console Enabled')
         originalLog('📡 Console logs will be intercepted and stored')
         originalLog('🌐 Visit ?admin=errors to view the error dashboard')
+        originalLog('🔧 Development mode detected - logs will be sent to dev server')
       }
       
       this.interceptConsole()
@@ -107,14 +107,7 @@ class RemoteConsole {
       device: this.getDeviceString()
     }
     
-    this.logs.unshift(entry)
-    
-    // Keep only the most recent logs
-    if (this.logs.length > this.maxLogs) {
-      this.logs = this.logs.slice(0, this.maxLogs)
-    }
-    
-    // Send to centralized logging API
+    // Send directly to API - keep it simple
     this.sendToBackend(entry)
     
     // Show critical errors on screen for iOS
@@ -170,21 +163,7 @@ class RemoteConsole {
   }
   
   private sendToBackend(entry: LogEntry) {
-    // Don't send to backend if we're in development mode, unless debug=true
-    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-    const debugMode = window.location.search.includes('debug=true')
-    
-    if (isLocalhost && !debugMode) {
-      return
-    }
-    
-    // For localhost with debug=true, store in localStorage as fallback
-    if (isLocalhost && debugMode) {
-      this.storeLocalLog(entry)
-      return
-    }
-    
-    // Send error to centralized logging API (fire and forget)
+    // Send directly to API - keep it simple
     fetch('/api/log-error', {
       method: 'POST',
       headers: {
@@ -199,38 +178,11 @@ class RemoteConsole {
         sessionId: this.getSessionId(),
         timestamp: new Date(entry.timestamp).toISOString()
       })
-    }).catch(error => {
-      // Don't create infinite loops, but show feedback for debugging
-      if (debugMode) {
-        const originalWarn = window.console?.warn || (() => {})
-        originalWarn('🚨 Failed to send log to backend (API not available in dev mode):', error)
-        originalWarn('💡 To test error logging locally, use: vercel dev')
-      }
+    }).catch(() => {
+      // Silent fail - don't create infinite loops
     })
   }
   
-  private storeLocalLog(entry: LogEntry) {
-    try {
-      const stored = localStorage.getItem('dev-error-logs') || '[]'
-      const logs = JSON.parse(stored)
-      logs.unshift({
-        ...entry,
-        timestamp: new Date(entry.timestamp).toISOString(),
-        url: window.location.href,
-        sessionId: this.getSessionId(),
-        userAgent: navigator.userAgent
-      })
-      
-      // Keep only last 100 logs
-      if (logs.length > 100) {
-        logs.splice(100)
-      }
-      
-      localStorage.setItem('dev-error-logs', JSON.stringify(logs))
-    } catch (error) {
-      // Ignore localStorage errors
-    }
-  }
   
   private getSessionId(): string {
     // Simple session ID generation for tracking user sessions
@@ -246,25 +198,10 @@ class RemoteConsole {
     this.addLog('info', '🔍 Device Info', deviceInfo)
   }
   
-  // Public methods
-  public getLogs(): LogEntry[] {
-    return [...this.logs]
-  }
-  
+  // Public methods for debugging
   public clearLogs(): void {
-    this.logs = []
-  }
-  
-  public exportLogs(): string {
-    return JSON.stringify(this.logs, null, 2)
-  }
-  
-  public getLogsAsText(): string {
-    return this.logs.map(log => {
-      const time = new Date(log.timestamp).toISOString()
-      const data = log.data ? ` | Data: ${JSON.stringify(log.data)}` : ''
-      return `[${time}] ${log.level.toUpperCase()} (${log.device}): ${log.message}${data}`
-    }).join('\n')
+    // Clear logs via API
+    fetch('/api/log-error', { method: 'DELETE' }).catch(() => {})
   }
   
   // Enable/disable console
@@ -299,16 +236,13 @@ export const logIOSIssue = (context: string, issue: string, data?: any) => {
 // Export logs for debugging (can be called from browser console)
 declare global {
   interface Window {
-    exportLogs: () => string
     clearLogs: () => void
     showLogs: () => void
   }
 }
 
 // Make debugging functions available globally
-window.exportLogs = () => remoteConsole.getLogsAsText()
 window.clearLogs = () => remoteConsole.clearLogs()
 window.showLogs = () => {
-  console.log('📋 Recent Logs:')
-  console.log(remoteConsole.getLogsAsText())
+  console.log('📋 Logs are stored in API - visit the admin dashboard to view them')
 }

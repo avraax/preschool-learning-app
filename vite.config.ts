@@ -8,6 +8,13 @@ export default defineConfig({
     // Note: API functions are Vercel serverless functions
     // For local development with API testing, use: vercel dev
     // Or visit production URL for full functionality
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+        secure: false,
+      }
+    }
   },
   build: {
     // Ensure unique filenames for cache busting

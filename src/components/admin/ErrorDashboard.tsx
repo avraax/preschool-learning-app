@@ -29,6 +29,7 @@ interface ErrorLogResponse {
 const ErrorDashboard: React.FC = () => {
   const [logs, setLogs] = useState<ErrorLogEntry[]>([])
   const [stats, setStats] = useState({ errors: 0, warnings: 0, info: 0, logs: 0 })
+  const [totalCount, setTotalCount] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [levelFilter, setLevelFilter] = useState<string>('all')
@@ -79,6 +80,7 @@ const ErrorDashboard: React.FC = () => {
         
         setLogs(filteredLogs)
         setStats(stats)
+        setTotalCount(allLogs.length)
         return
       }
       
@@ -103,6 +105,7 @@ const ErrorDashboard: React.FC = () => {
       const data: ErrorLogResponse = await response.json()
       setLogs(data.logs)
       setStats(data.stats)
+      setTotalCount(data.totalCount)
       
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch logs')
@@ -233,6 +236,15 @@ Copied from Børnelæring Error Dashboard at ${new Date().toISOString()}`
 
       {/* Stats Cards */}
       <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 2, mb: 3 }}>
+        <Card sx={{ bgcolor: '#e8f5e8' }}>
+          <CardContent>
+            <Typography variant="h6" color="success.main">Total</Typography>
+            <Typography variant="h3" sx={{ fontWeight: 'bold' }}>{totalCount}</Typography>
+            <Typography variant="caption" color="text.secondary">
+              ({stats.errors + stats.warnings + stats.info + stats.logs} calculated)
+            </Typography>
+          </CardContent>
+        </Card>
         <Card sx={{ bgcolor: '#ffebee' }}>
           <CardContent>
             <Typography variant="h6" color="error">Errors</Typography>

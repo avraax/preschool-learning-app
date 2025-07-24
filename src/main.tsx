@@ -6,6 +6,9 @@ import App from './App.tsx'
 import kidTheme from './theme/kidTheme'
 import './index.css'
 
+// Initialize remote console for error logging
+import './utils/remoteConsole'
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <ThemeProvider theme={kidTheme}>

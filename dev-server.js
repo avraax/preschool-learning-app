@@ -19,6 +19,10 @@ app.use(express.static('dist')); // Serve built files
 // Initialize Google TTS client
 let ttsClient = null;
 
+// In-memory storage for error logs (dev only)
+let errorLogs = [];
+const MAX_LOGS = 1000;
+
 function initializeClient() {
   if (ttsClient) return ttsClient;
 
@@ -79,6 +83,133 @@ app.post('/api/tts', async (req, res) => {
     console.error('❌ TTS error:', error);
     res.status(500).json({ 
       error: 'Text-to-speech synthesis failed',
+      details: error.message
+    });
+  }
+});
+
+// Log error API endpoint (dev equivalent of /api/log-error.ts)
+app.post('/api/log-error', (req, res) => {
+  console.log('📊 Error log request received');
+  
+  try {
+    const errorEntry = {
+      timestamp: new Date().toISOString(),
+      level: req.body.level || 'error',
+      message: req.body.message || 'Unknown error',
+      data: req.body.data,
+      device: req.body.device || 'Unknown device',
+      userAgent: req.headers['user-agent'] || 'Unknown',
+      url: req.body.url || 'Unknown URL',
+      userId: req.body.userId,
+      sessionId: req.body.sessionId
+    };
+    
+    // Add to memory storage
+    errorLogs.unshift(errorEntry);
+    
+    // Keep only the most recent logs
+    if (errorLogs.length > MAX_LOGS) {
+      errorLogs = errorLogs.slice(0, MAX_LOGS);
+    }
+    
+    // Log to console as well
+    console.log(`[ERROR LOG] ${errorEntry.device} - ${errorEntry.message}`, {
+      level: errorEntry.level,
+      url: errorEntry.url,
+      timestamp: errorEntry.timestamp,
+      data: errorEntry.data
+    });
+    
+    res.json({ 
+      success: true, 
+      message: 'Error logged successfully',
+      logCount: errorLogs.length
+    });
+    
+  } catch (error) {
+    console.error('❌ Error logging API error:', error);
+    res.status(500).json({ 
+      error: 'Failed to process error log',
+      details: error.message
+    });
+  }
+});
+
+// Get error logs endpoint
+app.get('/api/log-error', (req, res) => {
+  console.log('📊 Get error logs request received');
+  
+  try {
+    const { limit = 50, level, device, since } = req.query;
+    
+    let filteredLogs = errorLogs;
+    
+    // Filter by level if specified
+    if (level && typeof level === 'string') {
+      filteredLogs = filteredLogs.filter(log => log.level === level);
+    }
+    
+    // Filter by device if specified
+    if (device && typeof device === 'string') {
+      filteredLogs = filteredLogs.filter(log => 
+        log.device.toLowerCase().includes(device.toLowerCase())
+      );
+    }
+    
+    // Filter by timestamp if specified
+    if (since && typeof since === 'string') {
+      const sinceDate = new Date(since);
+      filteredLogs = filteredLogs.filter(log => 
+        new Date(log.timestamp) > sinceDate
+      );
+    }
+    
+    // Limit results
+    const limitNum = parseInt(limit) || 50;
+    filteredLogs = filteredLogs.slice(0, limitNum);
+    
+    res.json({
+      logs: filteredLogs,
+      totalCount: errorLogs.length,
+      filteredCount: filteredLogs.length,
+      stats: {
+        errors: errorLogs.filter(l => l.level === 'error').length,
+        warnings: errorLogs.filter(l => l.level === 'warn').length,
+        info: errorLogs.filter(l => l.level === 'info').length,
+        logs: errorLogs.filter(l => l.level === 'log').length
+      }
+    });
+    
+  } catch (error) {
+    console.error('❌ Error fetching logs:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch error logs',
+      details: error.message
+    });
+  }
+});
+
+// Clear error logs endpoint
+app.delete('/api/log-error', (req, res) => {
+  console.log('📊 Clear error logs request received');
+  
+  try {
+    const previousCount = errorLogs.length;
+    errorLogs = [];
+    
+    console.log(`[ERROR LOG] Cleared ${previousCount} error logs`);
+    
+    res.json({ 
+      success: true, 
+      message: `Cleared ${previousCount} error logs`,
+      clearedCount: previousCount
+    });
+    
+  } catch (error) {
+    console.error('❌ Error clearing logs:', error);
+    res.status(500).json({ 
+      error: 'Failed to clear error logs',
       details: error.message
     });
   }
