@@ -15,8 +15,15 @@ const PWAUpdateNotification: React.FC = () => {
         try {
           const registration = await navigator.serviceWorker.getRegistration();
           if (registration) {
+            console.log('🔄 Checking for updates...');
             // Force check for updates
             await registration.update();
+            
+            // Check if there's a waiting service worker
+            if (registration.waiting) {
+              console.log('🔄 Update available - service worker waiting');
+              handleServiceWorkerUpdate();
+            }
           }
         } catch (error) {
           console.log('Service worker update check failed:', error);
@@ -74,23 +81,36 @@ const PWAUpdateNotification: React.FC = () => {
 
       // Initial update check
       checkForUpdates();
+      
+      // Periodic update check every 30 seconds
+      const periodicCheck = setInterval(() => {
+        checkForUpdates();
+      }, 30000); // Check every 30 seconds
 
-      // Register for service worker updates
-      navigator.serviceWorker.register('/sw.js').then((registration) => {
-        registration.addEventListener('updatefound', () => {
-          console.log('🔄 Update found in service worker registration');
-          const newWorker = registration.installing;
-          if (newWorker) {
-            newWorker.addEventListener('statechange', () => {
-              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                console.log('🔄 New service worker installed, update available');
-                handleServiceWorkerUpdate();
-              }
-            });
+      // Listen to existing service worker registration (don't register again)
+      navigator.serviceWorker.getRegistration().then((registration) => {
+        if (registration) {
+          registration.addEventListener('updatefound', () => {
+            console.log('🔄 Update found in service worker registration');
+            const newWorker = registration.installing;
+            if (newWorker) {
+              newWorker.addEventListener('statechange', () => {
+                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                  console.log('🔄 New service worker installed, update available');
+                  handleServiceWorkerUpdate();
+                }
+              });
+            }
+          });
+          
+          // Also check immediately if there's already a waiting worker
+          if (registration.waiting) {
+            console.log('🔄 Service worker already waiting, showing update prompt');
+            handleServiceWorkerUpdate();
           }
-        });
+        }
       }).catch((error) => {
-        console.log('Service worker registration failed:', error);
+        console.log('Service worker registration check failed:', error);
       });
     }
 
@@ -98,6 +118,7 @@ const PWAUpdateNotification: React.FC = () => {
     return () => {
       if (updateTimer) clearTimeout(updateTimer);
       if (countdownTimer) clearInterval(countdownTimer);
+      if (periodicCheck) clearInterval(periodicCheck);
     };
   }, []);
 
