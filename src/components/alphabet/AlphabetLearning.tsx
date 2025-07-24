@@ -17,7 +17,8 @@ import {
   ArrowBack,
   PlayArrow,
   Pause,
-  Replay
+  Replay,
+  School
 } from '@mui/icons-material'
 import { audioManager } from '../../utils/audio'
 
@@ -165,18 +166,28 @@ const AlphabetLearning: React.FC<AlphabetLearningProps> = ({ onBack }) => {
       <Container maxWidth="lg" sx={{ py: 4 }}>
         {/* Title */}
         <Box sx={{ textAlign: 'center', mb: 4 }}>
-          <Typography 
-            variant="h2" 
-            sx={{ 
-              color: 'primary.dark',
-              mb: 2,
-              fontWeight: 700
-            }}
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
           >
-            Dansk Alfabet
-          </Typography>
-          <Typography variant="h6" color="primary.main" sx={{ mb: 1 }}>
-            Lær alle bogstaver fra A til Å 📚
+            <Typography 
+              variant="h3" 
+              sx={{ 
+                color: 'primary.dark',
+                fontWeight: 700,
+                mb: 2,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 1
+              }}
+            >
+              <School fontSize="large" /> Lær Alfabetet
+            </Typography>
+          </motion.div>
+          <Typography variant="h5" color="primary.main" sx={{ mb: 1 }}>
+            Lær alle bogstaver fra A til Å
           </Typography>
           <Typography variant="body1" color="text.secondary">
             Klik på et bogstav for at høre det! 👆

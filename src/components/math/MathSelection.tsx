@@ -57,7 +57,11 @@ const MathSelection: React.FC<MathSelectionProps> = ({ onBack, onSelectExercise 
     <Box 
       sx={{ 
         minHeight: '100vh', 
-        background: 'linear-gradient(135deg, #e0f2fe 0%, #f3e5f5 50%, #fff3e0 100%)'
+        height: '100vh',
+        background: 'linear-gradient(135deg, #e0f2fe 0%, #f3e5f5 50%, #fff3e0 100%)',
+        overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column'
       }}
     >
       {/* App Bar with Back Button */}
@@ -78,9 +82,17 @@ const MathSelection: React.FC<MathSelectionProps> = ({ onBack, onSelectExercise 
         </Toolbar>
       </AppBar>
 
-      <Container maxWidth="lg" sx={{ py: 4 }}>
-        {/* Title */}
-        <Box sx={{ textAlign: 'center', mb: 6 }}>
+      <Container 
+        maxWidth="xl" 
+        sx={{ 
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          py: { xs: 2, md: 3 }
+        }}
+      >
+        {/* Title - More Compact */}
+        <Box sx={{ textAlign: 'center', mb: { xs: 3, md: 4 } }}>
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -89,8 +101,9 @@ const MathSelection: React.FC<MathSelectionProps> = ({ onBack, onSelectExercise 
             <Typography 
               variant="h2" 
               sx={{ 
+                fontSize: { xs: '1.75rem', sm: '2.25rem', md: '3rem' },
                 color: 'primary.dark',
-                mb: 2,
+                mb: 1,
                 fontWeight: 700,
                 display: 'flex',
                 alignItems: 'center',
@@ -101,87 +114,92 @@ const MathSelection: React.FC<MathSelectionProps> = ({ onBack, onSelectExercise 
               <Calculate fontSize="large" /> Matematik
             </Typography>
           </motion.div>
-          <Typography variant="h5" color="primary.main" sx={{ mb: 4 }}>
+          <Typography 
+            variant="h5" 
+            color="primary.main" 
+            sx={{ fontSize: { xs: '1rem', sm: '1.25rem', md: '1.5rem' } }}
+          >
             Vælg hvad du vil lære! 🧮
           </Typography>
         </Box>
 
-        {/* Exercise Selection Grid */}
-        <Grid 
-          container 
-          spacing={4} 
-          sx={{ 
-            maxWidth: '1000px',
-            mx: 'auto',
-            mb: 6
-          }}
-        >
+        {/* Main Content - Top aligned */}
+        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+          <Grid 
+            container 
+            spacing={{ xs: 2, md: 3 }} 
+            sx={{ mb: { xs: 2, md: 3 } }}
+          >
           {exercises.map((exercise, index) => (
-            <Grid size={{ xs: 12, md: 4 }} key={exercise.id}>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }} key={exercise.id}>
               <motion.div
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: index * 0.2 }}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+                initial={{ opacity: 0, x: index === 0 ? -30 : index === 2 ? 30 : 0, y: index === 1 ? -30 : 0 }}
+                animate={{ opacity: 1, x: 0, y: 0 }}
+                transition={{ duration: 0.6 }}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
               >
                 <Card 
                   onClick={() => onSelectExercise(exercise.id as 'counting' | 'numbers' | 'addition')}
                   sx={{ 
-                    minHeight: 250,
+                    height: { xs: 180, sm: 200, md: 220 },
                     cursor: 'pointer',
-                    border: '3px solid',
+                    border: '2px solid',
                     borderColor: `${exercise.color}.200`,
-                    bgcolor: 'white',
-                    transition: 'all 0.3s ease',
                     '&:hover': {
                       borderColor: `${exercise.color}.main`,
-                      bgcolor: `${exercise.color}.50`,
-                      boxShadow: 12
+                      boxShadow: 6
                     }
                   }}
                 >
                   <CardContent 
                     sx={{ 
+                      p: { xs: 2, md: 3 },
+                      height: '100%',
                       display: 'flex',
                       flexDirection: 'column',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      height: '100%',
-                      p: 3,
+                      justifyContent: 'space-between',
                       textAlign: 'center'
                     }}
                   >
-                    <Box sx={{ mb: 2 }}>
-                      <Typography sx={{ fontSize: '3rem', mb: 1 }}>
-                        {exercise.emoji}
+                    <Box>
+                      <motion.div
+                        animate={{ rotate: [0, 3, -3, 0] }}
+                        transition={{ duration: 3, repeat: Infinity }}
+                      >
+                        {React.cloneElement(exercise.icon, {
+                          sx: { 
+                            fontSize: { xs: '2.5rem', md: '3.5rem' }, 
+                            color: `${exercise.color}.main`, 
+                            mb: 1 
+                          }
+                        })}
+                      </motion.div>
+                      <Typography 
+                        variant="h4"
+                        sx={{ 
+                          fontSize: { xs: '1.25rem', md: '1.5rem' },
+                          fontWeight: 700,
+                          color: `${exercise.color}.dark`,
+                          mb: 0.5
+                        }}
+                      >
+                        {exercise.title}
                       </Typography>
-                      {exercise.icon}
+                      <Typography 
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{ fontSize: { xs: '0.875rem', md: '1rem' } }}
+                      >
+                        {exercise.description}
+                      </Typography>
                     </Box>
-                    
-                    <Typography 
-                      variant="h4"
-                      sx={{ 
-                        fontWeight: 700,
-                        color: `${exercise.color}.dark`,
-                        mb: 1
-                      }}
-                    >
-                      {exercise.title}
-                    </Typography>
-                    
-                    <Typography 
-                      variant="body1"
-                      color="text.secondary"
-                      sx={{ mb: 2 }}
-                    >
-                      {exercise.description}
-                    </Typography>
 
                     <Button
                       variant="contained"
-                      color={exercise.color as 'primary' | 'secondary'}
+                      color={exercise.color as any}
                       startIcon={<PlayArrow />}
+                      fullWidth
                       sx={{ 
                         py: 1, 
                         px: 3,
@@ -196,17 +214,7 @@ const MathSelection: React.FC<MathSelectionProps> = ({ onBack, onSelectExercise 
               </motion.div>
             </Grid>
           ))}
-        </Grid>
-
-
-        {/* Decorative Animation */}
-        <Box sx={{ textAlign: 'center', py: 4 }}>
-          <motion.div
-            animate={{ rotate: [0, 5, -5, 0] }}
-            transition={{ duration: 3, repeat: Infinity }}
-          >
-            <Typography sx={{ fontSize: '4rem' }}>🧮</Typography>
-          </motion.div>
+          </Grid>
         </Box>
       </Container>
     </Box>

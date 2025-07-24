@@ -17,7 +17,7 @@ import {
 import {
   ArrowBack,
   VolumeUp,
-  School,
+  Quiz,
   Star
 } from '@mui/icons-material'
 import { audioManager } from '../../utils/audio'
@@ -112,32 +112,64 @@ const AlphabetGame: React.FC<AlphabetGameProps> = ({ onBack }) => {
         background: 'linear-gradient(135deg, #f3e8ff 0%, #fce7f3 50%, #dbeafe 100%)'
       }}
     >
-      {/* Navigation - Back Button Only */}
-      <Box sx={{ position: 'absolute', top: 16, left: 16, zIndex: 10 }}>
-        <IconButton 
-          onClick={onBack}
-          color="primary"
-          size="large"
-          sx={{ 
-            bgcolor: 'white', 
-            boxShadow: 3,
-            '&:hover': { boxShadow: 6 }
-          }}
-        >
-          <ArrowBack />
-        </IconButton>
-      </Box>
+      {/* App Bar with Back Button and Score */}
+      <AppBar position="static" color="transparent" elevation={0}>
+        <Toolbar sx={{ justifyContent: 'space-between', py: 2 }}>
+          <IconButton 
+            onClick={onBack}
+            color="primary"
+            size="large"
+            sx={{ 
+              bgcolor: 'white', 
+              boxShadow: 3,
+              '&:hover': { boxShadow: 6 }
+            }}
+          >
+            <ArrowBack />
+          </IconButton>
+          
+          <Chip 
+            icon={<Star />} 
+            label={`Point: ${score}`} 
+            color="primary" 
+            sx={{ 
+              fontSize: '1.1rem',
+              py: 1,
+              fontWeight: 'bold',
+              boxShadow: 2
+            }}
+          />
+        </Toolbar>
+      </AppBar>
 
-      <Container 
-        maxWidth={false}
-        sx={{ 
-          height: '100vh',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          px: { xs: 2, sm: 3, md: 4 }
-        }}
-      >
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        {/* Game Title */}
+        <Box sx={{ textAlign: 'center', mb: 4 }}>
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <Typography 
+              variant="h3" 
+              sx={{ 
+                color: 'primary.dark',
+                fontWeight: 700,
+                mb: 2,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 1
+              }}
+            >
+              <Quiz fontSize="large" /> Bogstav Quiz
+            </Typography>
+          </motion.div>
+          <Typography variant="h5" color="primary.main" sx={{ mb: 4 }}>
+            Klik på det bogstav du hører!
+          </Typography>
+        </Box>
+
         {/* Audio Control */}
         <Box sx={{ textAlign: 'center', mb: { xs: 3, md: 4 } }}>
           <Button 
@@ -153,7 +185,7 @@ const AlphabetGame: React.FC<AlphabetGameProps> = ({ onBack }) => {
         </Box>
 
         {/* Answer Options Grid */}
-        <Box sx={{ display: 'flex', justifyContent: 'center', flex: 1 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'center' }}>
           <Grid 
             container 
             spacing={{ xs: 2, sm: 3 }} 

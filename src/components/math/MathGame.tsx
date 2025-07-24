@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import {
   Container,
@@ -40,6 +40,7 @@ const MathGame: React.FC<MathGameProps> = ({ onBack }) => {
   const [score, setScore] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
   const [gameMode, setGameMode] = useState<'counting' | 'arithmetic'>('counting')
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
     const settings = difficultyManager.getCurrentSettings()
@@ -56,6 +57,10 @@ const MathGame: React.FC<MathGameProps> = ({ onBack }) => {
     // Cleanup function
     return () => {
       audioManager.stopAll()
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
+        timeoutRef.current = null
+      }
     }
   }, [gameMode])
 
@@ -68,6 +73,15 @@ const MathGame: React.FC<MathGameProps> = ({ onBack }) => {
   }
 
   const generateCountingQuestion = () => {
+    // Clear any existing timeout first
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current)
+      timeoutRef.current = null
+    }
+    
+    // Stop any currently playing audio
+    audioManager.stopAll()
+    
     const number = difficultyManager.getRandomNumber()
     const options = [number]
     
@@ -81,12 +95,26 @@ const MathGame: React.FC<MathGameProps> = ({ onBack }) => {
     setShowOptions(options.sort(() => Math.random() - 0.5))
     setCurrentProblem({ num1: number, num2: 0, operation: '+', answer: number })
     
-    setTimeout(() => {
+    // Schedule audio with proper cleanup
+    timeoutRef.current = setTimeout(() => {
       audioManager.speakQuizPromptWithRepeat(`Find tallet ${number}`, number.toString())
+        .catch(error => {
+          console.error('Error in scheduled audio:', error)
+        })
+      timeoutRef.current = null
     }, 500)
   }
 
   const generateArithmeticQuestion = () => {
+    // Clear any existing timeout first
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current)
+      timeoutRef.current = null
+    }
+    
+    // Stop any currently playing audio
+    audioManager.stopAll()
+    
     const problem = difficultyManager.generateMathProblem()
     setCurrentProblem(problem)
     
@@ -102,14 +130,26 @@ const MathGame: React.FC<MathGameProps> = ({ onBack }) => {
     
     setShowOptions(options.sort(() => Math.random() - 0.5))
     
-    setTimeout(async () => {
-      const problemText = `${problem.num1} ${problem.operation} ${problem.num2} = ?`
-      await audioManager.speakMathProblem(problemText)
+    // Schedule audio with proper cleanup
+    timeoutRef.current = setTimeout(async () => {
+      try {
+        const problemText = `${problem.num1} ${problem.operation} ${problem.num2} = ?`
+        await audioManager.speakMathProblem(problemText)
+      } catch (error) {
+        console.error('Error in scheduled math problem audio:', error)
+      }
+      timeoutRef.current = null
     }, 500)
   }
 
   const handleAnswerClick = async (selectedAnswer: number) => {
     if (!currentProblem) return
+    
+    // Clear any pending audio timeouts
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current)
+      timeoutRef.current = null
+    }
     
     // Stop any currently playing audio
     audioManager.stopAll()
@@ -117,11 +157,16 @@ const MathGame: React.FC<MathGameProps> = ({ onBack }) => {
     
     if (selectedAnswer === currentProblem.answer) {
       setScore(score + 1)
-      await audioManager.announceGameResult(true)
-      setTimeout(() => {
-        generateNewQuestion()
+      try {
+        await audioManager.announceGameResult(true)
+        setTimeout(() => {
+          generateNewQuestion()
+          setIsPlaying(false)
+        }, 2000)
+      } catch (error) {
+        console.error('Error playing success feedback:', error)
         setIsPlaying(false)
-      }, 2000)
+      }
     } else {
       // For wrong answers, allow immediate new clicks
       try {
@@ -137,11 +182,20 @@ const MathGame: React.FC<MathGameProps> = ({ onBack }) => {
   const repeatQuestion = () => {
     if (!currentProblem) return
     
+    // Clear any pending timeouts and stop current audio
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current)
+      timeoutRef.current = null
+    }
+    audioManager.stopAll()
+    
     if (gameMode === 'counting') {
       audioManager.speakQuizPromptWithRepeat(`Find tallet ${currentProblem.answer}`, currentProblem.answer.toString())
+        .catch(error => console.error('Error repeating counting question:', error))
     } else {
       const problemText = `${currentProblem.num1} ${currentProblem.operation} ${currentProblem.num2} = ?`
       audioManager.speakMathProblem(problemText)
+        .catch(error => console.error('Error repeating math problem:', error))
     }
   }
 
@@ -172,32 +226,64 @@ const MathGame: React.FC<MathGameProps> = ({ onBack }) => {
         background: 'linear-gradient(135deg, #dbeafe 0%, #dcfce7 50%, #fef3c7 100%)'
       }}
     >
-      {/* Navigation - Back Button Only */}
-      <Box sx={{ position: 'absolute', top: 16, left: 16, zIndex: 10 }}>
-        <IconButton 
-          onClick={onBack}
-          color="secondary"
-          size="large"
-          sx={{ 
-            bgcolor: 'white', 
-            boxShadow: 3,
-            '&:hover': { boxShadow: 6 }
-          }}
-        >
-          <ArrowBack />
-        </IconButton>
-      </Box>
+      {/* App Bar with Back Button and Score */}
+      <AppBar position="static" color="transparent" elevation={0}>
+        <Toolbar sx={{ justifyContent: 'space-between', py: 2 }}>
+          <IconButton 
+            onClick={onBack}
+            color="secondary"
+            size="large"
+            sx={{ 
+              bgcolor: 'white', 
+              boxShadow: 3,
+              '&:hover': { boxShadow: 6 }
+            }}
+          >
+            <ArrowBack />
+          </IconButton>
+          
+          <Chip 
+            icon={<Star />} 
+            label={`Point: ${score}`} 
+            color="secondary" 
+            sx={{ 
+              fontSize: '1.1rem',
+              py: 1,
+              fontWeight: 'bold',
+              boxShadow: 2
+            }}
+          />
+        </Toolbar>
+      </AppBar>
 
-      <Container 
-        maxWidth={false}
-        sx={{ 
-          height: '100vh',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          px: { xs: 2, sm: 3, md: 4 }
-        }}
-      >
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        {/* Game Title */}
+        <Box sx={{ textAlign: 'center', mb: 4 }}>
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <Typography 
+              variant="h3" 
+              sx={{ 
+                color: 'secondary.dark',
+                fontWeight: 700,
+                mb: 2,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 1
+              }}
+            >
+              <Calculate fontSize="large" /> Tal Quiz
+            </Typography>
+          </motion.div>
+          <Typography variant="h5" color="secondary.main" sx={{ mb: 4 }}>
+            {gameMode === 'counting' ? 'Klik på det tal du hører!' : 'Hvad er svaret?'}
+          </Typography>
+        </Box>
+
         {/* Audio Control */}
         <Box sx={{ textAlign: 'center', mb: { xs: 3, md: 4 } }}>
           <Button 
@@ -213,7 +299,7 @@ const MathGame: React.FC<MathGameProps> = ({ onBack }) => {
         </Box>
 
         {/* Answer Options Grid */}
-        <Box sx={{ display: 'flex', justifyContent: 'center', flex: 1 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'center' }}>
           <Grid 
             container 
             spacing={{ xs: 2, sm: 3 }} 

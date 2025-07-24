@@ -17,7 +17,8 @@ import {
   ArrowBack,
   PlayArrow,
   Pause,
-  Replay
+  Replay,
+  School
 } from '@mui/icons-material'
 import { audioManager } from '../../utils/audio'
 
@@ -130,32 +131,68 @@ const NumberLearning: React.FC<NumberLearningProps> = ({ onBack }) => {
         background: 'linear-gradient(135deg, #e0f2fe 0%, #f3e5f5 50%, #fff3e0 100%)'
       }}
     >
-      {/* Navigation - Back Button Only */}
-      <Box sx={{ position: 'absolute', top: 16, left: 16, zIndex: 10 }}>
-        <IconButton 
-          onClick={onBack}
-          color="primary"
-          size="large"
-          sx={{ 
-            bgcolor: 'white', 
-            boxShadow: 3,
-            '&:hover': { boxShadow: 6 }
-          }}
-        >
-          <ArrowBack />
-        </IconButton>
-      </Box>
+      {/* App Bar with Back Button and Progress */}
+      <AppBar position="static" color="transparent" elevation={0}>
+        <Toolbar sx={{ justifyContent: 'space-between', py: 2 }}>
+          <IconButton 
+            onClick={onBack}
+            color="primary"
+            size="large"
+            sx={{ 
+              bgcolor: 'white', 
+              boxShadow: 3,
+              '&:hover': { boxShadow: 6 }
+            }}
+          >
+            <ArrowBack />
+          </IconButton>
+          
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Typography variant="body2" sx={{ color: 'secondary.dark', fontWeight: 600 }}>
+              {currentIndex + 1} / {numbers.length}
+            </Typography>
+            <Box sx={{ width: 200, bgcolor: 'white', borderRadius: 1, p: 0.5 }}>
+              <LinearProgress 
+                variant="determinate" 
+                value={progress} 
+                color="secondary"
+                sx={{ height: 8, borderRadius: 1 }}
+              />
+            </Box>
+          </Box>
+        </Toolbar>
+      </AppBar>
 
-      <Container 
-        maxWidth={false}
-        sx={{ 
-          height: '100vh',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          px: { xs: 2, sm: 3, md: 4 }
-        }}
-      >
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        {/* Title */}
+        <Box sx={{ textAlign: 'center', mb: 4 }}>
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <Typography 
+              variant="h3" 
+              sx={{ 
+                color: 'secondary.dark',
+                fontWeight: 700,
+                mb: 2,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 1
+              }}
+            >
+              <School fontSize="large" /> Lær Tal
+            </Typography>
+          </motion.div>
+          <Typography variant="h5" color="secondary.main" sx={{ mb: 1 }}>
+            Lær alle tal fra 1 til 100
+          </Typography>
+          <Typography variant="body1" color="text.secondary">
+            Klik på et tal for at høre det! 👆
+          </Typography>
+        </Box>
 
         {/* Current Number Display */}
         <Box sx={{ textAlign: 'center', mb: { xs: 3, md: 4 } }}>

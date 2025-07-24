@@ -147,32 +147,64 @@ const AdditionGame: React.FC<AdditionGameProps> = ({ onBack }) => {
         background: 'linear-gradient(135deg, #e0f2fe 0%, #f3e5f5 50%, #fff3e0 100%)'
       }}
     >
-      {/* Navigation - Back Button Only */}
-      <Box sx={{ position: 'absolute', top: 16, left: 16, zIndex: 10 }}>
-        <IconButton 
-          onClick={onBack}
-          color="primary"
-          size="large"
-          sx={{ 
-            bgcolor: 'white', 
-            boxShadow: 3,
-            '&:hover': { boxShadow: 6 }
-          }}
-        >
-          <ArrowBack />
-        </IconButton>
-      </Box>
+      {/* App Bar with Back Button and Score */}
+      <AppBar position="static" color="transparent" elevation={0}>
+        <Toolbar sx={{ justifyContent: 'space-between', py: 2 }}>
+          <IconButton 
+            onClick={onBack}
+            color="primary"
+            size="large"
+            sx={{ 
+              bgcolor: 'white', 
+              boxShadow: 3,
+              '&:hover': { boxShadow: 6 }
+            }}
+          >
+            <ArrowBack />
+          </IconButton>
+          
+          <Chip 
+            icon={<Star />} 
+            label={`Point: ${score}`} 
+            color="primary" 
+            sx={{ 
+              fontSize: '1.1rem',
+              py: 1,
+              fontWeight: 'bold',
+              boxShadow: 2
+            }}
+          />
+        </Toolbar>
+      </AppBar>
 
-      <Container 
-        maxWidth={false}
-        sx={{ 
-          height: '100vh',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          px: { xs: 2, sm: 3, md: 4 }
-        }}
-      >
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        {/* Game Title */}
+        <Box sx={{ textAlign: 'center', mb: 4 }}>
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <Typography 
+              variant="h3" 
+              sx={{ 
+                color: 'primary.dark',
+                fontWeight: 700,
+                mb: 2,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 1
+              }}
+            >
+              <Add fontSize="large" /> Plus Opgaver
+            </Typography>
+          </motion.div>
+          <Typography variant="h5" color="primary.main" sx={{ mb: 4 }}>
+            Hvad bliver svaret?
+          </Typography>
+        </Box>
+
         {/* Problem Display */}
         <Box sx={{ textAlign: 'center', mb: { xs: 3, md: 4 } }}>
           <Paper 
