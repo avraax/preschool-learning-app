@@ -158,6 +158,7 @@ const HomePage = () => {
                           fontSize: { xs: '1.25rem', md: '1.5rem' }
                         }}
                       >
+                        {/* Force deployment - title updated to Alfabetet */}
                         Alfabetet
                       </Typography>
                       <Typography 
