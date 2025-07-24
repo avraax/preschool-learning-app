@@ -105,6 +105,9 @@ class RemoteConsole {
       this.logs = this.logs.slice(0, this.maxLogs)
     }
     
+    // Send to centralized logging API
+    this.sendToBackend(entry)
+    
     // Show critical errors on screen for iOS
     if (level === 'error' && deviceInfo.isIOS) {
       this.showErrorToast(message)
@@ -155,6 +158,43 @@ class RemoteConsole {
         toast.parentNode.removeChild(toast)
       }
     })
+  }
+  
+  private sendToBackend(entry: LogEntry) {
+    // Don't send to backend if we're in development mode
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      return
+    }
+    
+    // Send error to centralized logging API (fire and forget)
+    fetch('/api/log-error', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        level: entry.level,
+        message: entry.message,
+        data: entry.data,
+        device: entry.device,
+        url: window.location.href,
+        sessionId: this.getSessionId(),
+        timestamp: new Date(entry.timestamp).toISOString()
+      })
+    }).catch(error => {
+      // Silently fail - don't create infinite loops
+      console.warn('Failed to send log to backend:', error)
+    })
+  }
+  
+  private getSessionId(): string {
+    // Simple session ID generation for tracking user sessions
+    let sessionId = sessionStorage.getItem('børnelæring-session-id')
+    if (!sessionId) {
+      sessionId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+      sessionStorage.setItem('børnelæring-session-id', sessionId)
+    }
+    return sessionId
   }
   
   private logDeviceInfo() {

@@ -23,8 +23,9 @@ import MathGame from './components/math/MathGame'
 import MathSelection from './components/math/MathSelection'
 import NumberLearning from './components/math/NumberLearning'
 import AdditionGame from './components/math/AdditionGame'
+import ErrorDashboard from './components/admin/ErrorDashboard'
 
-type AppScreen = 'home' | 'alphabet-selection' | 'alphabet-quiz' | 'alphabet-learn' | 'math-selection' | 'math-counting' | 'math-numbers' | 'math-addition'
+type AppScreen = 'home' | 'alphabet-selection' | 'alphabet-quiz' | 'alphabet-learn' | 'math-selection' | 'math-counting' | 'math-numbers' | 'math-addition' | 'admin-errors'
 
 function App() {
   const [currentScreen, setCurrentScreen] = useState<AppScreen>('home')
@@ -37,6 +38,12 @@ function App() {
     // Log any iOS-specific initialization
     if (deviceInfo.isIOS) {
       logIOSIssue('App Initialization', 'iOS device detected, enhanced debugging active')
+    }
+    
+    // Check for admin access via URL parameter
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('admin') === 'errors') {
+      setCurrentScreen('admin-errors')
     }
   }, [])
 
@@ -319,6 +326,8 @@ function App() {
       return <NumberLearning onBack={() => setCurrentScreen('math-selection')} />
     case 'math-addition':
       return <AdditionGame onBack={() => setCurrentScreen('math-selection')} />
+    case 'admin-errors':
+      return <ErrorDashboard />
     default:
       return renderHome()
   }

@@ -115,6 +115,30 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   } catch (error) {
     console.error('TTS API error:', error)
     
+    // Log error to centralized logging system
+    try {
+      await fetch('/api/log-error', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          level: 'error',
+          message: `TTS API Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          data: {
+            text: req.body.text,
+            voice: req.body.voice,
+            audioConfig: req.body.audioConfig,
+            error: error instanceof Error ? error.stack : error
+          },
+          device: 'Server API',
+          url: '/api/tts',
+          timestamp: new Date().toISOString()
+        })
+      })
+    } catch (logError) {
+      // Silently fail logging - don't break the main error response
+      console.warn('Failed to log TTS error:', logError)
+    }
+    
     // Return appropriate error response
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
     return res.status(500).json({ 
