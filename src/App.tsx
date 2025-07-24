@@ -28,6 +28,8 @@ import NumberLearning from './components/math/NumberLearning'
 import AdditionGame from './components/math/AdditionGame'
 import ErrorDashboard from './components/admin/ErrorDashboard'
 import PWAInstallPrompt from './components/common/PWAInstallPrompt'
+import PWAUpdateNotification from './components/common/PWAUpdateNotification'
+import UpdateButton from './components/common/UpdateButton'
 
 // Admin redirect component for query parameter support
 const AdminRedirectChecker = ({ children }: { children: React.ReactNode }) => {
@@ -362,8 +364,10 @@ function App() {
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
       
-      {/* PWA Install Prompt - shown globally */}
+      {/* PWA Components - shown globally */}
       <PWAInstallPrompt />
+      <PWAUpdateNotification />
+      <UpdateButton />
     </>
   )
 }

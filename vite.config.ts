@@ -7,7 +7,8 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'autoUpdate',
+      registerType: 'prompt',
+      injectRegister: 'script',
       // Use our custom manifest.json from public folder
       manifest: {
         name: "Børnelæring - Alfabetet og Tal",
@@ -68,9 +69,20 @@ export default defineConfig({
         ],
         skipWaiting: true,
         clientsClaim: true,
-        // Don't cache anything
-        globPatterns: []
-      }
+        // Don't cache anything - ensures latest code
+        globPatterns: [],
+        // Force immediate update check
+        cleanupOutdatedCaches: true,
+        // Enhanced update detection
+        maximumFileSizeToCacheInBytes: 0 // Disable file caching completely
+      },
+      // Enhanced development and update detection
+      devOptions: {
+        enabled: true,
+        type: 'module'
+      },
+      // Immediate service worker activation
+      selfDestroying: false
     })
   ],
   server: {
