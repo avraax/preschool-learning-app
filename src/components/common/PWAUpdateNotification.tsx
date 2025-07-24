@@ -9,6 +9,7 @@ const PWAUpdateNotification: React.FC = () => {
   useEffect(() => {
     let updateTimer: NodeJS.Timeout;
     let countdownTimer: NodeJS.Timeout;
+    let periodicCheck: NodeJS.Timeout;
 
     const checkForUpdates = async () => {
       if ('serviceWorker' in navigator) {
@@ -83,7 +84,7 @@ const PWAUpdateNotification: React.FC = () => {
       checkForUpdates();
       
       // Periodic update check every 30 seconds
-      const periodicCheck = setInterval(() => {
+      periodicCheck = setInterval(() => {
         checkForUpdates();
       }, 30000); // Check every 30 seconds
 
