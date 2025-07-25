@@ -66,6 +66,17 @@ export class AudioManager {
         return // Success, exit the retry loop
       } catch (error: any) {
         lastError = error
+        
+        // Check if this is a navigation interruption (expected)
+        const isNavigationInterruption = error instanceof Error && 
+          (error.message.includes('interrupted by navigation') || 
+           error.message.includes('interrupted by user'))
+        
+        if (isNavigationInterruption) {
+          console.log('🎵 Number speech interrupted by navigation (expected)')
+          throw error // Don't retry for navigation interruptions
+        }
+        
         logAudioIssue(`Number speech attempt ${attempt + 1}`, error, { 
           number, 
           numberText,
@@ -280,6 +291,16 @@ export class AudioManager {
       
       logIOSIssue('Quiz Audio', 'Successfully completed speakQuizPromptWithRepeat')
     } catch (error) {
+      // Check if this is a navigation interruption (expected)
+      const isNavigationInterruption = error instanceof Error && 
+        (error.message.includes('interrupted by navigation') || 
+         error.message.includes('interrupted by user'))
+      
+      if (isNavigationInterruption) {
+        console.log('🎵 Quiz audio interrupted by navigation (expected)')
+        return // Don't log or retry for navigation interruptions
+      }
+      
       logAudioIssue('speakQuizPromptWithRepeat', error, { text, repeatWord, voiceType })
       
       // iOS-specific fallback: try a simpler approach

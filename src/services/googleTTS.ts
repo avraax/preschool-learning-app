@@ -449,14 +449,30 @@ export class GoogleTTSService {
         audio.addEventListener('pause', checkPauseCompletion)
         
         audio.addEventListener('error', (error) => {
-          logAudioIssue('Audio Playback Error', error, { 
-            isIOS: isIOS(),
-            audioDataLength: base64AudioData.length,
-            userAgent: navigator.userAgent,
-            currentTime: audio.currentTime,
-            duration: audio.duration
-          })
-          clearTimeoutAndRejectHandler(error)
+          // Check if this is due to navigation/interruption (expected error)
+          const isNavigationError = isCompleted || 
+            !audio.src || 
+            audio.src === '' || 
+            audio.readyState === 0 ||
+            (audio.currentTime === 0 && isNaN(audio.duration))
+          
+          if (isNavigationError) {
+            console.log('🎵 Audio interrupted due to navigation (expected)')
+            clearTimeoutAndRejectHandler(new Error('Audio interrupted by navigation'))
+          } else {
+            // Log unexpected audio errors
+            logAudioIssue('Audio Playback Error', error, { 
+              isIOS: isIOS(),
+              audioDataLength: base64AudioData.length,
+              userAgent: navigator.userAgent,
+              currentTime: audio.currentTime,
+              duration: audio.duration,
+              readyState: audio.readyState,
+              networkState: audio.networkState,
+              src: audio.src ? 'present' : 'empty'
+            })
+            clearTimeoutAndRejectHandler(error)
+          }
         })
         
         // Add load event to log when audio is ready
@@ -615,6 +631,16 @@ export class GoogleTTSService {
         await this.playAudioFromData(audioData)
         return // Success with Google TTS
       } catch (googleTTSError) {
+        // Check if this is a navigation interruption
+        const isNavigationInterruption = googleTTSError instanceof Error && 
+          (googleTTSError.message.includes('interrupted by navigation') || 
+           googleTTSError.message.includes('interrupted by user'))
+        
+        if (isNavigationInterruption) {
+          console.log('🎵 iOS Google TTS interrupted by navigation (expected)')
+          throw googleTTSError
+        }
+        
         logAudioIssue('iOS Google TTS Failed', googleTTSError, { text })
         // Try Web Speech as fallback
         try {
@@ -632,6 +658,16 @@ export class GoogleTTSService {
       const audioData = await this.synthesizeSpeech(text, voiceType, useSSML, customAudioConfig)
       await this.playAudioFromData(audioData)
     } catch (error) {
+      // Check if this is a navigation interruption (expected)
+      const isNavigationInterruption = error instanceof Error && 
+        (error.message.includes('interrupted by navigation') || 
+         error.message.includes('interrupted by user'))
+      
+      if (isNavigationInterruption) {
+        console.log('🎵 Audio synthesis interrupted by navigation (expected)')
+        throw error // Re-throw but don't log as error
+      }
+      
       logAudioIssue('Google TTS Failed', error, { 
         text, 
         voiceType, 
