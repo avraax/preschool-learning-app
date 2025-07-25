@@ -3,27 +3,19 @@ import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
   Container,
-  Button,
   Typography,
   Box,
   IconButton,
   AppBar,
   Toolbar,
   LinearProgress,
-  Alert,
-  Snackbar,
   Card
 } from '@mui/material'
 import {
   ArrowBack,
-  PlayArrow,
-  Pause,
-  Replay,
   School
 } from '@mui/icons-material'
 import { audioManager } from '../../utils/audio'
-import { deviceInfo } from '../../utils/deviceDetection'
-import { iosAudioHelper } from '../../utils/iosAudioHelper'
 import LearningGrid from '../common/LearningGrid'
 
 
@@ -31,11 +23,7 @@ const NumberLearning: React.FC = () => {
   const navigate = useNavigate()
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
-  const [isAutoPlay, setIsAutoPlay] = useState(false)
-  const [showAudioError, setShowAudioError] = useState(false)
-  const [audioRetryCount, setAudioRetryCount] = useState(0)
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
-  const lastUserInteraction = useRef<number>(Date.now())
 
   // Generate numbers 1-100
   const numbers = Array.from({ length: 100 }, (_, i) => i + 1)
@@ -61,17 +49,9 @@ const NumberLearning: React.FC = () => {
       }
       window.removeEventListener('beforeunload', handleBeforeUnload)
       window.removeEventListener('pagehide', handleBeforeUnload)
-      // Ensure iOS audio helper is stopped
-      if (deviceInfo.isIOS) {
-        iosAudioHelper.stopKeepAlive()
-      }
     }
   }, [])
 
-  // Track user interactions for iOS audio
-  const updateUserInteraction = () => {
-    lastUserInteraction.current = Date.now()
-  }
 
   const speakCurrentNumber = async () => {
     if (isPlaying) return
@@ -84,105 +64,15 @@ const NumberLearning: React.FC = () => {
     try {
       // Use faster speed for number counting (1.2 instead of default 0.8)
       await audioManager.speakNumber(currentNumber, 1.2)
-      setAudioRetryCount(0) // Reset retry count on success
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error speaking number:', error)
-      
-      // Check if it's a navigation interruption (expected)
-      const isNavigationInterruption = error instanceof Error && 
-        (error.message.includes('interrupted by navigation') || 
-         error.message.includes('interrupted by user'))
-      
-      if (isNavigationInterruption) {
-        console.log('🎵 Number speech interrupted by navigation (expected)')
-        return // Don't show error or retry for navigation interruptions
-      }
-      
-      // iOS audio permission error handling
-      if (deviceInfo.isIOS && error?.name === 'NotAllowedError') {
-        // Check if it's been more than 6 seconds since last user interaction
-        const timeSinceInteraction = Date.now() - lastUserInteraction.current
-        
-        if (timeSinceInteraction > 6000 && audioRetryCount < 1) {
-          // Show error and pause auto-play for user to resume
-          setIsAutoPlay(false)
-          setShowAudioError(true)
-          setAudioRetryCount(prev => prev + 1)
-        }
-      } else if (deviceInfo.isIOS && audioRetryCount < 2) {
-        // iOS TTS failure during autoplay - retry after delay
-        console.log(`🔄 iOS TTS retry ${audioRetryCount + 1} for number ${currentNumber}`)
-        setAudioRetryCount(prev => prev + 1)
-        
-        // Stop autoplay temporarily and retry after delay
-        setIsPlaying(false)
-        setTimeout(() => {
-          // Retry the same number
-          setCurrentIndex(prev => prev) // Trigger re-render to retry
-        }, 800)
-        return
-      } else if (audioRetryCount >= 2) {
-        // Too many retries - pause autoplay
-        console.log('🚨 Too many audio failures, pausing autoplay')
-        setIsAutoPlay(false)
-        setShowAudioError(true)
-        setAudioRetryCount(0)
-      }
     } finally {
       setIsPlaying(false)
-      
-      // If auto-play is on, move to next number after a pause
-      if (isAutoPlay && currentIndex < numbers.length - 1) {
-        // Use shorter delay for iOS to avoid audio timeout
-        const delay = deviceInfo.isIOS ? 600 : 1000
-        timeoutRef.current = setTimeout(() => {
-          setCurrentIndex(prev => prev + 1)
-        }, delay)
-      } else if (isAutoPlay && currentIndex === numbers.length - 1) {
-        // Finished counting to 100
-        setIsAutoPlay(false)
-      }
     }
   }
 
-  const startAutoPlay = () => {
-    // Always reset to beginning when starting auto-play
-    stopAutoPlay()
-    setCurrentIndex(0)
-    setIsAutoPlay(true)
-    updateUserInteraction() // Track user interaction
-    setShowAudioError(false)
-    setAudioRetryCount(0)
-    
-    // Start iOS audio keep-alive
-    if (deviceInfo.isIOS) {
-      iosAudioHelper.startKeepAlive()
-    }
-  }
-
-  const stopAutoPlay = () => {
-    setIsAutoPlay(false)
-    setIsPlaying(false)  // Also stop playing state
-    audioManager.stopAll()
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current)
-    }
-    
-    // Stop iOS audio keep-alive
-    if (deviceInfo.isIOS) {
-      iosAudioHelper.stopKeepAlive()
-    }
-  }
 
   const goToNumber = async (index: number) => {
-    // Cancel auto-play if it's running
-    if (isAutoPlay) {
-      stopAutoPlay()
-    }
-    
-    updateUserInteraction() // Track user interaction
-    setShowAudioError(false)
-    
     setCurrentIndex(index)
     setIsPlaying(true)
     audioManager.stopAll()
@@ -192,7 +82,6 @@ const NumberLearning: React.FC = () => {
     try {
       // Use faster speed for number counting (1.2 instead of default 0.8)
       await audioManager.speakNumber(number, 1.2)
-      setAudioRetryCount(0) // Reset retry count on success
     } catch (error) {
       console.error('Error speaking number:', error)
     } finally {
@@ -200,27 +89,11 @@ const NumberLearning: React.FC = () => {
     }
   }
 
-  const restart = () => {
-    stopAutoPlay()
-    setCurrentIndex(0)
-    updateUserInteraction() // Track user interaction
-    setShowAudioError(false)
-  }
-  
-  const resumeAutoPlay = () => {
-    updateUserInteraction()
-    setShowAudioError(false)
-    setIsAutoPlay(true)
-    // Trigger speech for current number
-    speakCurrentNumber()
-  }
 
-  // Auto-play the current number when index changes and auto-play is on
+  // Speak the current number when index changes
   useEffect(() => {
-    if (isAutoPlay) {
-      speakCurrentNumber()
-    }
-  }, [currentIndex, isAutoPlay])
+    speakCurrentNumber()
+  }, [currentIndex])
 
   const progress = ((currentIndex + 1) / numbers.length) * 100
 
@@ -329,81 +202,14 @@ const NumberLearning: React.FC = () => {
           </motion.div>
         </Box>
 
-        {/* Control Buttons - Very Compact */}
-        <Box sx={{ textAlign: 'center', mb: { xs: 1, md: 1.5 }, flex: '0 0 auto' }}>
-          <Box sx={{ display: 'flex', justifyContent: 'center', gap: { xs: 1, md: 2 }, flexWrap: 'wrap' }}>
-            {!isAutoPlay ? (
-              <Button
-                onClick={startAutoPlay}
-                variant="contained"
-                color="primary"
-                size="large"
-                startIcon={<PlayArrow />}
-                disabled={isPlaying}
-                sx={{ py: { xs: 0.5, md: 1 }, px: { xs: 2, md: 3 }, fontSize: { xs: '0.875rem', md: '1rem' }, minHeight: '44px' }}
-              >
-                Tæl Alle
-              </Button>
-            ) : (
-              <Button
-                onClick={stopAutoPlay}
-                variant="contained"
-                color="error"
-                size="large"
-                startIcon={<Pause />}
-                sx={{ py: { xs: 0.5, md: 1 }, px: { xs: 2, md: 3 }, fontSize: { xs: '0.875rem', md: '1rem' }, minHeight: '44px' }}
-              >
-                Stop
-              </Button>
-            )}
-
-            <Button
-              onClick={restart}
-              variant="outlined"
-              color="primary"
-              size="large"
-              startIcon={<Replay />}
-              disabled={isPlaying || isAutoPlay}
-              sx={{ py: 2, px: 4, fontSize: '1.1rem' }}
-            >
-              Start Forfra
-            </Button>
-          </Box>
-        </Box>
 
         {/* Numbers Grid - Using Reusable Component */}
         <LearningGrid
           items={numbers}
           currentIndex={currentIndex}
-          isAutoPlay={isAutoPlay}
           onItemClick={goToNumber}
         />
       </Container>
-      
-      {/* iOS Audio Error Snackbar */}
-      <Snackbar
-        open={showAudioError}
-        autoHideDuration={null} // Don't auto-hide
-        onClose={() => setShowAudioError(false)}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-      >
-        <Alert 
-          severity="warning"
-          sx={{ width: '100%' }}
-          action={
-            <Button 
-              color="inherit" 
-              size="small" 
-              onClick={resumeAutoPlay}
-              sx={{ fontWeight: 'bold' }}
-            >
-              Fortsæt
-            </Button>
-          }
-        >
-          Lyd stoppet - tryk "Fortsæt" for at genoptage tælling
-        </Alert>
-      </Snackbar>
     </Box>
   )
 }

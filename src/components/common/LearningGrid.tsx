@@ -5,14 +5,12 @@ import { Box, Grid, Card, CardContent, Typography } from '@mui/material'
 interface LearningGridProps {
   items: (string | number)[]
   currentIndex: number
-  isAutoPlay: boolean
   onItemClick: (index: number) => void
 }
 
 const LearningGrid: React.FC<LearningGridProps> = ({
   items,
   currentIndex,
-  isAutoPlay,
   onItemClick
 }) => {
   return (
@@ -51,8 +49,7 @@ const LearningGrid: React.FC<LearningGridProps> = ({
                   cursor: 'pointer',
                   border: '2px solid',
                   borderColor: index === currentIndex ? 'secondary.main' : 'primary.200',
-                  bgcolor: index === currentIndex ? 'secondary.50' : 
-                           index < currentIndex && isAutoPlay ? 'success.50' : 'white',
+                  bgcolor: index === currentIndex ? 'secondary.50' : 'white',
                   transition: 'all 0.3s ease',
                   '&:hover': {
                     borderColor: 'primary.main',
