@@ -26,6 +26,8 @@ import {
 } from '@mui/icons-material'
 import { audioManager } from '../../utils/audio'
 import { isIOS } from '../../utils/deviceDetection'
+import LottieCharacter, { useCharacterState } from '../common/LottieCharacter'
+import CelebrationEffect, { useCelebration } from '../common/CelebrationEffect'
 
 
 const AdditionGame: React.FC = () => {
@@ -39,9 +41,17 @@ const AdditionGame: React.FC = () => {
   const [showIOSPrompt, setShowIOSPrompt] = useState(false)
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
   const lastInteractionRef = useRef<number>(Date.now())
+  
+  // Character and celebration management
+  const mathTeacher = useCharacterState('wave')
+  const { showCelebration, celebrationIntensity, celebrate, stopCelebration } = useCelebration()
 
   useEffect(() => {
     generateNewProblem()
+    
+    // Initialize math teacher character
+    mathTeacher.setCharacter('fox')
+    mathTeacher.wave()
     
     // Track user interactions for iOS
     const updateInteraction = () => {
@@ -144,7 +154,11 @@ const AdditionGame: React.FC = () => {
     setShowIOSPrompt(false) // Hide prompt on interaction
     
     if (selectedAnswer === correctAnswer) {
+      // Correct answer - celebrate!
       setScore(score + 1)
+      mathTeacher.celebrate()
+      celebrate(score > 5 ? 'high' : 'medium')
+      
       try {
         await audioManager.announceGameResult(true)
       } catch (error: any) {
@@ -156,10 +170,15 @@ const AdditionGame: React.FC = () => {
       }
       
       setTimeout(() => {
+        stopCelebration()
+        mathTeacher.point()
         generateNewProblem()
         setIsPlaying(false)
-      }, 2000)
+      }, 3000)
     } else {
+      // Wrong answer - encourage
+      mathTeacher.encourage()
+      
       try {
         await audioManager.announceGameResult(false)
       } catch (error: any) {
@@ -171,6 +190,7 @@ const AdditionGame: React.FC = () => {
       }
       
       setTimeout(() => {
+        mathTeacher.think()
         setIsPlaying(false)
       }, 2000)
     }
@@ -238,30 +258,35 @@ const AdditionGame: React.FC = () => {
           overflow: 'hidden'
         }}
       >
-        {/* Game Title - Compact */}
+        {/* Game Title with Math Teacher */}
         <Box sx={{ textAlign: 'center', mb: { xs: 2, md: 3 }, flex: '0 0 auto' }}>
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            <Typography 
-              variant="h3" 
-              sx={{ 
-                color: 'primary.dark',
-                fontWeight: 700,
-                mb: 2,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 1
-              }}
-            >
-              <Add fontSize="large" /> Plus Opgaver
-            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2, mb: 2 }}>
+              <LottieCharacter
+                character={mathTeacher.character}
+                state={mathTeacher.state}
+                size={80}
+                onClick={mathTeacher.wave}
+              />
+              <Typography 
+                variant="h3" 
+                sx={{ 
+                  color: 'primary.dark',
+                  fontWeight: 700,
+                  fontSize: { xs: '1.5rem', md: '2rem' }
+                }}
+              >
+                <Add fontSize="large" /> Plus Opgaver
+              </Typography>
+              <Typography sx={{ fontSize: '2.5rem' }}>🧮</Typography>
+            </Box>
           </motion.div>
-          <Typography variant="h5" color="primary.main" sx={{ mb: 4 }}>
-            Hvad bliver svaret?
+          <Typography variant="h5" color="primary.main" sx={{ mb: 4, fontSize: { xs: '1rem', md: '1.25rem' } }}>
+            Hvad bliver svaret? 🤔
           </Typography>
         </Box>
 
@@ -447,6 +472,14 @@ const AdditionGame: React.FC = () => {
           Tryk for at høre opgaven 🔊
         </Alert>
       </Snackbar>
+      
+      {/* Celebration Effect */}
+      <CelebrationEffect
+        show={showCelebration}
+        character="fox"
+        intensity={celebrationIntensity}
+        onComplete={stopCelebration}
+      />
     </Box>
   )
 }

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
   Container,
@@ -22,7 +22,6 @@ import CelebrationEffect, { useCelebration } from '../common/CelebrationEffect'
 // Comprehensive math settings for all ages
 const MAX_NUMBER = 50
 const MAX_ADDITION_NUMBER = 10
-const GAME_MODE = 'arithmetic' // Include both counting and arithmetic
 
 interface MathProblem {
   num1: number
@@ -33,10 +32,14 @@ interface MathProblem {
 
 const MathGame: React.FC = () => {
   const navigate = useNavigate()
+  const location = useLocation()
   const [currentProblem, setCurrentProblem] = useState<MathProblem | null>(null)
   const [showOptions, setShowOptions] = useState<number[]>([])
   const [score, setScore] = useState(0)
-  const [gameMode] = useState<'counting' | 'arithmetic'>(GAME_MODE)
+  
+  // Determine game mode based on current route
+  const gameMode: 'counting' | 'arithmetic' = location.pathname.includes('/counting') ? 'counting' : 'arithmetic'
+  
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
   
   // Character and celebration management
