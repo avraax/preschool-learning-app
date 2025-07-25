@@ -13,15 +13,19 @@ import {
   Chip,
   Paper,
   AppBar,
-  Toolbar
+  Toolbar,
+  Snackbar,
+  Alert
 } from '@mui/material'
 import {
   ArrowBack,
   VolumeUp,
   Add,
-  Star
+  Star,
+  TouchApp
 } from '@mui/icons-material'
 import { audioManager } from '../../utils/audio'
+import { isIOS } from '../../utils/deviceDetection'
 
 
 const AdditionGame: React.FC = () => {
@@ -32,10 +36,20 @@ const AdditionGame: React.FC = () => {
   const [options, setOptions] = useState<number[]>([])
   const [score, setScore] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
+  const [showIOSPrompt, setShowIOSPrompt] = useState(false)
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const lastInteractionRef = useRef<number>(Date.now())
 
   useEffect(() => {
     generateNewProblem()
+    
+    // Track user interactions for iOS
+    const updateInteraction = () => {
+      lastInteractionRef.current = Date.now()
+    }
+    
+    document.addEventListener('click', updateInteraction)
+    document.addEventListener('touchstart', updateInteraction)
     
     // Cleanup function
     return () => {
@@ -43,6 +57,8 @@ const AdditionGame: React.FC = () => {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current)
       }
+      document.removeEventListener('click', updateInteraction)
+      document.removeEventListener('touchstart', updateInteraction)
     }
   }, [])
 
@@ -87,9 +103,20 @@ const AdditionGame: React.FC = () => {
     audioManager.stopAll()
     
     try {
+      // Check if iOS needs user interaction
+      if (isIOS() && Date.now() - lastInteractionRef.current > 5000) {
+        setShowIOSPrompt(true)
+        setIsPlaying(false)
+        return
+      }
+      
       await audioManager.speakAdditionProblem(a, b, 'primary')
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error speaking problem:', error)
+      // Show iOS prompt if it's a permission error
+      if (isIOS() && error?.name === 'NotAllowedError') {
+        setShowIOSPrompt(true)
+      }
     } finally {
       setIsPlaying(false)
     }
@@ -100,13 +127,18 @@ const AdditionGame: React.FC = () => {
     
     setIsPlaying(true)
     audioManager.stopAll()
+    setShowIOSPrompt(false) // Hide prompt on interaction
     
     if (selectedAnswer === correctAnswer) {
       setScore(score + 1)
       try {
         await audioManager.announceGameResult(true)
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error playing success sound:', error)
+        // Show iOS prompt if it's a permission error
+        if (isIOS() && error?.name === 'NotAllowedError') {
+          setShowIOSPrompt(true)
+        }
       }
       
       setTimeout(() => {
@@ -116,8 +148,12 @@ const AdditionGame: React.FC = () => {
     } else {
       try {
         await audioManager.announceGameResult(false)
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error playing encouragement sound:', error)
+        // Show iOS prompt if it's a permission error
+        if (isIOS() && error?.name === 'NotAllowedError') {
+          setShowIOSPrompt(true)
+        }
       }
       
       setTimeout(() => {
@@ -127,6 +163,13 @@ const AdditionGame: React.FC = () => {
   }
 
   const repeatProblem = () => {
+    setShowIOSPrompt(false) // Hide prompt on interaction
+    speakProblem(num1, num2)
+  }
+
+  const handleIOSPromptClick = () => {
+    setShowIOSPrompt(false)
+    lastInteractionRef.current = Date.now()
     speakProblem(num1, num2)
   }
 
@@ -366,6 +409,30 @@ const AdditionGame: React.FC = () => {
         </Box>
 
       </Container>
+
+      {/* iOS Audio Permission Prompt */}
+      <Snackbar
+        open={showIOSPrompt}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        sx={{ mb: 4 }}
+      >
+        <Alert
+          severity="info"
+          icon={<TouchApp />}
+          action={
+            <Button color="inherit" size="small" onClick={handleIOSPromptClick}>
+              Tryk her for lyd
+            </Button>
+          }
+          sx={{ 
+            width: '100%',
+            fontSize: '1.1rem',
+            alignItems: 'center'
+          }}
+        >
+          Tryk for at høre opgaven 🔊
+        </Alert>
+      </Snackbar>
     </Box>
   )
 }

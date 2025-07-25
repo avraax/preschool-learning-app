@@ -15,6 +15,8 @@ export class GoogleTTSService {
   private cache: Map<string, CachedAudio> = new Map()
   private initPromise: Promise<void> | null = null
   private currentAudio: HTMLAudioElement | null = null
+  private audioContext: AudioContext | null = null
+  private lastUserInteraction: number = Date.now()
 
   // Use shared configuration
   private readonly voiceConfigs = {
@@ -46,6 +48,36 @@ export class GoogleTTSService {
   constructor() {
     this.initializeService()
     this.loadCacheFromStorage()
+    this.setupUserInteractionTracking()
+  }
+
+  // Track user interactions for iOS audio requirements
+  private setupUserInteractionTracking(): void {
+    const updateInteraction = () => {
+      this.lastUserInteraction = Date.now()
+      this.resumeAudioContext()
+    }
+    
+    // Track various user interactions
+    document.addEventListener('click', updateInteraction, { passive: true })
+    document.addEventListener('touchstart', updateInteraction, { passive: true })
+    document.addEventListener('touchend', updateInteraction, { passive: true })
+  }
+
+  // Resume audio context for iOS
+  private async resumeAudioContext(): Promise<void> {
+    if (!this.audioContext) {
+      this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
+    }
+    
+    if (this.audioContext.state === 'suspended') {
+      try {
+        await this.audioContext.resume()
+        logIOSIssue('Audio Context', 'Audio context resumed successfully')
+      } catch (error) {
+        logAudioIssue('Audio Context Resume', error)
+      }
+    }
   }
 
   private async initializeService(): Promise<void> {
@@ -197,14 +229,7 @@ export class GoogleTTSService {
         'Content-Type': 'application/json'
       }
       
-      console.log('🎙️ Attempting Google TTS synthesis:', { 
-        voice: voice.name, 
-        rate: this.audioConfig.speakingRate,
-        pitch: this.audioConfig.pitch,
-        textLength: text.length,
-        requestUrl: '/api/tts',
-        requestMethod: 'POST'
-      })
+      // Synthesis request prepared
       
       const response = await fetch('/api/tts', {
         method: 'POST',
@@ -265,7 +290,7 @@ export class GoogleTTSService {
       const data = await response.json()
       const audioData = data.audioContent
       
-      console.log('✅ Google TTS synthesis successful')
+      // Synthesis completed successfully
 
       // Cache the result
       this.cacheAudio(cacheKey, voice.name, audioData)
@@ -298,14 +323,20 @@ export class GoogleTTSService {
         this.currentAudio = audio
         
         // Add timeout to prevent hanging (especially important for iOS)
+        const timeoutDuration = isIOS() ? 5000 : 10000 // Shorter timeout for iOS
         const playbackTimeout = setTimeout(() => {
-          logAudioIssue('Audio Playback Timeout', 'Audio playback timed out after 10 seconds', {
+          logAudioIssue('Audio Playback Timeout', `Audio playback timed out after ${timeoutDuration/1000} seconds`, {
             isIOS: isIOS(),
             audioDataLength: base64AudioData.length
           })
-          this.currentAudio = null
+          // Try to clean up the audio element
+          if (this.currentAudio) {
+            this.currentAudio.pause()
+            this.currentAudio.src = ''
+            this.currentAudio = null
+          }
           reject(new Error('Audio playback timeout'))
-        }, 10000)
+        }, timeoutDuration)
         
         const clearTimeoutAndResolve = () => {
           clearTimeout(playbackTimeout)
@@ -348,16 +379,40 @@ export class GoogleTTSService {
         
         // iOS-specific play handling
         if (isIOS()) {
-          // Add a small delay before playing on iOS
-          setTimeout(() => {
-            audio.play().catch((playError) => {
-              logAudioIssue('iOS Audio Play Error', playError, {
-                errorName: playError.name,
-                errorMessage: playError.message
-              })
-              clearTimeoutAndReject(playError)
+          // Check if we need user interaction
+          const timeSinceInteraction = Date.now() - this.lastUserInteraction
+          if (timeSinceInteraction > 5000) { // More than 5 seconds since last interaction
+            logAudioIssue('iOS Audio Permission', 'Need user interaction to play audio', {
+              timeSinceInteraction,
+              audioContext: this.audioContext?.state
             })
-          }, 50)
+            // Try to resume audio context first
+            this.resumeAudioContext().then(() => {
+              // Add a small delay before playing on iOS
+              setTimeout(() => {
+                audio.play().catch((playError) => {
+                  logAudioIssue('iOS Audio Play Error', playError, {
+                    errorName: playError.name,
+                    errorMessage: playError.message,
+                    timeSinceInteraction,
+                    audioContextState: this.audioContext?.state
+                  })
+                  clearTimeoutAndReject(playError)
+                })
+              }, 50)
+            })
+          } else {
+            // Recent interaction, should be able to play
+            setTimeout(() => {
+              audio.play().catch((playError) => {
+                logAudioIssue('iOS Audio Play Error', playError, {
+                  errorName: playError.name,
+                  errorMessage: playError.message
+                })
+                clearTimeoutAndReject(playError)
+              })
+            }, 50)
+          }
         } else {
           audio.play().catch((error) => clearTimeoutAndReject(error))
         }
@@ -381,27 +436,57 @@ export class GoogleTTSService {
       // Clean text for Web Speech (remove SSML tags)
       const cleanText = text.replace(/<[^>]*>/g, '')
       
-      const utterance = new SpeechSynthesisUtterance(cleanText)
-      utterance.lang = 'da-DK'
-      utterance.rate = 0.8
-      utterance.pitch = 1.1
+      // iOS-specific: Ensure voices are loaded
+      const loadVoicesAndSpeak = () => {
+        const utterance = new SpeechSynthesisUtterance(cleanText)
+        utterance.lang = 'da-DK'
+        utterance.rate = 0.8
+        utterance.pitch = 1.1
 
-      // Try to find a Danish voice
-      const voices = window.speechSynthesis.getVoices()
-      const danishVoice = voices.find(voice => voice.lang.startsWith('da'))
-      if (danishVoice) {
-        utterance.voice = danishVoice
+        // Try to find a Danish voice
+        const voices = window.speechSynthesis.getVoices()
+        const danishVoice = voices.find(voice => voice.lang.startsWith('da'))
+        if (danishVoice) {
+          utterance.voice = danishVoice
+        }
+
+        // Add timeout for Web Speech API
+        const speechTimeout = setTimeout(() => {
+          window.speechSynthesis.cancel()
+          reject(new Error('Web Speech API timeout'))
+        }, 5000)
+
+        utterance.onend = () => {
+          clearTimeout(speechTimeout)
+          resolve()
+        }
+        utterance.onerror = (error) => {
+          clearTimeout(speechTimeout)
+          logAudioIssue('Web Speech API Error', error)
+          reject(error)
+        }
+
+        // Stop any current speech
+        window.speechSynthesis.cancel()
+        
+        // iOS fix: Small delay before speaking
+        if (isIOS()) {
+          setTimeout(() => {
+            window.speechSynthesis.speak(utterance)
+          }, 100)
+        } else {
+          window.speechSynthesis.speak(utterance)
+        }
       }
 
-      utterance.onend = () => resolve()
-      utterance.onerror = (error) => {
-        logAudioIssue('Web Speech API Error', error)
-        reject(error)
+      // iOS voices might not be loaded immediately
+      if (window.speechSynthesis.getVoices().length === 0) {
+        window.speechSynthesis.addEventListener('voiceschanged', loadVoicesAndSpeak, { once: true })
+        // Trigger voice loading
+        window.speechSynthesis.getVoices()
+      } else {
+        loadVoicesAndSpeak()
       }
-
-      // Stop any current speech
-      window.speechSynthesis.cancel()
-      window.speechSynthesis.speak(utterance)
     })
   }
 
@@ -412,6 +497,18 @@ export class GoogleTTSService {
     useSSML: boolean = true,
     customAudioConfig?: Partial<typeof TTS_CONFIG.audioConfig>
   ): Promise<void> {
+    // iOS-specific: Always try Web Speech API first for better reliability
+    if (isIOS()) {
+      try {
+        console.log('🎵 iOS detected, using Web Speech API')
+        await this.fallbackToWebSpeech(text)
+        return // Success with Web Speech API
+      } catch (webSpeechError) {
+        logAudioIssue('iOS Web Speech Failed', webSpeechError, { text })
+        // Continue to try Google TTS as backup
+      }
+    }
+    
     try {
       const audioData = await this.synthesizeSpeech(text, voiceType, useSSML, customAudioConfig)
       await this.playAudioFromData(audioData)
@@ -424,16 +521,21 @@ export class GoogleTTSService {
         userAgent: navigator.userAgent 
       })
       
-      // Fallback to Web Speech API, especially important for iOS
-      try {
-        console.log('🔄 Falling back to Web Speech API')
-        await this.fallbackToWebSpeech(text)
-      } catch (fallbackError) {
-        logAudioIssue('Both TTS methods failed', fallbackError, { 
-          originalError: error,
-          fallbackError: fallbackError 
-        })
-        throw new Error(`Audio synthesis failed: ${error}`)
+      // Fallback to Web Speech API for non-iOS or if iOS Web Speech also failed
+      if (!isIOS()) {
+        try {
+          console.log('🔄 Falling back to Web Speech API')
+          await this.fallbackToWebSpeech(text)
+        } catch (fallbackError) {
+          logAudioIssue('Both TTS methods failed', fallbackError, { 
+            originalError: error,
+            fallbackError: fallbackError 
+          })
+          throw new Error(`Audio synthesis failed: ${error}`)
+        }
+      } else {
+        // iOS already tried Web Speech, so just throw
+        throw new Error(`Audio synthesis failed on iOS: ${error}`)
       }
     }
   }

@@ -21,6 +21,8 @@ import {
   Star
 } from '@mui/icons-material'
 import { audioManager } from '../../utils/audio'
+import { useIOSAudioFix } from '../../hooks/useIOSAudioFix'
+import IOSAudioPrompt from '../common/IOSAudioPrompt'
 
 // Full Danish alphabet including special characters
 const DANISH_ALPHABET = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'Æ', 'Ø', 'Å']
@@ -30,7 +32,9 @@ const AlphabetGame: React.FC = () => {
   const [currentLetter, setCurrentLetter] = useState<string>('')
   const [showOptions, setShowOptions] = useState<string[]>([])
   const [score, setScore] = useState(0)
+  const [isPlaying, setIsPlaying] = useState(false)
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const { showIOSPrompt, checkIOSAudioPermission, handleIOSAudioError, hideIOSPrompt } = useIOSAudioFix()
 
   useEffect(() => {
     generateNewQuestion()
@@ -69,35 +73,69 @@ const AlphabetGame: React.FC = () => {
     // Stop any currently playing audio before starting new one
     audioManager.stopAll()
     
-    timeoutRef.current = setTimeout(() => {
-      audioManager.speakQuizPromptWithRepeat(`Find bogstavet ${letter}`, letter)
+    timeoutRef.current = setTimeout(async () => {
+      if (!checkIOSAudioPermission()) return
+      
+      setIsPlaying(true)
+      try {
+        await audioManager.speakQuizPromptWithRepeat(`Find bogstavet ${letter}`, letter)
+      } catch (error) {
+        handleIOSAudioError(error)
+      } finally {
+        setIsPlaying(false)
+      }
     }, 500)
   }
 
   const handleLetterClick = async (selectedLetter: string) => {
+    if (isPlaying) return
+    
     // Stop any currently playing audio
     audioManager.stopAll()
+    hideIOSPrompt() // Hide prompt on interaction
     
-    if (selectedLetter === currentLetter) {
-      setScore(score + 1)
-      await audioManager.announceGameResult(true)
-      setTimeout(() => {
-        generateNewQuestion()
-      }, 2000)
-    } else {
-      // For wrong answers, allow immediate new clicks
-      try {
+    setIsPlaying(true)
+    try {
+      if (selectedLetter === currentLetter) {
+        setScore(score + 1)
+        await audioManager.announceGameResult(true)
+        setTimeout(() => {
+          generateNewQuestion()
+        }, 2000)
+      } else {
+        // For wrong answers, allow immediate new clicks
         await audioManager.announceGameResult(false)
-      } catch (error) {
-        console.error('Error playing wrong answer feedback:', error)
       }
-      // Don't block further clicks
+    } catch (error) {
+      console.error('Error playing feedback:', error)
+      handleIOSAudioError(error)
+    } finally {
+      setIsPlaying(false)
     }
   }
 
-  const repeatLetter = () => {
+  const repeatLetter = async () => {
+    if (isPlaying) return
+    
     // Stop any currently playing audio before speaking again
     audioManager.stopAll()
+    hideIOSPrompt() // Hide prompt on interaction
+    
+    if (!checkIOSAudioPermission()) return
+    
+    setIsPlaying(true)
+    try {
+      await audioManager.speakQuizPromptWithRepeat(`Find bogstavet ${currentLetter}`, currentLetter)
+    } catch (error) {
+      handleIOSAudioError(error)
+    } finally {
+      setIsPlaying(false)
+    }
+  }
+  
+  const handleIOSPromptAction = () => {
+    hideIOSPrompt()
+    repeatLetter()
     audioManager.speakQuizPromptWithRepeat(`Find bogstavet ${currentLetter}`, currentLetter)
   }
 
@@ -257,6 +295,13 @@ const AlphabetGame: React.FC = () => {
         </Box>
 
       </Container>
+      
+      {/* iOS Audio Permission Prompt */}
+      <IOSAudioPrompt 
+        open={showIOSPrompt}
+        onAction={handleIOSPromptAction}
+        message="Tryk for at høre bogstavet"
+      />
     </Box>
   )
 }
