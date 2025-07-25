@@ -1,6 +1,14 @@
 // Remote console system for iOS debugging without Mac
 
 import { deviceInfo } from './deviceDetection'
+import { 
+  EnhancedErrorLog, 
+  parseStackTrace, 
+  generateErrorId, 
+  getEnvironmentInfo, 
+  userActionTracker,
+  setupNetworkInterceptor
+} from './errorCapture'
 
 interface LogEntry {
   timestamp: number
@@ -22,6 +30,7 @@ class RemoteConsole {
     if (this.isEnabled) {      
       this.interceptConsole()
       this.setupErrorHandling()
+      this.setupNetworkInterception()
       this.logDeviceInfo()
     }
   }
@@ -57,22 +66,37 @@ class RemoteConsole {
   }
   
   private setupErrorHandling() {
-    // Catch unhandled errors
+    // Catch unhandled errors with enhanced logging
     window.addEventListener('error', (event) => {
-      this.addLog('error', `Unhandled Error: ${event.message}`, {
-        filename: event.filename,
-        lineno: event.lineno,
-        colno: event.colno,
-        stack: event.error?.stack
-      })
+      this.addEnhancedError(
+        `Unhandled Error: ${event.message}`,
+        event.error,
+        {
+          filename: event.filename,
+          lineno: event.lineno,
+          colno: event.colno,
+          eventType: 'unhandled-error'
+        }
+      )
     })
     
     // Catch unhandled promise rejections (common with audio on iOS)
     window.addEventListener('unhandledrejection', (event) => {
-      this.addLog('error', `Unhandled Promise Rejection: ${event.reason}`, {
-        reason: event.reason,
-        promise: event.promise
-      })
+      this.addEnhancedError(
+        `Unhandled Promise Rejection: ${event.reason}`,
+        event.reason instanceof Error ? event.reason : new Error(String(event.reason)),
+        {
+          reason: event.reason,
+          eventType: 'unhandled-rejection'
+        }
+      )
+    })
+  }
+  
+  private setupNetworkInterception() {
+    // Set up network request/response logging
+    setupNetworkInterceptor((enhancedError) => {
+      this.sendEnhancedErrorToBackend(enhancedError)
     })
   }
   
@@ -105,6 +129,93 @@ class RemoteConsole {
     if (level === 'error' && deviceInfo.isIOS) {
       this.showErrorToast(message)
     }
+  }
+  
+  private addEnhancedError(message: string, error?: Error, additionalData?: any) {
+    const enhancedError: EnhancedErrorLog = {
+      id: generateErrorId(),
+      timestamp: new Date().toISOString(),
+      level: 'error',
+      message,
+      stack: error?.stack,
+      parsedStack: error?.stack ? parseStackTrace(error.stack) : undefined,
+      fileName: error?.stack ? this.extractFileFromStack(error.stack) : undefined,
+      lineNumber: this.extractLineFromStack(error?.stack),
+      columnNumber: this.extractColumnFromStack(error?.stack),
+      functionName: this.extractFunctionFromStack(error?.stack),
+      environment: getEnvironmentInfo(),
+      user: {
+        sessionId: this.getSessionId(),
+        actions: userActionTracker.getActions()
+      },
+      app: {
+        version: (window as any).__APP_VERSION__ || 'unknown',
+        buildTime: (window as any).__BUILD_TIME__ || 'unknown',
+        route: window.location.pathname,
+        component: this.getCurrentComponent(),
+        state: this.getCurrentState()
+      },
+      customData: additionalData,
+      tags: ['client-error', 'enhanced-capture']
+    }
+    
+    this.sendEnhancedErrorToBackend(enhancedError)
+    
+    // Show critical errors on screen for iOS
+    if (deviceInfo.isIOS) {
+      this.showErrorToast(message)
+    }
+  }
+  
+  private extractFileFromStack(stack?: string): string | undefined {
+    if (!stack) return undefined
+    const parsed = parseStackTrace(stack)
+    return parsed[0]?.fileName
+  }
+  
+  private extractLineFromStack(stack?: string): number | undefined {
+    if (!stack) return undefined
+    const parsed = parseStackTrace(stack)
+    return parsed[0]?.lineNumber
+  }
+  
+  private extractColumnFromStack(stack?: string): number | undefined {
+    if (!stack) return undefined
+    const parsed = parseStackTrace(stack)
+    return parsed[0]?.columnNumber
+  }
+  
+  private extractFunctionFromStack(stack?: string): string | undefined {
+    if (!stack) return undefined
+    const parsed = parseStackTrace(stack)
+    return parsed[0]?.functionName
+  }
+  
+  private getCurrentComponent(): string | undefined {
+    // Try to extract React component name from current DOM
+    const reactRoot = document.querySelector('#root')
+    if (reactRoot) {
+      const reactKey = Object.keys(reactRoot).find(key => key.startsWith('__reactInternalInstance'))
+      if (reactKey) {
+        try {
+          const reactInstance = (reactRoot as any)[reactKey]
+          return reactInstance?.type?.name || 'Unknown'
+        } catch {
+          return undefined
+        }
+      }
+    }
+    return undefined
+  }
+  
+  private getCurrentState(): any {
+    // Try to capture current URL params as basic state
+    const params = new URLSearchParams(window.location.search)
+    const state: any = {}
+    params.forEach((value, key) => {
+      state[key] = value
+    })
+    return Object.keys(state).length > 0 ? state : undefined
   }
   
   private getDeviceString(): string {
@@ -154,7 +265,7 @@ class RemoteConsole {
   }
   
   private sendToBackend(entry: LogEntry) {
-    // Send directly to API - keep it simple
+    // Send directly to API - keep it simple (legacy format)
     const requestBody = {
       level: entry.level,
       message: entry.message,
@@ -202,6 +313,36 @@ class RemoteConsole {
     })
   }
   
+  private sendEnhancedErrorToBackend(enhancedError: EnhancedErrorLog) {
+    fetch('/api/log-error', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        ...enhancedError,
+        // Legacy compatibility fields
+        level: enhancedError.level,
+        message: enhancedError.message,
+        device: enhancedError.environment.device,
+        url: window.location.href,
+        sessionId: enhancedError.user.sessionId,
+        data: enhancedError.customData
+      })
+    }).catch(async (error) => {
+      try {
+        const originalConsole = window.console?.error || (() => {})
+        originalConsole('❌ Enhanced error logging failed:', {
+          error: error.message,
+          enhancedErrorId: enhancedError.id,
+          timestamp: enhancedError.timestamp
+        })
+      } catch {
+        // Silent fail to prevent logging loops
+      }
+    })
+  }
+  
   
   private getSessionId(): string {
     // Simple session ID generation for tracking user sessions
@@ -240,9 +381,23 @@ class RemoteConsole {
 // Global instance
 export const remoteConsole = new RemoteConsole()
 
-// Utility function to log audio-specific issues
+// Utility function to log audio-specific issues with enhanced capture
 export const logAudioIssue = (context: string, error: any, additionalData?: any) => {
   console.error(`🎵 Audio Issue [${context}]:`, error, additionalData)
+  
+  // Also send enhanced error capture for audio issues
+  if (remoteConsole.isActive()) {
+    const audioError = error instanceof Error ? error : new Error(String(error))
+    remoteConsole['addEnhancedError'](
+      `Audio Issue [${context}]: ${audioError.message}`,
+      audioError,
+      {
+        context,
+        additionalData,
+        category: 'audio-issue'
+      }
+    )
+  }
 }
 
 // Utility function to log iOS-specific issues
