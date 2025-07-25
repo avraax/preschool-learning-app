@@ -35,7 +35,7 @@ const MathSelection: React.FC = () => {
     {
       id: 'counting',
       title: 'Tal Quiz',
-      description: 'Find det rigtige tal du hører',
+      description: 'Find det rigtige tal du hører (1-30)',
       icon: <Calculate sx={{ fontSize: '4rem' }} />,
       color: 'secondary',
       emoji: '🎯'

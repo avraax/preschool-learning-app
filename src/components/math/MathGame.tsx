@@ -20,7 +20,7 @@ import LottieCharacter, { useCharacterState } from '../common/LottieCharacter'
 import CelebrationEffect, { useCelebration } from '../common/CelebrationEffect'
 
 // Comprehensive math settings for all ages
-const MAX_NUMBER = 50
+const MAX_NUMBER = 30  // Tal Quiz numbers from 1-30
 const MAX_ADDITION_NUMBER = 10
 
 interface MathProblem {
