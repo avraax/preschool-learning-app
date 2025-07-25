@@ -53,23 +53,6 @@ const NumberLearning: React.FC = () => {
   }, [])
 
 
-  const speakCurrentNumber = async () => {
-    if (isPlaying) return
-    
-    setIsPlaying(true)
-    audioManager.stopAll()
-    
-    const currentNumber = numbers[currentIndex]
-    
-    try {
-      // Use faster speed for number counting (1.2 instead of default 0.8)
-      await audioManager.speakNumber(currentNumber, 1.2)
-    } catch (error) {
-      console.error('Error speaking number:', error)
-    } finally {
-      setIsPlaying(false)
-    }
-  }
 
 
   const goToNumber = async (index: number) => {
@@ -90,10 +73,6 @@ const NumberLearning: React.FC = () => {
   }
 
 
-  // Speak the current number when index changes
-  useEffect(() => {
-    speakCurrentNumber()
-  }, [currentIndex])
 
   const progress = ((currentIndex + 1) / numbers.length) * 100
 

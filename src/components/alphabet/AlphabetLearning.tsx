@@ -17,8 +17,6 @@ import {
 } from '@mui/icons-material'
 import { audioManager } from '../../utils/audio'
 import LearningGrid from '../common/LearningGrid'
-import { isIOS } from '../../utils/deviceDetection'
-import { logAudioIssue } from '../../utils/remoteConsole'
 
 
 const DANISH_ALPHABET = [
@@ -59,29 +57,6 @@ const AlphabetLearning: React.FC = () => {
     }
   }, [])
 
-  const speakCurrentLetter = async () => {
-    if (isPlaying) {
-      return
-    }
-    
-    const currentLetter = DANISH_ALPHABET[currentIndex]
-    
-    setIsPlaying(true)
-    audioManager.stopAll()
-    
-    try {
-      await audioManager.speakLetter(currentLetter)
-    } catch (error) {
-      console.error('Error speaking letter:', error)
-      logAudioIssue('Alphabet Letter Speaking', error, { 
-        currentLetter, 
-        currentIndex,
-        isIOS: isIOS()
-      })
-    } finally {
-      setIsPlaying(false)
-    }
-  }
 
 
   const goToLetter = async (index: number) => {
@@ -102,10 +77,6 @@ const AlphabetLearning: React.FC = () => {
 
 
 
-  // Speak the current letter when index changes
-  useEffect(() => {
-    speakCurrentLetter()
-  }, [currentIndex])
 
   const progress = ((currentIndex + 1) / DANISH_ALPHABET.length) * 100
 
