@@ -17,6 +17,7 @@ import {
 import { Volume2, Award, ArrowLeft } from 'lucide-react'
 import { audioManager } from '../../utils/audio'
 import { useIOSAudioFix } from '../../hooks/useIOSAudioFix'
+import { isIOS } from '../../utils/deviceDetection'
 import IOSAudioPrompt from '../common/IOSAudioPrompt'
 import LottieCharacter, { useCharacterState } from '../common/LottieCharacter'
 import CelebrationEffect, { useCelebration } from '../common/CelebrationEffect'
@@ -95,12 +96,18 @@ const AlphabetGame: React.FC = () => {
     audioManager.stopAll()
     
     timeoutRef.current = setTimeout(async () => {
-      if (!checkIOSAudioPermission()) return
+      // For iOS, don't auto-play audio immediately - wait for user interaction
+      if (isIOS() && !checkIOSAudioPermission()) {
+        // Just show the visual question without audio for now
+        console.log('🍎 iOS: Waiting for user interaction before speaking question')
+        return
+      }
       
       setIsPlaying(true)
       try {
         await audioManager.speakQuizPromptWithRepeat(`Find bogstavet ${letter}`, letter)
       } catch (error) {
+        console.error('❌ Audio error in quiz:', error)
         handleIOSAudioError(error)
       } finally {
         setIsPlaying(false)

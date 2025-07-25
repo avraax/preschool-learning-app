@@ -58,10 +58,20 @@ export class GoogleTTSService {
       this.resumeAudioContext()
     }
     
-    // Track various user interactions
+    // Track various user interactions - more comprehensive for iOS
     document.addEventListener('click', updateInteraction, { passive: true })
     document.addEventListener('touchstart', updateInteraction, { passive: true })
     document.addEventListener('touchend', updateInteraction, { passive: true })
+    document.addEventListener('pointerdown', updateInteraction, { passive: true })
+    document.addEventListener('pointerup', updateInteraction, { passive: true })
+    document.addEventListener('keydown', updateInteraction, { passive: true })
+    
+    // iOS specific: Also track when page becomes visible
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) {
+        this.lastUserInteraction = Date.now()
+      }
+    })
   }
 
   // Resume audio context for iOS
@@ -379,40 +389,42 @@ export class GoogleTTSService {
         
         // iOS-specific play handling
         if (isIOS()) {
-          // Check if we need user interaction
+          // Check if we need user interaction - be more strict for iOS
           const timeSinceInteraction = Date.now() - this.lastUserInteraction
-          if (timeSinceInteraction > 5000) { // More than 5 seconds since last interaction
-            logAudioIssue('iOS Audio Permission', 'Need user interaction to play audio', {
+          const needsInteraction = timeSinceInteraction > 3000 || this.audioContext?.state !== 'running'
+          
+          if (needsInteraction) {
+            const errorMsg = `Need user interaction to play audio (${Math.round(timeSinceInteraction/1000)}s since last interaction, context: ${this.audioContext?.state})`
+            logAudioIssue('iOS Audio Permission', errorMsg, {
               timeSinceInteraction,
-              audioContext: this.audioContext?.state
+              audioContext: this.audioContext?.state,
+              documentHidden: document.hidden,
+              documentHasFocus: document.hasFocus(),
+              pageVisibility: document.visibilityState
             })
-            // Try to resume audio context first
-            this.resumeAudioContext().then(() => {
-              // Add a small delay before playing on iOS
-              setTimeout(() => {
-                audio.play().catch((playError) => {
-                  logAudioIssue('iOS Audio Play Error', playError, {
-                    errorName: playError.name,
-                    errorMessage: playError.message,
-                    timeSinceInteraction,
-                    audioContextState: this.audioContext?.state
-                  })
-                  clearTimeoutAndReject(playError)
-                })
-              }, 50)
-            })
-          } else {
-            // Recent interaction, should be able to play
+            clearTimeoutAndReject(new Error('iOS audio requires recent user interaction'))
+            return
+          }
+          
+          // Ensure audio context is running first
+          this.resumeAudioContext().then(() => {
+            // Add a longer delay for iOS to ensure context is ready
             setTimeout(() => {
               audio.play().catch((playError) => {
                 logAudioIssue('iOS Audio Play Error', playError, {
                   errorName: playError.name,
-                  errorMessage: playError.message
+                  errorMessage: playError.message,
+                  timeSinceInteraction,
+                  audioContextState: this.audioContext?.state,
+                  audioSrc: audio.src.substring(0, 50) + '...'
                 })
                 clearTimeoutAndReject(playError)
               })
-            }, 50)
-          }
+            }, 100) // Longer delay for iOS
+          }).catch((contextError) => {
+            logAudioIssue('iOS Audio Context Error', contextError)
+            clearTimeoutAndReject(contextError)
+          })
         } else {
           audio.play().catch((error) => clearTimeoutAndReject(error))
         }
@@ -450,11 +462,12 @@ export class GoogleTTSService {
           utterance.voice = danishVoice
         }
 
-        // Add timeout for Web Speech API
+        // Add timeout for Web Speech API - longer for iOS
+        const timeoutDuration = isIOS() ? 8000 : 5000
         const speechTimeout = setTimeout(() => {
           window.speechSynthesis.cancel()
-          reject(new Error('Web Speech API timeout'))
-        }, 5000)
+          reject(new Error(`Web Speech API timeout after ${timeoutDuration/1000}s`))
+        }, timeoutDuration)
 
         utterance.onend = () => {
           clearTimeout(speechTimeout)

@@ -12,14 +12,30 @@ export const useIOSAudioFix = () => {
       setShowIOSPrompt(false) // Hide prompt on any interaction
     }
     
+    // Track more interaction types for iOS
     document.addEventListener('click', updateInteraction)
     document.addEventListener('touchstart', updateInteraction)
     document.addEventListener('touchend', updateInteraction)
+    document.addEventListener('pointerdown', updateInteraction)
+    document.addEventListener('pointerup', updateInteraction)
+    document.addEventListener('keydown', updateInteraction)
+    
+    // Also track page visibility changes
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        updateInteraction()
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibilityChange)
     
     return () => {
       document.removeEventListener('click', updateInteraction)
       document.removeEventListener('touchstart', updateInteraction)
       document.removeEventListener('touchend', updateInteraction)
+      document.removeEventListener('pointerdown', updateInteraction)
+      document.removeEventListener('pointerup', updateInteraction)
+      document.removeEventListener('keydown', updateInteraction)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
   }, [])
   
@@ -27,7 +43,8 @@ export const useIOSAudioFix = () => {
     if (!isIOS()) return true
     
     const timeSinceInteraction = Date.now() - lastInteractionRef.current
-    if (timeSinceInteraction > 5000) {
+    // Use stricter timing to match GoogleTTS service
+    if (timeSinceInteraction > 3000 || document.hidden || !document.hasFocus()) {
       setShowIOSPrompt(true)
       return false
     }
