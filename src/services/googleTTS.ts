@@ -82,20 +82,37 @@ export class GoogleTTSService {
     document.addEventListener('pointerup', updateInteraction, { passive: true })
     document.addEventListener('keydown', updateInteraction, { passive: true })
     
-    // iOS specific: Also track when page becomes visible
+    // iOS specific: Track navigation and visibility changes as user interactions
     document.addEventListener('visibilitychange', () => {
       if (!document.hidden) {
         this.lastUserInteraction = Date.now()
+        console.log('🎵 Updated user interaction on page visibility change')
       }
+    })
+    
+    // Track focus events as user interactions (helpful for navigation)
+    window.addEventListener('focus', () => {
+      this.lastUserInteraction = Date.now()
+      console.log('🎵 Updated user interaction on window focus')
+    })
+    
+    // Track page load events as user interactions (for navigation)
+    window.addEventListener('pageshow', () => {
+      this.lastUserInteraction = Date.now()
+      console.log('🎵 Updated user interaction on page show')
     })
   }
 
   // Resume audio context for iOS - only with proper user gesture
   private async resumeAudioContext(): Promise<void> {
-    // Only try to create/resume audio context if we have recent user interaction
+    // Only try to create/resume audio context if we have recent user interaction or document focus
     const timeSinceInteraction = Date.now() - this.lastUserInteraction
-    if (timeSinceInteraction > 3000) {
-      console.log('🎵 Skipping AudioContext resume - no recent user interaction')
+    const hasDocumentFocus = document.hasFocus()
+    const isDocumentVisible = !document.hidden
+    
+    // More lenient check for AudioContext resume
+    if (timeSinceInteraction > 10000 && !hasDocumentFocus && !isDocumentVisible) {
+      console.log('🎵 Skipping AudioContext resume - no recent interaction or focus')
       return
     }
     
@@ -482,17 +499,24 @@ export class GoogleTTSService {
         
         // iOS-specific play handling
         if (isIOS()) {
-          // Check if we need user interaction - be more strict for iOS
+          // Check if we need user interaction - be more lenient for navigation scenarios
           const timeSinceInteraction = Date.now() - this.lastUserInteraction
-          const needsInteraction = timeSinceInteraction > 3000 || this.audioContext?.state !== 'running'
+          const hasRecentInteraction = timeSinceInteraction < 10000 // Increased from 3s to 10s
+          const hasDocumentFocus = document.hasFocus()
+          const isDocumentVisible = !document.hidden
           
-          if (needsInteraction) {
-            const errorMsg = `Need user interaction to play audio (${Math.round(timeSinceInteraction/1000)}s since last interaction, context: ${this.audioContext?.state})`
+          // More forgiving check: allow if any of these conditions are met
+          const canPlayAudio = hasRecentInteraction || (hasDocumentFocus && isDocumentVisible)
+          
+          if (!canPlayAudio) {
+            const errorMsg = `Need user interaction to play audio (${Math.round(timeSinceInteraction/1000)}s since last interaction, focus: ${hasDocumentFocus}, visible: ${isDocumentVisible}, context: ${this.audioContext?.state})`
             logAudioIssue('iOS Audio Permission', errorMsg, {
               timeSinceInteraction,
+              hasRecentInteraction,
+              hasDocumentFocus,
+              isDocumentVisible,
               audioContext: this.audioContext?.state,
               documentHidden: document.hidden,
-              documentHasFocus: document.hasFocus(),
               pageVisibility: document.visibilityState
             })
             clearTimeoutAndRejectHandler(new Error('iOS audio requires recent user interaction'))
