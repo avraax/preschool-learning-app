@@ -53,7 +53,7 @@ const AlphabetLearning: React.FC = () => {
         clearTimeout(timeoutRef.current)
       }
       // Ensure iOS audio helper is stopped
-      iosAudioHelper.stop()
+      iosAudioHelper.stopKeepAlive()
     }
 
     // Track user interactions for iOS audio
@@ -82,7 +82,7 @@ const AlphabetLearning: React.FC = () => {
       window.removeEventListener('pagehide', handleBeforeUnload)
       
       // Stop iOS audio helper
-      iosAudioHelper.stop()
+      iosAudioHelper.stopKeepAlive()
     }
   }, [])
 
@@ -184,7 +184,7 @@ const AlphabetLearning: React.FC = () => {
     
     // Start iOS audio keep-alive
     if (deviceInfo.isIOS) {
-      iosAudioHelper.start()
+      iosAudioHelper.startKeepAlive()
     }
   }
 
@@ -198,7 +198,7 @@ const AlphabetLearning: React.FC = () => {
     
     // Stop iOS audio keep-alive
     if (deviceInfo.isIOS) {
-      iosAudioHelper.stop()
+      iosAudioHelper.stopKeepAlive()
     }
   }
 
