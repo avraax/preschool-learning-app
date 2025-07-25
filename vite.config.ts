@@ -60,10 +60,22 @@ export default defineConfig({
       },
       includeAssets: ['favicon.svg', 'apple-touch-icon-*.svg', 'icon-*.svg'],
       workbox: {
-        // Network-only strategy - no caching
+        // Network-only strategy - no caching, but exclude API routes
         runtimeCaching: [
           {
-            urlPattern: ({ request }) => true, // Match all requests
+            // Only handle navigation requests and static assets, not API calls
+            urlPattern: ({ request, url }) => {
+              // Skip API routes entirely - let them go directly to server
+              if (url.pathname.startsWith('/api/')) {
+                return false
+              }
+              // Handle only document and static asset requests
+              return request.mode === 'navigate' || 
+                     request.destination === 'document' ||
+                     request.destination === 'script' ||
+                     request.destination === 'style' ||
+                     request.destination === 'image'
+            },
             handler: 'NetworkOnly' // Always go to network, no caching
           }
         ],
@@ -94,10 +106,26 @@ export default defineConfig({
         target: 'http://localhost:3001',
         changeOrigin: true,
         secure: false,
+        // Better error handling for proxy
+        onError: (err, req, res) => {
+          console.log('🔴 Proxy error:', err.message)
+          console.log('💡 Make sure the TTS server is running on port 3001')
+        },
+        // Add timeout and retry logic
+        timeout: 10000,
+        // Log successful proxy requests
+        onProxyReq: (proxyReq, req, res) => {
+          console.log('🔄 Proxying:', req.method, req.url, '→', proxyReq.getHeader('host') + proxyReq.path)
+        }
       }
     }
   },
   build: {
+    // TEMPORARY: Disable minification for production debugging
+    // This makes error line numbers match exactly with local development
+    // TODO: Re-enable minification once debugging phase is complete
+    minify: false,
+    
     // Ensure unique filenames for cache busting
     rollupOptions: {
       output: {

@@ -8,6 +8,8 @@
     "dev:full": "npm run build && node dev-server.js",
     "dev:vercel": "vercel dev",
     "build": "tsc && vite build",
+    "build:debug": "tsc && vite build --mode debug",
+    "build:production": "tsc && vite build --minify",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview"
   },
