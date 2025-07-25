@@ -161,11 +161,11 @@ export function extractRequestInfo(args: any[]): RequestInfo {
   // Extract headers
   if (init?.headers) {
     if (init.headers instanceof Headers) {
-      init.headers.forEach((value, key) => {
+      init.headers.forEach((value: string, key: string) => {
         headers[key] = value
       })
     } else if (Array.isArray(init.headers)) {
-      init.headers.forEach(([key, value]) => {
+      init.headers.forEach(([key, value]: [string, string]) => {
         headers[key] = value
       })
     } else {

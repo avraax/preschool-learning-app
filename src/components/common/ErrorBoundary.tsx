@@ -79,7 +79,7 @@ class ErrorBoundary extends Component<Props, State> {
         version: (window as any).__APP_VERSION__ || 'unknown',
         buildTime: (window as any).__BUILD_TIME__ || 'unknown',
         route: window.location.pathname,
-        component: this.extractComponentFromStack(errorInfo.componentStack),
+        component: this.extractComponentFromStack(errorInfo.componentStack || ''),
         state: this.getCurrentUrlParams()
       },
       customData: {
