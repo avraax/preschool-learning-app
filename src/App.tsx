@@ -28,7 +28,8 @@ import NumberLearning from './components/math/NumberLearning'
 import AdditionGame from './components/math/AdditionGame'
 import ErrorDashboard from './components/admin/ErrorDashboard'
 import PWAInstallPrompt from './components/common/PWAInstallPrompt'
-import PWAUpdateNotification from './components/common/PWAUpdateNotification'
+import UpdateBanner from './components/common/UpdateBanner'
+import { useUpdateChecker } from './hooks/useUpdateChecker'
 
 // Admin redirect component for query parameter support
 const AdminRedirectChecker = ({ children }: { children: React.ReactNode }) => {
@@ -322,6 +323,9 @@ const NotFoundPage = () => {
 }
 
 function App() {
+  // Initialize update checker
+  const updateStatus = useUpdateChecker()
+  
   useEffect(() => {
     // Initialize remote console and log device info
     console.log('🎈 Børnelæring App Starting')
@@ -335,6 +339,14 @@ function App() {
 
   return (
     <>
+      {/* Update Banner - shown at top when update available */}
+      <UpdateBanner
+        show={updateStatus.updateAvailable}
+        onUpdate={updateStatus.applyUpdate}
+        onDismiss={updateStatus.dismissUpdate}
+        isApplying={false}
+      />
+      
       <Routes>
         {/* Home Routes */}
         <Route path="/" element={
@@ -366,7 +378,6 @@ function App() {
       
       {/* PWA Components - shown globally */}
       <PWAInstallPrompt />
-      <PWAUpdateNotification />
     </>
   )
 }

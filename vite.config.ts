@@ -1,18 +1,73 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
+import fs from 'fs'
+import path from 'path'
+
+// Version generation plugin
+function generateVersionPlugin() {
+  let versionInfo: any
+  
+  return {
+    name: 'generate-version',
+    buildStart() {
+      const buildTime = Date.now()
+      const versionPath = path.resolve(__dirname, 'src/config/version.ts')
+      
+      // Try to get git commit hash
+      let commitHash = 'dev'
+      try {
+        const { execSync } = require('child_process')
+        commitHash = execSync('git rev-parse --short HEAD', { encoding: 'utf8' }).trim()
+      } catch (error) {
+        console.log('Could not get git commit hash, using "dev"')
+      }
+      
+      versionInfo = {
+        buildTime,
+        version: '1.0.0',
+        commitHash
+      }
+      
+      const versionContent = `// Auto-generated build information
+// This file is updated automatically during the build process
+
+export const BUILD_INFO = {
+  buildTime: ${buildTime},
+  version: '1.0.0',
+  commitHash: '${commitHash}'
+}
+
+export default BUILD_INFO`
+      
+      fs.writeFileSync(versionPath, versionContent)
+      console.log(`📦 Generated version info: ${new Date(buildTime).toISOString()}, commit: ${commitHash}`)
+    },
+    generateBundle() {
+      // Also generate version.json for the API endpoint
+      if (versionInfo) {
+        this.emitFile({
+          type: 'asset',
+          fileName: 'version.json',
+          source: JSON.stringify(versionInfo, null, 2)
+        })
+      }
+    }
+  }
+}
 
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
+    generateVersionPlugin(),
     react(),
     VitePWA({
-      registerType: 'prompt',
-      injectRegister: 'script',
-      // Use our custom manifest.json from public folder
+      // Generate manifest only, disable service worker completely
+      disable: false,
+      injectRegister: null,
       manifest: {
         name: "Børnelæring - Alfabetet og Tal",
-        short_name: "Børnelæring",
+        short_name: "Børnelæring", 
         description: "Lær alfabetet og tal på dansk for børn 3-7 år. Interaktive spil med dansk lyd og animationer.",
         start_url: "/",
         display: "standalone",
@@ -31,14 +86,14 @@ export default defineConfig({
           },
           {
             src: "icon-512x512.svg",
-            sizes: "512x512",
+            sizes: "512x512", 
             type: "image/svg+xml",
             purpose: "any"
           },
           {
             src: "apple-touch-icon-180x180.svg",
             sizes: "180x180",
-            type: "image/svg+xml",
+            type: "image/svg+xml", 
             purpose: "any"
           },
           {
@@ -48,7 +103,7 @@ export default defineConfig({
             purpose: "maskable"
           },
           {
-            src: "icon-512x512-maskable.svg",
+            src: "icon-512x512-maskable.svg", 
             sizes: "512x512",
             type: "image/svg+xml",
             purpose: "maskable"
@@ -58,43 +113,11 @@ export default defineConfig({
         dir: "ltr",
         display_override: ["standalone", "minimal-ui"]
       },
-      includeAssets: ['favicon.svg', 'apple-touch-icon-*.svg', 'icon-*.svg'],
       workbox: {
-        // Network-only strategy - no caching, but exclude API routes
-        runtimeCaching: [
-          {
-            // Only handle navigation requests and static assets, not API calls
-            urlPattern: ({ request, url }) => {
-              // Skip API routes entirely - let them go directly to server
-              if (url.pathname.startsWith('/api/')) {
-                return false
-              }
-              // Handle only document and static asset requests
-              return request.mode === 'navigate' || 
-                     request.destination === 'document' ||
-                     request.destination === 'script' ||
-                     request.destination === 'style' ||
-                     request.destination === 'image'
-            },
-            handler: 'NetworkOnly' // Always go to network, no caching
-          }
-        ],
-        skipWaiting: true,
-        clientsClaim: true,
-        // Don't cache anything - ensures latest code
-        globPatterns: [],
-        // Force immediate update check
-        cleanupOutdatedCaches: true,
-        // Enhanced update detection
-        maximumFileSizeToCacheInBytes: 0 // Disable file caching completely
-      },
-      // Enhanced development and update detection
-      devOptions: {
-        enabled: true,
-        type: 'module'
-      },
-      // Immediate service worker activation
-      selfDestroying: false
+        // Disable service worker generation completely
+        mode: 'development',
+        globPatterns: []
+      }
     })
   ],
   server: {
