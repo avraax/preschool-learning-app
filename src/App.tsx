@@ -327,7 +327,7 @@ function App() {
   
   // DEV MODE: Set to true to test update banner styling
   // This allows you to see and adjust the UpdateBanner without waiting for a real update
-  const DEV_SHOW_UPDATE_BANNER = false // Change to true to test the banner
+  const DEV_SHOW_UPDATE_BANNER = true // Change to true to test the banner
   const DEV_SHOW_APPLYING_STATE = false // Change to true to test the "applying" state
   
   useEffect(() => {
@@ -343,11 +343,10 @@ function App() {
 
   return (
     <>
-      {/* Update Banner - shown at top when update available */}
+      {/* Update Button - shown in lower right when update available */}
       <UpdateBanner
         show={updateStatus.updateAvailable || DEV_SHOW_UPDATE_BANNER}
         onUpdate={DEV_SHOW_UPDATE_BANNER ? () => console.log('🧪 DEV MODE: Update clicked') : updateStatus.applyUpdate}
-        onDismiss={DEV_SHOW_UPDATE_BANNER ? () => console.log('🧪 DEV MODE: Dismiss clicked') : updateStatus.dismissUpdate}
         isApplying={DEV_SHOW_APPLYING_STATE}
       />
       
