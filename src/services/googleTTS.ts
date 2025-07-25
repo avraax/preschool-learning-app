@@ -348,14 +348,47 @@ export class GoogleTTSService {
           reject(new Error('Audio playback timeout'))
         }, timeoutDuration)
         
+        let isCompleted = false
+        
+        // Fallback completion detection using timeupdate  
+        const checkCompletion = () => {
+          if (audio.currentTime > 0 && audio.currentTime >= audio.duration - 0.1) {
+            console.log('🎵 Audio completion detected via timeupdate')
+            clearTimeoutAndResolve()
+          }
+        }
+        
+        // Check completion via pause event
+        const checkPauseCompletion = () => {
+          // If paused at the end, consider it complete
+          if (audio.currentTime > 0 && audio.currentTime >= audio.duration - 0.1) {
+            console.log('🎵 Audio completion detected via pause at end')
+            clearTimeoutAndResolve()
+          }
+        }
+        
         const clearTimeoutAndResolve = () => {
+          if (isCompleted) return
+          isCompleted = true
           clearTimeout(playbackTimeout)
+          // Remove all event listeners to prevent memory leaks
+          audio.removeEventListener('ended', clearTimeoutAndResolve)
+          audio.removeEventListener('timeupdate', checkCompletion)
+          audio.removeEventListener('pause', checkPauseCompletion)
+          audio.removeEventListener('error', clearTimeoutAndRejectHandler)
           this.currentAudio = null
           resolve()
         }
         
-        const clearTimeoutAndReject = (error: any) => {
-          clearTimeout(playbackTimeout)
+        const clearTimeoutAndRejectHandler = (error: any) => {
+          if (isCompleted) return
+          isCompleted = true
+          clearTimeout(playbackTimeout)  
+          // Remove all event listeners to prevent memory leaks
+          audio.removeEventListener('ended', clearTimeoutAndResolve)
+          audio.removeEventListener('timeupdate', checkCompletion)
+          audio.removeEventListener('pause', checkPauseCompletion)
+          audio.removeEventListener('error', clearTimeoutAndRejectHandler)
           this.currentAudio = null
           reject(error)
         }
@@ -373,18 +406,32 @@ export class GoogleTTSService {
           })
         }
         
+        // Primary completion event
         audio.addEventListener('ended', () => {
-          logIOSIssue('Audio Playback', 'Audio ended successfully')
+          console.log('🎵 Audio ended successfully')
           clearTimeoutAndResolve()
         })
+        
+        // Fallback completion detection using timeupdate
+        audio.addEventListener('timeupdate', checkCompletion)
+        
+        // Additional completion events  
+        audio.addEventListener('pause', checkPauseCompletion)
         
         audio.addEventListener('error', (error) => {
           logAudioIssue('Audio Playback Error', error, { 
             isIOS: isIOS(),
             audioDataLength: base64AudioData.length,
-            userAgent: navigator.userAgent
+            userAgent: navigator.userAgent,
+            currentTime: audio.currentTime,
+            duration: audio.duration
           })
-          clearTimeoutAndReject(error)
+          clearTimeoutAndRejectHandler(error)
+        })
+        
+        // Add load event to log when audio is ready
+        audio.addEventListener('loadeddata', () => {
+          console.log(`🎵 Audio loaded: duration=${audio.duration}s, data=${base64AudioData.length} bytes`)
         })
         
         // iOS-specific play handling
@@ -402,7 +449,7 @@ export class GoogleTTSService {
               documentHasFocus: document.hasFocus(),
               pageVisibility: document.visibilityState
             })
-            clearTimeoutAndReject(new Error('iOS audio requires recent user interaction'))
+            clearTimeoutAndRejectHandler(new Error('iOS audio requires recent user interaction'))
             return
           }
           
@@ -418,15 +465,15 @@ export class GoogleTTSService {
                   audioContextState: this.audioContext?.state,
                   audioSrc: audio.src.substring(0, 50) + '...'
                 })
-                clearTimeoutAndReject(playError)
+                clearTimeoutAndRejectHandler(playError)
               })
             }, 100) // Longer delay for iOS
           }).catch((contextError) => {
             logAudioIssue('iOS Audio Context Error', contextError)
-            clearTimeoutAndReject(contextError)
+            clearTimeoutAndRejectHandler(contextError)
           })
         } else {
-          audio.play().catch((error) => clearTimeoutAndReject(error))
+          audio.play().catch((error) => clearTimeoutAndRejectHandler(error))
         }
         
       } catch (setupError) {
