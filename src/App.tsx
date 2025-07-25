@@ -27,7 +27,6 @@ import MathSelection from './components/math/MathSelection'
 import NumberLearning from './components/math/NumberLearning'
 import AdditionGame from './components/math/AdditionGame'
 import ErrorDashboard from './components/admin/ErrorDashboard'
-import PWAInstallPrompt from './components/common/PWAInstallPrompt'
 import UpdateBanner from './components/common/UpdateBanner'
 import { useUpdateChecker } from './hooks/useUpdateChecker'
 
@@ -159,7 +158,7 @@ const HomePage = () => {
                         }}
                       >
                         {/* Force deployment - title updated to Alfabetet */}
-                        Alfabetet
+                        Alfabetet 2
                       </Typography>
                       <Typography 
                         variant="body2" 
@@ -376,8 +375,7 @@ function App() {
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
       
-      {/* PWA Components - shown globally */}
-      <PWAInstallPrompt />
+      {/* Update Banner - shown globally */}
     </>
   )
 }

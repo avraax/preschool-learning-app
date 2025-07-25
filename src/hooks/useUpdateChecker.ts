@@ -68,13 +68,6 @@ export function useUpdateChecker(): UpdateStatus {
       const hasUpdate = remoteVersion.buildTime > currentVersion.buildTime
       setUpdateAvailable(hasUpdate && !isDismissed)
 
-      console.log('🔄 Update check:', {
-        current: new Date(currentVersion.buildTime).toISOString(),
-        remote: new Date(remoteVersion.buildTime).toISOString(),
-        hasUpdate,
-        dismissed: isDismissed
-      })
-
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error'
       setError(`Update check failed: ${errorMessage}`)
