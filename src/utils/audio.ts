@@ -77,16 +77,24 @@ export class AudioManager {
           throw error // Don't retry for navigation interruptions
         }
         
-        logAudioIssue(`Number speech attempt ${attempt + 1}`, error, { 
+        // Enhanced error information for iOS debugging
+        const errorInfo = {
           number, 
           numberText,
           isIOS: isIOS(),
-          attempt: attempt + 1 
-        })
+          attempt: attempt + 1,
+          errorMessage: error instanceof Error ? error.message : 'Unknown error',
+          errorType: typeof error,
+          audioContextState: (window as any).AudioContext ? 'supported' : 'not supported'
+        }
+        
+        logAudioIssue(`Number speech attempt ${attempt + 1}`, error, errorInfo)
         
         // Wait a bit before retrying (but not on last attempt)
+        // Use longer delay for iOS to allow audio context to recover
         if (attempt < maxRetries - 1) {
-          await new Promise(resolve => setTimeout(resolve, 300))
+          const retryDelay = isIOS() ? 500 : 300
+          await new Promise(resolve => setTimeout(resolve, retryDelay))
         }
       }
     }

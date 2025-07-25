@@ -18,6 +18,12 @@ export class GoogleTTSService {
   private audioContext: AudioContext | null = null
   private lastUserInteraction: number = Date.now()
 
+  // Circuit breaker for iOS TTS failures
+  private failureCount = 0
+  private lastFailureTime = 0
+  private readonly MAX_FAILURES = 3
+  private readonly FAILURE_RESET_TIME = 30000 // 30 seconds
+
   // Use shared configuration
   private readonly voiceConfigs = {
     primary: TTS_CONFIG.voice,
@@ -261,6 +267,17 @@ export class GoogleTTSService {
   ): Promise<string> {
     await this.initializeService()
     
+    // Circuit breaker: Check if we should temporarily stop trying
+    const now = Date.now()
+    if (this.failureCount >= this.MAX_FAILURES) {
+      if (now - this.lastFailureTime < this.FAILURE_RESET_TIME) {
+        throw new Error('TTS service temporarily disabled due to repeated failures')
+      } else {
+        // Reset circuit breaker after timeout
+        this.failureCount = 0
+      }
+    }
+    
     const voice = this.voiceConfigs[voiceType]
     const inputText = useSSML ? this.createChildFriendlySSML(text) : text
     const finalAudioConfig = customAudioConfig ? { ...this.audioConfig, ...customAudioConfig } : this.audioConfig
@@ -352,11 +369,19 @@ export class GoogleTTSService {
       // Cache the result
       this.cacheAudio(cacheKey, voice.name, audioData)
       
+      // Reset failure count on success
+      this.failureCount = 0
+      
       return audioData
 
     } catch (error) {
       console.error('❌ Google TTS synthesis failed:', error)
       console.log('ℹ️ Will fall back to Web Speech API')
+      
+      // Track failure for circuit breaker
+      this.failureCount++
+      this.lastFailureTime = Date.now()
+      
       throw error
     }
   }
@@ -665,14 +690,30 @@ export class GoogleTTSService {
           throw googleTTSError
         }
         
-        logAudioIssue('iOS Google TTS Failed', googleTTSError, { text })
+        // Enhanced error information for empty error objects
+        const errorInfo = {
+          text,
+          voiceType,
+          useSSML,
+          errorMessage: googleTTSError instanceof Error ? googleTTSError.message : 'Unknown error',
+          errorType: typeof googleTTSError,
+          errorKeys: Object.keys(googleTTSError || {}),
+          audioContextState: this.audioContext?.state,
+          userAgent: navigator.userAgent
+        }
+        
+        logAudioIssue('iOS Google TTS Failed', googleTTSError, errorInfo)
+        
+        // Add delay before fallback to prevent rapid failures
+        await new Promise(resolve => setTimeout(resolve, 200))
+        
         // Try Web Speech as fallback
         try {
           console.log('🔄 iOS: Falling back to Web Speech API')
           await this.fallbackToWebSpeech(text)
           return
         } catch (webSpeechError) {
-          logAudioIssue('iOS Web Speech Also Failed', webSpeechError, { text })
+          logAudioIssue('iOS Web Speech Also Failed', webSpeechError, { text, originalError: googleTTSError })
           throw new Error(`Both audio methods failed on iOS: ${googleTTSError}`)
         }
       }

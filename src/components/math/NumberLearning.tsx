@@ -88,6 +88,16 @@ const NumberLearning: React.FC = () => {
     } catch (error: any) {
       console.error('Error speaking number:', error)
       
+      // Check if it's a navigation interruption (expected)
+      const isNavigationInterruption = error instanceof Error && 
+        (error.message.includes('interrupted by navigation') || 
+         error.message.includes('interrupted by user'))
+      
+      if (isNavigationInterruption) {
+        console.log('🎵 Number speech interrupted by navigation (expected)')
+        return // Don't show error or retry for navigation interruptions
+      }
+      
       // iOS audio permission error handling
       if (deviceInfo.isIOS && error?.name === 'NotAllowedError') {
         // Check if it's been more than 6 seconds since last user interaction
@@ -99,6 +109,24 @@ const NumberLearning: React.FC = () => {
           setShowAudioError(true)
           setAudioRetryCount(prev => prev + 1)
         }
+      } else if (deviceInfo.isIOS && audioRetryCount < 2) {
+        // iOS TTS failure during autoplay - retry after delay
+        console.log(`🔄 iOS TTS retry ${audioRetryCount + 1} for number ${currentNumber}`)
+        setAudioRetryCount(prev => prev + 1)
+        
+        // Stop autoplay temporarily and retry after delay
+        setIsPlaying(false)
+        setTimeout(() => {
+          // Retry the same number
+          setCurrentIndex(prev => prev) // Trigger re-render to retry
+        }, 800)
+        return
+      } else if (audioRetryCount >= 2) {
+        // Too many retries - pause autoplay
+        console.log('🚨 Too many audio failures, pausing autoplay')
+        setIsAutoPlay(false)
+        setShowAudioError(true)
+        setAudioRetryCount(0)
       }
     } finally {
       setIsPlaying(false)

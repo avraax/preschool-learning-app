@@ -124,11 +124,6 @@ class RemoteConsole {
     
     // Send directly to API - keep it simple
     this.sendToBackend(entry)
-    
-    // Show critical errors on screen for iOS
-    if (level === 'error' && deviceInfo.isIOS) {
-      this.showErrorToast(message)
-    }
   }
   
   private addEnhancedError(message: string, error?: Error, additionalData?: any) {
@@ -160,11 +155,6 @@ class RemoteConsole {
     }
     
     this.sendEnhancedErrorToBackend(enhancedError)
-    
-    // Show critical errors on screen for iOS
-    if (deviceInfo.isIOS) {
-      this.showErrorToast(message)
-    }
   }
   
   private extractFileFromStack(stack?: string): string | undefined {
@@ -226,43 +216,6 @@ class RemoteConsole {
     return `${navigator.platform} - ${navigator.userAgent.split(' ')[0]}`
   }
   
-  private showErrorToast(message: string) {
-    // Create a temporary error toast for iOS users
-    const toast = document.createElement('div')
-    toast.style.cssText = `
-      position: fixed;
-      top: 20px;
-      left: 20px;
-      right: 20px;
-      background: #ef4444;
-      color: white;
-      padding: 12px 16px;
-      border-radius: 8px;
-      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-      font-size: 14px;
-      z-index: 10000;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-      word-wrap: break-word;
-    `
-    
-    toast.textContent = `🚨 Error: ${message.substring(0, 100)}${message.length > 100 ? '...' : ''}`
-    
-    document.body.appendChild(toast)
-    
-    // Auto-remove after 5 seconds
-    setTimeout(() => {
-      if (toast.parentNode) {
-        toast.parentNode.removeChild(toast)
-      }
-    }, 5000)
-    
-    // Allow manual dismiss by tapping
-    toast.addEventListener('touchend', () => {
-      if (toast.parentNode) {
-        toast.parentNode.removeChild(toast)
-      }
-    })
-  }
   
   private sendToBackend(entry: LogEntry) {
     // Send directly to API - keep it simple (legacy format)
