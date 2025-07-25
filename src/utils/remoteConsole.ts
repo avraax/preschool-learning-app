@@ -14,28 +14,12 @@ class RemoteConsole {
   private isEnabled = true
   
   constructor() {
-    // Enable remote console on all devices for comprehensive error logging
-    const debugMode = window.location.search.includes('debug=true')
-    const isDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     const disableConsole = window.location.search.includes('disable-console=true')
     
     // Enable by default on all devices, but allow disabling via URL parameter
     this.isEnabled = !disableConsole
     
-    if (this.isEnabled) {
-      // Show debug info if enabled manually or during development
-      if (debugMode || isDevelopment) {
-        const originalLog = window.console?.log || (() => {})
-        originalLog('🐛 Remote Console Enabled')
-        originalLog('📡 Console logs will be intercepted and stored')
-        originalLog('🌐 Visit ?admin=errors to view the error dashboard')
-        if (isDevelopment) {
-          originalLog('🔧 Development mode - logs will be sent to dev server')
-        } else {
-          originalLog('🚀 Production mode - logs will be sent to API')
-        }
-      }
-      
+    if (this.isEnabled) {      
       this.interceptConsole()
       this.setupErrorHandling()
       this.logDeviceInfo()

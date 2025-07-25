@@ -79,15 +79,21 @@ define(['./workbox-f8c404e3'], (function (workbox) { 'use strict';
    */
   workbox.precacheAndRoute([{
     "url": "index.html",
-    "revision": "0.mhi8agogrf"
+    "revision": "0.ujcm16ql32g"
   }], {});
   workbox.cleanupOutdatedCaches();
   workbox.registerRoute(new workbox.NavigationRoute(workbox.createHandlerBoundToURL("index.html"), {
     allowlist: [/^\/$/]
   }));
   workbox.registerRoute(({
-    request
-  }) => true, new workbox.NetworkOnly(), 'GET');
+    request,
+    url
+  }) => {
+    if (url.pathname.startsWith("/api/")) {
+      return false;
+    }
+    return request.mode === "navigate" || request.destination === "document" || request.destination === "script" || request.destination === "style" || request.destination === "image";
+  }, new workbox.NetworkOnly(), 'GET');
 
 }));
 //# sourceMappingURL=sw.js.map

@@ -43,6 +43,11 @@ function initializeClient() {
   }
 }
 
+// Health check endpoint for dev script
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString(), port: port });
+});
+
 // TTS API endpoint
 app.post('/api/tts', async (req, res) => {
   console.log('🎙️ TTS request received:', { text: req.body.text?.substring(0, 50) });

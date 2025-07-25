@@ -54,6 +54,28 @@ $ttsJob = Start-Job -ScriptBlock {
     npx nodemon dev-server.js --watch dev-server.js --watch shared-tts-config.js --watch src/services/googleTTS.ts
 }
 
+Write-Host "⏳ Waiting for TTS server to start..." -ForegroundColor Yellow
+Start-Sleep -Seconds 3
+
+# Wait for TTS server to be ready
+$maxRetries = 10
+$retries = 0
+do {
+    $retries++
+    try {
+        $response = Invoke-WebRequest -Uri "http://localhost:3001/health" -Method GET -TimeoutSec 2 -ErrorAction Stop
+        Write-Host "✅ TTS server is ready!" -ForegroundColor Green
+        break
+    } catch {
+        if ($retries -ge $maxRetries) {
+            Write-Host "❌ TTS server failed to start after $maxRetries attempts" -ForegroundColor Red
+            break
+        }
+        Write-Host "⏳ TTS server not ready yet, retrying... ($retries/$maxRetries)" -ForegroundColor Yellow
+        Start-Sleep -Seconds 2
+    }
+} while ($retries -lt $maxRetries)
+
 # Create a job for the Vite dev server with proxy configuration
 $viteJob = Start-Job -ScriptBlock {
     Set-Location $using:PWD

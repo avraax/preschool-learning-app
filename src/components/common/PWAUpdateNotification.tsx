@@ -1,14 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 
 const PWAUpdateNotification: React.FC = () => {
-  const [showUpdatePrompt, setShowUpdatePrompt] = useState(false);
-  const [minutesLeft, setMinutesLeft] = useState(10);
   const [updateAvailable, setUpdateAvailable] = useState(false);
 
   useEffect(() => {
     let updateTimer: NodeJS.Timeout;
-    let countdownTimer: NodeJS.Timeout;
     let periodicCheck: NodeJS.Timeout;
 
     const checkForUpdates = async () => {
@@ -35,20 +32,6 @@ const PWAUpdateNotification: React.FC = () => {
     const handleServiceWorkerUpdate = () => {
       console.log('🔄 Service worker update detected');
       setUpdateAvailable(true);
-      setShowUpdatePrompt(true);
-      setMinutesLeft(10);
-
-      // Start 10-minute countdown
-      countdownTimer = setInterval(() => {
-        setMinutesLeft((prev) => {
-          if (prev <= 1) {
-            // Auto-update after 10 minutes
-            handleUpdate();
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 60000); // Update every minute
 
       // Auto-update after 10 minutes
       updateTimer = setTimeout(() => {
@@ -60,7 +43,6 @@ const PWAUpdateNotification: React.FC = () => {
       console.log('🔄 Updating app...');
       // Clear timers
       if (updateTimer) clearTimeout(updateTimer);
-      if (countdownTimer) clearInterval(countdownTimer);
       
       // Force reload to get latest code
       window.location.reload();
@@ -118,7 +100,6 @@ const PWAUpdateNotification: React.FC = () => {
     // Cleanup function
     return () => {
       if (updateTimer) clearTimeout(updateTimer);
-      if (countdownTimer) clearInterval(countdownTimer);
       if (periodicCheck) clearInterval(periodicCheck);
     };
   }, []);
@@ -128,78 +109,28 @@ const PWAUpdateNotification: React.FC = () => {
     window.location.reload();
   };
 
-  const handleDismiss = () => {
-    setShowUpdatePrompt(false);
-  };
-
-  if (!showUpdatePrompt || !updateAvailable) {
+  if (!updateAvailable) {
     return null;
   }
 
   return (
-    <AnimatePresence>
+    <motion.button
+      initial={{ opacity: 0, scale: 0.8 }}
+      animate={{ opacity: 1, scale: 1 }}
+      whileHover={{ scale: 1.1 }}
+      whileTap={{ scale: 0.95 }}
+      onClick={handleManualUpdate}
+      className="fixed bottom-6 right-6 z-50 w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 text-white rounded-full shadow-xl flex items-center justify-center hover:shadow-2xl transition-all duration-300"
+      title="Opdater app - opdateres automatisk om 10 minutter"
+    >
       <motion.div
-        initial={{ opacity: 0, y: -100 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -100 }}
-        className="fixed top-4 left-4 right-4 z-50 md:left-auto md:right-4 md:max-w-md"
+        animate={{ rotate: 360 }}
+        transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+        className="text-2xl"
       >
-        <div className="bg-gradient-to-br from-blue-500 to-purple-600 text-white p-4 rounded-2xl shadow-lg">
-          {/* Header */}
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center space-x-2">
-              <span className="text-2xl">🔄</span>
-              <h3 className="font-bold text-lg">Ny Version</h3>
-            </div>
-            <button
-              onClick={handleDismiss}
-              className="text-white/80 hover:text-white text-xl leading-none"
-              aria-label="Luk"
-            >
-              ×
-            </button>
-          </div>
-
-          {/* Content */}
-          <p className="text-sm mb-4 text-white/90">
-            Ny version tilgængelig! Opdater app eller den opdateres automatisk om{' '}
-            <span className="font-bold">{minutesLeft} minut{minutesLeft !== 1 ? 'ter' : ''}</span>.
-          </p>
-
-          {/* Buttons */}
-          <div className="flex space-x-2">
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={handleManualUpdate}
-              className="flex-1 bg-white text-blue-600 px-4 py-2 rounded-xl font-bold text-sm hover:bg-blue-50 transition-colors"
-            >
-              🔄 Opdater App
-            </motion.button>
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={handleDismiss}
-              className="px-4 py-2 text-white/80 text-sm hover:text-white transition-colors"
-            >
-              Senere
-            </motion.button>
-          </div>
-
-          {/* Progress bar showing time left */}
-          <div className="mt-3">
-            <div className="w-full bg-white/20 rounded-full h-2">
-              <motion.div
-                className="bg-white h-2 rounded-full"
-                initial={{ width: '100%' }}
-                animate={{ width: `${(minutesLeft / 10) * 100}%` }}
-                transition={{ duration: 1 }}
-              />
-            </div>
-          </div>
-        </div>
+        🔄
       </motion.div>
-    </AnimatePresence>
+    </motion.button>
   );
 };
 
