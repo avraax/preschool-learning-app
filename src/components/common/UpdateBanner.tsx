@@ -37,8 +37,12 @@ const UpdateBanner: React.FC<UpdateBannerProps> = ({
               backgroundColor: '#8B5CF6', // Purple theme matching the app
               color: 'white',
               fontWeight: 'bold',
-              fontSize: '1rem',
+              fontSize: '0.95rem',
               textTransform: 'none',
+              minWidth: '140px', // Ensure enough width for "Opdater app"
+              height: '48px', // Standard height
+              paddingX: 2, // Extra horizontal padding
+              whiteSpace: 'nowrap', // Prevent text wrapping to multiple lines
               boxShadow: '0 8px 32px rgba(139, 92, 246, 0.3)',
               '&:hover': {
                 backgroundColor: '#7C3AED',
