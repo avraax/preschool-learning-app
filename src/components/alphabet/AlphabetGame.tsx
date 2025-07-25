@@ -14,15 +14,12 @@ import {
   AppBar,
   Toolbar
 } from '@mui/material'
-import {
-  ArrowBack,
-  VolumeUp,
-  Quiz,
-  Star
-} from '@mui/icons-material'
+import { Volume2, Home, Award } from 'lucide-react'
 import { audioManager } from '../../utils/audio'
 import { useIOSAudioFix } from '../../hooks/useIOSAudioFix'
 import IOSAudioPrompt from '../common/IOSAudioPrompt'
+import LottieCharacter, { useCharacterState } from '../common/LottieCharacter'
+import CelebrationEffect, { useCelebration } from '../common/CelebrationEffect'
 
 // Full Danish alphabet including special characters
 const DANISH_ALPHABET = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'Æ', 'Ø', 'Å']
@@ -35,9 +32,31 @@ const AlphabetGame: React.FC = () => {
   const [isPlaying, setIsPlaying] = useState(false)
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
   const { showIOSPrompt, checkIOSAudioPermission, handleIOSAudioError, hideIOSPrompt } = useIOSAudioFix()
+  
+  // Character and celebration management
+  const teacherCharacter = useCharacterState('wave')
+  const { showCelebration, celebrationIntensity, celebrate, stopCelebration } = useCelebration()
+  
+  useEffect(() => {
+    // Initial teacher greeting
+    teacherCharacter.setCharacter('owl')
+    teacherCharacter.wave()
+  }, [])
 
   useEffect(() => {
     generateNewQuestion()
+    
+    // Stop audio immediately when navigating away
+    const handleBeforeUnload = () => {
+      audioManager.stopAll()
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
+      }
+    }
+
+    // Listen for navigation events
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    window.addEventListener('pagehide', handleBeforeUnload)
     
     // Cleanup function to stop all audio and timeouts when component unmounts
     return () => {
@@ -45,6 +64,8 @@ const AlphabetGame: React.FC = () => {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current)
       }
+      window.removeEventListener('beforeunload', handleBeforeUnload)
+      window.removeEventListener('pagehide', handleBeforeUnload)
     }
   }, [])
 
@@ -97,14 +118,24 @@ const AlphabetGame: React.FC = () => {
     setIsPlaying(true)
     try {
       if (selectedLetter === currentLetter) {
+        // Correct answer - celebrate!
         setScore(score + 1)
+        teacherCharacter.celebrate()
+        celebrate(score > 5 ? 'high' : 'medium')
+        
         await audioManager.announceGameResult(true)
         setTimeout(() => {
+          stopCelebration()
+          teacherCharacter.point()
           generateNewQuestion()
-        }, 2000)
+        }, 3000)
       } else {
-        // For wrong answers, allow immediate new clicks
+        // Wrong answer - encourage
+        teacherCharacter.encourage()
         await audioManager.announceGameResult(false)
+        setTimeout(() => {
+          teacherCharacter.think()
+        }, 1000)
       }
     } catch (error) {
       console.error('Error playing feedback:', error)
@@ -162,15 +193,15 @@ const AlphabetGame: React.FC = () => {
               '&:hover': { boxShadow: 6 }
             }}
           >
-            <ArrowBack />
+            <Home size={24} />
           </IconButton>
           
           <Chip 
-            icon={<Star />} 
-            label={`Point: ${score}`} 
+            icon={<Award size={20} />} 
+            label={`${score} ⭐`} 
             color="primary" 
             sx={{ 
-              fontSize: '1.1rem',
+              fontSize: '1.2rem',
               py: 1,
               fontWeight: 'bold',
               boxShadow: 2
@@ -189,30 +220,35 @@ const AlphabetGame: React.FC = () => {
           overflow: 'hidden'
         }}
       >
-        {/* Game Title - Compact */}
+        {/* Game Title with Teacher Character */}
         <Box sx={{ textAlign: 'center', mb: { xs: 2, md: 3 }, flex: '0 0 auto' }}>
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            <Typography 
-              variant="h3" 
-              sx={{ 
-                color: 'primary.dark',
-                fontWeight: 700,
-                mb: 2,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 1
-              }}
-            >
-              <Quiz fontSize="large" /> Bogstav Quiz
-            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2, mb: 2 }}>
+              <LottieCharacter
+                character={teacherCharacter.character}
+                state={teacherCharacter.state}
+                size={80}
+                onClick={teacherCharacter.wave}
+              />
+              <Typography 
+                variant="h3" 
+                sx={{ 
+                  color: 'primary.dark',
+                  fontWeight: 700,
+                  fontSize: { xs: '1.5rem', md: '2rem' }
+                }}
+              >
+                🔤 Quiz
+              </Typography>
+              <Typography sx={{ fontSize: '2.5rem' }}>🎯</Typography>
+            </Box>
           </motion.div>
-          <Typography variant="h5" color="primary.main" sx={{ mb: 4 }}>
-            Klik på det bogstav du hører!
+          <Typography variant="h5" color="primary.main" sx={{ mb: 4, fontSize: { xs: '1rem', md: '1.25rem' } }}>
+            Klik på bogstavet! 👆
           </Typography>
         </Box>
 
@@ -223,10 +259,10 @@ const AlphabetGame: React.FC = () => {
             variant="contained"
             color="primary"
             size="large"
-            startIcon={<VolumeUp />}
-            sx={{ py: 2, px: 4, fontSize: '1.1rem' }}
+            startIcon={<Volume2 size={24} />}
+            sx={{ py: 2, px: 4, fontSize: '1.1rem', borderRadius: 3 }}
           >
-            Hør igen 🎵
+            🎵 Gentag
           </Button>
         </Box>
 
@@ -301,6 +337,14 @@ const AlphabetGame: React.FC = () => {
         open={showIOSPrompt}
         onAction={handleIOSPromptAction}
         message="Tryk for at høre bogstavet"
+      />
+      
+      {/* Celebration Effect */}
+      <CelebrationEffect
+        show={showCelebration}
+        character="owl"
+        intensity={celebrationIntensity}
+        onComplete={stopCelebration}
       />
     </Box>
   )

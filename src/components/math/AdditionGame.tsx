@@ -48,8 +48,20 @@ const AdditionGame: React.FC = () => {
       lastInteractionRef.current = Date.now()
     }
     
+    // Stop audio immediately when navigating away
+    const handleBeforeUnload = () => {
+      audioManager.stopAll()
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
+      }
+    }
+
     document.addEventListener('click', updateInteraction)
     document.addEventListener('touchstart', updateInteraction)
+    
+    // Listen for navigation events
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    window.addEventListener('pagehide', handleBeforeUnload)
     
     // Cleanup function
     return () => {
@@ -59,6 +71,8 @@ const AdditionGame: React.FC = () => {
       }
       document.removeEventListener('click', updateInteraction)
       document.removeEventListener('touchstart', updateInteraction)
+      window.removeEventListener('beforeunload', handleBeforeUnload)
+      window.removeEventListener('pagehide', handleBeforeUnload)
     }
   }, [])
 

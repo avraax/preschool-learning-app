@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import React, { useEffect } from 'react'
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { logIOSIssue } from './utils/remoteConsole'
@@ -13,10 +13,12 @@ import {
   Box
 } from '@mui/material'
 import { 
-  School,
-  Calculate,
+  Home, 
+  BookOpen,
+  Brain,
+  Play,
   Star
-} from '@mui/icons-material'
+} from 'lucide-react'
 
 // Import all page components
 import AlphabetGame from './components/alphabet/AlphabetGame'
@@ -28,6 +30,7 @@ import NumberLearning from './components/math/NumberLearning'
 import AdditionGame from './components/math/AdditionGame'
 import ErrorDashboard from './components/admin/ErrorDashboard'
 import UpdateBanner from './components/common/UpdateBanner'
+import LottieCharacter, { useCharacterState } from './components/common/LottieCharacter'
 import { useUpdateChecker } from './hooks/useUpdateChecker'
 
 // Admin redirect component for query parameter support
@@ -47,6 +50,16 @@ const AdminRedirectChecker = ({ children }: { children: React.ReactNode }) => {
 // Home Page Component
 const HomePage = () => {
   const navigate = useNavigate()
+  const welcomeCharacter = useCharacterState('wave')
+  
+  React.useEffect(() => {
+    // Welcome animation sequence
+    const timer = setTimeout(() => {
+      welcomeCharacter.wave()
+    }, 1000)
+    return () => clearTimeout(timer)
+  }, [])
+
   return (
     <Box 
       sx={{ 
@@ -67,38 +80,55 @@ const HomePage = () => {
           py: { xs: 2, md: 3 }
         }}
       >
-        {/* Header */}
+        {/* Header with Welcome Character */}
         <Box sx={{ textAlign: 'center', mb: { xs: 3, md: 4 } }}>
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5 }}
           >
-            <Typography 
-              variant="h1" 
-              sx={{ 
-                fontSize: { xs: '2rem', sm: '2.5rem', md: '3.5rem' },
-                fontWeight: 700,
-                color: 'primary.dark',
-                mb: 1,
-                textShadow: '2px 2px 4px rgba(0,0,0,0.1)'
-              }}
-            >
-              🎈 Børnelæring 🌈
-            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2, mb: 2 }}>
+              <Typography 
+                variant="h1" 
+                sx={{ 
+                  fontSize: { xs: '2rem', sm: '2.5rem', md: '3.5rem' },
+                  fontWeight: 700,
+                  color: 'primary.dark',
+                  textShadow: '2px 2px 4px rgba(0,0,0,0.1)'
+                }}
+              >
+                🎈 Børnelæring 🌈
+              </Typography>
+              <motion.div
+                initial={{ x: 20, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                transition={{ delay: 0.8, duration: 0.5 }}
+              >
+                <LottieCharacter
+                  character={welcomeCharacter.character}
+                  state={welcomeCharacter.state}
+                  size={80}
+                  onClick={welcomeCharacter.wave}
+                />
+              </motion.div>
+            </Box>
           </motion.div>
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3, duration: 0.5 }}
           >
-            <Typography 
-              variant="h5" 
-              color="primary.main"
-              sx={{ fontSize: { xs: '1rem', sm: '1.25rem', md: '1.5rem' } }}
-            >
-              Lær alfabetet og tal på en sjov måde!
-            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
+              <Play size={20} color="#1976d2" />
+              <Typography 
+                variant="h5" 
+                color="primary.main"
+                sx={{ fontSize: { xs: '1rem', sm: '1.25rem', md: '1.5rem' } }}
+              >
+                Lær med sjove spil!
+              </Typography>
+              <BookOpen size={20} color="#1976d2" />
+            </Box>
           </motion.div>
         </Box>
 
@@ -138,49 +168,45 @@ const HomePage = () => {
                     }}
                   >
                     <Box>
-                      <motion.div
-                        animate={{ rotate: [0, 3, -3, 0] }}
-                        transition={{ duration: 3, repeat: Infinity }}
-                      >
-                        <School sx={{ 
-                          fontSize: { xs: '2.5rem', md: '3.5rem' }, 
-                          color: 'primary.main', 
-                          mb: 1 
-                        }} />
-                      </motion.div>
+                      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, mb: 2 }}>
+                        <motion.div
+                          animate={{ rotate: [0, 3, -3, 0] }}
+                          transition={{ duration: 3, repeat: Infinity }}
+                        >
+                          <BookOpen size={40} color="#1976d2" />
+                        </motion.div>
+                        <Typography sx={{ fontSize: '3rem' }}>🔤</Typography>
+                        <LottieCharacter
+                          character="owl"
+                          state="thinking"
+                          size={50}
+                          loop={true}
+                        />
+                      </Box>
                       <Typography 
                         variant="h4" 
                         color="primary.dark" 
                         sx={{ 
-                          mb: 1, 
+                          mb: 2, 
                           fontWeight: 700,
                           fontSize: { xs: '1.25rem', md: '1.5rem' }
                         }}
                       >
-                        {/* Force deployment - title updated to Alfabetet */}
-                        Alfabetet 2
-                      </Typography>
-                      <Typography 
-                        variant="body2" 
-                        color="text.secondary" 
-                        sx={{ 
-                          mb: 2,
-                          fontSize: { xs: '0.875rem', md: '1rem' }
-                        }}
-                      >
-                        Lær & øv bogstaver
+                        A-B-C 📝
                       </Typography>
                     </Box>
                     <Button 
                       variant="contained" 
                       color="primary"
-                      size="small"
+                      size="large"
+                      startIcon={<Play size={20} />}
                       sx={{ 
-                        py: 1,
-                        fontSize: { xs: '0.875rem', md: '1rem' }
+                        py: 1.5,
+                        fontSize: { xs: '1rem', md: '1.1rem' },
+                        borderRadius: 3
                       }}
                     >
-                      Start læring! 🚀
+                      🚀 Start
                     </Button>
                   </CardContent>
                 </Card>
@@ -220,48 +246,45 @@ const HomePage = () => {
                     }}
                   >
                     <Box>
-                      <motion.div
-                        animate={{ y: [0, -3, 0] }}
-                        transition={{ duration: 2, repeat: Infinity }}
-                      >
-                        <Calculate sx={{ 
-                          fontSize: { xs: '2.5rem', md: '3.5rem' }, 
-                          color: 'secondary.main', 
-                          mb: 1 
-                        }} />
-                      </motion.div>
+                      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, mb: 2 }}>
+                        <motion.div
+                          animate={{ y: [0, -3, 0] }}
+                          transition={{ duration: 2, repeat: Infinity }}
+                        >
+                          <Brain size={40} color="#9c27b0" />
+                        </motion.div>
+                        <Typography sx={{ fontSize: '3rem' }}>🧮</Typography>
+                        <LottieCharacter
+                          character="fox"
+                          state="thinking"
+                          size={50}
+                          loop={true}
+                        />
+                      </Box>
                       <Typography 
                         variant="h4" 
                         color="secondary.dark" 
                         sx={{ 
-                          mb: 1, 
+                          mb: 2, 
                           fontWeight: 700,
                           fontSize: { xs: '1.25rem', md: '1.5rem' }
                         }}
                       >
-                        Tal og Regning
-                      </Typography>
-                      <Typography 
-                        variant="body2" 
-                        color="text.secondary" 
-                        sx={{ 
-                          mb: 2,
-                          fontSize: { xs: '0.875rem', md: '1rem' }
-                        }}
-                      >
-                        Tæl og regn 1-100
+                        1-2-3 🔢
                       </Typography>
                     </Box>
                     <Button 
                       variant="contained" 
                       color="secondary"
-                      size="small"
+                      size="large"
+                      startIcon={<Play size={20} />}
                       sx={{ 
-                        py: 1,
-                        fontSize: { xs: '0.875rem', md: '1rem' }
+                        py: 1.5,
+                        fontSize: { xs: '1rem', md: '1.1rem' },
+                        borderRadius: 3
                       }}
                     >
-                      Start regning! ✨
+                      ✨ Start
                     </Button>
                   </CardContent>
                 </Card>
@@ -278,7 +301,7 @@ const HomePage = () => {
               }}
               transition={{ duration: 4, repeat: Infinity }}
             >
-              <Star sx={{ fontSize: { xs: '2.5rem', md: '3rem' }, color: 'warning.main' }} />
+              <Star size={48} color="#ff9800" />
             </motion.div>
           </Box>
         </Box>
@@ -290,6 +313,12 @@ const HomePage = () => {
 // 404 Not Found Component
 const NotFoundPage = () => {
   const navigate = useNavigate()
+  const sadCharacter = useCharacterState('encourage')
+  
+  React.useEffect(() => {
+    sadCharacter.encourage()
+  }, [])
+
   return (
     <Box 
       sx={{ 
@@ -301,20 +330,30 @@ const NotFoundPage = () => {
       }}
     >
       <Container maxWidth="sm" sx={{ textAlign: 'center' }}>
+        <Box sx={{ mb: 3 }}>
+          <LottieCharacter
+            character={sadCharacter.character}
+            state={sadCharacter.state}
+            size={120}
+            onClick={sadCharacter.encourage}
+          />
+        </Box>
         <Typography variant="h1" sx={{ fontSize: '4rem', mb: 2 }}>🎈</Typography>
         <Typography variant="h4" sx={{ mb: 2, fontWeight: 700 }}>
-          Siden blev ikke fundet
+          Hovsa! 🤔
         </Typography>
-        <Typography variant="body1" sx={{ mb: 4, color: 'text.secondary' }}>
-          Siden du leder efter eksisterer ikke.
+        <Typography variant="body1" sx={{ mb: 4, color: 'text.secondary', fontSize: '1.2rem' }}>
+          Denne side findes ikke 🔍
         </Typography>
         <Button 
           variant="contained" 
           color="primary" 
           size="large"
+          startIcon={<Home size={24} />}
           onClick={() => navigate('/')}
+          sx={{ py: 1.5, px: 3, fontSize: '1.1rem', borderRadius: 3 }}
         >
-          Gå til forsiden 🏠
+          🏠 Hjem
         </Button>
       </Container>
     </Box>

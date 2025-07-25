@@ -41,12 +41,26 @@ const NumberLearning: React.FC = () => {
   const numbers = Array.from({ length: 100 }, (_, i) => i + 1)
 
   useEffect(() => {
+    // Stop audio immediately when navigating away
+    const handleBeforeUnload = () => {
+      audioManager.stopAll()
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
+      }
+    }
+
+    // Listen for navigation events
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    window.addEventListener('pagehide', handleBeforeUnload)
+    
     // Cleanup function to stop all audio and timeouts when component unmounts
     return () => {
       audioManager.stopAll()
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current)
       }
+      window.removeEventListener('beforeunload', handleBeforeUnload)
+      window.removeEventListener('pagehide', handleBeforeUnload)
       // Ensure iOS audio helper is stopped
       if (deviceInfo.isIOS) {
         iosAudioHelper.stopKeepAlive()

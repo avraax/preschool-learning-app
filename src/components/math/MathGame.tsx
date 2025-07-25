@@ -14,13 +14,10 @@ import {
   AppBar,
   Toolbar
 } from '@mui/material'
-import {
-  ArrowBack,
-  VolumeUp,
-  Calculate,
-  Star
-} from '@mui/icons-material'
+import { Volume2, Home, Award } from 'lucide-react'
 import { audioManager } from '../../utils/audio'
+import LottieCharacter, { useCharacterState } from '../common/LottieCharacter'
+import CelebrationEffect, { useCelebration } from '../common/CelebrationEffect'
 
 // Comprehensive math settings for all ages
 const MAX_NUMBER = 50
@@ -41,6 +38,16 @@ const MathGame: React.FC = () => {
   const [score, setScore] = useState(0)
   const [gameMode] = useState<'counting' | 'arithmetic'>(GAME_MODE)
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
+  
+  // Character and celebration management
+  const mathTeacher = useCharacterState('wave')
+  const { showCelebration, celebrationIntensity, celebrate, stopCelebration } = useCelebration()
+  
+  useEffect(() => {
+    // Initial math teacher greeting
+    mathTeacher.setCharacter('fox')
+    mathTeacher.wave()
+  }, [])
 
   // Remove useEffect that set gameMode from difficulty settings
 
@@ -50,6 +57,19 @@ const MathGame: React.FC = () => {
       generateNewQuestion()
     }
     
+    // Stop audio immediately when navigating away
+    const handleBeforeUnload = () => {
+      audioManager.stopAll()
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
+        timeoutRef.current = null
+      }
+    }
+
+    // Listen for navigation events
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    window.addEventListener('pagehide', handleBeforeUnload)
+    
     // Cleanup function
     return () => {
       audioManager.stopAll()
@@ -57,6 +77,8 @@ const MathGame: React.FC = () => {
         clearTimeout(timeoutRef.current)
         timeoutRef.current = null
       }
+      window.removeEventListener('beforeunload', handleBeforeUnload)
+      window.removeEventListener('pagehide', handleBeforeUnload)
     }
   }, [gameMode])
 
@@ -157,23 +179,32 @@ const MathGame: React.FC = () => {
     audioManager.stopAll()
     
     if (selectedAnswer === currentProblem.answer) {
+      // Correct answer - celebrate!
       setScore(score + 1)
+      mathTeacher.celebrate()
+      celebrate(score > 5 ? 'high' : 'medium')
+      
       try {
         await audioManager.announceGameResult(true)
         setTimeout(() => {
+          stopCelebration()
+          mathTeacher.point()
           generateNewQuestion()
-        }, 2000)
+        }, 3000)
       } catch (error) {
         console.error('Error playing success feedback:', error)
       }
     } else {
-      // For wrong answers, allow immediate new clicks
+      // Wrong answer - encourage
+      mathTeacher.encourage()
       try {
         await audioManager.announceGameResult(false)
+        setTimeout(() => {
+          mathTeacher.think()
+        }, 1000)
       } catch (error) {
         console.error('Error playing wrong answer feedback:', error)
       }
-      // Don't block further clicks
     }
   }
 
@@ -223,15 +254,15 @@ const MathGame: React.FC = () => {
               '&:hover': { boxShadow: 6 }
             }}
           >
-            <ArrowBack />
+            <Home size={24} />
           </IconButton>
           
           <Chip 
-            icon={<Star />} 
-            label={`Point: ${score}`} 
+            icon={<Award size={20} />} 
+            label={`${score} ⭐`} 
             color="secondary" 
             sx={{ 
-              fontSize: '1.1rem',
+              fontSize: '1.2rem',
               py: 1,
               fontWeight: 'bold',
               boxShadow: 2
@@ -250,30 +281,35 @@ const MathGame: React.FC = () => {
           overflow: 'hidden'
         }}
       >
-        {/* Game Title - Compact */}
+        {/* Game Title with Math Teacher */}
         <Box sx={{ textAlign: 'center', mb: { xs: 2, md: 3 }, flex: '0 0 auto' }}>
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            <Typography 
-              variant="h3" 
-              sx={{ 
-                color: 'secondary.dark',
-                fontWeight: 700,
-                mb: 2,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 1
-              }}
-            >
-              <Calculate fontSize="large" /> Tal Quiz
-            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2, mb: 2 }}>
+              <LottieCharacter
+                character={mathTeacher.character}
+                state={mathTeacher.state}
+                size={80}
+                onClick={mathTeacher.wave}
+              />
+              <Typography 
+                variant="h3" 
+                sx={{ 
+                  color: 'secondary.dark',
+                  fontWeight: 700,
+                  fontSize: { xs: '1.5rem', md: '2rem' }
+                }}
+              >
+                🔢 Quiz
+              </Typography>
+              <Typography sx={{ fontSize: '2.5rem' }}>🧮</Typography>
+            </Box>
           </motion.div>
-          <Typography variant="h5" color="secondary.main" sx={{ mb: 4 }}>
-            {gameMode === 'counting' ? 'Klik på det tal du hører!' : 'Hvad er svaret?'}
+          <Typography variant="h5" color="secondary.main" sx={{ mb: 4, fontSize: { xs: '1rem', md: '1.25rem' } }}>
+            {gameMode === 'counting' ? 'Klik på tallet! 👆' : 'Find svaret! 🤔'}
           </Typography>
         </Box>
 
@@ -284,10 +320,10 @@ const MathGame: React.FC = () => {
             variant="contained"
             color="secondary"
             size="large"
-            startIcon={<VolumeUp />}
-            sx={{ py: 2, px: 4, fontSize: '1.1rem' }}
+            startIcon={<Volume2 size={24} />}
+            sx={{ py: 2, px: 4, fontSize: '1.1rem', borderRadius: 3 }}
           >
-            Hør igen 🎵
+            🎵 Gentag
           </Button>
         </Box>
 
@@ -362,6 +398,14 @@ const MathGame: React.FC = () => {
         </Box>
 
       </Container>
+      
+      {/* Celebration Effect */}
+      <CelebrationEffect
+        show={showCelebration}
+        character="fox"
+        intensity={celebrationIntensity}
+        onComplete={stopCelebration}
+      />
     </Box>
   )
 }

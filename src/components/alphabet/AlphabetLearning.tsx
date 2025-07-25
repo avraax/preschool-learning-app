@@ -38,12 +38,26 @@ const AlphabetLearning: React.FC = () => {
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
+    // Stop audio immediately when navigating away
+    const handleBeforeUnload = () => {
+      audioManager.stopAll()
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
+      }
+    }
+
+    // Listen for navigation events
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    window.addEventListener('pagehide', handleBeforeUnload)
+    
     // Cleanup function to stop all audio and timeouts when component unmounts
     return () => {
       audioManager.stopAll()
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current)
       }
+      window.removeEventListener('beforeunload', handleBeforeUnload)
+      window.removeEventListener('pagehide', handleBeforeUnload)
     }
   }, [])
 
