@@ -298,7 +298,16 @@ class UserActionTracker {
   
   private getElementSelector(element: HTMLElement): string {
     if (element.id) return `#${element.id}`
-    if (element.className) return `.${element.className.split(' ')[0]}`
+    if (element.className) {
+      try {
+        // Safely convert className to string and get first class
+        const className = String(element.className)
+        const firstClass = className.split(' ')[0]
+        if (firstClass) return `.${firstClass}`
+      } catch (error) {
+        // If className conversion fails, just continue to tagName
+      }
+    }
     return element.tagName.toLowerCase()
   }
   

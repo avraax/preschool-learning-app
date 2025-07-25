@@ -2,7 +2,7 @@
 // This file is updated automatically during the build process
 
 export const BUILD_INFO = {
-  buildTime: 1753450840409,
+  buildTime: 1753458502059,
   version: '1.0.0',
   commitHash: 'dev'
 }
