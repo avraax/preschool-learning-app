@@ -39,9 +39,25 @@ export class GoogleTTSService {
   // Stop any currently playing audio
   stopCurrentAudio(): void {
     if (this.currentAudio) {
-      this.currentAudio.pause()
-      this.currentAudio.currentTime = 0
+      try {
+        this.currentAudio.pause()
+        this.currentAudio.currentTime = 0
+        this.currentAudio.src = '' // Clear the source to stop loading
+        this.currentAudio.load() // Reset the audio element
+      } catch (error) {
+        console.log('🎵 Error stopping audio:', error)
+      }
       this.currentAudio = null
+    }
+    
+    // Also stop Web Speech API if it's running
+    if (window.speechSynthesis && window.speechSynthesis.speaking) {
+      try {
+        window.speechSynthesis.cancel()
+        console.log('🎵 Cancelled Web Speech API')
+      } catch (error) {
+        console.log('🎵 Error cancelling Web Speech API:', error)
+      }
     }
   }
 
@@ -74,18 +90,32 @@ export class GoogleTTSService {
     })
   }
 
-  // Resume audio context for iOS
+  // Resume audio context for iOS - only with proper user gesture
   private async resumeAudioContext(): Promise<void> {
+    // Only try to create/resume audio context if we have recent user interaction
+    const timeSinceInteraction = Date.now() - this.lastUserInteraction
+    if (timeSinceInteraction > 3000) {
+      console.log('🎵 Skipping AudioContext resume - no recent user interaction')
+      return
+    }
+    
     if (!this.audioContext) {
-      this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
+      try {
+        this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
+        console.log('🎵 AudioContext created successfully')
+      } catch (error) {
+        console.log('🎵 Failed to create AudioContext:', error)
+        return
+      }
     }
     
     if (this.audioContext.state === 'suspended') {
       try {
         await this.audioContext.resume()
-        logIOSIssue('Audio Context', 'Audio context resumed successfully')
+        console.log('🎵 AudioContext resumed successfully')
       } catch (error) {
-        logAudioIssue('Audio Context Resume', error)
+        console.log('🎵 Failed to resume AudioContext:', error)
+        // Don't log as error since this is expected without user gesture
       }
     }
   }
@@ -492,11 +522,23 @@ export class GoogleTTSService {
         return
       }
 
-      // Clean text for Web Speech (remove SSML tags)
-      const cleanText = text.replace(/<[^>]*>/g, '')
-      
-      // iOS-specific: Ensure voices are loaded
-      const loadVoicesAndSpeak = () => {
+      // Stop any existing speech synthesis first to prevent interference
+      if (window.speechSynthesis.speaking) {
+        window.speechSynthesis.cancel()
+        // Wait a bit for the cancellation to take effect
+        setTimeout(() => this.startWebSpeech(text, resolve, reject), 100)
+      } else {
+        this.startWebSpeech(text, resolve, reject)
+      }
+    })
+  }
+
+  private startWebSpeech(text: string, resolve: () => void, reject: (error: Error) => void): void {
+    // Clean text for Web Speech (remove SSML tags)
+    const cleanText = text.replace(/<[^>]*>/g, '')
+    
+    // iOS-specific: Ensure voices are loaded
+    const loadVoicesAndSpeak = () => {
         const utterance = new SpeechSynthesisUtterance(cleanText)
         utterance.lang = 'da-DK'
         utterance.rate = 0.8
@@ -547,15 +589,14 @@ export class GoogleTTSService {
         }
       }
 
-      // iOS voices might not be loaded immediately
-      if (window.speechSynthesis.getVoices().length === 0) {
-        window.speechSynthesis.addEventListener('voiceschanged', loadVoicesAndSpeak, { once: true })
-        // Trigger voice loading
-        window.speechSynthesis.getVoices()
-      } else {
-        loadVoicesAndSpeak()
-      }
-    })
+    // iOS voices might not be loaded immediately
+    if (window.speechSynthesis.getVoices().length === 0) {
+      window.speechSynthesis.addEventListener('voiceschanged', loadVoicesAndSpeak, { once: true })
+      // Trigger voice loading
+      window.speechSynthesis.getVoices()
+    } else {
+      loadVoicesAndSpeak()
+    }
   }
 
   // Synthesize and play in one step

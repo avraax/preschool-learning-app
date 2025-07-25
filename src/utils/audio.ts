@@ -149,11 +149,61 @@ export class AudioManager {
 
   // Enhanced stop method
   stopAll(): void {
+    console.log('🔇 AudioManager: Stopping all audio')
+    
     // Stop Howler.js sounds
-    this.sounds.forEach(sound => sound.stop())
+    this.sounds.forEach(sound => {
+      try {
+        sound.stop()
+        sound.unload() // Also unload to free memory
+      } catch (error) {
+        console.log('🎵 Error stopping Howler sound:', error)
+      }
+    })
     
     // Stop any currently playing Google TTS audio
     this.googleTTS.stopCurrentAudio()
+  }
+  
+  // Emergency stop - more aggressive cleanup
+  emergencyStop(): void {
+    console.log('🚨 AudioManager: Emergency stop all audio')
+    
+    // Stop all Howler.js sounds
+    this.sounds.forEach(sound => {
+      try {
+        sound.stop()
+        sound.unload()
+      } catch (error) {
+        console.log('🎵 Error in emergency stop:', error)
+      }
+    })
+    this.sounds.clear()
+    
+    // Stop Google TTS
+    this.googleTTS.stopCurrentAudio()
+    
+    // Global Web Speech API stop
+    if (window.speechSynthesis && window.speechSynthesis.speaking) {
+      try {
+        window.speechSynthesis.cancel()
+        console.log('🔇 Emergency cancelled Web Speech API')
+      } catch (error) {
+        console.log('🎵 Error cancelling Web Speech API:', error)
+      }
+    }
+    
+    // Stop all audio elements globally
+    const audioElements = document.querySelectorAll('audio')
+    audioElements.forEach(audio => {
+      try {
+        audio.pause()
+        audio.currentTime = 0
+        audio.src = ''
+      } catch (error) {
+        console.log('🎵 Error stopping audio element:', error)
+      }
+    })
   }
 
   // Clean up audio cache
