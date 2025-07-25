@@ -14,7 +14,7 @@ import {
   AppBar,
   Toolbar
 } from '@mui/material'
-import { Volume2, Home, Award } from 'lucide-react'
+import { Volume2, Award, ArrowLeft } from 'lucide-react'
 import { audioManager } from '../../utils/audio'
 import { useIOSAudioFix } from '../../hooks/useIOSAudioFix'
 import IOSAudioPrompt from '../common/IOSAudioPrompt'
@@ -193,7 +193,7 @@ const AlphabetGame: React.FC = () => {
               '&:hover': { boxShadow: 6 }
             }}
           >
-            <Home size={24} />
+            <ArrowLeft size={24} />
           </IconButton>
           
           <Chip 

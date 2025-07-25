@@ -462,8 +462,16 @@ export class GoogleTTSService {
         }
         utterance.onerror = (error) => {
           clearTimeout(speechTimeout)
-          logAudioIssue('Web Speech API Error', error)
-          reject(error)
+          const errorInfo = {
+            error: error.error || 'unknown',
+            charIndex: error.charIndex,
+            elapsedTime: error.elapsedTime,
+            text: cleanText,
+            voiceCount: window.speechSynthesis.getVoices().length,
+            hasUserInteraction: document.hasFocus()
+          }
+          logAudioIssue('Web Speech API Error', errorInfo, { fullError: error })
+          reject(new Error(`Web Speech failed: ${error.error || 'unknown error'}`))
         }
 
         // Stop any current speech
@@ -497,15 +505,25 @@ export class GoogleTTSService {
     useSSML: boolean = true,
     customAudioConfig?: Partial<typeof TTS_CONFIG.audioConfig>
   ): Promise<void> {
-    // iOS-specific: Always try Web Speech API first for better reliability
+    // iOS-specific: Try Google TTS first, then fallback to Web Speech
+    // This is reversed from before as Web Speech seems to be failing
     if (isIOS()) {
       try {
-        console.log('🎵 iOS detected, using Web Speech API')
-        await this.fallbackToWebSpeech(text)
-        return // Success with Web Speech API
-      } catch (webSpeechError) {
-        logAudioIssue('iOS Web Speech Failed', webSpeechError, { text })
-        // Continue to try Google TTS as backup
+        console.log('🎵 iOS detected, trying Google TTS first')
+        const audioData = await this.synthesizeSpeech(text, voiceType, useSSML, customAudioConfig)
+        await this.playAudioFromData(audioData)
+        return // Success with Google TTS
+      } catch (googleTTSError) {
+        logAudioIssue('iOS Google TTS Failed', googleTTSError, { text })
+        // Try Web Speech as fallback
+        try {
+          console.log('🔄 iOS: Falling back to Web Speech API')
+          await this.fallbackToWebSpeech(text)
+          return
+        } catch (webSpeechError) {
+          logAudioIssue('iOS Web Speech Also Failed', webSpeechError, { text })
+          throw new Error(`Both audio methods failed on iOS: ${googleTTSError}`)
+        }
       }
     }
     

@@ -14,7 +14,7 @@ import {
   AppBar,
   Toolbar
 } from '@mui/material'
-import { Volume2, Home, Award } from 'lucide-react'
+import { Volume2, Award, ArrowLeft } from 'lucide-react'
 import { audioManager } from '../../utils/audio'
 import LottieCharacter, { useCharacterState } from '../common/LottieCharacter'
 import CelebrationEffect, { useCelebration } from '../common/CelebrationEffect'
@@ -254,7 +254,7 @@ const MathGame: React.FC = () => {
               '&:hover': { boxShadow: 6 }
             }}
           >
-            <Home size={24} />
+            <ArrowLeft size={24} />
           </IconButton>
           
           <Chip 

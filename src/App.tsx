@@ -13,7 +13,7 @@ import {
   Box
 } from '@mui/material'
 import { 
-  Home, 
+  ArrowLeft,
   BookOpen,
   Brain,
   Play,
@@ -163,51 +163,63 @@ const HomePage = () => {
                       height: '100%',
                       display: 'flex',
                       flexDirection: 'column',
-                      justifyContent: 'space-between',
-                      textAlign: 'center'
+                      justifyContent: 'center',
+                      textAlign: 'center',
+                      position: 'relative',
+                      '&::after': {
+                        content: '""',
+                        position: 'absolute',
+                        right: { xs: 16, md: 24 },
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        width: 0,
+                        height: 0,
+                        borderTop: '12px solid transparent',
+                        borderBottom: '12px solid transparent',
+                        borderLeft: '16px solid #1976d2',
+                        opacity: 0.5
+                      }
                     }}
                   >
-                    <Box>
-                      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, mb: 2 }}>
-                        <motion.div
-                          animate={{ rotate: [0, 3, -3, 0] }}
-                          transition={{ duration: 3, repeat: Infinity }}
-                        >
-                          <BookOpen size={40} color="#1976d2" />
-                        </motion.div>
-                        <Typography sx={{ fontSize: '3rem' }}>🔤</Typography>
-                        <LottieCharacter
-                          character="owl"
-                          state="thinking"
-                          size={50}
-                          loop={true}
-                        />
-                      </Box>
-                      <Typography 
-                        variant="h4" 
-                        color="primary.dark" 
-                        sx={{ 
-                          mb: 2, 
-                          fontWeight: 700,
-                          fontSize: { xs: '1.25rem', md: '1.5rem' }
-                        }}
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, mb: 2 }}>
+                      <motion.div
+                        animate={{ rotate: [0, 3, -3, 0] }}
+                        transition={{ duration: 3, repeat: Infinity }}
                       >
-                        A-B-C 📝
-                      </Typography>
+                        <BookOpen size={48} color="#1976d2" />
+                      </motion.div>
+                      <Typography sx={{ fontSize: '3.5rem' }}>🔤</Typography>
+                      <LottieCharacter
+                        character="owl"
+                        state="thinking"
+                        size={60}
+                        loop={true}
+                      />
                     </Box>
-                    <Button 
-                      variant="contained" 
-                      color="primary"
-                      size="large"
-                      startIcon={<Play size={20} />}
+                    <Typography 
+                      variant="h4" 
+                      color="primary.dark" 
                       sx={{ 
-                        py: 1.5,
-                        fontSize: { xs: '1rem', md: '1.1rem' },
-                        borderRadius: 3
+                        mb: 1, 
+                        fontWeight: 700,
+                        fontSize: { xs: '1.5rem', md: '1.75rem' }
                       }}
                     >
-                      🚀 Start
-                    </Button>
+                      Alfabetet
+                    </Typography>
+                    <Typography 
+                      variant="body1" 
+                      color="text.secondary" 
+                      sx={{ 
+                        fontSize: { xs: '0.875rem', md: '1rem' },
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 0.5
+                      }}
+                    >
+                      2 øvelser <Typography component="span" sx={{ fontSize: '1.2rem' }}>→</Typography>
+                    </Typography>
                   </CardContent>
                 </Card>
               </motion.div>
@@ -241,51 +253,63 @@ const HomePage = () => {
                       height: '100%',
                       display: 'flex',
                       flexDirection: 'column',
-                      justifyContent: 'space-between',
-                      textAlign: 'center'
+                      justifyContent: 'center',
+                      textAlign: 'center',
+                      position: 'relative',
+                      '&::after': {
+                        content: '""',
+                        position: 'absolute',
+                        right: { xs: 16, md: 24 },
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        width: 0,
+                        height: 0,
+                        borderTop: '12px solid transparent',
+                        borderBottom: '12px solid transparent',
+                        borderLeft: '16px solid #9c27b0',
+                        opacity: 0.5
+                      }
                     }}
                   >
-                    <Box>
-                      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, mb: 2 }}>
-                        <motion.div
-                          animate={{ y: [0, -3, 0] }}
-                          transition={{ duration: 2, repeat: Infinity }}
-                        >
-                          <Brain size={40} color="#9c27b0" />
-                        </motion.div>
-                        <Typography sx={{ fontSize: '3rem' }}>🧮</Typography>
-                        <LottieCharacter
-                          character="fox"
-                          state="thinking"
-                          size={50}
-                          loop={true}
-                        />
-                      </Box>
-                      <Typography 
-                        variant="h4" 
-                        color="secondary.dark" 
-                        sx={{ 
-                          mb: 2, 
-                          fontWeight: 700,
-                          fontSize: { xs: '1.25rem', md: '1.5rem' }
-                        }}
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, mb: 2 }}>
+                      <motion.div
+                        animate={{ y: [0, -3, 0] }}
+                        transition={{ duration: 2, repeat: Infinity }}
                       >
-                        1-2-3 🔢
-                      </Typography>
+                        <Brain size={48} color="#9c27b0" />
+                      </motion.div>
+                      <Typography sx={{ fontSize: '3.5rem' }}>🧮</Typography>
+                      <LottieCharacter
+                        character="fox"
+                        state="thinking"
+                        size={60}
+                        loop={true}
+                      />
                     </Box>
-                    <Button 
-                      variant="contained" 
-                      color="secondary"
-                      size="large"
-                      startIcon={<Play size={20} />}
+                    <Typography 
+                      variant="h4" 
+                      color="secondary.dark" 
                       sx={{ 
-                        py: 1.5,
-                        fontSize: { xs: '1rem', md: '1.1rem' },
-                        borderRadius: 3
+                        mb: 1, 
+                        fontWeight: 700,
+                        fontSize: { xs: '1.5rem', md: '1.75rem' }
                       }}
                     >
-                      ✨ Start
-                    </Button>
+                      Tal og Regning
+                    </Typography>
+                    <Typography 
+                      variant="body1" 
+                      color="text.secondary" 
+                      sx={{ 
+                        fontSize: { xs: '0.875rem', md: '1rem' },
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 0.5
+                      }}
+                    >
+                      3 øvelser <Typography component="span" sx={{ fontSize: '1.2rem' }}>→</Typography>
+                    </Typography>
                   </CardContent>
                 </Card>
               </motion.div>
@@ -349,7 +373,7 @@ const NotFoundPage = () => {
           variant="contained" 
           color="primary" 
           size="large"
-          startIcon={<Home size={24} />}
+          startIcon={<ArrowLeft size={24} />}
           onClick={() => navigate('/')}
           sx={{ py: 1.5, px: 3, fontSize: '1.1rem', borderRadius: 3 }}
         >

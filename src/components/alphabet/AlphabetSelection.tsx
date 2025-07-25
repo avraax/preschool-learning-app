@@ -14,11 +14,11 @@ import {
   Toolbar
 } from '@mui/material'
 import {
-  ArrowBack,
   Quiz,
   School,
   PlayArrow
 } from '@mui/icons-material'
+import { ArrowLeft } from 'lucide-react'
 
 const AlphabetSelection: React.FC = () => {
   const navigate = useNavigate()
@@ -65,7 +65,7 @@ const AlphabetSelection: React.FC = () => {
               '&:hover': { boxShadow: 6 }
             }}
           >
-            <ArrowBack />
+            <ArrowLeft size={24} />
           </IconButton>
         </Toolbar>
       </AppBar>
