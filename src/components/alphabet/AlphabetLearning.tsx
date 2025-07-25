@@ -21,8 +21,9 @@ import {
 } from '@mui/icons-material'
 import { audioManager } from '../../utils/audio'
 import LearningGrid from '../common/LearningGrid'
-import { isIOS } from '../../utils/deviceDetection'
+import { isIOS, deviceInfo } from '../../utils/deviceDetection'
 import { logAudioIssue, logIOSIssue } from '../../utils/remoteConsole'
+import { iosAudioHelper } from '../../utils/iosAudioHelper'
 
 
 const DANISH_ALPHABET = [
@@ -35,7 +36,14 @@ const AlphabetLearning: React.FC = () => {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
   const [isAutoPlay, setIsAutoPlay] = useState(false)
+  const [audioRetryCount, setAudioRetryCount] = useState(0)
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const lastUserInteraction = useRef<number>(Date.now())
+
+  // Track user interactions for iOS audio requirements
+  const updateUserInteraction = () => {
+    lastUserInteraction.current = Date.now()
+  }
 
   useEffect(() => {
     // Stop audio immediately when navigating away
@@ -44,7 +52,15 @@ const AlphabetLearning: React.FC = () => {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current)
       }
+      // Ensure iOS audio helper is stopped
+      iosAudioHelper.stop()
     }
+
+    // Track user interactions for iOS audio
+    const userInteractionEvents = ['touchstart', 'touchend', 'click', 'keydown']
+    userInteractionEvents.forEach(event => {
+      document.addEventListener(event, updateUserInteraction, true)
+    })
 
     // Listen for navigation events
     window.addEventListener('beforeunload', handleBeforeUnload)
@@ -56,8 +72,17 @@ const AlphabetLearning: React.FC = () => {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current)
       }
+      
+      // Clean up user interaction events
+      userInteractionEvents.forEach(event => {
+        document.removeEventListener(event, updateUserInteraction, true)
+      })
+      
       window.removeEventListener('beforeunload', handleBeforeUnload)
       window.removeEventListener('pagehide', handleBeforeUnload)
+      
+      // Stop iOS audio helper
+      iosAudioHelper.stop()
     }
   }, [])
 
@@ -81,12 +106,52 @@ const AlphabetLearning: React.FC = () => {
     try {
       await audioManager.speakLetter(currentLetter)
       logIOSIssue('Alphabet Auto-play', `Successfully spoke letter: ${currentLetter}`)
-    } catch (error) {
+      setAudioRetryCount(0) // Reset retry count on success
+    } catch (error: any) {
+      console.error('Error speaking letter:', error)
+      
+      // Check if it's a navigation interruption (expected)
+      const isNavigationInterruption = error instanceof Error && 
+        (error.message.includes('interrupted by navigation') || 
+         error.message.includes('interrupted by user'))
+      
+      if (isNavigationInterruption) {
+        console.log('🎵 Letter speech interrupted by navigation (expected)')
+        return // Don't show error or retry for navigation interruptions
+      }
+      
+      // iOS audio permission error handling
+      if (deviceInfo.isIOS && error?.message?.includes('not allowed by the user agent')) {
+        // Check if it's been more than 6 seconds since last user interaction
+        const timeSinceInteraction = Date.now() - lastUserInteraction.current
+        
+        if (timeSinceInteraction > 6000 && audioRetryCount < 2) {
+          // iOS TTS failure during autoplay - retry after delay
+          console.log(`🔄 iOS TTS retry ${audioRetryCount + 1} for letter ${currentLetter}`)
+          setAudioRetryCount(prev => prev + 1)
+          
+          // Stop autoplay temporarily and retry after delay
+          setIsPlaying(false)
+          setTimeout(() => {
+            // Retry the same letter
+            setCurrentIndex(prev => prev) // Trigger re-render to retry
+          }, 800)
+          return
+        } else if (audioRetryCount >= 2) {
+          // Too many retries - pause autoplay
+          console.log('🚨 Too many alphabet audio failures, pausing autoplay')
+          setIsAutoPlay(false)
+          setAudioRetryCount(0)
+        }
+      }
+      
       logAudioIssue('Alphabet Letter Speaking', error, { 
         currentLetter, 
         currentIndex, 
         isAutoPlay,
-        isIOS: isIOS()
+        isIOS: isIOS(),
+        timeSinceInteraction: Date.now() - lastUserInteraction.current,
+        audioRetryCount
       })
     } finally {
       setIsPlaying(false)
@@ -114,6 +179,13 @@ const AlphabetLearning: React.FC = () => {
     stopAutoPlay()
     setCurrentIndex(0)
     setIsAutoPlay(true)
+    updateUserInteraction() // Track user interaction
+    setAudioRetryCount(0)
+    
+    // Start iOS audio keep-alive
+    if (deviceInfo.isIOS) {
+      iosAudioHelper.start()
+    }
   }
 
   const stopAutoPlay = () => {
@@ -122,6 +194,11 @@ const AlphabetLearning: React.FC = () => {
     audioManager.stopAll()
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current)
+    }
+    
+    // Stop iOS audio keep-alive
+    if (deviceInfo.isIOS) {
+      iosAudioHelper.stop()
     }
   }
 
@@ -134,6 +211,7 @@ const AlphabetLearning: React.FC = () => {
     setCurrentIndex(index)
     setIsPlaying(true)
     audioManager.stopAll()
+    updateUserInteraction() // Track user interaction
     
     const letter = DANISH_ALPHABET[index]
     
