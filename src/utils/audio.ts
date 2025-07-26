@@ -405,17 +405,27 @@ export class AudioManager {
 
   // Announce current score or points
   async announceScore(score: number, voiceType: 'primary' | 'backup' | 'male' = 'primary'): Promise<void> {
-    let scoreText = ''
-    
-    if (score === 0) {
-      scoreText = 'Du har ingen point endnu'
-    } else if (score === 1) {
-      scoreText = 'Du har et point'
-    } else {
-      scoreText = `Du har ${score} point`
+    try {
+      if (score === 0) {
+        await this.speak('Du har ingen point endnu', voiceType, true)
+      } else if (score === 1) {
+        await this.speak('Du har et point', voiceType, true)
+      } else {
+        // For scores > 1, speak each part separately for better pronunciation
+        await this.speak('Du har', voiceType, false)
+        await new Promise(resolve => setTimeout(resolve, 200))
+        await this.speakNumber(score)
+        await new Promise(resolve => setTimeout(resolve, 200))
+        await this.speak('point', voiceType, false)
+      }
+    } catch (error) {
+      console.error('Error in announceScore:', error)
+      // Fallback to simple text
+      const scoreText = score === 0 ? 'Du har ingen point endnu' 
+                      : score === 1 ? 'Du har et point' 
+                      : `Du har ${score} point`
+      await this.speak(scoreText, voiceType, true)
     }
-    
-    await this.speak(scoreText, voiceType, true)
   }
 
   // Announce current position in learning sequence

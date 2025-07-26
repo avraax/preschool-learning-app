@@ -29,6 +29,7 @@ interface ComparisonProblem {
   leftObjects: typeof OBJECT_TYPES[0]
   rightObjects: typeof OBJECT_TYPES[0]
   correctSymbol: '>' | '<' | '='
+  questionType: 'largest' | 'smallest' | 'equal'
 }
 
 const ComparisonGame: React.FC = () => {
@@ -72,18 +73,30 @@ const ComparisonGame: React.FC = () => {
       rightObjectType = OBJECT_TYPES[Math.floor(Math.random() * OBJECT_TYPES.length)]
     }
     
-    // Determine correct symbol
+    // Determine correct symbol and question type
     let correctSymbol: '>' | '<' | '='
-    if (leftNum > rightNum) correctSymbol = '>'
-    else if (leftNum < rightNum) correctSymbol = '<'  
-    else correctSymbol = '='
+    let questionType: 'largest' | 'smallest' | 'equal'
+    
+    if (leftNum > rightNum) {
+      correctSymbol = '>'
+      // Randomly ask for largest or smallest
+      questionType = Math.random() < 0.5 ? 'largest' : 'smallest'
+    } else if (leftNum < rightNum) {
+      correctSymbol = '<'  
+      // Randomly ask for largest or smallest
+      questionType = Math.random() < 0.5 ? 'largest' : 'smallest'
+    } else {
+      correctSymbol = '='
+      questionType = 'equal'
+    }
     
     const problem: ComparisonProblem = {
       leftNumber: leftNum,
       rightNumber: rightNum,
       leftObjects: leftObjectType,
       rightObjects: rightObjectType,
-      correctSymbol
+      correctSymbol,
+      questionType
     }
     
     setCurrentProblem(problem)
@@ -114,8 +127,16 @@ const ComparisonGame: React.FC = () => {
       
       await new Promise(resolve => setTimeout(resolve, 500))
       
-      // Ask comparison question
-      await audioManager.speak('Hvilket tal er størst?')
+      // Ask comparison question based on question type
+      let questionText = ''
+      if (problem.questionType === 'largest') {
+        questionText = 'Hvilket tal er størst?'
+      } else if (problem.questionType === 'smallest') {
+        questionText = 'Hvilket tal er mindst?'
+      } else {
+        questionText = 'Er tallene ens?'
+      }
+      await audioManager.speak(questionText)
       
     } catch (error) {
       console.error('Error speaking problem:', error)
@@ -131,7 +152,31 @@ const ComparisonGame: React.FC = () => {
     setShowFeedback(true)
     setIsPlaying(true)
     
-    const isCorrect = symbol === currentProblem.correctSymbol
+    // Determine if the answer is correct based on question type
+    let isCorrect = false
+    
+    if (currentProblem.questionType === 'equal') {
+      // For "Er tallene ens?", only "=" is correct for equal numbers
+      isCorrect = symbol === currentProblem.correctSymbol
+    } else if (currentProblem.questionType === 'largest') {
+      // For "Hvilket tal er størst?", we need to select the symbol that points to the larger number
+      if (currentProblem.leftNumber > currentProblem.rightNumber) {
+        isCorrect = symbol === '>' // Left is larger, so > is correct
+      } else if (currentProblem.rightNumber > currentProblem.leftNumber) {
+        isCorrect = symbol === '<' // Right is larger, so < is correct
+      } else {
+        isCorrect = symbol === '=' // They are equal
+      }
+    } else if (currentProblem.questionType === 'smallest') {
+      // For "Hvilket tal er mindst?", we need to select the symbol that points to the smaller number
+      if (currentProblem.leftNumber < currentProblem.rightNumber) {
+        isCorrect = symbol === '<' // Left is smaller, so < is correct (left < right)
+      } else if (currentProblem.rightNumber < currentProblem.leftNumber) {
+        isCorrect = symbol === '>' // Right is smaller, so > is correct (left > right)
+      } else {
+        isCorrect = symbol === '=' // They are equal
+      }
+    }
     
     if (isCorrect) {
       // Correct answer - celebrate!
@@ -162,11 +207,31 @@ const ComparisonGame: React.FC = () => {
         // Provide teaching moment
         await new Promise(resolve => setTimeout(resolve, 1000))
         
-        const teachingText = currentProblem.correctSymbol === '>' 
-          ? `${DANISH_NUMBERS[currentProblem.leftNumber]} er større end ${DANISH_NUMBERS[currentProblem.rightNumber]}`
-          : currentProblem.correctSymbol === '<'
-          ? `${DANISH_NUMBERS[currentProblem.leftNumber]} er mindre end ${DANISH_NUMBERS[currentProblem.rightNumber]}`
-          : `${DANISH_NUMBERS[currentProblem.leftNumber]} er lige med ${DANISH_NUMBERS[currentProblem.rightNumber]}`
+        let teachingText = ''
+        
+        if (currentProblem.questionType === 'equal') {
+          if (currentProblem.correctSymbol === '=') {
+            teachingText = `${DANISH_NUMBERS[currentProblem.leftNumber]} er lige med ${DANISH_NUMBERS[currentProblem.rightNumber]}`
+          } else {
+            teachingText = `${DANISH_NUMBERS[currentProblem.leftNumber]} er ikke lige med ${DANISH_NUMBERS[currentProblem.rightNumber]}`
+          }
+        } else if (currentProblem.questionType === 'largest') {
+          if (currentProblem.leftNumber > currentProblem.rightNumber) {
+            teachingText = `${DANISH_NUMBERS[currentProblem.leftNumber]} er størst`
+          } else if (currentProblem.rightNumber > currentProblem.leftNumber) {
+            teachingText = `${DANISH_NUMBERS[currentProblem.rightNumber]} er størst`
+          } else {
+            teachingText = `${DANISH_NUMBERS[currentProblem.leftNumber]} og ${DANISH_NUMBERS[currentProblem.rightNumber]} er ens`
+          }
+        } else if (currentProblem.questionType === 'smallest') {
+          if (currentProblem.leftNumber < currentProblem.rightNumber) {
+            teachingText = `${DANISH_NUMBERS[currentProblem.leftNumber]} er mindst`
+          } else if (currentProblem.rightNumber < currentProblem.leftNumber) {
+            teachingText = `${DANISH_NUMBERS[currentProblem.rightNumber]} er mindst`
+          } else {
+            teachingText = `${DANISH_NUMBERS[currentProblem.leftNumber]} og ${DANISH_NUMBERS[currentProblem.rightNumber]} er ens`
+          }
+        }
         
         await audioManager.speak(teachingText)
         
