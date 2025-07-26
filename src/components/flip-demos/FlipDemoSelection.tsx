@@ -62,7 +62,7 @@ const FlipDemoSelection: React.FC = () => {
 
         <Grid container spacing={3}>
           {demos.map((demo, index) => (
-            <Grid item xs={12} md={6} key={demo.path}>
+            <Grid size={{ xs: 12, md: 6 }} key={demo.path}>
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}

@@ -6,7 +6,6 @@ import { motion } from 'framer-motion'
 import LottieCharacter, { useCharacterState } from '../common/LottieCharacter'
 import CelebrationEffect, { useCelebration } from '../common/CelebrationEffect'
 import { audioManager } from '../../utils/audio'
-import { isIOS } from '../../utils/deviceDetection'
 
 // Object types for visual counting
 const OBJECT_TYPES = [
@@ -41,7 +40,6 @@ const ComparisonGame: React.FC = () => {
   const [isPlaying, setIsPlaying] = useState(false)
   const [showIOSPrompt, setShowIOSPrompt] = useState(false)
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
-  const lastInteractionRef = useRef<number>(Date.now())
   
   // Character and celebration management
   const mathTeacher = useCharacterState('wave')
@@ -296,7 +294,7 @@ const ComparisonGame: React.FC = () => {
           >
             <Grid container spacing={4} alignItems="center">
               {/* Left Side */}
-              <Grid xs={12} sm={4}>
+              <Grid size={{ xs: 12, sm: 4 }}>
                 <Box sx={{ textAlign: 'center' }}>
                   {/* Objects Display */}
                   <Box sx={{ mb: 2, minHeight: 100, display: 'flex', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center', gap: 1 }}>
@@ -330,7 +328,7 @@ const ComparisonGame: React.FC = () => {
               </Grid>
 
               {/* Symbol Selection */}
-              <Grid xs={12} sm={4}>
+              <Grid size={{ xs: 12, sm: 4 }}>
                 <Box sx={{ textAlign: 'center' }}>
                   {showFeedback && selectedSymbol ? (
                     <Box sx={{ mb: 2 }}>
@@ -381,7 +379,7 @@ const ComparisonGame: React.FC = () => {
               </Grid>
 
               {/* Right Side */}
-              <Grid xs={12} sm={4}>
+              <Grid size={{ xs: 12, sm: 4 }}>
                 <Box sx={{ textAlign: 'center' }}>
                   {/* Objects Display */}
                   <Box sx={{ mb: 2, minHeight: 100, display: 'flex', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center', gap: 1 }}>

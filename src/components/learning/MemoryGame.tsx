@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { Container, Box, Typography, Button, IconButton, Grid, Card, CardContent, Paper, AppBar, Toolbar, Chip } from '@mui/material'
-import { ArrowBack, Star, VolumeUp, Refresh } from '@mui/icons-material'
-import { motion, AnimatePresence } from 'framer-motion'
+import { Container, Box, Typography, Button, IconButton, AppBar, Toolbar, Chip } from '@mui/material'
+import { ArrowBack, Star, Refresh } from '@mui/icons-material'
+import { motion } from 'framer-motion'
 
 // Working CSS for card flip animation
 const flipStyles = `
@@ -54,7 +54,6 @@ const flipStyles = `
 import LottieCharacter, { useCharacterState } from '../common/LottieCharacter'
 import CelebrationEffect, { useCelebration } from '../common/CelebrationEffect'
 import { audioManager } from '../../utils/audio'
-import { isIOS } from '../../utils/deviceDetection'
 
 // Danish alphabet (29 letters)
 const DANISH_ALPHABET = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'Æ', 'Ø', 'Å']
@@ -95,59 +94,6 @@ const LETTER_ICONS: { [key: string]: { word: string; icon: string } } = {
   'Å': { word: 'Å', icon: '🏞️' }
 }
 
-// Number visual representations
-const getNumberVisual = (num: number): React.ReactNode => {
-  if (num <= 10) {
-    const dots = ['🟣', '🔵', '🟢', '🟡', '🔴']
-    const dotColor = dots[(num - 1) % 5]
-    
-    // Create visual patterns for numbers 1-10
-    const patterns: { [key: number]: number[][] } = {
-      1: [[1]],
-      2: [[1, 1]],
-      3: [[1], [1, 1]],
-      4: [[2], [2]],
-      5: [[2], [1], [2]],
-      6: [[3], [3]],
-      7: [[3], [1], [3]],
-      8: [[4], [4]],
-      9: [[3], [3], [3]],
-      10: [[5], [5]]
-    }
-    
-    const pattern = patterns[num] || [[num]]
-    
-    return (
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.25, alignItems: 'center' }}>
-        {pattern.map((row, i) => (
-          <Box key={i} sx={{ display: 'flex', gap: 0.25, fontSize: { xs: '0.8rem', sm: '1rem', md: '1.2rem' } }}>
-            {Array(row[0]).fill(null).map((_, j) => (
-              <span key={j}>{dotColor}</span>
-            ))}
-          </Box>
-        ))}
-      </Box>
-    )
-  } else if (num <= 15) {
-    // Stars for 11-15
-    return (
-      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.2, justifyContent: 'center', maxWidth: '80%', fontSize: { xs: '0.8rem', sm: '1rem', md: '1.2rem' } }}>
-        {Array(num).fill(null).map((_, i) => (
-          <span key={i}>⭐</span>
-        ))}
-      </Box>
-    )
-  } else {
-    // Balloons for 16-20
-    return (
-      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.2, justifyContent: 'center', maxWidth: '80%', fontSize: { xs: '0.8rem', sm: '1rem', md: '1.2rem' } }}>
-        {Array(num).fill(null).map((_, i) => (
-          <span key={i}>🎈</span>
-        ))}
-      </Box>
-    )
-  }
-}
 
 interface MemoryCard {
   id: string
@@ -156,11 +102,6 @@ interface MemoryCard {
   isMatched: boolean
   pairId: string
 }
-
-interface MemoryGameProps {
-  gameType: 'letters' | 'numbers'
-}
-
 
 const MemoryGame: React.FC = () => {
   const navigate = useNavigate()
@@ -339,9 +280,6 @@ const MemoryGame: React.FC = () => {
     return gameType === 'letters' ? 'Hukommelsesspil - Bogstaver' : 'Hukommelsesspil - Tal'
   }
 
-  const getGameSubtitle = () => {
-    return `Find alle ${20} par! 🧠`
-  }
 
   return (
     <>
