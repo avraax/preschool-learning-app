@@ -59,9 +59,17 @@ const ComparisonGame: React.FC = () => {
     const leftNum = Math.floor(Math.random() * 10) + 1
     let rightNum = Math.floor(Math.random() * 10) + 1
     
-    // Ensure we get different numbers most of the time (90% different, 10% equal for = practice)
-    if (Math.random() > 0.1 && leftNum === rightNum) {
-      rightNum = rightNum === 10 ? rightNum - 1 : rightNum + 1
+    // Randomly decide if we want equal numbers (25% chance)
+    const wantEqual = Math.random() < 0.25
+    
+    if (wantEqual) {
+      // Force equal numbers
+      rightNum = leftNum
+    } else {
+      // Force different numbers
+      while (rightNum === leftNum) {
+        rightNum = Math.floor(Math.random() * 10) + 1
+      }
     }
     
     // Select random object types for each side

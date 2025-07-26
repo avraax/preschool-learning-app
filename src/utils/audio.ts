@@ -136,7 +136,7 @@ export class AudioManager {
   }
 
   async playSuccessSound() {
-    await this.speak('Godt klaret!')
+    await this.speak('Godt!')
   }
 
   async playEncouragementSound() {
@@ -234,8 +234,8 @@ export class AudioManager {
 
   // Specialized methods for child-friendly audio
   async speakWithEnthusiasm(text: string, voiceType: 'primary' | 'backup' | 'male' = 'primary'): Promise<void> {
-    const enthusiasticText = `Godt klaret! ${text}!`
-    await this.speak(enthusiasticText, voiceType, true)
+    // Just speak the text with enthusiasm, don't add extra words
+    await this.speak(text, voiceType, true)
   }
 
   async speakSlowly(text: string, voiceType: 'primary' | 'backup' | 'male' = 'primary'): Promise<void> {
@@ -366,9 +366,10 @@ export class AudioManager {
     if (isCorrect) {
       const successPhrases = [
         'Fantastisk!',
-        'Rigtig godt klaret!', 
-        'Super flot!',
-        'Perfekt!'
+        'Godt!', 
+        'Super!',
+        'Perfekt!',
+        'Flot!'
       ]
       const phrase = successPhrases[Math.floor(Math.random() * successPhrases.length)]
       await this.speakWithEnthusiasm(phrase, voiceType)
