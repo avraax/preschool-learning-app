@@ -49,11 +49,18 @@ const flipStyles = `
   .card-back {
     transform: rotateY(180deg);
   }
+
+  @keyframes pulse {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.05); opacity: 0.8; }
+    100% { transform: scale(1); opacity: 1; }
+  }
 `
 
 import LottieCharacter, { useCharacterState } from '../common/LottieCharacter'
 import CelebrationEffect, { useCelebration } from '../common/CelebrationEffect'
 import { audioManager } from '../../utils/audio'
+import { isIOS } from '../../utils/deviceDetection'
 
 // Danish alphabet (29 letters)
 const DANISH_ALPHABET = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'Æ', 'Ø', 'Å']
@@ -127,6 +134,11 @@ const MemoryGame: React.FC = () => {
     // Initialize teacher character
     teacher.setCharacter('owl')
     teacher.wave()
+    
+    // Show iOS prompt if needed
+    if (isIOS()) {
+      setShowIOSPrompt(true)
+    }
   }, [gameType])
 
   const initializeGame = () => {
@@ -186,23 +198,40 @@ const MemoryGame: React.FC = () => {
     const newRevealedCards = [...revealedCards, { ...clickedCard, isRevealed: true }]
     setRevealedCards(newRevealedCards)
 
-    // Play audio for the revealed card (don't await to prevent blocking)
-    if (gameType === 'letters') {
-      audioManager.speak(clickedCard.content).catch(error => {
-        // Silently handle audio errors - they're often due to navigation interruption
-        if (!error.message.includes('interrupted by navigation')) {
-          console.error('Error playing card audio:', error)
+    // Play audio for the revealed card with enhanced iOS handling
+    const playCardAudio = async () => {
+      try {
+        if (gameType === 'letters') {
+          await audioManager.speak(clickedCard.content)
+        } else {
+          await audioManager.speakNumber(parseInt(clickedCard.content))
         }
-      })
-    } else {
-      // Use speakNumber for numbers to ensure proper Danish pronunciation
-      audioManager.speakNumber(parseInt(clickedCard.content)).catch(error => {
-        // Silently handle audio errors - they're often due to navigation interruption
-        if (!error.message.includes('interrupted by navigation')) {
-          console.error('Error playing card audio:', error)
+      } catch (error: any) {
+        // Check if this is a navigation interruption (expected)
+        const isNavigationInterruption = error && 
+          (error.message?.includes('interrupted by navigation') || 
+           error.message?.includes('interrupted by user'))
+        
+        if (isNavigationInterruption) {
+          console.log('🎵 Card audio interrupted by navigation (expected)')
+          return // Don't show prompts for expected interruptions
         }
-      })
+        
+        // For other errors, especially timeouts, handle iOS-specific issues
+        const isTimeoutError = error && error.message?.includes('timeout')
+        const isIOSAudioError = isIOS() && (isTimeoutError || error.message?.includes('iOS') || error.message?.includes('audio requires'))
+        
+        if (isIOSAudioError) {
+          console.warn('🎵 iOS audio issue detected, showing prompt again:', error.message)
+          setShowIOSPrompt(true)
+        } else {
+          console.error('🎵 Unexpected card audio error:', error)
+        }
+      }
     }
+    
+    // Start audio playback but don't wait for it to prevent blocking the game
+    playCardAudio()
 
     // If this is the second card, check for match
     if (newRevealedCards.length === 2) {
@@ -274,6 +303,70 @@ const MemoryGame: React.FC = () => {
   const restartGame = () => {
     teacher.wave()
     initializeGame()
+  }
+
+  const handleIOSAudioInit = async () => {
+    try {
+      // Initialize audio context on iOS with user gesture
+      console.log('🎵 iOS: Initializing audio with user gesture...')
+      
+      // First try a simple greeting to initialize the audio system
+      await audioManager.speak('Hej!')
+      
+      // If successful, also test with number pronunciation to warm up the system
+      if (gameType === 'numbers') {
+        await new Promise(resolve => setTimeout(resolve, 500))
+        await audioManager.speakNumber(1)
+      }
+      
+      console.log('🎵 iOS: Audio initialization successful')
+      setShowIOSPrompt(false)
+    } catch (error) {
+      console.error('🎵 iOS audio initialization failed:', error)
+      
+      // Try a simpler fallback approach
+      try {
+        console.log('🎵 iOS: Trying fallback initialization...')
+        
+        // Use the emergency stop and reinitialize
+        audioManager.emergencyStop()
+        await new Promise(resolve => setTimeout(resolve, 300))
+        
+        // Try just a simple Web Speech API test
+        if ('speechSynthesis' in window) {
+          const utterance = new SpeechSynthesisUtterance('Hej')
+          utterance.lang = 'da-DK'
+          utterance.rate = 0.8
+          utterance.pitch = 1.1
+          
+          return new Promise<void>((resolve, reject) => {
+            const timeout = setTimeout(() => {
+              window.speechSynthesis.cancel()
+              reject(new Error('Speech synthesis timeout'))
+            }, 3000)
+            
+            utterance.onend = () => {
+              clearTimeout(timeout)
+              console.log('🎵 iOS: Fallback audio initialization successful')
+              setShowIOSPrompt(false)
+              resolve()
+            }
+            
+            utterance.onerror = (event) => {
+              clearTimeout(timeout)
+              console.error('🎵 iOS: Fallback also failed:', event)
+              // Keep prompt visible for user to try again
+              reject(event)
+            }
+            
+            window.speechSynthesis.speak(utterance)
+          })
+        }
+      } catch (fallbackError) {
+        console.error('🎵 iOS: Both initialization methods failed:', fallbackError)
+        // Keep prompt visible if all methods fail
+      }
+    }
   }
 
   const getGameTitle = () => {
@@ -575,16 +668,29 @@ const MemoryGame: React.FC = () => {
 
       {/* iOS Audio Permission Prompt */}
       {showIOSPrompt && (
-        <Box sx={{ position: 'fixed', bottom: 20, left: 20, right: 20, zIndex: 1000 }}>
+        <Box sx={{ 
+          position: 'fixed', 
+          bottom: 20, 
+          left: 20, 
+          right: 20, 
+          zIndex: 1000,
+          animation: 'pulse 2s infinite'
+        }}>
           <Button
-            onClick={() => setShowIOSPrompt(false)}
+            onClick={handleIOSAudioInit}
             variant="contained"
-            color="info"
+            color="warning"
             size="large"
             fullWidth
-            sx={{ py: 2, fontSize: '1.1rem' }}
+            sx={{ 
+              py: 2, 
+              fontSize: '1.1rem',
+              fontWeight: 'bold',
+              boxShadow: 4,
+              '&:hover': { boxShadow: 8 }
+            }}
           >
-            Tryk for at høre lyd 🔊
+            📱 Tryk for at aktivere lyd på iPad 🔊
           </Button>
         </Box>
       )}
