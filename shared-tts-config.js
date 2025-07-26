@@ -3,7 +3,7 @@
 export const TTS_CONFIG = {
   voice: {
     languageCode: 'da-DK',
-    name: 'da-DK-Wavenet-A',
+    name: 'da-DK-Wavenet-F',
     ssmlGender: 'FEMALE'
   },
   audioConfig: {

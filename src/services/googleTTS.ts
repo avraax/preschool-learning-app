@@ -29,12 +29,12 @@ export class GoogleTTSService {
     primary: TTS_CONFIG.voice,
     backup: {
       languageCode: 'da-DK', 
-      name: 'da-DK-Wavenet-D', // Another female Wavenet voice
+      name: 'da-DK-Wavenet-F', // Same as primary for consistency (no other female Wavenet available)
       ssmlGender: 'FEMALE' as const
     },
     male: {
       languageCode: 'da-DK',
-      name: 'da-DK-Wavenet-C', // Male option for variety
+      name: 'da-DK-Wavenet-G', // Latest male Wavenet voice
       ssmlGender: 'MALE' as const
     }
   }

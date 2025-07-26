@@ -375,9 +375,9 @@ This documentation provides everything needed to understand, develop, and deploy
 
 ### Current Shared Configurations
 - **`tts-config.js`** - Centralized TTS voice and audio settings
-  - Speaking rate: 0.4 (slower for children)
+  - Speaking rate: 0.8 (slower for children)
   - Pitch: 1.1 (slightly higher for friendly tone)
-  - Voice: da-DK-Wavenet-A (Danish female)
+  - Voice: da-DK-Wavenet-F (Danish female)
   - Used by both `dev-server.js` and client-side code
 
 ### Development Guidelines

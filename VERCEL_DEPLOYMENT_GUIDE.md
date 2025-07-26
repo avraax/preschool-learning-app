@@ -40,7 +40,7 @@ vercel env add VITE_TTS_FALLBACK_TO_WEB_SPEECH production
 # Enter: true
 
 vercel env add VITE_PREFERRED_DANISH_VOICE production
-# Enter: da-DK-Wavenet-A
+# Enter: da-DK-Wavenet-F
 
 vercel env add VITE_SPEECH_RATE production
 # Enter: 0.9

@@ -1,5 +1,6 @@
 import { VercelRequest, VercelResponse } from '@vercel/node'
 import { TextToSpeechClient } from '@google-cloud/text-to-speech'
+import { TTS_CONFIG } from '../shared-tts-config.js'
 
 // Initialize the client with service account credentials from environment variables
 let ttsClient: TextToSpeechClient | null = null
@@ -77,18 +78,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     
     const request = {
       input,
-      voice: voice || {
-        languageCode: 'da-DK',
-        name: 'da-DK-Wavenet-F',
-        ssmlGender: 'FEMALE'
-      },
-      audioConfig: audioConfig || {
-        audioEncoding: 'MP3',
-        speakingRate: 1.0,
-        pitch: 1.2,
-        volumeGainDb: 0,
-        sampleRateHertz: 24000
-      }
+      voice: voice || TTS_CONFIG.voice,
+      audioConfig: audioConfig || TTS_CONFIG.audioConfig
     }
 
     // Call Google Cloud TTS
