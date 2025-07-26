@@ -17,7 +17,9 @@ import {
   Calculate,
   PlayArrow,
   School,
-  Add
+  Add,
+  CompareArrows,
+  Psychology
 } from '@mui/icons-material'
 import { ArrowLeft } from 'lucide-react'
 
@@ -47,6 +49,22 @@ const MathSelection: React.FC = () => {
       icon: <Add sx={{ fontSize: '4rem' }} />,
       color: 'success',
       emoji: '➕'
+    },
+    {
+      id: 'comparison',
+      title: 'Sammenlign Tal',
+      description: 'Lær større end, mindre end (1-10)',
+      icon: <CompareArrows sx={{ fontSize: '4rem' }} />,
+      color: 'warning',
+      emoji: '⚖️'
+    },
+    {
+      id: 'memory',
+      title: 'Hukommelsesspil',
+      description: 'Find par af tal (40 kort)',
+      icon: <Psychology sx={{ fontSize: '4rem' }} />,
+      color: 'info',
+      emoji: '🧠'
     }
   ]
 
@@ -128,7 +146,7 @@ const MathSelection: React.FC = () => {
             sx={{ mb: { xs: 2, md: 3 } }}
           >
           {exercises.map((exercise, index) => (
-            <Grid size={{ xs: 12, sm: 6, md: 4 }} key={exercise.id}>
+            <Grid size={{ xs: 12, sm: 6, lg: 4 }} key={exercise.id}>
               <motion.div
                 initial={{ opacity: 0, x: index === 0 ? -30 : index === 2 ? 30 : 0, y: index === 1 ? -30 : 0 }}
                 animate={{ opacity: 1, x: 0, y: 0 }}
@@ -137,7 +155,7 @@ const MathSelection: React.FC = () => {
                 whileTap={{ scale: 0.98 }}
               >
                 <Card 
-                  onClick={() => navigate(`/math/${exercise.id}`)}
+                  onClick={() => navigate(exercise.id === 'memory' ? '/learning/memory/numbers' : `/math/${exercise.id}`)}
                   sx={{ 
                     height: { xs: 180, sm: 200, md: 220 },
                     cursor: 'pointer',

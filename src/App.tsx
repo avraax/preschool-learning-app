@@ -28,8 +28,18 @@ import MathGame from './components/math/MathGame'
 import MathSelection from './components/math/MathSelection'
 import NumberLearning from './components/math/NumberLearning'
 import AdditionGame from './components/math/AdditionGame'
+import ComparisonGame from './components/math/ComparisonGame'
+import MemoryGame from './components/learning/MemoryGame'
 import ErrorDashboard from './components/admin/ErrorDashboard'
 import UpdateBanner from './components/common/UpdateBanner'
+
+// Flip Demo Components
+import FlipDemoSelection from './components/flip-demos/FlipDemoSelection'
+import CSSClassFlip from './components/flip-demos/CSSClassFlip'
+import InlineStyleFlip from './components/flip-demos/InlineStyleFlip'
+import WebAnimationsFlip from './components/flip-demos/WebAnimationsFlip'
+import OpacityScaleFlip from './components/flip-demos/OpacityScaleFlip'
+import AbsolutePositionFlip from './components/flip-demos/AbsolutePositionFlip'
 import LottieCharacter, { useCharacterState } from './components/common/LottieCharacter'
 import { useUpdateChecker } from './hooks/useUpdateChecker'
 
@@ -136,7 +146,7 @@ const HomePage = () => {
         <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
           <Grid container spacing={{ xs: 2, md: 3 }} sx={{ mb: { xs: 2, md: 3 } }}>
             {/* Alphabet Card */}
-            <Grid size={{ xs: 12, sm: 6, lg: 6 }}>
+            <Grid size={{ xs: 12, sm: 6, lg: 4 }}>
               <motion.div
                 initial={{ opacity: 0, x: -30 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -218,7 +228,7 @@ const HomePage = () => {
                         gap: 0.5
                       }}
                     >
-                      2 øvelser <Typography component="span" sx={{ fontSize: '1.2rem' }}>→</Typography>
+                      3 øvelser <Typography component="span" sx={{ fontSize: '1.2rem' }}>→</Typography>
                     </Typography>
                   </CardContent>
                 </Card>
@@ -226,7 +236,7 @@ const HomePage = () => {
             </Grid>
 
             {/* Math Card */}
-            <Grid size={{ xs: 12, sm: 6, lg: 6 }}>
+            <Grid size={{ xs: 12, sm: 6, lg: 4 }}>
               <motion.div
                 initial={{ opacity: 0, y: -30 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -308,12 +318,13 @@ const HomePage = () => {
                         gap: 0.5
                       }}
                     >
-                      3 øvelser <Typography component="span" sx={{ fontSize: '1.2rem' }}>→</Typography>
+                      5 øvelser <Typography component="span" sx={{ fontSize: '1.2rem' }}>→</Typography>
                     </Typography>
                   </CardContent>
                 </Card>
               </motion.div>
             </Grid>
+
           </Grid>
 
           {/* Bottom Decoration */}
@@ -434,12 +445,24 @@ function App() {
         <Route path="/math/counting" element={<MathGame />} />
         <Route path="/math/numbers" element={<NumberLearning />} />
         <Route path="/math/addition" element={<AdditionGame />} />
+        <Route path="/math/comparison" element={<ComparisonGame />} />
+        
+        {/* Learning Routes */}
+        <Route path="/learning/memory/:type" element={<MemoryGame />} />
         
         {/* Admin Routes */}
         <Route path="/admin/errors" element={<ErrorDashboard />} />
         
         {/* Legacy redirect for old admin access */}
         <Route path="/admin" element={<Navigate to="/admin/errors" replace />} />
+        
+        {/* Flip Demo Routes */}
+        <Route path="/flip-demo" element={<FlipDemoSelection />} />
+        <Route path="/flip-demo/css-class" element={<CSSClassFlip />} />
+        <Route path="/flip-demo/inline-style" element={<InlineStyleFlip />} />
+        <Route path="/flip-demo/web-animations" element={<WebAnimationsFlip />} />
+        <Route path="/flip-demo/opacity-scale" element={<OpacityScaleFlip />} />
+        <Route path="/flip-demo/absolute-positioning" element={<AbsolutePositionFlip />} />
         
         {/* 404 Not Found */}
         <Route path="*" element={<NotFoundPage />} />

@@ -16,7 +16,8 @@ import {
 import {
   Quiz,
   School,
-  PlayArrow
+  PlayArrow,
+  Psychology
 } from '@mui/icons-material'
 import { ArrowLeft } from 'lucide-react'
 
@@ -38,6 +39,14 @@ const AlphabetSelection: React.FC = () => {
       icon: <Quiz sx={{ fontSize: '4rem' }} />,
       color: 'secondary',
       emoji: '🎯'
+    },
+    {
+      id: 'memory',
+      title: 'Hukommelsesspil',
+      description: 'Find par af bogstaver (40 kort)',
+      icon: <Psychology sx={{ fontSize: '4rem' }} />,
+      color: 'success',
+      emoji: '🧠'
     }
   ]
 
@@ -119,16 +128,16 @@ const AlphabetSelection: React.FC = () => {
             sx={{ mb: { xs: 2, md: 3 } }}
           >
           {exercises.map((exercise, index) => (
-            <Grid size={{ xs: 12, sm: 6, lg: 6 }} key={exercise.id}>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }} key={exercise.id}>
               <motion.div
-                initial={{ opacity: 0, x: index === 0 ? -30 : 30 }}
-                animate={{ opacity: 1, x: 0 }}
+                initial={{ opacity: 0, x: index === 0 ? -30 : index === 1 ? 0 : 30, y: index === 1 ? -30 : 0 }}
+                animate={{ opacity: 1, x: 0, y: 0 }}
                 transition={{ duration: 0.6 }}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
                 <Card 
-                  onClick={() => navigate(`/alphabet/${exercise.id}`)}
+                  onClick={() => navigate(exercise.id === 'memory' ? '/learning/memory/letters' : `/alphabet/${exercise.id}`)}
                   sx={{ 
                     height: { xs: 200, sm: 240, md: 260 },
                     cursor: 'pointer',
