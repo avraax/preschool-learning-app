@@ -245,7 +245,7 @@ export class AudioManager {
 
   async speakQuizPromptWithRepeat(text: string, repeatWord: string, voiceType: 'primary' | 'backup' | 'male' = 'primary'): Promise<void> {
     try {
-      logIOSIssue('Quiz Audio', `Starting speakQuizPromptWithRepeat: "${text}" with repeat word: "${repeatWord}"`)
+      logIOSIssue('Quiz Audio', `Speaking quiz prompt: "${text}"`)
       
       // iOS-specific: Ensure all audio is properly stopped before starting
       if (isIOS()) {
@@ -253,53 +253,10 @@ export class AudioManager {
         await new Promise(resolve => setTimeout(resolve, 200)) // Longer pause for iOS
       }
       
-      // Split text to get the base prompt without the target word
-      // e.g. "Find bogstavet H" -> "Find bogstavet" + "H"
-      let basePrompt = text
-      let useRepeat = true
+      // Just speak the full text once - no repetition
+      await this.speak(text, voiceType, false)
       
-      // Try to intelligently split the text
-      if (repeatWord && text.includes(repeatWord)) {
-        const lastIndex = text.lastIndexOf(repeatWord)
-        if (lastIndex > 0) {
-          basePrompt = text.substring(0, lastIndex).trim()
-        }
-      } else {
-        // If repeatWord is not in text, just speak the full text
-        useRepeat = false
-      }
-      
-      // First: speak base prompt
-      logIOSIssue('Quiz Audio', `Speaking base prompt: "${basePrompt}"`)
-      await this.speak(basePrompt, voiceType, false)
-      
-      // Only repeat the word if we found it in the text
-      if (useRepeat && repeatWord) {
-        // iOS-specific pause adjustment
-        const shortPause = isIOS() ? 300 : 50
-        await new Promise(resolve => setTimeout(resolve, shortPause))
-        
-        // Second: speak the target word
-        logIOSIssue('Quiz Audio', `Speaking target word first time: "${repeatWord}"`)
-        await this.speak(repeatWord, voiceType, false)
-        
-        // iOS-specific pause adjustment
-        const longPause = isIOS() ? 1500 : 1000
-        await new Promise(resolve => setTimeout(resolve, longPause))
-        
-        // Stop any potential lingering audio
-        this.stopAll()
-        
-        // iOS-specific longer cleanup pause
-        const stopPause = isIOS() ? 300 : 100
-        await new Promise(resolve => setTimeout(resolve, stopPause))
-        
-        // Third: repeat the target word
-        logIOSIssue('Quiz Audio', `Speaking target word second time: "${repeatWord}"`)
-        await this.speak(repeatWord, voiceType, false)
-      }
-      
-      logIOSIssue('Quiz Audio', 'Successfully completed speakQuizPromptWithRepeat')
+      logIOSIssue('Quiz Audio', 'Successfully completed quiz prompt')
     } catch (error) {
       // Check if this is a navigation interruption (expected)
       const isNavigationInterruption = error instanceof Error && 
