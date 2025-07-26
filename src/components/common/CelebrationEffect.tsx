@@ -50,6 +50,9 @@ const CelebrationEffect: React.FC<CelebrationEffectProps> = ({
       }, duration)
 
       return () => clearTimeout(timer)
+    } else {
+      // Immediately stop confetti when show becomes false
+      setShowConfetti(false)
     }
   }, [show, duration, onComplete])
 

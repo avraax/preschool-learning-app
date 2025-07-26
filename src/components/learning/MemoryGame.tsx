@@ -652,15 +652,9 @@ const MemoryGame: React.FC = () => {
               <Typography variant="h4" color="success.main" sx={{ mb: 2 }}>
                 🎉 Tillykke! Alle par fundet! 🎉
               </Typography>
-              <Button
-                onClick={restartGame}
-                variant="contained"
-                size="large"
-                color="success"
-                sx={{ fontSize: '1.2rem', py: 2, px: 4 }}
-              >
-                Spil igen! 🎮
-              </Button>
+              <Typography variant="h6" color="text.secondary" sx={{ mt: 1 }}>
+                Brug "Ny spil" knappen ovenfor for at spille igen
+              </Typography>
             </motion.div>
           </Box>
         )}

@@ -52,6 +52,8 @@ export class AudioManager {
         const tensText = tensNames[tens as keyof typeof tensNames]
         numberText = `${onesText}og${tensText}`
       }
+    } else if (number === 100) {
+      numberText = 'et hundrede'
     } else {
       numberText = number.toString()
     }
@@ -382,10 +384,10 @@ export class AudioManager {
   async announceGameResult(isCorrect: boolean, voiceType: 'primary' | 'backup' | 'male' = 'primary'): Promise<void> {
     if (isCorrect) {
       const successPhrases = [
-        'Fantastisk! Du er så dygtig!',
+        'Fantastisk!',
         'Rigtig godt klaret!', 
-        'Super! Det var korrekt!',
-        'Perfekt! Du kan virkelig det!'
+        'Super flot!',
+        'Perfekt!'
       ]
       const phrase = successPhrases[Math.floor(Math.random() * successPhrases.length)]
       await this.speakWithEnthusiasm(phrase, voiceType)
