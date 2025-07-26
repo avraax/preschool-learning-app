@@ -245,7 +245,7 @@ export class AudioManager {
 
   async speakQuizPromptWithRepeat(text: string, repeatWord: string, voiceType: 'primary' | 'backup' | 'male' = 'primary'): Promise<void> {
     try {
-      logIOSIssue('Quiz Audio', `Speaking quiz prompt: "${text}"`)
+      logIOSIssue('Quiz Audio', `Speaking quiz prompt: "${text}" with target word: "${repeatWord}"`)
       
       // iOS-specific: Ensure all audio is properly stopped before starting
       if (isIOS()) {
@@ -253,8 +253,32 @@ export class AudioManager {
         await new Promise(resolve => setTimeout(resolve, 200)) // Longer pause for iOS
       }
       
-      // Just speak the full text once - no repetition
-      await this.speak(text, voiceType, false)
+      // Split text to separate the base prompt from the target word
+      // e.g. "Find bogstavet H" -> "Find bogstavet" + pause + "H"
+      if (repeatWord && text.includes(repeatWord)) {
+        const lastIndex = text.lastIndexOf(repeatWord)
+        if (lastIndex > 0) {
+          const basePrompt = text.substring(0, lastIndex).trim()
+          
+          // Speak the base prompt
+          logIOSIssue('Quiz Audio', `Speaking base prompt: "${basePrompt}"`)
+          await this.speak(basePrompt, voiceType, false)
+          
+          // Add pause before the target word
+          const pauseDuration = isIOS() ? 600 : 400
+          await new Promise(resolve => setTimeout(resolve, pauseDuration))
+          
+          // Speak the target word once
+          logIOSIssue('Quiz Audio', `Speaking target word: "${repeatWord}"`)
+          await this.speak(repeatWord, voiceType, false)
+        } else {
+          // If we can't split it, just speak the full text
+          await this.speak(text, voiceType, false)
+        }
+      } else {
+        // If repeatWord is not in text, just speak the full text
+        await this.speak(text, voiceType, false)
+      }
       
       logIOSIssue('Quiz Audio', 'Successfully completed quiz prompt')
     } catch (error) {
