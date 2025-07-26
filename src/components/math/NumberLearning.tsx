@@ -103,7 +103,21 @@ const NumberLearning: React.FC = () => {
           </IconButton>
           
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Typography variant="body2" sx={{ color: 'secondary.dark', fontWeight: 600 }}>
+            <Typography 
+              variant="body2" 
+              onClick={() => audioManager.announcePosition(currentIndex, numbers.length, 'tal').catch(console.error)}
+              sx={{ 
+                color: 'secondary.dark', 
+                fontWeight: 600,
+                cursor: 'pointer',
+                padding: '4px 8px',
+                borderRadius: 1,
+                '&:hover': { 
+                  backgroundColor: 'secondary.50',
+                  boxShadow: 1
+                }
+              }}
+            >
               {currentIndex + 1} / {numbers.length}
             </Typography>
             <Box sx={{ width: 200, bgcolor: 'white', borderRadius: 1, p: 0.5 }}>

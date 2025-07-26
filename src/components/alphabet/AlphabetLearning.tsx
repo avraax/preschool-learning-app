@@ -107,7 +107,21 @@ const AlphabetLearning: React.FC = () => {
           </IconButton>
           
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Typography variant="body2" sx={{ color: 'primary.dark', fontWeight: 600 }}>
+            <Typography 
+              variant="body2" 
+              onClick={() => audioManager.announcePosition(currentIndex, DANISH_ALPHABET.length, 'bogstav').catch(console.error)}
+              sx={{ 
+                color: 'primary.dark', 
+                fontWeight: 600,
+                cursor: 'pointer',
+                padding: '4px 8px',
+                borderRadius: 1,
+                '&:hover': { 
+                  backgroundColor: 'primary.50',
+                  boxShadow: 1
+                }
+              }}
+            >
               {currentIndex + 1} / {DANISH_ALPHABET.length}
             </Typography>
             <Box sx={{ width: 200, bgcolor: 'white', borderRadius: 1, p: 0.5 }}>

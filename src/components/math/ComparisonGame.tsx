@@ -221,11 +221,14 @@ const ComparisonGame: React.FC = () => {
             icon={<Star />} 
             label={`Point: ${score}`} 
             color="primary" 
+            onClick={() => audioManager.announceScore(score).catch(console.error)}
             sx={{ 
               fontSize: '1.1rem',
               py: 1,
               fontWeight: 'bold',
-              boxShadow: 2
+              boxShadow: 2,
+              cursor: 'pointer',
+              '&:hover': { boxShadow: 4 }
             }}
           />
         </Toolbar>

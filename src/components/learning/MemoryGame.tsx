@@ -406,11 +406,14 @@ const MemoryGame: React.FC = () => {
             icon={<Star />} 
             label={`Point: ${score}`} 
             color="primary" 
+            onClick={() => audioManager.announceScore(score).catch(console.error)}
             sx={{ 
               fontSize: '1rem',
               py: 0.5,
               fontWeight: 'bold',
-              boxShadow: 1
+              boxShadow: 1,
+              cursor: 'pointer',
+              '&:hover': { boxShadow: 2 }
             }}
           />
         </Toolbar>

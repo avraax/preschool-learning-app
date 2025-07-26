@@ -402,6 +402,35 @@ export class AudioManager {
       await this.speak(phrase, voiceType, true)
     }
   }
+
+  // Announce current score or points
+  async announceScore(score: number, voiceType: 'primary' | 'backup' | 'male' = 'primary'): Promise<void> {
+    let scoreText = ''
+    
+    if (score === 0) {
+      scoreText = 'Du har ingen point endnu'
+    } else if (score === 1) {
+      scoreText = 'Du har et point'
+    } else {
+      scoreText = `Du har ${score} point`
+    }
+    
+    await this.speak(scoreText, voiceType, true)
+  }
+
+  // Announce current position in learning sequence
+  async announcePosition(currentIndex: number, total: number, itemType: 'tal' | 'bogstav' = 'tal', voiceType: 'primary' | 'backup' | 'male' = 'primary'): Promise<void> {
+    const currentNumber = currentIndex + 1
+    let positionText = ''
+    
+    if (itemType === 'tal') {
+      positionText = `Du er ved ${itemType} nummer ${currentNumber} af ${total}`
+    } else {
+      positionText = `Du er ved ${itemType} nummer ${currentNumber} af ${total}`
+    }
+    
+    await this.speak(positionText, voiceType, true)
+  }
 }
 
 export const audioManager = new AudioManager()

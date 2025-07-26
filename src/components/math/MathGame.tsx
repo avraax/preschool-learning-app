@@ -264,11 +264,14 @@ const MathGame: React.FC = () => {
             icon={<Award size={20} />} 
             label={`${score} ⭐`} 
             color="secondary" 
+            onClick={() => audioManager.announceScore(score).catch(console.error)}
             sx={{ 
               fontSize: '1.2rem',
               py: 1,
               fontWeight: 'bold',
-              boxShadow: 2
+              boxShadow: 2,
+              cursor: 'pointer',
+              '&:hover': { boxShadow: 4 }
             }}
           />
         </Toolbar>
