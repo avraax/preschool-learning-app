@@ -13,6 +13,7 @@ export interface BalloonProps {
   onClick: (id: string, x: number, y: number) => void;
   floatDuration?: number;
   children?: React.ReactNode;
+  movementAngle?: number; // Optional movement angle for direction
 }
 
 interface BalloonBaseProps extends BalloonProps {
@@ -33,7 +34,8 @@ export const BalloonBase: React.FC<BalloonBaseProps> = ({
   floatDuration = 10,
   children,
   customShape,
-  popAnimation
+  popAnimation,
+  movementAngle
 }) => {
   const getGradientId = (balloonId: string) => `balloon-gradient-${balloonId}`;
   
@@ -64,19 +66,34 @@ export const BalloonBase: React.FC<BalloonBaseProps> = ({
     return colors[baseColor] || baseColor;
   };
 
-  // Generate outward movement based on ID for variety
+  // Use provided movement angle or fallback to ID-based calculation
   const seedFromId = parseInt(id.split('-').pop() || '0');
-  const angle = (seedFromId * Math.PI * 2) / 10;
+  const angle = movementAngle !== undefined ? movementAngle : (seedFromId * Math.PI * 2) / 10;
   const outwardDistance = 250;
   const outwardX = x + Math.cos(angle) * outwardDistance;
   const outwardY = y + Math.sin(angle) * outwardDistance;
 
-  const defaultFloatAnimation = {
-    y: [0, outwardY - y, (outwardY - y) - 300], // Relative movement from starting position
-    x: [0, outwardX - x, (outwardX - x) + Math.sin(seedFromId * 0.1) * 15], // Relative movement from starting position
-    rotate: [0, 0, 0], // No rotation - balloons stay upright
-    opacity: [0, 1, 1, 0], // Fade in quickly, stay visible, fade out at end
-    scale: [0.1, 1.2, 1, 0.8] // Grow quickly to slightly oversized, settle to normal, shrink at end
+  // Different animations based on balloon state
+  const getAnimation = () => {
+    if (isPopped) {
+      // Quick pop animation
+      return popAnimation || {
+        scale: [1, 0],
+        opacity: [1, 0], 
+        rotate: [0, 0],
+        x: 0,
+        y: 0
+      };
+    } else {
+      // Normal floating animation that naturally exits viewport at top
+      return {
+        y: [0, outwardY - y, (outwardY - y) - 1000], // Float far upward until out of view
+        x: [0, outwardX - x, (outwardX - x) + Math.sin(seedFromId * 0.1) * 20], // Slight horizontal drift
+        rotate: [0, 0, 0], // No rotation - balloons stay upright
+        opacity: [0, 1, 1, 1, 1], // Fade in, stay visible throughout
+        scale: [0.1, 1.2, 1, 1, 1] // Grow, settle, stay normal size
+      };
+    }
   };
 
   const renderBalloonShape = () => {
@@ -198,29 +215,23 @@ export const BalloonBase: React.FC<BalloonBaseProps> = ({
         opacity: 0,
         rotate: 0
       }}
-      animate={isPopped ? (popAnimation || {
-        scale: [1, 0],
-        opacity: [1, 0], 
-        rotate: [0, 0],
-        x: 0, // Stay at current position
-        y: 0  // Stay at current position
-      }) : defaultFloatAnimation}
+      animate={getAnimation()}
       exit={{
         scale: 0,
         opacity: 0
       }}
       transition={{
-        duration: isPopped ? 0.05 : Math.max(floatDuration * 0.5, 8), // Ultra-fast pop (0.05s), faster overall animation  
-        ease: isPopped ? "linear" : ["easeOut", "easeOut", "easeIn"], // Quick burst, quick reach, slow float
-        times: isPopped ? undefined : [0, 0.15, 1], // 15% for quick outward burst, 85% for upward float
-        repeat: isPopped ? 0 : 0, // No repeat - balloons disappear after one journey
+        duration: isPopped ? 0.05 : floatDuration, // Pop: 0.05s, Float: full duration
+        ease: isPopped ? "linear" : ["easeOut", "linear", "linear", "easeIn"], // Different easing per state
+        times: isPopped ? undefined : [0, 0.05, 0.475, 0.49, 1], // Keep spawn speed, but start upward movement at half the original wait time
+        repeat: 0, // No repeat
         repeatType: "loop"
       }}
       style={{
         position: 'fixed',
         left: x, // Explicitly set left position
         top: y,  // Explicitly set top position
-        cursor: 'pointer',
+        cursor: isPopped ? 'default' : 'pointer',
         zIndex: 100,
         pointerEvents: isPopped ? 'none' : 'auto'
       }}

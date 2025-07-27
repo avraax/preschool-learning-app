@@ -36,7 +36,7 @@ export const Logo: React.FC<LogoProps> = ({
     >
       <Box
         component="img"
-        src="/icon-512x512.png"
+        src="/icon-source.svg"
         alt={alt}
         sx={{
           width: size,

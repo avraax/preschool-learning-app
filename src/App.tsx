@@ -68,7 +68,7 @@ interface HomeBalloon {
   size: number;
   content: string;
   isPopped: boolean;
-  angle?: number;
+  angle: number; // Movement angle - required for direction
 }
 
 // Home Page Component
@@ -78,72 +78,135 @@ const HomePage = () => {
   const { play, stopAll } = useBalloonSound()
   const [balloons, setBalloons] = useState<HomeBalloon[]>([])
   const [particles, setParticles] = useState<Particle[]>([])
+  const [lastSpawnTime, setLastSpawnTime] = useState<number>(0)
   
   const balloonColors = ['#EF4444', '#3B82F6', '#10B981', '#FDE047', '#8B5CF6', '#F97316', '#EC4899']
   const balloonContents = ['A', 'B', 'C', 'Å', '1', '2', '3', '4', '5']
   
+  // Dynamic angle calculation based on logo viewport position
+  const calculateDynamicAngle = (logoRect: DOMRect, balloonIndex: number): number => {
+    const viewportHeight = window.innerHeight;
+    const logoRelativeY = logoRect.top / viewportHeight;
+    
+    // Circle angles: 0=right, π/2=down, π=left, 3π/2=up
+    let minAngle: number;
+    let maxAngle: number;
+    
+    if (logoRelativeY < 0.25) {
+      // Logo in top 25% - spawn mostly downward (45° to 135° = π/4 to 3π/4)
+      minAngle = Math.PI * 0.25;  // 45° (down-right)
+      maxAngle = Math.PI * 0.75;  // 135° (down-left)
+    } else if (logoRelativeY > 0.75) {
+      // Logo in bottom 25% - allow upward spawning (315° to 45° = 7π/4 to π/4, wrapping around)
+      // Use two ranges: 315°-360° and 0°-45°
+      if (Math.random() < 0.5) {
+        minAngle = Math.PI * 1.75; // 315° (up-right)
+        maxAngle = Math.PI * 2;    // 360° (right)
+      } else {
+        minAngle = 0;              // 0° (right)
+        maxAngle = Math.PI * 0.25; // 45° (down-right)
+      }
+    } else {
+      // Logo in middle 50% - wider downward arc (30° to 150° = π/6 to 5π/6)
+      minAngle = Math.PI * 0.17;  // 30° (down-right)
+      maxAngle = Math.PI * 0.83;  // 150° (down-left)
+    }
+    
+    // More random angle distribution instead of even spacing
+    const angleRange = maxAngle - minAngle;
+    
+    // Create clustered randomness for more natural scattering
+    let baseAngle: number;
+    if (Math.random() < 0.7) {
+      // 70% random within the allowed range
+      baseAngle = minAngle + Math.random() * angleRange;
+    } else {
+      // 30% use balloon index for some structure
+      baseAngle = minAngle + (balloonIndex / 10) * angleRange;
+    }
+    
+    const randomOffset = (Math.random() - 0.5) * 0.4; // ±36° randomness (increased)
+    const finalAngle = baseAngle + randomOffset;
+    
+    return finalAngle;
+  };
+
   const spawnBalloons = useCallback((logoElement?: HTMLElement) => {
-    let centerX, centerY;
+    // Prevent too rapid spawning (cooldown of 500ms)
+    const now = Date.now();
+    if (now - lastSpawnTime < 500) {
+      return;
+    }
+    setLastSpawnTime(now);
+    
+    let centerX, centerY, logoRect;
     
     if (logoElement) {
       // Get actual logo position from DOM element
-      const rect = logoElement.getBoundingClientRect();
-      centerX = rect.left + rect.width / 2;
-      centerY = rect.top + rect.height / 2;
+      logoRect = logoElement.getBoundingClientRect();
+      centerX = logoRect.left + logoRect.width / 2;
+      centerY = logoRect.top + logoRect.height / 2;
     } else {
       // Fallback to window center
       centerX = window.innerWidth / 2;
       centerY = window.innerHeight / 2;
+      logoRect = new DOMRect(centerX - 100, centerY - 100, 200, 200); // Fallback rect
     }
     
     const newBalloons: HomeBalloon[] = [];
     const balloonCount = 10; // Always spawn exactly 10 balloons
     
     for (let i = 0; i < balloonCount; i++) {
-      // Random angle with extreme downward bias
-      // Almost all balloons spawn downwards with slight variations
-      let angle;
-      if (Math.random() < 0.95) {
-        // 95% chance for bottom 40% of circle (π*0.8 to π*1.2)
-        angle = Math.PI * 0.8 + Math.random() * Math.PI * 0.4;
-      } else {
-        // 5% chance for far bottom sides (π*0.6 to π*0.8 and π*1.2 to π*1.4)
-        angle = Math.random() < 0.5 
-          ? Math.PI * 0.6 + Math.random() * Math.PI * 0.2  // Far bottom-left
-          : Math.PI * 1.2 + Math.random() * Math.PI * 0.2; // Far bottom-right
-      }
-      
-      // Add some randomness to break up perfect patterns
-      angle += (Math.random() - 0.5) * 0.3;
+      // Calculate dynamic angle based on viewport position
+      const angle = calculateDynamicAngle(logoRect, i);
       
       // Calculate balloon size - bigger in general
       const balloonSize = Math.random() * 40 + 80; // 80-120px (was 60-90px)
       
-      // Varied spawn distance from center - allow spawning directly on logo (distance 0)
-      const spawnDistance = Math.random() * 120; // 0-120px from center (includes logo center)
+      // Much wider scattering throughout the entire viewport
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+      const maxViewportDistance = Math.min(viewportWidth, viewportHeight) * 0.6; // Use 60% of viewport
       
-      // Calculate varied spawn position around logo center
+      const minDistance = 80; // Start further out
+      const maxDistance = Math.max(400, maxViewportDistance); // Much larger maximum distance
+      
+      // Three distance zones for full viewport coverage
+      let spawnDistance: number;
+      const zoneRandom = Math.random();
+      if (zoneRandom < 0.3) {
+        // 30% close balloons (80-200px)
+        spawnDistance = minDistance + Math.random() * 120;
+      } else if (zoneRandom < 0.7) {
+        // 40% medium balloons (200-400px)
+        spawnDistance = 200 + Math.random() * 200;
+      } else {
+        // 30% far balloons (400px to viewport edge)
+        spawnDistance = 400 + Math.random() * (maxDistance - 400);
+      }
+      
+      // Calculate spawn position around logo center
       const offsetX = Math.cos(angle) * spawnDistance;
       const offsetY = Math.sin(angle) * spawnDistance;
       
-      // Allow balloons to spawn on logo - remove tight viewport constraints
+      // Position balloon with better spacing
       const startX = centerX + offsetX - balloonSize / 2;
       const startY = centerY + offsetY - balloonSize / 2;
       
       newBalloons.push({
-        id: `home-${Date.now()}-${Math.random()}-${i}`, // More unique ID to prevent duplicates
+        id: `home-${Date.now()}-${Math.random()}-${i}`, // Unique ID to prevent duplicates
         x: startX,
         y: startY,
         color: balloonColors[Math.floor(Math.random() * balloonColors.length)],
         size: balloonSize, // Use the pre-calculated size
         content: balloonContents[Math.floor(Math.random() * balloonContents.length)],
         isPopped: false,
-        angle: angle // Store the angle for movement direction
+        angle: angle // Store the calculated movement angle
       });
     }
     
     setBalloons(newBalloons);
-  }, []);
+  }, [lastSpawnTime]);
 
   const popBalloon = useCallback((id: string, x: number, y: number) => {
     const balloon = balloons.find(b => b.id === id);
@@ -177,6 +240,7 @@ const HomePage = () => {
     return () => clearTimeout(timer)
   }, [])
   
+
   // Cleanup on unmount
   React.useEffect(() => {
     return () => {
@@ -543,7 +607,8 @@ const HomePage = () => {
           content={balloon.content}
           isPopped={balloon.isPopped}
           onClick={popBalloon}
-          floatDuration={8} // 8 seconds total animation
+          floatDuration={30} // 30 seconds total animation - longer so balloons naturally exit viewport
+          movementAngle={balloon.angle} // Pass the calculated movement angle
         />
       ))}
 
