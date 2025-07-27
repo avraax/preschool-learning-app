@@ -42,6 +42,7 @@ import OpacityScaleFlip from './components/flip-demos/OpacityScaleFlip'
 import AbsolutePositionFlip from './components/flip-demos/AbsolutePositionFlip'
 import LottieCharacter, { useCharacterState } from './components/common/LottieCharacter'
 import { useUpdateChecker } from './hooks/useUpdateChecker'
+import { useNativeAppFeel } from './hooks/useNativeAppFeel'
 
 // Admin redirect component for query parameter support
 const AdminRedirectChecker = ({ children }: { children: React.ReactNode }) => {
@@ -72,7 +73,9 @@ const HomePage = () => {
 
   return (
     <Box 
+      className="interactive-area"
       sx={{ 
+        position: 'relative',
         height: '100dvh',
         background: 'linear-gradient(135deg, #dbeafe 0%, #e9d5ff 50%, #fce7f3 100%)',
         overflow: 'hidden',
@@ -81,7 +84,12 @@ const HomePage = () => {
         paddingTop: 'env(safe-area-inset-top)',
         paddingBottom: 'env(safe-area-inset-bottom)',
         paddingLeft: 'env(safe-area-inset-left)',
-        paddingRight: 'env(safe-area-inset-right)'
+        paddingRight: 'env(safe-area-inset-right)',
+        /* Enhanced native app properties */
+        touchAction: 'pan-x pan-down pinch-zoom',
+        WebkitUserSelect: 'none',
+        userSelect: 'none',
+        WebkitTouchCallout: 'none'
       }}
     >
       <Container 
@@ -429,6 +437,9 @@ const NotFoundPage = () => {
 function App() {
   // Initialize update checker
   const updateStatus = useUpdateChecker()
+  
+  // Initialize native app feel optimizations
+  const nativeAppFeel = useNativeAppFeel()
   
   // DEV MODE: Set to true to test update banner styling
   // This allows you to see and adjust the UpdateBanner without waiting for a real update

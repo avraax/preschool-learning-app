@@ -1,6 +1,26 @@
 /* Global styles for preschool learning app */
 :root {
   font-family: 'SF Pro Display', 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+  /* Fix iOS viewport height issues */
+  --vh: 1vh;
+}
+
+/* iOS viewport height fix */
+@supports (-webkit-touch-callout: none) {
+  :root {
+    --vh: calc(var(--vh, 1vh));
+  }
+}
+
+/* Eliminate elastic bounce and overscroll completely */
+html {
+  overscroll-behavior: none;
+  overscroll-behavior-y: none;
+  -webkit-overflow-scrolling: auto;
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
 }
 
 body {
@@ -10,42 +30,92 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   
-  /* iOS Safari optimizations */
+  /* Native app feel optimizations */
   -webkit-touch-callout: none; /* Disable callout on touch and hold */
   -webkit-tap-highlight-color: transparent; /* Remove tap highlight */
   -webkit-user-select: none; /* Prevent text selection */
   user-select: none;
+  -webkit-user-drag: none; /* Prevent dragging of elements */
+  
+  /* Eliminate elastic bounce and overscroll */
+  overscroll-behavior: none;
+  overscroll-behavior-y: none;
+  -webkit-overflow-scrolling: auto;
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
 }
 
 #root {
+  position: relative;
   width: 100%;
-  min-height: 100vh;
-  /* Ensure root container uses full viewport height on iOS */
-  min-height: -webkit-fill-available;
+  height: 100%;
+  /* Use CSS custom property for dynamic height */
+  min-height: calc(var(--vh, 1vh) * 100);
+  overflow: hidden;
 }
 
-/* iOS-specific touch optimizations */
+/* Enhanced touch optimizations for native app feel */
 button, .MuiButton-root, .MuiCard-root, [role="button"] {
   -webkit-touch-callout: none;
   -webkit-tap-highlight-color: transparent;
   -webkit-user-select: none;
   user-select: none;
-  /* Improve touch responsiveness */
+  -webkit-user-drag: none;
+  /* Advanced touch action control */
   touch-action: manipulation;
+  /* Hardware acceleration for smooth interactions */
+  will-change: transform;
+  backface-visibility: hidden;
+  /* Native-like touch feedback */
+  transition: transform 0.1s ease-out;
 }
 
-/* Allow text selection only for educational content */
-.educational-text, .MuiTypography-root {
+/* Native app-like press feedback */
+button:active, .MuiButton-root:active, .MuiCard-root:active {
+  transform: scale(0.98);
+}
+
+/* Completely disable text selection except for designated educational areas */
+.MuiTypography-root {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Allow text selection only for specific educational content */
+.educational-text, .allow-text-selection {
   -webkit-user-select: text;
   user-select: text;
 }
 
-/* Smooth scrolling for iOS Safari */
+/* Disable elastic scrolling globally */
 * {
-  -webkit-overflow-scrolling: touch;
+  -webkit-overflow-scrolling: auto;
+  overscroll-behavior: none;
 }
 
-/* Prevent zoom on double tap for game elements */
+/* Game elements - complete gesture control */
 .game-element, .MuiGrid-item {
-  touch-action: manipulation;
+  touch-action: none; /* Disable all gestures for precise game control */
+  -webkit-user-drag: none;
+  -webkit-touch-callout: none;
+}
+
+/* Interactive elements - prevent pull-to-refresh but allow pan */
+.interactive-area {
+  touch-action: pan-x pan-down pinch-zoom;
+}
+
+/* Prevent zoom on input focus (iOS Safari fix) */
+input, select, textarea {
+  font-size: 16px; /* Prevents zoom on iOS */
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+/* Hardware acceleration for all animated elements */
+.animated, [class*="Mui"]:hover, [class*="motion"] {
+  will-change: transform;
+  backface-visibility: hidden;
 }
