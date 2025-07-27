@@ -234,12 +234,28 @@ export const kidTheme = createTheme({
       },
     },
     
-    // AppBar for navigation
+    // AppBar for navigation - seamless blend with app background
     MuiAppBar: {
       styleOverrides: {
         root: {
-          borderRadius: '0 0 20px 20px',
-          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
+          borderRadius: 0, // Remove rounded corners
+          boxShadow: 'none', // Remove shadow for seamless blend
+          background: 'transparent', // Make background transparent
+        },
+      },
+    },
+
+    // Toolbar - extra padding on iPad to avoid status bar collision
+    MuiToolbar: {
+      styleOverrides: {
+        root: {
+          // Extra top padding on iPad to avoid collision with status bar/notch
+          '@media (min-width: 768px) and (orientation: landscape)': {
+            paddingTop: '24px', // Move content lower on iPad landscape
+          },
+          '@media (min-width: 768px) and (orientation: portrait)': {
+            paddingTop: '16px', // Move content lower on iPad portrait
+          },
         },
       },
     },

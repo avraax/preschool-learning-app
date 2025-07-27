@@ -70,7 +70,7 @@ export class AudioManager {
   }
 
   // Update user interaction in global context
-  private updateUserInteraction(): void {
+  updateUserInteraction(): void {
     if (globalAudioPermissionContext) {
       globalAudioPermissionContext.updateUserInteraction()
     }
@@ -331,6 +331,11 @@ export class AudioManager {
           // Add pause before the target word
           const pauseDuration = isIOS() ? 600 : 400
           await new Promise(resolve => setTimeout(resolve, pauseDuration))
+          
+          // iOS CRITICAL: Update user interaction before second audio call
+          // This prevents iOS permission timeout between audio segments
+          this.updateUserInteraction()
+          logIOSIssue('Quiz Audio', 'Updated user interaction for second audio segment')
           
           // Speak the target word once
           logIOSIssue('Quiz Audio', `Speaking target word: "${repeatWord}"`)

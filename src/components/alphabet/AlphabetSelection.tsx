@@ -70,9 +70,13 @@ const AlphabetSelection: React.FC = () => {
             color="primary"
             size="large"
             sx={{ 
-              bgcolor: 'white', 
-              boxShadow: 3,
-              '&:hover': { boxShadow: 6 }
+              bgcolor: 'rgba(255, 255, 255, 0.8)', 
+              border: '1px solid rgba(255, 255, 255, 0.3)',
+              backdropFilter: 'blur(8px)',
+              '&:hover': { 
+                bgcolor: 'rgba(255, 255, 255, 0.9)',
+                transform: 'scale(1.05)'
+              }
             }}
           >
             <ArrowLeft size={24} />

@@ -172,6 +172,10 @@ const MathGame: React.FC = () => {
   const handleAnswerClick = async (selectedAnswer: number) => {
     if (!currentProblem) return
     
+    // iOS CRITICAL: Update user interaction immediately on click
+    // This ensures fresh audio permission for subsequent audio calls
+    audioManager.updateUserInteraction()
+    
     // Clear any pending audio timeouts
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current)
@@ -214,6 +218,9 @@ const MathGame: React.FC = () => {
   const repeatQuestion = () => {
     if (!currentProblem) return
     
+    // iOS CRITICAL: Update user interaction for repeat button click
+    audioManager.updateUserInteraction()
+    
     // Clear any pending timeouts and stop current audio
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current)
@@ -252,9 +259,13 @@ const MathGame: React.FC = () => {
             color="secondary"
             size="large"
             sx={{ 
-              bgcolor: 'white', 
-              boxShadow: 3,
-              '&:hover': { boxShadow: 6 }
+              bgcolor: 'rgba(255, 255, 255, 0.8)', 
+              border: '1px solid rgba(255, 255, 255, 0.3)',
+              backdropFilter: 'blur(8px)',
+              '&:hover': { 
+                bgcolor: 'rgba(255, 255, 255, 0.9)',
+                transform: 'scale(1.05)'
+              }
             }}
           >
             <ArrowLeft size={24} />
