@@ -3,7 +3,6 @@ import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import {
   Container,
-  Grid,
   Card,
   CardContent,
   Button,
@@ -278,67 +277,103 @@ const AlphabetGame: React.FC = () => {
         </Box>
 
         {/* Answer Options Grid */}
-        <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-          <Grid 
-            container 
-            spacing={{ xs: 2, sm: 3 }} 
+        <Box sx={{ 
+          flex: 1, 
+          display: 'flex', 
+          justifyContent: 'center', 
+          alignItems: 'center',
+          minHeight: 0
+        }}>
+          <Box
             sx={{ 
-              maxWidth: { xs: '100%', sm: '600px', md: '800px' },
-              width: 'fit-content'
+              display: 'grid',
+              gridTemplateColumns: 'repeat(2, 1fr)',
+              gridAutoRows: 'auto',
+              gap: { xs: '16px', sm: '20px', md: '24px' },
+              width: '100%',
+              maxWidth: { xs: '400px', sm: '500px', md: '600px' },
+              justifyContent: 'center',
+              alignItems: 'center',
+              // Individual card aspect ratio and constraints
+              '& > *': {
+                aspectRatio: '4/3',
+                minHeight: { xs: '80px', sm: '90px', md: '100px' },
+                maxHeight: { xs: '120px', sm: '140px', md: '160px' },
+                width: '100%'
+              },
+              // Orientation specific adjustments
+              '@media (orientation: landscape)': {
+                gridTemplateColumns: 'repeat(4, 1fr)',
+                maxWidth: { xs: '600px', sm: '700px', md: '800px' },
+                '& > *': {
+                  aspectRatio: '4/3',
+                  minHeight: { xs: '60px', sm: '70px', md: '80px' },
+                  maxHeight: { xs: '100px', sm: '110px', md: '120px' }
+                }
+              }
             }}
           >
           {showOptions.map((letter, index) => (
-            <Grid size={{ xs: 6, sm: 4, md: 3 }} key={`${letter}-${index}`}>
-              <motion.div
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: index * 0.1 }}
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
+            <motion.div
+              key={`${letter}-${index}`}
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: index * 0.1 }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              style={{ height: '100%' }}
+            >
+              <Card 
+                onClick={() => handleLetterClick(letter)}
+                sx={{ 
+                  height: '100%',
+                  cursor: 'pointer',
+                  border: '3px solid',
+                  borderColor: 'primary.200',
+                  bgcolor: 'white',
+                  transition: 'all 0.3s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: '12px',
+                  '&:hover': {
+                    borderColor: 'primary.main',
+                    bgcolor: 'primary.50',
+                    boxShadow: 12,
+                    transform: 'translateY(-2px)'
+                  }
+                }}
               >
-                <Card 
-                  onClick={() => handleLetterClick(letter)}
+                <CardContent 
                   sx={{ 
-                    minHeight: { xs: 80, sm: 100, md: 120 },
-                    cursor: 'pointer',
-                    border: '3px solid',
-                    borderColor: 'primary.200',
-                    bgcolor: 'white',
-                    transition: 'all 0.3s ease',
-                    '&:hover': {
-                      borderColor: 'primary.main',
-                      bgcolor: 'primary.50',
-                      boxShadow: 12
-                    }
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    height: '100%',
+                    p: { xs: 1.5, sm: 2, md: 2.5 }
                   }}
                 >
-                  <CardContent 
+                  <Typography 
+                    variant="h1"
                     sx={{ 
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      height: '100%',
-                      p: 2
+                      fontSize: 'clamp(2.5rem, 8vw, 4.5rem)',
+                      fontWeight: 700,
+                      color: 'primary.dark',
+                      userSelect: 'none',
+                      lineHeight: 1,
+                      // Adjust font size in landscape
+                      '@media (orientation: landscape)': {
+                        fontSize: 'clamp(2rem, 6vw, 3.5rem)'
+                      }
                     }}
                   >
-                    <Typography 
-                      variant="h1"
-                      sx={{ 
-                        fontSize: { xs: '3rem', md: '4rem' },
-                        fontWeight: 700,
-                        color: 'primary.dark',
-                        userSelect: 'none',
-                        lineHeight: 1
-                      }}
-                    >
-                      {letter}
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            </Grid>
+                    {letter}
+                  </Typography>
+                </CardContent>
+              </Card>
+            </motion.div>
           ))}
-          </Grid>
+          </Box>
         </Box>
 
       </Container>

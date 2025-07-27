@@ -385,3 +385,200 @@ This documentation provides everything needed to understand, develop, and deploy
 - Prefer modifying shared configs over duplicating values
 - Use environment variables for deployment-specific settings
 - Document any new shared configurations here
+
+## Responsive Layout Guidelines
+
+### Core Principle
+**All game layouts MUST fill available screen space without scrolling, maintaining optimal proportions in both portrait and landscape orientations.**
+
+### Layout Requirements
+
+#### 1. Grid Systems
+- **Always use CSS Grid** with dynamic sizing instead of fixed dimensions
+- Use `gridAutoRows: 'minmax(0, 1fr)'` for equal height distribution
+- Implement responsive column counts based on orientation and screen size
+- Example pattern from LearningGrid:
+```javascript
+gridTemplateColumns: {
+  xs: 'repeat(6, 1fr)',   // Mobile portrait
+  sm: 'repeat(8, 1fr)',   // Tablet
+  md: 'repeat(10, 1fr)'   // Desktop
+}
+```
+
+#### 2. Orientation Support
+- **Implement landscape/portrait specific layouts** using media queries
+- Adjust grid columns to maintain aspect ratios
+- Example:
+```javascript
+'@media (orientation: landscape)': {
+  gridTemplateColumns: 'repeat(10, 1fr)' // More columns in landscape
+}
+```
+
+#### 3. Dynamic Sizing
+- **No fixed heights** - use flex containers and relative units
+- Container structure: `height: '100vh'` with flex children
+- Cards/items should expand to fill available space
+- Use `overflow: 'hidden'` to prevent scrolling
+
+#### 4. Font Sizing
+- **Use clamp() for responsive typography**
+- Combine viewport units with min/max constraints
+- Example: `fontSize: 'clamp(1rem, 3.5vw, 1.5rem)'`
+- Adjust font sizes for landscape orientation
+
+#### 5. Touch Targets
+- **Maintain minimum 44px touch areas** for accessibility
+- Scale up elements on larger screens
+- Use padding to increase tap areas without affecting visual size
+
+### Implementation Pattern
+```javascript
+// Container setup
+<Box sx={{ 
+  height: '100vh',
+  display: 'flex',
+  flexDirection: 'column',
+  overflow: 'hidden'
+}}>
+  // Fixed height header
+  <AppBar sx={{ flex: '0 0 auto' }} />
+  
+  // Flexible content area
+  <Container sx={{ 
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    minHeight: 0
+  }}>
+    // Grid that fills available space
+    <Box sx={{
+      flex: 1,
+      display: 'grid',
+      gridAutoRows: 'minmax(0, 1fr)',
+      gap: { xs: '8px', md: '12px' }
+    }}>
+      // Content items
+    </Box>
+  </Container>
+</Box>
+```
+
+### Testing Requirements
+1. **Test on multiple devices**: phones, tablets, desktop
+2. **Test both orientations**: portrait and landscape
+3. **Verify no scrolling** unless explicitly required
+4. **Check touch targets** are easily tappable
+5. **Ensure text remains readable** at all sizes
+
+### Common Pitfalls to Avoid
+- ❌ Fixed heights like `height: 200px`
+- ❌ Using only breakpoints without orientation queries
+- ❌ Small touch targets on mobile
+- ❌ Text that becomes too small/large at extremes
+- ❌ Layouts that require scrolling to see all content
+
+### Reference Implementation
+See `src/components/common/LearningGrid.tsx` for a complete example of these principles in action.
+
+## Aspect Ratio Guidelines
+
+### Core Principle
+**All interactive elements MUST maintain natural, readable proportions that enhance usability and visual appeal, avoiding extremely tall, narrow, or wide elements.**
+
+### Element-Specific Standards
+
+#### 1. Quiz Cards (Letters/Numbers)
+- **Aspect Ratio**: 4:3 (width:height)
+- **Rationale**: Optimal for displaying single characters while maintaining touch accessibility
+- **Implementation**: `aspectRatio: '4/3'`
+- **Constraints**: `minHeight: '80px'`, `maxHeight: '120px'`
+
+#### 2. Memory Cards
+- **Aspect Ratio**: 3:4 (width:height) 
+- **Rationale**: Traditional card proportions, familiar and easy to scan
+- **Implementation**: `aspectRatio: '3/4'`
+- **Constraints**: `minHeight: '60px'`, `maxHeight: '100px'`
+
+#### 3. Action Buttons
+- **Aspect Ratio**: 3:2 to 4:3 (width:height)
+- **Rationale**: Easy to tap without being too wide, good for text labels
+- **Implementation**: `aspectRatio: '3/2'` or `aspectRatio: '4/3'`
+- **Constraints**: `minHeight: '44px'` (accessibility requirement)
+
+#### 4. Display Cards (Learning Grid)
+- **Aspect Ratio**: 1:1 to 4:3 (width:height)
+- **Rationale**: Depends on content - square for balanced display, 4:3 for text-heavy content
+- **Implementation**: `aspectRatio: '1/1'` or `aspectRatio: '4/3'`
+
+### Implementation Rules
+
+#### 1. CSS Aspect Ratio Property
+```javascript
+// Always use CSS aspect-ratio for consistent proportions
+'& > *': {
+  aspectRatio: '4/3',  // Specify appropriate ratio
+  minHeight: '80px',   // Ensure minimum touch target
+  maxHeight: '120px'   // Prevent oversizing
+}
+```
+
+#### 2. Grid Layout Adjustments
+```javascript
+// Use auto-sizing instead of equal height distribution
+gridAutoRows: 'auto',  // Instead of 'minmax(0, 1fr)'
+
+// Let aspect ratios determine card sizes naturally
+'& > *': {
+  aspectRatio: '4/3',
+  width: '100%'  // Fill grid cell width, height determined by aspect ratio
+}
+```
+
+#### 3. Responsive Constraints
+- **Always set min/max height** to prevent extreme sizing on different screens
+- **Test aspect ratios** at multiple viewport sizes
+- **Adjust grid columns** if aspect ratios cause overflow
+
+### Common Aspect Ratio Issues
+
+#### ❌ Problems to Avoid
+- Cards that are extremely tall and narrow (height >> width)
+- Cards that are extremely wide and flat (width >> height)  
+- Using `gridAutoRows: 'minmax(0, 1fr)'` without aspect ratio constraints
+- Fixed heights that break proportions on different screens
+
+#### ✅ Best Practices
+- Always define aspect ratios for interactive elements
+- Use grid auto-sizing with aspect ratio constraints
+- Set reasonable min/max constraints
+- Test on multiple device orientations
+- Prioritize readability and touch accessibility
+
+### Testing Checklist
+1. **Portrait Mode**: Cards maintain good proportions
+2. **Landscape Mode**: Cards don't become too wide or narrow  
+3. **Small Screens**: Elements remain readable and tappable
+4. **Large Screens**: Elements don't become oversized
+5. **Touch Targets**: Minimum 44px height maintained
+6. **Content Clarity**: Letters/numbers remain clearly visible
+
+### Example Implementation
+```javascript
+// Quiz game cards with proper aspect ratios
+<Box sx={{
+  display: 'grid',
+  gridTemplateColumns: 'repeat(2, 1fr)',
+  gridAutoRows: 'auto',  // Let aspect ratios determine height
+  gap: '16px',
+  '& > *': {
+    aspectRatio: '4/3',   // Optimal for quiz cards
+    minHeight: '80px',    // Minimum touch target
+    maxHeight: '120px',   // Prevent oversizing
+    width: '100%'
+  }
+}}>
+  {/* Cards will maintain 4:3 proportions */}
+</Box>
+```

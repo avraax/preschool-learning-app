@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
   Container,
-  Grid,
   Card,
   CardContent,
   Button,
@@ -386,68 +385,98 @@ const AdditionGame: React.FC = () => {
           alignItems: 'center',
           minHeight: 0
         }}>
-          <Grid 
-            container 
-            spacing={{ xs: 2, sm: 3 }} 
+          <Box
             sx={{ 
-              maxWidth: { xs: '100%', sm: '600px', md: '800px' },
-              width: 'fit-content'
+              display: 'grid',
+              gridTemplateColumns: 'repeat(2, 1fr)',
+              gridAutoRows: 'auto',
+              gap: { xs: '16px', sm: '20px', md: '24px' },
+              width: '100%',
+              maxWidth: { xs: '400px', sm: '500px', md: '600px' },
+              justifyContent: 'center',
+              alignItems: 'center',
+              // Individual card aspect ratio and constraints
+              '& > *': {
+                aspectRatio: '4/3',
+                minHeight: { xs: '80px', sm: '90px', md: '100px' },
+                maxHeight: { xs: '120px', sm: '140px', md: '160px' },
+                width: '100%'
+              },
+              // Orientation specific adjustments
+              '@media (orientation: landscape)': {
+                gridTemplateColumns: 'repeat(4, 1fr)',
+                maxWidth: { xs: '600px', sm: '700px', md: '800px' },
+                '& > *': {
+                  aspectRatio: '4/3',
+                  minHeight: { xs: '60px', sm: '70px', md: '80px' },
+                  maxHeight: { xs: '100px', sm: '110px', md: '120px' }
+                }
+              }
             }}
           >
           {options.map((option, index) => (
-            <Grid size={{ xs: 6, sm: 4, md: 3 }} key={`${option}-${index}`}>
-              <motion.div
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: index * 0.1 }}
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
+            <motion.div
+              key={`${option}-${index}`}
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: index * 0.1 }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              style={{ height: '100%' }}
+            >
+              <Card 
+                onClick={() => handleAnswerClick(option)}
+                sx={{ 
+                  height: '100%',
+                  cursor: 'pointer',
+                  border: '3px solid',
+                  borderColor: 'primary.200',
+                  bgcolor: 'white',
+                  transition: 'all 0.3s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: '12px',
+                  '&:hover': {
+                    borderColor: 'primary.main',
+                    bgcolor: 'primary.50',
+                    boxShadow: 12,
+                    transform: 'translateY(-2px)'
+                  }
+                }}
               >
-                <Card 
-                  onClick={() => handleAnswerClick(option)}
+                <CardContent 
                   sx={{ 
-                    minHeight: { xs: 80, sm: 100, md: 120 },
-                    cursor: 'pointer',
-                    border: '3px solid',
-                    borderColor: 'primary.200',
-                    bgcolor: 'white',
-                    transition: 'all 0.3s ease',
-                    '&:hover': {
-                      borderColor: 'primary.main',
-                      bgcolor: 'primary.50',
-                      boxShadow: 12
-                    }
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    height: '100%',
+                    p: { xs: 1.5, sm: 2, md: 2.5 },
+                    textAlign: 'center'
                   }}
                 >
-                  <CardContent 
-                    sx={{ 
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      height: '100%',
-                      p: 2,
-                      textAlign: 'center'
-                    }}
-                  >
                     <Typography 
                       variant="h1"
                       sx={{ 
-                        fontSize: { xs: '3rem', md: '4rem' },
+                        fontSize: 'clamp(2.5rem, 8vw, 4.5rem)',
                         fontWeight: 700,
                         color: 'primary.dark',
                         userSelect: 'none',
-                        lineHeight: 1
+                        lineHeight: 1,
+                        // Adjust font size in landscape
+                        '@media (orientation: landscape)': {
+                          fontSize: 'clamp(2rem, 6vw, 3.5rem)'
+                        }
                       }}
                     >
                       {option}
                     </Typography>
                   </CardContent>
-                </Card>
-              </motion.div>
-            </Grid>
+              </Card>
+            </motion.div>
           ))}
-          </Grid>
+          </Box>
         </Box>
 
       </Container>

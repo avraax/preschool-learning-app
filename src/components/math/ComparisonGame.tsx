@@ -362,26 +362,45 @@ const ComparisonGame: React.FC = () => {
             sx={{ 
               maxWidth: 800,
               width: '100%',
-              p: { xs: 3, md: 4 },
+              p: { xs: 2, sm: 3, md: 4 },
               borderRadius: 4,
               border: '2px solid',
               borderColor: 'primary.200',
-              mb: 4
+              mb: 4,
+              // Landscape adjustments
+              '@media (orientation: landscape)': {
+                maxWidth: '90%',
+                p: { xs: 1.5, sm: 2, md: 3 }
+              }
             }}
           >
-            <Grid container spacing={4} alignItems="center">
+            <Grid container spacing={{ xs: 2, md: 4 }} alignItems="center">
               {/* Left Side */}
               <Grid size={{ xs: 12, sm: 4 }}>
                 <Box sx={{ textAlign: 'center' }}>
                   {/* Objects Display */}
-                  <Box sx={{ mb: 2, minHeight: 100, display: 'flex', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center', gap: 1 }}>
+                  <Box sx={{ 
+                    mb: 2, 
+                    minHeight: { xs: 80, md: 100 }, 
+                    maxHeight: { xs: 120, md: 150 },
+                    display: 'flex', 
+                    flexWrap: 'wrap', 
+                    justifyContent: 'center', 
+                    alignItems: 'center', 
+                    gap: 1,
+                    overflow: 'hidden',
+                    '@media (orientation: landscape)': {
+                      minHeight: { xs: 60, md: 80 },
+                      maxHeight: { xs: 100, md: 120 }
+                    }
+                  }}>
                     {Array.from({ length: currentProblem.leftNumber }, (_, i) => (
                       <motion.span
                         key={i}
                         initial={{ opacity: 0, scale: 0 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ delay: i * 0.1 }}
-                        style={{ fontSize: '2rem' }}
+                        style={{ fontSize: 'clamp(1.5rem, 3vw, 2rem)' }}
                       >
                         {currentProblem.leftObjects.emoji}
                       </motion.span>
@@ -406,7 +425,13 @@ const ComparisonGame: React.FC = () => {
 
               {/* Symbol Selection */}
               <Grid size={{ xs: 12, sm: 4 }}>
-                <Box sx={{ textAlign: 'center' }}>
+                <Box sx={{ 
+                  textAlign: 'center',
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center'
+                }}>
                   {showFeedback && selectedSymbol ? (
                     <Box sx={{ mb: 2 }}>
                       <Typography 
@@ -426,7 +451,13 @@ const ComparisonGame: React.FC = () => {
                       )}
                     </Box>
                   ) : (
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    <Box sx={{ 
+                      display: 'flex', 
+                      flexDirection: 'column', 
+                      gap: { xs: 1.5, md: 2 },
+                      justifyContent: 'center',
+                      alignItems: 'center'
+                    }}>
                       {(['>', '<', '='] as const).map((symbol) => (
                         <Button
                           key={symbol}
@@ -435,12 +466,13 @@ const ComparisonGame: React.FC = () => {
                           onClick={() => handleSymbolClick(symbol)}
                           disabled={isPlaying || showFeedback}
                           sx={{
-                            fontSize: { xs: '2rem', md: '3rem' },
+                            fontSize: 'clamp(1.8rem, 4vw, 3rem)',
                             fontWeight: 700,
-                            py: 2,
-                            px: 4,
+                            py: { xs: 1.5, md: 2 },
+                            px: { xs: 3, md: 4 },
                             borderRadius: 3,
                             boxShadow: 4,
+                            minWidth: { xs: '80px', md: '100px' },
                             '&:hover': {
                               boxShadow: 8,
                               transform: 'scale(1.05)'
@@ -459,14 +491,28 @@ const ComparisonGame: React.FC = () => {
               <Grid size={{ xs: 12, sm: 4 }}>
                 <Box sx={{ textAlign: 'center' }}>
                   {/* Objects Display */}
-                  <Box sx={{ mb: 2, minHeight: 100, display: 'flex', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center', gap: 1 }}>
+                  <Box sx={{ 
+                    mb: 2, 
+                    minHeight: { xs: 80, md: 100 }, 
+                    maxHeight: { xs: 120, md: 150 },
+                    display: 'flex', 
+                    flexWrap: 'wrap', 
+                    justifyContent: 'center', 
+                    alignItems: 'center', 
+                    gap: 1,
+                    overflow: 'hidden',
+                    '@media (orientation: landscape)': {
+                      minHeight: { xs: 60, md: 80 },
+                      maxHeight: { xs: 100, md: 120 }
+                    }
+                  }}>
                     {Array.from({ length: currentProblem.rightNumber }, (_, i) => (
                       <motion.span
                         key={i}
                         initial={{ opacity: 0, scale: 0 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ delay: i * 0.1 }}
-                        style={{ fontSize: '2rem' }}
+                        style={{ fontSize: 'clamp(1.5rem, 3vw, 2rem)' }}
                       >
                         {currentProblem.rightObjects.emoji}
                       </motion.span>

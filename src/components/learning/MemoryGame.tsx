@@ -479,25 +479,42 @@ const MemoryGame: React.FC = () => {
           justifyContent: 'center', 
           alignItems: 'center',
           minHeight: 0,
-          overflow: { xs: 'auto', md: 'hidden' },
+          overflow: 'hidden',
           p: { xs: 0.5, sm: 1, md: 1.5 },
           width: '100%'
         }}>
           <Box sx={{
             display: 'grid',
             gridTemplateColumns: { 
-              xs: 'repeat(8, 1fr)', 
-              sm: 'repeat(10, 1fr)'
+              xs: 'repeat(5, 1fr)',   // Mobile portrait: 5 columns
+              sm: 'repeat(8, 1fr)',   // Tablet: 8 columns
+              md: 'repeat(10, 1fr)'   // Desktop: 10 columns
             },
-            gridTemplateRows: { 
-              xs: 'repeat(5, 1fr)', 
-              sm: 'repeat(4, 1fr)'
-            },
-            gap: { xs: 0.5, sm: 0.75, md: 1, lg: 1.25 },
-            maxWidth: { xs: '100%', md: '1000px', lg: '1200px' },
+            gridAutoRows: 'auto',
+            gap: { xs: '6px', sm: '8px', md: '10px', lg: '12px' },
             width: '100%',
-            height: { xs: 'auto', md: 'fit-content' },
-            maxHeight: { md: '100%' }
+            maxWidth: { md: '1000px', lg: '1200px' },
+            justifyContent: 'center',
+            // Individual card aspect ratio and constraints
+            '& > *': {
+              aspectRatio: '3/4',  // Traditional card proportions
+              minHeight: { xs: '60px', sm: '70px', md: '80px' },
+              maxHeight: { xs: '100px', sm: '120px', md: '140px' },
+              width: '100%'
+            },
+            // Orientation specific adjustments
+            '@media (orientation: landscape)': {
+              gridTemplateColumns: { 
+                xs: 'repeat(8, 1fr)',   // Landscape mobile: 8 columns
+                sm: 'repeat(10, 1fr)',  // Landscape tablet: 10 columns
+                md: 'repeat(10, 1fr)'   // Landscape desktop: 10 columns
+              },
+              '& > *': {
+                aspectRatio: '3/4',
+                minHeight: { xs: '50px', sm: '60px', md: '70px' },
+                maxHeight: { xs: '80px', sm: '90px', md: '100px' }
+              }
+            }
           }}>
             {cards.map((card, index) => (
               <motion.div
@@ -520,7 +537,7 @@ const MemoryGame: React.FC = () => {
                 <div 
                   className="flip-container" 
                   style={{ 
-                    height: 'clamp(70px, 10vw, 115px)' // Responsive height
+                    height: '100%'
                   }}
                 >
                   <div 
@@ -560,7 +577,7 @@ const MemoryGame: React.FC = () => {
                           gap: '4px'
                         }}>
                           <div style={{
-                            fontSize: 'clamp(1.5rem, 4vw, 2.5rem)',
+                            fontSize: 'clamp(1.2rem, 3.5vw, 2rem)',
                             fontWeight: 'bold',
                             color: 'white',
                             textShadow: '0 2px 4px rgba(0,0,0,0.3)',
@@ -588,33 +605,34 @@ const MemoryGame: React.FC = () => {
                       {gameType === 'letters' && LETTER_ICONS[card.content] ? (
                         <>
                           <div style={{ 
-                            fontSize: 'clamp(1.2rem, 3vw, 2.2rem)',
+                            fontSize: 'clamp(1rem, 2.5vw, 1.8rem)',
                             fontWeight: 700,
                             color: card.isMatched ? '#2e7d32' : '#1976d2',
-                            marginBottom: '4px',
+                            marginBottom: '2px',
                             lineHeight: 1
                           }}>
                             {card.content}
                           </div>
                           <div style={{ 
-                            fontSize: 'clamp(1.2rem, 3vw, 2rem)', 
-                            marginBottom: '2px', 
+                            fontSize: 'clamp(1rem, 2.5vw, 1.6rem)', 
+                            marginBottom: '1px', 
                             lineHeight: 1 
                           }}>
                             {LETTER_ICONS[card.content].icon}
                           </div>
                           <div style={{ 
-                            fontSize: 'clamp(0.6rem, 1.5vw, 0.9rem)',
+                            fontSize: 'clamp(0.5rem, 1.2vw, 0.8rem)',
                             color: '#666',
                             fontWeight: 500,
-                            lineHeight: 1
+                            lineHeight: 1,
+                            display: window.innerWidth < 400 ? 'none' : 'block'
                           }}>
                             {LETTER_ICONS[card.content].word}
                           </div>
                         </>
                       ) : gameType === 'numbers' ? (
                         <div style={{ 
-                          fontSize: 'clamp(1.5rem, 4vw, 3rem)',
+                          fontSize: 'clamp(1.2rem, 3vw, 2.5rem)',
                           fontWeight: 700,
                           color: card.isMatched ? '#2e7d32' : '#1976d2',
                           lineHeight: 1

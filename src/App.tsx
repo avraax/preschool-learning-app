@@ -73,7 +73,6 @@ const HomePage = () => {
   return (
     <Box 
       sx={{ 
-        minHeight: '100vh', 
         height: '100vh',
         background: 'linear-gradient(135deg, #dbeafe 0%, #e9d5ff 50%, #fce7f3 100%)',
         overflow: 'hidden',
@@ -143,8 +142,22 @@ const HomePage = () => {
         </Box>
 
         {/* Main Content */}
-        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-          <Grid container spacing={{ xs: 2, md: 3 }} sx={{ mb: { xs: 2, md: 3 } }}>
+        <Box sx={{ 
+          flex: 1, 
+          display: 'flex', 
+          flexDirection: 'column', 
+          justifyContent: 'center',
+          minHeight: 0
+        }}>
+          <Grid 
+            container 
+            spacing={{ xs: 2, md: 3 }} 
+            sx={{ 
+              mb: { xs: 2, md: 3 },
+              height: { xs: 'auto', md: '60%' },
+              maxHeight: { xs: '500px', md: '600px' }
+            }}
+          >
             {/* Alphabet Card */}
             <Grid size={{ xs: 12, sm: 6, lg: 4 }}>
               <motion.div
@@ -157,13 +170,20 @@ const HomePage = () => {
                 <Card 
                   onClick={() => navigate('/alphabet')}
                   sx={{ 
-                    height: { xs: 200, sm: 240, md: 260 },
+                    height: '100%',
+                    minHeight: { xs: 180, sm: 220, md: 240 },
                     cursor: 'pointer',
                     border: '2px solid',
                     borderColor: 'primary.200',
+                    display: 'flex',
+                    flexDirection: 'column',
                     '&:hover': {
                       borderColor: 'primary.main',
                       boxShadow: 6
+                    },
+                    // Orientation specific adjustments
+                    '@media (orientation: landscape)': {
+                      minHeight: { xs: 160, sm: 180, md: 200 }
                     }
                   }}
                 >
@@ -247,13 +267,20 @@ const HomePage = () => {
                 <Card 
                   onClick={() => navigate('/math')}
                   sx={{ 
-                    height: { xs: 200, sm: 240, md: 260 },
+                    height: '100%',
+                    minHeight: { xs: 180, sm: 220, md: 240 },
                     cursor: 'pointer',
                     border: '2px solid',
                     borderColor: 'secondary.200',
+                    display: 'flex',
+                    flexDirection: 'column',
                     '&:hover': {
                       borderColor: 'secondary.main',
                       boxShadow: 6
+                    },
+                    // Orientation specific adjustments
+                    '@media (orientation: landscape)': {
+                      minHeight: { xs: 160, sm: 180, md: 200 }
                     }
                   }}
                 >
