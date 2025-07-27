@@ -568,13 +568,6 @@ const MemoryGame: React.FC = () => {
                           }}>
                             {gameType === 'letters' ? 'ABC' : '123'}
                           </div>
-                          <div style={{
-                            fontSize: 'clamp(0.7rem, 1.5vw, 0.8rem)',
-                            color: 'white',
-                            textShadow: '0 1px 2px rgba(0,0,0,0.3)'
-                          }}>
-                            {gameType === 'letters' ? 'Bogstaver' : 'Tal'}
-                          </div>
                         </div>
                         {/* Corner stars */}
                         <div style={{ position: 'absolute', top: 8, left: 8, fontSize: '1rem' }}>⭐</div>
