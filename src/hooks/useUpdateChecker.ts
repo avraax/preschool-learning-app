@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { BUILD_INFO } from '../config/version'
 
 interface VersionInfo {
@@ -27,7 +27,11 @@ export function useUpdateChecker(): UpdateStatus {
 
   const currentVersion = BUILD_INFO
 
+  // Create a stable reference to the check function
+  const checkForUpdatesRef = useRef<() => Promise<void>>()
+
   const checkForUpdates = useCallback(async () => {
+    // Prevent concurrent checks
     if (isChecking) return
 
     setIsChecking(true)
@@ -37,17 +41,13 @@ export function useUpdateChecker(): UpdateStatus {
       // Check if we're in development mode
       const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
       
-      let apiUrl
       if (isDev) {
-        // For development, check against a mock API or return false
+        // For development, skip the check
         setIsChecking(false)
         return
-      } else {
-        // For production, use the version API
-        apiUrl = '/api/version'
       }
 
-      const response = await fetch(apiUrl, {
+      const response = await fetch('/api/version', {
         method: 'GET',
         cache: 'no-cache',
         headers: {
@@ -75,7 +75,10 @@ export function useUpdateChecker(): UpdateStatus {
     } finally {
       setIsChecking(false)
     }
-  }, [currentVersion, isDismissed, isChecking])
+  }, [currentVersion.buildTime, isDismissed])
+
+  // Update the ref whenever checkForUpdates changes
+  checkForUpdatesRef.current = checkForUpdates
 
   const dismissUpdate = useCallback(() => {
     setIsDismissed(true)
@@ -122,43 +125,35 @@ export function useUpdateChecker(): UpdateStatus {
       console.warn('Could not read dismiss state from localStorage:', e)
     }
 
-    // Initial check
-    checkForUpdates()
+    // Initial check - only once on mount
+    checkForUpdatesRef.current?.()
 
-    // Set up smart polling
-    let pollInterval: NodeJS.Timeout
-    let visibilityListener: () => void
-
-    const startPolling = () => {
-      // Check every 5 minutes when document is visible
-      pollInterval = setInterval(() => {
-        if (!document.hidden) {
-          checkForUpdates()
-        }
-      }, 5 * 60 * 1000) // 5 minutes
-    }
-
-    const handleVisibilityChange = () => {
+    // Set up polling interval - check every 10 minutes
+    const pollInterval = setInterval(() => {
       if (!document.hidden) {
-        // Page became visible - check for updates immediately
-        checkForUpdates()
+        checkForUpdatesRef.current?.()
+      }
+    }, 10 * 60 * 1000) // 10 minutes instead of 5
+
+    // Throttled visibility change handler
+    let lastVisibilityCheck = 0
+    const handleVisibilityChange = () => {
+      const now = Date.now()
+      // Only check if page became visible and it's been at least 2 minutes since last check
+      if (!document.hidden && (now - lastVisibilityCheck) > 2 * 60 * 1000) {
+        lastVisibilityCheck = now
+        checkForUpdatesRef.current?.()
       }
     }
 
-    visibilityListener = handleVisibilityChange
-    document.addEventListener('visibilitychange', visibilityListener)
-    
-    // Start polling
-    startPolling()
+    document.addEventListener('visibilitychange', handleVisibilityChange)
 
     // Cleanup
     return () => {
-      if (pollInterval) clearInterval(pollInterval)
-      if (visibilityListener) {
-        document.removeEventListener('visibilitychange', visibilityListener)
-      }
+      clearInterval(pollInterval)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
-  }, [checkForUpdates, currentVersion.buildTime])
+  }, []) // Remove checkForUpdates from dependencies to prevent loop
 
   return {
     updateAvailable,
