@@ -67,9 +67,22 @@ const AlphabetLearning: React.FC = () => {
     const letter = DANISH_ALPHABET[index]
     
     try {
+      // Start audio debug session on first audio attempt
+      const { audioDebugSession } = await import('../../utils/remoteConsole')
+      if (!audioDebugSession.isSessionActive()) {
+        audioDebugSession.startSession('iPad Audio Debug - Alphabet Learning')
+      }
+      
       await audioManager.speakLetter(letter)
+      
+      // End session after successful audio
+      audioDebugSession.endSession('Audio completed successfully')
     } catch (error) {
       console.error('Error speaking letter:', error)
+      
+      // End session with error context
+      const { audioDebugSession } = await import('../../utils/remoteConsole')
+      audioDebugSession.endSession('Audio failed with error')
     } finally {
       setIsPlaying(false)
     }

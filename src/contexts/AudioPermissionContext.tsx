@@ -133,9 +133,85 @@ export const AudioPermissionProvider: React.FC<AudioPermissionProviderProps> = (
       return true
     }
 
+    // First try: Simple interaction-based permission check
+    // If we have recent user interaction and the page is focused, assume audio will work
+    const timeSinceInteraction = Date.now() - (lastInteractionRef.current || 0)
+    const hasRecentInteraction = timeSinceInteraction < 5000 // 5 seconds
+    const hasDocumentFocus = document.hasFocus()
+    const isDocumentVisible = !document.hidden
+    
+    audioDebugSession.addLog('PERMISSION_IOS_INTERACTION_CHECK', {
+      timeSinceInteraction,
+      hasRecentInteraction,
+      hasDocumentFocus,
+      isDocumentVisible
+    })
+    
+    // If we have recent interaction and focus, audio should work
+    if (hasRecentInteraction && hasDocumentFocus && isDocumentVisible) {
+      audioDebugSession.addLog('PERMISSION_IOS_INTERACTION_SUCCESS', {
+        result: true,
+        reason: 'recent_interaction_with_focus'
+      })
+      return true
+    }
+    
+    // Fallback: AudioContext-based test (more reliable than audio element)
+    try {
+      audioDebugSession.addLog('PERMISSION_IOS_AUDIOCONTEXT_TEST', {
+        device: 'iOS',
+        testType: 'audiocontext'
+      })
+      
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
+      audioDebugSession.addLog('PERMISSION_AUDIOCONTEXT_CREATED', {
+        state: audioContext.state,
+        sampleRate: audioContext.sampleRate
+      })
+      
+      if (audioContext.state === 'running') {
+        audioDebugSession.addLog('PERMISSION_AUDIOCONTEXT_RUNNING', {
+          result: true
+        })
+        audioContext.close()
+        return true
+      } else if (audioContext.state === 'suspended' && hasRecentInteraction) {
+        // Try to resume only if we have recent interaction
+        try {
+          await audioContext.resume()
+          audioDebugSession.addLog('PERMISSION_AUDIOCONTEXT_RESUMED', {
+            result: true,
+            finalState: audioContext.state
+          })
+          audioContext.close()
+          return true
+        } catch (resumeError) {
+          audioDebugSession.addLog('PERMISSION_AUDIOCONTEXT_RESUME_FAILED', {
+            error: resumeError instanceof Error ? resumeError.message : resumeError?.toString(),
+            state: audioContext.state,
+            result: false
+          })
+          audioContext.close()
+        }
+      } else {
+        audioDebugSession.addLog('PERMISSION_AUDIOCONTEXT_SUSPENDED_NO_INTERACTION', {
+          state: audioContext.state,
+          hasRecentInteraction,
+          result: false
+        })
+        audioContext.close()
+      }
+    } catch (contextError) {
+      audioDebugSession.addLog('PERMISSION_AUDIOCONTEXT_ERROR', {
+        error: contextError instanceof Error ? contextError.message : contextError?.toString(),
+        errorType: contextError instanceof Error ? contextError.constructor?.name : typeof contextError
+      })
+    }
+
+    // Fallback: Original silent audio test
     audioDebugSession.addLog('PERMISSION_IOS_CAPABILITY_TEST', {
       device: 'iOS',
-      testType: 'silent_audio'
+      testType: 'silent_audio_fallback'
     })
     
     try {
@@ -207,11 +283,33 @@ export const AudioPermissionProvider: React.FC<AudioPermissionProviderProps> = (
         }
 
         const onError = (error: any) => {
-          audioDebugSession.addLog('PERMISSION_TEST_AUDIO_ERROR', {
+          // Extract detailed error information for iOS debugging
+          const errorDetails = {
             error: error.message || error.toString(),
-            errorType: error.constructor?.name,
+            errorType: error.constructor?.name || typeof error,
+            eventType: error.type,
+            target: error.target ? {
+              readyState: error.target.readyState,
+              networkState: error.target.networkState,
+              error: error.target.error ? {
+                code: error.target.error.code,
+                message: error.target.error.message
+              } : null,
+              src: error.target.src ? 'present' : 'missing'
+            } : null,
+            audioElement: {
+              readyState: audio.readyState,
+              networkState: audio.networkState,
+              duration: audio.duration,
+              currentTime: audio.currentTime,
+              paused: audio.paused,
+              muted: audio.muted,
+              volume: audio.volume
+            },
             result: false
-          })
+          }
+          
+          audioDebugSession.addLog('PERMISSION_TEST_AUDIO_ERROR', errorDetails)
           clearTimeout(timeout)
           audio.removeEventListener('canplay', onCanPlay)
           audio.removeEventListener('error', onError)
@@ -233,26 +331,49 @@ export const AudioPermissionProvider: React.FC<AudioPermissionProviderProps> = (
   }
 
   const checkAudioPermissionInternal = async (): Promise<boolean> => {
+    const { audioDebugSession } = await import('../utils/remoteConsole')
     const timeSinceInteraction = Date.now() - lastInteractionRef.current
     const hasRecentInteraction = timeSinceInteraction < 10000 // 10 seconds
     const hasDocumentFocus = document.hasFocus()
     const isDocumentVisible = !document.hidden
 
+    audioDebugSession.addLog('PERMISSION_CHECK_INTERNAL', {
+      timeSinceInteraction,
+      hasRecentInteraction,
+      hasDocumentFocus,
+      isDocumentVisible,
+      isIOS: isIOS()
+    })
+
     // For non-iOS devices, be more permissive
     if (!isIOS()) {
       const hasPermission = hasRecentInteraction || hasDocumentFocus || isDocumentVisible
+      audioDebugSession.addLog('PERMISSION_NON_IOS_RESULT', {
+        hasPermission
+      })
       setState(prev => ({ ...prev, hasPermission }))
       return hasPermission
     }
 
-    // For iOS, test actual audio capability
-    const canPlayAudio = hasRecentInteraction && (hasDocumentFocus || isDocumentVisible)
+    // For iOS: Always try the technical test first to see if audio actually works
+    audioDebugSession.addLog('PERMISSION_IOS_RUNNING_TECHNICAL_TEST', {
+      action: 'test_if_audio_works_before_modal'
+    })
     
-    if (canPlayAudio) {
-      const audioWorks = await testAudioPermission()
-      setState(prev => ({ ...prev, hasPermission: audioWorks }))
-      return audioWorks
+    const audioWorks = await testAudioPermission()
+    
+    if (audioWorks) {
+      audioDebugSession.addLog('PERMISSION_IOS_TECHNICAL_TEST_SUCCESS', {
+        result: true,
+        action: 'audio_works_no_modal_needed'
+      })
+      setState(prev => ({ ...prev, hasPermission: true }))
+      return true
     } else {
+      audioDebugSession.addLog('PERMISSION_IOS_TECHNICAL_TEST_FAILED', {
+        result: false,
+        action: 'audio_failed_will_show_modal'
+      })
       setState(prev => ({ ...prev, hasPermission: false }))
       return false
     }
@@ -263,9 +384,52 @@ export const AudioPermissionProvider: React.FC<AudioPermissionProviderProps> = (
   }
 
   const requestAudioPermission = async (): Promise<boolean> => {
+    const { audioDebugSession } = await import('../utils/remoteConsole')
+    
     // When user explicitly requests permission, update interaction time
     lastInteractionRef.current = Date.now()
     
+    audioDebugSession.addLog('PERMISSION_REQUEST_USER_CLICK', {
+      timestamp: Date.now(),
+      sessionPromptShown: sessionPromptShownRef.current
+    })
+    
+    // For iOS with recent interaction, run the technical test now
+    if (isIOS()) {
+      audioDebugSession.addLog('PERMISSION_REQUEST_IOS_TECHNICAL_TEST', {
+        action: 'running_test_after_user_click'
+      })
+      
+      const audioWorks = await testAudioPermission()
+      
+      if (audioWorks) {
+        audioDebugSession.addLog('PERMISSION_REQUEST_SUCCESS', {
+          result: true
+        })
+        setState(prev => ({
+          ...prev,
+          hasPermission: true,
+          showPrompt: false
+        }))
+        sessionPromptShownRef.current = true
+        return true
+      } else {
+        audioDebugSession.addLog('PERMISSION_REQUEST_FAILED', {
+          result: false,
+          action: 'show_modal'
+        })
+        // Show prompt if technical test still fails
+        setState(prev => ({
+          ...prev,
+          hasPermission: false,
+          showPrompt: true
+        }))
+        sessionPromptShownRef.current = true
+        return false
+      }
+    }
+    
+    // For non-iOS, use original logic
     const hasPermission = await checkAudioPermissionInternal()
     
     if (hasPermission) {
