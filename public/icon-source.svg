@@ -15,31 +15,34 @@
   <!-- Background circle -->
   <circle cx="256" cy="256" r="240" fill="url(#bgGradient)" stroke="#6B46C1" stroke-width="8"/>
   
-  <!-- Main balloon -->
-  <ellipse cx="256" cy="200" rx="80" ry="100" fill="url(#balloonGradient)" stroke="#92400E" stroke-width="4"/>
+  <!-- Tiny balloon accent (much smaller) -->
+  <ellipse cx="256" cy="256" rx="25" ry="32" fill="url(#balloonGradient)" stroke="#92400E" stroke-width="2"/>
+  <ellipse cx="248" cy="245" rx="8" ry="10" fill="#FBBF24" opacity="0.6"/>
+  <line x1="256" y1="288" x2="256" y2="310" stroke="#92400E" stroke-width="2" stroke-linecap="round"/>
   
-  <!-- Balloon highlight -->
-  <ellipse cx="230" cy="160" rx="25" ry="35" fill="#FBBF24" opacity="0.6"/>
+  <!-- Huge Danish letters A-Å -->
+  <text x="120" y="180" font-family="Comic Sans MS, cursive" font-size="100" font-weight="bold" fill="#FFFFFF" text-anchor="middle" stroke="#6B46C1" stroke-width="3">A</text>
+  <text x="392" y="180" font-family="Comic Sans MS, cursive" font-size="100" font-weight="bold" fill="#FFFFFF" text-anchor="middle" stroke="#6B46C1" stroke-width="3">Å</text>
   
-  <!-- Balloon string -->
-  <line x1="256" y1="300" x2="256" y2="400" stroke="#92400E" stroke-width="6" stroke-linecap="round"/>
+  <!-- Large Numbers -->
+  <text x="120" y="380" font-family="Comic Sans MS, cursive" font-size="85" font-weight="bold" fill="#FFFFFF" text-anchor="middle" stroke="#6B46C1" stroke-width="3">1</text>
+  <text x="392" y="380" font-family="Comic Sans MS, cursive" font-size="75" font-weight="bold" fill="#FFFFFF" text-anchor="middle" stroke="#6B46C1" stroke-width="3">10</text>
   
-  <!-- Danish letters A-Å around balloon -->
-  <text x="180" y="120" font-family="Comic Sans MS, cursive" font-size="32" font-weight="bold" fill="#FFFFFF" text-anchor="middle">A</text>
-  <text x="332" y="120" font-family="Comic Sans MS, cursive" font-size="32" font-weight="bold" fill="#FFFFFF" text-anchor="middle">Å</text>
+  <!-- Colorful shapes for future game categories -->
+  <!-- Green triangle (top-left) -->
+  <path d="M 60 60 L 80 100 L 40 100 Z" fill="#10B981" stroke="#059669" stroke-width="2"/>
   
-  <!-- Numbers -->
-  <text x="140" y="280" font-family="Comic Sans MS, cursive" font-size="28" font-weight="bold" fill="#FFFFFF" text-anchor="middle">1</text>
-  <text x="372" y="280" font-family="Comic Sans MS, cursive" font-size="28" font-weight="bold" fill="#FFFFFF" text-anchor="middle">10</text>
+  <!-- Blue square (top-right) -->
+  <rect x="432" y="60" width="40" height="40" fill="#3B82F6" stroke="#1D4ED8" stroke-width="2" rx="4"/>
   
-  <!-- Danish flag colors accent -->
-  <rect x="200" y="420" width="112" height="16" fill="#C8102E" rx="8"/>
-  <rect x="200" y="440" width="112" height="16" fill="#FFFFFF" rx="8"/>
-  <rect x="200" y="460" width="112" height="16" fill="#C8102E" rx="8"/>
+  <!-- Red circle (bottom-left) -->
+  <circle cx="60" cy="440" r="20" fill="#EF4444" stroke="#DC2626" stroke-width="2"/>
   
-  <!-- Small decorative elements -->
-  <circle cx="120" cy="380" r="12" fill="#FDE047" opacity="0.8"/>
-  <circle cx="390" cy="380" r="12" fill="#FDE047" opacity="0.8"/>
-  <circle cx="120" cy="180" r="8" fill="#FFFFFF" opacity="0.7"/>
-  <circle cx="390" cy="180" r="8" fill="#FFFFFF" opacity="0.7"/>
+  <!-- Orange star (bottom-right) -->
+  <path d="M 452 420 L 456 432 L 468 432 L 458 440 L 462 452 L 452 444 L 442 452 L 446 440 L 436 432 L 448 432 Z" 
+        fill="#F97316" stroke="#EA580C" stroke-width="2"/>
+  
+  <!-- Yellow hexagon (center-bottom) -->
+  <path d="M 236 440 L 256 430 L 276 440 L 276 460 L 256 470 L 236 460 Z" 
+        fill="#FDE047" stroke="#EAB308" stroke-width="2"/>
 </svg>
