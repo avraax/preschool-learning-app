@@ -4,7 +4,7 @@ import { Box, SxProps, Theme } from '@mui/material';
 interface LogoProps {
   size?: number | string;
   sx?: SxProps<Theme>;
-  onClick?: () => void;
+  onClick?: (event: React.MouseEvent<HTMLElement>) => void;
   alt?: string;
 }
 
@@ -31,14 +31,8 @@ export const Logo: React.FC<LogoProps> = ({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        cursor: onClick ? 'pointer' : 'default',
-        transition: 'transform 0.2s ease-in-out',
-        '&:hover': onClick ? {
-          transform: 'scale(1.05)',
-        } : {},
         ...sx
       }}
-      onClick={onClick}
     >
       <Box
         component="img"
@@ -50,7 +44,13 @@ export const Logo: React.FC<LogoProps> = ({
           objectFit: 'contain',
           filter: 'drop-shadow(0 4px 8px rgba(139, 92, 246, 0.3))',
           borderRadius: '16px',
+          cursor: onClick ? 'pointer' : 'default',
+          transition: 'transform 0.2s ease-in-out',
+          '&:hover': onClick ? {
+            transform: 'scale(1.05)',
+          } : {},
         }}
+        onClick={onClick}
       />
     </Box>
   );

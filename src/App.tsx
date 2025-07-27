@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useState, useCallback } from 'react'
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { logIOSIssue } from './utils/remoteConsole'
@@ -35,13 +35,11 @@ import UpdateBanner from './components/common/UpdateBanner'
 import GlobalAudioPermission from './components/common/GlobalAudioPermission'
 import { AudioPermissionProvider } from './contexts/AudioPermissionContext'
 
-// Flip Demo Components
-import FlipDemoSelection from './components/flip-demos/FlipDemoSelection'
-import CSSClassFlip from './components/flip-demos/CSSClassFlip'
-import InlineStyleFlip from './components/flip-demos/InlineStyleFlip'
-import WebAnimationsFlip from './components/flip-demos/WebAnimationsFlip'
-import OpacityScaleFlip from './components/flip-demos/OpacityScaleFlip'
-import AbsolutePositionFlip from './components/flip-demos/AbsolutePositionFlip'
+
+// Balloon Components
+import BalloonBase from './components/common/balloon/BalloonBase'
+import { ParticleEffects, createPopParticles, Particle } from './components/common/balloon/ParticleEffects'
+import { useBalloonSound } from './components/common/balloon/SoundManager'
 import LottieCharacter, { useCharacterState } from './components/common/LottieCharacter'
 import { useUpdateChecker } from './hooks/useUpdateChecker'
 import { useNativeAppFeel } from './hooks/useNativeAppFeel'
@@ -61,10 +59,115 @@ const AdminRedirectChecker = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>
 }
 
+// Balloon interface
+interface HomeBalloon {
+  id: string;
+  x: number;
+  y: number;
+  color: string;
+  size: number;
+  content: string;
+  isPopped: boolean;
+  angle?: number;
+}
+
 // Home Page Component
 const HomePage = () => {
   const navigate = useNavigate()
   const welcomeCharacter = useCharacterState('wave')
+  const { play, stopAll } = useBalloonSound()
+  const [balloons, setBalloons] = useState<HomeBalloon[]>([])
+  const [particles, setParticles] = useState<Particle[]>([])
+  
+  const balloonColors = ['#EF4444', '#3B82F6', '#10B981', '#FDE047', '#8B5CF6', '#F97316', '#EC4899']
+  const balloonContents = ['A', 'B', 'C', 'Å', '1', '2', '3', '4', '5']
+  
+  const spawnBalloons = useCallback((logoElement?: HTMLElement) => {
+    let centerX, centerY;
+    
+    if (logoElement) {
+      // Get actual logo position from DOM element
+      const rect = logoElement.getBoundingClientRect();
+      centerX = rect.left + rect.width / 2;
+      centerY = rect.top + rect.height / 2;
+    } else {
+      // Fallback to window center
+      centerX = window.innerWidth / 2;
+      centerY = window.innerHeight / 2;
+    }
+    
+    const newBalloons: HomeBalloon[] = [];
+    const balloonCount = 10; // Always spawn exactly 10 balloons
+    
+    for (let i = 0; i < balloonCount; i++) {
+      // Random angle with extreme downward bias
+      // Almost all balloons spawn downwards with slight variations
+      let angle;
+      if (Math.random() < 0.95) {
+        // 95% chance for bottom 40% of circle (π*0.8 to π*1.2)
+        angle = Math.PI * 0.8 + Math.random() * Math.PI * 0.4;
+      } else {
+        // 5% chance for far bottom sides (π*0.6 to π*0.8 and π*1.2 to π*1.4)
+        angle = Math.random() < 0.5 
+          ? Math.PI * 0.6 + Math.random() * Math.PI * 0.2  // Far bottom-left
+          : Math.PI * 1.2 + Math.random() * Math.PI * 0.2; // Far bottom-right
+      }
+      
+      // Add some randomness to break up perfect patterns
+      angle += (Math.random() - 0.5) * 0.3;
+      
+      // Calculate balloon size - bigger in general
+      const balloonSize = Math.random() * 40 + 80; // 80-120px (was 60-90px)
+      
+      // Varied spawn distance from center - allow spawning directly on logo (distance 0)
+      const spawnDistance = Math.random() * 120; // 0-120px from center (includes logo center)
+      
+      // Calculate varied spawn position around logo center
+      const offsetX = Math.cos(angle) * spawnDistance;
+      const offsetY = Math.sin(angle) * spawnDistance;
+      
+      // Allow balloons to spawn on logo - remove tight viewport constraints
+      const startX = centerX + offsetX - balloonSize / 2;
+      const startY = centerY + offsetY - balloonSize / 2;
+      
+      newBalloons.push({
+        id: `home-${Date.now()}-${Math.random()}-${i}`, // More unique ID to prevent duplicates
+        x: startX,
+        y: startY,
+        color: balloonColors[Math.floor(Math.random() * balloonColors.length)],
+        size: balloonSize, // Use the pre-calculated size
+        content: balloonContents[Math.floor(Math.random() * balloonContents.length)],
+        isPopped: false,
+        angle: angle // Store the angle for movement direction
+      });
+    }
+    
+    setBalloons(newBalloons);
+  }, []);
+
+  const popBalloon = useCallback((id: string, x: number, y: number) => {
+    const balloon = balloons.find(b => b.id === id);
+    
+    if (!balloon || balloon.isPopped) {
+      return;
+    }
+
+    // Mark balloon as popped and remove immediately for instant visual feedback
+    setBalloons(prev => prev.filter(b => b.id !== id));
+
+    // Create particle effect
+    const newParticles = createPopParticles(x, y, balloon.color);
+    setParticles(prev => [...prev, ...newParticles]);
+
+    // Play sound independently - fire and forget
+    play('sharp-pop-328170').catch(() => {
+      // Silently handle any errors
+    });
+  }, [balloons, play]);
+
+  const removeParticle = useCallback((particleId: string) => {
+    setParticles(prev => prev.filter(p => p.id !== particleId));
+  }, []);
   
   React.useEffect(() => {
     // Welcome animation sequence
@@ -73,6 +176,13 @@ const HomePage = () => {
     }, 1000)
     return () => clearTimeout(timer)
   }, [])
+  
+  // Cleanup on unmount
+  React.useEffect(() => {
+    return () => {
+      stopAll();
+    };
+  }, [stopAll])
 
   return (
     <Box 
@@ -112,13 +222,40 @@ const HomePage = () => {
             transition={{ duration: 0.5 }}
           >
             {/* App Logo */}
-            <Box sx={{ mb: 2 }}>
+            <Box sx={{ mb: 2, position: 'relative' }}>
               <LogoLarge
-                onClick={() => {
-                  // Add a fun interaction - shake the logo when clicked
-                  welcomeCharacter.wave()
+                onClick={(e) => {
+                  // Spawn balloons when logo is clicked
+                  const logoElement = e.currentTarget as HTMLElement;
+                  spawnBalloons(logoElement);
+                  welcomeCharacter.wave();
+                }}
+                sx={{
+                  cursor: 'pointer',
+                  '&:hover': {
+                    transform: 'scale(1.05)',
+                    filter: 'drop-shadow(0 8px 16px rgba(139, 92, 246, 0.4))'
+                  }
                 }}
               />
+              {/* Subtle hint that logo is clickable */}
+              {balloons.length === 0 && (
+                <Typography
+                  variant="caption"
+                  sx={{
+                    position: 'absolute',
+                    bottom: -20,
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    color: 'primary.main',
+                    opacity: 0.7,
+                    fontSize: '0.75rem',
+                    whiteSpace: 'nowrap'
+                  }}
+                >
+                  🎈 Klik for balloner!
+                </Typography>
+              )}
             </Box>
             
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2, mb: 2 }}>
@@ -393,6 +530,25 @@ const HomePage = () => {
           </Box>
         </Box>
       </Container>
+      
+      {/* Balloons */}
+      {balloons.map((balloon) => (
+        <BalloonBase
+          key={balloon.id}
+          id={balloon.id}
+          x={balloon.x}
+          y={balloon.y}
+          size={balloon.size}
+          color={balloon.color}
+          content={balloon.content}
+          isPopped={balloon.isPopped}
+          onClick={popBalloon}
+          floatDuration={8} // 8 seconds total animation
+        />
+      ))}
+
+      {/* Particle Effects */}
+      <ParticleEffects particles={particles} onParticleComplete={removeParticle} />
     </Box>
   )
 }
@@ -514,13 +670,6 @@ function App() {
         {/* Legacy redirect for old admin access */}
         <Route path="/admin" element={<Navigate to="/admin/errors" replace />} />
         
-        {/* Flip Demo Routes */}
-        <Route path="/flip-demo" element={<FlipDemoSelection />} />
-        <Route path="/flip-demo/css-class" element={<CSSClassFlip />} />
-        <Route path="/flip-demo/inline-style" element={<InlineStyleFlip />} />
-        <Route path="/flip-demo/web-animations" element={<WebAnimationsFlip />} />
-        <Route path="/flip-demo/opacity-scale" element={<OpacityScaleFlip />} />
-        <Route path="/flip-demo/absolute-positioning" element={<AbsolutePositionFlip />} />
         
         {/* 404 Not Found */}
         <Route path="*" element={<NotFoundPage />} />
