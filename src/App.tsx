@@ -439,7 +439,7 @@ function App() {
   const updateStatus = useUpdateChecker()
   
   // Initialize native app feel optimizations
-  const nativeAppFeel = useNativeAppFeel()
+  useNativeAppFeel()
   
   // DEV MODE: Set to true to test update banner styling
   // This allows you to see and adjust the UpdateBanner without waiting for a real update
