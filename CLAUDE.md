@@ -30,7 +30,7 @@ Frontend Framework: React 18 + TypeScript
 Build Tool: Vite
 Styling: Tailwind CSS v4 + Custom CSS
 Animations: Framer Motion
-Audio: Web Speech API + Howler.js
+Audio: Global Permission System + Google TTS + Web Speech API + Howler.js
 Routing: React Router DOM v7
 Deployment: Vercel-ready configuration
 ```
@@ -86,6 +86,182 @@ const gameUrl = buildGameUrl('/alphabet/quiz', {
 4. **Browser history support** - Back/forward buttons must work correctly
 5. **Deep linking** - Users should be able to share specific exercise URLs
 
+### 🔊 Global Audio Permission System
+
+The app features a sophisticated audio permission management system designed to provide seamless Danish audio narration while respecting browser security requirements and delivering an excellent user experience.
+
+#### System Architecture
+
+**Location**: `src/contexts/AudioPermissionContext.tsx`, `src/components/common/GlobalAudioPermission.tsx`
+
+The audio system uses a centralized context-based approach:
+
+```typescript
+// Core components
+AudioPermissionProvider    // Global state management
+GlobalAudioPermission     // Beautiful permission modal
+useAudioPermissionHook    // Clean hook interface
+AudioManager             // Enhanced with permission checks
+```
+
+#### Smart Permission Detection
+
+**Key Features:**
+- **Session-Based**: Permission prompt shows only once per user session
+- **Smart Triggers**: Detects app startup, focus changes, and navigation events
+- **Proactive Testing**: Tests audio capability before attempting playback
+- **Non-Intrusive**: Only appears when audio is actually needed, not after errors
+
+**Trigger Events:**
+```typescript
+// Automatic detection of user engagement
+- App startup and initial load
+- Window focus/visibility changes  
+- Navigation between game sections
+- Switching back from other apps
+- User interactions (clicks, touches)
+```
+
+#### Permission State Management
+
+```typescript
+interface AudioPermissionState {
+  hasPermission: boolean      // Current permission status
+  needsPermission: boolean    // Whether app currently needs audio
+  showPrompt: boolean         // Whether to display permission modal
+  sessionInitialized: boolean // Session state tracking
+  lastUserInteraction: number // Timestamp for iOS compatibility
+}
+```
+
+#### Beautiful User Interface
+
+The permission modal features:
+- **Elegant Design**: Purple gradient background with smooth animations
+- **Danish Language**: Clear, child-friendly instructions
+- **Visual Appeal**: Volume icon animations and modern styling
+- **Dismissible**: Users can close or enable audio permissions
+- **Responsive**: Works on all device sizes and orientations
+
+#### AudioManager Integration
+
+**Location**: `src/utils/audio.ts`
+
+The enhanced AudioManager automatically:
+```typescript
+// Before any speech synthesis
+async speak(text: string) {
+  // 1. Update user interaction timestamp
+  this.updateUserInteraction()
+  
+  // 2. Check global permission state
+  const hasPermission = await this.checkAudioPermission()
+  if (!hasPermission) {
+    console.log('Audio permission not available, skipping speech')
+    return
+  }
+  
+  // 3. Proceed with audio synthesis
+  await this.googleTTS.synthesizeAndPlay(text)
+}
+```
+
+#### Cross-Platform Compatibility
+
+**iOS Safari Optimization:**
+- Enhanced interaction tracking for iOS audio restrictions
+- Silent audio testing to verify permissions
+- Fallback to Web Speech API when needed
+- Respects iOS 10-second interaction timeout
+
+**Desktop Browsers:**
+- More permissive permission handling
+- Automatic permission detection
+- Seamless audio experience
+
+#### Developer Guidelines
+
+**Usage in Components:**
+```typescript
+// Components automatically inherit global permission handling
+import { audioManager } from '../../utils/audio'
+
+// Simply call audio methods - permissions handled automatically
+await audioManager.speak('Hej børn!')
+await audioManager.speakNumber(5)
+await audioManager.playSuccessSound()
+```
+
+**No Manual Permission Handling Required:**
+- ❌ No need for component-level permission state
+- ❌ No need for try/catch audio permission blocks  
+- ❌ No need for individual iOS prompts
+- ✅ Global system handles everything automatically
+
+#### Audio Technology Stack
+
+**Primary: Google Cloud TTS**
+- High-quality Danish Wavenet voices
+- Custom SSML for child-friendly speech patterns
+- Intelligent caching system
+- Server-side synthesis via `/api/tts`
+
+**Fallback: Web Speech API**
+- Browser-native Danish voices
+- Client-side synthesis
+- Automatic fallback when Google TTS unavailable
+
+**Sound Effects: Howler.js**
+- Game sound effects and music
+- Cross-browser audio compatibility
+- Volume and playback controls
+
+#### Performance Optimizations
+
+**Caching Strategy:**
+- 24-hour audio cache in localStorage
+- Preloading of common phrases and numbers
+- Batch synthesis for better performance
+- Cache size limits (100 items max)
+
+**Network Optimization:**
+- Serverless TTS API functions
+- Compressed audio delivery
+- Graceful degradation on network issues
+
+#### Error Handling & Logging
+
+**Comprehensive Error Tracking:**
+```typescript
+// Detailed logging for debugging
+logAudioIssue('Audio event', error, {
+  isIOS: deviceInfo.isIOS,
+  permissionState: context.state,
+  audioContextState: this.audioContext?.state,
+  userAgent: navigator.userAgent
+})
+```
+
+**Graceful Degradation:**
+- Silent fallback when audio unavailable
+- Non-blocking game functionality
+- User-friendly error recovery
+
+#### Migration Notes
+
+**From Old System:**
+- ✅ Removed scattered iOS permission prompts from all game components
+- ✅ Deleted `useIOSAudioFix.tsx` hook
+- ✅ Deleted `IOSAudioPrompt.tsx` component  
+- ✅ Centralized all audio permission logic
+- ✅ Unified user experience across all games
+
+**Benefits:**
+- 🎯 **Better UX**: Single, beautiful permission modal instead of multiple yellow bars
+- 🎯 **Fewer Interruptions**: Smart session-based prompting
+- 🎯 **Cleaner Code**: No permission handling needed in individual components
+- 🎯 **Better Maintenance**: Centralized audio logic easier to update
+
 ### Project Structure
 ```
 preschool-learning-app/
@@ -93,14 +269,21 @@ preschool-learning-app/
 │   ├── components/
 │   │   ├── common/           # Reusable UI components
 │   │   │   ├── Button.tsx    # Animated button component
-│   │   │   └── Card.tsx      # Container card component
+│   │   │   ├── Card.tsx      # Container card component
+│   │   │   └── GlobalAudioPermission.tsx  # Global audio permission modal
 │   │   ├── alphabet/
 │   │   │   └── AlphabetGame.tsx  # Letter recognition game
 │   │   └── math/
 │   │       └── MathGame.tsx      # Counting & arithmetic game
+│   ├── contexts/
+│   │   └── AudioPermissionContext.tsx  # Global audio permission state
+│   ├── hooks/
+│   │   └── useAudioPermission.ts       # Audio permission hook
 │   ├── utils/
-│   │   └── audio.ts         # Danish audio management system
-│   ├── App.tsx              # Main application router
+│   │   └── audio.ts         # Enhanced AudioManager with permission checks
+│   ├── services/
+│   │   └── googleTTS.ts     # Google Cloud TTS integration
+│   ├── App.tsx              # Main application router with AudioPermissionProvider
 │   ├── main.tsx            # React entry point
 │   └── index.css           # Global styles + Tailwind
 ├── public/                  # Static assets
@@ -150,12 +333,17 @@ preschool-learning-app/
 - **Alphabet**: Complete Danish alphabet A-Å (including æ, ø, å)
 - **Math**: Numbers 1-50 for counting, addition problems up to 10+10=20
 
-### 4. Audio System (`/src/utils/audio.ts`)
-- **Danish Text-to-Speech**: Web Speech API with Danish locale
+### 4. Advanced Audio System
+- **Global Permission Management**: Smart, session-based audio permission handling
+- **Multi-Tier Audio Stack**: Google Cloud TTS → Web Speech API → Howler.js fallbacks
+- **Danish Text-to-Speech**: High-quality Wavenet voices with child-friendly speech patterns
 - **Number Pronunciation**: Handles Danish number complexities
   - Basic numbers: en, to, tre, fire...
   - Special cases: halvtreds, halvfjerds, halvfems
   - Compound numbers: femogtyve, seksoghalvfjerds
+- **Intelligent Caching**: 24-hour localStorage cache with automatic cleanup
+- **Cross-Platform Optimization**: iOS Safari compatibility with enhanced interaction tracking
+- **Beautiful Permission UI**: Elegant purple gradient modal with Danish instructions
 - **Feedback System**: Encouragement and success sounds in Danish
 
 ## 🎨 Design Specifications

@@ -61,7 +61,6 @@ import LottieCharacter, { useCharacterState } from '../common/LottieCharacter'
 import CelebrationEffect, { useCelebration } from '../common/CelebrationEffect'
 import { audioManager } from '../../utils/audio'
 import { DANISH_PHRASES } from '../../config/danish-phrases'
-import { isIOS } from '../../utils/deviceDetection'
 
 // Danish alphabet (29 letters)
 const DANISH_ALPHABET = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'Æ', 'Ø', 'Å']
@@ -121,7 +120,6 @@ const MemoryGame: React.FC = () => {
   const [matchedPairs, setMatchedPairs] = useState(0)
   const [isProcessing, setIsProcessing] = useState(false)
   const [score, setScore] = useState(0)
-  const [showIOSPrompt, setShowIOSPrompt] = useState(false)
   const [wrongPairIds, setWrongPairIds] = useState<string[]>([])
   
   
@@ -136,10 +134,6 @@ const MemoryGame: React.FC = () => {
     teacher.setCharacter('owl')
     teacher.wave()
     
-    // Show iOS prompt if needed
-    if (isIOS()) {
-      setShowIOSPrompt(true)
-    }
   }, [gameType])
 
   const initializeGame = () => {
@@ -218,16 +212,7 @@ const MemoryGame: React.FC = () => {
           return // Don't show prompts for expected interruptions
         }
         
-        // For other errors, especially timeouts, handle iOS-specific issues
-        const isTimeoutError = error && error.message?.includes('timeout')
-        const isIOSAudioError = isIOS() && (isTimeoutError || error.message?.includes('iOS') || error.message?.includes('audio requires'))
-        
-        if (isIOSAudioError) {
-          console.warn('🎵 iOS audio issue detected, showing prompt again:', error.message)
-          setShowIOSPrompt(true)
-        } else {
-          console.error('🎵 Unexpected card audio error:', error)
-        }
+        console.error('🎵 Audio error:', error)
       }
     }
     
@@ -306,69 +291,6 @@ const MemoryGame: React.FC = () => {
     initializeGame()
   }
 
-  const handleIOSAudioInit = async () => {
-    try {
-      // Initialize audio context on iOS with user gesture
-      console.log('🎵 iOS: Initializing audio with user gesture...')
-      
-      // First try a simple greeting to initialize the audio system
-      await audioManager.speak(DANISH_PHRASES.completion.greeting)
-      
-      // If successful, also test with number pronunciation to warm up the system
-      if (gameType === 'numbers') {
-        await new Promise(resolve => setTimeout(resolve, 500))
-        await audioManager.speakNumber(1)
-      }
-      
-      console.log('🎵 iOS: Audio initialization successful')
-      setShowIOSPrompt(false)
-    } catch (error) {
-      console.error('🎵 iOS audio initialization failed:', error)
-      
-      // Try a simpler fallback approach
-      try {
-        console.log('🎵 iOS: Trying fallback initialization...')
-        
-        // Use the emergency stop and reinitialize
-        audioManager.emergencyStop()
-        await new Promise(resolve => setTimeout(resolve, 300))
-        
-        // Try just a simple Web Speech API test
-        if ('speechSynthesis' in window) {
-          const utterance = new SpeechSynthesisUtterance(DANISH_PHRASES.completion.greeting)
-          utterance.lang = 'da-DK'
-          utterance.rate = 0.8
-          utterance.pitch = 1.1
-          
-          return new Promise<void>((resolve, reject) => {
-            const timeout = setTimeout(() => {
-              window.speechSynthesis.cancel()
-              reject(new Error('Speech synthesis timeout'))
-            }, 3000)
-            
-            utterance.onend = () => {
-              clearTimeout(timeout)
-              console.log('🎵 iOS: Fallback audio initialization successful')
-              setShowIOSPrompt(false)
-              resolve()
-            }
-            
-            utterance.onerror = (event) => {
-              clearTimeout(timeout)
-              console.error('🎵 iOS: Fallback also failed:', event)
-              // Keep prompt visible for user to try again
-              reject(event)
-            }
-            
-            window.speechSynthesis.speak(utterance)
-          })
-        }
-      } catch (fallbackError) {
-        console.error('🎵 iOS: Both initialization methods failed:', fallbackError)
-        // Keep prompt visible if all methods fail
-      }
-    }
-  }
 
   const getGameTitle = () => {
     return gameType === 'letters' ? 'Hukommelsesspil - Bogstaver' : 'Hukommelsesspil - Tal'
@@ -675,35 +597,6 @@ const MemoryGame: React.FC = () => {
         )}
       </Container>
 
-      {/* iOS Audio Permission Prompt */}
-      {showIOSPrompt && (
-        <Box sx={{ 
-          position: 'fixed', 
-          bottom: 20, 
-          left: 20, 
-          right: 20, 
-          zIndex: 1000,
-          animation: 'pulse 2s infinite'
-        }}>
-          <Button
-            onClick={handleIOSAudioInit}
-            variant="contained"
-            color="warning"
-            size="large"
-            fullWidth
-            sx={{ 
-              py: 2, 
-              fontSize: '1.1rem',
-              fontWeight: 'bold',
-              boxShadow: 4,
-              '&:hover': { boxShadow: 8 }
-            }}
-          >
-            📱 Tryk for at aktivere lyd på iPad 🔊
-          </Button>
-        </Box>
-      )}
-      
       {/* Celebration Effect */}
       <CelebrationEffect
         show={showCelebration}

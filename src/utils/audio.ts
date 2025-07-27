@@ -4,6 +4,14 @@ import { isIOS } from './deviceDetection'
 import { logAudioIssue, logIOSIssue } from './remoteConsole'
 import { DANISH_PHRASES, getRandomSuccessPhrase, getRandomEncouragementPhrase, getDanishNumberText } from '../config/danish-phrases'
 
+// Global reference to audio permission context
+// This will be set by the AudioPermissionProvider when it initializes
+let globalAudioPermissionContext: any = null
+
+export const setGlobalAudioPermissionContext = (context: any) => {
+  globalAudioPermissionContext = context
+}
+
 export class AudioManager {
   private sounds: Map<string, Howl> = new Map()
   private googleTTS: GoogleTTSService
@@ -15,7 +23,51 @@ export class AudioManager {
     this.preloadAudio()
   }
 
+  // Check if audio permission is available
+  private async checkAudioPermission(): Promise<boolean> {
+    if (!globalAudioPermissionContext) {
+      // Fallback to old behavior if context not available
+      console.warn('Audio permission context not available, using fallback')
+      return true
+    }
+
+    try {
+      // Signal that we need audio permission
+      globalAudioPermissionContext.setNeedsPermission(true)
+      
+      // Check current permission status
+      const hasPermission = await globalAudioPermissionContext.checkAudioPermission()
+      
+      if (!hasPermission) {
+        // Request permission through the global system
+        return await globalAudioPermissionContext.requestAudioPermission()
+      }
+      
+      return hasPermission
+    } catch (error) {
+      console.warn('Error checking audio permission:', error)
+      return false
+    }
+  }
+
+  // Update user interaction in global context
+  private updateUserInteraction(): void {
+    if (globalAudioPermissionContext) {
+      globalAudioPermissionContext.updateUserInteraction()
+    }
+  }
+
   async speak(text: string, voiceType: 'primary' | 'backup' | 'male' = 'primary', useSSML: boolean = true, customSpeed?: number): Promise<void> {
+    // Update user interaction timestamp
+    this.updateUserInteraction()
+    
+    // Check audio permission before speaking
+    const hasPermission = await this.checkAudioPermission()
+    if (!hasPermission) {
+      console.log('🔇 Audio permission not available, skipping speech')
+      return
+    }
+    
     // Always use Google TTS with config from shared-tts-config.js
     const customAudioConfig = customSpeed ? { speakingRate: customSpeed } : undefined
     await this.googleTTS.synthesizeAndPlay(text, voiceType, useSSML, customAudioConfig)

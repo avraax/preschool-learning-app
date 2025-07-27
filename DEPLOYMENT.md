@@ -89,7 +89,7 @@ npm run dev      # Test development build
 
 - ✅ Build completes without errors
 - ✅ App runs locally on both dev and preview servers
-- ✅ Audio permissions work in browser
+- ✅ Audio permission system works properly (beautiful modal appears when needed)
 - ✅ Responsive design tested on mobile/tablet
 - ✅ Danish text-to-speech functions properly
 
@@ -97,9 +97,10 @@ npm run dev      # Test development build
 
 Once deployed, users can:
 1. **Visit the URL** on any device
-2. **Allow audio permissions** when prompted
-3. **Choose difficulty level** appropriate for child's age
-4. **Start learning** with alphabet or math games
+2. **Enable audio** via the beautiful purple modal (appears automatically when needed)
+3. **Choose learning module** - Alphabet or Math games
+4. **Start learning** with automatic Danish audio narration
+5. **Enjoy seamless experience** - permission prompt appears only once per session
 
 ## 📱 Device Compatibility
 
@@ -126,23 +127,32 @@ The app now uses **Google Cloud Text-to-Speech** for superior Danish voice quali
 - **Automatic caching** for instant playback
 
 ### First Time Setup
-1. **Enable Audio**: Browser will ask for audio permissions (no microphone needed)
-2. **Danish Language**: 
+1. **Automatic Audio Setup**: Beautiful purple modal appears automatically when audio is needed
+2. **One-Click Enable**: Click "Tryk for at aktivere lyd" to enable audio (no microphone needed)
+3. **Session-Based**: Permission prompt appears only once per browsing session
+4. **Multi-Tier Audio System**: 
    - Primary: Google Cloud TTS with Wavenet Danish voices
    - Fallback: Browser's built-in Danish voice
-3. **Volume**: Ensure device volume is appropriate for children
+   - Sound Effects: Howler.js for game sounds
+5. **Volume**: Ensure device volume is appropriate for children
 
 ### Audio Features
+- **Global Permission Management**: Smart session-based permission handling
 - **SSML Support**: Enhanced speech with pauses, emphasis, and pitch variations
+- **Intelligent Caching**: 24-hour localStorage cache for instant audio playback
+- **Cross-Platform Optimization**: Enhanced iOS Safari compatibility
 - **Slow Speech Mode**: Automatically slows down for difficult words
 - **Math Problem Reading**: Special formatting for arithmetic problems
 - **Encouraging Feedback**: Randomized success and encouragement phrases
+- **Beautiful UI**: Elegant permission modal instead of browser prompts
 
 ### Troubleshooting Audio
-- **No Sound**: Check device volume and browser permissions
+- **No Sound**: Check device volume and look for the purple permission modal
+- **Permission Modal Not Showing**: Try refreshing the page and interacting with the app
 - **Google TTS Issues**: App automatically falls back to Web Speech API
-- **iOS Issues**: Tap screen once before using audio features
-- **Cached Audio**: Clear browser cache if audio seems outdated
+- **iOS Safari**: Permission modal is optimized for iOS - click "Tryk for at aktivere lyd"
+- **Cached Audio**: Clear browser cache if audio seems outdated (cache auto-expires after 24 hours)
+- **Session Reset**: Audio permission resets each browsing session for security
 
 ## 🎯 Usage Instructions for Parents/Teachers
 
@@ -190,9 +200,10 @@ The app now uses **Google Cloud Text-to-Speech** for superior Danish voice quali
 
 #### "No sound/wrong language"
 - Check device volume
-- Allow browser audio permissions
-- Try on different device
-- Restart browser
+- Look for the purple audio permission modal and click "Tryk for at aktivere lyd"
+- Refresh the page if the permission modal doesn't appear
+- Try on different device/browser
+- Check browser console for audio-related errors
 
 #### "Touch not responding"
 - Enable JavaScript in browser

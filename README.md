@@ -9,10 +9,14 @@ A fun and interactive web application designed to teach Danish children aged 3-7
 - **Mathematics**: Counting from 1-100 and basic arithmetic operations
 - **Difficulty Levels**: Age-appropriate content for 3-4, 4-6, and 6-7 year olds
 
-### 🎵 Audio Features
-- **Danish Text-to-Speech**: Native Danish pronunciation for all content
-- **Interactive Audio**: Letters, numbers, and instructions read aloud
-- **Encouraging Feedback**: Positive reinforcement in Danish
+### 🎵 Advanced Audio System
+- **Global Permission Management**: Smart, session-based audio permission handling
+- **High-Quality Danish TTS**: Google Cloud Wavenet voices with child-friendly speech patterns
+- **Multi-Tier Fallback**: Google TTS → Web Speech API → Howler.js for maximum compatibility
+- **Interactive Audio**: Letters, numbers, and instructions read aloud automatically
+- **Intelligent Caching**: Fast audio playback with 24-hour localStorage cache
+- **Cross-Platform**: Optimized for iOS Safari and desktop browsers
+- **Beautiful Permission UI**: Elegant modal with Danish instructions (shown only once per session)
 
 ### 🎨 Kid-Friendly Design
 - **Colorful Interface**: Bright, appealing colors and animations
@@ -48,7 +52,7 @@ npm run build
 - **Build Tool**: Vite
 - **Styling**: Tailwind CSS
 - **Animations**: Framer Motion
-- **Audio**: Web Speech API + Howler.js
+- **Audio**: Global Permission System + Google Cloud TTS + Web Speech API + Howler.js
 - **Deployment**: Vercel
 
 ## 🎯 Difficulty Levels
@@ -83,20 +87,39 @@ The app is configured for easy deployment on Vercel:
 - Safari 12+
 - Edge 79+
 
-## 🔊 Audio Requirements
+## 🔊 Audio System
 
-The app uses the Web Speech API for Danish text-to-speech. For the best experience:
-- Use a modern browser with speech synthesis support
-- Ensure your device/browser has Danish language support
-- Allow audio permissions when prompted
+The app features a sophisticated multi-tier audio system for the best Danish learning experience:
+
+### Automatic Audio Permission Management
+- **Smart Detection**: Automatically detects when audio is needed
+- **Session-Based**: Permission prompt appears only once per session
+- **Non-Intrusive**: Beautiful modal instead of annoying browser prompts
+- **iOS Optimized**: Enhanced compatibility with iOS Safari restrictions
+
+### Audio Technology Stack
+- **Primary**: Google Cloud Text-to-Speech with Danish Wavenet voices
+- **Fallback**: Browser Web Speech API with Danish locale
+- **Sound Effects**: Howler.js for game sounds and music
+- **Caching**: Intelligent 24-hour cache for instant audio playback
+
+### Requirements
+- Modern browser (Chrome 70+, Firefox 65+, Safari 12+, Edge 79+)
+- Audio permissions (automatically requested when needed)
+- Internet connection for first-time audio generation (cached afterward)
 
 ## 🎮 How to Use
 
-1. **Choose Difficulty**: Select the appropriate age level
-2. **Pick a Module**: Choose between Alphabet or Math
-3. **Listen & Learn**: Click the audio button to hear instructions
-4. **Interactive Play**: Tap/click on answers to play and learn
-5. **Progress**: Track your score as you learn
+1. **Start Playing**: Open the app and choose Alphabet or Math
+2. **Audio Setup**: If prompted, click "Aktivér lyd" to enable audio (happens once per session)
+3. **Listen & Learn**: Audio instructions play automatically - no need to click audio buttons
+4. **Interactive Play**: Tap/click on letters, numbers, or answers to play and learn
+5. **Progress**: Track your score as you learn with encouraging Danish feedback
+
+### First-Time Experience
+- When you first use audio features, you'll see a beautiful purple modal asking to enable audio
+- Click "Tryk for at aktivere lyd" to start enjoying full Danish narration
+- This permission setup happens only once per browsing session
 
 ## 🏗️ Development
 

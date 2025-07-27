@@ -12,19 +12,15 @@ import {
   Chip,
   Paper,
   AppBar,
-  Toolbar,
-  Snackbar,
-  Alert
+  Toolbar
 } from '@mui/material'
 import {
   ArrowBack,
   VolumeUp,
   Add,
-  Star,
-  TouchApp
+  Star
 } from '@mui/icons-material'
 import { audioManager } from '../../utils/audio'
-import { isIOS } from '../../utils/deviceDetection'
 import LottieCharacter, { useCharacterState } from '../common/LottieCharacter'
 import CelebrationEffect, { useCelebration } from '../common/CelebrationEffect'
 
@@ -37,9 +33,7 @@ const AdditionGame: React.FC = () => {
   const [options, setOptions] = useState<number[]>([])
   const [score, setScore] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
-  const [showIOSPrompt, setShowIOSPrompt] = useState(false)
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
-  const lastInteractionRef = useRef<number>(Date.now())
   
   // Character and celebration management
   const mathTeacher = useCharacterState('wave')
@@ -52,11 +46,6 @@ const AdditionGame: React.FC = () => {
     mathTeacher.setCharacter('fox')
     mathTeacher.wave()
     
-    // Track user interactions for iOS
-    const updateInteraction = () => {
-      lastInteractionRef.current = Date.now()
-    }
-    
     // Stop audio immediately when navigating away
     const handleBeforeUnload = () => {
       audioManager.stopAll()
@@ -64,9 +53,6 @@ const AdditionGame: React.FC = () => {
         clearTimeout(timeoutRef.current)
       }
     }
-
-    document.addEventListener('click', updateInteraction)
-    document.addEventListener('touchstart', updateInteraction)
     
     // Listen for navigation events
     window.addEventListener('beforeunload', handleBeforeUnload)
@@ -78,8 +64,6 @@ const AdditionGame: React.FC = () => {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current)
       }
-      document.removeEventListener('click', updateInteraction)
-      document.removeEventListener('touchstart', updateInteraction)
       window.removeEventListener('beforeunload', handleBeforeUnload)
       window.removeEventListener('pagehide', handleBeforeUnload)
     }
@@ -126,20 +110,9 @@ const AdditionGame: React.FC = () => {
     audioManager.stopAll()
     
     try {
-      // Check if iOS needs user interaction
-      if (isIOS() && Date.now() - lastInteractionRef.current > 5000) {
-        setShowIOSPrompt(true)
-        setIsPlaying(false)
-        return
-      }
-      
       await audioManager.speakAdditionProblem(a, b, 'primary')
     } catch (error: any) {
       console.error('Error speaking problem:', error)
-      // Show iOS prompt if it's a permission error
-      if (isIOS() && error?.name === 'NotAllowedError') {
-        setShowIOSPrompt(true)
-      }
     } finally {
       setIsPlaying(false)
     }
@@ -150,7 +123,6 @@ const AdditionGame: React.FC = () => {
     
     setIsPlaying(true)
     audioManager.stopAll()
-    setShowIOSPrompt(false) // Hide prompt on interaction
     
     if (selectedAnswer === correctAnswer) {
       // Correct answer - celebrate!
@@ -162,10 +134,6 @@ const AdditionGame: React.FC = () => {
         await audioManager.announceGameResult(true)
       } catch (error: any) {
         console.error('Error playing success sound:', error)
-        // Show iOS prompt if it's a permission error
-        if (isIOS() && error?.name === 'NotAllowedError') {
-          setShowIOSPrompt(true)
-        }
       }
       
       setTimeout(() => {
@@ -182,10 +150,6 @@ const AdditionGame: React.FC = () => {
         await audioManager.announceGameResult(false)
       } catch (error: any) {
         console.error('Error playing encouragement sound:', error)
-        // Show iOS prompt if it's a permission error
-        if (isIOS() && error?.name === 'NotAllowedError') {
-          setShowIOSPrompt(true)
-        }
       }
       
       setTimeout(() => {
@@ -196,13 +160,6 @@ const AdditionGame: React.FC = () => {
   }
 
   const repeatProblem = () => {
-    setShowIOSPrompt(false) // Hide prompt on interaction
-    speakProblem(num1, num2)
-  }
-
-  const handleIOSPromptClick = () => {
-    setShowIOSPrompt(false)
-    lastInteractionRef.current = Date.now()
     speakProblem(num1, num2)
   }
 
@@ -481,30 +438,6 @@ const AdditionGame: React.FC = () => {
 
       </Container>
 
-      {/* iOS Audio Permission Prompt */}
-      <Snackbar
-        open={showIOSPrompt}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-        sx={{ mb: 4 }}
-      >
-        <Alert
-          severity="info"
-          icon={<TouchApp />}
-          action={
-            <Button color="inherit" size="small" onClick={handleIOSPromptClick}>
-              Tryk her for lyd
-            </Button>
-          }
-          sx={{ 
-            width: '100%',
-            fontSize: '1.1rem',
-            alignItems: 'center'
-          }}
-        >
-          Tryk for at høre opgaven 🔊
-        </Alert>
-      </Snackbar>
-      
       {/* Celebration Effect */}
       <CelebrationEffect
         show={showCelebration}

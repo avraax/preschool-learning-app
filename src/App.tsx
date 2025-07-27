@@ -32,6 +32,8 @@ import ComparisonGame from './components/math/ComparisonGame'
 import MemoryGame from './components/learning/MemoryGame'
 import ErrorDashboard from './components/admin/ErrorDashboard'
 import UpdateBanner from './components/common/UpdateBanner'
+import GlobalAudioPermission from './components/common/GlobalAudioPermission'
+import { AudioPermissionProvider } from './contexts/AudioPermissionContext'
 
 // Flip Demo Components
 import FlipDemoSelection from './components/flip-demos/FlipDemoSelection'
@@ -458,7 +460,7 @@ function App() {
   }, [])
 
   return (
-    <>
+    <AudioPermissionProvider>
       {/* Update Button - shown in lower right when update available */}
       <UpdateBanner
         show={updateStatus.updateAvailable || DEV_SHOW_UPDATE_BANNER}
@@ -468,6 +470,9 @@ function App() {
         } : updateStatus.applyUpdate}
         isApplying={DEV_SHOW_APPLYING_STATE}
       />
+      
+      {/* Global Audio Permission System */}
+      <GlobalAudioPermission />
       
       <Routes>
         {/* Home Routes */}
@@ -509,9 +514,7 @@ function App() {
         {/* 404 Not Found */}
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
-      
-      {/* Update Banner - shown globally */}
-    </>
+    </AudioPermissionProvider>
   )
 }
 

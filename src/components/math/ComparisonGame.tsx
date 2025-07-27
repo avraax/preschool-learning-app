@@ -40,7 +40,6 @@ const ComparisonGame: React.FC = () => {
   const [showFeedback, setShowFeedback] = useState(false)
   const [score, setScore] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
-  const [showIOSPrompt, setShowIOSPrompt] = useState(false)
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
   
   // Character and celebration management
@@ -554,22 +553,6 @@ const ComparisonGame: React.FC = () => {
         </Box>
       </Container>
 
-      {/* iOS Audio Permission Prompt */}
-      {showIOSPrompt && (
-        <Box sx={{ position: 'fixed', bottom: 20, left: 20, right: 20, zIndex: 1000 }}>
-          <Button
-            onClick={() => setShowIOSPrompt(false)}
-            variant="contained"
-            color="info"
-            size="large"
-            fullWidth
-            sx={{ py: 2, fontSize: '1.1rem' }}
-          >
-            Tryk for at høre opgaven 🔊
-          </Button>
-        </Box>
-      )}
-      
       {/* Celebration Effect */}
       <CelebrationEffect
         show={showCelebration}

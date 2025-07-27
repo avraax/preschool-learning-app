@@ -15,10 +15,7 @@ import {
 } from '@mui/material'
 import { Volume2, Award, ArrowLeft } from 'lucide-react'
 import { audioManager } from '../../utils/audio'
-import { useIOSAudioFix } from '../../hooks/useIOSAudioFix'
 import { DANISH_PHRASES } from '../../config/danish-phrases'
-import { isIOS } from '../../utils/deviceDetection'
-import IOSAudioPrompt from '../common/IOSAudioPrompt'
 import LottieCharacter, { useCharacterState } from '../common/LottieCharacter'
 import CelebrationEffect, { useCelebration } from '../common/CelebrationEffect'
 
@@ -32,7 +29,6 @@ const AlphabetGame: React.FC = () => {
   const [score, setScore] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
-  const { showIOSPrompt, checkIOSAudioPermission, handleIOSAudioError, hideIOSPrompt } = useIOSAudioFix()
   
   // Character and celebration management
   const teacherCharacter = useCharacterState('wave')
@@ -96,19 +92,11 @@ const AlphabetGame: React.FC = () => {
     audioManager.stopAll()
     
     timeoutRef.current = setTimeout(async () => {
-      // For iOS, don't auto-play audio immediately - wait for user interaction
-      if (isIOS() && !checkIOSAudioPermission()) {
-        // Just show the visual question without audio for now
-        console.log('🍎 iOS: Waiting for user interaction before speaking question')
-        return
-      }
-      
       setIsPlaying(true)
       try {
         await audioManager.speakQuizPromptWithRepeat(DANISH_PHRASES.gamePrompts.findLetter(letter), letter)
       } catch (error) {
         console.error('❌ Audio error in quiz:', error)
-        handleIOSAudioError(error)
       } finally {
         setIsPlaying(false)
       }
@@ -120,7 +108,6 @@ const AlphabetGame: React.FC = () => {
     
     // Stop any currently playing audio
     audioManager.stopAll()
-    hideIOSPrompt() // Hide prompt on interaction
     
     setIsPlaying(true)
     try {
@@ -146,7 +133,6 @@ const AlphabetGame: React.FC = () => {
       }
     } catch (error) {
       console.error('Error playing feedback:', error)
-      handleIOSAudioError(error)
     } finally {
       setIsPlaying(false)
     }
@@ -157,24 +143,15 @@ const AlphabetGame: React.FC = () => {
     
     // Stop any currently playing audio before speaking again
     audioManager.stopAll()
-    hideIOSPrompt() // Hide prompt on interaction
-    
-    if (!checkIOSAudioPermission()) return
     
     setIsPlaying(true)
     try {
       await audioManager.speakQuizPromptWithRepeat(DANISH_PHRASES.gamePrompts.findLetter(currentLetter), currentLetter)
     } catch (error) {
-      handleIOSAudioError(error)
+      console.error('Error repeating letter:', error)
     } finally {
       setIsPlaying(false)
     }
-  }
-  
-  const handleIOSPromptAction = () => {
-    hideIOSPrompt()
-    repeatLetter()
-    audioManager.speakQuizPromptWithRepeat(DANISH_PHRASES.gamePrompts.findLetter(currentLetter), currentLetter)
   }
 
   return (
@@ -377,13 +354,6 @@ const AlphabetGame: React.FC = () => {
         </Box>
 
       </Container>
-      
-      {/* iOS Audio Permission Prompt */}
-      <IOSAudioPrompt 
-        open={showIOSPrompt}
-        onAction={handleIOSPromptAction}
-        message="Tryk for at høre bogstavet"
-      />
       
       {/* Celebration Effect */}
       <CelebrationEffect
