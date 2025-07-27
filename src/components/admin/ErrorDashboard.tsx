@@ -460,10 +460,15 @@ const ErrorDashboard: React.FC = () => {
   }
 
   return (
-    <Box sx={{ p: 3, maxWidth: 1200, margin: '0 auto' }}>
-      <Typography variant="h4" sx={{ mb: 3, fontWeight: 'bold', color: '#1976d2' }}>
-        🚨 Error Dashboard - Børnelæring
-      </Typography>
+    <Box sx={{ 
+      height: '100vh',
+      overflow: 'auto',
+      backgroundColor: '#f5f5f5'
+    }}>
+      <Box sx={{ p: 3, maxWidth: 1200, margin: '0 auto' }}>
+        <Typography variant="h4" sx={{ mb: 3, fontWeight: 'bold', color: '#1976d2' }}>
+          🚨 Error Dashboard - Børnelæring
+        </Typography>
 
       {/* Stats Cards */}
       <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 2, mb: 3 }}>
@@ -980,6 +985,7 @@ const ErrorDashboard: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
+      </Box>
     </Box>
   )
 }

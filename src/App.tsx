@@ -45,6 +45,7 @@ import AbsolutePositionFlip from './components/flip-demos/AbsolutePositionFlip'
 import LottieCharacter, { useCharacterState } from './components/common/LottieCharacter'
 import { useUpdateChecker } from './hooks/useUpdateChecker'
 import { useNativeAppFeel } from './hooks/useNativeAppFeel'
+import { LogoLarge } from './components/common/Logo'
 
 // Admin redirect component for query parameter support
 const AdminRedirectChecker = ({ children }: { children: React.ReactNode }) => {
@@ -103,13 +104,23 @@ const HomePage = () => {
           py: { xs: 2, md: 3 }
         }}
       >
-        {/* Header with Welcome Character */}
+        {/* Header with Logo and Welcome Character */}
         <Box sx={{ textAlign: 'center', mb: { xs: 3, md: 4 } }}>
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5 }}
           >
+            {/* App Logo */}
+            <Box sx={{ mb: 2 }}>
+              <LogoLarge
+                onClick={() => {
+                  // Add a fun interaction - shake the logo when clicked
+                  welcomeCharacter.wave()
+                }}
+              />
+            </Box>
+            
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2, mb: 2 }}>
               <Typography 
                 variant="h1" 
@@ -120,7 +131,7 @@ const HomePage = () => {
                   textShadow: '2px 2px 4px rgba(0,0,0,0.1)'
                 }}
               >
-                🎈 Børnelæring 🌈
+                Børnelæring
               </Typography>
               <motion.div
                 initial={{ x: 20, opacity: 0 }}

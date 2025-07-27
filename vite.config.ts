@@ -79,33 +79,33 @@ export default defineConfig({
         scope: "/",
         icons: [
           {
-            src: "icon-192x192.svg",
+            src: "icon-192x192.png",
             sizes: "192x192",
-            type: "image/svg+xml",
+            type: "image/png",
             purpose: "any"
           },
           {
-            src: "icon-512x512.svg",
+            src: "icon-512x512.png",
             sizes: "512x512", 
-            type: "image/svg+xml",
+            type: "image/png",
             purpose: "any"
           },
           {
-            src: "apple-touch-icon-180x180.svg",
+            src: "apple-touch-icon-180x180.png",
             sizes: "180x180",
-            type: "image/svg+xml", 
+            type: "image/png", 
             purpose: "any"
           },
           {
-            src: "icon-192x192-maskable.svg",
+            src: "icon-192x192-maskable.png",
             sizes: "192x192",
-            type: "image/svg+xml",
+            type: "image/png",
             purpose: "maskable"
           },
           {
-            src: "icon-512x512-maskable.svg", 
+            src: "icon-512x512-maskable.png", 
             sizes: "512x512",
-            type: "image/svg+xml",
+            type: "image/png",
             purpose: "maskable"
           }
         ],

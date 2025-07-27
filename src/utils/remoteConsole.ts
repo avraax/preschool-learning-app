@@ -360,6 +360,121 @@ export const logIOSIssue = (context: string, issue: string, data?: any) => {
   }
 }
 
+// Audio debugging session tracker
+class AudioDebugSession {
+  private sessionLogs: any[] = []
+  private sessionId: string = ''
+  private startTime: number = 0
+  private isActive: boolean = false
+
+  startSession(context: string = 'Audio Debug Session') {
+    this.sessionId = `audio-debug-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`
+    this.startTime = Date.now()
+    this.sessionLogs = []
+    this.isActive = true
+    
+    this.addLog('SESSION_START', {
+      context,
+      timestamp: new Date().toISOString(),
+      deviceInfo: deviceInfo,
+      userAgent: navigator.userAgent,
+      url: window.location.href
+    })
+  }
+
+  addLog(type: string, data: any) {
+    if (!this.isActive) return
+    
+    this.sessionLogs.push({
+      timestamp: Date.now(),
+      relativeTime: Date.now() - this.startTime,
+      type,
+      data
+    })
+  }
+
+  isSessionActive(): boolean {
+    return this.isActive
+  }
+
+  endSession(context: string = 'Audio Debug Complete') {
+    if (!this.isActive) return
+    
+    this.addLog('SESSION_END', {
+      context,
+      totalDuration: Date.now() - this.startTime,
+      totalLogs: this.sessionLogs.length
+    })
+    
+    // Send comprehensive report to admin dashboard
+    const comprehensiveReport = {
+      sessionId: this.sessionId,
+      startTime: new Date(this.startTime).toISOString(),
+      endTime: new Date().toISOString(),
+      totalDuration: Date.now() - this.startTime,
+      device: deviceInfo,
+      environment: {
+        userAgent: navigator.userAgent,
+        url: window.location.href,
+        viewport: {
+          width: window.innerWidth,
+          height: window.innerHeight
+        },
+        audioContext: (window as any).AudioContext ? 'supported' : 'not supported',
+        speechSynthesis: window.speechSynthesis ? 'supported' : 'not supported'
+      },
+      logs: this.sessionLogs,
+      summary: this.generateSummary()
+    }
+
+    // Send to API as a special audio debug report
+    fetch('/api/log-error', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        level: 'info',
+        message: `🔊 AUDIO DEBUG REPORT - ${context}`,
+        device: `${deviceInfo.isIPad ? 'iPad' : deviceInfo.isIPhone ? 'iPhone' : 'Unknown'} iOS ${deviceInfo.version}`,
+        url: window.location.href,
+        sessionId: this.sessionId,
+        timestamp: new Date().toISOString(),
+        data: comprehensiveReport,
+        tags: ['audio-debug', 'comprehensive-report']
+      })
+    }).catch(error => {
+      console.error('Failed to send audio debug report:', error)
+    })
+
+    this.isActive = false
+    return comprehensiveReport
+  }
+
+  private generateSummary() {
+    const errorLogs = this.sessionLogs.filter(log => log.type.includes('ERROR') || log.type.includes('FAILED'))
+    const successLogs = this.sessionLogs.filter(log => log.type.includes('SUCCESS') || log.type.includes('COMPLETED'))
+    const permissionLogs = this.sessionLogs.filter(log => log.type.includes('PERMISSION'))
+    
+    return {
+      totalSteps: this.sessionLogs.length,
+      errorCount: errorLogs.length,
+      successCount: successLogs.length,
+      permissionSteps: permissionLogs.length,
+      firstError: errorLogs[0] || null,
+      lastSuccess: successLogs[successLogs.length - 1] || null,
+      keyEvents: this.sessionLogs.filter(log => 
+        log.type.includes('PERMISSION') || 
+        log.type.includes('PLAY') || 
+        log.type.includes('ERROR') ||
+        log.type.includes('SUCCESS')
+      )
+    }
+  }
+}
+
+export const audioDebugSession = new AudioDebugSession()
+
 // Export logs for debugging (can be called from browser console)
 declare global {
   interface Window {

@@ -8,7 +8,21 @@ const GlobalAudioPermission: React.FC = () => {
   const { state, requestAudioPermission, hidePrompt } = useAudioPermissionHook()
 
   const handleEnableAudio = async () => {
-    await requestAudioPermission()
+    const { audioDebugSession } = await import('../../utils/remoteConsole')
+    audioDebugSession.addLog('GLOBAL_PERMISSION_BUTTON_CLICKED', {
+      timestamp: Date.now()
+    })
+    try {
+      const result = await requestAudioPermission()
+      audioDebugSession.addLog('GLOBAL_PERMISSION_REQUEST_COMPLETED', {
+        result
+      })
+    } catch (error) {
+      audioDebugSession.addLog('GLOBAL_PERMISSION_REQUEST_FAILED', {
+        error: error instanceof Error ? error.message : error?.toString(),
+        errorType: error instanceof Error ? error.constructor?.name : typeof error
+      })
+    }
   }
 
   const handleDismiss = () => {

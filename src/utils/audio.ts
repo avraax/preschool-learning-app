@@ -25,27 +25,46 @@ export class AudioManager {
 
   // Check if audio permission is available
   private async checkAudioPermission(): Promise<boolean> {
+    const { audioDebugSession } = await import('../utils/remoteConsole')
+    audioDebugSession.addLog('AUDIO_MANAGER_PERMISSION_CHECK', {
+      hasGlobalContext: !!globalAudioPermissionContext
+    })
+    
     if (!globalAudioPermissionContext) {
-      // Fallback to old behavior if context not available
-      console.warn('Audio permission context not available, using fallback')
+      audioDebugSession.addLog('AUDIO_MANAGER_NO_CONTEXT_FALLBACK', {
+        result: true
+      })
       return true
     }
 
     try {
-      // Signal that we need audio permission
+      audioDebugSession.addLog('AUDIO_MANAGER_SET_NEEDS_PERMISSION', {})
       globalAudioPermissionContext.setNeedsPermission(true)
       
-      // Check current permission status
+      audioDebugSession.addLog('AUDIO_MANAGER_CHECK_CURRENT_STATUS', {})
       const hasPermission = await globalAudioPermissionContext.checkAudioPermission()
+      audioDebugSession.addLog('AUDIO_MANAGER_PERMISSION_STATUS', {
+        hasPermission
+      })
       
       if (!hasPermission) {
-        // Request permission through the global system
-        return await globalAudioPermissionContext.requestAudioPermission()
+        audioDebugSession.addLog('AUDIO_MANAGER_REQUEST_PERMISSION', {})
+        const requestResult = await globalAudioPermissionContext.requestAudioPermission()
+        audioDebugSession.addLog('AUDIO_MANAGER_PERMISSION_REQUEST_RESULT', {
+          requestResult
+        })
+        return requestResult
       }
       
+      audioDebugSession.addLog('AUDIO_MANAGER_PERMISSION_AVAILABLE', {
+        result: hasPermission
+      })
       return hasPermission
     } catch (error) {
-      console.warn('Error checking audio permission:', error)
+      audioDebugSession.addLog('AUDIO_MANAGER_PERMISSION_ERROR', {
+        error: error instanceof Error ? error.message : error?.toString(),
+        errorType: error instanceof Error ? error.constructor?.name : typeof error
+      })
       return false
     }
   }
@@ -58,19 +77,49 @@ export class AudioManager {
   }
 
   async speak(text: string, voiceType: 'primary' | 'backup' | 'male' = 'primary', useSSML: boolean = true, customSpeed?: number): Promise<void> {
+    const { audioDebugSession } = await import('../utils/remoteConsole')
+    audioDebugSession.addLog('AUDIO_MANAGER_SPEAK_CALLED', {
+      text: text.substring(0, 100) + (text.length > 100 ? '...' : ''),
+      textLength: text.length,
+      voiceType,
+      useSSML,
+      customSpeed
+    })
+    
     // Update user interaction timestamp
     this.updateUserInteraction()
+    audioDebugSession.addLog('AUDIO_MANAGER_USER_INTERACTION_UPDATED', {})
     
     // Check audio permission before speaking
     const hasPermission = await this.checkAudioPermission()
+    audioDebugSession.addLog('AUDIO_MANAGER_FINAL_PERMISSION_CHECK', {
+      hasPermission
+    })
+    
     if (!hasPermission) {
-      console.log('🔇 Audio permission not available, skipping speech')
+      audioDebugSession.addLog('AUDIO_MANAGER_PERMISSION_DENIED_SKIP', {
+        result: 'skipped'
+      })
       return
     }
     
-    // Always use Google TTS with config from shared-tts-config.js
+    audioDebugSession.addLog('AUDIO_MANAGER_CALLING_GOOGLE_TTS', {
+      customAudioConfig: customSpeed ? { speakingRate: customSpeed } : undefined
+    })
+    
     const customAudioConfig = customSpeed ? { speakingRate: customSpeed } : undefined
-    await this.googleTTS.synthesizeAndPlay(text, voiceType, useSSML, customAudioConfig)
+    try {
+      await this.googleTTS.synthesizeAndPlay(text, voiceType, useSSML, customAudioConfig)
+      audioDebugSession.addLog('AUDIO_MANAGER_TTS_SUCCESS', {
+        result: 'completed'
+      })
+    } catch (error) {
+      audioDebugSession.addLog('AUDIO_MANAGER_TTS_FAILED', {
+        error: error instanceof Error ? error.message : error?.toString(),
+        errorType: error instanceof Error ? error.constructor?.name : typeof error
+      })
+      throw error
+    }
   }
 
   async speakLetter(letter: string) {

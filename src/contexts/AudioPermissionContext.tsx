@@ -119,14 +119,29 @@ export const AudioPermissionProvider: React.FC<AudioPermissionProviderProps> = (
 
   // Test if audio can be played without user interaction
   const testAudioPermission = async (): Promise<boolean> => {
+    const { audioDebugSession } = await import('../utils/remoteConsole')
+    audioDebugSession.addLog('PERMISSION_TEST_START', {
+      isIOS: isIOS(),
+      timestamp: Date.now()
+    })
+    
     if (!isIOS()) {
-      // Non-iOS devices generally don't have strict audio restrictions
+      audioDebugSession.addLog('PERMISSION_NON_IOS_SUCCESS', {
+        device: 'non-iOS',
+        result: true
+      })
       return true
     }
 
+    audioDebugSession.addLog('PERMISSION_IOS_CAPABILITY_TEST', {
+      device: 'iOS',
+      testType: 'silent_audio'
+    })
+    
     try {
       // Clean up any existing test audio
       if (audioTestRef.current) {
+        audioDebugSession.addLog('PERMISSION_CLEANUP_PREVIOUS', {})
         audioTestRef.current.pause()
         audioTestRef.current.src = ''
       }
@@ -140,14 +155,25 @@ export const AudioPermissionProvider: React.FC<AudioPermissionProviderProps> = (
       audio.volume = 0
       audio.muted = true
 
+      audioDebugSession.addLog('PERMISSION_TEST_AUDIO_CREATED', {
+        audioSrcLength: audio.src.length,
+        volume: audio.volume,
+        muted: audio.muted
+      })
+
       return new Promise((resolve) => {
         const timeout = setTimeout(() => {
+          audioDebugSession.addLog('PERMISSION_TEST_TIMEOUT', {
+            timeoutDuration: 1000,
+            result: false
+          })
           audio.removeEventListener('canplay', onCanPlay)
           audio.removeEventListener('error', onError)
           resolve(false)
         }, 1000)
 
         const onCanPlay = () => {
+          audioDebugSession.addLog('PERMISSION_TEST_CAN_PLAY', {})
           clearTimeout(timeout)
           audio.removeEventListener('canplay', onCanPlay)
           audio.removeEventListener('error', onError)
@@ -157,16 +183,35 @@ export const AudioPermissionProvider: React.FC<AudioPermissionProviderProps> = (
           if (playPromise !== undefined) {
             playPromise
               .then(() => {
+                audioDebugSession.addLog('PERMISSION_TEST_PLAY_SUCCESS', {
+                  result: true
+                })
                 audio.pause()
                 resolve(true)
               })
-              .catch(() => resolve(false))
+              .catch((error) => {
+                audioDebugSession.addLog('PERMISSION_TEST_PLAY_FAILED', {
+                  error: error.message || error.toString(),
+                  errorType: error.constructor?.name,
+                  result: false
+                })
+                resolve(false)
+              })
           } else {
+            audioDebugSession.addLog('PERMISSION_TEST_NO_PROMISE', {
+              playPromise: 'undefined',
+              result: false
+            })
             resolve(false)
           }
         }
 
-        const onError = () => {
+        const onError = (error: any) => {
+          audioDebugSession.addLog('PERMISSION_TEST_AUDIO_ERROR', {
+            error: error.message || error.toString(),
+            errorType: error.constructor?.name,
+            result: false
+          })
           clearTimeout(timeout)
           audio.removeEventListener('canplay', onCanPlay)
           audio.removeEventListener('error', onError)
@@ -178,7 +223,11 @@ export const AudioPermissionProvider: React.FC<AudioPermissionProviderProps> = (
         audio.load()
       })
     } catch (error) {
-      console.log('Audio permission test error:', error)
+      audioDebugSession.addLog('PERMISSION_TEST_EXCEPTION', {
+        error: error instanceof Error ? error.message : error?.toString(),
+        errorType: error instanceof Error ? error.constructor?.name : typeof error,
+        result: false
+      })
       return false
     }
   }
