@@ -15,6 +15,7 @@ import {
 } from '@mui/material'
 import { Volume2, Award, ArrowLeft } from 'lucide-react'
 import { audioManager } from '../../utils/audio'
+import { isIOS } from '../../utils/deviceDetection'
 import { DANISH_PHRASES } from '../../config/danish-phrases'
 import LottieCharacter, { useCharacterState } from '../common/LottieCharacter'
 import CelebrationEffect, { useCelebration } from '../common/CelebrationEffect'
@@ -93,15 +94,30 @@ const MathGame: React.FC = () => {
     }
   }
 
-  const generateCountingQuestion = () => {
+  const generateCountingQuestion = async () => {
+    // Start debug session for question generation
+    const { audioDebugSession } = await import('../../utils/remoteConsole')
+    const questionId = `question-gen-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`
+    audioDebugSession.startSession(`Generate Counting Question - ${questionId}`)
+    
+    audioDebugSession.addLog('QUESTION_GEN_START', {
+      questionId,
+      gameMode: 'counting',
+      maxNumber: MAX_NUMBER,
+      timestamp: new Date().toISOString(),
+      isIOS: isIOS()
+    })
+    
     // Clear any existing timeout first
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current)
       timeoutRef.current = null
+      audioDebugSession.addLog('QUESTION_GEN_TIMEOUT_CLEARED', { questionId })
     }
     
     // Stop any currently playing audio
     audioManager.stopAll()
+    audioDebugSession.addLog('QUESTION_GEN_AUDIO_STOPPED', { questionId })
     
     // Generate a random number from 1 to MAX_NUMBER
     const number = Math.floor(Math.random() * MAX_NUMBER) + 1
@@ -117,14 +133,50 @@ const MathGame: React.FC = () => {
     setShowOptions(options.sort(() => Math.random() - 0.5))
     setCurrentProblem({ num1: number, num2: 0, operation: '+', answer: number })
     
-    // Schedule audio with proper cleanup
-    timeoutRef.current = setTimeout(() => {
-      audioManager.speakQuizPromptWithRepeat(DANISH_PHRASES.gamePrompts.findNumber(number), number.toString())
-        .catch(error => {
-          console.error('Error in scheduled audio:', error)
-        })
-      timeoutRef.current = null
-    }, 500)
+    audioDebugSession.addLog('QUESTION_GEN_SETUP_COMPLETE', {
+      questionId,
+      number,
+      options: options.length
+    })
+    
+    // Try to play audio immediately for iOS (within user interaction window)
+    audioDebugSession.addLog('QUESTION_GEN_ATTEMPTING_IMMEDIATE_AUDIO', {
+      questionId,
+      text: DANISH_PHRASES.gamePrompts.findNumber(number),
+      targetNumber: number.toString(),
+      isIOS: isIOS()
+    })
+    
+    const playAudioPromise = audioManager.speakQuizPromptWithRepeat(
+      DANISH_PHRASES.gamePrompts.findNumber(number), 
+      number.toString()
+    ).then(() => {
+      audioDebugSession.addLog('QUESTION_GEN_IMMEDIATE_AUDIO_SUCCESS', { questionId })
+      audioDebugSession.endSession('Question generated with immediate audio success')
+    }).catch(error => {
+      audioDebugSession.addLog('QUESTION_GEN_IMMEDIATE_AUDIO_FAILED', {
+        questionId,
+        error: error instanceof Error ? error.message : error?.toString(),
+        fallbackNeeded: true
+      })
+      audioDebugSession.endSession('Question generated, audio failed - Gentag needed')
+      console.log('Audio failed, user can click Gentag button:', error)
+    })
+    
+    // For non-iOS: Also schedule a backup delayed audio  
+    if (!isIOS()) {
+      audioDebugSession.addLog('QUESTION_GEN_SCHEDULING_BACKUP_AUDIO', {
+        questionId,
+        delay: 500
+      })
+      timeoutRef.current = setTimeout(() => {
+        audioManager.speakQuizPromptWithRepeat(DANISH_PHRASES.gamePrompts.findNumber(number), number.toString())
+          .catch(error => {
+            console.error('Error in scheduled audio:', error)
+          })
+        timeoutRef.current = null
+      }, 500)
+    }
   }
 
   const generateArithmeticQuestion = () => {
@@ -157,33 +209,66 @@ const MathGame: React.FC = () => {
     
     setShowOptions(options.sort(() => Math.random() - 0.5))
     
-    // Schedule audio with proper cleanup
-    timeoutRef.current = setTimeout(async () => {
-      try {
-        const problemText = `${problem.num1} ${problem.operation} ${problem.num2} = ?`
-        await audioManager.speakMathProblem(problemText)
-      } catch (error) {
-        console.error('Error in scheduled math problem audio:', error)
-      }
-      timeoutRef.current = null
-    }, 500)
+    // Try to play audio immediately for iOS (within user interaction window)
+    // Fall back to manual trigger (Gentag button) if permission expires
+    const problemText = `${problem.num1} ${problem.operation} ${problem.num2} = ?`
+    audioManager.speakMathProblem(problemText).catch(error => {
+      console.log('Math audio failed, user can click Gentag button:', error)
+    })
+    
+    // For non-iOS: Also schedule a backup delayed audio
+    if (!isIOS()) {
+      timeoutRef.current = setTimeout(async () => {
+        try {
+          await audioManager.speakMathProblem(problemText)
+        } catch (error) {
+          console.error('Error in scheduled math problem audio:', error)
+        }
+        timeoutRef.current = null
+      }, 500)
+    }
   }
 
   const handleAnswerClick = async (selectedAnswer: number) => {
     if (!currentProblem) return
     
+    // Start comprehensive debug session for this user interaction
+    const { audioDebugSession } = await import('../../utils/remoteConsole')
+    const clickSessionId = `answer-click-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`
+    audioDebugSession.startSession(`Math Game Answer Click - ${clickSessionId}`)
+    
+    audioDebugSession.addLog('ANSWER_CLICK_START', {
+      sessionId: clickSessionId,
+      selectedAnswer,
+      correctAnswer: currentProblem.answer,
+      isCorrect: selectedAnswer === currentProblem.answer,
+      gameMode,
+      score,
+      timestamp: new Date().toISOString(),
+      userAgent: navigator.userAgent,
+      isIOS: typeof window !== 'undefined' && /iPad|iPhone|iPod/.test(navigator.userAgent)
+    })
+    
     // iOS CRITICAL: Update user interaction immediately on click
-    // This ensures fresh audio permission for subsequent audio calls
     audioManager.updateUserInteraction()
+    audioDebugSession.addLog('ANSWER_CLICK_INTERACTION_UPDATED', {
+      sessionId: clickSessionId
+    })
     
     // Clear any pending audio timeouts
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current)
       timeoutRef.current = null
+      audioDebugSession.addLog('ANSWER_CLICK_TIMEOUT_CLEARED', {
+        sessionId: clickSessionId
+      })
     }
     
     // Stop any currently playing audio
     audioManager.stopAll()
+    audioDebugSession.addLog('ANSWER_CLICK_AUDIO_STOPPED', {
+      sessionId: clickSessionId
+    })
     
     if (selectedAnswer === currentProblem.answer) {
       // Correct answer - celebrate!
@@ -191,14 +276,45 @@ const MathGame: React.FC = () => {
       mathTeacher.celebrate()
       celebrate(score > 5 ? 'high' : 'medium')
       
+      audioDebugSession.addLog('ANSWER_CLICK_CORRECT', {
+        sessionId: clickSessionId,
+        newScore: score + 1
+      })
+      
       try {
+        audioDebugSession.addLog('ANSWER_CLICK_PLAYING_SUCCESS_AUDIO', {
+          sessionId: clickSessionId
+        })
         await audioManager.announceGameResult(true)
+        
+        audioDebugSession.addLog('ANSWER_CLICK_SUCCESS_AUDIO_COMPLETE', {
+          sessionId: clickSessionId
+        })
+        
+        // Shorter delay for iOS to preserve user interaction window
+        const delayTime = isIOS() ? 1000 : 3000
+        audioDebugSession.addLog('ANSWER_CLICK_SCHEDULING_NEXT_QUESTION', {
+          sessionId: clickSessionId,
+          delayTime,
+          isIOS: isIOS()
+        })
+        
         setTimeout(() => {
+          audioDebugSession.addLog('ANSWER_CLICK_GENERATING_NEXT_QUESTION', {
+            sessionId: clickSessionId,
+            actualDelay: Date.now() - parseInt(clickSessionId.split('-')[2])
+          })
           stopCelebration()
           mathTeacher.point()
           generateNewQuestion()
-        }, 3000)
+          audioDebugSession.endSession('Answer click completed, new question generated')
+        }, delayTime)
       } catch (error) {
+        audioDebugSession.addLog('ANSWER_CLICK_SUCCESS_AUDIO_ERROR', {
+          sessionId: clickSessionId,
+          error: error instanceof Error ? error.message : error?.toString()
+        })
+        audioDebugSession.endSession('Answer click failed during success audio')
         console.error('Error playing success feedback:', error)
       }
     } else {

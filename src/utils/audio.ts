@@ -308,59 +308,127 @@ export class AudioManager {
   }
 
   async speakQuizPromptWithRepeat(text: string, repeatWord: string, voiceType: 'primary' | 'backup' | 'male' = 'primary'): Promise<void> {
+    const { audioDebugSession } = await import('./remoteConsole')
+    const sessionId = `quiz-audio-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+    
+    // Start comprehensive logging session
+    audioDebugSession.startSession(`Quiz Audio Debug - ${sessionId}`)
+    
+    const debugContext = {
+      sessionId,
+      text,
+      repeatWord,
+      voiceType,
+      isIOS: isIOS(),
+      userAgent: navigator.userAgent,
+      currentUrl: window.location.href,
+      timestamp: new Date().toISOString(),
+      timeSincePageLoad: Date.now() - (window.performance?.timing?.navigationStart || 0)
+    }
+    
+    audioDebugSession.addLog('QUIZ_AUDIO_START', debugContext)
+    
     try {
-      logIOSIssue('Quiz Audio', `Speaking quiz prompt: "${text}" with target word: "${repeatWord}"`)
+      // Check initial permission state
+      const initialPermission = await this.checkAudioPermission()
+      audioDebugSession.addLog('QUIZ_AUDIO_INITIAL_PERMISSION', {
+        hasPermission: initialPermission,
+        audioContextState: this.audioContext?.state
+      })
       
       // iOS-specific: Ensure all audio is properly stopped before starting
       if (isIOS()) {
         this.stopAll()
-        await new Promise(resolve => setTimeout(resolve, 200)) // Longer pause for iOS
+        await new Promise(resolve => setTimeout(resolve, 200))
+        audioDebugSession.addLog('QUIZ_AUDIO_IOS_PREP', {
+          stoppedAudio: true,
+          pauseDuration: 200
+        })
       }
       
       // Split text to separate the base prompt from the target word
-      // e.g. "Find bogstavet H" -> "Find bogstavet" + pause + "H"
       if (repeatWord && text.includes(repeatWord)) {
         const lastIndex = text.lastIndexOf(repeatWord)
         if (lastIndex > 0) {
           const basePrompt = text.substring(0, lastIndex).trim()
           
+          audioDebugSession.addLog('QUIZ_AUDIO_SPLIT_APPROACH', {
+            basePrompt,
+            targetWord: repeatWord,
+            splitIndex: lastIndex
+          })
+          
           // Speak the base prompt
-          logIOSIssue('Quiz Audio', `Speaking base prompt: "${basePrompt}"`)
           await this.speak(basePrompt, voiceType, false)
+          audioDebugSession.addLog('QUIZ_AUDIO_BASE_COMPLETE', {
+            basePrompt,
+            success: true
+          })
           
           // Add pause before the target word
           const pauseDuration = isIOS() ? 600 : 400
           await new Promise(resolve => setTimeout(resolve, pauseDuration))
           
-          // iOS CRITICAL: Update user interaction before second audio call
-          // This prevents iOS permission timeout between audio segments
+          // Update user interaction before second audio call
           this.updateUserInteraction()
-          logIOSIssue('Quiz Audio', 'Updated user interaction for second audio segment')
+          const midPermission = await this.checkAudioPermission()
+          audioDebugSession.addLog('QUIZ_AUDIO_MID_PERMISSION', {
+            hasPermission: midPermission,
+            pauseDuration,
+            interactionUpdated: true
+          })
           
-          // Speak the target word once
-          logIOSIssue('Quiz Audio', `Speaking target word: "${repeatWord}"`)
+          // Speak the target word
           await this.speak(repeatWord, voiceType, false)
+          audioDebugSession.addLog('QUIZ_AUDIO_TARGET_COMPLETE', {
+            targetWord: repeatWord,
+            success: true
+          })
         } else {
-          // If we can't split it, just speak the full text
+          audioDebugSession.addLog('QUIZ_AUDIO_NO_SPLIT', {
+            reason: 'repeat_word_not_found_properly'
+          })
           await this.speak(text, voiceType, false)
         }
       } else {
-        // If repeatWord is not in text, just speak the full text
+        audioDebugSession.addLog('QUIZ_AUDIO_FULL_TEXT', {
+          reason: 'no_repeat_word_or_not_in_text'
+        })
         await this.speak(text, voiceType, false)
       }
       
-      logIOSIssue('Quiz Audio', 'Successfully completed quiz prompt')
+      audioDebugSession.addLog('QUIZ_AUDIO_SUCCESS', {
+        totalDuration: Date.now() - parseInt(sessionId.split('-')[2])
+      })
+      audioDebugSession.endSession('Quiz audio completed successfully')
+      
     } catch (error) {
+      // Comprehensive error logging
+      const errorDetails = {
+        error: error instanceof Error ? error.message : error?.toString(),
+        errorType: error instanceof Error ? error.constructor?.name : typeof error,
+        stack: error instanceof Error ? error.stack : undefined,
+        timeSinceStart: Date.now() - parseInt(sessionId.split('-')[2]),
+        audioContextState: this.audioContext?.state,
+        currentPermission: await this.checkAudioPermission().catch(() => false)
+      }
+      
+      audioDebugSession.addLog('QUIZ_AUDIO_ERROR', errorDetails)
+      
       // Check if this is a navigation interruption (expected)
       const isNavigationInterruption = error instanceof Error && 
         (error.message.includes('interrupted by navigation') || 
          error.message.includes('interrupted by user'))
       
       if (isNavigationInterruption) {
-        console.log('🎵 Quiz audio interrupted by navigation (expected)')
-        return // Don't log or retry for navigation interruptions
+        audioDebugSession.addLog('QUIZ_AUDIO_NAVIGATION_INTERRUPT', {
+          expected: true
+        })
+        audioDebugSession.endSession('Quiz audio interrupted by navigation (expected)')
+        return
       }
       
+      audioDebugSession.endSession('Quiz audio failed with error')
       logAudioIssue('speakQuizPromptWithRepeat', error, { text, repeatWord, voiceType })
       
       // iOS-specific fallback: try a simpler approach

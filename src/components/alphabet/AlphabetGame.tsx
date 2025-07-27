@@ -15,6 +15,7 @@ import {
 } from '@mui/material'
 import { Volume2, Award, ArrowLeft } from 'lucide-react'
 import { audioManager } from '../../utils/audio'
+import { isIOS } from '../../utils/deviceDetection'
 import { DANISH_PHRASES } from '../../config/danish-phrases'
 import LottieCharacter, { useCharacterState } from '../common/LottieCharacter'
 import CelebrationEffect, { useCelebration } from '../common/CelebrationEffect'
@@ -91,7 +92,9 @@ const AlphabetGame: React.FC = () => {
     // Stop any currently playing audio before starting new one
     audioManager.stopAll()
     
-    timeoutRef.current = setTimeout(async () => {
+    // Try to play audio immediately for iOS (within user interaction window)
+    // Fall back to manual trigger (Gentag button) if permission expires
+    const playAudioAsync = async () => {
       setIsPlaying(true)
       try {
         // Start audio debug session on first audio attempt
@@ -105,7 +108,7 @@ const AlphabetGame: React.FC = () => {
         // End session after successful audio (or in finally block if it fails)
         audioDebugSession.endSession('Audio completed successfully')
       } catch (error) {
-        console.error('❌ Audio error in quiz:', error)
+        console.log('Audio failed, user can click Gentag button:', error)
         
         // End session with error context
         const { audioDebugSession } = await import('../../utils/remoteConsole')
@@ -113,7 +116,14 @@ const AlphabetGame: React.FC = () => {
       } finally {
         setIsPlaying(false)
       }
-    }, 500)
+    }
+    
+    // Try immediate audio for iOS, delayed for others
+    if (isIOS()) {
+      playAudioAsync()
+    } else {
+      timeoutRef.current = setTimeout(playAudioAsync, 500)
+    }
   }
 
   const handleLetterClick = async (selectedLetter: string) => {
@@ -135,11 +145,15 @@ const AlphabetGame: React.FC = () => {
         celebrate(score > 5 ? 'high' : 'medium')
         
         await audioManager.announceGameResult(true)
+        
+        // Shorter delay for iOS to preserve user interaction window
+        const delayTime = isIOS() ? 1000 : 3000
+        
         setTimeout(() => {
           stopCelebration()
           teacherCharacter.point()
           generateNewQuestion()
-        }, 3000)
+        }, delayTime)
       } else {
         // Wrong answer - encourage
         teacherCharacter.encourage()
