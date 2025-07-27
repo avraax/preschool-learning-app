@@ -333,7 +333,7 @@ export class AudioManager {
       const initialPermission = await this.checkAudioPermission()
       audioDebugSession.addLog('QUIZ_AUDIO_INITIAL_PERMISSION', {
         hasPermission: initialPermission,
-        audioContextState: this.audioContext?.state
+        audioContextSupported: !!(window.AudioContext || (window as any).webkitAudioContext)
       })
       
       // iOS-specific: Ensure all audio is properly stopped before starting
@@ -409,7 +409,7 @@ export class AudioManager {
         errorType: error instanceof Error ? error.constructor?.name : typeof error,
         stack: error instanceof Error ? error.stack : undefined,
         timeSinceStart: Date.now() - parseInt(sessionId.split('-')[2]),
-        audioContextState: this.audioContext?.state,
+        audioContextSupported: !!(window.AudioContext || (window as any).webkitAudioContext),
         currentPermission: await this.checkAudioPermission().catch(() => false)
       }
       

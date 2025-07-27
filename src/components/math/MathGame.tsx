@@ -147,7 +147,7 @@ const MathGame: React.FC = () => {
       isIOS: isIOS()
     })
     
-    const playAudioPromise = audioManager.speakQuizPromptWithRepeat(
+    audioManager.speakQuizPromptWithRepeat(
       DANISH_PHRASES.gamePrompts.findNumber(number), 
       number.toString()
     ).then(() => {
