@@ -97,22 +97,9 @@ const AlphabetGame: React.FC = () => {
     const playAudioAsync = async () => {
       setIsPlaying(true)
       try {
-        // Start audio debug session on first audio attempt
-        const { audioDebugSession } = await import('../../utils/remoteConsole')
-        if (!audioDebugSession.isSessionActive()) {
-          audioDebugSession.startSession('iPad Audio Debug - Alphabet Game')
-        }
-        
         await audioManager.speakQuizPromptWithRepeat(DANISH_PHRASES.gamePrompts.findLetter(letter), letter)
-        
-        // End session after successful audio (or in finally block if it fails)
-        audioDebugSession.endSession('Audio completed successfully')
       } catch (error) {
         console.log('Audio failed, user can click Gentag button:', error)
-        
-        // End session with error context
-        const { audioDebugSession } = await import('../../utils/remoteConsole')
-        audioDebugSession.endSession('Audio failed with error')
       } finally {
         setIsPlaying(false)
       }

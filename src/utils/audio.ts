@@ -1,7 +1,6 @@
 import { Howl } from 'howler'
 import { googleTTS, GoogleTTSService } from '../services/googleTTS'
 import { isIOS } from './deviceDetection'
-import { logAudioIssue, logIOSIssue } from './remoteConsole'
 import { DANISH_PHRASES, getRandomSuccessPhrase, getRandomEncouragementPhrase, getDanishNumberText } from '../config/danish-phrases'
 
 // Global reference to audio permission context
@@ -25,46 +24,22 @@ export class AudioManager {
 
   // Check if audio permission is available
   private async checkAudioPermission(): Promise<boolean> {
-    const { audioDebugSession } = await import('../utils/remoteConsole')
-    audioDebugSession.addLog('AUDIO_MANAGER_PERMISSION_CHECK', {
-      hasGlobalContext: !!globalAudioPermissionContext
-    })
-    
     if (!globalAudioPermissionContext) {
-      audioDebugSession.addLog('AUDIO_MANAGER_NO_CONTEXT_FALLBACK', {
-        result: true
-      })
       return true
     }
 
     try {
-      audioDebugSession.addLog('AUDIO_MANAGER_SET_NEEDS_PERMISSION', {})
       globalAudioPermissionContext.setNeedsPermission(true)
-      
-      audioDebugSession.addLog('AUDIO_MANAGER_CHECK_CURRENT_STATUS', {})
       const hasPermission = await globalAudioPermissionContext.checkAudioPermission()
-      audioDebugSession.addLog('AUDIO_MANAGER_PERMISSION_STATUS', {
-        hasPermission
-      })
       
       if (!hasPermission) {
-        audioDebugSession.addLog('AUDIO_MANAGER_REQUEST_PERMISSION', {})
         const requestResult = await globalAudioPermissionContext.requestAudioPermission()
-        audioDebugSession.addLog('AUDIO_MANAGER_PERMISSION_REQUEST_RESULT', {
-          requestResult
-        })
         return requestResult
       }
       
-      audioDebugSession.addLog('AUDIO_MANAGER_PERMISSION_AVAILABLE', {
-        result: hasPermission
-      })
       return hasPermission
     } catch (error) {
-      audioDebugSession.addLog('AUDIO_MANAGER_PERMISSION_ERROR', {
-        error: error instanceof Error ? error.message : error?.toString(),
-        errorType: error instanceof Error ? error.constructor?.name : typeof error
-      })
+      console.log('Audio permission check failed:', error)
       return false
     }
   }
@@ -77,49 +52,18 @@ export class AudioManager {
   }
 
   async speak(text: string, voiceType: 'primary' | 'backup' | 'male' = 'primary', useSSML: boolean = true, customSpeed?: number): Promise<void> {
-    const { audioDebugSession } = await import('../utils/remoteConsole')
-    audioDebugSession.addLog('AUDIO_MANAGER_SPEAK_CALLED', {
-      text: text.substring(0, 100) + (text.length > 100 ? '...' : ''),
-      textLength: text.length,
-      voiceType,
-      useSSML,
-      customSpeed
-    })
-    
     // Update user interaction timestamp
     this.updateUserInteraction()
-    audioDebugSession.addLog('AUDIO_MANAGER_USER_INTERACTION_UPDATED', {})
     
     // Check audio permission before speaking
     const hasPermission = await this.checkAudioPermission()
-    audioDebugSession.addLog('AUDIO_MANAGER_FINAL_PERMISSION_CHECK', {
-      hasPermission
-    })
-    
     if (!hasPermission) {
-      audioDebugSession.addLog('AUDIO_MANAGER_PERMISSION_DENIED_SKIP', {
-        result: 'skipped'
-      })
+      console.log('Audio permission not available, skipping speech')
       return
     }
     
-    audioDebugSession.addLog('AUDIO_MANAGER_CALLING_GOOGLE_TTS', {
-      customAudioConfig: customSpeed ? { speakingRate: customSpeed } : undefined
-    })
-    
     const customAudioConfig = customSpeed ? { speakingRate: customSpeed } : undefined
-    try {
-      await this.googleTTS.synthesizeAndPlay(text, voiceType, useSSML, customAudioConfig)
-      audioDebugSession.addLog('AUDIO_MANAGER_TTS_SUCCESS', {
-        result: 'completed'
-      })
-    } catch (error) {
-      audioDebugSession.addLog('AUDIO_MANAGER_TTS_FAILED', {
-        error: error instanceof Error ? error.message : error?.toString(),
-        errorType: error instanceof Error ? error.constructor?.name : typeof error
-      })
-      throw error
-    }
+    await this.googleTTS.synthesizeAndPlay(text, voiceType, useSSML, customAudioConfig)
   }
 
   async speakLetter(letter: string) {
@@ -150,18 +94,7 @@ export class AudioManager {
           throw error // Don't retry for navigation interruptions
         }
         
-        // Enhanced error information for iOS debugging
-        const errorInfo = {
-          number, 
-          numberText,
-          isIOS: isIOS(),
-          attempt: attempt + 1,
-          errorMessage: error instanceof Error ? error.message : 'Unknown error',
-          errorType: typeof error,
-          audioContextState: (window as any).AudioContext ? 'supported' : 'not supported'
-        }
-        
-        logAudioIssue(`Number speech attempt ${attempt + 1}`, error, errorInfo)
+        console.log(`Number speech attempt ${attempt + 1} failed:`, error)
         
         // Wait a bit before retrying (but not on last attempt)
         // Use longer delay for iOS to allow audio context to recover
@@ -174,11 +107,7 @@ export class AudioManager {
     
     // If all retries failed, throw the last error
     if (lastError) {
-      logAudioIssue('All number speech attempts failed', lastError, { 
-        number, 
-        numberText,
-        maxRetries 
-      })
+      console.error('All number speech attempts failed:', lastError)
       throw lastError
     }
   }
@@ -308,128 +237,54 @@ export class AudioManager {
   }
 
   async speakQuizPromptWithRepeat(text: string, repeatWord: string, voiceType: 'primary' | 'backup' | 'male' = 'primary'): Promise<void> {
-    const { audioDebugSession } = await import('./remoteConsole')
-    const sessionId = `quiz-audio-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-    
-    // Start comprehensive logging session
-    audioDebugSession.startSession(`Quiz Audio Debug - ${sessionId}`)
-    
-    const debugContext = {
-      sessionId,
-      text,
-      repeatWord,
-      voiceType,
-      isIOS: isIOS(),
-      userAgent: navigator.userAgent,
-      currentUrl: window.location.href,
-      timestamp: new Date().toISOString(),
-      timeSincePageLoad: Date.now() - (window.performance?.timing?.navigationStart || 0)
-    }
-    
-    audioDebugSession.addLog('QUIZ_AUDIO_START', debugContext)
-    
     try {
-      // Check initial permission state
-      const initialPermission = await this.checkAudioPermission()
-      audioDebugSession.addLog('QUIZ_AUDIO_INITIAL_PERMISSION', {
-        hasPermission: initialPermission,
-        audioContextSupported: !!(window.AudioContext || (window as any).webkitAudioContext)
-      })
-      
       // iOS-specific: Ensure all audio is properly stopped before starting
       if (isIOS()) {
         this.stopAll()
         await new Promise(resolve => setTimeout(resolve, 200))
-        audioDebugSession.addLog('QUIZ_AUDIO_IOS_PREP', {
-          stoppedAudio: true,
-          pauseDuration: 200
-        })
       }
       
       // Split text to separate the base prompt from the target word
+      // e.g. "Find bogstavet H" -> "Find bogstavet" + pause + "H"
       if (repeatWord && text.includes(repeatWord)) {
         const lastIndex = text.lastIndexOf(repeatWord)
         if (lastIndex > 0) {
           const basePrompt = text.substring(0, lastIndex).trim()
           
-          audioDebugSession.addLog('QUIZ_AUDIO_SPLIT_APPROACH', {
-            basePrompt,
-            targetWord: repeatWord,
-            splitIndex: lastIndex
-          })
-          
           // Speak the base prompt
           await this.speak(basePrompt, voiceType, false)
-          audioDebugSession.addLog('QUIZ_AUDIO_BASE_COMPLETE', {
-            basePrompt,
-            success: true
-          })
           
           // Add pause before the target word
           const pauseDuration = isIOS() ? 600 : 400
           await new Promise(resolve => setTimeout(resolve, pauseDuration))
           
-          // Update user interaction before second audio call
+          // iOS CRITICAL: Update user interaction before second audio call
+          // This prevents iOS permission timeout between audio segments
           this.updateUserInteraction()
-          const midPermission = await this.checkAudioPermission()
-          audioDebugSession.addLog('QUIZ_AUDIO_MID_PERMISSION', {
-            hasPermission: midPermission,
-            pauseDuration,
-            interactionUpdated: true
-          })
           
-          // Speak the target word
+          // Speak the target word once
           await this.speak(repeatWord, voiceType, false)
-          audioDebugSession.addLog('QUIZ_AUDIO_TARGET_COMPLETE', {
-            targetWord: repeatWord,
-            success: true
-          })
         } else {
-          audioDebugSession.addLog('QUIZ_AUDIO_NO_SPLIT', {
-            reason: 'repeat_word_not_found_properly'
-          })
+          // If we can't split it, just speak the full text
           await this.speak(text, voiceType, false)
         }
       } else {
-        audioDebugSession.addLog('QUIZ_AUDIO_FULL_TEXT', {
-          reason: 'no_repeat_word_or_not_in_text'
-        })
+        // If repeatWord is not in text, just speak the full text
         await this.speak(text, voiceType, false)
       }
       
-      audioDebugSession.addLog('QUIZ_AUDIO_SUCCESS', {
-        totalDuration: Date.now() - parseInt(sessionId.split('-')[2])
-      })
-      audioDebugSession.endSession('Quiz audio completed successfully')
-      
     } catch (error) {
-      // Comprehensive error logging
-      const errorDetails = {
-        error: error instanceof Error ? error.message : error?.toString(),
-        errorType: error instanceof Error ? error.constructor?.name : typeof error,
-        stack: error instanceof Error ? error.stack : undefined,
-        timeSinceStart: Date.now() - parseInt(sessionId.split('-')[2]),
-        audioContextSupported: !!(window.AudioContext || (window as any).webkitAudioContext),
-        currentPermission: await this.checkAudioPermission().catch(() => false)
-      }
-      
-      audioDebugSession.addLog('QUIZ_AUDIO_ERROR', errorDetails)
-      
       // Check if this is a navigation interruption (expected)
       const isNavigationInterruption = error instanceof Error && 
         (error.message.includes('interrupted by navigation') || 
          error.message.includes('interrupted by user'))
       
       if (isNavigationInterruption) {
-        audioDebugSession.addLog('QUIZ_AUDIO_NAVIGATION_INTERRUPT', {
-          expected: true
-        })
-        audioDebugSession.endSession('Quiz audio interrupted by navigation (expected)')
-        return
+        console.log('🎵 Quiz audio interrupted by navigation (expected)')
+        return // Don't log or retry for navigation interruptions
       }
       
-      audioDebugSession.endSession('Quiz audio failed with error')
-      logAudioIssue('speakQuizPromptWithRepeat', error, { text, repeatWord, voiceType })
+      console.error('speakQuizPromptWithRepeat error:', error)
       
       // iOS-specific fallback: try a simpler approach
       if (isIOS()) {
@@ -439,17 +294,17 @@ export class AudioManager {
           await new Promise(resolve => setTimeout(resolve, 500))
           
           // Just speak the full text once on iOS fallback
-          logIOSIssue('Quiz Audio', 'Using iOS fallback: speaking full text once')
+          console.log('Quiz Audio: Using iOS fallback - speaking full text once')
           await this.speak(text, voiceType, false)
         } catch (iosFallbackError) {
-          logAudioIssue('iOS fallback', iosFallbackError, { text, repeatWord })
+          console.error('iOS fallback error:', iosFallbackError)
         }
       } else {
         // Original fallback for non-iOS
         try {
           await this.speak(text, voiceType, false)
         } catch (fallbackError) {
-          logAudioIssue('General fallback', fallbackError, { text, repeatWord })
+          console.error('General fallback error:', fallbackError)
         }
       }
     }
@@ -466,7 +321,7 @@ export class AudioManager {
 
   async speakAdditionProblem(num1: number, num2: number, voiceType: 'primary' | 'backup' | 'male' = 'primary'): Promise<void> {
     try {
-      logIOSIssue('Addition Problem', `Speaking: ${num1} + ${num2}`)
+      console.log(`Addition Problem: Speaking ${num1} + ${num2}`)
       
       // Speak addition problems with proper separation for iOS compatibility
       // First: "Hvad er"
@@ -490,9 +345,9 @@ export class AudioManager {
       // Fourth: second number
       await this.speakNumber(num2)
       
-      logIOSIssue('Addition Problem', 'Successfully spoke addition problem')
+      console.log('Addition Problem: Successfully spoke addition problem')
     } catch (error) {
-      logAudioIssue('speakAdditionProblem', error, { num1, num2, voiceType })
+      console.error('speakAdditionProblem error:', error)
       // Fallback: speak as single text
       const fallbackText = DANISH_PHRASES.gamePrompts.mathQuestion.addition(num1, num2)
       await this.speak(fallbackText, voiceType, true)
