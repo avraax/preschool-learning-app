@@ -180,7 +180,7 @@ const AlphabetGame: React.FC = () => {
   return (
     <Box 
       sx={{ 
-        height: '100vh',
+        height: '100dvh',
         overflow: 'hidden',
         display: 'flex',
         flexDirection: 'column',

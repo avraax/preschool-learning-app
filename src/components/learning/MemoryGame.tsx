@@ -380,7 +380,7 @@ const MemoryGame: React.FC = () => {
       <style>{flipStyles}</style>
       <Box 
         sx={{ 
-          height: '100vh',
+          height: '100dvh',
           overflow: 'hidden',
           display: 'flex',
           flexDirection: 'column',

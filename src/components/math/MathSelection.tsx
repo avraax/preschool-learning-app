@@ -73,7 +73,7 @@ const MathSelection: React.FC = () => {
     <Box 
       sx={{ 
         minHeight: '100vh', 
-        height: '100vh',
+        height: '100dvh',
         background: 'linear-gradient(135deg, #e0f2fe 0%, #f3e5f5 50%, #fff3e0 100%)',
         overflow: 'hidden',
         display: 'flex',
