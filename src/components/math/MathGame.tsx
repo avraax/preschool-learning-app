@@ -16,6 +16,7 @@ import {
 } from '@mui/material'
 import { Volume2, Award, ArrowLeft } from 'lucide-react'
 import { audioManager } from '../../utils/audio'
+import { DANISH_PHRASES } from '../../config/danish-phrases'
 import LottieCharacter, { useCharacterState } from '../common/LottieCharacter'
 import CelebrationEffect, { useCelebration } from '../common/CelebrationEffect'
 
@@ -119,7 +120,7 @@ const MathGame: React.FC = () => {
     
     // Schedule audio with proper cleanup
     timeoutRef.current = setTimeout(() => {
-      audioManager.speakQuizPromptWithRepeat(`Find tallet ${number}`, number.toString())
+      audioManager.speakQuizPromptWithRepeat(DANISH_PHRASES.gamePrompts.findNumber(number), number.toString())
         .catch(error => {
           console.error('Error in scheduled audio:', error)
         })
@@ -222,7 +223,7 @@ const MathGame: React.FC = () => {
     audioManager.stopAll()
     
     if (gameMode === 'counting') {
-      audioManager.speakQuizPromptWithRepeat(`Find tallet ${currentProblem.answer}`, currentProblem.answer.toString())
+      audioManager.speakQuizPromptWithRepeat(DANISH_PHRASES.gamePrompts.findNumber(currentProblem.answer), currentProblem.answer.toString())
         .catch(error => console.error('Error repeating counting question:', error))
     } else {
       const problemText = `${currentProblem.num1} ${currentProblem.operation} ${currentProblem.num2} = ?`
@@ -315,7 +316,7 @@ const MathGame: React.FC = () => {
             </Box>
           </motion.div>
           <Typography variant="h5" color="secondary.main" sx={{ mb: 4, fontSize: { xs: '1rem', md: '1.25rem' } }}>
-            {gameMode === 'counting' ? 'Klik på tallet! 👆' : 'Find svaret! 🤔'}
+            {gameMode === 'counting' ? DANISH_PHRASES.ui.clickNumber : DANISH_PHRASES.ui.findAnswer}
           </Typography>
         </Box>
 

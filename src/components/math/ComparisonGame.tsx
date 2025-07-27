@@ -6,6 +6,7 @@ import { motion } from 'framer-motion'
 import LottieCharacter, { useCharacterState } from '../common/LottieCharacter'
 import CelebrationEffect, { useCelebration } from '../common/CelebrationEffect'
 import { audioManager } from '../../utils/audio'
+import { DANISH_PHRASES } from '../../config/danish-phrases'
 
 // Object types for visual counting
 const OBJECT_TYPES = [
@@ -138,9 +139,9 @@ const ComparisonGame: React.FC = () => {
       // Ask comparison question based on question type
       let questionText = ''
       if (problem.questionType === 'largest') {
-        questionText = 'Hvilket tal er størst?'
+        questionText = DANISH_PHRASES.gamePrompts.comparison.largest
       } else if (problem.questionType === 'smallest') {
-        questionText = 'Hvilket tal er mindst?'
+        questionText = DANISH_PHRASES.gamePrompts.comparison.smallest
       } else {
         questionText = 'Er tallene ens?'
       }

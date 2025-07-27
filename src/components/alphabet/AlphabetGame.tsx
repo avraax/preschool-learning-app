@@ -17,6 +17,7 @@ import {
 import { Volume2, Award, ArrowLeft } from 'lucide-react'
 import { audioManager } from '../../utils/audio'
 import { useIOSAudioFix } from '../../hooks/useIOSAudioFix'
+import { DANISH_PHRASES } from '../../config/danish-phrases'
 import { isIOS } from '../../utils/deviceDetection'
 import IOSAudioPrompt from '../common/IOSAudioPrompt'
 import LottieCharacter, { useCharacterState } from '../common/LottieCharacter'
@@ -105,7 +106,7 @@ const AlphabetGame: React.FC = () => {
       
       setIsPlaying(true)
       try {
-        await audioManager.speakQuizPromptWithRepeat(`Find bogstavet ${letter}`, letter)
+        await audioManager.speakQuizPromptWithRepeat(DANISH_PHRASES.gamePrompts.findLetter(letter), letter)
       } catch (error) {
         console.error('❌ Audio error in quiz:', error)
         handleIOSAudioError(error)
@@ -163,7 +164,7 @@ const AlphabetGame: React.FC = () => {
     
     setIsPlaying(true)
     try {
-      await audioManager.speakQuizPromptWithRepeat(`Find bogstavet ${currentLetter}`, currentLetter)
+      await audioManager.speakQuizPromptWithRepeat(DANISH_PHRASES.gamePrompts.findLetter(currentLetter), currentLetter)
     } catch (error) {
       handleIOSAudioError(error)
     } finally {
@@ -174,7 +175,7 @@ const AlphabetGame: React.FC = () => {
   const handleIOSPromptAction = () => {
     hideIOSPrompt()
     repeatLetter()
-    audioManager.speakQuizPromptWithRepeat(`Find bogstavet ${currentLetter}`, currentLetter)
+    audioManager.speakQuizPromptWithRepeat(DANISH_PHRASES.gamePrompts.findLetter(currentLetter), currentLetter)
   }
 
   return (

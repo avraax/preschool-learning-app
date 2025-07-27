@@ -20,6 +20,7 @@ import {
   Psychology
 } from '@mui/icons-material'
 import { ArrowLeft } from 'lucide-react'
+import { DANISH_PHRASES } from '../../config/danish-phrases'
 
 const AlphabetSelection: React.FC = () => {
   const navigate = useNavigate()
@@ -35,7 +36,7 @@ const AlphabetSelection: React.FC = () => {
     {
       id: 'quiz',
       title: 'Bogstav Quiz',
-      description: 'Find det rigtige bogstav du hører',
+      description: DANISH_PHRASES.descriptions.alphabet.learn,
       icon: <Quiz sx={{ fontSize: '4rem' }} />,
       color: 'secondary',
       emoji: '🎯'
@@ -43,7 +44,7 @@ const AlphabetSelection: React.FC = () => {
     {
       id: 'memory',
       title: 'Hukommelsesspil',
-      description: 'Find par af bogstaver (40 kort)',
+      description: DANISH_PHRASES.descriptions.alphabet.memory,
       icon: <Psychology sx={{ fontSize: '4rem' }} />,
       color: 'success',
       emoji: '🧠'

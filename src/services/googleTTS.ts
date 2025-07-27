@@ -2,6 +2,7 @@
 import { TTS_CONFIG } from '../config/tts-config'
 import { isIOS } from '../utils/deviceDetection'
 import { logAudioIssue, logIOSIssue } from '../utils/remoteConsole'
+import { DANISH_PHRASES } from '../config/danish-phrases'
 
 // Audio cache interface for browser storage
 interface CachedAudio {
@@ -762,16 +763,7 @@ export class GoogleTTSService {
 
   // Preload common phrases for better performance
   async preloadCommonPhrases(): Promise<void> {
-    const commonPhrases = [
-      'Godt klaret!',
-      'Prøv igen!',
-      'Du kan det!',
-      'Næsten der!',
-      'Godt forsøg!',
-      'plus',
-      'minus',
-      'er lig med'
-    ]
+    const commonPhrases = DANISH_PHRASES.preload
 
     const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZÆØÅ'.split('')
     const numbers = Array.from({length: 20}, (_, i) => (i + 1).toString())

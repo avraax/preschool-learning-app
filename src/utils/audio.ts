@@ -2,6 +2,7 @@ import { Howl } from 'howler'
 import { googleTTS, GoogleTTSService } from '../services/googleTTS'
 import { isIOS } from './deviceDetection'
 import { logAudioIssue, logIOSIssue } from './remoteConsole'
+import { DANISH_PHRASES, getRandomSuccessPhrase, getRandomEncouragementPhrase, getDanishNumberText } from '../config/danish-phrases'
 
 export class AudioManager {
   private sounds: Map<string, Howl> = new Map()
@@ -25,38 +26,7 @@ export class AudioManager {
   }
 
   async speakNumber(number: number, customSpeed?: number): Promise<void> {
-    const danishNumbers = {
-      0: 'nul', 1: 'en', 2: 'to', 3: 'tre', 4: 'fire', 5: 'fem',
-      6: 'seks', 7: 'syv', 8: 'otte', 9: 'ni', 10: 'ti',
-      11: 'elleve', 12: 'tolv', 13: 'tretten', 14: 'fjorten', 15: 'femten',
-      16: 'seksten', 17: 'sytten', 18: 'atten', 19: 'nitten', 20: 'tyve'
-    }
-
-    let numberText = ''
-    
-    if (number <= 20) {
-      numberText = danishNumbers[number as keyof typeof danishNumbers] || number.toString()
-    } else if (number < 100) {
-      const tens = Math.floor(number / 10)
-      const ones = number % 10
-      
-      const tensNames = {
-        2: 'tyve', 3: 'tredive', 4: 'fyrre', 5: 'halvtreds',
-        6: 'tres', 7: 'halvfjerds', 8: 'firs', 9: 'halvfems'
-      }
-      
-      if (ones === 0) {
-        numberText = tensNames[tens as keyof typeof tensNames] || number.toString()
-      } else {
-        const onesText = danishNumbers[ones as keyof typeof danishNumbers]
-        const tensText = tensNames[tens as keyof typeof tensNames]
-        numberText = `${onesText}og${tensText}`
-      }
-    } else if (number === 100) {
-      numberText = 'et hundrede'
-    } else {
-      numberText = number.toString()
-    }
+    const numberText = getDanishNumberText(number)
 
     // Retry logic for number counting - important for auto-play reliability
     let lastError: Error | null = null
@@ -136,18 +106,11 @@ export class AudioManager {
   }
 
   async playSuccessSound() {
-    await this.speak('Godt!')
+    await this.speak(getRandomSuccessPhrase())
   }
 
   async playEncouragementSound() {
-    const encouragements = [
-      'Prøv igen!',
-      'Du kan det!',
-      'Næsten der!',
-      'Godt forsøg!'
-    ]
-    const random = encouragements[Math.floor(Math.random() * encouragements.length)]
-    await this.speak(random)
+    await this.speak(getRandomEncouragementPhrase())
   }
 
   // Preload common audio for better performance
@@ -321,9 +284,9 @@ export class AudioManager {
   async speakMathProblem(problem: string, voiceType: 'primary' | 'backup' | 'male' = 'primary'): Promise<void> {
     // Use natural speech patterns with pauses for math problems
     const mathText = problem
-      .replace(/\+/g, ' plus ')
-      .replace(/-/g, ' minus ')
-      .replace(/=/g, ' er lig med ')
+      .replace(/\+/g, ` ${DANISH_PHRASES.math.plus} `)
+      .replace(/-/g, ` ${DANISH_PHRASES.math.minus} `)
+      .replace(/=/g, ` ${DANISH_PHRASES.math.equals} `)
     await this.speak(mathText, voiceType, true)
   }
 
@@ -333,7 +296,7 @@ export class AudioManager {
       
       // Speak addition problems with proper separation for iOS compatibility
       // First: "Hvad er"
-      await this.speak('Hvad er', voiceType, false)
+      await this.speak(DANISH_PHRASES.gamePrompts.mathQuestion.prefix, voiceType, false)
       
       // Small pause
       await new Promise(resolve => setTimeout(resolve, 300))
@@ -345,7 +308,7 @@ export class AudioManager {
       await new Promise(resolve => setTimeout(resolve, 200))
       
       // Third: "plus"
-      await this.speak('plus', voiceType, false)
+      await this.speak(DANISH_PHRASES.math.plus, voiceType, false)
       
       // Small pause
       await new Promise(resolve => setTimeout(resolve, 200))
@@ -357,31 +320,16 @@ export class AudioManager {
     } catch (error) {
       logAudioIssue('speakAdditionProblem', error, { num1, num2, voiceType })
       // Fallback: speak as single text
-      const fallbackText = `Hvad er ${num1} plus ${num2}`
+      const fallbackText = DANISH_PHRASES.gamePrompts.mathQuestion.addition(num1, num2)
       await this.speak(fallbackText, voiceType, true)
     }
   }
 
   async announceGameResult(isCorrect: boolean, voiceType: 'primary' | 'backup' | 'male' = 'primary'): Promise<void> {
     if (isCorrect) {
-      const successPhrases = [
-        'Fantastisk!',
-        'Godt!', 
-        'Super!',
-        'Perfekt!',
-        'Flot!'
-      ]
-      const phrase = successPhrases[Math.floor(Math.random() * successPhrases.length)]
-      await this.speakWithEnthusiasm(phrase, voiceType)
+      await this.speakWithEnthusiasm(getRandomSuccessPhrase(), voiceType)
     } else {
-      const encouragementPhrases = [
-        'Næsten der! Prøv igen!',
-        'Godt forsøg! Du kan det!',
-        'Det er okay. Prøv en gang til!',
-        'Kom så! Du er så tæt på!'
-      ]
-      const phrase = encouragementPhrases[Math.floor(Math.random() * encouragementPhrases.length)]
-      await this.speak(phrase, voiceType, true)
+      await this.speak(getRandomEncouragementPhrase(), voiceType, true)
     }
   }
 
@@ -389,23 +337,23 @@ export class AudioManager {
   async announceScore(score: number, voiceType: 'primary' | 'backup' | 'male' = 'primary'): Promise<void> {
     try {
       if (score === 0) {
-        await this.speak('Du har ingen point endnu', voiceType, true)
+        await this.speak(DANISH_PHRASES.score.noPoints, voiceType, true)
       } else if (score === 1) {
-        await this.speak('Du har et point', voiceType, true)
+        await this.speak(DANISH_PHRASES.score.onePoint, voiceType, true)
       } else {
         // For scores > 1, speak each part separately for better pronunciation
-        await this.speak('Du har', voiceType, false)
+        await this.speak(DANISH_PHRASES.score.multiplePoints.prefix, voiceType, false)
         await new Promise(resolve => setTimeout(resolve, 200))
         await this.speakNumber(score)
         await new Promise(resolve => setTimeout(resolve, 200))
-        await this.speak('point', voiceType, false)
+        await this.speak(DANISH_PHRASES.score.multiplePoints.suffix, voiceType, false)
       }
     } catch (error) {
       console.error('Error in announceScore:', error)
       // Fallback to simple text
-      const scoreText = score === 0 ? 'Du har ingen point endnu' 
-                      : score === 1 ? 'Du har et point' 
-                      : `Du har ${score} point`
+      const scoreText = score === 0 ? DANISH_PHRASES.score.noPoints
+                      : score === 1 ? DANISH_PHRASES.score.onePoint
+                      : `${DANISH_PHRASES.score.multiplePoints.prefix} ${score} ${DANISH_PHRASES.score.multiplePoints.suffix}`
       await this.speak(scoreText, voiceType, true)
     }
   }
@@ -413,13 +361,7 @@ export class AudioManager {
   // Announce current position in learning sequence
   async announcePosition(currentIndex: number, total: number, itemType: 'tal' | 'bogstav' = 'tal', voiceType: 'primary' | 'backup' | 'male' = 'primary'): Promise<void> {
     const currentNumber = currentIndex + 1
-    let positionText = ''
-    
-    if (itemType === 'tal') {
-      positionText = `Du er ved ${itemType} nummer ${currentNumber} af ${total}`
-    } else {
-      positionText = `Du er ved ${itemType} nummer ${currentNumber} af ${total}`
-    }
+    const positionText = DANISH_PHRASES.position.template(itemType, currentNumber, total)
     
     await this.speak(positionText, voiceType, true)
   }

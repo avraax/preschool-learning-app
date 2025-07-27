@@ -22,6 +22,7 @@ import {
   Psychology
 } from '@mui/icons-material'
 import { ArrowLeft } from 'lucide-react'
+import { DANISH_PHRASES } from '../../config/danish-phrases'
 
 const MathSelection: React.FC = () => {
   const navigate = useNavigate()
@@ -37,7 +38,7 @@ const MathSelection: React.FC = () => {
     {
       id: 'counting',
       title: 'Tal Quiz',
-      description: 'Find det rigtige tal du hører (1-30)',
+      description: DANISH_PHRASES.descriptions.math.counting,
       icon: <Calculate sx={{ fontSize: '4rem' }} />,
       color: 'secondary',
       emoji: '🎯'
@@ -61,7 +62,7 @@ const MathSelection: React.FC = () => {
     {
       id: 'memory',
       title: 'Hukommelsesspil',
-      description: 'Find par af tal (40 kort)',
+      description: DANISH_PHRASES.descriptions.math.memory,
       icon: <Psychology sx={{ fontSize: '4rem' }} />,
       color: 'info',
       emoji: '🧠'

@@ -60,6 +60,7 @@ const flipStyles = `
 import LottieCharacter, { useCharacterState } from '../common/LottieCharacter'
 import CelebrationEffect, { useCelebration } from '../common/CelebrationEffect'
 import { audioManager } from '../../utils/audio'
+import { DANISH_PHRASES } from '../../config/danish-phrases'
 import { isIOS } from '../../utils/deviceDetection'
 
 // Danish alphabet (29 letters)
@@ -265,7 +266,7 @@ const MemoryGame: React.FC = () => {
         if (matchedPairs + 1 === 20) {
           celebrate('high')
           try {
-            await audioManager.speak('Fantastisk! Du fandt alle parene!')
+            await audioManager.speak(DANISH_PHRASES.completion.memoryGameSuccess)
           } catch (error) {
             console.error('Error playing completion sound:', error)
           }
@@ -311,7 +312,7 @@ const MemoryGame: React.FC = () => {
       console.log('🎵 iOS: Initializing audio with user gesture...')
       
       // First try a simple greeting to initialize the audio system
-      await audioManager.speak('Hej!')
+      await audioManager.speak(DANISH_PHRASES.completion.greeting)
       
       // If successful, also test with number pronunciation to warm up the system
       if (gameType === 'numbers') {
@@ -334,7 +335,7 @@ const MemoryGame: React.FC = () => {
         
         // Try just a simple Web Speech API test
         if ('speechSynthesis' in window) {
-          const utterance = new SpeechSynthesisUtterance('Hej')
+          const utterance = new SpeechSynthesisUtterance(DANISH_PHRASES.completion.greeting)
           utterance.lang = 'da-DK'
           utterance.rate = 0.8
           utterance.pitch = 1.1
