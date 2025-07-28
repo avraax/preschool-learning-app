@@ -54,8 +54,7 @@ const AlphabetSelection: React.FC = () => {
   return (
     <Box 
       sx={{ 
-        minHeight: '100vh', 
-        height: '100dvh',
+        height: 'calc(var(--vh, 1vh) * 100)',
         background: 'linear-gradient(135deg, #f3e8ff 0%, #fce7f3 50%, #dbeafe 100%)',
         overflow: 'hidden',
         display: 'flex',

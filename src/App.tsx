@@ -34,6 +34,7 @@ import ErrorDashboard from './components/admin/ErrorDashboard'
 import UpdateBanner from './components/common/UpdateBanner'
 import GlobalAudioPermission from './components/common/GlobalAudioPermission'
 import { AudioPermissionProvider } from './contexts/AudioPermissionContext'
+import { useViewportHeight } from './hooks/useViewportHeight'
 
 
 // Balloon Components
@@ -253,7 +254,7 @@ const HomePage = () => {
       className="interactive-area"
       sx={{ 
         position: 'relative',
-        height: '100dvh',
+        height: 'calc(var(--vh, 1vh) * 100)',
         background: 'linear-gradient(135deg, #dbeafe 0%, #e9d5ff 50%, #fce7f3 100%)',
         overflow: 'hidden',
         display: 'flex',
@@ -612,11 +613,12 @@ const NotFoundPage = () => {
   return (
     <Box 
       sx={{ 
-        minHeight: '100vh',
+        height: 'calc(var(--vh, 1vh) * 100)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: 'linear-gradient(135deg, #dbeafe 0%, #e9d5ff 50%, #fce7f3 100%)'
+        background: 'linear-gradient(135deg, #dbeafe 0%, #e9d5ff 50%, #fce7f3 100%)',
+        overflow: 'hidden'
       }}
     >
       <Container maxWidth="sm" sx={{ textAlign: 'center' }}>
@@ -651,6 +653,9 @@ const NotFoundPage = () => {
 }
 
 function App() {
+  // Initialize viewport height for iOS
+  useViewportHeight()
+  
   // Initialize update checker
   const updateStatus = useUpdateChecker()
   

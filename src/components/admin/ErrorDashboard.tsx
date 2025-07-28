@@ -461,7 +461,7 @@ const ErrorDashboard: React.FC = () => {
 
   return (
     <Box sx={{ 
-      height: '100vh',
+      height: 'calc(var(--vh, 1vh) * 100)',
       overflow: 'auto',
       backgroundColor: '#f5f5f5'
     }}>

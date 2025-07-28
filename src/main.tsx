@@ -10,6 +10,14 @@ import './index.css'
 // Initialize remote console for error logging
 import './utils/remoteConsole'
 
+// Initialize viewport height before React renders
+const setInitialViewportHeight = () => {
+  const vh = window.innerHeight * 0.01
+  document.documentElement.style.setProperty('--vh', `${vh}px`)
+  document.documentElement.style.setProperty('--full-vh', `${window.innerHeight}px`)
+}
+setInitialViewportHeight()
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <BrowserRouter>
