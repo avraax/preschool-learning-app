@@ -302,24 +302,6 @@ const HomePage = () => {
                   }
                 }}
               />
-              {/* Subtle hint that logo is clickable */}
-              {balloons.length === 0 && (
-                <Typography
-                  variant="caption"
-                  sx={{
-                    position: 'absolute',
-                    bottom: -20,
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    color: 'primary.main',
-                    opacity: 0.7,
-                    fontSize: '0.75rem',
-                    whiteSpace: 'nowrap'
-                  }}
-                >
-                  🎈 Klik for balloner!
-                </Typography>
-              )}
             </Box>
             
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2, mb: 2 }}>
