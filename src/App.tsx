@@ -29,6 +29,8 @@ import MathSelection from './components/math/MathSelection'
 import NumberLearning from './components/math/NumberLearning'
 import AdditionGame from './components/math/AdditionGame'
 import ComparisonGame from './components/math/ComparisonGame'
+import FarverSelection from './components/farver/FarverSelection'
+import FarvejagtGame from './components/farver/FarvejagtGame'
 import MemoryGame from './components/learning/MemoryGame'
 import ErrorDashboard from './components/admin/ErrorDashboard'
 import UpdateBanner from './components/common/UpdateBanner'
@@ -562,6 +564,103 @@ const HomePage = () => {
               </motion.div>
             </Grid>
 
+            {/* Farver Card */}
+            <Grid size={{ xs: 12, sm: 6, lg: 4 }}>
+              <motion.div
+                initial={{ opacity: 0, x: 30 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.6, delay: 0.2 }}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <Card 
+                  onClick={() => navigate('/farver')}
+                  sx={{ 
+                    height: '100%',
+                    minHeight: { xs: 180, sm: 220, md: 240 },
+                    cursor: 'pointer',
+                    border: '2px solid',
+                    borderColor: '#FFB74D',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    '&:hover': {
+                      borderColor: '#FF6B00',
+                      boxShadow: 6
+                    },
+                    // Orientation specific adjustments
+                    '@media (orientation: landscape)': {
+                      minHeight: { xs: 160, sm: 180, md: 200 }
+                    }
+                  }}
+                >
+                  <CardContent 
+                    sx={{ 
+                      p: { xs: 2, md: 3 },
+                      height: '100%',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'center',
+                      textAlign: 'center',
+                      position: 'relative',
+                      '&::after': {
+                        content: '""',
+                        position: 'absolute',
+                        right: { xs: 16, md: 24 },
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        width: 0,
+                        height: 0,
+                        borderTop: '12px solid transparent',
+                        borderBottom: '12px solid transparent',
+                        borderLeft: '16px solid #FF6B00',
+                        opacity: 0.5
+                      }
+                    }}
+                  >
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, mb: 2 }}>
+                      <motion.div
+                        animate={{ rotate: [0, 10, -10, 0] }}
+                        transition={{ duration: 3, repeat: Infinity }}
+                      >
+                        <Typography sx={{ fontSize: '3rem' }}>🎨</Typography>
+                      </motion.div>
+                      <Typography sx={{ fontSize: '3.5rem' }}>🌈</Typography>
+                      <LottieCharacter
+                        character="bear"
+                        state="thinking"
+                        size={60}
+                        loop={true}
+                      />
+                    </Box>
+                    <Typography 
+                      variant="h4" 
+                      sx={{ 
+                        mb: 1, 
+                        fontWeight: 700,
+                        fontSize: { xs: '1.5rem', md: '1.75rem' },
+                        color: '#E65100'
+                      }}
+                    >
+                      Farver
+                    </Typography>
+                    <Typography 
+                      variant="body1" 
+                      color="text.secondary" 
+                      sx={{ 
+                        fontSize: { xs: '0.875rem', md: '1rem' },
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 0.5
+                      }}
+                    >
+                      1 øvelse <Typography component="span" sx={{ fontSize: '1.2rem' }}>→</Typography>
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            </Grid>
+
           </Grid>
 
           {/* Bottom Decoration */}
@@ -713,6 +812,10 @@ function App() {
         <Route path="/math/numbers" element={<NumberLearning />} />
         <Route path="/math/addition" element={<AdditionGame />} />
         <Route path="/math/comparison" element={<ComparisonGame />} />
+        
+        {/* Farver Routes */}
+        <Route path="/farver" element={<FarverSelection />} />
+        <Route path="/farver/jagt" element={<FarvejagtGame />} />
         
         {/* Learning Routes */}
         <Route path="/learning/memory/:type" element={<MemoryGame />} />

@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react'
-import { Box, Typography, Button, Container, Chip } from '@mui/material'
+import { useNavigate } from 'react-router-dom'
+import { Box, Typography, Button, Container, Chip, AppBar, Toolbar, IconButton } from '@mui/material'
+import { ArrowLeft } from 'lucide-react'
 import { DndContext, DragEndEvent, DragStartEvent, DragOverlay, closestCenter } from '@dnd-kit/core'
-import { audioManager } from '../../../utils/audio'
-import { DraggableItem } from '../../common/dnd/DraggableItem'
-import { DroppableZone } from '../../common/dnd/DroppableZone'
+import { audioManager } from '../../utils/audio'
+import { DraggableItem } from '../common/dnd/DraggableItem'
+import { DroppableZone } from '../common/dnd/DroppableZone'
 
 // Game item interface
 interface GameItem {
@@ -82,7 +84,8 @@ const COLOR_TARGETS = [
   { color: 'orange', phrase: 'Find alle orange ting' }
 ]
 
-const ColorHunt2Demo: React.FC = () => {
+const FarvejagtGame: React.FC = () => {
+  const navigate = useNavigate()
   // Game state
   const [gameItems, setGameItems] = useState<GameItem[]>([])
   const [score, setScore] = useState(0)
@@ -413,12 +416,47 @@ const ColorHunt2Demo: React.FC = () => {
   const activeItem = gameItems.find(item => item.id === activeId)
 
   return (
-    <Container sx={{ height: '100%', display: 'flex', flexDirection: 'column', py: 2 }}>
-      {/* Header */}
-      <Box sx={{ textAlign: 'center', mb: 2 }}>
-        <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 1 }}>
-          Farve Jagt 2
-        </Typography>
+    <Box sx={{ 
+      minHeight: 'calc(var(--vh, 1vh) * 100)',
+      background: 'linear-gradient(135deg, #FFF3E0 0%, #FFE0B2 50%, #FFCC80 100%)',
+      display: 'flex',
+      flexDirection: 'column'
+    }}>
+      {/* App Bar */}
+      <AppBar 
+        position="static" 
+        color="transparent" 
+        elevation={0}
+        sx={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}
+      >
+        <Toolbar>
+          <IconButton 
+            edge="start" 
+            onClick={() => navigate('/farver')}
+            sx={{ 
+              mr: 2,
+              backgroundColor: 'rgba(255, 255, 255, 0.2)',
+              '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.3)' }
+            }}
+          >
+            <ArrowLeft size={24} />
+          </IconButton>
+          <Typography variant="h6" component="div" sx={{ 
+            flexGrow: 1,
+            fontWeight: 700,
+            color: '#E65100'
+          }}>
+            Farvejagt
+          </Typography>
+        </Toolbar>
+      </AppBar>
+
+      <Container sx={{ flex: 1, display: 'flex', flexDirection: 'column', py: 2 }}>
+        {/* Header */}
+        <Box sx={{ textAlign: 'center', mb: 2 }}>
+          <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 1, color: '#E65100' }}>
+            Farvejagt
+          </Typography>
         <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', alignItems: 'center', mb: 2 }}>
           <Chip 
             label={`${targetColor} ting: ${score}/${totalTarget}`} 
@@ -611,8 +649,9 @@ const ColorHunt2Demo: React.FC = () => {
           }
         `}
       </style>
-    </Container>
+      </Container>
+    </Box>
   )
 }
 
-export default ColorHunt2Demo
+export default FarvejagtGame

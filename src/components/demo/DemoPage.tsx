@@ -16,9 +16,8 @@ import {
 import { ArrowLeft, Palette, Shapes } from 'lucide-react'
 
 // Import demo components
-import ColorHuntDemo from './games/ColorHuntDemo'
-import ColorHunt2Demo from './games/ColorHunt2Demo'
-import ColorMixingDemo from './games/ColorMixingDemo'
+import ColorMixTargetDemo from './games/ColorMixTargetDemo'
+import ColorMixFreeDemo from './games/ColorMixFreeDemo'
 import RainbowBuilderDemo from './games/RainbowBuilderDemo'
 import ColorMemoryDemo from './games/ColorMemoryDemo'
 import ShapeDetectiveDemo from './games/ShapeDetectiveDemo'
@@ -31,32 +30,25 @@ interface DemoGame {
   id: string
   name: string
   category: 'colors' | 'shapes'
-  component: React.ComponentType<{ variation?: 'A' | 'B' | 'C' }>
+  component: React.ComponentType<any>
   hasVariations?: boolean
 }
 
 const demoGames: DemoGame[] = [
   // Color Games
   {
-    id: 'color-hunt',
-    name: 'Color Hunt',
+    id: 'color-mix-target',
+    name: 'Farvejagt - Find målet',
     category: 'colors',
-    component: ColorHuntDemo,
+    component: ColorMixTargetDemo,
     hasVariations: false
   },
   {
-    id: 'color-hunt-2',
-    name: 'Color Hunt 2',
+    id: 'color-mix-free',
+    name: 'Fri farveblanding',
     category: 'colors',
-    component: ColorHunt2Demo,
+    component: ColorMixFreeDemo,
     hasVariations: false
-  },
-  {
-    id: 'color-mixing',
-    name: 'Color Mixing',
-    category: 'colors',
-    component: ColorMixingDemo,
-    hasVariations: true
   },
   {
     id: 'rainbow-builder',
@@ -108,7 +100,6 @@ const demoGames: DemoGame[] = [
 const DemoPage: React.FC = () => {
   const navigate = useNavigate()
   const [selectedGame, setSelectedGame] = useState<string | null>(null)
-  const [selectedVariation, setSelectedVariation] = useState<'A' | 'B' | 'C'>('A')
   const [selectedCategory, setSelectedCategory] = useState<'colors' | 'shapes' | null>(null)
 
   const currentGame = demoGames.find(g => g.id === selectedGame)
@@ -116,12 +107,10 @@ const DemoPage: React.FC = () => {
 
   const handleGameSelect = (gameId: string) => {
     setSelectedGame(gameId)
-    setSelectedVariation('A')
   }
 
   const handleBackToList = () => {
     setSelectedGame(null)
-    setSelectedVariation('A')
   }
 
   const handleBackToCategories = () => {
@@ -209,7 +198,7 @@ const DemoPage: React.FC = () => {
                       Farver
                     </Typography>
                     <Typography variant="body1" color="text.secondary">
-                      4 spil om farver og farveblandinger
+                      5 spil om farver og farveblandinger
                     </Typography>
                   </CardContent>
                 </Card>
@@ -371,33 +360,12 @@ const DemoPage: React.FC = () => {
             </Typography>
           </Box>
 
-          {/* Variation selector - only show if game has variations */}
-          {currentGame?.hasVariations && (
-            <Box sx={{ display: 'flex', gap: 1 }}>
-              {(['A', 'B'] as const).map((v) => (
-                <Chip
-                  key={v}
-                  label={`Variation ${v}`}
-                  onClick={() => setSelectedVariation(v)}
-                  color={selectedVariation === v ? 'primary' : 'default'}
-                  variant={selectedVariation === v ? 'filled' : 'outlined'}
-                  clickable
-                />
-              ))}
-            </Box>
-          )}
         </Toolbar>
       </AppBar>
 
       {/* Game content */}
       <Box sx={{ flex: 1, overflow: 'auto', bgcolor: '#f5f5f5' }}>
-        {GameComponent && (
-          currentGame?.hasVariations ? (
-            <GameComponent variation={selectedVariation} />
-          ) : (
-            <GameComponent />
-          )
-        )}
+        {GameComponent && <GameComponent />}
       </Box>
     </Box>
   )

@@ -3,9 +3,7 @@ import { Box, Typography, Button, Paper } from '@mui/material'
 import { motion, AnimatePresence } from 'framer-motion'
 import { audioManager } from '../../../utils/audio'
 
-interface ColorMixingDemoProps {
-  variation: 'A' | 'B' | 'C'
-}
+interface ColorMixFreeDemoProps {}
 
 interface ColorDrop {
   id: string
@@ -16,12 +14,10 @@ interface ColorDrop {
   used: boolean
 }
 
-const ColorMixingDemo: React.FC<ColorMixingDemoProps> = ({ variation }) => {
+const ColorMixFreeDemo: React.FC<ColorMixFreeDemoProps> = () => {
   const [availableColors, setAvailableColors] = useState<ColorDrop[]>([])
   const [mixingArea, setMixingArea] = useState<ColorDrop[]>([])
-  const [targetColor, setTargetColor] = useState<{ color: string, name: string } | null>(null)
   const [result, setResult] = useState<{ color: string, name: string } | null>(null)
-  const [showSuccess, setShowSuccess] = useState(false)
   const [createdColors, setCreatedColors] = useState<{ color: string, name: string }[]>([])
 
   const primaryColors = [
@@ -39,21 +35,14 @@ const ColorMixingDemo: React.FC<ColorMixingDemoProps> = ({ variation }) => {
     'gul+blå': { color: '#10B981', name: 'grøn' }
   }
 
-  const possibleTargets = [
-    { color: '#A855F7', name: 'lilla' },
-    { color: '#F97316', name: 'orange' },
-    { color: '#10B981', name: 'grøn' }
-  ]
-
   React.useEffect(() => {
     initializeGame()
-  }, [variation])
+  }, [])
 
   const initializeGame = () => {
     // Reset game state
     setMixingArea([])
     setResult(null)
-    setShowSuccess(false)
     setCreatedColors([])
     
     // Set up available colors
@@ -67,16 +56,7 @@ const ColorMixingDemo: React.FC<ColorMixingDemoProps> = ({ variation }) => {
     }))
     setAvailableColors(colors)
 
-    if (variation === 'A') {
-      // Target-based mode
-      const randomTarget = possibleTargets[Math.floor(Math.random() * possibleTargets.length)]
-      setTargetColor(randomTarget)
-      audioManager.speak(`Lav ${randomTarget.name} ved at blande to farver!`)
-    } else {
-      // Freestyle mode
-      setTargetColor(null)
-      audioManager.speak('Bland farverne og se hvad du kan lave!')
-    }
+    audioManager.speak('Bland farverne og se hvad du kan lave!')
   }
 
   const handleColorDrop = (colorId: string, x: number, y: number) => {
@@ -124,37 +104,24 @@ const ColorMixingDemo: React.FC<ColorMixingDemoProps> = ({ variation }) => {
       setResult(mixResult)
       audioManager.speak(`${colors[0].colorName} og ${colors[1].colorName} bliver til ${mixResult.name}!`)
       
-      if (variation === 'A') {
-        // Target-based mode
-        if (targetColor && mixResult.color === targetColor.color) {
-          setTimeout(() => {
-            setShowSuccess(true)
-            audioManager.playSuccessSound()
-            audioManager.speak('Perfekt! Du fandt den rigtige farve!')
-            
-            setTimeout(() => {
-              initializeGame() // Start new round
-            }, 3000)
-          }, 1000)
-        } else {
-          setTimeout(() => {
-            resetMixing()
-            audioManager.speak('Prøv igen med andre farver!')
-          }, 2000)
-        }
-      } else {
-        // Freestyle mode - add to created colors collection
-        setTimeout(() => {
-          if (!createdColors.some(c => c.color === mixResult.color)) {
-            setCreatedColors(prev => [...prev, mixResult])
-            audioManager.playSuccessSound()
-          }
+      // Add to created colors collection
+      setTimeout(() => {
+        if (!createdColors.some(c => c.color === mixResult.color)) {
+          setCreatedColors(prev => [...prev, mixResult])
+          audioManager.playSuccessSound()
           
-          setTimeout(() => {
-            resetMixing()
-          }, 1500)
-        }, 1000)
-      }
+          // Check if all 3 colors created
+          if (createdColors.length === 2) {
+            setTimeout(() => {
+              audioManager.speak('Fantastisk! Du har lavet alle tre farver!')
+            }, 1000)
+          }
+        }
+        
+        setTimeout(() => {
+          resetMixing()
+        }, 1500)
+      }, 1000)
     }
   }
 
@@ -164,111 +131,66 @@ const ColorMixingDemo: React.FC<ColorMixingDemoProps> = ({ variation }) => {
     setAvailableColors(availableColors.map(c => ({ ...c, used: false })))
   }
 
-  const getVariationStyle = () => {
-    switch (variation) {
-      case 'A': // Target-based mixing
-        return {
-          dropStyle: { borderRadius: '50% 50% 50% 0', transform: 'rotate(45deg)' },
-          containerBg: '#FFF',
-          title: 'Farveblanding - Find målet'
-        }
-      case 'B': // Freestyle 3-color mixing
-        return {
-          dropStyle: { borderRadius: '40% 60% 60% 40% / 60% 40% 60% 40%' },
-          containerBg: '#F8F9FA',
-          title: 'Fri farveblanding'
-        }
-      default:
-        return { dropStyle: {}, containerBg: '#FFF', title: 'Farvemiks' }
-    }
-  }
-
-  const style = getVariationStyle()
-
   return (
     <Box sx={{ height: '100%', p: 3, bgcolor: '#F5F5F5' }}>
       {/* Header */}
       <Box sx={{ textAlign: 'center', mb: 3 }}>
         <Typography variant="h4" sx={{ mb: 2, fontWeight: 700 }}>
-          {style.title}
+          Fri farveblanding
         </Typography>
         
-        {/* Target color display for variation A */}
-        {variation === 'A' && targetColor && (
-          <Paper elevation={4} sx={{ display: 'inline-block', p: 2, mb: 2 }}>
-            <Typography variant="h6" sx={{ mb: 1 }}>
-              Mål: Lav denne farve
-            </Typography>
-            <Box
-              sx={{
-                width: 80,
-                height: 80,
-                bgcolor: targetColor.color,
-                borderRadius: 2,
-                mx: 'auto',
-                border: '3px solid #333'
-              }}
-            />
-            <Typography variant="h6" sx={{ mt: 1, fontWeight: 700 }}>
-              {targetColor.name}
-            </Typography>
-          </Paper>
-        )}
-        
-        {/* Created colors collection for variation B */}
-        {variation === 'B' && (
-          <Box sx={{ mb: 2 }}>
-            <Typography variant="h6" sx={{ mb: 1 }}>
-              Dine blandede farver: {createdColors.length}/3
-            </Typography>
-            <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1 }}>
-              {createdColors.map((color, index) => (
-                <Box
-                  key={index}
-                  sx={{
-                    width: 50,
-                    height: 50,
-                    bgcolor: color.color,
-                    borderRadius: 2,
-                    border: '2px solid #333',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: 'white',
-                    fontSize: '0.8rem',
-                    fontWeight: 700
-                  }}
-                >
-                  {color.name}
-                </Box>
-              ))}
-              {/* Empty slots */}
-              {Array.from({ length: 3 - createdColors.length }).map((_, index) => (
-                <Box
-                  key={`empty-${index}`}
-                  sx={{
-                    width: 50,
-                    height: 50,
-                    border: '2px dashed #9CA3AF',
-                    borderRadius: 2,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: '#9CA3AF',
-                    fontSize: '1.5rem'
-                  }}
-                >
-                  ?
-                </Box>
-              ))}
-            </Box>
-            {createdColors.length === 3 && (
-              <Typography variant="h6" color="success.main" sx={{ mt: 1, fontWeight: 700 }}>
-                🎉 Du har lavet alle 3 mulige farver!
-              </Typography>
-            )}
+        {/* Created colors collection */}
+        <Box sx={{ mb: 2 }}>
+          <Typography variant="h6" sx={{ mb: 1 }}>
+            Dine blandede farver: {createdColors.length}/3
+          </Typography>
+          <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1 }}>
+            {createdColors.map((color, index) => (
+              <Box
+                key={index}
+                sx={{
+                  width: 50,
+                  height: 50,
+                  bgcolor: color.color,
+                  borderRadius: 2,
+                  border: '2px solid #333',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'white',
+                  fontSize: '0.8rem',
+                  fontWeight: 700
+                }}
+              >
+                {color.name}
+              </Box>
+            ))}
+            {/* Empty slots */}
+            {Array.from({ length: 3 - createdColors.length }).map((_, index) => (
+              <Box
+                key={`empty-${index}`}
+                sx={{
+                  width: 50,
+                  height: 50,
+                  border: '2px dashed #9CA3AF',
+                  borderRadius: 2,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#9CA3AF',
+                  fontSize: '1.5rem'
+                }}
+              >
+                ?
+              </Box>
+            ))}
           </Box>
-        )}
+          {createdColors.length === 3 && (
+            <Typography variant="h6" color="success.main" sx={{ mt: 1, fontWeight: 700 }}>
+              🎉 Du har lavet alle 3 mulige farver!
+            </Typography>
+          )}
+        </Box>
       </Box>
 
       {/* Game area */}
@@ -276,7 +198,7 @@ const ColorMixingDemo: React.FC<ColorMixingDemoProps> = ({ variation }) => {
         elevation={4}
         sx={{
           height: 400,
-          bgcolor: style.containerBg,
+          bgcolor: '#F8F9FA',
           position: 'relative',
           overflow: 'hidden',
           display: 'flex',
@@ -342,7 +264,7 @@ const ColorMixingDemo: React.FC<ColorMixingDemoProps> = ({ variation }) => {
                 width: 80,
                 height: 80,
                 bgcolor: color.color,
-                ...style.dropStyle,
+                borderRadius: '40% 60% 60% 40% / 60% 40% 60% 40%',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -351,8 +273,7 @@ const ColorMixingDemo: React.FC<ColorMixingDemoProps> = ({ variation }) => {
                 fontWeight: 700
               }}
             >
-              {variation === 'A' && '💧'}
-              {variation === 'B' && '🎨'}
+              🎨
             </Box>
           </motion.div>
         ))}
@@ -374,7 +295,7 @@ const ColorMixingDemo: React.FC<ColorMixingDemoProps> = ({ variation }) => {
                 width: 80,
                 height: 80,
                 bgcolor: color.color,
-                ...style.dropStyle,
+                borderRadius: '40% 60% 60% 40% / 60% 40% 60% 40%',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -382,8 +303,7 @@ const ColorMixingDemo: React.FC<ColorMixingDemoProps> = ({ variation }) => {
                 fontSize: '2rem'
               }}
             >
-              {variation === 'A' && '💧'}
-              {variation === 'B' && '🎨'}
+              🎨
             </Box>
           </motion.div>
         ))}
@@ -423,29 +343,6 @@ const ColorMixingDemo: React.FC<ColorMixingDemoProps> = ({ variation }) => {
             </motion.div>
           )}
         </AnimatePresence>
-
-        {/* Success celebration */}
-        <AnimatePresence>
-          {showSuccess && (
-            <motion.div
-              initial={{ scale: 0, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0, opacity: 0 }}
-              style={{
-                position: 'absolute',
-                zIndex: 30,
-                background: 'linear-gradient(45deg, #10B981, #34D399)',
-                borderRadius: 20,
-                padding: 20,
-                color: 'white',
-                textAlign: 'center'
-              }}
-            >
-              <Typography variant="h3" sx={{ mb: 1 }}>🎉</Typography>
-              <Typography variant="h4">Perfekt!</Typography>
-            </motion.div>
-          )}
-        </AnimatePresence>
       </Paper>
 
       {/* Controls */}
@@ -454,11 +351,11 @@ const ColorMixingDemo: React.FC<ColorMixingDemoProps> = ({ variation }) => {
           Ryd blanding
         </Button>
         <Button variant="contained" onClick={initializeGame} color="primary">
-          Ny opgave
+          Nyt spil
         </Button>
       </Box>
     </Box>
   )
 }
 
-export default ColorMixingDemo
+export default ColorMixFreeDemo

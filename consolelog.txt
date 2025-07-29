@@ -1,0 +1,31 @@
+remoteConsole.ts:48 🎵 Audio completion detected via timeupdate
+remoteConsole.ts:48 🎵 Audio ended successfully
+remoteConsole.ts:48 🎵 Updated user interaction on window focus
+remoteConsole.ts:48 === DRAG END EVENT START ===
+remoteConsole.ts:48 1. Event details: {activeId: 'item-2', overId: undefined, overData: undefined}
+remoteConsole.ts:48 2. Dragged item lookup: {activeId: 'item-2', foundItem: {…}, itemExists: true, itemCollected: false}
+remoteConsole.ts:48 3. Item validation passed - processing drop: {itemId: 'item-2', itemColor: 'gul', targetColor: 'gul', isTarget: true, collected: false, …}
+remoteConsole.ts:48 4. NOT DROPPED ON TARGET ZONE - dropped elsewhere
+remoteConsole.ts:48    Over zone: none
+remoteConsole.ts:48 === DRAG END EVENT COMPLETE ===
+remoteConsole.ts:48 === DRAG END EVENT START ===
+remoteConsole.ts:48 1. Event details: {activeId: 'item-3', overId: undefined, overData: undefined}
+remoteConsole.ts:48 2. Dragged item lookup: {activeId: 'item-3', foundItem: {…}, itemExists: true, itemCollected: false}
+remoteConsole.ts:48 3. Item validation passed - processing drop: {itemId: 'item-3', itemColor: 'gul', targetColor: 'gul', isTarget: true, collected: false, …}
+remoteConsole.ts:48 4. NOT DROPPED ON TARGET ZONE - dropped elsewhere
+remoteConsole.ts:48    Over zone: none
+remoteConsole.ts:48 === DRAG END EVENT COMPLETE ===
+remoteConsole.ts:48 === DRAG END EVENT START ===
+remoteConsole.ts:48 1. Event details: {activeId: 'item-8', overId: undefined, overData: undefined}
+remoteConsole.ts:48 2. Dragged item lookup: {activeId: 'item-8', foundItem: {…}, itemExists: true, itemCollected: false}
+remoteConsole.ts:48 3. Item validation passed - processing drop: {itemId: 'item-8', itemColor: 'lilla', targetColor: 'gul', isTarget: false, collected: false, …}
+remoteConsole.ts:48 4. NOT DROPPED ON TARGET ZONE - dropped elsewhere
+remoteConsole.ts:48    Over zone: none
+remoteConsole.ts:48 === DRAG END EVENT COMPLETE ===
+remoteConsole.ts:48 === DRAG END EVENT START ===
+remoteConsole.ts:48 1. Event details: {activeId: 'item-9', overId: undefined, overData: undefined}
+remoteConsole.ts:48 2. Dragged item lookup: {activeId: 'item-9', foundItem: {…}, itemExists: true, itemCollected: false}
+remoteConsole.ts:48 3. Item validation passed - processing drop: {itemId: 'item-9', itemColor: 'orange', targetColor: 'gul', isTarget: false, collected: false, …}
+remoteConsole.ts:48 4. NOT DROPPED ON TARGET ZONE - dropped elsewhere
+remoteConsole.ts:48    Over zone: none
+remoteConsole.ts:48 === DRAG END EVENT COMPLETE ===
