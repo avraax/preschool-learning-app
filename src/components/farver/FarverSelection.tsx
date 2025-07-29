@@ -22,9 +22,6 @@ const FarverSelection: React.FC = () => {
   const encourageCharacter = useCharacterState('encourage')
   
   React.useEffect(() => {
-    // Welcome message for color category
-    audioManager.speak('Velkommen til farver! Vælg et spil.')
-    
     // Character animation
     setTimeout(() => {
       encourageCharacter.encourage()
@@ -136,7 +133,6 @@ const FarverSelection: React.FC = () => {
               >
                 <Card 
                   onClick={() => {
-                    audioManager.speak(`Du valgte ${game.title}!`)
                     navigate(game.route)
                   }}
                   sx={{ 
