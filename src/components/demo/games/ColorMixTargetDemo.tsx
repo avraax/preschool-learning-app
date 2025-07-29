@@ -52,6 +52,16 @@ const ColorMixTargetDemo: React.FC = () => {
     { id: 'black', color: 'sort', colorName: 'sort', hex: '#1F2937', emoji: '💧', isUsed: false }
   ]
 
+  // Shuffle array utility function
+  const shuffleArray = (array: ColorDroplet[]): ColorDroplet[] => {
+    const shuffled = [...array]
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1))
+      ;[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+    }
+    return shuffled
+  }
+
   // Possible target colors
   const possibleTargets: TargetColor[] = [
     { color: 'lilla', name: 'lilla', hex: '#A855F7' },
@@ -87,14 +97,20 @@ const ColorMixTargetDemo: React.FC = () => {
 
 
   const initializeGame = () => {
-    // Select random target color
-    const randomTarget = possibleTargets[Math.floor(Math.random() * possibleTargets.length)]
+    // Select random target color (different from current if exists)
+    const availableTargets = gameState.targetColor 
+      ? possibleTargets.filter(target => target.hex !== gameState.targetColor.hex)
+      : possibleTargets
+    const randomTarget = availableTargets[Math.floor(Math.random() * availableTargets.length)]
     console.log('🎲 Random target selected:', randomTarget)
+    
+    // Shuffle color droplets for random order
+    const shuffledColors = shuffleArray(primaryColors)
     
     // Reset game state
     setGameState({
       targetColor: randomTarget,
-      availableColors: [...primaryColors],
+      availableColors: shuffledColors,
       mixingZone: [],
       gameResult: null,
       attempts: 0
