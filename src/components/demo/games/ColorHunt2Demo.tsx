@@ -367,7 +367,18 @@ const ColorHunt2Demo: React.FC = () => {
               fontWeight: 'bold'
             }}
           />
-          <Button variant="contained" onClick={resetGame} size="small">
+          <Button 
+            variant="contained" 
+            onClick={resetGame} 
+            size="small"
+            sx={{
+              backgroundColor: '#6b7280',
+              color: 'white',
+              '&:hover': {
+                backgroundColor: '#4b5563'
+              }
+            }}
+          >
             Start forfra
           </Button>
         </Box>
