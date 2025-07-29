@@ -501,9 +501,26 @@ const ColorHunt2Demo: React.FC = () => {
             <Typography variant="h5" sx={{ fontWeight: 'bold' }}>
               🎉 Fantastisk! 🎉
             </Typography>
-            <Typography variant="body1" sx={{ mt: 1 }}>
+            <Typography variant="body1" sx={{ mt: 1, mb: 2 }}>
               Du fandt alle de {targetColor} ting!
             </Typography>
+            <Button
+              variant="contained"
+              onClick={resetGame}
+              sx={{
+                backgroundColor: 'white',
+                color: getTargetColorHex(),
+                fontWeight: 'bold',
+                px: 3,
+                py: 1,
+                '&:hover': {
+                  backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                  transform: 'scale(1.05)'
+                }
+              }}
+            >
+              Nyt Spil 🚀
+            </Button>
           </Box>
         )}
       </Box>
