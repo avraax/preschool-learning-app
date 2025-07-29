@@ -37,14 +37,14 @@ const demoGames: DemoGame[] = [
   // Color Games
   {
     id: 'color-mix-target',
-    name: 'Farvejagt - Find målet',
+    name: 'Ram farven',
     category: 'colors',
     component: ColorMixTargetDemo,
     hasVariations: false
   },
   {
     id: 'color-mix-free',
-    name: 'Fri farveblanding',
+    name: 'Farvemixer',
     category: 'colors',
     component: ColorMixFreeDemo,
     hasVariations: false
