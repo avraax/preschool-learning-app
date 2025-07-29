@@ -95,7 +95,33 @@ export const DANISH_PHRASES = {
     math: {
       counting: 'Find det rigtige tal du hører (1-30)',
       memory: 'Find par af tal (40 kort)'
+    },
+    colors: {
+      hunt: 'Find alle røde ting og træk dem til cirklen!',
+      mixing: 'Bland farver for at lave nye farver!',
+      rainbow: 'Byg din egen regnbue! Klik på farver for at tilføje dem.',
+      memory: 'Find par af farver (40 kort)'
     }
+  },
+
+  // Color game specific phrases
+  colorGames: {
+    // Success phrases specifically for correct color items (cycles through 5)
+    correctItem: [
+      'Fremragende',
+      'Perfekt', 
+      'Fantastisk',
+      'Super',
+      'Godt klaret'
+    ],
+    // Wrong color item phrases
+    wrongColor: {
+      template: (itemName: string) => `Nej, ${itemName} er ikke rød. Prøv igen!`
+    },
+    // Game completion
+    allItemsFound: 'Fantastisk! Du fandt alle røde ting!',
+    // Game start
+    welcomeColorHunt: 'Find alle røde ting og træk dem til cirklen!'
   },
 
   // Danish number pronunciations (0-100)
@@ -135,6 +161,16 @@ export const getRandomSuccessPhrase = (): string => {
 export const getRandomEncouragementPhrase = (): string => {
   const phrases = DANISH_PHRASES.encouragement
   return phrases[Math.floor(Math.random() * phrases.length)]
+}
+
+// Color game specific helper functions
+export const getRandomCorrectItemPhrase = (): string => {
+  const phrases = DANISH_PHRASES.colorGames.correctItem
+  return phrases[Math.floor(Math.random() * phrases.length)]
+}
+
+export const getWrongColorPhrase = (itemName: string): string => {
+  return DANISH_PHRASES.colorGames.wrongColor.template(itemName)
 }
 
 // Function to convert numbers to Danish text

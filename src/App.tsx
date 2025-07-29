@@ -35,6 +35,7 @@ import UpdateBanner from './components/common/UpdateBanner'
 import GlobalAudioPermission from './components/common/GlobalAudioPermission'
 import { AudioPermissionProvider } from './contexts/AudioPermissionContext'
 import { useViewportHeight } from './hooks/useViewportHeight'
+import DemoPage from './components/demo/DemoPage'
 
 
 // Balloon Components
@@ -722,6 +723,8 @@ function App() {
         {/* Legacy redirect for old admin access */}
         <Route path="/admin" element={<Navigate to="/admin/errors" replace />} />
         
+        {/* Demo Routes */}
+        <Route path="/demo" element={<DemoPage />} />
         
         {/* 404 Not Found */}
         <Route path="*" element={<NotFoundPage />} />
