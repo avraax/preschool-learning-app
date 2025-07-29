@@ -9,7 +9,9 @@ import { DroppableZone } from '../../common/dnd/DroppableZone'
 interface GameItem {
   id: string
   colorName: string
-  label: string
+  objectName: string
+  objectNameDefinite: string
+  emoji: string
   hex: string
   isTarget: boolean
   collected: boolean
@@ -18,55 +20,221 @@ interface GameItem {
   y: number
 }
 
+// Danish object database
+const DANISH_OBJECTS = {
+  rød: [
+    { objectName: 'æble', objectNameDefinite: 'æblet', emoji: '🍎', hex: '#dc2626' },
+    { objectName: 'bil', objectNameDefinite: 'bilen', emoji: '🚗', hex: '#ef4444' },
+    { objectName: 'rose', objectNameDefinite: 'rosen', emoji: '🌹', hex: '#f87171' },
+    { objectName: 'bold', objectNameDefinite: 'bolden', emoji: '⚽', hex: '#b91c1c' },
+    { objectName: 'jordbær', objectNameDefinite: 'jordbæret', emoji: '🍓', hex: '#991b1b' },
+    { objectName: 'hjerte', objectNameDefinite: 'hjertet', emoji: '❤️', hex: '#dc2626' },
+    { objectName: 'hat', objectNameDefinite: 'hatten', emoji: '👒', hex: '#ef4444' }
+  ],
+  blå: [
+    { objectName: 'hav', objectNameDefinite: 'havet', emoji: '🌊', hex: '#3b82f6' },
+    { objectName: 'lastbil', objectNameDefinite: 'lastbilen', emoji: '🚙', hex: '#2563eb' },
+    { objectName: 'hval', objectNameDefinite: 'hvalen', emoji: '🐳', hex: '#1d4ed8' },
+    { objectName: 'skjorte', objectNameDefinite: 'skjorten', emoji: '👔', hex: '#1e40af' },
+    { objectName: 'blåbær', objectNameDefinite: 'blåbæret', emoji: '🫐', hex: '#3730a3' },
+    { objectName: 'himmel', objectNameDefinite: 'himlen', emoji: '☁️', hex: '#60a5fa' }
+  ],
+  grøn: [
+    { objectName: 'blad', objectNameDefinite: 'bladet', emoji: '🌿', hex: '#22c55e' },
+    { objectName: 'agurk', objectNameDefinite: 'agurken', emoji: '🥒', hex: '#16a34a' },
+    { objectName: 'skildpadde', objectNameDefinite: 'skildpadden', emoji: '🐢', hex: '#15803d' },
+    { objectName: 'kløver', objectNameDefinite: 'kløveren', emoji: '🍀', hex: '#166534' },
+    { objectName: 'træ', objectNameDefinite: 'træet', emoji: '🌳', hex: '#14532d' },
+    { objectName: 'salat', objectNameDefinite: 'salaten', emoji: '🥬', hex: '#22c55e' }
+  ],
+  gul: [
+    { objectName: 'sol', objectNameDefinite: 'solen', emoji: '☀️', hex: '#eab308' },
+    { objectName: 'banan', objectNameDefinite: 'bananen', emoji: '🍌', hex: '#facc15' },
+    { objectName: 'majs', objectNameDefinite: 'majsen', emoji: '🌽', hex: '#fde047' },
+    { objectName: 'stjerne', objectNameDefinite: 'stjernen', emoji: '⭐', hex: '#f59e0b' },
+    { objectName: 'smør', objectNameDefinite: 'smørret', emoji: '🧈', hex: '#fbbf24' },
+    { objectName: 'kylling', objectNameDefinite: 'kyllingen', emoji: '🐥', hex: '#f97316' }
+  ],
+  lilla: [
+    { objectName: 'druer', objectNameDefinite: 'druerne', emoji: '🍇', hex: '#a855f7' },
+    { objectName: 'aubergine', objectNameDefinite: 'auberginen', emoji: '🍆', hex: '#9333ea' },
+    { objectName: 'krystal', objectNameDefinite: 'krystallet', emoji: '🔮', hex: '#7c3aed' },
+    { objectName: 'hjerte', objectNameDefinite: 'hjertet', emoji: '💜', hex: '#8b5cf6' },
+    { objectName: 'blomst', objectNameDefinite: 'blomsten', emoji: '🌸', hex: '#a855f7' }
+  ],
+  orange: [
+    { objectName: 'appelsin', objectNameDefinite: 'appelsinen', emoji: '🍊', hex: '#f97316' },
+    { objectName: 'græskar', objectNameDefinite: 'græskaret', emoji: '🎃', hex: '#ea580c' },
+    { objectName: 'ræv', objectNameDefinite: 'ræven', emoji: '🦊', hex: '#dc2626' },
+    { objectName: 'gulerod', objectNameDefinite: 'guleroden', emoji: '🥕', hex: '#f97316' },
+    { objectName: 'hjerte', objectNameDefinite: 'hjertet', emoji: '🧡', hex: '#fb923c' },
+    { objectName: 'fersken', objectNameDefinite: 'ferskenen', emoji: '🍑', hex: '#fdba74' }
+  ]
+}
+
+// Color target options
+const COLOR_TARGETS = [
+  { color: 'rød', phrase: 'Find alle røde ting' },
+  { color: 'blå', phrase: 'Find alle blå ting' },
+  { color: 'grøn', phrase: 'Find alle grønne ting' },
+  { color: 'gul', phrase: 'Find alle gule ting' },
+  { color: 'lilla', phrase: 'Find alle lilla ting' },
+  { color: 'orange', phrase: 'Find alle orange ting' }
+]
+
 const ColorHunt2Demo: React.FC = () => {
   // Game state
   const [gameItems, setGameItems] = useState<GameItem[]>([])
   const [score, setScore] = useState(0)
-  const [totalRed, setTotalRed] = useState(0)
+  const [totalTarget, setTotalTarget] = useState(0)
   const [isComplete, setIsComplete] = useState(false)
   const [activeId, setActiveId] = useState<string | null>(null)
+  const [targetColor, setTargetColor] = useState<string>('rød')
+  const [targetPhrase, setTargetPhrase] = useState<string>('Find alle røde ting')
   const hasInitialized = React.useRef(false)
+  const previousColor = React.useRef<string>('')
 
-  // Initialize game items with positions
+  // Get target color hex for UI elements
+  const getTargetColorHex = () => {
+    const colorObjects = DANISH_OBJECTS[targetColor as keyof typeof DANISH_OBJECTS]
+    return colorObjects?.[0]?.hex || '#dc2626'
+  }
+
+  // Random position generator avoiding center area
+  const generateRandomPositions = (itemCount: number) => {
+    const positions: Array<{x: number, y: number}> = []
+    const centerX = 50, centerY = 50, centerRadius = 25
+    const minDistance = 12
+    
+    for (let i = 0; i < itemCount; i++) {
+      let attempts = 0
+      let position: {x: number, y: number}
+      
+      do {
+        // Generate random position with edge buffer
+        position = {
+          x: Math.random() * 80 + 10, // 10-90% range
+          y: Math.random() * 80 + 10  // 10-90% range
+        }
+        attempts++
+      } while (
+        attempts < 50 && (
+          // Avoid center circle
+          Math.sqrt((position.x - centerX) ** 2 + (position.y - centerY) ** 2) < centerRadius ||
+          // Avoid other items
+          positions.some(pos => 
+            Math.sqrt((position.x - pos.x) ** 2 + (position.y - pos.y) ** 2) < minDistance
+          )
+        )
+      )
+      
+      positions.push(position)
+    }
+    return positions
+  }
+
+  // Select random target color (avoid consecutive repeats)  
+  const selectRandomTarget = () => {
+    let availableTargets = COLOR_TARGETS.filter(target => target.color !== previousColor.current)
+    if (availableTargets.length === 0) availableTargets = COLOR_TARGETS
+    
+    const selected = availableTargets[Math.floor(Math.random() * availableTargets.length)]
+    previousColor.current = selected.color
+    return selected
+  }
+
+  // Generate random game items
+  const generateGameItems = () => {
+    const target = selectRandomTarget()
+    
+    // Get target objects (3-4 items)
+    const targetObjects = DANISH_OBJECTS[target.color as keyof typeof DANISH_OBJECTS]
+    const selectedTargets = targetObjects
+      .sort(() => Math.random() - 0.5)
+      .slice(0, Math.min(4, targetObjects.length))
+    
+    // Get distractor objects (4-6 items from other colors)
+    const distractorObjects: any[] = []
+    const otherColors = Object.keys(DANISH_OBJECTS).filter(color => color !== target.color)
+    
+    otherColors.forEach(color => {
+      const colorObjects = DANISH_OBJECTS[color as keyof typeof DANISH_OBJECTS]
+      const selected = colorObjects
+        .sort(() => Math.random() - 0.5)
+        .slice(0, 1) // 1 item per other color
+      distractorObjects.push(...selected.map(obj => ({ ...obj, colorName: color })))
+    })
+    
+    // Combine and randomize positions
+    const allObjects = [
+      ...selectedTargets.map(obj => ({ ...obj, colorName: target.color, isTarget: true })),
+      ...distractorObjects.map(obj => ({ ...obj, isTarget: false }))
+    ]
+    
+    const positions = generateRandomPositions(allObjects.length)
+    
+    const items: GameItem[] = allObjects.map((obj, index) => ({
+      id: `item-${index + 1}`,
+      colorName: obj.colorName,
+      objectName: obj.objectName,
+      objectNameDefinite: obj.objectNameDefinite,
+      emoji: obj.emoji,
+      hex: obj.hex,
+      isTarget: obj.isTarget,
+      collected: false,
+      returning: false,
+      x: positions[index].x,
+      y: positions[index].y
+    }))
+    
+    return { items, targetCount: selectedTargets.length, targetColor: target.color, targetPhrase: target.phrase }
+  }
+
+  // Initialize game
   useEffect(() => {
-    // Fix dual audio issue
     if (hasInitialized.current) return
     
     hasInitialized.current = true
+    const { items, targetCount, targetColor: newTargetColor, targetPhrase: newTargetPhrase } = generateGameItems()
     
-    const items: GameItem[] = [
-      // Red items (targets)
-      { id: 'item-1', colorName: 'rød', label: 'Rød æble', hex: '#dc2626', isTarget: true, collected: false, returning: false, x: 10, y: 20 },
-      { id: 'item-2', colorName: 'rød', label: 'Rød bil', hex: '#ef4444', isTarget: true, collected: false, returning: false, x: 80, y: 15 },
-      { id: 'item-3', colorName: 'rød', label: 'Rød blomst', hex: '#f87171', isTarget: true, collected: false, returning: false, x: 15, y: 70 },
-      { id: 'item-4', colorName: 'rød', label: 'Rød bold', hex: '#b91c1c', isTarget: true, collected: false, returning: false, x: 75, y: 75 },
-      { id: 'item-5', colorName: 'rød', label: 'Rød hat', hex: '#991b1b', isTarget: true, collected: false, returning: false, x: 5, y: 45 },
-      // Non-red items (distractors)
-      { id: 'item-6', colorName: 'blå', label: 'Blå himmel', hex: '#3b82f6', isTarget: false, collected: false, returning: false, x: 85, y: 45 },
-      { id: 'item-7', colorName: 'grøn', label: 'Grøn græs', hex: '#22c55e', isTarget: false, collected: false, returning: false, x: 30, y: 10 },
-      { id: 'item-8', colorName: 'gul', label: 'Gul sol', hex: '#eab308', isTarget: false, collected: false, returning: false, x: 60, y: 10 },
-      { id: 'item-9', colorName: 'lilla', label: 'Lilla druer', hex: '#a855f7', isTarget: false, collected: false, returning: false, x: 25, y: 80 },
-      { id: 'item-10', colorName: 'orange', label: 'Orange frugt', hex: '#f97316', isTarget: false, collected: false, returning: false, x: 65, y: 85 },
-    ]
-
     setGameItems(items)
-    setTotalRed(items.filter(item => item.isTarget).length)
+    setTotalTarget(targetCount)
+    setTargetColor(newTargetColor)
+    setTargetPhrase(newTargetPhrase)
     
-    // Welcome message with delay to avoid conflicts
+    // Welcome message with delay - use the actual selected target
     setTimeout(() => {
-      audioManager.speak('Velkommen til farve jagt! Find alle de røde ting og træk dem til cirklen.')
+      try {
+        audioManager.speak(`Velkommen til farve jagt! ${newTargetPhrase} og træk dem til cirklen.`)
+          .catch(error => {
+            console.log('Audio error (welcome):', error)
+            audioManager.reset?.()
+          })
+      } catch (error) {
+        console.log('Audio error (welcome):', error)
+        audioManager.reset?.()
+      }
     }, 1000)
   }, [])
 
   // Check for game completion
   useEffect(() => {
-    if (score > 0 && score === totalRed && !isComplete) {
+    if (score > 0 && score === totalTarget && !isComplete) {
       setIsComplete(true)
       setTimeout(() => {
-        audioManager.speak('Godt klaret! Du fandt alle de røde ting!')
+        try {
+          audioManager.speak(`Fantastisk! Du fandt alle de ${targetColor} ting!`)
+            .catch(error => {
+              console.log('Audio error (completion):', error)
+              audioManager.reset?.()
+            })
+        } catch (error) {
+          console.log('Audio error (completion):', error)
+          audioManager.reset?.()
+        }
       }, 300)
     }
-  }, [score, totalRed, isComplete])
+  }, [score, totalTarget, isComplete, targetColor])
 
   // Handle drag start
   const handleDragStart = (event: DragStartEvent) => {
@@ -81,6 +249,16 @@ const ColorHunt2Demo: React.FC = () => {
     const draggedItem = gameItems.find(item => item.id === active.id)
     if (!draggedItem || draggedItem.collected) return
 
+    // Debug logging for tracking game state issues
+    console.log('Drop event:', {
+      itemId: draggedItem.id,
+      itemColor: draggedItem.colorName,
+      targetColor: targetColor,
+      isTarget: draggedItem.isTarget,
+      collected: draggedItem.collected,
+      overZone: over?.id
+    })
+
     // Check if dropped on the target circle
     if (over && over.id === 'target-zone') {
       if (draggedItem.isTarget) {
@@ -94,13 +272,43 @@ const ColorHunt2Demo: React.FC = () => {
           } : item
         ))
         setScore(prev => prev + 1)
-        audioManager.speak(`Flot! ${draggedItem.label} er rød.`)
+        
+        // Play success audio with enhanced error handling
+        setTimeout(() => {
+          try {
+            audioManager.speak(`Flot! ${draggedItem.objectNameDefinite} er ${draggedItem.colorName}.`)
+              .catch(error => {
+                console.log('Audio error (correct item):', error)
+                // Attempt to reset audio on error
+                audioManager.reset?.()
+              })
+          } catch (error) {
+            console.log('Audio error (correct item):', error)
+            // Attempt to reset audio on error
+            audioManager.reset?.()
+          }
+        }, 200)
       } else {
         // Wrong item - bounce it back to original position
         setGameItems(prev => prev.map(item =>
           item.id === active.id ? { ...item, returning: true } : item
         ))
-        audioManager.speak(`Nej, ${draggedItem.label} er ${draggedItem.colorName}, ikke rød.`)
+        
+        // Play error audio with enhanced error handling
+        setTimeout(() => {
+          try {
+            audioManager.speak(`Nej, ${draggedItem.objectNameDefinite} er ${draggedItem.colorName}, ikke ${targetColor}.`)
+              .catch(error => {
+                console.log('Audio error (wrong item):', error)
+                // Attempt to reset audio on error
+                audioManager.reset?.()
+              })
+          } catch (error) {
+            console.log('Audio error (wrong item):', error)
+            // Attempt to reset audio on error
+            audioManager.reset?.()
+          }
+        }, 200)
         
         // Reset returning state after animation
         setTimeout(() => {
@@ -113,26 +321,29 @@ const ColorHunt2Demo: React.FC = () => {
     // Items dropped outside target zone automatically return to original position
   }
 
-  // Reset game
+  // Reset game with new random setup
   const resetGame = () => {
-    // Reset to original positions
-    const items: GameItem[] = [
-      { id: 'item-1', colorName: 'rød', label: 'Rød æble', hex: '#dc2626', isTarget: true, collected: false, returning: false, x: 10, y: 20 },
-      { id: 'item-2', colorName: 'rød', label: 'Rød bil', hex: '#ef4444', isTarget: true, collected: false, returning: false, x: 80, y: 15 },
-      { id: 'item-3', colorName: 'rød', label: 'Rød blomst', hex: '#f87171', isTarget: true, collected: false, returning: false, x: 15, y: 70 },
-      { id: 'item-4', colorName: 'rød', label: 'Rød bold', hex: '#b91c1c', isTarget: true, collected: false, returning: false, x: 75, y: 75 },
-      { id: 'item-5', colorName: 'rød', label: 'Rød hat', hex: '#991b1b', isTarget: true, collected: false, returning: false, x: 5, y: 45 },
-      { id: 'item-6', colorName: 'blå', label: 'Blå himmel', hex: '#3b82f6', isTarget: false, collected: false, returning: false, x: 85, y: 45 },
-      { id: 'item-7', colorName: 'grøn', label: 'Grøn græs', hex: '#22c55e', isTarget: false, collected: false, returning: false, x: 30, y: 10 },
-      { id: 'item-8', colorName: 'gul', label: 'Gul sol', hex: '#eab308', isTarget: false, collected: false, returning: false, x: 60, y: 10 },
-      { id: 'item-9', colorName: 'lilla', label: 'Lilla druer', hex: '#a855f7', isTarget: false, collected: false, returning: false, x: 25, y: 80 },
-      { id: 'item-10', colorName: 'orange', label: 'Orange frugt', hex: '#f97316', isTarget: false, collected: false, returning: false, x: 65, y: 85 },
-    ]
+    const { items, targetCount, targetColor: newTargetColor, targetPhrase: newTargetPhrase } = generateGameItems()
     
     setGameItems(items)
+    setTotalTarget(targetCount)
+    setTargetColor(newTargetColor)
+    setTargetPhrase(newTargetPhrase)
     setScore(0)
     setIsComplete(false)
-    audioManager.speak('Nyt spil! Find alle de røde ting.')
+    
+    setTimeout(() => {
+      try {
+        audioManager.speak(`Nyt spil! ${newTargetPhrase} og træk dem til cirklen.`)
+          .catch(error => {
+            console.log('Audio error (reset):', error)
+            audioManager.reset?.()
+          })
+      } catch (error) {
+        console.log('Audio error (reset):', error)
+        audioManager.reset?.()
+      }
+    }, 500)
   }
 
   const activeItem = gameItems.find(item => item.id === activeId)
@@ -146,9 +357,15 @@ const ColorHunt2Demo: React.FC = () => {
         </Typography>
         <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', alignItems: 'center', mb: 2 }}>
           <Chip 
-            label={`Score: ${score}/${totalRed}`} 
-            color={isComplete ? 'success' : 'primary'}
-            sx={{ fontSize: '1.1rem', py: 2 }}
+            label={`${targetColor} ting: ${score}/${totalTarget}`} 
+            sx={{ 
+              fontSize: '1.1rem', 
+              py: 2, 
+              textTransform: 'capitalize',
+              backgroundColor: getTargetColorHex(),
+              color: 'white',
+              fontWeight: 'bold'
+            }}
           />
           <Button variant="contained" onClick={resetGame} size="small">
             Start forfra
@@ -192,8 +409,8 @@ const ColorHunt2Demo: React.FC = () => {
                 width: '100%',
                 height: '100%',
                 borderRadius: '50%',
-                border: '4px dashed #dc2626',
-                backgroundColor: 'rgba(220, 38, 38, 0.1)',
+                border: `4px dashed ${getTargetColorHex()}`,
+                backgroundColor: `${getTargetColorHex()}1A`, // 10% opacity
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -203,13 +420,13 @@ const ColorHunt2Demo: React.FC = () => {
               <Typography 
                 variant="body1" 
                 sx={{ 
-                  color: '#dc2626', 
+                  color: getTargetColorHex(), 
                   fontWeight: 'bold',
                   textAlign: 'center',
                   pointerEvents: 'none'
                 }}
               >
-                Træk røde ting hertil
+                Træk {targetColor} ting hertil
               </Typography>
             </DroppableZone>
           </div>
@@ -245,16 +462,13 @@ const ColorHunt2Demo: React.FC = () => {
                 }}
               >
                 <Typography 
-                  variant="caption" 
                   sx={{ 
-                    color: 'white', 
-                    fontWeight: 'bold',
-                    textAlign: 'center',
-                    fontSize: '0.8rem',
-                    padding: '4px'
+                    fontSize: '2.5rem',
+                    lineHeight: 1,
+                    userSelect: 'none'
                   }}
                 >
-                  {item.label}
+                  {item.emoji}
                 </Typography>
               </Box>
             </DraggableItem>
@@ -274,20 +488,21 @@ const ColorHunt2Demo: React.FC = () => {
               top: '50%',
               left: '50%',
               transform: 'translate(-50%, -50%)',
-              backgroundColor: 'rgba(34, 197, 94, 0.9)',
+              backgroundColor: `${getTargetColorHex()}E6`, // Add transparency to target color
               color: 'white',
               padding: 3,
               borderRadius: 2,
               textAlign: 'center',
               zIndex: 20,
-              animation: 'fadeIn 0.5s ease-in'
+              animation: 'fadeIn 0.5s ease-in',
+              boxShadow: 3
             }}
           >
             <Typography variant="h5" sx={{ fontWeight: 'bold' }}>
               🎉 Fantastisk! 🎉
             </Typography>
             <Typography variant="body1" sx={{ mt: 1 }}>
-              Du fandt alle de røde ting!
+              Du fandt alle de {targetColor} ting!
             </Typography>
           </Box>
         )}
@@ -296,7 +511,7 @@ const ColorHunt2Demo: React.FC = () => {
       {/* Instructions */}
       <Box sx={{ textAlign: 'center', mt: 2 }}>
         <Typography variant="body2" color="text.secondary">
-          Træk alle de røde ting til cirklen i midten
+          Træk alle de {targetColor} ting til cirklen i midten
         </Typography>
       </Box>
 
