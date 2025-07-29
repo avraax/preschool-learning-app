@@ -16,6 +16,7 @@ import { ArrowLeft, Palette, Shapes } from 'lucide-react'
 
 // Import demo components
 import ColorMixTargetDemo from './games/ColorMixTargetDemo'
+import ColorMixTargetDemoOld from './games/ColorMixTargetDemoOld'
 import ColorMixFreeDemo from './games/ColorMixFreeDemo'
 import RainbowBuilderDemo from './games/RainbowBuilderDemo'
 import ColorMemoryDemo from './games/ColorMemoryDemo'
@@ -40,6 +41,13 @@ const demoGames: DemoGame[] = [
     name: 'Ram farven',
     category: 'colors',
     component: ColorMixTargetDemo,
+    hasVariations: false
+  },
+  {
+    id: 'color-mix-target-old',
+    name: 'Ram farven - old',
+    category: 'colors',
+    component: ColorMixTargetDemoOld,
     hasVariations: false
   },
   {
