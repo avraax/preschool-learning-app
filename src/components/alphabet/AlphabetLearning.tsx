@@ -16,6 +16,7 @@ import {
   School
 } from '@mui/icons-material'
 import { audioManager } from '../../utils/audio'
+import { categoryThemes } from '../../config/categoryThemes'
 import LearningGrid from '../common/LearningGrid'
 
 
@@ -100,7 +101,7 @@ const AlphabetLearning: React.FC = () => {
         overflow: 'hidden',
         display: 'flex',
         flexDirection: 'column',
-        background: 'linear-gradient(135deg, #f3e8ff 0%, #fce7f3 50%, #dbeafe 100%)'
+        background: categoryThemes.alphabet.gradient
       }}
     >
       {/* App Bar with Back Button and Progress */}

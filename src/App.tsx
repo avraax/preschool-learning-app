@@ -15,7 +15,6 @@ import {
 import { 
   ArrowLeft,
   BookOpen,
-  Brain,
   Play,
   Star
 } from 'lucide-react'
@@ -48,6 +47,7 @@ import LottieCharacter, { useCharacterState } from './components/common/LottieCh
 import { useUpdateChecker } from './hooks/useUpdateChecker'
 import { useNativeAppFeel } from './hooks/useNativeAppFeel'
 import { LogoLarge } from './components/common/Logo'
+import { categoryThemes } from './config/categoryThemes'
 
 // Admin redirect component for query parameter support
 const AdminRedirectChecker = ({ children }: { children: React.ReactNode }) => {
@@ -386,11 +386,11 @@ const HomePage = () => {
                     minHeight: { xs: 180, sm: 220, md: 240 },
                     cursor: 'pointer',
                     border: '2px solid',
-                    borderColor: 'primary.200',
+                    borderColor: categoryThemes.alphabet.borderColor,
                     display: 'flex',
                     flexDirection: 'column',
                     '&:hover': {
-                      borderColor: 'primary.main',
+                      borderColor: categoryThemes.alphabet.hoverBorderColor,
                       boxShadow: 6
                     },
                     // Orientation specific adjustments
@@ -406,62 +406,34 @@ const HomePage = () => {
                       display: 'flex',
                       flexDirection: 'column',
                       justifyContent: 'center',
-                      textAlign: 'center',
-                      position: 'relative',
-                      '&::after': {
-                        content: '""',
-                        position: 'absolute',
-                        right: { xs: 16, md: 24 },
-                        top: '50%',
-                        transform: 'translateY(-50%)',
-                        width: 0,
-                        height: 0,
-                        borderTop: '12px solid transparent',
-                        borderBottom: '12px solid transparent',
-                        borderLeft: '16px solid #1976d2',
-                        opacity: 0.5
-                      }
+                      textAlign: 'center'
                     }}
                   >
-                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, mb: 2 }}>
-                      <motion.div
-                        animate={{ rotate: [0, 3, -3, 0] }}
-                        transition={{ duration: 3, repeat: Infinity }}
+                    <Box sx={{ mb: 2 }}>
+                      <Typography sx={{ fontSize: categoryThemes.alphabet.iconSize, mb: 2 }}>
+                        {categoryThemes.alphabet.icon}
+                      </Typography>
+                      <Typography 
+                        variant="h4" 
+                        sx={{ 
+                          mb: 1, 
+                          fontWeight: 700,
+                          fontSize: { xs: '1.5rem', md: '1.75rem' },
+                          color: categoryThemes.alphabet.accentColor
+                        }}
                       >
-                        <BookOpen size={48} color="#1976d2" />
-                      </motion.div>
-                      <Typography sx={{ fontSize: '3.5rem' }}>🔤</Typography>
-                      <LottieCharacter
-                        character="owl"
-                        state="thinking"
-                        size={60}
-                        loop={true}
-                      />
+                        {categoryThemes.alphabet.name}
+                      </Typography>
+                      <Typography 
+                        variant="body1" 
+                        color="text.secondary" 
+                        sx={{ 
+                          fontSize: { xs: '0.875rem', md: '1rem' }
+                        }}
+                      >
+                        {categoryThemes.alphabet.description}
+                      </Typography>
                     </Box>
-                    <Typography 
-                      variant="h4" 
-                      color="primary.dark" 
-                      sx={{ 
-                        mb: 1, 
-                        fontWeight: 700,
-                        fontSize: { xs: '1.5rem', md: '1.75rem' }
-                      }}
-                    >
-                      Alfabetet
-                    </Typography>
-                    <Typography 
-                      variant="body1" 
-                      color="text.secondary" 
-                      sx={{ 
-                        fontSize: { xs: '0.875rem', md: '1rem' },
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: 0.5
-                      }}
-                    >
-                      3 øvelser <Typography component="span" sx={{ fontSize: '1.2rem' }}>→</Typography>
-                    </Typography>
                   </CardContent>
                 </Card>
               </motion.div>
@@ -483,11 +455,11 @@ const HomePage = () => {
                     minHeight: { xs: 180, sm: 220, md: 240 },
                     cursor: 'pointer',
                     border: '2px solid',
-                    borderColor: 'secondary.200',
+                    borderColor: categoryThemes.math.borderColor,
                     display: 'flex',
                     flexDirection: 'column',
                     '&:hover': {
-                      borderColor: 'secondary.main',
+                      borderColor: categoryThemes.math.hoverBorderColor,
                       boxShadow: 6
                     },
                     // Orientation specific adjustments
@@ -503,62 +475,34 @@ const HomePage = () => {
                       display: 'flex',
                       flexDirection: 'column',
                       justifyContent: 'center',
-                      textAlign: 'center',
-                      position: 'relative',
-                      '&::after': {
-                        content: '""',
-                        position: 'absolute',
-                        right: { xs: 16, md: 24 },
-                        top: '50%',
-                        transform: 'translateY(-50%)',
-                        width: 0,
-                        height: 0,
-                        borderTop: '12px solid transparent',
-                        borderBottom: '12px solid transparent',
-                        borderLeft: '16px solid #9c27b0',
-                        opacity: 0.5
-                      }
+                      textAlign: 'center'
                     }}
                   >
-                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, mb: 2 }}>
-                      <motion.div
-                        animate={{ y: [0, -3, 0] }}
-                        transition={{ duration: 2, repeat: Infinity }}
+                    <Box sx={{ mb: 2 }}>
+                      <Typography sx={{ fontSize: categoryThemes.math.iconSize, mb: 2 }}>
+                        {categoryThemes.math.icon}
+                      </Typography>
+                      <Typography 
+                        variant="h4" 
+                        sx={{ 
+                          mb: 1, 
+                          fontWeight: 700,
+                          fontSize: { xs: '1.5rem', md: '1.75rem' },
+                          color: categoryThemes.math.accentColor
+                        }}
                       >
-                        <Brain size={48} color="#9c27b0" />
-                      </motion.div>
-                      <Typography sx={{ fontSize: '3.5rem' }}>🧮</Typography>
-                      <LottieCharacter
-                        character="fox"
-                        state="thinking"
-                        size={60}
-                        loop={true}
-                      />
+                        {categoryThemes.math.name}
+                      </Typography>
+                      <Typography 
+                        variant="body1" 
+                        color="text.secondary" 
+                        sx={{ 
+                          fontSize: { xs: '0.875rem', md: '1rem' }
+                        }}
+                      >
+                        {categoryThemes.math.description}
+                      </Typography>
                     </Box>
-                    <Typography 
-                      variant="h4" 
-                      color="secondary.dark" 
-                      sx={{ 
-                        mb: 1, 
-                        fontWeight: 700,
-                        fontSize: { xs: '1.5rem', md: '1.75rem' }
-                      }}
-                    >
-                      Tal og Regning
-                    </Typography>
-                    <Typography 
-                      variant="body1" 
-                      color="text.secondary" 
-                      sx={{ 
-                        fontSize: { xs: '0.875rem', md: '1rem' },
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: 0.5
-                      }}
-                    >
-                      5 øvelser <Typography component="span" sx={{ fontSize: '1.2rem' }}>→</Typography>
-                    </Typography>
                   </CardContent>
                 </Card>
               </motion.div>
@@ -580,11 +524,11 @@ const HomePage = () => {
                     minHeight: { xs: 180, sm: 220, md: 240 },
                     cursor: 'pointer',
                     border: '2px solid',
-                    borderColor: '#FFB74D',
+                    borderColor: categoryThemes.colors.borderColor,
                     display: 'flex',
                     flexDirection: 'column',
                     '&:hover': {
-                      borderColor: '#FF6B00',
+                      borderColor: categoryThemes.colors.hoverBorderColor,
                       boxShadow: 6
                     },
                     // Orientation specific adjustments
@@ -600,62 +544,34 @@ const HomePage = () => {
                       display: 'flex',
                       flexDirection: 'column',
                       justifyContent: 'center',
-                      textAlign: 'center',
-                      position: 'relative',
-                      '&::after': {
-                        content: '""',
-                        position: 'absolute',
-                        right: { xs: 16, md: 24 },
-                        top: '50%',
-                        transform: 'translateY(-50%)',
-                        width: 0,
-                        height: 0,
-                        borderTop: '12px solid transparent',
-                        borderBottom: '12px solid transparent',
-                        borderLeft: '16px solid #FF6B00',
-                        opacity: 0.5
-                      }
+                      textAlign: 'center'
                     }}
                   >
-                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, mb: 2 }}>
-                      <motion.div
-                        animate={{ rotate: [0, 10, -10, 0] }}
-                        transition={{ duration: 3, repeat: Infinity }}
+                    <Box sx={{ mb: 2 }}>
+                      <Typography sx={{ fontSize: categoryThemes.colors.iconSize, mb: 2 }}>
+                        {categoryThemes.colors.icon}
+                      </Typography>
+                      <Typography 
+                        variant="h4" 
+                        sx={{ 
+                          mb: 1, 
+                          fontWeight: 700,
+                          fontSize: { xs: '1.5rem', md: '1.75rem' },
+                          color: categoryThemes.colors.accentColor
+                        }}
                       >
-                        <Typography sx={{ fontSize: '3rem' }}>🎨</Typography>
-                      </motion.div>
-                      <Typography sx={{ fontSize: '3.5rem' }}>🌈</Typography>
-                      <LottieCharacter
-                        character="bear"
-                        state="thinking"
-                        size={60}
-                        loop={true}
-                      />
+                        {categoryThemes.colors.name}
+                      </Typography>
+                      <Typography 
+                        variant="body1" 
+                        color="text.secondary" 
+                        sx={{ 
+                          fontSize: { xs: '0.875rem', md: '1rem' }
+                        }}
+                      >
+                        {categoryThemes.colors.description}
+                      </Typography>
                     </Box>
-                    <Typography 
-                      variant="h4" 
-                      sx={{ 
-                        mb: 1, 
-                        fontWeight: 700,
-                        fontSize: { xs: '1.5rem', md: '1.75rem' },
-                        color: '#E65100'
-                      }}
-                    >
-                      Farver
-                    </Typography>
-                    <Typography 
-                      variant="body1" 
-                      color="text.secondary" 
-                      sx={{ 
-                        fontSize: { xs: '0.875rem', md: '1rem' },
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: 0.5
-                      }}
-                    >
-                      1 øvelse <Typography component="span" sx={{ fontSize: '1.2rem' }}>→</Typography>
-                    </Typography>
                   </CardContent>
                 </Card>
               </motion.div>

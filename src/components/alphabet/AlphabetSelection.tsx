@@ -21,6 +21,7 @@ import {
 } from '@mui/icons-material'
 import { ArrowLeft } from 'lucide-react'
 import { DANISH_PHRASES } from '../../config/danish-phrases'
+import { categoryThemes } from '../../config/categoryThemes'
 
 const AlphabetSelection: React.FC = () => {
   const navigate = useNavigate()
@@ -55,7 +56,7 @@ const AlphabetSelection: React.FC = () => {
     <Box 
       sx={{ 
         height: 'calc(var(--vh, 1vh) * 100)',
-        background: 'linear-gradient(135deg, #f3e8ff 0%, #fce7f3 50%, #dbeafe 100%)',
+        background: categoryThemes.alphabet.gradient,
         overflow: 'hidden',
         display: 'flex',
         flexDirection: 'column'

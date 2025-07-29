@@ -10,8 +10,7 @@ import {
   CardContent,
   AppBar,
   Toolbar,
-  IconButton,
-  Chip
+  IconButton
 } from '@mui/material'
 import { ArrowLeft, Palette, Shapes } from 'lucide-react'
 

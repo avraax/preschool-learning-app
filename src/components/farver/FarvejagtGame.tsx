@@ -4,6 +4,7 @@ import { Box, Typography, Button, Container, Chip, AppBar, Toolbar, IconButton }
 import { ArrowLeft } from 'lucide-react'
 import { DndContext, DragEndEvent, DragStartEvent, DragOverlay, closestCenter } from '@dnd-kit/core'
 import { audioManager } from '../../utils/audio'
+import { categoryThemes } from '../../config/categoryThemes'
 import { DraggableItem } from '../common/dnd/DraggableItem'
 import { DroppableZone } from '../common/dnd/DroppableZone'
 
@@ -91,9 +92,9 @@ const FarvejagtGame: React.FC = () => {
   const [score, setScore] = useState(0)
   const [totalTarget, setTotalTarget] = useState(0)
   const [isComplete, setIsComplete] = useState(false)
-  const [activeId, setActiveId] = useState<string | null>(null)
+  const [_activeId, setActiveId] = useState<string | null>(null)
   const [targetColor, setTargetColor] = useState<string>('rød')
-  const [targetPhrase, setTargetPhrase] = useState<string>('Find alle røde ting')
+  const [, setTargetPhrase] = useState<string>('Find alle røde ting')
   const hasInitialized = React.useRef(false)
   const previousColor = React.useRef<string>('')
 
@@ -223,11 +224,9 @@ const FarvejagtGame: React.FC = () => {
         audioManager.speak(`Velkommen til farve jagt! ${newTargetPhrase} og træk dem til cirklen.`)
           .catch(error => {
             console.log('Audio error (welcome):', error)
-            audioManager.reset?.()
           })
       } catch (error) {
         console.log('Audio error (welcome):', error)
-        audioManager.reset?.()
       }
     }, 1000)
   }, [])
@@ -241,12 +240,10 @@ const FarvejagtGame: React.FC = () => {
           audioManager.speak(`Fantastisk! Du fandt alle de ${targetColor} ting!`)
             .catch(error => {
               console.log('Audio error (completion):', error)
-              audioManager.reset?.()
-            })
+              })
         } catch (error) {
           console.log('Audio error (completion):', error)
-          audioManager.reset?.()
-        }
+          }
       }, 300)
     }
   }, [score, totalTarget, isComplete, targetColor])
@@ -335,13 +332,9 @@ const FarvejagtGame: React.FC = () => {
             audioManager.speak(`Flot! ${draggedItem.objectNameDefinite} er ${draggedItem.colorName}.`)
               .catch(error => {
                 console.log('Audio error (correct item):', error)
-                // Attempt to reset audio on error
-                audioManager.reset?.()
-              })
+                  })
           } catch (error) {
             console.log('Audio error (correct item):', error)
-            // Attempt to reset audio on error
-            audioManager.reset?.()
           }
         }, 200)
       } else {
@@ -363,13 +356,9 @@ const FarvejagtGame: React.FC = () => {
             audioManager.speak(`Nej, ${draggedItem.objectNameDefinite} er ${draggedItem.colorName}, ikke ${targetColor}.`)
               .catch(error => {
                 console.log('Audio error (wrong item):', error)
-                // Attempt to reset audio on error
-                audioManager.reset?.()
-              })
+                  })
           } catch (error) {
             console.log('Audio error (wrong item):', error)
-            // Attempt to reset audio on error
-            audioManager.reset?.()
           }
         }, 200)
         
@@ -404,21 +393,19 @@ const FarvejagtGame: React.FC = () => {
         audioManager.speak(`Nyt spil! ${newTargetPhrase} og træk dem til cirklen.`)
           .catch(error => {
             console.log('Audio error (reset):', error)
-            audioManager.reset?.()
           })
       } catch (error) {
         console.log('Audio error (reset):', error)
-        audioManager.reset?.()
       }
     }, 500)
   }
 
-  const activeItem = gameItems.find(item => item.id === activeId)
+  // const activeItem = gameItems.find(item => item.id === activeId)
 
   return (
     <Box sx={{ 
       minHeight: 'calc(var(--vh, 1vh) * 100)',
-      background: 'linear-gradient(135deg, #FFF3E0 0%, #FFE0B2 50%, #FFCC80 100%)',
+      background: categoryThemes.colors.gradient,
       display: 'flex',
       flexDirection: 'column'
     }}>
@@ -444,7 +431,7 @@ const FarvejagtGame: React.FC = () => {
           <Typography variant="h6" component="div" sx={{ 
             flexGrow: 1,
             fontWeight: 700,
-            color: '#E65100'
+            color: categoryThemes.colors.accentColor
           }}>
             Farvejagt
           </Typography>
@@ -454,7 +441,7 @@ const FarvejagtGame: React.FC = () => {
       <Container sx={{ flex: 1, display: 'flex', flexDirection: 'column', py: 2 }}>
         {/* Header */}
         <Box sx={{ textAlign: 'center', mb: 2 }}>
-          <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 1, color: '#E65100' }}>
+          <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 1, color: categoryThemes.colors.accentColor }}>
             Farvejagt
           </Typography>
         <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', alignItems: 'center', mb: 2 }}>

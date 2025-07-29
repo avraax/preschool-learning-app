@@ -16,6 +16,7 @@ import {
   School
 } from '@mui/icons-material'
 import { audioManager } from '../../utils/audio'
+import { categoryThemes } from '../../config/categoryThemes'
 import LearningGrid from '../common/LearningGrid'
 
 
@@ -83,7 +84,7 @@ const NumberLearning: React.FC = () => {
         overflow: 'hidden',
         display: 'flex',
         flexDirection: 'column',
-        background: 'linear-gradient(135deg, #e0f2fe 0%, #f3e5f5 50%, #fff3e0 100%)'
+        background: categoryThemes.math.gradient
       }}
     >
       {/* App Bar with Back Button and Progress */}

@@ -88,9 +88,9 @@ const ColorHunt2Demo: React.FC = () => {
   const [score, setScore] = useState(0)
   const [totalTarget, setTotalTarget] = useState(0)
   const [isComplete, setIsComplete] = useState(false)
-  const [activeId, setActiveId] = useState<string | null>(null)
+  const [_activeId, setActiveId] = useState<string | null>(null)
   const [targetColor, setTargetColor] = useState<string>('rød')
-  const [targetPhrase, setTargetPhrase] = useState<string>('Find alle røde ting')
+  const [, setTargetPhrase] = useState<string>('Find alle røde ting')
   const hasInitialized = React.useRef(false)
   const previousColor = React.useRef<string>('')
 
@@ -220,11 +220,9 @@ const ColorHunt2Demo: React.FC = () => {
         audioManager.speak(`Velkommen til farve jagt! ${newTargetPhrase} og træk dem til cirklen.`)
           .catch(error => {
             console.log('Audio error (welcome):', error)
-            audioManager.reset?.()
           })
       } catch (error) {
         console.log('Audio error (welcome):', error)
-        audioManager.reset?.()
       }
     }, 1000)
   }, [])
@@ -238,12 +236,10 @@ const ColorHunt2Demo: React.FC = () => {
           audioManager.speak(`Fantastisk! Du fandt alle de ${targetColor} ting!`)
             .catch(error => {
               console.log('Audio error (completion):', error)
-              audioManager.reset?.()
-            })
+              })
         } catch (error) {
           console.log('Audio error (completion):', error)
-          audioManager.reset?.()
-        }
+          }
       }, 300)
     }
   }, [score, totalTarget, isComplete, targetColor])
@@ -332,13 +328,9 @@ const ColorHunt2Demo: React.FC = () => {
             audioManager.speak(`Flot! ${draggedItem.objectNameDefinite} er ${draggedItem.colorName}.`)
               .catch(error => {
                 console.log('Audio error (correct item):', error)
-                // Attempt to reset audio on error
-                audioManager.reset?.()
-              })
+                  })
           } catch (error) {
             console.log('Audio error (correct item):', error)
-            // Attempt to reset audio on error
-            audioManager.reset?.()
           }
         }, 200)
       } else {
@@ -360,13 +352,9 @@ const ColorHunt2Demo: React.FC = () => {
             audioManager.speak(`Nej, ${draggedItem.objectNameDefinite} er ${draggedItem.colorName}, ikke ${targetColor}.`)
               .catch(error => {
                 console.log('Audio error (wrong item):', error)
-                // Attempt to reset audio on error
-                audioManager.reset?.()
-              })
+                  })
           } catch (error) {
             console.log('Audio error (wrong item):', error)
-            // Attempt to reset audio on error
-            audioManager.reset?.()
           }
         }, 200)
         
@@ -401,16 +389,14 @@ const ColorHunt2Demo: React.FC = () => {
         audioManager.speak(`Nyt spil! ${newTargetPhrase} og træk dem til cirklen.`)
           .catch(error => {
             console.log('Audio error (reset):', error)
-            audioManager.reset?.()
           })
       } catch (error) {
         console.log('Audio error (reset):', error)
-        audioManager.reset?.()
       }
     }, 500)
   }
 
-  const activeItem = gameItems.find(item => item.id === activeId)
+  // const activeItem = gameItems.find(item => item.id === activeId)
 
   return (
     <Container sx={{ height: '100%', display: 'flex', flexDirection: 'column', py: 2 }}>

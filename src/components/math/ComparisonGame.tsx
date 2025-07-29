@@ -7,6 +7,7 @@ import LottieCharacter, { useCharacterState } from '../common/LottieCharacter'
 import CelebrationEffect, { useCelebration } from '../common/CelebrationEffect'
 import { audioManager } from '../../utils/audio'
 import { DANISH_PHRASES } from '../../config/danish-phrases'
+import { categoryThemes } from '../../config/categoryThemes'
 
 // Object types for visual counting
 const OBJECT_TYPES = [
@@ -271,7 +272,7 @@ const ComparisonGame: React.FC = () => {
         overflow: 'hidden',
         display: 'flex',
         flexDirection: 'column',
-        background: 'linear-gradient(135deg, #e1f5fe 0%, #f3e5f5 50%, #fff8e1 100%)'
+        background: categoryThemes.math.gradient
       }}
     >
       {/* App Bar with Back Button and Score */}

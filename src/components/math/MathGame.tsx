@@ -17,6 +17,7 @@ import { Volume2, Award, ArrowLeft } from 'lucide-react'
 import { audioManager } from '../../utils/audio'
 import { isIOS } from '../../utils/deviceDetection'
 import { DANISH_PHRASES } from '../../config/danish-phrases'
+import { categoryThemes } from '../../config/categoryThemes'
 import LottieCharacter, { useCharacterState } from '../common/LottieCharacter'
 import CelebrationEffect, { useCelebration } from '../common/CelebrationEffect'
 
@@ -272,7 +273,7 @@ const MathGame: React.FC = () => {
         overflow: 'hidden',
         display: 'flex',
         flexDirection: 'column',
-        background: 'linear-gradient(135deg, #dbeafe 0%, #dcfce7 50%, #fef3c7 100%)'
+        background: categoryThemes.math.gradient
       }}
     >
       {/* App Bar with Back Button and Score */}

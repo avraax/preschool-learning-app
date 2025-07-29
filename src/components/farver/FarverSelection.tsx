@@ -6,7 +6,6 @@ import {
   Grid,
   Card,
   CardContent,
-  Button,
   Typography,
   Box,
   AppBar,
@@ -14,7 +13,7 @@ import {
   IconButton
 } from '@mui/material'
 import { ArrowLeft, Palette } from 'lucide-react'
-import { audioManager } from '../../utils/audio'
+import { categoryThemes } from '../../config/categoryThemes'
 import LottieCharacter, { useCharacterState } from '../common/LottieCharacter'
 
 const FarverSelection: React.FC = () => {
@@ -43,7 +42,7 @@ const FarverSelection: React.FC = () => {
   return (
     <Box sx={{ 
       minHeight: 'calc(var(--vh, 1vh) * 100)',
-      background: 'linear-gradient(135deg, #FFF3E0 0%, #FFE0B2 50%, #FFCC80 100%)',
+      background: categoryThemes.colors.gradient,
       display: 'flex',
       flexDirection: 'column'
     }}>
@@ -139,11 +138,11 @@ const FarverSelection: React.FC = () => {
                     height: 250,
                     cursor: 'pointer',
                     border: '3px solid',
-                    borderColor: '#FFB74D',
+                    borderColor: categoryThemes.colors.borderColor,
                     background: game.gradient,
                     color: 'white',
                     '&:hover': {
-                      borderColor: '#FF6B00',
+                      borderColor: categoryThemes.colors.hoverBorderColor,
                       boxShadow: 6,
                       transform: 'translateY(-4px)'
                     },
@@ -190,12 +189,6 @@ const FarverSelection: React.FC = () => {
           ))}
         </Grid>
 
-        {/* Coming Soon Message */}
-        <Box sx={{ textAlign: 'center', mt: 4, opacity: 0.7 }}>
-          <Typography variant="body2" color="text.secondary">
-            Flere farvespil kommer snart! 🌈
-          </Typography>
-        </Box>
       </Container>
     </Box>
   )

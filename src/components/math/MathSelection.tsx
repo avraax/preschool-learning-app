@@ -23,6 +23,7 @@ import {
 } from '@mui/icons-material'
 import { ArrowLeft } from 'lucide-react'
 import { DANISH_PHRASES } from '../../config/danish-phrases'
+import { categoryThemes } from '../../config/categoryThemes'
 
 const MathSelection: React.FC = () => {
   const navigate = useNavigate()
@@ -73,7 +74,7 @@ const MathSelection: React.FC = () => {
     <Box 
       sx={{ 
         height: 'calc(var(--vh, 1vh) * 100)',
-        background: 'linear-gradient(135deg, #e0f2fe 0%, #f3e5f5 50%, #fff3e0 100%)',
+        background: categoryThemes.math.gradient,
         overflow: 'hidden',
         display: 'flex',
         flexDirection: 'column'
