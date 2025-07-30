@@ -30,6 +30,7 @@ import AdditionGame from './components/math/AdditionGame'
 import ComparisonGame from './components/math/ComparisonGame'
 import FarverSelection from './components/farver/FarverSelection'
 import FarvejagtGame from './components/farver/FarvejagtGame'
+import RamFarvenGame from './components/farver/RamFarvenGame'
 import MemoryGame from './components/learning/MemoryGame'
 import ErrorDashboard from './components/admin/ErrorDashboard'
 import UpdateBanner from './components/common/UpdateBanner'
@@ -732,6 +733,7 @@ function App() {
         {/* Farver Routes */}
         <Route path="/farver" element={<FarverSelection />} />
         <Route path="/farver/jagt" element={<FarvejagtGame />} />
+        <Route path="/farver/ram-farven" element={<RamFarvenGame />} />
         
         {/* Learning Routes */}
         <Route path="/learning/memory/:type" element={<MemoryGame />} />

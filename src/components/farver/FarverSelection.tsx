@@ -35,8 +35,15 @@ const FarverSelection: React.FC = () => {
       emoji: '🎯',
       route: '/farver/jagt',
       gradient: 'linear-gradient(135deg, #FF6B6B 0%, #FF8E53 50%, #FF6B9D 100%)'
+    },
+    {
+      id: 'ram-farven',
+      title: 'Ram Farven',
+      description: 'Bland to farver og lav den rigtige farve',
+      emoji: '🎨',
+      route: '/farver/ram-farven',
+      gradient: 'linear-gradient(135deg, #A855F7 0%, #F97316 50%, #10B981 100%)'
     }
-    // Future games will be added here
   ]
 
   return (
