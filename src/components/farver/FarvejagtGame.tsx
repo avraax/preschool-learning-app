@@ -7,6 +7,9 @@ import { audioManager } from '../../utils/audio'
 import { categoryThemes } from '../../config/categoryThemes'
 import { DraggableItem } from '../common/dnd/DraggableItem'
 import { DroppableZone } from '../common/dnd/DroppableZone'
+import { useCharacterState } from '../common/LottieCharacter'
+import CelebrationEffect, { useCelebration } from '../common/CelebrationEffect'
+import { useGameEntryAudio } from '../../hooks/useGameEntryAudio'
 
 // Game item interface
 interface GameItem {
@@ -95,8 +98,15 @@ const FarvejagtGame: React.FC = () => {
   const [_activeId, setActiveId] = useState<string | null>(null)
   const [targetColor, setTargetColor] = useState<string>('rød')
   const [, setTargetPhrase] = useState<string>('Find alle røde ting')
+  
+  // Character and celebration management
+  const colorHunter = useCharacterState('wave')
+  const { showCelebration, celebrationIntensity, celebrate, stopCelebration } = useCelebration()
   const hasInitialized = React.useRef(false)
   const previousColor = React.useRef<string>('')
+  
+  // Centralized entry audio
+  useGameEntryAudio({ gameType: 'farvejagt' })
 
   // Get target color hex for UI elements
   const getTargetColorHex = () => {
@@ -211,6 +221,11 @@ const FarvejagtGame: React.FC = () => {
     if (hasInitialized.current) return
     
     hasInitialized.current = true
+    
+    // Initialize character
+    colorHunter.setCharacter('fox')
+    colorHunter.wave()
+    
     const { items, targetCount, targetColor: newTargetColor, targetPhrase: newTargetPhrase } = generateGameItems()
     
     setGameItems(items)
@@ -218,35 +233,45 @@ const FarvejagtGame: React.FC = () => {
     setTargetColor(newTargetColor)
     setTargetPhrase(newTargetPhrase)
     
-    // Welcome message with delay - use the actual selected target
+    // Entry audio is now handled by useGameEntryAudio hook
+    // Only speak the target phrase for game initialization
     setTimeout(() => {
       try {
-        audioManager.speak(`Velkommen til farve jagt! ${newTargetPhrase} og træk dem til cirklen.`)
+        audioManager.speak(`${newTargetPhrase} og træk dem til cirklen.`)
           .catch(error => {
             console.log('Audio error (welcome):', error)
           })
       } catch (error) {
         console.log('Audio error (welcome):', error)
       }
-    }, 1000)
+    }, 1500) // Slightly longer delay to not conflict with entry audio
   }, [])
 
-  // Check for game completion
+  // Check for game completion and trigger celebration
   useEffect(() => {
     if (score > 0 && score === totalTarget && !isComplete) {
       setIsComplete(true)
-      setTimeout(() => {
+      
+      // Start celebration
+      colorHunter.celebrate()
+      celebrate(score > 5 ? 'high' : 'medium')
+      
+      setTimeout(async () => {
         try {
-          audioManager.speak(`Fantastisk! Du fandt alle de ${targetColor} ting!`)
-            .catch(error => {
-              console.log('Audio error (completion):', error)
-              })
+          await audioManager.announceGameResult(true)
         } catch (error) {
           console.log('Audio error (completion):', error)
-          }
+        }
+        
+        // Auto-reset after celebration (3 seconds)
+        setTimeout(() => {
+          stopCelebration()
+          colorHunter.point()
+          resetGame(true) // Automatic restart - no "Nyt spil!" prefix
+        }, 3000)
       }, 300)
     }
-  }, [score, totalTarget, isComplete, targetColor])
+  }, [score, totalTarget, isComplete, targetColor, colorHunter, celebrate, stopCelebration])
 
   // Handle drag start
   const handleDragStart = (event: DragStartEvent) => {
@@ -378,7 +403,7 @@ const FarvejagtGame: React.FC = () => {
   }
 
   // Reset game with new random setup
-  const resetGame = () => {
+  const resetGame = (isAutomatic = true) => {
     const { items, targetCount, targetColor: newTargetColor, targetPhrase: newTargetPhrase } = generateGameItems()
     
     setGameItems(items)
@@ -390,7 +415,13 @@ const FarvejagtGame: React.FC = () => {
     
     setTimeout(() => {
       try {
-        audioManager.speak(`Nyt spil! ${newTargetPhrase} og træk dem til cirklen.`)
+        // For automatic restarts (after completion), don't say "Nyt spil!"
+        // For manual restarts (button click), include "Nyt spil!"
+        const message = isAutomatic 
+          ? `${newTargetPhrase} og træk dem til cirklen.`
+          : `Nyt spil! ${newTargetPhrase} og træk dem til cirklen.`
+        
+        audioManager.speak(message)
           .catch(error => {
             console.log('Audio error (reset):', error)
           })
@@ -458,7 +489,7 @@ const FarvejagtGame: React.FC = () => {
           />
           <Button 
             variant="contained" 
-            onClick={resetGame} 
+            onClick={() => resetGame(false)} // Manual restart - include "Nyt spil!" prefix
             size="small"
             sx={{
               backgroundColor: '#6b7280',
@@ -569,49 +600,6 @@ const FarvejagtGame: React.FC = () => {
           </DragOverlay>
         </DndContext>
 
-        {/* Completion message */}
-        {isComplete && (
-          <Box
-            sx={{
-              position: 'absolute',
-              top: '50%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)',
-              backgroundColor: `${getTargetColorHex()}E6`, // Add transparency to target color
-              color: 'white',
-              padding: 3,
-              borderRadius: 2,
-              textAlign: 'center',
-              zIndex: 20,
-              animation: 'fadeIn 0.5s ease-in',
-              boxShadow: 3
-            }}
-          >
-            <Typography variant="h5" sx={{ fontWeight: 'bold' }}>
-              🎉 Fantastisk! 🎉
-            </Typography>
-            <Typography variant="body1" sx={{ mt: 1, mb: 2 }}>
-              Du fandt alle de {targetColor} ting!
-            </Typography>
-            <Button
-              variant="contained"
-              onClick={resetGame}
-              sx={{
-                backgroundColor: 'white',
-                color: getTargetColorHex(),
-                fontWeight: 'bold',
-                px: 3,
-                py: 1,
-                '&:hover': {
-                  backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                  transform: 'scale(1.05)'
-                }
-              }}
-            >
-              Nyt Spil 🚀
-            </Button>
-          </Box>
-        )}
       </Box>
 
       {/* Instructions */}
@@ -629,14 +617,16 @@ const FarvejagtGame: React.FC = () => {
             25% { transform: translate(-50%, -50%) translateX(-10px) rotate(-5deg); }
             75% { transform: translate(-50%, -50%) translateX(10px) rotate(5deg); }
           }
-          
-          @keyframes fadeIn {
-            from { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
-            to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-          }
         `}
       </style>
       </Container>
+      
+      {/* Celebration Effect */}
+      <CelebrationEffect
+        show={showCelebration}
+        intensity={celebrationIntensity}
+        onComplete={stopCelebration}
+      />
     </Box>
   )
 }

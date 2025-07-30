@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Box, Typography, Button, Container, AppBar, Toolbar, IconButton } from '@mui/material'
-import { ArrowLeft } from 'lucide-react'
+import { Box, Typography, Container, AppBar, Toolbar, IconButton, Chip } from '@mui/material'
+import { ArrowLeft, Award } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { DndContext, DragEndEvent, DragStartEvent, closestCenter } from '@dnd-kit/core'
 import { audioManager } from '../../utils/audio'
 import { categoryThemes } from '../../config/categoryThemes'
 import { DraggableItem } from '../common/dnd/DraggableItem'
 import { DroppableZone } from '../common/dnd/DroppableZone'
+import { useCharacterState } from '../common/LottieCharacter'
+import CelebrationEffect, { useCelebration } from '../common/CelebrationEffect'
+import { useGameEntryAudio } from '../../hooks/useGameEntryAudio'
 
 // Game interfaces
 interface ColorDroplet {
@@ -29,7 +32,6 @@ interface GameState {
   targetColor: TargetColor
   availableColors: ColorDroplet[]
   mixingZone: ColorDroplet[]
-  gameResult: 'waiting' | 'success' | 'failure' | null
   attempts: number
 }
 
@@ -41,11 +43,19 @@ const RamFarvenGame: React.FC = () => {
     targetColor: { color: 'lilla', name: 'lilla', hex: '#A855F7' },
     availableColors: [],
     mixingZone: [],
-    gameResult: null,
     attempts: 0
   })
+  const [score, setScore] = useState(0)
+  const [isPlaying, setIsPlaying] = useState(false)
   const [_activeId, setActiveId] = useState<string | null>(null)
   const hasInitialized = React.useRef(false)
+  
+  // Character and celebration management
+  const colorTeacher = useCharacterState('wave')
+  const { showCelebration, celebrationIntensity, celebrate, stopCelebration } = useCelebration()
+  
+  // Centralized entry audio
+  useGameEntryAudio({ gameType: 'ramfarven' })
 
   // Primary colors for mixing (5 colors for gameplay options)
   const primaryColors: ColorDroplet[] = [
@@ -96,6 +106,11 @@ const RamFarvenGame: React.FC = () => {
   useEffect(() => {
     if (hasInitialized.current) return
     hasInitialized.current = true
+    
+    // Initialize color teacher character
+    colorTeacher.setCharacter('bear')
+    colorTeacher.wave()
+    
     initializeGame()
   }, [])
 
@@ -114,11 +129,10 @@ const RamFarvenGame: React.FC = () => {
       targetColor: randomTarget,
       availableColors: shuffledColors,
       mixingZone: [],
-      gameResult: null,
       attempts: 0
     })
 
-    // Delayed welcome audio
+    // Game-specific instruction (after centralized welcome audio)
     setTimeout(() => {
       try {
         audioManager.speak(`Lav ${randomTarget.name} ved at blande to farver!`)
@@ -126,12 +140,9 @@ const RamFarvenGame: React.FC = () => {
       } catch (error) {
         console.log('Audio error:', error)
       }
-    }, 1000)
+    }, 2000) // Longer delay to allow centralized welcome audio to finish first
   }
 
-  const resetGame = () => {
-    initializeGame()
-  }
 
   const addToMixingZone = (droplet: ColorDroplet) => {
     if (gameState.mixingZone.length >= 2) return
@@ -162,46 +173,52 @@ const RamFarvenGame: React.FC = () => {
     }
   }
 
-  const tryMixColors = (colorsToMix: ColorDroplet[]) => {
+  const tryMixColors = async (colorsToMix: ColorDroplet[]) => {
+    if (isPlaying) return
+    
     const [color1, color2] = colorsToMix
     const combinationKey = `${color1.colorName}+${color2.colorName}`
     const mixResult = mixingRules[combinationKey]
 
     if (mixResult && mixResult.name === gameState.targetColor.name) {
-      // Success!
+      // Success! Correct color mixing
+      setScore(score + 1)
+      colorTeacher.celebrate()
+      celebrate(score > 5 ? 'high' : 'medium')
+      
       setGameState(prev => ({
         ...prev,
-        gameResult: 'success',
         attempts: prev.attempts + 1
       }))
 
+      setIsPlaying(true)
+      try {
+        await audioManager.announceGameResult(true)
+      } catch (error) {
+        console.log('Audio error:', error)
+      }
+
+      // Auto-generate new question after celebration
       setTimeout(() => {
-        try {
-          audioManager.speak(`Fantastisk! Du lavede ${mixResult.name}!`)
-            .catch(error => console.log('Audio error:', error))
-        } catch (error) {
-          console.log('Audio error:', error)
-        }
-      }, 500)
+        stopCelebration()
+        colorTeacher.point()
+        initializeGame()
+        setIsPlaying(false)
+      }, 3000)
     } else {
-      // Wrong combination
+      // Wrong combination - encourage
+      colorTeacher.encourage()
+      
       setGameState(prev => ({
         ...prev,
-        gameResult: 'failure',
         attempts: prev.attempts + 1
       }))
 
-      setTimeout(() => {
-        try {
-          audioManager.speak('Næsten! Prøv igen med andre farver.')
-            .catch(error => console.log('Audio error:', error))
-        } catch (error) {
-          console.log('Audio error:', error)
-        }
-      }, 500)
-
-      // Reset after 2 seconds
-      setTimeout(() => {
+      setIsPlaying(true)
+      try {
+        await audioManager.announceGameResult(false)
+        
+        // Reset immediately when audio ends
         const clearedColors = gameState.availableColors.map(color => ({
           ...color,
           isUsed: false
@@ -210,10 +227,29 @@ const RamFarvenGame: React.FC = () => {
         setGameState(prev => ({
           ...prev,
           availableColors: clearedColors,
-          mixingZone: [],
-          gameResult: null
+          mixingZone: []
         }))
-      }, 2000)
+        
+        colorTeacher.think()
+        setIsPlaying(false)
+      } catch (error) {
+        console.log('Audio error:', error)
+        
+        // Even on error, reset immediately
+        const clearedColors = gameState.availableColors.map(color => ({
+          ...color,
+          isUsed: false
+        }))
+
+        setGameState(prev => ({
+          ...prev,
+          availableColors: clearedColors,
+          mixingZone: []
+        }))
+        
+        colorTeacher.think()
+        setIsPlaying(false)
+      }
     }
   }
 
@@ -248,25 +284,46 @@ const RamFarvenGame: React.FC = () => {
         elevation={0}
         sx={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}
       >
-        <Toolbar>
+        <Toolbar sx={{ justifyContent: 'space-between', py: 2 }}>
           <IconButton 
             edge="start" 
             onClick={() => navigate('/farver')}
             sx={{ 
-              mr: 2,
-              backgroundColor: 'rgba(255, 255, 255, 0.2)',
-              '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.3)' }
+              backgroundColor: 'rgba(255, 255, 255, 0.8)',
+              border: '1px solid rgba(255, 255, 255, 0.3)',
+              backdropFilter: 'blur(8px)',
+              '&:hover': { 
+                backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                transform: 'scale(1.05)'
+              }
             }}
           >
             <ArrowLeft size={24} />
           </IconButton>
+          
           <Typography variant="h6" sx={{ 
             flexGrow: 1, 
             fontWeight: 700,
-            color: categoryThemes.colors.accentColor
+            color: categoryThemes.colors.accentColor,
+            textAlign: 'center'
           }}>
             Ram Farven
           </Typography>
+          
+          <Chip 
+            icon={<Award size={20} />} 
+            label={`${score} ⭐`} 
+            color="primary" 
+            onClick={() => audioManager.announceScore(score).catch(console.error)}
+            sx={{ 
+              fontSize: '1.2rem',
+              py: 1,
+              fontWeight: 'bold',
+              boxShadow: 2,
+              cursor: 'pointer',
+              '&:hover': { boxShadow: 4 }
+            }}
+          />
         </Toolbar>
       </AppBar>
 
@@ -365,33 +422,6 @@ const RamFarvenGame: React.FC = () => {
                         }} />
                       </motion.div>
                     ))}
-                    
-                    {gameState.gameResult === 'success' && (
-                      <motion.div
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1.2 }}
-                        style={{
-                          position: 'absolute',
-                          top: '50%',
-                          left: '50%',
-                          transform: 'translate(-50%, -50%)'
-                        }}
-                      >
-                        <Box sx={{
-                          width: 120,
-                          height: 120,
-                          borderRadius: '50%',
-                          backgroundColor: gameState.targetColor.hex,
-                          border: '4px solid white',
-                          boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center'
-                        }}>
-                          <Typography sx={{ fontSize: '3rem' }}>🎉</Typography>
-                        </Box>
-                      </motion.div>
-                    )}
                   </AnimatePresence>
                 </DroppableZone>
               </Box>
@@ -454,90 +484,16 @@ const RamFarvenGame: React.FC = () => {
             </DndContext>
           </Box>
 
-          {/* Control Area - Ny opgave button */}
-          <Box sx={{ 
-            display: 'flex', 
-            justifyContent: 'center', 
-            mt: 6,
-            mb: 1
-          }}>
-            <Button
-              variant="contained"
-              onClick={resetGame}
-              sx={{
-                backgroundColor: categoryThemes.colors.accentColor,
-                color: 'white',
-                fontSize: { xs: '0.9rem', md: '1rem' },
-                py: 1.5,
-                px: 3,
-                '&:hover': {
-                  backgroundColor: categoryThemes.colors.hoverBorderColor
-                }
-              }}
-            >
-              🎯 Ny opgave
-            </Button>
-          </Box>
 
-          {/* Success Message */}
-          <AnimatePresence>
-            {gameState.gameResult === 'success' && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                style={{
-                  position: 'fixed',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                  zIndex: 1000
-                }}
-              >
-                <Box sx={{
-                  backgroundColor: categoryThemes.colors.accentColor,
-                  color: 'white',
-                  padding: { xs: 3, md: 4 },
-                  borderRadius: 3,
-                  textAlign: 'center',
-                  boxShadow: '0 16px 64px rgba(0,0,0,0.3)',
-                  maxWidth: '400px',
-                  mx: 2
-                }}>
-                  <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 2, fontSize: { xs: '1.5rem', md: '2rem' } }}>
-                    🎉 Fantastisk! 🎉
-                  </Typography>
-                  <Typography variant="body1" sx={{ fontSize: { xs: '1rem', md: '1.2rem' }, mb: 3 }}>
-                    Du lavede {gameState.targetColor.name}!
-                  </Typography>
-                  <Button
-                    variant="contained"
-                    onClick={resetGame}
-                    sx={{
-                      backgroundColor: 'white',
-                      color: categoryThemes.colors.accentColor,
-                      fontWeight: 'bold',
-                      fontSize: { xs: '0.9rem', md: '1rem' },
-                      py: 1.5,
-                      px: 4,
-                      '&:hover': {
-                        backgroundColor: '#f5f5f5'
-                      }
-                    }}
-                  >
-                    🎯 Ny opgave
-                  </Button>
-                </Box>
-              </motion.div>
-            )}
-          </AnimatePresence>
         </Box>
       </Container>
+      
+      {/* Celebration Effect */}
+      <CelebrationEffect
+        show={showCelebration}
+        intensity={celebrationIntensity}
+        onComplete={stopCelebration}
+      />
     </Box>
   )
 }

@@ -394,6 +394,31 @@ export class AudioManager {
     
     await this.speak(positionText, voiceType, true)
   }
+
+  // Centralized game welcome audio system
+  async playGameWelcome(gameType: string, voiceType: 'primary' | 'backup' | 'male' = 'primary'): Promise<void> {
+    console.log(`🎵 AudioManager.playGameWelcome: Starting welcome audio for "${gameType}"`)
+    
+    // Import game welcome messages dynamically to avoid circular dependencies
+    const { GAME_WELCOME_MESSAGES } = await import('../hooks/useGameEntryAudio')
+    
+    const welcomeMessage = GAME_WELCOME_MESSAGES[gameType as keyof typeof GAME_WELCOME_MESSAGES]
+    
+    if (!welcomeMessage) {
+      console.warn(`🎵 AudioManager.playGameWelcome: No welcome message defined for game type: ${gameType}`)
+      console.log(`🎵 Available game types:`, Object.keys(GAME_WELCOME_MESSAGES))
+      return
+    }
+
+    try {
+      console.log(`🎵 AudioManager.playGameWelcome: Playing welcome audio for ${gameType}: "${welcomeMessage}"`)
+      await this.speak(welcomeMessage, voiceType, true)
+      console.log(`🎵 AudioManager.playGameWelcome: Successfully completed welcome audio for "${gameType}"`)
+    } catch (error) {
+      console.error(`🎵 AudioManager.playGameWelcome: Error playing welcome audio for ${gameType}:`, error)
+      throw error
+    }
+  }
 }
 
 export const audioManager = new AudioManager()

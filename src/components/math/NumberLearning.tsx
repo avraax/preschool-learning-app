@@ -18,6 +18,7 @@ import {
 import { audioManager } from '../../utils/audio'
 import { categoryThemes } from '../../config/categoryThemes'
 import LearningGrid from '../common/LearningGrid'
+import { useGameEntryAudio } from '../../hooks/useGameEntryAudio'
 
 
 const NumberLearning: React.FC = () => {
@@ -25,6 +26,9 @@ const NumberLearning: React.FC = () => {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
+  
+  // Centralized entry audio
+  useGameEntryAudio({ gameType: 'numberlearning' })
 
   // Generate numbers 1-100
   const numbers = Array.from({ length: 100 }, (_, i) => i + 1)

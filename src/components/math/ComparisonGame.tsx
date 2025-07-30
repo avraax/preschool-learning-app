@@ -8,6 +8,9 @@ import CelebrationEffect, { useCelebration } from '../common/CelebrationEffect'
 import { audioManager } from '../../utils/audio'
 import { DANISH_PHRASES } from '../../config/danish-phrases'
 import { categoryThemes } from '../../config/categoryThemes'
+import { useGameEntryAudio } from '../../hooks/useGameEntryAudio'
+import { entryAudioManager } from '../../utils/entryAudioManager'
+import { MathRepeatButton } from '../common/RepeatButton'
 
 // Object types for visual counting
 const OBJECT_TYPES = [
@@ -41,18 +44,52 @@ const ComparisonGame: React.FC = () => {
   const [showFeedback, setShowFeedback] = useState(false)
   const [score, setScore] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
+  const [entryAudioComplete, setEntryAudioComplete] = useState(false)
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
   
   // Character and celebration management
   const mathTeacher = useCharacterState('wave')
   const { showCelebration, celebrationIntensity, celebrate, stopCelebration } = useCelebration()
+  
+  // Centralized entry audio
+  useGameEntryAudio({ gameType: 'comparison' })
 
   useEffect(() => {
-    generateNewProblem()
-    
     // Initialize math teacher character
     mathTeacher.setCharacter('fox')
     mathTeacher.wave()
+    
+    // Register callback to start the game after entry audio completes
+    entryAudioManager.onComplete('comparison', () => {
+      console.log(`🎵 ComparisonGame: Entry audio completed, starting first question`)
+      setEntryAudioComplete(true)
+      // Add a small delay after entry audio before starting the question
+      setTimeout(() => {
+        generateNewProblem()
+      }, 500)
+    })
+    
+    // Stop audio immediately when navigating away
+    const handleBeforeUnload = () => {
+      audioManager.stopAll()
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
+      }
+    }
+
+    // Listen for navigation events
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    window.addEventListener('pagehide', handleBeforeUnload)
+    
+    // Cleanup function
+    return () => {
+      audioManager.stopAll()
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
+      }
+      window.removeEventListener('beforeunload', handleBeforeUnload)
+      window.removeEventListener('pagehide', handleBeforeUnload)
+    }
   }, [])
 
   const generateNewProblem = () => {
@@ -538,17 +575,11 @@ const ComparisonGame: React.FC = () => {
 
             {/* Repeat Button */}
             <Box sx={{ textAlign: 'center', mt: 3 }}>
-              <Button 
+              <MathRepeatButton 
                 onClick={repeatProblem}
-                variant="contained"
-                color="secondary"
-                size="large"
-                startIcon={<VolumeUp />}
-                disabled={isPlaying}
-                sx={{ py: 2, px: 4, fontSize: '1.1rem' }}
-              >
-                Hør igen 🎵
-              </Button>
+                disabled={!entryAudioComplete || isPlaying}
+                label="🎵 Hør igen"
+              />
             </Box>
           </Paper>
         </Box>
@@ -557,7 +588,6 @@ const ComparisonGame: React.FC = () => {
       {/* Celebration Effect */}
       <CelebrationEffect
         show={showCelebration}
-        character="fox"
         intensity={celebrationIntensity}
         onComplete={stopCelebration}
       />

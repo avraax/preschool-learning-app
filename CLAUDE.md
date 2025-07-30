@@ -694,6 +694,217 @@ const theme = getCategoryTheme('alphabet')
 - Use environment variables for deployment-specific settings
 - Document any new shared configurations here
 
+## 🎮 Task-Based Game Development Pattern
+
+### Overview
+All task-based games (quiz games, problem-solving games, memory games) MUST follow a centralized pattern that ensures consistent behavior for entry audio, repeat buttons, and empty state handling.
+
+### Game Type Classifications
+
+#### ✅ **Task-Based Games** (Use centralized pattern):
+- Quiz games with questions (AlphabetGame, MathGame)
+- Problem-solving games (AdditionGame, ComparisonGame)
+- Memory/matching games (MemoryGame)
+- Any game with discrete tasks/challenges
+
+#### ❌ **Learning-Based Games** (Don't use pattern):
+- Free exploration games (AlphabetLearning, NumberLearning)
+- Drag-and-drop activities (FarvejagtGame, RamFarvenGame)
+- Continuous interaction games without discrete tasks
+
+### Required Implementation Pattern
+
+#### 1. Import Centralized Components
+```typescript
+import { useTaskBasedGame } from '../../hooks/useTaskBasedGame'
+import { MathRepeatButton, AlphabetRepeatButton } from '../common/RepeatButton'
+```
+
+#### 2. Use Centralized Hook
+```typescript
+const { entryAudioComplete } = useTaskBasedGame({
+  gameType: 'addition', // Must match useGameEntryAudio gameType
+  onEntryAudioComplete: () => generateNewProblem(),
+  delay: 500 // Optional, defaults to 500ms
+})
+```
+
+#### 3. Use Centralized Repeat Button
+```typescript
+// For math games
+<MathRepeatButton 
+  onClick={repeatProblem}
+  disabled={!entryAudioComplete || isPlaying}
+  label="🎵 Hør igen"
+/>
+
+// For alphabet games  
+<AlphabetRepeatButton 
+  onClick={repeatQuestion}
+  disabled={!entryAudioComplete}
+/>
+```
+
+#### 4. Handle Empty States
+```typescript
+// Show nothing during entry audio, then show content
+{options.length > 0 ? renderOptions() : null}
+
+// Or use utility helpers
+import { renderWithEmptyState } from '../../utils/gameStateUtils'
+{renderWithEmptyState(options, renderOptions)}
+```
+
+### Centralized Components
+
+#### `useTaskBasedGame` Hook
+**Location**: `src/hooks/useTaskBasedGame.ts`
+
+**Purpose**: Consolidates entry audio completion handling and state management
+
+**Features**:
+- Registers entry audio completion callback automatically
+- Manages `entryAudioComplete` state
+- Calls `onEntryAudioComplete` after configurable delay
+- Eliminates duplicate callback registration code
+
+#### `RepeatButton` Components  
+**Location**: `src/components/common/RepeatButton.tsx`
+
+**Purpose**: Provides consistent styling and behavior for repeat buttons
+
+**Variants**:
+- `MathRepeatButton` - Purple theme, "Hör igen" label
+- `AlphabetRepeatButton` - Blue theme, "Gentag" label  
+- `ColorRepeatButton` - Orange theme, "Hør igen" label
+
+#### Game State Utilities
+**Location**: `src/utils/gameStateUtils.ts`
+
+**Purpose**: Helper functions for empty state handling and game state management
+
+**Functions**:
+- `renderWithEmptyState()` - Conditional rendering helper
+- `useGameOptions()` - Hook for managing option arrays
+- `useGameProblem()` - Hook for managing current problem state
+
+### Benefits of Centralized Pattern
+
+1. **Consistency**: All task-based games behave identically
+2. **DRY Principle**: Eliminates code duplication across 5+ games
+3. **Maintainability**: Bug fixes happen in one place
+4. **Type Safety**: Centralized interfaces prevent errors
+5. **Future-Proof**: New games get correct behavior automatically
+
+### Migration from Old Pattern
+
+#### Before (Duplicate Code):
+```typescript
+const [entryAudioComplete, setEntryAudioComplete] = useState(false)
+
+entryAudioManager.onComplete('gameType', () => {
+  setEntryAudioComplete(true)
+  setTimeout(() => generateNewProblem(), 500)
+})
+
+<Button disabled={!entryAudioComplete}>Hør igen</Button>
+```
+
+#### After (Centralized):
+```typescript
+const { entryAudioComplete } = useTaskBasedGame({
+  gameType: 'addition',
+  onEntryAudioComplete: () => generateNewProblem()
+})
+
+<MathRepeatButton disabled={!entryAudioComplete} onClick={repeatProblem} />
+```
+
+### ⚠️ Critical: No Loading Overlays Pattern
+
+#### Correct Pattern: Show UI Immediately
+**Based on working AlphabetGame & MathGame implementations:**
+
+**✅ CORRECT approach - NO loading overlays:**
+```typescript
+// GOOD: Direct callback registration (like AlphabetGame/MathGame)
+const [entryAudioComplete, setEntryAudioComplete] = useState(false)
+
+useEffect(() => {
+  entryAudioManager.onComplete('gameType', () => {
+    setEntryAudioComplete(true)
+    setTimeout(() => generateNewProblem(), 500)
+  })
+}, [])
+
+// GOOD: Show full UI immediately, no loading states
+return (
+  <Box>
+    <AppBar>{/* Always visible */}</AppBar>
+    <Container>
+      <Typography>Game Title</Typography>
+      
+      {/* Disabled repeat button until ready */}
+      <Button disabled={!entryAudioComplete}>🎵 Gentag</Button>
+      
+      {/* Conditional content display */}
+      {options.length > 0 ? options.map(...) : null}
+    </Container>
+  </Box>
+)
+```
+
+**❌ NEVER do this:**
+```typescript
+// BAD: Loading overlay (causes unwanted intermediate screen)
+if (!entryAudioComplete) {
+  return (
+    <Box>
+      <Typography>Game Title</Typography>
+      <Typography>Lytter...</Typography> {/* ❌ Unwanted overlay */}
+    </Box>
+  )
+}
+
+// BAD: useTaskBasedGame hook (over-engineered)
+const { entryAudioComplete } = useTaskBasedGame({...}) // ❌ Use direct pattern instead
+```
+
+#### Required Implementation Pattern
+**Follow exact pattern from AlphabetGame/MathGame:**
+
+1. **Show full UI immediately** - no loading overlays ever
+2. **Disabled repeat button** until `entryAudioComplete` 
+3. **Conditional content rendering** with `{options.length > 0 ? ... : null}`
+4. **Direct callback registration** with `entryAudioManager.onComplete()`
+5. **No useTaskBasedGame hook** - use direct pattern instead
+
+### Required for New Task-Based Games
+
+1. **MUST show full UI immediately** - never use loading overlays
+2. **MUST use direct callback registration** with `entryAudioManager.onComplete()`
+3. **MUST use appropriate `RepeatButton` variant** if game has repeat functionality
+4. **MUST disable repeat button** until `entryAudioComplete` is true
+5. **MUST use conditional content rendering** with `{content.length > 0 ? ... : null}`
+6. **MUST NOT use useTaskBasedGame hook** - use direct pattern instead
+7. **MUST NOT create loading screens** or "Lytter..." overlays
+8. **MUST follow AlphabetGame/MathGame pattern** exactly
+
+### New Centralized Helper (Optional)
+**Location**: `src/hooks/useDirectTaskGame.ts`
+
+For teams who prefer hooks, use the new centralized helper:
+```typescript
+import { useDirectTaskGame } from '../../hooks/useDirectTaskGame'
+
+const { entryAudioComplete } = useDirectTaskGame({
+  gameType: 'addition',
+  onEntryAudioComplete: () => generateNewProblem()
+})
+```
+
+This provides the same direct pattern but with reduced boilerplate code.
+
 ## Responsive Layout Guidelines
 
 ### Core Principle

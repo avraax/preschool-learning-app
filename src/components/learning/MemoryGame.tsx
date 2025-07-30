@@ -61,6 +61,8 @@ import LottieCharacter, { useCharacterState } from '../common/LottieCharacter'
 import CelebrationEffect, { useCelebration } from '../common/CelebrationEffect'
 import { audioManager } from '../../utils/audio'
 import { DANISH_PHRASES } from '../../config/danish-phrases'
+import { useGameEntryAudio } from '../../hooks/useGameEntryAudio'
+import { entryAudioManager } from '../../utils/entryAudioManager'
 
 // Danish alphabet (29 letters)
 const DANISH_ALPHABET = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'Æ', 'Ø', 'Å']
@@ -121,19 +123,34 @@ const MemoryGame: React.FC = () => {
   const [isProcessing, setIsProcessing] = useState(false)
   const [score, setScore] = useState(0)
   const [wrongPairIds, setWrongPairIds] = useState<string[]>([])
-  
+  const [entryAudioComplete, setEntryAudioComplete] = useState(false)
   
   // Character and celebration management
   const teacher = useCharacterState('wave')
   const { showCelebration, celebrationIntensity, celebrate, stopCelebration } = useCelebration()
+  
+  // Centralized entry audio
+  useGameEntryAudio({ gameType: 'memory' })
+  
+  // Debug logging for component initialization
+  useEffect(() => {
+    console.log(`🎵 MemoryGame: Component initialized with type="${type}", gameType="${gameType}"`)
+  }, [])
 
   useEffect(() => {
-    initializeGame()
-    
     // Initialize teacher character
     teacher.setCharacter('owl')
     teacher.wave()
     
+    // Register callback to start the game after entry audio completes
+    entryAudioManager.onComplete('memory', () => {
+      console.log(`🎵 MemoryGame: Entry audio completed, ready for interaction`)
+      setEntryAudioComplete(true)
+      // Memory game is ready - cards are already generated
+    })
+    
+    // Generate cards immediately but don't show them until entry audio completes
+    initializeGame()
   }, [gameType])
 
   const initializeGame = () => {
@@ -297,6 +314,7 @@ const MemoryGame: React.FC = () => {
   }
 
 
+
   return (
     <>
       <style>{flipStyles}</style>
@@ -438,7 +456,7 @@ const MemoryGame: React.FC = () => {
               }
             }
           }}>
-            {cards.map((card, index) => (
+            {entryAudioComplete && cards.length > 0 ? cards.map((card, index) => (
               <motion.div
                 key={card.id}
                 initial={{ opacity: 0, scale: 0.8 }}
@@ -574,33 +592,15 @@ const MemoryGame: React.FC = () => {
                   </div>
                 </div>
               </motion.div>
-            ))}
+            )) : null}
           </Box>
         </Box>
 
-        {/* Game Complete Message */}
-        {matchedPairs === 20 && (
-          <Box sx={{ textAlign: 'center', mt: 2 }}>
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.5 }}
-            >
-              <Typography variant="h4" color="success.main" sx={{ mb: 2 }}>
-                🎉 Tillykke! Alle par fundet! 🎉
-              </Typography>
-              <Typography variant="h6" color="text.secondary" sx={{ mt: 1 }}>
-                Brug "Ny spil" knappen ovenfor for at spille igen
-              </Typography>
-            </motion.div>
-          </Box>
-        )}
       </Container>
 
       {/* Celebration Effect */}
       <CelebrationEffect
         show={showCelebration}
-        character="owl"
         intensity={celebrationIntensity}
         onComplete={stopCelebration}
       />

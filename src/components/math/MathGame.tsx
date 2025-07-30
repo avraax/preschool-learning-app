@@ -20,6 +20,8 @@ import { DANISH_PHRASES } from '../../config/danish-phrases'
 import { categoryThemes } from '../../config/categoryThemes'
 import LottieCharacter, { useCharacterState } from '../common/LottieCharacter'
 import CelebrationEffect, { useCelebration } from '../common/CelebrationEffect'
+import { useGameEntryAudio } from '../../hooks/useGameEntryAudio'
+import { entryAudioManager } from '../../utils/entryAudioManager'
 
 // Comprehensive math settings for all ages
 const MAX_NUMBER = 30  // Tal Quiz numbers from 1-30
@@ -38,6 +40,7 @@ const MathGame: React.FC = () => {
   const [currentProblem, setCurrentProblem] = useState<MathProblem | null>(null)
   const [showOptions, setShowOptions] = useState<number[]>([])
   const [score, setScore] = useState(0)
+  const [entryAudioComplete, setEntryAudioComplete] = useState(false)
   
   // Determine game mode based on current route
   const gameMode: 'counting' | 'arithmetic' = location.pathname.includes('/counting') ? 'counting' : 'arithmetic'
@@ -48,6 +51,9 @@ const MathGame: React.FC = () => {
   const mathTeacher = useCharacterState('wave')
   const { showCelebration, celebrationIntensity, celebrate, stopCelebration } = useCelebration()
   
+  // Centralized entry audio
+  useGameEntryAudio({ gameType: 'math' })
+  
   useEffect(() => {
     // Initial math teacher greeting
     mathTeacher.setCharacter('fox')
@@ -56,11 +62,16 @@ const MathGame: React.FC = () => {
 
   // Remove useEffect that set gameMode from difficulty settings
 
-  // Generate question when gameMode is set
   useEffect(() => {
-    if (gameMode) {
-      generateNewQuestion()
-    }
+    // Register callback to start the game after entry audio completes
+    entryAudioManager.onComplete('math', () => {
+      console.log(`🎵 MathGame: Entry audio completed, starting first question`)
+      setEntryAudioComplete(true)
+      // Add a small delay after entry audio before starting the question
+      setTimeout(() => {
+        generateNewQuestion()
+      }, 500)
+    })
     
     // Stop audio immediately when navigating away
     const handleBeforeUnload = () => {
@@ -85,7 +96,7 @@ const MathGame: React.FC = () => {
       window.removeEventListener('beforeunload', handleBeforeUnload)
       window.removeEventListener('pagehide', handleBeforeUnload)
     }
-  }, [gameMode])
+  }, [])
 
   const generateNewQuestion = () => {
     if (gameMode === 'counting') {
@@ -102,8 +113,10 @@ const MathGame: React.FC = () => {
       timeoutRef.current = null
     }
     
-    // Stop any currently playing audio
-    audioManager.stopAll()
+    // Only stop audio if it's not the initial question (to avoid interrupting entry audio)
+    if (currentProblem) {
+      audioManager.stopAll()
+    }
     
     // Generate a random number from 1 to MAX_NUMBER
     const number = Math.floor(Math.random() * MAX_NUMBER) + 1
@@ -119,25 +132,16 @@ const MathGame: React.FC = () => {
     setShowOptions(options.sort(() => Math.random() - 0.5))
     setCurrentProblem({ num1: number, num2: 0, operation: '+', answer: number })
     
-    // Try to play audio immediately for iOS (within user interaction window)
-    // Fall back to manual trigger (Gentag button) if permission expires
-    audioManager.speakQuizPromptWithRepeat(
-      DANISH_PHRASES.gamePrompts.findNumber(number), 
-      number.toString()
-    ).catch(error => {
-      console.log('Audio failed, user can click Gentag button:', error)
-    })
-    
-    // For non-iOS: Also schedule a backup delayed audio  
-    if (!isIOS()) {
-      timeoutRef.current = setTimeout(() => {
-        audioManager.speakQuizPromptWithRepeat(DANISH_PHRASES.gamePrompts.findNumber(number), number.toString())
-          .catch(error => {
-            console.error('Error in scheduled audio:', error)
-          })
-        timeoutRef.current = null
-      }, 500)
-    }
+    // Schedule audio with a proper delay to avoid conflicts
+    timeoutRef.current = setTimeout(() => {
+      audioManager.speakQuizPromptWithRepeat(
+        DANISH_PHRASES.gamePrompts.findNumber(number), 
+        number.toString()
+      ).catch(error => {
+        console.log('Audio failed, user can click Gentag button:', error)
+      })
+      timeoutRef.current = null
+    }, 500)
   }
 
   const generateArithmeticQuestion = () => {
@@ -147,8 +151,10 @@ const MathGame: React.FC = () => {
       timeoutRef.current = null
     }
     
-    // Stop any currently playing audio
-    audioManager.stopAll()
+    // Only stop audio if it's not the initial question (to avoid interrupting entry audio)
+    if (currentProblem) {
+      audioManager.stopAll()
+    }
     
     // Generate addition problem with reasonable range
     const num1 = Math.floor(Math.random() * MAX_ADDITION_NUMBER) + 1
@@ -170,24 +176,16 @@ const MathGame: React.FC = () => {
     
     setShowOptions(options.sort(() => Math.random() - 0.5))
     
-    // Try to play audio immediately for iOS (within user interaction window)
-    // Fall back to manual trigger (Gentag button) if permission expires
+    // Schedule audio with a proper delay to avoid conflicts
     const problemText = `${problem.num1} ${problem.operation} ${problem.num2} = ?`
-    audioManager.speakMathProblem(problemText).catch(error => {
-      console.log('Math audio failed, user can click Gentag button:', error)
-    })
-    
-    // For non-iOS: Also schedule a backup delayed audio
-    if (!isIOS()) {
-      timeoutRef.current = setTimeout(async () => {
-        try {
-          await audioManager.speakMathProblem(problemText)
-        } catch (error) {
-          console.error('Error in scheduled math problem audio:', error)
-        }
-        timeoutRef.current = null
-      }, 500)
-    }
+    timeoutRef.current = setTimeout(async () => {
+      try {
+        await audioManager.speakMathProblem(problemText)
+      } catch (error) {
+        console.log('Math audio failed, user can click Gentag button:', error)
+      }
+      timeoutRef.current = null
+    }, 500)
   }
 
   const handleAnswerClick = async (selectedAnswer: number) => {
@@ -264,7 +262,6 @@ const MathGame: React.FC = () => {
   }
 
 
-  if (!currentProblem) return null
 
   return (
     <Box 
@@ -369,6 +366,7 @@ const MathGame: React.FC = () => {
             color="secondary"
             size="large"
             startIcon={<Volume2 size={24} />}
+            disabled={!entryAudioComplete}
             sx={{ py: 2, px: 4, fontSize: '1.1rem', borderRadius: 3 }}
           >
             🎵 Gentag
@@ -412,7 +410,7 @@ const MathGame: React.FC = () => {
               }
             }}
           >
-          {showOptions.map((number, index) => (
+          {showOptions.length > 0 ? showOptions.map((number, index) => (
             <motion.div
               key={`${number}-${index}`}
               initial={{ opacity: 0, scale: 0.8 }}
@@ -471,7 +469,7 @@ const MathGame: React.FC = () => {
                 </CardContent>
               </Card>
             </motion.div>
-          ))}
+          )) : null}
           </Box>
         </Box>
 
@@ -480,7 +478,6 @@ const MathGame: React.FC = () => {
       {/* Celebration Effect */}
       <CelebrationEffect
         show={showCelebration}
-        character="fox"
         intensity={celebrationIntensity}
         onComplete={stopCelebration}
       />

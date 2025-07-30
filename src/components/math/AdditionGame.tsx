@@ -24,29 +24,47 @@ import { audioManager } from '../../utils/audio'
 import { categoryThemes } from '../../config/categoryThemes'
 import LottieCharacter, { useCharacterState } from '../common/LottieCharacter'
 import CelebrationEffect, { useCelebration } from '../common/CelebrationEffect'
+import { useGameEntryAudio } from '../../hooks/useGameEntryAudio'
+import { entryAudioManager } from '../../utils/entryAudioManager'
 
 
 const AdditionGame: React.FC = () => {
   const navigate = useNavigate()
-  const [num1, setNum1] = useState(0)
-  const [num2, setNum2] = useState(0)
-  const [correctAnswer, setCorrectAnswer] = useState(0)
+  const [num1, setNum1] = useState(1)
+  const [num2, setNum2] = useState(1)
+  const [correctAnswer, setCorrectAnswer] = useState(2)
   const [options, setOptions] = useState<number[]>([])
   const [score, setScore] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
+  const [entryAudioComplete, setEntryAudioComplete] = useState(false)
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
   
   // Character and celebration management
   const mathTeacher = useCharacterState('wave')
   const { showCelebration, celebrationIntensity, celebrate, stopCelebration } = useCelebration()
+  
+  // Centralized entry audio
+  useGameEntryAudio({ gameType: 'addition' })
 
   useEffect(() => {
-    generateNewProblem()
-    
     // Initialize math teacher character
     mathTeacher.setCharacter('fox')
     mathTeacher.wave()
-    
+  }, [])
+
+  useEffect(() => {
+    // Register callback to start the game after entry audio completes
+    entryAudioManager.onComplete('addition', () => {
+      console.log(`🎵 AdditionGame: Entry audio completed, starting first question`)
+      setEntryAudioComplete(true)
+      // Add a small delay after entry audio before starting the question
+      setTimeout(() => {
+        generateNewProblem()
+      }, 500)
+    })
+  }, [])
+
+  useEffect(() => {
     // Stop audio immediately when navigating away
     const handleBeforeUnload = () => {
       audioManager.stopAll()
@@ -70,14 +88,8 @@ const AdditionGame: React.FC = () => {
     }
   }, [])
 
-  // Speak the problem when numbers are set (after initial render and state updates)
-  useEffect(() => {
-    if (num1 && num2) {
-      timeoutRef.current = setTimeout(() => {
-        speakProblem(num1, num2)
-      }, 800)
-    }
-  }, [num1, num2])
+  // This problematic useEffect has been removed to prevent infinite loops
+  // Audio is now handled by the centralized task-based game pattern
 
   const generateNewProblem = () => {
     // Generate two numbers that add up to max 10
@@ -102,6 +114,11 @@ const AdditionGame: React.FC = () => {
     }
     
     setOptions(Array.from(answerOptions).sort(() => Math.random() - 0.5))
+    
+    // Schedule audio with proper delay (centralized pattern)
+    timeoutRef.current = setTimeout(() => {
+      speakProblem(firstNum, secondNum)
+    }, 800)
   }
 
   const speakProblem = async (a: number, b: number) => {
@@ -163,6 +180,7 @@ const AdditionGame: React.FC = () => {
   const repeatProblem = () => {
     speakProblem(num1, num2)
   }
+
 
 
   return (
@@ -251,19 +269,20 @@ const AdditionGame: React.FC = () => {
         </Box>
 
         {/* Problem Display - Compact */}
-        <Box sx={{ textAlign: 'center', mb: { xs: 2, md: 3 }, flex: '0 0 auto' }}>
-          <Paper 
-            elevation={8}
-            sx={{ 
-              maxWidth: 500,
-              mx: 'auto',
-              p: { xs: 2, md: 4 },
-              borderRadius: 4,
-              border: '2px solid',
-              borderColor: 'primary.200',
-              mb: 3
-            }}
-          >
+        {entryAudioComplete && (
+          <Box sx={{ textAlign: 'center', mb: { xs: 2, md: 3 }, flex: '0 0 auto' }}>
+            <Paper 
+              elevation={8}
+              sx={{ 
+                maxWidth: 500,
+                mx: 'auto',
+                p: { xs: 2, md: 4 },
+                borderRadius: 4,
+                border: '2px solid',
+                borderColor: 'primary.200',
+                mb: 3
+              }}
+            >
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: { xs: 2, md: 3 }, mb: 3 }}>
               {/* First number */}
               <Box sx={{ textAlign: 'center' }}>
@@ -323,17 +342,19 @@ const AdditionGame: React.FC = () => {
 
             <Button 
               onClick={repeatProblem}
+              disabled={!entryAudioComplete || isPlaying}
+              label="🎵 Hør igen"
               variant="contained"
               color="secondary"
               size="large"
               startIcon={<VolumeUp />}
-              disabled={isPlaying}
-              sx={{ py: 2, px: 4, fontSize: '1.1rem' }}
+              sx={{ py: 2, px: 4, fontSize: '1.1rem', borderRadius: 3 }}
             >
-              Hør igen 🎵
+              🎵 Gentag
             </Button>
           </Paper>
         </Box>
+        )}
 
         {/* Answer Options Grid - Flexible */}
         <Box sx={{ 
@@ -372,7 +393,7 @@ const AdditionGame: React.FC = () => {
               }
             }}
           >
-          {options.map((option, index) => (
+          {entryAudioComplete && options.length > 0 ? options.map((option, index) => (
             <motion.div
               key={`${option}-${index}`}
               initial={{ opacity: 0, scale: 0.8 }}
@@ -433,7 +454,7 @@ const AdditionGame: React.FC = () => {
                   </CardContent>
               </Card>
             </motion.div>
-          ))}
+          )) : null}
           </Box>
         </Box>
 
@@ -442,7 +463,6 @@ const AdditionGame: React.FC = () => {
       {/* Celebration Effect */}
       <CelebrationEffect
         show={showCelebration}
-        character="fox"
         intensity={celebrationIntensity}
         onComplete={stopCelebration}
       />

@@ -2,12 +2,10 @@ import React, { useEffect, useState } from 'react'
 import Confetti from 'react-confetti'
 import { Box, SxProps, Theme } from '@mui/material'
 import { motion, AnimatePresence } from 'framer-motion'
-import LottieCharacter, { CharacterType } from './LottieCharacter'
 
 interface CelebrationEffectProps {
   show: boolean
   onComplete?: () => void
-  character?: CharacterType
   confettiColors?: string[]
   duration?: number
   sx?: SxProps<Theme>
@@ -17,7 +15,6 @@ interface CelebrationEffectProps {
 const CelebrationEffect: React.FC<CelebrationEffectProps> = ({
   show,
   onComplete,
-  character = 'bear',
   confettiColors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#ffeaa7', '#dda0dd'],
   duration = 3000,
   intensity = 'medium',
@@ -108,54 +105,6 @@ const CelebrationEffect: React.FC<CelebrationEffectProps> = ({
             />
           )}
 
-          {/* Celebrating Character */}
-          <motion.div
-            initial={{ scale: 0, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0, opacity: 0 }}
-            transition={{
-              type: "spring",
-              stiffness: 500,
-              damping: 25
-            }}
-            style={{
-              position: 'absolute',
-              top: '50%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)',
-              pointerEvents: 'auto'
-            }}
-          >
-            <LottieCharacter
-              character={character}
-              state="celebrate"
-              size={150}
-              loop={true}
-              autoplay={true}
-            />
-          </motion.div>
-
-          {/* Success Text Animation */}
-          <motion.div
-            initial={{ y: 50, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: -50, opacity: 0 }}
-            transition={{ delay: 0.3, duration: 0.6 }}
-            style={{
-              position: 'absolute',
-              top: '60%',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              textAlign: 'center',
-              fontSize: '2rem',
-              fontWeight: 'bold',
-              color: '#4caf50',
-              textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
-              pointerEvents: 'none'
-            }}
-          >
-            🎉 Rigtig godt! 🎉
-          </motion.div>
 
           {/* Floating Success Emojis */}
           {[...Array(6)].map((_, index) => (

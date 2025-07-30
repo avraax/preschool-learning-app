@@ -18,6 +18,7 @@ import {
 import { audioManager } from '../../utils/audio'
 import { categoryThemes } from '../../config/categoryThemes'
 import LearningGrid from '../common/LearningGrid'
+import { useGameEntryAudio } from '../../hooks/useGameEntryAudio'
 
 
 const DANISH_ALPHABET = [
@@ -30,6 +31,9 @@ const AlphabetLearning: React.FC = () => {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
+  
+  // Centralized entry audio
+  useGameEntryAudio({ gameType: 'alphabetlearning' })
 
 
   useEffect(() => {

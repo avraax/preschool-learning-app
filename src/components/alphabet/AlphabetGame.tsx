@@ -20,6 +20,8 @@ import { DANISH_PHRASES } from '../../config/danish-phrases'
 import { categoryThemes } from '../../config/categoryThemes'
 import LottieCharacter, { useCharacterState } from '../common/LottieCharacter'
 import CelebrationEffect, { useCelebration } from '../common/CelebrationEffect'
+import { useGameEntryAudio } from '../../hooks/useGameEntryAudio'
+import { entryAudioManager } from '../../utils/entryAudioManager'
 
 // Full Danish alphabet including special characters
 const DANISH_ALPHABET = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'Æ', 'Ø', 'Å']
@@ -30,11 +32,20 @@ const AlphabetGame: React.FC = () => {
   const [showOptions, setShowOptions] = useState<string[]>([])
   const [score, setScore] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
+  const [entryAudioComplete, setEntryAudioComplete] = useState(false)
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
   
   // Character and celebration management
   const teacherCharacter = useCharacterState('wave')
   const { showCelebration, celebrationIntensity, celebrate, stopCelebration } = useCelebration()
+  
+  // Centralized entry audio
+  useGameEntryAudio({ gameType: 'alphabet' })
+  
+  // Debug logging for component initialization
+  useEffect(() => {
+    console.log(`🎵 AlphabetGame: Component initialized`)
+  }, [])
   
   useEffect(() => {
     // Initial teacher greeting
@@ -43,7 +54,16 @@ const AlphabetGame: React.FC = () => {
   }, [])
 
   useEffect(() => {
-    generateNewQuestion()
+    // Register callback to start the game after entry audio completes
+    console.log(`🎵 AlphabetGame: Registering callback for entry audio completion`)
+    entryAudioManager.onComplete('alphabet', () => {
+      console.log(`🎵 AlphabetGame: Entry audio completed, starting first question`)
+      setEntryAudioComplete(true)
+      // Add a small delay after entry audio before starting the question
+      setTimeout(() => {
+        generateNewQuestion()
+      }, 500)
+    })
     
     // Stop audio immediately when navigating away
     const handleBeforeUnload = () => {
@@ -108,8 +128,10 @@ const AlphabetGame: React.FC = () => {
     
     // Try immediate audio for iOS, delayed for others
     if (isIOS()) {
+      console.log(`🎵 AlphabetGame: Starting immediate audio for iOS - Find bogstavet ${letter}`)
       playAudioAsync()
     } else {
+      console.log(`🎵 AlphabetGame: Scheduling delayed audio (500ms) - Find bogstavet ${letter}`)
       timeoutRef.current = setTimeout(playAudioAsync, 500)
     }
   }
@@ -275,6 +297,7 @@ const AlphabetGame: React.FC = () => {
             variant="contained"
             size="large"
             startIcon={<Volume2 size={24} />}
+            disabled={!entryAudioComplete}
             sx={{ 
               py: 2, 
               px: 4, 
@@ -395,7 +418,6 @@ const AlphabetGame: React.FC = () => {
       {/* Celebration Effect */}
       <CelebrationEffect
         show={showCelebration}
-        character="owl"
         intensity={celebrationIntensity}
         onComplete={stopCelebration}
       />

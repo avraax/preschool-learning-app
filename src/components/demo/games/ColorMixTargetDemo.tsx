@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react'
-import { Box, Typography, Button } from '@mui/material'
+import { Box, Typography } from '@mui/material'
 import { motion, AnimatePresence } from 'framer-motion'
 import { DndContext, DragEndEvent, DragStartEvent, closestCenter } from '@dnd-kit/core'
 import { audioManager } from '../../../utils/audio'
-import { categoryThemes } from '../../../config/categoryThemes'
 import { DraggableItem } from '../../common/dnd/DraggableItem'
 import { DroppableZone } from '../../common/dnd/DroppableZone'
+import { useCharacterState } from '../../common/LottieCharacter'
+import CelebrationEffect, { useCelebration } from '../../common/CelebrationEffect'
 
 // Game interfaces
 interface ColorDroplet {
@@ -27,7 +28,6 @@ interface GameState {
   targetColor: TargetColor
   availableColors: ColorDroplet[]
   mixingZone: ColorDroplet[]
-  gameResult: 'waiting' | 'success' | 'failure' | null
   attempts: number
 }
 
@@ -37,11 +37,14 @@ const ColorMixTargetDemo: React.FC = () => {
     targetColor: { color: 'lilla', name: 'lilla', hex: '#A855F7' },
     availableColors: [],
     mixingZone: [],
-    gameResult: null,
     attempts: 0
   })
   const [_activeId, setActiveId] = useState<string | null>(null)
   const hasInitialized = React.useRef(false)
+  
+  // Character and celebration management
+  const colorMixer = useCharacterState('wave')
+  const { showCelebration, celebrationIntensity, celebrate, stopCelebration } = useCelebration()
 
   // Primary colors for mixing (5 colors for more gameplay options)
   const primaryColors: ColorDroplet[] = [
@@ -92,6 +95,11 @@ const ColorMixTargetDemo: React.FC = () => {
   useEffect(() => {
     if (hasInitialized.current) return
     hasInitialized.current = true
+    
+    // Initialize character
+    colorMixer.setCharacter('bear')
+    colorMixer.wave()
+    
     initializeGame()
   }, [])
 
@@ -112,7 +120,6 @@ const ColorMixTargetDemo: React.FC = () => {
       targetColor: randomTarget,
       availableColors: shuffledColors,
       mixingZone: [],
-      gameResult: null,
       attempts: 0
     })
 
@@ -127,9 +134,6 @@ const ColorMixTargetDemo: React.FC = () => {
     }, 1000)
   }
 
-  const resetGame = () => {
-    initializeGame()
-  }
 
   const addToMixingZone = (droplet: ColorDroplet) => {
     if (gameState.mixingZone.length >= 2) return
@@ -160,46 +164,46 @@ const ColorMixTargetDemo: React.FC = () => {
     }
   }
 
-  const tryMixColors = (colorsToMix: ColorDroplet[]) => {
+  const tryMixColors = async (colorsToMix: ColorDroplet[]) => {
     const [color1, color2] = colorsToMix
     const combinationKey = `${color1.colorName}+${color2.colorName}`
     const mixResult = mixingRules[combinationKey]
 
     if (mixResult && mixResult.name === gameState.targetColor.name) {
-      // Success!
+      // Success! Correct color mixing
+      colorMixer.celebrate()
+      celebrate('medium')
+      
       setGameState(prev => ({
         ...prev,
-        gameResult: 'success',
         attempts: prev.attempts + 1
       }))
 
+      try {
+        await audioManager.announceGameResult(true)
+      } catch (error) {
+        console.log('Audio error:', error)
+      }
+
+      // Auto-generate new question after celebration
       setTimeout(() => {
-        try {
-          audioManager.speak(`Fantastisk! Du lavede ${mixResult.name}!`)
-            .catch(error => console.log('Audio error:', error))
-        } catch (error) {
-          console.log('Audio error:', error)
-        }
-      }, 500)
+        stopCelebration()
+        colorMixer.point()
+        initializeGame()
+      }, 3000)
     } else {
-      // Wrong combination
+      // Wrong combination - encourage
+      colorMixer.encourage()
+      
       setGameState(prev => ({
         ...prev,
-        gameResult: 'failure',
         attempts: prev.attempts + 1
       }))
 
-      setTimeout(() => {
-        try {
-          audioManager.speak('Næsten! Prøv igen med andre farver.')
-            .catch(error => console.log('Audio error:', error))
-        } catch (error) {
-          console.log('Audio error:', error)
-        }
-      }, 500)
-
-      // Reset after 2 seconds
-      setTimeout(() => {
+      try {
+        await audioManager.announceGameResult(false)
+        
+        // Reset immediately when audio ends
         const clearedColors = gameState.availableColors.map(color => ({
           ...color,
           isUsed: false
@@ -208,10 +212,13 @@ const ColorMixTargetDemo: React.FC = () => {
         setGameState(prev => ({
           ...prev,
           availableColors: clearedColors,
-          mixingZone: [],
-          gameResult: null
+          mixingZone: []
         }))
-      }, 2000)
+        
+        colorMixer.think()
+      } catch (error) {
+        console.log('Audio error:', error)
+      }
     }
   }
 
@@ -329,33 +336,6 @@ const ColorMixTargetDemo: React.FC = () => {
                       }} />
                     </motion.div>
                   ))}
-                  
-                  {gameState.gameResult === 'success' && (
-                    <motion.div
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1.2 }}
-                      style={{
-                        position: 'absolute',
-                        top: '50%',
-                        left: '50%',
-                        transform: 'translate(-50%, -50%)'
-                      }}
-                    >
-                      <Box sx={{
-                        width: 120,
-                        height: 120,
-                        borderRadius: '50%',
-                        backgroundColor: gameState.targetColor.hex,
-                        border: '4px solid white',
-                        boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
-                      }}>
-                        <Typography sx={{ fontSize: '3rem' }}>🎉</Typography>
-                      </Box>
-                    </motion.div>
-                  )}
                 </AnimatePresence>
               </DroppableZone>
             </Box>
@@ -419,88 +399,14 @@ const ColorMixTargetDemo: React.FC = () => {
 
         </Box>
 
-        {/* Control Area - Ny opgave button */}
-        <Box sx={{ 
-          display: 'flex', 
-          justifyContent: 'center', 
-          mt: 6,
-          mb: 1
-        }}>
-          <Button
-            variant="contained"
-            onClick={resetGame}
-            sx={{
-              backgroundColor: categoryThemes.colors.accentColor,
-              color: 'white',
-              fontSize: { xs: '0.9rem', md: '1rem' },
-              py: 1.5,
-              px: 3,
-              '&:hover': {
-                backgroundColor: categoryThemes.colors.hoverBorderColor
-              }
-            }}
-          >
-            🎯 Ny opgave
-          </Button>
-        </Box>
 
-        {/* Success Message */}
-        <AnimatePresence>
-          {gameState.gameResult === 'success' && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.8 }}
-              style={{
-                position: 'fixed',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                zIndex: 1000
-              }}
-            >
-              <Box sx={{
-                backgroundColor: categoryThemes.colors.accentColor,
-                color: 'white',
-                padding: { xs: 3, md: 4 },
-                borderRadius: 3,
-                textAlign: 'center',
-                boxShadow: '0 16px 64px rgba(0,0,0,0.3)',
-                maxWidth: '400px',
-                mx: 2
-              }}>
-                <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 2, fontSize: { xs: '1.5rem', md: '2rem' } }}>
-                  🎉 Fantastisk! 🎉
-                </Typography>
-                <Typography variant="body1" sx={{ fontSize: { xs: '1rem', md: '1.2rem' }, mb: 3 }}>
-                  Du lavede {gameState.targetColor.name}!
-                </Typography>
-                <Button
-                  variant="contained"
-                  onClick={resetGame}
-                  sx={{
-                    backgroundColor: 'white',
-                    color: categoryThemes.colors.accentColor,
-                    fontWeight: 'bold',
-                    fontSize: { xs: '0.9rem', md: '1rem' },
-                    py: 1.5,
-                    px: 4,
-                    '&:hover': {
-                      backgroundColor: '#f5f5f5'
-                    }
-                  }}
-                >
-                  🎯 Ny opgave
-                </Button>
-              </Box>
-            </motion.div>
-          )}
-        </AnimatePresence>
+      
+      {/* Celebration Effect */}
+      <CelebrationEffect
+        show={showCelebration}
+        intensity={celebrationIntensity}
+        onComplete={stopCelebration}
+      />
     </Box>
   )
 }
