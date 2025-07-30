@@ -169,10 +169,9 @@ const AdditionGame: React.FC = () => {
         console.error('Error playing encouragement sound:', error)
       }
       
-      setTimeout(() => {
-        mathTeacher.think()
-        setIsPlaying(false)
-      }, 2000)
+      // Allow immediate interaction after audio completes
+      mathTeacher.think()
+      setIsPlaying(false)
     }
   }
 

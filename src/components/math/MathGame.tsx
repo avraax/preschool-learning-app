@@ -229,9 +229,8 @@ const MathGame: React.FC = () => {
       mathTeacher.encourage()
       try {
         await audioManager.announceGameResult(false)
-        setTimeout(() => {
-          mathTeacher.think()
-        }, 1000)
+        // Allow immediate interaction after audio completes
+        mathTeacher.think()
       } catch (error) {
         console.error('Error playing wrong answer feedback:', error)
       }

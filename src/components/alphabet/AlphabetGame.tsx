@@ -168,9 +168,8 @@ const AlphabetGame: React.FC = () => {
         // Wrong answer - encourage
         teacherCharacter.encourage()
         await audioManager.announceGameResult(false)
-        setTimeout(() => {
-          teacherCharacter.think()
-        }, 1000)
+        // Allow immediate interaction after audio completes
+        teacherCharacter.think()
       }
     } catch (error) {
       console.error('Error playing feedback:', error)

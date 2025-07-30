@@ -250,9 +250,7 @@ const ComparisonGame: React.FC = () => {
       try {
         await audioManager.announceGameResult(false)
         
-        // Provide teaching moment
-        await new Promise(resolve => setTimeout(resolve, 1000))
-        
+        // Provide teaching moment immediately (no pre-delay)
         let teachingText = ''
         
         if (currentProblem.questionType === 'equal') {
@@ -285,12 +283,11 @@ const ComparisonGame: React.FC = () => {
         console.error('Error playing encouragement:', error)
       }
       
-      timeoutRef.current = setTimeout(() => {
-        mathTeacher.think()
-        setShowFeedback(false)
-        setSelectedSymbol(null)
-        setIsPlaying(false)
-      }, 4000)
+      // Allow immediate interaction after audio completes
+      mathTeacher.think()
+      setShowFeedback(false)
+      setSelectedSymbol(null)
+      setIsPlaying(false)
     }
   }
 
