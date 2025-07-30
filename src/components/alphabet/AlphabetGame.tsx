@@ -264,14 +264,6 @@ const AlphabetGame: React.FC = () => {
               <Typography sx={{ fontSize: '2.5rem' }}>🎯</Typography>
             </Box>
           </motion.div>
-          <Typography variant="h5" sx={{ 
-            mb: 4, 
-            fontSize: { xs: '1rem', md: '1.25rem' },
-            color: '#64B5F6',
-            fontWeight: 500
-          }}>
-            Klik på bogstavet! 👆
-          </Typography>
         </Box>
 
         {/* Audio Control - Compact */}

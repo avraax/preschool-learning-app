@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Box, Typography, Button, Container, Chip, AppBar, Toolbar, IconButton } from '@mui/material'
-import { ArrowLeft } from 'lucide-react'
+import { Box, Typography, Button, Container, Chip } from '@mui/material'
 import { DndContext, DragEndEvent, DragStartEvent, DragOverlay, closestCenter } from '@dnd-kit/core'
 import { audioManager } from '../../utils/audio'
 import { categoryThemes } from '../../config/categoryThemes'
@@ -10,8 +9,11 @@ import { DroppableZone } from '../common/dnd/DroppableZone'
 import { useCharacterState } from '../common/LottieCharacter'
 import CelebrationEffect, { useCelebration } from '../common/CelebrationEffect'
 import { ColorRepeatButton } from '../common/RepeatButton'
+import { ColorScoreChip } from '../common/ScoreChip'
 import { useGameEntryAudio } from '../../hooks/useGameEntryAudio'
 import { entryAudioManager } from '../../utils/entryAudioManager'
+import { useGameState } from '../../hooks/useGameState'
+import GameHeader from '../common/GameHeader'
 
 // Game item interface
 interface GameItem {
@@ -94,13 +96,15 @@ const FarvejagtGame: React.FC = () => {
   const navigate = useNavigate()
   // Game state
   const [gameItems, setGameItems] = useState<GameItem[]>([])
-  const [score, setScore] = useState(0)
   const [totalTarget, setTotalTarget] = useState(0)
   const [isComplete, setIsComplete] = useState(false)
   const [_activeId, setActiveId] = useState<string | null>(null)
   const [targetColor, setTargetColor] = useState<string>('rød')
   const [, setTargetPhrase] = useState<string>('Find alle røde ting')
   const [entryAudioComplete, setEntryAudioComplete] = useState(false)
+  
+  // Centralized game state management
+  const { score, incrementScore, resetScore, isScoreNarrating, handleScoreClick } = useGameState()
   
   // Character and celebration management
   const colorHunter = useCharacterState('wave')
@@ -304,10 +308,7 @@ const FarvejagtGame: React.FC = () => {
           return updated
         })
         
-        setScore(prev => {
-          const newScore = prev + 1
-          return newScore
-        })
+        incrementScore()
         
         // Play success audio with enhanced error handling
         setTimeout(() => {
@@ -371,7 +372,7 @@ const FarvejagtGame: React.FC = () => {
     setTotalTarget(targetCount)
     setTargetColor(newTargetColor)
     setTargetPhrase(newTargetPhrase)
-    setScore(0)
+    resetScore()
     setIsComplete(false)
     
     setTimeout(() => {
@@ -394,46 +395,38 @@ const FarvejagtGame: React.FC = () => {
 
   return (
     <Box sx={{ 
-      minHeight: 'calc(var(--vh, 1vh) * 100)',
-      background: categoryThemes.colors.gradient,
+      height: '100dvh',
+      overflow: 'hidden',
       display: 'flex',
-      flexDirection: 'column'
+      flexDirection: 'column',
+      background: categoryThemes.colors.gradient
     }}>
-      {/* App Bar */}
-      <AppBar 
-        position="static" 
-        color="transparent" 
-        elevation={0}
-        sx={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}
-      >
-        <Toolbar>
-          <IconButton 
-            edge="start" 
-            onClick={() => navigate('/farver')}
-            sx={{ 
-              mr: 2,
-              backgroundColor: 'rgba(255, 255, 255, 0.2)',
-              '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.3)' }
-            }}
-          >
-            <ArrowLeft size={24} />
-          </IconButton>
-          <Typography variant="h6" component="div" sx={{ 
-            flexGrow: 1,
-            fontWeight: 700,
-            color: categoryThemes.colors.accentColor
-          }}>
-            Farvejagt
-          </Typography>
-        </Toolbar>
-      </AppBar>
+      <GameHeader
+        title="Jagt"
+        titleIcon="🎨"
+        gameIcon="🎯"
+        character={colorHunter}
+        categoryTheme={categoryThemes.colors}
+        backPath="/farver"
+        scoreComponent={
+          <ColorScoreChip
+            score={score}
+            disabled={isScoreNarrating}
+            onClick={handleScoreClick}
+          />
+        }
+      />
 
-      <Container sx={{ flex: 1, display: 'flex', flexDirection: 'column', py: 2 }}>
-        {/* Header */}
-        <Box sx={{ textAlign: 'center', mb: 2 }}>
-          <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 1, color: categoryThemes.colors.accentColor }}>
-            Farvejagt
-          </Typography>
+      <Container 
+        maxWidth="lg" 
+        sx={{ 
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          py: { xs: 2, md: 3 },
+          overflow: 'hidden'
+        }}
+      >
         <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', alignItems: 'center', mb: 2 }}>
           <Chip 
             label={`${targetColor} ting: ${score}/${totalTarget}`} 
@@ -463,27 +456,26 @@ const FarvejagtGame: React.FC = () => {
         </Box>
         
         {/* Repeat Instructions Button */}
-        <Box sx={{ textAlign: 'center', mb: 2 }}>
+        <Box sx={{ textAlign: 'center', mb: { xs: 2, md: 3 }, flex: '0 0 auto' }}>
           <ColorRepeatButton 
             onClick={repeatInstructions}
             disabled={!entryAudioComplete}
-            label="🎵 Hør igen"
+            label="🎵 Hör igen"
           />
         </Box>
-      </Box>
 
-      {/* Game area */}
-      <Box 
-        sx={{ 
-          flex: 1,
-          position: 'relative',
-          backgroundColor: '#fef3c7',
-          borderRadius: 3,
-          boxShadow: 3,
-          overflow: 'hidden',
-          minHeight: 400
-        }}
-      >
+        {/* Game area */}
+        <Box 
+          sx={{ 
+            flex: 1,
+            position: 'relative',
+            backgroundColor: '#fef3c7',
+            borderRadius: 3,
+            boxShadow: 3,
+            overflow: 'hidden',
+            minHeight: 0
+          }}
+        >
         <DndContext 
           onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
@@ -568,16 +560,9 @@ const FarvejagtGame: React.FC = () => {
           </DragOverlay>
         </DndContext>
 
-      </Box>
+        </Box>
 
-      {/* Instructions */}
-      <Box sx={{ textAlign: 'center', mt: 2 }}>
-        <Typography variant="body2" color="text.secondary">
-          Træk alle de {targetColor} ting til cirklen i midten
-        </Typography>
-      </Box>
-
-      {/* CSS animations */}
+        {/* CSS animations */}
       <style>
         {`
           @keyframes shake {
@@ -586,7 +571,7 @@ const FarvejagtGame: React.FC = () => {
             75% { transform: translate(-50%, -50%) translateX(10px) rotate(5deg); }
           }
         `}
-      </style>
+        </style>
       </Container>
       
       {/* Celebration Effect */}

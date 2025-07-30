@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Box, Typography, Container, AppBar, Toolbar, IconButton } from '@mui/material'
-import { ArrowLeft } from 'lucide-react'
+import { Box, Typography, Container } from '@mui/material'
 import { motion, AnimatePresence } from 'framer-motion'
 import { DndContext, DragEndEvent, DragStartEvent, closestCenter } from '@dnd-kit/core'
 import { audioManager } from '../../utils/audio'
@@ -15,6 +14,7 @@ import { ColorRepeatButton } from '../common/RepeatButton'
 import { useGameEntryAudio } from '../../hooks/useGameEntryAudio'
 import { useGameState } from '../../hooks/useGameState'
 import { entryAudioManager } from '../../utils/entryAudioManager'
+import GameHeader from '../common/GameHeader'
 
 // Game interfaces
 interface ColorDroplet {
@@ -294,63 +294,48 @@ const RamFarvenGame: React.FC = () => {
 
   return (
     <Box sx={{ 
-      minHeight: 'calc(var(--vh, 1vh) * 100)',
-      background: categoryThemes.colors.gradient,
+      height: '100dvh',
+      overflow: 'hidden',
       display: 'flex',
-      flexDirection: 'column'
+      flexDirection: 'column',
+      background: categoryThemes.colors.gradient
     }}>
-      {/* App Bar */}
-      <AppBar 
-        position="static" 
-        color="transparent" 
-        elevation={0}
-        sx={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}
-      >
-        <Toolbar sx={{ justifyContent: 'space-between', py: 2 }}>
-          <IconButton 
-            edge="start" 
-            onClick={() => navigate('/farver')}
-            sx={{ 
-              backgroundColor: 'rgba(255, 255, 255, 0.8)',
-              border: '1px solid rgba(255, 255, 255, 0.3)',
-              backdropFilter: 'blur(8px)',
-              '&:hover': { 
-                backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                transform: 'scale(1.05)'
-              }
-            }}
-          >
-            <ArrowLeft size={24} />
-          </IconButton>
-          
-          <Typography variant="h6" sx={{ 
-            flexGrow: 1, 
-            fontWeight: 700,
-            color: categoryThemes.colors.accentColor,
-            textAlign: 'center'
-          }}>
-            Ram Farven
-          </Typography>
-          
+      <GameHeader
+        title="Ram Farven"
+        titleIcon="🎨"
+        gameIcon="🎯"
+        character={colorTeacher}
+        categoryTheme={categoryThemes.colors}
+        backPath="/farver"
+        scoreComponent={
           <ColorScoreChip
             score={score}
             disabled={isScoreNarrating}
             onClick={handleScoreClick}
           />
-        </Toolbar>
-      </AppBar>
+        }
+      />
 
-      <Container sx={{ flex: 1, display: 'flex', flexDirection: 'column', py: 2 }}>
+      <Container 
+        maxWidth="lg" 
+        sx={{ 
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          py: { xs: 2, md: 3 },
+          overflow: 'hidden'
+        }}
+      >
         <Box sx={{ 
-          height: '100%', 
+          flex: 1,
           background: 'transparent',
           overflow: 'hidden',
           display: 'flex',
           flexDirection: 'column',
-          p: 2
+          minHeight: 0
         }}>
           {/* Target Display */}
-          <Box sx={{ textAlign: 'center', mb: 4 }}>
+          <Box sx={{ textAlign: 'center', mb: { xs: 2, md: 3 }, flex: '0 0 auto' }}>
             <motion.div
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -375,20 +360,22 @@ const RamFarvenGame: React.FC = () => {
           </Box>
 
           {/* Repeat Instructions Button */}
-          <Box sx={{ textAlign: 'center', mb: 3 }}>
+          <Box sx={{ textAlign: 'center', mb: { xs: 2, md: 3 }, flex: '0 0 auto' }}>
             <ColorRepeatButton 
               onClick={repeatInstructions}
               disabled={!entryAudioComplete}
-              label="🎵 Hør igen"
+              label="🎵 Hör igen"
             />
           </Box>
 
           {/* Game Area */}
           <Box sx={{ 
+            flex: 1,
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'flex-start',
-            gap: 2
+            gap: 2,
+            minHeight: 0
           }}>
             <DndContext 
               onDragStart={handleDragStart}
@@ -396,7 +383,7 @@ const RamFarvenGame: React.FC = () => {
               collisionDetection={closestCenter}
             >
               {/* Mixing Zone */}
-              <Box sx={{ textAlign: 'center', mb: 1 }}>
+              <Box sx={{ textAlign: 'center', mb: { xs: 1, md: 2 }, flex: '0 0 auto' }}>
                 <DroppableZone
                   id="mixing-zone"
                   style={{
@@ -455,7 +442,8 @@ const RamFarvenGame: React.FC = () => {
                 gap: { xs: 1, md: 2 },
                 maxWidth: '600px',
                 mx: 'auto',
-                px: 1
+                px: 1,
+                flex: '0 0 auto'
               }}>
                 {gameState.availableColors.map((color) => (
                   <motion.div
@@ -505,8 +493,6 @@ const RamFarvenGame: React.FC = () => {
               </Box>
             </DndContext>
           </Box>
-
-
         </Box>
       </Container>
       

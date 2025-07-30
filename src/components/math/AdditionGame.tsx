@@ -14,10 +14,10 @@ import {
   Toolbar
 } from '@mui/material'
 import {
-  ArrowBack,
   VolumeUp,
   Add
 } from '@mui/icons-material'
+import { ArrowLeft } from 'lucide-react'
 import { audioManager } from '../../utils/audio'
 import { categoryThemes } from '../../config/categoryThemes'
 import LottieCharacter, { useCharacterState } from '../common/LottieCharacter'
@@ -204,12 +204,16 @@ const AdditionGame: React.FC = () => {
             color="primary"
             size="large"
             sx={{ 
-              bgcolor: 'white', 
-              boxShadow: 3,
-              '&:hover': { boxShadow: 6 }
+              bgcolor: 'rgba(255, 255, 255, 0.8)', 
+              border: '1px solid rgba(255, 255, 255, 0.3)',
+              backdropFilter: 'blur(8px)',
+              '&:hover': { 
+                bgcolor: 'rgba(255, 255, 255, 0.9)',
+                transform: 'scale(1.05)'
+              }
             }}
           >
-            <ArrowBack />
+            <ArrowLeft size={24} />
           </IconButton>
           
           <MathScoreChip

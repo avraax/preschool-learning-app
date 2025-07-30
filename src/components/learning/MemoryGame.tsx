@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { Container, Box, Typography, IconButton, AppBar, Toolbar } from '@mui/material'
-import { ArrowBack } from '@mui/icons-material'
+import { Container, Box, Typography } from '@mui/material'
 import { motion } from 'framer-motion'
 
 // Working CSS for card flip animation
@@ -57,7 +56,7 @@ const flipStyles = `
   }
 `
 
-import LottieCharacter, { useCharacterState } from '../common/LottieCharacter'
+import { useCharacterState } from '../common/LottieCharacter'
 import CelebrationEffect, { useCelebration } from '../common/CelebrationEffect'
 import { AlphabetScoreChip } from '../common/ScoreChip'
 import { AlphabetRestartButton } from '../common/RestartButton'
@@ -67,6 +66,8 @@ import { DANISH_PHRASES } from '../../config/danish-phrases'
 import { useGameEntryAudio } from '../../hooks/useGameEntryAudio'
 import { entryAudioManager } from '../../utils/entryAudioManager'
 import { useGameState } from '../../hooks/useGameState'
+import { categoryThemes } from '../../config/categoryThemes'
+import GameHeader from '../common/GameHeader'
 
 // Danish alphabet (29 letters)
 const DANISH_ALPHABET = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'Æ', 'Ø', 'Å']
@@ -340,6 +341,10 @@ const MemoryGame: React.FC = () => {
     return gameType === 'letters' ? 'Hukommelsesspil - Bogstaver' : 'Hukommelsesspil - Tal'
   }
 
+  const getBackPath = () => {
+    return gameType === 'letters' ? '/alphabet' : '/math'
+  }
+
 
 
   return (
@@ -354,29 +359,20 @@ const MemoryGame: React.FC = () => {
           background: 'linear-gradient(135deg, #f3e5f5 0%, #e8f5e8 50%, #fff3e0 100%)'
         }}
       >
-      {/* App Bar with Back Button and Score */}
-      <AppBar position="static" color="transparent" elevation={0}>
-        <Toolbar sx={{ justifyContent: 'space-between', py: 1, minHeight: { xs: 56, sm: 60 } }}>
-          <IconButton 
-            onClick={() => navigate('/')}
-            color="primary"
-            size="medium"
-            sx={{ 
-              bgcolor: 'white', 
-              boxShadow: 2,
-              '&:hover': { boxShadow: 4 }
-            }}
-          >
-            <ArrowBack />
-          </IconButton>
-          
+      <GameHeader
+        title={getGameTitle()}
+        titleIcon="🧠"
+        character={teacher}
+        categoryTheme={categoryThemes.alphabet}
+        backPath={getBackPath()}
+        scoreComponent={
           <AlphabetScoreChip
             score={score}
             disabled={isScoreNarrating}
             onClick={handleScoreClick}
           />
-        </Toolbar>
-      </AppBar>
+        }
+      />
 
       <Container 
         maxWidth="xl" 
@@ -388,47 +384,18 @@ const MemoryGame: React.FC = () => {
           overflow: 'hidden'
         }}
       >
-        {/* Game Title with Teacher */}
-        <Box sx={{ textAlign: 'center', mb: 0.5, flex: '0 0 auto' }}>
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1.5, mb: 0.5 }}>
-              <LottieCharacter
-                character={teacher.character}
-                state={teacher.state}
-                size={45}
-                onClick={teacher.wave}
-              />
-              <Typography 
-                variant="h5" 
-                sx={{ 
-                  color: 'primary.dark',
-                  fontWeight: 700,
-                  fontSize: { xs: '1.1rem', md: '1.3rem' }
-                }}
-              >
-                {getGameTitle()}
-              </Typography>
-              <Typography sx={{ fontSize: '1.2rem' }}>🧠</Typography>
-            </Box>
-            
-            {/* Controls */}
-            <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mb: 1 }}>
-              <AlphabetRestartButton
-                onClick={restartGame}
-                size="small"
-              />
-              <AlphabetRepeatButton
-                onClick={repeatInstructions}
-                disabled={!entryAudioComplete}
-                size="small"
-                label="🎵 Hør igen"
-              />
-            </Box>
-          </motion.div>
+        {/* Controls */}
+        <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mb: { xs: 1, md: 2 }, flex: '0 0 auto' }}>
+          <AlphabetRestartButton
+            onClick={restartGame}
+            size="small"
+          />
+          <AlphabetRepeatButton
+            onClick={repeatInstructions}
+            disabled={!entryAudioComplete}
+            size="small"
+            label="🎵 Hör igen"
+          />
         </Box>
 
         {/* Memory Cards Grid - 4x10 layout */}
@@ -439,7 +406,7 @@ const MemoryGame: React.FC = () => {
           alignItems: 'center',
           minHeight: 0,
           overflow: 'hidden',
-          p: { xs: 0.5, sm: 1, md: 1.5 },
+          p: { xs: 0.5, sm: 1, md: 1 },
           width: '100%'
         }}>
           <Box sx={{

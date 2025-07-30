@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Container, Box, Typography, Button, IconButton, AppBar, Toolbar, Paper, Grid } from '@mui/material'
-import { ArrowBack } from '@mui/icons-material'
+import { ArrowLeft } from 'lucide-react'
 import { motion } from 'framer-motion'
 import LottieCharacter, { useCharacterState } from '../common/LottieCharacter'
 import CelebrationEffect, { useCelebration } from '../common/CelebrationEffect'
@@ -318,12 +318,16 @@ const ComparisonGame: React.FC = () => {
             color="primary"
             size="large"
             sx={{ 
-              bgcolor: 'white', 
-              boxShadow: 3,
-              '&:hover': { boxShadow: 6 }
+              bgcolor: 'rgba(255, 255, 255, 0.8)', 
+              border: '1px solid rgba(255, 255, 255, 0.3)',
+              backdropFilter: 'blur(8px)',
+              '&:hover': { 
+                bgcolor: 'rgba(255, 255, 255, 0.9)',
+                transform: 'scale(1.05)'
+              }
             }}
           >
-            <ArrowBack />
+            <ArrowLeft size={24} />
           </IconButton>
           
           <MathScoreChip
