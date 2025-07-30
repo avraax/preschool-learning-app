@@ -321,8 +321,6 @@ export class AudioManager {
 
   async speakAdditionProblem(num1: number, num2: number, voiceType: 'primary' | 'backup' | 'male' = 'primary'): Promise<void> {
     try {
-      console.log(`Addition Problem: Speaking ${num1} + ${num2}`)
-      
       // Speak addition problems with proper separation for iOS compatibility
       // First: "Hvad er"
       await this.speak(DANISH_PHRASES.gamePrompts.mathQuestion.prefix, voiceType, false)
@@ -344,8 +342,6 @@ export class AudioManager {
       
       // Fourth: second number
       await this.speakNumber(num2)
-      
-      console.log('Addition Problem: Successfully spoke addition problem')
     } catch (error) {
       console.error('speakAdditionProblem error:', error)
       // Fallback: speak as single text

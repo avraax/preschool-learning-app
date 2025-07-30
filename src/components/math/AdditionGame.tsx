@@ -55,7 +55,6 @@ const AdditionGame: React.FC = () => {
   useEffect(() => {
     // Register callback to start the game after entry audio completes
     entryAudioManager.onComplete('addition', () => {
-      console.log(`🎵 AdditionGame: Entry audio completed, starting first question`)
       setEntryAudioComplete(true)
       // Add a small delay after entry audio before starting the question
       setTimeout(() => {
