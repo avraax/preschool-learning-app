@@ -19,12 +19,15 @@ import { audioManager } from '../../utils/audio'
 import { categoryThemes } from '../../config/categoryThemes'
 import LearningGrid from '../common/LearningGrid'
 import { useGameEntryAudio } from '../../hooks/useGameEntryAudio'
+import { entryAudioManager } from '../../utils/entryAudioManager'
+import { MathRepeatButton } from '../common/RepeatButton'
 
 
 const NumberLearning: React.FC = () => {
   const navigate = useNavigate()
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
+  const [entryAudioComplete, setEntryAudioComplete] = useState(false)
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
   
   // Centralized entry audio
@@ -32,6 +35,13 @@ const NumberLearning: React.FC = () => {
 
   // Generate numbers 1-100
   const numbers = Array.from({ length: 100 }, (_, i) => i + 1)
+
+  useEffect(() => {
+    // Register callback to enable interactions after entry audio completes
+    entryAudioManager.onComplete('numberlearning', () => {
+      setEntryAudioComplete(true)
+    })
+  }, [])
 
   useEffect(() => {
     // Stop audio immediately when navigating away
@@ -77,7 +87,12 @@ const NumberLearning: React.FC = () => {
     }
   }
 
-
+  // Repeat instructions for the current number
+  const repeatInstructions = () => {
+    if (!entryAudioComplete) return
+    
+    goToNumber(currentIndex)
+  }
 
   const progress = ((currentIndex + 1) / numbers.length) * 100
 
@@ -165,6 +180,15 @@ const NumberLearning: React.FC = () => {
           </Typography>
         </Box>
 
+        {/* Repeat Button */}
+        <Box sx={{ textAlign: 'center', mb: { xs: 1, md: 1.5 } }}>
+          <MathRepeatButton 
+            onClick={repeatInstructions}
+            disabled={!entryAudioComplete || isPlaying}
+            label="🎵 Hør igen"
+          />
+        </Box>
+
         {/* Current Number Display - Very Compact */}
         <Box sx={{ textAlign: 'center', mb: { xs: 1, md: 1.5 }, flex: '0 0 auto' }}>
           <motion.div
@@ -206,6 +230,7 @@ const NumberLearning: React.FC = () => {
           items={numbers}
           currentIndex={currentIndex}
           onItemClick={goToNumber}
+          disabled={!entryAudioComplete}
         />
       </Container>
     </Box>

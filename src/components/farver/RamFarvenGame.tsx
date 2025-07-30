@@ -11,8 +11,10 @@ import { DraggableItem } from '../common/dnd/DraggableItem'
 import { DroppableZone } from '../common/dnd/DroppableZone'
 import { useCharacterState } from '../common/LottieCharacter'
 import CelebrationEffect, { useCelebration } from '../common/CelebrationEffect'
+import { ColorRepeatButton } from '../common/RepeatButton'
 import { useGameEntryAudio } from '../../hooks/useGameEntryAudio'
 import { useGameState } from '../../hooks/useGameState'
+import { entryAudioManager } from '../../utils/entryAudioManager'
 
 // Game interfaces
 interface ColorDroplet {
@@ -49,6 +51,7 @@ const RamFarvenGame: React.FC = () => {
   })
   const [isPlaying, setIsPlaying] = useState(false)
   const [_activeId, setActiveId] = useState<string | null>(null)
+  const [entryAudioComplete, setEntryAudioComplete] = useState(false)
   
   // Centralized game state management
   const { score, incrementScore, isScoreNarrating, handleScoreClick } = useGameState()
@@ -115,7 +118,14 @@ const RamFarvenGame: React.FC = () => {
     colorTeacher.setCharacter('bear')
     colorTeacher.wave()
     
-    initializeGame()
+    // Register callback to start the game after entry audio completes
+    entryAudioManager.onComplete('ramfarven', () => {
+      setEntryAudioComplete(true)
+      // Add a small delay after entry audio before starting the game
+      setTimeout(() => {
+        initializeGame()
+      }, 500)
+    })
   }, [])
 
   const initializeGame = () => {
@@ -136,17 +146,27 @@ const RamFarvenGame: React.FC = () => {
       attempts: 0
     })
 
-    // Game-specific instruction (after centralized welcome audio)
-    setTimeout(() => {
-      try {
-        audioManager.speak(`Lav ${randomTarget.name} ved at blande to farver!`)
-          .catch(() => {})
-      } catch (error) {
-        // Ignore audio errors
-      }
-    }, 2000) // Longer delay to allow centralized welcome audio to finish first
+    // Game-specific instruction (NOW after entry audio completes)
+    try {
+      audioManager.speak(`Lav ${randomTarget.name} ved at blande to farver!`)
+        .catch(() => {})
+    } catch (error) {
+      // Ignore audio errors
+    }
   }
 
+
+  // Repeat current game instructions
+  const repeatInstructions = () => {
+    if (!entryAudioComplete || !gameState.targetColor) return
+    
+    try {
+      audioManager.speak(`Lav ${gameState.targetColor.name} ved at blande to farver!`)
+        .catch(() => {})
+    } catch (error) {
+      // Ignore audio errors
+    }
+  }
 
   const addToMixingZone = (droplet: ColorDroplet) => {
     if (gameState.mixingZone.length >= 2) return
@@ -354,6 +374,15 @@ const RamFarvenGame: React.FC = () => {
             </motion.div>
           </Box>
 
+          {/* Repeat Instructions Button */}
+          <Box sx={{ textAlign: 'center', mb: 3 }}>
+            <ColorRepeatButton 
+              onClick={repeatInstructions}
+              disabled={!entryAudioComplete}
+              label="🎵 Hør igen"
+            />
+          </Box>
+
           {/* Game Area */}
           <Box sx={{ 
             display: 'flex',
@@ -451,7 +480,7 @@ const RamFarvenGame: React.FC = () => {
                     >
                       <DraggableItem
                         id={color.id}
-                        disabled={color.isUsed}
+                        disabled={!entryAudioComplete || color.isUsed}
                         data={color}
                       >
                         <Box sx={{

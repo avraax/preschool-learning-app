@@ -9,7 +9,9 @@ import { DraggableItem } from '../common/dnd/DraggableItem'
 import { DroppableZone } from '../common/dnd/DroppableZone'
 import { useCharacterState } from '../common/LottieCharacter'
 import CelebrationEffect, { useCelebration } from '../common/CelebrationEffect'
+import { ColorRepeatButton } from '../common/RepeatButton'
 import { useGameEntryAudio } from '../../hooks/useGameEntryAudio'
+import { entryAudioManager } from '../../utils/entryAudioManager'
 
 // Game item interface
 interface GameItem {
@@ -98,6 +100,7 @@ const FarvejagtGame: React.FC = () => {
   const [_activeId, setActiveId] = useState<string | null>(null)
   const [targetColor, setTargetColor] = useState<string>('rød')
   const [, setTargetPhrase] = useState<string>('Find alle røde ting')
+  const [entryAudioComplete, setEntryAudioComplete] = useState(false)
   
   // Character and celebration management
   const colorHunter = useCharacterState('wave')
@@ -208,30 +211,33 @@ const FarvejagtGame: React.FC = () => {
   // Initialize game
   useEffect(() => {
     if (hasInitialized.current) return
-    
     hasInitialized.current = true
     
     // Initialize character
     colorHunter.setCharacter('fox')
     colorHunter.wave()
     
-    const { items, targetCount, targetColor: newTargetColor, targetPhrase: newTargetPhrase } = generateGameItems()
-    
-    setGameItems(items)
-    setTotalTarget(targetCount)
-    setTargetColor(newTargetColor)
-    setTargetPhrase(newTargetPhrase)
-    
-    // Entry audio is now handled by useGameEntryAudio hook
-    // Only speak the target phrase for game initialization
-    setTimeout(() => {
-      try {
-        audioManager.speak(`${newTargetPhrase} og træk dem til cirklen.`)
-          .catch(() => {})
-      } catch (error) {
-        // Ignore audio errors on welcome
-      }
-    }, 1500) // Slightly longer delay to not conflict with entry audio
+    // Register callback to start the game after entry audio completes
+    entryAudioManager.onComplete('farvejagt', () => {
+      setEntryAudioComplete(true)
+      // Add a small delay after entry audio before starting the game
+      setTimeout(() => {
+        const { items, targetCount, targetColor: newTargetColor, targetPhrase: newTargetPhrase } = generateGameItems()
+        
+        setGameItems(items)
+        setTotalTarget(targetCount)
+        setTargetColor(newTargetColor)
+        setTargetPhrase(newTargetPhrase)
+        
+        // NOW speak the target phrase (after entry audio completes)
+        try {
+          audioManager.speak(`${newTargetPhrase} og træk dem til cirklen.`)
+            .catch(() => {})
+        } catch (error) {
+          // Ignore audio errors
+        }
+      }, 500)
+    })
   }, [])
 
   // Check for game completion and trigger celebration
@@ -344,6 +350,19 @@ const FarvejagtGame: React.FC = () => {
     // Items dropped outside target zone automatically return to original position
   }
 
+  // Repeat current game instructions
+  const repeatInstructions = () => {
+    if (!entryAudioComplete || !targetColor) return
+    
+    try {
+      const targetPhrase = COLOR_TARGETS.find(target => target.color === targetColor)?.phrase || 'Find alle røde ting'
+      audioManager.speak(`${targetPhrase} og træk dem til cirklen.`)
+        .catch(() => {})
+    } catch (error) {
+      // Ignore audio errors
+    }
+  }
+
   // Reset game with new random setup
   const resetGame = (isAutomatic = true) => {
     const { items, targetCount, targetColor: newTargetColor, targetPhrase: newTargetPhrase } = generateGameItems()
@@ -442,6 +461,15 @@ const FarvejagtGame: React.FC = () => {
             Start forfra
           </Button>
         </Box>
+        
+        {/* Repeat Instructions Button */}
+        <Box sx={{ textAlign: 'center', mb: 2 }}>
+          <ColorRepeatButton 
+            onClick={repeatInstructions}
+            disabled={!entryAudioComplete}
+            label="🎵 Hør igen"
+          />
+        </Box>
       </Box>
 
       {/* Game area */}
@@ -496,7 +524,7 @@ const FarvejagtGame: React.FC = () => {
             <DraggableItem
               key={item.id}
               id={item.id}
-              disabled={item.collected || item.returning}
+              disabled={!entryAudioComplete || item.collected || item.returning}
               position={{ x: item.x, y: item.y }}
               data={item}
             >

@@ -6,12 +6,14 @@ interface LearningGridProps {
   items: (string | number)[]
   currentIndex: number
   onItemClick: (index: number) => void
+  disabled?: boolean
 }
 
 const LearningGrid: React.FC<LearningGridProps> = ({
   items,
   currentIndex,
-  onItemClick
+  onItemClick,
+  disabled = false
 }) => {
   // Calculate grid dimensions for optimal layout
   const isAlphabet = items.length === 29
@@ -69,18 +71,19 @@ const LearningGrid: React.FC<LearningGridProps> = ({
             style={{ height: '100%' }}
           >
             <Card 
-                onClick={() => onItemClick(index)}
+                onClick={disabled ? undefined : () => onItemClick(index)}
                 sx={{ 
                   height: '100%',
-                  cursor: 'pointer',
+                  cursor: disabled ? 'default' : 'pointer',
                   border: '2px solid',
                   borderColor: index === currentIndex ? 'secondary.main' : 'primary.200',
                   bgcolor: index === currentIndex ? 'secondary.50' : 'white',
+                  opacity: disabled ? 0.5 : 1,
                   transition: 'all 0.3s ease',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  '&:hover': {
+                  '&:hover': disabled ? {} : {
                     borderColor: 'primary.main',
                     bgcolor: 'primary.50',
                     boxShadow: 4

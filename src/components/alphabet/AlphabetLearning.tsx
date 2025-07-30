@@ -19,6 +19,8 @@ import { audioManager } from '../../utils/audio'
 import { categoryThemes } from '../../config/categoryThemes'
 import LearningGrid from '../common/LearningGrid'
 import { useGameEntryAudio } from '../../hooks/useGameEntryAudio'
+import { entryAudioManager } from '../../utils/entryAudioManager'
+import { AlphabetRepeatButton } from '../common/RepeatButton'
 
 
 const DANISH_ALPHABET = [
@@ -30,11 +32,18 @@ const AlphabetLearning: React.FC = () => {
   const navigate = useNavigate()
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
+  const [entryAudioComplete, setEntryAudioComplete] = useState(false)
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
   
   // Centralized entry audio
   useGameEntryAudio({ gameType: 'alphabetlearning' })
 
+  useEffect(() => {
+    // Register callback to enable interactions after entry audio completes
+    entryAudioManager.onComplete('alphabetlearning', () => {
+      setEntryAudioComplete(true)
+    })
+  }, [])
 
   useEffect(() => {
     // Stop audio immediately when navigating away
@@ -93,8 +102,12 @@ const AlphabetLearning: React.FC = () => {
     }
   }
 
-
-
+  // Repeat instructions for the current letter
+  const repeatInstructions = () => {
+    if (!entryAudioComplete) return
+    
+    goToLetter(currentIndex)
+  }
 
   const progress = ((currentIndex + 1) / DANISH_ALPHABET.length) * 100
 
@@ -185,6 +198,15 @@ const AlphabetLearning: React.FC = () => {
           </Typography>
         </Box>
 
+        {/* Repeat Button */}
+        <Box sx={{ textAlign: 'center', mb: { xs: 1, md: 1.5 } }}>
+          <AlphabetRepeatButton 
+            onClick={repeatInstructions}
+            disabled={!entryAudioComplete || isPlaying}
+            label="🎵 Hør igen"
+          />
+        </Box>
+
         {/* Current Letter Display - Very Compact */}
         <Box sx={{ textAlign: 'center', mb: { xs: 1, md: 1.5 }, flex: '0 0 auto' }}>
           <motion.div
@@ -226,6 +248,7 @@ const AlphabetLearning: React.FC = () => {
           items={DANISH_ALPHABET}
           currentIndex={currentIndex}
           onItemClick={goToLetter}
+          disabled={!entryAudioComplete}
         />
       </Container>
     </Box>

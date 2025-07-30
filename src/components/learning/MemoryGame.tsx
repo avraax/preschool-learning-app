@@ -61,6 +61,7 @@ import LottieCharacter, { useCharacterState } from '../common/LottieCharacter'
 import CelebrationEffect, { useCelebration } from '../common/CelebrationEffect'
 import { AlphabetScoreChip } from '../common/ScoreChip'
 import { AlphabetRestartButton } from '../common/RestartButton'
+import { AlphabetRepeatButton } from '../common/RepeatButton'
 import { audioManager } from '../../utils/audio'
 import { DANISH_PHRASES } from '../../config/danish-phrases'
 import { useGameEntryAudio } from '../../hooks/useGameEntryAudio'
@@ -320,6 +321,21 @@ const MemoryGame: React.FC = () => {
     initializeGame()
   }
 
+  // Repeat game instructions
+  const repeatInstructions = () => {
+    if (!entryAudioComplete) return
+    
+    const message = gameType === 'letters' 
+      ? 'Find ens bogstaver ved at klikke på kortene'
+      : 'Find ens tal ved at klikke på kortene'
+    
+    try {
+      audioManager.speak(message).catch(() => {})
+    } catch (error) {
+      // Ignore audio errors
+    }
+  }
+
   const getGameTitle = () => {
     return gameType === 'letters' ? 'Hukommelsesspil - Bogstaver' : 'Hukommelsesspil - Tal'
   }
@@ -400,10 +416,16 @@ const MemoryGame: React.FC = () => {
             </Box>
             
             {/* Controls */}
-            <Box sx={{ display: 'flex', justifyContent: 'center', mb: 1 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mb: 1 }}>
               <AlphabetRestartButton
                 onClick={restartGame}
                 size="small"
+              />
+              <AlphabetRepeatButton
+                onClick={repeatInstructions}
+                disabled={!entryAudioComplete}
+                size="small"
+                label="🎵 Hør igen"
               />
             </Box>
           </motion.div>
