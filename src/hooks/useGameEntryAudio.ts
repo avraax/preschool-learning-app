@@ -8,7 +8,7 @@ const GAME_WELCOME_MESSAGES = {
   addition: 'Velkommen til "Plus Opgaver".',
   math: 'Velkommen til "Tal Quiz".',
   numberlearning: 'Velkommen til "Lær Tal".',
-  comparison: 'Velkommen til "Tal sammenligning".',
+  comparison: 'Velkommen til "Sammenlign tal".',
   memory: 'Velkommen til "Hukommelsesspillet".',
   farvejagt: 'Velkommen til "Farvejagt".',
   ramfarven: 'Velkommen til "Farveblanding".'

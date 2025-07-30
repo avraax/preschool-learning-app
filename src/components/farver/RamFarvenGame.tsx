@@ -1,16 +1,18 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Box, Typography, Container, AppBar, Toolbar, IconButton, Chip } from '@mui/material'
-import { ArrowLeft, Award } from 'lucide-react'
+import { Box, Typography, Container, AppBar, Toolbar, IconButton } from '@mui/material'
+import { ArrowLeft } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { DndContext, DragEndEvent, DragStartEvent, closestCenter } from '@dnd-kit/core'
 import { audioManager } from '../../utils/audio'
 import { categoryThemes } from '../../config/categoryThemes'
+import { ColorScoreChip } from '../common/ScoreChip'
 import { DraggableItem } from '../common/dnd/DraggableItem'
 import { DroppableZone } from '../common/dnd/DroppableZone'
 import { useCharacterState } from '../common/LottieCharacter'
 import CelebrationEffect, { useCelebration } from '../common/CelebrationEffect'
 import { useGameEntryAudio } from '../../hooks/useGameEntryAudio'
+import { useGameState } from '../../hooks/useGameState'
 
 // Game interfaces
 interface ColorDroplet {
@@ -45,10 +47,11 @@ const RamFarvenGame: React.FC = () => {
     mixingZone: [],
     attempts: 0
   })
-  const [score, setScore] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
   const [_activeId, setActiveId] = useState<string | null>(null)
-  const [isScoreNarrating, setIsScoreNarrating] = useState(false)
+  
+  // Centralized game state management
+  const { score, incrementScore, isScoreNarrating, handleScoreClick } = useGameState()
   const hasInitialized = React.useRef(false)
   
   // Character and celebration management
@@ -183,7 +186,7 @@ const RamFarvenGame: React.FC = () => {
 
     if (mixResult && mixResult.name === gameState.targetColor.name) {
       // Success! Correct color mixing
-      setScore(score + 1)
+      incrementScore()
       colorTeacher.celebrate()
       celebrate(score > 5 ? 'high' : 'medium')
       
@@ -269,18 +272,6 @@ const RamFarvenGame: React.FC = () => {
     }
   }
 
-  const handleScoreClick = async () => {
-    if (isScoreNarrating) return
-    setIsScoreNarrating(true)
-    try {
-      await audioManager.announceScore(score)
-    } catch (error) {
-      // Ignore audio errors
-    } finally {
-      setIsScoreNarrating(false)
-    }
-  }
-
   return (
     <Box sx={{ 
       minHeight: 'calc(var(--vh, 1vh) * 100)',
@@ -321,21 +312,10 @@ const RamFarvenGame: React.FC = () => {
             Ram Farven
           </Typography>
           
-          <Chip 
-            icon={<Award size={20} />} 
-            label={`${score} ⭐`} 
-            color="primary" 
-            onClick={handleScoreClick}
+          <ColorScoreChip
+            score={score}
             disabled={isScoreNarrating}
-            sx={{ 
-              fontSize: '1.2rem',
-              py: 1,
-              fontWeight: 'bold',
-              boxShadow: isScoreNarrating ? 0 : 2,
-              cursor: isScoreNarrating ? 'default' : 'pointer',
-              opacity: isScoreNarrating ? 0.6 : 1,
-              '&:hover': { boxShadow: isScoreNarrating ? 0 : 4 }
-            }}
+            onClick={handleScoreClick}
           />
         </Toolbar>
       </AppBar>

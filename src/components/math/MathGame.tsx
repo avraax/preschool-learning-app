@@ -5,23 +5,24 @@ import {
   Container,
   Card,
   CardContent,
-  Button,
   Typography,
   Box,
   IconButton,
-  Chip,
   AppBar,
   Toolbar
 } from '@mui/material'
-import { Volume2, Award, ArrowLeft } from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
 import { audioManager } from '../../utils/audio'
 import { isIOS } from '../../utils/deviceDetection'
 import { DANISH_PHRASES } from '../../config/danish-phrases'
 import { categoryThemes } from '../../config/categoryThemes'
 import LottieCharacter, { useCharacterState } from '../common/LottieCharacter'
 import CelebrationEffect, { useCelebration } from '../common/CelebrationEffect'
+import { MathScoreChip } from '../common/ScoreChip'
+import { MathRepeatButton } from '../common/RepeatButton'
 import { useGameEntryAudio } from '../../hooks/useGameEntryAudio'
 import { entryAudioManager } from '../../utils/entryAudioManager'
+import { useGameState } from '../../hooks/useGameState'
 
 // Comprehensive math settings for all ages
 const MAX_NUMBER = 30  // Tal Quiz numbers from 1-30
@@ -39,9 +40,10 @@ const MathGame: React.FC = () => {
   const location = useLocation()
   const [currentProblem, setCurrentProblem] = useState<MathProblem | null>(null)
   const [showOptions, setShowOptions] = useState<number[]>([])
-  const [score, setScore] = useState(0)
   const [entryAudioComplete, setEntryAudioComplete] = useState(false)
-  const [isScoreNarrating, setIsScoreNarrating] = useState(false)
+  
+  // Centralized game state management
+  const { score, incrementScore, isScoreNarrating, handleScoreClick } = useGameState()
   
   // Determine game mode based on current route
   const gameMode: 'counting' | 'arithmetic' = location.pathname.includes('/counting') ? 'counting' : 'arithmetic'
@@ -204,7 +206,7 @@ const MathGame: React.FC = () => {
     
     if (selectedAnswer === currentProblem.answer) {
       // Correct answer - celebrate!
-      setScore(score + 1)
+      incrementScore()
       mathTeacher.celebrate()
       celebrate(score > 5 ? 'high' : 'medium')
       
@@ -258,18 +260,6 @@ const MathGame: React.FC = () => {
     }
   }
 
-  const handleScoreClick = async () => {
-    if (isScoreNarrating) return
-    setIsScoreNarrating(true)
-    try {
-      await audioManager.announceScore(score)
-    } catch (error) {
-      // Ignore audio errors
-    } finally {
-      setIsScoreNarrating(false)
-    }
-  }
-
 
 
   return (
@@ -302,21 +292,11 @@ const MathGame: React.FC = () => {
             <ArrowLeft size={24} />
           </IconButton>
           
-          <Chip 
-            icon={<Award size={20} />} 
-            label={`${score} ⭐`} 
-            color="secondary" 
-            onClick={handleScoreClick}
+          <MathScoreChip
+            score={score}
             disabled={isScoreNarrating}
-            sx={{ 
-              fontSize: '1.2rem',
-              py: 1,
-              fontWeight: 'bold',
-              boxShadow: isScoreNarrating ? 0 : 2,
-              cursor: isScoreNarrating ? 'default' : 'pointer',
-              opacity: isScoreNarrating ? 0.6 : 1,
-              '&:hover': { boxShadow: isScoreNarrating ? 0 : 4 }
-            }}
+            onClick={handleScoreClick}
+            format="stars"
           />
         </Toolbar>
       </AppBar>
@@ -371,17 +351,10 @@ const MathGame: React.FC = () => {
 
         {/* Audio Control - Compact */}
         <Box sx={{ textAlign: 'center', mb: { xs: 2, md: 3 }, flex: '0 0 auto' }}>
-          <Button 
+          <MathRepeatButton
             onClick={repeatQuestion}
-            variant="contained"
-            color="secondary"
-            size="large"
-            startIcon={<Volume2 size={24} />}
             disabled={!entryAudioComplete}
-            sx={{ py: 2, px: 4, fontSize: '1.1rem', borderRadius: 3 }}
-          >
-            🎵 Gentag
-          </Button>
+          />
         </Box>
 
         {/* Answer Options Grid - Flexible */}

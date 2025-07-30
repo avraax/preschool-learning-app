@@ -5,23 +5,24 @@ import {
   Container,
   Card,
   CardContent,
-  Button,
   Typography,
   Box,
   IconButton,
-  Chip,
   AppBar,
   Toolbar
 } from '@mui/material'
-import { Volume2, Award, ArrowLeft } from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
 import { audioManager } from '../../utils/audio'
 import { isIOS } from '../../utils/deviceDetection'
 import { DANISH_PHRASES } from '../../config/danish-phrases'
 import { categoryThemes } from '../../config/categoryThemes'
 import LottieCharacter, { useCharacterState } from '../common/LottieCharacter'
 import CelebrationEffect, { useCelebration } from '../common/CelebrationEffect'
+import { AlphabetScoreChip } from '../common/ScoreChip'
+import { AlphabetRepeatButton } from '../common/RepeatButton'
 import { useGameEntryAudio } from '../../hooks/useGameEntryAudio'
 import { entryAudioManager } from '../../utils/entryAudioManager'
+import { useGameState } from '../../hooks/useGameState'
 
 // Full Danish alphabet including special characters
 const DANISH_ALPHABET = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'Æ', 'Ø', 'Å']
@@ -30,10 +31,11 @@ const AlphabetGame: React.FC = () => {
   const navigate = useNavigate()
   const [currentLetter, setCurrentLetter] = useState<string>('')
   const [showOptions, setShowOptions] = useState<string[]>([])
-  const [score, setScore] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
   const [entryAudioComplete, setEntryAudioComplete] = useState(false)
-  const [isScoreNarrating, setIsScoreNarrating] = useState(false)
+  
+  // Centralized game state management
+  const { score, incrementScore, isScoreNarrating, handleScoreClick } = useGameState()
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
   
   // Character and celebration management
@@ -142,7 +144,7 @@ const AlphabetGame: React.FC = () => {
     try {
       if (selectedLetter === currentLetter) {
         // Correct answer - celebrate!
-        setScore(score + 1)
+        incrementScore()
         teacherCharacter.celebrate()
         celebrate(score > 5 ? 'high' : 'medium')
         
@@ -186,18 +188,6 @@ const AlphabetGame: React.FC = () => {
     }
   }
 
-  const handleScoreClick = async () => {
-    if (isScoreNarrating) return
-    setIsScoreNarrating(true)
-    try {
-      await audioManager.announceScore(score)
-    } catch (error) {
-      // Ignore audio errors
-    } finally {
-      setIsScoreNarrating(false)
-    }
-  }
-
   return (
     <Box 
       sx={{ 
@@ -228,21 +218,10 @@ const AlphabetGame: React.FC = () => {
             <ArrowLeft size={24} />
           </IconButton>
           
-          <Chip 
-            icon={<Award size={20} />} 
-            label={`${score} ⭐`} 
-            color="primary" 
-            onClick={handleScoreClick}
+          <AlphabetScoreChip
+            score={score}
             disabled={isScoreNarrating}
-            sx={{ 
-              fontSize: '1.2rem',
-              py: 1,
-              fontWeight: 'bold',
-              boxShadow: isScoreNarrating ? 0 : 2,
-              cursor: isScoreNarrating ? 'default' : 'pointer',
-              opacity: isScoreNarrating ? 0.6 : 1,
-              '&:hover': { boxShadow: isScoreNarrating ? 0 : 4 }
-            }}
+            onClick={handleScoreClick}
           />
         </Toolbar>
       </AppBar>
@@ -297,25 +276,10 @@ const AlphabetGame: React.FC = () => {
 
         {/* Audio Control - Compact */}
         <Box sx={{ textAlign: 'center', mb: { xs: 2, md: 3 }, flex: '0 0 auto' }}>
-          <Button 
+          <AlphabetRepeatButton
             onClick={repeatLetter}
-            variant="contained"
-            size="large"
-            startIcon={<Volume2 size={24} />}
             disabled={!entryAudioComplete}
-            sx={{ 
-              py: 2, 
-              px: 4, 
-              fontSize: '1.1rem', 
-              borderRadius: 3,
-              backgroundColor: categoryThemes.alphabet.accentColor,
-              '&:hover': {
-                backgroundColor: categoryThemes.alphabet.hoverBorderColor
-              }
-            }}
-          >
-            🎵 Gentag
-          </Button>
+          />
         </Box>
 
         {/* Answer Options Grid */}

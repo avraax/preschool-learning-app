@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { Container, Box, Typography, Button, IconButton, AppBar, Toolbar, Chip } from '@mui/material'
-import { ArrowBack, Star, Refresh } from '@mui/icons-material'
+import { Container, Box, Typography, IconButton, AppBar, Toolbar } from '@mui/material'
+import { ArrowBack } from '@mui/icons-material'
 import { motion } from 'framer-motion'
 
 // Working CSS for card flip animation
@@ -59,10 +59,13 @@ const flipStyles = `
 
 import LottieCharacter, { useCharacterState } from '../common/LottieCharacter'
 import CelebrationEffect, { useCelebration } from '../common/CelebrationEffect'
+import { AlphabetScoreChip } from '../common/ScoreChip'
+import { AlphabetRestartButton } from '../common/RestartButton'
 import { audioManager } from '../../utils/audio'
 import { DANISH_PHRASES } from '../../config/danish-phrases'
 import { useGameEntryAudio } from '../../hooks/useGameEntryAudio'
 import { entryAudioManager } from '../../utils/entryAudioManager'
+import { useGameState } from '../../hooks/useGameState'
 
 // Danish alphabet (29 letters)
 const DANISH_ALPHABET = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'Æ', 'Ø', 'Å']
@@ -121,10 +124,11 @@ const MemoryGame: React.FC = () => {
   const [revealedCards, setRevealedCards] = useState<MemoryCard[]>([])
   const [matchedPairs, setMatchedPairs] = useState(0)
   const [isProcessing, setIsProcessing] = useState(false)
-  const [score, setScore] = useState(0)
   const [wrongPairIds, setWrongPairIds] = useState<string[]>([])
   const [entryAudioComplete, setEntryAudioComplete] = useState(false)
-  const [isScoreNarrating, setIsScoreNarrating] = useState(false)
+  
+  // Centralized game state management
+  const { score, incrementScore, resetScore, isScoreNarrating, handleScoreClick } = useGameState()
   
   // Character and celebration management
   const teacher = useCharacterState('wave')
@@ -188,7 +192,7 @@ const MemoryGame: React.FC = () => {
     setRevealedCards([])
     setMatchedPairs(0)
     setIsProcessing(false)
-    setScore(0)
+    resetScore()
   }
 
   const handleCardClick = async (clickedCard: MemoryCard) => {
@@ -261,7 +265,7 @@ const MemoryGame: React.FC = () => {
         )
         setCards(matchedCards)
         setMatchedPairs(prev => prev + 1)
-        setScore(prev => prev + 1)
+        incrementScore()
 
         // Silent match - no celebration until game complete
         teacher.celebrate()
@@ -316,21 +320,8 @@ const MemoryGame: React.FC = () => {
     initializeGame()
   }
 
-
   const getGameTitle = () => {
     return gameType === 'letters' ? 'Hukommelsesspil - Bogstaver' : 'Hukommelsesspil - Tal'
-  }
-
-  const handleScoreClick = async () => {
-    if (isScoreNarrating) return
-    setIsScoreNarrating(true)
-    try {
-      await audioManager.announceScore(score)
-    } catch (error) {
-      // Ignore audio errors
-    } finally {
-      setIsScoreNarrating(false)
-    }
   }
 
 
@@ -363,21 +354,10 @@ const MemoryGame: React.FC = () => {
             <ArrowBack />
           </IconButton>
           
-          <Chip 
-            icon={<Star />} 
-            label={`Point: ${score}`} 
-            color="primary" 
-            onClick={handleScoreClick}
+          <AlphabetScoreChip
+            score={score}
             disabled={isScoreNarrating}
-            sx={{ 
-              fontSize: '1rem',
-              py: 0.5,
-              fontWeight: 'bold',
-              boxShadow: isScoreNarrating ? 0 : 1,
-              cursor: isScoreNarrating ? 'default' : 'pointer',
-              opacity: isScoreNarrating ? 0.6 : 1,
-              '&:hover': { boxShadow: isScoreNarrating ? 0 : 2 }
-            }}
+            onClick={handleScoreClick}
           />
         </Toolbar>
       </AppBar>
@@ -421,15 +401,10 @@ const MemoryGame: React.FC = () => {
             
             {/* Controls */}
             <Box sx={{ display: 'flex', justifyContent: 'center', mb: 1 }}>
-              <Button
+              <AlphabetRestartButton
                 onClick={restartGame}
-                variant="outlined"
                 size="small"
-                startIcon={<Refresh />}
-                sx={{ fontSize: '0.8rem', py: 0.5, px: 1.5 }}
-              >
-                Ny spil
-              </Button>
+              />
             </Box>
           </motion.div>
         </Box>
@@ -567,29 +542,19 @@ const MemoryGame: React.FC = () => {
                       {gameType === 'letters' && LETTER_ICONS[card.content] ? (
                         <>
                           <div style={{ 
-                            fontSize: 'clamp(1rem, 2.5vw, 1.8rem)',
+                            fontSize: 'clamp(1.4rem, 3.5vw, 2.5rem)',
                             fontWeight: 700,
                             color: card.isMatched ? '#2e7d32' : '#1976d2',
-                            marginBottom: '2px',
+                            marginBottom: '6px',
                             lineHeight: 1
                           }}>
                             {card.content}
                           </div>
                           <div style={{ 
-                            fontSize: 'clamp(1rem, 2.5vw, 1.6rem)', 
-                            marginBottom: '1px', 
+                            fontSize: 'clamp(1.4rem, 3.5vw, 2.2rem)', 
                             lineHeight: 1 
                           }}>
                             {LETTER_ICONS[card.content].icon}
-                          </div>
-                          <div style={{ 
-                            fontSize: 'clamp(0.5rem, 1.2vw, 0.8rem)',
-                            color: '#666',
-                            fontWeight: 500,
-                            lineHeight: 1,
-                            display: window.innerWidth < 400 ? 'none' : 'block'
-                          }}>
-                            {LETTER_ICONS[card.content].word}
                           </div>
                         </>
                       ) : gameType === 'numbers' ? (

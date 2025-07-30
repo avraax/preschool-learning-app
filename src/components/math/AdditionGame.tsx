@@ -9,7 +9,6 @@ import {
   Typography,
   Box,
   IconButton,
-  Chip,
   Paper,
   AppBar,
   Toolbar
@@ -17,15 +16,17 @@ import {
 import {
   ArrowBack,
   VolumeUp,
-  Add,
-  Star
+  Add
 } from '@mui/icons-material'
 import { audioManager } from '../../utils/audio'
 import { categoryThemes } from '../../config/categoryThemes'
 import LottieCharacter, { useCharacterState } from '../common/LottieCharacter'
 import CelebrationEffect, { useCelebration } from '../common/CelebrationEffect'
+import { MathScoreChip } from '../common/ScoreChip'
+import { MathRepeatButton } from '../common/RepeatButton'
 import { useGameEntryAudio } from '../../hooks/useGameEntryAudio'
 import { entryAudioManager } from '../../utils/entryAudioManager'
+import { useGameState } from '../../hooks/useGameState'
 
 
 const AdditionGame: React.FC = () => {
@@ -34,10 +35,11 @@ const AdditionGame: React.FC = () => {
   const [num2, setNum2] = useState<number | null>(null)
   const [correctAnswer, setCorrectAnswer] = useState<number | null>(null)
   const [options, setOptions] = useState<number[]>([])
-  const [score, setScore] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
   const [entryAudioComplete, setEntryAudioComplete] = useState(false)
-  const [isScoreNarrating, setIsScoreNarrating] = useState(false)
+  
+  // Centralized game state management
+  const { score, incrementScore, isScoreNarrating, handleScoreClick } = useGameState()
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
   
   // Character and celebration management
@@ -144,7 +146,7 @@ const AdditionGame: React.FC = () => {
     
     if (selectedAnswer === correctAnswer) {
       // Correct answer - celebrate!
-      setScore(score + 1)
+      incrementScore()
       mathTeacher.celebrate()
       celebrate(score > 5 ? 'high' : 'medium')
       
@@ -182,18 +184,6 @@ const AdditionGame: React.FC = () => {
     }
   }
 
-  const handleScoreClick = async () => {
-    if (isScoreNarrating) return
-    setIsScoreNarrating(true)
-    try {
-      await audioManager.announceScore(score)
-    } catch (error) {
-      // Ignore audio errors
-    } finally {
-      setIsScoreNarrating(false)
-    }
-  }
-
 
 
   return (
@@ -222,21 +212,10 @@ const AdditionGame: React.FC = () => {
             <ArrowBack />
           </IconButton>
           
-          <Chip 
-            icon={<Star />} 
-            label={`Point: ${score}`} 
-            color="primary" 
-            onClick={handleScoreClick}
+          <MathScoreChip
+            score={score}
             disabled={isScoreNarrating}
-            sx={{ 
-              fontSize: '1.1rem',
-              py: 1,
-              fontWeight: 'bold',
-              boxShadow: isScoreNarrating ? 0 : 2,
-              cursor: isScoreNarrating ? 'default' : 'pointer',
-              opacity: isScoreNarrating ? 0.6 : 1,
-              '&:hover': { boxShadow: isScoreNarrating ? 0 : 4 }
-            }}
+            onClick={handleScoreClick}
           />
         </Toolbar>
       </AppBar>
@@ -355,18 +334,10 @@ const AdditionGame: React.FC = () => {
               </Typography>
             </Box>
 
-            <Button 
+            <MathRepeatButton
               onClick={repeatProblem}
               disabled={!entryAudioComplete || isPlaying || num1 === null || num2 === null}
-              label="🎵 Hør igen"
-              variant="contained"
-              color="secondary"
-              size="large"
-              startIcon={<VolumeUp />}
-              sx={{ py: 2, px: 4, fontSize: '1.1rem', borderRadius: 3 }}
-            >
-              🎵 Gentag
-            </Button>
+            />
           </Paper>
         </Box>
         )}

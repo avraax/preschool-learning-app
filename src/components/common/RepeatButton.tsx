@@ -70,21 +70,56 @@ export const RepeatButton: React.FC<RepeatButtonProps> = ({
       px: 4,
       fontSize: '1.1rem',
       borderRadius: 3,
-      fontWeight: 500
+      fontWeight: 600,
+      textTransform: 'none' as const,
+      transition: 'all 0.3s ease',
+      boxShadow: 2
     }
 
     if (variant === 'primary') {
       return {
         ...baseStyles,
         backgroundColor: theme.accentColor,
+        color: 'white',
+        border: `2px solid ${theme.accentColor}`,
         '&:hover': {
-          backgroundColor: theme.hoverBorderColor
+          backgroundColor: theme.hoverBorderColor,
+          borderColor: theme.hoverBorderColor,
+          boxShadow: 4,
+          transform: 'translateY(-2px)'
+        },
+        '&:active': {
+          transform: 'translateY(0px)',
+          boxShadow: 2
+        },
+        '&:disabled': {
+          backgroundColor: 'grey.400',
+          borderColor: 'grey.400',
+          color: 'grey.600'
         }
       }
     } else {
+      // Secondary variant with enhanced category theming
       return {
         ...baseStyles,
-        // Secondary variant uses default MUI secondary color
+        backgroundColor: theme.accentColor,
+        color: 'white',
+        border: `2px solid ${theme.accentColor}`,
+        '&:hover': {
+          backgroundColor: theme.hoverBorderColor,
+          borderColor: theme.hoverBorderColor,
+          boxShadow: 4,
+          transform: 'translateY(-2px)'
+        },
+        '&:active': {
+          transform: 'translateY(0px)',
+          boxShadow: 2
+        },
+        '&:disabled': {
+          backgroundColor: 'grey.400',
+          borderColor: 'grey.400',
+          color: 'grey.600'
+        }
       }
     }
   }
@@ -93,7 +128,6 @@ export const RepeatButton: React.FC<RepeatButtonProps> = ({
     <Button
       onClick={onClick}
       variant="contained"
-      color={variant}
       size={size}
       disabled={disabled}
       startIcon={useLucideIcons ? <IconComponent size={iconSize} /> : <IconComponent />}

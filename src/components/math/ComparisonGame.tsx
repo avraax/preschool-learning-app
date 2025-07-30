@@ -1,16 +1,18 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Container, Box, Typography, Button, IconButton, Chip, AppBar, Toolbar, Paper, Grid } from '@mui/material'
-import { ArrowBack, Star, VolumeUp } from '@mui/icons-material'
+import { Container, Box, Typography, Button, IconButton, AppBar, Toolbar, Paper, Grid } from '@mui/material'
+import { ArrowBack } from '@mui/icons-material'
 import { motion } from 'framer-motion'
 import LottieCharacter, { useCharacterState } from '../common/LottieCharacter'
 import CelebrationEffect, { useCelebration } from '../common/CelebrationEffect'
+import { MathScoreChip } from '../common/ScoreChip'
 import { audioManager } from '../../utils/audio'
 import { DANISH_PHRASES } from '../../config/danish-phrases'
 import { categoryThemes } from '../../config/categoryThemes'
 import { useGameEntryAudio } from '../../hooks/useGameEntryAudio'
 import { entryAudioManager } from '../../utils/entryAudioManager'
 import { MathRepeatButton } from '../common/RepeatButton'
+import { useGameState } from '../../hooks/useGameState'
 
 // Object types for visual counting
 const OBJECT_TYPES = [
@@ -42,10 +44,11 @@ const ComparisonGame: React.FC = () => {
   const [currentProblem, setCurrentProblem] = useState<ComparisonProblem | null>(null)
   const [selectedSymbol, setSelectedSymbol] = useState<string | null>(null)
   const [showFeedback, setShowFeedback] = useState(false)
-  const [score, setScore] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
   const [entryAudioComplete, setEntryAudioComplete] = useState(false)
-  const [isScoreNarrating, setIsScoreNarrating] = useState(false)
+  
+  // Centralized game state management
+  const { score, incrementScore, isScoreNarrating, handleScoreClick } = useGameState()
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
   
   // Character and celebration management
@@ -226,7 +229,7 @@ const ComparisonGame: React.FC = () => {
     
     if (isCorrect) {
       // Correct answer - celebrate!
-      setScore(score + 1)
+      incrementScore()
       mathTeacher.celebrate()
       celebrate(score > 5 ? 'high' : 'medium')
       
@@ -297,20 +300,6 @@ const ComparisonGame: React.FC = () => {
     }
   }
 
-  const handleScoreClick = async () => {
-    if (isScoreNarrating) return
-    setIsScoreNarrating(true)
-    try {
-      await audioManager.announceScore(score)
-    } catch (error) {
-      // Ignore audio errors
-    } finally {
-      setIsScoreNarrating(false)
-    }
-  }
-
-  if (!currentProblem) return null
-
   return (
     <Box 
       sx={{ 
@@ -337,21 +326,10 @@ const ComparisonGame: React.FC = () => {
             <ArrowBack />
           </IconButton>
           
-          <Chip 
-            icon={<Star />} 
-            label={`Point: ${score}`} 
-            color="primary" 
-            onClick={handleScoreClick}
+          <MathScoreChip
+            score={score}
             disabled={isScoreNarrating}
-            sx={{ 
-              fontSize: '1.1rem',
-              py: 1,
-              fontWeight: 'bold',
-              boxShadow: isScoreNarrating ? 0 : 2,
-              cursor: isScoreNarrating ? 'default' : 'pointer',
-              opacity: isScoreNarrating ? 0.6 : 1,
-              '&:hover': { boxShadow: isScoreNarrating ? 0 : 4 }
-            }}
+            onClick={handleScoreClick}
           />
         </Toolbar>
       </AppBar>
@@ -395,33 +373,34 @@ const ComparisonGame: React.FC = () => {
           </motion.div>
         </Box>
 
-        {/* Problem Display */}
-        <Box sx={{ 
-          flex: 1, 
-          display: 'flex', 
-          flexDirection: 'column',
-          justifyContent: 'center',
-          alignItems: 'center',
-          minHeight: 0
-        }}>
-          {/* Numbers and Objects Display */}
-          <Paper 
-            elevation={8}
-            sx={{ 
-              maxWidth: 800,
-              width: '100%',
-              p: { xs: 2, sm: 3, md: 4 },
-              borderRadius: 4,
-              border: '2px solid',
-              borderColor: 'primary.200',
-              mb: 4,
-              // Landscape adjustments
-              '@media (orientation: landscape)': {
-                maxWidth: '90%',
-                p: { xs: 1.5, sm: 2, md: 3 }
-              }
-            }}
-          >
+        {/* Problem Display - Only show when currentProblem exists */}
+        {currentProblem && (
+          <Box sx={{ 
+            flex: 1, 
+            display: 'flex', 
+            flexDirection: 'column',
+            justifyContent: 'center',
+            alignItems: 'center',
+            minHeight: 0
+          }}>
+            {/* Numbers and Objects Display */}
+            <Paper 
+              elevation={8}
+              sx={{ 
+                maxWidth: 800,
+                width: '100%',
+                p: { xs: 2, sm: 3, md: 4 },
+                borderRadius: 4,
+                border: '2px solid',
+                borderColor: 'primary.200',
+                mb: 4,
+                // Landscape adjustments
+                '@media (orientation: landscape)': {
+                  maxWidth: '90%',
+                  p: { xs: 1.5, sm: 2, md: 3 }
+                }
+              }}
+            >
             <Grid container spacing={{ xs: 2, md: 4 }} alignItems="center">
               {/* Left Side */}
               <Grid size={{ xs: 12, sm: 4 }}>
@@ -594,6 +573,7 @@ const ComparisonGame: React.FC = () => {
             </Box>
           </Paper>
         </Box>
+        )}
       </Container>
 
       {/* Celebration Effect */}
