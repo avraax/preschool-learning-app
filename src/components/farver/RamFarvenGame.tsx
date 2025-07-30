@@ -48,6 +48,7 @@ const RamFarvenGame: React.FC = () => {
   const [score, setScore] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
   const [_activeId, setActiveId] = useState<string | null>(null)
+  const [isScoreNarrating, setIsScoreNarrating] = useState(false)
   const hasInitialized = React.useRef(false)
   
   // Character and celebration management
@@ -268,6 +269,18 @@ const RamFarvenGame: React.FC = () => {
     }
   }
 
+  const handleScoreClick = async () => {
+    if (isScoreNarrating) return
+    setIsScoreNarrating(true)
+    try {
+      await audioManager.announceScore(score)
+    } catch (error) {
+      // Ignore audio errors
+    } finally {
+      setIsScoreNarrating(false)
+    }
+  }
+
   return (
     <Box sx={{ 
       minHeight: 'calc(var(--vh, 1vh) * 100)',
@@ -312,14 +325,16 @@ const RamFarvenGame: React.FC = () => {
             icon={<Award size={20} />} 
             label={`${score} ⭐`} 
             color="primary" 
-            onClick={() => audioManager.announceScore(score).catch(console.error)}
+            onClick={handleScoreClick}
+            disabled={isScoreNarrating}
             sx={{ 
               fontSize: '1.2rem',
               py: 1,
               fontWeight: 'bold',
-              boxShadow: 2,
-              cursor: 'pointer',
-              '&:hover': { boxShadow: 4 }
+              boxShadow: isScoreNarrating ? 0 : 2,
+              cursor: isScoreNarrating ? 'default' : 'pointer',
+              opacity: isScoreNarrating ? 0.6 : 1,
+              '&:hover': { boxShadow: isScoreNarrating ? 0 : 4 }
             }}
           />
         </Toolbar>

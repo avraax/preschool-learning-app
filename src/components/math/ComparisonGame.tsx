@@ -45,6 +45,7 @@ const ComparisonGame: React.FC = () => {
   const [score, setScore] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
   const [entryAudioComplete, setEntryAudioComplete] = useState(false)
+  const [isScoreNarrating, setIsScoreNarrating] = useState(false)
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
   
   // Character and celebration management
@@ -296,6 +297,18 @@ const ComparisonGame: React.FC = () => {
     }
   }
 
+  const handleScoreClick = async () => {
+    if (isScoreNarrating) return
+    setIsScoreNarrating(true)
+    try {
+      await audioManager.announceScore(score)
+    } catch (error) {
+      // Ignore audio errors
+    } finally {
+      setIsScoreNarrating(false)
+    }
+  }
+
   if (!currentProblem) return null
 
   return (
@@ -328,14 +341,16 @@ const ComparisonGame: React.FC = () => {
             icon={<Star />} 
             label={`Point: ${score}`} 
             color="primary" 
-            onClick={() => audioManager.announceScore(score).catch(console.error)}
+            onClick={handleScoreClick}
+            disabled={isScoreNarrating}
             sx={{ 
               fontSize: '1.1rem',
               py: 1,
               fontWeight: 'bold',
-              boxShadow: 2,
-              cursor: 'pointer',
-              '&:hover': { boxShadow: 4 }
+              boxShadow: isScoreNarrating ? 0 : 2,
+              cursor: isScoreNarrating ? 'default' : 'pointer',
+              opacity: isScoreNarrating ? 0.6 : 1,
+              '&:hover': { boxShadow: isScoreNarrating ? 0 : 4 }
             }}
           />
         </Toolbar>

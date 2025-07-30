@@ -41,6 +41,7 @@ const MathGame: React.FC = () => {
   const [showOptions, setShowOptions] = useState<number[]>([])
   const [score, setScore] = useState(0)
   const [entryAudioComplete, setEntryAudioComplete] = useState(false)
+  const [isScoreNarrating, setIsScoreNarrating] = useState(false)
   
   // Determine game mode based on current route
   const gameMode: 'counting' | 'arithmetic' = location.pathname.includes('/counting') ? 'counting' : 'arithmetic'
@@ -257,6 +258,18 @@ const MathGame: React.FC = () => {
     }
   }
 
+  const handleScoreClick = async () => {
+    if (isScoreNarrating) return
+    setIsScoreNarrating(true)
+    try {
+      await audioManager.announceScore(score)
+    } catch (error) {
+      // Ignore audio errors
+    } finally {
+      setIsScoreNarrating(false)
+    }
+  }
+
 
 
   return (
@@ -293,14 +306,16 @@ const MathGame: React.FC = () => {
             icon={<Award size={20} />} 
             label={`${score} ⭐`} 
             color="secondary" 
-            onClick={() => audioManager.announceScore(score).catch(console.error)}
+            onClick={handleScoreClick}
+            disabled={isScoreNarrating}
             sx={{ 
               fontSize: '1.2rem',
               py: 1,
               fontWeight: 'bold',
-              boxShadow: 2,
-              cursor: 'pointer',
-              '&:hover': { boxShadow: 4 }
+              boxShadow: isScoreNarrating ? 0 : 2,
+              cursor: isScoreNarrating ? 'default' : 'pointer',
+              opacity: isScoreNarrating ? 0.6 : 1,
+              '&:hover': { boxShadow: isScoreNarrating ? 0 : 4 }
             }}
           />
         </Toolbar>

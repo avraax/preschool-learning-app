@@ -86,7 +86,7 @@ const LETTER_ICONS: { [key: string]: { word: string; icon: string } } = {
   'L': { word: 'Løve', icon: '🦁' },
   'M': { word: 'Mus', icon: '🐭' },
   'N': { word: 'Næsehorn', icon: '🦏' },
-  'O': { word: 'Ugle', icon: '🦉' },
+  'O': { word: 'Ost', icon: '🧀' },
   'P': { word: 'Papegøje', icon: '🦜' },
   'Q': { word: 'Quiz', icon: '❓' },
   'R': { word: 'Ræv', icon: '🦊' },
@@ -124,6 +124,7 @@ const MemoryGame: React.FC = () => {
   const [score, setScore] = useState(0)
   const [wrongPairIds, setWrongPairIds] = useState<string[]>([])
   const [entryAudioComplete, setEntryAudioComplete] = useState(false)
+  const [isScoreNarrating, setIsScoreNarrating] = useState(false)
   
   // Character and celebration management
   const teacher = useCharacterState('wave')
@@ -191,6 +192,19 @@ const MemoryGame: React.FC = () => {
   }
 
   const handleCardClick = async (clickedCard: MemoryCard) => {
+    // Handle matched cards differently - they should speak "X som word" when clicked
+    if (clickedCard.isMatched && gameType === 'letters') {
+      const letterData = LETTER_ICONS[clickedCard.content]
+      if (letterData) {
+        try {
+          await audioManager.speak(`${clickedCard.content} som ${letterData.word}`)
+        } catch (error: any) {
+          // Ignore audio errors for matched card clicks
+        }
+      }
+      return
+    }
+    
     // Prevent clicks during processing or if card is already revealed/matched
     if (isProcessing || clickedCard.isRevealed || clickedCard.isMatched || revealedCards.length >= 2) {
       return
@@ -307,6 +321,18 @@ const MemoryGame: React.FC = () => {
     return gameType === 'letters' ? 'Hukommelsesspil - Bogstaver' : 'Hukommelsesspil - Tal'
   }
 
+  const handleScoreClick = async () => {
+    if (isScoreNarrating) return
+    setIsScoreNarrating(true)
+    try {
+      await audioManager.announceScore(score)
+    } catch (error) {
+      // Ignore audio errors
+    } finally {
+      setIsScoreNarrating(false)
+    }
+  }
+
 
 
   return (
@@ -341,14 +367,16 @@ const MemoryGame: React.FC = () => {
             icon={<Star />} 
             label={`Point: ${score}`} 
             color="primary" 
-            onClick={() => audioManager.announceScore(score).catch(console.error)}
+            onClick={handleScoreClick}
+            disabled={isScoreNarrating}
             sx={{ 
               fontSize: '1rem',
               py: 0.5,
               fontWeight: 'bold',
-              boxShadow: 1,
-              cursor: 'pointer',
-              '&:hover': { boxShadow: 2 }
+              boxShadow: isScoreNarrating ? 0 : 1,
+              cursor: isScoreNarrating ? 'default' : 'pointer',
+              opacity: isScoreNarrating ? 0.6 : 1,
+              '&:hover': { boxShadow: isScoreNarrating ? 0 : 2 }
             }}
           />
         </Toolbar>

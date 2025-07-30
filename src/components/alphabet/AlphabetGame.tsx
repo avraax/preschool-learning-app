@@ -33,6 +33,7 @@ const AlphabetGame: React.FC = () => {
   const [score, setScore] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
   const [entryAudioComplete, setEntryAudioComplete] = useState(false)
+  const [isScoreNarrating, setIsScoreNarrating] = useState(false)
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
   
   // Character and celebration management
@@ -185,6 +186,18 @@ const AlphabetGame: React.FC = () => {
     }
   }
 
+  const handleScoreClick = async () => {
+    if (isScoreNarrating) return
+    setIsScoreNarrating(true)
+    try {
+      await audioManager.announceScore(score)
+    } catch (error) {
+      // Ignore audio errors
+    } finally {
+      setIsScoreNarrating(false)
+    }
+  }
+
   return (
     <Box 
       sx={{ 
@@ -219,14 +232,16 @@ const AlphabetGame: React.FC = () => {
             icon={<Award size={20} />} 
             label={`${score} ⭐`} 
             color="primary" 
-            onClick={() => audioManager.announceScore(score).catch(console.error)}
+            onClick={handleScoreClick}
+            disabled={isScoreNarrating}
             sx={{ 
               fontSize: '1.2rem',
               py: 1,
               fontWeight: 'bold',
-              boxShadow: 2,
-              cursor: 'pointer',
-              '&:hover': { boxShadow: 4 }
+              boxShadow: isScoreNarrating ? 0 : 2,
+              cursor: isScoreNarrating ? 'default' : 'pointer',
+              opacity: isScoreNarrating ? 0.6 : 1,
+              '&:hover': { boxShadow: isScoreNarrating ? 0 : 4 }
             }}
           />
         </Toolbar>
