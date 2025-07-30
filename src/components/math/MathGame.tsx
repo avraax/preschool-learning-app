@@ -139,7 +139,7 @@ const MathGame: React.FC = () => {
       audioManager.speakQuizPromptWithRepeat(
         DANISH_PHRASES.gamePrompts.findNumber(number), 
         number.toString()
-      ).catch(error => {
+      ).catch(() => {
       })
       timeoutRef.current = null
     }, 500)

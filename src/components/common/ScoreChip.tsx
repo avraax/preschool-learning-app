@@ -2,7 +2,7 @@ import React from 'react'
 import { Chip } from '@mui/material'
 import { Star } from '@mui/icons-material'
 import { Award } from 'lucide-react'
-import { categoryThemes, getCategoryTheme } from '../../config/categoryThemes'
+import { getCategoryTheme } from '../../config/categoryThemes'
 
 /**
  * Props for the ScoreChip component

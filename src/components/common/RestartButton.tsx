@@ -1,7 +1,7 @@
 import React from 'react'
 import { Button } from '@mui/material'
-import { Refresh, RestartAlt } from '@mui/icons-material'
-import { categoryThemes, getCategoryTheme } from '../../config/categoryThemes'
+import { Refresh } from '@mui/icons-material'
+import { getCategoryTheme } from '../../config/categoryThemes'
 
 /**
  * Props for the RestartButton component

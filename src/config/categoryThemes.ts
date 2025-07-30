@@ -18,6 +18,7 @@ export interface CategoryTheme {
   hoverBorderColor: string
   icon: string
   iconSize: string
+  description: string
   games: Game[]
 }
 
@@ -31,6 +32,7 @@ export const categoryThemes: Record<string, CategoryTheme> = {
     hoverBorderColor: '#1976D2',
     icon: '📚',
     iconSize: '6rem',
+    description: 'Lær det danske alfabet fra A til Å med sjove spil og quiz',
     games: [
       {
         id: 'learn',
@@ -64,6 +66,7 @@ export const categoryThemes: Record<string, CategoryTheme> = {
     hoverBorderColor: '#9C27B0',
     icon: '🧮',
     iconSize: '6rem',
+    description: 'Lær tal, optælling og grundlæggende matematik på en sjov måde',
     games: [
       {
         id: 'numbers',
@@ -111,6 +114,7 @@ export const categoryThemes: Record<string, CategoryTheme> = {
     hoverBorderColor: '#FF6B00',
     icon: '🎨',
     iconSize: '6rem',
+    description: 'Udforsk farver gennem interaktive spil og kreative aktiviteter',
     games: [
       {
         id: 'farvejagt',

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
-import { Container, Box, Typography } from '@mui/material'
+import { useParams } from 'react-router-dom'
+import { Container, Box } from '@mui/material'
 import { motion } from 'framer-motion'
 
 // Working CSS for card flip animation
@@ -118,7 +118,6 @@ interface MemoryCard {
 }
 
 const MemoryGame: React.FC = () => {
-  const navigate = useNavigate()
   const { type } = useParams<{ type: 'letters' | 'numbers' }>()
   const gameType = type as 'letters' | 'numbers' || 'letters'
   

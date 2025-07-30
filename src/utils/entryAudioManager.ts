@@ -2,7 +2,6 @@
 // This ensures entry audio plays even if components mount/unmount rapidly
 
 import { audioManager } from './audio'
-import { GAME_WELCOME_MESSAGES } from '../hooks/useGameEntryAudio'
 
 // Track which games have played entry audio
 const playedGames: Set<string> = new Set()

@@ -5,7 +5,6 @@ import {
   Container,
   Card,
   CardContent,
-  Button,
   Typography,
   Box,
   IconButton,
@@ -14,7 +13,6 @@ import {
   Toolbar
 } from '@mui/material'
 import {
-  VolumeUp,
   Add
 } from '@mui/icons-material'
 import { ArrowLeft } from 'lucide-react'

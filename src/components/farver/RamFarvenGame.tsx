@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { Box, Typography, Container } from '@mui/material'
 import { motion, AnimatePresence } from 'framer-motion'
 import { DndContext, DragEndEvent, DragStartEvent, closestCenter } from '@dnd-kit/core'
@@ -40,7 +39,6 @@ interface GameState {
 }
 
 const RamFarvenGame: React.FC = () => {
-  const navigate = useNavigate()
   
   // Game state
   const [gameState, setGameState] = useState<GameState>({

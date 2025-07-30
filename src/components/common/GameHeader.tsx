@@ -33,7 +33,6 @@ const GameHeader: React.FC<GameHeaderProps> = ({
   backPath,
   scoreComponent,
   onCharacterClick,
-  removeDescription = true
 }) => {
   const navigate = useNavigate()
 

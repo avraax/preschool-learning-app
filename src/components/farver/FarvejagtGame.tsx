@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { Box, Typography, Button, Container, Chip } from '@mui/material'
 import { DndContext, DragEndEvent, DragStartEvent, DragOverlay, closestCenter } from '@dnd-kit/core'
 import { audioManager } from '../../utils/audio'
@@ -93,7 +92,6 @@ const COLOR_TARGETS = [
 ]
 
 const FarvejagtGame: React.FC = () => {
-  const navigate = useNavigate()
   // Game state
   const [gameItems, setGameItems] = useState<GameItem[]>([])
   const [totalTarget, setTotalTarget] = useState(0)
