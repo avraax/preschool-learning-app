@@ -340,7 +340,8 @@ const MathGame: React.FC = () => {
               <Typography 
                 variant="h3" 
                 sx={{ 
-                  color: 'secondary.dark',
+                  color: categoryThemes.math.accentColor,
+                  textShadow: '1px 1px 2px rgba(156, 39, 176, 0.2)',
                   fontWeight: 700,
                   fontSize: { xs: '1.5rem', md: '2rem' }
                 }}
@@ -350,7 +351,12 @@ const MathGame: React.FC = () => {
               <Typography sx={{ fontSize: '2.5rem' }}>🧮</Typography>
             </Box>
           </motion.div>
-          <Typography variant="h5" color="secondary.main" sx={{ mb: 4, fontSize: { xs: '1rem', md: '1.25rem' } }}>
+          <Typography variant="h5" sx={{ 
+            mb: 4, 
+            fontSize: { xs: '1rem', md: '1.25rem' },
+            color: '#BA68C8',
+            fontWeight: 500
+          }}>
             {gameMode === 'counting' ? DANISH_PHRASES.ui.clickNumber : DANISH_PHRASES.ui.findAnswer}
           </Typography>
         </Box>

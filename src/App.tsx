@@ -259,7 +259,13 @@ const HomePage = () => {
       sx={{ 
         position: 'relative',
         height: 'calc(var(--vh, 1vh) * 100)',
-        background: 'linear-gradient(135deg, #dbeafe 0%, #e9d5ff 50%, #fce7f3 100%)',
+        background: `
+          #F8FAFC,
+          radial-gradient(circle at 15% 25%, rgba(255, 255, 255, 0.8) 25px, transparent 26px),
+          radial-gradient(circle at 85% 15%, rgba(255, 255, 255, 0.8) 30px, transparent 31px),
+          radial-gradient(circle at 25% 70%, rgba(255, 255, 255, 0.8) 28px, transparent 29px),
+          radial-gradient(circle at 75% 75%, rgba(255, 255, 255, 0.8) 22px, transparent 23px)
+        `,
         overflow: 'hidden',
         display: 'flex',
         flexDirection: 'column',
@@ -271,7 +277,32 @@ const HomePage = () => {
         touchAction: 'pan-x pan-down pinch-zoom',
         WebkitUserSelect: 'none',
         userSelect: 'none',
-        WebkitTouchCallout: 'none'
+        WebkitTouchCallout: 'none',
+        /* Rainbow arc background */
+        '&::before': {
+          content: '""',
+          position: 'absolute',
+          bottom: -100,
+          left: '50%',
+          transform: 'translateX(-50%)',
+          width: '150%',
+          height: 400,
+          background: 'conic-gradient(from 0deg at 50% 100%, #FF0000 0deg, #FF8C00 51deg, #FFD700 102deg, #32CD32 153deg, #1E90FF 204deg, #9932CC 255deg, #8B00FF 306deg, #FF0000 360deg)',
+          borderRadius: '50%',
+          opacity: 0.9,
+          animation: 'rainbowShimmer 8s ease-in-out infinite alternate',
+          zIndex: 0
+        },
+        '@keyframes rainbowShimmer': {
+          '0%': { 
+            opacity: 0.8,
+            transform: 'translateX(-50%) scale(1)'
+          },
+          '100%': { 
+            opacity: 1,
+            transform: 'translateX(-50%) scale(1.05)'
+          }
+        },
       }}
     >
       <Container 
@@ -280,7 +311,9 @@ const HomePage = () => {
           flex: 1,
           display: 'flex',
           flexDirection: 'column',
-          py: { xs: 2, md: 3 }
+          py: { xs: 2, md: 3 },
+          position: 'relative',
+          zIndex: 2
         }}
       >
         {/* Header with Logo and Welcome Character */}
@@ -315,8 +348,9 @@ const HomePage = () => {
                 sx={{ 
                   fontSize: { xs: '2rem', sm: '2.5rem', md: '3.5rem' },
                   fontWeight: 700,
-                  color: 'primary.dark',
-                  textShadow: '2px 2px 4px rgba(0,0,0,0.1)'
+                  color: '#8B5CF6',
+                  textShadow: '2px 2px 8px rgba(139, 92, 246, 0.25)',
+                  letterSpacing: '0.02em'
                 }}
               >
                 Børnelæring
@@ -341,15 +375,18 @@ const HomePage = () => {
             transition={{ delay: 0.3, duration: 0.5 }}
           >
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
-              <Play size={20} color="#1976d2" />
+              <Play size={20} color="#F87171" />
               <Typography 
                 variant="h5" 
-                color="primary.main"
-                sx={{ fontSize: { xs: '1rem', sm: '1.25rem', md: '1.5rem' } }}
+                sx={{ 
+                  fontSize: { xs: '1rem', sm: '1.25rem', md: '1.5rem' },
+                  color: '#F87171',
+                  fontWeight: 600
+                }}
               >
                 Lær med sjove spil!
               </Typography>
-              <BookOpen size={20} color="#1976d2" />
+              <BookOpen size={20} color="#F87171" />
             </Box>
           </motion.div>
         </Box>
@@ -390,10 +427,14 @@ const HomePage = () => {
                     borderColor: categoryThemes.alphabet.borderColor,
                     display: 'flex',
                     flexDirection: 'column',
+                    background: `linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(227, 242, 253, 0.9) 100%)`,
+                    backdropFilter: 'blur(15px)',
                     '&:hover': {
                       borderColor: categoryThemes.alphabet.hoverBorderColor,
-                      boxShadow: 6
+                      boxShadow: '0 8px 32px rgba(25, 118, 210, 0.3)',
+                      transform: 'translateY(-2px)'
                     },
+                    transition: 'all 0.3s ease',
                     // Orientation specific adjustments
                     '@media (orientation: landscape)': {
                       minHeight: { xs: 160, sm: 180, md: 200 }
@@ -459,10 +500,14 @@ const HomePage = () => {
                     borderColor: categoryThemes.math.borderColor,
                     display: 'flex',
                     flexDirection: 'column',
+                    background: `linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(243, 229, 245, 0.9) 100%)`,
+                    backdropFilter: 'blur(15px)',
                     '&:hover': {
                       borderColor: categoryThemes.math.hoverBorderColor,
-                      boxShadow: 6
+                      boxShadow: '0 8px 32px rgba(156, 39, 176, 0.3)',
+                      transform: 'translateY(-2px)'
                     },
+                    transition: 'all 0.3s ease',
                     // Orientation specific adjustments
                     '@media (orientation: landscape)': {
                       minHeight: { xs: 160, sm: 180, md: 200 }
@@ -528,10 +573,14 @@ const HomePage = () => {
                     borderColor: categoryThemes.colors.borderColor,
                     display: 'flex',
                     flexDirection: 'column',
+                    background: `linear-gradient(135deg, rgba(255, 243, 224, 0.95) 0%, rgba(255, 224, 178, 0.95) 100%)`,
+                    backdropFilter: 'blur(10px)',
                     '&:hover': {
                       borderColor: categoryThemes.colors.hoverBorderColor,
-                      boxShadow: 6
+                      boxShadow: '0 8px 32px rgba(230, 81, 0, 0.3)',
+                      transform: 'translateY(-2px)'
                     },
+                    transition: 'all 0.3s ease',
                     // Orientation specific adjustments
                     '@media (orientation: landscape)': {
                       minHeight: { xs: 160, sm: 180, md: 200 }

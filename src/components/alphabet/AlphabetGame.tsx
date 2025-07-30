@@ -247,9 +247,10 @@ const AlphabetGame: React.FC = () => {
               <Typography 
                 variant="h3" 
                 sx={{ 
-                  color: 'primary.dark',
+                  color: categoryThemes.alphabet.accentColor,
                   fontWeight: 700,
-                  fontSize: { xs: '1.5rem', md: '2rem' }
+                  fontSize: { xs: '1.5rem', md: '2rem' },
+                  textShadow: '1px 1px 2px rgba(25, 118, 210, 0.2)'
                 }}
               >
                 🔤 Quiz
@@ -257,7 +258,12 @@ const AlphabetGame: React.FC = () => {
               <Typography sx={{ fontSize: '2.5rem' }}>🎯</Typography>
             </Box>
           </motion.div>
-          <Typography variant="h5" color="primary.main" sx={{ mb: 4, fontSize: { xs: '1rem', md: '1.25rem' } }}>
+          <Typography variant="h5" sx={{ 
+            mb: 4, 
+            fontSize: { xs: '1rem', md: '1.25rem' },
+            color: '#64B5F6',
+            fontWeight: 500
+          }}>
             Klik på bogstavet! 👆
           </Typography>
         </Box>
@@ -267,10 +273,18 @@ const AlphabetGame: React.FC = () => {
           <Button 
             onClick={repeatLetter}
             variant="contained"
-            color="primary"
             size="large"
             startIcon={<Volume2 size={24} />}
-            sx={{ py: 2, px: 4, fontSize: '1.1rem', borderRadius: 3 }}
+            sx={{ 
+              py: 2, 
+              px: 4, 
+              fontSize: '1.1rem', 
+              borderRadius: 3,
+              backgroundColor: categoryThemes.alphabet.accentColor,
+              '&:hover': {
+                backgroundColor: categoryThemes.alphabet.hoverBorderColor
+              }
+            }}
           >
             🎵 Gentag
           </Button>
@@ -329,7 +343,7 @@ const AlphabetGame: React.FC = () => {
                   height: '100%',
                   cursor: 'pointer',
                   border: '3px solid',
-                  borderColor: 'primary.200',
+                  borderColor: categoryThemes.alphabet.borderColor,
                   bgcolor: 'white',
                   transition: 'all 0.3s ease',
                   display: 'flex',
@@ -337,9 +351,9 @@ const AlphabetGame: React.FC = () => {
                   justifyContent: 'center',
                   borderRadius: '12px',
                   '&:hover': {
-                    borderColor: 'primary.main',
-                    bgcolor: 'primary.50',
-                    boxShadow: 12,
+                    borderColor: categoryThemes.alphabet.hoverBorderColor,
+                    bgcolor: '#E3F2FD',
+                    boxShadow: `0 8px 32px ${categoryThemes.alphabet.accentColor}40`,
                     transform: 'translateY(-2px)'
                   }
                 }}
@@ -358,7 +372,7 @@ const AlphabetGame: React.FC = () => {
                     sx={{ 
                       fontSize: 'clamp(2.5rem, 8vw, 4.5rem)',
                       fontWeight: 700,
-                      color: 'primary.dark',
+                      color: categoryThemes.alphabet.accentColor,
                       userSelect: 'none',
                       lineHeight: 1,
                       // Adjust font size in landscape
