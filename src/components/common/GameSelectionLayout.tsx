@@ -13,7 +13,7 @@ import {
   IconButton
 } from '@mui/material'
 import { ArrowLeft } from 'lucide-react'
-import { categoryThemes, getCategoryTheme } from '../../config/categoryThemes'
+import { getCategoryTheme } from '../../config/categoryThemes'
 
 interface Game {
   id: string
