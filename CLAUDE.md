@@ -48,7 +48,13 @@ The app uses **React Router v7** for comprehensive URL-based navigation with ful
 ├── /math (Math selection page)
 │   ├── /math/counting (Counting game)
 │   ├── /math/numbers (Number learning)
-│   └── /math/addition (Addition practice)
+│   ├── /math/addition (Addition practice)
+│   └── /math/comparison (Number comparison game)
+├── /farver (Colors selection page)
+│   ├── /farver/jagt (Farvejagt - Color Hunt game)
+│   └── /farver/ram-farven (Ram Farven - Color Mixing game)
+├── /memory (Memory card game)
+├── /demo (Demo games showcase)
 └── /admin/errors?level=error&device=ios&limit=50 (Error dashboard)
 ```
 
@@ -270,19 +276,45 @@ preschool-learning-app/
 │   │   ├── common/           # Reusable UI components
 │   │   │   ├── Button.tsx    # Animated button component
 │   │   │   ├── Card.tsx      # Container card component
-│   │   │   └── GlobalAudioPermission.tsx  # Global audio permission modal
-│   │   ├── alphabet/
-│   │   │   └── AlphabetGame.tsx  # Letter recognition game
-│   │   └── math/
-│   │       └── MathGame.tsx      # Counting & arithmetic game
+│   │   │   ├── GlobalAudioPermission.tsx  # Global audio permission modal
+│   │   │   ├── LearningGrid.tsx  # Responsive grid layout
+│   │   │   ├── Logo.tsx      # App logo components
+│   │   │   └── balloon/      # Balloon effects components
+│   │   ├── alphabet/         # Alphabet learning games
+│   │   │   ├── AlphabetGame.tsx     # Letter recognition quiz
+│   │   │   ├── AlphabetLearning.tsx # Interactive letter learning
+│   │   │   └── AlphabetSelection.tsx # Alphabet section menu
+│   │   ├── math/             # Math learning games
+│   │   │   ├── MathGame.tsx         # Counting game
+│   │   │   ├── MathSelection.tsx    # Math section menu
+│   │   │   ├── NumberLearning.tsx   # Interactive number learning
+│   │   │   ├── AdditionGame.tsx     # Addition practice
+│   │   │   └── ComparisonGame.tsx   # Number comparison game
+│   │   ├── farver/           # Color learning games
+│   │   │   ├── FarverSelection.tsx  # Colors section menu
+│   │   │   ├── FarvejagtGame.tsx    # Color Hunt game
+│   │   │   └── RamFarvenGame.tsx    # Color Mixing game
+│   │   ├── learning/         # Additional learning games
+│   │   │   └── MemoryGame.tsx       # Memory card game
+│   │   ├── demo/             # Demo games showcase
+│   │   │   ├── DemoPage.tsx         # Demo section landing
+│   │   │   └── games/               # Individual demo games
+│   │   └── admin/            # Admin tools
+│   │       └── ErrorDashboard.tsx   # Error monitoring
 │   ├── contexts/
 │   │   └── AudioPermissionContext.tsx  # Global audio permission state
 │   ├── hooks/
 │   │   └── useAudioPermission.ts       # Audio permission hook
 │   ├── utils/
-│   │   └── audio.ts         # Enhanced AudioManager with permission checks
+│   │   ├── audio.ts         # Enhanced AudioManager with permission checks
+│   │   ├── urlParams.ts     # URL parameter utilities
+│   │   ├── deviceDetection.ts # Device capability detection
+│   │   └── remoteConsole.ts # Remote error logging
 │   ├── services/
 │   │   └── googleTTS.ts     # Google Cloud TTS integration
+│   ├── config/
+│   │   ├── categoryThemes.ts # Centralized theme configuration
+│   │   └── version.ts       # App version management
 │   ├── App.tsx              # Main application router with AudioPermissionProvider
 │   ├── main.tsx            # React entry point
 │   └── index.css           # Global styles + Tailwind
@@ -317,23 +349,52 @@ preschool-learning-app/
   - Score tracking
   - Complete Danish alphabet including Æ, Ø, Å
 
-#### 2. Math Game (`/src/components/math/MathGame.tsx`)
-- **Purpose**: Teach counting and basic arithmetic
-- **Two Modes**:
-  - **Counting Mode**: Number recognition 1-50
-  - **Arithmetic Mode**: Addition problems up to 10+10=20
-- **Features**:
-  - Danish number pronunciation (including special cases)
+#### 2. Math Games
+- **Counting Game** (`/src/components/math/MathGame.tsx`)
+  - Number recognition 1-50
+  - Danish number pronunciation
   - Visual finger counting animations
-  - Fixed settings suitable for all ages
-  - Audio math problem narration
+- **Number Learning** (`/src/components/math/NumberLearning.tsx`)
+  - Interactive number exploration
+  - Visual representations of quantities
+  - Touch-based learning
+- **Addition Game** (`/src/components/math/AdditionGame.tsx`)
+  - Addition problems up to 10+10=20
+  - Visual aids for calculation
+  - Progressive difficulty
+- **Comparison Game** (`/src/components/math/ComparisonGame.tsx`)
+  - Greater than/less than concepts
+  - Visual comparison exercises
+  - Number size relationships
 
-### 3. Comprehensive Game Settings
+#### 3. Color Games (`Farver`)
+- **Farvejagt (Color Hunt)** (`/src/components/farver/FarvejagtGame.tsx`)
+  - Find objects by color
+  - Rich database of everyday objects
+  - Progressive difficulty levels
+  - Visual and audio feedback
+- **Ram Farven (Hit the Color)** (`/src/components/farver/RamFarvenGame.tsx`)
+  - Interactive color mixing
+  - Primary and secondary colors
+  - Target color matching
+  - Creative exploration mode
+
+#### 4. Memory Game (`/src/components/learning/MemoryGame.tsx`)
+- **Purpose**: Enhance memory and pattern recognition
+- **Features**:
+  - Card matching gameplay
+  - Progressive difficulty
+  - Visual memory training
+  - Celebration animations
+
+### 5. Comprehensive Game Settings
 - **Full Complexity**: Suitable for all children aged 3-7 years
 - **Alphabet**: Complete Danish alphabet A-Å (including æ, ø, å)
 - **Math**: Numbers 1-50 for counting, addition problems up to 10+10=20
+- **Colors**: Full spectrum learning with mixing and identification
+- **Memory**: Pattern recognition and recall exercises
 
-### 4. Advanced Audio System
+### 6. Advanced Audio System
 - **Global Permission Management**: Smart, session-based audio permission handling
 - **Multi-Tier Audio Stack**: Google Cloud TTS → Web Speech API → Howler.js fallbacks
 - **Danish Text-to-Speech**: High-quality Wavenet voices with child-friendly speech patterns
@@ -553,6 +614,65 @@ npm run dev
 - **Task Killing**: Use PID from netstat with `Stop-Process -Id <PID> -Force`
 
 This documentation provides everything needed to understand, develop, and deploy the Danish preschool learning app using PowerShell on Windows. The codebase is ready for collaborative development and future enhancements.
+
+## 🎨 Centralized Category Theming System
+
+### Overview
+The app uses a centralized theming system to ensure consistent visual design across all learning categories. This system provides unified color schemes, gradients, and styling for each major section.
+
+### Theme Configuration
+**Location**: `src/config/categoryThemes.ts`
+
+Each category has a comprehensive theme definition:
+```typescript
+interface CategoryTheme {
+  id: string                // Unique identifier
+  name: string              // Danish display name
+  gradient: string          // Background gradient
+  accentColor: string       // Primary accent color
+  borderColor: string       // Default border color
+  hoverBorderColor: string  // Hover state border
+  icon: string              // Category emoji icon
+  iconSize: string          // Icon display size
+  description: string       // Danish description
+}
+```
+
+### Current Categories
+1. **Alphabet (alfabetet)**
+   - Blue gradient theme
+   - Academic, learning-focused design
+   - Icon: 📚
+
+2. **Math (tal og regning)**
+   - Purple gradient theme
+   - Playful, calculation-focused design
+   - Icon: 🧮
+
+3. **Colors (farver)**
+   - Orange/yellow gradient theme
+   - Creative, artistic design
+   - Icon: 🎨
+
+### Usage in Components
+```typescript
+import { getCategoryTheme } from '../config/categoryThemes'
+
+// Get theme for a category
+const theme = getCategoryTheme('alphabet')
+
+// Apply theme to component
+<Box sx={{ 
+  background: theme.gradient,
+  borderColor: theme.borderColor
+}}>
+```
+
+### Benefits
+- **Consistency**: All games in a category share visual identity
+- **Maintainability**: Single source of truth for theming
+- **Extensibility**: Easy to add new categories
+- **Accessibility**: Carefully chosen color contrasts
 
 ## Configuration Best Practices
 
