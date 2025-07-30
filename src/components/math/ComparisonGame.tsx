@@ -61,7 +61,6 @@ const ComparisonGame: React.FC = () => {
     
     // Register callback to start the game after entry audio completes
     entryAudioManager.onComplete('comparison', () => {
-      console.log(`🎵 ComparisonGame: Entry audio completed, starting first question`)
       setEntryAudioComplete(true)
       // Add a small delay after entry audio before starting the question
       setTimeout(() => {

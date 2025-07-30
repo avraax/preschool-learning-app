@@ -30,9 +30,9 @@ import { entryAudioManager } from '../../utils/entryAudioManager'
 
 const AdditionGame: React.FC = () => {
   const navigate = useNavigate()
-  const [num1, setNum1] = useState(1)
-  const [num2, setNum2] = useState(1)
-  const [correctAnswer, setCorrectAnswer] = useState(2)
+  const [num1, setNum1] = useState<number | null>(null)
+  const [num2, setNum2] = useState<number | null>(null)
+  const [correctAnswer, setCorrectAnswer] = useState<number | null>(null)
   const [options, setOptions] = useState<number[]>([])
   const [score, setScore] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
@@ -136,7 +136,7 @@ const AdditionGame: React.FC = () => {
   }
 
   const handleAnswerClick = async (selectedAnswer: number) => {
-    if (isPlaying) return
+    if (isPlaying || correctAnswer === null) return
     
     setIsPlaying(true)
     audioManager.stopAll()
@@ -176,7 +176,9 @@ const AdditionGame: React.FC = () => {
   }
 
   const repeatProblem = () => {
-    speakProblem(num1, num2)
+    if (num1 !== null && num2 !== null) {
+      speakProblem(num1, num2)
+    }
   }
 
 
@@ -267,7 +269,7 @@ const AdditionGame: React.FC = () => {
         </Box>
 
         {/* Problem Display - Compact */}
-        {entryAudioComplete && (
+        {entryAudioComplete && num1 !== null && num2 !== null && options.length > 0 && (
           <Box sx={{ textAlign: 'center', mb: { xs: 2, md: 3 }, flex: '0 0 auto' }}>
             <Paper 
               elevation={8}
@@ -340,7 +342,7 @@ const AdditionGame: React.FC = () => {
 
             <Button 
               onClick={repeatProblem}
-              disabled={!entryAudioComplete || isPlaying}
+              disabled={!entryAudioComplete || isPlaying || num1 === null || num2 === null}
               label="🎵 Hør igen"
               variant="contained"
               color="secondary"

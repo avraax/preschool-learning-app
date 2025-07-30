@@ -45,33 +45,23 @@ export const useGameEntryAudio = ({
   const hasScheduled = useRef(false)
 
   useEffect(() => {
-    console.log(`🎵 useGameEntryAudio: Effect triggered for "${gameType}"`)
-    console.log(`🎵   - hasScheduled: ${hasScheduled.current}`)
-    console.log(`🎵   - enabled: ${enabled}`)
-    console.log(`🎵   - delay: ${delay}`)
-    console.log(`🎵   - hasPlayed: ${entryAudioManager.hasPlayed(gameType)}`)
-    
     // Don't play if disabled
     if (!enabled) {
-      console.log(`🎵 useGameEntryAudio: Entry audio disabled for "${gameType}"`)
       return
     }
     
     // Don't schedule if already played
     if (entryAudioManager.hasPlayed(gameType)) {
-      console.log(`🎵 useGameEntryAudio: Entry audio already played for "${gameType}"`)
       return
     }
     
     // Don't schedule multiple times from same component
     if (hasScheduled.current) {
-      console.log(`🎵 useGameEntryAudio: Already scheduled from this component for "${gameType}"`)
       return
     }
     
     // Schedule the entry audio using the centralized manager
     hasScheduled.current = true
-    console.log(`🎵 useGameEntryAudio: Scheduling entry audio for "${gameType}"`)
     entryAudioManager.scheduleEntryAudio(gameType, delay)
 
     // No cleanup needed - the centralized manager handles the timeout
@@ -80,13 +70,11 @@ export const useGameEntryAudio = ({
 
   // Return function to manually replay entry audio
   const replayEntryAudio = () => {
-    console.log(`🎵 useGameEntryAudio: Manual replay requested for "${gameType}"`)
     entryAudioManager.playEntryAudio(gameType)
   }
 
   // Function to reset entry audio state (useful for testing)
   const resetEntryAudio = () => {
-    console.log(`🎵 useGameEntryAudio: Resetting entry audio state for "${gameType}"`)
     entryAudioManager.resetGame(gameType)
     hasScheduled.current = false
   }

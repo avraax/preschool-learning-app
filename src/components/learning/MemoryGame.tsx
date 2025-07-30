@@ -132,10 +132,6 @@ const MemoryGame: React.FC = () => {
   // Centralized entry audio
   useGameEntryAudio({ gameType: 'memory' })
   
-  // Debug logging for component initialization
-  useEffect(() => {
-    console.log(`🎵 MemoryGame: Component initialized with type="${type}", gameType="${gameType}"`)
-  }, [])
 
   useEffect(() => {
     // Initialize teacher character
@@ -144,7 +140,6 @@ const MemoryGame: React.FC = () => {
     
     // Register callback to start the game after entry audio completes
     entryAudioManager.onComplete('memory', () => {
-      console.log(`🎵 MemoryGame: Entry audio completed, ready for interaction`)
       setEntryAudioComplete(true)
       // Memory game is ready - cards are already generated
     })
@@ -225,7 +220,6 @@ const MemoryGame: React.FC = () => {
            error.message?.includes('interrupted by user'))
         
         if (isNavigationInterruption) {
-          console.log('🎵 Card audio interrupted by navigation (expected)')
           return // Don't show prompts for expected interruptions
         }
         

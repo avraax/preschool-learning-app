@@ -136,9 +136,9 @@ const RamFarvenGame: React.FC = () => {
     setTimeout(() => {
       try {
         audioManager.speak(`Lav ${randomTarget.name} ved at blande to farver!`)
-          .catch(error => console.log('Audio error:', error))
+          .catch(() => {})
       } catch (error) {
-        console.log('Audio error:', error)
+        // Ignore audio errors
       }
     }, 2000) // Longer delay to allow centralized welcome audio to finish first
   }
@@ -162,9 +162,9 @@ const RamFarvenGame: React.FC = () => {
     // Speak color name
     try {
       audioManager.speak(droplet.colorName)
-        .catch(error => console.log('Audio error:', error))
+        .catch(() => {})
     } catch (error) {
-      console.log('Audio error:', error)
+      // Ignore audio errors
     }
 
     // If we have two colors, try mixing
@@ -195,7 +195,7 @@ const RamFarvenGame: React.FC = () => {
       try {
         await audioManager.announceGameResult(true)
       } catch (error) {
-        console.log('Audio error:', error)
+        // Ignore audio errors
       }
 
       // Auto-generate new question after celebration
@@ -233,8 +233,6 @@ const RamFarvenGame: React.FC = () => {
         colorTeacher.think()
         setIsPlaying(false)
       } catch (error) {
-        console.log('Audio error:', error)
-        
         // Even on error, reset immediately
         const clearedColors = gameState.availableColors.map(color => ({
           ...color,

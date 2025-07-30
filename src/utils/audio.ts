@@ -39,7 +39,6 @@ export class AudioManager {
       
       return hasPermission
     } catch (error) {
-      console.log('Audio permission check failed:', error)
       return false
     }
   }
@@ -58,7 +57,6 @@ export class AudioManager {
     // Check audio permission before speaking
     const hasPermission = await this.checkAudioPermission()
     if (!hasPermission) {
-      console.log('Audio permission not available, skipping speech')
       return
     }
     
@@ -90,11 +88,9 @@ export class AudioManager {
            error.message.includes('interrupted by user'))
         
         if (isNavigationInterruption) {
-          console.log('🎵 Number speech interrupted by navigation (expected)')
           throw error // Don't retry for navigation interruptions
         }
         
-        console.log(`Number speech attempt ${attempt + 1} failed:`, error)
         
         // Wait a bit before retrying (but not on last attempt)
         // Use longer delay for iOS to allow audio context to recover
@@ -163,7 +159,6 @@ export class AudioManager {
 
   // Enhanced stop method
   stopAll(): void {
-    console.log('🔇 AudioManager: Stopping all audio')
     
     // Stop Howler.js sounds
     this.sounds.forEach(sound => {
@@ -280,7 +275,6 @@ export class AudioManager {
          error.message.includes('interrupted by user'))
       
       if (isNavigationInterruption) {
-        console.log('🎵 Quiz audio interrupted by navigation (expected)')
         return // Don't log or retry for navigation interruptions
       }
       
@@ -294,7 +288,6 @@ export class AudioManager {
           await new Promise(resolve => setTimeout(resolve, 500))
           
           // Just speak the full text once on iOS fallback
-          console.log('Quiz Audio: Using iOS fallback - speaking full text once')
           await this.speak(text, voiceType, false)
         } catch (iosFallbackError) {
           console.error('iOS fallback error:', iosFallbackError)
@@ -393,8 +386,6 @@ export class AudioManager {
 
   // Centralized game welcome audio system
   async playGameWelcome(gameType: string, voiceType: 'primary' | 'backup' | 'male' = 'primary'): Promise<void> {
-    console.log(`🎵 AudioManager.playGameWelcome: Starting welcome audio for "${gameType}"`)
-    
     // Import game welcome messages dynamically to avoid circular dependencies
     const { GAME_WELCOME_MESSAGES } = await import('../hooks/useGameEntryAudio')
     
@@ -402,14 +393,11 @@ export class AudioManager {
     
     if (!welcomeMessage) {
       console.warn(`🎵 AudioManager.playGameWelcome: No welcome message defined for game type: ${gameType}`)
-      console.log(`🎵 Available game types:`, Object.keys(GAME_WELCOME_MESSAGES))
       return
     }
 
     try {
-      console.log(`🎵 AudioManager.playGameWelcome: Playing welcome audio for ${gameType}: "${welcomeMessage}"`)
       await this.speak(welcomeMessage, voiceType, true)
-      console.log(`🎵 AudioManager.playGameWelcome: Successfully completed welcome audio for "${gameType}"`)
     } catch (error) {
       console.error(`🎵 AudioManager.playGameWelcome: Error playing welcome audio for ${gameType}:`, error)
       throw error

@@ -61,7 +61,6 @@ export const useTaskBasedGame = ({
   useEffect(() => {
     // Register callback to handle entry audio completion
     entryAudioManager.onComplete(gameType, () => {
-      console.log(`🎵 useTaskBasedGame: Entry audio completed for "${gameType}"`)
       
       // Mark entry audio as complete (enables repeat buttons)
       setEntryAudioComplete(true)

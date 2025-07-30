@@ -42,10 +42,6 @@ const AlphabetGame: React.FC = () => {
   // Centralized entry audio
   useGameEntryAudio({ gameType: 'alphabet' })
   
-  // Debug logging for component initialization
-  useEffect(() => {
-    console.log(`🎵 AlphabetGame: Component initialized`)
-  }, [])
   
   useEffect(() => {
     // Initial teacher greeting
@@ -55,9 +51,7 @@ const AlphabetGame: React.FC = () => {
 
   useEffect(() => {
     // Register callback to start the game after entry audio completes
-    console.log(`🎵 AlphabetGame: Registering callback for entry audio completion`)
     entryAudioManager.onComplete('alphabet', () => {
-      console.log(`🎵 AlphabetGame: Entry audio completed, starting first question`)
       setEntryAudioComplete(true)
       // Add a small delay after entry audio before starting the question
       setTimeout(() => {
@@ -120,7 +114,6 @@ const AlphabetGame: React.FC = () => {
       try {
         await audioManager.speakQuizPromptWithRepeat(DANISH_PHRASES.gamePrompts.findLetter(letter), letter)
       } catch (error) {
-        console.log('Audio failed, user can click Gentag button:', error)
       } finally {
         setIsPlaying(false)
       }
@@ -128,10 +121,8 @@ const AlphabetGame: React.FC = () => {
     
     // Try immediate audio for iOS, delayed for others
     if (isIOS()) {
-      console.log(`🎵 AlphabetGame: Starting immediate audio for iOS - Find bogstavet ${letter}`)
       playAudioAsync()
     } else {
-      console.log(`🎵 AlphabetGame: Scheduling delayed audio (500ms) - Find bogstavet ${letter}`)
       timeoutRef.current = setTimeout(playAudioAsync, 500)
     }
   }

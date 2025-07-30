@@ -65,7 +65,6 @@ const MathGame: React.FC = () => {
   useEffect(() => {
     // Register callback to start the game after entry audio completes
     entryAudioManager.onComplete('math', () => {
-      console.log(`🎵 MathGame: Entry audio completed, starting first question`)
       setEntryAudioComplete(true)
       // Add a small delay after entry audio before starting the question
       setTimeout(() => {
@@ -138,7 +137,6 @@ const MathGame: React.FC = () => {
         DANISH_PHRASES.gamePrompts.findNumber(number), 
         number.toString()
       ).catch(error => {
-        console.log('Audio failed, user can click Gentag button:', error)
       })
       timeoutRef.current = null
     }, 500)
@@ -182,7 +180,6 @@ const MathGame: React.FC = () => {
       try {
         await audioManager.speakMathProblem(problemText)
       } catch (error) {
-        console.log('Math audio failed, user can click Gentag button:', error)
       }
       timeoutRef.current = null
     }, 500)

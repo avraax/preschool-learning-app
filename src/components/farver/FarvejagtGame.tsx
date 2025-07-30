@@ -201,17 +201,6 @@ const FarvejagtGame: React.FC = () => {
       y: positions[index].y
     }))
     
-    console.log('Generated game items:', {
-      targetColor: target.color,
-      totalItems: items.length,
-      targetItems: items.filter(item => item.isTarget).length,
-      itemBreakdown: items.map(item => ({
-        id: item.id,
-        colorName: item.colorName,
-        isTarget: item.isTarget,
-        emoji: item.emoji
-      }))
-    })
     
     return { items, targetCount: selectedTargets.length, targetColor: target.color, targetPhrase: target.phrase }
   }
@@ -238,11 +227,9 @@ const FarvejagtGame: React.FC = () => {
     setTimeout(() => {
       try {
         audioManager.speak(`${newTargetPhrase} og træk dem til cirklen.`)
-          .catch(error => {
-            console.log('Audio error (welcome):', error)
-          })
+          .catch(() => {})
       } catch (error) {
-        console.log('Audio error (welcome):', error)
+        // Ignore audio errors on welcome
       }
     }, 1500) // Slightly longer delay to not conflict with entry audio
   }, [])
@@ -260,7 +247,7 @@ const FarvejagtGame: React.FC = () => {
         try {
           await audioManager.announceGameResult(true)
         } catch (error) {
-          console.log('Audio error (completion):', error)
+          // Ignore audio errors on completion
         }
         
         // Auto-reset after celebration (3 seconds)
@@ -280,55 +267,23 @@ const FarvejagtGame: React.FC = () => {
 
   // Handle drag end
   const handleDragEnd = (event: DragEndEvent) => {
-    console.log('=== DRAG END EVENT START ===')
     const { active, over } = event
     
-    console.log('1. Event details:', {
-      activeId: active.id,
-      overId: over?.id,
-      overData: over?.data?.current
-    })
     
     setActiveId(null)
 
     const draggedItem = gameItems.find(item => item.id === active.id)
     
-    console.log('2. Dragged item lookup:', {
-      activeId: active.id,
-      foundItem: draggedItem,
-      itemExists: !!draggedItem,
-      itemCollected: draggedItem?.collected
-    })
     
     if (!draggedItem || draggedItem.collected) {
-      console.log('3. EARLY RETURN - no item or already collected')
       return
     }
 
-    // Debug logging for tracking game state issues
-    console.log('3. Item validation passed - processing drop:', {
-      itemId: draggedItem.id,
-      itemColor: draggedItem.colorName,
-      targetColor: targetColor,
-      isTarget: draggedItem.isTarget,
-      collected: draggedItem.collected,
-      overZone: over?.id,
-      colorMatch: draggedItem.colorName === targetColor
-    })
 
     // Check if dropped on the target circle
     if (over && over.id === 'target-zone') {
-      console.log('4. DROPPED ON TARGET ZONE - analyzing item:', {
-        itemId: draggedItem.id,
-        isTarget: draggedItem.isTarget,
-        colorName: draggedItem.colorName,
-        targetColor: targetColor,
-        collected: draggedItem.collected,
-        shouldBeCorrect: draggedItem.colorName === targetColor
-      })
       
       if (draggedItem.isTarget) {
-        console.log('5. ✅ CORRECT ITEM PATH - collecting item')
         
         // Correct item - collect it and move to center
         setGameItems(prev => {
@@ -340,50 +295,40 @@ const FarvejagtGame: React.FC = () => {
               y: 50
             } : item
           )
-          console.log('6. Updated game items state (correct):', updated.find(item => item.id === active.id))
           return updated
         })
         
         setScore(prev => {
           const newScore = prev + 1
-          console.log('7. Updated score:', newScore)
           return newScore
         })
         
         // Play success audio with enhanced error handling
-        console.log('8. Playing success audio...')
         setTimeout(() => {
           try {
             audioManager.speak(`Flot! ${draggedItem.objectNameDefinite} er ${draggedItem.colorName}.`)
-              .catch(error => {
-                console.log('Audio error (correct item):', error)
-                  })
+              .catch(() => {})
           } catch (error) {
-            console.log('Audio error (correct item):', error)
+            // Ignore audio errors
           }
         }, 200)
       } else {
-        console.log('5. ❌ WRONG ITEM PATH - bouncing back')
         
         // Wrong item - bounce it back to original position
         setGameItems(prev => {
           const updated = prev.map(item =>
             item.id === active.id ? { ...item, returning: true } : item
           )
-          console.log('6. Updated game items state (wrong):', updated.find(item => item.id === active.id))
           return updated
         })
         
         // Play error audio with enhanced error handling
-        console.log('7. Playing error audio...')
         setTimeout(() => {
           try {
             audioManager.speak(`Nej, ${draggedItem.objectNameDefinite} er ${draggedItem.colorName}, ikke ${targetColor}.`)
-              .catch(error => {
-                console.log('Audio error (wrong item):', error)
-                  })
+              .catch(() => {})
           } catch (error) {
-            console.log('Audio error (wrong item):', error)
+            // Ignore audio errors
           }
         }, 200)
         
@@ -395,10 +340,7 @@ const FarvejagtGame: React.FC = () => {
         }, 500)
       }
     } else {
-      console.log('4. NOT DROPPED ON TARGET ZONE - dropped elsewhere')
-      console.log('   Over zone:', over?.id || 'none')
     }
-    console.log('=== DRAG END EVENT COMPLETE ===')
     // Items dropped outside target zone automatically return to original position
   }
 
@@ -422,11 +364,9 @@ const FarvejagtGame: React.FC = () => {
           : `Nyt spil! ${newTargetPhrase} og træk dem til cirklen.`
         
         audioManager.speak(message)
-          .catch(error => {
-            console.log('Audio error (reset):', error)
-          })
+          .catch(() => {})
       } catch (error) {
-        console.log('Audio error (reset):', error)
+        // Ignore audio errors on reset
       }
     }, 500)
   }

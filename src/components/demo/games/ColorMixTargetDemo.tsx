@@ -110,7 +110,6 @@ const ColorMixTargetDemo: React.FC = () => {
       ? possibleTargets.filter(target => target.hex !== gameState.targetColor.hex)
       : possibleTargets
     const randomTarget = availableTargets[Math.floor(Math.random() * availableTargets.length)]
-    console.log('🎲 Random target selected:', randomTarget)
     
     // Shuffle color droplets for random order
     const shuffledColors = shuffleArray(primaryColors)
@@ -127,9 +126,9 @@ const ColorMixTargetDemo: React.FC = () => {
     setTimeout(() => {
       try {
         audioManager.speak(`Lav ${randomTarget.name} ved at blande to farver!`)
-          .catch(error => console.log('Audio error:', error))
+          .catch(() => {})
       } catch (error) {
-        console.log('Audio error:', error)
+        // Ignore audio errors
       }
     }, 1000)
   }
@@ -153,9 +152,9 @@ const ColorMixTargetDemo: React.FC = () => {
     // Speak color name
     try {
       audioManager.speak(droplet.colorName)
-        .catch(error => console.log('Audio error:', error))
+        .catch(() => {})
     } catch (error) {
-      console.log('Audio error:', error)
+      // Ignore audio errors
     }
 
     // If we have two colors, try mixing
@@ -182,7 +181,7 @@ const ColorMixTargetDemo: React.FC = () => {
       try {
         await audioManager.announceGameResult(true)
       } catch (error) {
-        console.log('Audio error:', error)
+        // Ignore audio errors
       }
 
       // Auto-generate new question after celebration
@@ -217,7 +216,7 @@ const ColorMixTargetDemo: React.FC = () => {
         
         colorMixer.think()
       } catch (error) {
-        console.log('Audio error:', error)
+        // Ignore audio errors
       }
     }
   }

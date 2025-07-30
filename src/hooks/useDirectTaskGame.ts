@@ -44,10 +44,8 @@ export const useDirectTaskGame = ({
 
   useEffect(() => {
     // Register callback for entry audio completion
-    console.log(`🎵 useDirectTaskGame: Registering callback for ${gameType}`)
     
     entryAudioManager.onComplete(gameType, () => {
-      console.log(`🎵 useDirectTaskGame: Entry audio completed for ${gameType}`)
       setEntryAudioComplete(true)
       
       // Add configurable delay before calling the game-specific callback
