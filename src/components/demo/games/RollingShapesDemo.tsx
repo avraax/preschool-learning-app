@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { Box, Typography, Button, Paper } from '@mui/material'
 import { motion, AnimatePresence } from 'framer-motion'
-import { audioManager } from '../../../utils/audio'
+import { useAudio } from '../../../hooks/useAudio'
 
 interface RollingShapesDemoProps {
   variation: 'A' | 'B' | 'C'
@@ -15,6 +15,9 @@ interface Shape {
 }
 
 const RollingShapesDemo: React.FC<RollingShapesDemoProps> = ({ variation }) => {
+  // Centralized audio system
+  const audio = useAudio({ componentId: 'RollingShapesDemo' })
+  
   const [selectedShape, setSelectedShape] = useState<Shape | null>(null)
   const [isRolling, setIsRolling] = useState(false)
   const [showResult, setShowResult] = useState(false)
@@ -28,7 +31,7 @@ const RollingShapesDemo: React.FC<RollingShapesDemoProps> = ({ variation }) => {
 
   const handleShapeSelect = (shape: Shape) => {
     setSelectedShape(shape)
-    audioManager.speak(shape.name)
+    audio.speak(shape.name)
   }
 
   const startRolling = () => {
@@ -43,13 +46,13 @@ const RollingShapesDemo: React.FC<RollingShapesDemoProps> = ({ variation }) => {
       
       if (selectedShape.type === 'circle') {
         setResultMessage(`${selectedShape.name} ruller let ned ad bakken!`)
-        audioManager.speak(`${selectedShape.name} ruller let ned ad bakken!`)
+        audio.speak(`${selectedShape.name} ruller let ned ad bakken!`)
       } else if (selectedShape.type === 'square') {
         setResultMessage(`${selectedShape.name} glider ned ad bakken!`)
-        audioManager.speak(`${selectedShape.name} glider ned ad bakken!`)
+        audio.speak(`${selectedShape.name} glider ned ad bakken!`)
       } else {
         setResultMessage(`${selectedShape.name} tumler ned ad bakken!`)
-        audioManager.speak(`${selectedShape.name} tumler ned ad bakken!`)
+        audio.speak(`${selectedShape.name} tumler ned ad bakken!`)
       }
     }, 3000)
   }

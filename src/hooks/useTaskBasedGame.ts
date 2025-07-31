@@ -28,7 +28,7 @@ interface UseTaskBasedGameReturn {
  * 
  * This hook consolidates the common pattern used across quiz games, math games,
  * and other task-based games that need to:
- * 1. Play entry audio ("Velkommen til...")
+ * 1. Play entry audio
  * 2. Disable repeat buttons during entry audio
  * 3. Handle empty states while waiting for first task
  * 4. Start the first task after entry audio completes

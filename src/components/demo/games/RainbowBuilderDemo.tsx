@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { Box, Typography, Button, Paper } from '@mui/material'
 import { motion, AnimatePresence } from 'framer-motion'
-import { audioManager } from '../../../utils/audio'
+import { useAudio } from '../../../hooks/useAudio'
 
 interface RainbowColor {
   id: string
@@ -14,6 +14,9 @@ interface RainbowColor {
 interface RainbowBuilderDemoProps {}
 
 const RainbowBuilderDemo: React.FC<RainbowBuilderDemoProps> = () => {
+  // Centralized audio system
+  const audio = useAudio({ componentId: 'RainbowBuilderDemo' })
+  
   const [availableColors, setAvailableColors] = useState<RainbowColor[]>([])
   const [rainbowColors, setRainbowColors] = useState<(RainbowColor | null)[]>(Array(8).fill(null))
   const [showCelebration, setShowCelebration] = useState(false)
@@ -49,7 +52,7 @@ const RainbowBuilderDemo: React.FC<RainbowBuilderDemoProps> = () => {
     setRainbowColors(Array(8).fill(null))
     setShowCelebration(false)
     
-    audioManager.speak('Byg din egen regnbue! Klik på farver for at tilføje dem.')
+    audio.speak('Byg din egen regnbue! Klik på farver for at tilføje dem.')
   }
 
   const handleColorClick = (colorId: string) => {
@@ -69,15 +72,15 @@ const RainbowBuilderDemo: React.FC<RainbowBuilderDemoProps> = () => {
       c.id === colorId ? { ...c, inRainbow: true, rainbowPosition: nextEmptySlot } : c
     ))
     
-    audioManager.speak(color.name)
+    audio.speak(color.name)
     
     // Check if rainbow is full (all 8 slots filled)
     const filledSlots = newRainbowColors.filter(c => c !== null).length
     if (filledSlots === 8) {
       setTimeout(() => {
         setShowCelebration(true)
-        audioManager.playSuccessSound()
-        audioManager.speak('Fantastisk! Du har lavet en smuk regnbue!')
+        audio.playSuccessSound()
+        audio.speak('Fantastisk! Du har lavet en smuk regnbue!')
         
         // Reset after celebration
         setTimeout(() => {
@@ -101,7 +104,7 @@ const RainbowBuilderDemo: React.FC<RainbowBuilderDemoProps> = () => {
       c.id === colorInPosition.id ? { ...c, inRainbow: false, rainbowPosition: null } : c
     ))
     
-    audioManager.speak(`${colorInPosition.name} fjernet`)
+    audio.speak(`${colorInPosition.name} fjernet`)
   }
 
   const renderRainbow = () => (

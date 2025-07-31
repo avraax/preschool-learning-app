@@ -36,6 +36,7 @@ export class AudioController {
   // Event listeners
   private playingStateListeners: AudioEventListener[] = []
   private audioCompleteListeners: Map<string, AudioCompleteListener[]> = new Map()
+  private navigationCleanupCallbacks: (() => void)[] = []
 
   constructor() {
     this.googleTTS = googleTTS
@@ -702,6 +703,8 @@ export class AudioController {
    */
   private setupGlobalCleanup(): void {
     const cleanup = () => {
+      console.log('🎵 AudioController: Navigation detected, cleaning up all audio')
+      this.triggerNavigationCleanup()
       this.stopAll()
     }
 
@@ -709,10 +712,48 @@ export class AudioController {
     window.addEventListener('beforeunload', cleanup)
     window.addEventListener('pagehide', cleanup)
     
-    // Listen for React Router navigation
+    // Listen for React Router navigation (browser back/forward)
     if (typeof window !== 'undefined') {
       window.addEventListener('popstate', cleanup)
     }
+  }
+
+  /**
+   * Register a callback to be called when navigation cleanup is triggered
+   * This allows React components to register for navigation events
+   */
+  public registerNavigationCleanup(callback: () => void): () => void {
+    console.log('🎵 AudioController: Registering navigation cleanup callback')
+    this.navigationCleanupCallbacks.push(callback)
+    
+    // Return unsubscribe function
+    return () => {
+      const index = this.navigationCleanupCallbacks.indexOf(callback)
+      if (index > -1) {
+        this.navigationCleanupCallbacks.splice(index, 1)
+        console.log('🎵 AudioController: Unregistered navigation cleanup callback')
+      }
+    }
+  }
+
+  /**
+   * Trigger navigation cleanup - called by React Router navigation detection
+   */
+  public triggerNavigationCleanup(): void {
+    console.log(`🎵 AudioController: Triggering navigation cleanup for ${this.navigationCleanupCallbacks.length} callbacks`)
+    
+    // Call all registered cleanup callbacks
+    this.navigationCleanupCallbacks.forEach((callback, index) => {
+      try {
+        callback()
+        console.log(`🎵 AudioController: Navigation cleanup callback ${index + 1} executed successfully`)
+      } catch (error) {
+        console.error(`🎵 AudioController: Error in navigation cleanup callback ${index + 1}:`, error)
+      }
+    })
+    
+    // Stop all audio
+    this.stopAll()
   }
 
   // Clean up audio cache

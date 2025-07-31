@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Box, Typography, Button, Container, Chip } from '@mui/material'
 import { DndContext, DragEndEvent, DragStartEvent, DragOverlay, closestCenter } from '@dnd-kit/core'
-import { audioManager } from '../../../utils/audio'
+import { useAudio } from '../../../hooks/useAudio'
 import { DraggableItem } from '../../common/dnd/DraggableItem'
 import { DroppableZone } from '../../common/dnd/DroppableZone'
 
@@ -83,6 +83,9 @@ const COLOR_TARGETS = [
 ]
 
 const ColorHunt2Demo: React.FC = () => {
+  // Centralized audio system
+  const audio = useAudio({ componentId: 'ColorHunt2Demo' })
+  
   // Game state
   const [gameItems, setGameItems] = useState<GameItem[]>([])
   const [score, setScore] = useState(0)
@@ -217,7 +220,7 @@ const ColorHunt2Demo: React.FC = () => {
     // Welcome message with delay - use the actual selected target
     setTimeout(() => {
       try {
-        audioManager.speak(`Velkommen til farve jagt! ${newTargetPhrase} og træk dem til cirklen.`)
+        audio.speak(`Velkommen til farve jagt! ${newTargetPhrase} og træk dem til cirklen.`)
           .catch(() => {})
       } catch (error) {
         // Ignore audio errors
@@ -231,7 +234,7 @@ const ColorHunt2Demo: React.FC = () => {
       setIsComplete(true)
       setTimeout(() => {
         try {
-          audioManager.speak(`Fantastisk! Du fandt alle de ${targetColor} ting!`)
+          audio.speak(`Fantastisk! Du fandt alle de ${targetColor} ting!`)
             .catch(() => {})
         } catch (error) {
           // Ignore audio errors
@@ -287,7 +290,7 @@ const ColorHunt2Demo: React.FC = () => {
         // Play success audio with enhanced error handling
         setTimeout(() => {
           try {
-            audioManager.speak(`Flot! ${draggedItem.objectNameDefinite} er ${draggedItem.colorName}.`)
+            audio.speak(`Flot! ${draggedItem.objectNameDefinite} er ${draggedItem.colorName}.`)
               .catch(() => {})
           } catch (error) {
             // Ignore audio errors
@@ -306,7 +309,7 @@ const ColorHunt2Demo: React.FC = () => {
         // Play error audio with enhanced error handling
         setTimeout(() => {
           try {
-            audioManager.speak(`Nej, ${draggedItem.objectNameDefinite} er ${draggedItem.colorName}, ikke ${targetColor}.`)
+            audio.speak(`Nej, ${draggedItem.objectNameDefinite} er ${draggedItem.colorName}, ikke ${targetColor}.`)
               .catch(() => {})
           } catch (error) {
             // Ignore audio errors
@@ -340,7 +343,7 @@ const ColorHunt2Demo: React.FC = () => {
     
     setTimeout(() => {
       try {
-        audioManager.speak(`Nyt spil! ${newTargetPhrase} og træk dem til cirklen.`)
+        audio.speak(`Nyt spil! ${newTargetPhrase} og træk dem til cirklen.`)
           .catch(() => {})
       } catch (error) {
         // Ignore audio errors

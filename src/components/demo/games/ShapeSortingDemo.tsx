@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Box, Typography, Button, Paper } from '@mui/material'
 import { motion, AnimatePresence } from 'framer-motion'
-import { audioManager } from '../../../utils/audio'
+import { useAudio } from '../../../hooks/useAudio'
 
 interface FallingShape {
   id: string
@@ -17,6 +17,9 @@ interface ShapeSortingDemoProps {
 }
 
 const ShapeSortingDemo: React.FC<ShapeSortingDemoProps> = ({ variation }) => {
+  // Centralized audio system
+  const audio = useAudio({ componentId: 'ShapeSortingDemo' })
+  
   const [fallingShapes, setFallingShapes] = useState<FallingShape[]>([])
   const [score, setScore] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
@@ -70,10 +73,10 @@ const ShapeSortingDemo: React.FC<ShapeSortingDemoProps> = ({ variation }) => {
   const handleShapeDrop = (shape: FallingShape, binType: string) => {
     if (shape.type === binType) {
       setScore(score + 1)
-      audioManager.playSuccessSound()
-      audioManager.speak('Rigtig!')
+      audio.playSuccessSound()
+      audio.speak('Rigtig!')
     } else {
-      audioManager.speak('Prøv igen!')
+      audio.speak('Prøv igen!')
     }
 
     setFallingShapes(prev => prev.filter(s => s.id !== shape.id))
@@ -83,7 +86,7 @@ const ShapeSortingDemo: React.FC<ShapeSortingDemoProps> = ({ variation }) => {
     setIsPlaying(true)
     setScore(0)
     setFallingShapes([])
-    audioManager.speak('Sorter formerne i de rigtige kasser!')
+    audio.speak('Sorter formerne i de rigtige kasser!')
   }
 
   const stopGame = () => {

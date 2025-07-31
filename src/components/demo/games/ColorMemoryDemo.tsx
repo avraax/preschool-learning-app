@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Box, Typography, Button } from '@mui/material'
 import { motion } from 'framer-motion'
-import { audioManager } from '../../../utils/audio'
+import { useAudio } from '../../../hooks/useAudio'
 
 // Working CSS for card flip animation (same as main memory game)
 const flipStyles = `
@@ -63,6 +63,9 @@ interface ColorMemoryCard {
 interface ColorMemoryDemoProps {}
 
 const ColorMemoryDemo: React.FC<ColorMemoryDemoProps> = () => {
+  // Centralized audio system
+  const audio = useAudio({ componentId: 'ColorMemoryDemo' })
+  
   const [cards, setCards] = useState<ColorMemoryCard[]>([])
   const [revealedCards, setRevealedCards] = useState<ColorMemoryCard[]>([])
   const [matchedPairs, setMatchedPairs] = useState(0)
@@ -165,7 +168,7 @@ const ColorMemoryDemo: React.FC<ColorMemoryDemoProps> = () => {
 
     // Play audio for the revealed card
     try {
-      await audioManager.speak(clickedCard.colorName)
+      await audio.speak(clickedCard.colorName)
     } catch (error) {
       console.error('Audio error:', error)
     }
@@ -190,8 +193,8 @@ const ColorMemoryDemo: React.FC<ColorMemoryDemoProps> = () => {
         setScore(prev => prev + 1)
 
         try {
-          await audioManager.playSuccessSound()
-          await audioManager.speak('Godt klaret!')
+          await audio.playSuccessSound()
+          await audio.speak('Godt klaret!')
         } catch (error) {
           console.error('Error playing success sound:', error)
         }
@@ -199,7 +202,7 @@ const ColorMemoryDemo: React.FC<ColorMemoryDemoProps> = () => {
         // Check if game is complete (all 20 pairs found)
         if (matchedPairs + 1 === 20) {
           try {
-            await audioManager.speak('Fantastisk! Du fandt alle parrene!')
+            await audio.speak('Fantastisk! Du fandt alle parrene!')
           } catch (error) {
             console.error('Error playing completion sound:', error)
           }
@@ -226,7 +229,7 @@ const ColorMemoryDemo: React.FC<ColorMemoryDemoProps> = () => {
         setCards(resetCards)
 
         try {
-          await audioManager.speak('Prøv igen!')
+          await audio.speak('Prøv igen!')
         } catch (error) {
           console.error('Error playing try again sound:', error)
         }

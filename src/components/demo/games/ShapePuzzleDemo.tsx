@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { Box, Typography, Button, Paper } from '@mui/material'
 import { motion } from 'framer-motion'
-import { audioManager } from '../../../utils/audio'
+import { useAudio } from '../../../hooks/useAudio'
 
 interface Shape {
   id: string
@@ -17,6 +17,9 @@ interface ShapePuzzleDemoProps {
 }
 
 const ShapePuzzleDemo: React.FC<ShapePuzzleDemoProps> = ({ variation }) => {
+  // Centralized audio system
+  const audio = useAudio({ componentId: 'ShapePuzzleDemo' })
+  
   const [shapes, setShapes] = useState<Shape[]>([])
   const [completed, setCompleted] = useState(false)
 
@@ -85,7 +88,7 @@ const ShapePuzzleDemo: React.FC<ShapePuzzleDemoProps> = ({ variation }) => {
         ? { ...shape, rotation: (shape.rotation + 90) % 360 }
         : shape
     ))
-    audioManager.playSuccessSound()
+    audio.playSuccessSound()
   }
 
   const checkCompletion = () => {
@@ -98,7 +101,7 @@ const ShapePuzzleDemo: React.FC<ShapePuzzleDemoProps> = ({ variation }) => {
 
     if (shapesInTarget.length === shapes.length && !completed) {
       setCompleted(true)
-      audioManager.speak('Fantastisk! Du har bygget det!')
+      audio.speak('Fantastisk! Du har bygget det!')
     }
   }
 

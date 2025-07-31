@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { Box, Typography, Button, Paper } from '@mui/material'
 import { motion } from 'framer-motion'
-import { audioManager } from '../../../utils/audio'
+import { useAudio } from '../../../hooks/useAudio'
 
 interface ShapeDetectiveDemoProps {
   variation: 'A' | 'B' | 'C'
@@ -16,6 +16,9 @@ interface ShapeItem {
 }
 
 const ShapeDetectiveDemo: React.FC<ShapeDetectiveDemoProps> = ({ variation }) => {
+  // Centralized audio system
+  const audio = useAudio({ componentId: 'ShapeDetectiveDemo' })
+  
   const [targetShape, setTargetShape] = useState('cirkel')
   const [foundShapes, setFoundShapes] = useState<string[]>([])
   const [showFeedback, setShowFeedback] = useState(false)
@@ -65,7 +68,7 @@ const ShapeDetectiveDemo: React.FC<ShapeDetectiveDemoProps> = ({ variation }) =>
   const handleShapeClick = (item: ShapeItem) => {
     if (item.shape === targetShape && !foundShapes.includes(item.id)) {
       setFoundShapes([...foundShapes, item.id])
-      audioManager.playSuccessSound()
+      audio.playSuccessSound()
       
       const remainingShapes = currentScene.items.filter(i => 
         i.shape === targetShape && !foundShapes.includes(i.id) && i.id !== item.id
@@ -78,14 +81,14 @@ const ShapeDetectiveDemo: React.FC<ShapeDetectiveDemoProps> = ({ variation }) =>
           const nextShape = shapeNames[Math.floor(Math.random() * shapeNames.length)]
           setTargetShape(nextShape)
           setFoundShapes([])
-          audioManager.speak(`Find alle ${nextShape}er!`)
+          audio.speak(`Find alle ${nextShape}er!`)
         }, 2000)
       }
     }
   }
 
   const startGame = () => {
-    audioManager.speak(`Find alle ${targetShape}er!`)
+    audio.speak(`Find alle ${targetShape}er!`)
   }
 
   const renderShape = (item: ShapeItem) => {

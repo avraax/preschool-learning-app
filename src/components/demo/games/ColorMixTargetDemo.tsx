@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { Box, Typography } from '@mui/material'
 import { motion, AnimatePresence } from 'framer-motion'
 import { DndContext, DragEndEvent, DragStartEvent, closestCenter } from '@dnd-kit/core'
-import { audioManager } from '../../../utils/audio'
+import { useAudio } from '../../../hooks/useAudio'
 import { DraggableItem } from '../../common/dnd/DraggableItem'
 import { DroppableZone } from '../../common/dnd/DroppableZone'
 import { useCharacterState } from '../../common/LottieCharacter'
@@ -32,6 +32,9 @@ interface GameState {
 }
 
 const ColorMixTargetDemo: React.FC = () => {
+  // Centralized audio system
+  const audio = useAudio({ componentId: 'ColorMixTargetDemo' })
+  
   // Game state
   const [gameState, setGameState] = useState<GameState>({
     targetColor: { color: 'lilla', name: 'lilla', hex: '#A855F7' },
@@ -125,7 +128,7 @@ const ColorMixTargetDemo: React.FC = () => {
     // Delayed welcome audio to prevent dual audio
     setTimeout(() => {
       try {
-        audioManager.speak(`Lav ${randomTarget.name} ved at blande to farver!`)
+        audio.speak(`Lav ${randomTarget.name} ved at blande to farver!`)
           .catch(() => {})
       } catch (error) {
         // Ignore audio errors
@@ -151,7 +154,7 @@ const ColorMixTargetDemo: React.FC = () => {
 
     // Speak color name
     try {
-      audioManager.speak(droplet.colorName)
+      audio.speak(droplet.colorName)
         .catch(() => {})
     } catch (error) {
       // Ignore audio errors
@@ -179,7 +182,7 @@ const ColorMixTargetDemo: React.FC = () => {
       }))
 
       try {
-        await audioManager.announceGameResult(true)
+        await audio.announceGameResult(true)
       } catch (error) {
         // Ignore audio errors
       }
@@ -200,7 +203,7 @@ const ColorMixTargetDemo: React.FC = () => {
       }))
 
       try {
-        await audioManager.announceGameResult(false)
+        await audio.announceGameResult(false)
         
         // Reset immediately when audio ends
         const clearedColors = gameState.availableColors.map(color => ({

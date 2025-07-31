@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react'
-import { Routes, Route, Navigate, useNavigate } from 'react-router-dom'
+import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { logIOSIssue } from './utils/remoteConsole'
 import { deviceInfo } from './utils/deviceDetection'
@@ -36,7 +36,7 @@ import ErrorDashboard from './components/admin/ErrorDashboard'
 import UpdateBanner from './components/common/UpdateBanner'
 import GlobalAudioPermission from './components/common/GlobalAudioPermission'
 import { AudioPermissionProvider } from './contexts/AudioPermissionContext'
-import { AudioProvider } from './contexts/AudioContext'
+import { AudioProvider, useAudioContext } from './contexts/AudioContext'
 import { useViewportHeight } from './hooks/useViewportHeight'
 import DemoPage from './components/demo/DemoPage'
 
@@ -719,6 +719,19 @@ const NotFoundPage = () => {
   )
 }
 
+// Navigation Audio Cleanup Component
+const NavigationAudioCleanup: React.FC = () => {
+  const location = useLocation()
+  const audioContext = useAudioContext()
+  
+  useEffect(() => {
+    console.log(`🎵 App: Route changed to ${location.pathname}, triggering audio cleanup`)
+    audioContext.triggerNavigationCleanup()
+  }, [location.pathname, audioContext])
+  
+  return null // This component only handles side effects
+}
+
 function App() {
   // Initialize viewport height for iOS
   useViewportHeight()
@@ -748,6 +761,9 @@ function App() {
   return (
     <AudioPermissionProvider>
       <AudioProvider>
+        {/* Navigation Audio Cleanup - handles React Router navigation */}
+        <NavigationAudioCleanup />
+        
         {/* Update Button - shown in lower right when update available */}
         <UpdateBanner
           show={updateStatus.updateAvailable || DEV_SHOW_UPDATE_BANNER}

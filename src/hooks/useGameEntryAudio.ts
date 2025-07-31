@@ -3,15 +3,15 @@ import { entryAudioManager } from '../utils/entryAudioManager'
 
 // Game-specific welcome messages in Danish
 const GAME_WELCOME_MESSAGES = {
-  alphabet: 'Velkommen til "Bogstav Quiz".',
-  alphabetlearning: 'Velkommen til "Lær Alfabetet".',
-  addition: 'Velkommen til "Plus Opgaver".',
-  math: 'Velkommen til "Tal Quiz".',
-  numberlearning: 'Velkommen til "Lær Tal".',
-  comparison: 'Velkommen til "Sammenlign tal".',
-  memory: 'Velkommen til "Hukommelsesspillet".',
-  farvejagt: 'Velkommen til "Farvejagt".',
-  ramfarven: 'Velkommen til "Farveblanding".'
+  alphabet: '"Bogstav Quiz".',
+  alphabetlearning: 'Lær Alfabetet',
+  addition: 'Plus Opgaver',
+  math: 'Tal Quiz',
+  numberlearning: 'Lær Tal',
+  comparison: 'Sammenlign tal',
+  memory: 'Hukommelsesspillet',
+  farvejagt: 'Farvejagt',
+  ramfarven: 'Farveblanding'
 }
 
 type GameType = keyof typeof GAME_WELCOME_MESSAGES

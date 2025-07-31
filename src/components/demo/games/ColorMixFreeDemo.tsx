@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { Box, Typography, Button, Paper } from '@mui/material'
 import { motion, AnimatePresence } from 'framer-motion'
-import { audioManager } from '../../../utils/audio'
+import { useAudio } from '../../../hooks/useAudio'
 
 interface ColorMixFreeDemoProps {}
 
@@ -15,6 +15,9 @@ interface ColorDrop {
 }
 
 const ColorMixFreeDemo: React.FC<ColorMixFreeDemoProps> = () => {
+  // Centralized audio system
+  const audio = useAudio({ componentId: 'ColorMixFreeDemo' })
+  
   const [availableColors, setAvailableColors] = useState<ColorDrop[]>([])
   const [mixingArea, setMixingArea] = useState<ColorDrop[]>([])
   const [result, setResult] = useState<{ color: string, name: string } | null>(null)
@@ -56,7 +59,7 @@ const ColorMixFreeDemo: React.FC<ColorMixFreeDemoProps> = () => {
     }))
     setAvailableColors(colors)
 
-    audioManager.speak('Bland farverne og se hvad du kan lave!')
+    audio.speak('Bland farverne og se hvad du kan lave!')
   }
 
   const handleColorDrop = (colorId: string, x: number, y: number) => {
@@ -84,7 +87,7 @@ const ColorMixFreeDemo: React.FC<ColorMixFreeDemoProps> = () => {
         c.id === colorId ? { ...c, used: true } : c
       ))
       
-      audioManager.speak(color.colorName)
+      audio.speak(color.colorName)
       
       // If two colors in mixing area, try to mix
       if (mixingArea.length === 1) {
@@ -102,18 +105,18 @@ const ColorMixFreeDemo: React.FC<ColorMixFreeDemoProps> = () => {
 
     if (mixResult) {
       setResult(mixResult)
-      audioManager.speak(`${colors[0].colorName} og ${colors[1].colorName} bliver til ${mixResult.name}!`)
+      audio.speak(`${colors[0].colorName} og ${colors[1].colorName} bliver til ${mixResult.name}!`)
       
       // Add to created colors collection
       setTimeout(() => {
         if (!createdColors.some(c => c.color === mixResult.color)) {
           setCreatedColors(prev => [...prev, mixResult])
-          audioManager.playSuccessSound()
+          audio.playSuccessSound()
           
           // Check if all 3 colors created
           if (createdColors.length === 2) {
             setTimeout(() => {
-              audioManager.speak('Fantastisk! Du har lavet alle tre farver!')
+              audio.speak('Fantastisk! Du har lavet alle tre farver!')
             }, 1000)
           }
         }

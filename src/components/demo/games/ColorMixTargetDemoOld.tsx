@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { Box, Typography, Button, Paper } from '@mui/material'
 import { motion, AnimatePresence } from 'framer-motion'
-import { audioManager } from '../../../utils/audio'
+import { useAudio } from '../../../hooks/useAudio'
 
 interface ColorMixTargetDemoProps {}
 
@@ -15,6 +15,9 @@ interface ColorDrop {
 }
 
 const ColorMixTargetDemoOld: React.FC<ColorMixTargetDemoProps> = () => {
+  // Centralized audio system
+  const audio = useAudio({ componentId: 'ColorMixTargetDemoOld' })
+  
   const [availableColors, setAvailableColors] = useState<ColorDrop[]>([])
   const [mixingArea, setMixingArea] = useState<ColorDrop[]>([])
   const [targetColor, setTargetColor] = useState<{ color: string, name: string } | null>(null)
@@ -66,7 +69,7 @@ const ColorMixTargetDemoOld: React.FC<ColorMixTargetDemoProps> = () => {
     // Set random target
     const randomTarget = possibleTargets[Math.floor(Math.random() * possibleTargets.length)]
     setTargetColor(randomTarget)
-    audioManager.speak(`Lav ${randomTarget.name} ved at blande to farver!`)
+    audio.speak(`Lav ${randomTarget.name} ved at blande to farver!`)
   }
 
   const handleColorDrop = (colorId: string, x: number, y: number) => {
@@ -94,7 +97,7 @@ const ColorMixTargetDemoOld: React.FC<ColorMixTargetDemoProps> = () => {
         c.id === colorId ? { ...c, used: true } : c
       ))
       
-      audioManager.speak(color.colorName)
+      audio.speak(color.colorName)
       
       // If two colors in mixing area, try to mix
       if (mixingArea.length === 1) {
@@ -112,14 +115,14 @@ const ColorMixTargetDemoOld: React.FC<ColorMixTargetDemoProps> = () => {
 
     if (mixResult) {
       setResult(mixResult)
-      audioManager.speak(`${colors[0].colorName} og ${colors[1].colorName} bliver til ${mixResult.name}!`)
+      audio.speak(`${colors[0].colorName} og ${colors[1].colorName} bliver til ${mixResult.name}!`)
       
       // Check if target achieved
       if (targetColor && mixResult.color === targetColor.color) {
         setTimeout(() => {
           setShowSuccess(true)
-          audioManager.playSuccessSound()
-          audioManager.speak('Perfekt! Du fandt den rigtige farve!')
+          audio.playSuccessSound()
+          audio.speak('Perfekt! Du fandt den rigtige farve!')
           
           setTimeout(() => {
             initializeGame() // Start new round
@@ -128,7 +131,7 @@ const ColorMixTargetDemoOld: React.FC<ColorMixTargetDemoProps> = () => {
       } else {
         setTimeout(() => {
           resetMixing()
-          audioManager.speak('Prøv igen med andre farver!')
+          audio.speak('Prøv igen med andre farver!')
         }, 2000)
       }
     }

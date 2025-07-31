@@ -155,6 +155,7 @@ const MyGameComponent = () => {
 - **Error Handling**: Graceful fallbacks and navigation interruption handling
 - **State Management**: Centralized isPlaying state across all components
 - **Cross-Platform**: iOS Safari optimization and desktop browser support
+- **Universal Navigation Cleanup**: Automatic audio cancellation on all navigation types
 
 #### Migration Guidelines
 
@@ -316,6 +317,55 @@ speakMyNewFunction: (text: string) => Promise<string>
 const audio = useAudio({ componentId: 'MyComponent' })
 await audio.speakMyNewFunction('Custom text')
 ```
+
+#### Universal Navigation Audio Cleanup
+
+**Automatic Audio Cancellation on Navigation:**
+
+The centralized system automatically cancels all ongoing audio when any navigation occurs, ensuring a clean user experience without audio bleeding between routes.
+
+**Supported Navigation Types:**
+- **Browser Navigation**: Back/forward buttons, page refresh, tab close
+- **React Router Navigation**: All programmatic navigation and route changes
+- **Direct URL Changes**: Bookmarks, typed URLs, deep links
+- **Component Navigation**: Navigate() calls, Link clicks, redirect components
+
+**Implementation Details:**
+
+1. **Browser Event Detection** (AudioController.ts):
+```typescript
+// Automatic cleanup on browser navigation
+window.addEventListener('beforeunload', cleanup)  // Page close/refresh
+window.addEventListener('pagehide', cleanup)      // Page hide
+window.addEventListener('popstate', cleanup)      // Back/forward buttons
+```
+
+2. **React Router Detection** (App.tsx):
+```typescript
+// NavigationAudioCleanup component detects route changes
+const NavigationAudioCleanup = () => {
+  const location = useLocation()
+  const audioContext = useAudioContext()
+  
+  useEffect(() => {
+    audioContext.triggerNavigationCleanup()  // Cancel audio on route change
+  }, [location.pathname])
+}
+```
+
+3. **Centralized Cleanup System** (AudioController.ts):
+```typescript
+// Extensible navigation callback system
+public registerNavigationCleanup(callback: () => void): () => void
+public triggerNavigationCleanup(): void  // Called by React Router detection
+```
+
+**Benefits:**
+- **No Component Changes**: Existing games work without modification
+- **Universal Coverage**: All navigation types trigger audio cleanup
+- **Immediate Response**: Audio stops before new route renders
+- **Centralized Logic**: Single system handles all cleanup scenarios
+- **Extensible**: Components can register additional cleanup callbacks
 
 #### Audio Technology Stack
 
@@ -683,6 +733,8 @@ Remove-Item -Recurse -Force node_modules, dist  # Clean build artifacts
 2. Use `audioController.getTTSStatus()` for queue and cache information
 3. Verify component uses `useAudio()` hook, not direct audioManager imports
 4. Ensure no bypassing of the centralized queue system
+5. Look for navigation cleanup logs: "Navigation detected, cleaning up all audio"
+6. Verify NavigationAudioCleanup component is active in App.tsx
 
 ### Build Issues
 - **Tailwind CSS v4**: Uses new `@tailwindcss/postcss` plugin

@@ -32,6 +32,10 @@ export interface AudioContextType {
   stopAll: () => void
   emergencyStop: () => void
   
+  // Navigation management
+  registerNavigationCleanup: (callback: () => void) => () => void
+  triggerNavigationCleanup: () => void
+  
   // Event listeners
   onAudioComplete: (audioId: string, listener: () => void) => () => void
   
@@ -99,6 +103,10 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
     // Audio management
     stopAll: audioController.stopAll.bind(audioController),
     emergencyStop: audioController.emergencyStop.bind(audioController),
+    
+    // Navigation management
+    registerNavigationCleanup: audioController.registerNavigationCleanup.bind(audioController),
+    triggerNavigationCleanup: audioController.triggerNavigationCleanup.bind(audioController),
     
     // Event listeners
     onAudioComplete: audioController.onAudioComplete.bind(audioController),

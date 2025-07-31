@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { Box, Typography, Button, Paper } from '@mui/material'
 import { motion } from 'framer-motion'
-import { audioManager } from '../../../utils/audio'
+import { useAudio } from '../../../hooks/useAudio'
 
 interface TangramPiece {
   id: string
@@ -18,6 +18,9 @@ interface TangramAnimalsDemoProps {
 }
 
 const TangramAnimalsDemo: React.FC<TangramAnimalsDemoProps> = ({ variation }) => {
+  // Centralized audio system
+  const audio = useAudio({ componentId: 'TangramAnimalsDemo' })
+  
   const [pieces, setPieces] = useState<TangramPiece[]>([])
   const [completed, setCompleted] = useState(false)
   const [showOutline, setShowOutline] = useState(true)
@@ -93,7 +96,7 @@ const TangramAnimalsDemo: React.FC<TangramAnimalsDemoProps> = ({ variation }) =>
         ? { ...piece, rotation: (piece.rotation + 45) % 360 }
         : piece
     ))
-    audioManager.playSuccessSound()
+    audio.playSuccessSound()
   }
 
   const checkCompletion = () => {
@@ -104,13 +107,13 @@ const TangramAnimalsDemo: React.FC<TangramAnimalsDemoProps> = ({ variation }) =>
     if (piecesInTarget.length === pieces.length && !completed) {
       setCompleted(true)
       setShowOutline(false)
-      audioManager.speak(`Fantastisk! Du har lavet en ${currentAnimal.name}!`)
+      audio.speak(`Fantastisk! Du har lavet en ${currentAnimal.name}!`)
       
       // Play animal sound
       setTimeout(() => {
-        if (variation === 'A') audioManager.speak('Miav!')
-        else if (variation === 'B') audioManager.speak('Blub blub!')
-        else audioManager.speak('Pip pip!')
+        if (variation === 'A') audio.speak('Miav!')
+        else if (variation === 'B') audio.speak('Blub blub!')
+        else audio.speak('Pip pip!')
       }, 1000)
     }
   }
@@ -168,7 +171,7 @@ const TangramAnimalsDemo: React.FC<TangramAnimalsDemoProps> = ({ variation }) =>
 
   const toggleOutline = () => {
     setShowOutline(!showOutline)
-    audioManager.speak(showOutline ? 'Skjuler hjælpelinje' : 'Viser hjælpelinje')
+    audio.speak(showOutline ? 'Skjuler hjælpelinje' : 'Viser hjælpelinje')
   }
 
   return (
