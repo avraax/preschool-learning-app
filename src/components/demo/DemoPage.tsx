@@ -52,7 +52,7 @@ const demoGames: DemoGame[] = [
   },
   {
     id: 'color-mix-free',
-    name: 'Farvemixer',
+    name: 'Farvemixer 2',
     category: 'colors',
     component: ColorMixFreeDemo,
     hasVariations: false

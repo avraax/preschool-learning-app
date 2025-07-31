@@ -27,11 +27,13 @@ Create an engaging educational web app that helps Danish preschool children lear
 ### Technology Stack
 ```
 Frontend Framework: React 18 + TypeScript
-Build Tool: Vite
-Styling: Tailwind CSS v4 + Custom CSS
-Animations: Framer Motion
-Audio: Global Permission System + Google TTS + Web Speech API + Howler.js
-Routing: React Router DOM v7
+Build Tool: Vite 5.2.0
+UI Framework: Material-UI v7 (complete design system)
+Styling: Material-UI System + CSS (no Tailwind)
+Animations: Framer Motion 12.23.6
+Audio: AudioController + AudioPermissionContext + Google TTS + Web Speech API + Howler.js
+Routing: React Router DOM v7.7.1
+PWA: Vite PWA Plugin
 Deployment: Vercel-ready configuration
 ```
 
@@ -94,24 +96,24 @@ const gameUrl = buildGameUrl('/alphabet/quiz', {
 
 ### 🔊 Centralized Audio System Architecture
 
-The app features a **centralized AudioController system** that manages all audio playback, permissions, and state across the entire application. This system ensures audio reliability, prevents conflicts, and provides seamless Danish audio narration.
+The app features a **sophisticated 3-tier audio management system** providing seamless Danish audio narration with automatic permission handling, audio queueing, and cross-platform compatibility.
 
 #### System Architecture
 
-**Primary Components:**
-- **AudioController** (`src/utils/AudioController.ts`) - Centralized audio management with queue system
-- **AudioContext** (`src/contexts/AudioContext.tsx`) - React context for global audio state
+**Core Components:**
+- **AudioController** (`src/utils/AudioController.ts`) - Central audio queue and playback management
+- **AudioContext** (`src/contexts/AudioContext.tsx`) - Global permission state and React context
+- **GlobalAudioPermission** (`src/components/common/GlobalAudioPermission.tsx`) - Beautiful permission modal
 - **useAudio Hook** (`src/hooks/useAudio.ts`) - Component-level audio interface
-- **AudioPermissionContext** (`src/contexts/AudioPermissionContext.tsx`) - Permission management
 - **entryAudioManager** (`src/utils/entryAudioManager.ts`) - Game entry audio coordination
 
 ```typescript
-// Core architecture
-AudioController          // Central audio queue and playback management
-├── AudioContext         // React context provider for global state
-├── useAudio()          // Hook interface for components
-├── AudioPermissionContext // Permission handling
-└── entryAudioManager   // Entry audio coordination
+// Current architecture (fixed Promise-based completion)
+AudioController          // Central queue system with Promise-based completion
+├── AudioContext         // Global permission state management  
+├── useAudio()          // Component hook for audio operations
+├── GlobalAudioPermission // Session-based permission modal
+└── entryAudioManager   // Entry audio coordination with completion tracking
 ```
 
 #### ⚠️ CRITICAL: All Audio Work Must Use Centralized System
@@ -215,26 +217,29 @@ The permission modal features:
 - **Dismissible**: Users can close or enable audio permissions
 - **Responsive**: Works on all device sizes and orientations
 
-#### AudioManager Integration
+#### AudioController Integration
 
-**Location**: `src/utils/audio.ts`
+**Location**: `src/utils/AudioController.ts`
 
-The enhanced AudioManager automatically:
+The centralized AudioController automatically handles:
 ```typescript
-// Before any speech synthesis
-async speak(text: string) {
-  // 1. Update user interaction timestamp
-  this.updateUserInteraction()
-  
-  // 2. Check global permission state
-  const hasPermission = await this.checkAudioPermission()
-  if (!hasPermission) {
-    console.log('Audio permission not available, skipping speech')
-    return
-  }
-  
-  // 3. Proceed with audio synthesis
-  await this.googleTTS.synthesizeAndPlay(text)
+// Promise-based audio queueing with completion tracking
+async queueAudio(
+  audioFunction: () => Promise<void>, 
+  priority: 'high' | 'normal' | 'low' = 'normal'
+): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const queueItem: AudioQueueItem = {
+      audioFunction: async () => {
+        try {
+          await audioFunction()
+          resolve(audioId) // Resolves when audio actually completes
+        } catch (error) {
+          reject(error)
+        }
+      }
+    }
+  })
 }
 ```
 
@@ -416,32 +421,31 @@ logAudioIssue('Audio event', error, {
 - Non-blocking game functionality
 - User-friendly error recovery
 
-#### Migration Notes
+#### Key Improvements Over Legacy System
 
-**From Old System:**
-- ✅ Removed scattered iOS permission prompts from all game components
-- ✅ Deleted `useIOSAudioFix.tsx` hook
-- ✅ Deleted `IOSAudioPrompt.tsx` component  
-- ✅ Centralized all audio permission logic
-- ✅ Unified user experience across all games
+**Centralized Architecture Benefits:**
+- ✅ **Single Audio Queue**: Only one audio plays at a time with automatic cancellation
+- ✅ **Promise-Based Completion**: Fixed entry audio cutoff issues with proper async/await
+- ✅ **Global Permission Management**: Session-based permission modal replaces scattered prompts
+- ✅ **Navigation Cleanup**: Automatic audio cancellation on route changes
+- ✅ **Cross-Platform Optimization**: Enhanced iOS Safari compatibility
 
-**Benefits:**
-- 🎯 **Better UX**: Single, beautiful permission modal instead of multiple yellow bars
-- 🎯 **Fewer Interruptions**: Smart session-based prompting
-- 🎯 **Cleaner Code**: No permission handling needed in individual components
-- 🎯 **Better Maintenance**: Centralized audio logic easier to update
+**Developer Experience:**
+- 🎯 **Simple Component Usage**: `const audio = useAudio({ componentId: 'GameName' })`
+- 🎯 **Automatic Permission Handling**: No manual permission checks needed
+- 🎯 **Queue Management**: `await audio.speak()` ensures proper sequencing
+- 🎯 **Error Recovery**: Graceful fallbacks and comprehensive logging
 
 ### Project Structure
 ```
 preschool-learning-app/
 ├── src/
 │   ├── components/
-│   │   ├── common/           # Reusable UI components
-│   │   │   ├── Button.tsx    # Animated button component
-│   │   │   ├── Card.tsx      # Container card component
+│   │   ├── common/           # Shared UI components
 │   │   │   ├── GlobalAudioPermission.tsx  # Global audio permission modal
 │   │   │   ├── LearningGrid.tsx  # Responsive grid layout
 │   │   │   ├── Logo.tsx      # App logo components
+│   │   │   ├── RepeatButton.tsx  # Centralized repeat button variants
 │   │   │   └── balloon/      # Balloon effects components
 │   │   ├── alphabet/         # Alphabet learning games
 │   │   │   ├── AlphabetGame.tsx     # Letter recognition quiz
@@ -465,11 +469,11 @@ preschool-learning-app/
 │   │   └── admin/            # Admin tools
 │   │       └── ErrorDashboard.tsx   # Error monitoring
 │   ├── contexts/
-│   │   └── AudioPermissionContext.tsx  # Global audio permission state
+│   │   └── AudioContext.tsx            # Global audio permission state and React context
 │   ├── hooks/
-│   │   └── useAudioPermission.ts       # Audio permission hook
+│   │   └── useAudio.ts                 # Component-level audio hook interface
 │   ├── utils/
-│   │   ├── audio.ts         # Enhanced AudioManager with permission checks
+│   │   ├── AudioController.ts          # Central audio queue and playback management
 │   │   ├── urlParams.ts     # URL parameter utilities
 │   │   ├── deviceDetection.ts # Device capability detection
 │   │   └── remoteConsole.ts # Remote error logging
@@ -478,13 +482,11 @@ preschool-learning-app/
 │   ├── config/
 │   │   ├── categoryThemes.ts # Centralized theme configuration
 │   │   └── version.ts       # App version management
-│   ├── App.tsx              # Main application router with AudioPermissionProvider
+│   ├── App.tsx              # Main application router with AudioProvider and NavigationAudioCleanup
 │   ├── main.tsx            # React entry point
-│   └── index.css           # Global styles + Tailwind
+│   └── index.css           # Global styles
 ├── public/                  # Static assets
 ├── package.json            # Dependencies & scripts
-├── tailwind.config.js      # Tailwind configuration
-├── postcss.config.js       # PostCSS configuration
 ├── vite.config.ts          # Vite build configuration
 ├── vercel.json             # Vercel deployment config
 └── README.md               # User documentation
@@ -697,10 +699,11 @@ Remove-Item -Recurse -Force node_modules, dist  # Clean build artifacts
 - **No Global State**: Simple prop drilling sufficient for app size
 
 ### Audio Architecture
-- **Primary**: Web Speech API for Danish TTS
-- **Fallback**: Howler.js for custom audio files
-- **Language**: Danish (da-DK locale)
-- **Voice Selection**: Automatic Danish voice detection
+- **Primary**: Google Cloud TTS for high-quality Danish synthesis
+- **Fallback**: Web Speech API for browser-native voices
+- **Sound Effects**: Howler.js for game audio
+- **Language**: Danish (da-DK locale) with specialized number pronunciation
+- **Queue Management**: AudioController ensures single audio playback
 
 ### Animation System
 - **Library**: Framer Motion
@@ -737,9 +740,9 @@ Remove-Item -Recurse -Force node_modules, dist  # Clean build artifacts
 6. Verify NavigationAudioCleanup component is active in App.tsx
 
 ### Build Issues
-- **Tailwind CSS v4**: Uses new `@tailwindcss/postcss` plugin
-- **PostCSS Configuration**: Must use new plugin format
-- **TypeScript Errors**: All imports properly typed
+- **Material-UI v7**: Uses latest design system with enhanced theming
+- **Vite Configuration**: Optimized for fast development and production builds
+- **TypeScript Errors**: All imports properly typed with strict mode
 
 ### Performance Considerations
 - **Bundle Size**: ~308KB (gzipped: ~97KB)
@@ -882,11 +885,10 @@ const theme = getCategoryTheme('alphabet')
 - Check for existing patterns before creating new files
 
 ### Current Shared Configurations
-- **`tts-config.js`** - Centralized TTS voice and audio settings
-  - Speaking rate: 0.8 (slower for children)
-  - Pitch: 1.1 (slightly higher for friendly tone)
-  - Voice: da-DK-Wavenet-F (Danish female)
-  - Used by both `dev-server.js` and client-side code
+- **AudioController** - Centralized audio settings and queue management
+- **categoryThemes.ts** - Unified color schemes and styling for game categories
+- **version.ts** - Build information and version tracking
+- **Google TTS Configuration** - Danish Wavenet voice with child-friendly speech patterns
 
 ### Development Guidelines
 - When updating settings, always check if they're used elsewhere
@@ -894,23 +896,27 @@ const theme = getCategoryTheme('alphabet')
 - Use environment variables for deployment-specific settings
 - Document any new shared configurations here
 
-## 🎮 Task-Based Game Development Pattern
+## 🎮 Game Development Guidelines
 
-### Overview
-All task-based games (quiz games, problem-solving games, memory games) MUST follow a centralized pattern that ensures consistent behavior for entry audio, repeat buttons, and empty state handling.
+### Current Game Architecture
 
-### Game Type Classifications
+**All games successfully use the centralized audio system with these patterns:**
 
-#### ✅ **Task-Based Games** (Use centralized pattern):
-- Quiz games with questions (AlphabetGame, MathGame)
-- Problem-solving games (AdditionGame, ComparisonGame)
-- Memory/matching games (MemoryGame)
-- Any game with discrete tasks/challenges
+#### Task-Based Games (Quiz/Problem Games):
+- AlphabetGame, MathGame, AdditionGame, ComparisonGame, MemoryGame
+- Use `entryAudioManager.onComplete()` for entry audio coordination
+- Show full UI immediately with conditional content rendering
+- Material-UI components for consistent styling
 
-#### ❌ **Learning-Based Games** (Don't use pattern):
-- Free exploration games (AlphabetLearning, NumberLearning)
-- Drag-and-drop activities (FarvejagtGame, RamFarvenGame)
-- Continuous interaction games without discrete tasks
+#### Learning-Based Games (Exploration Games):
+- AlphabetLearning, NumberLearning, FarvejagtGame, RamFarvenGame
+- Direct audio interaction with immediate feedback
+- No entry audio coordination needed
+
+#### Demo Games (Prototype Games):
+- 11 demo games in `/demo/games/` directory
+- All migrated to use centralized `useAudio()` hook
+- Showcase various interaction patterns and game mechanics
 
 ### Required Implementation Pattern
 
