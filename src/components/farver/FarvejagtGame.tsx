@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Box, Typography, Button, Container, Chip } from '@mui/material'
 import { DndContext, DragEndEvent, DragStartEvent, DragOverlay, closestCenter } from '@dnd-kit/core'
-import { audioManager } from '../../utils/audio'
+import { useAudio } from '../../hooks/useAudio'
 import { categoryThemes } from '../../config/categoryThemes'
 import { DraggableItem } from '../common/dnd/DraggableItem'
 import { DroppableZone } from '../common/dnd/DroppableZone'
@@ -103,6 +103,9 @@ const FarvejagtGame: React.FC = () => {
   
   // Centralized game state management
   const { score, incrementScore, resetScore, isScoreNarrating, handleScoreClick } = useGameState()
+  
+  // Centralized audio system
+  const audio = useAudio({ componentId: 'FarvejagtGame' })
   
   // Character and celebration management
   const colorHunter = useCharacterState('wave')
@@ -233,7 +236,7 @@ const FarvejagtGame: React.FC = () => {
         
         // NOW speak the target phrase (after entry audio completes)
         try {
-          audioManager.speak(`${newTargetPhrase} og træk dem til cirklen.`)
+          audio.speak(`${newTargetPhrase} og træk dem til cirklen.`)
             .catch(() => {})
         } catch (error) {
           // Ignore audio errors
@@ -253,7 +256,7 @@ const FarvejagtGame: React.FC = () => {
       
       setTimeout(async () => {
         try {
-          await audioManager.announceGameResult(true)
+          await audio.announceGameResult(true)
         } catch (error) {
           // Ignore audio errors on completion
         }
@@ -311,7 +314,7 @@ const FarvejagtGame: React.FC = () => {
         // Play success audio with enhanced error handling
         setTimeout(() => {
           try {
-            audioManager.speak(`Flot! ${draggedItem.objectNameDefinite} er ${draggedItem.colorName}.`)
+            audio.speak(`Flot! ${draggedItem.objectNameDefinite} er ${draggedItem.colorName}.`)
               .catch(() => {})
           } catch (error) {
             // Ignore audio errors
@@ -330,7 +333,7 @@ const FarvejagtGame: React.FC = () => {
         // Play error audio with enhanced error handling
         setTimeout(() => {
           try {
-            audioManager.speak(`Nej, ${draggedItem.objectNameDefinite} er ${draggedItem.colorName}, ikke ${targetColor}.`)
+            audio.speak(`Nej, ${draggedItem.objectNameDefinite} er ${draggedItem.colorName}, ikke ${targetColor}.`)
               .catch(() => {})
           } catch (error) {
             // Ignore audio errors
@@ -355,7 +358,7 @@ const FarvejagtGame: React.FC = () => {
     
     try {
       const targetPhrase = COLOR_TARGETS.find(target => target.color === targetColor)?.phrase || 'Find alle røde ting'
-      audioManager.speak(`${targetPhrase} og træk dem til cirklen.`)
+      audio.speak(`${targetPhrase} og træk dem til cirklen.`)
         .catch(() => {})
     } catch (error) {
       // Ignore audio errors
@@ -381,7 +384,7 @@ const FarvejagtGame: React.FC = () => {
           ? `${newTargetPhrase} og træk dem til cirklen.`
           : `Nyt spil! ${newTargetPhrase} og træk dem til cirklen.`
         
-        audioManager.speak(message)
+        audio.speak(message)
           .catch(() => {})
       } catch (error) {
         // Ignore audio errors on reset

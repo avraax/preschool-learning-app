@@ -6,7 +6,7 @@ import { motion } from 'framer-motion'
 import LottieCharacter, { useCharacterState } from '../common/LottieCharacter'
 import CelebrationEffect, { useCelebration } from '../common/CelebrationEffect'
 import { MathScoreChip } from '../common/ScoreChip'
-import { audioManager } from '../../utils/audio'
+import { useAudio } from '../../hooks/useAudio'
 import { DANISH_PHRASES } from '../../config/danish-phrases'
 import { categoryThemes } from '../../config/categoryThemes'
 import { useGameEntryAudio } from '../../hooks/useGameEntryAudio'
@@ -44,7 +44,8 @@ const ComparisonGame: React.FC = () => {
   const [currentProblem, setCurrentProblem] = useState<ComparisonProblem | null>(null)
   const [selectedSymbol, setSelectedSymbol] = useState<string | null>(null)
   const [showFeedback, setShowFeedback] = useState(false)
-  const [isPlaying, setIsPlaying] = useState(false)
+  // Centralized audio system
+  const audio = useAudio({ componentId: 'ComparisonGame' })
   const [entryAudioComplete, setEntryAudioComplete] = useState(false)
   
   // Centralized game state management
@@ -74,7 +75,7 @@ const ComparisonGame: React.FC = () => {
     
     // Stop audio immediately when navigating away
     const handleBeforeUnload = () => {
-      audioManager.stopAll()
+      audio.stopAll()
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current)
       }
@@ -86,7 +87,7 @@ const ComparisonGame: React.FC = () => {
     
     // Cleanup function
     return () => {
-      audioManager.stopAll()
+      audio.stopAll()
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current)
       }
@@ -159,20 +160,18 @@ const ComparisonGame: React.FC = () => {
   }
 
   const speakProblem = async (problem: ComparisonProblem) => {
-    if (isPlaying) return
-    
-    setIsPlaying(true)
+    if (audio.isPlaying) return
     
     try {
       // Count left objects
       const leftText = `${DANISH_NUMBERS[problem.leftNumber]} ${problem.leftObjects.danishName}`
-      await audioManager.speak(leftText)
+      await audio.speak(leftText)
       
       await new Promise(resolve => setTimeout(resolve, 500))
       
       // Count right objects  
       const rightText = `${DANISH_NUMBERS[problem.rightNumber]} ${problem.rightObjects.danishName}`
-      await audioManager.speak(rightText)
+      await audio.speak(rightText)
       
       await new Promise(resolve => setTimeout(resolve, 500))
       
@@ -185,21 +184,18 @@ const ComparisonGame: React.FC = () => {
       } else {
         questionText = 'Er tallene ens?'
       }
-      await audioManager.speak(questionText)
+      await audio.speak(questionText)
       
     } catch (error) {
       console.error('Error speaking problem:', error)
-    } finally {
-      setIsPlaying(false)
     }
   }
 
   const handleSymbolClick = async (symbol: '>' | '<' | '=') => {
-    if (!currentProblem || isPlaying || showFeedback) return
+    if (!currentProblem || audio.isPlaying || showFeedback) return
     
     setSelectedSymbol(symbol)
     setShowFeedback(true)
-    setIsPlaying(true)
     
     // Determine if the answer is correct based on question type
     let isCorrect = false
@@ -234,7 +230,7 @@ const ComparisonGame: React.FC = () => {
       celebrate(score > 5 ? 'high' : 'medium')
       
       try {
-        await audioManager.announceGameResult(true)
+        await audio.announceGameResult(true)
       } catch (error) {
         console.error('Error playing success sound:', error)
       }
@@ -243,7 +239,6 @@ const ComparisonGame: React.FC = () => {
         stopCelebration()
         mathTeacher.point()
         generateNewProblem()
-        setIsPlaying(false)
       }, 3000)
       
     } else {
@@ -251,7 +246,7 @@ const ComparisonGame: React.FC = () => {
       mathTeacher.encourage()
       
       try {
-        await audioManager.announceGameResult(false)
+        await audio.announceGameResult(false)
         
         // Provide teaching moment immediately (no pre-delay)
         let teachingText = ''
@@ -280,7 +275,7 @@ const ComparisonGame: React.FC = () => {
           }
         }
         
-        await audioManager.speak(teachingText)
+        await audio.speak(teachingText)
         
       } catch (error) {
         console.error('Error playing encouragement:', error)
@@ -290,7 +285,6 @@ const ComparisonGame: React.FC = () => {
       mathTeacher.think()
       setShowFeedback(false)
       setSelectedSymbol(null)
-      setIsPlaying(false)
     }
   }
 
@@ -495,7 +489,7 @@ const ComparisonGame: React.FC = () => {
                           variant="contained"
                           size="large"
                           onClick={() => handleSymbolClick(symbol)}
-                          disabled={isPlaying || showFeedback}
+                          disabled={audio.isPlaying || showFeedback}
                           sx={{
                             fontSize: 'clamp(1.8rem, 4vw, 3rem)',
                             fontWeight: 700,
@@ -571,7 +565,7 @@ const ComparisonGame: React.FC = () => {
             <Box sx={{ textAlign: 'center', mt: 3 }}>
               <MathRepeatButton 
                 onClick={repeatProblem}
-                disabled={!entryAudioComplete || isPlaying}
+                disabled={!entryAudioComplete || audio.isPlaying}
                 label="🎵 Hør igen"
               />
             </Box>

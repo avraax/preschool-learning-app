@@ -11,20 +11,78 @@ The AudioContext was not allowed to start. It must be resumed (or created) after
 The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. <WEBADRESSE>
 The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. <WEBADRESSE>
 The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. <WEBADRESSE>
+remoteConsole.ts:48 🎵 useAudio: Component "AlphabetGame" mounted
+remoteConsole.ts:48 🎵 EntryAudioManager: Scheduling entry audio for "alphabet" with 1000ms delay
+remoteConsole.ts:48 🎵 EntryAudioManager: Entry audio for "alphabet" scheduled successfully
+remoteConsole.ts:48 🎵 useAudio: Component "AlphabetGame" unmounting
+remoteConsole.ts:48 🎵 useAudio: Component "AlphabetGame" mounted
 remoteConsole.ts:48 🎵 AudioContext resumed successfully
 remoteConsole.ts:48 🎵 AudioContext resumed successfully
 remoteConsole.ts:48 🎵 AudioContext resumed successfully
 remoteConsole.ts:48 🎵 AudioContext resumed successfully
 remoteConsole.ts:48 🎵 AudioContext resumed successfully
+remoteConsole.ts:48 🎵 EntryAudioManager: Timeout fired for "alphabet", attempting to play entry audio
+remoteConsole.ts:48 🎵 EntryAudioManager: Starting playEntryAudio for "alphabet"
+remoteConsole.ts:48 🎵 EntryAudioManager: Marked "alphabet" as playing and played
+remoteConsole.ts:48 🎵 EntryAudioManager: Calling audioManager.playGameWelcome("alphabet")
+remoteConsole.ts:48 🎵 AudioController.playGameWelcome: Starting welcome audio for "alphabet"
+remoteConsole.ts:48 🎵 AudioController.playGameWelcome: Found welcome message for "alphabet": "Velkommen til "Bogstav Quiz"."
+remoteConsole.ts:48 🎵 AudioController.playGameWelcome: Calling speak() with message
+remoteConsole.ts:48 🎵 AudioController.speak: Queuing audio for text: "Velkommen til "Bogstav Quiz"."
+remoteConsole.ts:48 🎵 AudioController.queueAudio: Adding audio to queue with ID: audio_1753946564165_4kth99ezq, priority: normal
+remoteConsole.ts:48 🎵 AudioController.queueAudio: Stopping current audio before queuing new audio
+remoteConsole.ts:48 🎵 AudioController.queueAudio: Added normal priority audio to end of queue
+remoteConsole.ts:48 🎵 AudioController.queueAudio: Queue length now: 1
+remoteConsole.ts:48 🎵 AudioController.queueAudio: Starting queue processing
+remoteConsole.ts:48 🎵 AudioController.speak: Processing queued audio for text: "Velkommen til "Bogstav Quiz"."
+remoteConsole.ts:48 🎵 AudioController.playGameWelcome: Successfully completed speak() for "alphabet"
+remoteConsole.ts:48 🎵 EntryAudioManager: Successfully completed playGameWelcome for "alphabet"
+remoteConsole.ts:48 🎵 EntryAudioManager: Found 1 completion callbacks for "alphabet"
+remoteConsole.ts:48 🎵 EntryAudioManager: Calling completion callback 1/1 for "alphabet"
+remoteConsole.ts:48 🎵 EntryAudioManager: All completion callbacks processed for "alphabet"
+remoteConsole.ts:48 🎵 EntryAudioManager: Finished playEntryAudio for "alphabet", removed from playing games
+remoteConsole.ts:48 🎵 useAudio: Component "AlphabetGame" unmounting
+remoteConsole.ts:48 🎵 useAudio: Component "AlphabetGame" mounted
+remoteConsole.ts:48 🎵 AudioController.speak: Permission granted, calling googleTTS for: "Velkommen til "Bogstav Quiz"."
 remoteConsole.ts:48 🎵 Audio loaded: duration=2.832s, data=30208 bytes
-remoteConsole.ts:48 🎵 Audio completion detected via timeupdate
-remoteConsole.ts:48 🎵 Audio ended successfully
-remoteConsole.ts:48 🎵 Audio loaded: duration=0.984s, data=10496 bytes
-remoteConsole.ts:48 🎵 Audio completion detected via timeupdate
-remoteConsole.ts:48 🎵 Audio ended successfully
-remoteConsole.ts:48 🎵 Audio loaded: duration=1.152s, data=12288 bytes
-remoteConsole.ts:48 🎵 Audio completion detected via timeupdate
-remoteConsole.ts:48 🎵 Audio ended successfully
-remoteConsole.ts:48 🎵 Audio loaded: duration=2.04s, data=21760 bytes
-remoteConsole.ts:48 🎵 Audio completion detected via timeupdate
-remoteConsole.ts:48 🎵 Audio ended successfully
+remoteConsole.ts:48 🎵 AudioController.queueAudio: Adding audio to queue with ID: audio_1753946565192_ctdax8wju, priority: normal
+remoteConsole.ts:48 🎵 AudioController.queueAudio: Stopping current audio before queuing new audio
+remoteConsole.ts:48 🎵 AudioController.queueAudio: Added normal priority audio to end of queue
+remoteConsole.ts:48 🎵 AudioController.queueAudio: Queue length now: 1
+remoteConsole.ts:48 🎵 AudioController.queueAudio: Queue already being processed
+remoteConsole.ts:48 🎵 Audio interrupted due to navigation (expected)
+remoteConsole.ts:48 🎵 Audio synthesis interrupted by navigation (expected)
+remoteConsole.ts:58 🎵 AudioController.speak: Error in googleTTS for: "Velkommen til "Bogstav Quiz"." Error: Audio interrupted by navigation
+    at Audio.<anonymous> (googleTTS.ts:512:42)
+console.error @ remoteConsole.ts:58
+(anonym) @ AudioController.ts:322
+await in (anonym)
+processAudioQueue @ AudioController.ts:197
+queueAudio @ AudioController.ts:172
+speak @ AudioController.ts:302
+playGameWelcome @ AudioController.ts:584
+await in playGameWelcome
+playEntryAudio @ entryAudioManager.ts:76
+(anonym) @ entryAudioManager.ts:50
+setTimeout
+scheduleEntryAudio @ entryAudioManager.ts:39
+(anonym) @ useGameEntryAudio.ts:65
+commitHookEffectListMount @ chunk-WRD5HZVH.js?v=1fed5efb:16915
+commitPassiveMountOnFiber @ chunk-WRD5HZVH.js?v=1fed5efb:18156
+commitPassiveMountEffects_complete @ chunk-WRD5HZVH.js?v=1fed5efb:18129
+commitPassiveMountEffects_begin @ chunk-WRD5HZVH.js?v=1fed5efb:18119
+commitPassiveMountEffects @ chunk-WRD5HZVH.js?v=1fed5efb:18109
+flushPassiveEffectsImpl @ chunk-WRD5HZVH.js?v=1fed5efb:19490
+flushPassiveEffects @ chunk-WRD5HZVH.js?v=1fed5efb:19447
+performSyncWorkOnRoot @ chunk-WRD5HZVH.js?v=1fed5efb:18868
+flushSyncCallbacks @ chunk-WRD5HZVH.js?v=1fed5efb:9119
+commitRootImpl @ chunk-WRD5HZVH.js?v=1fed5efb:19432
+commitRoot @ chunk-WRD5HZVH.js?v=1fed5efb:19277
+finishConcurrentRender @ chunk-WRD5HZVH.js?v=1fed5efb:18805
+performConcurrentWorkOnRoot @ chunk-WRD5HZVH.js?v=1fed5efb:18718
+workLoop @ chunk-WRD5HZVH.js?v=1fed5efb:197
+flushWork @ chunk-WRD5HZVH.js?v=1fed5efb:176
+performWorkUntilDeadline @ chunk-WRD5HZVH.js?v=1fed5efb:384
+remoteConsole.ts:48 🎵 AudioController: Navigation interruption detected, clearing queue
+remoteConsole.ts:48 🎵 useAudio: Component "AlphabetGame" unmounting
+remoteConsole.ts:48 🎵 useAudio: Component "AlphabetGame" mounted

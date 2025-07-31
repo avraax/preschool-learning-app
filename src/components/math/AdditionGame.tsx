@@ -16,7 +16,6 @@ import {
   Add
 } from '@mui/icons-material'
 import { ArrowLeft } from 'lucide-react'
-import { audioManager } from '../../utils/audio'
 import { categoryThemes } from '../../config/categoryThemes'
 import LottieCharacter, { useCharacterState } from '../common/LottieCharacter'
 import CelebrationEffect, { useCelebration } from '../common/CelebrationEffect'
@@ -25,6 +24,7 @@ import { MathRepeatButton } from '../common/RepeatButton'
 import { useGameEntryAudio } from '../../hooks/useGameEntryAudio'
 import { entryAudioManager } from '../../utils/entryAudioManager'
 import { useGameState } from '../../hooks/useGameState'
+import { useAudio } from '../../hooks/useAudio'
 
 
 const AdditionGame: React.FC = () => {
@@ -33,8 +33,10 @@ const AdditionGame: React.FC = () => {
   const [num2, setNum2] = useState<number | null>(null)
   const [correctAnswer, setCorrectAnswer] = useState<number | null>(null)
   const [options, setOptions] = useState<number[]>([])
-  const [isPlaying, setIsPlaying] = useState(false)
   const [entryAudioComplete, setEntryAudioComplete] = useState(false)
+  
+  // Centralized audio system - replaces individual isPlaying state
+  const audio = useAudio({ componentId: 'AdditionGame', stopOnUnmount: false })
   
   // Centralized game state management
   const { score, incrementScore, isScoreNarrating, handleScoreClick } = useGameState()
@@ -65,26 +67,11 @@ const AdditionGame: React.FC = () => {
   }, [])
 
   useEffect(() => {
-    // Stop audio immediately when navigating away
-    const handleBeforeUnload = () => {
-      audioManager.stopAll()
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current)
-      }
-    }
-    
-    // Listen for navigation events
-    window.addEventListener('beforeunload', handleBeforeUnload)
-    window.addEventListener('pagehide', handleBeforeUnload)
-    
-    // Cleanup function
+    // Cleanup function for timeouts - audio cleanup handled by useAudio hook
     return () => {
-      audioManager.stopAll()
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current)
       }
-      window.removeEventListener('beforeunload', handleBeforeUnload)
-      window.removeEventListener('pagehide', handleBeforeUnload)
     }
   }, [])
 
@@ -122,62 +109,54 @@ const AdditionGame: React.FC = () => {
   }
 
   const speakProblem = async (a: number, b: number) => {
-    if (isPlaying) return
-    
-    setIsPlaying(true)
-    audioManager.stopAll()
+    if (audio.isPlaying) return
     
     try {
-      await audioManager.speakAdditionProblem(a, b, 'primary')
+      await audio.speakAdditionProblem(a, b, 'primary')
     } catch (error: any) {
       console.error('Error speaking problem:', error)
-    } finally {
-      setIsPlaying(false)
     }
   }
 
   const handleAnswerClick = async (selectedAnswer: number) => {
-    if (isPlaying || correctAnswer === null) return
+    if (audio.isPlaying || correctAnswer === null) return
     
-    setIsPlaying(true)
-    audioManager.stopAll()
-    
-    if (selectedAnswer === correctAnswer) {
-      // Correct answer - celebrate!
-      incrementScore()
-      mathTeacher.celebrate()
-      celebrate(score > 5 ? 'high' : 'medium')
-      
-      try {
-        await audioManager.announceGameResult(true)
-      } catch (error: any) {
-        console.error('Error playing success sound:', error)
+    try {
+      if (selectedAnswer === correctAnswer) {
+        // Correct answer - celebrate!
+        incrementScore()
+        mathTeacher.celebrate()
+        celebrate(score > 5 ? 'high' : 'medium')
+        
+        await audio.playWithCallback(
+          () => audio.announceGameResult(true),
+          () => {
+            setTimeout(() => {
+              stopCelebration()
+              mathTeacher.point()
+              generateNewProblem()
+            }, 3000)
+          }
+        )
+      } else {
+        // Wrong answer - encourage
+        mathTeacher.encourage()
+        
+        await audio.playWithCallback(
+          () => audio.announceGameResult(false),
+          () => {
+            // Allow immediate interaction after audio completes
+            mathTeacher.think()
+          }
+        )
       }
-      
-      setTimeout(() => {
-        stopCelebration()
-        mathTeacher.point()
-        generateNewProblem()
-        setIsPlaying(false)
-      }, 3000)
-    } else {
-      // Wrong answer - encourage
-      mathTeacher.encourage()
-      
-      try {
-        await audioManager.announceGameResult(false)
-      } catch (error: any) {
-        console.error('Error playing encouragement sound:', error)
-      }
-      
-      // Allow immediate interaction after audio completes
-      mathTeacher.think()
-      setIsPlaying(false)
+    } catch (error: any) {
+      console.error('Error playing feedback:', error)
     }
   }
 
   const repeatProblem = () => {
-    if (num1 !== null && num2 !== null) {
+    if (num1 !== null && num2 !== null && !audio.isPlaying) {
       speakProblem(num1, num2)
     }
   }
@@ -338,7 +317,7 @@ const AdditionGame: React.FC = () => {
 
             <MathRepeatButton
               onClick={repeatProblem}
-              disabled={!entryAudioComplete || isPlaying || num1 === null || num2 === null}
+              disabled={!entryAudioComplete || audio.isPlaying || num1 === null || num2 === null}
             />
           </Paper>
         </Box>

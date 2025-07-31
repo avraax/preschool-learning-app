@@ -15,7 +15,7 @@ import {
   ArrowBack,
   School
 } from '@mui/icons-material'
-import { audioManager } from '../../utils/audio'
+import { useAudio } from '../../hooks/useAudio'
 import { categoryThemes } from '../../config/categoryThemes'
 import LearningGrid from '../common/LearningGrid'
 import { useGameEntryAudio } from '../../hooks/useGameEntryAudio'
@@ -30,7 +30,8 @@ const DANISH_ALPHABET = [
 const AlphabetLearning: React.FC = () => {
   const navigate = useNavigate()
   const [currentIndex, setCurrentIndex] = useState(0)
-  const [isPlaying, setIsPlaying] = useState(false)
+  // Centralized audio system
+  const audio = useAudio({ componentId: 'AlphabetLearning' })
   const [entryAudioComplete, setEntryAudioComplete] = useState(false)
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
   
@@ -47,7 +48,7 @@ const AlphabetLearning: React.FC = () => {
   useEffect(() => {
     // Stop audio immediately when navigating away
     const handleBeforeUnload = () => {
-      audioManager.stopAll()
+      audio.stopAll()
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current)
       }
@@ -60,7 +61,7 @@ const AlphabetLearning: React.FC = () => {
     
     // Cleanup function to stop all audio and timeouts when component unmounts
     return () => {
-      audioManager.stopAll()
+      audio.stopAll()
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current)
       }
@@ -74,8 +75,7 @@ const AlphabetLearning: React.FC = () => {
 
   const goToLetter = async (index: number) => {
     setCurrentIndex(index)
-    setIsPlaying(true)
-    audioManager.stopAll()
+    audio.stopAll()
     
     const letter = DANISH_ALPHABET[index]
     
@@ -86,7 +86,7 @@ const AlphabetLearning: React.FC = () => {
         audioDebugSession.startSession('iPad Audio Debug - Alphabet Learning')
       }
       
-      await audioManager.speakLetter(letter)
+      await audio.speakLetter(letter)
       
       // End session after successful audio
       audioDebugSession.endSession('Audio completed successfully')
@@ -96,8 +96,6 @@ const AlphabetLearning: React.FC = () => {
       // End session with error context
       const { audioDebugSession } = await import('../../utils/remoteConsole')
       audioDebugSession.endSession('Audio failed with error')
-    } finally {
-      setIsPlaying(false)
     }
   }
 
@@ -137,7 +135,7 @@ const AlphabetLearning: React.FC = () => {
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <Typography 
               variant="body2" 
-              onClick={() => audioManager.announcePosition(currentIndex, DANISH_ALPHABET.length, 'bogstav').catch(console.error)}
+              onClick={() => audio.announcePosition(currentIndex, DANISH_ALPHABET.length, 'bogstav').catch(console.error)}
               sx={{ 
                 color: 'primary.dark', 
                 fontWeight: 600,
@@ -206,8 +204,8 @@ const AlphabetLearning: React.FC = () => {
                 p: { xs: 2, md: 3 },
                 background: 'white',
                 border: '4px solid',
-                borderColor: isPlaying ? categoryThemes.alphabet.accentColor : categoryThemes.alphabet.borderColor,
-                boxShadow: isPlaying 
+                borderColor: audio.isPlaying ? categoryThemes.alphabet.accentColor : categoryThemes.alphabet.borderColor,
+                boxShadow: audio.isPlaying 
                   ? '0 0 30px rgba(25, 118, 210, 0.4), 0 8px 32px rgba(25, 118, 210, 0.3)'
                   : '0 4px 20px rgba(25, 118, 210, 0.2), 0 8px 32px rgba(25, 118, 210, 0.15)',
                 transition: 'all 0.3s ease',
@@ -232,7 +230,7 @@ const AlphabetLearning: React.FC = () => {
                   right: 8,
                   fontSize: '1.5rem',
                   color: categoryThemes.alphabet.accentColor,
-                  animation: isPlaying ? 'pulse 2s infinite' : 'none'
+                  animation: audio.isPlaying ? 'pulse 2s infinite' : 'none'
                 }
               }}
             >

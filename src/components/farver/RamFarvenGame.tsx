@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { Box, Typography, Container } from '@mui/material'
 import { motion, AnimatePresence } from 'framer-motion'
 import { DndContext, DragEndEvent, DragStartEvent, closestCenter } from '@dnd-kit/core'
-import { audioManager } from '../../utils/audio'
+import { useAudio } from '../../hooks/useAudio'
 import { categoryThemes } from '../../config/categoryThemes'
 import { ColorScoreChip } from '../common/ScoreChip'
 import { DraggableItem } from '../common/dnd/DraggableItem'
@@ -47,7 +47,8 @@ const RamFarvenGame: React.FC = () => {
     mixingZone: [],
     attempts: 0
   })
-  const [isPlaying, setIsPlaying] = useState(false)
+  // Centralized audio system
+  const audio = useAudio({ componentId: 'RamFarvenGame' })
   const [_activeId, setActiveId] = useState<string | null>(null)
   const [entryAudioComplete, setEntryAudioComplete] = useState(false)
   
@@ -146,7 +147,7 @@ const RamFarvenGame: React.FC = () => {
 
     // Game-specific instruction (NOW after entry audio completes)
     try {
-      audioManager.speak(`Lav ${randomTarget.name} ved at blande to farver!`)
+      audio.speak(`Lav ${randomTarget.name} ved at blande to farver!`)
         .catch(() => {})
     } catch (error) {
       // Ignore audio errors
@@ -159,7 +160,7 @@ const RamFarvenGame: React.FC = () => {
     if (!entryAudioComplete || !gameState.targetColor) return
     
     try {
-      audioManager.speak(`Lav ${gameState.targetColor.name} ved at blande to farver!`)
+      audio.speak(`Lav ${gameState.targetColor.name} ved at blande to farver!`)
         .catch(() => {})
     } catch (error) {
       // Ignore audio errors
@@ -183,7 +184,7 @@ const RamFarvenGame: React.FC = () => {
 
     // Speak color name
     try {
-      audioManager.speak(droplet.colorName)
+      audio.speak(droplet.colorName)
         .catch(() => {})
     } catch (error) {
       // Ignore audio errors
@@ -196,7 +197,7 @@ const RamFarvenGame: React.FC = () => {
   }
 
   const tryMixColors = async (colorsToMix: ColorDroplet[]) => {
-    if (isPlaying) return
+    if (audio.isPlaying) return
     
     const [color1, color2] = colorsToMix
     const combinationKey = `${color1.colorName}+${color2.colorName}`
@@ -213,9 +214,8 @@ const RamFarvenGame: React.FC = () => {
         attempts: prev.attempts + 1
       }))
 
-      setIsPlaying(true)
       try {
-        await audioManager.announceGameResult(true)
+        await audio.announceGameResult(true)
       } catch (error) {
         // Ignore audio errors
       }
@@ -225,7 +225,6 @@ const RamFarvenGame: React.FC = () => {
         stopCelebration()
         colorTeacher.point()
         initializeGame()
-        setIsPlaying(false)
       }, 3000)
     } else {
       // Wrong combination - encourage
@@ -236,9 +235,8 @@ const RamFarvenGame: React.FC = () => {
         attempts: prev.attempts + 1
       }))
 
-      setIsPlaying(true)
       try {
-        await audioManager.announceGameResult(false)
+        await audio.announceGameResult(false)
         
         // Reset immediately when audio ends
         const clearedColors = gameState.availableColors.map(color => ({
@@ -253,7 +251,6 @@ const RamFarvenGame: React.FC = () => {
         }))
         
         colorTeacher.think()
-        setIsPlaying(false)
       } catch (error) {
         // Even on error, reset immediately
         const clearedColors = gameState.availableColors.map(color => ({
@@ -268,7 +265,6 @@ const RamFarvenGame: React.FC = () => {
         }))
         
         colorTeacher.think()
-        setIsPlaying(false)
       }
     }
   }

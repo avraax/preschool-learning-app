@@ -61,7 +61,7 @@ import CelebrationEffect, { useCelebration } from '../common/CelebrationEffect'
 import { AlphabetScoreChip } from '../common/ScoreChip'
 import { AlphabetRestartButton } from '../common/RestartButton'
 import { AlphabetRepeatButton } from '../common/RepeatButton'
-import { audioManager } from '../../utils/audio'
+import { useAudio } from '../../hooks/useAudio'
 import { DANISH_PHRASES } from '../../config/danish-phrases'
 import { useGameEntryAudio } from '../../hooks/useGameEntryAudio'
 import { entryAudioManager } from '../../utils/entryAudioManager'
@@ -130,6 +130,9 @@ const MemoryGame: React.FC = () => {
   
   // Centralized game state management
   const { score, incrementScore, resetScore, isScoreNarrating, handleScoreClick } = useGameState()
+  
+  // Centralized audio system
+  const audio = useAudio({ componentId: 'MemoryGame' })
   
   // Character and celebration management
   const teacher = useCharacterState('wave')
@@ -202,7 +205,7 @@ const MemoryGame: React.FC = () => {
       const letterData = LETTER_ICONS[clickedCard.content]
       if (letterData) {
         try {
-          await audioManager.speak(`${clickedCard.content} som ${letterData.word}`)
+          await audio.speak(`${clickedCard.content} som ${letterData.word}`)
         } catch (error: any) {
           // Ignore audio errors for matched card clicks
         }
@@ -228,9 +231,9 @@ const MemoryGame: React.FC = () => {
     const playCardAudio = async () => {
       try {
         if (gameType === 'letters') {
-          await audioManager.speak(clickedCard.content)
+          await audio.speak(clickedCard.content)
         } else {
-          await audioManager.speakNumber(parseInt(clickedCard.content))
+          await audio.speakNumber(parseInt(clickedCard.content))
         }
       } catch (error: any) {
         // Check if this is a navigation interruption (expected)
@@ -272,7 +275,7 @@ const MemoryGame: React.FC = () => {
         teacher.celebrate()
 
         try {
-          await audioManager.announceGameResult(true)
+          await audio.announceGameResult(true)
         } catch (error) {
           console.error('Error playing success sound:', error)
         }
@@ -281,7 +284,7 @@ const MemoryGame: React.FC = () => {
         if (matchedPairs + 1 === 20) {
           celebrate('high')
           try {
-            await audioManager.speak(DANISH_PHRASES.completion.memoryGameSuccess)
+            await audio.speak(DANISH_PHRASES.completion.memoryGameSuccess)
           } catch (error) {
             console.error('Error playing completion sound:', error)
           }
@@ -330,7 +333,7 @@ const MemoryGame: React.FC = () => {
       : 'Find ens tal ved at klikke på kortene'
     
     try {
-      audioManager.speak(message).catch(() => {})
+      audio.speak(message).catch(() => {})
     } catch (error) {
       // Ignore audio errors
     }

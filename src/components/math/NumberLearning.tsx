@@ -15,7 +15,7 @@ import {
   ArrowBack,
   School
 } from '@mui/icons-material'
-import { audioManager } from '../../utils/audio'
+import { useAudio } from '../../hooks/useAudio'
 import { categoryThemes } from '../../config/categoryThemes'
 import LearningGrid from '../common/LearningGrid'
 import { useGameEntryAudio } from '../../hooks/useGameEntryAudio'
@@ -26,7 +26,8 @@ import { MathRepeatButton } from '../common/RepeatButton'
 const NumberLearning: React.FC = () => {
   const navigate = useNavigate()
   const [currentIndex, setCurrentIndex] = useState(0)
-  const [isPlaying, setIsPlaying] = useState(false)
+  // Centralized audio system
+  const audio = useAudio({ componentId: 'NumberLearning' })
   const [entryAudioComplete, setEntryAudioComplete] = useState(false)
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
   
@@ -46,7 +47,7 @@ const NumberLearning: React.FC = () => {
   useEffect(() => {
     // Stop audio immediately when navigating away
     const handleBeforeUnload = () => {
-      audioManager.stopAll()
+      audio.stopAll()
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current)
       }
@@ -58,7 +59,7 @@ const NumberLearning: React.FC = () => {
     
     // Cleanup function to stop all audio and timeouts when component unmounts
     return () => {
-      audioManager.stopAll()
+      audio.stopAll()
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current)
       }
@@ -72,18 +73,15 @@ const NumberLearning: React.FC = () => {
 
   const goToNumber = async (index: number) => {
     setCurrentIndex(index)
-    setIsPlaying(true)
-    audioManager.stopAll()
+    audio.stopAll()
     
     const number = numbers[index]
     
     try {
       // Use faster speed for number counting (1.2 instead of default 0.8)
-      await audioManager.speakNumber(number, 1.2)
+      await audio.speakNumber(number, 1.2)
     } catch (error) {
       console.error('Error speaking number:', error)
-    } finally {
-      setIsPlaying(false)
     }
   }
 
@@ -125,7 +123,7 @@ const NumberLearning: React.FC = () => {
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <Typography 
               variant="body2" 
-              onClick={() => audioManager.announcePosition(currentIndex, numbers.length, 'tal').catch(console.error)}
+              onClick={() => audio.announcePosition(currentIndex, numbers.length, 'tal').catch(console.error)}
               sx={{ 
                 color: 'secondary.dark', 
                 fontWeight: 600,
@@ -184,7 +182,7 @@ const NumberLearning: React.FC = () => {
         <Box sx={{ textAlign: 'center', mb: { xs: 1, md: 1.5 } }}>
           <MathRepeatButton 
             onClick={repeatInstructions}
-            disabled={!entryAudioComplete || isPlaying}
+            disabled={!entryAudioComplete || audio.isPlaying}
             label="🎵 Hør igen"
           />
         </Box>
@@ -202,9 +200,9 @@ const NumberLearning: React.FC = () => {
                 maxWidth: { xs: 120, md: 150 },
                 mx: 'auto',
                 p: { xs: 1, md: 1.5 },
-                bgcolor: isPlaying ? 'secondary.50' : 'white',
+                bgcolor: audio.isPlaying ? 'secondary.50' : 'white',
                 border: '2px solid',
-                borderColor: isPlaying ? 'secondary.main' : 'primary.200',
+                borderColor: audio.isPlaying ? 'secondary.main' : 'primary.200',
                 transition: 'all 0.3s ease'
               }}
             >

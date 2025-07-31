@@ -92,22 +92,87 @@ const gameUrl = buildGameUrl('/alphabet/quiz', {
 4. **Browser history support** - Back/forward buttons must work correctly
 5. **Deep linking** - Users should be able to share specific exercise URLs
 
-### 🔊 Global Audio Permission System
+### 🔊 Centralized Audio System Architecture
 
-The app features a sophisticated audio permission management system designed to provide seamless Danish audio narration while respecting browser security requirements and delivering an excellent user experience.
+The app features a **centralized AudioController system** that manages all audio playback, permissions, and state across the entire application. This system ensures audio reliability, prevents conflicts, and provides seamless Danish audio narration.
 
 #### System Architecture
 
-**Location**: `src/contexts/AudioPermissionContext.tsx`, `src/components/common/GlobalAudioPermission.tsx`
-
-The audio system uses a centralized context-based approach:
+**Primary Components:**
+- **AudioController** (`src/utils/AudioController.ts`) - Centralized audio management with queue system
+- **AudioContext** (`src/contexts/AudioContext.tsx`) - React context for global audio state
+- **useAudio Hook** (`src/hooks/useAudio.ts`) - Component-level audio interface
+- **AudioPermissionContext** (`src/contexts/AudioPermissionContext.tsx`) - Permission management
+- **entryAudioManager** (`src/utils/entryAudioManager.ts`) - Game entry audio coordination
 
 ```typescript
-// Core components
-AudioPermissionProvider    // Global state management
-GlobalAudioPermission     // Beautiful permission modal
-useAudioPermissionHook    // Clean hook interface
-AudioManager             // Enhanced with permission checks
+// Core architecture
+AudioController          // Central audio queue and playback management
+├── AudioContext         // React context provider for global state
+├── useAudio()          // Hook interface for components
+├── AudioPermissionContext // Permission handling
+└── entryAudioManager   // Entry audio coordination
+```
+
+#### ⚠️ CRITICAL: All Audio Work Must Use Centralized System
+
+**MANDATORY REQUIREMENTS for all audio-related development:**
+
+1. **❌ NEVER create new audio management code outside the centralized system**
+2. **❌ NEVER use Web Speech API, Howler.js, or HTML5 Audio directly in components**
+3. **❌ NEVER create component-level audio state or isPlaying states**
+4. **❌ NEVER bypass the AudioController queue system**
+5. **✅ ALWAYS use `useAudio()` hook in components**
+6. **✅ ALWAYS add new specialized audio functions to AudioController class**
+7. **✅ ALWAYS use the centralized queue for all audio playback**
+
+#### Centralized AudioController System
+
+**Location**: `src/utils/AudioController.ts`
+
+The AudioController is a singleton class that manages all audio in the application:
+
+```typescript
+// CORRECT: Use centralized audio system
+import { useAudio } from '../../hooks/useAudio'
+
+const MyGameComponent = () => {
+  const audio = useAudio({ componentId: 'MyGame' })
+  
+  const playSound = async () => {
+    // All audio goes through centralized queue
+    await audio.speak('Hej børn!')
+    await audio.speakNumber(5)
+    await audio.playSuccessSound()
+  }
+}
+```
+
+**Key Features:**
+- **Queue Management**: Only one audio plays at a time, automatic cancellation
+- **Danish Language Support**: Specialized functions for Danish numbers, letters, phrases
+- **Permission Integration**: Automatic permission checking and user interaction tracking  
+- **Error Handling**: Graceful fallbacks and navigation interruption handling
+- **State Management**: Centralized isPlaying state across all components
+- **Cross-Platform**: iOS Safari optimization and desktop browser support
+
+#### Migration Guidelines
+
+**If you find audio code that doesn't use the centralized system:**
+
+```typescript
+// ❌ OLD PATTERN - Replace immediately
+const [isPlaying, setIsPlaying] = useState(false)
+const handleSpeak = () => {
+  // Direct Web Speech API or other audio libraries
+  window.speechSynthesis.speak(new SpeechSynthesisUtterance(text))
+}
+
+// ✅ NEW PATTERN - Use centralized system
+const audio = useAudio({ componentId: 'ComponentName' })
+const handleSpeak = async () => {
+  await audio.speak(text)  // Automatically queued and managed
+}
 ```
 
 #### Smart Permission Detection
@@ -189,20 +254,68 @@ async speak(text: string) {
 
 **Usage in Components:**
 ```typescript
-// Components automatically inherit global permission handling
-import { audioManager } from '../../utils/audio'
+// ✅ CORRECT: Use centralized audio system
+import { useAudio } from '../../hooks/useAudio'
 
-// Simply call audio methods - permissions handled automatically
-await audioManager.speak('Hej børn!')
-await audioManager.speakNumber(5)
-await audioManager.playSuccessSound()
+const MyComponent = () => {
+  const audio = useAudio({ componentId: 'MyComponent' })
+  
+  const handleAction = async () => {
+    // All audio automatically queued and managed
+    await audio.speak('Hej børn!')
+    await audio.speakNumber(5)
+    await audio.playSuccessSound()
+  }
+  
+  return <button onClick={handleAction}>Play Audio</button>
+}
+```
+
+**❌ DEPRECATED: Direct audioManager import**
+```typescript
+// ❌ OLD PATTERN - Do not use in new code
+import { audioManager } from '../../utils/audio'
+await audioManager.speak('text') // Bypasses React context and state management
 ```
 
 **No Manual Permission Handling Required:**
 - ❌ No need for component-level permission state
 - ❌ No need for try/catch audio permission blocks  
 - ❌ No need for individual iOS prompts
-- ✅ Global system handles everything automatically
+- ❌ No need for manual isPlaying state management
+- ✅ Centralized system handles everything automatically
+
+#### Adding New Audio Functions
+
+**When you need new specialized audio functionality:**
+
+1. **Add to AudioController class** in `src/utils/AudioController.ts`:
+```typescript
+// ✅ CORRECT: Add specialized functions to AudioController
+async speakMyNewFunction(customText: string): Promise<string> {
+  return this.queueAudio(async () => {
+    this.updateUserInteraction()
+    
+    const hasPermission = await this.checkAudioPermission()
+    if (!hasPermission) return
+    
+    // Your specialized audio logic here
+    await this.googleTTS.synthesizeAndPlay(customText, 'primary', true)
+  })
+}
+```
+
+2. **Export through useAudio hook** in `src/hooks/useAudio.ts`:
+```typescript
+// Add to hook interface
+speakMyNewFunction: (text: string) => Promise<string>
+```
+
+3. **Use in components**:
+```typescript
+const audio = useAudio({ componentId: 'MyComponent' })
+await audio.speakMyNewFunction('Custom text')
+```
 
 #### Audio Technology Stack
 
@@ -444,6 +557,29 @@ npm run build
 npm run preview
 ```
 
+### Audio Development Guidelines
+
+**⚠️ BEFORE making any audio-related changes:**
+
+1. **Read the Centralized Audio System Architecture section above**
+2. **Never create audio code outside the centralized system**
+3. **Always use `useAudio()` hook in components**
+4. **Add new audio functions to AudioController class only**
+
+**Audio Development Workflow:**
+```powershell
+# 1. Check existing audio functions in AudioController
+Get-Content src/utils/AudioController.ts | Select-String "async.*Promise<string>"
+
+# 2. Add new functions to AudioController class if needed
+# 3. Export through useAudio hook interface
+# 4. Test with centralized queue system
+npm run dev
+
+# 5. Verify no audio conflicts or bypassing
+# Check console for 🎵 AudioController logs
+```
+
 ### Key Development Commands (PowerShell)
 ```powershell
 npm run dev          # Start dev server (http://localhost:5173)
@@ -531,10 +667,22 @@ Remove-Item -Recurse -Force node_modules, dist  # Clean build artifacts
 
 ## 🐛 Troubleshooting & Common Issues
 
-### Audio Issues
-- **Danish Voice Not Available**: App falls back to system default
-- **Audio Permissions**: Browser may require user interaction first
-- **iOS Safari**: May require specific user gesture for audio
+### Audio Issues - Use Centralized System Only
+
+**⚠️ CRITICAL: All audio issues must be fixed in the centralized AudioController system.**
+
+- **Audio Not Playing**: Check AudioController queue system, not component-level audio
+- **Multiple Audio Playing**: Indicates bypass of centralized queue - fix by using useAudio() hook
+- **Permission Issues**: Handled automatically by AudioController - no component-level fixes needed
+- **Danish Voice Not Available**: AudioController automatically falls back to system default
+- **iOS Safari Audio**: AudioController handles iOS-specific audio restrictions automatically
+- **Entry Audio Cut Off**: Fixed globally in AudioController.queueAudio() - no per-game fixes needed
+
+**Debugging Audio Issues:**
+1. Check AudioController console logs (prefixed with 🎵)
+2. Use `audioController.getTTSStatus()` for queue and cache information
+3. Verify component uses `useAudio()` hook, not direct audioManager imports
+4. Ensure no bypassing of the centralized queue system
 
 ### Build Issues
 - **Tailwind CSS v4**: Uses new `@tailwindcss/postcss` plugin

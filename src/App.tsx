@@ -36,6 +36,7 @@ import ErrorDashboard from './components/admin/ErrorDashboard'
 import UpdateBanner from './components/common/UpdateBanner'
 import GlobalAudioPermission from './components/common/GlobalAudioPermission'
 import { AudioPermissionProvider } from './contexts/AudioPermissionContext'
+import { AudioProvider } from './contexts/AudioContext'
 import { useViewportHeight } from './hooks/useViewportHeight'
 import DemoPage from './components/demo/DemoPage'
 
@@ -746,20 +747,21 @@ function App() {
 
   return (
     <AudioPermissionProvider>
-      {/* Update Button - shown in lower right when update available */}
-      <UpdateBanner
-        show={updateStatus.updateAvailable || DEV_SHOW_UPDATE_BANNER}
-        onUpdate={DEV_SHOW_UPDATE_BANNER ? () => {
-          console.log('🧪 DEV MODE: Update button clicked!')
-          console.log('🧪 DEV MODE: This is just a test - no actual update will happen')
-        } : updateStatus.applyUpdate}
-        isApplying={DEV_SHOW_APPLYING_STATE}
-      />
-      
-      {/* Global Audio Permission System */}
-      <GlobalAudioPermission />
-      
-      <Routes>
+      <AudioProvider>
+        {/* Update Button - shown in lower right when update available */}
+        <UpdateBanner
+          show={updateStatus.updateAvailable || DEV_SHOW_UPDATE_BANNER}
+          onUpdate={DEV_SHOW_UPDATE_BANNER ? () => {
+            console.log('🧪 DEV MODE: Update button clicked!')
+            console.log('🧪 DEV MODE: This is just a test - no actual update will happen')
+          } : updateStatus.applyUpdate}
+          isApplying={DEV_SHOW_APPLYING_STATE}
+        />
+        
+        {/* Global Audio Permission System */}
+        <GlobalAudioPermission />
+        
+        <Routes>
         {/* Home Routes */}
         <Route path="/" element={
           <AdminRedirectChecker>
@@ -799,6 +801,7 @@ function App() {
         {/* 404 Not Found */}
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
+      </AudioProvider>
     </AudioPermissionProvider>
   )
 }

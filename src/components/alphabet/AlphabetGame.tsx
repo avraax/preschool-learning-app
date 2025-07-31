@@ -12,7 +12,6 @@ import {
   Toolbar
 } from '@mui/material'
 import { ArrowLeft } from 'lucide-react'
-import { audioManager } from '../../utils/audio'
 import { isIOS } from '../../utils/deviceDetection'
 import { DANISH_PHRASES } from '../../config/danish-phrases'
 import { categoryThemes } from '../../config/categoryThemes'
@@ -23,6 +22,7 @@ import { AlphabetRepeatButton } from '../common/RepeatButton'
 import { useGameEntryAudio } from '../../hooks/useGameEntryAudio'
 import { entryAudioManager } from '../../utils/entryAudioManager'
 import { useGameState } from '../../hooks/useGameState'
+import { useAudio } from '../../hooks/useAudio'
 
 // Full Danish alphabet including special characters
 const DANISH_ALPHABET = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'Æ', 'Ø', 'Å']
@@ -31,8 +31,10 @@ const AlphabetGame: React.FC = () => {
   const navigate = useNavigate()
   const [currentLetter, setCurrentLetter] = useState<string>('')
   const [showOptions, setShowOptions] = useState<string[]>([])
-  const [isPlaying, setIsPlaying] = useState(false)
   const [entryAudioComplete, setEntryAudioComplete] = useState(false)
+  
+  // Centralized audio system - replaces individual isPlaying state
+  const audio = useAudio({ componentId: 'AlphabetGame', stopOnUnmount: false })
   
   // Centralized game state management
   const { score, incrementScore, isScoreNarrating, handleScoreClick } = useGameState()
@@ -62,26 +64,11 @@ const AlphabetGame: React.FC = () => {
       }, 500)
     })
     
-    // Stop audio immediately when navigating away
-    const handleBeforeUnload = () => {
-      audioManager.stopAll()
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current)
-      }
-    }
-
-    // Listen for navigation events
-    window.addEventListener('beforeunload', handleBeforeUnload)
-    window.addEventListener('pagehide', handleBeforeUnload)
-    
-    // Cleanup function to stop all audio and timeouts when component unmounts
+    // Cleanup function for timeouts - audio cleanup handled by useAudio hook
     return () => {
-      audioManager.stopAll()
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current)
       }
-      window.removeEventListener('beforeunload', handleBeforeUnload)
-      window.removeEventListener('pagehide', handleBeforeUnload)
     }
   }, [])
 
@@ -107,18 +94,12 @@ const AlphabetGame: React.FC = () => {
       clearTimeout(timeoutRef.current)
     }
     
-    // Stop any currently playing audio before starting new one
-    audioManager.stopAll()
-    
-    // Try to play audio immediately for iOS (within user interaction window)
-    // Fall back to manual trigger (Gentag button) if permission expires
+    // Use centralized audio system - no manual state management needed
     const playAudioAsync = async () => {
-      setIsPlaying(true)
       try {
-        await audioManager.speakQuizPromptWithRepeat(DANISH_PHRASES.gamePrompts.findLetter(letter), letter)
+        await audio.speakQuizPromptWithRepeat(DANISH_PHRASES.gamePrompts.findLetter(letter), letter)
       } catch (error) {
-      } finally {
-        setIsPlaying(false)
+        // Error handled by centralized audio system
       }
     }
     
@@ -131,16 +112,8 @@ const AlphabetGame: React.FC = () => {
   }
 
   const handleLetterClick = async (selectedLetter: string) => {
-    if (isPlaying) return
+    if (audio.isPlaying) return
     
-    // iOS CRITICAL: Update user interaction immediately on click
-    // This ensures fresh audio permission for subsequent audio calls
-    audioManager.updateUserInteraction()
-    
-    // Stop any currently playing audio
-    audioManager.stopAll()
-    
-    setIsPlaying(true)
     try {
       if (selectedLetter === currentLetter) {
         // Correct answer - celebrate!
@@ -148,43 +121,42 @@ const AlphabetGame: React.FC = () => {
         teacherCharacter.celebrate()
         celebrate(score > 5 ? 'high' : 'medium')
         
-        await audioManager.announceGameResult(true)
-        
-        // Shorter delay for iOS to preserve user interaction window
-        const delayTime = isIOS() ? 1000 : 3000
-        
-        setTimeout(() => {
-          stopCelebration()
-          teacherCharacter.point()
-          generateNewQuestion()
-        }, delayTime)
+        await audio.playWithCallback(
+          () => audio.announceGameResult(true),
+          () => {
+            // Shorter delay for iOS to preserve user interaction window
+            const delayTime = isIOS() ? 1000 : 3000
+            
+            setTimeout(() => {
+              stopCelebration()
+              teacherCharacter.point()
+              generateNewQuestion()
+            }, delayTime)
+          }
+        )
       } else {
         // Wrong answer - encourage
         teacherCharacter.encourage()
-        await audioManager.announceGameResult(false)
-        // Allow immediate interaction after audio completes
-        teacherCharacter.think()
+        await audio.playWithCallback(
+          () => audio.announceGameResult(false),
+          () => {
+            // Allow immediate interaction after audio completes
+            teacherCharacter.think()
+          }
+        )
       }
     } catch (error) {
       console.error('Error playing feedback:', error)
-    } finally {
-      setIsPlaying(false)
     }
   }
 
   const repeatLetter = async () => {
-    if (isPlaying) return
+    if (audio.isPlaying) return
     
-    // Stop any currently playing audio before speaking again
-    audioManager.stopAll()
-    
-    setIsPlaying(true)
     try {
-      await audioManager.speakQuizPromptWithRepeat(DANISH_PHRASES.gamePrompts.findLetter(currentLetter), currentLetter)
+      await audio.speakQuizPromptWithRepeat(DANISH_PHRASES.gamePrompts.findLetter(currentLetter), currentLetter)
     } catch (error) {
       console.error('Error repeating letter:', error)
-    } finally {
-      setIsPlaying(false)
     }
   }
 
@@ -270,7 +242,7 @@ const AlphabetGame: React.FC = () => {
         <Box sx={{ textAlign: 'center', mb: { xs: 2, md: 3 }, flex: '0 0 auto' }}>
           <AlphabetRepeatButton
             onClick={repeatLetter}
-            disabled={!entryAudioComplete}
+            disabled={!entryAudioComplete || audio.isPlaying}
           />
         </Box>
 
