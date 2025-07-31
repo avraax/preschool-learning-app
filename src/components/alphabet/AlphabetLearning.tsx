@@ -20,7 +20,6 @@ import { categoryThemes } from '../../config/categoryThemes'
 import LearningGrid from '../common/LearningGrid'
 import { useGameEntryAudio } from '../../hooks/useGameEntryAudio'
 import { entryAudioManager } from '../../utils/entryAudioManager'
-import { AlphabetRepeatButton } from '../common/RepeatButton'
 
 
 const DANISH_ALPHABET = [
@@ -102,12 +101,6 @@ const AlphabetLearning: React.FC = () => {
     }
   }
 
-  // Repeat instructions for the current letter
-  const repeatInstructions = () => {
-    if (!entryAudioComplete) return
-    
-    goToLetter(currentIndex)
-  }
 
   const progress = ((currentIndex + 1) / DANISH_ALPHABET.length) * 100
 
@@ -180,12 +173,12 @@ const AlphabetLearning: React.FC = () => {
           overflow: 'hidden'
         }}
       >
-        {/* Title - Very Compact */}
-        <Box sx={{ textAlign: 'center', mb: { xs: 1, md: 1.5 } }}>
+        {/* Title - More Space */}
+        <Box sx={{ textAlign: 'center', mb: { xs: 2, md: 3 } }}>
           <Typography 
-            variant="h5" 
+            variant="h4" 
             sx={{ 
-              fontSize: { xs: '1.25rem', md: '1.5rem' },
+              fontSize: { xs: '1.5rem', md: '2rem' },
               color: 'primary.dark',
               fontWeight: 700,
               display: 'flex',
@@ -194,21 +187,12 @@ const AlphabetLearning: React.FC = () => {
               gap: 0.5
             }}
           >
-            <School sx={{ fontSize: { xs: '1.25rem', md: '1.5rem' } }} /> Lær Alfabetet
+            <School sx={{ fontSize: { xs: '1.5rem', md: '2rem' } }} /> Lær Alfabetet
           </Typography>
         </Box>
 
-        {/* Repeat Button */}
-        <Box sx={{ textAlign: 'center', mb: { xs: 1, md: 1.5 } }}>
-          <AlphabetRepeatButton 
-            onClick={repeatInstructions}
-            disabled={!entryAudioComplete || isPlaying}
-            label="🎵 Hør igen"
-          />
-        </Box>
-
-        {/* Current Letter Display - Very Compact */}
-        <Box sx={{ textAlign: 'center', mb: { xs: 1, md: 1.5 }, flex: '0 0 auto' }}>
+        {/* Current Letter Display - Enhanced Visual */}
+        <Box sx={{ textAlign: 'center', mb: { xs: 2, md: 3 }, flex: '0 0 auto' }}>
           <motion.div
             key={currentIndex}
             initial={{ scale: 0.8, opacity: 0 }}
@@ -217,23 +201,52 @@ const AlphabetLearning: React.FC = () => {
           >
             <Card
               sx={{
-                maxWidth: { xs: 120, md: 150 },
+                maxWidth: { xs: 160, md: 200 },
                 mx: 'auto',
-                p: { xs: 1, md: 1.5 },
-                bgcolor: isPlaying ? 'secondary.50' : 'white',
-                border: '2px solid',
-                borderColor: isPlaying ? 'secondary.main' : 'primary.200',
-                transition: 'all 0.3s ease'
+                p: { xs: 2, md: 3 },
+                background: 'white',
+                border: '4px solid',
+                borderColor: isPlaying ? categoryThemes.alphabet.accentColor : categoryThemes.alphabet.borderColor,
+                boxShadow: isPlaying 
+                  ? '0 0 30px rgba(25, 118, 210, 0.4), 0 8px 32px rgba(25, 118, 210, 0.3)'
+                  : '0 4px 20px rgba(25, 118, 210, 0.2), 0 8px 32px rgba(25, 118, 210, 0.15)',
+                transition: 'all 0.3s ease',
+                position: 'relative',
+                overflow: 'hidden',
+                '&::before': {
+                  content: '""',
+                  position: 'absolute',
+                  top: -2,
+                  left: -2,
+                  right: -2,
+                  bottom: -2,
+                  background: categoryThemes.alphabet.gradient,
+                  borderRadius: 'inherit',
+                  opacity: 0.2,
+                  zIndex: 0
+                },
+                '&::after': {
+                  content: '"⭐"',
+                  position: 'absolute',
+                  top: 8,
+                  right: 8,
+                  fontSize: '1.5rem',
+                  color: categoryThemes.alphabet.accentColor,
+                  animation: isPlaying ? 'pulse 2s infinite' : 'none'
+                }
               }}
             >
               <Typography
                 variant="h1"
                 sx={{
-                  fontSize: { xs: '2.5rem', md: '3.5rem' },
+                  fontSize: { xs: '3.5rem', md: '4.5rem' },
                   fontWeight: 700,
-                  color: 'primary.dark',
+                  color: categoryThemes.alphabet.accentColor,
                   textAlign: 'center',
-                  lineHeight: 1
+                  lineHeight: 1,
+                  textShadow: '1px 1px 2px rgba(25, 118, 210, 0.1)',
+                  position: 'relative',
+                  zIndex: 1
                 }}
               >
                 {DANISH_ALPHABET[currentIndex]}
@@ -251,6 +264,17 @@ const AlphabetLearning: React.FC = () => {
           disabled={!entryAudioComplete}
         />
       </Container>
+      
+      {/* CSS Animation for pulse effect */}
+      <style>
+        {`
+          @keyframes pulse {
+            0% { transform: scale(1); opacity: 0.7; }
+            50% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(1); opacity: 0.7; }
+          }
+        `}
+      </style>
     </Box>
   )
 }

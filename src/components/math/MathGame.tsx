@@ -334,7 +334,7 @@ const MathGame: React.FC = () => {
                   fontSize: { xs: '1.5rem', md: '2rem' }
                 }}
               >
-                🔢 Quiz
+                Tal Quiz
               </Typography>
               <Typography sx={{ fontSize: '2.5rem' }}>🧮</Typography>
             </Box>

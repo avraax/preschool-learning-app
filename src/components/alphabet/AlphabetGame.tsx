@@ -259,7 +259,7 @@ const AlphabetGame: React.FC = () => {
                   textShadow: '1px 1px 2px rgba(25, 118, 210, 0.2)'
                 }}
               >
-                🔤 Quiz
+                Bogstav Quiz
               </Typography>
               <Typography sx={{ fontSize: '2.5rem' }}>🎯</Typography>
             </Box>

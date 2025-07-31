@@ -400,7 +400,7 @@ const FarvejagtGame: React.FC = () => {
       background: categoryThemes.colors.gradient
     }}>
       <GameHeader
-        title="Jagt"
+        title="Farvejagt"
         titleIcon="🎨"
         gameIcon="🎯"
         character={colorHunter}
