@@ -567,16 +567,18 @@ export class GoogleTTSService {
             return
           }
           
-          audioDebugSession.addLog('GOOGLE_TTS_IOS_RESUME_CONTEXT', {})
-          // Ensure audio context is running first
-          this.resumeAudioContext().then(() => {
-            audioDebugSession.addLog('GOOGLE_TTS_IOS_CONTEXT_RESUMED', {})
-            // Add a longer delay for iOS to ensure context is ready
-            setTimeout(() => {
-              audioDebugSession.addLog('GOOGLE_TTS_IOS_CALLING_PLAY', {})
-              audio.play().then(() => {
-                audioDebugSession.addLog('GOOGLE_TTS_IOS_PLAY_SUCCESS', {})
-              }).catch(async (playError) => {
+          audioDebugSession.addLog('GOOGLE_TTS_IOS_CALLING_PLAY_SYNCHRONOUS', {})
+          // For iOS, call play() immediately to preserve user interaction context
+          // Don't wait for audio context resume as it can break the interaction chain
+          audio.play().then(() => {
+            audioDebugSession.addLog('GOOGLE_TTS_IOS_PLAY_SUCCESS', {})
+            // Resume audio context after successful play
+            this.resumeAudioContext().catch((contextError) => {
+              audioDebugSession.addLog('GOOGLE_TTS_IOS_CONTEXT_RESUME_AFTER_PLAY', {
+                error: contextError instanceof Error ? contextError.message : contextError?.toString()
+              })
+            })
+          }).catch(async (playError) => {
                 audioDebugSession.addLog('GOOGLE_TTS_IOS_PLAY_ERROR', {
                   errorName: playError.name,
                   errorMessage: playError.message,
@@ -613,15 +615,6 @@ export class GoogleTTSService {
                 })
                 clearTimeoutAndRejectHandler(playError)
               })
-            }, 100) // Longer delay for iOS
-          }).catch((contextError) => {
-            audioDebugSession.addLog('GOOGLE_TTS_IOS_CONTEXT_ERROR', {
-              error: contextError instanceof Error ? contextError.message : contextError?.toString(),
-              errorType: contextError instanceof Error ? contextError.constructor?.name : typeof contextError
-            })
-            logAudioIssue('iOS Audio Context Error', contextError)
-            clearTimeoutAndRejectHandler(contextError)
-          })
         } else {
           audioDebugSession.addLog('GOOGLE_TTS_NON_IOS_CALLING_PLAY', {})
           audio.play().then(() => {
