@@ -539,8 +539,11 @@ export class GoogleTTSService {
           const hasDocumentFocus = document.hasFocus()
           const isDocumentVisible = !document.hidden
           
-          // Even more forgiving check for entry audio: allow if document is focused and visible OR has recent interaction
-          const canPlayAudio = hasRecentInteraction || (hasDocumentFocus && isDocumentVisible) || isDocumentVisible
+          // Most lenient check for entry audio: only block if document is truly hidden and no recent interaction
+          const canPlayAudio = isDocumentVisible || hasRecentInteraction || hasDocumentFocus
+          
+          // Force allow for debugging entry audio issues on iOS
+          const forceAllowEntryAudio = timeSinceInteraction < 60000 // Allow up to 1 minute for entry audio
           
           // Enhanced logging for iOS debugging
           audioDebugSession.addLog('GOOGLE_TTS_IOS_PERMISSION_CHECK', {
@@ -549,10 +552,12 @@ export class GoogleTTSService {
             hasDocumentFocus,
             isDocumentVisible,
             canPlayAudio,
+            forceAllowEntryAudio,
+            finalDecision: canPlayAudio || forceAllowEntryAudio,
             audioContextState: this.audioContext?.state
           })
           
-          if (!canPlayAudio) {
+          if (!canPlayAudio && !forceAllowEntryAudio) {
             const errorMsg = `Need user interaction to play audio (${Math.round(timeSinceInteraction/1000)}s since last interaction, focus: ${hasDocumentFocus}, visible: ${isDocumentVisible}, context: ${this.audioContext?.state})`
             logAudioIssue('iOS Audio Permission', errorMsg, {
               timeSinceInteraction,

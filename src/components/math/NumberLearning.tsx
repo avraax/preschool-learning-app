@@ -29,6 +29,7 @@ const NumberLearning: React.FC = () => {
   // Centralized audio system
   const audio = useAudio({ componentId: 'NumberLearning' })
   const [entryAudioComplete, setEntryAudioComplete] = useState(false)
+  const [hasPlayedEntryAudio, setHasPlayedEntryAudio] = useState(false)
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
   
   // Centralized entry audio
@@ -41,8 +42,19 @@ const NumberLearning: React.FC = () => {
     // Register callback to enable interactions after entry audio completes
     entryAudioManager.onComplete('numberlearning', () => {
       setEntryAudioComplete(true)
+      setHasPlayedEntryAudio(true)
     })
-  }, [])
+    
+    // iOS fallback: if no entry audio after 3 seconds, allow interactions
+    const fallbackTimeout = setTimeout(() => {
+      if (!hasPlayedEntryAudio) {
+        console.log('🎵 iOS fallback: Enabling interactions without entry audio')
+        setEntryAudioComplete(true)
+      }
+    }, 3000)
+    
+    return () => clearTimeout(fallbackTimeout)
+  }, [hasPlayedEntryAudio])
 
   useEffect(() => {
     // Stop audio immediately when navigating away
@@ -72,10 +84,24 @@ const NumberLearning: React.FC = () => {
 
 
   const goToNumber = async (index: number) => {
+    // iOS fallback: if entry audio hasn't played yet, play it now with user interaction
+    if (!hasPlayedEntryAudio && entryAudioComplete) {
+      try {
+        console.log('🎵 iOS fallback: Playing entry audio on first interaction')
+        await audio.speak('Lær Tal')
+        setHasPlayedEntryAudio(true)
+      } catch (error) {
+        console.error('iOS fallback entry audio failed:', error)
+      }
+    }
+    
     setCurrentIndex(index)
     audio.stopAll()
     
     const number = numbers[index]
+    
+    // No need to explicitly update user interaction here
+    // The speakNumber method in AudioController already calls updateUserInteraction()
     
     try {
       // Use faster speed for number counting (1.2 instead of default 0.8)
