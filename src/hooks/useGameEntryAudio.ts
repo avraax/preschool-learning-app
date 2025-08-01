@@ -39,7 +39,7 @@ interface UseGameEntryAudioOptions {
  */
 export const useGameEntryAudio = ({ 
   gameType, 
-  delay = 200, // Reduced from 1000ms to 200ms for immediate audio 
+  delay = 0, // Set to 0ms for immediate audio playback 
   enabled = true 
 }: UseGameEntryAudioOptions) => {
   const hasScheduled = useRef(false)

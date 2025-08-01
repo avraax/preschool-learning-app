@@ -71,8 +71,10 @@ const LearningGrid: React.FC<LearningGridProps> = ({
             style={{ height: '100%' }}
           >
             <Card 
-                onClick={disabled ? undefined : () => onItemClick(index)}
+                onPointerDown={disabled ? undefined : () => onItemClick(index)}  // Use pointer events to avoid VoiceOver
                 role="presentation"  // Prevent VoiceOver from announcing as button
+                aria-disabled="true"  // Explicitly disable for screen readers
+                tabIndex={-1}  // Remove from tab order
                 sx={{ 
                   height: '100%',
                   cursor: disabled ? 'default' : 'pointer',
@@ -84,6 +86,10 @@ const LearningGrid: React.FC<LearningGridProps> = ({
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
+                  WebkitUserSelect: 'none',  // Prevent text selection on iOS
+                  userSelect: 'none',
+                  WebkitTouchCallout: 'none',  // Disable iOS callout menu
+                  speak: 'none' as any,  // Legacy CSS to prevent speech
                   '&:hover': disabled ? {} : {
                     borderColor: 'primary.main',
                     bgcolor: 'primary.50',
@@ -105,6 +111,8 @@ const LearningGrid: React.FC<LearningGridProps> = ({
                   <Typography 
                     variant="h4"
                     aria-hidden="true"  // Prevent VoiceOver from reading the text
+                    aria-label=""  // Empty label to prevent announcements
+                    role="img"  // Treat as decorative image instead of text
                     sx={{ 
                       fontWeight: 700,
                       color: index === currentIndex ? 'secondary.dark' : 'primary.dark',

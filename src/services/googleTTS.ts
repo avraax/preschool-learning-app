@@ -635,54 +635,7 @@ export class GoogleTTSService {
     })
   }
 
-  // Optimized Web Speech API for iOS with faster initialization
-  private async optimizedWebSpeechForIOS(text: string): Promise<void> {
-    return new Promise((resolve, reject) => {
-      if (!('speechSynthesis' in window)) {
-        reject(new Error('Speech synthesis not supported'))
-        return
-      }
-
-      // Clean text for Web Speech (remove SSML tags)
-      const cleanText = text.replace(/<[^>]*>/g, '')
-      
-      // Create utterance immediately without waiting for voices
-      const utterance = new SpeechSynthesisUtterance(cleanText)
-      utterance.lang = 'da-DK'
-      utterance.rate = 0.9  // Slightly faster for immediate feedback
-      utterance.pitch = 1.0
-      utterance.volume = 1.0
-
-      // iOS optimization: Set voice immediately if available
-      const voices = window.speechSynthesis.getVoices()
-      if (voices.length > 0) {
-        const danishVoice = voices.find(voice => voice.lang.startsWith('da'))
-        if (danishVoice) {
-          utterance.voice = danishVoice
-        }
-      }
-
-      // Shorter timeout for immediate feedback
-      const speechTimeout = setTimeout(() => {
-        window.speechSynthesis.cancel()
-        reject(new Error('iOS Web Speech timeout after 3s'))
-      }, 3000)
-
-      utterance.onend = () => {
-        clearTimeout(speechTimeout)
-        resolve()
-      }
-      
-      utterance.onerror = (error) => {
-        clearTimeout(speechTimeout)
-        reject(new Error(`iOS Web Speech failed: ${error.error || 'unknown error'}`))
-      }
-
-      // Stop any current speech and speak immediately
-      window.speechSynthesis.cancel()
-      window.speechSynthesis.speak(utterance)
-    })
-  }
+  // Removed optimizedWebSpeechForIOS method - using only Google TTS now
 
   // Fallback to Web Speech API for iOS when Google TTS fails
   private async fallbackToWebSpeech(text: string): Promise<void> {
@@ -787,83 +740,7 @@ export class GoogleTTSService {
       isIOS: isIOS()
     })
     
-    // iOS-specific: For entry audio, skip GoogleTTS and use Web Speech directly for reliability
-    if (isIOS()) {
-      // Check if this is entry audio or single letter/number (common iOS failures)
-      const isEntryAudio = text.includes('Lær') || text.includes('Quiz') || text.includes('Tal') || 
-                          text.includes('Alfabetet') || text.includes('Farve') || text.includes('Hukommelses')
-      
-      // Also bypass GoogleTTS for single letters/numbers on iOS (common in alphabet learning)
-      const isSingleCharacter = text.length <= 3 && /^[A-ZÆØÅ0-9]$/i.test(text.trim())
-      
-      if (isEntryAudio || isSingleCharacter) {
-        audioDebugSession.addLog('GOOGLE_TTS_IOS_ENTRY_AUDIO_WEB_SPEECH_DIRECT', {
-          text: text.substring(0, 50),
-          reason: isEntryAudio ? 'entry_audio_reliability' : 'single_character_reliability'
-        })
-        
-        try {
-          // Use optimized Web Speech for iOS reliability
-          await this.optimizedWebSpeechForIOS(text)
-          audioDebugSession.addLog('GOOGLE_TTS_IOS_ENTRY_AUDIO_WEB_SPEECH_SUCCESS', {})
-          return // Success with Web Speech for entry audio
-        } catch (webSpeechError) {
-          audioDebugSession.addLog('GOOGLE_TTS_IOS_ENTRY_AUDIO_WEB_SPEECH_FAILED', {
-            error: webSpeechError instanceof Error ? webSpeechError.message : String(webSpeechError)
-          })
-          // Continue to GoogleTTS attempt below
-        }
-      }
-      
-      // For non-entry audio, try Google TTS first
-      try {
-        audioDebugSession.addLog('GOOGLE_TTS_IOS_PRIMARY_ATTEMPT', {})
-        const audioData = await this.synthesizeSpeech(text, voiceType, useSSML, customAudioConfig)
-        audioDebugSession.addLog('GOOGLE_TTS_IOS_SYNTHESIS_SUCCESS', {
-          audioDataLength: audioData.length
-        })
-        await this.playAudioFromData(audioData)
-        audioDebugSession.addLog('GOOGLE_TTS_IOS_PLAYBACK_SUCCESS', {})
-        return // Success with Google TTS
-      } catch (googleTTSError) {
-        // Check if this is a navigation interruption
-        const isNavigationInterruption = googleTTSError instanceof Error && 
-          (googleTTSError.message.includes('interrupted by navigation') || 
-           googleTTSError.message.includes('interrupted by user'))
-        
-        if (isNavigationInterruption) {
-          console.log('🎵 iOS Google TTS interrupted by navigation (expected)')
-          throw googleTTSError
-        }
-        
-        // Enhanced error information for empty error objects
-        const errorInfo = {
-          text,
-          voiceType,
-          useSSML,
-          errorMessage: googleTTSError instanceof Error ? googleTTSError.message : 'Unknown error',
-          errorType: typeof googleTTSError,
-          errorKeys: Object.keys(googleTTSError || {}),
-          audioContextState: this.audioContext?.state,
-          userAgent: navigator.userAgent
-        }
-        
-        logAudioIssue('iOS Google TTS Failed', googleTTSError, errorInfo)
-        
-        // Add delay before fallback to prevent rapid failures
-        await new Promise(resolve => setTimeout(resolve, 200))
-        
-        // Try Web Speech as fallback
-        try {
-          console.log('🔄 iOS: Falling back to Web Speech API')
-          await this.fallbackToWebSpeech(text)
-          return
-        } catch (webSpeechError) {
-          logAudioIssue('iOS Web Speech Also Failed', webSpeechError, { text, originalError: googleTTSError })
-          throw new Error(`Both audio methods failed on iOS: ${googleTTSError}`)
-        }
-      }
-    }
+    // Always use Google TTS - removed iOS-specific bypasses per user request
     
     try {
       audioDebugSession.addLog('GOOGLE_TTS_NON_IOS_ATTEMPT', {})

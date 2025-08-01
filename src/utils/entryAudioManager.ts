@@ -20,12 +20,8 @@ const lastImmediateExecution: Map<string, number> = new Map()
 
 export const entryAudioManager = {
   // Schedule entry audio for a game
-  scheduleEntryAudio(gameType: string, delay: number = 1000): void {
-    // For iOS devices, play immediately without delay to ensure faster response
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
-    const actualDelay = isIOS ? 0 : delay
-    
-    console.log(`🎵 EntryAudioManager: Scheduling entry audio for "${gameType}" with ${actualDelay}ms delay (iOS: ${isIOS})`)
+  scheduleEntryAudio(gameType: string, _delay: number = 0): void {
+    console.log(`🎵 EntryAudioManager: Playing entry audio immediately for "${gameType}" (delay ignored)`)
     
     // Check if already played or playing
     if (playedGames.has(gameType) || playingGames.has(gameType)) {
@@ -39,30 +35,9 @@ export const entryAudioManager = {
       return
     }
     
-    // For iOS with 0 delay, play immediately
-    if (actualDelay === 0) {
-      console.log(`🎵 EntryAudioManager: Playing entry audio immediately for iOS`)
-      this.playEntryAudio(gameType)
-      return
-    }
-    
-    // Schedule the audio for non-iOS devices
-    const timeoutId = setTimeout(() => {
-      console.log(`🎵 EntryAudioManager: Timeout fired for "${gameType}", attempting to play entry audio`)
-      pendingTimeouts.delete(gameType)
-      
-      // Double-check not already played
-      if (playedGames.has(gameType)) {
-        console.log(`🎵 EntryAudioManager: Entry audio for "${gameType}" already played after timeout, skipping`)
-        return
-      }
-      
-      // Play the audio
-      this.playEntryAudio(gameType)
-    }, actualDelay)
-    
-    pendingTimeouts.set(gameType, timeoutId)
-    console.log(`🎵 EntryAudioManager: Entry audio for "${gameType}" scheduled successfully`)
+    // Always play immediately - no delays, no scheduling
+    console.log(`🎵 EntryAudioManager: Playing entry audio immediately`)
+    this.playEntryAudio(gameType)
   },
   
   // Play entry audio immediately
