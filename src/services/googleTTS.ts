@@ -738,8 +738,31 @@ export class GoogleTTSService {
       isIOS: isIOS()
     })
     
-    // iOS-specific: Try Google TTS first, then fallback to Web Speech
+    // iOS-specific: For entry audio, skip GoogleTTS and use Web Speech directly for reliability
     if (isIOS()) {
+      // Check if this is entry audio by looking for common game entry phrases
+      const isEntryAudio = text.includes('Lær') || text.includes('Quiz') || text.includes('Tal') || 
+                          text.includes('Alfabetet') || text.includes('Farve') || text.includes('Hukommelses')
+      
+      if (isEntryAudio) {
+        audioDebugSession.addLog('GOOGLE_TTS_IOS_ENTRY_AUDIO_WEB_SPEECH_DIRECT', {
+          text: text.substring(0, 50),
+          reason: 'entry_audio_reliability'
+        })
+        
+        try {
+          await this.fallbackToWebSpeech(text)
+          audioDebugSession.addLog('GOOGLE_TTS_IOS_ENTRY_AUDIO_WEB_SPEECH_SUCCESS', {})
+          return // Success with Web Speech for entry audio
+        } catch (webSpeechError) {
+          audioDebugSession.addLog('GOOGLE_TTS_IOS_ENTRY_AUDIO_WEB_SPEECH_FAILED', {
+            error: webSpeechError instanceof Error ? webSpeechError.message : String(webSpeechError)
+          })
+          // Continue to GoogleTTS attempt below
+        }
+      }
+      
+      // For non-entry audio, try Google TTS first
       try {
         audioDebugSession.addLog('GOOGLE_TTS_IOS_PRIMARY_ATTEMPT', {})
         const audioData = await this.synthesizeSpeech(text, voiceType, useSSML, customAudioConfig)
