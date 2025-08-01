@@ -533,24 +533,14 @@ export class GoogleTTSService {
         
         // iOS-specific play handling
         if (isIOS()) {
-          // Check if we need user interaction - be more lenient for entry audio and navigation
+          // Check if we need user interaction - be more lenient for navigation scenarios
           const timeSinceInteraction = Date.now() - this.lastUserInteraction
-          const hasRecentInteraction = timeSinceInteraction < 30000 // Increased to 30s for entry audio
+          const hasRecentInteraction = timeSinceInteraction < 10000 // Increased from 3s to 10s
           const hasDocumentFocus = document.hasFocus()
           const isDocumentVisible = !document.hidden
           
           // More forgiving check: allow if any of these conditions are met
           const canPlayAudio = hasRecentInteraction || (hasDocumentFocus && isDocumentVisible)
-          
-          // Enhanced logging for iOS debugging
-          audioDebugSession.addLog('GOOGLE_TTS_IOS_PERMISSION_CHECK', {
-            timeSinceInteraction,
-            hasRecentInteraction,
-            hasDocumentFocus,
-            isDocumentVisible,
-            canPlayAudio,
-            audioContextState: this.audioContext?.state
-          })
           
           if (!canPlayAudio) {
             const errorMsg = `Need user interaction to play audio (${Math.round(timeSinceInteraction/1000)}s since last interaction, focus: ${hasDocumentFocus}, visible: ${isDocumentVisible}, context: ${this.audioContext?.state})`
@@ -567,18 +557,16 @@ export class GoogleTTSService {
             return
           }
           
-          audioDebugSession.addLog('GOOGLE_TTS_IOS_CALLING_PLAY_SYNCHRONOUS', {})
-          // For iOS, call play() immediately to preserve user interaction context
-          // Don't wait for audio context resume as it can break the interaction chain
-          audio.play().then(() => {
-            audioDebugSession.addLog('GOOGLE_TTS_IOS_PLAY_SUCCESS', {})
-            // Resume audio context after successful play
-            this.resumeAudioContext().catch((contextError) => {
-              audioDebugSession.addLog('GOOGLE_TTS_IOS_CONTEXT_RESUME_AFTER_PLAY', {
-                error: contextError instanceof Error ? contextError.message : contextError?.toString()
-              })
-            })
-          }).catch(async (playError) => {
+          audioDebugSession.addLog('GOOGLE_TTS_IOS_RESUME_CONTEXT', {})
+          // Ensure audio context is running first
+          this.resumeAudioContext().then(() => {
+            audioDebugSession.addLog('GOOGLE_TTS_IOS_CONTEXT_RESUMED', {})
+            // Add a longer delay for iOS to ensure context is ready
+            setTimeout(() => {
+              audioDebugSession.addLog('GOOGLE_TTS_IOS_CALLING_PLAY', {})
+              audio.play().then(() => {
+                audioDebugSession.addLog('GOOGLE_TTS_IOS_PLAY_SUCCESS', {})
+              }).catch((playError) => {
                 audioDebugSession.addLog('GOOGLE_TTS_IOS_PLAY_ERROR', {
                   errorName: playError.name,
                   errorMessage: playError.message,
@@ -586,26 +574,6 @@ export class GoogleTTSService {
                   audioContextState: this.audioContext?.state,
                   audioSrcLength: audio.src.length
                 })
-                
-                // For NotSupportedError with long inactivity, trigger permission re-check
-                if (playError.name === 'NotSupportedError' && timeSinceInteraction > 10000) {
-                  audioDebugSession.addLog('GOOGLE_TTS_IOS_TIMEOUT_PERMISSION_TRIGGER', {
-                    timeSinceInteraction,
-                    action: 'triggering_permission_recheck'
-                  })
-                  
-                  // Import and use the global audio permission context
-                  const { getGlobalAudioPermissionContext } = await import('../utils/audio')
-                  const permissionContext = getGlobalAudioPermissionContext()
-                  
-                  if (permissionContext) {
-                    // Set needs permission to trigger the prompt
-                    permissionContext.setNeedsPermission(true)
-                    // Check permission which should now show the prompt
-                    await permissionContext.checkAudioPermission()
-                  }
-                }
-                
                 logAudioIssue('iOS Audio Play Error', playError, {
                   errorName: playError.name,
                   errorMessage: playError.message,
@@ -615,6 +583,15 @@ export class GoogleTTSService {
                 })
                 clearTimeoutAndRejectHandler(playError)
               })
+            }, 100) // Longer delay for iOS
+          }).catch((contextError) => {
+            audioDebugSession.addLog('GOOGLE_TTS_IOS_CONTEXT_ERROR', {
+              error: contextError instanceof Error ? contextError.message : contextError?.toString(),
+              errorType: contextError instanceof Error ? contextError.constructor?.name : typeof contextError
+            })
+            logAudioIssue('iOS Audio Context Error', contextError)
+            clearTimeoutAndRejectHandler(contextError)
+          })
         } else {
           audioDebugSession.addLog('GOOGLE_TTS_NON_IOS_CALLING_PLAY', {})
           audio.play().then(() => {
@@ -634,8 +611,6 @@ export class GoogleTTSService {
       }
     })
   }
-
-  // Removed optimizedWebSpeechForIOS method - using only Google TTS now
 
   // Fallback to Web Speech API for iOS when Google TTS fails
   private async fallbackToWebSpeech(text: string): Promise<void> {
@@ -740,7 +715,56 @@ export class GoogleTTSService {
       isIOS: isIOS()
     })
     
-    // Always use Google TTS - removed iOS-specific bypasses per user request
+    // iOS-specific: Try Google TTS first, then fallback to Web Speech
+    if (isIOS()) {
+      try {
+        audioDebugSession.addLog('GOOGLE_TTS_IOS_PRIMARY_ATTEMPT', {})
+        const audioData = await this.synthesizeSpeech(text, voiceType, useSSML, customAudioConfig)
+        audioDebugSession.addLog('GOOGLE_TTS_IOS_SYNTHESIS_SUCCESS', {
+          audioDataLength: audioData.length
+        })
+        await this.playAudioFromData(audioData)
+        audioDebugSession.addLog('GOOGLE_TTS_IOS_PLAYBACK_SUCCESS', {})
+        return // Success with Google TTS
+      } catch (googleTTSError) {
+        // Check if this is a navigation interruption
+        const isNavigationInterruption = googleTTSError instanceof Error && 
+          (googleTTSError.message.includes('interrupted by navigation') || 
+           googleTTSError.message.includes('interrupted by user'))
+        
+        if (isNavigationInterruption) {
+          console.log('🎵 iOS Google TTS interrupted by navigation (expected)')
+          throw googleTTSError
+        }
+        
+        // Enhanced error information for empty error objects
+        const errorInfo = {
+          text,
+          voiceType,
+          useSSML,
+          errorMessage: googleTTSError instanceof Error ? googleTTSError.message : 'Unknown error',
+          errorType: typeof googleTTSError,
+          errorKeys: Object.keys(googleTTSError || {}),
+          audioContextState: this.audioContext?.state,
+          userAgent: navigator.userAgent
+        }
+        
+        logAudioIssue('iOS Google TTS Failed', googleTTSError, errorInfo)
+        
+        // Add delay before fallback to prevent rapid failures
+        await new Promise(resolve => setTimeout(resolve, 200))
+        
+        // Try Web Speech as fallback
+        try {
+          console.log('🔄 iOS: Falling back to Web Speech API')
+          await this.fallbackToWebSpeech(text)
+          return
+        } catch (webSpeechError) {
+          logAudioIssue('iOS Web Speech Also Failed', webSpeechError, { text, originalError: googleTTSError })
+          throw new Error(`Both audio methods failed on iOS: ${googleTTSError}`)
+        }
+      }
+    }
     
     try {
       audioDebugSession.addLog('GOOGLE_TTS_NON_IOS_ATTEMPT', {})

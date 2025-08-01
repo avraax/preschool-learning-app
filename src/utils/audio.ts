@@ -5,7 +5,6 @@
 export { 
   audioController as audioManager, 
   setGlobalAudioPermissionContext,
-  getGlobalAudioPermissionContext,
   AudioController 
 } from './AudioController'
 

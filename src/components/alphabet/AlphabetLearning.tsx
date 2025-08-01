@@ -198,9 +198,6 @@ const AlphabetLearning: React.FC = () => {
             transition={{ duration: 0.3 }}
           >
             <Card
-              role="presentation"  // Prevent VoiceOver announcements
-              aria-hidden="true"  // Hide from screen readers
-              tabIndex={-1}  // Remove from tab order
               sx={{
                 maxWidth: { xs: 160, md: 200 },
                 mx: 'auto',
@@ -239,9 +236,6 @@ const AlphabetLearning: React.FC = () => {
             >
               <Typography
                 variant="h1"
-                aria-hidden="true"  // Prevent VoiceOver from reading the large letter
-                aria-label=""  // Empty label
-                role="img"  // Treat as decorative image
                 sx={{
                   fontSize: { xs: '3.5rem', md: '4.5rem' },
                   fontWeight: 700,
@@ -250,11 +244,7 @@ const AlphabetLearning: React.FC = () => {
                   lineHeight: 1,
                   textShadow: '1px 1px 2px rgba(25, 118, 210, 0.1)',
                   position: 'relative',
-                  zIndex: 1,
-                  WebkitUserSelect: 'none',  // Prevent text selection on iOS
-                  userSelect: 'none',
-                  WebkitTouchCallout: 'none',  // Disable iOS callout menu
-                  speak: 'none' as any  // Legacy CSS to prevent speech
+                  zIndex: 1
                 }}
               >
                 {DANISH_ALPHABET[currentIndex]}

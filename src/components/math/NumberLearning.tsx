@@ -77,9 +77,6 @@ const NumberLearning: React.FC = () => {
     
     const number = numbers[index]
     
-    // No need to explicitly update user interaction here
-    // The speakNumber method in AudioController already calls updateUserInteraction()
-    
     try {
       // Use faster speed for number counting (1.2 instead of default 0.8)
       await audio.speakNumber(number, 1.2)

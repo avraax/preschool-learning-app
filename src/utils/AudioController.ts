@@ -11,10 +11,6 @@ export const setGlobalAudioPermissionContext = (context: any) => {
   globalAudioPermissionContext = context
 }
 
-export const getGlobalAudioPermissionContext = () => {
-  return globalAudioPermissionContext
-}
-
 // Audio event listeners for state management
 type AudioEventListener = () => void
 type AudioCompleteListener = () => void
@@ -282,91 +278,21 @@ export class AudioController {
    * Check if audio permission is available
    */
   private async checkAudioPermission(): Promise<boolean> {
-    const { audioDebugSession } = await import('../utils/remoteConsole')
-    const permissionSessionId = `permission_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-    
-    audioDebugSession.addLog('PERMISSION_CHECK_START', {
-      permissionSessionId,
-      hasGlobalContext: !!globalAudioPermissionContext,
-      globalContextType: typeof globalAudioPermissionContext,
-      timestamp: Date.now()
-    })
-    
     if (!globalAudioPermissionContext) {
-      console.log('🎵 AudioController.checkAudioPermission: No global context, returning true')
-      audioDebugSession.addLog('PERMISSION_NO_GLOBAL_CONTEXT', {
-        permissionSessionId,
-        result: true,
-        reason: 'no_global_context_fallback'
-      })
       return true
     }
 
     try {
-      console.log('🎵 AudioController.checkAudioPermission: Setting needs permission')
       globalAudioPermissionContext.setNeedsPermission(true)
-      
-      audioDebugSession.addLog('PERMISSION_NEEDS_SET', {
-        permissionSessionId,
-        needsPermission: true
-      })
-      
-      console.log('🎵 AudioController.checkAudioPermission: Checking permission')
       const hasPermission = await globalAudioPermissionContext.checkAudioPermission()
-      console.log('🎵 AudioController.checkAudioPermission: Initial check result:', hasPermission)
-      
-      audioDebugSession.addLog('PERMISSION_INITIAL_CHECK', {
-        permissionSessionId,
-        hasPermission,
-        checkType: 'initial'
-      })
       
       if (!hasPermission) {
-        console.log('🎵 AudioController.checkAudioPermission: No permission, requesting')
-        
-        audioDebugSession.addLog('PERMISSION_REQUESTING', {
-          permissionSessionId,
-          action: 'requesting_permission'
-        })
-        
         const requestResult = await globalAudioPermissionContext.requestAudioPermission()
-        console.log('🎵 AudioController.checkAudioPermission: Request result:', requestResult)
-        
-        audioDebugSession.addLog('PERMISSION_REQUEST_RESULT', {
-          permissionSessionId,
-          requestResult,
-          finalResult: requestResult
-        })
-        
         return requestResult
       }
       
-      audioDebugSession.addLog('PERMISSION_CHECK_SUCCESS', {
-        permissionSessionId,
-        hasPermission,
-        finalResult: hasPermission
-      })
-      
       return hasPermission
     } catch (error) {
-      console.error('🎵 AudioController.checkAudioPermission: Error in permission check:', error)
-      
-      // Enhanced error logging for iOS debugging
-      audioDebugSession.addLog('PERMISSION_CHECK_ERROR_COMPREHENSIVE', {
-        permissionSessionId,
-        error: error instanceof Error ? error.message : String(error),
-        errorStack: error instanceof Error ? error.stack : undefined,
-        errorType: typeof error,
-        errorConstructor: error?.constructor?.name,
-        errorKeys: Object.keys(error || {}),
-        isEmptyObject: Object.keys(error || {}).length === 0,
-        isIOS: /iPad|iPhone|iPod/.test(navigator.userAgent),
-        hasGlobalContext: !!globalAudioPermissionContext,
-        globalContextType: typeof globalAudioPermissionContext,
-        userAgent: navigator.userAgent.substring(0, 100),
-        timestamp: Date.now()
-      })
-      
       return false
     }
   }
@@ -386,102 +312,29 @@ export class AudioController {
    * Basic speak function with queue management
    */
   async speak(text: string, voiceType: 'primary' | 'backup' | 'male' = 'primary', useSSML: boolean = true, customSpeed?: number): Promise<string> {
-    const { audioDebugSession } = await import('../utils/remoteConsole')
-    const speakSessionId = `speak_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-    
     console.log(`🎵 AudioController.speak: Queuing audio for text: "${text}"`)
-    
-    audioDebugSession.addLog('SPEAK_START', {
-      speakSessionId,
-      text: text.substring(0, 100) + (text.length > 100 ? '...' : ''),
-      textLength: text.length,
-      voiceType,
-      useSSML,
-      customSpeed,
-      timestamp: Date.now()
-    })
     
     return this.queueAudio(async () => {
       console.log(`🎵 AudioController.speak: Processing queued audio for text: "${text}"`)
       
-      audioDebugSession.addLog('SPEAK_PROCESSING_QUEUE', {
-        speakSessionId,
-        text: text.substring(0, 50),
-        queuePosition: 'processing'
-      })
-      
       // Update user interaction timestamp
-      console.log(`🎵 AudioController.speak: Updating user interaction`)
       this.updateUserInteraction()
       
-      audioDebugSession.addLog('SPEAK_USER_INTERACTION_UPDATED', {
-        speakSessionId,
-        hasGlobalContext: !!globalAudioPermissionContext
-      })
-      
       // Check audio permission before speaking
-      console.log(`🎵 AudioController.speak: Checking audio permission`)
       const hasPermission = await this.checkAudioPermission()
-      
-      audioDebugSession.addLog('SPEAK_PERMISSION_CHECK_RESULT', {
-        speakSessionId,
-        hasPermission,
-        hasGlobalContext: !!globalAudioPermissionContext,
-        globalContextType: typeof globalAudioPermissionContext
-      })
-      
       if (!hasPermission) {
         console.warn(`🎵 AudioController.speak: No audio permission, skipping: "${text}"`)
-        audioDebugSession.addLog('SPEAK_PERMISSION_DENIED', {
-          speakSessionId,
-          text: text.substring(0, 50),
-          reason: 'permission_check_failed'
-        })
         return
       }
       
       console.log(`🎵 AudioController.speak: Permission granted, calling googleTTS for: "${text}"`)
       const customAudioConfig = customSpeed ? { speakingRate: customSpeed } : undefined
       
-      audioDebugSession.addLog('SPEAK_CALLING_GOOGLE_TTS', {
-        speakSessionId,
-        text: text.substring(0, 50),
-        voiceType,
-        useSSML,
-        customAudioConfig
-      })
-      
       try {
         await this.googleTTS.synthesizeAndPlay(text, voiceType, useSSML, customAudioConfig)
         console.log(`🎵 AudioController.speak: Successfully completed synthesis for: "${text}"`)
-        
-        audioDebugSession.addLog('SPEAK_SUCCESS', {
-          speakSessionId,
-          text: text.substring(0, 50),
-          completedAt: Date.now()
-        })
       } catch (error) {
         console.error(`🎵 AudioController.speak: Error in googleTTS for: "${text}"`, error)
-        
-        // Enhanced error logging for iOS debugging
-        audioDebugSession.addLog('SPEAK_ERROR_COMPREHENSIVE', {
-          speakSessionId,
-          text: text.substring(0, 100) + (text.length > 100 ? '...' : ''),
-          voiceType,
-          useSSML,
-          customAudioConfig,
-          error: error instanceof Error ? error.message : String(error),
-          errorStack: error instanceof Error ? error.stack : undefined,
-          errorType: typeof error,
-          errorConstructor: error?.constructor?.name,
-          errorKeys: Object.keys(error || {}),
-          isEmptyObject: Object.keys(error || {}).length === 0,
-          isIOS: /iPad|iPhone|iPod/.test(navigator.userAgent),
-          hasGlobalContext: !!globalAudioPermissionContext,
-          speechSynthesisReady: !!window.speechSynthesis,
-          userAgent: navigator.userAgent.substring(0, 100)
-        })
-        
         throw error
       }
     })
@@ -727,92 +580,27 @@ export class AudioController {
 
   // Centralized game welcome audio system
   async playGameWelcome(gameType: string, voiceType: 'primary' | 'backup' | 'male' = 'primary'): Promise<string> {
-    // Create comprehensive logging session for debugging
-    const { audioDebugSession } = await import('../utils/remoteConsole')
-    const debugSessionId = `playGameWelcome_${gameType}_${Date.now()}`
-    
     console.log(`🎵 AudioController.playGameWelcome: Starting welcome audio for "${gameType}"`)
     
-    audioDebugSession.addLog('GAME_WELCOME_START', {
-      debugSessionId,
-      gameType,
-      voiceType,
-      timestamp: Date.now(),
-      isIOS: /iPad|iPhone|iPod/.test(navigator.userAgent),
-      hasGlobalContext: !!globalAudioPermissionContext,
-      userAgent: navigator.userAgent.substring(0, 100)
-    })
+    // Import game welcome messages dynamically to avoid circular dependencies
+    const { GAME_WELCOME_MESSAGES } = await import('../hooks/useGameEntryAudio')
+    
+    const welcomeMessage = GAME_WELCOME_MESSAGES[gameType as keyof typeof GAME_WELCOME_MESSAGES]
+    
+    if (!welcomeMessage) {
+      console.warn(`🎵 AudioController.playGameWelcome: No welcome message defined for game type: ${gameType}`)
+      return Promise.resolve('')
+    }
+
+    console.log(`🎵 AudioController.playGameWelcome: Found welcome message for "${gameType}": "${welcomeMessage}"`)
+    console.log(`🎵 AudioController.playGameWelcome: Calling speak() with message`)
     
     try {
-      // Import game welcome messages dynamically to avoid circular dependencies
-      console.log(`🎵 AudioController.playGameWelcome: Importing game messages`)
-      const { GAME_WELCOME_MESSAGES } = await import('../hooks/useGameEntryAudio')
-      
-      audioDebugSession.addLog('GAME_WELCOME_MESSAGES_IMPORTED', {
-        debugSessionId,
-        availableGameTypes: Object.keys(GAME_WELCOME_MESSAGES),
-        requestedGameType: gameType
-      })
-      
-      const welcomeMessage = GAME_WELCOME_MESSAGES[gameType as keyof typeof GAME_WELCOME_MESSAGES]
-      
-      if (!welcomeMessage) {
-        console.warn(`🎵 AudioController.playGameWelcome: No welcome message defined for game type: ${gameType}`)
-        audioDebugSession.addLog('GAME_WELCOME_MESSAGE_NOT_FOUND', {
-          debugSessionId,
-          gameType,
-          availableTypes: Object.keys(GAME_WELCOME_MESSAGES)
-        })
-        return Promise.resolve('')
-      }
-
-      console.log(`🎵 AudioController.playGameWelcome: Found welcome message for "${gameType}": "${welcomeMessage}"`)
-      audioDebugSession.addLog('GAME_WELCOME_MESSAGE_FOUND', {
-        debugSessionId,
-        gameType,
-        welcomeMessage,
-        messageLength: welcomeMessage.length
-      })
-      
-      console.log(`🎵 AudioController.playGameWelcome: Calling speak() with message`)
-      audioDebugSession.addLog('GAME_WELCOME_CALLING_SPEAK', {
-        debugSessionId,
-        gameType,
-        voiceType,
-        useSSML: true
-      })
-      
       const result = await this.speak(welcomeMessage, voiceType, true)
-      
       console.log(`🎵 AudioController.playGameWelcome: Successfully completed speak() for "${gameType}"`)
-      audioDebugSession.addLog('GAME_WELCOME_SUCCESS', {
-        debugSessionId,
-        gameType,
-        result: typeof result,
-        resultLength: result?.length || 0
-      })
-      
       return result
     } catch (error) {
       console.error(`🎵 AudioController.playGameWelcome: Error in speak() for "${gameType}":`, error)
-      
-      // Comprehensive error logging
-      audioDebugSession.addLog('GAME_WELCOME_ERROR_COMPREHENSIVE', {
-        debugSessionId,
-        gameType,
-        voiceType,
-        error: error instanceof Error ? error.message : String(error),
-        errorStack: error instanceof Error ? error.stack : undefined,
-        errorType: typeof error,
-        errorConstructor: error?.constructor?.name,
-        errorKeys: Object.keys(error || {}),
-        isEmptyObject: Object.keys(error || {}).length === 0,
-        isIOS: /iPad|iPhone|iPod/.test(navigator.userAgent),
-        hasGlobalContext: !!globalAudioPermissionContext,
-        globalContextType: typeof globalAudioPermissionContext,
-        timestamp: Date.now()
-      })
-      
       throw error
     }
   }

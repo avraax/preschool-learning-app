@@ -20,8 +20,8 @@ const lastImmediateExecution: Map<string, number> = new Map()
 
 export const entryAudioManager = {
   // Schedule entry audio for a game
-  scheduleEntryAudio(gameType: string, _delay: number = 0): void {
-    console.log(`🎵 EntryAudioManager: Playing entry audio immediately for "${gameType}" (delay ignored)`)
+  scheduleEntryAudio(gameType: string, delay: number = 1000): void {
+    console.log(`🎵 EntryAudioManager: Scheduling entry audio for "${gameType}" with ${delay}ms delay`)
     
     // Check if already played or playing
     if (playedGames.has(gameType) || playingGames.has(gameType)) {
@@ -35,9 +35,23 @@ export const entryAudioManager = {
       return
     }
     
-    // Always play immediately - no delays, no scheduling
-    console.log(`🎵 EntryAudioManager: Playing entry audio immediately`)
-    this.playEntryAudio(gameType)
+    // Schedule the audio
+    const timeoutId = setTimeout(() => {
+      console.log(`🎵 EntryAudioManager: Timeout fired for "${gameType}", attempting to play entry audio`)
+      pendingTimeouts.delete(gameType)
+      
+      // Double-check not already played
+      if (playedGames.has(gameType)) {
+        console.log(`🎵 EntryAudioManager: Entry audio for "${gameType}" already played after timeout, skipping`)
+        return
+      }
+      
+      // Play the audio
+      this.playEntryAudio(gameType)
+    }, delay)
+    
+    pendingTimeouts.set(gameType, timeoutId)
+    console.log(`🎵 EntryAudioManager: Entry audio for "${gameType}" scheduled successfully`)
   },
   
   // Play entry audio immediately
