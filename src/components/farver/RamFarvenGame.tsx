@@ -316,7 +316,7 @@ const RamFarvenGame: React.FC = () => {
           flex: 1,
           display: 'flex',
           flexDirection: 'column',
-          py: { xs: 2, md: 3 },
+          py: { xs: 1, sm: 1.5, md: 2 },
           overflow: 'hidden'
         }}
       >
@@ -329,15 +329,15 @@ const RamFarvenGame: React.FC = () => {
           minHeight: 0
         }}>
           {/* Target Display */}
-          <Box sx={{ textAlign: 'center', mb: { xs: 2, md: 3 }, flex: '0 0 auto' }}>
+          <Box sx={{ textAlign: 'center', mb: { xs: 1, sm: 1.5, md: 2 }, flex: '0 0 auto' }}>
             <motion.div
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ duration: 0.5 }}
             >
               <Box sx={{
-                width: { xs: 160, md: 200 },
-                height: { xs: 160, md: 200 },
+                width: { xs: 120, sm: 140, md: 160, lg: 200 },
+                height: { xs: 120, sm: 140, md: 160, lg: 200 },
                 borderRadius: '50%',
                 backgroundColor: gameState.targetColor.hex,
                 border: '3px solid white',
@@ -348,13 +348,13 @@ const RamFarvenGame: React.FC = () => {
                 alignItems: 'center',
                 justifyContent: 'center'
               }}>
-                <Typography sx={{ fontSize: { xs: '2.5rem', md: '3rem' } }}>🎨</Typography>
+                <Typography sx={{ fontSize: { xs: '2rem', sm: '2.25rem', md: '2.5rem', lg: '3rem' } }}>🎨</Typography>
               </Box>
             </motion.div>
           </Box>
 
           {/* Repeat Instructions Button */}
-          <Box sx={{ textAlign: 'center', mb: { xs: 2, md: 3 }, flex: '0 0 auto' }}>
+          <Box sx={{ textAlign: 'center', mb: { xs: 1, sm: 1.5, md: 2 }, flex: '0 0 auto' }}>
             <ColorRepeatButton 
               onClick={repeatInstructions}
               disabled={!entryAudioComplete}
@@ -368,7 +368,7 @@ const RamFarvenGame: React.FC = () => {
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'flex-start',
-            gap: 2,
+            gap: { xs: 1, sm: 1.5, md: 2 },
             minHeight: 0
           }}>
             <DndContext 
@@ -377,12 +377,12 @@ const RamFarvenGame: React.FC = () => {
               collisionDetection={closestCenter}
             >
               {/* Mixing Zone */}
-              <Box sx={{ textAlign: 'center', mb: { xs: 1, md: 2 }, flex: '0 0 auto' }}>
+              <Box sx={{ textAlign: 'center', mb: { xs: 0.5, sm: 1, md: 1.5 }, flex: '0 0 auto' }}>
                 <DroppableZone
                   id="mixing-zone"
                   style={{
-                    width: window.innerWidth < 768 ? 160 : 200,
-                    height: window.innerWidth < 768 ? 160 : 200,
+                    width: window.innerWidth < 600 ? 120 : window.innerWidth < 900 ? 140 : window.innerWidth < 1200 ? 160 : 200,
+                    height: window.innerWidth < 600 ? 120 : window.innerWidth < 900 ? 140 : window.innerWidth < 1200 ? 160 : 200,
                     borderRadius: '50%',
                     border: '4px dashed #E65100',
                     backgroundColor: gameState.mixingZone.length === 2 
@@ -415,8 +415,8 @@ const RamFarvenGame: React.FC = () => {
                         }}
                       >
                         <Box sx={{
-                          width: { xs: 50, md: 60 },
-                          height: { xs: 50, md: 60 },
+                          width: { xs: 40, sm: 45, md: 50, lg: 60 },
+                          height: { xs: 40, sm: 45, md: 50, lg: 60 },
                           borderRadius: '50% 50% 50% 0',
                           transform: 'rotate(135deg)',
                           backgroundColor: color.hex,
@@ -433,8 +433,8 @@ const RamFarvenGame: React.FC = () => {
               <Box sx={{ 
                 display: 'grid',
                 gridTemplateColumns: 'repeat(5, 1fr)',
-                gap: { xs: 1, md: 2 },
-                maxWidth: '600px',
+                gap: { xs: 0.75, sm: 1, md: 1.5, lg: 2 },
+                maxWidth: { xs: '400px', sm: '450px', md: '500px', lg: '600px' },
                 mx: 'auto',
                 px: 1,
                 flex: '0 0 auto'
@@ -466,8 +466,8 @@ const RamFarvenGame: React.FC = () => {
                         data={color}
                       >
                         <Box sx={{
-                          width: { xs: '60px', md: '70px' },
-                          height: { xs: '60px', md: '70px' },
+                          width: { xs: '50px', sm: '55px', md: '60px', lg: '70px' },
+                          height: { xs: '50px', sm: '55px', md: '60px', lg: '70px' },
                           borderRadius: '50% 50% 50% 0',
                           transform: 'rotate(135deg)',
                           backgroundColor: color.hex,
