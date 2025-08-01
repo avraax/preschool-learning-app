@@ -72,6 +72,7 @@ const LearningGrid: React.FC<LearningGridProps> = ({
           >
             <Card 
                 onClick={disabled ? undefined : () => onItemClick(index)}
+                role="presentation"  // Prevent VoiceOver from announcing as button
                 sx={{ 
                   height: '100%',
                   cursor: disabled ? 'default' : 'pointer',
@@ -103,6 +104,7 @@ const LearningGrid: React.FC<LearningGridProps> = ({
                 >
                   <Typography 
                     variant="h4"
+                    aria-hidden="true"  // Prevent VoiceOver from reading the text
                     sx={{ 
                       fontWeight: 700,
                       color: index === currentIndex ? 'secondary.dark' : 'primary.dark',
