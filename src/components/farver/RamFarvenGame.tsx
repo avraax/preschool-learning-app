@@ -328,6 +328,15 @@ const RamFarvenGame: React.FC = () => {
           flexDirection: 'column',
           minHeight: 0
         }}>
+          {/* Repeat Instructions Button */}
+          <Box sx={{ textAlign: 'center', mb: { xs: 1, sm: 1.5, md: 2 }, flex: '0 0 auto' }}>
+            <ColorRepeatButton 
+              onClick={repeatInstructions}
+              disabled={!entryAudioComplete}
+              label="🎵 Hör igen"
+            />
+          </Box>
+
           {/* Target Display */}
           <Box sx={{ textAlign: 'center', mb: { xs: 1, sm: 1.5, md: 2 }, flex: '0 0 auto' }}>
             <motion.div
@@ -351,15 +360,6 @@ const RamFarvenGame: React.FC = () => {
                 <Typography sx={{ fontSize: { xs: '2rem', sm: '2.25rem', md: '2.5rem', lg: '3rem' } }}>🎨</Typography>
               </Box>
             </motion.div>
-          </Box>
-
-          {/* Repeat Instructions Button */}
-          <Box sx={{ textAlign: 'center', mb: { xs: 1, sm: 1.5, md: 2 }, flex: '0 0 auto' }}>
-            <ColorRepeatButton 
-              onClick={repeatInstructions}
-              disabled={!entryAudioComplete}
-              label="🎵 Hör igen"
-            />
           </Box>
 
           {/* Game Area */}
