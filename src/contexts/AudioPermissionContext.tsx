@@ -147,11 +147,11 @@ export const AudioPermissionProvider: React.FC<AudioPermissionProviderProps> = (
       isDocumentVisible
     })
     
-    // If we have recent interaction and focus, audio should work
-    if (hasRecentInteraction && hasDocumentFocus && isDocumentVisible) {
+    // If we have recent interaction OR focus and visibility, audio should work
+    if (hasRecentInteraction || (hasDocumentFocus && isDocumentVisible)) {
       audioDebugSession.addLog('PERMISSION_IOS_INTERACTION_SUCCESS', {
         result: true,
-        reason: 'recent_interaction_with_focus'
+        reason: hasRecentInteraction ? 'recent_interaction' : 'focus_and_visibility'
       })
       return true
     }
@@ -175,8 +175,8 @@ export const AudioPermissionProvider: React.FC<AudioPermissionProviderProps> = (
         })
         audioContext.close()
         return true
-      } else if (audioContext.state === 'suspended' && hasRecentInteraction) {
-        // Try to resume only if we have recent interaction
+      } else if (audioContext.state === 'suspended' && (hasRecentInteraction || isDocumentVisible)) {
+        // Try to resume if we have recent interaction OR document is visible
         try {
           await audioContext.resume()
           audioDebugSession.addLog('PERMISSION_AUDIOCONTEXT_RESUMED', {
@@ -333,7 +333,7 @@ export const AudioPermissionProvider: React.FC<AudioPermissionProviderProps> = (
   const checkAudioPermissionInternal = async (): Promise<boolean> => {
     const { audioDebugSession } = await import('../utils/remoteConsole')
     const timeSinceInteraction = Date.now() - lastInteractionRef.current
-    const hasRecentInteraction = timeSinceInteraction < 10000 // 10 seconds
+    const hasRecentInteraction = timeSinceInteraction < 30000 // Extended to 30 seconds for entry audio
     const hasDocumentFocus = document.hasFocus()
     const isDocumentVisible = !document.hidden
 
@@ -353,6 +353,30 @@ export const AudioPermissionProvider: React.FC<AudioPermissionProviderProps> = (
       })
       setState(prev => ({ ...prev, hasPermission }))
       return hasPermission
+    }
+    
+    // iOS Safari has a strict 10-second timeout for audio playback
+    // If it's been more than 10 seconds and audio is needed, we need to re-prompt
+    if (timeSinceInteraction > 10000 && state.needsPermission) {
+      audioDebugSession.addLog('PERMISSION_IOS_TIMEOUT_DETECTED', {
+        timeSinceInteraction,
+        needsPermission: state.needsPermission,
+        action: 'will_show_prompt_for_timeout'
+      })
+      
+      // Reset permission state and show prompt again if not already shown
+      setState(prev => ({
+        ...prev,
+        hasPermission: false,
+        showPrompt: !sessionPromptShownRef.current
+      }))
+      
+      // Mark that we've shown the prompt in this session
+      if (!sessionPromptShownRef.current) {
+        sessionPromptShownRef.current = true
+      }
+      
+      return false
     }
 
     // For iOS: Always try the technical test first to see if audio actually works
