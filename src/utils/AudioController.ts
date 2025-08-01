@@ -283,20 +283,41 @@ export class AudioController {
    */
   private async checkAudioPermission(): Promise<boolean> {
     if (!globalAudioPermissionContext) {
+      console.log('🎵 AudioController.checkAudioPermission: No global context, returning true')
       return true
     }
 
     try {
+      console.log('🎵 AudioController.checkAudioPermission: Setting needs permission')
       globalAudioPermissionContext.setNeedsPermission(true)
+      
+      console.log('🎵 AudioController.checkAudioPermission: Checking permission')
       const hasPermission = await globalAudioPermissionContext.checkAudioPermission()
+      console.log('🎵 AudioController.checkAudioPermission: Initial check result:', hasPermission)
       
       if (!hasPermission) {
+        console.log('🎵 AudioController.checkAudioPermission: No permission, requesting')
         const requestResult = await globalAudioPermissionContext.requestAudioPermission()
+        console.log('🎵 AudioController.checkAudioPermission: Request result:', requestResult)
         return requestResult
       }
       
       return hasPermission
     } catch (error) {
+      console.error('🎵 AudioController.checkAudioPermission: Error in permission check:', error)
+      
+      // Enhanced error logging for iOS debugging
+      const { audioDebugSession } = await import('../utils/remoteConsole')
+      audioDebugSession.addLog('AUDIO_CONTROLLER_PERMISSION_ERROR', {
+        error: error instanceof Error ? error.message : String(error),
+        errorStack: error instanceof Error ? error.stack : undefined,
+        errorType: typeof error,
+        isIOS: /iPad|iPhone|iPod/.test(navigator.userAgent),
+        hasGlobalContext: !!globalAudioPermissionContext,
+        userAgent: navigator.userAgent,
+        timeSinceLastUpdate: 'tracked_by_permission_context'
+      })
+      
       return false
     }
   }
@@ -339,6 +360,24 @@ export class AudioController {
         console.log(`🎵 AudioController.speak: Successfully completed synthesis for: "${text}"`)
       } catch (error) {
         console.error(`🎵 AudioController.speak: Error in googleTTS for: "${text}"`, error)
+        
+        // Enhanced error logging for iOS debugging
+        const { audioDebugSession } = await import('../utils/remoteConsole')
+        audioDebugSession.addLog('AUDIO_CONTROLLER_SPEAK_ERROR', {
+          text: text.substring(0, 100) + (text.length > 100 ? '...' : ''),
+          voiceType,
+          useSSML,
+          customAudioConfig,
+          error: error instanceof Error ? error.message : String(error),
+          errorStack: error instanceof Error ? error.stack : undefined,
+          errorType: typeof error,
+          isIOS: /iPad|iPhone|iPod/.test(navigator.userAgent),
+          hasGlobalContext: !!globalAudioPermissionContext,
+          audioContextState: 'managed_by_google_tts',
+          speechSynthesisReady: !!window.speechSynthesis,
+          userAgent: navigator.userAgent
+        })
+        
         throw error
       }
     })
@@ -605,6 +644,21 @@ export class AudioController {
       return result
     } catch (error) {
       console.error(`🎵 AudioController.playGameWelcome: Error in speak() for "${gameType}":`, error)
+      
+      // Log detailed error information for iOS debugging
+      const { audioDebugSession } = await import('../utils/remoteConsole')
+      audioDebugSession.addLog('AUDIO_CONTROLLER_GAME_WELCOME_ERROR', {
+        gameType,
+        error: error instanceof Error ? error.message : String(error),
+        errorStack: error instanceof Error ? error.stack : undefined,
+        errorType: typeof error,
+        voiceType,
+        welcomeMessage: welcomeMessage?.substring(0, 100),
+        isIOS: /iPad|iPhone|iPod/.test(navigator.userAgent),
+        hasGlobalContext: !!globalAudioPermissionContext,
+        userAgent: navigator.userAgent
+      })
+      
       throw error
     }
   }

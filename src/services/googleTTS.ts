@@ -533,14 +533,24 @@ export class GoogleTTSService {
         
         // iOS-specific play handling
         if (isIOS()) {
-          // Check if we need user interaction - be more lenient for navigation scenarios
+          // Check if we need user interaction - be more lenient for entry audio and navigation
           const timeSinceInteraction = Date.now() - this.lastUserInteraction
-          const hasRecentInteraction = timeSinceInteraction < 10000 // Increased from 3s to 10s
+          const hasRecentInteraction = timeSinceInteraction < 30000 // Increased to 30s for entry audio
           const hasDocumentFocus = document.hasFocus()
           const isDocumentVisible = !document.hidden
           
-          // More forgiving check: allow if any of these conditions are met
-          const canPlayAudio = hasRecentInteraction || (hasDocumentFocus && isDocumentVisible)
+          // Even more forgiving check for entry audio: allow if document is focused and visible OR has recent interaction
+          const canPlayAudio = hasRecentInteraction || (hasDocumentFocus && isDocumentVisible) || isDocumentVisible
+          
+          // Enhanced logging for iOS debugging
+          audioDebugSession.addLog('GOOGLE_TTS_IOS_PERMISSION_CHECK', {
+            timeSinceInteraction,
+            hasRecentInteraction,
+            hasDocumentFocus,
+            isDocumentVisible,
+            canPlayAudio,
+            audioContextState: this.audioContext?.state
+          })
           
           if (!canPlayAudio) {
             const errorMsg = `Need user interaction to play audio (${Math.round(timeSinceInteraction/1000)}s since last interaction, focus: ${hasDocumentFocus}, visible: ${isDocumentVisible}, context: ${this.audioContext?.state})`
@@ -566,7 +576,7 @@ export class GoogleTTSService {
               audioDebugSession.addLog('GOOGLE_TTS_IOS_CALLING_PLAY', {})
               audio.play().then(() => {
                 audioDebugSession.addLog('GOOGLE_TTS_IOS_PLAY_SUCCESS', {})
-              }).catch((playError) => {
+              }).catch(async (playError) => {
                 audioDebugSession.addLog('GOOGLE_TTS_IOS_PLAY_ERROR', {
                   errorName: playError.name,
                   errorMessage: playError.message,
@@ -574,6 +584,26 @@ export class GoogleTTSService {
                   audioContextState: this.audioContext?.state,
                   audioSrcLength: audio.src.length
                 })
+                
+                // For NotSupportedError with long inactivity, trigger permission re-check
+                if (playError.name === 'NotSupportedError' && timeSinceInteraction > 10000) {
+                  audioDebugSession.addLog('GOOGLE_TTS_IOS_TIMEOUT_PERMISSION_TRIGGER', {
+                    timeSinceInteraction,
+                    action: 'triggering_permission_recheck'
+                  })
+                  
+                  // Import and use the global audio permission context
+                  const { getGlobalAudioPermissionContext } = await import('../utils/audio')
+                  const permissionContext = getGlobalAudioPermissionContext()
+                  
+                  if (permissionContext) {
+                    // Set needs permission to trigger the prompt
+                    permissionContext.setNeedsPermission(true)
+                    // Check permission which should now show the prompt
+                    await permissionContext.checkAudioPermission()
+                  }
+                }
+                
                 logAudioIssue('iOS Audio Play Error', playError, {
                   errorName: playError.name,
                   errorMessage: playError.message,
