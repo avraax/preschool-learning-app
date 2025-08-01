@@ -11,6 +11,10 @@ export const setGlobalAudioPermissionContext = (context: any) => {
   globalAudioPermissionContext = context
 }
 
+export const getGlobalAudioPermissionContext = () => {
+  return globalAudioPermissionContext
+}
+
 // Audio event listeners for state management
 type AudioEventListener = () => void
 type AudioCompleteListener = () => void
