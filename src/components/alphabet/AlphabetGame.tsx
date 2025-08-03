@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import {
@@ -20,9 +20,10 @@ import CelebrationEffect, { useCelebration } from '../common/CelebrationEffect'
 import { AlphabetScoreChip } from '../common/ScoreChip'
 import { AlphabetRepeatButton } from '../common/RepeatButton'
 import { useGameEntryAudio } from '../../hooks/useGameEntryAudio'
-import { entryAudioManager } from '../../utils/entryAudioManager'
 import { useGameState } from '../../hooks/useGameState'
 import { useAudio } from '../../hooks/useAudio'
+import { useDelayedAudio } from '../../hooks/useDelayedAudio'
+import { entryAudioManager } from '../../utils/entryAudioManager'
 
 // Full Danish alphabet including special characters
 const DANISH_ALPHABET = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'Æ', 'Ø', 'Å']
@@ -33,12 +34,14 @@ const AlphabetGame: React.FC = () => {
   const [showOptions, setShowOptions] = useState<string[]>([])
   const [entryAudioComplete, setEntryAudioComplete] = useState(false)
   
-  // Centralized audio system - replaces individual isPlaying state
-  const audio = useAudio({ componentId: 'AlphabetGame', stopOnUnmount: false })
+  // Centralized audio system - with proper unmount handling
+  const audio = useAudio({ componentId: 'AlphabetGame', stopOnUnmount: true })
   
   // Centralized game state management
   const { score, incrementScore, isScoreNarrating, handleScoreClick } = useGameState()
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null)
+  
+  // Consolidated delayed audio management
+  const { scheduleAudio, cancelScheduledAudio } = useDelayedAudio()
   
   // Character and celebration management
   const teacherCharacter = useCharacterState('wave')
@@ -52,30 +55,35 @@ const AlphabetGame: React.FC = () => {
     // Initial teacher greeting
     teacherCharacter.setCharacter('owl')
     teacherCharacter.wave()
-  }, [])
-
-  useEffect(() => {
-    // Register callback to start the game after entry audio completes
-    entryAudioManager.onComplete('alphabet', () => {
+    
+    // Set up entry audio completion callback
+    const handleEntryComplete = () => {
       setEntryAudioComplete(true)
-      // Add a small delay after entry audio before starting the question
+      // Delay before generating first question to ensure proper audio sequencing
       setTimeout(() => {
         generateNewQuestion()
       }, 500)
-    })
-    
-    // Cleanup function for timeouts - audio cleanup handled by useAudio hook
-    return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current)
-      }
     }
-  }, [])
+    
+    entryAudioManager.onComplete('alphabet', handleEntryComplete)
+    
+    // Cleanup function
+    return () => {
+      cancelScheduledAudio()
+      entryAudioManager.removeCallback('alphabet', handleEntryComplete)
+    }
+  }, []) // Empty dependency array to run only once
 
-  const generateNewQuestion = () => {
+  // Stabilize generateNewQuestion with useCallback to prevent recreation
+  const generateNewQuestion = useCallback(() => {
+    console.log('🎯 AlphabetGame: generateNewQuestion called')
+    console.log(`🎯 AlphabetGame: Current state - currentLetter: "${currentLetter}", showOptions: ${JSON.stringify(showOptions)}`)
+    
     // Pick a random letter from full Danish alphabet
     const letter = DANISH_ALPHABET[Math.floor(Math.random() * DANISH_ALPHABET.length)]
+    console.log(`🎯 AlphabetGame: New letter selected: ${letter}`)
     setCurrentLetter(letter)
+    console.log(`🎯 AlphabetGame: setCurrentLetter called with: ${letter}`)
     
     // Create 4 options including the correct answer
     const options = [letter]
@@ -87,70 +95,68 @@ const AlphabetGame: React.FC = () => {
       }
     }
     
-    setShowOptions(options.sort(() => Math.random() - 0.5))
+    const shuffledOptions = options.sort(() => Math.random() - 0.5)
+    console.log(`🎯 AlphabetGame: Options created: ${JSON.stringify(shuffledOptions)}`)
+    setShowOptions(shuffledOptions)
+    console.log(`🎯 AlphabetGame: setShowOptions called with: ${JSON.stringify(shuffledOptions)}`)
     
-    // Clear any existing timeout before setting a new one
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current)
-    }
     
-    // Use centralized audio system - no manual state management needed
+    // Use centralized audio system with proper async handling
     const playAudioAsync = async () => {
       try {
+        console.log(`🎯 AlphabetGame: About to speak quiz prompt for letter: ${letter}`)
         await audio.speakQuizPromptWithRepeat(DANISH_PHRASES.gamePrompts.findLetter(letter), letter)
+        console.log(`🎯 AlphabetGame: Quiz prompt audio completed for letter: ${letter}`)
       } catch (error) {
-        // Error handled by centralized audio system
+        console.error('🎯 AlphabetGame: Error playing question audio:', error)
       }
     }
     
     // Try immediate audio for iOS, delayed for others
     if (isIOS()) {
+      console.log('🎯 AlphabetGame: iOS detected, playing audio immediately')
       playAudioAsync()
     } else {
-      timeoutRef.current = setTimeout(playAudioAsync, 500)
+      console.log('🎯 AlphabetGame: Non-iOS, scheduling audio with 500ms delay')
+      scheduleAudio(playAudioAsync, 500)
     }
-  }
+    
+    console.log('🎯 AlphabetGame: generateNewQuestion completed')
+  }, [audio, scheduleAudio, currentLetter, showOptions]) // Stable dependencies
 
   const handleLetterClick = async (selectedLetter: string) => {
     if (audio.isPlaying) return
     
+    const isCorrect = selectedLetter === currentLetter
+    console.log(`🎯 AlphabetGame: Letter clicked: ${selectedLetter}, correct: ${isCorrect}`)
+    
     try {
-      if (selectedLetter === currentLetter) {
-        // Correct answer - celebrate!
-        incrementScore()
-        teacherCharacter.celebrate()
-        celebrate(score > 5 ? 'high' : 'medium')
-        
-        await audio.playWithCallback(
-          () => audio.announceGameResult(true),
-          () => {
-            // Shorter delay for iOS to preserve user interaction window
-            const delayTime = isIOS() ? 1000 : 3000
-            
-            setTimeout(() => {
-              stopCelebration()
-              teacherCharacter.point()
-              generateNewQuestion()
-            }, delayTime)
-          }
-        )
-      } else {
-        // Wrong answer - encourage
-        teacherCharacter.encourage()
-        await audio.playWithCallback(
-          () => audio.announceGameResult(false),
-          () => {
-            // Allow immediate interaction after audio completes
-            teacherCharacter.think()
-          }
-        )
-      }
+      // Use unified game result handler
+      await audio.handleCompleteGameResult({
+        isCorrect,
+        character: teacherCharacter,
+        celebrate,
+        stopCelebration,
+        incrementScore,
+        currentScore: score,
+        nextAction: isCorrect ? () => {
+          console.log('🎯 AlphabetGame: NextAction callback called - generating new question')
+          console.log('🎯 AlphabetGame: About to call generateNewQuestion()')
+          generateNewQuestion()
+          console.log('🎯 AlphabetGame: generateNewQuestion() call completed')
+        } : () => {
+          console.log('🎯 AlphabetGame: Wrong answer - character thinking')
+          teacherCharacter.think()
+        },
+        autoAdvanceDelay: isIOS() ? 1000 : 3000,
+        isIOS: isIOS()
+      })
     } catch (error) {
-      console.error('Error playing feedback:', error)
+      console.error('Error in unified game result handler:', error)
     }
   }
 
-  const repeatLetter = async () => {
+  const repeatLetter = useCallback(async () => {
     if (audio.isPlaying) return
     
     try {
@@ -158,7 +164,7 @@ const AlphabetGame: React.FC = () => {
     } catch (error) {
       console.error('Error repeating letter:', error)
     }
-  }
+  }, [audio, currentLetter])
 
   return (
     <Box 

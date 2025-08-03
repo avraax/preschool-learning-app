@@ -213,10 +213,15 @@ export class AudioController {
         
         // Call completion callback if provided
         if (queueItem.onComplete) {
+          console.log(`🎵 AudioController.processAudioQueue: Calling onComplete callback for audio item ${queueItem.id}`)
           queueItem.onComplete()
+          console.log(`🎵 AudioController.processAudioQueue: onComplete callback completed for audio item ${queueItem.id}`)
+        } else {
+          console.log(`🎵 AudioController.processAudioQueue: No onComplete callback for audio item ${queueItem.id}`)
         }
         
         // Notify audio complete listeners
+        console.log(`🎵 AudioController.processAudioQueue: Notifying audio complete listeners for ${queueItem.id}`)
         this.notifyAudioComplete(queueItem.id)
         
       } catch (error) {
@@ -603,6 +608,318 @@ export class AudioController {
       console.error(`🎵 AudioController.playGameWelcome: Error in speak() for "${gameType}":`, error)
       throw error
     }
+  }
+
+  /**
+   * Centralized method for playing game entry audio and then executing setup callback
+   * Consolidates the common pattern used across all task-based games
+   * @param gameType - The type of game (e.g., 'alphabet', 'math', 'addition')
+   * @param setupCallback - Function to call after entry audio completes
+   * @param delay - Delay in ms before calling setupCallback (default: 500)
+   */
+  async playGameEntryWithSetup(
+    gameType: string,
+    setupCallback: () => void,
+    delay: number = 500
+  ): Promise<void> {
+    console.log(`🎵 AudioController.playGameEntryWithSetup: Starting for "${gameType}" with ${delay}ms delay`)
+    
+    // Play the game welcome audio
+    await this.playGameWelcome(gameType)
+    
+    // Wait for the specified delay, then execute the setup callback
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        console.log(`🎵 AudioController.playGameEntryWithSetup: Executing setup callback for "${gameType}"`)
+        try {
+          setupCallback()
+          resolve()
+        } catch (error) {
+          console.error(`🎵 AudioController.playGameEntryWithSetup: Error in setup callback for "${gameType}":`, error)
+          resolve() // Still resolve to prevent hanging
+        }
+      }, delay)
+    })
+  }
+
+  /**
+   * Context-aware number speaking for different educational scenarios
+   * Consolidates various number speaking patterns across games
+   */
+  async speakNumberInContext(
+    number: number,
+    context: 'counting' | 'answer' | 'learning' | 'result' | 'instruction',
+    options?: { prefix?: string; suffix?: string; voiceType?: 'primary' | 'backup' | 'male' }
+  ): Promise<string> {
+    const { prefix = '', suffix = '', voiceType = 'primary' } = options || {}
+    
+    const contextPhrases = {
+      counting: `${number}`,
+      answer: `Svaret er ${number}`,
+      learning: `Dette er tallet ${number}`,
+      result: `Du fik ${number} rigtige!`,
+      instruction: `Tæl til ${number}`
+    }
+    
+    const baseText = contextPhrases[context] || `${number}`
+    const fullText = `${prefix}${baseText}${suffix}`.trim()
+    
+    return this.speak(fullText, voiceType, true)
+  }
+
+  /**
+   * Enhanced comparison problem speaking
+   * Consolidates the complex pattern from ComparisonGame
+   */
+  async speakComparisonProblem(
+    leftNum: number,
+    rightNum: number,
+    leftObjects: string,
+    rightObjects: string,
+    questionType: 'largest' | 'smallest' | 'equal',
+    voiceType: 'primary' | 'backup' | 'male' = 'primary'
+  ): Promise<string> {
+    return this.queueAudio(async () => {
+      // Danish numbers mapping (inline to avoid import issues)
+      const DANISH_NUMBERS = ['nul', 'en', 'to', 'tre', 'fire', 'fem', 'seks', 'syv', 'otte', 'ni', 'ti']
+      
+      // Speak left side
+      const leftText = `${DANISH_NUMBERS[leftNum] || leftNum} ${leftObjects}`
+      await this.speak(leftText, voiceType, true)
+      await new Promise(resolve => setTimeout(resolve, 500))
+      
+      // Speak right side  
+      const rightText = `${DANISH_NUMBERS[rightNum] || rightNum} ${rightObjects}`
+      await this.speak(rightText, voiceType, true)
+      await new Promise(resolve => setTimeout(resolve, 500))
+      
+      // Ask the comparison question
+      let questionText: string
+      if (questionType === 'equal') {
+        questionText = 'Er der lige mange på begge sider?'
+      } else if (questionType === 'largest') {
+        questionText = 'Hvor er der flest?'
+      } else {
+        questionText = 'Hvor er der færrest?'
+      }
+      
+      await this.speak(questionText, voiceType, true)
+    })
+  }
+
+  /**
+   * Enhanced math result announcement with context
+   * Consolidates success/error patterns from multiple games
+   */
+  async announceGameResultWithContext(
+    isCorrect: boolean,
+    details?: { 
+      correctAnswer?: string | number;
+      explanation?: string;
+      voiceType?: 'primary' | 'backup' | 'male';
+    }
+  ): Promise<string> {
+    const { correctAnswer, explanation, voiceType = 'primary' } = details || {}
+    
+    return this.queueAudio(async () => {
+      if (isCorrect) {
+        // Success announcement
+        const { getRandomSuccessPhrase } = await import('../config/danish-phrases')
+        await this.speak(getRandomSuccessPhrase(), voiceType, true)
+        
+        if (explanation) {
+          await new Promise(resolve => setTimeout(resolve, 300))
+          await this.speak(explanation, voiceType, true)
+        }
+      } else {
+        // Error with helpful feedback
+        const encouragement = 'Prøv igen!'
+        await this.speak(encouragement, voiceType, true)
+        
+        if (correctAnswer !== undefined) {
+          await new Promise(resolve => setTimeout(resolve, 300))
+          await this.speak(`Det rigtige svar er ${correctAnswer}`, voiceType, true)
+        }
+        
+        if (explanation) {
+          await new Promise(resolve => setTimeout(resolve, 300))
+          await this.speak(explanation, voiceType, true)
+        }
+      }
+    })
+  }
+
+  /**
+   * Play audio with callback when complete
+   * Used for sequencing audio and UI actions
+   */
+  async playWithCallback(
+    audioFunction: () => Promise<string>,
+    onComplete?: () => void
+  ): Promise<void> {
+    console.log('🎵 AudioController.playWithCallback: Starting audio with callback')
+    
+    if (!onComplete) {
+      // No callback needed, just play the audio
+      await audioFunction()
+      return
+    }
+    
+    // Create a promise that resolves when the audio completes and callback is called
+    return new Promise((resolve, reject) => {
+      const wrappedAudioFunction = async (): Promise<void> => {
+        try {
+          // Call the actual audio function (which returns an audioId)
+          await audioFunction()
+          console.log('🎵 AudioController.playWithCallback: Audio function completed')
+        } catch (error) {
+          console.error('🎵 AudioController.playWithCallback: Error in audio function:', error)
+          throw error
+        }
+      }
+      
+      // Queue audio with completion callback that resolves the promise
+      this.queueAudio(wrappedAudioFunction, 'normal', () => {
+        console.log('🎵 AudioController.playWithCallback: onComplete callback triggered')
+        try {
+          onComplete()
+          console.log('🎵 AudioController.playWithCallback: onComplete callback executed successfully')
+          resolve()
+        } catch (error) {
+          console.error('🎵 AudioController.playWithCallback: Error in onComplete callback:', error)
+          reject(error)
+        }
+      }).catch(error => {
+        console.error('🎵 AudioController.playWithCallback: Error in queueAudio:', error)
+        reject(error)
+      })
+    })
+  }
+
+  /**
+   * Unified game result handler with character animation, celebration, and audio
+   * Consolidates the common pattern found across all games
+   */
+  async handleCompleteGameResult(options: {
+    isCorrect: boolean;
+    character: any; // LottieCharacter instance
+    celebrate: (intensity: 'low' | 'medium' | 'high') => void;
+    stopCelebration: () => void;
+    incrementScore: () => void;
+    currentScore: number;
+    nextAction?: () => void;
+    correctAnswer?: string | number;
+    explanation?: string;
+    autoAdvanceDelay?: number;
+    isIOS?: boolean;
+    voiceType?: 'primary' | 'backup' | 'male';
+  }): Promise<void> {
+    const {
+      isCorrect,
+      character,
+      celebrate,
+      stopCelebration,
+      incrementScore,
+      currentScore,
+      nextAction,
+      correctAnswer,
+      explanation,
+      autoAdvanceDelay,
+      isIOS = false,
+      voiceType = 'primary'
+    } = options
+
+    if (isCorrect) {
+      // Success sequence
+      incrementScore()
+      character.celebrate()
+      celebrate(currentScore > 5 ? 'high' : 'medium')
+      
+      // Play success audio with callback for next action
+      await this.playWithCallback(
+        () => this.announceGameResult(true, voiceType),
+        () => {
+          console.log('🎵 AudioController.handleCompleteGameResult: Success audio completion callback triggered')
+          if (nextAction) {
+            // Shorter delay for iOS to preserve user interaction window
+            const delayTime = isIOS ? 1000 : (autoAdvanceDelay || 3000)
+            console.log(`🎵 AudioController.handleCompleteGameResult: Setting timeout for nextAction with delay: ${delayTime}ms`)
+            setTimeout(() => {
+              console.log('🎵 AudioController.handleCompleteGameResult: Timeout fired, executing nextAction')
+              stopCelebration()
+              character.wave()
+              nextAction()
+              console.log('🎵 AudioController.handleCompleteGameResult: nextAction execution completed')
+            }, delayTime)
+          } else {
+            console.log('🎵 AudioController.handleCompleteGameResult: No nextAction provided')
+          }
+        }
+      )
+    } else {
+      // Error sequence
+      character.think()
+      
+      // Play error audio with feedback
+      await this.playWithCallback(
+        () => this.announceGameResultWithContext(false, { 
+          correctAnswer, 
+          explanation, 
+          voiceType 
+        }),
+        () => {
+          // Allow immediate interaction after audio completes
+          if (nextAction) {
+            nextAction()
+          }
+        }
+      )
+    }
+  }
+
+  /**
+   * Specialized completion celebration for full game completion
+   * Used when completing entire games (like collecting all items)
+   */
+  async handleGameCompletion(options: {
+    character: any;
+    celebrate: (intensity: 'high') => void;
+    stopCelebration: () => void;
+    resetAction?: () => void;
+    completionMessage?: string;
+    autoResetDelay?: number;
+    voiceType?: 'primary' | 'backup' | 'male';
+  }): Promise<void> {
+    const {
+      character,
+      celebrate,
+      stopCelebration,
+      resetAction,
+      completionMessage = 'Fantastisk! Du klarede det hele!',
+      autoResetDelay = 3000,
+      voiceType = 'primary'
+    } = options
+
+    // Big celebration for game completion
+    character.celebrate()
+    celebrate('high')
+    
+    setTimeout(async () => {
+      try {
+        await this.speak(completionMessage, voiceType, true)
+      } catch (error) {
+        console.error('Error playing completion message:', error)
+      }
+      
+      // Auto-reset after celebration
+      if (resetAction) {
+        setTimeout(() => {
+          stopCelebration()
+          character.point()
+          resetAction()
+        }, autoResetDelay)
+      }
+    }, 300)
   }
 
   async playSuccessSound(): Promise<string> {
