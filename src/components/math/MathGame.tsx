@@ -20,7 +20,7 @@ import CelebrationEffect, { useCelebration } from '../common/CelebrationEffect'
 import { MathScoreChip } from '../common/ScoreChip'
 import { MathRepeatButton } from '../common/RepeatButton'
 import { useGameEntryAudio } from '../../hooks/useGameEntryAudio'
-import { entryAudioManager } from '../../utils/entryAudioManager'
+import { useGameAudioSetup } from '../../hooks/useGameAudioSetup'
 import { useGameState } from '../../hooks/useGameState'
 import { useAudio } from '../../hooks/useAudio'
 
@@ -40,7 +40,6 @@ const MathGame: React.FC = () => {
   const location = useLocation()
   const [currentProblem, setCurrentProblem] = useState<MathProblem | null>(null)
   const [showOptions, setShowOptions] = useState<number[]>([])
-  const [entryAudioComplete, setEntryAudioComplete] = useState(false)
   
   // Centralized audio system - replaces individual isPlaying state
   const audio = useAudio({ componentId: 'MathGame', stopOnUnmount: false })
@@ -50,8 +49,6 @@ const MathGame: React.FC = () => {
   
   // Determine game mode based on current route
   const gameMode: 'counting' | 'arithmetic' = location.pathname.includes('/counting') ? 'counting' : 'arithmetic'
-  
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null)
   
   // Character and celebration management
   const mathTeacher = useCharacterState('wave')
@@ -68,16 +65,18 @@ const MathGame: React.FC = () => {
 
   // Remove useEffect that set gameMode from difficulty settings
 
+  // Forward declaration for useGameAudioSetup to avoid hoisting issues
+  const generateNewQuestionRef = useRef<(() => void) | null>(null)
+  
+  // Timeout ref for cleanup
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null)
+  
+  // Use centralized game audio setup hook
+  const { ready: entryAudioComplete } = useGameAudioSetup('math', () => {
+    generateNewQuestionRef.current?.()
+  })
+  
   useEffect(() => {
-    // Register callback to start the game after entry audio completes
-    entryAudioManager.onComplete('math', () => {
-      setEntryAudioComplete(true)
-      // Add a small delay after entry audio before starting the question
-      setTimeout(() => {
-        generateNewQuestion()
-      }, 500)
-    })
-    
     // Cleanup function for timeouts - audio cleanup handled by useAudio hook
     return () => {
       if (timeoutRef.current) {
@@ -94,13 +93,13 @@ const MathGame: React.FC = () => {
       generateArithmeticQuestion()
     }
   }
+  
+  // Assign function to ref for useGameAudioSetup
+  useEffect(() => {
+    generateNewQuestionRef.current = generateNewQuestion
+  }, [generateNewQuestion])
 
   const generateCountingQuestion = () => {
-    // Clear any existing timeout first
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current)
-      timeoutRef.current = null
-    }
     
     // Generate a random number from 1 to MAX_NUMBER
     const number = Math.floor(Math.random() * MAX_NUMBER) + 1
@@ -116,25 +115,23 @@ const MathGame: React.FC = () => {
     setShowOptions(options.sort(() => Math.random() - 0.5))
     setCurrentProblem({ num1: number, num2: 0, operation: '+', answer: number })
     
-    // Use centralized audio system with proper delay
-    timeoutRef.current = setTimeout(() => {
-      audio.speakQuizPromptWithRepeat(
-        DANISH_PHRASES.gamePrompts.findNumber(number), 
-        number.toString()
-      ).catch(() => {
+    // Schedule delayed audio for the number
+    timeoutRef.current = setTimeout(async () => {
+      try {
+        await audio.speakQuizPromptWithRepeat(
+          DANISH_PHRASES.gamePrompts.findNumber(number), 
+          number.toString()
+        )
+      } catch (error) {
         // Error handled by centralized audio system
-      })
-      timeoutRef.current = null
+        console.error('Error playing counting question audio:', error)
+      } finally {
+        timeoutRef.current = null
+      }
     }, 500)
   }
 
   const generateArithmeticQuestion = () => {
-    // Clear any existing timeout first
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current)
-      timeoutRef.current = null
-    }
-    
     // Generate addition problem with reasonable range
     const num1 = Math.floor(Math.random() * MAX_ADDITION_NUMBER) + 1
     const num2 = Math.floor(Math.random() * MAX_ADDITION_NUMBER) + 1
@@ -155,71 +152,50 @@ const MathGame: React.FC = () => {
     
     setShowOptions(options.sort(() => Math.random() - 0.5))
     
-    // Use centralized audio system with proper delay
+    // Schedule delayed audio for the problem
     const problemText = `${problem.num1} ${problem.operation} ${problem.num2} = ?`
     timeoutRef.current = setTimeout(async () => {
       try {
         await audio.speakMathProblem(problemText)
       } catch (error) {
         // Error handled by centralized audio system
+        console.error('Error playing arithmetic question audio:', error)
+      } finally {
+        timeoutRef.current = null
       }
-      timeoutRef.current = null
     }, 500)
   }
 
   const handleAnswerClick = async (selectedAnswer: number) => {
     if (!currentProblem || audio.isPlaying) return
     
-    // Clear any pending audio timeouts
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current)
-      timeoutRef.current = null
-    }
+    
+    const isCorrect = selectedAnswer === currentProblem.answer
     
     try {
-      if (selectedAnswer === currentProblem.answer) {
-        // Correct answer - celebrate!
-        incrementScore()
-        mathTeacher.celebrate()
-        celebrate(score > 5 ? 'high' : 'medium')
-        
-        await audio.playWithCallback(
-          () => audio.announceGameResult(true),
-          () => {
-            // Shorter delay for iOS to preserve user interaction window
-            const delayTime = isIOS() ? 1000 : 3000
-            
-            setTimeout(() => {
-              stopCelebration()
-              mathTeacher.point()
-              generateNewQuestion()
-            }, delayTime)
-          }
-        )
-      } else {
-        // Wrong answer - encourage
-        mathTeacher.encourage()
-        await audio.playWithCallback(
-          () => audio.announceGameResult(false),
-          () => {
-            // Allow immediate interaction after audio completes
-            mathTeacher.think()
-          }
-        )
-      }
+      // Use unified game result handler
+      await audio.handleCompleteGameResult({
+        isCorrect,
+        character: mathTeacher,
+        celebrate,
+        stopCelebration,
+        incrementScore,
+        currentScore: score,
+        nextAction: isCorrect ? generateNewQuestion : () => {
+          mathTeacher.think()
+        },
+        correctAnswer: isCorrect ? undefined : currentProblem.answer,
+        autoAdvanceDelay: isIOS() ? 1000 : 3000,
+        isIOS: isIOS()
+      })
     } catch (error) {
-      console.error('Error playing feedback:', error)
+      console.error('Error in unified game result handler:', error)
     }
   }
 
   const repeatQuestion = () => {
     if (!currentProblem || audio.isPlaying) return
     
-    // Clear any pending timeouts
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current)
-      timeoutRef.current = null
-    }
     
     try {
       if (gameMode === 'counting') {

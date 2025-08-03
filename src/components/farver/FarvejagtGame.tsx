@@ -10,7 +10,7 @@ import CelebrationEffect, { useCelebration } from '../common/CelebrationEffect'
 import { ColorRepeatButton } from '../common/RepeatButton'
 import { ColorScoreChip } from '../common/ScoreChip'
 import { useGameEntryAudio } from '../../hooks/useGameEntryAudio'
-import { entryAudioManager } from '../../utils/entryAudioManager'
+import { useGameAudioSetup } from '../../hooks/useGameAudioSetup'
 import { useGameState } from '../../hooks/useGameState'
 import GameHeader from '../common/GameHeader'
 
@@ -99,7 +99,6 @@ const FarvejagtGame: React.FC = () => {
   const [_activeId, setActiveId] = useState<string | null>(null)
   const [targetColor, setTargetColor] = useState<string>('rød')
   const [, setTargetPhrase] = useState<string>('Find alle røde ting')
-  const [entryAudioComplete, setEntryAudioComplete] = useState(false)
   
   // Centralized game state management
   const { score, incrementScore, resetScore, isScoreNarrating, handleScoreClick } = useGameState()
@@ -115,6 +114,29 @@ const FarvejagtGame: React.FC = () => {
   
   // Centralized entry audio
   useGameEntryAudio({ gameType: 'farvejagt' })
+  
+  // Game initialization function
+  const initializeGame = () => {
+    const { items, targetCount, targetColor: newTargetColor, targetPhrase: newTargetPhrase } = generateGameItems()
+    
+    setGameItems(items)
+    setTotalTarget(targetCount)
+    setTargetColor(newTargetColor)
+    setTargetPhrase(newTargetPhrase)
+    
+    // Speak the target phrase after setup
+    setTimeout(() => {
+      try {
+        audio.speak(`${newTargetPhrase} og træk dem til cirklen.`)
+          .catch(() => {})
+      } catch (error) {
+        // Ignore audio errors
+      }
+    }, 300)
+  }
+  
+  // Use centralized game audio setup hook
+  const { ready: entryAudioComplete } = useGameAudioSetup('farvejagt', initializeGame)
 
   // Get target color hex for UI elements
   const getTargetColorHex = () => {
@@ -213,7 +235,7 @@ const FarvejagtGame: React.FC = () => {
     return { items, targetCount: selectedTargets.length, targetColor: target.color, targetPhrase: target.phrase }
   }
 
-  // Initialize game
+  // Initialize game character
   useEffect(() => {
     if (hasInitialized.current) return
     hasInitialized.current = true
@@ -221,28 +243,6 @@ const FarvejagtGame: React.FC = () => {
     // Initialize character
     colorHunter.setCharacter('fox')
     colorHunter.wave()
-    
-    // Register callback to start the game after entry audio completes
-    entryAudioManager.onComplete('farvejagt', () => {
-      setEntryAudioComplete(true)
-      // Add a small delay after entry audio before starting the game
-      setTimeout(() => {
-        const { items, targetCount, targetColor: newTargetColor, targetPhrase: newTargetPhrase } = generateGameItems()
-        
-        setGameItems(items)
-        setTotalTarget(targetCount)
-        setTargetColor(newTargetColor)
-        setTargetPhrase(newTargetPhrase)
-        
-        // NOW speak the target phrase (after entry audio completes)
-        try {
-          audio.speak(`${newTargetPhrase} og træk dem til cirklen.`)
-            .catch(() => {})
-        } catch (error) {
-          // Ignore audio errors
-        }
-      }, 500)
-    })
   }, [])
 
   // Check for game completion and trigger celebration

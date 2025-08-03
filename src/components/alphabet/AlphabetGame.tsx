@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import {
@@ -20,10 +20,9 @@ import CelebrationEffect, { useCelebration } from '../common/CelebrationEffect'
 import { AlphabetScoreChip } from '../common/ScoreChip'
 import { AlphabetRepeatButton } from '../common/RepeatButton'
 import { useGameEntryAudio } from '../../hooks/useGameEntryAudio'
+import { useGameAudioSetup } from '../../hooks/useGameAudioSetup'
 import { useGameState } from '../../hooks/useGameState'
 import { useAudio } from '../../hooks/useAudio'
-import { useDelayedAudio } from '../../hooks/useDelayedAudio'
-import { entryAudioManager } from '../../utils/entryAudioManager'
 
 // Full Danish alphabet including special characters
 const DANISH_ALPHABET = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'Æ', 'Ø', 'Å']
@@ -32,16 +31,12 @@ const AlphabetGame: React.FC = () => {
   const navigate = useNavigate()
   const [currentLetter, setCurrentLetter] = useState<string>('')
   const [showOptions, setShowOptions] = useState<string[]>([])
-  const [entryAudioComplete, setEntryAudioComplete] = useState(false)
   
-  // Centralized audio system - with proper unmount handling
-  const audio = useAudio({ componentId: 'AlphabetGame', stopOnUnmount: true })
+  // Centralized audio system - consistent with working MathGame
+  const audio = useAudio({ componentId: 'AlphabetGame', stopOnUnmount: false })
   
   // Centralized game state management
   const { score, incrementScore, isScoreNarrating, handleScoreClick } = useGameState()
-  
-  // Consolidated delayed audio management
-  const { scheduleAudio, cancelScheduledAudio } = useDelayedAudio()
   
   // Character and celebration management
   const teacherCharacter = useCharacterState('wave')
@@ -50,34 +45,37 @@ const AlphabetGame: React.FC = () => {
   // Centralized entry audio
   useGameEntryAudio({ gameType: 'alphabet' })
   
+  // Timeout ref for cleanup
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null)
+  
+  
+  // Forward declaration for useGameAudioSetup to avoid hoisting issues
+  const generateNewQuestionRef = useRef<(() => void) | null>(null)
+  
+  // Use centralized game audio setup hook (same pattern as MathGame)
+  const { ready: entryAudioComplete } = useGameAudioSetup('alphabet', () => {
+    generateNewQuestionRef.current?.()
+  })
   
   useEffect(() => {
     // Initial teacher greeting
     teacherCharacter.setCharacter('owl')
     teacherCharacter.wave()
-    
-    // Set up entry audio completion callback
-    const handleEntryComplete = () => {
-      setEntryAudioComplete(true)
-      // Delay before generating first question to ensure proper audio sequencing
-      setTimeout(() => {
-        generateNewQuestion()
-      }, 500)
-    }
-    
-    entryAudioManager.onComplete('alphabet', handleEntryComplete)
-    
-    // Cleanup function
+  }, [])
+  
+  useEffect(() => {
+    // Cleanup function for timeouts - audio cleanup handled by useAudio hook
     return () => {
-      cancelScheduledAudio()
-      entryAudioManager.removeCallback('alphabet', handleEntryComplete)
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
+        timeoutRef.current = null
+      }
     }
-  }, []) // Empty dependency array to run only once
+  }, [])
 
-  // Stabilize generateNewQuestion with useCallback to prevent recreation
-  const generateNewQuestion = useCallback(() => {
+  // Generate new question - same pattern as MathGame
+  const generateNewQuestion = () => {
     console.log('🎯 AlphabetGame: generateNewQuestion called')
-    console.log(`🎯 AlphabetGame: Current state - currentLetter: "${currentLetter}", showOptions: ${JSON.stringify(showOptions)}`)
     
     // Pick a random letter from full Danish alphabet
     const letter = DANISH_ALPHABET[Math.floor(Math.random() * DANISH_ALPHABET.length)]
@@ -100,29 +98,26 @@ const AlphabetGame: React.FC = () => {
     setShowOptions(shuffledOptions)
     console.log(`🎯 AlphabetGame: setShowOptions called with: ${JSON.stringify(shuffledOptions)}`)
     
-    
-    // Use centralized audio system with proper async handling
-    const playAudioAsync = async () => {
+    // Schedule delayed audio (same pattern as MathGame)
+    timeoutRef.current = setTimeout(async () => {
       try {
         console.log(`🎯 AlphabetGame: About to speak quiz prompt for letter: ${letter}`)
         await audio.speakQuizPromptWithRepeat(DANISH_PHRASES.gamePrompts.findLetter(letter), letter)
         console.log(`🎯 AlphabetGame: Quiz prompt audio completed for letter: ${letter}`)
       } catch (error) {
         console.error('🎯 AlphabetGame: Error playing question audio:', error)
+      } finally {
+        timeoutRef.current = null
       }
-    }
-    
-    // Try immediate audio for iOS, delayed for others
-    if (isIOS()) {
-      console.log('🎯 AlphabetGame: iOS detected, playing audio immediately')
-      playAudioAsync()
-    } else {
-      console.log('🎯 AlphabetGame: Non-iOS, scheduling audio with 500ms delay')
-      scheduleAudio(playAudioAsync, 500)
-    }
+    }, 500)
     
     console.log('🎯 AlphabetGame: generateNewQuestion completed')
-  }, [audio, scheduleAudio, currentLetter, showOptions]) // Stable dependencies
+  }
+  
+  // Assign function to ref for useGameAudioSetup
+  useEffect(() => {
+    generateNewQuestionRef.current = generateNewQuestion
+  }, [generateNewQuestion])
 
   const handleLetterClick = async (selectedLetter: string) => {
     if (audio.isPlaying) return
@@ -156,15 +151,16 @@ const AlphabetGame: React.FC = () => {
     }
   }
 
-  const repeatLetter = useCallback(async () => {
+  const repeatLetter = async () => {
     if (audio.isPlaying) return
     
     try {
+      console.log(`🎯 AlphabetGame: Repeating letter: ${currentLetter}`)
       await audio.speakQuizPromptWithRepeat(DANISH_PHRASES.gamePrompts.findLetter(currentLetter), currentLetter)
     } catch (error) {
       console.error('Error repeating letter:', error)
     }
-  }, [audio, currentLetter])
+  }
 
   return (
     <Box 

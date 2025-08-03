@@ -64,7 +64,7 @@ import { AlphabetRepeatButton } from '../common/RepeatButton'
 import { useAudio } from '../../hooks/useAudio'
 import { DANISH_PHRASES } from '../../config/danish-phrases'
 import { useGameEntryAudio } from '../../hooks/useGameEntryAudio'
-import { entryAudioManager } from '../../utils/entryAudioManager'
+import { useGameAudioSetup } from '../../hooks/useGameAudioSetup'
 import { useGameState } from '../../hooks/useGameState'
 import { categoryThemes } from '../../config/categoryThemes'
 import GameHeader from '../common/GameHeader'
@@ -126,8 +126,7 @@ const MemoryGame: React.FC = () => {
   const [matchedPairs, setMatchedPairs] = useState(0)
   const [isProcessing, setIsProcessing] = useState(false)
   const [wrongPairIds, setWrongPairIds] = useState<string[]>([])
-  const [entryAudioComplete, setEntryAudioComplete] = useState(false)
-  
+    
   // Centralized game state management
   const { score, incrementScore, resetScore, isScoreNarrating, handleScoreClick } = useGameState()
   
@@ -141,17 +140,15 @@ const MemoryGame: React.FC = () => {
   // Centralized entry audio
   useGameEntryAudio({ gameType: 'memory' })
   
+  // Use centralized game audio setup hook (no callback needed for memory game)
+  const { ready: entryAudioComplete } = useGameAudioSetup('memory', () => {})
+  
 
   useEffect(() => {
     // Initialize teacher character
     teacher.setCharacter('owl')
     teacher.wave()
     
-    // Register callback to start the game after entry audio completes
-    entryAudioManager.onComplete('memory', () => {
-      setEntryAudioComplete(true)
-      // Memory game is ready - cards are already generated
-    })
     
     // Generate cards immediately but don't show them until entry audio completes
     initializeGame()

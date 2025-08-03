@@ -22,7 +22,7 @@ import CelebrationEffect, { useCelebration } from '../common/CelebrationEffect'
 import { MathScoreChip } from '../common/ScoreChip'
 import { MathRepeatButton } from '../common/RepeatButton'
 import { useGameEntryAudio } from '../../hooks/useGameEntryAudio'
-import { entryAudioManager } from '../../utils/entryAudioManager'
+import { useGameAudioSetup } from '../../hooks/useGameAudioSetup'
 import { useGameState } from '../../hooks/useGameState'
 import { useAudio } from '../../hooks/useAudio'
 
@@ -33,13 +33,14 @@ const AdditionGame: React.FC = () => {
   const [num2, setNum2] = useState<number | null>(null)
   const [correctAnswer, setCorrectAnswer] = useState<number | null>(null)
   const [options, setOptions] = useState<number[]>([])
-  const [entryAudioComplete, setEntryAudioComplete] = useState(false)
-  
+    
   // Centralized audio system - replaces individual isPlaying state
   const audio = useAudio({ componentId: 'AdditionGame', stopOnUnmount: false })
   
   // Centralized game state management
   const { score, incrementScore, isScoreNarrating, handleScoreClick } = useGameState()
+  
+  // Timeout ref for cleanup
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
   
   // Character and celebration management
@@ -55,22 +56,20 @@ const AdditionGame: React.FC = () => {
     mathTeacher.wave()
   }, [])
 
-  useEffect(() => {
-    // Register callback to start the game after entry audio completes
-    entryAudioManager.onComplete('addition', () => {
-      setEntryAudioComplete(true)
-      // Add a small delay after entry audio before starting the question
-      setTimeout(() => {
-        generateNewProblem()
-      }, 500)
-    })
-  }, [])
+  // Forward declaration for useGameAudioSetup to avoid hoisting issues
+  const generateNewProblemRef = useRef<(() => void) | null>(null)
+  
+  // Use centralized game audio setup hook
+  const { ready: entryAudioComplete } = useGameAudioSetup('addition', () => {
+    generateNewProblemRef.current?.()
+  })
 
   useEffect(() => {
     // Cleanup function for timeouts - audio cleanup handled by useAudio hook
     return () => {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current)
+        timeoutRef.current = null
       }
     }
   }, [])
@@ -102,11 +101,17 @@ const AdditionGame: React.FC = () => {
     
     setOptions(Array.from(answerOptions).sort(() => Math.random() - 0.5))
     
-    // Schedule audio with proper delay (centralized pattern)
+    // Schedule delayed audio for the problem
+    // Schedule delayed audio for the problem
     timeoutRef.current = setTimeout(() => {
       speakProblem(firstNum, secondNum)
     }, 800)
   }
+  
+  // Assign function to ref for useGameAudioSetup
+  useEffect(() => {
+    generateNewProblemRef.current = generateNewProblem
+  }, [generateNewProblem])
 
   const speakProblem = async (a: number, b: number) => {
     if (audio.isPlaying) return
@@ -121,37 +126,25 @@ const AdditionGame: React.FC = () => {
   const handleAnswerClick = async (selectedAnswer: number) => {
     if (audio.isPlaying || correctAnswer === null) return
     
+    const isCorrect = selectedAnswer === correctAnswer
+    
     try {
-      if (selectedAnswer === correctAnswer) {
-        // Correct answer - celebrate!
-        incrementScore()
-        mathTeacher.celebrate()
-        celebrate(score > 5 ? 'high' : 'medium')
-        
-        await audio.playWithCallback(
-          () => audio.announceGameResult(true),
-          () => {
-            setTimeout(() => {
-              stopCelebration()
-              mathTeacher.point()
-              generateNewProblem()
-            }, 3000)
-          }
-        )
-      } else {
-        // Wrong answer - encourage
-        mathTeacher.encourage()
-        
-        await audio.playWithCallback(
-          () => audio.announceGameResult(false),
-          () => {
-            // Allow immediate interaction after audio completes
-            mathTeacher.think()
-          }
-        )
-      }
+      // Use unified game result handler
+      await audio.handleCompleteGameResult({
+        isCorrect,
+        character: mathTeacher,
+        celebrate,
+        stopCelebration,
+        incrementScore,
+        currentScore: score,
+        nextAction: isCorrect ? generateNewProblem : () => {
+          mathTeacher.think()
+        },
+        correctAnswer: isCorrect ? undefined : correctAnswer,
+        autoAdvanceDelay: 3000
+      })
     } catch (error: any) {
-      console.error('Error playing feedback:', error)
+      console.error('Error in unified game result handler:', error)
     }
   }
 

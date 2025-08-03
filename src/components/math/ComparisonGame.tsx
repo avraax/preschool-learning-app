@@ -7,10 +7,9 @@ import LottieCharacter, { useCharacterState } from '../common/LottieCharacter'
 import CelebrationEffect, { useCelebration } from '../common/CelebrationEffect'
 import { MathScoreChip } from '../common/ScoreChip'
 import { useAudio } from '../../hooks/useAudio'
-import { DANISH_PHRASES } from '../../config/danish-phrases'
 import { categoryThemes } from '../../config/categoryThemes'
 import { useGameEntryAudio } from '../../hooks/useGameEntryAudio'
-import { entryAudioManager } from '../../utils/entryAudioManager'
+import { useGameAudioSetup } from '../../hooks/useGameAudioSetup'
 import { MathRepeatButton } from '../common/RepeatButton'
 import { useGameState } from '../../hooks/useGameState'
 
@@ -46,10 +45,11 @@ const ComparisonGame: React.FC = () => {
   const [showFeedback, setShowFeedback] = useState(false)
   // Centralized audio system
   const audio = useAudio({ componentId: 'ComparisonGame' })
-  const [entryAudioComplete, setEntryAudioComplete] = useState(false)
-  
+    
   // Centralized game state management
   const { score, incrementScore, isScoreNarrating, handleScoreClick } = useGameState()
+  
+  // Timeout ref for cleanup
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
   
   // Character and celebration management
@@ -58,26 +58,26 @@ const ComparisonGame: React.FC = () => {
   
   // Centralized entry audio
   useGameEntryAudio({ gameType: 'comparison' })
+  
+  // Forward declaration for useGameAudioSetup to avoid hoisting issues
+  const generateNewProblemRef = useRef<(() => void) | null>(null)
+  
+  // Use centralized game audio setup hook
+  const { ready: entryAudioComplete } = useGameAudioSetup('comparison', () => {
+    generateNewProblemRef.current?.()
+  })
 
   useEffect(() => {
     // Initialize math teacher character
     mathTeacher.setCharacter('fox')
     mathTeacher.wave()
     
-    // Register callback to start the game after entry audio completes
-    entryAudioManager.onComplete('comparison', () => {
-      setEntryAudioComplete(true)
-      // Add a small delay after entry audio before starting the question
-      setTimeout(() => {
-        generateNewProblem()
-      }, 500)
-    })
-    
     // Stop audio immediately when navigating away
     const handleBeforeUnload = () => {
       audio.stopAll()
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current)
+        timeoutRef.current = null
       }
     }
 
@@ -90,6 +90,7 @@ const ComparisonGame: React.FC = () => {
       audio.stopAll()
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current)
+        timeoutRef.current = null
       }
       window.removeEventListener('beforeunload', handleBeforeUnload)
       window.removeEventListener('pagehide', handleBeforeUnload)
@@ -153,39 +154,30 @@ const ComparisonGame: React.FC = () => {
     setSelectedSymbol(null)
     setShowFeedback(false)
     
-    // Speak the problem after a delay
+    // Schedule delayed audio for the problem
+    // Schedule delayed audio for the problem
     timeoutRef.current = setTimeout(() => {
       speakProblem(problem)
     }, 1000)
   }
+  
+  // Assign function to ref for useGameAudioSetup
+  useEffect(() => {
+    generateNewProblemRef.current = generateNewProblem
+  }, [generateNewProblem])
 
   const speakProblem = async (problem: ComparisonProblem) => {
     if (audio.isPlaying) return
     
     try {
-      // Count left objects
-      const leftText = `${DANISH_NUMBERS[problem.leftNumber]} ${problem.leftObjects.danishName}`
-      await audio.speak(leftText)
-      
-      await new Promise(resolve => setTimeout(resolve, 500))
-      
-      // Count right objects  
-      const rightText = `${DANISH_NUMBERS[problem.rightNumber]} ${problem.rightObjects.danishName}`
-      await audio.speak(rightText)
-      
-      await new Promise(resolve => setTimeout(resolve, 500))
-      
-      // Ask comparison question based on question type
-      let questionText = ''
-      if (problem.questionType === 'largest') {
-        questionText = DANISH_PHRASES.gamePrompts.comparison.largest
-      } else if (problem.questionType === 'smallest') {
-        questionText = DANISH_PHRASES.gamePrompts.comparison.smallest
-      } else {
-        questionText = 'Er tallene ens?'
-      }
-      await audio.speak(questionText)
-      
+      // Use consolidated comparison problem speaking method
+      await audio.speakComparisonProblem(
+        problem.leftNumber,
+        problem.rightNumber,
+        problem.leftObjects.danishName,
+        problem.rightObjects.danishName,
+        problem.questionType
+      )
     } catch (error) {
       console.error('Error speaking problem:', error)
     }
@@ -223,68 +215,52 @@ const ComparisonGame: React.FC = () => {
       }
     }
     
-    if (isCorrect) {
-      // Correct answer - celebrate!
-      incrementScore()
-      mathTeacher.celebrate()
-      celebrate(score > 5 ? 'high' : 'medium')
-      
-      try {
-        await audio.announceGameResult(true)
-      } catch (error) {
-        console.error('Error playing success sound:', error)
-      }
-      
-      timeoutRef.current = setTimeout(() => {
-        stopCelebration()
-        mathTeacher.point()
-        generateNewProblem()
-      }, 3000)
-      
-    } else {
-      // Wrong answer - encourage and teach
-      mathTeacher.encourage()
-      
-      try {
-        await audio.announceGameResult(false)
-        
-        // Provide teaching moment immediately (no pre-delay)
-        let teachingText = ''
-        
-        if (currentProblem.questionType === 'equal') {
-          if (currentProblem.correctSymbol === '=') {
-            teachingText = `${DANISH_NUMBERS[currentProblem.leftNumber]} er lige med ${DANISH_NUMBERS[currentProblem.rightNumber]}`
-          } else {
-            teachingText = `${DANISH_NUMBERS[currentProblem.leftNumber]} er ikke lige med ${DANISH_NUMBERS[currentProblem.rightNumber]}`
-          }
-        } else if (currentProblem.questionType === 'largest') {
-          if (currentProblem.leftNumber > currentProblem.rightNumber) {
-            teachingText = `${DANISH_NUMBERS[currentProblem.leftNumber]} er størst`
-          } else if (currentProblem.rightNumber > currentProblem.leftNumber) {
-            teachingText = `${DANISH_NUMBERS[currentProblem.rightNumber]} er størst`
-          } else {
-            teachingText = `${DANISH_NUMBERS[currentProblem.leftNumber]} og ${DANISH_NUMBERS[currentProblem.rightNumber]} er ens`
-          }
-        } else if (currentProblem.questionType === 'smallest') {
-          if (currentProblem.leftNumber < currentProblem.rightNumber) {
-            teachingText = `${DANISH_NUMBERS[currentProblem.leftNumber]} er mindst`
-          } else if (currentProblem.rightNumber < currentProblem.leftNumber) {
-            teachingText = `${DANISH_NUMBERS[currentProblem.rightNumber]} er mindst`
-          } else {
-            teachingText = `${DANISH_NUMBERS[currentProblem.leftNumber]} og ${DANISH_NUMBERS[currentProblem.rightNumber]} er ens`
-          }
+    // Generate teaching explanation for wrong answers
+    let explanation = ''
+    if (!isCorrect) {
+      if (currentProblem.questionType === 'equal') {
+        if (currentProblem.correctSymbol === '=') {
+          explanation = `${DANISH_NUMBERS[currentProblem.leftNumber]} er lige med ${DANISH_NUMBERS[currentProblem.rightNumber]}`
+        } else {
+          explanation = `${DANISH_NUMBERS[currentProblem.leftNumber]} er ikke lige med ${DANISH_NUMBERS[currentProblem.rightNumber]}`
         }
-        
-        await audio.speak(teachingText)
-        
-      } catch (error) {
-        console.error('Error playing encouragement:', error)
+      } else if (currentProblem.questionType === 'largest') {
+        if (currentProblem.leftNumber > currentProblem.rightNumber) {
+          explanation = `${DANISH_NUMBERS[currentProblem.leftNumber]} er størst`
+        } else if (currentProblem.rightNumber > currentProblem.leftNumber) {
+          explanation = `${DANISH_NUMBERS[currentProblem.rightNumber]} er størst`
+        } else {
+          explanation = `${DANISH_NUMBERS[currentProblem.leftNumber]} og ${DANISH_NUMBERS[currentProblem.rightNumber]} er ens`
+        }
+      } else if (currentProblem.questionType === 'smallest') {
+        if (currentProblem.leftNumber < currentProblem.rightNumber) {
+          explanation = `${DANISH_NUMBERS[currentProblem.leftNumber]} er mindst`
+        } else if (currentProblem.rightNumber < currentProblem.leftNumber) {
+          explanation = `${DANISH_NUMBERS[currentProblem.rightNumber]} er mindst`
+        } else {
+          explanation = `${DANISH_NUMBERS[currentProblem.leftNumber]} og ${DANISH_NUMBERS[currentProblem.rightNumber]} er ens`
+        }
       }
-      
-      // Allow immediate interaction after audio completes
-      mathTeacher.think()
-      setShowFeedback(false)
-      setSelectedSymbol(null)
+    }
+
+    // Use unified game result handler
+    try {
+      await audio.handleCompleteGameResult({
+        isCorrect,
+        character: mathTeacher,
+        celebrate,
+        stopCelebration,
+        incrementScore,
+        currentScore: score,
+        nextAction: isCorrect ? generateNewProblem : () => {
+          setShowFeedback(false)
+          setSelectedSymbol(null)
+        },
+        explanation: !isCorrect ? explanation : undefined,
+        autoAdvanceDelay: 3000
+      })
+    } catch (error) {
+      console.error('Error in unified game result handler:', error)
     }
   }
 
