@@ -21,28 +21,22 @@ const lastImmediateExecution: Map<string, number> = new Map()
 export const entryAudioManager = {
   // Schedule entry audio for a game
   scheduleEntryAudio(gameType: string, delay: number = 1000): void {
-    console.log(`🎵 EntryAudioManager: Scheduling entry audio for "${gameType}" with ${delay}ms delay`)
-    
     // Check if already played or playing
     if (playedGames.has(gameType) || playingGames.has(gameType)) {
-      console.log(`🎵 EntryAudioManager: Entry audio for "${gameType}" already played/playing, skipping`)
       return
     }
     
     // Check if already scheduled
     if (pendingTimeouts.has(gameType)) {
-      console.log(`🎵 EntryAudioManager: Entry audio for "${gameType}" already scheduled, skipping`)
       return
     }
     
     // Schedule the audio
     const timeoutId = setTimeout(() => {
-      console.log(`🎵 EntryAudioManager: Timeout fired for "${gameType}", attempting to play entry audio`)
       pendingTimeouts.delete(gameType)
       
       // Double-check not already played
       if (playedGames.has(gameType)) {
-        console.log(`🎵 EntryAudioManager: Entry audio for "${gameType}" already played after timeout, skipping`)
         return
       }
       
@@ -51,17 +45,13 @@ export const entryAudioManager = {
     }, delay)
     
     pendingTimeouts.set(gameType, timeoutId)
-    console.log(`🎵 EntryAudioManager: Entry audio for "${gameType}" scheduled successfully`)
   },
   
   // Play entry audio immediately
   async playEntryAudio(gameType: string): Promise<void> {
-    console.log(`🎵 EntryAudioManager: Starting playEntryAudio for "${gameType}"`)
-    
     // Cancel any pending timeout
     const pendingTimeout = pendingTimeouts.get(gameType)
     if (pendingTimeout) {
-      console.log(`🎵 EntryAudioManager: Clearing pending timeout for "${gameType}"`)
       clearTimeout(pendingTimeout)
       pendingTimeouts.delete(gameType)
     }
@@ -69,31 +59,24 @@ export const entryAudioManager = {
     // Mark as playing and played
     playingGames.add(gameType)
     playedGames.add(gameType)
-    console.log(`🎵 EntryAudioManager: Marked "${gameType}" as playing and played`)
     
     try {
-      console.log(`🎵 EntryAudioManager: Calling audioManager.playGameWelcome("${gameType}")`)
       await audioManager.playGameWelcome(gameType)
-      console.log(`🎵 EntryAudioManager: Successfully completed playGameWelcome for "${gameType}"`)
       
       // Call completion callbacks
       const callbacks = completionCallbacks.get(gameType) || []
-      console.log(`🎵 EntryAudioManager: Found ${callbacks.length} completion callbacks for "${gameType}"`)
       callbacks.forEach((callback, index) => {
         try {
-          console.log(`🎵 EntryAudioManager: Calling completion callback ${index + 1}/${callbacks.length} for "${gameType}"`)
           callback()
         } catch (error) {
           console.error(`🎵 EntryAudioManager: Error in completion callback ${index + 1}:`, error)
         }
       })
       completionCallbacks.delete(gameType)
-      console.log(`🎵 EntryAudioManager: All completion callbacks processed for "${gameType}"`)
     } catch (error) {
       console.error(`🎵 EntryAudioManager: Error playing entry audio for "${gameType}":`, error)
     } finally {
       playingGames.delete(gameType)
-      console.log(`🎵 EntryAudioManager: Finished playEntryAudio for "${gameType}", removed from playing games`)
     }
   },
   
@@ -154,7 +137,6 @@ export const entryAudioManager = {
       
       // Prevent duplicate executions within 100ms (React strict mode protection)
       if (timeSinceLastExecution < 100) {
-        console.log(`🎵 EntryAudioManager: Duplicate execution blocked for "${gameType}" (${timeSinceLastExecution}ms ago)`)
         return
       }
       

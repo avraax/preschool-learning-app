@@ -143,12 +143,9 @@ export class AudioController {
   ): Promise<string> {
     const audioId = `audio_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
     
-    console.log(`🎵 AudioController.queueAudio: Adding audio to queue with ID: ${audioId}, priority: ${priority}`)
-    
     // Create a promise that resolves when this specific audio completes
     return new Promise((resolve, reject) => {
       // Stop any currently playing audio immediately
-      console.log(`🎵 AudioController.queueAudio: Stopping current audio before queuing new audio`)
       this.stopCurrentAudio()
       
       const queueItem: AudioQueueItem = {
@@ -156,10 +153,9 @@ export class AudioController {
         audioFunction: async () => {
           try {
             await audioFunction()
-            console.log(`🎵 AudioController.queueAudio: Audio ${audioId} completed successfully`)
             resolve(audioId)
           } catch (error) {
-            console.log(`🎵 AudioController.queueAudio: Audio ${audioId} failed:`, error)
+            console.error(`🎵 AudioController.queueAudio: Audio ${audioId} failed:`, error)
             reject(error)
           }
         },
@@ -174,20 +170,13 @@ export class AudioController {
       // For high priority, add to front of queue
       if (priority === 'high') {
         this.audioQueue.unshift(queueItem)
-        console.log(`🎵 AudioController.queueAudio: Added high priority audio to front of queue`)
       } else {
         this.audioQueue.push(queueItem)
-        console.log(`🎵 AudioController.queueAudio: Added normal priority audio to end of queue`)
       }
-      
-      console.log(`🎵 AudioController.queueAudio: Queue length now: ${this.audioQueue.length}`)
       
       // Process queue if not already processing
       if (!this.processingQueue) {
-        console.log(`🎵 AudioController.queueAudio: Starting queue processing`)
         this.processAudioQueue()
-      } else {
-        console.log(`🎵 AudioController.queueAudio: Queue already being processed`)
       }
     })
   }
@@ -213,15 +202,10 @@ export class AudioController {
         
         // Call completion callback if provided
         if (queueItem.onComplete) {
-          console.log(`🎵 AudioController.processAudioQueue: Calling onComplete callback for audio item ${queueItem.id}`)
           queueItem.onComplete()
-          console.log(`🎵 AudioController.processAudioQueue: onComplete callback completed for audio item ${queueItem.id}`)
-        } else {
-          console.log(`🎵 AudioController.processAudioQueue: No onComplete callback for audio item ${queueItem.id}`)
         }
         
         // Notify audio complete listeners
-        console.log(`🎵 AudioController.processAudioQueue: Notifying audio complete listeners for ${queueItem.id}`)
         this.notifyAudioComplete(queueItem.id)
         
       } catch (error) {
@@ -232,12 +216,8 @@ export class AudioController {
         
         if (isNavigationInterruption) {
           // Clear queue on navigation interruption - this is expected, not an error
-          console.log(`🎵 AudioController: Navigation interruption detected, clearing queue`)
           this.audioQueue.length = 0
           break
-        } else {
-          // Only log as error if it's not a navigation interruption
-          console.error(`Error processing audio queue item ${queueItem.id}:`, error)
         }
       } finally {
         this.isCurrentlyPlaying = false
@@ -317,10 +297,7 @@ export class AudioController {
    * Basic speak function with queue management
    */
   async speak(text: string, voiceType: 'primary' | 'backup' | 'male' = 'primary', useSSML: boolean = true, customSpeed?: number): Promise<string> {
-    console.log(`🎵 AudioController.speak: Queuing audio for text: "${text}"`)
-    
     return this.queueAudio(async () => {
-      console.log(`🎵 AudioController.speak: Processing queued audio for text: "${text}"`)
       
       // Update user interaction timestamp
       this.updateUserInteraction()
@@ -328,16 +305,13 @@ export class AudioController {
       // Check audio permission before speaking
       const hasPermission = await this.checkAudioPermission()
       if (!hasPermission) {
-        console.warn(`🎵 AudioController.speak: No audio permission, skipping: "${text}"`)
         return
       }
       
-      console.log(`🎵 AudioController.speak: Permission granted, calling googleTTS for: "${text}"`)
       const customAudioConfig = customSpeed ? { speakingRate: customSpeed } : undefined
       
       try {
         await this.googleTTS.synthesizeAndPlay(text, voiceType, useSSML, customAudioConfig)
-        console.log(`🎵 AudioController.speak: Successfully completed synthesis for: "${text}"`)
       } catch (error) {
         console.error(`🎵 AudioController.speak: Error in googleTTS for: "${text}"`, error)
         throw error
@@ -534,17 +508,11 @@ export class AudioController {
   }
 
   async announceGameResult(isCorrect: boolean, voiceType: 'primary' | 'backup' | 'male' = 'primary'): Promise<string> {
-    console.log(`🎵 AudioController.announceGameResult: Called with isCorrect = ${isCorrect}, voiceType = ${voiceType}`)
-    
     if (isCorrect) {
-      console.log('🎵 AudioController.announceGameResult: ✅ Playing success phrase with enthusiasm')
       const result = await this.speakWithEnthusiasm(getRandomSuccessPhrase(), voiceType)
-      console.log('🎵 AudioController.announceGameResult: ✅ Success phrase completed')
       return result
     } else {
-      console.log('🎵 AudioController.announceGameResult: ❌ Playing encouragement phrase')
       const result = await this.speak(getRandomEncouragementPhrase(), voiceType, true)
-      console.log('🎵 AudioController.announceGameResult: ❌ Encouragement phrase completed')
       return result
     }
   }
@@ -593,24 +561,17 @@ export class AudioController {
 
   // Centralized game welcome audio system
   async playGameWelcome(gameType: string, voiceType: 'primary' | 'backup' | 'male' = 'primary'): Promise<string> {
-    console.log(`🎵 AudioController.playGameWelcome: Starting welcome audio for "${gameType}"`)
-    
     // Import game welcome messages dynamically to avoid circular dependencies
     const { GAME_WELCOME_MESSAGES } = await import('../hooks/useGameEntryAudio')
     
     const welcomeMessage = GAME_WELCOME_MESSAGES[gameType as keyof typeof GAME_WELCOME_MESSAGES]
     
     if (!welcomeMessage) {
-      console.warn(`🎵 AudioController.playGameWelcome: No welcome message defined for game type: ${gameType}`)
       return Promise.resolve('')
     }
-
-    console.log(`🎵 AudioController.playGameWelcome: Found welcome message for "${gameType}": "${welcomeMessage}"`)
-    console.log(`🎵 AudioController.playGameWelcome: Calling speak() with message`)
     
     try {
       const result = await this.speak(welcomeMessage, voiceType, true)
-      console.log(`🎵 AudioController.playGameWelcome: Successfully completed speak() for "${gameType}"`)
       return result
     } catch (error) {
       console.error(`🎵 AudioController.playGameWelcome: Error in speak() for "${gameType}":`, error)
@@ -630,15 +591,12 @@ export class AudioController {
     setupCallback: () => void,
     delay: number = 500
   ): Promise<void> {
-    console.log(`🎵 AudioController.playGameEntryWithSetup: Starting for "${gameType}" with ${delay}ms delay`)
-    
     // Play the game welcome audio
     await this.playGameWelcome(gameType)
     
     // Wait for the specified delay, then execute the setup callback
     return new Promise((resolve) => {
       setTimeout(() => {
-        console.log(`🎵 AudioController.playGameEntryWithSetup: Executing setup callback for "${gameType}"`)
         try {
           setupCallback()
           resolve()
@@ -757,8 +715,6 @@ export class AudioController {
     audioFunction: () => Promise<string>,
     onComplete?: () => void
   ): Promise<void> {
-    console.log('🎵 AudioController.playWithCallback: Starting audio with callback')
-    
     if (!onComplete) {
       // No callback needed, just play the audio
       await audioFunction()
@@ -771,7 +727,6 @@ export class AudioController {
         try {
           // Call the actual audio function (which returns an audioId)
           await audioFunction()
-          console.log('🎵 AudioController.playWithCallback: Audio function completed')
         } catch (error) {
           console.error('🎵 AudioController.playWithCallback: Error in audio function:', error)
           throw error
@@ -780,13 +735,10 @@ export class AudioController {
       
       // Queue audio with completion callback that resolves the promise
       this.queueAudio(wrappedAudioFunction, 'normal', () => {
-        console.log('🎵 AudioController.playWithCallback: onComplete callback triggered')
         try {
           onComplete()
-          console.log('🎵 AudioController.playWithCallback: onComplete callback executed successfully')
           resolve()
         } catch (error) {
-          console.error('🎵 AudioController.playWithCallback: Error in onComplete callback:', error)
           reject(error)
         }
       }).catch(error => {
@@ -814,13 +766,6 @@ export class AudioController {
     isIOS?: boolean;
     voiceType?: 'primary' | 'backup' | 'male';
   }): Promise<void> {
-    console.log('🎵 AudioController.handleCompleteGameResult: ===== STARTING GAME RESULT HANDLER =====')
-    console.log(`🎵 AudioController.handleCompleteGameResult: isCorrect = ${options.isCorrect}`)
-    console.log(`🎵 AudioController.handleCompleteGameResult: currentScore = ${options.currentScore}`)
-    console.log(`🎵 AudioController.handleCompleteGameResult: nextAction provided = ${!!options.nextAction}`)
-    console.log(`🎵 AudioController.handleCompleteGameResult: autoAdvanceDelay = ${options.autoAdvanceDelay}`)
-    console.log(`🎵 AudioController.handleCompleteGameResult: isIOS = ${options.isIOS}`)
-    
     const {
       isCorrect,
       character,
@@ -837,44 +782,23 @@ export class AudioController {
     } = options
 
     if (isCorrect) {
-      console.log('🎵 AudioController.handleCompleteGameResult: ✅ CORRECT ANSWER - Starting success sequence')
-      
-      // Success sequence
-      console.log('🎵 AudioController.handleCompleteGameResult: Incrementing score...')
       incrementScore()
-      console.log('🎵 AudioController.handleCompleteGameResult: Score incremented')
-      
-      console.log('🎵 AudioController.handleCompleteGameResult: Setting character to celebrate...')
       character.celebrate()
-      console.log('🎵 AudioController.handleCompleteGameResult: Character set to celebrate')
-      
       const celebrationIntensity = currentScore > 5 ? 'high' : 'medium'
-      console.log(`🎵 AudioController.handleCompleteGameResult: Starting celebration with intensity: ${celebrationIntensity}`)
       celebrate(celebrationIntensity)
-      console.log('🎵 AudioController.handleCompleteGameResult: Celebration started')
       
       // Play success audio directly without nested queuing
-      console.log('🎵 AudioController.handleCompleteGameResult: About to play success audio...')
       try {
         await this.announceGameResult(true, voiceType)
-        console.log('🎵 AudioController.handleCompleteGameResult: ✅ Success audio completed')
         
         if (nextAction) {
           // Shorter delay for iOS to preserve user interaction window
           const delayTime = isIOS ? 1000 : (autoAdvanceDelay || 3000)
-          console.log(`🎵 AudioController.handleCompleteGameResult: Setting timeout for nextAction with delay: ${delayTime}ms`)
           setTimeout(() => {
-            console.log('🎵 AudioController.handleCompleteGameResult: ⏰ TIMEOUT FIRED - About to execute nextAction')
-            console.log('🎵 AudioController.handleCompleteGameResult: Stopping celebration...')
             stopCelebration()
-            console.log('🎵 AudioController.handleCompleteGameResult: Setting character to wave...')
             character.wave()
-            console.log('🎵 AudioController.handleCompleteGameResult: About to call nextAction...')
             nextAction()
-            console.log('🎵 AudioController.handleCompleteGameResult: ✅ NEXT ACTION EXECUTION COMPLETED')
           }, delayTime)
-        } else {
-          console.log('🎵 AudioController.handleCompleteGameResult: ❌ No nextAction provided')
         }
       } catch (error) {
         console.error('🎵 AudioController.handleCompleteGameResult: Error playing success audio:', error)
@@ -888,30 +812,17 @@ export class AudioController {
         }
       }
     } else {
-      console.log('🎵 AudioController.handleCompleteGameResult: ❌ INCORRECT ANSWER - Starting error sequence')
-      
-      // Error sequence
-      console.log('🎵 AudioController.handleCompleteGameResult: Setting character to think...')
       character.think()
-      console.log('🎵 AudioController.handleCompleteGameResult: Character set to think')
-      
-      // Play error audio directly without nested queuing
-      console.log('🎵 AudioController.handleCompleteGameResult: About to play error audio...')
       try {
         await this.announceGameResultWithContext(false, { 
           correctAnswer, 
           explanation, 
           voiceType 
         })
-        console.log('🎵 AudioController.handleCompleteGameResult: ❌ Error audio completed')
         
         // Allow immediate interaction after audio completes
         if (nextAction) {
-          console.log('🎵 AudioController.handleCompleteGameResult: Calling nextAction for error case...')
           nextAction()
-          console.log('🎵 AudioController.handleCompleteGameResult: Error nextAction completed')
-        } else {
-          console.log('🎵 AudioController.handleCompleteGameResult: No nextAction for error case')
         }
       } catch (error) {
         console.error('🎵 AudioController.handleCompleteGameResult: Error playing error audio:', error)
@@ -921,8 +832,6 @@ export class AudioController {
         }
       }
     }
-    
-    console.log('🎵 AudioController.handleCompleteGameResult: ===== GAME RESULT HANDLER COMPLETED =====')
   }
 
   /**
@@ -1018,8 +927,6 @@ export class AudioController {
    * Emergency stop - more aggressive cleanup
    */
   emergencyStop(): void {
-    console.log('🚨 AudioController: Emergency stop all audio')
-    
     // Stop all Howler.js sounds
     this.sounds.forEach(sound => {
       try {
@@ -1068,7 +975,6 @@ export class AudioController {
    */
   private setupGlobalCleanup(): void {
     const cleanup = () => {
-      console.log('🎵 AudioController: Navigation detected, cleaning up all audio')
       this.triggerNavigationCleanup()
       this.stopAll()
     }
@@ -1088,7 +994,6 @@ export class AudioController {
    * This allows React components to register for navigation events
    */
   public registerNavigationCleanup(callback: () => void): () => void {
-    console.log('🎵 AudioController: Registering navigation cleanup callback')
     this.navigationCleanupCallbacks.push(callback)
     
     // Return unsubscribe function
@@ -1096,7 +1001,6 @@ export class AudioController {
       const index = this.navigationCleanupCallbacks.indexOf(callback)
       if (index > -1) {
         this.navigationCleanupCallbacks.splice(index, 1)
-        console.log('🎵 AudioController: Unregistered navigation cleanup callback')
       }
     }
   }
@@ -1105,13 +1009,10 @@ export class AudioController {
    * Trigger navigation cleanup - called by React Router navigation detection
    */
   public triggerNavigationCleanup(): void {
-    console.log(`🎵 AudioController: Triggering navigation cleanup for ${this.navigationCleanupCallbacks.length} callbacks`)
-    
     // Call all registered cleanup callbacks
     this.navigationCleanupCallbacks.forEach((callback, index) => {
       try {
         callback()
-        console.log(`🎵 AudioController: Navigation cleanup callback ${index + 1} executed successfully`)
       } catch (error) {
         console.error(`🎵 AudioController: Error in navigation cleanup callback ${index + 1}:`, error)
       }
