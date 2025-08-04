@@ -115,7 +115,6 @@ export const useGameState = (initialScore: number = 0): GameStateHook => {
       await audioManager.announceScore(gameState.score)
     } catch (error) {
       // Ignore audio errors gracefully
-      console.log('Score narration failed:', error)
     } finally {
       setGameState(prev => ({
         ...prev,

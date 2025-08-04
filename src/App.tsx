@@ -725,7 +725,6 @@ const NavigationAudioCleanup: React.FC = () => {
   const audioContext = useAudioContext()
   
   useEffect(() => {
-    console.log(`🎵 App: Route changed to ${location.pathname}, triggering audio cleanup`)
     audioContext.triggerNavigationCleanup()
   }, [location.pathname, audioContext])
   
@@ -749,8 +748,6 @@ function App() {
   
   useEffect(() => {
     // Initialize remote console and log device info
-    console.log('🎈 Børnelæring App Starting')
-    console.log('📱 Device Info:', deviceInfo)
     
     // Log any iOS-specific initialization
     if (deviceInfo.isIOS) {
@@ -768,8 +765,6 @@ function App() {
         <UpdateBanner
           show={updateStatus.updateAvailable || DEV_SHOW_UPDATE_BANNER}
           onUpdate={DEV_SHOW_UPDATE_BANNER ? () => {
-            console.log('🧪 DEV MODE: Update button clicked!')
-            console.log('🧪 DEV MODE: This is just a test - no actual update will happen')
           } : updateStatus.applyUpdate}
           isApplying={DEV_SHOW_APPLYING_STATE}
         />

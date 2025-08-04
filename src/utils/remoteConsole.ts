@@ -486,5 +486,4 @@ declare global {
 // Make debugging functions available globally
 window.clearLogs = () => remoteConsole.clearLogs()
 window.showLogs = () => {
-  console.log('📋 Logs are stored in API - visit the admin dashboard to view them')
 }

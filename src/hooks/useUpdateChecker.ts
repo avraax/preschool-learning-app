@@ -96,7 +96,6 @@ export function useUpdateChecker(): UpdateStatus {
   }, [currentVersion.buildTime])
 
   const applyUpdate = useCallback(() => {
-    console.log('🔄 Applying update - reloading page')
     
     // Clear any cached data
     try {

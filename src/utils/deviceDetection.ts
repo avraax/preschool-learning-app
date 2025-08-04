@@ -73,10 +73,4 @@ export const getAudioTriggerEvent = () => {
 
 // Debug logging for device info (will be used by remote console)
 export const logDeviceInfo = () => {
-  console.log('🔍 Device Detection:', {
-    ...deviceInfo,
-    userAgent: navigator.userAgent,
-    platform: navigator.platform,
-    maxTouchPoints: navigator.maxTouchPoints
-  })
 }

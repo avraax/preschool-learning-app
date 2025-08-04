@@ -68,7 +68,6 @@ export const useTaskBasedGame = ({
       // Call the provided callback after the specified delay
       if (onEntryAudioComplete) {
         setTimeout(() => {
-          console.log(`🎵 useTaskBasedGame: Starting first task for "${gameType}"`)
           onEntryAudioComplete()
         }, delay)
       }

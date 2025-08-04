@@ -25,7 +25,6 @@ export const useDelayedAudio = () => {
           if (mountedRef.current) {
             await audioFunction()
           } else {
-            console.log('🎵 useDelayedAudio: Skipping scheduled audio on unmounted component')
           }
         } catch (error) {
           console.error('Error in scheduled audio:', error)
@@ -61,7 +60,6 @@ export const useDelayedAudio = () => {
     return () => {
       mountedRef.current = false
       cancelScheduledAudio()
-      console.log('🎵 useDelayedAudio: Component unmounted, cleaned up scheduled audio')
     }
   }, [cancelScheduledAudio])
 

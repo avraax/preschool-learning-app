@@ -111,7 +111,6 @@ export const AudioPermissionProvider: React.FC<AudioPermissionProviderProps> = (
           audioTestRef.current.src = ''
           audioTestRef.current.load()
         } catch (error) {
-          console.log('Audio cleanup error:', error)
         }
       }
     }

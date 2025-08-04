@@ -190,17 +190,6 @@ const ColorHunt2Demo: React.FC = () => {
       y: positions[index].y
     }))
     
-    console.log('Generated game items:', {
-      targetColor: target.color,
-      totalItems: items.length,
-      targetItems: items.filter(item => item.isTarget).length,
-      itemBreakdown: items.map(item => ({
-        id: item.id,
-        colorName: item.colorName,
-        isTarget: item.isTarget,
-        emoji: item.emoji
-      }))
-    })
     
     return { items, targetCount: selectedTargets.length, targetColor: target.color, targetPhrase: target.phrase }
   }
@@ -250,7 +239,6 @@ const ColorHunt2Demo: React.FC = () => {
 
   // Handle drag end
   const handleDragEnd = (event: DragEndEvent) => {
-    console.log('=== DRAG END EVENT START ===')
     const { active, over } = event
     
     
@@ -324,9 +312,7 @@ const ColorHunt2Demo: React.FC = () => {
         }, 500)
       }
     } else {
-      console.log('   Over zone:', over?.id || 'none')
     }
-    console.log('=== DRAG END EVENT COMPLETE ===')
     // Items dropped outside target zone automatically return to original position
   }
 

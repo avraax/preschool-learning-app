@@ -19,7 +19,6 @@ export const useViewportHeight = () => {
       
       // Log for debugging on iOS
       if (window.navigator.userAgent.match(/iPad|iPhone|iPod/)) {
-        console.log(`Viewport height set: ${vh}px (${window.innerHeight}px total)`)
       }
     }
 

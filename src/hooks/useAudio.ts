@@ -91,13 +91,13 @@ export interface UseAudioReturn {
  * // Play audio with callback
  * await audio.playWithCallback(
  *   () => audio.speakNumber(5),
- *   () => console.log('Number 5 finished speaking')
+ *   () => { }
  * )
  * 
- * // Check if audio is playing
- * <Button disabled={audio.isPlaying}>Play Audio</Button>
+ * Check if audio is playing:
+ * Button should be disabled when audio is playing
  * 
- * // Use specialized functions
+ * Use specialized functions:
  * await audio.speakAdditionProblem(3, 7)
  * await audio.announceGameResult(true)
  * ```
@@ -117,21 +117,18 @@ export const useAudio = (options: UseAudioOptions = {}): UseAudioReturn => {
     mountedRef.current = true
     
     if (componentId) {
-      console.log(`🎵 useAudio: Component "${componentId}" mounted`)
     }
     
     return () => {
       mountedRef.current = false
       
       if (componentId) {
-        console.log(`🎵 useAudio: Component "${componentId}" unmounting`)
       }
       
       // Stop audio on unmount if enabled
       if (stopOnUnmount) {
         // Only stop audio for this specific component, not entry audio
         // Entry audio is managed by entryAudioManager and should survive component unmounting
-        console.log(`🎵 useAudio: Component "${componentId}" stopping audio on unmount`)
         
         // Clean up any registered audio complete listeners for this component
         activeAudioIds.current.clear()

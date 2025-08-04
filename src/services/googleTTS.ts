@@ -52,7 +52,6 @@ export class GoogleTTSService {
         this.currentAudio.src = '' // Clear the source to stop loading
         this.currentAudio.load() // Reset the audio element
       } catch (error) {
-        console.log('🎵 Error stopping audio:', error)
       }
       this.currentAudio = null
     }
@@ -61,9 +60,7 @@ export class GoogleTTSService {
     if (window.speechSynthesis && window.speechSynthesis.speaking) {
       try {
         window.speechSynthesis.cancel()
-        console.log('🎵 Cancelled Web Speech API')
       } catch (error) {
-        console.log('🎵 Error cancelling Web Speech API:', error)
       }
     }
   }
@@ -93,20 +90,17 @@ export class GoogleTTSService {
     document.addEventListener('visibilitychange', () => {
       if (!document.hidden) {
         this.lastUserInteraction = Date.now()
-        console.log('🎵 Updated user interaction on page visibility change')
       }
     })
     
     // Track focus events as user interactions (helpful for navigation)
     window.addEventListener('focus', () => {
       this.lastUserInteraction = Date.now()
-      console.log('🎵 Updated user interaction on window focus')
     })
     
     // Track page load events as user interactions (for navigation)
     window.addEventListener('pageshow', () => {
       this.lastUserInteraction = Date.now()
-      console.log('🎵 Updated user interaction on page show')
     })
   }
 
@@ -119,16 +113,13 @@ export class GoogleTTSService {
     
     // More lenient check for AudioContext resume
     if (timeSinceInteraction > 10000 && !hasDocumentFocus && !isDocumentVisible) {
-      console.log('🎵 Skipping AudioContext resume - no recent interaction or focus')
       return
     }
     
     if (!this.audioContext) {
       try {
         this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
-        console.log('🎵 AudioContext created successfully')
       } catch (error) {
-        console.log('🎵 Failed to create AudioContext:', error)
         return
       }
     }
@@ -136,9 +127,7 @@ export class GoogleTTSService {
     if (this.audioContext.state === 'suspended') {
       try {
         await this.audioContext.resume()
-        console.log('🎵 AudioContext resumed successfully')
       } catch (error) {
-        console.log('🎵 Failed to resume AudioContext:', error)
         // Don't log as error since this is expected without user gesture
       }
     }
@@ -372,7 +361,6 @@ export class GoogleTTSService {
 
     } catch (error) {
       console.error('❌ Google TTS synthesis failed:', error)
-      console.log('ℹ️ Will fall back to Web Speech API')
       
       // Track failure for circuit breaker
       this.failureCount++
@@ -429,7 +417,6 @@ export class GoogleTTSService {
         // Fallback completion detection using timeupdate  
         const checkCompletion = () => {
           if (audio.currentTime > 0 && audio.currentTime >= audio.duration - 0.1) {
-            console.log('🎵 Audio completion detected via timeupdate')
             clearTimeoutAndResolve()
           }
         }
@@ -438,7 +425,6 @@ export class GoogleTTSService {
         const checkPauseCompletion = () => {
           // If paused at the end, consider it complete
           if (audio.currentTime > 0 && audio.currentTime >= audio.duration - 0.1) {
-            console.log('🎵 Audio completion detected via pause at end')
             clearTimeoutAndResolve()
           }
         }
@@ -484,7 +470,6 @@ export class GoogleTTSService {
         
         // Primary completion event
         audio.addEventListener('ended', () => {
-          console.log('🎵 Audio ended successfully')
           clearTimeoutAndResolve()
         })
         
@@ -503,7 +488,6 @@ export class GoogleTTSService {
             (audio.currentTime === 0 && isNaN(audio.duration))
           
           if (isNavigationError) {
-            console.log('🎵 Audio interrupted due to navigation (expected)')
             clearTimeoutAndRejectHandler(new Error('Audio interrupted by navigation'))
           } else {
             // Log unexpected audio errors
@@ -523,7 +507,6 @@ export class GoogleTTSService {
         
         // Add load event to log when audio is ready
         audio.addEventListener('loadeddata', () => {
-          console.log(`🎵 Audio loaded: duration=${audio.duration}s, data=${base64AudioData.length} bytes`)
         })
         
         // iOS-specific play handling
@@ -728,7 +711,6 @@ export class GoogleTTSService {
            googleTTSError.message.includes('interrupted by user'))
         
         if (isNavigationInterruption) {
-          console.log('🎵 iOS Google TTS interrupted by navigation (expected)')
           throw googleTTSError
         }
         
@@ -751,7 +733,6 @@ export class GoogleTTSService {
         
         // Try Web Speech as fallback
         try {
-          console.log('🔄 iOS: Falling back to Web Speech API')
           await this.fallbackToWebSpeech(text)
           return
         } catch (webSpeechError) {
@@ -776,7 +757,6 @@ export class GoogleTTSService {
          error.message.includes('interrupted by user'))
       
       if (isNavigationInterruption) {
-        console.log('🎵 Audio synthesis interrupted by navigation (expected)')
         throw error // Re-throw but don't log as error
       }
       
@@ -791,7 +771,6 @@ export class GoogleTTSService {
       // Fallback to Web Speech API for non-iOS or if iOS Web Speech also failed
       if (!isIOS()) {
         try {
-          console.log('🔄 Falling back to Web Speech API')
           await this.fallbackToWebSpeech(text)
         } catch (fallbackError) {
           logAudioIssue('Both TTS methods failed', fallbackError, { 

@@ -240,7 +240,6 @@ export class AudioController {
       try {
         sound.stop()
       } catch (error) {
-        console.log('🎵 Error stopping Howler sound:', error)
       }
     })
     
@@ -252,7 +251,6 @@ export class AudioController {
       try {
         window.speechSynthesis.cancel()
       } catch (error) {
-        console.log('🎵 Error cancelling Web Speech API:', error)
       }
     }
   }
@@ -933,7 +931,6 @@ export class AudioController {
         sound.stop()
         sound.unload()
       } catch (error) {
-        console.log('🎵 Error in emergency stop:', error)
       }
     })
     this.sounds.clear()
@@ -945,9 +942,7 @@ export class AudioController {
     if (window.speechSynthesis && window.speechSynthesis.speaking) {
       try {
         window.speechSynthesis.cancel()
-        console.log('🔇 Emergency cancelled Web Speech API')
       } catch (error) {
-        console.log('🎵 Error cancelling Web Speech API:', error)
       }
     }
     
@@ -959,7 +954,6 @@ export class AudioController {
         audio.currentTime = 0
         audio.src = ''
       } catch (error) {
-        console.log('🎵 Error stopping audio element:', error)
       }
     })
     
