@@ -149,15 +149,10 @@ export class GoogleTTSService {
       return this.initPromise
     }
 
-    this.initPromise = new Promise(async (resolve) => {
-      try {
-        // For client-side implementation, we'll use a different approach
-        // since we can't include service account credentials directly in browser
-        resolve()
-      } catch (error) {
-        console.error('Failed to initialize Google TTS service:', error)
-        resolve() // Don't reject, just log the error
-      }
+    this.initPromise = new Promise((resolve) => {
+      // For client-side implementation, we'll use a different approach
+      // since we can't include service account credentials directly in browser
+      resolve()
     })
 
     return this.initPromise
@@ -315,7 +310,7 @@ export class GoogleTTSService {
       if (!response.ok) {
         // Capture comprehensive error information
         let errorResponseBody = ''
-        let errorResponseHeaders: { [key: string]: string } = {}
+        const errorResponseHeaders: { [key: string]: string } = {}
         
         try {
           errorResponseBody = await response.text()

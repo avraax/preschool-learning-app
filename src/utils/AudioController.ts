@@ -861,35 +861,40 @@ export class AudioController {
       celebrate(celebrationIntensity)
       console.log('🎵 AudioController.handleCompleteGameResult: Celebration started')
       
-      // Play success audio with callback for next action
-      console.log('🎵 AudioController.handleCompleteGameResult: About to call playWithCallback for success audio...')
-      await this.playWithCallback(
-        () => {
-          console.log('🎵 AudioController.handleCompleteGameResult: Audio function called, calling announceGameResult...')
-          return this.announceGameResult(true, voiceType)
-        },
-        () => {
-          console.log('🎵 AudioController.handleCompleteGameResult: ✅ SUCCESS AUDIO COMPLETION CALLBACK TRIGGERED')
-          if (nextAction) {
-            // Shorter delay for iOS to preserve user interaction window
-            const delayTime = isIOS ? 1000 : (autoAdvanceDelay || 3000)
-            console.log(`🎵 AudioController.handleCompleteGameResult: Setting timeout for nextAction with delay: ${delayTime}ms`)
-            setTimeout(() => {
-              console.log('🎵 AudioController.handleCompleteGameResult: ⏰ TIMEOUT FIRED - About to execute nextAction')
-              console.log('🎵 AudioController.handleCompleteGameResult: Stopping celebration...')
-              stopCelebration()
-              console.log('🎵 AudioController.handleCompleteGameResult: Setting character to wave...')
-              character.wave()
-              console.log('🎵 AudioController.handleCompleteGameResult: About to call nextAction...')
-              nextAction()
-              console.log('🎵 AudioController.handleCompleteGameResult: ✅ NEXT ACTION EXECUTION COMPLETED')
-            }, delayTime)
-          } else {
-            console.log('🎵 AudioController.handleCompleteGameResult: ❌ No nextAction provided')
-          }
+      // Play success audio directly without nested queuing
+      console.log('🎵 AudioController.handleCompleteGameResult: About to play success audio...')
+      try {
+        await this.announceGameResult(true, voiceType)
+        console.log('🎵 AudioController.handleCompleteGameResult: ✅ Success audio completed')
+        
+        if (nextAction) {
+          // Shorter delay for iOS to preserve user interaction window
+          const delayTime = isIOS ? 1000 : (autoAdvanceDelay || 3000)
+          console.log(`🎵 AudioController.handleCompleteGameResult: Setting timeout for nextAction with delay: ${delayTime}ms`)
+          setTimeout(() => {
+            console.log('🎵 AudioController.handleCompleteGameResult: ⏰ TIMEOUT FIRED - About to execute nextAction')
+            console.log('🎵 AudioController.handleCompleteGameResult: Stopping celebration...')
+            stopCelebration()
+            console.log('🎵 AudioController.handleCompleteGameResult: Setting character to wave...')
+            character.wave()
+            console.log('🎵 AudioController.handleCompleteGameResult: About to call nextAction...')
+            nextAction()
+            console.log('🎵 AudioController.handleCompleteGameResult: ✅ NEXT ACTION EXECUTION COMPLETED')
+          }, delayTime)
+        } else {
+          console.log('🎵 AudioController.handleCompleteGameResult: ❌ No nextAction provided')
         }
-      )
-      console.log('🎵 AudioController.handleCompleteGameResult: playWithCallback completed for success audio')
+      } catch (error) {
+        console.error('🎵 AudioController.handleCompleteGameResult: Error playing success audio:', error)
+        // Still trigger next action even if audio fails
+        if (nextAction) {
+          setTimeout(() => {
+            stopCelebration()
+            character.wave()
+            nextAction()
+          }, 2000)
+        }
+      }
     } else {
       console.log('🎵 AudioController.handleCompleteGameResult: ❌ INCORRECT ANSWER - Starting error sequence')
       
@@ -898,30 +903,31 @@ export class AudioController {
       character.think()
       console.log('🎵 AudioController.handleCompleteGameResult: Character set to think')
       
-      // Play error audio with feedback
-      console.log('🎵 AudioController.handleCompleteGameResult: About to call playWithCallback for error audio...')
-      await this.playWithCallback(
-        () => {
-          console.log('🎵 AudioController.handleCompleteGameResult: Error audio function called, calling announceGameResultWithContext...')
-          return this.announceGameResultWithContext(false, { 
-            correctAnswer, 
-            explanation, 
-            voiceType 
-          })
-        },
-        () => {
-          console.log('🎵 AudioController.handleCompleteGameResult: ❌ ERROR AUDIO COMPLETION CALLBACK TRIGGERED')
-          // Allow immediate interaction after audio completes
-          if (nextAction) {
-            console.log('🎵 AudioController.handleCompleteGameResult: Calling nextAction for error case...')
-            nextAction()
-            console.log('🎵 AudioController.handleCompleteGameResult: Error nextAction completed')
-          } else {
-            console.log('🎵 AudioController.handleCompleteGameResult: No nextAction for error case')
-          }
+      // Play error audio directly without nested queuing
+      console.log('🎵 AudioController.handleCompleteGameResult: About to play error audio...')
+      try {
+        await this.announceGameResultWithContext(false, { 
+          correctAnswer, 
+          explanation, 
+          voiceType 
+        })
+        console.log('🎵 AudioController.handleCompleteGameResult: ❌ Error audio completed')
+        
+        // Allow immediate interaction after audio completes
+        if (nextAction) {
+          console.log('🎵 AudioController.handleCompleteGameResult: Calling nextAction for error case...')
+          nextAction()
+          console.log('🎵 AudioController.handleCompleteGameResult: Error nextAction completed')
+        } else {
+          console.log('🎵 AudioController.handleCompleteGameResult: No nextAction for error case')
         }
-      )
-      console.log('🎵 AudioController.handleCompleteGameResult: playWithCallback completed for error audio')
+      } catch (error) {
+        console.error('🎵 AudioController.handleCompleteGameResult: Error playing error audio:', error)
+        // Still trigger next action even if audio fails
+        if (nextAction) {
+          nextAction()
+        }
+      }
     }
     
     console.log('🎵 AudioController.handleCompleteGameResult: ===== GAME RESULT HANDLER COMPLETED =====')

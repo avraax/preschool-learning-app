@@ -181,7 +181,7 @@ const ErrorDashboard: React.FC = () => {
       if (!response.ok) {
         // Enhanced error logging for debugging
         let errorResponseBody = ''
-        let errorResponseHeaders: { [key: string]: string } = {}
+        const errorResponseHeaders: { [key: string]: string } = {}
         
         try {
           errorResponseBody = await response.text()
@@ -295,7 +295,7 @@ const ErrorDashboard: React.FC = () => {
       if (!response.ok) {
         // Enhanced error logging for debugging
         let errorResponseBody = ''
-        let errorResponseHeaders: { [key: string]: string } = {}
+        const errorResponseHeaders: { [key: string]: string } = {}
         
         try {
           errorResponseBody = await response.text()

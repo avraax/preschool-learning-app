@@ -254,20 +254,18 @@ const FarvejagtGame: React.FC = () => {
       colorHunter.celebrate()
       celebrate(score > 5 ? 'high' : 'medium')
       
-      setTimeout(async () => {
-        try {
-          await audio.announceGameResult(true)
-        } catch (error) {
-          // Ignore audio errors on completion
-        }
-        
-        // Auto-reset after celebration (3 seconds)
-        setTimeout(() => {
-          stopCelebration()
-          colorHunter.point()
+      // Use centralized game completion handler
+      audio.handleGameCompletion({
+        character: colorHunter,
+        celebrate: celebrate,
+        stopCelebration: stopCelebration,
+        resetAction: () => {
           resetGame(true) // Automatic restart - no "Nyt spil!" prefix
-        }, 3000)
-      }, 300)
+        },
+        completionMessage: 'Fantastisk! Du fandt alle farverne!',
+        autoResetDelay: 3000,
+        voiceType: 'primary'
+      })
     }
   }, [score, totalTarget, isComplete, targetColor, colorHunter, celebrate, stopCelebration])
 
@@ -311,15 +309,22 @@ const FarvejagtGame: React.FC = () => {
         
         incrementScore()
         
-        // Play success audio with enhanced error handling
-        setTimeout(() => {
-          try {
-            audio.speak(`Flot! ${draggedItem.objectNameDefinite} er ${draggedItem.colorName}.`)
-              .catch(() => {})
-          } catch (error) {
-            // Ignore audio errors
-          }
-        }, 200)
+        // Play success audio using centralized pattern
+        colorHunter.celebrate()
+        audio.handleCompleteGameResult({
+          isCorrect: true,
+          character: colorHunter,
+          celebrate: () => {}, // Don't start new celebration for each item
+          stopCelebration: () => {},
+          incrementScore: () => {}, // Already incremented above
+          currentScore: score,
+          nextAction: () => {
+            colorHunter.wave()
+          },
+          explanation: `${draggedItem.objectNameDefinite} er ${draggedItem.colorName}`,
+          autoAdvanceDelay: 500, // Quick transition for item collection
+          voiceType: 'primary'
+        })
       } else {
         
         // Wrong item - bounce it back to original position
@@ -330,15 +335,23 @@ const FarvejagtGame: React.FC = () => {
           return updated
         })
         
-        // Play error audio with enhanced error handling
-        setTimeout(() => {
-          try {
-            audio.speak(`Nej, ${draggedItem.objectNameDefinite} er ${draggedItem.colorName}, ikke ${targetColor}.`)
-              .catch(() => {})
-          } catch (error) {
-            // Ignore audio errors
-          }
-        }, 200)
+        // Play error audio using centralized pattern
+        colorHunter.think()
+        audio.handleCompleteGameResult({
+          isCorrect: false,
+          character: colorHunter,
+          celebrate: () => {},
+          stopCelebration: () => {},
+          incrementScore: () => {},
+          currentScore: score,
+          nextAction: () => {
+            colorHunter.wave()
+          },
+          correctAnswer: targetColor,
+          explanation: `${draggedItem.objectNameDefinite} er ${draggedItem.colorName}`,
+          autoAdvanceDelay: 500,
+          voiceType: 'primary'
+        })
         
         // Reset returning state after animation
         setTimeout(() => {
