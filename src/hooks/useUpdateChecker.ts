@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { BUILD_INFO } from '../config/version'
+import { isVersionGreater } from '../utils/semver'
 
 interface VersionInfo {
   buildTime: number
@@ -64,9 +65,14 @@ export function useUpdateChecker(): UpdateStatus {
       const remoteVersion: VersionInfo = await response.json()
       setLatestVersion(remoteVersion)
 
-      // Compare build times - if remote is newer, show update
-      const hasUpdate = remoteVersion.buildTime > currentVersion.buildTime
-      setUpdateAvailable(hasUpdate && !isDismissed)
+      // Compare semantic versions - if remote is newer, show update
+      const hasUpdate = isVersionGreater(remoteVersion.version, currentVersion.version)
+      
+      // Fallback to build time comparison if versions are equal (for same version with different builds)
+      const hasBuildUpdate = remoteVersion.version === currentVersion.version && 
+                           remoteVersion.buildTime > currentVersion.buildTime
+      
+      setUpdateAvailable((hasUpdate || hasBuildUpdate) && !isDismissed)
 
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error'
@@ -75,7 +81,7 @@ export function useUpdateChecker(): UpdateStatus {
     } finally {
       setIsChecking(false)
     }
-  }, [currentVersion.buildTime, isDismissed])
+  }, [currentVersion.version, currentVersion.buildTime, isDismissed])
 
   // Update the ref whenever checkForUpdates changes
   checkForUpdatesRef.current = checkForUpdates
@@ -87,13 +93,14 @@ export function useUpdateChecker(): UpdateStatus {
     // Store dismiss state in localStorage with current version
     try {
       localStorage.setItem('updateDismissed', JSON.stringify({
+        version: currentVersion.version,
         buildTime: currentVersion.buildTime,
         dismissedAt: Date.now()
       }))
     } catch (e) {
       console.warn('Could not save dismiss state to localStorage:', e)
     }
-  }, [currentVersion.buildTime])
+  }, [currentVersion.version, currentVersion.buildTime])
 
   const applyUpdate = useCallback(() => {
     
@@ -114,9 +121,13 @@ export function useUpdateChecker(): UpdateStatus {
     try {
       const dismissedData = localStorage.getItem('updateDismissed')
       if (dismissedData) {
-        const { buildTime } = JSON.parse(dismissedData)
-        // If dismissed for current version, start as dismissed
-        if (buildTime === currentVersion.buildTime) {
+        const { version, buildTime } = JSON.parse(dismissedData)
+        // If dismissed for current version (prioritize version, fallback to buildTime)
+        const isDismissedForCurrentVersion = version 
+          ? version === currentVersion.version 
+          : buildTime === currentVersion.buildTime
+          
+        if (isDismissedForCurrentVersion) {
           setIsDismissed(true)
         }
       }

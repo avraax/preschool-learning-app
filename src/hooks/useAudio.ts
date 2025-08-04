@@ -117,12 +117,30 @@ export const useAudio = (options: UseAudioOptions = {}): UseAudioReturn => {
     mountedRef.current = true
     
     if (componentId) {
+      console.log(`🎵 useAudio: Hook initialized for component "${componentId}"`, {
+        componentId,
+        stopOnUnmount,
+        audioContextIsPlaying: audioContext.isPlaying,
+        timestamp: new Date().toISOString(),
+        userAgent: navigator.userAgent,
+        isIOS: navigator.userAgent.includes('iPhone') || navigator.userAgent.includes('iPad'),
+        isPWA: window.matchMedia('(display-mode: standalone)').matches,
+        documentFocus: document.hasFocus(),
+        documentVisible: !document.hidden
+      })
     }
     
     return () => {
       mountedRef.current = false
       
       if (componentId) {
+        console.log(`🎵 useAudio: Hook unmounting for component "${componentId}"`, {
+          componentId,
+          activeAudioCount: activeAudioIds.current.size,
+          activeAudioIds: Array.from(activeAudioIds.current),
+          stopOnUnmount,
+          timestamp: new Date().toISOString()
+        })
       }
       
       // Stop audio on unmount if enabled
@@ -148,14 +166,41 @@ export const useAudio = (options: UseAudioOptions = {}): UseAudioReturn => {
     onComplete?: () => void
   ): Promise<void> => {
     try {
+      console.log(`🎵 useAudio.playWithCallback: Starting audio for component "${componentId || 'unknown'}"`, {
+        componentId,
+        hasOnComplete: !!onComplete,
+        componentMounted: mountedRef.current,
+        activeAudioCount: activeAudioIds.current.size,
+        timestamp: new Date().toISOString()
+      })
+      
       const audioId = await audioFunction()
+      
+      console.log(`🎵 useAudio.playWithCallback: Audio function completed for component "${componentId || 'unknown'}"`, {
+        componentId,
+        audioId,
+        hasOnComplete: !!onComplete,
+        componentMounted: mountedRef.current
+      })
       
       if (onComplete && mountedRef.current) {
         // Track this audio ID for cleanup
         activeAudioIds.current.add(audioId)
         
+        console.log(`🎵 useAudio.playWithCallback: Registering completion callback for component "${componentId || 'unknown'}"`, {
+          componentId,
+          audioId,
+          activeAudioCount: activeAudioIds.current.size
+        })
+        
         // Register completion callback
         const unsubscribe = audioContext.onAudioComplete(audioId, () => {
+          console.log(`🎵 useAudio.playWithCallback: Completion callback triggered for component "${componentId || 'unknown'}"`, {
+            componentId,
+            audioId,
+            componentMounted: mountedRef.current
+          })
+          
           // Remove from tracking
           activeAudioIds.current.delete(audioId)
           
@@ -167,12 +212,22 @@ export const useAudio = (options: UseAudioOptions = {}): UseAudioReturn => {
         
         // Clean up subscription if component unmounts before audio completes
         if (!mountedRef.current) {
+          console.log(`🎵 useAudio.playWithCallback: Component unmounted, cleaning up for "${componentId || 'unknown'}"`, {
+            componentId,
+            audioId
+          })
           unsubscribe()
           activeAudioIds.current.delete(audioId)
         }
       }
     } catch (error) {
-      console.error('Error in playWithCallback:', error)
+      console.error(`🎵 useAudio.playWithCallback: Error for component "${componentId || 'unknown'}":`, error, {
+        componentId,
+        errorName: error instanceof Error ? error.name : 'Unknown',
+        errorMessage: error instanceof Error ? error.message : error?.toString(),
+        componentMounted: mountedRef.current,
+        timestamp: new Date().toISOString()
+      })
       throw error
     }
   }
@@ -183,9 +238,23 @@ export const useAudio = (options: UseAudioOptions = {}): UseAudioReturn => {
   ): T => {
     return ((...args: any[]) => {
       if (!mountedRef.current) {
-        console.warn('🎵 useAudio: Attempted to play audio on unmounted component')
+        console.warn(`🎵 useAudio: Attempted to play audio on unmounted component "${componentId || 'unknown'}"`, {
+          componentId,
+          functionName: audioFunction.name,
+          args: args.length > 0 ? args[0] : undefined,
+          timestamp: new Date().toISOString()
+        })
         return Promise.resolve('')
       }
+      
+      console.log(`🎵 useAudio: Calling ${audioFunction.name} for component "${componentId || 'unknown'}"`, {
+        componentId,
+        functionName: audioFunction.name,
+        args: args.length > 0 ? args[0] : undefined,
+        componentMounted: mountedRef.current,
+        audioContextIsPlaying: audioContext.isPlaying,
+        timestamp: new Date().toISOString()
+      })
       
       return audioFunction(...args)
     }) as T
@@ -197,9 +266,23 @@ export const useAudio = (options: UseAudioOptions = {}): UseAudioReturn => {
   ): T => {
     return ((...args: any[]) => {
       if (!mountedRef.current) {
-        console.warn('🎵 useAudio: Attempted to play audio on unmounted component')
+        console.warn(`🎵 useAudio: Attempted to play void audio on unmounted component "${componentId || 'unknown'}"`, {
+          componentId,
+          functionName: audioFunction.name,
+          args: args.length > 0 ? args[0] : undefined,
+          timestamp: new Date().toISOString()
+        })
         return Promise.resolve()
       }
+      
+      console.log(`🎵 useAudio: Calling void ${audioFunction.name} for component "${componentId || 'unknown'}"`, {
+        componentId,
+        functionName: audioFunction.name,
+        args: args.length > 0 ? args[0] : undefined,
+        componentMounted: mountedRef.current,
+        audioContextIsPlaying: audioContext.isPlaying,
+        timestamp: new Date().toISOString()
+      })
       
       return audioFunction(...args)
     }) as T
@@ -243,9 +326,24 @@ export const useAudio = (options: UseAudioOptions = {}): UseAudioReturn => {
     playEncouragementSound: createSafeAudioFunction(audioContext.playEncouragementSound),
     playSound: (soundId: string, src?: string) => {
       if (!mountedRef.current) {
-        console.warn('🎵 useAudio: Attempted to play sound on unmounted component')
+        console.warn(`🎵 useAudio: Attempted to play sound on unmounted component "${componentId || 'unknown'}"`, {
+          componentId,
+          soundId,
+          src,
+          timestamp: new Date().toISOString()
+        })
         return Promise.resolve()
       }
+      
+      console.log(`🎵 useAudio: Playing sound for component "${componentId || 'unknown'}"`, {
+        componentId,
+        soundId,
+        src,
+        componentMounted: mountedRef.current,
+        audioContextIsPlaying: audioContext.isPlaying,
+        timestamp: new Date().toISOString()
+      })
+      
       return audioContext.playSound(soundId, src)
     },
     

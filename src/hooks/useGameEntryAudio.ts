@@ -45,22 +45,40 @@ export const useGameEntryAudio = ({
   const hasScheduled = useRef(false)
 
   useEffect(() => {
+    console.log(`🎵 useGameEntryAudio: Hook called for game "${gameType}"`, {
+      gameType,
+      delay,
+      enabled,
+      hasAlreadyScheduled: hasScheduled.current,
+      hasAlreadyPlayed: entryAudioManager.hasPlayed(gameType),
+      timestamp: new Date().toISOString(),
+      isIOS: navigator.userAgent.includes('iPhone') || navigator.userAgent.includes('iPad'),
+      isPWA: window.matchMedia('(display-mode: standalone)').matches,
+      documentFocus: document.hasFocus(),
+      documentVisible: !document.hidden,
+      entryAudioManagerState: entryAudioManager.getState()
+    })
+    
     // Don't play if disabled
     if (!enabled) {
+      console.log(`🎵 useGameEntryAudio: Entry audio disabled for "${gameType}"`)
       return
     }
     
     // Don't schedule if already played
     if (entryAudioManager.hasPlayed(gameType)) {
+      console.log(`🎵 useGameEntryAudio: Entry audio already played for "${gameType}"`)
       return
     }
     
     // Don't schedule multiple times from same component
     if (hasScheduled.current) {
+      console.log(`🎵 useGameEntryAudio: Entry audio already scheduled from this component for "${gameType}"`)
       return
     }
     
     // Schedule the entry audio using the centralized manager
+    console.log(`🎵 useGameEntryAudio: Scheduling entry audio for "${gameType}" with ${delay}ms delay`)
     hasScheduled.current = true
     entryAudioManager.scheduleEntryAudio(gameType, delay)
 
@@ -70,11 +88,19 @@ export const useGameEntryAudio = ({
 
   // Return function to manually replay entry audio
   const replayEntryAudio = () => {
+    console.log(`🎵 useGameEntryAudio: Manual replay requested for "${gameType}"`, {
+      gameType,
+      timestamp: new Date().toISOString()
+    })
     entryAudioManager.playEntryAudio(gameType)
   }
 
   // Function to reset entry audio state (useful for testing)
   const resetEntryAudio = () => {
+    console.log(`🎵 useGameEntryAudio: Reset requested for "${gameType}"`, {
+      gameType,
+      timestamp: new Date().toISOString()
+    })
     entryAudioManager.resetGame(gameType)
     hasScheduled.current = false
   }

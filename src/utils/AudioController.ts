@@ -364,16 +364,30 @@ export class AudioController {
    * Basic speak function with queue management
    */
   async speak(text: string, voiceType: 'primary' | 'backup' | 'male' = 'primary', useSSML: boolean = true, customSpeed?: number): Promise<string> {
-    logAudioDebug('speak called', { 
+    logAudioDebug('AudioController.speak called', { 
       text: text.substring(0, 50) + (text.length > 50 ? '...' : ''),
       voiceType,
       useSSML,
       customSpeed,
-      queueLength: this.audioQueue.length
+      isPlaying: this.isCurrentlyPlaying,
+      queueLength: this.audioQueue.length,
+      processingQueue: this.processingQueue,
+      isIOS: isIOS(),
+      isPWA: window.matchMedia('(display-mode: standalone)').matches,
+      userAgent: navigator.userAgent,
+      documentFocus: document.hasFocus(),
+      documentVisible: !document.hidden,
+      timestamp: new Date().toISOString(),
+      callStack: new Error().stack?.split('\n').slice(1, 4).join(' -> ')
     })
 
     return this.queueAudio(async () => {
-      logAudioDebug('speak executing in queue', { text: text.substring(0, 50) + '...' })
+      logAudioDebug('AudioController.speak executing in queue', { 
+        text: text.substring(0, 50) + '...',
+        queuePosition: this.audioQueue.length,
+        isCurrentlyPlaying: this.isCurrentlyPlaying,
+        processingQueue: this.processingQueue
+      })
       
       // Update user interaction timestamp
       this.updateUserInteraction()

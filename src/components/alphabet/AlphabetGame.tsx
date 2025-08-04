@@ -24,9 +24,12 @@ import { useAudio } from '../../hooks/useAudio'
 import { entryAudioManager } from '../../utils/entryAudioManager'
 import { audioDebugSession } from '../../utils/remoteConsole'
 
-// Enhanced iOS Safari PWA debugging using audioDebugSession
+// Enhanced logging - always log to console, also audioDebugSession if active
 const logAlphabetGameDebug = (message: string, data?: any) => {
-  // Only log to audioDebugSession if it's active
+  // Always log to console for comprehensive debugging
+  console.log(`🎵 AlphabetGame: ${message}`, data)
+  
+  // Also log to audioDebugSession if it's active
   if (audioDebugSession.isSessionActive()) {
     const isIOSDevice = isIOS()
     const isPWA = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone

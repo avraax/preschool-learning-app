@@ -14,6 +14,16 @@ function generateVersionPlugin() {
       const buildTime = Date.now()
       const versionPath = path.resolve(__dirname, 'src/config/version.ts')
       
+      // Read version from package.json
+      let packageVersion = '1.0.0'
+      try {
+        const packageJsonPath = path.resolve(__dirname, 'package.json')
+        const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'))
+        packageVersion = packageJson.version
+      } catch (error) {
+        console.log('Could not read version from package.json, using default "1.0.0"')
+      }
+      
       // Try to get git commit hash
       let commitHash = 'dev'
       try {
@@ -25,7 +35,7 @@ function generateVersionPlugin() {
       
       versionInfo = {
         buildTime,
-        version: '1.0.0',
+        version: packageVersion,
         commitHash
       }
       
@@ -34,14 +44,14 @@ function generateVersionPlugin() {
 
 export const BUILD_INFO = {
   buildTime: ${buildTime},
-  version: '1.0.0',
+  version: '${packageVersion}',
   commitHash: '${commitHash}'
 }
 
 export default BUILD_INFO`
       
       fs.writeFileSync(versionPath, versionContent)
-      console.log(`📦 Generated version info: ${new Date(buildTime).toISOString()}, commit: ${commitHash}`)
+      console.log(`📦 Generated version info: v${packageVersion}, ${new Date(buildTime).toISOString()}, commit: ${commitHash}`)
     },
     generateBundle() {
       // Also generate version.json for the API endpoint

@@ -794,6 +794,23 @@ export class GoogleTTSService {
     useSSML: boolean = true,
     customAudioConfig?: Partial<typeof TTS_CONFIG.audioConfig>
   ): Promise<void> {
+    // Comprehensive logging at method entry
+    logAudioIssue('TTS synthesizeAndPlay called', {
+      text: text.substring(0, 50) + (text.length > 50 ? '...' : ''),
+      voiceType,
+      useSSML,
+      textLength: text.length,
+      isIOS: isIOS(),
+      isPWA: window.matchMedia('(display-mode: standalone)').matches,
+      userAgent: navigator.userAgent,
+      audioContextExists: !!this.audioContext,
+      audioContextState: this.audioContext?.state || 'none',
+      timeSinceLastInteraction: Date.now() - this.lastUserInteraction,
+      documentFocus: document.hasFocus(),
+      documentVisible: !document.hidden,
+      speechSynthesisAvailable: !!window.speechSynthesis,
+      timestamp: new Date().toISOString()
+    })
     const { audioDebugSession } = await import('../utils/remoteConsole')
     audioDebugSession.addLog('GOOGLE_TTS_SYNTHESIZE_AND_PLAY', {
       text: text.substring(0, 100) + (text.length > 100 ? '...' : ''),
@@ -837,7 +854,25 @@ export class GoogleTTSService {
           userAgent: navigator.userAgent
         }
         
-        logAudioIssue('iOS Google TTS Failed', googleTTSError, errorInfo)
+        logAudioIssue('iOS Google TTS Failed', googleTTSError, {
+          ...errorInfo,
+          detailedContext: {
+            text: text.substring(0, 100),
+            voiceType,
+            useSSML,
+            audioContextState: this.audioContext?.state,
+            timeSinceInteraction: Date.now() - this.lastUserInteraction,
+            documentFocus: document.hasFocus(),
+            documentVisible: !document.hidden,
+            isPWA: window.matchMedia('(display-mode: standalone)').matches,
+            speechSynthesisAvailable: !!window.speechSynthesis,
+            speechSynthesisVoicesCount: window.speechSynthesis?.getVoices?.()?.length || 0,
+            userAgent: navigator.userAgent,
+            currentURL: window.location.href,
+            failureCount: this.failureCount,
+            lastFailureTime: this.lastFailureTime
+          }
+        })
         
         // Add delay before fallback to prevent rapid failures
         await new Promise(resolve => setTimeout(resolve, 200))

@@ -50,6 +50,7 @@ import { useUpdateChecker } from './hooks/useUpdateChecker'
 import { useNativeAppFeel } from './hooks/useNativeAppFeel'
 import { LogoLarge } from './components/common/Logo'
 import { categoryThemes } from './config/categoryThemes'
+import { BUILD_INFO } from './config/version'
 
 // Admin redirect component for query parameter support
 const AdminRedirectChecker = ({ children }: { children: React.ReactNode }) => {
@@ -725,10 +726,60 @@ const NavigationAudioCleanup: React.FC = () => {
   const audioContext = useAudioContext()
   
   useEffect(() => {
+    console.log('🎵 NavigationAudioCleanup: Route change detected, triggering audio cleanup', {
+      fromPath: location.pathname,
+      timestamp: new Date().toISOString(),
+      isIOS: navigator.userAgent.includes('iPhone') || navigator.userAgent.includes('iPad'),
+      isPWA: window.matchMedia('(display-mode: standalone)').matches,
+      audioContextState: audioContext.isPlaying ? 'playing' : 'idle',
+      documentFocus: document.hasFocus(),
+      documentVisible: !document.hidden,
+      referrer: document.referrer,
+      userAgent: navigator.userAgent
+    })
+    
     audioContext.triggerNavigationCleanup()
   }, [location.pathname, audioContext])
   
   return null // This component only handles side effects
+}
+
+// Version Display Component
+const VersionDisplay: React.FC = () => {
+  const buildDateTime = new Date(BUILD_INFO.buildTime)
+  
+  const releaseDate = buildDateTime.toLocaleDateString('da-DK', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  })
+  
+  const releaseTime = buildDateTime.toLocaleTimeString('da-DK', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false
+  })
+
+  return (
+    <Box
+      sx={{
+        position: 'fixed',
+        bottom: 8,
+        right: 8,
+        zIndex: 1000,
+        fontSize: '0.65rem',
+        color: 'rgba(0, 0, 0, 0.4)',
+        textAlign: 'right',
+        lineHeight: 1.2,
+        pointerEvents: 'none',
+        userSelect: 'none',
+        fontFamily: 'monospace'
+      }}
+    >
+      <Box component="div">v{BUILD_INFO.version}</Box>
+      <Box component="div">{releaseDate} {releaseTime}</Box>
+    </Box>
+  )
 }
 
 function App() {
@@ -771,6 +822,9 @@ function App() {
         
         {/* Global Audio Permission System */}
         <GlobalAudioPermission />
+        
+        {/* Version Display */}
+        <VersionDisplay />
         
         <Routes>
         {/* Home Routes */}
