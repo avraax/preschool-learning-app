@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import {
@@ -19,10 +19,9 @@ import LottieCharacter, { useCharacterState } from '../common/LottieCharacter'
 import CelebrationEffect, { useCelebration } from '../common/CelebrationEffect'
 import { AlphabetScoreChip } from '../common/ScoreChip'
 import { AlphabetRepeatButton } from '../common/RepeatButton'
-import { useGameEntryAudio } from '../../hooks/useGameEntryAudio'
-import { useGameAudioSetup } from '../../hooks/useGameAudioSetup'
 import { useGameState } from '../../hooks/useGameState'
 import { useAudio } from '../../hooks/useAudio'
+import { entryAudioManager } from '../../utils/entryAudioManager'
 
 // Full Danish alphabet including special characters
 const DANISH_ALPHABET = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'Æ', 'Ø', 'Å']
@@ -42,25 +41,46 @@ const AlphabetGame: React.FC = () => {
   const teacherCharacter = useCharacterState('wave')
   const { showCelebration, celebrationIntensity, celebrate, stopCelebration } = useCelebration()
   
-  // Centralized entry audio
-  useGameEntryAudio({ gameType: 'alphabet' })
-  
   // Timeout ref for cleanup
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
   
   
-  // Forward declaration for useGameAudioSetup to avoid hoisting issues
+  // Forward declaration for entry audio completion (same pattern as MathGame)
   const generateNewQuestionRef = useRef<(() => void) | null>(null)
-  
-  // Use centralized game audio setup hook (same pattern as MathGame)
-  const { ready: entryAudioComplete } = useGameAudioSetup('alphabet', () => {
-    generateNewQuestionRef.current?.()
-  })
+  const [entryAudioComplete, setEntryAudioComplete] = useState(false)
   
   useEffect(() => {
+    console.log('🎯 AlphabetGame: useEffect running - setting up entry audio')
+    
     // Initial teacher greeting
     teacherCharacter.setCharacter('owl')
     teacherCharacter.wave()
+    
+    // Set up entry audio completion callback (direct pattern like MathGame)
+    const handleEntryComplete = () => {
+      console.log('🎯 AlphabetGame: Entry audio completed, setting entryAudioComplete to true')
+      setEntryAudioComplete(true)
+      // Delay before generating first question to ensure proper audio sequencing
+      setTimeout(() => {
+        console.log('🎯 AlphabetGame: Calling generateNewQuestionRef.current after delay')
+        generateNewQuestionRef.current?.()
+      }, 500)
+    }
+    
+    console.log('🎯 AlphabetGame: Registering entry audio callback with entryAudioManager')
+    entryAudioManager.onComplete('alphabet', handleEntryComplete)
+    
+    // Schedule entry audio (this was missing!)
+    console.log('🎯 AlphabetGame: Scheduling entry audio')
+    entryAudioManager.scheduleEntryAudio('alphabet', 1000)
+    
+    console.log('🎯 AlphabetGame: Component setup complete')
+    
+    // Cleanup function
+    return () => {
+      console.log('🎯 AlphabetGame: Cleaning up entry audio callback')
+      entryAudioManager.removeCallback('alphabet', handleEntryComplete)
+    }
   }, [])
   
   useEffect(() => {
@@ -73,13 +93,16 @@ const AlphabetGame: React.FC = () => {
     }
   }, [])
 
-  // Generate new question - same pattern as MathGame
-  const generateNewQuestion = () => {
-    console.log('🎯 AlphabetGame: generateNewQuestion called')
+  // Generate new question - stable useCallback to prevent infinite loops
+  const generateNewQuestion = useCallback(() => {
+    console.log('🎯 AlphabetGame: ===== generateNewQuestion STARTED =====')
+    console.log(`🎯 AlphabetGame: Current game state - currentLetter: "${currentLetter}", showOptions: ${JSON.stringify(showOptions)}`)
     
     // Pick a random letter from full Danish alphabet
     const letter = DANISH_ALPHABET[Math.floor(Math.random() * DANISH_ALPHABET.length)]
     console.log(`🎯 AlphabetGame: New letter selected: ${letter}`)
+    
+    console.log('🎯 AlphabetGame: Setting currentLetter state...')
     setCurrentLetter(letter)
     console.log(`🎯 AlphabetGame: setCurrentLetter called with: ${letter}`)
     
@@ -95,24 +118,35 @@ const AlphabetGame: React.FC = () => {
     
     const shuffledOptions = options.sort(() => Math.random() - 0.5)
     console.log(`🎯 AlphabetGame: Options created: ${JSON.stringify(shuffledOptions)}`)
+    
+    console.log('🎯 AlphabetGame: Setting showOptions state...')
     setShowOptions(shuffledOptions)
     console.log(`🎯 AlphabetGame: setShowOptions called with: ${JSON.stringify(shuffledOptions)}`)
     
+    // Clear any existing timeout
+    if (timeoutRef.current) {
+      console.log('🎯 AlphabetGame: Clearing existing timeout')
+      clearTimeout(timeoutRef.current)
+      timeoutRef.current = null
+    }
+    
     // Schedule delayed audio (same pattern as MathGame)
+    console.log('🎯 AlphabetGame: Setting up audio timeout...')
     timeoutRef.current = setTimeout(async () => {
       try {
-        console.log(`🎯 AlphabetGame: About to speak quiz prompt for letter: ${letter}`)
+        console.log(`🎯 AlphabetGame: Timeout fired, about to speak quiz prompt for letter: ${letter}`)
         await audio.speakQuizPromptWithRepeat(DANISH_PHRASES.gamePrompts.findLetter(letter), letter)
         console.log(`🎯 AlphabetGame: Quiz prompt audio completed for letter: ${letter}`)
       } catch (error) {
         console.error('🎯 AlphabetGame: Error playing question audio:', error)
       } finally {
+        console.log('🎯 AlphabetGame: Audio timeout cleanup, setting timeoutRef to null')
         timeoutRef.current = null
       }
     }, 500)
     
-    console.log('🎯 AlphabetGame: generateNewQuestion completed')
-  }
+    console.log('🎯 AlphabetGame: ===== generateNewQuestion COMPLETED =====')
+  }, [audio]) // Stable dependency - only recreate if audio changes
   
   // Assign function to ref for useGameAudioSetup
   useEffect(() => {
@@ -120,12 +154,20 @@ const AlphabetGame: React.FC = () => {
   }, [generateNewQuestion])
 
   const handleLetterClick = async (selectedLetter: string) => {
-    if (audio.isPlaying) return
+    console.log(`🎯 AlphabetGame: handleLetterClick called with letter: ${selectedLetter}`)
+    console.log(`🎯 AlphabetGame: audio.isPlaying = ${audio.isPlaying}`)
+    
+    if (audio.isPlaying) {
+      console.log('🎯 AlphabetGame: Audio is playing, returning early')
+      return
+    }
     
     const isCorrect = selectedLetter === currentLetter
-    console.log(`🎯 AlphabetGame: Letter clicked: ${selectedLetter}, correct: ${isCorrect}`)
+    console.log(`🎯 AlphabetGame: Letter clicked: ${selectedLetter}, currentLetter: ${currentLetter}, correct: ${isCorrect}`)
     
     try {
+      console.log('🎯 AlphabetGame: About to call handleCompleteGameResult')
+      
       // Use unified game result handler
       await audio.handleCompleteGameResult({
         isCorrect,
@@ -135,30 +177,39 @@ const AlphabetGame: React.FC = () => {
         incrementScore,
         currentScore: score,
         nextAction: isCorrect ? () => {
-          console.log('🎯 AlphabetGame: NextAction callback called - generating new question')
-          console.log('🎯 AlphabetGame: About to call generateNewQuestion()')
+          console.log('🎯 AlphabetGame: ✅ CORRECT ANSWER NextAction callback called')
+          console.log('🎯 AlphabetGame: About to call generateNewQuestion() from nextAction')
           generateNewQuestion()
-          console.log('🎯 AlphabetGame: generateNewQuestion() call completed')
+          console.log('🎯 AlphabetGame: generateNewQuestion() call completed from nextAction')
         } : () => {
-          console.log('🎯 AlphabetGame: Wrong answer - character thinking')
+          console.log('🎯 AlphabetGame: ❌ WRONG ANSWER - character thinking')
           teacherCharacter.think()
         },
         autoAdvanceDelay: isIOS() ? 1000 : 3000,
         isIOS: isIOS()
       })
+      
+      console.log('🎯 AlphabetGame: handleCompleteGameResult completed')
     } catch (error) {
-      console.error('Error in unified game result handler:', error)
+      console.error('🎯 AlphabetGame: Error in unified game result handler:', error)
     }
   }
 
   const repeatLetter = async () => {
-    if (audio.isPlaying) return
+    console.log('🎯 AlphabetGame: repeatLetter called')
+    console.log(`🎯 AlphabetGame: audio.isPlaying = ${audio.isPlaying}`)
+    
+    if (audio.isPlaying) {
+      console.log('🎯 AlphabetGame: Audio is playing, cannot repeat')
+      return
+    }
     
     try {
       console.log(`🎯 AlphabetGame: Repeating letter: ${currentLetter}`)
       await audio.speakQuizPromptWithRepeat(DANISH_PHRASES.gamePrompts.findLetter(currentLetter), currentLetter)
+      console.log(`🎯 AlphabetGame: Letter repeat completed: ${currentLetter}`)
     } catch (error) {
-      console.error('Error repeating letter:', error)
+      console.error('🎯 AlphabetGame: Error repeating letter:', error)
     }
   }
 

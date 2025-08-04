@@ -534,10 +534,18 @@ export class AudioController {
   }
 
   async announceGameResult(isCorrect: boolean, voiceType: 'primary' | 'backup' | 'male' = 'primary'): Promise<string> {
+    console.log(`🎵 AudioController.announceGameResult: Called with isCorrect = ${isCorrect}, voiceType = ${voiceType}`)
+    
     if (isCorrect) {
-      return this.speakWithEnthusiasm(getRandomSuccessPhrase(), voiceType)
+      console.log('🎵 AudioController.announceGameResult: ✅ Playing success phrase with enthusiasm')
+      const result = await this.speakWithEnthusiasm(getRandomSuccessPhrase(), voiceType)
+      console.log('🎵 AudioController.announceGameResult: ✅ Success phrase completed')
+      return result
     } else {
-      return this.speak(getRandomEncouragementPhrase(), voiceType, true)
+      console.log('🎵 AudioController.announceGameResult: ❌ Playing encouragement phrase')
+      const result = await this.speak(getRandomEncouragementPhrase(), voiceType, true)
+      console.log('🎵 AudioController.announceGameResult: ❌ Encouragement phrase completed')
+      return result
     }
   }
 
@@ -814,6 +822,13 @@ export class AudioController {
     isIOS?: boolean;
     voiceType?: 'primary' | 'backup' | 'male';
   }): Promise<void> {
+    console.log('🎵 AudioController.handleCompleteGameResult: ===== STARTING GAME RESULT HANDLER =====')
+    console.log(`🎵 AudioController.handleCompleteGameResult: isCorrect = ${options.isCorrect}`)
+    console.log(`🎵 AudioController.handleCompleteGameResult: currentScore = ${options.currentScore}`)
+    console.log(`🎵 AudioController.handleCompleteGameResult: nextAction provided = ${!!options.nextAction}`)
+    console.log(`🎵 AudioController.handleCompleteGameResult: autoAdvanceDelay = ${options.autoAdvanceDelay}`)
+    console.log(`🎵 AudioController.handleCompleteGameResult: isIOS = ${options.isIOS}`)
+    
     const {
       isCorrect,
       character,
@@ -830,51 +845,86 @@ export class AudioController {
     } = options
 
     if (isCorrect) {
+      console.log('🎵 AudioController.handleCompleteGameResult: ✅ CORRECT ANSWER - Starting success sequence')
+      
       // Success sequence
+      console.log('🎵 AudioController.handleCompleteGameResult: Incrementing score...')
       incrementScore()
+      console.log('🎵 AudioController.handleCompleteGameResult: Score incremented')
+      
+      console.log('🎵 AudioController.handleCompleteGameResult: Setting character to celebrate...')
       character.celebrate()
-      celebrate(currentScore > 5 ? 'high' : 'medium')
+      console.log('🎵 AudioController.handleCompleteGameResult: Character set to celebrate')
+      
+      const celebrationIntensity = currentScore > 5 ? 'high' : 'medium'
+      console.log(`🎵 AudioController.handleCompleteGameResult: Starting celebration with intensity: ${celebrationIntensity}`)
+      celebrate(celebrationIntensity)
+      console.log('🎵 AudioController.handleCompleteGameResult: Celebration started')
       
       // Play success audio with callback for next action
+      console.log('🎵 AudioController.handleCompleteGameResult: About to call playWithCallback for success audio...')
       await this.playWithCallback(
-        () => this.announceGameResult(true, voiceType),
         () => {
-          console.log('🎵 AudioController.handleCompleteGameResult: Success audio completion callback triggered')
+          console.log('🎵 AudioController.handleCompleteGameResult: Audio function called, calling announceGameResult...')
+          return this.announceGameResult(true, voiceType)
+        },
+        () => {
+          console.log('🎵 AudioController.handleCompleteGameResult: ✅ SUCCESS AUDIO COMPLETION CALLBACK TRIGGERED')
           if (nextAction) {
             // Shorter delay for iOS to preserve user interaction window
             const delayTime = isIOS ? 1000 : (autoAdvanceDelay || 3000)
             console.log(`🎵 AudioController.handleCompleteGameResult: Setting timeout for nextAction with delay: ${delayTime}ms`)
             setTimeout(() => {
-              console.log('🎵 AudioController.handleCompleteGameResult: Timeout fired, executing nextAction')
+              console.log('🎵 AudioController.handleCompleteGameResult: ⏰ TIMEOUT FIRED - About to execute nextAction')
+              console.log('🎵 AudioController.handleCompleteGameResult: Stopping celebration...')
               stopCelebration()
+              console.log('🎵 AudioController.handleCompleteGameResult: Setting character to wave...')
               character.wave()
+              console.log('🎵 AudioController.handleCompleteGameResult: About to call nextAction...')
               nextAction()
-              console.log('🎵 AudioController.handleCompleteGameResult: nextAction execution completed')
+              console.log('🎵 AudioController.handleCompleteGameResult: ✅ NEXT ACTION EXECUTION COMPLETED')
             }, delayTime)
           } else {
-            console.log('🎵 AudioController.handleCompleteGameResult: No nextAction provided')
+            console.log('🎵 AudioController.handleCompleteGameResult: ❌ No nextAction provided')
           }
         }
       )
+      console.log('🎵 AudioController.handleCompleteGameResult: playWithCallback completed for success audio')
     } else {
+      console.log('🎵 AudioController.handleCompleteGameResult: ❌ INCORRECT ANSWER - Starting error sequence')
+      
       // Error sequence
+      console.log('🎵 AudioController.handleCompleteGameResult: Setting character to think...')
       character.think()
+      console.log('🎵 AudioController.handleCompleteGameResult: Character set to think')
       
       // Play error audio with feedback
+      console.log('🎵 AudioController.handleCompleteGameResult: About to call playWithCallback for error audio...')
       await this.playWithCallback(
-        () => this.announceGameResultWithContext(false, { 
-          correctAnswer, 
-          explanation, 
-          voiceType 
-        }),
         () => {
+          console.log('🎵 AudioController.handleCompleteGameResult: Error audio function called, calling announceGameResultWithContext...')
+          return this.announceGameResultWithContext(false, { 
+            correctAnswer, 
+            explanation, 
+            voiceType 
+          })
+        },
+        () => {
+          console.log('🎵 AudioController.handleCompleteGameResult: ❌ ERROR AUDIO COMPLETION CALLBACK TRIGGERED')
           // Allow immediate interaction after audio completes
           if (nextAction) {
+            console.log('🎵 AudioController.handleCompleteGameResult: Calling nextAction for error case...')
             nextAction()
+            console.log('🎵 AudioController.handleCompleteGameResult: Error nextAction completed')
+          } else {
+            console.log('🎵 AudioController.handleCompleteGameResult: No nextAction for error case')
           }
         }
       )
+      console.log('🎵 AudioController.handleCompleteGameResult: playWithCallback completed for error audio')
     }
+    
+    console.log('🎵 AudioController.handleCompleteGameResult: ===== GAME RESULT HANDLER COMPLETED =====')
   }
 
   /**

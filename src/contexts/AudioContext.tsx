@@ -22,6 +22,16 @@ export interface AudioContextType {
   announceScore: (score: number, voiceType?: 'primary' | 'backup' | 'male') => Promise<string>
   announcePosition: (currentIndex: number, total: number, itemType?: 'tal' | 'bogstav', voiceType?: 'primary' | 'backup' | 'male') => Promise<string>
   playGameWelcome: (gameType: string, voiceType?: 'primary' | 'backup' | 'male') => Promise<string>
+  playGameEntryWithSetup: (gameType: string, setupCallback: () => void, delay?: number) => Promise<void>
+  
+  // Enhanced consolidated methods
+  speakNumberInContext: (number: number, context: 'counting' | 'answer' | 'learning' | 'result' | 'instruction', options?: { prefix?: string; suffix?: string; voiceType?: 'primary' | 'backup' | 'male' }) => Promise<string>
+  speakComparisonProblem: (leftNum: number, rightNum: number, leftObjects: string, rightObjects: string, questionType: 'largest' | 'smallest' | 'equal', voiceType?: 'primary' | 'backup' | 'male') => Promise<string>
+  announceGameResultWithContext: (isCorrect: boolean, details?: { correctAnswer?: string | number; explanation?: string; voiceType?: 'primary' | 'backup' | 'male' }) => Promise<string>
+  
+  // Unified game result handlers
+  handleCompleteGameResult: (options: { isCorrect: boolean; character: any; celebrate: (intensity: 'low' | 'medium' | 'high') => void; stopCelebration: () => void; incrementScore: () => void; currentScore: number; nextAction?: () => void; correctAnswer?: string | number; explanation?: string; autoAdvanceDelay?: number; isIOS?: boolean; voiceType?: 'primary' | 'backup' | 'male' }) => Promise<void>
+  handleGameCompletion: (options: { character: any; celebrate: (intensity: 'high') => void; stopCelebration: () => void; resetAction?: () => void; completionMessage?: string; autoResetDelay?: number; voiceType?: 'primary' | 'backup' | 'male' }) => Promise<void>
   
   // Sound effects
   playSuccessSound: () => Promise<string>
@@ -38,6 +48,9 @@ export interface AudioContextType {
   
   // Event listeners
   onAudioComplete: (audioId: string, listener: () => void) => () => void
+  
+  // Utility functions
+  playWithCallback: (audioFunction: () => Promise<string>, onComplete?: () => void) => Promise<void>
   
   // Status
   getTTSStatus: () => {
@@ -94,6 +107,16 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
     announceScore: audioController.announceScore.bind(audioController),
     announcePosition: audioController.announcePosition.bind(audioController),
     playGameWelcome: audioController.playGameWelcome.bind(audioController),
+    playGameEntryWithSetup: audioController.playGameEntryWithSetup.bind(audioController),
+    
+    // Enhanced consolidated methods
+    speakNumberInContext: audioController.speakNumberInContext.bind(audioController),
+    speakComparisonProblem: audioController.speakComparisonProblem.bind(audioController),
+    announceGameResultWithContext: audioController.announceGameResultWithContext.bind(audioController),
+    
+    // Unified game result handlers
+    handleCompleteGameResult: audioController.handleCompleteGameResult.bind(audioController),
+    handleGameCompletion: audioController.handleGameCompletion.bind(audioController),
     
     // Sound effects
     playSuccessSound: audioController.playSuccessSound.bind(audioController),
@@ -110,6 +133,9 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
     
     // Event listeners
     onAudioComplete: audioController.onAudioComplete.bind(audioController),
+    
+    // Utility functions
+    playWithCallback: audioController.playWithCallback.bind(audioController),
     
     // Status
     getTTSStatus: audioController.getTTSStatus.bind(audioController)

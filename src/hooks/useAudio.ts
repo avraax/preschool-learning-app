@@ -35,6 +35,16 @@ export interface UseAudioReturn {
   announceScore: (score: number, voiceType?: 'primary' | 'backup' | 'male') => Promise<string>
   announcePosition: (currentIndex: number, total: number, itemType?: 'tal' | 'bogstav', voiceType?: 'primary' | 'backup' | 'male') => Promise<string>
   playGameWelcome: (gameType: string, voiceType?: 'primary' | 'backup' | 'male') => Promise<string>
+  playGameEntryWithSetup: (gameType: string, setupCallback: () => void, delay?: number) => Promise<void>
+  
+  // Enhanced consolidated methods
+  speakNumberInContext: (number: number, context: 'counting' | 'answer' | 'learning' | 'result' | 'instruction', options?: { prefix?: string; suffix?: string; voiceType?: 'primary' | 'backup' | 'male' }) => Promise<string>
+  speakComparisonProblem: (leftNum: number, rightNum: number, leftObjects: string, rightObjects: string, questionType: 'largest' | 'smallest' | 'equal', voiceType?: 'primary' | 'backup' | 'male') => Promise<string>
+  announceGameResultWithContext: (isCorrect: boolean, details?: { correctAnswer?: string | number; explanation?: string; voiceType?: 'primary' | 'backup' | 'male' }) => Promise<string>
+  
+  // Unified game result handlers
+  handleCompleteGameResult: (options: { isCorrect: boolean; character: any; celebrate: (intensity: 'low' | 'medium' | 'high') => void; stopCelebration: () => void; incrementScore: () => void; currentScore: number; nextAction?: () => void; correctAnswer?: string | number; explanation?: string; autoAdvanceDelay?: number; isIOS?: boolean; voiceType?: 'primary' | 'backup' | 'male' }) => Promise<void>
+  handleGameCompletion: (options: { character: any; celebrate: (intensity: 'high') => void; stopCelebration: () => void; resetAction?: () => void; completionMessage?: string; autoResetDelay?: number; voiceType?: 'primary' | 'backup' | 'male' }) => Promise<void>
   
   // Sound effects
   playSuccessSound: () => Promise<string>
@@ -174,6 +184,20 @@ export const useAudio = (options: UseAudioOptions = {}): UseAudioReturn => {
     }) as T
   }
 
+  // Special wrapper for void-returning functions
+  const createSafeVoidAudioFunction = <T extends (...args: any[]) => Promise<void>>(
+    audioFunction: T
+  ): T => {
+    return ((...args: any[]) => {
+      if (!mountedRef.current) {
+        console.warn('🎵 useAudio: Attempted to play audio on unmounted component')
+        return Promise.resolve()
+      }
+      
+      return audioFunction(...args)
+    }) as T
+  }
+
   // Return all audio functions with lifecycle safety
   return {
     // Playing state
@@ -196,6 +220,16 @@ export const useAudio = (options: UseAudioOptions = {}): UseAudioReturn => {
     announceScore: createSafeAudioFunction(audioContext.announceScore),
     announcePosition: createSafeAudioFunction(audioContext.announcePosition),
     playGameWelcome: createSafeAudioFunction(audioContext.playGameWelcome),
+    playGameEntryWithSetup: createSafeVoidAudioFunction(audioContext.playGameEntryWithSetup),
+    
+    // Enhanced consolidated methods
+    speakNumberInContext: createSafeAudioFunction(audioContext.speakNumberInContext),
+    speakComparisonProblem: createSafeAudioFunction(audioContext.speakComparisonProblem),
+    announceGameResultWithContext: createSafeAudioFunction(audioContext.announceGameResultWithContext),
+    
+    // Unified game result handlers
+    handleCompleteGameResult: createSafeVoidAudioFunction(audioContext.handleCompleteGameResult),
+    handleGameCompletion: createSafeVoidAudioFunction(audioContext.handleGameCompletion),
     
     // Sound effects (wrapped for safety)
     playSuccessSound: createSafeAudioFunction(audioContext.playSuccessSound),
