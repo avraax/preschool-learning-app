@@ -182,17 +182,25 @@ const ColorMixTargetDemo: React.FC = () => {
       }))
 
       try {
-        await audio.announceGameResult(true)
+        await audio.handleCompleteGameResult({
+          isCorrect: true,
+          character: colorMixer,
+          celebrate,
+          stopCelebration,
+          incrementScore: () => {}, // Already incremented above
+          currentScore: gameState.attempts,
+          nextAction: () => initializeGame(),
+          autoAdvanceDelay: 3000,
+          isIOS: false
+        })
       } catch (error) {
-        // Ignore audio errors
+        // Fallback if audio fails
+        setTimeout(() => {
+          stopCelebration()
+          colorMixer.point()
+          initializeGame()
+        }, 3000)
       }
-
-      // Auto-generate new question after celebration
-      setTimeout(() => {
-        stopCelebration()
-        colorMixer.point()
-        initializeGame()
-      }, 3000)
     } else {
       // Wrong combination - encourage
       colorMixer.encourage()
@@ -203,19 +211,28 @@ const ColorMixTargetDemo: React.FC = () => {
       }))
 
       try {
-        await audio.announceGameResult(false)
-        
-        // Reset immediately when audio ends
-        const clearedColors = gameState.availableColors.map(color => ({
-          ...color,
-          isUsed: false
-        }))
+        await audio.handleCompleteGameResult({
+          isCorrect: false,
+          character: colorMixer,
+          celebrate,
+          stopCelebration,
+          incrementScore: () => {}, // No score increment for wrong answers
+          currentScore: gameState.attempts,
+          nextAction: () => {
+            // Reset immediately when audio ends
+            const clearedColors = gameState.availableColors.map(color => ({
+              ...color,
+              isUsed: false
+            }))
 
-        setGameState(prev => ({
-          ...prev,
-          availableColors: clearedColors,
-          mixingZone: []
-        }))
+            setGameState(prev => ({
+              ...prev,
+              availableColors: clearedColors,
+              mixingZone: []
+            }))
+          },
+          isIOS: false
+        })
         
         colorMixer.think()
       } catch (error) {

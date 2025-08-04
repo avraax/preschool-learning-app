@@ -59,6 +59,16 @@ export interface UseAudioReturn {
   
   // Utility functions
   playWithCallback: (audioFunction: () => Promise<string>, onComplete?: () => void) => Promise<void>
+  
+  // Color game specialized methods
+  speakColorMixingInstructions: (targetColorName: string, voiceType?: 'primary' | 'backup' | 'male') => Promise<string>
+  speakColorMixingSuccess: (color1: string, color2: string, resultColor: string, voiceType?: 'primary' | 'backup' | 'male') => Promise<string>
+  speakColorHuntInstructions: (targetPhrase: string, voiceType?: 'primary' | 'backup' | 'male') => Promise<string>
+  speakNewColorHuntGame: (targetPhrase: string, voiceType?: 'primary' | 'backup' | 'male') => Promise<string>
+  
+  // Game completion methods
+  speakGameCompletionCelebration: (voiceType?: 'primary' | 'backup' | 'male') => Promise<string>
+  speakSpecificGameCompletion: (gameType: 'memory' | 'colorHunt' | 'shapes' | 'puzzle', voiceType?: 'primary' | 'backup' | 'male') => Promise<string>
 }
 
 /**
@@ -249,7 +259,17 @@ export const useAudio = (options: UseAudioOptions = {}): UseAudioReturn => {
     onAudioComplete: audioContext.onAudioComplete,
     
     // Utility functions
-    playWithCallback
+    playWithCallback,
+    
+    // Color game specialized methods (wrapped for safety)
+    speakColorMixingInstructions: createSafeAudioFunction(audioContext.speakColorMixingInstructions),
+    speakColorMixingSuccess: createSafeAudioFunction(audioContext.speakColorMixingSuccess),
+    speakColorHuntInstructions: createSafeAudioFunction(audioContext.speakColorHuntInstructions),
+    speakNewColorHuntGame: createSafeAudioFunction(audioContext.speakNewColorHuntGame),
+    
+    // Game completion methods (wrapped for safety)
+    speakGameCompletionCelebration: createSafeAudioFunction(audioContext.speakGameCompletionCelebration),
+    speakSpecificGameCompletion: createSafeAudioFunction(audioContext.speakSpecificGameCompletion)
   }
 }
 

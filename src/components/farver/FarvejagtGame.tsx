@@ -127,7 +127,7 @@ const FarvejagtGame: React.FC = () => {
     // Speak the target phrase after setup
     setTimeout(() => {
       try {
-        audio.speak(`${newTargetPhrase} og træk dem til cirklen.`)
+        audio.speakColorHuntInstructions(newTargetPhrase)
           .catch(() => {})
       } catch (error) {
         // Ignore audio errors
@@ -371,7 +371,7 @@ const FarvejagtGame: React.FC = () => {
     
     try {
       const targetPhrase = COLOR_TARGETS.find(target => target.color === targetColor)?.phrase || 'Find alle røde ting'
-      audio.speak(`${targetPhrase} og træk dem til cirklen.`)
+      audio.speakColorHuntInstructions(targetPhrase)
         .catch(() => {})
     } catch (error) {
       // Ignore audio errors
@@ -393,12 +393,13 @@ const FarvejagtGame: React.FC = () => {
       try {
         // For automatic restarts (after completion), don't say "Nyt spil!"
         // For manual restarts (button click), include "Nyt spil!"
-        const message = isAutomatic 
-          ? `${newTargetPhrase} og træk dem til cirklen.`
-          : `Nyt spil! ${newTargetPhrase} og træk dem til cirklen.`
-        
-        audio.speak(message)
-          .catch(() => {})
+        if (isAutomatic) {
+          audio.speakColorHuntInstructions(newTargetPhrase)
+            .catch(() => {})
+        } else {
+          audio.speakNewColorHuntGame(newTargetPhrase)
+            .catch(() => {})
+        }
       } catch (error) {
         // Ignore audio errors on reset
       }

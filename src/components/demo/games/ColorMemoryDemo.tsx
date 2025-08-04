@@ -194,7 +194,7 @@ const ColorMemoryDemo: React.FC<ColorMemoryDemoProps> = () => {
 
         try {
           await audio.playSuccessSound()
-          await audio.speak('Godt klaret!')
+          await audio.speakGameCompletionCelebration()
         } catch (error) {
           console.error('Error playing success sound:', error)
         }
@@ -202,7 +202,7 @@ const ColorMemoryDemo: React.FC<ColorMemoryDemoProps> = () => {
         // Check if game is complete (all 20 pairs found)
         if (matchedPairs + 1 === 20) {
           try {
-            await audio.speak('Fantastisk! Du fandt alle parrene!')
+            await audio.speakSpecificGameCompletion('memory')
           } catch (error) {
             console.error('Error playing completion sound:', error)
           }

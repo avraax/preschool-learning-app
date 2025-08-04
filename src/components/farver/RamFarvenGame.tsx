@@ -147,7 +147,7 @@ const RamFarvenGame: React.FC = () => {
 
     // Game-specific instruction (NOW after entry audio completes)
     try {
-      audio.speak(`Lav ${randomTarget.name} ved at blande to farver!`)
+      audio.speakColorMixingInstructions(randomTarget.name)
         .catch(() => {})
     } catch (error) {
       // Ignore audio errors
@@ -160,7 +160,7 @@ const RamFarvenGame: React.FC = () => {
     if (!entryAudioComplete || !gameState.targetColor) return
     
     try {
-      audio.speak(`Lav ${gameState.targetColor.name} ved at blande to farver!`)
+      audio.speakColorMixingInstructions(gameState.targetColor.name)
         .catch(() => {})
     } catch (error) {
       // Ignore audio errors
@@ -214,18 +214,21 @@ const RamFarvenGame: React.FC = () => {
         attempts: prev.attempts + 1
       }))
 
-      try {
-        await audio.announceGameResult(true)
-      } catch (error) {
-        // Ignore audio errors
-      }
-
-      // Auto-generate new question after celebration
-      setTimeout(() => {
-        stopCelebration()
-        colorTeacher.point()
-        initializeGame()
-      }, 3000)
+      // Use centralized game result handler
+      await audio.handleCompleteGameResult({
+        isCorrect: true,
+        character: colorTeacher,
+        celebrate: () => {}, // Already celebrated above
+        stopCelebration: stopCelebration,
+        incrementScore: () => {}, // Already incremented above
+        currentScore: score,
+        nextAction: () => {
+          colorTeacher.point()
+          initializeGame()
+        },
+        autoAdvanceDelay: 3000,
+        voiceType: 'primary'
+      })
     } else {
       // Wrong combination - encourage
       colorTeacher.encourage()
@@ -235,37 +238,32 @@ const RamFarvenGame: React.FC = () => {
         attempts: prev.attempts + 1
       }))
 
-      try {
-        await audio.announceGameResult(false)
-        
-        // Reset immediately when audio ends
-        const clearedColors = gameState.availableColors.map(color => ({
-          ...color,
-          isUsed: false
-        }))
+      // Use centralized game result handler
+      await audio.handleCompleteGameResult({
+        isCorrect: false,
+        character: colorTeacher,
+        celebrate: () => {},
+        stopCelebration: () => {},
+        incrementScore: () => {},
+        currentScore: score,
+        nextAction: () => {
+          // Reset the mixing zone
+          const clearedColors = gameState.availableColors.map(color => ({
+            ...color,
+            isUsed: false
+          }))
 
-        setGameState(prev => ({
-          ...prev,
-          availableColors: clearedColors,
-          mixingZone: []
-        }))
-        
-        colorTeacher.think()
-      } catch (error) {
-        // Even on error, reset immediately
-        const clearedColors = gameState.availableColors.map(color => ({
-          ...color,
-          isUsed: false
-        }))
-
-        setGameState(prev => ({
-          ...prev,
-          availableColors: clearedColors,
-          mixingZone: []
-        }))
-        
-        colorTeacher.think()
-      }
+          setGameState(prev => ({
+            ...prev,
+            availableColors: clearedColors,
+            mixingZone: []
+          }))
+          
+          colorTeacher.think()
+        },
+        autoAdvanceDelay: 0, // Immediate reset for wrong answers
+        voiceType: 'primary'
+      })
     }
   }
 

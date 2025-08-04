@@ -729,32 +729,24 @@ export class AudioController {
   ): Promise<string> {
     const { correctAnswer, explanation, voiceType = 'primary' } = details || {}
     
-    return this.queueAudio(async () => {
-      if (isCorrect) {
-        // Success announcement
-        const { getRandomSuccessPhrase } = await import('../config/danish-phrases')
-        await this.speak(getRandomSuccessPhrase(), voiceType, true)
-        
-        if (explanation) {
-          await new Promise(resolve => setTimeout(resolve, 300))
-          await this.speak(explanation, voiceType, true)
-        }
-      } else {
-        // Error with helpful feedback
-        const encouragement = 'Prøv igen!'
-        await this.speak(encouragement, voiceType, true)
-        
-        if (correctAnswer !== undefined) {
-          await new Promise(resolve => setTimeout(resolve, 300))
-          await this.speak(`Det rigtige svar er ${correctAnswer}`, voiceType, true)
-        }
-        
-        if (explanation) {
-          await new Promise(resolve => setTimeout(resolve, 300))
-          await this.speak(explanation, voiceType, true)
-        }
+    if (isCorrect) {
+      // Success announcement
+      const { getRandomSuccessPhrase } = await import('../config/danish-phrases')
+      return this.speak(getRandomSuccessPhrase(), voiceType, true)
+    } else {
+      // Error with helpful feedback - speak all parts as one message
+      let message = 'Prøv igen!'
+      
+      if (correctAnswer !== undefined) {
+        message += ` Det rigtige svar er ${correctAnswer}.`
       }
-    })
+      
+      if (explanation) {
+        message += ` ${explanation}`
+      }
+      
+      return this.speak(message, voiceType, true)
+    }
   }
 
   /**
@@ -1154,6 +1146,98 @@ export class AudioController {
       queueLength: this.audioQueue.length,
       isPlaying: this.isCurrentlyPlaying
     }
+  }
+
+  // ===== CENTRALIZED COLOR MIXING AUDIO METHODS =====
+
+  /**
+   * Announces the start of a color mixing game with target color
+   */
+  async speakColorMixingInstructions(targetColorName: string, voiceType: 'primary' | 'backup' | 'male' = 'primary'): Promise<string> {
+    return this.queueAudio(async () => {
+      this.updateUserInteraction()
+      
+      const hasPermission = await this.checkAudioPermission()
+      if (!hasPermission) return
+
+      const message = `Lav ${targetColorName} ved at blande to farver!`
+      await this.googleTTS.synthesizeAndPlay(message, voiceType, true)
+    })
+  }
+
+  /**
+   * Announces a successful color mixing result with celebration
+   */
+  async speakColorMixingSuccess(color1: string, color2: string, resultColor: string, voiceType: 'primary' | 'backup' | 'male' = 'primary'): Promise<string> {
+    return this.queueAudio(async () => {
+      this.updateUserInteraction()
+      
+      const hasPermission = await this.checkAudioPermission()
+      if (!hasPermission) return
+
+      const message = `${color1} og ${color2} bliver til ${resultColor}!`
+      await this.googleTTS.synthesizeAndPlay(message, voiceType, true)
+    })
+  }
+
+  /**
+   * Announces color hunt game instructions with target color
+   */
+  async speakColorHuntInstructions(targetPhrase: string, voiceType: 'primary' | 'backup' | 'male' = 'primary'): Promise<string> {
+    return this.queueAudio(async () => {
+      this.updateUserInteraction()
+      
+      const hasPermission = await this.checkAudioPermission()
+      if (!hasPermission) return
+
+      const message = `${targetPhrase} og træk dem til cirklen.`
+      await this.googleTTS.synthesizeAndPlay(message, voiceType, true)
+    })
+  }
+
+  /**
+   * Announces new game start with color hunt instructions
+   */
+  async speakNewColorHuntGame(targetPhrase: string, voiceType: 'primary' | 'backup' | 'male' = 'primary'): Promise<string> {
+    return this.queueAudio(async () => {
+      this.updateUserInteraction()
+      
+      const hasPermission = await this.checkAudioPermission()
+      if (!hasPermission) return
+
+      const message = `Nyt spil! ${targetPhrase} og træk dem til cirklen.`
+      await this.googleTTS.synthesizeAndPlay(message, voiceType, true)
+    })
+  }
+
+  // ===== CENTRALIZED GAME INSTRUCTION METHODS =====
+
+  /**
+   * Standard success celebration phrases
+   */
+  async speakGameCompletionCelebration(voiceType: 'primary' | 'backup' | 'male' = 'primary'): Promise<string> {
+    const celebrations = [
+      'Fantastisk!',
+      'Perfekt!',
+      'Godt klaret!'
+    ]
+    const randomCelebration = celebrations[Math.floor(Math.random() * celebrations.length)]
+    
+    return this.speak(randomCelebration, voiceType, true)
+  }
+
+  /**
+   * Game-specific completion messages
+   */
+  async speakSpecificGameCompletion(gameType: 'memory' | 'colorHunt' | 'shapes' | 'puzzle', voiceType: 'primary' | 'backup' | 'male' = 'primary'): Promise<string> {
+    const messages = {
+      memory: 'Fantastisk! Du fandt alle parrene!',
+      colorHunt: 'Fantastisk! Du fandt alle farverne!',
+      shapes: 'Fantastisk! Du har bygget det!',
+      puzzle: 'Godt klaret! Du løste opgaven!'
+    }
+    
+    return this.speak(messages[gameType], voiceType, true)
   }
 }
 
