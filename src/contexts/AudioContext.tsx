@@ -33,6 +33,16 @@ export interface AudioContextType {
   handleCompleteGameResult: (options: { isCorrect: boolean; character: any; celebrate: (intensity: 'low' | 'medium' | 'high') => void; stopCelebration: () => void; incrementScore: () => void; currentScore: number; nextAction?: () => void; correctAnswer?: string | number; explanation?: string; autoAdvanceDelay?: number; isIOS?: boolean; voiceType?: 'primary' | 'backup' | 'male' }) => Promise<void>
   handleGameCompletion: (options: { character: any; celebrate: (intensity: 'high') => void; stopCelebration: () => void; resetAction?: () => void; completionMessage?: string; autoResetDelay?: number; voiceType?: 'primary' | 'backup' | 'male' }) => Promise<void>
   
+  // Color game audio functions
+  speakColorMixingInstructions: (targetColorName: string, voiceType?: 'primary' | 'backup' | 'male') => Promise<string>
+  speakColorMixingSuccess: (color1: string, color2: string, resultColor: string, voiceType?: 'primary' | 'backup' | 'male') => Promise<string>
+  speakColorHuntInstructions: (targetPhrase: string, voiceType?: 'primary' | 'backup' | 'male') => Promise<string>
+  speakNewColorHuntGame: (targetPhrase: string, voiceType?: 'primary' | 'backup' | 'male') => Promise<string>
+  
+  // Game completion celebration methods
+  speakGameCompletionCelebration: (voiceType?: 'primary' | 'backup' | 'male') => Promise<string>
+  speakSpecificGameCompletion: (gameType: 'memory' | 'colorHunt' | 'shapes' | 'puzzle', voiceType?: 'primary' | 'backup' | 'male') => Promise<string>
+  
   // Sound effects
   playSuccessSound: () => Promise<string>
   playEncouragementSound: () => Promise<string>
@@ -117,6 +127,16 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
     // Unified game result handlers
     handleCompleteGameResult: audioController.handleCompleteGameResult.bind(audioController),
     handleGameCompletion: audioController.handleGameCompletion.bind(audioController),
+    
+    // Color game audio functions
+    speakColorMixingInstructions: audioController.speakColorMixingInstructions.bind(audioController),
+    speakColorMixingSuccess: audioController.speakColorMixingSuccess.bind(audioController),
+    speakColorHuntInstructions: audioController.speakColorHuntInstructions.bind(audioController),
+    speakNewColorHuntGame: audioController.speakNewColorHuntGame.bind(audioController),
+    
+    // Game completion celebration methods
+    speakGameCompletionCelebration: audioController.speakGameCompletionCelebration.bind(audioController),
+    speakSpecificGameCompletion: audioController.speakSpecificGameCompletion.bind(audioController),
     
     // Sound effects
     playSuccessSound: audioController.playSuccessSound.bind(audioController),
