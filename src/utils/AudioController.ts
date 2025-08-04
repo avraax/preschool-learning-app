@@ -10,16 +10,25 @@ const logAudioDebug = (message: string, data?: any) => {
   if (audioDebugSession.isSessionActive()) {
     const isIOSDevice = isIOS()
     const isPWA = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone
-    const audioContextState = (window as any).AudioContext ? (() => {
+    // Get AudioContext state without creating new instances
+    const audioContextState = (() => {
+      if (!(window as any).AudioContext && !(window as any).webkitAudioContext) {
+        return 'unavailable'
+      }
+      
+      // Try to get existing AudioContext state from GoogleTTS service
+      // Avoid creating new AudioContext instances just for debugging
       try {
-        const ctx = new (window.AudioContext || (window as any).webkitAudioContext)()
-        const state = ctx.state
-        ctx.close()
-        return state
+        // Check if we already have an AudioContext in the app
+        const existingAudioContext = (window as any).__globalAudioContext
+        if (existingAudioContext) {
+          return existingAudioContext.state
+        }
+        return 'not_created'
       } catch {
         return 'unavailable'
       }
-    })() : 'unavailable'
+    })()
     
     audioDebugSession.addLog('AUDIO_CONTROLLER', {
       message,

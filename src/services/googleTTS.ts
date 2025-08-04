@@ -75,7 +75,8 @@ export class GoogleTTSService {
   private setupUserInteractionTracking(): void {
     const updateInteraction = () => {
       this.lastUserInteraction = Date.now()
-      this.resumeAudioContext()
+      // Don't automatically resume AudioContext on every interaction
+      // Let audio playback methods handle AudioContext resumption when needed
     }
     
     // Track various user interactions - more comprehensive for iOS
@@ -86,25 +87,24 @@ export class GoogleTTSService {
     document.addEventListener('pointerup', updateInteraction, { passive: true })
     document.addEventListener('keydown', updateInteraction, { passive: true })
     
-    // Enhanced iOS PWA specific tracking
+    // Enhanced iOS PWA specific tracking - only update interaction time
     document.addEventListener('visibilitychange', () => {
       if (!document.hidden) {
         this.lastUserInteraction = Date.now()
-        // Proactive AudioContext resumption for PWA mode
-        this.proactiveAudioContextResume()
+        // Remove proactive AudioContext resumption - let audio playback trigger it
       }
     })
     
-    // Enhanced focus tracking for PWA
+    // Enhanced focus tracking for PWA - only update interaction time  
     window.addEventListener('focus', () => {
       this.lastUserInteraction = Date.now()
-      this.proactiveAudioContextResume()
+      // Remove proactive AudioContext resumption - let audio playback trigger it
     })
     
     // Track page load events as user interactions (for navigation)
     window.addEventListener('pageshow', () => {
       this.lastUserInteraction = Date.now()
-      this.proactiveAudioContextResume()
+      // Remove proactive AudioContext resumption - let audio playback trigger it
     })
     
     // iOS Safari PWA specific: Track app launch/resume events
@@ -112,15 +112,11 @@ export class GoogleTTSService {
       // PWA app state change tracking
       document.addEventListener('resume', () => {
         this.lastUserInteraction = Date.now()
-        this.proactiveAudioContextResume()
+        // Remove proactive resume - only resume when actually needed for audio playback
       })
       
-      // Check for PWA reactivation every few seconds when visible
-      setInterval(() => {
-        if (!document.hidden && document.hasFocus()) {
-          this.proactiveAudioContextResume()
-        }
-      }, 5000)
+      // Remove aggressive 5-second interval - was causing "AudioContext already running" conflicts
+      // AudioContext will be resumed on-demand when audio is actually needed
     }
   }
   
@@ -177,14 +173,27 @@ export class GoogleTTSService {
       return
     }
     
-    // Create AudioContext if needed
+    // Reuse existing AudioContext or create new one
     if (!this.audioContext) {
       try {
-        this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
-        logAudioIssue('AudioContext created', { 
-          state: this.audioContext.state, 
-          sampleRate: this.audioContext.sampleRate 
-        })
+        // Check for existing global AudioContext first
+        const globalAudioContext = (window as any).__globalAudioContext
+        
+        if (globalAudioContext && globalAudioContext.state !== 'closed') {
+          this.audioContext = globalAudioContext
+          logAudioIssue('AudioContext reused from global reference', { 
+            state: this.audioContext.state 
+          })
+        } else {
+          // Create new AudioContext and store global reference
+          this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
+          ;(window as any).__globalAudioContext = this.audioContext
+          
+          logAudioIssue('AudioContext created and stored globally', { 
+            state: this.audioContext.state, 
+            sampleRate: this.audioContext.sampleRate 
+          })
+        }
       } catch (error) {
         logAudioIssue('Failed to create AudioContext', { 
           error: error instanceof Error ? error.message : error?.toString(),
@@ -212,7 +221,8 @@ export class GoogleTTSService {
         })
       }
     } else if (this.audioContext.state === 'running') {
-      logAudioIssue('AudioContext already running', { state: this.audioContext.state })
+      // AudioContext is already running - no action needed, don't log as an issue
+      return
     }
   }
 
