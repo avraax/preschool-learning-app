@@ -120,28 +120,8 @@ export class GoogleTTSService {
     }
   }
   
-  // Proactive AudioContext resumption for iOS Safari PWA compatibility
-  private async proactiveAudioContextResume(): Promise<void> {
-    const isPWA = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone
-    
-    if (!isIOS() || !isPWA) {
-      return // Only needed for iOS Safari PWA
-    }
-    
-    logAudioIssue('Proactive AudioContext resume triggered', {
-      isVisible: !document.hidden,
-      hasFocus: document.hasFocus(),
-      timeSinceInteraction: Date.now() - this.lastUserInteraction
-    })
-    
-    try {
-      await this.resumeAudioContext()
-    } catch (error) {
-      logAudioIssue('Proactive AudioContext resume failed', {
-        error: error instanceof Error ? error.message : error?.toString()
-      })
-    }
-  }
+  // Remove unused proactive AudioContext resumption method
+  // This was causing "AudioContext already running" conflicts
 
   // Enhanced iOS Safari PWA compatible AudioContext resumption
   private async resumeAudioContext(): Promise<void> {
@@ -182,7 +162,7 @@ export class GoogleTTSService {
         if (globalAudioContext && globalAudioContext.state !== 'closed') {
           this.audioContext = globalAudioContext
           logAudioIssue('AudioContext reused from global reference', { 
-            state: this.audioContext.state 
+            state: this.audioContext?.state 
           })
         } else {
           // Create new AudioContext and store global reference
@@ -203,8 +183,8 @@ export class GoogleTTSService {
       }
     }
     
-    // Resume suspended AudioContext
-    if (this.audioContext.state === 'suspended') {
+    // Resume suspended AudioContext (with null check)
+    if (this.audioContext && this.audioContext.state === 'suspended') {
       try {
         await this.audioContext.resume()
         logAudioIssue('AudioContext resumed successfully', { 
@@ -220,7 +200,7 @@ export class GoogleTTSService {
           timeSinceInteraction
         })
       }
-    } else if (this.audioContext.state === 'running') {
+    } else if (this.audioContext && this.audioContext.state === 'running') {
       // AudioContext is already running - no action needed, don't log as an issue
       return
     }
