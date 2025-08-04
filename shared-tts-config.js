@@ -7,7 +7,7 @@ export const TTS_CONFIG = {
     ssmlGender: 'FEMALE'
   },
   audioConfig: {
-    audioEncoding: 'MP3',
+    audioEncoding: 'OGG_OPUS', // Better compatibility with iOS Safari PWA than MP3
     speakingRate: 0.8, // Slower speed for children (0.25-2.0 scale)
     pitch: 1.1,        // Slightly higher pitch for friendly tone
     volumeGainDb: 0,

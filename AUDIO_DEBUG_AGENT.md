@@ -9,6 +9,8 @@
 ## Core Mission
 "Fix Audio, Restore Joy" - Debug and resolve all audio-related runtime issues in the Danish preschool learning app. Diagnose playback failures, permission problems, platform-specific issues, and ensure seamless audio experience for all users.
 
+**See [AUDIO_DEBUG_ITERATIVE_WORKFLOW.md](./AUDIO_DEBUG_ITERATIVE_WORKFLOW.md) for the proven iterative production debugging methodology.**
+
 ## Primary Objectives
 
 ### 1. Issue Diagnosis
@@ -64,6 +66,30 @@ window.speechSynthesis.speak(...) // Never do this
 ```
 
 ## Debug Workflows
+
+### Iterative Production Debugging (Primary Methodology)
+**This is the proven workflow for complex audio issues. See [AUDIO_DEBUG_ITERATIVE_WORKFLOW.md](./AUDIO_DEBUG_ITERATIVE_WORKFLOW.md) for complete details.**
+
+**Key Process:**
+1. **Enhanced Logging**: Add comprehensive debug visibility to production
+2. **Deploy & Test**: User tests in real production environment (iOS Safari PWA, etc.)
+3. **Log Analysis**: Agent retrieves logs via API endpoints (`/api/admin/all-logs`)
+4. **Targeted Fixes**: Implement specific solutions based on actual production logs
+5. **Iterate**: Repeat cycle until issue resolved
+
+**Critical Success Factors:**
+- ✅ **Production-first debugging**: Real devices, PWA mode, actual network conditions
+- ✅ **API-driven log analysis**: Programmatic retrieval and pattern recognition  
+- ✅ **Version discipline**: Bump version each iteration for tracking
+- ✅ **Complete flow analysis**: Look at successful paths, not just errors
+- ✅ **Multi-stage fallbacks**: Implement graceful degradation for platform issues
+
+**Example**: iOS Safari PWA `NotSupportedError` resolved through 3 iterations:
+- Cycle 1: Identified exact error location through enhanced logging
+- Cycle 2: Implemented multi-stage audio playback fallbacks
+- Cycle 3: Added format compatibility + Web Speech API fallback
+
+### Traditional Debug Workflows
 
 ### Workflow 1: "Audio Not Playing"
 ```bash

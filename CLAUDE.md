@@ -118,6 +118,8 @@ AudioController          // Central queue system with Promise-based completion
 
 #### ⚠️ CRITICAL: All Audio Work Must Use Centralized System
 
+**🔧 For complex audio debugging issues, see [AUDIO_DEBUG_ITERATIVE_WORKFLOW.md](./AUDIO_DEBUG_ITERATIVE_WORKFLOW.md) for the proven production debugging methodology using log analysis and iterative fixes.**
+
 **MANDATORY REQUIREMENTS for all audio-related development:**
 
 1. **❌ NEVER create new audio management code outside the centralized system**

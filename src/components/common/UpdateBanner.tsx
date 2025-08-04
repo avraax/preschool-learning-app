@@ -26,7 +26,7 @@ const UpdateBanner: React.FC<UpdateBannerProps> = ({
             position: 'fixed',
             bottom: 24,
             right: 24,
-            zIndex: 1000,
+            zIndex: 1000, // Below version display (1001) to avoid conflicts
           }}
         >
           <Fab

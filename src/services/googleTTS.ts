@@ -471,7 +471,7 @@ export class GoogleTTSService {
   }
 
   // Play audio directly from base64 data
-  async playAudioFromData(base64AudioData: string): Promise<void> {
+  async playAudioFromData(base64AudioData: string, originalText?: string): Promise<void> {
     const { audioDebugSession } = await import('../utils/remoteConsole')
     audioDebugSession.addLog('GOOGLE_TTS_PLAY_AUDIO_FROM_DATA', {
       audioDataLength: base64AudioData.length
@@ -645,29 +645,104 @@ export class GoogleTTSService {
             audioContextState: this.audioContext?.state
           })
           
-          // Add a short delay for iOS to ensure context is stable
-          setTimeout(() => {
-            audioDebugSession.addLog('GOOGLE_TTS_IOS_CALLING_PLAY', {})
-            audio.play().then(() => {
-              audioDebugSession.addLog('GOOGLE_TTS_IOS_PLAY_SUCCESS', {})
-            }).catch((playError) => {
+          // iOS Safari PWA Enhanced Audio Playback with Multi-Stage Fallbacks
+          const attemptIOSPlayback = async (attempt: number = 1): Promise<void> => {
+            try {
+              audioDebugSession.addLog('GOOGLE_TTS_IOS_PLAY_ATTEMPT', {
+                attempt,
+                audioSrcLength: audio.src.length,
+                audioSrcPrefix: audio.src.substring(0, 50),
+                audioContextState: this.audioContext?.state,
+                isPWA: window.matchMedia('(display-mode: standalone)').matches,
+                timeSinceInteraction
+              })
+              
+              if (attempt === 1) {
+                // First attempt: Standard playback
+                await audio.play()
+                audioDebugSession.addLog('GOOGLE_TTS_IOS_PLAY_SUCCESS', { attempt })
+              } else if (attempt === 2) {
+                // Second attempt: Reload audio element for PWA compatibility
+                audioDebugSession.addLog('GOOGLE_TTS_IOS_PWA_RELOAD_ATTEMPT', {})
+                audio.load()
+                await new Promise(resolve => setTimeout(resolve, 100))
+                await audio.play()
+                audioDebugSession.addLog('GOOGLE_TTS_IOS_PWA_PLAY_SUCCESS', { attempt })
+              } else if (attempt === 3) {
+                // Third attempt: Create fresh audio element
+                audioDebugSession.addLog('GOOGLE_TTS_IOS_NEW_ELEMENT_ATTEMPT', {})
+                const newAudio = new Audio()
+                newAudio.crossOrigin = 'anonymous'
+                newAudio.preload = 'auto'
+                newAudio.src = audio.src
+                
+                // Transfer event listeners
+                newAudio.addEventListener('ended', clearTimeoutAndResolve)
+                newAudio.addEventListener('timeupdate', checkCompletion)
+                newAudio.addEventListener('pause', checkPauseCompletion)
+                newAudio.addEventListener('error', clearTimeoutAndRejectHandler)
+                
+                this.currentAudio = newAudio
+                // Note: audio is const, so we work with newAudio directly
+                
+                await newAudio.play()
+                audioDebugSession.addLog('GOOGLE_TTS_IOS_NEW_ELEMENT_SUCCESS', { attempt })
+              }
+              
+            } catch (playError: any) {
               audioDebugSession.addLog('GOOGLE_TTS_IOS_PLAY_ERROR', {
+                attempt,
                 errorName: playError.name,
                 errorMessage: playError.message,
+                errorStack: playError.stack,
                 timeSinceInteraction,
                 audioContextState: this.audioContext?.state,
-                audioSrcLength: audio.src.length
+                audioSrcLength: audio.src.length,
+                isPWA: window.matchMedia('(display-mode: standalone)').matches
               })
+              
               logAudioIssue('iOS Audio Play Error', playError, {
+                attempt,
                 errorName: playError.name,
                 errorMessage: playError.message,
                 timeSinceInteraction,
                 audioContextState: this.audioContext?.state,
-                audioSrc: audio.src.substring(0, 50) + '...'
+                audioSrc: audio.src.substring(0, 50) + '...',
+                isPWA: window.matchMedia('(display-mode: standalone)').matches
               })
+              
+              // Try next fallback approach for specific errors
+              if (attempt < 3 && (playError.name === 'NotSupportedError' || playError.name === 'AbortError')) {
+                audioDebugSession.addLog('GOOGLE_TTS_IOS_TRYING_FALLBACK', { 
+                  nextAttempt: attempt + 1,
+                  error: playError.name 
+                })
+                setTimeout(() => attemptIOSPlayback(attempt + 1), 150)
+                return
+              }
+              
+              // Final fallback: Web Speech API
+              if (attempt === 3) {
+                audioDebugSession.addLog('GOOGLE_TTS_IOS_WEBSPEECH_FALLBACK', {})
+                try {
+                  // Use the originalText parameter passed to playAudioFromData  
+                  await this.fallbackToWebSpeech(originalText || 'Hej')
+                  audioDebugSession.addLog('GOOGLE_TTS_IOS_WEBSPEECH_SUCCESS', {})
+                  clearTimeoutAndResolve()
+                  return
+                } catch (webSpeechError) {
+                  audioDebugSession.addLog('GOOGLE_TTS_IOS_WEBSPEECH_FAILED', {
+                    error: webSpeechError instanceof Error ? webSpeechError.message : webSpeechError?.toString()
+                  })
+                }
+              }
+              
               clearTimeoutAndRejectHandler(playError)
-            })
-          }, 50) // Shorter delay since AudioContext is already verified
+            }
+          }
+          
+          // Start multi-stage iOS playback with delay for context stability
+          setTimeout(() => attemptIOSPlayback(1), 50)
         } else {
           audioDebugSession.addLog('GOOGLE_TTS_NON_IOS_CALLING_PLAY', {})
           audio.play().then(() => {
@@ -829,7 +904,7 @@ export class GoogleTTSService {
         audioDebugSession.addLog('GOOGLE_TTS_IOS_SYNTHESIS_SUCCESS', {
           audioDataLength: audioData.length
         })
-        await this.playAudioFromData(audioData)
+        await this.playAudioFromData(audioData, text)
         audioDebugSession.addLog('GOOGLE_TTS_IOS_PLAYBACK_SUCCESS', {})
         return // Success with Google TTS
       } catch (googleTTSError) {

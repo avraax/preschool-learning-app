@@ -9,6 +9,6 @@ export const TTS_CONFIG = {
   },
   audioConfig: {
     ...Config.audioConfig,
-    audioEncoding: Config.audioConfig.audioEncoding as 'MP3'
+    audioEncoding: Config.audioConfig.audioEncoding as 'OGG_OPUS'
   }
 };

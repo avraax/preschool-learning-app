@@ -745,7 +745,11 @@ const NavigationAudioCleanup: React.FC = () => {
 }
 
 // Version Display Component
-const VersionDisplay: React.FC = () => {
+interface VersionDisplayProps {
+  updateAvailable?: boolean
+}
+
+const VersionDisplay: React.FC<VersionDisplayProps> = ({ updateAvailable = false }) => {
   const buildDateTime = new Date(BUILD_INFO.buildTime)
   
   const releaseDate = buildDateTime.toLocaleDateString('da-DK', {
@@ -764,20 +768,33 @@ const VersionDisplay: React.FC = () => {
     <Box
       sx={{
         position: 'fixed',
+        // Dynamic positioning: bottom-left when update available, bottom-right otherwise
         bottom: 8,
-        right: 8,
-        zIndex: 1000,
-        fontSize: '0.65rem',
-        color: 'rgba(0, 0, 0, 0.4)',
-        textAlign: 'right',
+        right: updateAvailable ? 'auto' : 8,
+        left: updateAvailable ? 8 : 'auto',
+        zIndex: 1001, // Just above update banner (1000) but below modals
+        fontSize: { xs: '0.65rem', sm: '0.75rem' }, // Responsive font size
+        color: 'rgba(0, 0, 0, 0.6)',
+        textAlign: updateAvailable ? 'left' : 'right',
         lineHeight: 1.2,
         pointerEvents: 'none',
         userSelect: 'none',
-        fontFamily: 'monospace'
+        fontFamily: 'monospace',
+        backgroundColor: 'rgba(255, 255, 255, 0.8)',
+        padding: '4px 8px',
+        borderRadius: '4px',
+        backdropFilter: 'blur(4px)',
+        border: '1px solid rgba(0, 0, 0, 0.1)',
+        // Smooth transition animation
+        transition: 'all 0.3s ease-in-out',
+        // Ensure visibility on mobile
+        maxWidth: '120px'
       }}
     >
-      <Box component="div">v{BUILD_INFO.version}</Box>
-      <Box component="div">{releaseDate} {releaseTime}</Box>
+      <Box component="div" sx={{ fontWeight: 600 }}>v{BUILD_INFO.version}</Box>
+      <Box component="div" sx={{ fontSize: { xs: '0.55rem', sm: '0.65rem' } }}>
+        {releaseDate} {releaseTime}
+      </Box>
     </Box>
   )
 }
@@ -823,8 +840,8 @@ function App() {
         {/* Global Audio Permission System */}
         <GlobalAudioPermission />
         
-        {/* Version Display */}
-        <VersionDisplay />
+        {/* Version Display - repositions to bottom-left when update available */}
+        <VersionDisplay updateAvailable={updateStatus.updateAvailable || DEV_SHOW_UPDATE_BANNER} />
         
         <Routes>
         {/* Home Routes */}
