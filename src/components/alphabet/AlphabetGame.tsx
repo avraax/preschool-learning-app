@@ -62,25 +62,16 @@ const AlphabetGame: React.FC = () => {
   const [currentLetter, setCurrentLetter] = useState<string>('')
   const [showOptions, setShowOptions] = useState<string[]>([])
   
-  // Start audio debug session only for iOS PWA
+  // Initialize component - individual error logging only (no sessions)
   useEffect(() => {
     const isPWA = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone
     if (isIOS() && isPWA) {
-      audioDebugSession.startSession('AlphabetGame - iOS PWA Debug')
-      
       logAlphabetGameDebug('AlphabetGame component initialized', {
         userAgent: navigator.userAgent,
         speechSynthesisVoices: window.speechSynthesis?.getVoices?.()?.length || 0,
         currentLetter,
         showOptionsLength: showOptions.length
       })
-    }
-    
-    // End session on unmount
-    return () => {
-      if (audioDebugSession.isSessionActive()) {
-        audioDebugSession.endSession('AlphabetGame unmounted')
-      }
     }
   }, [])
   

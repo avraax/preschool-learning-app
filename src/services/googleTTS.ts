@@ -123,12 +123,13 @@ export class GoogleTTSService {
   // Remove unused proactive AudioContext resumption method
   // This was causing "AudioContext already running" conflicts
 
-  // Enhanced iOS Safari PWA compatible AudioContext resumption
-  private async resumeAudioContext(): Promise<void> {
+  // iOS Safari PWA compatible AudioContext resumption - called only when audio is needed
+  private async resumeAudioContextForPlayback(): Promise<boolean> {
     const timeSinceInteraction = Date.now() - this.lastUserInteraction
     const hasDocumentFocus = document.hasFocus()
     const isDocumentVisible = !document.hidden
     const isPWA = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone
+    const isIOSDevice = isIOS()
     
     // Enhanced logging for iOS Safari PWA debugging
     const debugInfo = {
@@ -136,21 +137,30 @@ export class GoogleTTSService {
       hasDocumentFocus,
       isDocumentVisible,
       isPWA,
-      isIOS: isIOS(),
+      isIOS: isIOSDevice,
       audioContextExists: !!this.audioContext,
       audioContextState: this.audioContext?.state || 'none'
     }
     
-    logAudioIssue('AudioContext resume attempt', debugInfo)
+    logAudioIssue('AudioContext resume for playback', debugInfo)
     
-    // More lenient check for PWA mode - PWAs need more permissive audio context handling
-    const shouldTryResume = isPWA ? 
-      (timeSinceInteraction < 30000 || hasDocumentFocus || isDocumentVisible) : // PWA: 30 second window
-      (timeSinceInteraction < 10000 || hasDocumentFocus || isDocumentVisible)   // Browser: 10 second window
+    // iOS PWA needs very recent user interaction (1-2 seconds) - much stricter than regular Safari
+    const maxInteractionTime = isIOSDevice && isPWA ? 2000 : 
+                              isIOSDevice ? 5000 : 
+                              isPWA ? 10000 : 15000
+    
+    const hasRecentInteraction = timeSinceInteraction < maxInteractionTime
+    const shouldTryResume = hasRecentInteraction || (hasDocumentFocus && isDocumentVisible)
     
     if (!shouldTryResume) {
-      logAudioIssue('AudioContext resume skipped - insufficient interaction', debugInfo)
-      return
+      logAudioIssue('AudioContext resume blocked - iOS PWA requires very recent interaction', {
+        timeSinceInteraction,
+        maxAllowed: maxInteractionTime,
+        hasDocumentFocus,
+        isDocumentVisible,
+        isIOSPWA: isIOSDevice && isPWA
+      })
+      return false
     }
     
     // Reuse existing AudioContext or create new one
@@ -179,7 +189,7 @@ export class GoogleTTSService {
           error: error instanceof Error ? error.message : error?.toString(),
           errorType: error instanceof Error ? error.constructor?.name : typeof error
         })
-        return
+        return false
       }
     }
     
@@ -188,22 +198,31 @@ export class GoogleTTSService {
       try {
         await this.audioContext.resume()
         logAudioIssue('AudioContext resumed successfully', { 
-          newState: this.audioContext.state,
+          newState: this.audioContext?.state,
           isPWA,
           timeSinceInteraction
         })
+        return true
       } catch (error) {
         logAudioIssue('AudioContext resume failed', { 
           error: error instanceof Error ? error.message : error?.toString(),
-          state: this.audioContext.state,
+          state: this.audioContext?.state,
           isPWA,
           timeSinceInteraction
         })
+        return false
       }
     } else if (this.audioContext && this.audioContext.state === 'running') {
-      // AudioContext is already running - no action needed, don't log as an issue
-      return
+      // AudioContext is already running - perfect for playback
+      return true
     }
+    
+    // If we get here, AudioContext exists but is in an unknown state
+    logAudioIssue('AudioContext in unexpected state', {
+      state: this.audioContext?.state,
+      exists: !!this.audioContext
+    })
+    return false
   }
 
   private async initializeService(): Promise<void> {
@@ -458,7 +477,7 @@ export class GoogleTTSService {
       audioDataLength: base64AudioData.length
     })
     
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
       try {
         audioDebugSession.addLog('GOOGLE_TTS_STOP_CURRENT_AUDIO', {})
         // Stop any currently playing audio first
@@ -591,9 +610,9 @@ export class GoogleTTSService {
           const isDocumentVisible = !document.hidden
           
           // More forgiving check: allow if any of these conditions are met
-          const canPlayAudio = hasRecentInteraction || (hasDocumentFocus && isDocumentVisible)
+          const hasAudioPermission = hasRecentInteraction || (hasDocumentFocus && isDocumentVisible)
           
-          if (!canPlayAudio) {
+          if (!hasAudioPermission) {
             const errorMsg = `Need user interaction to play audio (${Math.round(timeSinceInteraction/1000)}s since last interaction, focus: ${hasDocumentFocus}, visible: ${isDocumentVisible}, context: ${this.audioContext?.state})`
             logAudioIssue('iOS Audio Permission', errorMsg, {
               timeSinceInteraction,
@@ -609,40 +628,46 @@ export class GoogleTTSService {
           }
           
           audioDebugSession.addLog('GOOGLE_TTS_IOS_RESUME_CONTEXT', {})
-          // Ensure audio context is running first
-          this.resumeAudioContext().then(() => {
-            audioDebugSession.addLog('GOOGLE_TTS_IOS_CONTEXT_RESUMED', {})
-            // Add a longer delay for iOS to ensure context is ready
-            setTimeout(() => {
-              audioDebugSession.addLog('GOOGLE_TTS_IOS_CALLING_PLAY', {})
-              audio.play().then(() => {
-                audioDebugSession.addLog('GOOGLE_TTS_IOS_PLAY_SUCCESS', {})
-              }).catch((playError) => {
-                audioDebugSession.addLog('GOOGLE_TTS_IOS_PLAY_ERROR', {
-                  errorName: playError.name,
-                  errorMessage: playError.message,
-                  timeSinceInteraction,
-                  audioContextState: this.audioContext?.state,
-                  audioSrcLength: audio.src.length
-                })
-                logAudioIssue('iOS Audio Play Error', playError, {
-                  errorName: playError.name,
-                  errorMessage: playError.message,
-                  timeSinceInteraction,
-                  audioContextState: this.audioContext?.state,
-                  audioSrc: audio.src.substring(0, 50) + '...'
-                })
-                clearTimeoutAndRejectHandler(playError)
-              })
-            }, 100) // Longer delay for iOS
-          }).catch((contextError) => {
-            audioDebugSession.addLog('GOOGLE_TTS_IOS_CONTEXT_ERROR', {
-              error: contextError instanceof Error ? contextError.message : contextError?.toString(),
-              errorType: contextError instanceof Error ? contextError.constructor?.name : typeof contextError
+          // Try to resume AudioContext for playback - new targeted approach
+          const audioContextReady = await this.resumeAudioContextForPlayback()
+          
+          if (!audioContextReady) {
+            logAudioIssue('iOS Audio Context not ready for playback', {
+              timeSinceInteraction,
+              audioContextState: this.audioContext?.state,
+              isPWA: window.matchMedia('(display-mode: standalone)').matches
             })
-            logAudioIssue('iOS Audio Context Error', contextError)
-            clearTimeoutAndRejectHandler(contextError)
+            clearTimeoutAndRejectHandler(new Error('AudioContext not ready for iOS PWA playback'))
+            return
+          }
+          
+          audioDebugSession.addLog('GOOGLE_TTS_IOS_CONTEXT_READY', {
+            audioContextState: this.audioContext?.state
           })
+          
+          // Add a short delay for iOS to ensure context is stable
+          setTimeout(() => {
+            audioDebugSession.addLog('GOOGLE_TTS_IOS_CALLING_PLAY', {})
+            audio.play().then(() => {
+              audioDebugSession.addLog('GOOGLE_TTS_IOS_PLAY_SUCCESS', {})
+            }).catch((playError) => {
+              audioDebugSession.addLog('GOOGLE_TTS_IOS_PLAY_ERROR', {
+                errorName: playError.name,
+                errorMessage: playError.message,
+                timeSinceInteraction,
+                audioContextState: this.audioContext?.state,
+                audioSrcLength: audio.src.length
+              })
+              logAudioIssue('iOS Audio Play Error', playError, {
+                errorName: playError.name,
+                errorMessage: playError.message,
+                timeSinceInteraction,
+                audioContextState: this.audioContext?.state,
+                audioSrc: audio.src.substring(0, 50) + '...'
+              })
+              clearTimeoutAndRejectHandler(playError)
+            })
+          }, 50) // Shorter delay since AudioContext is already verified
         } else {
           audioDebugSession.addLog('GOOGLE_TTS_NON_IOS_CALLING_PLAY', {})
           audio.play().then(() => {
@@ -661,6 +686,19 @@ export class GoogleTTSService {
         reject(setupError)
       }
     })
+  }
+
+  // iOS PWA-optimized fallback to Web Speech API 
+  private async fallbackToWebSpeechAPI(text: string, isIOSPWA: boolean): Promise<void> {
+    // For iOS PWA, try to resume AudioContext first
+    if (isIOSPWA) {
+      const contextReady = await this.resumeAudioContextForPlayback()
+      if (!contextReady) {
+        throw new Error('iOS PWA: AudioContext not ready for Web Speech API fallback')
+      }
+    }
+    
+    return this.fallbackToWebSpeech(text)
   }
 
   // Fallback to Web Speech API for iOS when Google TTS fails
@@ -804,9 +842,10 @@ export class GoogleTTSService {
         // Add delay before fallback to prevent rapid failures
         await new Promise(resolve => setTimeout(resolve, 200))
         
-        // Try Web Speech as fallback
+        // Try Web Speech as fallback with iOS PWA optimization
         try {
-          await this.fallbackToWebSpeech(text)
+          const isPWA = window.matchMedia('(display-mode: standalone)').matches
+          await this.fallbackToWebSpeechAPI(text, isPWA)
           return
         } catch (webSpeechError) {
           logAudioIssue('iOS Web Speech Also Failed', webSpeechError, { text, originalError: googleTTSError })
