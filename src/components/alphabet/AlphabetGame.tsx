@@ -22,6 +22,37 @@ import { AlphabetRepeatButton } from '../common/RepeatButton'
 import { useGameState } from '../../hooks/useGameState'
 import { useAudio } from '../../hooks/useAudio'
 import { entryAudioManager } from '../../utils/entryAudioManager'
+import { audioDebugSession } from '../../utils/remoteConsole'
+
+// Enhanced iOS Safari PWA debugging using audioDebugSession
+const logAlphabetGameDebug = (message: string, data?: any) => {
+  // Only log to audioDebugSession if it's active
+  if (audioDebugSession.isSessionActive()) {
+    const isIOSDevice = isIOS()
+    const isPWA = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone
+    const audioContextState = (window as any).AudioContext ? (() => {
+      try {
+        const ctx = new (window.AudioContext || (window as any).webkitAudioContext)()
+        const state = ctx.state
+        ctx.close()
+        return state
+      } catch {
+        return 'unavailable'
+      }
+    })() : 'unavailable'
+    
+    audioDebugSession.addLog('ALPHABET_GAME', {
+      message,
+      data,
+      context: {
+        isIOS: isIOSDevice,
+        isPWA,
+        audioContextState,
+        timestamp: new Date().toISOString()
+      }
+    })
+  }
+}
 
 // Full Danish alphabet including special characters
 const DANISH_ALPHABET = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'Æ', 'Ø', 'Å']
@@ -30,6 +61,28 @@ const AlphabetGame: React.FC = () => {
   const navigate = useNavigate()
   const [currentLetter, setCurrentLetter] = useState<string>('')
   const [showOptions, setShowOptions] = useState<string[]>([])
+  
+  // Start audio debug session only for iOS PWA
+  useEffect(() => {
+    const isPWA = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone
+    if (isIOS() && isPWA) {
+      audioDebugSession.startSession('AlphabetGame - iOS PWA Debug')
+      
+      logAlphabetGameDebug('AlphabetGame component initialized', {
+        userAgent: navigator.userAgent,
+        speechSynthesisVoices: window.speechSynthesis?.getVoices?.()?.length || 0,
+        currentLetter,
+        showOptionsLength: showOptions.length
+      })
+    }
+    
+    // End session on unmount
+    return () => {
+      if (audioDebugSession.isSessionActive()) {
+        audioDebugSession.endSession('AlphabetGame unmounted')
+      }
+    }
+  }, [])
   
   // Centralized audio system - consistent with working MathGame
   const audio = useAudio({ componentId: 'AlphabetGame', stopOnUnmount: false })
@@ -50,6 +103,7 @@ const AlphabetGame: React.FC = () => {
   const [entryAudioComplete, setEntryAudioComplete] = useState(false)
   
   useEffect(() => {
+    logAlphabetGameDebug('Main useEffect running - setting up game initialization')
     
     // Initial teacher greeting
     teacherCharacter.setCharacter('owl')
@@ -57,21 +111,32 @@ const AlphabetGame: React.FC = () => {
     
     // Set up entry audio completion callback (direct pattern like MathGame)
     const handleEntryComplete = () => {
+      logAlphabetGameDebug('Entry audio completed, enabling interactions')
       setEntryAudioComplete(true)
       // Delay before generating first question to ensure proper audio sequencing
       setTimeout(() => {
+        logAlphabetGameDebug('Calling generateNewQuestion after entry audio delay')
         generateNewQuestionRef.current?.()
       }, 500)
     }
     
+    logAlphabetGameDebug('Registering entry audio completion callback')
     entryAudioManager.onComplete('alphabet', handleEntryComplete)
     
-    // Schedule entry audio (this was missing!)
-    entryAudioManager.scheduleEntryAudio('alphabet', 1000)
+    // Schedule entry audio - no delay for iOS PWA to stay within user interaction window
+    const isPWA = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone
+    const delay = isIOS() && isPWA ? 0 : 1000
+    logAlphabetGameDebug(`Scheduling entry audio with ${delay}ms delay`, {
+      isIOS: isIOS(),
+      isPWA,
+      reason: isIOS() && isPWA ? 'iOS PWA requires immediate audio' : 'Standard delay'
+    })
+    entryAudioManager.scheduleEntryAudio('alphabet', delay)
     
     
     // Cleanup function
     return () => {
+      logAlphabetGameDebug('Cleaning up entry audio manager callback')
       entryAudioManager.removeCallback('alphabet', handleEntryComplete)
     }
   }, [])
@@ -88,9 +153,20 @@ const AlphabetGame: React.FC = () => {
 
   // Generate new question - stable useCallback to prevent infinite loops
   const generateNewQuestion = useCallback(() => {
+    logAlphabetGameDebug('generateNewQuestion called', {
+      previousLetter: currentLetter,
+      entryAudioComplete,
+      audioIsPlaying: audio.isPlaying,
+      timestamp: Date.now()
+    })
     
     // Pick a random letter from full Danish alphabet
     const letter = DANISH_ALPHABET[Math.floor(Math.random() * DANISH_ALPHABET.length)]
+    
+    logAlphabetGameDebug('Generated new letter', { 
+      letter,
+      letterIndex: DANISH_ALPHABET.indexOf(letter)
+    })
     
     setCurrentLetter(letter)
     
@@ -106,6 +182,12 @@ const AlphabetGame: React.FC = () => {
     
     const shuffledOptions = options.sort(() => Math.random() - 0.5)
     
+    logAlphabetGameDebug('Generated quiz options', { 
+      correctLetter: letter,
+      allOptions: shuffledOptions,
+      correctPosition: shuffledOptions.indexOf(letter)
+    })
+    
     setShowOptions(shuffledOptions)
     
     // Clear any existing timeout
@@ -115,17 +197,31 @@ const AlphabetGame: React.FC = () => {
     }
     
     // Schedule delayed audio (same pattern as MathGame)
+    logAlphabetGameDebug('Scheduling quiz prompt audio', { 
+      letter,
+      delay: 500,
+      prompt: DANISH_PHRASES.gamePrompts.findLetter(letter)
+    })
+    
     timeoutRef.current = setTimeout(async () => {
       try {
+        logAlphabetGameDebug('About to play quiz prompt audio', { letter })
         await audio.speakQuizPromptWithRepeat(DANISH_PHRASES.gamePrompts.findLetter(letter), letter)
+        logAlphabetGameDebug('Quiz prompt audio completed successfully', { letter })
       } catch (error) {
+        logAlphabetGameDebug('Error playing question audio', { 
+          letter,
+          error: error?.toString(),
+          errorName: error?.constructor?.name,
+          errorMessage: (error as any)?.message
+        })
         console.error('🎯 AlphabetGame: Error playing question audio:', error)
       } finally {
         timeoutRef.current = null
       }
     }, 500)
     
-  }, [audio]) // Stable dependency - only recreate if audio changes
+  }, [audio, currentLetter, entryAudioComplete]) // Stable dependency - only recreate if audio changes
   
   // Assign function to ref for useGameAudioSetup
   useEffect(() => {
@@ -133,14 +229,28 @@ const AlphabetGame: React.FC = () => {
   }, [generateNewQuestion])
 
   const handleLetterClick = async (selectedLetter: string) => {
+    logAlphabetGameDebug('handleLetterClick called', {
+      selectedLetter,
+      currentLetter,
+      isCorrect: selectedLetter === currentLetter,
+      audioIsPlaying: audio.isPlaying,
+      score,
+      timestamp: Date.now()
+    })
     
     if (audio.isPlaying) {
+      logAlphabetGameDebug('Audio is playing, ignoring click')
       return
     }
     
     const isCorrect = selectedLetter === currentLetter
     
     try {
+      logAlphabetGameDebug('About to call handleCompleteGameResult', {
+        isCorrect,
+        currentScore: score,
+        autoAdvanceDelay: isIOS() ? 1000 : 3000
+      })
       
       // Use unified game result handler
       await audio.handleCompleteGameResult({
@@ -151,15 +261,27 @@ const AlphabetGame: React.FC = () => {
         incrementScore,
         currentScore: score,
         nextAction: isCorrect ? () => {
+          logAlphabetGameDebug('Correct answer - generating new question')
           generateNewQuestion()
         } : () => {
+          logAlphabetGameDebug('Incorrect answer - character thinking')
           teacherCharacter.think()
         },
         autoAdvanceDelay: isIOS() ? 1000 : 3000,
         isIOS: isIOS()
       })
       
+      logAlphabetGameDebug('handleCompleteGameResult completed successfully')
+      
     } catch (error) {
+      logAlphabetGameDebug('Error in handleCompleteGameResult', {
+        selectedLetter,
+        currentLetter,
+        isCorrect,
+        error: error?.toString(),
+        errorName: error?.constructor?.name,
+        errorMessage: (error as any)?.message
+      })
       console.error('🎯 AlphabetGame: Error in unified game result handler:', error)
     }
   }

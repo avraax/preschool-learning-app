@@ -20,6 +20,38 @@ import { categoryThemes } from '../../config/categoryThemes'
 import LearningGrid from '../common/LearningGrid'
 import { useGameEntryAudio } from '../../hooks/useGameEntryAudio'
 import { entryAudioManager } from '../../utils/entryAudioManager'
+import { isIOS } from '../../utils/deviceDetection'
+import { audioDebugSession } from '../../utils/remoteConsole'
+
+// Enhanced iOS Safari PWA debugging using audioDebugSession
+const logAlphabetDebug = (message: string, data?: any) => {
+  // Only log to audioDebugSession if it's active
+  if (audioDebugSession.isSessionActive()) {
+    const isIOSDevice = isIOS()
+    const isPWA = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone
+    const audioContextState = (window as any).AudioContext ? (() => {
+      try {
+        const ctx = new (window.AudioContext || (window as any).webkitAudioContext)()
+        const state = ctx.state
+        ctx.close()
+        return state
+      } catch {
+        return 'unavailable'
+      }
+    })() : 'unavailable'
+    
+    audioDebugSession.addLog('ALPHABET_LEARNING', {
+      message,
+      data,
+      context: {
+        isIOS: isIOSDevice,
+        isPWA,
+        audioContextState,
+        timestamp: new Date().toISOString()
+      }
+    })
+  }
+}
 
 
 const DANISH_ALPHABET = [
@@ -35,12 +67,37 @@ const AlphabetLearning: React.FC = () => {
   const [entryAudioComplete, setEntryAudioComplete] = useState(false)
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
   
+  // Start audio debug session only for iOS PWA
+  useEffect(() => {
+    const isPWA = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone
+    if (isIOS() && isPWA) {
+      audioDebugSession.startSession('AlphabetLearning - iOS PWA Debug')
+      
+      logAlphabetDebug('AlphabetLearning component initialized', {
+        userAgent: navigator.userAgent,
+        speechSynthesisVoices: window.speechSynthesis?.getVoices?.()?.length || 0,
+        audioHookState: { isPlaying: audio.isPlaying },
+        initialIndex: currentIndex
+      })
+    }
+    
+    // End session on unmount
+    return () => {
+      if (audioDebugSession.isSessionActive()) {
+        audioDebugSession.endSession('AlphabetLearning unmounted')
+      }
+    }
+  }, [])
+  
   // Centralized entry audio
   useGameEntryAudio({ gameType: 'alphabetlearning' })
 
   useEffect(() => {
+    logAlphabetDebug('Registering entry audio completion callback')
+    
     // Register callback to enable interactions after entry audio completes
     entryAudioManager.onComplete('alphabetlearning', () => {
+      logAlphabetDebug('Entry audio completed, enabling interactions')
       setEntryAudioComplete(true)
     })
   }, [])
@@ -74,28 +131,57 @@ const AlphabetLearning: React.FC = () => {
 
 
   const goToLetter = async (index: number) => {
+    const letter = DANISH_ALPHABET[index]
+    const isPWA = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone
+    const shouldCreateSession = isIOS() && isPWA && !audioDebugSession.isSessionActive()
+    
+    // Create a new session for each letter if not already active
+    if (shouldCreateSession) {
+      audioDebugSession.startSession(`AlphabetLearning - Letter ${letter}`)
+    }
+    
+    logAlphabetDebug('goToLetter called', {
+      index,
+      letter,
+      previousIndex: currentIndex,
+      entryAudioComplete,
+      audioIsPlaying: audio.isPlaying,
+      timestamp: Date.now()
+    })
+    
     setCurrentIndex(index)
     audio.stopAll()
     
-    const letter = DANISH_ALPHABET[index]
-    
     try {
-      // Start audio debug session on first audio attempt
-      const { audioDebugSession } = await import('../../utils/remoteConsole')
-      if (!audioDebugSession.isSessionActive()) {
-        audioDebugSession.startSession('iPad Audio Debug - Alphabet Learning')
-      }
+      logAlphabetDebug('About to speak letter', { letter })
+      
+      logAlphabetDebug('Calling audio.speakLetter', { 
+        letter,
+        audioControllerState: audio.isPlaying
+      })
       
       await audio.speakLetter(letter)
       
-      // End session after successful audio
-      audioDebugSession.endSession('Audio completed successfully')
+      logAlphabetDebug('audio.speakLetter completed successfully', { letter })
+      
+      // End session after successful audio (only if we created one)
+      if (shouldCreateSession) {
+        audioDebugSession.endSession(`Letter ${letter} - Success`)
+      }
     } catch (error) {
+      logAlphabetDebug('Error in goToLetter', { 
+        letter,
+        error: error?.toString(),
+        errorName: error?.constructor?.name,
+        errorMessage: (error as any)?.message
+      })
+      
       console.error('Error speaking letter:', error)
       
-      // End session with error context
-      const { audioDebugSession } = await import('../../utils/remoteConsole')
-      audioDebugSession.endSession('Audio failed with error')
+      // End session with error context (only if we created one)
+      if (shouldCreateSession) {
+        audioDebugSession.endSession(`Letter ${letter} - Failed: ${error?.toString()}`)
+      }
     }
   }
 

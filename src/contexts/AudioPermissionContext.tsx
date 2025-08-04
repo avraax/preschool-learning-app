@@ -1,6 +1,41 @@
 import React, { createContext, useState, useEffect, useRef, ReactNode } from 'react'
 import { isIOS } from '../utils/deviceDetection'
 import { setGlobalAudioPermissionContext } from '../utils/audio'
+import { audioDebugSession } from '../utils/remoteConsole'
+
+// Enhanced iOS Safari PWA debugging using audioDebugSession
+const logPermissionDebug = (message: string, data?: any) => {
+  // Only log to audioDebugSession if it's active
+  if (audioDebugSession.isSessionActive()) {
+    const isIOSDevice = isIOS()
+    const isPWA = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone
+    const audioContextState = (window as any).AudioContext ? (() => {
+      try {
+        const ctx = new (window.AudioContext || (window as any).webkitAudioContext)()
+        const state = ctx.state
+        ctx.close()
+        return state
+      } catch {
+        return 'unavailable'
+      }
+    })() : 'unavailable'
+    const visibility = document.hidden ? 'hidden' : 'visible'
+    const hasFocus = document.hasFocus()
+    
+    audioDebugSession.addLog('AUDIO_PERMISSION', {
+      message,
+      data,
+      context: {
+        isIOS: isIOSDevice,
+        isPWA,
+        audioContextState,
+        visibility,
+        hasFocus,
+        timestamp: new Date().toISOString()
+      }
+    })
+  }
+}
 
 export interface AudioPermissionState {
   hasPermission: boolean
@@ -34,6 +69,12 @@ export const AudioPermissionProvider: React.FC<AudioPermissionProviderProps> = (
     lastUserInteraction: Date.now()
   })
 
+  logPermissionDebug('AudioPermissionProvider initialized', {
+    initialState: state,
+    userAgent: navigator.userAgent,
+    speechSynthesisVoices: window.speechSynthesis?.getVoices?.()?.length || 0
+  })
+
   const lastInteractionRef = useRef<number>(Date.now())
   const audioTestRef = useRef<HTMLAudioElement | null>(null)
   const sessionPromptShownRef = useRef<boolean>(false)
@@ -42,6 +83,13 @@ export const AudioPermissionProvider: React.FC<AudioPermissionProviderProps> = (
   useEffect(() => {
     const updateInteraction = () => {
       const now = Date.now()
+      logPermissionDebug('User interaction detected', { 
+        timestamp: now,
+        interactionType: 'global_update',
+        previousInteraction: lastInteractionRef.current,
+        timeSincePrevious: now - lastInteractionRef.current
+      })
+      
       lastInteractionRef.current = now
       setState(prev => ({
         ...prev,
@@ -62,11 +110,19 @@ export const AudioPermissionProvider: React.FC<AudioPermissionProviderProps> = (
 
     // Track app visibility and focus changes as potential session starts
     const handleVisibilityChange = () => {
+      logPermissionDebug('Visibility change', { 
+        hidden: document.hidden,
+        needsPermission: state.needsPermission,
+        hasPermission: state.hasPermission,
+        sessionPromptShown: sessionPromptShownRef.current
+      })
+      
       if (!document.hidden) {
         updateInteraction()
         // Check if we need to show permission prompt when app becomes visible
         setTimeout(() => {
           if (state.needsPermission && !state.hasPermission && !sessionPromptShownRef.current) {
+            logPermissionDebug('Checking permission after visibility change')
             checkAudioPermissionInternal()
           }
         }, 500)
@@ -74,10 +130,18 @@ export const AudioPermissionProvider: React.FC<AudioPermissionProviderProps> = (
     }
 
     const handleWindowFocus = () => {
+      logPermissionDebug('Window focus change', { 
+        hasFocus: document.hasFocus(),
+        needsPermission: state.needsPermission,
+        hasPermission: state.hasPermission,
+        sessionPromptShown: sessionPromptShownRef.current
+      })
+      
       updateInteraction()
       // Similar check for window focus
       setTimeout(() => {
         if (state.needsPermission && !state.hasPermission && !sessionPromptShownRef.current) {
+          logPermissionDebug('Checking permission after focus change')
           checkAudioPermissionInternal()
         }
       }, 500)
@@ -336,6 +400,14 @@ export const AudioPermissionProvider: React.FC<AudioPermissionProviderProps> = (
     const hasDocumentFocus = document.hasFocus()
     const isDocumentVisible = !document.hidden
 
+    logPermissionDebug('checkAudioPermissionInternal called', {
+      timeSinceInteraction,
+      hasRecentInteraction,
+      hasDocumentFocus,
+      isDocumentVisible,
+      currentState: state
+    })
+
     audioDebugSession.addLog('PERMISSION_CHECK_INTERNAL', {
       timeSinceInteraction,
       hasRecentInteraction,
@@ -384,6 +456,12 @@ export const AudioPermissionProvider: React.FC<AudioPermissionProviderProps> = (
 
   const requestAudioPermission = async (): Promise<boolean> => {
     const { audioDebugSession } = await import('../utils/remoteConsole')
+    
+    logPermissionDebug('requestAudioPermission called', {
+      timestamp: Date.now(),
+      sessionPromptShown: sessionPromptShownRef.current,
+      currentState: state
+    })
     
     // When user explicitly requests permission, update interaction time
     lastInteractionRef.current = Date.now()
@@ -466,15 +544,26 @@ export const AudioPermissionProvider: React.FC<AudioPermissionProviderProps> = (
   }
 
   const setNeedsPermission = (needs: boolean) => {
+    logPermissionDebug('setNeedsPermission called', {
+      needs,
+      currentNeedsPermission: state.needsPermission,
+      hasPermission: state.hasPermission,
+      sessionPromptShown: sessionPromptShownRef.current
+    })
+    
     setState(prev => ({ ...prev, needsPermission: needs }))
     
     // If audio is needed and we don't have permission, check if we should show prompt
     if (needs && !state.hasPermission && !sessionPromptShownRef.current) {
+      logPermissionDebug('Audio needed but no permission, checking audio capability')
       setTimeout(async () => {
         const hasPermission = await checkAudioPermissionInternal()
         if (!hasPermission) {
+          logPermissionDebug('Audio capability check failed, showing prompt')
           setState(prev => ({ ...prev, showPrompt: true }))
           sessionPromptShownRef.current = true
+        } else {
+          logPermissionDebug('Audio capability check passed, no prompt needed')
         }
       }, 100)
     }

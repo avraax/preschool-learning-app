@@ -86,50 +86,133 @@ export class GoogleTTSService {
     document.addEventListener('pointerup', updateInteraction, { passive: true })
     document.addEventListener('keydown', updateInteraction, { passive: true })
     
-    // iOS specific: Track navigation and visibility changes as user interactions
+    // Enhanced iOS PWA specific tracking
     document.addEventListener('visibilitychange', () => {
       if (!document.hidden) {
         this.lastUserInteraction = Date.now()
+        // Proactive AudioContext resumption for PWA mode
+        this.proactiveAudioContextResume()
       }
     })
     
-    // Track focus events as user interactions (helpful for navigation)
+    // Enhanced focus tracking for PWA
     window.addEventListener('focus', () => {
       this.lastUserInteraction = Date.now()
+      this.proactiveAudioContextResume()
     })
     
     // Track page load events as user interactions (for navigation)
     window.addEventListener('pageshow', () => {
       this.lastUserInteraction = Date.now()
+      this.proactiveAudioContextResume()
     })
+    
+    // iOS Safari PWA specific: Track app launch/resume events
+    if (isIOS() && (window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone)) {
+      // PWA app state change tracking
+      document.addEventListener('resume', () => {
+        this.lastUserInteraction = Date.now()
+        this.proactiveAudioContextResume()
+      })
+      
+      // Check for PWA reactivation every few seconds when visible
+      setInterval(() => {
+        if (!document.hidden && document.hasFocus()) {
+          this.proactiveAudioContextResume()
+        }
+      }, 5000)
+    }
+  }
+  
+  // Proactive AudioContext resumption for iOS Safari PWA compatibility
+  private async proactiveAudioContextResume(): Promise<void> {
+    const isPWA = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone
+    
+    if (!isIOS() || !isPWA) {
+      return // Only needed for iOS Safari PWA
+    }
+    
+    logAudioIssue('Proactive AudioContext resume triggered', {
+      isVisible: !document.hidden,
+      hasFocus: document.hasFocus(),
+      timeSinceInteraction: Date.now() - this.lastUserInteraction
+    })
+    
+    try {
+      await this.resumeAudioContext()
+    } catch (error) {
+      logAudioIssue('Proactive AudioContext resume failed', {
+        error: error instanceof Error ? error.message : error?.toString()
+      })
+    }
   }
 
-  // Resume audio context for iOS - only with proper user gesture
+  // Enhanced iOS Safari PWA compatible AudioContext resumption
   private async resumeAudioContext(): Promise<void> {
-    // Only try to create/resume audio context if we have recent user interaction or document focus
     const timeSinceInteraction = Date.now() - this.lastUserInteraction
     const hasDocumentFocus = document.hasFocus()
     const isDocumentVisible = !document.hidden
+    const isPWA = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone
     
-    // More lenient check for AudioContext resume
-    if (timeSinceInteraction > 10000 && !hasDocumentFocus && !isDocumentVisible) {
+    // Enhanced logging for iOS Safari PWA debugging
+    const debugInfo = {
+      timeSinceInteraction,
+      hasDocumentFocus,
+      isDocumentVisible,
+      isPWA,
+      isIOS: isIOS(),
+      audioContextExists: !!this.audioContext,
+      audioContextState: this.audioContext?.state || 'none'
+    }
+    
+    logAudioIssue('AudioContext resume attempt', debugInfo)
+    
+    // More lenient check for PWA mode - PWAs need more permissive audio context handling
+    const shouldTryResume = isPWA ? 
+      (timeSinceInteraction < 30000 || hasDocumentFocus || isDocumentVisible) : // PWA: 30 second window
+      (timeSinceInteraction < 10000 || hasDocumentFocus || isDocumentVisible)   // Browser: 10 second window
+    
+    if (!shouldTryResume) {
+      logAudioIssue('AudioContext resume skipped - insufficient interaction', debugInfo)
       return
     }
     
+    // Create AudioContext if needed
     if (!this.audioContext) {
       try {
         this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
+        logAudioIssue('AudioContext created', { 
+          state: this.audioContext.state, 
+          sampleRate: this.audioContext.sampleRate 
+        })
       } catch (error) {
+        logAudioIssue('Failed to create AudioContext', { 
+          error: error instanceof Error ? error.message : error?.toString(),
+          errorType: error instanceof Error ? error.constructor?.name : typeof error
+        })
         return
       }
     }
     
+    // Resume suspended AudioContext
     if (this.audioContext.state === 'suspended') {
       try {
         await this.audioContext.resume()
+        logAudioIssue('AudioContext resumed successfully', { 
+          newState: this.audioContext.state,
+          isPWA,
+          timeSinceInteraction
+        })
       } catch (error) {
-        // Don't log as error since this is expected without user gesture
+        logAudioIssue('AudioContext resume failed', { 
+          error: error instanceof Error ? error.message : error?.toString(),
+          state: this.audioContext.state,
+          isPWA,
+          timeSinceInteraction
+        })
       }
+    } else if (this.audioContext.state === 'running') {
+      logAudioIssue('AudioContext already running', { state: this.audioContext.state })
     }
   }
 

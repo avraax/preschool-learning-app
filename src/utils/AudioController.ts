@@ -2,6 +2,37 @@ import { Howl } from 'howler'
 import { googleTTS, GoogleTTSService } from '../services/googleTTS'
 import { isIOS } from './deviceDetection'
 import { DANISH_PHRASES, getRandomSuccessPhrase, getRandomEncouragementPhrase, getDanishNumberText } from '../config/danish-phrases'
+import { audioDebugSession } from './remoteConsole'
+
+// Enhanced iOS Safari PWA debugging using audioDebugSession
+const logAudioDebug = (message: string, data?: any) => {
+  // Only log to audioDebugSession if it's active
+  if (audioDebugSession.isSessionActive()) {
+    const isIOSDevice = isIOS()
+    const isPWA = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone
+    const audioContextState = (window as any).AudioContext ? (() => {
+      try {
+        const ctx = new (window.AudioContext || (window as any).webkitAudioContext)()
+        const state = ctx.state
+        ctx.close()
+        return state
+      } catch {
+        return 'unavailable'
+      }
+    })() : 'unavailable'
+    
+    audioDebugSession.addLog('AUDIO_CONTROLLER', {
+      message,
+      data,
+      context: {
+        isIOS: isIOSDevice,
+        isPWA,
+        audioContextState,
+        timestamp: new Date().toISOString()
+      }
+    })
+  }
+}
 
 // Global reference to audio permission context
 // This will be set by the AudioPermissionProvider when it initializes
@@ -40,6 +71,14 @@ export class AudioController {
 
   constructor() {
     this.googleTTS = googleTTS
+    
+    logAudioDebug('AudioController initialized', {
+      userAgent: navigator.userAgent,
+      standalone: (window.navigator as any).standalone,
+      displayMode: window.matchMedia('(display-mode: standalone)').matches,
+      speechSynthesis: !!window.speechSynthesis,
+      audioContextSupport: !!(window as any).AudioContext || !!(window as any).webkitAudioContext
+    })
     
     // Preload common phrases for better performance
     this.preloadAudio()
@@ -261,21 +300,33 @@ export class AudioController {
    * Check if audio permission is available
    */
   private async checkAudioPermission(): Promise<boolean> {
+    logAudioDebug('checkAudioPermission called', {
+      hasGlobalContext: !!globalAudioPermissionContext,
+      timestamp: Date.now()
+    })
+
     if (!globalAudioPermissionContext) {
+      logAudioDebug('No global audio permission context, allowing by default')
       return true
     }
 
     try {
       globalAudioPermissionContext.setNeedsPermission(true)
+      logAudioDebug('Set needs permission to true')
+      
       const hasPermission = await globalAudioPermissionContext.checkAudioPermission()
+      logAudioDebug('checkAudioPermission result', { hasPermission })
       
       if (!hasPermission) {
+        logAudioDebug('No permission, requesting audio permission')
         const requestResult = await globalAudioPermissionContext.requestAudioPermission()
+        logAudioDebug('requestAudioPermission result', { requestResult })
         return requestResult
       }
       
       return hasPermission
     } catch (error) {
+      logAudioDebug('Error in checkAudioPermission', { error: error?.toString() })
       return false
     }
   }
@@ -284,8 +335,17 @@ export class AudioController {
    * Update user interaction in global context
    */
   updateUserInteraction(): void {
+    const timestamp = Date.now()
+    logAudioDebug('updateUserInteraction called', { 
+      hasGlobalContext: !!globalAudioPermissionContext,
+      timestamp 
+    })
+    
     if (globalAudioPermissionContext) {
       globalAudioPermissionContext.updateUserInteraction()
+      logAudioDebug('User interaction updated in global context')
+    } else {
+      logAudioDebug('No global context for user interaction update')
     }
   }
 
@@ -295,7 +355,16 @@ export class AudioController {
    * Basic speak function with queue management
    */
   async speak(text: string, voiceType: 'primary' | 'backup' | 'male' = 'primary', useSSML: boolean = true, customSpeed?: number): Promise<string> {
+    logAudioDebug('speak called', { 
+      text: text.substring(0, 50) + (text.length > 50 ? '...' : ''),
+      voiceType,
+      useSSML,
+      customSpeed,
+      queueLength: this.audioQueue.length
+    })
+
     return this.queueAudio(async () => {
+      logAudioDebug('speak executing in queue', { text: text.substring(0, 50) + '...' })
       
       // Update user interaction timestamp
       this.updateUserInteraction()
@@ -303,14 +372,29 @@ export class AudioController {
       // Check audio permission before speaking
       const hasPermission = await this.checkAudioPermission()
       if (!hasPermission) {
+        logAudioDebug('speak aborted - no audio permission', { text })
         return
       }
       
       const customAudioConfig = customSpeed ? { speakingRate: customSpeed } : undefined
       
       try {
+        logAudioDebug('Calling googleTTS.synthesizeAndPlay', { 
+          text: text.substring(0, 50) + '...',
+          voiceType,
+          useSSML,
+          customAudioConfig
+        })
+        
         await this.googleTTS.synthesizeAndPlay(text, voiceType, useSSML, customAudioConfig)
+        logAudioDebug('googleTTS.synthesizeAndPlay completed successfully', { text: text.substring(0, 50) + '...' })
       } catch (error) {
+        logAudioDebug('Error in googleTTS.synthesizeAndPlay', { 
+          text: text.substring(0, 50) + '...',
+          error: error?.toString(),
+          errorName: error?.constructor?.name,
+          errorMessage: (error as any)?.message
+        })
         console.error(`🎵 AudioController.speak: Error in googleTTS for: "${text}"`, error)
         throw error
       }
@@ -559,19 +643,40 @@ export class AudioController {
 
   // Centralized game welcome audio system
   async playGameWelcome(gameType: string, voiceType: 'primary' | 'backup' | 'male' = 'primary'): Promise<string> {
+    logAudioDebug('playGameWelcome called', { 
+      gameType,
+      voiceType,
+      timestamp: Date.now()
+    })
+
     // Import game welcome messages dynamically to avoid circular dependencies
     const { GAME_WELCOME_MESSAGES } = await import('../hooks/useGameEntryAudio')
     
     const welcomeMessage = GAME_WELCOME_MESSAGES[gameType as keyof typeof GAME_WELCOME_MESSAGES]
     
+    logAudioDebug('Game welcome message lookup', { 
+      gameType,
+      welcomeMessage: welcomeMessage || 'NOT_FOUND',
+      hasMessage: !!welcomeMessage
+    })
+    
     if (!welcomeMessage) {
+      logAudioDebug('No welcome message found for game type', { gameType })
       return Promise.resolve('')
     }
     
     try {
+      logAudioDebug('About to speak welcome message', { gameType, welcomeMessage })
       const result = await this.speak(welcomeMessage, voiceType, true)
+      logAudioDebug('playGameWelcome completed successfully', { gameType, result })
       return result
     } catch (error) {
+      logAudioDebug('Error in playGameWelcome', { 
+        gameType,
+        error: error?.toString(),
+        errorName: error?.constructor?.name,
+        errorMessage: (error as any)?.message
+      })
       console.error(`🎵 AudioController.playGameWelcome: Error in speak() for "${gameType}":`, error)
       throw error
     }

@@ -1,22 +1,1409 @@
 Error Log Details
 ==================
-ID: err_1754324119467_nbhxs39e3
-Level: LOG
-Time: 04.08.2025, 18.15.19
-Message: 🎵 Updated user interaction on window focus
+ID: err_1754325525747_8blo5wdb3
+Level: INFO
+Time: 04.08.2025, 18.38.45
+Message: 🔊 AUDIO DEBUG REPORT - AlphabetGame unmounted
 
 Environment (Legacy):
 ------------------
-Device: Win32 - Mozilla/5.0
-User Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36
+Device: iPad iOS undefined
+User Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.13 Safari/605.1.15
 
 User Context (Legacy):
 ------------------
-Session ID: 1754323907386-9k2bxqshx
+Session ID: audio-debug-1754325521683-xi556f
 
 App Context (Legacy):
 ------------------
-URL: https://preschool-learning-app.vercel.app/admin/errors
+URL: https://preschool-learning-app.vercel.app/alphabet
+
+Tags: audio-debug, comprehensive-report
+
+Additional Data:
+------------------
+{
+  "sessionId": "audio-debug-1754325521683-xi556f",
+  "startTime": "2025-08-04T16:38:41.683Z",
+  "endTime": "2025-08-04T16:38:45.381Z",
+  "totalDuration": 3698,
+  "device": {
+    "isIOS": true,
+    "isIPad": true,
+    "isIPhone": false,
+    "isSafari": true,
+    "isMobile": true,
+    "touchSupported": true,
+    "isPWA": true,
+    "isIPadPro": true,
+    "isM1iPad": true,
+    "displayMode": "standalone",
+    "standalone": true,
+    "safariMode": "pwa",
+    "audioContextSupported": true,
+    "speechSynthesisSupported": true
+  },
+  "environment": {
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.13 Safari/605.1.15",
+    "url": "https://preschool-learning-app.vercel.app/alphabet",
+    "viewport": {
+      "width": 1366,
+      "height": 1004
+    },
+    "audioContext": "supported",
+    "speechSynthesis": "supported"
+  },
+  "logs": [
+    {
+      "timestamp": 1754325521683,
+      "relativeTime": 0,
+      "type": "SESSION_START",
+      "data": {
+        "context": "AlphabetGame - iOS PWA Debug",
+        "timestamp": "2025-08-04T16:38:41.683Z",
+        "deviceInfo": {
+          "isIOS": true,
+          "isIPad": true,
+          "isIPhone": false,
+          "isSafari": true,
+          "isMobile": true,
+          "touchSupported": true,
+          "isPWA": true,
+          "isIPadPro": true,
+          "isM1iPad": true,
+          "displayMode": "standalone",
+          "standalone": true,
+          "safariMode": "pwa",
+          "audioContextSupported": true,
+          "speechSynthesisSupported": true
+        },
+        "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.13 Safari/605.1.15",
+        "url": "https://preschool-learning-app.vercel.app/alphabet/quiz"
+      }
+    },
+    {
+      "timestamp": 1754325521684,
+      "relativeTime": 1,
+      "type": "ALPHABET_GAME",
+      "data": {
+        "message": "AlphabetGame component initialized",
+        "data": {
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.13 Safari/605.1.15",
+          "speechSynthesisVoices": 186,
+          "currentLetter": "",
+          "showOptionsLength": 0
+        },
+        "context": {
+          "isIOS": true,
+          "isPWA": true,
+          "audioContextState": "suspended",
+          "timestamp": "2025-08-04T16:38:41.684Z"
+        }
+      }
+    },
+    {
+      "timestamp": 1754325521686,
+      "relativeTime": 3,
+      "type": "ALPHABET_GAME",
+      "data": {
+        "message": "Main useEffect running - setting up game initialization",
+        "context": {
+          "isIOS": true,
+          "isPWA": true,
+          "audioContextState": "suspended",
+          "timestamp": "2025-08-04T16:38:41.686Z"
+        }
+      }
+    },
+    {
+      "timestamp": 1754325521687,
+      "relativeTime": 4,
+      "type": "ALPHABET_GAME",
+      "data": {
+        "message": "Registering entry audio completion callback",
+        "context": {
+          "isIOS": true,
+          "isPWA": true,
+          "audioContextState": "suspended",
+          "timestamp": "2025-08-04T16:38:41.687Z"
+        }
+      }
+    },
+    {
+      "timestamp": 1754325521689,
+      "relativeTime": 6,
+      "type": "ALPHABET_GAME",
+      "data": {
+        "message": "Scheduling entry audio with 1000ms delay",
+        "context": {
+          "isIOS": true,
+          "isPWA": true,
+          "audioContextState": "suspended",
+          "timestamp": "2025-08-04T16:38:41.689Z"
+        }
+      }
+    },
+    {
+      "timestamp": 1754325522706,
+      "relativeTime": 1023,
+      "type": "AUDIO_CONTROLLER",
+      "data": {
+        "message": "playGameWelcome called",
+        "data": {
+          "gameType": "alphabet",
+          "voiceType": "primary",
+          "timestamp": 1754325522705
+        },
+        "context": {
+          "isIOS": true,
+          "isPWA": true,
+          "audioContextState": "suspended",
+          "timestamp": "2025-08-04T16:38:42.706Z"
+        }
+      }
+    },
+    {
+      "timestamp": 1754325522709,
+      "relativeTime": 1026,
+      "type": "AUDIO_CONTROLLER",
+      "data": {
+        "message": "Game welcome message lookup",
+        "data": {
+          "gameType": "alphabet",
+          "welcomeMessage": "\"Bogstav Quiz\".",
+          "hasMessage": true
+        },
+        "context": {
+          "isIOS": true,
+          "isPWA": true,
+          "audioContextState": "suspended",
+          "timestamp": "2025-08-04T16:38:42.709Z"
+        }
+      }
+    },
+    {
+      "timestamp": 1754325522710,
+      "relativeTime": 1027,
+      "type": "AUDIO_CONTROLLER",
+      "data": {
+        "message": "About to speak welcome message",
+        "data": {
+          "gameType": "alphabet",
+          "welcomeMessage": "\"Bogstav Quiz\"."
+        },
+        "context": {
+          "isIOS": true,
+          "isPWA": true,
+          "audioContextState": "suspended",
+          "timestamp": "2025-08-04T16:38:42.710Z"
+        }
+      }
+    },
+    {
+      "timestamp": 1754325522712,
+      "relativeTime": 1029,
+      "type": "AUDIO_CONTROLLER",
+      "data": {
+        "message": "speak called",
+        "data": {
+          "text": "\"Bogstav Quiz\".",
+          "voiceType": "primary",
+          "useSSML": true,
+          "queueLength": 0
+        },
+        "context": {
+          "isIOS": true,
+          "isPWA": true,
+          "audioContextState": "suspended",
+          "timestamp": "2025-08-04T16:38:42.712Z"
+        }
+      }
+    },
+    {
+      "timestamp": 1754325522714,
+      "relativeTime": 1031,
+      "type": "AUDIO_CONTROLLER",
+      "data": {
+        "message": "speak executing in queue",
+        "data": {
+          "text": "\"Bogstav Quiz\"...."
+        },
+        "context": {
+          "isIOS": true,
+          "isPWA": true,
+          "audioContextState": "suspended",
+          "timestamp": "2025-08-04T16:38:42.714Z"
+        }
+      }
+    },
+    {
+      "timestamp": 1754325522716,
+      "relativeTime": 1033,
+      "type": "AUDIO_CONTROLLER",
+      "data": {
+        "message": "updateUserInteraction called",
+        "data": {
+          "hasGlobalContext": true,
+          "timestamp": 1754325522714
+        },
+        "context": {
+          "isIOS": true,
+          "isPWA": true,
+          "audioContextState": "suspended",
+          "timestamp": "2025-08-04T16:38:42.716Z"
+        }
+      }
+    },
+    {
+      "timestamp": 1754325522718,
+      "relativeTime": 1035,
+      "type": "AUDIO_CONTROLLER",
+      "data": {
+        "message": "User interaction updated in global context",
+        "context": {
+          "isIOS": true,
+          "isPWA": true,
+          "audioContextState": "suspended",
+          "timestamp": "2025-08-04T16:38:42.718Z"
+        }
+      }
+    },
+    {
+      "timestamp": 1754325522720,
+      "relativeTime": 1037,
+      "type": "AUDIO_CONTROLLER",
+      "data": {
+        "message": "checkAudioPermission called",
+        "data": {
+          "hasGlobalContext": true,
+          "timestamp": 1754325522718
+        },
+        "context": {
+          "isIOS": true,
+          "isPWA": true,
+          "audioContextState": "suspended",
+          "timestamp": "2025-08-04T16:38:42.720Z"
+        }
+      }
+    },
+    {
+      "timestamp": 1754325522722,
+      "relativeTime": 1039,
+      "type": "AUDIO_PERMISSION",
+      "data": {
+        "message": "setNeedsPermission called",
+        "data": {
+          "needs": true,
+          "currentNeedsPermission": true,
+          "hasPermission": true,
+          "sessionPromptShown": false
+        },
+        "context": {
+          "isIOS": true,
+          "isPWA": true,
+          "audioContextState": "suspended",
+          "visibility": "visible",
+          "hasFocus": true,
+          "timestamp": "2025-08-04T16:38:42.722Z"
+        }
+      }
+    },
+    {
+      "timestamp": 1754325522724,
+      "relativeTime": 1041,
+      "type": "AUDIO_CONTROLLER",
+      "data": {
+        "message": "Set needs permission to true",
+        "context": {
+          "isIOS": true,
+          "isPWA": true,
+          "audioContextState": "suspended",
+          "timestamp": "2025-08-04T16:38:42.724Z"
+        }
+      }
+    },
+    {
+      "timestamp": 1754325522726,
+      "relativeTime": 1043,
+      "type": "AUDIO_PERMISSION",
+      "data": {
+        "message": "checkAudioPermissionInternal called",
+        "data": {
+          "timeSinceInteraction": 8,
+          "hasRecentInteraction": true,
+          "hasDocumentFocus": true,
+          "isDocumentVisible": true,
+          "currentState": {
+            "hasPermission": true,
+            "needsPermission": true,
+            "showPrompt": false,
+            "sessionInitialized": true,
+            "lastUserInteraction": 1754325521661
+          }
+        },
+        "context": {
+          "isIOS": true,
+          "isPWA": true,
+          "audioContextState": "suspended",
+          "visibility": "visible",
+          "hasFocus": true,
+          "timestamp": "2025-08-04T16:38:42.726Z"
+        }
+      }
+    },
+    {
+      "timestamp": 1754325522726,
+      "relativeTime": 1043,
+      "type": "PERMISSION_CHECK_INTERNAL",
+      "data": {
+        "timeSinceInteraction": 8,
+        "hasRecentInteraction": true,
+        "hasDocumentFocus": true,
+        "isDocumentVisible": true,
+        "isIOS": true
+      }
+    },
+    {
+      "timestamp": 1754325522726,
+      "relativeTime": 1043,
+      "type": "PERMISSION_IOS_RUNNING_TECHNICAL_TEST",
+      "data": {
+        "action": "test_if_audio_works_before_modal"
+      }
+    },
+    {
+      "timestamp": 1754325522726,
+      "relativeTime": 1043,
+      "type": "PERMISSION_TEST_START",
+      "data": {
+        "isIOS": true,
+        "timestamp": 1754325522726
+      }
+    },
+    {
+      "timestamp": 1754325522726,
+      "relativeTime": 1043,
+      "type": "PERMISSION_IOS_INTERACTION_CHECK",
+      "data": {
+        "timeSinceInteraction": 10,
+        "hasRecentInteraction": true,
+        "hasDocumentFocus": true,
+        "isDocumentVisible": true
+      }
+    },
+    {
+      "timestamp": 1754325522726,
+      "relativeTime": 1043,
+      "type": "PERMISSION_IOS_INTERACTION_SUCCESS",
+      "data": {
+        "result": true,
+        "reason": "recent_interaction_with_focus"
+      }
+    },
+    {
+      "timestamp": 1754325522726,
+      "relativeTime": 1043,
+      "type": "PERMISSION_IOS_TECHNICAL_TEST_SUCCESS",
+      "data": {
+        "result": true,
+        "action": "audio_works_no_modal_needed"
+      }
+    },
+    {
+      "timestamp": 1754325522728,
+      "relativeTime": 1045,
+      "type": "AUDIO_CONTROLLER",
+      "data": {
+        "message": "checkAudioPermission result",
+        "data": {
+          "hasPermission": true
+        },
+        "context": {
+          "isIOS": true,
+          "isPWA": true,
+          "audioContextState": "suspended",
+          "timestamp": "2025-08-04T16:38:42.728Z"
+        }
+      }
+    },
+    {
+      "timestamp": 1754325522729,
+      "relativeTime": 1046,
+      "type": "AUDIO_CONTROLLER",
+      "data": {
+        "message": "Calling googleTTS.synthesizeAndPlay",
+        "data": {
+          "text": "\"Bogstav Quiz\"....",
+          "voiceType": "primary",
+          "useSSML": true
+        },
+        "context": {
+          "isIOS": true,
+          "isPWA": true,
+          "audioContextState": "suspended",
+          "timestamp": "2025-08-04T16:38:42.729Z"
+        }
+      }
+    },
+    {
+      "timestamp": 1754325522730,
+      "relativeTime": 1047,
+      "type": "GOOGLE_TTS_SYNTHESIZE_AND_PLAY",
+      "data": {
+        "text": "\"Bogstav Quiz\".",
+        "textLength": 15,
+        "voiceType": "primary",
+        "useSSML": true,
+        "isIOS": true
+      }
+    },
+    {
+      "timestamp": 1754325522730,
+      "relativeTime": 1047,
+      "type": "GOOGLE_TTS_IOS_PRIMARY_ATTEMPT",
+      "data": {}
+    },
+    {
+      "timestamp": 1754325522730,
+      "relativeTime": 1047,
+      "type": "GOOGLE_TTS_IOS_SYNTHESIS_SUCCESS",
+      "data": {
+        "audioDataLength": 19968
+      }
+    },
+    {
+      "timestamp": 1754325522730,
+      "relativeTime": 1047,
+      "type": "GOOGLE_TTS_PLAY_AUDIO_FROM_DATA",
+      "data": {
+        "audioDataLength": 19968
+      }
+    },
+    {
+      "timestamp": 1754325522730,
+      "relativeTime": 1047,
+      "type": "GOOGLE_TTS_STOP_CURRENT_AUDIO",
+      "data": {}
+    },
+    {
+      "timestamp": 1754325522730,
+      "relativeTime": 1047,
+      "type": "GOOGLE_TTS_CREATE_AUDIO_ELEMENT",
+      "data": {}
+    },
+    {
+      "timestamp": 1754325522730,
+      "relativeTime": 1047,
+      "type": "GOOGLE_TTS_AUDIO_ELEMENT_CREATED",
+      "data": {}
+    },
+    {
+      "timestamp": 1754325522730,
+      "relativeTime": 1047,
+      "type": "GOOGLE_TTS_IOS_RESUME_CONTEXT",
+      "data": {}
+    },
+    {
+      "timestamp": 1754325522736,
+      "relativeTime": 1053,
+      "type": "GOOGLE_TTS_IOS_CONTEXT_RESUMED",
+      "data": {}
+    },
+    {
+      "timestamp": 1754325522740,
+      "relativeTime": 1057,
+      "type": "AUDIO_PERMISSION",
+      "data": {
+        "message": "AudioPermissionProvider initialized",
+        "data": {
+          "initialState": {
+            "hasPermission": true,
+            "needsPermission": true,
+            "showPrompt": false,
+            "sessionInitialized": true,
+            "lastUserInteraction": 1754325522716
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.13 Safari/605.1.15",
+          "speechSynthesisVoices": 186
+        },
+        "context": {
+          "isIOS": true,
+          "isPWA": true,
+          "audioContextState": "suspended",
+          "visibility": "visible",
+          "hasFocus": true,
+          "timestamp": "2025-08-04T16:38:42.740Z"
+        }
+      }
+    },
+    {
+      "timestamp": 1754325522770,
+      "relativeTime": 1087,
+      "type": "AUDIO_CONTROLLER",
+      "data": {
+        "message": "Error in googleTTS.synthesizeAndPlay",
+        "data": {
+          "text": "\"Bogstav Quiz\"....",
+          "error": "Error: Audio interrupted by navigation",
+          "errorName": "Error",
+          "errorMessage": "Audio interrupted by navigation"
+        },
+        "context": {
+          "isIOS": true,
+          "isPWA": true,
+          "audioContextState": "suspended",
+          "timestamp": "2025-08-04T16:38:42.770Z"
+        }
+      }
+    },
+    {
+      "timestamp": 1754325522772,
+      "relativeTime": 1089,
+      "type": "AUDIO_CONTROLLER",
+      "data": {
+        "message": "Error in playGameWelcome",
+        "data": {
+          "gameType": "alphabet",
+          "error": "Error: Audio interrupted by navigation",
+          "errorName": "Error",
+          "errorMessage": "Audio interrupted by navigation"
+        },
+        "context": {
+          "isIOS": true,
+          "isPWA": true,
+          "audioContextState": "suspended",
+          "timestamp": "2025-08-04T16:38:42.772Z"
+        }
+      }
+    },
+    {
+      "timestamp": 1754325522837,
+      "relativeTime": 1154,
+      "type": "GOOGLE_TTS_IOS_CALLING_PLAY",
+      "data": {}
+    },
+    {
+      "timestamp": 1754325522837,
+      "relativeTime": 1154,
+      "type": "GOOGLE_TTS_IOS_PLAY_ERROR",
+      "data": {
+        "errorName": "NotSupportedError",
+        "errorMessage": "The operation is not supported.",
+        "timeSinceInteraction": 1074,
+        "audioContextState": "running",
+        "audioSrcLength": 55
+      }
+    },
+    {
+      "timestamp": 1754325525294,
+      "relativeTime": 3611,
+      "type": "AUDIO_PERMISSION",
+      "data": {
+        "message": "User interaction detected",
+        "data": {
+          "timestamp": 1754325525285,
+          "interactionType": "global_update",
+          "previousInteraction": 1754325522716,
+          "timeSincePrevious": 2569
+        },
+        "context": {
+          "isIOS": true,
+          "isPWA": true,
+          "audioContextState": "suspended",
+          "visibility": "visible",
+          "hasFocus": true,
+          "timestamp": "2025-08-04T16:38:45.294Z"
+        }
+      }
+    },
+    {
+      "timestamp": 1754325525300,
+      "relativeTime": 3617,
+      "type": "AUDIO_PERMISSION",
+      "data": {
+        "message": "AudioPermissionProvider initialized",
+        "data": {
+          "initialState": {
+            "hasPermission": true,
+            "needsPermission": true,
+            "showPrompt": false,
+            "sessionInitialized": true,
+            "lastUserInteraction": 1754325525285
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.13 Safari/605.1.15",
+          "speechSynthesisVoices": 186
+        },
+        "context": {
+          "isIOS": true,
+          "isPWA": true,
+          "audioContextState": "suspended",
+          "visibility": "visible",
+          "hasFocus": true,
+          "timestamp": "2025-08-04T16:38:45.300Z"
+        }
+      }
+    },
+    {
+      "timestamp": 1754325525312,
+      "relativeTime": 3629,
+      "type": "AUDIO_PERMISSION",
+      "data": {
+        "message": "User interaction detected",
+        "data": {
+          "timestamp": 1754325525310,
+          "interactionType": "global_update",
+          "previousInteraction": 1754325525285,
+          "timeSincePrevious": 25
+        },
+        "context": {
+          "isIOS": true,
+          "isPWA": true,
+          "audioContextState": "suspended",
+          "visibility": "visible",
+          "hasFocus": true,
+          "timestamp": "2025-08-04T16:38:45.312Z"
+        }
+      }
+    },
+    {
+      "timestamp": 1754325525316,
+      "relativeTime": 3633,
+      "type": "AUDIO_PERMISSION",
+      "data": {
+        "message": "AudioPermissionProvider initialized",
+        "data": {
+          "initialState": {
+            "hasPermission": true,
+            "needsPermission": true,
+            "showPrompt": false,
+            "sessionInitialized": true,
+            "lastUserInteraction": 1754325525310
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.13 Safari/605.1.15",
+          "speechSynthesisVoices": 186
+        },
+        "context": {
+          "isIOS": true,
+          "isPWA": true,
+          "audioContextState": "suspended",
+          "visibility": "visible",
+          "hasFocus": true,
+          "timestamp": "2025-08-04T16:38:45.316Z"
+        }
+      }
+    },
+    {
+      "timestamp": 1754325525338,
+      "relativeTime": 3655,
+      "type": "AUDIO_PERMISSION",
+      "data": {
+        "message": "User interaction detected",
+        "data": {
+          "timestamp": 1754325525338,
+          "interactionType": "global_update",
+          "previousInteraction": 1754325525310,
+          "timeSincePrevious": 28
+        },
+        "context": {
+          "isIOS": true,
+          "isPWA": true,
+          "audioContextState": "suspended",
+          "visibility": "visible",
+          "hasFocus": true,
+          "timestamp": "2025-08-04T16:38:45.338Z"
+        }
+      }
+    },
+    {
+      "timestamp": 1754325525341,
+      "relativeTime": 3658,
+      "type": "AUDIO_PERMISSION",
+      "data": {
+        "message": "AudioPermissionProvider initialized",
+        "data": {
+          "initialState": {
+            "hasPermission": true,
+            "needsPermission": true,
+            "showPrompt": false,
+            "sessionInitialized": true,
+            "lastUserInteraction": 1754325525338
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.13 Safari/605.1.15",
+          "speechSynthesisVoices": 186
+        },
+        "context": {
+          "isIOS": true,
+          "isPWA": true,
+          "audioContextState": "suspended",
+          "visibility": "visible",
+          "hasFocus": true,
+          "timestamp": "2025-08-04T16:38:45.341Z"
+        }
+      }
+    },
+    {
+      "timestamp": 1754325525349,
+      "relativeTime": 3666,
+      "type": "AUDIO_PERMISSION",
+      "data": {
+        "message": "User interaction detected",
+        "data": {
+          "timestamp": 1754325525348,
+          "interactionType": "global_update",
+          "previousInteraction": 1754325525338,
+          "timeSincePrevious": 10
+        },
+        "context": {
+          "isIOS": true,
+          "isPWA": true,
+          "audioContextState": "suspended",
+          "visibility": "visible",
+          "hasFocus": true,
+          "timestamp": "2025-08-04T16:38:45.349Z"
+        }
+      }
+    },
+    {
+      "timestamp": 1754325525351,
+      "relativeTime": 3668,
+      "type": "AUDIO_PERMISSION",
+      "data": {
+        "message": "AudioPermissionProvider initialized",
+        "data": {
+          "initialState": {
+            "hasPermission": true,
+            "needsPermission": true,
+            "showPrompt": false,
+            "sessionInitialized": true,
+            "lastUserInteraction": 1754325525348
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.13 Safari/605.1.15",
+          "speechSynthesisVoices": 186
+        },
+        "context": {
+          "isIOS": true,
+          "isPWA": true,
+          "audioContextState": "suspended",
+          "visibility": "visible",
+          "hasFocus": true,
+          "timestamp": "2025-08-04T16:38:45.351Z"
+        }
+      }
+    },
+    {
+      "timestamp": 1754325525359,
+      "relativeTime": 3676,
+      "type": "AUDIO_PERMISSION",
+      "data": {
+        "message": "User interaction detected",
+        "data": {
+          "timestamp": 1754325525358,
+          "interactionType": "global_update",
+          "previousInteraction": 1754325525348,
+          "timeSincePrevious": 10
+        },
+        "context": {
+          "isIOS": true,
+          "isPWA": true,
+          "audioContextState": "suspended",
+          "visibility": "visible",
+          "hasFocus": true,
+          "timestamp": "2025-08-04T16:38:45.359Z"
+        }
+      }
+    },
+    {
+      "timestamp": 1754325525360,
+      "relativeTime": 3677,
+      "type": "AUDIO_PERMISSION",
+      "data": {
+        "message": "AudioPermissionProvider initialized",
+        "data": {
+          "initialState": {
+            "hasPermission": true,
+            "needsPermission": true,
+            "showPrompt": false,
+            "sessionInitialized": true,
+            "lastUserInteraction": 1754325525358
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.13 Safari/605.1.15",
+          "speechSynthesisVoices": 186
+        },
+        "context": {
+          "isIOS": true,
+          "isPWA": true,
+          "audioContextState": "suspended",
+          "visibility": "visible",
+          "hasFocus": true,
+          "timestamp": "2025-08-04T16:38:45.360Z"
+        }
+      }
+    },
+    {
+      "timestamp": 1754325525369,
+      "relativeTime": 3686,
+      "type": "AUDIO_PERMISSION",
+      "data": {
+        "message": "User interaction detected",
+        "data": {
+          "timestamp": 1754325525368,
+          "interactionType": "global_update",
+          "previousInteraction": 1754325525358,
+          "timeSincePrevious": 10
+        },
+        "context": {
+          "isIOS": true,
+          "isPWA": true,
+          "audioContextState": "suspended",
+          "visibility": "visible",
+          "hasFocus": true,
+          "timestamp": "2025-08-04T16:38:45.369Z"
+        }
+      }
+    },
+    {
+      "timestamp": 1754325525372,
+      "relativeTime": 3689,
+      "type": "AUDIO_PERMISSION",
+      "data": {
+        "message": "AudioPermissionProvider initialized",
+        "data": {
+          "initialState": {
+            "hasPermission": true,
+            "needsPermission": true,
+            "showPrompt": false,
+            "sessionInitialized": true,
+            "lastUserInteraction": 1754325525368
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.13 Safari/605.1.15",
+          "speechSynthesisVoices": 186
+        },
+        "context": {
+          "isIOS": true,
+          "isPWA": true,
+          "audioContextState": "suspended",
+          "visibility": "visible",
+          "hasFocus": true,
+          "timestamp": "2025-08-04T16:38:45.372Z"
+        }
+      }
+    },
+    {
+      "timestamp": 1754325525381,
+      "relativeTime": 3698,
+      "type": "SESSION_END",
+      "data": {
+        "context": "AlphabetGame unmounted",
+        "totalDuration": 3698,
+        "totalLogs": 50
+      }
+    }
+  ],
+  "summary": {
+    "totalSteps": 51,
+    "errorCount": 1,
+    "successCount": 3,
+    "permissionSteps": 21,
+    "firstError": {
+      "timestamp": 1754325522837,
+      "relativeTime": 1154,
+      "type": "GOOGLE_TTS_IOS_PLAY_ERROR",
+      "data": {
+        "errorName": "NotSupportedError",
+        "errorMessage": "The operation is not supported.",
+        "timeSinceInteraction": 1074,
+        "audioContextState": "running",
+        "audioSrcLength": 55
+      }
+    },
+    "lastSuccess": {
+      "timestamp": 1754325522730,
+      "relativeTime": 1047,
+      "type": "GOOGLE_TTS_IOS_SYNTHESIS_SUCCESS",
+      "data": {
+        "audioDataLength": 19968
+      }
+    },
+    "keyEvents": [
+      {
+        "timestamp": 1754325522722,
+        "relativeTime": 1039,
+        "type": "AUDIO_PERMISSION",
+        "data": {
+          "message": "setNeedsPermission called",
+          "data": {
+            "needs": true,
+            "currentNeedsPermission": true,
+            "hasPermission": true,
+            "sessionPromptShown": false
+          },
+          "context": {
+            "isIOS": true,
+            "isPWA": true,
+            "audioContextState": "suspended",
+            "visibility": "visible",
+            "hasFocus": true,
+            "timestamp": "2025-08-04T16:38:42.722Z"
+          }
+        }
+      },
+      {
+        "timestamp": 1754325522726,
+        "relativeTime": 1043,
+        "type": "AUDIO_PERMISSION",
+        "data": {
+          "message": "checkAudioPermissionInternal called",
+          "data": {
+            "timeSinceInteraction": 8,
+            "hasRecentInteraction": true,
+            "hasDocumentFocus": true,
+            "isDocumentVisible": true,
+            "currentState": {
+              "hasPermission": true,
+              "needsPermission": true,
+              "showPrompt": false,
+              "sessionInitialized": true,
+              "lastUserInteraction": 1754325521661
+            }
+          },
+          "context": {
+            "isIOS": true,
+            "isPWA": true,
+            "audioContextState": "suspended",
+            "visibility": "visible",
+            "hasFocus": true,
+            "timestamp": "2025-08-04T16:38:42.726Z"
+          }
+        }
+      },
+      {
+        "timestamp": 1754325522726,
+        "relativeTime": 1043,
+        "type": "PERMISSION_CHECK_INTERNAL",
+        "data": {
+          "timeSinceInteraction": 8,
+          "hasRecentInteraction": true,
+          "hasDocumentFocus": true,
+          "isDocumentVisible": true,
+          "isIOS": true
+        }
+      },
+      {
+        "timestamp": 1754325522726,
+        "relativeTime": 1043,
+        "type": "PERMISSION_IOS_RUNNING_TECHNICAL_TEST",
+        "data": {
+          "action": "test_if_audio_works_before_modal"
+        }
+      },
+      {
+        "timestamp": 1754325522726,
+        "relativeTime": 1043,
+        "type": "PERMISSION_TEST_START",
+        "data": {
+          "isIOS": true,
+          "timestamp": 1754325522726
+        }
+      },
+      {
+        "timestamp": 1754325522726,
+        "relativeTime": 1043,
+        "type": "PERMISSION_IOS_INTERACTION_CHECK",
+        "data": {
+          "timeSinceInteraction": 10,
+          "hasRecentInteraction": true,
+          "hasDocumentFocus": true,
+          "isDocumentVisible": true
+        }
+      },
+      {
+        "timestamp": 1754325522726,
+        "relativeTime": 1043,
+        "type": "PERMISSION_IOS_INTERACTION_SUCCESS",
+        "data": {
+          "result": true,
+          "reason": "recent_interaction_with_focus"
+        }
+      },
+      {
+        "timestamp": 1754325522726,
+        "relativeTime": 1043,
+        "type": "PERMISSION_IOS_TECHNICAL_TEST_SUCCESS",
+        "data": {
+          "result": true,
+          "action": "audio_works_no_modal_needed"
+        }
+      },
+      {
+        "timestamp": 1754325522730,
+        "relativeTime": 1047,
+        "type": "GOOGLE_TTS_SYNTHESIZE_AND_PLAY",
+        "data": {
+          "text": "\"Bogstav Quiz\".",
+          "textLength": 15,
+          "voiceType": "primary",
+          "useSSML": true,
+          "isIOS": true
+        }
+      },
+      {
+        "timestamp": 1754325522730,
+        "relativeTime": 1047,
+        "type": "GOOGLE_TTS_IOS_SYNTHESIS_SUCCESS",
+        "data": {
+          "audioDataLength": 19968
+        }
+      },
+      {
+        "timestamp": 1754325522730,
+        "relativeTime": 1047,
+        "type": "GOOGLE_TTS_PLAY_AUDIO_FROM_DATA",
+        "data": {
+          "audioDataLength": 19968
+        }
+      },
+      {
+        "timestamp": 1754325522740,
+        "relativeTime": 1057,
+        "type": "AUDIO_PERMISSION",
+        "data": {
+          "message": "AudioPermissionProvider initialized",
+          "data": {
+            "initialState": {
+              "hasPermission": true,
+              "needsPermission": true,
+              "showPrompt": false,
+              "sessionInitialized": true,
+              "lastUserInteraction": 1754325522716
+            },
+            "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.13 Safari/605.1.15",
+            "speechSynthesisVoices": 186
+          },
+          "context": {
+            "isIOS": true,
+            "isPWA": true,
+            "audioContextState": "suspended",
+            "visibility": "visible",
+            "hasFocus": true,
+            "timestamp": "2025-08-04T16:38:42.740Z"
+          }
+        }
+      },
+      {
+        "timestamp": 1754325522837,
+        "relativeTime": 1154,
+        "type": "GOOGLE_TTS_IOS_CALLING_PLAY",
+        "data": {}
+      },
+      {
+        "timestamp": 1754325522837,
+        "relativeTime": 1154,
+        "type": "GOOGLE_TTS_IOS_PLAY_ERROR",
+        "data": {
+          "errorName": "NotSupportedError",
+          "errorMessage": "The operation is not supported.",
+          "timeSinceInteraction": 1074,
+          "audioContextState": "running",
+          "audioSrcLength": 55
+        }
+      },
+      {
+        "timestamp": 1754325525294,
+        "relativeTime": 3611,
+        "type": "AUDIO_PERMISSION",
+        "data": {
+          "message": "User interaction detected",
+          "data": {
+            "timestamp": 1754325525285,
+            "interactionType": "global_update",
+            "previousInteraction": 1754325522716,
+            "timeSincePrevious": 2569
+          },
+          "context": {
+            "isIOS": true,
+            "isPWA": true,
+            "audioContextState": "suspended",
+            "visibility": "visible",
+            "hasFocus": true,
+            "timestamp": "2025-08-04T16:38:45.294Z"
+          }
+        }
+      },
+      {
+        "timestamp": 1754325525300,
+        "relativeTime": 3617,
+        "type": "AUDIO_PERMISSION",
+        "data": {
+          "message": "AudioPermissionProvider initialized",
+          "data": {
+            "initialState": {
+              "hasPermission": true,
+              "needsPermission": true,
+              "showPrompt": false,
+              "sessionInitialized": true,
+              "lastUserInteraction": 1754325525285
+            },
+            "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.13 Safari/605.1.15",
+            "speechSynthesisVoices": 186
+          },
+          "context": {
+            "isIOS": true,
+            "isPWA": true,
+            "audioContextState": "suspended",
+            "visibility": "visible",
+            "hasFocus": true,
+            "timestamp": "2025-08-04T16:38:45.300Z"
+          }
+        }
+      },
+      {
+        "timestamp": 1754325525312,
+        "relativeTime": 3629,
+        "type": "AUDIO_PERMISSION",
+        "data": {
+          "message": "User interaction detected",
+          "data": {
+            "timestamp": 1754325525310,
+            "interactionType": "global_update",
+            "previousInteraction": 1754325525285,
+            "timeSincePrevious": 25
+          },
+          "context": {
+            "isIOS": true,
+            "isPWA": true,
+            "audioContextState": "suspended",
+            "visibility": "visible",
+            "hasFocus": true,
+            "timestamp": "2025-08-04T16:38:45.312Z"
+          }
+        }
+      },
+      {
+        "timestamp": 1754325525316,
+        "relativeTime": 3633,
+        "type": "AUDIO_PERMISSION",
+        "data": {
+          "message": "AudioPermissionProvider initialized",
+          "data": {
+            "initialState": {
+              "hasPermission": true,
+              "needsPermission": true,
+              "showPrompt": false,
+              "sessionInitialized": true,
+              "lastUserInteraction": 1754325525310
+            },
+            "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.13 Safari/605.1.15",
+            "speechSynthesisVoices": 186
+          },
+          "context": {
+            "isIOS": true,
+            "isPWA": true,
+            "audioContextState": "suspended",
+            "visibility": "visible",
+            "hasFocus": true,
+            "timestamp": "2025-08-04T16:38:45.316Z"
+          }
+        }
+      },
+      {
+        "timestamp": 1754325525338,
+        "relativeTime": 3655,
+        "type": "AUDIO_PERMISSION",
+        "data": {
+          "message": "User interaction detected",
+          "data": {
+            "timestamp": 1754325525338,
+            "interactionType": "global_update",
+            "previousInteraction": 1754325525310,
+            "timeSincePrevious": 28
+          },
+          "context": {
+            "isIOS": true,
+            "isPWA": true,
+            "audioContextState": "suspended",
+            "visibility": "visible",
+            "hasFocus": true,
+            "timestamp": "2025-08-04T16:38:45.338Z"
+          }
+        }
+      },
+      {
+        "timestamp": 1754325525341,
+        "relativeTime": 3658,
+        "type": "AUDIO_PERMISSION",
+        "data": {
+          "message": "AudioPermissionProvider initialized",
+          "data": {
+            "initialState": {
+              "hasPermission": true,
+              "needsPermission": true,
+              "showPrompt": false,
+              "sessionInitialized": true,
+              "lastUserInteraction": 1754325525338
+            },
+            "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.13 Safari/605.1.15",
+            "speechSynthesisVoices": 186
+          },
+          "context": {
+            "isIOS": true,
+            "isPWA": true,
+            "audioContextState": "suspended",
+            "visibility": "visible",
+            "hasFocus": true,
+            "timestamp": "2025-08-04T16:38:45.341Z"
+          }
+        }
+      },
+      {
+        "timestamp": 1754325525349,
+        "relativeTime": 3666,
+        "type": "AUDIO_PERMISSION",
+        "data": {
+          "message": "User interaction detected",
+          "data": {
+            "timestamp": 1754325525348,
+            "interactionType": "global_update",
+            "previousInteraction": 1754325525338,
+            "timeSincePrevious": 10
+          },
+          "context": {
+            "isIOS": true,
+            "isPWA": true,
+            "audioContextState": "suspended",
+            "visibility": "visible",
+            "hasFocus": true,
+            "timestamp": "2025-08-04T16:38:45.349Z"
+          }
+        }
+      },
+      {
+        "timestamp": 1754325525351,
+        "relativeTime": 3668,
+        "type": "AUDIO_PERMISSION",
+        "data": {
+          "message": "AudioPermissionProvider initialized",
+          "data": {
+            "initialState": {
+              "hasPermission": true,
+              "needsPermission": true,
+              "showPrompt": false,
+              "sessionInitialized": true,
+              "lastUserInteraction": 1754325525348
+            },
+            "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.13 Safari/605.1.15",
+            "speechSynthesisVoices": 186
+          },
+          "context": {
+            "isIOS": true,
+            "isPWA": true,
+            "audioContextState": "suspended",
+            "visibility": "visible",
+            "hasFocus": true,
+            "timestamp": "2025-08-04T16:38:45.351Z"
+          }
+        }
+      },
+      {
+        "timestamp": 1754325525359,
+        "relativeTime": 3676,
+        "type": "AUDIO_PERMISSION",
+        "data": {
+          "message": "User interaction detected",
+          "data": {
+            "timestamp": 1754325525358,
+            "interactionType": "global_update",
+            "previousInteraction": 1754325525348,
+            "timeSincePrevious": 10
+          },
+          "context": {
+            "isIOS": true,
+            "isPWA": true,
+            "audioContextState": "suspended",
+            "visibility": "visible",
+            "hasFocus": true,
+            "timestamp": "2025-08-04T16:38:45.359Z"
+          }
+        }
+      },
+      {
+        "timestamp": 1754325525360,
+        "relativeTime": 3677,
+        "type": "AUDIO_PERMISSION",
+        "data": {
+          "message": "AudioPermissionProvider initialized",
+          "data": {
+            "initialState": {
+              "hasPermission": true,
+              "needsPermission": true,
+              "showPrompt": false,
+              "sessionInitialized": true,
+              "lastUserInteraction": 1754325525358
+            },
+            "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.13 Safari/605.1.15",
+            "speechSynthesisVoices": 186
+          },
+          "context": {
+            "isIOS": true,
+            "isPWA": true,
+            "audioContextState": "suspended",
+            "visibility": "visible",
+            "hasFocus": true,
+            "timestamp": "2025-08-04T16:38:45.360Z"
+          }
+        }
+      },
+      {
+        "timestamp": 1754325525369,
+        "relativeTime": 3686,
+        "type": "AUDIO_PERMISSION",
+        "data": {
+          "message": "User interaction detected",
+          "data": {
+            "timestamp": 1754325525368,
+            "interactionType": "global_update",
+            "previousInteraction": 1754325525358,
+            "timeSincePrevious": 10
+          },
+          "context": {
+            "isIOS": true,
+            "isPWA": true,
+            "audioContextState": "suspended",
+            "visibility": "visible",
+            "hasFocus": true,
+            "timestamp": "2025-08-04T16:38:45.369Z"
+          }
+        }
+      },
+      {
+        "timestamp": 1754325525372,
+        "relativeTime": 3689,
+        "type": "AUDIO_PERMISSION",
+        "data": {
+          "message": "AudioPermissionProvider initialized",
+          "data": {
+            "initialState": {
+              "hasPermission": true,
+              "needsPermission": true,
+              "showPrompt": false,
+              "sessionInitialized": true,
+              "lastUserInteraction": 1754325525368
+            },
+            "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.13 Safari/605.1.15",
+            "speechSynthesisVoices": 186
+          },
+          "context": {
+            "isIOS": true,
+            "isPWA": true,
+            "audioContextState": "suspended",
+            "visibility": "visible",
+            "hasFocus": true,
+            "timestamp": "2025-08-04T16:38:45.372Z"
+          }
+        }
+      }
+    ]
+  }
+}
 
 ==================
-Copied from Børnelæring Error Dashboard at 2025-08-04T16:15:27.429Z
+Copied from Børnelæring Error Dashboard at 2025-08-04T16:39:17.552Z
