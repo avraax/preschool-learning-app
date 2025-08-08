@@ -722,6 +722,31 @@ Remove-Item -Recurse -Force node_modules, dist  # Clean build artifacts
 
 ## 🐛 Troubleshooting & Common Issues
 
+## 🔍 Error Logging & Debugging
+
+### Production Error Log Endpoint
+```
+https://preschool-learning-app.vercel.app/api/admin/all-logs?limit=200
+```
+
+**Query Parameters:**
+- `limit`: Number of logs to return (25, 50, 100, 200)
+- `search`: Filter by search term (e.g., `EntryAudioManager`, `iOS`, `error`)
+- `level`: Filter by level (`error`, `warn`, `log`)
+- `device`: Filter by device (`iPad`, `iPhone`, `Mac`, `Windows`)
+
+**Example Usage:**
+```bash
+# Get recent iPad errors
+curl "https://preschool-learning-app.vercel.app/api/admin/all-logs?limit=50&device=iPad&level=error"
+
+# Search for entry audio issues
+curl "https://preschool-learning-app.vercel.app/api/admin/all-logs?search=EntryAudioManager"
+
+# Get all recent logs
+curl "https://preschool-learning-app.vercel.app/api/admin/all-logs?limit=200"
+```
+
 ### Audio Issues - Use Centralized System Only
 
 **⚠️ CRITICAL: All audio issues must be fixed in the centralized AudioController system.**

@@ -152,6 +152,9 @@ const ColorMemoryDemo: React.FC<ColorMemoryDemoProps> = () => {
   }
 
   const handleCardClick = async (clickedCard: ColorMemoryCard) => {
+    // Critical iOS fix: Update user interaction timestamp BEFORE audio call
+    audio.updateUserInteraction()
+    
     // Prevent clicks during processing or if card is already revealed/matched
     if (isProcessing || clickedCard.isRevealed || clickedCard.isMatched || revealedCards.length >= 2) {
       return

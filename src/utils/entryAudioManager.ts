@@ -152,6 +152,35 @@ export const entryAudioManager = {
     pendingTimeouts.clear()
   },
   
+  // Reset entry audio for games in a specific section when navigating away
+  // This allows entry audio to play again when returning to sections
+  resetSection(sectionPath: string): void {
+    console.log(`🎵 EntryAudioManager: Resetting section "${sectionPath}"`)
+    
+    // Map routes to their associated game types
+    const sectionGameTypes: { [key: string]: string[] } = {
+      '/alphabet': ['alphabetlearning', 'alphabet'],
+      '/math': ['counting', 'numbers', 'addition', 'comparison'],
+      '/farver': ['colorhunt', 'colormixing'],
+      '/learning/memory': ['memory']
+    }
+    
+    // Find games to reset for this section
+    const gamesToReset = sectionGameTypes[sectionPath] || []
+    
+    gamesToReset.forEach(gameType => {
+      if (playedGames.has(gameType)) {
+        console.log(`🎵 EntryAudioManager: Resetting game "${gameType}" for section "${sectionPath}"`)
+        this.resetGame(gameType)
+      }
+    })
+    
+    console.log(`🎵 EntryAudioManager: Section reset complete for "${sectionPath}"`, {
+      resetGames: gamesToReset,
+      remainingPlayed: Array.from(playedGames)
+    })
+  },
+  
   // Get current state (for debugging)
   getState(): { played: string[], playing: string[], pending: string[] } {
     return {

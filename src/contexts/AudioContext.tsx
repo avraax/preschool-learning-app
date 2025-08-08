@@ -51,6 +51,7 @@ export interface AudioContextType {
   // Audio management
   stopAll: () => void
   emergencyStop: () => void
+  updateUserInteraction: () => void
   
   // Navigation management
   registerNavigationCleanup: (callback: () => void) => () => void
@@ -146,6 +147,7 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
     // Audio management
     stopAll: audioController.stopAll.bind(audioController),
     emergencyStop: audioController.emergencyStop.bind(audioController),
+    updateUserInteraction: audioController.updateUserInteraction.bind(audioController),
     
     // Navigation management
     registerNavigationCleanup: audioController.registerNavigationCleanup.bind(audioController),

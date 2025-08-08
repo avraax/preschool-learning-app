@@ -72,6 +72,9 @@ const NumberLearning: React.FC = () => {
 
 
   const goToNumber = async (index: number) => {
+    // Critical iOS fix: Update user interaction timestamp BEFORE audio call
+    audio.updateUserInteraction()
+    
     setCurrentIndex(index)
     audio.stopAll()
     
@@ -123,7 +126,11 @@ const NumberLearning: React.FC = () => {
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <Typography 
               variant="body2" 
-              onClick={() => audio.announcePosition(currentIndex, numbers.length, 'tal').catch(console.error)}
+              onClick={() => {
+                // Critical iOS fix: Update user interaction timestamp BEFORE audio call
+                audio.updateUserInteraction()
+                audio.announcePosition(currentIndex, numbers.length, 'tal').catch(console.error)
+              }}
               sx={{ 
                 color: 'secondary.dark', 
                 fontWeight: 600,

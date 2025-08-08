@@ -66,6 +66,9 @@ const ShapeDetectiveDemo: React.FC<ShapeDetectiveDemoProps> = ({ variation }) =>
   const currentScene = scenes[variation]
 
   const handleShapeClick = (item: ShapeItem) => {
+    // Critical iOS fix: Update user interaction timestamp BEFORE audio call
+    audio.updateUserInteraction()
+    
     if (item.shape === targetShape && !foundShapes.includes(item.id)) {
       setFoundShapes([...foundShapes, item.id])
       audio.playSuccessSound()
@@ -88,6 +91,8 @@ const ShapeDetectiveDemo: React.FC<ShapeDetectiveDemoProps> = ({ variation }) =>
   }
 
   const startGame = () => {
+    // Critical iOS fix: Update user interaction timestamp BEFORE audio call
+    audio.updateUserInteraction()
     audio.speak(`Find alle ${targetShape}er!`)
   }
 

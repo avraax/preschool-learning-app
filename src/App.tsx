@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react'
+import React, { useEffect, useState, useCallback, useRef } from 'react'
 import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { logIOSIssue } from './utils/remoteConsole'
@@ -724,10 +724,15 @@ const NotFoundPage = () => {
 const NavigationAudioCleanup: React.FC = () => {
   const location = useLocation()
   const audioContext = useAudioContext()
+  const previousPathRef = useRef<string>('')
   
   useEffect(() => {
+    const currentPath = location.pathname
+    const previousPath = previousPathRef.current
+    
     console.log('🎵 NavigationAudioCleanup: Route change detected, triggering audio cleanup', {
-      fromPath: location.pathname,
+      fromPath: previousPath,
+      toPath: currentPath,
       timestamp: new Date().toISOString(),
       isIOS: navigator.userAgent.includes('iPhone') || navigator.userAgent.includes('iPad'),
       isPWA: window.matchMedia('(display-mode: standalone)').matches,
@@ -738,7 +743,37 @@ const NavigationAudioCleanup: React.FC = () => {
       userAgent: navigator.userAgent
     })
     
+    // Standard audio cleanup
     audioContext.triggerNavigationCleanup()
+    
+    // Reset entry audio for sections when leaving them
+    if (previousPath) {
+      // Import entryAudioManager dynamically to avoid circular dependencies
+      import('./utils/entryAudioManager').then(({ entryAudioManager }) => {
+        // Determine section paths to reset based on navigation
+        const getSectionPath = (path: string): string => {
+          if (path.startsWith('/alphabet')) return '/alphabet'
+          if (path.startsWith('/math')) return '/math'
+          if (path.startsWith('/farver')) return '/farver'
+          if (path.startsWith('/learning/memory')) return '/learning/memory'
+          return path
+        }
+        
+        const previousSection = getSectionPath(previousPath)
+        const currentSection = getSectionPath(currentPath)
+        
+        // If leaving a section, reset its entry audio for future visits
+        if (previousSection !== currentSection && ['/alphabet', '/math', '/farver', '/learning/memory'].includes(previousSection)) {
+          console.log(`🎵 NavigationAudioCleanup: Leaving section "${previousSection}", resetting entry audio`)
+          entryAudioManager.resetSection(previousSection)
+        }
+      }).catch(error => {
+        console.error('🎵 NavigationAudioCleanup: Error importing entryAudioManager:', error)
+      })
+    }
+    
+    // Update previous path for next navigation
+    previousPathRef.current = currentPath
   }, [location.pathname, audioContext])
   
   return null // This component only handles side effects

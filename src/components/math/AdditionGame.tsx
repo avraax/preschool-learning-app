@@ -124,6 +124,9 @@ const AdditionGame: React.FC = () => {
   }
 
   const handleAnswerClick = async (selectedAnswer: number) => {
+    // Critical iOS fix: Update user interaction timestamp BEFORE audio call
+    audio.updateUserInteraction()
+    
     if (audio.isPlaying || correctAnswer === null) return
     
     const isCorrect = selectedAnswer === correctAnswer
@@ -149,6 +152,9 @@ const AdditionGame: React.FC = () => {
   }
 
   const repeatProblem = () => {
+    // Critical iOS fix: Update user interaction timestamp BEFORE audio call
+    audio.updateUserInteraction()
+    
     if (num1 !== null && num2 !== null && !audio.isPlaying) {
       speakProblem(num1, num2)
     }

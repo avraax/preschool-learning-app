@@ -367,6 +367,9 @@ const FarvejagtGame: React.FC = () => {
 
   // Repeat current game instructions
   const repeatInstructions = () => {
+    // Critical iOS fix: Update user interaction timestamp BEFORE audio call
+    audio.updateUserInteraction()
+    
     if (!entryAudioComplete || !targetColor) return
     
     try {
@@ -380,6 +383,11 @@ const FarvejagtGame: React.FC = () => {
 
   // Reset game with new random setup
   const resetGame = (isAutomatic = true) => {
+    // Critical iOS fix: Update user interaction for manual resets
+    if (!isAutomatic) {
+      audio.updateUserInteraction()
+    }
+    
     const { items, targetCount, targetColor: newTargetColor, targetPhrase: newTargetPhrase } = generateGameItems()
     
     setGameItems(items)

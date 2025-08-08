@@ -232,6 +232,11 @@ const AlphabetGame: React.FC = () => {
       timestamp: Date.now()
     })
     
+    // Critical iOS fix: Update user interaction timestamp BEFORE audio call
+    // This ensures iOS Safari PWA recognizes the button click as a valid user interaction
+    audio.updateUserInteraction()
+    logAlphabetGameDebug('Updated user interaction for iOS audio permission')
+    
     if (audio.isPlaying) {
       logAlphabetGameDebug('Audio is playing, ignoring click')
       return
@@ -281,6 +286,8 @@ const AlphabetGame: React.FC = () => {
   }
 
   const repeatLetter = async () => {
+    // Critical iOS fix: Update user interaction timestamp BEFORE audio call
+    audio.updateUserInteraction()
     
     if (audio.isPlaying) {
       return

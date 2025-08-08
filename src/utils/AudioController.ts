@@ -345,10 +345,25 @@ export class AudioController {
    */
   updateUserInteraction(): void {
     const timestamp = Date.now()
+    const isIOSDevice = isIOS()
+    const isPWA = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone
+    
+    // Enhanced logging for iOS PWA debugging
     logAudioDebug('updateUserInteraction called', { 
       hasGlobalContext: !!globalAudioPermissionContext,
-      timestamp 
+      timestamp,
+      isIOS: isIOSDevice,
+      isPWA,
+      caller: new Error().stack?.split('\n')[2]?.trim() // Track which component called this
     })
+    
+    // Additional iOS-specific logging
+    if (isIOSDevice && isPWA) {
+      console.log('🍎 iOS PWA: User interaction recorded at', new Date(timestamp).toISOString(), {
+        audioContextState: (window as any).AudioContext ? 'available' : 'unavailable',
+        globalContextExists: !!globalAudioPermissionContext
+      })
+    }
     
     if (globalAudioPermissionContext) {
       globalAudioPermissionContext.updateUserInteraction()

@@ -133,6 +133,11 @@ const AlphabetLearning: React.FC = () => {
       timestamp: Date.now()
     })
     
+    // Critical iOS fix: Update user interaction timestamp BEFORE audio call
+    // This ensures iOS Safari PWA recognizes the button click as a valid user interaction
+    audio.updateUserInteraction()
+    logAlphabetDebug('Updated user interaction for iOS audio permission')
+    
     setCurrentIndex(index)
     audio.stopAll()
     
@@ -196,7 +201,11 @@ const AlphabetLearning: React.FC = () => {
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <Typography 
               variant="body2" 
-              onClick={() => audio.announcePosition(currentIndex, DANISH_ALPHABET.length, 'bogstav').catch(console.error)}
+              onClick={() => {
+                // Critical iOS fix: Update user interaction timestamp BEFORE audio call
+                audio.updateUserInteraction()
+                audio.announcePosition(currentIndex, DANISH_ALPHABET.length, 'bogstav').catch(console.error)
+              }}
               sx={{ 
                 color: 'primary.dark', 
                 fontWeight: 600,

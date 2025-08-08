@@ -184,6 +184,9 @@ const ComparisonGame: React.FC = () => {
   }
 
   const handleSymbolClick = async (symbol: '>' | '<' | '=') => {
+    // Critical iOS fix: Update user interaction timestamp BEFORE audio call
+    audio.updateUserInteraction()
+    
     if (!currentProblem || audio.isPlaying || showFeedback) return
     
     setSelectedSymbol(symbol)
@@ -265,6 +268,9 @@ const ComparisonGame: React.FC = () => {
   }
 
   const repeatProblem = () => {
+    // Critical iOS fix: Update user interaction timestamp BEFORE audio call
+    audio.updateUserInteraction()
+    
     if (currentProblem) {
       speakProblem(currentProblem)
     }

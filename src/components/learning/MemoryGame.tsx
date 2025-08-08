@@ -197,6 +197,9 @@ const MemoryGame: React.FC = () => {
   }
 
   const handleCardClick = async (clickedCard: MemoryCard) => {
+    // Critical iOS fix: Update user interaction timestamp BEFORE audio call
+    audio.updateUserInteraction()
+    
     // Handle matched cards differently - they should speak "X som word" when clicked
     if (clickedCard.isMatched && gameType === 'letters') {
       const letterData = LETTER_ICONS[clickedCard.content]
@@ -335,6 +338,9 @@ const MemoryGame: React.FC = () => {
 
   // Repeat game instructions
   const repeatInstructions = () => {
+    // Critical iOS fix: Update user interaction timestamp BEFORE audio call
+    audio.updateUserInteraction()
+    
     if (!entryAudioComplete) return
     
     const message = gameType === 'letters' 

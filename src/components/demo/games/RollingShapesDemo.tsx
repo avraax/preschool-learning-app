@@ -30,11 +30,17 @@ const RollingShapesDemo: React.FC<RollingShapesDemoProps> = ({ variation }) => {
   ]
 
   const handleShapeSelect = (shape: Shape) => {
+    // Critical iOS fix: Update user interaction timestamp BEFORE audio call
+    audio.updateUserInteraction()
+    
     setSelectedShape(shape)
     audio.speak(shape.name)
   }
 
   const startRolling = () => {
+    // Critical iOS fix: Update user interaction timestamp BEFORE audio call
+    audio.updateUserInteraction()
+    
     if (!selectedShape) return
 
     setIsRolling(true)

@@ -167,6 +167,9 @@ const MathGame: React.FC = () => {
   }
 
   const handleAnswerClick = async (selectedAnswer: number) => {
+    // Critical iOS fix: Update user interaction timestamp BEFORE audio call
+    audio.updateUserInteraction()
+    
     if (!currentProblem || audio.isPlaying) return
     
     
@@ -194,6 +197,9 @@ const MathGame: React.FC = () => {
   }
 
   const repeatQuestion = () => {
+    // Critical iOS fix: Update user interaction timestamp BEFORE audio call
+    audio.updateUserInteraction()
+    
     if (!currentProblem || audio.isPlaying) return
     
     

@@ -56,6 +56,9 @@ const RainbowBuilderDemo: React.FC<RainbowBuilderDemoProps> = () => {
   }
 
   const handleColorClick = (colorId: string) => {
+    // Critical iOS fix: Update user interaction timestamp BEFORE audio call
+    audio.updateUserInteraction()
+    
     const color = availableColors.find(c => c.id === colorId)
     if (!color || color.inRainbow) return
 
@@ -91,6 +94,9 @@ const RainbowBuilderDemo: React.FC<RainbowBuilderDemoProps> = () => {
   }
 
   const handleRainbowColorClick = (position: number) => {
+    // Critical iOS fix: Update user interaction timestamp BEFORE audio call
+    audio.updateUserInteraction()
+    
     const colorInPosition = rainbowColors[position]
     if (!colorInPosition) return
 

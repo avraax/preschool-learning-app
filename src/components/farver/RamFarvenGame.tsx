@@ -157,6 +157,9 @@ const RamFarvenGame: React.FC = () => {
 
   // Repeat current game instructions
   const repeatInstructions = () => {
+    // Critical iOS fix: Update user interaction timestamp BEFORE audio call
+    audio.updateUserInteraction()
+    
     if (!entryAudioComplete || !gameState.targetColor) return
     
     try {

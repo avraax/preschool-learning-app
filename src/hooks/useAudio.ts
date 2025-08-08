@@ -53,6 +53,7 @@ export interface UseAudioReturn {
   
   // Audio management
   stopAll: () => void
+  updateUserInteraction: () => void
   
   // Event listeners
   onAudioComplete: (audioId: string, listener: () => void) => () => void
@@ -349,6 +350,7 @@ export const useAudio = (options: UseAudioOptions = {}): UseAudioReturn => {
     
     // Audio management
     stopAll: audioContext.stopAll,
+    updateUserInteraction: audioContext.updateUserInteraction,
     
     // Event listeners
     onAudioComplete: audioContext.onAudioComplete,
