@@ -637,7 +637,7 @@ npm run dev
 ### Key Development Commands (PowerShell)
 ```powershell
 npm run dev          # Start dev server (http://localhost:5173)
-npm run build        # TypeScript compile + Vite build
+npm run build        # TypeScript compile + Vite build (dev only)
 npm run lint         # Run ESLint
 npm run preview      # Preview production build
 
@@ -648,6 +648,19 @@ node generate-icons.cjs  # Generate app icons from source SVG
 Get-Process -Name "node" | Stop-Process -Force  # Stop all Node.js processes
 netstat -ano | findstr :5173                    # Check port usage
 Remove-Item -Recurse -Force node_modules, dist  # Clean build artifacts
+```
+
+### 🚀 Production Deployment Command
+```powershell
+# ONLY command needed for production releases
+.\deploy-with-version.ps1
+
+# This single script handles:
+# - Version incrementing (1.0.x → 1.0.x+1)
+# - Building with updated version timestamp  
+# - Git commit and push of version changes
+# - Vercel production deployment
+# - Verification that new version is live
 ```
 
 ### PWA Development Notes
@@ -666,8 +679,43 @@ Remove-Item -Recurse -Force node_modules, dist  # Clean build artifacts
 
 ## 🚀 Deployment Instructions
 
-### Vercel Deployment (Recommended)
-1. **GitHub Setup (PowerShell)**:
+### 🎯 CRITICAL: Always Use Official Deployment Script
+
+**⚠️ MANDATORY: All production releases MUST use the official deployment script:**
+
+```powershell
+.\deploy-with-version.ps1
+```
+
+**This script is the ONLY approved method for production deployments and performs:**
+1. **Version Bump**: Automatically increments patch version (e.g., 1.0.5 → 1.0.6)
+2. **Build**: Compiles TypeScript and builds with version timestamp
+3. **Git Operations**: Commits version bump and pushes to origin/master
+4. **Vercel Deploy**: Deploys to production with `--prod --yes`
+5. **Verification**: Waits and verifies the new version is live
+
+### Never Deploy Manually
+
+**❌ DO NOT use these manual methods for production:**
+- Direct `npm run build` + `git commit` + `git push`
+- Manual `npx vercel --prod`
+- Component-by-component deployment steps
+
+**✅ ALWAYS use the official script:**
+```powershell
+# Single command for complete production release
+.\deploy-with-version.ps1
+```
+
+### Script Features
+- **Automatic Version Management**: Handles version incrementing and timestamp updates
+- **Error Handling**: Stops deployment if any step fails
+- **Git Integration**: Automated commit and push with proper commit messages
+- **Deployment Verification**: Confirms new version is live before completion
+- **Progress Tracking**: Clear status messages throughout the process
+
+### Initial Setup (One-time)
+1. **GitHub Repository Setup**:
    ```powershell
    git init
    git add .
@@ -680,18 +728,19 @@ Remove-Item -Recurse -Force node_modules, dist  # Clean build artifacts
    - Connect GitHub repo to Vercel
    - Vercel auto-detects Vite framework
    - Uses `vercel.json` configuration
-   - Deploys automatically on push
+   - Configured for automatic deployment
 
-3. **Configuration**: Pre-configured in `vercel.json`
-   - Build command: `npm run build`
-   - Output directory: `dist`
-   - SPA routing support
+### Configuration
+- **Build Command**: `npm run build` (automatically updates version.ts)
+- **Output Directory**: `dist`
+- **Version Tracking**: `src/config/version.ts` updated during build
+- **Version Display**: Shows in app corner for user visibility
 
-### Alternative Deployment Options
-- **Netlify**: Build with `npm run build`, then drag & drop `dist/` folder
-- **GitHub Pages**: Use `vite-plugin-gh-pages`
-- **Firebase Hosting**: `firebase deploy`
+### Alternative Options (Development Only)
 - **Local Testing**: `npm run preview` (PowerShell)
+- **Development Build**: `npm run build` (for testing builds locally)
+
+**Production deployments should ONLY use `.\deploy-with-version.ps1`**
 
 ## 🔍 Code Architecture Details
 

@@ -35,7 +35,44 @@ try {
     exit 1
 }
 
-# Step 3: Deploy to Vercel production
+# Step 3: Commit version bump
+Write-Host "`n📝 Committing version bump..." -ForegroundColor Yellow
+$packageJson = Get-Content "package.json" | ConvertFrom-Json
+$newVersion = $packageJson.version
+try {
+    git add package.json src/config/version.ts
+    if ($LASTEXITCODE -ne 0) {
+        throw "Git add failed"
+    }
+    
+    $commitMessage = @"
+Bump version to v$newVersion
+
+- Version incremented for production deployment
+- Build timestamp updated for version tracking
+- Version information will be visible in app corner
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+"@
+    
+    git commit -m $commitMessage
+    if ($LASTEXITCODE -ne 0) {
+        throw "Git commit failed"
+    }
+    
+    git push origin master
+    if ($LASTEXITCODE -ne 0) {
+        throw "Git push failed"
+    }
+    Write-Host "✅ Version bump committed and pushed" -ForegroundColor Green
+} catch {
+    Write-Host "❌ Error: Git operations failed: $_" -ForegroundColor Red
+    exit 1
+}
+
+# Step 4: Deploy to Vercel production
 Write-Host "`n🚀 Deploying to production..." -ForegroundColor Yellow
 try {
     npx vercel --prod --yes
@@ -48,9 +85,33 @@ try {
     exit 1
 }
 
-$packageJson = Get-Content "package.json" | ConvertFrom-Json
-$newVersion = $packageJson.version
+# Step 5: Verify deployment
+Write-Host "`n🔍 Verifying deployment..." -ForegroundColor Yellow
+$maxRetries = 12
+$retryCount = 0
+$deploymentVerified = $false
+
+while ($retryCount -lt $maxRetries -and -not $deploymentVerified) {
+    try {
+        $response = Invoke-RestMethod -Uri "https://preschool-learning-app.vercel.app/version.json" -Method Get
+        if ($response.version -eq $newVersion) {
+            $deploymentVerified = $true
+            Write-Host "✅ Deployment verified! Live version: v$($response.version)" -ForegroundColor Green
+        } else {
+            Write-Host "⏳ Waiting for deployment to propagate... (Current: v$($response.version), Expected: v$newVersion)" -ForegroundColor Yellow
+            Start-Sleep -Seconds 10
+            $retryCount++
+        }
+    } catch {
+        Write-Host "⏳ Waiting for deployment to become available..." -ForegroundColor Yellow
+        Start-Sleep -Seconds 10
+        $retryCount++
+    }
+}
+
+if (-not $deploymentVerified) {
+    Write-Host "⚠️  Warning: Could not verify deployment within expected time. Please check manually." -ForegroundColor Yellow
+}
 
 Write-Host "`n🌐 Production URL: https://preschool-learning-app.vercel.app/" -ForegroundColor Cyan
 Write-Host "🎉 Deployment complete! The app is now live with version v$newVersion." -ForegroundColor Green
-Write-Host "📝 Remember to commit the version bump manually: git add package.json src/config/version.ts && git commit && git push" -ForegroundColor Cyan
