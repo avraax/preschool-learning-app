@@ -144,10 +144,11 @@ export class GoogleTTSService {
     
     logAudioIssue('AudioContext resume for playback', debugInfo)
     
-    // iOS PWA needs very recent user interaction (1-2 seconds) - much stricter than regular Safari
-    const maxInteractionTime = isIOSDevice && isPWA ? 2000 : 
-                              isIOSDevice ? 5000 : 
-                              isPWA ? 10000 : 15000
+    // iOS PWA needs recent user interaction but be more lenient for navigation scenarios
+    // The AudioController.updateUserInteraction() should be called before each audio
+    const maxInteractionTime = isIOSDevice && isPWA ? 8000 : 
+                              isIOSDevice ? 12000 : 
+                              isPWA ? 15000 : 20000
     
     const hasRecentInteraction = timeSinceInteraction < maxInteractionTime
     const shouldTryResume = hasRecentInteraction || (hasDocumentFocus && isDocumentVisible)
@@ -163,7 +164,7 @@ export class GoogleTTSService {
       return false
     }
     
-    // Reuse existing AudioContext or create new one
+    // Reuse existing AudioContext or create new one with race condition protection
     if (!this.audioContext) {
       try {
         // Check for existing global AudioContext first
@@ -175,14 +176,39 @@ export class GoogleTTSService {
             state: this.audioContext?.state 
           })
         } else {
-          // Create new AudioContext and store global reference
-          this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
-          ;(window as any).__globalAudioContext = this.audioContext
-          
-          logAudioIssue('AudioContext created and stored globally', { 
-            state: this.audioContext.state, 
-            sampleRate: this.audioContext.sampleRate 
-          })
+          // Prevent race conditions by checking if one is already being created
+          if (!(window as any).__creatingAudioContext) {
+            (window as any).__creatingAudioContext = true
+            
+            try {
+              // Create new AudioContext and store global reference
+              this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
+              ;(window as any).__globalAudioContext = this.audioContext
+              
+              logAudioIssue('AudioContext created and stored globally', { 
+                state: this.audioContext.state, 
+                sampleRate: this.audioContext.sampleRate 
+              })
+            } finally {
+              (window as any).__creatingAudioContext = false
+            }
+          } else {
+            // Wait for the other creation process and then use it
+            let attempts = 0
+            while ((window as any).__creatingAudioContext && attempts < 10) {
+              await new Promise(resolve => setTimeout(resolve, 50))
+              attempts++
+            }
+            
+            const createdAudioContext = (window as any).__globalAudioContext
+            if (createdAudioContext && createdAudioContext.state !== 'closed') {
+              this.audioContext = createdAudioContext
+              logAudioIssue('AudioContext acquired after creation wait', { 
+                state: this.audioContext?.state,
+                attempts 
+              })
+            }
+          }
         }
       } catch (error) {
         logAudioIssue('Failed to create AudioContext', { 
@@ -605,12 +631,14 @@ export class GoogleTTSService {
         if (isIOS()) {
           // Check if we need user interaction - be more lenient for navigation scenarios
           const timeSinceInteraction = Date.now() - this.lastUserInteraction
-          const hasRecentInteraction = timeSinceInteraction < 10000 // Increased from 3s to 10s
+          const hasRecentInteraction = timeSinceInteraction < 15000 // More generous for iOS PWA
           const hasDocumentFocus = document.hasFocus()
           const isDocumentVisible = !document.hidden
+          const isPWAMode = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone
           
           // More forgiving check: allow if any of these conditions are met
-          const hasAudioPermission = hasRecentInteraction || (hasDocumentFocus && isDocumentVisible)
+          // For PWA, be extra lenient as app focus detection is different
+          const hasAudioPermission = hasRecentInteraction || (hasDocumentFocus && isDocumentVisible) || (isPWAMode && isDocumentVisible)
           
           if (!hasAudioPermission) {
             const errorMsg = `Need user interaction to play audio (${Math.round(timeSinceInteraction/1000)}s since last interaction, focus: ${hasDocumentFocus}, visible: ${isDocumentVisible}, context: ${this.audioContext?.state})`
@@ -711,13 +739,21 @@ export class GoogleTTSService {
                 isPWA: window.matchMedia('(display-mode: standalone)').matches
               })
               
-              // Try next fallback approach for specific errors
-              if (attempt < 3 && (playError.name === 'NotSupportedError' || playError.name === 'AbortError')) {
+              // Try next fallback approach for specific errors - more comprehensive error handling
+              if (attempt < 3 && (
+                playError.name === 'NotSupportedError' || 
+                playError.name === 'AbortError' ||
+                playError.name === 'NotAllowedError' ||
+                playError.message?.includes('The operation is not supported') ||
+                playError.message?.includes('interrupted')
+              )) {
                 audioDebugSession.addLog('GOOGLE_TTS_IOS_TRYING_FALLBACK', { 
                   nextAttempt: attempt + 1,
-                  error: playError.name 
+                  error: playError.name,
+                  errorMessage: playError.message
                 })
-                setTimeout(() => attemptIOSPlayback(attempt + 1), 150)
+                // Longer delay for iOS to allow system to recover
+                setTimeout(() => attemptIOSPlayback(attempt + 1), attempt === 1 ? 200 : 400)
                 return
               }
               

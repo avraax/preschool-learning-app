@@ -201,10 +201,26 @@ export class AudioController {
         audioFunction: async () => {
           try {
             await audioFunction()
-            resolve(audioId)
+            // Ensure we always resolve with a valid audioId
+            if (audioId) {
+              resolve(audioId)
+            } else {
+              resolve(`fallback_${Date.now()}`)
+            }
           } catch (error) {
             console.error(`🎵 AudioController.queueAudio: Audio ${audioId} failed:`, error)
-            reject(error)
+            // For iOS compatibility, don't reject on certain expected errors
+            const isExpectedError = error instanceof Error && (
+              error.message.includes('interrupted by navigation') || 
+              error.message.includes('interrupted by user') ||
+              error.message.includes('The operation is not supported')
+            )
+            
+            if (isExpectedError) {
+              resolve(audioId || `interrupted_${Date.now()}`) // Resolve instead of reject for expected interruptions
+            } else {
+              reject(error)
+            }
           }
         },
         onComplete: () => {
@@ -379,6 +395,9 @@ export class AudioController {
    * Basic speak function with queue management
    */
   async speak(text: string, voiceType: 'primary' | 'backup' | 'male' = 'primary', useSSML: boolean = true, customSpeed?: number): Promise<string> {
+    // Always update user interaction immediately when speak is called
+    this.updateUserInteraction()
+    
     logAudioDebug('AudioController.speak called', { 
       text: text.substring(0, 50) + (text.length > 50 ? '...' : ''),
       voiceType,
@@ -393,6 +412,7 @@ export class AudioController {
       documentFocus: document.hasFocus(),
       documentVisible: !document.hidden,
       timestamp: new Date().toISOString(),
+      timeSinceLastInteraction: Date.now() - (globalAudioPermissionContext?.state?.lastUserInteraction || 0),
       callStack: new Error().stack?.split('\n').slice(1, 4).join(' -> ')
     })
 
@@ -404,7 +424,7 @@ export class AudioController {
         processingQueue: this.processingQueue
       })
       
-      // Update user interaction timestamp
+      // Update user interaction timestamp again for iOS PWA compatibility
       this.updateUserInteraction()
       
       // Check audio permission before speaking
@@ -684,8 +704,13 @@ export class AudioController {
     logAudioDebug('playGameWelcome called', { 
       gameType,
       voiceType,
-      timestamp: Date.now()
+      timestamp: Date.now(),
+      isIOS: isIOS(),
+      isPWA: window.matchMedia('(display-mode: standalone)').matches
     })
+
+    // Update user interaction for iOS compatibility before any audio
+    this.updateUserInteraction()
 
     // Import game welcome messages dynamically to avoid circular dependencies
     const { GAME_WELCOME_MESSAGES } = await import('../hooks/useGameEntryAudio')
@@ -695,11 +720,15 @@ export class AudioController {
     logAudioDebug('Game welcome message lookup', { 
       gameType,
       welcomeMessage: welcomeMessage || 'NOT_FOUND',
-      hasMessage: !!welcomeMessage
+      hasMessage: !!welcomeMessage,
+      allGameTypes: Object.keys(GAME_WELCOME_MESSAGES)
     })
     
     if (!welcomeMessage) {
-      logAudioDebug('No welcome message found for game type', { gameType })
+      logAudioDebug('No welcome message found for game type', { 
+        gameType,
+        availableTypes: Object.keys(GAME_WELCOME_MESSAGES)
+      })
       return Promise.resolve('')
     }
     
@@ -709,12 +738,27 @@ export class AudioController {
       logAudioDebug('playGameWelcome completed successfully', { gameType, result })
       return result
     } catch (error) {
+      // Don't throw for iOS-specific audio errors - resolve gracefully
+      const isIOSAudioError = error instanceof Error && (
+        error.message.includes('The operation is not supported') ||
+        error.message.includes('interrupted') ||
+        error.message.includes('NotSupportedError')
+      )
+      
       logAudioDebug('Error in playGameWelcome', { 
         gameType,
         error: error?.toString(),
         errorName: error?.constructor?.name,
-        errorMessage: (error as any)?.message
+        errorMessage: (error as any)?.message,
+        isIOSAudioError,
+        willThrow: !isIOSAudioError
       })
+      
+      if (isIOSAudioError && isIOS()) {
+        console.warn(`🎵 AudioController.playGameWelcome: iOS audio error for "${gameType}", continuing without audio:`, error)
+        return Promise.resolve(`ios_fallback_${Date.now()}`)
+      }
+      
       console.error(`🎵 AudioController.playGameWelcome: Error in speak() for "${gameType}":`, error)
       throw error
     }
