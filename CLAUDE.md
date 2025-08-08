@@ -788,27 +788,29 @@ Remove-Item -Recurse -Force node_modules, dist  # Clean build artifacts
 
 ## 🔍 Error Logging & Debugging
 
-### Production Error Log Endpoint
+### Production Log Endpoint
 ```
-https://preschool-learning-app.vercel.app/api/admin/all-logs?limit=200
+https://preschool-learning-app.vercel.app/api/log-error?limit=200
 ```
 
+**Note:** This endpoint retrieves ALL log types (errors, warnings, info, logs), not just errors despite the endpoint name.
+
 **Query Parameters:**
-- `limit`: Number of logs to return (25, 50, 100, 200)
-- `search`: Filter by search term (e.g., `EntryAudioManager`, `iOS`, `error`)
-- `level`: Filter by level (`error`, `warn`, `log`)
-- `device`: Filter by device (`iPad`, `iPhone`, `Mac`, `Windows`)
+- `limit`: Number of logs to return (default: 50, supports any number)
+- `level`: Filter by log level (`error`, `warn`, `info`, `log`)
+- `device`: Filter by device type (`iPad`, `iPhone`, etc.)
+- `since`: Filter by timestamp (ISO date string)
 
 **Example Usage:**
 ```bash
 # Get recent iPad errors
-curl "https://preschool-learning-app.vercel.app/api/admin/all-logs?limit=50&device=iPad&level=error"
+curl "https://preschool-learning-app.vercel.app/api/log-error?limit=50&device=iPad&level=error"
 
 # Search for entry audio issues
-curl "https://preschool-learning-app.vercel.app/api/admin/all-logs?search=EntryAudioManager"
+curl "https://preschool-learning-app.vercel.app/api/log-error?limit=200&device=iPad"
 
 # Get all recent logs
-curl "https://preschool-learning-app.vercel.app/api/admin/all-logs?limit=200"
+curl "https://preschool-learning-app.vercel.app/api/log-error?limit=200"
 ```
 
 ### Audio Issues - Use Centralized System Only

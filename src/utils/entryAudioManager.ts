@@ -24,9 +24,18 @@ const lastImmediateExecution: Map<string, number> = new Map()
 export const entryAudioManager = {
   // Schedule entry audio for a game
   scheduleEntryAudio(gameType: string, delay: number = 1000): void {
+    // iOS Safari PWA has strict user interaction timeout (~10 seconds)
+    // Reduce delay for iOS to stay within interaction window
+    const isIOSPWA = (navigator.userAgent.includes('iPhone') || navigator.userAgent.includes('iPad')) && 
+                     (window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone)
+    
+    if (isIOSPWA) {
+      delay = Math.min(delay, 500) // Max 500ms delay on iOS PWA
+    }
     const debugInfo = {
       gameType,
       delay,
+      originalDelay: delay === 500 && isIOSPWA ? 1000 : delay, // Show original delay if modified
       alreadyPlayed: playedGames.has(gameType),
       currentlyPlaying: playingGames.has(gameType),
       alreadyScheduled: pendingTimeouts.has(gameType),
@@ -34,6 +43,8 @@ export const entryAudioManager = {
       // Additional iOS debugging
       isIOS: navigator.userAgent.includes('iPhone') || navigator.userAgent.includes('iPad'),
       isPWA: window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone,
+      isIOSPWA,
+      delayReduced: isIOSPWA && delay < 1000,
       documentFocus: document.hasFocus(),
       documentVisible: !document.hidden,
       userAgent: navigator.userAgent.substring(0, 100),

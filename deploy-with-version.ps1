@@ -48,13 +48,13 @@ try {
     $commitMessage = @"
 Bump version to v$newVersion
 
-- Version incremented for production deployment
-- Build timestamp updated for version tracking
-- Version information will be visible in app corner
+* Version incremented for production deployment
+* Build timestamp updated for version tracking
+* Version information will be visible in app corner
 
-🤖 Generated with [Claude Code](https://claude.ai/code)
+Generated with Claude Code
 
-Co-Authored-By: Claude <noreply@anthropic.com>
+Co-Authored-By: Claude
 "@
     
     git commit -m $commitMessage

@@ -222,55 +222,33 @@ export const AudioPermissionProvider: React.FC<AudioPermissionProviderProps> = (
       return true
     }
     
-    // Fallback: AudioContext-based test (more reliable than audio element)
+    // Fallback: Simple iOS permission assumption
+    // On iOS, if we have recent user interaction, assume audio will work
+    // Avoid creating AudioContext instances that could conflict with the main audio system
     try {
-      audioDebugSession.addLog('PERMISSION_IOS_AUDIOCONTEXT_TEST', {
+      audioDebugSession.addLog('PERMISSION_IOS_SIMPLE_CHECK', {
         device: 'iOS',
-        testType: 'audiocontext'
+        testType: 'interaction_based'
       })
       
-      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
-      audioDebugSession.addLog('PERMISSION_AUDIOCONTEXT_CREATED', {
-        state: audioContext.state,
-        sampleRate: audioContext.sampleRate
-      })
-      
-      if (audioContext.state === 'running') {
-        audioDebugSession.addLog('PERMISSION_AUDIOCONTEXT_RUNNING', {
-          result: true
+      // For iOS, if we have user interaction within reasonable time, assume permission
+      if (hasRecentInteraction) {
+        audioDebugSession.addLog('PERMISSION_IOS_INTERACTION_GRANTED', {
+          result: true,
+          reason: 'recent_interaction_on_iOS'
         })
-        audioContext.close()
         return true
-      } else if (audioContext.state === 'suspended' && hasRecentInteraction) {
-        // Try to resume only if we have recent interaction
-        try {
-          await audioContext.resume()
-          audioDebugSession.addLog('PERMISSION_AUDIOCONTEXT_RESUMED', {
-            result: true,
-            finalState: audioContext.state
-          })
-          audioContext.close()
-          return true
-        } catch (resumeError) {
-          audioDebugSession.addLog('PERMISSION_AUDIOCONTEXT_RESUME_FAILED', {
-            error: resumeError instanceof Error ? resumeError.message : resumeError?.toString(),
-            state: audioContext.state,
-            result: false
-          })
-          audioContext.close()
-        }
       } else {
-        audioDebugSession.addLog('PERMISSION_AUDIOCONTEXT_SUSPENDED_NO_INTERACTION', {
-          state: audioContext.state,
+        audioDebugSession.addLog('PERMISSION_IOS_NO_RECENT_INTERACTION', {
           hasRecentInteraction,
+          timeSinceInteraction,
           result: false
         })
-        audioContext.close()
       }
-    } catch (contextError) {
-      audioDebugSession.addLog('PERMISSION_AUDIOCONTEXT_ERROR', {
-        error: contextError instanceof Error ? contextError.message : contextError?.toString(),
-        errorType: contextError instanceof Error ? contextError.constructor?.name : typeof contextError
+    } catch (error) {
+      audioDebugSession.addLog('PERMISSION_IOS_CHECK_ERROR', {
+        error: error instanceof Error ? error.message : error?.toString(),
+        errorType: error instanceof Error ? error.constructor?.name : typeof error
       })
     }
 

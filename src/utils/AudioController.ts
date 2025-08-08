@@ -24,6 +24,7 @@ const logAudioDebug = (message: string, data?: any) => {
         if (existingAudioContext) {
           return existingAudioContext.state
         }
+        // Note: Avoid accessing GoogleTTS internal AudioContext to prevent TypeScript issues
         return 'not_created'
       } catch {
         return 'unavailable'
