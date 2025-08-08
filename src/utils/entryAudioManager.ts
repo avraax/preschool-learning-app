@@ -1,7 +1,10 @@
 // Centralized entry audio manager that survives component unmounting
 // This ensures entry audio plays even if components mount/unmount rapidly
 
-import { audioManager } from './audio'
+import { AudioController } from './AudioController'
+
+// Create the centralized audio controller instance
+const audioController = new AudioController()
 
 // Track which games have played entry audio
 const playedGames: Set<string> = new Set()
@@ -21,14 +24,25 @@ const lastImmediateExecution: Map<string, number> = new Map()
 export const entryAudioManager = {
   // Schedule entry audio for a game
   scheduleEntryAudio(gameType: string, delay: number = 1000): void {
-    console.log(`🎵 EntryAudioManager: Scheduling entry audio for "${gameType}" with ${delay}ms delay`, {
+    const debugInfo = {
       gameType,
       delay,
       alreadyPlayed: playedGames.has(gameType),
       currentlyPlaying: playingGames.has(gameType),
       alreadyScheduled: pendingTimeouts.has(gameType),
-      timestamp: new Date().toISOString()
-    })
+      timestamp: new Date().toISOString(),
+      // Additional iOS debugging
+      isIOS: navigator.userAgent.includes('iPhone') || navigator.userAgent.includes('iPad'),
+      isPWA: window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone,
+      documentFocus: document.hasFocus(),
+      documentVisible: !document.hidden,
+      userAgent: navigator.userAgent.substring(0, 100),
+      audioContextExists: typeof window.AudioContext !== 'undefined',
+      speechSynthesisAvailable: typeof window.speechSynthesis !== 'undefined',
+      timeSincePageLoad: performance.now()
+    }
+    
+    console.log(`🎵 EntryAudioManager: Scheduling entry audio for "${gameType}" with ${delay}ms delay`, debugInfo)
     
     // Check if already played or playing
     if (playedGames.has(gameType) || playingGames.has(gameType)) {
@@ -91,8 +105,8 @@ export const entryAudioManager = {
     playedGames.add(gameType)
     
     try {
-      console.log(`🎵 EntryAudioManager: Calling audioManager.playGameWelcome for "${gameType}"`)
-      await audioManager.playGameWelcome(gameType)
+      console.log(`🎵 EntryAudioManager: Calling AudioController.playGameWelcome for "${gameType}"`)
+      await audioController.playGameWelcome(gameType)
       console.log(`🎵 EntryAudioManager: Successfully played entry audio for "${gameType}"`)
       
       // Call completion callbacks
@@ -113,8 +127,8 @@ export const entryAudioManager = {
         errorName: error instanceof Error ? error.name : 'Unknown',
         errorMessage: error instanceof Error ? error.message : error?.toString(),
         errorStack: error instanceof Error ? error.stack : 'No stack',
-        audioManagerAvailable: !!audioManager,
-        audioManagerMethods: audioManager ? Object.getOwnPropertyNames(Object.getPrototypeOf(audioManager)) : [],
+        audioControllerAvailable: !!audioController,
+        audioControllerMethods: audioController ? Object.getOwnPropertyNames(Object.getPrototypeOf(audioController)) : [],
         timestamp: new Date().toISOString()
       })
     } finally {

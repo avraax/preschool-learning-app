@@ -197,6 +197,29 @@ const MemoryGame: React.FC = () => {
   }
 
   const handleCardClick = async (clickedCard: MemoryCard) => {
+    const cardClickDebugInfo = {
+      cardId: clickedCard.id,
+      cardContent: clickedCard.content,
+      isMatched: clickedCard.isMatched,
+      isRevealed: clickedCard.isRevealed,
+      gameType,
+      isProcessing,
+      revealedCardsCount: revealedCards.length,
+      matchedPairs,
+      score,
+      audioIsPlaying: audio.isPlaying,
+      // Technical details
+      isIOS: navigator.userAgent.includes('iPhone') || navigator.userAgent.includes('iPad'),
+      isPWA: window.matchMedia('(display-mode: standalone)').matches,
+      documentFocus: document.hasFocus(),
+      documentVisible: !document.hidden,
+      userAgent: navigator.userAgent.substring(0, 100),
+      timestamp: Date.now(),
+      timeSincePageLoad: performance.now()
+    }
+    
+    console.log('🎵 MemoryGame: CARD CLICK ATTEMPT', cardClickDebugInfo)
+    
     // Critical iOS fix: Update user interaction timestamp BEFORE audio call
     audio.updateUserInteraction()
     
@@ -205,9 +228,19 @@ const MemoryGame: React.FC = () => {
       const letterData = LETTER_ICONS[clickedCard.content]
       if (letterData) {
         try {
+          console.log('🎵 MemoryGame: Speaking matched card', { content: clickedCard.content, word: letterData.word })
           await audio.speak(`${clickedCard.content} som ${letterData.word}`)
+          console.log('🎵 MemoryGame: Matched card audio completed successfully')
         } catch (error: any) {
-          // Ignore audio errors for matched card clicks
+          const errorDetails = {
+            cardContent: clickedCard.content,
+            word: letterData.word,
+            error: error?.toString(),
+            errorMessage: error?.message,
+            isIOS: navigator.userAgent.includes('iPhone') || navigator.userAgent.includes('iPad'),
+            isPWA: window.matchMedia('(display-mode: standalone)').matches
+          }
+          console.error('🎵 MemoryGame: Matched card audio failed', errorDetails)
         }
       }
       return
@@ -230,11 +263,19 @@ const MemoryGame: React.FC = () => {
     // Play audio for the revealed card with enhanced iOS handling
     const playCardAudio = async () => {
       try {
+        console.log('🎵 MemoryGame: Playing card reveal audio', { 
+          content: clickedCard.content, 
+          gameType,
+          isLetter: gameType === 'letters'
+        })
+        
         if (gameType === 'letters') {
           await audio.speak(clickedCard.content)
         } else {
           await audio.speakNumber(parseInt(clickedCard.content))
         }
+        
+        console.log('🎵 MemoryGame: Card reveal audio completed successfully', { content: clickedCard.content })
       } catch (error: any) {
         // Check if this is a navigation interruption (expected)
         const isNavigationInterruption = error && 
@@ -242,10 +283,24 @@ const MemoryGame: React.FC = () => {
            error.message?.includes('interrupted by user'))
         
         if (isNavigationInterruption) {
+          console.log('🎵 MemoryGame: Card audio interrupted by navigation (expected)')
           return // Don't show prompts for expected interruptions
         }
         
-        console.error('🎵 Audio error:', error)
+        const audioErrorDetails = {
+          cardContent: clickedCard.content,
+          gameType,
+          error: error?.toString(),
+          errorMessage: error?.message,
+          errorStack: error?.stack?.split('\n').slice(0, 3).join(' | '),
+          isIOS: navigator.userAgent.includes('iPhone') || navigator.userAgent.includes('iPad'),
+          isPWA: window.matchMedia('(display-mode: standalone)').matches,
+          documentFocus: document.hasFocus(),
+          documentVisible: !document.hidden,
+          timestamp: Date.now()
+        }
+        
+        console.error('🎵 MemoryGame: Card reveal audio failed', audioErrorDetails)
       }
     }
     

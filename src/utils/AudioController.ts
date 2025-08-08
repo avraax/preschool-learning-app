@@ -208,7 +208,29 @@ export class AudioController {
               resolve(`fallback_${Date.now()}`)
             }
           } catch (error) {
-            console.error(`🎵 AudioController.queueAudio: Audio ${audioId} failed:`, error)
+            const errorDetails = {
+              audioId,
+              errorMessage: (error as any)?.message || 'Unknown error',
+              errorName: (error as any)?.constructor?.name || 'UnknownError',
+              errorStack: (error as any)?.stack?.split('\n').slice(0, 3).join(' | ') || 'No stack',
+              isIOS: isIOS(),
+              isPWA: window.matchMedia('(display-mode: standalone)').matches,
+              audioContextState: (() => {
+                try {
+                  return globalThis.AudioContext ? new AudioContext().state : 'unavailable'
+                } catch { return 'unavailable' }
+              })(),
+              queueLength: this.audioQueue.length,
+              isCurrentlyPlaying: this.isCurrentlyPlaying,
+              processingQueue: this.processingQueue,
+              timeSinceLastInteraction: Date.now() - (globalAudioPermissionContext?.state?.lastUserInteraction || 0),
+              documentFocus: document.hasFocus(),
+              documentVisible: !document.hidden,
+              timestamp: new Date().toISOString()
+            }
+            
+            console.error(`🎵 AudioController.queueAudio: Audio ${audioId} failed:`, errorDetails)
+            
             // For iOS compatibility, don't reject on certain expected errors
             const isExpectedError = error instanceof Error && (
               error.message.includes('interrupted by navigation') || 
@@ -217,8 +239,10 @@ export class AudioController {
             )
             
             if (isExpectedError) {
+              console.log(`🎵 AudioController.queueAudio: ${audioId} - Expected error, resolving gracefully:`, errorDetails.errorMessage)
               resolve(audioId || `interrupted_${Date.now()}`) // Resolve instead of reject for expected interruptions
             } else {
+              console.error(`🎵 AudioController.queueAudio: ${audioId} - Unexpected error, rejecting:`, errorDetails)
               reject(error)
             }
           }
@@ -701,13 +725,28 @@ export class AudioController {
 
   // Centralized game welcome audio system
   async playGameWelcome(gameType: string, voiceType: 'primary' | 'backup' | 'male' = 'primary'): Promise<string> {
-    logAudioDebug('playGameWelcome called', { 
+    const playGameWelcomeDebugInfo = {
       gameType,
       voiceType,
       timestamp: Date.now(),
       isIOS: isIOS(),
-      isPWA: window.matchMedia('(display-mode: standalone)').matches
-    })
+      isPWA: window.matchMedia('(display-mode: standalone)').matches,
+      documentFocus: document.hasFocus(),
+      documentVisible: !document.hidden,
+      queueLength: this.audioQueue.length,
+      isCurrentlyPlaying: this.isCurrentlyPlaying,
+      processingQueue: this.processingQueue,
+      timeSinceLastInteraction: Date.now() - (globalAudioPermissionContext?.state?.lastUserInteraction || 0),
+      audioContextState: (() => {
+        try {
+          return globalThis.AudioContext ? new AudioContext().state : 'unavailable'
+        } catch { return 'unavailable' }
+      })(),
+      callStack: new Error().stack?.split('\n').slice(1, 4).join(' -> ') || 'No stack'
+    }
+    
+    logAudioDebug('playGameWelcome called', playGameWelcomeDebugInfo)
+    console.log('🎵 AudioController.playGameWelcome: ENTRY AUDIO ATTEMPT', playGameWelcomeDebugInfo)
 
     // Update user interaction for iOS compatibility before any audio
     this.updateUserInteraction()

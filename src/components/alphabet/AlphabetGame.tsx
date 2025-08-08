@@ -223,14 +223,27 @@ const AlphabetGame: React.FC = () => {
   }, [generateNewQuestion])
 
   const handleLetterClick = async (selectedLetter: string) => {
-    logAlphabetGameDebug('handleLetterClick called', {
+    const clickDebugInfo = {
       selectedLetter,
       currentLetter,
       isCorrect: selectedLetter === currentLetter,
       audioIsPlaying: audio.isPlaying,
       score,
-      timestamp: Date.now()
-    })
+      timestamp: Date.now(),
+      // Additional debugging info
+      isIOS: isIOS(),
+      isPWA: window.matchMedia('(display-mode: standalone)').matches,
+      documentFocus: document.hasFocus(),
+      documentVisible: !document.hidden,
+      userAgent: navigator.userAgent.substring(0, 100),
+      timeSincePageLoad: performance.now(),
+      audioContextAvailable: typeof window.AudioContext !== 'undefined',
+      speechSynthesisAvailable: typeof window.speechSynthesis !== 'undefined',
+      entryAudioComplete
+    }
+    
+    logAlphabetGameDebug('handleLetterClick called', clickDebugInfo)
+    console.log('🎵 AlphabetGame: LETTER CLICK ATTEMPT', clickDebugInfo)
     
     // Critical iOS fix: Update user interaction timestamp BEFORE audio call
     // This ensures iOS Safari PWA recognizes the button click as a valid user interaction
@@ -271,17 +284,23 @@ const AlphabetGame: React.FC = () => {
       })
       
       logAlphabetGameDebug('handleCompleteGameResult completed successfully')
+      console.log('🎵 AlphabetGame: LETTER CLICK AUDIO COMPLETED', { selectedLetter, isCorrect })
       
     } catch (error) {
-      logAlphabetGameDebug('Error in handleCompleteGameResult', {
+      const errorDetails = {
         selectedLetter,
         currentLetter,
         isCorrect,
         error: error?.toString(),
         errorName: error?.constructor?.name,
-        errorMessage: (error as any)?.message
-      })
-      console.error('🎯 AlphabetGame: Error in unified game result handler:', error)
+        errorMessage: (error as any)?.message,
+        errorStack: (error as any)?.stack?.split('\n').slice(0, 3).join(' | '),
+        isIOS: isIOS(),
+        isPWA: window.matchMedia('(display-mode: standalone)').matches,
+        timestamp: Date.now()
+      }
+      logAlphabetGameDebug('Error in handleCompleteGameResult', errorDetails)
+      console.error('🎵 AlphabetGame: LETTER CLICK FAILED', errorDetails)
     }
   }
 

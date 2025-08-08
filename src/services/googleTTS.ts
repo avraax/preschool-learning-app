@@ -4,6 +4,9 @@ import { isIOS } from '../utils/deviceDetection'
 import { logAudioIssue, logIOSIssue } from '../utils/remoteConsole'
 import { DANISH_PHRASES } from '../config/danish-phrases'
 
+// Global audio permission context reference
+let globalAudioPermissionContext: any = null
+
 // Audio cache interface for browser storage
 interface CachedAudio {
   audioData: string // base64 encoded audio
@@ -629,9 +632,11 @@ export class GoogleTTSService {
         
         // iOS-specific play handling
         if (isIOS()) {
-          // Check if we need user interaction - be more lenient for navigation scenarios
-          const timeSinceInteraction = Date.now() - this.lastUserInteraction
-          const hasRecentInteraction = timeSinceInteraction < 15000 // More generous for iOS PWA
+          // Check if we need user interaction - iOS PWA needs immediate interaction
+          // Use global context timestamp if available, fallback to local timestamp
+          const globalTimestamp = globalAudioPermissionContext?.state?.lastUserInteraction || this.lastUserInteraction
+          const timeSinceInteraction = Date.now() - globalTimestamp
+          const hasRecentInteraction = timeSinceInteraction < 2000 // Strict timing for iOS PWA (2 seconds max)
           const hasDocumentFocus = document.hasFocus()
           const isDocumentVisible = !document.hidden
           const isPWAMode = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone
