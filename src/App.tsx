@@ -44,6 +44,8 @@ import DemoPage from './components/demo/DemoPage'
 // Simplified Audio System imports
 import { SimplifiedAudioProvider } from './contexts/SimplifiedAudioContext'
 import SimplifiedAudioPermission from './components/common/SimplifiedAudioPermission'
+// import SimplifiedAudioTest from './components/test/SimplifiedAudioTest'
+// import AudioSystemComparison from './components/test/AudioSystemComparison'
 
 
 // Balloon Components
@@ -903,6 +905,14 @@ function App() {
             <AlphabetGameSimplified />
           </SimplifiedAudioProvider>
         } />
+        {/* Temporarily disabled for production build */}
+        {/* <Route path="/audio-test" element={
+          <SimplifiedAudioProvider>
+            <SimplifiedAudioPermission />
+            <SimplifiedAudioTest />
+          </SimplifiedAudioProvider>
+        } />
+        <Route path="/audio-comparison" element={<AudioSystemComparison />} /> */}
         
         {/* Math Routes */}
         <Route path="/math" element={<MathSelection />} />
