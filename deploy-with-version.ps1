@@ -13,12 +13,13 @@ if (-not (Test-Path "package.json")) {
 # Step 1: Bump version
 Write-Host "`nBumping version..." -ForegroundColor Yellow
 try {
-    .\bump-version.ps1
+    $versionOutput = & .\bump-version.ps1
     if ($LASTEXITCODE -ne 0) {
-        throw "Version bump failed"
+        throw "Version bump script returned error code $LASTEXITCODE"
     }
+    Write-Host "Version bump completed successfully" -ForegroundColor Green
 } catch {
-    Write-Host "Error: Version bump failed." -ForegroundColor Red
+    Write-Host "Error: Version bump failed - $_" -ForegroundColor Red
     exit 1
 }
 

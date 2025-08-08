@@ -39,6 +39,9 @@ try {
     Write-Host "✅ Version updated successfully!" -ForegroundColor Green
     Write-Host "📝 Don't forget to commit this change before deploying." -ForegroundColor Cyan
     
+    # Explicit success exit
+    exit 0
+    
 } catch {
     Write-Host "❌ Error updating version: $_" -ForegroundColor Red
     exit 1

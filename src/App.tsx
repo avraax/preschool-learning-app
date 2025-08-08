@@ -21,6 +21,7 @@ import {
 
 // Import all page components
 import AlphabetGame from './components/alphabet/AlphabetGame'
+import AlphabetGameSimplified from './components/alphabet/AlphabetGameSimplified'
 import AlphabetSelection from './components/alphabet/AlphabetSelection'
 import AlphabetLearning from './components/alphabet/AlphabetLearning'
 import MathGame from './components/math/MathGame'
@@ -39,6 +40,10 @@ import { AudioPermissionProvider } from './contexts/AudioPermissionContext'
 import { AudioProvider, useAudioContext } from './contexts/AudioContext'
 import { useViewportHeight } from './hooks/useViewportHeight'
 import DemoPage from './components/demo/DemoPage'
+
+// Simplified Audio System imports
+import { SimplifiedAudioProvider } from './contexts/SimplifiedAudioContext'
+import SimplifiedAudioPermission from './components/common/SimplifiedAudioPermission'
 
 
 // Balloon Components
@@ -890,6 +895,14 @@ function App() {
         <Route path="/alphabet" element={<AlphabetSelection />} />
         <Route path="/alphabet/learn" element={<AlphabetLearning />} />
         <Route path="/alphabet/quiz" element={<AlphabetGame />} />
+        
+        {/* Simplified Audio Test Routes */}
+        <Route path="/alphabet/quiz-simplified" element={
+          <SimplifiedAudioProvider>
+            <SimplifiedAudioPermission />
+            <AlphabetGameSimplified />
+          </SimplifiedAudioProvider>
+        } />
         
         {/* Math Routes */}
         <Route path="/math" element={<MathSelection />} />
