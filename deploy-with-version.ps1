@@ -110,8 +110,8 @@ while ($retryCount -lt $maxRetries -and -not $deploymentVerified) {
 }
 
 if (-not $deploymentVerified) {
-    Write-Host "⚠️  Warning: Could not verify deployment within expected time. Please check manually." -ForegroundColor Yellow
+    Write-Host "Warning: Could not verify deployment within expected time. Please check manually." -ForegroundColor Yellow
 }
 
-Write-Host "`n🌐 Production URL: https://preschool-learning-app.vercel.app/" -ForegroundColor Cyan
-Write-Host "🎉 Deployment complete! The app is now live with version v$newVersion." -ForegroundColor Green
+Write-Host "`nProduction URL: https://preschool-learning-app.vercel.app/" -ForegroundColor Cyan
+Write-Host "Deployment complete! The app is now live with version v$newVersion." -ForegroundColor Green
