@@ -795,22 +795,30 @@ https://preschool-learning-app.vercel.app/api/log-error?limit=200
 
 **Note:** This endpoint retrieves ALL log types (errors, warnings, info, logs), not just errors despite the endpoint name.
 
+**⚠️ IMPORTANT: Always use curl/Bash for log retrieval**
+- **ALWAYS use curl or Bash** to fetch logs directly
+- **DO NOT use WebFetch** - it may fail to parse large JSON responses correctly
+- **For Claude Code**: Use `curl -s "URL" | head -n 200` to get manageable chunks
+
 **Query Parameters:**
 - `limit`: Number of logs to return (default: 50, supports any number)
 - `level`: Filter by log level (`error`, `warn`, `info`, `log`)
 - `device`: Filter by device type (`iPad`, `iPhone`, etc.)
 - `since`: Filter by timestamp (ISO date string)
 
-**Example Usage:**
+**Example Usage (ALWAYS use curl):**
 ```bash
 # Get recent iPad errors
-curl "https://preschool-learning-app.vercel.app/api/log-error?limit=50&device=iPad&level=error"
+curl -s "https://preschool-learning-app.vercel.app/api/log-error?limit=50&device=iPad&level=error"
 
 # Search for entry audio issues
-curl "https://preschool-learning-app.vercel.app/api/log-error?limit=200&device=iPad"
+curl -s "https://preschool-learning-app.vercel.app/api/log-error?limit=200&device=iPad"
 
-# Get all recent logs
-curl "https://preschool-learning-app.vercel.app/api/log-error?limit=200"
+# Get all recent logs (pipe to head for manageable output)
+curl -s "https://preschool-learning-app.vercel.app/api/log-error?limit=200" | head -200
+
+# Search for specific terms in logs
+curl -s "https://preschool-learning-app.vercel.app/api/log-error?limit=200" | grep -i "simplified"
 ```
 
 ### Audio Issues - Use Centralized System Only

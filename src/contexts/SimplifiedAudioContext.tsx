@@ -3,18 +3,17 @@ import { isIOS } from '../utils/deviceDetection'
 import { audioDebugSession } from '../utils/remoteConsole'
 import { setSimplifiedAudioContext } from '../utils/SimplifiedAudioController'
 
-// Simplified iOS-optimized debugging
+// Simplified iOS-optimized debugging with remote logging
 const logSimpleAudio = (message: string, data?: any) => {
   console.log(`🔊 SimplifiedAudio: ${message}`, data)
   
-  if (audioDebugSession.isSessionActive()) {
-    audioDebugSession.addLog('SIMPLIFIED_AUDIO', {
-      message,
-      data,
-      isIOS: isIOS(),
-      timestamp: new Date().toISOString()
-    })
-  }
+  // Always send to remote logging for production debugging
+  audioDebugSession.addLog('SIMPLIFIED_AUDIO', {
+    message,
+    data,
+    isIOS: isIOS(),
+    timestamp: new Date().toISOString()
+  })
 }
 
 // Simplified state - just what we actually need
@@ -53,10 +52,18 @@ export const SimplifiedAudioProvider: React.FC<SimplifiedAudioProviderProps> = (
   const initializedRef = useRef<boolean>(false)
   const lastUserInteractionRef = useRef<number>(0)
 
-  logSimpleAudio('SimplifiedAudioProvider initialized', { 
-    isIOS: isIOS(),
-    userAgent: navigator.userAgent.substring(0, 100)
-  })
+  // Start debug session for remote logging
+  useEffect(() => {
+    audioDebugSession.startSession('SimplifiedAudioSystem')
+    logSimpleAudio('SimplifiedAudioProvider initialized', { 
+      isIOS: isIOS(),
+      userAgent: navigator.userAgent.substring(0, 100)
+    })
+    
+    return () => {
+      audioDebugSession.endSession('SimplifiedAudioSystem')
+    }
+  }, [])
 
   // Initialize speech synthesis reference
   useEffect(() => {

@@ -4,18 +4,17 @@ import { isIOS } from './deviceDetection'
 import { DANISH_PHRASES, getRandomSuccessPhrase, getRandomEncouragementPhrase, getDanishNumberText } from '../config/danish-phrases'
 import { audioDebugSession } from './remoteConsole'
 
-// Simplified logging for the new audio system
+// Simplified logging for the new audio system with remote logging
 const logSimplifiedAudio = (message: string, data?: any) => {
   console.log(`🎵 SimplifiedAudioController: ${message}`, data)
   
-  if (audioDebugSession.isSessionActive()) {
-    audioDebugSession.addLog('SIMPLIFIED_AUDIO_CONTROLLER', {
-      message,
-      data,
-      isIOS: isIOS(),
-      timestamp: new Date().toISOString()
-    })
-  }
+  // Always send to remote logging for production debugging
+  audioDebugSession.addLog('SIMPLIFIED_AUDIO_CONTROLLER', {
+    message,
+    data,
+    isIOS: isIOS(),
+    timestamp: new Date().toISOString()
+  })
 }
 
 // Reference to the simplified audio context
@@ -205,7 +204,7 @@ export class SimplifiedAudioController {
   // ===== SIMPLIFIED PERMISSION MANAGEMENT =====
 
   /**
-   * Simplified audio readiness check - no complex testing, just check if we have initialized context
+   * Simplified audio readiness check - more lenient for iOS
    */
   private ensureAudioReady(): boolean {
     if (!simplifiedAudioContextInstance) {
@@ -214,6 +213,15 @@ export class SimplifiedAudioController {
     }
 
     const { state, initializeAudio } = simplifiedAudioContextInstance
+    
+    // For iOS, be more lenient - if we've had ANY successful initialization, proceed
+    if (isIOS()) {
+      // If audio is working, allow it (iOS might have different states than expected)
+      if (state.isWorking) {
+        logSimplifiedAudio('iOS: Audio is working, allowing playback')
+        return true
+      }
+    }
     
     if (!state.isWorking && state.needsUserAction) {
       logSimplifiedAudio('Audio needs user interaction, attempting initialization')

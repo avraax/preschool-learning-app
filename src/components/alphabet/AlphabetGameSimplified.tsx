@@ -21,13 +21,16 @@ import CelebrationEffect, { useCelebration } from '../common/CelebrationEffect'
 import { AlphabetScoreChip } from '../common/ScoreChip'
 import { AlphabetRepeatButton } from '../common/RepeatButton'
 import { useGameState } from '../../hooks/useGameState'
+import { logIOSIssue } from '../../utils/remoteConsole'
 
 // 🚀 SIMPLIFIED AUDIO SYSTEM IMPORTS
 import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 
-// Enhanced logging for simplified audio testing
+// Enhanced logging for simplified audio testing with remote logging
 const logSimplifiedAlphabet = (message: string, data?: any) => {
   console.log(`🎵 AlphabetGameSimplified: ${message}`, data)
+  // Send to remote logging for production debugging
+  logIOSIssue('SimplifiedAlphabet', { message, ...data })
 }
 
 // Full Danish alphabet including special characters
@@ -58,6 +61,9 @@ const AlphabetGameSimplified: React.FC = () => {
   // Timeout ref for cleanup
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
   
+  // Use ref to track current letter for audio scheduling (avoids closure issues)
+  const currentLetterRef = useRef<string>('')
+  
   // Initialize component
   useEffect(() => {
     logSimplifiedAlphabet('Component initialized', {
@@ -83,6 +89,7 @@ const AlphabetGameSimplified: React.FC = () => {
         clearTimeout(timeoutRef.current)
         timeoutRef.current = null
       }
+      currentLetterRef.current = '' // Clear ref on unmount
     }
   }, [])
   
@@ -104,11 +111,12 @@ const AlphabetGameSimplified: React.FC = () => {
       await audio.playGameWelcome('alphabet')
       logSimplifiedAlphabet('Welcome message completed')
       
-      // Wait a bit then generate first question
+      // iOS-optimized delay - much shorter for iOS to keep within interaction window
+      const delay = isIOS() ? 100 : 500
       setTimeout(() => {
         setGameReady(true)
         generateNewQuestion()
-      }, 500)
+      }, delay)
     } catch (error) {
       logSimplifiedAlphabet('Error playing welcome', { error: error?.toString() })
       // Still start the game even if audio fails
@@ -130,6 +138,7 @@ const AlphabetGameSimplified: React.FC = () => {
     logSimplifiedAlphabet('Generated new letter', { letter })
     
     setCurrentLetter(letter)
+    currentLetterRef.current = letter // Update ref to avoid closure issues
     
     // Create 4 options including the correct answer
     const options = [letter]
@@ -156,26 +165,76 @@ const AlphabetGameSimplified: React.FC = () => {
       timeoutRef.current = null
     }
     
-    // Schedule delayed audio
-    if (audio.isAudioReady) {
-      timeoutRef.current = setTimeout(async () => {
-        try {
-          logSimplifiedAlphabet('Playing quiz prompt', { letter })
-          await audio.speakQuizPromptWithRepeat(
-            DANISH_PHRASES.gamePrompts.findLetter(letter), 
-            letter
-          )
-          logSimplifiedAlphabet('Quiz prompt completed')
-        } catch (error) {
-          logSimplifiedAlphabet('Error playing quiz prompt', { 
-            letter,
-            error: error?.toString()
+    // iOS-optimized: Reduce delay dramatically for iOS, normal delay for others
+    const delay = isIOS() ? 100 : 500
+    
+    // Schedule delayed audio - always schedule, check readiness inside timeout
+    timeoutRef.current = setTimeout(async () => {
+      try {
+        // Check if letter hasn't changed while we were waiting (use ref, not state)
+        if (letter !== currentLetterRef.current) {
+          logSimplifiedAlphabet('Letter changed while waiting, skipping audio', { 
+            scheduledLetter: letter, 
+            currentLetter: currentLetterRef.current 
           })
-        } finally {
+          return
+        }
+        
+        // Check audio readiness at playback time, not scheduling time
+        if (!audio.isAudioReady) {
+          logSimplifiedAlphabet('Audio not ready when attempting quiz prompt', { letter })
+          // Try again after another delay if audio isn't ready
+          timeoutRef.current = setTimeout(async () => {
+            // Check again if letter is still current (use ref)
+            if (letter !== currentLetterRef.current) {
+              logSimplifiedAlphabet('Letter changed during retry, skipping', { 
+                letter, 
+                currentLetter: currentLetterRef.current 
+              })
+              return
+            }
+            
+            if (audio.isAudioReady) {
+              logSimplifiedAlphabet('Retrying quiz prompt after delay', { letter })
+              audio.updateUserInteraction()
+              await audio.speakQuizPromptWithRepeat(
+                DANISH_PHRASES.gamePrompts.findLetter(letter), 
+                letter
+              )
+            } else {
+              logSimplifiedAlphabet('Audio still not ready after retry', { letter })
+            }
+          }, isIOS() ? 200 : 1000)
+          return
+        }
+        
+        logSimplifiedAlphabet('Playing quiz prompt', { letter })
+        // iOS-specific: Create fresh interaction event before audio
+        if (isIOS()) {
+          // Create a synthetic touch event to renew iOS interaction window
+          const syntheticEvent = new Event('touchstart', { bubbles: true })
+          document.dispatchEvent(syntheticEvent)
+          logSimplifiedAlphabet('iOS: Synthetic interaction event created')
+        }
+        
+        // Update user interaction timestamp before playing (iOS fix)
+        audio.updateUserInteraction()
+        await audio.speakQuizPromptWithRepeat(
+          DANISH_PHRASES.gamePrompts.findLetter(letter), 
+          letter
+        )
+        logSimplifiedAlphabet('Quiz prompt completed')
+      } catch (error) {
+        logSimplifiedAlphabet('Error playing quiz prompt', { 
+          letter,
+          error: error?.toString()
+        })
+      } finally {
+        if (timeoutRef.current) {
           timeoutRef.current = null
         }
-      }, 500)
-    }
+      }
+    }, delay)
     
   }, [audio, currentLetter])
   
@@ -208,14 +267,25 @@ const AlphabetGameSimplified: React.FC = () => {
         
         if (audio.isAudioReady) {
           await audio.announceGameResult(true)
+          // iOS: Immediately renew interaction after success audio
+          if (isIOS()) {
+            audio.updateUserInteraction()
+            logSimplifiedAlphabet('iOS: Renewed interaction after success audio')
+          }
         }
         
-        // Generate new question after delay
+        // iOS-optimized delay for next question - much shorter to stay in interaction window
+        const delay = isIOS() ? 200 : 2000
         setTimeout(() => {
           stopCelebration()
           teacherCharacter.wave()
+          // Renew interaction right before generating new question
+          if (isIOS()) {
+            audio.updateUserInteraction()
+            logSimplifiedAlphabet('iOS: Renewed interaction before new question')
+          }
           generateNewQuestion()
-        }, isIOS() ? 1000 : 2000)
+        }, delay)
         
       } else {
         // Incorrect
@@ -223,6 +293,11 @@ const AlphabetGameSimplified: React.FC = () => {
         
         if (audio.isAudioReady) {
           await audio.announceGameResult(false)
+          // iOS: Immediately renew interaction after incorrect audio too
+          if (isIOS()) {
+            audio.updateUserInteraction()
+            logSimplifiedAlphabet('iOS: Renewed interaction after incorrect audio')
+          }
         }
       }
       
@@ -236,8 +311,15 @@ const AlphabetGameSimplified: React.FC = () => {
   }
   
   const repeatLetter = async () => {
-    // 🚀 SIMPLIFIED: Update user interaction for iOS
+    // iOS-specific: Renew interaction immediately
     audio.updateUserInteraction()
+    
+    if (isIOS()) {
+      // Create synthetic touch event for iOS
+      const syntheticEvent = new Event('touchstart', { bubbles: true })
+      document.dispatchEvent(syntheticEvent)
+      logSimplifiedAlphabet('iOS: Synthetic interaction event for repeat')
+    }
     
     if (audio.isPlaying || !audio.isAudioReady) {
       return
