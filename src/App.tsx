@@ -753,6 +753,16 @@ const NavigationAudioCleanup: React.FC = () => {
     // Standard audio cleanup
     audioContext.triggerNavigationCleanup()
     
+    // ALSO cleanup SimplifiedAudioController for /quiz-simplified routes
+    if (currentPath.includes('quiz-simplified') || previousPath.includes('quiz-simplified')) {
+      import('./utils/SimplifiedAudioController').then(({ simplifiedAudioController }) => {
+        simplifiedAudioController.triggerNavigationCleanup()
+        console.log('🎵 NavigationAudioCleanup: SimplifiedAudioController cleanup triggered')
+      }).catch(error => {
+        console.error('🎵 NavigationAudioCleanup: Error importing SimplifiedAudioController:', error)
+      })
+    }
+    
     // Reset entry audio for sections when leaving them
     if (previousPath) {
       // Import entryAudioManager dynamically to avoid circular dependencies

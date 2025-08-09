@@ -183,22 +183,45 @@ export class SimplifiedAudioController {
     this.processingQueue = false
   }
 
-  private stopCurrentAudio(): void {
+  private stopCurrentAudio(reason: string = 'new_audio_queued'): void {
+    const queueLength = this.audioQueue.length
+    const wasSpeaking = window.speechSynthesis?.speaking
+    
+    // Clear the entire queue
     this.audioQueue.length = 0
     
-    this.sounds.forEach(sound => {
+    // Stop all Howler sounds
+    this.sounds.forEach((sound, key) => {
       try {
-        sound.stop()
+        if (sound.playing()) {
+          sound.stop()
+          logSimplifiedAudio(`Stopped Howler sound: ${key}`)
+        }
       } catch (error) {}
     })
     
+    // Stop Google TTS
     this.googleTTS.stopCurrentAudio()
     
-    if (window.speechSynthesis && window.speechSynthesis.speaking) {
+    // Stop Web Speech API - be more aggressive
+    if (window.speechSynthesis) {
       try {
+        // Cancel multiple times to ensure it stops (iOS Safari quirk)
         window.speechSynthesis.cancel()
+        setTimeout(() => window.speechSynthesis.cancel(), 10)
+        setTimeout(() => window.speechSynthesis.cancel(), 50)
       } catch (error) {}
     }
+    
+    // Reset playing state
+    this.isCurrentlyPlaying = false
+    this.notifyPlayingStateChange()
+    
+    logSimplifiedAudio('Audio stopped', { 
+      queueLength, 
+      wasSpeaking, 
+      reason 
+    })
   }
 
   // ===== SIMPLIFIED PERMISSION MANAGEMENT =====
@@ -493,6 +516,14 @@ export class SimplifiedAudioController {
     this.notifyPlayingStateChange()
   }
 
+  /**
+   * Cancel any currently playing audio immediately (alias for stopCurrentAudio for external use)
+   */
+  cancelCurrentAudio(): void {
+    logSimplifiedAudio('cancelCurrentAudio called')
+    this.stopCurrentAudio('manual_cancellation')
+  }
+
   emergencyStop(): void {
     this.sounds.forEach(sound => {
       try {
@@ -551,6 +582,12 @@ export class SimplifiedAudioController {
   }
 
   public triggerNavigationCleanup(): void {
+    logSimplifiedAudio('Navigation cleanup triggered - stopping all audio')
+    
+    // Stop all audio immediately
+    this.stopCurrentAudio('navigation')
+    
+    // Run all navigation cleanup callbacks
     this.navigationCleanupCallbacks.forEach((callback, index) => {
       try {
         callback()
@@ -559,7 +596,10 @@ export class SimplifiedAudioController {
       }
     })
     
+    // Final cleanup
     this.stopAll()
+    
+    logSimplifiedAudio('Navigation cleanup completed')
   }
 
   private async preloadAudio(): Promise<void> {

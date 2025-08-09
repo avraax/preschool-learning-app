@@ -366,7 +366,12 @@ const AlphabetGameSimplified: React.FC = () => {
       <AppBar position="static" color="transparent" elevation={0}>
         <Toolbar sx={{ justifyContent: 'space-between', py: 2 }}>
           <IconButton 
-            onClick={() => navigate('/alphabet')}
+            onClick={() => {
+              // Cancel any playing audio before navigation
+              audio.cancelCurrentAudio()
+              logSimplifiedAlphabet('Back button clicked - audio canceled')
+              navigate('/alphabet')
+            }}
             color="primary"
             size="large"
             sx={{ 

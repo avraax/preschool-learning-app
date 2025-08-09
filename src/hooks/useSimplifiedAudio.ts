@@ -30,6 +30,7 @@ export interface SimplifiedAudioHook {
   // Audio management
   stopAll: () => void
   emergencyStop: () => void
+  cancelCurrentAudio: () => void
   updateUserInteraction: () => void
   
   // Navigation management
@@ -120,6 +121,7 @@ export const useSimplifiedAudioHook = (options: UseSimplifiedAudioOptions = {}):
     // Audio management
     stopAll: simplifiedAudioController.stopAll.bind(simplifiedAudioController),
     emergencyStop: simplifiedAudioController.emergencyStop.bind(simplifiedAudioController),
+    cancelCurrentAudio: simplifiedAudioController.cancelCurrentAudio.bind(simplifiedAudioController),
     updateUserInteraction: simplifiedAudioController.updateUserInteraction.bind(simplifiedAudioController),
     
     // Navigation management
