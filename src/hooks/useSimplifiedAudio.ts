@@ -21,6 +21,7 @@ export interface SimplifiedAudioHook {
   speakMathProblem: (problem: string, voiceType?: 'primary' | 'backup' | 'male') => Promise<string>
   speakAdditionProblem: (num1: number, num2: number, voiceType?: 'primary' | 'backup' | 'male') => Promise<string>
   announceGameResult: (isCorrect: boolean, voiceType?: 'primary' | 'backup' | 'male') => Promise<string>
+  announceScore: (score: number, voiceType?: 'primary' | 'backup' | 'male') => Promise<string>
   playGameWelcome: (gameType: string, voiceType?: 'primary' | 'backup' | 'male') => Promise<string>
   
   // Sound effects
@@ -39,8 +40,8 @@ export interface SimplifiedAudioHook {
   // Status
   getTTSStatus: () => {
     cacheStats: { size: number; oldestEntry: number; newestEntry: number }
-    queueLength: number
     isPlaying: boolean
+    currentAudioId: string | null
   }
   
   // Audio readiness from context
@@ -112,6 +113,7 @@ export const useSimplifiedAudioHook = (options: UseSimplifiedAudioOptions = {}):
     speakMathProblem: simplifiedAudioController.speakMathProblem.bind(simplifiedAudioController),
     speakAdditionProblem: simplifiedAudioController.speakAdditionProblem.bind(simplifiedAudioController),
     announceGameResult: simplifiedAudioController.announceGameResult.bind(simplifiedAudioController),
+    announceScore: simplifiedAudioController.announceScore.bind(simplifiedAudioController),
     playGameWelcome: simplifiedAudioController.playGameWelcome.bind(simplifiedAudioController),
     
     // Sound effects

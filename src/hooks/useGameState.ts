@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react'
-import { audioManager } from '../utils/audio'
+import { simplifiedAudioController } from '../utils/SimplifiedAudioController'
 
 /**
  * Game state interface for score and narration management
@@ -112,7 +112,7 @@ export const useGameState = (initialScore: number = 0): GameStateHook => {
     }))
 
     try {
-      await audioManager.announceScore(gameState.score)
+      await simplifiedAudioController.announceScore(gameState.score)
     } catch (error) {
       // Ignore audio errors gracefully
     } finally {

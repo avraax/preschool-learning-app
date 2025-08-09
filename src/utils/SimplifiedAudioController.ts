@@ -28,23 +28,15 @@ export const setSimplifiedAudioContext = (context: any) => {
   })
 }
 
-interface AudioQueueItem {
-  id: string
-  audioFunction: () => Promise<void>
-  onComplete?: () => void
-  priority: 'high' | 'normal' | 'low'
-}
-
 /**
- * Simplified AudioController optimized for iOS Safari reliability
- * Removes complex permission testing and uses direct, immediate audio initialization
+ * Simplified AudioController with NO QUEUE - only one audio at a time
+ * New audio always cancels current audio immediately
  */
 export class SimplifiedAudioController {
   private sounds: Map<string, Howl> = new Map()
   private googleTTS: GoogleTTSService
   private isCurrentlyPlaying: boolean = false
-  private audioQueue: AudioQueueItem[] = []
-  private processingQueue: boolean = false
+  private currentAudioId: string | null = null
   
   // Simplified event listeners
   private playingStateListeners: (() => void)[] = []
@@ -93,135 +85,115 @@ export class SimplifiedAudioController {
     })
   }
 
-  // ===== SIMPLIFIED AUDIO QUEUE MANAGEMENT =====
+  // ===== SIMPLIFIED SINGLE AUDIO MANAGEMENT (NO QUEUE) =====
 
-  private async queueAudio(
-    audioFunction: () => Promise<void>, 
-    priority: 'high' | 'normal' | 'low' = 'normal',
-    onComplete?: () => void
-  ): Promise<string> {
+  private async playAudio(audioFunction: () => Promise<void>): Promise<string> {
     const audioId = `audio_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+    const stackTrace = new Error().stack
     
-    return new Promise((resolve, reject) => {
-      // Stop any currently playing audio immediately
-      this.stopCurrentAudio()
-      
-      const queueItem: AudioQueueItem = {
-        id: audioId,
-        audioFunction: async () => {
-          try {
-            await audioFunction()
-            resolve(audioId)
-          } catch (error) {
-            // Log error but be more permissive with iOS audio errors
-            logSimplifiedAudio('Audio playback error', { 
-              audioId,
-              error: error?.toString(),
-              isIOS: isIOS()
-            })
-            
-            // For iOS, resolve gracefully instead of rejecting for common errors
-            if (isIOS() && error instanceof Error && (
-              error.message.includes('interrupted') || 
-              error.message.includes('not supported') ||
-              error.message.includes('suspended')
-            )) {
-              logSimplifiedAudio('iOS audio error - resolving gracefully', { audioId })
-              resolve(audioId)
-            } else {
-              reject(error)
-            }
-          }
-        },
-        onComplete,
-        priority
-      }
-      
-      if (priority === 'high') {
-        this.audioQueue.unshift(queueItem)
-      } else {
-        this.audioQueue.push(queueItem)
-      }
-      
-      if (!this.processingQueue) {
-        this.processAudioQueue()
-      }
+    logSimplifiedAudio('🔴 PLAY_AUDIO_START', { 
+      audioId,
+      isCurrentlyPlaying: this.isCurrentlyPlaying,
+      currentAudioId: this.currentAudioId,
+      caller: stackTrace?.split('\n')[2]?.trim()
     })
-  }
-
-  private async processAudioQueue(): Promise<void> {
-    if (this.processingQueue || this.audioQueue.length === 0) {
-      return
-    }
     
-    this.processingQueue = true
+    // ALWAYS stop current audio first - dead simple
+    this.stopCurrentAudio('new_audio_requested')
     
-    while (this.audioQueue.length > 0) {
-      const queueItem = this.audioQueue.shift()!
+    // Set current audio tracking
+    this.currentAudioId = audioId
+    this.isCurrentlyPlaying = true
+    this.notifyPlayingStateChange()
+    
+    try {
+      logSimplifiedAudio('🎵 AUDIO_START', { audioId })
+      await audioFunction()
+      logSimplifiedAudio('✅ AUDIO_COMPLETE', { audioId })
       
-      try {
-        this.isCurrentlyPlaying = true
-        this.notifyPlayingStateChange()
-        
-        await queueItem.audioFunction()
-        
-        if (queueItem.onComplete) {
-          queueItem.onComplete()
-        }
-        
-      } catch (error) {
-        if (error instanceof Error && error.message.includes('interrupted by navigation')) {
-          this.audioQueue.length = 0
-          break
-        }
-      } finally {
+    } catch (error) {
+      logSimplifiedAudio('❌ AUDIO_ERROR', { 
+        audioId,
+        error: error?.toString()
+      })
+      
+      // For iOS, don't throw errors for common issues
+      if (isIOS() && error instanceof Error && (
+        error.message.includes('interrupted') || 
+        error.message.includes('not supported') ||
+        error.message.includes('suspended')
+      )) {
+        logSimplifiedAudio('iOS audio error - continuing gracefully', { audioId })
+      } else {
+        throw error
+      }
+    } finally {
+      // Only reset if this is still the current audio
+      if (this.currentAudioId === audioId) {
         this.isCurrentlyPlaying = false
+        this.currentAudioId = null
         this.notifyPlayingStateChange()
+        logSimplifiedAudio('🏁 AUDIO_FINISHED', { audioId })
+      } else {
+        logSimplifiedAudio('🔄 AUDIO_WAS_REPLACED', { 
+          audioId,
+          currentAudioId: this.currentAudioId
+        })
       }
     }
     
-    this.processingQueue = false
+    return audioId
   }
 
-  private stopCurrentAudio(reason: string = 'new_audio_queued'): void {
-    const queueLength = this.audioQueue.length
+  private stopCurrentAudio(reason: string = 'new_audio_requested'): void {
     const wasSpeaking = window.speechSynthesis?.speaking
     
-    // Clear the entire queue
-    this.audioQueue.length = 0
+    logSimplifiedAudio('🛑 STOP_CURRENT_AUDIO', { 
+      reason,
+      wasSpeaking,
+      isCurrentlyPlaying: this.isCurrentlyPlaying,
+      currentAudioId: this.currentAudioId
+    })
     
     // Stop all Howler sounds
     this.sounds.forEach((sound, key) => {
       try {
         if (sound.playing()) {
           sound.stop()
-          logSimplifiedAudio(`Stopped Howler sound: ${key}`)
+          logSimplifiedAudio('🔇 Stopped Howler', { key })
         }
       } catch (error) {}
     })
     
-    // Stop Google TTS
+    // Stop Google TTS (HTML5 audio elements)
     this.googleTTS.stopCurrentAudio()
     
-    // Stop Web Speech API - be more aggressive
+    // Stop Web Speech API aggressively for iOS
     if (window.speechSynthesis) {
       try {
-        // Cancel multiple times to ensure it stops (iOS Safari quirk)
+        window.speechSynthesis.cancel()
         window.speechSynthesis.cancel()
         setTimeout(() => window.speechSynthesis.cancel(), 10)
         setTimeout(() => window.speechSynthesis.cancel(), 50)
+        setTimeout(() => window.speechSynthesis.cancel(), 100)
       } catch (error) {}
     }
     
-    // Reset playing state
+    // Stop all HTML5 audio elements
+    const audioElements = document.querySelectorAll('audio')
+    audioElements.forEach((audio) => {
+      try {
+        audio.pause()
+        audio.currentTime = 0
+      } catch (error) {}
+    })
+    
+    // Reset state
     this.isCurrentlyPlaying = false
+    this.currentAudioId = null
     this.notifyPlayingStateChange()
     
-    logSimplifiedAudio('Audio stopped', { 
-      queueLength, 
-      wasSpeaking, 
-      reason 
-    })
+    logSimplifiedAudio('✅ STOP_COMPLETE', { reason })
   }
 
   // ===== SIMPLIFIED PERMISSION MANAGEMENT =====
@@ -271,36 +243,23 @@ export class SimplifiedAudioController {
   // ===== CORE AUDIO FUNCTIONS =====
 
   async speak(text: string, voiceType: 'primary' | 'backup' | 'male' = 'primary', useSSML: boolean = true, customSpeed?: number): Promise<string> {
-    // Always update user interaction immediately when speak is called
     this.updateUserInteraction()
     
-    logSimplifiedAudio('speak called', { 
+    logSimplifiedAudio('🗣️ SPEAK_CALLED', { 
       text: text.substring(0, 50) + (text.length > 50 ? '...' : ''),
       voiceType,
       useSSML,
-      customSpeed,
-      isPlaying: this.isCurrentlyPlaying
+      customSpeed
     })
 
-    return this.queueAudio(async () => {
-      // Check if audio is ready (but don't do complex testing)
+    return this.playAudio(async () => {
       if (!this.ensureAudioReady()) {
-        logSimplifiedAudio('Audio not ready, skipping speak', { text: text.substring(0, 50) })
+        logSimplifiedAudio('Audio not ready, skipping speak')
         return
       }
       
       const customAudioConfig = customSpeed ? { speakingRate: customSpeed } : undefined
-      
-      try {
-        await this.googleTTS.synthesizeAndPlay(text, voiceType, useSSML, customAudioConfig)
-        logSimplifiedAudio('speak completed successfully')
-      } catch (error) {
-        logSimplifiedAudio('speak error', { 
-          text: text.substring(0, 50),
-          error: error?.toString()
-        })
-        throw error
-      }
+      await this.googleTTS.synthesizeAndPlay(text, voiceType, useSSML, customAudioConfig)
     })
   }
 
@@ -311,7 +270,9 @@ export class SimplifiedAudioController {
   }
 
   async speakNumber(number: number, customSpeed?: number): Promise<string> {
-    return this.queueAudio(async () => {
+    logSimplifiedAudio('🔢 SPEAK_NUMBER_CALLED', { number })
+    
+    return this.playAudio(async () => {
       this.updateUserInteraction()
       
       if (!this.ensureAudioReady()) {
@@ -320,17 +281,7 @@ export class SimplifiedAudioController {
       
       const numberText = getDanishNumberText(number)
       const customAudioConfig = customSpeed ? { speakingRate: customSpeed } : undefined
-
-      try {
-        await this.googleTTS.synthesizeAndPlay(numberText, 'primary', true, customAudioConfig)
-      } catch (error) {
-        // For iOS, be more resilient to audio errors during number sequences
-        if (isIOS() && error instanceof Error) {
-          logSimplifiedAudio('iOS number speech error, continuing', { number, error: error.message })
-          return // Don't throw, just continue
-        }
-        throw error
-      }
+      await this.googleTTS.synthesizeAndPlay(numberText, 'primary', true, customAudioConfig)
     })
   }
 
@@ -343,83 +294,22 @@ export class SimplifiedAudioController {
   }
 
   async speakQuizPromptWithRepeat(text: string, repeatWord: string, voiceType: 'primary' | 'backup' | 'male' = 'primary'): Promise<string> {
-    logSimplifiedAudio('speakQuizPromptWithRepeat called', { 
+    logSimplifiedAudio('🎯 QUIZ_PROMPT_CALLED', { 
       text,
       repeatWord,
-      audioReady: simplifiedAudioContextInstance?.state?.isWorking
+      isCurrentlyPlaying: this.isCurrentlyPlaying
     })
     
-    return this.queueAudio(async () => {
+    return this.playAudio(async () => {
       this.updateUserInteraction()
       
       if (!this.ensureAudioReady()) {
-        logSimplifiedAudio('Audio not ready, aborting speakQuizPromptWithRepeat', {
-          audioContextState: simplifiedAudioContextInstance?.state
-        })
+        logSimplifiedAudio('Audio not ready for quiz prompt')
         return
       }
       
-      logSimplifiedAudio('About to play quiz prompt', { 
-        text,
-        repeatWord,
-        isIOS: isIOS()
-      })
-      
-      try {
-        // Enhanced approach with better logging
-        if (isIOS()) {
-          logSimplifiedAudio('iOS: Speaking full text', { text })
-          await this.googleTTS.synthesizeAndPlay(text, voiceType, false)
-          logSimplifiedAudio('iOS: Successfully spoke full text')
-        } else {
-          // Non-iOS can handle the split approach
-          if (repeatWord && text.includes(repeatWord)) {
-            const lastIndex = text.lastIndexOf(repeatWord)
-            if (lastIndex > 0) {
-              const basePrompt = text.substring(0, lastIndex).trim()
-              
-              logSimplifiedAudio('Non-iOS: Speaking split prompt', { 
-                basePrompt,
-                repeatWord
-              })
-              
-              await this.googleTTS.synthesizeAndPlay(basePrompt, voiceType, false)
-              await new Promise(resolve => setTimeout(resolve, 400))
-              this.updateUserInteraction() // Refresh interaction for second part
-              await this.googleTTS.synthesizeAndPlay(repeatWord, voiceType, false)
-              
-              logSimplifiedAudio('Non-iOS: Successfully spoke split prompt')
-            } else {
-              logSimplifiedAudio('Non-iOS: repeatWord not found in text, speaking full text', { text })
-              await this.googleTTS.synthesizeAndPlay(text, voiceType, false)
-            }
-          } else {
-            logSimplifiedAudio('Non-iOS: No repeatWord or not found, speaking full text', { text })
-            await this.googleTTS.synthesizeAndPlay(text, voiceType, false)
-          }
-        }
-        
-        logSimplifiedAudio('speakQuizPromptWithRepeat completed successfully')
-        
-      } catch (error) {
-        logSimplifiedAudio('speakQuizPromptWithRepeat error', { 
-          text,
-          error: error?.toString(),
-          errorName: error?.constructor?.name
-        })
-        
-        // Enhanced fallback logging
-        try {
-          logSimplifiedAudio('Trying fallback: simple text speech', { text })
-          await this.googleTTS.synthesizeAndPlay(text, voiceType, false)
-          logSimplifiedAudio('Fallback succeeded')
-        } catch (fallbackError) {
-          logSimplifiedAudio('Fallback also failed', { 
-            fallbackError: fallbackError?.toString()
-          })
-          throw fallbackError
-        }
-      }
+      // Keep it simple - just speak the full text
+      await this.googleTTS.synthesizeAndPlay(text, voiceType, false)
     })
   }
 
@@ -432,22 +322,17 @@ export class SimplifiedAudioController {
   }
 
   async speakAdditionProblem(num1: number, num2: number, voiceType: 'primary' | 'backup' | 'male' = 'primary'): Promise<string> {
-    return this.queueAudio(async () => {
+    logSimplifiedAudio('➕ ADDITION_PROBLEM_CALLED', { num1, num2 })
+    
+    return this.playAudio(async () => {
       this.updateUserInteraction()
       
       if (!this.ensureAudioReady()) {
         return
       }
       
-      try {
-        // Simplified for iOS - speak as one complete phrase
-        const problemText = `${DANISH_PHRASES.gamePrompts.mathQuestion.prefix} ${getDanishNumberText(num1)} ${DANISH_PHRASES.math.plus} ${getDanishNumberText(num2)}`
-        await this.googleTTS.synthesizeAndPlay(problemText, voiceType, true)
-      } catch (error) {
-        logSimplifiedAudio('speakAdditionProblem error', { error })
-        const fallbackText = DANISH_PHRASES.gamePrompts.mathQuestion.addition(num1, num2)
-        await this.googleTTS.synthesizeAndPlay(fallbackText, voiceType, true)
-      }
+      const problemText = `${DANISH_PHRASES.gamePrompts.mathQuestion.prefix} ${getDanishNumberText(num1)} ${DANISH_PHRASES.math.plus} ${getDanishNumberText(num2)}`
+      await this.googleTTS.synthesizeAndPlay(problemText, voiceType, true)
     })
   }
 
@@ -466,6 +351,27 @@ export class SimplifiedAudioController {
       logSimplifiedAudio('Playing encouragement phrase', { encouragementPhrase })
       return this.speak(encouragementPhrase, voiceType, true)
     }
+  }
+
+  async announceScore(score: number, voiceType: 'primary' | 'backup' | 'male' = 'primary'): Promise<string> {
+    logSimplifiedAudio('🏆 ANNOUNCE_SCORE_CALLED', { score })
+    
+    return this.playAudio(async () => {
+      this.updateUserInteraction()
+      
+      if (!this.ensureAudioReady()) {
+        return
+      }
+      
+      if (score === 0) {
+        await this.googleTTS.synthesizeAndPlay(DANISH_PHRASES.score.noPoints, voiceType, true)
+      } else if (score === 1) {
+        await this.googleTTS.synthesizeAndPlay(DANISH_PHRASES.score.onePoint, voiceType, true)
+      } else {
+        const scoreText = `${DANISH_PHRASES.score.multiplePoints.prefix} ${getDanishNumberText(score)} ${DANISH_PHRASES.score.multiplePoints.suffix}`
+        await this.googleTTS.synthesizeAndPlay(scoreText, voiceType, true)
+      }
+    })
   }
 
   // Centralized game welcome audio system
@@ -550,9 +456,8 @@ export class SimplifiedAudioController {
       } catch (error) {}
     })
     
-    this.audioQueue.length = 0
     this.isCurrentlyPlaying = false
-    this.processingQueue = false
+    this.currentAudioId = null
     this.notifyPlayingStateChange()
   }
 
@@ -612,13 +517,13 @@ export class SimplifiedAudioController {
 
   getTTSStatus(): {
     cacheStats: { size: number; oldestEntry: number; newestEntry: number }
-    queueLength: number
     isPlaying: boolean
+    currentAudioId: string | null
   } {
     return {
       cacheStats: this.googleTTS.getCacheStats(),
-      queueLength: this.audioQueue.length,
-      isPlaying: this.isCurrentlyPlaying
+      isPlaying: this.isCurrentlyPlaying,
+      currentAudioId: this.currentAudioId
     }
   }
 }

@@ -239,21 +239,21 @@ const AlphabetGameSimplified: React.FC = () => {
   }, [audio, currentLetter])
   
   const handleLetterClick = async (selectedLetter: string) => {
-    logSimplifiedAlphabet('Letter clicked', {
+    logSimplifiedAlphabet('🔵 LETTER_CLICK_START', {
       selectedLetter,
       currentLetter,
       isCorrect: selectedLetter === currentLetter,
       audioReady: audio.isAudioReady,
-      audioPlaying: audio.isPlaying
+      audioPlaying: audio.isPlaying,
+      timestamp: Date.now()
     })
     
     // 🚀 SIMPLIFIED: Update user interaction for iOS
     audio.updateUserInteraction()
     
-    if (audio.isPlaying) {
-      logSimplifiedAlphabet('Audio is playing, ignoring click')
-      return
-    }
+    // ALWAYS cancel current audio - no conditions
+    logSimplifiedAlphabet('🛑 CANCELLING_AUDIO_FOR_LETTER_CLICK')
+    audio.cancelCurrentAudio()
     
     const isCorrect = selectedLetter === currentLetter
     
@@ -274,16 +274,14 @@ const AlphabetGameSimplified: React.FC = () => {
           }
         }
         
-        // iOS-optimized delay for next question - much shorter to stay in interaction window
-        const delay = isIOS() ? 200 : 2000
+        // Normal celebration timing - enhanced interaction renewal handles iOS compatibility
+        const delay = 2000
         setTimeout(() => {
           stopCelebration()
           teacherCharacter.wave()
-          // Renew interaction right before generating new question
-          if (isIOS()) {
-            audio.updateUserInteraction()
-            logSimplifiedAlphabet('iOS: Renewed interaction before new question')
-          }
+          // Renew interaction right before generating new question for all platforms
+          audio.updateUserInteraction()
+          logSimplifiedAlphabet('Renewed interaction before new question after celebration')
           generateNewQuestion()
         }, delay)
         
@@ -311,6 +309,12 @@ const AlphabetGameSimplified: React.FC = () => {
   }
   
   const repeatLetter = async () => {
+    logSimplifiedAlphabet('🔄 REPEAT_BUTTON_CLICKED', {
+      currentLetter,
+      audioPlaying: audio.isPlaying,
+      timestamp: Date.now()
+    })
+    
     // iOS-specific: Renew interaction immediately
     audio.updateUserInteraction()
     
@@ -321,7 +325,12 @@ const AlphabetGameSimplified: React.FC = () => {
       logSimplifiedAlphabet('iOS: Synthetic interaction event for repeat')
     }
     
-    if (audio.isPlaying || !audio.isAudioReady) {
+    // ALWAYS cancel current audio - no conditions
+    logSimplifiedAlphabet('🛑 CANCELLING_AUDIO_FOR_REPEAT')
+    audio.cancelCurrentAudio()
+    
+    if (!audio.isAudioReady) {
+      logSimplifiedAlphabet('❌ Audio not ready, aborting repeat')
       return
     }
     
