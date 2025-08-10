@@ -73,6 +73,16 @@ export interface SimplifiedAudioHook {
   }) => Promise<string>
   speakNewColorHuntGame: () => Promise<string>
   
+  // Centralized celebration with standard timing
+  playCelebrationWithStandardTiming: (options: {
+    isCorrect: boolean
+    celebrate?: () => void
+    stopCelebration?: () => void
+    incrementScore?: () => void
+    nextAction?: () => void
+    teacherCharacter?: any
+  }) => Promise<void>
+  
   // Audio readiness from context
   isAudioReady: boolean
   needsUserAction: boolean
@@ -162,6 +172,9 @@ export const useSimplifiedAudioHook = (options: UseSimplifiedAudioOptions = {}):
     speakComparisonProblem: simplifiedAudioController.speakComparisonProblem.bind(simplifiedAudioController),
     handleGameCompletion: simplifiedAudioController.handleGameCompletion.bind(simplifiedAudioController),
     speakNewColorHuntGame: simplifiedAudioController.speakNewColorHuntGame.bind(simplifiedAudioController),
+    
+    // Centralized celebration with standard timing
+    playCelebrationWithStandardTiming: simplifiedAudioController.playCelebrationWithStandardTiming.bind(simplifiedAudioController),
     
     // Audio readiness from context
     isAudioReady: audioContext.state.isWorking,

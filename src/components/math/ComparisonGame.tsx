@@ -305,33 +305,31 @@ const ComparisonGame: React.FC = () => {
       mathTeacher.think()
     }
     
-    // THEN: Play celebration audio after a very short delay
+    // THEN: Use centralized celebration with standard timing
     setTimeout(async () => {
       try {
-        // Just play the audio feedback, visuals already started
-        await audio.announceGameResult(isCorrect)
+        await audio.playCelebrationWithStandardTiming({
+          isCorrect,
+          celebrate,
+          stopCelebration,
+          incrementScore: undefined, // Score already incremented above
+          nextAction: isCorrect ? generateNewProblem : () => {
+            setShowFeedback(false)
+            setSelectedSymbol(null)
+          },
+          teacherCharacter: mathTeacher
+        })
         
-        // Play explanation if wrong
+        // Play explanation if wrong (after the centralized celebration)
         if (!isCorrect && explanation) {
           setTimeout(async () => {
             await audio.speak(explanation)
           }, 500)
         }
         
-        // Auto-advance to next question after celebration
-        setTimeout(() => {
-          if (isCorrect) {
-            stopCelebration() // Stop celebration after 2 seconds
-            generateNewProblem()
-          } else {
-            setShowFeedback(false)
-            setSelectedSymbol(null)
-          }
-        }, isIOS() ? 1500 : 2000) // 2 second celebration duration
-        
       } catch (error) {
-        console.error('Error in game result audio:', error)
-        logError('Error in game result audio', {
+        console.error('Error in centralized celebration:', error)
+        logError('Error in centralized celebration', {
           symbol,
           currentProblem: currentProblem?.questionType,
           isCorrect,

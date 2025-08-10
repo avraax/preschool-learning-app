@@ -418,6 +418,64 @@ export class SimplifiedAudioController {
     return this.speak(getRandomEncouragementPhrase())
   }
 
+  /**
+   * Centralized celebration handler with standard timing
+   * Based on AlphabetGame (Bogstav Quiz) implementation
+   * @param options Celebration options including visual effects and next action
+   * @returns Promise that resolves when celebration audio completes
+   */
+  async playCelebrationWithStandardTiming(options: {
+    isCorrect: boolean
+    celebrate?: () => void           // Start visual celebration
+    stopCelebration?: () => void     // Stop visual celebration
+    incrementScore?: () => void      // Update score
+    nextAction?: () => void          // Action to take after celebration
+    teacherCharacter?: any           // Optional character animation
+  }): Promise<void> {
+    const { 
+      isCorrect, 
+      celebrate, 
+      stopCelebration, 
+      incrementScore, 
+      nextAction,
+      teacherCharacter 
+    } = options
+
+    if (isCorrect) {
+      // IMMEDIATELY: Start visual effects
+      if (incrementScore) incrementScore()
+      if (celebrate) celebrate()
+      if (teacherCharacter?.wave) teacherCharacter.wave()
+
+      // THEN: Play celebration audio after very short delay (150ms from AlphabetGame)
+      await new Promise(resolve => setTimeout(resolve, 150))
+      
+      try {
+        await this.announceGameResult(true)
+      } catch (error) {
+        logError('Error playing celebration audio', { error })
+      }
+
+      // Auto-advance after standard celebration duration
+      const celebrationDuration = isIOS() ? 1500 : 2000
+      
+      setTimeout(() => {
+        if (stopCelebration) stopCelebration()
+        if (nextAction) nextAction()
+      }, celebrationDuration)
+      
+    } else {
+      // Handle incorrect answer
+      if (teacherCharacter?.think) teacherCharacter.think()
+      
+      try {
+        await this.announceGameResult(false)
+      } catch (error) {
+        logError('Error playing encouragement audio', { error })
+      }
+    }
+  }
+
   // ===== CLEANUP AND MANAGEMENT =====
 
   stopAll(): void {

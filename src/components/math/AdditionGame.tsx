@@ -206,23 +206,20 @@ const AdditionGame: React.FC = () => {
       mathTeacher.think()
     }
     
-    // THEN: Play celebration audio after a very short delay
+    // THEN: Use centralized celebration with standard timing
     setTimeout(async () => {
       try {
-        // Just play the audio feedback, visuals already started
-        await audio.announceGameResult(isCorrect)
-        
-        // Auto-advance to next question after celebration
-        setTimeout(() => {
-          if (isCorrect) {
-            stopCelebration() // Stop celebration after 2 seconds
-            generateNewProblem()
-          }
-        }, isIOS() ? 1500 : 2000) // 2 second celebration duration
-        
+        await audio.playCelebrationWithStandardTiming({
+          isCorrect,
+          celebrate,
+          stopCelebration,
+          incrementScore: undefined, // Score already incremented above
+          nextAction: isCorrect ? generateNewProblem : undefined,
+          teacherCharacter: mathTeacher
+        })
       } catch (error: any) {
-        console.error('Error in game result audio:', error)
-        logError('Error in game result audio', {
+        console.error('Error in centralized celebration:', error)
+        logError('Error in centralized celebration', {
           selectedAnswer,
           correctAnswer,
           isCorrect,
