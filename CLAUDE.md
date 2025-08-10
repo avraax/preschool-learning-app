@@ -56,7 +56,6 @@ The app uses **React Router v7** for comprehensive URL-based navigation with ful
 │   ├── /farver/jagt (Farvejagt - Color Hunt game)
 │   └── /farver/ram-farven (Ram Farven - Color Mixing game)
 ├── /memory (Memory card game)
-├── /demo (Demo games showcase)
 └── /admin/errors?level=error&device=ios&limit=50 (Error dashboard)
 ```
 
@@ -465,9 +464,6 @@ preschool-learning-app/
 │   │   │   └── RamFarvenGame.tsx    # Color Mixing game
 │   │   ├── learning/         # Additional learning games
 │   │   │   └── MemoryGame.tsx       # Memory card game
-│   │   ├── demo/             # Demo games showcase
-│   │   │   ├── DemoPage.tsx         # Demo section landing
-│   │   │   └── games/               # Individual demo games
 │   │   └── admin/            # Admin tools
 │   │       └── ErrorDashboard.tsx   # Error monitoring
 │   ├── contexts/
@@ -1014,10 +1010,6 @@ const theme = getCategoryTheme('alphabet')
 - Direct audio interaction with immediate feedback
 - No entry audio coordination needed
 
-#### Demo Games (Prototype Games):
-- 11 demo games in `/demo/games/` directory
-- All migrated to use centralized `useAudio()` hook
-- Showcase various interaction patterns and game mechanics
 
 ### Required Implementation Pattern
 

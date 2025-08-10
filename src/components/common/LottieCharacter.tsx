@@ -11,7 +11,7 @@ export type CharacterState = 'idle' | 'wave' | 'celebrate' | 'encourage' | 'thin
 // For now, we'll use placeholders and simple CSS animations as fallback
 const getAnimationData = (_character: CharacterType, _state: CharacterState) => {
   // This would normally return the actual Lottie JSON data
-  // For demo purposes, we'll return null and use CSS fallback
+  // Return null and use CSS fallback
   return null
 }
 

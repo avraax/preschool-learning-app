@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useRef } from 'react'
+import React, { useEffect, useState, useCallback } from 'react'
 import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { logIOSIssue } from './utils/remoteConsole'
@@ -21,7 +21,6 @@ import {
 
 // Import all page components
 import AlphabetGame from './components/alphabet/AlphabetGame'
-import AlphabetGameSimplified from './components/alphabet/AlphabetGameSimplified'
 import AlphabetSelection from './components/alphabet/AlphabetSelection'
 import AlphabetLearning from './components/alphabet/AlphabetLearning'
 import MathGame from './components/math/MathGame'
@@ -35,11 +34,9 @@ import RamFarvenGame from './components/farver/RamFarvenGame'
 import MemoryGame from './components/learning/MemoryGame'
 import ErrorDashboard from './components/admin/ErrorDashboard'
 import UpdateBanner from './components/common/UpdateBanner'
-import GlobalAudioPermission from './components/common/GlobalAudioPermission'
-import { AudioPermissionProvider } from './contexts/AudioPermissionContext'
-import { AudioProvider, useAudioContext } from './contexts/AudioContext'
+// Legacy audio system removed - using SimplifiedAudioProvider only
 import { useViewportHeight } from './hooks/useViewportHeight'
-import DemoPage from './components/demo/DemoPage'
+// Demo system removed
 
 // Simplified Audio System imports
 import { SimplifiedAudioProvider } from './contexts/SimplifiedAudioContext'
@@ -727,71 +724,18 @@ const NotFoundPage = () => {
   )
 }
 
-// Navigation Audio Cleanup Component
+// Simplified Navigation Audio Cleanup Component
 const NavigationAudioCleanup: React.FC = () => {
   const location = useLocation()
-  const audioContext = useAudioContext()
-  const previousPathRef = useRef<string>('')
   
   useEffect(() => {
-    const currentPath = location.pathname
-    const previousPath = previousPathRef.current
-    
-    console.log('🎵 NavigationAudioCleanup: Route change detected, triggering audio cleanup', {
-      fromPath: previousPath,
-      toPath: currentPath,
-      timestamp: new Date().toISOString(),
-      isIOS: navigator.userAgent.includes('iPhone') || navigator.userAgent.includes('iPad'),
-      isPWA: window.matchMedia('(display-mode: standalone)').matches,
-      audioContextState: audioContext.isPlaying ? 'playing' : 'idle',
-      documentFocus: document.hasFocus(),
-      documentVisible: !document.hidden,
-      referrer: document.referrer,
-      userAgent: navigator.userAgent
+    // Cleanup SimplifiedAudioController on route changes
+    import('./utils/SimplifiedAudioController').then(({ simplifiedAudioController }) => {
+      simplifiedAudioController.triggerNavigationCleanup()
+    }).catch(() => {
+      // Silent fail if module not available
     })
-    
-    // Standard audio cleanup
-    audioContext.triggerNavigationCleanup()
-    
-    // ALSO cleanup SimplifiedAudioController for /quiz-simplified routes
-    if (currentPath.includes('quiz-simplified') || previousPath.includes('quiz-simplified')) {
-      import('./utils/SimplifiedAudioController').then(({ simplifiedAudioController }) => {
-        simplifiedAudioController.triggerNavigationCleanup()
-        console.log('🎵 NavigationAudioCleanup: SimplifiedAudioController cleanup triggered')
-      }).catch(error => {
-        console.error('🎵 NavigationAudioCleanup: Error importing SimplifiedAudioController:', error)
-      })
-    }
-    
-    // Reset entry audio for sections when leaving them
-    if (previousPath) {
-      // Import entryAudioManager dynamically to avoid circular dependencies
-      import('./utils/entryAudioManager').then(({ entryAudioManager }) => {
-        // Determine section paths to reset based on navigation
-        const getSectionPath = (path: string): string => {
-          if (path.startsWith('/alphabet')) return '/alphabet'
-          if (path.startsWith('/math')) return '/math'
-          if (path.startsWith('/farver')) return '/farver'
-          if (path.startsWith('/learning/memory')) return '/learning/memory'
-          return path
-        }
-        
-        const previousSection = getSectionPath(previousPath)
-        const currentSection = getSectionPath(currentPath)
-        
-        // If leaving a section, reset its entry audio for future visits
-        if (previousSection !== currentSection && ['/alphabet', '/math', '/farver', '/learning/memory'].includes(previousSection)) {
-          console.log(`🎵 NavigationAudioCleanup: Leaving section "${previousSection}", resetting entry audio`)
-          entryAudioManager.resetSection(previousSection)
-        }
-      }).catch(error => {
-        console.error('🎵 NavigationAudioCleanup: Error importing entryAudioManager:', error)
-      })
-    }
-    
-    // Update previous path for next navigation
-    previousPathRef.current = currentPath
-  }, [location.pathname, audioContext])
+  }, [location.pathname])
   
   return null // This component only handles side effects
 }
@@ -876,8 +820,9 @@ function App() {
   }, [])
 
   return (
-    <AudioPermissionProvider>
-      <AudioProvider>
+    <SimplifiedAudioProvider>
+      <SimplifiedAudioPermission />
+      <>
         {/* Navigation Audio Cleanup - handles React Router navigation */}
         <NavigationAudioCleanup />
         
@@ -890,7 +835,7 @@ function App() {
         />
         
         {/* Global Audio Permission System */}
-        <GlobalAudioPermission />
+        {/* Legacy GlobalAudioPermission removed */}
         
         {/* Version Display - repositions to bottom-left when update available */}
         <VersionDisplay updateAvailable={updateStatus.updateAvailable || DEV_SHOW_UPDATE_BANNER} />
@@ -908,13 +853,6 @@ function App() {
         <Route path="/alphabet/learn" element={<AlphabetLearning />} />
         <Route path="/alphabet/quiz" element={<AlphabetGame />} />
         
-        {/* Simplified Audio Test Routes */}
-        <Route path="/alphabet/quiz-simplified" element={
-          <SimplifiedAudioProvider>
-            <SimplifiedAudioPermission />
-            <AlphabetGameSimplified />
-          </SimplifiedAudioProvider>
-        } />
         {/* Temporarily disabled for production build */}
         {/* <Route path="/audio-test" element={
           <SimplifiedAudioProvider>
@@ -945,14 +883,13 @@ function App() {
         {/* Legacy redirect for old admin access */}
         <Route path="/admin" element={<Navigate to="/admin/errors" replace />} />
         
-        {/* Demo Routes */}
-        <Route path="/demo" element={<DemoPage />} />
+        {/* Demo Routes removed */}
         
         {/* 404 Not Found */}
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
-      </AudioProvider>
-    </AudioPermissionProvider>
+      </>
+    </SimplifiedAudioProvider>
   )
 }
 

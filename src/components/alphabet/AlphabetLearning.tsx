@@ -15,41 +15,16 @@ import {
   ArrowBack,
   School
 } from '@mui/icons-material'
-import { useAudio } from '../../hooks/useAudio'
 import { categoryThemes } from '../../config/categoryThemes'
 import LearningGrid from '../common/LearningGrid'
-import { useGameEntryAudio } from '../../hooks/useGameEntryAudio'
-import { entryAudioManager } from '../../utils/entryAudioManager'
 import { isIOS } from '../../utils/deviceDetection'
-import { audioDebugSession } from '../../utils/remoteConsole'
+// Simplified audio system
+import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 
-// Enhanced iOS Safari PWA debugging using audioDebugSession
-const logAlphabetDebug = (message: string, data?: any) => {
-  // Only log to audioDebugSession if it's active
-  if (audioDebugSession.isSessionActive()) {
-    const isIOSDevice = isIOS()
-    const isPWA = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone
-    const audioContextState = (window as any).AudioContext ? (() => {
-      try {
-        const ctx = new (window.AudioContext || (window as any).webkitAudioContext)()
-        const state = ctx.state
-        ctx.close()
-        return state
-      } catch {
-        return 'unavailable'
-      }
-    })() : 'unavailable'
-    
-    audioDebugSession.addLog('ALPHABET_LEARNING', {
-      message,
-      data,
-      context: {
-        isIOS: isIOSDevice,
-        isPWA,
-        audioContextState,
-        timestamp: new Date().toISOString()
-      }
-    })
+// Production logging - only essential errors
+const logError = (message: string, data?: any) => {
+  if (message.includes('Error') || message.includes('error')) {
+    console.error(`🎵 AlphabetLearning: ${message}`, data)
   }
 }
 
@@ -62,106 +37,94 @@ const DANISH_ALPHABET = [
 const AlphabetLearning: React.FC = () => {
   const navigate = useNavigate()
   const [currentIndex, setCurrentIndex] = useState(0)
-  // Centralized audio system
-  const audio = useAudio({ componentId: 'AlphabetLearning' })
-  const [entryAudioComplete, setEntryAudioComplete] = useState(false)
+  // Simplified audio system
+  const audio = useSimplifiedAudioHook({ 
+    componentId: 'AlphabetLearning',
+    autoInitialize: false
+  })
+  const [gameReady, setGameReady] = useState(false)
+  const [audioInitialized, setAudioInitialized] = useState(false)
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const hasInitialized = useRef(false)
   
-  // Initialize component - individual error logging only (no sessions)  
   useEffect(() => {
-    const isPWA = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone
-    if (isIOS() && isPWA) {
-      logAlphabetDebug('AlphabetLearning component initialized', {
-        userAgent: navigator.userAgent,
-        speechSynthesisVoices: window.speechSynthesis?.getVoices?.()?.length || 0,
-        audioHookState: { isPlaying: audio.isPlaying },
-        initialIndex: currentIndex
-      })
-    }
-  }, [])
-  
-  // Centralized entry audio
-  useGameEntryAudio({ gameType: 'alphabetlearning' })
-
-  useEffect(() => {
-    logAlphabetDebug('Registering entry audio completion callback')
+    // Prevent duplicate initialization with race condition guard
+    if (hasInitialized.current) return
+    hasInitialized.current = true
     
-    // Register callback to enable interactions after entry audio completes
-    entryAudioManager.onComplete('alphabetlearning', () => {
-      logAlphabetDebug('Entry audio completed, enabling interactions')
-      setEntryAudioComplete(true)
-    })
-  }, [])
-
-  useEffect(() => {
-    // Stop audio immediately when navigating away
-    const handleBeforeUnload = () => {
-      audio.stopAll()
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current)
-      }
+    // Check if audio is ready
+    if (audio.isAudioReady) {
+      setAudioInitialized(true)
+      playWelcomeAndStart()
     }
-
-
-    // Listen for navigation events
-    window.addEventListener('beforeunload', handleBeforeUnload)
-    window.addEventListener('pagehide', handleBeforeUnload)
     
-    // Cleanup function to stop all audio and timeouts when component unmounts
     return () => {
-      audio.stopAll()
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current)
+        timeoutRef.current = null
       }
-      
-      window.removeEventListener('beforeunload', handleBeforeUnload)
-      window.removeEventListener('pagehide', handleBeforeUnload)
     }
   }, [])
+  
+  // Monitor audio readiness - only if not already initialized
+  useEffect(() => {
+    if (audio.isAudioReady && !audioInitialized && !hasInitialized.current) {
+      hasInitialized.current = true
+      setAudioInitialized(true)
+      playWelcomeAndStart()
+    }
+  }, [audio.isAudioReady, audioInitialized])
+
+  // Play welcome message and start learning
+  const playWelcomeAndStart = async () => {
+    try {
+      // Play the welcome message
+      await audio.playGameWelcome('alphabetlearning')
+      
+      // Wait for welcome audio to complete, then start game with proper delay
+      const delay = isIOS() ? 1000 : 1500  // Increased delay to prevent audio overlap
+      setTimeout(() => {
+        setGameReady(true)
+      }, delay)
+    } catch (error) {
+      logError('Error playing welcome', { error: error?.toString() })
+      // Still start the game even if audio fails
+      setGameReady(true)
+    }
+  }
+
 
 
 
   const goToLetter = async (index: number) => {
     const letter = DANISH_ALPHABET[index]
     
-    logAlphabetDebug('goToLetter called', {
-      index,
-      letter,
-      previousIndex: currentIndex,
-      entryAudioComplete,
-      audioIsPlaying: audio.isPlaying,
-      timestamp: Date.now()
-    })
+    const clickTime = Date.now()
+    console.log(`🎵 AlphabetLearning: Letter clicked at ${clickTime} - ${letter} (index ${index})`)
     
     // Critical iOS fix: Update user interaction timestamp BEFORE audio call
-    // This ensures iOS Safari PWA recognizes the button click as a valid user interaction
     audio.updateUserInteraction()
-    logAlphabetDebug('Updated user interaction for iOS audio permission')
+    
+    // Always cancel current audio for fast tapping
+    console.log(`🎵 AlphabetLearning: Cancelling current audio for immediate letter pronunciation`)
+    audio.cancelCurrentAudio()
     
     setCurrentIndex(index)
-    audio.stopAll()
     
     try {
-      logAlphabetDebug('About to speak letter', { letter })
-      
-      logAlphabetDebug('Calling audio.speakLetter', { 
-        letter,
-        audioControllerState: audio.isPlaying
-      })
+      const audioStartTime = Date.now()
+      console.log(`🎵 AlphabetLearning: Starting letter audio at ${audioStartTime} (${audioStartTime - clickTime}ms after click) - ${letter}`)
       
       await audio.speakLetter(letter)
       
-      logAlphabetDebug('audio.speakLetter completed successfully', { letter })
-      
+      const audioEndTime = Date.now()
+      console.log(`🎵 AlphabetLearning: Letter audio completed at ${audioEndTime} (${audioEndTime - audioStartTime}ms duration) - ${letter}`)
     } catch (error) {
-      logAlphabetDebug('Error in goToLetter', { 
+      console.log(`🎵 AlphabetLearning: Error playing letter audio:`, error)
+      logError('Error speaking letter', {
         letter,
-        error: error?.toString(),
-        errorName: error?.constructor?.name,
-        errorMessage: (error as any)?.message
+        error: error?.toString()
       })
-      
-      console.error('Error speaking letter:', error)
     }
   }
 
@@ -201,10 +164,14 @@ const AlphabetLearning: React.FC = () => {
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <Typography 
               variant="body2" 
-              onClick={() => {
+              onClick={async () => {
                 // Critical iOS fix: Update user interaction timestamp BEFORE audio call
                 audio.updateUserInteraction()
-                audio.announcePosition(currentIndex, DANISH_ALPHABET.length, 'bogstav').catch(console.error)
+                try {
+                  await audio.announcePosition(currentIndex, DANISH_ALPHABET.length, 'bogstav')
+                } catch (error) {
+                  logError('Error announcing position', { error: error?.toString() })
+                }
               }}
               sx={{ 
                 color: 'primary.dark', 
@@ -329,7 +296,7 @@ const AlphabetLearning: React.FC = () => {
           items={DANISH_ALPHABET}
           currentIndex={currentIndex}
           onItemClick={goToLetter}
-          disabled={!entryAudioComplete}
+          disabled={!gameReady}
         />
       </Container>
       

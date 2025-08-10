@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useParams } from 'react-router-dom'
 import { Container, Box } from '@mui/material'
 import { motion } from 'framer-motion'
@@ -61,13 +61,13 @@ import CelebrationEffect, { useCelebration } from '../common/CelebrationEffect'
 import { AlphabetScoreChip } from '../common/ScoreChip'
 import { AlphabetRestartButton } from '../common/RestartButton'
 import { AlphabetRepeatButton } from '../common/RepeatButton'
-import { useAudio } from '../../hooks/useAudio'
 import { DANISH_PHRASES } from '../../config/danish-phrases'
-import { useGameEntryAudio } from '../../hooks/useGameEntryAudio'
-import { useGameAudioSetup } from '../../hooks/useGameAudioSetup'
 import { useGameState } from '../../hooks/useGameState'
 import { categoryThemes } from '../../config/categoryThemes'
 import GameHeader from '../common/GameHeader'
+import { isIOS } from '../../utils/deviceDetection'
+// Simplified audio system
+import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 
 // Danish alphabet (29 letters)
 const DANISH_ALPHABET = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'Æ', 'Ø', 'Å']
@@ -130,29 +130,73 @@ const MemoryGame: React.FC = () => {
   // Centralized game state management
   const { score, incrementScore, resetScore, isScoreNarrating, handleScoreClick } = useGameState()
   
-  // Centralized audio system
-  const audio = useAudio({ componentId: 'MemoryGame' })
+  // Simplified audio system
+  const audio = useSimplifiedAudioHook({ 
+    componentId: 'MemoryGame',
+    autoInitialize: false
+  })
+  const [gameReady, setGameReady] = useState(false)
+  const [audioInitialized, setAudioInitialized] = useState(false)
   
   // Character and celebration management
   const teacher = useCharacterState('wave')
   const { showCelebration, celebrationIntensity, celebrate, stopCelebration } = useCelebration()
   
-  // Centralized entry audio
-  useGameEntryAudio({ gameType: 'memory' })
-  
-  // Use centralized game audio setup hook (no callback needed for memory game)
-  const { ready: entryAudioComplete } = useGameAudioSetup('memory', () => {})
+  // Production logging - only essential errors
+  const logError = (message: string, data?: any) => {
+    if (message.includes('Error') || message.includes('error')) {
+      console.error(`🎵 MemoryGame: ${message}`, data)
+    }
+  }
   
 
+  const hasInitialized = useRef(false)
+
   useEffect(() => {
+    // Prevent duplicate initialization with race condition guard
+    if (hasInitialized.current) return
+    hasInitialized.current = true
+    
     // Initialize teacher character
     teacher.setCharacter('owl')
     teacher.wave()
     
+    // Check if audio is ready
+    if (audio.isAudioReady) {
+      setAudioInitialized(true)
+      playWelcomeAndStart()
+    }
     
     // Generate cards immediately but don't show them until entry audio completes
     initializeGame()
   }, [gameType])
+  
+  // Monitor audio readiness - only if not already initialized
+  useEffect(() => {
+    if (audio.isAudioReady && !audioInitialized && !hasInitialized.current) {
+      hasInitialized.current = true
+      setAudioInitialized(true)
+      playWelcomeAndStart()
+    }
+  }, [audio.isAudioReady, audioInitialized])
+
+  // Play welcome message and start game
+  const playWelcomeAndStart = async () => {
+    try {
+      // Play the welcome message
+      await audio.playGameWelcome('memory')
+      
+      // iOS-optimized delay - increased to prevent audio overlap
+      const delay = isIOS() ? 1000 : 1500
+      setTimeout(() => {
+        setGameReady(true)
+      }, delay)
+    } catch (error) {
+      logError('Error playing welcome', { error: error?.toString() })
+      // Still start the game even if audio fails
+      setGameReady(true)
+    }
+  }
 
   const initializeGame = () => {
     // Generate 20 random items for pairs
@@ -222,6 +266,9 @@ const MemoryGame: React.FC = () => {
     
     // Critical iOS fix: Update user interaction timestamp BEFORE audio call
     audio.updateUserInteraction()
+    
+    // Always cancel current audio for fast tapping
+    audio.cancelCurrentAudio()
     
     // Handle matched cards differently - they should speak "X som word" when clicked
     if (clickedCard.isMatched && gameType === 'letters') {
@@ -337,8 +384,7 @@ const MemoryGame: React.FC = () => {
           nextAction: () => {
             teacher.wave()
           },
-          autoAdvanceDelay: 500, // Quick transition for matches
-          voiceType: 'primary'
+          autoAdvanceDelay: 500 // Quick transition for matches
         })
 
         // Check if game is complete (all 20 pairs found)
@@ -352,8 +398,7 @@ const MemoryGame: React.FC = () => {
               restartGame()
             },
             completionMessage: DANISH_PHRASES.completion.memoryGameSuccess,
-            autoResetDelay: 3000,
-            voiceType: 'primary'
+            autoResetDelay: 3000
           })
         }
 
@@ -396,7 +441,7 @@ const MemoryGame: React.FC = () => {
     // Critical iOS fix: Update user interaction timestamp BEFORE audio call
     audio.updateUserInteraction()
     
-    if (!entryAudioComplete) return
+    if (!gameReady) return
     
     const message = gameType === 'letters' 
       ? 'Find ens bogstaver ved at klikke på kortene'
@@ -464,7 +509,7 @@ const MemoryGame: React.FC = () => {
           />
           <AlphabetRepeatButton
             onClick={repeatInstructions}
-            disabled={!entryAudioComplete}
+            disabled={false}
             size="small"
             label="🎵 Hör igen"
           />
@@ -514,7 +559,7 @@ const MemoryGame: React.FC = () => {
               }
             }
           }}>
-            {entryAudioComplete && cards.length > 0 ? cards.map((card, index) => (
+            {gameReady && cards.length > 0 ? cards.map((card, index) => (
               <motion.div
                 key={card.id}
                 initial={{ opacity: 0, scale: 0.8 }}

@@ -21,10 +21,10 @@ import LottieCharacter, { useCharacterState } from '../common/LottieCharacter'
 import CelebrationEffect, { useCelebration } from '../common/CelebrationEffect'
 import { MathScoreChip } from '../common/ScoreChip'
 import { MathRepeatButton } from '../common/RepeatButton'
-import { useGameEntryAudio } from '../../hooks/useGameEntryAudio'
-import { useGameAudioSetup } from '../../hooks/useGameAudioSetup'
 import { useGameState } from '../../hooks/useGameState'
-import { useAudio } from '../../hooks/useAudio'
+import { isIOS } from '../../utils/deviceDetection'
+// Simplified audio system
+import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 
 
 const AdditionGame: React.FC = () => {
@@ -34,8 +34,14 @@ const AdditionGame: React.FC = () => {
   const [correctAnswer, setCorrectAnswer] = useState<number | null>(null)
   const [options, setOptions] = useState<number[]>([])
     
-  // Centralized audio system - replaces individual isPlaying state
-  const audio = useAudio({ componentId: 'AdditionGame', stopOnUnmount: false })
+  // Simplified audio system
+  const audio = useSimplifiedAudioHook({ 
+    componentId: 'AdditionGame',
+    autoInitialize: false
+  })
+  const [gameReady, setGameReady] = useState(false)
+  const [audioInitialized, setAudioInitialized] = useState(false)
+  const hasInitialized = useRef(false)
   
   // Centralized game state management
   const { score, incrementScore, isScoreNarrating, handleScoreClick } = useGameState()
@@ -47,25 +53,28 @@ const AdditionGame: React.FC = () => {
   const mathTeacher = useCharacterState('wave')
   const { showCelebration, celebrationIntensity, celebrate, stopCelebration } = useCelebration()
   
-  // Centralized entry audio
-  useGameEntryAudio({ gameType: 'addition' })
+  // Production logging - only essential errors
+  const logError = (message: string, data?: any) => {
+    if (message.includes('Error') || message.includes('error')) {
+      console.error(`🎵 AdditionGame: ${message}`, data)
+    }
+  }
 
   useEffect(() => {
+    // Prevent duplicate initialization with race condition guard
+    if (hasInitialized.current) return
+    hasInitialized.current = true
+    
     // Initialize math teacher character
     mathTeacher.setCharacter('fox')
     mathTeacher.wave()
-  }, [])
-
-  // Forward declaration for useGameAudioSetup to avoid hoisting issues
-  const generateNewProblemRef = useRef<(() => void) | null>(null)
-  
-  // Use centralized game audio setup hook
-  const { ready: entryAudioComplete } = useGameAudioSetup('addition', () => {
-    generateNewProblemRef.current?.()
-  })
-
-  useEffect(() => {
-    // Cleanup function for timeouts - audio cleanup handled by useAudio hook
+    
+    // Check if audio is ready
+    if (audio.isAudioReady) {
+      setAudioInitialized(true)
+      playWelcomeAndStart()
+    }
+    
     return () => {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current)
@@ -73,6 +82,36 @@ const AdditionGame: React.FC = () => {
       }
     }
   }, [])
+  
+  // Monitor audio readiness - only if not already initialized
+  useEffect(() => {
+    if (audio.isAudioReady && !audioInitialized && !hasInitialized.current) {
+      hasInitialized.current = true
+      setAudioInitialized(true)
+      playWelcomeAndStart()
+    }
+  }, [audio.isAudioReady, audioInitialized])
+
+  // Play welcome message and start game
+  const playWelcomeAndStart = async () => {
+    try {
+      // Play the welcome message
+      await audio.playGameWelcome('addition')
+      
+      // iOS-optimized delay - increased to prevent audio overlap
+      const delay = isIOS() ? 1000 : 1500
+      setTimeout(() => {
+        setGameReady(true)
+        generateNewProblem()
+      }, delay)
+    } catch (error) {
+      logError('Error playing welcome', { error: error?.toString() })
+      // Still start the game even if audio fails
+      setGameReady(true)
+      generateNewProblem()
+    }
+  }
+
 
   // This problematic useEffect has been removed to prevent infinite loops
   // Audio is now handled by the centralized task-based game pattern
@@ -101,62 +140,121 @@ const AdditionGame: React.FC = () => {
     
     setOptions(Array.from(answerOptions).sort(() => Math.random() - 0.5))
     
-    // Schedule delayed audio for the problem
+    // Clear any existing timeout
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current)
+      timeoutRef.current = null
+    }
+    
+    // iOS-optimized delay
+    const delay = isIOS() ? 100 : 500
+    
     // Schedule delayed audio for the problem
     timeoutRef.current = setTimeout(() => {
       speakProblem(firstNum, secondNum)
-    }, 800)
+    }, delay)
   }
-  
-  // Assign function to ref for useGameAudioSetup
-  useEffect(() => {
-    generateNewProblemRef.current = generateNewProblem
-  }, [generateNewProblem])
 
   const speakProblem = async (a: number, b: number) => {
-    if (audio.isPlaying) return
-    
     try {
+      // Update user interaction timestamp before playing (iOS fix)
+      audio.updateUserInteraction()
       await audio.speakAdditionProblem(a, b, 'primary')
     } catch (error: any) {
-      console.error('Error speaking problem:', error)
+      logError('Error speaking problem', {
+        num1: a,
+        num2: b,
+        error: error?.toString()
+      })
     }
   }
 
   const handleAnswerClick = async (selectedAnswer: number) => {
+    if (correctAnswer === null) return
+    
+    const clickTime = Date.now()
+    console.log(`🎵 AdditionGame: Answer clicked at ${clickTime} - ${selectedAnswer}`)
+    
     // Critical iOS fix: Update user interaction timestamp BEFORE audio call
     audio.updateUserInteraction()
     
-    if (audio.isPlaying || correctAnswer === null) return
+    // Always cancel current audio for fast tapping
+    console.log(`🎵 AdditionGame: Cancelling current audio for immediate response`)
+    audio.cancelCurrentAudio()
     
     const isCorrect = selectedAnswer === correctAnswer
     
+    // FIRST: Play the number immediately for fast feedback
     try {
-      // Use unified game result handler
-      await audio.handleCompleteGameResult({
-        isCorrect,
-        character: mathTeacher,
-        celebrate,
-        stopCelebration,
-        incrementScore,
-        currentScore: score,
-        nextAction: isCorrect ? generateNewProblem : () => {
-          mathTeacher.think()
-        },
-        correctAnswer: isCorrect ? undefined : correctAnswer,
-        autoAdvanceDelay: 3000
-      })
-    } catch (error: any) {
-      console.error('Error in unified game result handler:', error)
+      const audioStartTime = Date.now()
+      console.log(`🎵 AdditionGame: Starting number audio at ${audioStartTime} (${audioStartTime - clickTime}ms after click) - ${selectedAnswer}`)
+      
+      await audio.speakNumber(selectedAnswer)
+      
+      const audioEndTime = Date.now()
+      console.log(`🎵 AdditionGame: Number audio completed at ${audioEndTime} (${audioEndTime - audioStartTime}ms duration) - ${selectedAnswer}`)
+    } catch (error) {
+      console.log(`🎵 AdditionGame: Error playing number audio:`, error)
     }
+    
+    // IMMEDIATELY: Start visual celebration effects if correct
+    if (isCorrect) {
+      incrementScore()
+      celebrate() // Start celebration visual immediately
+      mathTeacher.wave()
+    } else {
+      mathTeacher.think()
+    }
+    
+    // THEN: Play celebration audio after a very short delay
+    setTimeout(async () => {
+      try {
+        // Just play the audio feedback, visuals already started
+        await audio.announceGameResult(isCorrect)
+        
+        // Auto-advance to next question after celebration
+        setTimeout(() => {
+          if (isCorrect) {
+            stopCelebration() // Stop celebration after 2 seconds
+            generateNewProblem()
+          }
+        }, isIOS() ? 1500 : 2000) // 2 second celebration duration
+        
+      } catch (error: any) {
+        console.error('Error in game result audio:', error)
+        logError('Error in game result audio', {
+          selectedAnswer,
+          correctAnswer,
+          isCorrect,
+          error: error?.toString()
+        })
+      }
+    }, 150) // Very short delay between number audio and celebration audio
   }
 
-  const repeatProblem = () => {
+  const repeatProblem = async () => {
+    if (num1 === null || num2 === null) return
+    
+    const clickTime = Date.now()
+    console.log(`🎵 AdditionGame: Repeat button clicked at ${clickTime}`)
+    
     // Critical iOS fix: Update user interaction timestamp BEFORE audio call
     audio.updateUserInteraction()
     
-    if (num1 !== null && num2 !== null && !audio.isPlaying) {
-      speakProblem(num1, num2)
+    // Always cancel current audio for fast tapping
+    console.log(`🎵 AdditionGame: Cancelling current audio for immediate repeat`)
+    audio.cancelCurrentAudio()
+    
+    try {
+      const audioStartTime = Date.now()
+      console.log(`🎵 AdditionGame: Starting repeat audio at ${audioStartTime} (${audioStartTime - clickTime}ms after click)`)
+      
+      await speakProblem(num1, num2)
+      
+      const audioEndTime = Date.now()
+      console.log(`🎵 AdditionGame: Repeat audio completed at ${audioEndTime} (${audioEndTime - audioStartTime}ms duration)`)
+    } catch (error) {
+      console.error('🎵 AdditionGame: Error repeating problem:', error)
     }
   }
 
@@ -243,7 +341,7 @@ const AdditionGame: React.FC = () => {
         </Box>
 
         {/* Problem Display - Compact */}
-        {entryAudioComplete && num1 !== null && num2 !== null && options.length > 0 && (
+        {gameReady && num1 !== null && num2 !== null && options.length > 0 && (
           <Box sx={{ textAlign: 'center', mb: { xs: 2, md: 3 }, flex: '0 0 auto' }}>
             <Paper 
               elevation={8}
@@ -316,7 +414,7 @@ const AdditionGame: React.FC = () => {
 
             <MathRepeatButton
               onClick={repeatProblem}
-              disabled={!entryAudioComplete || audio.isPlaying || num1 === null || num2 === null}
+              disabled={false}
             />
           </Paper>
         </Box>
@@ -359,7 +457,7 @@ const AdditionGame: React.FC = () => {
               }
             }}
           >
-          {entryAudioComplete && options.length > 0 ? options.map((option, index) => (
+          {gameReady && options.length > 0 ? options.map((option, index) => (
             <motion.div
               key={`${option}-${index}`}
               initial={{ opacity: 0, scale: 0.8 }}

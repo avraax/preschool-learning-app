@@ -15,58 +15,83 @@ import {
   ArrowBack,
   School
 } from '@mui/icons-material'
-import { useAudio } from '../../hooks/useAudio'
 import { categoryThemes } from '../../config/categoryThemes'
 import LearningGrid from '../common/LearningGrid'
-import { useGameEntryAudio } from '../../hooks/useGameEntryAudio'
-import { entryAudioManager } from '../../utils/entryAudioManager'
 import { MathRepeatButton } from '../common/RepeatButton'
+import { isIOS } from '../../utils/deviceDetection'
+// Simplified audio system
+import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 
 
 const NumberLearning: React.FC = () => {
   const navigate = useNavigate()
   const [currentIndex, setCurrentIndex] = useState(0)
-  // Centralized audio system
-  const audio = useAudio({ componentId: 'NumberLearning' })
-  const [entryAudioComplete, setEntryAudioComplete] = useState(false)
+  // Simplified audio system
+  const audio = useSimplifiedAudioHook({ 
+    componentId: 'NumberLearning',
+    autoInitialize: false
+  })
+  const [gameReady, setGameReady] = useState(false)
+  const [audioInitialized, setAudioInitialized] = useState(false)
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const hasInitialized = useRef(false)
   
-  // Centralized entry audio
-  useGameEntryAudio({ gameType: 'numberlearning' })
-
   // Generate numbers 1-100
   const numbers = Array.from({ length: 100 }, (_, i) => i + 1)
-
-  useEffect(() => {
-    // Register callback to enable interactions after entry audio completes
-    entryAudioManager.onComplete('numberlearning', () => {
-      setEntryAudioComplete(true)
-    })
-  }, [])
-
-  useEffect(() => {
-    // Stop audio immediately when navigating away
-    const handleBeforeUnload = () => {
-      audio.stopAll()
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current)
-      }
+  
+  // Production logging - only essential errors
+  const logError = (message: string, data?: any) => {
+    if (message.includes('Error') || message.includes('error')) {
+      console.error(`🎵 NumberLearning: ${message}`, data)
     }
+  }
 
-    // Listen for navigation events
-    window.addEventListener('beforeunload', handleBeforeUnload)
-    window.addEventListener('pagehide', handleBeforeUnload)
+  useEffect(() => {
+    // Prevent duplicate initialization with race condition guard
+    if (hasInitialized.current) return
+    hasInitialized.current = true
     
-    // Cleanup function to stop all audio and timeouts when component unmounts
+    // Check if audio is ready
+    if (audio.isAudioReady) {
+      setAudioInitialized(true)
+      playWelcomeAndStart()
+    }
+    
     return () => {
-      audio.stopAll()
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current)
+        timeoutRef.current = null
       }
-      window.removeEventListener('beforeunload', handleBeforeUnload)
-      window.removeEventListener('pagehide', handleBeforeUnload)
     }
   }, [])
+  
+  // Monitor audio readiness - only if not already initialized
+  useEffect(() => {
+    if (audio.isAudioReady && !audioInitialized && !hasInitialized.current) {
+      hasInitialized.current = true
+      setAudioInitialized(true)
+      playWelcomeAndStart()
+    }
+  }, [audio.isAudioReady, audioInitialized])
+
+  // Play welcome message and start learning
+  const playWelcomeAndStart = async () => {
+    try {
+      // Play the welcome message
+      await audio.playGameWelcome('numberlearning')
+      
+      // iOS-optimized delay - increased to prevent audio overlap
+      const delay = isIOS() ? 1000 : 1500
+      setTimeout(() => {
+        setGameReady(true)
+      }, delay)
+    } catch (error) {
+      logError('Error playing welcome', { error: error?.toString() })
+      // Still start the game even if audio fails
+      setGameReady(true)
+    }
+  }
+
 
 
 
@@ -75,8 +100,12 @@ const NumberLearning: React.FC = () => {
     // Critical iOS fix: Update user interaction timestamp BEFORE audio call
     audio.updateUserInteraction()
     
+    if (audio.isPlaying) {
+      // Cancel current audio and immediately play new number
+      audio.cancelCurrentAudio()
+    }
+    
     setCurrentIndex(index)
-    audio.stopAll()
     
     const number = numbers[index]
     
@@ -84,15 +113,18 @@ const NumberLearning: React.FC = () => {
       // Use faster speed for number counting (1.2 instead of default 0.8)
       await audio.speakNumber(number, 1.2)
     } catch (error) {
-      console.error('Error speaking number:', error)
+      logError('Error speaking number', {
+        number,
+        error: error?.toString()
+      })
     }
   }
 
   // Repeat instructions for the current number
-  const repeatInstructions = () => {
-    if (!entryAudioComplete) return
+  const repeatInstructions = async () => {
+    if (!gameReady) return
     
-    goToNumber(currentIndex)
+    await goToNumber(currentIndex)
   }
 
   const progress = ((currentIndex + 1) / numbers.length) * 100
@@ -126,10 +158,14 @@ const NumberLearning: React.FC = () => {
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <Typography 
               variant="body2" 
-              onClick={() => {
+              onClick={async () => {
                 // Critical iOS fix: Update user interaction timestamp BEFORE audio call
                 audio.updateUserInteraction()
-                audio.announcePosition(currentIndex, numbers.length, 'tal').catch(console.error)
+                try {
+                  await audio.announcePosition(currentIndex, numbers.length, 'tal')
+                } catch (error) {
+                  logError('Error announcing position', { error: error?.toString() })
+                }
               }}
               sx={{ 
                 color: 'secondary.dark', 
@@ -189,7 +225,7 @@ const NumberLearning: React.FC = () => {
         <Box sx={{ textAlign: 'center', mb: { xs: 1, md: 1.5 } }}>
           <MathRepeatButton 
             onClick={repeatInstructions}
-            disabled={!entryAudioComplete || audio.isPlaying}
+            disabled={!gameReady || audio.isPlaying}
             label="🎵 Hør igen"
           />
         </Box>
@@ -235,7 +271,7 @@ const NumberLearning: React.FC = () => {
           items={numbers}
           currentIndex={currentIndex}
           onItemClick={goToNumber}
-          disabled={!entryAudioComplete}
+          disabled={!gameReady}
         />
       </Container>
     </Box>

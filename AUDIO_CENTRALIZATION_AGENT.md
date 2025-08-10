@@ -187,7 +187,6 @@ After implementing significant improvements:
 ### Consolidation Targets (Transform these)
 - All files in `src/components/` - Remove local audio
 - Game components in `src/components/alphabet/`, `math/`, `farver/`
-- Demo games in `src/components/demo/games/`
 - Any new components added to the system
 
 ## Success Metrics

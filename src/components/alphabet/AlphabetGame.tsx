@@ -20,40 +20,13 @@ import CelebrationEffect, { useCelebration } from '../common/CelebrationEffect'
 import { AlphabetScoreChip } from '../common/ScoreChip'
 import { AlphabetRepeatButton } from '../common/RepeatButton'
 import { useGameState } from '../../hooks/useGameState'
-import { useAudio } from '../../hooks/useAudio'
-import { entryAudioManager } from '../../utils/entryAudioManager'
-import { audioDebugSession } from '../../utils/remoteConsole'
+// Simplified audio system
+import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 
-// Enhanced logging - always log to console, also audioDebugSession if active
-const logAlphabetGameDebug = (message: string, data?: any) => {
-  // Always log to console for comprehensive debugging
-  console.log(`🎵 AlphabetGame: ${message}`, data)
-  
-  // Also log to audioDebugSession if it's active
-  if (audioDebugSession.isSessionActive()) {
-    const isIOSDevice = isIOS()
-    const isPWA = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone
-    const audioContextState = (window as any).AudioContext ? (() => {
-      try {
-        const ctx = new (window.AudioContext || (window as any).webkitAudioContext)()
-        const state = ctx.state
-        ctx.close()
-        return state
-      } catch {
-        return 'unavailable'
-      }
-    })() : 'unavailable'
-    
-    audioDebugSession.addLog('ALPHABET_GAME', {
-      message,
-      data,
-      context: {
-        isIOS: isIOSDevice,
-        isPWA,
-        audioContextState,
-        timestamp: new Date().toISOString()
-      }
-    })
+// Production logging - only essential errors
+const logError = (message: string, data?: any) => {
+  if (message.includes('Error') || message.includes('error')) {
+    console.error(`🎵 AlphabetGame: ${message}`, data)
   }
 }
 
@@ -65,24 +38,16 @@ const AlphabetGame: React.FC = () => {
   const [currentLetter, setCurrentLetter] = useState<string>('')
   const [showOptions, setShowOptions] = useState<string[]>([])
   
-  // Initialize component - individual error logging only (no sessions)
-  useEffect(() => {
-    const isPWA = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone
-    if (isIOS() && isPWA) {
-      logAlphabetGameDebug('AlphabetGame component initialized', {
-        userAgent: navigator.userAgent,
-        speechSynthesisVoices: window.speechSynthesis?.getVoices?.()?.length || 0,
-        currentLetter,
-        showOptionsLength: showOptions.length
-      })
-    }
-  }, [])
+  // Component initialization - no logging needed in production
   
-  // Centralized audio system - consistent with working MathGame
-  const audio = useAudio({ componentId: 'AlphabetGame', stopOnUnmount: false })
+  // Simplified audio system
+  const audio = useSimplifiedAudioHook({ 
+    componentId: 'AlphabetGame',
+    autoInitialize: false
+  })
   
   // Centralized game state management
-  const { score, incrementScore, isScoreNarrating, handleScoreClick } = useGameState()
+  const { score, incrementScore, handleScoreClick } = useGameState()
   
   // Character and celebration management
   const teacherCharacter = useCharacterState('wave')
@@ -92,51 +57,26 @@ const AlphabetGame: React.FC = () => {
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
   
   
-  // Forward declaration for entry audio completion (same pattern as MathGame)
-  const generateNewQuestionRef = useRef<(() => void) | null>(null)
-  const [entryAudioComplete, setEntryAudioComplete] = useState(false)
+  const [gameReady, setGameReady] = useState(false)
+  const [audioInitialized, setAudioInitialized] = useState(false)
+  const hasInitialized = useRef(false)
   
   useEffect(() => {
-    logAlphabetGameDebug('Main useEffect running - setting up game initialization')
+    // Prevent duplicate initialization with race condition guard
+    if (hasInitialized.current) return
+    hasInitialized.current = true
     
     // Initial teacher greeting
     teacherCharacter.setCharacter('owl')
     teacherCharacter.wave()
     
-    // Set up entry audio completion callback (direct pattern like MathGame)
-    const handleEntryComplete = () => {
-      logAlphabetGameDebug('Entry audio completed, enabling interactions')
-      setEntryAudioComplete(true)
-      // Delay before generating first question to ensure proper audio sequencing
-      setTimeout(() => {
-        logAlphabetGameDebug('Calling generateNewQuestion after entry audio delay')
-        generateNewQuestionRef.current?.()
-      }, 500)
+    // Check if audio is ready
+    if (audio.isAudioReady) {
+      setAudioInitialized(true)
+      // Play welcome message and then generate first question
+      playWelcomeAndStart()
     }
     
-    logAlphabetGameDebug('Registering entry audio completion callback')
-    entryAudioManager.onComplete('alphabet', handleEntryComplete)
-    
-    // Schedule entry audio - no delay for iOS PWA to stay within user interaction window
-    const isPWA = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone
-    const delay = isIOS() && isPWA ? 0 : 1000
-    logAlphabetGameDebug(`Scheduling entry audio with ${delay}ms delay`, {
-      isIOS: isIOS(),
-      isPWA,
-      reason: isIOS() && isPWA ? 'iOS PWA requires immediate audio' : 'Standard delay'
-    })
-    entryAudioManager.scheduleEntryAudio('alphabet', delay)
-    
-    
-    // Cleanup function
-    return () => {
-      logAlphabetGameDebug('Cleaning up entry audio manager callback')
-      entryAudioManager.removeCallback('alphabet', handleEntryComplete)
-    }
-  }, [])
-  
-  useEffect(() => {
-    // Cleanup function for timeouts - audio cleanup handled by useAudio hook
     return () => {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current)
@@ -144,23 +84,44 @@ const AlphabetGame: React.FC = () => {
       }
     }
   }, [])
+  
+  // Monitor audio readiness - only if not already initialized
+  useEffect(() => {
+    if (audio.isAudioReady && !audioInitialized && !hasInitialized.current) {
+      hasInitialized.current = true
+      setAudioInitialized(true)
+      playWelcomeAndStart()
+    }
+  }, [audio.isAudioReady, audioInitialized])
 
-  // Generate new question - stable useCallback to prevent infinite loops
+  // Play welcome message and start game
+  const playWelcomeAndStart = async () => {
+    try {
+      // Play the welcome message and wait for it to complete
+      await audio.playGameWelcome('alphabet')
+      
+      // Additional delay after welcome audio completes to ensure clean transition
+      const additionalDelay = isIOS() ? 1500 : 2000  // Even longer delay for cleaner audio experience
+      setTimeout(() => {
+        setGameReady(true)
+        generateNewQuestion()
+      }, additionalDelay)
+    } catch (error) {
+      logError('Error playing welcome', { error: error?.toString() })
+      // Still start the game even if audio fails
+      setGameReady(true)
+      generateNewQuestion()
+    }
+  }
+  
+  // Generate new question
   const generateNewQuestion = useCallback(() => {
-    logAlphabetGameDebug('generateNewQuestion called', {
-      previousLetter: currentLetter,
-      entryAudioComplete,
-      audioIsPlaying: audio.isPlaying,
-      timestamp: Date.now()
-    })
+    // Generating new question
     
     // Pick a random letter from full Danish alphabet
     const letter = DANISH_ALPHABET[Math.floor(Math.random() * DANISH_ALPHABET.length)]
     
-    logAlphabetGameDebug('Generated new letter', { 
-      letter,
-      letterIndex: DANISH_ALPHABET.indexOf(letter)
-    })
+    // Generated new letter
     
     setCurrentLetter(letter)
     
@@ -176,11 +137,7 @@ const AlphabetGame: React.FC = () => {
     
     const shuffledOptions = options.sort(() => Math.random() - 0.5)
     
-    logAlphabetGameDebug('Generated quiz options', { 
-      correctLetter: letter,
-      allOptions: shuffledOptions,
-      correctPosition: shuffledOptions.indexOf(letter)
-    })
+    // Generated quiz options
     
     setShowOptions(shuffledOptions)
     
@@ -190,132 +147,119 @@ const AlphabetGame: React.FC = () => {
       timeoutRef.current = null
     }
     
-    // Schedule delayed audio (same pattern as MathGame)
-    logAlphabetGameDebug('Scheduling quiz prompt audio', { 
-      letter,
-      delay: 500,
-      prompt: DANISH_PHRASES.gamePrompts.findLetter(letter)
-    })
+    // Shorter delay for quiz prompt since welcome audio has already completed with buffer
+    const delay = isIOS() ? 200 : 300  // Even shorter delay for better user experience
     
+    // Schedule delayed audio
     timeoutRef.current = setTimeout(async () => {
       try {
-        logAlphabetGameDebug('About to play quiz prompt audio', { letter })
-        await audio.speakQuizPromptWithRepeat(DANISH_PHRASES.gamePrompts.findLetter(letter), letter)
-        logAlphabetGameDebug('Quiz prompt audio completed successfully', { letter })
+        // Update user interaction timestamp before playing (iOS fix)
+        audio.updateUserInteraction()
+        await audio.speakQuizPromptWithRepeat(
+          DANISH_PHRASES.gamePrompts.findLetter(letter), 
+          letter
+        )
       } catch (error) {
-        logAlphabetGameDebug('Error playing question audio', { 
+        logError('Error playing quiz prompt', { 
           letter,
-          error: error?.toString(),
-          errorName: error?.constructor?.name,
-          errorMessage: (error as any)?.message
+          error: error?.toString()
         })
-        console.error('🎯 AlphabetGame: Error playing question audio:', error)
       } finally {
-        timeoutRef.current = null
+        if (timeoutRef.current) {
+          timeoutRef.current = null
+        }
       }
-    }, 500)
+    }, delay)
     
-  }, [audio, currentLetter, entryAudioComplete]) // Stable dependency - only recreate if audio changes
-  
-  // Assign function to ref for useGameAudioSetup
-  useEffect(() => {
-    generateNewQuestionRef.current = generateNewQuestion
-  }, [generateNewQuestion])
+  }, [audio]) // Stable dependency - only recreate if audio changes
 
   const handleLetterClick = async (selectedLetter: string) => {
-    const clickDebugInfo = {
-      selectedLetter,
-      currentLetter,
-      isCorrect: selectedLetter === currentLetter,
-      audioIsPlaying: audio.isPlaying,
-      score,
-      timestamp: Date.now(),
-      // Additional debugging info
-      isIOS: isIOS(),
-      isPWA: window.matchMedia('(display-mode: standalone)').matches,
-      documentFocus: document.hasFocus(),
-      documentVisible: !document.hidden,
-      userAgent: navigator.userAgent.substring(0, 100),
-      timeSincePageLoad: performance.now(),
-      audioContextAvailable: typeof window.AudioContext !== 'undefined',
-      speechSynthesisAvailable: typeof window.speechSynthesis !== 'undefined',
-      entryAudioComplete
+    // Only prevent clicks if game isn't ready
+    if (!gameReady) {
+      console.log(`🎵 AlphabetGame: Blocked click - gameReady: ${gameReady}`)
+      return
     }
     
-    logAlphabetGameDebug('handleLetterClick called', clickDebugInfo)
-    console.log('🎵 AlphabetGame: LETTER CLICK ATTEMPT', clickDebugInfo)
+    const clickTime = Date.now()
+    console.log(`🎵 AlphabetGame: Letter clicked at ${clickTime} - ${selectedLetter}`)
     
     // Critical iOS fix: Update user interaction timestamp BEFORE audio call
-    // This ensures iOS Safari PWA recognizes the button click as a valid user interaction
     audio.updateUserInteraction()
-    logAlphabetGameDebug('Updated user interaction for iOS audio permission')
     
-    if (audio.isPlaying) {
-      logAlphabetGameDebug('Audio is playing, ignoring click')
-      return
+    // Always cancel current audio for fast tapping
+    console.log(`🎵 AlphabetGame: Cancelling current audio for immediate letter pronunciation`)
+    audio.cancelCurrentAudio()
+    
+    // FIRST: Play the clicked letter immediately for fast feedback
+    try {
+      const audioStartTime = Date.now()
+      console.log(`🎵 AlphabetGame: Starting letter audio at ${audioStartTime} (${audioStartTime - clickTime}ms after click) - ${selectedLetter}`)
+      
+      await audio.speakLetter(selectedLetter)
+      
+      const audioEndTime = Date.now()
+      console.log(`🎵 AlphabetGame: Letter audio completed at ${audioEndTime} (${audioEndTime - audioStartTime}ms duration) - ${selectedLetter}`)
+    } catch (error) {
+      console.log(`🎵 AlphabetGame: Error playing letter audio:`, error)
     }
     
     const isCorrect = selectedLetter === currentLetter
     
-    try {
-      logAlphabetGameDebug('About to call handleCompleteGameResult', {
-        isCorrect,
-        currentScore: score,
-        autoAdvanceDelay: isIOS() ? 1000 : 3000
-      })
-      
-      // Use unified game result handler
-      await audio.handleCompleteGameResult({
-        isCorrect,
-        character: teacherCharacter,
-        celebrate,
-        stopCelebration,
-        incrementScore,
-        currentScore: score,
-        nextAction: isCorrect ? () => {
-          logAlphabetGameDebug('Correct answer - generating new question')
-          generateNewQuestion()
-        } : () => {
-          logAlphabetGameDebug('Incorrect answer - character thinking')
-          teacherCharacter.think()
-        },
-        autoAdvanceDelay: isIOS() ? 1000 : 3000,
-        isIOS: isIOS()
-      })
-      
-      logAlphabetGameDebug('handleCompleteGameResult completed successfully')
-      console.log('🎵 AlphabetGame: LETTER CLICK AUDIO COMPLETED', { selectedLetter, isCorrect })
-      
-    } catch (error) {
-      const errorDetails = {
-        selectedLetter,
-        currentLetter,
-        isCorrect,
-        error: error?.toString(),
-        errorName: error?.constructor?.name,
-        errorMessage: (error as any)?.message,
-        errorStack: (error as any)?.stack?.split('\n').slice(0, 3).join(' | '),
-        isIOS: isIOS(),
-        isPWA: window.matchMedia('(display-mode: standalone)').matches,
-        timestamp: Date.now()
-      }
-      logAlphabetGameDebug('Error in handleCompleteGameResult', errorDetails)
-      console.error('🎵 AlphabetGame: LETTER CLICK FAILED', errorDetails)
+    // IMMEDIATELY: Start visual celebration effects if correct
+    if (isCorrect) {
+      incrementScore()
+      celebrate() // Start celebration visual immediately
+      teacherCharacter.wave()
+    } else {
+      teacherCharacter.think()
     }
+    
+    // THEN: Play celebration audio after a very short delay
+    setTimeout(async () => {
+      try {
+        // Just play the audio feedback, visuals already started
+        await audio.announceGameResult(isCorrect)
+        
+        // Auto-advance to next question after celebration
+        setTimeout(() => {
+          if (isCorrect) {
+            stopCelebration() // Stop celebration after 2 seconds
+            generateNewQuestion()
+          }
+        }, isIOS() ? 1500 : 2000) // 2 second celebration duration
+        
+      } catch (error) {
+        logError('Error in game result audio', {
+          selectedLetter,
+          currentLetter,
+          isCorrect,
+          error: error?.toString()
+        })
+      }
+    }, 150) // Very short delay between letter audio and celebration audio
   }
 
   const repeatLetter = async () => {
+    const clickTime = Date.now()
+    console.log(`🎵 AlphabetGame: Repeat button clicked at ${clickTime}`)
+    
     // Critical iOS fix: Update user interaction timestamp BEFORE audio call
     audio.updateUserInteraction()
     
-    if (audio.isPlaying) {
-      return
-    }
+    // Always cancel current audio for fast tapping
+    console.log(`🎵 AlphabetGame: Cancelling current audio for immediate repeat`)
+    audio.cancelCurrentAudio()
     
     try {
+      const audioStartTime = Date.now()
+      console.log(`🎵 AlphabetGame: Starting repeat audio at ${audioStartTime} (${audioStartTime - clickTime}ms after click)`)
+      
       await audio.speakQuizPromptWithRepeat(DANISH_PHRASES.gamePrompts.findLetter(currentLetter), currentLetter)
+      
+      const audioEndTime = Date.now()
+      console.log(`🎵 AlphabetGame: Repeat audio completed at ${audioEndTime} (${audioEndTime - audioStartTime}ms duration)`)
     } catch (error) {
-      console.error('🎯 AlphabetGame: Error repeating letter:', error)
+      console.error('🎵 AlphabetGame: Error repeating letter:', error)
     }
   }
 
@@ -351,7 +295,7 @@ const AlphabetGame: React.FC = () => {
           
           <AlphabetScoreChip
             score={score}
-            disabled={isScoreNarrating}
+            disabled={false}
             onClick={handleScoreClick}
           />
         </Toolbar>
@@ -401,7 +345,7 @@ const AlphabetGame: React.FC = () => {
         <Box sx={{ textAlign: 'center', mb: { xs: 2, md: 3 }, flex: '0 0 auto' }}>
           <AlphabetRepeatButton
             onClick={repeatLetter}
-            disabled={!entryAudioComplete || audio.isPlaying}
+            disabled={false}
           />
         </Box>
 

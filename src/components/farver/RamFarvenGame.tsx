@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react'
 import { Box, Typography, Container } from '@mui/material'
 import { motion, AnimatePresence } from 'framer-motion'
 import { DndContext, DragEndEvent, DragStartEvent, closestCenter } from '@dnd-kit/core'
-import { useAudio } from '../../hooks/useAudio'
 import { categoryThemes } from '../../config/categoryThemes'
 import { ColorScoreChip } from '../common/ScoreChip'
 import { DraggableItem } from '../common/dnd/DraggableItem'
@@ -10,10 +9,11 @@ import { DroppableZone } from '../common/dnd/DroppableZone'
 import { useCharacterState } from '../common/LottieCharacter'
 import CelebrationEffect, { useCelebration } from '../common/CelebrationEffect'
 import { ColorRepeatButton } from '../common/RepeatButton'
-import { useGameEntryAudio } from '../../hooks/useGameEntryAudio'
 import { useGameState } from '../../hooks/useGameState'
-import { entryAudioManager } from '../../utils/entryAudioManager'
 import GameHeader from '../common/GameHeader'
+import { isIOS } from '../../utils/deviceDetection'
+// Simplified audio system
+import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 
 // Game interfaces
 interface ColorDroplet {
@@ -47,10 +47,14 @@ const RamFarvenGame: React.FC = () => {
     mixingZone: [],
     attempts: 0
   })
-  // Centralized audio system
-  const audio = useAudio({ componentId: 'RamFarvenGame' })
+  // Simplified audio system
+  const audio = useSimplifiedAudioHook({ 
+    componentId: 'RamFarvenGame',
+    autoInitialize: false
+  })
   const [_activeId, setActiveId] = useState<string | null>(null)
-  const [entryAudioComplete, setEntryAudioComplete] = useState(false)
+  const [gameReady, setGameReady] = useState(false)
+  const [audioInitialized, setAudioInitialized] = useState(false)
   
   // Centralized game state management
   const { score, incrementScore, isScoreNarrating, handleScoreClick } = useGameState()
@@ -60,8 +64,12 @@ const RamFarvenGame: React.FC = () => {
   const colorTeacher = useCharacterState('wave')
   const { showCelebration, celebrationIntensity, celebrate, stopCelebration } = useCelebration()
   
-  // Centralized entry audio
-  useGameEntryAudio({ gameType: 'ramfarven' })
+  // Production logging - only essential errors
+  const logError = (message: string, data?: any) => {
+    if (message.includes('Error') || message.includes('error')) {
+      console.error(`🎵 RamFarvenGame: ${message}`, data)
+    }
+  }
 
   // Primary colors for mixing (5 colors for gameplay options)
   const primaryColors: ColorDroplet[] = [
@@ -117,15 +125,41 @@ const RamFarvenGame: React.FC = () => {
     colorTeacher.setCharacter('bear')
     colorTeacher.wave()
     
-    // Register callback to start the game after entry audio completes
-    entryAudioManager.onComplete('ramfarven', () => {
-      setEntryAudioComplete(true)
-      // Add a small delay after entry audio before starting the game
-      setTimeout(() => {
-        initializeGame()
-      }, 500)
-    })
+    // Check if audio is ready
+    if (audio.isAudioReady) {
+      setAudioInitialized(true)
+      playWelcomeAndStart()
+    }
   }, [])
+  
+  // Monitor audio readiness - only if not already initialized
+  useEffect(() => {
+    if (audio.isAudioReady && !audioInitialized && !hasInitialized.current) {
+      hasInitialized.current = true
+      setAudioInitialized(true)
+      playWelcomeAndStart()
+    }
+  }, [audio.isAudioReady, audioInitialized])
+
+  // Play welcome message and start game
+  const playWelcomeAndStart = async () => {
+    try {
+      // Play the welcome message
+      await audio.playGameWelcome('ramfarven')
+      
+      // iOS-optimized delay - increased to prevent audio overlap
+      const delay = isIOS() ? 1000 : 1500
+      setTimeout(() => {
+        setGameReady(true)
+        initializeGame()
+      }, delay)
+    } catch (error) {
+      logError('Error playing welcome', { error: error?.toString() })
+      // Still start the game even if audio fails
+      setGameReady(true)
+      initializeGame()
+    }
+  }
 
   const initializeGame = () => {
     // Select random target color (different from current if exists)
@@ -146,27 +180,35 @@ const RamFarvenGame: React.FC = () => {
     })
 
     // Game-specific instruction (NOW after entry audio completes)
-    try {
-      audio.speakColorMixingInstructions(randomTarget.name)
-        .catch(() => {})
-    } catch (error) {
-      // Ignore audio errors
-    }
+    const instructionDelay = isIOS() ? 100 : 300
+    setTimeout(async () => {
+      try {
+        audio.updateUserInteraction()
+        await audio.speakColorMixingInstructions(randomTarget.name)
+      } catch (error) {
+        logError('Error speaking color mixing instructions', {
+          targetColor: randomTarget.name,
+          error: error?.toString()
+        })
+      }
+    }, instructionDelay)
   }
 
 
   // Repeat current game instructions
-  const repeatInstructions = () => {
+  const repeatInstructions = async () => {
     // Critical iOS fix: Update user interaction timestamp BEFORE audio call
     audio.updateUserInteraction()
     
-    if (!entryAudioComplete || !gameState.targetColor) return
+    if (!gameReady || !gameState.targetColor) return
     
     try {
-      audio.speakColorMixingInstructions(gameState.targetColor.name)
-        .catch(() => {})
+      await audio.speakColorMixingInstructions(gameState.targetColor.name)
     } catch (error) {
-      // Ignore audio errors
+      logError('Error repeating color mixing instructions', {
+        targetColor: gameState.targetColor.name,
+        error: error?.toString()
+      })
     }
   }
 
@@ -229,8 +271,7 @@ const RamFarvenGame: React.FC = () => {
           colorTeacher.point()
           initializeGame()
         },
-        autoAdvanceDelay: 3000,
-        voiceType: 'primary'
+        autoAdvanceDelay: 3000
       })
     } else {
       // Wrong combination - encourage
@@ -264,8 +305,7 @@ const RamFarvenGame: React.FC = () => {
           
           colorTeacher.think()
         },
-        autoAdvanceDelay: 0, // Immediate reset for wrong answers
-        voiceType: 'primary'
+        autoAdvanceDelay: 0 // Immediate reset for wrong answers
       })
     }
   }
@@ -333,7 +373,7 @@ const RamFarvenGame: React.FC = () => {
           <Box sx={{ textAlign: 'center', mb: { xs: 1, sm: 1.5, md: 2 }, flex: '0 0 auto' }}>
             <ColorRepeatButton 
               onClick={repeatInstructions}
-              disabled={!entryAudioComplete}
+              disabled={false}
               label="🎵 Hör igen"
             />
           </Box>
@@ -463,7 +503,7 @@ const RamFarvenGame: React.FC = () => {
                     >
                       <DraggableItem
                         id={color.id}
-                        disabled={!entryAudioComplete || color.isUsed}
+                        disabled={!gameReady || color.isUsed}
                         data={color}
                       >
                         <Box sx={{

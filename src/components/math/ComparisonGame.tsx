@@ -6,12 +6,12 @@ import { motion } from 'framer-motion'
 import LottieCharacter, { useCharacterState } from '../common/LottieCharacter'
 import CelebrationEffect, { useCelebration } from '../common/CelebrationEffect'
 import { MathScoreChip } from '../common/ScoreChip'
-import { useAudio } from '../../hooks/useAudio'
 import { categoryThemes } from '../../config/categoryThemes'
-import { useGameEntryAudio } from '../../hooks/useGameEntryAudio'
-import { useGameAudioSetup } from '../../hooks/useGameAudioSetup'
 import { MathRepeatButton } from '../common/RepeatButton'
 import { useGameState } from '../../hooks/useGameState'
+import { isIOS } from '../../utils/deviceDetection'
+// Simplified audio system
+import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 
 // Object types for visual counting
 const OBJECT_TYPES = [
@@ -43,8 +43,13 @@ const ComparisonGame: React.FC = () => {
   const [currentProblem, setCurrentProblem] = useState<ComparisonProblem | null>(null)
   const [selectedSymbol, setSelectedSymbol] = useState<string | null>(null)
   const [showFeedback, setShowFeedback] = useState(false)
-  // Centralized audio system
-  const audio = useAudio({ componentId: 'ComparisonGame' })
+  // Simplified audio system
+  const audio = useSimplifiedAudioHook({ 
+    componentId: 'ComparisonGame',
+    autoInitialize: false
+  })
+  const [audioInitialized, setAudioInitialized] = useState(false)
+  const hasInitialized = useRef(false)
     
   // Centralized game state management
   const { score, incrementScore, isScoreNarrating, handleScoreClick } = useGameState()
@@ -56,46 +61,62 @@ const ComparisonGame: React.FC = () => {
   const mathTeacher = useCharacterState('wave')
   const { showCelebration, celebrationIntensity, celebrate, stopCelebration } = useCelebration()
   
-  // Centralized entry audio
-  useGameEntryAudio({ gameType: 'comparison' })
-  
-  // Forward declaration for useGameAudioSetup to avoid hoisting issues
-  const generateNewProblemRef = useRef<(() => void) | null>(null)
-  
-  // Use centralized game audio setup hook
-  const { ready: entryAudioComplete } = useGameAudioSetup('comparison', () => {
-    generateNewProblemRef.current?.()
-  })
+  // Production logging - only essential errors
+  const logError = (message: string, data?: any) => {
+    if (message.includes('Error') || message.includes('error')) {
+      console.error(`🎵 ComparisonGame: ${message}`, data)
+    }
+  }
 
   useEffect(() => {
+    // Prevent duplicate initialization with race condition guard
+    if (hasInitialized.current) return
+    hasInitialized.current = true
+    
     // Initialize math teacher character
     mathTeacher.setCharacter('fox')
     mathTeacher.wave()
     
-    // Stop audio immediately when navigating away
-    const handleBeforeUnload = () => {
-      audio.stopAll()
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current)
-        timeoutRef.current = null
-      }
+    // Check if audio is ready
+    if (audio.isAudioReady) {
+      setAudioInitialized(true)
+      playWelcomeAndStart()
     }
-
-    // Listen for navigation events
-    window.addEventListener('beforeunload', handleBeforeUnload)
-    window.addEventListener('pagehide', handleBeforeUnload)
     
-    // Cleanup function
     return () => {
-      audio.stopAll()
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current)
         timeoutRef.current = null
       }
-      window.removeEventListener('beforeunload', handleBeforeUnload)
-      window.removeEventListener('pagehide', handleBeforeUnload)
     }
   }, [])
+  
+  // Monitor audio readiness - only if not already initialized
+  useEffect(() => {
+    if (audio.isAudioReady && !audioInitialized && !hasInitialized.current) {
+      hasInitialized.current = true
+      setAudioInitialized(true)
+      playWelcomeAndStart()
+    }
+  }, [audio.isAudioReady, audioInitialized])
+
+  // Play welcome message and start game
+  const playWelcomeAndStart = async () => {
+    try {
+      // Play the welcome message
+      await audio.playGameWelcome('comparison')
+      
+      // iOS-optimized delay - increased to prevent audio overlap
+      const delay = isIOS() ? 1000 : 1500
+      setTimeout(() => {
+        generateNewProblem()
+      }, delay)
+    } catch (error) {
+      logError('Error playing welcome', { error: error?.toString() })
+      // Still start the game even if audio fails
+      generateNewProblem()
+    }
+  }
 
   const generateNewProblem = () => {
     // Generate numbers 1-10 for age 4-6 appropriateness
@@ -154,22 +175,25 @@ const ComparisonGame: React.FC = () => {
     setSelectedSymbol(null)
     setShowFeedback(false)
     
-    // Schedule delayed audio for the problem
+    // Clear any existing timeout
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current)
+      timeoutRef.current = null
+    }
+    
+    // iOS-optimized delay
+    const delay = isIOS() ? 100 : 500
+    
     // Schedule delayed audio for the problem
     timeoutRef.current = setTimeout(() => {
       speakProblem(problem)
-    }, 1000)
+    }, delay)
   }
-  
-  // Assign function to ref for useGameAudioSetup
-  useEffect(() => {
-    generateNewProblemRef.current = generateNewProblem
-  }, [generateNewProblem])
 
   const speakProblem = async (problem: ComparisonProblem) => {
-    if (audio.isPlaying) return
-    
     try {
+      // Update user interaction timestamp before playing (iOS fix)
+      audio.updateUserInteraction()
       // Use consolidated comparison problem speaking method
       await audio.speakComparisonProblem(
         problem.leftNumber,
@@ -179,18 +203,44 @@ const ComparisonGame: React.FC = () => {
         problem.questionType
       )
     } catch (error) {
-      console.error('Error speaking problem:', error)
+      logError('Error speaking problem', {
+        leftNumber: problem.leftNumber,
+        rightNumber: problem.rightNumber,
+        questionType: problem.questionType,
+        error: error?.toString()
+      })
     }
   }
 
   const handleSymbolClick = async (symbol: '>' | '<' | '=') => {
+    if (!currentProblem || showFeedback) return
+    
+    const clickTime = Date.now()
+    console.log(`🎵 ComparisonGame: Symbol clicked at ${clickTime} - ${symbol}`)
+    
     // Critical iOS fix: Update user interaction timestamp BEFORE audio call
     audio.updateUserInteraction()
     
-    if (!currentProblem || audio.isPlaying || showFeedback) return
+    // Always cancel current audio for fast tapping
+    console.log(`🎵 ComparisonGame: Cancelling current audio for immediate response`)
+    audio.cancelCurrentAudio()
     
     setSelectedSymbol(symbol)
     setShowFeedback(true)
+    
+    // FIRST: Speak the symbol immediately for fast feedback
+    try {
+      const audioStartTime = Date.now()
+      console.log(`🎵 ComparisonGame: Starting symbol audio at ${audioStartTime} (${audioStartTime - clickTime}ms after click) - ${symbol}`)
+      
+      const symbolName = symbol === '>' ? 'større end' : symbol === '<' ? 'mindre end' : 'lig med'
+      await audio.speak(symbolName)
+      
+      const audioEndTime = Date.now()
+      console.log(`🎵 ComparisonGame: Symbol audio completed at ${audioEndTime} (${audioEndTime - audioStartTime}ms duration) - ${symbol}`)
+    } catch (error) {
+      console.log(`🎵 ComparisonGame: Error playing symbol audio:`, error)
+    }
     
     // Determine if the answer is correct based on question type
     let isCorrect = false
@@ -246,33 +296,74 @@ const ComparisonGame: React.FC = () => {
       }
     }
 
-    // Use unified game result handler
-    try {
-      await audio.handleCompleteGameResult({
-        isCorrect,
-        character: mathTeacher,
-        celebrate,
-        stopCelebration,
-        incrementScore,
-        currentScore: score,
-        nextAction: isCorrect ? generateNewProblem : () => {
-          setShowFeedback(false)
-          setSelectedSymbol(null)
-        },
-        explanation: !isCorrect ? explanation : undefined,
-        autoAdvanceDelay: 3000
-      })
-    } catch (error) {
-      console.error('Error in unified game result handler:', error)
+    // IMMEDIATELY: Start visual celebration effects if correct
+    if (isCorrect) {
+      incrementScore()
+      celebrate() // Start celebration visual immediately
+      mathTeacher.wave()
+    } else {
+      mathTeacher.think()
     }
+    
+    // THEN: Play celebration audio after a very short delay
+    setTimeout(async () => {
+      try {
+        // Just play the audio feedback, visuals already started
+        await audio.announceGameResult(isCorrect)
+        
+        // Play explanation if wrong
+        if (!isCorrect && explanation) {
+          setTimeout(async () => {
+            await audio.speak(explanation)
+          }, 500)
+        }
+        
+        // Auto-advance to next question after celebration
+        setTimeout(() => {
+          if (isCorrect) {
+            stopCelebration() // Stop celebration after 2 seconds
+            generateNewProblem()
+          } else {
+            setShowFeedback(false)
+            setSelectedSymbol(null)
+          }
+        }, isIOS() ? 1500 : 2000) // 2 second celebration duration
+        
+      } catch (error) {
+        console.error('Error in game result audio:', error)
+        logError('Error in game result audio', {
+          symbol,
+          currentProblem: currentProblem?.questionType,
+          isCorrect,
+          error: error?.toString()
+        })
+      }
+    }, 150) // Very short delay between symbol audio and celebration audio
   }
 
-  const repeatProblem = () => {
+  const repeatProblem = async () => {
+    if (!currentProblem) return
+    
+    const clickTime = Date.now()
+    console.log(`🎵 ComparisonGame: Repeat button clicked at ${clickTime}`)
+    
     // Critical iOS fix: Update user interaction timestamp BEFORE audio call
     audio.updateUserInteraction()
     
-    if (currentProblem) {
-      speakProblem(currentProblem)
+    // Always cancel current audio for fast tapping
+    console.log(`🎵 ComparisonGame: Cancelling current audio for immediate repeat`)
+    audio.cancelCurrentAudio()
+    
+    try {
+      const audioStartTime = Date.now()
+      console.log(`🎵 ComparisonGame: Starting repeat audio at ${audioStartTime} (${audioStartTime - clickTime}ms after click)`)
+      
+      await speakProblem(currentProblem)
+      
+      const audioEndTime = Date.now()
+      console.log(`🎵 ComparisonGame: Repeat audio completed at ${audioEndTime} (${audioEndTime - audioStartTime}ms duration)`)
+    } catch (error) {
+      console.error('🎵 ComparisonGame: Error repeating problem:', error)
     }
   }
 
@@ -471,7 +562,7 @@ const ComparisonGame: React.FC = () => {
                           variant="contained"
                           size="large"
                           onClick={() => handleSymbolClick(symbol)}
-                          disabled={audio.isPlaying || showFeedback}
+                          disabled={false}
                           sx={{
                             fontSize: 'clamp(1.8rem, 4vw, 3rem)',
                             fontWeight: 700,
@@ -547,7 +638,7 @@ const ComparisonGame: React.FC = () => {
             <Box sx={{ textAlign: 'center', mt: 3 }}>
               <MathRepeatButton 
                 onClick={repeatProblem}
-                disabled={!entryAudioComplete || audio.isPlaying}
+                disabled={false}
                 label="🎵 Hør igen"
               />
             </Box>

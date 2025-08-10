@@ -74,12 +74,14 @@ export class SimplifiedAudioController {
 
   private async playAudio(audioFunction: () => Promise<void>): Promise<string> {
     const audioId = `audio_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-    // Stack trace removed for production
+    const startTime = Date.now()
     
-    // Starting new audio playback
+    console.log(`🎵 SimplifiedAudioController: Starting playAudio ${audioId} at ${startTime}`)
     
     // ALWAYS stop current audio first - dead simple
+    const stopTime = Date.now()
     this.stopCurrentAudio('new_audio_requested')
+    console.log(`🎵 SimplifiedAudioController: Audio stopped in ${Date.now() - stopTime}ms`)
     
     // Set current audio tracking
     this.currentAudioId = audioId
@@ -87,23 +89,35 @@ export class SimplifiedAudioController {
     this.notifyPlayingStateChange()
     
     try {
+      const executeTime = Date.now()
+      console.log(`🎵 SimplifiedAudioController: Executing audio function at ${executeTime} (${executeTime - startTime}ms after start)`)
+      
       // Execute audio function
       await audioFunction()
-      // Audio completed successfully
+      
+      const completedTime = Date.now()
+      console.log(`🎵 SimplifiedAudioController: Audio completed at ${completedTime} (${completedTime - executeTime}ms duration)`)
       
     } catch (error) {
+      const errorTime = Date.now()
+      console.log(`🎵 SimplifiedAudioController: Audio error at ${errorTime} (${errorTime - startTime}ms after start)`, error)
+      
       logError('Audio playback error', { 
         audioId,
-        error: error?.toString()
+        error: error?.toString(),
+        timingMs: errorTime - startTime
       })
       
-      // For iOS, don't throw errors for common issues
+      // For iOS, don't throw errors for common issues - just continue gracefully
       if (isIOS() && error instanceof Error && (
         error.message.includes('interrupted') || 
         error.message.includes('not supported') ||
-        error.message.includes('suspended')
+        error.message.includes('suspended') ||
+        error.message.includes('AbortError') ||
+        error.message.includes('NotSupportedError')
       )) {
-        // iOS audio error - continuing gracefully
+        console.log(`🎵 SimplifiedAudioController: iOS audio error handled gracefully for ${audioId}`)
+        // iOS audio error - continuing gracefully without throwing
       } else {
         throw error
       }
@@ -113,9 +127,10 @@ export class SimplifiedAudioController {
         this.isCurrentlyPlaying = false
         this.currentAudioId = null
         this.notifyPlayingStateChange()
-        // Audio finished
+        const finalTime = Date.now()
+        console.log(`🎵 SimplifiedAudioController: Audio ${audioId} finished and cleaned up at ${finalTime} (${finalTime - startTime}ms total)`)
       } else {
-        // Audio was replaced by new audio
+        console.log(`🎵 SimplifiedAudioController: Audio ${audioId} was replaced by newer audio`)
       }
     }
     
@@ -123,49 +138,67 @@ export class SimplifiedAudioController {
   }
 
   private stopCurrentAudio(_reason: string = 'new_audio_requested'): void {
-    // Check if speech synthesis was speaking
+    const stopStartTime = Date.now()
+    console.log(`🎵 SimplifiedAudioController: Stopping current audio - ${_reason}`)
     
-    // Stopping current audio
+    // Stop Web Speech API IMMEDIATELY and aggressively for iOS fast-tap
+    if (window.speechSynthesis) {
+      try {
+        // Multiple immediate cancellation calls for iOS Safari
+        window.speechSynthesis.cancel()
+        window.speechSynthesis.cancel()
+        window.speechSynthesis.cancel()
+        // Additional delayed cancellations for stubborn iOS audio
+        setTimeout(() => {
+          try {
+            window.speechSynthesis.cancel()
+            window.speechSynthesis.cancel()
+          } catch {}
+        }, 0)
+        setTimeout(() => {
+          try { 
+            window.speechSynthesis.cancel() 
+          } catch {}
+        }, 10)
+        console.log(`🎵 SimplifiedAudioController: Web Speech API cancelled in ${Date.now() - stopStartTime}ms`)
+      } catch {}
+    }
     
-    // Stop all Howler sounds
+    // Stop all Howler sounds immediately
     this.sounds.forEach((sound) => {
       try {
         if (sound.playing()) {
           sound.stop()
-          // Stopped Howler sound
+          console.log(`🎵 SimplifiedAudioController: Howler sound stopped`)
         }
       } catch {}
     })
     
-    // Stop Google TTS (HTML5 audio elements)
+    // Stop Google TTS (HTML5 audio elements) immediately
     this.googleTTS.stopCurrentAudio()
+    console.log(`🎵 SimplifiedAudioController: Google TTS stopped`)
     
-    // Stop Web Speech API aggressively for iOS
-    if (window.speechSynthesis) {
-      try {
-        window.speechSynthesis.cancel()
-        window.speechSynthesis.cancel()
-        setTimeout(() => window.speechSynthesis.cancel(), 10)
-        setTimeout(() => window.speechSynthesis.cancel(), 50)
-        setTimeout(() => window.speechSynthesis.cancel(), 100)
-      } catch {}
-    }
-    
-    // Stop all HTML5 audio elements
+    // Stop all HTML5 audio elements aggressively
     const audioElements = document.querySelectorAll('audio')
     audioElements.forEach((audio) => {
       try {
         audio.pause()
         audio.currentTime = 0
+        // For iOS, also try to abort loading
+        if (isIOS() && audio.src) {
+          audio.src = ''
+          audio.load()
+        }
       } catch {}
     })
     
-    // Reset state
+    // Reset state immediately
     this.isCurrentlyPlaying = false
     this.currentAudioId = null
     this.notifyPlayingStateChange()
     
-    // Audio stopped successfully
+    const stopDuration = Date.now() - stopStartTime
+    console.log(`🎵 SimplifiedAudioController: Audio stopped successfully in ${stopDuration}ms`)
   }
 
   // ===== SIMPLIFIED PERMISSION MANAGEMENT =====
@@ -340,8 +373,19 @@ export class SimplifiedAudioController {
     
     this.updateUserInteraction()
 
-    // Import game welcome messages dynamically to avoid circular dependencies
-    const { GAME_WELCOME_MESSAGES } = await import('../hooks/useGameEntryAudio')
+    // Define game welcome messages directly
+    const GAME_WELCOME_MESSAGES = {
+      alphabet: 'Bogstav Quiz',
+      alphabetlearning: 'Lær Alfabetet',
+      math: 'Tal Quiz',
+      numberlearning: 'Lær Tallene',
+      addition: 'Plus Quiz',
+      comparison: 'Sammenligning Quiz',
+      memory: 'Hukommelse Spil',
+      colors: 'Farve Spil',
+      farvejagt: 'Farvejagt',
+      ramfarven: 'Ram Farven'
+    }
     
     const welcomeMessage = GAME_WELCOME_MESSAGES[gameType as keyof typeof GAME_WELCOME_MESSAGES]
     
@@ -473,6 +517,106 @@ export class SimplifiedAudioController {
     } catch (error) {
       // Failed to preload audio
     }
+  }
+
+  // ===== MISSING METHODS ADDED FOR COMPATIBILITY =====
+
+  async handleCompleteGameResult(options: {
+    isCorrect: boolean
+    character?: any
+    celebrate?: () => void
+    stopCelebration?: () => void
+    incrementScore?: () => void
+    currentScore?: number
+    nextAction?: () => void
+    correctAnswer?: number
+    explanation?: string
+    autoAdvanceDelay?: number
+    isIOS?: boolean
+  }): Promise<string> {
+    const { isCorrect, nextAction, autoAdvanceDelay = 2000 } = options
+    
+    return this.playAudio(async () => {
+      if (isCorrect) {
+        await this.announceGameResult(true)
+        if (options.incrementScore) options.incrementScore()
+        if (options.celebrate) options.celebrate()
+      } else {
+        await this.announceGameResult(false)
+        if (options.explanation) {
+          // Small delay before explanation
+          await new Promise(resolve => setTimeout(resolve, 500))
+          await this.speak(options.explanation)
+        }
+      }
+      
+      // Auto advance after delay
+      if (nextAction) {
+        setTimeout(() => {
+          if (options.stopCelebration) options.stopCelebration()
+          nextAction()
+        }, autoAdvanceDelay)
+      }
+    })
+  }
+
+  async announcePosition(currentIndex: number, totalItems: number, itemType: string): Promise<string> {
+    const text = `Du er ved ${itemType} ${currentIndex + 1} ud af ${totalItems}`
+    return this.speak(text)
+  }
+
+  async speakColorHuntInstructions(phrase: string): Promise<string> {
+    return this.speak(phrase)
+  }
+
+  async speakColorMixingInstructions(targetColor: string): Promise<string> {
+    const text = `Lav ${targetColor} farve ved at blande farverne`
+    return this.speak(text)
+  }
+
+  async speakComparisonProblem(
+    leftNumber: number, 
+    rightNumber: number, 
+    _leftObjects: string, 
+    _rightObjects: string, 
+    questionType: 'largest' | 'smallest' | 'equal'
+  ): Promise<string> {
+    let question = ''
+    if (questionType === 'largest') {
+      question = `Hvilket tal er størst? ${getDanishNumberText(leftNumber)} eller ${getDanishNumberText(rightNumber)}?`
+    } else if (questionType === 'smallest') {
+      question = `Hvilket tal er mindst? ${getDanishNumberText(leftNumber)} eller ${getDanishNumberText(rightNumber)}?`
+    } else {
+      question = `Er ${getDanishNumberText(leftNumber)} og ${getDanishNumberText(rightNumber)} ens?`
+    }
+    return this.speak(question)
+  }
+
+  async handleGameCompletion(options: {
+    character?: any
+    celebrate?: () => void
+    stopCelebration?: () => void
+    resetAction?: () => void
+    completionMessage?: string
+    autoResetDelay?: number
+    voiceType?: 'primary' | 'backup' | 'male'
+  }): Promise<string> {
+    const { completionMessage = 'Godt klaret!', resetAction, autoResetDelay = 3000, voiceType = 'primary' } = options
+    
+    return this.playAudio(async () => {
+      await this.speak(completionMessage, voiceType)
+      
+      if (resetAction && autoResetDelay > 0) {
+        setTimeout(() => {
+          if (options.stopCelebration) options.stopCelebration()
+          resetAction()
+        }, autoResetDelay)
+      }
+    })
+  }
+
+  async speakNewColorHuntGame(): Promise<string> {
+    return this.speak('Nyt spil! Lad os finde nogle flere farver!')
   }
 
   getTTSStatus(): {

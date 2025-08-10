@@ -358,7 +358,6 @@ export default async function handler(req, res) {
    // - AlphabetGame.tsx, AlphabetLearning.tsx  
    // - MathGame.tsx, NumberLearning.tsx, AdditionGame.tsx, ComparisonGame.tsx
    // - FarvejagtGame.tsx, RamFarvenGame.tsx, MemoryGame.tsx
-   // - 11 Demo games (ColorHunt2Demo, ColorMemoryDemo, etc.)
    
    // Migration pattern for each game:
    // 1. Update import to use cleaned audio system

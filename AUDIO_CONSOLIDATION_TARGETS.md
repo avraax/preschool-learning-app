@@ -119,7 +119,6 @@ await audio.speakNumberWithContext(number, {
 Some components still track playing state locally:
 
 ```typescript
-// Found in demo games
 const [isAudioPlaying, setIsAudioPlaying] = useState(false)
 ```
 

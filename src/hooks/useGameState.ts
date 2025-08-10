@@ -104,8 +104,9 @@ export const useGameState = (initialScore: number = 0): GameStateHook => {
    * Prevents overlapping audio by managing narration state
    */
   const handleScoreClick = useCallback(async () => {
-    if (gameState.isScoreNarrating) return
-
+    // Always cancel current audio for fast tapping
+    simplifiedAudioController.cancelCurrentAudio()
+    
     setGameState(prev => ({
       ...prev,
       isScoreNarrating: true
@@ -121,7 +122,7 @@ export const useGameState = (initialScore: number = 0): GameStateHook => {
         isScoreNarrating: false
       }))
     }
-  }, [gameState.score, gameState.isScoreNarrating])
+  }, [gameState.score])
 
   return {
     score: gameState.score,

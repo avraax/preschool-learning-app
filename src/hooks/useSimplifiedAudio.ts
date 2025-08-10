@@ -44,6 +44,35 @@ export interface SimplifiedAudioHook {
     currentAudioId: string | null
   }
   
+  // Additional game-specific methods
+  handleCompleteGameResult: (options: {
+    isCorrect: boolean
+    character?: any
+    celebrate?: () => void
+    stopCelebration?: () => void
+    incrementScore?: () => void
+    currentScore?: number
+    nextAction?: () => void
+    correctAnswer?: number
+    explanation?: string
+    autoAdvanceDelay?: number
+    isIOS?: boolean
+  }) => Promise<string>
+  announcePosition: (currentIndex: number, totalItems: number, itemType: string) => Promise<string>
+  speakColorHuntInstructions: (phrase: string) => Promise<string>
+  speakColorMixingInstructions: (targetColor: string) => Promise<string>
+  speakComparisonProblem: (leftNumber: number, rightNumber: number, leftObjects: string, rightObjects: string, questionType: 'largest' | 'smallest' | 'equal') => Promise<string>
+  handleGameCompletion: (options: {
+    character?: any
+    celebrate?: () => void
+    stopCelebration?: () => void
+    resetAction?: () => void
+    completionMessage?: string
+    autoResetDelay?: number
+    voiceType?: 'primary' | 'backup' | 'male'
+  }) => Promise<string>
+  speakNewColorHuntGame: () => Promise<string>
+  
   // Audio readiness from context
   isAudioReady: boolean
   needsUserAction: boolean
@@ -124,6 +153,15 @@ export const useSimplifiedAudioHook = (options: UseSimplifiedAudioOptions = {}):
     
     // Status
     getTTSStatus: simplifiedAudioController.getTTSStatus.bind(simplifiedAudioController),
+    
+    // Additional game-specific methods
+    handleCompleteGameResult: simplifiedAudioController.handleCompleteGameResult.bind(simplifiedAudioController),
+    announcePosition: simplifiedAudioController.announcePosition.bind(simplifiedAudioController),
+    speakColorHuntInstructions: simplifiedAudioController.speakColorHuntInstructions.bind(simplifiedAudioController),
+    speakColorMixingInstructions: simplifiedAudioController.speakColorMixingInstructions.bind(simplifiedAudioController),
+    speakComparisonProblem: simplifiedAudioController.speakComparisonProblem.bind(simplifiedAudioController),
+    handleGameCompletion: simplifiedAudioController.handleGameCompletion.bind(simplifiedAudioController),
+    speakNewColorHuntGame: simplifiedAudioController.speakNewColorHuntGame.bind(simplifiedAudioController),
     
     // Audio readiness from context
     isAudioReady: audioContext.state.isWorking,

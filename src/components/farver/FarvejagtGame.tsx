@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Box, Typography, Button, Container, Chip } from '@mui/material'
 import { DndContext, DragEndEvent, DragStartEvent, DragOverlay, closestCenter } from '@dnd-kit/core'
-import { useAudio } from '../../hooks/useAudio'
 import { categoryThemes } from '../../config/categoryThemes'
 import { DraggableItem } from '../common/dnd/DraggableItem'
 import { DroppableZone } from '../common/dnd/DroppableZone'
@@ -9,10 +8,11 @@ import { useCharacterState } from '../common/LottieCharacter'
 import CelebrationEffect, { useCelebration } from '../common/CelebrationEffect'
 import { ColorRepeatButton } from '../common/RepeatButton'
 import { ColorScoreChip } from '../common/ScoreChip'
-import { useGameEntryAudio } from '../../hooks/useGameEntryAudio'
-import { useGameAudioSetup } from '../../hooks/useGameAudioSetup'
 import { useGameState } from '../../hooks/useGameState'
 import GameHeader from '../common/GameHeader'
+import { isIOS } from '../../utils/deviceDetection'
+// Simplified audio system
+import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 
 // Game item interface
 interface GameItem {
@@ -103,8 +103,13 @@ const FarvejagtGame: React.FC = () => {
   // Centralized game state management
   const { score, incrementScore, resetScore, isScoreNarrating, handleScoreClick } = useGameState()
   
-  // Centralized audio system
-  const audio = useAudio({ componentId: 'FarvejagtGame' })
+  // Simplified audio system
+  const audio = useSimplifiedAudioHook({ 
+    componentId: 'FarvejagtGame',
+    autoInitialize: false
+  })
+  const [gameReady, setGameReady] = useState(false)
+  const [audioInitialized, setAudioInitialized] = useState(false)
   
   // Character and celebration management
   const colorHunter = useCharacterState('wave')
@@ -112,8 +117,12 @@ const FarvejagtGame: React.FC = () => {
   const hasInitialized = React.useRef(false)
   const previousColor = React.useRef<string>('')
   
-  // Centralized entry audio
-  useGameEntryAudio({ gameType: 'farvejagt' })
+  // Production logging - only essential errors
+  const logError = (message: string, data?: any) => {
+    if (message.includes('Error') || message.includes('error')) {
+      console.error(`🎵 FarvejagtGame: ${message}`, data)
+    }
+  }
   
   // Game initialization function
   const initializeGame = () => {
@@ -124,19 +133,20 @@ const FarvejagtGame: React.FC = () => {
     setTargetColor(newTargetColor)
     setTargetPhrase(newTargetPhrase)
     
-    // Speak the target phrase after setup
-    setTimeout(() => {
+    // Speak the target phrase after setup with iOS optimization
+    const delay = isIOS() ? 100 : 300
+    setTimeout(async () => {
       try {
-        audio.speakColorHuntInstructions(newTargetPhrase)
-          .catch(() => {})
+        audio.updateUserInteraction()
+        await audio.speakColorHuntInstructions(newTargetPhrase)
       } catch (error) {
-        // Ignore audio errors
+        logError('Error speaking color hunt instructions', {
+          phrase: newTargetPhrase,
+          error: error?.toString()
+        })
       }
-    }, 300)
+    }, delay)
   }
-  
-  // Use centralized game audio setup hook
-  const { ready: entryAudioComplete } = useGameAudioSetup('farvejagt', initializeGame)
 
   // Get target color hex for UI elements
   const getTargetColorHex = () => {
@@ -243,7 +253,42 @@ const FarvejagtGame: React.FC = () => {
     // Initialize character
     colorHunter.setCharacter('fox')
     colorHunter.wave()
+    
+    // Check if audio is ready
+    if (audio.isAudioReady) {
+      setAudioInitialized(true)
+      playWelcomeAndStart()
+    }
   }, [])
+  
+  // Monitor audio readiness - only if not already initialized
+  useEffect(() => {
+    if (audio.isAudioReady && !audioInitialized && !hasInitialized.current) {
+      hasInitialized.current = true
+      setAudioInitialized(true)
+      playWelcomeAndStart()
+    }
+  }, [audio.isAudioReady, audioInitialized])
+
+  // Play welcome message and start game
+  const playWelcomeAndStart = async () => {
+    try {
+      // Play the welcome message
+      await audio.playGameWelcome('farvejagt')
+      
+      // iOS-optimized delay - increased to prevent audio overlap
+      const delay = isIOS() ? 1000 : 1500
+      setTimeout(() => {
+        setGameReady(true)
+        initializeGame()
+      }, delay)
+    } catch (error) {
+      logError('Error playing welcome', { error: error?.toString() })
+      // Still start the game even if audio fails
+      setGameReady(true)
+      initializeGame()
+    }
+  }
 
   // Check for game completion and trigger celebration
   useEffect(() => {
@@ -263,14 +308,15 @@ const FarvejagtGame: React.FC = () => {
           resetGame(true) // Automatic restart - no "Nyt spil!" prefix
         },
         completionMessage: 'Fantastisk! Du fandt alle farverne!',
-        autoResetDelay: 3000,
-        voiceType: 'primary'
+        autoResetDelay: 3000
       })
     }
   }, [score, totalTarget, isComplete, targetColor, colorHunter, celebrate, stopCelebration])
 
   // Handle drag start
   const handleDragStart = (event: DragStartEvent) => {
+    // Cancel any ongoing audio for immediate interaction feedback
+    audio.cancelCurrentAudio()
     setActiveId(event.active.id as string)
   }
 
@@ -278,6 +324,8 @@ const FarvejagtGame: React.FC = () => {
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event
     
+    // Update user interaction for iOS audio compatibility
+    audio.updateUserInteraction()
     
     setActiveId(null)
 
@@ -322,8 +370,7 @@ const FarvejagtGame: React.FC = () => {
             colorHunter.wave()
           },
           explanation: `${draggedItem.objectNameDefinite} er ${draggedItem.colorName}`,
-          autoAdvanceDelay: 500, // Quick transition for item collection
-          voiceType: 'primary'
+          autoAdvanceDelay: 500 // Quick transition for item collection
         })
       } else {
         
@@ -347,10 +394,9 @@ const FarvejagtGame: React.FC = () => {
           nextAction: () => {
             colorHunter.wave()
           },
-          correctAnswer: targetColor,
+          // correctAnswer should be number for math games, not applicable here
           explanation: `${draggedItem.objectNameDefinite} er ${draggedItem.colorName}`,
-          autoAdvanceDelay: 500,
-          voiceType: 'primary'
+          autoAdvanceDelay: 500
         })
         
         // Reset returning state after animation
@@ -370,7 +416,7 @@ const FarvejagtGame: React.FC = () => {
     // Critical iOS fix: Update user interaction timestamp BEFORE audio call
     audio.updateUserInteraction()
     
-    if (!entryAudioComplete || !targetColor) return
+    if (!gameReady || !targetColor) return
     
     try {
       const targetPhrase = COLOR_TARGETS.find(target => target.color === targetColor)?.phrase || 'Find alle røde ting'
@@ -405,8 +451,13 @@ const FarvejagtGame: React.FC = () => {
           audio.speakColorHuntInstructions(newTargetPhrase)
             .catch(() => {})
         } else {
-          audio.speakNewColorHuntGame(newTargetPhrase)
+          audio.speakNewColorHuntGame()
             .catch(() => {})
+          // Then speak the specific instructions
+          setTimeout(() => {
+            audio.speakColorHuntInstructions(newTargetPhrase)
+              .catch(() => {})
+          }, 1000)
         }
       } catch (error) {
         // Ignore audio errors on reset
@@ -482,7 +533,7 @@ const FarvejagtGame: React.FC = () => {
         <Box sx={{ textAlign: 'center', mb: { xs: 2, md: 3 }, flex: '0 0 auto' }}>
           <ColorRepeatButton 
             onClick={repeatInstructions}
-            disabled={!entryAudioComplete}
+            disabled={false}
             label="🎵 Hör igen"
           />
         </Box>
@@ -539,7 +590,7 @@ const FarvejagtGame: React.FC = () => {
             <DraggableItem
               key={item.id}
               id={item.id}
-              disabled={!entryAudioComplete || item.collected || item.returning}
+              disabled={!gameReady || item.collected || item.returning}
               position={{ x: item.x, y: item.y }}
               data={item}
             >
