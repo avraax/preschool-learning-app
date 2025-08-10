@@ -17,7 +17,6 @@ import {
 } from '@mui/icons-material'
 import { categoryThemes } from '../../config/categoryThemes'
 import LearningGrid from '../common/LearningGrid'
-import { MathRepeatButton } from '../common/RepeatButton'
 import { isIOS } from '../../utils/deviceDetection'
 // Simplified audio system
 import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
@@ -120,12 +119,6 @@ const NumberLearning: React.FC = () => {
     }
   }
 
-  // Repeat instructions for the current number
-  const repeatInstructions = async () => {
-    if (!gameReady) return
-    
-    await goToNumber(currentIndex)
-  }
 
   const progress = ((currentIndex + 1) / numbers.length) * 100
 
@@ -221,14 +214,6 @@ const NumberLearning: React.FC = () => {
           </Typography>
         </Box>
 
-        {/* Repeat Button */}
-        <Box sx={{ textAlign: 'center', mb: { xs: 1, md: 1.5 } }}>
-          <MathRepeatButton 
-            onClick={repeatInstructions}
-            disabled={!gameReady || audio.isPlaying}
-            label="🎵 Hør igen"
-          />
-        </Box>
 
         {/* Current Number Display - Very Compact */}
         <Box sx={{ textAlign: 'center', mb: { xs: 1, md: 1.5 }, flex: '0 0 auto' }}>
