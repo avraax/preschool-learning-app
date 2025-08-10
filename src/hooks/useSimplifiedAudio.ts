@@ -60,7 +60,7 @@ interface UseSimplifiedAudioOptions {
  * Optimized for iOS Safari reliability with simplified permission handling
  */
 export const useSimplifiedAudioHook = (options: UseSimplifiedAudioOptions = {}): SimplifiedAudioHook => {
-  const { componentId = 'UnknownComponent', autoInitialize = true } = options
+  const { componentId: _componentId = 'UnknownComponent', autoInitialize = true } = options
   const [isPlaying, setIsPlaying] = useState<boolean>(simplifiedAudioController.isPlaying())
   
   // Get the simplified audio context for permission state
@@ -86,14 +86,7 @@ export const useSimplifiedAudioHook = (options: UseSimplifiedAudioOptions = {}):
     }
   }, [autoInitialize, audioContext.state.isWorking, audioContext.state.needsUserAction])
 
-  // Log component usage for debugging
-  useEffect(() => {
-    console.log(`🎵 useSimplifiedAudio: Component "${componentId}" initialized`, {
-      isPlaying,
-      isAudioReady: audioContext.state.isWorking,
-      needsUserAction: audioContext.state.needsUserAction
-    })
-  }, [componentId])
+  // Component initialized - no logging needed in production
 
   return {
     // Playing state

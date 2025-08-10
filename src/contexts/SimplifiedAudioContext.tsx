@@ -123,9 +123,9 @@ export const SimplifiedAudioProvider: React.FC<SimplifiedAudioProviderProps> = (
           speechSynthesisRef.current.speak(emptyUtterance)
           speechSynthesisWorking = true
           
-          logSimpleAudio('SpeechSynthesis unlocked with empty utterance')
+          // SpeechSynthesis unlocked with empty utterance
         } catch (error) {
-          logSimpleAudio('SpeechSynthesis initialization failed', { error: error?.toString() })
+          // SpeechSynthesis initialization failed
         }
       }
 
@@ -140,11 +140,7 @@ export const SimplifiedAudioProvider: React.FC<SimplifiedAudioProviderProps> = (
 
       initializedRef.current = true
       
-      logSimpleAudio('Audio initialization completed', {
-        audioContextWorking,
-        speechSynthesisWorking,
-        overallWorking: isWorking
-      })
+      // Audio initialization completed
 
       return isWorking
 

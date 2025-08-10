@@ -21,16 +21,17 @@ import CelebrationEffect, { useCelebration } from '../common/CelebrationEffect'
 import { AlphabetScoreChip } from '../common/ScoreChip'
 import { AlphabetRepeatButton } from '../common/RepeatButton'
 import { useGameState } from '../../hooks/useGameState'
-import { logIOSIssue } from '../../utils/remoteConsole'
+// Remote console logging removed
 
 // 🚀 SIMPLIFIED AUDIO SYSTEM IMPORTS
 import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 
-// Enhanced logging for simplified audio testing with remote logging
+// Production logging - only essential errors
 const logSimplifiedAlphabet = (message: string, data?: any) => {
-  console.log(`🎵 AlphabetGameSimplified: ${message}`, data)
-  // Send to remote logging for production debugging
-  logIOSIssue('SimplifiedAlphabet', { message, ...data })
+  // Only log errors in production
+  if (message.includes('Error') || message.includes('error')) {
+    console.error(`🎵 AlphabetGameSimplified: ${message}`, data)
+  }
 }
 
 // Full Danish alphabet including special characters
@@ -66,12 +67,7 @@ const AlphabetGameSimplified: React.FC = () => {
   
   // Initialize component
   useEffect(() => {
-    logSimplifiedAlphabet('Component initialized', {
-      isIOS: isIOS(),
-      isPWA: window.matchMedia('(display-mode: standalone)').matches,
-      audioReady: audio.isAudioReady,
-      needsUserAction: audio.needsUserAction
-    })
+    // Component initialization - no logging needed
     
     // Initial teacher greeting
     teacherCharacter.setCharacter('owl')
@@ -96,7 +92,7 @@ const AlphabetGameSimplified: React.FC = () => {
   // Monitor audio readiness
   useEffect(() => {
     if (audio.isAudioReady && !audioInitialized) {
-      logSimplifiedAlphabet('Audio became ready, initializing game')
+      // Audio became ready
       setAudioInitialized(true)
       playWelcomeAndStart()
     }
@@ -104,12 +100,12 @@ const AlphabetGameSimplified: React.FC = () => {
   
   // Play welcome message and start game
   const playWelcomeAndStart = async () => {
-    logSimplifiedAlphabet('Playing welcome message')
+    // Playing welcome message
     
     try {
       // Play the welcome message
       await audio.playGameWelcome('alphabet')
-      logSimplifiedAlphabet('Welcome message completed')
+      // Welcome message completed
       
       // iOS-optimized delay - much shorter for iOS to keep within interaction window
       const delay = isIOS() ? 100 : 500
@@ -127,15 +123,12 @@ const AlphabetGameSimplified: React.FC = () => {
   
   // Generate new question
   const generateNewQuestion = useCallback(() => {
-    logSimplifiedAlphabet('Generating new question', {
-      previousLetter: currentLetter,
-      audioReady: audio.isAudioReady
-    })
+    // Generating new question
     
     // Pick a random letter from full Danish alphabet
     const letter = DANISH_ALPHABET[Math.floor(Math.random() * DANISH_ALPHABET.length)]
     
-    logSimplifiedAlphabet('Generated new letter', { letter })
+    // Generated new letter
     
     setCurrentLetter(letter)
     currentLetterRef.current = letter // Update ref to avoid closure issues
@@ -152,10 +145,7 @@ const AlphabetGameSimplified: React.FC = () => {
     
     const shuffledOptions = options.sort(() => Math.random() - 0.5)
     
-    logSimplifiedAlphabet('Generated quiz options', { 
-      correctLetter: letter,
-      allOptions: shuffledOptions
-    })
+    // Generated quiz options
     
     setShowOptions(shuffledOptions)
     
@@ -173,48 +163,39 @@ const AlphabetGameSimplified: React.FC = () => {
       try {
         // Check if letter hasn't changed while we were waiting (use ref, not state)
         if (letter !== currentLetterRef.current) {
-          logSimplifiedAlphabet('Letter changed while waiting, skipping audio', { 
-            scheduledLetter: letter, 
-            currentLetter: currentLetterRef.current 
-          })
+          // Letter changed while waiting, skipping audio
           return
         }
         
         // Check audio readiness at playback time, not scheduling time
         if (!audio.isAudioReady) {
-          logSimplifiedAlphabet('Audio not ready when attempting quiz prompt', { letter })
+          // Audio not ready when attempting quiz prompt
           // Try again after another delay if audio isn't ready
           timeoutRef.current = setTimeout(async () => {
             // Check again if letter is still current (use ref)
             if (letter !== currentLetterRef.current) {
-              logSimplifiedAlphabet('Letter changed during retry, skipping', { 
-                letter, 
-                currentLetter: currentLetterRef.current 
-              })
+              // Letter changed during retry, skipping
               return
             }
             
             if (audio.isAudioReady) {
-              logSimplifiedAlphabet('Retrying quiz prompt after delay', { letter })
+              // Retrying quiz prompt after delay
               audio.updateUserInteraction()
               await audio.speakQuizPromptWithRepeat(
                 DANISH_PHRASES.gamePrompts.findLetter(letter), 
                 letter
               )
             } else {
-              logSimplifiedAlphabet('Audio still not ready after retry', { letter })
+              // Audio still not ready after retry
             }
           }, isIOS() ? 200 : 1000)
           return
         }
         
-        logSimplifiedAlphabet('Playing quiz prompt', { letter })
+        // Playing quiz prompt
         // iOS-specific: Create fresh interaction event before audio
         if (isIOS()) {
-          // Create a synthetic touch event to renew iOS interaction window
-          const syntheticEvent = new Event('touchstart', { bubbles: true })
-          document.dispatchEvent(syntheticEvent)
-          logSimplifiedAlphabet('iOS: Synthetic interaction event created')
+          // iOS: Update interaction timestamp
         }
         
         // Update user interaction timestamp before playing (iOS fix)
@@ -223,7 +204,7 @@ const AlphabetGameSimplified: React.FC = () => {
           DANISH_PHRASES.gamePrompts.findLetter(letter), 
           letter
         )
-        logSimplifiedAlphabet('Quiz prompt completed')
+        // Quiz prompt completed
       } catch (error) {
         logSimplifiedAlphabet('Error playing quiz prompt', { 
           letter,
@@ -239,20 +220,12 @@ const AlphabetGameSimplified: React.FC = () => {
   }, [audio, currentLetter])
   
   const handleLetterClick = async (selectedLetter: string) => {
-    logSimplifiedAlphabet('🔵 LETTER_CLICK_START', {
-      selectedLetter,
-      currentLetter,
-      isCorrect: selectedLetter === currentLetter,
-      audioReady: audio.isAudioReady,
-      audioPlaying: audio.isPlaying,
-      timestamp: Date.now()
-    })
+    // Letter clicked: cancel any playing audio and process click
     
     // 🚀 SIMPLIFIED: Update user interaction for iOS
     audio.updateUserInteraction()
     
-    // ALWAYS cancel current audio - no conditions
-    logSimplifiedAlphabet('🛑 CANCELLING_AUDIO_FOR_LETTER_CLICK')
+    // Cancel current audio to allow immediate response
     audio.cancelCurrentAudio()
     
     const isCorrect = selectedLetter === currentLetter
@@ -270,7 +243,7 @@ const AlphabetGameSimplified: React.FC = () => {
           // iOS: Immediately renew interaction after success audio
           if (isIOS()) {
             audio.updateUserInteraction()
-            logSimplifiedAlphabet('iOS: Renewed interaction after success audio')
+            // iOS: Renewed interaction after success audio
           }
         }
         
@@ -281,7 +254,7 @@ const AlphabetGameSimplified: React.FC = () => {
           teacherCharacter.wave()
           // Renew interaction right before generating new question for all platforms
           audio.updateUserInteraction()
-          logSimplifiedAlphabet('Renewed interaction before new question after celebration')
+          // Renewed interaction before new question
           generateNewQuestion()
         }, delay)
         
@@ -294,12 +267,12 @@ const AlphabetGameSimplified: React.FC = () => {
           // iOS: Immediately renew interaction after incorrect audio too
           if (isIOS()) {
             audio.updateUserInteraction()
-            logSimplifiedAlphabet('iOS: Renewed interaction after incorrect audio')
+            // iOS: Renewed interaction after incorrect audio
           }
         }
       }
       
-      logSimplifiedAlphabet('Letter click handled successfully')
+      // Letter click handled successfully
       
     } catch (error) {
       logSimplifiedAlphabet('Error handling letter click', {
@@ -309,28 +282,20 @@ const AlphabetGameSimplified: React.FC = () => {
   }
   
   const repeatLetter = async () => {
-    logSimplifiedAlphabet('🔄 REPEAT_BUTTON_CLICKED', {
-      currentLetter,
-      audioPlaying: audio.isPlaying,
-      timestamp: Date.now()
-    })
+    // Repeat button clicked
     
     // iOS-specific: Renew interaction immediately
     audio.updateUserInteraction()
     
     if (isIOS()) {
-      // Create synthetic touch event for iOS
-      const syntheticEvent = new Event('touchstart', { bubbles: true })
-      document.dispatchEvent(syntheticEvent)
-      logSimplifiedAlphabet('iOS: Synthetic interaction event for repeat')
+      // iOS: Update interaction timestamp
     }
     
-    // ALWAYS cancel current audio - no conditions
-    logSimplifiedAlphabet('🛑 CANCELLING_AUDIO_FOR_REPEAT')
+    // Cancel current audio to play repeat immediately
     audio.cancelCurrentAudio()
     
     if (!audio.isAudioReady) {
-      logSimplifiedAlphabet('❌ Audio not ready, aborting repeat')
+      // Audio not ready, aborting repeat
       return
     }
     
@@ -346,11 +311,11 @@ const AlphabetGameSimplified: React.FC = () => {
   
   // Manual audio initialization for iOS
   const handleInitializeAudio = async () => {
-    logSimplifiedAlphabet('Manual audio initialization clicked')
+    // Manual audio initialization clicked
     
     try {
       const success = await audio.initializeAudio()
-      logSimplifiedAlphabet('Audio initialization result', { success })
+      // Audio initialization completed
       
       if (success) {
         // Start the game after successful initialization
@@ -378,7 +343,6 @@ const AlphabetGameSimplified: React.FC = () => {
             onClick={() => {
               // Cancel any playing audio before navigation
               audio.cancelCurrentAudio()
-              logSimplifiedAlphabet('Back button clicked - audio canceled')
               navigate('/alphabet')
             }}
             color="primary"
