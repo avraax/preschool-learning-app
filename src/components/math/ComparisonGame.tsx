@@ -213,7 +213,9 @@ const ComparisonGame: React.FC = () => {
   }
 
   const handleSymbolClick = async (symbol: '>' | '<' | '=') => {
-    if (!currentProblem || showFeedback) return
+    if (!currentProblem || showFeedback) {
+      return
+    }
     
     // Critical iOS fix: Update user interaction timestamp BEFORE audio call
     audio.updateUserInteraction()
@@ -297,23 +299,27 @@ const ComparisonGame: React.FC = () => {
     // THEN: Use centralized celebration with standard timing
     setTimeout(async () => {
       try {
+        console.log('🎯 ComparisonGame: Starting celebration flow', { isCorrect, explanation })
+        
         await audio.playCelebrationWithStandardTiming({
           isCorrect,
           celebrate,
           stopCelebration,
           incrementScore: undefined, // Score already incremented above
-          nextAction: isCorrect ? generateNewProblem : () => {
-            setShowFeedback(false)
-            setSelectedSymbol(null)
-          },
+          nextAction: isCorrect ? generateNewProblem : undefined, // Don't reset UI immediately for wrong answers
           teacherCharacter: mathTeacher
         })
         
-        // Play explanation if wrong (after the centralized celebration)
-        if (!isCorrect && explanation) {
-          setTimeout(async () => {
-            await audio.speak(explanation)
-          }, 500)
+        console.log('🎯 ComparisonGame: Celebration completed, handling wrong answer flow')
+        
+        // For wrong answers, just reset UI to allow retry (NO explanation with correct answer)
+        if (!isCorrect) {
+          console.log('🎯 ComparisonGame: Wrong answer - resetting UI for retry (no explanation)')
+          setTimeout(() => {
+            setShowFeedback(false)
+            setSelectedSymbol(null)
+            console.log('🎯 ComparisonGame: UI reset complete, ready for retry')
+          }, 2000) // Give time for encouragement audio to finish
         }
         
       } catch (error) {
