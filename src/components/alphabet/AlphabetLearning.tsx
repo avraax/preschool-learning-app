@@ -99,8 +99,6 @@ const AlphabetLearning: React.FC = () => {
   const goToLetter = async (index: number) => {
     const letter = DANISH_ALPHABET[index]
     
-    const clickTime = Date.now()
-    
     // Critical iOS fix: Update user interaction timestamp BEFORE audio call
     audio.updateUserInteraction()
     
@@ -110,11 +108,7 @@ const AlphabetLearning: React.FC = () => {
     setCurrentIndex(index)
     
     try {
-      const audioStartTime = Date.now()
-      
       await audio.speakLetter(letter)
-      
-      const audioEndTime = Date.now()
     } catch (error) {
       logError('Error speaking letter', {
         letter,

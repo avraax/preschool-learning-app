@@ -215,8 +215,6 @@ const ComparisonGame: React.FC = () => {
   const handleSymbolClick = async (symbol: '>' | '<' | '=') => {
     if (!currentProblem || showFeedback) return
     
-    const clickTime = Date.now()
-    
     // Critical iOS fix: Update user interaction timestamp BEFORE audio call
     audio.updateUserInteraction()
     
@@ -228,12 +226,8 @@ const ComparisonGame: React.FC = () => {
     
     // FIRST: Speak the symbol immediately for fast feedback
     try {
-      const audioStartTime = Date.now()
-      
       const symbolName = symbol === '>' ? 'større end' : symbol === '<' ? 'mindre end' : 'lig med'
       await audio.speak(symbolName)
-      
-      const audioEndTime = Date.now()
     } catch (error) {
     }
     
@@ -337,8 +331,6 @@ const ComparisonGame: React.FC = () => {
   const repeatProblem = async () => {
     if (!currentProblem) return
     
-    const clickTime = Date.now()
-    
     // Critical iOS fix: Update user interaction timestamp BEFORE audio call
     audio.updateUserInteraction()
     
@@ -346,11 +338,7 @@ const ComparisonGame: React.FC = () => {
     audio.cancelCurrentAudio()
     
     try {
-      const audioStartTime = Date.now()
-      
       await speakProblem(currentProblem)
-      
-      const audioEndTime = Date.now()
     } catch (error) {
       console.error('🎵 ComparisonGame: Error repeating problem:', error)
     }

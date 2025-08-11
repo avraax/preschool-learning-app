@@ -172,8 +172,6 @@ const AdditionGame: React.FC = () => {
   const handleAnswerClick = async (selectedAnswer: number) => {
     if (correctAnswer === null) return
     
-    const clickTime = Date.now()
-    
     // Critical iOS fix: Update user interaction timestamp BEFORE audio call
     audio.updateUserInteraction()
     
@@ -184,11 +182,7 @@ const AdditionGame: React.FC = () => {
     
     // FIRST: Play the number immediately for fast feedback
     try {
-      const audioStartTime = Date.now()
-      
       await audio.speakNumber(selectedAnswer)
-      
-      const audioEndTime = Date.now()
     } catch (error) {
     }
     
@@ -227,8 +221,6 @@ const AdditionGame: React.FC = () => {
   const repeatProblem = async () => {
     if (num1 === null || num2 === null) return
     
-    const clickTime = Date.now()
-    
     // Critical iOS fix: Update user interaction timestamp BEFORE audio call
     audio.updateUserInteraction()
     
@@ -236,11 +228,7 @@ const AdditionGame: React.FC = () => {
     audio.cancelCurrentAudio()
     
     try {
-      const audioStartTime = Date.now()
-      
       await speakProblem(num1, num2)
-      
-      const audioEndTime = Date.now()
     } catch (error) {
       console.error('🎵 AdditionGame: Error repeating problem:', error)
     }

@@ -74,11 +74,8 @@ export class SimplifiedAudioController {
 
   private async playAudio(audioFunction: () => Promise<void>): Promise<string> {
     const audioId = `audio_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-    const startTime = Date.now()
-    
     
     // ALWAYS stop current audio first - dead simple
-    const stopTime = Date.now()
     this.stopCurrentAudio('new_audio_requested')
     
     // Set current audio tracking
@@ -87,20 +84,13 @@ export class SimplifiedAudioController {
     this.notifyPlayingStateChange()
     
     try {
-      const executeTime = Date.now()
-      
       // Execute audio function
       await audioFunction()
       
-      const completedTime = Date.now()
-      
     } catch (error) {
-      const errorTime = Date.now()
-      
       logError('Audio playback error', { 
         audioId,
-        error: error?.toString(),
-        timingMs: errorTime - startTime
+        error: error?.toString()
       })
       
       // For iOS, don't throw errors for common issues - just continue gracefully
@@ -121,8 +111,6 @@ export class SimplifiedAudioController {
         this.isCurrentlyPlaying = false
         this.currentAudioId = null
         this.notifyPlayingStateChange()
-        const finalTime = Date.now()
-      } else {
       }
     }
     
@@ -130,8 +118,6 @@ export class SimplifiedAudioController {
   }
 
   private stopCurrentAudio(_reason: string = 'new_audio_requested'): void {
-    const stopStartTime = Date.now()
-    
     // Stop Web Speech API IMMEDIATELY and aggressively for iOS fast-tap
     if (window.speechSynthesis) {
       try {
@@ -184,8 +170,6 @@ export class SimplifiedAudioController {
     this.isCurrentlyPlaying = false
     this.currentAudioId = null
     this.notifyPlayingStateChange()
-    
-    const stopDuration = Date.now() - stopStartTime
   }
 
   // ===== SIMPLIFIED PERMISSION MANAGEMENT =====

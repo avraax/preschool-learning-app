@@ -201,8 +201,6 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
       return
     }
     
-    const clickTime = Date.now()
-    
     // Critical iOS fix: Update user interaction timestamp BEFORE audio call
     audio.updateUserInteraction()
     
@@ -211,11 +209,7 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
     
     // FIRST: Play the clicked item immediately for fast feedback
     try {
-      const audioStartTime = Date.now()
-      
       await config.speakClickedItem(selectedItem, audio)
-      
-      const audioEndTime = Date.now()
     } catch (error) {
     }
     
@@ -258,8 +252,6 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
   const repeatItem = async () => {
     if (!currentItem) return
     
-    const clickTime = Date.now()
-    
     // Critical iOS fix: Update user interaction timestamp BEFORE audio call
     audio.updateUserInteraction()
     
@@ -267,11 +259,7 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
     audio.cancelCurrentAudio()
     
     try {
-      const audioStartTime = Date.now()
-      
       await config.getRepeatAudio(currentItem, audio)
-      
-      const audioEndTime = Date.now()
     } catch (error) {
       console.error('🎵 UnifiedQuizGame: Error repeating item:', error)
     }

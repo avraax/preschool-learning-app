@@ -235,28 +235,6 @@ const UnifiedMemoryGame: React.FC<UnifiedMemoryGameProps> = ({ config }) => {
   }
 
   const handleCardClick = async (clickedCard: MemoryCard) => {
-    const cardClickDebugInfo = {
-      cardId: clickedCard.id,
-      cardContent: clickedCard.content,
-      isMatched: clickedCard.isMatched,
-      isRevealed: clickedCard.isRevealed,
-      gameType: config.gameType,
-      isProcessing,
-      revealedCardsCount: revealedCards.length,
-      matchedPairs,
-      score,
-      audioIsPlaying: audio.isPlaying,
-      // Technical details
-      isIOS: navigator.userAgent.includes('iPhone') || navigator.userAgent.includes('iPad'),
-      isPWA: window.matchMedia('(display-mode: standalone)').matches,
-      documentFocus: document.hasFocus(),
-      documentVisible: !document.hidden,
-      userAgent: navigator.userAgent.substring(0, 100),
-      timestamp: Date.now(),
-      timeSincePageLoad: performance.now()
-    }
-    
-    
     // Critical iOS fix: Update user interaction timestamp BEFORE audio call
     audio.updateUserInteraction()
     
