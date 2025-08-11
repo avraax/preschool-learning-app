@@ -66,9 +66,9 @@ export const RestartButton: React.FC<RestartButtonProps> = ({
   // Build button styles based on category theme and variant
   const getButtonStyles = () => {
     const baseStyles = {
-      fontSize: size === 'small' ? '0.8rem' : size === 'large' ? '1.1rem' : '1rem',
-      py: size === 'small' ? 0.5 : size === 'large' ? 2 : 1.5,
-      px: size === 'small' ? 1.5 : size === 'large' ? 4 : 3,
+      fontSize: size === 'small' ? '0.9rem' : size === 'large' ? '1.1rem' : '1.1rem',
+      py: size === 'small' ? 1 : size === 'large' ? 2 : 2,
+      px: size === 'small' ? 2 : size === 'large' ? 4 : 4,
       borderRadius: 3,
       fontWeight: 600,
       textTransform: 'none' as const,

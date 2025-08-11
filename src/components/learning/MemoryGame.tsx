@@ -1,73 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React from 'react'
 import { useParams } from 'react-router-dom'
-import { Container, Box } from '@mui/material'
-import { motion } from 'framer-motion'
-
-// Working CSS for card flip animation
-const flipStyles = `
-  .flip-container {
-    perspective: 1000px;
-    width: 100%;
-    height: 100%;
-  }
-
-  .flipper {
-    transition: transform 0.6s;
-    transform-style: preserve-3d;
-    position: relative;
-    width: 100%;
-    height: 100%;
-    cursor: pointer;
-  }
-
-  .flipper.flipped {
-    transform: rotateY(180deg);
-  }
-
-  .card-face {
-    backface-visibility: hidden;
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    border-radius: 15px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    border: 3px solid;
-  }
-
-  .card-front {
-    transform: rotateY(0deg);
-    z-index: 2;
-  }
-
-  .card-back {
-    transform: rotateY(180deg);
-  }
-
-  @keyframes pulse {
-    0% { transform: scale(1); opacity: 1; }
-    50% { transform: scale(1.05); opacity: 0.8; }
-    100% { transform: scale(1); opacity: 1; }
-  }
-`
-
-import { useCharacterState } from '../common/LottieCharacter'
-import CelebrationEffect, { useCelebration } from '../common/CelebrationEffect'
-import { AlphabetScoreChip } from '../common/ScoreChip'
-import { AlphabetRestartButton } from '../common/RestartButton'
-import { AlphabetRepeatButton } from '../common/RepeatButton'
-import { DANISH_PHRASES } from '../../config/danish-phrases'
-import { useGameState } from '../../hooks/useGameState'
+import UnifiedMemoryGame, { UnifiedMemoryConfig, MemoryItemDisplay } from '../common/UnifiedMemoryGame'
 import { categoryThemes } from '../../config/categoryThemes'
-import GameHeader from '../common/GameHeader'
-import { isIOS } from '../../utils/deviceDetection'
-// Simplified audio system
-import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
+import { AlphabetScoreChip, MathScoreChip } from '../common/ScoreChip'
+import { AlphabetRestartButton, MathRestartButton } from '../common/RestartButton'
+import { AlphabetRepeatButton, MathRepeatButton } from '../common/RepeatButton'
 
 // Danish alphabet (29 letters)
 const DANISH_ALPHABET = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'Æ', 'Ø', 'Å']
@@ -108,598 +45,86 @@ const LETTER_ICONS: { [key: string]: { word: string; icon: string } } = {
   'Å': { word: 'Å', icon: '🏞️' }
 }
 
-
-interface MemoryCard {
-  id: string
-  content: string
-  isRevealed: boolean
-  isMatched: boolean
-  pairId: string
-}
-
 const MemoryGame: React.FC = () => {
   const { type } = useParams<{ type: 'letters' | 'numbers' }>()
   const gameType = type as 'letters' | 'numbers' || 'letters'
   
-  const [cards, setCards] = useState<MemoryCard[]>([])
-  const [revealedCards, setRevealedCards] = useState<MemoryCard[]>([])
-  const [matchedPairs, setMatchedPairs] = useState(0)
-  const [isProcessing, setIsProcessing] = useState(false)
-  const [wrongPairIds, setWrongPairIds] = useState<string[]>([])
+  // Configuration for letters memory game
+  const lettersConfig: UnifiedMemoryConfig = {
+    gameType: 'letters',
     
-  // Centralized game state management
-  const { score, incrementScore, resetScore, isScoreNarrating, handleScoreClick } = useGameState()
-  
-  // Simplified audio system
-  const audio = useSimplifiedAudioHook({ 
-    componentId: 'MemoryGame',
-    autoInitialize: false
-  })
-  const [gameReady, setGameReady] = useState(false)
-  const [audioInitialized, setAudioInitialized] = useState(false)
-  
-  // Character and celebration management
-  const teacher = useCharacterState('wave')
-  const { showCelebration, celebrationIntensity, celebrate, stopCelebration } = useCelebration()
-  
-  // Production logging - only essential errors
-  const logError = (message: string, data?: any) => {
-    if (message.includes('Error') || message.includes('error')) {
-      console.error(`🎵 MemoryGame: ${message}`, data)
-    }
-  }
-  
-
-  const hasInitialized = useRef(false)
-
-  useEffect(() => {
-    // Prevent duplicate initialization with race condition guard
-    if (hasInitialized.current) return
-    hasInitialized.current = true
+    generateItems: () => {
+      // Randomly select 20 letters from the Danish alphabet
+      const shuffledAlphabet = [...DANISH_ALPHABET].sort(() => Math.random() - 0.5)
+      return shuffledAlphabet.slice(0, 20)
+    },
     
-    // Initialize teacher character
-    teacher.setCharacter('owl')
-    teacher.wave()
+    getDisplayData: (letter: string): MemoryItemDisplay => {
+      const letterData = LETTER_ICONS[letter]
+      return {
+        primary: letter,
+        secondary: letterData?.word,
+        icon: letterData?.icon
+      }
+    },
     
-    // Check if audio is ready
-    if (audio.isAudioReady) {
-      setAudioInitialized(true)
-      playWelcomeAndStart()
-    }
+    speakItem: async (letter: string, audio: any) => {
+      return audio.speak(letter)
+    },
     
-    // Generate cards immediately but don't show them until entry audio completes
-    initializeGame()
-  }, [gameType])
-  
-  // Monitor audio readiness - only if not already initialized
-  useEffect(() => {
-    if (audio.isAudioReady && !audioInitialized && !hasInitialized.current) {
-      hasInitialized.current = true
-      setAudioInitialized(true)
-      playWelcomeAndStart()
-    }
-  }, [audio.isAudioReady, audioInitialized])
-
-  // Play welcome message and start game
-  const playWelcomeAndStart = async () => {
-    try {
-      // Play the welcome message
-      await audio.playGameWelcome('memory')
-      
-      // iOS-optimized delay - increased to prevent audio overlap
-      const delay = isIOS() ? 1000 : 1500
-      setTimeout(() => {
-        setGameReady(true)
-      }, delay)
-    } catch (error) {
-      logError('Error playing welcome', { error: error?.toString() })
-      // Still start the game even if audio fails
-      setGameReady(true)
-    }
-  }
-
-  const initializeGame = () => {
-    // Generate 20 random items for pairs
-    const sourceArray = gameType === 'letters' ? DANISH_ALPHABET : NUMBERS
-    
-    // Randomly select 20 items
-    const shuffledSource = [...sourceArray].sort(() => Math.random() - 0.5)
-    const selectedItems = shuffledSource.slice(0, 20)
-    
-    // Create pairs (each item appears twice)
-    const cardData: MemoryCard[] = []
-    selectedItems.forEach((item, index) => {
-      const pairId = `pair-${index}`
-      
-      // First card of the pair
-      cardData.push({
-        id: `${item}-1`,
-        content: item,
-        isRevealed: false,
-        isMatched: false,
-        pairId
-      })
-      
-      // Second card of the pair
-      cardData.push({
-        id: `${item}-2`,
-        content: item,
-        isRevealed: false,
-        isMatched: false,
-        pairId
-      })
-    })
-    
-    // Shuffle all 40 cards
-    const shuffledCards = cardData.sort(() => Math.random() - 0.5)
-    
-    setCards(shuffledCards)
-    setRevealedCards([])
-    setMatchedPairs(0)
-    setIsProcessing(false)
-    resetScore()
-  }
-
-  const handleCardClick = async (clickedCard: MemoryCard) => {
-    const cardClickDebugInfo = {
-      cardId: clickedCard.id,
-      cardContent: clickedCard.content,
-      isMatched: clickedCard.isMatched,
-      isRevealed: clickedCard.isRevealed,
-      gameType,
-      isProcessing,
-      revealedCardsCount: revealedCards.length,
-      matchedPairs,
-      score,
-      audioIsPlaying: audio.isPlaying,
-      // Technical details
-      isIOS: navigator.userAgent.includes('iPhone') || navigator.userAgent.includes('iPad'),
-      isPWA: window.matchMedia('(display-mode: standalone)').matches,
-      documentFocus: document.hasFocus(),
-      documentVisible: !document.hidden,
-      userAgent: navigator.userAgent.substring(0, 100),
-      timestamp: Date.now(),
-      timeSincePageLoad: performance.now()
-    }
-    
-    console.log('🎵 MemoryGame: CARD CLICK ATTEMPT', cardClickDebugInfo)
-    
-    // Critical iOS fix: Update user interaction timestamp BEFORE audio call
-    audio.updateUserInteraction()
-    
-    // Always cancel current audio for fast tapping
-    audio.cancelCurrentAudio()
-    
-    // Handle matched cards differently - they should speak "X som word" when clicked
-    if (clickedCard.isMatched && gameType === 'letters') {
-      const letterData = LETTER_ICONS[clickedCard.content]
+    speakMatchedItem: async (letter: string, audio: any) => {
+      const letterData = LETTER_ICONS[letter]
       if (letterData) {
-        try {
-          console.log('🎵 MemoryGame: Speaking matched card', { content: clickedCard.content, word: letterData.word })
-          await audio.speak(`${clickedCard.content} som ${letterData.word}`)
-          console.log('🎵 MemoryGame: Matched card audio completed successfully')
-        } catch (error: any) {
-          const errorDetails = {
-            cardContent: clickedCard.content,
-            word: letterData.word,
-            error: error?.toString(),
-            errorMessage: error?.message,
-            isIOS: navigator.userAgent.includes('iPhone') || navigator.userAgent.includes('iPad'),
-            isPWA: window.matchMedia('(display-mode: standalone)').matches
-          }
-          console.error('🎵 MemoryGame: Matched card audio failed', errorDetails)
-        }
+        return audio.speak(`${letter} som ${letterData.word}`)
       }
-      return
-    }
+      return audio.speak(letter)
+    },
     
-    // Prevent clicks during processing or if card is already revealed/matched
-    if (isProcessing || clickedCard.isRevealed || clickedCard.isMatched || revealedCards.length >= 2) {
-      return
-    }
-
-    // Reveal the clicked card
-    const updatedCards = cards.map(card =>
-      card.id === clickedCard.id ? { ...card, isRevealed: true } : card
-    )
-    setCards(updatedCards)
-
-    const newRevealedCards = [...revealedCards, { ...clickedCard, isRevealed: true }]
-    setRevealedCards(newRevealedCards)
-
-    // Play audio for the revealed card with enhanced iOS handling
-    const playCardAudio = async () => {
-      try {
-        console.log('🎵 MemoryGame: Playing card reveal audio', { 
-          content: clickedCard.content, 
-          gameType,
-          isLetter: gameType === 'letters'
-        })
-        
-        if (gameType === 'letters') {
-          await audio.speak(clickedCard.content)
-        } else {
-          await audio.speakNumber(parseInt(clickedCard.content))
-        }
-        
-        console.log('🎵 MemoryGame: Card reveal audio completed successfully', { content: clickedCard.content })
-      } catch (error: any) {
-        // Check if this is a navigation interruption (expected)
-        const isNavigationInterruption = error && 
-          (error.message?.includes('interrupted by navigation') || 
-           error.message?.includes('interrupted by user'))
-        
-        if (isNavigationInterruption) {
-          console.log('🎵 MemoryGame: Card audio interrupted by navigation (expected)')
-          return // Don't show prompts for expected interruptions
-        }
-        
-        const audioErrorDetails = {
-          cardContent: clickedCard.content,
-          gameType,
-          error: error?.toString(),
-          errorMessage: error?.message,
-          errorStack: error?.stack?.split('\n').slice(0, 3).join(' | '),
-          isIOS: navigator.userAgent.includes('iPhone') || navigator.userAgent.includes('iPad'),
-          isPWA: window.matchMedia('(display-mode: standalone)').matches,
-          documentFocus: document.hasFocus(),
-          documentVisible: !document.hidden,
-          timestamp: Date.now()
-        }
-        
-        console.error('🎵 MemoryGame: Card reveal audio failed', audioErrorDetails)
+    title: 'Hukommelsesspil - Bogstaver',
+    instructions: 'Find ens bogstaver ved at klikke på kortene',
+    backPath: '/alphabet',
+    theme: categoryThemes.alphabet,
+    cardBackIcon: 'ABC',
+    
+    ScoreComponent: AlphabetScoreChip,
+    RepeatButtonComponent: AlphabetRepeatButton,
+    RestartButtonComponent: AlphabetRestartButton
+  }
+  
+  // Configuration for numbers memory game
+  const numbersConfig: UnifiedMemoryConfig = {
+    gameType: 'numbers',
+    
+    generateItems: () => {
+      // Use all numbers 1-20
+      return [...NUMBERS]
+    },
+    
+    getDisplayData: (number: string): MemoryItemDisplay => {
+      return {
+        primary: number
       }
-    }
+    },
     
-    // Start audio playback but don't wait for it to prevent blocking the game
-    playCardAudio()
-
-    // If this is the second card, check for match
-    if (newRevealedCards.length === 2) {
-      setIsProcessing(true)
-      
-      const [firstCard, secondCard] = newRevealedCards
-      const isMatch = firstCard.content === secondCard.content
-
-      // Wait a moment to let user see both cards
-      await new Promise(resolve => setTimeout(resolve, 1000))
-
-      if (isMatch) {
-        // Match found!
-        const matchedCards = cards.map(card =>
-          card.pairId === firstCard.pairId ? { ...card, isMatched: true, isRevealed: true } : card
-        )
-        setCards(matchedCards)
-        setMatchedPairs(prev => prev + 1)
-        incrementScore()
-
-        // Play match success using centralized pattern
-        await audio.handleCompleteGameResult({
-          isCorrect: true,
-          character: teacher,
-          celebrate: () => {}, // Don't start new celebration for each match
-          stopCelebration: () => {},
-          incrementScore: () => {}, // Already incremented above
-          currentScore: score,
-          nextAction: () => {
-            teacher.wave()
-          },
-          autoAdvanceDelay: 500 // Quick transition for matches
-        })
-
-        // Check if game is complete (all 20 pairs found)
-        if (matchedPairs + 1 === 20) {
-          // Use centralized game completion handler
-          await audio.handleGameCompletion({
-            character: teacher,
-            celebrate: celebrate,
-            stopCelebration: stopCelebration,
-            resetAction: () => {
-              restartGame()
-            },
-            completionMessage: DANISH_PHRASES.completion.memoryGameSuccess,
-            autoResetDelay: 3000
-          })
-        }
-
-      } else {
-        // No match - show shake animation
-        setWrongPairIds(newRevealedCards.map(c => c.id))
-        
-        // Wait for shake animation
-        await new Promise(resolve => setTimeout(resolve, 600))
-        
-        // Reset wrong pair indicator
-        setWrongPairIds([])
-        
-        // Wait a bit more before flipping back
-        await new Promise(resolve => setTimeout(resolve, 400))
-        
-        const resetCards = cards.map(card =>
-          newRevealedCards.some(revealed => revealed.id === card.id) && !card.isMatched
-            ? { ...card, isRevealed: false }
-            : card
-        )
-        setCards(resetCards)
-
-        teacher.think()
-      }
-
-      // Reset revealed cards for next turn
-      setRevealedCards([])
-      setIsProcessing(false)
-    }
-  }
-
-  const restartGame = () => {
-    teacher.wave()
-    initializeGame()
-  }
-
-  // Repeat game instructions
-  const repeatInstructions = () => {
-    // Critical iOS fix: Update user interaction timestamp BEFORE audio call
-    audio.updateUserInteraction()
+    speakItem: async (number: string, audio: any) => {
+      return audio.speakNumber(parseInt(number))
+    },
     
-    if (!gameReady) return
+    title: 'Hukommelsesspil - Tal',
+    instructions: 'Find ens tal ved at klikke på kortene',
+    backPath: '/math',
+    theme: categoryThemes.math,
+    cardBackIcon: '123',
     
-    const message = gameType === 'letters' 
-      ? 'Find ens bogstaver ved at klikke på kortene'
-      : 'Find ens tal ved at klikke på kortene'
-    
-    try {
-      audio.speak(message).catch(() => {})
-    } catch (error) {
-      // Ignore audio errors
-    }
+    ScoreComponent: MathScoreChip,
+    RepeatButtonComponent: MathRepeatButton,
+    RestartButtonComponent: MathRestartButton
   }
 
-  const getGameTitle = () => {
-    return gameType === 'letters' ? 'Hukommelsesspil - Bogstaver' : 'Hukommelsesspil - Tal'
-  }
+  // Select configuration based on game type
+  const config = gameType === 'letters' ? lettersConfig : numbersConfig
 
-  const getBackPath = () => {
-    return gameType === 'letters' ? '/alphabet' : '/math'
-  }
-
-
-
-  return (
-    <>
-      <style>{flipStyles}</style>
-      <Box 
-        sx={{ 
-          height: '100dvh',
-          overflow: 'hidden',
-          display: 'flex',
-          flexDirection: 'column',
-          background: 'linear-gradient(135deg, #f3e5f5 0%, #e8f5e8 50%, #fff3e0 100%)'
-        }}
-      >
-      <GameHeader
-        title={getGameTitle()}
-        titleIcon="🧠"
-        character={teacher}
-        categoryTheme={categoryThemes.alphabet}
-        backPath={getBackPath()}
-        scoreComponent={
-          <AlphabetScoreChip
-            score={score}
-            disabled={isScoreNarrating}
-            onClick={handleScoreClick}
-          />
-        }
-      />
-
-      <Container 
-        maxWidth="xl" 
-        sx={{ 
-          flex: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          py: { xs: 0.5, md: 1 },
-          overflow: 'hidden'
-        }}
-      >
-        {/* Controls */}
-        <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mb: { xs: 1, md: 2 }, flex: '0 0 auto' }}>
-          <AlphabetRestartButton
-            onClick={restartGame}
-            size="small"
-          />
-          <AlphabetRepeatButton
-            onClick={repeatInstructions}
-            disabled={false}
-            size="small"
-            label="🎵 Hör igen"
-          />
-        </Box>
-
-        {/* Memory Cards Grid - 4x10 layout */}
-        <Box sx={{ 
-          flex: 1, 
-          display: 'flex', 
-          justifyContent: 'center', 
-          alignItems: 'center',
-          minHeight: 0,
-          overflow: 'hidden',
-          p: { xs: 0.5, sm: 1, md: 1 },
-          width: '100%'
-        }}>
-          <Box sx={{
-            display: 'grid',
-            gridTemplateColumns: { 
-              xs: 'repeat(5, 1fr)',   // Mobile portrait: 5 columns
-              sm: 'repeat(8, 1fr)',   // Tablet: 8 columns
-              md: 'repeat(10, 1fr)'   // Desktop: 10 columns
-            },
-            gridAutoRows: 'auto',
-            gap: { xs: '6px', sm: '8px', md: '10px', lg: '12px' },
-            width: '100%',
-            maxWidth: { md: '1000px', lg: '1200px' },
-            justifyContent: 'center',
-            // Individual card aspect ratio and constraints
-            '& > *': {
-              aspectRatio: '3/4',  // Traditional card proportions
-              minHeight: { xs: '60px', sm: '70px', md: '80px' },
-              maxHeight: { xs: '100px', sm: '120px', md: '140px' },
-              width: '100%'
-            },
-            // Orientation specific adjustments
-            '@media (orientation: landscape)': {
-              gridTemplateColumns: { 
-                xs: 'repeat(8, 1fr)',   // Landscape mobile: 8 columns
-                sm: 'repeat(10, 1fr)',  // Landscape tablet: 10 columns
-                md: 'repeat(10, 1fr)'   // Landscape desktop: 10 columns
-              },
-              '& > *': {
-                aspectRatio: '3/4',
-                minHeight: { xs: '50px', sm: '60px', md: '70px' },
-                maxHeight: { xs: '80px', sm: '90px', md: '100px' }
-              }
-            }
-          }}>
-            {gameReady && cards.length > 0 ? cards.map((card, index) => (
-              <motion.div
-                key={card.id}
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ 
-                  opacity: 1, 
-                  scale: 1,
-                  x: wrongPairIds.includes(card.id) ? [0, -10, 10, -10, 10, 0] : 0
-                }}
-                transition={{ 
-                  delay: index * 0.02, 
-                  duration: 0.5,
-                  x: { duration: 0.4, times: [0, 0.2, 0.4, 0.6, 0.8, 1] }
-                }}
-                whileHover={{ scale: card.isMatched ? 1 : 1.05 }}
-                whileTap={{ scale: card.isMatched ? 1 : 0.95 }}
-                style={{ width: '100%', height: '100%' }}
-              >
-                <div 
-                  className="flip-container" 
-                  style={{ 
-                    height: '100%'
-                  }}
-                >
-                  <div 
-                    className={`flipper ${card.isRevealed || card.isMatched ? 'flipped' : ''}`}
-                    onClick={() => handleCardClick(card)}
-                  >
-                    {/* Card Front (Back side - what shows when not flipped) */}
-                    <div 
-                      className="card-face card-front"
-                      style={{
-                        borderColor: '#9c27b0',
-                        background: 'linear-gradient(135deg, #9c27b0 0%, #2196f3 100%)'
-                      }}
-                    >
-                      <div style={{
-                        position: 'relative',
-                        width: '100%',
-                        height: '100%',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        flexDirection: 'column'
-                      }}>
-                        {/* Pattern overlay */}
-                        <div style={{
-                          position: 'absolute',
-                          inset: 0,
-                          opacity: 0.1,
-                          background: 'repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.1) 10px, rgba(255,255,255,0.1) 20px)'
-                        }} />
-                        {/* Central content */}
-                        <div style={{
-                          position: 'relative',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          alignItems: 'center',
-                          gap: '4px'
-                        }}>
-                          <div style={{
-                            fontSize: 'clamp(1.2rem, 3.5vw, 2rem)',
-                            fontWeight: 'bold',
-                            color: 'white',
-                            textShadow: '0 2px 4px rgba(0,0,0,0.3)',
-                            fontFamily: 'Comic Sans MS, Arial'
-                          }}>
-                            {gameType === 'letters' ? 'ABC' : '123'}
-                          </div>
-                        </div>
-                        {/* Corner stars */}
-                        <div style={{ position: 'absolute', top: 8, left: 8, fontSize: '1rem' }}>⭐</div>
-                        <div style={{ position: 'absolute', top: 8, right: 8, fontSize: '1rem' }}>⭐</div>
-                        <div style={{ position: 'absolute', bottom: 8, left: 8, fontSize: '1rem' }}>⭐</div>
-                        <div style={{ position: 'absolute', bottom: 8, right: 8, fontSize: '1rem' }}>⭐</div>
-                      </div>
-                    </div>
-
-                    {/* Card Back (Content side - what shows when flipped) */}
-                    <div 
-                      className="card-face card-back"
-                      style={{
-                        borderColor: card.isMatched ? '#4caf50' : '#1976d2',
-                        background: card.isMatched ? '#e8f5e8' : 'white'
-                      }}
-                    >
-                      {gameType === 'letters' && LETTER_ICONS[card.content] ? (
-                        <>
-                          <div style={{ 
-                            fontSize: 'clamp(1.4rem, 3.5vw, 2.5rem)',
-                            fontWeight: 700,
-                            color: card.isMatched ? '#2e7d32' : '#1976d2',
-                            marginBottom: '6px',
-                            lineHeight: 1
-                          }}>
-                            {card.content}
-                          </div>
-                          <div style={{ 
-                            fontSize: 'clamp(1.4rem, 3.5vw, 2.2rem)', 
-                            lineHeight: 1 
-                          }}>
-                            {LETTER_ICONS[card.content].icon}
-                          </div>
-                        </>
-                      ) : gameType === 'numbers' ? (
-                        <div style={{ 
-                          fontSize: 'clamp(1.2rem, 3vw, 2.5rem)',
-                          fontWeight: 700,
-                          color: card.isMatched ? '#2e7d32' : '#1976d2',
-                          lineHeight: 1
-                        }}>
-                          {card.content}
-                        </div>
-                      ) : (
-                        <div style={{ 
-                          fontSize: 'clamp(1.5rem, 4vw, 3rem)',
-                          fontWeight: 700,
-                          color: card.isMatched ? '#2e7d32' : '#1976d2'
-                        }}>
-                          {card.content}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            )) : null}
-          </Box>
-        </Box>
-
-      </Container>
-
-      {/* Celebration Effect */}
-      <CelebrationEffect
-        show={showCelebration}
-        intensity={celebrationIntensity}
-        onComplete={stopCelebration}
-      />
-    </Box>
-    </>
-  )
+  return <UnifiedMemoryGame config={config} />
 }
 
 export default MemoryGame

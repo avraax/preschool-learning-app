@@ -66,9 +66,9 @@ export const RepeatButton: React.FC<RepeatButtonProps> = ({
   // Build button styles based on variant and category
   const getButtonStyles = () => {
     const baseStyles = {
-      py: 2,
-      px: 4,
-      fontSize: '1.1rem',
+      py: size === 'small' ? 1 : size === 'large' ? 2 : 2,
+      px: size === 'small' ? 2 : size === 'large' ? 4 : 4,
+      fontSize: size === 'small' ? '0.9rem' : size === 'large' ? '1.1rem' : '1.1rem',
       borderRadius: 3,
       fontWeight: 600,
       textTransform: 'none' as const,
