@@ -100,27 +100,22 @@ const AlphabetLearning: React.FC = () => {
     const letter = DANISH_ALPHABET[index]
     
     const clickTime = Date.now()
-    console.log(`🎵 AlphabetLearning: Letter clicked at ${clickTime} - ${letter} (index ${index})`)
     
     // Critical iOS fix: Update user interaction timestamp BEFORE audio call
     audio.updateUserInteraction()
     
     // Always cancel current audio for fast tapping
-    console.log(`🎵 AlphabetLearning: Cancelling current audio for immediate letter pronunciation`)
     audio.cancelCurrentAudio()
     
     setCurrentIndex(index)
     
     try {
       const audioStartTime = Date.now()
-      console.log(`🎵 AlphabetLearning: Starting letter audio at ${audioStartTime} (${audioStartTime - clickTime}ms after click) - ${letter}`)
       
       await audio.speakLetter(letter)
       
       const audioEndTime = Date.now()
-      console.log(`🎵 AlphabetLearning: Letter audio completed at ${audioEndTime} (${audioEndTime - audioStartTime}ms duration) - ${letter}`)
     } catch (error) {
-      console.log(`🎵 AlphabetLearning: Error playing letter audio:`, error)
       logError('Error speaking letter', {
         letter,
         error: error?.toString()

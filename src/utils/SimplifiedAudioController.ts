@@ -76,12 +76,10 @@ export class SimplifiedAudioController {
     const audioId = `audio_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
     const startTime = Date.now()
     
-    console.log(`🎵 SimplifiedAudioController: Starting playAudio ${audioId} at ${startTime}`)
     
     // ALWAYS stop current audio first - dead simple
     const stopTime = Date.now()
     this.stopCurrentAudio('new_audio_requested')
-    console.log(`🎵 SimplifiedAudioController: Audio stopped in ${Date.now() - stopTime}ms`)
     
     // Set current audio tracking
     this.currentAudioId = audioId
@@ -90,17 +88,14 @@ export class SimplifiedAudioController {
     
     try {
       const executeTime = Date.now()
-      console.log(`🎵 SimplifiedAudioController: Executing audio function at ${executeTime} (${executeTime - startTime}ms after start)`)
       
       // Execute audio function
       await audioFunction()
       
       const completedTime = Date.now()
-      console.log(`🎵 SimplifiedAudioController: Audio completed at ${completedTime} (${completedTime - executeTime}ms duration)`)
       
     } catch (error) {
       const errorTime = Date.now()
-      console.log(`🎵 SimplifiedAudioController: Audio error at ${errorTime} (${errorTime - startTime}ms after start)`, error)
       
       logError('Audio playback error', { 
         audioId,
@@ -116,7 +111,6 @@ export class SimplifiedAudioController {
         error.message.includes('AbortError') ||
         error.message.includes('NotSupportedError')
       )) {
-        console.log(`🎵 SimplifiedAudioController: iOS audio error handled gracefully for ${audioId}`)
         // iOS audio error - continuing gracefully without throwing
       } else {
         throw error
@@ -128,9 +122,7 @@ export class SimplifiedAudioController {
         this.currentAudioId = null
         this.notifyPlayingStateChange()
         const finalTime = Date.now()
-        console.log(`🎵 SimplifiedAudioController: Audio ${audioId} finished and cleaned up at ${finalTime} (${finalTime - startTime}ms total)`)
       } else {
-        console.log(`🎵 SimplifiedAudioController: Audio ${audioId} was replaced by newer audio`)
       }
     }
     
@@ -139,7 +131,6 @@ export class SimplifiedAudioController {
 
   private stopCurrentAudio(_reason: string = 'new_audio_requested'): void {
     const stopStartTime = Date.now()
-    console.log(`🎵 SimplifiedAudioController: Stopping current audio - ${_reason}`)
     
     // Stop Web Speech API IMMEDIATELY and aggressively for iOS fast-tap
     if (window.speechSynthesis) {
@@ -160,7 +151,6 @@ export class SimplifiedAudioController {
             window.speechSynthesis.cancel() 
           } catch {}
         }, 10)
-        console.log(`🎵 SimplifiedAudioController: Web Speech API cancelled in ${Date.now() - stopStartTime}ms`)
       } catch {}
     }
     
@@ -169,14 +159,12 @@ export class SimplifiedAudioController {
       try {
         if (sound.playing()) {
           sound.stop()
-          console.log(`🎵 SimplifiedAudioController: Howler sound stopped`)
         }
       } catch {}
     })
     
     // Stop Google TTS (HTML5 audio elements) immediately
     this.googleTTS.stopCurrentAudio()
-    console.log(`🎵 SimplifiedAudioController: Google TTS stopped`)
     
     // Stop all HTML5 audio elements aggressively
     const audioElements = document.querySelectorAll('audio')
@@ -198,7 +186,6 @@ export class SimplifiedAudioController {
     this.notifyPlayingStateChange()
     
     const stopDuration = Date.now() - stopStartTime
-    console.log(`🎵 SimplifiedAudioController: Audio stopped successfully in ${stopDuration}ms`)
   }
 
   // ===== SIMPLIFIED PERMISSION MANAGEMENT =====

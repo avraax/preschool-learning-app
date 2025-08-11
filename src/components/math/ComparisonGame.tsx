@@ -216,13 +216,11 @@ const ComparisonGame: React.FC = () => {
     if (!currentProblem || showFeedback) return
     
     const clickTime = Date.now()
-    console.log(`🎵 ComparisonGame: Symbol clicked at ${clickTime} - ${symbol}`)
     
     // Critical iOS fix: Update user interaction timestamp BEFORE audio call
     audio.updateUserInteraction()
     
     // Always cancel current audio for fast tapping
-    console.log(`🎵 ComparisonGame: Cancelling current audio for immediate response`)
     audio.cancelCurrentAudio()
     
     setSelectedSymbol(symbol)
@@ -231,15 +229,12 @@ const ComparisonGame: React.FC = () => {
     // FIRST: Speak the symbol immediately for fast feedback
     try {
       const audioStartTime = Date.now()
-      console.log(`🎵 ComparisonGame: Starting symbol audio at ${audioStartTime} (${audioStartTime - clickTime}ms after click) - ${symbol}`)
       
       const symbolName = symbol === '>' ? 'større end' : symbol === '<' ? 'mindre end' : 'lig med'
       await audio.speak(symbolName)
       
       const audioEndTime = Date.now()
-      console.log(`🎵 ComparisonGame: Symbol audio completed at ${audioEndTime} (${audioEndTime - audioStartTime}ms duration) - ${symbol}`)
     } catch (error) {
-      console.log(`🎵 ComparisonGame: Error playing symbol audio:`, error)
     }
     
     // Determine if the answer is correct based on question type
@@ -343,23 +338,19 @@ const ComparisonGame: React.FC = () => {
     if (!currentProblem) return
     
     const clickTime = Date.now()
-    console.log(`🎵 ComparisonGame: Repeat button clicked at ${clickTime}`)
     
     // Critical iOS fix: Update user interaction timestamp BEFORE audio call
     audio.updateUserInteraction()
     
     // Always cancel current audio for fast tapping
-    console.log(`🎵 ComparisonGame: Cancelling current audio for immediate repeat`)
     audio.cancelCurrentAudio()
     
     try {
       const audioStartTime = Date.now()
-      console.log(`🎵 ComparisonGame: Starting repeat audio at ${audioStartTime} (${audioStartTime - clickTime}ms after click)`)
       
       await speakProblem(currentProblem)
       
       const audioEndTime = Date.now()
-      console.log(`🎵 ComparisonGame: Repeat audio completed at ${audioEndTime} (${audioEndTime - audioStartTime}ms duration)`)
     } catch (error) {
       console.error('🎵 ComparisonGame: Error repeating problem:', error)
     }
@@ -569,9 +560,15 @@ const ComparisonGame: React.FC = () => {
                             borderRadius: 3,
                             boxShadow: 4,
                             minWidth: { xs: '80px', md: '100px' },
-                            '&:hover': {
-                              boxShadow: 8,
-                              transform: 'scale(1.05)'
+                            outline: 'none',
+                            '&:focus': {
+                              outline: 'none'
+                            },
+                            '@media (hover: hover) and (pointer: fine)': {
+                              '&:hover': {
+                                boxShadow: 8,
+                                transform: 'scale(1.05)'
+                              }
                             }
                           }}
                         >

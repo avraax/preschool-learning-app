@@ -198,31 +198,25 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
   const handleItemClick = async (selectedItem: QuizItem) => {
     // Only prevent clicks if game isn't ready
     if (!gameReady || !currentItem) {
-      console.log(`🎵 UnifiedQuizGame: Blocked click - gameReady: ${gameReady}`)
       return
     }
     
     const clickTime = Date.now()
-    console.log(`🎵 UnifiedQuizGame: Item clicked at ${clickTime} - ${selectedItem.display}`)
     
     // Critical iOS fix: Update user interaction timestamp BEFORE audio call
     audio.updateUserInteraction()
     
     // Always cancel current audio for fast tapping
-    console.log(`🎵 UnifiedQuizGame: Cancelling current audio for immediate item pronunciation`)
     audio.cancelCurrentAudio()
     
     // FIRST: Play the clicked item immediately for fast feedback
     try {
       const audioStartTime = Date.now()
-      console.log(`🎵 UnifiedQuizGame: Starting item audio at ${audioStartTime} (${audioStartTime - clickTime}ms after click) - ${selectedItem.display}`)
       
       await config.speakClickedItem(selectedItem, audio)
       
       const audioEndTime = Date.now()
-      console.log(`🎵 UnifiedQuizGame: Item audio completed at ${audioEndTime} (${audioEndTime - audioStartTime}ms duration) - ${selectedItem.display}`)
     } catch (error) {
-      console.log(`🎵 UnifiedQuizGame: Error playing item audio:`, error)
     }
     
     const isCorrect = selectedItem.value === currentItem.value
@@ -265,23 +259,19 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
     if (!currentItem) return
     
     const clickTime = Date.now()
-    console.log(`🎵 UnifiedQuizGame: Repeat button clicked at ${clickTime}`)
     
     // Critical iOS fix: Update user interaction timestamp BEFORE audio call
     audio.updateUserInteraction()
     
     // Always cancel current audio for fast tapping
-    console.log(`🎵 UnifiedQuizGame: Cancelling current audio for immediate repeat`)
     audio.cancelCurrentAudio()
     
     try {
       const audioStartTime = Date.now()
-      console.log(`🎵 UnifiedQuizGame: Starting repeat audio at ${audioStartTime} (${audioStartTime - clickTime}ms after click)`)
       
       await config.getRepeatAudio(currentItem, audio)
       
       const audioEndTime = Date.now()
-      console.log(`🎵 UnifiedQuizGame: Repeat audio completed at ${audioEndTime} (${audioEndTime - audioStartTime}ms duration)`)
     } catch (error) {
       console.error('🎵 UnifiedQuizGame: Error repeating item:', error)
     }
@@ -436,11 +426,17 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
                   alignItems: 'center',
                   justifyContent: 'center',
                   borderRadius: '12px',
-                  '&:hover': {
-                    borderColor: config.theme.hoverBorderColor,
-                    bgcolor: config.quizType === 'alphabet' ? '#E3F2FD' : 'secondary.50',
-                    boxShadow: `0 8px 32px ${config.theme.accentColor}40`,
-                    transform: 'translateY(-2px)'
+                  outline: 'none',
+                  '&:focus': {
+                    outline: 'none'
+                  },
+                  '@media (hover: hover) and (pointer: fine)': {
+                    '&:hover': {
+                      borderColor: config.theme.hoverBorderColor,
+                      bgcolor: config.quizType === 'alphabet' ? '#E3F2FD' : 'secondary.50',
+                      boxShadow: `0 8px 32px ${config.theme.accentColor}40`,
+                      transform: 'translateY(-2px)'
+                    }
                   }
                 }}
               >

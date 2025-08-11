@@ -173,13 +173,11 @@ const AdditionGame: React.FC = () => {
     if (correctAnswer === null) return
     
     const clickTime = Date.now()
-    console.log(`🎵 AdditionGame: Answer clicked at ${clickTime} - ${selectedAnswer}`)
     
     // Critical iOS fix: Update user interaction timestamp BEFORE audio call
     audio.updateUserInteraction()
     
     // Always cancel current audio for fast tapping
-    console.log(`🎵 AdditionGame: Cancelling current audio for immediate response`)
     audio.cancelCurrentAudio()
     
     const isCorrect = selectedAnswer === correctAnswer
@@ -187,14 +185,11 @@ const AdditionGame: React.FC = () => {
     // FIRST: Play the number immediately for fast feedback
     try {
       const audioStartTime = Date.now()
-      console.log(`🎵 AdditionGame: Starting number audio at ${audioStartTime} (${audioStartTime - clickTime}ms after click) - ${selectedAnswer}`)
       
       await audio.speakNumber(selectedAnswer)
       
       const audioEndTime = Date.now()
-      console.log(`🎵 AdditionGame: Number audio completed at ${audioEndTime} (${audioEndTime - audioStartTime}ms duration) - ${selectedAnswer}`)
     } catch (error) {
-      console.log(`🎵 AdditionGame: Error playing number audio:`, error)
     }
     
     // IMMEDIATELY: Start visual celebration effects if correct
@@ -233,23 +228,19 @@ const AdditionGame: React.FC = () => {
     if (num1 === null || num2 === null) return
     
     const clickTime = Date.now()
-    console.log(`🎵 AdditionGame: Repeat button clicked at ${clickTime}`)
     
     // Critical iOS fix: Update user interaction timestamp BEFORE audio call
     audio.updateUserInteraction()
     
     // Always cancel current audio for fast tapping
-    console.log(`🎵 AdditionGame: Cancelling current audio for immediate repeat`)
     audio.cancelCurrentAudio()
     
     try {
       const audioStartTime = Date.now()
-      console.log(`🎵 AdditionGame: Starting repeat audio at ${audioStartTime} (${audioStartTime - clickTime}ms after click)`)
       
       await speakProblem(num1, num2)
       
       const audioEndTime = Date.now()
-      console.log(`🎵 AdditionGame: Repeat audio completed at ${audioEndTime} (${audioEndTime - audioStartTime}ms duration)`)
     } catch (error) {
       console.error('🎵 AdditionGame: Error repeating problem:', error)
     }
@@ -477,11 +468,17 @@ const AdditionGame: React.FC = () => {
                   alignItems: 'center',
                   justifyContent: 'center',
                   borderRadius: '12px',
-                  '&:hover': {
-                    borderColor: 'primary.main',
-                    bgcolor: 'primary.50',
-                    boxShadow: 12,
-                    transform: 'translateY(-2px)'
+                  outline: 'none',
+                  '&:focus': {
+                    outline: 'none'
+                  },
+                  '@media (hover: hover) and (pointer: fine)': {
+                    '&:hover': {
+                      borderColor: 'primary.main',
+                      bgcolor: 'primary.50',
+                      boxShadow: 12,
+                      transform: 'translateY(-2px)'
+                    }
                   }
                 }}
               >

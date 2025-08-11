@@ -256,7 +256,6 @@ const UnifiedMemoryGame: React.FC<UnifiedMemoryGameProps> = ({ config }) => {
       timeSincePageLoad: performance.now()
     }
     
-    console.log('🎵 UnifiedMemoryGame: CARD CLICK ATTEMPT', cardClickDebugInfo)
     
     // Critical iOS fix: Update user interaction timestamp BEFORE audio call
     audio.updateUserInteraction()
@@ -267,9 +266,7 @@ const UnifiedMemoryGame: React.FC<UnifiedMemoryGameProps> = ({ config }) => {
     // Handle matched cards - they should speak with special audio if available
     if (clickedCard.isMatched && config.speakMatchedItem) {
       try {
-        console.log('🎵 UnifiedMemoryGame: Speaking matched card', { content: clickedCard.content })
         await config.speakMatchedItem(clickedCard.content, audio)
-        console.log('🎵 UnifiedMemoryGame: Matched card audio completed successfully')
       } catch (error: any) {
         const errorDetails = {
           cardContent: clickedCard.content,
@@ -301,14 +298,9 @@ const UnifiedMemoryGame: React.FC<UnifiedMemoryGameProps> = ({ config }) => {
     // Play audio for the revealed card with enhanced iOS handling
     const playCardAudio = async () => {
       try {
-        console.log('🎵 UnifiedMemoryGame: Playing card reveal audio', { 
-          content: clickedCard.content, 
-          gameType: config.gameType
-        })
         
         await config.speakItem(clickedCard.content, audio)
         
-        console.log('🎵 UnifiedMemoryGame: Card reveal audio completed successfully', { content: clickedCard.content })
       } catch (error: any) {
         // Check if this is a navigation interruption (expected)
         const isNavigationInterruption = error && 
@@ -316,7 +308,6 @@ const UnifiedMemoryGame: React.FC<UnifiedMemoryGameProps> = ({ config }) => {
            error.message?.includes('interrupted by user'))
         
         if (isNavigationInterruption) {
-          console.log('🎵 UnifiedMemoryGame: Card audio interrupted by navigation (expected)')
           return // Don't show prompts for expected interruptions
         }
         

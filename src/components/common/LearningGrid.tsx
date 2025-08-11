@@ -83,10 +83,16 @@ const LearningGrid: React.FC<LearningGridProps> = ({
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  '&:hover': disabled ? {} : {
-                    borderColor: 'primary.main',
-                    bgcolor: 'primary.50',
-                    boxShadow: 4
+                  outline: 'none',
+                  '&:focus': {
+                    outline: 'none'
+                  },
+                  '@media (hover: hover) and (pointer: fine)': {
+                    '&:hover': disabled ? {} : {
+                      borderColor: 'primary.main',
+                      bgcolor: 'primary.50',
+                      boxShadow: 4
+                    }
                   }
                 }}
               >

@@ -5,8 +5,6 @@ import { setSimplifiedAudioContext } from '../utils/SimplifiedAudioController'
 
 // Simplified iOS-optimized debugging with remote logging
 const logSimpleAudio = (message: string, data?: any) => {
-  console.log(`🔊 SimplifiedAudio: ${message}`, data)
-  
   // Always send to remote logging for production debugging
   audioDebugSession.addLog('SIMPLIFIED_AUDIO', {
     message,
