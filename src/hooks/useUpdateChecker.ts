@@ -29,7 +29,7 @@ export function useUpdateChecker(): UpdateStatus {
   const currentVersion = BUILD_INFO
 
   // Create a stable reference to the check function
-  const checkForUpdatesRef = useRef<() => Promise<void>>()
+  const checkForUpdatesRef = useRef<() => Promise<void>>(undefined)
 
   const checkForUpdates = useCallback(async () => {
     // Prevent concurrent checks

@@ -455,7 +455,7 @@ const ComparisonGame: React.FC = () => {
                 }
               }}
             >
-            <Grid container spacing={{ xs: 2, md: 4 }} alignItems="center">
+            <Grid container spacing={{ xs: 2, md: 4 }} sx={{ alignItems: 'center' }}>
               {/* Left Side */}
               <Grid size={{ xs: 12, sm: 4 }}>
                 <Box sx={{ textAlign: 'center' }}>

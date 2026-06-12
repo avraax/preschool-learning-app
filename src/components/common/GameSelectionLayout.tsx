@@ -88,11 +88,10 @@ const GameSelectionLayout: React.FC<GameSelectionLayoutProps> = ({
       >
         {/* Games Grid */}
         <Box sx={{ flex: 1, display: 'flex', alignItems: 'center' }}>
-          <Grid 
-            container 
-            spacing={{ xs: 2, md: 3 }} 
-            justifyContent="center"
-            sx={{ width: '100%' }}
+          <Grid
+            container
+            spacing={{ xs: 2, md: 3 }}
+            sx={{ width: '100%', justifyContent: 'center' }}
           >
             {games.map((game, index) => (
               <Grid size={{ xs: 12, sm: 6, md: 4 }} key={game.id}>
