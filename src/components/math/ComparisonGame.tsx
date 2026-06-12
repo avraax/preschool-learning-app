@@ -361,18 +361,17 @@ const ComparisonGame: React.FC = () => {
       }}
     >
       {/* App Bar with Back Button and Score */}
-      <AppBar position="static" color="transparent" elevation={0}>
+      <AppBar position="static" elevation={0} sx={{ backgroundColor: 'rgba(0,0,0,0.15)', backdropFilter: 'blur(4px)' }}>
         <Toolbar sx={{ justifyContent: 'space-between', py: 2 }}>
-          <IconButton 
+          <IconButton
             onClick={() => navigate('/math')}
-            color="primary"
             size="large"
-            sx={{ 
-              bgcolor: 'rgba(255, 255, 255, 0.8)', 
-              border: '1px solid rgba(255, 255, 255, 0.3)',
-              backdropFilter: 'blur(8px)',
-              '&:hover': { 
-                bgcolor: 'rgba(255, 255, 255, 0.9)',
+            sx={{
+              bgcolor: 'rgba(255, 255, 255, 0.25)',
+              color: 'white',
+              border: '2px solid rgba(255,255,255,0.3)',
+              '&:hover': {
+                bgcolor: 'rgba(255, 255, 255, 0.4)',
                 transform: 'scale(1.05)'
               }
             }}

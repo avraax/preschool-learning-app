@@ -36,7 +36,20 @@ import ErrorDashboard from './components/admin/ErrorDashboard'
 import UpdateBanner from './components/common/UpdateBanner'
 // Legacy audio system removed - using SimplifiedAudioProvider only
 import { useViewportHeight } from './hooks/useViewportHeight'
-// Demo system removed
+
+// Lazy load Demo Homepage components to prevent initial loading errors
+const HomepageGallery = React.lazy(() => import('./components/demo/homepages/HomepageGallery'))
+const SpaceAdventure = React.lazy(() => import('./components/demo/homepages/SpaceAdventure'))
+const UnderwaterWorld = React.lazy(() => import('./components/demo/homepages/UnderwaterWorld'))
+const MagicalForest = React.lazy(() => import('./components/demo/homepages/MagicalForest'))
+const ToyboxPlayground = React.lazy(() => import('./components/demo/homepages/ToyboxPlayground'))
+const InteractiveStorybook = React.lazy(() => import('./components/demo/homepages/InteractiveStorybook'))
+const CircusCarnival = React.lazy(() => import('./components/demo/homepages/CircusCarnival'))
+const CloudKingdom = React.lazy(() => import('./components/demo/homepages/CloudKingdom'))
+const ConstructionSite = React.lazy(() => import('./components/demo/homepages/ConstructionSite'))
+const ArtStudio = React.lazy(() => import('./components/demo/homepages/ArtStudio'))
+const MusicFestival = React.lazy(() => import('./components/demo/homepages/MusicFestival'))
+const ValidationTest = React.lazy(() => import('./components/demo/ValidationTest'))
 
 // Simplified Audio System imports
 import { SimplifiedAudioProvider } from './contexts/SimplifiedAudioContext'
@@ -260,18 +273,12 @@ const HomePage = () => {
   }, [stopAll])
 
   return (
-    <Box 
+    <Box
       className="interactive-area"
-      sx={{ 
+      sx={{
         position: 'relative',
         height: 'calc(var(--vh, 1vh) * 100)',
-        background: `
-          #F8FAFC,
-          radial-gradient(circle at 15% 25%, rgba(255, 255, 255, 0.8) 25px, transparent 26px),
-          radial-gradient(circle at 85% 15%, rgba(255, 255, 255, 0.8) 30px, transparent 31px),
-          radial-gradient(circle at 25% 70%, rgba(255, 255, 255, 0.8) 28px, transparent 29px),
-          radial-gradient(circle at 75% 75%, rgba(255, 255, 255, 0.8) 22px, transparent 23px)
-        `,
+        background: 'linear-gradient(180deg, #0EA5E9 0%, #0284C7 70%, #0369A1 100%)',
         overflow: 'hidden',
         display: 'flex',
         flexDirection: 'column',
@@ -279,36 +286,34 @@ const HomePage = () => {
         paddingBottom: 'env(safe-area-inset-bottom)',
         paddingLeft: 'env(safe-area-inset-left)',
         paddingRight: 'env(safe-area-inset-right)',
-        /* Enhanced native app properties */
         touchAction: 'pan-x pan-down pinch-zoom',
         WebkitUserSelect: 'none',
         userSelect: 'none',
         WebkitTouchCallout: 'none',
-        /* Rainbow arc background */
+        /* Soft cloud bumps at bottom */
         '&::before': {
           content: '""',
           position: 'absolute',
-          bottom: -100,
+          bottom: -60,
           left: '50%',
           transform: 'translateX(-50%)',
-          width: '150%',
-          height: 400,
-          background: 'conic-gradient(from 0deg at 50% 100%, #FF0000 0deg, #FF8C00 51deg, #FFD700 102deg, #32CD32 153deg, #1E90FF 204deg, #9932CC 255deg, #8B00FF 306deg, #FF0000 360deg)',
+          width: '140%',
+          height: 200,
+          background: 'rgba(255, 255, 255, 0.15)',
           borderRadius: '50%',
-          opacity: 0.9,
-          animation: 'rainbowShimmer 8s ease-in-out infinite alternate',
           zIndex: 0
         },
-        '@keyframes rainbowShimmer': {
-          '0%': { 
-            opacity: 0.8,
-            transform: 'translateX(-50%) scale(1)'
-          },
-          '100%': { 
-            opacity: 1,
-            transform: 'translateX(-50%) scale(1.05)'
-          }
-        },
+        '&::after': {
+          content: '""',
+          position: 'absolute',
+          bottom: -30,
+          left: '10%',
+          width: '35%',
+          height: 120,
+          background: 'rgba(255, 255, 255, 0.1)',
+          borderRadius: '50%',
+          zIndex: 0
+        }
       }}
     >
       <Container 
@@ -349,13 +354,13 @@ const HomePage = () => {
             </Box>
             
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2, mb: 2 }}>
-              <Typography 
-                variant="h1" 
-                sx={{ 
+              <Typography
+                variant="h1"
+                sx={{
                   fontSize: { xs: '2rem', sm: '2.5rem', md: '3.5rem' },
-                  fontWeight: 700,
-                  color: '#8B5CF6',
-                  textShadow: '2px 2px 8px rgba(139, 92, 246, 0.25)',
+                  fontWeight: 900,
+                  color: 'white',
+                  textShadow: '2px 3px 0px rgba(0,0,0,0.2)',
                   letterSpacing: '0.02em'
                 }}
               >
@@ -381,18 +386,19 @@ const HomePage = () => {
             transition={{ delay: 0.3, duration: 0.5 }}
           >
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
-              <Play size={20} color="#F87171" />
-              <Typography 
-                variant="h5" 
-                sx={{ 
+              <Play size={20} color="rgba(255,255,255,0.9)" />
+              <Typography
+                variant="h5"
+                sx={{
                   fontSize: { xs: '1rem', sm: '1.25rem', md: '1.5rem' },
-                  color: '#F87171',
-                  fontWeight: 600
+                  color: 'rgba(255,255,255,0.95)',
+                  fontWeight: 700,
+                  textShadow: '1px 1px 0px rgba(0,0,0,0.15)'
                 }}
               >
                 Lær med sjove spil!
               </Typography>
-              <BookOpen size={20} color="#F87171" />
+              <BookOpen size={20} color="rgba(255,255,255,0.9)" />
             </Box>
           </motion.div>
         </Box>
@@ -423,32 +429,30 @@ const HomePage = () => {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
-                <Card 
+                <Card
                   onClick={() => navigate('/alphabet')}
-                  sx={{ 
+                  sx={{
                     height: '100%',
                     minHeight: { xs: 180, sm: 220, md: 240 },
                     cursor: 'pointer',
-                    border: '2px solid',
-                    borderColor: categoryThemes.alphabet.borderColor,
+                    border: '4px solid rgba(255,255,255,0.4)',
+                    borderRadius: '24px',
                     display: 'flex',
                     flexDirection: 'column',
-                    background: `linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(227, 242, 253, 0.9) 100%)`,
-                    backdropFilter: 'blur(15px)',
+                    background: categoryThemes.alphabet.gradient,
+                    boxShadow: '0 8px 24px rgba(236, 72, 153, 0.4)',
                     '&:hover': {
-                      borderColor: categoryThemes.alphabet.hoverBorderColor,
-                      boxShadow: '0 8px 32px rgba(25, 118, 210, 0.3)',
-                      transform: 'translateY(-2px)'
+                      boxShadow: '0 12px 36px rgba(236, 72, 153, 0.55)',
+                      transform: 'translateY(-4px) scale(1.01)'
                     },
                     transition: 'all 0.3s ease',
-                    // Orientation specific adjustments
                     '@media (orientation: landscape)': {
                       minHeight: { xs: 160, sm: 180, md: 200 }
                     }
                   }}
                 >
-                  <CardContent 
-                    sx={{ 
+                  <CardContent
+                    sx={{
                       p: { xs: 2, md: 3 },
                       height: '100%',
                       display: 'flex',
@@ -457,26 +461,28 @@ const HomePage = () => {
                       textAlign: 'center'
                     }}
                   >
-                    <Box sx={{ mb: 2 }}>
-                      <Typography sx={{ fontSize: categoryThemes.alphabet.iconSize, mb: 2 }}>
+                    <Box sx={{ mb: 1 }}>
+                      <Typography sx={{ fontSize: categoryThemes.alphabet.iconSize, mb: 1, filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))' }}>
                         {categoryThemes.alphabet.icon}
                       </Typography>
-                      <Typography 
-                        variant="h4" 
-                        sx={{ 
-                          mb: 1, 
-                          fontWeight: 700,
+                      <Typography
+                        variant="h4"
+                        sx={{
+                          mb: 1,
+                          fontWeight: 900,
                           fontSize: { xs: '1.5rem', md: '1.75rem' },
-                          color: categoryThemes.alphabet.accentColor
+                          color: 'white',
+                          textShadow: '1px 2px 0px rgba(0,0,0,0.25)'
                         }}
                       >
                         {categoryThemes.alphabet.name}
                       </Typography>
-                      <Typography 
-                        variant="body1" 
-                        color="text.secondary" 
-                        sx={{ 
-                          fontSize: { xs: '0.875rem', md: '1rem' }
+                      <Typography
+                        variant="body1"
+                        sx={{
+                          fontSize: { xs: '0.8rem', md: '0.9rem' },
+                          color: 'rgba(255,255,255,0.9)',
+                          fontWeight: 500
                         }}
                       >
                         {categoryThemes.alphabet.description}
@@ -496,32 +502,30 @@ const HomePage = () => {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
-                <Card 
+                <Card
                   onClick={() => navigate('/math')}
-                  sx={{ 
+                  sx={{
                     height: '100%',
                     minHeight: { xs: 180, sm: 220, md: 240 },
                     cursor: 'pointer',
-                    border: '2px solid',
-                    borderColor: categoryThemes.math.borderColor,
+                    border: '4px solid rgba(255,255,255,0.4)',
+                    borderRadius: '24px',
                     display: 'flex',
                     flexDirection: 'column',
-                    background: `linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(243, 229, 245, 0.9) 100%)`,
-                    backdropFilter: 'blur(15px)',
+                    background: categoryThemes.math.gradient,
+                    boxShadow: '0 8px 24px rgba(124, 58, 237, 0.4)',
                     '&:hover': {
-                      borderColor: categoryThemes.math.hoverBorderColor,
-                      boxShadow: '0 8px 32px rgba(156, 39, 176, 0.3)',
-                      transform: 'translateY(-2px)'
+                      boxShadow: '0 12px 36px rgba(124, 58, 237, 0.55)',
+                      transform: 'translateY(-4px) scale(1.01)'
                     },
                     transition: 'all 0.3s ease',
-                    // Orientation specific adjustments
                     '@media (orientation: landscape)': {
                       minHeight: { xs: 160, sm: 180, md: 200 }
                     }
                   }}
                 >
-                  <CardContent 
-                    sx={{ 
+                  <CardContent
+                    sx={{
                       p: { xs: 2, md: 3 },
                       height: '100%',
                       display: 'flex',
@@ -530,26 +534,28 @@ const HomePage = () => {
                       textAlign: 'center'
                     }}
                   >
-                    <Box sx={{ mb: 2 }}>
-                      <Typography sx={{ fontSize: categoryThemes.math.iconSize, mb: 2 }}>
+                    <Box sx={{ mb: 1 }}>
+                      <Typography sx={{ fontSize: categoryThemes.math.iconSize, mb: 1, filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))' }}>
                         {categoryThemes.math.icon}
                       </Typography>
-                      <Typography 
-                        variant="h4" 
-                        sx={{ 
-                          mb: 1, 
-                          fontWeight: 700,
+                      <Typography
+                        variant="h4"
+                        sx={{
+                          mb: 1,
+                          fontWeight: 900,
                           fontSize: { xs: '1.5rem', md: '1.75rem' },
-                          color: categoryThemes.math.accentColor
+                          color: 'white',
+                          textShadow: '1px 2px 0px rgba(0,0,0,0.25)'
                         }}
                       >
                         {categoryThemes.math.name}
                       </Typography>
-                      <Typography 
-                        variant="body1" 
-                        color="text.secondary" 
-                        sx={{ 
-                          fontSize: { xs: '0.875rem', md: '1rem' }
+                      <Typography
+                        variant="body1"
+                        sx={{
+                          fontSize: { xs: '0.8rem', md: '0.9rem' },
+                          color: 'rgba(255,255,255,0.9)',
+                          fontWeight: 500
                         }}
                       >
                         {categoryThemes.math.description}
@@ -569,32 +575,30 @@ const HomePage = () => {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
-                <Card 
+                <Card
                   onClick={() => navigate('/farver')}
-                  sx={{ 
+                  sx={{
                     height: '100%',
                     minHeight: { xs: 180, sm: 220, md: 240 },
                     cursor: 'pointer',
-                    border: '2px solid',
-                    borderColor: categoryThemes.colors.borderColor,
+                    border: '4px solid rgba(255,255,255,0.4)',
+                    borderRadius: '24px',
                     display: 'flex',
                     flexDirection: 'column',
-                    background: `linear-gradient(135deg, rgba(255, 243, 224, 0.95) 0%, rgba(255, 224, 178, 0.95) 100%)`,
-                    backdropFilter: 'blur(10px)',
+                    background: categoryThemes.colors.gradient,
+                    boxShadow: '0 8px 24px rgba(249, 115, 22, 0.4)',
                     '&:hover': {
-                      borderColor: categoryThemes.colors.hoverBorderColor,
-                      boxShadow: '0 8px 32px rgba(230, 81, 0, 0.3)',
-                      transform: 'translateY(-2px)'
+                      boxShadow: '0 12px 36px rgba(249, 115, 22, 0.55)',
+                      transform: 'translateY(-4px) scale(1.01)'
                     },
                     transition: 'all 0.3s ease',
-                    // Orientation specific adjustments
                     '@media (orientation: landscape)': {
                       minHeight: { xs: 160, sm: 180, md: 200 }
                     }
                   }}
                 >
-                  <CardContent 
-                    sx={{ 
+                  <CardContent
+                    sx={{
                       p: { xs: 2, md: 3 },
                       height: '100%',
                       display: 'flex',
@@ -603,26 +607,28 @@ const HomePage = () => {
                       textAlign: 'center'
                     }}
                   >
-                    <Box sx={{ mb: 2 }}>
-                      <Typography sx={{ fontSize: categoryThemes.colors.iconSize, mb: 2 }}>
+                    <Box sx={{ mb: 1 }}>
+                      <Typography sx={{ fontSize: categoryThemes.colors.iconSize, mb: 1, filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))' }}>
                         {categoryThemes.colors.icon}
                       </Typography>
-                      <Typography 
-                        variant="h4" 
-                        sx={{ 
-                          mb: 1, 
-                          fontWeight: 700,
+                      <Typography
+                        variant="h4"
+                        sx={{
+                          mb: 1,
+                          fontWeight: 900,
                           fontSize: { xs: '1.5rem', md: '1.75rem' },
-                          color: categoryThemes.colors.accentColor
+                          color: 'white',
+                          textShadow: '1px 2px 0px rgba(0,0,0,0.25)'
                         }}
                       >
                         {categoryThemes.colors.name}
                       </Typography>
-                      <Typography 
-                        variant="body1" 
-                        color="text.secondary" 
-                        sx={{ 
-                          fontSize: { xs: '0.875rem', md: '1rem' }
+                      <Typography
+                        variant="body1"
+                        sx={{
+                          fontSize: { xs: '0.8rem', md: '0.9rem' },
+                          color: 'rgba(255,255,255,0.9)',
+                          fontWeight: 500
                         }}
                       >
                         {categoryThemes.colors.description}
@@ -876,6 +882,7 @@ function App() {
         
         {/* Learning Routes */}
         <Route path="/learning/memory/:type" element={<MemoryGame />} />
+        <Route path="/memory" element={<Navigate to="/learning/memory/animals" replace />} />
         
         {/* Admin Routes */}
         <Route path="/admin/errors" element={<ErrorDashboard />} />
@@ -883,7 +890,69 @@ function App() {
         {/* Legacy redirect for old admin access */}
         <Route path="/admin" element={<Navigate to="/admin/errors" replace />} />
         
-        {/* Demo Routes removed */}
+        {/* Demo Homepage Routes - wrapped with Suspense for lazy loading */}
+        <Route path="/demo/homepages" element={
+          <React.Suspense fallback={<div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', fontSize: '1.5rem' }}>🎨 Indlæser design galleri...</div>}>
+            <HomepageGallery />
+          </React.Suspense>
+        } />
+        <Route path="/demo/homepages/space-adventure" element={
+          <React.Suspense fallback={<div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', fontSize: '1.5rem' }}>🚀 Indlæser rummet...</div>}>
+            <SpaceAdventure />
+          </React.Suspense>
+        } />
+        <Route path="/demo/homepages/underwater-world" element={
+          <React.Suspense fallback={<div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', fontSize: '1.5rem' }}>🌊 Indlæser undervandsverdenen...</div>}>
+            <UnderwaterWorld />
+          </React.Suspense>
+        } />
+        <Route path="/demo/homepages/magical-forest" element={
+          <React.Suspense fallback={<div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', fontSize: '1.5rem' }}>🌲 Indlæser den magiske skov...</div>}>
+            <MagicalForest />
+          </React.Suspense>
+        } />
+        <Route path="/demo/homepages/toybox-playground" element={
+          <React.Suspense fallback={<div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', fontSize: '1.5rem' }}>🧸 Indlæser legetøjskassen...</div>}>
+            <ToyboxPlayground />
+          </React.Suspense>
+        } />
+        <Route path="/demo/homepages/interactive-storybook" element={
+          <React.Suspense fallback={<div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', fontSize: '1.5rem' }}>📚 Indlæser eventyrverden...</div>}>
+            <InteractiveStorybook />
+          </React.Suspense>
+        } />
+        <Route path="/demo/homepages/circus-carnival" element={
+          <React.Suspense fallback={<div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', fontSize: '1.5rem' }}>🎪 Indlæser cirkus karnevalet...</div>}>
+            <CircusCarnival />
+          </React.Suspense>
+        } />
+        <Route path="/demo/homepages/cloud-kingdom" element={
+          <React.Suspense fallback={<div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', fontSize: '1.5rem' }}>☁️ Indlæser skyriget...</div>}>
+            <CloudKingdom />
+          </React.Suspense>
+        } />
+        <Route path="/demo/homepages/construction-site" element={
+          <React.Suspense fallback={<div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', fontSize: '1.5rem' }}>🚧 Indlæser byggepladsen...</div>}>
+            <ConstructionSite />
+          </React.Suspense>
+        } />
+        <Route path="/demo/homepages/art-studio" element={
+          <React.Suspense fallback={<div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', fontSize: '1.5rem' }}>🎨 Indlæser kunstner værkstedet...</div>}>
+            <ArtStudio />
+          </React.Suspense>
+        } />
+        <Route path="/demo/homepages/music-festival" element={
+          <React.Suspense fallback={<div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', fontSize: '1.5rem' }}>🎵 Indlæser musikfestivalen...</div>}>
+            <MusicFestival />
+          </React.Suspense>
+        } />
+        
+        {/* Demo Validation */}
+        <Route path="/demo/validation" element={
+          <React.Suspense fallback={<div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', fontSize: '1.5rem' }}>🧪 Indlæser validering...</div>}>
+            <ValidationTest />
+          </React.Suspense>
+        } />
         
         {/* 404 Not Found */}
         <Route path="*" element={<NotFoundPage />} />

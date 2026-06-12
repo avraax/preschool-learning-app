@@ -29,7 +29,7 @@ const GameHeader: React.FC<GameHeaderProps> = ({
   titleIcon,
   gameIcon,
   character,
-  categoryTheme,
+  categoryTheme: _categoryTheme,
   backPath,
   scoreComponent,
   onCharacterClick,
@@ -39,25 +39,24 @@ const GameHeader: React.FC<GameHeaderProps> = ({
   return (
     <>
       {/* App Bar with Back Button and Score */}
-      <AppBar position="static" color="transparent" elevation={0}>
+      <AppBar position="static" elevation={0} sx={{ backgroundColor: 'rgba(0,0,0,0.15)', backdropFilter: 'blur(4px)' }}>
         <Toolbar sx={{ justifyContent: 'space-between', py: 2 }}>
-          <IconButton 
+          <IconButton
             onClick={() => navigate(backPath)}
-            color="primary"
             size="large"
-            sx={{ 
-              bgcolor: 'rgba(255, 255, 255, 0.8)', 
-              border: '1px solid rgba(255, 255, 255, 0.3)',
-              backdropFilter: 'blur(8px)',
-              '&:hover': { 
-                bgcolor: 'rgba(255, 255, 255, 0.9)',
+            sx={{
+              bgcolor: 'rgba(255, 255, 255, 0.25)',
+              color: 'white',
+              border: '2px solid rgba(255,255,255,0.3)',
+              '&:hover': {
+                bgcolor: 'rgba(255, 255, 255, 0.4)',
                 transform: 'scale(1.05)'
               }
             }}
           >
             <ArrowLeft size={24} />
           </IconButton>
-          
+
           {scoreComponent}
         </Toolbar>
       </AppBar>
@@ -76,13 +75,13 @@ const GameHeader: React.FC<GameHeaderProps> = ({
               size={80}
               onClick={onCharacterClick || character.wave}
             />
-            <Typography 
-              variant="h3" 
-              sx={{ 
-                color: categoryTheme.accentColor,
-                fontWeight: 700,
+            <Typography
+              variant="h3"
+              sx={{
+                color: 'white',
+                fontWeight: 800,
                 fontSize: { xs: '1.5rem', md: '2rem' },
-                textShadow: `1px 1px 2px ${categoryTheme.accentColor}33`
+                textShadow: '1px 2px 0px rgba(0,0,0,0.2)'
               }}
             >
               {titleIcon} {title}

@@ -70,34 +70,36 @@ const LearningGrid: React.FC<LearningGridProps> = ({
             whileTap={{ scale: 0.95 }}
             style={{ height: '100%' }}
           >
-            <Card 
+            <Card
                 onClick={disabled ? undefined : () => onItemClick(index)}
-                sx={{ 
+                sx={{
                   height: '100%',
                   cursor: disabled ? 'default' : 'pointer',
-                  border: '2px solid',
-                  borderColor: index === currentIndex ? 'secondary.main' : 'primary.200',
-                  bgcolor: index === currentIndex ? 'secondary.50' : 'white',
+                  border: '3px solid',
+                  borderColor: index === currentIndex ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.3)',
+                  borderRadius: '14px',
+                  bgcolor: index === currentIndex ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.85)',
                   opacity: disabled ? 0.5 : 1,
-                  transition: 'all 0.3s ease',
+                  transition: 'all 0.2s ease',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
+                  boxShadow: index === currentIndex ? '0 4px 16px rgba(0,0,0,0.2)' : '0 2px 8px rgba(0,0,0,0.1)',
                   outline: 'none',
                   '&:focus': {
                     outline: 'none'
                   },
                   '@media (hover: hover) and (pointer: fine)': {
                     '&:hover': disabled ? {} : {
-                      borderColor: 'primary.main',
-                      bgcolor: 'primary.50',
-                      boxShadow: 4
+                      bgcolor: 'rgba(255,255,255,0.98)',
+                      boxShadow: '0 6px 20px rgba(0,0,0,0.25)',
+                      transform: 'translateY(-2px)'
                     }
                   }
                 }}
               >
-                <CardContent 
-                  sx={{ 
+                <CardContent
+                  sx={{
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -107,24 +109,23 @@ const LearningGrid: React.FC<LearningGridProps> = ({
                     '&:last-child': { pb: { xs: 1, sm: 1.5, md: 2 } }
                   }}
                 >
-                  <Typography 
+                  <Typography
                     variant="h4"
-                    sx={{ 
-                      fontWeight: 700,
-                      color: index === currentIndex ? 'secondary.dark' : 'primary.dark',
-                      fontSize: { 
-                        xs: 'clamp(1rem, 3.5vw, 1.5rem)', 
-                        sm: 'clamp(1.2rem, 4vw, 2rem)', 
+                    sx={{
+                      fontWeight: 800,
+                      color: index === currentIndex ? '#7C3AED' : '#1e293b',
+                      fontSize: {
+                        xs: 'clamp(1rem, 3.5vw, 1.5rem)',
+                        sm: 'clamp(1.2rem, 4vw, 2rem)',
                         md: 'clamp(1.5rem, 5vw, 2.2rem)',
-                        lg: 'clamp(1.8rem, 5vw, 2.5rem)' 
+                        lg: 'clamp(1.8rem, 5vw, 2.5rem)'
                       },
                       lineHeight: 1,
-                      // Adjust font size in landscape orientation
                       '@media (orientation: landscape)': {
-                        fontSize: { 
-                          xs: 'clamp(1rem, 3vw, 1.3rem)', 
-                          sm: 'clamp(1.2rem, 3.5vw, 1.8rem)', 
-                          md: 'clamp(1.5rem, 4vw, 2rem)' 
+                        fontSize: {
+                          xs: 'clamp(1rem, 3vw, 1.3rem)',
+                          sm: 'clamp(1.2rem, 3.5vw, 1.8rem)',
+                          md: 'clamp(1.5rem, 4vw, 2rem)'
                         }
                       }
                     }}

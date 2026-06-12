@@ -279,25 +279,24 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
       }}
     >
       {/* App Bar with Back Button and Score */}
-      <AppBar position="static" color="transparent" elevation={0}>
+      <AppBar position="static" elevation={0} sx={{ backgroundColor: 'rgba(0,0,0,0.15)', backdropFilter: 'blur(4px)' }}>
         <Toolbar sx={{ justifyContent: 'space-between', py: 2 }}>
-          <IconButton 
+          <IconButton
             onClick={() => navigate(config.backRoute)}
-            color="primary"
             size="large"
-            sx={{ 
-              bgcolor: 'rgba(255, 255, 255, 0.8)', 
-              border: '1px solid rgba(255, 255, 255, 0.3)',
-              backdropFilter: 'blur(8px)',
-              '&:hover': { 
-                bgcolor: 'rgba(255, 255, 255, 0.9)',
+            sx={{
+              bgcolor: 'rgba(255, 255, 255, 0.25)',
+              color: 'white',
+              border: '2px solid rgba(255,255,255,0.3)',
+              '&:hover': {
+                bgcolor: 'rgba(255, 255, 255, 0.4)',
                 transform: 'scale(1.05)'
               }
             }}
           >
             <ArrowLeft size={24} />
           </IconButton>
-          
+
           <ScoreChip
             score={score}
             disabled={false}
@@ -330,13 +329,13 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
                 size={80}
                 onClick={teacherCharacter.wave}
               />
-              <Typography 
-                variant="h3" 
-                sx={{ 
-                  color: config.theme.accentColor,
-                  fontWeight: 700,
+              <Typography
+                variant="h3"
+                sx={{
+                  color: 'white',
+                  fontWeight: 800,
                   fontSize: { xs: '1.5rem', md: '2rem' },
-                  textShadow: `1px 1px 2px ${config.theme.accentColor}33`
+                  textShadow: '1px 2px 0px rgba(0,0,0,0.2)'
                 }}
               >
                 {config.title}
@@ -391,72 +390,75 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
               }
             }}
           >
-          {showOptions.map((item, index) => (
-            <motion.div
-              key={`${item.value}-${index}`}
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: index * 0.1 }}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              style={{ height: '100%' }}
-            >
-              <Card 
-                onClick={() => handleItemClick(item)}
-                sx={{ 
-                  height: '100%',
-                  cursor: 'pointer',
-                  border: '3px solid',
-                  borderColor: config.theme.borderColor,
-                  bgcolor: 'white',
-                  transition: 'all 0.3s ease',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  borderRadius: '12px',
-                  outline: 'none',
-                  '&:focus': {
-                    outline: 'none'
-                  },
-                  '@media (hover: hover) and (pointer: fine)': {
-                    '&:hover': {
-                      borderColor: config.theme.hoverBorderColor,
-                      bgcolor: config.quizType === 'alphabet' ? '#E3F2FD' : 'secondary.50',
-                      boxShadow: `0 8px 32px ${config.theme.accentColor}40`,
-                      transform: 'translateY(-2px)'
-                    }
-                  }
-                }}
+          {showOptions.map((item, index) => {
+            // Vibrant card colors inspired by design references
+            const cardColors = ['#EC4899', '#22C55E', '#7C3AED', '#F97316']
+            const cardColor = cardColors[index % cardColors.length]
+            return (
+              <motion.div
+                key={`${item.value}-${index}`}
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: index * 0.1 }}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                style={{ height: '100%' }}
               >
-                <CardContent 
-                  sx={{ 
+                <Card
+                  onClick={() => handleItemClick(item)}
+                  sx={{
+                    height: '100%',
+                    cursor: 'pointer',
+                    border: '4px solid rgba(255,255,255,0.4)',
+                    background: cardColor,
+                    boxShadow: `0 6px 20px ${cardColor}66`,
+                    transition: 'all 0.2s ease',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    height: '100%',
-                    p: { xs: 1.5, sm: 2, md: 2.5 }
+                    borderRadius: '20px',
+                    outline: 'none',
+                    '&:focus': {
+                      outline: 'none'
+                    },
+                    '@media (hover: hover) and (pointer: fine)': {
+                      '&:hover': {
+                        boxShadow: `0 10px 32px ${cardColor}88`,
+                        transform: 'translateY(-4px)'
+                      }
+                    }
                   }}
                 >
-                  <Typography 
-                    variant="h1"
-                    sx={{ 
-                      fontSize: 'clamp(2.5rem, 8vw, 4.5rem)',
-                      fontWeight: 700,
-                      color: config.theme.accentColor,
-                      userSelect: 'none',
-                      lineHeight: 1,
-                      // Adjust font size in landscape
-                      '@media (orientation: landscape)': {
-                        fontSize: 'clamp(2rem, 6vw, 3.5rem)'
-                      }
+                  <CardContent
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      height: '100%',
+                      p: { xs: 1.5, sm: 2, md: 2.5 }
                     }}
                   >
-                    {item.display}
-                  </Typography>
-                </CardContent>
-              </Card>
-            </motion.div>
-          ))}
+                    <Typography
+                      variant="h1"
+                      sx={{
+                        fontSize: 'clamp(2.5rem, 8vw, 4.5rem)',
+                        fontWeight: 900,
+                        color: 'white',
+                        userSelect: 'none',
+                        lineHeight: 1,
+                        textShadow: '1px 2px 0px rgba(0,0,0,0.25)',
+                        '@media (orientation: landscape)': {
+                          fontSize: 'clamp(2rem, 6vw, 3.5rem)'
+                        }
+                      }}
+                    >
+                      {item.display}
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )
+          })}
           </Box>
         </Box>
 

@@ -133,16 +133,19 @@ const NumberLearning: React.FC = () => {
       }}
     >
       {/* App Bar with Back Button and Progress */}
-      <AppBar position="static" color="transparent" elevation={0}>
+      <AppBar position="static" elevation={0} sx={{ backgroundColor: 'rgba(0,0,0,0.15)', backdropFilter: 'blur(4px)' }}>
         <Toolbar sx={{ justifyContent: 'space-between', py: 2 }}>
-          <IconButton 
+          <IconButton
             onClick={() => navigate('/math')}
-            color="primary"
             size="large"
-            sx={{ 
-              bgcolor: 'white', 
-              boxShadow: 3,
-              '&:hover': { boxShadow: 6 }
+            sx={{
+              bgcolor: 'rgba(255, 255, 255, 0.25)',
+              color: 'white',
+              border: '2px solid rgba(255,255,255,0.3)',
+              '&:hover': {
+                bgcolor: 'rgba(255, 255, 255, 0.4)',
+                transform: 'scale(1.05)'
+              }
             }}
           >
             <ArrowBack />
@@ -160,14 +163,15 @@ const NumberLearning: React.FC = () => {
                   logError('Error announcing position', { error: error?.toString() })
                 }
               }}
-              sx={{ 
-                color: 'secondary.dark', 
-                fontWeight: 600,
+              sx={{
+                color: 'white',
+                fontWeight: 700,
                 cursor: 'pointer',
                 padding: '4px 8px',
                 borderRadius: 1,
-                '&:hover': { 
-                  backgroundColor: 'secondary.50',
+                textShadow: '0 1px 2px rgba(0,0,0,0.2)',
+                '&:hover': {
+                  backgroundColor: 'rgba(255,255,255,0.15)',
                   boxShadow: 1
                 }
               }}

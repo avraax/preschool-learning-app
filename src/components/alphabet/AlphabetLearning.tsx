@@ -131,18 +131,17 @@ const AlphabetLearning: React.FC = () => {
       }}
     >
       {/* App Bar with Back Button and Progress */}
-      <AppBar position="static" color="transparent" elevation={0}>
+      <AppBar position="static" elevation={0} sx={{ backgroundColor: 'rgba(0,0,0,0.15)', backdropFilter: 'blur(4px)' }}>
         <Toolbar sx={{ justifyContent: 'space-between', py: 2 }}>
-          <IconButton 
+          <IconButton
             onClick={() => navigate('/alphabet')}
-            color="primary"
             size="large"
-            sx={{ 
-              bgcolor: 'rgba(255, 255, 255, 0.8)', 
-              border: '1px solid rgba(255, 255, 255, 0.3)',
-              backdropFilter: 'blur(8px)',
-              '&:hover': { 
-                bgcolor: 'rgba(255, 255, 255, 0.9)',
+            sx={{
+              bgcolor: 'rgba(255, 255, 255, 0.25)',
+              color: 'white',
+              border: '2px solid rgba(255,255,255,0.3)',
+              '&:hover': {
+                bgcolor: 'rgba(255, 255, 255, 0.4)',
                 transform: 'scale(1.05)'
               }
             }}
@@ -162,14 +161,15 @@ const AlphabetLearning: React.FC = () => {
                   logError('Error announcing position', { error: error?.toString() })
                 }
               }}
-              sx={{ 
-                color: 'primary.dark', 
-                fontWeight: 600,
+              sx={{
+                color: 'white',
+                fontWeight: 700,
                 cursor: 'pointer',
                 padding: '4px 8px',
                 borderRadius: 1,
-                '&:hover': { 
-                  backgroundColor: 'primary.50',
+                textShadow: '0 1px 2px rgba(0,0,0,0.2)',
+                '&:hover': {
+                  backgroundColor: 'rgba(255,255,255,0.15)',
                   boxShadow: 1
                 }
               }}
@@ -231,9 +231,9 @@ const AlphabetLearning: React.FC = () => {
                 background: 'white',
                 border: '4px solid',
                 borderColor: audio.isPlaying ? categoryThemes.alphabet.accentColor : categoryThemes.alphabet.borderColor,
-                boxShadow: audio.isPlaying 
-                  ? '0 0 30px rgba(25, 118, 210, 0.4), 0 8px 32px rgba(25, 118, 210, 0.3)'
-                  : '0 4px 20px rgba(25, 118, 210, 0.2), 0 8px 32px rgba(25, 118, 210, 0.15)',
+                boxShadow: audio.isPlaying
+                  ? '0 0 30px rgba(236, 72, 153, 0.5), 0 8px 32px rgba(236, 72, 153, 0.35)'
+                  : '0 4px 20px rgba(236, 72, 153, 0.25), 0 8px 32px rgba(236, 72, 153, 0.18)',
                 transition: 'all 0.3s ease',
                 position: 'relative',
                 overflow: 'hidden',
@@ -268,7 +268,7 @@ const AlphabetLearning: React.FC = () => {
                   color: categoryThemes.alphabet.accentColor,
                   textAlign: 'center',
                   lineHeight: 1,
-                  textShadow: '1px 1px 2px rgba(25, 118, 210, 0.1)',
+                  textShadow: '1px 1px 2px rgba(236, 72, 153, 0.15)',
                   position: 'relative',
                   zIndex: 1
                 }}
