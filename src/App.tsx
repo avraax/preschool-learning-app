@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, lazy, Suspense } from 'react'
+import React, { useEffect, useState, useCallback, useRef, lazy, Suspense } from 'react'
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { logIOSIssue } from './utils/remoteConsole'
@@ -43,6 +43,10 @@ const SpeakWordGame = lazy(() => import('./components/ordleg/SpeakWordGame'))
 const MemoryGame = lazy(() => import('./components/learning/MemoryGame'))
 import UpdateBanner from './components/common/UpdateBanner'
 import ThemeSelector from './components/common/ThemeSelector'
+import ThemeScene from './components/common/scene/ThemeScene'
+import ThemeMascot from './components/common/ThemeMascot'
+import { useParallax } from './components/common/scene/useParallax'
+import { useReducedMotion } from './hooks/useReducedMotion'
 // Legacy audio system removed - using SimplifiedAudioProvider only
 import { useViewportHeight } from './hooks/useViewportHeight'
 // Demo system removed
@@ -62,6 +66,7 @@ import LottieCharacter, { useCharacterState } from './components/common/LottieCh
 import { useUpdateChecker } from './hooks/useUpdateChecker'
 import { useNativeAppFeel } from './hooks/useNativeAppFeel'
 import { categoryThemes } from './config/categoryThemes'
+import { sectionIconImages } from './assets/themes/icons'
 import { BUILD_INFO } from './config/version'
 
 // Balloon interface
@@ -96,6 +101,13 @@ const homeCards: Array<{
 const HomePage = () => {
   const navigate = useNavigate()
   const theme = useTheme()
+  const reduceMotion = useReducedMotion()
+  // Parallax driver lives on the page root so the scene AND the mascot (separate planes)
+  // share one synced offset via inherited CSS vars.
+  const sceneRootRef = useRef<HTMLDivElement>(null)
+  useParallax(sceneRootRef, { disabled: reduceMotion })
+  // This theme has an authored world → use immersive treatments (glassy cards, world mascot).
+  const immersive = theme.scene.layers.length > 0
   const welcomeCharacter = useCharacterState('wave')
   const { play, stopAll } = useBalloonSound()
   const [balloons, setBalloons] = useState<HomeBalloon[]>([])
@@ -271,9 +283,10 @@ const HomePage = () => {
   }, [stopAll])
 
   return (
-    <Box 
+    <Box
+      ref={sceneRootRef}
       className="interactive-area"
-      sx={{ 
+      sx={{
         position: 'relative',
         height: 'calc(var(--vh, 1vh) * 100)',
         background: `${theme.decor.pageBackground},\n${theme.decor.dots}`,
@@ -316,9 +329,13 @@ const HomePage = () => {
         },
       }}
     >
-      <Container 
-        maxWidth="xl" 
-        sx={{ 
+      {/* Immersive theme world (parallax scene + ambient objects) — behind all content.
+          Renders nothing for themes without an authored world (flat look). */}
+      <ThemeScene />
+
+      <Container
+        maxWidth="xl"
+        sx={{
           flex: 1,
           display: 'flex',
           flexDirection: 'column',
@@ -335,34 +352,43 @@ const HomePage = () => {
             transition={{ duration: 0.5 }}
           >
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2, mb: 2 }}>
-              <Typography 
-                variant="h1" 
-                sx={{ 
+              <Typography
+                variant="h1"
+                sx={{
+                  fontFamily: theme.titleFontFamily,
                   fontSize: { xs: '1.75rem', sm: '2.25rem', md: '2.75rem' },
                   fontWeight: 700,
                   color: theme.decor.titleColor,
-                  textShadow: `2px 2px 8px ${alpha(theme.decor.titleColor, 0.25)}`,
+                  // Immersive worlds: a soft white halo + drop shadow so the title reads as
+                  // lit by the scene, not plain text floating on the art.
+                  textShadow: immersive
+                    ? '0 1px 0 rgba(255,255,255,0.7), 0 0 16px rgba(255,255,255,0.5), 0 3px 8px rgba(0,30,50,0.35)'
+                    : `2px 2px 8px ${alpha(theme.decor.titleColor, 0.25)}`,
                   letterSpacing: '0.02em'
                 }}
               >
                 Børnelæring
               </Typography>
-              <motion.div
-                initial={{ x: 20, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                transition={{ delay: 0.8, duration: 0.5 }}
-              >
-                <LottieCharacter
-                  character={welcomeCharacter.character}
-                  state={welcomeCharacter.state}
-                  size={80}
-                  onClick={() => {
-                    // Balloon easter-egg (previously on the logo)
-                    spawnBalloons();
-                    welcomeCharacter.wave();
-                  }}
-                />
-              </motion.div>
+              {/* On immersive worlds the per-world mascot is the playful character, so the
+                  generic welcome bear is hidden (it's off-theme e.g. underwater). */}
+              {!immersive && (
+                <motion.div
+                  initial={{ x: 20, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  transition={{ delay: 0.8, duration: 0.5 }}
+                >
+                  <LottieCharacter
+                    character={welcomeCharacter.character}
+                    state={welcomeCharacter.state}
+                    size={80}
+                    onClick={() => {
+                      // Balloon easter-egg (previously on the logo)
+                      spawnBalloons();
+                      welcomeCharacter.wave();
+                    }}
+                  />
+                </motion.div>
+              )}
             </Box>
           </motion.div>
         </Box>
@@ -406,8 +432,13 @@ const HomePage = () => {
                         borderColor: cat.border,
                         display: 'flex',
                         flexDirection: 'column',
-                        background: cat.cardSurface,
-                        backdropFilter: cat.cardBlur,
+                        // Immersive worlds: frosted "ocean glass" so the scene shows through
+                        // the cards (still high-contrast for the dark themed text/icons).
+                        background: immersive
+                          ? 'linear-gradient(135deg, rgba(255,255,255,0.62) 0%, rgba(255,255,255,0.46) 100%)'
+                          : cat.cardSurface,
+                        backdropFilter: immersive ? 'blur(16px) saturate(1.1)' : cat.cardBlur,
+                        WebkitBackdropFilter: immersive ? 'blur(16px) saturate(1.1)' : cat.cardBlur,
                         '&:hover': {
                           borderColor: cat.hoverBorder,
                           boxShadow: `0 8px 32px ${alpha(cat.accent, 0.3)}`,
@@ -430,9 +461,22 @@ const HomePage = () => {
                         }}
                       >
                         <Box sx={{ mb: { xs: 0.5, md: 1 } }}>
-                          <Typography sx={{ fontSize: cat.iconSize, mb: { xs: 0.5, md: 1 } }}>
-                            {cat.icon}
-                          </Typography>
+                          <Box
+                            component="img"
+                            src={sectionIconImages[card.id]}
+                            alt=""
+                            draggable={false}
+                            sx={{
+                              display: 'block',
+                              mx: 'auto',
+                              width: { xs: 58, sm: 64, md: 76 },
+                              height: { xs: 58, sm: 64, md: 76 },
+                              objectFit: 'contain',
+                              mb: { xs: 0.5, md: 1 },
+                              filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.22))',
+                              userSelect: 'none',
+                            }}
+                          />
                           <Typography
                             variant="h4"
                             sx={{
@@ -458,6 +502,17 @@ const HomePage = () => {
 
       {/* Theme selector — collapsed corner control, overlays the page (no layout cost) */}
       <ThemeSelector />
+
+      {/* Per-world mascot — sits on the sandy floor (bottom-left); tap to hear it speak and
+          spawn its own bubble burst. Renders nothing for themes without a mascot. */}
+      <ThemeMascot
+        sx={{
+          left: 'calc(env(safe-area-inset-left) + 6px)',
+          bottom: 'calc(env(safe-area-inset-bottom) + 2px)',
+          width: { xs: 128, sm: 156, md: 184 },
+          height: { xs: 128, sm: 156, md: 184 },
+        }}
+      />
 
       {/* Balloons */}
       {balloons.map((balloon) => (
@@ -585,11 +640,12 @@ const VersionDisplay: React.FC<VersionDisplayProps> = ({ updateAvailable = false
         lineHeight: 1.2,
         pointerEvents: 'none',
         userSelect: 'none',
-        backgroundColor: 'rgba(255, 255, 255, 0.8)',
-        padding: '4px 8px',
-        borderRadius: '4px',
-        backdropFilter: 'blur(4px)',
-        border: '1px solid rgba(0, 0, 0, 0.1)',
+        backgroundColor: 'rgba(255, 255, 255, 0.4)',
+        padding: '3px 7px',
+        borderRadius: '6px',
+        backdropFilter: 'blur(6px)',
+        border: '1px solid rgba(255, 255, 255, 0.25)',
+        opacity: 0.75,
         // Smooth transition animation
         transition: 'all 0.3s ease-in-out',
         // Ensure visibility on mobile

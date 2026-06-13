@@ -1,7 +1,8 @@
-import React, { createContext, useCallback, useContext, useMemo, useState } from 'react'
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { ThemeProvider as MuiThemeProvider } from '@mui/material/styles'
 import { buildTheme } from './buildTheme'
 import { defaultThemeId, getThemeTokens, themeOptions, type ThemeOption } from './themes'
+import { loadTitleFont } from './titleFonts'
 
 // Runtime theme switching. Holds the selected theme id (persisted to localStorage),
 // rebuilds the MUI theme on change, and exposes the selection via `useThemeSwitch()`.
@@ -47,6 +48,11 @@ export const AppThemeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, [])
 
   const theme = useMemo(() => buildTheme(getThemeTokens(themeId)), [themeId])
+
+  // Load only the active theme's bundled title font (latin subset). No-op for Comic-Neue themes.
+  useEffect(() => {
+    loadTitleFont(themeId)
+  }, [themeId])
 
   const value = useMemo<ThemeSwitchContextValue>(
     () => ({ themeId, setThemeId, availableThemes: themeOptions }),

@@ -20,7 +20,7 @@ export interface SceneAssets {
 // URLs Vite produces from the optimized art). Registered per theme in later phases, e.g.:
 //   ocean: () => import('../assets/themes/ocean'),
 const loaders: Record<string, () => Promise<{ default: SceneAssets }>> = {
-  // P1+ populate this map.
+  ocean: () => import('../assets/themes/ocean'),
 }
 
 // Resolve a theme's world assets, or `null` if the theme has none yet (→ flat look).

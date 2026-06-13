@@ -45,6 +45,38 @@ export const oceanThemeTokens: ThemeTokens = {
   },
 
   shadows: neutralShadows('#0277BD'),
+
+  // ---- Immersive world (Theme Worlds PRD) ----
+  // Round, bubbly title font; falls back to Comic Neue (which also covers æøå).
+  titleFontFamily: `"Fredoka", ${COMIC_FONT}`,
+
+  // Asset URLs (src/selectorThumb/mascot.src) are resolved at runtime by
+  // loadSceneAssets('ocean'); the values below are the non-asset CONFIG paired with them.
+  scene: {
+    dark: false,
+    // One immersive full-bleed underwater backdrop (opaque). Depth 0.7 → the whole scene
+    // pans gently (camera drift); the mascot rides a nearer plane (higher depth) for real
+    // parallax separation. ParallaxLayer's scale overscan hides the edges as it moves.
+    layers: [{ src: '', depth: 0.7, anchor: 'center' }],
+    ambient: {
+      // No sprite images: bubbles are drawn in pure CSS (AmbientField), so there's no
+      // transparency-dependent art to fetch. Rising motion.
+      sprites: [],
+      count: 12,
+      motion: 'rise',
+    },
+    mascot: {
+      src: '',
+      lines: ['Pluf! Vil du dykke med?', 'Bobler!', 'Sikke flot!'],
+    },
+    selectorThumb: '',
+  },
+
+  materials: {
+    cardFrame: '',
+    buttonGradient: 'linear-gradient(135deg, #0288D1 0%, #00897B 100%)',
+    motif: '',
+  },
 }
 
 export default oceanThemeTokens

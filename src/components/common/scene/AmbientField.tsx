@@ -1,0 +1,140 @@
+import React, { useMemo } from 'react'
+import { Box } from '@mui/material'
+import type { SceneTokens } from '../../../theme/tokens/types'
+
+// Floating ambient objects (Theme Worlds PRD §5.3): bubbles/leaves/stars drifting per the
+// scene's `motion`. Positions/sizes/timings are randomized ONCE (memoized by theme) so they
+// don't re-shuffle on re-render. Transforms-only animation; decorative + non-interactive.
+// Reduced motion → render nothing (calm static scene).
+
+interface AmbientFieldProps {
+  scene: SceneTokens
+  sprites: string[] // resolved URLs, aligned with scene.ambient.sprites
+  themeId: string
+  disabled?: boolean
+}
+
+interface AmbientItem {
+  url: string
+  left: number
+  top: number
+  size: number
+  duration: number
+  delay: number
+  drift: number
+}
+
+// Deterministic PRNG so ambient layout is PURE during render (no Math.random — satisfies the
+// react-hooks purity rule and prevents reshuffling on re-render) and stable per theme.
+const hashSeed = (s: string): number => {
+  let h = 2166136261
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i)
+    h = Math.imul(h, 16777619)
+  }
+  return h >>> 0
+}
+const makeRng = (seed: number): (() => number) => {
+  let a = seed >>> 0
+  return () => {
+    a = (a + 0x6d2b79f5) | 0
+    let t = Math.imul(a ^ (a >>> 15), 1 | a)
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+  }
+}
+
+const ambientKeyframes = {
+  '@keyframes ambient-rise': {
+    '0%': { transform: 'translate(0, 0)', opacity: 0 },
+    '8%': { opacity: 0.9 },
+    '92%': { opacity: 0.9 },
+    '100%': { transform: 'translate(var(--drift, 0px), -100vh)', opacity: 0 },
+  },
+  '@keyframes ambient-fall': {
+    '0%': { transform: 'translate(0, -10vh)', opacity: 0 },
+    '8%': { opacity: 0.9 },
+    '92%': { opacity: 0.9 },
+    '100%': { transform: 'translate(var(--drift, 0px), 100vh)', opacity: 0 },
+  },
+  '@keyframes ambient-drift': {
+    '0%': { transform: 'translate(-6vw, 0)', opacity: 0 },
+    '10%': { opacity: 0.85 },
+    '90%': { opacity: 0.85 },
+    '100%': { transform: 'translate(6vw, -4vh)', opacity: 0 },
+  },
+  '@keyframes ambient-twinkle': {
+    '0%, 100%': { transform: 'scale(0.7)', opacity: 0.2 },
+    '50%': { transform: 'scale(1)', opacity: 0.95 },
+  },
+} as const
+
+const AmbientField: React.FC<AmbientFieldProps> = ({ scene, sprites, themeId, disabled }) => {
+  const { count, motion } = scene.ambient
+  const specs = scene.ambient.sprites
+
+  // No sprite images → draw CSS bubbles (e.g. ocean). Otherwise use the sprite URLs.
+  const cssBubbles = sprites.length === 0
+
+  const items = useMemo<AmbientItem[]>(() => {
+    if (disabled) return []
+    const rng = makeRng(hashSeed(themeId) + count) // seeded by theme → stable, reshuffles on switch
+    return Array.from({ length: count }, (_, i) => {
+      const idx = sprites.length ? i % sprites.length : 0
+      const [min, max] = cssBubbles ? [8, 22] : specs[idx]?.size ?? [16, 32]
+      return {
+        url: sprites.length ? sprites[idx] : '',
+        left: rng() * 100,
+        top: rng() * 90,
+        size: Math.round(min + rng() * (max - min)),
+        duration: 9 + rng() * 11,
+        delay: -rng() * 14, // negative = staggered, already mid-flight on first paint
+        drift: Math.round((rng() * 2 - 1) * 36),
+      }
+    })
+  }, [count, themeId, disabled, sprites, specs, cssBubbles])
+
+  if (!items.length) return null
+
+  const animName = `ambient-${motion}`
+
+  return (
+    <Box aria-hidden sx={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none', ...ambientKeyframes }}>
+      {items.map((item, i) => (
+        <Box
+          key={i}
+          sx={{
+            position: 'absolute',
+            left: `${item.left}%`,
+            ...(motion === 'rise'
+              ? { bottom: 0 }
+              : motion === 'fall'
+                ? { top: 0 }
+                : { top: `${item.top}%` }),
+            width: item.size,
+            height: item.size,
+            ...(item.url
+              ? {
+                  backgroundImage: `url(${item.url})`,
+                  backgroundSize: 'contain',
+                  backgroundRepeat: 'no-repeat',
+                }
+              : {
+                  // CSS bubble: soft glassy sphere — subtle, so it reads as gentle ambience.
+                  borderRadius: '50%',
+                  background:
+                    'radial-gradient(circle at 33% 28%, rgba(255,255,255,0.85) 0%, rgba(255,255,255,0.25) 42%, rgba(200,240,255,0.08) 72%, rgba(200,240,255,0) 100%)',
+                  border: '1px solid rgba(255,255,255,0.5)',
+                  boxShadow: 'inset 0 0 6px rgba(255,255,255,0.35)',
+                }),
+            '--drift': `${item.drift}px`,
+            animation: `${animName} ${item.duration}s ${motion === 'twinkle' ? 'ease-in-out' : 'linear'} ${item.delay}s infinite`,
+            willChange: 'transform, opacity',
+          }}
+        />
+      ))}
+    </Box>
+  )
+}
+
+export default AmbientField
