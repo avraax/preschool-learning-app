@@ -46,6 +46,11 @@ const kidColors = {
   },
 }
 
+// Single font for this theme — defined ONCE here and used everywhere.
+// Comic Neue is bundled via @fontsource (self-hosted) so it renders identically on every
+// OS/device (no system-font fallback). Any future theme should define its own one FONT_FAMILY.
+const FONT_FAMILY = '"Comic Neue", "Comic Sans MS", "Comic Sans", sans-serif'
+
 // Kid-friendly theme configuration
 export const kidTheme = createTheme({
   palette: {
@@ -62,7 +67,7 @@ export const kidTheme = createTheme({
   },
   
   typography: {
-    fontFamily: '"SF Pro Display", "SF Pro Text", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif',
+    fontFamily: FONT_FAMILY,
     
     // Large, kid-friendly font sizes
     h1: {
@@ -131,6 +136,13 @@ export const kidTheme = createTheme({
   },
   
   components: {
+    // Apply the single theme font to the document body so non-MUI elements
+    // (e.g. the memory game's plain divs) inherit it too.
+    MuiCssBaseline: {
+      styleOverrides: {
+        body: { fontFamily: FONT_FAMILY }
+      }
+    },
     // Button styling for kids
     MuiButton: {
       styleOverrides: {

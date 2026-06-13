@@ -285,8 +285,7 @@ const SpeakWordGame: React.FC = () => {
             <MicOff size={64} color={theme.accentColor} />
             <Typography
               sx={{
-                fontFamily: '"Comic Sans MS", "Comic Sans", cursive',
-                fontSize: { xs: '1.1rem', md: '1.4rem' },
+                                fontSize: { xs: '1.1rem', md: '1.4rem' },
                 fontWeight: 700,
                 color: theme.accentColor,
                 mt: 2
@@ -304,8 +303,7 @@ const SpeakWordGame: React.FC = () => {
             <Box sx={{ textAlign: 'center', flex: '0 0 auto', mb: { xs: 2, md: 3 }, minHeight: 56 }}>
               <Typography
                 sx={{
-                  fontFamily: '"Comic Sans MS", "Comic Sans", cursive',
-                  fontSize: { xs: '1.15rem', md: '1.5rem' },
+                                    fontSize: { xs: '1.15rem', md: '1.5rem' },
                   fontWeight: 700,
                   color: theme.accentColor
                 }}
@@ -355,8 +353,7 @@ const SpeakWordGame: React.FC = () => {
                         >
                           <Typography
                             sx={{
-                              fontFamily: '"Comic Sans MS", "Comic Sans", cursive',
-                              fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2.5rem' },
+                                                            fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2.5rem' },
                               fontWeight: 700,
                               color: theme.accentColor
                             }}
@@ -447,8 +444,7 @@ const SpeakWordGame: React.FC = () => {
           >
             <Typography
               sx={{
-                fontFamily: '"Comic Sans MS", "Comic Sans", cursive',
-                fontSize: 'clamp(2rem, 9vw, 4rem)',
+                                fontSize: 'clamp(2rem, 9vw, 4rem)',
                 fontWeight: 700,
                 color: theme.accentColor,
                 letterSpacing: '0.08em'

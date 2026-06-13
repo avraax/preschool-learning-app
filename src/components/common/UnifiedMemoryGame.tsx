@@ -571,7 +571,6 @@ const UnifiedMemoryGame: React.FC<UnifiedMemoryGameProps> = ({ config }) => {
                               fontWeight: 'bold',
                               color: 'white',
                               textShadow: '0 0 8px rgba(0,0,0,0.8), 0 2px 4px rgba(0,0,0,0.6), 0 4px 8px rgba(0,0,0,0.4)',
-                              fontFamily: 'Comic Sans MS, Arial',
                               letterSpacing: '1px',
                               WebkitTextStroke: '0.5px rgba(0,0,0,0.3)'
                             }}>
@@ -625,8 +624,7 @@ const UnifiedMemoryGame: React.FC<UnifiedMemoryGameProps> = ({ config }) => {
                               color: card.isMatched ? '#2e7d32' : '#333',
                               fontWeight: 600,
                               textAlign: 'center',
-                              lineHeight: 1,
-                              fontFamily: 'Comic Sans MS, Arial'
+                              lineHeight: 1
                             }}
                             className="memory-card-secondary-text"
                           >

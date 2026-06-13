@@ -21,6 +21,7 @@
     "@dnd-kit/utilities": "^3.2.2",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
+    "@fontsource/comic-neue": "^5.2.7",
     "@google-cloud/speech": "^7.3.2",
     "@google-cloud/text-to-speech": "^6.4.1",
     "@mui/icons-material": "^9.1.1",

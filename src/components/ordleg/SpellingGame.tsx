@@ -367,7 +367,6 @@ const SpellingGame: React.FC = () => {
                 </Typography>
                 <Typography
                   sx={{
-                    fontFamily: '"Comic Sans MS", "Comic Sans", cursive',
                     fontSize: 'clamp(1.75rem, 7vw, 3rem)',
                     fontWeight: 700,
                     color: theme.accentColor,
@@ -414,8 +413,7 @@ const SpellingGame: React.FC = () => {
                   >
                     <Typography
                       sx={{
-                        fontFamily: '"Comic Sans MS", "Comic Sans", cursive',
-                        fontSize: 'clamp(1.75rem, 6vw, 2.75rem)',
+                            fontSize: 'clamp(1.75rem, 6vw, 2.75rem)',
                         fontWeight: 700,
                         color: filled ? 'white' : 'transparent',
                         userSelect: 'none'
@@ -491,8 +489,7 @@ const SpellingGame: React.FC = () => {
                       >
                         <Typography
                           sx={{
-                            fontFamily: '"Comic Sans MS", "Comic Sans", cursive',
-                            fontSize: 'clamp(1.75rem, 6vw, 2.75rem)',
+                                    fontSize: 'clamp(1.75rem, 6vw, 2.75rem)',
                             fontWeight: 700,
                             color: theme.accentColor
                           }}

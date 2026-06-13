@@ -376,7 +376,6 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
               {currentItem.questionVisual.word && (
                 <Typography
                   sx={{
-                    fontFamily: '"Comic Sans MS", "Comic Sans", cursive',
                     fontSize: 'clamp(1.5rem, 6vw, 2.5rem)',
                     fontWeight: 700,
                     color: config.theme.accentColor,
@@ -495,9 +494,6 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
                         ? 'clamp(1.1rem, 4.5vw, 2rem)'
                         : 'clamp(2.5rem, 8vw, 4.5rem)',
                       fontWeight: 700,
-                      fontFamily: (typeof item.display === 'string' && item.display.length > 2)
-                        ? '"Comic Sans MS", "Comic Sans", cursive'
-                        : undefined,
                       color: config.theme.accentColor,
                       userSelect: 'none',
                       lineHeight: 1.1,

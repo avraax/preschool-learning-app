@@ -5,6 +5,9 @@ import { ThemeProvider } from '@mui/material/styles'
 import { CssBaseline } from '@mui/material'
 import App from './App.tsx'
 import kidTheme from './theme/kidTheme'
+// Self-hosted kid-friendly font (bundled, identical on every OS/device)
+import '@fontsource/comic-neue/400.css'
+import '@fontsource/comic-neue/700.css'
 import './index.css'
 
 // Initialize remote console for error logging

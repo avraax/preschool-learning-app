@@ -181,8 +181,7 @@ const EnglishLearning: React.FC = () => {
                     </Typography>
                     <Typography
                       sx={{
-                        fontFamily: '"Comic Sans MS", "Comic Sans", cursive',
-                        fontSize: { xs: '1rem', md: '1.25rem' },
+                                                fontSize: { xs: '1rem', md: '1.25rem' },
                         fontWeight: 700,
                         color: theme.accentColor,
                         textAlign: 'center',

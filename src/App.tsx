@@ -885,7 +885,6 @@ const VersionDisplay: React.FC<VersionDisplayProps> = ({ updateAvailable = false
         lineHeight: 1.2,
         pointerEvents: 'none',
         userSelect: 'none',
-        fontFamily: 'monospace',
         backgroundColor: 'rgba(255, 255, 255, 0.8)',
         padding: '4px 8px',
         borderRadius: '4px',
