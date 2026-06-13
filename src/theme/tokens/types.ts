@@ -71,6 +71,50 @@ export interface ShadowTokens {
   focusRing: string
 }
 
+// ---- Immersive "world" tokens (Theme Worlds PRD) -------------------------------------
+// These describe a theme's home/menu world: layered parallax scenery, ambient objects,
+// a per-world mascot, and themed materials. They are OPTIONAL on ThemeTokens so a skin can
+// be authored incrementally (a theme with no `scene`/`materials` renders today's flat look).
+// Asset URLs are resolved at runtime by `loadSceneAssets(id)` (code-split per theme); the
+// tokens below hold the non-asset CONFIG (depth/motion/lines/etc.) that pairs with them.
+
+export type AmbientMotion = 'rise' | 'fall' | 'drift' | 'twinkle'
+
+export interface ParallaxLayerSpec {
+  src: string            // imported asset URL (transparent PNG/WebP/AVIF) or '' to use loader
+  depth: number          // 0 = static (far), 1 = strongest parallax (near); ~0.05–0.3 typical
+  anchor?: 'top' | 'bottom' | 'center' // placement hint; default = cover/full-bleed
+  opacity?: number
+}
+
+export interface AmbientSpriteSpec {
+  src: string            // small transparent sprite (e.g. a single bubble/leaf/star)
+  size: [number, number] // min/max px
+}
+
+export interface SceneTokens {
+  dark: boolean                 // dark decorative backdrop (Space). Cards/text stay light.
+  layers: ParallaxLayerSpec[]   // back→front; rendered behind content with parallax
+  ambient: {
+    sprites: AmbientSpriteSpec[]
+    count: number               // simultaneous objects (perf-capped, see PRD §7)
+    motion: AmbientMotion
+  }
+  mascot: {
+    src: string                 // mascot sprite (transparent)
+    lines: string[]             // short Danish phrases spoken on tap (pick one at random)
+  }
+  selectorThumb: string         // small scene thumbnail for the theme selector
+}
+
+export interface MaterialTokens {
+  // Home + menu "furniture" (NOT applied to game screens).
+  cardFrame: string             // border/frame treatment (CSS border or background image)
+  cardSurfaceOverlay?: string   // optional texture overlay on cards (subtle, low opacity)
+  buttonGradient: string        // primary/menu button background
+  motif: string                 // small static motif used on game screens (corner png or css)
+}
+
 export interface ThemeTokens {
   id: string
   name: string            // human label shown in the front-page theme selector
@@ -85,4 +129,9 @@ export interface ThemeTokens {
   decor: DecorTokens
 
   shadows: ShadowTokens
+
+  // ---- Immersive world (optional; absence = today's flat look) ----
+  titleFontFamily?: string  // bundled themed display font for titles (falls back to fontFamily)
+  scene?: SceneTokens
+  materials?: MaterialTokens
 }

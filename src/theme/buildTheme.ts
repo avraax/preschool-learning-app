@@ -1,5 +1,13 @@
 import { createTheme, type Theme } from '@mui/material/styles'
-import type { ThemeTokens, CategoryTokens, DecorTokens, ShadowTokens } from './tokens/types'
+import type {
+  ThemeTokens,
+  CategoryTokens,
+  DecorTokens,
+  ShadowTokens,
+  SceneTokens,
+  MaterialTokens,
+} from './tokens/types'
+import { emptyScene, noMaterials } from './tokens/helpers'
 import { setActiveTokens } from './tokens/activeTokens'
 
 // buildTheme(tokens) → MUI Theme.
@@ -13,6 +21,12 @@ export function buildTheme(tokens: ThemeTokens): Theme {
   setActiveTokens(tokens)
 
   const { palette, fontFamily, shadows } = tokens
+
+  // World tokens are optional (authored incrementally per the Theme Worlds phases).
+  // Absence → today's flat look: title uses the body font, no scene, no materials.
+  const titleFontFamily = tokens.titleFontFamily ?? fontFamily
+  const scene = tokens.scene ?? emptyScene()
+  const materials = tokens.materials ?? noMaterials()
 
   return createTheme({
     palette: {
@@ -276,6 +290,11 @@ export function buildTheme(tokens: ThemeTokens): Theme {
     categories: tokens.categories,
     decor: tokens.decor,
     customShadows: tokens.shadows,
+
+    // ---- Immersive world buckets (Theme Worlds PRD) ----
+    titleFontFamily,
+    scene,
+    materials,
   })
 }
 
@@ -293,11 +312,17 @@ declare module '@mui/material/styles' {
     categories: CategoryTokens
     decor: DecorTokens
     customShadows: ShadowTokens
+    titleFontFamily: string
+    scene: SceneTokens
+    materials: MaterialTokens
   }
   interface ThemeOptions {
     categories?: CategoryTokens
     decor?: DecorTokens
     customShadows?: ShadowTokens
+    titleFontFamily?: string
+    scene?: SceneTokens
+    materials?: MaterialTokens
   }
 }
 

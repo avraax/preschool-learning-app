@@ -1,4 +1,4 @@
-import type { CategoryPalette, ShadowTokens } from './types'
+import type { CategoryPalette, MaterialTokens, SceneTokens, ShadowTokens } from './types'
 
 // The bundled kid-friendly font. All current themes share it; a theme may override its own.
 export const COMIC_FONT = '"Comic Neue", "Comic Sans MS", "Comic Sans", sans-serif'
@@ -67,4 +67,22 @@ export const neutralShadows = (focusColor: string): ShadowTokens => ({
   card: '0 8px 32px rgba(0, 0, 0, 0.12)',
   cardHover: '0 12px 48px rgba(0, 0, 0, 0.18)',
   focusRing: `0 0 0 4px ${hexToRgba(focusColor, 0.4)}`,
+})
+
+// ---- Immersive world defaults (Theme Worlds PRD) -------------------------------------
+// A theme with no authored `scene` renders today's flat look: no parallax, no ambient
+// objects, no mascot. `buildTheme()` uses this as the fallback.
+export const emptyScene = (): SceneTokens => ({
+  dark: false,
+  layers: [],
+  ambient: { sprites: [], count: 0, motion: 'drift' },
+  mascot: { src: '', lines: [] },
+  selectorThumb: '',
+})
+
+// A theme with no authored `materials` keeps today's card/button surfaces (motif '' = none).
+export const noMaterials = (): MaterialTokens => ({
+  cardFrame: '',
+  buttonGradient: '',
+  motif: '',
 })
