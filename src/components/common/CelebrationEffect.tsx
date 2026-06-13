@@ -26,6 +26,13 @@ const CelebrationEffect: React.FC<CelebrationEffectProps> = ({
     height: window.innerHeight
   })
 
+  // Honour the OS "reduce motion" setting: keep the reward (audio + score) but skip the
+  // heavy confetti/flying-emoji animation.
+  const reduceMotion = React.useMemo(
+    () => typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches,
+    []
+  )
+
   useEffect(() => {
     const handleResize = () => {
       setWindowDimensions({
@@ -40,7 +47,7 @@ const CelebrationEffect: React.FC<CelebrationEffectProps> = ({
 
   useEffect(() => {
     if (show) {
-      setShowConfetti(true)
+      if (!reduceMotion) setShowConfetti(true)
       const timer = setTimeout(() => {
         setShowConfetti(false)
         onComplete?.()
@@ -107,7 +114,7 @@ const CelebrationEffect: React.FC<CelebrationEffectProps> = ({
 
 
           {/* Floating Success Emojis */}
-          {[...Array(6)].map((_, index) => (
+          {!reduceMotion && [...Array(6)].map((_, index) => (
             <motion.div
               key={index}
               initial={{ 

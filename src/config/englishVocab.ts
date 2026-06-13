@@ -103,6 +103,51 @@ export const englishThemes: EnglishTheme[] = [
     ]
   },
   {
+    id: 'body',
+    title: 'Krop',
+    emoji: '🧍',
+    words: [
+      { en: 'hand', da: 'hånd', emoji: '✋' },
+      { en: 'foot', da: 'fod', emoji: '🦶' },
+      { en: 'eye', da: 'øje', emoji: '👁️' },
+      { en: 'ear', da: 'øre', emoji: '👂' },
+      { en: 'nose', da: 'næse', emoji: '👃' },
+      { en: 'mouth', da: 'mund', emoji: '👄' },
+      { en: 'tooth', da: 'tand', emoji: '🦷' },
+      { en: 'hair', da: 'hår', emoji: '💇' }
+    ]
+  },
+  {
+    id: 'family',
+    title: 'Familie',
+    emoji: '👨‍👩‍👧',
+    words: [
+      { en: 'mom', da: 'mor', emoji: '👩' },
+      { en: 'dad', da: 'far', emoji: '👨' },
+      { en: 'baby', da: 'baby', emoji: '👶' },
+      { en: 'girl', da: 'pige', emoji: '👧' },
+      { en: 'boy', da: 'dreng', emoji: '👦' },
+      { en: 'grandma', da: 'bedstemor', emoji: '👵' },
+      { en: 'grandpa', da: 'bedstefar', emoji: '👴' },
+      { en: 'family', da: 'familie', emoji: '👨‍👩‍👧' }
+    ]
+  },
+  {
+    id: 'nature',
+    title: 'Natur',
+    emoji: '🌳',
+    words: [
+      { en: 'sun', da: 'sol', emoji: '☀️' },
+      { en: 'moon', da: 'måne', emoji: '🌙' },
+      { en: 'star', da: 'stjerne', emoji: '⭐' },
+      { en: 'tree', da: 'træ', emoji: '🌳' },
+      { en: 'flower', da: 'blomst', emoji: '🌸' },
+      { en: 'rain', da: 'regn', emoji: '🌧️' },
+      { en: 'snow', da: 'sne', emoji: '❄️' },
+      { en: 'cloud', da: 'sky', emoji: '☁️' }
+    ]
+  },
+  {
     id: 'greetings',
     title: 'Hilsner',
     emoji: '👋',

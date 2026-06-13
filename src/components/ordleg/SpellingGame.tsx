@@ -46,6 +46,22 @@ const SPELLING_WORDS: { word: string; emoji: string }[] = [
   { word: 'sø', emoji: '🏞️' },
   { word: 'ål', emoji: '🐍' },
   { word: 'øl', emoji: '🍺' },
+  // More easy 2-3 letter words
+  { word: 'æg', emoji: '🥚' },
+  { word: 'te', emoji: '🍵' },
+  { word: 'ur', emoji: '⌚' },
+  { word: 'sko', emoji: '👟' },
+  { word: 'haj', emoji: '🦈' },
+  { word: 'abe', emoji: '🐒' },
+  { word: 'ræv', emoji: '🦊' },
+  { word: 'ulv', emoji: '🐺' },
+  { word: 'ged', emoji: '🐐' },
+  { word: 'tog', emoji: '🚂' },
+  { word: 'mor', emoji: '👩' },
+  { word: 'far', emoji: '👨' },
+  { word: 'bær', emoji: '🍓' },
+  { word: 'løg', emoji: '🧅' },
+  { word: 'ski', emoji: '🎿' },
 ]
 
 const DANISH_ALPHABET = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'R', 'S', 'T', 'U', 'V', 'Y', 'Z', 'Æ', 'Ø', 'Å']

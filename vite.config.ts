@@ -146,15 +146,26 @@ export default defineConfig({
     },
   },
   build: {
-    minify: false,
+    minify: 'esbuild',
     rollupOptions: {
       output: {
         entryFileNames: 'assets/[name]-[hash].js',
         chunkFileNames: 'assets/[name]-[hash].js',
-        assetFileNames: 'assets/[name]-[hash].[ext]'
+        assetFileNames: 'assets/[name]-[hash].[ext]',
+        // Split heavy vendor libraries out of the main chunk so the home screen
+        // pulls only what it needs and per-route code loads on demand.
+        // Rolldown (Vite 8) requires manualChunks to be a function.
+        manualChunks(id: string) {
+          if (!id.includes('node_modules')) return
+          if (id.includes('@mui')) return 'mui-vendor'
+          if (id.includes('framer-motion')) return 'motion-vendor'
+          if (id.includes('howler') || id.includes('lottie') || id.includes('react-confetti')) return 'media-vendor'
+          if (id.includes('@dnd-kit')) return 'dnd-vendor'
+          if (id.includes('react-router') || id.includes('react-dom') || id.includes('scheduler') || /node_modules[\\/]react[\\/]/.test(id)) return 'react-vendor'
+        }
       }
     },
-    sourcemap: true,
+    sourcemap: false,
     emptyOutDir: true
   }
 })

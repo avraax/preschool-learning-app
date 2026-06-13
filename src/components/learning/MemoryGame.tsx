@@ -36,7 +36,7 @@ const LETTER_ICONS: { [key: string]: { word: string; icon: string } } = {
   'T': { word: 'Tog', icon: '🚂' },
   'U': { word: 'Ugle', icon: '🦉' },
   'V': { word: 'Vind', icon: '💨' },
-  'W': { word: 'Vand', icon: '🌊' },
+  'W': { word: 'Wienerbrød', icon: '🥐' },
   'X': { word: 'X', icon: '❌' },
   'Y': { word: 'Yacht', icon: '⛵' },
   'Z': { word: 'Zebra', icon: '🦓' },

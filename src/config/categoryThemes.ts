@@ -104,6 +104,13 @@ export const categoryThemes: Record<string, CategoryTheme> = {
         gradient: 'linear-gradient(135deg, #8E24AA 0%, #7B1FA2 100%)'
       },
       {
+        id: 'patterns',
+        title: 'Hvad Mangler?',
+        emoji: '🧩',
+        route: '/math/patterns',
+        gradient: 'linear-gradient(135deg, #7E57C2 0%, #5E35B1 100%)'
+      },
+      {
         id: 'memory',
         title: 'Hukommelsesspil',
         emoji: '🧠',
@@ -191,6 +198,13 @@ export const categoryThemes: Record<string, CategoryTheme> = {
     iconSize: '4rem',
     description: 'Stav ord og sig ord højt med din stemme',
     games: [
+      {
+        id: 'read',
+        title: 'Læs Ordet',
+        emoji: '📖',
+        route: '/ordleg/read',
+        gradient: 'linear-gradient(135deg, #4DB6AC 0%, #26A69A 100%)'
+      },
       {
         id: 'spelling',
         title: 'Stav Ordet',

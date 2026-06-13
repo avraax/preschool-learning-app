@@ -374,7 +374,7 @@ const RamFarvenGame: React.FC = () => {
             <ColorRepeatButton 
               onClick={repeatInstructions}
               disabled={false}
-              label="🎵 Hör igen"
+              label="🎵 Hør igen"
             />
           </Box>
 

@@ -18,8 +18,8 @@ interface RepeatButtonProps {
   variant?: 'primary' | 'secondary'
   /** Size of the button */
   size?: 'small' | 'medium' | 'large'
-  /** Category theme to use for styling */
-  category?: 'alphabet' | 'math' | 'farver' | 'english' | 'ordleg'
+  /** Category theme to use for styling (keys must match categoryThemes) */
+  category?: 'alphabet' | 'math' | 'colors' | 'english' | 'ordleg'
   /** Use Lucide React icons instead of MUI icons */
   useLucideIcons?: boolean
 }
@@ -150,7 +150,7 @@ export interface MathRepeatButtonProps extends Omit<RepeatButtonProps, 'category
 }
 
 export interface ColorRepeatButtonProps extends Omit<RepeatButtonProps, 'category'> {
-  category?: 'farver'
+  category?: 'colors'
 }
 
 export interface EnglishRepeatButtonProps extends Omit<RepeatButtonProps, 'category'> {
@@ -179,7 +179,7 @@ export const MathRepeatButton: React.FC<MathRepeatButtonProps> = (props) => (
  * Pre-configured repeat button for color games
  */
 export const ColorRepeatButton: React.FC<ColorRepeatButtonProps> = (props) => (
-  <RepeatButton {...props} category="farver" label="🎵 Hør igen" />
+  <RepeatButton {...props} category="colors" label="🎵 Hør igen" />
 )
 
 /**

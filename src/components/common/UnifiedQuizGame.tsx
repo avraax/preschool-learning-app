@@ -42,7 +42,7 @@ export interface QuizItem {
 // Configuration interface for the unified quiz
 export interface UnifiedQuizConfig {
   // Quiz identification
-  quizType: 'alphabet' | 'counting' | 'arithmetic' | 'english'
+  quizType: 'alphabet' | 'counting' | 'arithmetic' | 'english' | 'ordleg'
   
   // Content generation
   generateQuizItem: () => QuizItem
@@ -359,18 +359,20 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.4 }}
             >
-              <Typography
-                sx={{
-                  fontSize: 'clamp(3rem, 12vw, 5rem)',
-                  lineHeight: 1,
-                  mb: 0.5,
-                  '@media (orientation: landscape)': {
-                    fontSize: 'clamp(2.5rem, 8vh, 4rem)'
-                  }
-                }}
-              >
-                {currentItem.questionVisual.emoji}
-              </Typography>
+              {currentItem.questionVisual.emoji && (
+                <Typography
+                  sx={{
+                    fontSize: 'clamp(3rem, 12vw, 5rem)',
+                    lineHeight: 1,
+                    mb: 0.5,
+                    '@media (orientation: landscape)': {
+                      fontSize: 'clamp(2.5rem, 8vh, 4rem)'
+                    }
+                  }}
+                >
+                  {currentItem.questionVisual.emoji}
+                </Typography>
+              )}
               {currentItem.questionVisual.word && (
                 <Typography
                   sx={{
@@ -457,15 +459,18 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
                   justifyContent: 'center',
                   borderRadius: '12px',
                   outline: 'none',
-                  '&:focus': {
-                    outline: 'none'
+                  '&:focus-visible': {
+                    outline: '3px solid',
+                    outlineColor: config.theme.accentColor
                   },
                   '@media (hover: hover) and (pointer: fine)': {
                     '&:hover': {
                       borderColor: config.theme.hoverBorderColor,
                       bgcolor: config.quizType === 'alphabet'
                         ? '#E3F2FD'
-                        : config.quizType === 'english' ? '#E8F5E9' : 'secondary.50',
+                        : config.quizType === 'english'
+                          ? '#E8F5E9'
+                          : config.quizType === 'ordleg' ? '#E0F2F1' : 'secondary.50',
                       boxShadow: `0 8px 32px ${config.theme.accentColor}40`,
                       transform: 'translateY(-2px)'
                     }

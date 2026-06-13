@@ -62,7 +62,7 @@ const DANISH_OBJECTS = {
     { objectName: 'majs', objectNameDefinite: 'majsen', emoji: '🌽', hex: '#fde047' },
     { objectName: 'stjerne', objectNameDefinite: 'stjernen', emoji: '⭐', hex: '#f59e0b' },
     { objectName: 'smør', objectNameDefinite: 'smørret', emoji: '🧈', hex: '#fbbf24' },
-    { objectName: 'kylling', objectNameDefinite: 'kyllingen', emoji: '🐥', hex: '#f97316' }
+    { objectName: 'kylling', objectNameDefinite: 'kyllingen', emoji: '🐥', hex: '#facc15' }
   ],
   lilla: [
     { objectName: 'druer', objectNameDefinite: 'druerne', emoji: '🍇', hex: '#a855f7' },
@@ -74,7 +74,7 @@ const DANISH_OBJECTS = {
   orange: [
     { objectName: 'appelsin', objectNameDefinite: 'appelsinen', emoji: '🍊', hex: '#f97316' },
     { objectName: 'græskar', objectNameDefinite: 'græskaret', emoji: '🎃', hex: '#ea580c' },
-    { objectName: 'ræv', objectNameDefinite: 'ræven', emoji: '🦊', hex: '#dc2626' },
+    { objectName: 'ræv', objectNameDefinite: 'ræven', emoji: '🦊', hex: '#ea580c' },
     { objectName: 'gulerod', objectNameDefinite: 'guleroden', emoji: '🥕', hex: '#f97316' },
     { objectName: 'hjerte', objectNameDefinite: 'hjertet', emoji: '🧡', hex: '#fb923c' },
     { objectName: 'fersken', objectNameDefinite: 'ferskenen', emoji: '🍑', hex: '#fdba74' }
@@ -535,7 +535,7 @@ const FarvejagtGame: React.FC = () => {
           <ColorRepeatButton 
             onClick={repeatInstructions}
             disabled={false}
-            label="🎵 Hör igen"
+            label="🎵 Hør igen"
           />
         </Box>
 

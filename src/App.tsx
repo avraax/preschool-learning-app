@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useCallback } from 'react'
-import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom'
+import React, { useEffect, useState, useCallback, lazy, Suspense } from 'react'
+import { Routes, Route, useNavigate, useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { logIOSIssue } from './utils/remoteConsole'
 import { deviceInfo } from './utils/deviceDetection'
@@ -18,29 +18,30 @@ import {
   Play
 } from 'lucide-react'
 
-// Import all page components
-import AlphabetGame from './components/alphabet/AlphabetGame'
-import AlphabetSelection from './components/alphabet/AlphabetSelection'
-import AlphabetLearning from './components/alphabet/AlphabetLearning'
-import MathGame from './components/math/MathGame'
-import MathSelection from './components/math/MathSelection'
-import NumberLearning from './components/math/NumberLearning'
-import AdditionGame from './components/math/AdditionGame'
-import SubtractionGame from './components/math/SubtractionGame'
-import ComparisonGame from './components/math/ComparisonGame'
-import FarverSelection from './components/farver/FarverSelection'
-import FarvejagtGame from './components/farver/FarvejagtGame'
-import RamFarvenGame from './components/farver/RamFarvenGame'
-import EnglishSelection from './components/english/EnglishSelection'
-import EnglishListenGame from './components/english/EnglishListenGame'
-import EnglishWordGame from './components/english/EnglishWordGame'
-import EnglishTranslateGame from './components/english/EnglishTranslateGame'
-import EnglishLearning from './components/english/EnglishLearning'
-import OrdlegSelection from './components/ordleg/OrdlegSelection'
-import SpellingGame from './components/ordleg/SpellingGame'
-import SpeakWordGame from './components/ordleg/SpeakWordGame'
-import MemoryGame from './components/learning/MemoryGame'
-import ErrorDashboard from './components/admin/ErrorDashboard'
+// Route page components are lazy-loaded so the home screen ships a small initial
+// bundle and each section's code loads on demand.
+const AlphabetGame = lazy(() => import('./components/alphabet/AlphabetGame'))
+const AlphabetSelection = lazy(() => import('./components/alphabet/AlphabetSelection'))
+const AlphabetLearning = lazy(() => import('./components/alphabet/AlphabetLearning'))
+const MathGame = lazy(() => import('./components/math/MathGame'))
+const MathSelection = lazy(() => import('./components/math/MathSelection'))
+const NumberLearning = lazy(() => import('./components/math/NumberLearning'))
+const MathOperationGame = lazy(() => import('./components/math/MathOperationGame'))
+const ComparisonGame = lazy(() => import('./components/math/ComparisonGame'))
+const HvadManglerGame = lazy(() => import('./components/math/HvadManglerGame'))
+const FarverSelection = lazy(() => import('./components/farver/FarverSelection'))
+const FarvejagtGame = lazy(() => import('./components/farver/FarvejagtGame'))
+const RamFarvenGame = lazy(() => import('./components/farver/RamFarvenGame'))
+const EnglishSelection = lazy(() => import('./components/english/EnglishSelection'))
+const EnglishListenGame = lazy(() => import('./components/english/EnglishListenGame'))
+const EnglishWordGame = lazy(() => import('./components/english/EnglishWordGame'))
+const EnglishTranslateGame = lazy(() => import('./components/english/EnglishTranslateGame'))
+const EnglishLearning = lazy(() => import('./components/english/EnglishLearning'))
+const OrdlegSelection = lazy(() => import('./components/ordleg/OrdlegSelection'))
+const LaesOrdetGame = lazy(() => import('./components/ordleg/LaesOrdetGame'))
+const SpellingGame = lazy(() => import('./components/ordleg/SpellingGame'))
+const SpeakWordGame = lazy(() => import('./components/ordleg/SpeakWordGame'))
+const MemoryGame = lazy(() => import('./components/learning/MemoryGame'))
 import UpdateBanner from './components/common/UpdateBanner'
 // Legacy audio system removed - using SimplifiedAudioProvider only
 import { useViewportHeight } from './hooks/useViewportHeight'
@@ -62,20 +63,6 @@ import { useUpdateChecker } from './hooks/useUpdateChecker'
 import { useNativeAppFeel } from './hooks/useNativeAppFeel'
 import { categoryThemes } from './config/categoryThemes'
 import { BUILD_INFO } from './config/version'
-
-// Admin redirect component for query parameter support
-const AdminRedirectChecker = ({ children }: { children: React.ReactNode }) => {
-  const navigate = useNavigate()
-  
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
-    if (params.get('admin') === 'errors') {
-      navigate('/admin/errors', { replace: true })
-    }
-  }, [navigate])
-  
-  return <>{children}</>
-}
 
 // Balloon interface
 interface HomeBalloon {
@@ -963,13 +950,10 @@ function App() {
         {/* Version Display - repositions to bottom-left when update available */}
         <VersionDisplay updateAvailable={updateStatus.updateAvailable || DEV_SHOW_UPDATE_BANNER} />
         
+        <Suspense fallback={<Box sx={{ height: '100dvh', background: '#F8FAFC' }} />}>
         <Routes>
         {/* Home Routes */}
-        <Route path="/" element={
-          <AdminRedirectChecker>
-            <HomePage />
-          </AdminRedirectChecker>
-        } />
+        <Route path="/" element={<HomePage />} />
         
         {/* Alphabet Routes */}
         <Route path="/alphabet" element={<AlphabetSelection />} />
@@ -989,9 +973,10 @@ function App() {
         <Route path="/math" element={<MathSelection />} />
         <Route path="/math/counting" element={<MathGame />} />
         <Route path="/math/numbers" element={<NumberLearning />} />
-        <Route path="/math/addition" element={<AdditionGame />} />
-        <Route path="/math/subtraction" element={<SubtractionGame />} />
+        <Route path="/math/addition" element={<MathOperationGame operation="addition" />} />
+        <Route path="/math/subtraction" element={<MathOperationGame operation="subtraction" />} />
         <Route path="/math/comparison" element={<ComparisonGame />} />
+        <Route path="/math/patterns" element={<HvadManglerGame />} />
         
         {/* Farver Routes */}
         <Route path="/farver" element={<FarverSelection />} />
@@ -1007,23 +992,17 @@ function App() {
 
         {/* Ordleg Routes */}
         <Route path="/ordleg" element={<OrdlegSelection />} />
+        <Route path="/ordleg/read" element={<LaesOrdetGame />} />
         <Route path="/ordleg/spelling" element={<SpellingGame />} />
         <Route path="/ordleg/mic" element={<SpeakWordGame />} />
         
         {/* Learning Routes */}
         <Route path="/learning/memory/:type" element={<MemoryGame />} />
-        
-        {/* Admin Routes */}
-        <Route path="/admin/errors" element={<ErrorDashboard />} />
-        
-        {/* Legacy redirect for old admin access */}
-        <Route path="/admin" element={<Navigate to="/admin/errors" replace />} />
-        
-        {/* Demo Routes removed */}
-        
+
         {/* 404 Not Found */}
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
+      </Suspense>
       </>
     </SimplifiedAudioProvider>
   )

@@ -320,14 +320,19 @@ const ComparisonGame: React.FC = () => {
         
         console.log('🎯 ComparisonGame: Celebration completed, handling wrong answer flow')
         
-        // For wrong answers, just reset UI to allow retry (NO explanation with correct answer)
+        // For wrong answers, speak the teaching explanation, then reset UI to allow retry
         if (!isCorrect) {
-          console.log('🎯 ComparisonGame: Wrong answer - resetting UI for retry (no explanation)')
+          try {
+            if (explanation) {
+              await audio.speak(explanation)
+            }
+          } catch (explanationError) {
+            // ignore explanation audio errors
+          }
           setTimeout(() => {
             setShowFeedback(false)
             setSelectedSymbol(null)
-            console.log('🎯 ComparisonGame: UI reset complete, ready for retry')
-          }, 2000) // Give time for encouragement audio to finish
+          }, 1200) // brief pause after the explanation before allowing retry
         }
         
       } catch (error) {

@@ -393,7 +393,9 @@ export class SimplifiedAudioController {
       englishlisten: 'Lyt og find',
       englishword: 'Find det engelske ord',
       englishtranslate: 'Dansk til engelsk',
-      micword: 'Sig et ord'
+      micword: 'Sig et ord',
+      laesordet: 'Læs ordet',
+      patterns: 'Hvad mangler'
     }
     
     const welcomeMessage = GAME_WELCOME_MESSAGES[gameType as keyof typeof GAME_WELCOME_MESSAGES]

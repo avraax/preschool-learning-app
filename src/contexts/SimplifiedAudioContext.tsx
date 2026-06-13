@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect, useRef, ReactNode } from 'react'
+import React, { createContext, useState, useEffect, useRef, useMemo, ReactNode } from 'react'
 import { isIOS } from '../utils/deviceDetection'
 import { audioDebugSession } from '../utils/remoteConsole'
 import { setSimplifiedAudioContext } from '../utils/SimplifiedAudioController'
@@ -207,19 +207,22 @@ export const SimplifiedAudioProvider: React.FC<SimplifiedAudioProviderProps> = (
     }
   }, [state.needsUserAction, state.isWorking])
 
-  const value: SimplifiedAudioContextType = {
+  // Memoized so the Provider value and the controller-registration effect below only
+  // change when something meaningful changes (previously this object was recreated every
+  // render, re-registering the controller context on every render).
+  const value = useMemo<SimplifiedAudioContextType>(() => ({
     state,
     initializeAudio,
     updateUserInteraction,
     hidePrompt,
     globalAudioContext: globalAudioContextRef.current,
     speechSynthesis: speechSynthesisRef.current
-  }
+  }), [state, initializeAudio, updateUserInteraction, hidePrompt])
 
   // Connect this context to the SimplifiedAudioController
   useEffect(() => {
     setSimplifiedAudioContext(value)
-    
+
     return () => {
       setSimplifiedAudioContext(null)
     }

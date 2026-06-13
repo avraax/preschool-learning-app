@@ -1,84 +1,91 @@
 ---
 paths:
-  - "src/utils/AudioController.ts"
-  - "src/contexts/AudioContext.tsx"
-  - "src/hooks/useAudio.ts"
+  - "src/utils/SimplifiedAudioController.ts"
+  - "src/contexts/SimplifiedAudioContext.tsx"
+  - "src/hooks/useSimplifiedAudio.ts"
+  - "src/hooks/useSpeechInput.ts"
   - "src/services/googleTTS.ts"
-  - "src/components/common/GlobalAudioPermission.tsx"
-  - "src/utils/entryAudioManager.ts"
+  - "src/components/common/SimplifiedAudioPermission.tsx"
   - "src/components/**/*.tsx"
 ---
 
 # Centralized Audio System Rules
 
-All audio in this app goes through a centralized 3-tier system. No exceptions.
+All audio in this app goes through one centralized system. No exceptions.
 
 ## Architecture
 
 ```
-AudioController (src/utils/AudioController.ts)  -- singleton, queue, playback
-├── AudioContext (src/contexts/AudioContext.tsx)  -- React permission state
-├── useAudio() (src/hooks/useAudio.ts)           -- component hook interface
-├── GlobalAudioPermission                        -- session-based permission modal
-└── entryAudioManager                            -- game entry audio coordination
+SimplifiedAudioController (src/utils/SimplifiedAudioController.ts)  -- singleton, single-audio playback (NO queue)
+├── SimplifiedAudioContext (src/contexts/SimplifiedAudioContext.tsx)  -- React permission + readiness state
+├── useSimplifiedAudioHook() (src/hooks/useSimplifiedAudio.ts)        -- component hook interface
+└── SimplifiedAudioPermission (src/components/common/SimplifiedAudioPermission.tsx)  -- session permission modal (iOS)
 ```
 
 Stack: Google Cloud TTS (primary) -> Web Speech API (fallback) -> Howler.js (sound effects).
+TTS goes through `src/services/googleTTS.ts` and the `/api/tts` endpoint. The Engelsk section
+uses a British `en-GB` voice via `speakEnglish()` (voiceType `'english'` in googleTTS).
+
+**Key behaviour: there is NO audio queue.** Only one audio plays at a time; starting new audio
+immediately cancels whatever is playing (`playAudio()` calls `stopCurrentAudio()` first). This is
+intentional for fast tapping on iOS.
 
 ## Mandatory Rules
 
-1. **NEVER** create audio management code outside the centralized system
+1. **NEVER** create audio management code outside this system
 2. **NEVER** use Web Speech API, Howler.js, or HTML5 Audio directly in components
-3. **NEVER** create component-level `isPlaying` state or audio state
-4. **NEVER** bypass the AudioController queue
-5. **ALWAYS** use `useAudio()` hook in components
-6. **ALWAYS** add new audio functions to AudioController class
-7. **ALWAYS** use the centralized queue for all playback
+3. **NEVER** create component-level `isPlaying`/audio state (read it from the hook if needed)
+4. **ALWAYS** use the `useSimplifiedAudioHook()` hook in components
+5. **ALWAYS** add new audio capabilities as methods on `SimplifiedAudioController`, exposed through the hook
 
 ## Correct Pattern
 
 ```typescript
-import { useAudio } from '../../hooks/useAudio'
+import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 
 const MyComponent = () => {
-  const audio = useAudio({ componentId: 'MyComponent' })
+  const audio = useSimplifiedAudioHook({ componentId: 'MyComponent', autoInitialize: false })
 
   const handleAction = async () => {
+    audio.updateUserInteraction()   // iOS: refresh interaction timestamp before playback
     await audio.speak('Hej børn!')
     await audio.speakNumber(5)
-    await audio.playSuccessSound()
+    await audio.speakEnglish('dog')  // en-GB
   }
 }
 ```
 
 ## Adding New Audio Functions
 
-1. Add method to `AudioController` class in `src/utils/AudioController.ts`
-2. Export through `useAudio` hook in `src/hooks/useAudio.ts`
-3. Use in components via the hook
+1. Add a method to `SimplifiedAudioController` that wraps work in `this.playAudio(...)`:
 
 ```typescript
-// In AudioController.ts
 async speakNewThing(text: string): Promise<string> {
-  return this.queueAudio(async () => {
+  return this.playAudio(async () => {
     this.updateUserInteraction()
-    const hasPermission = await this.checkAudioPermission()
-    if (!hasPermission) return
+    if (!this.ensureAudioReady()) return
     await this.googleTTS.synthesizeAndPlay(text, 'primary', true)
   })
 }
 ```
 
-## Navigation Cleanup
+2. Expose it through `useSimplifiedAudio` (add to the `SimplifiedAudioHook` interface and bind it in the returned object).
+3. Use it in components via the hook.
 
-Audio cancels automatically on all navigation (browser back/forward, React Router, direct URLs). Handled by NavigationAudioCleanup in App.tsx and browser event listeners in AudioController. No component changes needed.
+## Game Audio Entry Pattern
 
-## Permission Handling
+Task-based games play a welcome (`audio.playGameWelcome(<type>)`) then start after a short iOS-tuned
+delay, gating interaction on a `gameReady` flag. Welcome strings live in `GAME_WELCOME_MESSAGES` inside
+`SimplifiedAudioController.playGameWelcome` — add an entry there for a new game's `gameWelcomeType`.
 
-Session-based, automatic. No manual permission checks in components. The GlobalAudioPermission modal handles everything. iOS Safari 10-second interaction timeout is handled by AudioController.
+## Navigation Cleanup & Permission
 
-## Debugging
+Audio cancels automatically on navigation via `NavigationAudioCleanup` in `App.tsx` and the controller's
+own listeners. Permission is session-based and automatic; `SimplifiedAudioPermission` handles the iOS
+prompt. The iOS Safari interaction-timeout handling lives in `googleTTS.ts`.
 
-- Console logs prefixed with `audioController.getTTSStatus()` for queue/cache state
-- Check component uses `useAudio()` hook, not direct imports
-- Look for navigation cleanup logs in console
+## Speech INPUT (separate from playback)
+
+`Sig et Ord` captures audio via `src/hooks/useSpeechInput.ts` (MediaRecorder -> `/api/stt`, Google STT v2).
+This is the *capture* side and sits beside the controller. It must NOT record while TTS is playing — call
+`audio.stopAll()` before starting capture.

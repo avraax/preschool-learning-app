@@ -456,7 +456,7 @@ const UnifiedMemoryGame: React.FC<UnifiedMemoryGameProps> = ({ config }) => {
             onClick={repeatInstructions}
             disabled={false}
             size="small"
-            label="🎵 Hör igen"
+            label="🎵 Hør igen"
           />
         </Box>
 
