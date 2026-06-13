@@ -61,7 +61,6 @@ import { useBalloonSound } from './components/common/balloon/SoundManager'
 import LottieCharacter, { useCharacterState } from './components/common/LottieCharacter'
 import { useUpdateChecker } from './hooks/useUpdateChecker'
 import { useNativeAppFeel } from './hooks/useNativeAppFeel'
-import { LogoLarge } from './components/common/Logo'
 import { categoryThemes } from './config/categoryThemes'
 import { BUILD_INFO } from './config/version'
 
@@ -338,25 +337,6 @@ const HomePage = () => {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5 }}
           >
-            {/* App Logo */}
-            <Box sx={{ mb: 2, position: 'relative' }}>
-              <LogoLarge
-                onClick={(e) => {
-                  // Spawn balloons when logo is clicked
-                  const logoElement = e.currentTarget as HTMLElement;
-                  spawnBalloons(logoElement);
-                  welcomeCharacter.wave();
-                }}
-                sx={{
-                  cursor: 'pointer',
-                  '&:hover': {
-                    transform: 'scale(1.05)',
-                    filter: 'drop-shadow(0 8px 16px rgba(139, 92, 246, 0.4))'
-                  }
-                }}
-              />
-            </Box>
-            
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2, mb: 2 }}>
               <Typography 
                 variant="h1" 
@@ -379,7 +359,11 @@ const HomePage = () => {
                   character={welcomeCharacter.character}
                   state={welcomeCharacter.state}
                   size={80}
-                  onClick={welcomeCharacter.wave}
+                  onClick={() => {
+                    // Balloon easter-egg (previously on the logo)
+                    spawnBalloons();
+                    welcomeCharacter.wave();
+                  }}
                 />
               </motion.div>
             </Box>
