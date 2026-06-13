@@ -12,11 +12,10 @@ import {
   Typography, 
   Box
 } from '@mui/material'
-import { 
+import {
   ArrowLeft,
   BookOpen,
-  Play,
-  Star
+  Play
 } from 'lucide-react'
 
 // Import all page components
@@ -330,8 +329,8 @@ const HomePage = () => {
           zIndex: 2
         }}
       >
-        {/* Header with Logo and Welcome Character */}
-        <Box sx={{ textAlign: 'center', mb: { xs: 3, md: 4 } }}>
+        {/* Header with title and Welcome Character */}
+        <Box sx={{ textAlign: 'center', mb: { xs: 1.5, md: 2 } }}>
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -341,7 +340,7 @@ const HomePage = () => {
               <Typography 
                 variant="h1" 
                 sx={{ 
-                  fontSize: { xs: '2rem', sm: '2.5rem', md: '3.5rem' },
+                  fontSize: { xs: '1.75rem', sm: '2.25rem', md: '2.75rem' },
                   fontWeight: 700,
                   color: '#8B5CF6',
                   textShadow: '2px 2px 8px rgba(139, 92, 246, 0.25)',
@@ -407,7 +406,7 @@ const HomePage = () => {
             }}
           >
             {/* Alphabet Card */}
-            <Grid size={{ xs: 12, sm: 6, lg: 4 }}>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
               <motion.div
                 initial={{ opacity: 0, x: -30 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -419,7 +418,7 @@ const HomePage = () => {
                   onClick={() => navigate('/alphabet')}
                   sx={{ 
                     height: '100%',
-                    minHeight: { xs: 150, sm: 190, md: 210 },
+                    minHeight: { xs: 120, sm: 150, md: 170 },
                     cursor: 'pointer',
                     border: '2px solid',
                     borderColor: categoryThemes.alphabet.borderColor,
@@ -435,7 +434,7 @@ const HomePage = () => {
                     transition: 'all 0.3s ease',
                     // Orientation specific adjustments
                     '@media (orientation: landscape)': {
-                      minHeight: { xs: 140, sm: 160, md: 180 }
+                      minHeight: { xs: 110, sm: 130, md: 140 }
                     }
                   }}
                 >
@@ -449,8 +448,8 @@ const HomePage = () => {
                       textAlign: 'center'
                     }}
                   >
-                    <Box sx={{ mb: 2 }}>
-                      <Typography sx={{ fontSize: categoryThemes.alphabet.iconSize, mb: 2 }}>
+                    <Box sx={{ mb: { xs: 0.5, md: 1 } }}>
+                      <Typography sx={{ fontSize: categoryThemes.alphabet.iconSize, mb: { xs: 0.5, md: 1 } }}>
                         {categoryThemes.alphabet.icon}
                       </Typography>
                       <Typography 
@@ -480,7 +479,7 @@ const HomePage = () => {
             </Grid>
 
             {/* Math Card */}
-            <Grid size={{ xs: 12, sm: 6, lg: 4 }}>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
               <motion.div
                 initial={{ opacity: 0, y: -30 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -492,7 +491,7 @@ const HomePage = () => {
                   onClick={() => navigate('/math')}
                   sx={{ 
                     height: '100%',
-                    minHeight: { xs: 150, sm: 190, md: 210 },
+                    minHeight: { xs: 120, sm: 150, md: 170 },
                     cursor: 'pointer',
                     border: '2px solid',
                     borderColor: categoryThemes.math.borderColor,
@@ -508,7 +507,7 @@ const HomePage = () => {
                     transition: 'all 0.3s ease',
                     // Orientation specific adjustments
                     '@media (orientation: landscape)': {
-                      minHeight: { xs: 140, sm: 160, md: 180 }
+                      minHeight: { xs: 110, sm: 130, md: 140 }
                     }
                   }}
                 >
@@ -522,8 +521,8 @@ const HomePage = () => {
                       textAlign: 'center'
                     }}
                   >
-                    <Box sx={{ mb: 2 }}>
-                      <Typography sx={{ fontSize: categoryThemes.math.iconSize, mb: 2 }}>
+                    <Box sx={{ mb: { xs: 0.5, md: 1 } }}>
+                      <Typography sx={{ fontSize: categoryThemes.math.iconSize, mb: { xs: 0.5, md: 1 } }}>
                         {categoryThemes.math.icon}
                       </Typography>
                       <Typography 
@@ -553,7 +552,7 @@ const HomePage = () => {
             </Grid>
 
             {/* Farver Card */}
-            <Grid size={{ xs: 12, sm: 6, lg: 4 }}>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
               <motion.div
                 initial={{ opacity: 0, x: 30 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -565,7 +564,7 @@ const HomePage = () => {
                   onClick={() => navigate('/farver')}
                   sx={{ 
                     height: '100%',
-                    minHeight: { xs: 150, sm: 190, md: 210 },
+                    minHeight: { xs: 120, sm: 150, md: 170 },
                     cursor: 'pointer',
                     border: '2px solid',
                     borderColor: categoryThemes.colors.borderColor,
@@ -581,7 +580,7 @@ const HomePage = () => {
                     transition: 'all 0.3s ease',
                     // Orientation specific adjustments
                     '@media (orientation: landscape)': {
-                      minHeight: { xs: 140, sm: 160, md: 180 }
+                      minHeight: { xs: 110, sm: 130, md: 140 }
                     }
                   }}
                 >
@@ -595,8 +594,8 @@ const HomePage = () => {
                       textAlign: 'center'
                     }}
                   >
-                    <Box sx={{ mb: 2 }}>
-                      <Typography sx={{ fontSize: categoryThemes.colors.iconSize, mb: 2 }}>
+                    <Box sx={{ mb: { xs: 0.5, md: 1 } }}>
+                      <Typography sx={{ fontSize: categoryThemes.colors.iconSize, mb: { xs: 0.5, md: 1 } }}>
                         {categoryThemes.colors.icon}
                       </Typography>
                       <Typography 
@@ -626,7 +625,7 @@ const HomePage = () => {
             </Grid>
 
             {/* English Card */}
-            <Grid size={{ xs: 12, sm: 6, lg: 4 }}>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
               <motion.div
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -638,7 +637,7 @@ const HomePage = () => {
                   onClick={() => navigate('/english')}
                   sx={{
                     height: '100%',
-                    minHeight: { xs: 150, sm: 190, md: 210 },
+                    minHeight: { xs: 120, sm: 150, md: 170 },
                     cursor: 'pointer',
                     border: '2px solid',
                     borderColor: categoryThemes.english.borderColor,
@@ -653,7 +652,7 @@ const HomePage = () => {
                     },
                     transition: 'all 0.3s ease',
                     '@media (orientation: landscape)': {
-                      minHeight: { xs: 140, sm: 160, md: 180 }
+                      minHeight: { xs: 110, sm: 130, md: 140 }
                     }
                   }}
                 >
@@ -667,8 +666,8 @@ const HomePage = () => {
                       textAlign: 'center'
                     }}
                   >
-                    <Box sx={{ mb: 2 }}>
-                      <Typography sx={{ fontSize: categoryThemes.english.iconSize, mb: 2 }}>
+                    <Box sx={{ mb: { xs: 0.5, md: 1 } }}>
+                      <Typography sx={{ fontSize: categoryThemes.english.iconSize, mb: { xs: 0.5, md: 1 } }}>
                         {categoryThemes.english.icon}
                       </Typography>
                       <Typography
@@ -696,7 +695,7 @@ const HomePage = () => {
             </Grid>
 
             {/* Ordleg Card */}
-            <Grid size={{ xs: 12, sm: 6, lg: 4 }}>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
               <motion.div
                 initial={{ opacity: 0, x: 30 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -708,7 +707,7 @@ const HomePage = () => {
                   onClick={() => navigate('/ordleg')}
                   sx={{
                     height: '100%',
-                    minHeight: { xs: 150, sm: 190, md: 210 },
+                    minHeight: { xs: 120, sm: 150, md: 170 },
                     cursor: 'pointer',
                     border: '2px solid',
                     borderColor: categoryThemes.ordleg.borderColor,
@@ -723,7 +722,7 @@ const HomePage = () => {
                     },
                     transition: 'all 0.3s ease',
                     '@media (orientation: landscape)': {
-                      minHeight: { xs: 140, sm: 160, md: 180 }
+                      minHeight: { xs: 110, sm: 130, md: 140 }
                     }
                   }}
                 >
@@ -737,8 +736,8 @@ const HomePage = () => {
                       textAlign: 'center'
                     }}
                   >
-                    <Box sx={{ mb: 2 }}>
-                      <Typography sx={{ fontSize: categoryThemes.ordleg.iconSize, mb: 2 }}>
+                    <Box sx={{ mb: { xs: 0.5, md: 1 } }}>
+                      <Typography sx={{ fontSize: categoryThemes.ordleg.iconSize, mb: { xs: 0.5, md: 1 } }}>
                         {categoryThemes.ordleg.icon}
                       </Typography>
                       <Typography
@@ -766,19 +765,6 @@ const HomePage = () => {
             </Grid>
 
           </Grid>
-
-          {/* Bottom Decoration */}
-          <Box sx={{ textAlign: 'center', mt: 'auto', py: 2 }}>
-            <motion.div
-              animate={{ 
-                scale: [1, 1.1, 1],
-                rotate: [0, 5, -5, 0]
-              }}
-              transition={{ duration: 4, repeat: Infinity }}
-            >
-              <Star size={48} color="#ff9800" />
-            </motion.div>
-          </Box>
         </Box>
       </Container>
       

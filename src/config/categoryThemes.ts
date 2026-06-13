@@ -31,7 +31,7 @@ export const categoryThemes: Record<string, CategoryTheme> = {
     borderColor: '#64B5F6',
     hoverBorderColor: '#1976D2',
     icon: '📚',
-    iconSize: '6rem',
+    iconSize: '4rem',
     description: 'Lær det danske alfabet fra A til Å med sjove spil og quiz',
     games: [
       {
@@ -65,7 +65,7 @@ export const categoryThemes: Record<string, CategoryTheme> = {
     borderColor: '#BA68C8',
     hoverBorderColor: '#9C27B0',
     icon: '🧮',
-    iconSize: '6rem',
+    iconSize: '4rem',
     description: 'Lær tal, optælling og grundlæggende matematik på en sjov måde',
     games: [
       {
@@ -120,7 +120,7 @@ export const categoryThemes: Record<string, CategoryTheme> = {
     borderColor: '#FFB74D',
     hoverBorderColor: '#FF6B00',
     icon: '🎨',
-    iconSize: '6rem',
+    iconSize: '4rem',
     description: 'Udforsk farver gennem interaktive spil og kreative aktiviteter',
     games: [
       {
@@ -146,8 +146,8 @@ export const categoryThemes: Record<string, CategoryTheme> = {
     accentColor: '#2E7D32',
     borderColor: '#66BB6A',
     hoverBorderColor: '#2E7D32',
-    icon: '🇬🇧',
-    iconSize: '6rem',
+    icon: '🌍',
+    iconSize: '4rem',
     description: 'Lær dine første engelske ord med billeder og lyd',
     games: [
       {
@@ -188,7 +188,7 @@ export const categoryThemes: Record<string, CategoryTheme> = {
     borderColor: '#4DB6AC',
     hoverBorderColor: '#00796B',
     icon: '🗣️',
-    iconSize: '6rem',
+    iconSize: '4rem',
     description: 'Stav ord og sig ord højt med din stemme',
     games: [
       {
