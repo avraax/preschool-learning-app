@@ -21,6 +21,7 @@ export interface SceneAssets {
 //   ocean: () => import('../assets/themes/ocean'),
 const loaders: Record<string, () => Promise<{ default: SceneAssets }>> = {
   ocean: () => import('../assets/themes/ocean'),
+  space: () => import('../assets/themes/space'),
 }
 
 // Resolve a theme's world assets, or `null` if the theme has none yet (→ flat look).

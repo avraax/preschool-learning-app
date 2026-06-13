@@ -43,6 +43,9 @@ const ThemeMascot: React.FC<ThemeMascotProps> = ({ sx, onTap, parallaxDepth = 0.
   const nextBubbleId = useRef(0)
 
   const lines = theme.scene.mascot.lines
+  // Tap burst matches the world's ambient style: sparkly stars for twinkle worlds (space),
+  // bubbles otherwise (ocean, etc.).
+  const sparkle = theme.scene.ambient.motion === 'twinkle'
 
   useEffect(() => {
     let alive = true
@@ -174,10 +177,22 @@ const ThemeMascot: React.FC<ThemeMascotProps> = ({ sx, onTap, parallaxDepth = 0.
               width: b.size,
               height: b.size,
               borderRadius: '50%',
-              background:
-                'radial-gradient(circle at 33% 28%, rgba(255,255,255,0.98) 0%, rgba(255,255,255,0.45) 38%, rgba(200,240,255,0.16) 72%, rgba(200,240,255,0) 100%)',
-              border: '1.5px solid rgba(255,255,255,0.75)',
-              boxShadow: 'inset 0 0 8px rgba(255,255,255,0.5)',
+              ...(sparkle
+                ? {
+                    // 4-point sparkle STAR (clip-path) so it's unmistakably not a bubble.
+                    // Use filter drop-shadow (follows the clip), not box-shadow (would be rect).
+                    background:
+                      'radial-gradient(circle, #ffffff 0%, rgba(255,247,214,0.95) 45%, rgba(255,210,120,0) 78%)',
+                    clipPath:
+                      'polygon(50% 0%, 58% 42%, 100% 50%, 58% 58%, 50% 100%, 42% 58%, 0% 50%, 42% 42%)',
+                    filter: 'drop-shadow(0 0 4px rgba(255,255,255,0.9))',
+                  }
+                : {
+                    background:
+                      'radial-gradient(circle at 33% 28%, rgba(255,255,255,0.98) 0%, rgba(255,255,255,0.45) 38%, rgba(200,240,255,0.16) 72%, rgba(200,240,255,0) 100%)',
+                    border: '1.5px solid rgba(255,255,255,0.75)',
+                    boxShadow: 'inset 0 0 8px rgba(255,255,255,0.5)',
+                  }),
             }}
           />
         ))}

@@ -108,6 +108,7 @@ const HomePage = () => {
   useParallax(sceneRootRef, { disabled: reduceMotion })
   // This theme has an authored world → use immersive treatments (glassy cards, world mascot).
   const immersive = theme.scene.layers.length > 0
+  const darkScene = theme.scene.dark // dark backdrop (e.g. Rummet) → light title
   const welcomeCharacter = useCharacterState('wave')
   const { play, stopAll } = useBalloonSound()
   const [balloons, setBalloons] = useState<HomeBalloon[]>([])
@@ -358,12 +359,16 @@ const HomePage = () => {
                   fontFamily: theme.titleFontFamily,
                   fontSize: { xs: '1.75rem', sm: '2.25rem', md: '2.75rem' },
                   fontWeight: 700,
-                  color: theme.decor.titleColor,
-                  // Immersive worlds: a soft white halo + drop shadow so the title reads as
-                  // lit by the scene, not plain text floating on the art.
-                  textShadow: immersive
-                    ? '0 1px 0 rgba(255,255,255,0.7), 0 0 16px rgba(255,255,255,0.5), 0 3px 8px rgba(0,30,50,0.35)'
-                    : `2px 2px 8px ${alpha(theme.decor.titleColor, 0.25)}`,
+                  // Dark worlds need a light title; otherwise the themed title colour.
+                  color: darkScene ? '#FFFFFF' : theme.decor.titleColor,
+                  // Title treatment: dark scenes get a glow + dark shadow for contrast;
+                  // light immersive scenes get a soft white halo; flat themes keep the
+                  // original subtle shadow.
+                  textShadow: darkScene
+                    ? '0 0 18px rgba(120,170,255,0.6), 0 2px 10px rgba(0,0,0,0.55)'
+                    : immersive
+                      ? '0 1px 0 rgba(255,255,255,0.7), 0 0 16px rgba(255,255,255,0.5), 0 3px 8px rgba(0,30,50,0.35)'
+                      : `2px 2px 8px ${alpha(theme.decor.titleColor, 0.25)}`,
                   letterSpacing: '0.02em'
                 }}
               >

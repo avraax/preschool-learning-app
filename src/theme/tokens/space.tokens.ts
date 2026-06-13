@@ -46,6 +46,30 @@ export const spaceThemeTokens: ThemeTokens = {
   },
 
   shadows: neutralShadows('#3949AB'),
+
+  // ---- Immersive world (Theme Worlds PRD) — DARK backdrop; cards/text stay light ----
+  titleFontFamily: `"Exo 2", ${COMIC_FONT}`,
+
+  scene: {
+    dark: true,
+    layers: [{ src: '', depth: 0.6, anchor: 'center' }], // full-bleed dark space backdrop
+    ambient: {
+      sprites: [], // CSS twinkling stars (no art needed)
+      count: 28,
+      motion: 'twinkle',
+    },
+    mascot: {
+      src: '',
+      lines: ['Klar til opsendelse?', '3-2-1!', 'Til stjernerne!'],
+    },
+    selectorThumb: '',
+  },
+
+  materials: {
+    cardFrame: '',
+    buttonGradient: 'linear-gradient(135deg, #3949AB 0%, #8E24AA 100%)',
+    motif: '',
+  },
 }
 
 export default spaceThemeTokens

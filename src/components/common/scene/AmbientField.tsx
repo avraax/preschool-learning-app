@@ -67,7 +67,25 @@ const ambientKeyframes = {
     '0%, 100%': { transform: 'scale(0.7)', opacity: 0.2 },
     '50%': { transform: 'scale(1)', opacity: 0.95 },
   },
+  // Occasional shooting star: flies across (per-star vector via CSS vars), then waits.
+  // The flight spans 0→28% of the cycle so it's slower/longer; the rest is the idle gap.
+  '@keyframes ambient-shoot': {
+    '0%': { transform: 'translate3d(0, 0, 0)', opacity: 0 },
+    '4%': { opacity: 1 },
+    '18%': { opacity: 1 },
+    '22%': { transform: 'translate3d(var(--shoot-dx, 64vw), var(--shoot-dy, 30vh), 0)', opacity: 0 },
+    '100%': { transform: 'translate3d(var(--shoot-dx, 64vw), var(--shoot-dy, 30vh), 0)', opacity: 0 },
+  },
 } as const
+
+// Shooting-star streaks for twinkle worlds — varied spawn points, directions, lengths and
+// timings (staggered) so they appear occasionally from different parts of the sky. `angle`
+// rotates the streak to trail behind its travel direction.
+const SHOOTING_STARS = [
+  { top: '6%', left: '-10%', dx: '82vw', dy: '34vh', angle: 24, len: 150, delay: '-2s', duration: '9s' },
+  { top: '2%', left: '80%', dx: '-70vw', dy: '44vh', angle: 150, len: 120, delay: '-6s', duration: '12s' },
+  { top: '34%', left: '-6%', dx: '46vw', dy: '40vh', angle: 44, len: 110, delay: '-11s', duration: '15s' },
+]
 
 const AmbientField: React.FC<AmbientFieldProps> = ({ scene, sprites, themeId, disabled }) => {
   const { count, motion } = scene.ambient
@@ -81,7 +99,11 @@ const AmbientField: React.FC<AmbientFieldProps> = ({ scene, sprites, themeId, di
     const rng = makeRng(hashSeed(themeId) + count) // seeded by theme → stable, reshuffles on switch
     return Array.from({ length: count }, (_, i) => {
       const idx = sprites.length ? i % sprites.length : 0
-      const [min, max] = cssBubbles ? [8, 22] : specs[idx]?.size ?? [16, 32]
+      const [min, max] = cssBubbles
+        ? motion === 'twinkle'
+          ? [4, 12] // stars are small
+          : [8, 22] // bubbles
+        : specs[idx]?.size ?? [16, 32]
       return {
         url: sprites.length ? sprites[idx] : '',
         left: rng() * 100,
@@ -92,7 +114,7 @@ const AmbientField: React.FC<AmbientFieldProps> = ({ scene, sprites, themeId, di
         drift: Math.round((rng() * 2 - 1) * 36),
       }
     })
-  }, [count, themeId, disabled, sprites, specs, cssBubbles])
+  }, [count, themeId, disabled, sprites, specs, cssBubbles, motion])
 
   if (!items.length) return null
 
@@ -119,20 +141,57 @@ const AmbientField: React.FC<AmbientFieldProps> = ({ scene, sprites, themeId, di
                   backgroundSize: 'contain',
                   backgroundRepeat: 'no-repeat',
                 }
-              : {
-                  // CSS bubble: soft glassy sphere — subtle, so it reads as gentle ambience.
-                  borderRadius: '50%',
-                  background:
-                    'radial-gradient(circle at 33% 28%, rgba(255,255,255,0.85) 0%, rgba(255,255,255,0.25) 42%, rgba(200,240,255,0.08) 72%, rgba(200,240,255,0) 100%)',
-                  border: '1px solid rgba(255,255,255,0.5)',
-                  boxShadow: 'inset 0 0 6px rgba(255,255,255,0.35)',
-                }),
+              : motion === 'twinkle'
+                ? {
+                    // CSS star: a bright glowing dot.
+                    borderRadius: '50%',
+                    background:
+                      'radial-gradient(circle, rgba(255,255,255,1) 0%, rgba(255,247,214,0.9) 35%, rgba(255,247,214,0) 70%)',
+                    boxShadow: '0 0 6px rgba(255,255,255,0.85)',
+                  }
+                : {
+                    // CSS bubble: soft glassy sphere — subtle, so it reads as gentle ambience.
+                    borderRadius: '50%',
+                    background:
+                      'radial-gradient(circle at 33% 28%, rgba(255,255,255,0.85) 0%, rgba(255,255,255,0.25) 42%, rgba(200,240,255,0.08) 72%, rgba(200,240,255,0) 100%)',
+                    border: '1px solid rgba(255,255,255,0.5)',
+                    boxShadow: 'inset 0 0 6px rgba(255,255,255,0.35)',
+                  }),
             '--drift': `${item.drift}px`,
             animation: `${animName} ${item.duration}s ${motion === 'twinkle' ? 'ease-in-out' : 'linear'} ${item.delay}s infinite`,
             willChange: 'transform, opacity',
           }}
         />
       ))}
+
+      {/* Occasional shooting stars (twinkle worlds only) — varied origins/directions. */}
+      {motion === 'twinkle' &&
+        SHOOTING_STARS.map((s, i) => (
+          <Box
+            key={`shoot-${i}`}
+            sx={{
+              position: 'absolute',
+              top: s.top,
+              left: s.left,
+              '--shoot-dx': s.dx,
+              '--shoot-dy': s.dy,
+              animation: `ambient-shoot ${s.duration} ease-out ${s.delay} infinite`,
+              willChange: 'transform, opacity',
+            }}
+          >
+            <Box
+              sx={{
+                width: s.len,
+                height: 2.5,
+                borderRadius: 2,
+                transform: `rotate(${s.angle}deg)`,
+                transformOrigin: 'right center',
+                background: 'linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.95) 100%)',
+                filter: 'drop-shadow(0 0 6px rgba(255,255,255,0.85))',
+              }}
+            />
+          </Box>
+        ))}
     </Box>
   )
 }
