@@ -15,6 +15,7 @@ import {
   ArrowBack,
   School
 } from '@mui/icons-material'
+import { alpha } from '@mui/material/styles'
 import { categoryThemes } from '../../config/categoryThemes'
 import LearningGrid from '../common/LearningGrid'
 import { isIOS } from '../../utils/deviceDetection'
@@ -231,9 +232,9 @@ const AlphabetLearning: React.FC = () => {
                 background: 'white',
                 border: '4px solid',
                 borderColor: audio.isPlaying ? categoryThemes.alphabet.accentColor : categoryThemes.alphabet.borderColor,
-                boxShadow: audio.isPlaying 
-                  ? '0 0 30px rgba(25, 118, 210, 0.4), 0 8px 32px rgba(25, 118, 210, 0.3)'
-                  : '0 4px 20px rgba(25, 118, 210, 0.2), 0 8px 32px rgba(25, 118, 210, 0.15)',
+                boxShadow: audio.isPlaying
+                  ? `0 0 30px ${alpha(categoryThemes.alphabet.accentColor, 0.4)}, 0 8px 32px ${alpha(categoryThemes.alphabet.accentColor, 0.3)}`
+                  : `0 4px 20px ${alpha(categoryThemes.alphabet.accentColor, 0.2)}, 0 8px 32px ${alpha(categoryThemes.alphabet.accentColor, 0.15)}`,
                 transition: 'all 0.3s ease',
                 position: 'relative',
                 overflow: 'hidden',
@@ -268,7 +269,7 @@ const AlphabetLearning: React.FC = () => {
                   color: categoryThemes.alphabet.accentColor,
                   textAlign: 'center',
                   lineHeight: 1,
-                  textShadow: '1px 1px 2px rgba(25, 118, 210, 0.1)',
+                  textShadow: `1px 1px 2px ${alpha(categoryThemes.alphabet.accentColor, 0.1)}`,
                   position: 'relative',
                   zIndex: 1
                 }}
