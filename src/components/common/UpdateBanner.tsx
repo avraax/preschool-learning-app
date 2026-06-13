@@ -1,5 +1,6 @@
 import React from 'react'
 import { Fab, CircularProgress } from '@mui/material'
+import { useTheme, alpha } from '@mui/material/styles'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Refresh as RefreshIcon } from '@mui/icons-material'
 
@@ -12,8 +13,9 @@ interface UpdateBannerProps {
 const UpdateBanner: React.FC<UpdateBannerProps> = ({ 
   show, 
   onUpdate, 
-  isApplying = false 
+  isApplying = false
 }) => {
+  const theme = useTheme()
   return (
     <AnimatePresence>
       {show && (
@@ -34,7 +36,7 @@ const UpdateBanner: React.FC<UpdateBannerProps> = ({
             onClick={onUpdate}
             disabled={isApplying}
             sx={{
-              backgroundColor: '#8B5CF6', // Purple theme matching the app
+              backgroundColor: theme.palette.primary.main, // Purple theme matching the app
               color: 'white',
               fontWeight: 'bold',
               fontSize: '0.95rem',
@@ -43,13 +45,13 @@ const UpdateBanner: React.FC<UpdateBannerProps> = ({
               height: '48px', // Standard height
               paddingX: 2, // Extra horizontal padding
               whiteSpace: 'nowrap', // Prevent text wrapping to multiple lines
-              boxShadow: '0 8px 32px rgba(139, 92, 246, 0.3)',
+              boxShadow: `0 8px 32px ${alpha(theme.palette.primary.main, 0.3)}`,
               '&:hover': {
-                backgroundColor: '#7C3AED',
-                boxShadow: '0 12px 40px rgba(139, 92, 246, 0.4)',
+                backgroundColor: theme.palette.primary.dark,
+                boxShadow: `0 12px 40px ${alpha(theme.palette.primary.main, 0.4)}`,
               },
               '&:disabled': {
-                backgroundColor: '#A78BFA',
+                backgroundColor: theme.palette.primary.light,
                 color: 'white',
               }
             }}

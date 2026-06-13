@@ -60,6 +60,8 @@ export interface DecorTokens {
   balloonColors: string[]         // home balloon palette
   confettiColors: string[]        // CelebrationEffect default
   notFoundBackground: string      // 404 page background gradient
+  audioPermissionGradient: string // iOS audio-permission modal background
+  audioPermissionAccent: string   // that modal's button text color
 }
 
 // Named shadows so cards/buttons share themable elevation.

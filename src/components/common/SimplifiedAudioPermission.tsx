@@ -1,11 +1,13 @@
 import React from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Box, Button, Typography, Paper, IconButton } from '@mui/material'
+import { useTheme } from '@mui/material/styles'
 import { VolumeUp, TouchApp, Close } from '@mui/icons-material'
 import { useSimplifiedAudio } from '../../contexts/SimplifiedAudioContext'
 import { audioDebugSession } from '../../utils/remoteConsole'
 
 const SimplifiedAudioPermission: React.FC = () => {
+  const theme = useTheme()
   const { state, initializeAudio, hidePrompt } = useSimplifiedAudio()
 
   const handleEnableAudio = async () => {
@@ -69,7 +71,7 @@ const SimplifiedAudioPermission: React.FC = () => {
                 p: 4,
                 borderRadius: 4,
                 textAlign: 'center',
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                background: theme.decor.audioPermissionGradient,
                 color: 'white',
                 position: 'relative',
                 overflow: 'hidden',
@@ -176,7 +178,7 @@ const SimplifiedAudioPermission: React.FC = () => {
                     fontWeight: 600,
                     borderRadius: 3,
                     backgroundColor: 'white',
-                    color: '#667eea',
+                    color: theme.decor.audioPermissionAccent,
                     textTransform: 'none',
                     boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
                     '&:hover': {
