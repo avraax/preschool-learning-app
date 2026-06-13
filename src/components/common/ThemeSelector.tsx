@@ -1,80 +1,141 @@
-import React from 'react'
-import { Box } from '@mui/material'
+import React, { useState } from 'react'
+import { Box, Paper, ClickAwayListener } from '@mui/material'
 import { useTheme, alpha } from '@mui/material/styles'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useThemeSwitch } from '../../theme/ThemeProvider'
 
-// Front-page theme picker: a row of emoji buttons (one per skin). Tapping one switches
-// the app theme instantly and persists the choice. Designed for non-readers — big emoji,
-// the active theme gets a coloured ring + lift.
+// Subtle front-page theme picker. Collapsed = a single round button showing the active
+// theme's emoji (top-right corner, out of layout flow). Tap expands a small popover with
+// all skins; picking one applies it and collapses. Tap-to-open (not hover) for touch.
 const ThemeSelector: React.FC = () => {
   const theme = useTheme()
   const { themeId, setThemeId, availableThemes } = useThemeSwitch()
+  const [open, setOpen] = useState(false)
+
+  const active = availableThemes.find((t) => t.id === themeId) ?? availableThemes[0]
 
   return (
     <Box
-      role="group"
-      aria-label="Vælg tema"
       sx={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        flexWrap: 'wrap',
-        gap: { xs: 1, md: 1.5 },
+        position: 'absolute',
+        top: 'calc(env(safe-area-inset-top) + 8px)',
+        right: 'calc(env(safe-area-inset-right) + 8px)',
+        zIndex: 20,
       }}
     >
-      {availableThemes.map((t) => {
-        const active = t.id === themeId
-        return (
+      <ClickAwayListener onClickAway={() => setOpen(false)}>
+        <Box sx={{ position: 'relative' }}>
+          {/* Collapsed toggle — shows the active theme's emoji */}
           <Box
-            key={t.id}
             component={motion.button}
             type="button"
-            onClick={() => setThemeId(t.id)}
-            aria-label={`Tema: ${t.name}`}
-            aria-pressed={active}
+            onClick={() => setOpen((o) => !o)}
+            aria-label={`Skift tema (nuværende: ${active.name})`}
+            aria-expanded={open}
             whileHover={{ scale: 1.08 }}
-            whileTap={{ scale: 0.94 }}
+            whileTap={{ scale: 0.92 }}
             sx={{
               cursor: 'pointer',
+              width: 48,
+              height: 48,
+              borderRadius: '50%',
               display: 'flex',
-              flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: 0.25,
-              width: { xs: 56, md: 64 },
-              minHeight: 56,
-              py: 0.75,
-              borderRadius: 3,
-              border: '3px solid',
-              borderColor: active ? theme.palette.primary.main : 'transparent',
-              backgroundColor: active
-                ? alpha(theme.palette.primary.main, 0.12)
-                : 'rgba(255, 255, 255, 0.7)',
-              boxShadow: active
-                ? `0 6px 18px ${alpha(theme.palette.primary.main, 0.35)}`
-                : '0 2px 8px rgba(0, 0, 0, 0.12)',
+              border: '2px solid',
+              borderColor: open ? theme.palette.primary.main : alpha(theme.palette.primary.main, 0.35),
+              backgroundColor: 'rgba(255, 255, 255, 0.8)',
+              boxShadow: '0 2px 10px rgba(0, 0, 0, 0.15)',
               backdropFilter: 'blur(6px)',
-              transition: 'border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease',
+              fontSize: '1.6rem',
+              lineHeight: 1,
+              transition: 'border-color 0.2s ease',
             }}
           >
-            <Box component="span" sx={{ fontSize: { xs: '1.6rem', md: '1.9rem' }, lineHeight: 1 }}>
-              {t.emoji}
-            </Box>
-            <Box
-              component="span"
-              sx={{
-                fontSize: { xs: '0.6rem', md: '0.68rem' },
-                fontWeight: 700,
-                color: active ? theme.palette.primary.main : theme.palette.text.secondary,
-                whiteSpace: 'nowrap',
-              }}
-            >
-              {t.name}
-            </Box>
+            <Box component="span" sx={{ lineHeight: 1 }}>{active.emoji}</Box>
           </Box>
-        )
-      })}
+
+          {/* Expanded popover — all themes */}
+          <AnimatePresence>
+            {open && (
+              <Box
+                component={motion.div}
+                initial={{ opacity: 0, scale: 0.85, y: -8 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.85, y: -8 }}
+                transition={{ duration: 0.18, ease: 'easeOut' }}
+                style={{ transformOrigin: 'top right' }}
+                sx={{ position: 'absolute', top: 'calc(100% + 8px)', right: 0 }}
+              >
+                <Paper
+                  elevation={8}
+                  role="group"
+                  aria-label="Vælg tema"
+                  sx={{
+                    p: 1,
+                    borderRadius: 3,
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(3, 1fr)',
+                    gap: 0.75,
+                    backgroundColor: 'rgba(255, 255, 255, 0.96)',
+                    backdropFilter: 'blur(8px)',
+                  }}
+                >
+                  {availableThemes.map((t) => {
+                    const isActive = t.id === themeId
+                    return (
+                      <Box
+                        key={t.id}
+                        component={motion.button}
+                        type="button"
+                        onClick={() => {
+                          setThemeId(t.id)
+                          setOpen(false)
+                        }}
+                        aria-label={`Tema: ${t.name}`}
+                        aria-pressed={isActive}
+                        whileHover={{ scale: 1.08 }}
+                        whileTap={{ scale: 0.92 }}
+                        sx={{
+                          cursor: 'pointer',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: 0.25,
+                          width: 60,
+                          minHeight: 60,
+                          py: 0.5,
+                          borderRadius: 2,
+                          border: '2px solid',
+                          borderColor: isActive ? theme.palette.primary.main : 'transparent',
+                          backgroundColor: isActive
+                            ? alpha(theme.palette.primary.main, 0.12)
+                            : 'transparent',
+                          transition: 'border-color 0.15s ease, background-color 0.15s ease',
+                        }}
+                      >
+                        <Box component="span" sx={{ fontSize: '1.6rem', lineHeight: 1 }}>{t.emoji}</Box>
+                        <Box
+                          component="span"
+                          sx={{
+                            fontSize: '0.6rem',
+                            fontWeight: 700,
+                            color: isActive ? theme.palette.primary.main : theme.palette.text.secondary,
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          {t.name}
+                        </Box>
+                      </Box>
+                    )
+                  })}
+                </Paper>
+              </Box>
+            )}
+          </AnimatePresence>
+        </Box>
+      </ClickAwayListener>
     </Box>
   )
 }

@@ -454,12 +454,10 @@ const HomePage = () => {
 
           </Grid>
         </Box>
-
-        {/* Theme selector */}
-        <Box sx={{ flex: '0 0 auto', pt: { xs: 1, md: 1.5 }, pb: { xs: 0.5, md: 1 } }}>
-          <ThemeSelector />
-        </Box>
       </Container>
+
+      {/* Theme selector — collapsed corner control, overlays the page (no layout cost) */}
+      <ThemeSelector />
 
       {/* Balloons */}
       {balloons.map((balloon) => (
