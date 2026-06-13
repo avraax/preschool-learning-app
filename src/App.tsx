@@ -413,6 +413,7 @@ const HomePage = () => {
                 transition={{ duration: 0.6 }}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
+                style={{ height: '100%' }}
               >
                 <Card 
                   onClick={() => navigate('/alphabet')}
@@ -486,6 +487,7 @@ const HomePage = () => {
                 transition={{ duration: 0.6, delay: 0.1 }}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
+                style={{ height: '100%' }}
               >
                 <Card 
                   onClick={() => navigate('/math')}
@@ -559,6 +561,7 @@ const HomePage = () => {
                 transition={{ duration: 0.6, delay: 0.2 }}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
+                style={{ height: '100%' }}
               >
                 <Card 
                   onClick={() => navigate('/farver')}
@@ -632,6 +635,7 @@ const HomePage = () => {
                 transition={{ duration: 0.6, delay: 0.3 }}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
+                style={{ height: '100%' }}
               >
                 <Card
                   onClick={() => navigate('/english')}
@@ -702,6 +706,7 @@ const HomePage = () => {
                 transition={{ duration: 0.6, delay: 0.4 }}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
+                style={{ height: '100%' }}
               >
                 <Card
                   onClick={() => navigate('/ordleg')}
