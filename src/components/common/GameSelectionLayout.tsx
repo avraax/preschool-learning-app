@@ -24,7 +24,7 @@ interface Game {
 }
 
 interface GameSelectionLayoutProps {
-  categoryId: 'alphabet' | 'math' | 'colors'
+  categoryId: 'alphabet' | 'math' | 'colors' | 'english' | 'ordleg'
   games: Game[]
 }
 

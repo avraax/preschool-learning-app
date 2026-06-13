@@ -13,7 +13,7 @@ import {
   Toolbar
 } from '@mui/material'
 import {
-  Add
+  Remove
 } from '@mui/icons-material'
 import { ArrowLeft } from 'lucide-react'
 import { categoryThemes } from '../../config/categoryThemes'
@@ -27,36 +27,36 @@ import { isIOS } from '../../utils/deviceDetection'
 import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 
 
-const AdditionGame: React.FC = () => {
+const SubtractionGame: React.FC = () => {
   const navigate = useNavigate()
   const [num1, setNum1] = useState<number | null>(null)
   const [num2, setNum2] = useState<number | null>(null)
   const [correctAnswer, setCorrectAnswer] = useState<number | null>(null)
   const [options, setOptions] = useState<number[]>([])
-    
+
   // Simplified audio system
-  const audio = useSimplifiedAudioHook({ 
-    componentId: 'AdditionGame',
+  const audio = useSimplifiedAudioHook({
+    componentId: 'SubtractionGame',
     autoInitialize: false
   })
   const [gameReady, setGameReady] = useState(false)
   const [audioInitialized, setAudioInitialized] = useState(false)
   const hasInitialized = useRef(false)
-  
+
   // Centralized game state management
   const { score, incrementScore, isScoreNarrating, handleScoreClick } = useGameState()
-  
+
   // Timeout ref for cleanup
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
-  
+
   // Character and celebration management
   const mathTeacher = useCharacterState('wave')
   const { showCelebration, celebrationIntensity, celebrate, stopCelebration } = useCelebration()
-  
+
   // Production logging - only essential errors
   const logError = (message: string, data?: any) => {
     if (message.includes('Error') || message.includes('error')) {
-      console.error(`🎵 AdditionGame: ${message}`, data)
+      console.error(`🎵 SubtractionGame: ${message}`, data)
     }
   }
 
@@ -64,17 +64,17 @@ const AdditionGame: React.FC = () => {
     // Prevent duplicate initialization with race condition guard
     if (hasInitialized.current) return
     hasInitialized.current = true
-    
+
     // Initialize math teacher character
     mathTeacher.setCharacter('fox')
     mathTeacher.wave()
-    
+
     // Check if audio is ready
     if (audio.isAudioReady) {
       setAudioInitialized(true)
       playWelcomeAndStart()
     }
-    
+
     return () => {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current)
@@ -82,7 +82,7 @@ const AdditionGame: React.FC = () => {
       }
     }
   }, [])
-  
+
   // Monitor audio readiness - only if not already initialized
   useEffect(() => {
     if (audio.isAudioReady && !audioInitialized && !hasInitialized.current) {
@@ -96,8 +96,8 @@ const AdditionGame: React.FC = () => {
   const playWelcomeAndStart = async () => {
     try {
       // Play the welcome message
-      await audio.playGameWelcome('addition')
-      
+      await audio.playGameWelcome('subtraction')
+
       // iOS-optimized delay - increased to prevent audio overlap
       const delay = isIOS() ? 1000 : 1500
       setTimeout(() => {
@@ -113,42 +113,38 @@ const AdditionGame: React.FC = () => {
   }
 
 
-  // This problematic useEffect has been removed to prevent infinite loops
-  // Audio is now handled by the centralized task-based game pattern
-
   const generateNewProblem = () => {
-    // Generate two numbers that add up to max 20
+    // Generate a subtraction problem with a non-negative result
     const firstNum = Math.floor(Math.random() * 10) + 1 // 1-10
-    const maxSecondNum = Math.min(20 - firstNum, 10) // ensure sum ≤ 20
-    const secondNum = Math.floor(Math.random() * maxSecondNum) + 1 // 1 to maxSecondNum
-    
+    const secondNum = Math.floor(Math.random() * firstNum) + 1 // 1 to firstNum
+
     setNum1(firstNum)
     setNum2(secondNum)
-    const answer = firstNum + secondNum
+    const answer = firstNum - secondNum // 0-9
     setCorrectAnswer(answer)
-    
+
     // Generate 4 answer options
     const answerOptions = new Set([answer])
-    
+
     // Generate 3 wrong answers
     while (answerOptions.size < 4) {
-      const wrongAnswer = Math.floor(Math.random() * 20) + 1 // 1-20
+      const wrongAnswer = Math.floor(Math.random() * 11) // 0-10
       if (wrongAnswer !== answer) {
         answerOptions.add(wrongAnswer)
       }
     }
-    
+
     setOptions(Array.from(answerOptions).sort(() => Math.random() - 0.5))
-    
+
     // Clear any existing timeout
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current)
       timeoutRef.current = null
     }
-    
+
     // iOS-optimized delay
     const delay = isIOS() ? 100 : 500
-    
+
     // Schedule delayed audio for the problem
     timeoutRef.current = setTimeout(() => {
       speakProblem(firstNum, secondNum)
@@ -159,7 +155,7 @@ const AdditionGame: React.FC = () => {
     try {
       // Update user interaction timestamp before playing (iOS fix)
       audio.updateUserInteraction()
-      await audio.speakAdditionProblem(a, b, 'primary')
+      await audio.speakSubtractionProblem(a, b, 'primary')
     } catch (error: any) {
       logError('Error speaking problem', {
         num1: a,
@@ -171,21 +167,21 @@ const AdditionGame: React.FC = () => {
 
   const handleAnswerClick = async (selectedAnswer: number) => {
     if (correctAnswer === null) return
-    
+
     // Critical iOS fix: Update user interaction timestamp BEFORE audio call
     audio.updateUserInteraction()
-    
+
     // Always cancel current audio for fast tapping
     audio.cancelCurrentAudio()
-    
+
     const isCorrect = selectedAnswer === correctAnswer
-    
+
     // FIRST: Play the number immediately for fast feedback
     try {
       await audio.speakNumber(selectedAnswer)
     } catch (error) {
     }
-    
+
     // IMMEDIATELY: Start visual celebration effects if correct
     if (isCorrect) {
       incrementScore()
@@ -194,7 +190,7 @@ const AdditionGame: React.FC = () => {
     } else {
       mathTeacher.think()
     }
-    
+
     // THEN: Use centralized celebration with standard timing
     setTimeout(async () => {
       try {
@@ -220,25 +216,25 @@ const AdditionGame: React.FC = () => {
 
   const repeatProblem = async () => {
     if (num1 === null || num2 === null) return
-    
+
     // Critical iOS fix: Update user interaction timestamp BEFORE audio call
     audio.updateUserInteraction()
-    
+
     // Always cancel current audio for fast tapping
     audio.cancelCurrentAudio()
-    
+
     try {
       await speakProblem(num1, num2)
     } catch (error) {
-      console.error('🎵 AdditionGame: Error repeating problem:', error)
+      console.error('🎵 SubtractionGame: Error repeating problem:', error)
     }
   }
 
 
 
   return (
-    <Box 
-      sx={{ 
+    <Box
+      sx={{
         height: '100dvh',
         overflow: 'hidden',
         display: 'flex',
@@ -249,15 +245,15 @@ const AdditionGame: React.FC = () => {
       {/* App Bar with Back Button and Score */}
       <AppBar position="static" color="transparent" elevation={0}>
         <Toolbar sx={{ justifyContent: 'space-between', py: 2 }}>
-          <IconButton 
+          <IconButton
             onClick={() => navigate('/math')}
             color="primary"
             size="large"
-            sx={{ 
-              bgcolor: 'rgba(255, 255, 255, 0.8)', 
+            sx={{
+              bgcolor: 'rgba(255, 255, 255, 0.8)',
               border: '1px solid rgba(255, 255, 255, 0.3)',
               backdropFilter: 'blur(8px)',
-              '&:hover': { 
+              '&:hover': {
                 bgcolor: 'rgba(255, 255, 255, 0.9)',
                 transform: 'scale(1.05)'
               }
@@ -265,7 +261,7 @@ const AdditionGame: React.FC = () => {
           >
             <ArrowLeft size={24} />
           </IconButton>
-          
+
           <MathScoreChip
             score={score}
             disabled={isScoreNarrating}
@@ -274,9 +270,9 @@ const AdditionGame: React.FC = () => {
         </Toolbar>
       </AppBar>
 
-      <Container 
-        maxWidth="lg" 
-        sx={{ 
+      <Container
+        maxWidth="lg"
+        sx={{
           flex: 1,
           display: 'flex',
           flexDirection: 'column',
@@ -298,15 +294,15 @@ const AdditionGame: React.FC = () => {
                 size={80}
                 onClick={mathTeacher.wave}
               />
-              <Typography 
-                variant="h3" 
-                sx={{ 
+              <Typography
+                variant="h3"
+                sx={{
                   color: 'primary.dark',
                   fontWeight: 700,
                   fontSize: { xs: '1.5rem', md: '2rem' }
                 }}
               >
-                <Add fontSize="large" /> Plus Opgaver
+                <Remove fontSize="large" /> Minus Opgaver
               </Typography>
               <Typography sx={{ fontSize: '2.5rem' }}>🧮</Typography>
             </Box>
@@ -319,9 +315,9 @@ const AdditionGame: React.FC = () => {
         {/* Problem Display - Compact */}
         {gameReady && num1 !== null && num2 !== null && options.length > 0 && (
           <Box sx={{ textAlign: 'center', mb: { xs: 2, md: 3 }, flex: '0 0 auto' }}>
-            <Paper 
+            <Paper
               elevation={8}
-              sx={{ 
+              sx={{
                 maxWidth: 500,
                 mx: 'auto',
                 p: { xs: 2, md: 4 },
@@ -334,11 +330,11 @@ const AdditionGame: React.FC = () => {
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: { xs: 2, md: 3 }, mb: 3 }}>
               {/* First number */}
               <Box sx={{ textAlign: 'center' }}>
-                <Typography 
-                  variant="h1" 
-                  sx={{ 
-                    fontSize: { xs: '3rem', md: '4rem' }, 
-                    fontWeight: 700, 
+                <Typography
+                  variant="h1"
+                  sx={{
+                    fontSize: { xs: '3rem', md: '4rem' },
+                    fontWeight: 700,
                     color: 'primary.dark'
                   }}
                 >
@@ -346,16 +342,16 @@ const AdditionGame: React.FC = () => {
                 </Typography>
               </Box>
 
-              {/* Plus sign */}
-              <Add sx={{ fontSize: { xs: '2.5rem', md: '3rem' }, color: 'secondary.main' }} />
+              {/* Minus sign */}
+              <Remove sx={{ fontSize: { xs: '2.5rem', md: '3rem' }, color: 'secondary.main' }} />
 
               {/* Second number */}
               <Box sx={{ textAlign: 'center' }}>
-                <Typography 
-                  variant="h1" 
-                  sx={{ 
-                    fontSize: { xs: '3rem', md: '4rem' }, 
-                    fontWeight: 700, 
+                <Typography
+                  variant="h1"
+                  sx={{
+                    fontSize: { xs: '3rem', md: '4rem' },
+                    fontWeight: 700,
                     color: 'primary.dark'
                   }}
                 >
@@ -364,11 +360,11 @@ const AdditionGame: React.FC = () => {
               </Box>
 
               {/* Equals sign */}
-              <Typography 
-                variant="h1" 
-                sx={{ 
-                  fontSize: { xs: '2.5rem', md: '3rem' }, 
-                  fontWeight: 700, 
+              <Typography
+                variant="h1"
+                sx={{
+                  fontSize: { xs: '2.5rem', md: '3rem' },
+                  fontWeight: 700,
                   color: 'text.secondary'
                 }}
               >
@@ -376,11 +372,11 @@ const AdditionGame: React.FC = () => {
               </Typography>
 
               {/* Question mark */}
-              <Typography 
-                variant="h1" 
-                sx={{ 
-                  fontSize: { xs: '3rem', md: '4rem' }, 
-                  fontWeight: 700, 
+              <Typography
+                variant="h1"
+                sx={{
+                  fontSize: { xs: '3rem', md: '4rem' },
+                  fontWeight: 700,
                   color: 'secondary.main'
                 }}
               >
@@ -397,15 +393,15 @@ const AdditionGame: React.FC = () => {
         )}
 
         {/* Answer Options Grid - Flexible */}
-        <Box sx={{ 
-          flex: 1, 
-          display: 'flex', 
-          justifyContent: 'center', 
+        <Box sx={{
+          flex: 1,
+          display: 'flex',
+          justifyContent: 'center',
           alignItems: 'center',
           minHeight: 0
         }}>
           <Box
-            sx={{ 
+            sx={{
               display: 'grid',
               gridTemplateColumns: 'repeat(2, 1fr)',
               gridAutoRows: 'auto',
@@ -443,9 +439,9 @@ const AdditionGame: React.FC = () => {
               whileTap={{ scale: 0.95 }}
               style={{ height: '100%' }}
             >
-              <Card 
+              <Card
                 onClick={() => handleAnswerClick(option)}
-                sx={{ 
+                sx={{
                   height: '100%',
                   cursor: 'pointer',
                   border: '3px solid',
@@ -470,8 +466,8 @@ const AdditionGame: React.FC = () => {
                   }
                 }}
               >
-                <CardContent 
-                  sx={{ 
+                <CardContent
+                  sx={{
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
@@ -481,9 +477,9 @@ const AdditionGame: React.FC = () => {
                     textAlign: 'center'
                   }}
                 >
-                    <Typography 
+                    <Typography
                       variant="h1"
-                      sx={{ 
+                      sx={{
                         fontSize: 'clamp(2.5rem, 8vw, 4.5rem)',
                         fontWeight: 700,
                         color: 'primary.dark',
@@ -516,4 +512,4 @@ const AdditionGame: React.FC = () => {
   )
 }
 
-export default AdditionGame
+export default SubtractionGame

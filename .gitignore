@@ -38,4 +38,8 @@ private-key-base64.txt
 public/audio-cache/
 .vercel
 
+# TTS voice evaluation output (PRD Part 1)
+tts-samples/
+
 .vercel
+.env*

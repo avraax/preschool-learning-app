@@ -7,6 +7,10 @@ export const TTS_CONFIG = {
     ...Config.voice,
     ssmlGender: Config.voice.ssmlGender as 'FEMALE'
   },
+  enVoice: {
+    ...Config.enVoice,
+    ssmlGender: Config.enVoice.ssmlGender as 'FEMALE'
+  },
   audioConfig: {
     ...Config.audioConfig,
     audioEncoding: Config.audioConfig.audioEncoding as 'OGG_OPUS'

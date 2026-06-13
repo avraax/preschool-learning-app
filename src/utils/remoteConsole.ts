@@ -23,10 +23,20 @@ class RemoteConsole {
   
   constructor() {
     const disableConsole = window.location.search.includes('disable-console=true')
-    
+
+    // Remote logging exists for iOS production debugging. In local dev it just floods
+    // /api/log-error (hundreds of requests, occasional >1MB payloads) since the real
+    // console + network tab are already available. Disable on localhost by default;
+    // force it on with ?enable-console=true if you need to test the logging pipeline.
+    const isLocalDev =
+      window.location.hostname === 'localhost' ||
+      window.location.hostname === '127.0.0.1' ||
+      window.location.hostname === '[::1]'
+    const forceEnable = window.location.search.includes('enable-console=true')
+
     // Enable by default on all devices, but allow disabling via URL parameter
-    this.isEnabled = !disableConsole
-    
+    this.isEnabled = !disableConsole && (!isLocalDev || forceEnable)
+
     if (this.isEnabled) {      
       this.interceptConsole()
       this.setupErrorHandling()

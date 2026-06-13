@@ -13,6 +13,7 @@ export interface SimplifiedAudioHook {
   // Specialized Danish audio functions
   speakLetter: (letter: string) => Promise<string>
   speakNumber: (number: number, customSpeed?: number) => Promise<string>
+  speakEnglish: (text: string) => Promise<string>
   speakWithEnthusiasm: (text: string, voiceType?: 'primary' | 'backup' | 'male') => Promise<string>
   speakSlowly: (text: string, voiceType?: 'primary' | 'backup' | 'male') => Promise<string>
   speakQuizPromptWithRepeat: (text: string, repeatWord: string, voiceType?: 'primary' | 'backup' | 'male') => Promise<string>
@@ -20,6 +21,7 @@ export interface SimplifiedAudioHook {
   // Game-specific audio functions
   speakMathProblem: (problem: string, voiceType?: 'primary' | 'backup' | 'male') => Promise<string>
   speakAdditionProblem: (num1: number, num2: number, voiceType?: 'primary' | 'backup' | 'male') => Promise<string>
+  speakSubtractionProblem: (num1: number, num2: number, voiceType?: 'primary' | 'backup' | 'male') => Promise<string>
   announceGameResult: (isCorrect: boolean, voiceType?: 'primary' | 'backup' | 'male') => Promise<string>
   announceScore: (score: number, voiceType?: 'primary' | 'backup' | 'male') => Promise<string>
   playGameWelcome: (gameType: string, voiceType?: 'primary' | 'backup' | 'male') => Promise<string>
@@ -137,6 +139,7 @@ export const useSimplifiedAudioHook = (options: UseSimplifiedAudioOptions = {}):
     // Specialized Danish audio functions
     speakLetter: simplifiedAudioController.speakLetter.bind(simplifiedAudioController),
     speakNumber: simplifiedAudioController.speakNumber.bind(simplifiedAudioController),
+    speakEnglish: simplifiedAudioController.speakEnglish.bind(simplifiedAudioController),
     speakWithEnthusiasm: simplifiedAudioController.speakWithEnthusiasm.bind(simplifiedAudioController),
     speakSlowly: simplifiedAudioController.speakSlowly.bind(simplifiedAudioController),
     speakQuizPromptWithRepeat: simplifiedAudioController.speakQuizPromptWithRepeat.bind(simplifiedAudioController),
@@ -144,6 +147,7 @@ export const useSimplifiedAudioHook = (options: UseSimplifiedAudioOptions = {}):
     // Game-specific audio functions
     speakMathProblem: simplifiedAudioController.speakMathProblem.bind(simplifiedAudioController),
     speakAdditionProblem: simplifiedAudioController.speakAdditionProblem.bind(simplifiedAudioController),
+    speakSubtractionProblem: simplifiedAudioController.speakSubtractionProblem.bind(simplifiedAudioController),
     announceGameResult: simplifiedAudioController.announceGameResult.bind(simplifiedAudioController),
     announceScore: simplifiedAudioController.announceScore.bind(simplifiedAudioController),
     playGameWelcome: simplifiedAudioController.playGameWelcome.bind(simplifiedAudioController),

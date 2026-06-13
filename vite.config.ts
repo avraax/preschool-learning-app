@@ -125,14 +125,25 @@ export default defineConfig({
     })
   ],
   server: {
+    // Bind explicitly. Without these, Vite 8 on Windows can print "ready" while
+    // failing to actually open the listening socket (browser gets
+    // ERR_CONNECTION_REFUSED). host:true binds all interfaces so both
+    // localhost and 127.0.0.1 reach it; strictPort makes a bind failure loud
+    // instead of silent.
+    host: true,
+    port: 5173,
+    strictPort: true,
     proxy: {
       '/api': {
-        target: 'http://localhost:3001',
+        // Use a literal IPv4 address, NOT "localhost". On Windows, Node resolves
+        // "localhost" to ::1 (IPv6) first and the proxy agent's dual-stack
+        // connection can be refused even though the API server is up — which
+        // surfaces as ECONNREFUSED / 502 on every /api/* call. Pinning to
+        // 127.0.0.1 removes the DNS/family ambiguity.
+        target: 'http://127.0.0.1:3001',
         changeOrigin: true,
-        secure: false,
-        timeout: 10000,
-      }
-    }
+      },
+    },
   },
   build: {
     minify: false,

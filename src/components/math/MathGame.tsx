@@ -6,7 +6,7 @@ import { MathScoreChip } from '../common/ScoreChip'
 import { MathRepeatButton } from '../common/RepeatButton'
 
 // Comprehensive math settings for counting quiz
-const MAX_NUMBER = 30  // Tal Quiz numbers from 1-30
+const MAX_NUMBER = 50  // Tal Quiz numbers from 1-50
 
 const MathGame: React.FC = () => {
   // Configuration for counting quiz

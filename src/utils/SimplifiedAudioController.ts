@@ -256,6 +256,23 @@ export class SimplifiedAudioController {
     })
   }
 
+  /**
+   * Speak text using the British English (en-GB) voice.
+   * Used by the Engelsk section for target words. Danish instruction/feedback audio
+   * still goes through speak()/the da-DK path. Plain text (no Danish SSML wrapper).
+   */
+  async speakEnglish(text: string): Promise<string> {
+    return this.playAudio(async () => {
+      this.updateUserInteraction()
+
+      if (!this.ensureAudioReady()) {
+        return
+      }
+
+      await this.googleTTS.synthesizeAndPlay(text, 'english', false)
+    })
+  }
+
   async speakWithEnthusiasm(text: string, voiceType: 'primary' | 'backup' | 'male' = 'primary'): Promise<string> {
     return this.speak(text, voiceType, true)
   }
@@ -299,6 +316,21 @@ export class SimplifiedAudioController {
       }
       
       const problemText = `${DANISH_PHRASES.gamePrompts.mathQuestion.prefix} ${getDanishNumberText(num1)} ${DANISH_PHRASES.math.plus} ${getDanishNumberText(num2)}`
+      await this.googleTTS.synthesizeAndPlay(problemText, voiceType, true)
+    })
+  }
+
+  async speakSubtractionProblem(num1: number, num2: number, voiceType: 'primary' | 'backup' | 'male' = 'primary'): Promise<string> {
+    // Playing subtraction problem
+
+    return this.playAudio(async () => {
+      this.updateUserInteraction()
+
+      if (!this.ensureAudioReady()) {
+        return
+      }
+
+      const problemText = `${DANISH_PHRASES.gamePrompts.mathQuestion.prefix} ${getDanishNumberText(num1)} ${DANISH_PHRASES.math.minus} ${getDanishNumberText(num2)}`
       await this.googleTTS.synthesizeAndPlay(problemText, voiceType, true)
     })
   }
@@ -351,11 +383,17 @@ export class SimplifiedAudioController {
       math: 'Tal Quiz',
       numberlearning: 'Lær Tallene',
       addition: 'Plus Quiz',
+      subtraction: 'Minus Opgaver',
+      spelling: 'Stav Ordet',
       comparison: 'Sammenligning Quiz',
       memory: 'Hukommelse Spil',
       colors: 'Farve Spil',
       farvejagt: 'Farvejagt',
-      ramfarven: 'Ram Farven'
+      ramfarven: 'Ram Farven',
+      englishlisten: 'Lyt og find',
+      englishword: 'Find det engelske ord',
+      englishtranslate: 'Dansk til engelsk',
+      micword: 'Sig et ord'
     }
     
     const welcomeMessage = GAME_WELCOME_MESSAGES[gameType as keyof typeof GAME_WELCOME_MESSAGES]

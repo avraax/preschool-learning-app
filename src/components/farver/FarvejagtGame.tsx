@@ -158,12 +158,13 @@ const FarvejagtGame: React.FC = () => {
   const generateRandomPositions = (itemCount: number) => {
     const positions: Array<{x: number, y: number}> = []
     const centerX = 50, centerY = 50, centerRadius = 25
-    const minDistance = 12
-    
+    // Tighten spacing as the board gets busier so up to ~16 items still place cleanly
+    const minDistance = itemCount > 12 ? 9 : 12
+
     for (let i = 0; i < itemCount; i++) {
       let attempts = 0
       let position: {x: number, y: number}
-      
+
       do {
         // Generate random position with edge buffer
         position = {
@@ -172,7 +173,7 @@ const FarvejagtGame: React.FC = () => {
         }
         attempts++
       } while (
-        attempts < 50 && (
+        attempts < 80 && (
           // Avoid center circle
           Math.sqrt((position.x - centerX) ** 2 + (position.y - centerY) ** 2) < centerRadius ||
           // Avoid other items
@@ -201,11 +202,11 @@ const FarvejagtGame: React.FC = () => {
   const generateGameItems = () => {
     const target = selectRandomTarget()
     
-    // Get target objects (3-4 items)
+    // Get target objects (5-6 items)
     const targetObjects = DANISH_OBJECTS[target.color as keyof typeof DANISH_OBJECTS]
     const selectedTargets = targetObjects
       .sort(() => Math.random() - 0.5)
-      .slice(0, Math.min(4, targetObjects.length))
+      .slice(0, Math.min(6, targetObjects.length))
     
     // Get distractor objects (4-6 items from other colors)
     const distractorObjects: any[] = []
@@ -215,7 +216,7 @@ const FarvejagtGame: React.FC = () => {
       const colorObjects = DANISH_OBJECTS[color as keyof typeof DANISH_OBJECTS]
       const selected = colorObjects
         .sort(() => Math.random() - 0.5)
-        .slice(0, 1) // 1 item per other color
+        .slice(0, 2) // 2 items per other color
       distractorObjects.push(...selected.map(obj => ({ ...obj, colorName: color })))
     })
     

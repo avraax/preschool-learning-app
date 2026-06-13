@@ -1,57 +1,47 @@
-// Local development server with TTS API support
 import express from 'express';
-import path from 'path';
-import fs from 'fs';
 import { TextToSpeechClient } from '@google-cloud/text-to-speech';
-import { fileURLToPath } from 'url';
+import { v2 as speechV2 } from '@google-cloud/speech';
 import { TTS_CONFIG } from './shared-tts-config.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
 const app = express();
-const port = 3001;
+const PORT = 3001;
 
-// Middleware
-app.use(express.json());
-app.use(express.static('dist')); // Serve built files
+// 5mb to comfortably hold a short base64-encoded audio clip from the mic game.
+app.use(express.json({ limit: '5mb' }));
 
-// Initialize Google TTS client
+// --- TTS Client ---
 let ttsClient = null;
 
-// In-memory storage for error logs (dev only)
-let errorLogs = [];
-const MAX_LOGS = 1000;
-
-function initializeClient() {
+function initializeTtsClient() {
   if (ttsClient) return ttsClient;
 
-  try {
-    // Read credentials from google-cloud-key.json
-    const keyFile = JSON.parse(fs.readFileSync('./google-cloud-key.json', 'utf8'));
-    
-    ttsClient = new TextToSpeechClient({
-      projectId: keyFile.project_id,
-      keyFile: './google-cloud-key.json'
-    });
+  const projectId = process.env.GOOGLE_CLOUD_PROJECT_ID;
+  const clientEmail = process.env.GOOGLE_CLOUD_CLIENT_EMAIL;
+  const privateKeyBase64 = process.env.GOOGLE_CLOUD_PRIVATE_KEY_BASE64;
+  let privateKey = process.env.GOOGLE_CLOUD_PRIVATE_KEY;
 
-    console.log('✅ Google TTS client initialized');
-    return ttsClient;
-  } catch (error) {
-    console.error('❌ Failed to initialize Google TTS client:', error);
-    throw error;
+  if (!projectId || !clientEmail || (!privateKey && !privateKeyBase64)) {
+    throw new Error(
+      'Missing Google Cloud env vars. Ensure .env.local has GOOGLE_CLOUD_PROJECT_ID, GOOGLE_CLOUD_CLIENT_EMAIL, and GOOGLE_CLOUD_PRIVATE_KEY_BASE64'
+    );
   }
+
+  if (privateKeyBase64 && !privateKey) {
+    privateKey = Buffer.from(privateKeyBase64, 'base64').toString('utf-8');
+  } else if (privateKey) {
+    privateKey = privateKey.replace(/\\n/g, '\n');
+  }
+
+  ttsClient = new TextToSpeechClient({
+    projectId,
+    credentials: { client_email: clientEmail, private_key: privateKey },
+  });
+  console.log(`[dev-server] TTS client initialized (project: ${projectId})`);
+  return ttsClient;
 }
 
-// Health check endpoint for dev script
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString(), port: port });
-});
-
-// TTS API endpoint
+// --- TTS endpoint ---
 app.post('/api/tts', async (req, res) => {
-  console.log('🎙️ TTS request received:', { text: req.body.text?.substring(0, 50) });
-  
   try {
     const { text, isSSML = false, voice, audioConfig } = req.body;
 
@@ -59,172 +49,146 @@ app.post('/api/tts', async (req, res) => {
       return res.status(400).json({ error: 'Text is required and must be a string' });
     }
 
-    const client = initializeClient();
+    const client = initializeTtsClient();
     const input = isSSML ? { ssml: text } : { text };
-    
     const request = {
       input,
       voice: voice || TTS_CONFIG.voice,
-      audioConfig: audioConfig || TTS_CONFIG.audioConfig
+      audioConfig: audioConfig || TTS_CONFIG.audioConfig,
     };
 
     const [response] = await client.synthesizeSpeech(request);
-    
+
     if (!response.audioContent) {
       throw new Error('No audio content received from Google TTS');
     }
 
     const audioBase64 = Buffer.from(response.audioContent).toString('base64');
-    
-    console.log('✅ TTS synthesis successful');
-    
-    res.json({
-      audioContent: audioBase64,
-      voice: request.voice,
-      text: text
-    });
-
+    res.json({ audioContent: audioBase64, voice: request.voice, text });
   } catch (error) {
-    console.error('❌ TTS error:', error);
-    res.status(500).json({ 
-      error: 'Text-to-speech synthesis failed',
-      details: error.message
-    });
+    console.error('[dev-server] TTS error:', error.message);
+    res.status(500).json({ error: 'TTS synthesis failed', details: error.message });
   }
 });
 
-// Log error API endpoint (dev equivalent of /api/log-error.ts)
+// --- Speech-to-Text (STT) client + endpoint ---
+const { SpeechClient } = speechV2;
+const STT_LOCATION = 'eu';
+const STT_API_ENDPOINT = 'eu-speech.googleapis.com';
+
+let sttClient = null;
+let sttProjectId = null;
+
+function initializeSttClient() {
+  if (sttClient) return { client: sttClient, projectId: sttProjectId };
+
+  const projectId = process.env.GOOGLE_CLOUD_PROJECT_ID;
+  const clientEmail = process.env.GOOGLE_CLOUD_CLIENT_EMAIL;
+  const privateKeyBase64 = process.env.GOOGLE_CLOUD_PRIVATE_KEY_BASE64;
+  let privateKey = process.env.GOOGLE_CLOUD_PRIVATE_KEY;
+
+  if (!projectId || !clientEmail || (!privateKey && !privateKeyBase64)) {
+    throw new Error(
+      'Missing Google Cloud env vars. Ensure .env.local has GOOGLE_CLOUD_PROJECT_ID, GOOGLE_CLOUD_CLIENT_EMAIL, and GOOGLE_CLOUD_PRIVATE_KEY_BASE64'
+    );
+  }
+
+  if (privateKeyBase64 && !privateKey) {
+    privateKey = Buffer.from(privateKeyBase64, 'base64').toString('utf-8');
+  } else if (privateKey) {
+    privateKey = privateKey.replace(/\\n/g, '\n');
+  }
+
+  sttClient = new SpeechClient({
+    apiEndpoint: STT_API_ENDPOINT,
+    projectId,
+    credentials: { client_email: clientEmail, private_key: privateKey },
+  });
+  sttProjectId = projectId;
+  console.log(`[dev-server] STT client initialized (project: ${projectId}, region: ${STT_LOCATION})`);
+  return { client: sttClient, projectId };
+}
+
+app.post('/api/stt', async (req, res) => {
+  try {
+    const { audioContent } = req.body;
+
+    if (!audioContent || typeof audioContent !== 'string') {
+      return res.status(400).json({ error: 'audioContent (base64) is required' });
+    }
+
+    const audioBytes = Buffer.from(audioContent, 'base64');
+    if (audioBytes.length === 0) {
+      return res.status(400).json({ error: 'audioContent is empty' });
+    }
+
+    const { client, projectId } = initializeSttClient();
+
+    const [response] = await client.recognize({
+      recognizer: `projects/${projectId}/locations/${STT_LOCATION}/recognizers/_`,
+      config: {
+        autoDecodingConfig: {},
+        languageCodes: ['da-DK'],
+        model: 'short',
+      },
+      content: audioBytes,
+    });
+
+    const alternative = response.results?.[0]?.alternatives?.[0];
+    const transcript = alternative?.transcript ?? '';
+    const confidence = alternative?.confidence ?? 0;
+
+    res.json({ transcript, confidence });
+  } catch (error) {
+    console.error('[dev-server] STT error:', error.message);
+    res.status(500).json({ error: 'STT recognition failed', details: error.message });
+  }
+});
+
+// --- Error logging endpoint (in-memory) ---
+let errorLogs = [];
+const MAX_LOGS = 200;
+
 app.post('/api/log-error', (req, res) => {
-  console.log('📊 Error log request received');
-  
-  try {
-    const errorEntry = {
-      timestamp: new Date().toISOString(),
-      level: req.body.level || 'error',
-      message: req.body.message || 'Unknown error',
-      data: req.body.data,
-      device: req.body.device || 'Unknown device',
-      userAgent: req.headers['user-agent'] || 'Unknown',
-      url: req.body.url || 'Unknown URL',
-      userId: req.body.userId,
-      sessionId: req.body.sessionId
-    };
-    
-    // Add to memory storage
-    errorLogs.unshift(errorEntry);
-    
-    // Keep only the most recent logs
-    if (errorLogs.length > MAX_LOGS) {
-      errorLogs = errorLogs.slice(0, MAX_LOGS);
-    }
-    
-    // Log to console as well
-    console.log(`[ERROR LOG] ${errorEntry.device} - ${errorEntry.message}`, {
-      level: errorEntry.level,
-      url: errorEntry.url,
-      timestamp: errorEntry.timestamp,
-      data: errorEntry.data
-    });
-    
-    res.json({ 
-      success: true, 
-      message: 'Error logged successfully',
-      logCount: errorLogs.length
-    });
-    
-  } catch (error) {
-    console.error('❌ Error logging API error:', error);
-    res.status(500).json({ 
-      error: 'Failed to process error log',
-      details: error.message
-    });
-  }
+  const entry = {
+    id: `err_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+    timestamp: req.body.timestamp || new Date().toISOString(),
+    level: req.body.level || 'error',
+    message: req.body.message || 'Unknown error',
+    data: req.body.data,
+    device: req.body.device || 'dev',
+    url: req.body.url || '',
+  };
+  errorLogs.unshift(entry);
+  if (errorLogs.length > MAX_LOGS) errorLogs = errorLogs.slice(0, MAX_LOGS);
+  res.json({ success: true, logCount: errorLogs.length, errorId: entry.id });
 });
 
-// Get error logs endpoint
 app.get('/api/log-error', (req, res) => {
-  console.log('📊 Get error logs request received');
-  
-  try {
-    const { limit = 50, level, device, since } = req.query;
-    
-    let filteredLogs = errorLogs;
-    
-    // Filter by level if specified
-    if (level && typeof level === 'string') {
-      filteredLogs = filteredLogs.filter(log => log.level === level);
-    }
-    
-    // Filter by device if specified
-    if (device && typeof device === 'string') {
-      filteredLogs = filteredLogs.filter(log => 
-        log.device.toLowerCase().includes(device.toLowerCase())
-      );
-    }
-    
-    // Filter by timestamp if specified
-    if (since && typeof since === 'string') {
-      const sinceDate = new Date(since);
-      filteredLogs = filteredLogs.filter(log => 
-        new Date(log.timestamp) > sinceDate
-      );
-    }
-    
-    // Limit results
-    const limitNum = parseInt(limit) || 50;
-    filteredLogs = filteredLogs.slice(0, limitNum);
-    
-    res.json({
-      logs: filteredLogs,
-      totalCount: errorLogs.length,
-      filteredCount: filteredLogs.length,
-      stats: {
-        errors: errorLogs.filter(l => l.level === 'error').length,
-        warnings: errorLogs.filter(l => l.level === 'warn').length,
-        info: errorLogs.filter(l => l.level === 'info').length,
-        logs: errorLogs.filter(l => l.level === 'log').length
-      }
-    });
-    
-  } catch (error) {
-    console.error('❌ Error fetching logs:', error);
-    res.status(500).json({ 
-      error: 'Failed to fetch error logs',
-      details: error.message
-    });
-  }
+  const { limit = 50, level, device } = req.query;
+  let logs = errorLogs;
+  if (level) logs = logs.filter((l) => l.level === level);
+  if (device) logs = logs.filter((l) => l.device.toLowerCase().includes(device.toLowerCase()));
+  logs = logs.slice(0, parseInt(limit) || 50);
+  res.json({ logs, totalCount: errorLogs.length, filteredCount: logs.length });
 });
 
-// Clear error logs endpoint
-app.delete('/api/log-error', (req, res) => {
-  console.log('📊 Clear error logs request received');
-  
-  try {
-    const previousCount = errorLogs.length;
-    errorLogs = [];
-    
-    console.log(`[ERROR LOG] Cleared ${previousCount} error logs`);
-    
-    res.json({ 
-      success: true, 
-      message: `Cleared ${previousCount} error logs`,
-      clearedCount: previousCount
-    });
-    
-  } catch (error) {
-    console.error('❌ Error clearing logs:', error);
-    res.status(500).json({ 
-      error: 'Failed to clear error logs',
-      details: error.message
-    });
-  }
+app.delete('/api/log-error', (_req, res) => {
+  const count = errorLogs.length;
+  errorLogs = [];
+  res.json({ success: true, clearedCount: count });
 });
 
-// Serve index.html for all routes (SPA support)
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+// --- Version endpoint ---
+app.get('/api/version', (_req, res) => {
+  res.json({ version: '1.0.0-dev', buildTime: Date.now(), commitHash: 'dev' });
 });
 
-app.listen(port, () => {
-  console.log(`🚀 Development server running at http://localhost:${port}`);
+// --- Start ---
+app.listen(PORT, () => {
+  console.log(`[dev-server] API server running at http://localhost:${PORT}`);
+  console.log(`[dev-server] TTS:       POST http://localhost:${PORT}/api/tts`);
+  console.log(`[dev-server] STT:       POST http://localhost:${PORT}/api/stt`);
+  console.log(`[dev-server] Logging:   POST/GET http://localhost:${PORT}/api/log-error`);
+  console.log(`[dev-server] Version:   GET  http://localhost:${PORT}/api/version`);
 });

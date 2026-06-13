@@ -26,8 +26,16 @@ const OBJECT_TYPES = [
 ]
 
 const DANISH_NUMBERS = [
-  'nul', 'en', 'to', 'tre', 'fire', 'fem', 'seks', 'syv', 'otte', 'ni', 'ti'
+  'nul', 'en', 'to', 'tre', 'fire', 'fem', 'seks', 'syv', 'otte', 'ni', 'ti',
+  'elleve', 'tolv', 'tretten', 'fjorten', 'femten', 'seksten', 'sytten', 'atten', 'nitten', 'tyve'
 ]
+
+// Shrink emoji visual aids as the count grows so up to 20 fit without scrolling
+const getEmojiFontSize = (count: number): string => {
+  if (count <= 10) return 'clamp(1.5rem, 3vw, 2rem)'
+  if (count <= 15) return 'clamp(1.1rem, 2.4vw, 1.6rem)'
+  return 'clamp(0.85rem, 2vw, 1.3rem)'
+}
 
 interface ComparisonProblem {
   leftNumber: number
@@ -119,9 +127,9 @@ const ComparisonGame: React.FC = () => {
   }
 
   const generateNewProblem = () => {
-    // Generate numbers 1-10 for age 4-6 appropriateness
-    const leftNum = Math.floor(Math.random() * 10) + 1
-    let rightNum = Math.floor(Math.random() * 10) + 1
+    // Generate numbers 1-20 (introduces Danish teen numbers)
+    const leftNum = Math.floor(Math.random() * 20) + 1
+    let rightNum = Math.floor(Math.random() * 20) + 1
     
     // Randomly decide if we want equal numbers (25% chance)
     const wantEqual = Math.random() < 0.25
@@ -132,7 +140,7 @@ const ComparisonGame: React.FC = () => {
     } else {
       // Force different numbers
       while (rightNum === leftNum) {
-        rightNum = Math.floor(Math.random() * 10) + 1
+        rightNum = Math.floor(Math.random() * 20) + 1
       }
     }
     
@@ -481,7 +489,7 @@ const ComparisonGame: React.FC = () => {
                         initial={{ opacity: 0, scale: 0 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ delay: i * 0.1 }}
-                        style={{ fontSize: 'clamp(1.5rem, 3vw, 2rem)' }}
+                        style={{ fontSize: getEmojiFontSize(currentProblem.leftNumber) }}
                       >
                         {currentProblem.leftObjects.emoji}
                       </motion.span>
@@ -599,7 +607,7 @@ const ComparisonGame: React.FC = () => {
                         initial={{ opacity: 0, scale: 0 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ delay: i * 0.1 }}
-                        style={{ fontSize: 'clamp(1.5rem, 3vw, 2rem)' }}
+                        style={{ fontSize: getEmojiFontSize(currentProblem.rightNumber) }}
                       >
                         {currentProblem.rightObjects.emoji}
                       </motion.span>

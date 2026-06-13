@@ -27,10 +27,19 @@ import MathGame from './components/math/MathGame'
 import MathSelection from './components/math/MathSelection'
 import NumberLearning from './components/math/NumberLearning'
 import AdditionGame from './components/math/AdditionGame'
+import SubtractionGame from './components/math/SubtractionGame'
 import ComparisonGame from './components/math/ComparisonGame'
 import FarverSelection from './components/farver/FarverSelection'
 import FarvejagtGame from './components/farver/FarvejagtGame'
 import RamFarvenGame from './components/farver/RamFarvenGame'
+import EnglishSelection from './components/english/EnglishSelection'
+import EnglishListenGame from './components/english/EnglishListenGame'
+import EnglishWordGame from './components/english/EnglishWordGame'
+import EnglishTranslateGame from './components/english/EnglishTranslateGame'
+import EnglishLearning from './components/english/EnglishLearning'
+import OrdlegSelection from './components/ordleg/OrdlegSelection'
+import SpellingGame from './components/ordleg/SpellingGame'
+import SpeakWordGame from './components/ordleg/SpeakWordGame'
 import MemoryGame from './components/learning/MemoryGame'
 import ErrorDashboard from './components/admin/ErrorDashboard'
 import UpdateBanner from './components/common/UpdateBanner'
@@ -405,13 +414,12 @@ const HomePage = () => {
           justifyContent: 'center',
           minHeight: 0
         }}>
-          <Grid 
-            container 
-            spacing={{ xs: 2, md: 3 }} 
-            sx={{ 
+          <Grid
+            container
+            spacing={{ xs: 2, md: 3 }}
+            sx={{
               mb: { xs: 2, md: 3 },
-              height: { xs: 'auto', md: '60%' },
-              maxHeight: { xs: '500px', md: '600px' }
+              justifyContent: 'center'
             }}
           >
             {/* Alphabet Card */}
@@ -427,7 +435,7 @@ const HomePage = () => {
                   onClick={() => navigate('/alphabet')}
                   sx={{ 
                     height: '100%',
-                    minHeight: { xs: 180, sm: 220, md: 240 },
+                    minHeight: { xs: 150, sm: 190, md: 210 },
                     cursor: 'pointer',
                     border: '2px solid',
                     borderColor: categoryThemes.alphabet.borderColor,
@@ -443,7 +451,7 @@ const HomePage = () => {
                     transition: 'all 0.3s ease',
                     // Orientation specific adjustments
                     '@media (orientation: landscape)': {
-                      minHeight: { xs: 160, sm: 180, md: 200 }
+                      minHeight: { xs: 140, sm: 160, md: 180 }
                     }
                   }}
                 >
@@ -500,7 +508,7 @@ const HomePage = () => {
                   onClick={() => navigate('/math')}
                   sx={{ 
                     height: '100%',
-                    minHeight: { xs: 180, sm: 220, md: 240 },
+                    minHeight: { xs: 150, sm: 190, md: 210 },
                     cursor: 'pointer',
                     border: '2px solid',
                     borderColor: categoryThemes.math.borderColor,
@@ -516,7 +524,7 @@ const HomePage = () => {
                     transition: 'all 0.3s ease',
                     // Orientation specific adjustments
                     '@media (orientation: landscape)': {
-                      minHeight: { xs: 160, sm: 180, md: 200 }
+                      minHeight: { xs: 140, sm: 160, md: 180 }
                     }
                   }}
                 >
@@ -573,7 +581,7 @@ const HomePage = () => {
                   onClick={() => navigate('/farver')}
                   sx={{ 
                     height: '100%',
-                    minHeight: { xs: 180, sm: 220, md: 240 },
+                    minHeight: { xs: 150, sm: 190, md: 210 },
                     cursor: 'pointer',
                     border: '2px solid',
                     borderColor: categoryThemes.colors.borderColor,
@@ -589,7 +597,7 @@ const HomePage = () => {
                     transition: 'all 0.3s ease',
                     // Orientation specific adjustments
                     '@media (orientation: landscape)': {
-                      minHeight: { xs: 160, sm: 180, md: 200 }
+                      minHeight: { xs: 140, sm: 160, md: 180 }
                     }
                   }}
                 >
@@ -626,6 +634,146 @@ const HomePage = () => {
                         }}
                       >
                         {categoryThemes.colors.description}
+                      </Typography>
+                    </Box>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            </Grid>
+
+            {/* English Card */}
+            <Grid size={{ xs: 12, sm: 6, lg: 4 }}>
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.3 }}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <Card
+                  onClick={() => navigate('/english')}
+                  sx={{
+                    height: '100%',
+                    minHeight: { xs: 150, sm: 190, md: 210 },
+                    cursor: 'pointer',
+                    border: '2px solid',
+                    borderColor: categoryThemes.english.borderColor,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    background: `linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(232, 245, 233, 0.9) 100%)`,
+                    backdropFilter: 'blur(15px)',
+                    '&:hover': {
+                      borderColor: categoryThemes.english.hoverBorderColor,
+                      boxShadow: '0 8px 32px rgba(46, 125, 50, 0.3)',
+                      transform: 'translateY(-2px)'
+                    },
+                    transition: 'all 0.3s ease',
+                    '@media (orientation: landscape)': {
+                      minHeight: { xs: 140, sm: 160, md: 180 }
+                    }
+                  }}
+                >
+                  <CardContent
+                    sx={{
+                      p: { xs: 2, md: 3 },
+                      height: '100%',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'center',
+                      textAlign: 'center'
+                    }}
+                  >
+                    <Box sx={{ mb: 2 }}>
+                      <Typography sx={{ fontSize: categoryThemes.english.iconSize, mb: 2 }}>
+                        {categoryThemes.english.icon}
+                      </Typography>
+                      <Typography
+                        variant="h4"
+                        sx={{
+                          mb: 1,
+                          fontWeight: 700,
+                          fontSize: { xs: '1.5rem', md: '1.75rem' },
+                          color: categoryThemes.english.accentColor
+                        }}
+                      >
+                        {categoryThemes.english.name}
+                      </Typography>
+                      <Typography
+                        variant="body1"
+                        color="text.secondary"
+                        sx={{ fontSize: { xs: '0.875rem', md: '1rem' } }}
+                      >
+                        {categoryThemes.english.description}
+                      </Typography>
+                    </Box>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            </Grid>
+
+            {/* Ordleg Card */}
+            <Grid size={{ xs: 12, sm: 6, lg: 4 }}>
+              <motion.div
+                initial={{ opacity: 0, x: 30 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.6, delay: 0.4 }}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <Card
+                  onClick={() => navigate('/ordleg')}
+                  sx={{
+                    height: '100%',
+                    minHeight: { xs: 150, sm: 190, md: 210 },
+                    cursor: 'pointer',
+                    border: '2px solid',
+                    borderColor: categoryThemes.ordleg.borderColor,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    background: `linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(224, 242, 241, 0.9) 100%)`,
+                    backdropFilter: 'blur(15px)',
+                    '&:hover': {
+                      borderColor: categoryThemes.ordleg.hoverBorderColor,
+                      boxShadow: '0 8px 32px rgba(0, 121, 107, 0.3)',
+                      transform: 'translateY(-2px)'
+                    },
+                    transition: 'all 0.3s ease',
+                    '@media (orientation: landscape)': {
+                      minHeight: { xs: 140, sm: 160, md: 180 }
+                    }
+                  }}
+                >
+                  <CardContent
+                    sx={{
+                      p: { xs: 2, md: 3 },
+                      height: '100%',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'center',
+                      textAlign: 'center'
+                    }}
+                  >
+                    <Box sx={{ mb: 2 }}>
+                      <Typography sx={{ fontSize: categoryThemes.ordleg.iconSize, mb: 2 }}>
+                        {categoryThemes.ordleg.icon}
+                      </Typography>
+                      <Typography
+                        variant="h4"
+                        sx={{
+                          mb: 1,
+                          fontWeight: 700,
+                          fontSize: { xs: '1.5rem', md: '1.75rem' },
+                          color: categoryThemes.ordleg.accentColor
+                        }}
+                      >
+                        {categoryThemes.ordleg.name}
+                      </Typography>
+                      <Typography
+                        variant="body1"
+                        color="text.secondary"
+                        sx={{ fontSize: { xs: '0.875rem', md: '1rem' } }}
+                      >
+                        {categoryThemes.ordleg.description}
                       </Typography>
                     </Box>
                   </CardContent>
@@ -867,12 +1015,25 @@ function App() {
         <Route path="/math/counting" element={<MathGame />} />
         <Route path="/math/numbers" element={<NumberLearning />} />
         <Route path="/math/addition" element={<AdditionGame />} />
+        <Route path="/math/subtraction" element={<SubtractionGame />} />
         <Route path="/math/comparison" element={<ComparisonGame />} />
         
         {/* Farver Routes */}
         <Route path="/farver" element={<FarverSelection />} />
         <Route path="/farver/jagt" element={<FarvejagtGame />} />
         <Route path="/farver/ram-farven" element={<RamFarvenGame />} />
+
+        {/* English Routes */}
+        <Route path="/english" element={<EnglishSelection />} />
+        <Route path="/english/listen" element={<EnglishListenGame />} />
+        <Route path="/english/word" element={<EnglishWordGame />} />
+        <Route path="/english/translate" element={<EnglishTranslateGame />} />
+        <Route path="/english/learn" element={<EnglishLearning />} />
+
+        {/* Ordleg Routes */}
+        <Route path="/ordleg" element={<OrdlegSelection />} />
+        <Route path="/ordleg/spelling" element={<SpellingGame />} />
+        <Route path="/ordleg/mic" element={<SpeakWordGame />} />
         
         {/* Learning Routes */}
         <Route path="/learning/memory/:type" element={<MemoryGame />} />

@@ -40,7 +40,8 @@ export class GoogleTTSService {
       languageCode: 'da-DK',
       name: 'da-DK-Wavenet-G', // Latest male Wavenet voice
       ssmlGender: 'MALE' as const
-    }
+    },
+    english: TTS_CONFIG.enVoice // British en-GB voice for the Engelsk section
   }
 
   // Use shared audio configuration
@@ -366,8 +367,8 @@ export class GoogleTTSService {
 
   // Enhanced synthesis method with SSML support
   async synthesizeSpeech(
-    text: string, 
-    voiceType: 'primary' | 'backup' | 'male' = 'primary',
+    text: string,
+    voiceType: 'primary' | 'backup' | 'male' | 'english' = 'primary',
     useSSML: boolean = true,
     customAudioConfig?: Partial<typeof TTS_CONFIG.audioConfig>
   ): Promise<string> {
@@ -905,8 +906,8 @@ export class GoogleTTSService {
 
   // Synthesize and play in one step
   async synthesizeAndPlay(
-    text: string, 
-    voiceType: 'primary' | 'backup' | 'male' = 'primary',
+    text: string,
+    voiceType: 'primary' | 'backup' | 'male' | 'english' = 'primary',
     useSSML: boolean = true,
     customAudioConfig?: Partial<typeof TTS_CONFIG.audioConfig>
   ): Promise<void> {

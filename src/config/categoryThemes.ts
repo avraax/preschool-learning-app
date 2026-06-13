@@ -90,6 +90,13 @@ export const categoryThemes: Record<string, CategoryTheme> = {
         gradient: 'linear-gradient(135deg, #9C27B0 0%, #8E24AA 100%)'
       },
       {
+        id: 'subtraction',
+        title: 'Minus Opgaver',
+        emoji: '➖',
+        route: '/math/subtraction',
+        gradient: 'linear-gradient(135deg, #9333EA 0%, #7E22CE 100%)'
+      },
+      {
         id: 'comparison',
         title: 'Sammenlign Tal',
         emoji: '⚖️',
@@ -129,6 +136,74 @@ export const categoryThemes: Record<string, CategoryTheme> = {
         emoji: '🎨',
         route: '/farver/ram-farven',
         gradient: 'linear-gradient(135deg, #A855F7 0%, #F97316 50%, #10B981 100%)'
+      }
+    ]
+  },
+  english: {
+    id: 'english',
+    name: 'Engelsk',
+    gradient: 'linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 50%, #A5D6A7 100%)',
+    accentColor: '#2E7D32',
+    borderColor: '#66BB6A',
+    hoverBorderColor: '#2E7D32',
+    icon: '🇬🇧',
+    iconSize: '6rem',
+    description: 'Lær dine første engelske ord med billeder og lyd',
+    games: [
+      {
+        id: 'listen',
+        title: 'Lyt og Find',
+        emoji: '👂',
+        route: '/english/listen',
+        gradient: 'linear-gradient(135deg, #66BB6A 0%, #43A047 100%)'
+      },
+      {
+        id: 'word',
+        title: 'Find det Engelske Ord',
+        emoji: '🔤',
+        route: '/english/word',
+        gradient: 'linear-gradient(135deg, #4CAF50 0%, #388E3C 100%)'
+      },
+      {
+        id: 'translate',
+        title: 'Dansk til Engelsk',
+        emoji: '🔁',
+        route: '/english/translate',
+        gradient: 'linear-gradient(135deg, #43A047 0%, #2E7D32 100%)'
+      },
+      {
+        id: 'learn',
+        title: 'Lær Engelsk',
+        emoji: '📚',
+        route: '/english/learn',
+        gradient: 'linear-gradient(135deg, #388E3C 0%, #1B5E20 100%)'
+      }
+    ]
+  },
+  ordleg: {
+    id: 'ordleg',
+    name: 'Ordleg',
+    gradient: 'linear-gradient(135deg, #E0F2F1 0%, #B2DFDB 50%, #80CBC4 100%)',
+    accentColor: '#00796B',
+    borderColor: '#4DB6AC',
+    hoverBorderColor: '#00796B',
+    icon: '🗣️',
+    iconSize: '6rem',
+    description: 'Stav ord og sig ord højt med din stemme',
+    games: [
+      {
+        id: 'spelling',
+        title: 'Stav Ordet',
+        emoji: '✏️',
+        route: '/ordleg/spelling',
+        gradient: 'linear-gradient(135deg, #26A69A 0%, #00897B 100%)'
+      },
+      {
+        id: 'mic',
+        title: 'Sig et Ord',
+        emoji: '🎤',
+        route: '/ordleg/mic',
+        gradient: 'linear-gradient(135deg, #00897B 0%, #00695C 100%)'
       }
     ]
   }

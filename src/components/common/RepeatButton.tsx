@@ -19,7 +19,7 @@ interface RepeatButtonProps {
   /** Size of the button */
   size?: 'small' | 'medium' | 'large'
   /** Category theme to use for styling */
-  category?: 'alphabet' | 'math' | 'farver'
+  category?: 'alphabet' | 'math' | 'farver' | 'english' | 'ordleg'
   /** Use Lucide React icons instead of MUI icons */
   useLucideIcons?: boolean
 }
@@ -153,6 +153,14 @@ export interface ColorRepeatButtonProps extends Omit<RepeatButtonProps, 'categor
   category?: 'farver'
 }
 
+export interface EnglishRepeatButtonProps extends Omit<RepeatButtonProps, 'category'> {
+  category?: 'english'
+}
+
+export interface OrdlegRepeatButtonProps extends Omit<RepeatButtonProps, 'category'> {
+  category?: 'ordleg'
+}
+
 /**
  * Pre-configured repeat button for alphabet games
  */
@@ -172,4 +180,18 @@ export const MathRepeatButton: React.FC<MathRepeatButtonProps> = (props) => (
  */
 export const ColorRepeatButton: React.FC<ColorRepeatButtonProps> = (props) => (
   <RepeatButton {...props} category="farver" label="🎵 Hør igen" />
+)
+
+/**
+ * Pre-configured repeat button for English games (green theme)
+ */
+export const EnglishRepeatButton: React.FC<EnglishRepeatButtonProps> = (props) => (
+  <RepeatButton {...props} category="english" label="🎵 Igen" />
+)
+
+/**
+ * Pre-configured repeat button for Ordleg games (teal theme)
+ */
+export const OrdlegRepeatButton: React.FC<OrdlegRepeatButtonProps> = (props) => (
+  <RepeatButton {...props} category="ordleg" label="🎵 Gentag" />
 )

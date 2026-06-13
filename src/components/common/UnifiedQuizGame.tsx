@@ -33,12 +33,16 @@ export interface QuizItem {
   display: string | number    // What to show on screen
   audioPrompt: string         // The full prompt text
   repeatWord: string          // Word to repeat in prompt
+  // Optional visual question shown in the prompt area (e.g. word-association mode:
+  // show an emoji + word and ask which letter it starts with). When present, the
+  // quiz renders this above the answer grid instead of relying on audio alone.
+  questionVisual?: { emoji: string; word: string }
 }
 
 // Configuration interface for the unified quiz
 export interface UnifiedQuizConfig {
   // Quiz identification
-  quizType: 'alphabet' | 'counting' | 'arithmetic'
+  quizType: 'alphabet' | 'counting' | 'arithmetic' | 'english'
   
   // Content generation
   generateQuizItem: () => QuizItem
@@ -346,6 +350,44 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
           </motion.div>
         </Box>
 
+        {/* Visual Question - shown for word-association style rounds */}
+        {currentItem?.questionVisual && (
+          <Box sx={{ textAlign: 'center', mb: { xs: 1.5, md: 2 }, flex: '0 0 auto' }}>
+            <motion.div
+              key={`${currentItem.value}-${currentItem.questionVisual.word}`}
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.4 }}
+            >
+              <Typography
+                sx={{
+                  fontSize: 'clamp(3rem, 12vw, 5rem)',
+                  lineHeight: 1,
+                  mb: 0.5,
+                  '@media (orientation: landscape)': {
+                    fontSize: 'clamp(2.5rem, 8vh, 4rem)'
+                  }
+                }}
+              >
+                {currentItem.questionVisual.emoji}
+              </Typography>
+              {currentItem.questionVisual.word && (
+                <Typography
+                  sx={{
+                    fontFamily: '"Comic Sans MS", "Comic Sans", cursive',
+                    fontSize: 'clamp(1.5rem, 6vw, 2.5rem)',
+                    fontWeight: 700,
+                    color: config.theme.accentColor,
+                    userSelect: 'none'
+                  }}
+                >
+                  {currentItem.questionVisual.word}
+                </Typography>
+              )}
+            </motion.div>
+          </Box>
+        )}
+
         {/* Audio Control - Compact */}
         <Box sx={{ textAlign: 'center', mb: { xs: 2, md: 3 }, flex: '0 0 auto' }}>
           <RepeatButton
@@ -421,7 +463,9 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
                   '@media (hover: hover) and (pointer: fine)': {
                     '&:hover': {
                       borderColor: config.theme.hoverBorderColor,
-                      bgcolor: config.quizType === 'alphabet' ? '#E3F2FD' : 'secondary.50',
+                      bgcolor: config.quizType === 'alphabet'
+                        ? '#E3F2FD'
+                        : config.quizType === 'english' ? '#E8F5E9' : 'secondary.50',
                       boxShadow: `0 8px 32px ${config.theme.accentColor}40`,
                       transform: 'translateY(-2px)'
                     }
@@ -437,17 +481,28 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
                     p: { xs: 1.5, sm: 2, md: 2.5 }
                   }}
                 >
-                  <Typography 
+                  <Typography
                     variant="h1"
-                    sx={{ 
-                      fontSize: 'clamp(2.5rem, 8vw, 4.5rem)',
+                    sx={{
+                      // Words (multi-character strings) render smaller so they fit the card;
+                      // single glyphs (letters/numbers/emoji) stay large.
+                      fontSize: (typeof item.display === 'string' && item.display.length > 2)
+                        ? 'clamp(1.1rem, 4.5vw, 2rem)'
+                        : 'clamp(2.5rem, 8vw, 4.5rem)',
                       fontWeight: 700,
+                      fontFamily: (typeof item.display === 'string' && item.display.length > 2)
+                        ? '"Comic Sans MS", "Comic Sans", cursive'
+                        : undefined,
                       color: config.theme.accentColor,
                       userSelect: 'none',
-                      lineHeight: 1,
+                      lineHeight: 1.1,
+                      textAlign: 'center',
+                      px: 1,
                       // Adjust font size in landscape
                       '@media (orientation: landscape)': {
-                        fontSize: 'clamp(2rem, 6vw, 3.5rem)'
+                        fontSize: (typeof item.display === 'string' && item.display.length > 2)
+                          ? 'clamp(1rem, 3.5vw, 1.75rem)'
+                          : 'clamp(2rem, 6vw, 3.5rem)'
                       }
                     }}
                   >

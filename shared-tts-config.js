@@ -6,6 +6,14 @@ export const TTS_CONFIG = {
     name: 'da-DK-Wavenet-F',
     ssmlGender: 'FEMALE'
   },
+  // British English voice for the Engelsk section. Warm, child-friendly female voice
+  // to match the Danish da-DK-Wavenet-F. Sent as a per-request voice override so the
+  // existing /api/tts endpoint needs no change.
+  enVoice: {
+    languageCode: 'en-GB',
+    name: 'en-GB-Neural2-A',
+    ssmlGender: 'FEMALE'
+  },
   audioConfig: {
     audioEncoding: 'OGG_OPUS', // Better compatibility with iOS Safari PWA than MP3
     speakingRate: 0.8, // Slower speed for children (0.25-2.0 scale)

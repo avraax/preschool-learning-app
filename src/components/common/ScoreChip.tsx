@@ -11,7 +11,7 @@ interface ScoreChipProps {
   /** Current score value */
   score: number
   /** Category theme to use for styling */
-  category: 'alphabet' | 'math' | 'colors'
+  category: 'alphabet' | 'math' | 'colors' | 'english' | 'ordleg'
   /** Display format for the score */
   format?: 'standard' | 'stars' | 'progress'
   /** Target value for progress format (e.g., "5/10") */
@@ -166,4 +166,26 @@ export const ColorScoreChip: React.FC<ColorScoreChipProps> = (props) => (
  */
 export const ColorProgressChip: React.FC<ColorScoreChipProps> = (props) => (
   <ScoreChip {...props} category="colors" format="progress" />
+)
+
+export interface EnglishScoreChipProps extends Omit<ScoreChipProps, 'category'> {
+  category?: 'english'
+}
+
+export interface OrdlegScoreChipProps extends Omit<ScoreChipProps, 'category'> {
+  category?: 'ordleg'
+}
+
+/**
+ * Pre-configured score chip for English games (green theme)
+ */
+export const EnglishScoreChip: React.FC<EnglishScoreChipProps> = (props) => (
+  <ScoreChip {...props} category="english" format="stars" />
+)
+
+/**
+ * Pre-configured score chip for Ordleg games (teal theme)
+ */
+export const OrdlegScoreChip: React.FC<OrdlegScoreChipProps> = (props) => (
+  <ScoreChip {...props} category="ordleg" format="stars" />
 )
