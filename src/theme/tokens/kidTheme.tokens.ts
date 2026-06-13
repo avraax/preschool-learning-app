@@ -36,6 +36,8 @@ export const kidThemeTokens: ThemeTokens = {
       hoverBorder: '#1976D2',
       icon: '📚',
       iconSize: '4rem',
+      cardSurface: 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(227, 242, 253, 0.9) 100%)',
+      cardBlur: 'blur(15px)',
     },
     math: {
       gradient: 'linear-gradient(135deg, #F3E5F5 0%, #E1BEE7 50%, #CE93D8 100%)',
@@ -44,6 +46,8 @@ export const kidThemeTokens: ThemeTokens = {
       hoverBorder: '#9C27B0',
       icon: '🧮',
       iconSize: '4rem',
+      cardSurface: 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(243, 229, 245, 0.9) 100%)',
+      cardBlur: 'blur(15px)',
     },
     colors: {
       gradient: 'linear-gradient(135deg, #FFF3E0 0%, #FFE0B2 50%, #FFCC80 100%)',
@@ -52,6 +56,8 @@ export const kidThemeTokens: ThemeTokens = {
       hoverBorder: '#FF6B00',
       icon: '🎨',
       iconSize: '4rem',
+      cardSurface: 'linear-gradient(135deg, rgba(255, 243, 224, 0.95) 0%, rgba(255, 224, 178, 0.95) 100%)',
+      cardBlur: 'blur(10px)',
     },
     english: {
       gradient: 'linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 50%, #A5D6A7 100%)',
@@ -60,6 +66,8 @@ export const kidThemeTokens: ThemeTokens = {
       hoverBorder: '#2E7D32',
       icon: '🌍',
       iconSize: '4rem',
+      cardSurface: 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(232, 245, 233, 0.9) 100%)',
+      cardBlur: 'blur(15px)',
     },
     ordleg: {
       gradient: 'linear-gradient(135deg, #E0F2F1 0%, #B2DFDB 50%, #80CBC4 100%)',
@@ -68,6 +76,8 @@ export const kidThemeTokens: ThemeTokens = {
       hoverBorder: '#00796B',
       icon: '🗣️',
       iconSize: '4rem',
+      cardSurface: 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(224, 242, 241, 0.9) 100%)',
+      cardBlur: 'blur(15px)',
     },
   },
 
@@ -86,6 +96,7 @@ export const kidThemeTokens: ThemeTokens = {
     subtitleColor: '#F87171',
     balloonColors: ['#EF4444', '#3B82F6', '#10B981', '#FDE047', '#8B5CF6', '#F97316', '#EC4899'],
     confettiColors: ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#ffeaa7', '#dda0dd'],
+    notFoundBackground: 'linear-gradient(135deg, #dbeafe 0%, #e9d5ff 50%, #fce7f3 100%)',
   },
 
   shadows: {

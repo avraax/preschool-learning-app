@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import Confetti from 'react-confetti'
 import { Box, SxProps, Theme } from '@mui/material'
+import { useTheme } from '@mui/material/styles'
 import { motion, AnimatePresence } from 'framer-motion'
 
 interface CelebrationEffectProps {
@@ -15,11 +16,14 @@ interface CelebrationEffectProps {
 const CelebrationEffect: React.FC<CelebrationEffectProps> = ({
   show,
   onComplete,
-  confettiColors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#ffeaa7', '#dda0dd'],
+  confettiColors,
   duration = 3000,
   intensity = 'medium',
   sx = {}
 }) => {
+  const theme = useTheme()
+  // Default confetti palette comes from the active theme; callers can still override.
+  const effectiveConfettiColors = confettiColors ?? theme.decor.confettiColors
   const [showConfetti, setShowConfetti] = useState(false)
   const [windowDimensions, setWindowDimensions] = useState({
     width: window.innerWidth,
@@ -107,7 +111,7 @@ const CelebrationEffect: React.FC<CelebrationEffectProps> = ({
             <Confetti
               width={windowDimensions.width}
               height={windowDimensions.height}
-              colors={confettiColors}
+              colors={effectiveConfettiColors}
               {...confettiConfig}
             />
           )}

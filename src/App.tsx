@@ -3,15 +3,16 @@ import { Routes, Route, useNavigate, useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { logIOSIssue } from './utils/remoteConsole'
 import { deviceInfo } from './utils/deviceDetection'
-import { 
-  Container, 
-  Grid, 
-  Card, 
-  CardContent, 
-  Button, 
-  Typography, 
+import {
+  Container,
+  Grid,
+  Card,
+  CardContent,
+  Button,
+  Typography,
   Box
 } from '@mui/material'
+import { useTheme, alpha } from '@mui/material/styles'
 import {
   ArrowLeft,
   BookOpen,
@@ -76,16 +77,33 @@ interface HomeBalloon {
   angle: number; // Movement angle - required for direction
 }
 
+// Home section cards — content/layout config; all styling comes from theme tokens
+// (theme.categories[id]) at render time so a reskin remaps every card automatically.
+type HomeCardId = 'alphabet' | 'math' | 'colors' | 'english' | 'ordleg'
+const homeCards: Array<{
+  id: HomeCardId
+  route: string
+  initial: { opacity: number; x?: number; y?: number }
+  delay: number
+}> = [
+  { id: 'alphabet', route: '/alphabet', initial: { opacity: 0, x: -30 }, delay: 0 },
+  { id: 'math', route: '/math', initial: { opacity: 0, y: -30 }, delay: 0.1 },
+  { id: 'colors', route: '/farver', initial: { opacity: 0, x: 30 }, delay: 0.2 },
+  { id: 'english', route: '/english', initial: { opacity: 0, y: 30 }, delay: 0.3 },
+  { id: 'ordleg', route: '/ordleg', initial: { opacity: 0, x: 30 }, delay: 0.4 },
+]
+
 // Home Page Component
 const HomePage = () => {
   const navigate = useNavigate()
+  const theme = useTheme()
   const welcomeCharacter = useCharacterState('wave')
   const { play, stopAll } = useBalloonSound()
   const [balloons, setBalloons] = useState<HomeBalloon[]>([])
   const [particles, setParticles] = useState<Particle[]>([])
   const [lastSpawnTime, setLastSpawnTime] = useState<number>(0)
-  
-  const balloonColors = ['#EF4444', '#3B82F6', '#10B981', '#FDE047', '#8B5CF6', '#F97316', '#EC4899']
+
+  const balloonColors = theme.decor.balloonColors
   const balloonContents = ['A', 'B', 'C', 'Å', '1', '2', '3', '4', '5']
   
   // Dynamic angle calculation based on logo viewport position
@@ -259,13 +277,7 @@ const HomePage = () => {
       sx={{ 
         position: 'relative',
         height: 'calc(var(--vh, 1vh) * 100)',
-        background: `
-          #F8FAFC,
-          radial-gradient(circle at 15% 25%, rgba(255, 255, 255, 0.8) 25px, transparent 26px),
-          radial-gradient(circle at 85% 15%, rgba(255, 255, 255, 0.8) 30px, transparent 31px),
-          radial-gradient(circle at 25% 70%, rgba(255, 255, 255, 0.8) 28px, transparent 29px),
-          radial-gradient(circle at 75% 75%, rgba(255, 255, 255, 0.8) 22px, transparent 23px)
-        `,
+        background: `${theme.decor.pageBackground},\n${theme.decor.dots}`,
         overflow: 'hidden',
         display: 'flex',
         flexDirection: 'column',
@@ -287,7 +299,7 @@ const HomePage = () => {
           transform: 'translateX(-50%)',
           width: '150%',
           height: 400,
-          background: 'conic-gradient(from 0deg at 50% 100%, #FF0000 0deg, #FF8C00 51deg, #FFD700 102deg, #32CD32 153deg, #1E90FF 204deg, #9932CC 255deg, #8B00FF 306deg, #FF0000 360deg)',
+          background: theme.decor.rainbow,
           borderRadius: '50%',
           opacity: 0.9,
           animation: 'rainbowShimmer 8s ease-in-out infinite alternate',
@@ -329,8 +341,8 @@ const HomePage = () => {
                 sx={{ 
                   fontSize: { xs: '1.75rem', sm: '2.25rem', md: '2.75rem' },
                   fontWeight: 700,
-                  color: '#8B5CF6',
-                  textShadow: '2px 2px 8px rgba(139, 92, 246, 0.25)',
+                  color: theme.decor.titleColor,
+                  textShadow: `2px 2px 8px ${alpha(theme.decor.titleColor, 0.25)}`,
                   letterSpacing: '0.02em'
                 }}
               >
@@ -360,18 +372,18 @@ const HomePage = () => {
             transition={{ delay: 0.3, duration: 0.5 }}
           >
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
-              <Play size={20} color="#F87171" />
-              <Typography 
-                variant="h5" 
-                sx={{ 
+              <Play size={20} color={theme.decor.subtitleColor} />
+              <Typography
+                variant="h5"
+                sx={{
                   fontSize: { xs: '1rem', sm: '1.25rem', md: '1.5rem' },
-                  color: '#F87171',
+                  color: theme.decor.subtitleColor,
                   fontWeight: 600
                 }}
               >
                 Lær med sjove spil!
               </Typography>
-              <BookOpen size={20} color="#F87171" />
+              <BookOpen size={20} color={theme.decor.subtitleColor} />
             </Box>
           </motion.div>
         </Box>
@@ -392,369 +404,81 @@ const HomePage = () => {
               justifyContent: 'center'
             }}
           >
-            {/* Alphabet Card */}
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <motion.div
-                initial={{ opacity: 0, x: -30 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.6 }}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                style={{ height: '100%' }}
-              >
-                <Card 
-                  onClick={() => navigate('/alphabet')}
-                  sx={{ 
-                    height: '100%',
-                    minHeight: { xs: 120, sm: 150, md: 170 },
-                    cursor: 'pointer',
-                    border: '2px solid',
-                    borderColor: categoryThemes.alphabet.borderColor,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    background: `linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(227, 242, 253, 0.9) 100%)`,
-                    backdropFilter: 'blur(15px)',
-                    '&:hover': {
-                      borderColor: categoryThemes.alphabet.hoverBorderColor,
-                      boxShadow: '0 8px 32px rgba(25, 118, 210, 0.3)',
-                      transform: 'translateY(-2px)'
-                    },
-                    transition: 'all 0.3s ease',
-                    // Orientation specific adjustments
-                    '@media (orientation: landscape)': {
-                      minHeight: { xs: 110, sm: 130, md: 140 }
-                    }
-                  }}
-                >
-                  <CardContent 
-                    sx={{ 
-                      p: { xs: 2, md: 3 },
-                      height: '100%',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      justifyContent: 'center',
-                      textAlign: 'center'
-                    }}
+            {homeCards.map((card) => {
+              const cat = theme.categories[card.id]
+              const content = categoryThemes[card.id]
+              return (
+                <Grid key={card.id} size={{ xs: 12, sm: 6, md: 4 }}>
+                  <motion.div
+                    initial={card.initial}
+                    animate={{ opacity: 1, x: 0, y: 0 }}
+                    transition={{ duration: 0.6, delay: card.delay }}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    style={{ height: '100%' }}
                   >
-                    <Box sx={{ mb: { xs: 0.5, md: 1 } }}>
-                      <Typography sx={{ fontSize: categoryThemes.alphabet.iconSize, mb: { xs: 0.5, md: 1 } }}>
-                        {categoryThemes.alphabet.icon}
-                      </Typography>
-                      <Typography 
-                        variant="h4" 
-                        sx={{ 
-                          mb: 1, 
-                          fontWeight: 700,
-                          fontSize: { xs: '1.5rem', md: '1.75rem' },
-                          color: categoryThemes.alphabet.accentColor
-                        }}
-                      >
-                        {categoryThemes.alphabet.name}
-                      </Typography>
-                      <Typography 
-                        variant="body1" 
-                        color="text.secondary" 
-                        sx={{ 
-                          fontSize: { xs: '0.875rem', md: '1rem' }
-                        }}
-                      >
-                        {categoryThemes.alphabet.description}
-                      </Typography>
-                    </Box>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            </Grid>
-
-            {/* Math Card */}
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <motion.div
-                initial={{ opacity: 0, y: -30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.1 }}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                style={{ height: '100%' }}
-              >
-                <Card 
-                  onClick={() => navigate('/math')}
-                  sx={{ 
-                    height: '100%',
-                    minHeight: { xs: 120, sm: 150, md: 170 },
-                    cursor: 'pointer',
-                    border: '2px solid',
-                    borderColor: categoryThemes.math.borderColor,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    background: `linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(243, 229, 245, 0.9) 100%)`,
-                    backdropFilter: 'blur(15px)',
-                    '&:hover': {
-                      borderColor: categoryThemes.math.hoverBorderColor,
-                      boxShadow: '0 8px 32px rgba(156, 39, 176, 0.3)',
-                      transform: 'translateY(-2px)'
-                    },
-                    transition: 'all 0.3s ease',
-                    // Orientation specific adjustments
-                    '@media (orientation: landscape)': {
-                      minHeight: { xs: 110, sm: 130, md: 140 }
-                    }
-                  }}
-                >
-                  <CardContent 
-                    sx={{ 
-                      p: { xs: 2, md: 3 },
-                      height: '100%',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      justifyContent: 'center',
-                      textAlign: 'center'
-                    }}
-                  >
-                    <Box sx={{ mb: { xs: 0.5, md: 1 } }}>
-                      <Typography sx={{ fontSize: categoryThemes.math.iconSize, mb: { xs: 0.5, md: 1 } }}>
-                        {categoryThemes.math.icon}
-                      </Typography>
-                      <Typography 
-                        variant="h4" 
-                        sx={{ 
-                          mb: 1, 
-                          fontWeight: 700,
-                          fontSize: { xs: '1.5rem', md: '1.75rem' },
-                          color: categoryThemes.math.accentColor
-                        }}
-                      >
-                        {categoryThemes.math.name}
-                      </Typography>
-                      <Typography 
-                        variant="body1" 
-                        color="text.secondary" 
-                        sx={{ 
-                          fontSize: { xs: '0.875rem', md: '1rem' }
-                        }}
-                      >
-                        {categoryThemes.math.description}
-                      </Typography>
-                    </Box>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            </Grid>
-
-            {/* Farver Card */}
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <motion.div
-                initial={{ opacity: 0, x: 30 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.6, delay: 0.2 }}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                style={{ height: '100%' }}
-              >
-                <Card 
-                  onClick={() => navigate('/farver')}
-                  sx={{ 
-                    height: '100%',
-                    minHeight: { xs: 120, sm: 150, md: 170 },
-                    cursor: 'pointer',
-                    border: '2px solid',
-                    borderColor: categoryThemes.colors.borderColor,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    background: `linear-gradient(135deg, rgba(255, 243, 224, 0.95) 0%, rgba(255, 224, 178, 0.95) 100%)`,
-                    backdropFilter: 'blur(10px)',
-                    '&:hover': {
-                      borderColor: categoryThemes.colors.hoverBorderColor,
-                      boxShadow: '0 8px 32px rgba(230, 81, 0, 0.3)',
-                      transform: 'translateY(-2px)'
-                    },
-                    transition: 'all 0.3s ease',
-                    // Orientation specific adjustments
-                    '@media (orientation: landscape)': {
-                      minHeight: { xs: 110, sm: 130, md: 140 }
-                    }
-                  }}
-                >
-                  <CardContent 
-                    sx={{ 
-                      p: { xs: 2, md: 3 },
-                      height: '100%',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      justifyContent: 'center',
-                      textAlign: 'center'
-                    }}
-                  >
-                    <Box sx={{ mb: { xs: 0.5, md: 1 } }}>
-                      <Typography sx={{ fontSize: categoryThemes.colors.iconSize, mb: { xs: 0.5, md: 1 } }}>
-                        {categoryThemes.colors.icon}
-                      </Typography>
-                      <Typography 
-                        variant="h4" 
-                        sx={{ 
-                          mb: 1, 
-                          fontWeight: 700,
-                          fontSize: { xs: '1.5rem', md: '1.75rem' },
-                          color: categoryThemes.colors.accentColor
-                        }}
-                      >
-                        {categoryThemes.colors.name}
-                      </Typography>
-                      <Typography 
-                        variant="body1" 
-                        color="text.secondary" 
-                        sx={{ 
-                          fontSize: { xs: '0.875rem', md: '1rem' }
-                        }}
-                      >
-                        {categoryThemes.colors.description}
-                      </Typography>
-                    </Box>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            </Grid>
-
-            {/* English Card */}
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <motion.div
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.3 }}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                style={{ height: '100%' }}
-              >
-                <Card
-                  onClick={() => navigate('/english')}
-                  sx={{
-                    height: '100%',
-                    minHeight: { xs: 120, sm: 150, md: 170 },
-                    cursor: 'pointer',
-                    border: '2px solid',
-                    borderColor: categoryThemes.english.borderColor,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    background: `linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(232, 245, 233, 0.9) 100%)`,
-                    backdropFilter: 'blur(15px)',
-                    '&:hover': {
-                      borderColor: categoryThemes.english.hoverBorderColor,
-                      boxShadow: '0 8px 32px rgba(46, 125, 50, 0.3)',
-                      transform: 'translateY(-2px)'
-                    },
-                    transition: 'all 0.3s ease',
-                    '@media (orientation: landscape)': {
-                      minHeight: { xs: 110, sm: 130, md: 140 }
-                    }
-                  }}
-                >
-                  <CardContent
-                    sx={{
-                      p: { xs: 2, md: 3 },
-                      height: '100%',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      justifyContent: 'center',
-                      textAlign: 'center'
-                    }}
-                  >
-                    <Box sx={{ mb: { xs: 0.5, md: 1 } }}>
-                      <Typography sx={{ fontSize: categoryThemes.english.iconSize, mb: { xs: 0.5, md: 1 } }}>
-                        {categoryThemes.english.icon}
-                      </Typography>
-                      <Typography
-                        variant="h4"
+                    <Card
+                      onClick={() => navigate(card.route)}
+                      sx={{
+                        height: '100%',
+                        minHeight: { xs: 120, sm: 150, md: 170 },
+                        cursor: 'pointer',
+                        border: '2px solid',
+                        borderColor: cat.border,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        background: cat.cardSurface,
+                        backdropFilter: cat.cardBlur,
+                        '&:hover': {
+                          borderColor: cat.hoverBorder,
+                          boxShadow: `0 8px 32px ${alpha(cat.accent, 0.3)}`,
+                          transform: 'translateY(-2px)'
+                        },
+                        transition: 'all 0.3s ease',
+                        '@media (orientation: landscape)': {
+                          minHeight: { xs: 110, sm: 130, md: 140 }
+                        }
+                      }}
+                    >
+                      <CardContent
                         sx={{
-                          mb: 1,
-                          fontWeight: 700,
-                          fontSize: { xs: '1.5rem', md: '1.75rem' },
-                          color: categoryThemes.english.accentColor
+                          p: { xs: 2, md: 3 },
+                          height: '100%',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          justifyContent: 'center',
+                          textAlign: 'center'
                         }}
                       >
-                        {categoryThemes.english.name}
-                      </Typography>
-                      <Typography
-                        variant="body1"
-                        color="text.secondary"
-                        sx={{ fontSize: { xs: '0.875rem', md: '1rem' } }}
-                      >
-                        {categoryThemes.english.description}
-                      </Typography>
-                    </Box>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            </Grid>
-
-            {/* Ordleg Card */}
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <motion.div
-                initial={{ opacity: 0, x: 30 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.6, delay: 0.4 }}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                style={{ height: '100%' }}
-              >
-                <Card
-                  onClick={() => navigate('/ordleg')}
-                  sx={{
-                    height: '100%',
-                    minHeight: { xs: 120, sm: 150, md: 170 },
-                    cursor: 'pointer',
-                    border: '2px solid',
-                    borderColor: categoryThemes.ordleg.borderColor,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    background: `linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(224, 242, 241, 0.9) 100%)`,
-                    backdropFilter: 'blur(15px)',
-                    '&:hover': {
-                      borderColor: categoryThemes.ordleg.hoverBorderColor,
-                      boxShadow: '0 8px 32px rgba(0, 121, 107, 0.3)',
-                      transform: 'translateY(-2px)'
-                    },
-                    transition: 'all 0.3s ease',
-                    '@media (orientation: landscape)': {
-                      minHeight: { xs: 110, sm: 130, md: 140 }
-                    }
-                  }}
-                >
-                  <CardContent
-                    sx={{
-                      p: { xs: 2, md: 3 },
-                      height: '100%',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      justifyContent: 'center',
-                      textAlign: 'center'
-                    }}
-                  >
-                    <Box sx={{ mb: { xs: 0.5, md: 1 } }}>
-                      <Typography sx={{ fontSize: categoryThemes.ordleg.iconSize, mb: { xs: 0.5, md: 1 } }}>
-                        {categoryThemes.ordleg.icon}
-                      </Typography>
-                      <Typography
-                        variant="h4"
-                        sx={{
-                          mb: 1,
-                          fontWeight: 700,
-                          fontSize: { xs: '1.5rem', md: '1.75rem' },
-                          color: categoryThemes.ordleg.accentColor
-                        }}
-                      >
-                        {categoryThemes.ordleg.name}
-                      </Typography>
-                      <Typography
-                        variant="body1"
-                        color="text.secondary"
-                        sx={{ fontSize: { xs: '0.875rem', md: '1rem' } }}
-                      >
-                        {categoryThemes.ordleg.description}
-                      </Typography>
-                    </Box>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            </Grid>
+                        <Box sx={{ mb: { xs: 0.5, md: 1 } }}>
+                          <Typography sx={{ fontSize: cat.iconSize, mb: { xs: 0.5, md: 1 } }}>
+                            {cat.icon}
+                          </Typography>
+                          <Typography
+                            variant="h4"
+                            sx={{
+                              mb: 1,
+                              fontWeight: 700,
+                              fontSize: { xs: '1.5rem', md: '1.75rem' },
+                              color: cat.accent
+                            }}
+                          >
+                            {content.name}
+                          </Typography>
+                          <Typography
+                            variant="body1"
+                            color="text.secondary"
+                            sx={{ fontSize: { xs: '0.875rem', md: '1rem' } }}
+                          >
+                            {content.description}
+                          </Typography>
+                        </Box>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                </Grid>
+              )
+            })}
 
           </Grid>
         </Box>
@@ -786,6 +510,7 @@ const HomePage = () => {
 // 404 Not Found Component
 const NotFoundPage = () => {
   const navigate = useNavigate()
+  const theme = useTheme()
   const sadCharacter = useCharacterState('encourage')
   
   React.useEffect(() => {
@@ -799,7 +524,7 @@ const NotFoundPage = () => {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: 'linear-gradient(135deg, #dbeafe 0%, #e9d5ff 50%, #fce7f3 100%)',
+        background: theme.decor.notFoundBackground,
         overflow: 'hidden'
       }}
     >
@@ -905,6 +630,7 @@ const VersionDisplay: React.FC<VersionDisplayProps> = ({ updateAvailable = false
 }
 
 function App() {
+  const theme = useTheme()
   // Initialize viewport height for iOS
   useViewportHeight()
   
@@ -949,7 +675,7 @@ function App() {
         {/* Version Display - repositions to bottom-left when update available */}
         <VersionDisplay updateAvailable={updateStatus.updateAvailable || DEV_SHOW_UPDATE_BANNER} />
         
-        <Suspense fallback={<Box sx={{ height: '100dvh', background: '#F8FAFC' }} />}>
+        <Suspense fallback={<Box sx={{ height: '100dvh', background: theme.decor.pageBackground }} />}>
         <Routes>
         {/* Home Routes */}
         <Route path="/" element={<HomePage />} />

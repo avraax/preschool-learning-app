@@ -18,12 +18,14 @@ export interface ColorScale {
 
 // Per-section visual identity (the 5 category cards/sections).
 export interface CategoryPalette {
-  gradient: string        // section background gradient
+  gradient: string        // section background gradient (full-screen section pages)
   accent: string          // titles, primary accents
   border: string
   hoverBorder: string
   icon: string            // emoji glyph
   iconSize: string
+  cardSurface: string     // frosted home-card background (white→tint gradient)
+  cardBlur: string        // home-card backdrop-filter blur
 }
 
 export interface ThemePalette {
@@ -57,6 +59,7 @@ export interface DecorTokens {
   subtitleColor: string           // tagline + play/book icons
   balloonColors: string[]         // home balloon palette
   confettiColors: string[]        // CelebrationEffect default
+  notFoundBackground: string      // 404 page background gradient
 }
 
 // Named shadows so cards/buttons share themable elevation.
