@@ -4,7 +4,11 @@ import { BrowserRouter } from 'react-router-dom'
 import { ThemeProvider } from '@mui/material/styles'
 import { CssBaseline } from '@mui/material'
 import App from './App.tsx'
-import kidTheme from './theme/kidTheme'
+import { buildTheme } from './theme/buildTheme'
+import { kidThemeTokens } from './theme/tokens/kidTheme.tokens'
+
+// The active skin. Swap the tokens object here (or wire a switcher) to reskin the app.
+const theme = buildTheme(kidThemeTokens)
 // Self-hosted kid-friendly font (bundled, identical on every OS/device)
 import '@fontsource/comic-neue/400.css'
 import '@fontsource/comic-neue/700.css'
@@ -24,7 +28,7 @@ setInitialViewportHeight()
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <BrowserRouter>
-      <ThemeProvider theme={kidTheme}>
+      <ThemeProvider theme={theme}>
         <CssBaseline />
         <App />
       </ThemeProvider>

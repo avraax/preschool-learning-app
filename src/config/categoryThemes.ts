@@ -1,5 +1,14 @@
-// Centralized theme configuration for all learning categories
-// This ensures consistent theming throughout the app
+// Centralized theme configuration for all learning categories.
+//
+// Section *colors* (gradient/accent/border/hoverBorder/icon/iconSize) are now THEME TOKENS
+// — they live in `src/theme/tokens/*` and are read here from the active skin. Only the
+// *content/config* (name, description, and the games[] list with routes/titles/emojis/
+// per-game button gradients) lives in this file. A reskin remaps colors; it never touches
+// this content.
+
+import type { ThemeTokens } from '../theme/tokens/types'
+import { getActiveTokens } from '../theme/tokens/activeTokens'
+import { kidThemeTokens } from '../theme/tokens/kidTheme.tokens'
 
 export interface Game {
   id: string
@@ -22,16 +31,18 @@ export interface CategoryTheme {
   games: Game[]
 }
 
-export const categoryThemes: Record<string, CategoryTheme> = {
+// Content/config only — colors come from theme tokens (merged in below).
+interface CategoryContent {
+  name: string
+  description: string
+  games: Game[]
+}
+
+type CategoryId = keyof ThemeTokens['categories']
+
+const categoryContent: Record<CategoryId, CategoryContent> = {
   alphabet: {
-    id: 'alphabet',
     name: 'Alfabetet',
-    gradient: 'linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 50%, #90CAF9 100%)',
-    accentColor: '#1976D2',
-    borderColor: '#64B5F6',
-    hoverBorderColor: '#1976D2',
-    icon: '📚',
-    iconSize: '4rem',
     description: 'Lær det danske alfabet fra A til Å med sjove spil og quiz',
     games: [
       {
@@ -58,14 +69,7 @@ export const categoryThemes: Record<string, CategoryTheme> = {
     ]
   },
   math: {
-    id: 'math',
     name: 'Tal og Regning',
-    gradient: 'linear-gradient(135deg, #F3E5F5 0%, #E1BEE7 50%, #CE93D8 100%)',
-    accentColor: '#9C27B0',
-    borderColor: '#BA68C8',
-    hoverBorderColor: '#9C27B0',
-    icon: '🧮',
-    iconSize: '4rem',
     description: 'Lær tal, optælling og grundlæggende matematik på en sjov måde',
     games: [
       {
@@ -120,14 +124,7 @@ export const categoryThemes: Record<string, CategoryTheme> = {
     ]
   },
   colors: {
-    id: 'colors',
     name: 'Farver',
-    gradient: 'linear-gradient(135deg, #FFF3E0 0%, #FFE0B2 50%, #FFCC80 100%)',
-    accentColor: '#E65100',
-    borderColor: '#FFB74D',
-    hoverBorderColor: '#FF6B00',
-    icon: '🎨',
-    iconSize: '4rem',
     description: 'Udforsk farver gennem interaktive spil og kreative aktiviteter',
     games: [
       {
@@ -147,14 +144,7 @@ export const categoryThemes: Record<string, CategoryTheme> = {
     ]
   },
   english: {
-    id: 'english',
     name: 'Engelsk',
-    gradient: 'linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 50%, #A5D6A7 100%)',
-    accentColor: '#2E7D32',
-    borderColor: '#66BB6A',
-    hoverBorderColor: '#2E7D32',
-    icon: '🌍',
-    iconSize: '4rem',
     description: 'Lær dine første engelske ord med billeder og lyd',
     games: [
       {
@@ -188,14 +178,7 @@ export const categoryThemes: Record<string, CategoryTheme> = {
     ]
   },
   ordleg: {
-    id: 'ordleg',
     name: 'Ordleg',
-    gradient: 'linear-gradient(135deg, #E0F2F1 0%, #B2DFDB 50%, #80CBC4 100%)',
-    accentColor: '#00796B',
-    borderColor: '#4DB6AC',
-    hoverBorderColor: '#00796B',
-    icon: '🗣️',
-    iconSize: '4rem',
     description: 'Stav ord og sig ord højt med din stemme',
     games: [
       {
@@ -223,12 +206,41 @@ export const categoryThemes: Record<string, CategoryTheme> = {
   }
 }
 
-// Helper function to get theme by category
+// Merge a category's themeable colors (from tokens) with its content/config.
+const toCategoryTheme = (id: CategoryId, tokens: ThemeTokens): CategoryTheme => {
+  const palette = tokens.categories[id]
+  const content = categoryContent[id]
+  return {
+    id,
+    name: content.name,
+    gradient: palette.gradient,
+    accentColor: palette.accent,
+    borderColor: palette.border,
+    hoverBorderColor: palette.hoverBorder,
+    icon: palette.icon,
+    iconSize: palette.iconSize,
+    description: content.description,
+    games: content.games,
+  }
+}
+
+const categoryIds = Object.keys(categoryContent) as CategoryId[]
+
+// Static map built from the DEFAULT theme — preserves the legacy `categoryThemes.<id>`
+// shape for direct property access. Color-bearing fields trace back to the default tokens.
+export const categoryThemes: Record<string, CategoryTheme> = Object.fromEntries(
+  categoryIds.map((id) => [id, toCategoryTheme(id, kidThemeTokens)])
+)
+
+// Helper function to get theme by category — reads the ACTIVE skin so a reskin/switch is
+// reflected at call time.
 export const getCategoryTheme = (categoryId: string): CategoryTheme => {
-  return categoryThemes[categoryId] || categoryThemes.alphabet
+  const tokens = getActiveTokens()
+  const id = (categoryId in tokens.categories ? categoryId : 'alphabet') as CategoryId
+  return toCategoryTheme(id, tokens)
 }
 
 // Helper function to get all theme IDs
 export const getCategoryIds = (): string[] => {
-  return Object.keys(categoryThemes)
+  return [...categoryIds]
 }
