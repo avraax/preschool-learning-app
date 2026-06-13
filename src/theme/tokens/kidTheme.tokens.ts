@@ -11,7 +11,8 @@ const FONT_FAMILY = '"Comic Neue", "Comic Sans MS", "Comic Sans", sans-serif'
 
 export const kidThemeTokens: ThemeTokens = {
   id: 'kid',
-  name: 'Børnelæring',
+  name: 'Regnbue',
+  selectorEmoji: '🌈',
   fontFamily: FONT_FAMILY,
 
   palette: {

@@ -14,9 +14,7 @@ import {
 } from '@mui/material'
 import { useTheme, alpha } from '@mui/material/styles'
 import {
-  ArrowLeft,
-  BookOpen,
-  Play
+  ArrowLeft
 } from 'lucide-react'
 
 // Route page components are lazy-loaded so the home screen ships a small initial
@@ -44,6 +42,7 @@ const SpellingGame = lazy(() => import('./components/ordleg/SpellingGame'))
 const SpeakWordGame = lazy(() => import('./components/ordleg/SpeakWordGame'))
 const MemoryGame = lazy(() => import('./components/learning/MemoryGame'))
 import UpdateBanner from './components/common/UpdateBanner'
+import ThemeSelector from './components/common/ThemeSelector'
 // Legacy audio system removed - using SimplifiedAudioProvider only
 import { useViewportHeight } from './hooks/useViewportHeight'
 // Demo system removed
@@ -366,26 +365,6 @@ const HomePage = () => {
               </motion.div>
             </Box>
           </motion.div>
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3, duration: 0.5 }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
-              <Play size={20} color={theme.decor.subtitleColor} />
-              <Typography
-                variant="h5"
-                sx={{
-                  fontSize: { xs: '1rem', sm: '1.25rem', md: '1.5rem' },
-                  color: theme.decor.subtitleColor,
-                  fontWeight: 600
-                }}
-              >
-                Lær med sjove spil!
-              </Typography>
-              <BookOpen size={20} color={theme.decor.subtitleColor} />
-            </Box>
-          </motion.div>
         </Box>
 
         {/* Main Content */}
@@ -465,13 +444,6 @@ const HomePage = () => {
                           >
                             {content.name}
                           </Typography>
-                          <Typography
-                            variant="body1"
-                            color="text.secondary"
-                            sx={{ fontSize: { xs: '0.875rem', md: '1rem' } }}
-                          >
-                            {content.description}
-                          </Typography>
                         </Box>
                       </CardContent>
                     </Card>
@@ -482,8 +454,13 @@ const HomePage = () => {
 
           </Grid>
         </Box>
+
+        {/* Theme selector */}
+        <Box sx={{ flex: '0 0 auto', pt: { xs: 1, md: 1.5 }, pb: { xs: 0.5, md: 1 } }}>
+          <ThemeSelector />
+        </Box>
       </Container>
-      
+
       {/* Balloons */}
       {balloons.map((balloon) => (
         <BalloonBase

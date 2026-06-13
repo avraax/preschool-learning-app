@@ -58,7 +58,7 @@ URL utilities in `src/utils/urlParams.ts`. All features must use URL routing wit
 - **Audio**: Centralized `SimplifiedAudioController` singleton (single audio at a time — new audio cancels current; **no queue**). See `.claude/rules/audio-system.md` for mandatory rules.
 - **Games**: Two patterns - task-based (quiz) and learning-based (exploration). Most quizzes are thin configs over `UnifiedQuizGame`. See `.claude/rules/game-development.md`.
 - **Layout**: Full-viewport, no-scroll game layouts. See `.claude/rules/responsive-design.md`.
-- **Theming**: Centralized in `src/config/categoryThemes.ts` (alphabet=blue, math=purple, colors=orange, english=green, ordleg=teal).
+- **Theming**: Fully token-driven. Each theme (skin) = one `ThemeTokens` object in `src/theme/tokens/*.tokens.ts`; `buildTheme(tokens)` maps it onto the MUI theme and attaches `theme.categories` / `theme.decor` / `theme.customShadows`. No styling values are hardcoded in components — read them via `useTheme()` or `getCategoryTheme(id)`. The active skin is chosen at runtime via the front-page **ThemeSelector** (`AppThemeProvider` in `src/theme/ThemeProvider.tsx`, persisted to `localStorage`). Ships 6 themes: Regnbue (default), Havet, Rummet, Junglen, Slikland, Dinosaurer. **Educational colors are NOT themeable** — Farvejagt/RamFarven color content stays as data. See "Adding a theme" below.
 - **State**: Local React state only, no global state management.
 - **Routing**: React Router v7 in `App.tsx` (lazy-loaded route components), `useNavigate()` for navigation, NavigationAudioCleanup for audio cleanup on route changes.
 - **PWA**: Network-only strategy (no offline caching), auto-generated service worker.
@@ -79,10 +79,17 @@ src/
   hooks/             useSimplifiedAudio.ts (component audio interface), useSpeechInput.ts (mic capture)
   utils/             SimplifiedAudioController.ts, urlParams.ts, deviceDetection.ts, remoteConsole.ts
   services/          googleTTS.ts
-  config/            categoryThemes.ts, englishVocab.ts, version.ts
+  config/            categoryThemes.ts (section content + token-backed colors), englishVocab.ts, version.ts
+  theme/             tokens/ (types.ts, helpers.ts, <skin>.tokens.ts), buildTheme.ts, themes.ts (registry), ThemeProvider.tsx
   api/               tts.ts, stt.ts, log-error.ts, version.ts  (Vercel serverless; mirror dev-server.js)
   App.tsx            Router + SimplifiedAudioProvider + NavigationAudioCleanup
 ```
+
+## Adding a theme
+
+1. Copy an existing `src/theme/tokens/<skin>.tokens.ts` (e.g. `ocean.tokens.ts`) to a new file, give it a unique `id`, a `name` + `selectorEmoji` (shown in the picker), and edit the colors. Use the `category()` / `gradient3()` / `neutralShadows()` helpers from `tokens/helpers.ts` so the structure matches other skins.
+2. Each theme must give the 5 sections (alphabet/math/colors/english/ordleg) **distinct, readable accents**. Keep `success` green-ish and `error` red-ish (kids read green=correct / red=wrong). Section emojis stay constant across skins (`SECTION_ICONS`).
+3. Register it: import and append to the `themes` array in `src/theme/themes.ts`. It appears in the front-page selector automatically. The default `kid` theme (`kidTheme.tokens.ts`) keeps hand-written exact values; don't refactor it.
 
 ## Production Logs
 

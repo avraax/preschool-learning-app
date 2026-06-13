@@ -73,7 +73,8 @@ export interface ShadowTokens {
 
 export interface ThemeTokens {
   id: string
-  name: string
+  name: string            // human label shown in the front-page theme selector
+  selectorEmoji: string   // emoji shown in the front-page theme selector
   fontFamily: string
 
   palette: ThemePalette
