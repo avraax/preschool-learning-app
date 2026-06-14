@@ -350,8 +350,11 @@ const HomePage = () => {
         }}
       >
         {/* Header row: brand lockup (left) + theme selector (right), bounded by the same
-            Container margins as the cards below — so they line up with the card grid edges. */}
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2, mb: { xs: 1.5, md: 2 } }}>
+            Container margins as the cards below — so they line up with the card grid edges.
+            Explicit position+zIndex so the row (and the selector's drop-down popover) reliably
+            paints ABOVE the card grid below — the cards use backdrop-filter, which on WebKit
+            otherwise paints over siblings that lack their own stacking context. */}
+        <Box sx={{ position: 'relative', zIndex: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2, mb: { xs: 1.5, md: 2 } }}>
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -404,10 +407,12 @@ const HomePage = () => {
         </Box>
 
         {/* Main Content */}
-        <Box sx={{ 
-          flex: 1, 
-          display: 'flex', 
-          flexDirection: 'column', 
+        <Box sx={{
+          position: 'relative',
+          zIndex: 1,
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
           justifyContent: 'center',
           minHeight: 0
         }}>
