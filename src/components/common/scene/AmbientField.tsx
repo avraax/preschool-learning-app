@@ -52,10 +52,10 @@ const ambientKeyframes = {
     '100%': { transform: 'translate(var(--drift, 0px), -100vh)', opacity: 0 },
   },
   '@keyframes ambient-fall': {
-    '0%': { transform: 'translate(0, -10vh)', opacity: 0 },
+    '0%': { transform: 'translate(0, -10vh) rotate(0deg)', opacity: 0 },
     '8%': { opacity: 0.9 },
     '92%': { opacity: 0.9 },
-    '100%': { transform: 'translate(var(--drift, 0px), 100vh)', opacity: 0 },
+    '100%': { transform: 'translate(var(--drift, 0px), 100vh) rotate(320deg)', opacity: 0 },
   },
   '@keyframes ambient-drift': {
     '0%': { transform: 'translate(-6vw, 0)', opacity: 0 },
@@ -102,7 +102,9 @@ const AmbientField: React.FC<AmbientFieldProps> = ({ scene, sprites, themeId, di
       const [min, max] = cssBubbles
         ? motion === 'twinkle'
           ? [4, 12] // stars are small
-          : [8, 22] // bubbles
+          : motion === 'fall'
+            ? [14, 30] // leaves
+            : [8, 22] // bubbles
         : specs[idx]?.size ?? [16, 32]
       return {
         url: sprites.length ? sprites[idx] : '',
@@ -149,14 +151,21 @@ const AmbientField: React.FC<AmbientFieldProps> = ({ scene, sprites, themeId, di
                       'radial-gradient(circle, rgba(255,255,255,1) 0%, rgba(255,247,214,0.9) 35%, rgba(255,247,214,0) 70%)',
                     boxShadow: '0 0 6px rgba(255,255,255,0.85)',
                   }
-                : {
-                    // CSS bubble: soft glassy sphere — subtle, so it reads as gentle ambience.
-                    borderRadius: '50%',
-                    background:
-                      'radial-gradient(circle at 33% 28%, rgba(255,255,255,0.85) 0%, rgba(255,255,255,0.25) 42%, rgba(200,240,255,0.08) 72%, rgba(200,240,255,0) 100%)',
-                    border: '1px solid rgba(255,255,255,0.5)',
-                    boxShadow: 'inset 0 0 6px rgba(255,255,255,0.35)',
-                  }),
+                : motion === 'fall'
+                  ? {
+                      // CSS leaf: rounded teardrop with a soft gradient (tumbles via keyframe).
+                      borderRadius: '0 100% 0 100%',
+                      background: 'linear-gradient(135deg, #9CCC65 0%, #558B2F 100%)',
+                      boxShadow: 'inset 1px -1px 2px rgba(0,0,0,0.18)',
+                    }
+                  : {
+                      // CSS bubble: soft glassy sphere — subtle, so it reads as gentle ambience.
+                      borderRadius: '50%',
+                      background:
+                        'radial-gradient(circle at 33% 28%, rgba(255,255,255,0.85) 0%, rgba(255,255,255,0.25) 42%, rgba(200,240,255,0.08) 72%, rgba(200,240,255,0) 100%)',
+                      border: '1px solid rgba(255,255,255,0.5)',
+                      boxShadow: 'inset 0 0 6px rgba(255,255,255,0.35)',
+                    }),
             '--drift': `${item.drift}px`,
             animation: `${animName} ${item.duration}s ${motion === 'twinkle' ? 'ease-in-out' : 'linear'} ${item.delay}s infinite`,
             willChange: 'transform, opacity',

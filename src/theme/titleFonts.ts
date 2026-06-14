@@ -16,6 +16,11 @@ const loaders: Record<string, () => Promise<unknown>> = {
       import('@fontsource/exo-2/latin-500.css'),
       import('@fontsource/exo-2/latin-700.css'),
     ]),
+  dino: () =>
+    Promise.all([
+      import('@fontsource/baloo-2/latin-500.css'),
+      import('@fontsource/baloo-2/latin-700.css'),
+    ]),
 }
 
 // Fire-and-forget: kicks off loading the active theme's title font (no-op if none/already).

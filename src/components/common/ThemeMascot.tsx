@@ -43,9 +43,8 @@ const ThemeMascot: React.FC<ThemeMascotProps> = ({ sx, onTap, parallaxDepth = 0.
   const nextBubbleId = useRef(0)
 
   const lines = theme.scene.mascot.lines
-  // Tap burst matches the world's ambient style: sparkly stars for twinkle worlds (space),
-  // bubbles otherwise (ocean, etc.).
-  const sparkle = theme.scene.ambient.motion === 'twinkle'
+  // Tap burst matches the world's ambient style: stars (space), leaves (dino), bubbles (ocean).
+  const burstMotion = theme.scene.ambient.motion
 
   useEffect(() => {
     let alive = true
@@ -177,7 +176,7 @@ const ThemeMascot: React.FC<ThemeMascotProps> = ({ sx, onTap, parallaxDepth = 0.
               width: b.size,
               height: b.size,
               borderRadius: '50%',
-              ...(sparkle
+              ...(burstMotion === 'twinkle'
                 ? {
                     // 4-point sparkle STAR (clip-path) so it's unmistakably not a bubble.
                     // Use filter drop-shadow (follows the clip), not box-shadow (would be rect).
@@ -186,6 +185,13 @@ const ThemeMascot: React.FC<ThemeMascotProps> = ({ sx, onTap, parallaxDepth = 0.
                     clipPath:
                       'polygon(50% 0%, 58% 42%, 100% 50%, 58% 58%, 50% 100%, 42% 58%, 0% 50%, 42% 42%)',
                     filter: 'drop-shadow(0 0 4px rgba(255,255,255,0.9))',
+                  }
+                : burstMotion === 'fall'
+                ? {
+                    // Leaf burst (dino) — playful poof of leaves.
+                    borderRadius: '0 100% 0 100%',
+                    background: 'linear-gradient(135deg, #9CCC65 0%, #558B2F 100%)',
+                    boxShadow: 'inset 1px -1px 2px rgba(0,0,0,0.18)',
                   }
                 : {
                     background:

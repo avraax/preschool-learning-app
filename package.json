@@ -21,6 +21,7 @@
     "@dnd-kit/utilities": "^3.2.2",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
+    "@fontsource/baloo-2": "^5.2.7",
     "@fontsource/comic-neue": "^5.2.7",
     "@fontsource/exo-2": "^5.2.8",
     "@fontsource/fredoka": "^5.2.10",

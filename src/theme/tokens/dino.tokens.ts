@@ -46,6 +46,32 @@ export const dinoThemeTokens: ThemeTokens = {
   },
 
   shadows: neutralShadows('#558B2F'),
+
+  // ---- Immersive world (Theme Worlds PRD) ----
+  // Baloo 2: chunky, playful, full Danish coverage (Bangers was the PRD pick but risks
+  // missing æøå as an all-caps display face).
+  titleFontFamily: `"Baloo 2", ${COMIC_FONT}`,
+
+  scene: {
+    dark: false,
+    layers: [{ src: '', depth: 0.65, anchor: 'center' }], // warm prehistoric backdrop
+    ambient: {
+      sprites: [], // CSS falling leaves (no art)
+      count: 14,
+      motion: 'fall',
+    },
+    mascot: {
+      src: '',
+      lines: ['Rooar! (en venlig en)', 'Lad os grave!', 'Flot fundet!'],
+    },
+    selectorThumb: '',
+  },
+
+  materials: {
+    cardFrame: '',
+    buttonGradient: 'linear-gradient(135deg, #558B2F 0%, #00796B 100%)',
+    motif: '',
+  },
 }
 
 export default dinoThemeTokens
