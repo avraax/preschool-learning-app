@@ -1,20 +1,14 @@
 import React, { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  Container,
   Box,
   Typography,
-  IconButton,
-  AppBar,
-  Toolbar,
   Card,
   Chip
 } from '@mui/material'
-import { ArrowLeft } from 'lucide-react'
 import { useTheme } from '@mui/material/styles'
 import { categoryThemes } from '../../config/categoryThemes'
-import GameMotif from '../common/GameMotif'
+import GameShell from '../common/GameShell'
 import { englishThemes, EnglishWord } from '../../config/englishVocab'
 import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 
@@ -22,7 +16,6 @@ import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 // + Danish translation), tap to hear the word in British English. Learning-based pattern:
 // direct audio on tap, no entry-audio coordination.
 const EnglishLearning: React.FC = () => {
-  const navigate = useNavigate()
   const muiTheme = useTheme()
   const theme = categoryThemes.english
   const audio = useSimplifiedAudioHook({ componentId: 'EnglishLearning', autoInitialize: false })
@@ -46,65 +39,13 @@ const EnglishLearning: React.FC = () => {
   }
 
   return (
-    <Box
-      sx={{
-        height: '100dvh',
-        overflow: 'hidden',
-        display: 'flex',
-        flexDirection: 'column',
-        background: theme.gradient,
-        position: 'relative',
-        isolation: 'isolate'
-      }}
+    <GameShell
+      categoryId="english"
+      title="Lær Engelsk"
+      backRoute="/english"
+      dense
+      guide={false}
     >
-      {/* Calm P4 motif behind the game content. */}
-      <GameMotif categoryId="english" />
-      <AppBar position="static" color="transparent" elevation={0}>
-        <Toolbar sx={{ justifyContent: 'space-between', py: 1.5 }}>
-          <IconButton
-            onClick={() => navigate('/english')}
-            color="primary"
-            size="large"
-            sx={{
-              bgcolor: 'rgba(255, 255, 255, 0.8)',
-              border: '1px solid rgba(255, 255, 255, 0.3)',
-              backdropFilter: 'blur(8px)',
-              '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.9)', transform: 'scale(1.05)' }
-            }}
-          >
-            <ArrowLeft size={24} />
-          </IconButton>
-          <Typography
-            variant="h5"
-            sx={{
-              fontFamily: muiTheme.titleFontFamily,
-              color: muiTheme.scene.dark ? '#FFFFFF' : theme.accentColor,
-              textShadow: muiTheme.scene.dark
-                ? '0 0 16px rgba(120,170,255,0.55), 0 2px 8px rgba(0,0,0,0.5)'
-                : 'none',
-              fontWeight: 700,
-              fontSize: { xs: '1.25rem', md: '1.6rem' },
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1
-            }}
-          >
-            📚 Lær Engelsk
-          </Typography>
-          <Box sx={{ width: 48 }} />
-        </Toolbar>
-      </AppBar>
-
-      <Container
-        maxWidth="lg"
-        sx={{
-          flex: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          py: { xs: 1, md: 2 },
-          overflow: 'hidden'
-        }}
-      >
         {/* Theme selector */}
         <Box
           sx={{
@@ -222,8 +163,7 @@ const EnglishLearning: React.FC = () => {
             </AnimatePresence>
           </Box>
         </Box>
-      </Container>
-    </Box>
+    </GameShell>
   )
 }
 

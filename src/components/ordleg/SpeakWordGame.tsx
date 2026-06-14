@@ -1,20 +1,15 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  Container,
   Box,
-  Typography,
-  IconButton,
-  AppBar,
-  Toolbar
+  Typography
 } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
-import { ArrowLeft, Mic, MicOff } from 'lucide-react'
+import { Mic, MicOff } from 'lucide-react'
 import { categoryThemes } from '../../config/categoryThemes'
-import LottieCharacter, { useCharacterState } from '../common/LottieCharacter'
-import GameMotif from '../common/GameMotif'
-import CelebrationEffect, { useCelebration } from '../common/CelebrationEffect'
+import GameShell from '../common/GameShell'
+import type { GuideReaction } from '../common/ThemeMascot'
+import { useCelebration } from '../common/CelebrationEffect'
 import { isIOS } from '../../utils/deviceDetection'
 import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 import { useSpeechInput, SpeechResult } from '../../hooks/useSpeechInput'
@@ -34,19 +29,26 @@ const extractFirstWord = (transcript: string): string => {
 }
 
 const SpeakWordGame: React.FC = () => {
-  const navigate = useNavigate()
   const muiTheme = useTheme()
   const theme = categoryThemes.ordleg
   const audio = useSimplifiedAudioHook({ componentId: 'SpeakWordGame', autoInitialize: false })
   const speech = useSpeechInput()
 
-  const teacher = useCharacterState('wave')
   const { showCelebration, celebrationIntensity, celebrate, stopCelebration } = useCelebration()
 
   const [phase, setPhaseState] = useState<Phase>('idle')
   const [recognizedWord, setRecognizedWord] = useState('')
   const [revealCount, setRevealCount] = useState(0)
   const [micFailed, setMicFailed] = useState(false)
+  const [guideReaction, setGuideReaction] = useState<GuideReaction>(null)
+  const guideReactionTimer = useRef<NodeJS.Timeout | null>(null)
+
+  // Cue the corner guide, clearing the reaction a beat later so it settles + re-fires.
+  const reactGuide = (reaction: GuideReaction) => {
+    setGuideReaction(reaction)
+    if (guideReactionTimer.current) clearTimeout(guideReactionTimer.current)
+    guideReactionTimer.current = setTimeout(() => setGuideReaction(null), 1100)
+  }
 
   const phaseRef = useRef<Phase>('idle')
   const setPhase = (p: Phase) => {
@@ -61,11 +63,10 @@ const SpeakWordGame: React.FC = () => {
   const mountedRef = useRef(true)
 
   useEffect(() => {
-    teacher.setCharacter('owl')
-    teacher.wave()
     return () => {
       mountedRef.current = false
       if (maxTimerRef.current) clearTimeout(maxTimerRef.current)
+      if (guideReactionTimer.current) clearTimeout(guideReactionTimer.current)
       speech.cancel()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -96,7 +97,6 @@ const SpeakWordGame: React.FC = () => {
     endingRef.current = false
     pressStartRef.current = Date.now()
     setPhase('recording')
-    teacher.wave()
 
     // getUserMedia must be invoked synchronously inside this gesture handler.
     const startPromise = speech.start().catch(err => {
@@ -158,7 +158,7 @@ const SpeakWordGame: React.FC = () => {
     if (!word) {
       // Friendly retry — no failure feeling.
       setPhase('retry')
-      teacher.think()
+      reactGuide('think')
       try {
         await audio.speak('Det hørte jeg ikke helt. Prøv igen!')
       } catch { /* ignore */ }
@@ -171,7 +171,7 @@ const SpeakWordGame: React.FC = () => {
     setRecognizedWord(word)
     setRevealCount(0)
     setPhase('spelling')
-    teacher.wave()
+    reactGuide('cheer')
 
     await runSpellingSequence(word)
 
@@ -219,77 +219,25 @@ const SpeakWordGame: React.FC = () => {
   const letters = recognizedWord.toUpperCase().split('')
 
   return (
-    <Box
-      sx={{
-        position: 'relative',
-        isolation: 'isolate',
-        height: '100dvh',
-        overflow: 'hidden',
-        display: 'flex',
-        flexDirection: 'column',
-        background: theme.gradient
-      }}
+    <GameShell
+      categoryId="ordleg"
+      title="Sig et Ord"
+      backRoute="/ordleg"
+      dense
+      guideReaction={guideReaction}
+      celebration={{ show: showCelebration, intensity: celebrationIntensity, onComplete: stopCelebration }}
     >
-      {/* Calm P4 motif behind the game content. */}
-      <GameMotif categoryId="ordleg" />
-      <AppBar position="static" color="transparent" elevation={0}>
-        <Toolbar sx={{ justifyContent: 'space-between', py: 1.5 }}>
-          <IconButton
-            onClick={() => navigate('/ordleg')}
-            color="primary"
-            size="large"
-            sx={{
-              bgcolor: 'rgba(255, 255, 255, 0.8)',
-              border: '1px solid rgba(255, 255, 255, 0.3)',
-              backdropFilter: 'blur(8px)',
-              '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.9)', transform: 'scale(1.05)' }
-            }}
-          >
-            <ArrowLeft size={24} />
-          </IconButton>
-          <Typography
-            variant="h5"
-            sx={{
-              fontFamily: muiTheme.titleFontFamily,
-              color: muiTheme.scene.dark ? '#FFFFFF' : theme.accentColor,
-              fontWeight: 700,
-              fontSize: { xs: '1.25rem', md: '1.6rem' },
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1,
-              textShadow: muiTheme.scene.dark
-                ? '0 0 16px rgba(120,170,255,0.55), 0 2px 8px rgba(0,0,0,0.5)'
-                : 'none'
-            }}
-          >
-            🎤 Sig et Ord
-          </Typography>
-          <Box sx={{ width: 48 }} />
-        </Toolbar>
-      </AppBar>
-
-      <Container
-        maxWidth="md"
+      <Box
         sx={{
           flex: 1,
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          py: { xs: 1, md: 2 },
+          minHeight: 0,
           overflow: 'hidden'
         }}
       >
-        {/* Teacher character */}
-        <Box sx={{ flex: '0 0 auto', mb: { xs: 1, md: 2 } }}>
-          <LottieCharacter
-            character={teacher.character}
-            state={teacher.state}
-            size={88}
-            onClick={teacher.wave}
-          />
-        </Box>
-
         {!supported ? (
           // Graceful fallback when getUserMedia is unavailable / blocked.
           <Box sx={{ textAlign: 'center', px: 2 }}>
@@ -445,7 +393,7 @@ const SpeakWordGame: React.FC = () => {
             </Box>
           </>
         )}
-      </Container>
+      </Box>
 
       <AnimatePresence>
         {/* recognized word headline above the spelling once known */}
@@ -469,13 +417,7 @@ const SpeakWordGame: React.FC = () => {
           </motion.div>
         )}
       </AnimatePresence>
-
-      <CelebrationEffect
-        show={showCelebration}
-        intensity={celebrationIntensity}
-        onComplete={stopCelebration}
-      />
-    </Box>
+    </GameShell>
   )
 }
 

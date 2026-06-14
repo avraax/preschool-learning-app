@@ -1,17 +1,15 @@
 import React, { useState, useEffect } from 'react'
-import { Box, Typography, Container } from '@mui/material'
+import { Box, Typography } from '@mui/material'
 import { motion, AnimatePresence } from 'framer-motion'
 import { DndContext, DragEndEvent, DragStartEvent, closestCenter } from '@dnd-kit/core'
-import { categoryThemes } from '../../config/categoryThemes'
 import { ColorScoreChip } from '../common/ScoreChip'
 import { DraggableItem } from '../common/dnd/DraggableItem'
 import { DroppableZone } from '../common/dnd/DroppableZone'
 import { useCharacterState } from '../common/LottieCharacter'
-import CelebrationEffect, { useCelebration } from '../common/CelebrationEffect'
+import { useCelebration } from '../common/CelebrationEffect'
 import { ColorRepeatButton } from '../common/RepeatButton'
 import { useGameState } from '../../hooks/useGameState'
-import GameHeader from '../common/GameHeader'
-import GameMotif from '../common/GameMotif'
+import GameShell from '../common/GameShell'
 import { isIOS } from '../../utils/deviceDetection'
 // Simplified audio system
 import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
@@ -329,44 +327,22 @@ const RamFarvenGame: React.FC = () => {
   }
 
   return (
-    <Box sx={{
-      height: '100dvh',
-      overflow: 'hidden',
-      display: 'flex',
-      flexDirection: 'column',
-      position: 'relative',
-      isolation: 'isolate',
-      background: categoryThemes.colors.gradient
-    }}>
-      {/* Calm P4 motif behind the game content. */}
-      <GameMotif categoryId="colors" />
-      <GameHeader
-        title="Ram Farven"
-        titleIcon="🎨"
-        gameIcon="🎯"
-        character={colorTeacher}
-        categoryTheme={categoryThemes.colors}
-        backPath="/farver"
-        scoreComponent={
-          <ColorScoreChip
-            score={score}
-            disabled={isScoreNarrating}
-            onClick={handleScoreClick}
-          />
-        }
-      />
-
-      <Container 
-        maxWidth="lg" 
-        sx={{ 
-          flex: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          py: { xs: 1, sm: 1.5, md: 2 },
-          overflow: 'hidden'
-        }}
-      >
-        <Box sx={{ 
+    <GameShell
+      categoryId="colors"
+      title="Ram Farven"
+      backRoute="/farver"
+      dense
+      guide={false}
+      score={
+        <ColorScoreChip
+          score={score}
+          disabled={isScoreNarrating}
+          onClick={handleScoreClick}
+        />
+      }
+      celebration={{ show: showCelebration, intensity: celebrationIntensity, onComplete: stopCelebration }}
+    >
+        <Box sx={{
           flex: 1,
           background: 'transparent',
           overflow: 'hidden',
@@ -534,15 +510,7 @@ const RamFarvenGame: React.FC = () => {
             </DndContext>
           </Box>
         </Box>
-      </Container>
-      
-      {/* Celebration Effect */}
-      <CelebrationEffect
-        show={showCelebration}
-        intensity={celebrationIntensity}
-        onComplete={stopCelebration}
-      />
-    </Box>
+    </GameShell>
   )
 }
 

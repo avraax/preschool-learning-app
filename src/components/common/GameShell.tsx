@@ -22,6 +22,11 @@ interface GameShellProps {
   score?: React.ReactNode
   guideReaction?: GuideReaction      // 'cheer' on correct, 'think' on wrong
   celebration?: { show: boolean; intensity?: 'low' | 'medium' | 'high'; onComplete?: () => void }
+  // Hide the corner companion on screens whose play area fills the viewport (learning/memory/
+  // color grids), where a bottom-corner mascot would overlap interactive content.
+  guide?: boolean
+  // Tighter title + paddings for vertically dense games (learning grids, memory, etc.).
+  dense?: boolean
   children: React.ReactNode
 }
 
@@ -32,6 +37,8 @@ const GameShell: React.FC<GameShellProps> = ({
   score,
   guideReaction = null,
   celebration,
+  guide = true,
+  dense = false,
   children,
 }) => {
   const navigate = useNavigate()
@@ -84,12 +91,12 @@ const GameShell: React.FC<GameShellProps> = ({
           flex: 1,
           display: 'flex',
           flexDirection: 'column',
-          py: { xs: 2, md: 3 },
+          py: dense ? { xs: 1, md: 2 } : { xs: 2, md: 3 },
           overflow: 'hidden',
         }}
       >
         {/* Themed title (dark worlds → light text + glow; light → accent + soft shadow). */}
-        <Box sx={{ textAlign: 'center', mb: { xs: 2, md: 3 }, flex: '0 0 auto' }}>
+        <Box sx={{ textAlign: 'center', mb: dense ? { xs: 1, md: 1.5 } : { xs: 2, md: 3 }, flex: '0 0 auto' }}>
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -101,7 +108,7 @@ const GameShell: React.FC<GameShellProps> = ({
                 fontFamily: theme.titleFontFamily,
                 color: dark ? '#FFFFFF' : category.accentColor,
                 fontWeight: 700,
-                fontSize: { xs: '1.6rem', md: '2.1rem' },
+                fontSize: dense ? { xs: '1.3rem', md: '1.7rem' } : { xs: '1.6rem', md: '2.1rem' },
                 textShadow: dark
                   ? '0 0 16px rgba(120,170,255,0.55), 0 2px 8px rgba(0,0,0,0.5)'
                   : `1px 1px 2px ${category.accentColor}33`,
@@ -118,8 +125,9 @@ const GameShell: React.FC<GameShellProps> = ({
         </Box>
       </Container>
 
-      {/* Bottom-left corner companion that reacts to answers. */}
-      <GameGuide reaction={guideReaction} />
+      {/* Bottom-left corner companion that reacts to answers (omitted where it would overlap a
+          full-viewport interactive grid). */}
+      {guide && <GameGuide reaction={guideReaction} />}
 
       {celebration && (
         <CelebrationEffect

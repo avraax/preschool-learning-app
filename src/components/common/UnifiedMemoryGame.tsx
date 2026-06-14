@@ -1,13 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { Container, Box } from '@mui/material'
+import { Box } from '@mui/material'
 import { motion } from 'framer-motion'
 import { CategoryTheme } from '../../config/categoryThemes'
 import { useCharacterState } from '../common/LottieCharacter'
-import CelebrationEffect, { useCelebration } from '../common/CelebrationEffect'
+import { useCelebration } from '../common/CelebrationEffect'
 import { DANISH_PHRASES } from '../../config/danish-phrases'
 import { useGameState } from '../../hooks/useGameState'
-import GameHeader from '../common/GameHeader'
-import GameMotif from './GameMotif'
+import GameShell from './GameShell'
 import { isIOS } from '../../utils/deviceDetection'
 // Simplified audio system
 import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
@@ -411,46 +410,22 @@ const UnifiedMemoryGame: React.FC<UnifiedMemoryGameProps> = ({ config }) => {
   const RestartButtonComponent = config.RestartButtonComponent
 
   return (
-    <>
-      <style>{flipStyles}</style>
-      <Box
-        sx={{
-          height: '100dvh',
-          overflow: 'hidden',
-          display: 'flex',
-          flexDirection: 'column',
-          position: 'relative',
-          isolation: 'isolate',
-          background: config.theme.gradient
-        }}
-      >
-      {/* Calm P4 motif behind the game content. */}
-      <GameMotif categoryId={config.theme.id} />
-      <GameHeader
-        title={config.title}
-        titleIcon="🧠"
-        character={teacher}
-        categoryTheme={config.theme}
-        backPath={config.backPath}
-        scoreComponent={
-          <ScoreComponent
-            score={score}
-            disabled={isScoreNarrating}
-            onClick={handleScoreClick}
-          />
-        }
-      />
-
-      <Container 
-        maxWidth="xl" 
-        sx={{ 
-          flex: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          py: { xs: 0.5, md: 1 },
-          overflow: 'hidden'
-        }}
-      >
+    <GameShell
+      categoryId={config.theme.id}
+      title={config.title}
+      backRoute={config.backPath}
+      dense
+      guide={false}
+      score={
+        <ScoreComponent
+          score={score}
+          disabled={isScoreNarrating}
+          onClick={handleScoreClick}
+        />
+      }
+      celebration={{ show: showCelebration, intensity: celebrationIntensity, onComplete: stopCelebration }}
+    >
+        <style>{flipStyles}</style>
         {/* Controls */}
         <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mb: { xs: 1, md: 2 }, flex: '0 0 auto' }}>
           <RestartButtonComponent
@@ -461,7 +436,7 @@ const UnifiedMemoryGame: React.FC<UnifiedMemoryGameProps> = ({ config }) => {
             onClick={repeatInstructions}
             disabled={false}
             size="small"
-            label="🎵 Hør igen"
+            label="Hør igen"
           />
         </Box>
 
@@ -644,17 +619,7 @@ const UnifiedMemoryGame: React.FC<UnifiedMemoryGameProps> = ({ config }) => {
             }) : null}
           </Box>
         </Box>
-
-      </Container>
-
-      {/* Celebration Effect */}
-      <CelebrationEffect
-        show={showCelebration}
-        intensity={celebrationIntensity}
-        onComplete={stopCelebration}
-      />
-    </Box>
-    </>
+    </GameShell>
   )
 }
 

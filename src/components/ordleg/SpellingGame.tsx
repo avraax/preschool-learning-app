@@ -1,21 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  Container,
   Box,
   Typography,
-  IconButton,
-  AppBar,
-  Toolbar,
   Paper
 } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
-import { ArrowLeft } from 'lucide-react'
 import { categoryThemes } from '../../config/categoryThemes'
-import LottieCharacter, { useCharacterState } from '../common/LottieCharacter'
-import GameMotif from '../common/GameMotif'
-import CelebrationEffect, { useCelebration } from '../common/CelebrationEffect'
+import GameShell from '../common/GameShell'
+import type { GuideReaction } from '../common/ThemeMascot'
+import { useCelebration } from '../common/CelebrationEffect'
 import { OrdlegScoreChip } from '../common/ScoreChip'
 import { OrdlegRepeatButton } from '../common/RepeatButton'
 import { useGameState } from '../../hooks/useGameState'
@@ -74,7 +68,6 @@ interface LetterTile {
 }
 
 const SpellingGame: React.FC = () => {
-  const navigate = useNavigate()
   const muiTheme = useTheme()
 
   // Current word and its uppercase letters
@@ -84,6 +77,8 @@ const SpellingGame: React.FC = () => {
   const [tiles, setTiles] = useState<LetterTile[]>([])
   const [usedTileIds, setUsedTileIds] = useState<Set<string>>(new Set())
   const [shakeTileId, setShakeTileId] = useState<string | null>(null)
+  const [guideReaction, setGuideReaction] = useState<GuideReaction>(null)
+  const guideReactionTimer = useRef<NodeJS.Timeout | null>(null)
 
   // Simplified audio system
   const audio = useSimplifiedAudioHook({
@@ -102,9 +97,15 @@ const SpellingGame: React.FC = () => {
   // Timeout ref for cleanup
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
 
-  // Character and celebration management
-  const teacher = useCharacterState('wave')
+  // Celebration management (corner guide reacts via guideReaction)
   const { showCelebration, celebrationIntensity, celebrate, stopCelebration } = useCelebration()
+
+  // Cue the corner guide, clearing the reaction a beat later so it settles + re-fires.
+  const reactGuide = (reaction: GuideReaction) => {
+    setGuideReaction(reaction)
+    if (guideReactionTimer.current) clearTimeout(guideReactionTimer.current)
+    guideReactionTimer.current = setTimeout(() => setGuideReaction(null), 1100)
+  }
 
   const logError = (message: string, data?: any) => {
     if (message.includes('Error') || message.includes('error')) {
@@ -116,9 +117,6 @@ const SpellingGame: React.FC = () => {
     if (hasInitialized.current) return
     hasInitialized.current = true
 
-    teacher.setCharacter('owl')
-    teacher.wave()
-
     if (audio.isAudioReady) {
       setAudioInitialized(true)
       playWelcomeAndStart()
@@ -128,6 +126,10 @@ const SpellingGame: React.FC = () => {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current)
         timeoutRef.current = null
+      }
+      if (guideReactionTimer.current) {
+        clearTimeout(guideReactionTimer.current)
+        guideReactionTimer.current = null
       }
     }
   }, [])
@@ -238,7 +240,7 @@ const SpellingGame: React.FC = () => {
     } else {
       // Wrong letter: shake and leave it in the pool
       setShakeTileId(tile.id)
-      teacher.think()
+      reactGuide('think')
       setTimeout(() => setShakeTileId(null), 450)
     }
   }
@@ -249,7 +251,7 @@ const SpellingGame: React.FC = () => {
 
     incrementScore()
     celebrate()
-    teacher.wave()
+    reactGuide('cheer')
 
     // Play the full word again, then advance to the next one
     setTimeout(async () => {
@@ -280,83 +282,21 @@ const SpellingGame: React.FC = () => {
   const availableTiles = tiles.filter(t => !usedTileIds.has(t.id))
 
   return (
-    <Box
-      sx={{
-        position: 'relative',
-        isolation: 'isolate',
-        height: '100dvh',
-        overflow: 'hidden',
-        display: 'flex',
-        flexDirection: 'column',
-        background: theme.gradient
-      }}
+    <GameShell
+      categoryId="ordleg"
+      title="Stav Ordet"
+      backRoute="/ordleg"
+      dense
+      guideReaction={guideReaction}
+      score={
+        <OrdlegScoreChip
+          score={score}
+          disabled={isScoreNarrating}
+          onClick={handleScoreClick}
+        />
+      }
+      celebration={{ show: showCelebration, intensity: celebrationIntensity, onComplete: stopCelebration }}
     >
-      {/* Calm P4 motif behind the game content. */}
-      <GameMotif categoryId="ordleg" />
-      {/* App Bar with Back Button and Score */}
-      <AppBar position="static" color="transparent" elevation={0}>
-        <Toolbar sx={{ justifyContent: 'space-between', py: 2 }}>
-          <IconButton
-            onClick={() => navigate('/ordleg')}
-            color="primary"
-            size="large"
-            sx={{
-              bgcolor: 'rgba(255, 255, 255, 0.8)',
-              border: '1px solid rgba(255, 255, 255, 0.3)',
-              backdropFilter: 'blur(8px)',
-              '&:hover': {
-                bgcolor: 'rgba(255, 255, 255, 0.9)',
-                transform: 'scale(1.05)'
-              }
-            }}
-          >
-            <ArrowLeft size={24} />
-          </IconButton>
-
-          <OrdlegScoreChip
-            score={score}
-            disabled={isScoreNarrating}
-            onClick={handleScoreClick}
-          />
-        </Toolbar>
-      </AppBar>
-
-      <Container
-        maxWidth="md"
-        sx={{
-          flex: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          py: { xs: 1.5, md: 2 },
-          overflow: 'hidden'
-        }}
-      >
-        {/* Title with teacher */}
-        <Box sx={{ textAlign: 'center', mb: { xs: 1, md: 1.5 }, flex: '0 0 auto' }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1.5 }}>
-            <LottieCharacter
-              character={teacher.character}
-              state={teacher.state}
-              size={64}
-              onClick={teacher.wave}
-            />
-            <Typography
-              variant="h4"
-              sx={{
-                fontFamily: muiTheme.titleFontFamily,
-                color: muiTheme.scene.dark ? '#FFFFFF' : theme.accentColor,
-                fontWeight: 700,
-                fontSize: { xs: '1.3rem', md: '1.75rem' },
-                textShadow: muiTheme.scene.dark
-                  ? '0 0 16px rgba(120,170,255,0.55), 0 2px 8px rgba(0,0,0,0.5)'
-                  : 'none'
-              }}
-            >
-              ✏️ Stav Ordet
-            </Typography>
-          </Box>
-        </Box>
-
         {gameReady && current && (
           <>
             {/* Word prompt: emoji + word + repeat */}
@@ -518,15 +458,7 @@ const SpellingGame: React.FC = () => {
             </Box>
           </>
         )}
-      </Container>
-
-      {/* Celebration Effect */}
-      <CelebrationEffect
-        show={showCelebration}
-        intensity={celebrationIntensity}
-        onComplete={stopCelebration}
-      />
-    </Box>
+    </GameShell>
   )
 }
 

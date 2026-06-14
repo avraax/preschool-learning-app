@@ -1,23 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
-  Container,
   Typography,
   Box,
-  IconButton,
-  AppBar,
-  Toolbar,
   LinearProgress,
   Card
 } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
-import {
-  ArrowBack,
-  School
-} from '@mui/icons-material'
-import { categoryThemes } from '../../config/categoryThemes'
-import GameMotif from '../common/GameMotif'
+import GameShell from '../common/GameShell'
 import LearningGrid from '../common/LearningGrid'
 import { isIOS } from '../../utils/deviceDetection'
 // Simplified audio system
@@ -25,7 +15,6 @@ import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 
 
 const NumberLearning: React.FC = () => {
-  const navigate = useNavigate()
   const muiTheme = useTheme()
   const [currentIndex, setCurrentIndex] = useState(0)
   // Simplified audio system
@@ -126,154 +115,96 @@ const NumberLearning: React.FC = () => {
   const progress = ((currentIndex + 1) / numbers.length) * 100
 
   return (
-    <Box
-      sx={{
-        position: 'relative',
-        isolation: 'isolate',
-        height: '100dvh',
-        overflow: 'hidden',
-        display: 'flex',
-        flexDirection: 'column',
-        background: categoryThemes.math.gradient
-      }}
-    >
-      {/* Calm P4 motif behind the game content. */}
-      <GameMotif categoryId="math" />
-      {/* App Bar with Back Button and Progress */}
-      <AppBar position="static" color="transparent" elevation={0}>
-        <Toolbar sx={{ justifyContent: 'space-between', py: 2 }}>
-          <IconButton 
-            onClick={() => navigate('/math')}
-            color="primary"
-            size="large"
-            sx={{ 
-              bgcolor: 'white', 
-              boxShadow: 3,
-              '&:hover': { boxShadow: 6 }
+    <GameShell
+      categoryId="math"
+      title="Lær Tal"
+      backRoute="/math"
+      dense
+      guide={false}
+      score={
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Typography
+            variant="body2"
+            onClick={async () => {
+              // Critical iOS fix: Update user interaction timestamp BEFORE audio call
+              audio.updateUserInteraction()
+              try {
+                await audio.announcePosition(currentIndex, numbers.length, 'tal')
+              } catch (error) {
+                logError('Error announcing position', { error: error?.toString() })
+              }
             }}
-          >
-            <ArrowBack />
-          </IconButton>
-          
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Typography 
-              variant="body2" 
-              onClick={async () => {
-                // Critical iOS fix: Update user interaction timestamp BEFORE audio call
-                audio.updateUserInteraction()
-                try {
-                  await audio.announcePosition(currentIndex, numbers.length, 'tal')
-                } catch (error) {
-                  logError('Error announcing position', { error: error?.toString() })
-                }
-              }}
-              sx={{ 
-                color: 'secondary.dark', 
-                fontWeight: 600,
-                cursor: 'pointer',
-                padding: '4px 8px',
-                borderRadius: 1,
-                '&:hover': { 
-                  backgroundColor: 'secondary.50',
-                  boxShadow: 1
-                }
-              }}
-            >
-              {currentIndex + 1} / {numbers.length}
-            </Typography>
-            <Box sx={{ width: 200, bgcolor: 'white', borderRadius: 1, p: 0.5 }}>
-              <LinearProgress 
-                variant="determinate" 
-                value={progress} 
-                color="secondary"
-                sx={{ height: 8, borderRadius: 1 }}
-              />
-            </Box>
-          </Box>
-        </Toolbar>
-      </AppBar>
-
-      <Container 
-        maxWidth="lg" 
-        sx={{ 
-          flex: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          py: { xs: 1, md: 2 },
-          overflow: 'hidden'
-        }}
-      >
-        {/* Title - Very Compact */}
-        <Box sx={{ textAlign: 'center', mb: { xs: 1, md: 1.5 } }}>
-          <Typography 
-            variant="h5"
             sx={{
-              fontFamily: muiTheme.titleFontFamily,
-              fontSize: { xs: '1.25rem', md: '1.5rem' },
               color: muiTheme.scene.dark ? '#FFFFFF' : 'secondary.dark',
-              fontWeight: 700,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 0.5,
-              textShadow: muiTheme.scene.dark
-                ? '0 0 16px rgba(120,170,255,0.55), 0 2px 8px rgba(0,0,0,0.5)'
-                : 'none'
+              fontWeight: 600,
+              cursor: 'pointer',
+              padding: '4px 8px',
+              borderRadius: 1,
+              '&:hover': {
+                backgroundColor: 'secondary.50',
+                boxShadow: 1
+              }
             }}
           >
-            <School sx={{ fontSize: { xs: '1.25rem', md: '1.5rem' } }} /> Lær Tal
+            {currentIndex + 1} / {numbers.length}
           </Typography>
+          <Box sx={{ width: { xs: 120, sm: 200 }, bgcolor: 'white', borderRadius: 1, p: 0.5 }}>
+            <LinearProgress
+              variant="determinate"
+              value={progress}
+              color="secondary"
+              sx={{ height: 8, borderRadius: 1 }}
+            />
+          </Box>
         </Box>
-
-
-        {/* Current Number Display - Very Compact */}
-        <Box sx={{ textAlign: 'center', mb: { xs: 1, md: 1.5 }, flex: '0 0 auto' }}>
-          <motion.div
-            key={currentIndex}
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.3 }}
+      }
+    >
+      {/* Current Number Display - Very Compact */}
+      <Box sx={{ textAlign: 'center', mb: { xs: 1, md: 1.5 }, flex: '0 0 auto' }}>
+        <motion.div
+          key={currentIndex}
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 0.3 }}
+        >
+          <Card
+            sx={{
+              maxWidth: { xs: 120, md: 150 },
+              mx: 'auto',
+              p: { xs: 1, md: 1.5 },
+              bgcolor: audio.isPlaying ? 'secondary.50' : 'white',
+              border: '2px solid',
+              borderColor: audio.isPlaying ? 'secondary.main' : 'primary.200',
+              transition: 'all 0.3s ease',
+              boxShadow: muiTheme.scene.dark
+                ? '0 12px 30px rgba(0,0,0,0.45)'
+                : '0 6px 18px rgba(0,0,0,0.12)'
+            }}
           >
-            <Card
+            <Typography
+              variant="h1"
               sx={{
-                maxWidth: { xs: 120, md: 150 },
-                mx: 'auto',
-                p: { xs: 1, md: 1.5 },
-                bgcolor: audio.isPlaying ? 'secondary.50' : 'white',
-                border: '2px solid',
-                borderColor: audio.isPlaying ? 'secondary.main' : 'primary.200',
-                transition: 'all 0.3s ease',
-                boxShadow: muiTheme.scene.dark
-                  ? '0 12px 30px rgba(0,0,0,0.45)'
-                  : '0 6px 18px rgba(0,0,0,0.12)'
+                fontSize: { xs: '2.5rem', md: '3.5rem' },
+                fontWeight: 700,
+                color: 'primary.dark',
+                textAlign: 'center',
+                lineHeight: 1
               }}
             >
-              <Typography
-                variant="h1"
-                sx={{
-                  fontSize: { xs: '2.5rem', md: '3.5rem' },
-                  fontWeight: 700,
-                  color: 'primary.dark',
-                  textAlign: 'center',
-                  lineHeight: 1
-                }}
-              >
-                {numbers[currentIndex]}
-              </Typography>
-            </Card>
-          </motion.div>
-        </Box>
+              {numbers[currentIndex]}
+            </Typography>
+          </Card>
+        </motion.div>
+      </Box>
 
-
-        {/* Numbers Grid - Using Reusable Component */}
-        <LearningGrid
-          items={numbers}
-          currentIndex={currentIndex}
-          onItemClick={goToNumber}
-          disabled={!gameReady}
-        />
-      </Container>
-    </Box>
+      {/* Numbers Grid - Using Reusable Component */}
+      <LearningGrid
+        items={numbers}
+        currentIndex={currentIndex}
+        onItemClick={goToNumber}
+        disabled={!gameReady}
+      />
+    </GameShell>
   )
 }
 

@@ -1,23 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
-import { useNavigate } from 'react-router-dom'
 import {
-  Container,
   Typography,
   Box,
-  IconButton,
-  AppBar,
-  Toolbar,
   LinearProgress,
   Card
 } from '@mui/material'
-import {
-  ArrowBack,
-  School
-} from '@mui/icons-material'
 import { alpha, useTheme } from '@mui/material/styles'
 import { categoryThemes } from '../../config/categoryThemes'
-import GameMotif from '../common/GameMotif'
+import GameShell from '../common/GameShell'
 import LearningGrid from '../common/LearningGrid'
 import { isIOS } from '../../utils/deviceDetection'
 // Simplified audio system
@@ -37,7 +28,6 @@ const DANISH_ALPHABET = [
 ]
 
 const AlphabetLearning: React.FC = () => {
-  const navigate = useNavigate()
   const muiTheme = useTheme()
   const [currentIndex, setCurrentIndex] = useState(0)
   // Simplified audio system
@@ -124,108 +114,49 @@ const AlphabetLearning: React.FC = () => {
   const progress = ((currentIndex + 1) / DANISH_ALPHABET.length) * 100
 
   return (
-    <Box 
-      sx={{ 
-        height: '100dvh',
-        overflow: 'hidden',
-        display: 'flex',
-        flexDirection: 'column',
-        background: categoryThemes.alphabet.gradient,
-        position: 'relative',
-        isolation: 'isolate'
-      }}
-    >
-      {/* Calm P4 motif behind the game content. */}
-      <GameMotif categoryId="alphabet" />
-      {/* App Bar with Back Button and Progress */}
-      <AppBar position="static" color="transparent" elevation={0}>
-        <Toolbar sx={{ justifyContent: 'space-between', py: 2 }}>
-          <IconButton 
-            onClick={() => navigate('/alphabet')}
-            color="primary"
-            size="large"
-            sx={{ 
-              bgcolor: 'rgba(255, 255, 255, 0.8)', 
-              border: '1px solid rgba(255, 255, 255, 0.3)',
-              backdropFilter: 'blur(8px)',
-              '&:hover': { 
-                bgcolor: 'rgba(255, 255, 255, 0.9)',
-                transform: 'scale(1.05)'
+    <GameShell
+      categoryId="alphabet"
+      title="Lær Alfabetet"
+      backRoute="/alphabet"
+      dense
+      guide={false}
+      score={
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Typography
+            variant="body2"
+            onClick={async () => {
+              // Critical iOS fix: Update user interaction timestamp BEFORE audio call
+              audio.updateUserInteraction()
+              try {
+                await audio.announcePosition(currentIndex, DANISH_ALPHABET.length, 'bogstav')
+              } catch (error) {
+                logError('Error announcing position', { error: error?.toString() })
+              }
+            }}
+            sx={{
+              color: muiTheme.scene.dark ? '#FFFFFF' : 'primary.dark',
+              fontWeight: 600,
+              cursor: 'pointer',
+              padding: '4px 8px',
+              borderRadius: 1,
+              '&:hover': {
+                backgroundColor: 'primary.50',
+                boxShadow: 1
               }
             }}
           >
-            <ArrowBack />
-          </IconButton>
-          
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Typography 
-              variant="body2" 
-              onClick={async () => {
-                // Critical iOS fix: Update user interaction timestamp BEFORE audio call
-                audio.updateUserInteraction()
-                try {
-                  await audio.announcePosition(currentIndex, DANISH_ALPHABET.length, 'bogstav')
-                } catch (error) {
-                  logError('Error announcing position', { error: error?.toString() })
-                }
-              }}
-              sx={{ 
-                color: 'primary.dark', 
-                fontWeight: 600,
-                cursor: 'pointer',
-                padding: '4px 8px',
-                borderRadius: 1,
-                '&:hover': { 
-                  backgroundColor: 'primary.50',
-                  boxShadow: 1
-                }
-              }}
-            >
-              {currentIndex + 1} / {DANISH_ALPHABET.length}
-            </Typography>
-            <Box sx={{ width: 200, bgcolor: 'white', borderRadius: 1, p: 0.5 }}>
-              <LinearProgress 
-                variant="determinate" 
-                value={progress} 
-                sx={{ height: 8, borderRadius: 1 }}
-              />
-            </Box>
-          </Box>
-        </Toolbar>
-      </AppBar>
-
-      <Container 
-        maxWidth="lg" 
-        sx={{ 
-          flex: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          py: { xs: 1, md: 2 },
-          overflow: 'hidden'
-        }}
-      >
-        {/* Title - More Space */}
-        <Box sx={{ textAlign: 'center', mb: { xs: 2, md: 3 } }}>
-          <Typography
-            variant="h4"
-            sx={{
-              fontFamily: muiTheme.titleFontFamily,
-              fontSize: { xs: '1.5rem', md: '2rem' },
-              color: muiTheme.scene.dark ? '#FFFFFF' : 'primary.dark',
-              textShadow: muiTheme.scene.dark
-                ? '0 0 16px rgba(120,170,255,0.55), 0 2px 8px rgba(0,0,0,0.5)'
-                : 'none',
-              fontWeight: 700,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 0.5
-            }}
-          >
-            <School sx={{ fontSize: { xs: '1.5rem', md: '2rem' } }} /> Lær Alfabetet
+            {currentIndex + 1} / {DANISH_ALPHABET.length}
           </Typography>
+          <Box sx={{ width: { xs: 120, sm: 200 }, bgcolor: 'white', borderRadius: 1, p: 0.5 }}>
+            <LinearProgress
+              variant="determinate"
+              value={progress}
+              sx={{ height: 8, borderRadius: 1 }}
+            />
+          </Box>
         </Box>
-
+      }
+    >
         {/* Current Letter Display - Enhanced Visual */}
         <Box sx={{ textAlign: 'center', mb: { xs: 2, md: 3 }, flex: '0 0 auto' }}>
           <motion.div
@@ -293,15 +224,14 @@ const AlphabetLearning: React.FC = () => {
         </Box>
 
 
-        {/* Alphabet Grid - Using Reusable Component */}
-        <LearningGrid
-          items={DANISH_ALPHABET}
-          currentIndex={currentIndex}
-          onItemClick={goToLetter}
-          disabled={!gameReady}
-        />
-      </Container>
-      
+      {/* Alphabet Grid - Using Reusable Component */}
+      <LearningGrid
+        items={DANISH_ALPHABET}
+        currentIndex={currentIndex}
+        onItemClick={goToLetter}
+        disabled={!gameReady}
+      />
+
       {/* CSS Animation for pulse effect */}
       <style>
         {`
@@ -312,7 +242,7 @@ const AlphabetLearning: React.FC = () => {
           }
         `}
       </style>
-    </Box>
+    </GameShell>
   )
 }
 

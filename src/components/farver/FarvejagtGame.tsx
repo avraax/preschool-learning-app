@@ -1,16 +1,14 @@
 import React, { useState, useEffect } from 'react'
-import { Box, Typography, Button, Container, Chip } from '@mui/material'
+import { Box, Typography, Button, Chip } from '@mui/material'
 import { DndContext, DragEndEvent, DragStartEvent, DragOverlay, closestCenter } from '@dnd-kit/core'
-import { categoryThemes } from '../../config/categoryThemes'
 import { DraggableItem } from '../common/dnd/DraggableItem'
 import { DroppableZone } from '../common/dnd/DroppableZone'
 import { useCharacterState } from '../common/LottieCharacter'
-import CelebrationEffect, { useCelebration } from '../common/CelebrationEffect'
+import { useCelebration } from '../common/CelebrationEffect'
 import { ColorRepeatButton } from '../common/RepeatButton'
 import { ColorScoreChip } from '../common/ScoreChip'
 import { useGameState } from '../../hooks/useGameState'
-import GameHeader from '../common/GameHeader'
-import GameMotif from '../common/GameMotif'
+import GameShell from '../common/GameShell'
 import { isIOS } from '../../utils/deviceDetection'
 // Simplified audio system
 import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
@@ -470,43 +468,21 @@ const FarvejagtGame: React.FC = () => {
   // const activeItem = gameItems.find(item => item.id === activeId)
 
   return (
-    <Box sx={{
-      height: '100dvh',
-      overflow: 'hidden',
-      display: 'flex',
-      flexDirection: 'column',
-      position: 'relative',
-      isolation: 'isolate',
-      background: categoryThemes.colors.gradient
-    }}>
-      {/* Calm P4 motif behind the game content. */}
-      <GameMotif categoryId="colors" />
-      <GameHeader
-        title="Farvejagt"
-        titleIcon="🎨"
-        gameIcon="🎯"
-        character={colorHunter}
-        categoryTheme={categoryThemes.colors}
-        backPath="/farver"
-        scoreComponent={
-          <ColorScoreChip
-            score={score}
-            disabled={isScoreNarrating}
-            onClick={handleScoreClick}
-          />
-        }
-      />
-
-      <Container 
-        maxWidth="lg" 
-        sx={{ 
-          flex: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          py: { xs: 2, md: 3 },
-          overflow: 'hidden'
-        }}
-      >
+    <GameShell
+      categoryId="colors"
+      title="Farvejagt"
+      backRoute="/farver"
+      dense
+      guide={false}
+      score={
+        <ColorScoreChip
+          score={score}
+          disabled={isScoreNarrating}
+          onClick={handleScoreClick}
+        />
+      }
+      celebration={{ show: showCelebration, intensity: celebrationIntensity, onComplete: stopCelebration }}
+    >
         <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', alignItems: 'center', mb: 2 }}>
           <Chip 
             label={`${targetColor} ting: ${score}/${totalTarget}`} 
@@ -652,15 +628,7 @@ const FarvejagtGame: React.FC = () => {
           }
         `}
         </style>
-      </Container>
-      
-      {/* Celebration Effect */}
-      <CelebrationEffect
-        show={showCelebration}
-        intensity={celebrationIntensity}
-        onComplete={stopCelebration}
-      />
-    </Box>
+    </GameShell>
   )
 }
 
