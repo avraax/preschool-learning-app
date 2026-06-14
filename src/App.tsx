@@ -304,9 +304,12 @@ const HomePage = () => {
         WebkitUserSelect: 'none',
         userSelect: 'none',
         WebkitTouchCallout: 'none',
-        /* Rainbow arc background */
+        /* Rainbow arc background — only for flat (non-immersive) skins. Immersive worlds
+           supply their own backdrop via <ThemeScene/>, so the arc is hidden to avoid a
+           rainbow/light flash before a themed (esp. dark) scene loads on reload. */
         '&::before': {
           content: '""',
+          display: immersive ? 'none' : 'block',
           position: 'absolute',
           bottom: -100,
           left: '50%',

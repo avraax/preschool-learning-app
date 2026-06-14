@@ -24,6 +24,18 @@ const CelebrationEffect: React.FC<CelebrationEffectProps> = ({
   const theme = useTheme()
   // Default confetti palette comes from the active theme; callers can still override.
   const effectiveConfettiColors = confettiColors ?? theme.decor.confettiColors
+  // Themed reward emojis: match the active world's ambient style (stars for space, bubbles for
+  // ocean, leaves for dino, sparkles otherwise). Flat skins keep the classic celebration set.
+  const celebrationEmojis = React.useMemo<string[]>(() => {
+    if (!theme.scene.layers.length) return ['⭐', '🌟', '✨', '🎊', '🎈', '🏆']
+    switch (theme.scene.ambient.motion) {
+      case 'twinkle': return ['⭐', '🌟', '✨', '💫', '🌠', '🚀']
+      case 'rise': return ['🫧', '✨', '🐠', '🌊', '⭐', '🐚']
+      case 'fall': return ['🍃', '🍂', '✨', '🌿', '⭐', '🦋']
+      case 'drift':
+      default: return ['⭐', '🌟', '✨', '🌈', '🎈', '🎊']
+    }
+  }, [theme.scene])
   const [showConfetti, setShowConfetti] = useState(false)
   const [windowDimensions, setWindowDimensions] = useState({
     width: window.innerWidth,
@@ -142,7 +154,7 @@ const CelebrationEffect: React.FC<CelebrationEffectProps> = ({
                 pointerEvents: 'none'
               }}
             >
-              {['⭐', '🌟', '✨', '🎊', '🎈', '🏆'][index]}
+              {celebrationEmojis[index]}
             </motion.div>
           ))}
         </Box>

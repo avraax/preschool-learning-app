@@ -12,7 +12,9 @@ import {
   Chip
 } from '@mui/material'
 import { ArrowLeft } from 'lucide-react'
+import { useTheme } from '@mui/material/styles'
 import { categoryThemes } from '../../config/categoryThemes'
+import GameMotif from '../common/GameMotif'
 import { englishThemes, EnglishWord } from '../../config/englishVocab'
 import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 
@@ -21,6 +23,7 @@ import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 // direct audio on tap, no entry-audio coordination.
 const EnglishLearning: React.FC = () => {
   const navigate = useNavigate()
+  const muiTheme = useTheme()
   const theme = categoryThemes.english
   const audio = useSimplifiedAudioHook({ componentId: 'EnglishLearning', autoInitialize: false })
 
@@ -49,9 +52,13 @@ const EnglishLearning: React.FC = () => {
         overflow: 'hidden',
         display: 'flex',
         flexDirection: 'column',
-        background: theme.gradient
+        background: theme.gradient,
+        position: 'relative',
+        isolation: 'isolate'
       }}
     >
+      {/* Calm P4 motif behind the game content. */}
+      <GameMotif categoryId="english" />
       <AppBar position="static" color="transparent" elevation={0}>
         <Toolbar sx={{ justifyContent: 'space-between', py: 1.5 }}>
           <IconButton
@@ -70,7 +77,11 @@ const EnglishLearning: React.FC = () => {
           <Typography
             variant="h5"
             sx={{
-              color: theme.accentColor,
+              fontFamily: muiTheme.titleFontFamily,
+              color: muiTheme.scene.dark ? '#FFFFFF' : theme.accentColor,
+              textShadow: muiTheme.scene.dark
+                ? '0 0 16px rgba(120,170,255,0.55), 0 2px 8px rgba(0,0,0,0.5)'
+                : 'none',
               fontWeight: 700,
               fontSize: { xs: '1.25rem', md: '1.6rem' },
               display: 'flex',
@@ -169,7 +180,11 @@ const EnglishLearning: React.FC = () => {
                       justifyContent: 'center',
                       p: { xs: 1, md: 1.5 },
                       minHeight: { xs: 96, md: 120 },
-                      boxShadow: playingWord === word.en ? `0 0 18px ${theme.accentColor}66` : 2,
+                      boxShadow: playingWord === word.en
+                        ? `0 0 18px ${theme.accentColor}66`
+                        : muiTheme.scene.dark
+                          ? '0 12px 30px rgba(0,0,0,0.45)'
+                          : '0 6px 18px rgba(0,0,0,0.12)',
                       transition: 'all 0.25s ease',
                       '@media (hover: hover) and (pointer: fine)': {
                         '&:hover': { borderColor: theme.hoverBorderColor, boxShadow: 6 }

@@ -49,31 +49,41 @@ const ThemeScene: React.FC = () => {
         overflow: 'hidden',
         zIndex: 0,
         pointerEvents: 'none',
+        // Dark worlds paint their base colour IMMEDIATELY (before the art loads) so a dark
+        // theme is dark from the first frame — no flash of the light default/rainbow on reload.
         backgroundColor: scene.dark ? '#070B1A' : 'transparent',
-        opacity: assets ? 1 : 0,
-        transition: 'opacity 0.6s ease',
       }}
     >
-      {assets && (
-        <>
-          {scene.layers.map((layer, i) =>
-            assets.layers[i] ? <ParallaxLayer key={i} spec={layer} url={assets.layers[i]} index={i} /> : null
-          )}
-          <AmbientField scene={scene} sprites={assets.ambientSprites} themeId={themeId} disabled={reduce} />
-          {/* Gentle scrim: lifts depth and keeps content cards readable over the scene. */}
-          <Box
-            aria-hidden
-            sx={{
-              position: 'absolute',
-              inset: 0,
-              zIndex: 50,
-              pointerEvents: 'none',
-              background:
-                'radial-gradient(ellipse at 50% 38%, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0) 45%), linear-gradient(to bottom, rgba(0,0,0,0.10) 0%, rgba(0,0,0,0) 22%, rgba(0,0,0,0) 78%, rgba(0,0,0,0.12) 100%)',
-            }}
-          />
-        </>
-      )}
+      {/* Only the art fades in; the base colour above is instant. */}
+      <Box
+        sx={{
+          position: 'absolute',
+          inset: 0,
+          opacity: assets ? 1 : 0,
+          transition: 'opacity 0.6s ease',
+        }}
+      >
+        {assets && (
+          <>
+            {scene.layers.map((layer, i) =>
+              assets.layers[i] ? <ParallaxLayer key={i} spec={layer} url={assets.layers[i]} index={i} /> : null
+            )}
+            <AmbientField scene={scene} sprites={assets.ambientSprites} themeId={themeId} disabled={reduce} />
+            {/* Gentle scrim: lifts depth and keeps content cards readable over the scene. */}
+            <Box
+              aria-hidden
+              sx={{
+                position: 'absolute',
+                inset: 0,
+                zIndex: 50,
+                pointerEvents: 'none',
+                background:
+                  'radial-gradient(ellipse at 50% 38%, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0) 45%), linear-gradient(to bottom, rgba(0,0,0,0.10) 0%, rgba(0,0,0,0) 22%, rgba(0,0,0,0) 78%, rgba(0,0,0,0.12) 100%)',
+              }}
+            />
+          </>
+        )}
+      </Box>
     </Box>
   )
 }

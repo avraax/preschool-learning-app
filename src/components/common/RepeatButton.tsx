@@ -50,7 +50,7 @@ interface RepeatButtonProps {
 export const RepeatButton: React.FC<RepeatButtonProps> = ({
   onClick,
   disabled = false,
-  label = '🎵 Gentag',
+  label = 'Gentag',
   variant = 'primary',
   size = 'large',
   category = 'alphabet',
@@ -165,33 +165,33 @@ export interface OrdlegRepeatButtonProps extends Omit<RepeatButtonProps, 'catego
  * Pre-configured repeat button for alphabet games
  */
 export const AlphabetRepeatButton: React.FC<AlphabetRepeatButtonProps> = (props) => (
-  <RepeatButton {...props} category="alphabet" label="🎵 Gentag" />
+  <RepeatButton {...props} category="alphabet" label="Gentag" />
 )
 
 /**
  * Pre-configured repeat button for math games  
  */
 export const MathRepeatButton: React.FC<MathRepeatButtonProps> = (props) => (
-  <RepeatButton {...props} category="math" label="🎵 Gentag" variant="secondary" />
+  <RepeatButton {...props} category="math" label="Gentag" variant="secondary" />
 )
 
 /**
  * Pre-configured repeat button for color games
  */
 export const ColorRepeatButton: React.FC<ColorRepeatButtonProps> = (props) => (
-  <RepeatButton {...props} category="colors" label="🎵 Hør igen" />
+  <RepeatButton {...props} category="colors" label="Hør igen" />
 )
 
 /**
  * Pre-configured repeat button for English games (green theme)
  */
 export const EnglishRepeatButton: React.FC<EnglishRepeatButtonProps> = (props) => (
-  <RepeatButton {...props} category="english" label="🎵 Igen" />
+  <RepeatButton {...props} category="english" label="Igen" />
 )
 
 /**
  * Pre-configured repeat button for Ordleg games (teal theme)
  */
 export const OrdlegRepeatButton: React.FC<OrdlegRepeatButtonProps> = (props) => (
-  <RepeatButton {...props} category="ordleg" label="🎵 Gentag" />
+  <RepeatButton {...props} category="ordleg" label="Gentag" />
 )

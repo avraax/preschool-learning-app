@@ -10,6 +10,7 @@ import { ColorRepeatButton } from '../common/RepeatButton'
 import { ColorScoreChip } from '../common/ScoreChip'
 import { useGameState } from '../../hooks/useGameState'
 import GameHeader from '../common/GameHeader'
+import GameMotif from '../common/GameMotif'
 import { isIOS } from '../../utils/deviceDetection'
 // Simplified audio system
 import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
@@ -469,13 +470,17 @@ const FarvejagtGame: React.FC = () => {
   // const activeItem = gameItems.find(item => item.id === activeId)
 
   return (
-    <Box sx={{ 
+    <Box sx={{
       height: '100dvh',
       overflow: 'hidden',
       display: 'flex',
       flexDirection: 'column',
+      position: 'relative',
+      isolation: 'isolate',
       background: categoryThemes.colors.gradient
     }}>
+      {/* Calm P4 motif behind the game content. */}
+      <GameMotif categoryId="colors" />
       <GameHeader
         title="Farvejagt"
         titleIcon="🎨"

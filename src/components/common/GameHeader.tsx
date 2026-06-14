@@ -8,6 +8,7 @@ import {
   Typography,
   Box
 } from '@mui/material'
+import { useTheme } from '@mui/material/styles'
 import { ArrowLeft } from 'lucide-react'
 import LottieCharacter, { useCharacterState } from './LottieCharacter'
 import { CategoryTheme } from '../../config/categoryThemes'
@@ -35,6 +36,7 @@ const GameHeader: React.FC<GameHeaderProps> = ({
   onCharacterClick,
 }) => {
   const navigate = useNavigate()
+  const theme = useTheme()
 
   return (
     <>
@@ -76,13 +78,17 @@ const GameHeader: React.FC<GameHeaderProps> = ({
               size={80}
               onClick={onCharacterClick || character.wave}
             />
-            <Typography 
-              variant="h3" 
-              sx={{ 
-                color: categoryTheme.accentColor,
+            <Typography
+              variant="h3"
+              sx={{
+                fontFamily: theme.titleFontFamily,
+                // Dark worlds (e.g. Rummet) → light title + soft glow, matching menus/home.
+                color: theme.scene.dark ? '#FFFFFF' : categoryTheme.accentColor,
                 fontWeight: 700,
                 fontSize: { xs: '1.5rem', md: '2rem' },
-                textShadow: `1px 1px 2px ${categoryTheme.accentColor}33`
+                textShadow: theme.scene.dark
+                  ? '0 0 16px rgba(120,170,255,0.55), 0 2px 8px rgba(0,0,0,0.5)'
+                  : `1px 1px 2px ${categoryTheme.accentColor}33`
               }}
             >
               {titleIcon} {title}

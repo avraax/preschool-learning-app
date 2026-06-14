@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Container, Box, Typography, Button, IconButton, AppBar, Toolbar, Paper, Grid } from '@mui/material'
+import { useTheme } from '@mui/material/styles'
 import { ArrowLeft } from 'lucide-react'
 import { motion } from 'framer-motion'
 import LottieCharacter, { useCharacterState } from '../common/LottieCharacter'
+import GameMotif from '../common/GameMotif'
 import CelebrationEffect, { useCelebration } from '../common/CelebrationEffect'
 import { MathScoreChip } from '../common/ScoreChip'
 import { categoryThemes } from '../../config/categoryThemes'
@@ -48,6 +50,7 @@ interface ComparisonProblem {
 
 const ComparisonGame: React.FC = () => {
   const navigate = useNavigate()
+  const muiTheme = useTheme()
   const [currentProblem, setCurrentProblem] = useState<ComparisonProblem | null>(null)
   const [selectedSymbol, setSelectedSymbol] = useState<string | null>(null)
   const [showFeedback, setShowFeedback] = useState(false)
@@ -364,8 +367,10 @@ const ComparisonGame: React.FC = () => {
   }
 
   return (
-    <Box 
-      sx={{ 
+    <Box
+      sx={{
+        position: 'relative',
+        isolation: 'isolate',
         height: '100dvh',
         overflow: 'hidden',
         display: 'flex',
@@ -373,6 +378,8 @@ const ComparisonGame: React.FC = () => {
         background: categoryThemes.math.gradient
       }}
     >
+      {/* Calm P4 motif behind the game content. */}
+      <GameMotif categoryId="math" />
       {/* App Bar with Back Button and Score */}
       <AppBar position="static" color="transparent" elevation={0}>
         <Toolbar sx={{ justifyContent: 'space-between', py: 2 }}>
@@ -426,11 +433,15 @@ const ComparisonGame: React.FC = () => {
                 onClick={mathTeacher.wave}
               />
               <Typography 
-                variant="h3" 
-                sx={{ 
-                  color: 'primary.dark',
+                variant="h3"
+                sx={{
+                  fontFamily: muiTheme.titleFontFamily,
+                  color: muiTheme.scene.dark ? '#FFFFFF' : 'primary.dark',
                   fontWeight: 700,
-                  fontSize: { xs: '1.5rem', md: '2rem' }
+                  fontSize: { xs: '1.5rem', md: '2rem' },
+                  textShadow: muiTheme.scene.dark
+                    ? '0 0 16px rgba(120,170,255,0.55), 0 2px 8px rgba(0,0,0,0.5)'
+                    : 'none'
                 }}
               >
                 Sammenlign Tal
@@ -565,7 +576,9 @@ const ComparisonGame: React.FC = () => {
                             py: { xs: 1.5, md: 2 },
                             px: { xs: 3, md: 4 },
                             borderRadius: 3,
-                            boxShadow: 4,
+                            boxShadow: muiTheme.scene.dark
+                              ? '0 12px 30px rgba(0,0,0,0.45)'
+                              : '0 6px 18px rgba(0,0,0,0.12)',
                             minWidth: { xs: '80px', md: '100px' },
                             outline: 'none',
                             '&:focus': {

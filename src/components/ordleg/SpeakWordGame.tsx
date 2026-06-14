@@ -9,9 +9,11 @@ import {
   AppBar,
   Toolbar
 } from '@mui/material'
+import { useTheme } from '@mui/material/styles'
 import { ArrowLeft, Mic, MicOff } from 'lucide-react'
 import { categoryThemes } from '../../config/categoryThemes'
 import LottieCharacter, { useCharacterState } from '../common/LottieCharacter'
+import GameMotif from '../common/GameMotif'
 import CelebrationEffect, { useCelebration } from '../common/CelebrationEffect'
 import { isIOS } from '../../utils/deviceDetection'
 import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
@@ -33,6 +35,7 @@ const extractFirstWord = (transcript: string): string => {
 
 const SpeakWordGame: React.FC = () => {
   const navigate = useNavigate()
+  const muiTheme = useTheme()
   const theme = categoryThemes.ordleg
   const audio = useSimplifiedAudioHook({ componentId: 'SpeakWordGame', autoInitialize: false })
   const speech = useSpeechInput()
@@ -218,6 +221,8 @@ const SpeakWordGame: React.FC = () => {
   return (
     <Box
       sx={{
+        position: 'relative',
+        isolation: 'isolate',
         height: '100dvh',
         overflow: 'hidden',
         display: 'flex',
@@ -225,6 +230,8 @@ const SpeakWordGame: React.FC = () => {
         background: theme.gradient
       }}
     >
+      {/* Calm P4 motif behind the game content. */}
+      <GameMotif categoryId="ordleg" />
       <AppBar position="static" color="transparent" elevation={0}>
         <Toolbar sx={{ justifyContent: 'space-between', py: 1.5 }}>
           <IconButton
@@ -243,12 +250,16 @@ const SpeakWordGame: React.FC = () => {
           <Typography
             variant="h5"
             sx={{
-              color: theme.accentColor,
+              fontFamily: muiTheme.titleFontFamily,
+              color: muiTheme.scene.dark ? '#FFFFFF' : theme.accentColor,
               fontWeight: 700,
               fontSize: { xs: '1.25rem', md: '1.6rem' },
               display: 'flex',
               alignItems: 'center',
-              gap: 1
+              gap: 1,
+              textShadow: muiTheme.scene.dark
+                ? '0 0 16px rgba(120,170,255,0.55), 0 2px 8px rgba(0,0,0,0.5)'
+                : 'none'
             }}
           >
             🎤 Sig et Ord
@@ -348,7 +359,10 @@ const SpeakWordGame: React.FC = () => {
                             bgcolor: revealed ? 'white' : 'rgba(255,255,255,0.5)',
                             display: 'flex',
                             alignItems: 'center',
-                            justifyContent: 'center'
+                            justifyContent: 'center',
+                            boxShadow: muiTheme.scene.dark
+                              ? '0 12px 30px rgba(0,0,0,0.45)'
+                              : '0 6px 18px rgba(0,0,0,0.12)'
                           }}
                         >
                           <Typography

@@ -94,7 +94,8 @@ export const ScoreChip: React.FC<ScoreChipProps> = ({
       fontWeight: 'bold',
       backgroundColor: disabled ? 'grey.300' : theme.accentColor,
       color: disabled ? 'grey.600' : 'white',
-      boxShadow: disabled ? 0 : 2,
+      // Soft themed glow so the pill reads as a polished element over any backdrop.
+      boxShadow: disabled ? 0 : `0 4px 16px ${theme.accentColor}59`,
       cursor: disabled ? 'default' : (onClick ? 'pointer' : 'default'),
       opacity: disabled ? 0.6 : 1,
       border: `2px solid ${disabled ? 'transparent' : theme.borderColor}`,

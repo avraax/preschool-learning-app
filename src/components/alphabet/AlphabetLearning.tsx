@@ -15,8 +15,9 @@ import {
   ArrowBack,
   School
 } from '@mui/icons-material'
-import { alpha } from '@mui/material/styles'
+import { alpha, useTheme } from '@mui/material/styles'
 import { categoryThemes } from '../../config/categoryThemes'
+import GameMotif from '../common/GameMotif'
 import LearningGrid from '../common/LearningGrid'
 import { isIOS } from '../../utils/deviceDetection'
 // Simplified audio system
@@ -37,6 +38,7 @@ const DANISH_ALPHABET = [
 
 const AlphabetLearning: React.FC = () => {
   const navigate = useNavigate()
+  const muiTheme = useTheme()
   const [currentIndex, setCurrentIndex] = useState(0)
   // Simplified audio system
   const audio = useSimplifiedAudioHook({ 
@@ -128,9 +130,13 @@ const AlphabetLearning: React.FC = () => {
         overflow: 'hidden',
         display: 'flex',
         flexDirection: 'column',
-        background: categoryThemes.alphabet.gradient
+        background: categoryThemes.alphabet.gradient,
+        position: 'relative',
+        isolation: 'isolate'
       }}
     >
+      {/* Calm P4 motif behind the game content. */}
+      <GameMotif categoryId="alphabet" />
       {/* App Bar with Back Button and Progress */}
       <AppBar position="static" color="transparent" elevation={0}>
         <Toolbar sx={{ justifyContent: 'space-between', py: 2 }}>
@@ -200,11 +206,15 @@ const AlphabetLearning: React.FC = () => {
       >
         {/* Title - More Space */}
         <Box sx={{ textAlign: 'center', mb: { xs: 2, md: 3 } }}>
-          <Typography 
-            variant="h4" 
-            sx={{ 
+          <Typography
+            variant="h4"
+            sx={{
+              fontFamily: muiTheme.titleFontFamily,
               fontSize: { xs: '1.5rem', md: '2rem' },
-              color: 'primary.dark',
+              color: muiTheme.scene.dark ? '#FFFFFF' : 'primary.dark',
+              textShadow: muiTheme.scene.dark
+                ? '0 0 16px rgba(120,170,255,0.55), 0 2px 8px rgba(0,0,0,0.5)'
+                : 'none',
               fontWeight: 700,
               display: 'flex',
               alignItems: 'center',
@@ -234,7 +244,9 @@ const AlphabetLearning: React.FC = () => {
                 borderColor: audio.isPlaying ? categoryThemes.alphabet.accentColor : categoryThemes.alphabet.borderColor,
                 boxShadow: audio.isPlaying
                   ? `0 0 30px ${alpha(categoryThemes.alphabet.accentColor, 0.4)}, 0 8px 32px ${alpha(categoryThemes.alphabet.accentColor, 0.3)}`
-                  : `0 4px 20px ${alpha(categoryThemes.alphabet.accentColor, 0.2)}, 0 8px 32px ${alpha(categoryThemes.alphabet.accentColor, 0.15)}`,
+                  : muiTheme.scene.dark
+                    ? '0 12px 30px rgba(0,0,0,0.45)'
+                    : '0 6px 18px rgba(0,0,0,0.12)',
                 transition: 'all 0.3s ease',
                 position: 'relative',
                 overflow: 'hidden',

@@ -12,9 +12,11 @@ import {
   AppBar,
   Toolbar
 } from '@mui/material'
+import { useTheme } from '@mui/material/styles'
 import { Add, Remove } from '@mui/icons-material'
 import { ArrowLeft } from 'lucide-react'
 import { categoryThemes } from '../../config/categoryThemes'
+import GameMotif from '../common/GameMotif'
 import LottieCharacter, { useCharacterState } from '../common/LottieCharacter'
 import CelebrationEffect, { useCelebration } from '../common/CelebrationEffect'
 import { MathScoreChip } from '../common/ScoreChip'
@@ -32,6 +34,7 @@ interface MathOperationGameProps {
 
 const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
   const navigate = useNavigate()
+  const muiTheme = useTheme()
   const isAddition = operation === 'addition'
   const title = isAddition ? 'Plus Opgaver' : 'Minus Opgaver'
   const OperatorIcon = isAddition ? Add : Remove
@@ -223,6 +226,8 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
   return (
     <Box
       sx={{
+        position: 'relative',
+        isolation: 'isolate',
         height: '100dvh',
         overflow: 'hidden',
         display: 'flex',
@@ -230,6 +235,8 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
         background: categoryThemes.math.gradient
       }}
     >
+      {/* Calm P4 motif behind the game content. */}
+      <GameMotif categoryId="math" />
       <AppBar position="static" color="transparent" elevation={0}>
         <Toolbar sx={{ justifyContent: 'space-between', py: 2 }}>
           <IconButton
@@ -280,9 +287,13 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
               <Typography
                 variant="h3"
                 sx={{
-                  color: categoryThemes.math.accentColor,
+                  fontFamily: muiTheme.titleFontFamily,
+                  color: muiTheme.scene.dark ? '#FFFFFF' : categoryThemes.math.accentColor,
                   fontWeight: 700,
-                  fontSize: { xs: '1.5rem', md: '2rem' }
+                  fontSize: { xs: '1.5rem', md: '2rem' },
+                  textShadow: muiTheme.scene.dark
+                    ? '0 0 16px rgba(120,170,255,0.55), 0 2px 8px rgba(0,0,0,0.5)'
+                    : 'none'
                 }}
               >
                 <OperatorIcon fontSize="large" /> {title}
@@ -385,6 +396,9 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
                     alignItems: 'center',
                     justifyContent: 'center',
                     borderRadius: '12px',
+                    boxShadow: muiTheme.scene.dark
+                      ? '0 12px 30px rgba(0,0,0,0.45)'
+                      : '0 6px 18px rgba(0,0,0,0.12)',
                     outline: 'none',
                     '&:focus-visible': {
                       outline: '3px solid',

@@ -68,7 +68,7 @@ export const spaceThemeTokens: ThemeTokens = {
   materials: {
     cardFrame: '',
     buttonGradient: 'linear-gradient(135deg, #3949AB 0%, #8E24AA 100%)',
-    motif: '',
+    motif: 'soft',
   },
 }
 

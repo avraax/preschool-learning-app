@@ -75,7 +75,7 @@ export const oceanThemeTokens: ThemeTokens = {
   materials: {
     cardFrame: '',
     buttonGradient: 'linear-gradient(135deg, #0288D1 0%, #00897B 100%)',
-    motif: '',
+    motif: 'soft',
   },
 }
 

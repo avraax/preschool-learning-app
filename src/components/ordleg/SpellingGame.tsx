@@ -10,9 +10,11 @@ import {
   Toolbar,
   Paper
 } from '@mui/material'
+import { useTheme } from '@mui/material/styles'
 import { ArrowLeft } from 'lucide-react'
 import { categoryThemes } from '../../config/categoryThemes'
 import LottieCharacter, { useCharacterState } from '../common/LottieCharacter'
+import GameMotif from '../common/GameMotif'
 import CelebrationEffect, { useCelebration } from '../common/CelebrationEffect'
 import { OrdlegScoreChip } from '../common/ScoreChip'
 import { OrdlegRepeatButton } from '../common/RepeatButton'
@@ -73,6 +75,7 @@ interface LetterTile {
 
 const SpellingGame: React.FC = () => {
   const navigate = useNavigate()
+  const muiTheme = useTheme()
 
   // Current word and its uppercase letters
   const [current, setCurrent] = useState<{ word: string; emoji: string } | null>(null)
@@ -279,6 +282,8 @@ const SpellingGame: React.FC = () => {
   return (
     <Box
       sx={{
+        position: 'relative',
+        isolation: 'isolate',
         height: '100dvh',
         overflow: 'hidden',
         display: 'flex',
@@ -286,6 +291,8 @@ const SpellingGame: React.FC = () => {
         background: theme.gradient
       }}
     >
+      {/* Calm P4 motif behind the game content. */}
+      <GameMotif categoryId="ordleg" />
       {/* App Bar with Back Button and Score */}
       <AppBar position="static" color="transparent" elevation={0}>
         <Toolbar sx={{ justifyContent: 'space-between', py: 2 }}>
@@ -336,9 +343,13 @@ const SpellingGame: React.FC = () => {
             <Typography
               variant="h4"
               sx={{
-                color: theme.accentColor,
+                fontFamily: muiTheme.titleFontFamily,
+                color: muiTheme.scene.dark ? '#FFFFFF' : theme.accentColor,
                 fontWeight: 700,
-                fontSize: { xs: '1.3rem', md: '1.75rem' }
+                fontSize: { xs: '1.3rem', md: '1.75rem' },
+                textShadow: muiTheme.scene.dark
+                  ? '0 0 16px rgba(120,170,255,0.55), 0 2px 8px rgba(0,0,0,0.5)'
+                  : 'none'
               }}
             >
               ✏️ Stav Ordet
@@ -479,6 +490,9 @@ const SpellingGame: React.FC = () => {
                           alignItems: 'center',
                           justifyContent: 'center',
                           userSelect: 'none',
+                          boxShadow: muiTheme.scene.dark
+                            ? '0 12px 30px rgba(0,0,0,0.45)'
+                            : '0 6px 18px rgba(0,0,0,0.12)',
                           '@media (hover: hover) and (pointer: fine)': {
                             '&:hover': {
                               borderColor: theme.hoverBorderColor,

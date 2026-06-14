@@ -7,6 +7,7 @@ import CelebrationEffect, { useCelebration } from '../common/CelebrationEffect'
 import { DANISH_PHRASES } from '../../config/danish-phrases'
 import { useGameState } from '../../hooks/useGameState'
 import GameHeader from '../common/GameHeader'
+import GameMotif from './GameMotif'
 import { isIOS } from '../../utils/deviceDetection'
 // Simplified audio system
 import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
@@ -412,15 +413,19 @@ const UnifiedMemoryGame: React.FC<UnifiedMemoryGameProps> = ({ config }) => {
   return (
     <>
       <style>{flipStyles}</style>
-      <Box 
-        sx={{ 
+      <Box
+        sx={{
           height: '100dvh',
           overflow: 'hidden',
           display: 'flex',
           flexDirection: 'column',
+          position: 'relative',
+          isolation: 'isolate',
           background: config.theme.gradient
         }}
       >
+      {/* Calm P4 motif behind the game content. */}
+      <GameMotif categoryId={config.theme.id} />
       <GameHeader
         title={config.title}
         titleIcon="🧠"

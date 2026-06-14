@@ -11,9 +11,12 @@ import {
   AppBar,
   Toolbar
 } from '@mui/material'
+import { useTheme } from '@mui/material/styles'
 import { ArrowLeft } from 'lucide-react'
 import { isIOS } from '../../utils/deviceDetection'
 import { CategoryTheme } from '../../config/categoryThemes'
+import { sectionIconImages } from '../../assets/themes/icons'
+import GameMotif from './GameMotif'
 import LottieCharacter, { useCharacterState } from '../common/LottieCharacter'
 import CelebrationEffect, { useCelebration } from '../common/CelebrationEffect'
 import { useGameState } from '../../hooks/useGameState'
@@ -74,6 +77,7 @@ interface UnifiedQuizGameProps {
 
 const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
   const navigate = useNavigate()
+  const muiTheme = useTheme()
   const [currentItem, setCurrentItem] = useState<QuizItem | null>(null)
   const [showOptions, setShowOptions] = useState<QuizItem[]>([])
   
@@ -96,8 +100,13 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
   
   const [gameReady, setGameReady] = useState(false)
-  const [audioInitialized, setAudioInitialized] = useState(false)
   const hasInitialized = useRef(false)
+  // Guards the actual start (welcome + first question) so it runs exactly once regardless of
+  // which path triggers it (audio-ready-at-mount, audio-unlocked-later, or the resilience
+  // fallback below).
+  const startedRef = useRef(false)
+  // Guards the welcome audio so it plays at most once even if audio unlocks after mount.
+  const welcomeTriggered = useRef(false)
   
   // Generate new question using config
   const generateNewQuestion = useCallback(() => {
@@ -146,58 +155,70 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
     
   }, [audio, config]) // Stable dependencies
   
-  // Play welcome message and start game
+  // Reveal the playable cards (first question). Idempotent — safe to call from any start path.
+  const beginGame = useCallback(() => {
+    if (startedRef.current) return
+    startedRef.current = true
+    setGameReady(true)
+    generateNewQuestion()
+  }, [generateNewQuestion])
+
+  // Play welcome message then reveal the cards. Self-guards (ref) so the welcome plays at most
+  // once even if audio readiness flips more than once.
   const playWelcomeAndStart = useCallback(async () => {
+    if (welcomeTriggered.current) return
+    welcomeTriggered.current = true
     try {
       // Play the welcome message and wait for it to complete
       await audio.playGameWelcome(config.gameWelcomeType)
-      
+
       // Additional delay after welcome audio completes to ensure clean transition
       const additionalDelay = isIOS() ? 1500 : 2000  // Even longer delay for cleaner audio experience
-      setTimeout(() => {
-        setGameReady(true)
-        generateNewQuestion()
-      }, additionalDelay)
+      setTimeout(() => beginGame(), additionalDelay)
     } catch (error) {
       logError('Error playing welcome', { error: error?.toString() })
       // Still start the game even if audio fails
-      setGameReady(true)
-      generateNewQuestion()
+      beginGame()
     }
-  }, [audio, config.gameWelcomeType, generateNewQuestion])
-  
+  }, [audio, config.gameWelcomeType, beginGame])
+
   useEffect(() => {
     // Prevent duplicate initialization with race condition guard
     if (hasInitialized.current) return
     hasInitialized.current = true
-    
+
     // Initial teacher greeting
     teacherCharacter.setCharacter(config.teacherCharacter)
     teacherCharacter.wave()
-    
-    // Check if audio is ready
+
+    // Play the welcome immediately if audio is already unlocked.
     if (audio.isAudioReady) {
-      setAudioInitialized(true)
-      // Play welcome message and then generate first question
       playWelcomeAndStart()
     }
-    
+
+    // Resilience: browsers block the AudioContext until a user gesture, so isAudioReady may
+    // never flip on a fresh/deep-linked load. Reveal the playable cards after a short delay so
+    // the child is never stranded on an empty screen; the welcome line still plays if/when
+    // audio unlocks (beginGame + playWelcomeAndStart are ref-guarded, so this never
+    // double-starts).
+    const fallback = setTimeout(() => beginGame(), 2500)
+
     return () => {
+      clearTimeout(fallback)
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current)
         timeoutRef.current = null
       }
     }
-  }, [audio.isAudioReady, config.teacherCharacter, teacherCharacter, playWelcomeAndStart])
-  
-  // Monitor audio readiness - only if not already initialized
+  }, [audio.isAudioReady, config.teacherCharacter, teacherCharacter, playWelcomeAndStart, beginGame])
+
+  // When audio unlocks after mount, play the welcome (unless it/the game already started).
+  // Ref-guarded so the effect performs no setState.
   useEffect(() => {
-    if (audio.isAudioReady && !audioInitialized && !hasInitialized.current) {
-      hasInitialized.current = true
-      setAudioInitialized(true)
+    if (audio.isAudioReady && !welcomeTriggered.current && !startedRef.current) {
       playWelcomeAndStart()
     }
-  }, [audio.isAudioReady, audioInitialized, playWelcomeAndStart])
+  }, [audio.isAudioReady, playWelcomeAndStart])
 
   const handleItemClick = async (selectedItem: QuizItem) => {
     // Only prevent clicks if game isn't ready
@@ -273,8 +294,10 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
   const RepeatButton = config.RepeatButtonComponent
 
   return (
-    <Box 
-      sx={{ 
+    <Box
+      sx={{
+        position: 'relative',
+        isolation: 'isolate',
         height: '100dvh',
         overflow: 'hidden',
         display: 'flex',
@@ -282,6 +305,9 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
         background: config.theme.gradient
       }}
     >
+      {/* Calm P4 motif (light from above + faint themed corner) behind the game content. */}
+      <GameMotif categoryId={config.theme.id} />
+
       {/* App Bar with Back Button and Score */}
       <AppBar position="static" color="transparent" elevation={0}>
         <Toolbar sx={{ justifyContent: 'space-between', py: 2 }}>
@@ -334,18 +360,35 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
                 size={80}
                 onClick={teacherCharacter.wave}
               />
-              <Typography 
-                variant="h3" 
-                sx={{ 
-                  color: config.theme.accentColor,
+              <Typography
+                variant="h3"
+                sx={{
+                  fontFamily: muiTheme.titleFontFamily,
+                  // Dark worlds (e.g. Rummet) → light title + soft glow, matching menus/home.
+                  color: muiTheme.scene.dark ? '#FFFFFF' : config.theme.accentColor,
                   fontWeight: 700,
                   fontSize: { xs: '1.5rem', md: '2rem' },
-                  textShadow: `1px 1px 2px ${config.theme.accentColor}33`
+                  textShadow: muiTheme.scene.dark
+                    ? '0 0 16px rgba(120,170,255,0.55), 0 2px 8px rgba(0,0,0,0.5)'
+                    : `1px 1px 2px ${config.theme.accentColor}33`
                 }}
               >
                 {config.title}
               </Typography>
-              <Typography sx={{ fontSize: '2.5rem' }}>{config.emoji}</Typography>
+              {/* Soft-3D section icon (theme-constant) replaces the flat trailing emoji. */}
+              <Box
+                component="img"
+                src={sectionIconImages[config.theme.id as keyof typeof sectionIconImages]}
+                alt=""
+                draggable={false}
+                sx={{
+                  width: 52,
+                  height: 52,
+                  objectFit: 'contain',
+                  filter: 'drop-shadow(0 3px 6px rgba(0,0,0,0.22))',
+                  userSelect: 'none'
+                }}
+              />
             </Box>
           </motion.div>
         </Box>
@@ -456,7 +499,11 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  borderRadius: '12px',
+                  borderRadius: '16px',
+                  // Themed elevation so the white card floats over the world (deeper on dark scenes).
+                  boxShadow: muiTheme.scene.dark
+                    ? '0 12px 30px rgba(0,0,0,0.45)'
+                    : '0 6px 18px rgba(0,0,0,0.12)',
                   outline: 'none',
                   '&:focus-visible': {
                     outline: '3px solid',

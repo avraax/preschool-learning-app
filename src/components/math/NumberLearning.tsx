@@ -11,11 +11,13 @@ import {
   LinearProgress,
   Card
 } from '@mui/material'
+import { useTheme } from '@mui/material/styles'
 import {
   ArrowBack,
   School
 } from '@mui/icons-material'
 import { categoryThemes } from '../../config/categoryThemes'
+import GameMotif from '../common/GameMotif'
 import LearningGrid from '../common/LearningGrid'
 import { isIOS } from '../../utils/deviceDetection'
 // Simplified audio system
@@ -24,6 +26,7 @@ import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 
 const NumberLearning: React.FC = () => {
   const navigate = useNavigate()
+  const muiTheme = useTheme()
   const [currentIndex, setCurrentIndex] = useState(0)
   // Simplified audio system
   const audio = useSimplifiedAudioHook({ 
@@ -123,8 +126,10 @@ const NumberLearning: React.FC = () => {
   const progress = ((currentIndex + 1) / numbers.length) * 100
 
   return (
-    <Box 
-      sx={{ 
+    <Box
+      sx={{
+        position: 'relative',
+        isolation: 'isolate',
         height: '100dvh',
         overflow: 'hidden',
         display: 'flex',
@@ -132,6 +137,8 @@ const NumberLearning: React.FC = () => {
         background: categoryThemes.math.gradient
       }}
     >
+      {/* Calm P4 motif behind the game content. */}
+      <GameMotif categoryId="math" />
       {/* App Bar with Back Button and Progress */}
       <AppBar position="static" color="transparent" elevation={0}>
         <Toolbar sx={{ justifyContent: 'space-between', py: 2 }}>
@@ -199,15 +206,19 @@ const NumberLearning: React.FC = () => {
         {/* Title - Very Compact */}
         <Box sx={{ textAlign: 'center', mb: { xs: 1, md: 1.5 } }}>
           <Typography 
-            variant="h5" 
-            sx={{ 
+            variant="h5"
+            sx={{
+              fontFamily: muiTheme.titleFontFamily,
               fontSize: { xs: '1.25rem', md: '1.5rem' },
-              color: 'secondary.dark',
+              color: muiTheme.scene.dark ? '#FFFFFF' : 'secondary.dark',
               fontWeight: 700,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: 0.5
+              gap: 0.5,
+              textShadow: muiTheme.scene.dark
+                ? '0 0 16px rgba(120,170,255,0.55), 0 2px 8px rgba(0,0,0,0.5)'
+                : 'none'
             }}
           >
             <School sx={{ fontSize: { xs: '1.25rem', md: '1.5rem' } }} /> Lær Tal
@@ -231,7 +242,10 @@ const NumberLearning: React.FC = () => {
                 bgcolor: audio.isPlaying ? 'secondary.50' : 'white',
                 border: '2px solid',
                 borderColor: audio.isPlaying ? 'secondary.main' : 'primary.200',
-                transition: 'all 0.3s ease'
+                transition: 'all 0.3s ease',
+                boxShadow: muiTheme.scene.dark
+                  ? '0 12px 30px rgba(0,0,0,0.45)'
+                  : '0 6px 18px rgba(0,0,0,0.12)'
               }}
             >
               <Typography

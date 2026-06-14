@@ -70,7 +70,7 @@ export const dinoThemeTokens: ThemeTokens = {
   materials: {
     cardFrame: '',
     buttonGradient: 'linear-gradient(135deg, #558B2F 0%, #00796B 100%)',
-    motif: '',
+    motif: 'soft',
   },
 }
 
