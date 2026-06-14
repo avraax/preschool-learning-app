@@ -1,11 +1,53 @@
 # PRD — Immersive Theme Worlds (realistic, kid-friendly)
 
-Status: **APPROVED for implementation** (decisions locked via product Q&A). To be implemented
-in a fresh session from the current `master` HEAD. No code has been written for this yet.
+Status: **P0–P2 SHIPPED** (home pages of all 4 worlds done). Menus (P3) + game screens (P4)
+remain — see the **App-wide UI Uplift** doc (`APP_UI_UPLIFT_PRD.md`) for the per-screen plan.
 
 Owner context: Danish preschool learning app (`Børnelæring`) for a ~5-year-old. React 19 +
 TS + Vite 8 + MUI v9, Framer Motion, Howler. Deploy: Vercel on push to `master`. See
 `CLAUDE.md` and `.claude/rules/*` for house rules (audio, responsive, game patterns).
+
+---
+
+## Implementation status & decisions (as of 2026-06-14)
+
+**Done (committed to `master`):**
+- **P0** — token plumbing: optional `scene` / `materials` / `titleFontFamily` on `ThemeTokens`;
+  `buildTheme` maps them with safe fallbacks; `loadSceneAssets()` code-split loader;
+  `useReducedMotion()` hook.
+- **P1** — Havet (ocean) home world end-to-end.
+- **P2** — Rummet (space, dark), Dinosaurer, and Regnbue (default) home worlds. **Jungle & Candy
+  were retired** from the selector (tokens still exist in `tokens/` but are unregistered).
+- **App logo** (soft-3D book+rainbow): master in `art-src/logo/`, `generate-png-icons.cjs` rebuilds
+  favicon + all PWA/Apple/maskable icons; front-page **brand lockup** (logo + wordmark).
+- **Selector**: 2×2 grid, circular scene-thumbnails, kid-size targets, moved into the header row.
+
+**Decisions that refined/superseded the original spec (authoritative — follow these):**
+1. **Single full-scene backdrop, not 3 separate parallax layers.** AI tools reliably produce one
+   opaque, immersive scene; separate transparent layers were fragile. Each world = ONE `scene.webp`
+   (full-bleed, ~depth 0.6–0.7) + a transparent mascot. The `SceneTokens.layers[]` array still
+   supports multiple layers if ever needed.
+2. **Ambient objects are CSS, not sprite art.** `AmbientField` draws by `motion`: `rise`→bubbles,
+   `twinkle`→sparkle-dots + shooting stars, `fall`→tumbling leaves, `drift`→soft sparkles. No
+   ambient image assets.
+3. **Transparency via magenta chroma-key.** Mascots/icons are generated on solid `#FF00FF`;
+   `optimize-theme-art.mjs` keys it out. (Gemini bakes fake checkerboards into "transparent" output.)
+4. **Parallax** is driven at the **page root** (`useParallax` sets `--parallax-x/y` CSS vars);
+   scene + mascot read them at different depths. Gentle auto-drift + pointer; **no gyroscope**.
+5. **Mascot tap-burst is theme-matched** (bubbles/stars/leaves/sparkles) + a random Danish line via
+   the existing single audio channel. The old generic "welcome bear" was removed from home; the
+   balloon easter-egg moved to the **logo tap**.
+6. **Title fonts** via `@fontsource` (latin subset, æøå verified), loaded only for the active theme
+   (`titleFonts.ts`): Ocean=Fredoka, Space=Exo 2, Dino=**Baloo 2** (Bangers risked missing æøå),
+   Regnbue=Comic Neue. Dark worlds use a light title + dark-side glow.
+7. **Section icons** are now custom **soft-3D images** (theme-constant), in `src/assets/themes/icons/`
+   via `sectionIconImages`. Currently wired on the **home cards only** (menus/game headers pending).
+8. Home cards use **glassy frosted material** on immersive themes; `immersive` =
+   `theme.scene.layers.length > 0`, `darkScene` = `theme.scene.dark`.
+
+**Asset pipeline (repeat for any new art):** generate in Gemini (mascots/icons on magenta) →
+drop in `art-src/<id>/` → `node scripts/optimize-theme-art.mjs <id>` (→ WebP, keyed, ≤700KB
+budget) → asset module `src/assets/themes/<id>/index.ts` → register in `theme/sceneAssets.ts`.
 
 ---
 
