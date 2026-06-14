@@ -5,13 +5,11 @@ import { motion } from 'framer-motion'
 import { useThemeSwitch } from '../../theme/ThemeProvider'
 import { loadSceneAssets } from '../../theme/sceneAssets'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
-import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 
 // Per-world mascot (Theme Worlds PRD §5.4). The ONE interactive element of the world layer:
-// gentle idle bob, and on tap it (1) plays a reaction wiggle, (2) spawns a fresh burst of
-// rising bubbles from itself, and (3) speaks a random Danish line via the existing
-// single-channel audio (no new channel, no queue). Renders nothing for themes without a
-// mascot. Reduced motion → no idle/react/bubble animation (tap-to-speak still works).
+// gentle idle bob, and on tap it plays a reaction wiggle + spawns a fresh burst of rising
+// bubbles from itself. The mascot is silent (no narration on tap). Renders nothing for themes
+// without a mascot. Reduced motion → no idle/react/bubble animation.
 
 // An externally-driven reaction (e.g. from a game answer). `cheer` = happy jump + scale + a
 // fresh burst; `think` = a gentle puzzled shake. `null` = idle. Distinct from the tap reaction.
@@ -38,7 +36,6 @@ const ThemeMascot: React.FC<ThemeMascotProps> = ({ sx, onTap, parallaxDepth = 0.
   const theme = useTheme()
   const { themeId } = useThemeSwitch()
   const reduce = useReducedMotion()
-  const audio = useSimplifiedAudioHook({ componentId: 'ThemeMascot', autoInitialize: false })
   // Tag the load with its themeId so a stale mascot isn't shown after a theme switch, without
   // a synchronous setState reset in the effect.
   const [loaded, setLoaded] = useState<{ id: string; mascot: string } | null>(null)
@@ -110,12 +107,6 @@ const ThemeMascot: React.FC<ThemeMascotProps> = ({ sx, onTap, parallaxDepth = 0.
     }
 
     onTap?.()
-
-    if (!audio.isAudioReady) return
-    audio.updateUserInteraction() // iOS: refresh interaction timestamp before playback
-    audio.cancelCurrentAudio() // honor no-queue: a fresh tap interrupts the previous line
-    const line = lines[Math.floor(Math.random() * lines.length)]
-    audio.speak(line).catch(() => {})
   }
 
   // Animation priority: external cheer (big happy jump) → external think (puzzled shake) →
