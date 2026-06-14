@@ -5,40 +5,35 @@ import { OrdlegScoreChip } from '../common/ScoreChip'
 import { OrdlegRepeatButton } from '../common/RepeatButton'
 
 // Læs Ordet: the written Danish word is shown (no picture); the child reads it and
-// taps the matching picture from 4 options. Whole-word reading practice for a child
-// who already reads simple words. The word is also spoken (read-along reinforcement).
+// taps the matching picture from 4 options. The word is NOT read aloud — the child must
+// read it themselves (that's the whole point). Easiest level: short, familiar 2–3 letter
+// words for a beginning reader who can't spell yet.
 interface ReadingWord {
   word: string
   emoji: string
 }
 
 const READING_WORDS: ReadingWord[] = [
+  { word: 'ko', emoji: '🐄' },
+  { word: 'is', emoji: '🍦' },
+  { word: 'æg', emoji: '🥚' },
   { word: 'kat', emoji: '🐱' },
-  { word: 'hund', emoji: '🐕' },
   { word: 'sol', emoji: '☀️' },
   { word: 'hus', emoji: '🏠' },
   { word: 'bil', emoji: '🚗' },
-  { word: 'fisk', emoji: '🐟' },
-  { word: 'ko', emoji: '🐄' },
   { word: 'bog', emoji: '📖' },
-  { word: 'æble', emoji: '🍎' },
-  { word: 'banan', emoji: '🍌' },
-  { word: 'hest', emoji: '🐴' },
   { word: 'mus', emoji: '🐭' },
   { word: 'and', emoji: '🦆' },
-  { word: 'gris', emoji: '🐷' },
-  { word: 'kage', emoji: '🍰' },
-  { word: 'bold', emoji: '⚽' },
   { word: 'sko', emoji: '👟' },
   { word: 'hat', emoji: '🎩' },
-  { word: 'blomst', emoji: '🌸' },
-  { word: 'måne', emoji: '🌙' },
-  { word: 'træ', emoji: '🌳' },
-  { word: 'tog', emoji: '🚂' },
-  { word: 'fugl', emoji: '🐦' },
-  { word: 'is', emoji: '🍦' },
   { word: 'ost', emoji: '🧀' },
-  { word: 'løve', emoji: '🦁' }
+  { word: 'tog', emoji: '🚂' },
+  { word: 'bus', emoji: '🚌' },
+  { word: 'ræv', emoji: '🦊' },
+  { word: 'ged', emoji: '🐐' },
+  { word: 'haj', emoji: '🦈' },
+  { word: 'abe', emoji: '🐒' },
+  { word: 'ski', emoji: '🎿' }
 ]
 
 const LaesOrdetGame: React.FC = () => {
@@ -80,13 +75,17 @@ const LaesOrdetGame: React.FC = () => {
 
     ScoreChipComponent: OrdlegScoreChip,
     RepeatButtonComponent: OrdlegRepeatButton,
+    // No "Gentag" button — there's nothing to repeat; the child reads the word silently.
+    showRepeat: false,
 
     gameWelcomeType: 'laesordet',
 
-    // Read-along: the word is spoken in Danish; tapping a picture speaks its word.
-    speakQuizPrompt: async (item: QuizItem, audio: any) => audio.speak(String(item.audioPrompt)),
+    // The prompt word is NEVER spoken (reading it aloud would defeat the exercise), so both
+    // the prompt and the repeat audio are no-ops. Tapping a picture still names the child's
+    // choice; the correct/wrong cue still plays (handled by UnifiedQuizGame).
+    speakQuizPrompt: async () => '',
     speakClickedItem: async (item: QuizItem, audio: any) => audio.speak(String(item.value)),
-    getRepeatAudio: async (item: QuizItem, audio: any) => audio.speak(String(item.audioPrompt))
+    getRepeatAudio: async () => ''
   }
 
   return <UnifiedQuizGame config={config} />

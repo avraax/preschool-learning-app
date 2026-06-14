@@ -323,8 +323,8 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
         )}
       </Box>
 
-      {/* Answer options */}
-      <Box sx={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 0 }}>
+      {/* Answer options — non-greedy so it groups under the equation (shell centres the group). */}
+      <Box sx={{ flex: '0 1 auto', display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 0 }}>
         <Box
           sx={{
             display: 'grid',

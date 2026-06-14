@@ -119,8 +119,10 @@ const GameShell: React.FC<GameShellProps> = ({
           </motion.div>
         </Box>
 
-        {/* Per-game body. */}
-        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+        {/* Per-game body. Centres its content vertically so the prompt and the answers read as
+            one group (games whose body has a flex:1 child still fill the area — flex-grow wins,
+            so grid-filling games like the learning/memory boards are unaffected). */}
+        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', minHeight: 0 }}>
           {children}
         </Box>
       </Container>

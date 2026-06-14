@@ -391,14 +391,16 @@ const SpellingGame: React.FC = () => {
               })}
             </Box>
 
-            {/* Scrambled letter tiles */}
+            {/* Scrambled letter tiles — non-greedy so the prompt/slots/tiles read as one
+                group (shell centres the cluster vertically). */}
             <Box
               sx={{
-                flex: 1,
+                flex: '0 1 auto',
                 display: 'flex',
                 justifyContent: 'center',
                 alignItems: 'center',
-                minHeight: 0
+                minHeight: 0,
+                mt: { xs: 1, md: 2 }
               }}
             >
               <Box

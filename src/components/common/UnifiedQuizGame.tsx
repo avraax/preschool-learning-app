@@ -49,7 +49,9 @@ export interface UnifiedQuizConfig {
   // Component configuration
   ScoreChipComponent: React.ComponentType<any>
   RepeatButtonComponent: React.ComponentType<any>
-  
+  // Hide the "Gentag" repeat button (e.g. Læs Ordet, where the word must not be read aloud).
+  showRepeat?: boolean        // default true
+
   // Audio configuration
   gameWelcomeType: string     // 'alphabet' or 'math'
   
@@ -358,19 +360,22 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
           </Box>
         )}
 
-        {/* Audio Control - Compact */}
-        <Box sx={{ textAlign: 'center', mb: { xs: 2, md: 3 }, flex: '0 0 auto' }}>
-          <RepeatButton
-            onClick={repeatItem}
-            disabled={false}
-          />
-        </Box>
+        {/* Audio Control - Compact (hidden for games that must not read the answer aloud) */}
+        {config.showRepeat !== false && (
+          <Box sx={{ textAlign: 'center', mb: { xs: 2, md: 3 }, flex: '0 0 auto' }}>
+            <RepeatButton
+              onClick={repeatItem}
+              disabled={false}
+            />
+          </Box>
+        )}
 
-        {/* Answer Options Grid */}
-        <Box sx={{ 
-          flex: 1, 
-          display: 'flex', 
-          justifyContent: 'center', 
+        {/* Answer Options Grid — non-greedy so it groups directly under the prompt
+            (GameShell centres the prompt+answers cluster vertically). */}
+        <Box sx={{
+          flex: '0 1 auto',
+          display: 'flex',
+          justifyContent: 'center',
           alignItems: 'center',
           minHeight: 0
         }}>
