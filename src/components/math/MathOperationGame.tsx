@@ -1,24 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import {
-  Container,
-  Card,
-  CardContent,
-  Typography,
-  Box,
-  IconButton,
-  Paper,
-  AppBar,
-  Toolbar
-} from '@mui/material'
+import { Typography, Box } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
-import { Add, Remove } from '@mui/icons-material'
-import { ArrowLeft } from 'lucide-react'
 import { categoryThemes } from '../../config/categoryThemes'
-import GameMotif from '../common/GameMotif'
-import LottieCharacter, { useCharacterState } from '../common/LottieCharacter'
-import CelebrationEffect, { useCelebration } from '../common/CelebrationEffect'
+import GameShell from '../common/GameShell'
+import AnswerTile, { type AnswerTileState } from '../common/AnswerTile'
+import SymbolTile from '../common/SymbolTile'
+import type { GuideReaction } from '../common/ThemeMascot'
+import { useCelebration } from '../common/CelebrationEffect'
+import { useCharacterState } from '../common/LottieCharacter'
 import { MathScoreChip } from '../common/ScoreChip'
 import { MathRepeatButton } from '../common/RepeatButton'
 import { useGameState } from '../../hooks/useGameState'
@@ -33,16 +23,18 @@ interface MathOperationGameProps {
 }
 
 const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
-  const navigate = useNavigate()
   const muiTheme = useTheme()
   const isAddition = operation === 'addition'
   const title = isAddition ? 'Plus Opgaver' : 'Minus Opgaver'
-  const OperatorIcon = isAddition ? Add : Remove
+  const operator = isAddition ? '+' : '-'
 
   const [num1, setNum1] = useState<number | null>(null)
   const [num2, setNum2] = useState<number | null>(null)
   const [correctAnswer, setCorrectAnswer] = useState<number | null>(null)
   const [options, setOptions] = useState<number[]>([])
+  // Feedback for the most-recently tapped answer + the corner guide reaction.
+  const [feedback, setFeedback] = useState<{ value: number; correct: boolean } | null>(null)
+  const [guideReaction, setGuideReaction] = useState<GuideReaction>(null)
 
   const audio = useSimplifiedAudioHook({
     componentId: isAddition ? 'AdditionGame' : 'SubtractionGame',
@@ -55,7 +47,10 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
   const { score, incrementScore, isScoreNarrating, handleScoreClick } = useGameState()
 
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const guideReactionTimer = useRef<NodeJS.Timeout | null>(null)
 
+  // Kept for the centralized celebration timing helper (drives reaction callbacks); the teacher
+  // figure itself is no longer rendered — the corner GameGuide reacts instead.
   const mathTeacher = useCharacterState('wave')
   const { showCelebration, celebrationIntensity, celebrate, stopCelebration } = useCelebration()
 
@@ -69,9 +64,6 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
     if (hasInitialized.current) return
     hasInitialized.current = true
 
-    mathTeacher.setCharacter('fox')
-    mathTeacher.wave()
-
     if (audio.isAudioReady) {
       setAudioInitialized(true)
       playWelcomeAndStart()
@@ -81,6 +73,10 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current)
         timeoutRef.current = null
+      }
+      if (guideReactionTimer.current) {
+        clearTimeout(guideReactionTimer.current)
+        guideReactionTimer.current = null
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -111,6 +107,10 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
   }
 
   const generateNewProblem = () => {
+    // Clear the previous answer's feedback + guide reaction before the new problem appears.
+    setFeedback(null)
+    setGuideReaction(null)
+
     let firstNum: number
     let secondNum: number
     let answer: number
@@ -177,18 +177,21 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
 
     const isCorrect = selectedAnswer === correctAnswer
 
+    // Mark the tapped tile + cue the corner guide, clearing the reaction a beat later.
+    setFeedback({ value: selectedAnswer, correct: isCorrect })
+    setGuideReaction(isCorrect ? 'cheer' : 'think')
+    if (guideReactionTimer.current) clearTimeout(guideReactionTimer.current)
+    guideReactionTimer.current = setTimeout(() => setGuideReaction(null), 1100)
+
     try {
       await audio.speakNumber(selectedAnswer)
-    } catch (error) {
+    } catch {
       // ignore number audio errors
     }
 
     if (isCorrect) {
       incrementScore()
       celebrate()
-      mathTeacher.wave()
-    } else {
-      mathTeacher.think()
     }
 
     setTimeout(async () => {
@@ -223,237 +226,151 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
     }
   }
 
+  const showEquation = gameReady && num1 !== null && num2 !== null && options.length > 0
+
+  // Big number styling inside the white "number sentence" card (readable on any scene).
+  const numberSx = {
+    fontSize: { xs: '2.6rem', md: '3.6rem' },
+    fontWeight: 700,
+    color: 'primary.dark',
+    lineHeight: 1,
+    userSelect: 'none' as const,
+    '@media (orientation: landscape)': { fontSize: { xs: '2.2rem', md: '3rem' } },
+  }
+  const symbolSx = { width: { xs: 38, md: 54 }, height: { xs: 38, md: 54 } }
+
   return (
-    <Box
-      sx={{
-        position: 'relative',
-        isolation: 'isolate',
-        height: '100dvh',
-        overflow: 'hidden',
-        display: 'flex',
-        flexDirection: 'column',
-        background: categoryThemes.math.gradient
-      }}
+    <GameShell
+      categoryId="math"
+      title={title}
+      backRoute="/math"
+      guideReaction={guideReaction}
+      score={<MathScoreChip score={score} disabled={isScoreNarrating} onClick={handleScoreClick} />}
+      celebration={{ show: showCelebration, intensity: celebrationIntensity, onComplete: stopCelebration }}
     >
-      {/* Calm P4 motif behind the game content. */}
-      <GameMotif categoryId="math" />
-      <AppBar position="static" color="transparent" elevation={0}>
-        <Toolbar sx={{ justifyContent: 'space-between', py: 2 }}>
-          <IconButton
-            onClick={() => navigate('/math')}
-            color="primary"
-            size="large"
-            sx={{
-              bgcolor: 'rgba(255, 255, 255, 0.8)',
-              border: '1px solid rgba(255, 255, 255, 0.3)',
-              backdropFilter: 'blur(8px)',
-              '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.9)', transform: 'scale(1.05)' }
-            }}
-          >
-            <ArrowLeft size={24} />
-          </IconButton>
-
-          <MathScoreChip
-            score={score}
-            disabled={isScoreNarrating}
-            onClick={handleScoreClick}
-          />
-        </Toolbar>
-      </AppBar>
-
-      <Container
-        maxWidth="lg"
+      {/* Question + soft-3D number sentence + repeat button — a clean flex column so the
+          equation never overlaps the question text (the old layout bug). */}
+      <Box
         sx={{
-          flex: 1,
+          flex: '0 0 auto',
           display: 'flex',
           flexDirection: 'column',
-          py: { xs: 2, md: 3 },
-          overflow: 'hidden'
+          alignItems: 'center',
+          gap: { xs: 1.5, md: 2 },
+          mb: { xs: 2, md: 3 },
         }}
       >
-        <Box sx={{ textAlign: 'center', mb: { xs: 2, md: 3 }, flex: '0 0 auto' }}>
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2, mb: 2 }}>
-              <LottieCharacter
-                character={mathTeacher.character}
-                state={mathTeacher.state}
-                size={80}
-                onClick={mathTeacher.wave}
-              />
-              <Typography
-                variant="h3"
-                sx={{
-                  fontFamily: muiTheme.titleFontFamily,
-                  color: muiTheme.scene.dark ? '#FFFFFF' : categoryThemes.math.accentColor,
-                  fontWeight: 700,
-                  fontSize: { xs: '1.5rem', md: '2rem' },
-                  textShadow: muiTheme.scene.dark
-                    ? '0 0 16px rgba(120,170,255,0.55), 0 2px 8px rgba(0,0,0,0.5)'
-                    : 'none'
-                }}
-              >
-                <OperatorIcon fontSize="large" /> {title}
-              </Typography>
-              <Typography sx={{ fontSize: '2.5rem' }}>🧮</Typography>
-            </Box>
-          </motion.div>
-          <Typography variant="h5" color="primary.main" sx={{ mb: 4, fontSize: { xs: '1rem', md: '1.25rem' } }}>
-            Hvad bliver svaret? 🤔
-          </Typography>
-        </Box>
+        <Typography
+          variant="h5"
+          sx={{
+            fontWeight: 700,
+            color: muiTheme.scene.dark ? '#FFFFFF' : 'primary.main',
+            fontSize: { xs: '1rem', md: '1.25rem' },
+            textShadow: muiTheme.scene.dark ? '0 2px 8px rgba(0,0,0,0.5)' : 'none',
+          }}
+        >
+          Hvad bliver svaret? 🤔
+        </Typography>
 
-        {gameReady && num1 !== null && num2 !== null && options.length > 0 && (
-          <Box sx={{ textAlign: 'center', mb: { xs: 2, md: 3 }, flex: '0 0 auto' }}>
-            <Paper
-              elevation={8}
+        {showEquation && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.4 }}
+            style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}
+          >
+            <Box
               sx={{
-                maxWidth: 500,
-                mx: 'auto',
-                p: { xs: 2, md: 4 },
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: { xs: 1.25, md: 2 },
+                bgcolor: 'rgba(255,255,255,0.96)',
                 borderRadius: 4,
                 border: '2px solid',
-                borderColor: 'primary.200',
-                mb: 3,
-                '@media (orientation: landscape)': {
-                  p: { xs: 1.5, md: 2.5 },
-                  mb: 1.5
-                }
+                borderColor: 'primary.100',
+                px: { xs: 2.5, md: 4 },
+                py: { xs: 1.5, md: 2.5 },
+                boxShadow: muiTheme.scene.dark
+                  ? '0 12px 30px rgba(0,0,0,0.45)'
+                  : '0 8px 24px rgba(0,0,0,0.14)',
+                '@media (orientation: landscape)': { py: { xs: 1, md: 1.5 } },
               }}
             >
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: { xs: 2, md: 3 }, mb: 3 }}>
-                <Typography variant="h1" sx={{ fontSize: { xs: '3rem', md: '4rem' }, fontWeight: 700, color: 'primary.dark' }}>
-                  {num1}
-                </Typography>
-                <OperatorIcon sx={{ fontSize: { xs: '2.5rem', md: '3rem' }, color: 'secondary.main' }} />
-                <Typography variant="h1" sx={{ fontSize: { xs: '3rem', md: '4rem' }, fontWeight: 700, color: 'primary.dark' }}>
-                  {num2}
-                </Typography>
-                <Typography variant="h1" sx={{ fontSize: { xs: '2.5rem', md: '3rem' }, fontWeight: 700, color: 'text.secondary' }}>
-                  =
-                </Typography>
-                <Typography variant="h1" sx={{ fontSize: { xs: '3rem', md: '4rem' }, fontWeight: 700, color: 'secondary.main' }}>
-                  ?
-                </Typography>
-              </Box>
+              <Typography variant="h1" component="span" sx={numberSx}>{num1}</Typography>
+              <SymbolTile op={operator} sx={symbolSx} />
+              <Typography variant="h1" component="span" sx={numberSx}>{num2}</Typography>
+              <SymbolTile op="=" sx={symbolSx} />
+              <SymbolTile op="?" sx={symbolSx} />
+            </Box>
 
-              <MathRepeatButton onClick={repeatProblem} disabled={false} />
-            </Paper>
-          </Box>
+            <MathRepeatButton onClick={repeatProblem} disabled={false} />
+          </motion.div>
         )}
+      </Box>
 
-        <Box sx={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 0 }}>
-          <Box
-            sx={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(2, 1fr)',
-              gridAutoRows: 'auto',
-              gap: { xs: '16px', sm: '20px', md: '24px' },
-              width: '100%',
-              maxWidth: { xs: '400px', sm: '500px', md: '600px' },
-              justifyContent: 'center',
-              alignItems: 'center',
+      {/* Answer options */}
+      <Box sx={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 0 }}>
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(2, 1fr)',
+            gridAutoRows: 'auto',
+            gap: { xs: '16px', sm: '20px', md: '24px' },
+            width: '100%',
+            maxWidth: { xs: '400px', sm: '500px', md: '600px' },
+            justifyContent: 'center',
+            alignItems: 'center',
+            '& > *': {
+              aspectRatio: '4/3',
+              minHeight: { xs: '80px', sm: '90px', md: '100px' },
+              maxHeight: { xs: '120px', sm: '140px', md: '160px' },
+              width: '100%'
+            },
+            '@media (orientation: landscape)': {
+              gridTemplateColumns: 'repeat(4, 1fr)',
+              maxWidth: { xs: '600px', sm: '700px', md: '800px' },
               '& > *': {
                 aspectRatio: '4/3',
-                minHeight: { xs: '80px', sm: '90px', md: '100px' },
-                maxHeight: { xs: '120px', sm: '140px', md: '160px' },
-                width: '100%'
-              },
-              '@media (orientation: landscape)': {
-                gridTemplateColumns: 'repeat(4, 1fr)',
-                maxWidth: { xs: '600px', sm: '700px', md: '800px' },
-                '& > *': {
-                  aspectRatio: '4/3',
-                  minHeight: { xs: '60px', sm: '70px', md: '80px' },
-                  maxHeight: { xs: '100px', sm: '110px', md: '120px' }
-                }
+                minHeight: { xs: '60px', sm: '70px', md: '80px' },
+                maxHeight: { xs: '100px', sm: '110px', md: '120px' }
               }
-            }}
-          >
-            {gameReady && options.length > 0 ? options.map((option, index) => (
-              <motion.div
-                key={`${option}-${index}`}
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: index * 0.1 }}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                style={{ height: '100%' }}
+            }
+          }}
+        >
+          {showEquation ? options.map((option, index) => (
+            <motion.div
+              key={`${option}-${index}`}
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: index * 0.08 }}
+              style={{ height: '100%' }}
+            >
+              <AnswerTile
+                onClick={() => handleAnswerClick(option)}
+                accent={categoryThemes.math.accentColor}
+                state={(feedback && feedback.value === option ? (feedback.correct ? 'correct' : 'wrong') : 'idle') as AnswerTileState}
               >
-                <Card
-                  onClick={() => handleAnswerClick(option)}
+                <Typography
+                  variant="h1"
+                  component="span"
                   sx={{
-                    height: '100%',
-                    cursor: 'pointer',
-                    border: '3px solid',
-                    borderColor: 'primary.200',
-                    bgcolor: 'white',
-                    transition: 'all 0.3s ease',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    borderRadius: '12px',
-                    boxShadow: muiTheme.scene.dark
-                      ? '0 12px 30px rgba(0,0,0,0.45)'
-                      : '0 6px 18px rgba(0,0,0,0.12)',
-                    outline: 'none',
-                    '&:focus-visible': {
-                      outline: '3px solid',
-                      outlineColor: 'primary.main'
-                    },
-                    '@media (hover: hover) and (pointer: fine)': {
-                      '&:hover': {
-                        borderColor: 'primary.main',
-                        bgcolor: 'primary.50',
-                        boxShadow: 12,
-                        transform: 'translateY(-2px)'
-                      }
-                    }
+                    fontSize: 'clamp(2.5rem, 8vw, 4.5rem)',
+                    fontWeight: 700,
+                    color: categoryThemes.math.accentColor,
+                    userSelect: 'none',
+                    lineHeight: 1,
+                    '@media (orientation: landscape)': { fontSize: 'clamp(2rem, 6vw, 3.5rem)' }
                   }}
                 >
-                  <CardContent
-                    sx={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      height: '100%',
-                      p: { xs: 1.5, sm: 2, md: 2.5 },
-                      textAlign: 'center'
-                    }}
-                  >
-                    <Typography
-                      variant="h1"
-                      sx={{
-                        fontSize: 'clamp(2.5rem, 8vw, 4.5rem)',
-                        fontWeight: 700,
-                        color: 'primary.dark',
-                        userSelect: 'none',
-                        lineHeight: 1,
-                        '@media (orientation: landscape)': {
-                          fontSize: 'clamp(2rem, 6vw, 3.5rem)'
-                        }
-                      }}
-                    >
-                      {option}
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            )) : null}
-          </Box>
+                  {option}
+                </Typography>
+              </AnswerTile>
+            </motion.div>
+          )) : null}
         </Box>
-      </Container>
-
-      <CelebrationEffect
-        show={showCelebration}
-        intensity={celebrationIntensity}
-        onComplete={stopCelebration}
-      />
-    </Box>
+      </Box>
+    </GameShell>
   )
 }
 

@@ -23,6 +23,13 @@ const SRC_ROOT = join(ROOT, 'art-src')
 const OUT_ROOT = join(ROOT, 'src', 'assets', 'themes')
 const BUDGET_KB = 700
 
+// Math symbol tiles (Game-Page Rework PRD §C/A6) — theme-CONSTANT soft-3D operator glyphs,
+// magenta-keyed cutouts, output to src/assets/symbols/. Generated on solid #FF00FF like the
+// mascots/icons. Filenames are safe ASCII (the registry maps each to its operator char).
+const SYMBOL_OUT = join(ROOT, 'src', 'assets', 'symbols')
+const SYMBOL_WIDTH = 160
+const SYMBOL_QUALITY = 90
+
 // Section icons (theme-constant, used app-wide). Magenta-keyed cutouts.
 const ICON_ROLES = ['alphabet', 'math', 'colors', 'english', 'ordleg']
 
@@ -47,10 +54,15 @@ const CHROMA_KEY_ROLES = new Set(['mascot', ...ICON_ROLES])
 const kb = (bytes) => Math.round(bytes / 1024)
 
 // Return a sharp pipeline with the solid magenta (#FF00FF) background removed to transparency,
-// plus a light despill on magenta fringe pixels.
-async function chromaKeyMagenta(srcPath) {
+// plus a light despill on magenta fringe pixels. `opts.clearBottomRight` (fractions of
+// width/height) wipes a bottom-right corner box to transparent — used to erase the small
+// Gemini "✦" decoration baked into the symbol art (the centred glyphs never reach that corner).
+async function chromaKeyMagenta(srcPath, opts = {}) {
   const { data, info } = await sharp(srcPath).ensureAlpha().raw().toBuffer({ resolveWithObject: true })
   const { width, height, channels } = info
+  const corner = opts.clearBottomRight
+  const minX = corner ? Math.floor(width * (1 - corner.w)) : Infinity
+  const minY = corner ? Math.floor(height * (1 - corner.h)) : Infinity
   for (let i = 0; i < data.length; i += channels) {
     const r = data[i]
     const g = data[i + 1]
@@ -61,6 +73,12 @@ async function chromaKeyMagenta(srcPath) {
       // magenta fringe → despill toward green so edges don't glow pink
       data[i] = Math.min(r, g + 30)
       data[i + 2] = Math.min(b, g + 30)
+    }
+    if (corner) {
+      const px = i / channels
+      const x = px % width
+      const y = (px - x) / width
+      if (x >= minX && y >= minY) data[i + 3] = 0 // wipe baked corner decoration
     }
   }
   return sharp(data, { raw: { width, height, channels } })
@@ -97,10 +115,39 @@ async function optimizeTheme(id) {
   console.log(`  ${'TOTAL'.padEnd(8)}   ${String(kb(total)).padStart(4)} KB${flag}`)
 }
 
+// Symbol tiles live outside the per-theme tree (one constant set), so they get their own pass:
+// art-src/symbols/<name>.png → src/assets/symbols/<name>.webp (magenta-keyed, ~160px, q90).
+async function optimizeSymbols() {
+  const srcDir = join(SRC_ROOT, 'symbols')
+  if (!existsSync(srcDir)) {
+    console.error('! no art-src/symbols — skipping')
+    return
+  }
+  await mkdir(SYMBOL_OUT, { recursive: true })
+  const files = (await readdir(srcDir)).filter((f) => /\.(png|jpe?g|webp)$/i.test(f))
+  let total = 0
+  console.log('\n=== symbols ===')
+  for (const file of files) {
+    const name = basename(file, extname(file)).toLowerCase()
+    const outPath = join(SYMBOL_OUT, `${name}.webp`)
+    // Erase the baked-in Gemini sparkle in the bottom-right corner (glyphs are centred).
+    const pipeline = await chromaKeyMagenta(join(srcDir, file), { clearBottomRight: { w: 0.2, h: 0.26 } })
+    await pipeline.resize({ width: SYMBOL_WIDTH, withoutEnlargement: true }).webp({ quality: SYMBOL_QUALITY, effort: 6 }).toFile(outPath)
+    const size = (await stat(outPath)).size
+    total += size
+    console.log(`  ${name.padEnd(9)} → ${name}.webp  ${String(kb(size)).padStart(4)} KB [magenta keyed]`)
+  }
+  console.log(`  ${'TOTAL'.padEnd(9)}   ${String(kb(total)).padStart(4)} KB`)
+}
+
 const args = process.argv.slice(2)
 const themes = args.length ? args : await readdir(SRC_ROOT)
 
 for (const id of themes) {
+  if (id === 'symbols') {
+    await optimizeSymbols()
+    continue
+  }
   if (!(await stat(join(SRC_ROOT, id)).then((s) => s.isDirectory()).catch(() => false))) continue
   await optimizeTheme(id)
 }

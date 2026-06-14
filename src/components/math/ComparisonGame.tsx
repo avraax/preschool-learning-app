@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { Container, Box, Typography, Button, IconButton, AppBar, Toolbar, Paper, Grid } from '@mui/material'
-import { useTheme } from '@mui/material/styles'
-import { ArrowLeft } from 'lucide-react'
+import { Box, Typography, Paper, Grid } from '@mui/material'
 import { motion } from 'framer-motion'
-import LottieCharacter, { useCharacterState } from '../common/LottieCharacter'
-import GameMotif from '../common/GameMotif'
-import CelebrationEffect, { useCelebration } from '../common/CelebrationEffect'
+import GameShell from '../common/GameShell'
+import AnswerTile from '../common/AnswerTile'
+import SymbolTile from '../common/SymbolTile'
+import type { GuideReaction } from '../common/ThemeMascot'
+import { useCharacterState } from '../common/LottieCharacter'
+import { useCelebration } from '../common/CelebrationEffect'
 import { MathScoreChip } from '../common/ScoreChip'
 import { categoryThemes } from '../../config/categoryThemes'
 import { MathRepeatButton } from '../common/RepeatButton'
@@ -49,29 +49,31 @@ interface ComparisonProblem {
 }
 
 const ComparisonGame: React.FC = () => {
-  const navigate = useNavigate()
-  const muiTheme = useTheme()
   const [currentProblem, setCurrentProblem] = useState<ComparisonProblem | null>(null)
-  const [selectedSymbol, setSelectedSymbol] = useState<string | null>(null)
   const [showFeedback, setShowFeedback] = useState(false)
+  // Most-recently tapped symbol + whether it was correct (drives the AnswerTile glow/shake).
+  const [feedback, setFeedback] = useState<{ symbol: string; correct: boolean } | null>(null)
+  const [guideReaction, setGuideReaction] = useState<GuideReaction>(null)
   // Simplified audio system
-  const audio = useSimplifiedAudioHook({ 
+  const audio = useSimplifiedAudioHook({
     componentId: 'ComparisonGame',
     autoInitialize: false
   })
   const [audioInitialized, setAudioInitialized] = useState(false)
   const hasInitialized = useRef(false)
-    
+
   // Centralized game state management
   const { score, incrementScore, isScoreNarrating, handleScoreClick } = useGameState()
-  
+
   // Timeout ref for cleanup
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
-  
-  // Character and celebration management
+  const guideReactionTimer = useRef<NodeJS.Timeout | null>(null)
+
+  // Kept for the centralized celebration timing helper; the teacher figure is no longer
+  // rendered — the corner GameGuide reacts instead.
   const mathTeacher = useCharacterState('wave')
   const { showCelebration, celebrationIntensity, celebrate, stopCelebration } = useCelebration()
-  
+
   // Production logging - only essential errors
   const logError = (message: string, data?: any) => {
     if (message.includes('Error') || message.includes('error')) {
@@ -83,25 +85,26 @@ const ComparisonGame: React.FC = () => {
     // Prevent duplicate initialization with race condition guard
     if (hasInitialized.current) return
     hasInitialized.current = true
-    
-    // Initialize math teacher character
-    mathTeacher.setCharacter('fox')
-    mathTeacher.wave()
-    
+
     // Check if audio is ready
     if (audio.isAudioReady) {
       setAudioInitialized(true)
       playWelcomeAndStart()
     }
-    
+
     return () => {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current)
         timeoutRef.current = null
       }
+      if (guideReactionTimer.current) {
+        clearTimeout(guideReactionTimer.current)
+        guideReactionTimer.current = null
+      }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
-  
+
   // Monitor audio readiness - only if not already initialized
   useEffect(() => {
     if (audio.isAudioReady && !audioInitialized && !hasInitialized.current) {
@@ -109,6 +112,7 @@ const ComparisonGame: React.FC = () => {
       setAudioInitialized(true)
       playWelcomeAndStart()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [audio.isAudioReady, audioInitialized])
 
   // Play welcome message and start game
@@ -116,7 +120,7 @@ const ComparisonGame: React.FC = () => {
     try {
       // Play the welcome message
       await audio.playGameWelcome('comparison')
-      
+
       // iOS-optimized delay - increased to prevent audio overlap
       const delay = isIOS() ? 1000 : 1500
       setTimeout(() => {
@@ -133,10 +137,10 @@ const ComparisonGame: React.FC = () => {
     // Generate numbers 1-20 (introduces Danish teen numbers)
     const leftNum = Math.floor(Math.random() * 20) + 1
     let rightNum = Math.floor(Math.random() * 20) + 1
-    
+
     // Randomly decide if we want equal numbers (25% chance)
     const wantEqual = Math.random() < 0.25
-    
+
     if (wantEqual) {
       // Force equal numbers
       rightNum = leftNum
@@ -146,33 +150,33 @@ const ComparisonGame: React.FC = () => {
         rightNum = Math.floor(Math.random() * 20) + 1
       }
     }
-    
+
     // Select random object types for each side
     const leftObjectType = OBJECT_TYPES[Math.floor(Math.random() * OBJECT_TYPES.length)]
     let rightObjectType = OBJECT_TYPES[Math.floor(Math.random() * OBJECT_TYPES.length)]
-    
+
     // Ensure different object types for visual clarity
     while (rightObjectType === leftObjectType) {
       rightObjectType = OBJECT_TYPES[Math.floor(Math.random() * OBJECT_TYPES.length)]
     }
-    
+
     // Determine correct symbol and question type
     let correctSymbol: '>' | '<' | '='
     let questionType: 'largest' | 'smallest' | 'equal'
-    
+
     if (leftNum > rightNum) {
       correctSymbol = '>'
       // Randomly ask for largest or smallest
       questionType = Math.random() < 0.5 ? 'largest' : 'smallest'
     } else if (leftNum < rightNum) {
-      correctSymbol = '<'  
+      correctSymbol = '<'
       // Randomly ask for largest or smallest
       questionType = Math.random() < 0.5 ? 'largest' : 'smallest'
     } else {
       correctSymbol = '='
       questionType = 'equal'
     }
-    
+
     const problem: ComparisonProblem = {
       leftNumber: leftNum,
       rightNumber: rightNum,
@@ -181,20 +185,21 @@ const ComparisonGame: React.FC = () => {
       correctSymbol,
       questionType
     }
-    
+
     setCurrentProblem(problem)
-    setSelectedSymbol(null)
     setShowFeedback(false)
-    
+    setFeedback(null)
+    setGuideReaction(null)
+
     // Clear any existing timeout
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current)
       timeoutRef.current = null
     }
-    
+
     // iOS-optimized delay
     const delay = isIOS() ? 100 : 500
-    
+
     // Schedule delayed audio for the problem
     timeoutRef.current = setTimeout(() => {
       speakProblem(problem)
@@ -227,26 +232,26 @@ const ComparisonGame: React.FC = () => {
     if (!currentProblem || showFeedback) {
       return
     }
-    
+
     // Critical iOS fix: Update user interaction timestamp BEFORE audio call
     audio.updateUserInteraction()
-    
+
     // Always cancel current audio for fast tapping
     audio.cancelCurrentAudio()
-    
-    setSelectedSymbol(symbol)
+
     setShowFeedback(true)
-    
+
     // FIRST: Speak the symbol immediately for fast feedback
     try {
       const symbolName = symbol === '>' ? 'større end' : symbol === '<' ? 'mindre end' : 'lig med'
       await audio.speak(symbolName)
-    } catch (error) {
+    } catch {
+      // ignore symbol audio errors
     }
-    
+
     // Determine if the answer is correct based on question type
     let isCorrect = false
-    
+
     if (currentProblem.questionType === 'equal') {
       // For "Er tallene ens?", only "=" is correct for equal numbers
       isCorrect = symbol === currentProblem.correctSymbol
@@ -269,7 +274,13 @@ const ComparisonGame: React.FC = () => {
         isCorrect = symbol === '=' // They are equal
       }
     }
-    
+
+    // Mark the tapped symbol tile + cue the corner guide, clearing the reaction a beat later.
+    setFeedback({ symbol, correct: isCorrect })
+    setGuideReaction(isCorrect ? 'cheer' : 'think')
+    if (guideReactionTimer.current) clearTimeout(guideReactionTimer.current)
+    guideReactionTimer.current = setTimeout(() => setGuideReaction(null), 1100)
+
     // Generate teaching explanation for wrong answers
     let explanation = ''
     if (!isCorrect) {
@@ -302,16 +313,11 @@ const ComparisonGame: React.FC = () => {
     if (isCorrect) {
       incrementScore()
       celebrate() // Start celebration visual immediately
-      mathTeacher.wave()
-    } else {
-      mathTeacher.think()
     }
-    
+
     // THEN: Use centralized celebration with standard timing
     setTimeout(async () => {
       try {
-        console.log('🎯 ComparisonGame: Starting celebration flow', { isCorrect, explanation })
-        
         await audio.playCelebrationWithStandardTiming({
           isCorrect,
           celebrate,
@@ -320,26 +326,23 @@ const ComparisonGame: React.FC = () => {
           nextAction: isCorrect ? generateNewProblem : undefined, // Don't reset UI immediately for wrong answers
           teacherCharacter: mathTeacher
         })
-        
-        console.log('🎯 ComparisonGame: Celebration completed, handling wrong answer flow')
-        
+
         // For wrong answers, speak the teaching explanation, then reset UI to allow retry
         if (!isCorrect) {
           try {
             if (explanation) {
               await audio.speak(explanation)
             }
-          } catch (explanationError) {
+          } catch {
             // ignore explanation audio errors
           }
           setTimeout(() => {
             setShowFeedback(false)
-            setSelectedSymbol(null)
+            setFeedback(null)
           }, 1200) // brief pause after the explanation before allowing retry
         }
-        
+
       } catch (error) {
-        console.error('Error in centralized celebration:', error)
         logError('Error in centralized celebration', {
           symbol,
           currentProblem: currentProblem?.questionType,
@@ -352,146 +355,70 @@ const ComparisonGame: React.FC = () => {
 
   const repeatProblem = async () => {
     if (!currentProblem) return
-    
+
     // Critical iOS fix: Update user interaction timestamp BEFORE audio call
     audio.updateUserInteraction()
-    
+
     // Always cancel current audio for fast tapping
     audio.cancelCurrentAudio()
-    
+
     try {
       await speakProblem(currentProblem)
     } catch (error) {
-      console.error('🎵 ComparisonGame: Error repeating problem:', error)
+      logError('Error repeating problem', { error: error?.toString() })
     }
   }
 
   return (
-    <Box
-      sx={{
-        position: 'relative',
-        isolation: 'isolate',
-        height: '100dvh',
-        overflow: 'hidden',
-        display: 'flex',
-        flexDirection: 'column',
-        background: categoryThemes.math.gradient
-      }}
+    <GameShell
+      categoryId="math"
+      title="Sammenlign Tal"
+      backRoute="/math"
+      guideReaction={guideReaction}
+      score={<MathScoreChip score={score} disabled={isScoreNarrating} onClick={handleScoreClick} />}
+      celebration={{ show: showCelebration, intensity: celebrationIntensity, onComplete: stopCelebration }}
     >
-      {/* Calm P4 motif behind the game content. */}
-      <GameMotif categoryId="math" />
-      {/* App Bar with Back Button and Score */}
-      <AppBar position="static" color="transparent" elevation={0}>
-        <Toolbar sx={{ justifyContent: 'space-between', py: 2 }}>
-          <IconButton 
-            onClick={() => navigate('/math')}
-            color="primary"
-            size="large"
-            sx={{ 
-              bgcolor: 'rgba(255, 255, 255, 0.8)', 
-              border: '1px solid rgba(255, 255, 255, 0.3)',
-              backdropFilter: 'blur(8px)',
-              '&:hover': { 
-                bgcolor: 'rgba(255, 255, 255, 0.9)',
-                transform: 'scale(1.05)'
-              }
-            }}
-          >
-            <ArrowLeft size={24} />
-          </IconButton>
-          
-          <MathScoreChip
-            score={score}
-            disabled={isScoreNarrating}
-            onClick={handleScoreClick}
-          />
-        </Toolbar>
-      </AppBar>
-
-      <Container 
-        maxWidth="lg" 
-        sx={{ 
+      {/* Problem Display - Only show when currentProblem exists */}
+      {currentProblem && (
+        <Box sx={{
           flex: 1,
           display: 'flex',
           flexDirection: 'column',
-          py: { xs: 2, md: 3 },
-          overflow: 'hidden'
-        }}
-      >
-        {/* Game Title with Math Teacher */}
-        <Box sx={{ textAlign: 'center', mb: { xs: 2, md: 3 }, flex: '0 0 auto' }}>
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
+          justifyContent: 'center',
+          alignItems: 'center',
+          minHeight: 0
+        }}>
+          {/* Numbers and Objects Display */}
+          <Paper
+            elevation={8}
+            sx={{
+              maxWidth: 800,
+              width: '100%',
+              p: { xs: 2, sm: 3, md: 4 },
+              borderRadius: 4,
+              border: '2px solid',
+              borderColor: 'primary.200',
+              mb: 4,
+              // Landscape adjustments
+              '@media (orientation: landscape)': {
+                maxWidth: '90%',
+                p: { xs: 1.5, sm: 2, md: 3 }
+              }
+            }}
           >
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2, mb: 2 }}>
-              <LottieCharacter
-                character={mathTeacher.character}
-                state={mathTeacher.state}
-                size={80}
-                onClick={mathTeacher.wave}
-              />
-              <Typography 
-                variant="h3"
-                sx={{
-                  fontFamily: muiTheme.titleFontFamily,
-                  color: muiTheme.scene.dark ? '#FFFFFF' : 'primary.dark',
-                  fontWeight: 700,
-                  fontSize: { xs: '1.5rem', md: '2rem' },
-                  textShadow: muiTheme.scene.dark
-                    ? '0 0 16px rgba(120,170,255,0.55), 0 2px 8px rgba(0,0,0,0.5)'
-                    : 'none'
-                }}
-              >
-                Sammenlign Tal
-              </Typography>
-              <Typography sx={{ fontSize: '2.5rem' }}>🔢</Typography>
-            </Box>
-          </motion.div>
-        </Box>
-
-        {/* Problem Display - Only show when currentProblem exists */}
-        {currentProblem && (
-          <Box sx={{ 
-            flex: 1, 
-            display: 'flex', 
-            flexDirection: 'column',
-            justifyContent: 'center',
-            alignItems: 'center',
-            minHeight: 0
-          }}>
-            {/* Numbers and Objects Display */}
-            <Paper 
-              elevation={8}
-              sx={{ 
-                maxWidth: 800,
-                width: '100%',
-                p: { xs: 2, sm: 3, md: 4 },
-                borderRadius: 4,
-                border: '2px solid',
-                borderColor: 'primary.200',
-                mb: 4,
-                // Landscape adjustments
-                '@media (orientation: landscape)': {
-                  maxWidth: '90%',
-                  p: { xs: 1.5, sm: 2, md: 3 }
-                }
-              }}
-            >
             <Grid container spacing={{ xs: 2, md: 4 }} sx={{ alignItems: 'center' }}>
               {/* Left Side */}
               <Grid size={{ xs: 12, sm: 4 }}>
                 <Box sx={{ textAlign: 'center' }}>
                   {/* Objects Display */}
-                  <Box sx={{ 
-                    mb: 2, 
-                    minHeight: { xs: 80, md: 100 }, 
+                  <Box sx={{
+                    mb: 2,
+                    minHeight: { xs: 80, md: 100 },
                     maxHeight: { xs: 120, md: 150 },
-                    display: 'flex', 
-                    flexWrap: 'wrap', 
-                    justifyContent: 'center', 
-                    alignItems: 'center', 
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    justifyContent: 'center',
+                    alignItems: 'center',
                     gap: 1,
                     overflow: 'hidden',
                     '@media (orientation: landscape)': {
@@ -512,11 +439,11 @@ const ComparisonGame: React.FC = () => {
                     ))}
                   </Box>
                   {/* Number */}
-                  <Typography 
-                    variant="h1" 
-                    sx={{ 
-                      fontSize: { xs: '4rem', md: '5rem' }, 
-                      fontWeight: 700, 
+                  <Typography
+                    variant="h1"
+                    sx={{
+                      fontSize: { xs: '4rem', md: '5rem' },
+                      fontWeight: 700,
                       color: 'primary.dark'
                     }}
                   >
@@ -528,75 +455,34 @@ const ComparisonGame: React.FC = () => {
                 </Box>
               </Grid>
 
-              {/* Symbol Selection */}
+              {/* Symbol Selection — soft-3D symbol tiles with correct/wrong feedback */}
               <Grid size={{ xs: 12, sm: 4 }}>
-                <Box sx={{ 
-                  textAlign: 'center',
-                  height: '100%',
+                <Box sx={{
                   display: 'flex',
                   flexDirection: 'column',
-                  justifyContent: 'center'
+                  gap: { xs: 1.5, md: 2 },
+                  justifyContent: 'center',
+                  alignItems: 'center'
                 }}>
-                  {showFeedback && selectedSymbol ? (
-                    <Box sx={{ mb: 2 }}>
-                      <Typography 
-                        variant="h1" 
-                        sx={{ 
-                          fontSize: { xs: '4rem', md: '6rem' }, 
-                          fontWeight: 700,
-                          color: selectedSymbol === currentProblem.correctSymbol ? 'success.main' : 'error.main'
-                        }}
+                  {(['>', '<', '='] as const).map((symbol) => (
+                    <Box
+                      key={symbol}
+                      sx={{
+                        width: { xs: 92, md: 116 },
+                        height: { xs: 64, md: 78 },
+                        '@media (orientation: landscape)': { height: { xs: 52, md: 64 } }
+                      }}
+                    >
+                      <AnswerTile
+                        onClick={() => handleSymbolClick(symbol)}
+                        accent={categoryThemes.math.accentColor}
+                        disabled={showFeedback}
+                        state={feedback && feedback.symbol === symbol ? (feedback.correct ? 'correct' : 'wrong') : 'idle'}
                       >
-                        {selectedSymbol}
-                      </Typography>
-                      {selectedSymbol === currentProblem.correctSymbol && (
-                        <Typography variant="h6" color="success.main">
-                          Rigtig! 🎉
-                        </Typography>
-                      )}
+                        <SymbolTile op={symbol} sx={{ width: { xs: 40, md: 50 }, height: { xs: 40, md: 50 } }} />
+                      </AnswerTile>
                     </Box>
-                  ) : (
-                    <Box sx={{ 
-                      display: 'flex', 
-                      flexDirection: 'column', 
-                      gap: { xs: 1.5, md: 2 },
-                      justifyContent: 'center',
-                      alignItems: 'center'
-                    }}>
-                      {(['>', '<', '='] as const).map((symbol) => (
-                        <Button
-                          key={symbol}
-                          variant="contained"
-                          size="large"
-                          onClick={() => handleSymbolClick(symbol)}
-                          disabled={false}
-                          sx={{
-                            fontSize: 'clamp(1.8rem, 4vw, 3rem)',
-                            fontWeight: 700,
-                            py: { xs: 1.5, md: 2 },
-                            px: { xs: 3, md: 4 },
-                            borderRadius: 3,
-                            boxShadow: muiTheme.scene.dark
-                              ? '0 12px 30px rgba(0,0,0,0.45)'
-                              : '0 6px 18px rgba(0,0,0,0.12)',
-                            minWidth: { xs: '80px', md: '100px' },
-                            outline: 'none',
-                            '&:focus': {
-                              outline: 'none'
-                            },
-                            '@media (hover: hover) and (pointer: fine)': {
-                              '&:hover': {
-                                boxShadow: 8,
-                                transform: 'scale(1.05)'
-                              }
-                            }
-                          }}
-                        >
-                          {symbol}
-                        </Button>
-                      ))}
-                    </Box>
-                  )}
+                  ))}
                 </Box>
               </Grid>
 
@@ -604,14 +490,14 @@ const ComparisonGame: React.FC = () => {
               <Grid size={{ xs: 12, sm: 4 }}>
                 <Box sx={{ textAlign: 'center' }}>
                   {/* Objects Display */}
-                  <Box sx={{ 
-                    mb: 2, 
-                    minHeight: { xs: 80, md: 100 }, 
+                  <Box sx={{
+                    mb: 2,
+                    minHeight: { xs: 80, md: 100 },
                     maxHeight: { xs: 120, md: 150 },
-                    display: 'flex', 
-                    flexWrap: 'wrap', 
-                    justifyContent: 'center', 
-                    alignItems: 'center', 
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    justifyContent: 'center',
+                    alignItems: 'center',
                     gap: 1,
                     overflow: 'hidden',
                     '@media (orientation: landscape)': {
@@ -632,11 +518,11 @@ const ComparisonGame: React.FC = () => {
                     ))}
                   </Box>
                   {/* Number */}
-                  <Typography 
-                    variant="h1" 
-                    sx={{ 
-                      fontSize: { xs: '4rem', md: '5rem' }, 
-                      fontWeight: 700, 
+                  <Typography
+                    variant="h1"
+                    sx={{
+                      fontSize: { xs: '4rem', md: '5rem' },
+                      fontWeight: 700,
                       color: 'primary.dark'
                     }}
                   >
@@ -651,24 +537,16 @@ const ComparisonGame: React.FC = () => {
 
             {/* Repeat Button */}
             <Box sx={{ textAlign: 'center', mt: 3 }}>
-              <MathRepeatButton 
+              <MathRepeatButton
                 onClick={repeatProblem}
                 disabled={false}
-                label="🎵 Hør igen"
+                label="Hør igen"
               />
             </Box>
           </Paper>
         </Box>
-        )}
-      </Container>
-
-      {/* Celebration Effect */}
-      <CelebrationEffect
-        show={showCelebration}
-        intensity={celebrationIntensity}
-        onComplete={stopCelebration}
-      />
-    </Box>
+      )}
+    </GameShell>
   )
 }
 
