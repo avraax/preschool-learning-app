@@ -86,8 +86,11 @@ const SpellingGame: React.FC = () => {
     autoInitialize: false
   })
   const [gameReady, setGameReady] = useState(false)
-  const [audioInitialized, setAudioInitialized] = useState(false)
   const hasInitialized = useRef(false)
+  // Resilient start (mirrors UnifiedQuizGame) so the board is never stranded when audio isn't
+  // unlocked at mount; the welcome plays at most once.
+  const startedRef = useRef(false)
+  const welcomeTriggered = useRef(false)
   const previousWord = useRef<string | null>(null)
   const isAdvancing = useRef(false)
 
@@ -118,11 +121,15 @@ const SpellingGame: React.FC = () => {
     hasInitialized.current = true
 
     if (audio.isAudioReady) {
-      setAudioInitialized(true)
       playWelcomeAndStart()
     }
 
+    // Resilience: reveal the board after a short delay even if audio never unlocks; the welcome
+    // still plays if/when it does (both starters are ref-guarded).
+    const fallback = setTimeout(() => beginGame(), 2500)
+
     return () => {
+      clearTimeout(fallback)
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current)
         timeoutRef.current = null
@@ -132,28 +139,35 @@ const SpellingGame: React.FC = () => {
         guideReactionTimer.current = null
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // When audio unlocks after mount, play the welcome (unless it/the game already started).
   useEffect(() => {
-    if (audio.isAudioReady && !audioInitialized && !hasInitialized.current) {
-      hasInitialized.current = true
-      setAudioInitialized(true)
+    if (audio.isAudioReady && !welcomeTriggered.current && !startedRef.current) {
       playWelcomeAndStart()
     }
-  }, [audio.isAudioReady, audioInitialized])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [audio.isAudioReady])
+
+  // Reveal the board (first word). Idempotent — safe from any start path.
+  const beginGame = () => {
+    if (startedRef.current) return
+    startedRef.current = true
+    setGameReady(true)
+    generateNewWord()
+  }
 
   const playWelcomeAndStart = async () => {
+    if (welcomeTriggered.current) return
+    welcomeTriggered.current = true
     try {
       await audio.playGameWelcome('spelling')
       const delay = isIOS() ? 1000 : 1500
-      setTimeout(() => {
-        setGameReady(true)
-        generateNewWord()
-      }, delay)
+      setTimeout(() => beginGame(), delay)
     } catch (error) {
       logError('Error playing welcome', { error: error?.toString() })
-      setGameReady(true)
-      generateNewWord()
+      beginGame()
     }
   }
 

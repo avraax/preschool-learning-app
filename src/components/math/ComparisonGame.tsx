@@ -59,8 +59,12 @@ const ComparisonGame: React.FC = () => {
     componentId: 'ComparisonGame',
     autoInitialize: false
   })
-  const [audioInitialized, setAudioInitialized] = useState(false)
   const hasInitialized = useRef(false)
+  // Resilient start (mirrors UnifiedQuizGame): the board reveals once via beginGame regardless
+  // of which path triggers it, and the welcome plays at most once — so a child is never stranded
+  // on an empty screen when audio isn't unlocked at mount.
+  const startedRef = useRef(false)
+  const welcomeTriggered = useRef(false)
 
   // Centralized game state management
   const { score, incrementScore, isScoreNarrating, handleScoreClick } = useGameState()
@@ -88,11 +92,15 @@ const ComparisonGame: React.FC = () => {
 
     // Check if audio is ready
     if (audio.isAudioReady) {
-      setAudioInitialized(true)
       playWelcomeAndStart()
     }
 
+    // Resilience: reveal the first problem after a short delay even if audio never unlocks;
+    // the welcome still plays if/when it does (both starters are ref-guarded).
+    const fallback = setTimeout(() => beginGame(), 2500)
+
     return () => {
+      clearTimeout(fallback)
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current)
         timeoutRef.current = null
@@ -105,31 +113,36 @@ const ComparisonGame: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Monitor audio readiness - only if not already initialized
+  // When audio unlocks after mount, play the welcome (unless it/the game already started).
   useEffect(() => {
-    if (audio.isAudioReady && !audioInitialized && !hasInitialized.current) {
-      hasInitialized.current = true
-      setAudioInitialized(true)
+    if (audio.isAudioReady && !welcomeTriggered.current && !startedRef.current) {
       playWelcomeAndStart()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [audio.isAudioReady, audioInitialized])
+  }, [audio.isAudioReady])
+
+  // Reveal the first problem. Idempotent — safe from any start path.
+  const beginGame = () => {
+    if (startedRef.current) return
+    startedRef.current = true
+    generateNewProblem()
+  }
 
   // Play welcome message and start game
   const playWelcomeAndStart = async () => {
+    if (welcomeTriggered.current) return
+    welcomeTriggered.current = true
     try {
       // Play the welcome message
       await audio.playGameWelcome('comparison')
 
       // iOS-optimized delay - increased to prevent audio overlap
       const delay = isIOS() ? 1000 : 1500
-      setTimeout(() => {
-        generateNewProblem()
-      }, delay)
+      setTimeout(() => beginGame(), delay)
     } catch (error) {
       logError('Error playing welcome', { error: error?.toString() })
       // Still start the game even if audio fails
-      generateNewProblem()
+      beginGame()
     }
   }
 

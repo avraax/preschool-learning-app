@@ -41,8 +41,12 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
     autoInitialize: false
   })
   const [gameReady, setGameReady] = useState(false)
-  const [audioInitialized, setAudioInitialized] = useState(false)
   const hasInitialized = useRef(false)
+  // Guards the actual start (runs once regardless of which path triggers it) and the welcome
+  // (plays at most once even if audio unlocks after mount). Mirrors UnifiedQuizGame's resilient
+  // start so a child is never stranded on an empty board when audio isn't unlocked at mount.
+  const startedRef = useRef(false)
+  const welcomeTriggered = useRef(false)
 
   const { score, incrementScore, isScoreNarrating, handleScoreClick } = useGameState()
 
@@ -65,11 +69,16 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
     hasInitialized.current = true
 
     if (audio.isAudioReady) {
-      setAudioInitialized(true)
       playWelcomeAndStart()
     }
 
+    // Resilience: if the AudioContext never unlocks (fresh/deep-linked load), reveal the board
+    // after a short delay anyway; the welcome still plays if/when audio unlocks (both starters
+    // are ref-guarded, so this never double-starts).
+    const fallback = setTimeout(() => beginGame(), 2500)
+
     return () => {
+      clearTimeout(fallback)
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current)
         timeoutRef.current = null
@@ -82,27 +91,32 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // When audio unlocks after mount, play the welcome (unless it/the game already started).
   useEffect(() => {
-    if (audio.isAudioReady && !audioInitialized && !hasInitialized.current) {
-      hasInitialized.current = true
-      setAudioInitialized(true)
+    if (audio.isAudioReady && !welcomeTriggered.current && !startedRef.current) {
       playWelcomeAndStart()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [audio.isAudioReady, audioInitialized])
+  }, [audio.isAudioReady])
+
+  // Reveal the playable board (first problem). Idempotent — safe from any start path.
+  const beginGame = () => {
+    if (startedRef.current) return
+    startedRef.current = true
+    setGameReady(true)
+    generateNewProblem()
+  }
 
   const playWelcomeAndStart = async () => {
+    if (welcomeTriggered.current) return
+    welcomeTriggered.current = true
     try {
       await audio.playGameWelcome(operation)
       const delay = isIOS() ? 1000 : 1500
-      setTimeout(() => {
-        setGameReady(true)
-        generateNewProblem()
-      }, delay)
+      setTimeout(() => beginGame(), delay)
     } catch (error) {
       logError('Error playing welcome', { error: error?.toString() })
-      setGameReady(true)
-      generateNewProblem()
+      beginGame()
     }
   }
 

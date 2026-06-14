@@ -131,64 +131,79 @@ const UnifiedMemoryGame: React.FC<UnifiedMemoryGameProps> = ({ config }) => {
     autoInitialize: false
   })
   const [gameReady, setGameReady] = useState(false)
-  const [audioInitialized, setAudioInitialized] = useState(false)
-  
+
   // Character and celebration management
   const teacher = useCharacterState('wave')
   const { showCelebration, celebrationIntensity, celebrate, stopCelebration } = useCelebration()
-  
+
   // Production logging - only essential errors
   const logError = (message: string, data?: any) => {
     if (message.includes('Error') || message.includes('error')) {
       console.error(`🎵 UnifiedMemoryGame: ${message}`, data)
     }
   }
-  
+
   const hasInitialized = useRef(false)
+  // Resilient start (mirrors UnifiedQuizGame): the board reveals once via beginGame regardless
+  // of which path triggers it, and the welcome plays at most once — so the cards are never
+  // stranded hidden when audio isn't unlocked at mount.
+  const startedRef = useRef(false)
+  const welcomeTriggered = useRef(false)
 
   useEffect(() => {
     // Prevent duplicate initialization with race condition guard
     if (hasInitialized.current) return
     hasInitialized.current = true
-    
+
     // Initialize teacher character
     teacher.setCharacter('owl')
     teacher.wave()
-    
+
     // Check if audio is ready
     if (audio.isAudioReady) {
-      setAudioInitialized(true)
       playWelcomeAndStart()
     }
-    
+
     // Generate cards immediately but don't show them until entry audio completes
     initializeGame()
+
+    // Resilience: reveal the cards after a short delay even if audio never unlocks; the welcome
+    // still plays if/when it does (both starters are ref-guarded).
+    const fallback = setTimeout(() => beginGame(), 2500)
+    return () => clearTimeout(fallback)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [config.gameType])
-  
-  // Monitor audio readiness - only if not already initialized
+
+  // When audio unlocks after mount, play the welcome (unless it/the game already started).
   useEffect(() => {
-    if (audio.isAudioReady && !audioInitialized && !hasInitialized.current) {
-      hasInitialized.current = true
-      setAudioInitialized(true)
+    if (audio.isAudioReady && !welcomeTriggered.current && !startedRef.current) {
       playWelcomeAndStart()
     }
-  }, [audio.isAudioReady, audioInitialized])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [audio.isAudioReady])
+
+  // Reveal the cards. Idempotent — safe from any start path.
+  const beginGame = () => {
+    if (startedRef.current) return
+    startedRef.current = true
+    setGameReady(true)
+  }
 
   // Play welcome message and start game
   const playWelcomeAndStart = async () => {
+    if (welcomeTriggered.current) return
+    welcomeTriggered.current = true
     try {
       // Play the welcome message
       await audio.playGameWelcome('memory')
-      
+
       // iOS-optimized delay - increased to prevent audio overlap
       const delay = isIOS() ? 1000 : 1500
-      setTimeout(() => {
-        setGameReady(true)
-      }, delay)
+      setTimeout(() => beginGame(), delay)
     } catch (error) {
       logError('Error playing welcome', { error: error?.toString() })
       // Still start the game even if audio fails
-      setGameReady(true)
+      beginGame()
     }
   }
 
