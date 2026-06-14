@@ -20,6 +20,7 @@ export interface SceneAssets {
 // URLs Vite produces from the optimized art). Registered per theme in later phases, e.g.:
 //   ocean: () => import('../assets/themes/ocean'),
 const loaders: Record<string, () => Promise<{ default: SceneAssets }>> = {
+  kid: () => import('../assets/themes/kid'),
   ocean: () => import('../assets/themes/ocean'),
   space: () => import('../assets/themes/space'),
   dino: () => import('../assets/themes/dino'),

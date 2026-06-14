@@ -102,9 +102,11 @@ const AmbientField: React.FC<AmbientFieldProps> = ({ scene, sprites, themeId, di
       const [min, max] = cssBubbles
         ? motion === 'twinkle'
           ? [4, 12] // stars are small
-          : motion === 'fall'
-            ? [14, 30] // leaves
-            : [8, 22] // bubbles
+          : motion === 'drift'
+            ? [6, 16] // soft sparkles
+            : motion === 'fall'
+              ? [14, 30] // leaves
+              : [8, 22] // bubbles
         : specs[idx]?.size ?? [16, 32]
       return {
         url: sprites.length ? sprites[idx] : '',
@@ -143,9 +145,9 @@ const AmbientField: React.FC<AmbientFieldProps> = ({ scene, sprites, themeId, di
                   backgroundSize: 'contain',
                   backgroundRepeat: 'no-repeat',
                 }
-              : motion === 'twinkle'
+              : motion === 'twinkle' || motion === 'drift'
                 ? {
-                    // CSS star: a bright glowing dot.
+                    // CSS sparkle: a soft glowing dot (stars in space, gentle sparkles in Regnbue).
                     borderRadius: '50%',
                     background:
                       'radial-gradient(circle, rgba(255,255,255,1) 0%, rgba(255,247,214,0.9) 35%, rgba(255,247,214,0) 70%)',

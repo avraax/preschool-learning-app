@@ -176,7 +176,7 @@ const ThemeMascot: React.FC<ThemeMascotProps> = ({ sx, onTap, parallaxDepth = 0.
               width: b.size,
               height: b.size,
               borderRadius: '50%',
-              ...(burstMotion === 'twinkle'
+              ...(burstMotion === 'twinkle' || burstMotion === 'drift'
                 ? {
                     // 4-point sparkle STAR (clip-path) so it's unmistakably not a bubble.
                     // Use filter drop-shadow (follows the clip), not box-shadow (would be rect).

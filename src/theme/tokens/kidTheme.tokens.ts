@@ -108,6 +108,29 @@ export const kidThemeTokens: ThemeTokens = {
     // Not yet consumed in Phase 1; derived from primary for future focus styling.
     focusRing: '0 0 0 4px rgba(139, 92, 246, 0.4)',
   },
+
+  // ---- Immersive world (Theme Worlds PRD) — gentle, light, familiar default ----
+  // Title font stays Comic Neue (omitted → falls back to fontFamily), per the PRD.
+  scene: {
+    dark: false,
+    layers: [{ src: '', depth: 0.6, anchor: 'center' }], // soft sky + rainbow backdrop
+    ambient: {
+      sprites: [], // CSS drifting sparkles (no art)
+      count: 14,
+      motion: 'drift',
+    },
+    mascot: {
+      src: '',
+      lines: ['Hej! Skal vi lege?', 'Godt klaret!', 'Vi ses!'],
+    },
+    selectorThumb: '',
+  },
+
+  materials: {
+    cardFrame: '',
+    buttonGradient: 'linear-gradient(135deg, #8B5CF6 0%, #3B82F6 100%)',
+    motif: '',
+  },
 }
 
 export default kidThemeTokens

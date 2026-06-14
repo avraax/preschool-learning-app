@@ -2,18 +2,16 @@ import type { ThemeTokens } from './tokens/types'
 import { kidThemeTokens } from './tokens/kidTheme.tokens'
 import { oceanThemeTokens } from './tokens/ocean.tokens'
 import { spaceThemeTokens } from './tokens/space.tokens'
-import { jungleThemeTokens } from './tokens/jungle.tokens'
-import { candyThemeTokens } from './tokens/candy.tokens'
 import { dinoThemeTokens } from './tokens/dino.tokens'
 
 // Registry of all selectable skins. Order = order shown in the front-page selector.
 // To add a theme: author a new `*.tokens.ts`, import it, and append it here.
+// NOTE: Jungle/Candy tokens still exist in tokens/ but are intentionally NOT registered —
+// they have no immersive world art yet, so they're kept out of the selector.
 export const themes: ThemeTokens[] = [
   kidThemeTokens,
   oceanThemeTokens,
   spaceThemeTokens,
-  jungleThemeTokens,
-  candyThemeTokens,
   dinoThemeTokens,
 ]
 
