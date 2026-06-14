@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { Box } from '@mui/material'
 import { useTheme, type SxProps, type Theme } from '@mui/material/styles'
 import { motion } from 'framer-motion'
@@ -13,10 +13,15 @@ import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 // single-channel audio (no new channel, no queue). Renders nothing for themes without a
 // mascot. Reduced motion → no idle/react/bubble animation (tap-to-speak still works).
 
+// An externally-driven reaction (e.g. from a game answer). `cheer` = happy jump + scale + a
+// fresh burst; `think` = a gentle puzzled shake. `null` = idle. Distinct from the tap reaction.
+export type GuideReaction = 'cheer' | 'think' | null
+
 interface ThemeMascotProps {
   sx?: SxProps<Theme> // positioning/size from the host page
   onTap?: () => void // optional extra action on tap
   parallaxDepth?: number // how strongly it rides the shared parallax driver
+  reaction?: GuideReaction // external reaction trigger (game feedback) — see GuideReaction
 }
 
 // One spawned bubble in a tap burst.
@@ -29,7 +34,7 @@ interface TapBubble {
   duration: number // seconds
 }
 
-const ThemeMascot: React.FC<ThemeMascotProps> = ({ sx, onTap, parallaxDepth = 0.45 }) => {
+const ThemeMascot: React.FC<ThemeMascotProps> = ({ sx, onTap, parallaxDepth = 0.45, reaction = null }) => {
   const theme = useTheme()
   const { themeId } = useThemeSwitch()
   const reduce = useReducedMotion()
@@ -58,15 +63,10 @@ const ThemeMascot: React.FC<ThemeMascotProps> = ({ sx, onTap, parallaxDepth = 0.
 
   const url = loaded && loaded.id === themeId ? loaded.mascot : ''
 
-  useEffect(() => () => {
-    if (reactTimer.current) clearTimeout(reactTimer.current)
-  }, [])
-
-  if (!url || !lines.length) return null
-
   // Build a fresh burst of bubbles rising from the mascot (built from scratch — not the
-  // balloon system). Safe to use Math.random here: this runs in an event handler, not render.
-  const spawnBubbleBurst = () => {
+  // balloon system). Safe to use Math.random here: this runs in an event handler / effect,
+  // never during render.
+  const spawnBubbleBurst = useCallback(() => {
     const count = 9 + Math.floor(Math.random() * 5) // 9–13 bubbles
     const burst: TapBubble[] = []
     for (let i = 0; i < count; i++) {
@@ -80,7 +80,23 @@ const ThemeMascot: React.FC<ThemeMascotProps> = ({ sx, onTap, parallaxDepth = 0.
       })
     }
     setBubbles((prev) => [...prev, ...burst])
-  }
+  }, [])
+
+  // A `cheer` reaction (correct answer) pops a celebratory burst. The burst is deferred to the
+  // next frame so we never call setState synchronously during the effect (avoids cascading
+  // renders). The cheer/think POSE itself is driven directly off the `reaction` prop below; the
+  // parent clears the prop after a beat, so a repeated same-value reaction re-fires.
+  useEffect(() => {
+    if (reaction !== 'cheer' || reduce) return
+    const raf = requestAnimationFrame(() => spawnBubbleBurst())
+    return () => cancelAnimationFrame(raf)
+  }, [reaction, reduce, spawnBubbleBurst])
+
+  useEffect(() => () => {
+    if (reactTimer.current) clearTimeout(reactTimer.current)
+  }, [])
+
+  if (!url || !lines.length) return null
 
   const removeBubble = (id: number) => setBubbles((prev) => prev.filter((b) => b.id !== id))
 
@@ -102,17 +118,27 @@ const ThemeMascot: React.FC<ThemeMascotProps> = ({ sx, onTap, parallaxDepth = 0.
     audio.speak(line).catch(() => {})
   }
 
+  // Animation priority: external cheer (big happy jump) → external think (puzzled shake) →
+  // tap wiggle → idle bob. Reduced motion stays perfectly still.
   const animate = reduce
     ? undefined
-    : reacting
-      ? { scale: [1, 1.14, 0.96, 1.04, 1], rotate: [0, -6, 6, -2, 0] }
-      : { y: [0, -7, 0] }
+    : reaction === 'cheer'
+      ? { y: [0, -34, 0, -14, 0], scale: [1, 1.16, 1, 1.06, 1] }
+      : reaction === 'think'
+        ? { rotate: [0, -7, 7, -5, 0] }
+        : reacting
+          ? { scale: [1, 1.14, 0.96, 1.04, 1], rotate: [0, -6, 6, -2, 0] }
+          : { y: [0, -7, 0] }
 
   const transition = reduce
     ? undefined
-    : reacting
-      ? { duration: 0.65, ease: 'easeInOut' as const }
-      : { duration: 3.4, repeat: Infinity, ease: 'easeInOut' as const }
+    : reaction === 'cheer'
+      ? { duration: 0.9, ease: 'easeInOut' as const }
+      : reaction === 'think'
+        ? { duration: 0.6, ease: 'easeInOut' as const }
+        : reacting
+          ? { duration: 0.65, ease: 'easeInOut' as const }
+          : { duration: 3.4, repeat: Infinity, ease: 'easeInOut' as const }
 
   return (
     // Outer wrapper rides the shared parallax driver (its own plane → depth separation from

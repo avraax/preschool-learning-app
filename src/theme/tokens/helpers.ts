@@ -20,6 +20,20 @@ export const hexToRgba = (hex: string, alpha: number): string => {
 export const gradient3 = (c1: string, c2: string, c3: string): string =>
   `linear-gradient(135deg, ${c1} 0%, ${c2} 50%, ${c3} 100%)`
 
+// Darken a hex colour toward black by `amount` (0–1). Used for the soft-3D "edge/lip" under
+// tactile tiles (AnswerTile/SymbolTile) so the bottom shadow reads as a coloured rim of the
+// section accent rather than flat grey.
+export const darken = (hex: string, amount: number): string => {
+  const h = hex.replace('#', '')
+  const full = h.length === 3 ? h.split('').map((c) => c + c).join('') : h
+  const num = parseInt(full, 16)
+  const f = Math.max(0, 1 - amount)
+  const r = Math.round(((num >> 16) & 255) * f)
+  const g = Math.round(((num >> 8) & 255) * f)
+  const b = Math.round((num & 255) * f)
+  return `rgb(${r}, ${g}, ${b})`
+}
+
 // Frosted home-card surface: white → soft category tint (matches the default theme's pattern).
 export const cardSurface = (tint: string): string =>
   `linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, ${hexToRgba(tint, 0.9)} 100%)`

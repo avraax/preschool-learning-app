@@ -1,24 +1,12 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { motion } from 'framer-motion'
-import { useNavigate } from 'react-router-dom'
-import {
-  Container,
-  Card,
-  CardContent,
-  Typography,
-  Box,
-  IconButton,
-  AppBar,
-  Toolbar
-} from '@mui/material'
-import { useTheme } from '@mui/material/styles'
-import { ArrowLeft } from 'lucide-react'
+import { Typography, Box } from '@mui/material'
 import { isIOS } from '../../utils/deviceDetection'
 import { CategoryTheme } from '../../config/categoryThemes'
-import { sectionIconImages } from '../../assets/themes/icons'
-import GameMotif from './GameMotif'
-import LottieCharacter, { useCharacterState } from '../common/LottieCharacter'
-import CelebrationEffect, { useCelebration } from '../common/CelebrationEffect'
+import GameShell from './GameShell'
+import AnswerTile, { type AnswerTileState } from './AnswerTile'
+import type { GuideReaction } from './ThemeMascot'
+import { useCelebration } from '../common/CelebrationEffect'
 import { useGameState } from '../../hooks/useGameState'
 // Simplified audio system
 import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
@@ -76,29 +64,33 @@ interface UnifiedQuizGameProps {
 }
 
 const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
-  const navigate = useNavigate()
-  const muiTheme = useTheme()
   const [currentItem, setCurrentItem] = useState<QuizItem | null>(null)
   const [showOptions, setShowOptions] = useState<QuizItem[]>([])
-  
+  // Feedback for the most-recently tapped answer (drives the AnswerTile correct/wrong state)
+  // and the bottom-corner guide reaction. Cleared on each new question.
+  const [feedback, setFeedback] = useState<{ value: string | number; correct: boolean } | null>(null)
+  const [guideReaction, setGuideReaction] = useState<GuideReaction>(null)
+
   // Component initialization - no logging needed in production
-  
+
   // Simplified audio system
-  const audio = useSimplifiedAudioHook({ 
+  const audio = useSimplifiedAudioHook({
     componentId: `UnifiedQuizGame-${config.quizType}`,
     autoInitialize: false
   })
-  
+
   // Centralized game state management
   const { score, incrementScore, handleScoreClick } = useGameState()
-  
-  // Character and celebration management
-  const teacherCharacter = useCharacterState('wave')
+
+  // Celebration management (rendered by GameShell)
   const { showCelebration, celebrationIntensity, celebrate, stopCelebration } = useCelebration()
   
   // Timeout ref for cleanup
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
-  
+  // Clears the guide reaction a beat after an answer so the mascot returns to idle and the
+  // next (possibly identical) reaction re-fires.
+  const guideReactionTimer = useRef<NodeJS.Timeout | null>(null)
+
   const [gameReady, setGameReady] = useState(false)
   const hasInitialized = useRef(false)
   // Guards the actual start (welcome + first question) so it runs exactly once regardless of
@@ -110,8 +102,10 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
   
   // Generate new question using config
   const generateNewQuestion = useCallback(() => {
-    // Generating new question
-    
+    // Clear the previous answer's feedback + guide reaction before the new question appears.
+    setFeedback(null)
+    setGuideReaction(null)
+
     // Generate quiz item using config
     const quizItem = config.generateQuizItem()
     
@@ -187,10 +181,6 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
     if (hasInitialized.current) return
     hasInitialized.current = true
 
-    // Initial teacher greeting
-    teacherCharacter.setCharacter(config.teacherCharacter)
-    teacherCharacter.wave()
-
     // Play the welcome immediately if audio is already unlocked.
     if (audio.isAudioReady) {
       playWelcomeAndStart()
@@ -209,8 +199,12 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
         clearTimeout(timeoutRef.current)
         timeoutRef.current = null
       }
+      if (guideReactionTimer.current) {
+        clearTimeout(guideReactionTimer.current)
+        guideReactionTimer.current = null
+      }
     }
-  }, [audio.isAudioReady, config.teacherCharacter, teacherCharacter, playWelcomeAndStart, beginGame])
+  }, [audio.isAudioReady, playWelcomeAndStart, beginGame])
 
   // When audio unlocks after mount, play the welcome (unless it/the game already started).
   // Ref-guarded so the effect performs no setState.
@@ -235,18 +229,23 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
     // FIRST: Play the clicked item immediately for fast feedback
     try {
       await config.speakClickedItem(selectedItem, audio)
-    } catch (error) {
+    } catch {
+      // best-effort: tile audio is non-critical, so ignore playback errors here
     }
-    
+
     const isCorrect = selectedItem.value === currentItem.value
-    
+
+    // Mark the tapped tile (glow+sparkle / shake) and cue the corner guide (cheer / think),
+    // clearing the reaction a beat later so the guide settles back to idle.
+    setFeedback({ value: selectedItem.value, correct: isCorrect })
+    setGuideReaction(isCorrect ? 'cheer' : 'think')
+    if (guideReactionTimer.current) clearTimeout(guideReactionTimer.current)
+    guideReactionTimer.current = setTimeout(() => setGuideReaction(null), 1100)
+
     // IMMEDIATELY: Start visual celebration effects if correct
     if (isCorrect) {
       incrementScore()
       celebrate() // Start celebration visual immediately
-      teacherCharacter.wave()
-    } else {
-      teacherCharacter.think()
     }
     
     // THEN: Play celebration audio after a very short delay
@@ -293,106 +292,33 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
   const ScoreChip = config.ScoreChipComponent
   const RepeatButton = config.RepeatButtonComponent
 
+  // Per-tile feedback state for the most-recently tapped answer.
+  const tileStateFor = (item: QuizItem): AnswerTileState =>
+    feedback && feedback.value === item.value ? (feedback.correct ? 'correct' : 'wrong') : 'idle'
+
+  // Until the welcome gate opens (or the resilience fallback fires) the board shows shimmer
+  // placeholders instead of an empty grid, so it never looks broken while audio warms up.
+  const showPlaceholders = !gameReady || showOptions.length === 0
+
   return (
-    <Box
-      sx={{
-        position: 'relative',
-        isolation: 'isolate',
-        height: '100dvh',
-        overflow: 'hidden',
-        display: 'flex',
-        flexDirection: 'column',
-        background: config.theme.gradient
+    <GameShell
+      categoryId={config.theme.id}
+      title={config.title}
+      backRoute={config.backRoute}
+      guideReaction={guideReaction}
+      score={
+        <ScoreChip
+          score={score}
+          disabled={false}
+          onClick={handleScoreClick}
+        />
+      }
+      celebration={{
+        show: showCelebration,
+        intensity: celebrationIntensity,
+        onComplete: stopCelebration,
       }}
     >
-      {/* Calm P4 motif (light from above + faint themed corner) behind the game content. */}
-      <GameMotif categoryId={config.theme.id} />
-
-      {/* App Bar with Back Button and Score */}
-      <AppBar position="static" color="transparent" elevation={0}>
-        <Toolbar sx={{ justifyContent: 'space-between', py: 2 }}>
-          <IconButton 
-            onClick={() => navigate(config.backRoute)}
-            color="primary"
-            size="large"
-            sx={{ 
-              bgcolor: 'rgba(255, 255, 255, 0.8)', 
-              border: '1px solid rgba(255, 255, 255, 0.3)',
-              backdropFilter: 'blur(8px)',
-              '&:hover': { 
-                bgcolor: 'rgba(255, 255, 255, 0.9)',
-                transform: 'scale(1.05)'
-              }
-            }}
-          >
-            <ArrowLeft size={24} />
-          </IconButton>
-          
-          <ScoreChip
-            score={score}
-            disabled={false}
-            onClick={handleScoreClick}
-          />
-        </Toolbar>
-      </AppBar>
-
-      <Container 
-        maxWidth="lg" 
-        sx={{ 
-          flex: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          py: { xs: 2, md: 3 },
-          overflow: 'hidden'
-        }}
-      >
-        {/* Game Title with Teacher Character */}
-        <Box sx={{ textAlign: 'center', mb: { xs: 2, md: 3 }, flex: '0 0 auto' }}>
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2, mb: 2 }}>
-              <LottieCharacter
-                character={teacherCharacter.character}
-                state={teacherCharacter.state}
-                size={80}
-                onClick={teacherCharacter.wave}
-              />
-              <Typography
-                variant="h3"
-                sx={{
-                  fontFamily: muiTheme.titleFontFamily,
-                  // Dark worlds (e.g. Rummet) → light title + soft glow, matching menus/home.
-                  color: muiTheme.scene.dark ? '#FFFFFF' : config.theme.accentColor,
-                  fontWeight: 700,
-                  fontSize: { xs: '1.5rem', md: '2rem' },
-                  textShadow: muiTheme.scene.dark
-                    ? '0 0 16px rgba(120,170,255,0.55), 0 2px 8px rgba(0,0,0,0.5)'
-                    : `1px 1px 2px ${config.theme.accentColor}33`
-                }}
-              >
-                {config.title}
-              </Typography>
-              {/* Soft-3D section icon (theme-constant) replaces the flat trailing emoji. */}
-              <Box
-                component="img"
-                src={sectionIconImages[config.theme.id as keyof typeof sectionIconImages]}
-                alt=""
-                draggable={false}
-                sx={{
-                  width: 52,
-                  height: 52,
-                  objectFit: 'contain',
-                  filter: 'drop-shadow(0 3px 6px rgba(0,0,0,0.22))',
-                  userSelect: 'none'
-                }}
-              />
-            </Box>
-          </motion.div>
-        </Box>
-
         {/* Visual Question - shown for word-association style rounds */}
         {currentItem?.questionVisual && (
           <Box sx={{ textAlign: 'center', mb: { xs: 1.5, md: 2 }, flex: '0 0 auto' }}>
@@ -477,101 +403,75 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
               }
             }}
           >
-          {showOptions.map((item, index) => (
-            <motion.div
-              key={`${item.value}-${index}`}
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: index * 0.1 }}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              style={{ height: '100%' }}
-            >
-              <Card 
-                onClick={() => handleItemClick(item)}
-                sx={{ 
-                  height: '100%',
-                  cursor: 'pointer',
-                  border: '3px solid',
-                  borderColor: config.theme.borderColor,
-                  bgcolor: 'white',
-                  transition: 'all 0.3s ease',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  borderRadius: '16px',
-                  // Themed elevation so the white card floats over the world (deeper on dark scenes).
-                  boxShadow: muiTheme.scene.dark
-                    ? '0 12px 30px rgba(0,0,0,0.45)'
-                    : '0 6px 18px rgba(0,0,0,0.12)',
-                  outline: 'none',
-                  '&:focus-visible': {
-                    outline: '3px solid',
-                    outlineColor: config.theme.accentColor
-                  },
-                  '@media (hover: hover) and (pointer: fine)': {
-                    '&:hover': {
-                      borderColor: config.theme.hoverBorderColor,
-                      bgcolor: config.quizType === 'alphabet'
-                        ? '#E3F2FD'
-                        : config.quizType === 'english'
-                          ? '#E8F5E9'
-                          : config.quizType === 'ordleg' ? '#E0F2F1' : 'secondary.50',
-                      boxShadow: `0 8px 32px ${config.theme.accentColor}40`,
-                      transform: 'translateY(-2px)'
-                    }
-                  }
-                }}
-              >
-                <CardContent 
-                  sx={{ 
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
+          {showPlaceholders
+            ? // Loading shimmer (welcome gate pending) — same footprint as the real tiles.
+              [0, 1, 2, 3].map((i) => (
+                <Box
+                  key={`placeholder-${i}`}
+                  aria-hidden
+                  sx={{
                     height: '100%',
-                    p: { xs: 1.5, sm: 2, md: 2.5 }
+                    borderRadius: '18px',
+                    border: '3px solid',
+                    borderColor: 'rgba(255,255,255,0.5)',
+                    background:
+                      'linear-gradient(100deg, rgba(255,255,255,0.55) 30%, rgba(255,255,255,0.85) 50%, rgba(255,255,255,0.55) 70%)',
+                    backgroundSize: '200% 100%',
+                    boxShadow: '0 6px 18px rgba(0,0,0,0.12)',
+                    '@media (prefers-reduced-motion: no-preference)': {
+                      animation: 'answerTileShimmer 1.4s ease-in-out infinite',
+                    },
+                    '@keyframes answerTileShimmer': {
+                      '0%': { backgroundPosition: '160% 0' },
+                      '100%': { backgroundPosition: '-60% 0' },
+                    },
                   }}
+                />
+              ))
+            : showOptions.map((item, index) => (
+                <motion.div
+                  key={`${item.value}-${index}`}
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: index * 0.08 }}
+                  style={{ height: '100%' }}
                 >
-                  <Typography
-                    variant="h1"
-                    sx={{
-                      // Words (multi-character strings) render smaller so they fit the card;
-                      // single glyphs (letters/numbers/emoji) stay large.
-                      fontSize: (typeof item.display === 'string' && item.display.length > 2)
-                        ? 'clamp(1.1rem, 4.5vw, 2rem)'
-                        : 'clamp(2.5rem, 8vw, 4.5rem)',
-                      fontWeight: 700,
-                      color: config.theme.accentColor,
-                      userSelect: 'none',
-                      lineHeight: 1.1,
-                      textAlign: 'center',
-                      px: 1,
-                      // Adjust font size in landscape
-                      '@media (orientation: landscape)': {
-                        fontSize: (typeof item.display === 'string' && item.display.length > 2)
-                          ? 'clamp(1rem, 3.5vw, 1.75rem)'
-                          : 'clamp(2rem, 6vw, 3.5rem)'
-                      }
-                    }}
+                  <AnswerTile
+                    onClick={() => handleItemClick(item)}
+                    accent={config.theme.accentColor}
+                    state={tileStateFor(item)}
                   >
-                    {item.display}
-                  </Typography>
-                </CardContent>
-              </Card>
-            </motion.div>
-          ))}
+                    <Typography
+                      variant="h1"
+                      component="span"
+                      sx={{
+                        // Words (multi-character strings) render smaller so they fit the tile;
+                        // single glyphs (letters/numbers/emoji) stay large.
+                        fontSize: (typeof item.display === 'string' && item.display.length > 2)
+                          ? 'clamp(1.1rem, 4.5vw, 2rem)'
+                          : 'clamp(2.5rem, 8vw, 4.5rem)',
+                        fontWeight: 700,
+                        color: config.theme.accentColor,
+                        userSelect: 'none',
+                        lineHeight: 1.1,
+                        textAlign: 'center',
+                        px: 1,
+                        // Adjust font size in landscape
+                        '@media (orientation: landscape)': {
+                          fontSize: (typeof item.display === 'string' && item.display.length > 2)
+                            ? 'clamp(1rem, 3.5vw, 1.75rem)'
+                            : 'clamp(2rem, 6vw, 3.5rem)'
+                        }
+                      }}
+                    >
+                      {item.display}
+                    </Typography>
+                  </AnswerTile>
+                </motion.div>
+              ))}
           </Box>
         </Box>
-
-      </Container>
-      
-      {/* Celebration Effect */}
-      <CelebrationEffect
-        show={showCelebration}
-        intensity={celebrationIntensity}
-        onComplete={stopCelebration}
-      />
-    </Box>
+    </GameShell>
   )
 }
 
