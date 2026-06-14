@@ -67,6 +67,7 @@ import { useUpdateChecker } from './hooks/useUpdateChecker'
 import { useNativeAppFeel } from './hooks/useNativeAppFeel'
 import { categoryThemes } from './config/categoryThemes'
 import { sectionIconImages } from './assets/themes/icons'
+import appLogo from './assets/logo.webp'
 import { BUILD_INFO } from './config/version'
 
 // Balloon interface
@@ -345,14 +346,32 @@ const HomePage = () => {
           zIndex: 2
         }}
       >
-        {/* Header with title and Welcome Character */}
-        <Box sx={{ textAlign: 'center', mb: { xs: 1.5, md: 2 } }}>
+        {/* Header row: brand lockup (left) + theme selector (right), bounded by the same
+            Container margins as the cards below — so they line up with the card grid edges. */}
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2, mb: { xs: 1.5, md: 2 } }}>
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5 }}
           >
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2, mb: 2 }}>
+            {/* Brand lockup: logo emblem + themed wordmark as one balanced unit. */}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1.25, md: 2 } }}>
+              <Box
+                component="img"
+                src={appLogo}
+                alt=""
+                draggable={false}
+                onClick={() => spawnBalloons()}
+                sx={{
+                  width: { xs: 44, sm: 52, md: 60 },
+                  height: { xs: 44, sm: 52, md: 60 },
+                  borderRadius: '24%',
+                  boxShadow: '0 4px 14px rgba(0,0,0,0.2)',
+                  userSelect: 'none',
+                  flexShrink: 0,
+                  cursor: 'pointer',
+                }}
+              />
               <Typography
                 variant="h1"
                 sx={{
@@ -374,28 +393,11 @@ const HomePage = () => {
               >
                 Børnelæring
               </Typography>
-              {/* On immersive worlds the per-world mascot is the playful character, so the
-                  generic welcome bear is hidden (it's off-theme e.g. underwater). */}
-              {!immersive && (
-                <motion.div
-                  initial={{ x: 20, opacity: 0 }}
-                  animate={{ x: 0, opacity: 1 }}
-                  transition={{ delay: 0.8, duration: 0.5 }}
-                >
-                  <LottieCharacter
-                    character={welcomeCharacter.character}
-                    state={welcomeCharacter.state}
-                    size={80}
-                    onClick={() => {
-                      // Balloon easter-egg (previously on the logo)
-                      spawnBalloons();
-                      welcomeCharacter.wave();
-                    }}
-                  />
-                </motion.div>
-              )}
             </Box>
           </motion.div>
+
+          {/* Theme selector — right side of the header row, aligned with the card grid edge */}
+          <ThemeSelector />
         </Box>
 
         {/* Main Content */}
@@ -504,9 +506,6 @@ const HomePage = () => {
           </Grid>
         </Box>
       </Container>
-
-      {/* Theme selector — collapsed corner control, overlays the page (no layout cost) */}
-      <ThemeSelector />
 
       {/* Per-world mascot — sits on the sandy floor (bottom-left); tap to hear it speak and
           spawn its own bubble burst. Renders nothing for themes without a mascot. */}

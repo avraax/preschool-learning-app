@@ -33,14 +33,9 @@ const ThemeSelector: React.FC = () => {
   const active = availableThemes.find((t) => t.id === themeId) ?? availableThemes[0]
 
   return (
-    <Box
-      sx={{
-        position: 'absolute',
-        top: 'calc(env(safe-area-inset-top) + 8px)',
-        right: 'calc(env(safe-area-inset-right) + 8px)',
-        zIndex: 20,
-      }}
-    >
+    // Positioned by the host (rendered inline in the home header row), not pinned to the
+    // viewport corner — so it aligns with the brand lockup and the card grid's right edge.
+    <Box sx={{ position: 'relative', zIndex: 30 }}>
       <ClickAwayListener onClickAway={() => setOpen(false)}>
         <Box sx={{ position: 'relative' }}>
           {/* Collapsed toggle — shows the active theme's emoji */}
@@ -54,18 +49,19 @@ const ThemeSelector: React.FC = () => {
             whileTap={{ scale: 0.92 }}
             sx={{
               cursor: 'pointer',
-              width: 48,
-              height: 48,
+              width: 54,
+              height: 54,
+              p: 0,
               borderRadius: '50%',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              border: '2px solid',
-              borderColor: open ? theme.palette.primary.main : alpha(theme.palette.primary.main, 0.35),
-              backgroundColor: 'rgba(255, 255, 255, 0.8)',
-              boxShadow: '0 2px 10px rgba(0, 0, 0, 0.15)',
+              border: '3px solid',
+              borderColor: open ? theme.palette.primary.main : alpha(theme.palette.primary.main, 0.4),
+              backgroundColor: 'rgba(255, 255, 255, 0.85)',
+              boxShadow: '0 3px 12px rgba(0, 0, 0, 0.18)',
               backdropFilter: 'blur(6px)',
-              fontSize: '1.6rem',
+              fontSize: '1.7rem',
               lineHeight: 1,
               overflow: 'hidden',
               transition: 'border-color 0.2s ease',
@@ -100,17 +96,20 @@ const ThemeSelector: React.FC = () => {
                   role="group"
                   aria-label="Vælg tema"
                   sx={{
-                    p: 1,
-                    borderRadius: 3,
+                    p: 1.25,
+                    borderRadius: 4,
                     display: 'grid',
-                    gridTemplateColumns: 'repeat(3, 1fr)',
-                    gap: 0.75,
-                    backgroundColor: 'rgba(255, 255, 255, 0.96)',
+                    gridTemplateColumns: 'repeat(2, 1fr)',
+                    gap: 0.5,
+                    backgroundColor: 'rgba(255, 255, 255, 0.97)',
                     backdropFilter: 'blur(8px)',
                   }}
                 >
                   {availableThemes.map((t) => {
                     const isActive = t.id === themeId
+                    const ring = isActive
+                      ? theme.palette.primary.main
+                      : alpha(theme.palette.primary.main, 0.18)
                     return (
                       <Box
                         key={t.id}
@@ -122,41 +121,58 @@ const ThemeSelector: React.FC = () => {
                         }}
                         aria-label={`Tema: ${t.name}`}
                         aria-pressed={isActive}
-                        whileHover={{ scale: 1.08 }}
-                        whileTap={{ scale: 0.92 }}
+                        whileHover={{ scale: 1.06 }}
+                        whileTap={{ scale: 0.93 }}
                         sx={{
                           cursor: 'pointer',
                           display: 'flex',
                           flexDirection: 'column',
                           alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: 0.25,
-                          width: 60,
-                          minHeight: 60,
-                          py: 0.5,
-                          borderRadius: 2,
-                          border: '2px solid',
-                          borderColor: isActive ? theme.palette.primary.main : 'transparent',
-                          backgroundColor: isActive
-                            ? alpha(theme.palette.primary.main, 0.12)
-                            : 'transparent',
-                          transition: 'border-color 0.15s ease, background-color 0.15s ease',
+                          gap: 0.5,
+                          width: 78,
+                          py: 1,
+                          px: 0.5,
+                          border: 'none',
+                          borderRadius: 3,
+                          backgroundColor: isActive ? alpha(theme.palette.primary.main, 0.12) : 'transparent',
+                          transition: 'background-color 0.15s ease',
                         }}
                       >
-                        {thumbs[t.id] ? (
-                          <Box
-                            component="img"
-                            src={thumbs[t.id]}
-                            alt=""
-                            sx={{ width: 44, height: 30, objectFit: 'cover', borderRadius: 1 }}
-                          />
-                        ) : (
-                          <Box component="span" sx={{ fontSize: '1.6rem', lineHeight: 1 }}>{t.emoji}</Box>
-                        )}
+                        {/* Circular thumbnail with a ring — matches the collapsed chip */}
+                        <Box
+                          sx={{
+                            width: 56,
+                            height: 56,
+                            borderRadius: '50%',
+                            overflow: 'hidden',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            border: '3px solid',
+                            borderColor: ring,
+                            backgroundColor: 'rgba(255,255,255,0.6)',
+                            boxShadow: isActive
+                              ? `0 0 0 3px ${alpha(theme.palette.primary.main, 0.22)}`
+                              : '0 1px 5px rgba(0,0,0,0.12)',
+                            fontSize: '1.9rem',
+                            lineHeight: 1,
+                          }}
+                        >
+                          {thumbs[t.id] ? (
+                            <Box
+                              component="img"
+                              src={thumbs[t.id]}
+                              alt=""
+                              sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                            />
+                          ) : (
+                            <Box component="span">{t.emoji}</Box>
+                          )}
+                        </Box>
                         <Box
                           component="span"
                           sx={{
-                            fontSize: '0.6rem',
+                            fontSize: '0.72rem',
                             fontWeight: 700,
                             color: isActive ? theme.palette.primary.main : theme.palette.text.secondary,
                             whiteSpace: 'nowrap',
