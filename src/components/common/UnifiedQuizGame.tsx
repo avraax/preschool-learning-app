@@ -247,7 +247,17 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
     
     // Always cancel current audio for fast tapping
     audio.cancelCurrentAudio()
-    
+
+    const isCorrect = selectedItem.value === currentItem.value
+
+    // INSTANT visual feedback: mark the tapped tile (correct/wrong border + glow/sparkle/shake)
+    // and cue the corner guide BEFORE any audio await, so the red/green feedback never waits on
+    // the spoken number/letter. (Audio timing below is unchanged.)
+    setFeedback({ value: selectedItem.value, correct: isCorrect })
+    setGuideReaction(isCorrect ? 'cheer' : 'think')
+    if (guideReactionTimer.current) clearTimeout(guideReactionTimer.current)
+    guideReactionTimer.current = setTimeout(() => setGuideReaction(null), 1100)
+
     // FIRST: Play the clicked item immediately for fast feedback
     try {
       await config.speakClickedItem(selectedItem, audio)
@@ -255,16 +265,7 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
       // best-effort: tile audio is non-critical, so ignore playback errors here
     }
 
-    const isCorrect = selectedItem.value === currentItem.value
-
-    // Mark the tapped tile (glow+sparkle / shake) and cue the corner guide (cheer / think),
-    // clearing the reaction a beat later so the guide settles back to idle.
-    setFeedback({ value: selectedItem.value, correct: isCorrect })
-    setGuideReaction(isCorrect ? 'cheer' : 'think')
-    if (guideReactionTimer.current) clearTimeout(guideReactionTimer.current)
-    guideReactionTimer.current = setTimeout(() => setGuideReaction(null), 1100)
-
-    // IMMEDIATELY: Start visual celebration effects if correct
+    // Start celebration / SFX (kept after the spoken item so audio timing is unchanged).
     if (isCorrect) {
       incrementScore()
       celebrateTier('micro') // light per-answer sparkle + soft "correct" SFX
