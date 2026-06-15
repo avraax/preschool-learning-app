@@ -25,7 +25,7 @@ import { TTS_CONFIG } from '../../config/tts-config'
 import { OVERRIDE_VOICES, VOICE_TIERS } from './voicelabData'
 
 const FONT = '"Comic Sans MS", "Comic Sans", cursive'
-const DEFAULT_RATE = TTS_CONFIG.speakingRate // 0.9
+const DEFAULT_RATE = TTS_CONFIG.speakingRate // 1.05
 
 const VoiceOverridePanel: React.FC = () => {
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null)

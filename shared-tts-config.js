@@ -12,8 +12,8 @@ export const TTS_CONFIG = {
   outputFormat: 'ogg-24khz-16bit-mono-opus',
   mime: 'audio/ogg',
 
-  // Speaking rate as an Azure <prosody rate> multiplier (1.0 = natural). Tuned slow for kids.
-  speakingRate: 0.9,
+  // Speaking rate as an Azure <prosody rate> multiplier (1.0 = natural). Slightly above natural.
+  speakingRate: 1.05,
 
   // voiceType → Azure voice. Danish narration (most of the app) uses Christel; `male` uses Jeppe.
   // English section narration uses Ava (en-US multilingual). The VoiceOverridePanel can swap the
