@@ -1,7 +1,7 @@
 # Overhaul PRD — Foundation (shared systems)
 
 **Date:** 2026-06-15
-**Part of:** Game Experience Overhaul (see `tmp-prd-overhaul-00-roadmap.md`).
+**Part of:** Game Experience Overhaul (see `plans/games-overhaul/tmp-prd-overhaul-00-roadmap.md`).
 **Implement FIRST.** Every per-game PRD depends on the systems defined here.
 
 ---

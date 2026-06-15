@@ -2,7 +2,7 @@
 
 **Date:** 2026-06-15
 **Owner:** Allan (parent). **Target user:** one ~5-year-old boy (single-child, at-home, **iPad/tablet** primary). Knows all letters, counts to ~60–70, adds to 20 on fingers, basic subtraction, cannot yet read/spell fluently.
-**Status:** Planning. This session produced the **Foundation PRD** (`tmp-prd-overhaul-01-foundation.md`) + this roadmap. Per-game PRDs are written in their own later sessions, one game at a time.
+**Status:** Planning. This session produced the **Foundation PRD** (`plans/games-overhaul/tmp-prd-overhaul-01-foundation.md`) + this roadmap. Per-game PRDs are written in their own later sessions, one game at a time.
 
 ---
 
@@ -39,9 +39,9 @@ The goal is a **thorough, game-by-game level-up** of gameplay, UI, UX and "juice
 ## Program structure
 
 ```
-tmp-prd-overhaul-00-roadmap.md      ← this file (index, order, PRD template)
-tmp-prd-overhaul-01-foundation.md   ← shared systems EVERY game plugs into (DONE this session)
-tmp-prd-overhaul-02-<area>.md       ← per-area / per-game deep-dive PRDs (future sessions)
+plans/games-overhaul/tmp-prd-overhaul-00-roadmap.md      ← this file (index, order, PRD template)
+plans/games-overhaul/tmp-prd-overhaul-01-foundation.md   ← shared systems EVERY game plugs into (DONE this session)
+plans/games-overhaul/tmp-prd-overhaul-02-<area>.md  ← per-area deep-dive PRDs (future sessions)
 ...
 ```
 
@@ -102,7 +102,7 @@ This captures what the inventory found so each future session starts warm. **Not
 
 Implementation happens in a **fresh session with no memory of this planning work**. If a PRD forces that session to re-explore the codebase to understand how to integrate, it will exhaust its context before building. Therefore **every `-NN-` PRD MUST embed enough to implement with near-zero exploration**:
 
-- **Verbatim current signatures** of every shared API it touches (interfaces, hook returns, component props) — copied into an "Embedded implementation reference" appendix, like `tmp-prd-overhaul-01-foundation.md` Appendix A.
+- **Verbatim current signatures** of every shared API it touches (interfaces, hook returns, component props) — copied into an "Embedded implementation reference" appendix, like `plans/games-overhaul/tmp-prd-overhaul-01-foundation.md` Appendix A.
 - **Exact integration points** as `file:line` (e.g. "replace the `generateNewQuestion()` call at `UnifiedQuizGame.tsx:263`").
 - **Complete content/data** inline (full word/number/sticker lists, config objects) — not "add some words".
 - **Named utilities to reuse** with their paths, so the session doesn't reinvent them.
@@ -164,12 +164,12 @@ Two kinds of session alternate per game-area:
 
 ### Step 0 — (optional) commit the planning output
 ```
-Commit the new overhaul planning docs: tmp-prd-overhaul-00-roadmap.md and tmp-prd-overhaul-01-foundation.md. Branch off master first, message describing the game-overhaul program.
+Commit the new overhaul planning docs: plans/games-overhaul/tmp-prd-overhaul-00-roadmap.md and plans/games-overhaul/tmp-prd-overhaul-01-foundation.md. Branch off master first, message describing the game-overhaul program.
 ```
 
 ### Step 1 — IMPLEMENT the Foundation (clean session)
 ```
-Read tmp-prd-overhaul-01-foundation.md in full, plus the guardrails in tmp-prd-overhaul-00-roadmap.md. Implement the Foundation PRD exactly: the progress store + useProgress, the sticker album/config/reveal + /album route and home-screen hub entry, the bounded-round + RoundResultScreen system wired into UnifiedQuizGame, the sfxClient SFX layer, and the celebration tiers. Follow .claude/rules (audio-system, game-development, responsive-design) and the app-wide visual quality floor (Principle 0). Do NOT change per-game content yet — only the shared systems, plus wiring ONE existing UnifiedQuizGame game (alphabet quiz) into a round as a reference/smoke test. Then run npm run build + npm run lint, drive it on an iPad viewport with the ui-screenshot skill, and report. Commit on a branch when green.
+Read plans/games-overhaul/tmp-prd-overhaul-01-foundation.md in full, plus the guardrails in plans/games-overhaul/tmp-prd-overhaul-00-roadmap.md. Implement the Foundation PRD exactly: the progress store + useProgress, the sticker album/config/reveal + /album route and home-screen hub entry, the bounded-round + RoundResultScreen system wired into UnifiedQuizGame, the sfxClient SFX layer, and the celebration tiers. Follow .claude/rules (audio-system, game-development, responsive-design) and the app-wide visual quality floor (Principle 0). Do NOT change per-game content yet — only the shared systems, plus wiring ONE existing UnifiedQuizGame game (alphabet quiz) into a round as a reference/smoke test. Then run npm run build + npm run lint, drive it on an iPad viewport with the ui-screenshot skill, and report. Commit on a branch when green.
 ```
 
 ### Step 2…N — per game-area, run DESIGN then IMPLEMENT
@@ -178,12 +178,12 @@ For each area in this order — **Math → Alphabet → Ordleg → English → F
 
 **Design session (interactive):**
 ```
-We're doing the per-game deep-dive for the <AREA> games in the Game Experience Overhaul. Read tmp-prd-overhaul-00-roadmap.md (esp. the per-game intent snapshot, the PRD template, and the SELF-CONTAINMENT hard rule) and tmp-prd-overhaul-01-foundation.md (the shared systems these games plug into). Explore the actual <AREA> game files. Then go into plan mode and ask me as many AskUserQuestion rounds as needed to lock the redesign (gameplay, UI, UX, juice, learning, what to add/remove/merge, round length, star thresholds, which sticker set, SFX cues). When we're aligned, write a self-contained PRD to tmp-prd-overhaul-NN-<area>.md following the template — including an Embedded implementation reference appendix with verbatim current signatures and exact file:line integration points, like Foundation Appendix A. Commit the PRD.
+We're doing the per-game deep-dive for the <AREA> games in the Game Experience Overhaul. Read plans/games-overhaul/tmp-prd-overhaul-00-roadmap.md (esp. the per-game intent snapshot, the PRD template, and the SELF-CONTAINMENT hard rule) and plans/games-overhaul/tmp-prd-overhaul-01-foundation.md (the shared systems these games plug into). Explore the actual <AREA> game files. Then go into plan mode and ask me as many AskUserQuestion rounds as needed to lock the redesign (gameplay, UI, UX, juice, learning, what to add/remove/merge, round length, star thresholds, which sticker set, SFX cues). When we're aligned, write a self-contained PRD to plans/games-overhaul/tmp-prd-overhaul-NN-<area>.md following the template — including an Embedded implementation reference appendix with verbatim current signatures and exact file:line integration points, like Foundation Appendix A. Commit the PRD.
 ```
 
 **Implement session (clean):**
 ```
-Read tmp-prd-overhaul-NN-<area>.md in full, plus tmp-prd-overhaul-01-foundation.md and the guardrails in tmp-prd-overhaul-00-roadmap.md. Implement the <AREA> PRD exactly, reusing the Foundation systems (progress store, rounds, RoundResultScreen, stickers, sfxClient, celebration tiers). Follow .claude/rules and the visual quality floor. Run npm run build + npm run lint, verify on an iPad viewport with the ui-screenshot skill, and report. Commit on a branch when green.
+Read plans/games-overhaul/tmp-prd-overhaul-NN-<area>.md in full, plus plans/games-overhaul/tmp-prd-overhaul-01-foundation.md and the guardrails in plans/games-overhaul/tmp-prd-overhaul-00-roadmap.md. Implement the <AREA> PRD exactly, reusing the Foundation systems (progress store, rounds, RoundResultScreen, stickers, sfxClient, celebration tiers). Follow .claude/rules and the visual quality floor. Run npm run build + npm run lint, verify on an iPad viewport with the ui-screenshot skill, and report. Commit on a branch when green.
 ```
 
 > After each area's implement session, **play-test with your son** before the next area — what you learn should feed the next design session. That's the whole point of going one-by-one.
