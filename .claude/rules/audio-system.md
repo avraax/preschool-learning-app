@@ -4,7 +4,7 @@ paths:
   - "src/contexts/SimplifiedAudioContext.tsx"
   - "src/hooks/useSimplifiedAudio.ts"
   - "src/hooks/useSpeechInput.ts"
-  - "src/services/googleTTS.ts"
+  - "src/services/ttsClient.ts"
   - "src/components/common/SimplifiedAudioPermission.tsx"
   - "src/components/**/*.tsx"
 ---
@@ -22,9 +22,11 @@ SimplifiedAudioController (src/utils/SimplifiedAudioController.ts)  -- singleton
 └── SimplifiedAudioPermission (src/components/common/SimplifiedAudioPermission.tsx)  -- session permission modal (iOS)
 ```
 
-Stack: Google Cloud TTS (primary) -> Web Speech API (fallback) -> Howler.js (sound effects).
-TTS goes through `src/services/googleTTS.ts` and the `/api/tts` endpoint. The Engelsk section
-uses a British `en-GB` voice via `speakEnglish()` (voiceType `'english'` in googleTTS).
+Stack: Azure AI Speech (single TTS provider) -> Web Speech API (fallback) -> Howler.js (sound effects).
+TTS goes through `src/services/ttsClient.ts` (the playback engine) and the `/api/tts-azure` endpoint.
+The Engelsk section uses an Azure `en-GB` voice via `speakEnglish()` (voiceType `'english'`). Danish
+pronunciation fixes live in the hosted PLS lexicon (`public/da-DK.pls`). The shared Azure synthesis
+core (`shared-azure-tts.js`) is used by both the dev server and the Vercel function so they can't drift.
 
 **Key behaviour: there is NO audio queue.** Only one audio plays at a time; starting new audio
 immediately cancels whatever is playing (`playAudio()` calls `stopCurrentAudio()` first). This is
@@ -64,7 +66,7 @@ async speakNewThing(text: string): Promise<string> {
   return this.playAudio(async () => {
     this.updateUserInteraction()
     if (!this.ensureAudioReady()) return
-    await this.googleTTS.synthesizeAndPlay(text, 'primary', true)
+    await this.ttsClient.synthesizeAndPlay(text, 'primary', true)
   })
 }
 ```
@@ -82,7 +84,8 @@ delay, gating interaction on a `gameReady` flag. Welcome strings live in `GAME_W
 
 Audio cancels automatically on navigation via `NavigationAudioCleanup` in `App.tsx` and the controller's
 own listeners. Permission is session-based and automatic; `SimplifiedAudioPermission` handles the iOS
-prompt. The iOS Safari interaction-timeout handling lives in `googleTTS.ts`.
+prompt. iOS suspension recovery: if the AudioContext later suspends or playback hits a
+`NotAllowedError`, the engine calls back into the provider (`markNeedsUserAction`) to re-prompt.
 
 ## Speech INPUT (separate from playback)
 

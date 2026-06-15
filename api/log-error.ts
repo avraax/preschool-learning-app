@@ -1,4 +1,5 @@
 import { VercelRequest, VercelResponse } from '@vercel/node'
+import { isAllowedOrigin } from '../lib/server-utils.js'
 
 interface ErrorLogEntry {
   // Enhanced error format
@@ -217,6 +218,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       })
       
     } else if (req.method === 'DELETE') {
+      // Clearing the log store is destructive — restrict to our own origins (PRD §9.1).
+      if (!isAllowedOrigin(req)) {
+        return res.status(403).json({ error: 'Forbidden origin' })
+      }
       // Clear all error logs
       const previousCount = errorLogs.length
       errorLogs = []

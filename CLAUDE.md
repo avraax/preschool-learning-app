@@ -6,7 +6,7 @@ Danish educational web app for children aged 3-7. Alphabet, math, colors, and me
 
 - React 19 + TypeScript, Vite 8, Material-UI v9 (no Tailwind)
 - Framer Motion for animations, Howler.js for sound effects
-- Audio: `SimplifiedAudioController` singleton → Google Cloud TTS (primary) → Web Speech API (fallback) → Howler (SFX). British en-GB voice for the Engelsk section.
+- Audio: `SimplifiedAudioController` singleton → `ttsClient` playback engine → **Azure AI Speech** (single TTS provider) → Web Speech API (fallback) → Howler (SFX). Danish da-DK voice (Christel, lead) for most sections; Azure en-GB voice for the Engelsk section. Danish pronunciation is corrected via a hosted W3C PLS lexicon (`public/da-DK.pls`) + inline IPA. (Google TTS was removed in the Audio v2 rebuild; Google STT still powers "Sig et Ord".)
 - Speech input (Sig et Ord): Google Cloud Speech-to-Text v2 via `/api/stt` + `useSpeechInput` hook
 - React Router DOM v7 (route components lazy-loaded), Vite PWA Plugin
 - Deployment: Vercel (auto-deploy on push to `master`)
@@ -78,10 +78,10 @@ src/
   contexts/          SimplifiedAudioContext.tsx (audio permission + readiness state)
   hooks/             useSimplifiedAudio.ts (component audio interface), useSpeechInput.ts (mic capture)
   utils/             SimplifiedAudioController.ts, urlParams.ts, deviceDetection.ts, remoteConsole.ts
-  services/          googleTTS.ts
+  services/          ttsClient.ts (Azure playback engine)
   config/            categoryThemes.ts (section content + token-backed colors), englishVocab.ts, version.ts
   theme/             tokens/ (types.ts, helpers.ts, <skin>.tokens.ts), buildTheme.ts, themes.ts (registry), ThemeProvider.tsx
-  api/               tts.ts, stt.ts, log-error.ts, version.ts  (Vercel serverless; mirror dev-server.js)
+  api/               tts-azure.ts, stt.ts, log-error.ts, version.ts  (Vercel serverless; mirror dev-server.js; shared Azure core in shared-azure-tts.js + helpers in lib/server-utils.ts)
   App.tsx            Router + SimplifiedAudioProvider + NavigationAudioCleanup
 ```
 
@@ -92,6 +92,11 @@ src/
 3. Register it: import and append to the `themes` array in `src/theme/themes.ts`. It appears in the front-page selector automatically. The default `kid` theme (`kidTheme.tokens.ts`) keeps hand-written exact values; don't refactor it.
 
 ## Production Logs
+
+Client-side remote logging (`remoteConsole`) is **dev-only / OFF in production** (Audio v2 decision —
+no durable storage). End users no longer POST to `/api/log-error`; the endpoint receives ~no traffic.
+Server-side errors are recorded via `lib/server-utils.ts` `logServerError` (Vercel function logs +
+absolute-URL POST). Force client logging on elsewhere with `?enable-console=true`.
 
 ```bash
 # ALWAYS use curl, not WebFetch (large JSON parsing issues)

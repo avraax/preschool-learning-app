@@ -1,17 +1,17 @@
+export interface AzureVoice {
+  name: string;
+  lang: string;
+}
+
 export declare const TTS_CONFIG: {
-  voice: {
-    languageCode: string;
-    name: string;
-    ssmlGender: string;
-  };
-  enVoice: {
-    languageCode: string;
-    name: string;
-    ssmlGender: string;
-  };
-  audioConfig: {
-    audioEncoding: string;
-    speakingRate: number;
-    pitch: number;
+  provider: 'azure';
+  outputFormat: string;
+  mime: string;
+  speakingRate: number;
+  voices: {
+    primary: AzureVoice;
+    backup: AzureVoice;
+    male: AzureVoice;
+    english: AzureVoice;
   };
 };

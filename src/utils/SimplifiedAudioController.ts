@@ -1,7 +1,6 @@
-import { Howl } from 'howler'
-import { googleTTS, GoogleTTSService } from '../services/googleTTS'
+import { ttsClient, TtsClient } from '../services/ttsClient'
 import { isIOS } from './deviceDetection'
-import { DANISH_PHRASES, getRandomSuccessPhrase, getRandomEncouragementPhrase, getDanishNumberText } from '../config/danish-phrases'
+import { DANISH_PHRASES, getRandomSuccessPhrase, getRandomEncouragementPhrase, getDanishNumberText, getDanishLetterName } from '../config/danish-phrases'
 // Remote console logging removed for production
 
 // Production logging - only critical errors
@@ -22,25 +21,31 @@ export const setSimplifiedAudioContext = (context: any) => {
  * New audio always cancels current audio immediately
  */
 export class SimplifiedAudioController {
-  private sounds: Map<string, Howl> = new Map()
-  private googleTTS: GoogleTTSService
+  private ttsClient: TtsClient
   private isCurrentlyPlaying: boolean = false
   private currentAudioId: string | null = null
-  
+
   // Simplified event listeners
   private playingStateListeners: (() => void)[] = []
   private navigationCleanupCallbacks: (() => void)[] = []
 
   constructor() {
-    this.googleTTS = googleTTS
-    
-    // SimplifiedAudioController initialized
-    
-    // Preload common phrases for better performance
-    this.preloadAudio()
-    
+    this.ttsClient = ttsClient
+
+    // When playback is blocked by a missing user gesture, re-prompt via the permission layer.
+    this.ttsClient.onNeedsUserAction = () => this.notifyNeedsUserAction()
+
+    // No startup preload burst — it used to trip the circuit breaker on launch (PRD §5.1).
+
     // Setup global navigation cleanup
     this.setupGlobalCleanup()
+  }
+
+  /** Ask the permission provider to re-prompt for a user gesture (iOS suspension recovery). */
+  private notifyNeedsUserAction(): void {
+    if (simplifiedAudioContextInstance?.markNeedsUserAction) {
+      simplifiedAudioContextInstance.markNeedsUserAction()
+    }
   }
 
   // ===== SIMPLIFIED STATE MANAGEMENT =====
@@ -118,54 +123,10 @@ export class SimplifiedAudioController {
   }
 
   private stopCurrentAudio(_reason: string = 'new_audio_requested'): void {
-    // Stop Web Speech API IMMEDIATELY and aggressively for iOS fast-tap
-    if (window.speechSynthesis) {
-      try {
-        // Multiple immediate cancellation calls for iOS Safari
-        window.speechSynthesis.cancel()
-        window.speechSynthesis.cancel()
-        window.speechSynthesis.cancel()
-        // Additional delayed cancellations for stubborn iOS audio
-        setTimeout(() => {
-          try {
-            window.speechSynthesis.cancel()
-            window.speechSynthesis.cancel()
-          } catch {}
-        }, 0)
-        setTimeout(() => {
-          try { 
-            window.speechSynthesis.cancel() 
-          } catch {}
-        }, 10)
-      } catch {}
-    }
-    
-    // Stop all Howler sounds immediately
-    this.sounds.forEach((sound) => {
-      try {
-        if (sound.playing()) {
-          sound.stop()
-        }
-      } catch {}
-    })
-    
-    // Stop Google TTS (HTML5 audio elements) immediately
-    this.googleTTS.stopCurrentAudio()
-    
-    // Stop all HTML5 audio elements aggressively
-    const audioElements = document.querySelectorAll('audio')
-    audioElements.forEach((audio) => {
-      try {
-        audio.pause()
-        audio.currentTime = 0
-        // For iOS, also try to abort loading
-        if (isIOS() && audio.src) {
-          audio.src = ''
-          audio.load()
-        }
-      } catch {}
-    })
-    
+    // The engine owns the single shared <audio> element + one speechSynthesis.cancel().
+    // No page-wide <audio> teardown, no repeated cancel() spam (PRD §5.1 / §1.3).
+    this.ttsClient.stopCurrentAudio()
+
     // Reset state immediately
     this.isCurrentlyPlaying = false
     this.currentAudioId = null
@@ -230,14 +191,15 @@ export class SimplifiedAudioController {
       }
       
       const customAudioConfig = customSpeed ? { speakingRate: customSpeed } : undefined
-      await this.googleTTS.synthesizeAndPlay(text, voiceType, useSSML, customAudioConfig)
+      await this.ttsClient.synthesizeAndPlay(text, voiceType, useSSML, customAudioConfig)
     })
   }
 
   // ===== SPECIALIZED DANISH AUDIO FUNCTIONS =====
 
   async speakLetter(letter: string): Promise<string> {
-    return this.speak(letter)
+    // Speak the Danish letter NAME (e.g. "W" → "dobbelt-ve"), not the bare glyph.
+    return this.speak(getDanishLetterName(letter))
   }
 
   async speakNumber(number: number, customSpeed?: number): Promise<string> {
@@ -252,7 +214,7 @@ export class SimplifiedAudioController {
       
       const numberText = getDanishNumberText(number)
       const customAudioConfig = customSpeed ? { speakingRate: customSpeed } : undefined
-      await this.googleTTS.synthesizeAndPlay(numberText, 'primary', true, customAudioConfig)
+      await this.ttsClient.synthesizeAndPlay(numberText, 'primary', true, customAudioConfig)
     })
   }
 
@@ -269,7 +231,7 @@ export class SimplifiedAudioController {
         return
       }
 
-      await this.googleTTS.synthesizeAndPlay(text, 'english', false)
+      await this.ttsClient.synthesizeAndPlay(text, 'english', false)
     })
   }
 
@@ -293,7 +255,7 @@ export class SimplifiedAudioController {
       }
       
       // Keep it simple - just speak the full text
-      await this.googleTTS.synthesizeAndPlay(text, voiceType, false)
+      await this.ttsClient.synthesizeAndPlay(text, voiceType, false)
     })
   }
 
@@ -316,7 +278,7 @@ export class SimplifiedAudioController {
       }
       
       const problemText = `${DANISH_PHRASES.gamePrompts.mathQuestion.prefix} ${getDanishNumberText(num1)} ${DANISH_PHRASES.math.plus} ${getDanishNumberText(num2)}`
-      await this.googleTTS.synthesizeAndPlay(problemText, voiceType, true)
+      await this.ttsClient.synthesizeAndPlay(problemText, voiceType, true)
     })
   }
 
@@ -331,7 +293,7 @@ export class SimplifiedAudioController {
       }
 
       const problemText = `${DANISH_PHRASES.gamePrompts.mathQuestion.prefix} ${getDanishNumberText(num1)} ${DANISH_PHRASES.math.minus} ${getDanishNumberText(num2)}`
-      await this.googleTTS.synthesizeAndPlay(problemText, voiceType, true)
+      await this.ttsClient.synthesizeAndPlay(problemText, voiceType, true)
     })
   }
 
@@ -360,12 +322,12 @@ export class SimplifiedAudioController {
       }
       
       if (score === 0) {
-        await this.googleTTS.synthesizeAndPlay(DANISH_PHRASES.score.noPoints, voiceType, true)
+        await this.ttsClient.synthesizeAndPlay(DANISH_PHRASES.score.noPoints, voiceType, true)
       } else if (score === 1) {
-        await this.googleTTS.synthesizeAndPlay(DANISH_PHRASES.score.onePoint, voiceType, true)
+        await this.ttsClient.synthesizeAndPlay(DANISH_PHRASES.score.onePoint, voiceType, true)
       } else {
         const scoreText = `${DANISH_PHRASES.score.multiplePoints.prefix} ${getDanishNumberText(score)} ${DANISH_PHRASES.score.multiplePoints.suffix}`
-        await this.googleTTS.synthesizeAndPlay(scoreText, voiceType, true)
+        await this.ttsClient.synthesizeAndPlay(scoreText, voiceType, true)
       }
     })
   }
@@ -504,31 +466,7 @@ export class SimplifiedAudioController {
   }
 
   emergencyStop(): void {
-    this.sounds.forEach(sound => {
-      try {
-        sound.stop()
-        sound.unload()
-      } catch {}
-    })
-    this.sounds.clear()
-    
-    this.googleTTS.stopCurrentAudio()
-    
-    if (window.speechSynthesis && window.speechSynthesis.speaking) {
-      try {
-        window.speechSynthesis.cancel()
-      } catch {}
-    }
-    
-    const audioElements = document.querySelectorAll('audio')
-    audioElements.forEach(audio => {
-      try {
-        audio.pause()
-        audio.currentTime = 0
-        audio.src = ''
-      } catch {}
-    })
-    
+    this.ttsClient.stopCurrentAudio()
     this.isCurrentlyPlaying = false
     this.currentAudioId = null
     this.notifyPlayingStateChange()
@@ -578,14 +516,6 @@ export class SimplifiedAudioController {
     this.stopAll()
     
     // Navigation cleanup completed
-  }
-
-  private async preloadAudio(): Promise<void> {
-    try {
-      await this.googleTTS.preloadCommonPhrases()
-    } catch (error) {
-      // Failed to preload audio
-    }
   }
 
   // ===== MISSING METHODS ADDED FOR COMPATIBILITY =====
@@ -694,7 +624,7 @@ export class SimplifiedAudioController {
     currentAudioId: string | null
   } {
     return {
-      cacheStats: this.googleTTS.getCacheStats(),
+      cacheStats: this.ttsClient.getCacheStats(),
       isPlaying: this.isCurrentlyPlaying,
       currentAudioId: this.currentAudioId
     }

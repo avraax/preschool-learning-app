@@ -152,6 +152,23 @@ export const DANISH_PHRASES = {
   ]
 }
 
+// Danish letter NAMES. speakLetter() sends these (not the bare glyph) so the spoken letter is
+// deterministic and locale-correct regardless of how the TTS engine handles single graphemes
+// (PRD §8 — controller-side map is the safe option vs. relying on lexicon grapheme matching).
+// The owner can refine any of these via VoiceLab; tricky names can also get a lexicon <lexeme>.
+export const DANISH_LETTER_NAMES: Record<string, string> = {
+  A: 'a', B: 'be', C: 'se', D: 'de', E: 'e', F: 'ef', G: 'ge', H: 'hå',
+  I: 'i', J: 'jåd', K: 'kå', L: 'el', M: 'em', N: 'en', O: 'o', P: 'pe',
+  Q: 'ku', R: 'er', S: 'es', T: 'te', U: 'u', V: 've', W: 'dobbelt-ve',
+  X: 'eks', Y: 'y', Z: 'set', Æ: 'æ', Ø: 'ø', Å: 'å',
+}
+
+/** Spoken Danish name for a letter; falls back to the glyph itself if not a known letter. */
+export const getDanishLetterName = (letter: string): string => {
+  const key = letter.trim().toUpperCase()
+  return DANISH_LETTER_NAMES[key] ?? letter
+}
+
 // Helper functions for getting random phrases
 export const getRandomSuccessPhrase = (): string => {
   const phrases = DANISH_PHRASES.success

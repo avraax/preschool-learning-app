@@ -1,19 +1,17 @@
-// Runtime TTS voice override — THROWAWAY internal tool (see tmp-prd-voicelab.md).
+// Runtime TTS voice override — THROWAWAY internal tool (see tmp-prd-audio-rebuild.md §10).
 //
-// Lets the owner audition a shortlist of Danish voices + a speaking-rate inside the real
-// games via a small popover (VoiceOverridePanel). When set, googleTTS swaps the Danish
-// "primary" voice app-wide. Persisted to localStorage so it survives reloads and is picked
-// up by googleTTS on construction. Removed once a production voice is chosen.
+// Lets the owner audition Danish Azure voices + a speaking-rate inside the real games via the
+// VoiceOverridePanel. When set, ttsClient swaps the da-DK voice app-wide. Persisted to
+// localStorage so it survives reloads. Removed once the production voice is locked.
 
 export interface VoiceOverride {
-  /** Full Google voice name, e.g. 'da-DK-Chirp3-HD-Sulafat'. */
+  /** Full Azure voice name, e.g. 'da-DK-ChristelNeural'. */
   name: string
-  ssmlGender: 'FEMALE' | 'MALE'
-  /** Google speakingRate (0.25–2.0). */
+  /** Azure <prosody rate> multiplier (1.0 = natural). */
   speakingRate: number
 }
 
-const KEY = 'voicelab_voice_override'
+const KEY = 'voicelab_voice_override_v2'
 
 export function loadVoiceOverride(): VoiceOverride | null {
   try {
@@ -36,9 +34,4 @@ export function saveVoiceOverride(override: VoiceOverride | null): void {
   } catch {
     /* ignore unavailable storage */
   }
-}
-
-/** Chirp voices reject SSML and the `pitch` parameter — send plain text, drop pitch. */
-export function isChirpVoice(name: string): boolean {
-  return name.includes('Chirp')
 }

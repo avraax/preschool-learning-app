@@ -1,5 +1,6 @@
 import { VercelRequest, VercelResponse } from '@vercel/node'
 import { v2 } from '@google-cloud/speech'
+import { logServerError, applyCors, isAllowedOrigin } from '../lib/server-utils.js'
 
 const { SpeechClient } = v2
 
@@ -46,9 +47,7 @@ function initializeClient() {
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  res.setHeader('Access-Control-Allow-Origin', '*')
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
+  applyCors(req, res)
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end()
@@ -56,6 +55,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' })
+  }
+  if (!isAllowedOrigin(req)) {
+    return res.status(403).json({ error: 'Forbidden origin' })
   }
 
   try {
@@ -90,24 +92,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     return res.status(200).json({ transcript, confidence })
   } catch (error) {
-    console.error('STT API error:', error)
-
-    try {
-      await fetch('/api/log-error', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          level: 'error',
-          message: `STT API Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
-          data: { error: error instanceof Error ? error.stack : error },
-          device: 'Server API',
-          url: '/api/stt',
-          timestamp: new Date().toISOString()
-        })
-      })
-    } catch (logError) {
-      console.warn('Failed to log STT error:', logError)
-    }
+    await logServerError(req, 'STT', error)
 
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
     return res.status(500).json({

@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect, useRef, useMemo, ReactNode } from 'react'
+import React, { createContext, useState, useEffect, useRef, useMemo, useCallback, ReactNode } from 'react'
 import { isIOS } from '../utils/deviceDetection'
 import { audioDebugSession } from '../utils/remoteConsole'
 import { setSimplifiedAudioContext } from '../utils/SimplifiedAudioController'
@@ -26,6 +26,8 @@ export interface SimplifiedAudioContextType {
   initializeAudio: () => Promise<boolean>
   updateUserInteraction: () => void
   hidePrompt: () => void
+  // Called by the audio engine when playback is blocked / the context suspends, so we re-prompt.
+  markNeedsUserAction: () => void
   // Expose the global audio context and speech synthesis for immediate access
   globalAudioContext: AudioContext | null
   speechSynthesis: SpeechSynthesis | null
@@ -73,8 +75,14 @@ export const SimplifiedAudioProvider: React.FC<SimplifiedAudioProviderProps> = (
     }
   }, [])
 
+  // Flip state back to "needs a gesture". Re-arms the prompt path; the next user interaction
+  // re-runs initializeAudio. Used on autoplay block / AudioContext suspension.
+  const markNeedsUserAction = useCallback(() => {
+    setState(prev => (prev.needsUserAction && !prev.isWorking ? prev : { ...prev, isWorking: false, needsUserAction: true }))
+  }, [])
+
   // iOS-optimized audio initialization - immediate, direct, simple
-  const initializeAudio = async (): Promise<boolean> => {
+  const initializeAudio = useCallback(async (): Promise<boolean> => {
     logSimpleAudio('initializeAudio called', {
       alreadyInitialized: initializedRef.current,
       timeSinceLastInteraction: Date.now() - lastUserInteractionRef.current
@@ -98,7 +106,8 @@ export const SimplifiedAudioProvider: React.FC<SimplifiedAudioProviderProps> = (
         }
       }
 
-      // 2. Resume AudioContext immediately during user interaction
+      // 2. Resume AudioContext immediately during user interaction, then VERIFY it is actually
+      // running (the old code latched isWorking=true without confirming — PRD §9.2).
       if (globalAudioContextRef.current) {
         if (globalAudioContextRef.current.state === 'suspended') {
           await globalAudioContextRef.current.resume()
@@ -107,6 +116,16 @@ export const SimplifiedAudioProvider: React.FC<SimplifiedAudioProviderProps> = (
           })
         }
         audioContextWorking = (globalAudioContextRef.current.state === 'running')
+
+        // Recover automatically: if the context later suspends (e.g. iOS backgrounding), flip
+        // back to needsUserAction so the next interaction re-prompts instead of going silent.
+        globalAudioContextRef.current.onstatechange = () => {
+          const ctx = globalAudioContextRef.current
+          if (ctx && ctx.state === 'suspended') {
+            logSimpleAudio('AudioContext suspended — needs user action', { state: ctx.state })
+            markNeedsUserAction()
+          }
+        }
       }
 
       // 3. Initialize speechSynthesis with "empty utterance" trick for iOS
@@ -157,24 +176,26 @@ export const SimplifiedAudioProvider: React.FC<SimplifiedAudioProviderProps> = (
       
       return false
     }
-  }
+  }, [markNeedsUserAction])
 
-  const updateUserInteraction = () => {
+  const updateUserInteraction = useCallback(() => {
     lastUserInteractionRef.current = Date.now()
-    logSimpleAudio('User interaction updated', { timestamp: lastUserInteractionRef.current })
-    
-    // If we haven't initialized yet and user is interacting, try initialization
-    if (!initializedRef.current) {
+
+    // If we haven't initialized yet (or a prior session suspended), a fresh gesture is our
+    // chance to (re)unlock audio — covers both first-run and suspension recovery.
+    const ctx = globalAudioContextRef.current
+    const suspended = ctx ? ctx.state === 'suspended' : false
+    if (!initializedRef.current || suspended) {
       initializeAudio().catch(error => {
         logSimpleAudio('Auto-initialization failed on interaction', { error })
       })
     }
-  }
+  }, [initializeAudio])
 
-  const hidePrompt = () => {
+  const hidePrompt = useCallback(() => {
     setState(prev => ({ ...prev, showPrompt: false }))
     updateUserInteraction()
-  }
+  }, [updateUserInteraction])
 
   // Track user interactions for iOS compatibility
   useEffect(() => {
@@ -195,13 +216,13 @@ export const SimplifiedAudioProvider: React.FC<SimplifiedAudioProviderProps> = (
     }
   }, [])
 
-  // Check if we should show prompt when audio is needed
+  // Show the prompt when audio is needed — on ALL platforms (desktop/Android included), not just
+  // iOS (PRD §9.2). A short delay lets a natural interaction unlock audio first without any modal.
   useEffect(() => {
-    if (state.needsUserAction && !state.isWorking && !initializedRef.current && isIOS()) {
-      // Only show prompt on iOS where audio restrictions are stricter
+    if (state.needsUserAction && !state.isWorking) {
       const timer = setTimeout(() => {
-        setState(prev => ({ ...prev, showPrompt: true }))
-      }, 1000) // Short delay to allow for natural user interactions first
+        setState(prev => (prev.needsUserAction && !prev.isWorking ? { ...prev, showPrompt: true } : prev))
+      }, 1500)
 
       return () => clearTimeout(timer)
     }
@@ -215,9 +236,10 @@ export const SimplifiedAudioProvider: React.FC<SimplifiedAudioProviderProps> = (
     initializeAudio,
     updateUserInteraction,
     hidePrompt,
+    markNeedsUserAction,
     globalAudioContext: globalAudioContextRef.current,
     speechSynthesis: speechSynthesisRef.current
-  }), [state, initializeAudio, updateUserInteraction, hidePrompt])
+  }), [state, initializeAudio, updateUserInteraction, hidePrompt, markNeedsUserAction])
 
   // Connect this context to the SimplifiedAudioController
   useEffect(() => {

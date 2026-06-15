@@ -1,7 +1,7 @@
 // VoiceOverridePanel — small floating 🎙️ button + popover to audition Danish voices
 // inside the real games. THROWAWAY internal tool (see tmp-prd-voicelab.md / voiceOverride.ts).
 //
-// Picking a voice/speed here sets a runtime override on googleTTS that applies app-wide, so
+// Picking a voice/speed here sets a runtime override on ttsClient that applies app-wide, so
 // every existing game (letters, numbers-as-words, words) is immediately heard with it.
 // "Nulstil" clears the override → back to the production voice. Removed once a voice is chosen.
 
@@ -20,22 +20,22 @@ import {
   Typography,
 } from '@mui/material'
 import { Mic } from 'lucide-react'
-import { googleTTS } from '../../services/googleTTS'
+import { ttsClient } from '../../services/ttsClient'
 import { TTS_CONFIG } from '../../config/tts-config'
 import { OVERRIDE_SHORTLIST } from './voicelabData'
 
 const FONT = '"Comic Sans MS", "Comic Sans", cursive'
-const DEFAULT_RATE = TTS_CONFIG.audioConfig.speakingRate // 0.8
+const DEFAULT_RATE = TTS_CONFIG.speakingRate // 0.9
 
 const VoiceOverridePanel: React.FC = () => {
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null)
-  const existing = googleTTS.getVoiceOverride()
+  const existing = ttsClient.getVoiceOverride()
   const [name, setName] = useState(existing?.name ?? OVERRIDE_SHORTLIST[0].name)
   const [rate, setRate] = useState(existing?.speakingRate ?? DEFAULT_RATE)
 
   const apply = (nextName: string, nextRate: number) => {
     const entry = OVERRIDE_SHORTLIST.find((v) => v.name === nextName) ?? OVERRIDE_SHORTLIST[0]
-    googleTTS.setVoiceOverride({ name: entry.name, ssmlGender: entry.ssmlGender, speakingRate: nextRate })
+    ttsClient.setVoiceOverride({ name: entry.name, speakingRate: nextRate })
   }
 
   const handleVoice = (nextName: string) => {
@@ -49,22 +49,22 @@ const VoiceOverridePanel: React.FC = () => {
   }
 
   const reset = () => {
-    googleTTS.setVoiceOverride(null)
+    ttsClient.setVoiceOverride(null)
     setName(OVERRIDE_SHORTLIST[0].name)
     setRate(DEFAULT_RATE)
   }
 
   // Play a sample through the live audio path so the override is exercised exactly as in-game.
   const sample = async (kind: 'letter' | 'number' | 'word') => {
-    const text = kind === 'letter' ? 'A' : kind === 'number' ? 'fem' : 'hund'
+    const text = kind === 'letter' ? 'a' : kind === 'number' ? 'fem' : 'hund'
     try {
-      await googleTTS.synthesizeAndPlay(text, 'primary', true)
+      await ttsClient.synthesizeAndPlay(text, 'primary', true)
     } catch {
       /* surfaced via existing audio logging; popover stays usable */
     }
   }
 
-  const overrideActive = !!googleTTS.getVoiceOverride()
+  const overrideActive = !!ttsClient.getVoiceOverride()
 
   return (
     <>

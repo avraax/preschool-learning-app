@@ -24,18 +24,16 @@ class RemoteConsole {
   constructor() {
     const disableConsole = window.location.search.includes('disable-console=true')
 
-    // Remote logging exists for iOS production debugging. In local dev it just floods
-    // /api/log-error (hundreds of requests, occasional >1MB payloads) since the real
-    // console + network tab are already available. Disable on localhost by default;
-    // force it on with ?enable-console=true if you need to test the logging pipeline.
+    // DECISION (PRD §9.3): remote logging is DEV-ONLY and OFF in production. End users no longer
+    // POST console output to /api/log-error (durable storage isn't wanted). It runs on localhost/dev
+    // so the relative-URL log-bug fix can be exercised; force on elsewhere with ?enable-console=true.
     const isLocalDev =
       window.location.hostname === 'localhost' ||
       window.location.hostname === '127.0.0.1' ||
       window.location.hostname === '[::1]'
     const forceEnable = window.location.search.includes('enable-console=true')
 
-    // Enable by default on all devices, but allow disabling via URL parameter
-    this.isEnabled = !disableConsole && (!isLocalDev || forceEnable)
+    this.isEnabled = !disableConsole && (isLocalDev || forceEnable)
 
     if (this.isEnabled) {      
       this.interceptConsole()
@@ -344,23 +342,11 @@ class RemoteConsole {
 // Global instance
 export const remoteConsole = new RemoteConsole()
 
-// Utility function to log audio-specific issues with enhanced capture
+// Utility function to log audio-specific issues.
+// ONE log per issue (PRD §9.3): just console.error. In dev that is intercepted and POSTed once;
+// in prod logging is off. (Previously this ALSO called addEnhancedError → a duplicate POST.)
 export const logAudioIssue = (context: string, error: any, additionalData?: any) => {
   console.error(`🎵 Audio Issue [${context}]:`, error, additionalData)
-  
-  // Also send enhanced error capture for audio issues
-  if (remoteConsole.isActive()) {
-    const audioError = error instanceof Error ? error : new Error(String(error))
-    remoteConsole['addEnhancedError'](
-      `Audio Issue [${context}]: ${audioError.message}`,
-      audioError,
-      {
-        context,
-        additionalData,
-        category: 'audio-issue'
-      }
-    )
-  }
 }
 
 // Utility function to log iOS-specific issues
@@ -437,25 +423,27 @@ class AudioDebugSession {
       summary: this.generateSummary()
     }
 
-    // Send to API as a special audio debug report
-    fetch('/api/log-error', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        level: 'info',
-        message: `🔊 AUDIO DEBUG REPORT - ${context}`,
-        device: `${deviceInfo.isIPad ? 'iPad' : deviceInfo.isIPhone ? 'iPhone' : 'Unknown'} iOS ${deviceInfo.version}`,
-        url: window.location.href,
-        sessionId: this.sessionId,
-        timestamp: new Date().toISOString(),
-        data: comprehensiveReport,
-        tags: ['audio-debug', 'comprehensive-report']
+    // Send to API only when remote logging is active (dev-only — PRD §9.3).
+    if (remoteConsole.isActive()) {
+      fetch('/api/log-error', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          level: 'info',
+          message: `🔊 AUDIO DEBUG REPORT - ${context}`,
+          device: `${deviceInfo.isIPad ? 'iPad' : deviceInfo.isIPhone ? 'iPhone' : 'Unknown'} iOS ${deviceInfo.version}`,
+          url: window.location.href,
+          sessionId: this.sessionId,
+          timestamp: new Date().toISOString(),
+          data: comprehensiveReport,
+          tags: ['audio-debug', 'comprehensive-report']
+        })
+      }).catch(() => {
+        /* logging is best-effort */
       })
-    }).catch(error => {
-      console.error('Failed to send audio debug report:', error)
-    })
+    }
 
     this.isActive = false
     return comprehensiveReport

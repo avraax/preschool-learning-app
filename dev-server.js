@@ -1,7 +1,12 @@
 import express from 'express';
-import { TextToSpeechClient } from '@google-cloud/text-to-speech';
 import { v2 as speechV2 } from '@google-cloud/speech';
 import { TTS_CONFIG } from './shared-tts-config.js';
+import {
+  buildSsml,
+  synthesizeAzure,
+  resolveVoice,
+  lexiconUriForRequest,
+} from './shared-azure-tts.js';
 
 const app = express();
 const PORT = 3001;
@@ -9,65 +14,73 @@ const PORT = 3001;
 // 5mb to comfortably hold a short base64-encoded audio clip from the mic game.
 app.use(express.json({ limit: '5mb' }));
 
-// --- TTS Client ---
-let ttsClient = null;
+// --- in-process error log (dev mirror of /api/log-error) ---
+let errorLogs = [];
+const MAX_LOGS = 200;
 
-function initializeTtsClient() {
-  if (ttsClient) return ttsClient;
-
-  const projectId = process.env.GOOGLE_CLOUD_PROJECT_ID;
-  const clientEmail = process.env.GOOGLE_CLOUD_CLIENT_EMAIL;
-  const privateKeyBase64 = process.env.GOOGLE_CLOUD_PRIVATE_KEY_BASE64;
-  let privateKey = process.env.GOOGLE_CLOUD_PRIVATE_KEY;
-
-  if (!projectId || !clientEmail || (!privateKey && !privateKeyBase64)) {
-    throw new Error(
-      'Missing Google Cloud env vars. Ensure .env.local has GOOGLE_CLOUD_PROJECT_ID, GOOGLE_CLOUD_CLIENT_EMAIL, and GOOGLE_CLOUD_PRIVATE_KEY_BASE64'
-    );
-  }
-
-  if (privateKeyBase64 && !privateKey) {
-    privateKey = Buffer.from(privateKeyBase64, 'base64').toString('utf-8');
-  } else if (privateKey) {
-    privateKey = privateKey.replace(/\\n/g, '\n');
-  }
-
-  ttsClient = new TextToSpeechClient({
-    projectId,
-    credentials: { client_email: clientEmail, private_key: privateKey },
+function logDevError(scope, error) {
+  const message = error instanceof Error ? error.message : String(error);
+  console.error(`[dev-server] ${scope} error:`, message);
+  errorLogs.unshift({
+    id: `err_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+    timestamp: new Date().toISOString(),
+    level: 'error',
+    message: `${scope} API Error: ${message}`,
+    data: { stack: error instanceof Error ? error.stack : undefined },
+    device: 'Server API',
+    url: `/api/${scope.toLowerCase()}`,
   });
-  console.log(`[dev-server] TTS client initialized (project: ${projectId})`);
-  return ttsClient;
+  if (errorLogs.length > MAX_LOGS) errorLogs = errorLogs.slice(0, MAX_LOGS);
 }
 
-// --- TTS endpoint ---
-app.post('/api/tts', async (req, res) => {
+// --- Azure TTS endpoint (mirrors api/tts-azure.ts via the shared core) ---
+const VOICE_TYPES = new Set(['primary', 'backup', 'male', 'english']);
+
+app.post('/api/tts-azure', async (req, res) => {
   try {
-    const { text, isSSML = false, voice, audioConfig } = req.body;
+    const { text, voiceType = 'primary', voiceName, lang, speed, useLexicon = true, ipa } = req.body ?? {};
 
     if (!text || typeof text !== 'string') {
       return res.status(400).json({ error: 'Text is required and must be a string' });
     }
-
-    const client = initializeTtsClient();
-    const input = isSSML ? { ssml: text } : { text };
-    const request = {
-      input,
-      voice: voice || TTS_CONFIG.voice,
-      audioConfig: audioConfig || TTS_CONFIG.audioConfig,
-    };
-
-    const [response] = await client.synthesizeSpeech(request);
-
-    if (!response.audioContent) {
-      throw new Error('No audio content received from Google TTS');
+    if (text.length > 5000) {
+      return res.status(400).json({ error: 'Text too long (max 5000 characters)' });
+    }
+    if (typeof voiceType !== 'string' || (!voiceName && !VOICE_TYPES.has(voiceType))) {
+      return res.status(400).json({ error: 'Invalid voiceType' });
+    }
+    if (speed !== undefined && (typeof speed !== 'number' || speed < 0.25 || speed > 3)) {
+      return res.status(400).json({ error: 'Invalid speed (0.25–3)' });
     }
 
-    const audioBase64 = Buffer.from(response.audioContent).toString('base64');
-    res.json({ audioContent: audioBase64, voice: request.voice, text });
+    const resolved = voiceName
+      ? { name: voiceName, lang: typeof lang === 'string' ? lang : 'da-DK' }
+      : resolveVoice(voiceType);
+
+    const isDanish = resolved.lang.startsWith('da');
+    const proto = req.headers['x-forwarded-proto'] || 'http';
+    const lexiconUri = useLexicon && isDanish ? lexiconUriForRequest(req.headers.host, proto) : null;
+
+    const ssml = buildSsml({
+      text,
+      voiceName: resolved.name,
+      lang: resolved.lang,
+      speed,
+      lexiconUri,
+      ipa: typeof ipa === 'string' ? ipa : null,
+    });
+
+    const audioContent = await synthesizeAzure({
+      key: process.env.AZURE_SPEECH_KEY,
+      region: process.env.AZURE_SPEECH_REGION,
+      ssml,
+      outputFormat: TTS_CONFIG.outputFormat,
+    });
+
+    res.json({ audioContent });
   } catch (error) {
-    console.error('[dev-server] TTS error:', error.message);
-    res.status(500).json({ error: 'TTS synthesis failed', details: error.message });
+    logDevError('TTS', error);
+    res.status(500).json({ error: 'Text-to-speech synthesis failed', details: error.message });
   }
 });
 
@@ -140,15 +153,12 @@ app.post('/api/stt', async (req, res) => {
 
     res.json({ transcript, confidence });
   } catch (error) {
-    console.error('[dev-server] STT error:', error.message);
+    logDevError('STT', error);
     res.status(500).json({ error: 'STT recognition failed', details: error.message });
   }
 });
 
-// --- Error logging endpoint (in-memory) ---
-let errorLogs = [];
-const MAX_LOGS = 200;
-
+// --- Error logging endpoint (in-memory; dev mirror of api/log-error.ts) ---
 app.post('/api/log-error', (req, res) => {
   const entry = {
     id: `err_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -187,8 +197,8 @@ app.get('/api/version', (_req, res) => {
 // --- Start ---
 app.listen(PORT, () => {
   console.log(`[dev-server] API server running at http://localhost:${PORT}`);
-  console.log(`[dev-server] TTS:       POST http://localhost:${PORT}/api/tts`);
-  console.log(`[dev-server] STT:       POST http://localhost:${PORT}/api/stt`);
-  console.log(`[dev-server] Logging:   POST/GET http://localhost:${PORT}/api/log-error`);
-  console.log(`[dev-server] Version:   GET  http://localhost:${PORT}/api/version`);
+  console.log(`[dev-server] TTS (Azure): POST http://localhost:${PORT}/api/tts-azure`);
+  console.log(`[dev-server] STT:         POST http://localhost:${PORT}/api/stt`);
+  console.log(`[dev-server] Logging:     POST/GET http://localhost:${PORT}/api/log-error`);
+  console.log(`[dev-server] Version:     GET  http://localhost:${PORT}/api/version`);
 });
