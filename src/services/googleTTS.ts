@@ -3,6 +3,7 @@ import { TTS_CONFIG } from '../config/tts-config'
 import { isIOS } from '../utils/deviceDetection'
 import { logAudioIssue, logIOSIssue } from '../utils/remoteConsole'
 import { DANISH_PHRASES } from '../config/danish-phrases'
+import { loadVoiceOverride, saveVoiceOverride, isChirpVoice, type VoiceOverride } from '../config/voiceOverride'
 
 // Global audio permission context reference
 let globalAudioPermissionContext: any = null
@@ -46,6 +47,19 @@ export class GoogleTTSService {
 
   // Use shared audio configuration
   private readonly audioConfig = TTS_CONFIG.audioConfig
+
+  // THROWAWAY voice-audition override (see src/config/voiceOverride.ts). When set, the Danish
+  // "primary" voice is swapped app-wide so every game can be heard with the chosen voice/speed.
+  private voiceOverride: VoiceOverride | null = loadVoiceOverride()
+
+  setVoiceOverride(override: VoiceOverride | null): void {
+    this.voiceOverride = override
+    saveVoiceOverride(override)
+  }
+
+  getVoiceOverride(): VoiceOverride | null {
+    return this.voiceOverride
+  }
 
   // Stop any currently playing audio
   stopCurrentAudio(): void {
@@ -385,11 +399,30 @@ export class GoogleTTSService {
       }
     }
     
-    const voice = this.voiceConfigs[voiceType]
-    const inputText = useSSML ? this.createChildFriendlySSML(text) : text
-    const finalAudioConfig = customAudioConfig ? { ...this.audioConfig, ...customAudioConfig } : this.audioConfig
-    const cacheKey = `${text}_${voiceType}_${useSSML}_${finalAudioConfig.speakingRate}_${finalAudioConfig.pitch}`
-    
+    let voice: { languageCode: string; name: string; ssmlGender: 'FEMALE' | 'MALE' } = this.voiceConfigs[voiceType]
+    let effectiveSSML = useSSML
+    const finalAudioConfig: {
+      audioEncoding: string; speakingRate: number; pitch?: number; volumeGainDb?: number; sampleRateHertz?: number
+    } = { ...this.audioConfig, ...(customAudioConfig ?? {}) }
+
+    // Apply the runtime voice override to the Danish voices only (English keeps its own voice).
+    const override = this.voiceOverride
+    const isDanish = voiceType === 'primary' || voiceType === 'backup' || voiceType === 'male'
+    if (override && isDanish) {
+      voice = { languageCode: 'da-DK', name: override.name, ssmlGender: override.ssmlGender }
+      finalAudioConfig.speakingRate = override.speakingRate
+    }
+
+    // Chirp voices reject SSML + pitch → send plain text and drop pitch. Applies whether Chirp
+    // is the app default (e.g. Sulafat) or selected via the override panel.
+    if (isDanish && isChirpVoice(voice.name)) {
+      effectiveSSML = false
+      delete finalAudioConfig.pitch
+    }
+
+    const inputText = effectiveSSML ? this.createChildFriendlySSML(text) : text
+    const cacheKey = `${text}_${voiceType}_${effectiveSSML}_${finalAudioConfig.speakingRate}_${finalAudioConfig.pitch}_${voice.name}`
+
     // Check cache first
     const cachedAudio = this.getCachedAudio(cacheKey, voice.name)
     if (cachedAudio) {
@@ -401,9 +434,9 @@ export class GoogleTTSService {
       // This avoids exposing service account credentials in the browser
       const requestBody = {
         text: inputText,
-        isSSML: useSSML,
+        isSSML: effectiveSSML,
         voice,
-        audioConfig: customAudioConfig ? { ...this.audioConfig, ...customAudioConfig } : this.audioConfig
+        audioConfig: finalAudioConfig
       }
       
       const requestHeaders = {

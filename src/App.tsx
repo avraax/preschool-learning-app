@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useRef, lazy, Suspense } from 'react'
+import React, { useEffect, useState, useCallback, lazy, Suspense } from 'react'
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { logIOSIssue } from './utils/remoteConsole'
@@ -41,12 +41,13 @@ const LaesOrdetGame = lazy(() => import('./components/ordleg/LaesOrdetGame'))
 const SpellingGame = lazy(() => import('./components/ordleg/SpellingGame'))
 const SpeakWordGame = lazy(() => import('./components/ordleg/SpeakWordGame'))
 const MemoryGame = lazy(() => import('./components/learning/MemoryGame'))
+// Hidden, off-menu internal tool — audition Danish TTS voices. Throwaway (tmp-prd-voicelab.md).
+const VoiceLab = lazy(() => import('./components/voicelab/VoiceLab'))
 import UpdateBanner from './components/common/UpdateBanner'
+import VoiceOverridePanel from './components/voicelab/VoiceOverridePanel'
 import ThemeSelector from './components/common/ThemeSelector'
-import ThemeScene from './components/common/scene/ThemeScene'
+import PersistentWorld from './components/common/scene/PersistentWorld'
 import ThemeMascot from './components/common/ThemeMascot'
-import { useParallax } from './components/common/scene/useParallax'
-import { useReducedMotion } from './hooks/useReducedMotion'
 // Legacy audio system removed - using SimplifiedAudioProvider only
 import { useViewportHeight } from './hooks/useViewportHeight'
 // Demo system removed
@@ -102,12 +103,8 @@ const homeCards: Array<{
 const HomePage = () => {
   const navigate = useNavigate()
   const theme = useTheme()
-  const reduceMotion = useReducedMotion()
-  // Parallax driver lives on the page root so the scene AND the mascot (separate planes)
-  // share one synced offset via inherited CSS vars.
-  const sceneRootRef = useRef<HTMLDivElement>(null)
-  useParallax(sceneRootRef, { disabled: reduceMotion })
-  // This theme has an authored world → use immersive treatments (glassy cards, world mascot).
+  // This theme has an authored world → use immersive treatments (glassy cards). The world
+  // itself (parallax scene + ambient + mascot) is rendered once, app-wide, by <PersistentWorld/>.
   const immersive = theme.scene.layers.length > 0
   const darkScene = theme.scene.dark // dark backdrop (e.g. Rummet) → light title
   const welcomeCharacter = useCharacterState('wave')
@@ -286,12 +283,13 @@ const HomePage = () => {
 
   return (
     <Box
-      ref={sceneRootRef}
       className="interactive-area"
       sx={{
         position: 'relative',
         height: 'calc(var(--vh, 1vh) * 100)',
-        background: `${theme.decor.pageBackground},\n${theme.decor.dots}`,
+        // Immersive skins: transparent so the app-wide <PersistentWorld/> scene shows through.
+        // Flat skins keep their own page background + dots (and the rainbow arc below).
+        background: immersive ? 'transparent' : `${theme.decor.pageBackground},\n${theme.decor.dots}`,
         overflow: 'hidden',
         display: 'flex',
         flexDirection: 'column',
@@ -334,10 +332,6 @@ const HomePage = () => {
         },
       }}
     >
-      {/* Immersive theme world (parallax scene + ambient objects) — behind all content.
-          Renders nothing for themes without an authored world (flat look). */}
-      <ThemeScene />
-
       <Container
         maxWidth="xl"
         sx={{
@@ -515,9 +509,11 @@ const HomePage = () => {
         </Box>
       </Container>
 
-      {/* Per-world mascot — sits on the sandy floor (bottom-left); tap to hear it speak and
-          spawn its own bubble burst. Renders nothing for themes without a mascot. */}
+      {/* Per-world mascot — rendered INSIDE the page (not in the persistent layer): a persistent
+          mascot in the separate world layer made Chrome flicker the scene's compositing on hover;
+          in-page it's rock-solid (same as the in-game GameGuide). parallaxDepth 0 → stays put. */}
       <ThemeMascot
+        parallaxDepth={0}
         sx={{
           left: 'calc(env(safe-area-inset-left) + 6px)',
           bottom: 'calc(env(safe-area-inset-bottom) + 2px)',
@@ -673,7 +669,7 @@ const VersionDisplay: React.FC<VersionDisplayProps> = ({ updateAvailable = false
 }
 
 function App() {
-  const theme = useTheme()
+  const location = useLocation()
   // Initialize viewport height for iOS
   useViewportHeight()
   
@@ -717,9 +713,28 @@ function App() {
         
         {/* Version Display - repositions to bottom-left when update available */}
         <VersionDisplay updateAvailable={updateStatus.updateAvailable || DEV_SHOW_UPDATE_BANNER} />
-        
-        <Suspense fallback={<Box sx={{ height: '100dvh', background: theme.decor.pageBackground }} />}>
-        <Routes>
+
+        {/* Throwaway voice-audition tool — floating 🎙️ override panel (tmp-prd-voicelab.md) */}
+        <VoiceOverridePanel />
+
+        {/* Full-viewport, no-scroll surface that hosts the persistent world + the routed pages.
+            Relative so the world's ABSOLUTE layers (and mascot) position against it — absolute
+            instead of fixed because Chrome blanks fixed layers during touch pan gestures. Height
+            uses the SAME basis as #root/pages (--vh) — mixing 100dvh here left a sub-pixel seam
+            at the bottom under fractional-DPR emulation. */}
+        <Box sx={{ position: 'relative', height: 'calc(var(--vh, 1vh) * 100)', overflow: 'hidden' }}>
+
+        {/* App-wide immersive world: rendered once behind the router, so the parallax scene /
+            ambient drift / mascot never unmount on navigation (no restart or flicker). Renders
+            nothing for flat skins. */}
+        <PersistentWorld />
+
+        {/* Foreground pages render over the steady world. Positioned wrapper ABOVE the world
+            layer (z-index:0). Cross-fade removed while diagnosing a compositing flicker — the
+            promoted opacity layer was painting white over the scene. */}
+        <Box sx={{ position: 'relative', zIndex: 1 }}>
+        <Suspense fallback={<Box sx={{ height: '100dvh' }} />}>
+        <Routes location={location}>
         {/* Home Routes */}
         <Route path="/" element={<HomePage />} />
         
@@ -767,10 +782,15 @@ function App() {
         {/* Learning Routes */}
         <Route path="/learning/memory/:type" element={<MemoryGame />} />
 
+        {/* Hidden internal tool — not in any menu, reachable only by URL */}
+        <Route path="/voicelab" element={<VoiceLab />} />
+
         {/* 404 Not Found */}
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
       </Suspense>
+        </Box>
+        </Box>
       </>
     </SimplifiedAudioProvider>
   )

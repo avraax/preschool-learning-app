@@ -4,7 +4,11 @@ import type { ParallaxLayerSpec } from '../../../theme/tokens/types'
 
 // One parallax scene layer (Theme Worlds PRD §5.3). Renders a single full-bleed image,
 // offset by `var(--parallax-x/y) * depth` (set by useParallax on the parent). A constant
-// scale(1.06) overscan hides the layer edges as it drifts. Decorative only.
+// scale(1.12) overscan hides the layer edges as it drifts. Decorative only.
+//
+// Anchored strips (top/bottom) pin their edge to that side of the viewport and therefore do NOT
+// translate vertically — otherwise the pinned edge lifts off as it drifts and exposes a 1px gap
+// of the transparent base (a flickering white line along the bottom). They still drift sideways.
 
 interface ParallaxLayerProps {
   spec: ParallaxLayerSpec
@@ -20,6 +24,11 @@ const ParallaxLayer: React.FC<ParallaxLayerProps> = ({ spec, url, index }) => {
   const backgroundSize = anchor === 'center' ? 'cover' : '100% auto'
   const transformOrigin = anchor === 'bottom' ? 'center bottom' : anchor === 'top' ? 'center top' : 'center'
 
+  // Horizontal drift for every layer; vertical drift only for center layers (anchored strips
+  // stay pinned to their edge so they never expose a gap there).
+  const tx = `calc(var(--parallax-x, 0px) * ${spec.depth})`
+  const ty = anchor === 'center' ? `calc(var(--parallax-y, 0px) * ${spec.depth})` : '0px'
+
   return (
     <Box
       aria-hidden
@@ -33,8 +42,8 @@ const ParallaxLayer: React.FC<ParallaxLayerProps> = ({ spec, url, index }) => {
         backgroundPosition,
         backgroundRepeat: 'no-repeat',
         transformOrigin,
-        // scale overscan must exceed the max travel (strength * depth) so edges never show.
-        transform: `translate3d(calc(var(--parallax-x, 0px) * ${spec.depth}), calc(var(--parallax-y, 0px) * ${spec.depth}), 0) scale(1.12)`,
+        // scale overscan must exceed the max horizontal travel (strength * depth) so edges never show.
+        transform: `translate3d(${tx}, ${ty}, 0) scale(1.12)`,
         willChange: 'transform',
         pointerEvents: 'none',
       }}

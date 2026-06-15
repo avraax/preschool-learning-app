@@ -45,6 +45,7 @@ const GameShell: React.FC<GameShellProps> = ({
   const theme = useTheme()
   const category = getCategoryTheme(categoryId)
   const dark = theme.scene.dark
+  const immersive = theme.scene.layers.length > 0
 
   return (
     <Box
@@ -55,10 +56,14 @@ const GameShell: React.FC<GameShellProps> = ({
         overflow: 'hidden',
         display: 'flex',
         flexDirection: 'column',
-        background: category.gradient,
+        // Immersive skins: transparent so the app-wide <PersistentWorld/> scene shows through —
+        // it fades in its own dim/blur scrim on game routes, so the in-game world stays calm.
+        // Flat skins keep the bold category gradient + GameMotif's CSS accent.
+        background: immersive ? 'transparent' : category.gradient,
       }}
     >
-      {/* Dimmed world backdrop (static atmosphere — no parallax/ambient/mascot). */}
+      {/* Calm in-game backdrop for FLAT skins (CSS accent). Immersive skins get their dimmed
+          world from the persistent layer, so GameMotif renders nothing there. */}
       <GameMotif categoryId={categoryId} />
 
       {/* Header: back (left) + score (right). The themed title sits below, centred. */}
@@ -108,7 +113,8 @@ const GameShell: React.FC<GameShellProps> = ({
                 fontFamily: theme.titleFontFamily,
                 color: dark ? '#FFFFFF' : category.accentColor,
                 fontWeight: 700,
-                fontSize: dense ? { xs: '1.3rem', md: '1.7rem' } : { xs: '1.6rem', md: '2.1rem' },
+                // Unified across all games (dense only affects paddings/margins, not the title).
+                fontSize: { xs: '1.6rem', md: '2.1rem' },
                 textShadow: dark
                   ? '0 0 16px rgba(120,170,255,0.55), 0 2px 8px rgba(0,0,0,0.5)'
                   : `1px 1px 2px ${category.accentColor}33`,

@@ -1,4 +1,4 @@
-import React, { useRef } from 'react'
+import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
@@ -15,9 +15,6 @@ import { useTheme, alpha } from '@mui/material/styles'
 import { ArrowLeft } from 'lucide-react'
 import { getCategoryTheme } from '../../config/categoryThemes'
 import { sectionIconImages } from '../../assets/themes/icons'
-import { useReducedMotion } from '../../hooks/useReducedMotion'
-import { useParallax } from './scene/useParallax'
-import ThemeScene from './scene/ThemeScene'
 import ThemeMascot from './ThemeMascot'
 
 interface Game {
@@ -38,17 +35,12 @@ const GameSelectionLayout: React.FC<GameSelectionLayoutProps> = ({
   games
 }) => {
   const navigate = useNavigate()
-  // Category colors/content (active skin) + the built theme for the world layer (scene /
-  // materials / themed title), mirroring the home page wiring in App.tsx.
+  // Category colors/content (active skin) + the built theme for themed title/cards. The world
+  // layer (scene + ambient + mascot + parallax) is rendered once, app-wide, by <PersistentWorld/>.
   const catTheme = getCategoryTheme(categoryId)
   const theme = useTheme()
-  const reduceMotion = useReducedMotion()
-  // Parallax driver lives on the page root so the scene AND the corner mascot (separate
-  // planes) share one synced offset via inherited CSS vars — exactly as on home.
-  const sceneRootRef = useRef<HTMLDivElement>(null)
-  useParallax(sceneRootRef, { disabled: reduceMotion })
-  // Authored world for this skin → immersive treatments (scene backdrop, glassy cards,
-  // title treatment, idle mascot). Flat skins keep the original category-gradient look.
+  // Authored world for this skin → immersive treatments (glassy cards, title treatment). Flat
+  // skins keep the original category-gradient look.
   const immersive = theme.scene.layers.length > 0
   const darkScene = theme.scene.dark // dark backdrop (e.g. Rummet) → light header text
   // Glass card surface. Dark worlds (Rummet) need a MORE opaque light glass: the home recipe
@@ -60,21 +52,18 @@ const GameSelectionLayout: React.FC<GameSelectionLayoutProps> = ({
 
   return (
     <Box
-      ref={sceneRootRef}
       sx={{
         position: 'relative',
         height: '100dvh',
         overflow: 'hidden',
-        background: catTheme.gradient,
+        // Immersive skins: transparent so the app-wide <PersistentWorld/> scene shows through.
+        // Flat skins keep the bold category gradient.
+        background: immersive ? 'transparent' : catTheme.gradient,
         display: 'flex',
         flexDirection: 'column'
       }}
     >
-      {/* Immersive world (parallax scene + ambient) behind all content. Renders nothing for
-          flat skins, so the category gradient above shows through unchanged. */}
-      <ThemeScene />
-
-      {/* Compact App Bar — content sits above the scene */}
+      {/* Compact App Bar — content sits above the persistent world */}
       <AppBar
         position="static"
         color="transparent"
@@ -245,11 +234,11 @@ const GameSelectionLayout: React.FC<GameSelectionLayoutProps> = ({
         </Box>
       </Container>
 
-      {/* Small idle mascot in the bottom-left corner (immersive skins only) — bottom-left to
-          match home and keep clear of the bottom-right version chip. Reuses the home
-          ThemeMascot — tap to hear a Danish line via the existing single audio channel. */}
+      {/* Small idle mascot, bottom-left corner — rendered INSIDE the page (like the in-game
+          GameGuide) rather than in the persistent world layer, which avoids the hover-compositing
+          flicker. parallaxDepth 0 → stays put. */}
       <ThemeMascot
-        parallaxDepth={0.3}
+        parallaxDepth={0}
         sx={{
           left: 'calc(env(safe-area-inset-left) + 4px)',
           bottom: 'calc(env(safe-area-inset-bottom) + 2px)',

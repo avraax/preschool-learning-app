@@ -330,17 +330,6 @@ const SpellingGame: React.FC = () => {
                 >
                   {current.emoji}
                 </Typography>
-                <Typography
-                  sx={{
-                    fontSize: 'clamp(1.75rem, 7vw, 3rem)',
-                    fontWeight: 700,
-                    color: theme.accentColor,
-                    letterSpacing: '0.1em',
-                    userSelect: 'none'
-                  }}
-                >
-                  {current.word.toUpperCase()}
-                </Typography>
               </motion.div>
               <Box sx={{ mt: 1 }}>
                 <OrdlegRepeatButton onClick={repeatWord} disabled={false} />
