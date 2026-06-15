@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, lazy, Suspense } from 'react'
+import React, { useEffect, useState, useCallback, useRef, lazy, Suspense } from 'react'
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { logIOSIssue } from './utils/remoteConsole'
@@ -41,6 +41,7 @@ const LaesOrdetGame = lazy(() => import('./components/ordleg/LaesOrdetGame'))
 const SpellingGame = lazy(() => import('./components/ordleg/SpellingGame'))
 const SpeakWordGame = lazy(() => import('./components/ordleg/SpeakWordGame'))
 const MemoryGame = lazy(() => import('./components/learning/MemoryGame'))
+const StickerAlbum = lazy(() => import('./components/hub/StickerAlbum'))
 // Hidden, off-menu internal tool — audition Danish TTS voices. Throwaway (tmp-prd-voicelab.md).
 const VoiceLab = lazy(() => import('./components/voicelab/VoiceLab'))
 import UpdateBanner from './components/common/UpdateBanner'
@@ -67,6 +68,10 @@ import LottieCharacter, { useCharacterState } from './components/common/LottieCh
 import { useUpdateChecker } from './hooks/useUpdateChecker'
 import { useNativeAppFeel } from './hooks/useNativeAppFeel'
 import { categoryThemes } from './config/categoryThemes'
+import { useProgress } from './hooks/useProgress'
+import { progressStore } from './services/progressStore'
+import { sfx } from './services/sfxClient'
+import { totalStickerCount } from './config/stickers'
 import { sectionIconImages } from './assets/themes/icons'
 import appLogo from './assets/logo.webp'
 import { BUILD_INFO } from './config/version'
@@ -108,6 +113,10 @@ const HomePage = () => {
   const immersive = theme.scene.layers.length > 0
   const darkScene = theme.scene.dark // dark backdrop (e.g. Rummet) → light title
   const welcomeCharacter = useCharacterState('wave')
+  const { state: progress } = useProgress()
+  const stickersOwned = Object.keys(progress.stickers.collected).length
+  const stickersTotal = totalStickerCount()
+  const albumFill = stickersTotal > 0 ? stickersOwned / stickersTotal : 0
   const { play, stopAll } = useBalloonSound()
   const [balloons, setBalloons] = useState<HomeBalloon[]>([])
   const [particles, setParticles] = useState<Particle[]>([])
@@ -505,6 +514,90 @@ const HomePage = () => {
               )
             })}
 
+            {/* Reward hub — the album entry. A "book that fills" + lifetime stars; reads the
+                shared progress store so it grows across sessions (Overhaul Foundation §2). */}
+            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, x: 0, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.5 }}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                style={{ height: '100%' }}
+              >
+                <Card
+                  onClick={() => navigate('/album')}
+                  sx={{
+                    height: '100%',
+                    minHeight: { xs: 120, sm: 150, md: 170 },
+                    cursor: 'pointer',
+                    border: '2px solid',
+                    borderColor: alpha('#FFB300', 0.7),
+                    display: 'flex',
+                    flexDirection: 'column',
+                    background: immersive
+                      ? 'linear-gradient(135deg, rgba(255,250,230,0.7) 0%, rgba(255,240,200,0.5) 100%)'
+                      : 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(255,236,179,0.9) 100%)',
+                    backdropFilter: immersive ? 'blur(16px) saturate(1.1)' : 'blur(15px)',
+                    WebkitBackdropFilter: immersive ? 'blur(16px) saturate(1.1)' : 'blur(15px)',
+                    '&:hover': {
+                      borderColor: '#FF9800',
+                      boxShadow: `0 8px 32px ${alpha('#FFB300', 0.4)}`,
+                      transform: 'translateY(-2px)',
+                    },
+                    transition: 'all 0.3s ease',
+                    '@media (orientation: landscape)': { minHeight: { xs: 110, sm: 130, md: 140 } },
+                  }}
+                >
+                  <CardContent
+                    sx={{
+                      p: { xs: 2, md: 3 },
+                      height: '100%',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'center',
+                      textAlign: 'center',
+                    }}
+                  >
+                    <Box sx={{ fontSize: { xs: '2.6rem', md: '3.2rem' }, lineHeight: 1, mb: { xs: 0.25, md: 0.5 } }}>
+                      📖
+                    </Box>
+                    <Typography
+                      variant="h4"
+                      sx={{ mb: 0.75, fontWeight: 700, fontSize: { xs: '1.4rem', md: '1.6rem' }, color: '#C77800' }}
+                    >
+                      Min Bog
+                    </Typography>
+                    {/* Fill bar that visibly grows as the album fills */}
+                    <Box
+                      sx={{
+                        position: 'relative',
+                        height: 12,
+                        borderRadius: 6,
+                        bgcolor: alpha('#C77800', 0.18),
+                        overflow: 'hidden',
+                        mx: 'auto',
+                        width: '80%',
+                        mb: 0.75,
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          position: 'absolute',
+                          inset: 0,
+                          width: `${Math.round(albumFill * 100)}%`,
+                          background: 'linear-gradient(90deg, #FFD86B 0%, #FFB300 100%)',
+                          transition: 'width 0.5s ease',
+                        }}
+                      />
+                    </Box>
+                    <Typography sx={{ fontWeight: 700, fontSize: { xs: '0.95rem', md: '1.05rem' }, color: '#9A5E00' }}>
+                      {stickersOwned} / {stickersTotal} · ⭐ {progress.totals.totalStars}
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            </Grid>
           </Grid>
         </Box>
       </Container>
@@ -608,6 +701,8 @@ const NavigationAudioCleanup: React.FC = () => {
     }).catch(() => {
       // Silent fail if module not available
     })
+    // SFX is a separate short channel; quiet any lingering cues on navigation too.
+    sfx.stopAll()
   }, [location.pathname])
   
   return null // This component only handles side effects
@@ -619,6 +714,23 @@ interface VersionDisplayProps {
 }
 
 const VersionDisplay: React.FC<VersionDisplayProps> = ({ updateAvailable = false }) => {
+  // Child-resistant parent reset: hold the version label for 3s → confirm → wipe all progress.
+  // Discreet and out of the child's normal flow (Overhaul Foundation §1).
+  const holdTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const startHold = () => {
+    if (holdTimer.current) clearTimeout(holdTimer.current)
+    holdTimer.current = setTimeout(() => {
+      const ok = window.confirm('Nulstil al fremgang?\nAlle klistermærker og rekorder slettes.')
+      if (ok) progressStore.resetAll()
+    }, 3000)
+  }
+  const cancelHold = () => {
+    if (holdTimer.current) {
+      clearTimeout(holdTimer.current)
+      holdTimer.current = null
+    }
+  }
+
   const buildDateTime = new Date(BUILD_INFO.buildTime)
   
   const releaseDate = buildDateTime.toLocaleDateString('da-DK', {
@@ -635,6 +747,10 @@ const VersionDisplay: React.FC<VersionDisplayProps> = ({ updateAvailable = false
 
   return (
     <Box
+      onPointerDown={startHold}
+      onPointerUp={cancelHold}
+      onPointerLeave={cancelHold}
+      onPointerCancel={cancelHold}
       sx={{
         position: 'fixed',
         // Dynamic positioning: bottom-left when update available, bottom-right otherwise
@@ -646,7 +762,10 @@ const VersionDisplay: React.FC<VersionDisplayProps> = ({ updateAvailable = false
         color: 'rgba(0, 0, 0, 0.6)',
         textAlign: updateAvailable ? 'left' : 'right',
         lineHeight: 1.2,
-        pointerEvents: 'none',
+        // Pointer events enabled so the hidden parent-reset long-press works; touch-action none
+        // so the hold doesn't get hijacked by scroll/pan gestures.
+        pointerEvents: 'auto',
+        touchAction: 'none',
         userSelect: 'none',
         backgroundColor: 'rgba(255, 255, 255, 0.4)',
         padding: '3px 7px',
@@ -686,10 +805,25 @@ function App() {
   
   useEffect(() => {
     // Initialize remote console and log device info
-    
+
     // Log any iOS-specific initialization
     if (deviceInfo.isIOS) {
       logIOSIssue('App Initialization', 'iOS device detected, enhanced debugging active')
+    }
+  }, [])
+
+  // Preload the SFX palette on the first user gesture (the same gesture that unlocks audio).
+  useEffect(() => {
+    const onFirstGesture = () => {
+      sfx.preload()
+      window.removeEventListener('pointerdown', onFirstGesture)
+      window.removeEventListener('keydown', onFirstGesture)
+    }
+    window.addEventListener('pointerdown', onFirstGesture, { once: false })
+    window.addEventListener('keydown', onFirstGesture, { once: false })
+    return () => {
+      window.removeEventListener('pointerdown', onFirstGesture)
+      window.removeEventListener('keydown', onFirstGesture)
     }
   }, [])
 
@@ -781,6 +915,9 @@ function App() {
         
         {/* Learning Routes */}
         <Route path="/learning/memory/:type" element={<MemoryGame />} />
+
+        {/* Sticker album / reward hub */}
+        <Route path="/album" element={<StickerAlbum />} />
 
         {/* Hidden internal tool — not in any menu, reachable only by URL */}
         <Route path="/voicelab" element={<VoiceLab />} />

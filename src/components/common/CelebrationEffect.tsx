@@ -3,6 +3,7 @@ import Confetti from 'react-confetti'
 import { Box, SxProps, Theme } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { motion, AnimatePresence } from 'framer-motion'
+import { sfx, type SfxCue } from '../../services/sfxClient'
 
 interface CelebrationEffectProps {
   show: boolean
@@ -165,14 +166,43 @@ const CelebrationEffect: React.FC<CelebrationEffectProps> = ({
 
 export default CelebrationEffect
 
+// Escalating juice tiers (Overhaul Foundation — System 5). Each tier maps to a confetti
+// intensity + duration and fires its matching SFX cue, so big moments feel bigger than the
+// per-answer "micro" sparkle. Reduced-motion is handled inside CelebrationEffect (the SFX +
+// score still land; the heavy animation is skipped).
+export type CelebrationTier = 'micro' | 'streak' | 'round' | 'best' | 'sticker' | 'page'
+
+const TIER_MAP: Record<
+  CelebrationTier,
+  { intensity: 'low' | 'medium' | 'high'; duration: number; sfx: SfxCue }
+> = {
+  micro: { intensity: 'low', duration: 1200, sfx: 'correct' },
+  streak: { intensity: 'medium', duration: 1600, sfx: 'streak-up' },
+  round: { intensity: 'high', duration: 2600, sfx: 'round-complete' },
+  best: { intensity: 'high', duration: 2200, sfx: 'star' },
+  sticker: { intensity: 'medium', duration: 2000, sfx: 'sticker-reveal' },
+  page: { intensity: 'high', duration: 3400, sfx: 'page-complete' },
+}
+
 // Hook for managing celebration effects
 export const useCelebration = () => {
   const [showCelebration, setShowCelebration] = useState(false)
   const [celebrationIntensity, setCelebrationIntensity] = useState<'low' | 'medium' | 'high'>('medium')
+  const [celebrationDuration, setCelebrationDuration] = useState<number>(3000)
 
   const celebrate = (intensity: 'low' | 'medium' | 'high' = 'medium') => {
     setCelebrationIntensity(intensity)
+    setCelebrationDuration(3000)
     setShowCelebration(true)
+  }
+
+  // Tiered celebration: sets the matching confetti + fires the tier's SFX cue.
+  const celebrateTier = (tier: CelebrationTier) => {
+    const t = TIER_MAP[tier]
+    setCelebrationIntensity(t.intensity)
+    setCelebrationDuration(t.duration)
+    setShowCelebration(true)
+    sfx.play(t.sfx)
   }
 
   const stopCelebration = () => {
@@ -182,7 +212,9 @@ export const useCelebration = () => {
   return {
     showCelebration,
     celebrationIntensity,
+    celebrationDuration,
     celebrate,
+    celebrateTier,
     stopCelebration
   }
 }

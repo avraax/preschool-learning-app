@@ -21,7 +21,7 @@ interface GameShellProps {
   backRoute: string
   score?: React.ReactNode
   guideReaction?: GuideReaction      // 'cheer' on correct, 'think' on wrong
-  celebration?: { show: boolean; intensity?: 'low' | 'medium' | 'high'; onComplete?: () => void }
+  celebration?: { show: boolean; intensity?: 'low' | 'medium' | 'high'; duration?: number; onComplete?: () => void }
   // Hide the corner companion on screens whose play area fills the viewport (learning/memory/
   // color grids), where a bottom-corner mascot would overlap interactive content.
   guide?: boolean
@@ -141,6 +141,7 @@ const GameShell: React.FC<GameShellProps> = ({
         <CelebrationEffect
           show={celebration.show}
           intensity={celebration.intensity}
+          duration={celebration.duration}
           onComplete={celebration.onComplete}
         />
       )}

@@ -8,6 +8,10 @@ import AnswerTile, { type AnswerTileState } from './AnswerTile'
 import type { GuideReaction } from './ThemeMascot'
 import { useCelebration } from '../common/CelebrationEffect'
 import { useGameState } from '../../hooks/useGameState'
+import { useRound, type RoundConfig } from '../../hooks/useRound'
+import { progressStore, type RoundOutcome } from '../../services/progressStore'
+import { sfx } from '../../services/sfxClient'
+import RoundResultScreen from './RoundResultScreen'
 // Simplified audio system
 import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 
@@ -59,6 +63,12 @@ export interface UnifiedQuizConfig {
   speakQuizPrompt: (item: QuizItem, audio: any) => Promise<string>
   speakClickedItem: (item: QuizItem, audio: any) => Promise<string>
   getRepeatAudio: (item: QuizItem, audio: any) => Promise<string>
+
+  // Bounded-round mode (Overhaul Foundation §3). OPTIONAL — absent → today's endless behavior.
+  // When set, the quiz runs `round.length` questions then shows RoundResultScreen and records the
+  // result to the progress store (stars/bests/stickers). Requires `gameId`.
+  round?: RoundConfig
+  gameId?: string             // stable id for progress, e.g. 'alphabet.quiz'
 }
 
 interface UnifiedQuizGameProps {
@@ -82,11 +92,19 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
   })
 
   // Centralized game state management
-  const { score, incrementScore, handleScoreClick } = useGameState()
+  const { score, incrementScore, resetScore, handleScoreClick } = useGameState()
 
   // Celebration management (rendered by GameShell)
-  const { showCelebration, celebrationIntensity, celebrate, stopCelebration } = useCelebration()
-  
+  const { showCelebration, celebrationIntensity, celebrationDuration, celebrateTier, stopCelebration } = useCelebration()
+
+  // Bounded round (no-op when config.round is absent → endless behavior preserved).
+  const round = useRound(config.round)
+  // True until the first wrong tile is tapped for the current question; gates the streak/star
+  // "first try" accounting. Reset on each new question.
+  const firstAttemptRef = useRef(true)
+  // When set, the round is over and the reward/result hero replaces the answer grid.
+  const [roundOutcome, setRoundOutcome] = useState<RoundOutcome | null>(null)
+
   // Timeout ref for cleanup
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
   // Clears the guide reaction a beat after an answer so the mascot returns to idle and the
@@ -107,6 +125,8 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
     // Clear the previous answer's feedback + guide reaction before the new question appears.
     setFeedback(null)
     setGuideReaction(null)
+    // New question → first attempt is fresh again (round streak/star accounting).
+    firstAttemptRef.current = true
 
     // Generate quiz item using config
     const quizItem = config.generateQuizItem()
@@ -247,23 +267,42 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
     // IMMEDIATELY: Start visual celebration effects if correct
     if (isCorrect) {
       incrementScore()
-      celebrate() // Start celebration visual immediately
+      celebrateTier('micro') // light per-answer sparkle + soft "correct" SFX
+    } else {
+      // Wrong answers don't advance/punish (current "retry until right" feel preserved); they
+      // only break this question's first-try flag (round streak/star accounting) + a gentle SFX.
+      firstAttemptRef.current = false
+      sfx.play('wrong')
     }
-    
+
     // THEN: Play celebration audio after a very short delay
     setTimeout(async () => {
       try {
         // Just play the audio feedback, visuals already started
         await audio.announceGameResult(isCorrect)
-        
+
         // Auto-advance to next question after celebration
         setTimeout(() => {
-          if (isCorrect) {
-            stopCelebration() // Stop celebration after 2 seconds
+          if (!isCorrect) return
+          stopCelebration() // Stop celebration after 2 seconds
+
+          if (!round.enabled) {
+            generateNewQuestion()
+            return
+          }
+
+          // Bounded round: record the completed question, fire streak milestones, end or advance.
+          const r = round.completeQuestion(firstAttemptRef.current)
+          if (!r.done && r.streak > 0 && r.streak % 3 === 0) {
+            celebrateTier('streak')
+          }
+          if (r.done) {
+            finishRound(r.firstTryCorrect, r.longestStreak)
+          } else {
             generateNewQuestion()
           }
         }, isIOS() ? 1500 : 2000) // 2 second celebration duration
-        
+
       } catch (error) {
         logError('Error in game result audio', {
           selectedItem: selectedItem.display,
@@ -289,6 +328,26 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
     } catch (error) {
       console.error('🎵 UnifiedQuizGame: Error repeating item:', error)
     }
+  }
+
+  // Round ended → record to the progress store (stars/bests/stickers) and show the result hero.
+  const finishRound = (firstTryCorrect: number, longestStreak: number) => {
+    const gameId = config.gameId ?? `quiz.${config.quizType}`
+    const outcome = progressStore.recordRoundResult(
+      gameId,
+      { correct: firstTryCorrect, total: round.length, longestStreak },
+      { starThresholds: config.round?.starThresholds, stickerSetId: config.round?.stickerSetId },
+    )
+    setRoundOutcome(outcome)
+  }
+
+  // "Spil igen" → reset round + score and start a fresh round.
+  const handleReplay = () => {
+    stopCelebration()
+    setRoundOutcome(null)
+    round.reset()
+    resetScore()
+    generateNewQuestion()
   }
 
   const ScoreChip = config.ScoreChipComponent
@@ -318,9 +377,19 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
       celebration={{
         show: showCelebration,
         intensity: celebrationIntensity,
+        duration: celebrationDuration,
         onComplete: stopCelebration,
       }}
     >
+        {roundOutcome ? (
+          <RoundResultScreen
+            outcome={roundOutcome}
+            categoryId={config.theme.id}
+            backRoute={config.backRoute}
+            onReplay={handleReplay}
+          />
+        ) : (
+        <>
         {/* Visual Question - shown for word-association style rounds */}
         {currentItem?.questionVisual && (
           <Box sx={{ textAlign: 'center', mb: { xs: 1.5, md: 2 }, flex: '0 0 auto' }}>
@@ -476,6 +545,8 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
               ))}
           </Box>
         </Box>
+        </>
+        )}
     </GameShell>
   )
 }

@@ -1,0 +1,345 @@
+// Persistent single-profile progress (Overhaul Foundation — System 1).
+//
+// One localStorage key, an in-memory cache hydrated on boot, debounced writes, and a tiny
+// subscribe model so React (useProgress) re-renders on change. Mirrors the discipline of
+// ttsClient / ThemeProvider: all storage access is wrapped in try/catch and degrades to
+// in-memory-only on private-mode / quota errors (the game still works, it just doesn't persist).
+//
+// Schema is VERSIONED (`version` field). Unknown/old shapes are normalised forward or reset —
+// reading bad data never throws.
+
+import {
+  allStickers,
+  findSet,
+  setForStickerId,
+  stickerPool,
+  totalStickerCount,
+  type Sticker,
+} from '../config/stickers'
+
+const STORAGE_KEY = 'bornelaering-progress'
+const SCHEMA_VERSION = 1 as const
+
+export interface PerGameStats {
+  bestStreak: number // longest correct-in-a-row (first try) ever
+  bestStars: number // best round star rating (1–3)
+  bestCount: number // most first-try-correct in one round
+  roundsCompleted: number
+  lifetimeCorrect: number
+}
+
+export interface ProgressSettings {
+  sfxEnabled: boolean
+  musicEnabled: boolean // reserved; no music in v1
+}
+
+export interface ProgressState {
+  version: typeof SCHEMA_VERSION
+  stickers: {
+    collected: Record<string, { count: number; firstAt: number }>
+  }
+  perGame: Record<string, PerGameStats>
+  totals: {
+    totalStars: number
+    totalStickers: number
+  }
+  settings: ProgressSettings
+}
+
+export interface StickerAward {
+  sticker: Sticker
+  setId: string
+  setTitle: string
+  isNew: boolean // first time ever collected
+  isShiny: boolean // a duplicate (album full for this pool) → sparkle variant
+  count: number // total owned of this sticker after the award
+}
+
+export interface RoundResultInput {
+  correct: number // first-try-correct count in the round
+  total: number // round length
+  longestStreak: number // longest first-try streak in the round
+}
+
+export interface RoundResultOptions {
+  starThresholds?: { three: number; two: number } // MISTAKES allowed; default 3★=0, 2★≤2
+  stickerSetId?: string // bias the award toward one set; else global pool
+}
+
+export interface RoundOutcome {
+  gameId: string
+  correct: number
+  total: number
+  mistakes: number
+  stars: number // 1–3, always ≥1 (no failure state)
+  longestStreak: number
+  previousBests: { streak: number; stars: number; count: number }
+  newBests: { streak: boolean; stars: boolean; count: boolean }
+  anyNewBest: boolean
+  stickers: StickerAward[] // round sticker + optional best-bonus sticker
+  pageCompleted: { id: string; title: string; emoji: string } | null
+  totals: { totalStars: number; totalStickers: number }
+}
+
+const DEFAULT_THRESHOLDS = { three: 0, two: 2 }
+
+const emptyGameStats = (): PerGameStats => ({
+  bestStreak: 0,
+  bestStars: 0,
+  bestCount: 0,
+  roundsCompleted: 0,
+  lifetimeCorrect: 0,
+})
+
+const defaultState = (): ProgressState => ({
+  version: SCHEMA_VERSION,
+  stickers: { collected: {} },
+  perGame: {},
+  totals: { totalStars: 0, totalStickers: 0 },
+  settings: { sfxEnabled: true, musicEnabled: false },
+})
+
+const pick = <T>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)]
+
+// Forward-safe normaliser: keep any known good data, fill missing slices, drop the rest.
+const normalize = (raw: unknown): ProgressState => {
+  const base = defaultState()
+  if (!raw || typeof raw !== 'object') return base
+  const r = raw as Partial<ProgressState>
+  if (r.version !== SCHEMA_VERSION) return base // unknown/old → reset (never crash)
+
+  const state = base
+  if (r.stickers && typeof r.stickers === 'object' && r.stickers.collected) {
+    for (const [id, v] of Object.entries(r.stickers.collected)) {
+      if (v && typeof v.count === 'number') {
+        state.stickers.collected[id] = {
+          count: Math.max(1, Math.floor(v.count)),
+          firstAt: typeof v.firstAt === 'number' ? v.firstAt : Date.now(),
+        }
+      }
+    }
+  }
+  if (r.perGame && typeof r.perGame === 'object') {
+    for (const [id, v] of Object.entries(r.perGame)) {
+      if (v && typeof v === 'object') {
+        state.perGame[id] = { ...emptyGameStats(), ...v }
+      }
+    }
+  }
+  if (r.totals && typeof r.totals === 'object') {
+    state.totals.totalStars = Number(r.totals.totalStars) || 0
+    state.totals.totalStickers = Number(r.totals.totalStickers) || 0
+  }
+  if (r.settings && typeof r.settings === 'object') {
+    state.settings.sfxEnabled = r.settings.sfxEnabled !== false
+    state.settings.musicEnabled = r.settings.musicEnabled === true
+  }
+  // Recompute derived totals defensively so the album count always matches reality.
+  state.totals.totalStickers = Object.keys(state.stickers.collected).length
+  return state
+}
+
+type Listener = () => void
+
+class ProgressStore {
+  private state: ProgressState
+  private listeners = new Set<Listener>()
+  private saveTimer: ReturnType<typeof setTimeout> | null = null
+
+  constructor() {
+    this.state = this.hydrate()
+  }
+
+  private hydrate(): ProgressState {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY)
+      if (raw) return normalize(JSON.parse(raw))
+    } catch {
+      /* private mode / malformed → in-memory default */
+    }
+    return defaultState()
+  }
+
+  private scheduleSave(): void {
+    if (this.saveTimer) clearTimeout(this.saveTimer)
+    this.saveTimer = setTimeout(() => {
+      this.saveTimer = null
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(this.state))
+      } catch {
+        /* quota / private mode — keep running on the in-memory copy */
+      }
+    }, 250)
+  }
+
+  // Replace the state reference (so useSyncExternalStore detects the change), persist, notify.
+  private commit(next: ProgressState): void {
+    this.state = next
+    this.scheduleSave()
+    this.listeners.forEach((l) => l())
+  }
+
+  // ----- reads -----
+  get(): ProgressState {
+    return this.state
+  }
+
+  getGame(gameId: string): PerGameStats {
+    return this.state.perGame[gameId] ?? emptyGameStats()
+  }
+
+  subscribe(listener: Listener): () => void {
+    this.listeners.add(listener)
+    return () => {
+      this.listeners.delete(listener)
+    }
+  }
+
+  // ----- sticker awarding -----
+  // Mutates the given (already-cloned) draft. Returns the award + the set that JUST became
+  // complete because of it (else null).
+  private grantSticker(
+    draft: ProgressState,
+    setId?: string,
+  ): { award: StickerAward; completedSetId: string | null } {
+    const pool = stickerPool(setId)
+    const uncollected = pool.filter((s) => !draft.stickers.collected[s.id])
+    const isNew = uncollected.length > 0
+    const sticker = isNew ? pick(uncollected) : pick(pool)
+    const set = setForStickerId(sticker.id) ?? findSet(setId ?? '')
+
+    const existing = draft.stickers.collected[sticker.id]
+    const wasSetComplete = set ? set.stickers.every((s) => !!draft.stickers.collected[s.id]) : true
+
+    if (existing) {
+      draft.stickers.collected[sticker.id] = { ...existing, count: existing.count + 1 }
+    } else {
+      draft.stickers.collected[sticker.id] = { count: 1, firstAt: Date.now() }
+    }
+    draft.totals.totalStickers = Object.keys(draft.stickers.collected).length
+
+    const nowSetComplete = set
+      ? set.stickers.every((s) => !!draft.stickers.collected[s.id])
+      : false
+    const completedSetId = set && !wasSetComplete && nowSetComplete ? set.id : null
+
+    return {
+      award: {
+        sticker,
+        setId: set?.id ?? '',
+        setTitle: set?.title ?? '',
+        isNew,
+        isShiny: !isNew,
+        count: draft.stickers.collected[sticker.id].count,
+      },
+      completedSetId,
+    }
+  }
+
+  // Public single-award entry (used by free-exploration milestone rewards). Persists + notifies.
+  awardSticker(setId?: string): StickerAward {
+    const draft = structuredCloneState(this.state)
+    const { award } = this.grantSticker(draft, setId)
+    this.commit(draft)
+    return award
+  }
+
+  // ----- the main round path -----
+  recordRoundResult(
+    gameId: string,
+    input: RoundResultInput,
+    options: RoundResultOptions = {},
+  ): RoundOutcome {
+    const thresholds = options.starThresholds ?? DEFAULT_THRESHOLDS
+    const mistakes = Math.max(0, input.total - input.correct)
+    const stars = mistakes <= thresholds.three ? 3 : mistakes <= thresholds.two ? 2 : 1
+
+    const draft = structuredCloneState(this.state)
+    const prev = draft.perGame[gameId] ?? emptyGameStats()
+
+    const previousBests = {
+      streak: prev.bestStreak,
+      stars: prev.bestStars,
+      count: prev.bestCount,
+    }
+    const newBests = {
+      streak: input.longestStreak > prev.bestStreak,
+      stars: stars > prev.bestStars,
+      count: input.correct > prev.bestCount,
+    }
+    const anyNewBest = newBests.streak || newBests.stars || newBests.count
+
+    draft.perGame[gameId] = {
+      bestStreak: Math.max(prev.bestStreak, input.longestStreak),
+      bestStars: Math.max(prev.bestStars, stars),
+      bestCount: Math.max(prev.bestCount, input.correct),
+      roundsCompleted: prev.roundsCompleted + 1,
+      lifetimeCorrect: prev.lifetimeCorrect + input.correct,
+    }
+    draft.totals.totalStars += stars
+
+    // 1 sticker per completed round, + a bonus sticker on a new personal best.
+    const stickers: StickerAward[] = []
+    let pageCompleted: RoundOutcome['pageCompleted'] = null
+
+    const roundGrant = this.grantSticker(draft, options.stickerSetId)
+    stickers.push(roundGrant.award)
+    if (roundGrant.completedSetId) pageCompleted = setSummary(roundGrant.completedSetId)
+
+    if (anyNewBest) {
+      const bonusGrant = this.grantSticker(draft, options.stickerSetId)
+      stickers.push(bonusGrant.award)
+      if (!pageCompleted && bonusGrant.completedSetId)
+        pageCompleted = setSummary(bonusGrant.completedSetId)
+    }
+
+    this.commit(draft)
+
+    return {
+      gameId,
+      correct: input.correct,
+      total: input.total,
+      mistakes,
+      stars,
+      longestStreak: input.longestStreak,
+      previousBests,
+      newBests,
+      anyNewBest,
+      stickers,
+      pageCompleted,
+      totals: { totalStars: draft.totals.totalStars, totalStickers: draft.totals.totalStickers },
+    }
+  }
+
+  // ----- settings + reset -----
+  setSetting<K extends keyof ProgressSettings>(key: K, value: ProgressSettings[K]): void {
+    const draft = structuredCloneState(this.state)
+    draft.settings[key] = value
+    this.commit(draft)
+  }
+
+  resetAll(): void {
+    this.commit(defaultState())
+  }
+}
+
+// Shallow-ish clone sufficient for our nested writes (we always create new nested objects above).
+function structuredCloneState(s: ProgressState): ProgressState {
+  return {
+    version: SCHEMA_VERSION,
+    stickers: { collected: { ...s.stickers.collected } },
+    perGame: { ...s.perGame },
+    totals: { ...s.totals },
+    settings: { ...s.settings },
+  }
+}
+
+function setSummary(setId: string): { id: string; title: string; emoji: string } | null {
+  const set = findSet(setId)
+  return set ? { id: set.id, title: set.title, emoji: set.emoji } : null
+}
+
+export const progressStore = new ProgressStore()
+
+// Convenience re-exports used around the album UI.
+export { allStickers, totalStickerCount }

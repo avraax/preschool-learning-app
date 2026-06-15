@@ -105,7 +105,12 @@ const AlphabetGame: React.FC = () => {
     
     // Audio configuration
     gameWelcomeType: 'alphabet',
-    
+
+    // Bounded round (Overhaul Foundation §3) — reference wiring / smoke test. 8 questions,
+    // then the result/reward hero. 3★ = no mistakes, 2★ ≤ 2, else 1★. Global sticker pool.
+    gameId: 'alphabet.quiz',
+    round: { length: 8, starThresholds: { three: 0, two: 2 } },
+
     // Audio methods
     speakQuizPrompt: async (item: QuizItem, audio: any) => {
       return audio.speakQuizPromptWithRepeat(item.audioPrompt, item.repeatWord)
