@@ -8,11 +8,16 @@ import {
 import { useTheme } from '@mui/material/styles'
 import { categoryThemes } from '../../config/categoryThemes'
 import GameShell from '../common/GameShell'
+import RoundResultScreen from '../common/RoundResultScreen'
 import type { GuideReaction } from '../common/ThemeMascot'
 import { useCelebration } from '../common/CelebrationEffect'
 import { OrdlegScoreChip } from '../common/ScoreChip'
 import { OrdlegRepeatButton } from '../common/RepeatButton'
 import { useGameState } from '../../hooks/useGameState'
+import { useRound } from '../../hooks/useRound'
+import { progressStore, type RoundOutcome } from '../../services/progressStore'
+import { sfx } from '../../services/sfxClient'
+import { useReducedMotion } from '../../hooks/useReducedMotion'
 import { isIOS } from '../../utils/deviceDetection'
 // Simplified audio system
 import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
@@ -69,6 +74,7 @@ interface LetterTile {
 
 const SpellingGame: React.FC = () => {
   const muiTheme = useTheme()
+  const reduce = useReducedMotion()
 
   // Current word and its uppercase letters
   const [current, setCurrent] = useState<{ word: string; emoji: string } | null>(null)
@@ -77,6 +83,10 @@ const SpellingGame: React.FC = () => {
   const [tiles, setTiles] = useState<LetterTile[]>([])
   const [usedTileIds, setUsedTileIds] = useState<Set<string>>(new Set())
   const [shakeTileId, setShakeTileId] = useState<string | null>(null)
+  // Next-letter hint: after 2 wrong taps on the current slot the correct tile pulses (never-fail
+  // scaffold). The wrong tap that triggered it already broke first-try, so the hint costs a star.
+  const [hintTileId, setHintTileId] = useState<string | null>(null)
+  const slotWrongRef = useRef(0) // wrong taps on the CURRENT slot
   const [guideReaction, setGuideReaction] = useState<GuideReaction>(null)
   const guideReactionTimer = useRef<NodeJS.Timeout | null>(null)
 
@@ -99,13 +109,18 @@ const SpellingGame: React.FC = () => {
   const hasInteractedRef = useRef(false)
 
   // Centralized game state management
-  const { score, incrementScore, isScoreNarrating, handleScoreClick } = useGameState()
+  const { score, incrementScore, resetScore, isScoreNarrating, handleScoreClick } = useGameState()
+
+  // Bounded round + reward flow (Overhaul Ordleg §2). 8 words, 3★ = no mistakes, 2★ ≤ 2.
+  const round = useRound({ length: 8, starThresholds: { three: 0, two: 2 } })
+  const firstAttemptRef = useRef(true)
+  const [roundOutcome, setRoundOutcome] = useState<RoundOutcome | null>(null)
 
   // Timeout ref for cleanup
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   // Celebration management (corner guide reacts via guideReaction)
-  const { showCelebration, celebrationIntensity, celebrate, stopCelebration } = useCelebration()
+  const { showCelebration, celebrationIntensity, celebrationDuration, celebrateTier, stopCelebration } = useCelebration()
 
   // Cue the corner guide, clearing the reaction a beat later so it settles + re-fires.
   const reactGuide = (reaction: GuideReaction) => {
@@ -213,6 +228,10 @@ const SpellingGame: React.FC = () => {
     setUsedTileIds(new Set())
     setShakeTileId(null)
     setTiles(buildTiles(letters))
+    // Fresh word → fresh first-try flag + hint state.
+    firstAttemptRef.current = true
+    slotWrongRef.current = 0
+    setHintTileId(null)
 
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current)
@@ -225,6 +244,23 @@ const SpellingGame: React.FC = () => {
     timeoutRef.current = setTimeout(() => {
       speakWord(next.word)
     }, delay)
+  }
+
+  const finishRound = (firstTryCorrect: number, longestStreak: number) => {
+    const outcome = progressStore.recordRoundResult(
+      'ordleg.spelling',
+      { correct: firstTryCorrect, total: round.length, longestStreak },
+      { starThresholds: { three: 0, two: 2 } },
+    )
+    setRoundOutcome(outcome)
+  }
+
+  const handleReplay = () => {
+    stopCelebration()
+    setRoundOutcome(null)
+    round.reset()
+    resetScore()
+    generateNewWord()
   }
 
   const speakWord = async (word: string) => {
@@ -248,10 +284,12 @@ const SpellingGame: React.FC = () => {
     const expectedLetter = targetLetters[filledCount]
 
     if (tile.letter === expectedLetter) {
-      // Correct letter: place it in the next slot
+      // Correct letter: place it in the next slot. The next slot starts fresh (no hint yet).
       const newFilled = filledCount + 1
       setUsedTileIds(prev => new Set(prev).add(tile.id))
       setFilledCount(newFilled)
+      slotWrongRef.current = 0
+      setHintTileId(null)
 
       try {
         await audio.speakLetter(tile.letter)
@@ -264,10 +302,21 @@ const SpellingGame: React.FC = () => {
         completeWord()
       }
     } else {
-      // Wrong letter: shake and leave it in the pool
+      // Wrong letter: gentle SFX + shake, leave it in the pool, break the first-try flag.
+      firstAttemptRef.current = false
+      sfx.play('wrong')
       setShakeTileId(tile.id)
       reactGuide('think')
       setTimeout(() => setShakeTileId(null), 450)
+
+      // After 2 wrong taps on this slot, point at the correct tile (never-fail scaffold).
+      slotWrongRef.current += 1
+      if (slotWrongRef.current >= 2) {
+        const hint = tiles.find(
+          t => !usedTileIds.has(t.id) && t.letter === targetLetters[filledCount],
+        )
+        if (hint) setHintTileId(hint.id)
+      }
     }
   }
 
@@ -276,10 +325,10 @@ const SpellingGame: React.FC = () => {
     isAdvancing.current = true
 
     incrementScore()
-    celebrate()
+    celebrateTier('micro')
     reactGuide('cheer')
 
-    // Play the full word again, then advance to the next one
+    // Play the full word again, then advance to the next one (or finish the round).
     setTimeout(async () => {
       try {
         await audio.speak(current.word)
@@ -288,7 +337,10 @@ const SpellingGame: React.FC = () => {
       }
       setTimeout(() => {
         stopCelebration()
-        generateNewWord()
+        const r = round.completeQuestion(firstAttemptRef.current)
+        if (!r.done && r.streak > 0 && r.streak % 3 === 0) celebrateTier('streak')
+        if (r.done) finishRound(r.firstTryCorrect, r.longestStreak)
+        else generateNewWord()
       }, isIOS() ? 1500 : 2000)
     }, 400)
   }
@@ -321,9 +373,16 @@ const SpellingGame: React.FC = () => {
           onClick={handleScoreClick}
         />
       }
-      celebration={{ show: showCelebration, intensity: celebrationIntensity, onComplete: stopCelebration }}
+      celebration={{ show: showCelebration, intensity: celebrationIntensity, duration: celebrationDuration, onComplete: stopCelebration }}
     >
-        {gameReady && current && (
+        {roundOutcome ? (
+          <RoundResultScreen
+            outcome={roundOutcome}
+            categoryId="ordleg"
+            backRoute="/ordleg"
+            onReplay={handleReplay}
+          />
+        ) : gameReady && current && (
           <>
             {/* Word prompt: emoji + word + repeat */}
             <Box sx={{ textAlign: 'center', flex: '0 0 auto', mb: { xs: 1, md: 2 } }}>
@@ -415,18 +474,28 @@ const SpellingGame: React.FC = () => {
                 }}
               >
                 <AnimatePresence>
-                  {availableTiles.map((tile) => (
+                  {availableTiles.map((tile) => {
+                    const isHint = tile.id === hintTileId
+                    const isShaking = shakeTileId === tile.id
+                    // Hint: a gentle attention pulse (motion) or a static glow ring (reduced motion).
+                    const animate = isShaking
+                      ? { opacity: 1, scale: 1, x: [0, -10, 10, -10, 10, 0] }
+                      : isHint && !reduce
+                        ? { opacity: 1, scale: [1, 1.12, 1], x: 0 }
+                        : { opacity: 1, scale: 1, x: 0 }
+                    const transition = isShaking
+                      ? { duration: 0.45 }
+                      : isHint && !reduce
+                        ? { duration: 1.1, repeat: Infinity, ease: 'easeInOut' as const }
+                        : { duration: 0.2 }
+                    return (
                     <motion.div
                       key={tile.id}
                       layout
                       initial={{ opacity: 0, scale: 0.8 }}
-                      animate={
-                        shakeTileId === tile.id
-                          ? { opacity: 1, scale: 1, x: [0, -10, 10, -10, 10, 0] }
-                          : { opacity: 1, scale: 1, x: 0 }
-                      }
+                      animate={animate}
                       exit={{ opacity: 0, scale: 0.5 }}
-                      transition={shakeTileId === tile.id ? { duration: 0.45 } : { duration: 0.2 }}
+                      transition={transition}
                       whileHover={{ scale: 1.08 }}
                       whileTap={{ scale: 0.92 }}
                     >
@@ -440,16 +509,22 @@ const SpellingGame: React.FC = () => {
                           minHeight: 44,
                           borderRadius: 2,
                           border: '3px solid',
-                          borderColor: shakeTileId === tile.id ? 'error.main' : theme.borderColor,
+                          borderColor: isShaking
+                            ? 'error.main'
+                            : isHint
+                              ? theme.accentColor
+                              : theme.borderColor,
                           bgcolor: 'white',
                           cursor: 'pointer',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
                           userSelect: 'none',
-                          boxShadow: muiTheme.scene.dark
-                            ? '0 12px 30px rgba(0,0,0,0.45)'
-                            : '0 6px 18px rgba(0,0,0,0.12)',
+                          boxShadow: isHint
+                            ? `0 0 0 4px ${theme.accentColor}55, ${muiTheme.scene.dark ? '0 12px 30px rgba(0,0,0,0.45)' : '0 6px 18px rgba(0,0,0,0.12)'}`
+                            : muiTheme.scene.dark
+                              ? '0 12px 30px rgba(0,0,0,0.45)'
+                              : '0 6px 18px rgba(0,0,0,0.12)',
                           '@media (hover: hover) and (pointer: fine)': {
                             '&:hover': {
                               borderColor: theme.hoverBorderColor,
@@ -469,7 +544,8 @@ const SpellingGame: React.FC = () => {
                         </Typography>
                       </Paper>
                     </motion.div>
-                  ))}
+                    )
+                  })}
                 </AnimatePresence>
               </Box>
             </Box>

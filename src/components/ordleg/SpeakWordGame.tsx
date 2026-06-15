@@ -8,8 +8,13 @@ import { useTheme } from '@mui/material/styles'
 import { Mic, MicOff } from 'lucide-react'
 import { categoryThemes } from '../../config/categoryThemes'
 import GameShell from '../common/GameShell'
+import RoundResultScreen from '../common/RoundResultScreen'
 import type { GuideReaction } from '../common/ThemeMascot'
 import { useCelebration } from '../common/CelebrationEffect'
+import { OrdlegScoreChip } from '../common/ScoreChip'
+import { useGameState } from '../../hooks/useGameState'
+import { useRound } from '../../hooks/useRound'
+import { progressStore, type RoundOutcome } from '../../services/progressStore'
 import { isIOS } from '../../utils/deviceDetection'
 import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 import { useSpeechInput, SpeechResult } from '../../hooks/useSpeechInput'
@@ -34,7 +39,14 @@ const SpeakWordGame: React.FC = () => {
   const audio = useSimplifiedAudioHook({ componentId: 'SpeakWordGame', autoInitialize: false })
   const speech = useSpeechInput()
 
-  const { showCelebration, celebrationIntensity, celebrate, stopCelebration } = useCelebration()
+  const { showCelebration, celebrationIntensity, celebrationDuration, celebrateTier, stopCelebration } = useCelebration()
+
+  // In-round word count + bounded round (Overhaul Ordleg §3). Open-ended: a "question" = one
+  // recognized word; there is NO target word and NO STT grading.
+  const { score, incrementScore, resetScore, isScoreNarrating, handleScoreClick } = useGameState()
+  const round = useRound({ length: 8, starThresholds: { three: 0, two: 2 } })
+  const firstTryRef = useRef(true)
+  const [roundOutcome, setRoundOutcome] = useState<RoundOutcome | null>(null)
 
   const [phase, setPhaseState] = useState<Phase>('idle')
   const [recognizedWord, setRecognizedWord] = useState('')
@@ -152,11 +164,32 @@ const SpeakWordGame: React.FC = () => {
     await handleResult(result)
   }
 
+  const finishRound = (firstTryCorrect: number, longestStreak: number) => {
+    const outcome = progressStore.recordRoundResult(
+      'ordleg.mic',
+      { correct: firstTryCorrect, total: round.length, longestStreak },
+      { starThresholds: { three: 0, two: 2 } },
+    )
+    setRoundOutcome(outcome)
+  }
+
+  const handleReplay = () => {
+    stopCelebration()
+    setRoundOutcome(null)
+    round.reset()
+    resetScore()
+    firstTryRef.current = true
+    setPhase('idle')
+    endingRef.current = false
+  }
+
   const handleResult = async (result: SpeechResult | null) => {
     const word = extractFirstWord(result?.transcript ?? '')
 
     if (!word) {
-      // Friendly retry — no failure feeling.
+      // Friendly retry — no failure feeling. Stay on the SAME question (don't advance/count); this
+      // is the only thing that breaks "first try".
+      firstTryRef.current = false
       setPhase('retry')
       reactGuide('think')
       try {
@@ -172,11 +205,21 @@ const SpeakWordGame: React.FC = () => {
     setRevealCount(0)
     setPhase('spelling')
     reactGuide('cheer')
+    incrementScore()
 
     await runSpellingSequence(word)
 
     if (!mountedRef.current) return
-    setPhase('idle')
+
+    // One recognized word = one completed question. Advance the round (or finish it).
+    const r = round.completeQuestion(firstTryRef.current)
+    if (!r.done && r.streak > 0 && r.streak % 3 === 0) celebrateTier('streak')
+    if (r.done) {
+      finishRound(r.firstTryCorrect, r.longestStreak)
+    } else {
+      firstTryRef.current = true // fresh question
+      setPhase('idle')
+    }
     endingRef.current = false
   }
 
@@ -205,7 +248,7 @@ const SpeakWordGame: React.FC = () => {
     if (!mountedRef.current) return
 
     // Celebrate and say the whole word again.
-    celebrate()
+    celebrateTier('micro')
     try {
       await audio.speak(word)
     } catch { /* ignore */ }
@@ -225,8 +268,18 @@ const SpeakWordGame: React.FC = () => {
       backRoute="/ordleg"
       dense
       guideReaction={guideReaction}
-      celebration={{ show: showCelebration, intensity: celebrationIntensity, onComplete: stopCelebration }}
+      score={<OrdlegScoreChip score={score} disabled={isScoreNarrating} onClick={handleScoreClick} />}
+      celebration={{ show: showCelebration, intensity: celebrationIntensity, duration: celebrationDuration, onComplete: stopCelebration }}
     >
+      {roundOutcome ? (
+        <RoundResultScreen
+          outcome={roundOutcome}
+          categoryId="ordleg"
+          backRoute="/ordleg"
+          onReplay={handleReplay}
+        />
+      ) : (
+      <>
       <Box
         sx={{
           flex: 1,
@@ -417,6 +470,8 @@ const SpeakWordGame: React.FC = () => {
           </motion.div>
         )}
       </AnimatePresence>
+      </>
+      )}
     </GameShell>
   )
 }

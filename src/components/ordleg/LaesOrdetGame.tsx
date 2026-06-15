@@ -80,6 +80,12 @@ const LaesOrdetGame: React.FC = () => {
 
     gameWelcomeType: 'laesordet',
 
+    // Bounded round of 8 + shared reward flow (Overhaul Ordleg §1). The engine handles
+    // everything: rounds, first-try/streak tracking, celebration tiers, wrong SFX, and the
+    // RoundResultScreen → progressStore.recordRoundResult('ordleg.read', …).
+    round: { length: 8, starThresholds: { three: 0, two: 2 } },
+    gameId: 'ordleg.read',
+
     // The prompt word is NEVER spoken (reading it aloud would defeat the exercise), so both
     // the prompt and the repeat audio are no-ops. Tapping a picture still names the child's
     // choice; the correct/wrong cue still plays (handled by UnifiedQuizGame).
