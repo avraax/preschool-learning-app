@@ -338,26 +338,28 @@ export class SimplifiedAudioController {
     
     this.updateUserInteraction()
 
-    // Define game welcome messages directly
+    // The welcome simply narrates the game's TITLE — these MUST stay exactly the card titles in
+    // src/config/categoryThemes.ts (categoryContent.*.games[].title), which are also the in-game
+    // GameShell titles. Keep all three aligned; don't invent a deviation here.
     const GAME_WELCOME_MESSAGES = {
       alphabet: 'Bogstav Quiz',
       alphabetlearning: 'Lær Alfabetet',
       math: 'Tal Quiz',
-      numberlearning: 'Lær Tallene',
-      addition: 'Plus Quiz',
+      numberlearning: 'Lær Tal',
+      addition: 'Plus Opgaver',
       subtraction: 'Minus Opgaver',
       spelling: 'Stav Ordet',
-      comparison: 'Sammenligning Quiz',
-      memory: 'Hukommelse Spil',
-      colors: 'Farve Spil',
+      comparison: 'Sammenlign Tal',
+      memory: 'Hukommelsesspil',
+      colors: 'Farver',
       farvejagt: 'Farvejagt',
       ramfarven: 'Ram Farven',
-      englishlisten: 'Lyt og find',
-      englishword: 'Find det engelske ord',
-      englishtranslate: 'Dansk til engelsk',
-      micword: 'Sig et ord',
-      laesordet: 'Læs ordet',
-      patterns: 'Hvad mangler'
+      englishlisten: 'Lyt og Find',
+      englishword: 'Find det Engelske Ord',
+      englishtranslate: 'Dansk til Engelsk',
+      micword: 'Sig et Ord',
+      laesordet: 'Læs Ordet',
+      patterns: 'Hvad Mangler?'
     }
     
     const welcomeMessage = GAME_WELCOME_MESSAGES[gameType as keyof typeof GAME_WELCOME_MESSAGES]
