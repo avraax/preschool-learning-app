@@ -59,7 +59,9 @@ const AlphabetGame: React.FC = () => {
           display: letter,
           audioPrompt: `Hvad starter ${word} med?`,
           repeatWord: word,
-          questionVisual: { emoji, word }
+          // Show only the picture — NOT the word — so the child must recognise the
+          // starting letter from the image, not just read it off the label.
+          questionVisual: { emoji }
         }
       }
 

@@ -25,8 +25,11 @@ import {
 import { TTS_CONFIG } from '../../config/tts-config'
 import {
   CURRENT_VOICE,
+  MASCOT_SFX,
+  MASCOT_SOUNDS,
   SAMPLE_SEGMENTS,
   VOICE_TIERS,
+  type MascotSound,
   type VoiceEntry,
 } from './voicelabData'
 
@@ -154,6 +157,69 @@ const VoiceLab: React.FC = () => {
       }
     },
     [active, playAzure, playWebSpeech, stopAll],
+  )
+
+  // Mascot tap-sound auditioner: each candidate plays with its mascot's fixed voice + pitch/rate
+  // (lexicon off — these are nonsense vocalizations). Lock one per mascot once it sounds right.
+  const playMascot = useCallback(
+    async (text: string, sound: MascotSound, key: string) => {
+      stopAll()
+      setErrorMsg(null)
+      setBusyKey(key)
+      try {
+        const res = await fetch('/api/tts-azure', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            text,
+            voiceName: sound.voiceName,
+            lang: sound.lang,
+            pitch: sound.pitch,
+            speed: sound.rate,
+            useLexicon: false,
+          }),
+        })
+        if (!res.ok) {
+          let detail = ''
+          try {
+            detail = (await res.json())?.details || ''
+          } catch {
+            /* ignore */
+          }
+          throw new Error(`${sound.label}: HTTP ${res.status}${detail ? ` — ${detail}` : ''}`)
+        }
+        const { audioContent } = await res.json()
+        const audio = audioRef.current
+        if (!audio) throw new Error('Audio ikke understøttet')
+        audio.src = `data:${AUDIO_MIME};base64,${audioContent}`
+        await audio.play()
+      } catch (err) {
+        setErrorMsg(err instanceof Error ? err.message : String(err))
+      } finally {
+        setBusyKey((k) => (k === key ? null : k))
+      }
+    },
+    [stopAll],
+  )
+
+  // Real SFX auditioner: play a static sound file (CC-BY) straight through the shared <audio>.
+  const playFile = useCallback(
+    async (url: string, key: string) => {
+      stopAll()
+      setErrorMsg(null)
+      setBusyKey(key)
+      try {
+        const audio = audioRef.current
+        if (!audio) throw new Error('Audio ikke understøttet')
+        audio.src = url
+        await audio.play()
+      } catch (err) {
+        setErrorMsg(err instanceof Error ? err.message : String(err))
+      } finally {
+        setBusyKey((k) => (k === key ? null : k))
+      }
+    },
+    [stopAll],
   )
 
   const activeLabel = useMemo(() => {
@@ -340,6 +406,83 @@ const VoiceLab: React.FC = () => {
             </Typography>
           </Box>
         </Box>
+
+        {/* ---- Mascot tap-sounds: audition candidates, pick one per mascot ---- */}
+        <Divider sx={{ my: 3 }} />
+        <Typography variant="h6" sx={{ fontFamily: FONT, mb: 0.5 }}>
+          🐾 Maskot-lyde
+        </Typography>
+        <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
+          Lyden maskotten siger når man trykker på den (spawner et tema-pust). Hør forslagene og
+          vælg én pr. maskot — hver har sin egen stemme + tonehøjde.
+        </Typography>
+
+        <Stack spacing={2}>
+          {MASCOT_SOUNDS.map((sound) => (
+            <Box key={sound.id} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2, p: 1.5 }}>
+              <Typography sx={{ fontFamily: FONT, fontWeight: 700, mb: 1 }}>
+                {sound.emoji} {sound.label}{' '}
+                <Typography component="span" sx={{ fontFamily: FONT, fontWeight: 400, fontSize: '0.8rem', color: 'text.secondary' }}>
+                  — spawner {sound.burst} · {sound.voiceName.replace('da-DK-', '').replace('Neural', '')} · tone {sound.pitch}
+                </Typography>
+              </Typography>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                {sound.candidates.map((text, i) => {
+                  const key = `mascot:${sound.id}:${i}`
+                  return (
+                    <Button
+                      key={key}
+                      onClick={() => playMascot(text, sound, key)}
+                      variant="outlined"
+                      sx={{ fontFamily: FONT, textTransform: 'none', minHeight: 44, px: 1.5, gap: 0.5, borderRadius: 2 }}
+                    >
+                      {busyKey === key ? <CircularProgress size={16} /> : '🔊'} {text}
+                    </Button>
+                  )
+                })}
+              </Box>
+            </Box>
+          ))}
+        </Stack>
+
+        {/* ---- Real SFX (CC-BY) — audition the candidate sound files per mascot ---- */}
+        <Divider sx={{ my: 3 }} />
+        <Typography variant="h6" sx={{ fontFamily: FONT, mb: 0.5 }}>
+          🔊 Rigtige lyde (SFX)
+        </Typography>
+        <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
+          Rigtige lydeffekter (CC-BY, Google Sound Library). Hør forslagene og vælg din favorit (eller
+          en lille liste) pr. maskot. NB: vand/rum er gode — dino/bjørn mangler et rigtigt brøl, så de
+          bruger nærmeste søde/skabnings-lyde indtil videre.
+        </Typography>
+
+        <Stack spacing={2}>
+          {MASCOT_SFX.map((m) => (
+            <Box key={m.id} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2, p: 1.5 }}>
+              <Typography sx={{ fontFamily: FONT, fontWeight: 700, mb: 1 }}>
+                {m.emoji} {m.label}{' '}
+                <Typography component="span" sx={{ fontFamily: FONT, fontWeight: 400, fontSize: '0.8rem', color: 'text.secondary' }}>
+                  — spawner {m.burst}
+                </Typography>
+              </Typography>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                {m.files.map((f) => {
+                  const key = `sfx:${f.file}`
+                  return (
+                    <Button
+                      key={key}
+                      onClick={() => playFile(f.file, key)}
+                      variant="outlined"
+                      sx={{ fontFamily: FONT, textTransform: 'none', minHeight: 44, px: 1.5, gap: 0.5, borderRadius: 2 }}
+                    >
+                      {busyKey === key ? <CircularProgress size={16} /> : '🔊'} {f.label}
+                    </Button>
+                  )
+                })}
+              </Box>
+            </Box>
+          ))}
+        </Stack>
       </Container>
     </Box>
   )

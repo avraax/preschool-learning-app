@@ -25,6 +25,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       voiceName,
       lang,
       speed,
+      pitch,
       useLexicon = true,
       ipa,
     } = req.body ?? {}
@@ -45,6 +46,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (voiceName !== undefined && typeof voiceName !== 'string') {
       return res.status(400).json({ error: 'Invalid voiceName' })
     }
+    if (pitch !== undefined && (typeof pitch !== 'string' || !/^[+-]?\d{1,3}%$/.test(pitch))) {
+      return res.status(400).json({ error: 'Invalid pitch (e.g. "+20%" / "-25%")' })
+    }
     if (ipa !== undefined && (typeof ipa !== 'string' || ipa.length > 200)) {
       return res.status(400).json({ error: 'Invalid ipa' })
     }
@@ -64,6 +68,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       voiceName: resolved.name,
       lang: resolved.lang,
       speed,
+      pitch: typeof pitch === 'string' ? pitch : null,
       lexiconUri,
       ipa: typeof ipa === 'string' ? ipa : null,
     })

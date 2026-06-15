@@ -38,7 +38,7 @@ const VOICE_TYPES = new Set(['primary', 'backup', 'male', 'english']);
 
 app.post('/api/tts-azure', async (req, res) => {
   try {
-    const { text, voiceType = 'primary', voiceName, lang, speed, useLexicon = true, ipa } = req.body ?? {};
+    const { text, voiceType = 'primary', voiceName, lang, speed, pitch, useLexicon = true, ipa } = req.body ?? {};
 
     if (!text || typeof text !== 'string') {
       return res.status(400).json({ error: 'Text is required and must be a string' });
@@ -51,6 +51,9 @@ app.post('/api/tts-azure', async (req, res) => {
     }
     if (speed !== undefined && (typeof speed !== 'number' || speed < 0.25 || speed > 3)) {
       return res.status(400).json({ error: 'Invalid speed (0.25–3)' });
+    }
+    if (pitch !== undefined && (typeof pitch !== 'string' || !/^[+-]?\d{1,3}%$/.test(pitch))) {
+      return res.status(400).json({ error: 'Invalid pitch (e.g. "+20%" / "-25%")' });
     }
 
     const resolved = voiceName
@@ -66,6 +69,7 @@ app.post('/api/tts-azure', async (req, res) => {
       voiceName: resolved.name,
       lang: resolved.lang,
       speed,
+      pitch: typeof pitch === 'string' ? pitch : null,
       lexiconUri,
       ipa: typeof ipa === 'string' ? ipa : null,
     });

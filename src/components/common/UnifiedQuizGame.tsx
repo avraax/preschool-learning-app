@@ -27,7 +27,7 @@ export interface QuizItem {
   // Optional visual question shown in the prompt area (e.g. word-association mode:
   // show an emoji + word and ask which letter it starts with). When present, the
   // quiz renders this above the answer grid instead of relying on audio alone.
-  questionVisual?: { emoji: string; word: string }
+  questionVisual?: { emoji: string; word?: string }
 }
 
 // Configuration interface for the unified quiz

@@ -1,0 +1,13 @@
+Mascot tap sound effects
+========================
+
+Source: Google Sound Library
+  https://developers.google.com/assistant/tools/sound-library/
+
+License: Creative Commons Attribution 4.0 International (CC-BY 4.0)
+  https://creativecommons.org/licenses/by/4.0/
+
+These .ogg files are candidates auditioned in /voicelab. The chosen ones are used as the
+mascot tap sounds. Attribution: "Sound effects by Google, licensed under CC-BY 4.0."
+
+(Throwaway/auditioning set — prune the unused files once the per-mascot sounds are locked.)

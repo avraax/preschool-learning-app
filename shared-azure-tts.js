@@ -27,11 +27,14 @@ export function resolveVoice(voiceType) {
  *  - `lexiconUri` (da-DK only) is referenced inside <voice> for permanent pronunciation fixes.
  *  - `ipa` wraps the whole text in an inline <phoneme> (used by VoiceLab for one-off auditioning).
  *  - `speed` becomes an Azure <prosody rate> multiplier (1.0 = natural).
+ *  - `pitch` (optional, e.g. "+35%" / "-25%") gives a voice a distinct character — used by the
+ *    VoiceLab mascot-sound auditioner so each mascot sounds different without new voices.
  */
-export function buildSsml({ text, voiceName, lang, speed, lexiconUri, ipa }) {
+export function buildSsml({ text, voiceName, lang, speed, pitch, lexiconUri, ipa }) {
   const safeLang = escapeXml(lang || 'da-DK');
   const safeVoice = escapeXml(voiceName);
   const rate = typeof speed === 'number' && speed > 0 ? speed : TTS_CONFIG.speakingRate;
+  const pitchAttr = typeof pitch === 'string' && pitch ? ` pitch="${escapeXml(pitch)}"` : '';
 
   const inner = ipa
     ? `<phoneme alphabet="ipa" ph="${escapeXml(ipa)}">${escapeXml(text)}</phoneme>`
@@ -43,7 +46,7 @@ export function buildSsml({ text, voiceName, lang, speed, lexiconUri, ipa }) {
     `<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xml:lang="${safeLang}">` +
     `<voice name="${safeVoice}">` +
     lexiconTag +
-    `<prosody rate="${rate}">${inner}</prosody>` +
+    `<prosody rate="${rate}"${pitchAttr}>${inner}</prosody>` +
     `</voice></speak>`
   );
 }

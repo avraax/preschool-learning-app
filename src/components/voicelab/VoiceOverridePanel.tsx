@@ -96,13 +96,13 @@ const VoiceOverridePanel: React.FC = () => {
         anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
         transformOrigin={{ vertical: 'bottom', horizontal: 'right' }}
       >
-        <Box sx={{ p: 2, width: 260, fontFamily: FONT }}>
+        <Box sx={{ p: 2, width: 290, fontFamily: FONT }}>
           <Typography sx={{ fontFamily: FONT, fontWeight: 700, mb: 1 }}>🎙️ Stemme-test</Typography>
 
           <Typography sx={{ fontFamily: FONT, fontSize: '0.75rem', color: 'text.secondary', mb: 0.5 }}>
-            Skifter den danske fortælle-stemme (engelsk sektion uupåvirket).
+            Skifter den danske fortælle-stemme (engelsk sektion upåvirket).
           </Typography>
-          <Box sx={{ maxHeight: 260, overflowY: 'auto', pr: 0.5 }}>
+          <Box sx={{ maxHeight: 200, overflowY: 'auto', pr: 0.5 }}>
             <RadioGroup value={name} onChange={(e) => handleVoice(e.target.value)}>
               {VOICE_TIERS.map((tier) => (
                 <Box key={tier.tier} sx={{ mb: 0.5 }}>
@@ -144,20 +144,20 @@ const VoiceOverridePanel: React.FC = () => {
             sx={{ mt: 0.5 }}
           />
 
-          <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
-            <Button size="small" variant="outlined" onClick={() => sample('letter')} sx={{ fontFamily: FONT, textTransform: 'none', minHeight: 44, flex: 1 }}>
+          <Stack direction="row" spacing={1} sx={{ mt: 1, width: '100%' }}>
+            <Button size="small" variant="outlined" onClick={() => sample('letter')} sx={{ fontFamily: FONT, textTransform: 'none', minHeight: 44, flex: 1, minWidth: 0, px: 0.75 }}>
               Bogstav
             </Button>
-            <Button size="small" variant="outlined" onClick={() => sample('number')} sx={{ fontFamily: FONT, textTransform: 'none', minHeight: 44, flex: 1 }}>
+            <Button size="small" variant="outlined" onClick={() => sample('number')} sx={{ fontFamily: FONT, textTransform: 'none', minHeight: 44, flex: 1, minWidth: 0, px: 0.75 }}>
               Tal
             </Button>
-            <Button size="small" variant="outlined" onClick={() => sample('word')} sx={{ fontFamily: FONT, textTransform: 'none', minHeight: 44, flex: 1 }}>
+            <Button size="small" variant="outlined" onClick={() => sample('word')} sx={{ fontFamily: FONT, textTransform: 'none', minHeight: 44, flex: 1, minWidth: 0, px: 0.75 }}>
               Ord
             </Button>
           </Stack>
 
-          <Button onClick={reset} size="small" color="inherit" sx={{ fontFamily: FONT, textTransform: 'none', mt: 1.5, width: '100%' }}>
-            Nulstil (nuværende stemme)
+          <Button onClick={reset} size="small" color="inherit" sx={{ fontFamily: FONT, textTransform: 'none', mt: 1.5, width: '100%', whiteSpace: 'nowrap' }}>
+            Nulstil stemme
           </Button>
         </Box>
       </Popover>
