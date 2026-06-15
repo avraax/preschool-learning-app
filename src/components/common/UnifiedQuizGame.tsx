@@ -12,7 +12,6 @@ import { useRound, type RoundConfig } from '../../hooks/useRound'
 import { progressStore, type RoundOutcome } from '../../services/progressStore'
 import { sfx } from '../../services/sfxClient'
 import RoundResultScreen from './RoundResultScreen'
-import { TaelMedMigButton } from './CountingAid'
 // Simplified audio system
 import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 
@@ -70,12 +69,6 @@ export interface UnifiedQuizConfig {
   // result to the progress store (stars/bests/stickers). Requires `gameId`.
   round?: RoundConfig
   gameId?: string             // stable id for progress, e.g. 'alphabet.quiz'
-
-  // On-demand counting scaffold (Math Overhaul §0). When set, a "Tæl med mig" toggle appears in
-  // the prompt area; tapping it reveals the returned node (e.g. a <CountingAid/> ten-frame) above
-  // the answer grid. Return null to suppress the aid for a particular item. Non-breaking (absent →
-  // no aid).
-  aidContent?: (item: QuizItem) => React.ReactNode
 }
 
 interface UnifiedQuizGameProps {
@@ -111,8 +104,6 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
   const firstAttemptRef = useRef(true)
   // When set, the round is over and the reward/result hero replaces the answer grid.
   const [roundOutcome, setRoundOutcome] = useState<RoundOutcome | null>(null)
-  // On-demand counting aid visibility (reset per question). Only used when config.aidContent set.
-  const [aidOpen, setAidOpen] = useState(false)
 
   // Timeout ref for cleanup
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
@@ -136,8 +127,6 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
     setGuideReaction(null)
     // New question → first attempt is fresh again (round streak/star accounting).
     firstAttemptRef.current = true
-    // Hide the counting aid so each question starts as a recognition test (scaffold-when-stuck).
-    setAidOpen(false)
 
     // Generate quiz item using config
     const quizItem = config.generateQuizItem()
@@ -447,24 +436,6 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
               onClick={repeatItem}
               disabled={false}
             />
-          </Box>
-        )}
-
-        {/* On-demand counting aid (Math Overhaul §0) — a "Tæl med mig" toggle reveals the
-            ten-frame scaffold above the answer grid. Only rendered when the config provides it. */}
-        {config.aidContent && currentItem && (
-          <Box
-            sx={{
-              flex: '0 0 auto',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: { xs: 1, md: 1.5 },
-              mb: { xs: 1.5, md: 2 },
-            }}
-          >
-            <TaelMedMigButton open={aidOpen} onToggle={() => setAidOpen((v) => !v)} accent={config.theme.accentColor} />
-            {aidOpen && config.aidContent(currentItem)}
           </Box>
         )}
 

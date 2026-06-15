@@ -10,7 +10,6 @@ import type { GuideReaction } from '../common/ThemeMascot'
 import { useCelebration } from '../common/CelebrationEffect'
 import { MathScoreChip } from '../common/ScoreChip'
 import { MathRepeatButton } from '../common/RepeatButton'
-import CountingAid, { TaelMedMigButton } from '../common/CountingAid'
 import RoundResultScreen from '../common/RoundResultScreen'
 import { useGameState } from '../../hooks/useGameState'
 import { useRound } from '../../hooks/useRound'
@@ -60,8 +59,6 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
   // True until the first wrong tile is tapped for the current problem (gates streak/star).
   const firstAttemptRef = useRef(true)
   const [roundOutcome, setRoundOutcome] = useState<RoundOutcome | null>(null)
-  // On-demand counting aid visibility (reset per problem).
-  const [aidOpen, setAidOpen] = useState(false)
 
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
   const guideReactionTimer = useRef<NodeJS.Timeout | null>(null)
@@ -134,9 +131,8 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
     // Clear the previous answer's feedback + guide reaction before the new problem appears.
     setFeedback(null)
     setGuideReaction(null)
-    // New problem → first attempt fresh again; hide the counting aid (recognition test first).
+    // New problem → first attempt fresh again.
     firstAttemptRef.current = true
-    setAidOpen(false)
 
     let firstNum: number
     let secondNum: number
@@ -384,21 +380,6 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
 
             <MathRepeatButton onClick={repeatProblem} disabled={false} />
           </motion.div>
-        )}
-
-        {/* On-demand counting aid: two-colour dots (add) or crossed-out dots (sub) so he can
-            work out the fact — matching how he already counts on fingers, then weaning off. */}
-        {showEquation && num1 !== null && num2 !== null && (
-          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: { xs: 1, md: 1.5 } }}>
-            <TaelMedMigButton open={aidOpen} onToggle={() => setAidOpen((v) => !v)} accent={categoryThemes.math.accentColor} />
-            <CountingAid
-              mode={isAddition ? 'add' : 'sub'}
-              a={num1}
-              b={num2}
-              accent={categoryThemes.math.accentColor}
-              open={aidOpen}
-            />
-          </Box>
         )}
       </Box>
 

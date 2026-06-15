@@ -1,11 +1,8 @@
 import React from 'react'
-import { Box, Typography } from '@mui/material'
-import { motion } from 'framer-motion'
 import UnifiedQuizGame, { UnifiedQuizConfig, QuizItem } from '../common/UnifiedQuizGame'
 import { categoryThemes } from '../../config/categoryThemes'
 import { MathScoreChip } from '../common/ScoreChip'
 import { MathRepeatButton } from '../common/RepeatButton'
-import CountingAid from '../common/CountingAid'
 
 // Hvad Mangler? — a sequence is shown with one element replaced by ❓; the child picks
 // the missing element. Covers number patterns, skip-counting (2s/5s/10s) and simple
@@ -36,67 +33,6 @@ const buildVisualPattern = () => {
   const missing = full[missingIndex]
   const display = full.map((e, i) => (i === missingIndex ? '❓' : e)).join('  ')
   return { missing, display, pool: unit }
-}
-
-// Count-through scaffold (Math Overhaul §5). Renders the *visible* sequence so the child can see
-// the step size / repeating unit — but NEVER reveals the ❓ blank (it stays a question mark).
-// Numeric sequences → each visible number as a small ten-frame under its numeral. Visual patterns
-// → the repeating emojis gently pulse so the unit stands out.
-const SequenceAid: React.FC<{ display: string; accent: string }> = ({ display, accent }) => {
-  const tokens = display.trim().split(/\s+/).filter(Boolean)
-  const isNumeric = tokens.every((t) => t === '❓' || /^\d+$/.test(t))
-
-  return (
-    <Box
-      sx={{
-        display: 'flex',
-        flexWrap: 'wrap',
-        justifyContent: 'center',
-        alignItems: 'flex-start',
-        gap: { xs: 1, md: 1.5 },
-        maxWidth: '100%',
-      }}
-    >
-      {tokens.map((tok, i) => {
-        const isBlank = tok === '❓'
-        if (isNumeric) {
-          return (
-            <Box
-              key={i}
-              sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5, minWidth: 0 }}
-            >
-              <Typography
-                sx={{
-                  fontFamily: '"Comic Sans MS", "Comic Neue", sans-serif',
-                  fontWeight: 700,
-                  fontSize: 'clamp(1.1rem, 4vw, 1.8rem)',
-                  color: isBlank ? accent : 'inherit',
-                  lineHeight: 1,
-                }}
-              >
-                {tok}
-              </Typography>
-              {!isBlank && (
-                <CountingAid mode="value" value={Number(tok)} accent={accent} open />
-              )}
-            </Box>
-          )
-        }
-        // Visual emoji pattern: pulse the visible emojis; the blank stays ❓.
-        return (
-          <Box
-            key={i}
-            component={motion.div}
-            animate={isBlank ? undefined : { scale: [1, 1.14, 1] }}
-            transition={isBlank ? undefined : { duration: 1.4, repeat: Infinity, delay: i * 0.18 }}
-            sx={{ fontSize: 'clamp(1.6rem, 7vw, 2.6rem)', lineHeight: 1 }}
-          >
-            {tok}
-          </Box>
-        )
-      })}
-    </Box>
-  )
 }
 
 const HvadManglerGame: React.FC = () => {
@@ -191,12 +127,6 @@ const HvadManglerGame: React.FC = () => {
     // Bounded round + reward flow (Foundation §3). 8 questions, 3★ = no mistakes, 2★ ≤ 2.
     gameId: 'math.patterns',
     round: { length: 8, starThresholds: { three: 0, two: 2 } },
-
-    // Count-through scaffold over the visible sequence (never reveals the ❓ blank).
-    aidContent: (item: QuizItem) =>
-      item.questionVisual?.word
-        ? <SequenceAid display={item.questionVisual.word} accent={categoryThemes.math.accentColor} />
-        : null,
 
     speakQuizPrompt: async (_item: QuizItem, audio: any) => audio.speak('Hvad mangler?'),
     speakClickedItem: async (item: QuizItem, audio: any) =>

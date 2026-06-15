@@ -4,7 +4,6 @@ import { DANISH_PHRASES } from '../../config/danish-phrases'
 import { categoryThemes } from '../../config/categoryThemes'
 import { MathScoreChip } from '../common/ScoreChip'
 import { MathRepeatButton } from '../common/RepeatButton'
-import CountingAid from '../common/CountingAid'
 
 // Comprehensive math settings for counting quiz
 const MAX_NUMBER = 50  // Tal Quiz numbers from 1-50
@@ -79,11 +78,6 @@ const MathGame: React.FC = () => {
     // Bounded round + reward flow (Foundation §3). 8 questions, 3★ = no mistakes, 2★ ≤ 2.
     gameId: 'math.counting',
     round: { length: 8, starThresholds: { three: 0, two: 2 } },
-
-    // Counting aid: show the TARGET number as a stacked ten-frame so he can map quantity → glyph.
-    aidContent: (item: QuizItem) => (
-      <CountingAid mode="value" value={item.value as number} accent={categoryThemes.math.accentColor} open />
-    ),
 
     // Audio methods
     speakQuizPrompt: async (item: QuizItem, audio: any) => {

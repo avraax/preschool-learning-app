@@ -9,7 +9,6 @@ import {
 import { useTheme } from '@mui/material/styles'
 import GameShell from '../common/GameShell'
 import LearningGrid from '../common/LearningGrid'
-import CountingAid, { TaelMedMigButton } from '../common/CountingAid'
 import RoundResultScreen from '../common/RoundResultScreen'
 import StickerReveal from '../common/StickerReveal'
 import { useCelebration } from '../common/CelebrationEffect'
@@ -35,7 +34,6 @@ const NumberLearning: React.FC = () => {
   const muiTheme = useTheme()
   const [currentIndex, setCurrentIndex] = useState(0)
   const [mode, setMode] = useState<'browse' | 'challenge'>('browse')
-  const [aidOpen, setAidOpen] = useState(false)
 
   // Simplified audio system
   const audio = useSimplifiedAudioHook({
@@ -142,7 +140,6 @@ const NumberLearning: React.FC = () => {
     if (audio.isPlaying) audio.cancelCurrentAudio()
 
     setCurrentIndex(index)
-    setAidOpen(false)
 
     const number = numbers[index]
     exploredRef.current.add(number)
@@ -180,7 +177,6 @@ const NumberLearning: React.FC = () => {
     round.reset()
     setMode('challenge')
     setCurrentIndex(-1)
-    setAidOpen(false)
     nextTarget()
   }
 
@@ -353,14 +349,6 @@ const NumberLearning: React.FC = () => {
                 </Typography>
               </Card>
             </motion.div>
-
-            {/* Counting aid for the current/target number (browse + challenge). */}
-            {displayNumber != null && (
-              <>
-                <TaelMedMigButton open={aidOpen} onToggle={() => setAidOpen((v) => !v)} accent={MATH_ACCENT} />
-                {aidOpen && <CountingAid mode="value" value={displayNumber} accent={MATH_ACCENT} open />}
-              </>
-            )}
           </Box>
 
           {/* Numbers Grid - Using Reusable Component */}

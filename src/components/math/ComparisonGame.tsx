@@ -4,7 +4,6 @@ import { motion } from 'framer-motion'
 import GameShell from '../common/GameShell'
 import AnswerTile, { type AnswerTileState } from '../common/AnswerTile'
 import SymbolTile from '../common/SymbolTile'
-import CountingAid, { TaelMedMigButton } from '../common/CountingAid'
 import RoundResultScreen from '../common/RoundResultScreen'
 import type { GuideReaction } from '../common/ThemeMascot'
 import { useCelebration } from '../common/CelebrationEffect'
@@ -70,7 +69,6 @@ const ComparisonGame: React.FC = () => {
   // The krokodille mouth opens toward the bigger number only after a correct tap.
   const [mouthOpen, setMouthOpen] = useState(false)
   const [guideReaction, setGuideReaction] = useState<GuideReaction>(null)
-  const [aidOpen, setAidOpen] = useState(false)
 
   // Simplified audio system
   const audio = useSimplifiedAudioHook({ componentId: 'ComparisonGame', autoInitialize: false })
@@ -177,7 +175,6 @@ const ComparisonGame: React.FC = () => {
     setLocked(false)
     setMouthOpen(false)
     setGuideReaction(null)
-    setAidOpen(false)
     firstAttemptRef.current = true
 
     if (timeoutRef.current) {
@@ -415,7 +412,7 @@ const ComparisonGame: React.FC = () => {
                   <Typography component="span" sx={{ fontSize: { xs: '1.8rem', md: '2.6rem' }, lineHeight: 1 }}>
                     🐊
                   </Typography>
-                  <Box data-krok-mouth sx={{ height: { xs: 44, md: 64 }, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Box sx={{ height: { xs: 44, md: 64 }, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     {mouthOpen && mouthOp && (
                       <Box
                         component={motion.div}
@@ -433,18 +430,9 @@ const ComparisonGame: React.FC = () => {
               <Grid size={{ xs: 5 }}>{renderSide('right')}</Grid>
             </Grid>
 
-            {/* Counting aid (optional, both sides) + repeat button. */}
-            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: { xs: 1, md: 1.5 }, mt: { xs: 2, md: 3 }, '@media (orientation: landscape)': { mt: { xs: 1, md: 1.5 }, gap: { xs: 0.5, md: 1 } } }}>
-              <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap', justifyContent: 'center' }}>
-                <TaelMedMigButton open={aidOpen} onToggle={() => setAidOpen((v) => !v)} accent={categoryThemes.math.accentColor} />
-                <MathRepeatButton onClick={repeatProblem} disabled={false} label="Hør igen" />
-              </Box>
-              {aidOpen && (
-                <Box sx={{ display: 'flex', gap: { xs: 2, md: 4 }, flexWrap: 'wrap', justifyContent: 'center' }}>
-                  <CountingAid mode="value" value={currentProblem.leftNumber} accent={categoryThemes.math.accentColor} open />
-                  <CountingAid mode="value" value={currentProblem.rightNumber} accent={categoryThemes.math.accentColor} open />
-                </Box>
-              )}
+            {/* Repeat button. */}
+            <Box sx={{ display: 'flex', justifyContent: 'center', mt: { xs: 2, md: 3 }, '@media (orientation: landscape)': { mt: { xs: 1, md: 1.5 } } }}>
+              <MathRepeatButton onClick={repeatProblem} disabled={false} label="Hør igen" />
             </Box>
           </Paper>
         </Box>
