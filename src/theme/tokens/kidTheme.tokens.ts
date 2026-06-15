@@ -95,7 +95,6 @@ export const kidThemeTokens: ThemeTokens = {
     ].join(',\n'),
     titleColor: '#8B5CF6',
     subtitleColor: '#F87171',
-    balloonColors: ['#EF4444', '#3B82F6', '#10B981', '#FDE047', '#8B5CF6', '#F97316', '#EC4899'],
     confettiColors: ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#ffeaa7', '#dda0dd'],
     notFoundBackground: 'linear-gradient(135deg, #dbeafe 0%, #e9d5ff 50%, #fce7f3 100%)',
     audioPermissionGradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',

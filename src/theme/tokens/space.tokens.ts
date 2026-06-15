@@ -38,7 +38,6 @@ export const spaceThemeTokens: ThemeTokens = {
     dots: WHITE_DOTS,
     titleColor: '#3949AB',
     subtitleColor: '#8E24AA',
-    balloonColors: ['#3949AB', '#8E24AA', '#D500F9', '#E53935', '#FF8F00', '#00ACC1', '#7986CB'],
     confettiColors: ['#9FA8DA', '#CE93D8', '#FFE082', '#80DEEA', '#EF9A9A', '#FF52FF'],
     notFoundBackground: 'linear-gradient(135deg, #E8EAF6 0%, #F3E5F5 50%, #E0F7FA 100%)',
     audioPermissionGradient: 'linear-gradient(135deg, #3949AB 0%, #8E24AA 100%)',

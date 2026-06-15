@@ -37,7 +37,6 @@ export const oceanThemeTokens: ThemeTokens = {
     dots: WHITE_DOTS,
     titleColor: '#0277BD',
     subtitleColor: '#FF7043',
-    balloonColors: ['#0277BD', '#00ACC1', '#26C6DA', '#00897B', '#FFD54F', '#FF7043', '#5E35B1'],
     confettiColors: ['#4FC3F7', '#80DEEA', '#B2DFDB', '#FFF59D', '#FFAB91', '#B39DDB'],
     notFoundBackground: 'linear-gradient(135deg, #E1F5FE 0%, #B2EBF2 50%, #E0F2F1 100%)',
     audioPermissionGradient: 'linear-gradient(135deg, #0288D1 0%, #00897B 100%)',

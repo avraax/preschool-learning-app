@@ -38,7 +38,6 @@ export const jungleThemeTokens: ThemeTokens = {
     dots: WHITE_DOTS,
     titleColor: '#2E7D32',
     subtitleColor: '#EF6C00',
-    balloonColors: ['#2E7D32', '#00897B', '#EF6C00', '#1565C0', '#C2185B', '#FBC02D', '#66BB6A'],
     confettiColors: ['#A5D6A7', '#80CBC4', '#FFCC80', '#90CAF9', '#F48FB1', '#FFF176'],
     notFoundBackground: 'linear-gradient(135deg, #E8F5E9 0%, #FFF3E0 50%, #E3F2FD 100%)',
     audioPermissionGradient: 'linear-gradient(135deg, #2E7D32 0%, #00897B 100%)',

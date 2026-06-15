@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useRef, lazy, Suspense } from 'react'
+import React, { useEffect, useState, useRef, lazy, Suspense } from 'react'
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { logIOSIssue } from './utils/remoteConsole'
@@ -10,7 +10,12 @@ import {
   CardContent,
   Button,
   Typography,
-  Box
+  Box,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField
 } from '@mui/material'
 import { useTheme, alpha } from '@mui/material/styles'
 import {
@@ -60,10 +65,6 @@ import SimplifiedAudioPermission from './components/common/SimplifiedAudioPermis
 // import AudioSystemComparison from './components/test/AudioSystemComparison'
 
 
-// Balloon Components
-import BalloonBase from './components/common/balloon/BalloonBase'
-import { ParticleEffects, createPopParticles, Particle } from './components/common/balloon/ParticleEffects'
-import { useBalloonSound } from './components/common/balloon/SoundManager'
 import LottieCharacter, { useCharacterState } from './components/common/LottieCharacter'
 import { useUpdateChecker } from './hooks/useUpdateChecker'
 import { useNativeAppFeel } from './hooks/useNativeAppFeel'
@@ -76,18 +77,6 @@ import { totalStickerCount } from './config/stickers'
 import { sectionIconImages } from './assets/themes/icons'
 import appLogo from './assets/logo.webp'
 import { BUILD_INFO } from './config/version'
-
-// Balloon interface
-interface HomeBalloon {
-  id: string;
-  x: number;
-  y: number;
-  color: string;
-  size: number;
-  content: string;
-  isPopped: boolean;
-  angle: number; // Movement angle - required for direction
-}
 
 // Home section cards — content/layout config; all styling comes from theme tokens
 // (theme.categories[id]) at render time so a reskin remaps every card automatically.
@@ -118,163 +107,7 @@ const HomePage = () => {
   const stickersOwned = Object.keys(progress.stickers.collected).length
   const stickersTotal = totalStickerCount()
   const albumFill = stickersTotal > 0 ? stickersOwned / stickersTotal : 0
-  const { play, stopAll } = useBalloonSound()
-  const [balloons, setBalloons] = useState<HomeBalloon[]>([])
-  const [particles, setParticles] = useState<Particle[]>([])
-  const [lastSpawnTime, setLastSpawnTime] = useState<number>(0)
 
-  const balloonColors = theme.decor.balloonColors
-  const balloonContents = ['A', 'B', 'C', 'Å', '1', '2', '3', '4', '5']
-  
-  // Dynamic angle calculation based on logo viewport position
-  const calculateDynamicAngle = (logoRect: DOMRect, balloonIndex: number): number => {
-    const viewportHeight = window.innerHeight;
-    const logoRelativeY = logoRect.top / viewportHeight;
-    
-    // Circle angles: 0=right, π/2=down, π=left, 3π/2=up
-    let minAngle: number;
-    let maxAngle: number;
-    
-    if (logoRelativeY < 0.25) {
-      // Logo in top 25% - spawn mostly downward (45° to 135° = π/4 to 3π/4)
-      minAngle = Math.PI * 0.25;  // 45° (down-right)
-      maxAngle = Math.PI * 0.75;  // 135° (down-left)
-    } else if (logoRelativeY > 0.75) {
-      // Logo in bottom 25% - allow upward spawning (315° to 45° = 7π/4 to π/4, wrapping around)
-      // Use two ranges: 315°-360° and 0°-45°
-      if (Math.random() < 0.5) {
-        minAngle = Math.PI * 1.75; // 315° (up-right)
-        maxAngle = Math.PI * 2;    // 360° (right)
-      } else {
-        minAngle = 0;              // 0° (right)
-        maxAngle = Math.PI * 0.25; // 45° (down-right)
-      }
-    } else {
-      // Logo in middle 50% - wider downward arc (30° to 150° = π/6 to 5π/6)
-      minAngle = Math.PI * 0.17;  // 30° (down-right)
-      maxAngle = Math.PI * 0.83;  // 150° (down-left)
-    }
-    
-    // More random angle distribution instead of even spacing
-    const angleRange = maxAngle - minAngle;
-    
-    // Create clustered randomness for more natural scattering
-    let baseAngle: number;
-    if (Math.random() < 0.7) {
-      // 70% random within the allowed range
-      baseAngle = minAngle + Math.random() * angleRange;
-    } else {
-      // 30% use balloon index for some structure
-      baseAngle = minAngle + (balloonIndex / 10) * angleRange;
-    }
-    
-    const randomOffset = (Math.random() - 0.5) * 0.4; // ±36° randomness (increased)
-    const finalAngle = baseAngle + randomOffset;
-    
-    return finalAngle;
-  };
-
-  const spawnBalloons = useCallback((logoElement?: HTMLElement) => {
-    // Prevent too rapid spawning (cooldown of 500ms)
-    const now = Date.now();
-    if (now - lastSpawnTime < 500) {
-      return;
-    }
-    setLastSpawnTime(now);
-    
-    let centerX, centerY, logoRect;
-    
-    if (logoElement) {
-      // Get actual logo position from DOM element
-      logoRect = logoElement.getBoundingClientRect();
-      centerX = logoRect.left + logoRect.width / 2;
-      centerY = logoRect.top + logoRect.height / 2;
-    } else {
-      // Fallback to window center
-      centerX = window.innerWidth / 2;
-      centerY = window.innerHeight / 2;
-      logoRect = new DOMRect(centerX - 100, centerY - 100, 200, 200); // Fallback rect
-    }
-    
-    const newBalloons: HomeBalloon[] = [];
-    const balloonCount = 10; // Always spawn exactly 10 balloons
-    
-    for (let i = 0; i < balloonCount; i++) {
-      // Calculate dynamic angle based on viewport position
-      const angle = calculateDynamicAngle(logoRect, i);
-      
-      // Calculate balloon size - bigger in general
-      const balloonSize = Math.random() * 40 + 80; // 80-120px (was 60-90px)
-      
-      // Much wider scattering throughout the entire viewport
-      const viewportWidth = window.innerWidth;
-      const viewportHeight = window.innerHeight;
-      const maxViewportDistance = Math.min(viewportWidth, viewportHeight) * 0.6; // Use 60% of viewport
-      
-      const minDistance = 80; // Start further out
-      const maxDistance = Math.max(400, maxViewportDistance); // Much larger maximum distance
-      
-      // Three distance zones for full viewport coverage
-      let spawnDistance: number;
-      const zoneRandom = Math.random();
-      if (zoneRandom < 0.3) {
-        // 30% close balloons (80-200px)
-        spawnDistance = minDistance + Math.random() * 120;
-      } else if (zoneRandom < 0.7) {
-        // 40% medium balloons (200-400px)
-        spawnDistance = 200 + Math.random() * 200;
-      } else {
-        // 30% far balloons (400px to viewport edge)
-        spawnDistance = 400 + Math.random() * (maxDistance - 400);
-      }
-      
-      // Calculate spawn position around logo center
-      const offsetX = Math.cos(angle) * spawnDistance;
-      const offsetY = Math.sin(angle) * spawnDistance;
-      
-      // Position balloon with better spacing
-      const startX = centerX + offsetX - balloonSize / 2;
-      const startY = centerY + offsetY - balloonSize / 2;
-      
-      newBalloons.push({
-        id: `home-${Date.now()}-${Math.random()}-${i}`, // Unique ID to prevent duplicates
-        x: startX,
-        y: startY,
-        color: balloonColors[Math.floor(Math.random() * balloonColors.length)],
-        size: balloonSize, // Use the pre-calculated size
-        content: balloonContents[Math.floor(Math.random() * balloonContents.length)],
-        isPopped: false,
-        angle: angle // Store the calculated movement angle
-      });
-    }
-    
-    setBalloons(newBalloons);
-  }, [lastSpawnTime]);
-
-  const popBalloon = useCallback((id: string, x: number, y: number) => {
-    const balloon = balloons.find(b => b.id === id);
-    
-    if (!balloon || balloon.isPopped) {
-      return;
-    }
-
-    // Mark balloon as popped and remove immediately for instant visual feedback
-    setBalloons(prev => prev.filter(b => b.id !== id));
-
-    // Create particle effect
-    const newParticles = createPopParticles(x, y, balloon.color);
-    setParticles(prev => [...prev, ...newParticles]);
-
-    // Play sound independently - fire and forget
-    play('sharp-pop-328170').catch(() => {
-      // Silently handle any errors
-    });
-  }, [balloons, play]);
-
-  const removeParticle = useCallback((particleId: string) => {
-    setParticles(prev => prev.filter(p => p.id !== particleId));
-  }, []);
-  
   React.useEffect(() => {
     // Welcome animation sequence
     const timer = setTimeout(() => {
@@ -282,14 +115,6 @@ const HomePage = () => {
     }, 1000)
     return () => clearTimeout(timer)
   }, [])
-  
-
-  // Cleanup on unmount
-  React.useEffect(() => {
-    return () => {
-      stopAll();
-    };
-  }, [stopAll])
 
   return (
     <Box
@@ -371,7 +196,6 @@ const HomePage = () => {
                 src={appLogo}
                 alt=""
                 draggable={false}
-                onClick={() => spawnBalloons()}
                 sx={{
                   width: { xs: 44, sm: 52, md: 60 },
                   height: { xs: 44, sm: 52, md: 60 },
@@ -379,7 +203,6 @@ const HomePage = () => {
                   boxShadow: '0 4px 14px rgba(0,0,0,0.2)',
                   userSelect: 'none',
                   flexShrink: 0,
-                  cursor: 'pointer',
                 }}
               />
               <Typography
@@ -616,25 +439,6 @@ const HomePage = () => {
         }}
       />
 
-      {/* Balloons */}
-      {balloons.map((balloon) => (
-        <BalloonBase
-          key={balloon.id}
-          id={balloon.id}
-          x={balloon.x}
-          y={balloon.y}
-          size={balloon.size}
-          color={balloon.color}
-          content={balloon.content}
-          isPopped={balloon.isPopped}
-          onClick={popBalloon}
-          floatDuration={30} // 30 seconds total animation - longer so balloons naturally exit viewport
-          movementAngle={balloon.angle} // Pass the calculated movement angle
-        />
-      ))}
-
-      {/* Particle Effects */}
-      <ParticleEffects particles={particles} onParticleComplete={removeParticle} />
     </Box>
   )
 }
@@ -714,15 +518,29 @@ interface VersionDisplayProps {
   updateAvailable?: boolean
 }
 
+// Danish words for digits 0–9, used by the grown-up reset gate (reading them is the gate —
+// a pre-reader who can count still can't pass it).
+const DANISH_DIGIT_WORDS = ['nul', 'en', 'to', 'tre', 'fire', 'fem', 'seks', 'syv', 'otte', 'ni']
+
 const VersionDisplay: React.FC<VersionDisplayProps> = ({ updateAvailable = false }) => {
-  // Child-resistant parent reset: hold the version label for 3s → confirm → wipe all progress.
-  // Discreet and out of the child's normal flow (Overhaul Foundation §1).
+  // Child-resistant parent reset: hold the version label for 3s → a "grown-ups only" gate
+  // (type 3 digits shown as Danish WORDS) → wipe all progress. Discreet and out of the child's
+  // normal flow (Overhaul Foundation §1).
   const holdTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [gateOpen, setGateOpen] = useState(false)
+  const [gateCode, setGateCode] = useState('')   // the 3-digit answer, e.g. "427"
+  const [gateInput, setGateInput] = useState('')
+  const [gateDone, setGateDone] = useState(false) // brief "nulstillet" confirmation
+
   const startHold = () => {
     if (holdTimer.current) clearTimeout(holdTimer.current)
     holdTimer.current = setTimeout(() => {
-      const ok = window.confirm('Nulstil al fremgang?\nAlle klistermærker og rekorder slettes.')
-      if (ok) progressStore.resetAll()
+      // Fresh random 3-digit challenge each time.
+      const code = Array.from({ length: 3 }, () => Math.floor(Math.random() * 10)).join('')
+      setGateCode(code)
+      setGateInput('')
+      setGateDone(false)
+      setGateOpen(true)
     }, 3000)
   }
   const cancelHold = () => {
@@ -731,6 +549,22 @@ const VersionDisplay: React.FC<VersionDisplayProps> = ({ updateAvailable = false
       holdTimer.current = null
     }
   }
+
+  const closeGate = () => {
+    setGateOpen(false)
+    setGateInput('')
+    setGateDone(false)
+  }
+  const submitGate = () => {
+    // Correct → wipe progress + show a brief confirmation. Wrong → silently close, nothing reset.
+    if (gateInput.replace(/\D/g, '') === gateCode) {
+      progressStore.resetAll()
+      setGateDone(true)
+    } else {
+      closeGate()
+    }
+  }
+  const gateWords = gateCode.split('').map(d => DANISH_DIGIT_WORDS[Number(d)]).join(' · ')
 
   const buildDateTime = new Date(BUILD_INFO.buildTime)
   
@@ -747,6 +581,7 @@ const VersionDisplay: React.FC<VersionDisplayProps> = ({ updateAvailable = false
   })
 
   return (
+    <>
     <Box
       onPointerDown={startHold}
       onPointerUp={cancelHold}
@@ -785,6 +620,46 @@ const VersionDisplay: React.FC<VersionDisplayProps> = ({ updateAvailable = false
         {releaseDate} {releaseTime}
       </Box>
     </Box>
+
+    {/* Grown-ups-only reset gate (reached only by holding the version label for 3s). */}
+    <Dialog open={gateOpen} onClose={closeGate} maxWidth="xs" fullWidth>
+      {gateDone ? (
+        <DialogContent sx={{ textAlign: 'center', py: 4 }}>
+          <Typography sx={{ fontSize: '2.5rem', mb: 1 }}>✅</Typography>
+          <Typography sx={{ fontWeight: 700 }}>Al fremgang er nulstillet.</Typography>
+          <DialogActions sx={{ justifyContent: 'center', mt: 2 }}>
+            <Button onClick={closeGate} variant="contained">Luk</Button>
+          </DialogActions>
+        </DialogContent>
+      ) : (
+        <>
+          <DialogTitle sx={{ fontWeight: 700 }}>Kun for voksne 🔒</DialogTitle>
+          <DialogContent>
+            <Typography sx={{ mb: 1 }}>
+              Dette nulstiller <strong>alle</strong> klistermærker, rekorder og stjerner.
+            </Typography>
+            <Typography sx={{ mb: 0.5 }}>Tast tallene for at bekræfte:</Typography>
+            <Typography sx={{ fontWeight: 700, fontSize: '1.4rem', textAlign: 'center', my: 1.5 }}>
+              {gateWords}
+            </Typography>
+            <TextField
+              autoFocus
+              fullWidth
+              value={gateInput}
+              onChange={(e) => setGateInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') submitGate() }}
+              placeholder="000"
+              slotProps={{ htmlInput: { inputMode: 'numeric', pattern: '[0-9]*', maxLength: 3, style: { textAlign: 'center', fontSize: '1.4rem', letterSpacing: '0.5rem' } } }}
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={closeGate}>Annullér</Button>
+            <Button onClick={submitGate} variant="contained" color="error">Nulstil</Button>
+          </DialogActions>
+        </>
+      )}
+    </Dialog>
+    </>
   )
 }
 

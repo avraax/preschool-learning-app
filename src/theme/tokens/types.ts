@@ -57,7 +57,6 @@ export interface DecorTokens {
   dots: string                    // home radial-gradient dot texture (the 4 dot layers)
   titleColor: string              // "Børnelæring" logo text
   subtitleColor: string           // tagline + play/book icons
-  balloonColors: string[]         // home balloon palette
   confettiColors: string[]        // CelebrationEffect default
   notFoundBackground: string      // 404 page background gradient
   audioPermissionGradient: string // iOS audio-permission modal background

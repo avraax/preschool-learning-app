@@ -38,7 +38,6 @@ export const dinoThemeTokens: ThemeTokens = {
     dots: WHITE_DOTS,
     titleColor: '#558B2F',
     subtitleColor: '#D84315',
-    balloonColors: ['#558B2F', '#00796B', '#D84315', '#455A64', '#FF8F00', '#8BC34A', '#AD1457'],
     confettiColors: ['#A5D6A7', '#80CBC4', '#FFAB91', '#B0BEC5', '#FFE082', '#C5E1A5'],
     notFoundBackground: 'linear-gradient(135deg, #E8F5E9 0%, #FBE9E7 50%, #ECEFF1 100%)',
     audioPermissionGradient: 'linear-gradient(135deg, #558B2F 0%, #00796B 100%)',

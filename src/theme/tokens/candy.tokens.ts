@@ -38,7 +38,6 @@ export const candyThemeTokens: ThemeTokens = {
     dots: WHITE_DOTS,
     titleColor: '#D81B60',
     subtitleColor: '#8E24AA',
-    balloonColors: ['#D81B60', '#8E24AA', '#F4511E', '#00897B', '#039BE5', '#EC407A', '#F06292'],
     confettiColors: ['#F8BBD0', '#E1BEE7', '#FFCC80', '#B2DFDB', '#B3E5FC', '#FF80AB'],
     notFoundBackground: 'linear-gradient(135deg, #FCE4EC 0%, #F3E5F5 50%, #E1F5FE 100%)',
     audioPermissionGradient: 'linear-gradient(135deg, #D81B60 0%, #8E24AA 100%)',
