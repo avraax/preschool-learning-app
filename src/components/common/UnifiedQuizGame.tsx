@@ -69,6 +69,12 @@ export interface UnifiedQuizConfig {
   // result to the progress store (stars/bests/stickers). Requires `gameId`.
   round?: RoundConfig
   gameId?: string             // stable id for progress, e.g. 'alphabet.quiz'
+
+  // When the welcome message already conveys the first question's prompt (e.g. Hvad Mangler?, whose
+  // welcome "Hvad mangler" equals its per-question prompt "Hvad mangler?"), set this so the engine
+  // does NOT voice the first prompt right after the welcome — avoiding hearing it twice on entry.
+  // Subsequent questions still voice their prompt normally on advance.
+  skipFirstPrompt?: boolean
 }
 
 interface UnifiedQuizGameProps {
@@ -198,8 +204,10 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
     } catch (error) {
       logError('Error playing welcome', { error: error?.toString() })
     }
-    speakCurrentPrompt()
-  }, [audio, config.gameWelcomeType, speakCurrentPrompt])
+    // Skip the first prompt when the welcome already said it (e.g. Hvad Mangler?) — otherwise the
+    // child hears the same line twice on entry.
+    if (!config.skipFirstPrompt) speakCurrentPrompt()
+  }, [audio, config.gameWelcomeType, config.skipFirstPrompt, speakCurrentPrompt])
 
   useEffect(() => {
     // Prevent duplicate initialization with race condition guard

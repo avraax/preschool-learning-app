@@ -128,6 +128,10 @@ const HvadManglerGame: React.FC = () => {
     gameId: 'math.patterns',
     round: { length: 8, starThresholds: { three: 0, two: 2 } },
 
+    // The welcome ("Hvad mangler") already asks the question, so don't voice the identical first
+    // prompt right after it — otherwise the title is heard twice on entry.
+    skipFirstPrompt: true,
+
     speakQuizPrompt: async (_item: QuizItem, audio: any) => audio.speak('Hvad mangler?'),
     speakClickedItem: async (item: QuizItem, audio: any) =>
       typeof item.value === 'number' ? audio.speakNumber(item.value) : Promise.resolve(''),
