@@ -73,10 +73,12 @@ const ComparisonGame: React.FC = () => {
   // Simplified audio system
   const audio = useSimplifiedAudioHook({ componentId: 'ComparisonGame', autoInitialize: false })
   const hasInitialized = useRef(false)
-  // Resilient start (mirrors UnifiedQuizGame): the board reveals once via beginGame regardless of
+  // Resilient start (mirrors UnifiedQuizGame): the board reveals once via revealBoard regardless of
   // which path triggers it, and the welcome plays at most once.
   const startedRef = useRef(false)
   const welcomeTriggered = useRef(false)
+  // True once the child taps → suppresses a (possibly late) welcome from talking over their play.
+  const hasInteractedRef = useRef(false)
 
   // Centralized game state management
   const { score, incrementScore, resetScore, isScoreNarrating, handleScoreClick } = useGameState()
@@ -101,15 +103,15 @@ const ComparisonGame: React.FC = () => {
     if (hasInitialized.current) return
     hasInitialized.current = true
 
+    // Instant load: show the first problem immediately (tappable), no waiting on the welcome.
+    revealBoard()
+
+    // Narrate the welcome over the visible board if audio is already unlocked.
     if (audio.isAudioReady) {
-      playWelcomeAndStart()
+      playWelcomeThenPrompt()
     }
 
-    // Resilience: reveal the first problem after a short delay even if audio never unlocks.
-    const fallback = setTimeout(() => beginGame(), 2500)
-
     return () => {
-      clearTimeout(fallback)
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current)
         timeoutRef.current = null
@@ -122,35 +124,39 @@ const ComparisonGame: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // When audio unlocks after mount, play the welcome (unless it/the game already started).
+  // When audio unlocks after mount, play the welcome (board already visible). Interaction-guarded
+  // inside playWelcomeThenPrompt so it never talks over active play.
   useEffect(() => {
-    if (audio.isAudioReady && !welcomeTriggered.current && !startedRef.current) {
-      playWelcomeAndStart()
+    if (audio.isAudioReady && !welcomeTriggered.current) {
+      playWelcomeThenPrompt()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [audio.isAudioReady])
 
-  // Reveal the first problem. Idempotent — safe from any start path.
-  const beginGame = () => {
+  // Instant load: render the first problem RIGHT AWAY without voicing the prompt yet — the welcome
+  // narrates over the visible board and the spoken prompt follows it. Idempotent.
+  const revealBoard = () => {
     if (startedRef.current) return
     startedRef.current = true
-    generateNewProblem()
+    generateNewProblem(false)
   }
 
-  const playWelcomeAndStart = async () => {
-    if (welcomeTriggered.current) return
+  // Play the welcome over the already-visible board, then voice the prompt. Self-guards; skips the
+  // trailing prompt if the child already started tapping.
+  const playWelcomeThenPrompt = async () => {
+    if (welcomeTriggered.current || hasInteractedRef.current) return
     welcomeTriggered.current = true
     try {
       await audio.playGameWelcome('comparison')
-      const delay = isIOS() ? 1000 : 1500
-      setTimeout(() => beginGame(), delay)
     } catch (error) {
       logError('Error playing welcome', { error: error?.toString() })
-      beginGame()
     }
+    if (!hasInteractedRef.current) speakProblem()
   }
 
-  const generateNewProblem = () => {
+  // `voice=false` renders the board without voicing the prompt (used for the first problem, which
+  // is voiced after the welcome instead).
+  const generateNewProblem = (voice = true) => {
     // Two DIFFERENT numbers 1–20 (no equality — one clear rule: tap the bigger).
     const leftNum = Math.floor(Math.random() * 20) + 1
     let rightNum = Math.floor(Math.random() * 20) + 1
@@ -181,6 +187,7 @@ const ComparisonGame: React.FC = () => {
       clearTimeout(timeoutRef.current)
       timeoutRef.current = null
     }
+    if (!voice) return
     const delay = isIOS() ? 100 : 500
     timeoutRef.current = setTimeout(() => speakProblem(), delay)
   }
@@ -213,6 +220,8 @@ const ComparisonGame: React.FC = () => {
 
   const handleSideClick = async (side: Side) => {
     if (!currentProblem || locked) return
+    // The child is playing → suppress any pending/late welcome from talking over them.
+    hasInteractedRef.current = true
 
     audio.updateUserInteraction()
     audio.cancelCurrentAudio()

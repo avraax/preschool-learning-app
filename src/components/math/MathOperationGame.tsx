@@ -62,6 +62,10 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
 
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
   const guideReactionTimer = useRef<NodeJS.Timeout | null>(null)
+  // Live current problem (so it can be voiced after the welcome) + interaction guard (so a late
+  // welcome never talks over active play).
+  const problemRef = useRef<{ a: number; b: number } | null>(null)
+  const hasInteractedRef = useRef(false)
 
   const { showCelebration, celebrationIntensity, celebrationDuration, celebrateTier, stopCelebration } = useCelebration()
 
@@ -75,17 +79,15 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
     if (hasInitialized.current) return
     hasInitialized.current = true
 
+    // Instant load: show the playable board immediately (tappable), no waiting on the welcome.
+    revealBoard()
+
+    // Narrate the welcome over the visible board if audio is already unlocked.
     if (audio.isAudioReady) {
-      playWelcomeAndStart()
+      playWelcomeThenProblem()
     }
 
-    // Resilience: if the AudioContext never unlocks (fresh/deep-linked load), reveal the board
-    // after a short delay anyway; the welcome still plays if/when audio unlocks (both starters
-    // are ref-guarded, so this never double-starts).
-    const fallback = setTimeout(() => beginGame(), 2500)
-
     return () => {
-      clearTimeout(fallback)
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current)
         timeoutRef.current = null
@@ -98,36 +100,42 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // When audio unlocks after mount, play the welcome (unless it/the game already started).
+  // When audio unlocks after mount, play the welcome (board already visible). Interaction-guarded
+  // inside playWelcomeThenProblem so it never talks over active play.
   useEffect(() => {
-    if (audio.isAudioReady && !welcomeTriggered.current && !startedRef.current) {
-      playWelcomeAndStart()
+    if (audio.isAudioReady && !welcomeTriggered.current) {
+      playWelcomeThenProblem()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [audio.isAudioReady])
 
-  // Reveal the playable board (first problem). Idempotent — safe from any start path.
-  const beginGame = () => {
+  // Instant load: render the playable board RIGHT AWAY without voicing the first problem yet — the
+  // welcome narrates over the visible board and the spoken problem follows it. Idempotent.
+  const revealBoard = () => {
     if (startedRef.current) return
     startedRef.current = true
     setGameReady(true)
-    generateNewProblem()
+    generateNewProblem(false)
   }
 
-  const playWelcomeAndStart = async () => {
-    if (welcomeTriggered.current) return
+  // Play the welcome over the already-visible board, then voice the first problem. Self-guards;
+  // skips the trailing problem if the child already started tapping.
+  const playWelcomeThenProblem = async () => {
+    if (welcomeTriggered.current || hasInteractedRef.current) return
     welcomeTriggered.current = true
     try {
       await audio.playGameWelcome(operation)
-      const delay = isIOS() ? 1000 : 1500
-      setTimeout(() => beginGame(), delay)
     } catch (error) {
       logError('Error playing welcome', { error: error?.toString() })
-      beginGame()
+    }
+    if (problemRef.current && !hasInteractedRef.current) {
+      speakProblem(problemRef.current.a, problemRef.current.b)
     }
   }
 
-  const generateNewProblem = () => {
+  // `voice=false` renders the board without voicing the problem (used for the first problem, which
+  // is voiced after the welcome instead).
+  const generateNewProblem = (voice = true) => {
     // Clear the previous answer's feedback + guide reaction before the new problem appears.
     setFeedback(null)
     setGuideReaction(null)
@@ -154,6 +162,7 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
     setNum1(firstNum)
     setNum2(secondNum)
     setCorrectAnswer(answer)
+    problemRef.current = { a: firstNum, b: secondNum }
 
     // Near-answer distractors (off-by-one/two + the operands) clamped to the valid result range,
     // so wrong options are plausible confusions rather than random noise. Top up with random
@@ -182,6 +191,8 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
       timeoutRef.current = null
     }
 
+    if (!voice) return
+
     const delay = isIOS() ? 100 : 500
     timeoutRef.current = setTimeout(() => {
       speakProblem(firstNum, secondNum)
@@ -203,6 +214,8 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
 
   const handleAnswerClick = async (selectedAnswer: number) => {
     if (correctAnswer === null) return
+    // The child is playing → suppress any pending/late welcome from talking over them.
+    hasInteractedRef.current = true
 
     audio.updateUserInteraction()
     audio.cancelCurrentAudio()

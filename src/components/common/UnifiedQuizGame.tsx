@@ -120,103 +120,101 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
   // Guards the welcome audio so it plays at most once even if audio unlocks after mount.
   const welcomeTriggered = useRef(false)
   
-  // Generate new question using config
-  const generateNewQuestion = useCallback(() => {
+  // Tracks the live current item so its prompt can be voiced after the welcome finishes (the board
+  // is generated before the welcome plays, so currentItem state isn't readable synchronously yet).
+  const currentItemRef = useRef<QuizItem | null>(null)
+  // True once the child taps — suppresses a (possibly late) welcome from talking over their play.
+  const hasInteractedRef = useRef(false)
+
+  // Generate a new question. `speakPrompt=false` renders the board WITHOUT voicing the prompt —
+  // used for the very first question, which is instead voiced right after the welcome.
+  const generateNewQuestion = useCallback((speakPrompt = true) => {
     // Clear the previous answer's feedback + guide reaction before the new question appears.
     setFeedback(null)
     setGuideReaction(null)
     // New question → first attempt is fresh again (round streak/star accounting).
     firstAttemptRef.current = true
 
-    // Generate quiz item using config
     const quizItem = config.generateQuizItem()
-    
-    // Generated new item
-    
+    currentItemRef.current = quizItem
     setCurrentItem(quizItem)
-    
-    // Generate options using config
-    const options = config.generateOptions(quizItem)
-    
-    // Generated quiz options
-    
-    setShowOptions(options)
-    
+    setShowOptions(config.generateOptions(quizItem))
+
     // Clear any existing timeout
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current)
       timeoutRef.current = null
     }
-    
+
+    if (!speakPrompt) return
+
     // Shorter delay for quiz prompt since welcome audio has already completed with buffer
-    const delay = isIOS() ? 200 : 300  // Even shorter delay for better user experience
-    
-    // Schedule delayed audio
+    const delay = isIOS() ? 200 : 300
     timeoutRef.current = setTimeout(async () => {
       try {
         // Update user interaction timestamp before playing (iOS fix)
         audio.updateUserInteraction()
         await config.speakQuizPrompt(quizItem, audio)
       } catch (error) {
-        logError('Error playing quiz prompt', { 
-          item: quizItem,
-          error: error?.toString()
-        })
+        logError('Error playing quiz prompt', { item: quizItem, error: error?.toString() })
       } finally {
         if (timeoutRef.current) {
           timeoutRef.current = null
         }
       }
     }, delay)
-    
   }, [audio, config]) // Stable dependencies
-  
-  // Reveal the playable cards (first question). Idempotent — safe to call from any start path.
-  const beginGame = useCallback(() => {
+
+  // Instant load: render the playable board RIGHT AWAY (tappable immediately) without voicing the
+  // first prompt yet — the welcome narrates over the visible board and the prompt follows it.
+  // Idempotent — safe to call from any start path.
+  const revealBoard = useCallback(() => {
     if (startedRef.current) return
     startedRef.current = true
     setGameReady(true)
-    generateNewQuestion()
+    generateNewQuestion(false)
   }, [generateNewQuestion])
 
-  // Play welcome message then reveal the cards. Self-guards (ref) so the welcome plays at most
-  // once even if audio readiness flips more than once.
-  const playWelcomeAndStart = useCallback(async () => {
-    if (welcomeTriggered.current) return
+  // Voice the current question's prompt (used once the welcome has finished). Skipped if the child
+  // already started tapping.
+  const speakCurrentPrompt = useCallback(async () => {
+    const item = currentItemRef.current
+    if (!item || hasInteractedRef.current) return
+    try {
+      audio.updateUserInteraction()
+      await config.speakQuizPrompt(item, audio)
+    } catch (error) {
+      logError('Error playing quiz prompt', { error: error?.toString() })
+    }
+  }, [audio, config])
+
+  // Play the welcome over the already-visible board, then voice the first prompt. Self-guards so it
+  // runs at most once; skips the trailing prompt if the child already started tapping.
+  const playWelcomeThenPrompt = useCallback(async () => {
+    if (welcomeTriggered.current || hasInteractedRef.current) return
     welcomeTriggered.current = true
     try {
-      // Play the welcome message and wait for it to complete
       await audio.playGameWelcome(config.gameWelcomeType)
-
-      // Additional delay after welcome audio completes to ensure clean transition
-      const additionalDelay = isIOS() ? 1500 : 2000  // Even longer delay for cleaner audio experience
-      setTimeout(() => beginGame(), additionalDelay)
     } catch (error) {
       logError('Error playing welcome', { error: error?.toString() })
-      // Still start the game even if audio fails
-      beginGame()
     }
-  }, [audio, config.gameWelcomeType, beginGame])
+    speakCurrentPrompt()
+  }, [audio, config.gameWelcomeType, speakCurrentPrompt])
 
   useEffect(() => {
     // Prevent duplicate initialization with race condition guard
     if (hasInitialized.current) return
     hasInitialized.current = true
 
-    // Play the welcome immediately if audio is already unlocked.
+    // Instant load: show the playable board immediately (no waiting on the welcome).
+    revealBoard()
+
+    // Narrate the welcome over the visible board if audio is already unlocked.
     if (audio.isAudioReady) {
-      playWelcomeAndStart()
+      playWelcomeThenPrompt()
     }
 
-    // Resilience: browsers block the AudioContext until a user gesture, so isAudioReady may
-    // never flip on a fresh/deep-linked load. Reveal the playable cards after a short delay so
-    // the child is never stranded on an empty screen; the welcome line still plays if/when
-    // audio unlocks (beginGame + playWelcomeAndStart are ref-guarded, so this never
-    // double-starts).
-    const fallback = setTimeout(() => beginGame(), 2500)
-
     return () => {
-      clearTimeout(fallback)
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current)
         timeoutRef.current = null
@@ -226,22 +224,24 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
         guideReactionTimer.current = null
       }
     }
-  }, [audio.isAudioReady, playWelcomeAndStart, beginGame])
+  }, [audio.isAudioReady, playWelcomeThenPrompt, revealBoard])
 
-  // When audio unlocks after mount, play the welcome (unless it/the game already started).
-  // Ref-guarded so the effect performs no setState.
+  // When audio unlocks after mount, play the welcome (board is already visible). Ref-guarded +
+  // interaction-guarded inside playWelcomeThenPrompt so it never talks over active play.
   useEffect(() => {
-    if (audio.isAudioReady && !welcomeTriggered.current && !startedRef.current) {
-      playWelcomeAndStart()
+    if (audio.isAudioReady && !welcomeTriggered.current) {
+      playWelcomeThenPrompt()
     }
-  }, [audio.isAudioReady, playWelcomeAndStart])
+  }, [audio.isAudioReady, playWelcomeThenPrompt])
 
   const handleItemClick = async (selectedItem: QuizItem) => {
     // Only prevent clicks if game isn't ready
     if (!gameReady || !currentItem) {
       return
     }
-    
+    // The child is playing → suppress any pending/late welcome from talking over them.
+    hasInteractedRef.current = true
+
     // Critical iOS fix: Update user interaction timestamp BEFORE audio call
     audio.updateUserInteraction()
     

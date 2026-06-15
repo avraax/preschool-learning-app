@@ -40,10 +40,13 @@ const NumberLearning: React.FC = () => {
     componentId: 'NumberLearning',
     autoInitialize: false
   })
-  const [gameReady, setGameReady] = useState(false)
-  const [audioInitialized, setAudioInitialized] = useState(false)
+  // Instant load: the grid is interactive from the first render; the welcome narrates over it.
+  const [gameReady] = useState(true)
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
   const hasInitialized = useRef(false)
+  const welcomeTriggered = useRef(false)
+  // True once the child taps → suppresses a (possibly late) welcome from talking over their play.
+  const hasInteractedRef = useRef(false)
 
   const { showCelebration, celebrationIntensity, celebrationDuration, celebrateTier, stopCelebration } = useCelebration()
 
@@ -74,10 +77,9 @@ const NumberLearning: React.FC = () => {
     if (hasInitialized.current) return
     hasInitialized.current = true
 
-    // Check if audio is ready
+    // The board is already interactive (gameReady starts true). Just narrate the welcome over it.
     if (audio.isAudioReady) {
-      setAudioInitialized(true)
-      playWelcomeAndStart()
+      playWelcome()
     }
 
     return () => {
@@ -93,25 +95,24 @@ const NumberLearning: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Monitor audio readiness - only if not already initialized
+  // When audio unlocks after mount, play the welcome (board already interactive). Guarded inside
+  // playWelcome so it never talks over active play.
   useEffect(() => {
-    if (audio.isAudioReady && !audioInitialized && !hasInitialized.current) {
-      hasInitialized.current = true
-      setAudioInitialized(true)
-      playWelcomeAndStart()
+    if (audio.isAudioReady && !welcomeTriggered.current) {
+      playWelcome()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [audio.isAudioReady, audioInitialized])
+  }, [audio.isAudioReady])
 
-  // Play welcome message and start learning
-  const playWelcomeAndStart = async () => {
+  // Narrate the welcome over the already-interactive board. Self-guards; skipped once the child
+  // has started tapping.
+  const playWelcome = async () => {
+    if (welcomeTriggered.current || hasInteractedRef.current) return
+    welcomeTriggered.current = true
     try {
       await audio.playGameWelcome('numberlearning')
-      const delay = isIOS() ? 1000 : 1500
-      setTimeout(() => setGameReady(true), delay)
     } catch (error) {
       logError('Error playing welcome', { error: error?.toString() })
-      setGameReady(true)
     }
   }
 
@@ -136,6 +137,7 @@ const NumberLearning: React.FC = () => {
   }
 
   const browseToNumber = async (index: number) => {
+    hasInteractedRef.current = true
     audio.updateUserInteraction()
     if (audio.isPlaying) audio.cancelCurrentAudio()
 
@@ -191,6 +193,7 @@ const NumberLearning: React.FC = () => {
 
   const handleChallengeTap = async (index: number) => {
     if (target === null) return
+    hasInteractedRef.current = true
     audio.updateUserInteraction()
     audio.cancelCurrentAudio()
     const tapped = numbers[index]
