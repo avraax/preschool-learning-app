@@ -22,7 +22,7 @@ import {
 import { Mic } from 'lucide-react'
 import { ttsClient } from '../../services/ttsClient'
 import { TTS_CONFIG } from '../../config/tts-config'
-import { OVERRIDE_SHORTLIST } from './voicelabData'
+import { OVERRIDE_VOICES, VOICE_TIERS } from './voicelabData'
 
 const FONT = '"Comic Sans MS", "Comic Sans", cursive'
 const DEFAULT_RATE = TTS_CONFIG.speakingRate // 0.9
@@ -30,12 +30,12 @@ const DEFAULT_RATE = TTS_CONFIG.speakingRate // 0.9
 const VoiceOverridePanel: React.FC = () => {
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null)
   const existing = ttsClient.getVoiceOverride()
-  const [name, setName] = useState(existing?.name ?? OVERRIDE_SHORTLIST[0].name)
+  const [name, setName] = useState(existing?.name ?? OVERRIDE_VOICES[0].name)
   const [rate, setRate] = useState(existing?.speakingRate ?? DEFAULT_RATE)
 
   const apply = (nextName: string, nextRate: number) => {
-    const entry = OVERRIDE_SHORTLIST.find((v) => v.name === nextName) ?? OVERRIDE_SHORTLIST[0]
-    ttsClient.setVoiceOverride({ name: entry.name, speakingRate: nextRate })
+    const entry = OVERRIDE_VOICES.find((v) => v.name === nextName) ?? OVERRIDE_VOICES[0]
+    ttsClient.setVoiceOverride({ name: entry.name, lang: entry.lang, speakingRate: nextRate })
   }
 
   const handleVoice = (nextName: string) => {
@@ -50,7 +50,7 @@ const VoiceOverridePanel: React.FC = () => {
 
   const reset = () => {
     ttsClient.setVoiceOverride(null)
-    setName(OVERRIDE_SHORTLIST[0].name)
+    setName(OVERRIDE_VOICES[0].name)
     setRate(DEFAULT_RATE)
   }
 
@@ -99,25 +99,37 @@ const VoiceOverridePanel: React.FC = () => {
         <Box sx={{ p: 2, width: 260, fontFamily: FONT }}>
           <Typography sx={{ fontFamily: FONT, fontWeight: 700, mb: 1 }}>🎙️ Stemme-test</Typography>
 
-          <RadioGroup value={name} onChange={(e) => handleVoice(e.target.value)}>
-            {OVERRIDE_SHORTLIST.map((v) => (
-              <FormControlLabel
-                key={v.name}
-                value={v.name}
-                control={<Radio size="small" />}
-                sx={{ '& .MuiFormControlLabel-label': { fontFamily: FONT, fontSize: '0.9rem' } }}
-                label={
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-                    {v.label}
-                    <Chip label={v.gender} size="small" sx={{ height: 18, fontSize: '0.65rem' }} />
-                    {v.current && (
-                      <Chip label="nuværende" size="small" color="success" sx={{ height: 18, fontSize: '0.65rem' }} />
-                    )}
-                  </Box>
-                }
-              />
-            ))}
-          </RadioGroup>
+          <Typography sx={{ fontFamily: FONT, fontSize: '0.75rem', color: 'text.secondary', mb: 0.5 }}>
+            Skifter den danske fortælle-stemme (engelsk sektion uupåvirket).
+          </Typography>
+          <Box sx={{ maxHeight: 260, overflowY: 'auto', pr: 0.5 }}>
+            <RadioGroup value={name} onChange={(e) => handleVoice(e.target.value)}>
+              {VOICE_TIERS.map((tier) => (
+                <Box key={tier.tier} sx={{ mb: 0.5 }}>
+                  <Typography sx={{ fontFamily: FONT, fontSize: '0.7rem', color: 'text.secondary', mt: 0.75 }}>
+                    {tier.tier}
+                  </Typography>
+                  {tier.voices.map((v) => (
+                    <FormControlLabel
+                      key={v.name}
+                      value={v.name}
+                      control={<Radio size="small" />}
+                      sx={{ '& .MuiFormControlLabel-label': { fontFamily: FONT, fontSize: '0.9rem' } }}
+                      label={
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                          {v.label}
+                          <Chip label={v.gender} size="small" sx={{ height: 18, fontSize: '0.65rem' }} />
+                          {v.current && (
+                            <Chip label="lead" size="small" color="success" sx={{ height: 18, fontSize: '0.65rem' }} />
+                          )}
+                        </Box>
+                      }
+                    />
+                  ))}
+                </Box>
+              ))}
+            </RadioGroup>
+          </Box>
 
           <Typography sx={{ fontFamily: FONT, fontSize: '0.85rem', mt: 1.5 }}>
             Hastighed: <strong>{rate.toFixed(2)}</strong>

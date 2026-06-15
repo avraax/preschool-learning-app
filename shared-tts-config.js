@@ -15,12 +15,13 @@ export const TTS_CONFIG = {
   // Speaking rate as an Azure <prosody rate> multiplier (1.0 = natural). Tuned slow for kids.
   speakingRate: 0.9,
 
-  // voiceType → Azure voice. Danish lead voice is Christel (auditioned in /voicelab; not yet
-  // final). `male` uses Jeppe. English section uses an en-GB neural voice.
+  // voiceType → Azure voice. Danish narration (most of the app) uses Christel; `male` uses Jeppe.
+  // English section narration uses Ava (en-US multilingual). The VoiceOverridePanel can swap the
+  // Danish narration voice live among all VoiceLab voices for auditioning.
   voices: {
     primary: { name: 'da-DK-ChristelNeural', lang: 'da-DK' },
     backup:  { name: 'da-DK-ChristelNeural', lang: 'da-DK' },
     male:    { name: 'da-DK-JeppeNeural', lang: 'da-DK' },
-    english: { name: 'en-GB-SoniaNeural', lang: 'en-GB' },
+    english: { name: 'en-US-AvaMultilingualNeural', lang: 'en-US' },
   },
 };

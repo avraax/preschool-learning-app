@@ -26,7 +26,6 @@
     "@fontsource/exo-2": "^5.2.8",
     "@fontsource/fredoka": "^5.2.10",
     "@google-cloud/speech": "^7.3.2",
-    "@google-cloud/text-to-speech": "^6.4.1",
     "@mui/icons-material": "^9.1.1",
     "@mui/material": "^9.1.1",
     "@mui/system": "^9.1.1",

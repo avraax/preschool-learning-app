@@ -7,11 +7,13 @@
 export interface VoiceOverride {
   /** Full Azure voice name, e.g. 'da-DK-ChristelNeural'. */
   name: string
+  /** Voice locale, e.g. 'da-DK' / 'en-US' / 'en-GB'. Drives the SSML xml:lang + lexicon gating. */
+  lang: string
   /** Azure <prosody rate> multiplier (1.0 = natural). */
   speakingRate: number
 }
 
-const KEY = 'voicelab_voice_override_v2'
+const KEY = 'voicelab_voice_override_v3'
 
 export function loadVoiceOverride(): VoiceOverride | null {
   try {
@@ -19,7 +21,8 @@ export function loadVoiceOverride(): VoiceOverride | null {
     if (!raw) return null
     const parsed = JSON.parse(raw)
     if (parsed && typeof parsed.name === 'string' && typeof parsed.speakingRate === 'number') {
-      return parsed as VoiceOverride
+      // lang added in v3 — default to da-DK for any older persisted value.
+      return { name: parsed.name, lang: typeof parsed.lang === 'string' ? parsed.lang : 'da-DK', speakingRate: parsed.speakingRate }
     }
   } catch {
     /* ignore malformed / unavailable storage */

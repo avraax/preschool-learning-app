@@ -6,7 +6,7 @@ Danish educational web app for children aged 3-7. Alphabet, math, colors, and me
 
 - React 19 + TypeScript, Vite 8, Material-UI v9 (no Tailwind)
 - Framer Motion for animations, Howler.js for sound effects
-- Audio: `SimplifiedAudioController` singleton → `ttsClient` playback engine → **Azure AI Speech** (single TTS provider) → Web Speech API (fallback) → Howler (SFX). Danish da-DK voice (Christel, lead) for most sections; Azure en-GB voice for the Engelsk section. Danish pronunciation is corrected via a hosted W3C PLS lexicon (`public/da-DK.pls`) + inline IPA. (Google TTS was removed in the Audio v2 rebuild; Google STT still powers "Sig et Ord".)
+- Audio: `SimplifiedAudioController` singleton → `ttsClient` playback engine → **Azure AI Speech** (single TTS provider) → Web Speech API (fallback) → Howler (SFX). Danish da-DK voice (Christel) for most sections; Azure en-US Ava (multilingual) for the Engelsk section. The mic-icon VoiceOverridePanel can swap the Danish narration voice live among all Azure VoiceLab voices. Danish pronunciation is corrected via a hosted W3C PLS lexicon (`public/da-DK.pls`) + inline IPA. (Google TTS was removed in the Audio v2 rebuild; Google STT still powers "Sig et Ord".)
 - Speech input (Sig et Ord): Google Cloud Speech-to-Text v2 via `/api/stt` + `useSpeechInput` hook
 - React Router DOM v7 (route components lazy-loaded), Vite PWA Plugin
 - Deployment: Vercel (auto-deploy on push to `master`)

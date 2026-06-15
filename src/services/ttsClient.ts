@@ -177,12 +177,16 @@ export class TtsClient {
   // ===== synthesis =====
   private resolveRequest(text: string, voiceType: VoiceType, speed?: number) {
     const base = TTS_CONFIG.voices[voiceType] ?? TTS_CONFIG.voices.primary
-    const isDanish = base.lang.startsWith('da')
-    const override = isDanish ? this.voiceOverride : null
+    const baseDanish = base.lang.startsWith('da')
+    // The override applies to the Danish narration voiceTypes only (the bulk of the app); the
+    // English section keeps its own voice. The override carries its own locale.
+    const override = baseDanish ? this.voiceOverride : null
     const name = override?.name ?? base.name
-    const lang = base.lang
+    const lang = override?.lang ?? base.lang
     const effectiveSpeed = override?.speakingRate ?? speed ?? TTS_CONFIG.speakingRate
-    const useLexicon = isDanish
+    // Lexicon is da-DK only — gate on the EFFECTIVE locale so an en-* override doesn't ship a
+    // mismatched lexicon.
+    const useLexicon = lang.startsWith('da')
     const cacheKey = `azure|${name}|${lang}|r${effectiveSpeed}|lex${useLexicon ? 1 : 0}|${text}`
 
     const body: Record<string, unknown> = { text, speed: effectiveSpeed, useLexicon }

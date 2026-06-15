@@ -51,22 +51,20 @@ export const VOICE_TIERS: VoiceTier[] = [
     ],
   },
   {
+    // English-section narration default is Ava (en-US multilingual, in the Flersproget tier above).
+    // These en-GB voices remain available to audition.
     tier: 'Engelsk (en-GB)',
     voices: [
-      v('en-GB-SoniaNeural', 'Sonia', 'F', 'en-GB', { current: true }),
+      v('en-GB-SoniaNeural', 'Sonia', 'F', 'en-GB'),
       v('en-GB-RyanNeural', 'Ryan', 'M', 'en-GB'),
       v('en-GB-LibbyNeural', 'Libby', 'F', 'en-GB'),
     ],
   },
 ]
 
-/** In-app override popover shortlist: lead default + finalists for in-game auditioning. */
-export const OVERRIDE_SHORTLIST: VoiceEntry[] = [
-  CURRENT_VOICE, // Christel (lead default)
-  v('da-DK-JeppeNeural', 'Jeppe', 'M', 'da-DK'),
-  v('en-US-AvaMultilingualNeural', 'Ava (multilingual)', 'F', 'da-DK'),
-  v('de-DE-SeraphinaMultilingualNeural', 'Seraphina (multilingual)', 'F', 'da-DK'),
-]
+/** In-app override popover: ALL VoiceLab voices, flattened, so the Danish narration voice can be
+ *  switched live among every Azure candidate (grouped by tier in the panel via VOICE_TIERS). */
+export const OVERRIDE_VOICES: VoiceEntry[] = VOICE_TIERS.flatMap((t) => t.voices)
 
 // ---- Fixed samples ----------------------------------------------------------
 
