@@ -4,7 +4,7 @@
   "installCommand": "npm install",
   "framework": "vite",
   "functions": {
-    "api/tts.ts": {
+    "api/tts-azure.ts": {
       "maxDuration": 10
     }
   },
