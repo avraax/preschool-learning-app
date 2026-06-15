@@ -46,31 +46,20 @@ const AlphabetGame: React.FC = () => {
     // Quiz identification
     quizType: 'alphabet',
 
-    // Content generation
+    // Content generation — all word-association (Overhaul -03-). The child sees a picture and picks
+    // the letter the word starts with — training the first-sound/reading-precursor skill. The old
+    // ~50% "hear the letter" recognition mode was retired (he knows every letter already).
     generateQuizItem: () => {
-      // ~50% classic "hear the letter" rounds, ~50% word-association rounds
-      const useWordMode = Math.random() < 0.5
-
-      if (useWordMode) {
-        const letter = WORD_LETTERS[Math.floor(Math.random() * WORD_LETTERS.length)]
-        const { word, emoji } = LETTER_WORDS[letter]
-        return {
-          value: letter,
-          display: letter,
-          audioPrompt: `Hvad starter ${word} med?`,
-          repeatWord: word,
-          // Show only the picture — NOT the word — so the child must recognise the
-          // starting letter from the image, not just read it off the label.
-          questionVisual: { emoji }
-        }
-      }
-
-      const letter = DANISH_ALPHABET[Math.floor(Math.random() * DANISH_ALPHABET.length)]
+      const letter = WORD_LETTERS[Math.floor(Math.random() * WORD_LETTERS.length)]
+      const { word, emoji } = LETTER_WORDS[letter]
       return {
         value: letter,
         display: letter,
-        audioPrompt: DANISH_PHRASES.gamePrompts.findLetter(letter),
-        repeatWord: letter
+        audioPrompt: `Hvad starter ${word} med?`,
+        repeatWord: word,
+        // Show only the picture — NOT the word — so the child must recognise the
+        // starting letter from the image, not just read it off the label.
+        questionVisual: { emoji }
       }
     },
     
