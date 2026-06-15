@@ -8,10 +8,14 @@ import AnswerTile, { type AnswerTileState } from '../common/AnswerTile'
 import SymbolTile from '../common/SymbolTile'
 import type { GuideReaction } from '../common/ThemeMascot'
 import { useCelebration } from '../common/CelebrationEffect'
-import { useCharacterState } from '../common/LottieCharacter'
 import { MathScoreChip } from '../common/ScoreChip'
 import { MathRepeatButton } from '../common/RepeatButton'
+import CountingAid, { TaelMedMigButton } from '../common/CountingAid'
+import RoundResultScreen from '../common/RoundResultScreen'
 import { useGameState } from '../../hooks/useGameState'
+import { useRound } from '../../hooks/useRound'
+import { progressStore, type RoundOutcome } from '../../services/progressStore'
+import { sfx } from '../../services/sfxClient'
 import { isIOS } from '../../utils/deviceDetection'
 import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 
@@ -27,6 +31,7 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
   const isAddition = operation === 'addition'
   const title = isAddition ? 'Plus Opgaver' : 'Minus Opgaver'
   const operator = isAddition ? '+' : '-'
+  const gameId = isAddition ? 'math.addition' : 'math.subtraction'
 
   const [num1, setNum1] = useState<number | null>(null)
   const [num2, setNum2] = useState<number | null>(null)
@@ -48,15 +53,20 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
   const startedRef = useRef(false)
   const welcomeTriggered = useRef(false)
 
-  const { score, incrementScore, isScoreNarrating, handleScoreClick } = useGameState()
+  const { score, incrementScore, resetScore, isScoreNarrating, handleScoreClick } = useGameState()
+
+  // Bounded round + reward flow (Foundation §3). 8 questions, 3★ = no mistakes, 2★ ≤ 2.
+  const round = useRound({ length: 8, starThresholds: { three: 0, two: 2 } })
+  // True until the first wrong tile is tapped for the current problem (gates streak/star).
+  const firstAttemptRef = useRef(true)
+  const [roundOutcome, setRoundOutcome] = useState<RoundOutcome | null>(null)
+  // On-demand counting aid visibility (reset per problem).
+  const [aidOpen, setAidOpen] = useState(false)
 
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
   const guideReactionTimer = useRef<NodeJS.Timeout | null>(null)
 
-  // Kept for the centralized celebration timing helper (drives reaction callbacks); the teacher
-  // figure itself is no longer rendered — the corner GameGuide reacts instead.
-  const mathTeacher = useCharacterState('wave')
-  const { showCelebration, celebrationIntensity, celebrate, stopCelebration } = useCelebration()
+  const { showCelebration, celebrationIntensity, celebrationDuration, celebrateTier, stopCelebration } = useCelebration()
 
   const logError = (message: string, data?: any) => {
     if (message.includes('Error') || message.includes('error')) {
@@ -124,6 +134,9 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
     // Clear the previous answer's feedback + guide reaction before the new problem appears.
     setFeedback(null)
     setGuideReaction(null)
+    // New problem → first attempt fresh again; hide the counting aid (recognition test first).
+    firstAttemptRef.current = true
+    setAidOpen(false)
 
     let firstNum: number
     let secondNum: number
@@ -146,18 +159,27 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
     setNum2(secondNum)
     setCorrectAnswer(answer)
 
-    // Generate 4 answer options
-    const answerOptions = new Set([answer])
-    while (answerOptions.size < 4) {
-      const wrongAnswer = isAddition
-        ? Math.floor(Math.random() * 20) + 1 // 1-20
-        : Math.floor(Math.random() * 11) // 0-10
-      if (wrongAnswer !== answer) {
-        answerOptions.add(wrongAnswer)
-      }
+    // Near-answer distractors (off-by-one/two + the operands) clamped to the valid result range,
+    // so wrong options are plausible confusions rather than random noise. Top up with random
+    // in-range values only if too few distinct confusables exist.
+    const lo = isAddition ? 1 : 0
+    const hi = isAddition ? 20 : 10
+    const confusables = (isAddition
+      ? [answer - 1, answer + 1, answer - 2, answer + 2]
+      : [answer - 1, answer + 1, answer + 2, firstNum, secondNum]
+    ).filter((c) => c >= lo && c <= hi && c !== answer)
+
+    const picks: number[] = []
+    for (const c of confusables.sort(() => Math.random() - 0.5)) {
+      if (picks.length >= 3) break
+      if (!picks.includes(c)) picks.push(c)
+    }
+    while (picks.length < 3) {
+      const r = Math.floor(Math.random() * (hi - lo + 1)) + lo
+      if (r !== answer && !picks.includes(r)) picks.push(r)
     }
 
-    setOptions(Array.from(answerOptions).sort(() => Math.random() - 0.5))
+    setOptions([answer, ...picks].sort(() => Math.random() - 0.5))
 
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current)
@@ -205,21 +227,35 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
 
     if (isCorrect) {
       incrementScore()
-      celebrate()
+      celebrateTier('micro') // light per-answer sparkle + soft "correct" SFX
+    } else {
+      // Wrong answers don't advance/punish (retry-until-right preserved); they only break this
+      // problem's first-try flag (round streak/star accounting) + a gentle SFX.
+      firstAttemptRef.current = false
+      sfx.play('wrong')
     }
 
     setTimeout(async () => {
       try {
-        await audio.playCelebrationWithStandardTiming({
-          isCorrect,
-          celebrate,
-          stopCelebration,
-          incrementScore: undefined,
-          nextAction: isCorrect ? generateNewProblem : undefined,
-          teacherCharacter: mathTeacher
-        })
+        await audio.announceGameResult(isCorrect)
+
+        setTimeout(() => {
+          if (!isCorrect) return
+          stopCelebration()
+
+          // Bounded round: record the completed question, fire streak milestones, end or advance.
+          const r = round.completeQuestion(firstAttemptRef.current)
+          if (!r.done && r.streak > 0 && r.streak % 3 === 0) {
+            celebrateTier('streak')
+          }
+          if (r.done) {
+            finishRound(r.firstTryCorrect, r.longestStreak)
+          } else {
+            generateNewProblem()
+          }
+        }, isIOS() ? 1500 : 2000)
       } catch (error: any) {
-        logError('Error in centralized celebration', {
+        logError('Error in game result audio', {
           selectedAnswer,
           correctAnswer,
           isCorrect,
@@ -227,6 +263,25 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
         })
       }
     }, 150)
+  }
+
+  // Round ended → record to the progress store (stars/bests/stickers) and show the result hero.
+  const finishRound = (firstTryCorrect: number, longestStreak: number) => {
+    const outcome = progressStore.recordRoundResult(
+      gameId,
+      { correct: firstTryCorrect, total: round.length, longestStreak },
+      { starThresholds: { three: 0, two: 2 } },
+    )
+    setRoundOutcome(outcome)
+  }
+
+  // "Spil igen" → reset round + score and start a fresh round.
+  const handleReplay = () => {
+    stopCelebration()
+    setRoundOutcome(null)
+    round.reset()
+    resetScore()
+    generateNewProblem()
   }
 
   const repeatProblem = async () => {
@@ -260,8 +315,17 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
       backRoute="/math"
       guideReaction={guideReaction}
       score={<MathScoreChip score={score} disabled={isScoreNarrating} onClick={handleScoreClick} />}
-      celebration={{ show: showCelebration, intensity: celebrationIntensity, onComplete: stopCelebration }}
+      celebration={{ show: showCelebration, intensity: celebrationIntensity, duration: celebrationDuration, onComplete: stopCelebration }}
     >
+      {roundOutcome ? (
+        <RoundResultScreen
+          outcome={roundOutcome}
+          categoryId="math"
+          backRoute="/math"
+          onReplay={handleReplay}
+        />
+      ) : (
+      <>
       {/* Question + soft-3D number sentence + repeat button — a clean flex column so the
           equation never overlaps the question text (the old layout bug). */}
       <Box
@@ -320,6 +384,21 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
 
             <MathRepeatButton onClick={repeatProblem} disabled={false} />
           </motion.div>
+        )}
+
+        {/* On-demand counting aid: two-colour dots (add) or crossed-out dots (sub) so he can
+            work out the fact — matching how he already counts on fingers, then weaning off. */}
+        {showEquation && num1 !== null && num2 !== null && (
+          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: { xs: 1, md: 1.5 } }}>
+            <TaelMedMigButton open={aidOpen} onToggle={() => setAidOpen((v) => !v)} accent={categoryThemes.math.accentColor} />
+            <CountingAid
+              mode={isAddition ? 'add' : 'sub'}
+              a={num1}
+              b={num2}
+              accent={categoryThemes.math.accentColor}
+              open={aidOpen}
+            />
+          </Box>
         )}
       </Box>
 
@@ -384,6 +463,8 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
           )) : null}
         </Box>
       </Box>
+      </>
+      )}
     </GameShell>
   )
 }
