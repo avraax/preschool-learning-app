@@ -1,12 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { Box } from '@mui/material'
+import { useTheme } from '@mui/material/styles'
 import { motion } from 'framer-motion'
 import { CategoryTheme } from '../../config/categoryThemes'
 import { useCharacterState } from '../common/LottieCharacter'
 import { useCelebration } from '../common/CelebrationEffect'
-import { DANISH_PHRASES } from '../../config/danish-phrases'
 import { useGameState } from '../../hooks/useGameState'
+import { useReducedMotion } from '../../hooks/useReducedMotion'
+import { darken, hexToRgba } from '../../theme/tokens/helpers'
+import { progressStore, type RoundOutcome } from '../../services/progressStore'
+import { sfx } from '../../services/sfxClient'
 import GameShell from './GameShell'
+import RoundResultScreen from './RoundResultScreen'
 // Simplified audio system
 import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 
@@ -56,10 +61,6 @@ const flipStyles = `
     transform: rotateY(180deg);
   }
 
-  .memory-card-text {
-    color: #1976d2 !important;
-  }
-
   @keyframes pulse {
     0% { transform: scale(1); opacity: 1; }
     50% { transform: scale(1.05); opacity: 0.8; }
@@ -88,9 +89,12 @@ export interface MemoryItemDisplay {
 export interface UnifiedMemoryConfig {
   // Game identification
   gameType: 'letters' | 'numbers' | 'colors' | 'shapes'
-  
+  gameId: string                             // stable per-board id, e.g. 'memory.letters.10'
+  boardPairs: number                         // 10 | 20 — pairs on the board (one board = one round)
+  starThresholds: { three: number; two: number }  // in MISTAKES (= mismatched turns)
+
   // Content generation
-  generateItems: () => string[]              // Generate 20 items for pairs
+  generateItems: () => string[]              // pool of items; engine slices boardPairs for pairs
   getDisplayData: (item: string) => MemoryItemDisplay
   
   // Audio configuration
@@ -115,12 +119,23 @@ interface UnifiedMemoryGameProps {
 }
 
 const UnifiedMemoryGame: React.FC<UnifiedMemoryGameProps> = ({ config }) => {
+  const muiTheme = useTheme()
+  const reduce = useReducedMotion()
   const [cards, setCards] = useState<MemoryCard[]>([])
   const [revealedCards, setRevealedCards] = useState<MemoryCard[]>([])
   const [matchedPairs, setMatchedPairs] = useState(0)
   const [isProcessing, setIsProcessing] = useState(false)
   const [wrongPairIds, setWrongPairIds] = useState<string[]>([])
-    
+  // pairId of the pair that just matched → drives a one-shot match pop on those two cards.
+  const [poppedPairId, setPoppedPairId] = useState<string | null>(null)
+
+  // Bounded round (one board = one round). No useRound: Memory always finds every pair, so the
+  // only skill signal is how many mismatched turns it took. Tracked in refs (async match logic).
+  const mismatchesRef = useRef(0)
+  const matchStreakRef = useRef(0)
+  const longestMatchStreakRef = useRef(0)
+  const [roundOutcome, setRoundOutcome] = useState<RoundOutcome | null>(null)
+
   // Centralized game state management
   const { score, incrementScore, resetScore, isScoreNarrating, handleScoreClick } = useGameState()
   
@@ -133,7 +148,7 @@ const UnifiedMemoryGame: React.FC<UnifiedMemoryGameProps> = ({ config }) => {
 
   // Character and celebration management
   const teacher = useCharacterState('wave')
-  const { showCelebration, celebrationIntensity, celebrate, stopCelebration } = useCelebration()
+  const { showCelebration, celebrationIntensity, celebrationDuration, celebrateTier, stopCelebration } = useCelebration()
 
   // Production logging - only essential errors
   const logError = (message: string, data?: any) => {
@@ -200,12 +215,12 @@ const UnifiedMemoryGame: React.FC<UnifiedMemoryGameProps> = ({ config }) => {
   }
 
   const initializeGame = () => {
-    // Generate 20 random items for pairs using config
+    // Generate the item pool using config
     const sourceItems = config.generateItems()
-    
-    // Randomly select 20 items (or all if less than 20)
+
+    // Select boardPairs items (or all if fewer) for this board's pairs
     const shuffledSource = [...sourceItems].sort(() => Math.random() - 0.5)
-    const selectedItems = shuffledSource.slice(0, Math.min(20, sourceItems.length))
+    const selectedItems = shuffledSource.slice(0, Math.min(config.boardPairs, sourceItems.length))
     
     // Create pairs (each item appears twice)
     const cardData: MemoryCard[] = []
@@ -238,6 +253,12 @@ const UnifiedMemoryGame: React.FC<UnifiedMemoryGameProps> = ({ config }) => {
     setRevealedCards([])
     setMatchedPairs(0)
     setIsProcessing(false)
+    setPoppedPairId(null)
+    setWrongPairIds([])
+    // Fresh board → fresh round counters.
+    mismatchesRef.current = 0
+    matchStreakRef.current = 0
+    longestMatchStreakRef.current = 0
     resetScore()
   }
 
@@ -272,6 +293,9 @@ const UnifiedMemoryGame: React.FC<UnifiedMemoryGameProps> = ({ config }) => {
     if (isProcessing || clickedCard.isRevealed || clickedCard.isMatched || revealedCards.length >= 2) {
       return
     }
+
+    // Light whoosh as the card flips up (separate SFX channel — never fights narration).
+    sfx.play('flip')
 
     // Reveal the clicked card
     const updatedCards = cards.map(card =>
@@ -329,56 +353,53 @@ const UnifiedMemoryGame: React.FC<UnifiedMemoryGameProps> = ({ config }) => {
       await new Promise(resolve => setTimeout(resolve, 1000))
 
       if (isMatch) {
-        // Match found!
+        // Match found! Mark the pair matched, count it, pop the two cards.
         const matchedCards = cards.map(card =>
           card.pairId === firstCard.pairId ? { ...card, isMatched: true, isRevealed: true } : card
         )
         setCards(matchedCards)
-        setMatchedPairs(prev => prev + 1)
+        const newMatchedPairs = matchedPairs + 1
+        setMatchedPairs(newMatchedPairs)
         incrementScore()
+        teacher.wave()
 
-        // Play match success using centralized pattern
-        await audio.handleCompleteGameResult({
-          isCorrect: true,
-          character: teacher,
-          celebrate: () => {}, // Don't start new celebration for each match
-          stopCelebration: () => {},
-          incrementScore: () => {}, // Already incremented above
-          currentScore: score,
-          nextAction: () => {
-            teacher.wave()
-          },
-          autoAdvanceDelay: 500 // Quick transition for matches
-        })
+        // micro tier fires the bright `correct` SFX + a small sparkle (no extra sfx.play).
+        celebrateTier('micro')
+        // One-shot match pop on the matched pair (skipped under reduced motion via the render guard).
+        setPoppedPairId(firstCard.pairId)
+        setTimeout(() => setPoppedPairId(null), 600)
 
-        // Check if game is complete (all 20 pairs found)
-        if (matchedPairs + 1 === 20) {
-          // Use centralized game completion handler
-          await audio.handleGameCompletion({
-            character: teacher,
-            celebrate: celebrate,
-            stopCelebration: stopCelebration,
-            resetAction: () => {
-              restartGame()
-            },
-            completionMessage: DANISH_PHRASES.completion.memoryGameSuccess,
-            autoResetDelay: 3000
-          })
+        // Match-streak tracking → "Længste stime" record. Every 3rd in a row gets a streak burst,
+        // but never on the final pair (the round result is the bigger moment).
+        matchStreakRef.current += 1
+        longestMatchStreakRef.current = Math.max(longestMatchStreakRef.current, matchStreakRef.current)
+        const isFinalPair = newMatchedPairs === config.boardPairs
+        if (matchStreakRef.current % 3 === 0 && !isFinalPair) {
+          celebrateTier('streak')
+        }
+
+        // Final pair → finish the round. Brief beat so the final pop/celebration registers
+        // before the result screen replaces the board.
+        if (isFinalPair) {
+          setTimeout(() => finishRound(), 700)
         }
 
       } else {
-        // No match - show shake animation
+        // No match - gentle wrong SFX + shake, then flip back. Never punishing, never ends the board.
+        sfx.play('wrong')
+        mismatchesRef.current += 1
+        matchStreakRef.current = 0
         setWrongPairIds(newRevealedCards.map(c => c.id))
-        
+
         // Wait for shake animation
         await new Promise(resolve => setTimeout(resolve, 600))
-        
+
         // Reset wrong pair indicator
         setWrongPairIds([])
-        
+
         // Wait a bit more before flipping back
         await new Promise(resolve => setTimeout(resolve, 400))
-        
+
         const resetCards = cards.map(card =>
           newRevealedCards.some(revealed => revealed.id === card.id) && !card.isMatched
             ? { ...card, isRevealed: false }
@@ -395,8 +416,32 @@ const UnifiedMemoryGame: React.FC<UnifiedMemoryGameProps> = ({ config }) => {
     }
   }
 
+  // Record the round once on the final match. correct = boardPairs (the board always completes),
+  // total = boardPairs + mismatches → progressStore derives mistakes = mismatches, so stars scale
+  // with mismatched turns; longestStreak feeds the "Længste stime" record. (Zero Foundation change.)
+  const finishRound = () => {
+    const outcome = progressStore.recordRoundResult(
+      config.gameId,
+      {
+        correct: config.boardPairs,
+        total: config.boardPairs + mismatchesRef.current,
+        longestStreak: longestMatchStreakRef.current,
+      },
+      { starThresholds: config.starThresholds },
+    )
+    setRoundOutcome(outcome)
+  }
+
+  const handleReplay = () => {
+    stopCelebration()
+    setRoundOutcome(null)
+    initializeGame()
+  }
+
   const restartGame = () => {
     teacher.wave()
+    stopCelebration()
+    setRoundOutcome(null)
     initializeGame()
   }
 
@@ -415,8 +460,32 @@ const UnifiedMemoryGame: React.FC<UnifiedMemoryGameProps> = ({ config }) => {
   }
 
   const ScoreComponent = config.ScoreComponent
-  const RepeatButtonComponent = config.RepeatButtonComponent  
+  const RepeatButtonComponent = config.RepeatButtonComponent
   const RestartButtonComponent = config.RestartButtonComponent
+
+  // Depth language (AnswerTile reference) — fully token-driven, correct on light + dark scenes.
+  const accent = config.theme.accentColor
+  const dark = muiTheme.scene.dark
+  const success = muiTheme.palette.success.main
+  const lip = darken(accent, 0.3)                 // coloured 3D rim under a card
+  const successEdge = darken(success, 0.28)
+  const ambientShadow = dark ? '0 12px 28px rgba(0,0,0,0.5)' : '0 10px 22px rgba(0,0,0,0.15)'
+  const idleBorder = hexToRgba(accent, dark ? 0.55 : 0.34)
+  const restingShadow = `0 7px 0 ${lip}, ${ambientShadow}`
+  const matchedShadow = `0 0 0 4px ${hexToRgba(success, 0.45)}, 0 7px 0 ${successEdge}, 0 14px 30px ${hexToRgba(success, 0.4)}`
+  const faceUpSurface = 'linear-gradient(180deg, #FFFFFF 0%, #ECF1F8 100%)'
+  const matchedSurface = `linear-gradient(180deg, #FFFFFF 0%, ${hexToRgba(success, 0.16)} 100%)`
+
+  // Grid columns derive from board size so both boards fill the viewport with no scroll.
+  const gridCols = config.boardPairs === 10
+    ? { xs: 'repeat(4, 1fr)', sm: 'repeat(5, 1fr)', md: 'repeat(5, 1fr)' }
+    : { xs: 'repeat(5, 1fr)', sm: 'repeat(8, 1fr)', md: 'repeat(10, 1fr)' }
+  const gridColsLandscape = config.boardPairs === 10
+    ? { xs: 'repeat(5, 1fr)', sm: 'repeat(7, 1fr)', md: 'repeat(7, 1fr)' }
+    : { xs: 'repeat(8, 1fr)', sm: 'repeat(10, 1fr)', md: 'repeat(10, 1fr)' }
+  const gridMaxWidth = config.boardPairs === 10
+    ? { md: '640px', lg: '760px' }
+    : { md: '1000px', lg: '1200px' }
 
   return (
     <GameShell
@@ -430,11 +499,21 @@ const UnifiedMemoryGame: React.FC<UnifiedMemoryGameProps> = ({ config }) => {
           score={score}
           disabled={isScoreNarrating}
           onClick={handleScoreClick}
+          customLabel={`Par: ${matchedPairs}/${config.boardPairs}`}
         />
       }
-      celebration={{ show: showCelebration, intensity: celebrationIntensity, onComplete: stopCelebration }}
+      celebration={{ show: showCelebration, intensity: celebrationIntensity, duration: celebrationDuration, onComplete: stopCelebration }}
     >
         <style>{flipStyles}</style>
+        {roundOutcome ? (
+          <RoundResultScreen
+            outcome={roundOutcome}
+            categoryId={config.theme.id}
+            backRoute={config.backPath}
+            onReplay={handleReplay}
+          />
+        ) : (
+          <>
         {/* Controls */}
         <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mb: { xs: 1, md: 2 }, flex: '0 0 auto' }}>
           <RestartButtonComponent
@@ -449,8 +528,8 @@ const UnifiedMemoryGame: React.FC<UnifiedMemoryGameProps> = ({ config }) => {
           />
         </Box>
 
-        {/* Memory Cards Grid - 4x10 layout */}
-        <Box sx={{ 
+        {/* Memory Cards Grid — columns derive from board size */}
+        <Box sx={{
           flex: 1, 
           display: 'flex', 
           justifyContent: 'center', 
@@ -462,15 +541,11 @@ const UnifiedMemoryGame: React.FC<UnifiedMemoryGameProps> = ({ config }) => {
         }}>
           <Box sx={{
             display: 'grid',
-            gridTemplateColumns: { 
-              xs: 'repeat(5, 1fr)',   // Mobile portrait: 5 columns
-              sm: 'repeat(8, 1fr)',   // Tablet: 8 columns
-              md: 'repeat(10, 1fr)'   // Desktop: 10 columns
-            },
+            gridTemplateColumns: gridCols,
             gridAutoRows: 'auto',
             gap: { xs: '6px', sm: '8px', md: '10px', lg: '12px' },
             width: '100%',
-            maxWidth: { md: '1000px', lg: '1200px' },
+            maxWidth: gridMaxWidth,
             justifyContent: 'center',
             // Individual card aspect ratio and constraints
             '& > *': {
@@ -481,11 +556,7 @@ const UnifiedMemoryGame: React.FC<UnifiedMemoryGameProps> = ({ config }) => {
             },
             // Orientation specific adjustments
             '@media (orientation: landscape)': {
-              gridTemplateColumns: { 
-                xs: 'repeat(8, 1fr)',   // Landscape mobile: 8 columns
-                sm: 'repeat(10, 1fr)',  // Landscape tablet: 10 columns
-                md: 'repeat(10, 1fr)'   // Landscape desktop: 10 columns
-              },
+              gridTemplateColumns: gridColsLandscape,
               '& > *': {
                 aspectRatio: '3/4',
                 minHeight: { xs: '50px', sm: '60px', md: '70px' },
@@ -499,14 +570,16 @@ const UnifiedMemoryGame: React.FC<UnifiedMemoryGameProps> = ({ config }) => {
                 <motion.div
                   key={card.id}
                   initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ 
-                    opacity: 1, 
-                    scale: 1,
+                  animate={{
+                    opacity: 1,
+                    // One-shot match pop (skipped under reduced motion — colour/glow still reads).
+                    scale: (!reduce && poppedPairId === card.pairId) ? [1, 1.08, 1] : 1,
                     x: wrongPairIds.includes(card.id) ? [0, -10, 10, -10, 10, 0] : 0
                   }}
-                  transition={{ 
-                    delay: index * 0.02, 
+                  transition={{
+                    delay: index * 0.02,
                     duration: 0.5,
+                    scale: { duration: 0.4, delay: 0 },
                     x: { duration: 0.4, times: [0, 0.2, 0.4, 0.6, 0.8, 1] }
                   }}
                   whileHover={{ scale: card.isMatched ? 1 : 1.05 }}
@@ -524,11 +597,12 @@ const UnifiedMemoryGame: React.FC<UnifiedMemoryGameProps> = ({ config }) => {
                       onClick={() => handleCardClick(card)}
                     >
                       {/* Card Front (Back side - what shows when not flipped) */}
-                      <div 
+                      <div
                         className="card-face card-front"
                         style={{
-                          borderColor: config.theme.accentColor,
-                          background: config.theme.gradient
+                          borderColor: idleBorder,
+                          background: config.theme.gradient,
+                          boxShadow: restingShadow
                         }}
                       >
                         <div style={{
@@ -575,19 +649,20 @@ const UnifiedMemoryGame: React.FC<UnifiedMemoryGameProps> = ({ config }) => {
                       </div>
 
                       {/* Card Back (Content side - what shows when flipped) */}
-                      <div 
+                      <div
                         className="card-face card-back"
                         style={{
-                          borderColor: card.isMatched ? '#4caf50' : config.theme.accentColor,
-                          background: card.isMatched ? '#e8f5e8' : 'white',
+                          borderColor: card.isMatched ? success : idleBorder,
+                          background: card.isMatched ? matchedSurface : faceUpSurface,
+                          boxShadow: card.isMatched ? matchedShadow : restingShadow,
                           padding: '4px'
                         }}
                       >
                         {/* Primary content */}
-                        <div style={{ 
+                        <div style={{
                           fontSize: config.gameType === 'numbers' ? 'clamp(1.4rem, 3vw, 2.2rem)' : 'clamp(1.6rem, 3.5vw, 2.2rem)',
                           fontWeight: 700,
-                          color: card.isMatched ? '#2e7d32' : config.theme.accentColor,
+                          color: card.isMatched ? successEdge : accent,
                           marginBottom: displayData.icon ? '2px' : '0px',
                           lineHeight: 0.9
                         }}>
@@ -607,10 +682,10 @@ const UnifiedMemoryGame: React.FC<UnifiedMemoryGameProps> = ({ config }) => {
 
                         {/* Optional secondary content */}
                         {displayData.secondary && (
-                          <div 
+                          <div
                             style={{
                               fontSize: 'clamp(0.7rem, 1.8vw, 1rem)',
-                              color: card.isMatched ? '#2e7d32' : '#333',
+                              color: card.isMatched ? successEdge : accent,
                               fontWeight: 600,
                               textAlign: 'center',
                               lineHeight: 1
@@ -628,6 +703,8 @@ const UnifiedMemoryGame: React.FC<UnifiedMemoryGameProps> = ({ config }) => {
             }) : null}
           </Box>
         </Box>
+          </>
+        )}
     </GameShell>
   )
 }

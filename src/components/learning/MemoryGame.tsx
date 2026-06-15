@@ -46,17 +46,24 @@ const LETTER_ICONS: { [key: string]: { word: string; icon: string } } = {
 }
 
 const MemoryGame: React.FC = () => {
-  const { type } = useParams<{ type: 'letters' | 'numbers' }>()
+  const { type, size } = useParams<{ type: 'letters' | 'numbers'; size: '10' | '20' }>()
   const gameType = type as 'letters' | 'numbers' || 'letters'
-  
+  // Static-difficulty: the board size is the game's identity (two separate routes), not a picker.
+  // Old bookmarks without :size (or anything invalid) default to the 20-pair stretch board.
+  const boardPairs = size === '10' ? 10 : 20
+  // Star thresholds are in MISTAKES (= mismatched turns). Tunable constants; static difficulty.
+  const starThresholds = boardPairs === 10 ? { three: 6, two: 14 } : { three: 14, two: 30 }
+
   // Configuration for letters memory game
   const lettersConfig: UnifiedMemoryConfig = {
     gameType: 'letters',
-    
+    gameId: `memory.letters.${boardPairs}`,
+    boardPairs,
+    starThresholds,
+
     generateItems: () => {
-      // Randomly select 20 letters from the Danish alphabet
-      const shuffledAlphabet = [...DANISH_ALPHABET].sort(() => Math.random() - 0.5)
-      return shuffledAlphabet.slice(0, 20)
+      // Shuffle the full alphabet; the engine slices boardPairs items for the board.
+      return [...DANISH_ALPHABET].sort(() => Math.random() - 0.5)
     },
     
     getDisplayData: (letter: string): MemoryItemDisplay => {
@@ -94,10 +101,13 @@ const MemoryGame: React.FC = () => {
   // Configuration for numbers memory game
   const numbersConfig: UnifiedMemoryConfig = {
     gameType: 'numbers',
-    
+    gameId: `memory.numbers.${boardPairs}`,
+    boardPairs,
+    starThresholds,
+
     generateItems: () => {
-      // Use all numbers 1-20
-      return [...NUMBERS]
+      // Shuffle 1–20; the engine slices boardPairs (random 10, or all 20).
+      return [...NUMBERS].sort(() => Math.random() - 0.5)
     },
     
     getDisplayData: (number: string): MemoryItemDisplay => {

@@ -790,6 +790,8 @@ function App() {
         <Route path="/ordleg/mic" element={<SpeakWordGame />} />
         
         {/* Learning Routes */}
+        <Route path="/learning/memory/:type/:size" element={<MemoryGame />} />
+        {/* Old size-less bookmarks → default to the 20-pair board (MemoryGame defaults size). */}
         <Route path="/learning/memory/:type" element={<MemoryGame />} />
 
         {/* Sticker album / reward hub */}

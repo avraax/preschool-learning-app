@@ -60,11 +60,18 @@ const categoryContent: Record<CategoryId, CategoryContent> = {
         gradient: 'linear-gradient(135deg, #2196F3 0%, #1976D2 100%)'
       },
       {
-        id: 'memory',
-        title: 'Hukommelsesspil',
+        id: 'memory10',
+        title: 'Hukommelse 10',
         emoji: '🧠',
-        route: '/learning/memory/letters',
+        route: '/learning/memory/letters/10',
         gradient: 'linear-gradient(135deg, #1976D2 0%, #1565C0 100%)'
+      },
+      {
+        id: 'memory20',
+        title: 'Hukommelse 20',
+        emoji: '🧠',
+        route: '/learning/memory/letters/20',
+        gradient: 'linear-gradient(135deg, #1565C0 0%, #0D47A1 100%)'
       }
     ]
   },
@@ -115,11 +122,18 @@ const categoryContent: Record<CategoryId, CategoryContent> = {
         gradient: 'linear-gradient(135deg, #7E57C2 0%, #5E35B1 100%)'
       },
       {
-        id: 'memory',
-        title: 'Hukommelsesspil',
+        id: 'memory10',
+        title: 'Hukommelse 10',
         emoji: '🧠',
-        route: '/learning/memory/numbers',
+        route: '/learning/memory/numbers/10',
         gradient: 'linear-gradient(135deg, #7B1FA2 0%, #6A1B9A 100%)'
+      },
+      {
+        id: 'memory20',
+        title: 'Hukommelse 20',
+        emoji: '🧠',
+        route: '/learning/memory/numbers/20',
+        gradient: 'linear-gradient(135deg, #6A1B9A 0%, #4A148C 100%)'
       }
     ]
   },
