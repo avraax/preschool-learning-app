@@ -7,7 +7,6 @@ import { useCelebration } from '../common/CelebrationEffect'
 import { DANISH_PHRASES } from '../../config/danish-phrases'
 import { useGameState } from '../../hooks/useGameState'
 import GameShell from './GameShell'
-import { isIOS } from '../../utils/deviceDetection'
 // Simplified audio system
 import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 
@@ -149,6 +148,8 @@ const UnifiedMemoryGame: React.FC<UnifiedMemoryGameProps> = ({ config }) => {
   // stranded hidden when audio isn't unlocked at mount.
   const startedRef = useRef(false)
   const welcomeTriggered = useRef(false)
+  // True once the child flips a card → suppresses a (possibly late) welcome from talking over play.
+  const hasInteractedRef = useRef(false)
 
   useEffect(() => {
     // Prevent duplicate initialization with race condition guard
@@ -159,51 +160,42 @@ const UnifiedMemoryGame: React.FC<UnifiedMemoryGameProps> = ({ config }) => {
     teacher.setCharacter('owl')
     teacher.wave()
 
-    // Check if audio is ready
-    if (audio.isAudioReady) {
-      playWelcomeAndStart()
-    }
-
-    // Generate cards immediately but don't show them until entry audio completes
+    // Instant load: generate + show the cards immediately (no waiting on the welcome).
     initializeGame()
+    revealBoard()
 
-    // Resilience: reveal the cards after a short delay even if audio never unlocks; the welcome
-    // still plays if/when it does (both starters are ref-guarded).
-    const fallback = setTimeout(() => beginGame(), 2500)
-    return () => clearTimeout(fallback)
+    // Narrate the welcome over the visible board if audio is already unlocked.
+    if (audio.isAudioReady) {
+      playWelcome()
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [config.gameType])
 
-  // When audio unlocks after mount, play the welcome (unless it/the game already started).
+  // When audio unlocks after mount, play the welcome (board already visible). Interaction-guarded
+  // inside playWelcome so it never talks over active play.
   useEffect(() => {
-    if (audio.isAudioReady && !welcomeTriggered.current && !startedRef.current) {
-      playWelcomeAndStart()
+    if (audio.isAudioReady && !welcomeTriggered.current) {
+      playWelcome()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [audio.isAudioReady])
 
   // Reveal the cards. Idempotent — safe from any start path.
-  const beginGame = () => {
+  const revealBoard = () => {
     if (startedRef.current) return
     startedRef.current = true
     setGameReady(true)
   }
 
-  // Play welcome message and start game
-  const playWelcomeAndStart = async () => {
-    if (welcomeTriggered.current) return
+  // Narrate the welcome over the already-visible board. Self-guards; skipped once the child has
+  // started flipping cards. (Memory has no per-question prompt.)
+  const playWelcome = async () => {
+    if (welcomeTriggered.current || hasInteractedRef.current) return
     welcomeTriggered.current = true
     try {
-      // Play the welcome message
       await audio.playGameWelcome('memory')
-
-      // iOS-optimized delay - increased to prevent audio overlap
-      const delay = isIOS() ? 1000 : 1500
-      setTimeout(() => beginGame(), delay)
     } catch (error) {
       logError('Error playing welcome', { error: error?.toString() })
-      // Still start the game even if audio fails
-      beginGame()
     }
   }
 
@@ -250,6 +242,8 @@ const UnifiedMemoryGame: React.FC<UnifiedMemoryGameProps> = ({ config }) => {
   }
 
   const handleCardClick = async (clickedCard: MemoryCard) => {
+    // The child is playing → suppress any pending/late welcome from talking over them.
+    hasInteractedRef.current = true
     // Critical iOS fix: Update user interaction timestamp BEFORE audio call
     audio.updateUserInteraction()
     

@@ -93,6 +93,10 @@ const SpellingGame: React.FC = () => {
   const welcomeTriggered = useRef(false)
   const previousWord = useRef<string | null>(null)
   const isAdvancing = useRef(false)
+  // Live current word (so it can be voiced after the welcome) + interaction guard (so a late
+  // welcome never talks over active play).
+  const wordRef = useRef<string | null>(null)
+  const hasInteractedRef = useRef(false)
 
   // Centralized game state management
   const { score, incrementScore, isScoreNarrating, handleScoreClick } = useGameState()
@@ -120,16 +124,15 @@ const SpellingGame: React.FC = () => {
     if (hasInitialized.current) return
     hasInitialized.current = true
 
+    // Instant load: show the playable board immediately (tappable), no waiting on the welcome.
+    revealBoard()
+
+    // Narrate the welcome over the visible board if audio is already unlocked.
     if (audio.isAudioReady) {
-      playWelcomeAndStart()
+      playWelcomeThenWord()
     }
 
-    // Resilience: reveal the board after a short delay even if audio never unlocks; the welcome
-    // still plays if/when it does (both starters are ref-guarded).
-    const fallback = setTimeout(() => beginGame(), 2500)
-
     return () => {
-      clearTimeout(fallback)
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current)
         timeoutRef.current = null
@@ -142,33 +145,35 @@ const SpellingGame: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // When audio unlocks after mount, play the welcome (unless it/the game already started).
+  // When audio unlocks after mount, play the welcome (board already visible). Interaction-guarded
+  // inside playWelcomeThenWord so it never talks over active play.
   useEffect(() => {
-    if (audio.isAudioReady && !welcomeTriggered.current && !startedRef.current) {
-      playWelcomeAndStart()
+    if (audio.isAudioReady && !welcomeTriggered.current) {
+      playWelcomeThenWord()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [audio.isAudioReady])
 
-  // Reveal the board (first word). Idempotent — safe from any start path.
-  const beginGame = () => {
+  // Instant load: render the playable board RIGHT AWAY without voicing the word yet — the welcome
+  // narrates over the visible board and the spoken word follows it. Idempotent.
+  const revealBoard = () => {
     if (startedRef.current) return
     startedRef.current = true
     setGameReady(true)
-    generateNewWord()
+    generateNewWord(false)
   }
 
-  const playWelcomeAndStart = async () => {
-    if (welcomeTriggered.current) return
+  // Play the welcome over the already-visible board, then voice the first word. Self-guards; skips
+  // the trailing word if the child already started tapping.
+  const playWelcomeThenWord = async () => {
+    if (welcomeTriggered.current || hasInteractedRef.current) return
     welcomeTriggered.current = true
     try {
       await audio.playGameWelcome('spelling')
-      const delay = isIOS() ? 1000 : 1500
-      setTimeout(() => beginGame(), delay)
     } catch (error) {
       logError('Error playing welcome', { error: error?.toString() })
-      beginGame()
     }
+    if (wordRef.current && !hasInteractedRef.current) speakWord(wordRef.current)
   }
 
   // Build a shuffled tile pool: the word's letters + a few distractor letters
@@ -188,7 +193,9 @@ const SpellingGame: React.FC = () => {
       .sort(() => Math.random() - 0.5)
   }
 
-  const generateNewWord = () => {
+  // `voice=false` renders the board without voicing the word (used for the first word, which is
+  // voiced after the welcome instead).
+  const generateNewWord = (voice = true) => {
     isAdvancing.current = false
 
     // Pick a word, avoiding an immediate repeat
@@ -196,6 +203,7 @@ const SpellingGame: React.FC = () => {
     if (candidates.length === 0) candidates = SPELLING_WORDS
     const next = candidates[Math.floor(Math.random() * candidates.length)]
     previousWord.current = next.word
+    wordRef.current = next.word
 
     const letters = next.word.toUpperCase().split('')
 
@@ -210,6 +218,8 @@ const SpellingGame: React.FC = () => {
       clearTimeout(timeoutRef.current)
       timeoutRef.current = null
     }
+
+    if (!voice) return
 
     const delay = isIOS() ? 200 : 500
     timeoutRef.current = setTimeout(() => {
@@ -229,6 +239,8 @@ const SpellingGame: React.FC = () => {
   const handleTileClick = async (tile: LetterTile) => {
     if (!gameReady || !current || isAdvancing.current) return
     if (usedTileIds.has(tile.id)) return
+    // The child is playing → suppress any pending/late welcome from talking over them.
+    hasInteractedRef.current = true
 
     audio.updateUserInteraction()
     audio.cancelCurrentAudio()

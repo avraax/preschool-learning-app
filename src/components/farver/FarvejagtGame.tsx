@@ -108,13 +108,18 @@ const FarvejagtGame: React.FC = () => {
     autoInitialize: false
   })
   const [gameReady, setGameReady] = useState(false)
-  const [audioInitialized, setAudioInitialized] = useState(false)
-  
+
   // Character and celebration management
   const colorHunter = useCharacterState('wave')
   const { showCelebration, celebrationIntensity, celebrate, stopCelebration } = useCelebration()
   const hasInitialized = React.useRef(false)
   const previousColor = React.useRef<string>('')
+  const startedRef = React.useRef(false)
+  const welcomeTriggered = React.useRef(false)
+  // Live target phrase (voiced after the welcome) + interaction guard (so a late welcome never
+  // talks over active play).
+  const targetPhraseRef = React.useRef<string>('')
+  const hasInteractedRef = React.useRef(false)
   
   // Production logging - only essential errors
   const logError = (message: string, data?: any) => {
@@ -123,15 +128,19 @@ const FarvejagtGame: React.FC = () => {
     }
   }
   
-  // Game initialization function
-  const initializeGame = () => {
+  // Game initialization function. `voice=false` sets up the board without speaking the target
+  // phrase (used for the instant first reveal; the phrase is voiced after the welcome instead).
+  const initializeGame = (voice = true) => {
     const { items, targetCount, targetColor: newTargetColor, targetPhrase: newTargetPhrase } = generateGameItems()
-    
+
     setGameItems(items)
     setTotalTarget(targetCount)
     setTargetColor(newTargetColor)
     setTargetPhrase(newTargetPhrase)
-    
+    targetPhraseRef.current = newTargetPhrase
+
+    if (!voice) return
+
     // Speak the target phrase after setup with iOS optimization
     const delay = isIOS() ? 100 : 300
     setTimeout(async () => {
@@ -249,44 +258,56 @@ const FarvejagtGame: React.FC = () => {
   useEffect(() => {
     if (hasInitialized.current) return
     hasInitialized.current = true
-    
+
     // Initialize character
     colorHunter.setCharacter('fox')
     colorHunter.wave()
-    
-    // Check if audio is ready
-    if (audio.isAudioReady) {
-      setAudioInitialized(true)
-      playWelcomeAndStart()
-    }
-  }, [])
-  
-  // Monitor audio readiness - only if not already initialized
-  useEffect(() => {
-    if (audio.isAudioReady && !audioInitialized && !hasInitialized.current) {
-      hasInitialized.current = true
-      setAudioInitialized(true)
-      playWelcomeAndStart()
-    }
-  }, [audio.isAudioReady, audioInitialized])
 
-  // Play welcome message and start game
-  const playWelcomeAndStart = async () => {
+    // Instant load: show the playable board immediately (draggable), no waiting on the welcome.
+    revealBoard()
+
+    // Narrate the welcome over the visible board if audio is already unlocked.
+    if (audio.isAudioReady) {
+      playWelcomeThenInstructions()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // When audio unlocks after mount, play the welcome (board already visible). Interaction-guarded
+  // inside playWelcomeThenInstructions so it never talks over active play.
+  useEffect(() => {
+    if (audio.isAudioReady && !welcomeTriggered.current) {
+      playWelcomeThenInstructions()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [audio.isAudioReady])
+
+  // Instant load: render the playable board RIGHT AWAY without voicing instructions yet — the
+  // welcome narrates over the visible board and the instructions follow it. Idempotent.
+  const revealBoard = () => {
+    if (startedRef.current) return
+    startedRef.current = true
+    setGameReady(true)
+    initializeGame(false)
+  }
+
+  // Play the welcome over the already-visible board, then voice the target instructions.
+  // Self-guards; skips the trailing instructions if the child already started dragging.
+  const playWelcomeThenInstructions = async () => {
+    if (welcomeTriggered.current || hasInteractedRef.current) return
+    welcomeTriggered.current = true
     try {
-      // Play the welcome message
       await audio.playGameWelcome('farvejagt')
-      
-      // iOS-optimized delay - increased to prevent audio overlap
-      const delay = isIOS() ? 1000 : 1500
-      setTimeout(() => {
-        setGameReady(true)
-        initializeGame()
-      }, delay)
     } catch (error) {
       logError('Error playing welcome', { error: error?.toString() })
-      // Still start the game even if audio fails
-      setGameReady(true)
-      initializeGame()
+    }
+    if (targetPhraseRef.current && !hasInteractedRef.current) {
+      try {
+        audio.updateUserInteraction()
+        await audio.speakColorHuntInstructions(targetPhraseRef.current)
+      } catch (error) {
+        logError('Error speaking color hunt instructions', { error: error?.toString() })
+      }
     }
   }
 
@@ -323,7 +344,9 @@ const FarvejagtGame: React.FC = () => {
   // Handle drag end
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event
-    
+    // The child is playing → suppress any pending/late welcome from talking over them.
+    hasInteractedRef.current = true
+
     // Update user interaction for iOS audio compatibility
     audio.updateUserInteraction()
     

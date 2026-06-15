@@ -10,7 +10,6 @@ import { alpha, useTheme } from '@mui/material/styles'
 import { categoryThemes } from '../../config/categoryThemes'
 import GameShell from '../common/GameShell'
 import LearningGrid from '../common/LearningGrid'
-import { isIOS } from '../../utils/deviceDetection'
 // Simplified audio system
 import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 
@@ -35,63 +34,58 @@ const AlphabetLearning: React.FC = () => {
     componentId: 'AlphabetLearning',
     autoInitialize: false
   })
-  const [gameReady, setGameReady] = useState(false)
-  const [audioInitialized, setAudioInitialized] = useState(false)
+  // Instant load: the grid is interactive from the first render; the welcome narrates over it.
+  const [gameReady] = useState(true)
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
   const hasInitialized = useRef(false)
-  
+  const welcomeTriggered = useRef(false)
+  // True once the child taps → suppresses a (possibly late) welcome from talking over their play.
+  const hasInteractedRef = useRef(false)
+
   useEffect(() => {
     // Prevent duplicate initialization with race condition guard
     if (hasInitialized.current) return
     hasInitialized.current = true
-    
-    // Check if audio is ready
+
+    // The board is already interactive (gameReady starts true). Just narrate the welcome over it.
     if (audio.isAudioReady) {
-      setAudioInitialized(true)
-      playWelcomeAndStart()
+      playWelcome()
     }
-    
+
     return () => {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current)
         timeoutRef.current = null
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
-  
-  // Monitor audio readiness - only if not already initialized
-  useEffect(() => {
-    if (audio.isAudioReady && !audioInitialized && !hasInitialized.current) {
-      hasInitialized.current = true
-      setAudioInitialized(true)
-      playWelcomeAndStart()
-    }
-  }, [audio.isAudioReady, audioInitialized])
 
-  // Play welcome message and start learning
-  const playWelcomeAndStart = async () => {
+  // When audio unlocks after mount, play the welcome (board already interactive). Guarded inside
+  // playWelcome so it never talks over active play.
+  useEffect(() => {
+    if (audio.isAudioReady && !welcomeTriggered.current) {
+      playWelcome()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [audio.isAudioReady])
+
+  // Narrate the welcome over the already-interactive board. Self-guards; skipped once the child
+  // has started tapping.
+  const playWelcome = async () => {
+    if (welcomeTriggered.current || hasInteractedRef.current) return
+    welcomeTriggered.current = true
     try {
-      // Play the welcome message
       await audio.playGameWelcome('alphabetlearning')
-      
-      // Wait for welcome audio to complete, then start game with proper delay
-      const delay = isIOS() ? 1000 : 1500  // Increased delay to prevent audio overlap
-      setTimeout(() => {
-        setGameReady(true)
-      }, delay)
     } catch (error) {
       logError('Error playing welcome', { error: error?.toString() })
-      // Still start the game even if audio fails
-      setGameReady(true)
     }
   }
 
-
-
-
   const goToLetter = async (index: number) => {
     const letter = DANISH_ALPHABET[index]
-    
+    hasInteractedRef.current = true
+
     // Critical iOS fix: Update user interaction timestamp BEFORE audio call
     audio.updateUserInteraction()
     

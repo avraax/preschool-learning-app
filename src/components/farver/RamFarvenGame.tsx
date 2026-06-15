@@ -53,11 +53,16 @@ const RamFarvenGame: React.FC = () => {
   })
   const [_activeId, setActiveId] = useState<string | null>(null)
   const [gameReady, setGameReady] = useState(false)
-  const [audioInitialized, setAudioInitialized] = useState(false)
-  
+
   // Centralized game state management
   const { score, incrementScore, isScoreNarrating, handleScoreClick } = useGameState()
   const hasInitialized = React.useRef(false)
+  const startedRef = React.useRef(false)
+  const welcomeTriggered = React.useRef(false)
+  // Live target colour name (voiced after the welcome) + interaction guard (so a late welcome
+  // never talks over active play).
+  const targetNameRef = React.useRef<string>('')
+  const hasInteractedRef = React.useRef(false)
   
   // Character and celebration management
   const colorTeacher = useCharacterState('wave')
@@ -119,57 +124,71 @@ const RamFarvenGame: React.FC = () => {
   useEffect(() => {
     if (hasInitialized.current) return
     hasInitialized.current = true
-    
+
     // Initialize color teacher character
     colorTeacher.setCharacter('bear')
     colorTeacher.wave()
-    
-    // Check if audio is ready
-    if (audio.isAudioReady) {
-      setAudioInitialized(true)
-      playWelcomeAndStart()
-    }
-  }, [])
-  
-  // Monitor audio readiness - only if not already initialized
-  useEffect(() => {
-    if (audio.isAudioReady && !audioInitialized && !hasInitialized.current) {
-      hasInitialized.current = true
-      setAudioInitialized(true)
-      playWelcomeAndStart()
-    }
-  }, [audio.isAudioReady, audioInitialized])
 
-  // Play welcome message and start game
-  const playWelcomeAndStart = async () => {
+    // Instant load: show the playable board immediately (draggable), no waiting on the welcome.
+    revealBoard()
+
+    // Narrate the welcome over the visible board if audio is already unlocked.
+    if (audio.isAudioReady) {
+      playWelcomeThenInstructions()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // When audio unlocks after mount, play the welcome (board already visible). Interaction-guarded
+  // inside playWelcomeThenInstructions so it never talks over active play.
+  useEffect(() => {
+    if (audio.isAudioReady && !welcomeTriggered.current) {
+      playWelcomeThenInstructions()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [audio.isAudioReady])
+
+  // Instant load: render the playable board RIGHT AWAY without voicing instructions yet — the
+  // welcome narrates over the visible board and the instructions follow it. Idempotent.
+  const revealBoard = () => {
+    if (startedRef.current) return
+    startedRef.current = true
+    setGameReady(true)
+    initializeGame(false)
+  }
+
+  // Play the welcome over the already-visible board, then voice the mixing instructions.
+  // Self-guards; skips the trailing instructions if the child already started dragging.
+  const playWelcomeThenInstructions = async () => {
+    if (welcomeTriggered.current || hasInteractedRef.current) return
+    welcomeTriggered.current = true
     try {
-      // Play the welcome message
       await audio.playGameWelcome('ramfarven')
-      
-      // iOS-optimized delay - increased to prevent audio overlap
-      const delay = isIOS() ? 1000 : 1500
-      setTimeout(() => {
-        setGameReady(true)
-        initializeGame()
-      }, delay)
     } catch (error) {
       logError('Error playing welcome', { error: error?.toString() })
-      // Still start the game even if audio fails
-      setGameReady(true)
-      initializeGame()
+    }
+    if (targetNameRef.current && !hasInteractedRef.current) {
+      try {
+        audio.updateUserInteraction()
+        await audio.speakColorMixingInstructions(targetNameRef.current)
+      } catch (error) {
+        logError('Error speaking color mixing instructions', { error: error?.toString() })
+      }
     }
   }
 
-  const initializeGame = () => {
+  // `voice=false` sets up the board without speaking instructions (used for the instant first
+  // reveal; instructions are voiced after the welcome instead).
+  const initializeGame = (voice = true) => {
     // Select random target color (different from current if exists)
-    const availableTargets = gameState.targetColor 
+    const availableTargets = gameState.targetColor
       ? possibleTargets.filter(target => target.hex !== gameState.targetColor.hex)
       : possibleTargets
     const randomTarget = availableTargets[Math.floor(Math.random() * availableTargets.length)]
-    
+
     // Shuffle color droplets for random order
     const shuffledColors = shuffleArray(primaryColors)
-    
+
     // Reset game state
     setGameState({
       targetColor: randomTarget,
@@ -177,6 +196,9 @@ const RamFarvenGame: React.FC = () => {
       mixingZone: [],
       attempts: 0
     })
+    targetNameRef.current = randomTarget.name
+
+    if (!voice) return
 
     // Game-specific instruction (NOW after entry audio completes)
     const instructionDelay = isIOS() ? 100 : 300
@@ -316,6 +338,8 @@ const RamFarvenGame: React.FC = () => {
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event
+    // The child is playing → suppress any pending/late welcome from talking over them.
+    hasInteractedRef.current = true
     setActiveId(null)
 
     if (!over || over.id !== 'mixing-zone') return
