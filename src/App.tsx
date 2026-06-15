@@ -71,6 +71,7 @@ import { categoryThemes } from './config/categoryThemes'
 import { useProgress } from './hooks/useProgress'
 import { progressStore } from './services/progressStore'
 import { sfx } from './services/sfxClient'
+import { simplifiedAudioController } from './utils/SimplifiedAudioController'
 import { totalStickerCount } from './config/stickers'
 import { sectionIconImages } from './assets/themes/icons'
 import appLogo from './assets/logo.webp'
@@ -695,12 +696,12 @@ const NavigationAudioCleanup: React.FC = () => {
   const location = useLocation()
   
   useEffect(() => {
-    // Cleanup SimplifiedAudioController on route changes
-    import('./utils/SimplifiedAudioController').then(({ simplifiedAudioController }) => {
-      simplifiedAudioController.triggerNavigationCleanup()
-    }).catch(() => {
-      // Silent fail if module not available
-    })
+    // Cleanup SimplifiedAudioController on route changes. This MUST run synchronously: a dynamic
+    // import() here defers the stop by a microtask, so for the very navigation that mounts a game it
+    // could land AFTER that game's entry welcome had already started — cancelling the title narration
+    // (the engine has no queue; any stop kills the current clip). With a static import the cleanup
+    // completes before the new route's mount effect fires, so the welcome always survives.
+    simplifiedAudioController.triggerNavigationCleanup()
     // SFX is a separate short channel; quiet any lingering cues on navigation too.
     sfx.stopAll()
   }, [location.pathname])
