@@ -42,6 +42,8 @@ const EnglishWordGame: React.FC = () => {
     RepeatButtonComponent: EnglishRepeatButton,
 
     gameWelcomeType: 'englishword',
+    gameId: 'english.word',
+    round: { length: 8, starThresholds: { three: 0, two: 2 } },
 
     // Speak the target English word as an audio hint alongside the picture.
     speakQuizPrompt: async (item: QuizItem, audio: any) => audio.speakEnglish(String(item.value)),

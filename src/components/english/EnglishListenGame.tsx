@@ -38,6 +38,8 @@ const EnglishListenGame: React.FC = () => {
     RepeatButtonComponent: EnglishRepeatButton,
 
     gameWelcomeType: 'englishlisten',
+    gameId: 'english.listen',
+    round: { length: 8, starThresholds: { three: 0, two: 2 } },
 
     // The target word is spoken in British English; tapping a picture also speaks
     // its English word for reinforcement.

@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Box,
@@ -9,12 +9,19 @@ import {
 import { useTheme } from '@mui/material/styles'
 import { categoryThemes } from '../../config/categoryThemes'
 import GameShell from '../common/GameShell'
+import StickerReveal from '../common/StickerReveal'
+import { useCelebration } from '../common/CelebrationEffect'
+import { progressStore, type StickerAward } from '../../services/progressStore'
 import { englishThemes, EnglishWord } from '../../config/englishVocab'
 import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 
+const ENGLISH_ACCENT = categoryThemes.english.accentColor
+const EXPLORE_MILESTONE = 9 // award a sticker every N distinct English words tapped
+
 // Lær Engelsk: free exploration. Browse a theme's words as cards (picture + English word
 // + Danish translation), tap to hear the word in British English. Learning-based pattern:
-// direct audio on tap, no entry-audio coordination.
+// direct audio on tap, no entry-audio coordination. Exploring distinct words earns a
+// milestone sticker (mirrors Lær Tal / Lær Alfabetet).
 const EnglishLearning: React.FC = () => {
   const muiTheme = useTheme()
   const theme = categoryThemes.english
@@ -23,12 +30,51 @@ const EnglishLearning: React.FC = () => {
   const [activeThemeId, setActiveThemeId] = useState(englishThemes[0].id)
   const [playingWord, setPlayingWord] = useState<string | null>(null)
 
+  const { showCelebration, celebrationIntensity, celebrationDuration, celebrateTier, stopCelebration } = useCelebration()
+
+  // Session-local exploration tracking → milestone stickers.
+  const exploredRef = useRef<Set<string>>(new Set())
+  const milestoneRef = useRef(0)
+  const [stickerAward, setStickerAward] = useState<StickerAward | null>(null)
+  const stickerTimer = useRef<NodeJS.Timeout | null>(null)
+
   const activeTheme = englishThemes.find(t => t.id === activeThemeId) || englishThemes[0]
+
+  useEffect(() => {
+    return () => {
+      if (stickerTimer.current) {
+        clearTimeout(stickerTimer.current)
+        stickerTimer.current = null
+      }
+    }
+  }, [])
+
+  // Award an exploration sticker when distinct-tap count crosses each milestone.
+  const maybeAwardExploration = () => {
+    const size = exploredRef.current.size
+    const milestone = Math.floor(size / EXPLORE_MILESTONE)
+    if (milestone > milestoneRef.current) {
+      milestoneRef.current = milestone
+      const award = progressStore.awardSticker()
+      setStickerAward(award)
+      celebrateTier('sticker')
+      if (stickerTimer.current) clearTimeout(stickerTimer.current)
+      stickerTimer.current = setTimeout(() => setStickerAward(null), 3600)
+      // Speak the sticker name; on a milestone tap the Danish celebration line wins over the word.
+      try {
+        audio.speak(`Nyt klistermærke! ${award.sticker.label}`).catch(() => {})
+      } catch {
+        /* ignore */
+      }
+    }
+  }
 
   const handleWordClick = async (word: EnglishWord) => {
     audio.updateUserInteraction()
     audio.cancelCurrentAudio()
     setPlayingWord(word.en)
+    exploredRef.current.add(word.en)
+    maybeAwardExploration()
     try {
       await audio.speakEnglish(word.en)
     } catch (error) {
@@ -45,6 +91,7 @@ const EnglishLearning: React.FC = () => {
       backRoute="/english"
       dense
       guide={false}
+      celebration={{ show: showCelebration, intensity: celebrationIntensity, duration: celebrationDuration, onComplete: stopCelebration }}
     >
         {/* Theme selector */}
         <Box
@@ -163,6 +210,24 @@ const EnglishLearning: React.FC = () => {
             </AnimatePresence>
           </Box>
         </Box>
+
+        {/* Exploration-milestone sticker reveal. Auto-dismisses; tap to close early. */}
+        {stickerAward && (
+          <Box
+            onClick={() => setStickerAward(null)}
+            sx={{
+              position: 'fixed',
+              inset: 0,
+              zIndex: 1300,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: 'rgba(0,0,0,0.45)',
+            }}
+          >
+            <StickerReveal award={stickerAward} accent={ENGLISH_ACCENT} size={140} />
+          </Box>
+        )}
     </GameShell>
   )
 }

@@ -42,6 +42,8 @@ const EnglishTranslateGame: React.FC = () => {
     RepeatButtonComponent: EnglishRepeatButton,
 
     gameWelcomeType: 'englishtranslate',
+    gameId: 'english.translate',
+    round: { length: 8, starThresholds: { three: 0, two: 2 } },
 
     // Prompt is the Danish word (Danish voice); tapping an option speaks the English word.
     speakQuizPrompt: async (item: QuizItem, audio: any) => audio.speak(String(item.audioPrompt)),
