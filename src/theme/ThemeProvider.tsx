@@ -54,6 +54,18 @@ export const AppThemeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     loadTitleFont(themeId)
   }, [themeId])
 
+  // Paint the document canvas (html/body) with the active scene's base colour. The whole app is
+  // sized to `calc(var(--vh) * 100)` (= window.innerHeight); on an iOS home-screen PWA innerHeight
+  // can come back a hair short of the real screen and isn't corrected, so a thin strip below the
+  // app would otherwise show the browser's default (light) canvas as a white gap at the bottom.
+  // Matching the canvas to the scene base (#070B1A for the dark immersive worlds) makes any such
+  // gap invisible. Flat/light skins keep their normal background.default.
+  useEffect(() => {
+    const base = theme.scene.dark ? '#070B1A' : theme.palette.background.default
+    document.documentElement.style.backgroundColor = base
+    document.body.style.backgroundColor = base
+  }, [theme])
+
   const value = useMemo<ThemeSwitchContextValue>(
     () => ({ themeId, setThemeId, availableThemes: themeOptions }),
     [themeId, setThemeId]
