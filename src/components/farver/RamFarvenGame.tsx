@@ -407,22 +407,16 @@ const RamFarvenGame: React.FC = () => {
   // Token-driven framed-board surface (mirrors Farvejagt); educational hexes stay as data.
   const boardBg = muiTheme.scene.dark ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.5)'
   const comicFont = '"Comic Sans MS", "Comic Neue", sans-serif'
-  // Workspace pot + goal-swatch sizes. Smaller in landscape so the goal→pot row AND the droplet
-  // tray always fit inside the board with no scroll (landscape is the primary orientation).
-  const potSizeSx = {
-    width: { xs: 138, sm: 168, md: 196, lg: 220 },
-    height: { xs: 138, sm: 168, md: 196, lg: 220 },
+  // Goal swatch + pot share ONE size so the two circles read as a balanced pair and line up on the
+  // same centre line (smaller in landscape so the goal→pot row AND the droplet tray fit with no
+  // scroll). The "below-circle reserve" (label + Tøm slot) is mirrored on both columns so their
+  // heights match and the circles stay vertically centred relative to each other.
+  const circleSizeSx = {
+    width: { xs: 144, sm: 168, md: 192, lg: 208 },
+    height: { xs: 144, sm: 168, md: 192, lg: 208 },
     '@media (orientation: landscape)': {
-      width: { xs: 112, sm: 132, md: 156, lg: 178 },
-      height: { xs: 112, sm: 132, md: 156, lg: 178 },
-    },
-  }
-  const swatchSizeSx = {
-    width: { xs: 116, sm: 138, md: 160, lg: 180 },
-    height: { xs: 116, sm: 138, md: 160, lg: 180 },
-    '@media (orientation: landscape)': {
-      width: { xs: 94, sm: 112, md: 132, lg: 150 },
-      height: { xs: 94, sm: 112, md: 132, lg: 150 },
+      width: { xs: 120, sm: 140, md: 158, lg: 172 },
+      height: { xs: 120, sm: 140, md: 158, lg: 172 },
     },
   }
 
@@ -491,8 +485,9 @@ const RamFarvenGame: React.FC = () => {
                 px: 2,
                 minHeight: 0
               }}>
-                {/* Goal swatch */}
-                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5, flex: '0 0 auto' }}>
+                {/* Goal swatch. Same column structure as the pot (circle → label → 44px reserve)
+                    so the two circles line up on the same centre line. */}
+                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1, flex: '0 0 auto' }}>
                   <motion.div
                     key={targetColor.hex}
                     initial={reduce ? { opacity: 1 } : { scale: 0.8, opacity: 0 }}
@@ -500,7 +495,7 @@ const RamFarvenGame: React.FC = () => {
                     transition={{ duration: 0.4 }}
                   >
                     <Box sx={{
-                      ...swatchSizeSx,
+                      ...circleSizeSx,
                       borderRadius: '50%',
                       backgroundColor: targetColor.hex,
                       backgroundImage: 'linear-gradient(160deg, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0) 45%)',
@@ -523,6 +518,8 @@ const RamFarvenGame: React.FC = () => {
                       Mål
                     </Typography>
                   </Box>
+                  {/* Reserve mirroring the pot's Tøm slot so both columns are equal height. */}
+                  <Box sx={{ height: 44 }} />
                 </Box>
 
                 {/* Arrow — chunky, friendly badge */}
@@ -541,7 +538,7 @@ const RamFarvenGame: React.FC = () => {
 
                 {/* Mixing pot + Tøm */}
                 <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1, flex: '0 0 auto' }}>
-                  <Box sx={potSizeSx}>
+                  <Box sx={circleSizeSx}>
                     <DroppableZone
                       id="mixing-zone"
                       overColor="rgba(255,255,255,0.55)"
@@ -657,23 +654,24 @@ const RamFarvenGame: React.FC = () => {
                 flex: '0 0 auto',
                 display: 'grid',
                 gridTemplateColumns: 'repeat(5, 1fr)',
-                gap: { xs: 0.75, sm: 1, md: 1.5 },
-                maxWidth: { xs: '360px', sm: '430px', md: '500px' },
+                gap: { xs: 1.5, sm: 1.75, md: 2.25 },
+                maxWidth: { xs: '380px', sm: '460px', md: '540px' },
                 mx: 'auto',
                 px: 1,
                 pt: 1,
                 pb: { xs: 1.25, md: 1.75 },
-                // Landscape: vertical tray on the right, centred over the board height.
+                // Landscape: a 2-column tray on the right (multiple rows), centred over the board
+                // height — roomier than a single cramped column, droplets larger and never touching.
                 '@media (orientation: landscape)': {
-                  gridTemplateColumns: '1fr',
-                  gap: { xs: 0.5, sm: 0.75, md: 1 },
+                  gridTemplateColumns: 'repeat(2, 1fr)',
+                  gap: { xs: 1.5, sm: 2, md: 2.5 },
                   maxWidth: 'none',
                   mx: 0,
                   alignContent: 'center',
                   justifyItems: 'center',
-                  px: { xs: 0.75, md: 1.25 },
+                  px: { xs: 1.25, md: 2 },
                   py: 0,
-                  pr: { xs: 1, md: 1.5 }
+                  pr: { xs: 1.5, md: 2.5 }
                 }
               }}>
                 {availableColors.map((color) => {
@@ -714,11 +712,11 @@ const RamFarvenGame: React.FC = () => {
                           data={color}
                         >
                           <Box sx={{
-                            width: { xs: '46px', sm: '52px', md: '58px', lg: '64px' },
-                            height: { xs: '46px', sm: '52px', md: '58px', lg: '64px' },
+                            width: { xs: '54px', sm: '60px', md: '68px', lg: '74px' },
+                            height: { xs: '54px', sm: '60px', md: '68px', lg: '74px' },
                             '@media (orientation: landscape)': {
-                              width: { xs: '34px', sm: '40px', md: '46px', lg: '50px' },
-                              height: { xs: '34px', sm: '40px', md: '46px', lg: '50px' }
+                              width: { xs: '50px', sm: '58px', md: '66px', lg: '72px' },
+                              height: { xs: '50px', sm: '58px', md: '66px', lg: '72px' }
                             },
                             borderRadius: '50% 50% 50% 0',
                             transform: 'rotate(135deg)',
