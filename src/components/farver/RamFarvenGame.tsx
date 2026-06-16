@@ -288,6 +288,16 @@ const RamFarvenGame: React.FC = () => {
     }
   }
 
+  // Tapping the goal swatch speaks just the target color name ("lilla") — distinct from the
+  // "Hør igen" button which replays the full "Ram farven: X" instruction.
+  const speakTargetColor = () => {
+    hasInteractedRef.current = true
+    audio.updateUserInteraction()
+    audio.cancelCurrentAudio()
+    if (!gameReady || !targetColor) return
+    audio.speak(targetColor.name).catch(() => {})
+  }
+
   // Empty the pot (Tøm button) — a mis-dragged droplet isn't a forced wrong attempt.
   const emptyPot = () => {
     if (committing) return
@@ -503,14 +513,18 @@ const RamFarvenGame: React.FC = () => {
                     animate={{ scale: 1, opacity: 1 }}
                     transition={{ duration: 0.4 }}
                   >
-                    <Box sx={{
-                      ...circleSizeSx,
-                      borderRadius: '50%',
-                      backgroundColor: targetColor.hex,
-                      backgroundImage: 'linear-gradient(160deg, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0) 45%)',
-                      border: '4px solid white',
-                      boxShadow: muiTheme.customShadows?.card ?? '0 4px 16px rgba(0,0,0,0.2)'
-                    }} />
+                    <Box
+                      onClick={speakTargetColor}
+                      sx={{
+                        ...circleSizeSx,
+                        borderRadius: '50%',
+                        backgroundColor: targetColor.hex,
+                        backgroundImage: 'linear-gradient(160deg, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0) 45%)',
+                        border: '4px solid white',
+                        cursor: 'pointer',
+                        boxShadow: muiTheme.customShadows?.card ?? '0 4px 16px rgba(0,0,0,0.2)'
+                      }}
+                    />
                   </motion.div>
                   <Box sx={{
                     px: 1.25, py: 0.25, borderRadius: 999,
