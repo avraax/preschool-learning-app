@@ -2,6 +2,9 @@ import React, { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { Box, Typography } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
+import { DndContext, DragEndEvent, DragStartEvent, closestCenter, DragOverlay } from '@dnd-kit/core'
+import { DraggableItem } from '../common/dnd/DraggableItem'
+import { DroppableZone } from '../common/dnd/DroppableZone'
 import { getCategoryTheme } from '../../config/categoryThemes'
 import { SHADES, HUE_ORDER, type ColorShade } from '../../config/colorContent'
 import { darken } from '../../theme/tokens/helpers'
@@ -19,14 +22,14 @@ import { isIOS } from '../../utils/deviceDetection'
 import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 
 // Nuancer — order shades of one hue from LIGHT to DARK. The real discrimination stretch in the
-// Farver section: the tiles are the same color family, so the only signal is lightness. Tap the
-// tiles in order (lightest first); each fills the next left→right slot. After 2 wrong taps the
-// correct next tile pulses (never-fail hint, costs a star). Bounded round of 8 → RoundResultScreen.
-// Static difficulty (no adaptive logic) — edit the levers below.
+// Farver section: the tiles are the same color family, so the only signal is lightness. DRAG each
+// shade into its slot (left = lightest, right = darkest). A wrong slot bounces back (gentle SFX +
+// shake); after 2 wrong drops the correct tile for the next empty slot pulses (never-fail hint,
+// costs a star). Bounded round of 8 → RoundResultScreen. Static difficulty — edit the levers below.
 
 // ── Tuning levers ─────────────────────────────────────────────────────────────────────────────
 const ROUND_QUESTIONS = 8          // orderings per round → RoundResultScreen
-const WRONG_BEFORE_HINT = 2        // pulse the correct next tile after this many wrong taps
+const WRONG_BEFORE_HINT = 2        // pulse the correct next tile after this many wrong drops
 
 const shuffle = <T,>(arr: T[]): T[] => {
   const a = [...arr]
@@ -43,11 +46,12 @@ const NuancerGame: React.FC = () => {
   const t = getCategoryTheme('colors')
 
   // Current question: a hue's shades (correct light→dark order) + a scrambled tray.
-  const [order, setOrder] = useState<ColorShade[]>([])   // correct order (light→dark)
-  const [tray, setTray] = useState<ColorShade[]>([])     // scrambled display order
-  const [placed, setPlaced] = useState<string[]>([])     // shade names placed so far, in order
+  const [order, setOrder] = useState<ColorShade[]>([])     // correct order (light→dark); slot i wants order[i]
+  const [tray, setTray] = useState<ColorShade[]>([])       // scrambled display order
+  const [slots, setSlots] = useState<(string | null)[]>([]) // placed shade name per slot index, or null
   const [shakeName, setShakeName] = useState<string | null>(null)
   const [hintName, setHintName] = useState<string | null>(null)
+  const [, setActiveId] = useState<string | null>(null)
   const slotWrongRef = useRef(0)
 
   const audio = useSimplifiedAudioHook({ componentId: 'NuancerGame', autoInitialize: false })
@@ -144,7 +148,7 @@ const NuancerGame: React.FC = () => {
       scrambled = shuffle(correct)
     }
     setTray(scrambled)
-    setPlaced([])
+    setSlots(correct.map(() => null))
     setShakeName(null)
     setHintName(null)
     slotWrongRef.current = 0
@@ -191,34 +195,50 @@ const NuancerGame: React.FC = () => {
     }, isIOS() ? 1100 : 1400)
   }
 
-  const handleTileTap = async (shade: ColorShade) => {
+  const handleDragStart = (event: DragStartEvent) => {
+    audio.cancelCurrentAudio()
+    setActiveId(event.active.id as string)
+  }
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event
+    setActiveId(null)
     if (!gameReady || isAdvancing.current) return
-    if (placed.includes(shade.name)) return
+
+    const shadeName = active.id as string
+    if (slots.includes(shadeName)) return // already placed
     hasInteractedRef.current = true
     audio.updateUserInteraction()
-    audio.cancelCurrentAudio()
 
-    const expected = order[placed.length]
-    if (shade.name === expected.name) {
-      // Correct next-lightest → lock into the next slot.
-      const newPlaced = [...placed, shade.name]
-      setPlaced(newPlaced)
+    if (!over) return // dropped on empty space → snaps back
+    const m = /^slot-(\d+)$/.exec(String(over.id))
+    if (!m) return
+    const i = Number(m[1])
+    if (slots[i]) return // slot already filled → snaps back
+
+    if (order[i] && shadeName === order[i].name) {
+      // Correct slot → lock it in.
+      const next = [...slots]
+      next[i] = shadeName
+      setSlots(next)
       slotWrongRef.current = 0
       setHintName(null)
       sfx.play('drop-snap')
-      try {
-        await audio.speak(shade.name)
-      } catch { /* ignore */ }
-      if (newPlaced.length === order.length) completeQuestion()
+      audio.cancelCurrentAudio()
+      audio.speak(shadeName).catch(() => {})
+      if (next.every((s) => s !== null)) completeQuestion()
     } else {
-      // Wrong → gentle SFX + shake, leave it, break first-try.
+      // Wrong slot → bounce back (automatic) + gentle SFX + shake, break first-try.
       firstAttemptRef.current = false
       sfx.play('wrong')
-      setShakeName(shade.name)
+      setShakeName(shadeName)
       reactGuide('think')
       setTimeout(() => setShakeName(null), 450)
       slotWrongRef.current += 1
-      if (slotWrongRef.current >= WRONG_BEFORE_HINT) setHintName(expected.name)
+      if (slotWrongRef.current >= WRONG_BEFORE_HINT) {
+        const firstEmpty = slots.findIndex((s) => !s)
+        if (firstEmpty >= 0 && order[firstEmpty]) setHintName(order[firstEmpty].name)
+      }
     }
   }
 
@@ -233,12 +253,14 @@ const NuancerGame: React.FC = () => {
     width: { xs: 66, sm: 76, md: 88 },
     height: { xs: 66, sm: 76, md: 88 },
     '@media (orientation: landscape)': { width: 60, height: 60 },
-    borderRadius: '16px',
-    border: '3px solid white',
+    borderRadius: '16px'
   } as const
 
-  const trayTiles = tray
-  const allPlaced = placed.length === order.length && order.length > 0
+  const liftedShadow = (hex: string) =>
+    `0 5px 0 ${darken(hex, 0.28)}, ${muiTheme.scene.dark ? '0 10px 24px rgba(0,0,0,0.45)' : '0 7px 16px rgba(0,0,0,0.12)'}`
+
+  const remaining = tray.filter((s) => !slots.includes(s.name))
+  const allPlaced = slots.length > 0 && slots.every((s) => s !== null)
 
   return (
     <GameShell
@@ -258,13 +280,13 @@ const NuancerGame: React.FC = () => {
           onReplay={handleReplay}
         />
       ) : gameReady && order.length > 0 && (
-        <>
+        <DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd} collisionDetection={closestCenter}>
           {/* Repeat instruction */}
           <Box sx={{ textAlign: 'center', mb: { xs: 1, md: 1.5 }, flex: '0 0 auto' }}>
             <ColorRepeatButton onClick={repeatInstruction} disabled={false} label="🎵 Hør igen" />
           </Box>
 
-          {/* Slots row: left = lightest, right = darkest. Filled slots show the placed shade. */}
+          {/* Slot row (drop targets): left = lightest, right = darkest. */}
           <Box sx={{
             display: 'flex',
             justifyContent: 'center',
@@ -274,24 +296,29 @@ const NuancerGame: React.FC = () => {
             mb: 0.5,
             '@media (orientation: landscape)': { mb: 0.25 }
           }}>
-            {order.map((_, index) => {
-              const filledName = placed[index]
-              const filledShade = filledName ? order.find(s => s.name === filledName) : undefined
+            {slots.map((placedName, index) => {
+              const placedShade = placedName ? order.find((s) => s.name === placedName) : undefined
               return (
                 <motion.div
                   key={`slot-${index}`}
                   animate={!reduce && allPlaced ? { scale: [1, 1.08, 1] } : { scale: 1 }}
                   transition={{ duration: 0.4 }}
                 >
-                  <Box sx={{
-                    ...tileSx,
-                    border: filledShade ? '3px solid white' : `3px dashed ${t.borderColor}`,
-                    backgroundColor: filledShade ? filledShade.hex : 'rgba(255,255,255,0.45)',
-                    boxShadow: filledShade
-                      ? `0 5px 0 ${darken(filledShade.hex, 0.28)}, ${muiTheme.scene.dark ? '0 10px 24px rgba(0,0,0,0.45)' : '0 7px 16px rgba(0,0,0,0.12)'}`
-                      : 'none',
-                    transition: 'background-color 0.25s ease, box-shadow 0.25s ease'
-                  }} />
+                  <Box sx={tileSx}>
+                    <DroppableZone
+                      id={`slot-${index}`}
+                      overColor={muiTheme.scene.dark ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.6)'}
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        borderRadius: '16px',
+                        border: placedShade ? '3px solid white' : `3px dashed ${t.borderColor}`,
+                        backgroundColor: placedShade ? placedShade.hex : 'rgba(255,255,255,0.45)',
+                        boxShadow: placedShade ? liftedShadow(placedShade.hex) : 'none',
+                        transition: 'background-color 0.25s ease, box-shadow 0.25s ease'
+                      }}
+                    />
+                  </Box>
                 </motion.div>
               )
             })}
@@ -315,7 +342,7 @@ const NuancerGame: React.FC = () => {
             <Typography sx={{ fontSize: '1.3rem', lineHeight: 1 }}>🌙</Typography>
           </Box>
 
-          {/* Tray: the scrambled shades to pick from (tap lightest remaining). */}
+          {/* Tray: the scrambled shades still to place (drag into a slot). */}
           <Box sx={{
             flex: '0 1 auto',
             display: 'flex',
@@ -323,49 +350,55 @@ const NuancerGame: React.FC = () => {
             alignItems: 'center',
             flexWrap: 'wrap',
             gap: { xs: 1.5, md: 2 },
-            minHeight: 0
+            minHeight: { xs: 72, md: 96 }
           }}>
-            {trayTiles.map((shade) => {
-              const used = placed.includes(shade.name)
-              const isHint = hintName === shade.name && !used
+            {remaining.map((shade) => {
+              const isHint = hintName === shade.name
               const isShaking = shakeName === shade.name
               const animate = isShaking
-                ? { x: [0, -10, 10, -10, 10, 0], scale: 1, opacity: 1 }
+                ? { x: [0, -10, 10, -10, 10, 0], scale: 1 }
                 : isHint && !reduce
-                  ? { scale: [1, 1.14, 1], x: 0, opacity: 1 }
-                  : { scale: used ? 0.6 : 1, x: 0, opacity: used ? 0 : 1 }
+                  ? { scale: [1, 1.14, 1], x: 0 }
+                  : { scale: 1, x: 0 }
               const transition = isShaking
                 ? { duration: 0.45 }
                 : isHint && !reduce
                   ? { duration: 1.1, repeat: Infinity, ease: 'easeInOut' as const }
                   : { duration: 0.25 }
               return (
-                <motion.div
+                // Force the absolutely-positioned DraggableItem to flow inline in this flex tray.
+                <Box
                   key={shade.name}
-                  animate={animate}
-                  transition={transition}
-                  whileHover={used ? undefined : { scale: 1.08 }}
-                  whileTap={used ? undefined : { scale: 0.92 }}
-                  style={{ pointerEvents: used ? 'none' : 'auto' }}
+                  sx={{
+                    position: 'relative !important',
+                    left: 'auto !important',
+                    top: 'auto !important',
+                    '& > div': { position: 'relative !important', left: 'auto !important', top: 'auto !important' }
+                  }}
                 >
-                  <Box
-                    onClick={() => handleTileTap(shade)}
-                    sx={{
-                      ...tileSx,
-                      backgroundColor: shade.hex,
-                      cursor: used ? 'default' : 'pointer',
-                      userSelect: 'none',
-                      boxShadow: isHint
-                        ? `0 0 0 5px ${t.accentColor}88, 0 6px 14px rgba(0,0,0,0.2)`
-                        : `0 5px 0 ${darken(shade.hex, 0.28)}, ${muiTheme.scene.dark ? '0 10px 24px rgba(0,0,0,0.45)' : '0 7px 16px rgba(0,0,0,0.12)'}`,
-                      transition: 'box-shadow 0.25s ease'
-                    }}
-                  />
-                </motion.div>
+                  <DraggableItem id={shade.name} disabled={!gameReady} data={shade}>
+                    <motion.div animate={animate} transition={transition}>
+                      <Box sx={{
+                        ...tileSx,
+                        backgroundColor: shade.hex,
+                        border: '3px solid white',
+                        cursor: 'grab',
+                        userSelect: 'none',
+                        boxShadow: isHint
+                          ? `0 0 0 5px ${t.accentColor}88, 0 6px 14px rgba(0,0,0,0.2)`
+                          : liftedShadow(shade.hex),
+                        transition: 'box-shadow 0.25s ease',
+                        '&:active': { cursor: 'grabbing' }
+                      }} />
+                    </motion.div>
+                  </DraggableItem>
+                </Box>
               )
             })}
           </Box>
-        </>
+
+          <DragOverlay>{null}</DragOverlay>
+        </DndContext>
       )}
     </GameShell>
   )
