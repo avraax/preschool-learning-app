@@ -151,16 +151,17 @@ const GameSelectionLayout: React.FC<GameSelectionLayoutProps> = ({
         <Box
           sx={{
             width: '100%',
-            maxWidth: 820,
-            mx: 'auto',
+            // Fixed-width columns (capped to the card width) centred as a group, so the gap
+            // between columns equals the gap between rows — a uniform 16px everywhere. (1fr
+            // columns were much wider than the capped card, which ballooned the horizontal gap.)
             display: 'grid',
-            gridTemplateColumns: { xs: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)' },
+            gridTemplateColumns: { xs: 'repeat(2, minmax(0, 270px))', md: 'repeat(3, minmax(0, 270px))' },
             gridAutoRows: 'auto',
             gap: '16px',
-            justifyItems: 'center',
+            justifyContent: 'center',
             alignItems: 'center',
             '@media (orientation: landscape)': {
-              gridTemplateColumns: games.length <= 4 ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)'
+              gridTemplateColumns: games.length <= 4 ? 'repeat(2, minmax(0, 270px))' : 'repeat(3, minmax(0, 270px))'
             }
           }}
         >
@@ -172,15 +173,14 @@ const GameSelectionLayout: React.FC<GameSelectionLayoutProps> = ({
               transition={{ duration: 0.5, delay: index * 0.08 }}
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
-              style={{ width: '100%', display: 'flex', justifyContent: 'center' }}
+              style={{ width: '100%' }}
             >
               <Card
                 onClick={() => navigate(game.route)}
                 sx={{
                   width: '100%',
-                  // Capped small so few-card menus don't blow up into giant tiles; the aspect
-                  // ratio derives a consistent height that shrinks with the column width.
-                  maxWidth: { xs: 260, md: 300 },
+                  // Width is governed by the (capped) column; the aspect ratio derives a
+                  // consistent height that shrinks with the column on small screens.
                   aspectRatio: '16 / 10',
                   cursor: 'pointer',
                   border: '3px solid',

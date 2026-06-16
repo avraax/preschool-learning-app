@@ -251,15 +251,15 @@ const HomePage = () => {
             sx={{
               mb: { xs: 2, md: 3 },
               width: '100%',
-              maxWidth: 820,
-              mx: 'auto',
+              // Fixed-width columns (capped to the card width) centred as a group → the gap
+              // between columns equals the gap between rows (uniform 16px). Matches the menus.
               display: 'grid',
-              gridTemplateColumns: { xs: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)' },
+              gridTemplateColumns: { xs: 'repeat(2, minmax(0, 270px))', md: 'repeat(3, minmax(0, 270px))' },
               gridAutoRows: 'auto',
               gap: '16px',
-              justifyItems: 'center',
+              justifyContent: 'center',
               alignItems: 'center',
-              '@media (orientation: landscape)': { gridTemplateColumns: 'repeat(3, 1fr)' }
+              '@media (orientation: landscape)': { gridTemplateColumns: 'repeat(3, minmax(0, 270px))' }
             }}
           >
             {homeCards.map((card) => {
@@ -273,13 +273,12 @@ const HomePage = () => {
                     transition={{ duration: 0.6, delay: card.delay }}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    style={{ width: '100%', display: 'flex', justifyContent: 'center' }}
+                    style={{ width: '100%' }}
                   >
                     <Card
                       onClick={() => navigate(card.route)}
                       sx={{
                         width: '100%',
-                        maxWidth: { xs: 260, md: 300 },
                         aspectRatio: '16 / 10',
                         cursor: 'pointer',
                         border: '2px solid',
@@ -348,13 +347,16 @@ const HomePage = () => {
               section card): it's a different KIND of thing (the child's reward collection), so it
               gets its own place + a warm glow + shimmer + a "book that fills" bar. Reads the shared
               progress store so it grows across sessions (Overhaul Foundation §2). */}
-          <motion.div
+          <Box
+            component={motion.div}
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.5 }}
             whileHover={{ scale: 1.015 }}
             whileTap={{ scale: 0.985 }}
-            style={{ width: '100%', maxWidth: 820, margin: '0 auto' }}
+            // Match the grid's centred content width (2-col = 556, 3-col = 842) so the shelf
+            // lines up with the cards above it.
+            sx={{ width: '100%', maxWidth: { xs: 556, md: 842 }, mx: 'auto' }}
           >
             <Card
               onClick={() => navigate('/album')}
@@ -427,7 +429,7 @@ const HomePage = () => {
                 </Typography>
               </CardContent>
             </Card>
-          </motion.div>
+          </Box>
         </Box>
       </Container>
 
