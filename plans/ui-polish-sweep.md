@@ -42,18 +42,18 @@ Runs across multiple sessions (context limits); this file is the resumable track
 | ✅ done | `/farver/ram-farven` | RamFarvenGame | Template for this sweep |
 | 🟦 reference | `/farver/jagt` | FarvejagtGame | The bar; verify it still holds |
 | ✅ at bar | `/math/counting` | MathGame | Shared UnifiedQuizGame engine — clean, near-number distractors |
-| 🟨 minor | `/math/numbers` | NumberLearning | OK; 100-grid is dense/tiny in landscape (learning-only, low stakes) — revisit if time |
+| ✅ done | `/math/numbers` | NumberLearning | Lifted tiles + landscape card compaction → dense grid legible (shared LearningGrid fix) |
 | ✅ done | `/math/addition` | MathOperationGame | Bumped operator-tile size (38/54→48/68) for balance |
 | ✅ done | `/math/subtraction` | MathOperationGame | Same symbol-size fix (shared component) |
 | ✅ at bar | `/math/comparison` | ComparisonGame | Framed card + krokodille reads well |
 | ✅ at bar | `/math/patterns` | HvadManglerGame | Shared UnifiedQuizGame engine — clean |
-| ⬜ todo | `/alphabet/learn` | AlphabetLearning | learning grid |
-| ⬜ todo | `/alphabet/quiz` | AlphabetGame | UnifiedQuizGame config |
-| ⬜ todo | `/english/listen` | EnglishListenGame | UnifiedQuizGame config |
-| ⬜ todo | `/english/word` | EnglishWordGame | UnifiedQuizGame config |
-| ⬜ todo | `/english/translate` | EnglishTranslateGame | UnifiedQuizGame config |
+| ✅ done | `/alphabet/learn` | AlphabetLearning | Lifted tiles + landscape card compaction (shared LearningGrid fix) |
+| ✅ at bar | `/alphabet/quiz` | AlphabetGame | Shared UnifiedQuizGame engine — lifted AnswerTiles, word-association reads clean |
+| ✅ at bar | `/english/listen` | EnglishListenGame | Shared engine — green tiles/repeat, spot-checked |
+| ✅ at bar | `/english/word` | EnglishWordGame | Shared engine — spot-checked |
+| ✅ at bar | `/english/translate` | EnglishTranslateGame | Shared engine — spot-checked |
 | ⬜ todo | `/english/learn` | EnglishLearning | browse |
-| ⬜ todo | `/ordleg/read` | LaesOrdetGame | UnifiedQuizGame config |
+| ✅ at bar | `/ordleg/read` | LaesOrdetGame | Shared engine — teal tiles, no prompt-word audio (correct), spot-checked |
 | ⬜ todo | `/ordleg/spelling` | SpellingGame | hand-rolled |
 | ⬜ todo | `/ordleg/mic` | SpeakWordGame | hand-rolled (mic) |
 | ⬜ todo | `/learning/memory/:type` | MemoryGame | letters + numbers |
