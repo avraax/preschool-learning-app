@@ -52,11 +52,11 @@ Runs across multiple sessions (context limits); this file is the resumable track
 | ✅ at bar | `/english/listen` | EnglishListenGame | Shared engine — green tiles/repeat, spot-checked |
 | ✅ at bar | `/english/word` | EnglishWordGame | Shared engine — spot-checked |
 | ✅ at bar | `/english/translate` | EnglishTranslateGame | Shared engine — spot-checked |
-| ⬜ todo | `/english/learn` | EnglishLearning | browse |
+| ✅ done | `/english/learn` | EnglishLearning | Lifted-3D word cards (green edge lip + active glow), dark-correct |
 | ✅ at bar | `/ordleg/read` | LaesOrdetGame | Shared engine — teal tiles, no prompt-word audio (correct), spot-checked |
-| ⬜ todo | `/ordleg/spelling` | SpellingGame | hand-rolled |
-| ⬜ todo | `/ordleg/mic` | SpeakWordGame | hand-rolled (mic) |
-| ⬜ todo | `/learning/memory/:type` | MemoryGame | letters + numbers |
+| ✅ done | `/ordleg/spelling` | SpellingGame | Lifted-3D letter tiles (hint glow / shake edge) + landscape balance |
+| ✅ done | `/ordleg/mic` | SpeakWordGame | Fixed landscape mic-off-screen + lifted tiles + dark-readable text |
+| ✅ at bar | `/learning/memory/:type/:size` | MemoryGame | Already lifted-3D (prior overhaul); verified sizing (10/20) + match glow + dark all hold |
 | ⬜ todo | menus | GameSelectionLayout + Home | section pickers + front page |
 
 > **Efficiency note:** many games are thin configs over `UnifiedQuizGame` — fixing the shared engine's
