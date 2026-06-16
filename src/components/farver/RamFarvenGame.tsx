@@ -531,18 +531,19 @@ const RamFarvenGame: React.FC = () => {
                   <Box sx={{ height: 44 }} />
                 </Box>
 
-                {/* Arrow — chunky, friendly badge */}
+                {/* Arrow — chunky, friendly badge (sized to balance the larger goal/pot circles). */}
                 <Box sx={{
                   flex: '0 0 auto',
-                  width: { xs: 44, sm: 50, md: 58 },
-                  height: { xs: 44, sm: 50, md: 58 },
+                  width: { xs: 58, sm: 66, md: 76 },
+                  height: { xs: 58, sm: 66, md: 76 },
+                  '@media (orientation: landscape)': { width: 54, height: 54 },
                   borderRadius: '50%',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   bgcolor: muiTheme.scene.dark ? 'rgba(255,255,255,0.16)' : 'rgba(255,255,255,0.92)',
-                  border: `2px solid ${t.borderColor}`,
+                  border: `3px solid ${t.borderColor}`,
                   boxShadow: muiTheme.customShadows?.card ?? 2
                 }}>
-                  <Typography sx={{ fontWeight: 900, fontSize: { xs: '1.5rem', sm: '1.7rem', md: '2rem' }, lineHeight: 1, color: t.accentColor }}>➜</Typography>
+                  <Typography sx={{ fontWeight: 900, fontSize: { xs: '2rem', sm: '2.3rem', md: '2.7rem' }, lineHeight: 1, color: t.accentColor, '@media (orientation: landscape)': { fontSize: '1.9rem' } }}>➜</Typography>
                 </Box>
 
                 {/* Mixing pot + Tøm */}
