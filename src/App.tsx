@@ -342,90 +342,92 @@ const HomePage = () => {
                   </motion.div>
               )
             })}
-
-            {/* Reward hub — the album entry. A "book that fills" + lifetime stars; reads the
-                shared progress store so it grows across sessions (Overhaul Foundation §2). */}
-            <motion.div
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, x: 0, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.5 }}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                style={{ width: '100%', display: 'flex', justifyContent: 'center' }}
-              >
-                <Card
-                  onClick={() => navigate('/album')}
-                  sx={{
-                    width: '100%',
-                    maxWidth: { xs: 260, md: 300 },
-                    aspectRatio: '16 / 10',
-                    cursor: 'pointer',
-                    border: '2px solid',
-                    borderColor: alpha('#FFB300', 0.7),
-                    display: 'flex',
-                    flexDirection: 'column',
-                    background: immersive
-                      ? 'linear-gradient(135deg, rgba(255,250,230,0.7) 0%, rgba(255,240,200,0.5) 100%)'
-                      : 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(255,236,179,0.9) 100%)',
-                    backdropFilter: immersive ? 'blur(16px) saturate(1.1)' : 'blur(15px)',
-                    WebkitBackdropFilter: immersive ? 'blur(16px) saturate(1.1)' : 'blur(15px)',
-                    '&:hover': {
-                      borderColor: '#FF9800',
-                      boxShadow: `0 8px 32px ${alpha('#FFB300', 0.4)}`,
-                      transform: 'translateY(-2px)',
-                    },
-                    transition: 'all 0.3s ease',
-                  }}
-                >
-                  <CardContent
-                    sx={{
-                      p: { xs: 1, md: 1.5 },
-                      height: '100%',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      textAlign: 'center',
-                      gap: { xs: 0.4, md: 0.6 },
-                    }}
-                  >
-                    <Box sx={{ fontSize: 'clamp(1.5rem, 4vh, 2.2rem)', lineHeight: 1 }}>
-                      📖
-                    </Box>
-                    <Typography
-                      sx={{ fontWeight: 700, fontSize: 'clamp(0.8rem, 2.2vh, 1.1rem)', lineHeight: 1.1, color: '#C77800' }}
-                    >
-                      Min Bog
-                    </Typography>
-                    {/* Fill bar that visibly grows as the album fills */}
-                    <Box
-                      sx={{
-                        position: 'relative',
-                        height: 8,
-                        borderRadius: 6,
-                        bgcolor: alpha('#C77800', 0.18),
-                        overflow: 'hidden',
-                        mx: 'auto',
-                        width: '80%',
-                      }}
-                    >
-                      <Box
-                        sx={{
-                          position: 'absolute',
-                          inset: 0,
-                          width: `${Math.round(albumFill * 100)}%`,
-                          background: 'linear-gradient(90deg, #FFD86B 0%, #FFB300 100%)',
-                          transition: 'width 0.5s ease',
-                        }}
-                      />
-                    </Box>
-                    <Typography sx={{ fontWeight: 700, fontSize: 'clamp(0.7rem, 1.8vh, 0.95rem)', color: '#9A5E00' }}>
-                      {stickersOwned} / {stickersTotal} · ⭐ {progress.totals.totalStars}
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </motion.div>
           </Box>
+
+          {/* Reward shelf — Min Bog. Its own distinct golden bar BELOW the learning grid (not a
+              section card): it's a different KIND of thing (the child's reward collection), so it
+              gets its own place + a warm glow + shimmer + a "book that fills" bar. Reads the shared
+              progress store so it grows across sessions (Overhaul Foundation §2). */}
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.5 }}
+            whileHover={{ scale: 1.015 }}
+            whileTap={{ scale: 0.985 }}
+            style={{ width: '100%', maxWidth: 820, margin: '0 auto' }}
+          >
+            <Card
+              onClick={() => navigate('/album')}
+              sx={{
+                width: '100%',
+                cursor: 'pointer',
+                position: 'relative',
+                overflow: 'hidden',
+                borderRadius: '18px',
+                border: '3px solid',
+                borderColor: alpha('#FFB300', 0.85),
+                background: immersive
+                  ? 'linear-gradient(135deg, rgba(255,247,214,0.82) 0%, rgba(255,228,150,0.7) 100%)'
+                  : 'linear-gradient(135deg, rgba(255,250,235,0.97) 0%, rgba(255,221,130,0.95) 100%)',
+                backdropFilter: immersive ? 'blur(16px) saturate(1.1)' : 'blur(15px)',
+                WebkitBackdropFilter: immersive ? 'blur(16px) saturate(1.1)' : 'blur(15px)',
+                boxShadow: `0 6px 26px ${alpha('#FFB300', 0.45)}`,
+                '&:hover': {
+                  borderColor: '#FF9800',
+                  boxShadow: `0 10px 36px ${alpha('#FFB300', 0.6)}`,
+                  transform: 'translateY(-2px)',
+                },
+                transition: 'box-shadow 0.3s ease, border-color 0.3s ease, transform 0.3s ease',
+                // Gentle gold shimmer sweep — marks it as the special "reward" (off for reduced motion).
+                '@media (prefers-reduced-motion: no-preference)': {
+                  '&::after': {
+                    content: '""',
+                    position: 'absolute',
+                    top: 0,
+                    bottom: 0,
+                    left: '-30%',
+                    width: '30%',
+                    background: 'linear-gradient(100deg, transparent 0%, rgba(255,255,255,0.55) 50%, transparent 100%)',
+                    transform: 'skewX(-18deg)',
+                    animation: 'minBogShimmer 4.5s ease-in-out infinite',
+                    pointerEvents: 'none',
+                  },
+                },
+                '@keyframes minBogShimmer': {
+                  '0%': { left: '-30%' },
+                  '55%': { left: '130%' },
+                  '100%': { left: '130%' },
+                },
+              }}
+            >
+              <CardContent
+                sx={{
+                  position: 'relative',
+                  zIndex: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: { xs: 1.5, md: 2.5 },
+                  px: { xs: 2, md: 3 },
+                  py: { xs: 1.25, md: 1.75 },
+                  '&:last-child': { pb: { xs: 1.25, md: 1.75 } },
+                }}
+              >
+                <Box sx={{ fontSize: { xs: '2.2rem', md: '2.8rem' }, lineHeight: 1, flex: '0 0 auto' }}>📖</Box>
+                <Box sx={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 0.6 }}>
+                  <Typography sx={{ fontWeight: 800, fontSize: { xs: '1.1rem', md: '1.35rem' }, color: '#B36A00', lineHeight: 1 }}>
+                    Min Bog
+                  </Typography>
+                  {/* Fill bar that visibly grows as the album fills */}
+                  <Box sx={{ position: 'relative', height: 12, borderRadius: 6, bgcolor: alpha('#C77800', 0.2), overflow: 'hidden', width: '100%' }}>
+                    <Box sx={{ position: 'absolute', inset: 0, width: `${Math.round(albumFill * 100)}%`, background: 'linear-gradient(90deg, #FFD86B 0%, #FFB300 100%)', transition: 'width 0.5s ease' }} />
+                  </Box>
+                </Box>
+                <Typography sx={{ flex: '0 0 auto', fontWeight: 800, fontSize: { xs: '0.95rem', md: '1.15rem' }, color: '#9A5E00', whiteSpace: 'nowrap' }}>
+                  {stickersOwned} / {stickersTotal} · ⭐ {progress.totals.totalStars}
+                </Typography>
+              </CardContent>
+            </Card>
+          </motion.div>
         </Box>
       </Container>
 
