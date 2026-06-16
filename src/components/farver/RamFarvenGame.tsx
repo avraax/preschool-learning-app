@@ -53,6 +53,9 @@ interface RecipeReveal {
   aHex: string
   bHex: string
   targetHex: string
+  aName: string
+  bName: string
+  targetName: string
 }
 
 // ── Educational color data + pure helpers (module scope: not themeable, not render-derived) ───
@@ -325,7 +328,7 @@ const RamFarvenGame: React.FC = () => {
     reactGuide('cheer')
 
     // Recipe reveal: 🔴 + 🔵 = 🟣 + spoken rule ("rød og blå bliver lilla").
-    setRecipe({ aHex: c1.hex, bHex: c2.hex, targetHex: result.hex })
+    setRecipe({ aHex: c1.hex, bHex: c2.hex, targetHex: result.hex, aName: c1.colorName, bName: c2.colorName, targetName: result.name })
     audio.cancelCurrentAudio()
     audio.speak(`${c1.colorName} og ${c2.colorName} bliver ${result.name}`).catch(() => {})
 
@@ -386,7 +389,27 @@ const RamFarvenGame: React.FC = () => {
 
   // Pot fill: the blended colour while committing, else a neutral wash.
   const potFill = blendResult ? blendResult.hex : 'rgba(255, 255, 255, 0.4)'
-  const potSize = { xs: 120, sm: 140, md: 160, lg: 200 }
+  // Token-driven framed-board surface (mirrors Farvejagt); educational hexes stay as data.
+  const boardBg = muiTheme.scene.dark ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.5)'
+  const comicFont = '"Comic Sans MS", "Comic Neue", sans-serif'
+  // Workspace pot + goal-swatch sizes. Smaller in landscape so the goal→pot row AND the droplet
+  // tray always fit inside the board with no scroll (landscape is the primary orientation).
+  const potSizeSx = {
+    width: { xs: 138, sm: 168, md: 196, lg: 220 },
+    height: { xs: 138, sm: 168, md: 196, lg: 220 },
+    '@media (orientation: landscape)': {
+      width: { xs: 112, sm: 132, md: 156, lg: 178 },
+      height: { xs: 112, sm: 132, md: 156, lg: 178 },
+    },
+  }
+  const swatchSizeSx = {
+    width: { xs: 116, sm: 138, md: 160, lg: 180 },
+    height: { xs: 116, sm: 138, md: 160, lg: 180 },
+    '@media (orientation: landscape)': {
+      width: { xs: 94, sm: 112, md: 132, lg: 150 },
+      height: { xs: 94, sm: 112, md: 132, lg: 150 },
+    },
+  }
 
   return (
     <GameShell
@@ -412,165 +435,231 @@ const RamFarvenGame: React.FC = () => {
           onReplay={handleReplay}
         />
       ) : gameReady && (
-        <Box sx={{
-          flex: 1,
-          background: 'transparent',
-          overflow: 'hidden',
-          display: 'flex',
-          flexDirection: 'column',
-          minHeight: 0
-        }}>
-          {/* Repeat Instructions Button */}
-          <Box sx={{ textAlign: 'center', mb: { xs: 1, sm: 1.5, md: 2 }, flex: '0 0 auto' }}>
+        <>
+          {/* Repeat Instructions Button (replays the spoken "Ram farven: X" target). */}
+          <Box sx={{ textAlign: 'center', mb: { xs: 0.75, md: 1 }, flex: '0 0 auto' }}>
             <ColorRepeatButton onClick={repeatInstructions} disabled={false} label="🎵 Hør igen" />
           </Box>
 
-          {/* Target display (or recipe reveal). */}
-          <Box sx={{ textAlign: 'center', mb: { xs: 1, sm: 1.5, md: 2 }, flex: '0 0 auto', minHeight: { xs: 130, sm: 150, md: 170, lg: 210 } }}>
-            <AnimatePresence mode="wait">
-              {recipe ? (
-                <motion.div
-                  key="recipe"
-                  initial={reduce ? { opacity: 1 } : { scale: 0.7, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  exit={reduce ? { opacity: 0 } : { scale: 0.7, opacity: 0 }}
-                  transition={{ duration: 0.35 }}
-                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, height: '100%' }}
-                >
-                  <Swatch hex={recipe.aHex} />
-                  <RecipeSign>+</RecipeSign>
-                  <Swatch hex={recipe.bHex} />
-                  <RecipeSign>=</RecipeSign>
-                  <Swatch hex={recipe.targetHex} big />
-                </motion.div>
-              ) : (
-                <motion.div
-                  key={targetColor.hex}
-                  initial={reduce ? { opacity: 1 } : { scale: 0.8, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ duration: 0.5 }}
-                >
-                  <Box sx={{
-                    width: potSize,
-                    height: potSize,
-                    borderRadius: '50%',
-                    backgroundColor: targetColor.hex,
-                    border: '4px solid white',
-                    boxShadow: muiTheme.customShadows?.card ?? '0 4px 16px rgba(0,0,0,0.2)',
-                    mx: 'auto',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}>
-                    <Typography sx={{ fontSize: { xs: '2rem', sm: '2.25rem', md: '2.5rem', lg: '3rem' } }}>🎨</Typography>
-                  </Box>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </Box>
-
-          {/* Game Area */}
-          <Box sx={{
-            flex: 1,
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-            alignItems: 'center',
-            gap: { xs: 1, sm: 1.5, md: 2 },
-            minHeight: 0
-          }}>
+          {/* Framed play board (mirrors Farvejagt): a contained stage that fills the remaining
+              space so the goal→pot row and the droplet tray are always balanced and never scroll. */}
+          <Box
+            sx={{
+              flex: 1,
+              position: 'relative',
+              backgroundColor: boardBg,
+              borderRadius: 4,
+              border: `3px solid ${t.borderColor}`,
+              boxShadow: muiTheme.customShadows?.card ?? 3,
+              overflow: 'hidden',
+              minHeight: 0,
+              display: 'flex',
+              flexDirection: 'column',
+              // Landscape: lay the stage and the droplet tray side-by-side so the goal→pot
+              // composition stays centred and roomy (portrait keeps the tray along the bottom).
+              '@media (orientation: landscape)': { flexDirection: 'row', alignItems: 'stretch' }
+            }}
+          >
             <DndContext
               onDragStart={handleDragStart}
               onDragEnd={handleDragEnd}
               collisionDetection={closestCenter}
             >
-              {/* Mixing pot + Tøm button */}
-              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1, flex: '0 0 auto' }}>
-                <Box sx={{ width: potSize, height: potSize }}>
-                  <DroppableZone
-                    id="mixing-zone"
-                    overColor="rgba(255,255,255,0.55)"
-                    style={{
-                      width: '100%',
-                      height: '100%',
-                      borderRadius: '50%',
-                      border: `4px dashed ${t.borderColor}`,
-                      backgroundColor: potFill,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      margin: '0 auto',
-                      position: 'relative',
-                      transition: `background-color ${BLEND_MS}ms ease`
-                    }}
+              {/* Goal → Pot row: make THIS (left swatch) IN HERE (right pot). */}
+              <Box sx={{
+                flex: 1,
+                position: 'relative',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: { xs: 1.5, sm: 2.5, md: 3.5 },
+                px: 2,
+                minHeight: 0
+              }}>
+                {/* Goal swatch */}
+                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5, flex: '0 0 auto' }}>
+                  <motion.div
+                    key={targetColor.hex}
+                    initial={reduce ? { opacity: 1 } : { scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ duration: 0.4 }}
                   >
-                    <AnimatePresence>
-                      {mixingZone.map((color, index) => (
-                        <motion.div
-                          key={color.id}
-                          initial={{ scale: 0, opacity: 0 }}
-                          animate={
-                            committing && !reduce
-                              ? { scale: [1, 0.6, 0], rotate: [0, 220, 360], left: '50%', opacity: [1, 1, 0] }
-                              : { scale: 1, opacity: 1, rotate: reduce ? 0 : 360 }
-                          }
-                          exit={{ scale: 0, opacity: 0 }}
-                          transition={{ duration: committing ? BLEND_MS / 1000 : 0.4 }}
-                          style={{
-                            position: 'absolute',
-                            left: index === 0 ? '32%' : '62%',
-                            top: '50%',
-                            transform: 'translate(-50%, -50%)'
-                          }}
-                        >
-                          <Box sx={{
-                            width: { xs: 40, sm: 45, md: 50, lg: 60 },
-                            height: { xs: 40, sm: 45, md: 50, lg: 60 },
-                            borderRadius: '50% 50% 50% 0',
-                            transform: 'rotate(135deg)',
-                            backgroundColor: color.hex,
-                            border: '2px solid #000',
-                            boxShadow: '0 4px 16px rgba(0,0,0,0.2)'
-                          }} />
-                        </motion.div>
-                      ))}
-                    </AnimatePresence>
-                  </DroppableZone>
+                    <Box sx={{
+                      ...swatchSizeSx,
+                      borderRadius: '50%',
+                      backgroundColor: targetColor.hex,
+                      backgroundImage: 'linear-gradient(160deg, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0) 45%)',
+                      border: '4px solid white',
+                      boxShadow: muiTheme.customShadows?.card ?? '0 4px 16px rgba(0,0,0,0.2)'
+                    }} />
+                  </motion.div>
+                  <Box sx={{
+                    px: 1.25, py: 0.25, borderRadius: 999,
+                    bgcolor: muiTheme.scene.dark ? 'rgba(255,255,255,0.16)' : 'rgba(255,255,255,0.9)',
+                    boxShadow: muiTheme.customShadows?.card ?? 1
+                  }}>
+                    <Typography sx={{
+                      fontFamily: comicFont,
+                      fontWeight: 700,
+                      fontSize: 'clamp(0.74rem, 2.1vw, 0.98rem)',
+                      color: muiTheme.scene.dark ? 'white' : 'text.secondary',
+                      lineHeight: 1.2
+                    }}>
+                      Mål
+                    </Typography>
+                  </Box>
                 </Box>
 
-                {/* Tøm — pour out a mis-dragged pot (only when it has droplets and isn't committing). */}
-                <Box sx={{ height: 48, display: 'flex', alignItems: 'center' }}>
-                  {mixingZone.length >= 1 && !committing && (
-                    <Button
-                      onClick={emptyPot}
-                      variant="contained"
-                      sx={{
-                        minHeight: 44,
-                        minWidth: 88,
-                        borderRadius: 999,
-                        px: 2.5,
-                        fontFamily: '"Comic Sans MS", "Comic Neue", sans-serif',
-                        fontWeight: 700,
-                        backgroundColor: t.accentColor,
-                        boxShadow: muiTheme.customShadows?.card ?? 3,
-                        '&:hover': { backgroundColor: t.hoverBorderColor }
+                {/* Arrow — chunky, friendly badge */}
+                <Box sx={{
+                  flex: '0 0 auto',
+                  width: { xs: 44, sm: 50, md: 58 },
+                  height: { xs: 44, sm: 50, md: 58 },
+                  borderRadius: '50%',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  bgcolor: muiTheme.scene.dark ? 'rgba(255,255,255,0.16)' : 'rgba(255,255,255,0.92)',
+                  border: `2px solid ${t.borderColor}`,
+                  boxShadow: muiTheme.customShadows?.card ?? 2
+                }}>
+                  <Typography sx={{ fontWeight: 900, fontSize: { xs: '1.5rem', sm: '1.7rem', md: '2rem' }, lineHeight: 1, color: t.accentColor }}>➜</Typography>
+                </Box>
+
+                {/* Mixing pot + Tøm */}
+                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1, flex: '0 0 auto' }}>
+                  <Box sx={potSizeSx}>
+                    <DroppableZone
+                      id="mixing-zone"
+                      overColor="rgba(255,255,255,0.55)"
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        borderRadius: '50%',
+                        border: `4px dashed ${t.borderColor}`,
+                        backgroundColor: potFill,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        margin: '0 auto',
+                        position: 'relative',
+                        boxShadow: 'inset 0 4px 12px rgba(0,0,0,0.12)',
+                        transition: `background-color ${BLEND_MS}ms ease`
                       }}
                     >
-                      🗑️ Tøm
-                    </Button>
-                  )}
+                      <AnimatePresence>
+                        {mixingZone.map((color, index) => (
+                          <motion.div
+                            key={color.id}
+                            initial={{ scale: 0, opacity: 0 }}
+                            animate={
+                              committing && !reduce
+                                ? { scale: [1, 0.6, 0], rotate: [0, 220, 360], left: '50%', opacity: [1, 1, 0] }
+                                : { scale: 1, opacity: 1, rotate: reduce ? 0 : 360 }
+                            }
+                            exit={{ scale: 0, opacity: 0 }}
+                            transition={{ duration: committing ? BLEND_MS / 1000 : 0.4 }}
+                            style={{
+                              position: 'absolute',
+                              left: index === 0 ? '32%' : '62%',
+                              top: '50%',
+                              transform: 'translate(-50%, -50%)'
+                            }}
+                          >
+                            <Box sx={{
+                              width: { xs: 36, sm: 42, md: 46, lg: 54 },
+                              height: { xs: 36, sm: 42, md: 46, lg: 54 },
+                              borderRadius: '50% 50% 50% 0',
+                              transform: 'rotate(135deg)',
+                              backgroundColor: color.hex,
+                              border: '2px solid rgba(255,255,255,0.9)',
+                              boxShadow: `0 4px 12px ${color.hex}66, inset 0 2px 0 rgba(255,255,255,0.45)`
+                            }} />
+                          </motion.div>
+                        ))}
+                      </AnimatePresence>
+
+                      {/* "Drop here" affordance while the pot is empty (gone once mixing starts). */}
+                      {mixingZone.length === 0 && !committing && (
+                        <Box sx={{
+                          position: 'absolute', inset: 0,
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          pointerEvents: 'none'
+                        }}>
+                          <motion.div
+                            animate={reduce ? {} : { y: [0, 4, 0] }}
+                            transition={reduce ? undefined : { duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
+                          >
+                            <Typography sx={{ fontSize: 'clamp(1.6rem, 6vw, 2.4rem)', lineHeight: 1, opacity: 0.6, color: muiTheme.scene.dark ? 'rgba(255,255,255,0.85)' : t.accentColor }}>⬇</Typography>
+                          </motion.div>
+                        </Box>
+                      )}
+                    </DroppableZone>
+                  </Box>
+
+                  {/* "Din blanding" label — mirrors the goal "Mål" chip so the relationship reads. */}
+                  <Box sx={{
+                    px: 1.25, py: 0.25, borderRadius: 999,
+                    bgcolor: muiTheme.scene.dark ? 'rgba(255,255,255,0.16)' : 'rgba(255,255,255,0.9)',
+                    boxShadow: muiTheme.customShadows?.card ?? 1
+                  }}>
+                    <Typography sx={{
+                      fontFamily: comicFont, fontWeight: 700,
+                      fontSize: 'clamp(0.74rem, 2.1vw, 0.98rem)',
+                      color: muiTheme.scene.dark ? 'white' : 'text.secondary', lineHeight: 1.2
+                    }}>
+                      Din blanding
+                    </Typography>
+                  </Box>
+
+                  {/* Tøm — pour out a mis-dragged pot (only when it has droplets and isn't committing). */}
+                  <Box sx={{ height: 44, display: 'flex', alignItems: 'center' }}>
+                    {mixingZone.length >= 1 && !committing && (
+                      <Button
+                        onClick={emptyPot}
+                        variant="contained"
+                        sx={{
+                          minHeight: 44,
+                          minWidth: 88,
+                          borderRadius: 999,
+                          px: 2.5,
+                          fontFamily: comicFont,
+                          fontWeight: 700,
+                          backgroundColor: t.accentColor,
+                          boxShadow: muiTheme.customShadows?.card ?? 3,
+                          '&:hover': { backgroundColor: t.hoverBorderColor }
+                        }}
+                      >
+                        🗑️ Tøm
+                      </Button>
+                    )}
+                  </Box>
                 </Box>
+
               </Box>
 
-              {/* Available Colors */}
+              {/* Droplet tray — pinned along the board bottom; non-growing so it never clips
+                  (this is what fixes the old landscape off-screen palette). */}
               <Box sx={{
+                flex: '0 0 auto',
                 display: 'grid',
                 gridTemplateColumns: 'repeat(5, 1fr)',
-                gap: { xs: 0.75, sm: 1, md: 1.5, lg: 2 },
-                maxWidth: { xs: '400px', sm: '450px', md: '500px', lg: '600px' },
+                gap: { xs: 0.75, sm: 1, md: 1.5 },
+                maxWidth: { xs: '360px', sm: '430px', md: '500px' },
                 mx: 'auto',
                 px: 1,
-                flex: '0 0 auto'
+                pt: 1,
+                pb: { xs: 1.25, md: 1.75 },
+                // Landscape: vertical tray on the right, centred over the board height.
+                '@media (orientation: landscape)': {
+                  gridTemplateColumns: '1fr',
+                  gap: { xs: 0.5, sm: 0.75, md: 1 },
+                  maxWidth: 'none',
+                  mx: 0,
+                  alignContent: 'center',
+                  justifyItems: 'center',
+                  px: { xs: 0.75, md: 1.25 },
+                  py: 0,
+                  pr: { xs: 1, md: 1.5 }
+                }
               }}>
                 {availableColors.map((color) => {
                   const isHint = recipeNames.includes(color.colorName) && !color.isUsed
@@ -610,15 +699,19 @@ const RamFarvenGame: React.FC = () => {
                           data={color}
                         >
                           <Box sx={{
-                            width: { xs: '50px', sm: '55px', md: '60px', lg: '70px' },
-                            height: { xs: '50px', sm: '55px', md: '60px', lg: '70px' },
+                            width: { xs: '46px', sm: '52px', md: '58px', lg: '64px' },
+                            height: { xs: '46px', sm: '52px', md: '58px', lg: '64px' },
+                            '@media (orientation: landscape)': {
+                              width: { xs: '34px', sm: '40px', md: '46px', lg: '50px' },
+                              height: { xs: '34px', sm: '40px', md: '46px', lg: '50px' }
+                            },
                             borderRadius: '50% 50% 50% 0',
                             transform: 'rotate(135deg)',
                             backgroundColor: color.hex,
-                            border: '2px solid #000',
+                            border: '2px solid rgba(255,255,255,0.9)',
                             boxShadow: isHint
-                              ? `0 0 0 5px ${t.accentColor}88, 0 4px 16px rgba(0,0,0,0.3)`
-                              : color.isUsed ? '0 2px 8px rgba(0,0,0,0.1)' : '0 4px 16px rgba(0,0,0,0.3)',
+                              ? `0 0 0 5px ${t.accentColor}88, 0 6px 14px ${color.hex}66`
+                              : color.isUsed ? '0 2px 8px rgba(0,0,0,0.12)' : `0 6px 14px ${color.hex}66, inset 0 2px 0 rgba(255,255,255,0.45)`,
                             cursor: color.isUsed ? 'default' : 'grab',
                             opacity: color.isUsed ? 0.5 : 1,
                             transition: 'box-shadow 0.3s ease',
@@ -631,8 +724,64 @@ const RamFarvenGame: React.FC = () => {
                 })}
               </Box>
             </DndContext>
+
+            {/* Recipe reveal — a solid celebratory card centred over the whole board (no
+                ghosting), showing the rule in words to reinforce the colour names. */}
+            <AnimatePresence>
+              {recipe && (
+                <motion.div
+                  key="recipe"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.25 }}
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: 6,
+                    background: muiTheme.scene.dark ? 'rgba(0,0,0,0.45)' : 'rgba(255,255,255,0.5)',
+                    backdropFilter: 'blur(3px)'
+                  }}
+                >
+                  <motion.div
+                    initial={reduce ? { scale: 1 } : { scale: 0.85 }}
+                    animate={{ scale: 1 }}
+                    transition={reduce ? { duration: 0 } : { type: 'spring', stiffness: 260, damping: 18 }}
+                  >
+                    <Box sx={{
+                      bgcolor: muiTheme.scene.dark ? 'rgba(31,41,55,0.98)' : '#ffffff',
+                      borderRadius: 5,
+                      border: `3px solid ${t.borderColor}`,
+                      boxShadow: muiTheme.customShadows?.card ?? '0 16px 40px rgba(0,0,0,0.28)',
+                      px: { xs: 3, md: 4 },
+                      py: { xs: 2.5, md: 3 },
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: { xs: 1.25, md: 1.75 },
+                      maxWidth: '92%'
+                    }}>
+                      <Typography sx={{ fontFamily: comicFont, fontWeight: 800, fontSize: 'clamp(1.1rem, 4.5vw, 1.7rem)', color: t.accentColor }}>Flot! 🎉</Typography>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, md: 1.5 } }}>
+                        <Swatch hex={recipe.aHex} />
+                        <RecipeSign>+</RecipeSign>
+                        <Swatch hex={recipe.bHex} />
+                        <RecipeSign>=</RecipeSign>
+                        <Swatch hex={recipe.targetHex} big />
+                      </Box>
+                      <Typography sx={{ fontFamily: comicFont, fontWeight: 700, fontSize: 'clamp(0.95rem, 3.2vw, 1.35rem)', color: muiTheme.scene.dark ? 'white' : 'text.primary', textAlign: 'center' }}>
+                        {recipe.aName} + {recipe.bName} = {recipe.targetName}
+                      </Typography>
+                    </Box>
+                  </motion.div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </Box>
-        </Box>
+        </>
       )}
     </GameShell>
   )
