@@ -36,6 +36,9 @@ const HvadManglerGame = lazy(() => import('./components/math/HvadManglerGame'))
 const FarverSelection = lazy(() => import('./components/farver/FarverSelection'))
 const FarvejagtGame = lazy(() => import('./components/farver/FarvejagtGame'))
 const RamFarvenGame = lazy(() => import('./components/farver/RamFarvenGame'))
+const FarveQuizGame = lazy(() => import('./components/farver/FarveQuizGame'))
+const NuancerGame = lazy(() => import('./components/farver/NuancerGame'))
+const FarverLearning = lazy(() => import('./components/farver/FarverLearning'))
 const EnglishSelection = lazy(() => import('./components/english/EnglishSelection'))
 const EnglishListenGame = lazy(() => import('./components/english/EnglishListenGame'))
 const EnglishWordGame = lazy(() => import('./components/english/EnglishWordGame'))
@@ -773,8 +776,11 @@ function App() {
         
         {/* Farver Routes */}
         <Route path="/farver" element={<FarverSelection />} />
+        <Route path="/farver/laer" element={<FarverLearning />} />
         <Route path="/farver/jagt" element={<FarvejagtGame />} />
+        <Route path="/farver/quiz" element={<FarveQuizGame />} />
         <Route path="/farver/ram-farven" element={<RamFarvenGame />} />
+        <Route path="/farver/nuancer" element={<NuancerGame />} />
 
         {/* English Routes */}
         <Route path="/english" element={<EnglishSelection />} />

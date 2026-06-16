@@ -142,6 +142,13 @@ const categoryContent: Record<CategoryId, CategoryContent> = {
     description: 'Udforsk farver gennem interaktive spil og kreative aktiviteter',
     games: [
       {
+        id: 'laer',
+        title: 'Lær Farver',
+        emoji: '🌈',
+        route: '/farver/laer',
+        gradient: 'linear-gradient(135deg, #FF6B6B 0%, #FDE047 35%, #3B82F6 70%, #A855F7 100%)'
+      },
+      {
         id: 'farvejagt',
         title: 'Farvejagt',
         emoji: '🎯',
@@ -149,11 +156,25 @@ const categoryContent: Record<CategoryId, CategoryContent> = {
         gradient: 'linear-gradient(135deg, #FF6B6B 0%, #FF8E53 50%, #FF6B9D 100%)'
       },
       {
+        id: 'farvequiz',
+        title: 'Hvilken Farve?',
+        emoji: '❓',
+        route: '/farver/quiz',
+        gradient: 'linear-gradient(135deg, #38BDF8 0%, #818CF8 50%, #F472B6 100%)'
+      },
+      {
         id: 'ram-farven',
         title: 'Ram Farven',
         emoji: '🎨',
         route: '/farver/ram-farven',
         gradient: 'linear-gradient(135deg, #A855F7 0%, #F97316 50%, #10B981 100%)'
+      },
+      {
+        id: 'nuancer',
+        title: 'Nuancer',
+        emoji: '🌗',
+        route: '/farver/nuancer',
+        gradient: 'linear-gradient(135deg, #BFDBFE 0%, #3B82F6 50%, #1E3A8A 100%)'
       }
     ]
   },
