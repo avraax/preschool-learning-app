@@ -35,12 +35,17 @@ Runs across multiple sessions (context limits); this file is the resumable track
 - Don't change game mechanics/content — visual/layout/clutter only (unless an obvious bug).
 - Educational color data stays as data. Honor `.claude/rules` (audio/responsive/game-dev).
 
+> **Sweep complete (2026-06-16):** every route is ✅ done or ✅ at bar. Shared `LearningGrid`,
+> `EnglishLearning`, `SpellingGame`, and `SpeakWordGame` got lifted-3D tiles; the dense number grid
+> and the mic-game landscape overflow were fixed; all quiz configs + Memory + menus verified against
+> the bar in light + dark. Leave this file as the record / restart point if new screens are added.
+
 ## Tracker (status per route)
 
 | Status | Route | Component | Notes |
 |---|---|---|---|
 | ✅ done | `/farver/ram-farven` | RamFarvenGame | Template for this sweep |
-| 🟦 reference | `/farver/jagt` | FarvejagtGame | The bar; verify it still holds |
+| 🟦 reference | `/farver/jagt` | FarvejagtGame | The bar; re-verified — framed board + target pill still hold |
 | ✅ at bar | `/math/counting` | MathGame | Shared UnifiedQuizGame engine — clean, near-number distractors |
 | ✅ done | `/math/numbers` | NumberLearning | Lifted tiles + landscape card compaction → dense grid legible (shared LearningGrid fix) |
 | ✅ done | `/math/addition` | MathOperationGame | Bumped operator-tile size (38/54→48/68) for balance |
@@ -57,7 +62,7 @@ Runs across multiple sessions (context limits); this file is the resumable track
 | ✅ done | `/ordleg/spelling` | SpellingGame | Lifted-3D letter tiles (hint glow / shake edge) + landscape balance |
 | ✅ done | `/ordleg/mic` | SpeakWordGame | Fixed landscape mic-off-screen + lifted tiles + dark-readable text |
 | ✅ at bar | `/learning/memory/:type/:size` | MemoryGame | Already lifted-3D (prior overhaul); verified sizing (10/20) + match glow + dark all hold |
-| ⬜ todo | menus | GameSelectionLayout + Home | section pickers + front page |
+| ✅ at bar | menus | GameSelectionLayout + Home | Verified cohesion + dark theme (frosted accent cards) — no changes |
 
 > **Efficiency note:** many games are thin configs over `UnifiedQuizGame` — fixing the shared engine's
 > layout polishes all of them at once; then per-game only the content differs. Triage the shared
