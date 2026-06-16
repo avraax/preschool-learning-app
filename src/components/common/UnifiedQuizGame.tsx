@@ -32,9 +32,6 @@ export interface QuizItem {
   // show an emoji + word and ask which letter it starts with). When present, the
   // quiz renders this above the answer grid instead of relying on audio alone.
   questionVisual?: { emoji: string; word?: string }
-  // Optional color swatch for the answer tile (e.g. Hvilken Farve?: tap the matching color).
-  // When set, the tile shows a colored circle + the name (`display`) instead of plain text.
-  optionColor?: string
 }
 
 // Configuration interface for the unified quiz
@@ -524,40 +521,9 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
                 >
                   <AnswerTile
                     onClick={() => handleItemClick(item)}
-                    accent={item.optionColor ?? config.theme.accentColor}
+                    accent={config.theme.accentColor}
                     state={tileStateFor(item)}
                   >
-                    {item.optionColor ? (
-                      // Color-swatch option (Hvilken Farve?): a big true-color circle + the name.
-                      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: { xs: 0.75, md: 1 } }}>
-                        <Box
-                          sx={{
-                            width: 'clamp(48px, 13vw, 84px)',
-                            height: 'clamp(48px, 13vw, 84px)',
-                            '@media (orientation: landscape)': { width: 'clamp(40px, 9vw, 70px)', height: 'clamp(40px, 9vw, 70px)' },
-                            borderRadius: '50%',
-                            backgroundColor: item.optionColor,
-                            backgroundImage: 'linear-gradient(160deg, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0) 45%)',
-                            border: '3px solid white',
-                            boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
-                          }}
-                        />
-                        <Typography
-                          component="span"
-                          sx={{
-                            fontFamily: '"Comic Sans MS", "Comic Neue", sans-serif',
-                            fontSize: 'clamp(0.85rem, 3vw, 1.2rem)',
-                            fontWeight: 700,
-                            color: config.theme.accentColor,
-                            userSelect: 'none',
-                            lineHeight: 1.1,
-                            textAlign: 'center'
-                          }}
-                        >
-                          {item.display}
-                        </Typography>
-                      </Box>
-                    ) : (
                     <Typography
                       variant="h1"
                       component="span"
@@ -583,7 +549,6 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
                     >
                       {item.display}
                     </Typography>
-                    )}
                   </AnswerTile>
                 </motion.div>
               ))}

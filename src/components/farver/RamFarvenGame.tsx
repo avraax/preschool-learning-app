@@ -464,9 +464,15 @@ const RamFarvenGame: React.FC = () => {
               minHeight: 0,
               display: 'flex',
               flexDirection: 'column',
-              // Landscape: lay the stage and the droplet tray side-by-side so the goal→pot
-              // composition stays centred and roomy (portrait keeps the tray along the bottom).
-              '@media (orientation: landscape)': { flexDirection: 'row', alignItems: 'stretch' }
+              // Landscape: lay the stage and the droplet tray side-by-side, centred as one group
+              // with a modest gap (avoids the big void between the pot and the tray). Portrait
+              // keeps the tray along the bottom.
+              '@media (orientation: landscape)': {
+                flexDirection: 'row',
+                alignItems: 'stretch',
+                justifyContent: 'center',
+                gap: { xs: 2, sm: 3, md: 5 }
+              }
             }}
           >
             <DndContext
@@ -483,7 +489,10 @@ const RamFarvenGame: React.FC = () => {
                 justifyContent: 'center',
                 gap: { xs: 1.5, sm: 2.5, md: 3.5 },
                 px: 2,
-                minHeight: 0
+                minHeight: 0,
+                // Landscape: don't grab all the width — sit at natural size so the board can centre
+                // the stage + tray together (this is what removes the dead space in the middle).
+                '@media (orientation: landscape)': { flex: '0 1 auto', px: 0 }
               }}>
                 {/* Goal swatch. Same column structure as the pot (circle → label → 44px reserve)
                     so the two circles line up on the same centre line. */}
@@ -589,7 +598,8 @@ const RamFarvenGame: React.FC = () => {
                         ))}
                       </AnimatePresence>
 
-                      {/* "Drop here" affordance while the pot is empty (gone once mixing starts). */}
+                      {/* Pour cue while the pot is empty: a droplet falls into the pot on loop
+                          (reads as "pour a droplet in here"). Gone once mixing starts. */}
                       {mixingZone.length === 0 && !committing && (
                         <Box sx={{
                           position: 'absolute', inset: 0,
@@ -597,10 +607,10 @@ const RamFarvenGame: React.FC = () => {
                           pointerEvents: 'none'
                         }}>
                           <motion.div
-                            animate={reduce ? {} : { y: [0, 4, 0] }}
-                            transition={reduce ? undefined : { duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
+                            animate={reduce ? { opacity: 0.6 } : { y: [-18, 6], opacity: [0, 1, 1, 0] }}
+                            transition={reduce ? undefined : { duration: 1.5, repeat: Infinity, ease: 'easeIn', times: [0, 0.25, 0.75, 1] }}
                           >
-                            <Typography sx={{ fontSize: 'clamp(1.6rem, 6vw, 2.4rem)', lineHeight: 1, opacity: 0.6, color: muiTheme.scene.dark ? 'rgba(255,255,255,0.85)' : t.accentColor }}>⬇</Typography>
+                            <Typography sx={{ fontSize: 'clamp(1.8rem, 6vw, 2.6rem)', lineHeight: 1 }}>💧</Typography>
                           </motion.div>
                         </Box>
                       )}
