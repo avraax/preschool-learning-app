@@ -68,27 +68,42 @@ const primaryColors: ColorDroplet[] = [
 ]
 
 const possibleTargets: TargetColor[] = [
+  // Secondary colors (two primaries)
   { color: 'lilla', name: 'lilla', hex: '#A855F7' },
   { color: 'orange', name: 'orange', hex: '#F97316' },
   { color: 'grøn', name: 'grøn', hex: '#10B981' },
+  // Tints (primary + white)
   { color: 'lyserød', name: 'lyserød', hex: '#FFB3BA' },
-  { color: 'grå', name: 'grå', hex: '#9CA3AF' },
-  { color: 'lyseblå', name: 'lyseblå', hex: '#BFDBFE' }
+  { color: 'lyseblå', name: 'lyseblå', hex: '#BFDBFE' },
+  { color: 'lysegul', name: 'lysegul', hex: '#FEF9C3' },
+  // Shades (primary + black) and grey
+  { color: 'mørkerød', name: 'mørkerød', hex: '#991B1B' },
+  { color: 'mørkeblå', name: 'mørkeblå', hex: '#1E3A8A' },
+  { color: 'grå', name: 'grå', hex: '#9CA3AF' }
 ]
 
 const mixingRules: Record<string, TargetColor> = {
+  // Secondaries
   'rød+blå': { color: 'lilla', name: 'lilla', hex: '#A855F7' },
   'blå+rød': { color: 'lilla', name: 'lilla', hex: '#A855F7' },
   'rød+gul': { color: 'orange', name: 'orange', hex: '#F97316' },
   'gul+rød': { color: 'orange', name: 'orange', hex: '#F97316' },
   'blå+gul': { color: 'grøn', name: 'grøn', hex: '#10B981' },
   'gul+blå': { color: 'grøn', name: 'grøn', hex: '#10B981' },
+  // Tints (+ white)
   'rød+hvid': { color: 'lyserød', name: 'lyserød', hex: '#FFB3BA' },
   'hvid+rød': { color: 'lyserød', name: 'lyserød', hex: '#FFB3BA' },
-  'sort+hvid': { color: 'grå', name: 'grå', hex: '#9CA3AF' },
-  'hvid+sort': { color: 'grå', name: 'grå', hex: '#9CA3AF' },
   'blå+hvid': { color: 'lyseblå', name: 'lyseblå', hex: '#BFDBFE' },
-  'hvid+blå': { color: 'lyseblå', name: 'lyseblå', hex: '#BFDBFE' }
+  'hvid+blå': { color: 'lyseblå', name: 'lyseblå', hex: '#BFDBFE' },
+  'gul+hvid': { color: 'lysegul', name: 'lysegul', hex: '#FEF9C3' },
+  'hvid+gul': { color: 'lysegul', name: 'lysegul', hex: '#FEF9C3' },
+  // Shades (+ black)
+  'rød+sort': { color: 'mørkerød', name: 'mørkerød', hex: '#991B1B' },
+  'sort+rød': { color: 'mørkerød', name: 'mørkerød', hex: '#991B1B' },
+  'blå+sort': { color: 'mørkeblå', name: 'mørkeblå', hex: '#1E3A8A' },
+  'sort+blå': { color: 'mørkeblå', name: 'mørkeblå', hex: '#1E3A8A' },
+  'sort+hvid': { color: 'grå', name: 'grå', hex: '#9CA3AF' },
+  'hvid+sort': { color: 'grå', name: 'grå', hex: '#9CA3AF' }
 }
 
 const shuffleArray = (array: ColorDroplet[]): ColorDroplet[] => {
