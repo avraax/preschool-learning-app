@@ -315,7 +315,7 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
     userSelect: 'none' as const,
     '@media (orientation: landscape)': { fontSize: { xs: '2.2rem', md: '3rem' } },
   }
-  const symbolSx = { width: { xs: 38, md: 54 }, height: { xs: 38, md: 54 } }
+  const symbolSx = { width: { xs: 48, md: 68 }, height: { xs: 48, md: 68 } }
 
   return (
     <GameShell
