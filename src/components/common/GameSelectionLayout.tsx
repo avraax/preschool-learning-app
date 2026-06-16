@@ -60,7 +60,12 @@ const GameSelectionLayout: React.FC<GameSelectionLayoutProps> = ({
         // Flat skins keep the bold category gradient.
         background: immersive ? 'transparent' : catTheme.gradient,
         display: 'flex',
-        flexDirection: 'column'
+        flexDirection: 'column',
+        // Keep the header clear of the iOS status bar / notch (standalone PWA): the back button +
+        // section icon were nearly touching the clock without this.
+        paddingTop: 'calc(env(safe-area-inset-top) + 8px)',
+        paddingLeft: 'env(safe-area-inset-left)',
+        paddingRight: 'env(safe-area-inset-right)'
       }}
     >
       {/* Compact App Bar — content sits above the persistent world */}
@@ -131,29 +136,29 @@ const GameSelectionLayout: React.FC<GameSelectionLayoutProps> = ({
           py: { xs: 2, md: 3 },
           display: 'flex',
           flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
           overflow: 'hidden',
           position: 'relative',
           zIndex: 2
         }}
       >
-        {/* Games grid. One continuous rule (no card-count branching): rows always divide the
-            available height (`1fr`) so the menu NEVER scrolls and shrinks as games multiply,
-            while each card carries a max width/height + is centered in its cell — so a few
-            games render as scene-framed tiles (capped) and many games shrink below the cap to
-            fit. Grid width is capped + centered so 2-col layouts don't spread too wide. */}
+        {/* Games grid. Rows size to the (capped) cards — NOT 1fr — so a few games render as a
+            tight, centred cluster of small cards instead of huge tiles spread across the height.
+            Fixed gap (same everywhere). Card width is column-bound (small) and the aspect ratio
+            sets the height, so more games just add rows and the cluster stays compact + never
+            scrolls; the whole block is centred H+V by the Container. */}
         <Box
           sx={{
-            flex: 1,
-            minHeight: 0,
             width: '100%',
-            maxWidth: 1000,
+            maxWidth: 820,
             mx: 'auto',
             display: 'grid',
             gridTemplateColumns: { xs: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)' },
-            gridAutoRows: 'minmax(0, 1fr)',
-            gap: { xs: 1.5, md: 2.5 },
-            alignContent: 'center',
-            justifyContent: 'center',
+            gridAutoRows: 'auto',
+            gap: '16px',
+            justifyItems: 'center',
+            alignItems: 'center',
             '@media (orientation: landscape)': {
               gridTemplateColumns: games.length <= 4 ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)'
             }
@@ -167,17 +172,16 @@ const GameSelectionLayout: React.FC<GameSelectionLayoutProps> = ({
               transition={{ duration: 0.5, delay: index * 0.08 }}
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
-              // Fill the cell but center a max-capped card inside it (cap applies when few
-              // games leave the row tall; the card shrinks with the row when there are many).
-              style={{ height: '100%', minHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              style={{ width: '100%', display: 'flex', justifyContent: 'center' }}
             >
               <Card
                 onClick={() => navigate(game.route)}
                 sx={{
-                  height: '100%',
                   width: '100%',
-                  maxHeight: 300,
-                  maxWidth: 460,
+                  // Capped small so few-card menus don't blow up into giant tiles; the aspect
+                  // ratio derives a consistent height that shrinks with the column width.
+                  maxWidth: { xs: 260, md: 300 },
+                  aspectRatio: '16 / 10',
                   cursor: 'pointer',
                   border: '3px solid',
                   borderColor: catTheme.borderColor,
@@ -205,12 +209,12 @@ const GameSelectionLayout: React.FC<GameSelectionLayoutProps> = ({
                   alignItems: 'center',
                   justifyContent: 'center',
                   textAlign: 'center',
-                  gap: { xs: 0.5, md: 1 },
-                  p: { xs: 1.5, md: 2 },
-                  '&:last-child': { pb: { xs: 1.5, md: 2 } }
+                  gap: { xs: 0.5, md: 0.75 },
+                  p: { xs: 1, md: 1.5 },
+                  '&:last-child': { pb: { xs: 1, md: 1.5 } }
                 }}>
                   <Typography sx={{
-                    fontSize: 'clamp(2rem, 9vh, 4.5rem)',
+                    fontSize: 'clamp(1.8rem, 5vh, 2.8rem)',
                     lineHeight: 1
                   }}>
                     {game.emoji}
@@ -221,7 +225,7 @@ const GameSelectionLayout: React.FC<GameSelectionLayoutProps> = ({
                       // Glass cards carry dark themed text (no shadow); gradient cards keep
                       // white text with a soft drop shadow for contrast.
                       textShadow: immersive ? 'none' : '1px 1px 2px rgba(0,0,0,0.3)',
-                      fontSize: 'clamp(0.95rem, 3.2vh, 1.5rem)',
+                      fontSize: 'clamp(0.85rem, 2.4vh, 1.2rem)',
                       lineHeight: 1.1
                     }}
                   >

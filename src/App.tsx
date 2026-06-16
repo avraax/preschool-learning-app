@@ -5,7 +5,6 @@ import { logIOSIssue } from './utils/remoteConsole'
 import { deviceInfo } from './utils/deviceDetection'
 import {
   Container,
-  Grid,
   Card,
   CardContent,
   Button,
@@ -246,32 +245,42 @@ const HomePage = () => {
           justifyContent: 'center',
           minHeight: 0
         }}>
-          <Grid
-            container
-            spacing={{ xs: 2, md: 3 }}
+          {/* Same compact card template as the section menus (GameSelectionLayout): a centred
+              grid of small, capped cards with a fixed 16px gap — identical dimensions. */}
+          <Box
             sx={{
               mb: { xs: 2, md: 3 },
-              justifyContent: 'center'
+              width: '100%',
+              maxWidth: 820,
+              mx: 'auto',
+              display: 'grid',
+              gridTemplateColumns: { xs: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)' },
+              gridAutoRows: 'auto',
+              gap: '16px',
+              justifyItems: 'center',
+              alignItems: 'center',
+              '@media (orientation: landscape)': { gridTemplateColumns: 'repeat(3, 1fr)' }
             }}
           >
             {homeCards.map((card) => {
               const cat = theme.categories[card.id]
               const content = categoryThemes[card.id]
               return (
-                <Grid key={card.id} size={{ xs: 12, sm: 6, md: 4 }}>
-                  <motion.div
+                <motion.div
+                    key={card.id}
                     initial={card.initial}
                     animate={{ opacity: 1, x: 0, y: 0 }}
                     transition={{ duration: 0.6, delay: card.delay }}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    style={{ height: '100%' }}
+                    style={{ width: '100%', display: 'flex', justifyContent: 'center' }}
                   >
                     <Card
                       onClick={() => navigate(card.route)}
                       sx={{
-                        height: '100%',
-                        minHeight: { xs: 120, sm: 150, md: 170 },
+                        width: '100%',
+                        maxWidth: { xs: 260, md: 300 },
+                        aspectRatio: '16 / 10',
                         cursor: 'pointer',
                         border: '2px solid',
                         borderColor: cat.border,
@@ -289,74 +298,67 @@ const HomePage = () => {
                           boxShadow: `0 8px 32px ${alpha(cat.accent, 0.3)}`,
                           transform: 'translateY(-2px)'
                         },
-                        transition: 'all 0.3s ease',
-                        '@media (orientation: landscape)': {
-                          minHeight: { xs: 110, sm: 130, md: 140 }
-                        }
+                        transition: 'all 0.3s ease'
                       }}
                     >
                       <CardContent
                         sx={{
-                          p: { xs: 2, md: 3 },
+                          p: { xs: 1, md: 1.5 },
                           height: '100%',
                           display: 'flex',
                           flexDirection: 'column',
+                          alignItems: 'center',
                           justifyContent: 'center',
-                          textAlign: 'center'
+                          textAlign: 'center',
+                          gap: { xs: 0.5, md: 0.75 }
                         }}
                       >
-                        <Box sx={{ mb: { xs: 0.5, md: 1 } }}>
-                          <Box
-                            component="img"
-                            src={sectionIconImages[card.id]}
-                            alt=""
-                            draggable={false}
-                            sx={{
-                              display: 'block',
-                              mx: 'auto',
-                              width: { xs: 58, sm: 64, md: 76 },
-                              height: { xs: 58, sm: 64, md: 76 },
-                              objectFit: 'contain',
-                              mb: { xs: 0.5, md: 1 },
-                              filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.22))',
-                              userSelect: 'none',
-                            }}
-                          />
-                          <Typography
-                            variant="h4"
-                            sx={{
-                              mb: 1,
-                              fontWeight: 700,
-                              fontSize: { xs: '1.5rem', md: '1.75rem' },
-                              color: cat.accent
-                            }}
-                          >
-                            {content.name}
-                          </Typography>
-                        </Box>
+                        <Box
+                          component="img"
+                          src={sectionIconImages[card.id]}
+                          alt=""
+                          draggable={false}
+                          sx={{
+                            display: 'block',
+                            width: { xs: 42, sm: 48, md: 56 },
+                            height: { xs: 42, sm: 48, md: 56 },
+                            objectFit: 'contain',
+                            filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.22))',
+                            userSelect: 'none',
+                          }}
+                        />
+                        <Typography
+                          sx={{
+                            fontWeight: 700,
+                            fontSize: 'clamp(0.85rem, 2.4vh, 1.2rem)',
+                            lineHeight: 1.1,
+                            color: cat.accent
+                          }}
+                        >
+                          {content.name}
+                        </Typography>
                       </CardContent>
                     </Card>
                   </motion.div>
-                </Grid>
               )
             })}
 
             {/* Reward hub — the album entry. A "book that fills" + lifetime stars; reads the
                 shared progress store so it grows across sessions (Overhaul Foundation §2). */}
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <motion.div
+            <motion.div
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, x: 0, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.5 }}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                style={{ height: '100%' }}
+                style={{ width: '100%', display: 'flex', justifyContent: 'center' }}
               >
                 <Card
                   onClick={() => navigate('/album')}
                   sx={{
-                    height: '100%',
-                    minHeight: { xs: 120, sm: 150, md: 170 },
+                    width: '100%',
+                    maxWidth: { xs: 260, md: 300 },
+                    aspectRatio: '16 / 10',
                     cursor: 'pointer',
                     border: '2px solid',
                     borderColor: alpha('#FFB300', 0.7),
@@ -373,25 +375,25 @@ const HomePage = () => {
                       transform: 'translateY(-2px)',
                     },
                     transition: 'all 0.3s ease',
-                    '@media (orientation: landscape)': { minHeight: { xs: 110, sm: 130, md: 140 } },
                   }}
                 >
                   <CardContent
                     sx={{
-                      p: { xs: 2, md: 3 },
+                      p: { xs: 1, md: 1.5 },
                       height: '100%',
                       display: 'flex',
                       flexDirection: 'column',
+                      alignItems: 'center',
                       justifyContent: 'center',
                       textAlign: 'center',
+                      gap: { xs: 0.4, md: 0.6 },
                     }}
                   >
-                    <Box sx={{ fontSize: { xs: '2.6rem', md: '3.2rem' }, lineHeight: 1, mb: { xs: 0.25, md: 0.5 } }}>
+                    <Box sx={{ fontSize: 'clamp(1.5rem, 4vh, 2.2rem)', lineHeight: 1 }}>
                       📖
                     </Box>
                     <Typography
-                      variant="h4"
-                      sx={{ mb: 0.75, fontWeight: 700, fontSize: { xs: '1.4rem', md: '1.6rem' }, color: '#C77800' }}
+                      sx={{ fontWeight: 700, fontSize: 'clamp(0.8rem, 2.2vh, 1.1rem)', lineHeight: 1.1, color: '#C77800' }}
                     >
                       Min Bog
                     </Typography>
@@ -399,13 +401,12 @@ const HomePage = () => {
                     <Box
                       sx={{
                         position: 'relative',
-                        height: 12,
+                        height: 8,
                         borderRadius: 6,
                         bgcolor: alpha('#C77800', 0.18),
                         overflow: 'hidden',
                         mx: 'auto',
                         width: '80%',
-                        mb: 0.75,
                       }}
                     >
                       <Box
@@ -418,14 +419,13 @@ const HomePage = () => {
                         }}
                       />
                     </Box>
-                    <Typography sx={{ fontWeight: 700, fontSize: { xs: '0.95rem', md: '1.05rem' }, color: '#9A5E00' }}>
+                    <Typography sx={{ fontWeight: 700, fontSize: 'clamp(0.7rem, 1.8vh, 0.95rem)', color: '#9A5E00' }}>
                       {stickersOwned} / {stickersTotal} · ⭐ {progress.totals.totalStars}
                     </Typography>
                   </CardContent>
                 </Card>
               </motion.div>
-            </Grid>
-          </Grid>
+          </Box>
         </Box>
       </Container>
 
