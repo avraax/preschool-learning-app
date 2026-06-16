@@ -7,6 +7,7 @@ import {
 import { useTheme } from '@mui/material/styles'
 import { Mic, MicOff } from 'lucide-react'
 import { categoryThemes } from '../../config/categoryThemes'
+import { darken, hexToRgba } from '../../theme/tokens/helpers'
 import GameShell from '../common/GameShell'
 import RoundResultScreen from '../common/RoundResultScreen'
 import type { GuideReaction } from '../common/ThemeMascot'
@@ -297,7 +298,7 @@ const SpeakWordGame: React.FC = () => {
             <MicOff size={64} color={theme.accentColor} />
             <Typography
               sx={{
-                                fontSize: { xs: '1.1rem', md: '1.4rem' },
+                fontSize: { xs: '1.1rem', md: '1.4rem' },
                 fontWeight: 700,
                 color: theme.accentColor,
                 mt: 2
@@ -312,12 +313,19 @@ const SpeakWordGame: React.FC = () => {
         ) : (
           <>
             {/* Instruction / status text */}
-            <Box sx={{ textAlign: 'center', flex: '0 0 auto', mb: { xs: 2, md: 3 }, minHeight: 56 }}>
+            <Box sx={{
+              textAlign: 'center',
+              flex: '0 0 auto',
+              mb: { xs: 2, md: 3 },
+              minHeight: 56,
+              '@media (orientation: landscape)': { mb: 1, minHeight: 40 }
+            }}>
               <Typography
                 sx={{
-                                    fontSize: { xs: '1.15rem', md: '1.5rem' },
+                  fontSize: { xs: '1.15rem', md: '1.5rem' },
                   fontWeight: 700,
-                  color: theme.accentColor
+                  // White on dark immersive scenes (accent teal is too dim there).
+                  color: muiTheme.scene.dark ? '#FFFFFF' : theme.accentColor
                 }}
               >
                 {phase === 'idle' && 'Hold knappen og sig et ord!'}
@@ -328,7 +336,8 @@ const SpeakWordGame: React.FC = () => {
               </Typography>
             </Box>
 
-            {/* Spelling display */}
+            {/* Spelling display. Landscape is height-constrained — shrink the reserved area so the
+                mic button below stays fully on-screen (it was pushed off the bottom). */}
             <Box
               sx={{
                 flex: '0 0 auto',
@@ -336,7 +345,8 @@ const SpeakWordGame: React.FC = () => {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                mb: { xs: 2, md: 3 }
+                mb: { xs: 2, md: 3 },
+                '@media (orientation: landscape)': { minHeight: 64, mb: 1 }
               }}
             >
               {phase === 'spelling' && recognizedWord && (
@@ -354,21 +364,23 @@ const SpeakWordGame: React.FC = () => {
                           sx={{
                             width: { xs: 48, sm: 56, md: 72 },
                             height: { xs: 48, sm: 56, md: 72 },
-                            borderRadius: 2,
+                            '@media (orientation: landscape)': { width: 52, height: 52 },
+                            borderRadius: '14px',
                             border: '3px solid',
-                            borderColor: revealed ? theme.accentColor : theme.borderColor,
-                            bgcolor: revealed ? 'white' : 'rgba(255,255,255,0.5)',
+                            borderColor: revealed ? theme.accentColor : hexToRgba(theme.accentColor, muiTheme.scene.dark ? 0.55 : 0.34),
+                            // Lifted-3D depth (matches AnswerTile) once a letter is revealed.
+                            background: revealed ? 'linear-gradient(180deg, #FFFFFF 0%, #ECF1F8 100%)' : 'rgba(255,255,255,0.5)',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            boxShadow: muiTheme.scene.dark
-                              ? '0 12px 30px rgba(0,0,0,0.45)'
-                              : '0 6px 18px rgba(0,0,0,0.12)'
+                            boxShadow: revealed
+                              ? `0 5px 0 ${darken(theme.accentColor, 0.28)}, ${muiTheme.scene.dark ? '0 10px 24px rgba(0,0,0,0.45)' : '0 7px 16px rgba(0,0,0,0.12)'}`
+                              : 'none'
                           }}
                         >
                           <Typography
                             sx={{
-                                                            fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2.5rem' },
+                              fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2.5rem' },
                               fontWeight: 700,
                               color: theme.accentColor
                             }}
@@ -408,6 +420,7 @@ const SpeakWordGame: React.FC = () => {
                   sx={{
                     width: { xs: 140, md: 168 },
                     height: { xs: 140, md: 168 },
+                    '@media (orientation: landscape)': { width: 124, height: 124 },
                     borderRadius: '50%',
                     mx: 'auto',
                     display: 'flex',
@@ -436,7 +449,8 @@ const SpeakWordGame: React.FC = () => {
               <Typography
                 sx={{
                   mt: 2,
-                  color: 'text.secondary',
+                  '@media (orientation: landscape)': { mt: 1 },
+                  color: muiTheme.scene.dark ? 'rgba(255,255,255,0.8)' : 'text.secondary',
                   fontSize: { xs: '0.9rem', md: '1.05rem' },
                   fontWeight: 600
                 }}
@@ -451,23 +465,34 @@ const SpeakWordGame: React.FC = () => {
       <AnimatePresence>
         {/* recognized word headline above the spelling once known */}
         {phase === 'spelling' && recognizedWord && (
-          <motion.div
+          <Box
+            component={motion.div}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
-            style={{ position: 'absolute', top: '14%', left: 0, right: 0, textAlign: 'center', pointerEvents: 'none' }}
+            sx={{
+              position: 'absolute',
+              top: '14%',
+              left: 0,
+              right: 0,
+              textAlign: 'center',
+              pointerEvents: 'none',
+              // Landscape is height-constrained and this floats over the title — the spelling
+              // tiles already show the word there, so drop the redundant headline.
+              '@media (orientation: landscape)': { display: 'none' }
+            }}
           >
             <Typography
               sx={{
-                                fontSize: 'clamp(2rem, 9vw, 4rem)',
+                fontSize: 'clamp(2rem, 9vw, 4rem)',
                 fontWeight: 700,
-                color: theme.accentColor,
+                color: muiTheme.scene.dark ? '#FFFFFF' : theme.accentColor,
                 letterSpacing: '0.08em'
               }}
             >
               {recognizedWord.toUpperCase()}
             </Typography>
-          </motion.div>
+          </Box>
         )}
       </AnimatePresence>
       </>
