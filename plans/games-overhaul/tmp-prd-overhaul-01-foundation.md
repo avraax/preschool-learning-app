@@ -343,4 +343,4 @@ useCelebration() => { showCelebration, celebrationIntensity, celebrate(intensity
 Collectible = **sticker album**; architecture = **one shared hub**; rounds = **bounded** (default 8); best = **streak + stars + personal-best count**, **no timers**; sound = **rich SFX**; lineup = **fully open**; quality floor = **match-or-exceed current immersive UI, app-wide**; device = **iPad-first**.
 
 ## Deferred to per-game PRDs
-Per-game round lengths & star thresholds; which sticker set each game biases toward; exploration-milestone rules for the 3 browse games; exact home-screen layout + parent-reset placement; whether to commission custom illustrated stickers; counting-aid component shape (math).
+Per-game round lengths & star thresholds; which sticker set each game biases toward; exploration-milestone rules for the 3 browse games; exact home-screen layout + parent-reset placement; whether to commission custom illustrated stickers.

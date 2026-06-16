@@ -14,7 +14,7 @@ The app is functionally solid (resilient audio, responsive no-scroll layouts, ta
 - **Repetitive reward** — the same confetti burst every correct answer; it stops landing after a few minutes.
 - **No memory** — score resets each session; effort doesn't accumulate into anything.
 - **Thin "game feel"** — mostly TTS voice, very few sound effects; little moment-to-moment juice beyond the tile press.
-- **Thin scaffolding** — no counting aids, no hints when stuck.
+- **Thin scaffolding** — no hints or encouragement when stuck.
 
 The goal is a **thorough, game-by-game level-up** of gameplay, UI, UX and "juice", anchored to the 5-year-old — explicitly allowing new games, removed games, or changed mechanics, not just polish.
 
@@ -54,7 +54,7 @@ plans/games-overhaul/tmp-prd-overhaul-02-<area>.md  ← per-area deep-dive PRDs 
 Each item below = one focused future session: **deep-dive design discussion → write that PRD → (separate session) implement → verify on device.**
 
 1. **Foundation** (`-01-`) — implement first. No game work lands well without it.
-2. **Math** (`-02-`) — 6 games, the richest learning surface and where the son is most actively progressing (counting, +/−). Highest payoff; also the best proving ground for scaffolding (counting aids) + the round/reward system.
+2. **Math** (`-02-`) — 6 games, the richest learning surface and where the son is most actively progressing (counting, +/−). Highest payoff; also the best proving ground for the round/reward system.
 3. **Alphabet** (`-03-`) — 2 games. He knows all letters, so the lift here is phonics/word-association depth + reward, and turning free-exploration into something with a goal.
 4. **Ordleg** (`-04-`) — 3 games (Læs Ordet, Stav Ordet, Sig et Ord). His emergent-reading frontier; the mic game is the likely favorite and deserves real investment.
 5. **English** (`-05-`) — 4 games. Strong shared-engine reuse; mostly benefits from the foundation + better distractors/scaffolding.
@@ -70,11 +70,11 @@ Each item below = one focused future session: **deep-dive design discussion → 
 This captures what the inventory found so each future session starts warm. **Not final scope** — each game gets its own questioning round.
 
 ### Math (`-02-`)
-- **Tal Quiz** (recognition 1–50): add **counting aids** (dot/finger/ten-frame visuals so a number isn't just a glyph); bounded rounds + stickers. Candidate: tie wrong-distractors to near numbers.
-- **Lære Tal** (browse 1–100): turn passive poster into a game with a goal — e.g. "find the number" challenges, ten-frame visuals, exploration stickers. Decide: keep endless-explore + add optional challenge mode.
-- **Plus / Minus**: biggest clarity gap — **no way to *work out* an unknown fact**. Add optional visual manipulatives (objects/ten-frame/number line "count with me"). Bounded rounds.
+- **Tal Quiz** (recognition 1–50): bounded rounds + stickers; tie wrong-distractors to **near numbers** (digit-swap, off-by-one/ten) so a correct tap is a real discrimination, not a lucky guess.
+- **Lære Tal** (browse 1–100): turn passive poster into a game with a goal — e.g. "find the number" challenges, exploration stickers. Decide: keep endless-explore + add optional challenge mode.
+- **Plus / Minus**: bounded rounds + rewards; **near-answer distractors** instead of random; SFX + celebration tiers.
 - **Sammenlign Tal** (>,<,=): clarify the symbol metaphor (the "hungry mouth eats the bigger number" device); keep emoji counts; round + reward.
-- **Hvad Mangler?** (sequences/skip-count): likely **too hard mixed**; consider splitting simple-next vs skip-counting, add count-through scaffolding.
+- **Hvad Mangler?** (sequences/skip-count): likely **too hard mixed**; consider splitting simple-next vs skip-counting.
 - Cross-math: a shared **counting-aid component** is a strong candidate (define once, reuse).
 
 ### Alphabet (`-03-`)

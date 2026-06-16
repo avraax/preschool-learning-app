@@ -18,17 +18,15 @@ Math is the richest learning surface and where the son is most actively progress
 counts to 60–70, **adds to 20 on his fingers**, does basic subtraction, knows all letters. The
 recurring gaps the overhaul inventory found in Math:
 
-- **Numbers are abstract glyphs** — there's **no way to *work out* an unknown fact**. Plus/Minus
-  just shows `3 + 4 = ?` with no manipulative; Tal Quiz shows a bare numeral.
 - **Flat, endless rounds** with one-size confetti and no memory between sessions.
+- **Random distractors** — a correct tap can be a lucky guess rather than a real discrimination.
 - **Sammenlign Tal is genuinely confusing**: it randomly asks "largest? / smallest? / equal?" and
   makes you pick among `>` `<` `=` tiles — three things vary at once.
 - **Lære Tal is a passive poster** — tap a number, hear it; no goal.
 
-**Success looks like:** he plays a bounded round, can tap **"Tæl med mig"** to *see* a number/fact as
-ten-frame dots when he's unsure, finishes on a reward screen that shows stars + whether he beat his
-best + a new sticker, and his album/bests survive across sessions — all at or above today's
-immersive themed polish.
+**Success looks like:** he plays a bounded round, finishes on a reward screen that shows stars +
+whether he beat his best + a new sticker, and his album/bests survive across sessions — all at or
+above today's immersive themed polish.
 
 **Static difficulty only** (standing constraint): no adaptive difficulty, no in-game level pickers.
 Tuning = editing the constants named in this PRD in a later session.
@@ -53,79 +51,42 @@ shared engine handled in `-07-`.
 
 - **`MathGame.tsx`** (Tal Quiz) — thin `UnifiedQuizGame` config. `MAX_NUMBER = 50`. Distractors are
   **purely random** in `generateOptions` (`MathGame.tsx:28-44`) — no targeting of real confusions.
-  No `round`/`gameId` → endless, no reward screen. No counting aid.
+  No `round`/`gameId` → endless, no reward screen.
 - **`MathOperationGame.tsx`** (Plus/Minus) — hand-rolled. Addition: `firstNum` 1–10, `secondNum`
   chosen so sum ≤20 (`:134-137`); Subtraction: result 0–9 (`:139-143`). **Distractors random**
   (`:150-158`). Uses legacy `celebrate()` + `playCelebrationWithStandardTiming` (`:206-229`), no
-  rounds, no SFX, **no manipulative to work out the fact**.
+  rounds, no SFX.
 - **`ComparisonGame.tsx`** — hand-rolled, **confusing**: numbers 1–20, 25% forced-equal (`:154-165`),
   random `questionType` of `largest`/`smallest`/`equal` (`:182-191`), child picks among `>` `<` `=`
   tiles (`:480-498`), with a long wrong-answer explanation path (`:298-356`). Three independent
   things vary per question. No rounds/SFX.
 - **`NumberLearning.tsx`** (Lær Tal) — learning-based 1–100 browse via `LearningGrid`
-  (`:200-206`); taps speak the number. **No goal, no reward, no aid.**
+  (`:200-206`); taps speak the number. **No goal, no reward.**
 - **`HvadManglerGame.tsx`** — `UnifiedQuizGame` config mixing count-by-1, skip-2/5/10, and abstract
   visual `ABAB` emoji patterns (`:42-88`). Distractors already near-number/pool (`:90-114`). No
-  `round`/`gameId`, no scaffolding.
+  `round`/`gameId`.
 
 ---
 
 ## Target experience
 
-A new shared **ten-frame counting aid**, on-demand behind a **"Tæl med mig"** button, plus
-bounded rounds + the Foundation reward flow on every game. Per game:
-
-### 0. Shared — `CountingAid` (NEW component)
-
-**New file:** `src/components/common/CountingAid.tsx`. The reusable manipulative.
-
-- **Static mode** — props `value: number`: renders `Math.ceil(value/10)` stacked **ten-frames**
-  (2 rows × 5 cells each). Cells fill up to `value`; remaining cells are empty outlines. The first
-  five filled dots use the theme **accent**, the second five a slightly darker shade (subitizing:
-  "five and two"). Example: `value=7` → one frame `●●●●● / ●●○○○`; `value=37` → three full frames +
-  a frame of 7. Scales cleanly to 50.
-- **Operation mode** — props `mode: 'add' | 'sub'`, `a: number`, `b: number`:
-  - `add`: a ten-frame (two if sum >10) with `a` dots in accent + `b` dots in a second colour, so
-    he can count the total. Reads as "`a` and `b` more."
-  - `sub`: `a` dots drawn, of which `b` are crossed-out / faded, leaving `a−b` solid.
-- **On-demand reveal:** the aid is **hidden by default**. A themed pill button **"Tæl med mig 🔢"**
-  toggles it. On reveal, dots **pop in staggered** (spring); reduced-motion → appear instantly.
-  Fires `sfx.play('tap')` on toggle. **It never reveals the answer** (see Hvad Mangler note).
-- **Look:** tactile, top-light dot gradient + soft shadow consistent with `AnswerTile`'s depth
-  language; all colours from theme tokens (`useTheme()` / accent), readable on `theme.scene.dark`.
-  No-scroll: the aid sits in the prompt area and is sized with `clamp()`; it must not push the
-  answer grid off-screen in landscape (cap height, wrap frames).
-
-**Suggested prop shape (implementer may refine):**
-```ts
-interface CountingAidProps {
-  accent: string                         // category accent (e.g. categoryThemes.math.accentColor)
-  mode?: 'value' | 'add' | 'sub'         // default 'value'
-  value?: number                         // 'value' mode
-  a?: number; b?: number                 // 'add' | 'sub' modes
-  open: boolean                          // controlled visibility
-  // optional: secondColor?: string
-}
-// Pair with a small <TaelMedMigButton onClick toggling `open`>; or expose an uncontrolled variant
-// that owns its own open state + renders its own button. Implementer's choice — keep it one import.
-```
+Bounded rounds + the Foundation reward flow on every game, near-number distractors, and a clarified
+Sammenlign mechanic. Per game:
 
 ### 1. Tal Quiz — `MathGame.tsx`
 
-**Before:** endless; random distractors; bare numeral.
+**Before:** endless; random distractors.
 **After:**
 - Bounded round: `round: { length: 8, starThresholds: { three: 0, two: 2 } }`, `gameId: 'math.counting'`.
 - **Near-number distractors** (replace `generateOptions`): build 3 wrong options from
   `[swapDigits(n), n−1, n+1, n−10, n+10]`, keep those in `1..50`, dedupe against `n` and each other,
   shuffle, take 3. Fall back to random-in-range only if fewer than 3 valid confusables exist
   (small/large edge numbers).
-- **Counting aid:** `aidContent: (item) => <CountingAid mode="value" value={Number(item.value)} accent={...} />`
-  — shows the **target** number as a stacked ten-frame so he can map quantity→glyph.
 - Range stays **1–50**.
 
 ### 2. Plus Opgaver / Minus Opgaver — `MathOperationGame.tsx`
 
-**Before:** endless; legacy celebration; random distractors; no manipulative.
+**Before:** endless; legacy celebration; random distractors.
 **After (both operations, hand-rolled wiring of Foundation):**
 - Bounded round via `useRound({ length: 8, starThresholds: { three: 0, two: 2 } })`;
   `gameId = isAddition ? 'math.addition' : 'math.subtraction'`. On round end render
@@ -138,11 +99,9 @@ interface CountingAidProps {
   → set `roundOutcome`; else generate the next problem.
 - **Juice:** replace `celebrate()` (`:208`) with `celebrateTier('micro')`; keep the spoken result.
   Keep the resilient start + the corner-guide reaction.
-- **Counting aid under the equation:** a "Tæl med mig" button reveals
-  `<CountingAid mode={isAddition ? 'add' : 'sub'} a={num1} b={num2} accent={...} />`.
 - **Near-answer distractors** (replace `:150-158`): build wrong options from
-  `[answer−1, answer+1, answer−2, answer+2, (isAddition ? num1*num2... no) swapped]` clamped to the
-  valid result range (addition 1–20, subtraction 0–10), dedupe, shuffle, take 3.
+  `[answer−1, answer+1, answer−2, answer+2]` clamped to the valid result range (addition 1–20,
+  subtraction 0–10), dedupe, shuffle, take 3.
 - **Ranges unchanged:** addition operands 1–10 with sum ≤20; subtraction result 0–9.
 
 ### 3. Sammenlign Tal — `ComparisonGame.tsx` (largest rework)
@@ -161,7 +120,6 @@ interface CountingAidProps {
 - **Removed:** the equality case, the `largest`/`smallest`/`equal` variance, and the long
   wrong-answer `explanation` path (`:298-356`). Wrong tap → gentle `sfx.play('wrong')` + the mouth
   does **not** open; he can retry (first-attempt flag breaks).
-- **Counting aid:** optional ten-frame per side via "Tæl med mig" (numbers ≤20 → 1–2 frames each).
 - Wire `useRound(8)` + `RoundResultScreen` + `progressStore` (`gameId: 'math.comparison'`) + tiers/SFX
   exactly as Plus/Minus.
 
@@ -169,9 +127,7 @@ interface CountingAidProps {
 
 **Before:** passive 1–100 poster.
 **After:**
-- **Keep** the calm browse (the `LearningGrid` + the big current-number card). Add a `CountingAid`
-  (`mode="value"`, `value=numbers[currentIndex]`) revealed by a "Tæl med mig" button beside the
-  current-number card.
+- **Keep** the calm browse (the `LearningGrid` + the big current-number card) exactly as today.
 - **"Find tallet" challenge:** a button in the header toggles a bounded round. In challenge mode,
   audio says **"Find tallet N"** (reuse `DANISH_PHRASES.gamePrompts.findNumber`), the child taps that
   number on the grid; correct → `celebrateTier('micro')` + advance, wrong → `sfx.play('wrong')` +
@@ -185,15 +141,10 @@ interface CountingAidProps {
 
 ### 5. Hvad Mangler? — `HvadManglerGame.tsx`
 
-**Before:** all three modes, no rounds/scaffold.
+**Before:** all three modes, no rounds.
 **After:**
 - **Keep all three modes** (count-1, skip-2/5/10, visual `ABAB`/`ABCABC`). Add
   `round: { length: 8, starThresholds: { three: 0, two: 2 } }`, `gameId: 'math.patterns'`.
-- **Scaffolding via `aidContent`:** a **count-through of the *visible* sequence** that does **NOT**
-  reveal the `❓` blank. For numeric sequences: render each visible number as a small ten-frame in
-  order (the blank stays `❓`), so he can *see* the step size and infer the missing quantity. For
-  visual patterns: highlight/loop the repeating unit (e.g. pulse the `AB` group). Reuse `CountingAid`
-  per visible number where it fits.
 - Keep the existing near-number/pool distractor logic (`:90-114`) — it's already good.
 
 ---
@@ -220,12 +171,6 @@ interface CountingAidProps {
 
 ## Learning design
 
-- **Make quantity visible, on demand.** Ten-frames are the canonical early-math representation:
-  five-wise grouping builds subitizing and a bridge to place value (37 = 3 tens + 7). On-demand keeps
-  the games a *recognition/recall* test first and a *scaffold when stuck* second — it never does the
-  thinking for him, and a parent can reveal it to teach.
-- **Plus/Minus become workable.** With "Tæl med mig" he can count `3 + 4` as dots instead of guessing
-  — matching how he already adds on fingers, then weaning off.
 - **Comparison gets one clear rule.** "Tap the bigger; the mouth eats it" removes the triple-variance
   that made the old game incoherent, while still teaching `>`/`<`.
 - **Near-number distractors** target the actual confusions (digit order, off-by-one/ten) so a correct
@@ -239,18 +184,13 @@ interface CountingAidProps {
 
 ## Visual/asset spec
 
-- **`CountingAid`** meets Principle 0: dot cells use a top-light gradient + soft shadow echoing
-  `AnswerTile`; accent + darker-accent dot colours from theme tokens; empty cells are faint outlines;
-  renders correctly on all 6 skins incl. dark immersive scenes; Framer spring pop-in; reduced-motion
-  → instant, no animation. Sized with `clamp()` and capped so it never forces scroll (wrap stacked
-  frames; tighten in `@media (orientation: landscape)`).
-- **"Tæl med mig" button:** themed pill (Comic Sans, ≥44px), reuses the math accent; visually distinct
-  from `MathRepeatButton` ("Hør igen") so the two don't compete.
 - **Krokodille mouth (Sammenlign):** a `>`/`<` built from `SymbolTile` or a 🐊 glyph that springs open
   toward the bigger side; static fallback under reduced-motion.
 - **`RoundResultScreen` / `StickerReveal`** are reused as-is (already at the quality bar).
 - **No new raster art required.** Everything is CSS/emoji/Framer. (Flag later only if we want a
   custom-illustrated crocodile — not needed for v1.)
+- Everything meets Principle 0: theme-token colours only, correct on all 6 skins incl. dark immersive
+  scenes, `clamp()` sizing, no-scroll, reduced-motion aware.
 
 ---
 
@@ -277,22 +217,18 @@ interface CountingAidProps {
 
 ## Files to touch
 
-**New**
-- `src/components/common/CountingAid.tsx` — ten-frame manipulative + "Tæl med mig" toggle.
-
 **Modified**
-- `src/components/common/UnifiedQuizGame.tsx` — add optional `aidContent?: (item) => React.ReactNode`
-  to `UnifiedQuizConfig`; render the "Tæl med mig" toggle + node in the prompt area (above the answer
-  grid) when present. Non-breaking.
-- `src/components/math/MathGame.tsx` — round + gameId, near-number distractors, `aidContent`.
+- `src/components/math/MathGame.tsx` — round + gameId, near-number distractors.
 - `src/components/math/MathOperationGame.tsx` — `useRound`/`RoundResultScreen`/`progressStore`/tiers/SFX,
-  first-attempt tracking, `CountingAid` (add/sub), near-answer distractors.
+  first-attempt tracking, near-answer distractors.
 - `src/components/math/ComparisonGame.tsx` — new tap-the-bigger mechanic + krokodille, drop equality
-  & explanation path, wire rounds/result/tiers/SFX, optional `CountingAid`.
-- `src/components/math/NumberLearning.tsx` — `CountingAid`, "Find tallet" challenge (round/result),
+  & explanation path, wire rounds/result/tiers/SFX.
+- `src/components/math/NumberLearning.tsx` — "Find tallet" challenge (round/result),
   session-local exploration-milestone stickers.
-- `src/components/math/HvadManglerGame.tsx` — round + gameId, `aidContent` count-through scaffold.
-- `CLAUDE.md` — document `CountingAid` and the `math.*` gameIds under the progress/overhaul notes.
+- `src/components/math/HvadManglerGame.tsx` — round + gameId.
+- `CLAUDE.md` — document the `math.*` gameIds under the progress/overhaul notes.
+
+**No new files.**
 
 **Reuse (do not reinvent)** — `useRound` (`src/hooks/useRound.ts`), `progressStore` +
 `RoundOutcome`/`recordRoundResult`/`awardSticker` (`src/services/progressStore.ts`),
@@ -312,30 +248,26 @@ project memory). Then:
 1. **Rounds:** each of `/math/counting`, `/math/addition`, `/math/subtraction`, `/math/comparison`,
    `/math/patterns` ends after **8** questions → `RoundResultScreen` (stars for 0 / 2 / 3 mistakes),
    replay + "Se bog" + "Tilbage" work.
-2. **Counting aid:** "Tæl med mig" reveals ten-frames; Tal Quiz shows the target as dots; Plus shows
-   two-colour dots summing correctly; Minus shows crossed-out dots; the aid never forces scroll in
-   portrait or landscape and never reveals the Hvad Mangler `❓`.
-3. **Sammenlign:** always "tap the bigger"; tapping the bigger opens the krokodille `>`/`<` toward it;
+2. **Sammenlign:** always "tap the bigger"; tapping the bigger opens the krokodille `>`/`<` toward it;
    no equality appears; wrong tap = gentle SFX + retry.
-4. **Lær Tal:** browse still calm + speaks numbers; "Find tallet" runs an 8-question round → result;
+3. **Lær Tal:** browse still calm + speaks numbers; "Find tallet" runs an 8-question round → result;
    ~every 12 distinct taps pops a sticker.
-5. **Persistence & best:** beat a streak/stars/count → "Ny rekord!" old→new; reload → album + stars +
+4. **Persistence & best:** beat a streak/stars/count → "Ny rekord!" old→new; reload → album + stars +
    bests survive; private window → no crash.
-6. **SFX/juice:** `tap` on aid toggle/tiles, `correct`/`wrong`, `streak-up` every 3rd first-try, the
+5. **SFX/juice:** `tap` on tiles, `correct`/`wrong`, `streak-up` every 3rd first-try, the
    result-screen star/round/sticker cues; mute (`progressStore.settings.sfxEnabled`) silences SFX but
    not TTS.
-7. **Quality floor:** every surface renders correctly and at-or-above current polish in **all 6
+6. **Quality floor:** every surface renders correctly and at-or-above current polish in **all 6
    themes**, portrait + landscape, **no scroll**; reduced-motion degrades gracefully.
-8. `npm run build` and `npm run lint` clean. Use the `ui-screenshot` skill to confirm layouts + zero
+7. `npm run build` and `npm run lint` clean. Use the `ui-screenshot` skill to confirm layouts + zero
    console errors.
 
 ---
 
 ## Open questions resolved this session
 
-- Counting aid = **ten-frame** (stacked for >10), **on-demand** via "Tæl med mig".
 - Plus & Minus **stay separate**.
-- Hvad Mangler? **keeps all three modes** + adds the count-through scaffold.
+- Hvad Mangler? **keeps all three modes**.
 - Tal Quiz = **near-number distractors**, range **1–50** kept.
 - Sammenlign = **hungry-mouth (krokodille)**, **tap the bigger**, **equality dropped**.
 - Lær Tal = **browse + "Find tallet" challenge**, exploration stickers **session-local**.
@@ -375,11 +307,6 @@ export interface UnifiedQuizConfig {
   gameId?: string                // stable progress id, e.g. 'math.counting'
 }
 ```
-- **ADD** `aidContent?: (item: QuizItem) => React.ReactNode` to this interface (non-breaking).
-- **Render point:** the prompt area is the `questionVisual` block + repeat-button block at
-  **`UnifiedQuizGame.tsx:393-440`**, just above the answer-grid `Box` at **`:442-547`**. Render the
-  "Tæl med mig" toggle + `config.aidContent(currentItem)` here (only when `config.aidContent` and a
-  non-null result), inside the `!roundOutcome` branch (`:391-549`).
 - **Round path already implemented** (mirror it for hand-rolled games): correct-answer handler
   `handleItemClick` (`:239-315`); the advance/finish block is **`:285-304`**:
 ```ts
@@ -397,7 +324,7 @@ setTimeout(() => {
   `handleReplay` (`:345-351`) resets round+score and regenerates. `firstAttemptRef` reset in
   `generateNewQuestion` (`:129`); broken on a wrong tap (`:274`) with `sfx.play('wrong')`.
 - Result render: `roundOutcome ? <RoundResultScreen outcome categoryId={config.theme.id}
-  backRoute={config.backRoute} onReplay={handleReplay}/> : (…grid…)` at **`:384-391`**.
+  backRoute={config.backRoute} onReplay={handleReplay}/> : (…grid…)`.
 
 ### `useRound` — `src/hooks/useRound.ts`
 ```ts
@@ -468,18 +395,18 @@ audio.isAudioReady; audio.updateUserInteraction(); audio.cancelCurrentAudio()
 audio.playGameWelcome(gameType)            // existing welcome strings: 'math','addition','subtraction','comparison','patterns','numberlearning'
 audio.speakNumber(n, customSpeed?)         // Lær Tal uses 1.2
 audio.speakAdditionProblem(a, b, 'primary'); audio.speakSubtractionProblem(a, b, 'primary')
-audio.speakComparisonProblem(left, right, leftObjs, rightObjs, 'largest'|'smallest'|'equal') // (now only need a "biggest" prompt; reuse audio.speak('Tryk på det største tal') if simpler)
 audio.speakQuizPromptWithRepeat(text, repeatWord); audio.speak(text); audio.announceGameResult(isCorrect)
 audio.announcePosition(currentIndex, total, 'tal')
+// Sammenlign now only needs a single "biggest" prompt — reuse audio.speak('Tryk på det største tal').
 ```
 
 ### `AnswerTile` — `src/components/common/AnswerTile.tsx`
 ```tsx
 <AnswerTile onClick accent={hex} state={'idle'|'correct'|'wrong'} disabled?>{children}</AnswerTile>
 ```
-Depth language to echo in `CountingAid`: 3px accent border, `darken(accent,0.3)` 3D lip, layered
-ambient shadow (`dark` deepens it), top-light surface gradient, `:active` sink, reduced-motion-aware.
-Helpers `darken`, `hexToRgba` live in `src/theme/tokens/helpers.ts`.
+Depth language used across surfaces: 3px accent border, `darken(accent,0.3)` 3D lip, layered ambient
+shadow (`dark` deepens it), top-light surface gradient, `:active` sink, reduced-motion-aware. Helpers
+`darken`, `hexToRgba` live in `src/theme/tokens/helpers.ts`.
 
 ### `MathOperationGame.tsx` — hand-roll integration points
 - Operation prop: `{ operation: 'addition' | 'subtraction' }`; `isAddition`, `operator`.
@@ -493,8 +420,7 @@ Helpers `darken`, `hexToRgba` live in `src/theme/tokens/helpers.ts`.
   with the round path from the engine snippet above; track `firstAttemptRef`).
 - Render: `GameShell` (`:256-264`) with `celebration={{ show, intensity, onComplete }}` (add
   `duration: celebrationDuration`); equation block (`:267-324`); answers grid (`:326-386`). Put
-  `RoundResultScreen` in place of equation+answers when `roundOutcome` is set; add the "Tæl med mig"
-  + `CountingAid` under the equation (`MathRepeatButton` is at `:321`).
+  `RoundResultScreen` in place of equation+answers when `roundOutcome` is set.
 
 ### `ComparisonGame.tsx` — current pieces to reuse / replace
 - `OBJECT_TYPES` (`:19-28`), `DANISH_NUMBERS` (`:30-33`), `getEmojiFontSize` (`:36-40`) — **keep**.
