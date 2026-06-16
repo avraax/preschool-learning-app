@@ -266,8 +266,15 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
     if (guideReactionTimer.current) clearTimeout(guideReactionTimer.current)
     guideReactionTimer.current = setTimeout(() => setGuideReaction(null), 1100)
 
-    // Success/fail is communicated by SFX + visuals only — no spoken feedback (owner request:
-    // the tapped item / "correct/wrong" narration was removed).
+    // Echo the tapped item (identification — e.g. the letter/number/word). The win/lose
+    // narration (announceGameResult "correct/try-again") stays removed; success/fail is
+    // otherwise SFX + visuals only.
+    try {
+      await config.speakClickedItem(selectedItem, audio)
+    } catch {
+      // best-effort: tile audio is non-critical, so ignore playback errors here
+    }
+
     if (isCorrect) {
       incrementScore()
       celebrateTier('micro') // light per-answer sparkle + soft "correct" SFX

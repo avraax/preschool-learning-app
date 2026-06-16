@@ -229,13 +229,21 @@ const ComparisonGame: React.FC = () => {
     const biggerSide: Side =
       currentProblem.leftNumber > currentProblem.rightNumber ? 'left' : 'right'
     const isCorrect = side === biggerSide
+    const tappedNumber = side === 'left' ? currentProblem.leftNumber : currentProblem.rightNumber
 
     setChosen({ side, correct: isCorrect })
     setGuideReaction(isCorrect ? 'cheer' : 'think')
     if (guideReactionTimer.current) clearTimeout(guideReactionTimer.current)
     guideReactionTimer.current = setTimeout(() => setGuideReaction(null), 1100)
 
-    // Success/fail is communicated by SFX + visuals only — no spoken feedback (owner request).
+    // Echo the tapped number (identification). The win/lose narration (announceGameResult) stays
+    // removed; success/fail is otherwise SFX + visuals only.
+    try {
+      await audio.speakNumber(tappedNumber)
+    } catch {
+      // ignore number audio errors
+    }
+
     if (isCorrect) {
       setLocked(true)
       setMouthOpen(true) // krokodille opens toward the bigger number

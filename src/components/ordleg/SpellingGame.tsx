@@ -291,7 +291,13 @@ const SpellingGame: React.FC = () => {
       setFilledCount(newFilled)
       slotWrongRef.current = 0
       setHintTileId(null)
-      sfx.play('drop-snap') // effect sound only; no spoken letter (owner request)
+
+      // Echo the placed letter (identification). No win/lose narration.
+      try {
+        await audio.speakLetter(tile.letter)
+      } catch (error) {
+        // ignore letter audio errors
+      }
 
       if (newFilled === targetLetters.length) {
         // Word complete
@@ -324,14 +330,22 @@ const SpellingGame: React.FC = () => {
     celebrateTier('micro')
     reactGuide('cheer')
 
-    // Advance after a short celebration window — SFX + visuals only, no spoken word (owner request).
-    setTimeout(() => {
-      stopCelebration()
-      const r = round.completeQuestion(firstAttemptRef.current)
-      if (!r.done && r.streak > 0 && r.streak % 3 === 0) celebrateTier('streak')
-      if (r.done) finishRound(r.firstTryCorrect, r.longestStreak)
-      else generateNewWord()
-    }, isIOS() ? 1500 : 2000)
+    // Read the completed word back (identification of what was spelled), then advance. No
+    // win/lose narration.
+    setTimeout(async () => {
+      try {
+        await audio.speak(current.word)
+      } catch (error) {
+        // ignore
+      }
+      setTimeout(() => {
+        stopCelebration()
+        const r = round.completeQuestion(firstAttemptRef.current)
+        if (!r.done && r.streak > 0 && r.streak % 3 === 0) celebrateTier('streak')
+        if (r.done) finishRound(r.firstTryCorrect, r.longestStreak)
+        else generateNewWord()
+      }, isIOS() ? 1500 : 2000)
+    }, 400)
   }
 
   const repeatWord = async () => {

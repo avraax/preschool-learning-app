@@ -226,7 +226,9 @@ const NuancerGame: React.FC = () => {
       slotWrongRef.current = 0
       setHintName(null)
       sfx.play('drop-snap')
-      // Success = SFX + visuals only; no spoken shade name (owner request).
+      // Identify the placed shade (educational echo). No win/lose narration.
+      audio.cancelCurrentAudio()
+      audio.speak(shadeName).catch(() => {})
       if (next.every((s) => s !== null)) completeQuestion()
     } else {
       // Wrong slot → bounce back (automatic) + gentle SFX + shake, break first-try.

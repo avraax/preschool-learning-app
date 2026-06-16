@@ -228,7 +228,14 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
     if (guideReactionTimer.current) clearTimeout(guideReactionTimer.current)
     guideReactionTimer.current = setTimeout(() => setGuideReaction(null), 1100)
 
-    // Success/fail is communicated by SFX + visuals only — no spoken feedback (owner request).
+    // Echo the tapped number (identification). The win/lose narration (announceGameResult) stays
+    // removed; success/fail is otherwise SFX + visuals only.
+    try {
+      await audio.speakNumber(selectedAnswer)
+    } catch {
+      // ignore number audio errors
+    }
+
     if (isCorrect) {
       incrementScore()
       celebrateTier('micro') // light per-answer sparkle + soft "correct" SFX

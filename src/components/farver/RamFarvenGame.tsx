@@ -354,8 +354,11 @@ const RamFarvenGame: React.FC = () => {
     celebrateTier('micro')
     reactGuide('cheer')
 
-    // Recipe reveal: 🔴 + 🔵 = 🟣 (visual card only — no spoken rule; owner request).
+    // Recipe reveal: 🔴 + 🔵 = 🟣 + the spoken rule ("rød og blå bliver lilla") — educational
+    // naming of the result (identification), not win/lose narration.
     setRecipe({ aHex: c1.hex, bHex: c2.hex, targetHex: result.hex, aName: c1.colorName, bName: c2.colorName, targetName: result.name })
+    audio.cancelCurrentAudio()
+    audio.speak(`${c1.colorName} og ${c2.colorName} bliver ${result.name}`).catch(() => {})
 
     if (commitTimer.current) clearTimeout(commitTimer.current)
     commitTimer.current = setTimeout(() => {
