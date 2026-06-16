@@ -7,6 +7,7 @@ import {
 } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { categoryThemes } from '../../config/categoryThemes'
+import { darken, hexToRgba } from '../../theme/tokens/helpers'
 import GameShell from '../common/GameShell'
 import RoundResultScreen from '../common/RoundResultScreen'
 import type { GuideReaction } from '../common/ThemeMascot'
@@ -396,7 +397,10 @@ const SpellingGame: React.FC = () => {
                   sx={{
                     fontSize: 'clamp(3rem, 14vh, 6rem)',
                     lineHeight: 1,
-                    mb: 0.5
+                    mb: 0.5,
+                    // Landscape is height-constrained — shrink the emoji so the slots + tiles
+                    // below keep room and the tiles' edge lip isn't clipped at the viewport edge.
+                    '@media (orientation: landscape)': { fontSize: 'clamp(2.4rem, 11vh, 3.4rem)' }
                   }}
                 >
                   {current.emoji}
@@ -415,7 +419,8 @@ const SpellingGame: React.FC = () => {
                 alignItems: 'center',
                 gap: { xs: 1, md: 1.5 },
                 flex: '0 0 auto',
-                mb: { xs: 1.5, md: 2.5 }
+                mb: { xs: 1.5, md: 2.5 },
+                '@media (orientation: landscape)': { mb: 1 }
               }}
             >
               {targetLetters.map((letter, index) => {
@@ -438,7 +443,7 @@ const SpellingGame: React.FC = () => {
                   >
                     <Typography
                       sx={{
-                            fontSize: 'clamp(1.75rem, 6vw, 2.75rem)',
+                        fontSize: 'clamp(1.75rem, 6vw, 2.75rem)',
                         fontWeight: 700,
                         color: filled ? 'white' : 'transparent',
                         userSelect: 'none'
@@ -460,7 +465,8 @@ const SpellingGame: React.FC = () => {
                 justifyContent: 'center',
                 alignItems: 'center',
                 minHeight: 0,
-                mt: { xs: 1, md: 2 }
+                mt: { xs: 1, md: 2 },
+                '@media (orientation: landscape)': { mt: 0.5 }
               }}
             >
               <Box
@@ -500,42 +506,48 @@ const SpellingGame: React.FC = () => {
                       whileTap={{ scale: 0.92 }}
                     >
                       <Paper
-                        elevation={4}
+                        elevation={0}
                         onClick={() => handleTileClick(tile)}
                         sx={{
                           width: { xs: 56, sm: 64, md: 76 },
                           height: { xs: 56, sm: 64, md: 76 },
                           minWidth: 44,
                           minHeight: 44,
-                          borderRadius: 2,
+                          borderRadius: '16px',
                           border: '3px solid',
                           borderColor: isShaking
                             ? 'error.main'
                             : isHint
                               ? theme.accentColor
-                              : theme.borderColor,
-                          bgcolor: 'white',
+                              : hexToRgba(theme.accentColor, muiTheme.scene.dark ? 0.55 : 0.34),
+                          // Lifted-3D depth (matches AnswerTile): top-light surface + teal edge lip.
+                          background: 'linear-gradient(180deg, #FFFFFF 0%, #ECF1F8 100%)',
                           cursor: 'pointer',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
                           userSelect: 'none',
+                          transition: 'box-shadow 0.2s ease, border-color 0.2s ease, transform 0.08s ease',
                           boxShadow: isHint
-                            ? `0 0 0 4px ${theme.accentColor}55, ${muiTheme.scene.dark ? '0 12px 30px rgba(0,0,0,0.45)' : '0 6px 18px rgba(0,0,0,0.12)'}`
-                            : muiTheme.scene.dark
-                              ? '0 12px 30px rgba(0,0,0,0.45)'
-                              : '0 6px 18px rgba(0,0,0,0.12)',
+                            ? `0 0 0 4px ${hexToRgba(theme.accentColor, 0.4)}, 0 5px 0 ${darken(theme.accentColor, 0.28)}, ${muiTheme.scene.dark ? '0 10px 24px rgba(0,0,0,0.5)' : '0 8px 18px rgba(0,0,0,0.15)'}`
+                            : isShaking
+                              ? `0 5px 0 ${darken(muiTheme.palette.error.main, 0.25)}, ${muiTheme.scene.dark ? '0 10px 24px rgba(0,0,0,0.45)' : '0 7px 16px rgba(0,0,0,0.12)'}`
+                              : `0 5px 0 ${darken(theme.accentColor, 0.28)}, ${muiTheme.scene.dark ? '0 10px 24px rgba(0,0,0,0.45)' : '0 7px 16px rgba(0,0,0,0.12)'}`,
+                          '&:active': {
+                            transform: 'translateY(3px)',
+                            boxShadow: `0 2px 0 ${darken(theme.accentColor, 0.28)}, ${muiTheme.scene.dark ? '0 4px 10px rgba(0,0,0,0.5)' : '0 4px 8px rgba(0,0,0,0.18)'}`
+                          },
                           '@media (hover: hover) and (pointer: fine)': {
                             '&:hover': {
                               borderColor: theme.hoverBorderColor,
-                              boxShadow: 8
+                              boxShadow: `0 8px 0 ${darken(theme.accentColor, 0.28)}, 0 14px 30px ${hexToRgba(theme.accentColor, 0.3)}`
                             }
                           }
                         }}
                       >
                         <Typography
                           sx={{
-                                    fontSize: 'clamp(1.75rem, 6vw, 2.75rem)',
+                            fontSize: 'clamp(1.75rem, 6vw, 2.75rem)',
                             fontWeight: 700,
                             color: theme.accentColor
                           }}
