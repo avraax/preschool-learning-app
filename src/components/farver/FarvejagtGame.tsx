@@ -347,9 +347,7 @@ const FarvejagtGame: React.FC = () => {
       setHintItemId(null)
       celebrateTier('micro')
       reactGuide('cheer')
-
-      audio.cancelCurrentAudio()
-      audio.speak(`${draggedItem.objectNameDefinite} er ${draggedItem.colorName}`).catch(() => {})
+      // Success = SFX (drop-snap) + visuals only; no spoken reinforcement (owner request).
 
       if (collectedTargetsNow + 1 >= totalTarget) {
         handleBoardComplete()
@@ -367,9 +365,7 @@ const FarvejagtGame: React.FC = () => {
           item.id === active.id ? { ...item, returning: false } : item
         ))
       }, 500)
-
-      audio.cancelCurrentAudio()
-      audio.speak(`${draggedItem.objectNameDefinite} er ${draggedItem.colorName}`).catch(() => {})
+      // Wrong = SFX (wrong) + bounce-back visual only; no spoken reinforcement (owner request).
 
       // After N wrong drops on this board, pulse an uncollected target (never-fail scaffold).
       boardWrongRef.current += 1

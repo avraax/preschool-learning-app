@@ -229,45 +229,31 @@ const ComparisonGame: React.FC = () => {
     const biggerSide: Side =
       currentProblem.leftNumber > currentProblem.rightNumber ? 'left' : 'right'
     const isCorrect = side === biggerSide
-    const tappedNumber = side === 'left' ? currentProblem.leftNumber : currentProblem.rightNumber
 
     setChosen({ side, correct: isCorrect })
     setGuideReaction(isCorrect ? 'cheer' : 'think')
     if (guideReactionTimer.current) clearTimeout(guideReactionTimer.current)
     guideReactionTimer.current = setTimeout(() => setGuideReaction(null), 1100)
 
-    // Speak the tapped number for immediate feedback.
-    try {
-      await audio.speakNumber(tappedNumber)
-    } catch {
-      // ignore number audio errors
-    }
-
+    // Success/fail is communicated by SFX + visuals only — no spoken feedback (owner request).
     if (isCorrect) {
       setLocked(true)
       setMouthOpen(true) // krokodille opens toward the bigger number
       incrementScore()
       celebrateTier('micro')
 
-      setTimeout(async () => {
-        try {
-          await audio.announceGameResult(true)
-          setTimeout(() => {
-            stopCelebration()
-            const r = round.completeQuestion(firstAttemptRef.current)
-            if (!r.done && r.streak > 0 && r.streak % 3 === 0) {
-              celebrateTier('streak')
-            }
-            if (r.done) {
-              finishRound(r.firstTryCorrect, r.longestStreak)
-            } else {
-              generateNewProblem()
-            }
-          }, isIOS() ? 1500 : 2000)
-        } catch (error) {
-          logError('Error in game result audio', { side, isCorrect, error: error?.toString() })
+      setTimeout(() => {
+        stopCelebration()
+        const r = round.completeQuestion(firstAttemptRef.current)
+        if (!r.done && r.streak > 0 && r.streak % 3 === 0) {
+          celebrateTier('streak')
         }
-      }, 150)
+        if (r.done) {
+          finishRound(r.firstTryCorrect, r.longestStreak)
+        } else {
+          generateNewProblem()
+        }
+      }, isIOS() ? 1500 : 2000)
     } else {
       // Gentle, non-punishing: break the first-try flag, soft SFX, the mouth stays shut, retry.
       firstAttemptRef.current = false

@@ -345,7 +345,7 @@ const RamFarvenGame: React.FC = () => {
     if (commitTimer.current) clearTimeout(commitTimer.current)
     commitTimer.current = setTimeout(() => {
       if (isCorrect && result) handleCorrectMix(c1, c2, result)
-      else handleWrongMix(result)
+      else handleWrongMix()
     }, BLEND_MS)
   }
 
@@ -354,10 +354,8 @@ const RamFarvenGame: React.FC = () => {
     celebrateTier('micro')
     reactGuide('cheer')
 
-    // Recipe reveal: 🔴 + 🔵 = 🟣 + spoken rule ("rød og blå bliver lilla").
+    // Recipe reveal: 🔴 + 🔵 = 🟣 (visual card only — no spoken rule; owner request).
     setRecipe({ aHex: c1.hex, bHex: c2.hex, targetHex: result.hex, aName: c1.colorName, bName: c2.colorName, targetName: result.name })
-    audio.cancelCurrentAudio()
-    audio.speak(`${c1.colorName} og ${c2.colorName} bliver ${result.name}`).catch(() => {})
 
     if (commitTimer.current) clearTimeout(commitTimer.current)
     commitTimer.current = setTimeout(() => {
@@ -369,14 +367,11 @@ const RamFarvenGame: React.FC = () => {
     }, reduce ? 1200 : REVEAL_MS)
   }
 
-  const handleWrongMix = (result?: TargetColor) => {
+  const handleWrongMix = () => {
     firstAttemptRef.current = false
     sfx.play('wrong')
     reactGuide('think')
-
-    audio.cancelCurrentAudio()
-    const text = result ? `Den blev ${result.name}, prøv igen` : 'Prøv en anden blanding'
-    audio.speak(text).catch(() => {})
+    // Wrong = SFX (wrong) + the brief wrong-colour fizz visual only; no spoken feedback (owner request).
 
     // After N wrong mixes on this target, pulse the 2 correct droplets (never-fail scaffold).
     targetWrongRef.current += 1

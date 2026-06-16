@@ -228,12 +228,7 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
     if (guideReactionTimer.current) clearTimeout(guideReactionTimer.current)
     guideReactionTimer.current = setTimeout(() => setGuideReaction(null), 1100)
 
-    try {
-      await audio.speakNumber(selectedAnswer)
-    } catch {
-      // ignore number audio errors
-    }
-
+    // Success/fail is communicated by SFX + visuals only — no spoken feedback (owner request).
     if (isCorrect) {
       incrementScore()
       celebrateTier('micro') // light per-answer sparkle + soft "correct" SFX
@@ -244,34 +239,23 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
       sfx.play('wrong')
     }
 
-    setTimeout(async () => {
-      try {
-        await audio.announceGameResult(isCorrect)
+    // Auto-advance after a short celebration window (correct only; wrong stays for retry).
+    if (isCorrect) {
+      setTimeout(() => {
+        stopCelebration()
 
-        setTimeout(() => {
-          if (!isCorrect) return
-          stopCelebration()
-
-          // Bounded round: record the completed question, fire streak milestones, end or advance.
-          const r = round.completeQuestion(firstAttemptRef.current)
-          if (!r.done && r.streak > 0 && r.streak % 3 === 0) {
-            celebrateTier('streak')
-          }
-          if (r.done) {
-            finishRound(r.firstTryCorrect, r.longestStreak)
-          } else {
-            generateNewProblem()
-          }
-        }, isIOS() ? 1500 : 2000)
-      } catch (error: any) {
-        logError('Error in game result audio', {
-          selectedAnswer,
-          correctAnswer,
-          isCorrect,
-          error: error?.toString()
-        })
-      }
-    }, 150)
+        // Bounded round: record the completed question, fire streak milestones, end or advance.
+        const r = round.completeQuestion(firstAttemptRef.current)
+        if (!r.done && r.streak > 0 && r.streak % 3 === 0) {
+          celebrateTier('streak')
+        }
+        if (r.done) {
+          finishRound(r.firstTryCorrect, r.longestStreak)
+        } else {
+          generateNewProblem()
+        }
+      }, isIOS() ? 1500 : 2000)
+    }
   }
 
   // Round ended → record to the progress store (stars/bests/stickers) and show the result hero.

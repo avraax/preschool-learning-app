@@ -266,14 +266,8 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
     if (guideReactionTimer.current) clearTimeout(guideReactionTimer.current)
     guideReactionTimer.current = setTimeout(() => setGuideReaction(null), 1100)
 
-    // FIRST: Play the clicked item immediately for fast feedback
-    try {
-      await config.speakClickedItem(selectedItem, audio)
-    } catch {
-      // best-effort: tile audio is non-critical, so ignore playback errors here
-    }
-
-    // Start celebration / SFX (kept after the spoken item so audio timing is unchanged).
+    // Success/fail is communicated by SFX + visuals only — no spoken feedback (owner request:
+    // the tapped item / "correct/wrong" narration was removed).
     if (isCorrect) {
       incrementScore()
       celebrateTier('micro') // light per-answer sparkle + soft "correct" SFX
@@ -284,43 +278,28 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
       sfx.play('wrong')
     }
 
-    // THEN: Play celebration audio after a very short delay
-    setTimeout(async () => {
-      try {
-        // Just play the audio feedback, visuals already started
-        await audio.announceGameResult(isCorrect)
+    // Auto-advance after a short celebration window (correct only; wrong stays for retry).
+    if (isCorrect) {
+      setTimeout(() => {
+        stopCelebration()
 
-        // Auto-advance to next question after celebration
-        setTimeout(() => {
-          if (!isCorrect) return
-          stopCelebration() // Stop celebration after 2 seconds
+        if (!round.enabled) {
+          generateNewQuestion()
+          return
+        }
 
-          if (!round.enabled) {
-            generateNewQuestion()
-            return
-          }
-
-          // Bounded round: record the completed question, fire streak milestones, end or advance.
-          const r = round.completeQuestion(firstAttemptRef.current)
-          if (!r.done && r.streak > 0 && r.streak % 3 === 0) {
-            celebrateTier('streak')
-          }
-          if (r.done) {
-            finishRound(r.firstTryCorrect, r.longestStreak)
-          } else {
-            generateNewQuestion()
-          }
-        }, isIOS() ? 1500 : 2000) // 2 second celebration duration
-
-      } catch (error) {
-        logError('Error in game result audio', {
-          selectedItem: selectedItem.display,
-          currentItem: currentItem.display,
-          isCorrect,
-          error: error?.toString()
-        })
-      }
-    }, 150) // Very short delay between item audio and celebration audio
+        // Bounded round: record the completed question, fire streak milestones, end or advance.
+        const r = round.completeQuestion(firstAttemptRef.current)
+        if (!r.done && r.streak > 0 && r.streak % 3 === 0) {
+          celebrateTier('streak')
+        }
+        if (r.done) {
+          finishRound(r.firstTryCorrect, r.longestStreak)
+        } else {
+          generateNewQuestion()
+        }
+      }, isIOS() ? 1500 : 2000) // celebration duration
+    }
   }
 
   const repeatItem = async () => {

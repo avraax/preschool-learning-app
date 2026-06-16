@@ -209,8 +209,7 @@ const FarveQuizGame: React.FC = () => {
       sfx.play('drop-snap')
       celebrateTier('micro')
       reactGuide('cheer')
-      audio.cancelCurrentAudio()
-      audio.speak(`${current.objectNameDefinite} er ${current.color}`).catch(() => {})
+      // Success = SFX + visuals only; no spoken reinforcement (owner request).
 
       if (advanceTimer.current) clearTimeout(advanceTimer.current)
       advanceTimer.current = setTimeout(() => {
