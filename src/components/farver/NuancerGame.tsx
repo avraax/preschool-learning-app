@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import { Box, Typography } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { DndContext, DragEndEvent, DragStartEvent, closestCenter, DragOverlay } from '@dnd-kit/core'
+import { useDragOnlySensors } from '../common/dnd/useDragOnlySensors'
 import { DraggableItem } from '../common/dnd/DraggableItem'
 import { DroppableZone } from '../common/dnd/DroppableZone'
 import { getCategoryTheme } from '../../config/categoryThemes'
@@ -44,6 +45,7 @@ const NuancerGame: React.FC = () => {
   const muiTheme = useTheme()
   const reduce = useReducedMotion()
   const t = getCategoryTheme('colors')
+  const sensors = useDragOnlySensors()
 
   // Current question: a hue's shades (correct light→dark order) + a scrambled tray.
   const [order, setOrder] = useState<ColorShade[]>([])     // correct order (light→dark); slot i wants order[i]
@@ -280,7 +282,7 @@ const NuancerGame: React.FC = () => {
           onReplay={handleReplay}
         />
       ) : gameReady && order.length > 0 && (
-        <DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd} collisionDetection={closestCenter}>
+        <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd} collisionDetection={closestCenter}>
           {/* Repeat instruction */}
           <Box sx={{ textAlign: 'center', mb: { xs: 1, md: 1.5 }, flex: '0 0 auto' }}>
             <ColorRepeatButton onClick={repeatInstruction} disabled={false} label="🎵 Hør igen" />

@@ -3,6 +3,7 @@ import { Box, Typography } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { motion } from 'framer-motion'
 import { DndContext, DragEndEvent, DragStartEvent, DragOverlay, closestCenter } from '@dnd-kit/core'
+import { useDragOnlySensors } from '../common/dnd/useDragOnlySensors'
 import { DraggableItem } from '../common/dnd/DraggableItem'
 import { DroppableZone } from '../common/dnd/DroppableZone'
 import type { GuideReaction } from '../common/ThemeMascot'
@@ -61,6 +62,7 @@ const FarvejagtGame: React.FC = () => {
   const muiTheme = useTheme()
   const reduce = useReducedMotion()
   const t = getCategoryTheme('colors')
+  const sensors = useDragOnlySensors()
 
   // Game state
   const [gameItems, setGameItems] = useState<GameItem[]>([])
@@ -472,6 +474,7 @@ const FarvejagtGame: React.FC = () => {
             }}
           >
             <DndContext
+              sensors={sensors}
               onDragStart={handleDragStart}
               onDragEnd={handleDragEnd}
               collisionDetection={closestCenter}

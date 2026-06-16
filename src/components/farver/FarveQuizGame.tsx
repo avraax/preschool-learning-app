@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import { Box, Typography } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { DndContext, DragEndEvent, DragStartEvent, closestCenter, DragOverlay } from '@dnd-kit/core'
+import { useDragOnlySensors } from '../common/dnd/useDragOnlySensors'
 import { DraggableItem } from '../common/dnd/DraggableItem'
 import { DroppableZone } from '../common/dnd/DroppableZone'
 import { getCategoryTheme } from '../../config/categoryThemes'
@@ -54,6 +55,7 @@ const FarveQuizGame: React.FC = () => {
   const muiTheme = useTheme()
   const reduce = useReducedMotion()
   const t = getCategoryTheme('colors')
+  const sensors = useDragOnlySensors()
 
   const [current, setCurrent] = useState<QuizObject | null>(null)
   const [options, setOptions] = useState<string[]>([])   // candidate color names
@@ -252,7 +254,7 @@ const FarveQuizGame: React.FC = () => {
       {roundOutcome ? (
         <RoundResultScreen outcome={roundOutcome} categoryId="colors" backRoute="/farver" onReplay={handleReplay} />
       ) : gameReady && current && (
-        <DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd} collisionDetection={closestCenter}>
+        <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd} collisionDetection={closestCenter}>
           {/* Repeat the spoken question */}
           <Box sx={{ textAlign: 'center', mb: { xs: 1, md: 1.5 }, flex: '0 0 auto' }}>
             <ColorRepeatButton onClick={repeatPrompt} disabled={false} label="🎵 Hør igen" />

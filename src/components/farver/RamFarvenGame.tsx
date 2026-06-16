@@ -3,6 +3,7 @@ import { Box, Typography, Button } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { motion, AnimatePresence } from 'framer-motion'
 import { DndContext, DragEndEvent, DragStartEvent, closestCenter } from '@dnd-kit/core'
+import { useDragOnlySensors } from '../common/dnd/useDragOnlySensors'
 import { ColorProgressChip } from '../common/ScoreChip'
 import { DraggableItem } from '../common/dnd/DraggableItem'
 import { DroppableZone } from '../common/dnd/DroppableZone'
@@ -132,6 +133,7 @@ const RamFarvenGame: React.FC = () => {
   const muiTheme = useTheme()
   const reduce = useReducedMotion()
   const t = getCategoryTheme('colors')
+  const sensors = useDragOnlySensors()
 
   // Game state (educational color data — NOT themeable)
   const [targetColor, setTargetColor] = useState<TargetColor>({ color: 'lilla', name: 'lilla', hex: '#A855F7' })
@@ -486,6 +488,7 @@ const RamFarvenGame: React.FC = () => {
             }}
           >
             <DndContext
+              sensors={sensors}
               onDragStart={handleDragStart}
               onDragEnd={handleDragEnd}
               collisionDetection={closestCenter}
