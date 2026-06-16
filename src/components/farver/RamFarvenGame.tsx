@@ -599,8 +599,7 @@ const RamFarvenGame: React.FC = () => {
                         ))}
                       </AnimatePresence>
 
-                      {/* Pour cue while the pot is empty: a droplet falls into the pot on loop
-                          (reads as "pour a droplet in here"). Gone once mixing starts. */}
+                      {/* "Drop here" affordance while the pot is empty (gone once mixing starts). */}
                       {mixingZone.length === 0 && !committing && (
                         <Box sx={{
                           position: 'absolute', inset: 0,
@@ -608,10 +607,10 @@ const RamFarvenGame: React.FC = () => {
                           pointerEvents: 'none'
                         }}>
                           <motion.div
-                            animate={reduce ? { opacity: 0.6 } : { y: [-18, 6], opacity: [0, 1, 1, 0] }}
-                            transition={reduce ? undefined : { duration: 1.5, repeat: Infinity, ease: 'easeIn', times: [0, 0.25, 0.75, 1] }}
+                            animate={reduce ? {} : { y: [0, 4, 0] }}
+                            transition={reduce ? undefined : { duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
                           >
-                            <Typography sx={{ fontSize: 'clamp(1.8rem, 6vw, 2.6rem)', lineHeight: 1 }}>💧</Typography>
+                            <Typography sx={{ fontSize: 'clamp(1.6rem, 6vw, 2.4rem)', lineHeight: 1, opacity: 0.6, color: muiTheme.scene.dark ? 'rgba(255,255,255,0.85)' : t.accentColor }}>⬇</Typography>
                           </motion.div>
                         </Box>
                       )}
