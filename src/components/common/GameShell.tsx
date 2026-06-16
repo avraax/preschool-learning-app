@@ -56,6 +56,11 @@ const GameShell: React.FC<GameShellProps> = ({
         overflow: 'hidden',
         display: 'flex',
         flexDirection: 'column',
+        // Consistent safe-area inset (matches the section menus + home) so the header clears the
+        // iOS status bar / notch and sits at the same spot on every page.
+        paddingTop: 'calc(env(safe-area-inset-top) + 8px)',
+        paddingLeft: 'env(safe-area-inset-left)',
+        paddingRight: 'env(safe-area-inset-right)',
         // Immersive skins: transparent so the app-wide <PersistentWorld/> scene shows through —
         // it fades in its own dim/blur scrim on game routes, so the in-game world stays calm.
         // Flat skins keep the bold category gradient + GameMotif's CSS accent.

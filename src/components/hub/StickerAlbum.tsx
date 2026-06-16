@@ -59,6 +59,10 @@ const StickerAlbum: React.FC = () => {
         overflow: 'hidden',
         display: 'flex',
         flexDirection: 'column',
+        // Consistent safe-area top gap (matches GameShell + menus + home).
+        paddingTop: 'calc(env(safe-area-inset-top) + 8px)',
+        paddingLeft: 'env(safe-area-inset-left)',
+        paddingRight: 'env(safe-area-inset-right)',
         background: immersive
           ? 'transparent'
           : `${theme.decor.pageBackground},\n${theme.decor.dots}`,

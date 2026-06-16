@@ -123,14 +123,18 @@ const HomePage = () => {
       className="interactive-area"
       sx={{
         position: 'relative',
+        // Real visible viewport (covers the full screen in an iOS standalone PWA). `dvh` where
+        // supported, the JS --vh hack as the fallback for older engines.
         height: 'calc(var(--vh, 1vh) * 100)',
+        '@supports (height: 100dvh)': { height: '100dvh' },
         // Immersive skins: transparent so the app-wide <PersistentWorld/> scene shows through.
         // Flat skins keep their own page background + dots (and the rainbow arc below).
         background: immersive ? 'transparent' : `${theme.decor.pageBackground},\n${theme.decor.dots}`,
         overflow: 'hidden',
         display: 'flex',
         flexDirection: 'column',
-        paddingTop: 'env(safe-area-inset-top)',
+        // Consistent safe-area top gap (matches GameShell + the section menus).
+        paddingTop: 'calc(env(safe-area-inset-top) + 8px)',
         paddingBottom: 'env(safe-area-inset-bottom)',
         paddingLeft: 'env(safe-area-inset-left)',
         paddingRight: 'env(safe-area-inset-right)',
@@ -739,7 +743,7 @@ function App() {
             instead of fixed because Chrome blanks fixed layers during touch pan gestures. Height
             uses the SAME basis as #root/pages (--vh) — mixing 100dvh here left a sub-pixel seam
             at the bottom under fractional-DPR emulation. */}
-        <Box sx={{ position: 'relative', height: 'calc(var(--vh, 1vh) * 100)', overflow: 'hidden' }}>
+        <Box sx={{ position: 'relative', height: 'calc(var(--vh, 1vh) * 100)', '@supports (height: 100dvh)': { height: '100dvh' }, overflow: 'hidden' }}>
 
         {/* App-wide immersive world: rendered once behind the router, so the parallax scene /
             ambient drift / mascot never unmount on navigation (no restart or flicker). Renders
