@@ -63,9 +63,82 @@ Runs across multiple sessions (context limits); this file is the resumable track
 > layout polishes all of them at once; then per-game only the content differs. Triage the shared
 > engine first.
 
+## Operational details (read before running — saves a fresh session from re-deriving)
+
+### Screenshots (the `ui-screenshot` skill / `cdp.mjs`)
+Exact command (portrait default 540×940; add `--w 900 --h 500` for landscape, `--w 1024 --h 768` for iPad):
+```bash
+node .claude/skills/ui-screenshot/cdp.mjs --url "http://127.0.0.1:5173/<route>" \
+  --wait-for '#root > *' --settle 1600 --out /tmp/shot.png
+```
+- **Do NOT pass `--click-text 'Start lyd nu'`.** The driver auto-dismisses the audio modal itself
+  (it launches with autoplay allowed). Passing it makes the run exit 1 ("NOT FOUND") whenever the
+  modal was already gone, which breaks `&&` chains/loops. Just rely on the built-in dismiss.
+- **Read the PNG at its real Windows path**, not `/tmp`: `/tmp/shot.png` actually lands at
+  `C:/Users/<user>/AppData/Local/Temp/shot.png` (the run prints the resolved path). Read that.
+- Always check the printed `console errors` / `page exceptions` lines (should be 0).
+- Delete temp PNGs when done.
+
+### Capturing transient states (drag/flow states the headless driver can't trigger)
+Temporarily seed React state, screenshot, then **revert**. Worked example from Ram Farven:
+- **Force the recipe card:** set the `recipe` useState initial to a literal object, AND comment the
+  `setRecipe(null)` line inside the game's `setupTarget`-equivalent (the init reset wipes a seeded
+  value), screenshot, revert both.
+- **Droplet-in-pot / button states:** seed the relevant array state (e.g. `mixingZone`) initial +
+  comment its reset; **force a hint** by short-circuiting the guard (e.g.
+  `const recipePair = recipeFor(targetColor.name)` instead of `hintActive ? … : null`).
+- After each: revert the temp edit and grep for leftovers (`TEMP`, seeded literals) before moving on.
+
+### Previewing a dark theme on the headless driver
+The driver uses a fresh Chrome profile each run, so the persisted theme (`localStorage`
+`bornelaering-theme`) won't stick. Temporarily set `export const defaultThemeId = spaceThemeTokens.id`
+in `src/theme/themes.ts` (Rummet, the dark immersive scene), screenshot, then revert to
+`kidThemeTokens.id`. Verify text/surfaces stay readable (`muiTheme.scene.dark` paths).
+
+### Reference patterns to copy (this is "the bar")
+- **Framed play board:** `src/components/farver/FarvejagtGame.tsx:520-531` (token `boardBg`, `borderRadius:4`,
+  `3px solid t.borderColor`, `customShadows.card`, `overflow:hidden`, `flex:1`).
+- **Target pill:** `FarvejagtGame.tsx:486-512`.
+- **Lifted-3D depth language:** `src/components/common/AnswerTile.tsx` (accent border, darker 3D lip,
+  layered shadow, top-light gradient; helpers `darken`/`hexToRgba` in `src/theme/tokens/helpers.ts`).
+- **Worked example of this whole rubric:** `src/components/farver/RamFarvenGame.tsx` (framed board,
+  goal→pot, label chips, drop affordance, solid recipe card, landscape side-tray, dark-theme handling).
+- Theme access: `getCategoryTheme('<cat>')` + `useTheme()` → `muiTheme.scene.dark`,
+  `muiTheme.customShadows.card`, `theme.decor.*`. Never hardcode styling. Comic Sans; Danish only.
+
+### Per-remaining-route hints (what to look for)
+- **Learning grids** (`NumberLearning`, `AlphabetLearning` → shared `src/components/common/LearningGrid.tsx`):
+  in landscape the dense grid (esp. 100 numbers) gets tiny/sub-44px cells — check legibility/targets;
+  consider giving the grid more room (e.g. smaller current-item card in landscape). Shared component →
+  one fix helps both.
+- **`SpellingGame` / `SpeakWordGame`** (hand-rolled): check framing/balance + dark theme + all states
+  (idle, recording, result) against the bar.
+- **`MemoryGame`**: check card grid sizing in landscape (sub-44px on phones), flip/match states, dark theme.
+- **Menus** (`GameSelectionLayout`, Home in `App.tsx`): already fairly polished — verify cohesion + dark theme only.
+- **Quiz games** (anything that is a `UnifiedQuizGame` config — alphabet quiz, all English quizzes, Læs
+  Ordet, Tal Quiz, Hvad Mangler): the shared engine is already at bar — only spot-check each one's
+  content (visual question / word tiles), don't rework.
+
+### Commit per route
+On a branch (currently `feature/games-overhaul`). Stage only the files you changed for that route
+(don't sweep up unrelated working-tree edits). Message form:
+```
+<Game> UI polish: <one-line what changed>
+
+<short why / before→after>
+
+Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>
+```
+Then update this file's tracker status and continue.
+
 ## Continue-this-sweep prompt (fresh session)
 ```
-Continue the autonomous UI/UX polish sweep per plans/ui-polish-sweep.md. Take the next ⬜ todo
-route(s), apply the rubric (screenshot all states/sizes + a dark theme, evaluate, fix, verify with
-build + ui-screenshot, commit), update the tracker status, and report. Dev servers are on 5173/3001.
+Run the autonomous UI/UX polish sweep per plans/ui-polish-sweep.md (read the whole file first,
+especially "Operational details"). Work fully autonomously — do NOT ask me design questions; make
+taste calls against the reference bar (RamFarvenGame / FarvejagtGame) and show before/after in your
+report. Take the next ⬜ todo / 🟨 minor route(s), apply the rubric (screenshot all meaningful
+states at portrait + landscape + iPad and in the dark Rummet theme, evaluate, fix, verify with
+npm run build + ui-screenshot, delete temp PNGs, commit per route, update the tracker status), then
+report what changed. Dev servers run in Windows PowerShell on 5173/3001 (start them if down:
+`node --env-file=.env.local dev-server.js` and `node node_modules/vite/bin/vite.js --host 127.0.0.1`).
 ```
