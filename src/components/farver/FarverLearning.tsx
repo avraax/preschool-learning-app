@@ -201,15 +201,19 @@ const FarverLearning: React.FC = () => {
         </Box>
       </Box>
 
-      {/* Color picker grid — tap a color to explore it. */}
+      {/* Color picker grid — tap a color to explore it. Non-growing so the detail panel + grid
+          read as one centred group (avoids a big dead band between them on tall screens). */}
       <Box sx={{
-        flex: 1,
+        flex: '0 0 auto',
         display: 'grid',
         gridTemplateColumns: { xs: 'repeat(3, 1fr)', sm: 'repeat(6, 1fr)' },
         '@media (orientation: landscape)': { gridTemplateColumns: 'repeat(6, 1fr)' },
-        gap: { xs: 1, md: 1.5 },
+        gap: { xs: 1.25, md: 2 },
         alignContent: 'center',
         justifyItems: 'center',
+        width: '100%',
+        maxWidth: 900,
+        mx: 'auto',
         minHeight: 0,
         px: { xs: 1, md: 2 }
       }}>
@@ -223,7 +227,7 @@ const FarverLearning: React.FC = () => {
                 sx={{
                   width: '100%',
                   aspectRatio: '1 / 1',
-                  maxWidth: { xs: 96, md: 120 },
+                  maxWidth: { xs: 110, sm: 128, md: 150 },
                   mx: 'auto',
                   borderRadius: '16px',
                   display: 'flex',
