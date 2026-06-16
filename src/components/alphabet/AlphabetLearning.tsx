@@ -195,8 +195,14 @@ const AlphabetLearning: React.FC = () => {
         </Box>
       }
     >
-        {/* Current Letter Display - Enhanced Visual */}
-        <Box sx={{ textAlign: 'center', mb: { xs: 2, md: 3 }, flex: '0 0 auto' }}>
+        {/* Current Letter Display - Enhanced Visual. Compact in landscape so the grid below keeps
+            the vertical room it needs (avoids the squished sliver-rows the sweep flagged). */}
+        <Box sx={{
+          textAlign: 'center',
+          mb: { xs: 2, md: 3 },
+          flex: '0 0 auto',
+          '@media (orientation: landscape)': { mb: 1 },
+        }}>
           <motion.div
             key={currentIndex}
             initial={{ scale: 0.8, opacity: 0 }}
@@ -208,6 +214,7 @@ const AlphabetLearning: React.FC = () => {
                 maxWidth: { xs: 160, md: 200 },
                 mx: 'auto',
                 p: { xs: 2, md: 3 },
+                '@media (orientation: landscape)': { maxWidth: 120, p: 1 },
                 background: 'white',
                 border: '4px solid',
                 borderColor: audio.isPlaying ? categoryThemes.alphabet.accentColor : categoryThemes.alphabet.borderColor,
@@ -252,7 +259,8 @@ const AlphabetLearning: React.FC = () => {
                   lineHeight: 1,
                   textShadow: `1px 1px 2px ${alpha(categoryThemes.alphabet.accentColor, 0.1)}`,
                   position: 'relative',
-                  zIndex: 1
+                  zIndex: 1,
+                  '@media (orientation: landscape)': { fontSize: '2.6rem' },
                 }}
               >
                 {DANISH_ALPHABET[currentIndex]}
@@ -268,6 +276,7 @@ const AlphabetLearning: React.FC = () => {
         currentIndex={currentIndex}
         onItemClick={goToLetter}
         disabled={!gameReady}
+        accent={ALPHABET_ACCENT}
       />
 
       {/* Exploration-milestone sticker reveal. Auto-dismisses; tap to close early. */}

@@ -175,8 +175,14 @@ const NumberLearning: React.FC = () => {
         </Box>
       }
     >
-      {/* Current Number Display */}
-      <Box sx={{ textAlign: 'center', mb: { xs: 1, md: 1.5 }, flex: '0 0 auto' }}>
+      {/* Current Number Display. Compact in landscape so the dense 1–100 grid below keeps its
+          vertical room (the sweep flagged sliver-thin rows when this card ate the space). */}
+      <Box sx={{
+        textAlign: 'center',
+        mb: { xs: 1, md: 1.5 },
+        flex: '0 0 auto',
+        '@media (orientation: landscape)': { mb: 0.5 },
+      }}>
         <motion.div
           key={currentIndex}
           initial={{ scale: 0.8, opacity: 0 }}
@@ -188,6 +194,7 @@ const NumberLearning: React.FC = () => {
               maxWidth: { xs: 120, md: 150 },
               mx: 'auto',
               p: { xs: 1, md: 1.5 },
+              '@media (orientation: landscape)': { maxWidth: 92, p: 0.5 },
               bgcolor: audio.isPlaying ? 'secondary.50' : 'white',
               border: '2px solid',
               borderColor: audio.isPlaying ? 'secondary.main' : 'primary.200',
@@ -197,7 +204,14 @@ const NumberLearning: React.FC = () => {
           >
             <Typography
               variant="h1"
-              sx={{ fontSize: { xs: '2.5rem', md: '3.5rem' }, fontWeight: 700, color: 'primary.dark', textAlign: 'center', lineHeight: 1 }}
+              sx={{
+                fontSize: { xs: '2.5rem', md: '3.5rem' },
+                fontWeight: 700,
+                color: 'primary.dark',
+                textAlign: 'center',
+                lineHeight: 1,
+                '@media (orientation: landscape)': { fontSize: '1.9rem' },
+              }}
             >
               {numbers[currentIndex]}
             </Typography>
@@ -211,6 +225,7 @@ const NumberLearning: React.FC = () => {
         currentIndex={currentIndex}
         onItemClick={goToNumber}
         disabled={!gameReady}
+        accent={MATH_ACCENT}
       />
 
       {/* Exploration-milestone sticker reveal. Auto-dismisses; tap to close early. */}
