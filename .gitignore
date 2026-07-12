@@ -38,6 +38,9 @@ private-key-base64.txt
 public/audio-cache/
 .vercel
 
+# Local bug-report storage (dev-server mirror of /api/bug-report → Vercel Blob)
+.bug-reports/
+
 # TTS voice evaluation output (PRD Part 1)
 tts-samples/
 

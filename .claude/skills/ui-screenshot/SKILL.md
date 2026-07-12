@@ -33,15 +33,18 @@ Then **view a saved PNG with the Read tool** (it renders images).
 node .claude/skills/ui-screenshot/cdp.mjs --url http://127.0.0.1:5173/alphabet/quiz \
   --wait-for '#root > *' --out shot.png
 
-# Open a popover, wait for it, tight-crop just that element
-node .claude/skills/ui-screenshot/cdp.mjs --url http://127.0.0.1:5173/alphabet/quiz \
-  --click '[aria-label="Stemme-test"]' --wait-for '.MuiPopover-paper' \
-  --clip '.MuiPopover-paper' --out panel.png
+# Open the adult menu (needs ?adult-tap=1 — a 2s hold can't be driven headlessly), then a
+# sub-dialog, wait for it, tight-crop just that element
+node .claude/skills/ui-screenshot/cdp.mjs --url 'http://127.0.0.1:5173/alphabet/quiz?adult-tap=1' \
+  --click '[aria-label="Til de voksne"]' --wait-for '.MuiDialog-paper' \
+  --click '[aria-label="Stemme-test"]' --wait-for-text 'Hastighed' \
+  --clip '.MuiDialog-paper' --out panel.png
 
 # PROVE no overflow/clipping (compare child rect.r to the container's inner right edge)
-node .claude/skills/ui-screenshot/cdp.mjs --url http://127.0.0.1:5173/alphabet/quiz \
-  --click '[aria-label="Stemme-test"]' --wait-for '.MuiPopover-paper' \
-  --measure '.MuiPopover-paper, .MuiPopover-paper button'
+node .claude/skills/ui-screenshot/cdp.mjs --url 'http://127.0.0.1:5173/alphabet/quiz?adult-tap=1' \
+  --click '[aria-label="Til de voksne"]' --wait-for '.MuiDialog-paper' \
+  --click '[aria-label="Stemme-test"]' --wait-for-text 'Hastighed' \
+  --measure '.MuiDialog-paper, .MuiDialog-paper button'
 
 # Check a different viewport (landscape) for responsive layout
 node .claude/skills/ui-screenshot/cdp.mjs --url http://127.0.0.1:5173/math/counting \
@@ -60,14 +63,22 @@ node .claude/skills/ui-screenshot/cdp.mjs --url http://127.0.0.1:5173/math/count
   target never appears (so failures are loud, not silently green).
 
 ## Gotchas (built-in, but know them)
+- **Run the driver on the Windows side too** when working from WSL: WSL cannot reach the
+  Windows-bound servers or Chrome's CDP port (NAT). Use
+  `powershell.exe -Command "node .claude/skills/ui-screenshot/cdp.mjs --url '...' ..."`.
+  PowerShell 5.1 strips embedded double quotes from native args — use **quote-free CSS
+  selectors** (`[aria-label^=Til]`, `.MuiDialog-paper [role=button]`), never `[aria-label="..."]`.
 - **Clicks use `element.click()`**, not synthetic mouse coordinates — MUI ignores synthetic coords.
-  So `--click` takes a CSS selector.
+  So `--click` takes a CSS selector. (`element.click()` fires no `pointerdown`, so tap-listeners
+  like the diagnostics breadcrumbs won't see driver clicks.)
 - **Audio modal ("Tænd for lyd")** is auto-dismissed (launches with autoplay allowed + clicks
   "Start lyd nu"). Use `--keep-audio-modal` only to screenshot the modal itself.
 - **Measure, don't eyeball, for overflow.** A scaled thumbnail can hide a button clipped past a
   popover edge; `rect.r > container.r` is unambiguous (this caught the sample-button overflow).
-- App sizes to `--vh`; default 540x940 is representative. Useful selectors: voice override panel
-  opens via `[aria-label="Stemme-test"]`; MUI popovers render under `.MuiPopover-paper`.
+- App sizes to `--vh`; default 540x940 is representative. Useful selectors: the adult menu opens
+  via `[aria-label="Til de voksne"]` (add `?adult-tap=1` to the URL so a plain click opens it —
+  the real gesture is a 2s hold); inside it `[aria-label="Stemme-test"]` opens the voice panel.
+  MUI dialogs render under `.MuiDialog-paper`, popovers under `.MuiPopover-paper`.
 - Always check the printed "console errors"/"page exceptions" lines — a clean screenshot can still
   hide a runtime error.
 

@@ -1,9 +1,15 @@
+// Always-on diagnostics ring buffers (console/network/breadcrumbs for bug reports).
+// MUST be the very first import: `import App` below transitively pulls in remoteConsole,
+// which also patches console/fetch — this layer has to install underneath it.
+import './services/diagnosticsBuffer'
+
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import { CssBaseline } from '@mui/material'
 import App from './App.tsx'
 import { AppThemeProvider } from './theme/ThemeProvider'
+import AppErrorBoundary from './components/common/AppErrorBoundary'
 // Self-hosted kid-friendly font (bundled, identical on every OS/device)
 import '@fontsource/comic-neue/400.css'
 import '@fontsource/comic-neue/700.css'
@@ -25,7 +31,9 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     <BrowserRouter>
       <AppThemeProvider>
         <CssBaseline />
-        <App />
+        <AppErrorBoundary>
+          <App />
+        </AppErrorBoundary>
       </AppThemeProvider>
     </BrowserRouter>
   </React.StrictMode>,

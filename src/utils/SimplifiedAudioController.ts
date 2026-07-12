@@ -623,6 +623,29 @@ export class SimplifiedAudioController {
     return this.speak('Nyt spil! Lad os finde nogle flere farver!')
   }
 
+  /**
+   * Read-only permission/readiness snapshot for bug reports. The provider instance is
+   * module-private (set via setSimplifiedAudioContext) — this is the only outside window into it.
+   */
+  getPermissionSnapshot(): {
+    available: boolean
+    isWorking?: boolean
+    needsUserAction?: boolean
+    audioContextState?: string
+  } {
+    if (!simplifiedAudioContextInstance) return { available: false }
+    try {
+      return {
+        available: true,
+        isWorking: simplifiedAudioContextInstance.state?.isWorking,
+        needsUserAction: simplifiedAudioContextInstance.state?.needsUserAction,
+        audioContextState: simplifiedAudioContextInstance.globalAudioContext?.state,
+      }
+    } catch {
+      return { available: false }
+    }
+  }
+
   getTTSStatus(): {
     cacheStats: { size: number; oldestEntry: number; newestEntry: number }
     isPlaying: boolean

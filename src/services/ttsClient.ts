@@ -395,6 +395,17 @@ export class TtsClient {
     this.saveCacheToStorage()
   }
 
+  /** Read-only circuit-breaker health — snapshotted into bug reports. */
+  getHealth(): { failureCount: number; lastFailureTime: number; circuitOpen: boolean } {
+    const now = Date.now()
+    return {
+      failureCount: this.failureCount,
+      lastFailureTime: this.lastFailureTime,
+      circuitOpen:
+        this.failureCount >= this.MAX_FAILURES && now - this.lastFailureTime < this.FAILURE_RESET_MS,
+    }
+  }
+
   getCacheStats(): { size: number; oldestEntry: number; newestEntry: number } {
     const timestamps = Array.from(this.cache.values()).map((v) => v.timestamp)
     return {

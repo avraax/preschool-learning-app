@@ -1,4 +1,6 @@
 import express from 'express';
+import fs from 'fs';
+import path from 'path';
 import { v2 as speechV2 } from '@google-cloud/speech';
 import { TTS_CONFIG } from './shared-tts-config.js';
 import {
@@ -193,6 +195,125 @@ app.delete('/api/log-error', (_req, res) => {
   res.json({ success: true, clearedCount: count });
 });
 
+// --- Bug reports (dev mirror of api/bug-report.ts — persists to .bug-reports/ on disk) ---
+const BUG_DIR = path.resolve('.bug-reports');
+const BUG_ID_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+const makeBugId = () =>
+  Array.from({ length: 5 }, () => BUG_ID_ALPHABET[Math.floor(Math.random() * BUG_ID_ALPHABET.length)]).join('');
+
+/** All stored reports as { id, date, dir, uploadedAt }, newest first. */
+function listBugReports() {
+  const out = [];
+  if (!fs.existsSync(BUG_DIR)) return out;
+  for (const date of fs.readdirSync(BUG_DIR)) {
+    const dateDir = path.join(BUG_DIR, date);
+    if (!fs.statSync(dateDir).isDirectory()) continue;
+    for (const id of fs.readdirSync(dateDir)) {
+      const reportPath = path.join(dateDir, id, 'report.json');
+      if (fs.existsSync(reportPath)) {
+        out.push({ id, date, dir: path.join(dateDir, id), uploadedAt: fs.statSync(reportPath).mtime });
+      }
+    }
+  }
+  return out.sort((a, b) => b.uploadedAt - a.uploadedAt);
+}
+
+app.post('/api/bug-report', (req, res) => {
+  try {
+    const { report, screenshot } = req.body ?? {};
+    if (!report || typeof report !== 'object') {
+      return res.status(400).json({ error: 'report (object) is required' });
+    }
+    if (
+      screenshot !== undefined &&
+      (typeof screenshot !== 'string' || !screenshot.startsWith('data:image/jpeg;base64,'))
+    ) {
+      return res.status(400).json({ error: 'screenshot must be a jpeg data URL' });
+    }
+
+    const date = new Date().toISOString().slice(0, 10);
+    let id = makeBugId();
+    while (fs.existsSync(path.join(BUG_DIR, date, id))) id = makeBugId();
+    const dir = path.join(BUG_DIR, date, id);
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(
+      path.join(dir, 'report.json'),
+      JSON.stringify({ id, receivedAt: new Date().toISOString(), ...report }, null, 2),
+    );
+    let screenshotUrl = null;
+    if (screenshot) {
+      fs.writeFileSync(
+        path.join(dir, 'screenshot.jpg'),
+        Buffer.from(screenshot.slice(screenshot.indexOf(',') + 1), 'base64'),
+      );
+      screenshotUrl = `/api/bug-report?id=${id}&screenshot=1`;
+    }
+    console.log(`[dev-server] bug report stored: ${dir}`);
+    res.json({ ok: true, id, url: `/api/bug-report?id=${id}`, screenshotUrl });
+  } catch (error) {
+    logDevError('BugReport', error);
+    res.status(500).json({ error: 'Failed to store bug report' });
+  }
+});
+
+app.get('/api/bug-report', (req, res) => {
+  try {
+    const all = listBugReports();
+    const id = req.query.id ? String(req.query.id).toUpperCase() : null;
+    if (id) {
+      const hit = all.find((r) => r.id === id);
+      if (!hit) return res.status(404).json({ error: `No report ${id}` });
+      const shotPath = path.join(hit.dir, 'screenshot.jpg');
+      if (req.query.screenshot === '1') {
+        if (!fs.existsSync(shotPath)) return res.status(404).json({ error: 'No screenshot' });
+        return res.type('image/jpeg').send(fs.readFileSync(shotPath));
+      }
+      return res.json({
+        id,
+        uploadedAt: hit.uploadedAt,
+        url: `/api/bug-report?id=${id}`,
+        screenshotUrl: fs.existsSync(shotPath) ? `/api/bug-report?id=${id}&screenshot=1` : null,
+        report: JSON.parse(fs.readFileSync(path.join(hit.dir, 'report.json'), 'utf-8')),
+      });
+    }
+
+    const n = Math.min(Math.max(parseInt(req.query.list ?? '20', 10) || 20, 1), 100);
+    const reports = all.slice(0, n).map((r) => ({
+      id: r.id,
+      date: r.date,
+      uploadedAt: r.uploadedAt,
+      size: fs.statSync(path.join(r.dir, 'report.json')).size,
+      url: `/api/bug-report?id=${r.id}`,
+      screenshotUrl: fs.existsSync(path.join(r.dir, 'screenshot.jpg'))
+        ? `/api/bug-report?id=${r.id}&screenshot=1`
+        : null,
+    }));
+    if (req.query.expand === '1') {
+      for (const r of reports.slice(0, 10)) {
+        try {
+          const full = JSON.parse(
+            fs.readFileSync(path.join(BUG_DIR, r.date, r.id, 'report.json'), 'utf-8'),
+          );
+          r.summary = {
+            type: full.type,
+            category: full.category,
+            route: full.app?.route,
+            version: full.app?.version,
+            note: typeof full.note === 'string' ? full.note.slice(0, 120) : undefined,
+            error: typeof full.error?.message === 'string' ? full.error.message.slice(0, 160) : undefined,
+          };
+        } catch {
+          /* summary is best-effort */
+        }
+      }
+    }
+    res.json({ reports, total: reports.length });
+  } catch (error) {
+    logDevError('BugReport', error);
+    res.status(500).json({ error: 'Failed to read bug reports' });
+  }
+});
+
 // --- Version endpoint ---
 app.get('/api/version', (_req, res) => {
   res.json({ version: '1.0.0-dev', buildTime: Date.now(), commitHash: 'dev' });
@@ -204,5 +325,6 @@ app.listen(PORT, () => {
   console.log(`[dev-server] TTS (Azure): POST http://localhost:${PORT}/api/tts-azure`);
   console.log(`[dev-server] STT:         POST http://localhost:${PORT}/api/stt`);
   console.log(`[dev-server] Logging:     POST/GET http://localhost:${PORT}/api/log-error`);
+  console.log(`[dev-server] Bug reports: POST/GET http://localhost:${PORT}/api/bug-report  (→ .bug-reports/)`);
   console.log(`[dev-server] Version:     GET  http://localhost:${PORT}/api/version`);
 });

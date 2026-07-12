@@ -131,11 +131,11 @@ export const getAudioTriggerEvent = () => {
   return supportsTouchEvents() ? 'touchend' : 'click'
 }
 
-// Enhanced debugging function with comprehensive device info
-export const logDeviceInfo = () => {
+// Comprehensive device snapshot — used by bug reports and logDeviceInfo below.
+export const getDeviceSnapshot = () => {
   const info = getDeviceInfo()
-  
-  console.log('📱 Device Information:', {
+
+  return {
     // Basic device info
     userAgent: navigator.userAgent,
     platform: navigator.platform,
@@ -184,7 +184,12 @@ export const logDeviceInfo = () => {
         return 'unavailable'
       }
     })()
-  })
+  }
+}
+
+// Enhanced debugging function with comprehensive device info
+export const logDeviceInfo = () => {
+  console.log('📱 Device Information:', getDeviceSnapshot())
 }
 
 // iOS Safari PWA specific detection

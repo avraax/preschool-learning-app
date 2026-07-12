@@ -29,6 +29,8 @@
     "@mui/icons-material": "^9.1.1",
     "@mui/material": "^9.1.1",
     "@mui/system": "^9.1.1",
+    "@vercel/blob": "^2.6.1",
+    "@zumer/snapdom": "^2.15.0",
     "framer-motion": "^12.40.0",
     "howler": "^2.2.4",
     "lottie-react": "^2.4.1",

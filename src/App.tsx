@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, lazy, Suspense } from 'react'
+import React, { useEffect, lazy, Suspense } from 'react'
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { logIOSIssue } from './utils/remoteConsole'
@@ -9,12 +9,7 @@ import {
   CardContent,
   Button,
   Typography,
-  Box,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField
+  Box
 } from '@mui/material'
 import { useTheme, alpha } from '@mui/material/styles'
 import {
@@ -52,7 +47,7 @@ const StickerAlbum = lazy(() => import('./components/hub/StickerAlbum'))
 // Hidden, off-menu internal tool — audition Danish TTS voices. Throwaway (tmp-prd-voicelab.md).
 const VoiceLab = lazy(() => import('./components/voicelab/VoiceLab'))
 import UpdateBanner from './components/common/UpdateBanner'
-import VoiceOverridePanel from './components/voicelab/VoiceOverridePanel'
+import AdultCorner from './components/adult/AdultCorner'
 import ThemeSelector from './components/common/ThemeSelector'
 import PersistentWorld from './components/common/scene/PersistentWorld'
 import ThemeMascot from './components/common/ThemeMascot'
@@ -72,13 +67,12 @@ import { useUpdateChecker } from './hooks/useUpdateChecker'
 import { useNativeAppFeel } from './hooks/useNativeAppFeel'
 import { categoryThemes } from './config/categoryThemes'
 import { useProgress } from './hooks/useProgress'
-import { progressStore } from './services/progressStore'
 import { sfx } from './services/sfxClient'
+import { recordRoute } from './services/diagnosticsBuffer'
 import { simplifiedAudioController } from './utils/SimplifiedAudioController'
 import { totalStickerCount } from './config/stickers'
 import { sectionIconImages } from './assets/themes/icons'
 import appLogo from './assets/logo.webp'
-import { BUILD_INFO } from './config/version'
 
 // Home section cards — content/layout config; all styling comes from theme tokens
 // (theme.categories[id]) at render time so a reskin remaps every card automatically.
@@ -511,6 +505,8 @@ const NavigationAudioCleanup: React.FC = () => {
   const location = useLocation()
   
   useEffect(() => {
+    // Diagnostics breadcrumb (bug reports) — record the route trail the child followed.
+    recordRoute(location.pathname)
     // Cleanup SimplifiedAudioController on route changes. This MUST run synchronously: a dynamic
     // import() here defers the stop by a microtask, so for the very navigation that mounts a game it
     // could land AFTER that game's entry welcome had already started — cancelling the title narration
@@ -524,154 +520,14 @@ const NavigationAudioCleanup: React.FC = () => {
   return null // This component only handles side effects
 }
 
-// Version Display Component
-interface VersionDisplayProps {
-  updateAvailable?: boolean
-}
-
-// Danish words for digits 0–9, used by the grown-up reset gate (reading them is the gate —
-// a pre-reader who can count still can't pass it).
-const DANISH_DIGIT_WORDS = ['nul', 'en', 'to', 'tre', 'fire', 'fem', 'seks', 'syv', 'otte', 'ni']
-
-const VersionDisplay: React.FC<VersionDisplayProps> = ({ updateAvailable = false }) => {
-  // Child-resistant parent reset: hold the version label for 3s → a "grown-ups only" gate
-  // (type 3 digits shown as Danish WORDS) → wipe all progress. Discreet and out of the child's
-  // normal flow (Overhaul Foundation §1).
-  const holdTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const [gateOpen, setGateOpen] = useState(false)
-  const [gateCode, setGateCode] = useState('')   // the 3-digit answer, e.g. "427"
-  const [gateInput, setGateInput] = useState('')
-  const [gateDone, setGateDone] = useState(false) // brief "nulstillet" confirmation
-
-  const startHold = () => {
-    if (holdTimer.current) clearTimeout(holdTimer.current)
-    holdTimer.current = setTimeout(() => {
-      // Fresh random 3-digit challenge each time.
-      const code = Array.from({ length: 3 }, () => Math.floor(Math.random() * 10)).join('')
-      setGateCode(code)
-      setGateInput('')
-      setGateDone(false)
-      setGateOpen(true)
-    }, 3000)
+// Crash-test probe — visiting any route with ?crash-test=1 throws during render, exercising
+// the AppErrorBoundary fallback AND the automatic crash upload end-to-end. Inert otherwise.
+const CrashTestProbe: React.FC = () => {
+  const location = useLocation()
+  if (new URLSearchParams(location.search).get('crash-test') === '1') {
+    throw new Error('Manuel crash-test (?crash-test=1)')
   }
-  const cancelHold = () => {
-    if (holdTimer.current) {
-      clearTimeout(holdTimer.current)
-      holdTimer.current = null
-    }
-  }
-
-  const closeGate = () => {
-    setGateOpen(false)
-    setGateInput('')
-    setGateDone(false)
-  }
-  const submitGate = () => {
-    // Correct → wipe progress + show a brief confirmation. Wrong → silently close, nothing reset.
-    if (gateInput.replace(/\D/g, '') === gateCode) {
-      progressStore.resetAll()
-      setGateDone(true)
-    } else {
-      closeGate()
-    }
-  }
-  const gateWords = gateCode.split('').map(d => DANISH_DIGIT_WORDS[Number(d)]).join(' · ')
-
-  const buildDateTime = new Date(BUILD_INFO.buildTime)
-  
-  const releaseDate = buildDateTime.toLocaleDateString('da-DK', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric'
-  })
-  
-  const releaseTime = buildDateTime.toLocaleTimeString('da-DK', {
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false
-  })
-
-  return (
-    <>
-    <Box
-      onPointerDown={startHold}
-      onPointerUp={cancelHold}
-      onPointerLeave={cancelHold}
-      onPointerCancel={cancelHold}
-      sx={{
-        position: 'fixed',
-        // Dynamic positioning: bottom-left when update available, bottom-right otherwise
-        bottom: 8,
-        right: updateAvailable ? 'auto' : 8,
-        left: updateAvailable ? 8 : 'auto',
-        zIndex: 1001, // Just above update banner (1000) but below modals
-        fontSize: { xs: '0.65rem', sm: '0.75rem' }, // Responsive font size
-        color: 'rgba(0, 0, 0, 0.6)',
-        textAlign: updateAvailable ? 'left' : 'right',
-        lineHeight: 1.2,
-        // Pointer events enabled so the hidden parent-reset long-press works; touch-action none
-        // so the hold doesn't get hijacked by scroll/pan gestures.
-        pointerEvents: 'auto',
-        touchAction: 'none',
-        userSelect: 'none',
-        backgroundColor: 'rgba(255, 255, 255, 0.4)',
-        padding: '3px 7px',
-        borderRadius: '6px',
-        backdropFilter: 'blur(6px)',
-        border: '1px solid rgba(255, 255, 255, 0.25)',
-        opacity: 0.75,
-        // Smooth transition animation
-        transition: 'all 0.3s ease-in-out',
-        // Ensure visibility on mobile
-        maxWidth: '120px'
-      }}
-    >
-      <Box component="div" sx={{ fontWeight: 600 }}>v{BUILD_INFO.version}</Box>
-      <Box component="div" sx={{ fontSize: { xs: '0.55rem', sm: '0.65rem' } }}>
-        {releaseDate} {releaseTime}
-      </Box>
-    </Box>
-
-    {/* Grown-ups-only reset gate (reached only by holding the version label for 3s). */}
-    <Dialog open={gateOpen} onClose={closeGate} maxWidth="xs" fullWidth>
-      {gateDone ? (
-        <DialogContent sx={{ textAlign: 'center', py: 4 }}>
-          <Typography sx={{ fontSize: '2.5rem', mb: 1 }}>✅</Typography>
-          <Typography sx={{ fontWeight: 700 }}>Al fremgang er nulstillet.</Typography>
-          <DialogActions sx={{ justifyContent: 'center', mt: 2 }}>
-            <Button onClick={closeGate} variant="contained">Luk</Button>
-          </DialogActions>
-        </DialogContent>
-      ) : (
-        <>
-          <DialogTitle sx={{ fontWeight: 700 }}>Kun for voksne 🔒</DialogTitle>
-          <DialogContent>
-            <Typography sx={{ mb: 1 }}>
-              Dette nulstiller <strong>alle</strong> klistermærker, rekorder og stjerner.
-            </Typography>
-            <Typography sx={{ mb: 0.5 }}>Tast tallene for at bekræfte:</Typography>
-            <Typography sx={{ fontWeight: 700, fontSize: '1.4rem', textAlign: 'center', my: 1.5 }}>
-              {gateWords}
-            </Typography>
-            <TextField
-              autoFocus
-              fullWidth
-              value={gateInput}
-              onChange={(e) => setGateInput(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') submitGate() }}
-              placeholder="000"
-              slotProps={{ htmlInput: { inputMode: 'numeric', pattern: '[0-9]*', maxLength: 3, style: { textAlign: 'center', fontSize: '1.4rem', letterSpacing: '0.5rem' } } }}
-            />
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={closeGate}>Annullér</Button>
-            <Button onClick={submitGate} variant="contained" color="error">Nulstil</Button>
-          </DialogActions>
-        </>
-      )}
-    </Dialog>
-    </>
-  )
+  return null
 }
 
 function App() {
@@ -731,12 +587,14 @@ function App() {
         
         {/* Global Audio Permission System */}
         {/* Legacy GlobalAudioPermission removed */}
-        
-        {/* Version Display - repositions to bottom-left when update available */}
-        <VersionDisplay updateAvailable={updateStatus.updateAvailable || DEV_SHOW_UPDATE_BANNER} />
 
-        {/* Throwaway voice-audition tool — floating 🎙️ override panel (tmp-prd-voicelab.md) */}
-        <VoiceOverridePanel />
+        {/* "Til de voksne" corner button — hold 2s → adult menu (bug reporter, voice test,
+            SFX toggle, progress reset, version info). Consolidates the old floating mic +
+            version chip; repositions to bottom-left when the update banner owns bottom-right. */}
+        <AdultCorner updateAvailable={updateStatus.updateAvailable || DEV_SHOW_UPDATE_BANNER} />
+
+        {/* Render-crash test hook for the global error boundary (?crash-test=1) */}
+        <CrashTestProbe />
 
         {/* Full-viewport, no-scroll surface that hosts the persistent world + the routed pages.
             Relative so the world's ABSOLUTE layers (and mascot) position against it — absolute
