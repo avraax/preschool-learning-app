@@ -17,6 +17,7 @@ import { progressStore, type RoundOutcome } from '../../services/progressStore'
 import { sfx } from '../../services/sfxClient'
 import { isIOS } from '../../utils/deviceDetection'
 import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
+import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 
 // Unified addition/subtraction game. Behaviour and difficulty ranges are preserved
 // exactly from the previous AdditionGame/SubtractionGame; only the operator,
@@ -305,8 +306,9 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
     lineHeight: 1,
     userSelect: 'none' as const,
     '@media (orientation: landscape)': { fontSize: { xs: '2.2rem', md: '3rem' } },
+    [PHONE_LANDSCAPE]: { fontSize: '1.6rem' },
   }
-  const symbolSx = { width: { xs: 48, md: 68 }, height: { xs: 48, md: 68 } }
+  const symbolSx = { width: { xs: 48, md: 68 }, height: { xs: 48, md: 68 }, [PHONE_LANDSCAPE]: { width: 32, height: 32 } }
 
   return (
     <GameShell
@@ -336,6 +338,7 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
           alignItems: 'center',
           gap: { xs: 1.5, md: 2 },
           mb: { xs: 2, md: 3 },
+          [PHONE_LANDSCAPE]: { gap: 0.5, mb: 1 },
         }}
       >
         <Typography
@@ -345,6 +348,7 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
             color: muiTheme.scene.dark ? '#FFFFFF' : 'primary.main',
             fontSize: { xs: '1rem', md: '1.25rem' },
             textShadow: muiTheme.scene.dark ? '0 2px 8px rgba(0,0,0,0.5)' : 'none',
+            [PHONE_LANDSCAPE]: { fontSize: '0.85rem' },
           }}
         >
           Hvad bliver svaret? 🤔
@@ -373,6 +377,7 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
                   ? '0 12px 30px rgba(0,0,0,0.45)'
                   : '0 8px 24px rgba(0,0,0,0.14)',
                 '@media (orientation: landscape)': { py: { xs: 1, md: 1.5 } },
+                [PHONE_LANDSCAPE]: { py: 0.5, px: 1.5 },
               }}
             >
               <Typography variant="h1" component="span" sx={numberSx}>{num1}</Typography>
@@ -413,6 +418,12 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
                 minHeight: { xs: '60px', sm: '70px', md: '80px' },
                 maxHeight: { xs: '100px', sm: '110px', md: '120px' }
               }
+            },
+            // Phone landscape: fixed tile height instead of aspect-driven (see UnifiedQuizGame).
+            [PHONE_LANDSCAPE]: {
+              gap: '10px',
+              maxWidth: '640px',
+              '& > *': { aspectRatio: 'auto', height: '72px', minHeight: '72px', maxHeight: '72px' }
             }
           }}
         >
@@ -438,7 +449,8 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
                     color: categoryThemes.math.accentColor,
                     userSelect: 'none',
                     lineHeight: 1,
-                    '@media (orientation: landscape)': { fontSize: 'clamp(2rem, 6vw, 3.5rem)' }
+                    '@media (orientation: landscape)': { fontSize: 'clamp(2rem, 6vw, 3.5rem)' },
+                    [PHONE_LANDSCAPE]: { fontSize: '2rem' }
                   }}
                 >
                   {option}

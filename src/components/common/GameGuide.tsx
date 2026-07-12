@@ -1,5 +1,6 @@
 import React from 'react'
 import ThemeMascot, { type GuideReaction } from './ThemeMascot'
+import { PHONE_ANY } from '../../theme/phoneMedia'
 
 // In-game companion (Game-Page Rework PRD §D). Reuses the per-theme world mascot as a small
 // bottom-LEFT corner buddy (the version chip lives bottom-right) that reacts to answers:
@@ -23,6 +24,9 @@ const GameGuide: React.FC<GameGuideProps> = ({ reaction = null }) => (
       // Smaller than the home mascot so it reads as a companion, not the star of the screen.
       width: { xs: 80, sm: 96, md: 112 },
       height: { xs: 80, sm: 96, md: 112 },
+      // Phones: shrink hard so the buddy never covers tiles/droplets (sweep: it overlapped
+      // answer tiles in landscape and Ram Farven's first droplet in portrait).
+      [PHONE_ANY]: { width: 52, height: 52 },
     }}
   />
 )

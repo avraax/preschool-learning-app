@@ -16,6 +16,7 @@ import { ArrowLeft } from 'lucide-react'
 import { getCategoryTheme } from '../../config/categoryThemes'
 import { sectionIconImages } from '../../assets/themes/icons'
 import ThemeMascot from './ThemeMascot'
+import { PHONE_ANY, PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 
 interface Game {
   id: string
@@ -77,7 +78,7 @@ const GameSelectionLayout: React.FC<GameSelectionLayoutProps> = ({
         // background and the title has the glow/halo treatment, so no header band is needed.
         sx={{ backgroundColor: 'transparent', flex: '0 0 auto', position: 'relative', zIndex: 2 }}
       >
-        <Toolbar sx={{ minHeight: '56px !important' }}>
+        <Toolbar sx={{ minHeight: '56px !important', [PHONE_LANDSCAPE]: { minHeight: '44px !important' } }}>
           <IconButton
             edge="start"
             onClick={() => navigate('/')}
@@ -134,6 +135,7 @@ const GameSelectionLayout: React.FC<GameSelectionLayoutProps> = ({
           flex: 1,
           minHeight: 0,
           py: { xs: 2, md: 3 },
+          [PHONE_LANDSCAPE]: { py: 0.5 },
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'center',
@@ -162,7 +164,16 @@ const GameSelectionLayout: React.FC<GameSelectionLayoutProps> = ({
             alignItems: 'center',
             '@media (orientation: landscape)': {
               gridTemplateColumns: games.length <= 4 ? 'repeat(2, minmax(0, 270px))' : 'repeat(3, minmax(0, 270px))'
-            }
+            },
+            // Phone landscape: the 270px-capped cards are too TALL for a ≤480px viewport
+            // (16:10 aspect → 169px rows). Smaller caps + up to 4 columns keep every menu
+            // (3-8 games) inside 1-2 compact rows.
+            [PHONE_LANDSCAPE]: {
+              gap: '10px',
+              gridTemplateColumns: games.length <= 4
+                ? `repeat(${games.length}, minmax(0, 180px))`
+                : 'repeat(4, minmax(0, 180px))',
+            },
           }}
         >
           {games.map((game, index) => (
@@ -247,7 +258,9 @@ const GameSelectionLayout: React.FC<GameSelectionLayoutProps> = ({
           left: 'calc(env(safe-area-inset-left) + 4px)',
           bottom: 'calc(env(safe-area-inset-bottom) + 2px)',
           width: { xs: 84, sm: 96, md: 112 },
-          height: { xs: 84, sm: 96, md: 112 }
+          height: { xs: 84, sm: 96, md: 112 },
+          // Phones: keep the buddy out of the card grid (it overlapped bottom-row cards).
+          [PHONE_ANY]: { width: 52, height: 52 },
         }}
       />
     </Box>

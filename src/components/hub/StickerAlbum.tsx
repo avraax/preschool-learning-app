@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { AppBar, Box, Container, IconButton, Toolbar, Typography } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
+import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
@@ -70,7 +71,7 @@ const StickerAlbum: React.FC = () => {
     >
       {/* Header: back (left) + lifetime stats (right) */}
       <AppBar position="static" color="transparent" elevation={0}>
-        <Toolbar sx={{ justifyContent: 'space-between', py: 2 }}>
+        <Toolbar sx={{ justifyContent: 'space-between', py: 2, [PHONE_LANDSCAPE]: { py: 0.25, minHeight: '48px !important' } }}>
           <IconButton
             onClick={() => navigate('/')}
             color="primary"
@@ -109,6 +110,7 @@ const StickerAlbum: React.FC = () => {
               : `1px 1px 2px ${hexToRgba(theme.decor.titleColor, 0.2)}`,
             mb: { xs: 1, md: 1.5 },
             flex: '0 0 auto',
+            [PHONE_LANDSCAPE]: { fontSize: '1.05rem', mb: 0.5 },
           }}
         >
           📖 Min Klistermærkebog
@@ -123,6 +125,7 @@ const StickerAlbum: React.FC = () => {
             flexWrap: 'wrap',
             mb: { xs: 1, md: 1.5 },
             flex: '0 0 auto',
+            [PHONE_LANDSCAPE]: { mb: 0.5, gap: 0.5 },
           }}
         >
           {STICKER_SETS.map((set, i) => {
@@ -177,6 +180,7 @@ const StickerAlbum: React.FC = () => {
             fontSize: 'clamp(0.9rem, 2.8vw, 1.1rem)',
             mb: { xs: 1, md: 1.5 },
             flex: '0 0 auto',
+            [PHONE_LANDSCAPE]: { mb: 0.25, fontSize: '0.75rem' },
           }}
         >
           {collectedInSet} / {activeSet.stickers.length} samlet
@@ -192,6 +196,8 @@ const StickerAlbum: React.FC = () => {
               width: '100%',
               maxWidth: { xs: 360, sm: 440, md: 520 },
               '& > *': { aspectRatio: '1 / 1' },
+              // Phone landscape: 3 square rows are too tall — 5 narrow columns → 2 rows.
+              [PHONE_LANDSCAPE]: { gridTemplateColumns: 'repeat(5, 1fr)', gap: '8px', maxWidth: 430 },
             }}
           >
             {activeSet.stickers.map((sticker) => {

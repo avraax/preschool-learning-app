@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { Box } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
+import { PHONE_LANDSCAPE, PHONE_PORTRAIT } from '../../theme/phoneMedia'
 import { motion } from 'framer-motion'
 import { CategoryTheme } from '../../config/categoryThemes'
 import { useCharacterState } from '../common/LottieCharacter'
@@ -515,7 +516,7 @@ const UnifiedMemoryGame: React.FC<UnifiedMemoryGameProps> = ({ config }) => {
         ) : (
           <>
         {/* Controls */}
-        <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mb: { xs: 1, md: 2 }, flex: '0 0 auto' }}>
+        <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mb: { xs: 1, md: 2 }, flex: '0 0 auto', [PHONE_LANDSCAPE]: { mb: 0.5 } }}>
           <RestartButtonComponent
             onClick={restartGame}
             size="small"
@@ -562,7 +563,26 @@ const UnifiedMemoryGame: React.FC<UnifiedMemoryGameProps> = ({ config }) => {
                 minHeight: { xs: '50px', sm: '60px', md: '70px' },
                 maxHeight: { xs: '80px', sm: '90px', md: '100px' }
               }
-            }
+            },
+            // Phone landscape: many narrow columns so 2 (10-pair) / 3 (20-pair) rows fit
+            // inside a ≤480px-tall viewport without clipping.
+            [PHONE_LANDSCAPE]: {
+              gridTemplateColumns: config.boardPairs === 10 ? 'repeat(10, 1fr)' : 'repeat(14, 1fr)',
+              gap: '5px',
+              '& > *': {
+                aspectRatio: '3/4',
+                minHeight: '48px',
+                maxHeight: config.boardPairs === 10 ? '86px' : '62px'
+              }
+            },
+            // Phone portrait: the 20-pair board (5 cols × 8 rows) overflowed — 6 columns.
+            ...(config.boardPairs === 20 && {
+              [PHONE_PORTRAIT]: {
+                gridTemplateColumns: 'repeat(6, 1fr)',
+                gap: '5px',
+                '& > *': { aspectRatio: '3/4', minHeight: '48px', maxHeight: '84px' }
+              }
+            })
           }}>
             {gameReady && cards.length > 0 ? cards.map((card, index) => {
               const displayData = config.getDisplayData(card.content)

@@ -16,6 +16,7 @@ import { progressStore, type RoundOutcome } from '../../services/progressStore'
 import { sfx } from '../../services/sfxClient'
 import { isIOS } from '../../utils/deviceDetection'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
+import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 // Simplified audio system
 import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 
@@ -294,7 +295,7 @@ const ComparisonGame: React.FC = () => {
     const num = side === 'left' ? currentProblem.leftNumber : currentProblem.rightNumber
     const obj = side === 'left' ? currentProblem.leftObjects : currentProblem.rightObjects
     return (
-      <Box sx={{ minHeight: { xs: 180, md: 230 }, '@media (orientation: landscape)': { minHeight: { xs: 120, md: 150 } } }}>
+      <Box sx={{ minHeight: { xs: 180, md: 230 }, '@media (orientation: landscape)': { minHeight: { xs: 120, md: 150 } }, [PHONE_LANDSCAPE]: { minHeight: 96 } }}>
         <AnswerTile
           onClick={() => handleSideClick(side)}
           accent={categoryThemes.math.accentColor}
@@ -312,7 +313,8 @@ const ComparisonGame: React.FC = () => {
               alignItems: 'center',
               gap: 0.75,
               overflow: 'hidden',
-              '@media (orientation: landscape)': { minHeight: { xs: 36, md: 48 }, maxHeight: { xs: 56, md: 72 } }
+              '@media (orientation: landscape)': { minHeight: { xs: 36, md: 48 }, maxHeight: { xs: 56, md: 72 } },
+              [PHONE_LANDSCAPE]: { minHeight: 26, maxHeight: 34 }
             }}>
               {Array.from({ length: num }, (_, i) => (
                 <motion.span
@@ -334,7 +336,8 @@ const ComparisonGame: React.FC = () => {
                 fontWeight: 700,
                 color: categoryThemes.math.accentColor,
                 lineHeight: 1,
-                '@media (orientation: landscape)': { fontSize: { xs: '2rem', md: '2.8rem' } }
+                '@media (orientation: landscape)': { fontSize: { xs: '2rem', md: '2.8rem' } },
+                [PHONE_LANDSCAPE]: { fontSize: '1.6rem' }
               }}
             >
               {num}
@@ -397,7 +400,8 @@ const ComparisonGame: React.FC = () => {
               borderRadius: 4,
               border: '2px solid',
               borderColor: 'primary.200',
-              '@media (orientation: landscape)': { maxWidth: '92%', p: { xs: 1.5, sm: 2, md: 2.5 } }
+              '@media (orientation: landscape)': { maxWidth: '92%', p: { xs: 1.5, sm: 2, md: 2.5 } },
+              [PHONE_LANDSCAPE]: { p: 1 }
             }}
           >
             <Grid container spacing={{ xs: 1, md: 2 }} sx={{ alignItems: 'center' }}>
@@ -412,10 +416,10 @@ const ComparisonGame: React.FC = () => {
                   justifyContent: 'center',
                   gap: 0.5,
                 }}>
-                  <Typography component="span" sx={{ fontSize: { xs: '1.8rem', md: '2.6rem' }, lineHeight: 1 }}>
+                  <Typography component="span" sx={{ fontSize: { xs: '1.8rem', md: '2.6rem' }, lineHeight: 1, [PHONE_LANDSCAPE]: { fontSize: '1.3rem' } }}>
                     🐊
                   </Typography>
-                  <Box sx={{ height: { xs: 44, md: 64 }, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Box sx={{ height: { xs: 44, md: 64 }, display: 'flex', alignItems: 'center', justifyContent: 'center', [PHONE_LANDSCAPE]: { height: 32 } }}>
                     {mouthOpen && mouthOp && (
                       <Box
                         component={motion.div}
@@ -434,7 +438,7 @@ const ComparisonGame: React.FC = () => {
             </Grid>
 
             {/* Repeat button. */}
-            <Box sx={{ display: 'flex', justifyContent: 'center', mt: { xs: 2, md: 3 }, '@media (orientation: landscape)': { mt: { xs: 1, md: 1.5 } } }}>
+            <Box sx={{ display: 'flex', justifyContent: 'center', mt: { xs: 2, md: 3 }, '@media (orientation: landscape)': { mt: { xs: 1, md: 1.5 } }, [PHONE_LANDSCAPE]: { mt: 0.5 } }}>
               <MathRepeatButton onClick={repeatProblem} disabled={false} label="Hør igen" />
             </Box>
           </Paper>

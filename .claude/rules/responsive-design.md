@@ -10,6 +10,23 @@ paths:
 
 All game layouts MUST fill available screen space without scrolling, working in both portrait and landscape.
 
+## Phone-compact variant (iPad-first, phones supported)
+
+The app is designed iPad-first, but every screen must ALSO fit phones. Use the shared guards from
+`src/theme/phoneMedia.ts` — `PHONE_LANDSCAPE` (landscape ≤480px height), `PHONE_PORTRAIT`
+(portrait ≤480px width), `PHONE_ANY` — as sx keys for a compact variant:
+
+```typescript
+import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
+sx={{ fontSize: '1.6rem', [PHONE_LANDSCAPE]: { fontSize: '1.05rem' } }}
+```
+
+No phone reaches 480 CSS px on its short side's counterpart (max is ~440, iPhone Pro Max), and no
+tablet goes below ~600 — so these guards can never affect iPads. When adding a new game/screen,
+verify it at 844×390 (and 667×375) with the ui-screenshot skill. GameShell/GameSelectionLayout/
+UnifiedQuizGame/LearningGrid/UnifiedMemoryGame/RoundResultScreen already carry compact variants —
+reuse them before inventing new ones.
+
 ## Layout Pattern
 
 ```typescript

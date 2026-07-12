@@ -8,6 +8,7 @@ import GameMotif from './GameMotif'
 import GameGuide from './GameGuide'
 import CelebrationEffect from './CelebrationEffect'
 import { getCategoryTheme } from '../../config/categoryThemes'
+import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 import type { GuideReaction } from './ThemeMascot'
 
 // Shared in-game scaffold (Game-Page Rework PRD §A). Every game renders its body into this so
@@ -73,7 +74,14 @@ const GameShell: React.FC<GameShellProps> = ({
 
       {/* Header: back (left) + score (right). The themed title sits below, centred. */}
       <AppBar position="static" color="transparent" elevation={0}>
-        <Toolbar sx={{ justifyContent: 'space-between', py: 2 }}>
+        <Toolbar
+          sx={{
+            justifyContent: 'space-between',
+            py: 2,
+            // Phone landscape: every vertical pixel goes to the game body.
+            [PHONE_LANDSCAPE]: { py: 0.25, minHeight: '48px !important' },
+          }}
+        >
           <IconButton
             onClick={() => navigate(backRoute)}
             color="primary"
@@ -86,6 +94,7 @@ const GameShell: React.FC<GameShellProps> = ({
                 bgcolor: 'rgba(255, 255, 255, 0.9)',
                 transform: 'scale(1.05)',
               },
+              [PHONE_LANDSCAPE]: { p: 0.75 },
             }}
           >
             <ArrowLeft size={24} />
@@ -103,10 +112,18 @@ const GameShell: React.FC<GameShellProps> = ({
           flexDirection: 'column',
           py: dense ? { xs: 1, md: 2 } : { xs: 2, md: 3 },
           overflow: 'hidden',
+          [PHONE_LANDSCAPE]: { py: 0.5 },
         }}
       >
         {/* Themed title (dark worlds → light text + glow; light → accent + soft shadow). */}
-        <Box sx={{ textAlign: 'center', mb: dense ? { xs: 1, md: 1.5 } : { xs: 2, md: 3 }, flex: '0 0 auto' }}>
+        <Box
+          sx={{
+            textAlign: 'center',
+            mb: dense ? { xs: 1, md: 1.5 } : { xs: 2, md: 3 },
+            flex: '0 0 auto',
+            [PHONE_LANDSCAPE]: { mb: 0.5 },
+          }}
+        >
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -120,6 +137,7 @@ const GameShell: React.FC<GameShellProps> = ({
                 fontWeight: 700,
                 // Unified across all games (dense only affects paddings/margins, not the title).
                 fontSize: { xs: '1.6rem', md: '2.1rem' },
+                [PHONE_LANDSCAPE]: { fontSize: '1.05rem' },
                 textShadow: dark
                   ? '0 0 16px rgba(120,170,255,0.55), 0 2px 8px rgba(0,0,0,0.5)'
                   : `1px 1px 2px ${category.accentColor}33`,

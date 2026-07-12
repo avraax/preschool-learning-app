@@ -7,6 +7,7 @@ import {
   Chip
 } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
+import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 import { categoryThemes } from '../../config/categoryThemes'
 import { darken, hexToRgba } from '../../theme/tokens/helpers'
 import GameShell from '../common/GameShell'
@@ -102,7 +103,8 @@ const EnglishLearning: React.FC = () => {
             justifyContent: 'center',
             gap: { xs: 0.75, md: 1 },
             mb: { xs: 1.5, md: 2 },
-            flex: '0 0 auto'
+            flex: '0 0 auto',
+            [PHONE_LANDSCAPE]: { gap: 0.5, mb: 0.75 }
           }}
         >
           {englishThemes.map(t => (
@@ -120,6 +122,7 @@ const EnglishLearning: React.FC = () => {
                 py: 2.2,
                 px: 0.5,
                 minHeight: 44,
+                [PHONE_LANDSCAPE]: { fontSize: '0.75rem', py: 1.6, minHeight: 36 },
                 cursor: 'pointer',
                 bgcolor: t.id === activeThemeId ? theme.accentColor : 'rgba(255,255,255,0.85)',
                 color: t.id === activeThemeId ? 'white' : theme.accentColor,
@@ -141,7 +144,8 @@ const EnglishLearning: React.FC = () => {
               maxWidth: 900,
               '@media (orientation: landscape)': {
                 gridTemplateColumns: { xs: 'repeat(5, 1fr)', md: 'repeat(5, 1fr)' }
-              }
+              },
+              [PHONE_LANDSCAPE]: { gap: '6px' }
             }}
           >
             <AnimatePresence mode="popLayout">
@@ -171,6 +175,7 @@ const EnglishLearning: React.FC = () => {
                       justifyContent: 'center',
                       p: { xs: 1, md: 1.5 },
                       minHeight: { xs: 96, md: 120 },
+                      [PHONE_LANDSCAPE]: { minHeight: 64, p: 0.5 },
                       boxShadow: playingWord === word.en
                         ? `0 0 0 3px ${hexToRgba(theme.accentColor, 0.4)}, 0 6px 0 ${darken(theme.accentColor, 0.28)}, ${muiTheme.scene.dark ? '0 10px 24px rgba(0,0,0,0.5)' : '0 8px 18px rgba(0,0,0,0.15)'}`
                         : `0 6px 0 ${darken(theme.accentColor, 0.28)}, ${muiTheme.scene.dark ? '0 10px 24px rgba(0,0,0,0.45)' : '0 7px 16px rgba(0,0,0,0.12)'}`,
@@ -184,7 +189,7 @@ const EnglishLearning: React.FC = () => {
                       }
                     }}
                   >
-                    <Typography sx={{ fontSize: { xs: '2.25rem', md: '3rem' }, lineHeight: 1 }}>
+                    <Typography sx={{ fontSize: { xs: '2.25rem', md: '3rem' }, lineHeight: 1, [PHONE_LANDSCAPE]: { fontSize: '1.3rem' } }}>
                       {word.emoji}
                     </Typography>
                     <Typography
@@ -194,7 +199,8 @@ const EnglishLearning: React.FC = () => {
                         color: theme.accentColor,
                         textAlign: 'center',
                         lineHeight: 1.1,
-                        mt: 0.5
+                        mt: 0.5,
+                        [PHONE_LANDSCAPE]: { fontSize: '0.8rem', mt: 0.25 }
                       }}
                     >
                       {word.en}
@@ -204,7 +210,8 @@ const EnglishLearning: React.FC = () => {
                         fontSize: { xs: '0.75rem', md: '0.9rem' },
                         color: 'text.secondary',
                         textAlign: 'center',
-                        lineHeight: 1
+                        lineHeight: 1,
+                        [PHONE_LANDSCAPE]: { fontSize: '0.65rem' }
                       }}
                     >
                       {word.da}

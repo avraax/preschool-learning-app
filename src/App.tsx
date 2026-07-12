@@ -69,6 +69,7 @@ import { categoryThemes } from './config/categoryThemes'
 import { useProgress } from './hooks/useProgress'
 import { sfx } from './services/sfxClient'
 import { recordRoute } from './services/diagnosticsBuffer'
+import { PHONE_ANY, PHONE_LANDSCAPE } from './theme/phoneMedia'
 import { simplifiedAudioController } from './utils/SimplifiedAudioController'
 import { totalStickerCount } from './config/stickers'
 import { sectionIconImages } from './assets/themes/icons'
@@ -175,7 +176,8 @@ const HomePage = () => {
           flexDirection: 'column',
           py: { xs: 2, md: 3 },
           position: 'relative',
-          zIndex: 2
+          zIndex: 2,
+          [PHONE_LANDSCAPE]: { py: 0.75 },
         }}
       >
         {/* Header row: brand lockup (left) + theme selector (right), bounded by the same
@@ -183,7 +185,7 @@ const HomePage = () => {
             Explicit position+zIndex so the row (and the selector's drop-down popover) reliably
             paints ABOVE the card grid below — the cards use backdrop-filter, which on WebKit
             otherwise paints over siblings that lack their own stacking context. */}
-        <Box sx={{ position: 'relative', zIndex: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2, mb: { xs: 1.5, md: 2 } }}>
+        <Box sx={{ position: 'relative', zIndex: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2, mb: { xs: 1.5, md: 2 }, [PHONE_LANDSCAPE]: { mb: 0.75 } }}>
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -203,6 +205,7 @@ const HomePage = () => {
                   boxShadow: '0 4px 14px rgba(0,0,0,0.2)',
                   userSelect: 'none',
                   flexShrink: 0,
+                  [PHONE_LANDSCAPE]: { width: 32, height: 32 },
                 }}
               />
               <Typography
@@ -211,6 +214,7 @@ const HomePage = () => {
                   fontFamily: theme.titleFontFamily,
                   fontSize: { xs: '1.75rem', sm: '2.25rem', md: '2.75rem' },
                   fontWeight: 700,
+                  [PHONE_LANDSCAPE]: { fontSize: '1.3rem' },
                   // Dark worlds need a light title; otherwise the themed title colour.
                   color: darkScene ? '#FFFFFF' : theme.decor.titleColor,
                   // Title treatment: dark scenes get a glow + dark shadow for contrast;
@@ -257,7 +261,10 @@ const HomePage = () => {
               gap: '16px',
               justifyContent: 'center',
               alignItems: 'center',
-              '@media (orientation: landscape)': { gridTemplateColumns: 'repeat(3, minmax(0, 270px))' }
+              '@media (orientation: landscape)': { gridTemplateColumns: 'repeat(3, minmax(0, 270px))' },
+              // Phone landscape: two 270px-capped rows don't fit a ≤480px-tall viewport —
+              // all five sections go in ONE compact row instead.
+              [PHONE_LANDSCAPE]: { gap: '10px', gridTemplateColumns: 'repeat(5, minmax(0, 150px))', mb: 1 },
             }}
           >
             {homeCards.map((card) => {
@@ -410,19 +417,20 @@ const HomePage = () => {
                   px: { xs: 2, md: 3 },
                   py: { xs: 1.25, md: 1.75 },
                   '&:last-child': { pb: { xs: 1.25, md: 1.75 } },
+                  [PHONE_LANDSCAPE]: { py: 0.5, '&:last-child': { pb: 0.5 }, gap: 1 },
                 }}
               >
-                <Box sx={{ fontSize: { xs: '2.2rem', md: '2.8rem' }, lineHeight: 1, flex: '0 0 auto' }}>📖</Box>
+                <Box sx={{ fontSize: { xs: '2.2rem', md: '2.8rem' }, lineHeight: 1, flex: '0 0 auto', [PHONE_LANDSCAPE]: { fontSize: '1.4rem' } }}>📖</Box>
                 <Box sx={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 0.6 }}>
-                  <Typography sx={{ fontWeight: 800, fontSize: { xs: '1.1rem', md: '1.35rem' }, color: '#B36A00', lineHeight: 1 }}>
+                  <Typography sx={{ fontWeight: 800, fontSize: { xs: '1.1rem', md: '1.35rem' }, color: '#B36A00', lineHeight: 1, [PHONE_LANDSCAPE]: { fontSize: '0.95rem' } }}>
                     Min Bog
                   </Typography>
                   {/* Fill bar that visibly grows as the album fills */}
-                  <Box sx={{ position: 'relative', height: 12, borderRadius: 6, bgcolor: alpha('#C77800', 0.2), overflow: 'hidden', width: '100%' }}>
+                  <Box sx={{ position: 'relative', height: 12, borderRadius: 6, bgcolor: alpha('#C77800', 0.2), overflow: 'hidden', width: '100%', [PHONE_LANDSCAPE]: { height: 8 } }}>
                     <Box sx={{ position: 'absolute', inset: 0, width: `${Math.round(albumFill * 100)}%`, background: 'linear-gradient(90deg, #FFD86B 0%, #FFB300 100%)', transition: 'width 0.5s ease' }} />
                   </Box>
                 </Box>
-                <Typography sx={{ flex: '0 0 auto', fontWeight: 800, fontSize: { xs: '0.95rem', md: '1.15rem' }, color: '#9A5E00', whiteSpace: 'nowrap' }}>
+                <Typography sx={{ flex: '0 0 auto', fontWeight: 800, fontSize: { xs: '0.95rem', md: '1.15rem' }, color: '#9A5E00', whiteSpace: 'nowrap', [PHONE_LANDSCAPE]: { fontSize: '0.8rem' } }}>
                   {stickersOwned} / {stickersTotal} · ⭐ {progress.totals.totalStars}
                 </Typography>
               </CardContent>
@@ -441,6 +449,8 @@ const HomePage = () => {
           bottom: 'calc(env(safe-area-inset-bottom) + 2px)',
           width: { xs: 128, sm: 156, md: 184 },
           height: { xs: 128, sm: 156, md: 184 },
+          // Phones: the big home mascot covered the Engelsk card (sweep + report BAZ3R).
+          [PHONE_ANY]: { width: 64, height: 64 },
         }}
       />
 

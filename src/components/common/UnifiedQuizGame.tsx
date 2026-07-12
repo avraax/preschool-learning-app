@@ -10,6 +10,7 @@ import { useCelebration } from '../common/CelebrationEffect'
 import { useGameState } from '../../hooks/useGameState'
 import { useRound, type RoundConfig } from '../../hooks/useRound'
 import { progressStore, type RoundOutcome } from '../../services/progressStore'
+import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 import { sfx } from '../../services/sfxClient'
 import RoundResultScreen from './RoundResultScreen'
 // Simplified audio system
@@ -387,7 +388,7 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
         <>
         {/* Visual Question - shown for word-association style rounds */}
         {currentItem?.questionVisual && (
-          <Box sx={{ textAlign: 'center', mb: { xs: 1.5, md: 2 }, flex: '0 0 auto' }}>
+          <Box sx={{ textAlign: 'center', mb: { xs: 1.5, md: 2 }, flex: '0 0 auto', [PHONE_LANDSCAPE]: { mb: 0.5 } }}>
             <motion.div
               key={`${currentItem.value}-${currentItem.questionVisual.word}`}
               initial={{ opacity: 0, scale: 0.8 }}
@@ -402,7 +403,8 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
                     mb: 0.5,
                     '@media (orientation: landscape)': {
                       fontSize: 'clamp(2.5rem, 8vh, 4rem)'
-                    }
+                    },
+                    [PHONE_LANDSCAPE]: { fontSize: '2rem', mb: 0.25 }
                   }}
                 >
                   {currentItem.questionVisual.emoji}
@@ -426,7 +428,7 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
 
         {/* Audio Control - Compact (hidden for games that must not read the answer aloud) */}
         {config.showRepeat !== false && (
-          <Box sx={{ textAlign: 'center', mb: { xs: 2, md: 3 }, flex: '0 0 auto' }}>
+          <Box sx={{ textAlign: 'center', mb: { xs: 2, md: 3 }, flex: '0 0 auto', [PHONE_LANDSCAPE]: { mb: 1 } }}>
             <RepeatButton
               onClick={repeatItem}
               disabled={false}
@@ -469,6 +471,13 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
                   minHeight: { xs: '60px', sm: '70px', md: '80px' },
                   maxHeight: { xs: '100px', sm: '110px', md: '120px' }
                 }
+              },
+              // Phone landscape: aspect-driven tiles (150px wide → 112px tall) blew the
+              // ≤480px height budget — fix the tile height instead of the aspect.
+              [PHONE_LANDSCAPE]: {
+                gap: '10px',
+                maxWidth: '640px',
+                '& > *': { aspectRatio: 'auto', height: '72px', minHeight: '72px', maxHeight: '72px' }
               }
             }}
           >
@@ -530,6 +539,11 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
                           fontSize: (typeof item.display === 'string' && item.display.length > 2)
                             ? 'clamp(1rem, 3.5vw, 1.75rem)'
                             : 'clamp(2rem, 6vw, 3.5rem)'
+                        },
+                        [PHONE_LANDSCAPE]: {
+                          fontSize: (typeof item.display === 'string' && item.display.length > 2)
+                            ? '1.05rem'
+                            : '2rem'
                         }
                       }}
                     >

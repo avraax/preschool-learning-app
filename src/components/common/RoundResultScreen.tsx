@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef } from 'react'
-import { Box, Button, Typography } from '@mui/material'
+import { Box, Button, Typography, useMediaQuery } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
+import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import { RotateCcw, Home, BookOpen } from 'lucide-react'
@@ -37,6 +38,8 @@ const RoundResultScreen: React.FC<RoundResultScreenProps> = ({
   const theme = useTheme()
   const navigate = useNavigate()
   const reduce = useReducedMotion()
+  // Prop-level compact (sx can't reach the StickerReveal size prop).
+  const phoneLandscape = useMediaQuery(PHONE_LANDSCAPE.replace('@media ', ''))
   const audio = useSimplifiedAudioHook({ componentId: 'RoundResultScreen', autoInitialize: false })
   const category = getCategoryTheme(categoryId)
   const accent = category.accentColor
@@ -113,6 +116,7 @@ const RoundResultScreen: React.FC<RoundResultScreenProps> = ({
     minHeight: 52,
     px: { xs: 2, md: 3 },
     fontSize: 'clamp(0.95rem, 2.6vw, 1.15rem)',
+    [PHONE_LANDSCAPE]: { minHeight: 44, fontSize: '0.85rem', px: 1.5 },
   }
 
   return (
@@ -127,6 +131,7 @@ const RoundResultScreen: React.FC<RoundResultScreenProps> = ({
         gap: { xs: 1.25, md: 2 },
         overflow: 'hidden',
         textAlign: 'center',
+        [PHONE_LANDSCAPE]: { gap: 0.5 },
       }}
     >
       {/* Local hero confetti (GameShell's own celebration is idle here). Bigger on page-complete. */}
@@ -142,6 +147,7 @@ const RoundResultScreen: React.FC<RoundResultScreenProps> = ({
           fontFamily: theme.titleFontFamily,
           fontWeight: 700,
           fontSize: 'clamp(1.6rem, 6vw, 2.6rem)',
+          [PHONE_LANDSCAPE]: { fontSize: '1.25rem' },
           color: dark ? '#FFFFFF' : accent,
           textShadow: dark ? '0 0 16px rgba(120,170,255,0.5), 0 2px 8px rgba(0,0,0,0.5)' : 'none',
           m: 0,
@@ -167,6 +173,7 @@ const RoundResultScreen: React.FC<RoundResultScreenProps> = ({
               }
               sx={{
                 fontSize: 'clamp(2.6rem, 11vw, 4.2rem)',
+                [PHONE_LANDSCAPE]: { fontSize: '2rem' },
                 lineHeight: 1,
                 filter: earned
                   ? 'drop-shadow(0 4px 10px rgba(255,180,0,0.55))'
@@ -239,7 +246,7 @@ const RoundResultScreen: React.FC<RoundResultScreenProps> = ({
             award={award}
             accent={accent}
             delay={stickerAt / 1000 + i * 0.45}
-            size={110}
+            size={phoneLandscape ? 76 : 110}
           />
         ))}
       </Box>

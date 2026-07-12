@@ -2,6 +2,7 @@ import React from 'react'
 import { motion } from 'framer-motion'
 import { Box, Card, CardContent, Typography } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
+import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 import { darken, hexToRgba } from '../../theme/tokens/helpers'
 
 interface LearningGridProps {
@@ -78,7 +79,16 @@ const LearningGrid: React.FC<LearningGridProps> = ({
               sm: 'repeat(10, 1fr)',  // Landscape tablet: 10 columns
               md: 'repeat(10, 1fr)'   // Landscape desktop: 10 columns
             }
-          } : {}
+          } : {
+            // Phone landscape, numbers (100 tiles): 72px-min columns → ~11 cols × 10 rows,
+            // which compresses tiles into unreadable stripes at ≤480px height. Narrower
+            // columns trade width for height: ~17 cols × 6 rows of readable tiles.
+            [PHONE_LANDSCAPE]: {
+              gridTemplateColumns: 'repeat(auto-fit, minmax(42px, 1fr))',
+              gap: '4px',
+              p: 0.25,
+            }
+          }
         }}
       >
         {items.map((item, index) => (
@@ -129,7 +139,8 @@ const LearningGrid: React.FC<LearningGridProps> = ({
                     height: '100%',
                     width: '100%',
                     p: { xs: 1, sm: 1.5, md: 2 },
-                    '&:last-child': { pb: { xs: 1, sm: 1.5, md: 2 } }
+                    '&:last-child': { pb: { xs: 1, sm: 1.5, md: 2 } },
+                    [PHONE_LANDSCAPE]: { p: 0.25, '&:last-child': { pb: 0.25 } }
                   }}
                 >
                   <Typography 
@@ -146,12 +157,13 @@ const LearningGrid: React.FC<LearningGridProps> = ({
                       lineHeight: 1,
                       // Adjust font size in landscape orientation
                       '@media (orientation: landscape)': {
-                        fontSize: { 
-                          xs: 'clamp(1rem, 3vw, 1.3rem)', 
-                          sm: 'clamp(1.2rem, 3.5vw, 1.8rem)', 
-                          md: 'clamp(1.5rem, 4vw, 2rem)' 
+                        fontSize: {
+                          xs: 'clamp(1rem, 3vw, 1.3rem)',
+                          sm: 'clamp(1.2rem, 3.5vw, 1.8rem)',
+                          md: 'clamp(1.5rem, 4vw, 2rem)'
                         }
-                      }
+                      },
+                      [PHONE_LANDSCAPE]: { fontSize: '0.8rem' }
                     }}
                   >
                     {item}
