@@ -23,6 +23,8 @@ export interface CategoryTheme {
   name: string
   gradient: string
   accentColor: string
+  onCardColor: string      // AA-guaranteed label colour for text on frosted cards/menus
+  tileSurface: string      // section-tinted idle answer-tile surface
   borderColor: string
   hoverBorderColor: string
   icon: string
@@ -250,6 +252,8 @@ const toCategoryTheme = (id: CategoryId, tokens: ThemeTokens): CategoryTheme => 
     name: content.name,
     gradient: palette.gradient,
     accentColor: palette.accent,
+    onCardColor: palette.onCard,
+    tileSurface: palette.tileSurface,
     borderColor: palette.border,
     hoverBorderColor: palette.hoverBorder,
     icon: palette.icon,

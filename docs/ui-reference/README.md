@@ -4,8 +4,10 @@ Canonical screenshots of **every view in the app**, captured headlessly for UI/U
 ("pixel perfect" pass). Reference these before/while redesigning — and re-capture after, so this
 folder always reflects the shipped UI.
 
-- **Captured**: 2026-07-13, build `867717b` (v1.0.45)
-- **Theme**: Regnbue (default — fresh localStorage). Other skins (Havet, Rummet, Junglen,
+- **Captured**: 2026-07-13, build `ad084ab` (v1.0.45) — **after the UI/UX/Gameplay overhaul**
+  (PromptStage focal zones, tactile tile juice, reactive corner mascot, unified pip ScoreChip +
+  "Hør igen", reward/album spectacle, ambient music, per-game feel upgrades).
+- **Theme**: Regnbue (default — forced via `?theme=kid`). Other skins (Havet, Rummet, Junglen,
   Slikland, Dinosaurer) share the same layout; only tokens differ.
 - **Capture tool**: `.claude/skills/ui-screenshot/cdp.mjs` (headless Chrome, audio modal
   auto-dismissed). JPEG q85. To re-capture the full set, ask Claude — the capture script

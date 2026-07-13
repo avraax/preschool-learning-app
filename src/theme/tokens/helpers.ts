@@ -20,6 +20,63 @@ export const hexToRgba = (hex: string, alpha: number): string => {
 export const gradient3 = (c1: string, c2: string, c3: string): string =>
   `linear-gradient(135deg, ${c1} 0%, ${c2} 50%, ${c3} 100%)`
 
+// ---- WCAG contrast utilities (UI/UX Overhaul PRD §5.1 — `onCard` AA guarantee) --------------
+// Parse either #hex (3/6) or rgb()/rgba() into [r,g,b] 0–255.
+const toRgb = (color: string): [number, number, number] => {
+  if (color.startsWith('rgb')) {
+    const m = color.match(/[\d.]+/g) ?? []
+    return [Number(m[0]) || 0, Number(m[1]) || 0, Number(m[2]) || 0]
+  }
+  const h = color.replace('#', '')
+  const full = h.length === 3 ? h.split('').map((c) => c + c).join('') : h
+  const num = parseInt(full, 16)
+  return [(num >> 16) & 255, (num >> 8) & 255, num & 255]
+}
+
+const channelLin = (c: number): number => {
+  const s = c / 255
+  return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4)
+}
+
+// WCAG relative luminance (0 black → 1 white).
+export const relLuminance = (color: string): number => {
+  const [r, g, b] = toRgb(color)
+  return 0.2126 * channelLin(r) + 0.7152 * channelLin(g) + 0.0722 * channelLin(b)
+}
+
+// WCAG contrast ratio between two opaque colours (1–21).
+export const contrastRatio = (a: string, b: string): number => {
+  const la = relLuminance(a)
+  const lb = relLuminance(b)
+  const hi = Math.max(la, lb)
+  const lo = Math.min(la, lb)
+  return (hi + 0.05) / (lo + 0.05)
+}
+
+// Darken `fg` toward black in small steps until it clears `ratio` against `bg` (or hits black).
+export const ensureContrast = (fg: string, bg = '#FFFFFF', ratio = 4.5): string => {
+  if (contrastRatio(fg, bg) >= ratio) return fg
+  let amount = 0
+  let out = fg
+  while (contrastRatio(out, bg) < ratio && amount < 0.96) {
+    amount += 0.04
+    out = darken(fg, amount)
+  }
+  return out
+}
+
+// AA-guaranteed label colour for text on frosted cards/menus (keeps the accent's hue; darkens
+// only as much as needed). Target: contrast ≥7.5:1 vs white → luminance ≤ ~0.09, which clears
+// AA (≥4.5:1) even on the darkest frosted surface we allow (opaque light glass over a dark world,
+// luminance ~0.69 — see the dark-scene card opacity in App/GameSelectionLayout). Warm accents
+// (gold/orange) become a deep amber/rust; already-dark accents (navy/green) are barely touched.
+export const onCardColor = (accent: string): string => ensureContrast(accent, '#FFFFFF', 7.5)
+
+// Section-tinted idle answer-tile surface (white → faint accent tint). `dark` deepens the tint
+// slightly so it still reads over dark worlds. Replaces the old hardcoded `#ECF1F8`.
+export const tileSurface = (accent: string, dark = false): string =>
+  `linear-gradient(180deg, #FFFFFF 0%, ${hexToRgba(accent, dark ? 0.14 : 0.08)} 100%)`
+
 // Darken a hex colour toward black by `amount` (0–1). Used for the soft-3D "edge/lip" under
 // tactile tiles (AnswerTile/SymbolTile) so the bottom shadow reads as a coloured rim of the
 // section accent rather than flat grey.
@@ -60,6 +117,8 @@ export const category = (
 ): CategoryPalette => ({
   gradient: gradient3(...gradientStops),
   accent,
+  onCard: onCardColor(accent),
+  tileSurface: tileSurface(accent),
   border,
   hoverBorder,
   icon,
@@ -81,6 +140,8 @@ export const neutralShadows = (focusColor: string): ShadowTokens => ({
   card: '0 8px 32px rgba(0, 0, 0, 0.12)',
   cardHover: '0 12px 48px rgba(0, 0, 0, 0.18)',
   focusRing: `0 0 0 4px ${hexToRgba(focusColor, 0.4)}`,
+  // Punchy branded lift for focal/pressed states (coloured lip + soft glow in the theme primary).
+  pop: `0 4px 0 ${darken(focusColor, 0.3)}, 0 10px 24px ${hexToRgba(focusColor, 0.35)}`,
 })
 
 // ---- Immersive world defaults (Theme Worlds PRD) -------------------------------------

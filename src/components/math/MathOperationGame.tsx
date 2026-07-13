@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { motion } from 'framer-motion'
-import { Typography, Box } from '@mui/material'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Typography, Box, useMediaQuery } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
-import { categoryThemes } from '../../config/categoryThemes'
+import { getCategoryTheme } from '../../config/categoryThemes'
 import GameShell from '../common/GameShell'
 import AnswerTile, { type AnswerTileState } from '../common/AnswerTile'
+import PromptStage from '../common/PromptStage'
 import SymbolTile from '../common/SymbolTile'
 import type { GuideReaction } from '../common/ThemeMascot'
 import { useCelebration } from '../common/CelebrationEffect'
@@ -13,21 +14,35 @@ import { MathRepeatButton } from '../common/RepeatButton'
 import RoundResultScreen from '../common/RoundResultScreen'
 import { useGameState } from '../../hooks/useGameState'
 import { useRound } from '../../hooks/useRound'
+import { useReducedMotion } from '../../hooks/useReducedMotion'
 import { progressStore, type RoundOutcome } from '../../services/progressStore'
 import { sfx } from '../../services/sfxClient'
+import { useDifficulty } from '../../hooks/useDifficulty'
 import { isIOS } from '../../utils/deviceDetection'
+import { devFx } from '../../utils/devHarness'
+import { POP, DWELL_CORRECT, motionOr } from '../../theme/motion'
+import { darken, hexToRgba, tileSurface } from '../../theme/tokens/helpers'
 import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 
 // Unified addition/subtraction game. Behaviour and difficulty ranges are preserved
-// exactly from the previous AdditionGame/SubtractionGame; only the operator,
+// exactly from the previous AdditionGame/SubtractionGame for 'normal'; only the operator,
 // problem generation, spoken prompt, title and welcome differ by `operation`.
+//
+// UI/UX Overhaul PRD §6B: the equation card is promoted INTO a PromptStage (bigger, glossy
+// operator/number tiles, subtle idle bob via PromptStage's own float). On a correct answer the
+// "?" flips to the revealed answer with a motion.POP before the unified DWELL_CORRECT auto-advance.
 interface MathOperationGameProps {
   operation: 'addition' | 'subtraction'
 }
 
 const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
   const muiTheme = useTheme()
+  const reduce = useReducedMotion()
+  const category = getCategoryTheme('math')
+  // Phone landscape's PromptStage slot is short (~26-34% of an already-short body) — the repeat
+  // button shrinks there so the equation keeps its full height instead of being squeezed/clipped.
+  const phoneLandscape = useMediaQuery(PHONE_LANDSCAPE.replace('@media ', ''))
   const isAddition = operation === 'addition'
   const title = isAddition ? 'Plus Opgaver' : 'Minus Opgaver'
   const operator = isAddition ? '+' : '-'
@@ -40,6 +55,8 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
   // Feedback for the most-recently tapped answer + the corner guide reaction.
   const [feedback, setFeedback] = useState<{ value: number; correct: boolean } | null>(null)
   const [guideReaction, setGuideReaction] = useState<GuideReaction>(null)
+  // The equation's "?" flips to the revealed answer (motion.POP) once the tapped tile is correct.
+  const [revealAnswer, setRevealAnswer] = useState(false)
 
   const audio = useSimplifiedAudioHook({
     componentId: isAddition ? 'AdditionGame' : 'SubtractionGame',
@@ -53,7 +70,7 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
   const startedRef = useRef(false)
   const welcomeTriggered = useRef(false)
 
-  const { score, incrementScore, resetScore, isScoreNarrating, handleScoreClick } = useGameState()
+  const { incrementScore, resetScore, isScoreNarrating, handleScoreClick } = useGameState()
 
   // Bounded round + reward flow (Foundation §3). 8 questions, 3★ = no mistakes, 2★ ≤ 2.
   const round = useRound({ length: 8, starThresholds: { three: 0, two: 2 } })
@@ -140,24 +157,50 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
     // Clear the previous answer's feedback + guide reaction before the new problem appears.
     setFeedback(null)
     setGuideReaction(null)
+    setRevealAnswer(false)
     // New problem → first attempt fresh again.
     firstAttemptRef.current = true
+
+    // Static, manual difficulty (UI/UX Overhaul PRD §5.7/Appendix A) — read fresh per problem.
+    // 'normal' reproduces today's exact ranges unchanged.
+    const level = progressStore.difficultyFor('math')
+    const randInt = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min
 
     let firstNum: number
     let secondNum: number
     let answer: number
 
     if (isAddition) {
-      // Two numbers that add up to max 20
-      firstNum = Math.floor(Math.random() * 10) + 1 // 1-10
-      const maxSecondNum = Math.min(20 - firstNum, 10) // ensure sum ≤ 20
-      secondNum = Math.floor(Math.random() * maxSecondNum) + 1 // 1 to maxSecondNum
+      if (level === 'let') {
+        // Let: sums ≤10.
+        firstNum = randInt(1, 9)
+        secondNum = randInt(1, Math.max(1, 10 - firstNum))
+      } else if (level === 'svaer') {
+        // Svær: sums ≤20, biased so almost every problem carries (crosses the ten).
+        firstNum = randInt(2, 10)
+        secondNum = randInt(Math.max(1, 10 - firstNum), 10)
+      } else {
+        // Normal (TODAY, unchanged): two numbers that add up to max 20.
+        firstNum = randInt(1, 10) // 1-10
+        const maxSecondNum = Math.min(20 - firstNum, 10) // ensure sum ≤ 20
+        secondNum = randInt(1, maxSecondNum) // 1 to maxSecondNum
+      }
       answer = firstNum + secondNum
     } else {
-      // Subtraction with a non-negative result
-      firstNum = Math.floor(Math.random() * 10) + 1 // 1-10
-      secondNum = Math.floor(Math.random() * firstNum) + 1 // 1 to firstNum
-      answer = firstNum - secondNum // 0-9
+      if (level === 'let') {
+        // Let: minuend ≤10, no borrow (kept single-digit so there's no "10 minus x" crossing).
+        firstNum = randInt(1, 9)
+        secondNum = randInt(1, firstNum)
+      } else if (level === 'svaer') {
+        // Svær: minuend ≤20.
+        firstNum = randInt(1, 20)
+        secondNum = randInt(1, firstNum)
+      } else {
+        // Normal (TODAY, unchanged): subtraction with a non-negative result.
+        firstNum = randInt(1, 10) // 1-10
+        secondNum = randInt(1, firstNum) // 1 to firstNum
+      }
+      answer = firstNum - secondNum // non-negative
     }
 
     setNum1(firstNum)
@@ -169,7 +212,7 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
     // so wrong options are plausible confusions rather than random noise. Top up with random
     // in-range values only if too few distinct confusables exist.
     const lo = isAddition ? 1 : 0
-    const hi = isAddition ? 20 : 10
+    const hi = isAddition ? 20 : (level === 'svaer' ? 20 : 10)
     const confusables = (isAddition
       ? [answer - 1, answer + 1, answer - 2, answer + 2]
       : [answer - 1, answer + 1, answer + 2, firstNum, secondNum]
@@ -181,7 +224,7 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
       if (!picks.includes(c)) picks.push(c)
     }
     while (picks.length < 3) {
-      const r = Math.floor(Math.random() * (hi - lo + 1)) + lo
+      const r = randInt(lo, hi)
       if (r !== answer && !picks.includes(r)) picks.push(r)
     }
 
@@ -240,6 +283,7 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
     if (isCorrect) {
       incrementScore()
       celebrateTier('micro') // light per-answer sparkle + soft "correct" SFX
+      setRevealAnswer(true) // the equation's "?" flips to the answer (motion.POP)
     } else {
       // Wrong answers don't advance/punish (retry-until-right preserved); they only break this
       // problem's first-try flag (round streak/star accounting) + a gentle SFX.
@@ -262,7 +306,7 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
         } else {
           generateNewProblem()
         }
-      }, isIOS() ? 1500 : 2000)
+      }, DWELL_CORRECT()) // unified celebration/advance dwell
     }
   }
 
@@ -298,17 +342,47 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
 
   const showEquation = gameReady && num1 !== null && num2 !== null && options.length > 0
 
-  // Big number styling inside the white "number sentence" card (readable on any scene).
+  // DEV screenshot harness (?fx=correct|wrong): the forced equation-flip/tile state is DERIVED
+  // (no setState-in-effect) so it's persistent and capturable — mirrors UnifiedQuizGame's
+  // `tileStateFor`. No-op in production.
+  const forcedFx = devFx()
+  const fxWrongValue = forcedFx === 'wrong' ? options.find((o) => o !== correctAnswer) : undefined
+  const effectiveRevealAnswer = revealAnswer || (forcedFx === 'correct' && showEquation && correctAnswer !== null)
+  const effectiveFeedback: { value: number; correct: boolean } | null =
+    forcedFx === 'correct' && showEquation && correctAnswer !== null
+      ? { value: correctAnswer, correct: true }
+      : forcedFx === 'wrong' && showEquation && fxWrongValue !== undefined
+        ? { value: fxWrongValue, correct: false }
+        : feedback
+
+  // Big number styling inside the glossy "number sentence" card (readable on any scene).
   const numberSx = {
-    fontSize: { xs: '2.6rem', md: '3.6rem' },
-    fontWeight: 700,
-    color: 'primary.dark',
+    fontSize: { xs: '3rem', md: '4.2rem' },
+    fontWeight: 800,
+    color: muiTheme.scene.dark ? '#FFFFFF' : category.accentColor,
     lineHeight: 1,
     userSelect: 'none' as const,
-    '@media (orientation: landscape)': { fontSize: { xs: '2.2rem', md: '3rem' } },
-    [PHONE_LANDSCAPE]: { fontSize: '1.6rem' },
+    textShadow: muiTheme.scene.dark ? '0 2px 10px rgba(0,0,0,0.55)' : 'none',
+    '@media (orientation: landscape)': { fontSize: { xs: '2.4rem', md: '3.4rem' } },
+    [PHONE_LANDSCAPE]: { fontSize: '1.3rem' },
   }
-  const symbolSx = { width: { xs: 48, md: 68 }, height: { xs: 48, md: 68 }, [PHONE_LANDSCAPE]: { width: 32, height: 32 } }
+  const symbolSx = {
+    width: { xs: 56, md: 80 },
+    height: { xs: 56, md: 80 },
+    '@media (orientation: landscape)': { width: { xs: 44, md: 64 }, height: { xs: 44, md: 64 } },
+    [PHONE_LANDSCAPE]: { width: 26, height: 26 },
+  }
+
+  // Live difficulty: regenerate the current problem when the level changes in the adult menu
+  // (no refresh). Skips the result screen + the initial mount.
+  const difficultyLevel = useDifficulty('math')
+  const prevDifficultyRef = useRef(difficultyLevel)
+  useEffect(() => {
+    if (prevDifficultyRef.current === difficultyLevel) return
+    prevDifficultyRef.current = difficultyLevel
+    if (roundOutcome || !gameReady) return
+    generateNewProblem()
+  }, [difficultyLevel]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <GameShell
@@ -316,8 +390,99 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
       title={title}
       backRoute="/math"
       guideReaction={guideReaction}
-      score={<MathScoreChip score={score} disabled={isScoreNarrating} onClick={handleScoreClick} />}
+      score={<MathScoreChip answered={round.state.index} total={round.length} disabled={isScoreNarrating} onClick={handleScoreClick} />}
       celebration={{ show: showCelebration, intensity: celebrationIntensity, duration: celebrationDuration, onComplete: stopCelebration }}
+      promptStage={
+        roundOutcome ? undefined : (
+          <PromptStage
+            accent={category.accentColor}
+            chargeKey={`${num1}-${num2}-${round.state.index}`}
+            repeat={
+              showEquation ? (
+                <MathRepeatButton onClick={repeatProblem} disabled={false} size={phoneLandscape ? 'small' : 'large'} />
+              ) : undefined
+            }
+          >
+            {showEquation && (
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: { xs: 1.25, md: 2 },
+                  background: tileSurface(category.accentColor, muiTheme.scene.dark),
+                  borderRadius: 4,
+                  border: `2px solid ${category.borderColor}`,
+                  px: { xs: 2.5, md: 4 },
+                  py: { xs: 1.5, md: 2.5 },
+                  boxShadow: muiTheme.customShadows.pop,
+                  '@media (orientation: landscape)': { py: { xs: 1, md: 1.5 } },
+                  [PHONE_LANDSCAPE]: { py: 0.25, px: 1, gap: 0.5 },
+                }}
+              >
+                <Typography variant="h1" component="span" sx={numberSx}>{num1}</Typography>
+                <SymbolTile op={operator} sx={symbolSx} />
+                <Typography variant="h1" component="span" sx={numberSx}>{num2}</Typography>
+                <SymbolTile op="=" sx={symbolSx} />
+
+                {/* The "?" flips to the revealed answer with a motion.POP once correct (reduced
+                    motion: instant swap — the colour/glow + SFX still land). */}
+                <Box sx={{ ...symbolSx, position: 'relative' }}>
+                  <AnimatePresence mode="wait" initial={false}>
+                    {effectiveRevealAnswer && correctAnswer !== null ? (
+                      <motion.div
+                        key="answer"
+                        initial={reduce ? false : { scale: 0.4, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={motionOr(POP, reduce)}
+                        style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                      >
+                        <Box
+                          sx={{
+                            width: '100%',
+                            height: '100%',
+                            borderRadius: '14px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            bgcolor: hexToRgba(muiTheme.palette.success.main, 0.2),
+                            border: `3px solid ${muiTheme.palette.success.main}`,
+                            boxShadow: muiTheme.customShadows.pop,
+                          }}
+                        >
+                          <Typography
+                            sx={{
+                              fontWeight: 800,
+                              lineHeight: 1,
+                              color: darken(muiTheme.palette.success.main, 0.2),
+                              fontSize: { xs: '1.7rem', md: '2.4rem' },
+                              [PHONE_LANDSCAPE]: { fontSize: '0.85rem' },
+                            }}
+                          >
+                            {correctAnswer}
+                          </Typography>
+                        </Box>
+                      </motion.div>
+                    ) : (
+                      <motion.div
+                        key="question"
+                        initial={reduce ? false : { scale: 0.7, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={motionOr(POP, reduce)}
+                        style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                      >
+                        <SymbolTile op="?" sx={{ width: '100%', height: '100%' }} />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </Box>
+              </Box>
+            )}
+          </PromptStage>
+        )
+      }
     >
       {roundOutcome ? (
         <RoundResultScreen
@@ -328,73 +493,8 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
         />
       ) : (
       <>
-      {/* Question + soft-3D number sentence + repeat button — a clean flex column so the
-          equation never overlaps the question text (the old layout bug). */}
-      <Box
-        sx={{
-          flex: '0 0 auto',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: { xs: 1.5, md: 2 },
-          mb: { xs: 2, md: 3 },
-          [PHONE_LANDSCAPE]: { gap: 0.5, mb: 1 },
-        }}
-      >
-        <Typography
-          variant="h5"
-          sx={{
-            fontWeight: 700,
-            color: muiTheme.scene.dark ? '#FFFFFF' : 'primary.main',
-            fontSize: { xs: '1rem', md: '1.25rem' },
-            textShadow: muiTheme.scene.dark ? '0 2px 8px rgba(0,0,0,0.5)' : 'none',
-            // Phone landscape: the equation IS the question — this line is decoration.
-            [PHONE_LANDSCAPE]: { display: 'none' },
-          }}
-        >
-          Hvad bliver svaret? 🤔
-        </Typography>
-
-        {showEquation && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.4 }}
-            style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}
-          >
-            <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: { xs: 1.25, md: 2 },
-                bgcolor: 'rgba(255,255,255,0.96)',
-                borderRadius: 4,
-                border: '2px solid',
-                borderColor: 'primary.100',
-                px: { xs: 2.5, md: 4 },
-                py: { xs: 1.5, md: 2.5 },
-                boxShadow: muiTheme.scene.dark
-                  ? '0 12px 30px rgba(0,0,0,0.45)'
-                  : '0 8px 24px rgba(0,0,0,0.14)',
-                '@media (orientation: landscape)': { py: { xs: 1, md: 1.5 } },
-                [PHONE_LANDSCAPE]: { py: 0.5, px: 1.5 },
-              }}
-            >
-              <Typography variant="h1" component="span" sx={numberSx}>{num1}</Typography>
-              <SymbolTile op={operator} sx={symbolSx} />
-              <Typography variant="h1" component="span" sx={numberSx}>{num2}</Typography>
-              <SymbolTile op="=" sx={symbolSx} />
-              <SymbolTile op="?" sx={symbolSx} />
-            </Box>
-
-            <MathRepeatButton onClick={repeatProblem} disabled={false} />
-          </motion.div>
-        )}
-      </Box>
-
-      {/* Answer options — non-greedy so it groups under the equation (shell centres the group). */}
-      <Box sx={{ flex: '0 1 auto', display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 0 }}>
+      {/* Answer options — fills the answer zone beneath the PromptStage equation. */}
+      <Box sx={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 0 }}>
         <Box
           sx={{
             display: 'grid',
@@ -438,8 +538,8 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
             >
               <AnswerTile
                 onClick={() => handleAnswerClick(option)}
-                accent={categoryThemes.math.accentColor}
-                state={(feedback && feedback.value === option ? (feedback.correct ? 'correct' : 'wrong') : 'idle') as AnswerTileState}
+                accent={category.accentColor}
+                state={(effectiveFeedback && effectiveFeedback.value === option ? (effectiveFeedback.correct ? 'correct' : 'wrong') : 'idle') as AnswerTileState}
               >
                 <Typography
                   variant="h1"
@@ -447,7 +547,7 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
                   sx={{
                     fontSize: 'clamp(2.5rem, 8vw, 4.5rem)',
                     fontWeight: 700,
-                    color: categoryThemes.math.accentColor,
+                    color: category.accentColor,
                     userSelect: 'none',
                     lineHeight: 1,
                     '@media (orientation: landscape)': { fontSize: 'clamp(2rem, 6vw, 3.5rem)' },

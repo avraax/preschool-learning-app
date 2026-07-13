@@ -62,6 +62,7 @@ export const spaceThemeTokens: ThemeTokens = {
       lines: ['Klar til opsendelse?', '3-2-1!', 'Til stjernerne!'],
     },
     selectorThumb: '',
+    music: '/sounds/music/space.mp3', // Rummet loop ("Galaxy/Universe"); body-trimmed + level-matched in musicClient
   },
 
   materials: {

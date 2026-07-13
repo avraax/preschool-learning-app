@@ -16,6 +16,10 @@ import { progressStore } from './progressStore'
 
 export type SfxCue =
   | 'tap'
+  | 'pick-up'
+  | 'spring-back'
+  | 'chomp'
+  | 'match'
   | 'correct'
   | 'wrong'
   | 'drop-snap'
@@ -26,8 +30,14 @@ export type SfxCue =
   | 'round-complete'
   | 'page-complete'
 
+// New drag/game cues (pick-up/spring-back/chomp/match) reuse curated files for now (real sound,
+// distinct cue names); swap to dedicated files when available — missing files degrade to silence.
 const CUE_FILES: Record<SfxCue, string> = {
   tap: '/sounds/ui/tap.ogg',
+  'pick-up': '/sounds/ui/tap.ogg',
+  'spring-back': '/sounds/ui/wrong.ogg',
+  chomp: '/sounds/ui/drop-snap.ogg',
+  match: '/sounds/ui/correct.ogg',
   correct: '/sounds/ui/correct.ogg',
   wrong: '/sounds/ui/wrong.ogg',
   'drop-snap': '/sounds/ui/drop-snap.ogg',
@@ -42,6 +52,10 @@ const CUE_FILES: Record<SfxCue, string> = {
 // Per-cue base volume — keep cues subtle so they don't fight narration.
 const CUE_VOLUME: Partial<Record<SfxCue, number>> = {
   tap: 0.35,
+  'pick-up': 0.4,
+  'spring-back': 0.4,
+  chomp: 0.55,
+  match: 0.5,
   correct: 0.5,
   wrong: 0.45,
   'drop-snap': 0.5,
@@ -114,6 +128,14 @@ class SfxClient {
   }
 
   play(cue: SfxCue, opts: PlayOptions = {}): void {
+    // DEV screenshot harness: record every fired cue (+ rate) so verification can assert distinct
+    // cues and ascending streak pitch. Recorded even when muted/missing, so the LOG reflects intent.
+    if (import.meta.env.DEV && typeof window !== 'undefined') {
+      const w = window as unknown as { __sfxLog?: Array<{ cue: string; rate: number }> }
+      if (!w.__sfxLog) w.__sfxLog = []
+      w.__sfxLog.push({ cue, rate: opts.rate ?? 1 })
+      if (w.__sfxLog.length > 80) w.__sfxLog.shift()
+    }
     if (!this.enabled) return
     const howl = this.getHowl(cue)
     if (!howl) return

@@ -3,6 +3,8 @@ import { ThemeProvider as MuiThemeProvider } from '@mui/material/styles'
 import { buildTheme } from './buildTheme'
 import { defaultThemeId, getThemeTokens, themeOptions, type ThemeOption } from './themes'
 import { loadTitleFont } from './titleFonts'
+import { devThemeId } from '../utils/devHarness'
+import { musicClient } from '../services/musicClient'
 
 // Runtime theme switching. Holds the selected theme id (persisted to localStorage),
 // rebuilds the MUI theme on change, and exposes the selection via `useThemeSwitch()`.
@@ -28,6 +30,9 @@ export const useThemeSwitch = (): ThemeSwitchContextValue => {
 }
 
 const readStoredThemeId = (): string => {
+  // DEV screenshot harness: ?theme=<id> forces the skin without click-chaining the selector.
+  const forced = devThemeId()
+  if (forced) return forced
   try {
     return localStorage.getItem(STORAGE_KEY) || defaultThemeId
   } catch {
@@ -65,6 +70,12 @@ export const AppThemeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     document.documentElement.style.backgroundColor = base
     document.body.style.backgroundColor = base
   }, [theme])
+
+  // Per-world ambient music: switch (cross-fade) the loop when the world changes. Only starts if
+  // musicEnabled + a user gesture has unlocked audio (musicClient handles gating + gesture resume).
+  useEffect(() => {
+    musicClient.setWorld(themeId, theme.scene.music)
+  }, [themeId, theme])
 
   const value = useMemo<ThemeSwitchContextValue>(
     () => ({ themeId, setThemeId, availableThemes: themeOptions }),

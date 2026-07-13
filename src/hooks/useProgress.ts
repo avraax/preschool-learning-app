@@ -1,8 +1,10 @@
 import { useCallback, useSyncExternalStore } from 'react'
 import {
   progressStore,
+  type DifficultyLevel,
   type ProgressSettings,
   type ProgressState,
+  type SectionId,
 } from '../services/progressStore'
 
 // React interface to the progress store (Overhaul Foundation — System 1).
@@ -13,6 +15,8 @@ import {
 export interface UseProgress {
   state: ProgressState
   setSetting: <K extends keyof ProgressSettings>(key: K, value: ProgressSettings[K]) => void
+  setDifficulty: (next: { global?: DifficultyLevel; section?: SectionId; level?: DifficultyLevel | null }) => void
+  markStickersSeen: () => void
   resetAll: () => void
 }
 
@@ -27,9 +31,15 @@ export const useProgress = (): UseProgress => {
       progressStore.setSetting(key, value),
     [],
   )
+  const setDifficulty = useCallback(
+    (next: { global?: DifficultyLevel; section?: SectionId; level?: DifficultyLevel | null }) =>
+      progressStore.setDifficulty(next),
+    [],
+  )
+  const markStickersSeen = useCallback(() => progressStore.markStickersSeen(), [])
   const resetAll = useCallback(() => progressStore.resetAll(), [])
 
-  return { state, setSetting, resetAll }
+  return { state, setSetting, setDifficulty, markStickersSeen, resetAll }
 }
 
 export default useProgress

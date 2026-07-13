@@ -19,7 +19,9 @@ export interface ColorScale {
 // Per-section visual identity (the 5 category cards/sections).
 export interface CategoryPalette {
   gradient: string        // section background gradient (full-screen section pages)
-  accent: string          // titles, primary accents
+  accent: string          // titles, primary accents, borders/fills
+  onCard: string          // AA-guaranteed label colour for text on frosted cards/menus (≥4.5:1)
+  tileSurface: string     // section-tinted idle answer-tile surface (white→accent tint)
   border: string
   hoverBorder: string
   icon: string            // emoji glyph
@@ -68,6 +70,7 @@ export interface ShadowTokens {
   card: string
   cardHover: string
   focusRing: string
+  pop: string             // punchy multi-layer tactile shadow for pressed/active + focal states
 }
 
 // ---- Immersive "world" tokens (Theme Worlds PRD) -------------------------------------
@@ -104,6 +107,7 @@ export interface SceneTokens {
     lines: string[]             // short Danish phrases spoken on tap (pick one at random)
   }
   selectorThumb: string         // small scene thumbnail for the theme selector
+  music?: string                // per-world ambient loop URL (optional; absence → no music)
 }
 
 export interface MaterialTokens {

@@ -1,18 +1,19 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { motion } from 'framer-motion'
 import {
   Typography,
   Box,
-  LinearProgress,
-  Card
+  LinearProgress
 } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import GameShell from '../common/GameShell'
 import LearningGrid from '../common/LearningGrid'
+import PromptStage from '../common/PromptStage'
 import StickerReveal from '../common/StickerReveal'
 import { useCelebration } from '../common/CelebrationEffect'
 import { categoryThemes } from '../../config/categoryThemes'
 import { progressStore, type StickerAward } from '../../services/progressStore'
+import { hexToRgba } from '../../theme/tokens/helpers'
+import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 // Simplified audio system
 import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 
@@ -22,6 +23,44 @@ import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 
 const MATH_ACCENT = categoryThemes.math.accentColor
 const EXPLORE_MILESTONE = 12 // award a sticker every N distinct numbers tapped
+
+// Count-reinforcement cluster for the bloomed number (UI/UX Overhaul PRD §6B — mirrors Tal Quiz's
+// counted-objects idea so the numeral isn't the only channel). Chunky recognisable stars at small
+// counts; crisp small dots once the count gets dense (emoji glyphs turn to mush under ~12px, dots
+// stay legible) — always renders exactly `n` items so the visual count is real, up to 100.
+const ObjectCount: React.FC<{ n: number; accent: string }> = ({ n, accent }) => {
+  const useDots = n > 30
+  const size = n <= 10 ? 30 : n <= 20 ? 24 : n <= 30 ? 18 : n <= 60 ? 10 : 7
+  return (
+    <Box
+      aria-hidden
+      sx={{
+        display: 'flex',
+        flexWrap: 'wrap',
+        alignItems: 'center',
+        justifyContent: 'center',
+        alignContent: 'center',
+        gap: useDots ? '3px' : '5px',
+        maxWidth: '92%',
+        maxHeight: '100%',
+        overflow: 'hidden',
+      }}
+    >
+      {Array.from({ length: n }).map((_, i) =>
+        useDots ? (
+          <Box
+            key={i}
+            sx={{ width: size, height: size, borderRadius: '50%', bgcolor: accent, opacity: 0.85, flex: '0 0 auto' }}
+          />
+        ) : (
+          <Box key={i} component="span" sx={{ fontSize: `${size}px`, lineHeight: 1, flex: '0 0 auto', userSelect: 'none' }}>
+            ⭐
+          </Box>
+        )
+      )}
+    </Box>
+  )
+}
 
 const NumberLearning: React.FC = () => {
   const muiTheme = useTheme()
@@ -174,51 +213,43 @@ const NumberLearning: React.FC = () => {
           </Box>
         </Box>
       }
-    >
-      {/* Current Number Display. Compact in landscape so the dense 1–100 grid below keeps its
-          vertical room (the sweep flagged sliver-thin rows when this card ate the space). */}
-      <Box sx={{
-        textAlign: 'center',
-        mb: { xs: 1, md: 1.5 },
-        flex: '0 0 auto',
-        '@media (orientation: landscape)': { mb: 0.5 },
-      }}>
-        <motion.div
-          key={currentIndex}
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 0.3 }}
-        >
-          <Card
+      promptStage={
+        // Selected number blooms large + its counted objects (§6B) — PromptStage's own chargeKey
+        // gives the gentle charge-in on every new selection (reduced-motion parity built in).
+        <PromptStage accent={MATH_ACCENT} chargeKey={currentIndex}>
+          <Box
             sx={{
-              maxWidth: { xs: 120, md: 150 },
-              mx: 'auto',
-              p: { xs: 1, md: 1.5 },
-              '@media (orientation: landscape)': { maxWidth: 92, p: 0.5 },
-              bgcolor: audio.isPlaying ? 'secondary.50' : 'white',
-              border: '2px solid',
-              borderColor: audio.isPlaying ? 'secondary.main' : 'primary.200',
-              transition: 'all 0.3s ease',
-              boxShadow: muiTheme.scene.dark ? '0 12px 30px rgba(0,0,0,0.45)' : '0 6px 18px rgba(0,0,0,0.12)'
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: { xs: 0.5, md: 1 },
+              width: '100%',
+              height: '100%',
             }}
           >
             <Typography
-              variant="h1"
               sx={{
-                fontSize: { xs: '2.5rem', md: '3.5rem' },
-                fontWeight: 700,
-                color: 'primary.dark',
-                textAlign: 'center',
+                fontWeight: 800,
                 lineHeight: 1,
-                '@media (orientation: landscape)': { fontSize: '1.9rem' },
+                color: muiTheme.scene.dark ? '#FFFFFF' : MATH_ACCENT,
+                textShadow: muiTheme.scene.dark
+                  ? '0 2px 10px rgba(0,0,0,0.5)'
+                  : audio.isPlaying
+                    ? `0 0 24px ${hexToRgba(MATH_ACCENT, 0.45)}`
+                    : 'none',
+                fontSize: 'clamp(2.75rem, 15vh, 6.5rem)',
+                transition: 'text-shadow 0.3s ease',
+                [PHONE_LANDSCAPE]: { fontSize: 'clamp(1.9rem, 24vh, 2.6rem)' },
               }}
             >
               {numbers[currentIndex]}
             </Typography>
-          </Card>
-        </motion.div>
-      </Box>
-
+            <ObjectCount n={numbers[currentIndex]} accent={MATH_ACCENT} />
+          </Box>
+        </PromptStage>
+      }
+    >
       {/* Numbers Grid - Using Reusable Component */}
       <LearningGrid
         items={numbers}

@@ -64,6 +64,7 @@ export const dinoThemeTokens: ThemeTokens = {
       lines: ['Rooar! (en venlig en)', 'Lad os grave!', 'Flot fundet!'],
     },
     selectorThumb: '',
+    music: '/sounds/music/dino.mp3', // Dinosaurer loop ("Fantasy theme"); body-trimmed loop in musicClient
   },
 
   materials: {

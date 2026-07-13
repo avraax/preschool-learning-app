@@ -3,6 +3,7 @@ import UnifiedQuizGame, { UnifiedQuizConfig, QuizItem } from '../common/UnifiedQ
 import { categoryThemes } from '../../config/categoryThemes'
 import { OrdlegScoreChip } from '../common/ScoreChip'
 import { OrdlegRepeatButton } from '../common/RepeatButton'
+import { progressStore, type DifficultyLevel } from '../../services/progressStore'
 
 // Læs Ordet: the written Danish word is shown (no picture); the child reads it and
 // taps the matching picture from 4 options. The word is NOT read aloud — the child must
@@ -36,6 +37,11 @@ const READING_WORDS: ReadingWord[] = [
   { word: 'ski', emoji: '🎿' }
 ]
 
+// Let (Overhaul §5.7/Appendix A): restrict the PROMPT word to the shortest (2-letter) entries —
+// gentler than Normal's 2–3-letter mix. Distractor pictures still draw from the full list (below)
+// so the option pool never runs dry. Ordleg's floor never grows past 3 letters at any level.
+const TWO_LETTER_WORDS = READING_WORDS.filter(w => w.word.length === 2)
+
 const LaesOrdetGame: React.FC = () => {
   const toItem = (w: ReadingWord): QuizItem => ({
     value: w.word,
@@ -48,7 +54,11 @@ const LaesOrdetGame: React.FC = () => {
     quizType: 'ordleg',
 
     generateQuizItem: () => {
-      const w = READING_WORDS[Math.floor(Math.random() * READING_WORDS.length)]
+      const level: DifficultyLevel = progressStore.difficultyFor('ordleg')
+      // Let draws only 2-letter prompt words (gentler); Normal/Svær keep today's full 2–3-letter
+      // pool — Svær's extra challenge is MORE distractor pictures below, never longer words.
+      const pool = level === 'let' ? TWO_LETTER_WORDS : READING_WORDS
+      const w = pool[Math.floor(Math.random() * pool.length)]
       return {
         ...toItem(w),
         // Word shown as text, no picture in the prompt — the child must read it.
@@ -57,11 +67,15 @@ const LaesOrdetGame: React.FC = () => {
     },
 
     generateOptions: (correct: QuizItem) => {
+      const level: DifficultyLevel = progressStore.difficultyFor('ordleg')
+      // Svær: more distractor PICTURES (6 instead of 4) — the one difficulty axis left once word
+      // length is fixed gentle at every level.
+      const optionCount = level === 'svaer' ? 6 : 4
       const correctWord = READING_WORDS.find(w => w.word === correct.value) || READING_WORDS[0]
       const options: QuizItem[] = [toItem(correctWord)]
       const shuffled = [...READING_WORDS].sort(() => Math.random() - 0.5)
       for (const w of shuffled) {
-        if (options.length >= 4) break
+        if (options.length >= optionCount) break
         if (!options.find(o => o.value === w.word)) options.push(toItem(w))
       }
       return options.sort(() => Math.random() - 0.5)

@@ -12,6 +12,7 @@ import {
   Button,
   Chip,
   Dialog,
+  DialogContent,
   FormControlLabel,
   Radio,
   RadioGroup,
@@ -22,6 +23,7 @@ import {
 import { ttsClient } from '../../services/ttsClient'
 import { TTS_CONFIG } from '../../config/tts-config'
 import { OVERRIDE_VOICES, VOICE_TIERS } from './voicelabData'
+import AdultBackHeader from '../adult/AdultBackHeader'
 
 const FONT = '"Comic Sans MS", "Comic Sans", cursive'
 const DEFAULT_RATE = TTS_CONFIG.speakingRate // 1.05
@@ -80,10 +82,9 @@ const VoiceOverridePanel: React.FC<VoiceOverridePanelProps> = ({ open, onClose }
   }
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="xs">
-      <Box sx={{ p: 2, width: 290, fontFamily: FONT }}>
-        <Typography sx={{ fontFamily: FONT, fontWeight: 700, mb: 1 }}>🎙️ Stemme-test</Typography>
-
+    <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
+      <AdultBackHeader title="🎙️ Stemme-test" onBack={onClose} />
+      <DialogContent sx={{ fontFamily: FONT }}>
         <Typography sx={{ fontFamily: FONT, fontSize: '0.75rem', color: 'text.secondary', mb: 0.5 }}>
           Skifter den danske fortælle-stemme (engelsk sektion upåvirket).
         </Typography>
@@ -144,7 +145,7 @@ const VoiceOverridePanel: React.FC<VoiceOverridePanelProps> = ({ open, onClose }
         <Button onClick={reset} size="small" color="inherit" sx={{ fontFamily: FONT, textTransform: 'none', mt: 1.5, width: '100%', whiteSpace: 'nowrap' }}>
           Nulstil stemme
         </Button>
-      </Box>
+      </DialogContent>
     </Dialog>
   )
 }

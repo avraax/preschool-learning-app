@@ -69,6 +69,7 @@ export const oceanThemeTokens: ThemeTokens = {
       lines: ['Pluf! Vil du dykke med?', 'Bobler!', 'Sikke flot!'],
     },
     selectorThumb: '',
+    music: '/sounds/music/ocean.mp3', // Havet loop ("Aquatic Downtime"); body-trimmed loop in musicClient
   },
 
   materials: {

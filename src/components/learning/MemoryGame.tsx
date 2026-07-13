@@ -91,8 +91,7 @@ const MemoryGame: React.FC = () => {
     instructions: 'Find ens bogstaver ved at klikke på kortene',
     backPath: '/alphabet',
     theme: categoryThemes.alphabet,
-    cardBackIcon: 'ABC',
-    
+
     ScoreComponent: AlphabetScoreChip,
     RepeatButtonComponent: AlphabetRepeatButton,
     RestartButtonComponent: AlphabetRestartButton
@@ -124,8 +123,7 @@ const MemoryGame: React.FC = () => {
     instructions: 'Find ens tal ved at klikke på kortene',
     backPath: '/math',
     theme: categoryThemes.math,
-    cardBackIcon: '123',
-    
+
     ScoreComponent: MathScoreChip,
     RepeatButtonComponent: MathRepeatButton,
     RestartButtonComponent: MathRestartButton

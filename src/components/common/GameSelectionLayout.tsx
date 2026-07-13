@@ -48,7 +48,7 @@ const GameSelectionLayout: React.FC<GameSelectionLayoutProps> = ({
   // (62→46% white) blurs to a muddy grey over a dark scene and kills accent-text contrast, so
   // dark scenes get a lighter frosted card to keep the PRD's "cards stay light & readable".
   const cardGlass = darkScene
-    ? 'linear-gradient(135deg, rgba(255,255,255,0.82) 0%, rgba(255,255,255,0.68) 100%)'
+    ? 'linear-gradient(135deg, rgba(255,255,255,0.92) 0%, rgba(255,255,255,0.84) 100%)'
     : 'linear-gradient(135deg, rgba(255,255,255,0.62) 0%, rgba(255,255,255,0.46) 100%)'
 
   return (
@@ -201,7 +201,8 @@ const GameSelectionLayout: React.FC<GameSelectionLayoutProps> = ({
                   background: immersive ? cardGlass : game.gradient,
                   backdropFilter: immersive ? 'blur(16px) saturate(1.1)' : undefined,
                   WebkitBackdropFilter: immersive ? 'blur(16px) saturate(1.1)' : undefined,
-                  color: immersive ? catTheme.accentColor : 'white',
+                  // Immersive glass cards: AA-guaranteed label colour (fixes warm-accent legibility).
+                  color: immersive ? catTheme.onCardColor : 'white',
                   borderRadius: '16px',
                   '@media (hover: hover) and (pointer: fine)': {
                     '&:hover': {

@@ -8,33 +8,28 @@ import { useCharacterState } from '../common/LottieCharacter'
 import { useCelebration } from '../common/CelebrationEffect'
 import { useGameState } from '../../hooks/useGameState'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
-import { darken, hexToRgba } from '../../theme/tokens/helpers'
+import { darken, hexToRgba, tileSurface } from '../../theme/tokens/helpers'
+import type { AmbientMotion } from '../../theme/tokens/types'
 import { progressStore, type RoundOutcome } from '../../services/progressStore'
 import { sfx } from '../../services/sfxClient'
+import { mascotBus } from '../../services/mascotBus'
+import { SNAP } from '../../theme/motion'
+import { devFx } from '../../utils/devHarness'
 import GameShell from './GameShell'
 import RoundResultScreen from './RoundResultScreen'
 // Simplified audio system
 import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 
-// Working CSS for card flip animation
+// Structural CSS for the 3D card flip (UI/UX Overhaul PRD §6E). The rotateY animation itself is
+// driven by Framer Motion (`SNAP` transition) on the `.flipper` element, not by a CSS class toggle —
+// this file only needs the perspective root + the two absolutely-positioned, backface-hidden faces.
+// Reduced motion drops the rotateY entirely (faces cross-fade via opacity instead — see the card
+// render below), so no CSS transition/transform is declared here at all.
 const flipStyles = `
   .flip-container {
     perspective: 1000px;
     width: 100%;
     height: 100%;
-  }
-
-  .flipper {
-    transition: transform 0.6s;
-    transform-style: preserve-3d;
-    position: relative;
-    width: 100%;
-    height: 100%;
-    cursor: pointer;
-  }
-
-  .flipper.flipped {
-    transform: rotateY(180deg);
   }
 
   .card-face {
@@ -44,30 +39,25 @@ const flipStyles = `
     left: 0;
     width: 100%;
     height: 100%;
-    border-radius: 15px;
+    border-radius: 18px;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-direction: column;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     border: 3px solid;
   }
-
-  .card-front {
-    transform: rotateY(0deg);
-    z-index: 2;
-  }
-
-  .card-back {
-    transform: rotateY(180deg);
-  }
-
-  @keyframes pulse {
-    0% { transform: scale(1); opacity: 1; }
-    50% { transform: scale(1.05); opacity: 0.8; }
-    100% { transform: scale(1); opacity: 1; }
-  }
 `
+
+// Per-world card-back motif (UI/UX Overhaul PRD §6E) — replaces the old generic "ABC"/"123".
+// Keyed by the active skin's ambient motion, the SAME signal Mascot.tsx / CelebrationEffect.tsx
+// already use to flavor their own emoji sets — so a reskin (kid/ocean/space/dino) is what changes
+// the card back, not the section (letters vs numbers stays signalled by the section accent color).
+const WORLD_MOTIF: Record<AmbientMotion, string> = {
+  twinkle: '🚀', // Rummet (space)
+  rise: '🐚',    // Havet (ocean)
+  fall: '🦕',    // Dinosaurer
+  drift: '🌈',   // Regnbue (default/kid)
+}
 
 // Memory card interface
 export interface MemoryCard {
@@ -106,9 +96,8 @@ export interface UnifiedMemoryConfig {
   title: string
   instructions: string
   backPath: string
-  theme: CategoryTheme
-  cardBackIcon: string     // Icon to show on card backs (ABC, 123, etc.)
-  
+  theme: CategoryTheme     // card-back MOTIF is theme/world-driven now (see WORLD_MOTIF), not config
+
   // Component overrides
   ScoreComponent: React.ComponentType<any>
   RepeatButtonComponent: React.ComponentType<any>
@@ -138,7 +127,7 @@ const UnifiedMemoryGame: React.FC<UnifiedMemoryGameProps> = ({ config }) => {
   const [roundOutcome, setRoundOutcome] = useState<RoundOutcome | null>(null)
 
   // Centralized game state management
-  const { score, incrementScore, resetScore, isScoreNarrating, handleScoreClick } = useGameState()
+  const { incrementScore, resetScore, isScoreNarrating, handleScoreClick } = useGameState()
   
   // Simplified audio system
   const audio = useSimplifiedAudioHook({ 
@@ -195,6 +184,20 @@ const UnifiedMemoryGame: React.FC<UnifiedMemoryGameProps> = ({ config }) => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [audio.isAudioReady])
+
+  // DEV screenshot harness (?fx=correct|wrong|hint|streak): nudge the mascot bus once per force so
+  // the reaction is capturable. The matching VISUAL override (which cards look matched/revealed/
+  // wrong) is DERIVED per-card at render time below (fxMatchedIds/fxRevealIds/fxWrongIds) — this
+  // never mutates real game/round state. Memory has no genuine hint mechanic, so `hint` is mapped to
+  // a plain face-up (flip) card — the remaining state worth capturing for this game.
+  const forcedFx = devFx()
+  useEffect(() => {
+    if (!forcedFx || cards.length === 0) return
+    if (forcedFx === 'correct') mascotBus.emit('correct')
+    else if (forcedFx === 'wrong') mascotBus.emit('wrong')
+    else if (forcedFx === 'streak') mascotBus.emit('streak')
+    else mascotBus.emit('hint')
+  }, [forcedFx, cards.length])
 
   // Reveal the cards. Idempotent — safe from any start path.
   const revealBoard = () => {
@@ -364,8 +367,13 @@ const UnifiedMemoryGame: React.FC<UnifiedMemoryGameProps> = ({ config }) => {
         incrementScore()
         teacher.wave()
 
-        // micro tier fires the bright `correct` SFX + a small sparkle (no extra sfx.play).
-        celebrateTier('micro')
+        // Match juice (UI/UX Overhaul PRD §6E): both cards already pop + glow (poppedPairId scale +
+        // the persistent success border/shadow from `isMatched`, computed at render time below) —
+        // here we fire the distinct 'match' cue + the reactive mascot. A per-match full-screen
+        // celebration is intentionally skipped (reserved for the streak/round crescendo moments below
+        // and in RoundResultScreen) so a 20-pair board doesn't fire 20 confetti bursts.
+        sfx.play('match')
+        mascotBus.emit('correct')
         // One-shot match pop on the matched pair (skipped under reduced motion via the render guard).
         setPoppedPairId(firstCard.pairId)
         setTimeout(() => setPoppedPairId(null), 600)
@@ -376,7 +384,9 @@ const UnifiedMemoryGame: React.FC<UnifiedMemoryGameProps> = ({ config }) => {
         longestMatchStreakRef.current = Math.max(longestMatchStreakRef.current, matchStreakRef.current)
         const isFinalPair = newMatchedPairs === config.boardPairs
         if (matchStreakRef.current % 3 === 0 && !isFinalPair) {
+          // celebrateTier fires the 'streak-up' SFX + medium confetti; the mascot joins in.
           celebrateTier('streak')
+          mascotBus.emit('streak')
         }
 
         // Final pair → finish the round. Brief beat so the final pop/celebration registers
@@ -388,6 +398,7 @@ const UnifiedMemoryGame: React.FC<UnifiedMemoryGameProps> = ({ config }) => {
       } else {
         // No match - gentle wrong SFX + shake, then flip back. Never punishing, never ends the board.
         sfx.play('wrong')
+        mascotBus.emit('wrong')
         mismatchesRef.current += 1
         matchStreakRef.current = 0
         setWrongPairIds(newRevealedCards.map(c => c.id))
@@ -464,18 +475,53 @@ const UnifiedMemoryGame: React.FC<UnifiedMemoryGameProps> = ({ config }) => {
   const RepeatButtonComponent = config.RepeatButtonComponent
   const RestartButtonComponent = config.RestartButtonComponent
 
-  // Depth language (AnswerTile reference) — fully token-driven, correct on light + dark scenes.
+  // Depth language (AnswerTile reference — UI/UX Overhaul PRD §5.2/§6E) — fully token-driven,
+  // correct on light + dark scenes. Formulas mirror AnswerTile's idle/correct/wrong states exactly
+  // so Memory's cards read as the same "furniture" as every other tile in the app.
   const accent = config.theme.accentColor
   const dark = muiTheme.scene.dark
   const success = muiTheme.palette.success.main
+  const errorColor = muiTheme.palette.error.main
   const lip = darken(accent, 0.3)                 // coloured 3D rim under a card
   const successEdge = darken(success, 0.28)
+  const errorEdge = darken(errorColor, 0.25)
   const ambientShadow = dark ? '0 12px 28px rgba(0,0,0,0.5)' : '0 10px 22px rgba(0,0,0,0.15)'
   const idleBorder = hexToRgba(accent, dark ? 0.55 : 0.34)
-  const restingShadow = `0 7px 0 ${lip}, ${ambientShadow}`
-  const matchedShadow = `0 0 0 4px ${hexToRgba(success, 0.45)}, 0 7px 0 ${successEdge}, 0 14px 30px ${hexToRgba(success, 0.4)}`
-  const faceUpSurface = 'linear-gradient(180deg, #FFFFFF 0%, #ECF1F8 100%)'
+  const restingShadow = `0 8px 0 ${lip}, ${ambientShadow}`
+  const matchedShadow = `0 0 0 5px ${hexToRgba(success, 0.5)}, 0 8px 0 ${successEdge}, 0 16px 34px ${hexToRgba(success, 0.42)}`
+  const wrongShadow = `0 8px 0 ${errorEdge}, ${ambientShadow}`
+  // Section-tinted idle surface (was a hardcoded #FFF→#ECF1F8 — the exact bug §5.1 introduced
+  // `tileSurface` to fix elsewhere; Memory's face-up cards had never been migrated to it).
+  const faceUpSurface = tileSurface(accent, dark)
   const matchedSurface = `linear-gradient(180deg, #FFFFFF 0%, ${hexToRgba(success, 0.16)} 100%)`
+  const wrongSurface = `linear-gradient(180deg, #FFFFFF 0%, ${hexToRgba(errorColor, 0.1)} 100%)`
+  // Per-world card-back motif (differs per skin, not per section — see WORLD_MOTIF above).
+  const motif = WORLD_MOTIF[muiTheme.scene.ambient.motion]
+
+  // DEV screenshot harness (?fx=): derive which card ids should render in the forced state, purely
+  // for display — real cards/score/round state is never touched. `correct`/`streak` force the first
+  // pair matched (pop+glow); `wrong` forces the first mismatching pair face-up + shaking; `hint`
+  // (no real hint mechanic in Memory) forces a single plain face-up card to demo the flip itself.
+  const fxMatchedIds = new Set<string>()
+  const fxRevealIds = new Set<string>()
+  const fxWrongIds = new Set<string>()
+  if (forcedFx && cards.length >= 2) {
+    if (forcedFx === 'correct' || forcedFx === 'streak') {
+      const first = cards[0]
+      cards.forEach((c) => { if (c.pairId === first.pairId) fxMatchedIds.add(c.id) })
+    } else if (forcedFx === 'wrong') {
+      const a = cards[0]
+      const b = cards.find((c) => c.pairId !== a.pairId)
+      fxRevealIds.add(a.id)
+      if (b) {
+        fxRevealIds.add(b.id)
+        fxWrongIds.add(a.id)
+        fxWrongIds.add(b.id)
+      }
+    } else if (forcedFx === 'hint') {
+      fxRevealIds.add(cards[0].id)
+    }
+  }
 
   // Grid columns derive from board size so both boards fill the viewport with no scroll.
   const gridCols = config.boardPairs === 10
@@ -497,7 +543,6 @@ const UnifiedMemoryGame: React.FC<UnifiedMemoryGameProps> = ({ config }) => {
       guide={false}
       score={
         <ScoreComponent
-          score={score}
           disabled={isScoreNarrating}
           onClick={handleScoreClick}
           customLabel={`Par: ${matchedPairs}/${config.boardPairs}`}
@@ -586,44 +631,63 @@ const UnifiedMemoryGame: React.FC<UnifiedMemoryGameProps> = ({ config }) => {
           }}>
             {gameReady && cards.length > 0 ? cards.map((card, index) => {
               const displayData = config.getDisplayData(card.content)
+              // DEV ?fx= overrides (no-op in prod / without the param — see fx*Ids above).
+              const fxMatched = fxMatchedIds.has(card.id)
+              const fxWrong = fxWrongIds.has(card.id)
+              const isMatched = card.isMatched || fxMatched
+              const isFaceUp = card.isRevealed || card.isMatched || fxRevealIds.has(card.id) || fxMatched
+              const isWrong = wrongPairIds.includes(card.id) || fxWrong
+              // One-shot match pop (skipped under reduced motion — colour/glow still communicates).
+              const pop = !reduce && (poppedPairId === card.pairId || fxMatched)
+
               return (
                 <motion.div
                   key={card.id}
-                  initial={{ opacity: 0, scale: 0.8 }}
+                  initial={reduce ? false : { opacity: 0, scale: 0.8 }}
                   animate={{
                     opacity: 1,
-                    // One-shot match pop (skipped under reduced motion — colour/glow still reads).
-                    scale: (!reduce && poppedPairId === card.pairId) ? [1, 1.08, 1] : 1,
-                    x: wrongPairIds.includes(card.id) ? [0, -10, 10, -10, 10, 0] : 0
+                    scale: pop ? [1, 1.08, 1] : 1,
+                    x: (!reduce && isWrong) ? [0, -10, 10, -10, 10, 0] : 0
                   }}
                   transition={{
-                    delay: index * 0.02,
-                    duration: 0.5,
+                    delay: reduce ? 0 : index * 0.02,
+                    duration: reduce ? 0 : 0.5,
                     scale: { duration: 0.4, delay: 0 },
                     x: { duration: 0.4, times: [0, 0.2, 0.4, 0.6, 0.8, 1] }
                   }}
-                  whileHover={{ scale: card.isMatched ? 1 : 1.05 }}
-                  whileTap={{ scale: card.isMatched ? 1 : 0.95 }}
+                  whileHover={{ scale: isMatched ? 1 : 1.05 }}
+                  whileTap={{ scale: isMatched ? 1 : 0.95 }}
                   style={{ width: '100%', height: '100%' }}
                 >
-                  <div 
-                    className="flip-container" 
-                    style={{ 
-                      height: '100%'
-                    }}
-                  >
-                    <div 
-                      className={`flipper ${card.isRevealed || card.isMatched ? 'flipped' : ''}`}
+                  <div className="flip-container" style={{ height: '100%' }}>
+                    {/* The rotateY flip itself (crisp 3D via `SNAP`). Reduced motion: no rotation at
+                        all (parent stays flat) — the two faces cross-fade via opacity instead, so the
+                        state change still reads without any transform animation. */}
+                    <motion.div
+                      className="flipper"
                       onClick={() => handleCardClick(card)}
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        position: 'relative',
+                        cursor: 'pointer',
+                        transformStyle: reduce ? 'flat' : 'preserve-3d',
+                      }}
+                      animate={reduce ? undefined : { rotateY: isFaceUp ? 180 : 0 }}
+                      transition={reduce ? undefined : SNAP}
                     >
-                      {/* Card Front (Back side - what shows when not flipped) */}
-                      <div
-                        className="card-face card-front"
+                      {/* Card back — the per-world motif (idle/rest state). */}
+                      <motion.div
+                        className="card-face card-motif"
                         style={{
+                          transform: reduce ? 'none' : 'rotateY(0deg)',
+                          zIndex: 2,
                           borderColor: idleBorder,
                           background: config.theme.gradient,
                           boxShadow: restingShadow
                         }}
+                        animate={reduce ? { opacity: isFaceUp ? 0 : 1 } : undefined}
+                        transition={reduce ? { duration: 0.25, ease: 'easeInOut' } : undefined}
                       >
                         <div style={{
                           position: 'relative',
@@ -641,58 +705,51 @@ const UnifiedMemoryGame: React.FC<UnifiedMemoryGameProps> = ({ config }) => {
                             opacity: 0.1,
                             background: 'repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.1) 10px, rgba(255,255,255,0.1) 20px)'
                           }} />
-                          {/* Central content */}
-                          <div style={{
+                          {/* World motif glyph (Rummet 🚀 / Havet 🐚 / Dinosaurer 🦕 / Regnbue 🌈) */}
+                          <div aria-hidden style={{
                             position: 'relative',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            gap: '4px'
+                            fontSize: 'clamp(1.7rem, 5vw, 2.8rem)',
+                            lineHeight: 1,
+                            filter: 'drop-shadow(0 2px 5px rgba(0,0,0,0.35))'
                           }}>
-                            <div style={{
-                              fontSize: 'clamp(1.2rem, 3vw, 1.8rem)',
-                              fontWeight: 'bold',
-                              color: 'white',
-                              textShadow: '0 0 8px rgba(0,0,0,0.8), 0 2px 4px rgba(0,0,0,0.6), 0 4px 8px rgba(0,0,0,0.4)',
-                              letterSpacing: '1px',
-                              WebkitTextStroke: '0.5px rgba(0,0,0,0.3)'
-                            }}>
-                              {config.cardBackIcon}
-                            </div>
+                            {motif}
                           </div>
-                          {/* Corner stars */}
-                          <div style={{ position: 'absolute', top: 8, left: 8, fontSize: '1rem' }}>⭐</div>
-                          <div style={{ position: 'absolute', top: 8, right: 8, fontSize: '1rem' }}>⭐</div>
-                          <div style={{ position: 'absolute', bottom: 8, left: 8, fontSize: '1rem' }}>⭐</div>
-                          <div style={{ position: 'absolute', bottom: 8, right: 8, fontSize: '1rem' }}>⭐</div>
+                          {/* Corner accents — same motif, small + faint */}
+                          <div aria-hidden style={{ position: 'absolute', top: 8, left: 8, fontSize: '0.75rem', opacity: 0.5 }}>{motif}</div>
+                          <div aria-hidden style={{ position: 'absolute', top: 8, right: 8, fontSize: '0.75rem', opacity: 0.5 }}>{motif}</div>
+                          <div aria-hidden style={{ position: 'absolute', bottom: 8, left: 8, fontSize: '0.75rem', opacity: 0.5 }}>{motif}</div>
+                          <div aria-hidden style={{ position: 'absolute', bottom: 8, right: 8, fontSize: '0.75rem', opacity: 0.5 }}>{motif}</div>
                         </div>
-                      </div>
+                      </motion.div>
 
-                      {/* Card Back (Content side - what shows when flipped) */}
-                      <div
-                        className="card-face card-back"
+                      {/* Card front — the content revealed on flip (letter/number + icon/word). */}
+                      <motion.div
+                        className="card-face card-content"
                         style={{
-                          borderColor: card.isMatched ? success : idleBorder,
-                          background: card.isMatched ? matchedSurface : faceUpSurface,
-                          boxShadow: card.isMatched ? matchedShadow : restingShadow,
+                          transform: reduce ? 'none' : 'rotateY(180deg)',
+                          borderColor: isMatched ? success : isWrong ? errorColor : idleBorder,
+                          background: isMatched ? matchedSurface : isWrong ? wrongSurface : faceUpSurface,
+                          boxShadow: isMatched ? matchedShadow : isWrong ? wrongShadow : restingShadow,
                           padding: '4px'
                         }}
+                        animate={reduce ? { opacity: isFaceUp ? 1 : 0 } : undefined}
+                        transition={reduce ? { duration: 0.25, ease: 'easeInOut' } : undefined}
                       >
                         {/* Primary content */}
                         <div style={{
                           fontSize: config.gameType === 'numbers' ? 'clamp(1.4rem, 3vw, 2.2rem)' : 'clamp(1.6rem, 3.5vw, 2.2rem)',
                           fontWeight: 700,
-                          color: card.isMatched ? successEdge : accent,
+                          color: isMatched ? successEdge : accent,
                           marginBottom: displayData.icon ? '2px' : '0px',
                           lineHeight: 0.9
                         }}>
                           {displayData.primary}
                         </div>
-                        
+
                         {/* Optional icon */}
                         {displayData.icon && (
-                          <div style={{ 
-                            fontSize: 'clamp(1rem, 2.5vw, 1.6rem)', 
+                          <div style={{
+                            fontSize: 'clamp(1rem, 2.5vw, 1.6rem)',
                             lineHeight: 1,
                             marginBottom: '3px'
                           }}>
@@ -705,7 +762,7 @@ const UnifiedMemoryGame: React.FC<UnifiedMemoryGameProps> = ({ config }) => {
                           <div
                             style={{
                               fontSize: 'clamp(0.7rem, 1.8vw, 1rem)',
-                              color: card.isMatched ? successEdge : accent,
+                              color: isMatched ? successEdge : accent,
                               fontWeight: 600,
                               textAlign: 'center',
                               lineHeight: 1
@@ -715,8 +772,8 @@ const UnifiedMemoryGame: React.FC<UnifiedMemoryGameProps> = ({ config }) => {
                             {displayData.secondary}
                           </div>
                         )}
-                      </div>
-                    </div>
+                      </motion.div>
+                    </motion.div>
                   </div>
                 </motion.div>
               )

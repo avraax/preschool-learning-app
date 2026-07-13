@@ -16,10 +16,6 @@ export const useViewportHeight = () => {
       
       // Also set a full viewport height property
       document.documentElement.style.setProperty('--full-vh', `${window.innerHeight}px`)
-      
-      // Log for debugging on iOS
-      if (window.navigator.userAgent.match(/iPad|iPhone|iPod/)) {
-      }
     }
 
     // Set initial height

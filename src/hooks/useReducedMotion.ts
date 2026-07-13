@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { devReduceMotion } from '../utils/devHarness'
 
 // Reusable `prefers-reduced-motion: reduce` hook (Theme Worlds PRD §7).
 // Generalizes the inline check already used in CelebrationEffect so the scene/parallax/
@@ -10,7 +11,7 @@ import { useEffect, useState } from 'react'
 const QUERY = '(prefers-reduced-motion: reduce)'
 
 const readInitial = (): boolean =>
-  typeof window !== 'undefined' && !!window.matchMedia?.(QUERY)?.matches
+  devReduceMotion() || (typeof window !== 'undefined' && !!window.matchMedia?.(QUERY)?.matches)
 
 export function useReducedMotion(): boolean {
   const [reduced, setReduced] = useState<boolean>(readInitial)

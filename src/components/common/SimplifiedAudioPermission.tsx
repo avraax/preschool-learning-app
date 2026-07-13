@@ -5,10 +5,14 @@ import { useTheme } from '@mui/material/styles'
 import { VolumeUp, TouchApp, Close } from '@mui/icons-material'
 import { useSimplifiedAudio } from '../../contexts/SimplifiedAudioContext'
 import { audioDebugSession } from '../../utils/remoteConsole'
+import { devNoGate } from '../../utils/devHarness'
 
 const SimplifiedAudioPermission: React.FC = () => {
   const theme = useTheme()
   const { state, initializeAudio, hidePrompt } = useSimplifiedAudio()
+
+  // DEV screenshot harness: ?nogate=1 suppresses the audio welcome gate so states are capturable.
+  if (devNoGate()) return null
 
   const handleEnableAudio = async () => {
     audioDebugSession.addLog('SIMPLIFIED_PERMISSION_CLICKED', {

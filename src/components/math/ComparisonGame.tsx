@@ -1,20 +1,25 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { Box, Typography, Paper, Grid } from '@mui/material'
+import { Box, Typography } from '@mui/material'
+import { useTheme } from '@mui/material/styles'
 import { motion } from 'framer-motion'
 import GameShell from '../common/GameShell'
 import AnswerTile, { type AnswerTileState } from '../common/AnswerTile'
+import PromptStage from '../common/PromptStage'
 import SymbolTile from '../common/SymbolTile'
 import RoundResultScreen from '../common/RoundResultScreen'
 import type { GuideReaction } from '../common/ThemeMascot'
 import { useCelebration } from '../common/CelebrationEffect'
 import { MathScoreChip } from '../common/ScoreChip'
-import { categoryThemes } from '../../config/categoryThemes'
+import { getCategoryTheme } from '../../config/categoryThemes'
 import { MathRepeatButton } from '../common/RepeatButton'
 import { useGameState } from '../../hooks/useGameState'
 import { useRound } from '../../hooks/useRound'
 import { progressStore, type RoundOutcome } from '../../services/progressStore'
 import { sfx } from '../../services/sfxClient'
 import { isIOS } from '../../utils/deviceDetection'
+import { useDifficulty } from '../../hooks/useDifficulty'
+import { devFx } from '../../utils/devHarness'
+import { BOUNCE, DWELL_CORRECT, motionOr } from '../../theme/motion'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
 import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 // Simplified audio system
@@ -25,6 +30,12 @@ import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 // springs open toward the chosen (bigger) number — "the mouth eats the bigger one" — reinforcing
 // the symbol. Removed (vs the old game): the equality case, the largest/smallest/equal variance,
 // and the long wrong-answer explanation path. No punishment: a wrong tap → gentle SFX + retry.
+//
+// UI/UX Overhaul PRD §6B: the krokodille is the star (enlarged) and lunges + its mouth chomps
+// toward the bigger side (motion.BOUNCE + "chomp" SFX + mascot cheer) on a correct tap. The whole
+// arena is raised into a top-anchored layout (PromptStage reused directly, not via GameShell's
+// fixed slot — there's no separate "answer grid" here, the count-cards ARE the tappable answers)
+// so the old dead gap above the container is gone.
 
 const OBJECT_TYPES = [
   { name: 'æble', emoji: '🍎', danishName: 'æbler' },
@@ -61,6 +72,8 @@ const COMPARE_PROMPT = 'Tryk på det største tal.'
 
 const ComparisonGame: React.FC = () => {
   const reduce = useReducedMotion()
+  const muiTheme = useTheme()
+  const category = getCategoryTheme('math')
   const [currentProblem, setCurrentProblem] = useState<ComparisonProblem | null>(null)
   // Most-recently tapped side + whether it was correct (drives the side AnswerTile glow/shake).
   const [chosen, setChosen] = useState<{ side: Side; correct: boolean } | null>(null)
@@ -82,7 +95,7 @@ const ComparisonGame: React.FC = () => {
   const hasInteractedRef = useRef(false)
 
   // Centralized game state management
-  const { score, incrementScore, resetScore, isScoreNarrating, handleScoreClick } = useGameState()
+  const { incrementScore, resetScore, isScoreNarrating, handleScoreClick } = useGameState()
 
   // Bounded round + reward flow (Foundation §3). 8 questions, 3★ = no mistakes, 2★ ≤ 2.
   const round = useRound({ length: 8, starThresholds: { three: 0, two: 2 } })
@@ -158,18 +171,42 @@ const ComparisonGame: React.FC = () => {
   // `voice=false` renders the board without voicing the prompt (used for the first problem, which
   // is voiced after the welcome instead).
   const generateNewProblem = (voice = true) => {
-    // Two DIFFERENT numbers 1–20 (no equality — one clear rule: tap the bigger).
-    const leftNum = Math.floor(Math.random() * 20) + 1
-    let rightNum = Math.floor(Math.random() * 20) + 1
-    while (rightNum === leftNum) {
-      rightNum = Math.floor(Math.random() * 20) + 1
+    // Static, manual difficulty (UI/UX Overhaul PRD §5.7/Appendix A) — read fresh per problem.
+    // 'normal' reproduces today's exact range/rule unchanged: two different numbers 1–20 (no
+    // equality — one clear rule: tap the bigger).
+    const level = progressStore.difficultyFor('math')
+    const randInt = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min
+
+    let leftNum: number
+    let rightNum: number
+
+    if (level === 'let') {
+      // Let: large gaps (≥8) so the bigger number is obvious.
+      leftNum = randInt(1, 20)
+      const farChoices: number[] = []
+      for (let n = 1; n <= 20; n++) if (Math.abs(n - leftNum) >= 8) farChoices.push(n)
+      rightNum = farChoices.length ? farChoices[randInt(0, farChoices.length - 1)] : (leftNum > 10 ? 1 : 20)
+    } else if (level === 'svaer') {
+      // Svær: close pairs (±1–2).
+      leftNum = randInt(1, 20)
+      const gap = randInt(1, 2)
+      const sign = randInt(0, 1) === 0 ? -1 : 1
+      const candidate = leftNum + sign * gap
+      rightNum = candidate >= 1 && candidate <= 20 ? candidate : leftNum - sign * gap
+    } else {
+      // Normal (TODAY, unchanged).
+      leftNum = randInt(1, 20)
+      rightNum = randInt(1, 20)
+      while (rightNum === leftNum) {
+        rightNum = randInt(1, 20)
+      }
     }
 
     // Distinct object types for visual clarity.
-    const leftObjectType = OBJECT_TYPES[Math.floor(Math.random() * OBJECT_TYPES.length)]
-    let rightObjectType = OBJECT_TYPES[Math.floor(Math.random() * OBJECT_TYPES.length)]
+    const leftObjectType = OBJECT_TYPES[randInt(0, OBJECT_TYPES.length - 1)]
+    let rightObjectType = OBJECT_TYPES[randInt(0, OBJECT_TYPES.length - 1)]
     while (rightObjectType === leftObjectType) {
-      rightObjectType = OBJECT_TYPES[Math.floor(Math.random() * OBJECT_TYPES.length)]
+      rightObjectType = OBJECT_TYPES[randInt(0, OBJECT_TYPES.length - 1)]
     }
 
     setCurrentProblem({
@@ -247,9 +284,10 @@ const ComparisonGame: React.FC = () => {
 
     if (isCorrect) {
       setLocked(true)
-      setMouthOpen(true) // krokodille opens toward the bigger number
+      setMouthOpen(true) // krokodille chomps toward the bigger number
       incrementScore()
       celebrateTier('micro')
+      sfx.play('chomp')
 
       setTimeout(() => {
         stopCelebration()
@@ -262,7 +300,7 @@ const ComparisonGame: React.FC = () => {
         } else {
           generateNewProblem()
         }
-      }, isIOS() ? 1500 : 2000)
+      }, DWELL_CORRECT()) // unified celebration/advance dwell
     } else {
       // Gentle, non-punishing: break the first-try flag, soft SFX, the mouth stays shut, retry.
       firstAttemptRef.current = false
@@ -282,8 +320,23 @@ const ComparisonGame: React.FC = () => {
     }
   }
 
+  // DEV screenshot harness (?fx=correct|wrong): the forced chomp/tile state is DERIVED (no
+  // setState-in-effect) so it's persistent and capturable — mirrors UnifiedQuizGame's
+  // `tileStateFor`. No-op in production.
+  const forcedFx = devFx()
+  const biggerSideForced: Side | null = currentProblem
+    ? (currentProblem.leftNumber > currentProblem.rightNumber ? 'left' : 'right')
+    : null
+  const effectiveChosen: { side: Side; correct: boolean } | null =
+    forcedFx === 'correct' && biggerSideForced
+      ? { side: biggerSideForced, correct: true }
+      : forcedFx === 'wrong' && biggerSideForced
+        ? { side: (biggerSideForced === 'left' ? 'right' : 'left') as Side, correct: false }
+        : chosen
+  const effectiveMouthOpen = mouthOpen || (forcedFx === 'correct' && !!currentProblem)
+
   const sideState = (side: Side): AnswerTileState =>
-    chosen && chosen.side === side ? (chosen.correct ? 'correct' : 'wrong') : 'idle'
+    effectiveChosen && effectiveChosen.side === side ? (effectiveChosen.correct ? 'correct' : 'wrong') : 'idle'
 
   // The comparison symbol: > if left is bigger, < if right is bigger.
   const mouthOp: '>' | '<' | null = currentProblem
@@ -298,7 +351,7 @@ const ComparisonGame: React.FC = () => {
       <Box sx={{ minHeight: { xs: 180, md: 230 }, '@media (orientation: landscape)': { minHeight: { xs: 120, md: 150 } }, [PHONE_LANDSCAPE]: { minHeight: 96 } }}>
         <AnswerTile
           onClick={() => handleSideClick(side)}
-          accent={categoryThemes.math.accentColor}
+          accent={category.accentColor}
           state={sideState(side)}
           disabled={locked}
         >
@@ -334,7 +387,7 @@ const ComparisonGame: React.FC = () => {
               sx={{
                 fontSize: { xs: '3rem', md: '4rem' },
                 fontWeight: 700,
-                color: categoryThemes.math.accentColor,
+                color: category.accentColor,
                 lineHeight: 1,
                 '@media (orientation: landscape)': { fontSize: { xs: '2rem', md: '2.8rem' } },
                 [PHONE_LANDSCAPE]: { fontSize: '1.6rem' }
@@ -351,13 +404,24 @@ const ComparisonGame: React.FC = () => {
     )
   }
 
+  // Live difficulty: regenerate the current problem when the level changes in the adult menu
+  // (no refresh). Skips the result screen + the initial mount.
+  const difficultyLevel = useDifficulty('math')
+  const prevDifficultyRef = useRef(difficultyLevel)
+  useEffect(() => {
+    if (prevDifficultyRef.current === difficultyLevel) return
+    prevDifficultyRef.current = difficultyLevel
+    if (roundOutcome || !currentProblem) return
+    generateNewProblem()
+  }, [difficultyLevel]) // eslint-disable-line react-hooks/exhaustive-deps
+
   return (
     <GameShell
       categoryId="math"
       title="Sammenlign Tal"
       backRoute="/math"
       guideReaction={guideReaction}
-      score={<MathScoreChip score={score} disabled={isScoreNarrating} onClick={handleScoreClick} />}
+      score={<MathScoreChip answered={round.state.index} total={round.length} disabled={isScoreNarrating} onClick={handleScoreClick} />}
       celebration={{ show: showCelebration, intensity: celebrationIntensity, duration: celebrationDuration, onComplete: stopCelebration }}
     >
       {roundOutcome ? (
@@ -368,80 +432,105 @@ const ComparisonGame: React.FC = () => {
           onReplay={handleReplay}
         />
       ) : currentProblem ? (
-        <Box sx={{
-          flex: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          alignItems: 'center',
-          minHeight: 0,
-        }}>
+        <Box
+          sx={{
+            flex: 1,
+            width: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            minHeight: 0,
+            // Top-anchored layout (§6B): the arena sits right under the title instead of vertically
+            // centred with a dead gap above it — PromptStage still supplies the frame/charge-in/
+            // idle float, it's just placed here directly (there's no separate answer grid; the
+            // count-cards below ARE the tappable answers).
+            justifyContent: 'flex-start',
+            gap: { xs: 0.75, md: 1.25 },
+            [PHONE_LANDSCAPE]: { gap: 0.5 },
+          }}
+        >
           {/* Prompt */}
           <Typography
             sx={{
+              flex: '0 0 auto',
               fontFamily: '"Comic Sans MS", "Comic Neue", sans-serif',
               fontWeight: 700,
               fontSize: { xs: '1.05rem', md: '1.35rem' },
-              color: (theme) => theme.scene.dark ? '#FFFFFF' : 'primary.main',
-              textShadow: (theme) => theme.scene.dark ? '0 2px 8px rgba(0,0,0,0.5)' : 'none',
-              mb: { xs: 1.5, md: 2.5 },
-              '@media (orientation: landscape)': { fontSize: { xs: '0.95rem', md: '1.15rem' }, mb: { xs: 0.5, md: 1 } },
+              color: muiTheme.scene.dark ? '#FFFFFF' : category.accentColor,
+              textShadow: muiTheme.scene.dark ? '0 2px 8px rgba(0,0,0,0.5)' : 'none',
+              textAlign: 'center',
+              [PHONE_LANDSCAPE]: { fontSize: '0.85rem' },
             }}
           >
             Tryk på det største tal 👆
           </Typography>
 
-          <Paper
-            elevation={8}
-            sx={{
-              maxWidth: 820,
-              width: '100%',
-              p: { xs: 2, sm: 3, md: 3.5 },
-              borderRadius: 4,
-              border: '2px solid',
-              borderColor: 'primary.200',
-              '@media (orientation: landscape)': { maxWidth: '92%', p: { xs: 1.5, sm: 2, md: 2.5 } },
-              [PHONE_LANDSCAPE]: { p: 1 }
-            }}
-          >
-            <Grid container spacing={{ xs: 1, md: 2 }} sx={{ alignItems: 'center' }}>
-              <Grid size={{ xs: 5 }}>{renderSide('left')}</Grid>
+          <Box sx={{ flex: '1 1 auto', minHeight: 0, width: '100%', maxWidth: 860, display: 'flex' }}>
+            <PromptStage
+              accent={category.accentColor}
+              chargeKey={`${currentProblem.leftNumber}-${currentProblem.rightNumber}-${round.state.index}`}
+              repeat={<MathRepeatButton onClick={repeatProblem} disabled={false} />}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: { xs: 1, md: 2.5 }, width: '100%' }}>
+                <Box sx={{ flex: '1 1 0', minWidth: 0 }}>{renderSide('left')}</Box>
 
-              {/* Krokodille mouth: opens toward the bigger number after a correct tap. */}
-              <Grid size={{ xs: 2 }}>
-                <Box sx={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 0.5,
-                }}>
-                  <Typography component="span" sx={{ fontSize: { xs: '1.8rem', md: '2.6rem' }, lineHeight: 1, [PHONE_LANDSCAPE]: { fontSize: '1.3rem' } }}>
+                {/* Krokodille: the star. It lunges + its mouth chomps toward the bigger side on a
+                    correct tap (motion.BOUNCE). Reduced motion: instant — SFX + mascot still fire. */}
+                <Box sx={{ flex: '0 0 auto', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: { xs: 0.25, md: 0.5 } }}>
+                  <Box
+                    component={motion.div}
+                    animate={
+                      effectiveMouthOpen && mouthOp
+                        ? { x: mouthOp === '>' ? [0, -24, 0] : [0, 24, 0], scale: [1, 1.25, 1] }
+                        : { x: 0, scale: 1 }
+                    }
+                    transition={motionOr(BOUNCE, reduce)}
+                    sx={{
+                      fontSize: { xs: '3.6rem', md: '5.5rem' },
+                      lineHeight: 1,
+                      // The iPad verification viewport is landscape — this override is what's
+                      // actually seen there, so the krokodille is sized generously here too.
+                      '@media (orientation: landscape)': { fontSize: { xs: '3.4rem', md: '6.4rem' } },
+                      [PHONE_LANDSCAPE]: { fontSize: '2.3rem' },
+                    }}
+                  >
                     🐊
-                  </Typography>
-                  <Box sx={{ height: { xs: 44, md: 64 }, display: 'flex', alignItems: 'center', justifyContent: 'center', [PHONE_LANDSCAPE]: { height: 32 } }}>
-                    {mouthOpen && mouthOp && (
+                  </Box>
+                  <Box
+                    sx={{
+                      height: { xs: 52, md: 76 },
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      '@media (orientation: landscape)': { height: { xs: 48, md: 92 } },
+                      [PHONE_LANDSCAPE]: { height: 34 },
+                    }}
+                  >
+                    {effectiveMouthOpen && mouthOp && (
                       <Box
                         component={motion.div}
                         initial={reduce ? false : { scale: 0, rotate: mouthOp === '>' ? 30 : -30 }}
                         animate={{ scale: 1, rotate: 0 }}
-                        transition={reduce ? { duration: 0 } : { type: 'spring', stiffness: 300, damping: 12 }}
+                        transition={motionOr(BOUNCE, reduce)}
                       >
-                        <SymbolTile op={mouthOp} sx={{ width: { xs: 44, md: 64 }, height: { xs: 44, md: 64 } }} />
+                        <SymbolTile
+                          op={mouthOp}
+                          sx={{
+                            width: { xs: 52, md: 76 },
+                            height: { xs: 52, md: 76 },
+                            '@media (orientation: landscape)': { width: { xs: 48, md: 92 }, height: { xs: 48, md: 92 } },
+                            [PHONE_LANDSCAPE]: { width: 32, height: 32 },
+                          }}
+                        />
                       </Box>
                     )}
                   </Box>
                 </Box>
-              </Grid>
 
-              <Grid size={{ xs: 5 }}>{renderSide('right')}</Grid>
-            </Grid>
-
-            {/* Repeat button. */}
-            <Box sx={{ display: 'flex', justifyContent: 'center', mt: { xs: 2, md: 3 }, '@media (orientation: landscape)': { mt: { xs: 1, md: 1.5 } }, [PHONE_LANDSCAPE]: { mt: 0.5 } }}>
-              <MathRepeatButton onClick={repeatProblem} disabled={false} label="Hør igen" />
-            </Box>
-          </Paper>
+                <Box sx={{ flex: '1 1 0', minWidth: 0 }}>{renderSide('right')}</Box>
+              </Box>
+            </PromptStage>
+          </Box>
         </Box>
       ) : null}
     </GameShell>

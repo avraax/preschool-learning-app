@@ -28,15 +28,36 @@ export interface PerGameStats {
   lifetimeCorrect: number
 }
 
+// Static, manual difficulty (UI/UX Overhaul PRD §5.7) — NO adaptivity. `normal` == today's tuning.
+export type DifficultyLevel = 'let' | 'normal' | 'svaer'
+export type SectionId = 'alphabet' | 'math' | 'colors' | 'english' | 'ordleg'
+
+export interface DifficultySetting {
+  global: DifficultyLevel
+  perSection?: Partial<Record<SectionId, DifficultyLevel>>
+}
+
 export interface ProgressSettings {
   sfxEnabled: boolean
-  musicEnabled: boolean // reserved; no music in v1
+  musicEnabled: boolean
+  // Marker: whether the "music on by default" flip has been applied to this profile. Lets us turn
+  // music on once for profiles saved before the default changed, while still respecting a later
+  // explicit user "off".
+  musicDefaultOn?: boolean
+  difficulty: DifficultySetting
 }
+
+const DIFFICULTY_LEVELS: DifficultyLevel[] = ['let', 'normal', 'svaer']
+const isLevel = (v: unknown): v is DifficultyLevel =>
+  typeof v === 'string' && (DIFFICULTY_LEVELS as string[]).includes(v)
 
 export interface ProgressState {
   version: typeof SCHEMA_VERSION
   stickers: {
     collected: Record<string, { count: number; firstAt: number }>
+    // Ids first collected but not yet seen in the album — drive the "nyt!" badge. Cleared when
+    // the album is opened (markStickersSeen).
+    newIds: string[]
   }
   perGame: Record<string, PerGameStats>
   totals: {
@@ -93,10 +114,10 @@ const emptyGameStats = (): PerGameStats => ({
 
 const defaultState = (): ProgressState => ({
   version: SCHEMA_VERSION,
-  stickers: { collected: {} },
+  stickers: { collected: {}, newIds: [] },
   perGame: {},
   totals: { totalStars: 0, totalStickers: 0 },
-  settings: { sfxEnabled: true, musicEnabled: false },
+  settings: { sfxEnabled: true, musicEnabled: true, musicDefaultOn: true, difficulty: { global: 'normal' } },
 })
 
 const pick = <T>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)]
@@ -118,6 +139,11 @@ const normalize = (raw: unknown): ProgressState => {
         }
       }
     }
+    if (Array.isArray(r.stickers.newIds)) {
+      state.stickers.newIds = r.stickers.newIds.filter(
+        (id): id is string => typeof id === 'string' && !!state.stickers.collected[id],
+      )
+    }
   }
   if (r.perGame && typeof r.perGame === 'object') {
     for (const [id, v] of Object.entries(r.perGame)) {
@@ -132,7 +158,22 @@ const normalize = (raw: unknown): ProgressState => {
   }
   if (r.settings && typeof r.settings === 'object') {
     state.settings.sfxEnabled = r.settings.sfxEnabled !== false
-    state.settings.musicEnabled = r.settings.musicEnabled === true
+    // Music defaults ON. Profiles saved before this flip (no `musicDefaultOn` marker) get it
+    // turned on once; profiles that already carry the marker keep the user's explicit choice.
+    state.settings.musicEnabled =
+      r.settings.musicDefaultOn === true ? r.settings.musicEnabled !== false : true
+    state.settings.musicDefaultOn = true
+    const d = (r.settings as Partial<ProgressSettings>).difficulty
+    if (d && typeof d === 'object') {
+      state.settings.difficulty.global = isLevel(d.global) ? d.global : 'normal'
+      if (d.perSection && typeof d.perSection === 'object') {
+        const per: Partial<Record<SectionId, DifficultyLevel>> = {}
+        for (const [k, v] of Object.entries(d.perSection)) {
+          if (isLevel(v)) per[k as SectionId] = v
+        }
+        if (Object.keys(per).length) state.settings.difficulty.perSection = per
+      }
+    }
   }
   // Recompute derived totals defensively so the album count always matches reality.
   state.totals.totalStickers = Object.keys(state.stickers.collected).length
@@ -188,6 +229,26 @@ class ProgressStore {
     return this.state.perGame[gameId] ?? emptyGameStats()
   }
 
+  // Effective (static) difficulty for a section: per-section override falls back to global.
+  difficultyFor(section: SectionId): DifficultyLevel {
+    const d = this.state.settings.difficulty
+    return d.perSection?.[section] ?? d.global
+  }
+
+  // Set the global level and/or a per-section override (pass `null` value to clear an override).
+  setDifficulty(next: { global?: DifficultyLevel; section?: SectionId; level?: DifficultyLevel | null }): void {
+    const draft = structuredCloneState(this.state)
+    const d = draft.settings.difficulty
+    if (next.global) d.global = next.global
+    if (next.section) {
+      const per = { ...(d.perSection ?? {}) }
+      if (next.level == null) delete per[next.section]
+      else per[next.section] = next.level
+      d.perSection = Object.keys(per).length ? per : undefined
+    }
+    this.commit(draft)
+  }
+
   subscribe(listener: Listener): () => void {
     this.listeners.add(listener)
     return () => {
@@ -215,6 +276,8 @@ class ProgressStore {
       draft.stickers.collected[sticker.id] = { ...existing, count: existing.count + 1 }
     } else {
       draft.stickers.collected[sticker.id] = { count: 1, firstAt: Date.now() }
+      // First-ever collect → flag as "new" until the album is opened.
+      if (!draft.stickers.newIds.includes(sticker.id)) draft.stickers.newIds.push(sticker.id)
     }
     draft.totals.totalStickers = Object.keys(draft.stickers.collected).length
 
@@ -311,6 +374,15 @@ class ProgressStore {
     }
   }
 
+  // Clear the "new sticker" flags (called when the album is opened, so the "nyt!" badges
+  // don't linger on a second visit).
+  markStickersSeen(): void {
+    if (this.state.stickers.newIds.length === 0) return
+    const draft = structuredCloneState(this.state)
+    draft.stickers.newIds = []
+    this.commit(draft)
+  }
+
   // ----- settings + reset -----
   setSetting<K extends keyof ProgressSettings>(key: K, value: ProgressSettings[K]): void {
     const draft = structuredCloneState(this.state)
@@ -327,10 +399,18 @@ class ProgressStore {
 function structuredCloneState(s: ProgressState): ProgressState {
   return {
     version: SCHEMA_VERSION,
-    stickers: { collected: { ...s.stickers.collected } },
+    stickers: { collected: { ...s.stickers.collected }, newIds: [...s.stickers.newIds] },
     perGame: { ...s.perGame },
     totals: { ...s.totals },
-    settings: { ...s.settings },
+    settings: {
+      ...s.settings,
+      difficulty: {
+        global: s.settings.difficulty.global,
+        ...(s.settings.difficulty.perSection
+          ? { perSection: { ...s.settings.difficulty.perSection } }
+          : {}),
+      },
+    },
   }
 }
 
@@ -340,6 +420,11 @@ function setSummary(setId: string): { id: string; title: string; emoji: string }
 }
 
 export const progressStore = new ProgressStore()
+
+// DEV: expose for the headless verification harness (e.g. asserting live difficulty changes).
+if (import.meta.env.DEV && typeof window !== 'undefined') {
+  ;(window as unknown as { __progress?: ProgressStore }).__progress = progressStore
+}
 
 // Convenience re-exports used around the album UI.
 export { allStickers, totalStickerCount }

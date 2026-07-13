@@ -103,7 +103,7 @@ const send = (method, params = {}, sid = sessionId) => {
   return new Promise((r) => { pending.set(i, r); ws.send(JSON.stringify(p)) })
 }
 const evaluate = async (expression) => {
-  const r = await send('Runtime.evaluate', { expression, returnByValue: true })
+  const r = await send('Runtime.evaluate', { expression, returnByValue: true, awaitPromise: true })
   return r.result?.result?.value
 }
 async function waitFor(expr, label) {
@@ -175,7 +175,9 @@ if (ev) console.log('eval:', await evaluate(ev))
 
 if (OUT) {
   const clipSel = opt('--clip')
-  let params = { format: 'png' }
+  // JPEG when the output path is .jpg/.jpeg (matches docs/ui-reference baseline); else PNG.
+  const isJpeg = /\.jpe?g$/i.test(OUT)
+  let params = isJpeg ? { format: 'jpeg', quality: parseInt(opt('--quality', '85'), 10) } : { format: 'png' }
   if (clipSel) {
     const rect = await evaluate(`(()=>{const e=document.querySelector(${JSON.stringify(clipSel)});if(!e)return null;const r=e.getBoundingClientRect();return JSON.stringify({x:r.left,y:r.top,w:r.width,h:r.height})})()`)
     if (rect) {

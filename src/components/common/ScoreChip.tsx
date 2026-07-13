@@ -1,192 +1,120 @@
 import React from 'react'
-import { Chip } from '@mui/material'
-import { Star } from '@mui/icons-material'
-import { Award } from 'lucide-react'
+import { Box } from '@mui/material'
 import { getCategoryTheme } from '../../config/categoryThemes'
+import { hexToRgba, relLuminance } from '../../theme/tokens/helpers'
 
-/**
- * Props for the ScoreChip component
- */
+// Unified round-progress chip (UI/UX Overhaul PRD §5.4). ONE design across every section: an
+// accent pill with a pip ring showing `answered/total` (round questions, Farvejagt boards, etc.)
+// plus an optional ⭐ record readout. The old `format="standard|stars|progress"` split is gone.
+//
+// - `total > 0` → pip ring (filled = answered). This is the standard bounded-round display.
+// - `customLabel` → free text (e.g. Memory "Par: X/P"), still inside the same pill.
+// - `value` → a plain number fallback for endless/exploration screens with no fixed total.
+// Content colour flips to dark on light accents (gold/orange) so it's always legible on the pill.
+
+type CategoryId = 'alphabet' | 'math' | 'colors' | 'english' | 'ordleg'
+
 interface ScoreChipProps {
-  /** Current score value */
-  score: number
-  /** Category theme to use for styling */
-  category: 'alphabet' | 'math' | 'colors' | 'english' | 'ordleg'
-  /** Display format for the score */
-  format?: 'standard' | 'stars' | 'progress'
-  /** Target value for progress format (e.g., "5/10") */
-  target?: number
-  /** Whether the chip should be disabled during narration */
-  disabled?: boolean
-  /** Click handler for score narration */
-  onClick?: () => void
-  /** Custom label override */
+  category: CategoryId
+  /** Filled pips (questions answered / boards cleared this round). */
+  answered?: number
+  /** Total pips (round length). Renders the pip ring when > 0. */
+  total?: number
+  /** Best-stars record shown as ⭐×N. Hidden when falsy. */
+  record?: number
+  /** Plain numeric fallback when there is no fixed total (endless/exploration). */
+  value?: number
+  /** Full label override (kept inside the pill), e.g. Memory "Par: X/P". */
   customLabel?: string
+  disabled?: boolean
+  onClick?: () => void
 }
 
-/**
- * Centralized score display component with category-based theming
- * 
- * Provides consistent styling, theming, and behavior across all games that display scores.
- * Automatically handles disabled states during narration and applies appropriate category colors.
- * 
- * @example
- * ```typescript
- * // Basic usage
- * <ScoreChip score={5} category="math" onClick={handleScoreClick} />
- * 
- * // With custom format and disabled state
- * <ScoreChip 
- *   score={3}
- *   target={10}
- *   category="colors"
- *   format="progress"
- *   disabled={isNarrating}
- *   onClick={handleScoreClick}
- * />
- * ```
- */
 export const ScoreChip: React.FC<ScoreChipProps> = ({
-  score,
   category,
-  format = 'standard',
-  target,
+  answered = 0,
+  total = 0,
+  record = 0,
+  value,
+  customLabel,
   disabled = false,
   onClick,
-  customLabel
 }) => {
-  // Get theme colors based on category
   const theme = getCategoryTheme(category)
-  
-  // Generate label based on format
-  const getLabel = () => {
-    if (customLabel) return customLabel
-    
-    switch (format) {
-      case 'stars':
-        return `${score} ⭐`
-      case 'progress':
-        return target ? `${score}/${target}` : `${score}`
-      case 'standard':
-      default:
-        return `Point: ${score}`
-    }
-  }
+  const accent = theme.accentColor
+  // Legible content colour on the accent pill (dark text on light/warm accents, white otherwise).
+  const onAccent = relLuminance(accent) > 0.5 ? '#1F2937' : '#FFFFFF'
+  const pipEmpty = hexToRgba(onAccent, 0.32)
 
-  // Choose appropriate icon based on format
-  const getIcon = () => {
-    switch (format) {
-      case 'stars':
-        return <Award size={20} />
-      case 'progress':
-        return <Star sx={{ fontSize: '20px' }} />
-      case 'standard':
-      default:
-        return <Star sx={{ fontSize: '20px' }} />
-    }
-  }
-
-  // Build styles based on category theme and disabled state
-  const getChipStyles = () => {
-    return {
-      fontSize: '1.2rem',
-      py: 1,
-      fontWeight: 'bold',
-      backgroundColor: disabled ? 'grey.300' : theme.accentColor,
-      color: disabled ? 'grey.600' : 'white',
-      // Soft themed glow so the pill reads as a polished element over any backdrop.
-      boxShadow: disabled ? 0 : `0 4px 16px ${theme.accentColor}59`,
-      cursor: disabled ? 'default' : (onClick ? 'pointer' : 'default'),
-      opacity: disabled ? 0.6 : 1,
-      border: `2px solid ${disabled ? 'transparent' : theme.borderColor}`,
-      transition: 'all 0.3s ease',
-      '&:hover': onClick && !disabled ? {
-        backgroundColor: theme.hoverBorderColor,
-        boxShadow: 4,
-        transform: 'scale(1.05)'
-      } : {},
-      '&:active': onClick && !disabled ? {
-        transform: 'scale(0.98)'
-      } : {}
-    }
-  }
+  const interactive = !!onClick && !disabled
 
   return (
-    <Chip
-      icon={getIcon()}
-      label={getLabel()}
-      disabled={disabled}
-      onClick={onClick}
-      sx={getChipStyles()}
-    />
+    <Box
+      component={onClick ? 'button' : 'div'}
+      type={onClick ? 'button' : undefined}
+      onClick={interactive ? onClick : undefined}
+      aria-label={customLabel ?? (total > 0 ? `${answered} af ${total}` : `Point: ${value ?? 0}`)}
+      sx={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 0.9,
+        minHeight: 40,
+        px: 1.6,
+        py: 0.5,
+        border: `2px solid ${disabled ? 'transparent' : theme.borderColor}`,
+        borderRadius: 999,
+        bgcolor: disabled ? 'grey.300' : accent,
+        color: disabled ? 'grey.600' : onAccent,
+        fontWeight: 800,
+        fontSize: '1.1rem',
+        lineHeight: 1,
+        cursor: interactive ? 'pointer' : 'default',
+        opacity: disabled ? 0.6 : 1,
+        boxShadow: disabled ? 'none' : `0 4px 16px ${hexToRgba(accent, 0.45)}`,
+        WebkitTapHighlightColor: 'transparent',
+        transition: 'transform 0.15s ease, box-shadow 0.2s ease',
+        '&:active': interactive ? { transform: 'scale(0.96)' } : {},
+        '@media (hover: hover) and (pointer: fine)': interactive
+          ? { '&:hover': { transform: 'scale(1.04)' } }
+          : {},
+      }}
+    >
+      {customLabel != null ? (
+        <Box component="span">{customLabel}</Box>
+      ) : total > 0 ? (
+        <Box aria-hidden sx={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
+          {Array.from({ length: total }).map((_, i) => (
+            <Box
+              key={i}
+              sx={{
+                width: 9,
+                height: 9,
+                borderRadius: '50%',
+                bgcolor: i < answered ? onAccent : pipEmpty,
+                transition: 'background-color 0.25s ease',
+              }}
+            />
+          ))}
+        </Box>
+      ) : (
+        <Box component="span">{value ?? 0}</Box>
+      )}
+
+      {record > 0 && (
+        <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: '2px', fontSize: '0.95rem' }}>
+          ⭐{record}
+        </Box>
+      )}
+    </Box>
   )
 }
 
-/**
- * Type-safe props for specific game categories
- */
-export interface AlphabetScoreChipProps extends Omit<ScoreChipProps, 'category'> {
-  category?: 'alphabet'
-}
+// Pre-configured per-category chips (bind the category only — one shared design).
+type CategoryChipProps = Omit<ScoreChipProps, 'category'>
 
-export interface MathScoreChipProps extends Omit<ScoreChipProps, 'category'> {
-  category?: 'math'
-}
-
-export interface ColorScoreChipProps extends Omit<ScoreChipProps, 'category'> {
-  category?: 'colors'
-}
-
-/**
- * Pre-configured score chip for alphabet games
- * Uses stars format and blue theme
- */
-export const AlphabetScoreChip: React.FC<AlphabetScoreChipProps> = (props) => (
-  <ScoreChip {...props} category="alphabet" format="stars" />
-)
-
-/**
- * Pre-configured score chip for math games
- * Uses standard format and purple theme
- */
-export const MathScoreChip: React.FC<MathScoreChipProps> = (props) => (
-  <ScoreChip {...props} category="math" format="standard" />
-)
-
-/**
- * Pre-configured score chip for color games
- * Uses stars format and orange theme
- */
-export const ColorScoreChip: React.FC<ColorScoreChipProps> = (props) => (
-  <ScoreChip {...props} category="colors" format="stars" />
-)
-
-/**
- * Pre-configured score chip for color hunt progress display
- * Uses progress format and orange theme
- */
-export const ColorProgressChip: React.FC<ColorScoreChipProps> = (props) => (
-  <ScoreChip {...props} category="colors" format="progress" />
-)
-
-export interface EnglishScoreChipProps extends Omit<ScoreChipProps, 'category'> {
-  category?: 'english'
-}
-
-export interface OrdlegScoreChipProps extends Omit<ScoreChipProps, 'category'> {
-  category?: 'ordleg'
-}
-
-/**
- * Pre-configured score chip for English games (green theme)
- */
-export const EnglishScoreChip: React.FC<EnglishScoreChipProps> = (props) => (
-  <ScoreChip {...props} category="english" format="stars" />
-)
-
-/**
- * Pre-configured score chip for Ordleg games (teal theme)
- */
-export const OrdlegScoreChip: React.FC<OrdlegScoreChipProps> = (props) => (
-  <ScoreChip {...props} category="ordleg" format="stars" />
-)
+export const AlphabetScoreChip: React.FC<CategoryChipProps> = (props) => <ScoreChip {...props} category="alphabet" />
+export const MathScoreChip: React.FC<CategoryChipProps> = (props) => <ScoreChip {...props} category="math" />
+export const ColorScoreChip: React.FC<CategoryChipProps> = (props) => <ScoreChip {...props} category="colors" />
+export const ColorProgressChip: React.FC<CategoryChipProps> = (props) => <ScoreChip {...props} category="colors" />
+export const EnglishScoreChip: React.FC<CategoryChipProps> = (props) => <ScoreChip {...props} category="english" />
+export const OrdlegScoreChip: React.FC<CategoryChipProps> = (props) => <ScoreChip {...props} category="ordleg" />

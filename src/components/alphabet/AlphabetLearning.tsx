@@ -1,18 +1,19 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { motion } from 'framer-motion'
 import {
   Typography,
   Box,
-  LinearProgress,
-  Card
+  LinearProgress
 } from '@mui/material'
-import { alpha, useTheme } from '@mui/material/styles'
+import { useTheme } from '@mui/material/styles'
 import { categoryThemes } from '../../config/categoryThemes'
 import GameShell from '../common/GameShell'
 import LearningGrid from '../common/LearningGrid'
+import PromptStage from '../common/PromptStage'
 import StickerReveal from '../common/StickerReveal'
 import { useCelebration } from '../common/CelebrationEffect'
 import { progressStore, type StickerAward } from '../../services/progressStore'
+import { hexToRgba } from '../../theme/tokens/helpers'
+import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 // Simplified audio system
 import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 
@@ -33,6 +34,38 @@ const ALPHABET_ACCENT = categoryThemes.alphabet.accentColor
 // Award a sticker every N distinct letters tapped. 29 letters → awards at 9 / 18 / 27 (3 stickers),
 // echoing the 9-per-album-page motif. Tunable constant (mirrors Lær Tal's EXPLORE_MILESTONE = 12).
 const EXPLORE_MILESTONE = 9
+
+// Example word + emoji for the bloomed letter (UI/UX Overhaul PRD §6B). Only letters with a clear,
+// child-friendly Danish word are included — Q, W, X have none, so their bloom shows just the giant
+// letter (the PromptStage hero gracefully supports an emoji-less state).
+const LETTER_WORDS: Record<string, { word: string; emoji: string }> = {
+  A: { word: 'Abe', emoji: '🐒' },
+  B: { word: 'Bil', emoji: '🚗' },
+  C: { word: 'Cykel', emoji: '🚲' },
+  D: { word: 'Drage', emoji: '🐉' },
+  E: { word: 'Elefant', emoji: '🐘' },
+  F: { word: 'Fisk', emoji: '🐟' },
+  G: { word: 'Giraf', emoji: '🦒' },
+  H: { word: 'Hund', emoji: '🐕' },
+  I: { word: 'Is', emoji: '🍦' },
+  J: { word: 'Jul', emoji: '🎄' },
+  K: { word: 'Kat', emoji: '🐱' },
+  L: { word: 'Løve', emoji: '🦁' },
+  M: { word: 'Mus', emoji: '🐭' },
+  N: { word: 'Næsehorn', emoji: '🦏' },
+  O: { word: 'Orm', emoji: '🪱' },
+  P: { word: 'Panda', emoji: '🐼' },
+  R: { word: 'Raket', emoji: '🚀' },
+  S: { word: 'Sol', emoji: '☀️' },
+  T: { word: 'Tog', emoji: '🚂' },
+  U: { word: 'Ugle', emoji: '🦉' },
+  V: { word: 'Vandmelon', emoji: '🍉' },
+  Y: { word: 'Yoghurt', emoji: '🥛' },
+  Z: { word: 'Zebra', emoji: '🦓' },
+  Æ: { word: 'Æble', emoji: '🍎' },
+  Ø: { word: 'Ørn', emoji: '🦅' },
+  Å: { word: 'Ål', emoji: '🐍' },
+}
 
 const AlphabetLearning: React.FC = () => {
   const muiTheme = useTheme()
@@ -194,82 +227,60 @@ const AlphabetLearning: React.FC = () => {
           </Box>
         </Box>
       }
-    >
-        {/* Current Letter Display - Enhanced Visual. Compact in landscape so the grid below keeps
-            the vertical room it needs (avoids the squished sliver-rows the sweep flagged). */}
-        <Box sx={{
-          textAlign: 'center',
-          mb: { xs: 2, md: 3 },
-          flex: '0 0 auto',
-          '@media (orientation: landscape)': { mb: 1 },
-        }}>
-          <motion.div
-            key={currentIndex}
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.3 }}
+      promptStage={
+        // Selected letter blooms large + its example word/emoji when the data has one (§6B).
+        // PromptStage's own chargeKey gives the gentle charge-in on every new selection
+        // (reduced-motion parity built in).
+        <PromptStage accent={ALPHABET_ACCENT} chargeKey={currentIndex}>
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: { xs: 0.5, md: 1 },
+              width: '100%',
+              height: '100%',
+            }}
           >
-            <Card
+            <Typography
               sx={{
-                maxWidth: { xs: 160, md: 200 },
-                mx: 'auto',
-                p: { xs: 2, md: 3 },
-                '@media (orientation: landscape)': { maxWidth: 120, p: 1 },
-                background: 'white',
-                border: '4px solid',
-                borderColor: audio.isPlaying ? categoryThemes.alphabet.accentColor : categoryThemes.alphabet.borderColor,
-                boxShadow: audio.isPlaying
-                  ? `0 0 30px ${alpha(categoryThemes.alphabet.accentColor, 0.4)}, 0 8px 32px ${alpha(categoryThemes.alphabet.accentColor, 0.3)}`
-                  : muiTheme.scene.dark
-                    ? '0 12px 30px rgba(0,0,0,0.45)'
-                    : '0 6px 18px rgba(0,0,0,0.12)',
-                transition: 'all 0.3s ease',
-                position: 'relative',
-                overflow: 'hidden',
-                '&::before': {
-                  content: '""',
-                  position: 'absolute',
-                  top: -2,
-                  left: -2,
-                  right: -2,
-                  bottom: -2,
-                  background: categoryThemes.alphabet.gradient,
-                  borderRadius: 'inherit',
-                  opacity: 0.2,
-                  zIndex: 0
-                },
-                '&::after': {
-                  content: '"⭐"',
-                  position: 'absolute',
-                  top: 8,
-                  right: 8,
-                  fontSize: '1.5rem',
-                  color: categoryThemes.alphabet.accentColor,
-                  animation: audio.isPlaying ? 'pulse 2s infinite' : 'none'
-                }
+                fontWeight: 800,
+                lineHeight: 1,
+                color: muiTheme.scene.dark ? '#FFFFFF' : ALPHABET_ACCENT,
+                textShadow: muiTheme.scene.dark
+                  ? '0 2px 10px rgba(0,0,0,0.5)'
+                  : audio.isPlaying
+                    ? `0 0 24px ${hexToRgba(ALPHABET_ACCENT, 0.45)}`
+                    : 'none',
+                fontSize: 'clamp(2.75rem, 15vh, 6.5rem)',
+                transition: 'text-shadow 0.3s ease',
+                [PHONE_LANDSCAPE]: { fontSize: 'clamp(1.9rem, 22vh, 2.6rem)' },
               }}
             >
-              <Typography
-                variant="h1"
-                sx={{
-                  fontSize: { xs: '3.5rem', md: '4.5rem' },
-                  fontWeight: 700,
-                  color: categoryThemes.alphabet.accentColor,
-                  textAlign: 'center',
-                  lineHeight: 1,
-                  textShadow: `1px 1px 2px ${alpha(categoryThemes.alphabet.accentColor, 0.1)}`,
-                  position: 'relative',
-                  zIndex: 1,
-                  '@media (orientation: landscape)': { fontSize: '2.6rem' },
-                }}
-              >
-                {DANISH_ALPHABET[currentIndex]}
-              </Typography>
-            </Card>
-          </motion.div>
-        </Box>
-
-
+              {DANISH_ALPHABET[currentIndex]}
+            </Typography>
+            {LETTER_WORDS[DANISH_ALPHABET[currentIndex]] && (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 0.75, md: 1.25 } }}>
+                <Typography sx={{ fontSize: 'clamp(1.4rem, 6vh, 2.4rem)', lineHeight: 1, [PHONE_LANDSCAPE]: { fontSize: '1.3rem' } }}>
+                  {LETTER_WORDS[DANISH_ALPHABET[currentIndex]].emoji}
+                </Typography>
+                <Typography
+                  sx={{
+                    fontWeight: 700,
+                    color: muiTheme.scene.dark ? 'rgba(255,255,255,0.85)' : 'text.secondary',
+                    fontSize: 'clamp(1rem, 3.5vh, 1.6rem)',
+                    [PHONE_LANDSCAPE]: { fontSize: '0.9rem' },
+                  }}
+                >
+                  {LETTER_WORDS[DANISH_ALPHABET[currentIndex]].word}
+                </Typography>
+              </Box>
+            )}
+          </Box>
+        </PromptStage>
+      }
+    >
       {/* Alphabet Grid - Using Reusable Component */}
       <LearningGrid
         items={DANISH_ALPHABET}
@@ -296,17 +307,6 @@ const AlphabetLearning: React.FC = () => {
           <StickerReveal award={stickerAward} accent={ALPHABET_ACCENT} size={140} />
         </Box>
       )}
-
-      {/* CSS Animation for pulse effect */}
-      <style>
-        {`
-          @keyframes pulse {
-            0% { transform: scale(1); opacity: 0.7; }
-            50% { transform: scale(1.2); opacity: 1; }
-            100% { transform: scale(1); opacity: 0.7; }
-          }
-        `}
-      </style>
     </GameShell>
   )
 }

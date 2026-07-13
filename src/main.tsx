@@ -18,6 +18,10 @@ import './index.css'
 // Initialize remote console for error logging
 import './utils/remoteConsole'
 
+// DEV screenshot harness: seed Math.random when ?seed=<n> is present (deterministic questions).
+import { installDevSeed } from './utils/devHarness'
+installDevSeed()
+
 // Initialize viewport height before React renders
 const setInitialViewportHeight = () => {
   const vh = window.innerHeight * 0.01

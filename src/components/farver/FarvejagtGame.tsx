@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import { Box, Typography } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { motion } from 'framer-motion'
-import { DndContext, DragEndEvent, DragStartEvent, DragOverlay, closestCenter } from '@dnd-kit/core'
+import { DndContext, DragEndEvent, DragStartEvent, DragOverEvent, DragOverlay, closestCenter } from '@dnd-kit/core'
 import { useDragOnlySensors } from '../common/dnd/useDragOnlySensors'
 import { DraggableItem } from '../common/dnd/DraggableItem'
 import { DroppableZone } from '../common/dnd/DroppableZone'
@@ -15,7 +15,10 @@ import { getCategoryTheme } from '../../config/categoryThemes'
 import { useRound } from '../../hooks/useRound'
 import { progressStore, type RoundOutcome } from '../../services/progressStore'
 import { sfx } from '../../services/sfxClient'
+import { mascotBus } from '../../services/mascotBus'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
+import { useDifficulty } from '../../hooks/useDifficulty'
+import { devFx } from '../../utils/devHarness'
 import GameShell from '../common/GameShell'
 import RoundResultScreen from '../common/RoundResultScreen'
 import { isIOS } from '../../utils/deviceDetection'
@@ -25,7 +28,7 @@ import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 
 // ── Tuning levers (static difficulty — edit here, no adaptive logic) ──────────────────────────
 const ROUND_BOARDS = 5            // boards (questions) per round → RoundResultScreen
-const DISTRACTORS_PER_COLOR = 1   // calmer ~12-item board (was 2)
+const DISTRACTORS_PER_COLOR = 1   // calmer ~12-item board (was 2) — the NORMAL baseline
 const WRONG_DROPS_BEFORE_HINT = 2 // pulse a correct item after this many wrong drops on a board
 const CIRCLE = 180                // target circle diameter (px); ring + pip geometry derive from it
 const FLOURISH_MS = 700           // board-complete ring spin/pop before advancing
@@ -68,7 +71,9 @@ const FarvejagtGame: React.FC = () => {
   // Game state
   const [gameItems, setGameItems] = useState<GameItem[]>([])
   const [totalTarget, setTotalTarget] = useState(0)
-  const [, setActiveId] = useState<string | null>(null)
+  const [activeId, setActiveId] = useState<string | null>(null)   // currently-grabbed item (lift juice)
+  const [overId, setOverId] = useState<string | null>(null)       // is a drag over the target well? (breathe juice)
+  const [burstAt, setBurstAt] = useState<{ slot: number; hex: string } | null>(null) // localized splash burst
   const [targetColor, setTargetColor] = useState<string>('rød')
   const [targetPhrase, setTargetPhrase] = useState<string>('Find alle røde ting')
   const [boardKey, setBoardKey] = useState(0)       // bumped per board → re-triggers scatter-in
@@ -93,6 +98,7 @@ const FarvejagtGame: React.FC = () => {
   const [guideReaction, setGuideReaction] = useState<GuideReaction>(null)
   const guideReactionTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const flourishTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const burstTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const hasInitialized = useRef(false)
   const previousColor = useRef<string>('')
@@ -163,7 +169,7 @@ const FarvejagtGame: React.FC = () => {
     return selected
   }
 
-  // Generate one board's items: 5-6 targets + DISTRACTORS_PER_COLOR per other color (~12 total)
+  // Generate one board's items: 5-6 targets + distractors (count/spread tuned by difficulty).
   const generateGameItems = () => {
     const target = selectRandomTarget()
 
@@ -173,13 +179,22 @@ const FarvejagtGame: React.FC = () => {
       .slice(0, Math.min(6, targetObjects.length))
 
     const distractorObjects: any[] = []
-    const otherColors = Object.keys(DANISH_OBJECTS).filter(color => color !== target.color)
+    const allOtherColors = Object.keys(DANISH_OBJECTS).filter(color => color !== target.color)
 
-    otherColors.forEach(color => {
+    // Static difficulty (progressStore.difficultyFor — no adaptivity). Let: fewer distractor
+    // colors (calmer board). Normal (today, unchanged): every other color, 1 distractor each.
+    // Svær: every other color, 2 distractors each (+distractors, per Appendix A).
+    const difficulty = progressStore.difficultyFor('colors')
+    const distractorColors = difficulty === 'let'
+      ? [...allOtherColors].sort(() => Math.random() - 0.5).slice(0, 3)
+      : allOtherColors
+    const perColor = difficulty === 'svaer' ? DISTRACTORS_PER_COLOR + 1 : DISTRACTORS_PER_COLOR
+
+    distractorColors.forEach(color => {
       const colorObjects = DANISH_OBJECTS[color as keyof typeof DANISH_OBJECTS]
       const selected = colorObjects
         .sort(() => Math.random() - 0.5)
-        .slice(0, DISTRACTORS_PER_COLOR) // calmer board
+        .slice(0, perColor)
       distractorObjects.push(...selected.map(obj => ({ ...obj, colorName: color })))
     })
 
@@ -220,6 +235,7 @@ const FarvejagtGame: React.FC = () => {
     setBoardKey(k => k + 1)
     setBoardFlourish(false)
     setHintItemId(null)
+    setBurstAt(null)
     firstAttemptRef.current = true
     boardWrongRef.current = 0
 
@@ -235,33 +251,6 @@ const FarvejagtGame: React.FC = () => {
       }
     }, delay)
   }
-
-  // Initialize game
-  useEffect(() => {
-    if (hasInitialized.current) return
-    hasInitialized.current = true
-
-    // Instant load: show the playable board immediately (draggable), no waiting on the welcome.
-    revealBoard()
-
-    if (audio.isAudioReady) {
-      playWelcomeThenInstructions()
-    }
-
-    return () => {
-      if (guideReactionTimer.current) clearTimeout(guideReactionTimer.current)
-      if (flourishTimer.current) clearTimeout(flourishTimer.current)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
-  // When audio unlocks after mount, play the welcome (board already visible).
-  useEffect(() => {
-    if (audio.isAudioReady && !welcomeTriggered.current) {
-      playWelcomeThenInstructions()
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [audio.isAudioReady])
 
   // Instant load: render the playable board RIGHT AWAY without voicing instructions yet. Idempotent.
   const revealBoard = () => {
@@ -290,6 +279,42 @@ const FarvejagtGame: React.FC = () => {
     }
   }
 
+  // Initialize game
+  useEffect(() => {
+    if (hasInitialized.current) return
+    hasInitialized.current = true
+
+    // Instant load: show the playable board immediately (draggable), no waiting on the welcome.
+    revealBoard()
+
+    if (audio.isAudioReady) {
+      playWelcomeThenInstructions()
+    }
+
+    return () => {
+      if (guideReactionTimer.current) clearTimeout(guideReactionTimer.current)
+      if (flourishTimer.current) clearTimeout(flourishTimer.current)
+      if (burstTimer.current) clearTimeout(burstTimer.current)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // When audio unlocks after mount, play the welcome (board already visible).
+  useEffect(() => {
+    if (audio.isAudioReady && !welcomeTriggered.current) {
+      playWelcomeThenInstructions()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [audio.isAudioReady])
+
+  // DEV screenshot harness (?fx=correct|wrong|hint): a PURE render-time derivation (no setState in
+  // an effect — mirrors UnifiedQuizGame's `tileStateFor`). The effect below only notifies the
+  // mascot (an external system). No-op in production (devFx() is DEV-only).
+  const forcedFx = devFx()
+  useEffect(() => {
+    if (forcedFx === 'hint') mascotBus.emit('hint')
+  }, [forcedFx])
+
   const finishRound = (firstTryCorrect: number, longestStreak: number) => {
     const outcome = progressStore.recordRoundResult(
       'colors.farvejagt',
@@ -310,6 +335,7 @@ const FarvejagtGame: React.FC = () => {
   const handleBoardComplete = () => {
     reactGuide('cheer')
     setBoardFlourish(true)
+    celebrateTier('streak') // board-complete: bigger confetti burst timed with the ring spin
     if (flourishTimer.current) clearTimeout(flourishTimer.current)
     flourishTimer.current = setTimeout(() => {
       setBoardFlourish(false)
@@ -320,10 +346,21 @@ const FarvejagtGame: React.FC = () => {
     }, reduce ? 250 : FLOURISH_MS)
   }
 
-  // Handle drag start
+  // Handle drag start — the draggable LIFTS (§6C shared drag juice) via `activeId` in the render.
   const handleDragStart = (event: DragStartEvent) => {
     audio.cancelCurrentAudio()
     setActiveId(event.active.id as string)
+    sfx.play('pick-up')
+  }
+
+  // The target well BREATHES/glows while a compatible item is dragged over it.
+  const handleDragOver = (event: DragOverEvent) => {
+    setOverId(event.over ? String(event.over.id) : null)
+  }
+
+  const handleDragCancel = () => {
+    setActiveId(null)
+    setOverId(null)
   }
 
   // Handle drag end
@@ -333,21 +370,31 @@ const FarvejagtGame: React.FC = () => {
     hasInteractedRef.current = true
     audio.updateUserInteraction()
     setActiveId(null)
+    setOverId(null)
 
     const draggedItem = gameItems.find(item => item.id === active.id)
     if (!draggedItem || draggedItem.collected) return
-    if (!over || over.id !== 'target-zone') return // dropped elsewhere → snaps back automatically
+    if (!over || over.id !== 'target-zone') return // dropped elsewhere → springs back automatically
 
     if (draggedItem.isTarget) {
-      // Correct: snap into the collected ring with a pop + sound, keep the spoken reinforcement.
+      // Correct: SNAP into the collected ring with a splash burst + sound, keep the spoken
+      // reinforcement. The burst is positioned at this item's stable ring slot.
       sfx.play('drop-snap')
-      const collectedTargetsNow = gameItems.filter(i => i.isTarget && i.collected).length
+      const targetItemsNow = gameItems.filter(i => i.isTarget)
+      const slotIndex = targetItemsNow.findIndex(i => i.id === draggedItem.id)
+      const collectedTargetsNow = targetItemsNow.filter(i => i.collected).length
       setGameItems(prev => prev.map(item =>
         item.id === active.id ? { ...item, collected: true } : item
       ))
       setHintItemId(null)
       celebrateTier('micro')
       reactGuide('cheer')
+
+      if (slotIndex >= 0) {
+        setBurstAt({ slot: slotIndex, hex: draggedItem.hex })
+        if (burstTimer.current) clearTimeout(burstTimer.current)
+        burstTimer.current = setTimeout(() => setBurstAt(null), 550)
+      }
 
       // Identify the object's colour (educational echo). No win/lose narration.
       audio.cancelCurrentAudio()
@@ -357,9 +404,9 @@ const FarvejagtGame: React.FC = () => {
         handleBoardComplete()
       }
     } else {
-      // Wrong: bounce back + gentle SFX + guide reacts; break the board's first-try flag.
+      // Wrong: springs back + gentle SFX + guide reacts; break the board's first-try flag.
       firstAttemptRef.current = false
-      sfx.play('wrong')
+      sfx.play('spring-back')
       reactGuide('think')
       setGameItems(prev => prev.map(item =>
         item.id === active.id ? { ...item, returning: true } : item
@@ -378,7 +425,10 @@ const FarvejagtGame: React.FC = () => {
       boardWrongRef.current += 1
       if (boardWrongRef.current >= WRONG_DROPS_BEFORE_HINT) {
         const hint = gameItems.find(i => i.isTarget && !i.collected)
-        if (hint) setHintItemId(hint.id)
+        if (hint) {
+          setHintItemId(hint.id)
+          mascotBus.emit('hint')
+        }
       }
     }
   }
@@ -395,13 +445,39 @@ const FarvejagtGame: React.FC = () => {
     }
   }
 
-  const targetItems = gameItems.filter(i => i.isTarget)
+  // Forced ?fx= states (DEV screenshot harness) — pure render-time overrides layered on the real
+  // gameItems, never mutating state. 'correct' marks the first target collected (shows the SNAP +
+  // splash into the ring); 'wrong' marks the first board item as returning (spring-back visual).
+  const firstTargetId = gameItems.find(i => i.isTarget)?.id ?? null
+  const displayGameItems =
+    forcedFx === 'correct' && firstTargetId
+      ? gameItems.map(i => (i.id === firstTargetId ? { ...i, collected: true } : i))
+      : forcedFx === 'wrong' && gameItems.length > 0
+        ? gameItems.map((i, idx) => (idx === 0 ? { ...i, returning: true } : i))
+        : gameItems
+
+  const targetItems = displayGameItems.filter(i => i.isTarget)
   const collectedCount = targetItems.filter(i => i.collected).length
-  const boardItems = gameItems.filter(i => !i.collected) // distractors + uncollected targets
+  const boardItems = displayGameItems.filter(i => !i.collected) // distractors + uncollected targets
   const targetHex = getTargetColorHex()
+  const displayHintItemId = forcedFx === 'hint' ? (hintItemId ?? targetItems.find(i => !i.collected)?.id ?? null) : hintItemId
+  // Position of the in-flight splash burst (§6C: "collected items pour into the ring with a splash").
+  const burstPos = burstAt ? ringSlotPx(burstAt.slot, totalTarget, RING_RADIUS) : null
+  const isOverWell = overId === 'target-zone'
 
   // Token-driven board surface (educational color hexes stay as data; chrome reads from theme).
   const boardBg = muiTheme.scene.dark ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.5)'
+
+  // Live difficulty: rebuild the current board when the level changes in the adult menu (no
+  // refresh). Skips the result screen + the initial mount.
+  const difficultyLevel = useDifficulty('colors')
+  const prevDifficultyRef = useRef(difficultyLevel)
+  useEffect(() => {
+    if (prevDifficultyRef.current === difficultyLevel) return
+    prevDifficultyRef.current = difficultyLevel
+    if (roundOutcome || !gameReady) return
+    setupBoard()
+  }, [difficultyLevel]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <GameShell
@@ -412,8 +488,8 @@ const FarvejagtGame: React.FC = () => {
       guideReaction={guideReaction}
       score={
         <ColorProgressChip
-          score={round.state.index}
-          target={ROUND_BOARDS}
+          answered={round.state.index}
+          total={ROUND_BOARDS}
           onClick={repeatInstructions}
         />
       }
@@ -495,7 +571,9 @@ const FarvejagtGame: React.FC = () => {
             <DndContext
               sensors={sensors}
               onDragStart={handleDragStart}
+              onDragOver={handleDragOver}
               onDragEnd={handleDragEnd}
+              onDragCancel={handleDragCancel}
               collisionDetection={closestCenter}
             >
               {/* Centred target zone wrapper: holds the drop circle, the collected ring, and the pips. */}
@@ -510,21 +588,45 @@ const FarvejagtGame: React.FC = () => {
                   zIndex: 0,
                 }}
               >
-                <DroppableZone
-                  id="target-zone"
-                  overColor={`${targetHex}33`}
+                {/* Glowing collection well — ambient halo behind the ring (§6C Farvejagt delta). */}
+                <motion.div
+                  aria-hidden
+                  animate={reduce ? { opacity: 0.5 } : { opacity: [0.35, 0.6, 0.35] }}
+                  transition={reduce ? { duration: 0 } : { duration: 2.6, repeat: Infinity, ease: 'easeInOut' }}
                   style={{
-                    width: '100%',
-                    height: '100%',
+                    position: 'absolute',
+                    inset: -18,
                     borderRadius: '50%',
-                    border: `4px dashed ${targetHex}`,
-                    backgroundColor: `${targetHex}1A`, // 10% opacity educational tint
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    pointerEvents: 'auto',
+                    background: `radial-gradient(circle, ${targetHex}55 0%, ${targetHex}00 70%)`,
+                    filter: 'blur(6px)',
+                    pointerEvents: 'none',
+                    zIndex: 0,
                   }}
                 />
+
+                <motion.div
+                  animate={isOverWell && !reduce ? { scale: [1, 1.06, 1] } : { scale: 1 }}
+                  transition={isOverWell && !reduce ? { duration: 0.6, repeat: Infinity, ease: 'easeInOut' } : { duration: 0.2 }}
+                  style={{ position: 'relative', width: '100%', height: '100%', zIndex: 0 }}
+                >
+                  <DroppableZone
+                    id="target-zone"
+                    overColor={`${targetHex}33`}
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      borderRadius: '50%',
+                      border: `4px dashed ${targetHex}`,
+                      backgroundColor: `${targetHex}1A`, // 10% opacity educational tint
+                      boxShadow: isOverWell ? `0 0 22px ${targetHex}99` : 'none',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      pointerEvents: 'auto',
+                      transition: 'box-shadow 0.25s ease',
+                    }}
+                  />
+                </motion.div>
 
                 {/* Progress pips around the circle perimeter — one per target item. */}
                 {targetItems.map((_, slot) => {
@@ -555,7 +657,8 @@ const FarvejagtGame: React.FC = () => {
                   )
                 })}
 
-                {/* Collected ring — items snap-pop into their slot; the whole ring spins on board win. */}
+                {/* Collected ring — items pour into their slot with a pop; the whole ring spins on
+                    board win. */}
                 <motion.div
                   animate={boardFlourish && !reduce ? { rotate: [0, 360], scale: [1, 1.12, 1] } : { rotate: 0, scale: 1 }}
                   transition={boardFlourish && !reduce ? { duration: 0.65, ease: 'easeInOut' } : { duration: 0 }}
@@ -567,9 +670,9 @@ const FarvejagtGame: React.FC = () => {
                     return (
                       <motion.div
                         key={`collected-${item.id}`}
-                        initial={reduce ? false : { scale: 0, opacity: 0 }}
-                        animate={reduce ? { scale: 1, opacity: 1 } : { scale: [0, 1.25, 1], opacity: 1 }}
-                        transition={reduce ? { duration: 0 } : { duration: 0.4, ease: 'easeOut' }}
+                        initial={reduce ? false : { scale: 0, opacity: 0, y: -16 }}
+                        animate={reduce ? { scale: 1, opacity: 1, y: 0 } : { scale: [0, 1.25, 1], opacity: 1, y: 0 }}
+                        transition={reduce ? { duration: 0 } : { duration: 0.45, ease: 'easeOut' }}
                         style={{
                           position: 'absolute',
                           left,
@@ -591,12 +694,45 @@ const FarvejagtGame: React.FC = () => {
                       </motion.div>
                     )
                   })}
+
+                  {/* Localized splash burst on a fresh capture. */}
+                  {burstAt && burstPos && !reduce && (
+                    <motion.div
+                      key={`burst-${burstAt.slot}`}
+                      initial={{ scale: 0.4, opacity: 0.9 }}
+                      animate={{ scale: 2.2, opacity: 0 }}
+                      transition={{ duration: 0.55, ease: 'easeOut' }}
+                      style={{
+                        position: 'absolute',
+                        left: burstPos.left,
+                        top: burstPos.top,
+                        width: COLLECTED_SIZE,
+                        height: COLLECTED_SIZE,
+                        marginLeft: -COLLECTED_SIZE / 2,
+                        marginTop: -COLLECTED_SIZE / 2,
+                        borderRadius: '50%',
+                        backgroundColor: burstAt.hex,
+                        pointerEvents: 'none',
+                      }}
+                    />
+                  )}
                 </motion.div>
               </div>
 
               {/* Scattered, draggable board items (uncollected). */}
               {boardItems.map((item, index) => {
-                const isHint = item.id === hintItemId
+                const isHint = item.id === displayHintItemId
+                const isLifted = activeId === item.id
+                const tileAnimate = isLifted && !reduce
+                  ? { scale: 1.14, opacity: 1, rotate: -6 }
+                  : isHint && !reduce
+                    ? { scale: [1, 1.15, 1], opacity: 1, rotate: 0 }
+                    : { scale: 1, opacity: 1, rotate: 0 }
+                const tileTransition = isLifted && !reduce
+                  ? { type: 'spring' as const, stiffness: 600, damping: 26 }
+                  : isHint && !reduce
+                    ? { duration: 1.1, repeat: Infinity, ease: 'easeInOut' as const }
+                    : { duration: 0.35, delay: reduce ? 0 : Math.min(index * 0.04, 0.5), ease: 'easeOut' as const }
                 return (
                   <DraggableItem
                     key={item.id}
@@ -608,16 +744,8 @@ const FarvejagtGame: React.FC = () => {
                     <motion.div
                       key={`${boardKey}-${item.id}`}
                       initial={reduce ? false : { scale: 0, opacity: 0 }}
-                      animate={
-                        isHint && !reduce
-                          ? { scale: [1, 1.15, 1], opacity: 1 }
-                          : { scale: 1, opacity: 1 }
-                      }
-                      transition={
-                        isHint && !reduce
-                          ? { duration: 1.1, repeat: Infinity, ease: 'easeInOut' }
-                          : { duration: 0.35, delay: reduce ? 0 : Math.min(index * 0.04, 0.5), ease: 'easeOut' }
-                      }
+                      animate={tileAnimate}
+                      transition={tileTransition}
                       style={{ width: 80, height: 80, transformOrigin: '0 0' }}
                     >
                       <Box
@@ -629,9 +757,11 @@ const FarvejagtGame: React.FC = () => {
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          boxShadow: isHint
-                            ? `0 0 0 5px ${targetHex}88, 0 4px 12px rgba(0,0,0,0.25)`
-                            : 3,
+                          boxShadow: isLifted
+                            ? `0 20px 34px rgba(0,0,0,${muiTheme.scene.dark ? 0.55 : 0.3}), 0 0 0 4px rgba(255,255,255,0.6)`
+                            : isHint
+                              ? `0 0 0 5px ${targetHex}88, 0 4px 12px rgba(0,0,0,0.25)`
+                              : 3,
                           border: '2px solid white',
                           transform: 'translate(-50%, -50%)',
                           transition: 'box-shadow 0.3s ease',

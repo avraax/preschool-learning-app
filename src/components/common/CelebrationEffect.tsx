@@ -88,9 +88,9 @@ const CelebrationEffect: React.FC<CelebrationEffectProps> = ({
         }
       case 'high':
         return {
-          numberOfPieces: 200,
+          numberOfPieces: 320,
           recycle: false,
-          gravity: 0.2
+          gravity: 0.18
         }
       case 'medium':
       default:
@@ -130,8 +130,8 @@ const CelebrationEffect: React.FC<CelebrationEffectProps> = ({
           )}
 
 
-          {/* Floating Success Emojis */}
-          {!reduceMotion && [...Array(6)].map((_, index) => (
+          {/* Floating Success Emojis — more of them for the bigger tiers. */}
+          {!reduceMotion && [...Array(intensity === 'high' ? 12 : intensity === 'low' ? 4 : 7)].map((_, index) => (
             <motion.div
               key={index}
               initial={{ 
@@ -155,7 +155,7 @@ const CelebrationEffect: React.FC<CelebrationEffectProps> = ({
                 pointerEvents: 'none'
               }}
             >
-              {celebrationEmojis[index]}
+              {celebrationEmojis[index % celebrationEmojis.length]}
             </motion.div>
           ))}
         </Box>
@@ -196,13 +196,14 @@ export const useCelebration = () => {
     setShowCelebration(true)
   }
 
-  // Tiered celebration: sets the matching confetti + fires the tier's SFX cue.
-  const celebrateTier = (tier: CelebrationTier) => {
+  // Tiered celebration: sets the matching confetti + fires the tier's SFX cue. `sfxRate` lets a
+  // caller ascend the pitch (e.g. streak chimes rising with the streak length).
+  const celebrateTier = (tier: CelebrationTier, opts?: { sfxRate?: number }) => {
     const t = TIER_MAP[tier]
     setCelebrationIntensity(t.intensity)
     setCelebrationDuration(t.duration)
     setShowCelebration(true)
-    sfx.play(t.sfx)
+    sfx.play(t.sfx, opts?.sfxRate != null ? { rate: opts.sfxRate } : {})
   }
 
   const stopCelebration = () => {

@@ -14,7 +14,6 @@ import {
   Dialog,
   DialogActions,
   DialogContent,
-  DialogTitle,
   FormControlLabel,
   TextField,
   Typography,
@@ -26,6 +25,7 @@ import {
   type BugReportPayload,
   type SubmitResult,
 } from '../../services/bugReporter'
+import AdultBackHeader from './AdultBackHeader'
 
 type Phase = 'compose' | 'sending' | 'success' | 'error'
 
@@ -85,7 +85,7 @@ const BugReportDialog: React.FC<BugReportDialogProps> = ({ open, screenshot, onC
     <Dialog open={open} onClose={phase === 'sending' ? undefined : onClose} maxWidth="xs" fullWidth>
       {phase === 'compose' && (
         <>
-          <DialogTitle sx={{ fontWeight: 700 }}>🐞 Rapportér et problem</DialogTitle>
+          <AdultBackHeader title="🐞 Rapportér et problem" onBack={onClose} />
           <DialogContent>
             <Typography sx={{ fontSize: '0.85rem', color: 'text.secondary', mb: 1.5 }}>
               Rapporten indeholder automatisk skærmbillede, seneste hændelser og teknisk info.

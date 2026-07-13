@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { AppBar, Box, Container, IconButton, Toolbar, Typography } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
@@ -11,6 +11,7 @@ import { useReducedMotion } from '../../hooks/useReducedMotion'
 import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 import { sfx } from '../../services/sfxClient'
 import { hexToRgba } from '../../theme/tokens/helpers'
+import { devNyt } from '../../utils/devHarness'
 
 // The sticker album (Overhaul Foundation — System 2) at /album. A themed "book" with one page
 // per set: collected stickers are bright; uncollected are faint "?" silhouettes. Tapping a
@@ -24,18 +25,29 @@ const StickerAlbum: React.FC = () => {
   const theme = useTheme()
   const navigate = useNavigate()
   const reduce = useReducedMotion()
-  const { state } = useProgress()
+  const { state, markStickersSeen } = useProgress()
   const audio = useSimplifiedAudioHook({ componentId: 'StickerAlbum', autoInitialize: false })
   const [activeIndex, setActiveIndex] = useState(0)
   const [poppedId, setPoppedId] = useState<string | null>(null)
+  const forceNyt = devNyt()
 
   const immersive = theme.scene.layers.length > 0
   const dark = theme.scene.dark
   const collected = state.stickers.collected
+  const newIds = state.stickers.newIds
   const activeSet = STICKER_SETS[activeIndex]
   const accent = theme.palette.primary.main
 
   const collectedInSet = activeSet.stickers.filter((s) => collected[s.id]).length
+  const setComplete = collectedInSet === activeSet.stickers.length
+
+  // Opening the album marks the "new" stickers as seen (the badges clear on the next visit). The
+  // ?nyt=1 harness keeps them so the badge is capturable.
+  useEffect(() => {
+    if (forceNyt) return
+    const t = window.setTimeout(() => markStickersSeen(), 1600)
+    return () => window.clearTimeout(t)
+  }, [forceNyt, markStickersSeen])
   const totalStickersOwned = Object.keys(collected).length
   const grandTotal = STICKER_SETS.reduce((n, s) => n + s.stickers.length, 0)
 
@@ -186,6 +198,52 @@ const StickerAlbum: React.FC = () => {
           {collectedInSet} / {activeSet.stickers.length} samlet
         </Typography>
 
+        {/* Set-complete payoff — a shining "hele siden!" ribbon when every sticker on the page is
+            collected (the album teases toward this). */}
+        {setComplete && (
+          <Box
+            component={motion.div}
+            initial={reduce ? false : { opacity: 0, scale: 0.85 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={reduce ? { duration: 0 } : { type: 'spring', stiffness: 300, damping: 16 }}
+            sx={{
+              alignSelf: 'center',
+              px: 2,
+              py: 0.4,
+              mb: { xs: 0.75, md: 1 },
+              borderRadius: '999px',
+              position: 'relative',
+              overflow: 'hidden',
+              background: 'linear-gradient(180deg, #FFD86B 0%, #FFB300 100%)',
+              border: '2px solid #FF9800',
+              boxShadow: '0 4px 14px rgba(255,152,0,0.45)',
+              flex: '0 0 auto',
+              [PHONE_LANDSCAPE]: { py: 0.2, mb: 0.25 },
+              ...(reduce
+                ? {}
+                : {
+                    '&::after': {
+                      content: '""',
+                      position: 'absolute',
+                      inset: 0,
+                      background:
+                        'linear-gradient(115deg, transparent 40%, rgba(255,255,255,0.7) 50%, transparent 60%)',
+                      transform: 'translateX(-120%)',
+                      animation: 'albumSetShine 3.2s ease-in-out infinite',
+                    },
+                    '@keyframes albumSetShine': {
+                      '0%': { transform: 'translateX(-120%)' },
+                      '60%, 100%': { transform: 'translateX(120%)' },
+                    },
+                  }),
+            }}
+          >
+            <Typography sx={{ fontFamily: COMIC, fontWeight: 800, color: '#5A3A00', fontSize: 'clamp(0.85rem, 2.8vw, 1.05rem)', position: 'relative', zIndex: 1, [PHONE_LANDSCAPE]: { fontSize: '0.72rem' } }}>
+              🎉 Hele siden er samlet!
+            </Typography>
+          </Box>
+        )}
+
         {/* Sticker grid (3 columns) */}
         <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 0 }}>
           <Box
@@ -200,10 +258,13 @@ const StickerAlbum: React.FC = () => {
               [PHONE_LANDSCAPE]: { gridTemplateColumns: 'repeat(5, 1fr)', gap: '8px', maxWidth: 430 },
             }}
           >
-            {activeSet.stickers.map((sticker) => {
+            {activeSet.stickers.map((sticker, i) => {
               const entry = collected[sticker.id]
-              const owned = !!entry
-              const shiny = owned && entry.count > 1
+              // ?nyt=1 harness: force the first slot owned+new so the badge is capturable.
+              const forcedHere = forceNyt && i === 0
+              const owned = !!entry || forcedHere
+              const shiny = !!entry && entry.count > 1
+              const isNew = forcedHere || newIds.includes(sticker.id)
               const popped = poppedId === sticker.id
               return (
                 <Box
@@ -241,18 +302,63 @@ const StickerAlbum: React.FC = () => {
                     outline: 'none',
                   }}
                 >
+                  {/* Locked slots show the real sticker as a faint grayscale silhouette (teasing
+                      what's still uncollected) rather than a bare "?". */}
                   <Typography
                     component="span"
                     sx={{
                       fontSize: 'clamp(2rem, 11vw, 3.4rem)',
                       lineHeight: 1,
                       filter: owned ? 'none' : 'grayscale(1)',
-                      opacity: owned ? 1 : 0.25,
+                      opacity: owned ? 1 : 0.28,
                       userSelect: 'none',
                     }}
                   >
-                    {owned ? sticker.emoji : '❔'}
+                    {sticker.emoji}
                   </Typography>
+                  {/* Faint "?" hint + gentle glint over locked slots — teases without revealing. */}
+                  {!owned && (
+                    <Box
+                      aria-hidden
+                      sx={{
+                        position: 'absolute',
+                        inset: 0,
+                        borderRadius: '18px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        pointerEvents: 'none',
+                        background:
+                          'radial-gradient(circle at 30% 25%, rgba(255,255,255,0.35) 0%, transparent 55%)',
+                      }}
+                    >
+                      <Box component="span" sx={{ fontSize: 'clamp(0.9rem, 3.5vw, 1.4rem)', fontWeight: 800, color: hexToRgba(dark ? '#FFFFFF' : '#000000', 0.28) }}>?</Box>
+                    </Box>
+                  )}
+                  {/* "nyt!" badge on a freshly collected sticker (clears on next album visit). */}
+                  {owned && isNew && (
+                    <Box
+                      data-nyt-badge
+                      sx={{
+                        position: 'absolute',
+                        top: -8,
+                        left: -6,
+                        px: 0.9,
+                        py: 0.15,
+                        borderRadius: '999px',
+                        background: 'linear-gradient(180deg, #FF6B6B 0%, #E53935 100%)',
+                        color: '#fff',
+                        fontFamily: COMIC,
+                        fontWeight: 800,
+                        fontSize: 'clamp(0.6rem, 2vw, 0.8rem)',
+                        boxShadow: '0 2px 8px rgba(229,57,53,0.5)',
+                        transform: 'rotate(-8deg)',
+                        zIndex: 2,
+                      }}
+                    >
+                      nyt!
+                    </Box>
+                  )}
                   {owned && (
                     <Typography
                       sx={{

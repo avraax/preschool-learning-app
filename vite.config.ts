@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 import fs from 'fs'
 import path from 'path'
+import { execSync } from 'child_process'
 
 function generateVersionPlugin(): Plugin {
   let versionInfo: any
@@ -24,7 +25,6 @@ function generateVersionPlugin(): Plugin {
 
       let commitHash = 'dev'
       try {
-        const { execSync } = require('child_process')
         commitHash = execSync('git rev-parse --short HEAD', { encoding: 'utf8' }).trim()
       } catch {
         console.log('Could not get git commit hash, using "dev"')

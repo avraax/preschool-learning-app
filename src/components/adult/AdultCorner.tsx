@@ -32,10 +32,11 @@ import { captureScreenshot } from '../../services/screenshotService'
 import AdultGate, { makeGateCode } from '../common/AdultGate'
 import VoiceOverridePanel from '../voicelab/VoiceOverridePanel'
 import BugReportDialog from './BugReportDialog'
+import DifficultyPanel from './DifficultyPanel'
 
 const HOLD_MS = 2000
 
-type AdultView = null | 'menu' | 'report' | 'voice' | 'resetGate' | 'resetDone'
+type AdultView = null | 'menu' | 'report' | 'voice' | 'difficulty' | 'resetGate' | 'resetDone'
 
 interface AdultCornerProps {
   /** Mirror the old VersionDisplay dodge: UpdateBanner owns bottom-right when visible. */
@@ -156,12 +157,27 @@ const AdultCorner: React.FC<AdultCornerProps> = ({ updateAvailable = false }) =>
             >
               <ListItemText primary="🎙️ Stemme-test" />
             </ListItemButton>
+            <ListItemButton
+              aria-label="Sværhedsgrad"
+              onClick={() => setView('difficulty')}
+              sx={{ borderRadius: 1, minHeight: 48 }}
+            >
+              <ListItemText primary="🎚️ Sværhedsgrad" />
+            </ListItemButton>
             <ListItem sx={{ minHeight: 48 }}>
               <ListItemText primary="🔊 Lydeffekter" />
               <Switch
                 checked={progress.state.settings.sfxEnabled}
                 onChange={(_, v) => progress.setSetting('sfxEnabled', v)}
                 slotProps={{ input: { 'aria-label': 'Lydeffekter til/fra' } }}
+              />
+            </ListItem>
+            <ListItem sx={{ minHeight: 48 }}>
+              <ListItemText primary="🎵 Musik" />
+              <Switch
+                checked={progress.state.settings.musicEnabled}
+                onChange={(_, v) => progress.setSetting('musicEnabled', v)}
+                slotProps={{ input: { 'aria-label': 'Musik til/fra' } }}
               />
             </ListItem>
             <ListItemButton
@@ -187,9 +203,11 @@ const AdultCorner: React.FC<AdultCornerProps> = ({ updateAvailable = false }) =>
         </DialogActions>
       </Dialog>
 
-      <BugReportDialog open={view === 'report'} screenshot={screenshot} onClose={closeAll} />
+      <BugReportDialog open={view === 'report'} screenshot={screenshot} onClose={() => setView('menu')} />
 
       <VoiceOverridePanel open={view === 'voice'} onClose={() => setView('menu')} />
+
+      <DifficultyPanel open={view === 'difficulty'} onClose={() => setView('menu')} />
 
       <AdultGate
         open={view === 'resetGate'}

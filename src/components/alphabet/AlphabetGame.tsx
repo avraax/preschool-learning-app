@@ -4,9 +4,33 @@ import { DANISH_PHRASES } from '../../config/danish-phrases'
 import { categoryThemes } from '../../config/categoryThemes'
 import { AlphabetScoreChip } from '../common/ScoreChip'
 import { AlphabetRepeatButton } from '../common/RepeatButton'
+import { progressStore, type DifficultyLevel } from '../../services/progressStore'
 
 // Full Danish alphabet including special characters
 const DANISH_ALPHABET = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'Æ', 'Ø', 'Å']
+
+// Svær (Overhaul §5.7/Appendix A): letters commonly confused — visually similar shapes, or
+// Danish vowels that sound alike — biasing distractors toward a genuine reading challenge
+// instead of uniformly random letters. Let uses these same groups the OTHER way: distractors
+// are kept OUT of the correct letter's group, so they read as maximally easy/dissimilar.
+const CONFUSABLE_GROUPS: string[][] = [
+  ['M', 'N'],
+  ['Æ', 'Ø', 'Å'],
+  ['B', 'D', 'P'],
+  ['E', 'Æ'],
+  ['O', 'Å'],
+  ['I', 'Y'],
+]
+
+const confusablesFor = (letter: string): string[] => {
+  const set = new Set<string>()
+  for (const group of CONFUSABLE_GROUPS) {
+    if (group.includes(letter)) {
+      for (const g of group) if (g !== letter) set.add(g)
+    }
+  }
+  return [...set]
+}
 
 // Word-association mode: child sees an emoji + Danish word and picks the starting letter.
 // Only letters with a clear, child-friendly Danish word are included (Q, W, X omitted).
@@ -64,20 +88,48 @@ const AlphabetGame: React.FC = () => {
     },
     
     generateOptions: (correctAnswer: QuizItem) => {
-      const options: QuizItem[] = [correctAnswer]
-      
-      while (options.length < 4) {
-        const randomLetter = DANISH_ALPHABET[Math.floor(Math.random() * DANISH_ALPHABET.length)]
-        if (!options.find(opt => opt.value === randomLetter)) {
-          options.push({
-            value: randomLetter,
-            display: randomLetter,
-            audioPrompt: DANISH_PHRASES.gamePrompts.findLetter(randomLetter),
-            repeatWord: randomLetter
-          })
+      const toLetterItem = (letter: string): QuizItem => ({
+        value: letter,
+        display: letter,
+        audioPrompt: DANISH_PHRASES.gamePrompts.findLetter(letter),
+        repeatWord: letter
+      })
+
+      const level: DifficultyLevel = progressStore.difficultyFor('alphabet')
+
+      if (level === 'normal') {
+        // Today's exact behavior (regression-safe) — fully random distractors; Q/W/X can only
+        // ever land here (they're never the correct answer — see WORD_LETTERS above).
+        const options: QuizItem[] = [correctAnswer]
+        while (options.length < 4) {
+          const randomLetter = DANISH_ALPHABET[Math.floor(Math.random() * DANISH_ALPHABET.length)]
+          if (!options.find(opt => opt.value === randomLetter)) {
+            options.push(toLetterItem(randomLetter))
+          }
         }
+        return options.sort(() => Math.random() - 0.5)
       }
-      
+
+      const correctLetter = correctAnswer.value as string
+      // Svær: seed with the correct letter's confusable group (M/N, Æ/Ø/Å, B/D/P, look-/sound-
+      // alike vowels) so a right answer means the child actually told them apart. Let: exclude
+      // that same group so distractors are never a near-miss.
+      const preferred = level === 'svaer' ? confusablesFor(correctLetter).sort(() => Math.random() - 0.5) : []
+      const excluded = level === 'let' ? new Set(confusablesFor(correctLetter)) : null
+
+      const picks: string[] = []
+      for (const letter of preferred) {
+        if (picks.length >= 3) break
+        picks.push(letter)
+      }
+      while (picks.length < 3) {
+        const randomLetter = DANISH_ALPHABET[Math.floor(Math.random() * DANISH_ALPHABET.length)]
+        if (randomLetter === correctLetter || picks.includes(randomLetter)) continue
+        if (excluded && excluded.has(randomLetter)) continue
+        picks.push(randomLetter)
+      }
+
+      const options: QuizItem[] = [correctAnswer, ...picks.map(toLetterItem)]
       return options.sort(() => Math.random() - 0.5)
     },
     

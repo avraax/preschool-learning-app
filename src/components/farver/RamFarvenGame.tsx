@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import { Box, Typography, Button } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { motion, AnimatePresence } from 'framer-motion'
-import { DndContext, DragEndEvent, DragStartEvent, closestCenter } from '@dnd-kit/core'
+import { DndContext, DragEndEvent, DragStartEvent, DragOverEvent, closestCenter } from '@dnd-kit/core'
 import { useDragOnlySensors } from '../common/dnd/useDragOnlySensors'
 import { ColorProgressChip } from '../common/ScoreChip'
 import { DraggableItem } from '../common/dnd/DraggableItem'
@@ -12,13 +12,17 @@ import { useCelebration } from '../common/CelebrationEffect'
 import { ColorRepeatButton } from '../common/RepeatButton'
 import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 import { getCategoryTheme } from '../../config/categoryThemes'
+import { hexToRgba } from '../../theme/tokens/helpers'
+import { SNAP, BOUNCE } from '../../theme/motion'
 import { useRound } from '../../hooks/useRound'
 import { progressStore, type RoundOutcome } from '../../services/progressStore'
 import { sfx } from '../../services/sfxClient'
+import { mascotBus } from '../../services/mascotBus'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
 import GameShell from '../common/GameShell'
 import RoundResultScreen from '../common/RoundResultScreen'
 import { isIOS } from '../../utils/deviceDetection'
+import { devFx } from '../../utils/devHarness'
 // Simplified audio system
 import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 
@@ -150,7 +154,8 @@ const RamFarvenGame: React.FC = () => {
     componentId: 'RamFarvenGame',
     autoInitialize: false
   })
-  const [, setActiveId] = useState<string | null>(null)
+  const [activeId, setActiveId] = useState<string | null>(null)  // currently-grabbed droplet (lift juice)
+  const [overId, setOverId] = useState<string | null>(null)      // is a drag over the pot? (breathe juice)
   const [gameReady, setGameReady] = useState(false)
 
   // Bounded round + reward flow (Overhaul Farver §Ram Farven). 8 mixes, 3★ = 0 wrong mixes, 2★ ≤ 2.
@@ -181,56 +186,6 @@ const RamFarvenGame: React.FC = () => {
     setGuideReaction(reaction)
     if (guideReactionTimer.current) clearTimeout(guideReactionTimer.current)
     guideReactionTimer.current = setTimeout(() => setGuideReaction(null), 1100)
-  }
-
-  // Initialize game
-  useEffect(() => {
-    if (hasInitialized.current) return
-    hasInitialized.current = true
-
-    revealBoard()
-
-    if (audio.isAudioReady) {
-      playWelcomeThenInstructions()
-    }
-
-    return () => {
-      if (guideReactionTimer.current) clearTimeout(guideReactionTimer.current)
-      if (commitTimer.current) clearTimeout(commitTimer.current)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
-  useEffect(() => {
-    if (audio.isAudioReady && !welcomeTriggered.current) {
-      playWelcomeThenInstructions()
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [audio.isAudioReady])
-
-  const revealBoard = () => {
-    if (startedRef.current) return
-    startedRef.current = true
-    setGameReady(true)
-    setupTarget(false)
-  }
-
-  const playWelcomeThenInstructions = async () => {
-    if (welcomeTriggered.current || hasInteractedRef.current) return
-    welcomeTriggered.current = true
-    try {
-      await audio.playGameWelcome('ramfarven')
-    } catch (error) {
-      logError('Error playing welcome', { error: error?.toString() })
-    }
-    if (targetNameRef.current && !hasInteractedRef.current) {
-      try {
-        audio.updateUserInteraction()
-        await audio.speakColorMixingInstructions(targetNameRef.current)
-      } catch (error) {
-        logError('Error speaking color mixing instructions', { error: error?.toString() })
-      }
-    }
   }
 
   // Set up a fresh target. `voice=false` skips speaking (used for the instant first reveal).
@@ -264,6 +219,64 @@ const RamFarvenGame: React.FC = () => {
       }, delay)
     }
   }
+
+  const revealBoard = () => {
+    if (startedRef.current) return
+    startedRef.current = true
+    setGameReady(true)
+    setupTarget(false)
+  }
+
+  const playWelcomeThenInstructions = async () => {
+    if (welcomeTriggered.current || hasInteractedRef.current) return
+    welcomeTriggered.current = true
+    try {
+      await audio.playGameWelcome('ramfarven')
+    } catch (error) {
+      logError('Error playing welcome', { error: error?.toString() })
+    }
+    if (targetNameRef.current && !hasInteractedRef.current) {
+      try {
+        audio.updateUserInteraction()
+        await audio.speakColorMixingInstructions(targetNameRef.current)
+      } catch (error) {
+        logError('Error speaking color mixing instructions', { error: error?.toString() })
+      }
+    }
+  }
+
+  // Initialize game
+  useEffect(() => {
+    if (hasInitialized.current) return
+    hasInitialized.current = true
+
+    revealBoard()
+
+    if (audio.isAudioReady) {
+      playWelcomeThenInstructions()
+    }
+
+    return () => {
+      if (guideReactionTimer.current) clearTimeout(guideReactionTimer.current)
+      if (commitTimer.current) clearTimeout(commitTimer.current)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  useEffect(() => {
+    if (audio.isAudioReady && !welcomeTriggered.current) {
+      playWelcomeThenInstructions()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [audio.isAudioReady])
+
+  // DEV screenshot harness (?fx=correct|wrong|hint): a PURE render-time derivation (no setState in
+  // an effect — mirrors UnifiedQuizGame's `tileStateFor`). The effect below only notifies the
+  // mascot (an external system). No-op in production (devFx() is DEV-only).
+  const forcedFx = devFx()
+  useEffect(() => {
+    if (forcedFx === 'hint') mascotBus.emit('hint')
+  }, [forcedFx])
 
   const finishRound = (firstTryCorrect: number, longestStreak: number) => {
     const outcome = progressStore.recordRoundResult(
@@ -373,13 +386,17 @@ const RamFarvenGame: React.FC = () => {
 
   const handleWrongMix = () => {
     firstAttemptRef.current = false
-    sfx.play('wrong')
+    sfx.play('spring-back')
     reactGuide('think')
-    // Wrong = SFX (wrong) + the brief wrong-colour fizz visual only; no spoken feedback (owner request).
+    // Wrong = SFX (spring-back) + the brief wrong-colour fizz-puff visual only; no spoken feedback
+    // (owner request).
 
     // After N wrong mixes on this target, pulse the 2 correct droplets (never-fail scaffold).
     targetWrongRef.current += 1
-    if (targetWrongRef.current >= WRONG_MIXES_BEFORE_HINT) setHintActive(true)
+    if (targetWrongRef.current >= WRONG_MIXES_BEFORE_HINT) {
+      setHintActive(true)
+      mascotBus.emit('hint')
+    }
 
     if (commitTimer.current) clearTimeout(commitTimer.current)
     commitTimer.current = setTimeout(() => {
@@ -391,15 +408,27 @@ const RamFarvenGame: React.FC = () => {
     }, reduce ? 500 : FIZZ_MS)
   }
 
-  // Drag handlers
+  // Drag handlers — the draggable LIFTS on grab (§6C shared drag juice); the pot BREATHES/glows
+  // while a droplet hovers it.
   const handleDragStart = (event: DragStartEvent) => {
     setActiveId(event.active.id as string)
+    sfx.play('pick-up')
+  }
+
+  const handleDragOver = (event: DragOverEvent) => {
+    setOverId(event.over ? String(event.over.id) : null)
+  }
+
+  const handleDragCancel = () => {
+    setActiveId(null)
+    setOverId(null)
   }
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event
     hasInteractedRef.current = true
     setActiveId(null)
+    setOverId(null)
 
     if (!over || over.id !== 'mixing-zone') return
 
@@ -409,12 +438,30 @@ const RamFarvenGame: React.FC = () => {
     }
   }
 
+  // Forced ?fx= states (DEV screenshot harness) — pure render-time overrides layered on the real
+  // state, never mutating it. 'correct' shows the recipe-reveal card for the CURRENT target;
+  // 'wrong' shows the pot filled with a wrong-colour fizz; 'hint' pulses the 2 correct droplets.
+  const forcedRecipePair = forcedFx === 'correct' ? recipeFor(targetColor.name) : null
+  const displayRecipe = recipe ?? (forcedRecipePair
+    ? {
+        aHex: forcedRecipePair[0].hex,
+        bHex: forcedRecipePair[1].hex,
+        targetHex: targetColor.hex,
+        aName: forcedRecipePair[0].colorName,
+        bName: forcedRecipePair[1].colorName,
+        targetName: targetColor.name
+      }
+    : null)
+  const displayBlendResult = forcedFx === 'wrong' ? (blendResult ?? { hex: '#9CA3AF', name: null, isCorrect: false }) : blendResult
+  const displayHintActive = forcedFx === 'hint' ? true : hintActive
+
   // Hint: which source colorNames make the current target.
-  const recipePair = hintActive ? recipeFor(targetColor.name) : null
+  const recipePair = displayHintActive ? recipeFor(targetColor.name) : null
   const recipeNames = recipePair ? [recipePair[0].colorName, recipePair[1].colorName] : []
 
   // Pot fill: the blended colour while committing, else a neutral wash.
-  const potFill = blendResult ? blendResult.hex : 'rgba(255, 255, 255, 0.4)'
+  const potFill = displayBlendResult ? displayBlendResult.hex : 'rgba(255, 255, 255, 0.4)'
+  const isOverPot = overId === 'mixing-zone'
   // Token-driven framed-board surface (mirrors Farvejagt); educational hexes stay as data.
   const boardBg = muiTheme.scene.dark ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.5)'
   const comicFont = '"Comic Sans MS", "Comic Neue", sans-serif'
@@ -440,8 +487,8 @@ const RamFarvenGame: React.FC = () => {
       guideReaction={guideReaction}
       score={
         <ColorProgressChip
-          score={round.state.index}
-          target={ROUND_MIXES}
+          answered={round.state.index}
+          total={ROUND_MIXES}
           onClick={repeatInstructions}
         />
       }
@@ -489,7 +536,9 @@ const RamFarvenGame: React.FC = () => {
             <DndContext
               sensors={sensors}
               onDragStart={handleDragStart}
+              onDragOver={handleDragOver}
               onDragEnd={handleDragEnd}
+              onDragCancel={handleDragCancel}
               collisionDetection={closestCenter}
             >
               {/* Goal → Pot row: make THIS (left swatch) IN HERE (right pot). */}
@@ -564,7 +613,24 @@ const RamFarvenGame: React.FC = () => {
 
                 {/* Mixing pot + Tøm */}
                 <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1, flex: '0 0 auto' }}>
-                  <Box sx={circleSizeSx}>
+                  <motion.div
+                    key={displayBlendResult ? `wobble-${displayBlendResult.hex}` : 'idle'}
+                    animate={
+                      displayBlendResult && !reduce
+                        ? { scaleY: [1, 1.05, 0.97, 1.02, 1], skewX: [0, 3, -2, 1, 0] }
+                        : isOverPot && !reduce
+                          ? { scale: [1, 1.05, 1] }
+                          : { scale: 1, scaleY: 1, skewX: 0 }
+                    }
+                    transition={
+                      displayBlendResult && !reduce
+                        ? { duration: 0.55, ease: 'easeInOut' }
+                        : isOverPot && !reduce
+                          ? { duration: 0.6, repeat: Infinity, ease: 'easeInOut' }
+                          : { duration: 0.2 }
+                    }
+                    style={{ ...circleSizeSx, position: 'relative' } as any}
+                  >
                     <DroppableZone
                       id="mixing-zone"
                       overColor="rgba(255,255,255,0.55)"
@@ -572,15 +638,17 @@ const RamFarvenGame: React.FC = () => {
                         width: '100%',
                         height: '100%',
                         borderRadius: '50%',
-                        border: `4px dashed ${t.borderColor}`,
+                        border: `4px dashed ${isOverPot ? t.accentColor : t.borderColor}`,
                         backgroundColor: potFill,
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         margin: '0 auto',
                         position: 'relative',
-                        boxShadow: 'inset 0 4px 12px rgba(0,0,0,0.12)',
-                        transition: `background-color ${BLEND_MS}ms ease`
+                        boxShadow: isOverPot
+                          ? `inset 0 4px 12px rgba(0,0,0,0.12), 0 0 18px ${hexToRgba(t.accentColor, 0.5)}`
+                          : 'inset 0 4px 12px rgba(0,0,0,0.12)',
+                        transition: `background-color ${BLEND_MS}ms ease, box-shadow 0.25s ease, border-color 0.25s ease`
                       }}
                     >
                       <AnimatePresence>
@@ -590,11 +658,11 @@ const RamFarvenGame: React.FC = () => {
                             initial={{ scale: 0, opacity: 0 }}
                             animate={
                               committing && !reduce
-                                ? { scale: [1, 0.6, 0], rotate: [0, 220, 360], left: '50%', opacity: [1, 1, 0] }
+                                ? { scale: [1, 0.6, 0], rotate: [0, 480, 720], left: '50%', opacity: [1, 1, 0] }
                                 : { scale: 1, opacity: 1, rotate: reduce ? 0 : 360 }
                             }
                             exit={{ scale: 0, opacity: 0 }}
-                            transition={{ duration: committing ? BLEND_MS / 1000 : 0.4 }}
+                            transition={{ duration: committing ? BLEND_MS / 1000 : 0.4, ease: 'easeInOut' }}
                             style={{
                               position: 'absolute',
                               left: index === 0 ? '32%' : '62%',
@@ -602,6 +670,21 @@ const RamFarvenGame: React.FC = () => {
                               transform: 'translate(-50%, -50%)'
                             }}
                           >
+                            {/* Trailing colour echo — reinforces the swirl-into-pot motion. */}
+                            {committing && !reduce && (
+                              <motion.div
+                                initial={{ opacity: 0.5, scale: 1 }}
+                                animate={{ opacity: 0, scale: 1.6 }}
+                                transition={{ duration: BLEND_MS / 1000, ease: 'easeOut' }}
+                                style={{
+                                  position: 'absolute',
+                                  inset: 0,
+                                  borderRadius: '50% 50% 50% 0',
+                                  backgroundColor: color.hex,
+                                  pointerEvents: 'none'
+                                }}
+                              />
+                            )}
                             <Box sx={{
                               width: { xs: 36, sm: 42, md: 46, lg: 54 },
                               height: { xs: 36, sm: 42, md: 46, lg: 54 },
@@ -630,8 +713,25 @@ const RamFarvenGame: React.FC = () => {
                           </motion.div>
                         </Box>
                       )}
+
+                      {/* Wrong-mix fizz puff — a brief poof, layered on the existing wrong-colour fill. */}
+                      {displayBlendResult && !displayBlendResult.isCorrect && !reduce && (
+                        <motion.div
+                          key={`fizz-${displayBlendResult.hex}`}
+                          initial={{ scale: 0.5, opacity: 0.9 }}
+                          animate={{ scale: 1.7, opacity: 0 }}
+                          transition={{ duration: 0.6, ease: 'easeOut' }}
+                          style={{
+                            position: 'absolute',
+                            inset: 0,
+                            borderRadius: '50%',
+                            background: 'radial-gradient(circle, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0) 70%)',
+                            pointerEvents: 'none'
+                          }}
+                        />
+                      )}
                     </DroppableZone>
-                  </Box>
+                  </motion.div>
 
                   {/* "Din blanding" label — mirrors the goal "Mål" chip so the relationship reads. */}
                   <Box sx={{
@@ -702,20 +802,23 @@ const RamFarvenGame: React.FC = () => {
               }}>
                 {availableColors.map((color) => {
                   const isHint = recipeNames.includes(color.colorName) && !color.isUsed
+                  const isLifted = activeId === color.id
+                  const animate = isLifted && !reduce
+                    ? { scale: 1.2, y: -4, rotate: 8 }
+                    : isHint && !reduce
+                      ? { scale: [1, 1.15, 1], y: 0, rotate: 0 }
+                      : { scale: color.isUsed ? 0.7 : 1, y: 0, rotate: 0 }
+                  const transition = isLifted && !reduce
+                    ? SNAP
+                    : isHint && !reduce
+                      ? { duration: 1.1, repeat: Infinity, ease: 'easeInOut' as const }
+                      : { duration: 0.3 }
                   return (
                     <motion.div
                       key={color.id}
                       initial={{ scale: 0, y: 50 }}
-                      animate={
-                        isHint && !reduce
-                          ? { scale: [1, 1.15, 1], y: 0 }
-                          : { scale: color.isUsed ? 0.7 : 1, y: 0 }
-                      }
-                      transition={
-                        isHint && !reduce
-                          ? { duration: 1.1, repeat: Infinity, ease: 'easeInOut' }
-                          : { duration: 0.3 }
-                      }
+                      animate={animate}
+                      transition={transition}
                       whileHover={{ scale: color.isUsed ? 0.7 : 1.1 }}
                       whileTap={{ scale: 0.95 }}
                     >
@@ -748,9 +851,11 @@ const RamFarvenGame: React.FC = () => {
                             transform: 'rotate(135deg)',
                             backgroundColor: color.hex,
                             border: '2px solid rgba(255,255,255,0.9)',
-                            boxShadow: isHint
-                              ? `0 0 0 5px ${t.accentColor}88, 0 6px 14px ${color.hex}66`
-                              : color.isUsed ? '0 2px 8px rgba(0,0,0,0.12)' : `0 6px 14px ${color.hex}66, inset 0 2px 0 rgba(255,255,255,0.45)`,
+                            boxShadow: isLifted
+                              ? `0 16px 26px rgba(0,0,0,${muiTheme.scene.dark ? 0.5 : 0.28}), 0 0 0 4px rgba(255,255,255,0.6)`
+                              : isHint
+                                ? `0 0 0 5px ${t.accentColor}88, 0 6px 14px ${color.hex}66`
+                                : color.isUsed ? '0 2px 8px rgba(0,0,0,0.12)' : `0 6px 14px ${color.hex}66, inset 0 2px 0 rgba(255,255,255,0.45)`,
                             cursor: color.isUsed ? 'default' : 'grab',
                             opacity: color.isUsed ? 0.5 : 1,
                             transition: 'box-shadow 0.3s ease',
@@ -765,9 +870,10 @@ const RamFarvenGame: React.FC = () => {
             </DndContext>
 
             {/* Recipe reveal — a solid celebratory card centred over the whole board (no
-                ghosting), showing the rule in words to reinforce the colour names. */}
+                ghosting), showing the rule in words to reinforce the colour names. Pops bigger
+                with a springier bounce (§6C Ram Farven delta). */}
             <AnimatePresence>
-              {recipe && (
+              {displayRecipe && (
                 <motion.div
                   key="recipe"
                   initial={{ opacity: 0 }}
@@ -786,33 +892,33 @@ const RamFarvenGame: React.FC = () => {
                   }}
                 >
                   <motion.div
-                    initial={reduce ? { scale: 1 } : { scale: 0.85 }}
-                    animate={{ scale: 1 }}
-                    transition={reduce ? { duration: 0 } : { type: 'spring', stiffness: 260, damping: 18 }}
+                    initial={reduce ? { scale: 1 } : { scale: 0.55, opacity: 0 }}
+                    animate={reduce ? { scale: 1, opacity: 1 } : { scale: [0.55, 1.12, 1], opacity: 1 }}
+                    transition={reduce ? { duration: 0 } : BOUNCE}
                   >
                     <Box sx={{
                       bgcolor: muiTheme.scene.dark ? 'rgba(31,41,55,0.98)' : '#ffffff',
                       borderRadius: 5,
                       border: `3px solid ${t.borderColor}`,
                       boxShadow: muiTheme.customShadows?.card ?? '0 16px 40px rgba(0,0,0,0.28)',
-                      px: { xs: 3, md: 4 },
-                      py: { xs: 2.5, md: 3 },
+                      px: { xs: 3.5, md: 5 },
+                      py: { xs: 3, md: 3.75 },
                       display: 'flex',
                       flexDirection: 'column',
                       alignItems: 'center',
-                      gap: { xs: 1.25, md: 1.75 },
+                      gap: { xs: 1.5, md: 2 },
                       maxWidth: '92%'
                     }}>
-                      <Typography sx={{ fontFamily: comicFont, fontWeight: 800, fontSize: 'clamp(1.1rem, 4.5vw, 1.7rem)', color: t.accentColor }}>Flot! 🎉</Typography>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, md: 1.5 } }}>
-                        <Swatch hex={recipe.aHex} />
+                      <Typography sx={{ fontFamily: comicFont, fontWeight: 800, fontSize: 'clamp(1.2rem, 5vw, 1.9rem)', color: t.accentColor }}>Flot! 🎉</Typography>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1.25, md: 1.75 } }}>
+                        <Swatch hex={displayRecipe.aHex} />
                         <RecipeSign>+</RecipeSign>
-                        <Swatch hex={recipe.bHex} />
+                        <Swatch hex={displayRecipe.bHex} />
                         <RecipeSign>=</RecipeSign>
-                        <Swatch hex={recipe.targetHex} big />
+                        <Swatch hex={displayRecipe.targetHex} big />
                       </Box>
-                      <Typography sx={{ fontFamily: comicFont, fontWeight: 700, fontSize: 'clamp(0.95rem, 3.2vw, 1.35rem)', color: muiTheme.scene.dark ? 'white' : 'text.primary', textAlign: 'center' }}>
-                        {recipe.aName} + {recipe.bName} = {recipe.targetName}
+                      <Typography sx={{ fontFamily: comicFont, fontWeight: 700, fontSize: 'clamp(1rem, 3.6vw, 1.5rem)', color: muiTheme.scene.dark ? 'white' : 'text.primary', textAlign: 'center' }}>
+                        {displayRecipe.aName} + {displayRecipe.bName} = {displayRecipe.targetName}
                       </Typography>
                     </Box>
                   </motion.div>
@@ -829,8 +935,8 @@ const RamFarvenGame: React.FC = () => {
 // Recipe-reveal swatch (educational colors as data).
 const Swatch: React.FC<{ hex: string; big?: boolean }> = ({ hex, big }) => (
   <Box sx={{
-    width: big ? { xs: 64, md: 84 } : { xs: 48, md: 64 },
-    height: big ? { xs: 64, md: 84 } : { xs: 48, md: 64 },
+    width: big ? { xs: 72, md: 96 } : { xs: 54, md: 72 },
+    height: big ? { xs: 72, md: 96 } : { xs: 54, md: 72 },
     borderRadius: '50%',
     backgroundColor: hex,
     border: '3px solid white',

@@ -585,7 +585,7 @@ export class SimplifiedAudioController {
     _rightObjects: string, 
     questionType: 'largest' | 'smallest' | 'equal'
   ): Promise<string> {
-    let question = ''
+    let question: string
     if (questionType === 'largest') {
       question = `Hvilket tal er størst? ${getDanishNumberText(leftNumber)} eller ${getDanishNumberText(rightNumber)}?`
     } else if (questionType === 'smallest') {

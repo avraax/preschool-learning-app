@@ -3,7 +3,7 @@ import { motion } from 'framer-motion'
 import { Box, Card, CardContent, Typography } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
-import { darken, hexToRgba } from '../../theme/tokens/helpers'
+import { darken, hexToRgba, tileSurface } from '../../theme/tokens/helpers'
 
 interface LearningGridProps {
   items: (string | number)[]
@@ -30,7 +30,9 @@ const LearningGrid: React.FC<LearningGridProps> = ({
   // Lifted-3D depth language (mirrors AnswerTile) — token-driven, no hardcoded section colours.
   const active = accent ?? theme.palette.secondary.main
   const base = theme.palette.primary.main
-  const restSurface = 'linear-gradient(180deg, #FFFFFF 0%, #ECF1F8 100%)'
+  // Section-tinted idle surface (faint accent tint) — no longer a hardcoded grey; the active
+  // cell deepens the same accent tint so idle vs. active still read at a glance.
+  const restSurface = tileSurface(active, dark)
   const activeSurface = `linear-gradient(180deg, #FFFFFF 0%, ${hexToRgba(active, 0.18)} 100%)`
   const ambient = dark ? '0 6px 16px rgba(0,0,0,0.45)' : '0 5px 12px rgba(0,0,0,0.12)'
   const restEdge = darken(base, 0.28)

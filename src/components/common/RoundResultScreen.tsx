@@ -10,6 +10,7 @@ import { hexToRgba } from '../../theme/tokens/helpers'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
 import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 import { sfx } from '../../services/sfxClient'
+import { mascotBus } from '../../services/mascotBus'
 import CelebrationEffect from './CelebrationEffect'
 import StickerReveal from './StickerReveal'
 import type { RoundOutcome } from '../../services/progressStore'
@@ -82,6 +83,10 @@ const RoundResultScreen: React.FC<RoundResultScreenProps> = ({
     timers.push(setTimeout(() => sfx.play('sticker-reveal'), stickerAt))
     // page-complete fanfare (one-off)
     if (pageCompleted) timers.push(setTimeout(() => sfx.play('page-complete'), stickerAt + 500))
+
+    // Mascot celebrates the round, then reacts again to the sticker reveal (bus → corner Mascot).
+    mascotBus.emit('round')
+    if (stickers.length) timers.push(setTimeout(() => mascotBus.emit('sticker'), stickerAt))
 
     // One composed Danish summary (single TTS channel — avoid clip cancellation).
     if (!spokenRef.current) {
@@ -169,7 +174,7 @@ const RoundResultScreen: React.FC<RoundResultScreenProps> = ({
               transition={
                 reduce
                   ? { duration: 0 }
-                  : { type: 'spring', stiffness: 320, damping: 14, delay: (t.starBase + i * t.starStep) / 1000 }
+                  : { type: 'spring', stiffness: 360, damping: 10, delay: (t.starBase + i * t.starStep) / 1000 }
               }
               sx={{
                 fontSize: 'clamp(2.6rem, 11vw, 4.2rem)',

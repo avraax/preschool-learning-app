@@ -5,7 +5,9 @@ import { useTheme } from '@mui/material/styles'
 import { getCategoryTheme } from '../../config/categoryThemes'
 import { SHADES, HUE_ORDER, COLOR_SWATCH, DANISH_OBJECTS } from '../../config/colorContent'
 import { darken, hexToRgba } from '../../theme/tokens/helpers'
+import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 import GameShell from '../common/GameShell'
+import PromptStage from '../common/PromptStage'
 import StickerReveal from '../common/StickerReveal'
 import { useCelebration } from '../common/CelebrationEffect'
 import { progressStore, type StickerAward } from '../../services/progressStore'
@@ -122,140 +124,169 @@ const FarverLearning: React.FC = () => {
       dense
       guide={false}
       celebration={{ show: showCelebration, intensity: celebrationIntensity, duration: celebrationDuration, onComplete: stopCelebration }}
-    >
-      {/* Detail panel: current color name + shade family + example objects. */}
-      <Box sx={{
-        flex: '0 0 auto',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: { xs: 1, md: 1.5 },
-        mb: { xs: 1.5, md: 2 }
-      }}>
-        {/* Shade trio (tap each to hear lys/mellem/mørk). */}
-        <Box sx={{ display: 'flex', alignItems: 'flex-end', gap: { xs: 1.25, md: 2 } }}>
-          {shades.map((shade, i) => {
-            const big = i === 1 // middle = the canonical color, shown largest
-            const dim = { xs: big ? 92 : 64, md: big ? 120 : 84 }
-            const dimLand = big ? 84 : 60
-            return (
-              <Box key={shade.name} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
-                <motion.div whileHover={{ scale: 1.06 }} whileTap={{ scale: 0.94 }}>
+      promptStage={
+        // Selected hue blooms with its name + shade trio + example objects (§6C). PromptStage's own
+        // chargeKey gives the gentle charge-in on every new hue (reduced-motion parity built in).
+        // Educational color hexes stay DATA (colorContent.ts) — only label text uses the themed
+        // accent for guaranteed contrast; every swatch/shade/object keeps its true hex.
+        <PromptStage accent={t.accentColor} chargeKey={currentHue}>
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: { xs: 0.5, md: 1 },
+              width: '100%',
+              height: '100%',
+            }}
+          >
+            {/* Hue name headline. Hidden on phone landscape — the shade trio's own middle label
+                already reads as the hue name (e.g. "rød"), and the ~90px stage budget there can't
+                fit headline + shades + objects at once (verified via screenshot — it was clipping
+                silently under PromptStage's overflow:hidden). */}
+            <Typography sx={{
+              fontFamily: '"Comic Sans MS", "Comic Neue", sans-serif',
+              fontWeight: 800,
+              textTransform: 'uppercase',
+              letterSpacing: '0.03em',
+              lineHeight: 1,
+              color: dark ? '#FFFFFF' : t.accentColor,
+              textShadow: dark ? '0 2px 10px rgba(0,0,0,0.5)' : 'none',
+              fontSize: 'clamp(1.3rem, 5.5vh, 2.2rem)',
+              [PHONE_LANDSCAPE]: { display: 'none' },
+            }}>
+              {currentHue}
+            </Typography>
+
+            {/* Shade trio (tap each to hear lys/mellem/mørk). */}
+            <Box sx={{ display: 'flex', alignItems: 'flex-end', gap: { xs: 1, md: 1.5 }, [PHONE_LANDSCAPE]: { gap: 0.75 } }}>
+              {shades.map((shade, i) => {
+                const big = i === 1 // middle = the canonical color, shown largest
+                const dim = { xs: big ? 78 : 56, md: big ? 100 : 74 }
+                const dimLand = big ? 56 : 40
+                return (
+                  <Box key={shade.name} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
+                    <motion.div whileHover={{ scale: 1.06 }} whileTap={{ scale: 0.94 }}>
+                      <Box
+                        onClick={() => tapSpeak(`shade-${shade.name}`, shade.name, currentHue)}
+                        sx={{
+                          width: { xs: dim.xs, md: dim.md },
+                          height: { xs: dim.xs, md: dim.md },
+                          [PHONE_LANDSCAPE]: { width: dimLand, height: dimLand },
+                          borderRadius: '50%',
+                          backgroundColor: shade.hex,
+                          backgroundImage: 'linear-gradient(160deg, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0) 45%)',
+                          border: '4px solid white',
+                          cursor: 'pointer',
+                          boxShadow: colorCardShadow(shade.hex, playing === `shade-${shade.name}`),
+                          transition: 'box-shadow 0.25s ease'
+                        }}
+                      />
+                    </motion.div>
+                    <Typography sx={{
+                      fontFamily: '"Comic Sans MS", "Comic Neue", sans-serif',
+                      fontWeight: big ? 800 : 600,
+                      fontSize: big ? 'clamp(0.9rem, 3vw, 1.25rem)' : 'clamp(0.65rem, 2vw, 0.85rem)',
+                      color: dark ? '#FFFFFF' : (big ? t.accentColor : 'text.secondary'),
+                      lineHeight: 1.1,
+                      textAlign: 'center',
+                      [PHONE_LANDSCAPE]: { fontSize: big ? '0.75rem' : '0.6rem' },
+                    }}>
+                      {shade.name}
+                    </Typography>
+                  </Box>
+                )
+              })}
+            </Box>
+
+            {/* Example objects in this color. Hidden on phone landscape (see note above). */}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 0.75, md: 1.25 }, [PHONE_LANDSCAPE]: { display: 'none' } }}>
+              {examples.map((obj) => (
+                <motion.div key={obj.objectName} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
                   <Box
-                    onClick={() => tapSpeak(`shade-${shade.name}`, shade.name, currentHue)}
+                    onClick={() => tapSpeak(`obj-${currentHue}-${obj.objectName}`, `${obj.objectNameDefinite} er ${currentHue}`)}
                     sx={{
-                      width: { xs: dim.xs, md: dim.md },
-                      height: { xs: dim.xs, md: dim.md },
-                      '@media (orientation: landscape)': { width: dimLand, height: dimLand },
-                      borderRadius: '50%',
-                      backgroundColor: shade.hex,
-                      backgroundImage: 'linear-gradient(160deg, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0) 45%)',
-                      border: '4px solid white',
+                      width: { xs: 40, md: 48 },
+                      height: { xs: 40, md: 48 },
+                      [PHONE_LANDSCAPE]: { width: 36, height: 36 },
+                      borderRadius: '12px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
                       cursor: 'pointer',
-                      boxShadow: colorCardShadow(shade.hex, playing === `shade-${shade.name}`),
-                      transition: 'box-shadow 0.25s ease'
+                      background: 'linear-gradient(180deg, #FFFFFF 0%, #ECF1F8 100%)',
+                      border: `2px solid ${hexToRgba(t.accentColor, dark ? 0.55 : 0.32)}`,
+                      boxShadow: dark ? '0 6px 16px rgba(0,0,0,0.45)' : '0 5px 12px rgba(0,0,0,0.12)'
                     }}
-                  />
+                  >
+                    <Typography sx={{ fontSize: { xs: '1.35rem', md: '1.7rem' }, lineHeight: 1, userSelect: 'none' }}>
+                      {obj.emoji}
+                    </Typography>
+                  </Box>
                 </motion.div>
-                <Typography sx={{
-                  fontFamily: '"Comic Sans MS", "Comic Neue", sans-serif',
-                  fontWeight: big ? 800 : 600,
-                  fontSize: big ? 'clamp(1rem, 3.4vw, 1.4rem)' : 'clamp(0.7rem, 2.2vw, 0.92rem)',
-                  color: dark ? '#FFFFFF' : (big ? t.accentColor : 'text.secondary'),
-                  lineHeight: 1.1,
-                  textAlign: 'center'
-                }}>
-                  {shade.name}
-                </Typography>
-              </Box>
+              ))}
+            </Box>
+          </Box>
+        </PromptStage>
+      }
+    >
+      {/* Color picker grid — tap a color to explore it. Centred within the answer zone beneath the
+          bloom (mirrors the pre-PromptStage centring). */}
+      <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 0, width: '100%' }}>
+        <Box sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: 'repeat(3, 1fr)', sm: 'repeat(6, 1fr)' },
+          '@media (orientation: landscape)': { gridTemplateColumns: 'repeat(6, 1fr)' },
+          gap: { xs: 1.25, md: 2 },
+          alignContent: 'center',
+          justifyItems: 'center',
+          width: '100%',
+          maxWidth: 900,
+          mx: 'auto',
+          minHeight: 0,
+          px: { xs: 1, md: 2 }
+        }}>
+          {HUE_ORDER.map((hue) => {
+            const hex = COLOR_SWATCH[hue]
+            const active = hue === currentHue
+            return (
+              <motion.div key={hue} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} style={{ width: '100%' }}>
+                <Box
+                  onClick={() => tapSpeak(`color-${hue}`, hue, hue)}
+                  sx={{
+                    width: '100%',
+                    aspectRatio: '1 / 1',
+                    maxWidth: { xs: 110, sm: 128, md: 150 },
+                    mx: 'auto',
+                    borderRadius: '16px',
+                    display: 'flex',
+                    alignItems: 'flex-end',
+                    justifyContent: 'center',
+                    pb: 0.75,
+                    cursor: 'pointer',
+                    backgroundColor: hex,
+                    backgroundImage: 'linear-gradient(160deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 45%)',
+                    border: active ? '4px solid white' : '3px solid rgba(255,255,255,0.85)',
+                    boxShadow: colorCardShadow(hex, active),
+                    transition: 'box-shadow 0.25s ease'
+                  }}
+                >
+                  <Typography sx={{
+                    fontFamily: '"Comic Sans MS", "Comic Neue", sans-serif',
+                    fontWeight: 800,
+                    fontSize: 'clamp(0.8rem, 2.6vw, 1.05rem)',
+                    color: '#FFFFFF',
+                    textShadow: '0 1px 3px rgba(0,0,0,0.5)',
+                    userSelect: 'none'
+                  }}>
+                    {hue}
+                  </Typography>
+                </Box>
+              </motion.div>
             )
           })}
         </Box>
-
-        {/* Example objects in this color. */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, md: 1.5 } }}>
-          {examples.map((obj) => (
-            <motion.div key={obj.objectName} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-              <Box
-                onClick={() => tapSpeak(`obj-${currentHue}-${obj.objectName}`, `${obj.objectNameDefinite} er ${currentHue}`)}
-                sx={{
-                  width: { xs: 44, md: 54 },
-                  height: { xs: 44, md: 54 },
-                  '@media (orientation: landscape)': { width: 42, height: 42 },
-                  borderRadius: '12px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  cursor: 'pointer',
-                  background: 'linear-gradient(180deg, #FFFFFF 0%, #ECF1F8 100%)',
-                  border: `2px solid ${hexToRgba(t.accentColor, dark ? 0.55 : 0.32)}`,
-                  boxShadow: dark ? '0 6px 16px rgba(0,0,0,0.45)' : '0 5px 12px rgba(0,0,0,0.12)'
-                }}
-              >
-                <Typography sx={{ fontSize: { xs: '1.5rem', md: '1.9rem' }, lineHeight: 1, userSelect: 'none' }}>
-                  {obj.emoji}
-                </Typography>
-              </Box>
-            </motion.div>
-          ))}
-        </Box>
-      </Box>
-
-      {/* Color picker grid — tap a color to explore it. Non-growing so the detail panel + grid
-          read as one centred group (avoids a big dead band between them on tall screens). */}
-      <Box sx={{
-        flex: '0 0 auto',
-        display: 'grid',
-        gridTemplateColumns: { xs: 'repeat(3, 1fr)', sm: 'repeat(6, 1fr)' },
-        '@media (orientation: landscape)': { gridTemplateColumns: 'repeat(6, 1fr)' },
-        gap: { xs: 1.25, md: 2 },
-        alignContent: 'center',
-        justifyItems: 'center',
-        width: '100%',
-        maxWidth: 900,
-        mx: 'auto',
-        minHeight: 0,
-        px: { xs: 1, md: 2 }
-      }}>
-        {HUE_ORDER.map((hue) => {
-          const hex = COLOR_SWATCH[hue]
-          const active = hue === currentHue
-          return (
-            <motion.div key={hue} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} style={{ width: '100%' }}>
-              <Box
-                onClick={() => tapSpeak(`color-${hue}`, hue, hue)}
-                sx={{
-                  width: '100%',
-                  aspectRatio: '1 / 1',
-                  maxWidth: { xs: 110, sm: 128, md: 150 },
-                  mx: 'auto',
-                  borderRadius: '16px',
-                  display: 'flex',
-                  alignItems: 'flex-end',
-                  justifyContent: 'center',
-                  pb: 0.75,
-                  cursor: 'pointer',
-                  backgroundColor: hex,
-                  backgroundImage: 'linear-gradient(160deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 45%)',
-                  border: active ? '4px solid white' : '3px solid rgba(255,255,255,0.85)',
-                  boxShadow: colorCardShadow(hex, active),
-                  transition: 'box-shadow 0.25s ease'
-                }}
-              >
-                <Typography sx={{
-                  fontFamily: '"Comic Sans MS", "Comic Neue", sans-serif',
-                  fontWeight: 800,
-                  fontSize: 'clamp(0.8rem, 2.6vw, 1.05rem)',
-                  color: '#FFFFFF',
-                  textShadow: '0 1px 3px rgba(0,0,0,0.5)',
-                  userSelect: 'none'
-                }}>
-                  {hue}
-                </Typography>
-              </Box>
-            </motion.div>
-          )
-        })}
       </Box>
 
       {/* Exploration-milestone sticker reveal. */}

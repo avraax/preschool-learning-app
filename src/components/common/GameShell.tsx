@@ -1,28 +1,35 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { AppBar, Box, Container, IconButton, Toolbar, Typography, useMediaQuery } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { ArrowLeft } from 'lucide-react'
 import GameMotif from './GameMotif'
-import GameGuide from './GameGuide'
+import Mascot from './Mascot'
 import CelebrationEffect from './CelebrationEffect'
 import { getCategoryTheme } from '../../config/categoryThemes'
 import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
+import { mascotBus } from '../../services/mascotBus'
 import type { GuideReaction } from './ThemeMascot'
 
-// Shared in-game scaffold (Game-Page Rework PRD §A). Every game renders its body into this so
-// the play surface matches the menus: the dimmed world backdrop (GameMotif), a themed header
-// (back / themed title / score — NO redundant section icon), a bottom-corner GameGuide that
-// reacts to answers, and the themed CelebrationEffect. Content lives in a no-scroll flex column.
+// Shared in-game scaffold (Game-Page Rework + UI/UX Overhaul PRD §5.3). Every game renders its
+// body into this: the dimmed world backdrop (GameMotif), a themed header (back / title / score),
+// the reactive corner Mascot, and the themed CelebrationEffect.
+//
+// Layout: when a `promptStage` is supplied the body becomes a top-anchored 3-zone column
+// (title → PromptStage slot sized to ~34–42% of the body / ~26–34% phone-landscape → answer zone),
+// eliminating the old "dead vertical band". Games with no prompt (learning/memory grids) omit
+// `promptStage` and keep the centred, grid-filling behaviour.
 
 interface GameShellProps {
   categoryId: string                 // 'alphabet' | 'math' | 'colors' | 'english' | 'ordleg'
   title: string
   backRoute: string
   score?: React.ReactNode
-  guideReaction?: GuideReaction      // 'cheer' on correct, 'think' on wrong
+  guideReaction?: GuideReaction      // 'cheer' on correct, 'think' on wrong (bridged to mascotBus)
   celebration?: { show: boolean; intensity?: 'low' | 'medium' | 'high'; duration?: number; onComplete?: () => void }
+  // Framed focal zone (PromptStage). When set, the body uses the anti-void 3-zone layout.
+  promptStage?: React.ReactNode
   // Hide the corner companion on screens whose play area fills the viewport (learning/memory/
   // color grids), where a bottom-corner mascot would overlap interactive content.
   guide?: boolean
@@ -38,6 +45,7 @@ const GameShell: React.FC<GameShellProps> = ({
   score,
   guideReaction = null,
   celebration,
+  promptStage,
   guide = true,
   dense = false,
   children,
@@ -51,6 +59,14 @@ const GameShell: React.FC<GameShellProps> = ({
   // and score) so its own row's height goes to the game body instead.
   const phoneLandscape = useMediaQuery(PHONE_LANDSCAPE.replace('@media ', ''))
 
+  // Bridge the legacy `guideReaction` prop onto the mascot bus so EVERY game that already reports
+  // cheer/think gets a reactive mascot with no per-file wiring. Richer events (streak/round/hint/
+  // sticker) are emitted directly by games that opt in.
+  useEffect(() => {
+    if (guideReaction === 'cheer') mascotBus.emit('correct')
+    else if (guideReaction === 'think') mascotBus.emit('wrong')
+  }, [guideReaction])
+
   return (
     <Box
       sx={{
@@ -60,14 +76,9 @@ const GameShell: React.FC<GameShellProps> = ({
         overflow: 'hidden',
         display: 'flex',
         flexDirection: 'column',
-        // Consistent safe-area inset (matches the section menus + home) so the header clears the
-        // iOS status bar / notch and sits at the same spot on every page.
         paddingTop: 'calc(env(safe-area-inset-top) + 8px)',
         paddingLeft: 'env(safe-area-inset-left)',
         paddingRight: 'env(safe-area-inset-right)',
-        // Immersive skins: transparent so the app-wide <PersistentWorld/> scene shows through —
-        // it fades in its own dim/blur scrim on game routes, so the in-game world stays calm.
-        // Flat skins keep the bold category gradient + GameMotif's CSS accent.
         background: immersive ? 'transparent' : category.gradient,
       }}
     >
@@ -81,7 +92,6 @@ const GameShell: React.FC<GameShellProps> = ({
           sx={{
             justifyContent: 'space-between',
             py: 2,
-            // Phone landscape: every vertical pixel goes to the game body.
             [PHONE_LANDSCAPE]: { py: 0.25, minHeight: '48px !important' },
           }}
         >
@@ -145,7 +155,7 @@ const GameShell: React.FC<GameShellProps> = ({
           <Box
             sx={{
               textAlign: 'center',
-              mb: dense ? { xs: 1, md: 1.5 } : { xs: 2, md: 3 },
+              mb: promptStage ? { xs: 1, md: 1.5 } : dense ? { xs: 1, md: 1.5 } : { xs: 2, md: 3 },
               flex: '0 0 auto',
             }}
           >
@@ -160,7 +170,6 @@ const GameShell: React.FC<GameShellProps> = ({
                   fontFamily: theme.titleFontFamily,
                   color: dark ? '#FFFFFF' : category.accentColor,
                   fontWeight: 700,
-                  // Unified across all games (dense only affects paddings/margins, not the title).
                   fontSize: { xs: '1.6rem', md: '2.1rem' },
                   textShadow: dark
                     ? '0 0 16px rgba(120,170,255,0.55), 0 2px 8px rgba(0,0,0,0.5)'
@@ -173,17 +182,34 @@ const GameShell: React.FC<GameShellProps> = ({
           </Box>
         )}
 
-        {/* Per-game body. Centres its content vertically so the prompt and the answers read as
-            one group (games whose body has a flex:1 child still fill the area — flex-grow wins,
-            so grid-filling games like the learning/memory boards are unaffected). */}
-        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', minHeight: 0 }}>
-          {children}
-        </Box>
+        {/* Per-game body. With a PromptStage: top-anchored 3-zone column (stage sized to a fixed
+            fraction so no game floats in a void). Without: centred, grid-filling (learning/memory). */}
+        {promptStage ? (
+          <Box data-game-body sx={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+            <Box
+              sx={{
+                flex: phoneLandscape ? '30 1 0' : '40 1 0',
+                minHeight: 0,
+                display: 'flex',
+                mb: { xs: 1, md: 1.5 },
+                [PHONE_LANDSCAPE]: { mb: 0.5 },
+              }}
+            >
+              {promptStage}
+            </Box>
+            <Box sx={{ flex: phoneLandscape ? '70 1 0' : '60 1 0', minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+              {children}
+            </Box>
+          </Box>
+        ) : (
+          <Box data-game-body sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', minHeight: 0 }}>
+            {children}
+          </Box>
+        )}
       </Container>
 
-      {/* Bottom-left corner companion that reacts to answers (omitted where it would overlap a
-          full-viewport interactive grid). */}
-      {guide && <GameGuide reaction={guideReaction} />}
+      {/* Reactive corner mascot (bus-driven). Omitted where it would overlap a full-viewport grid. */}
+      {guide && <Mascot />}
 
       {celebration && (
         <CelebrationEffect

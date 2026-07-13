@@ -110,7 +110,7 @@ const SpellingGame: React.FC = () => {
   const hasInteractedRef = useRef(false)
 
   // Centralized game state management
-  const { score, incrementScore, resetScore, isScoreNarrating, handleScoreClick } = useGameState()
+  const { incrementScore, resetScore, isScoreNarrating, handleScoreClick } = useGameState()
 
   // Bounded round + reward flow (Overhaul Ordleg §2). 8 words, 3★ = no mistakes, 2★ ≤ 2.
   const round = useRound({ length: 8, starThresholds: { three: 0, two: 2 } })
@@ -371,7 +371,8 @@ const SpellingGame: React.FC = () => {
       guideReaction={guideReaction}
       score={
         <OrdlegScoreChip
-          score={score}
+          answered={round.state.index}
+          total={round.length}
           disabled={isScoreNarrating}
           onClick={handleScoreClick}
         />

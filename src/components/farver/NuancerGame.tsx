@@ -1,25 +1,31 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
-import { Box, Typography } from '@mui/material'
+import { Box, Typography, useMediaQuery } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
-import { DndContext, DragEndEvent, DragStartEvent, closestCenter, DragOverlay } from '@dnd-kit/core'
+import { DndContext, DragEndEvent, DragStartEvent, DragOverEvent, closestCenter, DragOverlay } from '@dnd-kit/core'
 import { useDragOnlySensors } from '../common/dnd/useDragOnlySensors'
 import { DraggableItem } from '../common/dnd/DraggableItem'
 import { DroppableZone } from '../common/dnd/DroppableZone'
 import { getCategoryTheme } from '../../config/categoryThemes'
 import { SHADES, HUE_ORDER, type ColorShade } from '../../config/colorContent'
-import { darken } from '../../theme/tokens/helpers'
+import { darken, hexToRgba } from '../../theme/tokens/helpers'
+import { SNAP } from '../../theme/motion'
+import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 import GameShell from '../common/GameShell'
+import PromptStage from '../common/PromptStage'
 import RoundResultScreen from '../common/RoundResultScreen'
 import type { GuideReaction } from '../common/ThemeMascot'
 import { useCelebration } from '../common/CelebrationEffect'
 import { ColorProgressChip } from '../common/ScoreChip'
+import { useDifficulty } from '../../hooks/useDifficulty'
 import { ColorRepeatButton } from '../common/RepeatButton'
 import { useRound } from '../../hooks/useRound'
 import { progressStore, type RoundOutcome } from '../../services/progressStore'
 import { sfx } from '../../services/sfxClient'
+import { mascotBus } from '../../services/mascotBus'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
 import { isIOS } from '../../utils/deviceDetection'
+import { devFx } from '../../utils/devHarness'
 import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 
 // Nuancer — order shades of one hue from LIGHT to DARK. The real discrimination stretch in the
@@ -27,6 +33,12 @@ import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 // shade into its slot (left = lightest, right = darkest). A wrong slot bounces back (gentle SFX +
 // shake); after 2 wrong drops the correct tile for the next empty slot pulses (never-fail hint,
 // costs a star). Bounded round of 8 → RoundResultScreen. Static difficulty — edit the levers below.
+//
+// UI/UX Overhaul §6C: the slot row now lives in PromptStage (it IS the prompt — this kills the old
+// top void), and the tray of draggable shades is the answer zone beneath it. Shared drag juice:
+// grab = lift + 'pick-up' SFX; a compatible drop target breathes while hovered; a correct drop
+// SNAPs into place + a localized burst; a wrong drop springs back + 'spring-back' SFX. Reduced
+// motion drops the travel/particles but keeps colour/glow + SFX.
 
 // ── Tuning levers ─────────────────────────────────────────────────────────────────────────────
 const ROUND_QUESTIONS = 8          // orderings per round → RoundResultScreen
@@ -46,14 +58,25 @@ const NuancerGame: React.FC = () => {
   const reduce = useReducedMotion()
   const t = getCategoryTheme('colors')
   const sensors = useDragOnlySensors()
+  // PromptStage is much shorter on phone-landscape (GameShell's 30:70 split vs 40:60 on iPad) — too
+  // short to also fit RepeatButton's fixed (un-shrinkable) size alongside the slot row. On phone
+  // landscape the repeat button moves down into the answer zone instead, so PromptStage's full
+  // height goes entirely to the slot row.
+  const phoneLandscape = useMediaQuery(PHONE_LANDSCAPE.replace('@media ', ''))
 
-  // Current question: a hue's shades (correct light→dark order) + a scrambled tray.
+  // Current question: a hue's shades (correct light→dark order) + a scrambled tray. Difficulty
+  // (progressStore.difficultyFor('colors')) tunes the shade count: Let orders just 2 (lightest +
+  // darkest); Normal (today, unchanged) orders all 3; Svær keeps all 3 but folds in 1 decoy shade
+  // from a different hue with no slot of its own — a genuine "does this belong?" distractor,
+  // assembled purely from the existing exported SHADES data (colorContent.ts stays untouched).
   const [order, setOrder] = useState<ColorShade[]>([])     // correct order (light→dark); slot i wants order[i]
-  const [tray, setTray] = useState<ColorShade[]>([])       // scrambled display order
+  const [tray, setTray] = useState<ColorShade[]>([])       // scrambled display order (may include a decoy)
   const [slots, setSlots] = useState<(string | null)[]>([]) // placed shade name per slot index, or null
   const [shakeName, setShakeName] = useState<string | null>(null)
   const [hintName, setHintName] = useState<string | null>(null)
-  const [, setActiveId] = useState<string | null>(null)
+  const [activeId, setActiveId] = useState<string | null>(null)   // currently-grabbed tray tile (lift juice)
+  const [overId, setOverId] = useState<string | null>(null)       // slot currently hovered (breathe juice)
+  const [burstSlot, setBurstSlot] = useState<number | null>(null) // localized burst on a just-filled slot
   const slotWrongRef = useRef(0)
 
   const audio = useSimplifiedAudioHook({ componentId: 'NuancerGame', autoInitialize: false })
@@ -67,6 +90,7 @@ const NuancerGame: React.FC = () => {
   const [guideReaction, setGuideReaction] = useState<GuideReaction>(null)
   const guideReactionTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const advanceTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const burstTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const hasInitialized = useRef(false)
   const startedRef = useRef(false)
@@ -89,24 +113,56 @@ const NuancerGame: React.FC = () => {
 
   const INSTRUCTION = 'Sæt farverne fra lys til mørk'
 
-  useEffect(() => {
-    if (hasInitialized.current) return
-    hasInitialized.current = true
+  // Pick a fresh hue (avoid immediate repeat) and scramble its shades. `voice=false` skips audio.
+  const setupQuestion = (voice = true) => {
+    isAdvancing.current = false
+    let hues = HUE_ORDER.filter((h) => h !== previousHue.current)
+    if (hues.length === 0) hues = [...HUE_ORDER]
+    const hue = hues[Math.floor(Math.random() * hues.length)]
+    previousHue.current = hue
 
-    revealBoard()
-    if (audio.isAudioReady) playWelcomeThenInstructions()
+    const fullShades = SHADES[hue]
+    const difficulty = progressStore.difficultyFor('colors')
+    // Let: order just the lightest + darkest (2 slots — a simpler binary task).
+    // Normal: all 3 shades (today, unchanged — regression-safe).
+    // Svær: all 3 shades too (see the decoy tile below for the added challenge).
+    const correct = difficulty === 'let' ? [fullShades[0], fullShades[fullShades.length - 1]] : fullShades
+    setOrder(correct)
 
-    return () => {
-      if (guideReactionTimer.current) clearTimeout(guideReactionTimer.current)
-      if (advanceTimer.current) clearTimeout(advanceTimer.current)
+    // Re-shuffle until the scrambled order isn't already sorted, so it's always a real task.
+    let scrambled = shuffle(correct)
+    let guard = 0
+    while (guard++ < 8 && scrambled.every((s, i) => s.name === correct[i].name)) {
+      scrambled = shuffle(correct)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
 
-  useEffect(() => {
-    if (audio.isAudioReady && !welcomeTriggered.current) playWelcomeThenInstructions()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [audio.isAudioReady])
+    // Svær: fold in one decoy shade from a different hue — it has no slot, so the child must
+    // recognise it doesn't belong to this hue's light→dark run (Appendix A: "more distractors"),
+    // built purely from the existing exported SHADES data (colorContent.ts stays untouched).
+    if (difficulty === 'svaer') {
+      const otherHues = HUE_ORDER.filter((h) => h !== hue)
+      const decoyHue = otherHues[Math.floor(Math.random() * otherHues.length)]
+      const decoyShades = SHADES[decoyHue]
+      const decoy = decoyShades[Math.floor(Math.random() * decoyShades.length)]
+      scrambled = shuffle([...scrambled, decoy])
+    }
+
+    setTray(scrambled)
+    setSlots(correct.map(() => null))
+    setShakeName(null)
+    setHintName(null)
+    setBurstSlot(null)
+    slotWrongRef.current = 0
+    firstAttemptRef.current = true
+
+    if (!voice) return
+    const delay = isIOS() ? 150 : 350
+    if (advanceTimer.current) clearTimeout(advanceTimer.current)
+    advanceTimer.current = setTimeout(() => {
+      audio.updateUserInteraction()
+      audio.speak(INSTRUCTION).catch(() => {})
+    }, delay)
+  }
 
   const revealBoard = () => {
     if (startedRef.current) return
@@ -133,37 +189,34 @@ const NuancerGame: React.FC = () => {
     }
   }
 
-  // Pick a fresh hue (avoid immediate repeat) and scramble its shades. `voice=false` skips audio.
-  const setupQuestion = (voice = true) => {
-    isAdvancing.current = false
-    let hues = HUE_ORDER.filter((h) => h !== previousHue.current)
-    if (hues.length === 0) hues = [...HUE_ORDER]
-    const hue = hues[Math.floor(Math.random() * hues.length)]
-    previousHue.current = hue
+  useEffect(() => {
+    if (hasInitialized.current) return
+    hasInitialized.current = true
 
-    const correct = SHADES[hue]
-    setOrder(correct)
-    // Re-shuffle until the scrambled order isn't already sorted, so it's always a real task.
-    let scrambled = shuffle(correct)
-    let guard = 0
-    while (guard++ < 8 && scrambled.every((s, i) => s.name === correct[i].name)) {
-      scrambled = shuffle(correct)
+    revealBoard()
+    if (audio.isAudioReady) playWelcomeThenInstructions()
+
+    return () => {
+      if (guideReactionTimer.current) clearTimeout(guideReactionTimer.current)
+      if (advanceTimer.current) clearTimeout(advanceTimer.current)
+      if (burstTimer.current) clearTimeout(burstTimer.current)
     }
-    setTray(scrambled)
-    setSlots(correct.map(() => null))
-    setShakeName(null)
-    setHintName(null)
-    slotWrongRef.current = 0
-    firstAttemptRef.current = true
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
-    if (!voice) return
-    const delay = isIOS() ? 150 : 350
-    if (advanceTimer.current) clearTimeout(advanceTimer.current)
-    advanceTimer.current = setTimeout(() => {
-      audio.updateUserInteraction()
-      audio.speak(INSTRUCTION).catch(() => {})
-    }, delay)
-  }
+  useEffect(() => {
+    if (audio.isAudioReady && !welcomeTriggered.current) playWelcomeThenInstructions()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [audio.isAudioReady])
+
+  // DEV screenshot harness (?fx=correct|wrong|hint): a PURE render-time derivation (no setState in
+  // an effect — mirrors UnifiedQuizGame's `tileStateFor`), so it's persistent/capturable with no
+  // auto-advance cascade. The effect below only notifies the mascot (an external system), which is
+  // the one thing effects legitimately do. No-op in production (devFx() is DEV-only).
+  const forcedFx = devFx()
+  useEffect(() => {
+    if (forcedFx === 'hint') mascotBus.emit('hint')
+  }, [forcedFx])
 
   const finishRound = (firstTryCorrect: number, longestStreak: number) => {
     const outcome = progressStore.recordRoundResult(
@@ -200,11 +253,22 @@ const NuancerGame: React.FC = () => {
   const handleDragStart = (event: DragStartEvent) => {
     audio.cancelCurrentAudio()
     setActiveId(event.active.id as string)
+    sfx.play('pick-up')
+  }
+
+  const handleDragOver = (event: DragOverEvent) => {
+    setOverId(event.over ? String(event.over.id) : null)
+  }
+
+  const handleDragCancel = () => {
+    setActiveId(null)
+    setOverId(null)
   }
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event
     setActiveId(null)
+    setOverId(null)
     if (!gameReady || isAdvancing.current) return
 
     const shadeName = active.id as string
@@ -212,35 +276,41 @@ const NuancerGame: React.FC = () => {
     hasInteractedRef.current = true
     audio.updateUserInteraction()
 
-    if (!over) return // dropped on empty space → snaps back
+    if (!over) return // dropped on empty space → springs back
     const m = /^slot-(\d+)$/.exec(String(over.id))
     if (!m) return
     const i = Number(m[1])
-    if (slots[i]) return // slot already filled → snaps back
+    if (slots[i]) return // slot already filled → springs back
 
     if (order[i] && shadeName === order[i].name) {
-      // Correct slot → lock it in.
+      // Correct slot → lock it in with a SNAP + a localized burst.
       const next = [...slots]
       next[i] = shadeName
       setSlots(next)
       slotWrongRef.current = 0
       setHintName(null)
       sfx.play('drop-snap')
+      setBurstSlot(i)
+      if (burstTimer.current) clearTimeout(burstTimer.current)
+      burstTimer.current = setTimeout(() => setBurstSlot(null), 500)
       // Identify the placed shade (educational echo). No win/lose narration.
       audio.cancelCurrentAudio()
       audio.speak(shadeName).catch(() => {})
       if (next.every((s) => s !== null)) completeQuestion()
     } else {
-      // Wrong slot → bounce back (automatic) + gentle SFX + shake, break first-try.
+      // Wrong slot → springs back (automatic) + gentle SFX + shake, break first-try.
       firstAttemptRef.current = false
-      sfx.play('wrong')
+      sfx.play('spring-back')
       setShakeName(shadeName)
       reactGuide('think')
       setTimeout(() => setShakeName(null), 450)
       slotWrongRef.current += 1
       if (slotWrongRef.current >= WRONG_BEFORE_HINT) {
         const firstEmpty = slots.findIndex((s) => !s)
-        if (firstEmpty >= 0 && order[firstEmpty]) setHintName(order[firstEmpty].name)
+        if (firstEmpty >= 0 && order[firstEmpty]) {
+          setHintName(order[firstEmpty].name)
+          mascotBus.emit('hint')
+        }
       }
     }
   }
@@ -251,88 +321,112 @@ const NuancerGame: React.FC = () => {
     audio.speak(INSTRUCTION).catch(() => {})
   }
 
-  // Tile geometry (lifted-3D, colored). Slightly smaller in landscape so the row + tray fit.
+  // Tile geometry (lifted-3D, colored). Smaller in landscape so the row + tray fit; phone-landscape
+  // shrinks further to the 44px touch-target floor (PromptStage's own allocation is much shorter
+  // there) — shared by both the slot row (in PromptStage) and the tray (below) so they match.
   const tileSx = {
     width: { xs: 66, sm: 76, md: 88 },
     height: { xs: 66, sm: 76, md: 88 },
     '@media (orientation: landscape)': { width: 60, height: 60 },
+    [PHONE_LANDSCAPE]: { width: 44, height: 44 },
     borderRadius: '16px'
   } as const
 
   const liftedShadow = (hex: string) =>
     `0 5px 0 ${darken(hex, 0.28)}, ${muiTheme.scene.dark ? '0 10px 24px rgba(0,0,0,0.45)' : '0 7px 16px rgba(0,0,0,0.12)'}`
 
-  const remaining = tray.filter((s) => !slots.includes(s.name))
-  const allPlaced = slots.length > 0 && slots.every((s) => s !== null)
+  // Bigger, raised shadow for the currently-grabbed tray tile (§6C shared drag juice).
+  const grabShadow = (hex: string) =>
+    `0 3px 0 ${darken(hex, 0.32)}, 0 18px 30px rgba(0,0,0,${muiTheme.scene.dark ? 0.55 : 0.3}), 0 0 0 4px rgba(255,255,255,0.6)`
 
-  return (
-    <GameShell
-      categoryId="colors"
-      title="Nuancer"
-      backRoute="/farver"
-      dense
-      guideReaction={guideReaction}
-      score={<ColorProgressChip score={round.state.index} target={ROUND_QUESTIONS} onClick={repeatInstruction} />}
-      celebration={{ show: showCelebration, intensity: celebrationIntensity, duration: celebrationDuration, onComplete: stopCelebration }}
-    >
-      {roundOutcome ? (
-        <RoundResultScreen
-          outcome={roundOutcome}
-          categoryId="colors"
-          backRoute="/farver"
-          onReplay={handleReplay}
-        />
-      ) : gameReady && order.length > 0 && (
-        <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd} collisionDetection={closestCenter}>
-          {/* Repeat instruction */}
-          <Box sx={{ textAlign: 'center', mb: { xs: 1, md: 1.5 }, flex: '0 0 auto' }}>
-            <ColorRepeatButton onClick={repeatInstruction} disabled={false} label="🎵 Hør igen" />
-          </Box>
+  // Forced ?fx= states (DEV screenshot harness) — pure render-time overrides layered on the real
+  // state, never mutating it. 'correct' fills every slot from the real answer (shows SNAP + the
+  // completed-row shimmer); 'wrong'/'hint' target the first tray tile / first empty slot.
+  const displaySlots = forcedFx === 'correct' && order.length > 0 ? order.map((s) => s.name) : slots
+  const displayHintName = forcedFx === 'hint' ? (hintName ?? order[0]?.name ?? null) : hintName
+  const displayShakeName = forcedFx === 'wrong' ? (shakeName ?? tray[0]?.name ?? null) : shakeName
 
+  const remaining = tray.filter((s) => !displaySlots.includes(s.name))
+  const allPlaced = displaySlots.length > 0 && displaySlots.every((s) => s !== null)
+
+  // The slot row IS the prompt (§6C: "raise the light→dark slot row into PromptStage height" —
+  // kills the old top void). Charge-in re-triggers per question via chargeKey (derived from STATE,
+  // not the `previousHue` ref, so it's safe to read during render).
+  const promptStageContent =
+    roundOutcome || !gameReady || order.length === 0 ? undefined : (
+      <PromptStage
+        accent={t.accentColor}
+        chargeKey={`${order[0]?.hex ?? ''}-${round.state.index}`}
+        repeat={phoneLandscape ? undefined : <ColorRepeatButton onClick={repeatInstruction} disabled={false} label="🎵 Hør igen" />}
+      >
+        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: { xs: 1, md: 1.5 }, width: '100%', [PHONE_LANDSCAPE]: { gap: 0.25 } }}>
           {/* Slot row (drop targets): left = lightest, right = darkest. */}
-          <Box sx={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            gap: { xs: 1, md: 1.5 },
-            flex: '0 0 auto',
-            mb: 0.5,
-            '@media (orientation: landscape)': { mb: 0.25 }
-          }}>
-            {slots.map((placedName, index) => {
+          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: { xs: 1, md: 1.5 }, [PHONE_LANDSCAPE]: { gap: 0.5 } }}>
+            {displaySlots.map((placedName, index) => {
               const placedShade = placedName ? order.find((s) => s.name === placedName) : undefined
+              const isOverThis = overId === `slot-${index}`
+              const slotAnimate = allPlaced && !reduce
+                ? { scale: [1, 1.12, 1] }
+                : isOverThis && !reduce
+                  ? { scale: [1, 1.06, 1] }
+                  : { scale: 1 }
+              const slotTransition = allPlaced && !reduce
+                ? { duration: 0.5, delay: index * 0.12, ease: 'easeOut' as const }
+                : isOverThis && !reduce
+                  ? { duration: 0.7, repeat: Infinity, ease: 'easeInOut' as const }
+                  : { duration: 0.3 }
               return (
-                <motion.div
-                  key={`slot-${index}`}
-                  animate={!reduce && allPlaced ? { scale: [1, 1.08, 1] } : { scale: 1 }}
-                  transition={{ duration: 0.4 }}
-                >
-                  <Box sx={tileSx}>
-                    <DroppableZone
-                      id={`slot-${index}`}
-                      overColor={muiTheme.scene.dark ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.6)'}
-                      style={{
-                        width: '100%',
-                        height: '100%',
-                        borderRadius: '16px',
-                        border: placedShade ? '3px solid white' : `3px dashed ${t.borderColor}`,
-                        backgroundColor: placedShade ? placedShade.hex : 'rgba(255,255,255,0.45)',
-                        boxShadow: placedShade ? liftedShadow(placedShade.hex) : 'none',
-                        transition: 'background-color 0.25s ease, box-shadow 0.25s ease'
-                      }}
-                    />
+                <motion.div key={`slot-${index}`} animate={slotAnimate} transition={slotTransition}>
+                  <Box sx={{ ...tileSx, position: 'relative' }}>
+                    <motion.div
+                      key={placedName ?? 'empty'}
+                      initial={placedName && !reduce ? { scale: 0.55 } : false}
+                      animate={{ scale: 1 }}
+                      transition={placedName && !reduce ? SNAP : { duration: 0 }}
+                      style={{ width: '100%', height: '100%' }}
+                    >
+                      <DroppableZone
+                        id={`slot-${index}`}
+                        overColor={muiTheme.scene.dark ? 'rgba(255,255,255,0.22)' : 'rgba(255,255,255,0.65)'}
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          borderRadius: '16px',
+                          border: placedShade ? '3px solid white' : `3px dashed ${isOverThis ? t.accentColor : t.borderColor}`,
+                          backgroundColor: placedShade ? placedShade.hex : 'rgba(255,255,255,0.45)',
+                          boxShadow: placedShade
+                            ? liftedShadow(placedShade.hex)
+                            : isOverThis
+                              ? `0 0 0 4px ${hexToRgba(t.accentColor, 0.5)}, 0 4px 12px rgba(0,0,0,0.15)`
+                              : 'none',
+                          transition: 'background-color 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease'
+                        }}
+                      />
+                    </motion.div>
+                    {burstSlot === index && !reduce && placedShade && (
+                      <motion.div
+                        initial={{ scale: 0.6, opacity: 0.9 }}
+                        animate={{ scale: 1.9, opacity: 0 }}
+                        transition={{ duration: 0.5, ease: 'easeOut' }}
+                        style={{
+                          position: 'absolute',
+                          inset: 0,
+                          borderRadius: '16px',
+                          backgroundColor: placedShade.hex,
+                          pointerEvents: 'none'
+                        }}
+                      />
+                    )}
                   </Box>
                 </motion.div>
               )
             })}
           </Box>
 
-          {/* Lys → Mørk direction hint (icons, language-light). */}
-          <Box sx={{
-            display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 1,
-            flex: '0 0 auto', mb: { xs: 1.5, md: 2 },
-            '@media (orientation: landscape)': { mb: 1 }
-          }}>
+          {/* Lys → Mørk direction hint (icons, language-light). Phone-landscape hides this
+              decorative reinforcement — PromptStage is too short there for a 3rd row, and the
+              slot order itself still shows light→dark. */}
+          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 1, [PHONE_LANDSCAPE]: { display: 'none' } }}>
             <Typography sx={{ fontSize: '1.3rem', lineHeight: 1 }}>☀️</Typography>
             <Typography sx={{
               fontFamily: '"Comic Sans MS", "Comic Neue", sans-serif',
@@ -344,66 +438,125 @@ const NuancerGame: React.FC = () => {
             </Typography>
             <Typography sx={{ fontSize: '1.3rem', lineHeight: 1 }}>🌙</Typography>
           </Box>
+        </Box>
+      </PromptStage>
+    )
 
-          {/* Tray: the scrambled shades still to place (drag into a slot). */}
-          <Box sx={{
-            flex: '0 1 auto',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            flexWrap: 'wrap',
-            gap: { xs: 1.5, md: 2 },
-            minHeight: { xs: 72, md: 96 }
-          }}>
-            {remaining.map((shade) => {
-              const isHint = hintName === shade.name
-              const isShaking = shakeName === shade.name
-              const animate = isShaking
-                ? { x: [0, -10, 10, -10, 10, 0], scale: 1 }
-                : isHint && !reduce
-                  ? { scale: [1, 1.14, 1], x: 0 }
-                  : { scale: 1, x: 0 }
-              const transition = isShaking
-                ? { duration: 0.45 }
-                : isHint && !reduce
-                  ? { duration: 1.1, repeat: Infinity, ease: 'easeInOut' as const }
-                  : { duration: 0.25 }
-              return (
-                // Force the absolutely-positioned DraggableItem to flow inline in this flex tray.
-                <Box
-                  key={shade.name}
-                  sx={{
-                    position: 'relative !important',
-                    left: 'auto !important',
-                    top: 'auto !important',
-                    '& > div': { position: 'relative !important', left: 'auto !important', top: 'auto !important' }
-                  }}
-                >
-                  <DraggableItem id={shade.name} disabled={!gameReady} data={shade}>
-                    <motion.div animate={animate} transition={transition}>
-                      <Box sx={{
-                        ...tileSx,
-                        backgroundColor: shade.hex,
-                        border: '3px solid white',
-                        cursor: 'grab',
-                        userSelect: 'none',
-                        boxShadow: isHint
-                          ? `0 0 0 5px ${t.accentColor}88, 0 6px 14px rgba(0,0,0,0.2)`
-                          : liftedShadow(shade.hex),
-                        transition: 'box-shadow 0.25s ease',
-                        '&:active': { cursor: 'grabbing' }
-                      }} />
-                    </motion.div>
-                  </DraggableItem>
-                </Box>
-              )
-            })}
+  // Live difficulty: rebuild the current question when the level changes in the adult menu (no
+  // refresh). Skips the result screen + the initial mount.
+  const difficultyLevel = useDifficulty('colors')
+  const prevDifficultyRef = useRef(difficultyLevel)
+  useEffect(() => {
+    if (prevDifficultyRef.current === difficultyLevel) return
+    prevDifficultyRef.current = difficultyLevel
+    if (roundOutcome || !gameReady) return
+    setupQuestion()
+  }, [difficultyLevel]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  return (
+    <DndContext
+      sensors={sensors}
+      onDragStart={handleDragStart}
+      onDragOver={handleDragOver}
+      onDragEnd={handleDragEnd}
+      onDragCancel={handleDragCancel}
+      collisionDetection={closestCenter}
+    >
+      <GameShell
+        categoryId="colors"
+        title="Nuancer"
+        backRoute="/farver"
+        dense
+        guideReaction={guideReaction}
+        score={<ColorProgressChip answered={round.state.index} total={ROUND_QUESTIONS} onClick={repeatInstruction} />}
+        promptStage={promptStageContent}
+        celebration={{ show: showCelebration, intensity: celebrationIntensity, duration: celebrationDuration, onComplete: stopCelebration }}
+      >
+        {roundOutcome ? (
+          <RoundResultScreen
+            outcome={roundOutcome}
+            categoryId="colors"
+            backRoute="/farver"
+            onReplay={handleReplay}
+          />
+        ) : gameReady && order.length > 0 ? (
+          <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+            {/* Phone-landscape only: RepeatButton relocated here from PromptStage (see phoneLandscape
+                above) so the slot row gets the stage's full (short) height. */}
+            {phoneLandscape && (
+              <Box sx={{ textAlign: 'center', flex: '0 0 auto', mb: 0.5 }}>
+                <ColorRepeatButton onClick={repeatInstruction} disabled={false} label="🎵 Hør igen" />
+              </Box>
+            )}
+            {/* Tray: the scrambled shades still to place (drag into a slot above). Top-aligned (not
+                centred) so it sits just under the PromptStage slots as one tight cluster instead of
+                floating in the middle of the answer zone. */}
+            <Box sx={{
+              flex: 1,
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'flex-start',
+              flexWrap: 'wrap',
+              gap: { xs: 1.5, md: 2 },
+              pt: { xs: 1.5, md: 3 },
+              minHeight: 0
+            }}>
+              {remaining.map((shade) => {
+                const isLifted = activeId === shade.name
+                const isHint = displayHintName === shade.name
+                const isShaking = displayShakeName === shade.name
+                const animate = isLifted && !reduce
+                  ? { scale: 1.08, rotate: 6, x: 0 }
+                  : isShaking
+                    ? { x: [0, -10, 10, -10, 10, 0], scale: 1, rotate: 0 }
+                    : isHint && !reduce
+                      ? { scale: [1, 1.14, 1], x: 0, rotate: 0 }
+                      : { scale: 1, x: 0, rotate: 0 }
+                const transition = isLifted && !reduce
+                  ? SNAP
+                  : isShaking
+                    ? { duration: 0.45 }
+                    : isHint && !reduce
+                      ? { duration: 1.1, repeat: Infinity, ease: 'easeInOut' as const }
+                      : { duration: 0.25 }
+                return (
+                  // Force the absolutely-positioned DraggableItem to flow inline in this flex tray.
+                  <Box
+                    key={shade.name}
+                    sx={{
+                      position: 'relative !important',
+                      left: 'auto !important',
+                      top: 'auto !important',
+                      '& > div': { position: 'relative !important', left: 'auto !important', top: 'auto !important' }
+                    }}
+                  >
+                    <DraggableItem id={shade.name} disabled={!gameReady} data={shade}>
+                      <motion.div animate={animate} transition={transition}>
+                        <Box sx={{
+                          ...tileSx,
+                          backgroundColor: shade.hex,
+                          border: '3px solid white',
+                          cursor: 'grab',
+                          userSelect: 'none',
+                          boxShadow: isLifted
+                            ? grabShadow(shade.hex)
+                            : isHint
+                              ? `0 0 0 5px ${t.accentColor}88, 0 6px 14px rgba(0,0,0,0.2)`
+                              : liftedShadow(shade.hex),
+                          transition: 'box-shadow 0.25s ease',
+                          '&:active': { cursor: 'grabbing' }
+                        }} />
+                      </motion.div>
+                    </DraggableItem>
+                  </Box>
+                )
+              })}
+            </Box>
           </Box>
-
-          <DragOverlay>{null}</DragOverlay>
-        </DndContext>
-      )}
-    </GameShell>
+        ) : null}
+      </GameShell>
+      <DragOverlay>{null}</DragOverlay>
+    </DndContext>
   )
 }
 

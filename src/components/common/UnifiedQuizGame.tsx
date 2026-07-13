@@ -5,13 +5,19 @@ import { isIOS } from '../../utils/deviceDetection'
 import { CategoryTheme } from '../../config/categoryThemes'
 import GameShell from './GameShell'
 import AnswerTile, { type AnswerTileState } from './AnswerTile'
+import PromptStage, { HeroEmoji } from './PromptStage'
 import type { GuideReaction } from './ThemeMascot'
 import { useCelebration } from '../common/CelebrationEffect'
 import { useGameState } from '../../hooks/useGameState'
 import { useRound, type RoundConfig } from '../../hooks/useRound'
-import { progressStore, type RoundOutcome } from '../../services/progressStore'
+import { progressStore, type RoundOutcome, type SectionId } from '../../services/progressStore'
+import { useDifficulty } from '../../hooks/useDifficulty'
 import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 import { sfx } from '../../services/sfxClient'
+import { mascotBus } from '../../services/mascotBus'
+import { useReducedMotion } from '../../hooks/useReducedMotion'
+import { DWELL_CORRECT } from '../../theme/motion'
+import { devFx } from '../../utils/devHarness'
 import RoundResultScreen from './RoundResultScreen'
 // Simplified audio system
 import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
@@ -71,6 +77,12 @@ export interface UnifiedQuizConfig {
   round?: RoundConfig
   gameId?: string             // stable id for progress, e.g. 'alphabet.quiz'
 
+  // Optional custom PromptStage hero (UI/UX Overhaul §6A). When provided, the quiz renders this in
+  // the PromptStage instead of the default (questionVisual emoji/word, English "listen" card, or the
+  // item glyph). Use for richer subjects — e.g. Tal Quiz's numeral + counted objects, or Hvad
+  // Mangler's sequence with a pulsing "?". Receives the live QuizItem.
+  renderHero?: (item: QuizItem) => React.ReactNode
+
   // When the welcome message already conveys the first question's prompt (e.g. Hvad Mangler?, whose
   // welcome "Hvad mangler" equals its per-question prompt "Hvad mangler?"), set this so the engine
   // does NOT voice the first prompt right after the welcome — avoiding hearing it twice on entry.
@@ -89,6 +101,9 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
   // and the bottom-corner guide reaction. Cleared on each new question.
   const [feedback, setFeedback] = useState<{ value: string | number; correct: boolean } | null>(null)
   const [guideReaction, setGuideReaction] = useState<GuideReaction>(null)
+  const reduce = useReducedMotion()
+  // Live difficulty for this section — re-renders + regenerates on an adult-menu change (no refresh).
+  const difficultyLevel = useDifficulty(config.theme.id as SectionId)
 
   // Component initialization - no logging needed in production
 
@@ -243,6 +258,26 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
     }
   }, [audio.isAudioReady, playWelcomeThenPrompt])
 
+  // DEV screenshot harness (?fx=): the forced tile feedback is DERIVED in `tileStateFor` (no
+  // setState) so it's persistent and capturable; here we only nudge the mascot (a plain emit, not
+  // state). No-op in production.
+  const forcedFx = devFx()
+  useEffect(() => {
+    if (!forcedFx || showOptions.length === 0) return
+    mascotBus.emit(forcedFx === 'correct' ? 'correct' : forcedFx === 'wrong' ? 'wrong' : forcedFx)
+  }, [forcedFx, showOptions.length])
+
+  // Live difficulty: when the adult changes the level mid-game, regenerate the current question at
+  // the new level right away (the config's generators read difficultyFor live). Skips the result
+  // screen + the initial mount (only reacts to a real change).
+  const prevDifficulty = useRef(difficultyLevel)
+  useEffect(() => {
+    if (prevDifficulty.current === difficultyLevel) return
+    prevDifficulty.current = difficultyLevel
+    if (!gameReady || roundOutcome) return
+    generateNewQuestion()
+  }, [difficultyLevel, gameReady, roundOutcome, generateNewQuestion])
+
   const handleItemClick = async (selectedItem: QuizItem) => {
     // Only prevent clicks if game isn't ready
     if (!gameReady || !currentItem) {
@@ -256,6 +291,9 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
     
     // Always cancel current audio for fast tapping
     audio.cancelCurrentAudio()
+
+    // Every tap is felt: a soft tick synced to the press (separate SFX channel, never TTS).
+    sfx.play('tap')
 
     const isCorrect = selectedItem.value === currentItem.value
 
@@ -299,14 +337,17 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
         // Bounded round: record the completed question, fire streak milestones, end or advance.
         const r = round.completeQuestion(firstAttemptRef.current)
         if (!r.done && r.streak > 0 && r.streak % 3 === 0) {
-          celebrateTier('streak')
+          // Streak chime pitch ascends with the streak length.
+          celebrateTier('streak', { sfxRate: 1 + Math.min(r.streak, 12) * 0.06 })
+          mascotBus.emit('streak')
         }
         if (r.done) {
+          mascotBus.emit('round')
           finishRound(r.firstTryCorrect, r.longestStreak)
         } else {
           generateNewQuestion()
         }
-      }, isIOS() ? 1500 : 2000) // celebration duration
+      }, DWELL_CORRECT()) // unified celebration/advance dwell
     }
   }
 
@@ -349,13 +390,74 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
   const ScoreChip = config.ScoreChipComponent
   const RepeatButton = config.RepeatButtonComponent
 
-  // Per-tile feedback state for the most-recently tapped answer.
-  const tileStateFor = (item: QuizItem): AnswerTileState =>
-    feedback && feedback.value === item.value ? (feedback.correct ? 'correct' : 'wrong') : 'idle'
+  // Per-tile feedback state for the most-recently tapped answer. In DEV, ?fx=correct|wrong forces
+  // the first tile so the state is deterministically capturable.
+  const tileStateFor = (item: QuizItem, index: number): AnswerTileState => {
+    if (index === 0 && (forcedFx === 'correct' || forcedFx === 'wrong')) return forcedFx
+    return feedback && feedback.value === item.value ? (feedback.correct ? 'correct' : 'wrong') : 'idle'
+  }
 
   // Until the welcome gate opens (or the resilience fallback fires) the board shows shimmer
   // placeholders instead of an empty grid, so it never looks broken while audio warms up.
   const showPlaceholders = !gameReady || showOptions.length === 0
+
+  const gameId = config.gameId ?? `quiz.${config.quizType}`
+  const bestStars = progressStore.getGame(gameId).bestStars
+
+  // Hero subject for the PromptStage (§6A). Uses the config's questionVisual when present; audio-
+  // only English (Lyt og Find) shows a neutral "listen" card so it never reveals the answer;
+  // everything else falls back to the item's own glyph (e.g. Tal Quiz numeral) so the stage is
+  // never empty.
+  const renderHero = () => {
+    const item = currentItem
+    if (!item) return null
+    // Config-supplied custom hero takes precedence (Tal counted objects, Hvad Mangler sequence…).
+    if (config.renderHero) return config.renderHero(item)
+    const qv = item.questionVisual
+    if (qv && (qv.emoji || qv.word)) {
+      return (
+        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: { xs: 0.5, md: 1 } }}>
+          {qv.emoji && <HeroEmoji>{qv.emoji}</HeroEmoji>}
+          {qv.word && (
+            <Typography
+              sx={{
+                fontWeight: 800,
+                color: config.theme.accentColor,
+                lineHeight: 1,
+                userSelect: 'none',
+                letterSpacing: qv.emoji ? 'normal' : '0.06em',
+                textTransform: qv.emoji ? 'none' : 'uppercase',
+                fontSize: qv.emoji ? 'clamp(1.4rem, 5vw, 2.4rem)' : 'clamp(2.4rem, 10vw, 4.5rem)',
+                [PHONE_LANDSCAPE]: { fontSize: qv.emoji ? '1.2rem' : '2rem' },
+              }}
+            >
+              {qv.word}
+            </Typography>
+          )}
+        </Box>
+      )
+    }
+    if (config.quizType === 'english') {
+      // Listening task: an "equalizer" wonder card — a subject without revealing the picture.
+      return (
+        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
+          <HeroEmoji>🔊</HeroEmoji>
+          <Box aria-hidden sx={{ display: 'flex', alignItems: 'flex-end', gap: '4px', height: 24 }}>
+            {[0, 1, 2, 3, 4].map((i) => (
+              <Box
+                key={i}
+                component={motion.div}
+                animate={reduce ? undefined : { scaleY: [0.4, 1, 0.5, 0.9, 0.4] }}
+                transition={reduce ? undefined : { duration: 1.1, repeat: Infinity, delay: i * 0.12, ease: 'easeInOut' }}
+                sx={{ width: 6, height: 24, transformOrigin: 'bottom', borderRadius: 3, bgcolor: config.theme.accentColor }}
+              />
+            ))}
+          </Box>
+        </Box>
+      )
+    }
+    return <HeroEmoji>{item.display}</HeroEmoji>
+  }
 
   return (
     <GameShell
@@ -365,10 +467,28 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
       guideReaction={guideReaction}
       score={
         <ScoreChip
-          score={score}
+          answered={round.enabled ? round.state.index : score}
+          total={round.enabled ? round.length : 0}
+          record={bestStars}
+          value={score}
           disabled={false}
           onClick={handleScoreClick}
         />
+      }
+      promptStage={
+        roundOutcome ? undefined : (
+          <PromptStage
+            accent={config.theme.accentColor}
+            chargeKey={`${currentItem?.value ?? ''}-${round.state.index}`}
+            repeat={
+              config.showRepeat !== false && !showPlaceholders ? (
+                <RepeatButton onClick={repeatItem} disabled={false} />
+              ) : undefined
+            }
+          >
+            {!showPlaceholders && renderHero()}
+          </PromptStage>
+        )
       }
       celebration={{
         show: showCelebration,
@@ -386,77 +506,9 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
           />
         ) : (
         <>
-        {/* Prompt zone. Phone landscape: play-surface first — the visual question and the
-            repeat button share ONE row (display:contents keeps the normal stacked layout
-            everywhere else), freeing a full row's height for bigger answer tiles. */}
-        <Box
-          sx={{
-            display: 'contents',
-            [PHONE_LANDSCAPE]: {
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 2,
-              mb: 1,
-              flex: '0 0 auto',
-            },
-          }}
-        >
-        {/* Visual Question - shown for word-association style rounds */}
-        {currentItem?.questionVisual && (
-          <Box sx={{ textAlign: 'center', mb: { xs: 1.5, md: 2 }, flex: '0 0 auto', [PHONE_LANDSCAPE]: { mb: 0 } }}>
-            <motion.div
-              key={`${currentItem.value}-${currentItem.questionVisual.word}`}
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.4 }}
-            >
-              {currentItem.questionVisual.emoji && (
-                <Typography
-                  sx={{
-                    fontSize: 'clamp(3rem, 12vw, 5rem)',
-                    lineHeight: 1,
-                    mb: 0.5,
-                    '@media (orientation: landscape)': {
-                      fontSize: 'clamp(2.5rem, 8vh, 4rem)'
-                    },
-                    [PHONE_LANDSCAPE]: { fontSize: '2rem', mb: 0.25 }
-                  }}
-                >
-                  {currentItem.questionVisual.emoji}
-                </Typography>
-              )}
-              {currentItem.questionVisual.word && (
-                <Typography
-                  sx={{
-                    fontSize: 'clamp(1.5rem, 6vw, 2.5rem)',
-                    fontWeight: 700,
-                    color: config.theme.accentColor,
-                    userSelect: 'none'
-                  }}
-                >
-                  {currentItem.questionVisual.word}
-                </Typography>
-              )}
-            </motion.div>
-          </Box>
-        )}
-
-        {/* Audio Control - Compact (hidden for games that must not read the answer aloud) */}
-        {config.showRepeat !== false && (
-          <Box sx={{ textAlign: 'center', mb: { xs: 2, md: 3 }, flex: '0 0 auto', [PHONE_LANDSCAPE]: { mb: 0 } }}>
-            <RepeatButton
-              onClick={repeatItem}
-              disabled={false}
-            />
-          </Box>
-        )}
-        </Box>
-
-        {/* Answer Options Grid — non-greedy so it groups directly under the prompt
-            (GameShell centres the prompt+answers cluster vertically). */}
+        {/* Answer Options Grid — fills the answer zone beneath the PromptStage. */}
         <Box sx={{
-          flex: '0 1 auto',
+          flex: 1,
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
@@ -526,15 +578,15 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
             : showOptions.map((item, index) => (
                 <motion.div
                   key={`${item.value}-${index}`}
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: index * 0.08 }}
+                  initial={reduce ? false : { opacity: 0, scale: 0.8 }}
+                  animate={reduce ? { opacity: 1 } : { opacity: 1, scale: [0.8, 1.04, 1] }}
+                  transition={reduce ? { duration: 0 } : { delay: index * 0.08, duration: 0.25, ease: 'easeOut' }}
                   style={{ height: '100%' }}
                 >
                   <AnswerTile
                     onClick={() => handleItemClick(item)}
                     accent={config.theme.accentColor}
-                    state={tileStateFor(item)}
+                    state={tileStateFor(item, index)}
                   >
                     <Typography
                       variant="h1"

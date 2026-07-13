@@ -5,6 +5,7 @@ import { motion } from 'framer-motion'
 import { useThemeSwitch } from '../../theme/ThemeProvider'
 import { loadSceneAssets } from '../../theme/sceneAssets'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
+import { getTapAnims, TAP_ANIM_MAX_MS, type TapAnim } from '../../theme/mascotAnimations'
 
 // Per-world mascot (Theme Worlds PRD §5.4). The ONE interactive element of the world layer:
 // gentle idle bob, and on tap it plays a reaction wiggle + spawns a fresh burst of rising
@@ -39,9 +40,10 @@ const ThemeMascot: React.FC<ThemeMascotProps> = ({ sx, onTap, parallaxDepth = 0.
   // Tag the load with its themeId so a stale mascot isn't shown after a theme switch, without
   // a synchronous setState reset in the effect.
   const [loaded, setLoaded] = useState<{ id: string; mascot: string } | null>(null)
-  const [reacting, setReacting] = useState(false)
+  const [tapAnim, setTapAnim] = useState<TapAnim | null>(null)
   const [bubbles, setBubbles] = useState<TapBubble[]>([])
   const reactTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const tapIndex = useRef(0)
   const nextBubbleId = useRef(0)
 
   const lines = theme.scene.mascot.lines
@@ -98,11 +100,15 @@ const ThemeMascot: React.FC<ThemeMascotProps> = ({ sx, onTap, parallaxDepth = 0.
   const removeBubble = (id: number) => setBubbles((prev) => prev.filter((b) => b.id !== id))
 
   const handleTap = () => {
-    // Reaction wiggle + bubble burst (both skipped under reduced motion).
+    // Per-theme tap reaction (cycles through this world's set) + a themed bubble/star burst.
+    // Both skipped under reduced motion.
     if (!reduce) {
-      setReacting(true)
+      const anims = getTapAnims(themeId)
+      const a = anims[tapIndex.current % anims.length]
+      tapIndex.current += 1
+      setTapAnim(a)
       if (reactTimer.current) clearTimeout(reactTimer.current)
-      reactTimer.current = setTimeout(() => setReacting(false), 650)
+      reactTimer.current = setTimeout(() => setTapAnim(null), TAP_ANIM_MAX_MS)
       spawnBubbleBurst()
     }
 
@@ -117,8 +123,8 @@ const ThemeMascot: React.FC<ThemeMascotProps> = ({ sx, onTap, parallaxDepth = 0.
       ? { y: [0, -34, 0, -14, 0], scale: [1, 1.16, 1, 1.06, 1] }
       : reaction === 'think'
         ? { rotate: [0, -7, 7, -5, 0] }
-        : reacting
-          ? { scale: [1, 1.14, 0.96, 1.04, 1], rotate: [0, -6, 6, -2, 0] }
+        : tapAnim
+          ? tapAnim.animate
           : { y: [0, -7, 0] }
 
   const transition = reduce
@@ -127,8 +133,8 @@ const ThemeMascot: React.FC<ThemeMascotProps> = ({ sx, onTap, parallaxDepth = 0.
       ? { duration: 0.9, ease: 'easeInOut' as const }
       : reaction === 'think'
         ? { duration: 0.6, ease: 'easeInOut' as const }
-        : reacting
-          ? { duration: 0.65, ease: 'easeInOut' as const }
+        : tapAnim
+          ? tapAnim.transition
           : { duration: 3.4, repeat: Infinity, ease: 'easeInOut' as const }
 
   return (

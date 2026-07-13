@@ -46,6 +46,9 @@ const MemoryGame = lazy(() => import('./components/learning/MemoryGame'))
 const StickerAlbum = lazy(() => import('./components/hub/StickerAlbum'))
 // Hidden, off-menu internal tool — audition Danish TTS voices. Throwaway (tmp-prd-voicelab.md).
 const VoiceLab = lazy(() => import('./components/voicelab/VoiceLab'))
+// DEV-only screenshot-harness routes (never registered in production builds).
+const DevMascot = lazy(() => import('./components/dev/DevRoutes').then((m) => ({ default: m.DevMascot })))
+const DevRoundResult = lazy(() => import('./components/dev/DevRoutes').then((m) => ({ default: m.DevRoundResult })))
 import UpdateBanner from './components/common/UpdateBanner'
 import AdultCorner from './components/adult/AdultCorner'
 import ThemeSelector from './components/common/ThemeSelector'
@@ -53,6 +56,7 @@ import PersistentWorld from './components/common/scene/PersistentWorld'
 import ThemeMascot from './components/common/ThemeMascot'
 // Legacy audio system removed - using SimplifiedAudioProvider only
 import { useViewportHeight } from './hooks/useViewportHeight'
+import { useReducedMotion } from './hooks/useReducedMotion'
 // Demo system removed
 
 // Simplified Audio System imports
@@ -68,6 +72,7 @@ import { useNativeAppFeel } from './hooks/useNativeAppFeel'
 import { categoryThemes } from './config/categoryThemes'
 import { useProgress } from './hooks/useProgress'
 import { sfx } from './services/sfxClient'
+import { musicClient } from './services/musicClient'
 import { recordRoute } from './services/diagnosticsBuffer'
 import { PHONE_ANY, PHONE_LANDSCAPE } from './theme/phoneMedia'
 import { simplifiedAudioController } from './utils/SimplifiedAudioController'
@@ -99,6 +104,11 @@ const HomePage = () => {
   // itself (parallax scene + ambient + mascot) is rendered once, app-wide, by <PersistentWorld/>.
   const immersive = theme.scene.layers.length > 0
   const darkScene = theme.scene.dark // dark backdrop (e.g. Rummet) → light title
+  // Frosted card glass. Dark worlds need MORE opaque light glass so the accent label stays AA
+  // (a translucent card over a dark scene turns muddy grey and kills contrast). Matches menus.
+  const cardGlass = darkScene
+    ? 'linear-gradient(135deg, rgba(255,255,255,0.92) 0%, rgba(255,255,255,0.84) 100%)'
+    : 'linear-gradient(135deg, rgba(255,255,255,0.62) 0%, rgba(255,255,255,0.46) 100%)'
   const welcomeCharacter = useCharacterState('wave')
   const { state: progress } = useProgress()
   const stickersOwned = Object.keys(progress.stickers.collected).length
@@ -292,9 +302,7 @@ const HomePage = () => {
                         flexDirection: 'column',
                         // Immersive worlds: frosted "ocean glass" so the scene shows through
                         // the cards (still high-contrast for the dark themed text/icons).
-                        background: immersive
-                          ? 'linear-gradient(135deg, rgba(255,255,255,0.62) 0%, rgba(255,255,255,0.46) 100%)'
-                          : cat.cardSurface,
+                        background: immersive ? cardGlass : cat.cardSurface,
                         backdropFilter: immersive ? 'blur(16px) saturate(1.1)' : cat.cardBlur,
                         WebkitBackdropFilter: immersive ? 'blur(16px) saturate(1.1)' : cat.cardBlur,
                         '&:hover': {
@@ -336,7 +344,8 @@ const HomePage = () => {
                             fontWeight: 700,
                             fontSize: 'clamp(0.85rem, 2.4vh, 1.2rem)',
                             lineHeight: 1.1,
-                            color: cat.accent
+                            // AA-guaranteed on the frosted card (fixes warm-accent legibility).
+                            color: cat.onCard
                           }}
                         >
                           {content.name}
@@ -374,7 +383,9 @@ const HomePage = () => {
                 border: '3px solid',
                 borderColor: alpha('#FFB300', 0.85),
                 background: immersive
-                  ? 'linear-gradient(135deg, rgba(255,247,214,0.82) 0%, rgba(255,228,150,0.7) 100%)'
+                  ? darkScene
+                    ? 'linear-gradient(135deg, rgba(255,248,222,0.96) 0%, rgba(255,226,140,0.94) 100%)'
+                    : 'linear-gradient(135deg, rgba(255,247,214,0.82) 0%, rgba(255,228,150,0.7) 100%)'
                   : 'linear-gradient(135deg, rgba(255,250,235,0.97) 0%, rgba(255,221,130,0.95) 100%)',
                 backdropFilter: immersive ? 'blur(16px) saturate(1.1)' : 'blur(15px)',
                 WebkitBackdropFilter: immersive ? 'blur(16px) saturate(1.1)' : 'blur(15px)',
@@ -422,15 +433,16 @@ const HomePage = () => {
               >
                 <Box sx={{ fontSize: { xs: '2.2rem', md: '2.8rem' }, lineHeight: 1, flex: '0 0 auto', [PHONE_LANDSCAPE]: { fontSize: '1.4rem' } }}>📖</Box>
                 <Box sx={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 0.6 }}>
-                  <Typography sx={{ fontWeight: 800, fontSize: { xs: '1.1rem', md: '1.35rem' }, color: '#B36A00', lineHeight: 1, [PHONE_LANDSCAPE]: { fontSize: '0.95rem' } }}>
+                  <Typography sx={{ fontWeight: 800, fontSize: { xs: '1.1rem', md: '1.35rem' }, color: '#6B3F00', lineHeight: 1, [PHONE_LANDSCAPE]: { fontSize: '0.95rem' } }}>
                     Min Bog
                   </Typography>
                   {/* Fill bar that visibly grows as the album fills */}
                   <Box sx={{ position: 'relative', height: 12, borderRadius: 6, bgcolor: alpha('#C77800', 0.2), overflow: 'hidden', width: '100%', [PHONE_LANDSCAPE]: { height: 8 } }}>
-                    <Box sx={{ position: 'absolute', inset: 0, width: `${Math.round(albumFill * 100)}%`, background: 'linear-gradient(90deg, #FFD86B 0%, #FFB300 100%)', transition: 'width 0.5s ease' }} />
+                    {/* Fill grows with a springy overshoot as stickers are gained (Min Bog "fills"). */}
+                    <Box sx={{ position: 'absolute', inset: 0, width: `${Math.round(albumFill * 100)}%`, background: 'linear-gradient(90deg, #FFD86B 0%, #FFB300 100%)', boxShadow: '0 0 10px rgba(255,179,0,0.6)', transition: 'width 0.7s cubic-bezier(0.34, 1.56, 0.64, 1)' }} />
                   </Box>
                 </Box>
-                <Typography sx={{ flex: '0 0 auto', fontWeight: 800, fontSize: { xs: '0.95rem', md: '1.15rem' }, color: '#9A5E00', whiteSpace: 'nowrap', [PHONE_LANDSCAPE]: { fontSize: '0.8rem' } }}>
+                <Typography sx={{ flex: '0 0 auto', fontWeight: 800, fontSize: { xs: '0.95rem', md: '1.15rem' }, color: '#5C3800', whiteSpace: 'nowrap', [PHONE_LANDSCAPE]: { fontSize: '0.8rem' } }}>
                   {stickersOwned} / {stickersTotal} · ⭐ {progress.totals.totalStars}
                 </Typography>
               </CardContent>
@@ -542,6 +554,7 @@ const CrashTestProbe: React.FC = () => {
 
 function App() {
   const location = useLocation()
+  const reduceMotion = useReducedMotion()
   // Initialize viewport height for iOS
   useViewportHeight()
   
@@ -569,6 +582,8 @@ function App() {
   useEffect(() => {
     const onFirstGesture = () => {
       sfx.preload()
+      // Start ambient music now that a gesture has unlocked WebAudio (no-op if music is disabled).
+      musicClient.resume()
       window.removeEventListener('pointerdown', onFirstGesture)
       window.removeEventListener('keydown', onFirstGesture)
     }
@@ -622,6 +637,15 @@ function App() {
             layer (z-index:0). Cross-fade removed while diagnosing a compositing flicker — the
             promoted opacity layer was painting white over the scene. */}
         <Box sx={{ position: 'relative', zIndex: 1 }}>
+        {/* Fast shared page transition (UI/UX Overhaul PRD §5.8). A keyed fade-in over the steady
+            PersistentWorld — the outgoing page unmounts, the new one fades up from the scene (never
+            a white flash, since immersive pages are transparent). Instant under reduced motion. */}
+        <motion.div
+          key={location.pathname}
+          initial={reduceMotion ? false : { opacity: 0, scale: 0.99 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={reduceMotion ? { duration: 0 } : { duration: 0.18, ease: 'easeOut' }}
+        >
         <Suspense fallback={<Box sx={{ height: '100dvh' }} />}>
         <Routes location={location}>
         {/* Home Routes */}
@@ -682,10 +706,15 @@ function App() {
         {/* Hidden internal tool — not in any menu, reachable only by URL */}
         <Route path="/voicelab" element={<VoiceLab />} />
 
+        {/* DEV-only screenshot-harness routes (stripped from production builds). */}
+        {import.meta.env.DEV && <Route path="/dev/mascot" element={<DevMascot />} />}
+        {import.meta.env.DEV && <Route path="/dev/round-result" element={<DevRoundResult />} />}
+
         {/* 404 Not Found */}
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
       </Suspense>
+      </motion.div>
         </Box>
         </Box>
       </>

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import {
   Box,
   Typography
@@ -9,13 +9,18 @@ import { Mic, MicOff } from 'lucide-react'
 import { categoryThemes } from '../../config/categoryThemes'
 import { darken, hexToRgba } from '../../theme/tokens/helpers'
 import GameShell from '../common/GameShell'
+import PromptStage from '../common/PromptStage'
 import RoundResultScreen from '../common/RoundResultScreen'
 import type { GuideReaction } from '../common/ThemeMascot'
 import { useCelebration } from '../common/CelebrationEffect'
 import { OrdlegScoreChip } from '../common/ScoreChip'
 import { useGameState } from '../../hooks/useGameState'
 import { useRound } from '../../hooks/useRound'
+import { useReducedMotion } from '../../hooks/useReducedMotion'
 import { progressStore, type RoundOutcome } from '../../services/progressStore'
+import { mascotBus } from '../../services/mascotBus'
+import { CHARGE, POP } from '../../theme/motion'
+import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 import { isIOS } from '../../utils/deviceDetection'
 import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 import { useSpeechInput, SpeechResult } from '../../hooks/useSpeechInput'
@@ -34,9 +39,215 @@ const extractFirstWord = (transcript: string): string => {
   return first.replace(/[^a-zA-ZæøåÆØÅ-]/g, '')
 }
 
+// Equalizer bar count + stagger — mirrors the Quiz Feel Kit's "Lyt og Find" wonder card so the
+// live-waveform language reads the same wherever the app shows "listening" audio (UI/UX Overhaul
+// PRD §6D). Idle/reduced-motion → a flat, still row (no transform loop).
+const WAVE_BAR_KEYFRAMES = [0.35, 1, 0.5, 0.9, 0.35]
+
+// BIG animated mic + live-waveform equalizer (§6D). Persistent across idle/recording/processing/
+// retry — it never remounts mid-gesture (only its `phase`-driven animate targets change), so the
+// hold-to-talk pointer capture that started the recording is never lost. Reduced motion → static
+// mic (no pulse, no bar animation); the phase colour/opacity state still communicates the mode.
+interface MicHeroProps {
+  phase: Phase
+  supported: boolean
+  isBusy: boolean
+  accent: string
+  dark: boolean
+  reduce: boolean
+  onPressStart: (e: React.PointerEvent) => void
+  onPressEnd: (e?: React.PointerEvent) => void
+}
+
+const MicHero: React.FC<MicHeroProps> = ({ phase, supported, isBusy, accent, dark, reduce, onPressStart, onPressEnd }) => {
+  const recording = phase === 'recording'
+
+  if (!supported) {
+    return (
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%' }}>
+        <MicOff size={72} color={accent} />
+      </Box>
+    )
+  }
+
+  return (
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: { xs: 0.75, md: 1.25 },
+        width: '100%',
+        height: '100%',
+      }}
+    >
+      <motion.div
+        animate={reduce ? undefined : recording ? { scale: [1, 1.1, 1] } : { scale: 1 }}
+        transition={reduce ? undefined : recording ? { duration: 1, repeat: Infinity, ease: 'easeInOut' } : { duration: 0.2 }}
+        style={{ display: 'inline-block' }}
+      >
+        <Box
+          role="button"
+          aria-label="Sig et ord"
+          onPointerDown={onPressStart}
+          onPointerUp={onPressEnd}
+          onPointerLeave={onPressEnd}
+          onPointerCancel={onPressEnd}
+          sx={{
+            width: 'clamp(88px, 24vh, 168px)',
+            height: 'clamp(88px, 24vh, 168px)',
+            // Phone landscape's whole stage is only ~85px tall (30% of a ~390px-tall body) — the
+            // waveform row is dropped there (below) so the mic alone owns the budget; measured via
+            // --measure to confirm it clears the frame (was overflowing top+bottom at 96px).
+            [PHONE_LANDSCAPE]: { width: 'clamp(52px, 16vh, 72px)', height: 'clamp(52px, 16vh, 72px)' },
+            borderRadius: '50%',
+            mx: 'auto',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: isBusy ? 'default' : 'pointer',
+            userSelect: 'none',
+            touchAction: 'none',
+            WebkitUserSelect: 'none',
+            WebkitTouchCallout: 'none',
+            background: recording
+              ? `radial-gradient(circle at 50% 40%, #FF8A80 0%, ${accent} 100%)`
+              : `linear-gradient(160deg, ${accent} 0%, ${darken(accent, 0.28)} 100%)`,
+            border: '6px solid white',
+            boxShadow: recording
+              ? `0 0 0 10px ${hexToRgba(accent, 0.3)}, 0 8px 24px rgba(0,0,0,0.25)`
+              : '0 8px 24px rgba(0,0,0,0.25)',
+            opacity: isBusy ? 0.6 : 1,
+            pointerEvents: isBusy ? 'none' : 'auto',
+            transition: 'background 0.2s ease, box-shadow 0.2s ease',
+          }}
+        >
+          <Mic size={44} color="white" />
+        </Box>
+      </motion.div>
+
+      {/* Live waveform — animated equalizer while recording; still row otherwise/reduced motion.
+          Hidden on phone landscape: the ~85px stage there is already fully spent on the mic circle
+          alone (measured via --measure — the row was overflowing the frame at any smaller size). */}
+      <Box
+        aria-hidden
+        sx={{
+          display: 'flex',
+          alignItems: 'flex-end',
+          justifyContent: 'center',
+          gap: '5px',
+          height: 26,
+          [PHONE_LANDSCAPE]: { display: 'none' },
+        }}
+      >
+        {WAVE_BAR_KEYFRAMES.map((_, i) => (
+          <Box
+            key={i}
+            component={motion.div}
+            animate={recording && !reduce ? { scaleY: WAVE_BAR_KEYFRAMES } : { scaleY: 0.35 }}
+            transition={
+              recording && !reduce
+                ? { duration: 1.1, repeat: Infinity, delay: i * 0.12, ease: 'easeInOut' }
+                : { duration: 0.2 }
+            }
+            sx={{
+              width: 7,
+              height: 26,
+              [PHONE_LANDSCAPE]: { width: 4, height: 16 },
+              borderRadius: 3,
+              transformOrigin: 'bottom',
+              bgcolor: recording ? '#FF8A80' : hexToRgba(accent, dark ? 0.55 : 0.4),
+            }}
+          />
+        ))}
+      </Box>
+    </Box>
+  )
+}
+
+// PROMINENT spell-out banner (§6D) — replaces the old small letter-reveal boxes. Each recognized
+// letter pops in with `motion.POP`; the whole word is spoken via the existing per-letter audio in
+// `runSpellingSequence` (unchanged). Reduced motion → letters still appear (opacity only, instant).
+interface SpellBannerProps {
+  word: string
+  letters: string[]
+  revealCount: number
+  accent: string
+  dark: boolean
+  reduce: boolean
+}
+
+const SpellBanner: React.FC<SpellBannerProps> = ({ word, letters, revealCount, accent, dark, reduce }) => (
+  <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: { xs: 1, md: 1.75 }, width: '100%', [PHONE_LANDSCAPE]: { gap: 0.4 } }}>
+    <Typography
+      sx={{
+        fontSize: 'clamp(1.8rem, 8vh, 3.6rem)',
+        fontWeight: 800,
+        letterSpacing: '0.08em',
+        lineHeight: 1,
+        color: dark ? '#FFFFFF' : accent,
+        textShadow: dark ? '0 2px 10px rgba(0,0,0,0.5)' : 'none',
+        [PHONE_LANDSCAPE]: { fontSize: '1.15rem' },
+      }}
+    >
+      {word.toUpperCase()}
+    </Typography>
+    <Box sx={{ display: 'flex', gap: { xs: 1, md: 1.5 }, flexWrap: 'wrap', justifyContent: 'center', [PHONE_LANDSCAPE]: { gap: 0.5 } }}>
+      {letters.map((letter, index) => {
+        const revealed = index < revealCount
+        return (
+          <motion.div
+            key={`${word}-${index}`}
+            initial={reduce ? false : { opacity: 0, scale: 0.5 }}
+            animate={
+              reduce
+                ? { opacity: revealed ? 1 : 0.3 }
+                : { opacity: revealed ? 1 : 0.3, scale: revealed ? 1 : 0.88 }
+            }
+            transition={reduce ? { duration: 0 } : POP}
+          >
+            <Box
+              sx={{
+                width: { xs: 56, sm: 64, md: 84 },
+                height: { xs: 56, sm: 64, md: 84 },
+                // Phone-landscape stage budget is only ~80px total; the mic-hero fix above showed
+                // this size class needs real margin, not a razor-edge fit — shrunk accordingly.
+                [PHONE_LANDSCAPE]: { width: 36, height: 36 },
+                borderRadius: '16px',
+                border: '3px solid',
+                borderColor: revealed ? accent : hexToRgba(accent, dark ? 0.55 : 0.34),
+                background: revealed ? 'linear-gradient(180deg, #FFFFFF 0%, #ECF1F8 100%)' : 'rgba(255,255,255,0.5)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: revealed
+                  ? `0 6px 0 ${darken(accent, 0.28)}, ${dark ? '0 10px 24px rgba(0,0,0,0.45)' : '0 7px 16px rgba(0,0,0,0.12)'}`
+                  : 'none',
+              }}
+            >
+              <Typography
+                sx={{
+                  fontSize: { xs: '1.6rem', sm: '1.9rem', md: '2.8rem' },
+                  fontWeight: 700,
+                  color: accent,
+                  [PHONE_LANDSCAPE]: { fontSize: '1.05rem' },
+                }}
+              >
+                {letter}
+              </Typography>
+            </Box>
+          </motion.div>
+        )
+      })}
+    </Box>
+  </Box>
+)
+
 const SpeakWordGame: React.FC = () => {
   const muiTheme = useTheme()
   const theme = categoryThemes.ordleg
+  const reduce = useReducedMotion()
   const audio = useSimplifiedAudioHook({ componentId: 'SpeakWordGame', autoInitialize: false })
   const speech = useSpeechInput()
 
@@ -110,6 +321,9 @@ const SpeakWordGame: React.FC = () => {
     endingRef.current = false
     pressStartRef.current = Date.now()
     setPhase('recording')
+    // The mascot "listens" while recording (§6D) — a distinct cue from the correct/wrong reaction
+    // fired later in handleResult.
+    mascotBus.emit('hint')
 
     // getUserMedia must be invoked synchronously inside this gesture handler.
     const startPromise = speech.start().catch(err => {
@@ -269,8 +483,24 @@ const SpeakWordGame: React.FC = () => {
       backRoute="/ordleg"
       dense
       guideReaction={guideReaction}
-      score={<OrdlegScoreChip score={score} disabled={isScoreNarrating} onClick={handleScoreClick} />}
+      score={<OrdlegScoreChip answered={score} total={8} disabled={isScoreNarrating} onClick={handleScoreClick} />}
       celebration={{ show: showCelebration, intensity: celebrationIntensity, duration: celebrationDuration, onComplete: stopCelebration }}
+      promptStage={
+        roundOutcome ? undefined : (
+          <PromptStage accent={theme.accentColor}>
+            <MicHero
+              phase={phase}
+              supported={supported}
+              isBusy={isBusy}
+              accent={theme.accentColor}
+              dark={muiTheme.scene.dark}
+              reduce={reduce}
+              onPressStart={handlePressStart}
+              onPressEnd={handlePressEnd}
+            />
+          </PromptStage>
+        )
+      }
     >
       {roundOutcome ? (
         <RoundResultScreen
@@ -280,222 +510,79 @@ const SpeakWordGame: React.FC = () => {
           onReplay={handleReplay}
         />
       ) : (
-      <>
-      <Box
-        sx={{
-          flex: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          minHeight: 0,
-          overflow: 'hidden'
-        }}
-      >
-        {!supported ? (
-          // Graceful fallback when getUserMedia is unavailable / blocked.
-          <Box sx={{ textAlign: 'center', px: 2 }}>
-            <MicOff size={64} color={theme.accentColor} />
-            <Typography
-              sx={{
-                fontSize: { xs: '1.1rem', md: '1.4rem' },
-                fontWeight: 700,
-                color: theme.accentColor,
-                mt: 2
-              }}
+        <Box
+          sx={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            minHeight: 0,
+            overflow: 'hidden',
+            gap: { xs: 1.5, md: 2 },
+          }}
+        >
+          {!supported ? (
+            // Graceful fallback when getUserMedia is unavailable / blocked.
+            <Box sx={{ textAlign: 'center', px: 2 }}>
+              <Typography
+                sx={{
+                  fontSize: { xs: '1.1rem', md: '1.4rem' },
+                  fontWeight: 700,
+                  color: theme.accentColor,
+                }}
+              >
+                Mikrofonen virker ikke her.
+              </Typography>
+              <Typography sx={{ color: 'text.secondary', mt: 1, fontSize: { xs: '0.95rem', md: '1.1rem' } }}>
+                Prøv at give adgang til mikrofonen, eller åbn spillet i en anden browser.
+              </Typography>
+            </Box>
+          ) : phase === 'spelling' && recognizedWord ? (
+            <motion.div
+              initial={reduce ? false : { opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={reduce ? { duration: 0 } : CHARGE}
+              style={{ width: '100%', display: 'flex', justifyContent: 'center' }}
             >
-              Mikrofonen virker ikke her.
-            </Typography>
-            <Typography sx={{ color: 'text.secondary', mt: 1, fontSize: { xs: '0.95rem', md: '1.1rem' } }}>
-              Prøv at give adgang til mikrofonen, eller åbn spillet i en anden browser.
-            </Typography>
-          </Box>
-        ) : (
-          <>
-            {/* Instruction / status text */}
-            <Box sx={{
-              textAlign: 'center',
-              flex: '0 0 auto',
-              mb: { xs: 2, md: 3 },
-              minHeight: 56,
-              '@media (orientation: landscape)': { mb: 1, minHeight: 40 }
-            }}>
+              <SpellBanner
+                word={recognizedWord}
+                letters={letters}
+                revealCount={revealCount}
+                accent={theme.accentColor}
+                dark={muiTheme.scene.dark}
+                reduce={reduce}
+              />
+            </motion.div>
+          ) : (
+            <>
               <Typography
                 sx={{
                   fontSize: { xs: '1.15rem', md: '1.5rem' },
                   fontWeight: 700,
+                  textAlign: 'center',
                   // White on dark immersive scenes (accent teal is too dim there).
-                  color: muiTheme.scene.dark ? '#FFFFFF' : theme.accentColor
+                  color: muiTheme.scene.dark ? '#FFFFFF' : theme.accentColor,
                 }}
               >
                 {phase === 'idle' && 'Hold knappen og sig et ord!'}
                 {phase === 'recording' && 'Jeg lytter…'}
                 {phase === 'processing' && 'Lad mig tænke…'}
                 {phase === 'retry' && 'Det hørte jeg ikke helt – prøv igen!'}
-                {phase === 'spelling' && 'Sådan staves det:'}
               </Typography>
-            </Box>
-
-            {/* Spelling display. Landscape is height-constrained — shrink the reserved area so the
-                mic button below stays fully on-screen (it was pushed off the bottom). */}
-            <Box
-              sx={{
-                flex: '0 0 auto',
-                minHeight: { xs: 90, md: 120 },
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                mb: { xs: 2, md: 3 },
-                '@media (orientation: landscape)': { minHeight: 64, mb: 1 }
-              }}
-            >
-              {phase === 'spelling' && recognizedWord && (
-                <Box sx={{ display: 'flex', gap: { xs: 0.75, md: 1.25 }, flexWrap: 'wrap', justifyContent: 'center' }}>
-                  {letters.map((letter, index) => {
-                    const revealed = index < revealCount
-                    return (
-                      <motion.div
-                        key={`${recognizedWord}-${index}`}
-                        initial={{ opacity: 0, scale: 0.6 }}
-                        animate={revealed ? { opacity: 1, scale: 1 } : { opacity: 0.25, scale: 0.85 }}
-                        transition={{ duration: 0.25 }}
-                      >
-                        <Box
-                          sx={{
-                            width: { xs: 48, sm: 56, md: 72 },
-                            height: { xs: 48, sm: 56, md: 72 },
-                            '@media (orientation: landscape)': { width: 52, height: 52 },
-                            borderRadius: '14px',
-                            border: '3px solid',
-                            borderColor: revealed ? theme.accentColor : hexToRgba(theme.accentColor, muiTheme.scene.dark ? 0.55 : 0.34),
-                            // Lifted-3D depth (matches AnswerTile) once a letter is revealed.
-                            background: revealed ? 'linear-gradient(180deg, #FFFFFF 0%, #ECF1F8 100%)' : 'rgba(255,255,255,0.5)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            boxShadow: revealed
-                              ? `0 5px 0 ${darken(theme.accentColor, 0.28)}, ${muiTheme.scene.dark ? '0 10px 24px rgba(0,0,0,0.45)' : '0 7px 16px rgba(0,0,0,0.12)'}`
-                              : 'none'
-                          }}
-                        >
-                          <Typography
-                            sx={{
-                              fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2.5rem' },
-                              fontWeight: 700,
-                              color: theme.accentColor
-                            }}
-                          >
-                            {letter}
-                          </Typography>
-                        </Box>
-                      </motion.div>
-                    )
-                  })}
-                </Box>
-              )}
-            </Box>
-
-            {/* Magic mic button */}
-            <Box sx={{ flex: '0 0 auto', textAlign: 'center' }}>
-              <motion.div
-                animate={
-                  phase === 'recording'
-                    ? { scale: [1, 1.12, 1] }
-                    : { scale: 1 }
-                }
-                transition={
-                  phase === 'recording'
-                    ? { duration: 1, repeat: Infinity, ease: 'easeInOut' }
-                    : { duration: 0.2 }
-                }
-                style={{ display: 'inline-block' }}
-              >
-                <Box
-                  role="button"
-                  aria-label="Sig et ord"
-                  onPointerDown={handlePressStart}
-                  onPointerUp={handlePressEnd}
-                  onPointerLeave={handlePressEnd}
-                  onPointerCancel={handlePressEnd}
-                  sx={{
-                    width: { xs: 140, md: 168 },
-                    height: { xs: 140, md: 168 },
-                    '@media (orientation: landscape)': { width: 124, height: 124 },
-                    borderRadius: '50%',
-                    mx: 'auto',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    cursor: isBusy ? 'default' : 'pointer',
-                    userSelect: 'none',
-                    touchAction: 'none',
-                    WebkitUserSelect: 'none',
-                    WebkitTouchCallout: 'none',
-                    background: phase === 'recording'
-                      ? `radial-gradient(circle at 50% 40%, #FF8A80 0%, ${theme.accentColor} 100%)`
-                      : theme.games[1]?.gradient || theme.gradient,
-                    border: '6px solid white',
-                    boxShadow: phase === 'recording'
-                      ? `0 0 0 8px ${theme.accentColor}33, 0 8px 24px rgba(0,0,0,0.25)`
-                      : '0 8px 24px rgba(0,0,0,0.25)',
-                    opacity: isBusy ? 0.6 : 1,
-                    pointerEvents: isBusy ? 'none' : 'auto',
-                    transition: 'background 0.2s ease, box-shadow 0.2s ease'
-                  }}
-                >
-                  <Mic size={64} color="white" />
-                </Box>
-              </motion.div>
               <Typography
                 sx={{
-                  mt: 2,
-                  '@media (orientation: landscape)': { mt: 1 },
                   color: muiTheme.scene.dark ? 'rgba(255,255,255,0.8)' : 'text.secondary',
                   fontSize: { xs: '0.9rem', md: '1.05rem' },
-                  fontWeight: 600
+                  fontWeight: 600,
+                  textAlign: 'center',
                 }}
               >
                 Hold knappen nede mens du taler
               </Typography>
-            </Box>
-          </>
-        )}
-      </Box>
-
-      <AnimatePresence>
-        {/* recognized word headline above the spelling once known */}
-        {phase === 'spelling' && recognizedWord && (
-          <Box
-            component={motion.div}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            sx={{
-              position: 'absolute',
-              top: '14%',
-              left: 0,
-              right: 0,
-              textAlign: 'center',
-              pointerEvents: 'none',
-              // Landscape is height-constrained and this floats over the title — the spelling
-              // tiles already show the word there, so drop the redundant headline.
-              '@media (orientation: landscape)': { display: 'none' }
-            }}
-          >
-            <Typography
-              sx={{
-                fontSize: 'clamp(2rem, 9vw, 4rem)',
-                fontWeight: 700,
-                color: muiTheme.scene.dark ? '#FFFFFF' : theme.accentColor,
-                letterSpacing: '0.08em'
-              }}
-            >
-              {recognizedWord.toUpperCase()}
-            </Typography>
-          </Box>
-        )}
-      </AnimatePresence>
-      </>
+            </>
+          )}
+        </Box>
       )}
     </GameShell>
   )

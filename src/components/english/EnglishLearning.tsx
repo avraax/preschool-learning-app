@@ -11,6 +11,7 @@ import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 import { categoryThemes } from '../../config/categoryThemes'
 import { darken, hexToRgba } from '../../theme/tokens/helpers'
 import GameShell from '../common/GameShell'
+import PromptStage, { HeroEmoji } from '../common/PromptStage'
 import StickerReveal from '../common/StickerReveal'
 import { useCelebration } from '../common/CelebrationEffect'
 import { progressStore, type StickerAward } from '../../services/progressStore'
@@ -31,6 +32,9 @@ const EnglishLearning: React.FC = () => {
 
   const [activeThemeId, setActiveThemeId] = useState(englishThemes[0].id)
   const [playingWord, setPlayingWord] = useState<string | null>(null)
+  // Bloomed selection for the PromptStage (§6B) — defaults to the first word so the stage is never
+  // empty. Reset whenever the theme changes so the bloom always matches the visible grid.
+  const [selectedWord, setSelectedWord] = useState<EnglishWord>(englishThemes[0].words[0])
 
   const { showCelebration, celebrationIntensity, celebrationDuration, celebrateTier, stopCelebration } = useCelebration()
 
@@ -74,6 +78,7 @@ const EnglishLearning: React.FC = () => {
   const handleWordClick = async (word: EnglishWord) => {
     audio.updateUserInteraction()
     audio.cancelCurrentAudio()
+    setSelectedWord(word)
     setPlayingWord(word.en)
     exploredRef.current.add(word.en)
     maybeAwardExploration()
@@ -94,6 +99,44 @@ const EnglishLearning: React.FC = () => {
       dense
       guide={false}
       celebration={{ show: showCelebration, intensity: celebrationIntensity, duration: celebrationDuration, onComplete: stopCelebration }}
+      promptStage={
+        // Selected English word blooms (word + emoji) — §6B. chargeKey includes the theme id so
+        // switching theme (which also resets the word) re-triggers the charge-in immediately.
+        <PromptStage accent={theme.accentColor} chargeKey={`${activeThemeId}-${selectedWord.en}`}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: { xs: 0.5, md: 1 }, [PHONE_LANDSCAPE]: { gap: 0 } }}>
+            <HeroEmoji>{selectedWord.emoji}</HeroEmoji>
+            <Typography
+              sx={{
+                fontWeight: 800,
+                lineHeight: 1,
+                color: muiTheme.scene.dark ? '#FFFFFF' : theme.accentColor,
+                textShadow: muiTheme.scene.dark
+                  ? '0 2px 10px rgba(0,0,0,0.5)'
+                  : playingWord === selectedWord.en
+                    ? `0 0 24px ${hexToRgba(theme.accentColor, 0.45)}`
+                    : 'none',
+                fontSize: 'clamp(1.8rem, 9vh, 3.4rem)',
+                transition: 'text-shadow 0.3s ease',
+                [PHONE_LANDSCAPE]: { fontSize: '1.1rem' },
+              }}
+            >
+              {selectedWord.en}
+            </Typography>
+            {/* Danish translation — hidden on phone landscape (the ~90px stage budget there can't
+                fit emoji + word + translation; the grid tile captions still show it). */}
+            <Typography
+              sx={{
+                fontWeight: 600,
+                color: muiTheme.scene.dark ? 'rgba(255,255,255,0.75)' : 'text.secondary',
+                fontSize: 'clamp(1rem, 4vh, 1.4rem)',
+                [PHONE_LANDSCAPE]: { display: 'none' },
+              }}
+            >
+              {selectedWord.da}
+            </Typography>
+          </Box>
+        </PromptStage>
+      }
     >
         {/* Theme selector */}
         <Box
@@ -115,6 +158,7 @@ const EnglishLearning: React.FC = () => {
                 audio.updateUserInteraction()
                 audio.cancelCurrentAudio()
                 setActiveThemeId(t.id)
+                setSelectedWord(t.words[0])
               }}
               sx={{
                 fontSize: { xs: '0.9rem', md: '1.05rem' },

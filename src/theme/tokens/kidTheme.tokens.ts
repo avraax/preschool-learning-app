@@ -1,4 +1,5 @@
 import type { ThemeTokens } from './types'
+import { onCardColor, tileSurface } from './helpers'
 
 // DEFAULT THEME — "kid" skin.
 // Holds today's EXACT values so the app looks identical after the token migration.
@@ -33,6 +34,8 @@ export const kidThemeTokens: ThemeTokens = {
     alphabet: {
       gradient: 'linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 50%, #90CAF9 100%)',
       accent: '#1976D2',
+      onCard: onCardColor('#1976D2'),
+      tileSurface: tileSurface('#1976D2'),
       border: '#64B5F6',
       hoverBorder: '#1976D2',
       icon: '📚',
@@ -43,6 +46,8 @@ export const kidThemeTokens: ThemeTokens = {
     math: {
       gradient: 'linear-gradient(135deg, #F3E5F5 0%, #E1BEE7 50%, #CE93D8 100%)',
       accent: '#9C27B0',
+      onCard: onCardColor('#9C27B0'),
+      tileSurface: tileSurface('#9C27B0'),
       border: '#BA68C8',
       hoverBorder: '#9C27B0',
       icon: '🧮',
@@ -53,6 +58,8 @@ export const kidThemeTokens: ThemeTokens = {
     colors: {
       gradient: 'linear-gradient(135deg, #FFF3E0 0%, #FFE0B2 50%, #FFCC80 100%)',
       accent: '#E65100',
+      onCard: onCardColor('#E65100'),
+      tileSurface: tileSurface('#E65100'),
       border: '#FFB74D',
       hoverBorder: '#FF6B00',
       icon: '🎨',
@@ -63,6 +70,8 @@ export const kidThemeTokens: ThemeTokens = {
     english: {
       gradient: 'linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 50%, #A5D6A7 100%)',
       accent: '#2E7D32',
+      onCard: onCardColor('#2E7D32'),
+      tileSurface: tileSurface('#2E7D32'),
       border: '#66BB6A',
       hoverBorder: '#2E7D32',
       icon: '🌍',
@@ -73,6 +82,8 @@ export const kidThemeTokens: ThemeTokens = {
     ordleg: {
       gradient: 'linear-gradient(135deg, #E0F2F1 0%, #B2DFDB 50%, #80CBC4 100%)',
       accent: '#00796B',
+      onCard: onCardColor('#00796B'),
+      tileSurface: tileSurface('#00796B'),
       border: '#4DB6AC',
       hoverBorder: '#00796B',
       icon: '🗣️',
@@ -104,8 +115,9 @@ export const kidThemeTokens: ThemeTokens = {
   shadows: {
     card: '0 8px 32px rgba(0, 0, 0, 0.12)',
     cardHover: '0 12px 48px rgba(0, 0, 0, 0.18)',
-    // Not yet consumed in Phase 1; derived from primary for future focus styling.
     focusRing: '0 0 0 4px rgba(139, 92, 246, 0.4)',
+    // Punchy branded lift for focal/pressed states (primary #8B5CF6).
+    pop: '0 4px 0 rgb(97, 64, 172), 0 10px 24px rgba(139, 92, 246, 0.35)',
   },
 
   // ---- Immersive world (Theme Worlds PRD) — gentle, light, familiar default ----
@@ -123,6 +135,7 @@ export const kidThemeTokens: ThemeTokens = {
       lines: ['Hej! Skal vi lege?', 'Godt klaret!', 'Vi ses!'],
     },
     selectorThumb: '',
+    music: '/sounds/music/kid.mp3', // Regnbue loop ("Rainbow Adventures"); body-trimmed loop in musicClient
   },
 
   materials: {
