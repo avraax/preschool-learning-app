@@ -73,7 +73,7 @@ export default defineConfig({
       manifest: {
         name: "Børnelæring - Alfabetet og Tal",
         short_name: "Børnelæring",
-        description: "Lær alfabetet og tal på dansk for børn 3-7 år. Interaktive spil med dansk lyd og animationer.",
+        description: "Lær alfabetet og tal på dansk for børn 5-7 år. Interaktive spil med dansk lyd og animationer.",
         start_url: "/",
         display: "standalone",
         background_color: "#8B5CF6",

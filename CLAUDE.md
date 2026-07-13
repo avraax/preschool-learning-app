@@ -1,6 +1,6 @@
 # Børnelæring - Danish Preschool Learning App
 
-Danish educational web app for children aged 3-7. Alphabet, math, colors, and memory games with native Danish audio narration.
+Danish educational web app for children aged 5-7. Alphabet, math, colors, and memory games with native Danish audio narration.
 
 ## Tech Stack
 
