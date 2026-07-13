@@ -1,7 +1,7 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { AppBar, Box, Container, IconButton, Toolbar, Typography } from '@mui/material'
+import { AppBar, Box, Container, IconButton, Toolbar, Typography, useMediaQuery } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { ArrowLeft } from 'lucide-react'
 import GameMotif from './GameMotif'
@@ -47,6 +47,9 @@ const GameShell: React.FC<GameShellProps> = ({
   const category = getCategoryTheme(categoryId)
   const dark = theme.scene.dark
   const immersive = theme.scene.layers.length > 0
+  // Phone landscape: play-surface first — the title moves INTO the header row (between back
+  // and score) so its own row's height goes to the game body instead.
+  const phoneLandscape = useMediaQuery(PHONE_LANDSCAPE.replace('@media ', ''))
 
   return (
     <Box
@@ -100,6 +103,27 @@ const GameShell: React.FC<GameShellProps> = ({
             <ArrowLeft size={24} />
           </IconButton>
 
+          {phoneLandscape && (
+            <Typography
+              sx={{
+                fontFamily: theme.titleFontFamily,
+                fontWeight: 700,
+                fontSize: '1rem',
+                color: dark ? '#FFFFFF' : category.accentColor,
+                textShadow: dark
+                  ? '0 0 16px rgba(120,170,255,0.55), 0 2px 8px rgba(0,0,0,0.5)'
+                  : `1px 1px 2px ${category.accentColor}33`,
+                minWidth: 0,
+                px: 1,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {title}
+            </Typography>
+          )}
+
           {score}
         </Toolbar>
       </AppBar>
@@ -115,38 +139,39 @@ const GameShell: React.FC<GameShellProps> = ({
           [PHONE_LANDSCAPE]: { py: 0.5 },
         }}
       >
-        {/* Themed title (dark worlds → light text + glow; light → accent + soft shadow). */}
-        <Box
-          sx={{
-            textAlign: 'center',
-            mb: dense ? { xs: 1, md: 1.5 } : { xs: 2, md: 3 },
-            flex: '0 0 auto',
-            [PHONE_LANDSCAPE]: { mb: 0.5 },
-          }}
-        >
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
+        {/* Themed title (dark worlds → light text + glow; light → accent + soft shadow).
+            Phone landscape renders it inline in the toolbar instead — no title row at all. */}
+        {!phoneLandscape && (
+          <Box
+            sx={{
+              textAlign: 'center',
+              mb: dense ? { xs: 1, md: 1.5 } : { xs: 2, md: 3 },
+              flex: '0 0 auto',
+            }}
           >
-            <Typography
-              variant="h3"
-              sx={{
-                fontFamily: theme.titleFontFamily,
-                color: dark ? '#FFFFFF' : category.accentColor,
-                fontWeight: 700,
-                // Unified across all games (dense only affects paddings/margins, not the title).
-                fontSize: { xs: '1.6rem', md: '2.1rem' },
-                [PHONE_LANDSCAPE]: { fontSize: '1.05rem' },
-                textShadow: dark
-                  ? '0 0 16px rgba(120,170,255,0.55), 0 2px 8px rgba(0,0,0,0.5)'
-                  : `1px 1px 2px ${category.accentColor}33`,
-              }}
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
             >
-              {title}
-            </Typography>
-          </motion.div>
-        </Box>
+              <Typography
+                variant="h3"
+                sx={{
+                  fontFamily: theme.titleFontFamily,
+                  color: dark ? '#FFFFFF' : category.accentColor,
+                  fontWeight: 700,
+                  // Unified across all games (dense only affects paddings/margins, not the title).
+                  fontSize: { xs: '1.6rem', md: '2.1rem' },
+                  textShadow: dark
+                    ? '0 0 16px rgba(120,170,255,0.55), 0 2px 8px rgba(0,0,0,0.5)'
+                    : `1px 1px 2px ${category.accentColor}33`,
+                }}
+              >
+                {title}
+              </Typography>
+            </motion.div>
+          </Box>
+        )}
 
         {/* Per-game body. Centres its content vertically so the prompt and the answers read as
             one group (games whose body has a flex:1 child still fill the area — flex-grow wins,

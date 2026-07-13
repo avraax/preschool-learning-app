@@ -348,7 +348,8 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
             color: muiTheme.scene.dark ? '#FFFFFF' : 'primary.main',
             fontSize: { xs: '1rem', md: '1.25rem' },
             textShadow: muiTheme.scene.dark ? '0 2px 8px rgba(0,0,0,0.5)' : 'none',
-            [PHONE_LANDSCAPE]: { fontSize: '0.85rem' },
+            // Phone landscape: the equation IS the question — this line is decoration.
+            [PHONE_LANDSCAPE]: { display: 'none' },
           }}
         >
           Hvad bliver svaret? 🤔
@@ -422,8 +423,8 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
             // Phone landscape: fixed tile height instead of aspect-driven (see UnifiedQuizGame).
             [PHONE_LANDSCAPE]: {
               gap: '10px',
-              maxWidth: '640px',
-              '& > *': { aspectRatio: 'auto', height: '72px', minHeight: '72px', maxHeight: '72px' }
+              maxWidth: '680px',
+              '& > *': { aspectRatio: 'auto', height: '84px', minHeight: '84px', maxHeight: '84px' }
             }
           }}
         >

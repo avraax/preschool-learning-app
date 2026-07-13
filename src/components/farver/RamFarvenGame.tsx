@@ -10,6 +10,7 @@ import { DroppableZone } from '../common/dnd/DroppableZone'
 import type { GuideReaction } from '../common/ThemeMascot'
 import { useCelebration } from '../common/CelebrationEffect'
 import { ColorRepeatButton } from '../common/RepeatButton'
+import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 import { getCategoryTheme } from '../../config/categoryThemes'
 import { useRound } from '../../hooks/useRound'
 import { progressStore, type RoundOutcome } from '../../services/progressStore'
@@ -456,7 +457,7 @@ const RamFarvenGame: React.FC = () => {
       ) : gameReady && (
         <>
           {/* Repeat Instructions Button (replays the spoken "Ram farven: X" target). */}
-          <Box sx={{ textAlign: 'center', mb: { xs: 0.75, md: 1 }, flex: '0 0 auto' }}>
+          <Box sx={{ textAlign: 'center', mb: { xs: 0.75, md: 1 }, flex: '0 0 auto', [PHONE_LANDSCAPE]: { mb: 0.5 } }}>
             <ColorRepeatButton onClick={repeatInstructions} disabled={false} label="🎵 Hør igen" />
           </Box>
 

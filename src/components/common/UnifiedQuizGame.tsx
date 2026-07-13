@@ -386,9 +386,25 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
           />
         ) : (
         <>
+        {/* Prompt zone. Phone landscape: play-surface first — the visual question and the
+            repeat button share ONE row (display:contents keeps the normal stacked layout
+            everywhere else), freeing a full row's height for bigger answer tiles. */}
+        <Box
+          sx={{
+            display: 'contents',
+            [PHONE_LANDSCAPE]: {
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 2,
+              mb: 1,
+              flex: '0 0 auto',
+            },
+          }}
+        >
         {/* Visual Question - shown for word-association style rounds */}
         {currentItem?.questionVisual && (
-          <Box sx={{ textAlign: 'center', mb: { xs: 1.5, md: 2 }, flex: '0 0 auto', [PHONE_LANDSCAPE]: { mb: 0.5 } }}>
+          <Box sx={{ textAlign: 'center', mb: { xs: 1.5, md: 2 }, flex: '0 0 auto', [PHONE_LANDSCAPE]: { mb: 0 } }}>
             <motion.div
               key={`${currentItem.value}-${currentItem.questionVisual.word}`}
               initial={{ opacity: 0, scale: 0.8 }}
@@ -428,13 +444,14 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
 
         {/* Audio Control - Compact (hidden for games that must not read the answer aloud) */}
         {config.showRepeat !== false && (
-          <Box sx={{ textAlign: 'center', mb: { xs: 2, md: 3 }, flex: '0 0 auto', [PHONE_LANDSCAPE]: { mb: 1 } }}>
+          <Box sx={{ textAlign: 'center', mb: { xs: 2, md: 3 }, flex: '0 0 auto', [PHONE_LANDSCAPE]: { mb: 0 } }}>
             <RepeatButton
               onClick={repeatItem}
               disabled={false}
             />
           </Box>
         )}
+        </Box>
 
         {/* Answer Options Grid — non-greedy so it groups directly under the prompt
             (GameShell centres the prompt+answers cluster vertically). */}
@@ -476,8 +493,8 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
               // ≤480px height budget — fix the tile height instead of the aspect.
               [PHONE_LANDSCAPE]: {
                 gap: '10px',
-                maxWidth: '640px',
-                '& > *': { aspectRatio: 'auto', height: '72px', minHeight: '72px', maxHeight: '72px' }
+                maxWidth: '680px',
+                '& > *': { aspectRatio: 'auto', height: '84px', minHeight: '84px', maxHeight: '84px' }
               }
             }}
           >

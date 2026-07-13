@@ -9,6 +9,7 @@ import { DroppableZone } from '../common/dnd/DroppableZone'
 import type { GuideReaction } from '../common/ThemeMascot'
 import { useCelebration } from '../common/CelebrationEffect'
 import { ColorRepeatButton } from '../common/RepeatButton'
+import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 import { ColorProgressChip } from '../common/ScoreChip'
 import { getCategoryTheme } from '../../config/categoryThemes'
 import { useRound } from '../../hooks/useRound'
@@ -427,9 +428,24 @@ const FarvejagtGame: React.FC = () => {
         />
       ) : gameReady && (
         <>
+          {/* Phone landscape: prompt pill + repeat button share ONE row (display:contents
+              keeps the stacked layout everywhere else) — the board gets the saved height. */}
+          <Box
+            sx={{
+              display: 'contents',
+              [PHONE_LANDSCAPE]: {
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 1.5,
+                mb: 0.75,
+                flex: '0 0 auto',
+              },
+            }}
+          >
           {/* Target prompt pill — accent carries the educational target hex so a non-reader
               sees which color to hunt. */}
-          <Box sx={{ display: 'flex', justifyContent: 'center', flex: '0 0 auto', mb: { xs: 1, md: 1.5 } }}>
+          <Box sx={{ display: 'flex', justifyContent: 'center', flex: '0 0 auto', mb: { xs: 1, md: 1.5 }, [PHONE_LANDSCAPE]: { mb: 0 } }}>
             <Box
               sx={{
                 display: 'flex',
@@ -458,8 +474,9 @@ const FarvejagtGame: React.FC = () => {
           </Box>
 
           {/* Repeat Instructions Button */}
-          <Box sx={{ textAlign: 'center', mb: { xs: 1, md: 1.5 }, flex: '0 0 auto' }}>
+          <Box sx={{ textAlign: 'center', mb: { xs: 1, md: 1.5 }, flex: '0 0 auto', [PHONE_LANDSCAPE]: { mb: 0 } }}>
             <ColorRepeatButton onClick={repeatInstructions} disabled={false} label="🎵 Hør igen" />
+          </Box>
           </Box>
 
           {/* Game area */}
