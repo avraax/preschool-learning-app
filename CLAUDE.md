@@ -100,6 +100,9 @@ src/
   App.tsx            Router + SimplifiedAudioProvider + NavigationAudioCleanup + AdultCorner + CrashTestProbe
 ```
 
+**UI reference screenshots** of every view (iPad + phone + overlays) live in `docs/ui-reference/`
+(see its README) — use as the baseline for UI/UX polish work, and re-capture after visual changes.
+
 ## Adding a theme
 
 1. Copy an existing `src/theme/tokens/<skin>.tokens.ts` (e.g. `ocean.tokens.ts`) to a new file, give it a unique `id`, a `name` + `selectorEmoji` (shown in the picker), and edit the colors. Use the `category()` / `gradient3()` / `neutralShadows()` helpers from `tokens/helpers.ts` so the structure matches other skins.
