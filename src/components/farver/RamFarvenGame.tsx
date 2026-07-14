@@ -2,8 +2,9 @@ import React, { useState, useEffect, useRef } from 'react'
 import { Box, Typography, Button } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { motion, AnimatePresence } from 'framer-motion'
-import { DndContext, DragEndEvent, DragStartEvent, DragOverEvent, closestCenter } from '@dnd-kit/core'
+import { DndContext, DragEndEvent, DragStartEvent, DragOverEvent } from '@dnd-kit/core'
 import { useDragOnlySensors } from '../common/dnd/useDragOnlySensors'
+import { kidCollision } from '../common/dnd/kidCollision'
 import { ColorProgressChip } from '../common/ScoreChip'
 import { DraggableItem } from '../common/dnd/DraggableItem'
 import { DroppableZone } from '../common/dnd/DroppableZone'
@@ -12,6 +13,7 @@ import { useCelebration } from '../common/CelebrationEffect'
 import { ColorRepeatButton } from '../common/RepeatButton'
 import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 import { getCategoryTheme } from '../../config/categoryThemes'
+import { stickerSetForSection } from '../../config/stickers'
 import { hexToRgba } from '../../theme/tokens/helpers'
 import { SNAP, BOUNCE } from '../../theme/motion'
 import { useRound } from '../../hooks/useRound'
@@ -19,9 +21,11 @@ import { progressStore, type RoundOutcome } from '../../services/progressStore'
 import { sfx } from '../../services/sfxClient'
 import { mascotBus } from '../../services/mascotBus'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
+import { useDifficulty } from '../../hooks/useDifficulty'
 import GameShell from '../common/GameShell'
 import RoundResultScreen from '../common/RoundResultScreen'
 import { isIOS } from '../../utils/deviceDetection'
+import { shuffle } from '../../utils/shuffle'
 import { devFx } from '../../utils/devHarness'
 // Simplified audio system
 import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
@@ -112,13 +116,13 @@ const mixingRules: Record<string, TargetColor> = {
   'hvid+sort': { color: 'grå', name: 'grå', hex: '#9CA3AF' }
 }
 
-const shuffleArray = (array: ColorDroplet[]): ColorDroplet[] => {
-  const shuffled = [...array]
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1))
-    ;[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
-  }
-  return shuffled
+// Static-difficulty target pools (progressStore.difficultyFor — no adaptivity). Let: just the 3
+// iconic two-primary secondaries. Normal: + the 3 tints (primary + white). Svær: all 9, adding the
+// black-based shades + grey (mørkerød/mørkeblå/grå) which force the child to reach for black.
+const TARGET_NAMES_BY_DIFFICULTY: Record<string, string[]> = {
+  let: ['lilla', 'orange', 'grøn'],
+  normal: ['lilla', 'orange', 'grøn', 'lyserød', 'lyseblå', 'lysegul'],
+  svaer: possibleTargets.map((tgt) => tgt.name)
 }
 
 // The 2 source colors that mix to a target (for the recipe reveal + hint).
@@ -175,6 +179,10 @@ const RamFarvenGame: React.FC = () => {
   const welcomeTriggered = useRef(false)
   const targetNameRef = useRef<string>('')
   const hasInteractedRef = useRef(false)
+  // Last target's hex, to avoid an immediate repeat. Starts null so the FIRST target is unrestricted
+  // (previously the default 'lilla' state leaked in as an avoid, permanently excluding lilla from the
+  // first mix of every session/replay — P5).
+  const lastTargetHexRef = useRef<string | null>(null)
 
   const logError = (message: string, data?: any) => {
     if (message.includes('Error') || message.includes('error')) {
@@ -192,13 +200,19 @@ const RamFarvenGame: React.FC = () => {
   // `prevHex` lets the caller avoid an immediate repeat (state read in the closure may be stale
   // inside chained timeouts, so the caller passes the just-finished target's hex explicitly).
   const setupTarget = (voice = true, prevHex?: string) => {
-    const avoid = prevHex ?? targetColor?.hex
-    const pool = avoid ? possibleTargets.filter(target => target.hex !== avoid) : possibleTargets
+    const difficulty = progressStore.difficultyFor('colors')
+    const allowedNames = TARGET_NAMES_BY_DIFFICULTY[difficulty] ?? TARGET_NAMES_BY_DIFFICULTY.normal
+    const difficultyPool = possibleTargets.filter(target => allowedNames.includes(target.name))
+
+    const avoid = prevHex ?? lastTargetHexRef.current
+    let pool = avoid ? difficultyPool.filter(target => target.hex !== avoid) : difficultyPool
+    if (pool.length === 0) pool = difficultyPool // never over-filter to empty
     const next = pool[Math.floor(Math.random() * pool.length)]
+    lastTargetHexRef.current = next.hex
     targetNameRef.current = next.name
 
     setTargetColor(next)
-    setAvailableColors(shuffleArray(primaryColors))
+    setAvailableColors(shuffle(primaryColors))
     setMixingZone([])
     setBlendResult(null)
     setRecipe(null)
@@ -282,7 +296,7 @@ const RamFarvenGame: React.FC = () => {
     const outcome = progressStore.recordRoundResult(
       'colors.ramfarven',
       { correct: firstTryCorrect, total: round.length, longestStreak },
-      { starThresholds: { three: 0, two: 2 } },
+      { starThresholds: { three: 0, two: 2 }, stickerSetId: stickerSetForSection('colors') },
     )
     setRoundOutcome(outcome)
   }
@@ -478,6 +492,17 @@ const RamFarvenGame: React.FC = () => {
     },
   }
 
+  // Live difficulty: pick a fresh target from the new pool when the level changes in the adult menu
+  // (no refresh). Skips the result screen + the initial mount (mirrors the sibling Farver games).
+  const difficultyLevel = useDifficulty('colors')
+  const prevDifficultyRef = useRef(difficultyLevel)
+  useEffect(() => {
+    if (prevDifficultyRef.current === difficultyLevel) return
+    prevDifficultyRef.current = difficultyLevel
+    if (roundOutcome || !gameReady) return
+    setupTarget()
+  }, [difficultyLevel]) // eslint-disable-line react-hooks/exhaustive-deps
+
   return (
     <GameShell
       categoryId="colors"
@@ -539,7 +564,7 @@ const RamFarvenGame: React.FC = () => {
               onDragOver={handleDragOver}
               onDragEnd={handleDragEnd}
               onDragCancel={handleDragCancel}
-              collisionDetection={closestCenter}
+              collisionDetection={kidCollision}
             >
               {/* Goal → Pot row: make THIS (left swatch) IN HERE (right pot). */}
               <Box sx={{
@@ -613,7 +638,12 @@ const RamFarvenGame: React.FC = () => {
 
                 {/* Mixing pot + Tøm */}
                 <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1, flex: '0 0 auto' }}>
-                  <motion.div
+                  {/* P2 fix: the pot must go through MUI `sx` (not a raw inline `style`) so the
+                      RESPONSIVE size object (`circleSizeSx`) actually resolves — spreading it into a
+                      framer-motion `style` cast `as any` silently dropped every object-valued
+                      property, collapsing the pot (and its 100%-sized DroppableZone) to ~8px. */}
+                  <Box
+                    component={motion.div}
                     key={displayBlendResult ? `wobble-${displayBlendResult.hex}` : 'idle'}
                     animate={
                       displayBlendResult && !reduce
@@ -629,7 +659,7 @@ const RamFarvenGame: React.FC = () => {
                           ? { duration: 0.6, repeat: Infinity, ease: 'easeInOut' }
                           : { duration: 0.2 }
                     }
-                    style={{ ...circleSizeSx, position: 'relative' } as any}
+                    sx={{ ...circleSizeSx, position: 'relative' }}
                   >
                     <DroppableZone
                       id="mixing-zone"
@@ -731,7 +761,7 @@ const RamFarvenGame: React.FC = () => {
                         />
                       )}
                     </DroppableZone>
-                  </motion.div>
+                  </Box>
 
                   {/* "Din blanding" label — mirrors the goal "Mål" chip so the relationship reads. */}
                   <Box sx={{

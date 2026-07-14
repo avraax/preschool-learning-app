@@ -1,6 +1,6 @@
 import { ttsClient, TtsClient } from '../services/ttsClient'
 import { isIOS } from './deviceDetection'
-import { DANISH_PHRASES, getRandomSuccessPhrase, getRandomEncouragementPhrase, getDanishNumberText, getDanishLetterName } from '../config/danish-phrases'
+import { DANISH_PHRASES, getDanishNumberText, getDanishLetterName } from '../config/danish-phrases'
 // Remote console logging removed for production
 
 // Production logging - only critical errors
@@ -136,35 +136,27 @@ export class SimplifiedAudioController {
   // ===== SIMPLIFIED PERMISSION MANAGEMENT =====
 
   /**
-   * Simplified audio readiness check - more lenient for iOS
+   * Audio readiness check. If audio isn't working yet, (re)initialize within the current gesture
+   * and AWAIT the result rather than swallowing this tap — so the FIRST tap after load / after a
+   * suspension actually produces audio instead of being silently dropped (PRD-06 §5 / P3).
+   * initializeAudio de-dupes concurrent calls and resolves to whether audio is now working.
    */
-  private ensureAudioReady(): boolean {
-    if (!simplifiedAudioContextInstance) {
+  private async ensureAudioReady(): Promise<boolean> {
+    const ctx = simplifiedAudioContextInstance
+    if (!ctx) {
       // No simplified audio context available
       return false
     }
 
-    const { state, initializeAudio } = simplifiedAudioContextInstance
-    
-    // For iOS, be more lenient - if we've had ANY successful initialization, proceed
-    if (isIOS()) {
-      // If audio is working, allow it (iOS might have different states than expected)
-      if (state.isWorking) {
-        // iOS: Audio is working, allowing playback
-        return true
-      }
-    }
-    
-    if (!state.isWorking && state.needsUserAction) {
-      // Audio needs user interaction, attempting initialization
-      // Try to initialize if we haven't yet
-      initializeAudio().catch(() => {
-        // Auto-initialization failed
-      })
+    if (ctx.state?.isWorking) return true
+
+    // Not working — try to (re)unlock now (this call is on the tap's gesture stack) and use the
+    // authoritative result. Previously we fired-and-forgot init and returned false, dropping the tap.
+    try {
+      return await ctx.initializeAudio()
+    } catch {
       return false
     }
-
-    return state.isWorking
   }
 
   /**
@@ -185,7 +177,7 @@ export class SimplifiedAudioController {
     // Speaking text
 
     return this.playAudio(async () => {
-      if (!this.ensureAudioReady()) {
+      if (!(await this.ensureAudioReady())) {
         // Audio not ready, skipping speak
         return
       }
@@ -208,7 +200,7 @@ export class SimplifiedAudioController {
     return this.playAudio(async () => {
       this.updateUserInteraction()
       
-      if (!this.ensureAudioReady()) {
+      if (!(await this.ensureAudioReady())) {
         return
       }
       
@@ -219,7 +211,7 @@ export class SimplifiedAudioController {
   }
 
   /**
-   * Speak text using the British English (en-GB) voice.
+   * Speak text using the en-US Ava (multilingual) voice.
    * Used by the Engelsk section for target words. Danish instruction/feedback audio
    * still goes through speak()/the da-DK path. Plain text (no Danish SSML wrapper).
    */
@@ -227,20 +219,12 @@ export class SimplifiedAudioController {
     return this.playAudio(async () => {
       this.updateUserInteraction()
 
-      if (!this.ensureAudioReady()) {
+      if (!(await this.ensureAudioReady())) {
         return
       }
 
       await this.ttsClient.synthesizeAndPlay(text, 'english', false)
     })
-  }
-
-  async speakWithEnthusiasm(text: string, voiceType: 'primary' | 'backup' | 'male' = 'primary'): Promise<string> {
-    return this.speak(text, voiceType, true)
-  }
-
-  async speakSlowly(text: string, voiceType: 'primary' | 'backup' | 'male' = 'primary'): Promise<string> {
-    return this.speak(text, voiceType, true)
   }
 
   async speakQuizPromptWithRepeat(text: string, _repeatWord: string, voiceType: 'primary' | 'backup' | 'male' = 'primary'): Promise<string> {
@@ -249,7 +233,7 @@ export class SimplifiedAudioController {
     return this.playAudio(async () => {
       this.updateUserInteraction()
       
-      if (!this.ensureAudioReady()) {
+      if (!(await this.ensureAudioReady())) {
         // Audio not ready for quiz prompt
         return
       }
@@ -259,21 +243,13 @@ export class SimplifiedAudioController {
     })
   }
 
-  async speakMathProblem(problem: string, voiceType: 'primary' | 'backup' | 'male' = 'primary'): Promise<string> {
-    const mathText = problem
-      .replace(/\+/g, ` ${DANISH_PHRASES.math.plus} `)
-      .replace(/-/g, ` ${DANISH_PHRASES.math.minus} `)
-      .replace(/=/g, ` ${DANISH_PHRASES.math.equals} `)
-    return this.speak(mathText, voiceType, true)
-  }
-
   async speakAdditionProblem(num1: number, num2: number, voiceType: 'primary' | 'backup' | 'male' = 'primary'): Promise<string> {
     // Playing addition problem
     
     return this.playAudio(async () => {
       this.updateUserInteraction()
       
-      if (!this.ensureAudioReady()) {
+      if (!(await this.ensureAudioReady())) {
         return
       }
       
@@ -288,7 +264,7 @@ export class SimplifiedAudioController {
     return this.playAudio(async () => {
       this.updateUserInteraction()
 
-      if (!this.ensureAudioReady()) {
+      if (!(await this.ensureAudioReady())) {
         return
       }
 
@@ -297,27 +273,13 @@ export class SimplifiedAudioController {
     })
   }
 
-  async announceGameResult(isCorrect: boolean, voiceType: 'primary' | 'backup' | 'male' = 'primary'): Promise<string> {
-    // Announcing game result
-    
-    if (isCorrect) {
-      const successPhrase = getRandomSuccessPhrase()
-      // Playing success phrase
-      return this.speakWithEnthusiasm(successPhrase, voiceType)
-    } else {
-      const encouragementPhrase = getRandomEncouragementPhrase()
-      // Playing encouragement phrase
-      return this.speak(encouragementPhrase, voiceType, true)
-    }
-  }
-
   async announceScore(score: number, voiceType: 'primary' | 'backup' | 'male' = 'primary'): Promise<string> {
     // Announcing score
     
     return this.playAudio(async () => {
       this.updateUserInteraction()
       
-      if (!this.ensureAudioReady()) {
+      if (!(await this.ensureAudioReady())) {
         return
       }
       
@@ -388,72 +350,6 @@ export class SimplifiedAudioController {
     }
   }
 
-  async playSuccessSound(): Promise<string> {
-    return this.speak(getRandomSuccessPhrase())
-  }
-
-  async playEncouragementSound(): Promise<string> {
-    return this.speak(getRandomEncouragementPhrase())
-  }
-
-  /**
-   * Centralized celebration handler with standard timing
-   * Based on AlphabetGame (Bogstav Quiz) implementation
-   * @param options Celebration options including visual effects and next action
-   * @returns Promise that resolves when celebration audio completes
-   */
-  async playCelebrationWithStandardTiming(options: {
-    isCorrect: boolean
-    celebrate?: () => void           // Start visual celebration
-    stopCelebration?: () => void     // Stop visual celebration
-    incrementScore?: () => void      // Update score
-    nextAction?: () => void          // Action to take after celebration
-    teacherCharacter?: any           // Optional character animation
-  }): Promise<void> {
-    const { 
-      isCorrect, 
-      celebrate, 
-      stopCelebration, 
-      incrementScore, 
-      nextAction,
-      teacherCharacter 
-    } = options
-
-    if (isCorrect) {
-      // IMMEDIATELY: Start visual effects
-      if (incrementScore) incrementScore()
-      if (celebrate) celebrate()
-      if (teacherCharacter?.wave) teacherCharacter.wave()
-
-      // THEN: Play celebration audio after very short delay (150ms from AlphabetGame)
-      await new Promise(resolve => setTimeout(resolve, 150))
-      
-      try {
-        await this.announceGameResult(true)
-      } catch (error) {
-        logError('Error playing celebration audio', { error })
-      }
-
-      // Auto-advance after standard celebration duration
-      const celebrationDuration = isIOS() ? 1500 : 2000
-      
-      setTimeout(() => {
-        if (stopCelebration) stopCelebration()
-        if (nextAction) nextAction()
-      }, celebrationDuration)
-      
-    } else {
-      // Handle incorrect answer
-      if (teacherCharacter?.think) teacherCharacter.think()
-      
-      try {
-        await this.announceGameResult(false)
-      } catch (error) {
-        logError('Error playing encouragement audio', { error })
-      }
-    }
-  }
-
   // ===== CLEANUP AND MANAGEMENT =====
 
   stopAll(): void {
@@ -470,13 +366,6 @@ export class SimplifiedAudioController {
     this.stopCurrentAudio('manual_cancellation')
   }
 
-  emergencyStop(): void {
-    this.ttsClient.stopCurrentAudio()
-    this.isCurrentlyPlaying = false
-    this.currentAudioId = null
-    this.notifyPlayingStateChange()
-  }
-
   private setupGlobalCleanup(): void {
     const cleanup = () => {
       this.triggerNavigationCleanup()
@@ -485,9 +374,19 @@ export class SimplifiedAudioController {
 
     window.addEventListener('beforeunload', cleanup)
     window.addEventListener('pagehide', cleanup)
-    
+
     if (typeof window !== 'undefined') {
       window.addEventListener('popstate', cleanup)
+    }
+
+    // Backgrounding a standalone PWA mid-clip (visibilitychange:hidden) must cancel narration
+    // cleanly so the stall timer is disarmed — otherwise it fires on return and the whole sentence
+    // re-speaks (in the Web Speech voice) seconds later (PRD-06 §5 / P3). stopAll resolves the play
+    // promise as a cancellation (not an error), so no Web Speech fallback is triggered.
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden) this.stopAll()
+      })
     }
   }
 
@@ -523,46 +422,7 @@ export class SimplifiedAudioController {
     // Navigation cleanup completed
   }
 
-  // ===== MISSING METHODS ADDED FOR COMPATIBILITY =====
-
-  async handleCompleteGameResult(options: {
-    isCorrect: boolean
-    character?: any
-    celebrate?: () => void
-    stopCelebration?: () => void
-    incrementScore?: () => void
-    currentScore?: number
-    nextAction?: () => void
-    correctAnswer?: number
-    explanation?: string
-    autoAdvanceDelay?: number
-    isIOS?: boolean
-  }): Promise<string> {
-    const { isCorrect, nextAction, autoAdvanceDelay = 2000 } = options
-    
-    return this.playAudio(async () => {
-      if (isCorrect) {
-        await this.announceGameResult(true)
-        if (options.incrementScore) options.incrementScore()
-        if (options.celebrate) options.celebrate()
-      } else {
-        await this.announceGameResult(false)
-        if (options.explanation) {
-          // Small delay before explanation
-          await new Promise(resolve => setTimeout(resolve, 500))
-          await this.speak(options.explanation)
-        }
-      }
-      
-      // Auto advance after delay
-      if (nextAction) {
-        setTimeout(() => {
-          if (options.stopCelebration) options.stopCelebration()
-          nextAction()
-        }, autoAdvanceDelay)
-      }
-    })
-  }
+  // ===== COMPATIBILITY / LEARNING-MODE HELPERS =====
 
   async announcePosition(currentIndex: number, totalItems: number, itemType: string): Promise<string> {
     const text = `Du er ved ${itemType} ${currentIndex + 1} ud af ${totalItems}`
@@ -576,51 +436,6 @@ export class SimplifiedAudioController {
   async speakColorMixingInstructions(targetColor: string): Promise<string> {
     const text = `Lav ${targetColor} farve ved at blande farverne`
     return this.speak(text)
-  }
-
-  async speakComparisonProblem(
-    leftNumber: number, 
-    rightNumber: number, 
-    _leftObjects: string, 
-    _rightObjects: string, 
-    questionType: 'largest' | 'smallest' | 'equal'
-  ): Promise<string> {
-    let question: string
-    if (questionType === 'largest') {
-      question = `Hvilket tal er størst? ${getDanishNumberText(leftNumber)} eller ${getDanishNumberText(rightNumber)}?`
-    } else if (questionType === 'smallest') {
-      question = `Hvilket tal er mindst? ${getDanishNumberText(leftNumber)} eller ${getDanishNumberText(rightNumber)}?`
-    } else {
-      question = `Er ${getDanishNumberText(leftNumber)} og ${getDanishNumberText(rightNumber)} ens?`
-    }
-    return this.speak(question)
-  }
-
-  async handleGameCompletion(options: {
-    character?: any
-    celebrate?: () => void
-    stopCelebration?: () => void
-    resetAction?: () => void
-    completionMessage?: string
-    autoResetDelay?: number
-    voiceType?: 'primary' | 'backup' | 'male'
-  }): Promise<string> {
-    const { completionMessage = 'Godt klaret!', resetAction, autoResetDelay = 3000, voiceType = 'primary' } = options
-    
-    return this.playAudio(async () => {
-      await this.speak(completionMessage, voiceType)
-      
-      if (resetAction && autoResetDelay > 0) {
-        setTimeout(() => {
-          if (options.stopCelebration) options.stopCelebration()
-          resetAction()
-        }, autoResetDelay)
-      }
-    })
-  }
-
-  async speakNewColorHuntGame(): Promise<string> {
-    return this.speak('Nyt spil! Lad os finde nogle flere farver!')
   }
 
   /**

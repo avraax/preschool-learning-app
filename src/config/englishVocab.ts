@@ -2,6 +2,7 @@
 // Danish-scaffolded: `da` is the Danish translation (used for the Dansk→Engelsk game
 // and instructions); `en` is the target English word; `emoji` is the picture.
 // Every word has an emoji so it can be used as a picture answer in the quiz games.
+import { shuffle } from '../utils/shuffle'
 
 export interface EnglishWord {
   en: string
@@ -114,7 +115,7 @@ export const englishThemes: EnglishTheme[] = [
       { en: 'nose', da: 'næse', emoji: '👃' },
       { en: 'mouth', da: 'mund', emoji: '👄' },
       { en: 'tooth', da: 'tand', emoji: '🦷' },
-      { en: 'hair', da: 'hår', emoji: '💇' }
+      { en: 'hair', da: 'hår', emoji: '🦱' }
     ]
   },
   {
@@ -181,12 +182,12 @@ export const pickDistractorWords = (
   pool: EnglishWord[] = quizEnglishWords
 ): EnglishWord[] => {
   const options: EnglishWord[] = [correct]
-  const shuffled = [...pool].sort(() => Math.random() - 0.5)
+  const shuffled = shuffle(pool)
   for (const w of shuffled) {
     if (options.length >= count) break
     if (!options.find(o => o.en === w.en)) {
       options.push(w)
     }
   }
-  return options.sort(() => Math.random() - 0.5)
+  return shuffle(options)
 }

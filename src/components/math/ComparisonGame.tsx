@@ -11,6 +11,8 @@ import type { GuideReaction } from '../common/ThemeMascot'
 import { useCelebration } from '../common/CelebrationEffect'
 import { MathScoreChip } from '../common/ScoreChip'
 import { getCategoryTheme } from '../../config/categoryThemes'
+import { stickerSetForSection } from '../../config/stickers'
+import { getDanishNumberText } from '../../config/danish-phrases'
 import { MathRepeatButton } from '../common/RepeatButton'
 import { useGameState } from '../../hooks/useGameState'
 import { useRound } from '../../hooks/useRound'
@@ -53,12 +55,20 @@ const DANISH_NUMBERS = [
   'elleve', 'tolv', 'tretten', 'fjorten', 'femten', 'seksten', 'sytten', 'atten', 'nitten', 'tyve'
 ]
 
-// Shrink emoji visual aids as the count grows so up to 20 fit without scrolling
-const getEmojiFontSize = (count: number): string => {
-  if (count <= 10) return 'clamp(1.5rem, 3vw, 2rem)'
-  if (count <= 15) return 'clamp(1.1rem, 2.4vw, 1.6rem)'
-  return 'clamp(0.85rem, 2vw, 1.3rem)'
-}
+// Object-pile emoji size (PRD-05 P3). Shrinks as the count grows so a full pile of up to 20 fits
+// its fixed-height box in EVERY viewport WITHOUT clipping — the shown quantity must always match
+// the numeral (the old `overflow: hidden` + fixed size clipped high counts, so 18 could look like
+// 20). Sizes are picked so the tightest layouts (phone-landscape's short box, narrow phone-portrait
+// sides) still show every object. Returned as an sx object so it can carry the media overrides.
+const emojiPileSx = (count: number) => ({
+  lineHeight: 1,
+  userSelect: 'none' as const,
+  fontSize: count <= 8 ? '1.9rem' : count <= 14 ? '1.5rem' : '1.15rem',
+  '@media (orientation: landscape)': {
+    fontSize: count <= 8 ? '1.5rem' : count <= 14 ? '1.15rem' : '0.95rem',
+  },
+  [PHONE_LANDSCAPE]: { fontSize: count <= 10 ? '0.85rem' : '0.7rem' },
+})
 
 interface ComparisonProblem {
   leftNumber: number
@@ -103,7 +113,18 @@ const ComparisonGame: React.FC = () => {
   const [roundOutcome, setRoundOutcome] = useState<RoundOutcome | null>(null)
 
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
+  // The post-correct celebration/advance timer (PRD-02 P1/P4) — tracked so it's cleared on unmount
+  // (no ghost prompt on the next screen) and never runs twice.
+  const advanceTimerRef = useRef<NodeJS.Timeout | null>(null)
+  // Advance-lock (PRD-02 P1): the `locked` state disables tiles, but it's async — a second tap in
+  // the same tick reads stale `locked=false`. This ref is set synchronously on a correct tap so the
+  // guard closes the same-tick double-tap window that `locked` alone leaves open.
+  const isAdvancingRef = useRef(false)
   const guideReactionTimer = useRef<NodeJS.Timeout | null>(null)
+  // False after unmount (PRD-02 P4): the advance timer is scheduled after the `await speakNumber`
+  // echo, so this flag stops the post-await continuation from scheduling a ghost prompt if the child
+  // navigates away during the echo. Owned by its own effect so StrictMode's dev remount restores it.
+  const mountedRef = useRef(true)
 
   const { showCelebration, celebrationIntensity, celebrationDuration, celebrateTier, stopCelebration } = useCelebration()
 
@@ -125,10 +146,16 @@ const ComparisonGame: React.FC = () => {
       playWelcomeThenPrompt()
     }
 
+    // Empty-dep effect → this cleanup runs once, on unmount: clear every pending timer so no
+    // prompt/advance callback fires after the component is gone (ghost TTS on the next screen).
     return () => {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current)
         timeoutRef.current = null
+      }
+      if (advanceTimerRef.current) {
+        clearTimeout(advanceTimerRef.current)
+        advanceTimerRef.current = null
       }
       if (guideReactionTimer.current) {
         clearTimeout(guideReactionTimer.current)
@@ -136,6 +163,14 @@ const ComparisonGame: React.FC = () => {
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Owns the mounted flag (PRD-02 P4, StrictMode-safe): true on (re)mount, false on unmount.
+  useEffect(() => {
+    mountedRef.current = true
+    return () => {
+      mountedRef.current = false
+    }
   }, [])
 
   // When audio unlocks after mount, play the welcome (board already visible). Interaction-guarded
@@ -220,6 +255,7 @@ const ComparisonGame: React.FC = () => {
     setMouthOpen(false)
     setGuideReaction(null)
     firstAttemptRef.current = true
+    isAdvancingRef.current = false // release the advance-lock for the new problem
 
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current)
@@ -243,7 +279,7 @@ const ComparisonGame: React.FC = () => {
     const outcome = progressStore.recordRoundResult(
       'math.comparison',
       { correct: firstTryCorrect, total: round.length, longestStreak },
-      { starThresholds: { three: 0, two: 2 } },
+      { starThresholds: { three: 0, two: 2 }, stickerSetId: stickerSetForSection('math') },
     )
     setRoundOutcome(outcome)
   }
@@ -257,7 +293,9 @@ const ComparisonGame: React.FC = () => {
   }
 
   const handleSideClick = async (side: Side) => {
-    if (!currentProblem || locked) return
+    // Advance-lock (PRD-02 P1): the ref closes the same-tick double-tap window that the async
+    // `locked` state leaves open (a second tap reads stale `locked=false` before React re-renders).
+    if (!currentProblem || locked || isAdvancingRef.current) return
     // The child is playing → suppress any pending/late welcome from talking over them.
     hasInteractedRef.current = true
 
@@ -269,27 +307,45 @@ const ComparisonGame: React.FC = () => {
     const isCorrect = side === biggerSide
     const tappedNumber = side === 'left' ? currentProblem.leftNumber : currentProblem.rightNumber
 
+    // Engage the advance-lock + disable tiles SYNCHRONOUSLY on a correct tap — before the await
+    // below — so a second tap in the same tick is already blocked.
+    if (isCorrect) {
+      isAdvancingRef.current = true
+      setLocked(true)
+    }
+
     setChosen({ side, correct: isCorrect })
     setGuideReaction(isCorrect ? 'cheer' : 'think')
     if (guideReactionTimer.current) clearTimeout(guideReactionTimer.current)
     guideReactionTimer.current = setTimeout(() => setGuideReaction(null), 1100)
 
-    // Echo the tapped number (identification). The win/lose narration (announceGameResult) stays
-    // removed; success/fail is otherwise SFX + visuals only.
+    // Speak the completed FACT on a correct tap ("sytten er større end ni") — the reinforcement
+    // moment (PRD-05 P2). A wrong tap just echoes the tapped number. Single audio channel, so the
+    // fact REPLACES the number echo, never stacks.
     try {
-      await audio.speakNumber(tappedNumber)
+      if (isCorrect) {
+        const bigger = Math.max(currentProblem.leftNumber, currentProblem.rightNumber)
+        const smaller = Math.min(currentProblem.leftNumber, currentProblem.rightNumber)
+        await audio.speak(`${getDanishNumberText(bigger)} er større end ${getDanishNumberText(smaller)}`)
+      } else {
+        await audio.speakNumber(tappedNumber)
+      }
     } catch {
       // ignore number audio errors
     }
 
+    // Navigated away during the echo → don't advance/celebrate (PRD-02 P4).
+    if (!mountedRef.current) return
+
     if (isCorrect) {
-      setLocked(true)
+      // (advance-lock + setLocked already engaged synchronously above)
       setMouthOpen(true) // krokodille chomps toward the bigger number
       incrementScore()
       celebrateTier('micro')
       sfx.play('chomp')
 
-      setTimeout(() => {
+      advanceTimerRef.current = setTimeout(() => {
+        advanceTimerRef.current = null
         stopCelebration()
         const r = round.completeQuestion(firstAttemptRef.current)
         if (!r.done && r.streak > 0 && r.streak % 3 === 0) {
@@ -356,29 +412,31 @@ const ComparisonGame: React.FC = () => {
           disabled={locked}
         >
           <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5, width: '100%' }}>
-            {/* Objects */}
+            {/* Objects — a fixed-height pile that always shows EXACTLY `num` objects (never clipped),
+                so the visible quantity order-matches the numeral (PRD-05 P3). alignContent centres
+                the wrapped rows; the emoji size (emojiPileSx) shrinks with the count so even 20 fit. */}
             <Box sx={{
-              minHeight: { xs: 56, md: 76 },
-              maxHeight: { xs: 96, md: 120 },
+              height: { xs: 104, md: 128 },
               display: 'flex',
               flexWrap: 'wrap',
               justifyContent: 'center',
               alignItems: 'center',
-              gap: 0.75,
-              overflow: 'hidden',
-              '@media (orientation: landscape)': { minHeight: { xs: 36, md: 48 }, maxHeight: { xs: 56, md: 72 } },
-              [PHONE_LANDSCAPE]: { minHeight: 26, maxHeight: 34 }
+              alignContent: 'center',
+              gap: '3px',
+              '@media (orientation: landscape)': { height: { xs: 56, md: 76 } },
+              [PHONE_LANDSCAPE]: { height: 34 }
             }}>
               {Array.from({ length: num }, (_, i) => (
-                <motion.span
+                <Box
+                  component={motion.span}
                   key={i}
                   initial={reduce ? false : { opacity: 0, scale: 0 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: reduce ? 0 : i * 0.05 }}
-                  style={{ fontSize: getEmojiFontSize(num) }}
+                  sx={emojiPileSx(num)}
                 >
                   {obj.emoji}
-                </motion.span>
+                </Box>
               ))}
             </Box>
             {/* Numeral */}

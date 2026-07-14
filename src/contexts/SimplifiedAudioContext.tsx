@@ -2,6 +2,7 @@ import React, { createContext, useState, useEffect, useRef, useMemo, useCallback
 import { isIOS } from '../utils/deviceDetection'
 import { audioDebugSession } from '../utils/remoteConsole'
 import { setSimplifiedAudioContext } from '../utils/SimplifiedAudioController'
+import { ttsClient } from '../services/ttsClient'
 
 // Simplified iOS-optimized debugging with remote logging
 const logSimpleAudio = (message: string, data?: any) => {
@@ -51,6 +52,9 @@ export const SimplifiedAudioProvider: React.FC<SimplifiedAudioProviderProps> = (
   const speechSynthesisRef = useRef<SpeechSynthesis | null>(null)
   const initializedRef = useRef<boolean>(false)
   const lastUserInteractionRef = useRef<number>(0)
+  // De-dupe concurrent init attempts (a tap fires updateUserInteraction AND speak→ensureAudioReady,
+  // both of which may call initializeAudio) so we never create two AudioContexts (PRD-06 §5).
+  const initPromiseRef = useRef<Promise<boolean> | null>(null)
 
   // Start debug session for remote logging
   useEffect(() => {
@@ -81,8 +85,12 @@ export const SimplifiedAudioProvider: React.FC<SimplifiedAudioProviderProps> = (
     setState(prev => (prev.needsUserAction && !prev.isWorking ? prev : { ...prev, isWorking: false, needsUserAction: true }))
   }, [])
 
-  // iOS-optimized audio initialization - immediate, direct, simple
-  const initializeAudio = useCallback(async (): Promise<boolean> => {
+  // iOS-optimized audio initialization - immediate, direct, simple. Re-entrant calls in the same
+  // tick share one in-flight promise (PRD-06 §5) so we never create two AudioContexts.
+  const initializeAudio = useCallback((): Promise<boolean> => {
+    if (initPromiseRef.current) return initPromiseRef.current
+
+    const run = async (): Promise<boolean> => {
     logSimpleAudio('initializeAudio called', {
       alreadyInitialized: initializedRef.current,
       timeSinceLastInteraction: Date.now() - lastUserInteractionRef.current
@@ -107,26 +115,35 @@ export const SimplifiedAudioProvider: React.FC<SimplifiedAudioProviderProps> = (
       }
 
       // 2. Resume AudioContext immediately during user interaction, then VERIFY it is actually
-      // running (the old code latched isWorking=true without confirming — PRD §9.2).
+      // running (the old code latched isWorking=true without confirming — PRD §9.2). iOS/WebKit
+      // reports 'interrupted' (calls/Siri/backgrounding) as well as 'suspended' — resume on either
+      // (PRD-06 §5 / P3).
       if (globalAudioContextRef.current) {
-        if (globalAudioContextRef.current.state === 'suspended') {
-          await globalAudioContextRef.current.resume()
+        if (globalAudioContextRef.current.state !== 'running') {
+          await globalAudioContextRef.current.resume().catch(() => {})
           logSimpleAudio('Resumed AudioContext', {
             newState: globalAudioContextRef.current.state
           })
         }
         audioContextWorking = (globalAudioContextRef.current.state === 'running')
 
-        // Recover automatically: if the context later suspends (e.g. iOS backgrounding), flip
-        // back to needsUserAction so the next interaction re-prompts instead of going silent.
+        // Recover automatically: if the context later suspends OR is interrupted (iOS call/Siri/
+        // backgrounding), flip back to needsUserAction so the next interaction re-prompts instead of
+        // going silent. iOS uses 'interrupted', which is outside the TS AudioContextState union.
         globalAudioContextRef.current.onstatechange = () => {
           const ctx = globalAudioContextRef.current
-          if (ctx && ctx.state === 'suspended') {
-            logSimpleAudio('AudioContext suspended — needs user action', { state: ctx.state })
+          const s = ctx?.state as string | undefined
+          if (ctx && (s === 'suspended' || s === 'interrupted')) {
+            logSimpleAudio('AudioContext not running — needs user action', { state: s })
             markNeedsUserAction()
           }
         }
       }
+
+      // 2b. Prime the shared narration <audio> element inside THIS gesture (PRD-06 §5). Resuming
+      // the probe context above is not sufficient — narration plays through ttsClient's element,
+      // so that element is the one that must become user-activated.
+      ttsClient.primePlaybackElement()
 
       // 3. Initialize speechSynthesis with "empty utterance" trick for iOS
       if (speechSynthesisRef.current) {
@@ -173,9 +190,17 @@ export const SimplifiedAudioProvider: React.FC<SimplifiedAudioProviderProps> = (
         needsUserAction: true,
         showPrompt: isIOS() // Only show prompt on iOS where this is more critical
       }))
-      
+
       return false
     }
+    }
+
+    const p = run()
+    initPromiseRef.current = p
+    p.finally(() => {
+      if (initPromiseRef.current === p) initPromiseRef.current = null
+    })
+    return p
   }, [markNeedsUserAction])
 
   const updateUserInteraction = useCallback(() => {
@@ -184,7 +209,8 @@ export const SimplifiedAudioProvider: React.FC<SimplifiedAudioProviderProps> = (
     // If we haven't initialized yet (or a prior session suspended), a fresh gesture is our
     // chance to (re)unlock audio — covers both first-run and suspension recovery.
     const ctx = globalAudioContextRef.current
-    const suspended = ctx ? ctx.state === 'suspended' : false
+    const s = ctx?.state as string | undefined
+    const suspended = s === 'suspended' || s === 'interrupted'
     if (!initializedRef.current || suspended) {
       initializeAudio().catch(error => {
         logSimpleAudio('Auto-initialization failed on interaction', { error })

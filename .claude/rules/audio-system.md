@@ -24,7 +24,7 @@ SimplifiedAudioController (src/utils/SimplifiedAudioController.ts)  -- singleton
 
 Stack: Azure AI Speech (single TTS provider) -> Web Speech API (fallback) -> Howler.js (sound effects).
 TTS goes through `src/services/ttsClient.ts` (the playback engine) and the `/api/tts-azure` endpoint.
-The Engelsk section uses an Azure `en-GB` voice via `speakEnglish()` (voiceType `'english'`). Danish
+The Engelsk section uses the Azure `en-US-AvaMultilingualNeural` voice via `speakEnglish()` (voiceType `'english'`). Danish
 pronunciation fixes live in the hosted PLS lexicon (`public/da-DK.pls`). The shared Azure synthesis
 core (`shared-azure-tts.js`) is used by both the dev server and the Vercel function so they can't drift.
 
@@ -52,7 +52,7 @@ const MyComponent = () => {
     audio.updateUserInteraction()   // iOS: refresh interaction timestamp before playback
     await audio.speak('Hej børn!')
     await audio.speakNumber(5)
-    await audio.speakEnglish('dog')  // en-GB
+    await audio.speakEnglish('dog')  // en-US Ava (multilingual)
   }
 }
 ```
@@ -71,7 +71,10 @@ async speakNewThing(text: string): Promise<string> {
 }
 ```
 
-2. Expose it through `useSimplifiedAudio` (add to the `SimplifiedAudioHook` interface and bind it in the returned object).
+2. Expose it: add it to the `SimplifiedAudioHook` interface **and** to the module-level
+   `STABLE_AUDIO_METHODS` object in `useSimplifiedAudio.ts` (bound once). The hook returns a
+   `useMemo`'d object whose identity only changes when a reactive field changes — do **not** add
+   per-render `.bind()`s to the returned object or rely on the hook's identity changing.
 3. Use it in components via the hook.
 
 ## Game Audio Entry Pattern
@@ -92,3 +95,10 @@ prompt. iOS suspension recovery: if the AudioContext later suspends or playback 
 `Sig et Ord` captures audio via `src/hooks/useSpeechInput.ts` (MediaRecorder -> `/api/stt`, Google STT v2).
 This is the *capture* side and sits beside the controller. It must NOT record while TTS is playing — call
 `audio.stopAll()` before starting capture.
+
+`start()` guards against a mid-flight unmount with a **generation counter** (`genRef`):
+`cancel()`/`stopAndRecognize()` bump it, and `start()` re-checks after each `await`, stopping the
+granted tracks if it went stale — so the OS mic never lingers when the child taps mic then navigates
+away (`SpeakWordGame`'s unmount calls `speech.cancel()`). `extractFirstWord` drops any `*`-masked
+(profanity-filtered) STT token so it's never read back / spelled aloud. See the STT server side
+(`features.profanityFilter`) in `.claude/rules/api-endpoints.md`.

@@ -10,6 +10,7 @@ import { useGameState } from '../../hooks/useGameState'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
 import { darken, hexToRgba, tileSurface } from '../../theme/tokens/helpers'
 import type { AmbientMotion } from '../../theme/tokens/types'
+import { shuffle } from '../../utils/shuffle'
 import { progressStore, type RoundOutcome } from '../../services/progressStore'
 import { sfx } from '../../services/sfxClient'
 import { mascotBus } from '../../services/mascotBus'
@@ -83,6 +84,7 @@ export interface UnifiedMemoryConfig {
   gameId: string                             // stable per-board id, e.g. 'memory.letters.10'
   boardPairs: number                         // 10 | 20 — pairs on the board (one board = one round)
   starThresholds: { three: number; two: number }  // in MISTAKES (= mismatched turns)
+  stickerSetId?: string                      // bias awards toward one album page (PRD-09 P3)
 
   // Content generation
   generateItems: () => string[]              // pool of items; engine slices boardPairs for pairs
@@ -228,7 +230,7 @@ const UnifiedMemoryGame: React.FC<UnifiedMemoryGameProps> = ({ config }) => {
     const sourceItems = config.generateItems()
 
     // Select boardPairs items (or all if fewer) for this board's pairs
-    const shuffledSource = [...sourceItems].sort(() => Math.random() - 0.5)
+    const shuffledSource = shuffle(sourceItems)
     const selectedItems = shuffledSource.slice(0, Math.min(config.boardPairs, sourceItems.length))
     
     // Create pairs (each item appears twice)
@@ -256,7 +258,7 @@ const UnifiedMemoryGame: React.FC<UnifiedMemoryGameProps> = ({ config }) => {
     })
     
     // Shuffle all cards
-    const shuffledCards = cardData.sort(() => Math.random() - 0.5)
+    const shuffledCards = shuffle(cardData)
     
     boardSeq.current += 1 // fresh key namespace for this board's cards
     setCards(shuffledCards)
@@ -445,7 +447,7 @@ const UnifiedMemoryGame: React.FC<UnifiedMemoryGameProps> = ({ config }) => {
         total: config.boardPairs + mismatchesRef.current,
         longestStreak: longestMatchStreakRef.current,
       },
-      { starThresholds: config.starThresholds },
+      { starThresholds: config.starThresholds, stickerSetId: config.stickerSetId },
     )
     setRoundOutcome(outcome)
   }

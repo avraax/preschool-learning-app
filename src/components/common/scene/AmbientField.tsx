@@ -12,6 +12,9 @@ interface AmbientFieldProps {
   sprites: string[] // resolved URLs, aligned with scene.ambient.sprites
   themeId: string
   disabled?: boolean
+  // Freeze animations in place (PRD-08 §P4) without unmounting — game routes, where the scene is
+  // blurred anyway. Pausing (vs. rendering nothing) means no re-shuffle/re-entry pop on return.
+  paused?: boolean
 }
 
 interface AmbientItem {
@@ -87,7 +90,7 @@ const SHOOTING_STARS = [
   { top: '34%', left: '-6%', dx: '46vw', dy: '40vh', angle: 44, len: 110, delay: '-11s', duration: '15s' },
 ]
 
-const AmbientField: React.FC<AmbientFieldProps> = ({ scene, sprites, themeId, disabled }) => {
+const AmbientField: React.FC<AmbientFieldProps> = ({ scene, sprites, themeId, disabled, paused }) => {
   const { count, motion } = scene.ambient
   const specs = scene.ambient.sprites
 
@@ -170,6 +173,7 @@ const AmbientField: React.FC<AmbientFieldProps> = ({ scene, sprites, themeId, di
                     }),
             '--drift': `${item.drift}px`,
             animation: `${animName} ${item.duration}s ${motion === 'twinkle' ? 'ease-in-out' : 'linear'} ${item.delay}s infinite`,
+            animationPlayState: paused ? 'paused' : 'running',
             willChange: 'transform, opacity',
           }}
         />
@@ -187,6 +191,7 @@ const AmbientField: React.FC<AmbientFieldProps> = ({ scene, sprites, themeId, di
               '--shoot-dx': s.dx,
               '--shoot-dy': s.dy,
               animation: `ambient-shoot ${s.duration} ease-out ${s.delay} infinite`,
+              animationPlayState: paused ? 'paused' : 'running',
               willChange: 'transform, opacity',
             }}
           >

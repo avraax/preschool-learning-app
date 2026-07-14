@@ -2,9 +2,14 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 
 /**
  * Decide whether a request's Origin is allowed to call our TTS/STT endpoints.
- * Same-origin browser fetches and the native PWA send no Origin → allowed. A cross-origin
- * caller must come from localhost (dev) or one of our own hosts (the request host or any
- * *.vercel.app preview/prod). This is a light billing-abuse guard, not hard auth (PRD §9.1).
+ *
+ * A cross-origin caller must come from localhost (dev) or the request's own host (the browser
+ * app / installed PWA POST from the same deployment — prod and each preview both satisfy this
+ * because the Origin matches the host they were served from). We deliberately DROPPED the old
+ * blanket `*.vercel.app` allow (PRD-03 §P3) — anyone can deploy a `*.vercel.app` site and proxy
+ * our paid endpoints. Requests with no Origin (server-to-server, curl, the /debug-report skill)
+ * are still allowed here; the real billing/abuse guard for those is the per-IP rate limiter.
+ * This is a light guard, not hard auth.
  */
 export function isAllowedOrigin(req: VercelRequest): boolean {
   const origin = req.headers.origin
@@ -12,12 +17,62 @@ export function isAllowedOrigin(req: VercelRequest): boolean {
   try {
     const host = new URL(origin).hostname
     if (host === 'localhost' || host === '127.0.0.1' || host === '[::1]') return true
-    if (host.endsWith('.vercel.app')) return true
     if (req.headers.host && host === req.headers.host.split(':')[0]) return true
     return false
   } catch {
     return false
   }
+}
+
+/** Best-effort client IP for rate limiting (Vercel sets x-forwarded-for). */
+export function clientIp(req: VercelRequest): string {
+  const fwd = req.headers['x-forwarded-for']
+  const raw = Array.isArray(fwd) ? fwd[0] : fwd
+  const first = raw?.split(',')[0]?.trim()
+  return first || req.socket?.remoteAddress || 'unknown'
+}
+
+// Fixed-window per-IP counters. In-memory is fine: Fluid Compute reuses instances, and this is a
+// billing GUARD, not a wall — state resetting on a cold start is acceptable (PRD-03 §5).
+interface RateBucket {
+  count: number
+  resetAt: number
+}
+const rateBuckets = new Map<string, RateBucket>()
+
+/**
+ * Fixed-window rate limit. Returns true if the request is allowed; on refusal it has already
+ * written a 429 (with Retry-After) to `res`, so the caller should just `return`.
+ */
+export function rateLimit(
+  req: VercelRequest,
+  res: VercelResponse,
+  opts: { scope: string; limit: number; windowMs: number }
+): boolean {
+  const now = Date.now()
+  const key = `${opts.scope}:${clientIp(req)}`
+
+  // Opportunistic prune so the map can't grow unbounded across a long-lived instance.
+  if (rateBuckets.size > 5000) {
+    for (const [k, b] of rateBuckets) {
+      if (b.resetAt <= now) rateBuckets.delete(k)
+    }
+  }
+
+  let bucket = rateBuckets.get(key)
+  if (!bucket || bucket.resetAt <= now) {
+    bucket = { count: 0, resetAt: now + opts.windowMs }
+    rateBuckets.set(key, bucket)
+  }
+  bucket.count++
+
+  if (bucket.count > opts.limit) {
+    const retryAfter = Math.max(1, Math.ceil((bucket.resetAt - now) / 1000))
+    res.setHeader('Retry-After', String(retryAfter))
+    res.status(429).json({ error: 'Too many requests' })
+    return false
+  }
+  return true
 }
 
 /** CORS headers scoped to the caller's own origin (not a blanket '*'). */

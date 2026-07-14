@@ -3,15 +3,25 @@ import { Box, Typography } from '@mui/material'
 import UnifiedQuizGame, { UnifiedQuizConfig, QuizItem } from '../common/UnifiedQuizGame'
 import { DANISH_PHRASES } from '../../config/danish-phrases'
 import { categoryThemes, getCategoryTheme } from '../../config/categoryThemes'
+import { stickerSetForSection } from '../../config/stickers'
 import { MathScoreChip } from '../common/ScoreChip'
 import { MathRepeatButton } from '../common/RepeatButton'
 import { progressStore, type DifficultyLevel } from '../../services/progressStore'
 import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
+import { shuffle } from '../../utils/shuffle'
 
-// Comprehensive math settings for counting quiz. Normal (today) = 1–50, unchanged/regression-safe.
-// Difficulty (Overhaul §5.7/Appendix A) widens the range: Let 1–20, Svær 1–100.
+// Comprehensive math settings for counting quiz. Difficulty (Overhaul §5.7/Appendix A) sets the
+// range: Let 1–20, Normal 1–50, Svær 1–100. The manual adult-menu level stays authoritative.
 const MAX_NUMBER_BY_LEVEL: Record<DifficultyLevel, number> = { let: 20, normal: 50, svaer: 100 }
 const maxNumberForLevel = (level: DifficultyLevel): number => MAX_NUMBER_BY_LEVEL[level]
+
+// Count-the-objects mode (PRD-05 P3): for n ≤ 20 the prompt HIDES the numeral, shows exactly n
+// objects and asks the child "Hvor mange?" — so counting actually happens (a child who counts to
+// 70 finds "find the giant 37" trivial symbol-matching). For n > 20 (only reachable on Normal/Svær)
+// the numeral is shown and the task stays numeral recognition ("Find tallet 37"), with NO object
+// row so the shown quantity can never contradict the numeral (the old capped-dots bug).
+const COUNT_OBJECTS_MAX = 20
+const isCountingMode = (n: number): boolean => n <= COUNT_OBJECTS_MAX
 
 // Swap the tens/units digit of a two-digit number (23 → 32). Returns null for single-digit or
 // palindromic numbers (11, 22, …) where the swap isn't a distinct confusable.
@@ -23,43 +33,35 @@ const swapDigits = (n: number): number | null => {
   return units * 10 + tens
 }
 
+// A number as a quiz item. In counting mode (n ≤ 20) the spoken prompt is "Hvor mange?" — it must
+// NOT say the number (that would give away the answer to count). In numeral mode it's "Find tallet
+// N". (For OPTION tiles the prompt/repeat text is unused, so the mode only matters for the target.)
 const makeNumberItem = (n: number): QuizItem => ({
   value: n,
   display: n,
-  audioPrompt: DANISH_PHRASES.gamePrompts.findNumber(n),
-  repeatWord: n.toString(),
+  audioPrompt: isCountingMode(n) ? 'Hvor mange?' : DANISH_PHRASES.gamePrompts.findNumber(n),
+  repeatWord: isCountingMode(n) ? '' : n.toString(),
 })
 
 // Small rotating set of counting glyphs for the PromptStage hero's object count. Picked
 // deterministically from the number itself (NOT Math.random) so a) the same question always
 // renders the same icon and b) it never consumes the seeded RNG stream used for content
-// generation (which would desync `?seed=` determinism and the Normal-mode regression guarantee).
+// generation (which would desync `?seed=` determinism).
 const HERO_COUNT_EMOJI = ['⭐', '🔵', '🟢', '🍎', '🎈', '🐳']
-const MAX_HERO_DOTS = 20 // cap so Svær's up-to-100 values stay a tidy, uncluttered row/grid.
 
-// Tal Quiz hero (UI/UX Overhaul §6A): the numeral rendered huge PLUS a matching count of small
-// themed objects, so the prompt is never audio-only. Numbers above the cap still show the full
-// numeral — only the decorative object row is capped for tidiness.
+// Object size shrinks as the pile grows so up to 20 stay tidy inside the PromptStage hero.
+const heroObjectFontSize = (n: number): string =>
+  n <= 8 ? 'clamp(1.3rem, 5vh, 2.2rem)' : n <= 14 ? 'clamp(1rem, 4vh, 1.7rem)' : 'clamp(0.8rem, 3.2vh, 1.3rem)'
+
+// Tal Quiz hero (UI/UX Overhaul §6A / PRD-05 P3):
+//   counting mode (n ≤ 20) → EXACTLY n objects, numeral HIDDEN — the child counts them.
+//   numeral mode  (n > 20) → the numeral alone (no misleading object row) — numeral recognition.
 const renderCountingHero = (item: QuizItem): React.ReactNode => {
   const n = item.value as number
   const accent = getCategoryTheme('math').accentColor
-  const dotCount = Math.max(0, Math.min(n, MAX_HERO_DOTS))
-  const icon = HERO_COUNT_EMOJI[n % HERO_COUNT_EMOJI.length]
 
-  return (
-    <Box
-      sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        width: '100%',
-        height: '100%',
-        minHeight: 0,
-        gap: { xs: 0.5, md: 1 },
-        overflow: 'hidden',
-      }}
-    >
+  if (!isCountingMode(n)) {
+    return (
       <Typography
         component="span"
         sx={{
@@ -67,40 +69,42 @@ const renderCountingHero = (item: QuizItem): React.ReactNode => {
           lineHeight: 1,
           userSelect: 'none',
           color: accent,
-          fontSize: 'clamp(2.4rem, 9vh, 4.75rem)',
-          [PHONE_LANDSCAPE]: { fontSize: 'clamp(1.4rem, 13vh, 2.3rem)' },
+          fontSize: 'clamp(2.4rem, 12vh, 5.5rem)',
+          [PHONE_LANDSCAPE]: { fontSize: 'clamp(1.6rem, 14vh, 2.6rem)' },
         }}
       >
         {n}
       </Typography>
-      {dotCount > 0 && (
+    )
+  }
+
+  const icon = HERO_COUNT_EMOJI[n % HERO_COUNT_EMOJI.length]
+  return (
+    <Box
+      aria-hidden
+      sx={{
+        display: 'flex',
+        flexWrap: 'wrap',
+        justifyContent: 'center',
+        alignContent: 'center',
+        alignItems: 'center',
+        gap: { xs: '4px', md: '6px' },
+        width: '100%',
+        maxWidth: 520,
+        height: '100%',
+        minHeight: 0,
+        overflow: 'hidden',
+      }}
+    >
+      {Array.from({ length: n }).map((_, i) => (
         <Box
-          aria-hidden
-          sx={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            justifyContent: 'center',
-            alignContent: 'center',
-            gap: '4px',
-            maxWidth: '100%',
-            minHeight: 0,
-          }}
+          key={i}
+          component="span"
+          sx={{ fontSize: heroObjectFontSize(n), lineHeight: 1, [PHONE_LANDSCAPE]: { fontSize: 'clamp(0.6rem, 8vh, 1rem)' } }}
         >
-          {Array.from({ length: dotCount }).map((_, i) => (
-            <Box
-              key={i}
-              component="span"
-              sx={{
-                fontSize: 'clamp(0.75rem, 3vh, 1.4rem)',
-                lineHeight: 1,
-                [PHONE_LANDSCAPE]: { fontSize: 'clamp(0.55rem, 3vh, 0.9rem)' },
-              }}
-            >
-              {icon}
-            </Box>
-          ))}
+          {icon}
         </Box>
-      )}
+      ))}
     </Box>
   )
 }
@@ -129,7 +133,7 @@ const MathGame: React.FC = () => {
 
       // Dedupe, shuffle, take up to 3 distinct confusables.
       const picks: number[] = []
-      for (const c of confusables.sort(() => Math.random() - 0.5)) {
+      for (const c of shuffle(confusables)) {
         if (picks.length >= 3) break
         if (!picks.includes(c)) picks.push(c)
       }
@@ -140,7 +144,7 @@ const MathGame: React.FC = () => {
       }
 
       const options: QuizItem[] = [correctAnswer, ...picks.map(makeNumberItem)]
-      return options.sort(() => Math.random() - 0.5)
+      return shuffle(options)
     },
 
     // Hero subject (Overhaul §6A) — huge numeral + matching object count, replacing the old
@@ -163,7 +167,10 @@ const MathGame: React.FC = () => {
 
     // Bounded round + reward flow (Foundation §3). 8 questions, 3★ = no mistakes, 2★ ≤ 2.
     gameId: 'math.counting',
-    round: { length: 8, starThresholds: { three: 0, two: 2 } },
+    round: { length: 8, starThresholds: { three: 0, two: 2 }, stickerSetId: stickerSetForSection('math') },
+
+    // Never-fail hint (PRD-05 P1): after 2 wrong taps the correct number tile pulses.
+    hintAfterNWrong: 2,
 
     // Audio methods
     speakQuizPrompt: async (item: QuizItem, audio: any) => {

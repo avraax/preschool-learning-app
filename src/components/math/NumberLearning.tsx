@@ -12,6 +12,7 @@ import StickerReveal from '../common/StickerReveal'
 import { useCelebration } from '../common/CelebrationEffect'
 import { categoryThemes } from '../../config/categoryThemes'
 import { progressStore, type StickerAward } from '../../services/progressStore'
+import { stickerSetForSection } from '../../config/stickers'
 import { hexToRgba } from '../../theme/tokens/helpers'
 import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 // Simplified audio system
@@ -136,24 +137,34 @@ const NumberLearning: React.FC = () => {
     }
   }
 
-  // Award an exploration sticker when distinct-tap count crosses each milestone.
-  const maybeAwardExploration = () => {
+  // Award an exploration sticker when distinct-tap count crosses each milestone. Returns true when
+  // it spoke the sticker line, so the caller skips the number echo (PRD-06 §3).
+  const maybeAwardExploration = (): boolean => {
     const size = exploredRef.current.size
     const milestone = Math.floor(size / EXPLORE_MILESTONE)
     if (milestone > milestoneRef.current) {
       milestoneRef.current = milestone
-      const award = progressStore.awardSticker()
+      const award = progressStore.awardSticker(stickerSetForSection('math'))
       setStickerAward(award)
       celebrateTier('sticker')
       if (stickerTimer.current) clearTimeout(stickerTimer.current)
       stickerTimer.current = setTimeout(() => setStickerAward(null), 3600)
-      // Speak the sticker name (browse has no other TTS competing here).
+      // Speak the sticker name (browse has no other TTS competing here). A duplicate is a shiny,
+      // not a "new" one — match the StickerReveal banner (PRD-09 P2).
       try {
-        audio.speak(`Nyt klistermærke! ${award.sticker.label}`).catch(() => {})
+        audio
+          .speak(
+            award.isNew
+              ? `Nyt klistermærke! ${award.sticker.label}`
+              : `Skinnende! ${award.sticker.label}`,
+          )
+          .catch(() => {})
       } catch {
         /* ignore */
       }
+      return true
     }
+    return false
   }
 
   const goToNumber = async (index: number) => {
@@ -165,7 +176,8 @@ const NumberLearning: React.FC = () => {
 
     const number = numbers[index]
     exploredRef.current.add(number)
-    maybeAwardExploration()
+    // On a milestone tap the sticker line is the reward audio — don't also speak the number.
+    if (maybeAwardExploration()) return
 
     try {
       // Slightly faster for number counting.

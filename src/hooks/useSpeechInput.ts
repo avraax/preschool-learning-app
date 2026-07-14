@@ -34,6 +34,13 @@ export const useSpeechInput = () => {
   const chunksRef = useRef<Blob[]>([])
   const mimeRef = useRef<string>('')
 
+  // Cancellation token for an in-flight start(). getUserMedia (and the OS permission prompt) can
+  // stay pending for seconds; if the component unmounts or the user cancels in that window, we must
+  // not end up with a live-but-orphaned mic stream. stop/cancel bump this counter; start() captures
+  // the value at entry and, after each await, bails + releases the stream if it went stale. Without
+  // this the mic could record indefinitely (OS mic indicator stuck on) after leaving the game.
+  const genRef = useRef(0)
+
   const releaseStream = useCallback(() => {
     if (streamRef.current) {
       // Release mic tracks so the iOS mic indicator clears and audio routing isn't held.
@@ -58,7 +65,17 @@ export const useSpeechInput = () => {
       throw new Error('Speech input not supported in this context')
     }
 
+    const myGen = genRef.current
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+
+    // Cancelled while getUserMedia was pending (e.g. child hit Back while the permission prompt was
+    // up). Release the freshly-granted stream immediately and never start the recorder.
+    if (myGen !== genRef.current) {
+      stream.getTracks().forEach(track => {
+        try { track.stop() } catch { /* ignore */ }
+      })
+      return
+    }
     streamRef.current = stream
 
     const mimeType = MIME_CANDIDATES.find(
@@ -69,6 +86,13 @@ export const useSpeechInput = () => {
     const recorder = mimeType
       ? new MediaRecorder(stream, { mimeType })
       : new MediaRecorder(stream)
+
+    // Re-check after the synchronous recorder setup — cancel() may have fired between the awaits.
+    if (myGen !== genRef.current) {
+      releaseStream()
+      return
+    }
+
     recorderRef.current = recorder
     chunksRef.current = []
 
@@ -80,7 +104,7 @@ export const useSpeechInput = () => {
 
     recorder.start()
     setIsRecording(true)
-  }, [isSupported])
+  }, [isSupported, releaseStream])
 
   /**
    * Stop capture, assemble the clip, and POST it to /api/stt.
@@ -88,6 +112,9 @@ export const useSpeechInput = () => {
    * or recognition failed (caller shows a friendly retry).
    */
   const stopAndRecognize = useCallback(async (): Promise<SpeechResult | null> => {
+    // Retire any in-flight start() so a not-yet-resolved getUserMedia self-aborts instead of
+    // starting an orphaned recorder after we've decided to stop.
+    genRef.current++
     const recorder = recorderRef.current
     if (!recorder) {
       releaseStream()
@@ -142,6 +169,9 @@ export const useSpeechInput = () => {
 
   /** Abort capture without sending anything (e.g. on unmount or navigation). */
   const cancel = useCallback(() => {
+    // Retire any in-flight start() first: if getUserMedia is still pending, the stale-generation
+    // guard in start() will stop the granted tracks the moment it resolves, so the mic never lingers.
+    genRef.current++
     const recorder = recorderRef.current
     if (recorder && recorder.state !== 'inactive') {
       try {

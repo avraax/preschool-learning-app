@@ -1,9 +1,11 @@
-import React from 'react'
+import React, { useRef } from 'react'
 import UnifiedQuizGame, { UnifiedQuizConfig, QuizItem } from '../common/UnifiedQuizGame'
 import { categoryThemes } from '../../config/categoryThemes'
+import { stickerSetForSection } from '../../config/stickers'
 import { OrdlegScoreChip } from '../common/ScoreChip'
 import { OrdlegRepeatButton } from '../common/RepeatButton'
 import { progressStore, type DifficultyLevel } from '../../services/progressStore'
+import { shuffle } from '../../utils/shuffle'
 
 // Læs Ordet: the written Danish word is shown (no picture); the child reads it and
 // taps the matching picture from 4 options. The word is NOT read aloud — the child must
@@ -18,6 +20,8 @@ const READING_WORDS: ReadingWord[] = [
   { word: 'ko', emoji: '🐄' },
   { word: 'is', emoji: '🍦' },
   { word: 'æg', emoji: '🥚' },
+  { word: 'ur', emoji: '⌚' },
+  { word: 'so', emoji: '🐖' },
   { word: 'kat', emoji: '🐱' },
   { word: 'sol', emoji: '☀️' },
   { word: 'hus', emoji: '🏠' },
@@ -50,6 +54,11 @@ const LaesOrdetGame: React.FC = () => {
     repeatWord: w.word
   })
 
+  // Anti-repeat guard (PRD-05 P4): remember the last few prompt words so the small Let pool doesn't
+  // show the same word back-to-back. Persists across questions (LaesOrdetGame has no state, so it
+  // renders once and this ref is stable).
+  const recentRef = useRef<string[]>([])
+
   const config: UnifiedQuizConfig = {
     quizType: 'ordleg',
 
@@ -58,7 +67,14 @@ const LaesOrdetGame: React.FC = () => {
       // Let draws only 2-letter prompt words (gentler); Normal/Svær keep today's full 2–3-letter
       // pool — Svær's extra challenge is MORE distractor pictures below, never longer words.
       const pool = level === 'let' ? TWO_LETTER_WORDS : READING_WORDS
-      const w = pool[Math.floor(Math.random() * pool.length)]
+      // Avoid the most-recent words (window shrinks to fit a small pool so there's always a choice).
+      const window = Math.min(3, Math.max(1, pool.length - 1))
+      const recent = new Set(recentRef.current.slice(-window))
+      const candidates = pool.filter((w) => !recent.has(w.word))
+      const choices = candidates.length > 0 ? candidates : pool
+      const w = choices[Math.floor(Math.random() * choices.length)]
+      recentRef.current.push(w.word)
+      if (recentRef.current.length > 6) recentRef.current.shift()
       return {
         ...toItem(w),
         // Word shown as text, no picture in the prompt — the child must read it.
@@ -73,12 +89,12 @@ const LaesOrdetGame: React.FC = () => {
       const optionCount = level === 'svaer' ? 6 : 4
       const correctWord = READING_WORDS.find(w => w.word === correct.value) || READING_WORDS[0]
       const options: QuizItem[] = [toItem(correctWord)]
-      const shuffled = [...READING_WORDS].sort(() => Math.random() - 0.5)
+      const shuffled = shuffle(READING_WORDS)
       for (const w of shuffled) {
         if (options.length >= optionCount) break
         if (!options.find(o => o.value === w.word)) options.push(toItem(w))
       }
-      return options.sort(() => Math.random() - 0.5)
+      return shuffle(options)
     },
 
     title: 'Læs Ordet',
@@ -97,8 +113,11 @@ const LaesOrdetGame: React.FC = () => {
     // Bounded round of 8 + shared reward flow (Overhaul Ordleg §1). The engine handles
     // everything: rounds, first-try/streak tracking, celebration tiers, wrong SFX, and the
     // RoundResultScreen → progressStore.recordRoundResult('ordleg.read', …).
-    round: { length: 8, starThresholds: { three: 0, two: 2 } },
+    round: { length: 8, starThresholds: { three: 0, two: 2 }, stickerSetId: stickerSetForSection('ordleg') },
     gameId: 'ordleg.read',
+
+    // Never-fail hint (PRD-05 P1): after 2 wrong picture taps the correct picture pulses.
+    hintAfterNWrong: 2,
 
     // The prompt word is NEVER spoken (reading it aloud would defeat the exercise), so both
     // the prompt and the repeat audio are no-ops. Tapping a picture still names the child's

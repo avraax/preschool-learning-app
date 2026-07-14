@@ -2,12 +2,14 @@ import React, { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { Box, Typography } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
-import { DndContext, DragEndEvent, DragStartEvent, DragOverEvent, closestCenter, DragOverlay } from '@dnd-kit/core'
+import { DndContext, DragEndEvent, DragStartEvent, DragOverEvent } from '@dnd-kit/core'
 import { useDragOnlySensors } from '../common/dnd/useDragOnlySensors'
+import { kidCollision } from '../common/dnd/kidCollision'
 import { DraggableItem } from '../common/dnd/DraggableItem'
 import { DroppableZone } from '../common/dnd/DroppableZone'
 import { getCategoryTheme } from '../../config/categoryThemes'
-import { DANISH_OBJECTS, COLOR_SWATCH, HUE_ORDER } from '../../config/colorContent'
+import { stickerSetForSection } from '../../config/stickers'
+import { DANISH_OBJECTS, COLOR_SWATCH, HUE_ORDER, spokenColor } from '../../config/colorContent'
 import { darken, hexToRgba } from '../../theme/tokens/helpers'
 import { SNAP } from '../../theme/motion'
 import GameShell from '../common/GameShell'
@@ -23,6 +25,7 @@ import { sfx } from '../../services/sfxClient'
 import { mascotBus } from '../../services/mascotBus'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
 import { isIOS } from '../../utils/deviceDetection'
+import { shuffle } from '../../utils/shuffle'
 import { devFx } from '../../utils/devHarness'
 import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 
@@ -39,25 +42,22 @@ const ROUND_QUESTIONS = 8
 const WRONG_BEFORE_HINT = 2
 const OPTION_COUNT = 4 // NORMAL baseline (today, unchanged) — difficulty below adjusts Let/Svær
 
-interface QuizObject { color: string; objectName: string; objectNameDefinite: string; emoji: string }
+interface QuizObject { color: string; objectName: string; objectNameDefinite: string; emoji: string; neuter: boolean }
 
+// Only quiz-safe objects: emoji whose color the child can actually read off the picture. Objects
+// flagged quizSafe:false in colorContent (⚽/👒/☁️/🌸) are excluded so the child is never scored
+// wrong for correctly seeing a black-and-white ball or a white cloud.
 const OBJECT_POOL: QuizObject[] = HUE_ORDER.flatMap((color) =>
-  (DANISH_OBJECTS[color] ?? []).map((o) => ({
-    color,
-    objectName: o.objectName,
-    objectNameDefinite: o.objectNameDefinite,
-    emoji: o.emoji
-  }))
+  (DANISH_OBJECTS[color] ?? [])
+    .filter((o) => o.quizSafe !== false)
+    .map((o) => ({
+      color,
+      objectName: o.objectName,
+      objectNameDefinite: o.objectNameDefinite,
+      emoji: o.emoji,
+      neuter: o.neuter
+    }))
 )
-
-const shuffle = <T,>(arr: T[]): T[] => {
-  const a = [...arr]
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1))
-    ;[a[i], a[j]] = [a[j], a[i]]
-  }
-  return a
-}
 
 const FarveQuizGame: React.FC = () => {
   const muiTheme = useTheme()
@@ -193,7 +193,7 @@ const FarveQuizGame: React.FC = () => {
     const outcome = progressStore.recordRoundResult(
       'colors.quiz',
       { correct: firstTryCorrect, total: round.length, longestStreak },
-      { starThresholds: { three: 0, two: 2 } },
+      { starThresholds: { three: 0, two: 2 }, stickerSetId: stickerSetForSection('colors') },
     )
     setRoundOutcome(outcome)
   }
@@ -244,7 +244,7 @@ const FarveQuizGame: React.FC = () => {
 
       // Identify the object's colour (educational echo). No win/lose narration.
       audio.cancelCurrentAudio()
-      audio.speak(`${current.objectNameDefinite} er ${current.color}`).catch(() => {})
+      audio.speak(`${current.objectNameDefinite} er ${spokenColor(current.color, current.neuter)}`).catch(() => {})
 
       if (advanceTimer.current) clearTimeout(advanceTimer.current)
       advanceTimer.current = setTimeout(() => {
@@ -318,7 +318,7 @@ const FarveQuizGame: React.FC = () => {
           onDragOver={handleDragOver}
           onDragEnd={handleDragEnd}
           onDragCancel={handleDragCancel}
-          collisionDetection={closestCenter}
+          collisionDetection={kidCollision}
         >
           {/* Repeat the spoken question */}
           <Box sx={{ textAlign: 'center', mb: { xs: 1, md: 1.5 }, flex: '0 0 auto' }}>
@@ -483,8 +483,6 @@ const FarveQuizGame: React.FC = () => {
               )
             })}
           </Box>
-
-          <DragOverlay>{null}</DragOverlay>
         </DndContext>
       )}
     </GameShell>

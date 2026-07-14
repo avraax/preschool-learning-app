@@ -30,22 +30,33 @@ import { BUILD_INFO } from '../../config/version'
 import { useProgress } from '../../hooks/useProgress'
 import { captureScreenshot } from '../../services/screenshotService'
 import AdultGate, { makeGateCode } from '../common/AdultGate'
-import VoiceOverridePanel from '../voicelab/VoiceOverridePanel'
-import BugReportDialog from './BugReportDialog'
-import DifficultyPanel from './DifficultyPanel'
+
+// Adult-only dialogs are lazy-loaded (PRD-07): they pull in VoiceLab data (~282 lines), the bug
+// reporter, and the difficulty panel, none of which are needed until the adult menu opens. Keeping
+// them out of the main chunk shaves that weight off first paint. Each mounts on first open and
+// stays mounted afterwards so its open/close transition still animates.
+const VoiceOverridePanel = React.lazy(() => import('../voicelab/VoiceOverridePanel'))
+const BugReportDialog = React.lazy(() => import('./BugReportDialog'))
+const DifficultyPanel = React.lazy(() => import('./DifficultyPanel'))
 
 const HOLD_MS = 2000
 
 type AdultView = null | 'menu' | 'report' | 'voice' | 'difficulty' | 'resetGate' | 'resetDone'
 
 interface AdultCornerProps {
-  /** Mirror the old VersionDisplay dodge: UpdateBanner owns bottom-right when visible. */
+  /** A newer build is live → show the hold-gated "⬆️ Opdater app" item in the menu (PRD-09 P4). */
   updateAvailable?: boolean
+  /** Apply the update (hard reload). Only reachable from inside the adult menu, so it's gated by
+   *  the same ~2s hold that opens the menu — a child can't trigger it. */
+  onApplyUpdate?: () => void
 }
 
-const AdultCorner: React.FC<AdultCornerProps> = ({ updateAvailable = false }) => {
+const AdultCorner: React.FC<AdultCornerProps> = ({ updateAvailable = false, onApplyUpdate }) => {
   const progress = useProgress()
   const [view, setView] = useState<AdultView>(null)
+  // Which lazy dialogs have been opened at least once — once true they stay mounted so their
+  // open/close transitions animate (and their chunk only loads on first open).
+  const [mounted, setMounted] = useState<{ report?: boolean; voice?: boolean; difficulty?: boolean }>({})
   const [gateCode, setGateCode] = useState('')
   const [screenshot, setScreenshot] = useState<string | null>(null)
   const [capturing, setCapturing] = useState(false)
@@ -110,9 +121,10 @@ const AdultCorner: React.FC<AdultCornerProps> = ({ updateAvailable = false }) =>
         sx={{
           position: 'fixed',
           bottom: 'calc(env(safe-area-inset-bottom, 0px) + 8px)',
-          right: updateAvailable ? 'auto' : 'calc(env(safe-area-inset-right, 0px) + 8px)',
-          left: updateAvailable ? 'calc(env(safe-area-inset-left, 0px) + 8px)' : 'auto',
-          zIndex: 1001, // old version-chip slot: above UpdateBanner (1000), below modals
+          // Always bottom-right now (PRD-09 P4): the update pill is bottom-CENTRE, so the gear no
+          // longer has to dodge left onto the mascot when an update is available.
+          right: 'calc(env(safe-area-inset-right, 0px) + 8px)',
+          zIndex: 1001, // above the UpdateBanner pill (1000), below modals
           width: 40,
           height: 40,
           opacity: capturing ? 1 : 0.55,
@@ -143,23 +155,39 @@ const AdultCorner: React.FC<AdultCornerProps> = ({ updateAvailable = false }) =>
         <DialogTitle sx={{ fontWeight: 700 }}>Til de voksne 🔒</DialogTitle>
         <DialogContent sx={{ pb: 0.5 }}>
           <List sx={{ py: 0 }}>
+            {updateAvailable && onApplyUpdate && (
+              <ListItemButton
+                aria-label="Opdater app"
+                onClick={() => { closeAll(); onApplyUpdate() }}
+                sx={{
+                  borderRadius: 1,
+                  minHeight: 48,
+                  bgcolor: 'primary.main',
+                  color: 'primary.contrastText',
+                  mb: 0.5,
+                  '&:hover': { bgcolor: 'primary.dark' },
+                }}
+              >
+                <ListItemText primary="⬆️ Opdater app (ny version klar)" />
+              </ListItemButton>
+            )}
             <ListItemButton
               aria-label="Rapportér et problem"
-              onClick={() => setView('report')}
+              onClick={() => { setMounted((m) => ({ ...m, report: true })); setView('report') }}
               sx={{ borderRadius: 1, minHeight: 48 }}
             >
               <ListItemText primary="🐞 Rapportér et problem" />
             </ListItemButton>
             <ListItemButton
               aria-label="Stemme-test"
-              onClick={() => setView('voice')}
+              onClick={() => { setMounted((m) => ({ ...m, voice: true })); setView('voice') }}
               sx={{ borderRadius: 1, minHeight: 48 }}
             >
               <ListItemText primary="🎙️ Stemme-test" />
             </ListItemButton>
             <ListItemButton
               aria-label="Sværhedsgrad"
-              onClick={() => setView('difficulty')}
+              onClick={() => { setMounted((m) => ({ ...m, difficulty: true })); setView('difficulty') }}
               sx={{ borderRadius: 1, minHeight: 48 }}
             >
               <ListItemText primary="🎚️ Sværhedsgrad" />
@@ -203,11 +231,17 @@ const AdultCorner: React.FC<AdultCornerProps> = ({ updateAvailable = false }) =>
         </DialogActions>
       </Dialog>
 
-      <BugReportDialog open={view === 'report'} screenshot={screenshot} onClose={() => setView('menu')} />
-
-      <VoiceOverridePanel open={view === 'voice'} onClose={() => setView('menu')} />
-
-      <DifficultyPanel open={view === 'difficulty'} onClose={() => setView('menu')} />
+      <React.Suspense fallback={null}>
+        {mounted.report && (
+          <BugReportDialog open={view === 'report'} screenshot={screenshot} onClose={() => setView('menu')} />
+        )}
+        {mounted.voice && (
+          <VoiceOverridePanel open={view === 'voice'} onClose={() => setView('menu')} />
+        )}
+        {mounted.difficulty && (
+          <DifficultyPanel open={view === 'difficulty'} onClose={() => setView('menu')} />
+        )}
+      </React.Suspense>
 
       <AdultGate
         open={view === 'resetGate'}

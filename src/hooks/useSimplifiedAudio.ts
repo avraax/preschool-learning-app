@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { simplifiedAudioController } from '../utils/SimplifiedAudioController'
 import { useSimplifiedAudio as useSimplifiedAudioContext } from '../contexts/SimplifiedAudioContext'
 
@@ -14,25 +14,16 @@ export interface SimplifiedAudioHook {
   speakLetter: (letter: string) => Promise<string>
   speakNumber: (number: number, customSpeed?: number) => Promise<string>
   speakEnglish: (text: string) => Promise<string>
-  speakWithEnthusiasm: (text: string, voiceType?: 'primary' | 'backup' | 'male') => Promise<string>
-  speakSlowly: (text: string, voiceType?: 'primary' | 'backup' | 'male') => Promise<string>
   speakQuizPromptWithRepeat: (text: string, repeatWord: string, voiceType?: 'primary' | 'backup' | 'male') => Promise<string>
-  
+
   // Game-specific audio functions
-  speakMathProblem: (problem: string, voiceType?: 'primary' | 'backup' | 'male') => Promise<string>
   speakAdditionProblem: (num1: number, num2: number, voiceType?: 'primary' | 'backup' | 'male') => Promise<string>
   speakSubtractionProblem: (num1: number, num2: number, voiceType?: 'primary' | 'backup' | 'male') => Promise<string>
-  announceGameResult: (isCorrect: boolean, voiceType?: 'primary' | 'backup' | 'male') => Promise<string>
   announceScore: (score: number, voiceType?: 'primary' | 'backup' | 'male') => Promise<string>
   playGameWelcome: (gameType: string, voiceType?: 'primary' | 'backup' | 'male') => Promise<string>
-  
-  // Sound effects
-  playSuccessSound: () => Promise<string>
-  playEncouragementSound: () => Promise<string>
-  
+
   // Audio management
   stopAll: () => void
-  emergencyStop: () => void
   cancelCurrentAudio: () => void
   updateUserInteraction: () => void
   
@@ -47,44 +38,10 @@ export interface SimplifiedAudioHook {
   }
   
   // Additional game-specific methods
-  handleCompleteGameResult: (options: {
-    isCorrect: boolean
-    character?: any
-    celebrate?: () => void
-    stopCelebration?: () => void
-    incrementScore?: () => void
-    currentScore?: number
-    nextAction?: () => void
-    correctAnswer?: number
-    explanation?: string
-    autoAdvanceDelay?: number
-    isIOS?: boolean
-  }) => Promise<string>
   announcePosition: (currentIndex: number, totalItems: number, itemType: string) => Promise<string>
   speakColorHuntInstructions: (phrase: string) => Promise<string>
   speakColorMixingInstructions: (targetColor: string) => Promise<string>
-  speakComparisonProblem: (leftNumber: number, rightNumber: number, leftObjects: string, rightObjects: string, questionType: 'largest' | 'smallest' | 'equal') => Promise<string>
-  handleGameCompletion: (options: {
-    character?: any
-    celebrate?: () => void
-    stopCelebration?: () => void
-    resetAction?: () => void
-    completionMessage?: string
-    autoResetDelay?: number
-    voiceType?: 'primary' | 'backup' | 'male'
-  }) => Promise<string>
-  speakNewColorHuntGame: () => Promise<string>
-  
-  // Centralized celebration with standard timing
-  playCelebrationWithStandardTiming: (options: {
-    isCorrect: boolean
-    celebrate?: () => void
-    stopCelebration?: () => void
-    incrementScore?: () => void
-    nextAction?: () => void
-    teacherCharacter?: any
-  }) => Promise<void>
-  
+
   // Audio readiness from context
   isAudioReady: boolean
   needsUserAction: boolean
@@ -95,6 +52,46 @@ interface UseSimplifiedAudioOptions {
   componentId?: string
   autoInitialize?: boolean
 }
+
+// Stable method set (PRD-02 §3). Every method is just a bind of the SimplifiedAudioController
+// singleton, so we bind them ONCE at module load instead of allocating 30 fresh closures on every
+// render of every mounted game. This is the fixed part of the hook's return value — only the
+// reactive fields (isPlaying / isAudioReady / needsUserAction / initializeAudio) change per render.
+// Keeping this identity stable makes every downstream `useEffect`/`useCallback` dependency array
+// that includes the audio hook honest (no re-run per render) and lets effect cleanups actually run
+// on unmount instead of every render.
+const STABLE_AUDIO_METHODS = {
+  // Core audio functions - bound to SimplifiedAudioController
+  speak: simplifiedAudioController.speak.bind(simplifiedAudioController),
+
+  // Specialized Danish audio functions
+  speakLetter: simplifiedAudioController.speakLetter.bind(simplifiedAudioController),
+  speakNumber: simplifiedAudioController.speakNumber.bind(simplifiedAudioController),
+  speakEnglish: simplifiedAudioController.speakEnglish.bind(simplifiedAudioController),
+  speakQuizPromptWithRepeat: simplifiedAudioController.speakQuizPromptWithRepeat.bind(simplifiedAudioController),
+
+  // Game-specific audio functions
+  speakAdditionProblem: simplifiedAudioController.speakAdditionProblem.bind(simplifiedAudioController),
+  speakSubtractionProblem: simplifiedAudioController.speakSubtractionProblem.bind(simplifiedAudioController),
+  announceScore: simplifiedAudioController.announceScore.bind(simplifiedAudioController),
+  playGameWelcome: simplifiedAudioController.playGameWelcome.bind(simplifiedAudioController),
+
+  // Audio management
+  stopAll: simplifiedAudioController.stopAll.bind(simplifiedAudioController),
+  cancelCurrentAudio: simplifiedAudioController.cancelCurrentAudio.bind(simplifiedAudioController),
+  updateUserInteraction: simplifiedAudioController.updateUserInteraction.bind(simplifiedAudioController),
+
+  // Navigation management
+  registerNavigationCleanup: simplifiedAudioController.registerNavigationCleanup.bind(simplifiedAudioController),
+
+  // Status
+  getTTSStatus: simplifiedAudioController.getTTSStatus.bind(simplifiedAudioController),
+
+  // Additional game-specific methods
+  announcePosition: simplifiedAudioController.announcePosition.bind(simplifiedAudioController),
+  speakColorHuntInstructions: simplifiedAudioController.speakColorHuntInstructions.bind(simplifiedAudioController),
+  speakColorMixingInstructions: simplifiedAudioController.speakColorMixingInstructions.bind(simplifiedAudioController),
+} as const
 
 /**
  * Simplified audio hook that provides easy access to audio functionality
@@ -129,62 +126,24 @@ export const useSimplifiedAudioHook = (options: UseSimplifiedAudioOptions = {}):
 
   // Component initialized - no logging needed in production
 
-  return {
+  // Reactive fields read from context (audio readiness/permission).
+  const isAudioReady = audioContext.state.isWorking
+  const needsUserAction = audioContext.state.needsUserAction
+  const initializeAudio = audioContext.initializeAudio
+
+  // Stable return identity (PRD-02 §3): the object only changes when a reactive field changes, so
+  // consumers that put `audio` in a dependency array don't re-run/re-cleanup on every render. The
+  // methods come from the module-level stable set (bound once); nothing here relies on the object's
+  // identity changing (that would be a bug) — reactive state flows through the fields below.
+  return useMemo<SimplifiedAudioHook>(() => ({
+    ...STABLE_AUDIO_METHODS,
     // Playing state
     isPlaying,
-    
-    // Core audio functions - bound to SimplifiedAudioController
-    speak: simplifiedAudioController.speak.bind(simplifiedAudioController),
-    
-    // Specialized Danish audio functions
-    speakLetter: simplifiedAudioController.speakLetter.bind(simplifiedAudioController),
-    speakNumber: simplifiedAudioController.speakNumber.bind(simplifiedAudioController),
-    speakEnglish: simplifiedAudioController.speakEnglish.bind(simplifiedAudioController),
-    speakWithEnthusiasm: simplifiedAudioController.speakWithEnthusiasm.bind(simplifiedAudioController),
-    speakSlowly: simplifiedAudioController.speakSlowly.bind(simplifiedAudioController),
-    speakQuizPromptWithRepeat: simplifiedAudioController.speakQuizPromptWithRepeat.bind(simplifiedAudioController),
-    
-    // Game-specific audio functions
-    speakMathProblem: simplifiedAudioController.speakMathProblem.bind(simplifiedAudioController),
-    speakAdditionProblem: simplifiedAudioController.speakAdditionProblem.bind(simplifiedAudioController),
-    speakSubtractionProblem: simplifiedAudioController.speakSubtractionProblem.bind(simplifiedAudioController),
-    announceGameResult: simplifiedAudioController.announceGameResult.bind(simplifiedAudioController),
-    announceScore: simplifiedAudioController.announceScore.bind(simplifiedAudioController),
-    playGameWelcome: simplifiedAudioController.playGameWelcome.bind(simplifiedAudioController),
-    
-    // Sound effects
-    playSuccessSound: simplifiedAudioController.playSuccessSound.bind(simplifiedAudioController),
-    playEncouragementSound: simplifiedAudioController.playEncouragementSound.bind(simplifiedAudioController),
-    
-    // Audio management
-    stopAll: simplifiedAudioController.stopAll.bind(simplifiedAudioController),
-    emergencyStop: simplifiedAudioController.emergencyStop.bind(simplifiedAudioController),
-    cancelCurrentAudio: simplifiedAudioController.cancelCurrentAudio.bind(simplifiedAudioController),
-    updateUserInteraction: simplifiedAudioController.updateUserInteraction.bind(simplifiedAudioController),
-    
-    // Navigation management
-    registerNavigationCleanup: simplifiedAudioController.registerNavigationCleanup.bind(simplifiedAudioController),
-    
-    // Status
-    getTTSStatus: simplifiedAudioController.getTTSStatus.bind(simplifiedAudioController),
-    
-    // Additional game-specific methods
-    handleCompleteGameResult: simplifiedAudioController.handleCompleteGameResult.bind(simplifiedAudioController),
-    announcePosition: simplifiedAudioController.announcePosition.bind(simplifiedAudioController),
-    speakColorHuntInstructions: simplifiedAudioController.speakColorHuntInstructions.bind(simplifiedAudioController),
-    speakColorMixingInstructions: simplifiedAudioController.speakColorMixingInstructions.bind(simplifiedAudioController),
-    speakComparisonProblem: simplifiedAudioController.speakComparisonProblem.bind(simplifiedAudioController),
-    handleGameCompletion: simplifiedAudioController.handleGameCompletion.bind(simplifiedAudioController),
-    speakNewColorHuntGame: simplifiedAudioController.speakNewColorHuntGame.bind(simplifiedAudioController),
-    
-    // Centralized celebration with standard timing
-    playCelebrationWithStandardTiming: simplifiedAudioController.playCelebrationWithStandardTiming.bind(simplifiedAudioController),
-    
     // Audio readiness from context
-    isAudioReady: audioContext.state.isWorking,
-    needsUserAction: audioContext.state.needsUserAction,
-    initializeAudio: audioContext.initializeAudio
-  }
+    isAudioReady,
+    needsUserAction,
+    initializeAudio,
+  }), [isPlaying, isAudioReady, needsUserAction, initializeAudio])
 }
 
 // Backward compatibility export

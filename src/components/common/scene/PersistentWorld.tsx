@@ -17,7 +17,7 @@ import ThemeScene from './ThemeScene'
 //     with the answers.
 //
 // The MASCOT is intentionally NOT here. It's rendered inside each page instead (home/section
-// menus render <ThemeMascot/>, games use GameShell's <GameGuide/>). A persistent mascot living in
+// menus render <ThemeMascot/>, games render GameShell's in-game <Mascot/>). A persistent mascot living in
 // THIS separate, z-interleaved layer over the transparent pages made Chrome thrash the scene's
 // compositing (white/not-white flicker on hover); the same mascot inside the page subtree is
 // rock-solid. The cost is the mascot re-mounts on navigation instead of gliding — worth it.
@@ -34,12 +34,16 @@ const PersistentWorld: React.FC = () => {
   const reduce = useReducedMotion()
   const { pathname } = useLocation()
   const rootRef = useRef<HTMLDivElement>(null)
-  useParallax(rootRef, { disabled: reduce })
-
   const immersive = theme.scene.layers.length > 0
   const dark = theme.scene.dark
   const inGame = routeKind(pathname) === 'game'
   const ease = reduce ? '0s' : '0.4s'
+
+  // Freeze the scene during gameplay (PRD-08 §P4): the world is blurred + dimmed behind a game
+  // anyway, so stop the parallax rAF and pause the ambient CSS animations — no continuous GPU /
+  // battery cost behind blurred content. It resumes on returning to a menu route. `prefers-reduced-
+  // motion` remains an independent gate (already disables both); this is an ADDITIONAL freeze.
+  useParallax(rootRef, { disabled: reduce || inGame })
 
   // Flat skin → no world to keep alive; pages render their own backgrounds unchanged.
   if (!immersive) return null
@@ -69,7 +73,7 @@ const PersistentWorld: React.FC = () => {
           transition: `filter ${ease} ease, transform ${ease} ease`,
         }}
       >
-        <ThemeScene />
+        <ThemeScene paused={inGame} />
       </Box>
 
       {/* Dim overlay — a plain tint that fades in on game routes so nothing competes with the

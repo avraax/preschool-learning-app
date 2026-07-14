@@ -15,6 +15,7 @@ import PromptStage, { HeroEmoji } from '../common/PromptStage'
 import StickerReveal from '../common/StickerReveal'
 import { useCelebration } from '../common/CelebrationEffect'
 import { progressStore, type StickerAward } from '../../services/progressStore'
+import { stickerSetForSection } from '../../config/stickers'
 import { englishThemes, EnglishWord } from '../../config/englishVocab'
 import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 
@@ -22,7 +23,7 @@ const ENGLISH_ACCENT = categoryThemes.english.accentColor
 const EXPLORE_MILESTONE = 9 // award a sticker every N distinct English words tapped
 
 // Lær Engelsk: free exploration. Browse a theme's words as cards (picture + English word
-// + Danish translation), tap to hear the word in British English. Learning-based pattern:
+// + Danish translation), tap to hear the word in English (en-US Ava). Learning-based pattern:
 // direct audio on tap, no entry-audio coordination. Exploring distinct words earns a
 // milestone sticker (mirrors Lær Tal / Lær Alfabetet).
 const EnglishLearning: React.FC = () => {
@@ -55,24 +56,34 @@ const EnglishLearning: React.FC = () => {
     }
   }, [])
 
-  // Award an exploration sticker when distinct-tap count crosses each milestone.
-  const maybeAwardExploration = () => {
+  // Award an exploration sticker when distinct-tap count crosses each milestone. Returns true when
+  // it spoke the sticker line, so the caller skips the word echo (PRD-06 §3).
+  const maybeAwardExploration = (): boolean => {
     const size = exploredRef.current.size
     const milestone = Math.floor(size / EXPLORE_MILESTONE)
     if (milestone > milestoneRef.current) {
       milestoneRef.current = milestone
-      const award = progressStore.awardSticker()
+      const award = progressStore.awardSticker(stickerSetForSection('english'))
       setStickerAward(award)
       celebrateTier('sticker')
       if (stickerTimer.current) clearTimeout(stickerTimer.current)
       stickerTimer.current = setTimeout(() => setStickerAward(null), 3600)
       // Speak the sticker name; on a milestone tap the Danish celebration line wins over the word.
+      // Duplicate = shiny, not "new" — match the StickerReveal banner (PRD-09 P2).
       try {
-        audio.speak(`Nyt klistermærke! ${award.sticker.label}`).catch(() => {})
+        audio
+          .speak(
+            award.isNew
+              ? `Nyt klistermærke! ${award.sticker.label}`
+              : `Skinnende! ${award.sticker.label}`,
+          )
+          .catch(() => {})
       } catch {
         /* ignore */
       }
+      return true
     }
+    return false
   }
 
   const handleWordClick = async (word: EnglishWord) => {
@@ -81,7 +92,11 @@ const EnglishLearning: React.FC = () => {
     setSelectedWord(word)
     setPlayingWord(word.en)
     exploredRef.current.add(word.en)
-    maybeAwardExploration()
+    // On a milestone tap the Danish sticker line is the reward audio — don't also speak the word.
+    if (maybeAwardExploration()) {
+      setPlayingWord(null)
+      return
+    }
     try {
       await audio.speakEnglish(word.en)
     } catch (error) {

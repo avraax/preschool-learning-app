@@ -189,6 +189,7 @@ class ProgressStore {
 
   constructor() {
     this.state = this.hydrate()
+    this.installLifecycleHooks()
   }
 
   private hydrate(): ProgressState {
@@ -201,6 +202,37 @@ class ProgressStore {
     return defaultState()
   }
 
+  // Reliability + multi-tab (PRD-08 §P2):
+  //  • Flush the debounced write synchronously when the tab is backgrounded/closed, so earning a
+  //    sticker and immediately swiping the PWA away (within the 250ms debounce) can't lose it.
+  //  • Re-hydrate from a `storage` event when ANOTHER tab writes, so the two tabs don't silently
+  //    clobber each other's whole blob. This is a single-child app, so last-writer-wins is fine —
+  //    re-hydration just means the tab that saved most recently defines the shared state, and the
+  //    other tab catches up instead of overwriting it with older data on its next change.
+  private installLifecycleHooks(): void {
+    if (typeof window === 'undefined') return
+    const flush = () => this.flush()
+    // pagehide fires on real close/navigation-away (incl. iOS PWA swipe-away, where the tab may
+    // never get a later event); visibilitychange:hidden covers backgrounding/app-switch.
+    window.addEventListener('pagehide', flush)
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') this.flush()
+    })
+    window.addEventListener('storage', (e) => this.onStorage(e))
+  }
+
+  // Another tab wrote our key → adopt its state in memory and notify React. We do NOT re-save
+  // (the write already came from storage), avoiding a ping-pong between tabs.
+  private onStorage(e: StorageEvent): void {
+    if (e.key !== STORAGE_KEY || e.newValue == null) return
+    try {
+      this.state = normalize(JSON.parse(e.newValue))
+      this.listeners.forEach((l) => l())
+    } catch {
+      /* malformed cross-tab write — keep our own state */
+    }
+  }
+
   private scheduleSave(): void {
     if (this.saveTimer) clearTimeout(this.saveTimer)
     this.saveTimer = setTimeout(() => {
@@ -211,6 +243,19 @@ class ProgressStore {
         /* quota / private mode — keep running on the in-memory copy */
       }
     }, 250)
+  }
+
+  // Write immediately, bypassing the debounce. No-op when nothing is pending (a tab switch with
+  // no unsaved change shouldn't touch localStorage). Public so a lifecycle/test path can force it.
+  flush(): void {
+    if (!this.saveTimer) return // nothing dirty since the last write
+    clearTimeout(this.saveTimer)
+    this.saveTimer = null
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(this.state))
+    } catch {
+      /* quota / private mode — keep running on the in-memory copy */
+    }
   }
 
   // Replace the state reference (so useSyncExternalStore detects the change), persist, notify.
@@ -263,10 +308,18 @@ class ProgressStore {
     draft: ProgressState,
     setId?: string,
   ): { award: StickerAward; completedSetId: string | null } {
-    const pool = stickerPool(setId)
-    const uncollected = pool.filter((s) => !draft.stickers.collected[s.id])
+    const biasedPool = stickerPool(setId)
+    let uncollected = biasedPool.filter((s) => !draft.stickers.collected[s.id])
+    // PRD-09 P3: if this section's page is already full, fall back to the global uncollected pool
+    // so awards keep filling OTHER pages (the album stays completable) instead of endlessly
+    // handing out shiny duplicates from one finished set.
+    if (setId && uncollected.length === 0) {
+      uncollected = stickerPool().filter((s) => !draft.stickers.collected[s.id])
+    }
     const isNew = uncollected.length > 0
-    const sticker = isNew ? pick(uncollected) : pick(pool)
+    // New → next uncollected (biased first, else global); nothing left anywhere → a section-
+    // flavoured shiny duplicate.
+    const sticker = isNew ? pick(uncollected) : pick(biasedPool)
     const set = setForStickerId(sticker.id) ?? findSet(setId ?? '')
 
     const existing = draft.stickers.collected[sticker.id]
@@ -390,8 +443,13 @@ class ProgressStore {
     this.commit(draft)
   }
 
+  // PRD-09 P5: reset progress ONLY (stickers, per-game bests, lifetime stars) — the gate text
+  // promises "alle klistermærker, rekorder og stjerner". Sound/music/difficulty are device
+  // preferences, not progress, so they're carried across (the less-surprising choice).
   resetAll(): void {
-    this.commit(defaultState())
+    const next = defaultState()
+    next.settings = structuredCloneState(this.state).settings
+    this.commit(next)
   }
 }
 

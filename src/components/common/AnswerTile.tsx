@@ -14,6 +14,11 @@ import { useReducedMotion } from '../../hooks/useReducedMotion'
 //   wrong   → x-shake + red-tint flash
 // The content glyph (number/letter/emoji/word) is passed as children — typography unchanged.
 // Reduced motion → no travel/shake/particles (the colour/glow still communicates the result).
+//
+// `hint` (PRD-05 P1): the never-fail "you're stuck" cue used across every quiz. When the correct
+// tile is marked as a hint (after N wrong taps on the current question) it gently breathes + wears
+// an accent glow ring so the child can find the answer. Reduced motion drops the breathe but keeps
+// the static ring. Only takes effect while the tile is idle (a correct/wrong feedback state wins).
 
 export type AnswerTileState = 'idle' | 'correct' | 'wrong'
 
@@ -22,6 +27,8 @@ interface AnswerTileProps {
   accent: string
   state?: AnswerTileState
   disabled?: boolean
+  // Pulse this (correct) tile as a never-fail hint (see header). Ignored unless state === 'idle'.
+  hint?: boolean
   children: React.ReactNode
 }
 
@@ -47,7 +54,7 @@ const BURST = [
   { dx: 22, dy: -56 },
 ]
 
-const AnswerTile: React.FC<AnswerTileProps> = ({ onClick, accent, state = 'idle', disabled = false, children }) => {
+const AnswerTile: React.FC<AnswerTileProps> = ({ onClick, accent, state = 'idle', disabled = false, hint = false, children }) => {
   const theme = useTheme()
   const reduce = useReducedMotion()
   const dark = theme.scene.dark
@@ -55,18 +62,26 @@ const AnswerTile: React.FC<AnswerTileProps> = ({ onClick, accent, state = 'idle'
   const error = theme.palette.error.main
   const burstColors = theme.decor.confettiColors
 
+  // The hint cue only shows on an otherwise-idle tile (a correct/wrong feedback state always wins).
+  const showHint = hint && state === 'idle'
+
   const lip = darken(accent, 0.3) // coloured 3D rim under the tile
   const ambientShadow = dark ? '0 12px 28px rgba(0,0,0,0.5)' : '0 10px 22px rgba(0,0,0,0.15)'
 
   // Border + edge colour shift with the feedback state so correct/wrong read instantly.
   const borderColor =
-    state === 'correct' ? success : state === 'wrong' ? error : hexToRgba(accent, dark ? 0.55 : 0.34)
+    state === 'correct' ? success : state === 'wrong' ? error : hexToRgba(accent, showHint ? (dark ? 0.85 : 0.7) : dark ? 0.55 : 0.34)
   const edgeColor = state === 'correct' ? darken(success, 0.28) : state === 'wrong' ? darken(error, 0.25) : lip
 
+  // Accent glow ring for the hint (matches the correct-tile ring language, but in the section accent
+  // rather than success green — it's guidance, not a "correct" verdict).
+  const hintRing = `0 0 0 5px ${hexToRgba(accent, dark ? 0.6 : 0.5)}`
   const restingShadow =
     state === 'correct'
       ? `0 0 0 5px ${hexToRgba(success, 0.5)}, 0 8px 0 ${edgeColor}, 0 16px 34px ${hexToRgba(success, 0.42)}`
-      : `0 8px 0 ${edgeColor}, ${ambientShadow}`
+      : showHint
+        ? `${hintRing}, 0 8px 0 ${edgeColor}, ${ambientShadow}`
+        : `0 8px 0 ${edgeColor}, ${ambientShadow}`
 
   // Section-tinted idle surface (feedback states tint toward success/error).
   const surface =
@@ -82,9 +97,16 @@ const AnswerTile: React.FC<AnswerTileProps> = ({ onClick, accent, state = 'idle'
       ? { x: [0, -9, 9, -7, 7, 0] }
       : state === 'correct'
         ? { scale: [1, 1.12, 1] }
-        : { x: 0, scale: 1 }
+        : showHint
+          ? { scale: [1, 1.06, 1] }
+          : { x: 0, scale: 1 }
 
-  const transition = state === 'wrong' ? { duration: 0.45 } : { duration: 0.32, ease: 'easeOut' as const }
+  const transition =
+    state === 'wrong'
+      ? { duration: 0.45 }
+      : showHint && state === 'idle'
+        ? { duration: 1.0, repeat: Infinity, ease: 'easeInOut' as const }
+        : { duration: 0.32, ease: 'easeOut' as const }
 
   return (
     <Box

@@ -88,7 +88,69 @@ export const STICKER_SETS: StickerSet[] = [
       { id: 'natur-blad', label: 'Blad', emoji: '🍁' },
     ],
   },
+  {
+    id: 'havet',
+    title: 'Havet',
+    emoji: '🌊',
+    stickers: [
+      { id: 'hav-fisk', label: 'Fisk', emoji: '🐟' },
+      { id: 'hav-haj', label: 'Haj', emoji: '🦈' },
+      { id: 'hav-hval', label: 'Hval', emoji: '🐳' },
+      { id: 'hav-delfin', label: 'Delfin', emoji: '🐬' },
+      { id: 'hav-sael', label: 'Sæl', emoji: '🦭' },
+      { id: 'hav-krabbe', label: 'Krabbe', emoji: '🦀' },
+      { id: 'hav-blaeksprutte', label: 'Blæksprutte', emoji: '🐙' },
+      { id: 'hav-skildpadde', label: 'Skildpadde', emoji: '🐢' },
+      { id: 'hav-musling', label: 'Musling', emoji: '🐚' },
+    ],
+  },
+  {
+    id: 'smaakryb',
+    title: 'Småkryb',
+    emoji: '🐞',
+    stickers: [
+      { id: 'kryb-sommerfugl', label: 'Sommerfugl', emoji: '🦋' },
+      { id: 'kryb-bi', label: 'Bi', emoji: '🐝' },
+      { id: 'kryb-mariehoene', label: 'Mariehøne', emoji: '🐞' },
+      { id: 'kryb-myre', label: 'Myre', emoji: '🐜' },
+      { id: 'kryb-edderkop', label: 'Edderkop', emoji: '🕷️' },
+      { id: 'kryb-snegl', label: 'Snegl', emoji: '🐌' },
+      { id: 'kryb-larve', label: 'Larve', emoji: '🐛' },
+      { id: 'kryb-bille', label: 'Bille', emoji: '🪲' },
+      { id: 'kryb-graeshoppe', label: 'Græshoppe', emoji: '🦗' },
+    ],
+  },
+  {
+    id: 'legetoej',
+    title: 'Legetøj',
+    emoji: '🧸',
+    stickers: [
+      { id: 'leg-bold', label: 'Bold', emoji: '⚽' },
+      { id: 'leg-ballon', label: 'Ballon', emoji: '🎈' },
+      { id: 'leg-bamse', label: 'Bamse', emoji: '🧸' },
+      { id: 'leg-drage', label: 'Drage', emoji: '🪁' },
+      { id: 'leg-terning', label: 'Terning', emoji: '🎲' },
+      { id: 'leg-robot', label: 'Robot', emoji: '🤖' },
+      { id: 'leg-puslespil', label: 'Puslespil', emoji: '🧩' },
+      { id: 'leg-tromme', label: 'Tromme', emoji: '🥁' },
+      { id: 'leg-guitar', label: 'Guitar', emoji: '🎸' },
+    ],
+  },
 ]
+
+// Which set each section biases its awards toward (PRD-09 P3 — per-section page payoffs). A game
+// draws from its section's set until that page is full, then falls back to the global uncollected
+// pool (see progressStore.grantSticker), so the album still completes across a multi-week tail.
+export type StickerSection = 'alphabet' | 'math' | 'colors' | 'english' | 'ordleg'
+const SECTION_STICKER_SET: Record<StickerSection, string> = {
+  alphabet: 'dyr',
+  math: 'koeretoejer',
+  colors: 'natur',
+  english: 'mad',
+  ordleg: 'havet',
+}
+export const stickerSetForSection = (section: StickerSection): string =>
+  SECTION_STICKER_SET[section]
 
 // ----- lookups (built once) -----
 

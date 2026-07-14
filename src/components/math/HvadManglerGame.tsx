@@ -4,12 +4,15 @@ import { useTheme } from '@mui/material/styles'
 import { motion } from 'framer-motion'
 import UnifiedQuizGame, { UnifiedQuizConfig, QuizItem } from '../common/UnifiedQuizGame'
 import { getCategoryTheme } from '../../config/categoryThemes'
+import { stickerSetForSection } from '../../config/stickers'
 import { MathScoreChip } from '../common/ScoreChip'
 import { MathRepeatButton } from '../common/RepeatButton'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
 import { hexToRgba } from '../../theme/tokens/helpers'
+import { getDanishNumberText } from '../../config/danish-phrases'
 import { progressStore, type DifficultyLevel } from '../../services/progressStore'
 import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
+import { shuffle } from '../../utils/shuffle'
 
 // Hvad Mangler? — a sequence is shown with one element replaced by ❓; the child picks
 // the missing element. Covers number patterns, skip-counting (2s/5s/10s) and simple
@@ -17,7 +20,6 @@ import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 
 const PATTERN_EMOJIS = ['🔴', '🔵', '🟢', '🟡', '🟣', '🟠', '⭐', '❤️']
 
-const shuffle = <T,>(arr: T[]): T[] => [...arr].sort(() => Math.random() - 0.5)
 const randInt = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min
 
 // Static, manual difficulty (UI/UX Overhaul PRD §5.7/Appendix A) — cumulative branch weights for
@@ -155,7 +157,10 @@ const HvadManglerGame: React.FC = () => {
 
     // Bounded round + reward flow (Foundation §3). 8 questions, 3★ = no mistakes, 2★ ≤ 2.
     gameId: 'math.patterns',
-    round: { length: 8, starThresholds: { three: 0, two: 2 } },
+    round: { length: 8, starThresholds: { three: 0, two: 2 }, stickerSetId: stickerSetForSection('math') },
+
+    // Never-fail hint (PRD-05 P1): after 2 wrong taps the correct tile pulses.
+    hintAfterNWrong: 2,
 
     // The welcome ("Hvad mangler") already asks the question, so don't voice the identical first
     // prompt right after it — otherwise the title is heard twice on entry.
@@ -226,7 +231,19 @@ const HvadManglerGame: React.FC = () => {
     speakQuizPrompt: async (_item: QuizItem, audio: any) => audio.speak('Hvad mangler?'),
     speakClickedItem: async (item: QuizItem, audio: any) =>
       typeof item.value === 'number' ? audio.speakNumber(item.value) : Promise.resolve(''),
-    getRepeatAudio: async (_item: QuizItem, audio: any) => audio.speak('Hvad mangler?')
+    getRepeatAudio: async (_item: QuizItem, audio: any) => audio.speak('Hvad mangler?'),
+
+    // Speak the fact (PRD-05 P2): on a correct answer, read the COMPLETED sequence aloud (the blank
+    // filled with the answer) — e.g. "to, fire, seks, otte, ti" — reinforcing the pattern. Visual
+    // (emoji) patterns have no natural spoken fact, so they stay silent (as before).
+    speakCorrectFact: async (item: QuizItem, audio: any) => {
+      const tokens = (item.questionVisual?.word ?? '').split(/\s+/).filter(Boolean)
+      const filled = tokens.map((t) => (t === '❓' ? String(item.value) : t))
+      if (filled.length > 0 && filled.every((t) => /^\d+$/.test(t))) {
+        return audio.speak(filled.map((t) => getDanishNumberText(Number(t))).join(', '))
+      }
+      return ''
+    }
   }
 
   return <UnifiedQuizGame config={config} />

@@ -29,6 +29,7 @@ const StickerAlbum: React.FC = () => {
   const audio = useSimplifiedAudioHook({ componentId: 'StickerAlbum', autoInitialize: false })
   const [activeIndex, setActiveIndex] = useState(0)
   const [poppedId, setPoppedId] = useState<string | null>(null)
+  const [wiggleId, setWiggleId] = useState<string | null>(null)
   const forceNyt = devNyt()
 
   const immersive = theme.scene.layers.length > 0
@@ -54,7 +55,14 @@ const StickerAlbum: React.FC = () => {
   const titleColor = dark ? '#FFFFFF' : theme.decor.titleColor
 
   const handleStickerTap = (id: string, label: string) => {
-    if (!collected[id]) return
+    if (!collected[id]) {
+      // Not yet earned. A silent no-op reads as "broken" at 5 — give a gentle wiggle + a soft
+      // "not yet" tap cue instead (PRD-09 P6). No sad/wrong sound; the slot just nudges.
+      setWiggleId(id)
+      sfx.play('tap')
+      window.setTimeout(() => setWiggleId((cur) => (cur === id ? null : cur)), 500)
+      return
+    }
     setPoppedId(id)
     sfx.play('drop-snap')
     audio.updateUserInteraction()
@@ -266,13 +274,22 @@ const StickerAlbum: React.FC = () => {
               const shiny = !!entry && entry.count > 1
               const isNew = forcedHere || newIds.includes(sticker.id)
               const popped = poppedId === sticker.id
+              const wiggling = wiggleId === sticker.id
               return (
                 <Box
                   key={sticker.id}
                   component={motion.button}
                   type="button"
                   onClick={() => handleStickerTap(sticker.id, sticker.label)}
-                  animate={popped && !reduce ? { scale: [1, 1.18, 1], rotate: [0, -6, 6, 0] } : { scale: 1 }}
+                  animate={
+                    reduce
+                      ? { scale: 1 }
+                      : popped
+                        ? { scale: [1, 1.18, 1], rotate: [0, -6, 6, 0] }
+                        : wiggling
+                          ? { rotate: [0, -7, 7, -5, 5, 0] }
+                          : { scale: 1 }
+                  }
                   transition={{ duration: 0.5 }}
                   sx={{
                     position: 'relative',

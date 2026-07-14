@@ -51,6 +51,55 @@ node .claude/skills/ui-screenshot/cdp.mjs --url http://127.0.0.1:5173/math/count
   --w 900 --h 440 --wait-for '#root > *' --out landscape.png
 ```
 
+### Driving dnd-kit drag-and-drop (the Farver games)
+`--click` uses `element.click()`, which fires **no** `pointerdown` — so it cannot exercise a
+`@dnd-kit` drag. `--eval` runs with `awaitPromise:true`, so pass an async IIFE that dispatches a
+synthetic PointerEvent sequence: `pointerdown` on the draggable, a few `pointermove`s on `document`
+(must exceed the 8px sensor threshold), then `pointerup`. dnd-kit tags every draggable
+`[aria-roledescription="draggable"]`. Always run BOTH probes when touching collision/drag code
+(see `.claude/rules/drag-and-drop.md`):
+- **Abort probe** — release ~28px into empty space (aim the endpoint *away* from the board centre);
+  assert nothing scored (e.g. draggable count unchanged, no "solved" state).
+- **Positive control** — drop on a target; assert it lands (count drops / target fills). Proves the
+  synthetic drag actually reaches dnd-kit, so a passing abort means real spring-back, not dead events.
+
+```bash
+# reusable drag(startSel → x,y): fire on the FIRST draggable, release at absolute (ex,ey)
+node .claude/skills/ui-screenshot/cdp.mjs --url http://127.0.0.1:5173/farver/ram-farven \
+  --wait-for '#root > *' --click-text 'Start lyd nu' --settle 1200 --eval "$(cat <<'JS'
+(async()=>{const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+ const el=document.querySelector('[aria-roledescription=\"draggable\"]'); if(!el) return 'NONE';
+ const r=el.getBoundingClientRect(), sx=Math.round(r.left+r.width/2), sy=Math.round(r.top+r.height/2);
+ const ex=sx, ey=sy-28;  // abort: 28px into empty space
+ const fire=(t,x,y,tg)=>tg.dispatchEvent(new PointerEvent(t,{bubbles:true,cancelable:true,composed:true,pointerId:1,pointerType:'mouse',isPrimary:true,button:0,buttons:t==='pointerup'?0:1,clientX:x,clientY:y}));
+ fire('pointerdown',sx,sy,el); await sleep(25);
+ for(const f of [10,20,28]){fire('pointermove',sx,sy-f,document); await sleep(25);}
+ fire('pointerup',ex,ey,document); await sleep(700);
+ return 'done';})()
+JS
+)"
+```
+
+### Verifying spoken audio (what Danish the app actually says)
+To check narration/grammar/pronunciation, capture the **TTS request bodies** — the network ring
+doesn't expose POST payloads, so hook `window.fetch` at the START of an `--eval` IIFE (before any
+taps), push each `/api/tts-azure` request's `text` into a global, drive the interaction, then return
+the collected strings. Proves the exact text sent (e.g. gender agreement "æblet er rødt", corrected
+spellings) without listening. Add delays between taps — narration is single-channel (new audio
+cancels current), but the fetch still fires per tap.
+```bash
+node .claude/skills/ui-screenshot/cdp.mjs --url http://127.0.0.1:5173/farver/laer \
+  --wait-for '#root > *' --eval "$(cat <<'JS'
+(async()=>{const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+ window.__tts=[]; const of=window.fetch;
+ window.fetch=function(u,o){try{if(String(u).includes('/api/tts-azure')&&o&&o.body){const b=JSON.parse(o.body);window.__tts.push(b.text||b.ssml)}}catch(e){} return of.apply(this,arguments)};
+ await sleep(600);
+ // …click through the elements that trigger speech, sleep(~650) between each…
+ return JSON.stringify(window.__tts);})()
+JS
+)"
+```
+
 ## Options
 - Core: `--url` (req) · `--out <png>` · `--w/--h` (viewport, default 540x940)
 - Waiting (prefer over sleeps): `--wait-for "<css>"` · `--wait-for-text "<txt>"` · `--timeout <ms>`
@@ -62,6 +111,19 @@ node .claude/skills/ui-screenshot/cdp.mjs --url http://127.0.0.1:5173/math/count
 - Behaviour: `--keep-audio-modal` · `--port <n>`. Exit code is non-zero if a `--wait-for`/click
   target never appears (so failures are loud, not silently green).
 
+## Verifying game logic & progress (not just pixels)
+An async `--eval` IIFE (`awaitPromise` is on) can drive a whole round and assert the outcome:
+- **Each run is a fresh Chrome profile** → `localStorage` starts empty and does NOT persist across
+  runs. Read/assert *within one* `--eval`, or seed state at the top of the script.
+- **Round outcomes** live in `localStorage['bornelaering-progress']`: per-game bests at
+  `.perGame[<gameId>]` (`bestStars`, `roundsCompleted`), lifetime tallies at `.totals`
+  (`totalStars`, `totalStickers`). (It's `.perGame`, NOT `.games`.) Snapshot before/after to prove a
+  double-tap records once, a mis-tap doesn't drop a star, etc.
+- **Catch ghost audio after navigation** by patching `window.fetch` + `XMLHttpRequest.open` for
+  `/api/tts-azure` and timestamping calls, then asserting none fire after the route change.
+- Advance dwell + the echo `await` mean a correct answer takes ~2s+ to advance — size detection
+  windows generously and use a high `--timeout` for full-round drives.
+
 ## Gotchas (built-in, but know them)
 - **Run the driver on the Windows side too** when working from WSL: WSL cannot reach the
   Windows-bound servers or Chrome's CDP port (NAT). Use
@@ -71,6 +133,12 @@ node .claude/skills/ui-screenshot/cdp.mjs --url http://127.0.0.1:5173/math/count
 - **Clicks use `element.click()`**, not synthetic mouse coordinates — MUI ignores synthetic coords.
   So `--click` takes a CSS selector. (`element.click()` fires no `pointerdown`, so tap-listeners
   like the diagnostics breadcrumbs won't see driver clicks.)
+- **Driving pointer gestures & SPA nav**: because `element.click()` fires no `pointerdown`, for an
+  `onPointerDown` handler (e.g. the Sig et Ord mic) dispatch a real event via `--eval`:
+  `el.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true}))`. To unmount a route so React
+  cleanup runs, **soft-navigate** (`history.pushState({},'','/x');dispatchEvent(new PopStateEvent('popstate'))`)
+  — a hard `location` change skips cleanup. To inspect real mic tracks in a getUserMedia test, launch
+  Chrome with `--use-fake-device-for-media-stream` (needs a one-off custom launcher, not `cdp.mjs`).
 - **Audio modal ("Tænd for lyd")** is auto-dismissed (launches with autoplay allowed + clicks
   "Start lyd nu"). Use `--keep-audio-modal` only to screenshot the modal itself.
 - **Measure, don't eyeball, for overflow.** A scaled thumbnail can hide a button clipped past a

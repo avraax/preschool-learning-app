@@ -1,4 +1,5 @@
-import React, { useEffect, lazy, Suspense } from 'react'
+import React, { useEffect, Suspense } from 'react'
+import { lazyWithReload as lazy } from './utils/lazyWithReload'
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { logIOSIssue } from './utils/remoteConsole'
@@ -62,10 +63,6 @@ import { useReducedMotion } from './hooks/useReducedMotion'
 // Simplified Audio System imports
 import { SimplifiedAudioProvider } from './contexts/SimplifiedAudioContext'
 import SimplifiedAudioPermission from './components/common/SimplifiedAudioPermission'
-// import SimplifiedAudioTest from './components/test/SimplifiedAudioTest'
-// import AudioSystemComparison from './components/test/AudioSystemComparison'
-
-
 import LottieCharacter, { useCharacterState } from './components/common/LottieCharacter'
 import { useUpdateChecker } from './hooks/useUpdateChecker'
 import { useNativeAppFeel } from './hooks/useNativeAppFeel'
@@ -109,19 +106,10 @@ const HomePage = () => {
   const cardGlass = darkScene
     ? 'linear-gradient(135deg, rgba(255,255,255,0.92) 0%, rgba(255,255,255,0.84) 100%)'
     : 'linear-gradient(135deg, rgba(255,255,255,0.62) 0%, rgba(255,255,255,0.46) 100%)'
-  const welcomeCharacter = useCharacterState('wave')
   const { state: progress } = useProgress()
   const stickersOwned = Object.keys(progress.stickers.collected).length
   const stickersTotal = totalStickerCount()
   const albumFill = stickersTotal > 0 ? stickersOwned / stickersTotal : 0
-
-  React.useEffect(() => {
-    // Welcome animation sequence
-    const timer = setTimeout(() => {
-      welcomeCharacter.wave()
-    }, 1000)
-    return () => clearTimeout(timer)
-  }, [])
 
   return (
     <Box
@@ -453,7 +441,7 @@ const HomePage = () => {
 
       {/* Per-world mascot — rendered INSIDE the page (not in the persistent layer): a persistent
           mascot in the separate world layer made Chrome flicker the scene's compositing on hover;
-          in-page it's rock-solid (same as the in-game GameGuide). parallaxDepth 0 → stays put. */}
+          in-page it's rock-solid (same as the in-game Mascot). parallaxDepth 0 → stays put. */}
       <ThemeMascot
         parallaxDepth={0}
         sx={{
@@ -568,11 +556,9 @@ function App() {
   // Initialize native app feel optimizations
   useNativeAppFeel()
   
-  // DEV MODE: Set to true to test update banner styling
-  // This allows you to see and adjust the UpdateBanner without waiting for a real update
+  // DEV MODE: Set to true to preview the update announcement pill without waiting for a real update.
   const DEV_SHOW_UPDATE_BANNER = false // Change to true to test the banner
-  const DEV_SHOW_APPLYING_STATE = false // Change to true to test the "applying" state
-  
+
   useEffect(() => {
     // Initialize remote console and log device info
 
@@ -606,21 +592,24 @@ function App() {
         {/* Navigation Audio Cleanup - handles React Router navigation */}
         <NavigationAudioCleanup />
         
-        {/* Update Button - shown in lower right when update available */}
+        {/* Update announcement — a dismissible bottom-centre pill that points the adult to the
+            ⚙️ menu (PRD-09 P4). The actual apply-update is the hold-gated menu item, never a
+            child-tappable button. */}
         <UpdateBanner
           show={updateStatus.updateAvailable || DEV_SHOW_UPDATE_BANNER}
-          onUpdate={DEV_SHOW_UPDATE_BANNER ? () => {
-          } : updateStatus.applyUpdate}
-          isApplying={DEV_SHOW_APPLYING_STATE}
+          onDismiss={updateStatus.dismissUpdate}
         />
-        
+
         {/* Global Audio Permission System */}
         {/* Legacy GlobalAudioPermission removed */}
 
         {/* "Til de voksne" corner button — hold 2s → adult menu (bug reporter, voice test,
-            SFX toggle, progress reset, version info). Consolidates the old floating mic +
-            version chip; repositions to bottom-left when the update banner owns bottom-right. */}
-        <AdultCorner updateAvailable={updateStatus.updateAvailable || DEV_SHOW_UPDATE_BANNER} />
+            SFX toggle, progress reset, version info, and the gated "⬆️ Opdater app"). Stays
+            bottom-right; the update pill is bottom-centre so it no longer dodges onto the mascot. */}
+        <AdultCorner
+          updateAvailable={updateStatus.updateAvailable || DEV_SHOW_UPDATE_BANNER}
+          onApplyUpdate={updateStatus.applyUpdate}
+        />
 
         {/* Render-crash test hook for the global error boundary (?crash-test=1) */}
         <CrashTestProbe />

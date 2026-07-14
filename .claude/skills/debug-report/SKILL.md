@@ -14,7 +14,9 @@ on crashes. Each has a short id like `R7K3F`. Storage: production = Vercel Blob 
 - Production (default): `https://preschool-learning-app.vercel.app`
 - Local (user says "locally", or the report was made against a dev build): `http://127.0.0.1:3001`
   — or just Read the files under `.bug-reports/` directly.
-- If `BUG_REPORT_READ_KEY` is set in the Vercel env, append `&key=<value>` to every GET.
+- Production GET reads are gated by `BUG_REPORT_READ_KEY` (fail-closed): append `&key=<value>` to
+  every prod GET, or it returns 403 (unset env) / 401 (wrong key). Local dev (`127.0.0.1:3001`)
+  stays open unless the key env is set there too.
 - ALWAYS use curl, not WebFetch.
 
 ## 2. Resolve which report(s) to debug

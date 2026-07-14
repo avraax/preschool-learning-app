@@ -66,10 +66,10 @@ button, .MuiButton-root, .MuiCard-root, [role="button"] {
   -webkit-user-drag: none;
   /* Advanced touch action control */
   touch-action: manipulation;
-  /* Hardware acceleration for smooth interactions */
-  will-change: transform;
-  backface-visibility: hidden;
-  /* Native-like touch feedback */
+  /* Native-like touch feedback. NOTE (PRD-08 §P4): no blanket `will-change: transform` here — it
+     promoted every button/card/[role=button] to its own GPU layer app-wide (mass layer promotion,
+     continuous memory cost). will-change is applied narrowly where it's actually animated (e.g. the
+     ambient scene sprites) instead. */
   transition: transform 0.1s ease-out;
 }
 
@@ -115,8 +115,7 @@ input, select, textarea {
   user-select: text;
 }
 
-/* Hardware acceleration for all animated elements */
-.animated, [class*="Mui"]:hover, [class*="motion"] {
-  will-change: transform;
-  backface-visibility: hidden;
-}
+/* PRD-08 §P4: removed the blanket `will-change: transform` that promoted EVERY MUI element on
+   hover (and everything matching [class*="motion"]) to its own compositor layer — a large, always-on
+   GPU/memory cost on older iPads. Framer Motion and the scene layers manage their own promotion
+   where it's genuinely needed. */

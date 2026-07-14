@@ -1,24 +1,15 @@
-import React, { useEffect, useRef } from 'react'
-import Lottie, { LottieRefCurrentProps } from 'lottie-react'
+import React from 'react'
 import { Box, SxProps, Theme } from '@mui/material'
-import { useInView } from 'react-intersection-observer'
 
 // Character types and states
 export type CharacterType = 'bear' | 'owl' | 'fox' | 'rabbit'
 export type CharacterState = 'idle' | 'wave' | 'celebrate' | 'encourage' | 'thinking' | 'point'
 
-// Animation data - In a real app, these would be imported from Lottie JSON files
-// For now, we'll use placeholders and simple CSS animations as fallback
-const getAnimationData = (_character: CharacterType, _state: CharacterState) => {
-  // This would normally return the actual Lottie JSON data
-  // Return null and use CSS fallback
-  return null
-}
-
 interface LottieCharacterProps {
   character: CharacterType
   state: CharacterState
   size?: number | string
+  // Kept for API compatibility with older call sites; the component is emoji + CSS only.
   loop?: boolean
   autoplay?: boolean
   sx?: SxProps<Theme>
@@ -27,34 +18,20 @@ interface LottieCharacterProps {
   className?: string
 }
 
+// Animated-emoji mascot. This was historically a Lottie wrapper, but the Lottie branch was never
+// wired up (no animation data) — it has always rendered an emoji with CSS keyframes. The Lottie
+// dependency was removed in PRD-07 to trim dead weight from the first-paint bundle. The name and
+// public API are unchanged so call sites don't need to move.
 const LottieCharacter: React.FC<LottieCharacterProps> = ({
   character,
   state,
   size = 120,
-  loop = false,
-  autoplay = true,
   sx = {},
   onAnimationComplete,
   onClick,
   className = ''
 }) => {
-  const lottieRef = useRef<LottieRefCurrentProps>(null)
-  const { ref, inView } = useInView({
-    threshold: 0.1,
-    triggerOnce: false
-  })
-
-  const animationData = getAnimationData(character, state)
-
-  useEffect(() => {
-    if (inView && autoplay && lottieRef.current) {
-      lottieRef.current.play()
-    } else if (!inView && lottieRef.current) {
-      lottieRef.current.pause()
-    }
-  }, [inView, autoplay])
-
-  // Character emoji mapping for fallback
+  // Character emoji mapping
   const characterEmojis: Record<CharacterType, string> = {
     bear: '🐻',
     owl: '🦉',
@@ -62,7 +39,7 @@ const LottieCharacter: React.FC<LottieCharacterProps> = ({
     rabbit: '🐰'
   }
 
-  // State-based CSS animations for fallback
+  // State-based CSS animations
   const getStateAnimation = (state: CharacterState): string => {
     switch (state) {
       case 'wave':
@@ -81,37 +58,8 @@ const LottieCharacter: React.FC<LottieCharacterProps> = ({
     }
   }
 
-  // If we have Lottie animation data, use it
-  if (animationData) {
-    return (
-      <Box
-        ref={ref}
-        sx={{
-          width: size,
-          height: size,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          ...sx
-        }}
-        className={className}
-      >
-        <Lottie
-          lottieRef={lottieRef}
-          animationData={animationData}
-          loop={loop}
-          autoplay={autoplay && inView}
-          onComplete={onAnimationComplete}
-          style={{ width: '100%', height: '100%' }}
-        />
-      </Box>
-    )
-  }
-
-  // Fallback to animated emoji with CSS animations
   return (
     <Box
-      ref={ref}
       sx={{
         width: size,
         height: size,

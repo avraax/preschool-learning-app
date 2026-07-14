@@ -11,7 +11,7 @@ import {
 } from './shared-azure-tts.js';
 
 const app = express();
-const PORT = 3001;
+const PORT = Number(process.env.PORT) || 3001;
 
 // 5mb to comfortably hold a short base64-encoded audio clip from the mic game.
 app.use(express.json({ limit: '5mb' }));
@@ -35,10 +35,55 @@ function logDevError(scope, error) {
   if (errorLogs.length > MAX_LOGS) errorLogs = errorLogs.slice(0, MAX_LOGS);
 }
 
+// --- Shared guards (mirror lib/server-utils.ts) ---
+// Origin allow-list: localhost/127/::1 or the request's own host. No Origin (curl, scripts) is
+// allowed here — the rate limiter is the real guard for those. Cross-origin is rejected.
+function isAllowedOrigin(req) {
+  const origin = req.headers.origin;
+  if (!origin) return true;
+  try {
+    const host = new URL(origin).hostname;
+    if (host === 'localhost' || host === '127.0.0.1' || host === '[::1]') return true;
+    if (req.headers.host && host === req.headers.host.split(':')[0]) return true;
+    return false;
+  } catch {
+    return false;
+  }
+}
+
+function clientIp(req) {
+  const fwd = req.headers['x-forwarded-for'];
+  const raw = Array.isArray(fwd) ? fwd[0] : fwd;
+  const first = raw?.split(',')[0]?.trim();
+  return first || req.socket?.remoteAddress || 'unknown';
+}
+
+// Fixed-window per-IP rate limit. Returns true if allowed; on refusal writes a 429 and returns false.
+const rateBuckets = new Map();
+function rateLimit(req, res, { scope, limit, windowMs }) {
+  const now = Date.now();
+  const key = `${scope}:${clientIp(req)}`;
+  let bucket = rateBuckets.get(key);
+  if (!bucket || bucket.resetAt <= now) {
+    bucket = { count: 0, resetAt: now + windowMs };
+    rateBuckets.set(key, bucket);
+  }
+  bucket.count++;
+  if (bucket.count > limit) {
+    res.setHeader('Retry-After', String(Math.max(1, Math.ceil((bucket.resetAt - now) / 1000))));
+    res.status(429).json({ error: 'Too many requests' });
+    return false;
+  }
+  return true;
+}
+
 // --- Azure TTS endpoint (mirrors api/tts-azure.ts via the shared core) ---
 const VOICE_TYPES = new Set(['primary', 'backup', 'male', 'english']);
+const MAX_AUDIO_BASE64_CHARS = 1_500_000;
 
 app.post('/api/tts-azure', async (req, res) => {
+  if (!isAllowedOrigin(req)) return res.status(403).json({ error: 'Forbidden origin' });
+  if (!rateLimit(req, res, { scope: 'tts', limit: 200, windowMs: 60_000 })) return;
   try {
     const { text, voiceType = 'primary', voiceName, lang, speed, pitch, useLexicon = true, ipa } = req.body ?? {};
 
@@ -86,7 +131,7 @@ app.post('/api/tts-azure', async (req, res) => {
     res.json({ audioContent });
   } catch (error) {
     logDevError('TTS', error);
-    res.status(500).json({ error: 'Text-to-speech synthesis failed', details: error.message });
+    res.status(500).json({ error: 'Text-to-speech synthesis failed' });
   }
 });
 
@@ -129,11 +174,16 @@ function initializeSttClient() {
 }
 
 app.post('/api/stt', async (req, res) => {
+  if (!isAllowedOrigin(req)) return res.status(403).json({ error: 'Forbidden origin' });
+  if (!rateLimit(req, res, { scope: 'stt', limit: 40, windowMs: 60_000 })) return;
   try {
     const { audioContent } = req.body;
 
     if (!audioContent || typeof audioContent !== 'string') {
       return res.status(400).json({ error: 'audioContent (base64) is required' });
+    }
+    if (audioContent.length > MAX_AUDIO_BASE64_CHARS) {
+      return res.status(413).json({ error: 'audioContent too large' });
     }
 
     const audioBytes = Buffer.from(audioContent, 'base64');
@@ -149,6 +199,8 @@ app.post('/api/stt', async (req, res) => {
         autoDecodingConfig: {},
         languageCodes: ['da-DK'],
         model: 'short',
+        // Child-safety: mask profanity (mirrors api/stt.ts). See that file for rationale.
+        features: { profanityFilter: true },
       },
       content: audioBytes,
     });
@@ -160,7 +212,7 @@ app.post('/api/stt', async (req, res) => {
     res.json({ transcript, confidence });
   } catch (error) {
     logDevError('STT', error);
-    res.status(500).json({ error: 'STT recognition failed', details: error.message });
+    res.status(500).json({ error: 'STT recognition failed' });
   }
 });
 
@@ -219,6 +271,8 @@ function listBugReports() {
 }
 
 app.post('/api/bug-report', (req, res) => {
+  if (!isAllowedOrigin(req)) return res.status(403).json({ error: 'Forbidden origin' });
+  if (!rateLimit(req, res, { scope: 'bug-report', limit: 20, windowMs: 60_000 })) return;
   try {
     const { report, screenshot } = req.body ?? {};
     if (!report || typeof report !== 'object') {
@@ -257,6 +311,14 @@ app.post('/api/bug-report', (req, res) => {
 });
 
 app.get('/api/bug-report', (req, res) => {
+  if (!isAllowedOrigin(req)) return res.status(403).json({ error: 'Forbidden origin' });
+  // Dev mirror keeps reads open when no key is configured (local .bug-reports/ debugging stays
+  // frictionless); when BUG_REPORT_READ_KEY IS set, require it — so the prod gate is testable here.
+  // Production (api/bug-report.ts) is stricter: fail-closed (denies reads when the env is unset).
+  const readKey = process.env.BUG_REPORT_READ_KEY;
+  if (readKey && req.query.key !== readKey) {
+    return res.status(401).json({ error: 'Invalid key' });
+  }
   try {
     const all = listBugReports();
     const id = req.query.id ? String(req.query.id).toUpperCase() : null;

@@ -2,6 +2,7 @@ import { Howl, Howler } from 'howler'
 import { progressStore } from './progressStore'
 import { simplifiedAudioController } from '../utils/SimplifiedAudioController'
 import { devMusicOn } from '../utils/devHarness'
+import { SECTION_MENU_PATHS } from '../utils/menuPaths'
 
 // Per-world ambient music (UI/UX Overhaul PRD §5.6).
 //
@@ -61,8 +62,10 @@ const WORLD_LOOP: Record<string, { loopStart?: number; loopEnd?: number }> = {
 
 // Music is a MENU / front-page bed only — it must NOT play inside a game (or a content/browse
 // screen), so narration + SFX own the mix there. These are the only routes that keep music on;
-// everything deeper (games and Lær/browse screens) fades the bed out.
-const MENU_PATHS = new Set(['/', '/album', '/alphabet', '/math', '/farver', '/english', '/ordleg'])
+// everything deeper (games and Lær/browse screens) fades the bed out. Shares the section list with
+// scene/routeKind (src/utils/menuPaths.ts) and adds the /album reward hub, where the bed keeps
+// playing (the scene, by contrast, dims /album — see menuPaths.ts).
+const MENU_PATHS = new Set<string>([...SECTION_MENU_PATHS, '/album'])
 function routeAllowsMusic(pathname: string): boolean {
   const p = (pathname || '/').replace(/\/+$/, '')
   return MENU_PATHS.has(p === '' ? '/' : p)

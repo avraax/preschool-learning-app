@@ -14,8 +14,6 @@ interface RepeatButtonProps {
   disabled?: boolean
   /** Button text label */
   label?: string
-  /** Visual variant of the button */
-  variant?: 'primary' | 'secondary'
   /** Size of the button */
   size?: 'small' | 'medium' | 'large'
   /** Category theme to use for styling (keys must match categoryThemes) */
@@ -41,7 +39,6 @@ interface RepeatButtonProps {
  *   onClick={repeatProblem}
  *   disabled={!isReady}
  *   label="Hør igen"
- *   variant="secondary"
  *   category="math"
  *   size="large"
  * />
@@ -51,7 +48,6 @@ export const RepeatButton: React.FC<RepeatButtonProps> = ({
   onClick,
   disabled = false,
   label = 'Hør igen',
-  variant = 'primary',
   size = 'large',
   category = 'alphabet',
   useLucideIcons = true
@@ -63,66 +59,35 @@ export const RepeatButton: React.FC<RepeatButtonProps> = ({
   const IconComponent = useLucideIcons ? Volume2 : VolumeUp
   const iconSize = useLucideIcons ? 24 : undefined
 
-  // Build button styles based on variant and category
-  const getButtonStyles = () => {
-    const baseStyles = {
-      py: size === 'small' ? 1 : size === 'large' ? 2 : 2,
-      px: size === 'small' ? 2 : size === 'large' ? 4 : 4,
-      fontSize: size === 'small' ? '0.9rem' : size === 'large' ? '1.1rem' : '1.1rem',
-      borderRadius: 3,
-      fontWeight: 600,
-      textTransform: 'none' as const,
-      transition: 'all 0.3s ease',
+  // Build button styles based on category theme
+  const getButtonStyles = () => ({
+    py: size === 'small' ? 1 : 2,
+    px: size === 'small' ? 2 : 4,
+    fontSize: size === 'small' ? '0.9rem' : '1.1rem',
+    borderRadius: 3,
+    fontWeight: 600,
+    textTransform: 'none' as const,
+    transition: 'all 0.3s ease',
+    boxShadow: 2,
+    backgroundColor: theme.accentColor,
+    color: 'white',
+    border: `2px solid ${theme.accentColor}`,
+    '&:hover': {
+      backgroundColor: theme.hoverBorderColor,
+      borderColor: theme.hoverBorderColor,
+      boxShadow: 4,
+      transform: 'translateY(-2px)'
+    },
+    '&:active': {
+      transform: 'translateY(0px)',
       boxShadow: 2
+    },
+    '&:disabled': {
+      backgroundColor: 'grey.400',
+      borderColor: 'grey.400',
+      color: 'grey.600'
     }
-
-    if (variant === 'primary') {
-      return {
-        ...baseStyles,
-        backgroundColor: theme.accentColor,
-        color: 'white',
-        border: `2px solid ${theme.accentColor}`,
-        '&:hover': {
-          backgroundColor: theme.hoverBorderColor,
-          borderColor: theme.hoverBorderColor,
-          boxShadow: 4,
-          transform: 'translateY(-2px)'
-        },
-        '&:active': {
-          transform: 'translateY(0px)',
-          boxShadow: 2
-        },
-        '&:disabled': {
-          backgroundColor: 'grey.400',
-          borderColor: 'grey.400',
-          color: 'grey.600'
-        }
-      }
-    } else {
-      // Secondary variant with enhanced category theming
-      return {
-        ...baseStyles,
-        backgroundColor: theme.accentColor,
-        color: 'white',
-        border: `2px solid ${theme.accentColor}`,
-        '&:hover': {
-          backgroundColor: theme.hoverBorderColor,
-          borderColor: theme.hoverBorderColor,
-          boxShadow: 4,
-          transform: 'translateY(-2px)'
-        },
-        '&:active': {
-          transform: 'translateY(0px)',
-          boxShadow: 2
-        },
-        '&:disabled': {
-          backgroundColor: 'grey.400',
-          borderColor: 'grey.400',
-          color: 'grey.600'
-        }
-      }
-    }
-  }
+  })
 
   return (
     <Button
@@ -172,7 +137,7 @@ export const AlphabetRepeatButton: React.FC<AlphabetRepeatButtonProps> = (props)
  * Pre-configured repeat button for math games  
  */
 export const MathRepeatButton: React.FC<MathRepeatButtonProps> = (props) => (
-  <RepeatButton {...props} category="math" label="Hør igen" variant="secondary" />
+  <RepeatButton {...props} category="math" label="Hør igen" />
 )
 
 /**

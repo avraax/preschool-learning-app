@@ -2,9 +2,12 @@ import React from 'react'
 import UnifiedQuizGame, { UnifiedQuizConfig, QuizItem } from '../common/UnifiedQuizGame'
 import { DANISH_PHRASES } from '../../config/danish-phrases'
 import { categoryThemes } from '../../config/categoryThemes'
+import { stickerSetForSection } from '../../config/stickers'
 import { AlphabetScoreChip } from '../common/ScoreChip'
 import { AlphabetRepeatButton } from '../common/RepeatButton'
 import { progressStore, type DifficultyLevel } from '../../services/progressStore'
+import { shuffle } from '../../utils/shuffle'
+import { LETTER_WORDS, WORD_LETTERS } from '../../config/letterWords'
 
 // Full Danish alphabet including special characters
 const DANISH_ALPHABET = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'Æ', 'Ø', 'Å']
@@ -34,35 +37,8 @@ const confusablesFor = (letter: string): string[] => {
 
 // Word-association mode: child sees an emoji + Danish word and picks the starting letter.
 // Only letters with a clear, child-friendly Danish word are included (Q, W, X omitted).
-const LETTER_WORDS: Record<string, { word: string; emoji: string }> = {
-  'A': { word: 'Abe', emoji: '🐒' },
-  'B': { word: 'Bil', emoji: '🚗' },
-  'C': { word: 'Cykel', emoji: '🚲' },
-  'D': { word: 'Drage', emoji: '🐉' },
-  'E': { word: 'Elefant', emoji: '🐘' },
-  'F': { word: 'Fisk', emoji: '🐟' },
-  'G': { word: 'Giraf', emoji: '🦒' },
-  'H': { word: 'Hund', emoji: '🐕' },
-  'I': { word: 'Is', emoji: '🍦' },
-  'J': { word: 'Jul', emoji: '🎄' },
-  'K': { word: 'Kat', emoji: '🐱' },
-  'L': { word: 'Løve', emoji: '🦁' },
-  'M': { word: 'Mus', emoji: '🐭' },
-  'N': { word: 'Næsehorn', emoji: '🦏' },
-  'O': { word: 'Orm', emoji: '🪱' },
-  'P': { word: 'Panda', emoji: '🐼' },
-  'R': { word: 'Raket', emoji: '🚀' },
-  'S': { word: 'Sol', emoji: '☀️' },
-  'T': { word: 'Tog', emoji: '🚂' },
-  'U': { word: 'Ugle', emoji: '🦉' },
-  'V': { word: 'Vandmelon', emoji: '🍉' },
-  'Y': { word: 'Yoghurt', emoji: '🥛' },
-  'Z': { word: 'Zebra', emoji: '🦓' },
-  'Æ': { word: 'Æble', emoji: '🍎' },
-  'Ø': { word: 'Ørn', emoji: '🦅' },
-  'Å': { word: 'Ål', emoji: '🐍' },
-}
-const WORD_LETTERS = Object.keys(LETTER_WORDS)
+// LETTER_WORDS + WORD_LETTERS are the shared canonical table (src/config/letterWords.ts),
+// also used by Lær Alfabetet — kept in one place so the two never drift.
 
 const AlphabetGame: React.FC = () => {
   // Configuration for alphabet quiz
@@ -107,14 +83,14 @@ const AlphabetGame: React.FC = () => {
             options.push(toLetterItem(randomLetter))
           }
         }
-        return options.sort(() => Math.random() - 0.5)
+        return shuffle(options)
       }
 
       const correctLetter = correctAnswer.value as string
       // Svær: seed with the correct letter's confusable group (M/N, Æ/Ø/Å, B/D/P, look-/sound-
       // alike vowels) so a right answer means the child actually told them apart. Let: exclude
       // that same group so distractors are never a near-miss.
-      const preferred = level === 'svaer' ? confusablesFor(correctLetter).sort(() => Math.random() - 0.5) : []
+      const preferred = level === 'svaer' ? shuffle(confusablesFor(correctLetter)) : []
       const excluded = level === 'let' ? new Set(confusablesFor(correctLetter)) : null
 
       const picks: string[] = []
@@ -130,7 +106,7 @@ const AlphabetGame: React.FC = () => {
       }
 
       const options: QuizItem[] = [correctAnswer, ...picks.map(toLetterItem)]
-      return options.sort(() => Math.random() - 0.5)
+      return shuffle(options)
     },
     
     // Display configuration
@@ -150,7 +126,10 @@ const AlphabetGame: React.FC = () => {
     // Bounded round (Overhaul Foundation §3) — reference wiring / smoke test. 8 questions,
     // then the result/reward hero. 3★ = no mistakes, 2★ ≤ 2, else 1★. Global sticker pool.
     gameId: 'alphabet.quiz',
-    round: { length: 8, starThresholds: { three: 0, two: 2 } },
+    round: { length: 8, starThresholds: { three: 0, two: 2 }, stickerSetId: stickerSetForSection('alphabet') },
+
+    // Never-fail hint (PRD-05 P1): after 2 wrong taps the correct letter tile pulses.
+    hintAfterNWrong: 2,
 
     // Audio methods
     speakQuizPrompt: async (item: QuizItem, audio: any) => {

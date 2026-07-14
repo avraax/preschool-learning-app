@@ -1,6 +1,5 @@
 import { defineConfig, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
-import { VitePWA } from 'vite-plugin-pwa'
 import fs from 'fs'
 import path from 'path'
 import { execSync } from 'child_process'
@@ -64,65 +63,14 @@ export default BUILD_INFO`
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  // NOTE (PRD-08 §P3): no vite-plugin-pwa. The app is deliberately network-only — there is no
+  // service worker. The single PWA manifest is the hand-authored public/manifest.json (linked from
+  // index.html); the plugin used to inject a SECOND manifest (/manifest.webmanifest) and emit a
+  // dead, unregistered sw.js. main.tsx runs a one-time legacy-SW unregister sweep for clients that
+  // still have a SW from an earlier build era.
   plugins: [
     generateVersionPlugin(),
-    react(),
-    VitePWA({
-      disable: false,
-      injectRegister: null,
-      manifest: {
-        name: "Børnelæring - Alfabetet og Tal",
-        short_name: "Børnelæring",
-        description: "Lær alfabetet og tal på dansk for børn 5-7 år. Interaktive spil med dansk lyd og animationer.",
-        start_url: "/",
-        display: "standalone",
-        background_color: "#8B5CF6",
-        theme_color: "#8B5CF6",
-        orientation: "portrait-primary",
-        categories: ["education", "kids", "games"],
-        lang: "da",
-        scope: "/",
-        icons: [
-          {
-            src: "icon-192x192.png",
-            sizes: "192x192",
-            type: "image/png",
-            purpose: "any"
-          },
-          {
-            src: "icon-512x512.png",
-            sizes: "512x512",
-            type: "image/png",
-            purpose: "any"
-          },
-          {
-            src: "apple-touch-icon-180x180.png",
-            sizes: "180x180",
-            type: "image/png",
-            purpose: "any"
-          },
-          {
-            src: "icon-192x192-maskable.png",
-            sizes: "192x192",
-            type: "image/png",
-            purpose: "maskable"
-          },
-          {
-            src: "icon-512x512-maskable.png",
-            sizes: "512x512",
-            type: "image/png",
-            purpose: "maskable"
-          }
-        ],
-        prefer_related_applications: false,
-        dir: "ltr",
-        display_override: ["standalone", "minimal-ui"]
-      },
-      workbox: {
-        mode: 'development',
-        globPatterns: []
-      }
-    })
+    react()
   ],
   server: {
     // Bind explicitly. Without these, Vite 8 on Windows can print "ready" while
@@ -159,7 +107,7 @@ export default defineConfig({
           if (!id.includes('node_modules')) return
           if (id.includes('@mui')) return 'mui-vendor'
           if (id.includes('framer-motion')) return 'motion-vendor'
-          if (id.includes('howler') || id.includes('lottie') || id.includes('react-confetti')) return 'media-vendor'
+          if (id.includes('howler')) return 'media-vendor'
           if (id.includes('@dnd-kit')) return 'dnd-vendor'
           if (id.includes('react-router') || id.includes('react-dom') || id.includes('scheduler') || /node_modules[\\/]react[\\/]/.test(id)) return 'react-vendor'
         }

@@ -7,6 +7,7 @@ import {
 } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { categoryThemes } from '../../config/categoryThemes'
+import { stickerSetForSection } from '../../config/stickers'
 import { darken, hexToRgba } from '../../theme/tokens/helpers'
 import GameShell from '../common/GameShell'
 import RoundResultScreen from '../common/RoundResultScreen'
@@ -16,6 +17,7 @@ import { OrdlegScoreChip } from '../common/ScoreChip'
 import { OrdlegRepeatButton } from '../common/RepeatButton'
 import { useGameState } from '../../hooks/useGameState'
 import { useRound } from '../../hooks/useRound'
+import { shuffle } from '../../utils/shuffle'
 import { progressStore, type RoundOutcome } from '../../services/progressStore'
 import { sfx } from '../../services/sfxClient'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
@@ -121,8 +123,15 @@ const SpellingGame: React.FC = () => {
   const firstAttemptRef = useRef(true)
   const [roundOutcome, setRoundOutcome] = useState<RoundOutcome | null>(null)
 
-  // Timeout ref for cleanup
+  // Timeout ref for cleanup (per-word prompt timer)
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
+  // The two nested post-completion timers (PRD-02 P4): the echo delay and the advance delay. Tracked
+  // so they're cleared on unmount and never speak/advance over the next screen.
+  const completeTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const advanceTimerRef = useRef<NodeJS.Timeout | null>(null)
+  // False after unmount — checked inside the async completion callback (which awaits the word echo)
+  // so it never schedules the advance / speaks after the child has navigated away.
+  const mountedRef = useRef(true)
 
   // Celebration management (corner guide reacts via guideReaction)
   const { showCelebration, celebrationIntensity, celebrationDuration, celebrateTier, stopCelebration } = useCelebration()
@@ -152,10 +161,21 @@ const SpellingGame: React.FC = () => {
       playWelcomeThenWord()
     }
 
+    // Empty-dep effect → this cleanup runs once, on unmount: clear every pending timer so no
+    // prompt/echo/advance callback speaks or advances over the next screen. (The mounted flag is
+    // owned by its own effect below so StrictMode's dev remount restores it.)
     return () => {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current)
         timeoutRef.current = null
+      }
+      if (completeTimerRef.current) {
+        clearTimeout(completeTimerRef.current)
+        completeTimerRef.current = null
+      }
+      if (advanceTimerRef.current) {
+        clearTimeout(advanceTimerRef.current)
+        advanceTimerRef.current = null
       }
       if (guideReactionTimer.current) {
         clearTimeout(guideReactionTimer.current)
@@ -163,6 +183,17 @@ const SpellingGame: React.FC = () => {
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Owns the mounted flag on its own (PRD-02): sets true on (re)mount and false on unmount, so
+  // StrictMode's dev mount→cleanup→remount cycle leaves it TRUE (a shared init cleanup would strand
+  // it false and freeze the completion advance). The async word-echo callback checks it before
+  // scheduling the advance so it never speaks/advances over the next screen.
+  useEffect(() => {
+    mountedRef.current = true
+    return () => {
+      mountedRef.current = false
+    }
   }, [])
 
   // When audio unlocks after mount, play the welcome (board already visible). Interaction-guarded
@@ -202,15 +233,15 @@ const SpellingGame: React.FC = () => {
     const distractorPool = DANISH_ALPHABET.filter(l => !wordLetterSet.has(l))
     const distractors: string[] = []
     const distractorCount = 3
-    const shuffledPool = [...distractorPool].sort(() => Math.random() - 0.5)
+    const shuffledPool = shuffle(distractorPool)
     for (let i = 0; i < distractorCount && i < shuffledPool.length; i++) {
       distractors.push(shuffledPool[i])
     }
 
     const all = [...letters, ...distractors]
-    return all
-      .map((letter, index) => ({ id: `tile-${wordSeq.current}-${index}-${letter}`, letter }))
-      .sort(() => Math.random() - 0.5)
+    return shuffle(
+      all.map((letter, index) => ({ id: `tile-${wordSeq.current}-${index}-${letter}`, letter }))
+    )
   }
 
   // `voice=false` renders the board without voicing the word (used for the first word, which is
@@ -256,7 +287,7 @@ const SpellingGame: React.FC = () => {
     const outcome = progressStore.recordRoundResult(
       'ordleg.spelling',
       { correct: firstTryCorrect, total: round.length, longestStreak },
-      { starThresholds: { three: 0, two: 2 } },
+      { starThresholds: { three: 0, two: 2 }, stickerSetId: stickerSetForSection('ordleg') },
     )
     setRoundOutcome(outcome)
   }
@@ -297,12 +328,22 @@ const SpellingGame: React.FC = () => {
       slotWrongRef.current = 0
       setHintTileId(null)
 
+      // P3 (PRD-02): the final correct letter completes the word — engage the advance-lock NOW,
+      // BEFORE the echo await below. Otherwise a tap on a leftover distractor tile during the ~1s
+      // echo slips past the top-of-handler guard, hits the wrong branch (expectedLetter is
+      // undefined) and steals the just-earned star.
+      if (newFilled === targetLetters.length) isAdvancing.current = true
+
       // Echo the placed letter (identification). No win/lose narration.
       try {
         await audio.speakLetter(tile.letter)
       } catch (error) {
         // ignore letter audio errors
       }
+
+      // Navigated away during the letter echo → don't complete/advance (PRD-02 P4): completeWord
+      // would schedule the completion echo + advance over the next screen.
+      if (!mountedRef.current) return
 
       if (newFilled === targetLetters.length) {
         // Word complete
@@ -328,7 +369,9 @@ const SpellingGame: React.FC = () => {
   }
 
   const completeWord = () => {
-    if (!current || isAdvancing.current) return
+    // isAdvancing was already engaged by the final correct tap (see handleTileClick, P3) so the
+    // guard only needs the current-word check; it's still called exactly once per word.
+    if (!current) return
     isAdvancing.current = true
 
     incrementScore()
@@ -336,14 +379,19 @@ const SpellingGame: React.FC = () => {
     reactGuide('cheer')
 
     // Read the completed word back (identification of what was spelled), then advance. No
-    // win/lose narration.
-    setTimeout(async () => {
+    // win/lose narration. Both timers are tracked + the mounted guard stops the chain if the child
+    // navigates away during the echo, so nothing speaks/advances over the next screen (PRD-02 P4).
+    completeTimerRef.current = setTimeout(async () => {
+      completeTimerRef.current = null
+      if (!mountedRef.current) return // navigated away before the echo → don't speak/advance
       try {
         await audio.speak(current.word)
       } catch (error) {
         // ignore
       }
-      setTimeout(() => {
+      if (!mountedRef.current) return // navigated away during the echo → don't advance/speak
+      advanceTimerRef.current = setTimeout(() => {
+        advanceTimerRef.current = null
         stopCelebration()
         const r = round.completeQuestion(firstAttemptRef.current)
         if (!r.done && r.streak > 0 && r.streak % 3 === 0) celebrateTier('streak')

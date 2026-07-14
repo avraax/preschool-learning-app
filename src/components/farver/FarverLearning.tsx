@@ -3,7 +3,7 @@ import { motion } from 'framer-motion'
 import { Box, Typography } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { getCategoryTheme } from '../../config/categoryThemes'
-import { SHADES, HUE_ORDER, COLOR_SWATCH, DANISH_OBJECTS } from '../../config/colorContent'
+import { SHADES, HUE_ORDER, COLOR_SWATCH, DANISH_OBJECTS, spokenColor } from '../../config/colorContent'
 import { darken, hexToRgba } from '../../theme/tokens/helpers'
 import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 import GameShell from '../common/GameShell'
@@ -11,6 +11,7 @@ import PromptStage from '../common/PromptStage'
 import StickerReveal from '../common/StickerReveal'
 import { useCelebration } from '../common/CelebrationEffect'
 import { progressStore, type StickerAward } from '../../services/progressStore'
+import { stickerSetForSection } from '../../config/stickers'
 import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 
 // Lær Farver — a calm browse (learning-based, no challenge). Tap a color to hear its name and see
@@ -73,20 +74,30 @@ const FarverLearning: React.FC = () => {
     }
   }
 
-  const maybeAwardExploration = () => {
+  // Returns true when it spoke the sticker line, so the caller skips the item echo (PRD-06 §3).
+  const maybeAwardExploration = (): boolean => {
     const size = exploredRef.current.size
     const milestone = Math.floor(size / EXPLORE_MILESTONE)
     if (milestone > milestoneRef.current) {
       milestoneRef.current = milestone
-      const award = progressStore.awardSticker()
+      const award = progressStore.awardSticker(stickerSetForSection('colors'))
       setStickerAward(award)
       celebrateTier('sticker')
       if (stickerTimer.current) clearTimeout(stickerTimer.current)
       stickerTimer.current = setTimeout(() => setStickerAward(null), 3600)
+      // Duplicate = shiny, not "new" — match the StickerReveal banner (PRD-09 P2).
       try {
-        audio.speak(`Nyt klistermærke! ${award.sticker.label}`).catch(() => {})
+        audio
+          .speak(
+            award.isNew
+              ? `Nyt klistermærke! ${award.sticker.label}`
+              : `Skinnende! ${award.sticker.label}`,
+          )
+          .catch(() => {})
       } catch { /* ignore */ }
+      return true
     }
+    return false
   }
 
   // Speak `text`, tracking `key` for exploration milestones. `setCurrent` swaps the detail panel.
@@ -97,7 +108,11 @@ const FarverLearning: React.FC = () => {
     if (hue) setCurrentHue(hue)
     setPlaying(key)
     exploredRef.current.add(key)
-    maybeAwardExploration()
+    // On a milestone tap the sticker line is the reward audio — don't also speak the item.
+    if (maybeAwardExploration()) {
+      setPlaying((p) => (p === key ? null : p))
+      return
+    }
     try {
       await audio.speak(text)
     } catch (error) {
@@ -205,7 +220,7 @@ const FarverLearning: React.FC = () => {
               {examples.map((obj) => (
                 <motion.div key={obj.objectName} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
                   <Box
-                    onClick={() => tapSpeak(`obj-${currentHue}-${obj.objectName}`, `${obj.objectNameDefinite} er ${currentHue}`)}
+                    onClick={() => tapSpeak(`obj-${currentHue}-${obj.objectName}`, `${obj.objectNameDefinite} er ${spokenColor(currentHue, obj.neuter)}`)}
                     sx={{
                       width: { xs: 40, md: 48 },
                       height: { xs: 40, md: 48 },

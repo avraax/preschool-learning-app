@@ -251,7 +251,7 @@ const GameSelectionLayout: React.FC<GameSelectionLayoutProps> = ({
       </Container>
 
       {/* Small idle mascot, bottom-left corner — rendered INSIDE the page (like the in-game
-          GameGuide) rather than in the persistent world layer, which avoids the hover-compositing
+          Mascot) rather than in the persistent world layer, which avoids the hover-compositing
           flicker. parallaxDepth 0 → stays put. */}
       <ThemeMascot
         parallaxDepth={0}

@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Typography, Box, useMediaQuery } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { getCategoryTheme } from '../../config/categoryThemes'
+import { stickerSetForSection } from '../../config/stickers'
+import { DANISH_PHRASES, getDanishNumberText } from '../../config/danish-phrases'
 import GameShell from '../common/GameShell'
 import AnswerTile, { type AnswerTileState } from '../common/AnswerTile'
 import PromptStage from '../common/PromptStage'
@@ -22,6 +24,7 @@ import { isIOS } from '../../utils/deviceDetection'
 import { devFx } from '../../utils/devHarness'
 import { POP, DWELL_CORRECT, motionOr } from '../../theme/motion'
 import { darken, hexToRgba, tileSurface } from '../../theme/tokens/helpers'
+import { shuffle } from '../../utils/shuffle'
 import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 
@@ -79,7 +82,18 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
   const [roundOutcome, setRoundOutcome] = useState<RoundOutcome | null>(null)
 
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
+  // The post-correct celebration/advance timer (PRD-02 P1/P4) — tracked so it's cleared on unmount
+  // (no ghost prompt on the next screen) and never runs twice.
+  const advanceTimerRef = useRef<NodeJS.Timeout | null>(null)
+  // Advance-lock (PRD-02 P1/P2): set synchronously on a correct tap so a rapid double-tap can't
+  // double-record the round and a tap during the celebration dwell can't poison the earned
+  // first-try. A ref so it's readable synchronously within the same event-loop tick.
+  const isAdvancingRef = useRef(false)
   const guideReactionTimer = useRef<NodeJS.Timeout | null>(null)
+  // False after unmount (PRD-02 P4): the advance timer is scheduled after the `await speakNumber`
+  // echo, so this flag stops the post-await continuation from scheduling a ghost prompt if the child
+  // navigates away during the echo. Owned by its own effect so StrictMode's dev remount restores it.
+  const mountedRef = useRef(true)
   // Live current problem (so it can be voiced after the welcome) + interaction guard (so a late
   // welcome never talks over active play).
   const problemRef = useRef<{ a: number; b: number } | null>(null)
@@ -108,10 +122,16 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
       playWelcomeThenProblem()
     }
 
+    // Empty-dep effect → this cleanup runs once, on unmount: clear every pending timer so no
+    // prompt/advance callback fires after the component is gone (ghost TTS on the next screen).
     return () => {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current)
         timeoutRef.current = null
+      }
+      if (advanceTimerRef.current) {
+        clearTimeout(advanceTimerRef.current)
+        advanceTimerRef.current = null
       }
       if (guideReactionTimer.current) {
         clearTimeout(guideReactionTimer.current)
@@ -119,6 +139,14 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Owns the mounted flag (PRD-02 P4, StrictMode-safe): true on (re)mount, false on unmount.
+  useEffect(() => {
+    mountedRef.current = true
+    return () => {
+      mountedRef.current = false
+    }
   }, [])
 
   // When audio unlocks after mount, play the welcome (board already visible). Interaction-guarded
@@ -161,8 +189,9 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
     setFeedback(null)
     setGuideReaction(null)
     setRevealAnswer(false)
-    // New problem → first attempt fresh again.
+    // New problem → first attempt fresh again and the advance-lock releases (tiles tappable again).
     firstAttemptRef.current = true
+    isAdvancingRef.current = false
 
     // Static, manual difficulty (UI/UX Overhaul PRD §5.7/Appendix A) — read fresh per problem.
     // 'normal' reproduces today's exact ranges unchanged.
@@ -183,10 +212,11 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
         firstNum = randInt(2, 10)
         secondNum = randInt(Math.max(1, 10 - firstNum), 10)
       } else {
-        // Normal (TODAY, unchanged): two numbers that add up to max 20.
-        firstNum = randInt(1, 10) // 1-10
+        // Normal (PRD-05 P3): sums ≤20 (matches "adds to 20"), but both addends ≥2 so the floor
+        // isn't trivial (+1 / tiny sums). The child adds to 20 on fingers, so this is his level.
+        firstNum = randInt(2, 10)
         const maxSecondNum = Math.min(20 - firstNum, 10) // ensure sum ≤ 20
-        secondNum = randInt(1, maxSecondNum) // 1 to maxSecondNum
+        secondNum = randInt(2, Math.max(2, maxSecondNum))
       }
       answer = firstNum + secondNum
     } else {
@@ -195,13 +225,14 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
         firstNum = randInt(1, 9)
         secondNum = randInt(1, firstNum)
       } else if (level === 'svaer') {
-        // Svær: minuend ≤20.
-        firstNum = randInt(1, 20)
-        secondNum = randInt(1, firstNum)
+        // Svær: two-digit minuend (11–20) so it's clearly harder than Normal.
+        firstNum = randInt(11, 20)
+        secondNum = randInt(1, firstNum - 1)
       } else {
-        // Normal (TODAY, unchanged): subtraction with a non-negative result.
-        firstNum = randInt(1, 10) // 1-10
-        secondNum = randInt(1, firstNum) // 1 to firstNum
+        // Normal (PRD-05 P3): minuend up to 20 (was ≤10 — the harder range used to be gated behind
+        // Svær). Result ≥1 so there's always a real subtraction to do.
+        firstNum = randInt(2, 20)
+        secondNum = randInt(1, firstNum - 1)
       }
       answer = firstNum - secondNum // non-negative
     }
@@ -215,14 +246,17 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
     // so wrong options are plausible confusions rather than random noise. Top up with random
     // in-range values only if too few distinct confusables exist.
     const lo = isAddition ? 1 : 0
-    const hi = isAddition ? 20 : (level === 'svaer' ? 20 : 10)
+    // Subtraction results now reach 19 on Normal/Svær (P3), so distractors must span up to 20 there
+    // (only Let stays single-digit). Otherwise a right answer like 15 could get ≤10 distractors,
+    // making it trivially obvious.
+    const hi = isAddition ? 20 : (level === 'let' ? 10 : 20)
     const confusables = (isAddition
       ? [answer - 1, answer + 1, answer - 2, answer + 2]
       : [answer - 1, answer + 1, answer + 2, firstNum, secondNum]
     ).filter((c) => c >= lo && c <= hi && c !== answer)
 
     const picks: number[] = []
-    for (const c of confusables.sort(() => Math.random() - 0.5)) {
+    for (const c of shuffle(confusables)) {
       if (picks.length >= 3) break
       if (!picks.includes(c)) picks.push(c)
     }
@@ -232,7 +266,7 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
     }
 
     optionSeq.current += 1 // fresh key namespace for this problem's option tiles
-    setOptions([answer, ...picks].sort(() => Math.random() - 0.5))
+    setOptions(shuffle([answer, ...picks]))
 
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current)
@@ -262,6 +296,9 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
 
   const handleAnswerClick = async (selectedAnswer: number) => {
     if (correctAnswer === null) return
+    // Advance-lock (PRD-02 P1/P2): ignore every tap once a correct answer is resolving — blocks the
+    // double-tap double-record and the celebration-tap star theft.
+    if (isAdvancingRef.current) return
     // The child is playing → suppress any pending/late welcome from talking over them.
     hasInteractedRef.current = true
 
@@ -270,19 +307,34 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
 
     const isCorrect = selectedAnswer === correctAnswer
 
+    // Engage the advance-lock SYNCHRONOUSLY on a correct tap (before the await below) so a second
+    // tap fired in the same tick is already blocked by the guard above.
+    if (isCorrect) isAdvancingRef.current = true
+
     // Mark the tapped tile + cue the corner guide, clearing the reaction a beat later.
     setFeedback({ value: selectedAnswer, correct: isCorrect })
     setGuideReaction(isCorrect ? 'cheer' : 'think')
     if (guideReactionTimer.current) clearTimeout(guideReactionTimer.current)
     guideReactionTimer.current = setTimeout(() => setGuideReaction(null), 1100)
 
-    // Echo the tapped number (identification). The win/lose narration (announceGameResult) stays
-    // removed; success/fail is otherwise SFX + visuals only.
+    // Speak the completed FACT on a correct tap ("tre plus fire er syv") — the reinforcement moment
+    // (PRD-05 P2). A wrong tap just echoes the tapped number (identification). Single audio channel,
+    // so the fact REPLACES the number echo, never stacks. The win/lose narration stays removed.
     try {
-      await audio.speakNumber(selectedAnswer)
+      if (isCorrect && correctAnswer !== null && num1 !== null && num2 !== null) {
+        const op = isAddition ? DANISH_PHRASES.math.plus : DANISH_PHRASES.math.minus
+        await audio.speak(
+          `${getDanishNumberText(num1)} ${op} ${getDanishNumberText(num2)} er ${getDanishNumberText(correctAnswer)}`,
+        )
+      } else {
+        await audio.speakNumber(selectedAnswer)
+      }
     } catch {
       // ignore number audio errors
     }
+
+    // Navigated away during the echo → don't score/celebrate/schedule the advance (PRD-02 P4).
+    if (!mountedRef.current) return
 
     if (isCorrect) {
       incrementScore()
@@ -297,7 +349,8 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
 
     // Auto-advance after a short celebration window (correct only; wrong stays for retry).
     if (isCorrect) {
-      setTimeout(() => {
+      advanceTimerRef.current = setTimeout(() => {
+        advanceTimerRef.current = null
         stopCelebration()
 
         // Bounded round: record the completed question, fire streak milestones, end or advance.
@@ -319,7 +372,7 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
     const outcome = progressStore.recordRoundResult(
       gameId,
       { correct: firstTryCorrect, total: round.length, longestStreak },
-      { starThresholds: { three: 0, two: 2 } },
+      { starThresholds: { three: 0, two: 2 }, stickerSetId: stickerSetForSection('math') },
     )
     setRoundOutcome(outcome)
   }
@@ -544,6 +597,9 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
                 onClick={() => handleAnswerClick(option)}
                 accent={category.accentColor}
                 state={(effectiveFeedback && effectiveFeedback.value === option ? (effectiveFeedback.correct ? 'correct' : 'wrong') : 'idle') as AnswerTileState}
+                // Tiles visibly stop responding once a correct answer is resolving (PRD-02). The
+                // correct tap's setRevealAnswer/setFeedback re-render reads the just-set ref.
+                disabled={isAdvancingRef.current}
               >
                 <Typography
                   variant="h1"

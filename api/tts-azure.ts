@@ -1,7 +1,7 @@
 import { VercelRequest, VercelResponse } from '@vercel/node'
 import { buildSsml, synthesizeAzure, resolveVoice, lexiconUriForRequest } from '../shared-azure-tts.js'
 import { TTS_CONFIG } from '../shared-tts-config.js'
-import { logServerError, applyCors, isAllowedOrigin } from '../lib/server-utils.js'
+import { logServerError, applyCors, isAllowedOrigin, rateLimit } from '../lib/server-utils.js'
 
 const VOICE_TYPES = new Set(['primary', 'backup', 'male', 'english'])
 
@@ -16,6 +16,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
   if (!isAllowedOrigin(req)) {
     return res.status(403).json({ error: 'Forbidden origin' })
+  }
+  // Billing guard on the paid Azure call. High ceiling: a fast-tapping game session legitimately
+  // fires many short syntheses/minute (most are served from the client + edge cache, not here).
+  if (!rateLimit(req, res, { scope: 'tts', limit: 200, windowMs: 60_000 })) {
+    return
   }
 
   try {
@@ -80,15 +85,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       outputFormat: TTS_CONFIG.outputFormat,
     })
 
-    // Cache for 24h at the edge as well as in the client localStorage cache.
-    res.setHeader('Cache-Control', 'public, max-age=86400, s-maxage=86400')
+    // NB: POST responses are NOT cached by browsers/edge, so a Cache-Control here does nothing
+    // (PRD-06 §P1). The real shared warm cache is the prebaked static files under /sounds/tts/;
+    // this endpoint only handles genuinely dynamic text. Be explicit that it isn't cacheable.
+    res.setHeader('Cache-Control', 'no-store')
     res.setHeader('Content-Type', 'application/json')
     return res.status(200).json({ audioContent })
   } catch (error) {
-    console.error('Azure TTS API error:', error)
+    // Full detail goes to the server log only — never leaked to the client (PRD-03 §P3).
     await logServerError(req, 'TTS', error)
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
-    return res.status(500).json({ error: 'Text-to-speech synthesis failed', details: errorMessage })
+    return res.status(500).json({ error: 'Text-to-speech synthesis failed' })
   }
 }
 

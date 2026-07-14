@@ -4,7 +4,9 @@ import UnifiedMemoryGame, { UnifiedMemoryConfig, MemoryItemDisplay } from '../co
 import { categoryThemes } from '../../config/categoryThemes'
 import { AlphabetScoreChip, MathScoreChip } from '../common/ScoreChip'
 import { AlphabetRestartButton, MathRestartButton } from '../common/RestartButton'
+import { stickerSetForSection } from '../../config/stickers'
 import { AlphabetRepeatButton, MathRepeatButton } from '../common/RepeatButton'
+import { shuffle } from '../../utils/shuffle'
 
 // Danish alphabet (29 letters)
 const DANISH_ALPHABET = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'Æ', 'Ø', 'Å']
@@ -17,7 +19,7 @@ const LETTER_ICONS: { [key: string]: { word: string; icon: string } } = {
   'A': { word: 'Ananas', icon: '🍍' },
   'B': { word: 'Bjørn', icon: '🐻' },
   'C': { word: 'Cykel', icon: '🚲' },
-  'D': { word: 'Due', icon: '🦆' },
+  'D': { word: 'Due', icon: '🕊️' },
   'E': { word: 'Elefant', icon: '🐘' },
   'F': { word: 'Frø', icon: '🐸' },
   'G': { word: 'Giraf', icon: '🦒' },
@@ -52,7 +54,10 @@ const MemoryGame: React.FC = () => {
   // Old bookmarks without :size (or anything invalid) default to the 20-pair stretch board.
   const boardPairs = size === '10' ? 10 : 20
   // Star thresholds are in MISTAKES (= mismatched turns). Tunable constants; static difficulty.
-  const starThresholds = boardPairs === 10 ? { three: 6, two: 14 } : { three: 14, two: 30 }
+  // Retuned (PRD-05 P3) so a strong-but-imperfect child can actually reach 3★ — the old
+  // {10:6, 20:14} demanded near-perfect recall and left a flat reward curve on the games he plays
+  // most. Now 3★ tolerates ~1 mismatch per pair (10-pair) / ~0.9 (20-pair).
+  const starThresholds = boardPairs === 10 ? { three: 9, two: 18 } : { three: 18, two: 34 }
 
   // Configuration for letters memory game
   const lettersConfig: UnifiedMemoryConfig = {
@@ -60,10 +65,11 @@ const MemoryGame: React.FC = () => {
     gameId: `memory.letters.${boardPairs}`,
     boardPairs,
     starThresholds,
+    stickerSetId: stickerSetForSection('alphabet'),
 
     generateItems: () => {
       // Shuffle the full alphabet; the engine slices boardPairs items for the board.
-      return [...DANISH_ALPHABET].sort(() => Math.random() - 0.5)
+      return shuffle(DANISH_ALPHABET)
     },
     
     getDisplayData: (letter: string): MemoryItemDisplay => {
@@ -103,10 +109,11 @@ const MemoryGame: React.FC = () => {
     gameId: `memory.numbers.${boardPairs}`,
     boardPairs,
     starThresholds,
+    stickerSetId: stickerSetForSection('math'),
 
     generateItems: () => {
       // Shuffle 1–20; the engine slices boardPairs (random 10, or all 20).
-      return [...NUMBERS].sort(() => Math.random() - 0.5)
+      return shuffle(NUMBERS)
     },
     
     getDisplayData: (number: string): MemoryItemDisplay => {

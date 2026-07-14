@@ -2,8 +2,9 @@ import React, { useState, useEffect, useRef } from 'react'
 import { Box, Typography } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { motion } from 'framer-motion'
-import { DndContext, DragEndEvent, DragStartEvent, DragOverEvent, DragOverlay, closestCenter } from '@dnd-kit/core'
+import { DndContext, DragEndEvent, DragStartEvent, DragOverEvent } from '@dnd-kit/core'
 import { useDragOnlySensors } from '../common/dnd/useDragOnlySensors'
+import { kidCollision } from '../common/dnd/kidCollision'
 import { DraggableItem } from '../common/dnd/DraggableItem'
 import { DroppableZone } from '../common/dnd/DroppableZone'
 import type { GuideReaction } from '../common/ThemeMascot'
@@ -12,6 +13,7 @@ import { ColorRepeatButton } from '../common/RepeatButton'
 import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 import { ColorProgressChip } from '../common/ScoreChip'
 import { getCategoryTheme } from '../../config/categoryThemes'
+import { stickerSetForSection } from '../../config/stickers'
 import { useRound } from '../../hooks/useRound'
 import { progressStore, type RoundOutcome } from '../../services/progressStore'
 import { sfx } from '../../services/sfxClient'
@@ -22,7 +24,8 @@ import { devFx } from '../../utils/devHarness'
 import GameShell from '../common/GameShell'
 import RoundResultScreen from '../common/RoundResultScreen'
 import { isIOS } from '../../utils/deviceDetection'
-import { DANISH_OBJECTS, COLOR_TARGETS } from '../../config/colorContent'
+import { shuffle } from '../../utils/shuffle'
+import { DANISH_OBJECTS, COLOR_TARGETS, COLOR_SWATCH, spokenColor } from '../../config/colorContent'
 // Simplified audio system
 import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 
@@ -43,6 +46,7 @@ interface GameItem {
   objectNameDefinite: string
   emoji: string
   hex: string
+  neuter: boolean
   isTarget: boolean
   collected: boolean
   returning: boolean
@@ -103,6 +107,7 @@ const FarvejagtGame: React.FC = () => {
   const hasInitialized = useRef(false)
   const previousColor = useRef<string>('')
   const startedRef = useRef(false)
+  const isAdvancing = useRef(false)  // locks drops during the board-complete flourish (P3)
   const welcomeTriggered = useRef(false)
   // Live target phrase (voiced after the welcome) + interaction guard (so a late welcome never
   // talks over active play).
@@ -123,11 +128,10 @@ const FarvejagtGame: React.FC = () => {
     guideReactionTimer.current = setTimeout(() => setGuideReaction(null), 1100)
   }
 
-  // Get target color hex for UI elements (educational data — the hunted color must read true)
-  const getTargetColorHex = () => {
-    const colorObjects = DANISH_OBJECTS[targetColor as keyof typeof DANISH_OBJECTS]
-    return colorObjects?.[0]?.hex || '#dc2626'
-  }
+  // Get target color hex for UI elements (educational data — the hunted color must read true).
+  // Read the CANONICAL swatch (COLOR_SWATCH), not DANISH_OBJECTS[color][0].hex — the latter drifts
+  // between shades because the object arrays get reshuffled per board (P4).
+  const getTargetColorHex = () => COLOR_SWATCH[targetColor] || '#dc2626'
 
   // Random position generator avoiding center area
   const generateRandomPositions = (itemCount: number) => {
@@ -174,8 +178,7 @@ const FarvejagtGame: React.FC = () => {
     const target = selectRandomTarget()
 
     const targetObjects = DANISH_OBJECTS[target.color as keyof typeof DANISH_OBJECTS]
-    const selectedTargets = targetObjects
-      .sort(() => Math.random() - 0.5)
+    const selectedTargets = shuffle(targetObjects)
       .slice(0, Math.min(6, targetObjects.length))
 
     const distractorObjects: any[] = []
@@ -186,14 +189,13 @@ const FarvejagtGame: React.FC = () => {
     // Svær: every other color, 2 distractors each (+distractors, per Appendix A).
     const difficulty = progressStore.difficultyFor('colors')
     const distractorColors = difficulty === 'let'
-      ? [...allOtherColors].sort(() => Math.random() - 0.5).slice(0, 3)
+      ? shuffle(allOtherColors).slice(0, 3)
       : allOtherColors
     const perColor = difficulty === 'svaer' ? DISTRACTORS_PER_COLOR + 1 : DISTRACTORS_PER_COLOR
 
     distractorColors.forEach(color => {
       const colorObjects = DANISH_OBJECTS[color as keyof typeof DANISH_OBJECTS]
-      const selected = colorObjects
-        .sort(() => Math.random() - 0.5)
+      const selected = shuffle(colorObjects)
         .slice(0, perColor)
       distractorObjects.push(...selected.map(obj => ({ ...obj, colorName: color })))
     })
@@ -213,6 +215,7 @@ const FarvejagtGame: React.FC = () => {
       objectNameDefinite: obj.objectNameDefinite,
       emoji: obj.emoji,
       hex: obj.hex,
+      neuter: obj.neuter,
       isTarget: obj.isTarget,
       collected: false,
       returning: false,
@@ -238,6 +241,7 @@ const FarvejagtGame: React.FC = () => {
     setBurstAt(null)
     firstAttemptRef.current = true
     boardWrongRef.current = 0
+    isAdvancing.current = false
 
     if (!voice) return
 
@@ -319,7 +323,7 @@ const FarvejagtGame: React.FC = () => {
     const outcome = progressStore.recordRoundResult(
       'colors.farvejagt',
       { correct: firstTryCorrect, total: round.length, longestStreak },
-      { starThresholds: { three: 0, two: 2 } },
+      { starThresholds: { three: 0, two: 2 }, stickerSetId: stickerSetForSection('colors') },
     )
     setRoundOutcome(outcome)
   }
@@ -333,6 +337,7 @@ const FarvejagtGame: React.FC = () => {
 
   // A board is fully collected → flourish, then advance the round (or finish).
   const handleBoardComplete = () => {
+    isAdvancing.current = true // lock out drops during the flourish so a late drop can't fail a perfect board (P3)
     reactGuide('cheer')
     setBoardFlourish(true)
     celebrateTier('streak') // board-complete: bigger confetti burst timed with the ring spin
@@ -371,6 +376,7 @@ const FarvejagtGame: React.FC = () => {
     audio.updateUserInteraction()
     setActiveId(null)
     setOverId(null)
+    if (isAdvancing.current) return // board-complete flourish in progress → ignore late drops (P3)
 
     const draggedItem = gameItems.find(item => item.id === active.id)
     if (!draggedItem || draggedItem.collected) return
@@ -398,7 +404,7 @@ const FarvejagtGame: React.FC = () => {
 
       // Identify the object's colour (educational echo). No win/lose narration.
       audio.cancelCurrentAudio()
-      audio.speak(`${draggedItem.objectNameDefinite} er ${draggedItem.colorName}`).catch(() => {})
+      audio.speak(`${draggedItem.objectNameDefinite} er ${spokenColor(draggedItem.colorName, draggedItem.neuter)}`).catch(() => {})
 
       if (collectedTargetsNow + 1 >= totalTarget) {
         handleBoardComplete()
@@ -419,7 +425,7 @@ const FarvejagtGame: React.FC = () => {
 
       // Identify the dropped object's colour (educational echo). No win/lose narration.
       audio.cancelCurrentAudio()
-      audio.speak(`${draggedItem.objectNameDefinite} er ${draggedItem.colorName}`).catch(() => {})
+      audio.speak(`${draggedItem.objectNameDefinite} er ${spokenColor(draggedItem.colorName, draggedItem.neuter)}`).catch(() => {})
 
       // After N wrong drops on this board, pulse an uncollected target (never-fail scaffold).
       boardWrongRef.current += 1
@@ -574,7 +580,7 @@ const FarvejagtGame: React.FC = () => {
               onDragOver={handleDragOver}
               onDragEnd={handleDragEnd}
               onDragCancel={handleDragCancel}
-              collisionDetection={closestCenter}
+              collisionDetection={kidCollision}
             >
               {/* Centred target zone wrapper: holds the drop circle, the collected ring, and the pips. */}
               <div
@@ -780,8 +786,6 @@ const FarvejagtGame: React.FC = () => {
                   </DraggableItem>
                 )
               })}
-
-              <DragOverlay>{null}</DragOverlay>
             </DndContext>
           </Box>
 

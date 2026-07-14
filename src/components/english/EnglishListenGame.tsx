@@ -1,10 +1,12 @@
 import React from 'react'
 import UnifiedQuizGame, { UnifiedQuizConfig, QuizItem } from '../common/UnifiedQuizGame'
 import { categoryThemes } from '../../config/categoryThemes'
+import { stickerSetForSection } from '../../config/stickers'
 import { EnglishScoreChip } from '../common/ScoreChip'
 import { EnglishRepeatButton } from '../common/RepeatButton'
 import { quizEnglishWords, pickDistractorWords, englishThemes, EnglishWord } from '../../config/englishVocab'
 import { progressStore, type DifficultyLevel } from '../../services/progressStore'
+import { shuffle } from '../../utils/shuffle'
 
 // Difficulty-aware distractor pool (Overhaul §6A/Appendix A). Normal is untouched — today's fully
 // random `pickDistractorWords` across all mixed themes (regression-safe). Svær biases toward
@@ -26,7 +28,7 @@ const pickWordsForLevel = (correct: EnglishWord, level: DifficultyLevel): Englis
       : quizEnglishWords.filter(w => w.en !== correct.en && !sameTheme.some(s => s.en === w.en))
 
   const picks: EnglishWord[] = []
-  for (const w of [...biasPool].sort(() => Math.random() - 0.5)) {
+  for (const w of shuffle(biasPool)) {
     if (picks.length >= 3) break
     picks.push(w)
   }
@@ -37,10 +39,10 @@ const pickWordsForLevel = (correct: EnglishWord, level: DifficultyLevel): Englis
       if (w.en !== correct.en && !picks.some(p => p.en === w.en)) picks.push(w)
     }
   }
-  return [correct, ...picks].sort(() => Math.random() - 0.5)
+  return shuffle([correct, ...picks])
 }
 
-// Lyt og Find: the app speaks an English word (en-GB); the child taps the matching
+// Lyt og Find: the app speaks an English word (en-US Ava); the child taps the matching
 // picture from 4 options. Pure listening comprehension.
 const EnglishListenGame: React.FC = () => {
   const toPictureItem = (w: EnglishWord): QuizItem => ({
@@ -75,9 +77,12 @@ const EnglishListenGame: React.FC = () => {
 
     gameWelcomeType: 'englishlisten',
     gameId: 'english.listen',
-    round: { length: 8, starThresholds: { three: 0, two: 2 } },
+    round: { length: 8, starThresholds: { three: 0, two: 2 }, stickerSetId: stickerSetForSection('english') },
 
-    // The target word is spoken in British English; tapping a picture also speaks
+    // Never-fail hint (PRD-05 P1): after 2 wrong taps the correct picture tile pulses.
+    hintAfterNWrong: 2,
+
+    // The target word is spoken in English (en-US Ava); tapping a picture also speaks
     // its English word for reinforcement.
     speakQuizPrompt: async (item: QuizItem, audio: any) => audio.speakEnglish(String(item.value)),
     speakClickedItem: async (item: QuizItem, audio: any) => audio.speakEnglish(String(item.value)),

@@ -1,0 +1,260 @@
+// Prebake the closed TTS content set (PRD-06 §1) — the biggest latency win.
+//
+// The app narrates a large but CLOSED inventory: 26+3 letters, numbers 0–100, a fixed pool of
+// welcomes / success / encouragement lines, colour names + shade names + object reinforcement
+// lines, sticker names, and the beginner English words. This script synthesizes all of it ONCE
+// (via the same shared Azure core the server uses) into content-hashed files under
+// public/sounds/tts/, and regenerates src/config/prebakedTts.ts mapping each cache key → filename.
+// At runtime ttsClient plays the prebaked file directly — no Azure round-trip, no first-tap delay.
+//
+// Usage (needs Azure creds in .env.local, same as dev:api):
+//   npm run tts:prebake            # synthesize + write files + regenerate the manifest
+//   npm run tts:prebake -- --dry-run   # enumerate + report coverage, NO Azure calls, NO writes
+//
+// After a real run, commit BOTH public/sounds/tts/*.ogg AND src/config/prebakedTts.ts.
+//
+// Keep in sync with the app: content is imported from the SAME source modules the app uses
+// (Node strips the TS types), and the cache key is built with the SAME shared helper as the client
+// (shared-tts-key.js), so a prebaked file is found iff the client would ask for that exact clip.
+// A non-default narration voice (VoiceLab override) changes the key and correctly misses the
+// manifest → live synthesis.
+
+import { mkdir, writeFile, readdir, rm, stat } from 'node:fs/promises'
+import { createHash } from 'node:crypto'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+import { TTS_CONFIG } from './shared-tts-config.js'
+import { buildSsml, synthesizeAzure } from './shared-azure-tts.js'
+import { ttsCacheKey } from './shared-tts-key.js'
+
+import { DANISH_PHRASES, DANISH_LETTER_NAMES, getDanishLetterName, getDanishNumberText } from './src/config/danish-phrases.ts'
+import { allEnglishWords } from './src/config/englishVocab.ts'
+import { HUE_ORDER, SHADES, DANISH_OBJECTS, spokenColor } from './src/config/colorContent.ts'
+import { STICKER_SETS } from './src/config/stickers.ts'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+const OUT_DIR = path.join(__dirname, 'public', 'sounds', 'tts')
+const MANIFEST_TS = path.join(__dirname, 'src', 'config', 'prebakedTts.ts')
+
+const DRY_RUN = process.argv.includes('--dry-run')
+// Azure's real-time voice tier throttles bursts (429 "Downstream Service Throttled"). Keep
+// concurrency low and retry with backoff; the run is resumable so throttling never loses progress.
+const CONCURRENCY = 2
+const MAX_RETRIES = 6
+
+// Danish narration + English section voices, straight from the single source of voice truth.
+const DA = TTS_CONFIG.voices.primary // da-DK-ChristelNeural / da-DK
+const EN = TTS_CONFIG.voices.english // en-US Ava / en-US
+const RATE = TTS_CONFIG.speakingRate // default prosody rate (1.05)
+const NUMBER_BROWSE_RATE = 1.2 // Lær Tal speaks numbers with speakNumber(n, 1.2)
+
+// Azure fetches the da-DK PLS lexicon from a PUBLIC URL, so prebaked Danish audio carries the same
+// pronunciation fixes as production. localhost is unreachable to Azure — point at the prod host.
+const LEXICON_URI =
+  process.env.PREBAKE_LEXICON_URI ||
+  process.env.AZURE_LEXICON_URI ||
+  'https://preschool-learning-app.vercel.app/da-DK.pls'
+
+// Welcome titles (SimplifiedAudioController.GAME_WELCOME_MESSAGES). These ARE the game card titles;
+// keep this list aligned with that map if a game is added/renamed.
+const WELCOME_TITLES = [
+  'Bogstav Quiz', 'Lær Alfabetet', 'Tal Quiz', 'Lær Tal', 'Plus Opgaver', 'Minus Opgaver',
+  'Stav Ordet', 'Sammenlign Tal', 'Hukommelsesspil', 'Farver', 'Farvejagt', 'Ram Farven',
+  'Lær Farver', 'Hvilken Farve?', 'Nuancer', 'Lyt og Find', 'Find det Engelske Ord',
+  'Dansk til Engelsk', 'Sig et Ord', 'Læs Ordet', 'Hvad Mangler?',
+]
+
+/**
+ * Build the full list of clips to prebake. Each entry mirrors an actual runtime speak() call:
+ * { text, voiceName, lang, rate, useLexicon }. resolveRequest gates useLexicon on da-* locales.
+ */
+function collectEntries() {
+  const entries = []
+  const da = (text, rate = RATE) =>
+    entries.push({ text, voiceName: DA.name, lang: DA.lang, rate, useLexicon: true })
+  const en = (text) =>
+    entries.push({ text, voiceName: EN.name, lang: EN.lang, rate: RATE, useLexicon: false })
+
+  // Letters — speakLetter() sends the Danish letter NAME.
+  for (const glyph of Object.keys(DANISH_LETTER_NAMES)) da(getDanishLetterName(glyph))
+
+  // Numbers 0–100 — quiz/echo rate (default) AND Lær Tal browse rate (1.2).
+  for (let n = 0; n <= 100; n++) {
+    da(getDanishNumberText(n), RATE)
+    da(getDanishNumberText(n), NUMBER_BROWSE_RATE)
+  }
+
+  // Fixed spoken lines.
+  DANISH_PHRASES.success.forEach((t) => da(t))
+  DANISH_PHRASES.encouragement.forEach((t) => da(t))
+  da(DANISH_PHRASES.score.noPoints)
+  da(DANISH_PHRASES.score.onePoint)
+  WELCOME_TITLES.forEach((t) => da(t))
+
+  // Colours: hue names, shade names, and the object reinforcement lines ("{objektet} er {farve}").
+  for (const hue of HUE_ORDER) {
+    da(hue)
+    ;(SHADES[hue] ?? []).forEach((s) => da(s.name))
+    ;(DANISH_OBJECTS[hue] ?? []).forEach((o) => da(`${o.objectNameDefinite} er ${spokenColor(hue, o.neuter)}`))
+  }
+
+  // Sticker reveal lines ("Nyt klistermærke! {label}") — closed album pool.
+  for (const set of STICKER_SETS) for (const s of set.stickers) da(`Nyt klistermærke! ${s.label}`)
+
+  // English words — spoken via the en-US voice, no lexicon.
+  for (const w of allEnglishWords) en(w.en)
+
+  // De-dupe by cache key (identical requests collapse to one file).
+  const byKey = new Map()
+  for (const e of entries) {
+    const key = ttsCacheKey({ name: e.voiceName, lang: e.lang, rate: e.rate, useLexicon: e.useLexicon, text: e.text })
+    if (!byKey.has(key)) byKey.set(key, { ...e, key })
+  }
+  return [...byKey.values()]
+}
+
+const fileFor = (key) => `${createHash('sha1').update(key).digest('hex').slice(0, 16)}.ogg`
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
+
+async function synthOne(entry) {
+  const ssml = buildSsml({
+    text: entry.text,
+    voiceName: entry.voiceName,
+    lang: entry.lang,
+    speed: entry.rate,
+    pitch: null,
+    lexiconUri: entry.useLexicon ? LEXICON_URI : null,
+    ipa: null,
+  })
+  // Retry throttling (429) / transient 5xx with exponential backoff. Non-throttle errors throw.
+  for (let attempt = 0; ; attempt++) {
+    try {
+      const base64 = await synthesizeAzure({
+        key: process.env.AZURE_SPEECH_KEY,
+        region: process.env.AZURE_SPEECH_REGION,
+        ssml,
+        outputFormat: TTS_CONFIG.outputFormat,
+      })
+      return Buffer.from(base64, 'base64')
+    } catch (err) {
+      const status = err?.status
+      const retriable = status === 429 || status === 503 || status === 500
+      if (!retriable || attempt >= MAX_RETRIES) throw err
+      const wait = Math.min(30000, 1000 * 2 ** attempt) + Math.floor(Math.random() * 500)
+      await sleep(wait)
+    }
+  }
+}
+
+/** Existing non-empty file on disk → reuse (resumable across throttled runs). */
+async function fileExists(file) {
+  try {
+    return (await stat(path.join(OUT_DIR, file))).size > 0
+  } catch {
+    return false
+  }
+}
+
+function renderManifest(map) {
+  const lines = [...map.keys()]
+    .sort()
+    .map((k) => `  ${JSON.stringify(k)}: ${JSON.stringify(map.get(k))},`)
+    .join('\n')
+  return `// AUTO-GENERATED by prebake-tts.mjs — do NOT edit by hand.
+//
+// Maps a TTS cache key (see shared-tts-key.js \`ttsCacheKey\`) → a static audio filename under
+// public/sounds/tts/. \`ttsClient\` checks this manifest first and plays the prebaked file directly,
+// so the closed content set never hits Azure and has no first-tap fetch latency (PRD-06 §1).
+//
+// Regenerate with \`npm run tts:prebake\` (needs Azure creds). Commit this file together with the
+// public/sounds/tts/*.ogg it references. A non-default narration voice (VoiceLab override) has a
+// different cache key and correctly misses → live synthesis.
+export const PREBAKED_TTS: Record<string, string> = {
+${lines}
+}
+`
+}
+
+async function runPool(items, worker) {
+  let i = 0
+  let done = 0
+  const total = items.length
+  const runNext = async () => {
+    while (i < items.length) {
+      const idx = i++
+      await worker(items[idx])
+      done++
+      if (done % 25 === 0 || done === total) console.log(`  … ${done}/${total}`)
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(CONCURRENCY, items.length) }, runNext))
+}
+
+async function main() {
+  const entries = collectEntries()
+  console.log(`🎙️  Prebake TTS — ${entries.length} unique clips (default voice only).`)
+
+  // Coverage sanity — fail loudly if a source list came back empty (PRD-06 risk note).
+  const daCount = entries.filter((e) => e.lang.startsWith('da')).length
+  const enCount = entries.length - daCount
+  console.log(`   Danish: ${daCount}  ·  English: ${enCount}  ·  lexicon: ${LEXICON_URI}`)
+  if (daCount < 200 || enCount < 50) {
+    throw new Error('Prebake content looks too small — a source module may have failed to import.')
+  }
+
+  if (DRY_RUN) {
+    console.log('\n(dry run) sample entries:')
+    for (const e of entries.slice(0, 8)) console.log(`   [${e.lang} r${e.rate}] "${e.text}" → ${fileFor(e.key)}`)
+    console.log(`\n(dry run) would write ${entries.length} files to public/sounds/tts/ and regenerate prebakedTts.ts`)
+    return
+  }
+
+  if (!process.env.AZURE_SPEECH_KEY || !process.env.AZURE_SPEECH_REGION) {
+    throw new Error('Missing Azure creds — run: npm run tts:prebake (uses --env-file=.env.local)')
+  }
+
+  await mkdir(OUT_DIR, { recursive: true })
+
+  // Resumable: keep files already on disk (throttled prior runs), synth only what's missing.
+  const map = new Map() // cacheKey → filename
+  const wanted = new Set() // expected filenames (for orphan pruning)
+  const todo = []
+  for (const e of entries) {
+    const file = fileFor(e.key)
+    wanted.add(file)
+    if (await fileExists(file)) map.set(e.key, file)
+    else todo.push({ ...e, file })
+  }
+  console.log(`   ${map.size} already on disk · ${todo.length} to synthesize\n`)
+
+  let failed = 0
+  await runPool(todo, async (e) => {
+    try {
+      const buf = await synthOne(e)
+      if (!buf.length) throw new Error('empty audio')
+      await writeFile(path.join(OUT_DIR, e.file), buf)
+      map.set(e.key, e.file)
+    } catch (err) {
+      failed++
+      console.error(`  ✗ "${e.text}" (${e.lang}) — ${err.message}`)
+    }
+  })
+
+  // Drop orphaned .ogg files no longer referenced (content changed since a prior run).
+  for (const f of await readdir(OUT_DIR)) {
+    if (f.endsWith('.ogg') && !wanted.has(f)) await rm(path.join(OUT_DIR, f))
+  }
+
+  await writeFile(MANIFEST_TS, renderManifest(map), 'utf-8')
+  console.log(`\n✅ Wrote ${map.size}/${entries.length} clips + prebakedTts.ts (${failed} failed this run).`)
+  if (map.size < entries.length) {
+    console.log('   Missing keys fall back to live Azure. Re-run `npm run tts:prebake` to fill them.')
+  }
+}
+
+main().catch((err) => {
+  console.error('\nFatal error:', err.message)
+  process.exit(1)
+})

@@ -7,6 +7,7 @@ import {
 import { useTheme } from '@mui/material/styles'
 import { Mic, MicOff } from 'lucide-react'
 import { categoryThemes } from '../../config/categoryThemes'
+import { stickerSetForSection } from '../../config/stickers'
 import { darken, hexToRgba } from '../../theme/tokens/helpers'
 import GameShell from '../common/GameShell'
 import PromptStage from '../common/PromptStage'
@@ -36,6 +37,9 @@ const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 // Keeps Danish letters (incl. æ/ø/å) and hyphens.
 const extractFirstWord = (transcript: string): string => {
   const first = (transcript || '').trim().split(/\s+/)[0] || ''
+  // Google STT's profanity filter masks bad words as e.g. "f****". Never reveal or spell those:
+  // treat a masked token as unrecognized so the child just gets the friendly "prøv igen" retry.
+  if (first.includes('*')) return ''
   return first.replace(/[^a-zA-ZæøåÆØÅ-]/g, '')
 }
 
@@ -383,7 +387,7 @@ const SpeakWordGame: React.FC = () => {
     const outcome = progressStore.recordRoundResult(
       'ordleg.mic',
       { correct: firstTryCorrect, total: round.length, longestStreak },
-      { starThresholds: { three: 0, two: 2 } },
+      { starThresholds: { three: 0, two: 2 }, stickerSetId: stickerSetForSection('ordleg') },
     )
     setRoundOutcome(outcome)
   }

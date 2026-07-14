@@ -29,6 +29,29 @@ const logError = (message: string, data?: any) => {
   }
 }
 
+// Decide whether an answer-tile label is a multi-letter WORD (render small) or a single
+// glyph — a letter, a number, or an emoji (render large). The old `.length > 2` test mis-sized
+// multi-codepoint emoji: keycap digits (1️⃣, length 3), variation-selector emoji (🛏️/👁️/🌧️) and
+// ZWJ sequences (👨‍👩‍👧) are ONE grapheme but several code units, so they shrank to word size.
+// Numbers ("10", "100") stay large; any string containing a pictograph stays large; otherwise a
+// label is a "word" only if it spans more than one grapheme cluster.
+const isWordLabel = (display: string | number): boolean => {
+  if (typeof display !== 'string') return false
+  const s = display.trim()
+  if (s === '' || /^\d+$/.test(s)) return false               // numbers → large
+  if (/\p{Extended_Pictographic}/u.test(s)) return false      // most emoji → large
+  // Keycap sequences (1️⃣…9️⃣) have no pictographic codepoint but ARE one grapheme cluster; count
+  // grapheme clusters so they stay large. Segmenter isn't in our TS lib target — access via cast.
+  const Segmenter = (Intl as unknown as { Segmenter?: any }).Segmenter
+  if (typeof Segmenter === 'function') {
+    return [...new Segmenter(undefined, { granularity: 'grapheme' }).segment(s)].length > 1
+  }
+  // Fallback (no Intl.Segmenter): drop variation selectors, ZWJ and the enclosing-keycap mark so
+  // multi-codepoint emoji collapse to one char, then treat >1 remaining as a word.
+  const combining = new Set([0xFE0E, 0xFE0F, 0x200D, 0x20E3])
+  return [...s].filter((ch) => !combining.has(ch.codePointAt(0)!)).length > 1
+}
+
 // Quiz item interface for flexible content
 export interface QuizItem {
   value: string | number      // The actual value (letter, number, or expression)
@@ -70,6 +93,17 @@ export interface UnifiedQuizConfig {
   speakQuizPrompt: (item: QuizItem, audio: any) => Promise<string>
   speakClickedItem: (item: QuizItem, audio: any) => Promise<string>
   getRepeatAudio: (item: QuizItem, audio: any) => Promise<string>
+
+  // Optional: on a CORRECT answer, speak the completed fact (e.g. Hvad Mangler's finished sequence)
+  // INSTEAD OF echoing the tapped item (single audio channel — replaces, never stacks). Receives
+  // the current (correct) QuizItem. When absent, a correct tap echoes speakClickedItem as before.
+  speakCorrectFact?: (item: QuizItem, audio: any) => Promise<string>
+
+  // Never-fail hint (PRD-05 P1). After this many wrong taps on the current question, the correct
+  // tile pulses/glows (AnswerTile `hint`) so the child is never stuck — matching the hand-rolled
+  // color/spelling games. The 2 wrongs already broke first-try, so it needs no extra star
+  // bookkeeping. Omit (or 0) to disable. Enabled (2) for every config quiz.
+  hintAfterNWrong?: number
 
   // Bounded-round mode (Overhaul Foundation §3). OPTIONAL — absent → today's endless behavior.
   // When set, the quiz runs `round.length` questions then shows RoundResultScreen and records the
@@ -124,14 +158,33 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
   // True until the first wrong tile is tapped for the current question; gates the streak/star
   // "first try" accounting. Reset on each new question.
   const firstAttemptRef = useRef(true)
+  // Wrong taps on the current question → drives the never-fail hint (PRD-05 P1). Ref is the
+  // synchronous counter; `showHint` state flips on the render once the threshold is crossed.
+  const wrongCountRef = useRef(0)
+  const [showHint, setShowHint] = useState(false)
   // When set, the round is over and the reward/result hero replaces the answer grid.
   const [roundOutcome, setRoundOutcome] = useState<RoundOutcome | null>(null)
 
-  // Timeout ref for cleanup
+  // Timeout ref for cleanup (per-question prompt timer)
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
+  // The post-correct celebration/advance timer (PRD-02 P1/P4). Tracked so it's cleared on unmount
+  // (no ghost prompt on the next screen) and never runs twice.
+  const advanceTimerRef = useRef<NodeJS.Timeout | null>(null)
+  // Advance-lock (PRD-02 P1/P2): true from the moment a correct tap is registered until the next
+  // question starts. Set synchronously (before any await) so a rapid second tap — the classic 5yo
+  // double-tap — can't run the correct path twice (double round-record) and a tap during the
+  // celebration dwell can't poison the earned first-try. A ref (not state) so it's readable
+  // synchronously within the same event-loop tick.
+  const isAdvancingRef = useRef(false)
   // Clears the guide reaction a beat after an answer so the mascot returns to idle and the
   // next (possibly identical) reaction re-fires.
   const guideReactionTimer = useRef<NodeJS.Timeout | null>(null)
+  // False after unmount (PRD-02 P4). The advance timer is scheduled only AFTER the `await
+  // speakClickedItem` echo — so if the child navigates away DURING that echo, unmount has already
+  // run (nothing to clear yet) and the post-await continuation would still schedule a timer that
+  // speaks the next prompt over the menu. This flag lets that continuation bail. Owned by its own
+  // effect so StrictMode's dev remount restores it to true.
+  const mountedRef = useRef(true)
 
   const [gameReady, setGameReady] = useState(false)
   const hasInitialized = useRef(false)
@@ -159,8 +212,12 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
     // Clear the previous answer's feedback + guide reaction before the new question appears.
     setFeedback(null)
     setGuideReaction(null)
-    // New question → first attempt is fresh again (round streak/star accounting).
+    // New question → first attempt is fresh again (round streak/star accounting) and the
+    // advance-lock releases so tiles are tappable again. Reset the hint too.
     firstAttemptRef.current = true
+    isAdvancingRef.current = false
+    wrongCountRef.current = 0
+    setShowHint(false)
 
     const quizItem = config.generateQuizItem()
     currentItemRef.current = quizItem
@@ -243,18 +300,31 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
     if (audio.isAudioReady) {
       playWelcomeThenPrompt()
     }
-
-    return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current)
-        timeoutRef.current = null
-      }
-      if (guideReactionTimer.current) {
-        clearTimeout(guideReactionTimer.current)
-        guideReactionTimer.current = null
-      }
-    }
+    // NOTE: no cleanup here on purpose (PRD-02 P4). This effect's deps change (audio.isAudioReady),
+    // so a cleanup returned here would run mid-life and could clear a legitimately-pending prompt
+    // timer; and after the `hasInitialized` early-return it wouldn't register a cleanup at all,
+    // leaving timers alive on unmount. Teardown lives in the dedicated empty-dep effect below.
   }, [audio.isAudioReady, playWelcomeThenPrompt, revealBoard])
+
+  // Dedicated unmount teardown (PRD-02 P4): clear every pending timer so no prompt/advance callback
+  // fires after the component is gone (which would start audio over the next screen). Empty deps →
+  // runs exactly once, on unmount.
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current)
+      if (advanceTimerRef.current) clearTimeout(advanceTimerRef.current)
+      if (guideReactionTimer.current) clearTimeout(guideReactionTimer.current)
+    }
+  }, [])
+
+  // Owns the mounted flag (PRD-02 P4, StrictMode-safe): the dev mount→cleanup→remount cycle leaves
+  // it TRUE. Declared after the teardown effect so it re-sets true last on a remount.
+  useEffect(() => {
+    mountedRef.current = true
+    return () => {
+      mountedRef.current = false
+    }
+  }, [])
 
   // When audio unlocks after mount, play the welcome (board is already visible). Ref-guarded +
   // interaction-guarded inside playWelcomeThenPrompt so it never talks over active play.
@@ -289,6 +359,10 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
     if (!gameReady || !currentItem) {
       return
     }
+    // Advance-lock (PRD-02 P1/P2): once a correct answer is resolving, ignore every further tap —
+    // both a double-tap on the correct tile (would double-record the round) and a tap on a wrong
+    // tile during the celebration dwell (would poison the already-earned first-try).
+    if (isAdvancingRef.current) return
     // The child is playing → suppress any pending/late welcome from talking over them.
     hasInteractedRef.current = true
 
@@ -303,6 +377,10 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
 
     const isCorrect = selectedItem.value === currentItem.value
 
+    // Engage the advance-lock SYNCHRONOUSLY on a correct tap — before the `await` below — so a
+    // second tap fired in the same tick is already blocked by the guard above (PRD-02 P1/P2).
+    if (isCorrect) isAdvancingRef.current = true
+
     // INSTANT visual feedback: mark the tapped tile (correct/wrong border + glow/sparkle/shake)
     // and cue the corner guide BEFORE any audio await, so the red/green feedback never waits on
     // the spoken number/letter. (Audio timing below is unchanged.)
@@ -311,14 +389,26 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
     if (guideReactionTimer.current) clearTimeout(guideReactionTimer.current)
     guideReactionTimer.current = setTimeout(() => setGuideReaction(null), 1100)
 
-    // Echo the tapped item (identification — e.g. the letter/number/word). The win/lose
-    // narration (announceGameResult "correct/try-again") stays removed; success/fail is
-    // otherwise SFX + visuals only.
+    // On a correct tap, speak the completed FACT if the config supplies one (e.g. Hvad Mangler's
+    // finished sequence) — INSTEAD of echoing the tapped item (single audio channel, no stacking).
+    // Otherwise echo the tapped item (identification — e.g. the letter/number/word). The win/lose
+    // narration (announceGameResult "correct/try-again") stays removed; success/fail is otherwise
+    // SFX + visuals only.
     try {
-      await config.speakClickedItem(selectedItem, audio)
+      if (isCorrect && config.speakCorrectFact) {
+        await config.speakCorrectFact(currentItem, audio)
+      } else {
+        await config.speakClickedItem(selectedItem, audio)
+      }
     } catch {
       // best-effort: tile audio is non-critical, so ignore playback errors here
     }
+
+    // Navigated away during the echo → don't score/celebrate/schedule the advance (PRD-02 P4). The
+    // advance timer is scheduled below, AFTER this await, so this guard is what stops a ghost prompt
+    // speaking over the next screen (unmount ran before the timer existed, so there was nothing to
+    // clear).
+    if (!mountedRef.current) return
 
     if (isCorrect) {
       incrementScore()
@@ -328,11 +418,20 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
       // only break this question's first-try flag (round streak/star accounting) + a gentle SFX.
       firstAttemptRef.current = false
       sfx.play('wrong')
+      // Never-fail hint (PRD-05 P1): after N wrong taps on this question, pulse the correct tile.
+      // (Only fires on the wrong branch, so the advance-lock — which gates the correct/resolve
+      // window at the top of this handler — can never let it run mid-resolve.)
+      wrongCountRef.current += 1
+      if (config.hintAfterNWrong && wrongCountRef.current >= config.hintAfterNWrong) {
+        setShowHint(true)
+        mascotBus.emit('hint')
+      }
     }
 
     // Auto-advance after a short celebration window (correct only; wrong stays for retry).
     if (isCorrect) {
-      setTimeout(() => {
+      advanceTimerRef.current = setTimeout(() => {
+        advanceTimerRef.current = null
         stopCelebration()
 
         if (!round.enabled) {
@@ -401,6 +500,13 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
   const tileStateFor = (item: QuizItem, index: number): AnswerTileState => {
     if (index === 0 && (forcedFx === 'correct' || forcedFx === 'wrong')) return forcedFx
     return feedback && feedback.value === item.value ? (feedback.correct ? 'correct' : 'wrong') : 'idle'
+  }
+
+  // Never-fail hint (PRD-05 P1): the correct tile pulses once the wrong-tap threshold is crossed.
+  // In DEV, ?fx=hint forces the hint on the correct tile so it's deterministically capturable.
+  const tileHintFor = (item: QuizItem): boolean => {
+    if (!currentItem || item.value !== currentItem.value) return false
+    return showHint || forcedFx === 'hint'
   }
 
   // Until the welcome gate opens (or the resilience fallback fires) the board shows shimmer
@@ -593,6 +699,10 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
                     onClick={() => handleItemClick(item)}
                     accent={config.theme.accentColor}
                     state={tileStateFor(item, index)}
+                    hint={tileHintFor(item)}
+                    // Once a correct answer is resolving, tiles visibly stop responding (PRD-02).
+                    // setFeedback re-renders on the same correct tap, so this reads the just-set ref.
+                    disabled={isAdvancingRef.current}
                   >
                     <Typography
                       variant="h1"
@@ -600,7 +710,7 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
                       sx={{
                         // Words (multi-character strings) render smaller so they fit the tile;
                         // single glyphs (letters/numbers/emoji) stay large.
-                        fontSize: (typeof item.display === 'string' && item.display.length > 2)
+                        fontSize: isWordLabel(item.display)
                           ? 'clamp(1.1rem, 4.5vw, 2rem)'
                           : 'clamp(2.5rem, 8vw, 4.5rem)',
                         fontWeight: 700,
@@ -611,12 +721,12 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
                         px: 1,
                         // Adjust font size in landscape
                         '@media (orientation: landscape)': {
-                          fontSize: (typeof item.display === 'string' && item.display.length > 2)
+                          fontSize: isWordLabel(item.display)
                             ? 'clamp(1rem, 3.5vw, 1.75rem)'
                             : 'clamp(2rem, 6vw, 3.5rem)'
                         },
                         [PHONE_LANDSCAPE]: {
-                          fontSize: (typeof item.display === 'string' && item.display.length > 2)
+                          fontSize: isWordLabel(item.display)
                             ? '1.05rem'
                             : '2rem'
                         }

@@ -8,8 +8,20 @@
 import { TTS_CONFIG } from '../config/tts-config'
 import { logAudioIssue } from '../utils/remoteConsole'
 import { loadVoiceOverride, saveVoiceOverride, type VoiceOverride } from '../config/voiceOverride'
+import { ttsCacheKey } from '../../shared-tts-key.js'
+import { PREBAKED_TTS } from '../config/prebakedTts'
 
 type VoiceType = 'primary' | 'backup' | 'male' | 'english'
+
+// A ~50ms silent 8-bit WAV. Played through the shared <audio> element inside the unlock gesture so
+// iOS treats that element as user-activated — the FIRST real (post-fetch) narration then plays
+// instead of throwing NotAllowedError (PRD-06 §5 / P3). Format is irrelevant to the unlock; PCM WAV
+// decodes everywhere.
+const SILENT_UNLOCK_CLIP =
+  'data:audio/wav;base64,UklGRrQBAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YZABAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICA'
+
+// Prebaked static files live under <BASE>/sounds/tts/. Content-hashed names → immutable, CDN-cacheable.
+const prebakedUrl = (file: string): string => `${import.meta.env.BASE_URL}sounds/tts/${file}`
 
 interface CachedAudio {
   audioData: string // base64
@@ -27,6 +39,11 @@ export class TtsClient {
   private audio: HTMLAudioElement | null = null
   /** Resolves the in-flight play() promise as "cancelled" when a newer clip/stop arrives. */
   private currentCancel: (() => void) | null = null
+
+  // Monotonic "last request wins" generation token (PRD-06 §3 / P2). Every synthesizeAndPlay and
+  // every stop bumps it; a synth/fetch that resolves against a stale generation bails BEFORE
+  // playing, so a slow "B" can never pre-empt a later "K". Also keeps isPlaying/duck in sync.
+  private epoch = 0
 
   // Circuit breaker for interactive synthesis failures only. It degrades to Web Speech; it
   // NEVER disables audio, and (since there is no startup preload burst) cannot be tripped on launch.
@@ -63,8 +80,37 @@ export class TtsClient {
     return this.audio
   }
 
+  /**
+   * iOS unlock (PRD-06 §5): play a tiny silent clip through the SHARED playback element inside the
+   * user gesture. Priming the probe AudioContext alone is not enough — narration plays through THIS
+   * element, so it must be the one that gets user-activated, or the first post-fetch play() throws
+   * NotAllowedError. Safe to call repeatedly; the next real play() overwrites the src.
+   */
+  primePlaybackElement(): void {
+    try {
+      const a = this.getAudio()
+      a.src = SILENT_UNLOCK_CLIP
+      const p = a.play()
+      if (p && typeof p.then === 'function') {
+        p.then(() => {
+          try {
+            a.pause()
+          } catch {
+            /* ignore */
+          }
+        }).catch(() => {
+          /* no gesture yet / blocked — the real speak will surface NotAllowedError as usual */
+        })
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+
   /** Stop whatever is playing. pause + clear src (NO DOM-wide teardown), one speechSynthesis cancel. */
   stopCurrentAudio(): void {
+    // Invalidate any in-flight synth/fetch so it can't resolve and play after this stop (P2).
+    this.epoch++
     if (this.currentCancel) {
       const cancel = this.currentCancel
       this.currentCancel = null
@@ -90,10 +136,11 @@ export class TtsClient {
 
   // ===== playback =====
   /**
-   * Play base64 audio on the shared element. Resolves on `ended` OR on cancellation (a newer clip
-   * / stop), rejects only on a real decode/network error or a genuine stall timeout.
+   * Play an audio `src` (a `data:` URL for dynamic/cached clips, or a static `/sounds/tts/…` file
+   * URL for prebaked clips) on the shared element. Resolves on `ended` OR on cancellation (a newer
+   * clip / stop), rejects only on a real decode/network error or a genuine stall timeout.
    */
-  private play(base64: string, mime: string): Promise<void> {
+  private play(src: string): Promise<void> {
     const audio = this.getAudio()
 
     // A newer clip pre-empts the current one.
@@ -154,7 +201,7 @@ export class TtsClient {
       audio.addEventListener('error', onError)
       audio.addEventListener('loadedmetadata', armTimeout)
 
-      audio.src = `data:${mime};base64,${base64}`
+      audio.src = src
       audio.load()
       // Conservative fallback timeout until metadata gives us a real duration.
       timer = setTimeout(() => finishReject(new Error('Audio playback timeout')), 15000)
@@ -187,7 +234,8 @@ export class TtsClient {
     // Lexicon is da-DK only — gate on the EFFECTIVE locale so an en-* override doesn't ship a
     // mismatched lexicon.
     const useLexicon = lang.startsWith('da')
-    const cacheKey = `azure|${name}|${lang}|r${effectiveSpeed}|lex${useLexicon ? 1 : 0}|${text}`
+    // Built via the shared key so the prebake manifest and this client can't drift (PRD-06).
+    const cacheKey = ttsCacheKey({ name, lang, rate: effectiveSpeed, useLexicon, text })
 
     const body: Record<string, unknown> = { text, speed: effectiveSpeed, useLexicon }
     if (override) {
@@ -246,19 +294,45 @@ export class TtsClient {
     _useSSML: boolean = true,
     opts?: { speakingRate?: number },
   ): Promise<void> {
+    // Claim this generation; a later speak/stop bumps epoch and we bail after our fetch resolves.
+    const gen = ++this.epoch
     const lang = (TTS_CONFIG.voices[voiceType] ?? TTS_CONFIG.voices.primary).lang
+    const { cacheKey } = this.resolveRequest(text, voiceType, opts?.speakingRate)
 
+    // 1. Prebaked static file (the closed content set, default voice only) — no fetch, no Azure,
+    //    no first-tap latency. A VoiceLab override changes the cacheKey so it misses here on purpose.
+    const prebakedFile = PREBAKED_TTS[cacheKey]
+    if (prebakedFile) {
+      try {
+        await this.play(prebakedUrl(prebakedFile))
+        return
+      } catch (playErr) {
+        const name = (playErr as { name?: string })?.name
+        if (name === 'NotAllowedError') {
+          await this.fallbackWebSpeech(text, lang)
+          return
+        }
+        // A stale manifest (404) or decode miss → fall through to live Azure, unless superseded.
+        if (gen !== this.epoch) return
+      }
+    }
+
+    // 2. Dynamic / non-prebaked text → Azure (client + edge cache still apply).
     let audioData: string
     try {
       audioData = await this.synthesize(text, voiceType, opts?.speakingRate)
     } catch (synthErr) {
+      if (gen !== this.epoch) return // a newer clip already superseded this one — stay silent
       logAudioIssue('Azure synthesis failed → Web Speech', synthErr, { text: text.slice(0, 60) })
       await this.fallbackWebSpeech(text, lang)
       return
     }
 
+    // Last-tap-wins: if a newer speak/stop arrived while we were fetching, do NOT play this clip.
+    if (gen !== this.epoch) return
+
     try {
-      await this.play(audioData, TTS_CONFIG.mime)
+      await this.play(`data:${TTS_CONFIG.mime};base64,${audioData}`)
     } catch (playErr) {
       const name = (playErr as { name?: string })?.name
       if (name === 'NotAllowedError') {

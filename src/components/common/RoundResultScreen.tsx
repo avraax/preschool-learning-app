@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { Box, Button, Typography, useMediaQuery } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
@@ -46,6 +46,12 @@ const RoundResultScreen: React.FC<RoundResultScreenProps> = ({
   const accent = category.accentColor
   const dark = theme.scene.dark
   const spokenRef = useRef(false)
+  const timersRef = useRef<ReturnType<typeof setTimeout>[]>([])
+  // Fast-forward (PRD-09 P1): a tap during the ceremony jumps straight to the interactive buttons.
+  // The actions row stays pointer-inert until `buttonsReady`, so an excited tap-burst where the
+  // answer tiles used to be can't navigate/replay before the reward is even seen.
+  const [ff, setFf] = useState(false)
+  const [buttonsReady, setButtonsReady] = useState(false)
 
   const { stars, anyNewBest, longestStreak, stickers, pageCompleted } = outcome
 
@@ -61,16 +67,60 @@ const RoundResultScreen: React.FC<RoundResultScreenProps> = ({
     return lines.slice(0, 2)
   }, [outcome, longestStreak, stars])
 
-  // Timeline (ms). Reduced motion collapses the stagger.
-  const t = reduce
-    ? { starBase: 0, starStep: 60, sticker: 200 }
-    : { starBase: 450, starStep: 340, sticker: 0 }
-  const stickerAt = t.starBase + 3 * t.starStep + (anyNewBest ? 700 : 250) + 400
+  // Timeline (ms). Reduced motion collapses the stagger. The star span is the ACTUAL star count
+  // (not a fixed 3), so a 1★ result doesn't sit through three empty star-steps of dead air.
+  const t = reduce ? { starBase: 0, starStep: 60 } : { starBase: 450, starStep: 340 }
+  const starsSpan = stars * t.starStep
+  const stickerAt = t.starBase + starsSpan + (anyNewBest ? 700 : 250) + 400
   const buttonsAt = stickerAt + 800
+  // Framer delay (s); 0 once fast-forwarded so every beat snaps to its end state.
+  const dly = (ms: number) => (ff ? 0 : ms / 1000)
 
-  // Fire SFX beats + the single spoken summary on mount.
+  // One composed Danish summary (single TTS channel — avoid clip cancellation). Guarded so the
+  // scheduled play and a fast-forward tap can't double-speak. Branches new vs shiny (PRD-09 P2):
+  // once the album is full every award is a duplicate, so "nyt" would contradict the visual.
+  const speakSummary = () => {
+    if (spokenRef.current) return
+    spokenRef.current = true
+    const parts: string[] = [`Godt klaret! Du fik ${stars} ${stars === 1 ? 'stjerne' : 'stjerner'}.`]
+    if (anyNewBest) parts.push('Ny rekord!')
+    if (longestStreak >= 3) parts.push(`${longestStreak} i træk!`)
+    if (stickers.length) {
+      const names = stickers.map((s) => s.sticker.label).join(' og ')
+      const many = stickers.length > 1
+      const allNew = stickers.every((s) => s.isNew)
+      const noneNew = stickers.every((s) => !s.isNew)
+      const phrase = allNew
+        ? many
+          ? 'Du fik nye klistermærker'
+          : 'Du fik et nyt klistermærke'
+        : noneNew
+          ? many
+            ? 'Du fik skinnende klistermærker'
+            : 'Du fik et skinnende klistermærke'
+          : 'Du fik klistermærker' // mixed new + shiny (only when the best-bonus adds a 2nd award)
+      parts.push(`${phrase}: ${names}.`)
+    }
+    if (pageCompleted) parts.push(`Du har samlet hele ${pageCompleted.title} siden!`)
+    audio.updateUserInteraction()
+    audio.speak(parts.join(' ')).catch(() => {})
+  }
+
+  // Tap anywhere during the ceremony → skip to the buttons. A "skip", not a "cancel": the sticker
+  // is already recorded in the store and its reveal snaps into place; we just still speak the
+  // summary. No-op once the buttons are live.
+  const fastForward = () => {
+    if (ff || buttonsReady) return
+    timersRef.current.forEach(clearTimeout)
+    timersRef.current = []
+    speakSummary()
+    setFf(true)
+    setButtonsReady(true)
+  }
+
+  // Fire SFX beats + schedule the spoken summary and the buttons reveal on mount.
   useEffect(() => {
-    const timers: ReturnType<typeof setTimeout>[] = []
+    const timers = timersRef.current
     // round-complete jingle on entry
     sfx.play('round-complete')
     // ascending star "tings"
@@ -88,26 +138,14 @@ const RoundResultScreen: React.FC<RoundResultScreenProps> = ({
     mascotBus.emit('round')
     if (stickers.length) timers.push(setTimeout(() => mascotBus.emit('sticker'), stickerAt))
 
-    // One composed Danish summary (single TTS channel — avoid clip cancellation).
-    if (!spokenRef.current) {
-      spokenRef.current = true
-      const parts: string[] = [`Godt klaret! Du fik ${stars} ${stars === 1 ? 'stjerne' : 'stjerner'}.`]
-      if (anyNewBest) parts.push('Ny rekord!')
-      if (longestStreak >= 3) parts.push(`${longestStreak} i træk!`)
-      const names = stickers.map((s) => s.sticker.label).join(' og ')
-      parts.push(
-        `Du fik ${stickers.length > 1 ? 'nye klistermærker' : 'et nyt klistermærke'}: ${names}.`,
-      )
-      if (pageCompleted) parts.push(`Du har samlet hele ${pageCompleted.title} siden!`)
-      timers.push(
-        setTimeout(() => {
-          audio.updateUserInteraction()
-          audio.speak(parts.join(' ')).catch(() => {})
-        }, reduce ? 300 : 700),
-      )
-    }
+    // Spoken summary, then reveal + arm the action buttons.
+    timers.push(setTimeout(() => speakSummary(), reduce ? 300 : 700))
+    timers.push(setTimeout(() => setButtonsReady(true), buttonsAt))
 
-    return () => timers.forEach(clearTimeout)
+    return () => {
+      timers.forEach(clearTimeout)
+      timersRef.current = []
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -126,6 +164,7 @@ const RoundResultScreen: React.FC<RoundResultScreenProps> = ({
 
   return (
     <Box
+      onClick={fastForward}
       sx={{
         flex: 1,
         minHeight: 0,
@@ -136,12 +175,19 @@ const RoundResultScreen: React.FC<RoundResultScreenProps> = ({
         gap: { xs: 1.25, md: 2 },
         overflow: 'hidden',
         textAlign: 'center',
+        // While the ceremony plays, the whole surface is a "skip" target (PRD-09 P1).
+        cursor: buttonsReady ? 'default' : 'pointer',
         [PHONE_LANDSCAPE]: { gap: 0.5 },
       }}
     >
       {/* Local hero confetti (GameShell's own celebration is idle here). Bigger on page-complete. */}
       <CelebrationEffect show intensity="high" duration={pageCompleted ? 3400 : 2600} />
 
+      {/* Keyed so a fast-forward tap REMOUNTS every beat (PRD-09 P1): framer won't reschedule an
+          already-pending delayed animation just because we lower its delay, so we re-run them from
+          scratch with `dly()` → 0. The confetti + the useEffect SFX/TTS beats live outside, so they
+          don't re-fire. */}
+      <React.Fragment key={ff ? 'ff' : 'play'}>
       {/* Headline */}
       <Typography
         component={motion.h2}
@@ -174,7 +220,7 @@ const RoundResultScreen: React.FC<RoundResultScreenProps> = ({
               transition={
                 reduce
                   ? { duration: 0 }
-                  : { type: 'spring', stiffness: 360, damping: 10, delay: (t.starBase + i * t.starStep) / 1000 }
+                  : { type: 'spring', stiffness: 360, damping: 10, delay: dly(t.starBase + i * t.starStep) }
               }
               sx={{
                 fontSize: 'clamp(2.6rem, 11vw, 4.2rem)',
@@ -203,7 +249,7 @@ const RoundResultScreen: React.FC<RoundResultScreenProps> = ({
             type: 'spring',
             stiffness: 300,
             damping: 16,
-            delay: (t.starBase + 3 * t.starStep + 150) / 1000,
+            delay: dly(t.starBase + starsSpan + 150),
           }}
           sx={{
             px: 2.5,
@@ -231,7 +277,7 @@ const RoundResultScreen: React.FC<RoundResultScreenProps> = ({
           component={motion.div}
           initial={reduce ? false : { opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: (t.starBase + 3 * t.starStep + 350) / 1000 }}
+          transition={{ delay: dly(t.starBase + starsSpan + 350) }}
           sx={{
             fontFamily: COMIC,
             fontWeight: 700,
@@ -250,19 +296,27 @@ const RoundResultScreen: React.FC<RoundResultScreenProps> = ({
             key={`${award.sticker.id}-${i}`}
             award={award}
             accent={accent}
-            delay={stickerAt / 1000 + i * 0.45}
+            delay={ff ? i * 0.05 : stickerAt / 1000 + i * 0.45}
             size={phoneLandscape ? 76 : 110}
           />
         ))}
       </Box>
 
-      {/* Actions */}
+      {/* Actions — pointer-inert until visible so a tap during the ceremony fast-forwards instead
+          of hitting an invisible button where the answer tiles used to be (PRD-09 P1). */}
       <Box
         component={motion.div}
         initial={reduce ? false : { opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: buttonsAt / 1000 }}
-        sx={{ display: 'flex', gap: { xs: 1, md: 1.5 }, flexWrap: 'wrap', justifyContent: 'center', mt: 0.5 }}
+        transition={{ delay: dly(buttonsAt) }}
+        sx={{
+          display: 'flex',
+          gap: { xs: 1, md: 1.5 },
+          flexWrap: 'wrap',
+          justifyContent: 'center',
+          mt: 0.5,
+          pointerEvents: buttonsReady ? 'auto' : 'none',
+        }}
       >
         <Button
           variant="contained"
@@ -302,6 +356,7 @@ const RoundResultScreen: React.FC<RoundResultScreenProps> = ({
           Tilbage
         </Button>
       </Box>
+      </React.Fragment>
     </Box>
   )
 }

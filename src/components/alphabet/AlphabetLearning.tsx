@@ -12,6 +12,8 @@ import PromptStage from '../common/PromptStage'
 import StickerReveal from '../common/StickerReveal'
 import { useCelebration } from '../common/CelebrationEffect'
 import { progressStore, type StickerAward } from '../../services/progressStore'
+import { stickerSetForSection } from '../../config/stickers'
+import { LETTER_WORDS } from '../../config/letterWords'
 import { hexToRgba } from '../../theme/tokens/helpers'
 import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 // Simplified audio system
@@ -38,34 +40,6 @@ const EXPLORE_MILESTONE = 9
 // Example word + emoji for the bloomed letter (UI/UX Overhaul PRD §6B). Only letters with a clear,
 // child-friendly Danish word are included — Q, W, X have none, so their bloom shows just the giant
 // letter (the PromptStage hero gracefully supports an emoji-less state).
-const LETTER_WORDS: Record<string, { word: string; emoji: string }> = {
-  A: { word: 'Abe', emoji: '🐒' },
-  B: { word: 'Bil', emoji: '🚗' },
-  C: { word: 'Cykel', emoji: '🚲' },
-  D: { word: 'Drage', emoji: '🐉' },
-  E: { word: 'Elefant', emoji: '🐘' },
-  F: { word: 'Fisk', emoji: '🐟' },
-  G: { word: 'Giraf', emoji: '🦒' },
-  H: { word: 'Hund', emoji: '🐕' },
-  I: { word: 'Is', emoji: '🍦' },
-  J: { word: 'Jul', emoji: '🎄' },
-  K: { word: 'Kat', emoji: '🐱' },
-  L: { word: 'Løve', emoji: '🦁' },
-  M: { word: 'Mus', emoji: '🐭' },
-  N: { word: 'Næsehorn', emoji: '🦏' },
-  O: { word: 'Orm', emoji: '🪱' },
-  P: { word: 'Panda', emoji: '🐼' },
-  R: { word: 'Raket', emoji: '🚀' },
-  S: { word: 'Sol', emoji: '☀️' },
-  T: { word: 'Tog', emoji: '🚂' },
-  U: { word: 'Ugle', emoji: '🦉' },
-  V: { word: 'Vandmelon', emoji: '🍉' },
-  Y: { word: 'Yoghurt', emoji: '🥛' },
-  Z: { word: 'Zebra', emoji: '🦓' },
-  Æ: { word: 'Æble', emoji: '🍎' },
-  Ø: { word: 'Ørn', emoji: '🦅' },
-  Å: { word: 'Ål', emoji: '🐍' },
-}
 
 const AlphabetLearning: React.FC = () => {
   const muiTheme = useTheme()
@@ -135,24 +109,35 @@ const AlphabetLearning: React.FC = () => {
     }
   }
 
-  // Award an exploration sticker when distinct-tap count crosses each milestone.
-  const maybeAwardExploration = () => {
+  // Award an exploration sticker when distinct-tap count crosses each milestone. Returns true when
+  // it spoke the sticker line, so the caller skips the letter echo (they'd otherwise cancel each
+  // other nondeterministically — PRD-06 §3).
+  const maybeAwardExploration = (): boolean => {
     const size = exploredRef.current.size
     const milestone = Math.floor(size / EXPLORE_MILESTONE)
     if (milestone > milestoneRef.current) {
       milestoneRef.current = milestone
-      const award = progressStore.awardSticker()
+      const award = progressStore.awardSticker(stickerSetForSection('alphabet'))
       setStickerAward(award)
       celebrateTier('sticker')
       if (stickerTimer.current) clearTimeout(stickerTimer.current)
       stickerTimer.current = setTimeout(() => setStickerAward(null), 3600)
-      // Speak the sticker name (browse has no other TTS competing here).
+      // Speak the sticker name (browse has no other TTS competing here). Duplicate = shiny, not
+      // "new" — match the StickerReveal banner (PRD-09 P2).
       try {
-        audio.speak(`Nyt klistermærke! ${award.sticker.label}`).catch(() => {})
+        audio
+          .speak(
+            award.isNew
+              ? `Nyt klistermærke! ${award.sticker.label}`
+              : `Skinnende! ${award.sticker.label}`,
+          )
+          .catch(() => {})
       } catch {
         /* ignore */
       }
+      return true
     }
+    return false
   }
 
   const goToLetter = async (index: number) => {
@@ -168,7 +153,8 @@ const AlphabetLearning: React.FC = () => {
     setCurrentIndex(index)
 
     exploredRef.current.add(letter)
-    maybeAwardExploration()
+    // On a milestone tap the sticker line is the reward audio — don't also speak the letter.
+    if (maybeAwardExploration()) return
 
     try {
       await audio.speakLetter(letter)

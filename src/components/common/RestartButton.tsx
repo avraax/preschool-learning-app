@@ -49,7 +49,7 @@ export const RestartButton: React.FC<RestartButtonProps> = ({
   onClick,
   category,
   disabled = false,
-  label = 'Ny spil',
+  label = 'Nyt spil',
   size = 'medium',
   variant = 'contained',
   icon
@@ -158,7 +158,7 @@ export interface ColorRestartButtonProps extends Omit<RestartButtonProps, 'categ
  * Uses blue theme and "Ny spil" label
  */
 export const AlphabetRestartButton: React.FC<AlphabetRestartButtonProps> = (props) => (
-  <RestartButton {...props} category="alphabet" label="Ny spil" />
+  <RestartButton {...props} category="alphabet" label="Nyt spil" />
 )
 
 /**
@@ -166,7 +166,7 @@ export const AlphabetRestartButton: React.FC<AlphabetRestartButtonProps> = (prop
  * Uses purple theme and "Ny spil" label
  */
 export const MathRestartButton: React.FC<MathRestartButtonProps> = (props) => (
-  <RestartButton {...props} category="math" label="Ny spil" />
+  <RestartButton {...props} category="math" label="Nyt spil" />
 )
 
 /**

@@ -2,11 +2,13 @@ import React, { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { Box, Typography, useMediaQuery } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
-import { DndContext, DragEndEvent, DragStartEvent, DragOverEvent, closestCenter, DragOverlay } from '@dnd-kit/core'
+import { DndContext, DragEndEvent, DragStartEvent, DragOverEvent, MeasuringStrategy } from '@dnd-kit/core'
 import { useDragOnlySensors } from '../common/dnd/useDragOnlySensors'
+import { kidCollision } from '../common/dnd/kidCollision'
 import { DraggableItem } from '../common/dnd/DraggableItem'
 import { DroppableZone } from '../common/dnd/DroppableZone'
 import { getCategoryTheme } from '../../config/categoryThemes'
+import { stickerSetForSection } from '../../config/stickers'
 import { SHADES, HUE_ORDER, type ColorShade } from '../../config/colorContent'
 import { darken, hexToRgba } from '../../theme/tokens/helpers'
 import { SNAP } from '../../theme/motion'
@@ -25,6 +27,7 @@ import { sfx } from '../../services/sfxClient'
 import { mascotBus } from '../../services/mascotBus'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
 import { isIOS } from '../../utils/deviceDetection'
+import { shuffle } from '../../utils/shuffle'
 import { devFx } from '../../utils/devHarness'
 import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 
@@ -43,15 +46,6 @@ import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 // ── Tuning levers ─────────────────────────────────────────────────────────────────────────────
 const ROUND_QUESTIONS = 8          // orderings per round → RoundResultScreen
 const WRONG_BEFORE_HINT = 2        // pulse the correct next tile after this many wrong drops
-
-const shuffle = <T,>(arr: T[]): T[] => {
-  const a = [...arr]
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1))
-    ;[a[i], a[j]] = [a[j], a[i]]
-  }
-  return a
-}
 
 const NuancerGame: React.FC = () => {
   const muiTheme = useTheme()
@@ -222,7 +216,7 @@ const NuancerGame: React.FC = () => {
     const outcome = progressStore.recordRoundResult(
       'colors.nuancer',
       { correct: firstTryCorrect, total: round.length, longestStreak },
-      { starThresholds: { three: 0, two: 2 } },
+      { starThresholds: { three: 0, two: 2 }, stickerSetId: stickerSetForSection('colors') },
     )
     setRoundOutcome(outcome)
   }
@@ -460,7 +454,12 @@ const NuancerGame: React.FC = () => {
       onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
       onDragCancel={handleDragCancel}
-      collisionDetection={closestCenter}
+      collisionDetection={kidCollision}
+      // The slot drop-targets live inside PromptStage, which applies a perpetual idle-float to its
+      // content. With the default (measure-once-at-drag-start) strategy, pointerWithin would test
+      // the pointer against stale, pre-float slot rects. Re-measure continuously so the drop lands
+      // on the slot actually under the finger.
+      measuring={{ droppable: { strategy: MeasuringStrategy.Always } }}
     >
       <GameShell
         categoryId="colors"
@@ -555,7 +554,6 @@ const NuancerGame: React.FC = () => {
           </Box>
         ) : null}
       </GameShell>
-      <DragOverlay>{null}</DragOverlay>
     </DndContext>
   )
 }

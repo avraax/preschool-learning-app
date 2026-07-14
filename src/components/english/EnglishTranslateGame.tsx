@@ -1,10 +1,12 @@
 import React from 'react'
 import UnifiedQuizGame, { UnifiedQuizConfig, QuizItem } from '../common/UnifiedQuizGame'
 import { categoryThemes } from '../../config/categoryThemes'
+import { stickerSetForSection } from '../../config/stickers'
 import { EnglishScoreChip } from '../common/ScoreChip'
 import { EnglishRepeatButton } from '../common/RepeatButton'
 import { quizEnglishWords, pickDistractorWords, englishThemes, EnglishWord } from '../../config/englishVocab'
 import { progressStore, type DifficultyLevel } from '../../services/progressStore'
+import { shuffle } from '../../utils/shuffle'
 
 // Difficulty-aware distractor pool (Overhaul §6A/Appendix A). Normal is untouched — today's fully
 // random `pickDistractorWords` across all mixed themes (regression-safe). Svær biases toward
@@ -26,7 +28,7 @@ const pickWordsForLevel = (correct: EnglishWord, level: DifficultyLevel): Englis
       : quizEnglishWords.filter(w => w.en !== correct.en && !sameTheme.some(s => s.en === w.en))
 
   const picks: EnglishWord[] = []
-  for (const w of [...biasPool].sort(() => Math.random() - 0.5)) {
+  for (const w of shuffle(biasPool)) {
     if (picks.length >= 3) break
     picks.push(w)
   }
@@ -37,7 +39,7 @@ const pickWordsForLevel = (correct: EnglishWord, level: DifficultyLevel): Englis
       if (w.en !== correct.en && !picks.some(p => p.en === w.en)) picks.push(w)
     }
   }
-  return [correct, ...picks].sort(() => Math.random() - 0.5)
+  return shuffle([correct, ...picks])
 }
 
 // Dansk til Engelsk: show + speak a Danish word the child knows (with emoji); the child
@@ -79,7 +81,10 @@ const EnglishTranslateGame: React.FC = () => {
 
     gameWelcomeType: 'englishtranslate',
     gameId: 'english.translate',
-    round: { length: 8, starThresholds: { three: 0, two: 2 } },
+    round: { length: 8, starThresholds: { three: 0, two: 2 }, stickerSetId: stickerSetForSection('english') },
+
+    // Never-fail hint (PRD-05 P1): after 2 wrong taps the correct word tile pulses.
+    hintAfterNWrong: 2,
 
     // Prompt is the Danish word (Danish voice); tapping an option speaks the English word.
     speakQuizPrompt: async (item: QuizItem, audio: any) => audio.speak(String(item.audioPrompt)),

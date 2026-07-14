@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { put, list } from '@vercel/blob'
-import { applyCors, isAllowedOrigin, logServerError } from '../lib/server-utils.js'
+import { applyCors, isAllowedOrigin, logServerError, rateLimit } from '../lib/server-utils.js'
 
 // Bug report storage (Bug Report feature).
 //
@@ -12,8 +12,10 @@ import { applyCors, isAllowedOrigin, logServerError } from '../lib/server-utils.
 //       &expand=1             → adds a per-report summary (type/category/route/note/error)
 //                               for the 10 newest, so a list is readable without N lookups
 //
-// GETs can be locked with an optional BUG_REPORT_READ_KEY env (?key=...); when the env is
-// unset they are open (ids are unguessable, data is low-sensitivity).
+// GETs (list + fetch reports, which include a SCREENSHOT of a child's screen, device fingerprint,
+// timezone, progress and route history) REQUIRE the BUG_REPORT_READ_KEY env + a matching ?key=...
+// This is fail-closed: if the env is unset the read endpoint returns 403 rather than exposing the
+// data (PRD-03 §P3). Set BUG_REPORT_READ_KEY in the Vercel project env to enable reads.
 // Requires a Vercel Blob store connected to the project (BLOB_READ_WRITE_TOKEN).
 
 const PREFIX = 'bug-reports/'
@@ -54,6 +56,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
   if (!isAllowedOrigin(req)) {
     return res.status(403).json({ error: 'Forbidden origin' })
+  }
+  // Guard against a flood of uploads burning Blob storage/bandwidth.
+  if (!rateLimit(req, res, { scope: 'bug-report', limit: 20, windowMs: 60_000 })) {
+    return
   }
 
   try {
@@ -118,12 +124,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 }
 
 async function handleGet(req: VercelRequest, res: VercelResponse) {
-  try {
-    const readKey = process.env.BUG_REPORT_READ_KEY
-    if (readKey && queryParam(req.query.key) !== readKey) {
-      return res.status(401).json({ error: 'Invalid key' })
-    }
+  if (!isAllowedOrigin(req)) {
+    return res.status(403).json({ error: 'Forbidden origin' })
+  }
+  // Fail-closed: reads expose child screenshots + device/progress data, so they are DENIED unless
+  // an admin read key is configured AND supplied. No env → no reads (PRD-03 §P3).
+  const readKey = process.env.BUG_REPORT_READ_KEY
+  if (!readKey) {
+    return res.status(403).json({ error: 'Read access not configured' })
+  }
+  if (queryParam(req.query.key) !== readKey) {
+    return res.status(401).json({ error: 'Invalid key' })
+  }
 
+  try {
     const { blobs } = await list({ prefix: PREFIX, limit: LIST_LIMIT })
 
     const id = queryParam(req.query.id)?.toUpperCase()

@@ -172,7 +172,7 @@ const Mascot: React.FC<MascotProps> = ({ sx, forceEvent }) => {
         width: { xs: 84, md: 120 },
         height: { xs: 84, md: 120 },
         pointerEvents: 'none',
-        // Phones: play surface first — hide in landscape, small in portrait (matches old GameGuide).
+        // Phones: play surface first — hide in landscape, small in portrait.
         [PHONE_LANDSCAPE]: { display: 'none' },
         [PHONE_PORTRAIT]: { width: 52, height: 52 },
         ...sx,

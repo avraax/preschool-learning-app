@@ -16,7 +16,12 @@ import AmbientField from './AmbientField'
 // --parallax-x/y CSS vars); the layers here read those inherited vars and offset by depth, so
 // the scene and the separately-rendered mascot share one synced driver across planes.
 
-const ThemeScene: React.FC = () => {
+interface ThemeSceneProps {
+  // Freeze ambient animations (PRD-08 §P4) — set on game routes, where the scene is blurred anyway.
+  paused?: boolean
+}
+
+const ThemeScene: React.FC<ThemeSceneProps> = ({ paused = false }) => {
   const theme = useTheme()
   const { themeId } = useThemeSwitch()
   const reduce = useReducedMotion()
@@ -68,7 +73,7 @@ const ThemeScene: React.FC = () => {
             {scene.layers.map((layer, i) =>
               assets.layers[i] ? <ParallaxLayer key={i} spec={layer} url={assets.layers[i]} index={i} /> : null
             )}
-            <AmbientField scene={scene} sprites={assets.ambientSprites} themeId={themeId} disabled={reduce} />
+            <AmbientField scene={scene} sprites={assets.ambientSprites} themeId={themeId} disabled={reduce} paused={paused} />
             {/* Gentle scrim: lifts depth and keeps content cards readable over the scene. */}
             <Box
               aria-hidden

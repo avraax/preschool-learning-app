@@ -18,6 +18,10 @@ import './index.css'
 // Initialize remote console for error logging
 import './utils/remoteConsole'
 
+// Network-only app: unregister any leftover service worker from an earlier build era (PRD-08 §P3).
+import { sweepLegacyServiceWorkers } from './utils/swCleanup'
+sweepLegacyServiceWorkers()
+
 // DEV screenshot harness: seed Math.random when ?seed=<n> is present (deterministic questions).
 import { installDevSeed } from './utils/devHarness'
 installDevSeed()
