@@ -11,6 +11,7 @@ import { BUILD_INFO } from '../config/version'
 import { getDeviceSnapshot } from '../utils/deviceDetection'
 import { simplifiedAudioController } from '../utils/SimplifiedAudioController'
 import { ttsClient } from './ttsClient'
+import { musicClient } from './musicClient'
 import { progressStore, type ProgressState } from './progressStore'
 import {
   getDiagnosticsSnapshot,
@@ -55,6 +56,7 @@ export interface BugReportPayload {
     ttsHealth: ReturnType<typeof ttsClient.getHealth> | null
     voiceOverride: VoiceOverride | null
     sfxEnabled: boolean | null
+    music: ReturnType<typeof musicClient.getHealth> | null
   }
   progress: ProgressState | null
   diagnostics: DiagnosticsSnapshot
@@ -109,6 +111,7 @@ export function buildReportPayload(input: {
       ttsHealth: safe(() => ttsClient.getHealth(), null),
       voiceOverride: safe(() => ttsClient.getVoiceOverride(), null),
       sfxEnabled: safe(() => progressStore.get().settings.sfxEnabled, null),
+      music: safe(() => musicClient.getHealth(), null),
     },
     progress: safe(() => progressStore.get(), null),
     diagnostics: safe(() => getDiagnosticsSnapshot(), {
