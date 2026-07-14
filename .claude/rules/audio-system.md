@@ -30,7 +30,23 @@ core (`shared-azure-tts.js`) is used by both the dev server and the Vercel funct
 
 **Key behaviour: there is NO audio queue.** Only one audio plays at a time; starting new audio
 immediately cancels whatever is playing (`playAudio()` calls `stopCurrentAudio()` first). This is
-intentional for fast tapping on iOS.
+intentional for fast tapping on iOS. `ttsClient` also carries a **"last request wins" epoch token** —
+a slow synth/fetch bails instead of pre-empting a later tap; don't reintroduce play-on-stale-resolve.
+
+## Prebaked TTS
+
+The narrated inventory is a large but CLOSED set, so it's synthesized once at the **default
+voice/rate** into `public/sounds/tts/*.ogg` with a committed manifest (`src/config/prebakedTts.ts`).
+`ttsClient.synthesizeAndPlay` plays the prebaked file directly **before** touching Azure; Azure now
+serves only genuinely dynamic text or a non-default VoiceLab voice.
+
+- **After changing any narrated closed-set content** (letter words, phrases, sticker labels, English
+  words, numbers, colours), run `npm run tts:prebake` and **commit** the regenerated `.ogg` files +
+  `prebakedTts.ts`. It fails soft — a missing key just falls back to live Azure (slower), never breaks.
+- The manifest cache key **must** match between `ttsClient.resolveRequest` and the build script; both
+  build it via `shared-tts-key.js` (single source — don't hand-roll the key format).
+- Build scripts (`prebake-tts.mjs`, `tts-voice-eval.mjs`) `import` `src/**/*.ts` directly (Node ≥22
+  strips types) — generate from the real source arrays, never a hand-copied duplicate.
 
 ## Mandatory Rules
 
@@ -65,7 +81,7 @@ const MyComponent = () => {
 async speakNewThing(text: string): Promise<string> {
   return this.playAudio(async () => {
     this.updateUserInteraction()
-    if (!this.ensureAudioReady()) return
+    if (!(await this.ensureAudioReady())) return   // async: awaits init so the first tap isn't dropped
     await this.ttsClient.synthesizeAndPlay(text, 'primary', true)
   })
 }
@@ -89,6 +105,17 @@ Audio cancels automatically on navigation via `NavigationAudioCleanup` in `App.t
 own listeners. Permission is session-based and automatic; `SimplifiedAudioPermission` handles the iOS
 prompt. iOS suspension recovery: if the AudioContext later suspends or playback hits a
 `NotAllowedError`, the engine calls back into the provider (`markNeedsUserAction`) to re-prompt.
+
+iOS robustness gotchas (PRD-06), easy to regress:
+- The unlock gesture must prime **`ttsClient`'s shared `<audio>` element** (`primePlaybackElement()`),
+  not just the probe `AudioContext` — narration plays through that element, so it's the one iOS needs
+  user-activated, or the first post-fetch `play()` throws `NotAllowedError`.
+- Match `'interrupted'` (iOS calls/Siri/backgrounding) alongside `'suspended'` everywhere recovery is
+  armed — WebKit uses `'interrupted'`, which is outside the TS `AudioContextState` union.
+- `visibilitychange:hidden` cancels TTS so the stall timer is disarmed; otherwise a backgrounded PWA
+  re-speaks the clip (in the Web Speech voice) on return.
+- `ensureAudioReady` is **async** and awaits `initializeAudio()`, so the first tap after load/suspension
+  isn't silently swallowed.
 
 ## Speech INPUT (separate from playback)
 

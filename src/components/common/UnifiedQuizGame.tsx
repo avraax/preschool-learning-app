@@ -10,6 +10,7 @@ import type { GuideReaction } from './ThemeMascot'
 import { useCelebration } from '../common/CelebrationEffect'
 import { useGameState } from '../../hooks/useGameState'
 import { useRound, type RoundConfig } from '../../hooks/useRound'
+import { useNeverFailHint } from '../../hooks/useNeverFailHint'
 import { progressStore, type RoundOutcome, type SectionId } from '../../services/progressStore'
 import { useDifficulty } from '../../hooks/useDifficulty'
 import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
@@ -158,10 +159,10 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
   // True until the first wrong tile is tapped for the current question; gates the streak/star
   // "first try" accounting. Reset on each new question.
   const firstAttemptRef = useRef(true)
-  // Wrong taps on the current question → drives the never-fail hint (PRD-05 P1). Ref is the
-  // synchronous counter; `showHint` state flips on the render once the threshold is crossed.
-  const wrongCountRef = useRef(0)
-  const [showHint, setShowHint] = useState(false)
+  // Never-fail hint (PRD-05 P1): after `hintAfterNWrong` wrong taps on the current question the
+  // correct tile pulses. Shared primitive; `Infinity` threshold disables it when the config omits
+  // `hintAfterNWrong`. `showHint` is the boolean the render reads; reset per question.
+  const { hint: showHint, registerWrong: registerHintWrong, reset: resetHint } = useNeverFailHint<boolean>(config.hintAfterNWrong ?? Infinity)
   // When set, the round is over and the reward/result hero replaces the answer grid.
   const [roundOutcome, setRoundOutcome] = useState<RoundOutcome | null>(null)
 
@@ -216,8 +217,7 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
     // advance-lock releases so tiles are tappable again. Reset the hint too.
     firstAttemptRef.current = true
     isAdvancingRef.current = false
-    wrongCountRef.current = 0
-    setShowHint(false)
+    resetHint()
 
     const quizItem = config.generateQuizItem()
     currentItemRef.current = quizItem
@@ -248,7 +248,7 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
         }
       }
     }, delay)
-  }, [audio, config]) // Stable dependencies
+  }, [audio, config, resetHint]) // Stable dependencies (resetHint identity is stable)
 
   // Instant load: render the playable board RIGHT AWAY (tappable immediately) without voicing the
   // first prompt yet — the welcome narrates over the visible board and the prompt follows it.
@@ -421,11 +421,7 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
       // Never-fail hint (PRD-05 P1): after N wrong taps on this question, pulse the correct tile.
       // (Only fires on the wrong branch, so the advance-lock — which gates the correct/resolve
       // window at the top of this handler — can never let it run mid-resolve.)
-      wrongCountRef.current += 1
-      if (config.hintAfterNWrong && wrongCountRef.current >= config.hintAfterNWrong) {
-        setShowHint(true)
-        mascotBus.emit('hint')
-      }
+      if (registerHintWrong()) mascotBus.emit('hint')
     }
 
     // Auto-advance after a short celebration window (correct only; wrong stays for retry).

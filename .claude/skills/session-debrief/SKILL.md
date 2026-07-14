@@ -9,8 +9,8 @@ description: >-
 when_to_use: >-
   Triggers: "debrief", "capture what we learned", "turn this into a rule/guardrail", "create/update a
   skill", "create/update an agent/subagent", "document how X works so you don't redo it", "clean up
-  the .claude rules". Offer it proactively after finishing a non-trivial task that produced reusable
-  knowledge.
+  the .claude rules", "audit/slim an over-budget CLAUDE.md or rule". Offer it proactively after
+  finishing a non-trivial task that produced reusable knowledge.
 ---
 
 # Guardrails — build & maintain the `.claude` knowledge system
@@ -75,6 +75,10 @@ Rule of thumb: **fact → CLAUDE.md; convention/gotcha → rule; thing-to-run �
 - Revisit after major model releases — a rule that only worked around an older model's limits may now
   be pure overhead; delete it.
 - Keep the CLAUDE.md rule-pointer list in sync when you add/remove a rule.
+- **Slimming an over-budget file**: judge by token weight, not line count (dense bullets hide it). Cut
+  what the agent can derive — file trees, route/dependency tables, architecture overviews (`/doctor`
+  proposes these). Move domain detail into a path-scoped `.claude/rules/*` (loaded on demand) and
+  leave a one-line pointer; **distill, don't copy 1:1**, and strip volatile numbers + changelog phrasing.
 
 ## Authoring correctly
 

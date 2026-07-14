@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import { Box, Typography } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { motion } from 'framer-motion'
-import { DndContext, DragEndEvent, DragStartEvent, DragOverEvent } from '@dnd-kit/core'
+import { DndContext, DragEndEvent, DragStartEvent } from '@dnd-kit/core'
 import { useDragOnlySensors } from '../common/dnd/useDragOnlySensors'
 import { kidCollision } from '../common/dnd/kidCollision'
 import { DraggableItem } from '../common/dnd/DraggableItem'
@@ -25,6 +25,8 @@ import GameShell from '../common/GameShell'
 import RoundResultScreen from '../common/RoundResultScreen'
 import { isIOS } from '../../utils/deviceDetection'
 import { shuffle } from '../../utils/shuffle'
+import { useNeverFailHint } from '../../hooks/useNeverFailHint'
+import { useDragActive } from '../common/dnd/useDragActive'
 import { DANISH_OBJECTS, COLOR_TARGETS, COLOR_SWATCH, spokenColor } from '../../config/colorContent'
 // Simplified audio system
 import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
@@ -75,14 +77,16 @@ const FarvejagtGame: React.FC = () => {
   // Game state
   const [gameItems, setGameItems] = useState<GameItem[]>([])
   const [totalTarget, setTotalTarget] = useState(0)
-  const [activeId, setActiveId] = useState<string | null>(null)   // currently-grabbed item (lift juice)
-  const [overId, setOverId] = useState<string | null>(null)       // is a drag over the target well? (breathe juice)
+  // Shared lift/breathe drag state (activeId = grabbed item, overId = target under the pointer).
+  const { activeId, overId, setActiveId, onDragOver, clearActive } = useDragActive()
   const [burstAt, setBurstAt] = useState<{ slot: number; hex: string } | null>(null) // localized splash burst
   const [targetColor, setTargetColor] = useState<string>('rød')
   const [targetPhrase, setTargetPhrase] = useState<string>('Find alle røde ting')
   const [boardKey, setBoardKey] = useState(0)       // bumped per board → re-triggers scatter-in
   const [boardFlourish, setBoardFlourish] = useState(false)
-  const [hintItemId, setHintItemId] = useState<string | null>(null)
+  // Never-fail hint: after WRONG_DROPS_BEFORE_HINT wrong drops on the current board, an uncollected
+  // target pulses. `hintItemId` holds that item id (or null). Reset per board (see setup).
+  const { hint: hintItemId, setHint: setHintItemId, registerWrong: registerHintWrong, reset: resetHint } = useNeverFailHint<string>(WRONG_DROPS_BEFORE_HINT)
 
   // Simplified audio system
   const audio = useSimplifiedAudioHook({
@@ -94,7 +98,6 @@ const FarvejagtGame: React.FC = () => {
   // Bounded round + reward flow (Overhaul Farver §Farvejagt). 5 boards, 3★ = 0 wrong-drop boards, 2★ ≤ 2.
   const round = useRound({ length: ROUND_BOARDS, starThresholds: { three: 0, two: 2 } })
   const firstAttemptRef = useRef(true)   // first-try flag for the CURRENT board
-  const boardWrongRef = useRef(0)        // wrong drops on the CURRENT board (drives the hint)
   const [roundOutcome, setRoundOutcome] = useState<RoundOutcome | null>(null)
 
   // Celebration (corner guide reacts via guideReaction)
@@ -237,10 +240,9 @@ const FarvejagtGame: React.FC = () => {
     targetPhraseRef.current = newTargetPhrase
     setBoardKey(k => k + 1)
     setBoardFlourish(false)
-    setHintItemId(null)
+    resetHint()
     setBurstAt(null)
     firstAttemptRef.current = true
-    boardWrongRef.current = 0
     isAdvancing.current = false
 
     if (!voice) return
@@ -358,24 +360,13 @@ const FarvejagtGame: React.FC = () => {
     sfx.play('pick-up')
   }
 
-  // The target well BREATHES/glows while a compatible item is dragged over it.
-  const handleDragOver = (event: DragOverEvent) => {
-    setOverId(event.over ? String(event.over.id) : null)
-  }
-
-  const handleDragCancel = () => {
-    setActiveId(null)
-    setOverId(null)
-  }
-
   // Handle drag end
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event
     // The child is playing → suppress any pending/late welcome from talking over them.
     hasInteractedRef.current = true
     audio.updateUserInteraction()
-    setActiveId(null)
-    setOverId(null)
+    clearActive()
     if (isAdvancing.current) return // board-complete flourish in progress → ignore late drops (P3)
 
     const draggedItem = gameItems.find(item => item.id === active.id)
@@ -428,13 +419,8 @@ const FarvejagtGame: React.FC = () => {
       audio.speak(`${draggedItem.objectNameDefinite} er ${spokenColor(draggedItem.colorName, draggedItem.neuter)}`).catch(() => {})
 
       // After N wrong drops on this board, pulse an uncollected target (never-fail scaffold).
-      boardWrongRef.current += 1
-      if (boardWrongRef.current >= WRONG_DROPS_BEFORE_HINT) {
-        const hint = gameItems.find(i => i.isTarget && !i.collected)
-        if (hint) {
-          setHintItemId(hint.id)
-          mascotBus.emit('hint')
-        }
+      if (registerHintWrong(() => gameItems.find(i => i.isTarget && !i.collected)?.id ?? null)) {
+        mascotBus.emit('hint')
       }
     }
   }
@@ -577,9 +563,9 @@ const FarvejagtGame: React.FC = () => {
             <DndContext
               sensors={sensors}
               onDragStart={handleDragStart}
-              onDragOver={handleDragOver}
+              onDragOver={onDragOver}
               onDragEnd={handleDragEnd}
-              onDragCancel={handleDragCancel}
+              onDragCancel={clearActive}
               collisionDetection={kidCollision}
             >
               {/* Centred target zone wrapper: holds the drop circle, the collected ring, and the pips. */}

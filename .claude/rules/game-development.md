@@ -49,11 +49,24 @@ Most task-based quizzes are a thin **config** over `src/components/common/Unifie
   first-try, so no extra star bookkeeping.
 - **Custom hero**: `renderHero(item)` renders a richer subject in the `PromptStage` instead of the
   default glyph/emoji — used today by Tal Quiz (numeral + counted objects) and Hvad Mangler (the
-  sequence with a pulsing "?"). It's the intended vehicle for absorbing equation-card games
-  (MathOperationGame +/−, ComparisonGame) into the engine.
+  sequence with a pulsing "?").
 
 Only hand-roll a full component for genuinely novel mechanics (e.g. SpellingGame, SpeakWordGame, and
-the dnd-kit Farver games — see `.claude/rules/drag-and-drop.md`).
+the dnd-kit Farver games — see `.claude/rules/drag-and-drop.md`). **MathOperationGame (+/−) and
+ComparisonGame stay hand-rolled** despite ~cloning the engine's scaffold: they have bespoke
+*post-correct-tap* animations (the equation reveal; the krokodille mouth chomping toward the bigger
+number) and the engine has no `onCorrectAnimate`-style callback — absorbing them into `UnifiedQuizGame`
+needs that hook added first (it would touch all 7 config quizzes, so verify carefully).
+
+## Shared primitives — reuse, don't re-fragment
+
+- **Never-fail hint** → `useNeverFailHint` (`src/hooks/useNeverFailHint.ts`), used by the engine AND
+  the hand-rolled games. Each game keeps its OWN reset boundary (per question / slot / board / target)
+  and decides whether to nudge the mascot — that variance is **intentional, not drift; don't "unify"
+  it**. The hook owns only the wrong-counter + threshold trip + the pulse state.
+- **Shuffle** → `shuffle()` (`src/utils/shuffle.ts`), a non-mutating Fisher-Yates. Never the biased
+  `.sort(() => Math.random() - 0.5)` idiom, and never sort shared config in place.
+- **Drag games** → the `src/components/common/dnd/` primitives (see `.claude/rules/drag-and-drop.md`).
 
 ## Entry-audio pattern for hand-rolled task-based games
 

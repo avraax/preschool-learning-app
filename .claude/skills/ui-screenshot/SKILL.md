@@ -133,12 +133,20 @@ An async `--eval` IIFE (`awaitPromise` is on) can drive a whole round and assert
 - **Clicks use `element.click()`**, not synthetic mouse coordinates — MUI ignores synthetic coords.
   So `--click` takes a CSS selector. (`element.click()` fires no `pointerdown`, so tap-listeners
   like the diagnostics breadcrumbs won't see driver clicks.)
+- **`--click-text` is a SUBSTRING match** on the first `<button>` whose `textContent.includes(txt)` —
+  NOT exact. So `--click-text 1` clicks an `11` tile (and can silently advance a quiz). Use a value
+  that isn't a substring of other on-screen text, or `--click` with a CSS/`data-*` selector to hit
+  one specific element (answer tiles carry `[data-answer-tile]`).
 - **Driving pointer gestures & SPA nav**: because `element.click()` fires no `pointerdown`, for an
   `onPointerDown` handler (e.g. the Sig et Ord mic) dispatch a real event via `--eval`:
   `el.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true}))`. To unmount a route so React
   cleanup runs, **soft-navigate** (`history.pushState({},'','/x');dispatchEvent(new PopStateEvent('popstate'))`)
   — a hard `location` change skips cleanup. To inspect real mic tracks in a getUserMedia test, launch
   Chrome with `--use-fake-device-for-media-stream` (needs a one-off custom launcher, not `cdp.mjs`).
+- **Can't stub `window.location.reload`** in an `--eval` — it's non-configurable, so a `defineProperty`
+  throws and the *real* reload fires, navigating the page so your eval returns `undefined`. To test
+  code that reloads/navigates (e.g. `lazyWithReload`'s chunk recovery), make the side effect
+  **injectable** with a default (`fn = () => window.location.reload()`) and pass a spy from the eval.
 - **Audio modal ("Tænd for lyd")** is auto-dismissed (launches with autoplay allowed + clicks
   "Start lyd nu"). Use `--keep-audio-modal` only to screenshot the modal itself.
 - **Measure, don't eyeball, for overflow.** A scaled thumbnail can hide a button clipped past a
@@ -147,6 +155,11 @@ An async `--eval` IIFE (`awaitPromise` is on) can drive a whole round and assert
   via `[aria-label="Til de voksne"]` (add `?adult-tap=1` to the URL so a plain click opens it —
   the real gesture is a 2s hold); inside it `[aria-label="Stemme-test"]` opens the voice panel.
   MUI dialogs render under `.MuiDialog-paper`, popovers under `.MuiPopover-paper`.
+- **DEV query params force states deterministically for capture** (all DEV-only — see
+  `src/utils/devHarness.ts`): `?fx=correct|wrong|hint|streak` forces one tile/board into that feedback
+  state (no need to solve), `?seed=<n>` makes questions deterministic (probe with `--eval` to find a
+  seed that yields the case you want, e.g. a count-mode number or a high comparison pile), `?nogate=1`
+  skips the audio welcome/permission gate, `?reduce=1` forces reduced-motion, `?theme=<id>` sets the skin.
 - Always check the printed "console errors"/"page exceptions" lines — a clean screenshot can still
   hide a runtime error.
 

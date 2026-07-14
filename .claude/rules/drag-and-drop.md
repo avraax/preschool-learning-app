@@ -1,9 +1,14 @@
 # Drag-and-Drop Rules
 
 The Farver games are the app's only drag games. They use **`@dnd-kit/core`** through shared
-primitives in `src/components/common/dnd/` — reuse those, don't re-implement. Any new drag game
-follows the same rules. (Per-game tuning — round length, star thresholds, option/target counts —
-lives in each component's tuning levers, not here.)
+primitives in `src/components/common/dnd/` — **reuse those, don't re-implement**: `kidCollision`,
+`useDragOnlySensors`, `DroppableZone`, `DraggableItem`, and `useDragActive` (the shared
+`activeId`/`overId` lift-and-breathe state + `onDragOver`/`clearActive` — wire it into the DndContext;
+only `onDragStart` stays per-game). `DraggableItem` defaults to absolute `left/top%` placement (scatter
+boards); pass **`inline`** for in-flow tray layouts (Hvilken Farve?, Nuancer, Ram Farven's palette) —
+never wrap it in a `position: relative !important` hack. Any new drag game follows the same rules.
+(Per-game tuning — round length, star thresholds, option/target counts — lives in each component's
+tuning levers, not here.)
 
 ## The one that matters: `collisionDetection={kidCollision}`, never `closestCenter`
 

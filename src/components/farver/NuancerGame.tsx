@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { Box, Typography, useMediaQuery } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
-import { DndContext, DragEndEvent, DragStartEvent, DragOverEvent, MeasuringStrategy } from '@dnd-kit/core'
+import { DndContext, DragEndEvent, DragStartEvent, MeasuringStrategy } from '@dnd-kit/core'
 import { useDragOnlySensors } from '../common/dnd/useDragOnlySensors'
 import { kidCollision } from '../common/dnd/kidCollision'
 import { DraggableItem } from '../common/dnd/DraggableItem'
@@ -29,6 +29,8 @@ import { useReducedMotion } from '../../hooks/useReducedMotion'
 import { isIOS } from '../../utils/deviceDetection'
 import { shuffle } from '../../utils/shuffle'
 import { devFx } from '../../utils/devHarness'
+import { useNeverFailHint } from '../../hooks/useNeverFailHint'
+import { useDragActive } from '../common/dnd/useDragActive'
 import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 
 // Nuancer — order shades of one hue from LIGHT to DARK. The real discrimination stretch in the
@@ -67,11 +69,12 @@ const NuancerGame: React.FC = () => {
   const [tray, setTray] = useState<ColorShade[]>([])       // scrambled display order (may include a decoy)
   const [slots, setSlots] = useState<(string | null)[]>([]) // placed shade name per slot index, or null
   const [shakeName, setShakeName] = useState<string | null>(null)
-  const [hintName, setHintName] = useState<string | null>(null)
-  const [activeId, setActiveId] = useState<string | null>(null)   // currently-grabbed tray tile (lift juice)
-  const [overId, setOverId] = useState<string | null>(null)       // slot currently hovered (breathe juice)
+  // Never-fail hint: after WRONG_BEFORE_HINT wrong drops, the correct tile for the next empty slot
+  // pulses. `hintName` holds that shade name (or null). Reset per question AND per correct drop.
+  const { hint: hintName, registerWrong: registerHintWrong, reset: resetHint } = useNeverFailHint<string>(WRONG_BEFORE_HINT)
+  // Shared lift/breathe drag state (activeId = grabbed tray tile, overId = slot under the pointer).
+  const { activeId, overId, setActiveId, onDragOver, clearActive } = useDragActive()
   const [burstSlot, setBurstSlot] = useState<number | null>(null) // localized burst on a just-filled slot
-  const slotWrongRef = useRef(0)
 
   const audio = useSimplifiedAudioHook({ componentId: 'NuancerGame', autoInitialize: false })
   const [gameReady, setGameReady] = useState(false)
@@ -144,9 +147,8 @@ const NuancerGame: React.FC = () => {
     setTray(scrambled)
     setSlots(correct.map(() => null))
     setShakeName(null)
-    setHintName(null)
+    resetHint()
     setBurstSlot(null)
-    slotWrongRef.current = 0
     firstAttemptRef.current = true
 
     if (!voice) return
@@ -250,19 +252,9 @@ const NuancerGame: React.FC = () => {
     sfx.play('pick-up')
   }
 
-  const handleDragOver = (event: DragOverEvent) => {
-    setOverId(event.over ? String(event.over.id) : null)
-  }
-
-  const handleDragCancel = () => {
-    setActiveId(null)
-    setOverId(null)
-  }
-
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event
-    setActiveId(null)
-    setOverId(null)
+    clearActive()
     if (!gameReady || isAdvancing.current) return
 
     const shadeName = active.id as string
@@ -281,8 +273,7 @@ const NuancerGame: React.FC = () => {
       const next = [...slots]
       next[i] = shadeName
       setSlots(next)
-      slotWrongRef.current = 0
-      setHintName(null)
+      resetHint()
       sfx.play('drop-snap')
       setBurstSlot(i)
       if (burstTimer.current) clearTimeout(burstTimer.current)
@@ -298,14 +289,10 @@ const NuancerGame: React.FC = () => {
       setShakeName(shadeName)
       reactGuide('think')
       setTimeout(() => setShakeName(null), 450)
-      slotWrongRef.current += 1
-      if (slotWrongRef.current >= WRONG_BEFORE_HINT) {
+      if (registerHintWrong(() => {
         const firstEmpty = slots.findIndex((s) => !s)
-        if (firstEmpty >= 0 && order[firstEmpty]) {
-          setHintName(order[firstEmpty].name)
-          mascotBus.emit('hint')
-        }
-      }
+        return firstEmpty >= 0 && order[firstEmpty] ? order[firstEmpty].name : null
+      })) mascotBus.emit('hint')
     }
   }
 
@@ -451,9 +438,9 @@ const NuancerGame: React.FC = () => {
     <DndContext
       sensors={sensors}
       onDragStart={handleDragStart}
-      onDragOver={handleDragOver}
+      onDragOver={onDragOver}
       onDragEnd={handleDragEnd}
-      onDragCancel={handleDragCancel}
+      onDragCancel={clearActive}
       collisionDetection={kidCollision}
       // The slot drop-targets live inside PromptStage, which applies a perpetual idle-float to its
       // content. With the default (measure-once-at-drag-start) strategy, pointerWithin would test
@@ -519,17 +506,8 @@ const NuancerGame: React.FC = () => {
                       ? { duration: 1.1, repeat: Infinity, ease: 'easeInOut' as const }
                       : { duration: 0.25 }
                 return (
-                  // Force the absolutely-positioned DraggableItem to flow inline in this flex tray.
-                  <Box
-                    key={shade.name}
-                    sx={{
-                      position: 'relative !important',
-                      left: 'auto !important',
-                      top: 'auto !important',
-                      '& > div': { position: 'relative !important', left: 'auto !important', top: 'auto !important' }
-                    }}
-                  >
-                    <DraggableItem id={shade.name} disabled={!gameReady} data={shade}>
+                  <Box key={shade.name}>
+                    <DraggableItem id={shade.name} inline disabled={!gameReady} data={shade}>
                       <motion.div animate={animate} transition={transition}>
                         <Box sx={{
                           ...tileSx,

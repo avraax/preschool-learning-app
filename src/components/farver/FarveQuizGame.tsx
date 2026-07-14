@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { Box, Typography } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
-import { DndContext, DragEndEvent, DragStartEvent, DragOverEvent } from '@dnd-kit/core'
+import { DndContext, DragEndEvent, DragStartEvent } from '@dnd-kit/core'
 import { useDragOnlySensors } from '../common/dnd/useDragOnlySensors'
 import { kidCollision } from '../common/dnd/kidCollision'
 import { DraggableItem } from '../common/dnd/DraggableItem'
@@ -27,6 +27,8 @@ import { useReducedMotion } from '../../hooks/useReducedMotion'
 import { isIOS } from '../../utils/deviceDetection'
 import { shuffle } from '../../utils/shuffle'
 import { devFx } from '../../utils/devHarness'
+import { useNeverFailHint } from '../../hooks/useNeverFailHint'
+import { useDragActive } from '../common/dnd/useDragActive'
 import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 
 // Hvilken Farve? — drag an object onto the matching COLOR. Tests object→color association and
@@ -69,10 +71,11 @@ const FarveQuizGame: React.FC = () => {
   const [options, setOptions] = useState<string[]>([])   // candidate color names
   const [solvedColor, setSolvedColor] = useState<string | null>(null) // the color it landed in (correct)
   const [shakeColor, setShakeColor] = useState<string | null>(null)
-  const [hintColor, setHintColor] = useState<string | null>(null)
-  const [activeId, setActiveId] = useState<string | null>(null)  // currently-grabbed draggable (lift juice)
-  const [overId, setOverId] = useState<string | null>(null)      // swatch currently hovered (breathe juice)
-  const wrongRef = useRef(0)
+  // Never-fail hint: after WRONG_BEFORE_HINT wrong drops on the current question, the correct color
+  // pulses. `hintColor` holds that color name (or null). Reset per question (see setupQuestion).
+  const { hint: hintColor, setHint: setHintColor, registerWrong: registerHintWrong, reset: resetHint } = useNeverFailHint<string>(WRONG_BEFORE_HINT)
+  // Shared lift/breathe drag state (activeId = grabbed object, overId = swatch under the pointer).
+  const { activeId, overId, setActiveId, onDragOver, clearActive } = useDragActive()
 
   const audio = useSimplifiedAudioHook({ componentId: 'FarveQuizGame', autoInitialize: false })
   const [gameReady, setGameReady] = useState(false)
@@ -128,8 +131,7 @@ const FarveQuizGame: React.FC = () => {
     setOptions(opts)
     setSolvedColor(null)
     setShakeColor(null)
-    setHintColor(null)
-    wrongRef.current = 0
+    resetHint()
     firstAttemptRef.current = true
 
     if (!voice) return
@@ -211,19 +213,9 @@ const FarveQuizGame: React.FC = () => {
     sfx.play('pick-up')
   }
 
-  const handleDragOver = (event: DragOverEvent) => {
-    setOverId(event.over ? String(event.over.id) : null)
-  }
-
-  const handleDragCancel = () => {
-    setActiveId(null)
-    setOverId(null)
-  }
-
   const handleDragEnd = (event: DragEndEvent) => {
     const { over } = event
-    setActiveId(null)
-    setOverId(null)
+    clearActive()
     if (!gameReady || isAdvancing.current || !current) return
     hasInteractedRef.current = true
     audio.updateUserInteraction()
@@ -261,11 +253,7 @@ const FarveQuizGame: React.FC = () => {
       setShakeColor(droppedColor)
       reactGuide('think')
       setTimeout(() => setShakeColor(null), 450)
-      wrongRef.current += 1
-      if (wrongRef.current >= WRONG_BEFORE_HINT) {
-        setHintColor(current.color)
-        mascotBus.emit('hint')
-      }
+      if (registerHintWrong(() => current.color)) mascotBus.emit('hint')
     }
   }
 
@@ -315,9 +303,9 @@ const FarveQuizGame: React.FC = () => {
         <DndContext
           sensors={sensors}
           onDragStart={handleDragStart}
-          onDragOver={handleDragOver}
+          onDragOver={onDragOver}
           onDragEnd={handleDragEnd}
-          onDragCancel={handleDragCancel}
+          onDragCancel={clearActive}
           collisionDetection={kidCollision}
         >
           {/* Repeat the spoken question */}
@@ -336,11 +324,8 @@ const FarveQuizGame: React.FC = () => {
             '@media (orientation: landscape)': { mb: 1, minHeight: 84 }
           }}>
             {!displaySolvedColor && (
-              <Box sx={{
-                position: 'relative !important', left: 'auto !important', top: 'auto !important',
-                '& > div': { position: 'relative !important', left: 'auto !important', top: 'auto !important' }
-              }}>
-                <DraggableItem id="object" disabled={!gameReady} data={current}>
+              <Box>
+                <DraggableItem id="object" inline disabled={!gameReady} data={current}>
                   <motion.div
                     animate={
                       isLiftedObject && !reduce

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import { Box, Typography, Button } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { motion, AnimatePresence } from 'framer-motion'
-import { DndContext, DragEndEvent, DragStartEvent, DragOverEvent } from '@dnd-kit/core'
+import { DndContext, DragEndEvent, DragStartEvent } from '@dnd-kit/core'
 import { useDragOnlySensors } from '../common/dnd/useDragOnlySensors'
 import { kidCollision } from '../common/dnd/kidCollision'
 import { ColorProgressChip } from '../common/ScoreChip'
@@ -27,6 +27,8 @@ import RoundResultScreen from '../common/RoundResultScreen'
 import { isIOS } from '../../utils/deviceDetection'
 import { shuffle } from '../../utils/shuffle'
 import { devFx } from '../../utils/devHarness'
+import { useNeverFailHint } from '../../hooks/useNeverFailHint'
+import { useDragActive } from '../common/dnd/useDragActive'
 // Simplified audio system
 import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 
@@ -151,21 +153,22 @@ const RamFarvenGame: React.FC = () => {
   const [committing, setCommitting] = useState(false)     // locks drops during blend/reveal/fizz
   const [blendResult, setBlendResult] = useState<BlendResult | null>(null)
   const [recipe, setRecipe] = useState<RecipeReveal | null>(null)
-  const [hintActive, setHintActive] = useState(false)
+  // Never-fail hint: after WRONG_MIXES_BEFORE_HINT wrong mixes on the current target, the 2 correct
+  // droplets pulse. Reset per target (see setupTarget).
+  const { hint: hintActive, registerWrong: registerHintWrong, reset: resetHint } = useNeverFailHint<boolean>(WRONG_MIXES_BEFORE_HINT)
 
   // Simplified audio system
   const audio = useSimplifiedAudioHook({
     componentId: 'RamFarvenGame',
     autoInitialize: false
   })
-  const [activeId, setActiveId] = useState<string | null>(null)  // currently-grabbed droplet (lift juice)
-  const [overId, setOverId] = useState<string | null>(null)      // is a drag over the pot? (breathe juice)
+  // Shared lift/breathe drag state (activeId = grabbed droplet, overId = pot under the pointer).
+  const { activeId, overId, setActiveId, onDragOver, clearActive } = useDragActive()
   const [gameReady, setGameReady] = useState(false)
 
   // Bounded round + reward flow (Overhaul Farver §Ram Farven). 8 mixes, 3★ = 0 wrong mixes, 2★ ≤ 2.
   const round = useRound({ length: ROUND_MIXES, starThresholds: { three: 0, two: 2 } })
   const firstAttemptRef = useRef(true)  // first-try flag for the CURRENT target
-  const targetWrongRef = useRef(0)      // wrong mixes on the CURRENT target (drives the hint)
   const [roundOutcome, setRoundOutcome] = useState<RoundOutcome | null>(null)
 
   // Celebration (corner guide reacts via guideReaction)
@@ -216,10 +219,9 @@ const RamFarvenGame: React.FC = () => {
     setMixingZone([])
     setBlendResult(null)
     setRecipe(null)
-    setHintActive(false)
+    resetHint()
     setCommitting(false)
     firstAttemptRef.current = true
-    targetWrongRef.current = 0
 
     if (voice) {
       const delay = isIOS() ? 100 : 300
@@ -406,11 +408,7 @@ const RamFarvenGame: React.FC = () => {
     // (owner request).
 
     // After N wrong mixes on this target, pulse the 2 correct droplets (never-fail scaffold).
-    targetWrongRef.current += 1
-    if (targetWrongRef.current >= WRONG_MIXES_BEFORE_HINT) {
-      setHintActive(true)
-      mascotBus.emit('hint')
-    }
+    if (registerHintWrong()) mascotBus.emit('hint')
 
     if (commitTimer.current) clearTimeout(commitTimer.current)
     commitTimer.current = setTimeout(() => {
@@ -429,20 +427,10 @@ const RamFarvenGame: React.FC = () => {
     sfx.play('pick-up')
   }
 
-  const handleDragOver = (event: DragOverEvent) => {
-    setOverId(event.over ? String(event.over.id) : null)
-  }
-
-  const handleDragCancel = () => {
-    setActiveId(null)
-    setOverId(null)
-  }
-
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event
     hasInteractedRef.current = true
-    setActiveId(null)
-    setOverId(null)
+    clearActive()
 
     if (!over || over.id !== 'mixing-zone') return
 
@@ -561,9 +549,9 @@ const RamFarvenGame: React.FC = () => {
             <DndContext
               sensors={sensors}
               onDragStart={handleDragStart}
-              onDragOver={handleDragOver}
+              onDragOver={onDragOver}
               onDragEnd={handleDragEnd}
-              onDragCancel={handleDragCancel}
+              onDragCancel={clearActive}
               collisionDetection={kidCollision}
             >
               {/* Goal → Pot row: make THIS (left swatch) IN HERE (right pot). */}
@@ -852,21 +840,10 @@ const RamFarvenGame: React.FC = () => {
                       whileHover={{ scale: color.isUsed ? 0.7 : 1.1 }}
                       whileTap={{ scale: 0.95 }}
                     >
-                      <Box
-                        component="div"
-                        sx={{
-                          position: 'relative !important',
-                          left: 'auto !important',
-                          top: 'auto !important',
-                          '& > div': {
-                            position: 'relative !important',
-                            left: 'auto !important',
-                            top: 'auto !important'
-                          }
-                        }}
-                      >
+                      <Box component="div">
                         <DraggableItem
                           id={color.id}
+                          inline
                           disabled={!gameReady || color.isUsed || committing}
                           data={color}
                         >

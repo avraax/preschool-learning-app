@@ -17,6 +17,7 @@ import { OrdlegScoreChip } from '../common/ScoreChip'
 import { OrdlegRepeatButton } from '../common/RepeatButton'
 import { useGameState } from '../../hooks/useGameState'
 import { useRound } from '../../hooks/useRound'
+import { useNeverFailHint } from '../../hooks/useNeverFailHint'
 import { shuffle } from '../../utils/shuffle'
 import { progressStore, type RoundOutcome } from '../../services/progressStore'
 import { sfx } from '../../services/sfxClient'
@@ -88,8 +89,9 @@ const SpellingGame: React.FC = () => {
   const [shakeTileId, setShakeTileId] = useState<string | null>(null)
   // Next-letter hint: after 2 wrong taps on the current slot the correct tile pulses (never-fail
   // scaffold). The wrong tap that triggered it already broke first-try, so the hint costs a star.
-  const [hintTileId, setHintTileId] = useState<string | null>(null)
-  const slotWrongRef = useRef(0) // wrong taps on the CURRENT slot
+  // Reset per word AND per correctly-placed letter (each slot starts fresh). Unlike the color games,
+  // Stav Ordet deliberately does NOT nudge the mascot on hint.
+  const { hint: hintTileId, registerWrong: registerHintWrong, reset: resetHint } = useNeverFailHint<string>(2)
   const [guideReaction, setGuideReaction] = useState<GuideReaction>(null)
   const guideReactionTimer = useRef<NodeJS.Timeout | null>(null)
 
@@ -267,8 +269,7 @@ const SpellingGame: React.FC = () => {
     setTiles(buildTiles(letters))
     // Fresh word → fresh first-try flag + hint state.
     firstAttemptRef.current = true
-    slotWrongRef.current = 0
-    setHintTileId(null)
+    resetHint()
 
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current)
@@ -325,8 +326,7 @@ const SpellingGame: React.FC = () => {
       const newFilled = filledCount + 1
       setUsedTileIds(prev => new Set(prev).add(tile.id))
       setFilledCount(newFilled)
-      slotWrongRef.current = 0
-      setHintTileId(null)
+      resetHint()
 
       // P3 (PRD-02): the final correct letter completes the word — engage the advance-lock NOW,
       // BEFORE the echo await below. Otherwise a tap on a leftover distractor tile during the ~1s
@@ -358,13 +358,9 @@ const SpellingGame: React.FC = () => {
       setTimeout(() => setShakeTileId(null), 450)
 
       // After 2 wrong taps on this slot, point at the correct tile (never-fail scaffold).
-      slotWrongRef.current += 1
-      if (slotWrongRef.current >= 2) {
-        const hint = tiles.find(
-          t => !usedTileIds.has(t.id) && t.letter === targetLetters[filledCount],
-        )
-        if (hint) setHintTileId(hint.id)
-      }
+      registerHintWrong(
+        () => tiles.find(t => !usedTileIds.has(t.id) && t.letter === targetLetters[filledCount])?.id ?? null,
+      )
     }
   }
 
