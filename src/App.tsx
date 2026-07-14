@@ -537,6 +537,10 @@ const NavigationAudioCleanup: React.FC = () => {
     simplifiedAudioController.triggerNavigationCleanup()
     // SFX is a separate short channel; quiet any lingering cues on navigation too.
     sfx.stopAll()
+    // Background music is a menu/front-page bed only — fade it out on entering a game (or a
+    // content/browse screen) and back in on returning to a menu. Music never routes through the
+    // audio controller; this just tells the separate music channel where we are.
+    musicClient.setRoute(location.pathname)
   }, [location.pathname])
   
   return null // This component only handles side effects

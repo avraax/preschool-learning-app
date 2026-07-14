@@ -124,6 +124,11 @@ const UnifiedMemoryGame: React.FC<UnifiedMemoryGameProps> = ({ config }) => {
   const mismatchesRef = useRef(0)
   const matchStreakRef = useRef(0)
   const longestMatchStreakRef = useRef(0)
+  // Bumps each board so card React keys never collide across boards. card.id is content-derived
+  // (`${item}-1`) and the same letters/numbers reappear on a new board, so without this a reused
+  // key could flip a stale card back over + skip the deal-in stagger. (card.id itself is left as-is
+  // — the match logic keys off it; only the React key is namespaced.)
+  const boardSeq = useRef(0)
   const [roundOutcome, setRoundOutcome] = useState<RoundOutcome | null>(null)
 
   // Centralized game state management
@@ -253,6 +258,7 @@ const UnifiedMemoryGame: React.FC<UnifiedMemoryGameProps> = ({ config }) => {
     // Shuffle all cards
     const shuffledCards = cardData.sort(() => Math.random() - 0.5)
     
+    boardSeq.current += 1 // fresh key namespace for this board's cards
     setCards(shuffledCards)
     setRevealedCards([])
     setMatchedPairs(0)
@@ -642,7 +648,7 @@ const UnifiedMemoryGame: React.FC<UnifiedMemoryGameProps> = ({ config }) => {
 
               return (
                 <motion.div
-                  key={card.id}
+                  key={`b${boardSeq.current}-${card.id}`}
                   initial={reduce ? false : { opacity: 0, scale: 0.8 }}
                   animate={{
                     opacity: 1,

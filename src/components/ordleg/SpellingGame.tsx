@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import {
   Box,
   Typography,
@@ -104,6 +104,10 @@ const SpellingGame: React.FC = () => {
   const welcomeTriggered = useRef(false)
   const previousWord = useRef<string | null>(null)
   const isAdvancing = useRef(false)
+  // Bumps every word so tile React keys never collide across words. Without it two consecutive
+  // words that share an index+letter (e.g. a distractor, or S) reuse the same motion.div, and
+  // Framer `layout`-animates it from its old position to the new one — the "floating" tiles.
+  const wordSeq = useRef(0)
   // Live current word (so it can be voiced after the welcome) + interaction guard (so a late
   // welcome never talks over active play).
   const wordRef = useRef<string | null>(null)
@@ -205,7 +209,7 @@ const SpellingGame: React.FC = () => {
 
     const all = [...letters, ...distractors]
     return all
-      .map((letter, index) => ({ id: `tile-${index}-${letter}`, letter }))
+      .map((letter, index) => ({ id: `tile-${wordSeq.current}-${index}-${letter}`, letter }))
       .sort(() => Math.random() - 0.5)
   }
 
@@ -213,6 +217,7 @@ const SpellingGame: React.FC = () => {
   // voiced after the welcome instead).
   const generateNewWord = (voice = true) => {
     isAdvancing.current = false
+    wordSeq.current += 1 // fresh key namespace for this word's tiles (see wordSeq)
 
     // Pick a word, avoiding an immediate repeat
     let candidates = SPELLING_WORDS.filter(w => w.word !== previousWord.current)
@@ -482,8 +487,10 @@ const SpellingGame: React.FC = () => {
                   maxWidth: 560
                 }}
               >
-                <AnimatePresence>
-                  {availableTiles.map((tile) => {
+                {/* No layout/exit animation: a consumed tile just unmounts and flex reflows
+                    instantly — no floating toward the slots, no leftover gaps. Unique per-word
+                    keys (see wordSeq) mean a new word swaps the whole set cleanly. */}
+                {availableTiles.map((tile) => {
                     const isHint = tile.id === hintTileId
                     const isShaking = shakeTileId === tile.id
                     // Hint: a gentle attention pulse (motion) or a static glow ring (reduced motion).
@@ -500,10 +507,8 @@ const SpellingGame: React.FC = () => {
                     return (
                     <motion.div
                       key={tile.id}
-                      layout
                       initial={{ opacity: 0, scale: 0.8 }}
                       animate={animate}
-                      exit={{ opacity: 0, scale: 0.5 }}
                       transition={transition}
                       whileHover={{ scale: 1.08 }}
                       whileTap={{ scale: 0.92 }}
@@ -561,7 +566,6 @@ const SpellingGame: React.FC = () => {
                     </motion.div>
                     )
                   })}
-                </AnimatePresence>
               </Box>
             </Box>
           </>

@@ -37,8 +37,16 @@ curl -s -o /tmp/bug-R7K3F.jpg "<screenshotUrl>"  # then READ the jpg — actuall
 ## 4. Read the report in this order
 
 1. `report.note` — the human's words. (`report.category` is just `crash` for auto-reports, `andet` otherwise.)
-2. `report.app` — `route` (which game), `version`/`commitHash` (match code with
-   `git show <commitHash>:<file>` if the deploy has moved on), `online`, `viewport`.
+2. `report.app` — `route` (which game), then the **build**: `commitHash` + `buildTime` are the
+   real key — the `version` string is rarely bumped, so it can NOT separate pre-fix from post-fix;
+   `commitHash` can. Match code with `git show <commitHash>:<file>` if the deploy has moved on.
+   **When confirming a fix discussed in this conversation**, note the fix commit and classify every
+   report: `commitHash` at/after the fix = real signal about the fix; a report still on an older
+   commit = a stale session that hadn't reloaded (especially the PWA / iPad home-screen app, which
+   keeps the old service worker until fully reopened) — that's NOT a regression, so say so instead
+   of chasing it. If unsure what's actually live, establish it first:
+   `curl -s "$BASE/api/version"` (returns `{buildTime, version, commitHash}`) + `git log --oneline`.
+   Then `online`, `viewport`.
 3. `report.error` — crashes only: message/stack/componentStack.
 4. `report.diagnostics.breadcrumbs` — the route + tap trail: what the child actually did.
 5. `report.diagnostics.console` — errors/warnings around the incident (TTS fallbacks appear
@@ -47,11 +55,13 @@ curl -s -o /tmp/bug-R7K3F.jpg "<screenshotUrl>"  # then READ the jpg — actuall
    holds the API's error body.
 7. `report.audio` — for sound issues: `ttsHealth.circuitOpen`/`failureCount`, `permission`
    (audioContextState "suspended" = iOS gesture problem), `voiceOverride` (non-null = the
-   narrator voice was overridden!), `sfxEnabled`.
+   narrator voice was overridden!), `sfxEnabled`, and `music` (background-music health:
+   `world`/`playing`/`ctxState`/`lastError`; also grep the console ring for `[music]` lines).
 8. `report.device` + `report.progress` as supporting context.
 
 ## 5. Then debug
 
-Summarize in 3-5 sentences: what happened, where (route/game), on what (device/version), and the
-prime suspect subsystem — then open the implicated code and investigate. Delete `/tmp/bug-*.jpg`
-when done.
+Summarize in 3-5 sentences: what happened, where (route/game), on what (device + **which build**,
+by `commitHash`), and the prime suspect subsystem — then open the implicated code and investigate.
+When the point is to confirm a fix, state explicitly whether the report is on the fixed build or a
+stale one. Delete `/tmp/bug-*.jpg` when done.

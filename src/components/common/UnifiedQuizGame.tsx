@@ -145,6 +145,11 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
   // Tracks the live current item so its prompt can be voiced after the welcome finishes (the board
   // is generated before the welcome plays, so currentItem state isn't readable synchronously yet).
   const currentItemRef = useRef<QuizItem | null>(null)
+  // Bumps each question so option React keys never collide across questions. Without it, a value
+  // that lands at the same index in two consecutive questions reuses the same motion.div and skips
+  // its enter animation (and would "float" if a layout animation were ever added). Mirrors
+  // SpellingGame's wordSeq.
+  const questionSeq = useRef(0)
   // True once the child taps — suppresses a (possibly late) welcome from talking over their play.
   const hasInteractedRef = useRef(false)
 
@@ -160,6 +165,7 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
     const quizItem = config.generateQuizItem()
     currentItemRef.current = quizItem
     setCurrentItem(quizItem)
+    questionSeq.current += 1 // fresh key namespace for this question's option tiles
     setShowOptions(config.generateOptions(quizItem))
 
     // Clear any existing timeout
@@ -577,7 +583,7 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
               ))
             : showOptions.map((item, index) => (
                 <motion.div
-                  key={`${item.value}-${index}`}
+                  key={`q${questionSeq.current}-${item.value}-${index}`}
                   initial={reduce ? false : { opacity: 0, scale: 0.8 }}
                   animate={reduce ? { opacity: 1 } : { opacity: 1, scale: [0.8, 1.04, 1] }}
                   transition={reduce ? { duration: 0 } : { delay: index * 0.08, duration: 0.25, ease: 'easeOut' }}

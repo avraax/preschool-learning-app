@@ -83,6 +83,9 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
   // Live current problem (so it can be voiced after the welcome) + interaction guard (so a late
   // welcome never talks over active play).
   const problemRef = useRef<{ a: number; b: number } | null>(null)
+  // Per-problem key namespace so option tiles never reuse a motion.div across problems (which would
+  // skip the enter animation on a shared value at the same index). Mirrors SpellingGame's wordSeq.
+  const optionSeq = useRef(0)
   const hasInteractedRef = useRef(false)
 
   const { showCelebration, celebrationIntensity, celebrationDuration, celebrateTier, stopCelebration } = useCelebration()
@@ -228,6 +231,7 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
       if (r !== answer && !picks.includes(r)) picks.push(r)
     }
 
+    optionSeq.current += 1 // fresh key namespace for this problem's option tiles
     setOptions([answer, ...picks].sort(() => Math.random() - 0.5))
 
     if (timeoutRef.current) {
@@ -530,7 +534,7 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
         >
           {showEquation ? options.map((option, index) => (
             <motion.div
-              key={`${option}-${index}`}
+              key={`o${optionSeq.current}-${option}-${index}`}
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: index * 0.08 }}

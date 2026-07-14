@@ -59,6 +59,15 @@ const WORLD_LOOP: Record<string, { loopStart?: number; loopEnd?: number }> = {
   dino: { loopEnd: 153.5 },
 }
 
+// Music is a MENU / front-page bed only — it must NOT play inside a game (or a content/browse
+// screen), so narration + SFX own the mix there. These are the only routes that keep music on;
+// everything deeper (games and Lær/browse screens) fades the bed out.
+const MENU_PATHS = new Set(['/', '/album', '/alphabet', '/math', '/farver', '/english', '/ordleg'])
+function routeAllowsMusic(pathname: string): boolean {
+  const p = (pathname || '/').replace(/\/+$/, '')
+  return MENU_PATHS.has(p === '' ? '/' : p)
+}
+
 interface Track {
   world: string
   howl: Howl
@@ -73,6 +82,7 @@ class MusicClient {
   private current: Track | null = null
   private worldUrl: Record<string, string> = {}
   private hiddenPaused = false // paused because the app was backgrounded (not user-disabled)
+  private inGame = false // suppressed because the current route is a game/content screen (not a menu)
   private lastError: string | null = null
 
   constructor() {
@@ -112,6 +122,13 @@ class MusicClient {
     } catch {
       /* ignore */
     }
+    // Seed the in-game flag from the initial route so music never auto-starts if the app is
+    // deep-linked / reloaded straight into a game (the router later keeps it in sync via setRoute).
+    try {
+      if (typeof window !== 'undefined') this.inGame = !routeAllowsMusic(window.location.pathname)
+    } catch {
+      /* ignore */
+    }
   }
 
   // Diagnostics breadcrumb — captured by diagnosticsBuffer's console ring, so it lands in bug
@@ -147,9 +164,29 @@ class MusicClient {
   setWorld(world: string, url?: string): void {
     this.desiredWorld = world
     if (url) this.worldUrl[world] = url
-    if (!this.enabled) return
+    if (!this.enabled || this.inGame) return
     if (this.current?.world === world) return
     this.crossFadeTo(world)
+  }
+
+  // Route → music context. Music is a menu/front-page bed only; entering a game (or a content
+  // /browse screen) fades it out, returning to a menu fades it back in. Called on every navigation.
+  setRoute(pathname: string): void {
+    this.setInGame(!routeAllowsMusic(pathname))
+  }
+
+  private setInGame(inGame: boolean): void {
+    if (inGame === this.inGame) return
+    this.inGame = inGame
+    if (inGame) {
+      // Entering a game → fade the bed out + unload (stop()); no music under a game.
+      this.stop()
+      this.log('suppress (entered game)')
+    } else {
+      // Back to a menu/front page → recreate + fade the bed in (same proven path as first start).
+      this.log('unsuppress (back to menu)')
+      if (this.enabled && !this.hiddenPaused && this.desiredWorld) this.crossFadeTo(this.desiredWorld)
+    }
   }
 
   private crossFadeTo(world: string): void {
@@ -230,7 +267,7 @@ class MusicClient {
 
   // Start/resume the desired world's loop (call on the first user gesture / when music is enabled).
   resume(): void {
-    if (!this.enabled || !this.desiredWorld) return
+    if (!this.enabled || !this.desiredWorld || this.inGame) return
     if (this.current) {
       // Already have a track — make sure it's audible and at the right (possibly ducked) volume.
       try {
@@ -278,7 +315,7 @@ class MusicClient {
 
   // App foregrounded: resume only if we paused it for backgrounding (respect a user disable).
   private resumeFromBackground(): void {
-    if (!this.enabled || !this.hiddenPaused) return
+    if (!this.enabled || !this.hiddenPaused || this.inGame) return
     this.hiddenPaused = false
     if (this.current) {
       try {
@@ -323,6 +360,7 @@ class MusicClient {
     volume: number
     html5: true
     hiddenPaused: boolean
+    inGame: boolean
     ctxState: string | null
     lastError: string | null
   } {
@@ -347,6 +385,7 @@ class MusicClient {
       volume: this.currentVolume(),
       html5: true,
       hiddenPaused: this.hiddenPaused,
+      inGame: this.inGame,
       ctxState,
       lastError: this.lastError,
     }
