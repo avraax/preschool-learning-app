@@ -16,9 +16,13 @@ import {
   totalStickerCount,
   type Sticker,
 } from '../config/stickers'
+import { levelFromXp, bloomStage, bloomFill, roundXp } from '../config/progression'
 
 const STORAGE_KEY = 'bornelaering-progress'
-const SCHEMA_VERSION = 1 as const
+// v2 (Liveliness PRD-01): adds the `progression` slice (global XP/level + per-section bloom).
+// normalize() still resets on any version mismatch, so v1 blobs wipe to a fresh v2 default — the
+// owner accepted losing already-earned stickers/stars on this bump (migration stays trivial).
+const SCHEMA_VERSION = 2 as const
 
 export interface PerGameStats {
   bestStreak: number // longest correct-in-a-row (first try) ever
@@ -51,6 +55,65 @@ const DIFFICULTY_LEVELS: DifficultyLevel[] = ['let', 'normal', 'svaer']
 const isLevel = (v: unknown): v is DifficultyLevel =>
   typeof v === 'string' && (DIFFICULTY_LEVELS as string[]).includes(v)
 
+// Canonical section list (note: colors is `colors`, route is `/farver`).
+const SECTION_IDS: SectionId[] = ['alphabet', 'math', 'colors', 'english', 'ordleg']
+
+// ----- Progression (Liveliness PRD-01) -------------------------------------------------------
+// One play feeds BOTH layers: the amount adds to the cross-game `globalXp` AND to the attributed
+// section's `bloom`. Level and bloom stage/fill are DERIVED from XP (see src/config/progression.ts)
+// so they can never desync; the only stored cursor is `lastCelebratedLevel` (fires the level-up
+// ceremony exactly once, reload/cross-tab safe).
+export type XpReason = 'round' | 'browse-milestone' | 'sticker' | 'best' | 'page'
+
+export interface SectionBloom {
+  xp: number
+  updatedAt: number
+}
+
+export interface ProgressionState {
+  globalXp: number // lifetime global XP (monotonic)
+  lastCelebratedLevel: number // highest level the ceremony has already fired for
+  bloom: Record<SectionId, SectionBloom>
+  updatedAt: number
+}
+
+export interface XpGrantResult {
+  granted: number
+  section: SectionId
+  global: {
+    xpBefore: number
+    xpAfter: number
+    levelBefore: number
+    levelAfter: number
+    leveledUp: boolean
+    xpIntoLevel: number
+    xpToNextLevel: number
+    xpForThisLevel: number
+  }
+  bloom: {
+    xpBefore: number
+    xpAfter: number
+    stageBefore: number
+    stageAfter: number
+    stageAdvanced: boolean
+    fillBefore: number
+    fillAfter: number
+  }
+}
+
+const defaultBloom = (): SectionBloom => ({ xp: 0, updatedAt: 0 })
+const defaultProgression = (): ProgressionState => ({
+  globalXp: 0,
+  // Everyone STARTS at trin 1, so it's already "reached" — celebrating it would fire a bogus
+  // ceremony on first load. The first real level-up (1→2) is the first celebration.
+  lastCelebratedLevel: 1,
+  bloom: Object.fromEntries(SECTION_IDS.map((s) => [s, defaultBloom()])) as Record<
+    SectionId,
+    SectionBloom
+  >,
+  updatedAt: 0,
+})
+
 export interface ProgressState {
   version: typeof SCHEMA_VERSION
   stickers: {
@@ -64,6 +127,7 @@ export interface ProgressState {
     totalStars: number
     totalStickers: number
   }
+  progression: ProgressionState
   settings: ProgressSettings
 }
 
@@ -100,6 +164,7 @@ export interface RoundOutcome {
   stickers: StickerAward[] // round sticker + optional best-bonus sticker
   pageCompleted: { id: string; title: string; emoji: string } | null
   totals: { totalStars: number; totalStickers: number }
+  xp: XpGrantResult // Liveliness PRD-01: XP folded into the same atomic round commit
 }
 
 const DEFAULT_THRESHOLDS = { three: 0, two: 2 }
@@ -117,6 +182,7 @@ const defaultState = (): ProgressState => ({
   stickers: { collected: {}, newIds: [] },
   perGame: {},
   totals: { totalStars: 0, totalStickers: 0 },
+  progression: defaultProgression(),
   settings: { sfxEnabled: true, musicEnabled: true, musicDefaultOn: true, difficulty: { global: 'normal' } },
 })
 
@@ -172,6 +238,27 @@ const normalize = (raw: unknown): ProgressState => {
           if (isLevel(v)) per[k as SectionId] = v
         }
         if (Object.keys(per).length) state.settings.difficulty.perSection = per
+      }
+    }
+  }
+  // Progression slice (v2). Fill each numeric field defensively (same style as perGame/settings);
+  // missing sections fall back to defaultBloom(), unknown section keys are ignored.
+  if (r.progression && typeof r.progression === 'object') {
+    const p = r.progression as Partial<ProgressionState>
+    const num = (x: unknown) => Math.max(0, Math.floor(Number(x) || 0))
+    state.progression.globalXp = num(p.globalXp)
+    // Keep the default (1) when the field is absent so an older/partial blob can't reset the cursor
+    // to 0 and re-celebrate trin 1.
+    if (p.lastCelebratedLevel != null) state.progression.lastCelebratedLevel = num(p.lastCelebratedLevel)
+    state.progression.updatedAt = num(p.updatedAt)
+    if (p.bloom && typeof p.bloom === 'object') {
+      const rawBloom = p.bloom as Record<string, unknown>
+      for (const s of SECTION_IDS) {
+        const bl = rawBloom[s]
+        if (bl && typeof bl === 'object') {
+          const b = bl as Partial<SectionBloom>
+          state.progression.bloom[s] = { xp: num(b.xp), updatedAt: num(b.updatedAt) }
+        }
       }
     }
   }
@@ -409,6 +496,22 @@ class ProgressStore {
         pageCompleted = setSummary(bonusGrant.completedSetId)
     }
 
+    // Fold XP into the SAME draft/commit (Liveliness PRD-01): computed from round STRUCTURE only —
+    // never the difficulty setting — and applied off the post-round draft numbers so `xp` reflects
+    // the atomic post-round state. One play feeds both global level and the section's bloom.
+    const xp = this.applyXp(
+      draft,
+      sectionForGameId(gameId),
+      roundXp({
+        correct: input.correct,
+        total: input.total,
+        mistakes,
+        anyNewBest,
+        stickerCount: stickers.length,
+        pageCompleted: !!pageCompleted,
+      }),
+    )
+
     this.commit(draft)
 
     return {
@@ -424,7 +527,97 @@ class ProgressStore {
       stickers,
       pageCompleted,
       totals: { totalStars: draft.totals.totalStars, totalStickers: draft.totals.totalStickers },
+      xp,
     }
+  }
+
+  // ----- progression (XP / level / bloom) -----
+  // Mutates the given (already-cloned) draft's progression slice and returns the before/after report.
+  // Global level + bloom stage/fill are derived from the curve (never stored), so this can't desync.
+  private applyXp(draft: ProgressState, section: SectionId, amount: number): XpGrantResult {
+    const amt = Math.max(0, Math.floor(amount))
+    const now = Date.now()
+    const p = draft.progression
+
+    const xpBefore = p.globalXp
+    const before = levelFromXp(xpBefore)
+    p.globalXp = xpBefore + amt
+    const after = levelFromXp(p.globalXp)
+
+    const bloomBefore = (p.bloom[section] ?? defaultBloom()).xp
+    const bloomAfter = bloomBefore + amt
+    p.bloom[section] = { xp: bloomAfter, updatedAt: now }
+    p.updatedAt = now
+
+    return {
+      granted: amt,
+      section,
+      global: {
+        xpBefore,
+        xpAfter: p.globalXp,
+        levelBefore: before.level,
+        levelAfter: after.level,
+        leveledUp: after.level > before.level,
+        xpIntoLevel: after.xpIntoLevel,
+        xpToNextLevel: after.xpToNextLevel,
+        xpForThisLevel: after.xpForThisLevel,
+      },
+      bloom: {
+        xpBefore: bloomBefore,
+        xpAfter: bloomAfter,
+        stageBefore: bloomStage(bloomBefore),
+        stageAfter: bloomStage(bloomAfter),
+        stageAdvanced: bloomStage(bloomAfter) > bloomStage(bloomBefore),
+        fillBefore: bloomFill(bloomBefore),
+        fillAfter: bloomFill(bloomAfter),
+      },
+    }
+  }
+
+  // Feed BOTH layers in one commit. Used by browse-milestone grants (rounds go through
+  // recordRoundResult). `reason` is reserved for future telemetry; the amount is fully caller-owned.
+  grantXp(section: SectionId, amount: number, _reason: XpReason): XpGrantResult {
+    const draft = structuredCloneState(this.state)
+    const result = this.applyXp(draft, section, amount)
+    this.commit(draft)
+    return result
+  }
+
+  globalLevel(): number {
+    return levelFromXp(this.state.progression.globalXp).level
+  }
+
+  xpProgressToNextLevel(): {
+    level: number
+    xpIntoLevel: number
+    xpToNextLevel: number
+    xpForThisLevel: number
+    fill: number
+  } {
+    const info = levelFromXp(this.state.progression.globalXp)
+    return {
+      level: info.level,
+      xpIntoLevel: info.xpIntoLevel,
+      xpToNextLevel: info.xpToNextLevel,
+      xpForThisLevel: info.xpForThisLevel,
+      fill: info.xpForThisLevel > 0 ? info.xpIntoLevel / info.xpForThisLevel : 0,
+    }
+  }
+
+  bloomFor(section: SectionId): { xp: number; stage: number; fill: number } {
+    const xp = (this.state.progression.bloom[section] ?? defaultBloom()).xp
+    return { xp, stage: bloomStage(xp), fill: bloomFill(xp) }
+  }
+
+  // Advance the celebrated-level cursor (idempotent; only moves forward). Called by the level-up
+  // overlay AFTER the ceremony plays, so "XP recorded" and "ceremony shown" stay decoupled — that's
+  // what makes reload / cross-tab correct (last-writer-wins: the tab that celebrated advances it).
+  markLevelCelebrated(level: number): void {
+    const lvl = Math.max(0, Math.floor(level))
+    if (lvl <= this.state.progression.lastCelebratedLevel) return
+    const draft = structuredCloneState(this.state)
+    draft.progression.lastCelebratedLevel = lvl
+    this.commit(draft)
   }
 
   // Clear the "new sticker" flags (called when the album is opened, so the "nyt!" badges
@@ -460,6 +653,14 @@ function structuredCloneState(s: ProgressState): ProgressState {
     stickers: { collected: { ...s.stickers.collected }, newIds: [...s.stickers.newIds] },
     perGame: { ...s.perGame },
     totals: { ...s.totals },
+    progression: {
+      globalXp: s.progression.globalXp,
+      lastCelebratedLevel: s.progression.lastCelebratedLevel,
+      bloom: Object.fromEntries(
+        SECTION_IDS.map((id) => [id, { ...(s.progression.bloom[id] ?? defaultBloom()) }]),
+      ) as Record<SectionId, SectionBloom>,
+      updatedAt: s.progression.updatedAt,
+    },
     settings: {
       ...s.settings,
       difficulty: {
@@ -475,6 +676,17 @@ function structuredCloneState(s: ProgressState): ProgressState {
 function setSummary(setId: string): { id: string; title: string; emoji: string } | null {
   const set = findSet(setId)
   return set ? { id: set.id, title: set.title, emoji: set.emoji } : null
+}
+
+// Map a gameId to the section its XP/bloom is attributed to. `<section>.<game>` for the five
+// sections; the off-menu Memory boards (`memory.letters.*` / `memory.numbers.*`) fold into the
+// alphabet / math worlds by content type. Global XP counts regardless — this only picks the bloom.
+function sectionForGameId(gameId: string): SectionId {
+  const head = gameId.split('.')[0]
+  if ((SECTION_IDS as string[]).includes(head)) return head as SectionId
+  if (gameId.startsWith('memory.numbers')) return 'math'
+  if (gameId.startsWith('memory.letters')) return 'alphabet'
+  return 'alphabet'
 }
 
 export const progressStore = new ProgressStore()

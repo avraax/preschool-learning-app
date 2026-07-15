@@ -15,6 +15,7 @@ import PromptStage, { HeroEmoji } from '../common/PromptStage'
 import StickerReveal from '../common/StickerReveal'
 import { useCelebration } from '../common/CelebrationEffect'
 import { progressStore, type StickerAward } from '../../services/progressStore'
+import { levelUpBus } from '../../services/levelUpBus'
 import { stickerSetForSection } from '../../config/stickers'
 import { englishThemes, EnglishWord } from '../../config/englishVocab'
 import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
@@ -63,6 +64,10 @@ const EnglishLearning: React.FC = () => {
     const milestone = Math.floor(size / EXPLORE_MILESTONE)
     if (milestone > milestoneRef.current) {
       milestoneRef.current = milestone
+      // Browse XP (Liveliness PRD-01): flat grant at each distinct-tap milestone (distinct-tap gate
+      // is the anti-farm). Fire the level-up ceremony on a crossing; the app-root watcher backs it.
+      const xp = progressStore.grantXp('english', 6, 'browse-milestone')
+      if (xp.global.leveledUp) levelUpBus.emit({ level: xp.global.levelAfter, section: xp.section })
       const award = progressStore.awardSticker(stickerSetForSection('english'))
       setStickerAward(award)
       celebrateTier('sticker')

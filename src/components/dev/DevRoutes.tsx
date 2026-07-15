@@ -7,7 +7,7 @@ import GameShell from '../common/GameShell'
 import RoundResultScreen from '../common/RoundResultScreen'
 import type { MascotEvent } from '../../services/mascotBus'
 import { allStickers } from '../../config/stickers'
-import type { RoundOutcome, StickerAward } from '../../services/progressStore'
+import type { RoundOutcome, StickerAward, XpGrantResult } from '../../services/progressStore'
 
 // DEV-only harness routes (UI/UX Overhaul PRD §8.0.3). Routed ONLY under import.meta.env.DEV in
 // App.tsx, so they never ship. They render reward/mascot states deterministically for the
@@ -56,6 +56,33 @@ export const DevRoundResult: React.FC = () => {
     count: 1,
   }
   const correct = stars === 3 ? 8 : stars === 2 ? 6 : 4
+  // Liveliness PRD-01: ?levelup=1&level=N forces the XP meter to fill fully + hands off to the
+  // level-up overlay, so the ceremony is capturable in the screenshot harness.
+  const levelup = p.get('levelup') === '1'
+  const lvl = Math.max(1, Number(p.get('level') ?? 3))
+  const xp: XpGrantResult = {
+    granted: 33,
+    section: 'alphabet',
+    global: {
+      xpBefore: 0,
+      xpAfter: 33,
+      levelBefore: levelup ? Math.max(1, lvl - 1) : lvl,
+      levelAfter: lvl,
+      leveledUp: levelup,
+      xpIntoLevel: levelup ? 13 : 10,
+      xpToNextLevel: 22,
+      xpForThisLevel: 35,
+    },
+    bloom: {
+      xpBefore: 0,
+      xpAfter: 33,
+      stageBefore: 0,
+      stageAfter: 0,
+      stageAdvanced: false,
+      fillBefore: 0,
+      fillAfter: 33 / 480,
+    },
+  }
   const outcome: RoundOutcome = {
     gameId: 'dev.sample',
     correct,
@@ -69,6 +96,7 @@ export const DevRoundResult: React.FC = () => {
     stickers: showSticker ? [award] : [],
     pageCompleted: null,
     totals: { totalStars: 12, totalStickers: 5 },
+    xp,
   }
 
   return (

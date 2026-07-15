@@ -1,6 +1,12 @@
 import { ttsClient, TtsClient } from '../services/ttsClient'
 import { isIOS } from './deviceDetection'
-import { DANISH_PHRASES, getDanishNumberText, getDanishLetterName } from '../config/danish-phrases'
+import {
+  DANISH_PHRASES,
+  getDanishNumberText,
+  getDanishLetterName,
+  LEVEL_UP_PRAISE,
+  levelUpLine,
+} from '../config/danish-phrases'
 // Remote console logging removed for production
 
 // Production logging - only critical errors
@@ -209,6 +215,16 @@ export class SimplifiedAudioController {
       const customAudioConfig = customSpeed ? { speakingRate: customSpeed } : undefined
       await this.ttsClient.synthesizeAndPlay(numberText, 'primary', true, customAudioConfig)
     })
+  }
+
+  // Level-up praise (Liveliness PRD-01). Rotates a closed set of praise templates by level so the
+  // same level always speaks the same line (deterministic → prebake-friendly, no Math.random), with
+  // the level number spoken as Danish words. Routes through speak() so its cache key matches the
+  // prebaked Danish phrase path exactly. One call → single TTS channel (no queue).
+  async speakLevelUp(level: number): Promise<string> {
+    const lvl = Math.max(1, Math.floor(level))
+    const template = LEVEL_UP_PRAISE[lvl % LEVEL_UP_PRAISE.length]
+    return this.speak(levelUpLine(template, lvl))
   }
 
   /**

@@ -11,6 +11,8 @@ import { useReducedMotion } from '../../hooks/useReducedMotion'
 import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 import { sfx } from '../../services/sfxClient'
 import { mascotBus } from '../../services/mascotBus'
+import { levelUpBus } from '../../services/levelUpBus'
+import { levelFromXp } from '../../config/progression'
 import CelebrationEffect from './CelebrationEffect'
 import StickerReveal from './StickerReveal'
 import type { RoundOutcome } from '../../services/progressStore'
@@ -72,9 +74,22 @@ const RoundResultScreen: React.FC<RoundResultScreenProps> = ({
   const t = reduce ? { starBase: 0, starStep: 60 } : { starBase: 450, starStep: 340 }
   const starsSpan = stars * t.starStep
   const stickerAt = t.starBase + starsSpan + (anyNewBest ? 700 : 250) + 400
-  const buttonsAt = stickerAt + 800
+  // XP-meter beat (Liveliness PRD-01): the ring/bar fills after the sticker reveal, on EVERY round.
+  const xpAt = stickerAt + (reduce ? 120 : 350)
+  const buttonsAt = xpAt + (reduce ? 120 : 850)
   // Framer delay (s); 0 once fast-forwarded so every beat snaps to its end state.
   const dly = (ms: number) => (ff ? 0 : ms / 1000)
+
+  // XP progress within a level, before → after this round (mirrors the home companion ring). On a
+  // level-up the meter simply fills to full ("you filled it up!"); the LevelUpOverlay reveals the
+  // new level as the climactic beat, so this screen never draws the level-up itself.
+  const leveledUp = outcome.xp.global.leveledUp
+  const before = levelFromXp(outcome.xp.global.xpBefore)
+  const after = levelFromXp(outcome.xp.global.xpAfter)
+  const meterFrom = before.xpForThisLevel ? before.xpIntoLevel / before.xpForThisLevel : 0
+  const meterTo = leveledUp ? 1 : after.xpForThisLevel ? after.xpIntoLevel / after.xpForThisLevel : 0
+  const meterLevel = before.level
+  const levelUpEmittedRef = useRef(false)
 
   // One composed Danish summary (single TTS channel — avoid clip cancellation). Guarded so the
   // scheduled play and a fast-forward tap can't double-speak. Branches new vs shiny (PRD-09 P2):
@@ -148,6 +163,15 @@ const RoundResultScreen: React.FC<RoundResultScreenProps> = ({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // Level-up handoff (Liveliness PRD-01 §7). When this round crossed a level, hand off to the
+  // app-root <LevelUpOverlay/> as the climactic final beat — once the buttons are ready (the
+  // ceremony has played) or on fast-forward. Guarded so it fires exactly once.
+  useEffect(() => {
+    if (!buttonsReady || !leveledUp || levelUpEmittedRef.current) return
+    levelUpEmittedRef.current = true
+    levelUpBus.emit({ level: outcome.xp.global.levelAfter, section: outcome.xp.section })
+  }, [buttonsReady, leveledUp, outcome])
 
   const starSlots = [0, 1, 2]
 
@@ -300,6 +324,72 @@ const RoundResultScreen: React.FC<RoundResultScreenProps> = ({
             size={phoneLandscape ? 76 : 110}
           />
         ))}
+      </Box>
+
+      {/* XP-meter beat (Liveliness PRD-01) — a filling ring/bar mirroring the home companion,
+          appearing after the sticker reveal on every round. Text-free (pre-reader): the level
+          integer is the only number. */}
+      <Box
+        component={motion.div}
+        initial={reduce ? false : { opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: dly(xpAt) }}
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: { xs: 1, md: 1.25 },
+          width: 'min(340px, 82%)',
+        }}
+      >
+        {/* Level pill */}
+        <Box
+          sx={{
+            flex: '0 0 auto',
+            minWidth: 44,
+            height: 32,
+            px: 1,
+            borderRadius: '999px',
+            bgcolor: accent,
+            color: '#fff',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontFamily: COMIC,
+            fontWeight: 800,
+            fontSize: '1rem',
+            border: '2px solid #fff',
+            boxShadow: `0 3px 10px ${hexToRgba(accent, 0.5)}`,
+            [PHONE_LANDSCAPE]: { height: 26, minWidth: 38, fontSize: '0.85rem' },
+          }}
+        >
+          {meterLevel}
+        </Box>
+        {/* Fill bar */}
+        <Box
+          sx={{
+            position: 'relative',
+            flex: 1,
+            height: 14,
+            borderRadius: 7,
+            bgcolor: dark ? 'rgba(255,255,255,0.2)' : hexToRgba(accent, 0.16),
+            overflow: 'hidden',
+            [PHONE_LANDSCAPE]: { height: 10 },
+          }}
+        >
+          <Box
+            component={motion.div}
+            initial={reduce ? false : { width: `${Math.round(meterFrom * 100)}%` }}
+            animate={{ width: `${Math.round(meterTo * 100)}%` }}
+            transition={reduce ? { duration: 0 } : { delay: dly(xpAt) + 0.15, duration: 0.7, ease: [0.34, 1.56, 0.64, 1] }}
+            sx={{
+              position: 'absolute',
+              inset: 0,
+              borderRadius: 7,
+              background: `linear-gradient(90deg, ${hexToRgba(accent, 0.85)} 0%, ${accent} 100%)`,
+              boxShadow: `0 0 10px ${hexToRgba(accent, 0.6)}`,
+            }}
+          />
+        </Box>
       </Box>
 
       {/* Actions — pointer-inert until visible so a tap during the ceremony fast-forwards instead

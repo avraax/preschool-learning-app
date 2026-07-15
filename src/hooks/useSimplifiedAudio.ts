@@ -14,6 +14,7 @@ export interface SimplifiedAudioHook {
   speakLetter: (letter: string) => Promise<string>
   speakNumber: (number: number, customSpeed?: number) => Promise<string>
   speakEnglish: (text: string) => Promise<string>
+  speakLevelUp: (level: number) => Promise<string>
   speakQuizPromptWithRepeat: (text: string, repeatWord: string, voiceType?: 'primary' | 'backup' | 'male') => Promise<string>
 
   // Game-specific audio functions
@@ -68,6 +69,7 @@ const STABLE_AUDIO_METHODS = {
   speakLetter: simplifiedAudioController.speakLetter.bind(simplifiedAudioController),
   speakNumber: simplifiedAudioController.speakNumber.bind(simplifiedAudioController),
   speakEnglish: simplifiedAudioController.speakEnglish.bind(simplifiedAudioController),
+  speakLevelUp: simplifiedAudioController.speakLevelUp.bind(simplifiedAudioController),
   speakQuizPromptWithRepeat: simplifiedAudioController.speakQuizPromptWithRepeat.bind(simplifiedAudioController),
 
   // Game-specific audio functions

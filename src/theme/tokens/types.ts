@@ -108,6 +108,10 @@ export interface SceneTokens {
   }
   selectorThumb: string         // small scene thumbnail for the theme selector
   music?: string                // per-world ambient loop URL (optional; absence → no music)
+  // Optional growing-companion override (Liveliness PRD-01). `stages` are per-level-milestone emoji
+  // (or asset URLs) for the home companion + level-up growth reveal; `ringColor` tints its XP ring.
+  // Absent → a generic plant companion + a primary-derived ring color (see ProgressionCompanion).
+  progressionCompanion?: { stages: string[]; ringColor: string }
 }
 
 export interface MaterialTokens {

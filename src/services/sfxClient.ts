@@ -29,6 +29,7 @@ export type SfxCue =
   | 'sticker-reveal'
   | 'round-complete'
   | 'page-complete'
+  | 'level-up'
 
 // New drag/game cues (pick-up/spring-back/chomp/match) reuse curated files for now (real sound,
 // distinct cue names); swap to dedicated files when available — missing files degrade to silence.
@@ -47,6 +48,9 @@ const CUE_FILES: Record<SfxCue, string> = {
   'sticker-reveal': '/sounds/ui/sticker-reveal.ogg',
   'round-complete': '/sounds/ui/round-complete.ogg',
   'page-complete': '/sounds/ui/page-complete.ogg',
+  // Level-up fanfare (Liveliness PRD-01). Aliases the page-complete jingle until a dedicated cue
+  // ships (missing files degrade to silence anyway); the biggest celebratory moment in the app.
+  'level-up': '/sounds/ui/page-complete.ogg',
 }
 
 // Per-cue base volume — keep cues subtle so they don't fight narration.
@@ -65,6 +69,7 @@ const CUE_VOLUME: Partial<Record<SfxCue, number>> = {
   'sticker-reveal': 0.55,
   'round-complete': 0.55,
   'page-complete': 0.6,
+  'level-up': 0.6,
 }
 
 interface PlayOptions {

@@ -98,6 +98,27 @@ export const getDanishLetterName = (letter: string): string => {
   return DANISH_LETTER_NAMES[key] ?? letter
 }
 
+// Level-up praise (Liveliness PRD-01). "trin" = warm, concrete; avoids the formal "niveau". The
+// level number is spoken as Danish words (getDanishNumberText) so it reads naturally to a pre-reader.
+// `{n}` is the substitution point. These are a CLOSED set → prebaked + auditioned for levels
+// 2..LEVELUP_PREBAKE_MAX (first level-up is 1→2; levels beyond the cap fall back to live Azure).
+export const LEVEL_UP_PRAISE: string[] = [
+  'Sådan! Du er nået til trin {n}!',
+  'Wow! Du voksede til trin {n}!',
+  'Se dig! Trin {n}!',
+  'Du bliver dygtigere! Trin {n}!',
+]
+
+// Spoken when the child taps their home companion.
+export const LEVEL_UP_TAP = 'Du er på trin {n}!'
+
+// How many levels of level-up praise to prebake (see shared-narration-clips.js).
+export const LEVELUP_PREBAKE_MAX = 20
+
+// Fill a level-up template with the spoken Danish level number.
+export const levelUpLine = (template: string, level: number): string =>
+  template.replace('{n}', getDanishNumberText(level))
+
 // Function to convert numbers to Danish text
 export const getDanishNumberText = (number: number): string => {
   const { basic, tens, hundred } = DANISH_PHRASES.numbers

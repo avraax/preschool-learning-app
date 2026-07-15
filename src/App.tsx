@@ -56,6 +56,9 @@ import UpdateBanner from './components/common/UpdateBanner'
 import AdultCorner from './components/adult/AdultCorner'
 import PersistentWorld from './components/common/scene/PersistentWorld'
 import ThemeMascot from './components/common/ThemeMascot'
+import LevelUpOverlay from './components/common/LevelUpOverlay'
+import LevelUpWatcher from './components/common/LevelUpWatcher'
+import ProgressionCompanion from './components/common/ProgressionCompanion'
 // Legacy audio system removed - using SimplifiedAudioProvider only
 import { useViewportHeight } from './hooks/useViewportHeight'
 import { useReducedMotion } from './hooks/useReducedMotion'
@@ -230,6 +233,20 @@ const HomePage = () => {
                 Børnelæring
               </Typography>
             </Box>
+          </motion.div>
+
+          {/* Growing companion (Liveliness PRD-01) — the "home base" where the child watches their
+              cross-game level grow between sessions. Filling XP ring + stage-growing companion +
+              level badge; tap → speaks "Du er på trin {n}!". */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5, delay: 0.15 }}
+          >
+            <ProgressionCompanion
+              size={84}
+              sx={{ [PHONE_LANDSCAPE]: { transform: 'scale(0.72)' } }}
+            />
           </motion.div>
         </Box>
 
@@ -623,6 +640,12 @@ function App() {
             ambient drift / mascot never unmount on navigation (no restart or flicker). Renders
             nothing for flat skins. */}
         <PersistentWorld />
+
+        {/* Cross-game progression (Liveliness PRD-01): the level-up ceremony fires from any play
+            context via levelUpBus; the watcher is the reload/cross-tab safety net. Both mounted
+            once at app root, above the world layer. */}
+        <LevelUpOverlay />
+        <LevelUpWatcher />
 
         {/* Foreground pages render over the steady world. Positioned wrapper ABOVE the world
             layer (z-index:0). Cross-fade removed while diagnosing a compositing flicker — the

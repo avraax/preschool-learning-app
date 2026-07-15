@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "dev:api": "node --env-file=.env.local dev-server.js",
+    "test": "node --test \"src/**/*.test.ts\"",
     "tts:eval": "node --env-file=.env.local tts-voice-eval.mjs",
     "tts:prebake": "node --env-file=.env.local prebake-tts.mjs",
     "audit:check": "node scripts/narration-audit.mjs",

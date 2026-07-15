@@ -16,6 +16,10 @@ import {
   DANISH_LETTER_NAMES,
   getDanishLetterName,
   getDanishNumberText,
+  LEVEL_UP_PRAISE,
+  LEVEL_UP_TAP,
+  LEVELUP_PREBAKE_MAX,
+  levelUpLine,
 } from './src/config/danish-phrases.ts'
 import { allEnglishWords } from './src/config/englishVocab.ts'
 import { HUE_ORDER, SHADES, DANISH_OBJECTS, spokenColor } from './src/config/colorContent.ts'
@@ -78,6 +82,15 @@ export function collectNarrationClips() {
 
   // Sticker reveal lines ("Nyt klistermærke! {label}") — closed album pool (mixed-language clip).
   for (const set of STICKER_SETS) for (const s of set.stickers) da('mixed', `Nyt klistermærke! ${s.label}`)
+
+  // Level-up praise (Liveliness PRD-01). The controller rotates templates by level (lvl % len), so
+  // enumerate the exact line each level speaks. First level-up is 1→2; tap label reachable at trin 1.
+  for (let lvl = 2; lvl <= LEVELUP_PREBAKE_MAX; lvl++) {
+    da('levelup', levelUpLine(LEVEL_UP_PRAISE[lvl % LEVEL_UP_PRAISE.length], lvl))
+  }
+  for (let lvl = 1; lvl <= LEVELUP_PREBAKE_MAX; lvl++) {
+    da('levelup', levelUpLine(LEVEL_UP_TAP, lvl))
+  }
 
   // English words — spoken via the en-US voice, no lexicon.
   for (const w of allEnglishWords) en('english', w.en)

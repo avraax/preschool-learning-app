@@ -5,6 +5,8 @@ import {
   type ProgressSettings,
   type ProgressState,
   type SectionId,
+  type XpGrantResult,
+  type XpReason,
 } from '../services/progressStore'
 
 // React interface to the progress store (Overhaul Foundation — System 1).
@@ -18,6 +20,19 @@ export interface UseProgress {
   setDifficulty: (next: { global?: DifficultyLevel; section?: SectionId; level?: DifficultyLevel | null }) => void
   markStickersSeen: () => void
   resetAll: () => void
+  // Progression (Liveliness PRD-01). `state` re-renders on every grant (useSyncExternalStore), so
+  // these selectors always reflect the latest snapshot.
+  grantXp: (section: SectionId, amount: number, reason: XpReason) => XpGrantResult
+  globalLevel: () => number
+  xpProgress: () => {
+    level: number
+    xpIntoLevel: number
+    xpToNextLevel: number
+    xpForThisLevel: number
+    fill: number
+  }
+  bloomFor: (section: SectionId) => { xp: number; stage: number; fill: number }
+  markLevelCelebrated: (level: number) => void
 }
 
 const subscribe = (cb: () => void) => progressStore.subscribe(cb)
@@ -39,7 +54,28 @@ export const useProgress = (): UseProgress => {
   const markStickersSeen = useCallback(() => progressStore.markStickersSeen(), [])
   const resetAll = useCallback(() => progressStore.resetAll(), [])
 
-  return { state, setSetting, setDifficulty, markStickersSeen, resetAll }
+  const grantXp = useCallback(
+    (section: SectionId, amount: number, reason: XpReason) =>
+      progressStore.grantXp(section, amount, reason),
+    [],
+  )
+  const globalLevel = useCallback(() => progressStore.globalLevel(), [])
+  const xpProgress = useCallback(() => progressStore.xpProgressToNextLevel(), [])
+  const bloomFor = useCallback((section: SectionId) => progressStore.bloomFor(section), [])
+  const markLevelCelebrated = useCallback((level: number) => progressStore.markLevelCelebrated(level), [])
+
+  return {
+    state,
+    setSetting,
+    setDifficulty,
+    markStickersSeen,
+    resetAll,
+    grantXp,
+    globalLevel,
+    xpProgress,
+    bloomFor,
+    markLevelCelebrated,
+  }
 }
 
 export default useProgress

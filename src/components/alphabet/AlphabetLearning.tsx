@@ -12,6 +12,7 @@ import PromptStage from '../common/PromptStage'
 import StickerReveal from '../common/StickerReveal'
 import { useCelebration } from '../common/CelebrationEffect'
 import { progressStore, type StickerAward } from '../../services/progressStore'
+import { levelUpBus } from '../../services/levelUpBus'
 import { stickerSetForSection } from '../../config/stickers'
 import { LETTER_WORDS } from '../../config/letterWords'
 import { hexToRgba } from '../../theme/tokens/helpers'
@@ -117,6 +118,11 @@ const AlphabetLearning: React.FC = () => {
     const milestone = Math.floor(size / EXPLORE_MILESTONE)
     if (milestone > milestoneRef.current) {
       milestoneRef.current = milestone
+      // Browse XP (Liveliness PRD-01): a flat grant at the same distinct-tap milestone (distinct-tap
+      // gating is the anti-farm — re-tapping one tile earns nothing). Fire the level-up ceremony if
+      // it crossed a level; the app-root watcher is the safety net.
+      const xp = progressStore.grantXp('alphabet', 6, 'browse-milestone')
+      if (xp.global.leveledUp) levelUpBus.emit({ level: xp.global.levelAfter, section: xp.section })
       const award = progressStore.awardSticker(stickerSetForSection('alphabet'))
       setStickerAward(award)
       celebrateTier('sticker')

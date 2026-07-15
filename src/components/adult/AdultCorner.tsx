@@ -258,7 +258,7 @@ const AdultCorner: React.FC<AdultCornerProps> = ({ updateAvailable = false, onAp
         open={view === 'resetGate'}
         code={gateCode}
         description={
-          <>Dette nulstiller <strong>alle</strong> klistermærker, rekorder og stjerner.</>
+          <>Dette nulstiller <strong>alle</strong> klistermærker, rekorder, stjerner og trin.</>
         }
         confirmLabel="Nulstil"
         confirmColor="error"
