@@ -8,12 +8,9 @@ import { useTheme } from '@mui/material/styles'
 import GameShell from '../common/GameShell'
 import LearningGrid from '../common/LearningGrid'
 import PromptStage from '../common/PromptStage'
-import StickerReveal from '../common/StickerReveal'
 import { useCelebration } from '../common/CelebrationEffect'
 import { categoryThemes } from '../../config/categoryThemes'
-import { progressStore, type StickerAward } from '../../services/progressStore'
-import { levelUpBus } from '../../services/levelUpBus'
-import { stickerSetForSection } from '../../config/stickers'
+import { useBrowseXp } from '../../hooks/useBrowseXp'
 import { hexToRgba } from '../../theme/tokens/helpers'
 import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 // Simplified audio system
@@ -24,7 +21,6 @@ import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 // welcome narrates over it.
 
 const MATH_ACCENT = categoryThemes.math.accentColor
-const EXPLORE_MILESTONE = 12 // award a sticker every N distinct numbers tapped
 
 // Count-reinforcement cluster for the bloomed number (UI/UX Overhaul PRD §6B — mirrors Tal Quiz's
 // counted-objects idea so the numeral isn't the only channel). Chunky recognisable stars at small
@@ -80,13 +76,11 @@ const NumberLearning: React.FC = () => {
   // True once the child taps → suppresses a (possibly late) welcome from talking over their play.
   const hasInteractedRef = useRef(false)
 
-  const { showCelebration, celebrationIntensity, celebrationDuration, celebrateTier, stopCelebration } = useCelebration()
+  const { showCelebration, celebrationIntensity, celebrationDuration, stopCelebration } = useCelebration()
 
-  // Session-local exploration tracking → milestone stickers.
-  const exploredRef = useRef<Set<number>>(new Set())
-  const milestoneRef = useRef(0)
-  const [stickerAward, setStickerAward] = useState<StickerAward | null>(null)
-  const stickerTimer = useRef<NodeJS.Timeout | null>(null)
+  // Per-new-item browse XP (Liveliness PRD-04) — replaces the old milestone sticker. Each newly
+  // explored number feeds the shared cross-game level + ticks the header ring.
+  const awardBrowseXp = useBrowseXp('math')
 
   // Generate numbers 1-100
   const numbers = Array.from({ length: 100 }, (_, i) => i + 1)
@@ -108,12 +102,6 @@ const NumberLearning: React.FC = () => {
       playWelcome()
     }
 
-    return () => {
-      if (stickerTimer.current) {
-        clearTimeout(stickerTimer.current)
-        stickerTimer.current = null
-      }
-    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -138,40 +126,6 @@ const NumberLearning: React.FC = () => {
     }
   }
 
-  // Award an exploration sticker when distinct-tap count crosses each milestone. Returns true when
-  // it spoke the sticker line, so the caller skips the number echo (PRD-06 §3).
-  const maybeAwardExploration = (): boolean => {
-    const size = exploredRef.current.size
-    const milestone = Math.floor(size / EXPLORE_MILESTONE)
-    if (milestone > milestoneRef.current) {
-      milestoneRef.current = milestone
-      // Browse XP (Liveliness PRD-01): flat grant at each distinct-tap milestone (distinct-tap gate
-      // is the anti-farm). Fire the level-up ceremony on a crossing; the app-root watcher backs it.
-      const xp = progressStore.grantXp('math', 6, 'browse-milestone')
-      if (xp.global.leveledUp) levelUpBus.emit({ level: xp.global.levelAfter, section: xp.section })
-      const award = progressStore.awardSticker(stickerSetForSection('math'))
-      setStickerAward(award)
-      celebrateTier('sticker')
-      if (stickerTimer.current) clearTimeout(stickerTimer.current)
-      stickerTimer.current = setTimeout(() => setStickerAward(null), 3600)
-      // Speak the sticker name (browse has no other TTS competing here). A duplicate is a shiny,
-      // not a "new" one — match the StickerReveal banner (PRD-09 P2).
-      try {
-        audio
-          .speak(
-            award.isNew
-              ? `Nyt klistermærke! ${award.sticker.label}`
-              : `Skinnende! ${award.sticker.label}`,
-          )
-          .catch(() => {})
-      } catch {
-        /* ignore */
-      }
-      return true
-    }
-    return false
-  }
-
   const goToNumber = async (index: number) => {
     hasInteractedRef.current = true
     audio.updateUserInteraction()
@@ -180,9 +134,9 @@ const NumberLearning: React.FC = () => {
     setCurrentIndex(index)
 
     const number = numbers[index]
-    exploredRef.current.add(number)
-    // On a milestone tap the sticker line is the reward audio — don't also speak the number.
-    if (maybeAwardExploration()) return
+    // Per-new-item browse XP (Liveliness PRD-04): first visit to this number feeds the level + ticks
+    // the ring. We always still speak the number.
+    awardBrowseXp(String(number))
 
     try {
       // Slightly faster for number counting.
@@ -276,24 +230,6 @@ const NumberLearning: React.FC = () => {
         disabled={!gameReady}
         accent={MATH_ACCENT}
       />
-
-      {/* Exploration-milestone sticker reveal. Auto-dismisses; tap to close early. */}
-      {stickerAward && (
-        <Box
-          onClick={() => setStickerAward(null)}
-          sx={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 1300,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: 'rgba(0,0,0,0.45)',
-          }}
-        >
-          <StickerReveal award={stickerAward} accent={MATH_ACCENT} size={140} />
-        </Box>
-      )}
     </GameShell>
   )
 }

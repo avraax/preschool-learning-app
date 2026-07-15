@@ -8,20 +8,14 @@ import { darken, hexToRgba } from '../../theme/tokens/helpers'
 import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 import GameShell from '../common/GameShell'
 import PromptStage from '../common/PromptStage'
-import StickerReveal from '../common/StickerReveal'
 import { useCelebration } from '../common/CelebrationEffect'
-import { progressStore, type StickerAward } from '../../services/progressStore'
-import { levelUpBus } from '../../services/levelUpBus'
-import { stickerSetForSection } from '../../config/stickers'
+import { useBrowseXp } from '../../hooks/useBrowseXp'
 import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 
 // Lær Farver — a calm browse (learning-based, no challenge). Tap a color to hear its name and see
 // its shade family (lys/mellem/mørk) + example objects; tap a shade or an object to hear it too.
-// Exploring distinct things earns a milestone sticker (mirrors Lær Tal / Lær Alfabetet / Lær
-// Engelsk). Educational color data comes from colorContent (NOT themeable).
-
-const COLORS_ACCENT = getCategoryTheme('colors').accentColor
-const EXPLORE_MILESTONE = 9 // award a sticker every N distinct taps (colors + shades + objects)
+// Exploring distinct items feeds the shared cross-game level (per-new-item browse XP, PRD-04).
+// Educational color data comes from colorContent (NOT themeable).
 
 const FarverLearning: React.FC = () => {
   const muiTheme = useTheme()
@@ -32,13 +26,11 @@ const FarverLearning: React.FC = () => {
   const [currentHue, setCurrentHue] = useState<string>(HUE_ORDER[0])
   const [playing, setPlaying] = useState<string | null>(null)
 
-  const { showCelebration, celebrationIntensity, celebrationDuration, celebrateTier, stopCelebration } = useCelebration()
+  const { showCelebration, celebrationIntensity, celebrationDuration, stopCelebration } = useCelebration()
 
-  // Session-local exploration tracking → milestone stickers.
-  const exploredRef = useRef<Set<string>>(new Set())
-  const milestoneRef = useRef(0)
-  const [stickerAward, setStickerAward] = useState<StickerAward | null>(null)
-  const stickerTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // Per-new-item browse XP (Liveliness PRD-04) — replaces the old milestone sticker. Each newly
+  // explored color/shade/object feeds the shared cross-game level + ticks the header ring.
+  const awardBrowseXp = useBrowseXp('colors')
 
   const hasInitialized = useRef(false)
   const welcomeTriggered = useRef(false)
@@ -54,9 +46,6 @@ const FarverLearning: React.FC = () => {
     if (hasInitialized.current) return
     hasInitialized.current = true
     if (audio.isAudioReady) playWelcome()
-    return () => {
-      if (stickerTimer.current) clearTimeout(stickerTimer.current)
-    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -75,49 +64,16 @@ const FarverLearning: React.FC = () => {
     }
   }
 
-  // Returns true when it spoke the sticker line, so the caller skips the item echo (PRD-06 §3).
-  const maybeAwardExploration = (): boolean => {
-    const size = exploredRef.current.size
-    const milestone = Math.floor(size / EXPLORE_MILESTONE)
-    if (milestone > milestoneRef.current) {
-      milestoneRef.current = milestone
-      // Browse XP (Liveliness PRD-01): flat grant at each distinct-tap milestone (distinct-tap gate
-      // is the anti-farm). Fire the level-up ceremony on a crossing; the app-root watcher backs it.
-      const xp = progressStore.grantXp('colors', 6, 'browse-milestone')
-      if (xp.global.leveledUp) levelUpBus.emit({ level: xp.global.levelAfter, section: xp.section })
-      const award = progressStore.awardSticker(stickerSetForSection('colors'))
-      setStickerAward(award)
-      celebrateTier('sticker')
-      if (stickerTimer.current) clearTimeout(stickerTimer.current)
-      stickerTimer.current = setTimeout(() => setStickerAward(null), 3600)
-      // Duplicate = shiny, not "new" — match the StickerReveal banner (PRD-09 P2).
-      try {
-        audio
-          .speak(
-            award.isNew
-              ? `Nyt klistermærke! ${award.sticker.label}`
-              : `Skinnende! ${award.sticker.label}`,
-          )
-          .catch(() => {})
-      } catch { /* ignore */ }
-      return true
-    }
-    return false
-  }
-
-  // Speak `text`, tracking `key` for exploration milestones. `setCurrent` swaps the detail panel.
+  // Speak `text`, feeding per-new-item browse XP for `key`. `hue` swaps the detail panel.
   const tapSpeak = async (key: string, text: string, hue?: string) => {
     hasInteractedRef.current = true
     audio.updateUserInteraction()
     audio.cancelCurrentAudio()
     if (hue) setCurrentHue(hue)
     setPlaying(key)
-    exploredRef.current.add(key)
-    // On a milestone tap the sticker line is the reward audio — don't also speak the item.
-    if (maybeAwardExploration()) {
-      setPlaying((p) => (p === key ? null : p))
-      return
-    }
+    // Per-new-item browse XP (Liveliness PRD-04): first visit to this item feeds the level + ticks
+    // the ring. We always still speak the item.
+    awardBrowseXp(key)
     try {
       await audio.speak(text)
     } catch (error) {
@@ -309,24 +265,6 @@ const FarverLearning: React.FC = () => {
           })}
         </Box>
       </Box>
-
-      {/* Exploration-milestone sticker reveal. */}
-      {stickerAward && (
-        <Box
-          onClick={() => setStickerAward(null)}
-          sx={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 1300,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: 'rgba(0,0,0,0.45)'
-          }}
-        >
-          <StickerReveal award={stickerAward} accent={COLORS_ACCENT} size={140} />
-        </Box>
-      )}
     </GameShell>
   )
 }

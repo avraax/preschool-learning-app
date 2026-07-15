@@ -167,7 +167,7 @@ const RamFarvenGame: React.FC = () => {
   const [gameReady, setGameReady] = useState(false)
 
   // Bounded round + reward flow (Overhaul Farver §Ram Farven). 8 mixes, 3★ = 0 wrong mixes, 2★ ≤ 2.
-  const round = useRound({ length: ROUND_MIXES, starThresholds: { three: 0, two: 2 } })
+  const round = useRound({ length: ROUND_MIXES, starThresholds: { three: 0, two: 2 }, gameId: 'colors.ramfarven' })
   const firstAttemptRef = useRef(true)  // first-try flag for the CURRENT target
   const [roundOutcome, setRoundOutcome] = useState<RoundOutcome | null>(null)
 

@@ -260,7 +260,7 @@ const SpeakWordGame: React.FC = () => {
   // In-round word count + bounded round (Overhaul Ordleg §3). Open-ended: a "question" = one
   // recognized word; there is NO target word and NO STT grading.
   const { score, incrementScore, resetScore, isScoreNarrating, handleScoreClick } = useGameState()
-  const round = useRound({ length: 8, starThresholds: { three: 0, two: 2 } })
+  const round = useRound({ length: 8, starThresholds: { three: 0, two: 2 }, gameId: 'ordleg.mic' })
   const firstTryRef = useRef(true)
   const [roundOutcome, setRoundOutcome] = useState<RoundOutcome | null>(null)
 

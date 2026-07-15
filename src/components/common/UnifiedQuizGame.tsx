@@ -154,8 +154,11 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
   // Celebration management (rendered by GameShell)
   const { showCelebration, celebrationIntensity, celebrationDuration, celebrateTier, stopCelebration } = useCelebration()
 
-  // Bounded round (no-op when config.round is absent → endless behavior preserved).
-  const round = useRound(config.round)
+  // Bounded round (no-op when config.round is absent → endless behavior preserved). Thread the
+  // stable gameId in so useRound grants live per-task XP (Liveliness PRD-04) on each question.
+  const round = useRound(
+    config.round ? { ...config.round, gameId: config.gameId ?? `quiz.${config.quizType}` } : undefined,
+  )
   // True until the first wrong tile is tapped for the current question; gates the streak/star
   // "first try" accounting. Reset on each new question.
   const firstAttemptRef = useRef(true)

@@ -96,7 +96,7 @@ const FarvejagtGame: React.FC = () => {
   const [gameReady, setGameReady] = useState(false)
 
   // Bounded round + reward flow (Overhaul Farver §Farvejagt). 5 boards, 3★ = 0 wrong-drop boards, 2★ ≤ 2.
-  const round = useRound({ length: ROUND_BOARDS, starThresholds: { three: 0, two: 2 } })
+  const round = useRound({ length: ROUND_BOARDS, starThresholds: { three: 0, two: 2 }, gameId: 'colors.farvejagt' })
   const firstAttemptRef = useRef(true)   // first-try flag for the CURRENT board
   const [roundOutcome, setRoundOutcome] = useState<RoundOutcome | null>(null)
 

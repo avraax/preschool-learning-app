@@ -14,6 +14,7 @@ import { shuffle } from '../../utils/shuffle'
 import { progressStore, type RoundOutcome } from '../../services/progressStore'
 import { sfx } from '../../services/sfxClient'
 import { mascotBus } from '../../services/mascotBus'
+import { xpBus } from '../../services/xpBus'
 import { SNAP } from '../../theme/motion'
 import { devFx } from '../../utils/devHarness'
 import GameShell from './GameShell'
@@ -374,6 +375,14 @@ const UnifiedMemoryGame: React.FC<UnifiedMemoryGameProps> = ({ config }) => {
         setMatchedPairs(newMatchedPairs)
         incrementScore()
         teacher.wave()
+
+        // Live per-task XP (Liveliness PRD-04): each matched pair is a completed task. Grant the
+        // weighted 'memory' XP and ping the header ring (a crossed level only mini-flourishes here;
+        // the big ceremony is deferred to the round result). No first-try notion for a pair.
+        {
+          const grant = progressStore.grantTaskXp('memory', { firstTry: false })
+          xpBus.emit({ amount: grant.granted, leveledUp: grant.global.leveledUp })
+        }
 
         // Match juice (UI/UX Overhaul PRD §6E): both cards already pop + glow (poppedPairId scale +
         // the persistent success border/shadow from `isMatched`, computed at render time below) —

@@ -9,11 +9,8 @@ import { categoryThemes } from '../../config/categoryThemes'
 import GameShell from '../common/GameShell'
 import LearningGrid from '../common/LearningGrid'
 import PromptStage from '../common/PromptStage'
-import StickerReveal from '../common/StickerReveal'
 import { useCelebration } from '../common/CelebrationEffect'
-import { progressStore, type StickerAward } from '../../services/progressStore'
-import { levelUpBus } from '../../services/levelUpBus'
-import { stickerSetForSection } from '../../config/stickers'
+import { useBrowseXp } from '../../hooks/useBrowseXp'
 import { LETTER_WORDS } from '../../config/letterWords'
 import { hexToRgba } from '../../theme/tokens/helpers'
 import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
@@ -34,9 +31,6 @@ const DANISH_ALPHABET = [
 ]
 
 const ALPHABET_ACCENT = categoryThemes.alphabet.accentColor
-// Award a sticker every N distinct letters tapped. 29 letters → awards at 9 / 18 / 27 (3 stickers),
-// echoing the 9-per-album-page motif. Tunable constant (mirrors Lær Tal's EXPLORE_MILESTONE = 12).
-const EXPLORE_MILESTONE = 9
 
 // Example word + emoji for the bloomed letter (UI/UX Overhaul PRD §6B). Only letters with a clear,
 // child-friendly Danish word are included — Q, W, X have none, so their bloom shows just the giant
@@ -58,13 +52,12 @@ const AlphabetLearning: React.FC = () => {
   // True once the child taps → suppresses a (possibly late) welcome from talking over their play.
   const hasInteractedRef = useRef(false)
 
-  const { showCelebration, celebrationIntensity, celebrationDuration, celebrateTier, stopCelebration } = useCelebration()
+  const { showCelebration, celebrationIntensity, celebrationDuration, stopCelebration } = useCelebration()
 
-  // Session-local exploration tracking → milestone stickers.
-  const exploredRef = useRef<Set<string>>(new Set())
-  const milestoneRef = useRef(0)
-  const [stickerAward, setStickerAward] = useState<StickerAward | null>(null)
-  const stickerTimer = useRef<NodeJS.Timeout | null>(null)
+  // Per-new-item browse XP (Liveliness PRD-04) — replaces the old milestone sticker. Each newly
+  // explored letter feeds the shared cross-game level; the header ring ticks. No sticker here (they
+  // became level-up trophies); a browse level-up is celebrated on returning to a menu.
+  const awardBrowseXp = useBrowseXp('alphabet')
 
   useEffect(() => {
     // Prevent duplicate initialization with race condition guard
@@ -80,10 +73,6 @@ const AlphabetLearning: React.FC = () => {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current)
         timeoutRef.current = null
-      }
-      if (stickerTimer.current) {
-        clearTimeout(stickerTimer.current)
-        stickerTimer.current = null
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -110,42 +99,6 @@ const AlphabetLearning: React.FC = () => {
     }
   }
 
-  // Award an exploration sticker when distinct-tap count crosses each milestone. Returns true when
-  // it spoke the sticker line, so the caller skips the letter echo (they'd otherwise cancel each
-  // other nondeterministically — PRD-06 §3).
-  const maybeAwardExploration = (): boolean => {
-    const size = exploredRef.current.size
-    const milestone = Math.floor(size / EXPLORE_MILESTONE)
-    if (milestone > milestoneRef.current) {
-      milestoneRef.current = milestone
-      // Browse XP (Liveliness PRD-01): a flat grant at the same distinct-tap milestone (distinct-tap
-      // gating is the anti-farm — re-tapping one tile earns nothing). Fire the level-up ceremony if
-      // it crossed a level; the app-root watcher is the safety net.
-      const xp = progressStore.grantXp('alphabet', 6, 'browse-milestone')
-      if (xp.global.leveledUp) levelUpBus.emit({ level: xp.global.levelAfter, section: xp.section })
-      const award = progressStore.awardSticker(stickerSetForSection('alphabet'))
-      setStickerAward(award)
-      celebrateTier('sticker')
-      if (stickerTimer.current) clearTimeout(stickerTimer.current)
-      stickerTimer.current = setTimeout(() => setStickerAward(null), 3600)
-      // Speak the sticker name (browse has no other TTS competing here). Duplicate = shiny, not
-      // "new" — match the StickerReveal banner (PRD-09 P2).
-      try {
-        audio
-          .speak(
-            award.isNew
-              ? `Nyt klistermærke! ${award.sticker.label}`
-              : `Skinnende! ${award.sticker.label}`,
-          )
-          .catch(() => {})
-      } catch {
-        /* ignore */
-      }
-      return true
-    }
-    return false
-  }
-
   const goToLetter = async (index: number) => {
     const letter = DANISH_ALPHABET[index]
     hasInteractedRef.current = true
@@ -158,9 +111,9 @@ const AlphabetLearning: React.FC = () => {
 
     setCurrentIndex(index)
 
-    exploredRef.current.add(letter)
-    // On a milestone tap the sticker line is the reward audio — don't also speak the letter.
-    if (maybeAwardExploration()) return
+    // Per-new-item browse XP (Liveliness PRD-04): first visit to this letter feeds the level + ticks
+    // the ring. We always still speak the letter (unlike the old milestone, which spoke a sticker).
+    awardBrowseXp(letter)
 
     try {
       await audio.speakLetter(letter)
@@ -282,24 +235,6 @@ const AlphabetLearning: React.FC = () => {
         disabled={!gameReady}
         accent={ALPHABET_ACCENT}
       />
-
-      {/* Exploration-milestone sticker reveal. Auto-dismisses; tap to close early. */}
-      {stickerAward && (
-        <Box
-          onClick={() => setStickerAward(null)}
-          sx={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 1300,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: 'rgba(0,0,0,0.45)',
-          }}
-        >
-          <StickerReveal award={stickerAward} accent={ALPHABET_ACCENT} size={140} />
-        </Box>
-      )}
     </GameShell>
   )
 }

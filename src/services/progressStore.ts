@@ -16,7 +16,7 @@ import {
   totalStickerCount,
   type Sticker,
 } from '../config/stickers'
-import { levelFromXp, bloomStage, bloomFill, roundXp } from '../config/progression'
+import { levelFromXp, bloomStage, bloomFill, roundXp, taskXp } from '../config/progression'
 
 const STORAGE_KEY = 'bornelaering-progress'
 // v2 (Liveliness PRD-01): adds the `progression` slice (global XP/level + per-section bloom).
@@ -481,24 +481,17 @@ class ProgressStore {
     }
     draft.totals.totalStars += stars
 
-    // 1 sticker per completed round, + a bonus sticker on a new personal best.
+    // Stickers are NO LONGER granted per round (Liveliness PRD-04): they became the trophy of a
+    // LEVEL-UP (see grantLevelUpSticker), so the two rewards no longer fire at the same cadence.
+    // A normal round reveals no sticker; `pageCompleted` therefore stays null here (a page can only
+    // complete via a level-up trophy now).
     const stickers: StickerAward[] = []
-    let pageCompleted: RoundOutcome['pageCompleted'] = null
+    const pageCompleted: RoundOutcome['pageCompleted'] = null
 
-    const roundGrant = this.grantSticker(draft, options.stickerSetId)
-    stickers.push(roundGrant.award)
-    if (roundGrant.completedSetId) pageCompleted = setSummary(roundGrant.completedSetId)
-
-    if (anyNewBest) {
-      const bonusGrant = this.grantSticker(draft, options.stickerSetId)
-      stickers.push(bonusGrant.award)
-      if (!pageCompleted && bonusGrant.completedSetId)
-        pageCompleted = setSummary(bonusGrant.completedSetId)
-    }
-
-    // Fold XP into the SAME draft/commit (Liveliness PRD-01): computed from round STRUCTURE only —
-    // never the difficulty setting — and applied off the post-round draft numbers so `xp` reflects
-    // the atomic post-round state. One play feeds both global level and the section's bloom.
+    // Fold the round-END BONUS XP into the SAME draft/commit (Liveliness PRD-04): bonuses ONLY
+    // (perfect-round / new-best / page-complete) — the per-task portion was already granted live
+    // during play. Computed from round STRUCTURE only, never the difficulty setting (fairness). One
+    // play feeds both the global level and the section's bloom.
     const xp = this.applyXp(
       draft,
       sectionForGameId(gameId),
@@ -507,8 +500,8 @@ class ProgressStore {
         total: input.total,
         mistakes,
         anyNewBest,
-        stickerCount: stickers.length,
-        pageCompleted: !!pageCompleted,
+        stickerCount: 0,
+        pageCompleted: false,
       }),
     )
 
@@ -581,6 +574,32 @@ class ProgressStore {
     const result = this.applyXp(draft, section, amount)
     this.commit(draft)
     return result
+  }
+
+  // Live per-task XP (Liveliness PRD-04). Called once per COMPLETED TASK in any game (a question
+  // answered, a pair matched, a color board finished, a new browse item explored). Weighted per game
+  // (see TASK_XP) + a first-try bonus; NEVER difficulty-dependent (fairness). Feeds both the global
+  // level and the section's bloom in one commit and returns the grant so the caller can fire the
+  // "+X" flyer / mid-game flourish (via `XpGrantResult.global.leveledUp`). For `gameId === 'browse'`
+  // the caller passes the real section (browse screens know it); every other id derives its section.
+  grantTaskXp(gameId: string, opts: { firstTry: boolean; section?: SectionId }): XpGrantResult {
+    const draft = structuredCloneState(this.state)
+    const section = gameId === 'browse' ? opts.section ?? 'alphabet' : sectionForGameId(gameId)
+    const result = this.applyXp(draft, section, taskXp(gameId, opts.firstTry))
+    this.commit(draft)
+    return result
+  }
+
+  // Grant the ONE trophy sticker of a level-up (Liveliness PRD-04): stickers stopped dropping per
+  // round/browse and now mark a level-up, so the album becomes a "timeline of levels". Reuses the
+  // private next-uncollected → shiny-duplicate `grantSticker`. Called by the level-up ceremony
+  // (LevelUpOverlay) so the sticker reveals inside that moment. Returns the award + the set that
+  // JUST completed because of it (else null), so the ceremony can add a page-complete flourish.
+  grantLevelUpSticker(): { award: StickerAward; pageCompleted: { id: string; title: string; emoji: string } | null } {
+    const draft = structuredCloneState(this.state)
+    const { award, completedSetId } = this.grantSticker(draft)
+    this.commit(draft)
+    return { award, pageCompleted: completedSetId ? setSummary(completedSetId) : null }
   }
 
   globalLevel(): number {

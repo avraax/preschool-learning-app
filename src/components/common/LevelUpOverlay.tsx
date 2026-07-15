@@ -5,12 +5,13 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
 import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
-import { progressStore } from '../../services/progressStore'
+import { progressStore, type StickerAward } from '../../services/progressStore'
 import { levelUpBus, type LevelUpEvent } from '../../services/levelUpBus'
 import { mascotBus } from '../../services/mascotBus'
 import { sfx } from '../../services/sfxClient'
 import CelebrationEffect from './CelebrationEffect'
 import ProgressionCompanion from './ProgressionCompanion'
+import StickerReveal from './StickerReveal'
 
 // The level-up ceremony (Liveliness PRD-01) — a dedicated full-screen overlay mounted once at app
 // root so ANY play context (round-result, browse, memory) fires it via `levelUpBus`. Beats: opaque
@@ -27,6 +28,12 @@ const LevelUpOverlay: React.FC = () => {
   const reduce = useReducedMotion()
   const audio = useSimplifiedAudioHook({ componentId: 'LevelUpOverlay', autoInitialize: false })
   const [event, setEvent] = useState<LevelUpEvent | null>(null)
+  // The ONE trophy sticker of this level-up (Liveliness PRD-04): stickers became the keepsake of a
+  // level-up, so the ceremony grants + reveals exactly one, from ANY path that fires it (round
+  // result, browse/menu, safety-net watcher). Granted once per ceremony (grantedRef), cleared on
+  // dismiss so the next level-up gets a fresh one.
+  const [trophy, setTrophy] = useState<StickerAward | null>(null)
+  const grantedRef = useRef(false)
   const spokenRef = useRef(false)
   const dismissTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -47,12 +54,22 @@ const LevelUpOverlay: React.FC = () => {
     // Advance the celebrated cursor so neither this tab nor another re-fires for this level.
     progressStore.markLevelCelebrated(event.level)
     setEvent(null)
+    setTrophy(null)
+    grantedRef.current = false
     spokenRef.current = false
   }
 
   // Run the ceremony beats when an event appears.
   useEffect(() => {
     if (!event) return
+    // Grant the ONE trophy sticker of this level-up (once per ceremony) and reveal it below. A
+    // completed page adds a page-complete fanfare. Reuses the store's next-uncollected → shiny logic.
+    if (!grantedRef.current) {
+      grantedRef.current = true
+      const { award, pageCompleted } = progressStore.grantLevelUpSticker()
+      setTrophy(award)
+      if (pageCompleted) sfx.play('page-complete')
+    }
     // Fanfare + mascot cheer (SFX is a separate channel; safe over the spoken praise).
     sfx.play('level-up')
     mascotBus.emit('round')
@@ -133,6 +150,18 @@ const LevelUpOverlay: React.FC = () => {
               Trin {level}! 🎉
             </Typography>
           </Box>
+
+          {/* Trophy sticker of this level-up (Liveliness PRD-04) — the keepsake for the album. */}
+          {trophy && (
+            <Box sx={{ position: 'relative', zIndex: 12002 }}>
+              <StickerReveal
+                award={trophy}
+                accent={dark ? '#FFD86B' : '#C77800'}
+                delay={reduce ? 0 : 0.5}
+                size={110}
+              />
+            </Box>
+          )}
         </Box>
       )}
     </AnimatePresence>

@@ -12,6 +12,7 @@ import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 import { sfx } from '../../services/sfxClient'
 import { mascotBus } from '../../services/mascotBus'
 import { levelUpBus } from '../../services/levelUpBus'
+import { progressStore } from '../../services/progressStore'
 import { levelFromXp } from '../../config/progression'
 import CelebrationEffect from './CelebrationEffect'
 import StickerReveal from './StickerReveal'
@@ -164,14 +165,20 @@ const RoundResultScreen: React.FC<RoundResultScreenProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Level-up handoff (Liveliness PRD-01 §7). When this round crossed a level, hand off to the
-  // app-root <LevelUpOverlay/> as the climactic final beat — once the buttons are ready (the
-  // ceremony has played) or on fast-forward. Guarded so it fires exactly once.
+  // Level-up handoff (Liveliness PRD-01 §7 + PRD-04 §5). Hand off to the app-root <LevelUpOverlay/>
+  // as the climactic final beat once the buttons are ready (or on fast-forward). The crossing may
+  // have happened MID-ROUND via live per-task XP (not captured in outcome.xp, which is now only the
+  // round-end bonus), so trigger off the STORE cursor — `globalLevel() > lastCelebratedLevel` — not
+  // outcome.xp.global.leveledUp. The overlay grants + reveals the one trophy sticker and advances the
+  // cursor on dismiss. Guarded so it fires exactly once. (This surface is a game route, so
+  // LevelUpWatcher stays quiet here — this direct emit is what plays the ceremony on the result.)
   useEffect(() => {
-    if (!buttonsReady || !leveledUp || levelUpEmittedRef.current) return
+    if (!buttonsReady || levelUpEmittedRef.current) return
+    const level = progressStore.globalLevel()
+    if (level <= progressStore.get().progression.lastCelebratedLevel) return
     levelUpEmittedRef.current = true
-    levelUpBus.emit({ level: outcome.xp.global.levelAfter, section: outcome.xp.section })
-  }, [buttonsReady, leveledUp, outcome])
+    levelUpBus.emit({ level, section: outcome.xp.section })
+  }, [buttonsReady, outcome])
 
   const starSlots = [0, 1, 2]
 

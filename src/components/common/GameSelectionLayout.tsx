@@ -16,6 +16,7 @@ import ThemeMascot from './ThemeMascot'
 import LivingCard from './LivingCard'
 import GameTileIcon from './GameTileIcon'
 import BackButton from './BackButton'
+import LevelRingMini from './LevelRingMini'
 import { useTransitionNav } from '../../hooks/useTransitionNav'
 import { useTransitionContext } from './transition/TransitionProvider'
 import { useIdleAttract } from '../../hooks/useIdleAttract'
@@ -133,6 +134,12 @@ const GameSelectionLayout: React.FC<GameSelectionLayoutProps> = ({
               {catTheme.name}
             </Typography>
           </Box>
+
+          {/* Level is primary (Liveliness PRD-04 §7): the shared cross-game ring on the section menu
+              too, so progress is visible everywhere. No in-game flourish here — a level-up crossed on
+              this surface is celebrated by the app-root ceremony (LevelUpOverlay), not a mini burst. */}
+          <Box sx={{ flexGrow: 1 }} />
+          <LevelRingMini size={44} />
         </Toolbar>
       </AppBar>
 

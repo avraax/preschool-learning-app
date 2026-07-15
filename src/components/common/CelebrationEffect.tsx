@@ -170,7 +170,15 @@ export default CelebrationEffect
 // intensity + duration and fires its matching SFX cue, so big moments feel bigger than the
 // per-answer "micro" sparkle. Reduced-motion is handled inside CelebrationEffect (the SFX +
 // score still land; the heavy animation is skipped).
-export type CelebrationTier = 'micro' | 'streak' | 'round' | 'best' | 'sticker' | 'page' | 'levelup'
+export type CelebrationTier =
+  | 'micro'
+  | 'streak'
+  | 'round'
+  | 'best'
+  | 'sticker'
+  | 'page'
+  | 'levelup'
+  | 'levelup-mini'
 
 const TIER_MAP: Record<
   CelebrationTier,
@@ -184,6 +192,9 @@ const TIER_MAP: Record<
   page: { intensity: 'high', duration: 3400, sfx: 'page-complete' },
   // The biggest moment — a global level-up (Liveliness PRD-01). Longest, most confetti + fanfare.
   levelup: { intensity: 'high', duration: 3400, sfx: 'level-up' },
+  // A level-up crossed MID-GAME (Liveliness PRD-04): a short, non-interrupting burst + fanfare that
+  // never stops play. The BIG ceremony (`levelup`) is deferred to the result screen / next menu.
+  'levelup-mini': { intensity: 'medium', duration: 1600, sfx: 'level-up' },
 }
 
 // Hook for managing celebration effects

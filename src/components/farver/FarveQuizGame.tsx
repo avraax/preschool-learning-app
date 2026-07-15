@@ -80,7 +80,7 @@ const FarveQuizGame: React.FC = () => {
   const audio = useSimplifiedAudioHook({ componentId: 'FarveQuizGame', autoInitialize: false })
   const [gameReady, setGameReady] = useState(false)
 
-  const round = useRound({ length: ROUND_QUESTIONS, starThresholds: { three: 0, two: 2 } })
+  const round = useRound({ length: ROUND_QUESTIONS, starThresholds: { three: 0, two: 2 }, gameId: 'colors.quiz' })
   const firstAttemptRef = useRef(true)
   const [roundOutcome, setRoundOutcome] = useState<RoundOutcome | null>(null)
 

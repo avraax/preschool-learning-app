@@ -79,7 +79,7 @@ const NuancerGame: React.FC = () => {
   const audio = useSimplifiedAudioHook({ componentId: 'NuancerGame', autoInitialize: false })
   const [gameReady, setGameReady] = useState(false)
 
-  const round = useRound({ length: ROUND_QUESTIONS, starThresholds: { three: 0, two: 2 } })
+  const round = useRound({ length: ROUND_QUESTIONS, starThresholds: { three: 0, two: 2 }, gameId: 'colors.nuancer' })
   const firstAttemptRef = useRef(true)
   const [roundOutcome, setRoundOutcome] = useState<RoundOutcome | null>(null)
 

@@ -7,6 +7,7 @@ import Mascot from './Mascot'
 import BackButton from './BackButton'
 import GameIntro from './GameIntro'
 import CelebrationEffect from './CelebrationEffect'
+import LevelRingMini from './LevelRingMini'
 import { getCategoryTheme } from '../../config/categoryThemes'
 import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 import { mascotBus } from '../../services/mascotBus'
@@ -27,6 +28,10 @@ interface GameShellProps {
   title: string
   backRoute: string
   score?: React.ReactNode
+  // Live cross-game XP indicator (Liveliness PRD-04): a compact level ring shown in the header,
+  // beside the score, on EVERY game. Set false for a rare opt-out. Ticks/pops per task and does a
+  // non-interrupting burst on a mid-game level-up (the big ceremony is deferred).
+  levelIndicator?: boolean
   guideReaction?: GuideReaction      // 'cheer' on correct, 'think' on wrong (bridged to mascotBus)
   celebration?: { show: boolean; intensity?: 'low' | 'medium' | 'high'; duration?: number; onComplete?: () => void }
   // Framed focal zone (PromptStage). When set, the body uses the anti-void 3-zone layout.
@@ -48,6 +53,7 @@ const GameShell: React.FC<GameShellProps> = ({
   title,
   backRoute,
   score,
+  levelIndicator = true,
   guideReaction = null,
   celebration,
   promptStage,
@@ -128,7 +134,15 @@ const GameShell: React.FC<GameShellProps> = ({
             </Typography>
           )}
 
-          {score}
+          {/* Right cluster: live cross-game level ring (Liveliness PRD-04) + the game's own score
+              chip. The ring reads the shared store so it keeps climbing across games; phone-landscape
+              gets a smaller, flyer-less variant so it never fights the inline title/score row. */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, md: 1.5 } }}>
+            {levelIndicator && (
+              <LevelRingMini flourish compact={phoneLandscape} size={phoneLandscape ? 34 : 46} />
+            )}
+            {score}
+          </Box>
         </Toolbar>
       </AppBar>
 

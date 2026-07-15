@@ -261,7 +261,9 @@ const HomePage: React.FC = () => {
             })}
           </Box>
 
-          {/* Reward shelf — Min Bog. */}
+          {/* Reward shelf — Min Bog. De-emphasized (Liveliness PRD-04 §7): the LEVEL is now the
+              primary reward (the header companion + in-game/menu rings lead), so the album shelf is a
+              slimmer secondary pill. Album + earning stay fully intact — only its prominence shrinks. */}
           <Box
             component={motion.div}
             initial={{ opacity: 0, y: 24 }}
@@ -269,7 +271,7 @@ const HomePage: React.FC = () => {
             transition={{ duration: 0.6, delay: 0.5 }}
             whileHover={{ scale: 1.015 }}
             whileTap={{ scale: 0.985 }}
-            sx={{ width: '100%', maxWidth: { xs: 556, md: 842 }, mx: 'auto' }}
+            sx={{ width: '100%', maxWidth: { xs: 380, md: 520 }, mx: 'auto' }}
           >
             <Card
               onClick={() => { sfx.play('card-pop'); navigateWithTransition('/album') }}
@@ -322,23 +324,23 @@ const HomePage: React.FC = () => {
                   zIndex: 1,
                   display: 'flex',
                   alignItems: 'center',
-                  gap: { xs: 1.5, md: 2.5 },
-                  px: { xs: 2, md: 3 },
-                  py: { xs: 1.25, md: 1.75 },
-                  '&:last-child': { pb: { xs: 1.25, md: 1.75 } },
-                  [PHONE_LANDSCAPE]: { py: 0.5, '&:last-child': { pb: 0.5 }, gap: 1 },
+                  gap: { xs: 1.25, md: 1.75 },
+                  px: { xs: 1.5, md: 2 },
+                  py: { xs: 0.75, md: 1 },
+                  '&:last-child': { pb: { xs: 0.75, md: 1 } },
+                  [PHONE_LANDSCAPE]: { py: 0.4, '&:last-child': { pb: 0.4 }, gap: 0.75 },
                 }}
               >
-                <Box sx={{ fontSize: { xs: '2.2rem', md: '2.8rem' }, lineHeight: 1, flex: '0 0 auto', [PHONE_LANDSCAPE]: { fontSize: '1.4rem' } }}>📖</Box>
-                <Box sx={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 0.6 }}>
-                  <Typography sx={{ fontWeight: 800, fontSize: { xs: '1.1rem', md: '1.35rem' }, color: '#6B3F00', lineHeight: 1, [PHONE_LANDSCAPE]: { fontSize: '0.95rem' } }}>
+                <Box sx={{ fontSize: { xs: '1.5rem', md: '1.9rem' }, lineHeight: 1, flex: '0 0 auto', [PHONE_LANDSCAPE]: { fontSize: '1.2rem' } }}>📖</Box>
+                <Box sx={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 0.4 }}>
+                  <Typography sx={{ fontWeight: 800, fontSize: { xs: '0.9rem', md: '1.05rem' }, color: '#6B3F00', lineHeight: 1, [PHONE_LANDSCAPE]: { fontSize: '0.85rem' } }}>
                     Min Bog
                   </Typography>
-                  <Box sx={{ position: 'relative', height: 12, borderRadius: 6, bgcolor: alpha('#C77800', 0.2), overflow: 'hidden', width: '100%', [PHONE_LANDSCAPE]: { height: 8 } }}>
+                  <Box sx={{ position: 'relative', height: 8, borderRadius: 4, bgcolor: alpha('#C77800', 0.2), overflow: 'hidden', width: '100%', [PHONE_LANDSCAPE]: { height: 6 } }}>
                     <Box sx={{ position: 'absolute', inset: 0, width: `${Math.round(albumFill * 100)}%`, background: 'linear-gradient(90deg, #FFD86B 0%, #FFB300 100%)', boxShadow: '0 0 10px rgba(255,179,0,0.6)', transition: 'width 0.7s cubic-bezier(0.34, 1.56, 0.64, 1)' }} />
                   </Box>
                 </Box>
-                <Typography sx={{ flex: '0 0 auto', fontWeight: 800, fontSize: { xs: '0.95rem', md: '1.15rem' }, color: '#5C3800', whiteSpace: 'nowrap', [PHONE_LANDSCAPE]: { fontSize: '0.8rem' } }}>
+                <Typography sx={{ flex: '0 0 auto', fontWeight: 800, fontSize: { xs: '0.8rem', md: '0.95rem' }, color: '#5C3800', whiteSpace: 'nowrap', [PHONE_LANDSCAPE]: { fontSize: '0.75rem' } }}>
                   {stickersOwned} / {stickersTotal} · ⭐ {progress.totals.totalStars}
                 </Typography>
               </CardContent>

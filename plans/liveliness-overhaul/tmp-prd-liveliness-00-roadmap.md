@@ -59,7 +59,15 @@ plans/liveliness-overhaul/tmp-prd-liveliness-00-roadmap.md                 ← t
 plans/liveliness-overhaul/tmp-prd-liveliness-01-progression-foundation.md  ← shared progression layer (IMPLEMENT FIRST)
 plans/liveliness-overhaul/tmp-prd-liveliness-02-menus-and-navigation.md    ← living menus, themed transitions, nav SFX, back button
 plans/liveliness-overhaul/tmp-prd-liveliness-03-games-shell-and-audit.md   ← game-entry beat + unify shell + per-game audit
+plans/liveliness-overhaul/tmp-prd-liveliness-04-live-xp-progression.md     ← REWORK: live per-task XP + in-game indicator + stickers-as-level-up-trophies
 ```
+
+> **-04 supersedes the *earning* + *visibility* parts of -01.** After -01/-02/-03 shipped, XP earned only at
+> round-end and showed only on home, so cross-game progress felt absent. -04 reworks it to grant XP **per
+> completed task, live**, show a **level ring in the game header + on menus**, celebrate mid-game level-ups
+> **without interrupting play** (big ceremony deferred to the result screen), and re-role **stickers as the
+> trophy of a level-up** (level becomes the primary reward). Everything else -01 built (store slice, `applyXp`,
+> selectors, overlay/watcher, companion, bloom) is reused. Implement -04 after -01.
 
 **PRD-01 is the keystone and must be implemented first.** It defines the global XP/level system, per-section
 "bloom", the level-up ceremony, and the child-facing growth display. PRD-02's "visible bloom" and PRD-03's

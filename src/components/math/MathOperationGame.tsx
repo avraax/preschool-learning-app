@@ -77,7 +77,7 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
   const { incrementScore, resetScore, isScoreNarrating, handleScoreClick } = useGameState()
 
   // Bounded round + reward flow (Foundation §3). 8 questions, 3★ = no mistakes, 2★ ≤ 2.
-  const round = useRound({ length: 8, starThresholds: { three: 0, two: 2 } })
+  const round = useRound({ length: 8, starThresholds: { three: 0, two: 2 }, gameId })
   // True until the first wrong tile is tapped for the current problem (gates streak/star).
   const firstAttemptRef = useRef(true)
   const [roundOutcome, setRoundOutcome] = useState<RoundOutcome | null>(null)

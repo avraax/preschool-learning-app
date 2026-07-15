@@ -1,4 +1,6 @@
 import { useCallback, useRef, useState } from 'react'
+import { progressStore } from '../services/progressStore'
+import { xpBus } from '../services/xpBus'
 
 // Bounded-round state (Overhaul Foundation — System 3).
 //
@@ -15,6 +17,10 @@ export interface RoundConfig {
   length: number // questions per round (e.g. 8)
   starThresholds?: { three: number; two: number } // MISTAKES allowed; default 3★=0, 2★≤2
   stickerSetId?: string // optional sticker-pool bias
+  // Live per-task XP (Liveliness PRD-04). When set, each completed question grants weighted XP
+  // immediately (base + first-try bonus) and pings the XP indicator via xpBus. One edit here covers
+  // all 9 useRound games. Absent → no per-task XP (endless / XP-less rounds).
+  gameId?: string
 }
 
 export interface RoundState {
@@ -60,9 +66,16 @@ export const useRound = (config?: RoundConfig): UseRound => {
       const next: RoundState = { index, firstTryCorrect, streak, longestStreak, done }
       ref.current = next
       setState(next)
+      // Live per-task XP (Liveliness PRD-04): grant on THIS completed question (base + first-try
+      // bonus, weighted per game, difficulty-independent) and ping the header ring. A crossed level
+      // drives only the small in-game flourish here — the big ceremony is deferred (result/menu).
+      if (config?.gameId) {
+        const grant = progressStore.grantTaskXp(config.gameId, { firstTry })
+        xpBus.emit({ amount: grant.granted, leveledUp: grant.global.leveledUp })
+      }
       return next
     },
-    [enabled, config?.length],
+    [enabled, config?.length, config?.gameId],
   )
 
   const reset = useCallback(() => {

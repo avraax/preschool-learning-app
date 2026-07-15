@@ -122,7 +122,7 @@ const SpellingGame: React.FC = () => {
   const { incrementScore, resetScore, isScoreNarrating, handleScoreClick } = useGameState()
 
   // Bounded round + reward flow (Overhaul Ordleg §2). 8 words, 3★ = no mistakes, 2★ ≤ 2.
-  const round = useRound({ length: 8, starThresholds: { three: 0, two: 2 } })
+  const round = useRound({ length: 8, starThresholds: { three: 0, two: 2 }, gameId: 'ordleg.spelling' })
   const firstAttemptRef = useRef(true)
   const [roundOutcome, setRoundOutcome] = useState<RoundOutcome | null>(null)
 
