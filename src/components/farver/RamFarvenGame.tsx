@@ -394,7 +394,10 @@ const RamFarvenGame: React.FC = () => {
     commitTimer.current = setTimeout(() => {
       setRecipe(null)
       const r = round.completeQuestion(firstAttemptRef.current)
-      if (!r.done && r.streak > 0 && r.streak % 3 === 0) celebrateTier('streak')
+      if (!r.done && r.streak > 0 && r.streak % 3 === 0) {
+        celebrateTier('streak')
+        mascotBus.emit('streak') // mascot does its streak pose, matching the shared quiz engine
+      }
       if (r.done) finishRound(r.firstTryCorrect, r.longestStreak)
       else setupTarget(true, result.hex)
     }, reduce ? 1200 : REVEAL_MS)

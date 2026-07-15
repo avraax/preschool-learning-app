@@ -347,7 +347,10 @@ const FarvejagtGame: React.FC = () => {
     flourishTimer.current = setTimeout(() => {
       setBoardFlourish(false)
       const r = round.completeQuestion(firstAttemptRef.current)
-      if (!r.done && r.streak > 0 && r.streak % 3 === 0) celebrateTier('streak')
+      if (!r.done && r.streak > 0 && r.streak % 3 === 0) {
+        celebrateTier('streak')
+        mascotBus.emit('streak') // mascot does its streak pose, matching the shared quiz engine
+      }
       if (r.done) finishRound(r.firstTryCorrect, r.longestStreak)
       else setupBoard(true)
     }, reduce ? 250 : FLOURISH_MS)
