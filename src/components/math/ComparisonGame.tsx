@@ -18,6 +18,7 @@ import { useGameState } from '../../hooks/useGameState'
 import { useRound } from '../../hooks/useRound'
 import { progressStore, type RoundOutcome } from '../../services/progressStore'
 import { sfx } from '../../services/sfxClient'
+import { mascotBus } from '../../services/mascotBus'
 import { isIOS } from '../../utils/deviceDetection'
 import { useDifficulty } from '../../hooks/useDifficulty'
 import { devFx } from '../../utils/devHarness'
@@ -302,6 +303,10 @@ const ComparisonGame: React.FC = () => {
     audio.updateUserInteraction()
     audio.cancelCurrentAudio()
 
+    // Every tap is felt: a soft tick synced to the press (separate SFX channel, never TTS) —
+    // matching UnifiedQuizGame so the interaction language is consistent app-wide.
+    sfx.play('tap')
+
     const biggerSide: Side =
       currentProblem.leftNumber > currentProblem.rightNumber ? 'left' : 'right'
     const isCorrect = side === biggerSide
@@ -350,6 +355,7 @@ const ComparisonGame: React.FC = () => {
         const r = round.completeQuestion(firstAttemptRef.current)
         if (!r.done && r.streak > 0 && r.streak % 3 === 0) {
           celebrateTier('streak')
+          mascotBus.emit('streak') // mascot does its streak pose, matching the shared quiz engine
         }
         if (r.done) {
           finishRound(r.firstTryCorrect, r.longestStreak)
