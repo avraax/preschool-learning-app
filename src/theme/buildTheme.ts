@@ -8,7 +8,7 @@ import type {
   MaterialTokens,
   TransitionTokens,
 } from './tokens/types'
-import { emptyScene, noMaterials } from './tokens/helpers'
+import { emptyScene, noMaterials, defaultHomeAnchors, defaultSectionFocus } from './tokens/helpers'
 import { setActiveTokens } from './tokens/activeTokens'
 
 // Flat/unregistered skins get a fast OPAQUE fade wipe (no world present, so the page's own
@@ -39,7 +39,15 @@ export function buildTheme(tokens: ThemeTokens): Theme {
   // World tokens are optional (authored incrementally per the Theme Worlds phases).
   // Absence → today's flat look: title uses the body font, no scene, no materials.
   const titleFontFamily = tokens.titleFontFamily ?? fontFamily
-  const scene = tokens.scene ?? emptyScene()
+  const baseScene = tokens.scene ?? emptyScene()
+  // Structured World (PRD-05): every new field defaults to a sane value so flat & un-updated
+  // skins keep working and every consumer can rely on `theme.scene.homeAnchors` etc. existing.
+  const scene: SceneTokens = {
+    ...baseScene,
+    homeAnchors: baseScene.homeAnchors ?? defaultHomeAnchors(),
+    sectionFocus: baseScene.sectionFocus ?? defaultSectionFocus(),
+    bloomScenery: baseScene.bloomScenery ?? [],
+  }
   const materials = tokens.materials ?? noMaterials()
   const transition = tokens.transition ?? defaultTransition(tokens)
 

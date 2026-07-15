@@ -232,8 +232,9 @@ const GameSelectionLayout: React.FC<GameSelectionLayoutProps> = ({
                     p: { xs: 1, md: 1.5 },
                     '&:last-child': { pb: { xs: 1, md: 1.5 } }
                   }}>
-                    {/* Unified soft-3D-styled icon (matches home section icons). */}
-                    <GameTileIcon id={game.id} fallbackEmoji={game.emoji} />
+                    {/* Unified soft-3D-styled icon (matches home section icons). Keyed
+                        <section>.<id> so per-game art can't collide across sections (W4.1). */}
+                    <GameTileIcon section={categoryId} id={game.id} fallbackEmoji={game.emoji} />
                     <Typography
                       sx={{
                         fontWeight: 700,

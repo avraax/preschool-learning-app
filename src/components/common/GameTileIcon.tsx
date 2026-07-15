@@ -1,22 +1,26 @@
 import React from 'react'
 import { Box } from '@mui/material'
+import { gameIconImages } from '../../assets/themes/icons'
 
-// Unified tile-icon language (Liveliness PRD-02 §5). Home section cards use soft-3D icon art;
-// section-menu tiles used flat emoji — a visible inconsistency. This renders a soft-3D per-game
-// asset from the registry WHEN one exists, else the emoji styled IDENTICALLY (same soft drop
-// shadow + size clamp + no-select) so the polish matches immediately. Richer per-game art can land
-// incrementally by adding entries to GAME_ICON_IMAGES (assets under src/assets/themes/icons).
-
-// gameId → soft-3D icon asset URL. Empty for now (emoji fallback); populate incrementally.
-const GAME_ICON_IMAGES: Record<string, string> = {}
+// Unified tile-icon language (Liveliness PRD-02 §5, re-keyed by PRD-05 W4.1). Home section cards
+// use soft-3D icon art; section-menu tiles used flat emoji — a visible inconsistency. This renders
+// a soft-3D per-game asset from the registry WHEN one exists, else the emoji styled IDENTICALLY
+// (same soft drop shadow + size clamp + no-select) so the polish matches immediately.
+//
+// The registry (`gameIconImages`, in src/assets/themes/icons) is keyed COLLISION-FREE by
+// `<section>.<id>` — the bare game.id collides (alphabet.memory10 vs math.memory10). Callers pass
+// BOTH `section` and `id`; this builds the key. Richer per-game art lands incrementally by adding
+// entries to `gameIconImages` (batch B2) — any missing key falls back to the emoji, so partial
+// population is safe.
 
 interface GameTileIconProps {
+  section: string
   id: string
   fallbackEmoji: string
 }
 
-const GameTileIcon: React.FC<GameTileIconProps> = ({ id, fallbackEmoji }) => {
-  const art = GAME_ICON_IMAGES[id]
+const GameTileIcon: React.FC<GameTileIconProps> = ({ section, id, fallbackEmoji }) => {
+  const art = gameIconImages[`${section}.${id}`]
 
   if (art) {
     return (

@@ -1,4 +1,12 @@
-import type { CategoryPalette, MaterialTokens, SceneTokens, ShadowTokens } from './types'
+import type {
+  CategoryPalette,
+  HomeAnchor,
+  MaterialTokens,
+  SceneFocus,
+  SceneSectionId,
+  SceneTokens,
+  ShadowTokens,
+} from './types'
 
 // The bundled kid-friendly font. All current themes share it; a theme may override its own.
 export const COMIC_FONT = '"Comic Neue", "Comic Sans MS", "Comic Sans", sans-serif'
@@ -161,3 +169,31 @@ export const noMaterials = (): MaterialTokens => ({
   buttonGradient: '',
   motif: '',
 })
+
+// ---- Structured World defaults (Liveliness PRD-05) -----------------------------------
+// A theme that hasn't authored per-theme seating/framing still gets a sensible, balanced
+// arrangement so the home objects + section framing work. Each theme is expected to OVERRIDE
+// these with anchors that sit on its own near-layer features (clouds/shore/asteroids/ridges).
+
+export const SCENE_SECTION_ORDER: SceneSectionId[] = ['alphabet', 'math', 'colors', 'english', 'ordleg']
+
+// 5 objects on a gentle rainbow arc across the lower-middle of the scene (predictable, uncluttered).
+export const defaultHomeAnchors = (): HomeAnchor[] => [
+  { section: 'alphabet', xPct: 16, yPct: 54, scale: 1, depth: 0.3 },
+  { section: 'math', xPct: 33, yPct: 47, scale: 1, depth: 0.32 },
+  { section: 'colors', xPct: 50, yPct: 44, scale: 1.04, depth: 0.34 },
+  { section: 'english', xPct: 67, yPct: 47, scale: 1, depth: 0.32 },
+  { section: 'ordleg', xPct: 84, yPct: 54, scale: 1, depth: 0.3 },
+]
+
+// A neutral centred focus per section (no zoom-in) — themes override to frame their own locale.
+export const defaultSectionFocus = (): Record<SceneSectionId, SceneFocus> => {
+  const centred: SceneFocus = { xPct: 50, yPct: 50, zoom: 1.15 }
+  return {
+    alphabet: { ...centred },
+    math: { ...centred },
+    colors: { ...centred },
+    english: { ...centred },
+    ordleg: { ...centred },
+  }
+}

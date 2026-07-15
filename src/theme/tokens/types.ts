@@ -96,6 +96,44 @@ export interface AmbientSpriteSpec {
   size: [number, number] // min/max px
 }
 
+// The 5 learning sections (matches CategoryTokens' keys / progressStore SectionId). Kept as a
+// local alias so this schema file has no runtime dependency on the store.
+export type SceneSectionId = keyof CategoryTokens
+
+// ---- Structured World (Liveliness PRD-05) --------------------------------------------
+// Per-theme SEATING + FRAMING config for the "objects live in the world" shell. All optional
+// on SceneTokens and defaulted in buildTheme, so flat/un-updated skins keep working.
+
+// Where one of the 5 section objects rests on the home scene (percent of the viewport). Each
+// theme seats its 5 objects on its own near-layer features (clouds/shore/asteroids/ridges).
+export interface HomeAnchor {
+  section: SceneSectionId
+  xPct: number            // 0–100, horizontal centre of the object
+  yPct: number            // 0–100, vertical centre of the object
+  scale: number           // relative object size (1 = base)
+  rotate?: number         // small resting tilt (deg)
+  depth?: number          // parallax ride strength (0 static → ~0.6 near); default ~0.3
+}
+
+// Where the persistent world re-centres/zooms when a section menu is framed on its locale
+// (the cinematic push-in destination + framed-menu backdrop).
+export interface SceneFocus {
+  xPct: number            // focal point the world re-centres on (0–100)
+  yPct: number
+  zoom: number            // scene scale at rest in that section (~1.1–1.4)
+}
+
+// A discrete, stage-gated scenery sprite that fades/pops in as the section's bloom stage rises.
+export interface BloomSprite {
+  src: string             // resolved sprite URL (or '' to use a loader-provided one by index)
+  minStage: number        // appears once bloomStage ≥ this (0–4)
+  xPct: number
+  yPct: number
+  depth: number           // parallax ride strength
+  scale: number
+  section?: SceneSectionId // optional: only bloom in this section's framed scene (else home/all)
+}
+
 export interface SceneTokens {
   dark: boolean                 // dark decorative backdrop (Space). Cards/text stay light.
   layers: ParallaxLayerSpec[]   // back→front; rendered behind content with parallax
@@ -114,6 +152,10 @@ export interface SceneTokens {
   // (or asset URLs) for the home companion + level-up growth reveal; `ringColor` tints its XP ring.
   // Absent → a generic plant companion + a primary-derived ring color (see ProgressionCompanion).
   progressionCompanion?: { stages: string[]; ringColor: string }
+  // ---- Structured World (Liveliness PRD-05) — all optional, defaulted in buildTheme ----
+  homeAnchors?: HomeAnchor[]                          // per-theme seating of the 5 section objects (W3)
+  sectionFocus?: Partial<Record<SceneSectionId, SceneFocus>> // per-section camera focus (W2/W4/W5)
+  bloomScenery?: BloomSprite[]                        // discrete stage-gated scenery sprites (W7)
 }
 
 export interface MaterialTokens {
@@ -131,7 +173,8 @@ export interface MaterialTokens {
 // paints an OPAQUE fill and animates transform/clip-path ONLY (never the page's opacity, never
 // backdrop-filter) — see the compositing-flicker rules in the PRD.
 
-export type TransitionVariant = 'wave' | 'zoom' | 'leaves' | 'iris' | 'fade'
+// `push` (Liveliness PRD-05) = a cinematic focus-push into the tapped object's locale.
+export type TransitionVariant = 'wave' | 'zoom' | 'leaves' | 'iris' | 'fade' | 'push'
 
 export interface TransitionTokens {
   variant: TransitionVariant
