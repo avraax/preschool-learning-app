@@ -16,10 +16,12 @@ Danish educational web app for children aged 5-7. Alphabet, math, colors, and me
 ```
 npm install          # Install dependencies
 npm run dev          # Dev server at http://localhost:5173
-npm run build        # TypeScript compile + Vite production build
+npm run build        # TypeScript compile + Vite production build (rewrites src/config/version.ts — don't commit that churn)
 npm run lint         # ESLint
 npm run preview      # Preview production build
 npm run tts:prebake  # Regenerate prebaked TTS (needs Azure creds; resumable). Commit its output.
+npm run audit:check  # Narration guard (PRD-11): flags closed-set clips not signed off in docs/audit/
+npm run audit:approve-all  # Owner bulk sign-off of the current narration set (after a /audit listen pass)
 git push origin master  # Deploy to production (Vercel)
 ```
 

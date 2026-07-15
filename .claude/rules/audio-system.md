@@ -27,6 +27,9 @@ TTS goes through `src/services/ttsClient.ts` (the playback engine) and the `/api
 The Engelsk section uses the Azure `en-US-AvaMultilingualNeural` voice via `speakEnglish()` (voiceType `'english'`). Danish
 pronunciation fixes live in the hosted PLS lexicon (`public/da-DK.pls`). The shared Azure synthesis
 core (`shared-azure-tts.js`) is used by both the dev server and the Vercel function so they can't drift.
+Because Ava is *multilingual*, she code-switches accent on words that exist in other languages (e.g.
+"banana" reads Spanish-ish) — it can sound like a different speaker but it's the same voice, working
+as intended (PRD-11 owner ruling: keep en-US Ava, don't chase per-word accent).
 
 **Key behaviour: there is NO audio queue.** Only one audio plays at a time; starting new audio
 immediately cancels whatever is playing (`playAudio()` calls `stopCurrentAudio()` first). This is
@@ -50,8 +53,13 @@ serves only genuinely dynamic text or a non-default VoiceLab voice.
   (glyph-first: bare glyph for most, `X:'eks'`/`Z:'zæt'`; number 1 stays `'en'`, not `'et'`).
 - The manifest cache key **must** match between `ttsClient.resolveRequest` and the build script; both
   build it via `shared-tts-key.js` (single source — don't hand-roll the key format).
-- Build scripts (`prebake-tts.mjs`, `tts-voice-eval.mjs`) `import` `src/**/*.ts` directly (Node ≥22
-  strips types) — generate from the real source arrays, never a hand-copied duplicate.
+- Build scripts (`prebake-tts.mjs`, `tts-voice-eval.mjs`) + the shared enumerator
+  `shared-narration-clips.js` `import` `src/**/*.ts` directly (Node ≥22 strips types) — generate from
+  the real source arrays, never a hand-copied duplicate. **Relative imports anywhere in that
+  transitive graph need an explicit `.ts` extension** (e.g. `'../utils/shuffle.ts'`): Node's ESM
+  resolver rejects extensionless imports even though Vite/tsc accept them, so a build script silently
+  breaks on a source file the app imports fine. `allowImportingTsExtensions` makes the extension safe
+  in Vite/tsc too.
 
 ## Mandatory Rules
 
