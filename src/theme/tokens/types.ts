@@ -9,6 +9,8 @@
 // per palette entry rather than a single string, so a reskin reproduces today's exact
 // colours with no MUI-derived drift.
 
+import type { SfxCue } from '../../services/sfxClient'
+
 export interface ColorScale {
   main: string
   light: string
@@ -122,6 +124,27 @@ export interface MaterialTokens {
   motif: string                 // small static motif used on game screens (corner png or css)
 }
 
+// ---- Themed route transition (Liveliness PRD-02) -------------------------------------
+// A per-skin signature "wipe" that carries the child between routes: a rising wave (Havet),
+// a warp (Rummet), tumbling leaves (Dino), a rainbow iris (Regnbue). Optional on ThemeTokens
+// and defaulted in buildTheme (flat/unregistered skins → a fast opaque `fade`). The overlay
+// paints an OPAQUE fill and animates transform/clip-path ONLY (never the page's opacity, never
+// backdrop-filter) — see the compositing-flicker rules in the PRD.
+
+export type TransitionVariant = 'wave' | 'zoom' | 'leaves' | 'iris' | 'fade'
+
+export interface TransitionTokens {
+  variant: TransitionVariant
+  color: string                 // OPAQUE fill/gradient the overlay paints (never transparent)
+  direction: 'up' | 'down' | 'left' | 'right' | 'in'   // forward vector; back reverses it
+  coverMs: number               // cover-in duration (~250)
+  revealMs: number              // reveal-out duration (~300)
+  ease: number[] | string       // framer transition ease (cubic-bezier array or keyword)
+  sfx: SfxCue                    // forward travel cue (fired at cover start)
+  motif?: 'wave' | 'rocket' | 'leaves' | 'sparkle'     // signature sprite riding the overlay
+  reduced: 'fade' | 'none'      // reduced-motion fallback (fast opaque swap, or plain navigate)
+}
+
 export interface ThemeTokens {
   id: string
   name: string            // human label shown in the front-page theme selector
@@ -141,4 +164,5 @@ export interface ThemeTokens {
   titleFontFamily?: string  // bundled themed display font for titles (falls back to fontFamily)
   scene?: SceneTokens
   materials?: MaterialTokens
+  transition?: TransitionTokens
 }

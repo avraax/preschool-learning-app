@@ -3,9 +3,14 @@ import { Box } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { useLocation } from 'react-router-dom'
 import { useReducedMotion } from '../../../hooks/useReducedMotion'
+import { useProgress } from '../../../hooks/useProgress'
+import { sectionForPath } from '../../../config/routeDepth'
+import type { SectionId } from '../../../services/progressStore'
 import { useParallax } from './useParallax'
 import { routeKind } from './routeKind'
 import ThemeScene from './ThemeScene'
+
+const BLOOM_SECTIONS: SectionId[] = ['alphabet', 'math', 'colors', 'english', 'ordleg']
 
 // The ONE persistent SCENE for the whole app (App-wide UI Uplift / Theme Worlds). Rendered once
 // in App, behind the router, so the parallax scene + drifting ambient NEVER unmount on
@@ -33,11 +38,32 @@ const PersistentWorld: React.FC = () => {
   const theme = useTheme()
   const reduce = useReducedMotion()
   const { pathname } = useLocation()
+  const { bloomFor } = useProgress()
   const rootRef = useRef<HTMLDivElement>(null)
   const immersive = theme.scene.layers.length > 0
   const dark = theme.scene.dark
   const inGame = routeKind(pathname) === 'game'
   const ease = reduce ? '0s' : '0.4s'
+
+  // Visible bloom (Liveliness PRD-02 §9): the more a section is played, the more alive its world.
+  // A section route reflects THAT section's bloom; home reflects the child's best across sections.
+  // Bloom multiplies the scene's existing ambient knob (extra drifting objects) — monotonic and
+  // persisted, so the child returns to a world they made grow.
+  const section = sectionForPath(pathname)
+  let stage = 0
+  let fill = 0
+  if (section) {
+    const b = bloomFor(section)
+    stage = b.stage
+    fill = b.fill
+  } else {
+    for (const s of BLOOM_SECTIONS) {
+      const b = bloomFor(s)
+      stage = Math.max(stage, b.stage)
+      fill = Math.max(fill, b.fill)
+    }
+  }
+  const bloomExtra = Math.round(stage * 2 + fill * 4) // 0 (fresh) → ~12 (fully bloomed)
 
   // Freeze the scene during gameplay (PRD-08 §P4): the world is blurred + dimmed behind a game
   // anyway, so stop the parallax rAF and pause the ambient CSS animations — no continuous GPU /
@@ -73,7 +99,7 @@ const PersistentWorld: React.FC = () => {
           transition: `filter ${ease} ease, transform ${ease} ease`,
         }}
       >
-        <ThemeScene paused={inGame} />
+        <ThemeScene paused={inGame} bloomExtra={bloomExtra} />
       </Box>
 
       {/* Dim overlay — a plain tint that fades in on game routes so nothing competes with the

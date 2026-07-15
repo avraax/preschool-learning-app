@@ -6,9 +6,23 @@ import type {
   ShadowTokens,
   SceneTokens,
   MaterialTokens,
+  TransitionTokens,
 } from './tokens/types'
 import { emptyScene, noMaterials } from './tokens/helpers'
 import { setActiveTokens } from './tokens/activeTokens'
+
+// Flat/unregistered skins get a fast OPAQUE fade wipe (no world present, so the page's own
+// opaque background is what shows — the overlay just cross-cuts it, never a transparent layer).
+const defaultTransition = (tokens: ThemeTokens): TransitionTokens => ({
+  variant: 'fade',
+  color: tokens.decor.pageBackground,
+  direction: 'in',
+  coverMs: 180,
+  revealMs: 220,
+  ease: 'easeInOut',
+  sfx: 'nav-whoosh',
+  reduced: 'fade',
+})
 
 // buildTheme(tokens) → MUI Theme.
 // Maps theme tokens onto the MUI palette/typography/components AND attaches the custom
@@ -27,6 +41,7 @@ export function buildTheme(tokens: ThemeTokens): Theme {
   const titleFontFamily = tokens.titleFontFamily ?? fontFamily
   const scene = tokens.scene ?? emptyScene()
   const materials = tokens.materials ?? noMaterials()
+  const transition = tokens.transition ?? defaultTransition(tokens)
 
   return createTheme({
     palette: {
@@ -295,6 +310,7 @@ export function buildTheme(tokens: ThemeTokens): Theme {
     titleFontFamily,
     scene,
     materials,
+    transition,
   })
 }
 
@@ -315,6 +331,7 @@ declare module '@mui/material/styles' {
     titleFontFamily: string
     scene: SceneTokens
     materials: MaterialTokens
+    transition: TransitionTokens
   }
   interface ThemeOptions {
     categories?: CategoryTokens
@@ -323,6 +340,7 @@ declare module '@mui/material/styles' {
     titleFontFamily?: string
     scene?: SceneTokens
     materials?: MaterialTokens
+    transition?: TransitionTokens
   }
 }
 

@@ -30,6 +30,15 @@ export type SfxCue =
   | 'round-complete'
   | 'page-complete'
   | 'level-up'
+  // Navigation cues (Liveliness PRD-02): a subtle pop on tapping a card, a per-skin travel whoosh
+  // fired at cover start, a soft arrive chime when a menu reveals, and a softer reverse whoosh on back.
+  | 'card-pop'
+  | 'nav-whoosh'
+  | 'nav-wave'
+  | 'nav-warp'
+  | 'nav-stomp'
+  | 'menu-open'
+  | 'back'
 
 // New drag/game cues (pick-up/spring-back/chomp/match) reuse curated files for now (real sound,
 // distinct cue names); swap to dedicated files when available — missing files degrade to silence.
@@ -51,6 +60,15 @@ const CUE_FILES: Record<SfxCue, string> = {
   // Level-up fanfare (Liveliness PRD-01). Aliases the page-complete jingle until a dedicated cue
   // ships (missing files degrade to silence anyway); the biggest celebratory moment in the app.
   'level-up': '/sounds/ui/page-complete.ogg',
+  // Navigation cues (Liveliness PRD-02). Reuse existing curated files until dedicated
+  // /sounds/ui/{card-pop,nav-*,menu-open,back}.ogg ship; missing files degrade to silence.
+  'card-pop': '/sounds/ui/tap.ogg',
+  'nav-whoosh': '/sounds/ui/flip.ogg',
+  'nav-wave': '/sounds/ui/flip.ogg',
+  'nav-warp': '/sounds/ui/flip.ogg',
+  'nav-stomp': '/sounds/ui/drop-snap.ogg',
+  'menu-open': '/sounds/ui/star.ogg',
+  back: '/sounds/ui/flip.ogg',
 }
 
 // Per-cue base volume — keep cues subtle so they don't fight narration.
@@ -70,6 +88,13 @@ const CUE_VOLUME: Partial<Record<SfxCue, number>> = {
   'round-complete': 0.55,
   'page-complete': 0.6,
   'level-up': 0.6,
+  'card-pop': 0.35,
+  'nav-whoosh': 0.35,
+  'nav-wave': 0.35,
+  'nav-warp': 0.4,
+  'nav-stomp': 0.4,
+  'menu-open': 0.3,
+  back: 0.3,
 }
 
 interface PlayOptions {

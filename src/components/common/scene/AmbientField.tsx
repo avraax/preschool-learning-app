@@ -15,6 +15,9 @@ interface AmbientFieldProps {
   // Freeze animations in place (PRD-08 §P4) without unmounting — game routes, where the scene is
   // blurred anyway. Pausing (vs. rendering nothing) means no re-shuffle/re-entry pop on return.
   paused?: boolean
+  // Extra ambient objects from the current section's bloom (Liveliness PRD-02 §9): a played world
+  // drifts with more life than a fresh one. Added to the theme's base ambient count.
+  bloomExtra?: number
 }
 
 interface AmbientItem {
@@ -90,16 +93,18 @@ const SHOOTING_STARS = [
   { top: '34%', left: '-6%', dx: '46vw', dy: '40vh', angle: 44, len: 110, delay: '-11s', duration: '15s' },
 ]
 
-const AmbientField: React.FC<AmbientFieldProps> = ({ scene, sprites, themeId, disabled, paused }) => {
-  const { count, motion } = scene.ambient
+const AmbientField: React.FC<AmbientFieldProps> = ({ scene, sprites, themeId, disabled, paused, bloomExtra = 0 }) => {
+  const { motion } = scene.ambient
   const specs = scene.ambient.sprites
+  // Base ambient count + the current section's bloom (perf still capped — bloomExtra tops out ~12).
+  const count = scene.ambient.count + Math.max(0, bloomExtra)
 
   // No sprite images → draw CSS bubbles (e.g. ocean). Otherwise use the sprite URLs.
   const cssBubbles = sprites.length === 0
 
   const items = useMemo<AmbientItem[]>(() => {
     if (disabled) return []
-    const rng = makeRng(hashSeed(themeId) + count) // seeded by theme → stable, reshuffles on switch
+    const rng = makeRng(hashSeed(themeId) + count) // seeded by theme+count → stable, reshuffles on bloom/switch
     return Array.from({ length: count }, (_, i) => {
       const idx = sprites.length ? i % sprites.length : 0
       const [min, max] = cssBubbles

@@ -1,5 +1,4 @@
-import React from 'react'
-import { useNavigate } from 'react-router-dom'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import {
   Container,
@@ -8,14 +7,18 @@ import {
   Typography,
   Box,
   AppBar,
-  Toolbar,
-  IconButton
+  Toolbar
 } from '@mui/material'
 import { useTheme, alpha } from '@mui/material/styles'
-import { ArrowLeft } from 'lucide-react'
 import { getCategoryTheme } from '../../config/categoryThemes'
 import { sectionIconImages } from '../../assets/themes/icons'
 import ThemeMascot from './ThemeMascot'
+import LivingCard from './LivingCard'
+import GameTileIcon from './GameTileIcon'
+import BackButton from './BackButton'
+import { useTransitionNav } from '../../hooks/useTransitionNav'
+import { useTransitionContext } from './transition/TransitionProvider'
+import { useIdleAttract } from '../../hooks/useIdleAttract'
 import { PHONE_ANY, PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 
 interface Game {
@@ -35,7 +38,9 @@ const GameSelectionLayout: React.FC<GameSelectionLayoutProps> = ({
   categoryId,
   games
 }) => {
-  const navigate = useNavigate()
+  const { navigateWithTransition } = useTransitionNav()
+  const transitionPhase = useTransitionContext()?.phase ?? 'idle'
+  const frozen = transitionPhase !== 'idle'
   // Category colors/content (active skin) + the built theme for themed title/cards. The world
   // layer (scene + ambient + mascot + parallax) is rendered once, app-wide, by <PersistentWorld/>.
   const catTheme = getCategoryTheme(categoryId)
@@ -44,12 +49,29 @@ const GameSelectionLayout: React.FC<GameSelectionLayoutProps> = ({
   // skins keep the original category-gradient look.
   const immersive = theme.scene.layers.length > 0
   const darkScene = theme.scene.dark // dark backdrop (e.g. Rummet) → light header text
+  const burstMotion = theme.scene.ambient.motion
   // Glass card surface. Dark worlds (Rummet) need a MORE opaque light glass: the home recipe
   // (62→46% white) blurs to a muddy grey over a dark scene and kills accent-text contrast, so
   // dark scenes get a lighter frosted card to keep the PRD's "cards stay light & readable".
   const cardGlass = darkScene
     ? 'linear-gradient(135deg, rgba(255,255,255,0.92) 0%, rgba(255,255,255,0.84) 100%)'
     : 'linear-gradient(135deg, rgba(255,255,255,0.62) 0%, rgba(255,255,255,0.46) 100%)'
+
+  // Idle / attract loop (PRD-02 §6): after ~8s idle, wiggle the mascot + exactly one tile.
+  const [attractIndex, setAttractIndex] = useState(-1)
+  const [attractOn, setAttractOn] = useState(false)
+  const attractCounter = useRef(0)
+  const attractTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const onAttract = useCallback(() => {
+    const i = games.length ? attractCounter.current % games.length : 0
+    attractCounter.current += 1
+    setAttractIndex(i)
+    setAttractOn(true)
+    if (attractTimer.current) clearTimeout(attractTimer.current)
+    attractTimer.current = setTimeout(() => setAttractOn(false), 1300)
+  }, [games.length])
+  useIdleAttract({ onAttract })
+  useEffect(() => () => { if (attractTimer.current) clearTimeout(attractTimer.current) }, [])
 
   return (
     <Box
@@ -62,8 +84,7 @@ const GameSelectionLayout: React.FC<GameSelectionLayoutProps> = ({
         background: immersive ? 'transparent' : catTheme.gradient,
         display: 'flex',
         flexDirection: 'column',
-        // Keep the header clear of the iOS status bar / notch (standalone PWA): the back button +
-        // section icon were nearly touching the clock without this.
+        // Keep the header clear of the iOS status bar / notch (standalone PWA).
         paddingTop: 'calc(env(safe-area-inset-top) + 8px)',
         paddingLeft: 'env(safe-area-inset-left)',
         paddingRight: 'env(safe-area-inset-right)'
@@ -74,22 +95,11 @@ const GameSelectionLayout: React.FC<GameSelectionLayoutProps> = ({
         position="static"
         color="transparent"
         elevation={0}
-        // Transparent so the scene runs edge-to-edge; the back button carries its own circular
-        // background and the title has the glow/halo treatment, so no header band is needed.
         sx={{ backgroundColor: 'transparent', flex: '0 0 auto', position: 'relative', zIndex: 2 }}
       >
-        <Toolbar sx={{ minHeight: '56px !important', [PHONE_LANDSCAPE]: { minHeight: '44px !important' } }}>
-          <IconButton
-            edge="start"
-            onClick={() => navigate('/')}
-            sx={{
-              mr: 2,
-              backgroundColor: 'rgba(255, 255, 255, 0.2)',
-              '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.3)' }
-            }}
-          >
-            <ArrowLeft size={24} />
-          </IconButton>
+        <Toolbar sx={{ minHeight: '56px !important', gap: 2, [PHONE_LANDSCAPE]: { minHeight: '44px !important' } }}>
+          {/* Shared animated back button — reverses the themed wipe (PRD-02 §8). */}
+          <BackButton to="/" variant="menu" />
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
             {/* Soft-3D section icon (theme-constant) replaces the flat emoji. */}
             <Box
@@ -111,8 +121,6 @@ const GameSelectionLayout: React.FC<GameSelectionLayoutProps> = ({
               sx={{
                 fontFamily: theme.titleFontFamily,
                 fontWeight: 700,
-                // Title treatment mirrors home: dark scenes get light text + glow; light
-                // immersive scenes get a soft white halo; flat skins keep the accent color.
                 color: darkScene ? '#FFFFFF' : catTheme.accentColor,
                 textShadow: darkScene
                   ? '0 0 16px rgba(120,170,255,0.6), 0 2px 8px rgba(0,0,0,0.55)'
@@ -145,17 +153,9 @@ const GameSelectionLayout: React.FC<GameSelectionLayoutProps> = ({
           zIndex: 2
         }}
       >
-        {/* Games grid. Rows size to the (capped) cards — NOT 1fr — so a few games render as a
-            tight, centred cluster of small cards instead of huge tiles spread across the height.
-            Fixed gap (same everywhere). Card width is column-bound (small) and the aspect ratio
-            sets the height, so more games just add rows and the cluster stays compact + never
-            scrolls; the whole block is centred H+V by the Container. */}
         <Box
           sx={{
             width: '100%',
-            // Fixed-width columns (capped to the card width) centred as a group, so the gap
-            // between columns equals the gap between rows — a uniform 16px everywhere. (1fr
-            // columns were much wider than the capped card, which ballooned the horizontal gap.)
             display: 'grid',
             gridTemplateColumns: { xs: 'repeat(2, minmax(0, 270px))', md: 'repeat(3, minmax(0, 270px))' },
             gridAutoRows: 'auto',
@@ -165,9 +165,6 @@ const GameSelectionLayout: React.FC<GameSelectionLayoutProps> = ({
             '@media (orientation: landscape)': {
               gridTemplateColumns: games.length <= 4 ? 'repeat(2, minmax(0, 270px))' : 'repeat(3, minmax(0, 270px))'
             },
-            // Phone landscape: the 270px-capped cards are too TALL for a ≤480px viewport
-            // (16:10 aspect → 169px rows). Smaller caps + up to 4 columns keep every menu
-            // (3-8 games) inside 1-2 compact rows.
             [PHONE_LANDSCAPE]: {
               gap: '10px',
               gridTemplateColumns: games.length <= 4
@@ -183,68 +180,68 @@ const GameSelectionLayout: React.FC<GameSelectionLayoutProps> = ({
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: index * 0.08 }}
               whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.97 }}
               style={{ width: '100%' }}
             >
-              <Card
-                onClick={() => navigate(game.route)}
-                sx={{
-                  width: '100%',
-                  // Width is governed by the (capped) column; the aspect ratio derives a
-                  // consistent height that shrinks with the column on small screens.
-                  aspectRatio: '16 / 10',
-                  cursor: 'pointer',
-                  border: '3px solid',
-                  borderColor: catTheme.borderColor,
-                  // Immersive worlds: frosted glass so the scene shows through (matches the
-                  // home section cards). Flat skins keep the bold per-game gradient.
-                  background: immersive ? cardGlass : game.gradient,
-                  backdropFilter: immersive ? 'blur(16px) saturate(1.1)' : undefined,
-                  WebkitBackdropFilter: immersive ? 'blur(16px) saturate(1.1)' : undefined,
-                  // Immersive glass cards: AA-guaranteed label colour (fixes warm-accent legibility).
-                  color: immersive ? catTheme.onCardColor : 'white',
-                  borderRadius: '16px',
-                  '@media (hover: hover) and (pointer: fine)': {
-                    '&:hover': {
-                      borderColor: catTheme.hoverBorderColor,
-                      boxShadow: immersive ? `0 8px 32px ${alpha(catTheme.accentColor, 0.3)}` : 6,
-                      transform: 'translateY(-4px)'
-                    }
-                  },
-                  transition: 'all 0.3s ease'
-                }}
+              <LivingCard
+                index={index}
+                frozen={frozen}
+                attract={attractOn && attractIndex === index}
+                burstMotion={burstMotion}
+                onActivate={() => navigateWithTransition(game.route)}
+                sx={{ width: '100%' }}
               >
-                <CardContent sx={{
-                  height: '100%',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  textAlign: 'center',
-                  gap: { xs: 0.5, md: 0.75 },
-                  p: { xs: 1, md: 1.5 },
-                  '&:last-child': { pb: { xs: 1, md: 1.5 } }
-                }}>
-                  <Typography sx={{
-                    fontSize: 'clamp(1.8rem, 5vh, 2.8rem)',
-                    lineHeight: 1
+                <Card
+                  sx={{
+                    width: '100%',
+                    aspectRatio: '16 / 10',
+                    border: '3px solid',
+                    borderColor: catTheme.borderColor,
+                    // Immersive worlds: frosted glass so the scene shows through (matches the
+                    // home section cards). Flat skins keep the bold per-game gradient.
+                    background: immersive ? cardGlass : game.gradient,
+                    backdropFilter: immersive ? 'blur(16px) saturate(1.1)' : undefined,
+                    WebkitBackdropFilter: immersive ? 'blur(16px) saturate(1.1)' : undefined,
+                    // Immersive glass cards: AA-guaranteed label colour (fixes warm-accent legibility).
+                    color: immersive ? catTheme.onCardColor : 'white',
+                    borderRadius: '16px',
+                    '@media (hover: hover) and (pointer: fine)': {
+                      '&:hover': {
+                        borderColor: catTheme.hoverBorderColor,
+                        boxShadow: immersive ? `0 8px 32px ${alpha(catTheme.accentColor, 0.3)}` : 6,
+                        transform: 'translateY(-4px)'
+                      }
+                    },
+                    transition: 'all 0.3s ease'
+                  }}
+                >
+                  <CardContent sx={{
+                    height: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    textAlign: 'center',
+                    gap: { xs: 0.5, md: 0.75 },
+                    p: { xs: 1, md: 1.5 },
+                    '&:last-child': { pb: { xs: 1, md: 1.5 } }
                   }}>
-                    {game.emoji}
-                  </Typography>
-                  <Typography
-                    sx={{
-                      fontWeight: 700,
-                      // Glass cards carry dark themed text (no shadow); gradient cards keep
-                      // white text with a soft drop shadow for contrast.
-                      textShadow: immersive ? 'none' : '1px 1px 2px rgba(0,0,0,0.3)',
-                      fontSize: 'clamp(0.85rem, 2.4vh, 1.2rem)',
-                      lineHeight: 1.1
-                    }}
-                  >
-                    {game.title}
-                  </Typography>
-                </CardContent>
-              </Card>
+                    {/* Unified soft-3D-styled icon (matches home section icons). */}
+                    <GameTileIcon id={game.id} fallbackEmoji={game.emoji} />
+                    <Typography
+                      sx={{
+                        fontWeight: 700,
+                        // Glass cards carry dark themed text (no shadow); gradient cards keep
+                        // white text with a soft drop shadow for contrast.
+                        textShadow: immersive ? 'none' : '1px 1px 2px rgba(0,0,0,0.3)',
+                        fontSize: 'clamp(0.85rem, 2.4vh, 1.2rem)',
+                        lineHeight: 1.1
+                      }}
+                    >
+                      {game.title}
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </LivingCard>
             </motion.div>
           ))}
         </Box>
@@ -255,6 +252,7 @@ const GameSelectionLayout: React.FC<GameSelectionLayoutProps> = ({
           flicker. parallaxDepth 0 → stays put. */}
       <ThemeMascot
         parallaxDepth={0}
+        attract={attractOn}
         sx={{
           left: 'calc(env(safe-area-inset-left) + 4px)',
           bottom: 'calc(env(safe-area-inset-bottom) + 2px)',

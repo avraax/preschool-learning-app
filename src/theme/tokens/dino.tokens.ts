@@ -72,6 +72,21 @@ export const dinoThemeTokens: ThemeTokens = {
     buttonGradient: 'linear-gradient(135deg, #558B2F 0%, #00796B 100%)',
     motif: 'soft',
   },
+
+  // ---- Themed route transition (Liveliness PRD-02) ----
+  // An earthy green→amber panel sweeps left→right with tumbling leaves on the leading edge (a
+  // stompy, dusty crossing).
+  transition: {
+    variant: 'leaves',
+    color: 'linear-gradient(90deg, #33691E 0%, #558B2F 55%, #C56000 100%)',
+    direction: 'right',
+    coverMs: 260,
+    revealMs: 320,
+    ease: [0.45, 0, 0.55, 1],
+    sfx: 'nav-stomp',
+    motif: 'leaves',
+    reduced: 'fade',
+  },
 }
 
 export default dinoThemeTokens

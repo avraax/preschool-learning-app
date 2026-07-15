@@ -19,9 +19,11 @@ import AmbientField from './AmbientField'
 interface ThemeSceneProps {
   // Freeze ambient animations (PRD-08 §P4) — set on game routes, where the scene is blurred anyway.
   paused?: boolean
+  // Extra drifting ambient objects from the current section's bloom (Liveliness PRD-02 §9).
+  bloomExtra?: number
 }
 
-const ThemeScene: React.FC<ThemeSceneProps> = ({ paused = false }) => {
+const ThemeScene: React.FC<ThemeSceneProps> = ({ paused = false, bloomExtra = 0 }) => {
   const theme = useTheme()
   const { themeId } = useThemeSwitch()
   const reduce = useReducedMotion()
@@ -73,7 +75,7 @@ const ThemeScene: React.FC<ThemeSceneProps> = ({ paused = false }) => {
             {scene.layers.map((layer, i) =>
               assets.layers[i] ? <ParallaxLayer key={i} spec={layer} url={assets.layers[i]} index={i} /> : null
             )}
-            <AmbientField scene={scene} sprites={assets.ambientSprites} themeId={themeId} disabled={reduce} paused={paused} />
+            <AmbientField scene={scene} sprites={assets.ambientSprites} themeId={themeId} disabled={reduce} paused={paused} bloomExtra={bloomExtra} />
             {/* Gentle scrim: lifts depth and keeps content cards readable over the scene. */}
             <Box
               aria-hidden

@@ -77,6 +77,21 @@ export const oceanThemeTokens: ThemeTokens = {
     buttonGradient: 'linear-gradient(135deg, #0288D1 0%, #00897B 100%)',
     motif: 'soft',
   },
+
+  // ---- Themed route transition (Liveliness PRD-02) ----
+  // A foam-crested wave (opaque ocean-blue gradient) rises from the bottom edge to cover, then
+  // recedes downward on reveal (tide out). White foam crest is drawn by the `wave` motif.
+  transition: {
+    variant: 'wave',
+    color: 'linear-gradient(to top, #01579B 0%, #0277BD 55%, #039BE5 100%)',
+    direction: 'up',
+    coverMs: 260,
+    revealMs: 320,
+    ease: [0.33, 1, 0.68, 1],
+    sfx: 'nav-wave',
+    motif: 'wave',
+    reduced: 'fade',
+  },
 }
 
 export default oceanThemeTokens

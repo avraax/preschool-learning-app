@@ -143,6 +143,21 @@ export const kidThemeTokens: ThemeTokens = {
     buttonGradient: 'linear-gradient(135deg, #8B5CF6 0%, #3B82F6 100%)',
     motif: 'soft',
   },
+
+  // ---- Themed route transition (Liveliness PRD-02) ----
+  // Rainbow iris: an opaque rainbow radial rises from the bottom (echoing the home arc), covers,
+  // then irises open to reveal the next page. Bright sparkle speckle on top.
+  transition: {
+    variant: 'iris',
+    color: 'radial-gradient(circle at 50% 108%, #8B5CF6 0%, #3B82F6 30%, #EC4899 62%, #F59E0B 100%)',
+    direction: 'up',
+    coverMs: 240,
+    revealMs: 300,
+    ease: [0.22, 1, 0.36, 1],
+    sfx: 'nav-whoosh',
+    motif: 'sparkle',
+    reduced: 'fade',
+  },
 }
 
 export default kidThemeTokens

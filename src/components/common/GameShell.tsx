@@ -1,11 +1,10 @@
 import React, { useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { AppBar, Box, Container, IconButton, Toolbar, Typography, useMediaQuery } from '@mui/material'
+import { AppBar, Box, Container, Toolbar, Typography, useMediaQuery } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
-import { ArrowLeft } from 'lucide-react'
 import GameMotif from './GameMotif'
 import Mascot from './Mascot'
+import BackButton from './BackButton'
 import CelebrationEffect from './CelebrationEffect'
 import { getCategoryTheme } from '../../config/categoryThemes'
 import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
@@ -50,7 +49,6 @@ const GameShell: React.FC<GameShellProps> = ({
   dense = false,
   children,
 }) => {
-  const navigate = useNavigate()
   const theme = useTheme()
   const category = getCategoryTheme(categoryId)
   const dark = theme.scene.dark
@@ -95,23 +93,8 @@ const GameShell: React.FC<GameShellProps> = ({
             [PHONE_LANDSCAPE]: { py: 0.25, minHeight: '48px !important' },
           }}
         >
-          <IconButton
-            onClick={() => navigate(backRoute)}
-            color="primary"
-            size="large"
-            sx={{
-              bgcolor: 'rgba(255, 255, 255, 0.8)',
-              border: '1px solid rgba(255, 255, 255, 0.3)',
-              backdropFilter: 'blur(8px)',
-              '&:hover': {
-                bgcolor: 'rgba(255, 255, 255, 0.9)',
-                transform: 'scale(1.05)',
-              },
-              [PHONE_LANDSCAPE]: { p: 0.75 },
-            }}
-          >
-            <ArrowLeft size={24} />
-          </IconButton>
+          {/* Shared animated back button — reverses the themed wipe (PRD-02 §8). */}
+          <BackButton to={backRoute} variant="game" />
 
           {phoneLandscape && (
             <Typography

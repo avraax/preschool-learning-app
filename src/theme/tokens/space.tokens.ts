@@ -70,6 +70,21 @@ export const spaceThemeTokens: ThemeTokens = {
     buttonGradient: 'linear-gradient(135deg, #3949AB 0%, #8E24AA 100%)',
     motif: 'soft',
   },
+
+  // ---- Themed route transition (Liveliness PRD-02) ----
+  // Warp-in: an opaque dark space radial with a starburst scales up from centre to cover; on
+  // reveal the field zooms through and out. `rocket` motif rides the centre.
+  transition: {
+    variant: 'zoom',
+    color: 'radial-gradient(circle at 50% 50%, #1A237E 0%, #0B1030 55%, #070B1A 100%)',
+    direction: 'in',
+    coverMs: 260,
+    revealMs: 340,
+    ease: [0.16, 1, 0.3, 1],
+    sfx: 'nav-warp',
+    motif: 'rocket',
+    reduced: 'fade',
+  },
 }
 
 export default spaceThemeTokens

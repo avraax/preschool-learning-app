@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { Box } from '@mui/material'
 import { useTheme, type SxProps, type Theme } from '@mui/material/styles'
 import { motion } from 'framer-motion'
@@ -6,11 +6,15 @@ import { useThemeSwitch } from '../../theme/ThemeProvider'
 import { loadSceneAssets } from '../../theme/sceneAssets'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
 import { getTapAnims, TAP_ANIM_MAX_MS, type TapAnim } from '../../theme/mascotAnimations'
+import ThemedBurst, { type ThemedBurstHandle } from './ThemedBurst'
 
 // Per-world mascot (Theme Worlds PRD §5.4). The ONE interactive element of the world layer:
-// gentle idle bob, and on tap it plays a reaction wiggle + spawns a fresh burst of rising
-// bubbles from itself. The mascot is silent (no narration on tap). Renders nothing for themes
-// without a mascot. Reduced motion → no idle/react/bubble animation.
+// gentle idle bob, and on tap it plays a reaction wiggle + spawns a fresh themed burst (via the
+// shared <ThemedBurst>). Silent (no narration on tap). Renders nothing for themes without a mascot.
+// Reduced motion → no idle/react/burst animation.
+//
+// Liveliness PRD-02: the burst is now the shared <ThemedBurst> (single source of truth with living
+// cards), and an `attract` prop lets the idle/attract loop nudge the mascot into a beckon gesture.
 
 // An externally-driven reaction (e.g. from a game answer). `cheer` = happy jump + scale + a
 // fresh burst; `think` = a gentle puzzled shake. `null` = idle. Distinct from the tap reaction.
@@ -21,19 +25,16 @@ interface ThemeMascotProps {
   onTap?: () => void // optional extra action on tap
   parallaxDepth?: number // how strongly it rides the shared parallax driver
   reaction?: GuideReaction // external reaction trigger (game feedback) — see GuideReaction
+  attract?: boolean // idle/attract loop nudge → a one-shot beckon gesture + small burst
 }
 
-// One spawned bubble in a tap burst.
-interface TapBubble {
-  id: number
-  x: number // horizontal offset from the mascot centre (px)
-  size: number // diameter (px)
-  rise: number // how far it floats up (px)
-  drift: number // horizontal drift while rising (px)
-  duration: number // seconds
-}
-
-const ThemeMascot: React.FC<ThemeMascotProps> = ({ sx, onTap, parallaxDepth = 0.45, reaction = null }) => {
+const ThemeMascot: React.FC<ThemeMascotProps> = ({
+  sx,
+  onTap,
+  parallaxDepth = 0.45,
+  reaction = null,
+  attract = false,
+}) => {
   const theme = useTheme()
   const { themeId } = useThemeSwitch()
   const reduce = useReducedMotion()
@@ -41,13 +42,12 @@ const ThemeMascot: React.FC<ThemeMascotProps> = ({ sx, onTap, parallaxDepth = 0.
   // a synchronous setState reset in the effect.
   const [loaded, setLoaded] = useState<{ id: string; mascot: string } | null>(null)
   const [tapAnim, setTapAnim] = useState<TapAnim | null>(null)
-  const [bubbles, setBubbles] = useState<TapBubble[]>([])
   const reactTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const tapIndex = useRef(0)
-  const nextBubbleId = useRef(0)
+  const burstRef = useRef<ThemedBurstHandle>(null)
 
   const lines = theme.scene.mascot.lines
-  // Tap burst matches the world's ambient style: stars (space), leaves (dino), bubbles (ocean).
+  // Burst matches the world's ambient style: stars (space), leaves (dino), bubbles (ocean).
   const burstMotion = theme.scene.ambient.motion
 
   useEffect(() => {
@@ -62,46 +62,37 @@ const ThemeMascot: React.FC<ThemeMascotProps> = ({ sx, onTap, parallaxDepth = 0.
 
   const url = loaded && loaded.id === themeId ? loaded.mascot : ''
 
-  // Build a fresh burst of bubbles rising from the mascot (built from scratch — not the
-  // balloon system). Safe to use Math.random here: this runs in an event handler / effect,
-  // never during render.
-  const spawnBubbleBurst = useCallback(() => {
-    const count = 9 + Math.floor(Math.random() * 5) // 9–13 bubbles
-    const burst: TapBubble[] = []
-    for (let i = 0; i < count; i++) {
-      burst.push({
-        id: nextBubbleId.current++,
-        x: (Math.random() * 2 - 1) * 52,
-        size: 12 + Math.random() * 20,
-        rise: 150 + Math.random() * 170,
-        drift: (Math.random() * 2 - 1) * 40,
-        duration: 1.3 + Math.random() * 1.1,
-      })
-    }
-    setBubbles((prev) => [...prev, ...burst])
-  }, [])
-
-  // A `cheer` reaction (correct answer) pops a celebratory burst. The burst is deferred to the
-  // next frame so we never call setState synchronously during the effect (avoids cascading
-  // renders). The cheer/think POSE itself is driven directly off the `reaction` prop below; the
-  // parent clears the prop after a beat, so a repeated same-value reaction re-fires.
+  // A `cheer` reaction (correct answer) pops a celebratory burst. Deferred to the next frame so we
+  // never call the burst's setState synchronously during this effect (avoids cascading renders).
   useEffect(() => {
     if (reaction !== 'cheer' || reduce) return
-    const raf = requestAnimationFrame(() => spawnBubbleBurst())
+    const raf = requestAnimationFrame(() => burstRef.current?.fire())
     return () => cancelAnimationFrame(raf)
-  }, [reaction, reduce, spawnBubbleBurst])
+  }, [reaction, reduce])
 
-  useEffect(() => () => {
+  // Idle/attract nudge (Liveliness PRD-02 §6): a one-shot beckon reusing this world's first tap
+  // anim + a small burst. The parent toggles `attract` true→false each idle cycle so this re-fires.
+  useEffect(() => {
+    if (!attract || reduce) return
+    const anims = getTapAnims(themeId)
+    setTapAnim(anims[0])
     if (reactTimer.current) clearTimeout(reactTimer.current)
-  }, [])
+    reactTimer.current = setTimeout(() => setTapAnim(null), TAP_ANIM_MAX_MS)
+    const raf = requestAnimationFrame(() => burstRef.current?.fire())
+    return () => cancelAnimationFrame(raf)
+  }, [attract, reduce, themeId])
+
+  useEffect(
+    () => () => {
+      if (reactTimer.current) clearTimeout(reactTimer.current)
+    },
+    [],
+  )
 
   if (!url || !lines.length) return null
 
-  const removeBubble = (id: number) => setBubbles((prev) => prev.filter((b) => b.id !== id))
-
   const handleTap = () => {
-    // Per-theme tap reaction (cycles through this world's set) + a themed bubble/star burst.
-    // Both skipped under reduced motion.
+    // Per-theme tap reaction (cycles through this world's set) + a themed burst. Skipped under RM.
     if (!reduce) {
       const anims = getTapAnims(themeId)
       const a = anims[tapIndex.current % anims.length]
@@ -109,14 +100,14 @@ const ThemeMascot: React.FC<ThemeMascotProps> = ({ sx, onTap, parallaxDepth = 0.
       setTapAnim(a)
       if (reactTimer.current) clearTimeout(reactTimer.current)
       reactTimer.current = setTimeout(() => setTapAnim(null), TAP_ANIM_MAX_MS)
-      spawnBubbleBurst()
+      burstRef.current?.fire()
     }
 
     onTap?.()
   }
 
   // Animation priority: external cheer (big happy jump) → external think (puzzled shake) →
-  // tap wiggle → idle bob. Reduced motion stays perfectly still.
+  // tap/attract wiggle → idle bob. Reduced motion stays perfectly still.
   const animate = reduce
     ? undefined
     : reaction === 'cheer'
@@ -139,7 +130,7 @@ const ThemeMascot: React.FC<ThemeMascotProps> = ({ sx, onTap, parallaxDepth = 0.
 
   return (
     // Outer wrapper rides the shared parallax driver (its own plane → depth separation from
-    // the scene). Inner button does the idle bob / tap reaction; bubbles overlay on top.
+    // the scene). Inner button does the idle bob / tap reaction; the burst overlays on top.
     <Box
       sx={{
         position: 'fixed',
@@ -182,50 +173,8 @@ const ThemeMascot: React.FC<ThemeMascotProps> = ({ sx, onTap, parallaxDepth = 0.
         />
       </Box>
 
-      {/* Tap bubble burst — rises out of the mascot and pops (fades). Non-interactive. */}
-      <Box aria-hidden sx={{ position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'visible' }}>
-        {bubbles.map((b) => (
-          <Box
-            key={b.id}
-            component={motion.div}
-            initial={{ opacity: 0, scale: 0.3, x: 0, y: 0 }}
-            animate={{ opacity: [0, 0.95, 0.85, 0], scale: [0.3, 1, 1], x: b.drift, y: -b.rise }}
-            transition={{ duration: b.duration, ease: 'easeOut' }}
-            onAnimationComplete={() => removeBubble(b.id)}
-            style={{
-              position: 'absolute',
-              left: `calc(50% + ${b.x}px)`,
-              top: '26%',
-              width: b.size,
-              height: b.size,
-              borderRadius: '50%',
-              ...(burstMotion === 'twinkle' || burstMotion === 'drift'
-                ? {
-                    // 4-point sparkle STAR (clip-path) so it's unmistakably not a bubble.
-                    // Use filter drop-shadow (follows the clip), not box-shadow (would be rect).
-                    background:
-                      'radial-gradient(circle, #ffffff 0%, rgba(255,247,214,0.95) 45%, rgba(255,210,120,0) 78%)',
-                    clipPath:
-                      'polygon(50% 0%, 58% 42%, 100% 50%, 58% 58%, 50% 100%, 42% 58%, 0% 50%, 42% 42%)',
-                    filter: 'drop-shadow(0 0 4px rgba(255,255,255,0.9))',
-                  }
-                : burstMotion === 'fall'
-                ? {
-                    // Leaf burst (dino) — playful poof of leaves.
-                    borderRadius: '0 100% 0 100%',
-                    background: 'linear-gradient(135deg, #9CCC65 0%, #558B2F 100%)',
-                    boxShadow: 'inset 1px -1px 2px rgba(0,0,0,0.18)',
-                  }
-                : {
-                    background:
-                      'radial-gradient(circle at 33% 28%, rgba(255,255,255,0.98) 0%, rgba(255,255,255,0.45) 38%, rgba(200,240,255,0.16) 72%, rgba(200,240,255,0) 100%)',
-                    border: '1.5px solid rgba(255,255,255,0.75)',
-                    boxShadow: 'inset 0 0 8px rgba(255,255,255,0.5)',
-                  }),
-            }}
-          />
-        ))}
-      </Box>
+      {/* Tap / cheer / attract burst — rises out of the mascot and pops (shared ThemedBurst). */}
+      <ThemedBurst ref={burstRef} motionKind={burstMotion} originTop="26%" />
     </Box>
   )
 }
