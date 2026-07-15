@@ -38,3 +38,19 @@ math facts, score lines, colour-mix reveals) · English (all words).
 The closed (prebaked) set comes from the shared enumerator `shared-narration-clips.js` — the exact
 list `prebake-tts.mjs` bakes — so each row maps 1:1 to a prebaked file (or is flagged **dynamic /
 live-only**).
+
+## Regression guard (PRD-11 §6)
+
+`narration-audit.json` doubles as the **audited-OK manifest**. A guard compares the enumerated closed
+set against it, so newly added narrated content (a new sticker, English word, colour object…) shows up
+as **UNAUDITED** and can't silently ship un-listened:
+
+```
+npm run audit:check         # fails if any closed-set clip isn't verdict:"ok" (new/changed content)
+npm run audit:approve-all   # owner bulk sign-off after a full listen pass (never downgrades a verdict)
+```
+
+Workflow after adding/changing narrated content: `npm run audit:check` → it lists the new clips →
+audition them in `/audit` and mark OK (or `npm run audit:approve-all` once you've heard them) → commit
+the updated `narration-audit.{json,md}`. Pair with the mandatory `npm run tts:prebake` re-bake (see
+`.claude/rules/audio-system.md`).

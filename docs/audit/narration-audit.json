@@ -1,0 +1,3837 @@
+{
+  "updatedAt": "2026-07-15T10:08:28.813Z",
+  "clips": {
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|b": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "b",
+      "group": "letters",
+      "updatedAt": 1784110101651
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|c": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "c",
+      "group": "letters",
+      "updatedAt": 1784110101651
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|d": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "d",
+      "group": "letters",
+      "updatedAt": 1784110101651
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|e": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "e",
+      "group": "letters",
+      "updatedAt": 1784110101651
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|f": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "f",
+      "group": "letters",
+      "updatedAt": 1784110101651
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|g": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "g",
+      "group": "letters",
+      "updatedAt": 1784110101651
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|h": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "h",
+      "group": "letters",
+      "updatedAt": 1784110101651
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|i": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "i",
+      "group": "letters",
+      "updatedAt": 1784110101651
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|j": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "j",
+      "group": "letters",
+      "updatedAt": 1784110101651
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|k": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "k",
+      "group": "letters",
+      "updatedAt": 1784110101651
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|l": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "l",
+      "group": "letters",
+      "updatedAt": 1784110101651
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|m": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "m",
+      "group": "letters",
+      "updatedAt": 1784110101651
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|n": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "n",
+      "group": "letters",
+      "updatedAt": 1784110101651
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|o": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "o",
+      "group": "letters",
+      "updatedAt": 1784110101651
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|p": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "p",
+      "group": "letters",
+      "updatedAt": 1784110101651
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|q": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "q",
+      "group": "letters",
+      "updatedAt": 1784110101651
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|r": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "r",
+      "group": "letters",
+      "updatedAt": 1784110101651
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|s": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "s",
+      "group": "letters",
+      "updatedAt": 1784110101651
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|t": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "t",
+      "group": "letters",
+      "updatedAt": 1784110101651
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|u": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "u",
+      "group": "letters",
+      "updatedAt": 1784110101651
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|v": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "v",
+      "group": "letters",
+      "updatedAt": 1784110101651
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|w": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "w",
+      "group": "letters",
+      "updatedAt": 1784110101651
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|eks": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "eks",
+      "group": "letters",
+      "updatedAt": 1784110101651
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|y": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "y",
+      "group": "letters",
+      "updatedAt": 1784110101651
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|zæt": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "zæt",
+      "group": "letters",
+      "updatedAt": 1784110101651
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|æ": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "æ",
+      "group": "letters",
+      "updatedAt": 1784110101651
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|ø": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "ø",
+      "group": "letters",
+      "updatedAt": 1784110101651
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|å": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "å",
+      "group": "letters",
+      "updatedAt": 1784110101651
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|nul": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "nul",
+      "group": "numbers",
+      "updatedAt": 1784110101651
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|nul": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "nul",
+      "group": "numbers",
+      "updatedAt": 1784110101651
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|en": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "en",
+      "group": "numbers",
+      "updatedAt": 1784110101651
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|en": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "en",
+      "group": "numbers",
+      "updatedAt": 1784110101651
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|to": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "to",
+      "group": "numbers",
+      "updatedAt": 1784110101651
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|to": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "to",
+      "group": "numbers",
+      "updatedAt": 1784110101651
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tre": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tre",
+      "group": "numbers",
+      "updatedAt": 1784110101651
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|tre": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tre",
+      "group": "numbers",
+      "updatedAt": 1784110101651
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fire": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fire",
+      "group": "numbers",
+      "updatedAt": 1784110101651
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|fire": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fire",
+      "group": "numbers",
+      "updatedAt": 1784110101651
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fem": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fem",
+      "group": "numbers",
+      "updatedAt": 1784110101651
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|fem": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fem",
+      "group": "numbers",
+      "updatedAt": 1784110101651
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|seks": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "seks",
+      "group": "numbers",
+      "updatedAt": 1784110101651
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|seks": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "seks",
+      "group": "numbers",
+      "updatedAt": 1784110101651
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|syv": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "syv",
+      "group": "numbers",
+      "updatedAt": 1784110101651
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|syv": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "syv",
+      "group": "numbers",
+      "updatedAt": 1784110101651
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|otte": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "otte",
+      "group": "numbers",
+      "updatedAt": 1784110101651
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|otte": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "otte",
+      "group": "numbers",
+      "updatedAt": 1784110101651
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|ni": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "ni",
+      "group": "numbers",
+      "updatedAt": 1784110101651
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|ni": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "ni",
+      "group": "numbers",
+      "updatedAt": 1784110101651
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|ti": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "ti",
+      "group": "numbers",
+      "updatedAt": 1784110101651
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|ti": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "ti",
+      "group": "numbers",
+      "updatedAt": 1784110101651
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|elleve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "elleve",
+      "group": "numbers",
+      "updatedAt": 1784110101651
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|elleve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "elleve",
+      "group": "numbers",
+      "updatedAt": 1784110101651
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tolv": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tolv",
+      "group": "numbers",
+      "updatedAt": 1784110101651
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|tolv": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tolv",
+      "group": "numbers",
+      "updatedAt": 1784110101651
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tretten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tretten",
+      "group": "numbers",
+      "updatedAt": 1784110101651
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|tretten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tretten",
+      "group": "numbers",
+      "updatedAt": 1784110101651
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fjorten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fjorten",
+      "group": "numbers",
+      "updatedAt": 1784110101651
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|fjorten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fjorten",
+      "group": "numbers",
+      "updatedAt": 1784110101651
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|femten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "femten",
+      "group": "numbers",
+      "updatedAt": 1784110101651
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|femten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "femten",
+      "group": "numbers",
+      "updatedAt": 1784110101651
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|seksten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "seksten",
+      "group": "numbers",
+      "updatedAt": 1784110101651
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|seksten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "seksten",
+      "group": "numbers",
+      "updatedAt": 1784110101651
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|sytten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "sytten",
+      "group": "numbers",
+      "updatedAt": 1784110101651
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|sytten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "sytten",
+      "group": "numbers",
+      "updatedAt": 1784110101651
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|atten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "atten",
+      "group": "numbers",
+      "updatedAt": 1784110101651
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|atten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "atten",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|nitten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "nitten",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|nitten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "nitten",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tyve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tyve",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|tyve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tyve",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|enogtyve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "enogtyve",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|enogtyve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "enogtyve",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|toogtyve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "toogtyve",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|toogtyve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "toogtyve",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|treogtyve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "treogtyve",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|treogtyve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "treogtyve",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fireogtyve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fireogtyve",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|fireogtyve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fireogtyve",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|femogtyve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "femogtyve",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|femogtyve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "femogtyve",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|seksogtyve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "seksogtyve",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|seksogtyve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "seksogtyve",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|syvogtyve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "syvogtyve",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|syvogtyve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "syvogtyve",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|otteogtyve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "otteogtyve",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|otteogtyve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "otteogtyve",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|niogtyve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "niogtyve",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|niogtyve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "niogtyve",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tredive": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tredive",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|tredive": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tredive",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|enogtredive": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "enogtredive",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|enogtredive": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "enogtredive",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|toogtredive": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "toogtredive",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|toogtredive": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "toogtredive",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|treogtredive": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "treogtredive",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|treogtredive": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "treogtredive",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fireogtredive": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fireogtredive",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|fireogtredive": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fireogtredive",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|femogtredive": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "femogtredive",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|femogtredive": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "femogtredive",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|seksogtredive": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "seksogtredive",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|seksogtredive": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "seksogtredive",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|syvogtredive": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "syvogtredive",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|syvogtredive": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "syvogtredive",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|otteogtredive": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "otteogtredive",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|otteogtredive": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "otteogtredive",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|niogtredive": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "niogtredive",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|niogtredive": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "niogtredive",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fyrre": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fyrre",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|fyrre": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fyrre",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|enogfyrre": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "enogfyrre",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|enogfyrre": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "enogfyrre",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|toogfyrre": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "toogfyrre",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|toogfyrre": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "toogfyrre",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|treogfyrre": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "treogfyrre",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|treogfyrre": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "treogfyrre",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fireogfyrre": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fireogfyrre",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|fireogfyrre": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fireogfyrre",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|femogfyrre": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "femogfyrre",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|femogfyrre": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "femogfyrre",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|seksogfyrre": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "seksogfyrre",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|seksogfyrre": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "seksogfyrre",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|syvogfyrre": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "syvogfyrre",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|syvogfyrre": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "syvogfyrre",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|otteogfyrre": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "otteogfyrre",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|otteogfyrre": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "otteogfyrre",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|niogfyrre": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "niogfyrre",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|niogfyrre": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "niogfyrre",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|halvtreds": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "halvtreds",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|halvtreds": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "halvtreds",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|enoghalvtreds": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "enoghalvtreds",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|enoghalvtreds": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "enoghalvtreds",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tooghalvtreds": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tooghalvtreds",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|tooghalvtreds": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tooghalvtreds",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|treoghalvtreds": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "treoghalvtreds",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|treoghalvtreds": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "treoghalvtreds",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fireoghalvtreds": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fireoghalvtreds",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|fireoghalvtreds": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fireoghalvtreds",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|femoghalvtreds": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "femoghalvtreds",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|femoghalvtreds": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "femoghalvtreds",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|seksoghalvtreds": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "seksoghalvtreds",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|seksoghalvtreds": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "seksoghalvtreds",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|syvoghalvtreds": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "syvoghalvtreds",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|syvoghalvtreds": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "syvoghalvtreds",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|otteoghalvtreds": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "otteoghalvtreds",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|otteoghalvtreds": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "otteoghalvtreds",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|nioghalvtreds": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "nioghalvtreds",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|nioghalvtreds": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "nioghalvtreds",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tres": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tres",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|tres": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tres",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|enogtres": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "enogtres",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|enogtres": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "enogtres",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|toogtres": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "toogtres",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|toogtres": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "toogtres",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|treogtres": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "treogtres",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|treogtres": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "treogtres",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fireogtres": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fireogtres",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|fireogtres": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fireogtres",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|femogtres": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "femogtres",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|femogtres": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "femogtres",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|seksogtres": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "seksogtres",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|seksogtres": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "seksogtres",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|syvogtres": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "syvogtres",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|syvogtres": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "syvogtres",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|otteogtres": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "otteogtres",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|otteogtres": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "otteogtres",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|niogtres": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "niogtres",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|niogtres": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "niogtres",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|halvfjerds": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "halvfjerds",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|halvfjerds": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "halvfjerds",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|enoghalvfjerds": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "enoghalvfjerds",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|enoghalvfjerds": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "enoghalvfjerds",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tooghalvfjerds": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tooghalvfjerds",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|tooghalvfjerds": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tooghalvfjerds",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|treoghalvfjerds": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "treoghalvfjerds",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|treoghalvfjerds": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "treoghalvfjerds",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fireoghalvfjerds": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fireoghalvfjerds",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|fireoghalvfjerds": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fireoghalvfjerds",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|femoghalvfjerds": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "femoghalvfjerds",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|femoghalvfjerds": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "femoghalvfjerds",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|seksoghalvfjerds": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "seksoghalvfjerds",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|seksoghalvfjerds": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "seksoghalvfjerds",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|syvoghalvfjerds": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "syvoghalvfjerds",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|syvoghalvfjerds": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "syvoghalvfjerds",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|otteoghalvfjerds": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "otteoghalvfjerds",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|otteoghalvfjerds": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "otteoghalvfjerds",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|nioghalvfjerds": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "nioghalvfjerds",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|nioghalvfjerds": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "nioghalvfjerds",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|firs": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "firs",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|firs": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "firs",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|enogfirs": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "enogfirs",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|enogfirs": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "enogfirs",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|toogfirs": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "toogfirs",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|toogfirs": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "toogfirs",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|treogfirs": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "treogfirs",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|treogfirs": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "treogfirs",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fireogfirs": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fireogfirs",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|fireogfirs": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fireogfirs",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|femogfirs": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "femogfirs",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|femogfirs": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "femogfirs",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|seksogfirs": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "seksogfirs",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|seksogfirs": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "seksogfirs",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|syvogfirs": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "syvogfirs",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|syvogfirs": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "syvogfirs",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|otteogfirs": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "otteogfirs",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|otteogfirs": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "otteogfirs",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|niogfirs": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "niogfirs",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|niogfirs": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "niogfirs",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|halvfems": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "halvfems",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|halvfems": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "halvfems",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|enoghalvfems": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "enoghalvfems",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|enoghalvfems": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "enoghalvfems",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tooghalvfems": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tooghalvfems",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|tooghalvfems": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tooghalvfems",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|treoghalvfems": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "treoghalvfems",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|treoghalvfems": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "treoghalvfems",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fireoghalvfems": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fireoghalvfems",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|fireoghalvfems": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fireoghalvfems",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|femoghalvfems": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "femoghalvfems",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|femoghalvfems": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "femoghalvfems",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|seksoghalvfems": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "seksoghalvfems",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|seksoghalvfems": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "seksoghalvfems",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|syvoghalvfems": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "syvoghalvfems",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|syvoghalvfems": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "syvoghalvfems",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|otteoghalvfems": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "otteoghalvfems",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|otteoghalvfems": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "otteoghalvfems",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|nioghalvfems": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "nioghalvfems",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|nioghalvfems": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "nioghalvfems",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|et hundrede": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "et hundrede",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.2|lex1|et hundrede": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "et hundrede",
+      "group": "numbers",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fantastisk!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fantastisk!",
+      "group": "phrases",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Godt!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Godt!",
+      "group": "phrases",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Super!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Super!",
+      "group": "phrases",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Perfekt!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Perfekt!",
+      "group": "phrases",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Flot!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Flot!",
+      "group": "phrases",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Bravo!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Bravo!",
+      "group": "phrases",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fantastisk arbejde!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fantastisk arbejde!",
+      "group": "phrases",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Rigtig godt!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Rigtig godt!",
+      "group": "phrases",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Du er dygtig!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Du er dygtig!",
+      "group": "phrases",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Sådan!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Sådan!",
+      "group": "phrases",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Dejligt!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Dejligt!",
+      "group": "phrases",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Vildt godt!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Vildt godt!",
+      "group": "phrases",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Du kan det!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Du kan det!",
+      "group": "phrases",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Meget godt!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Meget godt!",
+      "group": "phrases",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fremragende!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fremragende!",
+      "group": "phrases",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Prøv igen!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Prøv igen!",
+      "group": "phrases",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Næsten der!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Næsten der!",
+      "group": "phrases",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Godt forsøg!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Godt forsøg!",
+      "group": "phrases",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Næsten der! Prøv igen!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Næsten der! Prøv igen!",
+      "group": "phrases",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Godt forsøg! Du kan det!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Godt forsøg! Du kan det!",
+      "group": "phrases",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Det er okay. Prøv en gang til!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Det er okay. Prøv en gang til!",
+      "group": "phrases",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Kom så! Du er så tæt på!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Kom så! Du er så tæt på!",
+      "group": "phrases",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Bare rolig!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Bare rolig!",
+      "group": "phrases",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Du lærer hurtigt!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Du lærer hurtigt!",
+      "group": "phrases",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Bliv ved!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Bliv ved!",
+      "group": "phrases",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Prøv lige igen!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Prøv lige igen!",
+      "group": "phrases",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Du har ingen point endnu": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Du har ingen point endnu",
+      "group": "phrases",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Du har et point": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Du har et point",
+      "group": "phrases",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Bogstav Quiz": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Bogstav Quiz",
+      "group": "phrases",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Lær Alfabetet": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Lær Alfabetet",
+      "group": "phrases",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tal Quiz": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tal Quiz",
+      "group": "phrases",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Lær Tal": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Lær Tal",
+      "group": "phrases",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Plus Opgaver": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Plus Opgaver",
+      "group": "phrases",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Minus Opgaver": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Minus Opgaver",
+      "group": "phrases",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Stav Ordet": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Stav Ordet",
+      "group": "phrases",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Sammenlign Tal": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Sammenlign Tal",
+      "group": "phrases",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Hukommelsesspil": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Hukommelsesspil",
+      "group": "phrases",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Farver": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Farver",
+      "group": "phrases",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Farvejagt": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Farvejagt",
+      "group": "phrases",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Ram Farven": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Ram Farven",
+      "group": "phrases",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Lær Farver": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Lær Farver",
+      "group": "phrases",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Hvilken Farve?": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Hvilken Farve?",
+      "group": "phrases",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Nuancer": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Nuancer",
+      "group": "phrases",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Lyt og Find": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Lyt og Find",
+      "group": "phrases",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find det Engelske Ord": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find det Engelske Ord",
+      "group": "phrases",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Dansk til Engelsk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Dansk til Engelsk",
+      "group": "phrases",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Sig et Ord": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Sig et Ord",
+      "group": "phrases",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Læs Ordet": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Læs Ordet",
+      "group": "phrases",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Hvad Mangler?": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Hvad Mangler?",
+      "group": "phrases",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|rød": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "rød",
+      "group": "colours",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|lyserød": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "lyserød",
+      "group": "colours",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|mørkerød": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "mørkerød",
+      "group": "colours",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|æblet er rødt": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "æblet er rødt",
+      "group": "colours",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|bilen er rød": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "bilen er rød",
+      "group": "colours",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|rosen er rød": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "rosen er rød",
+      "group": "colours",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|bolden er rød": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "bolden er rød",
+      "group": "colours",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|jordbærret er rødt": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "jordbærret er rødt",
+      "group": "colours",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|hjertet er rødt": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "hjertet er rødt",
+      "group": "colours",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|hatten er rød": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "hatten er rød",
+      "group": "colours",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|blå": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "blå",
+      "group": "colours",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|lyseblå": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "lyseblå",
+      "group": "colours",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|mørkeblå": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "mørkeblå",
+      "group": "colours",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|havet er blåt": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "havet er blåt",
+      "group": "colours",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|lastbilen er blå": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "lastbilen er blå",
+      "group": "colours",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|hvalen er blå": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "hvalen er blå",
+      "group": "colours",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|skjorten er blå": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "skjorten er blå",
+      "group": "colours",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|blåbærret er blåt": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "blåbærret er blåt",
+      "group": "colours",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|himlen er blå": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "himlen er blå",
+      "group": "colours",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|grøn": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "grøn",
+      "group": "colours",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|lysegrøn": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "lysegrøn",
+      "group": "colours",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|mørkegrøn": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "mørkegrøn",
+      "group": "colours",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|bladet er grønt": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "bladet er grønt",
+      "group": "colours",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|agurken er grøn": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "agurken er grøn",
+      "group": "colours",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|skildpadden er grøn": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "skildpadden er grøn",
+      "group": "colours",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|kløveren er grøn": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "kløveren er grøn",
+      "group": "colours",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|træet er grønt": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "træet er grønt",
+      "group": "colours",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|salaten er grøn": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "salaten er grøn",
+      "group": "colours",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|gul": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "gul",
+      "group": "colours",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|lysegul": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "lysegul",
+      "group": "colours",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|mørkegul": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "mørkegul",
+      "group": "colours",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|solen er gul": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "solen er gul",
+      "group": "colours",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|bananen er gul": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "bananen er gul",
+      "group": "colours",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|majsen er gul": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "majsen er gul",
+      "group": "colours",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|stjernen er gul": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "stjernen er gul",
+      "group": "colours",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|smørret er gult": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "smørret er gult",
+      "group": "colours",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|kyllingen er gul": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "kyllingen er gul",
+      "group": "colours",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|lilla": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "lilla",
+      "group": "colours",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|lys lilla": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "lys lilla",
+      "group": "colours",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|mørk lilla": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "mørk lilla",
+      "group": "colours",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|druerne er lilla": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "druerne er lilla",
+      "group": "colours",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|auberginen er lilla": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "auberginen er lilla",
+      "group": "colours",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|krystallet er lilla": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "krystallet er lilla",
+      "group": "colours",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|hjertet er lilla": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "hjertet er lilla",
+      "group": "colours",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|blomsten er lilla": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "blomsten er lilla",
+      "group": "colours",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|orange": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "orange",
+      "group": "colours",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|lys orange": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "lys orange",
+      "group": "colours",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|mørk orange": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "mørk orange",
+      "group": "colours",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|appelsinen er orange": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "appelsinen er orange",
+      "group": "colours",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|græskarret er orange": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "græskarret er orange",
+      "group": "colours",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|ræven er orange": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "ræven er orange",
+      "group": "colours",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|guleroden er orange": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "guleroden er orange",
+      "group": "colours",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|hjertet er orange": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "hjertet er orange",
+      "group": "colours",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|ferskenen er orange": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "ferskenen er orange",
+      "group": "colours",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Nyt klistermærke! Hund": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Nyt klistermærke! Hund",
+      "group": "mixed",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Nyt klistermærke! Kat": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Nyt klistermærke! Kat",
+      "group": "mixed",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Nyt klistermærke! Ko": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Nyt klistermærke! Ko",
+      "group": "mixed",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Nyt klistermærke! Hest": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Nyt klistermærke! Hest",
+      "group": "mixed",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Nyt klistermærke! Gris": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Nyt klistermærke! Gris",
+      "group": "mixed",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Nyt klistermærke! Får": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Nyt klistermærke! Får",
+      "group": "mixed",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Nyt klistermærke! Kanin": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Nyt klistermærke! Kanin",
+      "group": "mixed",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Nyt klistermærke! Ræv": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Nyt klistermærke! Ræv",
+      "group": "mixed",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Nyt klistermærke! Bjørn": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Nyt klistermærke! Bjørn",
+      "group": "mixed",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Nyt klistermærke! Bil": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Nyt klistermærke! Bil",
+      "group": "mixed",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Nyt klistermærke! Bus": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Nyt klistermærke! Bus",
+      "group": "mixed",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Nyt klistermærke! Tog": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Nyt klistermærke! Tog",
+      "group": "mixed",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Nyt klistermærke! Fly": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Nyt klistermærke! Fly",
+      "group": "mixed",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Nyt klistermærke! Båd": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Nyt klistermærke! Båd",
+      "group": "mixed",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Nyt klistermærke! Cykel": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Nyt klistermærke! Cykel",
+      "group": "mixed",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Nyt klistermærke! Lastbil": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Nyt klistermærke! Lastbil",
+      "group": "mixed",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Nyt klistermærke! Helikopter": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Nyt klistermærke! Helikopter",
+      "group": "mixed",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Nyt klistermærke! Raket": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Nyt klistermærke! Raket",
+      "group": "mixed",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Nyt klistermærke! Æble": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Nyt klistermærke! Æble",
+      "group": "mixed",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Nyt klistermærke! Banan": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Nyt klistermærke! Banan",
+      "group": "mixed",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Nyt klistermærke! Jordbær": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Nyt klistermærke! Jordbær",
+      "group": "mixed",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Nyt klistermærke! Gulerod": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Nyt klistermærke! Gulerod",
+      "group": "mixed",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Nyt klistermærke! Brød": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Nyt klistermærke! Brød",
+      "group": "mixed",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Nyt klistermærke! Ost": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Nyt klistermærke! Ost",
+      "group": "mixed",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Nyt klistermærke! Is": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Nyt klistermærke! Is",
+      "group": "mixed",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Nyt klistermærke! Kage": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Nyt klistermærke! Kage",
+      "group": "mixed",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Nyt klistermærke! Pizza": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Nyt klistermærke! Pizza",
+      "group": "mixed",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Nyt klistermærke! Træ": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Nyt klistermærke! Træ",
+      "group": "mixed",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Nyt klistermærke! Blomst": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Nyt klistermærke! Blomst",
+      "group": "mixed",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Nyt klistermærke! Sol": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Nyt klistermærke! Sol",
+      "group": "mixed",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Nyt klistermærke! Måne": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Nyt klistermærke! Måne",
+      "group": "mixed",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Nyt klistermærke! Stjerne": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Nyt klistermærke! Stjerne",
+      "group": "mixed",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Nyt klistermærke! Regnbue": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Nyt klistermærke! Regnbue",
+      "group": "mixed",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Nyt klistermærke! Sky": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Nyt klistermærke! Sky",
+      "group": "mixed",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Nyt klistermærke! Svamp": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Nyt klistermærke! Svamp",
+      "group": "mixed",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Nyt klistermærke! Blad": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Nyt klistermærke! Blad",
+      "group": "mixed",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Nyt klistermærke! Fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Nyt klistermærke! Fisk",
+      "group": "mixed",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Nyt klistermærke! Haj": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Nyt klistermærke! Haj",
+      "group": "mixed",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Nyt klistermærke! Hval": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Nyt klistermærke! Hval",
+      "group": "mixed",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Nyt klistermærke! Delfin": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Nyt klistermærke! Delfin",
+      "group": "mixed",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Nyt klistermærke! Sæl": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Nyt klistermærke! Sæl",
+      "group": "mixed",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Nyt klistermærke! Krabbe": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Nyt klistermærke! Krabbe",
+      "group": "mixed",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Nyt klistermærke! Blæksprutte": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Nyt klistermærke! Blæksprutte",
+      "group": "mixed",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Nyt klistermærke! Skildpadde": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Nyt klistermærke! Skildpadde",
+      "group": "mixed",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Nyt klistermærke! Musling": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Nyt klistermærke! Musling",
+      "group": "mixed",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Nyt klistermærke! Sommerfugl": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Nyt klistermærke! Sommerfugl",
+      "group": "mixed",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Nyt klistermærke! Bi": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Nyt klistermærke! Bi",
+      "group": "mixed",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Nyt klistermærke! Mariehøne": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Nyt klistermærke! Mariehøne",
+      "group": "mixed",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Nyt klistermærke! Myre": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Nyt klistermærke! Myre",
+      "group": "mixed",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Nyt klistermærke! Edderkop": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Nyt klistermærke! Edderkop",
+      "group": "mixed",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Nyt klistermærke! Snegl": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Nyt klistermærke! Snegl",
+      "group": "mixed",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Nyt klistermærke! Larve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Nyt klistermærke! Larve",
+      "group": "mixed",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Nyt klistermærke! Bille": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Nyt klistermærke! Bille",
+      "group": "mixed",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Nyt klistermærke! Græshoppe": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Nyt klistermærke! Græshoppe",
+      "group": "mixed",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Nyt klistermærke! Bold": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Nyt klistermærke! Bold",
+      "group": "mixed",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Nyt klistermærke! Ballon": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Nyt klistermærke! Ballon",
+      "group": "mixed",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Nyt klistermærke! Bamse": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Nyt klistermærke! Bamse",
+      "group": "mixed",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Nyt klistermærke! Drage": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Nyt klistermærke! Drage",
+      "group": "mixed",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Nyt klistermærke! Terning": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Nyt klistermærke! Terning",
+      "group": "mixed",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Nyt klistermærke! Robot": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Nyt klistermærke! Robot",
+      "group": "mixed",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Nyt klistermærke! Puslespil": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Nyt klistermærke! Puslespil",
+      "group": "mixed",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Nyt klistermærke! Tromme": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Nyt klistermærke! Tromme",
+      "group": "mixed",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Nyt klistermærke! Guitar": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Nyt klistermærke! Guitar",
+      "group": "mixed",
+      "updatedAt": 1784110101652
+    },
+    "azure|en-US-AvaMultilingualNeural|en-US|r1.05|lex0|dog": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "dog",
+      "group": "english",
+      "updatedAt": 1784110101652
+    },
+    "azure|en-US-AvaMultilingualNeural|en-US|r1.05|lex0|cat": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "cat",
+      "group": "english",
+      "updatedAt": 1784110101652
+    },
+    "azure|en-US-AvaMultilingualNeural|en-US|r1.05|lex0|fish": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fish",
+      "group": "english",
+      "updatedAt": 1784110101652
+    },
+    "azure|en-US-AvaMultilingualNeural|en-US|r1.05|lex0|bird": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "bird",
+      "group": "english",
+      "updatedAt": 1784110101652
+    },
+    "azure|en-US-AvaMultilingualNeural|en-US|r1.05|lex0|cow": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "cow",
+      "group": "english",
+      "updatedAt": 1784110101652
+    },
+    "azure|en-US-AvaMultilingualNeural|en-US|r1.05|lex0|horse": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "horse",
+      "group": "english",
+      "updatedAt": 1784110101652
+    },
+    "azure|en-US-AvaMultilingualNeural|en-US|r1.05|lex0|pig": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "pig",
+      "group": "english",
+      "updatedAt": 1784110101652
+    },
+    "azure|en-US-AvaMultilingualNeural|en-US|r1.05|lex0|duck": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "duck",
+      "group": "english",
+      "updatedAt": 1784110101652
+    },
+    "azure|en-US-AvaMultilingualNeural|en-US|r1.05|lex0|bear": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "bear",
+      "group": "english",
+      "updatedAt": 1784110101652
+    },
+    "azure|en-US-AvaMultilingualNeural|en-US|r1.05|lex0|lion": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "lion",
+      "group": "english",
+      "updatedAt": 1784110101652
+    },
+    "azure|en-US-AvaMultilingualNeural|en-US|r1.05|lex0|apple": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "apple",
+      "group": "english",
+      "updatedAt": 1784110101652
+    },
+    "azure|en-US-AvaMultilingualNeural|en-US|r1.05|lex0|banana": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "banana",
+      "group": "english",
+      "updatedAt": 1784110101652
+    },
+    "azure|en-US-AvaMultilingualNeural|en-US|r1.05|lex0|milk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "milk",
+      "group": "english",
+      "updatedAt": 1784110101652
+    },
+    "azure|en-US-AvaMultilingualNeural|en-US|r1.05|lex0|bread": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "bread",
+      "group": "english",
+      "updatedAt": 1784110101652
+    },
+    "azure|en-US-AvaMultilingualNeural|en-US|r1.05|lex0|egg": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "egg",
+      "group": "english",
+      "updatedAt": 1784110101652
+    },
+    "azure|en-US-AvaMultilingualNeural|en-US|r1.05|lex0|cheese": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "cheese",
+      "group": "english",
+      "updatedAt": 1784110101652
+    },
+    "azure|en-US-AvaMultilingualNeural|en-US|r1.05|lex0|water": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "water",
+      "group": "english",
+      "updatedAt": 1784110101652
+    },
+    "azure|en-US-AvaMultilingualNeural|en-US|r1.05|lex0|cake": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "cake",
+      "group": "english",
+      "updatedAt": 1784110101652
+    },
+    "azure|en-US-AvaMultilingualNeural|en-US|r1.05|lex0|ice cream": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "ice cream",
+      "group": "english",
+      "updatedAt": 1784110101652
+    },
+    "azure|en-US-AvaMultilingualNeural|en-US|r1.05|lex0|cookie": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "cookie",
+      "group": "english",
+      "updatedAt": 1784110101652
+    },
+    "azure|en-US-AvaMultilingualNeural|en-US|r1.05|lex0|ball": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "ball",
+      "group": "english",
+      "updatedAt": 1784110101652
+    },
+    "azure|en-US-AvaMultilingualNeural|en-US|r1.05|lex0|car": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "car",
+      "group": "english",
+      "updatedAt": 1784110101652
+    },
+    "azure|en-US-AvaMultilingualNeural|en-US|r1.05|lex0|book": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "book",
+      "group": "english",
+      "updatedAt": 1784110101652
+    },
+    "azure|en-US-AvaMultilingualNeural|en-US|r1.05|lex0|chair": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "chair",
+      "group": "english",
+      "updatedAt": 1784110101652
+    },
+    "azure|en-US-AvaMultilingualNeural|en-US|r1.05|lex0|bed": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "bed",
+      "group": "english",
+      "updatedAt": 1784110101652
+    },
+    "azure|en-US-AvaMultilingualNeural|en-US|r1.05|lex0|cup": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "cup",
+      "group": "english",
+      "updatedAt": 1784110101652
+    },
+    "azure|en-US-AvaMultilingualNeural|en-US|r1.05|lex0|shoe": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "shoe",
+      "group": "english",
+      "updatedAt": 1784110101652
+    },
+    "azure|en-US-AvaMultilingualNeural|en-US|r1.05|lex0|hat": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "hat",
+      "group": "english",
+      "updatedAt": 1784110101652
+    },
+    "azure|en-US-AvaMultilingualNeural|en-US|r1.05|lex0|door": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "door",
+      "group": "english",
+      "updatedAt": 1784110101652
+    },
+    "azure|en-US-AvaMultilingualNeural|en-US|r1.05|lex0|key": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "key",
+      "group": "english",
+      "updatedAt": 1784110101652
+    },
+    "azure|en-US-AvaMultilingualNeural|en-US|r1.05|lex0|one": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "one",
+      "group": "english",
+      "updatedAt": 1784110101652
+    },
+    "azure|en-US-AvaMultilingualNeural|en-US|r1.05|lex0|two": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "two",
+      "group": "english",
+      "updatedAt": 1784110101652
+    },
+    "azure|en-US-AvaMultilingualNeural|en-US|r1.05|lex0|three": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "three",
+      "group": "english",
+      "updatedAt": 1784110101652
+    },
+    "azure|en-US-AvaMultilingualNeural|en-US|r1.05|lex0|four": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "four",
+      "group": "english",
+      "updatedAt": 1784110101652
+    },
+    "azure|en-US-AvaMultilingualNeural|en-US|r1.05|lex0|five": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "five",
+      "group": "english",
+      "updatedAt": 1784110101652
+    },
+    "azure|en-US-AvaMultilingualNeural|en-US|r1.05|lex0|six": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "six",
+      "group": "english",
+      "updatedAt": 1784110101652
+    },
+    "azure|en-US-AvaMultilingualNeural|en-US|r1.05|lex0|seven": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "seven",
+      "group": "english",
+      "updatedAt": 1784110101652
+    },
+    "azure|en-US-AvaMultilingualNeural|en-US|r1.05|lex0|eight": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "eight",
+      "group": "english",
+      "updatedAt": 1784110101652
+    },
+    "azure|en-US-AvaMultilingualNeural|en-US|r1.05|lex0|nine": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "nine",
+      "group": "english",
+      "updatedAt": 1784110101652
+    },
+    "azure|en-US-AvaMultilingualNeural|en-US|r1.05|lex0|ten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "ten",
+      "group": "english",
+      "updatedAt": 1784110101652
+    },
+    "azure|en-US-AvaMultilingualNeural|en-US|r1.05|lex0|red": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "red",
+      "group": "english",
+      "updatedAt": 1784110101652
+    },
+    "azure|en-US-AvaMultilingualNeural|en-US|r1.05|lex0|blue": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "blue",
+      "group": "english",
+      "updatedAt": 1784110101652
+    },
+    "azure|en-US-AvaMultilingualNeural|en-US|r1.05|lex0|green": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "green",
+      "group": "english",
+      "updatedAt": 1784110101652
+    },
+    "azure|en-US-AvaMultilingualNeural|en-US|r1.05|lex0|yellow": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "yellow",
+      "group": "english",
+      "updatedAt": 1784110101652
+    },
+    "azure|en-US-AvaMultilingualNeural|en-US|r1.05|lex0|orange": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "orange",
+      "group": "english",
+      "updatedAt": 1784110101652
+    },
+    "azure|en-US-AvaMultilingualNeural|en-US|r1.05|lex0|purple": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "purple",
+      "group": "english",
+      "updatedAt": 1784110101652
+    },
+    "azure|en-US-AvaMultilingualNeural|en-US|r1.05|lex0|pink": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "pink",
+      "group": "english",
+      "updatedAt": 1784110101652
+    },
+    "azure|en-US-AvaMultilingualNeural|en-US|r1.05|lex0|black": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "black",
+      "group": "english",
+      "updatedAt": 1784110101652
+    },
+    "azure|en-US-AvaMultilingualNeural|en-US|r1.05|lex0|white": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "white",
+      "group": "english",
+      "updatedAt": 1784110101652
+    },
+    "azure|en-US-AvaMultilingualNeural|en-US|r1.05|lex0|brown": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "brown",
+      "group": "english",
+      "updatedAt": 1784110101652
+    },
+    "azure|en-US-AvaMultilingualNeural|en-US|r1.05|lex0|hand": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "hand",
+      "group": "english",
+      "updatedAt": 1784110101652
+    },
+    "azure|en-US-AvaMultilingualNeural|en-US|r1.05|lex0|foot": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "foot",
+      "group": "english",
+      "updatedAt": 1784110101652
+    },
+    "azure|en-US-AvaMultilingualNeural|en-US|r1.05|lex0|eye": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "eye",
+      "group": "english",
+      "updatedAt": 1784110101652
+    },
+    "azure|en-US-AvaMultilingualNeural|en-US|r1.05|lex0|ear": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "ear",
+      "group": "english",
+      "updatedAt": 1784110101652
+    },
+    "azure|en-US-AvaMultilingualNeural|en-US|r1.05|lex0|nose": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "nose",
+      "group": "english",
+      "updatedAt": 1784110101652
+    },
+    "azure|en-US-AvaMultilingualNeural|en-US|r1.05|lex0|mouth": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "mouth",
+      "group": "english",
+      "updatedAt": 1784110101652
+    },
+    "azure|en-US-AvaMultilingualNeural|en-US|r1.05|lex0|tooth": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tooth",
+      "group": "english",
+      "updatedAt": 1784110101652
+    },
+    "azure|en-US-AvaMultilingualNeural|en-US|r1.05|lex0|hair": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "hair",
+      "group": "english",
+      "updatedAt": 1784110101652
+    },
+    "azure|en-US-AvaMultilingualNeural|en-US|r1.05|lex0|mom": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "mom",
+      "group": "english",
+      "updatedAt": 1784110101652
+    },
+    "azure|en-US-AvaMultilingualNeural|en-US|r1.05|lex0|dad": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "dad",
+      "group": "english",
+      "updatedAt": 1784110101652
+    },
+    "azure|en-US-AvaMultilingualNeural|en-US|r1.05|lex0|baby": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "baby",
+      "group": "english",
+      "updatedAt": 1784110101652
+    },
+    "azure|en-US-AvaMultilingualNeural|en-US|r1.05|lex0|girl": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "girl",
+      "group": "english",
+      "updatedAt": 1784110101652
+    },
+    "azure|en-US-AvaMultilingualNeural|en-US|r1.05|lex0|boy": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "boy",
+      "group": "english",
+      "updatedAt": 1784110101652
+    },
+    "azure|en-US-AvaMultilingualNeural|en-US|r1.05|lex0|grandma": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "grandma",
+      "group": "english",
+      "updatedAt": 1784110101652
+    },
+    "azure|en-US-AvaMultilingualNeural|en-US|r1.05|lex0|grandpa": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "grandpa",
+      "group": "english",
+      "updatedAt": 1784110101652
+    },
+    "azure|en-US-AvaMultilingualNeural|en-US|r1.05|lex0|family": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "family",
+      "group": "english",
+      "updatedAt": 1784110101652
+    },
+    "azure|en-US-AvaMultilingualNeural|en-US|r1.05|lex0|sun": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "sun",
+      "group": "english",
+      "updatedAt": 1784110101652
+    },
+    "azure|en-US-AvaMultilingualNeural|en-US|r1.05|lex0|moon": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "moon",
+      "group": "english",
+      "updatedAt": 1784110101652
+    },
+    "azure|en-US-AvaMultilingualNeural|en-US|r1.05|lex0|star": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "star",
+      "group": "english",
+      "updatedAt": 1784110101652
+    },
+    "azure|en-US-AvaMultilingualNeural|en-US|r1.05|lex0|tree": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tree",
+      "group": "english",
+      "updatedAt": 1784110101652
+    },
+    "azure|en-US-AvaMultilingualNeural|en-US|r1.05|lex0|flower": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "flower",
+      "group": "english",
+      "updatedAt": 1784110101652
+    },
+    "azure|en-US-AvaMultilingualNeural|en-US|r1.05|lex0|rain": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "rain",
+      "group": "english",
+      "updatedAt": 1784110101652
+    },
+    "azure|en-US-AvaMultilingualNeural|en-US|r1.05|lex0|snow": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "snow",
+      "group": "english",
+      "updatedAt": 1784110101652
+    },
+    "azure|en-US-AvaMultilingualNeural|en-US|r1.05|lex0|cloud": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "cloud",
+      "group": "english",
+      "updatedAt": 1784110101652
+    },
+    "azure|en-US-AvaMultilingualNeural|en-US|r1.05|lex0|hello": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "hello",
+      "group": "english",
+      "updatedAt": 1784110101652
+    },
+    "azure|en-US-AvaMultilingualNeural|en-US|r1.05|lex0|goodbye": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "goodbye",
+      "group": "english",
+      "updatedAt": 1784110101652
+    },
+    "azure|en-US-AvaMultilingualNeural|en-US|r1.05|lex0|thank you": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "thank you",
+      "group": "english",
+      "updatedAt": 1784110101652
+    },
+    "azure|en-US-AvaMultilingualNeural|en-US|r1.05|lex0|please": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "please",
+      "group": "english",
+      "updatedAt": 1784110101652
+    },
+    "azure|en-US-AvaMultilingualNeural|en-US|r1.05|lex0|yes": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "yes",
+      "group": "english",
+      "updatedAt": 1784110101652
+    },
+    "azure|en-US-AvaMultilingualNeural|en-US|r1.05|lex0|no": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "no",
+      "group": "english",
+      "updatedAt": 1784110101652
+    },
+    "azure|en-US-AvaMultilingualNeural|en-US|r1.05|lex0|good morning": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "good morning",
+      "group": "english",
+      "updatedAt": 1784110101652
+    },
+    "azure|en-US-AvaMultilingualNeural|en-US|r1.05|lex0|good night": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "good night",
+      "group": "english",
+      "updatedAt": 1784110101652
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|a": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "a",
+      "group": "letters",
+      "updatedAt": 1784110108813
+    }
+  }
+}

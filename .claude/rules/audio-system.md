@@ -43,6 +43,11 @@ serves only genuinely dynamic text or a non-default VoiceLab voice.
 - **After changing any narrated closed-set content** (letter words, phrases, sticker labels, English
   words, numbers, colours), run `npm run tts:prebake` and **commit** the regenerated `.ogg` files +
   `prebakedTts.ts`. It fails soft — a missing key just falls back to live Azure (slower), never breaks.
+- **Then audition it** (PRD-11): the closed set is enumerated once in `shared-narration-clips.js`
+  (shared by prebake + the dev-only `/audit` harness). `npm run audit:check` flags any clip not signed
+  off in `docs/audit/narration-audit.json` (the audited-OK manifest), so new content surfaces as
+  UNAUDITED — listen in `/audit`, mark OK, commit. Letter names live in `DANISH_LETTER_NAMES`
+  (glyph-first: bare glyph for most, `X:'eks'`/`Z:'zæt'`; number 1 stays `'en'`, not `'et'`).
 - The manifest cache key **must** match between `ttsClient.resolveRequest` and the build script; both
   build it via `shared-tts-key.js` (single source — don't hand-roll the key format).
 - Build scripts (`prebake-tts.mjs`, `tts-voice-eval.mjs`) `import` `src/**/*.ts` directly (Node ≥22
