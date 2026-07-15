@@ -143,6 +143,7 @@ const FarverLearning: React.FC = () => {
       backRoute="/farver"
       dense
       guide={false}
+      intro={false}
       celebration={{ show: showCelebration, intensity: celebrationIntensity, duration: celebrationDuration, onComplete: stopCelebration }}
       promptStage={
         // Selected hue blooms with its name + shade trio + example objects (§6C). PromptStage's own

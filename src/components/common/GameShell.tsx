@@ -1,14 +1,16 @@
-import React, { useEffect } from 'react'
-import { motion } from 'framer-motion'
+import React, { useEffect, useState } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
 import { AppBar, Box, Container, Toolbar, Typography, useMediaQuery } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import GameMotif from './GameMotif'
 import Mascot from './Mascot'
 import BackButton from './BackButton'
+import GameIntro from './GameIntro'
 import CelebrationEffect from './CelebrationEffect'
 import { getCategoryTheme } from '../../config/categoryThemes'
 import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 import { mascotBus } from '../../services/mascotBus'
+import { useReducedMotion } from '../../hooks/useReducedMotion'
 import type { GuideReaction } from './ThemeMascot'
 
 // Shared in-game scaffold (Game-Page Rework + UI/UX Overhaul PRD §5.3). Every game renders its
@@ -34,6 +36,10 @@ interface GameShellProps {
   guide?: boolean
   // Tighter title + paddings for vertically dense games (learning grids, memory, etc.).
   dense?: boolean
+  // Skippable "Er du klar? … Kør!" game-entry beat (Liveliness PRD-03 §A1). Default true; calm
+  // browse screens (the "Lær …" exploration surfaces) pass false — they have no "get ready"
+  // semantics. Never shown under reduced motion (purely additive motion polish).
+  intro?: boolean
   children: React.ReactNode
 }
 
@@ -47,12 +53,17 @@ const GameShell: React.FC<GameShellProps> = ({
   promptStage,
   guide = true,
   dense = false,
+  intro = true,
   children,
 }) => {
   const theme = useTheme()
   const category = getCategoryTheme(categoryId)
   const dark = theme.scene.dark
   const immersive = theme.scene.layers.length > 0
+  const reduce = useReducedMotion()
+  // The entry beat plays once per game mount (a route change remounts GameShell). Never under
+  // reduced motion — there it stays today's silent-instant load.
+  const [showIntro, setShowIntro] = useState(intro && !reduce)
   // Phone landscape: play-surface first — the title moves INTO the header row (between back
   // and score) so its own row's height goes to the game body instead.
   const phoneLandscape = useMediaQuery(PHONE_LANDSCAPE.replace('@media ', ''))
@@ -202,6 +213,12 @@ const GameShell: React.FC<GameShellProps> = ({
           onComplete={celebration.onComplete}
         />
       )}
+
+      {/* Game-entry "Er du klar? … Kør!" beat (Liveliness PRD-03 §A1). A themed curtain over the
+          already-live board; lifts (AnimatePresence exit fade) after a short, skippable moment. */}
+      <AnimatePresence>
+        {showIntro && <GameIntro categoryId={categoryId} onDismiss={() => setShowIntro(false)} />}
+      </AnimatePresence>
     </Box>
   )
 }
