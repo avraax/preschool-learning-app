@@ -86,6 +86,9 @@ Adjust for landscape orientation.
 - No breakpoints without orientation queries
 - No small touch targets on mobile
 - No layouts that require scrolling to see all game content
+- Don't spread a `SxProps` into an object literal (`sx={{ ...a, ...b }}`) — an `sx` prop can be an
+  array or a function, so spreading it breaks typing and can silently drop styles. Merge with the
+  array form (`sx={[a, b]}`) or apply each on a separate nested `<Box>`.
 
 ## Reference
 

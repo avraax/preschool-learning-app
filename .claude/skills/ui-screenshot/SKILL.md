@@ -162,6 +162,14 @@ An async `--eval` IIFE (`awaitPromise` is on) can drive a whole round and assert
   skips the audio welcome/permission gate, `?reduce=1` forces reduced-motion, `?theme=<id>` sets the skin.
 - Always check the printed "console errors"/"page exceptions" lines — a clean screenshot can still
   hide a runtime error.
+- **`?reduce=1` flips only the JS `useReducedMotion()` hook, NOT the CSS `@media (prefers-reduced-motion:
+  reduce)`.** So animations gated purely in CSS (e.g. the living-card idle breathe) stay ON under
+  `?reduce=1` — it only exercises the JS-gated paths (transition fallback, framer bumps, idle attract).
+  Verify CSS-media-gated motion by emulating the media feature at the OS/DevTools level, not the dev param.
+- **Headless Chrome runs rAF/framer-motion unthrottled**, so route transitions + entrance animations
+  complete almost instantly — you generally CAN'T screenshot a mid-animation frame (even `--wait 70`
+  lands post-animation). Verify steady states + console cleanliness instead; for a "no white-flash"
+  regression check, use a DARK skin (`?theme=space`) where any white frame would be unmissable.
 
 ## Cleanup
 Delete temp PNGs when done. Chrome is killed each run. Stop the dev servers (free 3001/5173) if you
