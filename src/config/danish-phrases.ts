@@ -79,15 +79,17 @@ export const DANISH_PHRASES = {
   }
 }
 
-// Danish letter NAMES. speakLetter() sends these (not the bare glyph) so the spoken letter is
-// deterministic and locale-correct regardless of how the TTS engine handles single graphemes
-// (PRD §8 — controller-side map is the safe option vs. relying on lexicon grapheme matching).
-// The owner can refine any of these via VoiceLab; tricky names can also get a lexicon <lexeme>.
+// Danish letter NAMES — the text speakLetter() sends for each glyph (PRD-11, owner-audited by ear).
+// The old phonetic respellings (e.g. J:'jåd', Z:'set') were read wrong or as real words by neural
+// Christel. It turns out the da-DK voice reads a BARE lowercase glyph as the correct modern Danish
+// letter name for almost every letter — so the map is now the glyph itself, with only the letters
+// that don't read right as a glyph keeping an explicit respelling (X:'eks', Z:'zæt'). Object.keys
+// here is also the canonical 29-letter list the prebake/audit enumeration walks, so keep all 29.
 export const DANISH_LETTER_NAMES: Record<string, string> = {
-  A: 'a', B: 'be', C: 'se', D: 'de', E: 'e', F: 'ef', G: 'ge', H: 'hå',
-  I: 'i', J: 'jåd', K: 'kå', L: 'el', M: 'em', N: 'en', O: 'o', P: 'pe',
-  Q: 'ku', R: 'er', S: 'es', T: 'te', U: 'u', V: 've', W: 'dobbelt-ve',
-  X: 'eks', Y: 'y', Z: 'set', Æ: 'æ', Ø: 'ø', Å: 'å',
+  A: 'a', B: 'b', C: 'c', D: 'd', E: 'e', F: 'f', G: 'g', H: 'h',
+  I: 'i', J: 'j', K: 'k', L: 'l', M: 'm', N: 'n', O: 'o', P: 'p',
+  Q: 'q', R: 'r', S: 's', T: 't', U: 'u', V: 'v', W: 'w',
+  X: 'eks', Y: 'y', Z: 'zæt', Æ: 'æ', Ø: 'ø', Å: 'å',
 }
 
 /** Spoken Danish name for a letter; falls back to the glyph itself if not a known letter. */

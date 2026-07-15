@@ -190,7 +190,8 @@ export class SimplifiedAudioController {
   // ===== SPECIALIZED DANISH AUDIO FUNCTIONS =====
 
   async speakLetter(letter: string): Promise<string> {
-    // Speak the Danish letter NAME (e.g. "W" → "dobbelt-ve"), not the bare glyph.
+    // Speak the Danish letter NAME via the single-source map (PRD-11: bare glyph for most letters,
+    // explicit respelling for X/Z — see DANISH_LETTER_NAMES). Same text the prebake/audit enumerate.
     return this.speak(getDanishLetterName(letter))
   }
 
