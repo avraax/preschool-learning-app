@@ -68,6 +68,21 @@ needs that hook added first (it would touch all 7 config quizzes, so verify care
   `.sort(() => Math.random() - 0.5)` idiom, and never sort shared config in place.
 - **Drag games** → the `src/components/common/dnd/` primitives (see `.claude/rules/drag-and-drop.md`).
 
+## Interaction-language parity (hand-rolled task games)
+
+Hand-rolled task games must match `UnifiedQuizGame`'s feedback language — the engine does all of this
+internally, so only hand-rolled games can drift (this drift has bitten several games at once):
+
+- A synchronous **`sfx.play('tap')` "every tap is felt" tick** at the TOP of the tap handler (right
+  after `audio.cancelCurrentAudio()`, before the correct/wrong branch) so every press is felt even
+  before the resolution sound.
+- **`mascotBus.emit('streak')` alongside `celebrateTier('streak')`** on the streak milestone (the
+  `r.streak % 3 === 0` line) so the corner mascot does its streak pose.
+- `correct`/`wrong` mascot comes free via GameShell's `guideReaction` bridge (set `guideReaction`
+  cheer/think); `round` comes free via `RoundResultScreen`'s own `'round'` emit; `welcome` comes free
+  via GameShell's entry beat (`GameIntro`). So a hand-rolled game only needs `tap` + `streak` + `hint`
+  wired by hand.
+
 ## Entry-audio pattern for hand-rolled task-based games
 
 There is **no** `entryAudioManager` and **no** `useTaskBasedGame` hook. The real pattern is a

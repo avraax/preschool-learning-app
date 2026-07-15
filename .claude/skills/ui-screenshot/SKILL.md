@@ -166,6 +166,11 @@ An async `--eval` IIFE (`awaitPromise` is on) can drive a whole round and assert
   reduce)`.** So animations gated purely in CSS (e.g. the living-card idle breathe) stay ON under
   `?reduce=1` — it only exercises the JS-gated paths (transition fallback, framer bumps, idle attract).
   Verify CSS-media-gated motion by emulating the media feature at the OS/DevTools level, not the dev param.
+- **Every game now opens behind a skippable entry-beat curtain** (`GameIntro`, "Er du klar? … Kør!").
+  It covers the board for ~1.35s on mount, so to drive the board first `--click '[data-game-intro]'`
+  (or wait ~1.4s for it to auto-lift) — it swallows the first tap as a skip. Live under `?nogate=1`,
+  suppressed under `?reduce=1` (JS reduced-motion). Calm `Lær …` browses opt out (`intro={false}`).
+  Dev route `/dev/game-intro?category=&phase=ready|go` renders it FROZEN for capture.
 - **Headless Chrome runs rAF/framer-motion unthrottled**, so route transitions + entrance animations
   complete almost instantly — you generally CAN'T screenshot a mid-animation frame (even `--wait 70`
   lands post-animation). Verify steady states + console cleanliness instead; for a "no white-flash"
