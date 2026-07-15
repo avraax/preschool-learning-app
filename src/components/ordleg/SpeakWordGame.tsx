@@ -432,7 +432,10 @@ const SpeakWordGame: React.FC = () => {
 
     // One recognized word = one completed question. Advance the round (or finish it).
     const r = round.completeQuestion(firstTryRef.current)
-    if (!r.done && r.streak > 0 && r.streak % 3 === 0) celebrateTier('streak')
+    if (!r.done && r.streak > 0 && r.streak % 3 === 0) {
+      celebrateTier('streak')
+      mascotBus.emit('streak') // mascot does its streak pose, matching the shared quiz engine
+    }
     if (r.done) {
       finishRound(r.firstTryCorrect, r.longestStreak)
     } else {

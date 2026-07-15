@@ -21,6 +21,7 @@ import { useNeverFailHint } from '../../hooks/useNeverFailHint'
 import { shuffle } from '../../utils/shuffle'
 import { progressStore, type RoundOutcome } from '../../services/progressStore'
 import { sfx } from '../../services/sfxClient'
+import { mascotBus } from '../../services/mascotBus'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
 import { isIOS } from '../../utils/deviceDetection'
 // Simplified audio system
@@ -319,6 +320,10 @@ const SpellingGame: React.FC = () => {
     audio.updateUserInteraction()
     audio.cancelCurrentAudio()
 
+    // Every tap is felt: a soft tick synced to the press (separate SFX channel, never TTS) —
+    // matching UnifiedQuizGame so the interaction language is consistent app-wide.
+    sfx.play('tap')
+
     const expectedLetter = targetLetters[filledCount]
 
     if (tile.letter === expectedLetter) {
@@ -390,7 +395,10 @@ const SpellingGame: React.FC = () => {
         advanceTimerRef.current = null
         stopCelebration()
         const r = round.completeQuestion(firstAttemptRef.current)
-        if (!r.done && r.streak > 0 && r.streak % 3 === 0) celebrateTier('streak')
+        if (!r.done && r.streak > 0 && r.streak % 3 === 0) {
+          celebrateTier('streak')
+          mascotBus.emit('streak') // mascot does its streak pose, matching the shared quiz engine
+        }
         if (r.done) finishRound(r.firstTryCorrect, r.longestStreak)
         else generateNewWord()
       }, isIOS() ? 1500 : 2000)
