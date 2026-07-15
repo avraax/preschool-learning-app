@@ -2,7 +2,9 @@
 // Danish-scaffolded: `da` is the Danish translation (used for the Dansk→Engelsk game
 // and instructions); `en` is the target English word; `emoji` is the picture.
 // Every word has an emoji so it can be used as a picture answer in the quiz games.
-import { shuffle } from '../utils/shuffle'
+// Explicit .ts extension so Node's ESM resolver (used by prebake-tts.mjs / shared-narration-clips.js
+// via type-stripping) can resolve this too; tsconfig allowImportingTsExtensions + Vite accept it.
+import { shuffle } from '../utils/shuffle.ts'
 
 export interface EnglishWord {
   en: string

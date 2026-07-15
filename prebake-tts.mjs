@@ -26,12 +26,7 @@ import { fileURLToPath } from 'node:url'
 
 import { TTS_CONFIG } from './shared-tts-config.js'
 import { buildSsml, synthesizeAzure } from './shared-azure-tts.js'
-import { ttsCacheKey } from './shared-tts-key.js'
-
-import { DANISH_PHRASES, DANISH_LETTER_NAMES, getDanishLetterName, getDanishNumberText } from './src/config/danish-phrases.ts'
-import { allEnglishWords } from './src/config/englishVocab.ts'
-import { HUE_ORDER, SHADES, DANISH_OBJECTS, spokenColor } from './src/config/colorContent.ts'
-import { STICKER_SETS } from './src/config/stickers.ts'
+import { collectNarrationClips } from './shared-narration-clips.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const OUT_DIR = path.join(__dirname, 'public', 'sounds', 'tts')
@@ -43,12 +38,6 @@ const DRY_RUN = process.argv.includes('--dry-run')
 const CONCURRENCY = 2
 const MAX_RETRIES = 6
 
-// Danish narration + English section voices, straight from the single source of voice truth.
-const DA = TTS_CONFIG.voices.primary // da-DK-ChristelNeural / da-DK
-const EN = TTS_CONFIG.voices.english // en-US Ava / en-US
-const RATE = TTS_CONFIG.speakingRate // default prosody rate (1.05)
-const NUMBER_BROWSE_RATE = 1.2 // Lær Tal speaks numbers with speakNumber(n, 1.2)
-
 // Azure fetches the da-DK PLS lexicon from a PUBLIC URL, so prebaked Danish audio carries the same
 // pronunciation fixes as production. localhost is unreachable to Azure — point at the prod host.
 const LEXICON_URI =
@@ -56,62 +45,10 @@ const LEXICON_URI =
   process.env.AZURE_LEXICON_URI ||
   'https://preschool-learning-app.vercel.app/da-DK.pls'
 
-// Welcome titles (SimplifiedAudioController.GAME_WELCOME_MESSAGES). These ARE the game card titles;
-// keep this list aligned with that map if a game is added/renamed.
-const WELCOME_TITLES = [
-  'Bogstav Quiz', 'Lær Alfabetet', 'Tal Quiz', 'Lær Tal', 'Plus Opgaver', 'Minus Opgaver',
-  'Stav Ordet', 'Sammenlign Tal', 'Hukommelsesspil', 'Farver', 'Farvejagt', 'Ram Farven',
-  'Lær Farver', 'Hvilken Farve?', 'Nuancer', 'Lyt og Find', 'Find det Engelske Ord',
-  'Dansk til Engelsk', 'Sig et Ord', 'Læs Ordet', 'Hvad Mangler?',
-]
-
-/**
- * Build the full list of clips to prebake. Each entry mirrors an actual runtime speak() call:
- * { text, voiceName, lang, rate, useLexicon }. resolveRequest gates useLexicon on da-* locales.
- */
+// The closed clip list is shared with the /audit harness (shared-narration-clips.js) so "what gets
+// baked" and "what gets auditioned" can never drift. It already dedupes by cache key.
 function collectEntries() {
-  const entries = []
-  const da = (text, rate = RATE) =>
-    entries.push({ text, voiceName: DA.name, lang: DA.lang, rate, useLexicon: true })
-  const en = (text) =>
-    entries.push({ text, voiceName: EN.name, lang: EN.lang, rate: RATE, useLexicon: false })
-
-  // Letters — speakLetter() sends the Danish letter NAME.
-  for (const glyph of Object.keys(DANISH_LETTER_NAMES)) da(getDanishLetterName(glyph))
-
-  // Numbers 0–100 — quiz/echo rate (default) AND Lær Tal browse rate (1.2).
-  for (let n = 0; n <= 100; n++) {
-    da(getDanishNumberText(n), RATE)
-    da(getDanishNumberText(n), NUMBER_BROWSE_RATE)
-  }
-
-  // Fixed spoken lines.
-  DANISH_PHRASES.success.forEach((t) => da(t))
-  DANISH_PHRASES.encouragement.forEach((t) => da(t))
-  da(DANISH_PHRASES.score.noPoints)
-  da(DANISH_PHRASES.score.onePoint)
-  WELCOME_TITLES.forEach((t) => da(t))
-
-  // Colours: hue names, shade names, and the object reinforcement lines ("{objektet} er {farve}").
-  for (const hue of HUE_ORDER) {
-    da(hue)
-    ;(SHADES[hue] ?? []).forEach((s) => da(s.name))
-    ;(DANISH_OBJECTS[hue] ?? []).forEach((o) => da(`${o.objectNameDefinite} er ${spokenColor(hue, o.neuter)}`))
-  }
-
-  // Sticker reveal lines ("Nyt klistermærke! {label}") — closed album pool.
-  for (const set of STICKER_SETS) for (const s of set.stickers) da(`Nyt klistermærke! ${s.label}`)
-
-  // English words — spoken via the en-US voice, no lexicon.
-  for (const w of allEnglishWords) en(w.en)
-
-  // De-dupe by cache key (identical requests collapse to one file).
-  const byKey = new Map()
-  for (const e of entries) {
-    const key = ttsCacheKey({ name: e.voiceName, lang: e.lang, rate: e.rate, useLexicon: e.useLexicon, text: e.text })
-    if (!byKey.has(key)) byKey.set(key, { ...e, key })
-  }
-  return [...byKey.values()]
+  return collectNarrationClips()
 }
 
 const fileFor = (key) => `${createHash('sha1').update(key).digest('hex').slice(0, 16)}.ogg`
