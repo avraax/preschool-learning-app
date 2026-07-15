@@ -38,10 +38,11 @@ import AdultGate, { makeGateCode } from '../common/AdultGate'
 const VoiceOverridePanel = React.lazy(() => import('../voicelab/VoiceOverridePanel'))
 const BugReportDialog = React.lazy(() => import('./BugReportDialog'))
 const DifficultyPanel = React.lazy(() => import('./DifficultyPanel'))
+const ThemePanel = React.lazy(() => import('./ThemePanel'))
 
 const HOLD_MS = 2000
 
-type AdultView = null | 'menu' | 'report' | 'voice' | 'difficulty' | 'resetGate' | 'resetDone'
+type AdultView = null | 'menu' | 'report' | 'voice' | 'difficulty' | 'theme' | 'resetGate' | 'resetDone'
 
 interface AdultCornerProps {
   /** A newer build is live → show the hold-gated "⬆️ Opdater app" item in the menu (PRD-09 P4). */
@@ -56,7 +57,7 @@ const AdultCorner: React.FC<AdultCornerProps> = ({ updateAvailable = false, onAp
   const [view, setView] = useState<AdultView>(null)
   // Which lazy dialogs have been opened at least once — once true they stay mounted so their
   // open/close transitions animate (and their chunk only loads on first open).
-  const [mounted, setMounted] = useState<{ report?: boolean; voice?: boolean; difficulty?: boolean }>({})
+  const [mounted, setMounted] = useState<{ report?: boolean; voice?: boolean; difficulty?: boolean; theme?: boolean }>({})
   const [gateCode, setGateCode] = useState('')
   const [screenshot, setScreenshot] = useState<string | null>(null)
   const [capturing, setCapturing] = useState(false)
@@ -192,6 +193,13 @@ const AdultCorner: React.FC<AdultCornerProps> = ({ updateAvailable = false, onAp
             >
               <ListItemText primary="🎚️ Sværhedsgrad" />
             </ListItemButton>
+            <ListItemButton
+              aria-label="Tema"
+              onClick={() => { setMounted((m) => ({ ...m, theme: true })); setView('theme') }}
+              sx={{ borderRadius: 1, minHeight: 48 }}
+            >
+              <ListItemText primary="🎨 Tema" />
+            </ListItemButton>
             <ListItem sx={{ minHeight: 48 }}>
               <ListItemText primary="🔊 Lydeffekter" />
               <Switch
@@ -240,6 +248,9 @@ const AdultCorner: React.FC<AdultCornerProps> = ({ updateAvailable = false, onAp
         )}
         {mounted.difficulty && (
           <DifficultyPanel open={view === 'difficulty'} onClose={() => setView('menu')} />
+        )}
+        {mounted.theme && (
+          <ThemePanel open={view === 'theme'} onClose={() => setView('menu')} />
         )}
       </React.Suspense>
 

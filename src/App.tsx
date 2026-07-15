@@ -54,7 +54,6 @@ const DevRoundResult = lazy(() => import('./components/dev/DevRoutes').then((m) 
 const AuditHarness = lazy(() => import('./components/audit/AuditHarness'))
 import UpdateBanner from './components/common/UpdateBanner'
 import AdultCorner from './components/adult/AdultCorner'
-import ThemeSelector from './components/common/ThemeSelector'
 import PersistentWorld from './components/common/scene/PersistentWorld'
 import ThemeMascot from './components/common/ThemeMascot'
 // Legacy audio system removed - using SimplifiedAudioProvider only
@@ -180,9 +179,9 @@ const HomePage = () => {
           [PHONE_LANDSCAPE]: { py: 0.75 },
         }}
       >
-        {/* Header row: brand lockup (left) + theme selector (right), bounded by the same
-            Container margins as the cards below — so they line up with the card grid edges.
-            Explicit position+zIndex so the row (and the selector's drop-down popover) reliably
+        {/* Header row: brand lockup (left), bounded by the same Container margins as the cards
+            below — so it lines up with the card grid edges. (The theme picker moved into the
+            "Til de voksne" adult menu — AdultCorner.) Explicit position+zIndex so the row reliably
             paints ABOVE the card grid below — the cards use backdrop-filter, which on WebKit
             otherwise paints over siblings that lack their own stacking context. */}
         <Box sx={{ position: 'relative', zIndex: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2, mb: { xs: 1.5, md: 2 }, [PHONE_LANDSCAPE]: { mb: 0.75 } }}>
@@ -232,9 +231,6 @@ const HomePage = () => {
               </Typography>
             </Box>
           </motion.div>
-
-          {/* Theme selector — right side of the header row, aligned with the card grid edge */}
-          <ThemeSelector />
         </Box>
 
         {/* Main Content */}
