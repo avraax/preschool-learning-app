@@ -14,10 +14,11 @@ What each game is + its `gameId` + the **durable design invariants** (the *why*)
 star thresholds, milestone tap-counts, number ranges, round lengths — live in each component's
 "tuning levers", NOT here. How to build a game: `game-development.md`. Drag games: `drag-and-drop.md`.
 
-Shared shape: task games run bounded rounds → `RoundResultScreen`, feed the shared sticker pool
-(per-section-biased — see CLAUDE.md Progress/rewards), and never punish wrong answers (they only break
-a question's first-try flag). Calm "Lær …" browses run no
-round — they earn session-local exploration-milestone stickers. gameIds are `<section>.<game>`.
+Shared shape: task games run bounded rounds → `RoundResultScreen`, grant **live per-task XP** (via
+`useRound`'s `gameId`), and never punish wrong answers (they only break a question's first-try flag).
+Calm "Lær …" browses run no round — they earn **per-new-item browse XP** (`useBrowseXp`). Stickers
+are the **trophy of a level-up** now (not per-round / per-browse) — see CLAUDE.md Progression.
+gameIds are `<section>.<game>`.
 
 ## Math — `math.counting/.addition/.subtraction/.comparison/.patterns`
 - Distractors are **near-number** (digit-swap, off-by-one/ten), not random.

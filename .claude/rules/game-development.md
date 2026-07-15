@@ -20,8 +20,9 @@ the three English quizzes, LaesOrdetGame, SpellingGame, and the five Farver game
 
 **Learning-based** (exploration): the child freely browses and taps to hear, no scoring.
 Examples: AlphabetLearning, NumberLearning, EnglishLearning, FarverLearning (Lær Farver).
-- Direct audio on tap, no entry coordination needed. Earns session-local exploration-milestone
-  stickers (every N distinct taps) instead of running a round.
+- Direct audio on tap, no entry coordination needed. No round; earns **live per-new-item browse XP**
+  via `useBrowseXp(section)` (each distinct item feeds the shared cross-game level — see CLAUDE.md
+  Progression). No stickers here (they became level-up trophies).
 
 ## Prefer UnifiedQuizGame for new quizzes
 
@@ -42,8 +43,10 @@ Most task-based quizzes are a thin **config** over `src/components/common/Unifie
 - **Bounded round + rewards** (opt-in): set `round` (a `RoundConfig`, default 8 questions,
   `starThresholds`) **and** `gameId` (stable progress id, e.g. `'alphabet.quiz'`). The engine then
   runs the round via `useRound`, ends on `RoundResultScreen`, and records to `progressStore`
-  (stars/bests/stickers). Absent → legacy endless behavior. Wrong answers never punish; they only
-  break the question's first-try flag.
+  (stars/bests). Absent → legacy endless behavior. Wrong answers never punish; they only
+  break the question's first-try flag. Put the `gameId` on the **`RoundConfig`** too (hand-rolls pass
+  it to `useRound`; `UnifiedQuizGame` threads `config.gameId` in) so `useRound.completeQuestion`
+  grants **live per-task XP** — see CLAUDE.md Progression. Stickers are level-up trophies, not per-round.
 - **Never-fail hint** (PRD-05): `hintAfterNWrong` (2 for every config quiz) pulses the correct
   `AnswerTile` after that many wrong taps (reduced-motion → static glow). The 2 wrongs already broke
   first-try, so no extra star bookkeeping.
