@@ -72,13 +72,16 @@ never require reading).
   scenery pops in (`/dev/scene` bloom=4) and the home companion shows baked growth art (e.g. dino = egg at trin 1).
   **W7 fully done** (companion prominence + bloom scenery + earned world growth).
 
+- **B7 ambient sprites — DONE.** Keyed 2 motes/world (temp `process-ambient.mjs`) and wired
+  `SceneAssets.ambientSprites` + `scene.ambient.sprites` size specs: dino falling leaf+fern, ocean rising
+  bubble+cluster, space twinkling stars (count trimmed to 16 — backdrop already star-dense; CSS shooting stars
+  still fire). Kid switched to **cloud-only drift** (gold stars read oddly in a daytime rainbow sky).
+- **Home anchors re-tuned — DONE.** kid/ocean/dino objects lowered to sit ON the near-layer surfaces (cloud
+  bank / reef / canopy) instead of floating; **space kept** (orbiting the ringed planet is the best look).
+
 **Remaining:**
 - **W9** ambient audio — needs **4 short seamless loops** (`public/sounds/ambient/<id>.mp3`); then a menu-only
   ambient channel + bloom SFX cue (or owner opts to skip ambient, §12.4). The ONLY workstream left.
-- **B7 ambient sprites** (optional) — generated + available; current CSS ambient (bubbles/leaves/stars) works, so
-  swapping to sprite art is a nice-to-have, not wired.
-- Optional polish: re-tune home anchors so objects sit even more snugly on the new near-layer surfaces (they
-  currently hover just above — reads well; tune after play-testing).
 - **W9** ambient audio — needs **4 short seamless loops** (`public/sounds/ambient/<id>.mp3`); then a menu-only
   ambient channel + bloom SFX cue (or owner opts to skip ambient, §12.4). Deferred as a unit pending the loops.
 - **Assets outstanding:** B3 (world layers), B5 (bloom scenery), B6 (companion stages), B7 (ambient sprites);

@@ -63,9 +63,8 @@ export const oceanThemeTokens: ThemeTokens = {
       { src: '', depth: 0.82, anchor: 'center' }, // near: sandbar + coral
     ],
     ambient: {
-      // No sprite images: bubbles are drawn in pure CSS (AmbientField), so there's no
-      // transparency-dependent art to fetch. Rising motion.
-      sprites: [],
+      // B7 art motes (index-aligned to SceneAssets.ambientSprites): bubble + bubble cluster, rising.
+      sprites: [{ src: '', size: [12, 28] }, { src: '', size: [18, 36] }],
       count: 12,
       motion: 'rise',
     },
@@ -79,11 +78,11 @@ export const oceanThemeTokens: ThemeTokens = {
     // gentle arc clear of the coral clusters at the left/right edges. Refine onto shore/coral once
     // B3 near-layer art lands.
     homeAnchors: [
-      { section: 'alphabet', xPct: 17, yPct: 53, scale: 1, rotate: -3, depth: 0.3 },
-      { section: 'math', xPct: 34, yPct: 46, scale: 1, rotate: 2, depth: 0.32 },
-      { section: 'colors', xPct: 50, yPct: 43, scale: 1.06, rotate: 0, depth: 0.34 },
-      { section: 'english', xPct: 66, yPct: 46, scale: 1, rotate: -2, depth: 0.32 },
-      { section: 'ordleg', xPct: 83, yPct: 53, scale: 1, rotate: 3, depth: 0.3 },
+      { section: 'alphabet', xPct: 17, yPct: 60, scale: 1, rotate: -3, depth: 0.3 },
+      { section: 'math', xPct: 34, yPct: 54, scale: 1, rotate: 2, depth: 0.32 },
+      { section: 'colors', xPct: 50, yPct: 51, scale: 1.06, rotate: 0, depth: 0.34 },
+      { section: 'english', xPct: 66, yPct: 54, scale: 1, rotate: -2, depth: 0.32 },
+      { section: 'ordleg', xPct: 83, yPct: 60, scale: 1, rotate: 3, depth: 0.3 },
     ],
     sectionFocus: {
       alphabet: { xPct: 22, yPct: 55, zoom: 1.32 },

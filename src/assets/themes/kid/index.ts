@@ -18,12 +18,13 @@ import comp2 from './companion-2.webp'
 import comp3 from './companion-3.webp'
 import comp4 from './companion-4.webp'
 import comp5 from './companion-5.webp'
+import ambient2 from './ambient-2.webp'
 
 const kidAssets: SceneAssets = {
   // Multi-layer parallax world (PRD-05 W2 / batch B3): far rainbow sky → mid clouds → near cloud
   // bank. Index-aligned to scene.layers (depth/anchor) in kidTheme.tokens.ts.
   layers: [sceneFar, sceneMid, sceneNear],
-  ambientSprites: [], // none → CSS drifting sparkles
+  ambientSprites: [ambient2], // B7: soft cloud puffs drifting (a daytime rainbow sky reads better with clouds than stars)
   mascot,
   selectorThumb: thumb,
   // Reactive-guide poses (Liveliness PRD-05 W6): idle/greet/point/celebrate soft-3D renders.

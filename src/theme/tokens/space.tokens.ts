@@ -58,8 +58,10 @@ export const spaceThemeTokens: ThemeTokens = {
       { src: '', depth: 0.8, anchor: 'center' }, // near: asteroids + rocket
     ],
     ambient: {
-      sprites: [], // CSS twinkling stars (no art needed)
-      count: 28,
+      // B7 art motes (index-aligned to SceneAssets.ambientSprites): two soft stars, twinkling.
+      // Fewer than the CSS star count — the backdrop is already dense with painted stars.
+      sprites: [{ src: '', size: [10, 20] }, { src: '', size: [12, 24] }],
+      count: 16,
       motion: 'twinkle',
     },
     mascot: {

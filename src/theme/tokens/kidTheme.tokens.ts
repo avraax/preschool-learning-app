@@ -131,8 +131,9 @@ export const kidThemeTokens: ThemeTokens = {
       { src: '', depth: 0.82, anchor: 'center' }, // near: cloud bank
     ],
     ambient: {
-      sprites: [], // CSS drifting sparkles (no art)
-      count: 14,
+      // B7 art motes (index-aligned to SceneAssets.ambientSprites): soft cloud puffs drifting.
+      sprites: [{ src: '', size: [22, 44] }],
+      count: 7,
       motion: 'drift',
     },
     mascot: {
@@ -145,11 +146,11 @@ export const kidThemeTokens: ThemeTokens = {
     // in the open sky under the rainbow (up in the middle), clear of the bottom cloud bank +
     // corner mascot. Refine onto real cloud puffs once B3/B5 near-layer art lands.
     homeAnchors: [
-      { section: 'alphabet', xPct: 16, yPct: 51, scale: 1, rotate: -3, depth: 0.3 },
-      { section: 'math', xPct: 33, yPct: 44, scale: 1, rotate: 2, depth: 0.32 },
-      { section: 'colors', xPct: 50, yPct: 41, scale: 1.06, rotate: 0, depth: 0.34 },
-      { section: 'english', xPct: 67, yPct: 44, scale: 1, rotate: -2, depth: 0.32 },
-      { section: 'ordleg', xPct: 84, yPct: 51, scale: 1, rotate: 3, depth: 0.3 },
+      { section: 'alphabet', xPct: 16, yPct: 60, scale: 1, rotate: -3, depth: 0.3 },
+      { section: 'math', xPct: 33, yPct: 54, scale: 1, rotate: 2, depth: 0.32 },
+      { section: 'colors', xPct: 50, yPct: 51, scale: 1.06, rotate: 0, depth: 0.34 },
+      { section: 'english', xPct: 67, yPct: 54, scale: 1, rotate: -2, depth: 0.32 },
+      { section: 'ordleg', xPct: 84, yPct: 60, scale: 1, rotate: 3, depth: 0.3 },
     ],
     // Section framing (PRD-05 W4/W5): each section pushes into the region where its object sat,
     // so /alphabet feels like a different corner of the sky than /math (continuity with the push-in).

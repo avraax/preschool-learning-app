@@ -60,8 +60,9 @@ export const dinoThemeTokens: ThemeTokens = {
       { src: '', depth: 0.82, anchor: 'center' }, // near: mossy ridge
     ],
     ambient: {
-      sprites: [], // CSS falling leaves (no art)
-      count: 14,
+      // B7 art motes (index-aligned to SceneAssets.ambientSprites): leaf + fern frond, falling.
+      sprites: [{ src: '', size: [18, 34] }, { src: '', size: [16, 30] }],
+      count: 12,
       motion: 'fall',
     },
     mascot: {
@@ -74,11 +75,11 @@ export const dinoThemeTokens: ThemeTokens = {
     // centre one lifted above the volcano peak so it isn't obscured. Refine onto the mossy ridge
     // once B3 near-layer art lands.
     homeAnchors: [
-      { section: 'alphabet', xPct: 16, yPct: 58, scale: 1, rotate: -3, depth: 0.3 },
-      { section: 'math', xPct: 33, yPct: 55, scale: 1, rotate: 2, depth: 0.32 },
-      { section: 'colors', xPct: 50, yPct: 40, scale: 1.06, rotate: 0, depth: 0.34 },
-      { section: 'english', xPct: 67, yPct: 55, scale: 1, rotate: -2, depth: 0.32 },
-      { section: 'ordleg', xPct: 84, yPct: 58, scale: 1, rotate: 3, depth: 0.3 },
+      { section: 'alphabet', xPct: 16, yPct: 60, scale: 1, rotate: -3, depth: 0.3 },
+      { section: 'math', xPct: 33, yPct: 57, scale: 1, rotate: 2, depth: 0.32 },
+      { section: 'colors', xPct: 50, yPct: 46, scale: 1.06, rotate: 0, depth: 0.34 },
+      { section: 'english', xPct: 67, yPct: 57, scale: 1, rotate: -2, depth: 0.32 },
+      { section: 'ordleg', xPct: 84, yPct: 60, scale: 1, rotate: 3, depth: 0.3 },
     ],
     sectionFocus: {
       alphabet: { xPct: 22, yPct: 58, zoom: 1.32 },

@@ -22,11 +22,13 @@ import comp2 from './companion-2.webp'
 import comp3 from './companion-3.webp'
 import comp4 from './companion-4.webp'
 import comp5 from './companion-5.webp'
+import ambient1 from './ambient-1.webp'
+import ambient2 from './ambient-2.webp'
 
 const oceanAssets: SceneAssets = {
   // Multi-layer parallax world (PRD-05 W2 / B3): far god-rays water → mid reef → near sandbar+coral.
   layers: [sceneFar, sceneMid, sceneNear],
-  ambientSprites: [], // none → CSS bubbles
+  ambientSprites: [ambient1, ambient2], // B7: rising bubble + bubble cluster (index-aligned to scene.ambient.sprites)
   mascot,
   selectorThumb: thumb,
   // Reactive-guide poses (Liveliness PRD-05 W6).
