@@ -33,14 +33,27 @@ never require reading).
   but are far in RGB), border flood-fill + tight enclosed-hole removal + feather despill + a bottom-right
   Gemini-watermark corner strip, then trim + WebP. Reuse this approach for B3/Tier-2.
 
+**Also done & committed:**
+- **W3** home redesign — the frosted card grid is replaced (immersive skins) by the 5 section objects seated at
+  `theme.scene.homeAnchors` via the shared `SceneObjectField` (`src/components/common/scene/SceneObjectField.tsx`);
+  prominent companion (`size 104`), Min Bog as a slim secondary shelf. Phones/portrait fall back to the shared
+  tactile FLOW (never a card grid). Per-theme `homeAnchors` authored for all 4 registered skins. Flat skins keep
+  the old grid.
+- **W4** section menus — game tiles are soft-3D `SceneObject`s (B2 per-game icons) in a count-aware tactile flow
+  (reusing `SceneObjectField`), an enlarged section landmark rests in the scene, and `PersistentWorld` now frames
+  the world on `theme.scene.sectionFocus[section]` (transform-only push-in) + applies the section accent tint.
+  Per-theme `sectionFocus` authored for all 4 skins. W4.1 icon re-key was already in.
+- Verified via `ui-screenshot` across all 4 skins (home + section), reduced-motion, and phone-portrait; build+lint
+  clean; no white-flash on the dark skin; 0 console errors.
+
 **Remaining:**
 - **W2** multi-layer parallax — needs **B3 world layers** (far/mid/near per world). Deferrable; single-layer worlds
-  work today.
-- **W3** home redesign (objects seated at `theme.scene.homeAnchors` via `SceneObject`), **W4** section menus
-  (`SceneObject` game tiles + `sectionFocus` framing + accent tint + enlarged landmark), **W5** cinematic push-in
-  transition, **W7** visible progression (companion prominence + `bloomScenery`; **B6/B5** Tier-2 art),
-  **W8** reward-moment polish, **W9** ambient audio, **W10** album/peripheral. These can be wired NOW with existing
-  single-layer worlds + the B1/B2/B4 assets already in.
+  work today (W3/W4 already wired on them).
+- **W5** cinematic push-in transition (the `sectionFocus` reframe already delivers the travel-into-locale beat on
+  arrival; the dedicated `'push'` overlay variant + focus-origin plumbing is an OPEN owner sign-off — §12.3:
+  shared `push` vs keep the per-skin wipes). **W7** visible progression (companion prominence done; `bloomScenery`
+  placement + **B5/B6** Tier-2 art remain), **W8** reward-moment polish, **W9** ambient audio (needs 4 loops),
+  **W10** album/peripheral.
 - **Assets outstanding:** B3 (world layers), B5 (bloom scenery), B6 (companion stages), B7 (ambient sprites).
 
 ---
