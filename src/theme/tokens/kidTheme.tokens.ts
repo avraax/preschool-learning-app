@@ -124,7 +124,12 @@ export const kidThemeTokens: ThemeTokens = {
   // Title font stays Comic Neue (omitted → falls back to fontFamily), per the PRD.
   scene: {
     dark: false,
-    layers: [{ src: '', depth: 0.6, anchor: 'center' }], // soft sky + rainbow backdrop
+    // Multi-layer parallax (PRD-05 W2). Index-aligned to SceneAssets.layers (far→mid→near).
+    layers: [
+      { src: '', depth: 0.14, anchor: 'center' }, // far: rainbow sky
+      { src: '', depth: 0.44, anchor: 'center' }, // mid: floating clouds
+      { src: '', depth: 0.82, anchor: 'center' }, // near: cloud bank
+    ],
     ambient: {
       sprites: [], // CSS drifting sparkles (no art)
       count: 14,

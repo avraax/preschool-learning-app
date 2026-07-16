@@ -2,11 +2,12 @@
 // WebP as a separate file; the bytes are only fetched when an <img>/CSS-url actually renders
 // it. Dynamic-imported by `loadSceneAssets('ocean')`, so it's code-split.
 //
-// Structure (revised P1): ONE immersive full-bleed backdrop + a transparent mascot cutout.
-// Bubbles are drawn in CSS (no sprite art). `scene.webp` is the rich underwater backdrop;
-// until that art lands it falls back to the clean `far.webp` water so the build stays green.
+// Structure (PRD-05 W2): a 3-layer parallax world (far god-rays water → mid reef → near
+// sandbar+coral) + a transparent mascot cutout. Bubbles are drawn in CSS (no sprite art).
 import type { SceneAssets } from '../../../theme/sceneAssets'
-import scene from './scene.webp'
+import sceneFar from './scene-far.webp'
+import sceneMid from './scene-mid.webp'
+import sceneNear from './scene-near.webp'
 import mascot from './mascot.webp'
 import thumb from './thumb.webp'
 import mascotIdle from './mascot-idle.webp'
@@ -15,7 +16,8 @@ import mascotPoint from './mascot-point.webp'
 import mascotCelebrate from './mascot-celebrate.webp'
 
 const oceanAssets: SceneAssets = {
-  layers: [scene], // back→front; single immersive backdrop
+  // Multi-layer parallax world (PRD-05 W2 / B3): far god-rays water → mid reef → near sandbar+coral.
+  layers: [sceneFar, sceneMid, sceneNear],
   ambientSprites: [], // none → CSS bubbles
   mascot,
   selectorThumb: thumb,

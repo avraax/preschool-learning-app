@@ -56,7 +56,12 @@ export const oceanThemeTokens: ThemeTokens = {
     // One immersive full-bleed underwater backdrop (opaque). Depth 0.7 → the whole scene
     // pans gently (camera drift); the mascot rides a nearer plane (higher depth) for real
     // parallax separation. ParallaxLayer's scale overscan hides the edges as it moves.
-    layers: [{ src: '', depth: 0.7, anchor: 'center' }],
+    // Multi-layer parallax (PRD-05 W2). Index-aligned to SceneAssets.layers (far→mid→near).
+    layers: [
+      { src: '', depth: 0.14, anchor: 'center' }, // far: sunlit water + god-rays
+      { src: '', depth: 0.44, anchor: 'center' }, // mid: reef
+      { src: '', depth: 0.82, anchor: 'center' }, // near: sandbar + coral
+    ],
     ambient: {
       // No sprite images: bubbles are drawn in pure CSS (AmbientField), so there's no
       // transparency-dependent art to fetch. Rising motion.

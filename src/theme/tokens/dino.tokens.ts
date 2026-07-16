@@ -53,7 +53,12 @@ export const dinoThemeTokens: ThemeTokens = {
 
   scene: {
     dark: false,
-    layers: [{ src: '', depth: 0.65, anchor: 'center' }], // warm prehistoric backdrop
+    // Multi-layer parallax (PRD-05 W2). Index-aligned to SceneAssets.layers (far→mid→near).
+    layers: [
+      { src: '', depth: 0.14, anchor: 'center' }, // far: sunrise sky + volcano
+      { src: '', depth: 0.44, anchor: 'center' }, // mid: jungle tree-line
+      { src: '', depth: 0.82, anchor: 'center' }, // near: mossy ridge
+    ],
     ambient: {
       sprites: [], // CSS falling leaves (no art)
       count: 14,

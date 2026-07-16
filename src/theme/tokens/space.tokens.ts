@@ -51,7 +51,12 @@ export const spaceThemeTokens: ThemeTokens = {
 
   scene: {
     dark: true,
-    layers: [{ src: '', depth: 0.6, anchor: 'center' }], // full-bleed dark space backdrop
+    // Multi-layer parallax (PRD-05 W2). Index-aligned to SceneAssets.layers (far→mid→near).
+    layers: [
+      { src: '', depth: 0.12, anchor: 'center' }, // far: nebula + stars (dark backdrop)
+      { src: '', depth: 0.42, anchor: 'center' }, // mid: planets
+      { src: '', depth: 0.8, anchor: 'center' }, // near: asteroids + rocket
+    ],
     ambient: {
       sprites: [], // CSS twinkling stars (no art needed)
       count: 28,

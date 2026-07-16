@@ -1,7 +1,9 @@
 // Regnbue (kid / default) world assets. Dynamic-imported by loadSceneAssets('kid') → code-split.
 // Soft sky + rainbow backdrop + a friendly teddy-bear mascot; sparkles are CSS (no art).
 import type { SceneAssets } from '../../../theme/sceneAssets'
-import scene from './scene.webp'
+import sceneFar from './scene-far.webp'
+import sceneMid from './scene-mid.webp'
+import sceneNear from './scene-near.webp'
 import mascot from './mascot.webp'
 import thumb from './thumb.webp'
 import mascotIdle from './mascot-idle.webp'
@@ -10,7 +12,9 @@ import mascotPoint from './mascot-point.webp'
 import mascotCelebrate from './mascot-celebrate.webp'
 
 const kidAssets: SceneAssets = {
-  layers: [scene],
+  // Multi-layer parallax world (PRD-05 W2 / batch B3): far rainbow sky → mid clouds → near cloud
+  // bank. Index-aligned to scene.layers (depth/anchor) in kidTheme.tokens.ts.
+  layers: [sceneFar, sceneMid, sceneNear],
   ambientSprites: [], // none → CSS drifting sparkles
   mascot,
   selectorThumb: thumb,
