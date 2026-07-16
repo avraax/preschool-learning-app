@@ -18,6 +18,8 @@ const kidAssets: SceneAssets = {
   mascotPoses: { idle: mascotIdle, greet: mascotGreet, point: mascotPoint, celebrate: mascotCelebrate },
   // Bloom scenery (PRD-05 W7) lands with batch B5: add `bloomScenery: [flower, star, cloud]` here
   // (index-aligned to scene.bloomScenery in kidTheme.tokens.ts) and the sprites appear as XP blooms.
+  // Companion growth (batch B6): add `companionStages: [s1..s5]` (seed→full) and they replace the
+  // emoji companion automatically (ProgressionCompanion prefers SceneAssets.companionStages).
 }
 
 export default kidAssets

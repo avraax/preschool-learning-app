@@ -1,10 +1,12 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { Box, type SxProps, type Theme } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { motion } from 'framer-motion'
 import { useProgress } from '../../hooks/useProgress'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
 import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
+import { useThemeSwitch } from '../../theme/ThemeProvider'
+import { loadSceneAssets } from '../../theme/sceneAssets'
 import { LEVEL_UP_TAP, levelUpLine } from '../../config/danish-phrases'
 
 // The child-facing growth display (Liveliness PRD-01): a filling XP ring wrapped around a small
@@ -45,13 +47,28 @@ const ProgressionCompanion: React.FC<ProgressionCompanionProps> = ({
 }) => {
   const theme = useTheme()
   const reduce = useReducedMotion()
+  const { themeId } = useThemeSwitch()
   const { globalLevel, xpProgress } = useProgress()
   const audio = useSimplifiedAudioHook({ componentId: 'ProgressionCompanion', autoInitialize: false })
+
+  // Baked growing-companion art per world (Liveliness PRD-05 W7 / batch B6). When a theme ships
+  // `SceneAssets.companionStages`, those seed→full renders REPLACE the emoji token stages; until
+  // then the emoji default shows (no regression). Cached loader, so this is cheap.
+  const [artStages, setArtStages] = useState<string[] | null>(null)
+  useEffect(() => {
+    let alive = true
+    loadSceneAssets(themeId).then((a) => {
+      if (alive) setArtStages(a?.companionStages?.length ? a.companionStages : null)
+    })
+    return () => {
+      alive = false
+    }
+  }, [themeId])
 
   const level = levelProp ?? globalLevel()
   const fill = Math.max(0, Math.min(1, fillProp ?? xpProgress().fill))
 
-  const stages = theme.scene?.progressionCompanion?.stages ?? [...COMPANION_DEFAULT_STAGES]
+  const stages = artStages ?? theme.scene?.progressionCompanion?.stages ?? [...COMPANION_DEFAULT_STAGES]
   const stage = stageProp ?? companionStageForLevel(level, stages.length)
   const face = stages[Math.max(0, Math.min(stages.length - 1, stage))]
 
