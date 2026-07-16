@@ -74,7 +74,8 @@ export interface MemoryCard {
 export interface MemoryItemDisplay {
   primary: string           // Main display content (letter, number, etc.)
   secondary?: string        // Optional secondary content (word for letters)
-  icon?: string            // Optional icon/emoji
+  icon?: string            // Optional icon/emoji (fallback when no baked art)
+  iconArt?: string         // Optional baked soft-3D WebP URL (PRD-07) — rendered instead of `icon`
   backDisplay?: string     // Optional back of card text
 }
 
@@ -758,14 +759,30 @@ const UnifiedMemoryGame: React.FC<UnifiedMemoryGameProps> = ({ config }) => {
                           fontSize: config.gameType === 'numbers' ? 'clamp(1.4rem, 3vw, 2.2rem)' : 'clamp(1.6rem, 3.5vw, 2.2rem)',
                           fontWeight: 700,
                           color: isMatched ? successEdge : accent,
-                          marginBottom: displayData.icon ? '2px' : '0px',
+                          marginBottom: displayData.icon || displayData.iconArt ? '2px' : '0px',
                           lineHeight: 0.9
                         }}>
                           {displayData.primary}
                         </div>
 
-                        {/* Optional icon */}
-                        {displayData.icon && (
+                        {/* Optional icon — baked soft-3D art when present (PRD-07), else the emoji. */}
+                        {displayData.iconArt ? (
+                          <img
+                            src={displayData.iconArt}
+                            alt=""
+                            aria-hidden
+                            draggable={false}
+                            style={{
+                              height: 'clamp(1rem, 2.8vw, 1.9rem)',
+                              width: 'auto',
+                              maxWidth: '82%',
+                              objectFit: 'contain',
+                              marginBottom: '3px',
+                              filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.18))',
+                              pointerEvents: 'none',
+                            }}
+                          />
+                        ) : displayData.icon ? (
                           <div style={{
                             fontSize: 'clamp(1rem, 2.5vw, 1.6rem)',
                             lineHeight: 1,
@@ -773,7 +790,7 @@ const UnifiedMemoryGame: React.FC<UnifiedMemoryGameProps> = ({ config }) => {
                           }}>
                             {displayData.icon}
                           </div>
-                        )}
+                        ) : null}
 
                         {/* Optional secondary content */}
                         {displayData.secondary && (

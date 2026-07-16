@@ -8,10 +8,11 @@ import { useTheme } from '@mui/material/styles'
 import { categoryThemes } from '../../config/categoryThemes'
 import GameShell from '../common/GameShell'
 import LearningGrid from '../common/LearningGrid'
-import PromptStage from '../common/PromptStage'
+import PromptFocus from '../common/PromptFocus'
 import { useCelebration } from '../common/CelebrationEffect'
 import { useBrowseXp } from '../../hooks/useBrowseXp'
 import { LETTER_WORDS } from '../../config/letterWords'
+import { letterArt } from '../../assets/games/alphabet'
 import { hexToRgba } from '../../theme/tokens/helpers'
 import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 // Simplified audio system
@@ -32,9 +33,9 @@ const DANISH_ALPHABET = [
 
 const ALPHABET_ACCENT = categoryThemes.alphabet.accentColor
 
-// Example word + emoji for the bloomed letter (UI/UX Overhaul PRD §6B). Only letters with a clear,
-// child-friendly Danish word are included — Q, W, X have none, so their bloom shows just the giant
-// letter (the PromptStage hero gracefully supports an emoji-less state).
+// Example word + baked-art subject for the bloomed letter come from the shared LETTER_WORDS manifest.
+// Only letters with a clear, child-friendly Danish word are included — Q/W/X/Å have none, so their
+// bloom is glyph-only (PromptFocus renders the giant letter alone, no picture/word row).
 
 const AlphabetLearning: React.FC = () => {
   const muiTheme = useTheme()
@@ -173,57 +174,89 @@ const AlphabetLearning: React.FC = () => {
         </Box>
       }
       promptStage={
-        // Selected letter blooms large + its example word/emoji when the data has one (§6B).
-        // PromptStage's own chargeKey gives the gentle charge-in on every new selection
-        // (reduced-motion parity built in).
-        <PromptStage accent={ALPHABET_ACCENT} chargeKey={currentIndex}>
-          <Box
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: { xs: 0.5, md: 1 },
-              width: '100%',
-              height: '100%',
-            }}
-          >
-            <Typography
-              sx={{
-                fontWeight: 800,
-                lineHeight: 1,
-                color: muiTheme.scene.dark ? '#FFFFFF' : ALPHABET_ACCENT,
-                textShadow: muiTheme.scene.dark
-                  ? '0 2px 10px rgba(0,0,0,0.5)'
-                  : audio.isPlaying
-                    ? `0 0 24px ${hexToRgba(ALPHABET_ACCENT, 0.45)}`
-                    : 'none',
-                fontSize: 'clamp(2.75rem, 15vh, 6.5rem)',
-                transition: 'text-shadow 0.3s ease',
-                [PHONE_LANDSCAPE]: { fontSize: 'clamp(1.9rem, 22vh, 2.6rem)' },
-              }}
-            >
-              {DANISH_ALPHABET[currentIndex]}
-            </Typography>
-            {LETTER_WORDS[DANISH_ALPHABET[currentIndex]] && (
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 0.75, md: 1.25 } }}>
-                <Typography sx={{ fontSize: 'clamp(1.4rem, 6vh, 2.4rem)', lineHeight: 1, [PHONE_LANDSCAPE]: { fontSize: '1.3rem' } }}>
-                  {LETTER_WORDS[DANISH_ALPHABET[currentIndex]].emoji}
-                </Typography>
-                <Typography
+        // Selected letter blooms large in the calm world (PRD-07): PromptFocus grounds it on a
+        // light-pool + contact shadow (no frosted card). The giant glyph stays the lesson; the baked
+        // soft-3D object rests where the emoji was (emoji is the art-gated fallback), with the word
+        // beside it. Q/W/X/Å have no LETTER_WORDS entry → glyph-only bloom. chargeKey re-runs the
+        // charge-in per selection (reduced-motion parity built into PromptFocus).
+        (() => {
+          const letter = DANISH_ALPHABET[currentIndex]
+          const data = LETTER_WORDS[letter]
+          const art = letterArt(letter)
+          return (
+            <PromptFocus
+              accent={ALPHABET_ACCENT}
+              chargeKey={currentIndex}
+              subject={
+                <Box
                   sx={{
-                    fontWeight: 700,
-                    color: muiTheme.scene.dark ? 'rgba(255,255,255,0.85)' : 'text.secondary',
-                    fontSize: 'clamp(1rem, 3.5vh, 1.6rem)',
-                    [PHONE_LANDSCAPE]: { fontSize: '0.9rem' },
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: { xs: 0.5, md: 1 },
+                    width: '100%',
+                    height: '100%',
                   }}
                 >
-                  {LETTER_WORDS[DANISH_ALPHABET[currentIndex]].word}
-                </Typography>
-              </Box>
-            )}
-          </Box>
-        </PromptStage>
+                  <Typography
+                    sx={{
+                      fontWeight: 800,
+                      lineHeight: 1,
+                      color: muiTheme.scene.dark ? '#FFFFFF' : ALPHABET_ACCENT,
+                      textShadow: muiTheme.scene.dark
+                        ? '0 2px 10px rgba(0,0,0,0.5)'
+                        : audio.isPlaying
+                          ? `0 0 24px ${hexToRgba(ALPHABET_ACCENT, 0.45)}`
+                          : 'none',
+                      fontSize: 'clamp(2.75rem, 15vh, 6.5rem)',
+                      transition: 'text-shadow 0.3s ease',
+                      [PHONE_LANDSCAPE]: { fontSize: 'clamp(1.9rem, 22vh, 2.6rem)' },
+                    }}
+                  >
+                    {letter}
+                  </Typography>
+                  {data && (
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 0.75, md: 1.25 } }}>
+                      {art ? (
+                        <Box
+                          component="img"
+                          src={art}
+                          alt=""
+                          aria-hidden
+                          draggable={false}
+                          sx={{
+                            height: 'clamp(2.5rem, 9vh, 4rem)',
+                            width: 'auto',
+                            objectFit: 'contain',
+                            userSelect: 'none',
+                            pointerEvents: 'none',
+                            filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.18))',
+                            [PHONE_LANDSCAPE]: { height: '1.8rem' },
+                          }}
+                        />
+                      ) : (
+                        <Typography sx={{ fontSize: 'clamp(1.4rem, 6vh, 2.4rem)', lineHeight: 1, [PHONE_LANDSCAPE]: { fontSize: '1.3rem' } }}>
+                          {data.emoji}
+                        </Typography>
+                      )}
+                      <Typography
+                        sx={{
+                          fontWeight: 700,
+                          color: muiTheme.scene.dark ? 'rgba(255,255,255,0.85)' : 'text.secondary',
+                          fontSize: 'clamp(1rem, 3.5vh, 1.6rem)',
+                          [PHONE_LANDSCAPE]: { fontSize: '0.9rem' },
+                        }}
+                      >
+                        {data.word}
+                      </Typography>
+                    </Box>
+                  )}
+                </Box>
+              }
+            />
+          )
+        })()
       }
     >
       {/* Alphabet Grid - Using Reusable Component */}

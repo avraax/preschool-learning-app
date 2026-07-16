@@ -6,7 +6,7 @@ import { CategoryTheme } from '../../config/categoryThemes'
 import GameShell from './GameShell'
 import AnswerTile, { type AnswerTileState } from './AnswerTile'
 import PromptFocus from './PromptFocus'
-import { HeroEmoji } from './PromptStage'
+import { HeroEmoji, HeroArt } from './PromptStage'
 import type { GuideReaction } from './ThemeMascot'
 import { useCelebration } from '../common/CelebrationEffect'
 import { useGameState } from '../../hooks/useGameState'
@@ -63,7 +63,7 @@ export interface QuizItem {
   // Optional visual question shown in the prompt area (e.g. word-association mode:
   // show an emoji + word and ask which letter it starts with). When present, the
   // quiz renders this above the answer grid instead of relying on audio alone.
-  questionVisual?: { emoji: string; word?: string }
+  questionVisual?: { emoji?: string; word?: string; art?: string }
 }
 
 // Configuration interface for the unified quiz
@@ -526,10 +526,11 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
     // Config-supplied custom hero takes precedence (Tal counted objects, Hvad Mangler sequence…).
     if (config.renderHero) return config.renderHero(item)
     const qv = item.questionVisual
-    if (qv && (qv.emoji || qv.word)) {
+    if (qv && (qv.art || qv.emoji || qv.word)) {
       return (
         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: { xs: 0.5, md: 1 } }}>
-          {qv.emoji && <HeroEmoji>{qv.emoji}</HeroEmoji>}
+          {/* Baked soft-3D subject when the area has art (PRD-07); emoji is the art-gated fallback. */}
+          {qv.art ? <HeroArt src={qv.art} /> : qv.emoji ? <HeroEmoji>{qv.emoji}</HeroEmoji> : null}
           {qv.word && (
             <Typography
               sx={{

@@ -4,6 +4,7 @@ import { useTheme } from '@mui/material/styles'
 import { motion } from 'framer-motion'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
 import { hexToRgba } from '../../theme/tokens/helpers'
+import { softShadow } from '../../theme/depth'
 import { CHARGE, CHARGE_IN_OPACITY, CHARGE_IN_SCALE, idleFloat } from '../../theme/motion'
 import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 
@@ -108,4 +109,29 @@ export const HeroEmoji: React.FC<{ children: React.ReactNode }> = ({ children })
   >
     {children}
   </Box>
+)
+
+// The baked-art counterpart of HeroEmoji (Liveliness PRD-06 F2 / PRD-07): a soft-3D WebP subject
+// rendered at the hero size, resting in PromptFocus's light-pool. A gentle layered drop-shadow gives
+// it the same "cut-out object resting in the world" read as a SceneObject; the light-pool + contact
+// shadow come from PromptFocus around it. Decorative (the letter/answer is the content) → aria-hidden.
+export const HeroArt: React.FC<{ src: string; alt?: string }> = ({ src, alt = '' }) => (
+  <Box
+    component="img"
+    src={src}
+    alt={alt}
+    aria-hidden={alt === '' ? true : undefined}
+    draggable={false}
+    sx={{
+      height: 'clamp(4.5rem, 20vh, 11rem)',
+      width: 'auto',
+      maxWidth: '100%',
+      maxHeight: '100%',
+      objectFit: 'contain',
+      userSelect: 'none',
+      pointerEvents: 'none',
+      filter: softShadow(1.4),
+      [PHONE_LANDSCAPE]: { height: 'clamp(3rem, 26vh, 5rem)' },
+    }}
+  />
 )

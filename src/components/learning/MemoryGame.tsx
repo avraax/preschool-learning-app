@@ -7,45 +7,19 @@ import { AlphabetRestartButton, MathRestartButton } from '../common/RestartButto
 import { stickerSetForSection } from '../../config/stickers'
 import { AlphabetRepeatButton, MathRepeatButton } from '../common/RepeatButton'
 import { shuffle } from '../../utils/shuffle'
+import { LETTER_WORDS } from '../../config/letterWords'
+import { letterArt } from '../../assets/games/alphabet'
 
 // Danish alphabet (29 letters)
 const DANISH_ALPHABET = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'Æ', 'Ø', 'Å']
 
-// Numbers 1-20 
+// Numbers 1-20
 const NUMBERS = Array.from({ length: 20 }, (_, i) => (i + 1).toString())
 
-// Letter associations with Danish words and icons
-const LETTER_ICONS: { [key: string]: { word: string; icon: string } } = {
-  'A': { word: 'Ananas', icon: '🍍' },
-  'B': { word: 'Bjørn', icon: '🐻' },
-  'C': { word: 'Cykel', icon: '🚲' },
-  'D': { word: 'Due', icon: '🕊️' },
-  'E': { word: 'Elefant', icon: '🐘' },
-  'F': { word: 'Frø', icon: '🐸' },
-  'G': { word: 'Giraf', icon: '🦒' },
-  'H': { word: 'Hest', icon: '🐴' },
-  'I': { word: 'Is', icon: '🍦' },
-  'J': { word: 'Juletræ', icon: '🎄' },
-  'K': { word: 'Kat', icon: '🐱' },
-  'L': { word: 'Løve', icon: '🦁' },
-  'M': { word: 'Mus', icon: '🐭' },
-  'N': { word: 'Næsehorn', icon: '🦏' },
-  'O': { word: 'Ost', icon: '🧀' },
-  'P': { word: 'Papegøje', icon: '🦜' },
-  'Q': { word: 'Quiz', icon: '❓' },
-  'R': { word: 'Ræv', icon: '🦊' },
-  'S': { word: 'Sol', icon: '☀️' },
-  'T': { word: 'Tog', icon: '🚂' },
-  'U': { word: 'Ugle', icon: '🦉' },
-  'V': { word: 'Vind', icon: '💨' },
-  'W': { word: 'Wienerbrød', icon: '🥐' },
-  'X': { word: 'X', icon: '❌' },
-  'Y': { word: 'Yacht', icon: '⛵' },
-  'Z': { word: 'Zebra', icon: '🦓' },
-  'Æ': { word: 'Æble', icon: '🍎' },
-  'Ø': { word: 'Ø', icon: '🏝️' },
-  'Å': { word: 'Å', icon: '🏞️' }
-}
+// Letter → word/subject is the SHARED canonical manifest (`LETTER_WORDS`, src/config/letterWords.ts)
+// — the same table Bogstav Quiz + Lær Alfabetet use — so a letter shows the same object and speaks
+// the same word everywhere (PRD-07 §6.1 consolidation; the old divergent inline LETTER_ICONS is
+// gone). Q/W/X/Å have no entry → their memory cards are glyph-only (owner decision — glyph-only).
 
 const MemoryGame: React.FC = () => {
   const { type, size } = useParams<{ type: 'letters' | 'numbers'; size: '10' | '20' }>()
@@ -73,20 +47,21 @@ const MemoryGame: React.FC = () => {
     },
     
     getDisplayData: (letter: string): MemoryItemDisplay => {
-      const letterData = LETTER_ICONS[letter]
+      const letterData = LETTER_WORDS[letter]
       return {
         primary: letter,
         secondary: letterData?.word,
-        icon: letterData?.icon
+        icon: letterData?.emoji,
+        iconArt: letterArt(letter)
       }
     },
-    
+
     speakItem: async (letter: string, audio: any) => {
       return audio.speak(letter)
     },
-    
+
     speakMatchedItem: async (letter: string, audio: any) => {
-      const letterData = LETTER_ICONS[letter]
+      const letterData = LETTER_WORDS[letter]
       if (letterData) {
         return audio.speak(`${letter} som ${letterData.word}`)
       }
