@@ -113,7 +113,7 @@ const PersistentWorld: React.FC = () => {
           transition: `filter ${ease} ease, transform ${ease} ease`,
         }}
       >
-        <ThemeScene paused={inGame} bloomExtra={bloomExtra} />
+        <ThemeScene paused={inGame} bloomExtra={bloomExtra} bloomStage={stage} bloomSection={section} />
       </Box>
 
       {/* Section accent tint (PRD-05 W4) — a gentle wash in the section's colour, fading in on the

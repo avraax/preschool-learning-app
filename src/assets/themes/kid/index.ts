@@ -16,6 +16,8 @@ const kidAssets: SceneAssets = {
   selectorThumb: thumb,
   // Reactive-guide poses (Liveliness PRD-05 W6): idle/greet/point/celebrate soft-3D renders.
   mascotPoses: { idle: mascotIdle, greet: mascotGreet, point: mascotPoint, celebrate: mascotCelebrate },
+  // Bloom scenery (PRD-05 W7) lands with batch B5: add `bloomScenery: [flower, star, cloud]` here
+  // (index-aligned to scene.bloomScenery in kidTheme.tokens.ts) and the sprites appear as XP blooms.
 }
 
 export default kidAssets

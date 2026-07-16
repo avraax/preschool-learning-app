@@ -155,6 +155,13 @@ export const kidThemeTokens: ThemeTokens = {
       english: { xPct: 64, yPct: 46, zoom: 1.34 },
       ordleg: { xPct: 78, yPct: 52, zoom: 1.32 },
     },
+    // Earned bloom scenery (PRD-05 W7). Layout only; `src:''` → the URL comes from
+    // SceneAssets.bloomScenery by INDEX (batch B5, order: flower, sparkle-star, cloud puff).
+    bloomScenery: [
+      { src: '', minStage: 1, xPct: 12, yPct: 82, depth: 0.55, scale: 1 },
+      { src: '', minStage: 2, xPct: 88, yPct: 28, depth: 0.3, scale: 0.9 },
+      { src: '', minStage: 3, xPct: 72, yPct: 86, depth: 0.6, scale: 1.15 },
+    ],
   },
 
   materials: {

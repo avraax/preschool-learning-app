@@ -87,6 +87,13 @@ export const oceanThemeTokens: ThemeTokens = {
       english: { xPct: 64, yPct: 48, zoom: 1.34 },
       ordleg: { xPct: 78, yPct: 55, zoom: 1.32 },
     },
+    // Earned bloom scenery (PRD-05 W7). Layout only; `src:''` → URL from SceneAssets.bloomScenery
+    // by INDEX (batch B5, order: coral, seashell, starfish). Seated low on the seabed.
+    bloomScenery: [
+      { src: '', minStage: 1, xPct: 10, yPct: 86, depth: 0.6, scale: 1 },
+      { src: '', minStage: 2, xPct: 90, yPct: 84, depth: 0.55, scale: 0.9 },
+      { src: '', minStage: 3, xPct: 50, yPct: 90, depth: 0.62, scale: 1.1 },
+    ],
   },
 
   materials: {

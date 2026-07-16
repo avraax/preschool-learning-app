@@ -4,6 +4,8 @@ import { useTheme } from '@mui/material/styles'
 import { useThemeSwitch } from '../../../theme/ThemeProvider'
 import { loadSceneAssets, type SceneAssets } from '../../../theme/sceneAssets'
 import { useReducedMotion } from '../../../hooks/useReducedMotion'
+import { motion } from 'framer-motion'
+import type { SceneSectionId } from '../../../theme/tokens/types'
 import ParallaxLayer from './ParallaxLayer'
 import AmbientField from './AmbientField'
 
@@ -21,9 +23,19 @@ interface ThemeSceneProps {
   paused?: boolean
   // Extra drifting ambient objects from the current section's bloom (Liveliness PRD-02 §9).
   bloomExtra?: number
+  // Structured World (PRD-05 W7): the current bloom STAGE (0–4) and active section (or null for
+  // home / all-sections). Discrete `scene.bloomScenery` sprites appear once the stage reaches their
+  // `minStage` — recognizable, earned scenery on top of the ambient-count bloom. Absent → none show.
+  bloomStage?: number
+  bloomSection?: SceneSectionId | null
 }
 
-const ThemeScene: React.FC<ThemeSceneProps> = ({ paused = false, bloomExtra = 0 }) => {
+const ThemeScene: React.FC<ThemeSceneProps> = ({
+  paused = false,
+  bloomExtra = 0,
+  bloomStage = 0,
+  bloomSection = null,
+}) => {
   const theme = useTheme()
   const { themeId } = useThemeSwitch()
   const reduce = useReducedMotion()
@@ -76,6 +88,43 @@ const ThemeScene: React.FC<ThemeSceneProps> = ({ paused = false, bloomExtra = 0 
               assets.layers[i] ? <ParallaxLayer key={i} spec={layer} url={assets.layers[i]} index={i} /> : null
             )}
             <AmbientField scene={scene} sprites={assets.ambientSprites} themeId={themeId} disabled={reduce} paused={paused} bloomExtra={bloomExtra} />
+
+            {/* Earned bloom scenery (PRD-05 W7): discrete stage-gated sprites that pop in as the
+                child's bloom rises. Each token entry pairs by index with a loaded URL in
+                assets.bloomScenery (filled by batch B5); an entry with no URL yet renders nothing,
+                so this is a no-op until the art lands. Rides the shared parallax vars via `depth`. */}
+            {(scene.bloomScenery ?? []).map((sp, i) => {
+              const url = sp.src || assets.bloomScenery?.[i]
+              if (!url) return null
+              if (sp.minStage > bloomStage) return null
+              if (sp.section && sp.section !== bloomSection) return null
+              return (
+                <Box
+                  key={`bloom-${i}`}
+                  aria-hidden
+                  component={motion.img}
+                  src={url}
+                  alt=""
+                  draggable={false}
+                  initial={reduce ? false : { opacity: 0, scale: 0.6, y: 6 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  transition={reduce ? { duration: 0 } : { type: 'spring', stiffness: 260, damping: 18 }}
+                  style={{
+                    position: 'absolute',
+                    left: `${sp.xPct}%`,
+                    top: `${sp.yPct}%`,
+                    width: `${Math.round(64 * sp.scale)}px`,
+                    height: 'auto',
+                    zIndex: 40, // above the parallax layers, below the readability scrim (50)
+                    transform: `translate(-50%, -50%) translate3d(calc(var(--parallax-x, 0px) * ${sp.depth}), calc(var(--parallax-y, 0px) * ${sp.depth}), 0)`,
+                    filter: 'drop-shadow(0 6px 12px rgba(0,0,0,0.28))',
+                    pointerEvents: 'none',
+                    userSelect: 'none',
+                  }}
+                />
+              )
+            })}
+
             {/* Gentle scrim: lifts depth and keeps content cards readable over the scene. */}
             <Box
               aria-hidden

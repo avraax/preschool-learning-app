@@ -80,6 +80,13 @@ export const spaceThemeTokens: ThemeTokens = {
       english: { xPct: 63, yPct: 40, zoom: 1.34 },
       ordleg: { xPct: 76, yPct: 46, zoom: 1.32 },
     },
+    // Earned bloom scenery (PRD-05 W7). Layout only; `src:''` → URL from SceneAssets.bloomScenery
+    // by INDEX (batch B5, order: little planet, comet, star cluster). Float in the star field.
+    bloomScenery: [
+      { src: '', minStage: 1, xPct: 14, yPct: 24, depth: 0.35, scale: 1 },
+      { src: '', minStage: 2, xPct: 86, yPct: 18, depth: 0.28, scale: 0.9 },
+      { src: '', minStage: 3, xPct: 62, yPct: 68, depth: 0.4, scale: 1.05 },
+    ],
   },
 
   materials: {

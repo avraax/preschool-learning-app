@@ -176,7 +176,7 @@ export const DevScene: React.FC = () => {
           transition: 'transform 0.5s cubic-bezier(0.22,1,0.36,1)',
         }}
       >
-        <ThemeScene bloomExtra={bloomExtra} />
+        <ThemeScene bloomExtra={bloomExtra} bloomStage={bloom} bloomSection={section} />
       </Box>
 
       {/* Section accent tint — makes /alphabet feel like a different place than /math. */}
