@@ -49,9 +49,9 @@ never require reading).
 **Remaining:**
 - **W2** multi-layer parallax — needs **B3 world layers** (far/mid/near per world). Deferrable; single-layer worlds
   work today (W3/W4 already wired on them).
-- **W5** cinematic push-in transition (the `sectionFocus` reframe already delivers the travel-into-locale beat on
-  arrival; the dedicated `'push'` overlay variant + focus-origin plumbing is an OPEN owner sign-off — §12.3:
-  shared `push` vs keep the per-skin wipes). **W7** visible progression (companion prominence done; `bloomScenery`
+- **W5 cinematic push-in — RESOLVED (owner, 2026-07-16): KEEP the per-skin wipes** (iris/wave/warp/leaves) and
+  rely on the W4 `sectionFocus` reframe for the travel-into-locale beat. No dedicated `'push'` overlay variant is
+  shipped (the `'push'` type value stays available but unused). §12.3 closed. **W7** visible progression (companion prominence done; `bloomScenery`
   placement + **B5/B6** Tier-2 art remain), **W8** reward-moment polish, **W9** ambient audio (needs 4 loops),
   **W10** album/peripheral.
 - **Assets outstanding:** B3 (world layers), B5 (bloom scenery), B6 (companion stages), B7 (ambient sprites).

@@ -1,10 +1,9 @@
 import React, { useEffect, useState } from 'react'
-import { AppBar, Box, Container, IconButton, Toolbar, Typography } from '@mui/material'
+import { AppBar, Box, Container, Toolbar, Typography } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 import { motion } from 'framer-motion'
-import { useNavigate } from 'react-router-dom'
-import { ArrowLeft } from 'lucide-react'
+import BackButton from '../common/BackButton'
 import { STICKER_SETS } from '../../config/stickers'
 import { useProgress } from '../../hooks/useProgress'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
@@ -23,7 +22,6 @@ const COMIC = '"Comic Sans MS", "Comic Neue", sans-serif'
 
 const StickerAlbum: React.FC = () => {
   const theme = useTheme()
-  const navigate = useNavigate()
   const reduce = useReducedMotion()
   const { state, markStickersSeen } = useProgress()
   const audio = useSimplifiedAudioHook({ componentId: 'StickerAlbum', autoInitialize: false })
@@ -91,20 +89,9 @@ const StickerAlbum: React.FC = () => {
     >
       {/* Header: back (left) + lifetime stats (right) */}
       <AppBar position="static" color="transparent" elevation={0}>
-        <Toolbar sx={{ justifyContent: 'space-between', py: 2, [PHONE_LANDSCAPE]: { py: 0.25, minHeight: '48px !important' } }}>
-          <IconButton
-            onClick={() => navigate('/')}
-            color="primary"
-            size="large"
-            sx={{
-              bgcolor: 'rgba(255, 255, 255, 0.8)',
-              border: '1px solid rgba(255, 255, 255, 0.3)',
-              backdropFilter: 'blur(8px)',
-              '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.9)', transform: 'scale(1.05)' },
-            }}
-          >
-            <ArrowLeft size={24} />
-          </IconButton>
+        <Toolbar sx={{ justifyContent: 'space-between', py: 2, color: titleColor, [PHONE_LANDSCAPE]: { py: 0.25, minHeight: '48px !important' } }}>
+          {/* Shared themed back button — reverses the wipe, consistent with every other surface. */}
+          <BackButton to="/" variant="menu" />
 
           <Box sx={{ display: 'flex', gap: 1 }}>
             <StatPill label={`⭐ ${state.totals.totalStars}`} accent={accent} />
@@ -252,8 +239,27 @@ const StickerAlbum: React.FC = () => {
           </Box>
         )}
 
-        {/* Sticker grid (3 columns) */}
+        {/* Sticker grid (3 columns) — seated on a soft "page" panel so the collection reads as a
+            treasured book page inside the world (PRD-05 W10), not a bare floating grid. */}
         <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 0 }}>
+          <Box
+            sx={{
+              position: 'relative',
+              p: { xs: 1.5, sm: 2, md: 2.75 },
+              borderRadius: '26px',
+              border: '1px solid',
+              borderColor: dark ? 'rgba(255,255,255,0.16)' : hexToRgba(accent, 0.18),
+              background: dark
+                ? 'linear-gradient(180deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.05) 100%)'
+                : 'linear-gradient(180deg, rgba(255,255,255,0.66) 0%, rgba(255,255,255,0.44) 100%)',
+              backdropFilter: immersive ? 'blur(10px) saturate(1.05)' : 'none',
+              WebkitBackdropFilter: immersive ? 'blur(10px) saturate(1.05)' : 'none',
+              boxShadow: dark
+                ? '0 14px 40px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.14)'
+                : '0 14px 40px rgba(0,0,0,0.14), inset 0 1px 0 rgba(255,255,255,0.7)',
+              [PHONE_LANDSCAPE]: { p: 1, borderRadius: '18px' },
+            }}
+          >
           <Box
             sx={{
               display: 'grid',
@@ -406,6 +412,7 @@ const StickerAlbum: React.FC = () => {
                 </Box>
               )
             })}
+          </Box>
           </Box>
         </Box>
       </Container>
