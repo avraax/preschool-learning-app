@@ -61,6 +61,8 @@ plans/liveliness-overhaul/tmp-prd-liveliness-02-menus-and-navigation.md    ← l
 plans/liveliness-overhaul/tmp-prd-liveliness-03-games-shell-and-audit.md   ← game-entry beat + unify shell + per-game audit
 plans/liveliness-overhaul/tmp-prd-liveliness-04-live-xp-progression.md     ← REWORK: live per-task XP + in-game indicator + stickers-as-level-up-trophies
 plans/liveliness-overhaul/tmp-prd-liveliness-05-structured-world.md        ← VISUAL OVERHAUL of the shell: "Structured World" (objects live in the world, travel-into-section, baked soft-3D art via Gemini)
+plans/liveliness-overhaul/tmp-prd-liveliness-06-games-uplift-foundation.md ← GAMES visual uplift — SHARED FOUNDATION (keystone): remove entry-beat + tactile-tile primitive + focal-zone dissolve + in-game world presence + HUD unification + baked-art conventions
+plans/liveliness-overhaul/tmp-prd-liveliness-07-games-uplift-alphabet.md   ← GAMES uplift area 1: Alphabet (worked example). Areas -08 Math / -09 Farver / -10 Ordleg / -11 English authored just-in-time (one per session)
 ```
 
 > **-05 is the visual/art overhaul of the shell** (home, 5 section menus, transitions, reward moments, mascot,
@@ -75,6 +77,14 @@ plans/liveliness-overhaul/tmp-prd-liveliness-05-structured-world.md        ← V
 > **without interrupting play** (big ceremony deferred to the result screen), and re-role **stickers as the
 > trophy of a level-up** (level becomes the primary reward). Everything else -01 built (store slice, `applyXp`,
 > selectors, overlay/watcher, companion, bloom) is reused. Implement -04 after -01.
+
+> **-06/-07 are the "games visual uplift" sub-program** (decided with the owner 2026-07-16). PRD-05 re-skinned the
+> SHELL; this brings the **game boards** up to the same Structured-World standard. `-06` is the keystone
+> (implement first): it **removes the "Er du klar? … Kør!" entry beat** — superseding that part of PRD-03 — and
+> ships the shared language (tactile-tile primitive, focal-zone dissolve, softened in-game world, unified HUD,
+> baked-art conventions). Then areas ship one-per-session, **art-gated**, in order Alphabet → Math → Farver →
+> Ordleg → English, each play-tested before the next is authored. `-07` Alphabet is written; `-08…-11` are
+> authored just-in-time. Locked decisions live in `-06` §2.
 
 **PRD-01 is the keystone and must be implemented first.** It defines the global XP/level system, per-section
 "bloom", the level-up ceremony, and the child-facing growth display. PRD-02's "visible bloom" and PRD-03's
