@@ -55,11 +55,10 @@ export const dinoThemeTokens: ThemeTokens = {
     dark: false,
     // Multi-layer parallax (PRD-05 W2). Index-aligned to SceneAssets.layers (far→mid→near).
     layers: [
-      { src: '', depth: 0.14, anchor: 'center' }, // far: sunrise sky + volcano
-      // mid jungle dropped well down so its whole span (incl. the centre over the volcano) meets the
-      // near ridge — no longer a green ribbon floating in the sky.
-      { src: '', depth: 0.44, anchor: 'center', offsetY: 20 }, // mid: jungle tree-line
-      { src: '', depth: 0.82, anchor: 'center' }, // near: mossy ridge
+      { src: '', depth: 0.14, anchor: 'center' }, // far: sunrise sky + volcano + distant green mountains
+      // (mid jungle strip dropped — owner call; it always read as a floating band and the far
+      //  mountains already cover the mid-ground)
+      { src: '', depth: 0.82, anchor: 'center' }, // near: mossy ridge / foreground jungle
     ],
     ambient: {
       // B7 art motes (index-aligned to SceneAssets.ambientSprites): leaf + fern frond, falling.

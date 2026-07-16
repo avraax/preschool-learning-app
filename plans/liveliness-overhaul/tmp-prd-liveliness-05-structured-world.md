@@ -90,7 +90,11 @@ never require reading).
   planet → **re-keyed the space mid WHOLE** (global green key + despill, no clip — the planet/ring has no green
   subject so it's safe) and nudged the near asteroids up (`offsetY:-4`) to occlude the planet's lower bulge;
   (b) **Dinosaurer:** dropped the mid jungle (`offsetY:20`) so its whole span (incl. over the volcano) meets the
-  foreground — no more floating green ribbon. Verified home + framed section menus + reduced-motion.
+  foreground. **Update (owner call 2026-07-16):** `offsetY` only *relocated* the strip (it's a thin
+  horizontal foliage band and the far layer already has mountains in that zone, so any placement/feather/
+  opacity treatment still read as a band). Tried reposition + feathered bottom + 50% haze; none fully clean →
+  **dropped the dino mid layer** (now far volcano+mountains / near foreground jungle; the far mountains are the
+  mid-ground). `scene-mid.webp` removed. Verified clean; no floating band.
 - **Green-residue cleanup (scrutiny pass on kid + ocean):** re-keyed those mid/near layers too —
   **Regnbue** clouds had a green spill *fringe* + a stray speckle (fixed with a global green-key + hard despill,
   safe since clouds are white); **Havet** open water had faint green residue dots + a bright enclosed green
