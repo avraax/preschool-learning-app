@@ -50,9 +50,9 @@ Most task-based quizzes are a thin **config** over `src/components/common/Unifie
 - **Never-fail hint** (PRD-05): `hintAfterNWrong` (2 for every config quiz) pulses the correct
   `AnswerTile` after that many wrong taps (reduced-motion → static glow). The 2 wrongs already broke
   first-try, so no extra star bookkeeping.
-- **Custom hero**: `renderHero(item)` renders a richer subject in the `PromptStage` instead of the
-  default glyph/emoji — used today by Tal Quiz (numeral + counted objects) and Hvad Mangler (the
-  sequence with a pulsing "?").
+- **Custom hero**: `renderHero(item)` renders a richer subject in the focal zone (`PromptFocus`)
+  instead of the default glyph/emoji — used today by Tal Quiz (numeral + counted objects) and Hvad
+  Mangler (the sequence with a pulsing "?").
 
 Only hand-roll a full component for genuinely novel mechanics (e.g. SpellingGame, SpeakWordGame, and
 the dnd-kit Farver games — see `.claude/rules/drag-and-drop.md`). **MathOperationGame (+/−) and
@@ -70,6 +70,10 @@ needs that hook added first (it would touch all 7 config quizzes, so verify care
 - **Shuffle** → `shuffle()` (`src/utils/shuffle.ts`), a non-mutating Fisher-Yates. Never the biased
   `.sort(() => Math.random() - 0.5)` idiom, and never sort shared config in place.
 - **Drag games** → the `src/components/common/dnd/` primitives (see `.claude/rules/drag-and-drop.md`).
+- **Game-board surfaces** → `TactileTile` (pressable clay tile), `PromptFocus` (in-world focal zone),
+  `TactilePill` (HUD pills; `AnswerTile`/`ScoreChip`/`RepeatButton` ride these) via `src/theme/depth.ts`
+  (`softShadow`/`contactShadow`). New or hand-rolled game surfaces reuse these — don't re-invent tile
+  depth, a keyboard-lip button, or a frosted `PromptStage` card (PRD-06 F1/F2/F4).
 
 ## Interaction-language parity (hand-rolled task games)
 
