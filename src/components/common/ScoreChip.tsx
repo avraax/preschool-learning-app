@@ -2,10 +2,13 @@ import React from 'react'
 import { Box } from '@mui/material'
 import { getCategoryTheme } from '../../config/categoryThemes'
 import { hexToRgba, relLuminance } from '../../theme/tokens/helpers'
+import TactilePill from './TactilePill'
 
-// Unified round-progress chip (UI/UX Overhaul PRD §5.4). ONE design across every section: an
-// accent pill with a pip ring showing `answered/total` (round questions, Farvejagt boards, etc.)
-// plus an optional ⭐ record readout. The old `format="standard|stars|progress"` split is gone.
+// Unified round-progress chip (UI/UX Overhaul PRD §5.4; tactile material added in Liveliness PRD-06
+// F4). ONE design across every section: an accent pill with a pip ring showing `answered/total`
+// (round questions, Farvejagt boards, etc.) plus an optional ⭐ record readout. It now sits on the
+// shared `TactilePill` soft-3D material so it reads as one family with "Hør igen" + the level ring
+// (replacing the old flat `bgcolor:accent` + single glow).
 //
 // - `total > 0` → pip ring (filled = answered). This is the standard bounded-round display.
 // - `customLabel` → free text (e.g. Memory "Par: X/P"), still inside the same pill.
@@ -44,39 +47,21 @@ export const ScoreChip: React.FC<ScoreChipProps> = ({
   const accent = theme.accentColor
   // Legible content colour on the accent pill (dark text on light/warm accents, white otherwise).
   const onAccent = relLuminance(accent) > 0.5 ? '#1F2937' : '#FFFFFF'
-  const pipEmpty = hexToRgba(onAccent, 0.32)
-
-  const interactive = !!onClick && !disabled
+  const pipFilled = disabled ? '#6B7280' : onAccent
+  const pipEmpty = disabled ? '#9CA3AF' : hexToRgba(onAccent, 0.32)
 
   return (
-    <Box
-      component={onClick ? 'button' : 'div'}
-      type={onClick ? 'button' : undefined}
-      onClick={interactive ? onClick : undefined}
-      aria-label={customLabel ?? (total > 0 ? `${answered} af ${total}` : `Point: ${value ?? 0}`)}
+    <TactilePill
+      accent={accent}
+      onClick={onClick}
+      disabled={disabled}
+      ariaLabel={customLabel ?? (total > 0 ? `${answered} af ${total}` : `Point: ${value ?? 0}`)}
       sx={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: 0.9,
-        minHeight: 40,
+        color: disabled ? undefined : onAccent,
         px: 1.6,
-        py: 0.5,
-        border: `2px solid ${disabled ? 'transparent' : theme.borderColor}`,
-        borderRadius: 999,
-        bgcolor: disabled ? 'grey.300' : accent,
-        color: disabled ? 'grey.600' : onAccent,
         fontWeight: 800,
         fontSize: '1.1rem',
         lineHeight: 1,
-        cursor: interactive ? 'pointer' : 'default',
-        opacity: disabled ? 0.6 : 1,
-        boxShadow: disabled ? 'none' : `0 4px 16px ${hexToRgba(accent, 0.45)}`,
-        WebkitTapHighlightColor: 'transparent',
-        transition: 'transform 0.15s ease, box-shadow 0.2s ease',
-        '&:active': interactive ? { transform: 'scale(0.96)' } : {},
-        '@media (hover: hover) and (pointer: fine)': interactive
-          ? { '&:hover': { transform: 'scale(1.04)' } }
-          : {},
       }}
     >
       {customLabel != null ? (
@@ -90,7 +75,7 @@ export const ScoreChip: React.FC<ScoreChipProps> = ({
                 width: 9,
                 height: 9,
                 borderRadius: '50%',
-                bgcolor: i < answered ? onAccent : pipEmpty,
+                bgcolor: i < answered ? pipFilled : pipEmpty,
                 transition: 'background-color 0.25s ease',
               }}
             />
@@ -105,7 +90,7 @@ export const ScoreChip: React.FC<ScoreChipProps> = ({
           ⭐{record}
         </Box>
       )}
-    </Box>
+    </TactilePill>
   )
 }
 

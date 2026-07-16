@@ -83,8 +83,8 @@ internally, so only hand-rolled games can drift (this drift has bitten several g
   `r.streak % 3 === 0` line) so the corner mascot does its streak pose.
 - `correct`/`wrong` mascot comes free via GameShell's `guideReaction` bridge (set `guideReaction`
   cheer/think); `round` comes free via `RoundResultScreen`'s own `'round'` emit; `welcome` comes free
-  via GameShell's entry beat (`GameIntro`). So a hand-rolled game only needs `tap` + `streak` + `hint`
-  wired by hand.
+  via the themed wipe's `mascotBus.emit('welcome')` game-arrival cue. So a hand-rolled game only needs
+  `tap` + `streak` + `hint` wired by hand.
 
 ## Entry-audio pattern for hand-rolled task-based games
 

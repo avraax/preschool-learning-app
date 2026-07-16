@@ -1,24 +1,17 @@
 import React from 'react'
-import { Box } from '@mui/material'
-import { useTheme } from '@mui/material/styles'
-import { motion } from 'framer-motion'
-import { darken, hexToRgba, tileSurface } from '../../theme/tokens/helpers'
-import { useReducedMotion } from '../../hooks/useReducedMotion'
+import TactileTile from './TactileTile'
 
-// Tactile soft-3D answer tile (UI/UX Overhaul PRD §5.2) — the reference "juice" surface.
-// Pure CSS depth: a section-tinted top-light gradient (`tileSurface`, no longer a hardcoded grey),
-// a themed accent border + a coloured "edge/lip" beneath it, a layered drop shadow that deepens on
-// dark scenes, a deeper pressed `:active` travel (sinks onto a shorter lip) and a lifted hover.
-// Feedback states:
-//   correct → success glow ring + scale pop [1,1.12,1] + 8 sparkles + a localized colour burst
-//   wrong   → x-shake + red-tint flash
-// The content glyph (number/letter/emoji/word) is passed as children — typography unchanged.
-// Reduced motion → no travel/shake/particles (the colour/glow still communicates the result).
+// AnswerTile — the quiz answer surface. As of Liveliness PRD-06 F1 it is a thin wrapper over the
+// shared `TactileTile` clay primitive (soft matte surface + grounded contact shadow + press-travel,
+// NO keyboard lip / heavy border). Its public props are UNCHANGED so no quiz config needs editing:
+// `UnifiedQuizGame` and every hand-rolled game that renders <AnswerTile> upgrade to the tactile
+// material at once. The content glyph (letter/number/word/emoji) is still passed as children.
 //
-// `hint` (PRD-05 P1): the never-fail "you're stuck" cue used across every quiz. When the correct
-// tile is marked as a hint (after N wrong taps on the current question) it gently breathes + wears
-// an accent glow ring so the child can find the answer. Reduced motion drops the breathe but keeps
-// the static ring. Only takes effect while the tile is idle (a correct/wrong feedback state wins).
+// Feedback states map 1:1 to TactileTile:
+//   correct → soft scale pop + a few sparkles + success ring/contact-tint  (+ the game's sfx)
+//   wrong   → gentle x-shake + error tint
+//   hint    → slow breathe + accent glow ring (never-fail hint; reduced-motion → static ring)
+// The DOM contract (`data-answer-tile` / `data-tile-state`) is preserved for the screenshot harness.
 
 export type AnswerTileState = 'idle' | 'correct' | 'wrong'
 
@@ -27,189 +20,30 @@ interface AnswerTileProps {
   accent: string
   state?: AnswerTileState
   disabled?: boolean
-  // Pulse this (correct) tile as a never-fail hint (see header). Ignored unless state === 'idle'.
+  // Pulse this (correct) tile as a never-fail hint. Ignored unless state === 'idle'.
   hint?: boolean
   children: React.ReactNode
 }
 
-// Eight sparkles that pop out of a correct tile. Positions are fixed (no per-render randomness).
-const SPARKLES = [
-  { left: '8%', top: '12%', size: 16, delay: 0 },
-  { left: '82%', top: '18%', size: 20, delay: 0.06 },
-  { left: '50%', top: '-6%', size: 22, delay: 0.03 },
-  { left: '14%', top: '76%', size: 14, delay: 0.1 },
-  { left: '86%', top: '72%', size: 16, delay: 0.08 },
-  { left: '32%', top: '2%', size: 14, delay: 0.12 },
-  { left: '66%', top: '92%', size: 16, delay: 0.05 },
-  { left: '4%', top: '48%', size: 12, delay: 0.14 },
-]
-
-// A localized confetti micro-burst (coloured dots flying radially out of the tile centre).
-const BURST = [
-  { dx: -46, dy: -34 },
-  { dx: 46, dy: -34 },
-  { dx: -56, dy: 10 },
-  { dx: 56, dy: 10 },
-  { dx: -22, dy: -56 },
-  { dx: 22, dy: -56 },
-]
-
-const AnswerTile: React.FC<AnswerTileProps> = ({ onClick, accent, state = 'idle', disabled = false, hint = false, children }) => {
-  const theme = useTheme()
-  const reduce = useReducedMotion()
-  const dark = theme.scene.dark
-  const success = theme.palette.success.main
-  const error = theme.palette.error.main
-  const burstColors = theme.decor.confettiColors
-
-  // The hint cue only shows on an otherwise-idle tile (a correct/wrong feedback state always wins).
-  const showHint = hint && state === 'idle'
-
-  const lip = darken(accent, 0.3) // coloured 3D rim under the tile
-  const ambientShadow = dark ? '0 12px 28px rgba(0,0,0,0.5)' : '0 10px 22px rgba(0,0,0,0.15)'
-
-  // Border + edge colour shift with the feedback state so correct/wrong read instantly.
-  const borderColor =
-    state === 'correct' ? success : state === 'wrong' ? error : hexToRgba(accent, showHint ? (dark ? 0.85 : 0.7) : dark ? 0.55 : 0.34)
-  const edgeColor = state === 'correct' ? darken(success, 0.28) : state === 'wrong' ? darken(error, 0.25) : lip
-
-  // Accent glow ring for the hint (matches the correct-tile ring language, but in the section accent
-  // rather than success green — it's guidance, not a "correct" verdict).
-  const hintRing = `0 0 0 5px ${hexToRgba(accent, dark ? 0.6 : 0.5)}`
-  const restingShadow =
-    state === 'correct'
-      ? `0 0 0 5px ${hexToRgba(success, 0.5)}, 0 8px 0 ${edgeColor}, 0 16px 34px ${hexToRgba(success, 0.42)}`
-      : showHint
-        ? `${hintRing}, 0 8px 0 ${edgeColor}, ${ambientShadow}`
-        : `0 8px 0 ${edgeColor}, ${ambientShadow}`
-
-  // Section-tinted idle surface (feedback states tint toward success/error).
-  const surface =
-    state === 'correct'
-      ? `linear-gradient(180deg, #FFFFFF 0%, ${hexToRgba(success, 0.16)} 100%)`
-      : state === 'wrong'
-        ? `linear-gradient(180deg, #FFFFFF 0%, ${hexToRgba(error, 0.1)} 100%)`
-        : tileSurface(accent, dark)
-
-  const animate = reduce
-    ? undefined
-    : state === 'wrong'
-      ? { x: [0, -9, 9, -7, 7, 0] }
-      : state === 'correct'
-        ? { scale: [1, 1.12, 1] }
-        : showHint
-          ? { scale: [1, 1.06, 1] }
-          : { x: 0, scale: 1 }
-
-  const transition =
-    state === 'wrong'
-      ? { duration: 0.45 }
-      : showHint && state === 'idle'
-        ? { duration: 1.0, repeat: Infinity, ease: 'easeInOut' as const }
-        : { duration: 0.32, ease: 'easeOut' as const }
-
-  return (
-    <Box
-      component={motion.button}
-      type="button"
-      data-answer-tile
-      data-tile-state={state}
-      onClick={onClick}
-      disabled={disabled}
-      animate={animate}
-      transition={transition}
-      sx={{
-        position: 'relative',
-        width: '100%',
-        height: '100%',
-        p: { xs: 1.5, sm: 2, md: 2.5 },
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        border: '3px solid',
-        borderColor,
-        borderRadius: '18px',
-        background: surface,
-        boxShadow: restingShadow,
-        cursor: disabled ? 'default' : 'pointer',
-        transition: 'box-shadow 0.18s ease, transform 0.08s cubic-bezier(0.22,1,0.36,1), border-color 0.2s ease',
-        WebkitTapHighlightColor: 'transparent',
-        outline: 'none',
-        '&:focus-visible': {
-          outline: '3px solid',
-          outlineColor: accent,
-          outlineOffset: '2px',
-        },
-        // Tactile press: the tile sinks deeper onto a shorter lip (only when idle — feedback states
-        // hold their own shadow so the press doesn't fight the glow/shake). Lifted hover.
-        ...(state === 'idle' && !disabled
-          ? {
-              '&:active': {
-                transform: 'translateY(6px)',
-                boxShadow: `0 2px 0 ${edgeColor}, ${dark ? '0 4px 10px rgba(0,0,0,0.5)' : '0 4px 8px rgba(0,0,0,0.18)'}`,
-              },
-              '@media (hover: hover) and (pointer: fine)': {
-                '&:hover': {
-                  transform: 'translateY(-3px)',
-                  boxShadow: `0 11px 0 ${edgeColor}, 0 16px 34px ${hexToRgba(accent, 0.36)}`,
-                },
-              },
-            }
-          : {}),
-      }}
-    >
-      {children}
-
-      {/* Correct-answer particles (skipped under reduced motion). Non-interactive. */}
-      {state === 'correct' && !reduce && (
-        <Box aria-hidden sx={{ position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'visible' }}>
-          {/* Localized colour burst — dots fly radially out of the centre. */}
-          {BURST.map((b, i) => (
-            <Box
-              key={`burst-${i}`}
-              component={motion.div}
-              initial={{ opacity: 0, scale: 0, x: 0, y: 0 }}
-              animate={{ opacity: [0, 1, 0], scale: [0, 1, 0.3], x: b.dx, y: b.dy }}
-              transition={{ duration: 0.6, delay: 0.02 * i, ease: 'easeOut' }}
-              style={{
-                position: 'absolute',
-                left: '50%',
-                top: '50%',
-                width: 12,
-                height: 12,
-                marginLeft: -6,
-                marginTop: -6,
-                borderRadius: '50%',
-                background: burstColors[i % burstColors.length],
-              }}
-            />
-          ))}
-          {/* White sparkle stars. */}
-          {SPARKLES.map((s, i) => (
-            <Box
-              key={`sparkle-${i}`}
-              component={motion.div}
-              initial={{ opacity: 0, scale: 0 }}
-              animate={{ opacity: [0, 1, 0], scale: [0, 1, 0.4] }}
-              transition={{ duration: 0.7, delay: s.delay, ease: 'easeOut' }}
-              style={{
-                position: 'absolute',
-                left: s.left,
-                top: s.top,
-                width: s.size,
-                height: s.size,
-                background:
-                  'radial-gradient(circle, #ffffff 0%, rgba(255,247,214,0.95) 45%, rgba(255,210,120,0) 78%)',
-                clipPath:
-                  'polygon(50% 0%, 58% 42%, 100% 50%, 58% 58%, 50% 100%, 42% 58%, 0% 50%, 42% 42%)',
-                filter: 'drop-shadow(0 0 3px rgba(255,255,255,0.9))',
-              }}
-            />
-          ))}
-        </Box>
-      )}
-    </Box>
-  )
-}
+const AnswerTile: React.FC<AnswerTileProps> = ({
+  onClick,
+  accent,
+  state = 'idle',
+  disabled = false,
+  hint = false,
+  children,
+}) => (
+  <TactileTile
+    onActivate={onClick}
+    accent={accent}
+    state={state}
+    hint={hint}
+    disabled={disabled}
+    variant="tile"
+    domProps={{ 'data-answer-tile': '', 'data-tile-state': state }}
+  >
+    {children}
+  </TactileTile>
+)
 
 export default AnswerTile

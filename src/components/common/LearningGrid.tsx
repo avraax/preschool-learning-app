@@ -1,9 +1,14 @@
 import React from 'react'
-import { motion } from 'framer-motion'
-import { Box, Card, CardContent, Typography } from '@mui/material'
+import { Box, Typography } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
-import { darken, hexToRgba, tileSurface } from '../../theme/tokens/helpers'
+import { darken } from '../../theme/tokens/helpers'
+import TactileTile from './TactileTile'
+
+// LearningGrid — the "Lær …" browse grid (letters / numbers / etc.). As of Liveliness PRD-06 F1
+// each cell is the shared `TactileTile` clay primitive, so the calm browse reads as the same
+// tactile material as the quiz boards. The currently-spoken cell wears a gentle accent hint ring
+// (via TactileTile's `hint`) so a pre-reader can see where they are; reduced-motion → static ring.
 
 interface LearningGridProps {
   items: (string | number)[]
@@ -20,35 +25,26 @@ const LearningGrid: React.FC<LearningGridProps> = ({
   currentIndex,
   onItemClick,
   disabled = false,
-  accent
+  accent,
 }) => {
   const theme = useTheme()
-  const dark = theme.scene.dark
   // Calculate grid dimensions for optimal layout
   const isAlphabet = items.length === 29
 
-  // Lifted-3D depth language (mirrors AnswerTile) — token-driven, no hardcoded section colours.
   const active = accent ?? theme.palette.secondary.main
   const base = theme.palette.primary.main
-  // Section-tinted idle surface (faint accent tint) — no longer a hardcoded grey; the active
-  // cell deepens the same accent tint so idle vs. active still read at a glance.
-  const restSurface = tileSurface(active, dark)
-  const activeSurface = `linear-gradient(180deg, #FFFFFF 0%, ${hexToRgba(active, 0.18)} 100%)`
-  const ambient = dark ? '0 6px 16px rgba(0,0,0,0.45)' : '0 5px 12px rgba(0,0,0,0.12)'
-  const restEdge = darken(base, 0.28)
-  const activeEdge = darken(active, 0.28)
 
   return (
-    <Box sx={{ 
-      flex: 1, 
-      display: 'flex', 
+    <Box sx={{
+      flex: 1,
+      display: 'flex',
       flexDirection: 'column',
       overflow: 'hidden',
       minHeight: 0,
       width: '100%'
     }}>
       <Box
-        sx={{ 
+        sx={{
           display: 'grid',
           gridTemplateColumns: isAlphabet
             ? {
@@ -61,13 +57,13 @@ const LearningGrid: React.FC<LearningGridProps> = ({
           gap: { xs: '6px', sm: '8px', md: '10px' },
           width: '100%',
           height: '100%',
-          // Let the lifted tiles' edge/shadow breathe without being clipped by the stage.
+          // Let the tiles' soft contact shadows breathe without being clipped by the stage.
           overflow: 'visible',
           p: { xs: 0.5, sm: 1, md: 1.5 },
           gridAutoRows: 'minmax(0, 1fr)',
           // Ensure good aspect ratio by limiting max height
           '& > *': {
-            maxHeight: { 
+            maxHeight: {
               xs: '80px',
               sm: '100px',
               md: '120px',
@@ -93,87 +89,46 @@ const LearningGrid: React.FC<LearningGridProps> = ({
           }
         }}
       >
-        {items.map((item, index) => (
-          <motion.div
-            key={`${item}-${index}`}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            style={{ height: '100%' }}
-          >
-            <Card
-                onClick={disabled ? undefined : () => onItemClick(index)}
+        {items.map((item, index) => {
+          const isActive = index === currentIndex
+          return (
+            <TactileTile
+              key={`${item}-${index}`}
+              onActivate={disabled ? undefined : () => onItemClick(index)}
+              accent={active}
+              variant="card"
+              hint={isActive}
+              disabled={disabled}
+              sx={{ opacity: disabled ? 0.5 : 1 }}
+            >
+              <Typography
+                variant="h4"
                 sx={{
-                  height: '100%',
-                  cursor: disabled ? 'default' : 'pointer',
-                  border: '2px solid',
-                  borderColor: index === currentIndex ? active : hexToRgba(base, dark ? 0.5 : 0.32),
-                  background: index === currentIndex ? activeSurface : restSurface,
-                  borderRadius: '14px',
-                  opacity: disabled ? 0.5 : 1,
-                  boxShadow: index === currentIndex
-                    ? `0 0 0 3px ${hexToRgba(active, 0.4)}, 0 5px 0 ${activeEdge}, ${ambient}`
-                    : `0 4px 0 ${restEdge}, ${ambient}`,
-                  transition: 'box-shadow 0.2s ease, border-color 0.2s ease, transform 0.08s ease',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  outline: 'none',
-                  '&:focus': {
-                    outline: 'none'
+                  fontWeight: 700,
+                  color: isActive ? darken(active, 0.35) : darken(base, 0.4),
+                  fontSize: {
+                    xs: 'clamp(1rem, 3.5vw, 1.5rem)',
+                    sm: 'clamp(1.2rem, 4vw, 2rem)',
+                    md: 'clamp(1.5rem, 5vw, 2.2rem)',
+                    lg: 'clamp(1.8rem, 5vw, 2.5rem)'
                   },
-                  '&:active': disabled ? {} : {
-                    transform: 'translateY(3px)',
-                    boxShadow: `0 1px 0 ${index === currentIndex ? activeEdge : restEdge}, ${ambient}`
-                  },
-                  '@media (hover: hover) and (pointer: fine)': {
-                    '&:hover': disabled ? {} : {
-                      borderColor: active,
-                      boxShadow: `0 6px 0 ${index === currentIndex ? activeEdge : restEdge}, 0 10px 22px ${hexToRgba(active, 0.3)}`
+                  lineHeight: 1,
+                  // Adjust font size in landscape orientation
+                  '@media (orientation: landscape)': {
+                    fontSize: {
+                      xs: 'clamp(1rem, 3vw, 1.3rem)',
+                      sm: 'clamp(1.2rem, 3.5vw, 1.8rem)',
+                      md: 'clamp(1.5rem, 4vw, 2rem)'
                     }
-                  }
+                  },
+                  [PHONE_LANDSCAPE]: { fontSize: '0.8rem' }
                 }}
               >
-                <CardContent 
-                  sx={{ 
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    height: '100%',
-                    width: '100%',
-                    p: { xs: 1, sm: 1.5, md: 2 },
-                    '&:last-child': { pb: { xs: 1, sm: 1.5, md: 2 } },
-                    [PHONE_LANDSCAPE]: { p: 0.25, '&:last-child': { pb: 0.25 } }
-                  }}
-                >
-                  <Typography 
-                    variant="h4"
-                    sx={{
-                      fontWeight: 700,
-                      color: index === currentIndex ? darken(active, 0.35) : darken(base, 0.4),
-                      fontSize: { 
-                        xs: 'clamp(1rem, 3.5vw, 1.5rem)', 
-                        sm: 'clamp(1.2rem, 4vw, 2rem)', 
-                        md: 'clamp(1.5rem, 5vw, 2.2rem)',
-                        lg: 'clamp(1.8rem, 5vw, 2.5rem)' 
-                      },
-                      lineHeight: 1,
-                      // Adjust font size in landscape orientation
-                      '@media (orientation: landscape)': {
-                        fontSize: {
-                          xs: 'clamp(1rem, 3vw, 1.3rem)',
-                          sm: 'clamp(1.2rem, 3.5vw, 1.8rem)',
-                          md: 'clamp(1.5rem, 4vw, 2rem)'
-                        }
-                      },
-                      [PHONE_LANDSCAPE]: { fontSize: '0.8rem' }
-                    }}
-                  >
-                    {item}
-                  </Typography>
-                </CardContent>
-              </Card>
-            </motion.div>
-        ))}
+                {item}
+              </Typography>
+            </TactileTile>
+          )
+        })}
       </Box>
     </Box>
   )

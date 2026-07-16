@@ -4,7 +4,6 @@ import { Box, Typography } from '@mui/material'
 import { useTheme, alpha } from '@mui/material/styles'
 import Mascot from '../common/Mascot'
 import GameShell from '../common/GameShell'
-import GameIntro from '../common/GameIntro'
 import RoundResultScreen from '../common/RoundResultScreen'
 import ThemeScene from '../common/scene/ThemeScene'
 import SceneObject from '../common/scene/SceneObject'
@@ -107,24 +106,8 @@ export const DevRoundResult: React.FC = () => {
   }
 
   return (
-    <GameShell categoryId="alphabet" title="Resultat (dev)" backRoute="/" intro={false}>
+    <GameShell categoryId="alphabet" title="Resultat (dev)" backRoute="/">
       <RoundResultScreen outcome={outcome} categoryId="alphabet" backRoute="/" onReplay={() => {}} />
-    </GameShell>
-  )
-}
-
-// /dev/game-intro?category=alphabet&phase=ready|go — the game-entry beat, FROZEN (no auto-dismiss)
-// so the headless screenshot loop can capture it (Chrome runs animations unthrottled, so a live
-// beat would lift before a screenshot lands). `phase=go` shows the "Kør!" state.
-export const DevGameIntro: React.FC = () => {
-  const { search } = useLocation()
-  const p = new URLSearchParams(search)
-  const category = p.get('category') || 'alphabet'
-  const phase = p.get('phase') === 'go' ? 'go' : 'ready'
-  return (
-    <GameShell categoryId={category} title="Intro (dev)" backRoute="/" intro={false}>
-      <Box sx={{ flex: 1 }} />
-      <GameIntro categoryId={category} onDismiss={() => {}} hold initialPhase={phase} />
     </GameShell>
   )
 }

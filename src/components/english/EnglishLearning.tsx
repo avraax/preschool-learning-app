@@ -64,7 +64,6 @@ const EnglishLearning: React.FC = () => {
       backRoute="/english"
       dense
       guide={false}
-      intro={false}
       celebration={{ show: showCelebration, intensity: celebrationIntensity, duration: celebrationDuration, onComplete: stopCelebration }}
       promptStage={
         // Selected English word blooms (word + emoji) — §6B. chargeKey includes the theme id so

@@ -1,8 +1,10 @@
 import React from 'react'
-import { Button } from '@mui/material'
+import { Box } from '@mui/material'
 import { Volume2 } from 'lucide-react'
 import { VolumeUp } from '@mui/icons-material'
-import { categoryThemes } from '../../config/categoryThemes'
+import { getCategoryTheme } from '../../config/categoryThemes'
+import { relLuminance } from '../../theme/tokens/helpers'
+import TactilePill from './TactilePill'
 
 /**
  * Props for the RepeatButton component
@@ -23,26 +25,13 @@ interface RepeatButtonProps {
 }
 
 /**
- * Centralized repeat/replay button component for task-based games
- * 
- * Provides consistent styling, theming, and behavior across all games that need
- * audio repeat functionality. Automatically handles disabled states and applies
- * appropriate category theming.
- * 
- * @example
- * ```typescript
- * // Basic usage
- * <RepeatButton onClick={repeatQuestion} disabled={!entryAudioComplete} />
- * 
- * // With custom styling and theme
- * <RepeatButton 
- *   onClick={repeatProblem}
- *   disabled={!isReady}
- *   label="Hør igen"
- *   category="math"
- *   size="large"
- * />
- * ```
+ * Centralized repeat/replay ("Hør igen") button for task-based games.
+ *
+ * As of Liveliness PRD-06 F4 it is built on the shared `TactilePill` soft-3D material (accent-filled
+ * clay pill, grounded soft shadow, press-travel) so it reads as ONE family with the score chip and
+ * the level ring — replacing the old plain-MUI `variant="contained"` + `boxShadow:2/4` look. The 5
+ * per-category color variants, the disabled state, the speaker icon, the Danish label, and ≥44px
+ * touch target are all kept.
  */
 export const RepeatButton: React.FC<RepeatButtonProps> = ({
   onClick,
@@ -50,56 +39,39 @@ export const RepeatButton: React.FC<RepeatButtonProps> = ({
   label = 'Hør igen',
   size = 'large',
   category = 'alphabet',
-  useLucideIcons = true
+  useLucideIcons = true,
 }) => {
-  // Get theme colors based on category
-  const theme = categoryThemes[category] || categoryThemes.alphabet
-  
+  // Accent from the ACTIVE skin (getCategoryTheme, not the static map) so the pill matches the
+  // section title + numeral + score chip on every skin — the F4 "one HUD family" goal.
+  const accent = getCategoryTheme(category).accentColor
+  // Legible content colour on the accent pill (dark text on light/warm accents, white otherwise) —
+  // shares ScoreChip's rule so the whole HUD family stays consistent.
+  const onAccent = relLuminance(accent) > 0.5 ? '#1F2937' : '#FFFFFF'
+
   // Choose appropriate icon based on preference
   const IconComponent = useLucideIcons ? Volume2 : VolumeUp
-  const iconSize = useLucideIcons ? 24 : undefined
-
-  // Build button styles based on category theme
-  const getButtonStyles = () => ({
-    py: size === 'small' ? 1 : 2,
-    px: size === 'small' ? 2 : 4,
-    fontSize: size === 'small' ? '0.9rem' : '1.1rem',
-    borderRadius: 3,
-    fontWeight: 600,
-    textTransform: 'none' as const,
-    transition: 'all 0.3s ease',
-    boxShadow: 2,
-    backgroundColor: theme.accentColor,
-    color: 'white',
-    border: `2px solid ${theme.accentColor}`,
-    '&:hover': {
-      backgroundColor: theme.hoverBorderColor,
-      borderColor: theme.hoverBorderColor,
-      boxShadow: 4,
-      transform: 'translateY(-2px)'
-    },
-    '&:active': {
-      transform: 'translateY(0px)',
-      boxShadow: 2
-    },
-    '&:disabled': {
-      backgroundColor: 'grey.400',
-      borderColor: 'grey.400',
-      color: 'grey.600'
-    }
-  })
+  const iconSize = useLucideIcons ? (size === 'small' ? 20 : 24) : undefined
 
   return (
-    <Button
+    <TactilePill
+      accent={accent}
       onClick={onClick}
-      variant="contained"
-      size={size}
       disabled={disabled}
-      startIcon={useLucideIcons ? <IconComponent size={iconSize} /> : <IconComponent />}
-      sx={getButtonStyles()}
+      ariaLabel={label}
+      sx={{
+        color: onAccent,
+        gap: size === 'small' ? 0.75 : 1,
+        px: size === 'small' ? 2 : 3.5,
+        py: size === 'small' ? 0.75 : 1.5,
+        fontSize: size === 'small' ? '0.9rem' : '1.1rem',
+        fontWeight: 700,
+      }}
     >
+      <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center' }}>
+        {useLucideIcons ? <IconComponent size={iconSize} /> : <IconComponent />}
+      </Box>
       {label}
-    </Button>
+    </TactilePill>
   )
 }
 
@@ -134,7 +106,7 @@ export const AlphabetRepeatButton: React.FC<AlphabetRepeatButtonProps> = (props)
 )
 
 /**
- * Pre-configured repeat button for math games  
+ * Pre-configured repeat button for math games
  */
 export const MathRepeatButton: React.FC<MathRepeatButtonProps> = (props) => (
   <RepeatButton {...props} category="math" label="Hør igen" />

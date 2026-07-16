@@ -41,12 +41,12 @@ const flipStyles = `
     left: 0;
     width: 100%;
     height: 100%;
-    border-radius: 18px;
+    border-radius: 20px;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-direction: column;
-    border: 3px solid;
+    border: 1.5px solid;
   }
 `
 
@@ -492,21 +492,22 @@ const UnifiedMemoryGame: React.FC<UnifiedMemoryGameProps> = ({ config }) => {
   const RepeatButtonComponent = config.RepeatButtonComponent
   const RestartButtonComponent = config.RestartButtonComponent
 
-  // Depth language (AnswerTile reference — UI/UX Overhaul PRD §5.2/§6E) — fully token-driven,
-  // correct on light + dark scenes. Formulas mirror AnswerTile's idle/correct/wrong states exactly
-  // so Memory's cards read as the same "furniture" as every other tile in the app.
+  // Depth language (TactileTile reference — Liveliness PRD-06 F1) — fully token-driven, correct on
+  // light + dark scenes. The card faces now read as CLAY (matching TactileTile / the shell): the
+  // hard `0 8px 0` coloured keyboard lip is gone; depth is a soft layered drop-shadow + a top
+  // inner-light highlight, keeping the delicate 3D flip untouched (a per-card contact ellipse is
+  // impractical inside the rotateY faces, so the softShadow-style layered box-shadow stands in).
   const accent = config.theme.accentColor
   const dark = muiTheme.scene.dark
   const success = muiTheme.palette.success.main
   const errorColor = muiTheme.palette.error.main
-  const lip = darken(accent, 0.3)                 // coloured 3D rim under a card
-  const successEdge = darken(success, 0.28)
-  const errorEdge = darken(errorColor, 0.25)
-  const ambientShadow = dark ? '0 12px 28px rgba(0,0,0,0.5)' : '0 10px 22px rgba(0,0,0,0.15)'
-  const idleBorder = hexToRgba(accent, dark ? 0.55 : 0.34)
-  const restingShadow = `0 8px 0 ${lip}, ${ambientShadow}`
-  const matchedShadow = `0 0 0 5px ${hexToRgba(success, 0.5)}, 0 8px 0 ${successEdge}, 0 16px 34px ${hexToRgba(success, 0.42)}`
-  const wrongShadow = `0 8px 0 ${errorEdge}, ${ambientShadow}`
+  const successEdge = darken(success, 0.28)       // deep success tone for matched text
+  const ambientShadow = dark ? '0 10px 24px rgba(0,0,0,0.5)' : '0 8px 20px rgba(0,0,0,0.16)'
+  const innerHighlight = `inset 0 2px 3px ${hexToRgba('#FFFFFF', dark ? 0.28 : 0.6)}`
+  const idleBorder = hexToRgba(accent, dark ? 0.4 : 0.26)
+  const restingShadow = `${innerHighlight}, ${ambientShadow}`
+  const matchedShadow = `${innerHighlight}, 0 0 0 5px ${hexToRgba(success, 0.5)}, 0 14px 30px ${hexToRgba(success, 0.42)}`
+  const wrongShadow = `${innerHighlight}, 0 0 0 4px ${hexToRgba(errorColor, 0.4)}, ${ambientShadow}`
   // Section-tinted idle surface (was a hardcoded #FFF→#ECF1F8 — the exact bug §5.1 introduced
   // `tileSurface` to fix elsewhere; Memory's face-up cards had never been migrated to it).
   const faceUpSurface = tileSurface(accent, dark)

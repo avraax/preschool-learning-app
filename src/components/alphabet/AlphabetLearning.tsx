@@ -135,7 +135,6 @@ const AlphabetLearning: React.FC = () => {
       backRoute="/alphabet"
       dense
       guide={false}
-      intro={false}
       celebration={{ show: showCelebration, intensity: celebrationIntensity, duration: celebrationDuration, onComplete: stopCelebration }}
       score={
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>

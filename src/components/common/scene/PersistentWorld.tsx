@@ -88,8 +88,9 @@ const PersistentWorld: React.FC = () => {
   return (
     <Box ref={rootRef}>
       {/* Scene + ambient — behind the page content (transparent immersive pages show it through).
-          On game routes it blurs (and scales up to hide the blur's soft edges) while KEEPING its
-          parallax/ambient drift, so the world stays alive but quiet. */}
+          On game routes (PRD-06 F3 "calm-present") it takes only a LIGHT readability veil — a gentle
+          blur + a slight scale to hide the blur's soft edges — while FROZEN (ambient paused, parallax
+          off), so the *place* stays felt and the game's own tiles/subject read as resting IN it. */}
       <Box
         aria-hidden
         sx={{
@@ -105,11 +106,12 @@ const PersistentWorld: React.FC = () => {
           pointerEvents: 'none',
           // Dark worlds paint their base immediately so there's no light flash before art loads.
           backgroundColor: dark ? '#070B1A' : 'transparent',
-          filter: inGame ? 'blur(7px)' : 'none',
-          // Game routes: dim/blur scale. Section menus: push-in toward the section's focal locale.
-          // Home / no framing: neutral. (Mutually exclusive states — a game is never framed.)
+          filter: inGame ? 'blur(2.5px)' : 'none',
+          // Game routes: light veil scale (just enough to hide the soft blur edge). Section menus:
+          // push-in toward the section's focal locale. Home / no framing: neutral. (Mutually
+          // exclusive states — a game is never framed.)
           transformOrigin: framing ? `${framing.xPct}% ${framing.yPct}%` : 'center',
-          transform: inGame ? 'scale(1.06)' : framing ? `scale(${framing.zoom})` : 'none',
+          transform: inGame ? 'scale(1.03)' : framing ? `scale(${framing.zoom})` : 'none',
           transition: `filter ${ease} ease, transform ${ease} ease`,
         }}
       >
@@ -133,8 +135,9 @@ const PersistentWorld: React.FC = () => {
         }}
       />
 
-      {/* Dim overlay — a plain tint that fades in on game routes so nothing competes with the
-          answers. Behind page content, above the scene. */}
+      {/* Readability veil (PRD-06 F3) — a LIGHT static tint that fades in on game routes so the
+          content pops while the world stays felt (softer than the old heavy dim). Static during play
+          (the world is frozen) → no moving-layer backdrop-filter concern. Behind page content. */}
       <Box
         aria-hidden
         sx={{
@@ -145,8 +148,8 @@ const PersistentWorld: React.FC = () => {
           opacity: inGame ? 1 : 0,
           transition: `opacity ${ease} ease`,
           background: dark
-            ? 'radial-gradient(115% 90% at 50% 48%, rgba(7,11,26,0.58) 0%, rgba(7,11,26,0.34) 60%, rgba(7,11,26,0.46) 100%)'
-            : 'radial-gradient(115% 90% at 50% 48%, rgba(255,255,255,0.56) 0%, rgba(255,255,255,0.30) 60%, rgba(255,255,255,0.40) 100%)',
+            ? 'radial-gradient(115% 90% at 50% 48%, rgba(7,11,26,0.40) 0%, rgba(7,11,26,0.22) 60%, rgba(7,11,26,0.30) 100%)'
+            : 'radial-gradient(115% 90% at 50% 48%, rgba(255,255,255,0.30) 0%, rgba(255,255,255,0.14) 60%, rgba(255,255,255,0.20) 100%)',
         }}
       />
     </Box>

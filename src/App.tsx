@@ -47,7 +47,6 @@ const VoiceLab = lazy(() => import('./components/voicelab/VoiceLab'))
 // DEV-only screenshot-harness routes (never registered in production builds).
 const DevMascot = lazy(() => import('./components/dev/DevRoutes').then((m) => ({ default: m.DevMascot })))
 const DevRoundResult = lazy(() => import('./components/dev/DevRoutes').then((m) => ({ default: m.DevRoundResult })))
-const DevGameIntro = lazy(() => import('./components/dev/DevRoutes').then((m) => ({ default: m.DevGameIntro })))
 const DevScene = lazy(() => import('./components/dev/DevRoutes').then((m) => ({ default: m.DevScene })))
 // DEV-only narration-audit harness (PRD-11) — plays every closed-set clip for a native-ear pass.
 const AuditHarness = lazy(() => import('./components/audit/AuditHarness'))
@@ -306,7 +305,6 @@ function App() {
         {/* DEV-only screenshot-harness routes (stripped from production builds). */}
         {import.meta.env.DEV && <Route path="/dev/mascot" element={<DevMascot />} />}
         {import.meta.env.DEV && <Route path="/dev/round-result" element={<DevRoundResult />} />}
-        {import.meta.env.DEV && <Route path="/dev/game-intro" element={<DevGameIntro />} />}
         {import.meta.env.DEV && <Route path="/dev/scene" element={<DevScene />} />}
         {/* DEV-only narration-audit harness (PRD-11 §3) — never in production builds. */}
         {import.meta.env.DEV && <Route path="/audit" element={<AuditHarness />} />}

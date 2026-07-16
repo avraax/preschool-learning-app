@@ -5,7 +5,8 @@ import { isIOS } from '../../utils/deviceDetection'
 import { CategoryTheme } from '../../config/categoryThemes'
 import GameShell from './GameShell'
 import AnswerTile, { type AnswerTileState } from './AnswerTile'
-import PromptStage, { HeroEmoji } from './PromptStage'
+import PromptFocus from './PromptFocus'
+import { HeroEmoji } from './PromptStage'
 import type { GuideReaction } from './ThemeMascot'
 import { useCelebration } from '../common/CelebrationEffect'
 import { useGameState } from '../../hooks/useGameState'
@@ -588,17 +589,16 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
       }
       promptStage={
         roundOutcome ? undefined : (
-          <PromptStage
+          <PromptFocus
             accent={config.theme.accentColor}
             chargeKey={`${currentItem?.value ?? ''}-${round.state.index}`}
+            subject={showPlaceholders ? null : renderHero()}
             repeat={
               config.showRepeat !== false && !showPlaceholders ? (
                 <RepeatButton onClick={repeatItem} disabled={false} />
               ) : undefined
             }
-          >
-            {!showPlaceholders && renderHero()}
-          </PromptStage>
+          />
         )
       }
       celebration={{

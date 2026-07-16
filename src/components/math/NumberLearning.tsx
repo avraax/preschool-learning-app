@@ -155,7 +155,6 @@ const NumberLearning: React.FC = () => {
       backRoute="/math"
       dense
       guide={false}
-      intro={false}
       celebration={{ show: showCelebration, intensity: celebrationIntensity, duration: celebrationDuration, onComplete: stopCelebration }}
       score={
         <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, md: 2 } }}>
