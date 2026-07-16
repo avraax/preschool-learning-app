@@ -1,10 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { Box, Typography, type SxProps, type Theme } from '@mui/material'
+import { useTheme } from '@mui/material/styles'
 import { motion } from 'framer-motion'
 import type { AmbientMotion } from '../../../theme/tokens/types'
 import { useLivingCard } from '../../../hooks/useLivingCard'
 import { useReducedMotion } from '../../../hooks/useReducedMotion'
 import { softShadow, contactShadow, usePointerTilt } from '../../../theme/depth'
+import { hexToRgba } from '../../../theme/tokens/helpers'
 import { sfx } from '../../../services/sfxClient'
 import ThemedBurst, { type ThemedBurstHandle } from '../ThemedBurst'
 
@@ -45,7 +47,7 @@ const SceneObject: React.FC<SceneObjectProps> = ({
   art,
   label,
   accent,
-  size = 'clamp(84px, 13vh, 132px)',
+  size = 'clamp(96px, 15vh, 150px)',
   index = 0,
   frozen = false,
   attract = false,
@@ -55,6 +57,8 @@ const SceneObject: React.FC<SceneObjectProps> = ({
   onActivate,
   sx,
 }) => {
+  const theme = useTheme()
+  const dark = theme.scene.dark
   const { breatheSx, controls, bump, wiggle } = useLivingCard({ index, frozen })
   const reduce = useReducedMotion()
   const burstRef = useRef<ThemedBurstHandle>(null)
@@ -112,6 +116,25 @@ const SceneObject: React.FC<SceneObjectProps> = ({
           {/* Object + its grounded contact shadow. The shadow sits UNDER the art and shrinks a
               touch on press (the object lifts toward the camera). */}
           <Box sx={{ position: 'relative', width: size, aspectRatio: '1 / 1' }}>
+            {/* Grounding light-pool: a soft glow behind the object that SEATS it (a pool of light
+                it rests in) and lifts it off busy or empty backdrops so it reads as the hero, not
+                a pasted icon. Warm-white core → accent-tinted edge; brighter on dark worlds. */}
+            <Box
+              aria-hidden
+              sx={{
+                position: 'absolute',
+                left: '50%',
+                top: '48%',
+                transform: 'translate(-50%, -50%)',
+                width: '132%',
+                height: '132%',
+                borderRadius: '50%',
+                background: `radial-gradient(circle, ${hexToRgba('#FFFFFF', dark ? 0.32 : 0.5)} 0%, ${hexToRgba(accent, 0.18)} 36%, ${hexToRgba(accent, 0)} 66%)`,
+                filter: 'blur(7px)',
+                zIndex: 0,
+                pointerEvents: 'none',
+              }}
+            />
             {/* Soft contact-shadow ellipse — warm, accent-tinted, beneath the object. */}
             <Box
               aria-hidden

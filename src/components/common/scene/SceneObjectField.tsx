@@ -67,7 +67,7 @@ const SceneObjectField: React.FC<SceneObjectFieldProps> = ({
               shadow={shadow}
               rotate={item.rotate ?? a.rotate ?? 0}
               onActivate={item.onActivate}
-              size={`clamp(${Math.round(84 * a.scale)}px, ${(13 * a.scale).toFixed(1)}vh, ${Math.round(132 * a.scale)}px)`}
+              size={`clamp(${Math.round(98 * a.scale)}px, ${(15 * a.scale).toFixed(1)}vh, ${Math.round(158 * a.scale)}px)`}
               sx={{
                 position: 'absolute',
                 left: `${a.xPct}%`,

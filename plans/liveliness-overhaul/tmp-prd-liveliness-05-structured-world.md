@@ -78,6 +78,13 @@ never require reading).
   still fire). Kid switched to **cloud-only drift** (gold stars read oddly in a daytime rainbow sky).
 - **Home anchors re-tuned — DONE.** kid/ocean/dino objects lowered to sit ON the near-layer surfaces (cloud
   bank / reef / canopy) instead of floating; **space kept** (orbiting the ringed planet is the best look).
+- **Home composition polish — DONE** (owner flagged the objects reading as a flat pasted row). `SceneObject`
+  gained a soft **grounding light-pool** (seats objects + lifts them off busy/empty backdrops); seated objects
+  enlarged (~+18%, `SceneObjectField` clamp 98→158) so they read as the heroes; per-theme anchors given real
+  height + depth-scale variation so bases sink INTO the reef/canopy/cloud bank (organic, not a row). Verified all
+  4 skins + section + reduced-motion + phone-portrait.
+- **Known pre-existing issue (separate batch):** the B2 `colors.farvejagt` game icon has a baked-in white square
+  behind the magnifying glass (its cut-out wasn't clean) — a prior-batch icon defect, not scene work.
 
 **Remaining:**
 - **W9** ambient audio — needs **4 short seamless loops** (`public/sounds/ambient/<id>.mp3`); then a menu-only

@@ -74,12 +74,13 @@ export const dinoThemeTokens: ThemeTokens = {
     // Structured World (PRD-05 W3): objects rest on the jungle canopy/ridge in a gentle arc, the
     // centre one lifted above the volcano peak so it isn't obscured. Refine onto the mossy ridge
     // once B3 near-layer art lands.
+    // Seated on the jungle canopy at varied heights; colors rides higher on the centre vine bridge.
     homeAnchors: [
-      { section: 'alphabet', xPct: 16, yPct: 60, scale: 1, rotate: -3, depth: 0.3 },
-      { section: 'math', xPct: 33, yPct: 57, scale: 1, rotate: 2, depth: 0.32 },
-      { section: 'colors', xPct: 50, yPct: 46, scale: 1.06, rotate: 0, depth: 0.34 },
-      { section: 'english', xPct: 67, yPct: 57, scale: 1, rotate: -2, depth: 0.32 },
-      { section: 'ordleg', xPct: 84, yPct: 60, scale: 1, rotate: 3, depth: 0.3 },
+      { section: 'alphabet', xPct: 15, yPct: 60, scale: 0.96, rotate: -3, depth: 0.3 },
+      { section: 'math', xPct: 33, yPct: 57, scale: 1.04, rotate: 2, depth: 0.32 },
+      { section: 'colors', xPct: 50, yPct: 47, scale: 1.14, rotate: 0, depth: 0.34 },
+      { section: 'english', xPct: 68, yPct: 57, scale: 1.04, rotate: -2, depth: 0.32 },
+      { section: 'ordleg', xPct: 85, yPct: 60, scale: 0.96, rotate: 3, depth: 0.3 },
     ],
     sectionFocus: {
       alphabet: { xPct: 22, yPct: 58, zoom: 1.32 },

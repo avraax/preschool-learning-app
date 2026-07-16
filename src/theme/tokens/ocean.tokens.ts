@@ -77,12 +77,14 @@ export const oceanThemeTokens: ThemeTokens = {
     // Structured World (PRD-05 W3): objects hover in the sunlit open water above the seabed, in a
     // gentle arc clear of the coral clusters at the left/right edges. Refine onto shore/coral once
     // B3 near-layer art lands.
+    // Seated on the reef mounds at varied heights (colors sinks into the centre reef valley,
+    // the others rest on the coral peaks) so the band reads organic, not a flat row.
     homeAnchors: [
-      { section: 'alphabet', xPct: 17, yPct: 60, scale: 1, rotate: -3, depth: 0.3 },
-      { section: 'math', xPct: 34, yPct: 54, scale: 1, rotate: 2, depth: 0.32 },
-      { section: 'colors', xPct: 50, yPct: 51, scale: 1.06, rotate: 0, depth: 0.34 },
-      { section: 'english', xPct: 66, yPct: 54, scale: 1, rotate: -2, depth: 0.32 },
-      { section: 'ordleg', xPct: 83, yPct: 60, scale: 1, rotate: 3, depth: 0.3 },
+      { section: 'alphabet', xPct: 15, yPct: 57, scale: 0.96, rotate: -3, depth: 0.3 },
+      { section: 'math', xPct: 33, yPct: 52, scale: 1.04, rotate: 2, depth: 0.32 },
+      { section: 'colors', xPct: 50, yPct: 60, scale: 1.14, rotate: 0, depth: 0.34 },
+      { section: 'english', xPct: 67, yPct: 53, scale: 1.04, rotate: -2, depth: 0.32 },
+      { section: 'ordleg', xPct: 85, yPct: 56, scale: 0.96, rotate: 3, depth: 0.3 },
     ],
     sectionFocus: {
       alphabet: { xPct: 22, yPct: 55, zoom: 1.32 },
