@@ -1,6 +1,6 @@
 import React from 'react'
 import { Box } from '@mui/material'
-import { gameIconImages } from '../../assets/themes/icons'
+import { gameIconImages } from '../../assets/themes/icons/games'
 
 // Unified tile-icon language (Liveliness PRD-02 §5, re-keyed by PRD-05 W4.1). Home section cards
 // use soft-3D icon art; section-menu tiles used flat emoji — a visible inconsistency. This renders
