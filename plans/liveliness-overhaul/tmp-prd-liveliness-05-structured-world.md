@@ -84,11 +84,14 @@ never require reading).
   height + depth-scale variation so bases sink INTO the reef/canopy/cloud bank (organic, not a row). Verified all
   4 skins + section + reduced-motion + phone-portrait.
 - **Layer-alignment fixes (owner-spotted compositing bugs):** independently-generated B3 layers didn't line up.
-  Added an optional `ParallaxLayerSpec.offsetY` (static vertical nudge, % of viewport) and used it to
-  (a) **Rummet:** raise the near asteroids (`offsetY:-7`) so Saturn's ring passes *behind* them instead of showing
-  the mid layer's hard clipped bottom edge; (b) **Dinosaurer:** drop the mid jungle (`offsetY:10`) so it meets the
-  foreground ridge instead of floating as a detached green ribbon in the sky. Verified home + framed section
-  menus. (kid/ocean scanned — no such artifact.)
+  Added `ParallaxLayerSpec.offsetY` (static vertical nudge, % of viewport; **NB the sign must be formatted as
+  `calc(x - N%)` — `calc(x + -N%)` is invalid CSS and silently drops the whole transform**, which bit the first
+  attempt). Fixes: (a) **Rummet:** the ring's hard bottom edge came from a `clipBelowPct` bake that sliced the
+  planet → **re-keyed the space mid WHOLE** (global green key + despill, no clip — the planet/ring has no green
+  subject so it's safe) and nudged the near asteroids up (`offsetY:-4`) to occlude the planet's lower bulge;
+  (b) **Dinosaurer:** dropped the mid jungle (`offsetY:20`) so its whole span (incl. over the volcano) meets the
+  foreground — no more floating green ribbon. Verified home + framed section menus + reduced-motion. (kid/ocean
+  scanned — no such artifact.)
 - **Known pre-existing issue (separate batch):** the B2 `colors.farvejagt` game icon has a baked-in white square
   behind the magnifying glass (its cut-out wasn't clean) — a prior-batch icon defect, not scene work.
 

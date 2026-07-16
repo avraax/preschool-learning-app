@@ -29,7 +29,11 @@ const ParallaxLayer: React.FC<ParallaxLayerProps> = ({ spec, url, index }) => {
   // layer height, − = up) is added so independently-generated layers can be lined up.
   const tx = `calc(var(--parallax-x, 0px) * ${spec.depth})`
   const drift = anchor === 'center' ? `calc(var(--parallax-y, 0px) * ${spec.depth})` : '0px'
-  const ty = spec.offsetY ? `calc(${drift} + ${spec.offsetY}%)` : drift
+  // NB: format the sign explicitly — `calc(x + -7%)` is INVALID CSS (drops the whole transform);
+  // it must be `calc(x - 7%)`.
+  const ty = spec.offsetY
+    ? `calc(${drift} ${spec.offsetY < 0 ? '-' : '+'} ${Math.abs(spec.offsetY)}%)`
+    : drift
 
   return (
     <Box
