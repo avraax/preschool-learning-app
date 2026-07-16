@@ -90,8 +90,12 @@ never require reading).
   planet → **re-keyed the space mid WHOLE** (global green key + despill, no clip — the planet/ring has no green
   subject so it's safe) and nudged the near asteroids up (`offsetY:-4`) to occlude the planet's lower bulge;
   (b) **Dinosaurer:** dropped the mid jungle (`offsetY:20`) so its whole span (incl. over the volcano) meets the
-  foreground — no more floating green ribbon. Verified home + framed section menus + reduced-motion. (kid/ocean
-  scanned — no such artifact.)
+  foreground — no more floating green ribbon. Verified home + framed section menus + reduced-motion.
+- **Green-residue cleanup (scrutiny pass on kid + ocean):** re-keyed those mid/near layers too —
+  **Regnbue** clouds had a green spill *fringe* + a stray speckle (fixed with a global green-key + hard despill,
+  safe since clouds are white); **Havet** open water had faint green residue dots + a bright enclosed green
+  pocket behind the reef (fixed with a global BRIGHT-green removal — high excess threshold spares the muted sage
+  seaweed — plus a tiny-blob despeckle for the pale dots). All 4 worlds' layers now key clean.
 - **Known pre-existing issue (separate batch):** the B2 `colors.farvejagt` game icon has a baked-in white square
   behind the magnifying glass (its cut-out wasn't clean) — a prior-batch icon defect, not scene work.
 
