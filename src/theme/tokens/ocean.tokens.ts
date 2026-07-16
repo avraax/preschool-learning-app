@@ -59,7 +59,8 @@ export const oceanThemeTokens: ThemeTokens = {
     // Multi-layer parallax (PRD-05 W2). Index-aligned to SceneAssets.layers (far→mid→near).
     layers: [
       { src: '', depth: 0.14, anchor: 'center' }, // far: sunlit water + god-rays
-      { src: '', depth: 0.44, anchor: 'center' }, // mid: reef
+      // mid reef nudged DOWN so its base sinks onto the near sandbar instead of floating in mid-water.
+      { src: '', depth: 0.44, anchor: 'center', offsetY: 15 }, // mid: reef
       { src: '', depth: 0.82, anchor: 'center' }, // near: sandbar + coral
     ],
     ambient: {
@@ -80,11 +81,11 @@ export const oceanThemeTokens: ThemeTokens = {
     // Seated on the reef mounds at varied heights (colors sinks into the centre reef valley,
     // the others rest on the coral peaks) so the band reads organic, not a flat row.
     homeAnchors: [
-      { section: 'alphabet', xPct: 15, yPct: 57, scale: 0.96, rotate: -3, depth: 0.3 },
-      { section: 'math', xPct: 33, yPct: 52, scale: 1.04, rotate: 2, depth: 0.32 },
-      { section: 'colors', xPct: 50, yPct: 60, scale: 1.14, rotate: 0, depth: 0.34 },
-      { section: 'english', xPct: 67, yPct: 53, scale: 1.04, rotate: -2, depth: 0.32 },
-      { section: 'ordleg', xPct: 85, yPct: 56, scale: 0.96, rotate: 3, depth: 0.3 },
+      { section: 'alphabet', xPct: 15, yPct: 62, scale: 0.96, rotate: -3, depth: 0.3 },
+      { section: 'math', xPct: 33, yPct: 58, scale: 1.04, rotate: 2, depth: 0.32 },
+      { section: 'colors', xPct: 50, yPct: 64, scale: 1.14, rotate: 0, depth: 0.34 },
+      { section: 'english', xPct: 67, yPct: 58, scale: 1.04, rotate: -2, depth: 0.32 },
+      { section: 'ordleg', xPct: 85, yPct: 61, scale: 0.96, rotate: 3, depth: 0.3 },
     ],
     sectionFocus: {
       alphabet: { xPct: 22, yPct: 55, zoom: 1.32 },
