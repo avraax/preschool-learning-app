@@ -10,6 +10,14 @@ import mascotIdle from './mascot-idle.webp'
 import mascotGreet from './mascot-greet.webp'
 import mascotPoint from './mascot-point.webp'
 import mascotCelebrate from './mascot-celebrate.webp'
+import bloom1 from './bloom-1.webp'
+import bloom2 from './bloom-2.webp'
+import bloom3 from './bloom-3.webp'
+import comp1 from './companion-1.webp'
+import comp2 from './companion-2.webp'
+import comp3 from './companion-3.webp'
+import comp4 from './companion-4.webp'
+import comp5 from './companion-5.webp'
 
 const kidAssets: SceneAssets = {
   // Multi-layer parallax world (PRD-05 W2 / batch B3): far rainbow sky → mid clouds → near cloud
@@ -20,10 +28,10 @@ const kidAssets: SceneAssets = {
   selectorThumb: thumb,
   // Reactive-guide poses (Liveliness PRD-05 W6): idle/greet/point/celebrate soft-3D renders.
   mascotPoses: { idle: mascotIdle, greet: mascotGreet, point: mascotPoint, celebrate: mascotCelebrate },
-  // Bloom scenery (PRD-05 W7) lands with batch B5: add `bloomScenery: [flower, star, cloud]` here
-  // (index-aligned to scene.bloomScenery in kidTheme.tokens.ts) and the sprites appear as XP blooms.
-  // Companion growth (batch B6): add `companionStages: [s1..s5]` (seed→full) and they replace the
-  // emoji companion automatically (ProgressionCompanion prefers SceneAssets.companionStages).
+  // Bloom scenery (PRD-05 W7 / B5) — index-aligned to scene.bloomScenery: flower, sparkle-star, cloud.
+  bloomScenery: [bloom1, bloom2, bloom3],
+  // Companion growth (B6): sprout → plant → budding → flowering → rainbow-bloom (seed→full).
+  companionStages: [comp1, comp2, comp3, comp4, comp5],
 }
 
 export default kidAssets

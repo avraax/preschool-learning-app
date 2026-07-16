@@ -60,11 +60,25 @@ never require reading).
   `SceneAssets.companionStages` over the emoji stages. Both render paths verified with a placeholder (reverted).
   → **B5/B6 are pure data-drops**: fill each theme's `SceneAssets.bloomScenery` / `companionStages` and they appear.
 
-**Remaining (all asset-gated — code is ready):**
-- **W2** multi-layer parallax — needs **B3 world layers**. Single-layer worlds work today. When B3 lands: split each
-  `scene.layers` 1→2–3, index-align assets, and **re-tune the home anchors + section landmarks onto the real
-  near-layer resting surfaces**.
-- **W7 art** — drop **B5** (`SceneAssets.bloomScenery`) + **B6** (`SceneAssets.companionStages`) URLs; no code left.
+- **W2 multi-layer parallax — DONE** (B3 processed + wired). Each world split into far/mid/near from the owner's
+  B3 renders via a temp `process-b3.mjs` keyer (border flood-fill by green-excess so subject greens survive; edge
+  despill; size-capped despeckle; space/kid glow-band clips; far = opaque passthrough). Depths ~0.14/0.44/0.82,
+  all center/cover, full-frame aligned. Old single `scene.webp` removed. Verified in-app on all 4 skins + section
+  framing + reduced-motion; all layers ≤168KB.
+
+- **W7 art — DONE** (B5 + B6). The owner generated B5/B6/B7 alongside B3; a temp `process-sprites.mjs` keyed the
+  chosen sprites (green-excess key + trim + square-contain). Wired **B5** `bloomScenery` (3/world) + **B6**
+  `companionStages` (kid/ocean/dino 5, space 4) into each theme's index.ts. Verified in-app: stage-gated bloom
+  scenery pops in (`/dev/scene` bloom=4) and the home companion shows baked growth art (e.g. dino = egg at trin 1).
+  **W7 fully done** (companion prominence + bloom scenery + earned world growth).
+
+**Remaining:**
+- **W9** ambient audio — needs **4 short seamless loops** (`public/sounds/ambient/<id>.mp3`); then a menu-only
+  ambient channel + bloom SFX cue (or owner opts to skip ambient, §12.4). The ONLY workstream left.
+- **B7 ambient sprites** (optional) — generated + available; current CSS ambient (bubbles/leaves/stars) works, so
+  swapping to sprite art is a nice-to-have, not wired.
+- Optional polish: re-tune home anchors so objects sit even more snugly on the new near-layer surfaces (they
+  currently hover just above — reads well; tune after play-testing).
 - **W9** ambient audio — needs **4 short seamless loops** (`public/sounds/ambient/<id>.mp3`); then a menu-only
   ambient channel + bloom SFX cue (or owner opts to skip ambient, §12.4). Deferred as a unit pending the loops.
 - **Assets outstanding:** B3 (world layers), B5 (bloom scenery), B6 (companion stages), B7 (ambient sprites);
