@@ -43,18 +43,28 @@ never require reading).
   (reusing `SceneObjectField`), an enlarged section landmark rests in the scene, and `PersistentWorld` now frames
   the world on `theme.scene.sectionFocus[section]` (transform-only push-in) + applies the section accent tint.
   Per-theme `sectionFocus` authored for all 4 skins. W4.1 icon re-key was already in.
-- Verified via `ui-screenshot` across all 4 skins (home + section), reduced-motion, and phone-portrait; build+lint
-  clean; no white-flash on the dark skin; 0 console errors.
-
-**Remaining:**
-- **W2** multi-layer parallax — needs **B3 world layers** (far/mid/near per world). Deferrable; single-layer worlds
-  work today (W3/W4 already wired on them).
+- **W8** reward-moment polish — `GameIntro` now shows the world's **B4 greet (waving) pose** for the "Er du klar?
+  … Kør!" beat (fallback idle→emoji) + shared `softShadow()`. Audit found `RoundResultScreen`/`LevelUpOverlay`/
+  `StickerReveal` already token-driven, RM-safe, mascot-bus-wired, and matching the AnswerTile depth language →
+  no re-architecture (per W8's "re-skin only" mandate).
+- **W10** album — `StickerAlbum` grid seated on a soft theme-aware "page" panel (depth); raw back `IconButton` →
+  shared `<BackButton>` (now reverses the wipe like every other surface).
 - **W5 cinematic push-in — RESOLVED (owner, 2026-07-16): KEEP the per-skin wipes** (iris/wave/warp/leaves) and
   rely on the W4 `sectionFocus` reframe for the travel-into-locale beat. No dedicated `'push'` overlay variant is
-  shipped (the `'push'` type value stays available but unused). §12.3 closed. **W7** visible progression (companion prominence done; `bloomScenery`
-  placement + **B5/B6** Tier-2 art remain), **W8** reward-moment polish, **W9** ambient audio (needs 4 loops),
-  **W10** album/peripheral.
-- **Assets outstanding:** B3 (world layers), B5 (bloom scenery), B6 (companion stages), B7 (ambient sprites).
+  shipped (the `'push'` type value stays available but unused). §12.3 closed.
+- Verified via `ui-screenshot` across all 4 skins (home + section + entry beat + album), reduced-motion, and
+  phone-portrait; build+lint clean; no white-flash on the dark skin; 0 console errors.
+
+**Remaining (all art/audio-gated):**
+- **W2** multi-layer parallax — needs **B3 world layers** (far/mid/near per world). Single-layer worlds work today
+  (W3/W4 wired on them). When B3 lands: split each `scene.layers` 1→2–3, index-align assets, and **re-tune the
+  home anchors + section landmarks onto the real near-layer resting surfaces**.
+- **W7** visible progression — companion prominence done; **`bloomScenery` placement + B5/B6 Tier-2 art** remain
+  (render `BloomSprite[]` in `PersistentWorld` gated by `bloomStage`; feed `companionStages` into `ProgressionCompanion`).
+- **W9** ambient audio — needs **4 short seamless loops** (`public/sounds/ambient/<id>.mp3`); then a menu-only
+  ambient channel + bloom SFX cue (or owner opts to skip ambient, §12.4).
+- **Assets outstanding:** B3 (world layers), B5 (bloom scenery), B6 (companion stages), B7 (ambient sprites);
+  + 4 ambient audio loops for W9. Owner generating via the Gemini web app (Option A) + my keying pipeline.
 
 ---
 
