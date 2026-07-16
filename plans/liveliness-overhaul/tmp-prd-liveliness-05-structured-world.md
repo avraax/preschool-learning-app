@@ -55,14 +55,18 @@ never require reading).
 - Verified via `ui-screenshot` across all 4 skins (home + section + entry beat + album), reduced-motion, and
   phone-portrait; build+lint clean; no white-flash on the dark skin; 0 console errors.
 
-**Remaining (all art/audio-gated):**
-- **W2** multi-layer parallax — needs **B3 world layers** (far/mid/near per world). Single-layer worlds work today
-  (W3/W4 wired on them). When B3 lands: split each `scene.layers` 1→2–3, index-align assets, and **re-tune the
-  home anchors + section landmarks onto the real near-layer resting surfaces**.
-- **W7** visible progression — companion prominence done; **`bloomScenery` placement + B5/B6 Tier-2 art** remain
-  (render `BloomSprite[]` in `PersistentWorld` gated by `bloomStage`; feed `companionStages` into `ProgressionCompanion`).
+- **W7 sockets built** — `ThemeScene` renders stage-gated `scene.bloomScenery[]` (paired by index with
+  `SceneAssets.bloomScenery`, positions authored per theme), and `ProgressionCompanion` now prefers
+  `SceneAssets.companionStages` over the emoji stages. Both render paths verified with a placeholder (reverted).
+  → **B5/B6 are pure data-drops**: fill each theme's `SceneAssets.bloomScenery` / `companionStages` and they appear.
+
+**Remaining (all asset-gated — code is ready):**
+- **W2** multi-layer parallax — needs **B3 world layers**. Single-layer worlds work today. When B3 lands: split each
+  `scene.layers` 1→2–3, index-align assets, and **re-tune the home anchors + section landmarks onto the real
+  near-layer resting surfaces**.
+- **W7 art** — drop **B5** (`SceneAssets.bloomScenery`) + **B6** (`SceneAssets.companionStages`) URLs; no code left.
 - **W9** ambient audio — needs **4 short seamless loops** (`public/sounds/ambient/<id>.mp3`); then a menu-only
-  ambient channel + bloom SFX cue (or owner opts to skip ambient, §12.4).
+  ambient channel + bloom SFX cue (or owner opts to skip ambient, §12.4). Deferred as a unit pending the loops.
 - **Assets outstanding:** B3 (world layers), B5 (bloom scenery), B6 (companion stages), B7 (ambient sprites);
   + 4 ambient audio loops for W9. Owner generating via the Gemini web app (Option A) + my keying pipeline.
 
