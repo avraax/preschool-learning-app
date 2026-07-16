@@ -136,6 +136,25 @@ export const kidThemeTokens: ThemeTokens = {
     },
     selectorThumb: '',
     music: '/sounds/music/kid.mp3', // Regnbue loop ("Rainbow Adventures"); body-trimmed loop in musicClient
+    // Structured World (PRD-05 W3): the 5 section objects rest along a gentle rainbow-arc smile
+    // in the open sky under the rainbow (up in the middle), clear of the bottom cloud bank +
+    // corner mascot. Refine onto real cloud puffs once B3/B5 near-layer art lands.
+    homeAnchors: [
+      { section: 'alphabet', xPct: 16, yPct: 51, scale: 1, rotate: -3, depth: 0.3 },
+      { section: 'math', xPct: 33, yPct: 44, scale: 1, rotate: 2, depth: 0.32 },
+      { section: 'colors', xPct: 50, yPct: 41, scale: 1.06, rotate: 0, depth: 0.34 },
+      { section: 'english', xPct: 67, yPct: 44, scale: 1, rotate: -2, depth: 0.32 },
+      { section: 'ordleg', xPct: 84, yPct: 51, scale: 1, rotate: 3, depth: 0.3 },
+    ],
+    // Section framing (PRD-05 W4/W5): each section pushes into the region where its object sat,
+    // so /alphabet feels like a different corner of the sky than /math (continuity with the push-in).
+    sectionFocus: {
+      alphabet: { xPct: 22, yPct: 52, zoom: 1.32 },
+      math: { xPct: 36, yPct: 46, zoom: 1.34 },
+      colors: { xPct: 50, yPct: 44, zoom: 1.36 },
+      english: { xPct: 64, yPct: 46, zoom: 1.34 },
+      ordleg: { xPct: 78, yPct: 52, zoom: 1.32 },
+    },
   },
 
   materials: {

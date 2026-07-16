@@ -65,6 +65,23 @@ export const dinoThemeTokens: ThemeTokens = {
     },
     selectorThumb: '',
     music: '/sounds/music/dino.mp3', // Dinosaurer loop ("Fantasy theme"); body-trimmed loop in musicClient
+    // Structured World (PRD-05 W3): objects rest on the jungle canopy/ridge in a gentle arc, the
+    // centre one lifted above the volcano peak so it isn't obscured. Refine onto the mossy ridge
+    // once B3 near-layer art lands.
+    homeAnchors: [
+      { section: 'alphabet', xPct: 16, yPct: 58, scale: 1, rotate: -3, depth: 0.3 },
+      { section: 'math', xPct: 33, yPct: 55, scale: 1, rotate: 2, depth: 0.32 },
+      { section: 'colors', xPct: 50, yPct: 40, scale: 1.06, rotate: 0, depth: 0.34 },
+      { section: 'english', xPct: 67, yPct: 55, scale: 1, rotate: -2, depth: 0.32 },
+      { section: 'ordleg', xPct: 84, yPct: 58, scale: 1, rotate: 3, depth: 0.3 },
+    ],
+    sectionFocus: {
+      alphabet: { xPct: 22, yPct: 58, zoom: 1.32 },
+      math: { xPct: 36, yPct: 56, zoom: 1.34 },
+      colors: { xPct: 50, yPct: 48, zoom: 1.36 },
+      english: { xPct: 64, yPct: 56, zoom: 1.34 },
+      ordleg: { xPct: 78, yPct: 58, zoom: 1.32 },
+    },
   },
 
   materials: {

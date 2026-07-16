@@ -1,13 +1,14 @@
 import React, { useRef } from 'react'
 import { Box } from '@mui/material'
-import { useTheme } from '@mui/material/styles'
+import { useTheme, alpha } from '@mui/material/styles'
 import { useLocation } from 'react-router-dom'
 import { useReducedMotion } from '../../../hooks/useReducedMotion'
 import { useProgress } from '../../../hooks/useProgress'
 import { sectionForPath } from '../../../config/routeDepth'
+import { getCategoryTheme } from '../../../config/categoryThemes'
 import type { SectionId } from '../../../services/progressStore'
 import { useParallax } from './useParallax'
-import { routeKind } from './routeKind'
+import { routeKind, isHomeRoute } from './routeKind'
 import ThemeScene from './ThemeScene'
 
 const BLOOM_SECTIONS: SectionId[] = ['alphabet', 'math', 'colors', 'english', 'ordleg']
@@ -65,6 +66,16 @@ const PersistentWorld: React.FC = () => {
   }
   const bloomExtra = Math.round(stage * 2 + fill * 4) // 0 (fresh) → ~12 (fully bloomed)
 
+  // Section framing (Liveliness PRD-05 W4/W5): on a section MENU (not home, not a game) the same
+  // world re-centres/zooms onto that section's locale (theme.scene.sectionFocus) and takes on the
+  // section's accent tint — so /alphabet feels like a different place than /math WITHOUT bespoke
+  // backdrops. Transform-only (flicker-safe); the 0.4s transition gives the "reframe" beat and, on
+  // arrival from a push-in, agrees with the destination framing. Reduced-motion → snaps (ease 0s).
+  const isMenu = routeKind(pathname) === 'menu'
+  const framing =
+    immersive && isMenu && !isHomeRoute(pathname) && section ? theme.scene.sectionFocus?.[section] : null
+  const accent = framing && section ? getCategoryTheme(section).accentColor : null
+
   // Freeze the scene during gameplay (PRD-08 §P4): the world is blurred + dimmed behind a game
   // anyway, so stop the parallax rAF and pause the ambient CSS animations — no continuous GPU /
   // battery cost behind blurred content. It resumes on returning to a menu route. `prefers-reduced-
@@ -95,12 +106,32 @@ const PersistentWorld: React.FC = () => {
           // Dark worlds paint their base immediately so there's no light flash before art loads.
           backgroundColor: dark ? '#070B1A' : 'transparent',
           filter: inGame ? 'blur(7px)' : 'none',
-          transform: inGame ? 'scale(1.06)' : 'none',
+          // Game routes: dim/blur scale. Section menus: push-in toward the section's focal locale.
+          // Home / no framing: neutral. (Mutually exclusive states — a game is never framed.)
+          transformOrigin: framing ? `${framing.xPct}% ${framing.yPct}%` : 'center',
+          transform: inGame ? 'scale(1.06)' : framing ? `scale(${framing.zoom})` : 'none',
           transition: `filter ${ease} ease, transform ${ease} ease`,
         }}
       >
         <ThemeScene paused={inGame} bloomExtra={bloomExtra} />
       </Box>
+
+      {/* Section accent tint (PRD-05 W4) — a gentle wash in the section's colour, fading in on the
+          section menu so each locale reads distinctly. Behind page content, above the scene. */}
+      <Box
+        aria-hidden
+        sx={{
+          position: 'absolute',
+          inset: 0,
+          zIndex: 0,
+          pointerEvents: 'none',
+          opacity: accent ? 1 : 0,
+          transition: `opacity ${ease} ease`,
+          background: accent
+            ? `linear-gradient(180deg, ${alpha(accent, 0.10)} 0%, ${alpha(accent, 0.20)} 100%)`
+            : 'none',
+        }}
+      />
 
       {/* Dim overlay — a plain tint that fades in on game routes so nothing competes with the
           answers. Behind page content, above the scene. */}

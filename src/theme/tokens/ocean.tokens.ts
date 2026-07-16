@@ -70,6 +70,23 @@ export const oceanThemeTokens: ThemeTokens = {
     },
     selectorThumb: '',
     music: '/sounds/music/ocean.mp3', // Havet loop ("Aquatic Downtime"); body-trimmed loop in musicClient
+    // Structured World (PRD-05 W3): objects hover in the sunlit open water above the seabed, in a
+    // gentle arc clear of the coral clusters at the left/right edges. Refine onto shore/coral once
+    // B3 near-layer art lands.
+    homeAnchors: [
+      { section: 'alphabet', xPct: 17, yPct: 53, scale: 1, rotate: -3, depth: 0.3 },
+      { section: 'math', xPct: 34, yPct: 46, scale: 1, rotate: 2, depth: 0.32 },
+      { section: 'colors', xPct: 50, yPct: 43, scale: 1.06, rotate: 0, depth: 0.34 },
+      { section: 'english', xPct: 66, yPct: 46, scale: 1, rotate: -2, depth: 0.32 },
+      { section: 'ordleg', xPct: 83, yPct: 53, scale: 1, rotate: 3, depth: 0.3 },
+    ],
+    sectionFocus: {
+      alphabet: { xPct: 22, yPct: 55, zoom: 1.32 },
+      math: { xPct: 36, yPct: 48, zoom: 1.34 },
+      colors: { xPct: 50, yPct: 46, zoom: 1.36 },
+      english: { xPct: 64, yPct: 48, zoom: 1.34 },
+      ordleg: { xPct: 78, yPct: 55, zoom: 1.32 },
+    },
   },
 
   materials: {

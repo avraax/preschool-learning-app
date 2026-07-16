@@ -63,6 +63,23 @@ export const spaceThemeTokens: ThemeTokens = {
     },
     selectorThumb: '',
     music: '/sounds/music/space.mp3', // Rummet loop ("Galaxy/Universe"); body-trimmed + level-matched in musicClient
+    // Structured World (PRD-05 W3): objects FLOAT among the stars along an arc across the
+    // upper-middle nebula band — deliberately clear of the ringed planet (lower-left) and rocket
+    // (lower-right) already painted into the backdrop. Dark world → float shadow (see SceneObjectField).
+    homeAnchors: [
+      { section: 'alphabet', xPct: 18, yPct: 45, scale: 1, rotate: -3, depth: 0.3 },
+      { section: 'math', xPct: 35, yPct: 38, scale: 1, rotate: 2, depth: 0.32 },
+      { section: 'colors', xPct: 50, yPct: 35, scale: 1.06, rotate: 0, depth: 0.34 },
+      { section: 'english', xPct: 65, yPct: 38, scale: 1, rotate: -2, depth: 0.32 },
+      { section: 'ordleg', xPct: 82, yPct: 45, scale: 1, rotate: 3, depth: 0.3 },
+    ],
+    sectionFocus: {
+      alphabet: { xPct: 24, yPct: 46, zoom: 1.32 },
+      math: { xPct: 37, yPct: 40, zoom: 1.34 },
+      colors: { xPct: 50, yPct: 38, zoom: 1.36 },
+      english: { xPct: 63, yPct: 40, zoom: 1.34 },
+      ordleg: { xPct: 76, yPct: 46, zoom: 1.32 },
+    },
   },
 
   materials: {
