@@ -89,6 +89,9 @@ export interface ParallaxLayerSpec {
   depth: number          // 0 = static (far), 1 = strongest parallax (near); ~0.05–0.3 typical
   anchor?: 'top' | 'bottom' | 'center' // placement hint; default = cover/full-bleed
   opacity?: number
+  offsetY?: number       // static vertical nudge (% of viewport, − = up) so independently-generated
+                         // layers line up: e.g. raise the near foreground to occlude a mid element,
+                         // or drop a mid strip to meet the ground. Added on top of the parallax drift.
 }
 
 export interface AmbientSpriteSpec {

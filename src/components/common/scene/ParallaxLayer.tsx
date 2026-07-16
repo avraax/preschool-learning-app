@@ -25,9 +25,11 @@ const ParallaxLayer: React.FC<ParallaxLayerProps> = ({ spec, url, index }) => {
   const transformOrigin = anchor === 'bottom' ? 'center bottom' : anchor === 'top' ? 'center top' : 'center'
 
   // Horizontal drift for every layer; vertical drift only for center layers (anchored strips
-  // stay pinned to their edge so they never expose a gap there).
+  // stay pinned to their edge so they never expose a gap there). A static `offsetY` (% of the
+  // layer height, − = up) is added so independently-generated layers can be lined up.
   const tx = `calc(var(--parallax-x, 0px) * ${spec.depth})`
-  const ty = anchor === 'center' ? `calc(var(--parallax-y, 0px) * ${spec.depth})` : '0px'
+  const drift = anchor === 'center' ? `calc(var(--parallax-y, 0px) * ${spec.depth})` : '0px'
+  const ty = spec.offsetY ? `calc(${drift} + ${spec.offsetY}%)` : drift
 
   return (
     <Box

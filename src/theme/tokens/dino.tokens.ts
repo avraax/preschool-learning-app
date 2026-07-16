@@ -56,7 +56,8 @@ export const dinoThemeTokens: ThemeTokens = {
     // Multi-layer parallax (PRD-05 W2). Index-aligned to SceneAssets.layers (far→mid→near).
     layers: [
       { src: '', depth: 0.14, anchor: 'center' }, // far: sunrise sky + volcano
-      { src: '', depth: 0.44, anchor: 'center' }, // mid: jungle tree-line
+      // mid jungle dropped so it meets the near ridge (no longer a green ribbon floating in the sky).
+      { src: '', depth: 0.44, anchor: 'center', offsetY: 10 }, // mid: jungle tree-line
       { src: '', depth: 0.82, anchor: 'center' }, // near: mossy ridge
     ],
     ambient: {

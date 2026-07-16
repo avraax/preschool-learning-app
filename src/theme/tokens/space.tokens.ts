@@ -54,8 +54,10 @@ export const spaceThemeTokens: ThemeTokens = {
     // Multi-layer parallax (PRD-05 W2). Index-aligned to SceneAssets.layers (far→mid→near).
     layers: [
       { src: '', depth: 0.12, anchor: 'center' }, // far: nebula + stars (dark backdrop)
-      { src: '', depth: 0.42, anchor: 'center' }, // mid: planets
-      { src: '', depth: 0.8, anchor: 'center' }, // near: asteroids + rocket
+      { src: '', depth: 0.42, anchor: 'center' }, // mid: planet + ring
+      // near asteroids raised so they OCCLUDE the mid planet/ring bottom naturally (the ring passes
+      // behind the rocks) instead of the ring showing the mid layer's hard clipped edge.
+      { src: '', depth: 0.8, anchor: 'center', offsetY: -7 }, // near: asteroids + rocket
     ],
     ambient: {
       // B7 art motes (index-aligned to SceneAssets.ambientSprites): two soft stars, twinkling.

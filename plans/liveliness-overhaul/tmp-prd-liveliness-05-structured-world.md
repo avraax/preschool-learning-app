@@ -83,6 +83,12 @@ never require reading).
   enlarged (~+18%, `SceneObjectField` clamp 98→158) so they read as the heroes; per-theme anchors given real
   height + depth-scale variation so bases sink INTO the reef/canopy/cloud bank (organic, not a row). Verified all
   4 skins + section + reduced-motion + phone-portrait.
+- **Layer-alignment fixes (owner-spotted compositing bugs):** independently-generated B3 layers didn't line up.
+  Added an optional `ParallaxLayerSpec.offsetY` (static vertical nudge, % of viewport) and used it to
+  (a) **Rummet:** raise the near asteroids (`offsetY:-7`) so Saturn's ring passes *behind* them instead of showing
+  the mid layer's hard clipped bottom edge; (b) **Dinosaurer:** drop the mid jungle (`offsetY:10`) so it meets the
+  foreground ridge instead of floating as a detached green ribbon in the sky. Verified home + framed section
+  menus. (kid/ocean scanned — no such artifact.)
 - **Known pre-existing issue (separate batch):** the B2 `colors.farvejagt` game icon has a baked-in white square
   behind the magnifying glass (its cut-out wasn't clean) — a prior-batch icon defect, not scene work.
 
