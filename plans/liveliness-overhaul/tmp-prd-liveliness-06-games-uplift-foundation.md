@@ -167,6 +167,33 @@ language **while keeping a clear press affordance** (the pedagogy point). It reu
 verbatim: `softShadow`/`contactShadow`/`usePointerTilt` (`src/theme/depth.ts`) and the flicker-safe nested-motion
 pattern from `SceneObject`/`useLivingCard`.
 
+**Props (concrete — implement this interface):**
+```tsx
+interface TactileTileProps {
+  onActivate: () => void                    // tap/press (AnswerTile's onClick)
+  accent: string                            // section accent: surface tint, contact-shadow tint, feedback rings
+  state?: 'idle' | 'correct' | 'wrong'      // feedback (mirrors AnswerTileState)
+  hint?: boolean                            // never-fail hint pulse; active only when state==='idle'
+  disabled?: boolean                        // locked during the advance window
+  variant?: 'tile' | 'card' | 'chip'        // radius/size defaults: quiz tile · memory face · small chip
+  interactive?: boolean                     // default true; false = pure display (memory BACK face) → no press/tilt
+  size?: number | string                    // optional; default fills the caller's grid cell (100%)
+  index?: number                            // phase offset (only used if idle-breathe is enabled — see below)
+  children: React.ReactNode                 // content: glyph <Typography> | baked-art <img> | equalizer | swatch
+  sx?: SxProps<Theme>
+}
+```
+> **Calm default:** answer-tile grids do **NOT** idle-breathe (4 tiles breathing distracts a pre-reader) — the
+> "alive" is on press. `index`/breathe stays available for single/hero uses. This is a deliberate departure from
+> `SceneObject`, which breathes because menu objects are few and ambient.
+
+**Composition (mirror `SceneObject`'s flicker-safe nesting):** outer `Box` (caller sizing / grid cell) → framer
+squash layer (`motion.div`, `whileTap`/`controls` press-travel) → **surface `Box`** (`tileSurface(accent, dark)`,
+`borderRadius` per `variant`, optional `1px` low-opacity accent edge, top inner-light highlight, `filter:
+softShadow()`) + a **separate blurred contact-ellipse `Box` beneath** (`contactShadow(accent)`, shrinks to
+`scale(~0.85)` on press) + the `children` content slot. **No `0 8px 0` lip, no `3px` border, no
+`backdrop-filter`.** `usePointerTilt` on the surface for non-touch (disabled under RM/touch).
+
 **Material spec (what makes it "clay, not a keyboard key"):**
 - Surface: soft matte, section-tinted — reuse `tileSurface(accent, dark)` (the existing white→faint-accent
   vertical gradient) but **remove the hard `0 8px 0` colored lip and the heavy `3px` border**. Depth comes from a
@@ -221,6 +248,19 @@ in the calm framed world, exactly like a `SceneObject`.
   contact shadow** beneath, and the "Hør igen" pill floating below. **No panel, no border, no
   `backdrop-filter`.** A very soft, wide readability halo behind the subject (barely-there, not a card) keeps it
   legible over busy backdrops without reading as a frame.
+  ```tsx
+  interface PromptFocusProps {
+    accent: string
+    chargeKey?: string | number   // re-run the charge-in per question (replaces PromptStage.chargeKey)
+    subject: React.ReactNode      // the baked-art <img> | config.renderHero node | large glyph <Typography>
+    repeat?: React.ReactNode       // the "Hør igen" pill, floated beneath the subject
+    sx?: SxProps<Theme>
+  }
+  ```
+  Composition: grounding light-pool `Box` (`radial-gradient` warm-white→`accent`, blurred — reuse `SceneObject`'s
+  pool) + a soft contact-ellipse `Box` beneath (`contactShadow(accent)`) + the `subject` on a framer charge-in/
+  idle-float layer (keyed by `chargeKey`, RM-gated) + the `repeat` pill below. A single low-opacity wide radial
+  halo behind the subject for legibility — **not** a bordered/blurred panel.
 - Keep the **charge-in per question** (subject pops/settles on each new question, keyed like today's `chargeKey`)
   and a gentle idle float — both reduced-motion-gated.
 - `GameShell`'s 3-zone anti-void layout (`GameShell.tsx:195-211`) is **preserved** — the focal zone still occupies
