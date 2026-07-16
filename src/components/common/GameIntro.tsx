@@ -6,6 +6,7 @@ import { useThemeSwitch } from '../../theme/ThemeProvider'
 import { loadSceneAssets } from '../../theme/sceneAssets'
 import { getCategoryTheme } from '../../config/categoryThemes'
 import { hexToRgba } from '../../theme/tokens/helpers'
+import { softShadow } from '../../theme/depth'
 import { sfx } from '../../services/sfxClient'
 import { mascotBus } from '../../services/mascotBus'
 
@@ -56,11 +57,14 @@ const GameIntro: React.FC<GameIntroProps> = ({ categoryId, onDismiss, hold = fal
   const dismissedRef = useRef(false)
   const timersRef = useRef<ReturnType<typeof setTimeout>[]>([])
 
-  // Load this world's mascot sprite for an enlarged intro pose (emoji fallback until it resolves).
+  // Load this world's mascot for an enlarged intro pose — prefer the B4 GREET (waving) pose so the
+  // "Er du klar?" beat shows the guide welcoming the child, matching the reactive-guide language
+  // (W6); fall back to the idle sprite, then emoji, so nothing regresses on un-updated skins.
   useEffect(() => {
     let alive = true
     loadSceneAssets(themeId).then((a) => {
-      if (alive && a?.mascot) setSprite(a.mascot)
+      if (!alive || !a) return
+      setSprite(a.mascotPoses?.greet ?? a.mascot ?? '')
     })
     return () => {
       alive = false
@@ -137,7 +141,7 @@ const GameIntro: React.FC<GameIntroProps> = ({ categoryId, onDismiss, hold = fal
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          filter: 'drop-shadow(0 8px 18px rgba(0,0,0,0.3))',
+          filter: softShadow(2.4),
         }}
       >
         {sprite ? (
