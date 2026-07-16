@@ -14,6 +14,37 @@ never require reading).
 
 ---
 
+## Implementation status (living — update as workstreams land)
+
+**Done & committed** (branch `feature/ui-ux-upgrade`):
+- **W1 scaffolding** — `SceneObject` primitive (`src/components/common/scene/SceneObject.tsx`), depth helpers
+  (`src/theme/depth.ts`: `softShadow`/`contactShadow`/`usePointerTilt`), §7 tokens/types (`HomeAnchor`/`SceneFocus`/
+  `BloomSprite` + `homeAnchors`/`sectionFocus`/`bloomScenery` on `SceneTokens`, `MascotPoses`/`bloomScenery`/
+  `companionStages` on `SceneAssets`, `'push'` variant; all defaulted in `buildTheme` via
+  `defaultHomeAnchors`/`defaultSectionFocus`). Icon re-key **W4.1** done (`GameTileIcon` keyed `<section>.<id>`).
+  `/dev/scene?theme=&section=&bloom=` harness in `DevRoutes.tsx`.
+- **B1** — 5 hero section objects (regenerated at `src/assets/themes/icons/*.webp`).
+- **B2** — 22 per-game soft-3D icons (`src/assets/themes/icons/games/`, registry `gameIconImages`).
+- **B4 + W6** — 16 mascot poses (idle/greet/point/celebrate × 4 worlds, `src/assets/themes/<id>/mascot-*.webp`);
+  `ThemeMascot` reworked into the reactive guide (pose cross-fade; greet-on-mount→idle, attract→point,
+  cheer→celebrate; RM → static idle).
+- **Asset pipeline** — Gemini renders come on a flat green `#00FF00` screen; a Node/`sharp` script keys them via
+  **distance-to-sampled-screen** (NOT greenness — vital: subject greens like the rainbow/globe/dino share the hue
+  but are far in RGB), border flood-fill + tight enclosed-hole removal + feather despill + a bottom-right
+  Gemini-watermark corner strip, then trim + WebP. Reuse this approach for B3/Tier-2.
+
+**Remaining:**
+- **W2** multi-layer parallax — needs **B3 world layers** (far/mid/near per world). Deferrable; single-layer worlds
+  work today.
+- **W3** home redesign (objects seated at `theme.scene.homeAnchors` via `SceneObject`), **W4** section menus
+  (`SceneObject` game tiles + `sectionFocus` framing + accent tint + enlarged landmark), **W5** cinematic push-in
+  transition, **W7** visible progression (companion prominence + `bloomScenery`; **B6/B5** Tier-2 art),
+  **W8** reward-moment polish, **W9** ambient audio, **W10** album/peripheral. These can be wired NOW with existing
+  single-layer worlds + the B1/B2/B4 assets already in.
+- **Assets outstanding:** B3 (world layers), B5 (bloom scenery), B6 (companion stages), B7 (ambient sprites).
+
+---
+
 ## 1. Context — why this exists
 
 The app already owns a beautiful, **alive background**: a per-skin persistent parallax world, an idle mascot,
