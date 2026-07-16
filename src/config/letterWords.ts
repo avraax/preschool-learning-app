@@ -44,10 +44,11 @@ export const LETTER_WORDS: Record<string, { word: string; emoji: string }> = {
   Å: { word: 'Å', emoji: '🏞️' },
 }
 
-// Letters Bogstav Quiz asks about (the correct answer is one of these). Q/W/X/Å are intentionally
-// excluded — they are weak first-sound teaching letters — so they appear in the quiz only as
-// distractor tiles, while still blooming with a picture in Lær Alfabetet and Hukommelse.
+// Letters Bogstav Quiz asks about (the correct answer is one of these). W, X and Å are asked too
+// (owner request — they have honest picturable words: Wienerbrød / Xylofon / Å-stream). Only Q stays
+// excluded — "Quiz" (a question mark) has no natural spoken first-sound word — so Q appears in the
+// quiz only as a distractor tile, while still blooming with a picture in Lær Alfabetet and Hukommelse.
 export const WORD_LETTERS = [
   'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O',
-  'P', 'R', 'S', 'T', 'U', 'V', 'Y', 'Z', 'Æ', 'Ø',
+  'P', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'Æ', 'Ø', 'Å',
 ]
