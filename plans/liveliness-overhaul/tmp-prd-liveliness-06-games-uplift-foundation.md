@@ -338,14 +338,21 @@ composite verification, temp `.mjs` in repo root then delete). No new pipeline i
 ### F6 — Program structure & order (how the areas consume this)
 
 Each per-area PRD (`-07`…`-11`) is a focused implement session that:
-1. Adopts `TactileTile` (F1) + `PromptFocus` (F2) across that section's games (shared engines already upgraded;
+1. **Produces the area's Gemini prompt doc for the owner FIRST** (before/at the start of implementation) — a
+   self-contained prompt per subject that the owner pastes straight into Gemini, per the "generation loop" in
+   `.claude/rules/scene-assets.md` (full §8.2 style guide inlined, `#00FF00`, existing section icons as style
+   refs, named by content id). Confirm the subject manifest (§4-style table) with the owner, save the doc under
+   `plans/liveliness-overhaul/<area>-art-prompts.md`. The owner generates + hands back the folder; the session
+   keys it (green-EXCESS pipeline) and wires it. **Do this every area without being re-asked** (worked example:
+   `-07`'s `alphabet-art-prompts.md`).
+2. Adopts `TactileTile` (F1) + `PromptFocus` (F2) across that section's games (shared engines already upgraded;
    hand-rolled games adopt directly).
-2. Applies any **per-game UX/layout rework** that area needs to reach shell level (the owner's mandate: as much
+3. Applies any **per-game UX/layout rework** that area needs to reach shell level (the owner's mandate: as much
    rework as it takes; shared where possible). Known candidates flagged this session: **Sig et Ord** (sparse/dead
    space → richer speaking moment), **Ram Farven** (faint target + busy station → clearer mixing bench),
    **Farvejagt** (flat scattered stickers → findable objects resting in the scene) — but every area audits its own.
-3. Supplies + wires its **baked-art manifest** (F5); ships art-gated.
-4. Verifies with `ui-screenshot` across all 4 skins + reduced-motion + phone-portrait; build+lint clean; then the
+4. Wires its **baked-art manifest** (F5) once the owner returns the keyed batch; ships art-gated.
+5. Verifies with `ui-screenshot` across all 4 skins + reduced-motion + phone-portrait; build+lint clean; then the
    owner **play-tests with his son**, and that feeds the next area's PRD (authored just-in-time).
 
 **Order:** `-07` Alphabet (worked example, written now) → `-08` Math → `-09` Farver (dnd — extra care per the drag

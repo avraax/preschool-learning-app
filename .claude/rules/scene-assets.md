@@ -17,6 +17,34 @@ freeze, mascot bus, flicker discipline) is in CLAUDE.md's "Scene & mascot" bulle
   green screen (far/sky layers are rendered opaque, full-bleed, NOT on green). Processing is done with
   one-off `sharp` scripts (see below), never committed.
 
+## The generation loop — the implementer produces the prompts, the owner generates
+
+The owner generates all baked art in Gemini; a build session does **not** generate images. So whenever
+a task needs new baked art (a scene batch, section/game icons, or a per-area subject manifest like the
+alphabet letter subjects), the implementer's **first deliverable is a self-contained Gemini prompt doc**
+the owner can paste straight in. **Do this proactively** (don't wait to be asked), confirming the
+manifest/subject choices with the owner first, and save it in the relevant plan dir (e.g.
+`plans/<program>/<area>-art-prompts.md`). Each doc contains:
+
+- **One prompt per asset, each COMPLETE on its own** (the owner copies them one at a time): a subject
+  line + the full style guide inlined — PRD-05 §8.2: *soft-3D claymation / Pixar-lite, rounded matte
+  clay, soft top-left key + rim light, soft contact shadow, warm & child-safe (nothing scary/sharp),
+  slight 3/4 top-down, single centered subject, no text/letters, flat solid `#00FF00` background
+  edge-to-edge, 1:1*. Add per-subject child-safety notes where they matter (friendly/no sharp teeth,
+  blunt horns, gentle volcano…).
+- **Reference-image guidance:** attach 2–3 existing `src/assets/themes/icons/*.webp` (or the higher-res
+  `art-src/icons/*.png`) as STYLE references on every generation so the batch matches the app, and have
+  the owner re-use their first good render as a consistency anchor for the rest. Decide per-subject
+  whether a CONTENT reference photo is needed — usually not (common nouns render fine from text); call
+  it out when it is. (This is the implementer's call.)
+- **Output + naming:** `#00FF00`, square, highest res, PNG; owner names each file by its content id
+  (letter / object id), using ASCII aliases for filesystem-awkward glyphs (`AE`/`OE`/`AA` for Æ/Ø/Å).
+- **Hand-back:** the owner drops a folder path. Gemini filenames are random hashes, so identify each
+  subject visually (a `sharp` contact-sheet montage of the folder helps), map to ids, then key (below).
+
+This front-half is a standing part of **every** baked-art area — each area PRD's steps should include it
+so a fresh session does it automatically.
+
 ## Keying — the core gotcha: key by green-EXCESS, not greenness
 
 Subject greens (jungle foliage, the rainbow, ocean seaweed, the globe) **share the screen's hue** but
@@ -37,6 +65,15 @@ pure `#00FF00` and NOT raw "is it greenish" — the latter two eat the subject.
 
 ## Other pipeline gotchas (each bit us once)
 
+- **AI-baked contact shadows leave a green crescent under centered sprites.** The render's soft ground
+  shadow darkens the screen green (lower excess) right where it meets the subject, so a plain
+  high-threshold flood-fill leaves a green blob at the base. Fix: a **hysteresis flood-fill** — seed
+  from the border through vivid screen (high excess ~90), then GROW the transparent region through
+  faint green (low excess ~26) to eat the shadow. For sprites whose SUBJECT is green (tree foliage,
+  grassy island), **skip the faint-green grow** (a per-image flag) so it can't eat the subject — the
+  vivid-screen removal is still safe thanks to the big excess gap (subject greens ~20–50, screen ~130+;
+  verify the gap per batch with a green-excess histogram). Despeckle tiny opaque components afterward
+  to drop the Gemini "✦" sparkle watermark.
 - **Softening a hard alpha edge → edge-extend FIRST.** Blurring/feathering the alpha reveals whatever
   RGB sits in the cut-out area (leftover green, or black) as a fringe. Bleed the subject's RGB outward
   into the transparent zone before softening (or feather only real subject pixels, per-column), so the

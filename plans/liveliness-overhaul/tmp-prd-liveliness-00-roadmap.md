@@ -84,7 +84,10 @@ plans/liveliness-overhaul/tmp-prd-liveliness-07-games-uplift-alphabet.md   ← G
 > ships the shared language (tactile-tile primitive, focal-zone dissolve, softened in-game world, unified HUD,
 > baked-art conventions). Then areas ship one-per-session, **art-gated**, in order Alphabet → Math → Farver →
 > Ordleg → English, each play-tested before the next is authored. `-07` Alphabet is written; `-08…-11` are
-> authored just-in-time. Locked decisions live in `-06` §2.
+> authored just-in-time. Locked decisions live in `-06` §2. **Every area is art-gated: the implement session
+FIRST produces a self-contained Gemini prompt doc for the owner** (`plans/liveliness-overhaul/<area>-art-prompts.md`,
+per `.claude/rules/scene-assets.md` "generation loop"); the owner generates + hands back the folder, the session
+keys + wires it — see `-06` F6 step 1 and `-07`'s `alphabet-art-prompts.md` as the worked example.
 
 **PRD-01 is the keystone and must be implemented first.** It defines the global XP/level system, per-section
 "bloom", the level-up ceremony, and the child-facing growth display. PRD-02's "visible bloom" and PRD-03's
