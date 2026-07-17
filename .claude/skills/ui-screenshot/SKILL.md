@@ -160,6 +160,11 @@ An async `--eval` IIFE (`awaitPromise` is on) can drive a whole round and assert
   state (no need to solve), `?seed=<n>` makes questions deterministic (probe with `--eval` to find a
   seed that yields the case you want, e.g. a count-mode number or a high comparison pile), `?nogate=1`
   skips the audio welcome/permission gate, `?reduce=1` forces reduced-motion, `?theme=<id>` sets the skin.
+- **Auto-played game TTS often doesn't fire in headless** (no real audio device), so the fetch-capture
+  audio recipe is unreliable for a game's welcome/prompt — it works for **tap-triggered** echoes (browse
+  screens, answer taps), not the gated auto-play. To identify which quiz **subject** is showing without
+  audio, read the hero image src: `[data-prompt-focus] img` → the filename (Vite keeps the content id,
+  e.g. `.../X.webp`). Combine with `?seed=<n>` to force a specific question deterministically.
 - Always check the printed "console errors"/"page exceptions" lines — a clean screenshot can still
   hide a runtime error.
 - **`?reduce=1` flips only the JS `useReducedMotion()` hook, NOT the CSS `@media (prefers-reduced-motion:

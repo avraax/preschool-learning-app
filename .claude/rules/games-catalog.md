@@ -32,7 +32,9 @@ gameIds are `<section>.<game>`.
 
 ## Alphabet — `alphabet.quiz`
 - Bogstav Quiz is **all word-association**: show a picture, tap the letter the word starts with (the
-  trivial "hør bogstavet" recognition mode was removed). Distractors random; Q/W/X only ever distractors.
+  trivial "hør bogstavet" recognition mode was removed). The prompt subject is baked soft-3D art (not a
+  flat emoji). Distractors random; **Q is the only letter never asked** (distractor-only) — W/X/Å are
+  askable. The askable set is `WORD_LETTERS`; the full display manifest (incl. Q) is `LETTER_WORDS`.
 
 ## Ordleg — `ordleg.read/.spelling/.mic`
 - Læs Ordet **never reads the prompt word aloud** — silent decoding IS the exercise. Thin

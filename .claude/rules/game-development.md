@@ -74,6 +74,14 @@ needs that hook added first (it would touch all 7 config quizzes, so verify care
   `TactilePill` (HUD pills; `AnswerTile`/`ScoreChip`/`RepeatButton` ride these) via `src/theme/depth.ts`
   (`softShadow`/`contactShadow`). New or hand-rolled game surfaces reuse these — don't re-invent tile
   depth, a keyboard-lip button, or a frosted `PromptStage` card (PRD-06 F1/F2/F4).
+- **Baked game-art** (pictorial subjects, per-section) → `src/assets/games/<section>/index.ts`
+  eager-`import.meta.glob`s `*.webp` keyed by content id → a sync `letterArt()`-style helper.
+  **Art-gated**: empty until the owner's keyed WebP are dropped in (auto-registers, no code change);
+  consumers fall back to emoji/glyph until then. Use ASCII aliases (`AE`/`OE`/`AA`) for filesystem-awkward
+  glyphs. Render hooks: quiz hero via `QuizItem.questionVisual.art` (→ `HeroArt`), Memory via
+  `MemoryItemDisplay.iconArt`, browse bloom via `PromptFocus`. **Glyphs stay type — only depicted
+  subjects are baked** (recognising the letter/number IS the lesson). Art generation + keying:
+  `.claude/rules/scene-assets.md`.
 
 ## Interaction-language parity (hand-rolled task games)
 
