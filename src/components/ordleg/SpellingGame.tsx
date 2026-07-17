@@ -2,14 +2,17 @@ import React, { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import {
   Box,
-  Typography,
-  Paper
+  Typography
 } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
-import { categoryThemes } from '../../config/categoryThemes'
+import { getCategoryTheme } from '../../config/categoryThemes'
 import { stickerSetForSection } from '../../config/stickers'
-import { darken, hexToRgba } from '../../theme/tokens/helpers'
+import { tileSurface } from '../../theme/tokens/helpers'
+import { softShadow } from '../../theme/depth'
 import GameShell from '../common/GameShell'
+import PromptFocus from '../common/PromptFocus'
+import { HeroArt, HeroEmoji } from '../common/PromptStage'
+import TactileTile from '../common/TactileTile'
 import RoundResultScreen from '../common/RoundResultScreen'
 import type { GuideReaction } from '../common/ThemeMascot'
 import { useCelebration } from '../common/CelebrationEffect'
@@ -24,50 +27,57 @@ import { sfx } from '../../services/sfxClient'
 import { mascotBus } from '../../services/mascotBus'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
 import { isIOS } from '../../utils/deviceDetection'
+import { ordlegArt } from '../../assets/games/ordleg'
 // Simplified audio system
 import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 
 // 2-3 letter child-friendly Danish words. Duplicates from the source list removed.
 // Includes Æ, Ø, Å to practise the Danish-specific letters.
-const SPELLING_WORDS: { word: string; emoji: string }[] = [
-  { word: 'ko', emoji: '🐄' },
-  { word: 'bi', emoji: '🐝' },
-  { word: 'is', emoji: '🍦' },
-  { word: 'os', emoji: '🧀' },
-  { word: 'sol', emoji: '☀️' },
-  { word: 'hus', emoji: '🏠' },
-  { word: 'bil', emoji: '🚗' },
-  { word: 'kat', emoji: '🐱' },
+//
+// Visual uplift (PRD-10 §3.4): the prompt PICTURE becomes a baked soft-3D word-picture (§4) grounded
+// in PromptFocus — `art` is the ASCII art id (Danish glyphs aliased: æg→aeg, ræv→raev, bær→baer,
+// løg→loeg, ål→aal, sø→soe). Resolved via `ordlegArt(w.art)`; `emoji` is the art-gated fallback and
+// the *only* rendering for the abstract words (hej/arm/ben/fod/hul/mor/far, `art` omitted) — no clean
+// clay depiction exists for those (§0.4). The letter TILES + SLOTS + spelled letters stay type (the
+// lesson). `os` (os ≠ cheese — a stray dup of `ost`) and `øl` (beer, off-brand) removed per owner
+// decision §6.2; Ø is still practised via `sø`/`løg`.
+const SPELLING_WORDS: { word: string; emoji: string; art?: string }[] = [
+  { word: 'ko', emoji: '🐄', art: 'ko' },
+  { word: 'bi', emoji: '🐝', art: 'bi' },
+  { word: 'is', emoji: '🍦', art: 'is' },
+  { word: 'sol', emoji: '☀️', art: 'sol' },
+  { word: 'hus', emoji: '🏠', art: 'hus' },
+  { word: 'bil', emoji: '🚗', art: 'bil' },
+  { word: 'kat', emoji: '🐱', art: 'kat' },
   { word: 'hej', emoji: '👋' },
-  { word: 'hat', emoji: '🎩' },
-  { word: 'mus', emoji: '🐭' },
-  { word: 'bus', emoji: '🚌' },
-  { word: 'ost', emoji: '🧀' },
+  { word: 'hat', emoji: '🎩', art: 'hat' },
+  { word: 'mus', emoji: '🐭', art: 'mus' },
+  { word: 'bus', emoji: '🚌', art: 'bus' },
+  { word: 'ost', emoji: '🧀', art: 'ost' },
   { word: 'fod', emoji: '🦶' },
-  { word: 'bog', emoji: '📖' },
-  { word: 'and', emoji: '🦆' },
+  { word: 'bog', emoji: '📖', art: 'bog' },
+  { word: 'and', emoji: '🦆', art: 'and' },
   { word: 'arm', emoji: '💪' },
   { word: 'ben', emoji: '🦵' },
   { word: 'hul', emoji: '🕳️' },
-  { word: 'sø', emoji: '🏞️' },
-  { word: 'ål', emoji: '🐍' },
-  { word: 'øl', emoji: '🍺' },
+  { word: 'sø', emoji: '🏞️', art: 'soe' },
+  { word: 'ål', emoji: '🐍', art: 'aal' },
   // More easy 2-3 letter words
-  { word: 'æg', emoji: '🥚' },
-  { word: 'te', emoji: '🍵' },
-  { word: 'ur', emoji: '⌚' },
-  { word: 'sko', emoji: '👟' },
-  { word: 'haj', emoji: '🦈' },
-  { word: 'abe', emoji: '🐒' },
-  { word: 'ræv', emoji: '🦊' },
-  { word: 'ulv', emoji: '🐺' },
-  { word: 'ged', emoji: '🐐' },
-  { word: 'tog', emoji: '🚂' },
+  { word: 'æg', emoji: '🥚', art: 'aeg' },
+  { word: 'te', emoji: '🍵', art: 'te' },
+  { word: 'ur', emoji: '⌚', art: 'ur' },
+  { word: 'sko', emoji: '👟', art: 'sko' },
+  { word: 'haj', emoji: '🦈', art: 'haj' },
+  { word: 'abe', emoji: '🐒', art: 'abe' },
+  { word: 'ræv', emoji: '🦊', art: 'raev' },
+  { word: 'ulv', emoji: '🐺', art: 'ulv' },
+  { word: 'ged', emoji: '🐐', art: 'ged' },
+  { word: 'tog', emoji: '🚂', art: 'tog' },
   { word: 'mor', emoji: '👩' },
   { word: 'far', emoji: '👨' },
-  { word: 'bær', emoji: '🍓' },
-  { word: 'løg', emoji: '🧅' },
-  { word: 'ski', emoji: '🎿' },
+  { word: 'bær', emoji: '🍓', art: 'baer' },
+  { word: 'løg', emoji: '🧅', art: 'loeg' },
+  { word: 'ski', emoji: '🎿', art: 'ski' },
 ]
 
 const DANISH_ALPHABET = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'R', 'S', 'T', 'U', 'V', 'Y', 'Z', 'Æ', 'Ø', 'Å']
@@ -82,7 +92,7 @@ const SpellingGame: React.FC = () => {
   const reduce = useReducedMotion()
 
   // Current word and its uppercase letters
-  const [current, setCurrent] = useState<{ word: string; emoji: string } | null>(null)
+  const [current, setCurrent] = useState<{ word: string; emoji: string; art?: string } | null>(null)
   const [targetLetters, setTargetLetters] = useState<string[]>([])
   const [filledCount, setFilledCount] = useState(0)
   const [tiles, setTiles] = useState<LetterTile[]>([])
@@ -416,8 +426,12 @@ const SpellingGame: React.FC = () => {
     }
   }
 
-  const theme = categoryThemes.ordleg
+  // Live, skin-aware ordleg theme (§3.6) — the static `categoryThemes.ordleg` shows kid-skin colours
+  // on Havet/Rummet/Dino. Re-runs on skin change (muiTheme drives the re-render).
+  const theme = getCategoryTheme('ordleg')
+  const dark = muiTheme.scene.dark
   const availableTiles = tiles.filter(t => !usedTileIds.has(t.id))
+  const promptArt = current?.art ? ordlegArt(current.art) : undefined
 
   return (
     <GameShell
@@ -435,6 +449,20 @@ const SpellingGame: React.FC = () => {
         />
       }
       celebration={{ show: showCelebration, intensity: celebrationIntensity, duration: celebrationDuration, onComplete: stopCelebration }}
+      promptStage={
+        roundOutcome || !(gameReady && current) ? undefined : (
+          // The word's PICTURE rests in the focal zone on its light-pool + contact shadow (§3.4):
+          // baked soft-3D art for a concrete word, the emoji as the art-gated fallback (and the only
+          // rendering for abstract words). Grounds the picture in the world like the menu it launched
+          // from; the slots + tiles read directly beneath it (picture→slots→tiles order preserved).
+          <PromptFocus
+            accent={theme.accentColor}
+            chargeKey={current.word}
+            subject={promptArt ? <HeroArt src={promptArt} /> : <HeroEmoji>{current.emoji}</HeroEmoji>}
+            repeat={<OrdlegRepeatButton onClick={repeatWord} disabled={false} />}
+          />
+        )
+      }
     >
         {roundOutcome ? (
           <RoundResultScreen
@@ -444,34 +472,21 @@ const SpellingGame: React.FC = () => {
             onReplay={handleReplay}
           />
         ) : gameReady && current && (
-          <>
-            {/* Word prompt: emoji + word + repeat */}
-            <Box sx={{ textAlign: 'center', flex: '0 0 auto', mb: { xs: 1, md: 2 } }}>
-              <motion.div
-                key={current.word}
-                initial={{ opacity: 0, scale: 0.85 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.4 }}
-              >
-                <Typography
-                  sx={{
-                    fontSize: 'clamp(3rem, 14vh, 6rem)',
-                    lineHeight: 1,
-                    mb: 0.5,
-                    // Landscape is height-constrained — shrink the emoji so the slots + tiles
-                    // below keep room and the tiles' edge lip isn't clipped at the viewport edge.
-                    '@media (orientation: landscape)': { fontSize: 'clamp(2.4rem, 11vh, 3.4rem)' }
-                  }}
-                >
-                  {current.emoji}
-                </Typography>
-              </motion.div>
-              <Box sx={{ mt: 1 }}>
-                <OrdlegRepeatButton onClick={repeatWord} disabled={false} />
-              </Box>
-            </Box>
-
-            {/* Letter slots */}
+          <Box
+            sx={{
+              flex: 1,
+              minHeight: 0,
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+              alignItems: 'center',
+              gap: { xs: 1.5, md: 2.5 },
+              '@media (orientation: landscape)': { gap: 1 },
+            }}
+          >
+            {/* Letter slots — grounded, still type. Dashed "fill me" targets keep the accent border +
+                green-fill-on-placed, but sit on the tactile clay surface (tileSurface + softShadow)
+                so they stop reading as bare MUI boxes (§3.4). No baked art — the answer is the letters. */}
             <Box
               sx={{
                 display: 'flex',
@@ -479,8 +494,6 @@ const SpellingGame: React.FC = () => {
                 alignItems: 'center',
                 gap: { xs: 1, md: 1.5 },
                 flex: '0 0 auto',
-                mb: { xs: 1.5, md: 2.5 },
-                '@media (orientation: landscape)': { mb: 1 }
               }}
             >
               {targetLetters.map((letter, index) => {
@@ -491,10 +504,12 @@ const SpellingGame: React.FC = () => {
                     sx={{
                       width: { xs: 56, sm: 64, md: 80 },
                       height: { xs: 56, sm: 64, md: 80 },
-                      borderRadius: 2,
+                      borderRadius: '18px',
                       border: '3px dashed',
                       borderColor: filled ? 'success.main' : theme.borderColor,
-                      bgcolor: filled ? 'success.light' : 'rgba(255,255,255,0.6)',
+                      background: filled ? undefined : tileSurface(theme.accentColor, dark),
+                      bgcolor: filled ? 'success.light' : undefined,
+                      filter: filled ? undefined : softShadow(dark ? 1 : 0.7),
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -516,8 +531,11 @@ const SpellingGame: React.FC = () => {
               })}
             </Box>
 
-            {/* Scrambled letter tiles — non-greedy so the prompt/slots/tiles read as one
-                group (shell centres the cluster vertically). */}
+            {/* Scrambled letter tiles — tactile clay (TactileTile), NOT the old keyboard-lip Paper.
+                TactileTile owns the wrong-shake (state='wrong') + hint-breathe/ring (hint) + press
+                internally, so the game only feeds it `state` (from shakeTileId) + `hint` (from
+                useNeverFailHint) and keeps the sfx('wrong')/setShakeTileId + hint wiring. The letter
+                stays Comic Sans type (the lesson). */}
             <Box
               sx={{
                 flex: '0 1 auto',
@@ -525,8 +543,6 @@ const SpellingGame: React.FC = () => {
                 justifyContent: 'center',
                 alignItems: 'center',
                 minHeight: 0,
-                mt: { xs: 1, md: 2 },
-                '@media (orientation: landscape)': { mt: 0.5 }
               }}
             >
               <Box
@@ -541,86 +557,49 @@ const SpellingGame: React.FC = () => {
               >
                 {/* No layout/exit animation: a consumed tile just unmounts and flex reflows
                     instantly — no floating toward the slots, no leftover gaps. Unique per-word
-                    keys (see wordSeq) mean a new word swaps the whole set cleanly. */}
+                    keys (see wordSeq) mean a new word swaps the whole set cleanly. The entrance
+                    pop is one-shot; the shake/hint/press are TactileTile's own (nested layer). */}
                 {availableTiles.map((tile) => {
                     const isHint = tile.id === hintTileId
                     const isShaking = shakeTileId === tile.id
-                    // Hint: a gentle attention pulse (motion) or a static glow ring (reduced motion).
-                    const animate = isShaking
-                      ? { opacity: 1, scale: 1, x: [0, -10, 10, -10, 10, 0] }
-                      : isHint && !reduce
-                        ? { opacity: 1, scale: [1, 1.12, 1], x: 0 }
-                        : { opacity: 1, scale: 1, x: 0 }
-                    const transition = isShaking
-                      ? { duration: 0.45 }
-                      : isHint && !reduce
-                        ? { duration: 1.1, repeat: Infinity, ease: 'easeInOut' as const }
-                        : { duration: 0.2 }
                     return (
                     <motion.div
                       key={tile.id}
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={animate}
-                      transition={transition}
-                      whileHover={{ scale: 1.08 }}
-                      whileTap={{ scale: 0.92 }}
+                      initial={reduce ? false : { opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ duration: 0.2 }}
                     >
-                      <Paper
-                        elevation={0}
-                        onClick={() => handleTileClick(tile)}
+                      <Box
                         sx={{
                           width: { xs: 56, sm: 64, md: 76 },
                           height: { xs: 56, sm: 64, md: 76 },
-                          minWidth: 44,
-                          minHeight: 44,
-                          borderRadius: '16px',
-                          border: '3px solid',
-                          borderColor: isShaking
-                            ? 'error.main'
-                            : isHint
-                              ? theme.accentColor
-                              : hexToRgba(theme.accentColor, muiTheme.scene.dark ? 0.55 : 0.34),
-                          // Lifted-3D depth (matches AnswerTile): top-light surface + teal edge lip.
-                          background: 'linear-gradient(180deg, #FFFFFF 0%, #ECF1F8 100%)',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          userSelect: 'none',
-                          transition: 'box-shadow 0.2s ease, border-color 0.2s ease, transform 0.08s ease',
-                          boxShadow: isHint
-                            ? `0 0 0 4px ${hexToRgba(theme.accentColor, 0.4)}, 0 5px 0 ${darken(theme.accentColor, 0.28)}, ${muiTheme.scene.dark ? '0 10px 24px rgba(0,0,0,0.5)' : '0 8px 18px rgba(0,0,0,0.15)'}`
-                            : isShaking
-                              ? `0 5px 0 ${darken(muiTheme.palette.error.main, 0.25)}, ${muiTheme.scene.dark ? '0 10px 24px rgba(0,0,0,0.45)' : '0 7px 16px rgba(0,0,0,0.12)'}`
-                              : `0 5px 0 ${darken(theme.accentColor, 0.28)}, ${muiTheme.scene.dark ? '0 10px 24px rgba(0,0,0,0.45)' : '0 7px 16px rgba(0,0,0,0.12)'}`,
-                          '&:active': {
-                            transform: 'translateY(3px)',
-                            boxShadow: `0 2px 0 ${darken(theme.accentColor, 0.28)}, ${muiTheme.scene.dark ? '0 4px 10px rgba(0,0,0,0.5)' : '0 4px 8px rgba(0,0,0,0.18)'}`
-                          },
-                          '@media (hover: hover) and (pointer: fine)': {
-                            '&:hover': {
-                              borderColor: theme.hoverBorderColor,
-                              boxShadow: `0 8px 0 ${darken(theme.accentColor, 0.28)}, 0 14px 30px ${hexToRgba(theme.accentColor, 0.3)}`
-                            }
-                          }
                         }}
                       >
-                        <Typography
-                          sx={{
-                            fontSize: 'clamp(1.75rem, 6vw, 2.75rem)',
-                            fontWeight: 700,
-                            color: theme.accentColor
-                          }}
+                        <TactileTile
+                          onActivate={() => handleTileClick(tile)}
+                          accent={theme.accentColor}
+                          state={isShaking ? 'wrong' : 'idle'}
+                          hint={isHint}
+                          variant="tile"
+                          domProps={{ 'data-letter-tile': '', 'data-tile-state': isShaking ? 'wrong' : 'idle' }}
                         >
-                          {tile.letter}
-                        </Typography>
-                      </Paper>
+                          <Typography
+                            sx={{
+                              fontSize: 'clamp(1.75rem, 6vw, 2.75rem)',
+                              fontWeight: 700,
+                              color: theme.accentColor
+                            }}
+                          >
+                            {tile.letter}
+                          </Typography>
+                        </TactileTile>
+                      </Box>
                     </motion.div>
                     )
                   })}
               </Box>
             </Box>
-          </>
+          </Box>
         )}
     </GameShell>
   )

@@ -1,44 +1,52 @@
 import React, { useRef } from 'react'
 import UnifiedQuizGame, { UnifiedQuizConfig, QuizItem } from '../common/UnifiedQuizGame'
-import { categoryThemes } from '../../config/categoryThemes'
+import { getCategoryTheme } from '../../config/categoryThemes'
 import { stickerSetForSection } from '../../config/stickers'
 import { OrdlegScoreChip } from '../common/ScoreChip'
 import { OrdlegRepeatButton } from '../common/RepeatButton'
 import { progressStore, type DifficultyLevel } from '../../services/progressStore'
 import { shuffle } from '../../utils/shuffle'
+import { ordlegArt } from '../../assets/games/ordleg'
 
 // Læs Ordet: the written Danish word is shown (no picture); the child reads it and
 // taps the matching picture from 4 options. The word is NOT read aloud — the child must
 // read it themselves (that's the whole point). Easiest level: short, familiar 2–3 letter
 // words for a beginning reader who can't spell yet.
+//
+// Visual uplift (PRD-10 §3.3): the prompt WORD stays type (reading it IS the lesson), but the
+// answer *pictures* become baked soft-3D word-pictures — `art` is the ASCII art id (§4; Danish
+// glyphs aliased: æg→aeg, ræv→raev). Resolved via `ordlegArt(w.art)`; `emoji` is the art-gated
+// fallback until the batch lands. The whole pool is concrete/depictable, so once art lands a
+// question never mixes baked art with emoji tiles.
 interface ReadingWord {
   word: string
   emoji: string
+  art: string
 }
 
 const READING_WORDS: ReadingWord[] = [
-  { word: 'ko', emoji: '🐄' },
-  { word: 'is', emoji: '🍦' },
-  { word: 'æg', emoji: '🥚' },
-  { word: 'ur', emoji: '⌚' },
-  { word: 'so', emoji: '🐖' },
-  { word: 'kat', emoji: '🐱' },
-  { word: 'sol', emoji: '☀️' },
-  { word: 'hus', emoji: '🏠' },
-  { word: 'bil', emoji: '🚗' },
-  { word: 'bog', emoji: '📖' },
-  { word: 'mus', emoji: '🐭' },
-  { word: 'and', emoji: '🦆' },
-  { word: 'sko', emoji: '👟' },
-  { word: 'hat', emoji: '🎩' },
-  { word: 'ost', emoji: '🧀' },
-  { word: 'tog', emoji: '🚂' },
-  { word: 'bus', emoji: '🚌' },
-  { word: 'ræv', emoji: '🦊' },
-  { word: 'ged', emoji: '🐐' },
-  { word: 'haj', emoji: '🦈' },
-  { word: 'abe', emoji: '🐒' },
-  { word: 'ski', emoji: '🎿' }
+  { word: 'ko', emoji: '🐄', art: 'ko' },
+  { word: 'is', emoji: '🍦', art: 'is' },
+  { word: 'æg', emoji: '🥚', art: 'aeg' },
+  { word: 'ur', emoji: '⌚', art: 'ur' },
+  { word: 'so', emoji: '🐖', art: 'so' },
+  { word: 'kat', emoji: '🐱', art: 'kat' },
+  { word: 'sol', emoji: '☀️', art: 'sol' },
+  { word: 'hus', emoji: '🏠', art: 'hus' },
+  { word: 'bil', emoji: '🚗', art: 'bil' },
+  { word: 'bog', emoji: '📖', art: 'bog' },
+  { word: 'mus', emoji: '🐭', art: 'mus' },
+  { word: 'and', emoji: '🦆', art: 'and' },
+  { word: 'sko', emoji: '👟', art: 'sko' },
+  { word: 'hat', emoji: '🎩', art: 'hat' },
+  { word: 'ost', emoji: '🧀', art: 'ost' },
+  { word: 'tog', emoji: '🚂', art: 'tog' },
+  { word: 'bus', emoji: '🚌', art: 'bus' },
+  { word: 'ræv', emoji: '🦊', art: 'raev' },
+  { word: 'ged', emoji: '🐐', art: 'ged' },
+  { word: 'haj', emoji: '🦈', art: 'haj' },
+  { word: 'abe', emoji: '🐒', art: 'abe' },
+  { word: 'ski', emoji: '🎿', art: 'ski' }
 ]
 
 // Let (Overhaul §5.7/Appendix A): restrict the PROMPT word to the shortest (2-letter) entries —
@@ -51,7 +59,10 @@ const LaesOrdetGame: React.FC = () => {
     value: w.word,
     display: w.emoji,
     audioPrompt: w.word,
-    repeatWord: w.word
+    repeatWord: w.word,
+    // The option's baked soft-3D picture (§3.1 answer-tile art path); undefined until the art batch
+    // lands → the tile falls back to the `display` emoji, no code change.
+    art: ordlegArt(w.art)
   })
 
   // Anti-repeat guard (PRD-05 P4): remember the last few prompt words so the small Let pool doesn't
@@ -100,7 +111,9 @@ const LaesOrdetGame: React.FC = () => {
     title: 'Læs Ordet',
     emoji: '📖',
     teacherCharacter: 'owl',
-    theme: categoryThemes.ordleg,
+    // Live, skin-aware ordleg theme (§3.6) — the static `categoryThemes.ordleg` is bound to the kid
+    // tokens and would show kid-skin colours on Havet/Rummet/Dino.
+    theme: getCategoryTheme('ordleg'),
     backRoute: '/ordleg',
 
     ScoreChipComponent: OrdlegScoreChip,

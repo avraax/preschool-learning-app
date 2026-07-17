@@ -6,7 +6,7 @@ import { CategoryTheme } from '../../config/categoryThemes'
 import GameShell from './GameShell'
 import AnswerTile, { type AnswerTileState } from './AnswerTile'
 import PromptFocus from './PromptFocus'
-import { HeroEmoji, HeroArt } from './PromptStage'
+import { HeroEmoji, HeroArt, TileArt } from './PromptStage'
 import type { GuideReaction } from './ThemeMascot'
 import { useCelebration } from '../common/CelebrationEffect'
 import { useGameState } from '../../hooks/useGameState'
@@ -64,6 +64,12 @@ export interface QuizItem {
   // show an emoji + word and ask which letter it starts with). When present, the
   // quiz renders this above the answer grid instead of relying on audio alone.
   questionVisual?: { emoji?: string; word?: string; art?: string }
+  // Optional baked soft-3D picture rendered on THIS OPTION's answer tile (Liveliness PRD-10 §3.1) —
+  // distinct from `questionVisual.art`, which is the *prompt's* art. Used by Læs Ordet, whose answers
+  // ARE the pictures (the prompt is the word to read). When set the tile renders a <TileArt> instead
+  // of the glyph/emoji `display`; when absent (every other quiz) the tile renders `display` exactly as
+  // before — so this addition is inert for all non-Ordleg quizzes.
+  art?: string
 }
 
 // Configuration interface for the unified quiz
@@ -704,6 +710,12 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
                     // setFeedback re-renders on the same correct tap, so this reads the just-set ref.
                     disabled={isAdvancingRef.current}
                   >
+                    {/* Baked soft-3D picture answer (Læs Ordet — the answers ARE the pictures; §3.1);
+                        every other quiz leaves item.art unset → the glyph/emoji Typography below,
+                        byte-identical to before. */}
+                    {item.art ? (
+                      <TileArt src={item.art} />
+                    ) : (
                     <Typography
                       variant="h1"
                       component="span"
@@ -734,6 +746,7 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
                     >
                       {item.display}
                     </Typography>
+                    )}
                   </AnswerTile>
                 </motion.div>
               ))}

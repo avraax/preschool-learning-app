@@ -6,11 +6,13 @@ import {
 } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { Mic, MicOff } from 'lucide-react'
-import { categoryThemes } from '../../config/categoryThemes'
+import { getCategoryTheme } from '../../config/categoryThemes'
 import { stickerSetForSection } from '../../config/stickers'
 import { darken, hexToRgba } from '../../theme/tokens/helpers'
+import { softShadow, contactShadow } from '../../theme/depth'
 import GameShell from '../common/GameShell'
-import PromptStage from '../common/PromptStage'
+import { HeroArt } from '../common/PromptStage'
+import TactileTile from '../common/TactileTile'
 import RoundResultScreen from '../common/RoundResultScreen'
 import type { GuideReaction } from '../common/ThemeMascot'
 import { useCelebration } from '../common/CelebrationEffect'
@@ -25,6 +27,7 @@ import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 import { isIOS } from '../../utils/deviceDetection'
 import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 import { useSpeechInput, SpeechResult } from '../../hooks/useSpeechInput'
+import { ordlegArt } from '../../assets/games/ordleg'
 
 type Phase = 'idle' | 'recording' | 'processing' | 'spelling' | 'retry'
 
@@ -86,50 +89,74 @@ const MicHero: React.FC<MicHeroProps> = ({ phase, supported, isBusy, accent, dar
         height: '100%',
       }}
     >
-      <motion.div
-        animate={reduce ? undefined : recording ? { scale: [1, 1.1, 1] } : { scale: 1 }}
-        transition={reduce ? undefined : recording ? { duration: 1, repeat: Infinity, ease: 'easeInOut' } : { duration: 0.2 }}
-        style={{ display: 'inline-block' }}
-      >
+      {/* Orb zone: a grounded contact-shadow ellipse (the mic RESTS in the world, PRD-10 §3.5) sits
+          behind + beneath the clay orb. Static — the mic never idle-floats (the hold-to-talk gesture
+          relies on onPointerLeave = press-end, so any drift under a still finger would abort). */}
+      <Box sx={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <Box
-          role="button"
-          aria-label="Sig et ord"
-          onPointerDown={onPressStart}
-          onPointerUp={onPressEnd}
-          onPointerLeave={onPressEnd}
-          onPointerCancel={onPressEnd}
+          aria-hidden
           sx={{
-            width: 'clamp(88px, 24vh, 168px)',
-            height: 'clamp(88px, 24vh, 168px)',
-            // Phone landscape's whole stage is only ~85px tall (30% of a ~390px-tall body) — the
-            // waveform row is dropped there (below) so the mic alone owns the budget; measured via
-            // --measure to confirm it clears the frame (was overflowing top+bottom at 96px).
-            [PHONE_LANDSCAPE]: { width: 'clamp(52px, 16vh, 72px)', height: 'clamp(52px, 16vh, 72px)' },
-            borderRadius: '50%',
-            mx: 'auto',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: isBusy ? 'default' : 'pointer',
-            userSelect: 'none',
-            touchAction: 'none',
-            WebkitUserSelect: 'none',
-            WebkitTouchCallout: 'none',
-            background: recording
-              ? `radial-gradient(circle at 50% 40%, #FF8A80 0%, ${accent} 100%)`
-              : `linear-gradient(160deg, ${accent} 0%, ${darken(accent, 0.28)} 100%)`,
-            border: '6px solid white',
-            boxShadow: recording
-              ? `0 0 0 10px ${hexToRgba(accent, 0.3)}, 0 8px 24px rgba(0,0,0,0.25)`
-              : '0 8px 24px rgba(0,0,0,0.25)',
-            opacity: isBusy ? 0.6 : 1,
-            pointerEvents: isBusy ? 'none' : 'auto',
-            transition: 'background 0.2s ease, box-shadow 0.2s ease',
+            position: 'absolute',
+            left: '50%',
+            bottom: '-11%',
+            width: '78%',
+            height: '20%',
+            transform: 'translateX(-50%)',
+            background: contactShadow(recording ? '#FF6B6B' : accent, dark ? 1 : 0.9),
+            filter: 'blur(8px)',
+            pointerEvents: 'none',
+            zIndex: 0,
           }}
+        />
+        <motion.div
+          animate={reduce ? undefined : recording ? { scale: [1, 1.1, 1] } : { scale: 1 }}
+          transition={reduce ? undefined : recording ? { duration: 1, repeat: Infinity, ease: 'easeInOut' } : { duration: 0.2 }}
+          style={{ display: 'inline-block', position: 'relative', zIndex: 1 }}
         >
-          <Mic size={44} color="white" />
-        </Box>
-      </motion.div>
+          <Box
+            role="button"
+            aria-label="Sig et ord"
+            onPointerDown={onPressStart}
+            onPointerUp={onPressEnd}
+            onPointerLeave={onPressEnd}
+            onPointerCancel={onPressEnd}
+            sx={{
+              width: 'clamp(88px, 24vh, 168px)',
+              height: 'clamp(88px, 24vh, 168px)',
+              // Phone landscape's whole stage is only ~85px tall (30% of a ~390px-tall body) — the
+              // waveform row is dropped there (below) so the mic alone owns the budget; measured via
+              // --measure to confirm it clears the frame (was overflowing top+bottom at 96px).
+              [PHONE_LANDSCAPE]: { width: 'clamp(52px, 16vh, 72px)', height: 'clamp(52px, 16vh, 72px)' },
+              borderRadius: '50%',
+              mx: 'auto',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: isBusy ? 'default' : 'pointer',
+              userSelect: 'none',
+              touchAction: 'none',
+              WebkitUserSelect: 'none',
+              WebkitTouchCallout: 'none',
+              background: recording
+                ? `radial-gradient(circle at 50% 40%, #FF8A80 0%, ${accent} 100%)`
+                : `linear-gradient(160deg, ${accent} 0%, ${darken(accent, 0.28)} 100%)`,
+              border: '6px solid white',
+              // Clay depth (matches the tactile language): a layered softShadow drop-shadow + top
+              // inner-light highlight — NOT the old flat glossy `0 8px 24px`. The recording halo
+              // (the accent ring) stays as a boxShadow ring on top.
+              boxShadow: recording
+                ? `0 0 0 10px ${hexToRgba(accent, 0.3)}, inset 0 3px 5px rgba(255,255,255,0.45)`
+                : 'inset 0 3px 5px rgba(255,255,255,0.45)',
+              filter: softShadow(dark ? 1.7 : 1.4),
+              opacity: isBusy ? 0.6 : 1,
+              pointerEvents: isBusy ? 'none' : 'auto',
+              transition: 'background 0.2s ease, box-shadow 0.2s ease',
+            }}
+          >
+            <Mic size={44} color="white" />
+          </Box>
+        </motion.div>
+      </Box>
 
       {/* Live waveform — animated equalizer while recording; still row otherwise/reduced motion.
           Hidden on phone landscape: the ~85px stage there is already fully spent on the mic circle
@@ -200,6 +227,19 @@ const SpellBanner: React.FC<SpellBannerProps> = ({ word, letters, revealCount, a
     <Box sx={{ display: 'flex', gap: { xs: 1, md: 1.5 }, flexWrap: 'wrap', justifyContent: 'center', [PHONE_LANDSCAPE]: { gap: 0.5 } }}>
       {letters.map((letter, index) => {
         const revealed = index < revealCount
+        const glyph = (
+          <Typography
+            sx={{
+              fontSize: { xs: '1.6rem', sm: '1.9rem', md: '2.8rem' },
+              fontWeight: 700,
+              color: accent,
+              userSelect: 'none',
+              [PHONE_LANDSCAPE]: { fontSize: '1.05rem' },
+            }}
+          >
+            {letter}
+          </Typography>
+        )
         return (
           <motion.div
             key={`${word}-${index}`}
@@ -218,28 +258,31 @@ const SpellBanner: React.FC<SpellBannerProps> = ({ word, letters, revealCount, a
                 // Phone-landscape stage budget is only ~80px total; the mic-hero fix above showed
                 // this size class needs real margin, not a razor-edge fit — shrunk accordingly.
                 [PHONE_LANDSCAPE]: { width: 36, height: 36 },
-                borderRadius: '16px',
-                border: '3px solid',
-                borderColor: revealed ? accent : hexToRgba(accent, dark ? 0.55 : 0.34),
-                background: revealed ? 'linear-gradient(180deg, #FFFFFF 0%, #ECF1F8 100%)' : 'rgba(255,255,255,0.5)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: revealed
-                  ? `0 6px 0 ${darken(accent, 0.28)}, ${dark ? '0 10px 24px rgba(0,0,0,0.45)' : '0 7px 16px rgba(0,0,0,0.12)'}`
-                  : 'none',
               }}
             >
-              <Typography
-                sx={{
-                  fontSize: { xs: '1.6rem', sm: '1.9rem', md: '2.8rem' },
-                  fontWeight: 700,
-                  color: accent,
-                  [PHONE_LANDSCAPE]: { fontSize: '1.05rem' },
-                }}
-              >
-                {letter}
-              </Typography>
+              {/* Revealed letter = tactile clay display tile (TactileTile, non-interactive) — retires
+                  the old #ECF1F8 gradient + `0 6px 0` keyboard lip (PRD-10 §3.5). Unrevealed = a faint
+                  dashed placeholder (the letter shows dimmed via the parent motion opacity). The letter
+                  stays Comic Sans type. */}
+              {revealed ? (
+                <TactileTile interactive={false} accent={accent} variant="tile">
+                  {glyph}
+                </TactileTile>
+              ) : (
+                <Box
+                  sx={{
+                    width: '100%',
+                    height: '100%',
+                    borderRadius: '18px',
+                    border: `3px dashed ${hexToRgba(accent, dark ? 0.5 : 0.3)}`,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  {glyph}
+                </Box>
+              )}
             </Box>
           </motion.div>
         )
@@ -250,7 +293,9 @@ const SpellBanner: React.FC<SpellBannerProps> = ({ word, letters, revealCount, a
 
 const SpeakWordGame: React.FC = () => {
   const muiTheme = useTheme()
-  const theme = categoryThemes.ordleg
+  // Live, skin-aware ordleg theme (§3.6) — static `categoryThemes.ordleg` shows kid-skin colours on
+  // Havet/Rummet/Dino. Re-runs on skin change (muiTheme drives the re-render).
+  const theme = getCategoryTheme('ordleg')
   const reduce = useReducedMotion()
   const audio = useSimplifiedAudioHook({ componentId: 'SpeakWordGame', autoInitialize: false })
   const speech = useSpeechInput()
@@ -482,6 +527,15 @@ const SpeakWordGame: React.FC = () => {
 
   const isBusy = phase === 'processing' || phase === 'spelling'
   const letters = recognizedWord.toUpperCase().split('')
+  const dark = muiTheme.scene.dark
+  // Match-bloom (§3.5, owner decision §6.3): when the recognized word matches a known Ordleg
+  // word-picture, bloom that baked soft-3D object above the spelled letters — a "you said KAT!"
+  // payoff that fills the reveal. Art-gated: undefined until the batch lands → letters-only reveal.
+  // Fold the Danish glyphs to the ASCII art-id convention (æ→ae, ø→oe, å→aa) so æg/ræv/bær/løg/ål/sø
+  // also match their baked pictures (aeg/raev/…), consistent with the loader's filename aliases.
+  const bloomArt = ordlegArt(
+    recognizedWord.toLowerCase().replace(/æ/g, 'ae').replace(/ø/g, 'oe').replace(/å/g, 'aa'),
+  )
 
   return (
     <GameShell
@@ -494,18 +548,44 @@ const SpeakWordGame: React.FC = () => {
       celebration={{ show: showCelebration, intensity: celebrationIntensity, duration: celebrationDuration, onComplete: stopCelebration }}
       promptStage={
         roundOutcome ? undefined : (
-          <PromptStage accent={theme.accentColor}>
-            <MicHero
-              phase={phase}
-              supported={supported}
-              isBusy={isBusy}
-              accent={theme.accentColor}
-              dark={muiTheme.scene.dark}
-              reduce={reduce}
-              onPressStart={handlePressStart}
-              onPressEnd={handlePressEnd}
+          // The mic is grounded IN the calm world (PRD-10 §3.5) — a static light-pool beneath it,
+          // NO frosted PromptStage card. Deliberately NOT PromptFocus: its idle-float would drift the
+          // mic under a still finger (aborting the hold-to-talk gesture, which ends on onPointerLeave)
+          // and its per-phase chargeKey would remount MicHero mid-gesture (losing the getUserMedia
+          // pointer capture — the "never remounts mid-gesture" invariant). So: bespoke + static.
+          <Box sx={{ position: 'relative', width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            {/* Grounding light-pool — a warm pool of light the mic seats in (reused from PromptFocus:
+                warm-white core → accent edge; brighter on dark worlds). Static. */}
+            <Box
+              aria-hidden
+              sx={{
+                position: 'absolute',
+                left: '50%',
+                top: '52%',
+                transform: 'translate(-50%, -50%)',
+                width: 'clamp(180px, 34vh, 300px)',
+                height: 'clamp(180px, 34vh, 300px)',
+                borderRadius: '50%',
+                background: `radial-gradient(circle, ${hexToRgba('#FFFFFF', dark ? 0.32 : 0.5)} 0%, ${hexToRgba(theme.accentColor, 0.2)} 40%, ${hexToRgba(theme.accentColor, 0)} 70%)`,
+                filter: 'blur(12px)',
+                pointerEvents: 'none',
+                zIndex: 0,
+                [PHONE_LANDSCAPE]: { display: 'none' },
+              }}
             />
-          </PromptStage>
+            <Box sx={{ position: 'relative', zIndex: 1, width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <MicHero
+                phase={phase}
+                supported={supported}
+                isBusy={isBusy}
+                accent={theme.accentColor}
+                dark={dark}
+                reduce={reduce}
+                onPressStart={handlePressStart}
+                onPressEnd={handlePressEnd}
+              />
+            </Box>
+          </Box>
         )
       }
     >
@@ -550,44 +630,79 @@ const SpeakWordGame: React.FC = () => {
               initial={reduce ? false : { opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={reduce ? { duration: 0 } : CHARGE}
-              style={{ width: '100%', display: 'flex', justifyContent: 'center' }}
+              style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '12px', minHeight: 0 }}
             >
+              {/* Match-bloom: the baked soft-3D object for the recognized word blooms above the
+                  spelled letters (§3.5). A HeroArt on its own light-pool. Art-gated (absent → the
+                  letters alone). Hidden on phone-landscape, where the body budget is spent on the
+                  banner. */}
+              {bloomArt && (
+                <Box
+                  component={motion.div}
+                  initial={reduce ? false : { opacity: 0, scale: 0.7 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={reduce ? { duration: 0 } : POP}
+                  sx={{
+                    position: 'relative',
+                    flex: '0 1 auto',
+                    minHeight: 0,
+                    maxHeight: '42%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    [PHONE_LANDSCAPE]: { display: 'none' },
+                  }}
+                >
+                  <Box
+                    aria-hidden
+                    sx={{
+                      position: 'absolute',
+                      left: '50%',
+                      top: '52%',
+                      transform: 'translate(-50%, -50%)',
+                      width: '150%',
+                      height: '150%',
+                      borderRadius: '50%',
+                      background: `radial-gradient(circle, ${hexToRgba('#FFFFFF', dark ? 0.3 : 0.5)} 0%, ${hexToRgba(theme.accentColor, 0.18)} 42%, ${hexToRgba(theme.accentColor, 0)} 70%)`,
+                      filter: 'blur(12px)',
+                      pointerEvents: 'none',
+                      zIndex: 0,
+                    }}
+                  />
+                  <Box sx={{ position: 'relative', zIndex: 1, display: 'flex', minHeight: 0 }}>
+                    <HeroArt src={bloomArt} />
+                  </Box>
+                </Box>
+              )}
               <SpellBanner
                 word={recognizedWord}
                 letters={letters}
                 revealCount={revealCount}
                 accent={theme.accentColor}
-                dark={muiTheme.scene.dark}
+                dark={dark}
                 reduce={reduce}
               />
             </motion.div>
           ) : (
-            <>
-              <Typography
-                sx={{
-                  fontSize: { xs: '1.15rem', md: '1.5rem' },
-                  fontWeight: 700,
-                  textAlign: 'center',
-                  // White on dark immersive scenes (accent teal is too dim there).
-                  color: muiTheme.scene.dark ? '#FFFFFF' : theme.accentColor,
-                }}
-              >
-                {phase === 'idle' && 'Hold knappen og sig et ord!'}
-                {phase === 'recording' && 'Jeg lytter…'}
-                {phase === 'processing' && 'Lad mig tænke…'}
-                {phase === 'retry' && 'Det hørte jeg ikke helt – prøv igen!'}
-              </Typography>
-              <Typography
-                sx={{
-                  color: muiTheme.scene.dark ? 'rgba(255,255,255,0.8)' : 'text.secondary',
-                  fontSize: { xs: '0.9rem', md: '1.05rem' },
-                  fontWeight: 600,
-                  textAlign: 'center',
-                }}
-              >
-                Hold knappen nede mens du taler
-              </Typography>
-            </>
+            // Idle/recording/processing/retry: the grounded mic hero (in the focal zone above) is the
+            // obvious focus, so the body carries a single warm instruction — no second dim line (§3.5).
+            // Open-ended: never suggest a specific word.
+            <Typography
+              sx={{
+                fontSize: { xs: '1.25rem', md: '1.6rem' },
+                fontWeight: 700,
+                textAlign: 'center',
+                px: 2,
+                // White on dark immersive scenes (accent teal is too dim there).
+                color: dark ? '#FFFFFF' : theme.accentColor,
+                textShadow: dark ? '0 2px 10px rgba(0,0,0,0.5)' : 'none',
+              }}
+            >
+              {phase === 'idle' && 'Hold knappen og sig et ord!'}
+              {phase === 'recording' && 'Jeg lytter…'}
+              {phase === 'processing' && 'Lad mig tænke…'}
+              {phase === 'retry' && 'Det hørte jeg ikke helt – prøv igen!'}
+            </Typography>
           )}
         </Box>
       )}

@@ -135,3 +135,30 @@ export const HeroArt: React.FC<{ src: string; alt?: string }> = ({ src, alt = ''
     }}
   />
 )
+
+// The tile-scaled sibling of HeroArt (Liveliness PRD-10 §3.1): a soft-3D WebP subject sized to fill
+// a quiz ANSWER tile with padding. Used by Læs Ordet, where the prompt is the WORD (glyph) and the
+// *answers* are the pictures — the inverse of every other quiz, whose answers are glyphs. It rests
+// inside the TactileTile clay surface as the tile's content (the tile is the grounded pressable; this
+// is just what sits on it), so it carries only a gentle softShadow, no light-pool/contact of its own.
+// Decorative (the picture is the choice, spoken on tap) → aria-hidden + non-interactive.
+export const TileArt: React.FC<{ src: string; alt?: string }> = ({ src, alt = '' }) => (
+  <Box
+    component="img"
+    src={src}
+    alt={alt}
+    aria-hidden={alt === '' ? true : undefined}
+    draggable={false}
+    sx={{
+      height: 'clamp(2.6rem, 12vh, 5rem)',
+      width: 'auto',
+      maxWidth: '100%',
+      maxHeight: '100%',
+      objectFit: 'contain',
+      userSelect: 'none',
+      pointerEvents: 'none',
+      filter: softShadow(1),
+      [PHONE_LANDSCAPE]: { height: 'clamp(2rem, 20vh, 3.2rem)' },
+    }}
+  />
+)
