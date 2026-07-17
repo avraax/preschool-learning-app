@@ -4,10 +4,11 @@ import { Box, Typography } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { getCategoryTheme } from '../../config/categoryThemes'
 import { SHADES, HUE_ORDER, COLOR_SWATCH, DANISH_OBJECTS, spokenColor } from '../../config/colorContent'
-import { darken, hexToRgba } from '../../theme/tokens/helpers'
+import { hexToRgba } from '../../theme/tokens/helpers'
 import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 import GameShell from '../common/GameShell'
-import PromptStage from '../common/PromptStage'
+import PromptFocus from '../common/PromptFocus'
+import ObjectArt from './farverArt'
 import { useCelebration } from '../common/CelebrationEffect'
 import { useBrowseXp } from '../../hooks/useBrowseXp'
 import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
@@ -86,11 +87,12 @@ const FarverLearning: React.FC = () => {
   const shades = SHADES[currentHue] ?? []
   const examples = (DANISH_OBJECTS[currentHue] ?? []).slice(0, 4)
 
-  // Lifted-3D color card (mirrors AnswerTile depth, but the surface IS the color).
+  // PRD-09 §3.0 colour-surface grounding: a soft accent-tinted clay shadow (no hard keyboard lip);
+  // the card fill stays the true educational hex.
   const colorCardShadow = (hex: string, active: boolean) =>
     active
-      ? `0 0 0 4px ${hexToRgba(hex, 0.5)}, 0 6px 0 ${darken(hex, 0.28)}, ${dark ? '0 10px 24px rgba(0,0,0,0.5)' : '0 8px 18px rgba(0,0,0,0.15)'}`
-      : `0 6px 0 ${darken(hex, 0.28)}, ${dark ? '0 10px 24px rgba(0,0,0,0.45)' : '0 7px 16px rgba(0,0,0,0.12)'}`
+      ? `0 0 0 4px ${hexToRgba(hex, 0.5)}, 0 8px 20px ${hexToRgba(hex, 0.38)}, 0 3px 8px rgba(0,0,0,0.14)`
+      : `0 8px 20px ${hexToRgba(hex, dark ? 0.5 : 0.3)}, 0 3px 8px rgba(0,0,0,${dark ? 0.4 : 0.12})`
 
   return (
     <GameShell
@@ -101,11 +103,11 @@ const FarverLearning: React.FC = () => {
       guide={false}
       celebration={{ show: showCelebration, intensity: celebrationIntensity, duration: celebrationDuration, onComplete: stopCelebration }}
       promptStage={
-        // Selected hue blooms with its name + shade trio + example objects (§6C). PromptStage's own
-        // chargeKey gives the gentle charge-in on every new hue (reduced-motion parity built in).
+        // Selected hue blooms with its name + shade trio + example objects, now RESTING in the
+        // frozen world via PromptFocus (no frosted card). chargeKey gives the charge-in per hue.
         // Educational color hexes stay DATA (colorContent.ts) — only label text uses the themed
         // accent for guaranteed contrast; every swatch/shade/object keeps its true hex.
-        <PromptStage accent={t.accentColor} chargeKey={currentHue}>
+        <PromptFocus accent={t.accentColor} chargeKey={currentHue} subject={
           <Box
             sx={{
               display: 'flex',
@@ -180,31 +182,26 @@ const FarverLearning: React.FC = () => {
             <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 0.75, md: 1.25 }, [PHONE_LANDSCAPE]: { display: 'none' } }}>
               {examples.map((obj) => (
                 <motion.div key={obj.objectName} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                  {/* PRD-09: baked example object resting in the world (no #ECF1F8 holder). */}
                   <Box
                     onClick={() => tapSpeak(`obj-${currentHue}-${obj.objectName}`, `${obj.objectNameDefinite} er ${spokenColor(currentHue, obj.neuter)}`)}
                     sx={{
-                      width: { xs: 40, md: 48 },
-                      height: { xs: 40, md: 48 },
-                      [PHONE_LANDSCAPE]: { width: 36, height: 36 },
-                      borderRadius: '12px',
+                      width: { xs: 44, md: 54 },
+                      height: { xs: 44, md: 54 },
+                      [PHONE_LANDSCAPE]: { width: 38, height: 38 },
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       cursor: 'pointer',
-                      background: 'linear-gradient(180deg, #FFFFFF 0%, #ECF1F8 100%)',
-                      border: `2px solid ${hexToRgba(t.accentColor, dark ? 0.55 : 0.32)}`,
-                      boxShadow: dark ? '0 6px 16px rgba(0,0,0,0.45)' : '0 5px 12px rgba(0,0,0,0.12)'
                     }}
                   >
-                    <Typography sx={{ fontSize: { xs: '1.35rem', md: '1.7rem' }, lineHeight: 1, userSelect: 'none' }}>
-                      {obj.emoji}
-                    </Typography>
+                    <ObjectArt art={obj.art} emoji={obj.emoji} size="100%" elevation={1} alt={obj.objectName} />
                   </Box>
                 </motion.div>
               ))}
             </Box>
           </Box>
-        </PromptStage>
+        } />
       }
     >
       {/* Color picker grid — tap a color to explore it. Centred within the answer zone beneath the

@@ -10,11 +10,11 @@ import { DroppableZone } from '../common/dnd/DroppableZone'
 import { getCategoryTheme } from '../../config/categoryThemes'
 import { stickerSetForSection } from '../../config/stickers'
 import { SHADES, HUE_ORDER, type ColorShade } from '../../config/colorContent'
-import { darken, hexToRgba } from '../../theme/tokens/helpers'
+import { hexToRgba } from '../../theme/tokens/helpers'
 import { SNAP } from '../../theme/motion'
 import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 import GameShell from '../common/GameShell'
-import PromptStage from '../common/PromptStage'
+import PromptFocus from '../common/PromptFocus'
 import RoundResultScreen from '../common/RoundResultScreen'
 import type { GuideReaction } from '../common/ThemeMascot'
 import { useCelebration } from '../common/CelebrationEffect'
@@ -316,12 +316,16 @@ const NuancerGame: React.FC = () => {
     borderRadius: '16px'
   } as const
 
+  // PRD-09 §3.0 colour-surface grounding: soft accent-tinted clay shadow (no hard keyboard lip);
+  // the tile fill stays the true educational shade hex.
   const liftedShadow = (hex: string) =>
-    `0 5px 0 ${darken(hex, 0.28)}, ${muiTheme.scene.dark ? '0 10px 24px rgba(0,0,0,0.45)' : '0 7px 16px rgba(0,0,0,0.12)'}`
+    muiTheme.scene.dark
+      ? `0 8px 22px ${hexToRgba(hex, 0.5)}, 0 3px 8px rgba(0,0,0,0.4)`
+      : `0 8px 20px ${hexToRgba(hex, 0.35)}, 0 3px 8px rgba(0,0,0,0.12)`
 
-  // Bigger, raised shadow for the currently-grabbed tray tile (§6C shared drag juice).
+  // Bigger, raised soft shadow for the currently-grabbed tray tile (lift toward the camera).
   const grabShadow = (hex: string) =>
-    `0 3px 0 ${darken(hex, 0.32)}, 0 18px 30px rgba(0,0,0,${muiTheme.scene.dark ? 0.55 : 0.3}), 0 0 0 4px rgba(255,255,255,0.6)`
+    `0 16px 28px ${hexToRgba(hex, 0.45)}, 0 6px 14px rgba(0,0,0,${muiTheme.scene.dark ? 0.5 : 0.3})`
 
   // Forced ?fx= states (DEV screenshot harness) — pure render-time overrides layered on the real
   // state, never mutating it. 'correct' fills every slot from the real answer (shows SNAP + the
@@ -338,11 +342,11 @@ const NuancerGame: React.FC = () => {
   // not the `previousHue` ref, so it's safe to read during render).
   const promptStageContent =
     roundOutcome || !gameReady || order.length === 0 ? undefined : (
-      <PromptStage
+      <PromptFocus
         accent={t.accentColor}
         chargeKey={`${order[0]?.hex ?? ''}-${round.state.index}`}
         repeat={phoneLandscape ? undefined : <ColorRepeatButton onClick={repeatInstruction} disabled={false} label="🎵 Hør igen" />}
-      >
+        subject={
         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: { xs: 1, md: 1.5 }, width: '100%', [PHONE_LANDSCAPE]: { gap: 0.25 } }}>
           {/* Slot row (drop targets): left = lightest, right = darkest. */}
           <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: { xs: 1, md: 1.5 }, [PHONE_LANDSCAPE]: { gap: 0.5 } }}>
@@ -423,7 +427,8 @@ const NuancerGame: React.FC = () => {
             <Typography sx={{ fontSize: '1.3rem', lineHeight: 1 }}>🌙</Typography>
           </Box>
         </Box>
-      </PromptStage>
+        }
+      />
     )
 
   // Live difficulty: rebuild the current question when the level changes in the adult menu (no

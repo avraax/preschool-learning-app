@@ -467,8 +467,6 @@ const RamFarvenGame: React.FC = () => {
   // Pot fill: the blended colour while committing, else a neutral wash.
   const potFill = displayBlendResult ? displayBlendResult.hex : 'rgba(255, 255, 255, 0.4)'
   const isOverPot = overId === 'mixing-zone'
-  // Token-driven framed-board surface (mirrors Farvejagt); educational hexes stay as data.
-  const boardBg = muiTheme.scene.dark ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.5)'
   const comicFont = '"Comic Sans MS", "Comic Neue", sans-serif'
   // Goal swatch + pot share ONE size so the two circles read as a balanced pair and line up on the
   // same centre line (smaller in landscape so the goal→pot row AND the droplet tray fit with no
@@ -524,17 +522,14 @@ const RamFarvenGame: React.FC = () => {
             <ColorRepeatButton onClick={repeatInstructions} disabled={false} label="🎵 Hør igen" />
           </Box>
 
-          {/* Framed play board (mirrors Farvejagt): a contained stage that fills the remaining
-              space so the goal→pot row and the droplet tray are always balanced and never scroll. */}
+          {/* PRD-09: NO framed panel — the mixing bench sits directly on the calm frozen world (F3).
+              A transparent stage that fills the remaining space so the goal→pot row and the droplet
+              tray stay balanced and never scroll. */}
           <Box
             sx={{
               flex: 1,
               position: 'relative',
-              backgroundColor: boardBg,
-              borderRadius: 4,
-              border: `3px solid ${t.borderColor}`,
-              boxShadow: muiTheme.customShadows?.card ?? 3,
-              overflow: 'hidden',
+              overflow: 'visible',
               minHeight: 0,
               display: 'flex',
               flexDirection: 'column',
@@ -580,18 +575,30 @@ const RamFarvenGame: React.FC = () => {
                     animate={{ scale: 1, opacity: 1 }}
                     transition={{ duration: 0.4 }}
                   >
-                    <Box
-                      onClick={speakTargetColor}
-                      sx={{
-                        ...circleSizeSx,
-                        borderRadius: '50%',
-                        backgroundColor: targetColor.hex,
-                        backgroundImage: 'linear-gradient(160deg, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0) 45%)',
-                        border: '4px solid white',
-                        cursor: 'pointer',
-                        boxShadow: muiTheme.customShadows?.card ?? '0 4px 16px rgba(0,0,0,0.2)'
-                      }}
-                    />
+                    {/* PRD-09: the goal you can't miss — a grounding light-pool behind the swatch +
+                        a prominent accent-tinted contact shadow so it clearly reads "make THIS". */}
+                    <Box sx={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <Box aria-hidden sx={{
+                        position: 'absolute', left: '50%', top: '52%', transform: 'translate(-50%, -50%)',
+                        width: '156%', height: '156%', borderRadius: '50%',
+                        background: `radial-gradient(circle, ${hexToRgba('#FFFFFF', muiTheme.scene.dark ? 0.3 : 0.55)} 0%, ${hexToRgba(targetColor.hex, 0.24)} 44%, ${hexToRgba(targetColor.hex, 0)} 70%)`,
+                        filter: 'blur(12px)', pointerEvents: 'none', zIndex: 0,
+                      }} />
+                      <Box
+                        onClick={speakTargetColor}
+                        sx={{
+                          ...circleSizeSx,
+                          position: 'relative',
+                          zIndex: 1,
+                          borderRadius: '50%',
+                          backgroundColor: targetColor.hex,
+                          backgroundImage: 'linear-gradient(160deg, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0) 45%)',
+                          border: '4px solid white',
+                          cursor: 'pointer',
+                          boxShadow: `0 12px 28px ${hexToRgba(targetColor.hex, 0.42)}, 0 4px 10px rgba(0,0,0,0.18)`
+                        }}
+                      />
+                    </Box>
                   </motion.div>
                   <Box sx={{
                     px: 1.25, py: 0.25, borderRadius: 999,
@@ -897,8 +904,9 @@ const RamFarvenGame: React.FC = () => {
                     alignItems: 'center',
                     justifyContent: 'center',
                     zIndex: 6,
-                    background: muiTheme.scene.dark ? 'rgba(0,0,0,0.45)' : 'rgba(255,255,255,0.5)',
-                    backdropFilter: 'blur(3px)'
+                    // PRD-09: no backdrop-filter (retired frosted idiom + flicker rule) — a plain
+                    // opaque-enough wash instead so the reveal still pops.
+                    background: muiTheme.scene.dark ? 'rgba(8,11,26,0.62)' : 'rgba(255,255,255,0.72)'
                   }}
                 >
                   <motion.div

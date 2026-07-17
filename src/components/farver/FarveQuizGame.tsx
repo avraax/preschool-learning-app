@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
-import { Box, Typography } from '@mui/material'
+import { Box } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { DndContext, DragEndEvent, DragStartEvent } from '@dnd-kit/core'
 import { useDragOnlySensors } from '../common/dnd/useDragOnlySensors'
@@ -10,7 +10,7 @@ import { DroppableZone } from '../common/dnd/DroppableZone'
 import { getCategoryTheme } from '../../config/categoryThemes'
 import { stickerSetForSection } from '../../config/stickers'
 import { DANISH_OBJECTS, COLOR_SWATCH, HUE_ORDER, spokenColor } from '../../config/colorContent'
-import { darken, hexToRgba } from '../../theme/tokens/helpers'
+import { hexToRgba } from '../../theme/tokens/helpers'
 import { SNAP } from '../../theme/motion'
 import GameShell from '../common/GameShell'
 import RoundResultScreen from '../common/RoundResultScreen'
@@ -29,6 +29,7 @@ import { shuffle } from '../../utils/shuffle'
 import { devFx } from '../../utils/devHarness'
 import { useNeverFailHint } from '../../hooks/useNeverFailHint'
 import { useDragActive } from '../common/dnd/useDragActive'
+import ObjectArt from './farverArt'
 import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 
 // Hvilken Farve? — drag an object onto the matching COLOR. Tests object→color association and
@@ -44,7 +45,7 @@ const ROUND_QUESTIONS = 8
 const WRONG_BEFORE_HINT = 2
 const OPTION_COUNT = 4 // NORMAL baseline (today, unchanged) — difficulty below adjusts Let/Svær
 
-interface QuizObject { color: string; objectName: string; objectNameDefinite: string; emoji: string; neuter: boolean }
+interface QuizObject { color: string; objectName: string; objectNameDefinite: string; emoji: string; art?: string; neuter: boolean }
 
 // Only quiz-safe objects: emoji whose color the child can actually read off the picture. Objects
 // flagged quizSafe:false in colorContent (⚽/👒/☁️/🌸) are excluded so the child is never scored
@@ -57,6 +58,7 @@ const OBJECT_POOL: QuizObject[] = HUE_ORDER.flatMap((color) =>
       objectName: o.objectName,
       objectNameDefinite: o.objectNameDefinite,
       emoji: o.emoji,
+      art: o.art,
       neuter: o.neuter
     }))
 )
@@ -266,8 +268,12 @@ const FarveQuizGame: React.FC = () => {
     audio.speak(promptFor(current)).catch(() => {})
   }
 
+  // PRD-09 §3.0 colour-surface grounding: soft accent-tinted clay shadow (no hard keyboard lip);
+  // the swatch fill stays the true educational hex.
   const liftedShadow = (hex: string) =>
-    `0 5px 0 ${darken(hex, 0.28)}, ${muiTheme.scene.dark ? '0 10px 24px rgba(0,0,0,0.45)' : '0 7px 16px rgba(0,0,0,0.12)'}`
+    muiTheme.scene.dark
+      ? `0 8px 22px ${hexToRgba(hex, 0.5)}, 0 3px 8px rgba(0,0,0,0.4)`
+      : `0 8px 20px ${hexToRgba(hex, 0.35)}, 0 3px 8px rgba(0,0,0,0.12)`
 
   const isLiftedObject = activeId === 'object'
 
@@ -341,25 +347,20 @@ const FarveQuizGame: React.FC = () => {
                         : reduce ? undefined : { duration: 1.6, repeat: Infinity, ease: 'easeInOut' }
                     }
                   >
+                    {/* PRD-09: the object is a baked soft-3D thing resting in the world (no #ECF1F8
+                        holder, no border, no lip). Its true colour reads off the art; the child drags
+                        it onto the matching swatch. */}
                     <Box sx={{
                       width: { xs: 92, md: 112 },
                       height: { xs: 92, md: 112 },
                       '@media (orientation: landscape)': { width: 80, height: 80 },
-                      borderRadius: '20px',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       cursor: 'grab',
-                      background: 'linear-gradient(180deg, #FFFFFF 0%, #ECF1F8 100%)',
-                      border: `3px solid ${hexToRgba(t.accentColor, muiTheme.scene.dark ? 0.55 : 0.34)}`,
-                      boxShadow: isLiftedObject
-                        ? `0 20px 34px rgba(0,0,0,${muiTheme.scene.dark ? 0.55 : 0.32}), 0 0 0 4px rgba(255,255,255,0.65)`
-                        : `0 6px 0 ${darken(t.accentColor, 0.28)}, ${muiTheme.scene.dark ? '0 10px 24px rgba(0,0,0,0.45)' : '0 8px 18px rgba(0,0,0,0.14)'}`,
                       '&:active': { cursor: 'grabbing' }
                     }}>
-                      <Typography sx={{ fontSize: { xs: '3rem', md: '3.6rem' }, lineHeight: 1, userSelect: 'none' }}>
-                        {current.emoji}
-                      </Typography>
+                      <ObjectArt art={current.art} emoji={current.emoji} size="100%" elevation={isLiftedObject ? 3 : 1} alt={current.objectName} />
                     </Box>
                   </motion.div>
                 </DraggableItem>
@@ -445,9 +446,7 @@ const FarveQuizGame: React.FC = () => {
                           animate={{ scale: 1, opacity: 1 }}
                           transition={reduce ? { duration: 0 } : SNAP}
                         >
-                          <Typography sx={{ fontSize: { xs: '2.4rem', md: '3rem' }, lineHeight: 1, userSelect: 'none' }}>
-                            {current.emoji}
-                          </Typography>
+                          <ObjectArt art={current.art} emoji={current.emoji} size={64} elevation={2} alt={current.objectName} />
                         </motion.div>
                       )}
                     </DroppableZone>

@@ -12,7 +12,6 @@ import { useCelebration } from '../common/CelebrationEffect'
 import { ColorRepeatButton } from '../common/RepeatButton'
 import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 import { ColorProgressChip } from '../common/ScoreChip'
-import { getCategoryTheme } from '../../config/categoryThemes'
 import { stickerSetForSection } from '../../config/stickers'
 import { useRound } from '../../hooks/useRound'
 import { progressStore, type RoundOutcome } from '../../services/progressStore'
@@ -28,6 +27,7 @@ import { shuffle } from '../../utils/shuffle'
 import { useNeverFailHint } from '../../hooks/useNeverFailHint'
 import { useDragActive } from '../common/dnd/useDragActive'
 import { DANISH_OBJECTS, COLOR_TARGETS, COLOR_SWATCH, spokenColor } from '../../config/colorContent'
+import ObjectArt from './farverArt'
 // Simplified audio system
 import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 
@@ -47,6 +47,7 @@ interface GameItem {
   objectName: string
   objectNameDefinite: string
   emoji: string
+  art?: string
   hex: string
   neuter: boolean
   isTarget: boolean
@@ -71,7 +72,6 @@ const ringSlotPx = (slot: number, total: number, radius: number) => {
 const FarvejagtGame: React.FC = () => {
   const muiTheme = useTheme()
   const reduce = useReducedMotion()
-  const t = getCategoryTheme('colors')
   const sensors = useDragOnlySensors()
 
   // Game state
@@ -217,6 +217,7 @@ const FarvejagtGame: React.FC = () => {
       objectName: obj.objectName,
       objectNameDefinite: obj.objectNameDefinite,
       emoji: obj.emoji,
+      art: obj.art,
       hex: obj.hex,
       neuter: obj.neuter,
       isTarget: obj.isTarget,
@@ -460,9 +461,6 @@ const FarvejagtGame: React.FC = () => {
   const burstPos = burstAt ? ringSlotPx(burstAt.slot, totalTarget, RING_RADIUS) : null
   const isOverWell = overId === 'target-zone'
 
-  // Token-driven board surface (educational color hexes stay as data; chrome reads from theme).
-  const boardBg = muiTheme.scene.dark ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.5)'
-
   // Live difficulty: rebuild the current board when the level changes in the adult menu (no
   // refresh). Skips the result screen + the initial mount.
   const difficultyLevel = useDifficulty('colors')
@@ -550,16 +548,13 @@ const FarvejagtGame: React.FC = () => {
           </Box>
           </Box>
 
-          {/* Game area */}
+          {/* Game area — PRD-09: NO framed board. The objects rest directly on the calm frozen
+              world (F3); the container is transparent and just anchors the absolute scatter. */}
           <Box
             sx={{
               flex: 1,
               position: 'relative',
-              backgroundColor: boardBg,
-              borderRadius: 4,
-              border: `3px solid ${t.borderColor}`,
-              boxShadow: muiTheme.customShadows?.card ?? 3,
-              overflow: 'hidden',
+              overflow: 'visible',
               minHeight: 0
             }}
           >
@@ -676,16 +671,13 @@ const FarvejagtGame: React.FC = () => {
                           height: COLLECTED_SIZE,
                           marginLeft: -COLLECTED_SIZE / 2,
                           marginTop: -COLLECTED_SIZE / 2,
-                          borderRadius: 10,
-                          backgroundColor: item.hex,
-                          border: '2px solid white',
-                          boxShadow: '0 3px 10px rgba(0,0,0,0.25)',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
                         }}
                       >
-                        <Typography sx={{ fontSize: '1.5rem', lineHeight: 1, userSelect: 'none' }}>{item.emoji}</Typography>
+                        {/* Collected: the baked object rests in its ring slot (no hex tile). */}
+                        <ObjectArt art={item.art} emoji={item.emoji} size={COLLECTED_SIZE} elevation={1} alt={item.objectName} />
                       </motion.div>
                     )
                   })}
@@ -743,33 +735,26 @@ const FarvejagtGame: React.FC = () => {
                       transition={tileTransition}
                       style={{ width: 80, height: 80, transformOrigin: '0 0' }}
                     >
+                      {/* PRD-09: a baked object RESTING in the world — no hex tile, no border, no
+                          keyboard lip. Depth comes from ObjectArt's softShadow; the hint adds an
+                          accent glow, the lift raises the shadow. */}
                       <Box
                         sx={{
                           width: 80,
                           height: 80,
-                          backgroundColor: item.hex,
-                          borderRadius: 2,
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          boxShadow: isLifted
-                            ? `0 20px 34px rgba(0,0,0,${muiTheme.scene.dark ? 0.55 : 0.3}), 0 0 0 4px rgba(255,255,255,0.6)`
-                            : isHint
-                              ? `0 0 0 5px ${targetHex}88, 0 4px 12px rgba(0,0,0,0.25)`
-                              : 3,
-                          border: '2px solid white',
                           transform: 'translate(-50%, -50%)',
-                          transition: 'box-shadow 0.3s ease',
                           animation: item.returning ? 'farvejagt-shake 0.5s' : undefined,
                           cursor: 'grab',
+                          filter: isHint && !reduce ? `drop-shadow(0 0 10px ${targetHex})` : undefined,
                           '&:hover': {
                             transform: !item.returning ? 'translate(-50%, -50%) scale(1.05)' : 'translate(-50%, -50%)',
                           }
                         }}
                       >
-                        <Typography sx={{ fontSize: '2.5rem', lineHeight: 1, userSelect: 'none' }}>
-                          {item.emoji}
-                        </Typography>
+                        <ObjectArt art={item.art} emoji={item.emoji} size={80} elevation={isLifted ? 3 : 1} alt={item.objectName} />
                       </Box>
                     </motion.div>
                   </DraggableItem>
