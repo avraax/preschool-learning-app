@@ -37,7 +37,11 @@ instantly recognisable, no fine detail that turns to mush when tiny.
    all ids are ASCII (no Æ/Ø/Å aliasing needed). Then hand me the folder and I key + convert to `≤40 KB` WebP and wire
    it in (auto-registers, no code change).
 
-5. **If a render adds an extra element** (a second floating object, a bar/rod, a prop, a background shape — Gemini does
+5. **Check the FULL frame before trusting a render.** Gemini's in-chat preview fits/crops the image, so a stray element
+   near the top edge or a corner can be invisible in the chat bubble but present in the downloaded PNG. **Click the image
+   to open it full-size (or zoom) and scan the whole square** — the top edge + corners especially — *before* downloading.
+   (The small **✦ sparkle** is Google's export marker added on download, not part of the render; keying removes it.)
+6. **If a render adds an extra element** (a second floating object, a bar/rod, a prop, a background shape — Gemini does
    this stochastically even though every prompt says "single isolated subject"): **just regenerate first** (a re-roll
    usually comes back clean). If it persists after ~2 re-rolls, append this clause to that prompt:
    > *ABSOLUTELY NOTHING ELSE in the frame — no second object, no props, no floating shapes, no bars or rods, no background elements. ONLY the [subject] and the flat green background.*
