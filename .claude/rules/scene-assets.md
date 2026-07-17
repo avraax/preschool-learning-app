@@ -39,6 +39,11 @@ manifest/subject choices with the owner first, and save it in the relevant plan 
   it out when it is. (This is the implementer's call.)
 - **Output + naming:** `#00FF00`, square, highest res, PNG; owner names each file by its content id
   (letter / object id), using ASCII aliases for filesystem-awkward glyphs (`AE`/`OE`/`AA` for Æ/Ø/Å).
+- **Download gotcha (tell the owner):** save via **right-click → "Save image as…", NOT the download button
+  embedded on the image** — the embedded button exports a *processed/branded* copy that stamps the ✦
+  sparkle marker and can composite in stray extra elements (a floating bar/blob, framing) absent from the
+  render. This is the "elements got added on download" mystery; right-click grabs the clean rendered PNG.
+  (Also: Gemini's in-chat preview crops, so verify the render full-size, not from the chat thumbnail.)
 - **Hand-back:** the owner drops a folder path. Gemini filenames are random hashes, so identify each
   subject visually (a `sharp` contact-sheet montage of the folder helps), map to ids, then key (below).
 

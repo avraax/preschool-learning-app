@@ -32,22 +32,21 @@ instantly recognisable, no fine detail that turns to mush when tiny.
 2. **After your first object looks right, also attach that render** as a reference for the rest — keeps scale/lighting
    consistent across the set. (Or generate them all in one Gemini chat so it remembers the style.)
 3. **Output:** one flat solid `#00FF00` green background filling the frame, single centered subject, square 1:1,
-   highest resolution offered. Download as PNG.
-4. **Naming:** save/rename each download to its **art id** (the id column in PRD-09 §4) so it places deterministically —
+   highest resolution offered.
+4. **⚠️ DOWNLOAD via right-click → "Save image as…", NOT the download button embedded on the image.** The embedded
+   button exports a *processed/branded* version — it stamps the ✦ sparkle marker and can composite in stray extra
+   elements (a floating bar/blob, framing). Right-click → Save grabs the actual rendered PNG, which is clean. (This was
+   the mystery "elements added on download" — it was the export button, not the render.)
+5. **Naming:** save/rename each download to its **art id** (the id column in PRD-09 §4) so it places deterministically —
    all ids are ASCII (no Æ/Ø/Å aliasing needed). Then hand me the folder and I key + convert to `≤40 KB` WebP and wire
    it in (auto-registers, no code change).
-
-5. **Check the FULL frame before trusting a render.** Gemini's in-chat preview fits/crops the image, so a stray element
-   near the top edge or a corner can be invisible in the chat bubble but present in the downloaded PNG. **Click the image
-   to open it full-size (or zoom) and scan the whole square** — the top edge + corners especially — *before* downloading.
-   (The small **✦ sparkle** is Google's export marker added on download, not part of the render; keying removes it.)
-6. **If a render adds an extra element** (a second floating object, a bar/rod, a prop, a background shape — Gemini does
-   this stochastically even though every prompt says "single isolated subject"): **just regenerate first** (a re-roll
-   usually comes back clean). If it persists after ~2 re-rolls, append this clause to that prompt:
+6. **If the render ITSELF is off** (a genuine second object in the generated image, wrong colour, mangled subject —
+   visible in the full-size chat preview, not just the export): regenerate (Gemini is stochastic — a re-roll usually
+   comes back clean). If an extra object persists after ~2 re-rolls, append this clause to that prompt:
    > *ABSOLUTELY NOTHING ELSE in the frame — no second object, no props, no floating shapes, no bars or rods, no background elements. ONLY the [subject] and the flat green background.*
-   The small **✦ sparkle watermark** Gemini sometimes drops in a corner is fine — the keying despeckle removes it; don't
-   re-roll just for that. A single stray floating blob can also be dropped at keying time (floating-island / keep-largest-
-   component removal), but a clean re-roll beats relying on it.
+   Even a stray floating blob or a stray sparkle in the raw PNG can be dropped at keying time (despeckle /
+   floating-island / keep-largest-component removal), so a not-perfectly-clean download is usually salvageable — only a
+   stray that **overlaps/touches the subject** needs a re-roll.
 
 Each prompt below is complete on its own — copy one, attach the reference images, generate.
 
