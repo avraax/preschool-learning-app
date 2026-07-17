@@ -4,7 +4,7 @@ import { useTheme } from '@mui/material/styles'
 import { motion } from 'framer-motion'
 import GameShell from '../common/GameShell'
 import AnswerTile, { type AnswerTileState } from '../common/AnswerTile'
-import PromptStage from '../common/PromptStage'
+import PromptFocus from '../common/PromptFocus'
 import SymbolTile from '../common/SymbolTile'
 import RoundResultScreen from '../common/RoundResultScreen'
 import type { GuideReaction } from '../common/ThemeMascot'
@@ -25,6 +25,8 @@ import { devFx } from '../../utils/devHarness'
 import { BOUNCE, DWELL_CORRECT, motionOr } from '../../theme/motion'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
 import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
+import { COUNTING_OBJECTS, artForObject, type CountingObject } from '../../config/countingObjects'
+import { crocodileArt } from '../../assets/games/math'
 // Simplified audio system
 import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 
@@ -35,21 +37,17 @@ import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 // and the long wrong-answer explanation path. No punishment: a wrong tap → gentle SFX + retry.
 //
 // UI/UX Overhaul PRD §6B: the krokodille is the star (enlarged) and lunges + its mouth chomps
-// toward the bigger side (motion.BOUNCE + "chomp" SFX + mascot cheer) on a correct tap. The whole
-// arena is raised into a top-anchored layout (PromptStage reused directly, not via GameShell's
-// fixed slot — there's no separate "answer grid" here, the count-cards ARE the tappable answers)
-// so the old dead gap above the container is gone.
+// toward the bigger side (motion.BOUNCE + "chomp" SFX + mascot cheer) on a correct tap. Games Visual
+// Uplift (PRD-08 §3.4): the frosted PromptStage card is retired — the arena now rests in PromptFocus's
+// in-world light-pool; the object piles + the krokodille are baked soft-3D art (emoji fallback until
+// the batch lands). The whole arena is a top-anchored layout (there's no separate "answer grid" here,
+// the count-cards ARE the tappable answers). The chomp motion + >/< SymbolTile are unchanged.
 
-const OBJECT_TYPES = [
-  { name: 'æble', emoji: '🍎', danishName: 'æbler' },
-  { name: 'ballon', emoji: '🎈', danishName: 'balloner' },
-  { name: 'stjerne', emoji: '⭐', danishName: 'stjerner' },
-  { name: 'blomst', emoji: '🌸', danishName: 'blomster' },
-  { name: 'bil', emoji: '🚗', danishName: 'biler' },
-  { name: 'bold', emoji: '⚽', danishName: 'bolde' },
-  { name: 'fugl', emoji: '🐦', danishName: 'fugle' },
-  { name: 'fisk', emoji: '🐟', danishName: 'fisk' }
-]
+// The counting objects are the ONE shared section set (src/config/countingObjects.ts) — same objects
+// as Tal Quiz / Lær Tal / Memory so counting "feels" the same across Math. Each carries a stable art
+// id (→ baked soft-3D WebP, PRD-08) plus the honest Danish plural for the spoken/label ("fire bolde")
+// and an emoji fallback until the art lands.
+const OBJECT_TYPES = COUNTING_OBJECTS
 
 const DANISH_NUMBERS = [
   'nul', 'en', 'to', 'tre', 'fire', 'fem', 'seks', 'syv', 'otte', 'ni', 'ti',
@@ -71,11 +69,27 @@ const emojiPileSx = (count: number) => ({
   [PHONE_LANDSCAPE]: { fontSize: count <= 10 ? '0.85rem' : '0.7rem' },
 })
 
+// The baked-art pile item (PRD-08): a soft-3D <img> sized to match the emoji pile exactly (same
+// count-based shrink, expressed as `height`), so a full pile of up to 20 still fits its fixed-height
+// box in every viewport WITHOUT clipping — the shown quantity must always match the numeral.
+const imgPileSx = (count: number) => ({
+  height: count <= 8 ? '1.9rem' : count <= 14 ? '1.5rem' : '1.15rem',
+  width: 'auto',
+  objectFit: 'contain' as const,
+  userSelect: 'none' as const,
+  pointerEvents: 'none' as const,
+  flex: '0 0 auto',
+  '@media (orientation: landscape)': {
+    height: count <= 8 ? '1.5rem' : count <= 14 ? '1.15rem' : '0.95rem',
+  },
+  [PHONE_LANDSCAPE]: { height: count <= 10 ? '0.85rem' : '0.7rem' },
+})
+
 interface ComparisonProblem {
   leftNumber: number
   rightNumber: number
-  leftObjects: typeof OBJECT_TYPES[0]
-  rightObjects: typeof OBJECT_TYPES[0]
+  leftObjects: CountingObject
+  rightObjects: CountingObject
 }
 
 type Side = 'left' | 'right'
@@ -432,18 +446,25 @@ const ComparisonGame: React.FC = () => {
               '@media (orientation: landscape)': { height: { xs: 56, md: 76 } },
               [PHONE_LANDSCAPE]: { height: 34 }
             }}>
-              {Array.from({ length: num }, (_, i) => (
-                <Box
-                  component={motion.span}
-                  key={i}
-                  initial={reduce ? false : { opacity: 0, scale: 0 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: reduce ? 0 : i * 0.05 }}
-                  sx={emojiPileSx(num)}
-                >
-                  {obj.emoji}
-                </Box>
-              ))}
+              {Array.from({ length: num }, (_, i) => {
+                const art = artForObject(obj)
+                return (
+                  <Box
+                    component={motion.span}
+                    key={i}
+                    initial={reduce ? false : { opacity: 0, scale: 0 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: reduce ? 0 : i * 0.05 }}
+                    sx={{ display: 'inline-flex', lineHeight: 1 }}
+                  >
+                    {art ? (
+                      <Box component="img" src={art} alt="" draggable={false} sx={imgPileSx(num)} />
+                    ) : (
+                      <Box component="span" sx={emojiPileSx(num)}>{obj.emoji}</Box>
+                    )}
+                  </Box>
+                )
+              })}
             </Box>
             {/* Numeral */}
             <Typography
@@ -530,12 +551,12 @@ const ComparisonGame: React.FC = () => {
           </Typography>
 
           <Box sx={{ flex: '1 1 auto', minHeight: 0, width: '100%', maxWidth: 860, display: 'flex' }}>
-            <PromptStage
+            <PromptFocus
               accent={category.accentColor}
               chargeKey={`${currentProblem.leftNumber}-${currentProblem.rightNumber}-${round.state.index}`}
               repeat={<MathRepeatButton onClick={repeatProblem} disabled={false} />}
-            >
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: { xs: 1, md: 2.5 }, width: '100%' }}>
+              subject={
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: { xs: 1, md: 2.5 }, width: '100%' }}>
                 <Box sx={{ flex: '1 1 0', minWidth: 0 }}>{renderSide('left')}</Box>
 
                 {/* Krokodille: the star. It lunges + its mouth chomps toward the bigger side on a
@@ -550,6 +571,10 @@ const ComparisonGame: React.FC = () => {
                     }
                     transition={motionOr(BOUNCE, reduce)}
                     sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      // Sizes the emoji fallback; the baked <img> below reads these as its box.
                       fontSize: { xs: '3.6rem', md: '5.5rem' },
                       lineHeight: 1,
                       // The iPad verification viewport is landscape — this override is what's
@@ -558,7 +583,21 @@ const ComparisonGame: React.FC = () => {
                       [PHONE_LANDSCAPE]: { fontSize: '2.3rem' },
                     }}
                   >
-                    🐊
+                    {/* The baked soft-3D krokodille (PRD-08) — the section's one flat-emoji character.
+                        The lunge/chomp BOUNCE motion + sfx('chomp') are unchanged; only the art swaps
+                        (emoji is the art-gated fallback). Sized to the emoji's font-size so the swap is
+                        scale-neutral. */}
+                    {crocodileArt() ? (
+                      <Box
+                        component="img"
+                        src={crocodileArt()}
+                        alt=""
+                        draggable={false}
+                        sx={{ height: '1em', width: 'auto', objectFit: 'contain', userSelect: 'none', pointerEvents: 'none' }}
+                      />
+                    ) : (
+                      '🐊'
+                    )}
                   </Box>
                   <Box
                     sx={{
@@ -593,7 +632,8 @@ const ComparisonGame: React.FC = () => {
 
                 <Box sx={{ flex: '1 1 0', minWidth: 0 }}>{renderSide('right')}</Box>
               </Box>
-            </PromptStage>
+              }
+            />
           </Box>
         </Box>
       ) : null}

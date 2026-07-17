@@ -9,6 +9,7 @@ import { AlphabetRepeatButton, MathRepeatButton } from '../common/RepeatButton'
 import { shuffle } from '../../utils/shuffle'
 import { LETTER_WORDS } from '../../config/letterWords'
 import { letterArt } from '../../assets/games/alphabet'
+import { countingObjectForNumber, artForObject } from '../../config/countingObjects'
 
 // Danish alphabet (29 letters)
 const DANISH_ALPHABET = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'Æ', 'Ø', 'Å']
@@ -92,8 +93,16 @@ const MemoryGame: React.FC = () => {
     },
     
     getDisplayData: (number: string): MemoryItemDisplay => {
+      // Count cluster (PRD-08 §3.6, owner-locked): the matched front reinforces count ↔ numeral with
+      // exactly `n` copies of the shared counting object (same set as Tal Quiz / Sammenlign / Lær Tal,
+      // rotated by n % 8). Art-gated — `iconArt` is undefined until the WebP lands, so the cluster is
+      // suppressed and the card stays numeral-only (today's look). The numeral stays the primary read.
+      const n = parseInt(number, 10)
+      const obj = countingObjectForNumber(n)
       return {
-        primary: number
+        primary: number,
+        iconArt: artForObject(obj),
+        iconCount: n,
       }
     },
     

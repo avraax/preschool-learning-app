@@ -7,7 +7,7 @@ import { stickerSetForSection } from '../../config/stickers'
 import { DANISH_PHRASES, getDanishNumberText } from '../../config/danish-phrases'
 import GameShell from '../common/GameShell'
 import AnswerTile, { type AnswerTileState } from '../common/AnswerTile'
-import PromptStage from '../common/PromptStage'
+import PromptFocus from '../common/PromptFocus'
 import SymbolTile from '../common/SymbolTile'
 import type { GuideReaction } from '../common/ThemeMascot'
 import { useCelebration } from '../common/CelebrationEffect'
@@ -25,6 +25,7 @@ import { isIOS } from '../../utils/deviceDetection'
 import { devFx } from '../../utils/devHarness'
 import { POP, DWELL_CORRECT, motionOr } from '../../theme/motion'
 import { darken, hexToRgba, tileSurface } from '../../theme/tokens/helpers'
+import { softShadow } from '../../theme/depth'
 import { shuffle } from '../../utils/shuffle'
 import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
@@ -33,9 +34,11 @@ import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 // exactly from the previous AdditionGame/SubtractionGame for 'normal'; only the operator,
 // problem generation, spoken prompt, title and welcome differ by `operation`.
 //
-// UI/UX Overhaul PRD §6B: the equation card is promoted INTO a PromptStage (bigger, glossy
-// operator/number tiles, subtle idle bob via PromptStage's own float). On a correct answer the
-// "?" flips to the revealed answer with a motion.POP before the unified DWELL_CORRECT auto-advance.
+// Games Visual Uplift (PRD-08 §3.3): the equation "number sentence" now rests as CLAY in
+// PromptFocus's in-world light-pool — the frosted PromptStage card (border + backdrop-filter) is
+// retired. On a correct answer the "?" flips to the revealed answer with a motion.POP before the
+// unified DWELL_CORRECT auto-advance — that bespoke reveal is preserved exactly; only its container
+// material changed.
 interface MathOperationGameProps {
   operation: 'addition' | 'subtraction'
 }
@@ -457,7 +460,7 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
       celebration={{ show: showCelebration, intensity: celebrationIntensity, duration: celebrationDuration, onComplete: stopCelebration }}
       promptStage={
         roundOutcome ? undefined : (
-          <PromptStage
+          <PromptFocus
             accent={category.accentColor}
             chargeKey={`${num1}-${num2}-${round.state.index}`}
             repeat={
@@ -465,8 +468,13 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
                 <MathRepeatButton onClick={repeatProblem} disabled={false} size={phoneLandscape ? 'small' : 'large'} />
               ) : undefined
             }
-          >
-            {showEquation && (
+            subject={
+              showEquation ? (
+              // The equation "number sentence" now rests as CLAY on PromptFocus's light-pool (no
+              // frosted card / no backdrop-filter). Re-materialed (PRD-08 §3.3): the hard 2px border
+              // + customShadows.pop are gone — the clay tileSurface keeps a 1px hairline for
+              // definition, a grounded softShadow() drop-shadow, and an inner-light top highlight,
+              // matching the TactileTile chip material. The SymbolTile operators + big numerals stay.
               <Box
                 sx={{
                   display: 'flex',
@@ -475,10 +483,11 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
                   gap: { xs: 1.25, md: 2 },
                   background: tileSurface(category.accentColor, muiTheme.scene.dark),
                   borderRadius: 4,
-                  border: `2px solid ${category.borderColor}`,
+                  border: `1px solid ${hexToRgba(category.accentColor, muiTheme.scene.dark ? 0.4 : 0.26)}`,
                   px: { xs: 2.5, md: 4 },
                   py: { xs: 1.5, md: 2.5 },
-                  boxShadow: muiTheme.customShadows.pop,
+                  filter: softShadow(muiTheme.scene.dark ? 1.6 : 1.2),
+                  boxShadow: `inset 0 2px 3px ${hexToRgba('#FFFFFF', muiTheme.scene.dark ? 0.3 : 0.6)}`,
                   '@media (orientation: landscape)': { py: { xs: 1, md: 1.5 } },
                   [PHONE_LANDSCAPE]: { py: 0.25, px: 1, gap: 0.5 },
                 }}
@@ -542,8 +551,9 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
                   </AnimatePresence>
                 </Box>
               </Box>
-            )}
-          </PromptStage>
+              ) : null
+            }
+          />
         )
       }
     >

@@ -76,6 +76,10 @@ export interface MemoryItemDisplay {
   secondary?: string        // Optional secondary content (word for letters)
   icon?: string            // Optional icon/emoji (fallback when no baked art)
   iconArt?: string         // Optional baked soft-3D WebP URL (PRD-07) — rendered instead of `icon`
+  // Optional count cluster (PRD-08 §3.6): when set WITH `iconArt`, render exactly this many copies
+  // of the icon (a mini ObjectCount) instead of one — numbers-Hukommelse reinforces count ↔ numeral.
+  // Absent → the single-image render (alphabet), so it's fully backward-compatible.
+  iconCount?: number
   backDisplay?: string     // Optional back of card text
 }
 
@@ -765,8 +769,50 @@ const UnifiedMemoryGame: React.FC<UnifiedMemoryGameProps> = ({ config }) => {
                           {displayData.primary}
                         </div>
 
-                        {/* Optional icon — baked soft-3D art when present (PRD-07), else the emoji. */}
-                        {displayData.iconArt ? (
+                        {/* Optional icon — baked soft-3D art when present (PRD-07/-08), else the emoji.
+                            With `iconCount` (numbers-Hukommelse, PRD-08 §3.6) render exactly that many
+                            copies as a shrink-to-fit count cluster (reinforcing count ↔ numeral); the
+                            numeral above stays the prominent read. Absent → the single image (alphabet). */}
+                        {displayData.iconArt && displayData.iconCount && displayData.iconCount > 1 ? (
+                          <div
+                            aria-hidden
+                            style={{
+                              display: 'flex',
+                              flexWrap: 'wrap',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              alignContent: 'center',
+                              gap: '2px',
+                              maxWidth: '92%',
+                              maxHeight: '46%',
+                              overflow: 'hidden',
+                              marginBottom: '3px',
+                            }}
+                          >
+                            {Array.from({ length: displayData.iconCount }).map((_, i) => (
+                              <img
+                                key={i}
+                                src={displayData.iconArt}
+                                alt=""
+                                draggable={false}
+                                style={{
+                                  // Shrink hard as the count grows so up to 20 stay inside the small
+                                  // face without crowding out the numeral.
+                                  height:
+                                    displayData.iconCount! <= 5
+                                      ? 'clamp(0.7rem, 1.8vw, 1.15rem)'
+                                      : displayData.iconCount! <= 10
+                                        ? 'clamp(0.55rem, 1.4vw, 0.9rem)'
+                                        : 'clamp(0.4rem, 1vw, 0.65rem)',
+                                  width: 'auto',
+                                  objectFit: 'contain',
+                                  flex: '0 0 auto',
+                                  pointerEvents: 'none',
+                                }}
+                              />
+                            ))}
+                          </div>
+                        ) : displayData.iconArt ? (
                           <img
                             src={displayData.iconArt}
                             alt=""

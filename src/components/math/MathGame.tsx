@@ -9,6 +9,7 @@ import { MathRepeatButton } from '../common/RepeatButton'
 import { progressStore, type DifficultyLevel } from '../../services/progressStore'
 import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 import { shuffle } from '../../utils/shuffle'
+import { countingObjectForNumber, artForObject } from '../../config/countingObjects'
 
 // Comprehensive math settings for counting quiz. Difficulty (Overhaul §5.7/Appendix A) sets the
 // range: Let 1–20, Normal 1–50, Svær 1–100. The manual adult-menu level stays authoritative.
@@ -43,15 +44,17 @@ const makeNumberItem = (n: number): QuizItem => ({
   repeatWord: isCountingMode(n) ? '' : n.toString(),
 })
 
-// Small rotating set of counting glyphs for the PromptStage hero's object count. Picked
-// deterministically from the number itself (NOT Math.random) so a) the same question always
-// renders the same icon and b) it never consumes the seeded RNG stream used for content
-// generation (which would desync `?seed=` determinism).
-const HERO_COUNT_EMOJI = ['⭐', '🔵', '🟢', '🍎', '🎈', '🐳']
+// The counting object is picked from the SHARED section set (src/config/countingObjects.ts) the same
+// deterministic way everywhere — `countingObjectForNumber(n)` rotates by `n % 8` (NOT Math.random) so
+// a) the same question always renders the same object and b) it never consumes the seeded RNG stream
+// used for content generation (which would desync `?seed=`). Baked soft-3D WebP (PRD-08) when the art
+// has landed; the object's emoji is the art-gated fallback.
 
-// Object size shrinks as the pile grows so up to 20 stay tidy inside the PromptStage hero.
+// Object size shrinks as the pile grows so up to 20 stay tidy inside the hero. One clamp used for
+// both the emoji fallback (fontSize) and the baked <img> (height) so the two look identical in scale.
 const heroObjectFontSize = (n: number): string =>
   n <= 8 ? 'clamp(1.3rem, 5vh, 2.2rem)' : n <= 14 ? 'clamp(1rem, 4vh, 1.7rem)' : 'clamp(0.8rem, 3.2vh, 1.3rem)'
+const HERO_OBJECT_PHONE_SIZE = 'clamp(0.6rem, 8vh, 1rem)'
 
 // Tal Quiz hero (UI/UX Overhaul §6A / PRD-05 P3):
 //   counting mode (n ≤ 20) → EXACTLY n objects, numeral HIDDEN — the child counts them.
@@ -78,7 +81,8 @@ const renderCountingHero = (item: QuizItem): React.ReactNode => {
     )
   }
 
-  const icon = HERO_COUNT_EMOJI[n % HERO_COUNT_EMOJI.length]
+  const obj = countingObjectForNumber(n)
+  const art = artForObject(obj)
   return (
     <Box
       aria-hidden
@@ -96,15 +100,34 @@ const renderCountingHero = (item: QuizItem): React.ReactNode => {
         overflow: 'hidden',
       }}
     >
-      {Array.from({ length: n }).map((_, i) => (
-        <Box
-          key={i}
-          component="span"
-          sx={{ fontSize: heroObjectFontSize(n), lineHeight: 1, [PHONE_LANDSCAPE]: { fontSize: 'clamp(0.6rem, 8vh, 1rem)' } }}
-        >
-          {icon}
-        </Box>
-      ))}
+      {Array.from({ length: n }).map((_, i) =>
+        art ? (
+          <Box
+            key={i}
+            component="img"
+            src={art}
+            alt=""
+            draggable={false}
+            sx={{
+              height: heroObjectFontSize(n),
+              width: 'auto',
+              objectFit: 'contain',
+              userSelect: 'none',
+              pointerEvents: 'none',
+              flex: '0 0 auto',
+              [PHONE_LANDSCAPE]: { height: HERO_OBJECT_PHONE_SIZE },
+            }}
+          />
+        ) : (
+          <Box
+            key={i}
+            component="span"
+            sx={{ fontSize: heroObjectFontSize(n), lineHeight: 1, [PHONE_LANDSCAPE]: { fontSize: HERO_OBJECT_PHONE_SIZE } }}
+          >
+            {obj.emoji}
+          </Box>
+        )
+      )}
     </Box>
   )
 }

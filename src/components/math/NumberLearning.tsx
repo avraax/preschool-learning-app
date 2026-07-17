@@ -7,10 +7,11 @@ import {
 import { useTheme } from '@mui/material/styles'
 import GameShell from '../common/GameShell'
 import LearningGrid from '../common/LearningGrid'
-import PromptStage from '../common/PromptStage'
+import PromptFocus from '../common/PromptFocus'
 import { useCelebration } from '../common/CelebrationEffect'
 import { categoryThemes } from '../../config/categoryThemes'
 import { useBrowseXp } from '../../hooks/useBrowseXp'
+import { STAR_OBJECT, artForObject } from '../../config/countingObjects'
 import { hexToRgba } from '../../theme/tokens/helpers'
 import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 // Simplified audio system
@@ -29,6 +30,10 @@ const MATH_ACCENT = categoryThemes.math.accentColor
 const ObjectCount: React.FC<{ n: number; accent: string }> = ({ n, accent }) => {
   const useDots = n > 30
   const size = n <= 10 ? 30 : n <= 20 ? 24 : n <= 30 ? 18 : n <= 60 ? 10 : 7
+  // The shared section counting object (PRD-08 decision 1: Lær Tal uses `star`). Baked soft-3D WebP
+  // when the art has landed; the ⭐ emoji is the art-gated fallback. Dense counts (n > 30) stay plain
+  // accent dots — a baked object at <10px is mush, dots stay legible (this shrink-to-dots stays).
+  const starArt = artForObject(STAR_OBJECT)
   return (
     <Box
       aria-hidden
@@ -50,9 +55,18 @@ const ObjectCount: React.FC<{ n: number; accent: string }> = ({ n, accent }) => 
             key={i}
             sx={{ width: size, height: size, borderRadius: '50%', bgcolor: accent, opacity: 0.85, flex: '0 0 auto' }}
           />
+        ) : starArt ? (
+          <Box
+            key={i}
+            component="img"
+            src={starArt}
+            alt=""
+            draggable={false}
+            sx={{ height: `${size}px`, width: 'auto', objectFit: 'contain', flex: '0 0 auto', userSelect: 'none', pointerEvents: 'none' }}
+          />
         ) : (
           <Box key={i} component="span" sx={{ fontSize: `${size}px`, lineHeight: 1, flex: '0 0 auto', userSelect: 'none' }}>
-            ⭐
+            {STAR_OBJECT.emoji}
           </Box>
         )
       )}
@@ -185,40 +199,46 @@ const NumberLearning: React.FC = () => {
         </Box>
       }
       promptStage={
-        // Selected number blooms large + its counted objects (§6B) — PromptStage's own chargeKey
-        // gives the gentle charge-in on every new selection (reduced-motion parity built in).
-        <PromptStage accent={MATH_ACCENT} chargeKey={currentIndex}>
-          <Box
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: { xs: 0.5, md: 1 },
-              width: '100%',
-              height: '100%',
-            }}
-          >
-            <Typography
+        // Selected number blooms large + its counted objects (§6B). Games Visual Uplift (PRD-08
+        // §3.7): the frosted PromptStage card is retired — the bloom now rests in PromptFocus's
+        // in-world light-pool; its chargeKey gives the gentle charge-in on every new selection
+        // (reduced-motion parity built in).
+        <PromptFocus
+          accent={MATH_ACCENT}
+          chargeKey={currentIndex}
+          subject={
+            <Box
               sx={{
-                fontWeight: 800,
-                lineHeight: 1,
-                color: muiTheme.scene.dark ? '#FFFFFF' : MATH_ACCENT,
-                textShadow: muiTheme.scene.dark
-                  ? '0 2px 10px rgba(0,0,0,0.5)'
-                  : audio.isPlaying
-                    ? `0 0 24px ${hexToRgba(MATH_ACCENT, 0.45)}`
-                    : 'none',
-                fontSize: 'clamp(2.75rem, 15vh, 6.5rem)',
-                transition: 'text-shadow 0.3s ease',
-                [PHONE_LANDSCAPE]: { fontSize: 'clamp(1.9rem, 24vh, 2.6rem)' },
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: { xs: 0.5, md: 1 },
+                width: '100%',
+                height: '100%',
               }}
             >
-              {numbers[currentIndex]}
-            </Typography>
-            <ObjectCount n={numbers[currentIndex]} accent={MATH_ACCENT} />
-          </Box>
-        </PromptStage>
+              <Typography
+                sx={{
+                  fontWeight: 800,
+                  lineHeight: 1,
+                  color: muiTheme.scene.dark ? '#FFFFFF' : MATH_ACCENT,
+                  textShadow: muiTheme.scene.dark
+                    ? '0 2px 10px rgba(0,0,0,0.5)'
+                    : audio.isPlaying
+                      ? `0 0 24px ${hexToRgba(MATH_ACCENT, 0.45)}`
+                      : 'none',
+                  fontSize: 'clamp(2.75rem, 15vh, 6.5rem)',
+                  transition: 'text-shadow 0.3s ease',
+                  [PHONE_LANDSCAPE]: { fontSize: 'clamp(1.9rem, 24vh, 2.6rem)' },
+                }}
+              >
+                {numbers[currentIndex]}
+              </Typography>
+              <ObjectCount n={numbers[currentIndex]} accent={MATH_ACCENT} />
+            </Box>
+          }
+        />
       }
     >
       {/* Numbers Grid - Using Reusable Component */}
