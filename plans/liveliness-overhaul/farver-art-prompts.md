@@ -37,6 +37,14 @@ instantly recognisable, no fine detail that turns to mush when tiny.
    all ids are ASCII (no Æ/Ø/Å aliasing needed). Then hand me the folder and I key + convert to `≤40 KB` WebP and wire
    it in (auto-registers, no code change).
 
+5. **If a render adds an extra element** (a second floating object, a bar/rod, a prop, a background shape — Gemini does
+   this stochastically even though every prompt says "single isolated subject"): **just regenerate first** (a re-roll
+   usually comes back clean). If it persists after ~2 re-rolls, append this clause to that prompt:
+   > *ABSOLUTELY NOTHING ELSE in the frame — no second object, no props, no floating shapes, no bars or rods, no background elements. ONLY the [subject] and the flat green background.*
+   The small **✦ sparkle watermark** Gemini sometimes drops in a corner is fine — the keying despeckle removes it; don't
+   re-roll just for that. A single stray floating blob can also be dropped at keying time (floating-island / keep-largest-
+   component removal), but a clean re-roll beats relying on it.
+
 Each prompt below is complete on its own — copy one, attach the reference images, generate.
 
 ---
