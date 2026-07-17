@@ -1,10 +1,11 @@
 import React from 'react'
 import UnifiedQuizGame, { UnifiedQuizConfig, QuizItem } from '../common/UnifiedQuizGame'
-import { categoryThemes } from '../../config/categoryThemes'
+import { getCategoryTheme } from '../../config/categoryThemes'
 import { stickerSetForSection } from '../../config/stickers'
 import { EnglishScoreChip } from '../common/ScoreChip'
 import { EnglishRepeatButton } from '../common/RepeatButton'
 import { quizEnglishWords, pickDistractorWords, englishThemes, EnglishWord } from '../../config/englishVocab'
+import { englishArt, englishArtId } from '../../assets/games/english'
 import { progressStore, type DifficultyLevel } from '../../services/progressStore'
 import { shuffle } from '../../utils/shuffle'
 
@@ -60,7 +61,11 @@ const EnglishTranslateGame: React.FC = () => {
       const word = quizEnglishWords[Math.floor(Math.random() * quizEnglishWords.length)]
       return {
         ...toWordItem(word),
-        questionVisual: { emoji: word.emoji, word: word.da }
+        // Baked soft-3D picture (PRD-07 hero path) + the Danish caption `word.da` beneath it
+        // (rendered small via the engine's `qv.word` path — keep `emoji` set so the caption uses
+        // the small type size, not the big word-only size). `emoji` is the art-gated fallback.
+        // The English word ANSWERS stay type (the lesson — never baked).
+        questionVisual: { emoji: word.emoji, word: word.da, art: englishArt(englishArtId(word.en)) }
       }
     },
 
@@ -73,7 +78,7 @@ const EnglishTranslateGame: React.FC = () => {
     title: 'Dansk til Engelsk',
     emoji: '🔁',
     teacherCharacter: 'owl',
-    theme: categoryThemes.english,
+    theme: getCategoryTheme('english'),
     backRoute: '/english',
 
     ScoreChipComponent: EnglishScoreChip,

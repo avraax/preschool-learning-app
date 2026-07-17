@@ -1,10 +1,11 @@
 import React from 'react'
 import UnifiedQuizGame, { UnifiedQuizConfig, QuizItem } from '../common/UnifiedQuizGame'
-import { categoryThemes } from '../../config/categoryThemes'
+import { getCategoryTheme } from '../../config/categoryThemes'
 import { stickerSetForSection } from '../../config/stickers'
 import { EnglishScoreChip } from '../common/ScoreChip'
 import { EnglishRepeatButton } from '../common/RepeatButton'
 import { quizEnglishWords, pickDistractorWords, englishThemes, EnglishWord } from '../../config/englishVocab'
+import { englishArt, englishArtId } from '../../assets/games/english'
 import { progressStore, type DifficultyLevel } from '../../services/progressStore'
 import { shuffle } from '../../utils/shuffle'
 
@@ -59,8 +60,10 @@ const EnglishWordGame: React.FC = () => {
       const word = quizEnglishWords[Math.floor(Math.random() * quizEnglishWords.length)]
       return {
         ...toWordItem(word),
-        // Picture-only prompt; no word text under the emoji.
-        questionVisual: { emoji: word.emoji, word: '' }
+        // Picture-only prompt; no word text under it. Baked soft-3D picture via `questionVisual.art`
+        // (PRD-07 hero path); `emoji` is the art-gated fallback for never-baked words. The English
+        // word ANSWERS stay type (the lesson — never baked).
+        questionVisual: { emoji: word.emoji, word: '', art: englishArt(englishArtId(word.en)) }
       }
     },
 
@@ -73,7 +76,7 @@ const EnglishWordGame: React.FC = () => {
     title: 'Find det Engelske Ord',
     emoji: '🔤',
     teacherCharacter: 'owl',
-    theme: categoryThemes.english,
+    theme: getCategoryTheme('english'),
     backRoute: '/english',
 
     ScoreChipComponent: EnglishScoreChip,

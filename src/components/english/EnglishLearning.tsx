@@ -1,34 +1,38 @@
 import React, { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import {
-  Box,
-  Typography,
-  Card,
-  Chip
-} from '@mui/material'
+import { Box, Typography, Chip } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
-import { categoryThemes } from '../../config/categoryThemes'
-import { darken, hexToRgba } from '../../theme/tokens/helpers'
+import { getCategoryTheme } from '../../config/categoryThemes'
+import { hexToRgba } from '../../theme/tokens/helpers'
+import { softShadow } from '../../theme/depth'
 import GameShell from '../common/GameShell'
-import PromptStage, { HeroEmoji } from '../common/PromptStage'
+import PromptFocus from '../common/PromptFocus'
+import TactileTile from '../common/TactileTile'
+import { HeroArt, HeroEmoji } from '../common/PromptStage'
 import { useCelebration } from '../common/CelebrationEffect'
 import { useBrowseXp } from '../../hooks/useBrowseXp'
 import { englishThemes, EnglishWord } from '../../config/englishVocab'
+import { englishArt, englishArtId } from '../../assets/games/english'
 import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 
 // Lær Engelsk: free exploration. Browse a theme's words as cards (picture + English word
 // + Danish translation), tap to hear the word in English (en-US Ava). Learning-based pattern:
-// direct audio on tap, no entry-audio coordination. Exploring distinct words earns a
-// milestone sticker (mirrors Lær Tal / Lær Alfabetet).
+// direct audio on tap, no entry-audio coordination. Exploring distinct words earns per-new-item
+// browse XP (mirrors Lær Tal / Lær Alfabetet).
+//
+// Games Visual Uplift (PRD-11 §3.5): the bloom rests in the calm frozen world via PromptFocus (no
+// frosted PromptStage card), and the word cards are the shell's tactile clay (TactileTile) — the
+// legacy #ECF1F8 gradient + hard keyboard lip are retired. Concrete words show a baked soft-3D
+// picture; never-baked words (greetings/body/family) keep their emoji via the art-gated fallback.
 const EnglishLearning: React.FC = () => {
   const muiTheme = useTheme()
-  const theme = categoryThemes.english
+  const theme = getCategoryTheme('english')
   const audio = useSimplifiedAudioHook({ componentId: 'EnglishLearning', autoInitialize: false })
 
   const [activeThemeId, setActiveThemeId] = useState(englishThemes[0].id)
   const [playingWord, setPlayingWord] = useState<string | null>(null)
-  // Bloomed selection for the PromptStage (§6B) — defaults to the first word so the stage is never
+  // Bloomed selection for the focal zone (§3.5) — defaults to the first word so the bloom is never
   // empty. Reset whenever the theme changes so the bloom always matches the visible grid.
   const [selectedWord, setSelectedWord] = useState<EnglishWord>(englishThemes[0].words[0])
 
@@ -66,42 +70,54 @@ const EnglishLearning: React.FC = () => {
       guide={false}
       celebration={{ show: showCelebration, intensity: celebrationIntensity, duration: celebrationDuration, onComplete: stopCelebration }}
       promptStage={
-        // Selected English word blooms (word + emoji) — §6B. chargeKey includes the theme id so
-        // switching theme (which also resets the word) re-triggers the charge-in immediately.
-        <PromptStage accent={theme.accentColor} chargeKey={`${activeThemeId}-${selectedWord.en}`}>
-          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: { xs: 0.5, md: 1 }, [PHONE_LANDSCAPE]: { gap: 0 } }}>
-            <HeroEmoji>{selectedWord.emoji}</HeroEmoji>
-            <Typography
-              sx={{
-                fontWeight: 800,
-                lineHeight: 1,
-                color: muiTheme.scene.dark ? '#FFFFFF' : theme.accentColor,
-                textShadow: muiTheme.scene.dark
-                  ? '0 2px 10px rgba(0,0,0,0.5)'
-                  : playingWord === selectedWord.en
-                    ? `0 0 24px ${hexToRgba(theme.accentColor, 0.45)}`
-                    : 'none',
-                fontSize: 'clamp(1.8rem, 9vh, 3.4rem)',
-                transition: 'text-shadow 0.3s ease',
-                [PHONE_LANDSCAPE]: { fontSize: '1.1rem' },
-              }}
-            >
-              {selectedWord.en}
-            </Typography>
-            {/* Danish translation — hidden on phone landscape (the ~90px stage budget there can't
-                fit emoji + word + translation; the grid tile captions still show it). */}
-            <Typography
-              sx={{
-                fontWeight: 600,
-                color: muiTheme.scene.dark ? 'rgba(255,255,255,0.75)' : 'text.secondary',
-                fontSize: 'clamp(1rem, 4vh, 1.4rem)',
-                [PHONE_LANDSCAPE]: { display: 'none' },
-              }}
-            >
-              {selectedWord.da}
-            </Typography>
-          </Box>
-        </PromptStage>
+        // Selected word blooms in the calm world via PromptFocus (§3.5) — the baked soft-3D object
+        // (or emoji fallback) rests on its light-pool + contact shadow, with the English word + the
+        // Danish caption beneath. chargeKey includes the theme id so switching theme (which also
+        // resets the word) re-triggers the charge-in immediately.
+        (() => {
+          const art = englishArt(englishArtId(selectedWord.en))
+          return (
+            <PromptFocus
+              accent={theme.accentColor}
+              chargeKey={`${activeThemeId}-${selectedWord.en}`}
+              subject={
+                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: { xs: 0.5, md: 1 }, width: '100%', height: '100%', [PHONE_LANDSCAPE]: { gap: 0 } }}>
+                  {/* Baked soft-3D picture (PRD-11); emoji is the art-gated fallback. */}
+                  {art ? <HeroArt src={art} /> : <HeroEmoji>{selectedWord.emoji}</HeroEmoji>}
+                  <Typography
+                    sx={{
+                      fontWeight: 800,
+                      lineHeight: 1,
+                      color: muiTheme.scene.dark ? '#FFFFFF' : theme.accentColor,
+                      textShadow: muiTheme.scene.dark
+                        ? '0 2px 10px rgba(0,0,0,0.5)'
+                        : playingWord === selectedWord.en
+                          ? `0 0 24px ${hexToRgba(theme.accentColor, 0.45)}`
+                          : 'none',
+                      fontSize: 'clamp(1.6rem, 8vh, 3rem)',
+                      transition: 'text-shadow 0.3s ease',
+                      [PHONE_LANDSCAPE]: { fontSize: '1.1rem' },
+                    }}
+                  >
+                    {selectedWord.en}
+                  </Typography>
+                  {/* Danish translation — hidden on phone landscape (the ~90px stage budget there
+                      can't fit picture + word + translation; the grid tile captions still show it). */}
+                  <Typography
+                    sx={{
+                      fontWeight: 600,
+                      color: muiTheme.scene.dark ? 'rgba(255,255,255,0.75)' : 'text.secondary',
+                      fontSize: 'clamp(0.95rem, 3.5vh, 1.3rem)',
+                      [PHONE_LANDSCAPE]: { display: 'none' },
+                    }}
+                  >
+                    {selectedWord.da}
+                  </Typography>
+                </Box>
+              }
+            />
+          )
+        })()
       }
     >
         {/* Theme selector */}
@@ -159,76 +175,85 @@ const EnglishLearning: React.FC = () => {
             }}
           >
             <AnimatePresence mode="popLayout">
-              {activeTheme.words.map((word, index) => (
-                <motion.div
-                  key={`${activeTheme.id}-${word.en}`}
-                  initial={{ opacity: 0, scale: 0.85 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.85 }}
-                  transition={{ delay: index * 0.03, duration: 0.25 }}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <Card
-                    onClick={() => handleWordClick(word)}
-                    sx={{
-                      cursor: 'pointer',
-                      border: '3px solid',
-                      borderColor: playingWord === word.en ? theme.accentColor : hexToRgba(theme.accentColor, muiTheme.scene.dark ? 0.55 : 0.34),
-                      // Lifted-3D depth language (matches AnswerTile / LearningGrid): top-light
-                      // surface, coloured edge lip beneath, soft ambient shadow; active = accent glow.
-                      background: 'linear-gradient(180deg, #FFFFFF 0%, #ECF1F8 100%)',
-                      borderRadius: '14px',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      p: { xs: 1, md: 1.5 },
-                      minHeight: { xs: 96, md: 120 },
-                      [PHONE_LANDSCAPE]: { minHeight: 64, p: 0.5 },
-                      boxShadow: playingWord === word.en
-                        ? `0 0 0 3px ${hexToRgba(theme.accentColor, 0.4)}, 0 6px 0 ${darken(theme.accentColor, 0.28)}, ${muiTheme.scene.dark ? '0 10px 24px rgba(0,0,0,0.5)' : '0 8px 18px rgba(0,0,0,0.15)'}`
-                        : `0 6px 0 ${darken(theme.accentColor, 0.28)}, ${muiTheme.scene.dark ? '0 10px 24px rgba(0,0,0,0.45)' : '0 7px 16px rgba(0,0,0,0.12)'}`,
-                      transition: 'box-shadow 0.25s ease, border-color 0.25s ease, transform 0.08s ease',
-                      '&:active': {
-                        transform: 'translateY(3px)',
-                        boxShadow: `0 2px 0 ${darken(theme.accentColor, 0.28)}, ${muiTheme.scene.dark ? '0 4px 10px rgba(0,0,0,0.5)' : '0 4px 8px rgba(0,0,0,0.18)'}`
-                      },
-                      '@media (hover: hover) and (pointer: fine)': {
-                        '&:hover': { borderColor: theme.hoverBorderColor, boxShadow: `0 9px 0 ${darken(theme.accentColor, 0.28)}, 0 14px 30px ${hexToRgba(theme.accentColor, 0.3)}` }
-                      }
-                    }}
+              {activeTheme.words.map((word, index) => {
+                // Baked soft-3D card picture (PRD-11); emoji is the art-gated fallback. A concrete
+                // theme's grid is all-clay-art, an abstract theme's grid all-emoji — uniform within
+                // any single visible grid (the child switches themes to change grids).
+                const art = englishArt(englishArtId(word.en))
+                return (
+                  <motion.div
+                    key={`${activeTheme.id}-${word.en}`}
+                    initial={{ opacity: 0, scale: 0.85 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.85 }}
+                    transition={{ delay: index * 0.03, duration: 0.25 }}
+                    style={{ height: '100%' }}
                   >
-                    <Typography sx={{ fontSize: { xs: '2.25rem', md: '3rem' }, lineHeight: 1, [PHONE_LANDSCAPE]: { fontSize: '1.3rem' } }}>
-                      {word.emoji}
-                    </Typography>
-                    <Typography
-                      sx={{
-                        fontSize: { xs: '1rem', md: '1.25rem' },
-                        fontWeight: 700,
-                        color: theme.accentColor,
-                        textAlign: 'center',
-                        lineHeight: 1.1,
-                        mt: 0.5,
-                        [PHONE_LANDSCAPE]: { fontSize: '0.8rem', mt: 0.25 }
-                      }}
+                    {/* Shell clay tile (§3.5) — retires the #ECF1F8 gradient + hard lip. The
+                        `playingWord` accent glow rides TactileTile's `hint` (accent ring + gentle
+                        pulse; static ring under reduced motion). */}
+                    <TactileTile
+                      variant="card"
+                      accent={theme.accentColor}
+                      interactive
+                      onActivate={() => handleWordClick(word)}
+                      hint={playingWord === word.en}
+                      breathe={false}
+                      sx={{ minHeight: { xs: 96, md: 120 }, [PHONE_LANDSCAPE]: { minHeight: 64 } }}
                     >
-                      {word.en}
-                    </Typography>
-                    <Typography
-                      sx={{
-                        fontSize: { xs: '0.75rem', md: '0.9rem' },
-                        color: 'text.secondary',
-                        textAlign: 'center',
-                        lineHeight: 1,
-                        [PHONE_LANDSCAPE]: { fontSize: '0.65rem' }
-                      }}
-                    >
-                      {word.da}
-                    </Typography>
-                  </Card>
-                </motion.div>
-              ))}
+                      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 0.25 }}>
+                        {art ? (
+                          <Box
+                            component="img"
+                            src={art}
+                            alt=""
+                            aria-hidden
+                            draggable={false}
+                            sx={{
+                              height: { xs: '2.25rem', md: '3rem' },
+                              width: 'auto',
+                              maxWidth: '100%',
+                              objectFit: 'contain',
+                              filter: softShadow(1),
+                              userSelect: 'none',
+                              pointerEvents: 'none',
+                              [PHONE_LANDSCAPE]: { height: '1.3rem' },
+                            }}
+                          />
+                        ) : (
+                          <Typography sx={{ fontSize: { xs: '2.25rem', md: '3rem' }, lineHeight: 1, [PHONE_LANDSCAPE]: { fontSize: '1.3rem' } }}>
+                            {word.emoji}
+                          </Typography>
+                        )}
+                        <Typography
+                          sx={{
+                            fontSize: { xs: '1rem', md: '1.25rem' },
+                            fontWeight: 700,
+                            color: theme.accentColor,
+                            textAlign: 'center',
+                            lineHeight: 1.1,
+                            mt: 0.5,
+                            [PHONE_LANDSCAPE]: { fontSize: '0.8rem', mt: 0.25 }
+                          }}
+                        >
+                          {word.en}
+                        </Typography>
+                        <Typography
+                          sx={{
+                            fontSize: { xs: '0.75rem', md: '0.9rem' },
+                            color: 'text.secondary',
+                            textAlign: 'center',
+                            lineHeight: 1,
+                            [PHONE_LANDSCAPE]: { fontSize: '0.65rem' }
+                          }}
+                        >
+                          {word.da}
+                        </Typography>
+                      </Box>
+                    </TactileTile>
+                  </motion.div>
+                )
+              })}
             </AnimatePresence>
           </Box>
         </Box>

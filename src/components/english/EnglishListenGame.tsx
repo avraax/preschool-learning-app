@@ -1,10 +1,11 @@
 import React from 'react'
 import UnifiedQuizGame, { UnifiedQuizConfig, QuizItem } from '../common/UnifiedQuizGame'
-import { categoryThemes } from '../../config/categoryThemes'
+import { getCategoryTheme } from '../../config/categoryThemes'
 import { stickerSetForSection } from '../../config/stickers'
 import { EnglishScoreChip } from '../common/ScoreChip'
 import { EnglishRepeatButton } from '../common/RepeatButton'
 import { quizEnglishWords, pickDistractorWords, englishThemes, EnglishWord } from '../../config/englishVocab'
+import { englishArt, englishArtId } from '../../assets/games/english'
 import { progressStore, type DifficultyLevel } from '../../services/progressStore'
 import { shuffle } from '../../utils/shuffle'
 
@@ -45,9 +46,14 @@ const pickWordsForLevel = (correct: EnglishWord, level: DifficultyLevel): Englis
 // Lyt og Find: the app speaks an English word (en-US Ava); the child taps the matching
 // picture from 4 options. Pure listening comprehension.
 const EnglishListenGame: React.FC = () => {
+  // The ANSWER tiles are the pictures (the child taps the one matching the spoken word). Baked
+  // soft-3D art via `QuizItem.art` (PRD-10 answer-tile path); `display` emoji is the art-gated
+  // fallback (and permanent for never-baked words — greetings/body/family). The 🔊 PROMPT is never
+  // given a picture (would reveal the answer — §0.7), so no `questionVisual` here.
   const toPictureItem = (w: EnglishWord): QuizItem => ({
     value: w.en,
     display: w.emoji,
+    art: englishArt(englishArtId(w.en)),
     audioPrompt: w.en,
     repeatWord: w.en
   })
@@ -69,7 +75,7 @@ const EnglishListenGame: React.FC = () => {
     title: 'Lyt og Find',
     emoji: '👂',
     teacherCharacter: 'owl',
-    theme: categoryThemes.english,
+    theme: getCategoryTheme('english'),
     backRoute: '/english',
 
     ScoreChipComponent: EnglishScoreChip,
