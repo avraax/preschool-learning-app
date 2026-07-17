@@ -205,15 +205,13 @@ language, `useReducedMotion`, `sfx`, `celebrateTier`, `mascotBus`.
   styling tweak in `renderHero` (185-226), no manifest. Either way, no new WebP.
 
 ### 3.6 Hukommelse (numbers) (`MemoryGame.tsx` + `UnifiedMemoryGame.tsx`)
-- The matched front should reinforce **count ↔ numeral** with the shared counting object. Two ways, per §6:
-  - **[recommended] a count cluster:** extend `MemoryItemDisplay` with an optional `iconCount?: number` and,
-    when set with `iconArt`, render exactly `iconCount` copies of the `<img>` (a mini `ObjectCount`, reusing the
-    shrink-to-fit sizing) — numbers pass `{ primary:number, iconArt: countingObjectArt(id), iconCount:n }`;
-    alphabet keeps `iconCount` absent → the single image it renders today (backward-compatible, one small
-    `UnifiedMemoryGame` change at 769-784). Cap/scale for legibility on the small face (tuning lever; e.g. for
-    n > 10 shrink hard or show numeral-prominent + a capped cluster).
-  - **[simpler] a single decorative object:** pass `iconArt` only (one image) — no engine change, but a lone
-    object beside "7" reads as count 1, which is pedagogically muddy. Not recommended.
+- The matched front reinforces **count ↔ numeral** with the shared counting object via a **count cluster**
+  (owner-locked, §6.2): extend `MemoryItemDisplay` with an optional `iconCount?: number` and, when set with
+  `iconArt`, render exactly `iconCount` copies of the `<img>` (a mini `ObjectCount`, reusing the shrink-to-fit
+  sizing) — numbers pass `{ primary:number, iconArt: countingObjectArt(id), iconCount:n }`; alphabet keeps
+  `iconCount` absent → the single image it renders today (backward-compatible, one small `UnifiedMemoryGame`
+  change at 769-784). Cap/scale for legibility on the small face (tuning lever; e.g. for n > 10 shrink hard or
+  show numeral-prominent + a capped cluster).
 - Numerals stay the `primary` glyph. `starThresholds`/round/flip unchanged.
 
 ### 3.7 Lær Tal (`NumberLearning.tsx`)
@@ -273,13 +271,14 @@ child-safe, slight 3/4 top-down, single centered subject, no text, flat solid #0
 `DANISH_NUMBERS` + `danishName` pile labels, "Hør igen"). **No prebake/`/audit` cycle** — nothing narrated
 changes.
 
-## 6. Open decisions for the owner (before/at implementation)
-1. **Counting-object set** — [recommended] the 8 in §4 (matched to `OBJECT_TYPES` so plurals stay honest). Fewer
-   (e.g. just apple/ball/star/balloon — the roundest, most countable) is also fine for Tal Quiz/Lær Tal but
-   Sammenlign needs ≥2 visually-distinct types side-by-side. Confirm the 8 or trim.
-2. **Numbers-memory card icon** — [recommended] the **count cluster** (§3.6a: numeral + exactly-n objects,
-   small `MemoryItemDisplay.iconCount` addition) for the count↔symbol reinforcement, vs the simpler single
-   decorative object (§3.6b), vs leaving numbers memory glyph-only.
+## 6. Decisions (owner-locked 2026-07-17)
+1. **Counting-object set** — ✅ **the 8 in §4** (matched to `OBJECT_TYPES` so plurals stay honest). Tal Quiz
+   rotates by `n % 8`; Sammenlign uses ≥2 distinct types per problem; Lær Tal uses `star`; Memory the cluster.
+2. **Numbers-memory card icon** — ✅ **count cluster** (§3.6: numeral + exactly-n objects via the small
+   backward-compatible `MemoryItemDisplay.iconCount` addition). Not the single-object or glyph-only variants.
+
+**Still open (minor — recommendations stand; decide at implementation):**
+
 3. **Hvad Mangler visual-pattern tokens** — leave the colour-dot emoji as-is (recommended — abstract, not
    depicted) vs the optional clay-pip styling tweak (§3.5). No baked art either way.
 4. **Lær Tal dense counts** — keep the accent dots above n = 30 (recommended; baked art at <10px is mush) vs
@@ -295,8 +294,8 @@ changes.
   the chomp (§3.4).
 - `src/components/math/NumberLearning.tsx` — `PromptStage`→`PromptFocus`, `ObjectCount` emoji → baked `<img>`
   (dots stay for dense) (§3.7).
-- `src/components/learning/MemoryGame.tsx` — numbers `getDisplayData` → `iconArt` (+ `iconCount` if §6.2a) (§3.6).
-- *(if §6.2a)* `src/components/common/UnifiedMemoryGame.tsx` — optional `iconCount` cluster render (backward-compatible).
+- `src/components/learning/MemoryGame.tsx` — numbers `getDisplayData` → `iconArt` + `iconCount:n` (§3.6).
+- `src/components/common/UnifiedMemoryGame.tsx` — add the `iconCount` cluster render (backward-compatible; alphabet unaffected) (§3.6).
 - *(if §3.5 polish)* `src/components/math/HvadManglerGame.tsx` — clay-pip pattern tokens.
 **Reuse:** `PromptFocus`, `HeroArt`, `TactileTile`/`TactilePill`, `SymbolTile`, `countingObjectArt`,
 `getCategoryTheme('math')`, `softShadow`/`contactShadow`, the scene-assets keying pipeline.
