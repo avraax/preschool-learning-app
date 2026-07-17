@@ -73,7 +73,11 @@ needs that hook added first (it would touch all 7 config quizzes, so verify care
 - **Game-board surfaces** → `TactileTile` (pressable clay tile), `PromptFocus` (in-world focal zone),
   `TactilePill` (HUD pills; `AnswerTile`/`ScoreChip`/`RepeatButton` ride these) via `src/theme/depth.ts`
   (`softShadow`/`contactShadow`). New or hand-rolled game surfaces reuse these — don't re-invent tile
-  depth, a keyboard-lip button, or a frosted `PromptStage` card (PRD-06 F1/F2/F4).
+  depth, a keyboard-lip button, or a frosted `PromptStage` card (PRD-06 F1/F2/F4). The Foundation's
+  swap auto-upgraded only the **shared engines** (`UnifiedQuizGame`/`UnifiedMemoryGame`/`LearningGrid`);
+  **hand-rolled games + screens that render `PromptStage` directly still show the old frosted card** and
+  must be migrated to `PromptFocus` per area — check with a `PromptStage` import grep before assuming a
+  game already upgraded.
 - **Baked game-art** (pictorial subjects, per-section) → `src/assets/games/<section>/index.ts`
   eager-`import.meta.glob`s `*.webp` keyed by content id → a sync `letterArt()`-style helper.
   **Art-gated**: empty until the owner's keyed WebP are dropped in (auto-registers, no code change);

@@ -29,6 +29,8 @@ gameIds are `<section>.<game>`.
   Mangler reads the finished sequence — instead of echoing the tapped number.
 - Sammenlign Tal: tap the **bigger** number (crocodile >/< "eats" it); **equality was dropped**; the
   object piles are fixed-height shrink-to-fit and order-match the numerals.
+- The equation/comparison symbols `+ − = ? > <` are **baked soft-3D `SymbolTile` art**
+  (`src/assets/symbols`), not emoji/glyphs — don't re-bake or emoji them. Numerals stay Typography.
 
 ## Alphabet — `alphabet.quiz`
 - Bogstav Quiz is **all word-association**: show a picture, tap the letter the word starts with (the
