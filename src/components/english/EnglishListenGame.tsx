@@ -47,12 +47,12 @@ const pickWordsForLevel = (correct: EnglishWord, level: DifficultyLevel): Englis
 // picture from 4 options. Pure listening comprehension.
 const EnglishListenGame: React.FC = () => {
   // The ANSWER tiles are the pictures (the child taps the one matching the spoken word). Baked
-  // soft-3D art via `QuizItem.art` (PRD-10 answer-tile path); `display` emoji is the art-gated
-  // fallback (still live for the not-yet-baked greetings/body/family — PRD-12 Phase B). The listen
-  // PROMPT is never given a picture (would reveal the answer — §0.7), so no `questionVisual` here.
+  // soft-3D art via `QuizItem.art` (PRD-10 answer-tile path) — every English word is baked now
+  // (PRD-12), so the picture always resolves; `display` is only the never-hit text fallback. The
+  // listen PROMPT is never given a picture (would reveal the answer — §0.7), so no `questionVisual`.
   const toPictureItem = (w: EnglishWord): QuizItem => ({
     value: w.en,
-    display: w.emoji,
+    display: w.en,
     art: englishArt(englishArtId(w.en)),
     audioPrompt: w.en,
     repeatWord: w.en

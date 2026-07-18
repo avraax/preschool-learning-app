@@ -22,6 +22,8 @@
 // emoji fallback. Drop the keyed files and they auto-register with no code change. One image per id;
 // ≤40 KB, square, transparent (per scene-assets rules).
 
+import { sharedArtMap } from '../shared'
+
 // Statically-bundled URLs for every WebP in this folder (Vite rewrites each to its hashed asset URL).
 const modules = import.meta.glob('./*.webp', {
   eager: true,
@@ -43,8 +45,11 @@ for (const [path, url] of Object.entries(modules)) {
 export const englishArtId = (en: string): string =>
   en.toLowerCase().replace(/[^a-z0-9]/g, '')
 
-// The baked soft-3D subject for a word art id, or `undefined` (→ caller keeps its emoji fallback).
+// The baked soft-3D subject for a word art id, or `undefined`. Falls back to the SHARED pool
+// (`../shared`) so body/family words (hand, mom, family…) resolve their cross-section art; greetings
+// live in THIS dir. Every English word is baked (concrete + body/family + greetings), so this no
+// longer returns undefined for any real word — the emoji fallback is retired (PRD-12 Phase B).
 export const englishArt = (id: string | undefined): string | undefined =>
-  id ? englishArtMap[id] : undefined
+  id ? englishArtMap[id] ?? sharedArtMap[id] : undefined
 
 export default englishArtMap

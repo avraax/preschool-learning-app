@@ -61,9 +61,9 @@ const EnglishWordGame: React.FC = () => {
       return {
         ...toWordItem(word),
         // Picture-only prompt; no word text under it. Baked soft-3D picture via `questionVisual.art`
-        // (PRD-07 hero path); `emoji` is the art-gated fallback for never-baked words. The English
-        // word ANSWERS stay type (the lesson — never baked).
-        questionVisual: { emoji: word.emoji, word: '', art: englishArt(englishArtId(word.en)) }
+        // (PRD-07 hero path) — every English word is baked now (PRD-12). The English word ANSWERS
+        // stay type (the lesson — never baked).
+        questionVisual: { word: '', art: englishArt(englishArtId(word.en)) }
       }
     },
 

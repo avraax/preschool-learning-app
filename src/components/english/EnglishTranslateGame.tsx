@@ -62,10 +62,10 @@ const EnglishTranslateGame: React.FC = () => {
       return {
         ...toWordItem(word),
         // Baked soft-3D picture (PRD-07 hero path) + the Danish caption `word.da` beneath it
-        // (rendered small via the engine's `qv.word` path — keep `emoji` set so the caption uses
-        // the small type size, not the big word-only size). `emoji` is the art-gated fallback.
-        // The English word ANSWERS stay type (the lesson — never baked).
-        questionVisual: { emoji: word.emoji, word: word.da, art: englishArt(englishArtId(word.en)) }
+        // (rendered small via the engine's `qv.word` path — the picture makes the word a caption,
+        // so it uses the small type size, not the big word-only size). Every English word is baked
+        // now (PRD-12). The English word ANSWERS stay type (the lesson — never baked).
+        questionVisual: { word: word.da, art: englishArt(englishArtId(word.en)) }
       }
     },
 

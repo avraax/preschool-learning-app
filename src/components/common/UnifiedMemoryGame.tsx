@@ -9,7 +9,7 @@ import { useCelebration } from '../common/CelebrationEffect'
 import { useGameState } from '../../hooks/useGameState'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
 import { darken, hexToRgba, tileSurface } from '../../theme/tokens/helpers'
-import type { AmbientMotion } from '../../theme/tokens/types'
+import { memoryBackArt } from '../../assets/games/memory-backs'
 import { shuffle } from '../../utils/shuffle'
 import { progressStore, type RoundOutcome } from '../../services/progressStore'
 import { sfx } from '../../services/sfxClient'
@@ -50,16 +50,11 @@ const flipStyles = `
   }
 `
 
-// Per-world card-back motif (UI/UX Overhaul PRD §6E) — replaces the old generic "ABC"/"123".
-// Keyed by the active skin's ambient motion, the SAME signal Mascot.tsx / CelebrationEffect.tsx
-// already use to flavor their own emoji sets — so a reskin (kid/ocean/space/dino) is what changes
-// the card back, not the section (letters vs numbers stays signalled by the section accent color).
-const WORLD_MOTIF: Record<AmbientMotion, string> = {
-  twinkle: '🚀', // Rummet (space)
-  rise: '🐚',    // Havet (ocean)
-  fall: '🦕',    // Dinosaurer
-  drift: '🌈',   // Regnbue (default/kid)
-}
+// Per-world card-back motif (UI/UX Overhaul PRD §6E) — a baked soft-3D emblem (PRD-12; replaced the
+// old emoji, itself a replacement for the generic "ABC"/"123"). Keyed by the active skin's ambient
+// motion via `memoryBackArt()`, the SAME signal Mascot.tsx / CelebrationEffect.tsx use — so a reskin
+// (kid/ocean/space/dino → rainbow/shell/rocket/dino) is what changes the card back, not the section
+// (letters vs numbers stays signalled by the section accent color).
 
 // Memory card interface
 export interface MemoryCard {
@@ -518,8 +513,8 @@ const UnifiedMemoryGame: React.FC<UnifiedMemoryGameProps> = ({ config }) => {
   const faceUpSurface = tileSurface(accent, dark)
   const matchedSurface = `linear-gradient(180deg, #FFFFFF 0%, ${hexToRgba(success, 0.16)} 100%)`
   const wrongSurface = `linear-gradient(180deg, #FFFFFF 0%, ${hexToRgba(errorColor, 0.1)} 100%)`
-  // Per-world card-back motif (differs per skin, not per section — see WORLD_MOTIF above).
-  const motif = WORLD_MOTIF[muiTheme.scene.ambient.motion]
+  // Per-world card-back emblem WebP (differs per skin, not per section — see memoryBackArt above).
+  const motif = memoryBackArt(muiTheme.scene.ambient.motion)
 
   // DEV screenshot harness (?fx=): derive which card ids should render in the forced state, purely
   // for display — real cards/score/round state is never touched. `correct`/`streak` force the first
@@ -728,20 +723,24 @@ const UnifiedMemoryGame: React.FC<UnifiedMemoryGameProps> = ({ config }) => {
                             opacity: 0.1,
                             background: 'repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.1) 10px, rgba(255,255,255,0.1) 20px)'
                           }} />
-                          {/* World motif glyph (Rummet 🚀 / Havet 🐚 / Dinosaurer 🦕 / Regnbue 🌈) */}
-                          <div aria-hidden style={{
-                            position: 'relative',
-                            fontSize: 'clamp(1.7rem, 5vw, 2.8rem)',
-                            lineHeight: 1,
-                            filter: 'drop-shadow(0 2px 5px rgba(0,0,0,0.35))'
-                          }}>
-                            {motif}
-                          </div>
-                          {/* Corner accents — same motif, small + faint */}
-                          <div aria-hidden style={{ position: 'absolute', top: 8, left: 8, fontSize: '0.75rem', opacity: 0.5 }}>{motif}</div>
-                          <div aria-hidden style={{ position: 'absolute', top: 8, right: 8, fontSize: '0.75rem', opacity: 0.5 }}>{motif}</div>
-                          <div aria-hidden style={{ position: 'absolute', bottom: 8, left: 8, fontSize: '0.75rem', opacity: 0.5 }}>{motif}</div>
-                          <div aria-hidden style={{ position: 'absolute', bottom: 8, right: 8, fontSize: '0.75rem', opacity: 0.5 }}>{motif}</div>
+                          {/* World emblem — baked soft-3D per skin (rocket/shell/dino/rainbow). */}
+                          {motif && (
+                            <img aria-hidden src={motif} alt="" draggable={false} style={{
+                              position: 'relative',
+                              width: 'clamp(1.9rem, 5.5vw, 3rem)',
+                              height: 'auto',
+                              filter: 'drop-shadow(0 2px 5px rgba(0,0,0,0.35))',
+                              userSelect: 'none',
+                              pointerEvents: 'none'
+                            }} />
+                          )}
+                          {/* Corner accents — same emblem, small + faint */}
+                          {motif && [
+                            { top: 8, left: 8 }, { top: 8, right: 8 }, { bottom: 8, left: 8 }, { bottom: 8, right: 8 },
+                          ].map((pos, i) => (
+                            <img key={i} aria-hidden src={motif} alt="" draggable={false}
+                              style={{ position: 'absolute', ...pos, width: '0.9rem', height: 'auto', opacity: 0.5, pointerEvents: 'none' }} />
+                          ))}
                         </div>
                       </motion.div>
 

@@ -33,18 +33,18 @@ const logError = (message: string, data?: any) => {
 }
 
 // Decide whether an answer-tile label is a multi-letter WORD (render small) or a single
-// glyph — a letter, a number, or an emoji (render large). The old `.length > 2` test mis-sized
-// multi-codepoint emoji: keycap digits (1️⃣, length 3), variation-selector emoji (🛏️/👁️/🌧️) and
-// ZWJ sequences (👨‍👩‍👧) are ONE grapheme but several code units, so they shrank to word size.
-// Numbers ("10", "100") stay large; any string containing a pictograph stays large; otherwise a
-// label is a "word" only if it spans more than one grapheme cluster.
+// glyph — a letter or a number (render large). Answer labels are letters/numerals/words now (no
+// pictographs — those became baked art), but the grapheme-cluster test is kept: the old `.length > 2`
+// test mis-sized multi-codepoint glyphs (keycap digits, variation-selector and ZWJ pictographs are ONE
+// grapheme but several code units), so they'd have shrunk to word size. Numbers ("10", "100") stay
+// large; any pictograph stays large; otherwise a label is a "word" only if it spans >1 grapheme cluster.
 const isWordLabel = (display: string | number): boolean => {
   if (typeof display !== 'string') return false
   const s = display.trim()
   if (s === '' || /^\d+$/.test(s)) return false               // numbers → large
   if (/\p{Extended_Pictographic}/u.test(s)) return false      // most emoji → large
-  // Keycap sequences (1️⃣…9️⃣) have no pictographic codepoint but ARE one grapheme cluster; count
-  // grapheme clusters so they stay large. Segmenter isn't in our TS lib target — access via cast.
+  // Keycap sequences (enclosed-digit emoji) have no pictographic codepoint but ARE one grapheme
+  // cluster; count grapheme clusters so they stay large. Segmenter isn't in our TS lib target — cast.
   const Segmenter = (Intl as unknown as { Segmenter?: any }).Segmenter
   if (typeof Segmenter === 'function') {
     return [...new Segmenter(undefined, { granularity: 'grapheme' }).segment(s)].length > 1
@@ -541,9 +541,13 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
     if (config.renderHero) return config.renderHero(item)
     const qv = item.questionVisual
     if (qv && (qv.art || qv.emoji || qv.word)) {
+      // A picture above the word makes the word a small CAPTION (Dansk til Engelsk's Danish gloss);
+      // a word with no picture is the BIG prompt subject (Læs Ordet, Hvad Mangler's sequence). Art is
+      // the picture now — emoji is the retired fallback, so treat either as "has picture".
+      const hasPicture = !!(qv.art || qv.emoji)
       return (
         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: { xs: 0.5, md: 1 } }}>
-          {/* Baked soft-3D subject when the area has art (PRD-07); emoji is the art-gated fallback. */}
+          {/* Baked soft-3D subject when the area has art (PRD-07); emoji is the retired art-gated fallback. */}
           {qv.art ? <HeroArt src={qv.art} /> : qv.emoji ? <HeroEmoji>{qv.emoji}</HeroEmoji> : null}
           {qv.word && (
             <Typography
@@ -552,10 +556,10 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
                 color: config.theme.accentColor,
                 lineHeight: 1,
                 userSelect: 'none',
-                letterSpacing: qv.emoji ? 'normal' : '0.06em',
-                textTransform: qv.emoji ? 'none' : 'uppercase',
-                fontSize: qv.emoji ? 'clamp(1.4rem, 5vw, 2.4rem)' : 'clamp(2.4rem, 10vw, 4.5rem)',
-                [PHONE_LANDSCAPE]: { fontSize: qv.emoji ? '1.2rem' : '2rem' },
+                letterSpacing: hasPicture ? 'normal' : '0.06em',
+                textTransform: hasPicture ? 'none' : 'uppercase',
+                fontSize: hasPicture ? 'clamp(1.4rem, 5vw, 2.4rem)' : 'clamp(2.4rem, 10vw, 4.5rem)',
+                [PHONE_LANDSCAPE]: { fontSize: hasPicture ? '1.2rem' : '2rem' },
               }}
             >
               {qv.word}

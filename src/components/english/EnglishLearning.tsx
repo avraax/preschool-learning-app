@@ -10,7 +10,7 @@ import { softShadow } from '../../theme/depth'
 import GameShell from '../common/GameShell'
 import PromptFocus from '../common/PromptFocus'
 import TactileTile from '../common/TactileTile'
-import { HeroArt, HeroEmoji } from '../common/PromptArt'
+import { HeroArt } from '../common/PromptArt'
 import { useCelebration } from '../common/CelebrationEffect'
 import { useBrowseXp } from '../../hooks/useBrowseXp'
 import { englishThemes, EnglishWord } from '../../config/englishVocab'
@@ -97,8 +97,8 @@ const EnglishLearning: React.FC = () => {
               chargeKey={`${activeThemeId}-${selectedWord.en}`}
               subject={
                 <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: { xs: 0.5, md: 1 }, width: '100%', height: '100%', [PHONE_LANDSCAPE]: { gap: 0 } }}>
-                  {/* Baked soft-3D picture (PRD-11); emoji is the art-gated fallback. */}
-                  {art ? <HeroArt src={art} /> : <HeroEmoji>{selectedWord.emoji}</HeroEmoji>}
+                  {/* Baked soft-3D picture (PRD-11/-12) — every English word is baked. */}
+                  {art && <HeroArt src={art} />}
                   <Typography
                     sx={{
                       fontWeight: 800,
@@ -199,9 +199,8 @@ const EnglishLearning: React.FC = () => {
           >
             <AnimatePresence mode="popLayout">
               {activeTheme.words.map((word, index) => {
-                // Baked soft-3D card picture (PRD-11); emoji is the art-gated fallback. A concrete
-                // theme's grid is all-clay-art, an abstract theme's grid all-emoji — uniform within
-                // any single visible grid (the child switches themes to change grids).
+                // Baked soft-3D card picture (PRD-11/-12) — every English word is baked, so every
+                // theme's grid is all-clay-art.
                 const art = englishArt(englishArtId(word.en))
                 return (
                   <motion.div
@@ -225,7 +224,7 @@ const EnglishLearning: React.FC = () => {
                       sx={{ minHeight: { xs: 96, md: 120 }, [PHONE_LANDSCAPE]: { minHeight: 64 } }}
                     >
                       <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 0.25 }}>
-                        {art ? (
+                        {art && (
                           <Box
                             component="img"
                             src={art}
@@ -243,10 +242,6 @@ const EnglishLearning: React.FC = () => {
                               [PHONE_LANDSCAPE]: { height: '1.3rem' },
                             }}
                           />
-                        ) : (
-                          <Typography sx={{ fontSize: { xs: '2.25rem', md: '3rem' }, lineHeight: 1, [PHONE_LANDSCAPE]: { fontSize: '1.3rem' } }}>
-                            {word.emoji}
-                          </Typography>
                         )}
                         <Typography
                           sx={{

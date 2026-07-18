@@ -11,7 +11,7 @@ import { tileSurface } from '../../theme/tokens/helpers'
 import { softShadow } from '../../theme/depth'
 import GameShell from '../common/GameShell'
 import PromptFocus from '../common/PromptFocus'
-import { HeroArt, HeroEmoji } from '../common/PromptArt'
+import { HeroArt } from '../common/PromptArt'
 import TactileTile from '../common/TactileTile'
 import RoundResultScreen from '../common/RoundResultScreen'
 import type { GuideReaction } from '../common/ThemeMascot'
@@ -36,13 +36,13 @@ import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 //
 // Visual uplift (PRD-10 §3.4): the prompt PICTURE is a baked soft-3D word-picture (§4) grounded in
 // PromptFocus — `art` is the ASCII art id (Danish glyphs aliased: æg→aeg, ræv→raev, bær→baer,
-// løg→loeg, ål→aal, sø→soe), resolved via `ordlegArt(w.art)`. The concrete words are all baked; only
-// the 7 abstract words (hej/arm/ben/fod/hul/mor/far, `art` omitted) still carry `emoji` — no clean
-// clay depiction exists for those (§0.4), so it's the *only* rendering for them until PRD-12 Phase B
-// bakes them. The letter TILES + SLOTS + spelled letters stay type (the lesson). `os` (os ≠ cheese —
-// a stray dup of `ost`) and `øl` (beer, off-brand) removed per owner decision §6.2; Ø is still
-// practised via `sø`/`løg`.
-const SPELLING_WORDS: { word: string; emoji?: string; art?: string }[] = [
+// løg→loeg, ål→aal, sø→soe), resolved via `ordlegArt(w.art)`. EVERY word is baked now (PRD-12 Phase B):
+// the 7 formerly-abstract words reuse cross-section art via `ordlegArt`'s shared/english fallback —
+// hej→`hello`, arm→`arm`, ben→`leg`, fod→`foot`, mor→`mom`, far→`dad` (the shared body/people pool),
+// hul→`hul` (this dir) — so the emoji fallback is retired. The letter TILES + SLOTS + spelled letters
+// stay type (the lesson). `os` (os ≠ cheese — a stray dup of `ost`) and `øl` (beer, off-brand)
+// removed per owner decision §6.2; Ø is still practised via `sø`/`løg`.
+const SPELLING_WORDS: { word: string; art: string }[] = [
   { word: 'ko', art: 'ko' },
   { word: 'bi', art: 'bi' },
   { word: 'is', art: 'is' },
@@ -50,17 +50,17 @@ const SPELLING_WORDS: { word: string; emoji?: string; art?: string }[] = [
   { word: 'hus', art: 'hus' },
   { word: 'bil', art: 'bil' },
   { word: 'kat', art: 'kat' },
-  { word: 'hej', emoji: '👋' },
+  { word: 'hej', art: 'hello' },
   { word: 'hat', art: 'hat' },
   { word: 'mus', art: 'mus' },
   { word: 'bus', art: 'bus' },
   { word: 'ost', art: 'ost' },
-  { word: 'fod', emoji: '🦶' },
+  { word: 'fod', art: 'foot' },
   { word: 'bog', art: 'bog' },
   { word: 'and', art: 'and' },
-  { word: 'arm', emoji: '💪' },
-  { word: 'ben', emoji: '🦵' },
-  { word: 'hul', emoji: '🕳️' },
+  { word: 'arm', art: 'arm' },
+  { word: 'ben', art: 'leg' },
+  { word: 'hul', art: 'hul' },
   { word: 'sø', art: 'soe' },
   { word: 'ål', art: 'aal' },
   // More easy 2-3 letter words
@@ -74,8 +74,8 @@ const SPELLING_WORDS: { word: string; emoji?: string; art?: string }[] = [
   { word: 'ulv', art: 'ulv' },
   { word: 'ged', art: 'ged' },
   { word: 'tog', art: 'tog' },
-  { word: 'mor', emoji: '👩' },
-  { word: 'far', emoji: '👨' },
+  { word: 'mor', art: 'mom' },
+  { word: 'far', art: 'dad' },
   { word: 'bær', art: 'baer' },
   { word: 'løg', art: 'loeg' },
   { word: 'ski', art: 'ski' },
@@ -132,7 +132,7 @@ const SpellingGame: React.FC = () => {
   // Centralized game state management
   const { incrementScore, resetScore, isScoreNarrating, handleScoreClick } = useGameState()
 
-  // Bounded round + reward flow (Overhaul Ordleg §2). 8 words, 3★ = no mistakes, 2★ ≤ 2.
+  // Bounded round + reward flow (Overhaul Ordleg §2). 8 words, 3 stars = no mistakes, 2 stars <= 2.
   const round = useRound({ length: 8, starThresholds: { three: 0, two: 2 }, gameId: 'ordleg.spelling' })
   const firstAttemptRef = useRef(true)
   const [roundOutcome, setRoundOutcome] = useState<RoundOutcome | null>(null)
@@ -453,13 +453,13 @@ const SpellingGame: React.FC = () => {
       promptStage={
         roundOutcome || !(gameReady && current) ? undefined : (
           // The word's PICTURE rests in the focal zone on its light-pool + contact shadow (§3.4):
-          // baked soft-3D art for a concrete word, the emoji as the art-gated fallback (and the only
-          // rendering for abstract words). Grounds the picture in the world like the menu it launched
-          // from; the slots + tiles read directly beneath it (picture→slots→tiles order preserved).
+          // a baked soft-3D word-picture (every word is baked now — PRD-12). Grounds the picture in
+          // the world like the menu it launched from; the slots + tiles read directly beneath it
+          // (picture→slots→tiles order preserved).
           <PromptFocus
             accent={theme.accentColor}
             chargeKey={current.word}
-            subject={promptArt ? <HeroArt src={promptArt} /> : <HeroEmoji>{current.emoji}</HeroEmoji>}
+            subject={promptArt ? <HeroArt src={promptArt} /> : null}
             repeat={<OrdlegRepeatButton onClick={repeatWord} disabled={false} />}
           />
         )

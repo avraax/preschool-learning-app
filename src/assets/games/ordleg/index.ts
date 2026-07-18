@@ -21,6 +21,9 @@
 // fallback. Drop the keyed files and they auto-register with no code change. One image per id;
 // ≤40 KB, square, transparent (per scene-assets rules).
 
+import { sharedArtMap } from '../shared'
+import { englishArtMap } from '../english'
+
 // Statically-bundled URLs for every WebP in this folder (Vite rewrites each to its hashed asset URL).
 const modules = import.meta.glob('./*.webp', {
   eager: true,
@@ -35,9 +38,11 @@ for (const [path, url] of Object.entries(modules)) {
   ordlegArtMap[stem] = url
 }
 
-// The baked soft-3D subject for a word art id, or `undefined` (→ caller keeps its emoji fallback).
-// `id` is the `art` field on a word (undefined-safe: returns undefined for a missing/absent id).
+// The baked soft-3D subject for a word art id, or `undefined`. Concrete Ordleg words resolve from
+// THIS dir; the 7 abstract words reuse cross-section art (PRD-12 Phase B): arm/ben/fod/mor/far →
+// the SHARED pool (`../shared`), hej → `hello` in the ENGLISH greetings dir, hul → this dir. So it
+// falls back ordleg → shared → english. Every Ordleg word is now baked — the emoji fallback is gone.
 export const ordlegArt = (id: string | undefined): string | undefined =>
-  id ? ordlegArtMap[id] : undefined
+  id ? ordlegArtMap[id] ?? sharedArtMap[id] ?? englishArtMap[id] : undefined
 
 export default ordlegArtMap
