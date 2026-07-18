@@ -121,6 +121,15 @@ export interface UnifiedQuizConfig {
   // bookkeeping. Omit (or 0) to disable. Enabled (2) for every config quiz.
   hintAfterNWrong?: number
 
+  // Hear-before-commit (PRD-14 W7 — the flagship). OPT-IN, for quizzes whose ANSWER tiles are
+  // written words a pre-reader cannot read (english.word / english.translate). When on, the FIRST
+  // tap on a tile AUDITIONS it — speaks the tile's word and raises it ('selected') WITHOUT scoring,
+  // advancing, breaking first-try, or arming the hint. Only a SECOND tap on the SAME raised tile
+  // COMMITS (runs the normal correct/wrong path). Tapping a DIFFERENT tile moves the audition.
+  // Absent/false → today's single-tap-commits behavior, byte-identical. Do NOT enable it where the
+  // answers already reveal themselves (picture answers, glyph/number quizzes he can read).
+  previewBeforeCommit?: boolean
+
   // Bounded-round mode (Overhaul Foundation §3). OPTIONAL — absent → today's endless behavior.
   // When set, the quiz runs `round.length` questions then shows RoundResultScreen and records the
   // result to the progress store (stars/bests/stickers). Requires `gameId`.
@@ -151,6 +160,9 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
   // and the bottom-corner guide reaction. Cleared on each new question.
   const [feedback, setFeedback] = useState<{ value: string | number; correct: boolean } | null>(null)
   const [guideReaction, setGuideReaction] = useState<GuideReaction>(null)
+  // Hear-before-commit (PRD-14 W7): the value of the currently-auditioned/raised tile, or null when
+  // nothing is selected. Only used when config.previewBeforeCommit is on. Cleared per question.
+  const [previewValue, setPreviewValue] = useState<string | number | null>(null)
   const reduce = useReducedMotion()
   // Live difficulty for this section — re-renders + regenerates on an adult-menu change (no refresh).
   const difficultyLevel = useDifficulty(config.theme.id as SectionId)
@@ -236,6 +248,7 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
     firstAttemptRef.current = true
     isAdvancingRef.current = false
     resetHint()
+    setPreviewValue(null) // hear-before-commit: no tile is auditioned at the start of a question (W7)
 
     const quizItem = config.generateQuizItem()
     currentItemRef.current = quizItem
@@ -393,6 +406,23 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
     // Every tap is felt: a soft tick synced to the press (separate SFX channel, never TTS).
     sfx.play('tap')
 
+    // Hear-before-commit (PRD-14 W7): when enabled, the FIRST tap on a tile (or on a DIFFERENT tile
+    // than the one currently raised) AUDITIONS it — speak its word + raise it — and returns WITHOUT
+    // committing. The audio was already cancelled above, so this is single-channel. Crucially we
+    // return BEFORE the lock/score/feedback/first-try/hint block: none of those invariants run on an
+    // audition. Only a second tap on the SAME already-raised tile falls through to the commit path.
+    if (config.previewBeforeCommit && selectedItem.value !== previewValue) {
+      setPreviewValue(selectedItem.value)
+      setFeedback(null)     // clear any prior correct/wrong mark so only the raised tile is highlighted
+      setGuideReaction(null)
+      try {
+        await config.speakClickedItem(selectedItem, audio)
+      } catch {
+        // best-effort: audition audio is non-critical
+      }
+      return
+    }
+
     const isCorrect = selectedItem.value === currentItem.value
 
     // Engage the advance-lock SYNCHRONOUSLY on a correct tap — before the `await` below — so a
@@ -513,7 +543,11 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
   // the first tile so the state is deterministically capturable.
   const tileStateFor = (item: QuizItem, index: number): AnswerTileState => {
     if (index === 0 && (forcedFx === 'correct' || forcedFx === 'wrong')) return forcedFx
-    return feedback && feedback.value === item.value ? (feedback.correct ? 'correct' : 'wrong') : 'idle'
+    // Committed correct/wrong feedback always wins over the raised audition state.
+    if (feedback && feedback.value === item.value) return feedback.correct ? 'correct' : 'wrong'
+    // Hear-before-commit (W7): the auditioned tile reads as raised/'selected' until it commits.
+    if (previewValue !== null && item.value === previewValue) return 'selected'
+    return 'idle'
   }
 
   // Never-fail hint (PRD-05 P1): the correct tile pulses once the wrong-tap threshold is crossed.
@@ -640,13 +674,18 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
           />
         ) : (
         <>
-        {/* Answer Options Grid — fills the answer zone beneath the PromptStage. */}
+        {/* Answer Options Grid — fills the answer zone beneath the PromptStage. The grid rises to the
+            TOP of the body zone (PRD-14 W1) so the tiles sit right beneath the prompt instead of
+            hugging the very bottom edge — killing the old dead mid-band. Phone-landscape keeps the
+            tiles centred (its 30/70 split is already tight — preserve that behaviour). */}
         <Box sx={{
           flex: 1,
           display: 'flex',
           justifyContent: 'center',
-          alignItems: 'center',
-          minHeight: 0
+          alignItems: 'flex-start',
+          pt: { xs: 1, md: 2 },
+          minHeight: 0,
+          [PHONE_LANDSCAPE]: { alignItems: 'center', pt: 0 },
         }}>
           <Box
             sx={{ 

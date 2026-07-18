@@ -88,6 +88,11 @@ const EnglishWordGame: React.FC = () => {
     // Never-fail hint (PRD-05 P1): after 2 wrong taps the correct word tile pulses.
     hintAfterNWrong: 2,
 
+    // Hear-before-commit (PRD-14 W7): the answer tiles are WRITTEN English words a pre-reader can't
+    // read, so the first tap auditions the tile's word (raises it) and only a second tap commits —
+    // turning an unreadable guess into real auditory matching.
+    previewBeforeCommit: true,
+
     // Speak the target English word as an audio hint alongside the picture.
     speakQuizPrompt: async (item: QuizItem, audio: any) => audio.speakEnglish(String(item.value)),
     speakClickedItem: async (item: QuizItem, audio: any) => audio.speakEnglish(String(item.value)),

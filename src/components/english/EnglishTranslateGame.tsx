@@ -90,6 +90,11 @@ const EnglishTranslateGame: React.FC = () => {
     // Never-fail hint (PRD-05 P1): after 2 wrong taps the correct word tile pulses.
     hintAfterNWrong: 2,
 
+    // Hear-before-commit (PRD-14 W7): the answer tiles are WRITTEN English words a pre-reader can't
+    // read, so the first tap auditions the tile's English word (raises it) and only a second tap
+    // commits — the child hears the Danish prompt, then hears each English candidate before choosing.
+    previewBeforeCommit: true,
+
     // Prompt is the Danish word (Danish voice); tapping an option speaks the English word.
     speakQuizPrompt: async (item: QuizItem, audio: any) => audio.speak(String(item.audioPrompt)),
     speakClickedItem: async (item: QuizItem, audio: any) => audio.speakEnglish(String(item.value)),

@@ -190,7 +190,10 @@ const HvadManglerGame: React.FC = () => {
 
       if (typeof correct.value === 'number') {
         const base = correct.value
-        const candidates = shuffle([base - 2, base - 1, base + 1, base + 2, base + 5, base + 10])
+        // Near-value distractors (PRD-14 W2 / audit §A6): prefer the (shuffled) ±1/±2 neighbours so a
+        // wrong option is a real sequence error, not a far +10 outlier; +5/+10 stay only as a fallback
+        // tail so the option count never drops below 4 if the near neighbours run out.
+        const candidates = [...shuffle([base - 2, base - 1, base + 1, base + 2]), base + 5, base + 10]
           .filter(n => n >= 0 && n !== base)
         for (const n of candidates) {
           if (options.length >= 4) break

@@ -75,24 +75,13 @@ const AlphabetGame: React.FC = () => {
 
       const level: DifficultyLevel = progressStore.difficultyFor('alphabet')
 
-      if (level === 'normal') {
-        // Today's exact behavior (regression-safe) — fully random distractors; Q/W/X can only
-        // ever land here (they're never the correct answer — see WORD_LETTERS above).
-        const options: QuizItem[] = [correctAnswer]
-        while (options.length < 4) {
-          const randomLetter = DANISH_ALPHABET[Math.floor(Math.random() * DANISH_ALPHABET.length)]
-          if (!options.find(opt => opt.value === randomLetter)) {
-            options.push(toLetterItem(randomLetter))
-          }
-        }
-        return shuffle(options)
-      }
-
       const correctLetter = correctAnswer.value as string
-      // Svær: seed with the correct letter's confusable group (M/N, Æ/Ø/Å, B/D/P, look-/sound-
-      // alike vowels) so a right answer means the child actually told them apart. Let: exclude
-      // that same group so distractors are never a near-miss.
-      const preferred = level === 'svaer' ? shuffle(confusablesFor(correctLetter)) : []
+      // Near-confusable distractors are now the DEFAULT (PRD-14 W2 / audit §A2). Normal + Svær both
+      // seed with the correct letter's confusable group (M/N, Æ/Ø/Å, B/D/P, look-/sound-alike vowels)
+      // so a right answer means the child actually told them apart — not just spotted an outlier. Let
+      // still EXCLUDES that group so its distractors stay maximally dissimilar (easiest). Q/W/X can
+      // only ever appear as random top-ups (never the correct answer — see WORD_LETTERS above).
+      const preferred = level === 'normal' || level === 'svaer' ? shuffle(confusablesFor(correctLetter)) : []
       const excluded = level === 'let' ? new Set(confusablesFor(correctLetter)) : null
 
       const picks: string[] = []
@@ -140,7 +129,17 @@ const AlphabetGame: React.FC = () => {
     speakClickedItem: async (item: QuizItem, audio: any) => {
       return audio.speakLetter(item.value)
     },
-    
+
+    // Reinforce the skill on a correct answer (PRD-14 W3 / audit §A3): speak the completed fact
+    // "{ord} starter med {bogstav}" (e.g. "Wienerbrød starter med W") instead of echoing the bare
+    // letter name — turning a right tap into a repeat of the first-sound lesson. Every askable letter
+    // (WORD_LETTERS) has a LETTER_WORDS entry; guard anyway and fall back to the letter name. New
+    // closed-set phrase → prebaked + auditioned (see docs/audit).
+    speakCorrectFact: async (item: QuizItem, audio: any) => {
+      const data = LETTER_WORDS[item.value as string]
+      return data ? audio.speak(`${data.word} starter med ${item.value}`) : audio.speakLetter(item.value)
+    },
+
     getRepeatAudio: async (item: QuizItem, audio: any) => {
       return audio.speakQuizPromptWithRepeat(item.audioPrompt, item.repeatWord)
     }

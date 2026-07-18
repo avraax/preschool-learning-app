@@ -98,11 +98,24 @@ const LaesOrdetGame: React.FC = () => {
       // length is fixed gentle at every level.
       const optionCount = level === 'svaer' ? 6 : 4
       const correctWord = READING_WORDS.find(w => w.word === correct.value) || READING_WORDS[0]
+      const correctInitial = correctWord.word[0]
+      // Let/Normal (PRD-14 W2 / audit §F): distractor pictures must NOT share the correct word's
+      // initial letter, so decoding the FIRST SOUND is a winning strategy instead of a trap. The word
+      // is still never read aloud (silent decoding IS the exercise). Svær keeps the full pool (shared
+      // initials allowed) as its extra challenge, alongside the 6-picture grid.
+      const distractorPool =
+        level === 'svaer' ? READING_WORDS : READING_WORDS.filter(w => w.word[0] !== correctInitial)
       const options: QuizItem[] = [toItem(correctWord)]
-      const shuffled = shuffle(READING_WORDS)
-      for (const w of shuffled) {
+      for (const w of shuffle(distractorPool)) {
         if (options.length >= optionCount) break
         if (!options.find(o => o.value === w.word)) options.push(toItem(w))
+      }
+      // Safety top-up (keeps the option count stable if a filtered pool ever ran short).
+      if (options.length < optionCount) {
+        for (const w of shuffle(READING_WORDS)) {
+          if (options.length >= optionCount) break
+          if (!options.find(o => o.value === w.word)) options.push(toItem(w))
+        }
       }
       return shuffle(options)
     },
