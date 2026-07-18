@@ -46,7 +46,6 @@ interface GameItem {
   colorName: string
   objectName: string
   objectNameDefinite: string
-  emoji: string
   art?: string
   hex: string
   neuter: boolean
@@ -216,7 +215,6 @@ const FarvejagtGame: React.FC = () => {
       colorName: obj.colorName,
       objectName: obj.objectName,
       objectNameDefinite: obj.objectNameDefinite,
-      emoji: obj.emoji,
       art: obj.art,
       hex: obj.hex,
       neuter: obj.neuter,
@@ -544,7 +542,7 @@ const FarvejagtGame: React.FC = () => {
 
           {/* Repeat Instructions Button */}
           <Box sx={{ textAlign: 'center', mb: { xs: 1, md: 1.5 }, flex: '0 0 auto', [PHONE_LANDSCAPE]: { mb: 0 } }}>
-            <ColorRepeatButton onClick={repeatInstructions} disabled={false} label="🎵 Hør igen" />
+            <ColorRepeatButton onClick={repeatInstructions} disabled={false} />
           </Box>
           </Box>
 
@@ -677,7 +675,7 @@ const FarvejagtGame: React.FC = () => {
                         }}
                       >
                         {/* Collected: the baked object rests in its ring slot (no hex tile). */}
-                        <ObjectArt art={item.art} emoji={item.emoji} size={COLLECTED_SIZE} elevation={1} alt={item.objectName} />
+                        <ObjectArt art={item.art} size={COLLECTED_SIZE} elevation={1} alt={item.objectName} />
                       </motion.div>
                     )
                   })}
@@ -754,7 +752,7 @@ const FarvejagtGame: React.FC = () => {
                           }
                         }}
                       >
-                        <ObjectArt art={item.art} emoji={item.emoji} size={80} elevation={isLifted ? 3 : 1} alt={item.objectName} />
+                        <ObjectArt art={item.art} size={80} elevation={isLifted ? 3 : 1} alt={item.objectName} />
                       </Box>
                     </motion.div>
                   </DraggableItem>

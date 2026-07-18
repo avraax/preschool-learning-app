@@ -1,5 +1,6 @@
 import React from 'react'
 import { Box } from '@mui/material'
+import { Star, Heart } from 'lucide-react'
 import { useTheme } from '@mui/material/styles'
 import { motion } from 'framer-motion'
 import UnifiedQuizGame, { UnifiedQuizConfig, QuizItem } from '../common/UnifiedQuizGame'
@@ -14,11 +15,75 @@ import { progressStore, type DifficultyLevel } from '../../services/progressStor
 import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 import { shuffle } from '../../utils/shuffle'
 
-// Hvad Mangler? — a sequence is shown with one element replaced by ❓; the child picks
+// Hvad Mangler? — a sequence is shown with one element replaced by "?"; the child picks
 // the missing element. Covers number patterns, skip-counting (2s/5s/10s) and simple
 // repeating visual patterns. Early-logic + skip-counting in one game.
 
-const PATTERN_EMOJIS = ['🔴', '🔵', '🟢', '🟡', '🟣', '🟠', '⭐', '❤️']
+// Visual-pattern tokens (Liveliness PRD-12 §2B) — abstract colour/shape sequence pieces rendered as
+// CSS clay pips (a tinted clay circle, or a filled clay star/heart), NOT emoji. The token is a stable
+// id used for matching correct↔distractor; <ClayPip> owns the visual. The pattern lesson is the
+// colour/shape sequence, which clay pips read more clearly than flat emoji (and need no baked art).
+const PATTERN_TOKENS = ['red', 'blue', 'green', 'yellow', 'purple', 'orange', 'star', 'heart'] as const
+type PatternToken = (typeof PATTERN_TOKENS)[number]
+
+const PIP_COLOR: Record<PatternToken, string> = {
+  red: '#EF4444',
+  blue: '#3B82F6',
+  green: '#22C55E',
+  yellow: '#FDE047',
+  purple: '#A855F7',
+  orange: '#F97316',
+  star: '#FBBF24',
+  heart: '#EF4444',
+}
+
+const isPatternToken = (t: string): t is PatternToken => (PATTERN_TOKENS as readonly string[]).includes(t)
+
+// One clay pip — a colour circle, or a filled clay star/heart, at hero (in the focal zone) or tile
+// (answer option) scale. Decorative (the pattern IS the lesson) → aria-hidden.
+const ClayPip: React.FC<{ token: string; variant: 'hero' | 'tile' }> = ({ token, variant }) => {
+  const color = isPatternToken(token) ? PIP_COLOR[token] : '#94A3B8'
+  const dim = variant === 'hero' ? { xs: '2.4rem', md: '3.2rem' } : { xs: '3rem', md: '3.9rem' }
+  const phoneDim = variant === 'hero' ? '1.5rem' : '2rem'
+  const sizeSx = { width: dim, height: dim, [PHONE_LANDSCAPE]: { width: phoneDim, height: phoneDim } }
+
+  if (token === 'star' || token === 'heart') {
+    const Icon = token === 'star' ? Star : Heart
+    return (
+      <Box
+        aria-hidden
+        sx={[
+          sizeSx,
+          {
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color,
+            filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.2))',
+            '& svg': { width: '100%', height: '100%' },
+          },
+        ]}
+      >
+        <Icon fill="currentColor" strokeWidth={0} />
+      </Box>
+    )
+  }
+
+  return (
+    <Box
+      aria-hidden
+      sx={[
+        sizeSx,
+        {
+          borderRadius: '50%',
+          backgroundColor: color,
+          backgroundImage: 'linear-gradient(160deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0) 55%)',
+          boxShadow: `0 6px 14px ${hexToRgba(color, 0.5)}, inset 0 2px 0 rgba(255,255,255,0.5), inset 0 -3px 7px rgba(0,0,0,0.14)`,
+        },
+      ]}
+    />
+  )
+}
 
 const randInt = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min
 
@@ -37,19 +102,19 @@ const buildNumberSequence = (start: number, step: number, length: number) => {
   // Prefer blanking the last or a middle slot (not the first, which gives no context).
   const missingIndex = Math.random() < 0.5 ? length - 1 : randInt(1, length - 1)
   const missing = full[missingIndex]
-  const display = full.map((n, i) => (i === missingIndex ? '❓' : String(n))).join('   ')
+  const display = full.map((n, i) => (i === missingIndex ? '?' : String(n))).join('   ')
   return { missing, display }
 }
 
 const buildVisualPattern = () => {
-  // Repeating pattern from 2-3 distinct emojis, e.g. ABAB? or ABCABC?
-  const palette = shuffle(PATTERN_EMOJIS)
+  // Repeating pattern from 2-3 distinct clay-pip tokens, e.g. ABAB? or ABCABC?
+  const palette = shuffle([...PATTERN_TOKENS])
   const unit = palette.slice(0, Math.random() < 0.5 ? 2 : 3)
   const length = unit.length === 2 ? 5 : 6
   const full = Array.from({ length }, (_, i) => unit[i % unit.length])
   const missingIndex = Math.random() < 0.6 ? length - 1 : randInt(1, length - 1)
   const missing = full[missingIndex]
-  const display = full.map((e, i) => (i === missingIndex ? '❓' : e)).join('  ')
+  const display = full.map((e, i) => (i === missingIndex ? '?' : e)).join('  ')
   return { missing, display, pool: unit }
 }
 
@@ -103,6 +168,8 @@ const HvadManglerGame: React.FC = () => {
         return {
           value,
           display,
+          // The correct option's tile renders a clay pip (PRD-12 §2B), not the id text.
+          node: <ClayPip token={seq.missing} variant="tile" />,
           audioPrompt: 'Hvad mangler?',
           repeatWord: '',
           questionVisual: { emoji: '', word: seq.display }
@@ -132,11 +199,11 @@ const HvadManglerGame: React.FC = () => {
           }
         }
       } else {
-        const pool = shuffle(PATTERN_EMOJIS)
-        for (const e of pool) {
+        const pool = shuffle([...PATTERN_TOKENS])
+        for (const tk of pool) {
           if (options.length >= 4) break
-          if (!options.find(o => o.value === e)) {
-            options.push({ value: e, display: e, audioPrompt: '', repeatWord: '' })
+          if (!options.find(o => o.value === tk)) {
+            options.push({ value: tk, display: tk, node: <ClayPip token={tk} variant="tile" />, audioPrompt: '', repeatWord: '' })
           }
         }
       }
@@ -145,7 +212,6 @@ const HvadManglerGame: React.FC = () => {
     },
 
     title: 'Hvad Mangler?',
-    emoji: '🧩',
     teacherCharacter: 'fox',
     theme: category,
     backRoute: '/math',
@@ -166,8 +232,9 @@ const HvadManglerGame: React.FC = () => {
     // prompt right after it — otherwise the title is heard twice on entry.
     skipFirstPrompt: true,
 
-    // PromptStage hero (§6A/Phase 5): the sequence rendered as individual slots, the blank "❓"
-    // one pulsing so it reads as the thing to fill in (not just more sequence text).
+    // Focal hero (§6A/Phase 5): the sequence rendered as individual slots, the blank "?" one pulsing
+    // so it reads as the thing to fill in. Visual-pattern slots render CSS clay pips (PRD-12 §2B); the
+    // numeric slots + the blank stay type.
     renderHero: (item: QuizItem) => {
       const tokens = (item.questionVisual?.word ?? '').split(/\s+/).filter(Boolean)
       if (tokens.length === 0) return null
@@ -183,7 +250,11 @@ const HvadManglerGame: React.FC = () => {
           }}
         >
           {tokens.map((token, i) => {
-            const isBlank = token === '❓'
+            const isBlank = token === '?'
+            // A colour/shape token → a clay pip (never the id text).
+            if (!isBlank && isPatternToken(token)) {
+              return <ClayPip key={i} token={token} variant="hero" />
+            }
             return (
               <Box
                 key={i}
@@ -238,7 +309,7 @@ const HvadManglerGame: React.FC = () => {
     // (emoji) patterns have no natural spoken fact, so they stay silent (as before).
     speakCorrectFact: async (item: QuizItem, audio: any) => {
       const tokens = (item.questionVisual?.word ?? '').split(/\s+/).filter(Boolean)
-      const filled = tokens.map((t) => (t === '❓' ? String(item.value) : t))
+      const filled = tokens.map((t) => (t === '?' ? String(item.value) : t))
       if (filled.length > 0 && filled.every((t) => /^\d+$/.test(t))) {
         return audio.speak(filled.map((t) => getDanishNumberText(Number(t))).join(', '))
       }

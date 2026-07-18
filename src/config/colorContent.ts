@@ -7,11 +7,10 @@
 export interface ColorObject {
   objectName: string          // indefinite Danish noun ("æble")
   objectNameDefinite: string  // definite form ("æblet") — used in spoken reinforcement
-  emoji: string               // fallback until the baked art lands (art-gated)
-  art?: string                // baked soft-3D art id (src/assets/games/farver/<art>.webp) → colorObjectArt()
+  art: string                 // baked soft-3D art id (src/assets/games/farver/<art>.webp) → colorObjectArt()
   hex: string                 // the object's true color (drives the draggable tile color)
   neuter: boolean             // true = et-word (neuter gender) → color predicate takes -t ("rødt")
-  quizSafe?: boolean          // false = emoji contradicts its color → excluded from Hvilken Farve?
+  quizSafe?: boolean          // false = picture contradicts its color → excluded from Hvilken Farve?
 }
 
 // Neuter (-t) forms of the declinable base colors. Common-gender objects speak the base name;
@@ -37,40 +36,40 @@ export const spokenColor = (hue: string, neuter: boolean): string =>
 // object so the spoken echoes stay identical (no new narration → no prebake/audit cycle).
 export const DANISH_OBJECTS: Record<string, ColorObject[]> = {
   rød: [
-    { objectName: 'æble', objectNameDefinite: 'æblet', emoji: '🍎', art: 'apple', hex: '#dc2626', neuter: true },
-    { objectName: 'bil', objectNameDefinite: 'bilen', emoji: '🚗', art: 'car', hex: '#ef4444', neuter: false },
-    { objectName: 'rose', objectNameDefinite: 'rosen', emoji: '🌹', art: 'rose', hex: '#f87171', neuter: false },
-    { objectName: 'jordbær', objectNameDefinite: 'jordbærret', emoji: '🍓', art: 'strawberry', hex: '#991b1b', neuter: true }
+    { objectName: 'æble', objectNameDefinite: 'æblet', art: 'apple', hex: '#dc2626', neuter: true },
+    { objectName: 'bil', objectNameDefinite: 'bilen', art: 'car', hex: '#ef4444', neuter: false },
+    { objectName: 'rose', objectNameDefinite: 'rosen', art: 'rose', hex: '#f87171', neuter: false },
+    { objectName: 'jordbær', objectNameDefinite: 'jordbærret', art: 'strawberry', hex: '#991b1b', neuter: true }
   ],
   blå: [
-    { objectName: 'hval', objectNameDefinite: 'hvalen', emoji: '🐳', art: 'whale', hex: '#1d4ed8', neuter: false },
-    { objectName: 'blåbær', objectNameDefinite: 'blåbærret', emoji: '🫐', art: 'blueberry', hex: '#3730a3', neuter: true },
-    { objectName: 'lastbil', objectNameDefinite: 'lastbilen', emoji: '🚙', art: 'truck', hex: '#2563eb', neuter: false },
-    { objectName: 'skjorte', objectNameDefinite: 'skjorten', emoji: '👔', art: 'shirt', hex: '#1e40af', neuter: false }
+    { objectName: 'hval', objectNameDefinite: 'hvalen', art: 'whale', hex: '#1d4ed8', neuter: false },
+    { objectName: 'blåbær', objectNameDefinite: 'blåbærret', art: 'blueberry', hex: '#3730a3', neuter: true },
+    { objectName: 'lastbil', objectNameDefinite: 'lastbilen', art: 'truck', hex: '#2563eb', neuter: false },
+    { objectName: 'skjorte', objectNameDefinite: 'skjorten', art: 'shirt', hex: '#1e40af', neuter: false }
   ],
   grøn: [
-    { objectName: 'agurk', objectNameDefinite: 'agurken', emoji: '🥒', art: 'cucumber', hex: '#16a34a', neuter: false },
-    { objectName: 'skildpadde', objectNameDefinite: 'skildpadden', emoji: '🐢', art: 'turtle', hex: '#15803d', neuter: false },
-    { objectName: 'kløver', objectNameDefinite: 'kløveren', emoji: '🍀', art: 'clover', hex: '#166534', neuter: false },
-    { objectName: 'træ', objectNameDefinite: 'træet', emoji: '🌳', art: 'tree', hex: '#14532d', neuter: true }
+    { objectName: 'agurk', objectNameDefinite: 'agurken', art: 'cucumber', hex: '#16a34a', neuter: false },
+    { objectName: 'skildpadde', objectNameDefinite: 'skildpadden', art: 'turtle', hex: '#15803d', neuter: false },
+    { objectName: 'kløver', objectNameDefinite: 'kløveren', art: 'clover', hex: '#166534', neuter: false },
+    { objectName: 'træ', objectNameDefinite: 'træet', art: 'tree', hex: '#14532d', neuter: true }
   ],
   gul: [
-    { objectName: 'sol', objectNameDefinite: 'solen', emoji: '☀️', art: 'sun', hex: '#eab308', neuter: false },
-    { objectName: 'banan', objectNameDefinite: 'bananen', emoji: '🍌', art: 'banana', hex: '#facc15', neuter: false },
-    { objectName: 'majs', objectNameDefinite: 'majsen', emoji: '🌽', art: 'corn', hex: '#fde047', neuter: false },
-    { objectName: 'kylling', objectNameDefinite: 'kyllingen', emoji: '🐥', art: 'chick', hex: '#facc15', neuter: false }
+    { objectName: 'sol', objectNameDefinite: 'solen', art: 'sun', hex: '#eab308', neuter: false },
+    { objectName: 'banan', objectNameDefinite: 'bananen', art: 'banana', hex: '#facc15', neuter: false },
+    { objectName: 'majs', objectNameDefinite: 'majsen', art: 'corn', hex: '#fde047', neuter: false },
+    { objectName: 'kylling', objectNameDefinite: 'kyllingen', art: 'chick', hex: '#facc15', neuter: false }
   ],
   lilla: [
-    { objectName: 'druer', objectNameDefinite: 'druerne', emoji: '🍇', art: 'grapes', hex: '#a855f7', neuter: false },
-    { objectName: 'aubergine', objectNameDefinite: 'auberginen', emoji: '🍆', art: 'eggplant', hex: '#9333ea', neuter: false },
-    { objectName: 'krystal', objectNameDefinite: 'krystallet', emoji: '🔮', art: 'crystal', hex: '#7c3aed', neuter: true },
-    { objectName: 'hjerte', objectNameDefinite: 'hjertet', emoji: '💜', art: 'heart', hex: '#8b5cf6', neuter: true }
+    { objectName: 'druer', objectNameDefinite: 'druerne', art: 'grapes', hex: '#a855f7', neuter: false },
+    { objectName: 'aubergine', objectNameDefinite: 'auberginen', art: 'eggplant', hex: '#9333ea', neuter: false },
+    { objectName: 'krystal', objectNameDefinite: 'krystallet', art: 'crystal', hex: '#7c3aed', neuter: true },
+    { objectName: 'hjerte', objectNameDefinite: 'hjertet', art: 'heart', hex: '#8b5cf6', neuter: true }
   ],
   orange: [
-    { objectName: 'appelsin', objectNameDefinite: 'appelsinen', emoji: '🍊', art: 'orange_fruit', hex: '#f97316', neuter: false },
-    { objectName: 'græskar', objectNameDefinite: 'græskarret', emoji: '🎃', art: 'pumpkin', hex: '#ea580c', neuter: true },
-    { objectName: 'ræv', objectNameDefinite: 'ræven', emoji: '🦊', art: 'fox', hex: '#ea580c', neuter: false },
-    { objectName: 'gulerod', objectNameDefinite: 'guleroden', emoji: '🥕', art: 'carrot', hex: '#f97316', neuter: false }
+    { objectName: 'appelsin', objectNameDefinite: 'appelsinen', art: 'orange_fruit', hex: '#f97316', neuter: false },
+    { objectName: 'græskar', objectNameDefinite: 'græskarret', art: 'pumpkin', hex: '#ea580c', neuter: true },
+    { objectName: 'ræv', objectNameDefinite: 'ræven', art: 'fox', hex: '#ea580c', neuter: false },
+    { objectName: 'gulerod', objectNameDefinite: 'guleroden', art: 'carrot', hex: '#f97316', neuter: false }
   ]
 }
 

@@ -195,7 +195,7 @@ const FarverLearning: React.FC = () => {
                       cursor: 'pointer',
                     }}
                   >
-                    <ObjectArt art={obj.art} emoji={obj.emoji} size="100%" elevation={1} alt={obj.objectName} />
+                    <ObjectArt art={obj.art} size="100%" elevation={1} alt={obj.objectName} />
                   </Box>
                 </motion.div>
               ))}

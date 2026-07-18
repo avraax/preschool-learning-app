@@ -7,9 +7,8 @@ import { countingObjectArt } from '../assets/games/math'
 // spoken plural ("fire bolde") stays honest, and Tal Quiz / Memory rotate over it by `n % length`.
 //
 // GLYPHS ARE NOT ART: numerals stay Typography everywhere (recognising the number IS the lesson);
-// only these depicted manipulatives are baked soft-3D WebP. Art-gated: `art` is the keyed WebP URL
-// when the batch has landed, else `undefined` → every consumer falls back to `emoji` (today's look),
-// so nothing regresses before the art drops in.
+// only these depicted manipulatives are baked soft-3D WebP (`art`, keyed by `id`). The whole set is
+// baked and shipping (PRD-12 removed the flat-emoji fallback column).
 
 export interface CountingObject {
   id: string
@@ -17,19 +16,17 @@ export interface CountingObject {
   name: string
   /** Danish plural — the honest label under a pile ("fire bolde"). */
   danishName: string
-  /** Flat-emoji fallback, shown until the baked WebP for `id` lands. */
-  emoji: string
 }
 
 export const COUNTING_OBJECTS: CountingObject[] = [
-  { id: 'apple', name: 'æble', danishName: 'æbler', emoji: '🍎' },
-  { id: 'balloon', name: 'ballon', danishName: 'balloner', emoji: '🎈' },
-  { id: 'star', name: 'stjerne', danishName: 'stjerner', emoji: '⭐' },
-  { id: 'flower', name: 'blomst', danishName: 'blomster', emoji: '🌸' },
-  { id: 'car', name: 'bil', danishName: 'biler', emoji: '🚗' },
-  { id: 'ball', name: 'bold', danishName: 'bolde', emoji: '⚽' },
-  { id: 'bird', name: 'fugl', danishName: 'fugle', emoji: '🐦' },
-  { id: 'fish', name: 'fisk', danishName: 'fisk', emoji: '🐟' },
+  { id: 'apple', name: 'æble', danishName: 'æbler' },
+  { id: 'balloon', name: 'ballon', danishName: 'balloner' },
+  { id: 'star', name: 'stjerne', danishName: 'stjerner' },
+  { id: 'flower', name: 'blomst', danishName: 'blomster' },
+  { id: 'car', name: 'bil', danishName: 'biler' },
+  { id: 'ball', name: 'bold', danishName: 'bolde' },
+  { id: 'bird', name: 'fugl', danishName: 'fugle' },
+  { id: 'fish', name: 'fisk', danishName: 'fisk' },
 ]
 
 // Pick the counting object for a number the SAME deterministic way everywhere (`n % length`, NOT

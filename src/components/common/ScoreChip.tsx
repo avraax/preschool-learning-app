@@ -1,12 +1,13 @@
 import React from 'react'
 import { Box } from '@mui/material'
+import { Star } from 'lucide-react'
 import { getCategoryTheme } from '../../config/categoryThemes'
 import { hexToRgba, relLuminance } from '../../theme/tokens/helpers'
 import TactilePill from './TactilePill'
 
 // Unified round-progress chip (UI/UX Overhaul PRD §5.4; tactile material added in Liveliness PRD-06
 // F4). ONE design across every section: an accent pill with a pip ring showing `answered/total`
-// (round questions, Farvejagt boards, etc.) plus an optional ⭐ record readout. It now sits on the
+// (round questions, Farvejagt boards, etc.) plus an optional star record readout. It now sits on the
 // shared `TactilePill` soft-3D material so it reads as one family with "Hør igen" + the level ring
 // (replacing the old flat `bgcolor:accent` + single glow).
 //
@@ -23,7 +24,7 @@ interface ScoreChipProps {
   answered?: number
   /** Total pips (round length). Renders the pip ring when > 0. */
   total?: number
-  /** Best-stars record shown as ⭐×N. Hidden when falsy. */
+  /** Best-stars record shown as a star + N. Hidden when falsy. */
   record?: number
   /** Plain numeric fallback when there is no fixed total (endless/exploration). */
   value?: number
@@ -86,8 +87,8 @@ export const ScoreChip: React.FC<ScoreChipProps> = ({
       )}
 
       {record > 0 && (
-        <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: '2px', fontSize: '0.95rem' }}>
-          ⭐{record}
+        <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: '3px', fontSize: '0.95rem' }}>
+          <Star size={15} fill="currentColor" strokeWidth={0} aria-hidden style={{ display: 'block' }} />{record}
         </Box>
       )}
     </TactilePill>

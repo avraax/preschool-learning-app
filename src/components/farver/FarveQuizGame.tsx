@@ -45,11 +45,11 @@ const ROUND_QUESTIONS = 8
 const WRONG_BEFORE_HINT = 2
 const OPTION_COUNT = 4 // NORMAL baseline (today, unchanged) — difficulty below adjusts Let/Svær
 
-interface QuizObject { color: string; objectName: string; objectNameDefinite: string; emoji: string; art?: string; neuter: boolean }
+interface QuizObject { color: string; objectName: string; objectNameDefinite: string; art?: string; neuter: boolean }
 
-// Only quiz-safe objects: emoji whose color the child can actually read off the picture. Objects
-// flagged quizSafe:false in colorContent (⚽/👒/☁️/🌸) are excluded so the child is never scored
-// wrong for correctly seeing a black-and-white ball or a white cloud.
+// Only quiz-safe objects: pictures whose color the child can actually read off the picture. Objects
+// flagged quizSafe:false in colorContent are excluded so the child is never scored wrong for
+// correctly seeing a black-and-white ball or a white cloud.
 const OBJECT_POOL: QuizObject[] = HUE_ORDER.flatMap((color) =>
   (DANISH_OBJECTS[color] ?? [])
     .filter((o) => o.quizSafe !== false)
@@ -57,7 +57,6 @@ const OBJECT_POOL: QuizObject[] = HUE_ORDER.flatMap((color) =>
       color,
       objectName: o.objectName,
       objectNameDefinite: o.objectNameDefinite,
-      emoji: o.emoji,
       art: o.art,
       neuter: o.neuter
     }))
@@ -319,7 +318,7 @@ const FarveQuizGame: React.FC = () => {
         >
           {/* Repeat the spoken question */}
           <Box sx={{ textAlign: 'center', mb: { xs: 1, md: 1.5 }, flex: '0 0 auto' }}>
-            <ColorRepeatButton onClick={repeatPrompt} disabled={false} label="🎵 Hør igen" />
+            <ColorRepeatButton onClick={repeatPrompt} disabled={false} />
           </Box>
 
           {/* The object to drag onto a color. */}
@@ -360,7 +359,7 @@ const FarveQuizGame: React.FC = () => {
                       cursor: 'grab',
                       '&:active': { cursor: 'grabbing' }
                     }}>
-                      <ObjectArt art={current.art} emoji={current.emoji} size="100%" elevation={isLiftedObject ? 3 : 1} alt={current.objectName} />
+                      <ObjectArt art={current.art} size="100%" elevation={isLiftedObject ? 3 : 1} alt={current.objectName} />
                     </Box>
                   </motion.div>
                 </DraggableItem>
@@ -446,7 +445,7 @@ const FarveQuizGame: React.FC = () => {
                           animate={{ scale: 1, opacity: 1 }}
                           transition={reduce ? { duration: 0 } : SNAP}
                         >
-                          <ObjectArt art={current.art} emoji={current.emoji} size={64} elevation={2} alt={current.objectName} />
+                          <ObjectArt art={current.art} size={64} elevation={2} alt={current.objectName} />
                         </motion.div>
                       )}
                     </DroppableZone>

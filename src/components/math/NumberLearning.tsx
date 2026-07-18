@@ -30,9 +30,9 @@ const MATH_ACCENT = categoryThemes.math.accentColor
 const ObjectCount: React.FC<{ n: number; accent: string }> = ({ n, accent }) => {
   const useDots = n > 30
   const size = n <= 10 ? 30 : n <= 20 ? 24 : n <= 30 ? 18 : n <= 60 ? 10 : 7
-  // The shared section counting object (PRD-08 decision 1: Lær Tal uses `star`). Baked soft-3D WebP
-  // when the art has landed; the ⭐ emoji is the art-gated fallback. Dense counts (n > 30) stay plain
-  // accent dots — a baked object at <10px is mush, dots stay legible (this shrink-to-dots stays).
+  // The shared section counting object (PRD-08 decision 1: Lær Tal uses `star`), a baked soft-3D WebP.
+  // Dense counts (n > 30) stay plain accent dots — a baked object at <10px is mush, dots stay legible
+  // (this shrink-to-dots stays).
   const starArt = artForObject(STAR_OBJECT)
   return (
     <Box
@@ -64,11 +64,7 @@ const ObjectCount: React.FC<{ n: number; accent: string }> = ({ n, accent }) => 
             draggable={false}
             sx={{ height: `${size}px`, width: 'auto', objectFit: 'contain', flex: '0 0 auto', userSelect: 'none', pointerEvents: 'none' }}
           />
-        ) : (
-          <Box key={i} component="span" sx={{ fontSize: `${size}px`, lineHeight: 1, flex: '0 0 auto', userSelect: 'none' }}>
-            {STAR_OBJECT.emoji}
-          </Box>
-        )
+        ) : null
       )}
     </Box>
   )

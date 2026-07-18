@@ -14,39 +14,37 @@ import { ordlegArt } from '../../assets/games/ordleg'
 // words for a beginning reader who can't spell yet.
 //
 // Visual uplift (PRD-10 §3.3): the prompt WORD stays type (reading it IS the lesson), but the
-// answer *pictures* become baked soft-3D word-pictures — `art` is the ASCII art id (§4; Danish
-// glyphs aliased: æg→aeg, ræv→raev). Resolved via `ordlegArt(w.art)`; `emoji` is the art-gated
-// fallback until the batch lands. The whole pool is concrete/depictable, so once art lands a
-// question never mixes baked art with emoji tiles.
+// answer *pictures* are baked soft-3D word-pictures — `art` is the ASCII art id (§4; Danish glyphs
+// aliased: æg→aeg, ræv→raev), resolved via `ordlegArt(w.art)`. The whole pool is concrete/depictable
+// and fully baked (PRD-12 dropped the emoji fallback), so a question is always all-picture tiles.
 interface ReadingWord {
   word: string
-  emoji: string
   art: string
 }
 
 const READING_WORDS: ReadingWord[] = [
-  { word: 'ko', emoji: '🐄', art: 'ko' },
-  { word: 'is', emoji: '🍦', art: 'is' },
-  { word: 'æg', emoji: '🥚', art: 'aeg' },
-  { word: 'ur', emoji: '⌚', art: 'ur' },
-  { word: 'so', emoji: '🐖', art: 'so' },
-  { word: 'kat', emoji: '🐱', art: 'kat' },
-  { word: 'sol', emoji: '☀️', art: 'sol' },
-  { word: 'hus', emoji: '🏠', art: 'hus' },
-  { word: 'bil', emoji: '🚗', art: 'bil' },
-  { word: 'bog', emoji: '📖', art: 'bog' },
-  { word: 'mus', emoji: '🐭', art: 'mus' },
-  { word: 'and', emoji: '🦆', art: 'and' },
-  { word: 'sko', emoji: '👟', art: 'sko' },
-  { word: 'hat', emoji: '🎩', art: 'hat' },
-  { word: 'ost', emoji: '🧀', art: 'ost' },
-  { word: 'tog', emoji: '🚂', art: 'tog' },
-  { word: 'bus', emoji: '🚌', art: 'bus' },
-  { word: 'ræv', emoji: '🦊', art: 'raev' },
-  { word: 'ged', emoji: '🐐', art: 'ged' },
-  { word: 'haj', emoji: '🦈', art: 'haj' },
-  { word: 'abe', emoji: '🐒', art: 'abe' },
-  { word: 'ski', emoji: '🎿', art: 'ski' }
+  { word: 'ko', art: 'ko' },
+  { word: 'is', art: 'is' },
+  { word: 'æg', art: 'aeg' },
+  { word: 'ur', art: 'ur' },
+  { word: 'so', art: 'so' },
+  { word: 'kat', art: 'kat' },
+  { word: 'sol', art: 'sol' },
+  { word: 'hus', art: 'hus' },
+  { word: 'bil', art: 'bil' },
+  { word: 'bog', art: 'bog' },
+  { word: 'mus', art: 'mus' },
+  { word: 'and', art: 'and' },
+  { word: 'sko', art: 'sko' },
+  { word: 'hat', art: 'hat' },
+  { word: 'ost', art: 'ost' },
+  { word: 'tog', art: 'tog' },
+  { word: 'bus', art: 'bus' },
+  { word: 'ræv', art: 'raev' },
+  { word: 'ged', art: 'ged' },
+  { word: 'haj', art: 'haj' },
+  { word: 'abe', art: 'abe' },
+  { word: 'ski', art: 'ski' }
 ]
 
 // Let (Overhaul §5.7/Appendix A): restrict the PROMPT word to the shortest (2-letter) entries —
@@ -57,11 +55,12 @@ const TWO_LETTER_WORDS = READING_WORDS.filter(w => w.word.length === 2)
 const LaesOrdetGame: React.FC = () => {
   const toItem = (w: ReadingWord): QuizItem => ({
     value: w.word,
-    display: w.emoji,
+    // The tile renders the baked picture (`art`); `display` is only the non-visual label (never an
+    // emoji) used if art were ever missing.
+    display: w.word,
     audioPrompt: w.word,
     repeatWord: w.word,
-    // The option's baked soft-3D picture (§3.1 answer-tile art path); undefined until the art batch
-    // lands → the tile falls back to the `display` emoji, no code change.
+    // The option's baked soft-3D picture (§3.1 answer-tile art path).
     art: ordlegArt(w.art)
   })
 
@@ -109,7 +108,6 @@ const LaesOrdetGame: React.FC = () => {
     },
 
     title: 'Læs Ordet',
-    emoji: '📖',
     teacherCharacter: 'owl',
     // Live, skin-aware ordleg theme (§3.6) — the static `categoryThemes.ordleg` is bound to the kid
     // tokens and would show kid-skin colours on Havet/Rummet/Dino.

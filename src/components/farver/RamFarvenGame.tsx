@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { Box, Typography, Button } from '@mui/material'
+import { ArrowRight, ArrowDown, Trash2 } from 'lucide-react'
 import { useTheme } from '@mui/material/styles'
 import { motion, AnimatePresence } from 'framer-motion'
 import { DndContext, DragEndEvent, DragStartEvent } from '@dnd-kit/core'
@@ -45,7 +46,6 @@ interface ColorDroplet {
   color: string
   colorName: string
   hex: string
-  emoji: string
   isUsed: boolean
 }
 
@@ -72,11 +72,11 @@ interface RecipeReveal {
 
 // ── Educational color data + pure helpers (module scope: not themeable, not render-derived) ───
 const primaryColors: ColorDroplet[] = [
-  { id: 'red', color: 'rød', colorName: 'rød', hex: '#EF4444', emoji: '💧', isUsed: false },
-  { id: 'blue', color: 'blå', colorName: 'blå', hex: '#3B82F6', emoji: '💧', isUsed: false },
-  { id: 'yellow', color: 'gul', colorName: 'gul', hex: '#FDE047', emoji: '💧', isUsed: false },
-  { id: 'white', color: 'hvid', colorName: 'hvid', hex: '#F8FAFC', emoji: '💧', isUsed: false },
-  { id: 'black', color: 'sort', colorName: 'sort', hex: '#1F2937', emoji: '💧', isUsed: false }
+  { id: 'red', color: 'rød', colorName: 'rød', hex: '#EF4444', isUsed: false },
+  { id: 'blue', color: 'blå', colorName: 'blå', hex: '#3B82F6', isUsed: false },
+  { id: 'yellow', color: 'gul', colorName: 'gul', hex: '#FDE047', isUsed: false },
+  { id: 'white', color: 'hvid', colorName: 'hvid', hex: '#F8FAFC', isUsed: false },
+  { id: 'black', color: 'sort', colorName: 'sort', hex: '#1F2937', isUsed: false }
 ]
 
 const possibleTargets: TargetColor[] = [
@@ -384,7 +384,8 @@ const RamFarvenGame: React.FC = () => {
     celebrateTier('micro')
     reactGuide('cheer')
 
-    // Recipe reveal: 🔴 + 🔵 = 🟣 + the spoken rule ("rød og blå bliver lilla") — educational
+    // Recipe reveal: the two source swatches + the result swatch + the spoken rule ("rød og blå
+    // bliver lilla") — educational
     // naming of the result (identification), not win/lose narration.
     setRecipe({ aHex: c1.hex, bHex: c2.hex, targetHex: result.hex, aName: c1.colorName, bName: c2.colorName, targetName: result.name })
     audio.cancelCurrentAudio()
@@ -519,7 +520,7 @@ const RamFarvenGame: React.FC = () => {
         <>
           {/* Repeat Instructions Button (replays the spoken "Ram farven: X" target). */}
           <Box sx={{ textAlign: 'center', mb: { xs: 0.75, md: 1 }, flex: '0 0 auto', [PHONE_LANDSCAPE]: { mb: 0.5 } }}>
-            <ColorRepeatButton onClick={repeatInstructions} disabled={false} label="🎵 Hør igen" />
+            <ColorRepeatButton onClick={repeatInstructions} disabled={false} />
           </Box>
 
           {/* PRD-09: NO framed panel — the mixing bench sits directly on the calm frozen world (F3).
@@ -631,7 +632,9 @@ const RamFarvenGame: React.FC = () => {
                   border: `3px solid ${t.borderColor}`,
                   boxShadow: muiTheme.customShadows?.card ?? 2
                 }}>
-                  <Typography sx={{ fontWeight: 900, fontSize: { xs: '2rem', sm: '2.3rem', md: '2.7rem' }, lineHeight: 1, color: t.accentColor, '@media (orientation: landscape)': { fontSize: '1.9rem' } }}>➜</Typography>
+                  <Box aria-hidden sx={{ display: 'flex', color: t.accentColor, '& svg': { width: { xs: 34, sm: 40, md: 46 }, height: 'auto' }, '@media (orientation: landscape)': { '& svg': { width: 32 } } }}>
+                    <ArrowRight strokeWidth={2.75} />
+                  </Box>
                 </Box>
 
                 {/* Mixing pot + Tøm */}
@@ -737,7 +740,9 @@ const RamFarvenGame: React.FC = () => {
                             animate={reduce ? {} : { y: [0, 4, 0] }}
                             transition={reduce ? undefined : { duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
                           >
-                            <Typography sx={{ fontSize: 'clamp(1.6rem, 6vw, 2.4rem)', lineHeight: 1, opacity: 0.6, color: muiTheme.scene.dark ? 'rgba(255,255,255,0.85)' : t.accentColor }}>⬇</Typography>
+                            <Box aria-hidden sx={{ display: 'flex', opacity: 0.6, color: muiTheme.scene.dark ? 'rgba(255,255,255,0.85)' : t.accentColor, '& svg': { width: 'clamp(1.6rem, 6vw, 2.4rem)', height: 'auto' } }}>
+                              <ArrowDown strokeWidth={2.75} />
+                            </Box>
                           </motion.div>
                         </Box>
                       )}
@@ -794,7 +799,7 @@ const RamFarvenGame: React.FC = () => {
                           '&:hover': { backgroundColor: t.hoverBorderColor }
                         }}
                       >
-                        🗑️ Tøm
+<Trash2 size={18} style={{ marginRight: 6 }} />Tøm
                       </Button>
                     )}
                   </Box>
@@ -927,7 +932,7 @@ const RamFarvenGame: React.FC = () => {
                       gap: { xs: 1.5, md: 2 },
                       maxWidth: '92%'
                     }}>
-                      <Typography sx={{ fontFamily: comicFont, fontWeight: 800, fontSize: 'clamp(1.2rem, 5vw, 1.9rem)', color: t.accentColor }}>Flot! 🎉</Typography>
+                      <Typography sx={{ fontFamily: comicFont, fontWeight: 800, fontSize: 'clamp(1.2rem, 5vw, 1.9rem)', color: t.accentColor }}>Flot!</Typography>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1.25, md: 1.75 } }}>
                         <Swatch hex={displayRecipe.aHex} />
                         <RecipeSign>+</RecipeSign>

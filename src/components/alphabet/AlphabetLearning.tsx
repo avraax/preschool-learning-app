@@ -218,7 +218,7 @@ const AlphabetLearning: React.FC = () => {
                   </Typography>
                   {data && (
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 0.75, md: 1.25 } }}>
-                      {art ? (
+                      {art && (
                         <Box
                           component="img"
                           src={art}
@@ -235,10 +235,6 @@ const AlphabetLearning: React.FC = () => {
                             [PHONE_LANDSCAPE]: { height: '1.8rem' },
                           }}
                         />
-                      ) : (
-                        <Typography sx={{ fontSize: 'clamp(1.4rem, 6vh, 2.4rem)', lineHeight: 1, [PHONE_LANDSCAPE]: { fontSize: '1.3rem' } }}>
-                          {data.emoji}
-                        </Typography>
                       )}
                       <Typography
                         sx={{

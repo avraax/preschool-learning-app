@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Box, Typography, Chip } from '@mui/material'
+import { PawPrint, Apple, Blocks, Hash, Palette, PersonStanding, Users, Trees, Hand, type LucideIcon } from 'lucide-react'
 import { useTheme } from '@mui/material/styles'
 import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 import { getCategoryTheme } from '../../config/categoryThemes'
@@ -9,7 +10,7 @@ import { softShadow } from '../../theme/depth'
 import GameShell from '../common/GameShell'
 import PromptFocus from '../common/PromptFocus'
 import TactileTile from '../common/TactileTile'
-import { HeroArt, HeroEmoji } from '../common/PromptStage'
+import { HeroArt, HeroEmoji } from '../common/PromptArt'
 import { useCelebration } from '../common/CelebrationEffect'
 import { useBrowseXp } from '../../hooks/useBrowseXp'
 import { englishThemes, EnglishWord } from '../../config/englishVocab'
@@ -25,6 +26,20 @@ import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 // frosted PromptStage card), and the word cards are the shell's tactile clay (TactileTile) — the
 // legacy #ECF1F8 gradient + hard keyboard lip are retired. Concrete words show a baked soft-3D
 // picture; never-baked words (greetings/body/family) keep their emoji via the art-gated fallback.
+// Per-theme Lucide icon for the theme-selector chips (PRD-12 §2C — controls, not subjects, so a
+// clean icon replaces the old emoji chip glyph). Keyed by the englishVocab theme id.
+const THEME_ICONS: Record<string, LucideIcon> = {
+  animals: PawPrint,
+  food: Apple,
+  objects: Blocks,
+  numbers: Hash,
+  colors: Palette,
+  body: PersonStanding,
+  family: Users,
+  nature: Trees,
+  greetings: Hand,
+}
+
 const EnglishLearning: React.FC = () => {
   const muiTheme = useTheme()
   const theme = getCategoryTheme('english')
@@ -132,10 +147,17 @@ const EnglishLearning: React.FC = () => {
             [PHONE_LANDSCAPE]: { gap: 0.5, mb: 0.75 }
           }}
         >
-          {englishThemes.map(t => (
+          {englishThemes.map(t => {
+            const ThemeIcon = THEME_ICONS[t.id] ?? Blocks
+            return (
             <Chip
               key={t.id}
-              label={`${t.emoji} ${t.title}`}
+              label={
+                <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.6 }}>
+                  <ThemeIcon size={18} strokeWidth={2.5} aria-hidden />
+                  {t.title}
+                </Box>
+              }
               onClick={() => {
                 audio.updateUserInteraction()
                 audio.cancelCurrentAudio()
@@ -156,7 +178,8 @@ const EnglishLearning: React.FC = () => {
                 '&:hover': { bgcolor: t.id === activeThemeId ? theme.hoverBorderColor : 'white' }
               }}
             />
-          ))}
+            )
+          })}
         </Box>
 
         {/* Word cards grid */}

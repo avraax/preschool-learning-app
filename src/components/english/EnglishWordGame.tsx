@@ -74,7 +74,6 @@ const EnglishWordGame: React.FC = () => {
     },
 
     title: 'Find det Engelske Ord',
-    emoji: '🔤',
     teacherCharacter: 'owl',
     theme: getCategoryTheme('english'),
     backRoute: '/english',

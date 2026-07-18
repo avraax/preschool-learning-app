@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import { Typography, Box } from '@mui/material'
+import { Volume2 } from 'lucide-react'
 import { isIOS } from '../../utils/deviceDetection'
 import { CategoryTheme } from '../../config/categoryThemes'
 import GameShell from './GameShell'
 import AnswerTile, { type AnswerTileState } from './AnswerTile'
 import PromptFocus from './PromptFocus'
-import { HeroEmoji, HeroArt, TileArt } from './PromptStage'
+import { HeroEmoji, HeroArt, TileArt } from './PromptArt'
 import type { GuideReaction } from './ThemeMascot'
 import { useCelebration } from '../common/CelebrationEffect'
 import { useGameState } from '../../hooks/useGameState'
@@ -70,6 +71,11 @@ export interface QuizItem {
   // of the glyph/emoji `display`; when absent (every other quiz) the tile renders `display` exactly as
   // before — so this addition is inert for all non-Ordleg quizzes.
   art?: string
+  // Optional custom answer-tile content (Liveliness PRD-12 §2B): a React node rendered on THIS
+  // OPTION's tile instead of the `display` glyph — used by Hvad Mangler to render CSS clay pips for
+  // the visual-pattern options (no emoji, no baked art). `value` stays a plain matchable primitive;
+  // `node` is purely the visual. Absent for every other quiz → the glyph render is unchanged.
+  node?: React.ReactNode
 }
 
 // Configuration interface for the unified quiz
@@ -83,7 +89,9 @@ export interface UnifiedQuizConfig {
   
   // Display configuration
   title: string                // "Bogstav Quiz" or "Tal Quiz"
-  emoji: string               // "🎯" or "🧮"
+  // Legacy game-identity glyph — never rendered (kept optional only for back-compat; PRD-12 dropped
+  // the emoji values). Do not add new usages.
+  emoji?: string
   teacherCharacter: 'owl' | 'fox'
   theme: CategoryTheme
   backRoute: string
@@ -560,7 +568,11 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
       // Listening task: an "equalizer" wonder card — a subject without revealing the picture.
       return (
         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
-          <HeroEmoji>🔊</HeroEmoji>
+          {/* A "listen" control glyph — a Lucide speaker, NEVER a picture (it must not reveal the
+              answer for the audio-only Lyt og Find task). */}
+          <Box aria-hidden sx={{ display: 'flex', color: config.theme.accentColor, '& svg': { width: 'clamp(3.5rem, 14vh, 7rem)', height: 'auto' }, [PHONE_LANDSCAPE]: { '& svg': { width: 'clamp(2.2rem, 18vh, 3.2rem)' } } }}>
+            <Volume2 strokeWidth={2.25} />
+          </Box>
           <Box aria-hidden sx={{ display: 'flex', alignItems: 'flex-end', gap: '4px', height: 24 }}>
             {[0, 1, 2, 3, 4].map((i) => (
               <Box
@@ -711,10 +723,12 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
                     disabled={isAdvancingRef.current}
                   >
                     {/* Baked soft-3D picture answer (Læs Ordet — the answers ARE the pictures; §3.1);
-                        every other quiz leaves item.art unset → the glyph/emoji Typography below,
-                        byte-identical to before. */}
+                        a custom node (Hvad Mangler's CSS clay pips; PRD-12 §2B); else the glyph/emoji
+                        Typography below, byte-identical to before for every other quiz. */}
                     {item.art ? (
                       <TileArt src={item.art} />
+                    ) : item.node ? (
+                      item.node
                     ) : (
                     <Typography
                       variant="h1"

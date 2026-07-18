@@ -52,7 +52,6 @@ const MemoryGame: React.FC = () => {
       return {
         primary: letter,
         secondary: letterData?.word,
-        icon: letterData?.emoji,
         iconArt: letterArt(letter)
       }
     },

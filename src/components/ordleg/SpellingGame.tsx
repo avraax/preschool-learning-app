@@ -11,7 +11,7 @@ import { tileSurface } from '../../theme/tokens/helpers'
 import { softShadow } from '../../theme/depth'
 import GameShell from '../common/GameShell'
 import PromptFocus from '../common/PromptFocus'
-import { HeroArt, HeroEmoji } from '../common/PromptStage'
+import { HeroArt, HeroEmoji } from '../common/PromptArt'
 import TactileTile from '../common/TactileTile'
 import RoundResultScreen from '../common/RoundResultScreen'
 import type { GuideReaction } from '../common/ThemeMascot'
@@ -34,50 +34,51 @@ import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 // 2-3 letter child-friendly Danish words. Duplicates from the source list removed.
 // Includes Æ, Ø, Å to practise the Danish-specific letters.
 //
-// Visual uplift (PRD-10 §3.4): the prompt PICTURE becomes a baked soft-3D word-picture (§4) grounded
-// in PromptFocus — `art` is the ASCII art id (Danish glyphs aliased: æg→aeg, ræv→raev, bær→baer,
-// løg→loeg, ål→aal, sø→soe). Resolved via `ordlegArt(w.art)`; `emoji` is the art-gated fallback and
-// the *only* rendering for the abstract words (hej/arm/ben/fod/hul/mor/far, `art` omitted) — no clean
-// clay depiction exists for those (§0.4). The letter TILES + SLOTS + spelled letters stay type (the
-// lesson). `os` (os ≠ cheese — a stray dup of `ost`) and `øl` (beer, off-brand) removed per owner
-// decision §6.2; Ø is still practised via `sø`/`løg`.
-const SPELLING_WORDS: { word: string; emoji: string; art?: string }[] = [
-  { word: 'ko', emoji: '🐄', art: 'ko' },
-  { word: 'bi', emoji: '🐝', art: 'bi' },
-  { word: 'is', emoji: '🍦', art: 'is' },
-  { word: 'sol', emoji: '☀️', art: 'sol' },
-  { word: 'hus', emoji: '🏠', art: 'hus' },
-  { word: 'bil', emoji: '🚗', art: 'bil' },
-  { word: 'kat', emoji: '🐱', art: 'kat' },
+// Visual uplift (PRD-10 §3.4): the prompt PICTURE is a baked soft-3D word-picture (§4) grounded in
+// PromptFocus — `art` is the ASCII art id (Danish glyphs aliased: æg→aeg, ræv→raev, bær→baer,
+// løg→loeg, ål→aal, sø→soe), resolved via `ordlegArt(w.art)`. The concrete words are all baked; only
+// the 7 abstract words (hej/arm/ben/fod/hul/mor/far, `art` omitted) still carry `emoji` — no clean
+// clay depiction exists for those (§0.4), so it's the *only* rendering for them until PRD-12 Phase B
+// bakes them. The letter TILES + SLOTS + spelled letters stay type (the lesson). `os` (os ≠ cheese —
+// a stray dup of `ost`) and `øl` (beer, off-brand) removed per owner decision §6.2; Ø is still
+// practised via `sø`/`løg`.
+const SPELLING_WORDS: { word: string; emoji?: string; art?: string }[] = [
+  { word: 'ko', art: 'ko' },
+  { word: 'bi', art: 'bi' },
+  { word: 'is', art: 'is' },
+  { word: 'sol', art: 'sol' },
+  { word: 'hus', art: 'hus' },
+  { word: 'bil', art: 'bil' },
+  { word: 'kat', art: 'kat' },
   { word: 'hej', emoji: '👋' },
-  { word: 'hat', emoji: '🎩', art: 'hat' },
-  { word: 'mus', emoji: '🐭', art: 'mus' },
-  { word: 'bus', emoji: '🚌', art: 'bus' },
-  { word: 'ost', emoji: '🧀', art: 'ost' },
+  { word: 'hat', art: 'hat' },
+  { word: 'mus', art: 'mus' },
+  { word: 'bus', art: 'bus' },
+  { word: 'ost', art: 'ost' },
   { word: 'fod', emoji: '🦶' },
-  { word: 'bog', emoji: '📖', art: 'bog' },
-  { word: 'and', emoji: '🦆', art: 'and' },
+  { word: 'bog', art: 'bog' },
+  { word: 'and', art: 'and' },
   { word: 'arm', emoji: '💪' },
   { word: 'ben', emoji: '🦵' },
   { word: 'hul', emoji: '🕳️' },
-  { word: 'sø', emoji: '🏞️', art: 'soe' },
-  { word: 'ål', emoji: '🐍', art: 'aal' },
+  { word: 'sø', art: 'soe' },
+  { word: 'ål', art: 'aal' },
   // More easy 2-3 letter words
-  { word: 'æg', emoji: '🥚', art: 'aeg' },
-  { word: 'te', emoji: '🍵', art: 'te' },
-  { word: 'ur', emoji: '⌚', art: 'ur' },
-  { word: 'sko', emoji: '👟', art: 'sko' },
-  { word: 'haj', emoji: '🦈', art: 'haj' },
-  { word: 'abe', emoji: '🐒', art: 'abe' },
-  { word: 'ræv', emoji: '🦊', art: 'raev' },
-  { word: 'ulv', emoji: '🐺', art: 'ulv' },
-  { word: 'ged', emoji: '🐐', art: 'ged' },
-  { word: 'tog', emoji: '🚂', art: 'tog' },
+  { word: 'æg', art: 'aeg' },
+  { word: 'te', art: 'te' },
+  { word: 'ur', art: 'ur' },
+  { word: 'sko', art: 'sko' },
+  { word: 'haj', art: 'haj' },
+  { word: 'abe', art: 'abe' },
+  { word: 'ræv', art: 'raev' },
+  { word: 'ulv', art: 'ulv' },
+  { word: 'ged', art: 'ged' },
+  { word: 'tog', art: 'tog' },
   { word: 'mor', emoji: '👩' },
   { word: 'far', emoji: '👨' },
-  { word: 'bær', emoji: '🍓', art: 'baer' },
-  { word: 'løg', emoji: '🧅', art: 'loeg' },
-  { word: 'ski', emoji: '🎿', art: 'ski' },
+  { word: 'bær', art: 'baer' },
+  { word: 'løg', art: 'loeg' },
+  { word: 'ski', art: 'ski' },
 ]
 
 const DANISH_ALPHABET = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'R', 'S', 'T', 'U', 'V', 'Y', 'Z', 'Æ', 'Ø', 'Å']
@@ -92,7 +93,7 @@ const SpellingGame: React.FC = () => {
   const reduce = useReducedMotion()
 
   // Current word and its uppercase letters
-  const [current, setCurrent] = useState<{ word: string; emoji: string; art?: string } | null>(null)
+  const [current, setCurrent] = useState<{ word: string; emoji?: string; art?: string } | null>(null)
   const [targetLetters, setTargetLetters] = useState<string[]>([])
   const [filledCount, setFilledCount] = useState(0)
   const [tiles, setTiles] = useState<LetterTile[]>([])

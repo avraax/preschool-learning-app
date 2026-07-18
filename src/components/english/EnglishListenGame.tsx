@@ -48,8 +48,8 @@ const pickWordsForLevel = (correct: EnglishWord, level: DifficultyLevel): Englis
 const EnglishListenGame: React.FC = () => {
   // The ANSWER tiles are the pictures (the child taps the one matching the spoken word). Baked
   // soft-3D art via `QuizItem.art` (PRD-10 answer-tile path); `display` emoji is the art-gated
-  // fallback (and permanent for never-baked words — greetings/body/family). The 🔊 PROMPT is never
-  // given a picture (would reveal the answer — §0.7), so no `questionVisual` here.
+  // fallback (still live for the not-yet-baked greetings/body/family — PRD-12 Phase B). The listen
+  // PROMPT is never given a picture (would reveal the answer — §0.7), so no `questionVisual` here.
   const toPictureItem = (w: EnglishWord): QuizItem => ({
     value: w.en,
     display: w.emoji,
@@ -73,7 +73,6 @@ const EnglishListenGame: React.FC = () => {
     },
 
     title: 'Lyt og Find',
-    emoji: '👂',
     teacherCharacter: 'owl',
     theme: getCategoryTheme('english'),
     backRoute: '/english',

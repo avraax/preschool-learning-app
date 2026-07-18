@@ -52,16 +52,16 @@ const AlphabetGame: React.FC = () => {
     // ~50% "hear the letter" recognition mode was retired (he knows every letter already).
     generateQuizItem: () => {
       const letter = WORD_LETTERS[Math.floor(Math.random() * WORD_LETTERS.length)]
-      const { word, emoji } = LETTER_WORDS[letter]
+      const { word } = LETTER_WORDS[letter]
       return {
         value: letter,
         display: letter,
         audioPrompt: `Hvad starter ${word} med?`,
         repeatWord: word,
-        // Show only the picture — NOT the word — so the child must recognise the
-        // starting letter from the image, not just read it off the label. The subject is the baked
-        // soft-3D object (PRD-07); `emoji` is the art-gated fallback until the WebP batch lands.
-        questionVisual: { emoji, art: letterArt(letter) }
+        // Show only the picture — NOT the word — so the child must recognise the starting letter from
+        // the image, not just read it off the label. The subject is the baked soft-3D object (PRD-07;
+        // the whole 29-letter set is baked and shipping).
+        questionVisual: { art: letterArt(letter) }
       }
     },
     
@@ -113,7 +113,6 @@ const AlphabetGame: React.FC = () => {
     
     // Display configuration
     title: 'Bogstav Quiz',
-    emoji: '🎯',
     teacherCharacter: 'owl',
     theme: categoryThemes.alphabet,
     backRoute: '/alphabet',

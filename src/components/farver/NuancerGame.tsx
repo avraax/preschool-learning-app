@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { Box, Typography, useMediaQuery } from '@mui/material'
+import { Sun, Moon } from 'lucide-react'
 import { useTheme } from '@mui/material/styles'
 import { DndContext, DragEndEvent, DragStartEvent, MeasuringStrategy } from '@dnd-kit/core'
 import { useDragOnlySensors } from '../common/dnd/useDragOnlySensors'
@@ -345,7 +346,7 @@ const NuancerGame: React.FC = () => {
       <PromptFocus
         accent={t.accentColor}
         chargeKey={`${order[0]?.hex ?? ''}-${round.state.index}`}
-        repeat={phoneLandscape ? undefined : <ColorRepeatButton onClick={repeatInstruction} disabled={false} label="🎵 Hør igen" />}
+        repeat={phoneLandscape ? undefined : <ColorRepeatButton onClick={repeatInstruction} disabled={false} />}
         subject={
         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: { xs: 1, md: 1.5 }, width: '100%', [PHONE_LANDSCAPE]: { gap: 0.25 } }}>
           {/* Slot row (drop targets): left = lightest, right = darkest. */}
@@ -415,7 +416,9 @@ const NuancerGame: React.FC = () => {
               decorative reinforcement — PromptStage is too short there for a 3rd row, and the
               slot order itself still shows light→dark. */}
           <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 1, [PHONE_LANDSCAPE]: { display: 'none' } }}>
-            <Typography sx={{ fontSize: '1.3rem', lineHeight: 1 }}>☀️</Typography>
+            <Box aria-hidden sx={{ display: 'flex', color: '#F59E0B', '& svg': { width: '1.3rem', height: 'auto' } }}>
+              <Sun strokeWidth={2.5} />
+            </Box>
             <Typography sx={{
               fontFamily: '"Comic Sans MS", "Comic Neue", sans-serif',
               fontWeight: 700,
@@ -424,7 +427,9 @@ const NuancerGame: React.FC = () => {
             }}>
               lys → mørk
             </Typography>
-            <Typography sx={{ fontSize: '1.3rem', lineHeight: 1 }}>🌙</Typography>
+            <Box aria-hidden sx={{ display: 'flex', color: muiTheme.scene.dark ? '#CBD5E1' : '#64748B', '& svg': { width: '1.3rem', height: 'auto' } }}>
+              <Moon strokeWidth={2.5} />
+            </Box>
           </Box>
         </Box>
         }
@@ -479,7 +484,7 @@ const NuancerGame: React.FC = () => {
                 above) so the slot row gets the stage's full (short) height. */}
             {phoneLandscape && (
               <Box sx={{ textAlign: 'center', flex: '0 0 auto', mb: 0.5 }}>
-                <ColorRepeatButton onClick={repeatInstruction} disabled={false} label="🎵 Hør igen" />
+                <ColorRepeatButton onClick={repeatInstruction} disabled={false} />
               </Box>
             )}
             {/* Tray: the scrambled shades still to place (drag into a slot above). Top-aligned (not

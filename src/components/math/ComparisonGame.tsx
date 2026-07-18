@@ -58,20 +58,11 @@ const DANISH_NUMBERS = [
 // its fixed-height box in EVERY viewport WITHOUT clipping — the shown quantity must always match
 // the numeral (the old `overflow: hidden` + fixed size clipped high counts, so 18 could look like
 // 20). Sizes are picked so the tightest layouts (phone-landscape's short box, narrow phone-portrait
-// sides) still show every object. Returned as an sx object so it can carry the media overrides.
-const emojiPileSx = (count: number) => ({
-  lineHeight: 1,
-  userSelect: 'none' as const,
-  fontSize: count <= 8 ? '1.9rem' : count <= 14 ? '1.5rem' : '1.15rem',
-  '@media (orientation: landscape)': {
-    fontSize: count <= 8 ? '1.5rem' : count <= 14 ? '1.15rem' : '0.95rem',
-  },
-  [PHONE_LANDSCAPE]: { fontSize: count <= 10 ? '0.85rem' : '0.7rem' },
-})
-
-// The baked-art pile item (PRD-08): a soft-3D <img> sized to match the emoji pile exactly (same
-// count-based shrink, expressed as `height`), so a full pile of up to 20 still fits its fixed-height
-// box in every viewport WITHOUT clipping — the shown quantity must always match the numeral.
+// sides) still show every object.
+//
+// The baked-art pile item (PRD-08): a soft-3D <img> sized by a count-based `height` so a full pile of
+// up to 20 still fits its fixed-height box in every viewport WITHOUT clipping — the shown quantity
+// must always match the numeral. Returned as an sx object so it can carry the media overrides.
 const imgPileSx = (count: number) => ({
   height: count <= 8 ? '1.9rem' : count <= 14 ? '1.5rem' : '1.15rem',
   width: 'auto',
@@ -459,9 +450,7 @@ const ComparisonGame: React.FC = () => {
                   >
                     {art ? (
                       <Box component="img" src={art} alt="" draggable={false} sx={imgPileSx(num)} />
-                    ) : (
-                      <Box component="span" sx={emojiPileSx(num)}>{obj.emoji}</Box>
-                    )}
+                    ) : null}
                   </Box>
                 )
               })}
@@ -547,7 +536,7 @@ const ComparisonGame: React.FC = () => {
               [PHONE_LANDSCAPE]: { fontSize: '0.85rem' },
             }}
           >
-            Tryk på det største tal 👆
+            Tryk på det største tal
           </Typography>
 
           <Box sx={{ flex: '1 1 auto', minHeight: 0, width: '100%', maxWidth: 860, display: 'flex' }}>
@@ -574,7 +563,7 @@ const ComparisonGame: React.FC = () => {
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      // Sizes the emoji fallback; the baked <img> below reads these as its box.
+                      // Sizes the krokodille; the baked <img> below reads this as its box.
                       fontSize: { xs: '3.6rem', md: '5.5rem' },
                       lineHeight: 1,
                       // The iPad verification viewport is landscape — this override is what's
@@ -583,10 +572,9 @@ const ComparisonGame: React.FC = () => {
                       [PHONE_LANDSCAPE]: { fontSize: '2.3rem' },
                     }}
                   >
-                    {/* The baked soft-3D krokodille (PRD-08) — the section's one flat-emoji character.
-                        The lunge/chomp BOUNCE motion + sfx('chomp') are unchanged; only the art swaps
-                        (emoji is the art-gated fallback). Sized to the emoji's font-size so the swap is
-                        scale-neutral. */}
+                    {/* The baked soft-3D krokodille (PRD-08) — the section's one character. The
+                        lunge/chomp BOUNCE motion + sfx('chomp') are unchanged. Sized to the box's
+                        font-size (1em) so it fills the arena the same either way. */}
                     {crocodileArt() ? (
                       <Box
                         component="img"
@@ -595,9 +583,7 @@ const ComparisonGame: React.FC = () => {
                         draggable={false}
                         sx={{ height: '1em', width: 'auto', objectFit: 'contain', userSelect: 'none', pointerEvents: 'none' }}
                       />
-                    ) : (
-                      '🐊'
-                    )}
+                    ) : null}
                   </Box>
                   <Box
                     sx={{

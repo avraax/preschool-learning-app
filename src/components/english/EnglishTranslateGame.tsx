@@ -76,7 +76,6 @@ const EnglishTranslateGame: React.FC = () => {
     },
 
     title: 'Dansk til Engelsk',
-    emoji: '🔁',
     teacherCharacter: 'owl',
     theme: getCategoryTheme('english'),
     backRoute: '/english',

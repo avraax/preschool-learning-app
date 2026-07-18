@@ -100,34 +100,26 @@ const renderCountingHero = (item: QuizItem): React.ReactNode => {
         overflow: 'hidden',
       }}
     >
-      {Array.from({ length: n }).map((_, i) =>
-        art ? (
-          <Box
-            key={i}
-            component="img"
-            src={art}
-            alt=""
-            draggable={false}
-            sx={{
-              height: heroObjectFontSize(n),
-              width: 'auto',
-              objectFit: 'contain',
-              userSelect: 'none',
-              pointerEvents: 'none',
-              flex: '0 0 auto',
-              [PHONE_LANDSCAPE]: { height: HERO_OBJECT_PHONE_SIZE },
-            }}
-          />
-        ) : (
-          <Box
-            key={i}
-            component="span"
-            sx={{ fontSize: heroObjectFontSize(n), lineHeight: 1, [PHONE_LANDSCAPE]: { fontSize: HERO_OBJECT_PHONE_SIZE } }}
-          >
-            {obj.emoji}
-          </Box>
-        )
-      )}
+      {art
+        ? Array.from({ length: n }).map((_, i) => (
+            <Box
+              key={i}
+              component="img"
+              src={art}
+              alt=""
+              draggable={false}
+              sx={{
+                height: heroObjectFontSize(n),
+                width: 'auto',
+                objectFit: 'contain',
+                userSelect: 'none',
+                pointerEvents: 'none',
+                flex: '0 0 auto',
+                [PHONE_LANDSCAPE]: { height: HERO_OBJECT_PHONE_SIZE },
+              }}
+            />
+          ))
+        : null}
     </Box>
   )
 }
@@ -176,7 +168,6 @@ const MathGame: React.FC = () => {
     
     // Display configuration
     title: 'Tal Quiz',
-    emoji: '🧮',
     teacherCharacter: 'fox',
     theme: categoryThemes.math,
     backRoute: '/math',
