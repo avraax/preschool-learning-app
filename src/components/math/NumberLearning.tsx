@@ -14,6 +14,7 @@ import { useBrowseXp } from '../../hooks/useBrowseXp'
 import { STAR_OBJECT, artForObject } from '../../config/countingObjects'
 import { hexToRgba } from '../../theme/tokens/helpers'
 import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
+import { useDifficulty } from '../../hooks/useDifficulty'
 // Simplified audio system
 import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 
@@ -92,9 +93,19 @@ const NumberLearning: React.FC = () => {
   // explored number feeds the shared cross-game level + ticks the header ring.
   const awardBrowseXp = useBrowseXp('math')
 
-  // W3 (PRD-15): cap the range at 1–60 (matched to his ~60–70 ceiling). 71–100 was unusable to him
-  // and is what forced sub-44px grid tiles; 1–60 fills the 10-column hundreds-chart as 6 clean rows.
-  const numbers = Array.from({ length: 60 }, (_, i) => i + 1)
+  // W3 (PRD-15): the range scales with the MANUAL difficulty level (authoritative, no adaptivity).
+  // Let stays at his comfortable ~60 ceiling — 6 clean rows of big ≥44px tiles. Normal/Svær go to the
+  // full 100 (owner ask); the smaller tiles at 100 are the accepted trade-off, and the 10-column
+  // hundreds-chart keeps the tens aligned (base-10 pattern) at any size.
+  const difficulty = useDifficulty('math')
+  const maxNumber = difficulty === 'let' ? 60 : 100
+  const numbers = Array.from({ length: maxNumber }, (_, i) => i + 1)
+
+  // If the adult lowers the difficulty mid-browse (Normal/Svær → Let), the range shrinks — keep the
+  // highlighted cell in-bounds so the bloomed numeral never reads `undefined`.
+  useEffect(() => {
+    if (currentIndex > maxNumber - 1) setCurrentIndex(maxNumber - 1)
+  }, [maxNumber, currentIndex])
 
   // Production logging - only essential errors
   const logError = (message: string, data?: any) => {
