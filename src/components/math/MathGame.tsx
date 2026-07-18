@@ -143,8 +143,15 @@ const MathGame: React.FC = () => {
     generateOptions: (correctAnswer: QuizItem) => {
       const maxNumber = maxNumberForLevel(progressStore.difficultyFor('math'))
       const n = correctAnswer.value as number
-      const confusables = [swapDigits(n), n - 1, n + 1, n - 10, n + 10]
-        .filter((c): c is number => c !== null && c >= 1 && c <= maxNumber && c !== n)
+      // Near-number distractors (PRD-14 W2 / audit §A2). For n≥10 keep the digit-order (23↔32) and
+      // off-by-one/ten confusions — the real errors at that scale. Small counts (n<10) have no
+      // meaningful digit-swap/±10 confusable, so a "3 vs 13" outlier taught nothing → bias them to
+      // ±1/±2 so a correct count actually discriminates near neighbours. Random top-up still fills in.
+      const confusables = (
+        n < 10
+          ? [n - 1, n + 1, n - 2, n + 2]
+          : [swapDigits(n), n - 1, n + 1, n - 10, n + 10]
+      ).filter((c): c is number => c !== null && c >= 1 && c <= maxNumber && c !== n)
 
       // Dedupe, shuffle, take up to 3 distinct confusables.
       const picks: number[] = []

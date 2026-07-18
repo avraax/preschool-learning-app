@@ -26,8 +26,10 @@ const MemoryGame: React.FC = () => {
   const { type, size } = useParams<{ type: 'letters' | 'numbers'; size: '10' | '20' }>()
   const gameType = type as 'letters' | 'numbers' || 'letters'
   // Static-difficulty: the board size is the game's identity (two separate routes), not a picker.
-  // Old bookmarks without :size (or anything invalid) default to the 20-pair stretch board.
-  const boardPairs = size === '10' ? 10 : 20
+  // The 10-pair board is the primary/default (PRD-14 W4 / audit §A4 — 20 pairs / 40 cards exceeds a
+  // 5yo's working memory); 20 is the explicit optional "harder" tile. Only an explicit :size of 20
+  // opens the stretch board — a size-less or invalid bookmark defaults to 10.
+  const boardPairs = size === '20' ? 20 : 10
   // Star thresholds are in MISTAKES (= mismatched turns). Tunable constants; static difficulty.
   // Retuned (PRD-05 P3) so a strong-but-imperfect child can actually reach 3★ — the old
   // {10:6, 20:14} demanded near-perfect recall and left a flat reward curve on the games he plays

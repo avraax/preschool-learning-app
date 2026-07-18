@@ -117,7 +117,13 @@ const AlphabetLearning: React.FC = () => {
     awardBrowseXp(letter)
 
     try {
-      await audio.speakLetter(letter)
+      // Reinforce the sound↔word association on tap (PRD-14 W3 / audit §A3): for a child who already
+      // knows every letter, the bare name is dead — speak "{bogstav} som {ord}" (e.g. "A som Abe")
+      // instead. These exact strings already ship (the memory game's speakMatchedItem uses the same
+      // LETTER_WORDS table for all 29 letters), so no new narration is introduced. Falls back to the
+      // name-only read only if a letter ever lacks a LETTER_WORDS entry.
+      const data = LETTER_WORDS[letter]
+      await (data ? audio.speak(`${letter} som ${data.word}`) : audio.speakLetter(letter))
     } catch (error) {
       logError('Error speaking letter', {
         letter,

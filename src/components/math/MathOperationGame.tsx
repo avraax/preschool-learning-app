@@ -566,8 +566,18 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
         />
       ) : (
       <>
-      {/* Answer options — fills the answer zone beneath the PromptStage equation. */}
-      <Box sx={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 0 }}>
+      {/* Answer options — rise to the TOP of the answer zone beneath the equation (PRD-14 W1) so the
+          tiles sit close under the prompt instead of hugging the bottom edge (kills the dead mid-band).
+          Phone-landscape keeps its centred tiles (tight 30/70 split preserved). */}
+      <Box sx={{
+        flex: 1,
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'flex-start',
+        pt: { xs: 1, md: 2 },
+        minHeight: 0,
+        [PHONE_LANDSCAPE]: { alignItems: 'center', pt: 0 },
+      }}>
         <Box
           sx={{
             display: 'grid',

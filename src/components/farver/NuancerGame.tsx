@@ -381,13 +381,20 @@ const NuancerGame: React.FC = () => {
                           width: '100%',
                           height: '100%',
                           borderRadius: '16px',
-                          border: placedShade ? '3px solid white' : `3px dashed ${isOverThis ? t.accentColor : t.borderColor}`,
-                          backgroundColor: placedShade ? placedShade.hex : 'rgba(255,255,255,0.45)',
+                          // Inviting empty slot (PRD-14 W6 / audit §A6): a clearer "well" — thicker
+                          // dashed rim, brighter fill + a concave inset shadow so the drop targets
+                          // read as obvious destinations (were a faint 45% wash, no depth).
+                          border: placedShade ? '3px solid white' : `4px dashed ${isOverThis ? t.accentColor : t.borderColor}`,
+                          backgroundColor: placedShade
+                            ? placedShade.hex
+                            : muiTheme.scene.dark
+                              ? 'rgba(255,255,255,0.22)'
+                              : 'rgba(255,255,255,0.72)',
                           boxShadow: placedShade
                             ? liftedShadow(placedShade.hex)
                             : isOverThis
                               ? `0 0 0 4px ${hexToRgba(t.accentColor, 0.5)}, 0 4px 12px rgba(0,0,0,0.15)`
-                              : 'none',
+                              : 'inset 0 4px 10px rgba(0,0,0,0.16)',
                           transition: 'background-color 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease'
                         }}
                       />

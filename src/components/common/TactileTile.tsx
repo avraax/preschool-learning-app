@@ -26,7 +26,10 @@ import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 //   separate sibling that shrinks on press. Reduced motion → everything static, but the surface +
 //   contact shadow + content + feedback colour/ring all still render (the state still reads).
 
-export type TactileTileState = 'idle' | 'correct' | 'wrong'
+// 'selected' = the hear-before-commit "raised" state (PRD-14 W7): a tile the child has auditioned
+// and can commit by tapping again. It reads as lifted/outlined (accent), NOT as correct/wrong
+// feedback, and stays pressable (a second tap commits). Reduced-motion keeps the outline, drops the lift.
+export type TactileTileState = 'idle' | 'correct' | 'wrong' | 'selected'
 
 interface TactileTileProps {
   onActivate?: () => void                       // tap/press (AnswerTile's onClick)
@@ -85,7 +88,8 @@ const TactileTile: React.FC<TactileTileProps> = ({
 
   // The hint cue only shows on an otherwise-idle tile (a correct/wrong feedback state always wins).
   const showHint = hint && state === 'idle'
-  const canPress = interactive && !disabled && state === 'idle'
+  // A raised/auditioned ('selected') tile stays pressable so a second tap commits (PRD-14 W7).
+  const canPress = interactive && !disabled && (state === 'idle' || state === 'selected')
 
   // Surface: soft matte, section-tinted (feedback states tint toward success/error). Reuses the
   // shell's `tileSurface` — the same white→faint-accent gradient the menus use.
@@ -96,13 +100,16 @@ const TactileTile: React.FC<TactileTileProps> = ({
         ? `linear-gradient(180deg, #FFFFFF 0%, ${hexToRgba(error, 0.1)} 100%)`
         : tileSurface(accent, dark)
 
-  // A hairline accent edge for definition only (NOT a frame). Feedback states tint it.
+  // A hairline accent edge for definition only (NOT a frame). Feedback states tint it; the raised
+  // 'selected' state gets a strong accent edge so the auditioned tile reads as "confirm this one".
   const edgeColor =
     state === 'correct'
       ? hexToRgba(success, 0.55)
       : state === 'wrong'
         ? hexToRgba(error, 0.5)
-        : hexToRgba(accent, showHint ? (dark ? 0.7 : 0.55) : dark ? 0.4 : 0.26)
+        : state === 'selected'
+          ? hexToRgba(accent, dark ? 0.85 : 0.7)
+          : hexToRgba(accent, showHint ? (dark ? 0.7 : 0.55) : dark ? 0.4 : 0.26)
 
   // Depth = grounded contact ellipse (sibling, below) + layered softShadow() on the surface. The
   // top inner-light highlight gives the clay read; a success/hint ring adds the feedback verdict.
@@ -110,9 +117,11 @@ const TactileTile: React.FC<TactileTileProps> = ({
   const ring =
     state === 'correct'
       ? `0 0 0 5px ${hexToRgba(success, 0.45)}`
-      : showHint
-        ? `0 0 0 5px ${hexToRgba(accent, dark ? 0.55 : 0.45)}`
-        : null
+      : state === 'selected'
+        ? `0 0 0 4px ${hexToRgba(accent, dark ? 0.6 : 0.5)}` // steady accent ring (no pulse)
+        : showHint
+          ? `0 0 0 5px ${hexToRgba(accent, dark ? 0.55 : 0.45)}`
+          : null
   const boxShadow = [innerHighlight, ring].filter(Boolean).join(', ')
 
   // Contact-shadow tint follows the feedback so a correct tile casts a warm success cast.
@@ -125,9 +134,11 @@ const TactileTile: React.FC<TactileTileProps> = ({
       ? { x: [0, -7, 7, -5, 5, 0] }
       : state === 'correct'
         ? { scale: [1, 1.08, 1] }
-        : showHint
-          ? { scale: [1, 1.05, 1] }
-          : { x: 0, scale: 1 }
+        : state === 'selected'
+          ? { y: -6, scale: 1.04 } // sustained lift — the auditioned tile "rises" toward the child
+          : showHint
+            ? { scale: [1, 1.05, 1] }
+            : { x: 0, y: 0, scale: 1 } // reset (incl. y so a deselect settles back down)
 
   const transition =
     state === 'wrong'

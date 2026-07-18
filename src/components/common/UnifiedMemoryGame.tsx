@@ -837,21 +837,9 @@ const UnifiedMemoryGame: React.FC<UnifiedMemoryGameProps> = ({ config }) => {
                           </div>
                         ) : null}
 
-                        {/* Optional secondary content */}
-                        {displayData.secondary && (
-                          <div
-                            style={{
-                              fontSize: 'clamp(0.7rem, 1.8vw, 1rem)',
-                              color: isMatched ? successEdge : accent,
-                              fontWeight: 600,
-                              textAlign: 'center',
-                              lineHeight: 1
-                            }}
-                            className="memory-card-secondary-text"
-                          >
-                            {displayData.secondary}
-                          </div>
-                        )}
+                        {/* The word label was dropped (PRD-14 W5 / audit §A5): unreadable text on a
+                            tiny card is clutter for a pre-reader — the glyph + baked picture/count
+                            cluster carry the face, and the word is still SPOKEN on a match. */}
                       </motion.div>
                     </motion.div>
                   </div>

@@ -604,9 +604,15 @@ const FarvejagtGame: React.FC = () => {
                       width: '100%',
                       height: '100%',
                       borderRadius: '50%',
-                      border: `4px dashed ${targetHex}`,
-                      backgroundColor: `${targetHex}1A`, // 10% opacity educational tint
-                      boxShadow: isOverWell ? `0 0 22px ${targetHex}99` : 'none',
+                      // Inviting, high-contrast collection well (PRD-14 W6 / audit §A6): a clearly
+                      // colour-tinted "basket" with a concave inset shadow, so a 5yo's every drag
+                      // aims at an obvious destination instead of a near-invisible 10% outline. The
+                      // over-glow + scale pulse (parent) still signal the hover; overColor unchanged.
+                      border: `5px dashed ${targetHex}`,
+                      backgroundColor: `${targetHex}40`, // ~25% educational tint (was 10%)
+                      boxShadow: isOverWell
+                        ? `0 0 22px ${targetHex}99, inset 0 8px 18px rgba(0,0,0,0.22)`
+                        : `inset 0 8px 18px rgba(0,0,0,0.20)`,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',

@@ -24,6 +24,7 @@ import {
 import { allEnglishWords } from './src/config/englishVocab.ts'
 import { HUE_ORDER, SHADES, DANISH_OBJECTS, spokenColor } from './src/config/colorContent.ts'
 import { STICKER_SETS } from './src/config/stickers.ts'
+import { LETTER_WORDS, WORD_LETTERS } from './src/config/letterWords.ts'
 
 // Danish narration + English section voices, straight from the single source of voice truth.
 const DA = TTS_CONFIG.voices.primary // da-DK-ChristelNeural / da-DK
@@ -57,6 +58,15 @@ export function collectNarrationClips() {
 
   // Letters — speakLetter() sends the Danish letter NAME.
   for (const glyph of Object.keys(DANISH_LETTER_NAMES)) da('letters', getDanishLetterName(glyph))
+
+  // Letter↔word association lines (PRD-14 W3). Two closed sets over the shared LETTER_WORDS table:
+  //   "{bogstav} som {ord}"    — Lær Alfabetet tap + Hukommelse match (speakMatchedItem), all 29 letters
+  //   "{ord} starter med {bogstav}" — Bogstav Quiz correct-answer fact (speakCorrectFact), askable letters
+  for (const letter of Object.keys(LETTER_WORDS)) da('letters', `${letter} som ${LETTER_WORDS[letter].word}`)
+  for (const letter of WORD_LETTERS) {
+    const data = LETTER_WORDS[letter]
+    if (data) da('letters', `${data.word} starter med ${letter}`)
+  }
 
   // Numbers 0–100 — quiz/echo rate (default) AND Lær Tal browse rate (1.2).
   for (let n = 0; n <= 100; n++) {

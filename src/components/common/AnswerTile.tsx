@@ -8,12 +8,13 @@ import TactileTile from './TactileTile'
 // material at once. The content glyph (letter/number/word/emoji) is still passed as children.
 //
 // Feedback states map 1:1 to TactileTile:
-//   correct → soft scale pop + a few sparkles + success ring/contact-tint  (+ the game's sfx)
-//   wrong   → gentle x-shake + error tint
-//   hint    → slow breathe + accent glow ring (never-fail hint; reduced-motion → static ring)
+//   correct  → soft scale pop + a few sparkles + success ring/contact-tint  (+ the game's sfx)
+//   wrong    → gentle x-shake + error tint
+//   selected → raised/outlined accent (hear-before-commit audition; PRD-14 W7) — a second tap commits
+//   hint     → slow breathe + accent glow ring (never-fail hint; reduced-motion → static ring)
 // The DOM contract (`data-answer-tile` / `data-tile-state`) is preserved for the screenshot harness.
 
-export type AnswerTileState = 'idle' | 'correct' | 'wrong'
+export type AnswerTileState = 'idle' | 'correct' | 'wrong' | 'selected'
 
 interface AnswerTileProps {
   onClick: () => void

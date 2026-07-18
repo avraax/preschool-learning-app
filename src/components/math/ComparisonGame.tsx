@@ -49,11 +49,6 @@ import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 // and an emoji fallback until the art lands.
 const OBJECT_TYPES = COUNTING_OBJECTS
 
-const DANISH_NUMBERS = [
-  'nul', 'en', 'to', 'tre', 'fire', 'fem', 'seks', 'syv', 'otte', 'ni', 'ti',
-  'elleve', 'tolv', 'tretten', 'fjorten', 'femten', 'seksten', 'sytten', 'atten', 'nitten', 'tyve'
-]
-
 // Object-pile emoji size (PRD-05 P3). Shrinks as the count grows so a full pile of up to 20 fits
 // its fixed-height box in EVERY viewport WITHOUT clipping — the shown quantity must always match
 // the numeral (the old `overflow: hidden` + fixed size clipped high counts, so 18 could look like
@@ -469,9 +464,8 @@ const ComparisonGame: React.FC = () => {
             >
               {num}
             </Typography>
-            <Typography variant="body2" sx={{ color: 'text.secondary', fontWeight: 600, '@media (orientation: landscape)': { fontSize: '0.7rem' } }}>
-              {DANISH_NUMBERS[num]} {obj.danishName}
-            </Typography>
+            {/* The "{n} {word}" caption was dropped (PRD-14 W5 / audit §A5): unreadable for a
+                pre-reader — the object pile + numeral + the spoken completed fact already carry it. */}
           </Box>
         </AnswerTile>
       </Box>

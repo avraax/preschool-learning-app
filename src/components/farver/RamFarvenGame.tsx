@@ -465,8 +465,14 @@ const RamFarvenGame: React.FC = () => {
   const recipePair = displayHintActive ? recipeFor(targetColor.name) : null
   const recipeNames = recipePair ? [recipePair[0].colorName, recipePair[1].colorName] : []
 
-  // Pot fill: the blended colour while committing, else a neutral wash.
-  const potFill = displayBlendResult ? displayBlendResult.hex : 'rgba(255, 255, 255, 0.4)'
+  // Pot fill: the blended colour while committing, else an inviting "empty vessel" wash (PRD-14 W6 /
+  // audit §A6). The pot sits on a near-white bench on light skins, so an empty WHITE wash was almost
+  // invisible → use a faint darkening on light (reads as a concave bowl) and a brighter wash on dark.
+  const potFill = displayBlendResult
+    ? displayBlendResult.hex
+    : muiTheme.scene.dark
+      ? 'rgba(255, 255, 255, 0.22)'
+      : 'rgba(0, 0, 0, 0.07)'
   const isOverPot = overId === 'mixing-zone'
   const comicFont = '"Comic Sans MS", "Comic Neue", sans-serif'
   // Goal swatch + pot share ONE size so the two circles read as a balanced pair and line up on the
@@ -677,8 +683,8 @@ const RamFarvenGame: React.FC = () => {
                         margin: '0 auto',
                         position: 'relative',
                         boxShadow: isOverPot
-                          ? `inset 0 4px 12px rgba(0,0,0,0.12), 0 0 18px ${hexToRgba(t.accentColor, 0.5)}`
-                          : 'inset 0 4px 12px rgba(0,0,0,0.12)',
+                          ? `inset 0 6px 16px rgba(0,0,0,0.18), 0 0 18px ${hexToRgba(t.accentColor, 0.5)}`
+                          : 'inset 0 6px 16px rgba(0,0,0,0.16)', // deeper concave bowl (W6)
                         transition: `background-color ${BLEND_MS}ms ease, box-shadow 0.25s ease, border-color 0.25s ease`
                       }}
                     >

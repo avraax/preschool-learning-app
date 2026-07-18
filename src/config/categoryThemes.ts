@@ -70,7 +70,7 @@ const categoryContent: Record<CategoryId, CategoryContent> = {
       },
       {
         id: 'memory20',
-        title: 'Hukommelse 20',
+        title: 'Hukommelse 20 (svær)',
         emoji: '🧠',
         route: '/learning/memory/letters/20',
         gradient: 'linear-gradient(135deg, #1565C0 0%, #0D47A1 100%)'
@@ -132,7 +132,7 @@ const categoryContent: Record<CategoryId, CategoryContent> = {
       },
       {
         id: 'memory20',
-        title: 'Hukommelse 20',
+        title: 'Hukommelse 20 (svær)',
         emoji: '🧠',
         route: '/learning/memory/numbers/20',
         gradient: 'linear-gradient(135deg, #6A1B9A 0%, #4A148C 100%)'

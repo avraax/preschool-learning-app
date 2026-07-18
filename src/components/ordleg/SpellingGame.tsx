@@ -28,6 +28,7 @@ import { mascotBus } from '../../services/mascotBus'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
 import { isIOS } from '../../utils/deviceDetection'
 import { ordlegArt } from '../../assets/games/ordleg'
+import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 // Simplified audio system
 import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 
@@ -479,10 +480,15 @@ const SpellingGame: React.FC = () => {
               minHeight: 0,
               display: 'flex',
               flexDirection: 'column',
-              justifyContent: 'center',
+              // Slots+tiles rise toward the top of the answer zone (PRD-14 W1) so they sit under the
+              // prompt instead of hugging the bottom edge (kills the dead mid-band). Phone-landscape
+              // keeps them centred (tight split preserved).
+              justifyContent: 'flex-start',
               alignItems: 'center',
+              pt: { xs: 1, md: 2 },
               gap: { xs: 1.5, md: 2.5 },
               '@media (orientation: landscape)': { gap: 1 },
+              [PHONE_LANDSCAPE]: { justifyContent: 'center', pt: 0 },
             }}
           >
             {/* Letter slots — grounded, still type. Dashed "fill me" targets keep the accent border +
