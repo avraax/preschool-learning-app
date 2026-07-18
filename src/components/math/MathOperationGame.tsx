@@ -43,6 +43,97 @@ interface MathOperationGameProps {
   operation: 'addition' | 'subtraction'
 }
 
+// W1 (PRD-15) — concrete quantity layer: a ten-frame the child can actually COUNT so a finger-counter
+// can *solve* the number sentence instead of guessing (he adds to 20 on his fingers; a symbol-only
+// board gave him nothing to count). Pure CSS dots, NO art.
+//   Addition a+b: `a` dots in tint A then `b` dots in tint B, filled continuously across one or two
+//     ten-frames so crossing-ten is legible (the first frame fills to 10, the second begins).
+//   Subtraction a−b: `a` dots with the last `b` faded + struck through ("take away"); the remaining
+//     filled dots = the answer.
+// Two ten-frames sit side by side (10 cols × 2 rows) so it stays SHORT (2 rows) under the equation and
+// never scrolls. Reduced motion → static (no per-dot pop-in). Tints are two guaranteed-distinct,
+// skin-aware section accents (token contract §2: every skin gives the 5 sections readable accents).
+type ConcreteOp = MathOperationGameProps['operation']
+const TenFrameLayer: React.FC<{ op: ConcreteOp; a: number; b: number; reduce: boolean; dark: boolean }> = ({
+  op,
+  a,
+  b,
+  reduce,
+  dark,
+}) => {
+  const tintA = getCategoryTheme('math').accentColor
+  const tintB = getCategoryTheme('alphabet').accentColor
+  const total = op === 'addition' ? a + b : a
+  const capacity = total <= 10 ? 10 : 20
+  type Fill = 'empty' | 'a' | 'b' | 'remain' | 'removed'
+  const cells: Fill[] = Array.from({ length: capacity }, (_, i) => {
+    if (op === 'addition') return i < a ? 'a' : i < a + b ? 'b' : 'empty'
+    return i < a - b ? 'remain' : i < a ? 'removed' : 'empty'
+  })
+  const frames = capacity === 20 ? [cells.slice(0, 10), cells.slice(10, 20)] : [cells]
+
+  const cellSx = {
+    width: { xs: 14, md: 19 },
+    height: { xs: 14, md: 19 },
+    borderRadius: '4px',
+    border: `1.5px solid ${hexToRgba(tintA, dark ? 0.45 : 0.22)}`,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative' as const,
+    '@media (orientation: landscape)': { width: { xs: 13, md: 19 }, height: { xs: 13, md: 19 } },
+    [PHONE_LANDSCAPE]: { width: 9, height: 9, borderRadius: '2px' },
+  }
+
+  return (
+    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: { xs: 1, md: 1.5 }, [PHONE_LANDSCAPE]: { gap: 0.5 } }}>
+      {frames.map((frame, fi) => (
+        <Box
+          key={fi}
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(5, auto)',
+            gridAutoRows: 'auto',
+            gap: { xs: '2px', md: '3px' },
+            [PHONE_LANDSCAPE]: { gap: '1px' },
+          }}
+        >
+          {frame.map((c, i) => {
+            const filled = c !== 'empty'
+            const removed = c === 'removed'
+            const color = c === 'b' ? tintB : tintA
+            return (
+              <Box key={i} sx={cellSx}>
+                {filled && (
+                  <Box
+                    component={motion.div}
+                    initial={reduce ? false : { scale: 0, opacity: 0 }}
+                    animate={{ scale: 1, opacity: removed ? 0.32 : 1 }}
+                    transition={reduce ? undefined : { delay: (fi * 10 + i) * 0.03, type: 'spring', stiffness: 500, damping: 24 }}
+                    sx={{ width: '68%', height: '68%', borderRadius: '50%', bgcolor: color }}
+                  />
+                )}
+                {removed && (
+                  <Box
+                    sx={{
+                      position: 'absolute',
+                      width: '118%',
+                      height: 2,
+                      bgcolor: tintA,
+                      transform: 'rotate(-45deg)',
+                      borderRadius: 2,
+                    }}
+                  />
+                )}
+              </Box>
+            )
+          })}
+        </Box>
+      ))}
+    </Box>
+  )
+}
+
 const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
   const muiTheme = useTheme()
   const reduce = useReducedMotion()
@@ -477,10 +568,13 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
               // matching the TactileTile chip material. The SymbolTile operators + big numerals stay.
               <Box
                 sx={{
+                  // W1: the clay tile is now a COLUMN — the number sentence on top, the concrete
+                  // ten-frame the child counts beneath it (the concrete→abstract bridge).
                   display: 'flex',
+                  flexDirection: 'column',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: { xs: 1.25, md: 2 },
+                  gap: { xs: 1, md: 1.5 },
                   background: tileSurface(category.accentColor, muiTheme.scene.dark),
                   borderRadius: 4,
                   border: `1px solid ${hexToRgba(category.accentColor, muiTheme.scene.dark ? 0.4 : 0.26)}`,
@@ -489,9 +583,19 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
                   filter: softShadow(muiTheme.scene.dark ? 1.6 : 1.2),
                   boxShadow: `inset 0 2px 3px ${hexToRgba('#FFFFFF', muiTheme.scene.dark ? 0.3 : 0.6)}`,
                   '@media (orientation: landscape)': { py: { xs: 1, md: 1.5 } },
-                  [PHONE_LANDSCAPE]: { py: 0.25, px: 1, gap: 0.5 },
+                  [PHONE_LANDSCAPE]: { py: 0.25, px: 1, gap: 0.4 },
                 }}
               >
+                {/* Number sentence (unchanged): num1 op num2 = ?→answer POP */}
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: { xs: 1.25, md: 2 },
+                    [PHONE_LANDSCAPE]: { gap: 0.5 },
+                  }}
+                >
                 <Typography variant="h1" component="span" sx={numberSx}>{num1}</Typography>
                 <SymbolTile op={operator} sx={symbolSx} />
                 <Typography variant="h1" component="span" sx={numberSx}>{num2}</Typography>
@@ -550,6 +654,18 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
                     )}
                   </AnimatePresence>
                 </Box>
+                </Box>
+
+                {/* W1 concrete quantity layer — countable dots so a finger-counter can SOLVE, not
+                    guess. Keyed on the problem so the pop-in replays each question. */}
+                <TenFrameLayer
+                  key={`tf-${num1}-${num2}`}
+                  op={operation}
+                  a={num1!}
+                  b={num2!}
+                  reduce={reduce}
+                  dark={muiTheme.scene.dark}
+                />
               </Box>
               ) : null
             }

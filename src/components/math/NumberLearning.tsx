@@ -92,8 +92,9 @@ const NumberLearning: React.FC = () => {
   // explored number feeds the shared cross-game level + ticks the header ring.
   const awardBrowseXp = useBrowseXp('math')
 
-  // Generate numbers 1-100
-  const numbers = Array.from({ length: 100 }, (_, i) => i + 1)
+  // W3 (PRD-15): cap the range at 1–60 (matched to his ~60–70 ceiling). 71–100 was unusable to him
+  // and is what forced sub-44px grid tiles; 1–60 fills the 10-column hundreds-chart as 6 clean rows.
+  const numbers = Array.from({ length: 60 }, (_, i) => i + 1)
 
   // Production logging - only essential errors
   const logError = (message: string, data?: any) => {

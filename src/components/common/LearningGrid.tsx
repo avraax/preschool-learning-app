@@ -53,7 +53,11 @@ const LearningGrid: React.FC<LearningGridProps> = ({
                 md: 'repeat(8, 1fr)',  // Desktop: 8 columns (4 rows)
                 lg: 'repeat(10, 1fr)'  // Large desktop: 10 columns (3 rows)
               }
-            : `repeat(auto-fit, minmax(72px, 1fr))`,
+            // Numbers (W3 / PRD-15): a deliberate 10-column hundreds-chart so each column = a units
+            // digit and each row = a tens band (10/20/30… stack in one column) — the base-10 pattern
+            // is the lesson. With 1–60 that's 10×6, tiles comfortably ≥44px, no scroll. (Was
+            // `auto-fit minmax(72px)` = "however many 72px tracks fit" → ~13 scrambled columns.)
+            : 'repeat(10, 1fr)',
           gap: { xs: '6px', sm: '8px', md: '10px' },
           width: '100%',
           height: '100%',
@@ -78,11 +82,10 @@ const LearningGrid: React.FC<LearningGridProps> = ({
               md: 'repeat(10, 1fr)'   // Landscape desktop: 10 columns
             }
           } : {
-            // Phone landscape, numbers (100 tiles): 72px-min columns → ~11 cols × 10 rows,
-            // which compresses tiles into unreadable stripes at ≤480px height. Narrower
-            // columns trade width for height: ~17 cols × 6 rows of readable tiles.
+            // Phone landscape, numbers (W3): keep the aligned 10-column hundreds-chart (inherited
+            // from the base) so tens still stack — only tighten the gap/padding for the short height.
+            // 1–60 → 10 cols × 6 rows fits an ≤480px-tall landscape phone.
             [PHONE_LANDSCAPE]: {
-              gridTemplateColumns: 'repeat(auto-fit, minmax(42px, 1fr))',
               gap: '4px',
               p: 0.25,
             }

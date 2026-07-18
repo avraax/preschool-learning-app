@@ -52,8 +52,15 @@ const makeNumberItem = (n: number): QuizItem => ({
 
 // Object size shrinks as the pile grows so up to 20 stay tidy inside the hero. One clamp used for
 // both the emoji fallback (fontSize) and the baked <img> (height) so the two look identical in scale.
+// W4 (PRD-15): for a COUNTING task the countable objects should own the space — at low n (≤6) the
+// objects are scaled up big so they fill the focal pool instead of clustering tiny in empty space;
+// the per-object size still shrinks as n grows so high counts stay tidy.
 const heroObjectFontSize = (n: number): string =>
-  n <= 8 ? 'clamp(1.3rem, 5vh, 2.2rem)' : n <= 14 ? 'clamp(1rem, 4vh, 1.7rem)' : 'clamp(0.8rem, 3.2vh, 1.3rem)'
+  n <= 3 ? 'clamp(2.4rem, 13vh, 4.6rem)'
+    : n <= 6 ? 'clamp(1.9rem, 9.5vh, 3.4rem)'
+    : n <= 8 ? 'clamp(1.4rem, 6vh, 2.4rem)'
+    : n <= 14 ? 'clamp(1rem, 4vh, 1.7rem)'
+    : 'clamp(0.8rem, 3.2vh, 1.3rem)'
 const HERO_OBJECT_PHONE_SIZE = 'clamp(0.6rem, 8vh, 1rem)'
 
 // Tal Quiz hero (UI/UX Overhaul §6A / PRD-05 P3):
@@ -83,6 +90,10 @@ const renderCountingHero = (item: QuizItem): React.ReactNode => {
 
   const obj = countingObjectForNumber(n)
   const art = artForObject(obj)
+  // W4: relax the pool width at low n so the few (now-bigger) objects fill the focal pool instead
+  // of being squeezed into a narrow centre column. Higher counts keep the tighter 520 cap so 20
+  // objects wrap tidily rather than sprawling into a thin single row.
+  const poolMaxWidth = n <= 6 ? 720 : 520
   return (
     <Box
       aria-hidden
@@ -92,9 +103,9 @@ const renderCountingHero = (item: QuizItem): React.ReactNode => {
         justifyContent: 'center',
         alignContent: 'center',
         alignItems: 'center',
-        gap: { xs: '4px', md: '6px' },
+        gap: n <= 6 ? { xs: '10px', md: '16px' } : { xs: '4px', md: '6px' },
         width: '100%',
-        maxWidth: 520,
+        maxWidth: poolMaxWidth,
         height: '100%',
         minHeight: 0,
         overflow: 'hidden',

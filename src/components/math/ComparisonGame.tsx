@@ -539,7 +539,7 @@ const ComparisonGame: React.FC = () => {
               chargeKey={`${currentProblem.leftNumber}-${currentProblem.rightNumber}-${round.state.index}`}
               repeat={<MathRepeatButton onClick={repeatProblem} disabled={false} />}
               subject={
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: { xs: 1, md: 2.5 }, width: '100%' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: { xs: 0.5, md: 1.5 }, width: '100%' }}>
                 <Box sx={{ flex: '1 1 0', minWidth: 0 }}>{renderSide('left')}</Box>
 
                 {/* Krokodille: the star. It lunges + its mouth chomps toward the bigger side on a
@@ -557,13 +557,16 @@ const ComparisonGame: React.FC = () => {
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      // Sizes the krokodille; the baked <img> below reads this as its box.
-                      fontSize: { xs: '3.6rem', md: '5.5rem' },
+                      // Sizes the krokodille; the baked <img> below reads this as its box. W2
+                      // (PRD-15): enlarged so it's the arena's CENTREPIECE between the two cards —
+                      // the >/< "the mouth eats the bigger number" mnemonic only teaches when the
+                      // croc is the star, not a small blob dwarfed by the side cards.
+                      fontSize: { xs: '4.8rem', md: '8.2rem' },
                       lineHeight: 1,
                       // The iPad verification viewport is landscape — this override is what's
                       // actually seen there, so the krokodille is sized generously here too.
-                      '@media (orientation: landscape)': { fontSize: { xs: '3.4rem', md: '6.4rem' } },
-                      [PHONE_LANDSCAPE]: { fontSize: '2.3rem' },
+                      '@media (orientation: landscape)': { fontSize: { xs: '4.4rem', md: '9.6rem' } },
+                      [PHONE_LANDSCAPE]: { fontSize: '2.9rem' },
                     }}
                   >
                     {/* The baked soft-3D krokodille (PRD-08) — the section's one character. The
