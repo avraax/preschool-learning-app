@@ -128,12 +128,14 @@ export const kidThemeTokens: ThemeTokens = {
     layers: [
       { src: '', depth: 0.14, anchor: 'center' }, // far: rainbow sky
       { src: '', depth: 0.44, anchor: 'center' }, // mid: floating clouds
-      { src: '', depth: 0.82, anchor: 'center' }, // near: cloud bank
+      // B2 (scene-fixes): raise the near cloud bank into frame to reclaim the empty lower-middle.
+      { src: '', depth: 0.82, anchor: 'center', offsetY: -6 }, // near: cloud bank
     ],
     ambient: {
       // B7 art motes (index-aligned to SceneAssets.ambientSprites): soft cloud puffs drifting.
-      sprites: [{ src: '', size: [22, 44] }],
-      count: 7,
+      // B2 (scene-fixes): denser + larger to fill the vast pale mid-sky.
+      sprites: [{ src: '', size: [24, 60] }],
+      count: 14,
       motion: 'drift',
     },
     mascot: {
@@ -163,10 +165,12 @@ export const kidThemeTokens: ThemeTokens = {
     },
     // Earned bloom scenery (PRD-05 W7). Layout only; `src:''` → the URL comes from
     // SceneAssets.bloomScenery by INDEX (batch B5, order: flower, sparkle-star, cloud puff).
+    // B2 (scene-fixes): larger + more spread so a progressing profile fills more of the frame
+    // (stage 2 rides high in the mid sky where the world reads emptiest).
     bloomScenery: [
-      { src: '', minStage: 1, xPct: 12, yPct: 82, depth: 0.55, scale: 1 },
-      { src: '', minStage: 2, xPct: 88, yPct: 28, depth: 0.3, scale: 0.9 },
-      { src: '', minStage: 3, xPct: 72, yPct: 86, depth: 0.6, scale: 1.15 },
+      { src: '', minStage: 1, xPct: 12, yPct: 82, depth: 0.55, scale: 1.15 },
+      { src: '', minStage: 2, xPct: 88, yPct: 26, depth: 0.3, scale: 1.05 },
+      { src: '', minStage: 3, xPct: 72, yPct: 86, depth: 0.6, scale: 1.3 },
     ],
   },
 

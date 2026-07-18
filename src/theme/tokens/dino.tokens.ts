@@ -76,19 +76,22 @@ export const dinoThemeTokens: ThemeTokens = {
     // centre one lifted above the volcano peak so it isn't obscured. Refine onto the mossy ridge
     // once B3 near-layer art lands.
     // Seated on the jungle canopy at varied heights; colors rides higher on the centre vine bridge.
+    // B1 (scene-fixes): lower the flanking objects so they nestle onto the mountain
+    // ridge instead of floating in open sky; centre (colors) stays lifted to clear the
+    // volcano peak.
     homeAnchors: [
-      { section: 'alphabet', xPct: 15, yPct: 60, scale: 0.96, rotate: -3, depth: 0.3 },
-      { section: 'math', xPct: 33, yPct: 57, scale: 1.04, rotate: 2, depth: 0.32 },
-      { section: 'colors', xPct: 50, yPct: 47, scale: 1.14, rotate: 0, depth: 0.34 },
-      { section: 'english', xPct: 68, yPct: 57, scale: 1.04, rotate: -2, depth: 0.32 },
-      { section: 'ordleg', xPct: 85, yPct: 60, scale: 0.96, rotate: 3, depth: 0.3 },
+      { section: 'alphabet', xPct: 15, yPct: 70, scale: 0.96, rotate: -3, depth: 0.3 },
+      { section: 'math', xPct: 33, yPct: 66, scale: 1.04, rotate: 2, depth: 0.32 },
+      { section: 'colors', xPct: 50, yPct: 52, scale: 1.14, rotate: 0, depth: 0.34 },
+      { section: 'english', xPct: 68, yPct: 66, scale: 1.04, rotate: -2, depth: 0.32 },
+      { section: 'ordleg', xPct: 85, yPct: 70, scale: 0.96, rotate: 3, depth: 0.3 },
     ],
     sectionFocus: {
-      alphabet: { xPct: 22, yPct: 58, zoom: 1.32 },
-      math: { xPct: 36, yPct: 56, zoom: 1.34 },
-      colors: { xPct: 50, yPct: 48, zoom: 1.36 },
-      english: { xPct: 64, yPct: 56, zoom: 1.34 },
-      ordleg: { xPct: 78, yPct: 58, zoom: 1.32 },
+      alphabet: { xPct: 22, yPct: 68, zoom: 1.32 },
+      math: { xPct: 36, yPct: 65, zoom: 1.34 },
+      colors: { xPct: 50, yPct: 53, zoom: 1.36 },
+      english: { xPct: 64, yPct: 65, zoom: 1.34 },
+      ordleg: { xPct: 78, yPct: 68, zoom: 1.32 },
     },
     // Earned bloom scenery (PRD-05 W7). Layout only; `src:''` → URL from SceneAssets.bloomScenery
     // by INDEX (batch B5, order: fern sprout, egg, mushroom). Rest on the jungle ridge.

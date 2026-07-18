@@ -83,14 +83,14 @@ export const oceanThemeTokens: ThemeTokens = {
     homeAnchors: [
       { section: 'alphabet', xPct: 15, yPct: 62, scale: 0.96, rotate: -3, depth: 0.3 },
       { section: 'math', xPct: 33, yPct: 58, scale: 1.04, rotate: 2, depth: 0.32 },
-      { section: 'colors', xPct: 50, yPct: 64, scale: 1.14, rotate: 0, depth: 0.34 },
+      { section: 'colors', xPct: 50, yPct: 68, scale: 1.14, rotate: 0, depth: 0.34 }, // B3 (scene-fixes): settle palette onto the centre reef
       { section: 'english', xPct: 67, yPct: 58, scale: 1.04, rotate: -2, depth: 0.32 },
       { section: 'ordleg', xPct: 85, yPct: 61, scale: 0.96, rotate: 3, depth: 0.3 },
     ],
     sectionFocus: {
       alphabet: { xPct: 22, yPct: 55, zoom: 1.32 },
       math: { xPct: 36, yPct: 48, zoom: 1.34 },
-      colors: { xPct: 50, yPct: 46, zoom: 1.36 },
+      colors: { xPct: 50, yPct: 49, zoom: 1.36 },
       english: { xPct: 64, yPct: 48, zoom: 1.34 },
       ordleg: { xPct: 78, yPct: 55, zoom: 1.32 },
     },
