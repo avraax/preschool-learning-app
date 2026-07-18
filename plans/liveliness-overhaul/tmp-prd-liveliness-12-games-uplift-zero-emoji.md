@@ -91,6 +91,10 @@ it from the pool rather than ship a confusing clay blob (§5).
 
 ## 4. Phase B baked-art manifest (owner generates in Gemini)
 
+> **Paste-ready prompts:** one complete Gemini prompt per subject is in
+> **`tmp-prd-liveliness-12-zero-emoji-art-prompts.md`** (companion doc) — plus the section-word→file mapping. The
+> manifest below is the summary; generate from the prompts doc.
+
 Style = PRD-05 §8.2 (soft-3D claymation, soft key+rim light, contact shadow, child-safe, centered, isolated on flat
 `#00FF00`, no text). Key + trim + square-contain per `.claude/rules/scene-assets.md`; ≤40 KB WebP. Upload existing
 `assets/themes/icons/*.webp` as style refs.
