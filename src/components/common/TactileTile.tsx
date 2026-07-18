@@ -38,6 +38,11 @@ interface TactileTileProps {
   hint?: boolean                                 // never-fail hint pulse; active only when state==='idle'
   disabled?: boolean                             // locked during the advance window
   variant?: 'tile' | 'card' | 'chip'            // radius defaults: quiz tile · memory face · small chip
+  // Dense grids that must show many rows no-scroll (the 1–100 Lær Tal hundreds-chart): relax the
+  // 44px touch floor + heavy padding so each tile fills its (necessarily short) grid row instead of
+  // overflowing it and overlapping the row below. Owner-accepted trade-off for the full 100 on one
+  // screen; the tap target stays as tall as the row allows.
+  compact?: boolean
   interactive?: boolean                          // default true; false = pure display (no press/tilt)
   size?: number | string                         // optional; default fills the caller's grid cell (100%)
   index?: number                                 // phase offset for the optional idle-breathe
@@ -69,6 +74,7 @@ const TactileTile: React.FC<TactileTileProps> = ({
   hint = false,
   disabled = false,
   variant = 'tile',
+  compact = false,
   interactive = true,
   size = '100%',
   index = 0,
@@ -200,10 +206,10 @@ const TactileTile: React.FC<TactileTileProps> = ({
             position: 'relative',
             width: '100%',
             height: '100%',
-            minHeight: '44px',
+            minHeight: compact ? '0' : '44px',
             m: 0,
-            p: { xs: 1, sm: 1.5, md: 2 },
-            [PHONE_LANDSCAPE]: { p: 0.5 },
+            p: compact ? '2px' : { xs: 1, sm: 1.5, md: 2 },
+            [PHONE_LANDSCAPE]: { p: compact ? '1px' : 0.5 },
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',

@@ -30,6 +30,11 @@ const LearningGrid: React.FC<LearningGridProps> = ({
   const theme = useTheme()
   // Calculate grid dimensions for optimal layout
   const isAlphabet = items.length === 29
+  // Dense numbers grid (Lær Tal on Normal/Svær = 1–100): 10 rows can't each be ≥44px on a no-scroll
+  // iPad, so give the tiles a compact mode (they fill their short rows cleanly instead of holding the
+  // 44px floor and overlapping the row below) + a tighter gap + a smaller numeral. 1–60 (Let) is
+  // unaffected — 6 roomy rows.
+  const dense = !isAlphabet && items.length > 60
 
   const active = accent ?? theme.palette.secondary.main
   const base = theme.palette.primary.main
@@ -58,12 +63,12 @@ const LearningGrid: React.FC<LearningGridProps> = ({
             // is the lesson. With 1–60 that's 10×6, tiles comfortably ≥44px, no scroll. (Was
             // `auto-fit minmax(72px)` = "however many 72px tracks fit" → ~13 scrambled columns.)
             : 'repeat(10, 1fr)',
-          gap: { xs: '6px', sm: '8px', md: '10px' },
+          gap: dense ? { xs: '3px', md: '5px' } : { xs: '6px', sm: '8px', md: '10px' },
           width: '100%',
           height: '100%',
           // Let the tiles' soft contact shadows breathe without being clipped by the stage.
           overflow: 'visible',
-          p: { xs: 0.5, sm: 1, md: 1.5 },
+          p: dense ? 0.25 : { xs: 0.5, sm: 1, md: 1.5 },
           gridAutoRows: 'minmax(0, 1fr)',
           // Ensure good aspect ratio by limiting max height
           '& > *': {
@@ -100,6 +105,7 @@ const LearningGrid: React.FC<LearningGridProps> = ({
               onActivate={disabled ? undefined : () => onItemClick(index)}
               accent={active}
               variant="card"
+              compact={dense}
               hint={isActive}
               disabled={disabled}
               sx={{ opacity: disabled ? 0.5 : 1 }}
@@ -109,21 +115,25 @@ const LearningGrid: React.FC<LearningGridProps> = ({
                 sx={{
                   fontWeight: 700,
                   color: isActive ? darken(active, 0.35) : darken(base, 0.4),
-                  fontSize: {
-                    xs: 'clamp(1rem, 3.5vw, 1.5rem)',
-                    sm: 'clamp(1.2rem, 4vw, 2rem)',
-                    md: 'clamp(1.5rem, 5vw, 2.2rem)',
-                    lg: 'clamp(1.8rem, 5vw, 2.5rem)'
-                  },
+                  fontSize: dense
+                    ? { xs: 'clamp(0.85rem, 2.4vw, 1.15rem)', md: 'clamp(1rem, 2.4vw, 1.35rem)' }
+                    : {
+                        xs: 'clamp(1rem, 3.5vw, 1.5rem)',
+                        sm: 'clamp(1.2rem, 4vw, 2rem)',
+                        md: 'clamp(1.5rem, 5vw, 2.2rem)',
+                        lg: 'clamp(1.8rem, 5vw, 2.5rem)'
+                      },
                   lineHeight: 1,
                   // Adjust font size in landscape orientation
-                  '@media (orientation: landscape)': {
-                    fontSize: {
-                      xs: 'clamp(1rem, 3vw, 1.3rem)',
-                      sm: 'clamp(1.2rem, 3.5vw, 1.8rem)',
-                      md: 'clamp(1.5rem, 4vw, 2rem)'
-                    }
-                  },
+                  '@media (orientation: landscape)': dense
+                    ? { fontSize: { xs: 'clamp(0.8rem, 2vw, 1.1rem)', md: 'clamp(0.95rem, 2vw, 1.3rem)' } }
+                    : {
+                        fontSize: {
+                          xs: 'clamp(1rem, 3vw, 1.3rem)',
+                          sm: 'clamp(1.2rem, 3.5vw, 1.8rem)',
+                          md: 'clamp(1.5rem, 4vw, 2rem)'
+                        }
+                      },
                   [PHONE_LANDSCAPE]: { fontSize: '0.8rem' }
                 }}
               >
