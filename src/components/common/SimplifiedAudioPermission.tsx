@@ -26,16 +26,19 @@ const SimplifiedAudioPermission: React.FC = () => {
         success: result,
         timestamp: Date.now()
       })
-      
-      if (result) {
-        // Audio is now working, hide the prompt
-        hidePrompt()
-      }
     } catch (error) {
       audioDebugSession.addLog('SIMPLIFIED_PERMISSION_ERROR', {
         error: error instanceof Error ? error.message : error?.toString(),
         timestamp: Date.now()
       })
+    } finally {
+      // Always dismiss on an explicit tap — the tap itself IS the iOS unlock gesture. Previously this
+      // only closed the modal when initializeAudio() reported success, but iOS frequently returns
+      // "not working" on the first pass (the AudioContext lags to 'running'), so the button appeared
+      // to do nothing while the ✕ worked. Closing unconditionally (like the ✕) sets userDismissed,
+      // which also stops the 1.5s re-arm from popping it back; audio recovers silently on the next
+      // interaction via the document-wide listeners.
+      hidePrompt()
     }
   }
 
