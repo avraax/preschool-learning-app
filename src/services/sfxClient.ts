@@ -1,4 +1,4 @@
-import { Howl } from 'howler'
+import { Howl, Howler } from 'howler'
 import { progressStore } from './progressStore'
 import { guardHowlCleanBuffer } from './howlerGuard'
 
@@ -110,6 +110,7 @@ interface PlayOptions {
 class SfxClient {
   private enabled = true
   private preloaded = false
+  private loggedCtxState = false
   private howls = new Map<SfxCue, Howl>()
 
   constructor() {
@@ -141,11 +142,13 @@ class SfxClient {
         volume: CUE_VOLUME[cue] ?? 0.5,
         preload: true,
         html5: false, // WebAudio: low-latency + supports per-play rate; cues are tiny
-        onloaderror: () => {
-          /* missing/broken file → silent no-op */
+        onloaderror: (_id, err) => {
+          // [audio-unlock] diagnostic: an OGG decode failure on iOS surfaces HERE (Safari <17.4 can't
+          // decode Ogg Vorbis via WebAudio) → SFX silently do nothing. Captured in bug-report ring.
+          console.warn('[audio-unlock] SFX load error:', cue, src, err)
         },
-        onplayerror: () => {
-          /* gesture/decoding hiccup → silent */
+        onplayerror: (_id, err) => {
+          console.warn('[audio-unlock] SFX play error:', cue, err)
         },
       })
       this.howls.set(cue, howl)
@@ -174,6 +177,13 @@ class SfxClient {
     if (!this.enabled) return
     const howl = this.getHowl(cue)
     if (!howl) return
+    // [audio-unlock] diagnostic: log Howler's WebAudio context state on the FIRST play attempt
+    // (captured in bug-report ring). 'suspended' here = SFX blocked because Howler's context never
+    // resumed in a gesture; 'running' = the context is live and any silence is elsewhere (codec/mute).
+    if (!this.loggedCtxState) {
+      this.loggedCtxState = true
+      console.warn('[audio-unlock] first SFX play — Howler.ctx state:', Howler.ctx?.state ?? 'none', 'enabled:', this.enabled)
+    }
     try {
       const id = howl.play()
       if (id != null) {
