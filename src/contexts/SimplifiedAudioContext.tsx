@@ -3,6 +3,7 @@ import { isIOS } from '../utils/deviceDetection'
 import { audioDebugSession } from '../utils/remoteConsole'
 import { setSimplifiedAudioContext } from '../utils/SimplifiedAudioController'
 import { ttsClient } from '../services/ttsClient'
+import { shouldShowAudioPrompt } from './audioPromptPolicy'
 
 // Simplified iOS-optimized debugging with remote logging
 const logSimpleAudio = (message: string, data?: any) => {
@@ -55,6 +56,15 @@ export const SimplifiedAudioProvider: React.FC<SimplifiedAudioProviderProps> = (
   // De-dupe concurrent init attempts (a tap fires updateUserInteraction AND speak→ensureAudioReady,
   // both of which may call initializeAudio) so we never create two AudioContexts (PRD-06 §5).
   const initPromiseRef = useRef<Promise<boolean> | null>(null)
+  // Once audio has unlocked once, OR the user has explicitly closed the modal, we must NEVER auto-
+  // re-show the big blocking permission modal. On iOS the AudioContext routinely flips to
+  // suspended/interrupted right after the unlock gesture (WebKit does this when the priming
+  // utterance ends / on focus hiccups), which used to re-arm the modal 1.5s later — so neither the
+  // "Start lyd nu" button nor the ✕ could keep it closed (it bounced back). Suspension recovery is
+  // already handled silently by the document-wide interaction listeners (they re-run initializeAudio
+  // on the next tap), so the modal is a first-run primer only.
+  const hasUnlockedRef = useRef<boolean>(false)
+  const userDismissedRef = useRef<boolean>(false)
 
   // Start debug session for remote logging
   useEffect(() => {
@@ -164,7 +174,10 @@ export const SimplifiedAudioProvider: React.FC<SimplifiedAudioProviderProps> = (
       }
 
       const isWorking = audioContextWorking || speechSynthesisWorking
-      
+      // Latch: audio has unlocked at least once this session → the big modal must never auto-return
+      // (a later transient iOS suspension recovers silently on the next interaction, no modal).
+      if (isWorking) hasUnlockedRef.current = true
+
       setState(prev => ({
         ...prev,
         isWorking,
@@ -219,6 +232,10 @@ export const SimplifiedAudioProvider: React.FC<SimplifiedAudioProviderProps> = (
   }, [initializeAudio])
 
   const hidePrompt = useCallback(() => {
+    // Explicit close (✕ or the post-unlock hide): keep it closed for the session. The next real
+    // interaction still silently (re)unlocks audio via updateUserInteraction — we just never force
+    // the blocking modal back on the child.
+    userDismissedRef.current = true
     setState(prev => ({ ...prev, showPrompt: false }))
     updateUserInteraction()
   }, [updateUserInteraction])
@@ -244,10 +261,22 @@ export const SimplifiedAudioProvider: React.FC<SimplifiedAudioProviderProps> = (
 
   // Show the prompt when audio is needed — on ALL platforms (desktop/Android included), not just
   // iOS (PRD §9.2). A short delay lets a natural interaction unlock audio first without any modal.
+  // Guard: only ever show it BEFORE the first successful unlock and only if the user hasn't already
+  // closed it — otherwise a transient iOS AudioContext suspend/interrupt would re-pop the modal and
+  // it would read as "can't be dismissed" (both the button and the ✕ are defeated by the re-arm).
   useEffect(() => {
-    if (state.needsUserAction && !state.isWorking) {
+    const inputs = () => ({
+      needsUserAction: state.needsUserAction,
+      isWorking: state.isWorking,
+      hasUnlockedOnce: hasUnlockedRef.current,
+      userDismissed: userDismissedRef.current,
+    })
+    if (shouldShowAudioPrompt(inputs())) {
       const timer = setTimeout(() => {
-        setState(prev => (prev.needsUserAction && !prev.isWorking ? { ...prev, showPrompt: true } : prev))
+        // Re-check the refs at fire time — audio may have unlocked (or the user dismissed) during the delay.
+        if (shouldShowAudioPrompt(inputs())) {
+          setState(prev => (prev.needsUserAction && !prev.isWorking ? { ...prev, showPrompt: true } : prev))
+        }
       }, 1500)
 
       return () => clearTimeout(timer)

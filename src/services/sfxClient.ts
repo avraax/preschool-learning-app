@@ -1,5 +1,10 @@
 import { Howl } from 'howler'
 import { progressStore } from './progressStore'
+import { guardHowlCleanBuffer } from './howlerGuard'
+
+// Patch Howler's iOS _cleanBuffer crash once, at module load, before any Howl is built (see
+// howlerGuard.ts for the full rationale).
+guardHowlCleanBuffer((Howl as unknown as { prototype: Parameters<typeof guardHowlCleanBuffer>[0] }).prototype)
 
 // App-wide sound-effects layer (Overhaul Foundation — System 4).
 //
