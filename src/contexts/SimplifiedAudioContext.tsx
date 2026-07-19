@@ -123,23 +123,20 @@ export const SimplifiedAudioProvider: React.FC<SimplifiedAudioProviderProps> = (
           })
         }
       }
+      // [audio-unlock] diagnostic (captured in bug-report diagnostics ring).
+      console.warn('[audio-unlock] initializeAudio: ctxState=', globalAudioContextRef.current?.state,
+        'speechAvail=', !!speechSynthesisRef.current)
 
-      // 2. Resume AudioContext immediately during user interaction, then VERIFY it is actually
-      // running (the old code latched isWorking=true without confirming — PRD §9.2). iOS/WebKit
-      // reports 'interrupted' (calls/Siri/backgrounding) as well as 'suspended' — resume on either
-      // (PRD-06 §5 / P3).
+      // 2. CRITICAL iOS ORDERING: everything that needs the user-activation (transient activation)
+      // must run SYNCHRONOUSLY here, BEFORE the first `await`. iOS/WebKit consumes the activation
+      // across an await, so we kick resume() (without awaiting), prime the narration <audio> element,
+      // and unlock speechSynthesis first — then await resume() only to VERIFY. Priming after the
+      // await (the old order) silently failed on iOS → narration never unlocked → "no sound after
+      // tapping Start lyd nu". (PRD-06 §5 / P3; iOS reports 'interrupted' too, not just 'suspended'.)
+      let resumePromise: Promise<void> = Promise.resolve()
       if (globalAudioContextRef.current) {
-        if (globalAudioContextRef.current.state !== 'running') {
-          await globalAudioContextRef.current.resume().catch(() => {})
-          logSimpleAudio('Resumed AudioContext', {
-            newState: globalAudioContextRef.current.state
-          })
-        }
-        audioContextWorking = (globalAudioContextRef.current.state === 'running')
-
         // Recover automatically: if the context later suspends OR is interrupted (iOS call/Siri/
-        // backgrounding), flip back to needsUserAction so the next interaction re-prompts instead of
-        // going silent. iOS uses 'interrupted', which is outside the TS AudioContextState union.
+        // backgrounding), flip back to needsUserAction so the next interaction re-unlocks silently.
         globalAudioContextRef.current.onstatechange = () => {
           const ctx = globalAudioContextRef.current
           const s = ctx?.state as string | undefined
@@ -148,32 +145,40 @@ export const SimplifiedAudioProvider: React.FC<SimplifiedAudioProviderProps> = (
             markNeedsUserAction()
           }
         }
+        if (globalAudioContextRef.current.state !== 'running') {
+          resumePromise = globalAudioContextRef.current.resume().catch(() => {})
+        }
       }
 
-      // 2b. Prime the shared narration <audio> element inside THIS gesture (PRD-06 §5). Resuming
-      // the probe context above is not sufficient — narration plays through ttsClient's element,
-      // so that element is the one that must become user-activated.
+      // 2b. Prime the shared narration <audio> element inside THIS gesture (PRD-06 §5) — BEFORE any
+      // await. Narration plays through ttsClient's element, so that element is the one that must
+      // become user-activated; resuming the probe context is not sufficient.
       ttsClient.primePlaybackElement()
 
-      // 3. Initialize speechSynthesis with "empty utterance" trick for iOS
+      // 2c. Unlock speechSynthesis with an "empty utterance" — also in-gesture, before any await.
       if (speechSynthesisRef.current) {
         try {
-          // Create and speak empty utterance to unlock speechSynthesis for the session
           const emptyUtterance = new SpeechSynthesisUtterance('')
           emptyUtterance.volume = 0
           emptyUtterance.rate = 10 // Very fast so it finishes quickly
-          
-          // This unlocks speechSynthesis for programmatic use throughout the session
           speechSynthesisRef.current.speak(emptyUtterance)
           speechSynthesisWorking = true
-          
-          // SpeechSynthesis unlocked with empty utterance
         } catch (error) {
           // SpeechSynthesis initialization failed
         }
       }
 
+      // 2d. NOW it's safe to await the resume() we kicked off, and verify the context actually runs.
+      await resumePromise
+      if (globalAudioContextRef.current) {
+        audioContextWorking = (globalAudioContextRef.current.state === 'running')
+        logSimpleAudio('Resumed AudioContext', { newState: globalAudioContextRef.current.state })
+      }
+
       const isWorking = audioContextWorking || speechSynthesisWorking
+      // [audio-unlock] diagnostic (captured in bug-report diagnostics ring).
+      console.warn('[audio-unlock] after resume: ctxState=', globalAudioContextRef.current?.state,
+        'audioCtxWorking=', audioContextWorking, 'speechWorking=', speechSynthesisWorking, 'isWorking=', isWorking)
       // Latch: audio has unlocked at least once this session → the big modal must never auto-return
       // (a later transient iOS suspension recovers silently on the next interaction, no modal).
       if (isWorking) hasUnlockedRef.current = true
@@ -192,11 +197,12 @@ export const SimplifiedAudioProvider: React.FC<SimplifiedAudioProviderProps> = (
       return isWorking
 
     } catch (error) {
-      logSimpleAudio('Audio initialization failed', { 
+      console.warn('[audio-unlock] initializeAudio threw:', error)
+      logSimpleAudio('Audio initialization failed', {
         error: error?.toString(),
-        errorType: error?.constructor?.name 
+        errorType: error?.constructor?.name
       })
-      
+
       setState(prev => ({
         ...prev,
         isWorking: false,

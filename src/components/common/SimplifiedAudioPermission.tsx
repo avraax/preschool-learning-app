@@ -14,32 +14,34 @@ const SimplifiedAudioPermission: React.FC = () => {
   // DEV screenshot harness: ?nogate=1 suppresses the audio welcome gate so states are capturable.
   if (devNoGate()) return null
 
-  const handleEnableAudio = async () => {
+  const handleEnableAudio = () => {
+    // [audio-unlock] diagnostic (captured in bug-report diagnostics ring) — proves the tap handler
+    // actually fired (rules out the framer-motion wrapper swallowing the tap).
+    console.warn('[audio-unlock] "Start lyd nu" tapped')
     audioDebugSession.addLog('SIMPLIFIED_PERMISSION_CLICKED', {
       timestamp: Date.now(),
       userAgent: navigator.userAgent.substring(0, 100)
     })
-    
-    try {
-      const result = await initializeAudio()
-      audioDebugSession.addLog('SIMPLIFIED_PERMISSION_RESULT', {
-        success: result,
-        timestamp: Date.now()
+
+    // Dismiss SYNCHRONOUSLY & immediately — never gate the close on the async unlock resolving. iOS
+    // resume() can lag or hang; previously an awaited init could leave the button "unresponsive".
+    // hidePrompt() also kicks initializeAudio() via updateUserInteraction, in the SAME gesture, so
+    // the in-gesture priming (see SimplifiedAudioContext) still happens.
+    hidePrompt()
+
+    // Explicit call is de-duped by initPromiseRef; used only to log the unlock outcome.
+    initializeAudio()
+      .then((result) => {
+        console.warn('[audio-unlock] initializeAudio result:', result)
+        audioDebugSession.addLog('SIMPLIFIED_PERMISSION_RESULT', { success: result, timestamp: Date.now() })
       })
-    } catch (error) {
-      audioDebugSession.addLog('SIMPLIFIED_PERMISSION_ERROR', {
-        error: error instanceof Error ? error.message : error?.toString(),
-        timestamp: Date.now()
+      .catch((error) => {
+        console.warn('[audio-unlock] initializeAudio error:', error)
+        audioDebugSession.addLog('SIMPLIFIED_PERMISSION_ERROR', {
+          error: error instanceof Error ? error.message : error?.toString(),
+          timestamp: Date.now(),
+        })
       })
-    } finally {
-      // Always dismiss on an explicit tap — the tap itself IS the iOS unlock gesture. Previously this
-      // only closed the modal when initializeAudio() reported success, but iOS frequently returns
-      // "not working" on the first pass (the AudioContext lags to 'running'), so the button appeared
-      // to do nothing while the ✕ worked. Closing unconditionally (like the ✕) sets userDismissed,
-      // which also stops the 1.5s re-arm from popping it back; audio recovers silently on the next
-      // interaction via the document-wide listeners.
-      hidePrompt()
-    }
   }
 
   return (

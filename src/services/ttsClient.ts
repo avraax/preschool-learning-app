@@ -93,17 +93,22 @@ export class TtsClient {
       const p = a.play()
       if (p && typeof p.then === 'function') {
         p.then(() => {
+          // [audio-unlock] diagnostic (captured in bug-report diagnostics ring): the narration
+          // <audio> element accepted play() → narration is unlocked for the session.
+          console.warn('[audio-unlock] playback element primed OK')
           try {
             a.pause()
           } catch {
             /* ignore */
           }
-        }).catch(() => {
-          /* no gesture yet / blocked — the real speak will surface NotAllowedError as usual */
+        }).catch((e: unknown) => {
+          // Blocked → element NOT user-activated (no gesture / called outside activation). This is
+          // the "no sound after tapping" signature; the real speak will surface NotAllowedError too.
+          console.warn('[audio-unlock] playback element prime BLOCKED:', (e as { name?: string })?.name || String(e))
         })
       }
-    } catch {
-      /* ignore */
+    } catch (e) {
+      console.warn('[audio-unlock] primePlaybackElement threw:', e)
     }
   }
 
