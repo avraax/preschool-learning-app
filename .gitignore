@@ -43,6 +43,9 @@ public/audio-cache/
 # Local bug-report storage (dev-server mirror of /api/bug-report → Vercel Blob)
 .bug-reports/
 
+# Scratch dir: scene-audit baselines, verification screenshots, one-off diagnostics — never committed
+tmp/
+
 # TTS voice evaluation output (PRD Part 1)
 tts-samples/
 
