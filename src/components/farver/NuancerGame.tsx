@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
-import { Box, Typography, useMediaQuery } from '@mui/material'
+import { Box, useMediaQuery } from '@mui/material'
 import { Sun, Moon } from 'lucide-react'
 import { useTheme } from '@mui/material/styles'
 import { DndContext, DragEndEvent, DragStartEvent, MeasuringStrategy } from '@dnd-kit/core'
@@ -310,11 +310,13 @@ const NuancerGame: React.FC = () => {
   // shrinks further to the 44px touch-target floor (PromptStage's own allocation is much shorter
   // there) — shared by both the slot row (in PromptStage) and the tray (below) so they match.
   const tileSx = {
-    width: { xs: 66, sm: 76, md: 88 },
-    height: { xs: 66, sm: 76, md: 88 },
-    '@media (orientation: landscape)': { width: 60, height: 60 },
+    width: { xs: 78, sm: 88, md: 100 },
+    height: { xs: 78, sm: 88, md: 100 },
+    // Bigger on the roomy iPad landscape surface now that the ramp/hint no longer share the stage —
+    // easier grab targets for 5yo motor control and a fuller use of the freed space.
+    '@media (orientation: landscape)': { width: 78, height: 78 },
     [PHONE_LANDSCAPE]: { width: 44, height: 44 },
-    borderRadius: '16px'
+    borderRadius: '18px'
   } as const
 
   // PRD-09 §3.0 colour-surface grounding: soft accent-tinted clay shadow (no hard keyboard lip);
@@ -348,9 +350,16 @@ const NuancerGame: React.FC = () => {
         chargeKey={`${order[0]?.hex ?? ''}-${round.state.index}`}
         repeat={phoneLandscape ? undefined : <ColorRepeatButton onClick={repeatInstruction} disabled={false} />}
         subject={
-        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: { xs: 1, md: 1.5 }, width: '100%', [PHONE_LANDSCAPE]: { gap: 0.25 } }}>
-          {/* Slot row (drop targets): left = lightest, right = darkest. */}
-          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: { xs: 1, md: 1.5 }, [PHONE_LANDSCAPE]: { gap: 0.5 } }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
+          {/* Sun (light end) ← slots → Moon (dark end): ONE wordless spatial cue for a pre-reader —
+              put the light shade by the sun, the dark shade by the moon. (Replaces the old gradient
+              ramp + "lys → mørk" text, which doubled up and needed reading.) */}
+          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: { xs: 1.25, md: 2 }, [PHONE_LANDSCAPE]: { gap: 0.75 } }}>
+            <Box aria-hidden sx={{ display: 'flex', flex: '0 0 auto', color: '#F59E0B', '& svg': { width: { xs: '2.3rem', md: '3rem' }, height: 'auto' }, [PHONE_LANDSCAPE]: { '& svg': { width: '1.7rem' } } }}>
+              <Sun strokeWidth={2.5} />
+            </Box>
+            {/* Slot row (drop targets): left = lightest (by the sun), right = darkest (by the moon). */}
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: { xs: 1, md: 1.5 }, [PHONE_LANDSCAPE]: { gap: 0.5 } }}>
             {displaySlots.map((placedName, index) => {
               const placedShade = placedName ? order.find((s) => s.name === placedName) : undefined
               const isOverThis = overId === `slot-${index}`
@@ -417,24 +426,8 @@ const NuancerGame: React.FC = () => {
                 </motion.div>
               )
             })}
-          </Box>
-
-          {/* Lys → Mørk direction hint (icons, language-light). Phone-landscape hides this
-              decorative reinforcement — PromptStage is too short there for a 3rd row, and the
-              slot order itself still shows light→dark. */}
-          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 1, [PHONE_LANDSCAPE]: { display: 'none' } }}>
-            <Box aria-hidden sx={{ display: 'flex', color: '#F59E0B', '& svg': { width: '1.3rem', height: 'auto' } }}>
-              <Sun strokeWidth={2.5} />
             </Box>
-            <Typography sx={{
-              fontFamily: '"Comic Sans MS", "Comic Neue", sans-serif',
-              fontWeight: 700,
-              fontSize: 'clamp(0.85rem, 2.6vw, 1.05rem)',
-              color: muiTheme.scene.dark ? 'rgba(255,255,255,0.85)' : 'text.secondary'
-            }}>
-              lys → mørk
-            </Typography>
-            <Box aria-hidden sx={{ display: 'flex', color: muiTheme.scene.dark ? '#CBD5E1' : '#64748B', '& svg': { width: '1.3rem', height: 'auto' } }}>
+            <Box aria-hidden sx={{ display: 'flex', flex: '0 0 auto', color: muiTheme.scene.dark ? '#CBD5E1' : '#475569', '& svg': { width: { xs: '2.3rem', md: '3rem' }, height: 'auto' }, [PHONE_LANDSCAPE]: { '& svg': { width: '1.7rem' } } }}>
               <Moon strokeWidth={2.5} />
             </Box>
           </Box>
@@ -494,17 +487,18 @@ const NuancerGame: React.FC = () => {
                 <ColorRepeatButton onClick={repeatInstruction} disabled={false} />
               </Box>
             )}
-            {/* Tray: the scrambled shades still to place (drag into a slot above). Top-aligned (not
-                centred) so it sits just under the PromptStage slots as one tight cluster instead of
-                floating in the middle of the answer zone. */}
+            {/* Tray: the scrambled shades still to place (drag into a slot above). Sits just under
+                the PromptStage slots+button as one tight top-centred cluster (centring it in the tall
+                answer zone dropped it to the very bottom). The freed PromptStage space now breathes
+                around the sun→slots→moon row instead of carrying the old ramp + hint text. */}
             <Box sx={{
               flex: 1,
               display: 'flex',
               justifyContent: 'center',
               alignItems: 'flex-start',
               flexWrap: 'wrap',
-              gap: { xs: 1.5, md: 2 },
-              pt: { xs: 1.5, md: 3 },
+              gap: { xs: 1.5, md: 2.5 },
+              pt: { xs: 2, md: 4 },
               minHeight: 0
             }}>
               {remaining.map((shade) => {

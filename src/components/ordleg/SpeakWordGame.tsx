@@ -8,7 +8,7 @@ import { useTheme } from '@mui/material/styles'
 import { Mic, MicOff } from 'lucide-react'
 import { getCategoryTheme } from '../../config/categoryThemes'
 import { stickerSetForSection } from '../../config/stickers'
-import { darken, hexToRgba } from '../../theme/tokens/helpers'
+import { darken, hexToRgba, onTileColor } from '../../theme/tokens/helpers'
 import { softShadow, contactShadow } from '../../theme/depth'
 import GameShell from '../common/GameShell'
 import { HeroArt } from '../common/PromptArt'
@@ -60,13 +60,15 @@ interface MicHeroProps {
   supported: boolean
   isBusy: boolean
   accent: string
+  // Readable-on-white accent for the idle caption on light scenes (see theme.onTileColor).
+  onTileColor: string
   dark: boolean
   reduce: boolean
   onPressStart: (e: React.PointerEvent) => void
   onPressEnd: (e?: React.PointerEvent) => void
 }
 
-const MicHero: React.FC<MicHeroProps> = ({ phase, supported, isBusy, accent, dark, reduce, onPressStart, onPressEnd }) => {
+const MicHero: React.FC<MicHeroProps> = ({ phase, supported, isBusy, accent, onTileColor, dark, reduce, onPressStart, onPressEnd }) => {
   const recording = phase === 'recording'
 
   if (!supported) {
@@ -193,6 +195,27 @@ const MicHero: React.FC<MicHeroProps> = ({ phase, supported, isBusy, accent, dar
           />
         ))}
       </Box>
+
+      {/* Idle call-to-action, RIGHT under the mic (PRD-18 W4): button + label read as one unit instead
+          of the label floating low in the body with a dead band between. Only during idle — the
+          transient recording/processing/retry statuses stay in the body below. Hidden on phone-landscape
+          (the ~85px stage is already fully spent on the mic circle alone — that fallback lives in the
+          body). */}
+      {phase === 'idle' && (
+        <Typography
+          sx={{
+            fontSize: { xs: '1.2rem', md: '1.55rem' },
+            fontWeight: 700,
+            textAlign: 'center',
+            px: 2,
+            color: dark ? '#FFFFFF' : onTileColor,
+            textShadow: dark ? '0 2px 10px rgba(0,0,0,0.5)' : 'none',
+            [PHONE_LANDSCAPE]: { display: 'none' },
+          }}
+        >
+          Hold knappen og sig et ord!
+        </Typography>
+      )}
     </Box>
   )
 }
@@ -217,7 +240,9 @@ const SpellBanner: React.FC<SpellBannerProps> = ({ word, letters, revealCount, a
         fontWeight: 800,
         letterSpacing: '0.08em',
         lineHeight: 1,
-        color: dark ? '#FFFFFF' : accent,
+        // Spelled-back word banner: white on dark scenes, readable-on-white accent on light scenes
+        // (Ordleg's orange accent fails on white on Rummet/Dino). See onTileColor.
+        color: dark ? '#FFFFFF' : onTileColor(accent),
         textShadow: dark ? '0 2px 10px rgba(0,0,0,0.5)' : 'none',
         [PHONE_LANDSCAPE]: { fontSize: '1.15rem' },
       }}
@@ -232,7 +257,9 @@ const SpellBanner: React.FC<SpellBannerProps> = ({ word, letters, revealCount, a
             sx={{
               fontSize: { xs: '1.6rem', sm: '1.9rem', md: '2.8rem' },
               fontWeight: 700,
-              color: accent,
+              // Revealed letters sit on a white clay tile — the raw Ordleg accent (orange on
+              // Rummet/Dino) was illegible there; onTileColor darkens only the too-light accents.
+              color: onTileColor(accent),
               userSelect: 'none',
               [PHONE_LANDSCAPE]: { fontSize: '1.05rem' },
             }}
@@ -579,6 +606,7 @@ const SpeakWordGame: React.FC = () => {
                 supported={supported}
                 isBusy={isBusy}
                 accent={theme.accentColor}
+                onTileColor={theme.onTileColor}
                 dark={dark}
                 reduce={reduce}
                 onPressStart={handlePressStart}
@@ -684,18 +712,22 @@ const SpeakWordGame: React.FC = () => {
               />
             </motion.div>
           ) : (
-            // Idle/recording/processing/retry: the grounded mic hero (in the focal zone above) is the
-            // obvious focus, so the body carries a single warm instruction — no second dim line (§3.5).
-            // Open-ended: never suggest a specific word.
+            // Recording/processing/retry status sits in the body under the mic. The IDLE call-to-action
+            // moved UP next to the mic (MicHero caption, PRD-18 W4) so button+label are one unit — EXCEPT
+            // on phone-landscape, where the mic's caption is hidden (tight ~85px stage), so the idle CTA
+            // is surfaced here instead (guarded to phone-landscape only). Open-ended: never suggest a word.
             <Typography
               sx={{
                 fontSize: { xs: '1.25rem', md: '1.6rem' },
                 fontWeight: 700,
                 textAlign: 'center',
                 px: 2,
-                // White on dark immersive scenes (accent teal is too dim there).
-                color: dark ? '#FFFFFF' : theme.accentColor,
+                // White on dark immersive scenes; readable-on-white accent on light scenes.
+                color: dark ? '#FFFFFF' : theme.onTileColor,
                 textShadow: dark ? '0 2px 10px rgba(0,0,0,0.5)' : 'none',
+                // Idle text is a phone-landscape-only fallback; on iPad/phone-portrait the mic caption
+                // owns the idle CTA, so an idle body would be a dead duplicate — collapse it there.
+                ...(phase === 'idle' ? { display: 'none', [PHONE_LANDSCAPE]: { display: 'block' } } : null),
               }}
             >
               {phase === 'idle' && 'Hold knappen og sig et ord!'}

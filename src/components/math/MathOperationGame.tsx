@@ -512,14 +512,17 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
         ? { value: fxWrongValue, correct: false }
         : feedback
 
-  // Big number styling inside the glossy "number sentence" card (readable on any scene).
+  // Big number styling inside the glossy "number sentence" card. The card is `tileSurface` — its top
+  // stop is opaque #FFFFFF on EVERY skin, so the numbers sit on white regardless of scene. The old
+  // `scene.dark ? '#FFFFFF'` branch was therefore white-on-white on dark skins; `onTileColor` is the
+  // correct always-dark-on-white label (a no-op for accents that already read).
   const numberSx = {
     fontSize: { xs: '3rem', md: '4.2rem' },
     fontWeight: 800,
-    color: muiTheme.scene.dark ? '#FFFFFF' : category.accentColor,
+    color: category.onTileColor,
     lineHeight: 1,
     userSelect: 'none' as const,
-    textShadow: muiTheme.scene.dark ? '0 2px 10px rgba(0,0,0,0.55)' : 'none',
+    textShadow: 'none',
     '@media (orientation: landscape)': { fontSize: { xs: '2.4rem', md: '3.4rem' } },
     [PHONE_LANDSCAPE]: { fontSize: '1.3rem' },
   }
@@ -749,7 +752,8 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
                   sx={{
                     fontSize: 'clamp(2.5rem, 8vw, 4.5rem)',
                     fontWeight: 700,
-                    color: category.accentColor,
+                    // Readable-on-white answer-tile numeral (onTileColor) — see CategoryTheme.onTileColor.
+                    color: category.onTileColor,
                     userSelect: 'none',
                     lineHeight: 1,
                     '@media (orientation: landscape)': { fontSize: 'clamp(2rem, 6vw, 3.5rem)' },

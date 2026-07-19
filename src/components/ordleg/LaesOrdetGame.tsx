@@ -87,16 +87,19 @@ const LaesOrdetGame: React.FC = () => {
       if (recentRef.current.length > 6) recentRef.current.shift()
       return {
         ...toItem(w),
-        // Word shown as text, no picture in the prompt — the child must read it.
-        questionVisual: { emoji: '', word: w.word.toUpperCase() }
+        // Word shown as text, no picture in the prompt — the child must read it. `emphasizeFirstLetter`
+        // (PRD-18 W1) renders the first letter larger + accent-coloured as a SILENT "sound out this
+        // letter first" cue; the word is still never spoken (the whole point of the game).
+        questionVisual: { emoji: '', word: w.word.toUpperCase(), emphasizeFirstLetter: true }
       }
     },
 
     generateOptions: (correct: QuizItem) => {
       const level: DifficultyLevel = progressStore.difficultyFor('ordleg')
-      // Svær: more distractor PICTURES (6 instead of 4) — the one difficulty axis left once word
-      // length is fixed gentle at every level.
-      const optionCount = level === 'svaer' ? 6 : 4
+      // Option count scales with level (PRD-18 W1): Let = 3 (gentler floor for the youngest reader),
+      // Normal = 4, Svær = 6 (more distractor PICTURES — the one difficulty axis left once word length
+      // is fixed gentle at every level).
+      const optionCount = level === 'let' ? 3 : level === 'svaer' ? 6 : 4
       const correctWord = READING_WORDS.find(w => w.word === correct.value) || READING_WORDS[0]
       const correctInitial = correctWord.word[0]
       // Let/Normal (PRD-14 W2 / audit §F): distractor pictures must NOT share the correct word's

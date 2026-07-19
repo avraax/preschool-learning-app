@@ -594,7 +594,9 @@ const SpellingGame: React.FC = () => {
                             sx={{
                               fontSize: 'clamp(1.75rem, 6vw, 2.75rem)',
                               fontWeight: 700,
-                              color: theme.accentColor
+                              // Readable-on-white letter-tile glyph (onTileColor) — Ordleg's orange
+                              // accent on Rummet/Dino was illegible on the white tile. See onTileColor.
+                              color: theme.onTileColor
                             }}
                           >
                             {tile.letter}

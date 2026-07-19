@@ -41,7 +41,12 @@ export const LETTER_WORDS: Record<string, { word: string }> = {
   Q: { word: 'Quiz' },
   W: { word: 'Wienerbrød' },
   X: { word: 'Xylofon' },
-  Å: { word: 'Å' },
+  // PRD-18 W2 manifest audit: was 'Å' (a stream — a Danish child reads that picture as "vand"/"bæk",
+  // which fights the audio). Swapped to 'Ål' (eel), an unambiguous child-known noun that genuinely
+  // starts with Å. Needs a re-baked Å-keyed picture (an eel, not a stream) — art is gated on the owner
+  // dropping the new AA.webp; until then the OLD stream picture shows under the word "Ål" (mismatch).
+  // The two changed spoken lines ("Å som Ål" / "Ål starter med Å") need a tts:prebake + /audit pass.
+  Å: { word: 'Ål' },
 }
 
 // Letters Bogstav Quiz asks about (the correct answer is one of these). W, X and Å are asked too

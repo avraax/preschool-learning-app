@@ -2,7 +2,7 @@ import React from 'react'
 import { Box, Typography } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { motion } from 'framer-motion'
-import { hexToRgba } from '../../theme/tokens/helpers'
+import { hexToRgba, onTileColor } from '../../theme/tokens/helpers'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
 import type { StickerAward } from '../../services/progressStore'
 
@@ -53,7 +53,8 @@ const StickerReveal: React.FC<StickerRevealProps> = ({ award, accent, delay = 0,
             fontFamily: '"Comic Sans MS", "Comic Neue", sans-serif',
             fontWeight: 700,
             fontSize: 'clamp(1rem, 3.5vw, 1.4rem)',
-            color: dark ? '#FFFFFF' : accent,
+            // Readable-on-white accent on light scenes (onTileColor); white on dark scenes.
+            color: dark ? '#FFFFFF' : onTileColor(accent),
             textShadow: dark ? '0 2px 8px rgba(0,0,0,0.5)' : 'none',
           }}
         >

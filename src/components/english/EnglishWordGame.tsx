@@ -43,8 +43,13 @@ const pickWordsForLevel = (correct: EnglishWord, level: DifficultyLevel): Englis
   return shuffle([correct, ...picks])
 }
 
-// Find det Engelske Ord: show a picture (emoji), the child picks the correct written
-// English word from 4 text options. Early English reading.
+// Find det Engelske Ord: show a baked picture, the child picks the correct written English word
+// from 4 text options. Early English reading (meaning→print recognition).
+//
+// Liveliness PRD-17 W1 — differentiation: this game KEEPS its picture prompt; the sibling Dansk til
+// Engelsk drops it and prompts with a Danish word instead. So Find = picture→English (recognition),
+// Translate = Danish-word→English (translation) — two distinct skills, both winnable by a pre-reader
+// via the shared W7 tile audition (hear each English tile before committing).
 const EnglishWordGame: React.FC = () => {
   const toWordItem = (w: EnglishWord): QuizItem => ({
     value: w.en,

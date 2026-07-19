@@ -761,7 +761,9 @@ const UnifiedMemoryGame: React.FC<UnifiedMemoryGameProps> = ({ config }) => {
                         <div style={{
                           fontSize: config.gameType === 'numbers' ? 'clamp(1.4rem, 3vw, 2.2rem)' : 'clamp(1.6rem, 3.5vw, 2.2rem)',
                           fontWeight: 700,
-                          color: isMatched ? successEdge : accent,
+                          // Readable-on-white face label (onTileColor): the white face-up surface made
+                          // light accents (Rummet cyan etc.) illegible; darkens only those, no-op otherwise.
+                          color: isMatched ? successEdge : config.theme.onTileColor,
                           marginBottom: displayData.icon || displayData.iconArt ? '2px' : '0px',
                           lineHeight: 0.9
                         }}>

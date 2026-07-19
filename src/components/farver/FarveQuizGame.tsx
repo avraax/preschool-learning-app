@@ -317,19 +317,20 @@ const FarveQuizGame: React.FC = () => {
           collisionDetection={kidCollision}
         >
           {/* Repeat the spoken question */}
-          <Box sx={{ textAlign: 'center', mb: { xs: 1, md: 1.5 }, flex: '0 0 auto' }}>
+          <Box sx={{ textAlign: 'center', mb: { xs: 0.75, md: 1 }, flex: '0 0 auto' }}>
             <ColorRepeatButton onClick={repeatPrompt} disabled={false} />
           </Box>
 
-          {/* The object to drag onto a color. */}
+          {/* The object to drag onto a color. W5: pulled tight to the swatch row below (smaller mb)
+              so the object + swatches read as one cluster and the drag is short. */}
           <Box sx={{
             flex: '0 0 auto',
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
-            mb: { xs: 1.5, md: 2.5 },
+            mb: { xs: 0.5, md: 1 },
             minHeight: { xs: 96, md: 120 },
-            '@media (orientation: landscape)': { mb: 1, minHeight: 84 }
+            '@media (orientation: landscape)': { mb: 0.5, minHeight: 84 }
           }}>
             {!displaySolvedColor && (
               <Box>

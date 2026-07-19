@@ -108,7 +108,9 @@ const GameShell: React.FC<GameShellProps> = ({
                 fontFamily: theme.titleFontFamily,
                 fontWeight: 700,
                 fontSize: '1rem',
-                color: dark ? '#FFFFFF' : category.accentColor,
+                // Title on the scene: white on dark worlds, the readable-on-white accent on light
+                // worlds (a light section accent — Havet yellow etc. — was washed out). See onTileColor.
+                color: dark ? '#FFFFFF' : category.onTileColor,
                 textShadow: dark
                   ? '0 0 16px rgba(120,170,255,0.55), 0 2px 8px rgba(0,0,0,0.5)'
                   : `1px 1px 2px ${category.accentColor}33`,
@@ -165,7 +167,8 @@ const GameShell: React.FC<GameShellProps> = ({
                 variant="h3"
                 sx={{
                   fontFamily: theme.titleFontFamily,
-                  color: dark ? '#FFFFFF' : category.accentColor,
+                  // White on dark worlds, readable-on-white accent on light worlds (see onTileColor).
+                  color: dark ? '#FFFFFF' : category.onTileColor,
                   fontWeight: 700,
                   fontSize: { xs: '1.6rem', md: '2.1rem' },
                   textShadow: dark

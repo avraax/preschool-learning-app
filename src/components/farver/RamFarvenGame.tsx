@@ -94,6 +94,11 @@ const possibleTargets: TargetColor[] = [
   { color: 'grå', name: 'grå', hex: '#9CA3AF' }
 ]
 
+// W3 (PRD-16): pale-tint targets are near-white and vanish against the light cloud/sky world, so the
+// child can't perceive the colour they're aiming for. These get a neutral backing disc behind the
+// goal swatch so the pale hue reads as a distinct colour (and is distinguishable from a white droplet).
+const PALE_TARGET_HEXES = new Set(['#FFB3BA', '#BFDBFE', '#FEF9C3', '#9CA3AF'])
+
 const mixingRules: Record<string, TargetColor> = {
   // Secondaries
   'rød+blå': { color: 'lilla', name: 'lilla', hex: '#A855F7' },
@@ -475,6 +480,8 @@ const RamFarvenGame: React.FC = () => {
       : 'rgba(0, 0, 0, 0.07)'
   const isOverPot = overId === 'mixing-zone'
   const comicFont = '"Comic Sans MS", "Comic Neue", sans-serif'
+  // W3: pale tints need a neutral backing plate so they read against the light world (see set above).
+  const isPaleTarget = PALE_TARGET_HEXES.has(targetColor.hex.toUpperCase())
   // Goal swatch + pot share ONE size so the two circles read as a balanced pair and line up on the
   // same centre line (smaller in landscape so the goal→pot row AND the droplet tray fit with no
   // scroll). The "below-circle reserve" (label + Tøm slot) is mirrored on both columns so their
@@ -591,6 +598,20 @@ const RamFarvenGame: React.FC = () => {
                         background: `radial-gradient(circle, ${hexToRgba('#FFFFFF', muiTheme.scene.dark ? 0.3 : 0.55)} 0%, ${hexToRgba(targetColor.hex, 0.24)} 44%, ${hexToRgba(targetColor.hex, 0)} 70%)`,
                         filter: 'blur(12px)', pointerEvents: 'none', zIndex: 0,
                       }} />
+                      {/* W3 neutral backing disc — only for pale tints, so the near-white goal reads
+                          as a distinct colour against the pale world (and vs. the white droplet). A
+                          soft mid-neutral plate peeking ~9% around the swatch frames its edge. */}
+                      {isPaleTarget && (
+                        <Box aria-hidden sx={{
+                          position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)',
+                          width: '118%', height: '118%', borderRadius: '50%',
+                          backgroundColor: muiTheme.scene.dark ? 'rgba(15,23,42,0.55)' : '#8A93A3',
+                          boxShadow: muiTheme.scene.dark
+                            ? 'inset 0 2px 6px rgba(0,0,0,0.4)'
+                            : 'inset 0 2px 6px rgba(0,0,0,0.22), 0 3px 8px rgba(0,0,0,0.14)',
+                          pointerEvents: 'none', zIndex: 0,
+                        }} />
+                      )}
                       <Box
                         onClick={speakTargetColor}
                         sx={{
@@ -825,18 +846,28 @@ const RamFarvenGame: React.FC = () => {
                 px: 1,
                 pt: 1,
                 pb: { xs: 1.25, md: 1.75 },
-                // Landscape: a 2-column tray on the right (multiple rows), centred over the board
-                // height — roomier than a single cramped column, droplets larger and never touching.
+                // Landscape (W3): a single row of 5 beside the bench so the sources read as ONE
+                // palette (was repeat(2,1fr) → an untidy 2+2+1 orphan). Non-growing (flex:0 0 auto)
+                // so it sits at natural width; the whole bench+tray group stays centred. This targets
+                // the iPad landscape surface (the primary one) where the row + bench co-fit.
                 '@media (orientation: landscape)': {
-                  gridTemplateColumns: 'repeat(2, 1fr)',
-                  gap: { xs: 1.5, sm: 2, md: 2.5 },
+                  gridTemplateColumns: 'repeat(5, 1fr)',
+                  gap: { xs: 1, sm: 1.5, md: 2 },
                   maxWidth: 'none',
                   mx: 0,
                   alignContent: 'center',
                   justifyItems: 'center',
-                  px: { xs: 1.25, md: 2 },
-                  py: 0,
-                  pr: { xs: 1.5, md: 2.5 }
+                  px: { xs: 1, md: 1.5 },
+                  py: 0
+                },
+                // Phone landscape is far too narrow for a 5-wide row alongside the bench (it clipped
+                // the goal + last droplet), so keep the compact 2-column block there — the orphan the
+                // single row fixes is an iPad concern; this rare surface stays a tidy 2×2+1 grid.
+                [PHONE_LANDSCAPE]: {
+                  gridTemplateColumns: 'repeat(2, 1fr)',
+                  gap: 1.25,
+                  px: 1,
+                  pr: 1.5
                 }
               }}>
                 {availableColors.map((color) => {
@@ -938,7 +969,10 @@ const RamFarvenGame: React.FC = () => {
                       gap: { xs: 1.5, md: 2 },
                       maxWidth: '92%'
                     }}>
-                      <Typography sx={{ fontFamily: comicFont, fontWeight: 800, fontSize: 'clamp(1.2rem, 5vw, 1.9rem)', color: t.accentColor }}>Flot!</Typography>
+                      {/* Recipe card is scene-adaptive (near-black on dark skins, white on light): keep
+                          the light accent on the dark card, but use the readable-on-white label on the
+                          white card (Farver's orange accent was too light there). */}
+                      <Typography sx={{ fontFamily: comicFont, fontWeight: 800, fontSize: 'clamp(1.2rem, 5vw, 1.9rem)', color: muiTheme.scene.dark ? t.accentColor : t.onTileColor }}>Flot!</Typography>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1.25, md: 1.75 } }}>
                         <Swatch hex={displayRecipe.aHex} />
                         <RecipeSign>+</RecipeSign>

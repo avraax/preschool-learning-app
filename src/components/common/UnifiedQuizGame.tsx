@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import { Typography, Box } from '@mui/material'
+import { useTheme } from '@mui/material/styles'
 import { Volume2 } from 'lucide-react'
 import { isIOS } from '../../utils/deviceDetection'
 import { CategoryTheme } from '../../config/categoryThemes'
@@ -64,7 +65,12 @@ export interface QuizItem {
   // Optional visual question shown in the prompt area (e.g. word-association mode:
   // show an emoji + word and ask which letter it starts with). When present, the
   // quiz renders this above the answer grid instead of relying on audio alone.
-  questionVisual?: { emoji?: string; word?: string; art?: string }
+  // `emphasizeFirstLetter` (Liveliness PRD-18 W1): opt-in SILENT typographic cue for a word-only
+  // prompt — the first grapheme renders larger + full-strength accent, the rest muted, modelling
+  // "sound out this letter first." Purely visual (the word is still fully shown and NEVER spoken —
+  // Læs Ordet's invariant). Scoped to Læs Ordet; other word-only prompts (Dansk til Engelsk) leave it
+  // unset and render the plain word exactly as before.
+  questionVisual?: { emoji?: string; word?: string; art?: string; emphasizeFirstLetter?: boolean }
   // Optional baked soft-3D picture rendered on THIS OPTION's answer tile (Liveliness PRD-10 §3.1) —
   // distinct from `questionVisual.art`, which is the *prompt's* art. Used by Læs Ordet, whose answers
   // ARE the pictures (the prompt is the word to read). When set the tile renders a <TileArt> instead
@@ -164,6 +170,9 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
   // nothing is selected. Only used when config.previewBeforeCommit is on. Cleared per question.
   const [previewValue, setPreviewValue] = useState<string | number | null>(null)
   const reduce = useReducedMotion()
+  // Scene darkness — the focal-zone prompt word rides the light-pool: light accent on a DARK scene,
+  // but the darkened readable-on-white accent on a LIGHT scene (see the qv.word hero below).
+  const muiTheme = useTheme()
   // Live difficulty for this section — re-renders + regenerates on an adult-menu change (no refresh).
   const difficultyLevel = useDifficulty(config.theme.id as SectionId)
 
@@ -584,10 +593,48 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
           {/* Baked soft-3D subject when the area has art (PRD-07); emoji is the retired art-gated fallback. */}
           {qv.art ? <HeroArt src={qv.art} /> : qv.emoji ? <HeroEmoji>{qv.emoji}</HeroEmoji> : null}
           {qv.word && (
+            // First-letter decode cue (PRD-18 W1): a word-only prompt flagged `emphasizeFirstLetter`
+            // splits into an oversized full-strength first grapheme + a muted remainder — a SILENT
+            // "sound out this letter first" nudge (Læs Ordet). The whole word stays shown (silent
+            // decoding intact) and is never spoken. Every other prompt renders the plain word.
+            qv.emphasizeFirstLetter && !hasPicture ? (
+              (() => {
+                const [firstChar, ...restChars] = [...qv.word!]
+                const baseColor = muiTheme.scene.dark ? config.theme.accentColor : config.theme.onTileColor
+                return (
+                  <Typography
+                    component="div"
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'baseline',
+                      justifyContent: 'center',
+                      color: baseColor,
+                      lineHeight: 1,
+                      userSelect: 'none',
+                      letterSpacing: '0.06em',
+                      textTransform: 'uppercase',
+                      fontSize: 'clamp(2.4rem, 10vw, 4.5rem)',
+                      [PHONE_LANDSCAPE]: { fontSize: '2rem' },
+                    }}
+                  >
+                    {/* Decode-me first letter: bigger + heavier + full accent strength. */}
+                    <Box component="span" sx={{ fontSize: '1.12em', fontWeight: 900 }}>{firstChar}</Box>
+                    {/* The rest of the word: muted + slightly smaller, still fully readable. */}
+                    <Box component="span" sx={{ fontSize: '0.82em', fontWeight: 700, opacity: 0.5 }}>
+                      {restChars.join('')}
+                    </Box>
+                  </Typography>
+                )
+              })()
+            ) : (
             <Typography
               sx={{
                 fontWeight: 800,
-                color: config.theme.accentColor,
+                // Prompt word on the focal-zone light-pool: keep the vivid accent on DARK scenes
+                // (readable there), but darken to the readable-on-white accent on LIGHT scenes so a
+                // light section accent (Havet's yellow, Rummet's cyan) isn't washed out. No-op when
+                // the accent already reads. Mirrors the tile fix (onTileColor).
+                color: muiTheme.scene.dark ? config.theme.accentColor : config.theme.onTileColor,
                 lineHeight: 1,
                 userSelect: 'none',
                 letterSpacing: hasPicture ? 'normal' : '0.06em',
@@ -598,17 +645,30 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
             >
               {qv.word}
             </Typography>
+            )
           )}
         </Box>
       )
     }
     if (config.quizType === 'english') {
-      // Listening task: an "equalizer" wonder card — a subject without revealing the picture.
+      // Listening task (Lyt og Find): an "equalizer" wonder card — a subject without revealing the
+      // picture. PRD-17 W2: the indicator tracks REAL audio-playback state (`audio.isPlaying`, read
+      // from the hook — never a component-level isPlaying, per audio-system.md). While the clip plays
+      // the bars dance (the app is speaking); when idle they settle flat and the speaker calmly
+      // pulses to signal "your turn" (tap a picture / Hør igen). Reduced motion → both static.
+      const speaking = audio.isPlaying
       return (
         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
           {/* A "listen" control glyph — a Lucide speaker, NEVER a picture (it must not reveal the
-              answer for the audio-only Lyt og Find task). */}
-          <Box aria-hidden sx={{ display: 'flex', color: config.theme.accentColor, '& svg': { width: 'clamp(3.5rem, 14vh, 7rem)', height: 'auto' }, [PHONE_LANDSCAPE]: { '& svg': { width: 'clamp(2.2rem, 18vh, 3.2rem)' } } }}>
+              answer for the audio-only Lyt og Find task). It calmly pulses ONLY when idle (his turn);
+              it holds steady while the word plays (the bars carry the motion then). */}
+          <Box
+            aria-hidden
+            component={motion.div}
+            animate={reduce || speaking ? undefined : { scale: [1, 1.09, 1] }}
+            transition={reduce || speaking ? undefined : { duration: 1.7, repeat: Infinity, ease: 'easeInOut' }}
+            sx={{ display: 'flex', color: config.theme.accentColor, '& svg': { width: 'clamp(3.5rem, 14vh, 7rem)', height: 'auto' }, [PHONE_LANDSCAPE]: { '& svg': { width: 'clamp(2.2rem, 18vh, 3.2rem)' } } }}
+          >
             <Volume2 strokeWidth={2.25} />
           </Box>
           <Box aria-hidden sx={{ display: 'flex', alignItems: 'flex-end', gap: '4px', height: 24 }}>
@@ -616,9 +676,16 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
               <Box
                 key={i}
                 component={motion.div}
-                animate={reduce ? undefined : { scaleY: [0.4, 1, 0.5, 0.9, 0.4] }}
-                transition={reduce ? undefined : { duration: 1.1, repeat: Infinity, delay: i * 0.12, ease: 'easeInOut' }}
-                sx={{ width: 6, height: 24, transformOrigin: 'bottom', borderRadius: 3, bgcolor: config.theme.accentColor }}
+                // Dance only while audio actually plays; otherwise settle to a calm low resting bar.
+                animate={reduce ? undefined : speaking ? { scaleY: [0.4, 1, 0.5, 0.9, 0.4] } : { scaleY: 0.3 }}
+                transition={
+                  reduce
+                    ? undefined
+                    : speaking
+                      ? { duration: 0.9, repeat: Infinity, delay: i * 0.1, ease: 'easeInOut' }
+                      : { duration: 0.3, ease: 'easeOut' }
+                }
+                sx={{ width: 6, height: 24, transformOrigin: 'bottom', borderRadius: 3, bgcolor: config.theme.accentColor, opacity: reduce || speaking ? 1 : 0.55 }}
               />
             ))}
           </Box>
@@ -783,7 +850,10 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
                           ? 'clamp(1.1rem, 4.5vw, 2rem)'
                           : 'clamp(2.5rem, 8vw, 4.5rem)',
                         fontWeight: 700,
-                        color: config.theme.accentColor,
+                        // Readable-on-white tile label: darkens only too-light accents (e.g. Rummet
+                        // cyan / Havet yellow) that were illegible on the white tile; a no-op for
+                        // accents that already pass AA. See onTileColor / CategoryTheme.onTileColor.
+                        color: config.theme.onTileColor,
                         userSelect: 'none',
                         lineHeight: 1.1,
                         textAlign: 'center',

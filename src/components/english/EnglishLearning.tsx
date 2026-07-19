@@ -103,7 +103,9 @@ const EnglishLearning: React.FC = () => {
                     sx={{
                       fontWeight: 800,
                       lineHeight: 1,
-                      color: muiTheme.scene.dark ? '#FFFFFF' : theme.accentColor,
+                      // Bloom word on the focal-zone light-pool: vivid accent on dark scenes, the
+                      // readable-on-white accent on light scenes (onTileColor) so a light accent reads.
+                      color: muiTheme.scene.dark ? '#FFFFFF' : theme.onTileColor,
                       textShadow: muiTheme.scene.dark
                         ? '0 2px 10px rgba(0,0,0,0.5)'
                         : playingWord === selectedWord.en
@@ -149,13 +151,26 @@ const EnglishLearning: React.FC = () => {
         >
           {englishThemes.map(t => {
             const ThemeIcon = THEME_ICONS[t.id] ?? Blocks
+            const active = t.id === activeThemeId
             return (
             <Chip
               key={t.id}
+              // W3 (PRD-17): icon-FORWARD chips — the icon is the primary (large) element with the
+              // Danish label secondary/small beneath it, so a non-reader navigates the 9 themes by
+              // icon, not text. The icon sizes via sx (`& svg`) so it can go responsive; `size` prop
+              // can't. Active highlight + bloom-on-select below are unchanged.
               label={
-                <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.6 }}>
-                  <ThemeIcon size={18} strokeWidth={2.5} aria-hidden />
-                  {t.title}
+                <Box component="span" sx={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'center', gap: 0.15, py: 0.25 }}>
+                  <Box
+                    component="span"
+                    aria-hidden
+                    sx={{ display: 'flex', '& svg': { width: { xs: 28, md: 32 }, height: 'auto', [PHONE_LANDSCAPE]: { width: 22 } } }}
+                  >
+                    <ThemeIcon strokeWidth={2.25} />
+                  </Box>
+                  <Box component="span" sx={{ fontSize: { xs: '0.7rem', md: '0.8rem' }, lineHeight: 1, [PHONE_LANDSCAPE]: { fontSize: '0.6rem' } }}>
+                    {t.title}
+                  </Box>
                 </Box>
               }
               onClick={() => {
@@ -165,17 +180,22 @@ const EnglishLearning: React.FC = () => {
                 setSelectedWord(t.words[0])
               }}
               sx={{
-                fontSize: { xs: '0.9rem', md: '1.05rem' },
+                height: 'auto',
                 fontWeight: 700,
-                py: 2.2,
+                py: 0.75,
                 px: 0.5,
-                minHeight: 44,
-                [PHONE_LANDSCAPE]: { fontSize: '0.75rem', py: 1.6, minHeight: 36 },
+                minHeight: 58,
+                minWidth: 62,
+                borderRadius: '16px',
+                '& .MuiChip-label': { px: 0.75 },
+                [PHONE_LANDSCAPE]: { minHeight: 46, minWidth: 50, py: 0.4 },
                 cursor: 'pointer',
-                bgcolor: t.id === activeThemeId ? theme.accentColor : 'rgba(255,255,255,0.85)',
-                color: t.id === activeThemeId ? 'white' : theme.accentColor,
+                bgcolor: active ? theme.accentColor : 'rgba(255,255,255,0.85)',
+                // Inactive chip = accent on a near-white pill → use the readable-on-white label
+                // (onTileColor); active = white on the accent fill (unchanged).
+                color: active ? 'white' : theme.onTileColor,
                 border: `2px solid ${theme.borderColor}`,
-                '&:hover': { bgcolor: t.id === activeThemeId ? theme.hoverBorderColor : 'white' }
+                '&:hover': { bgcolor: active ? theme.hoverBorderColor : 'white' }
               }}
             />
             )
@@ -247,7 +267,9 @@ const EnglishLearning: React.FC = () => {
                           sx={{
                             fontSize: { xs: '1rem', md: '1.25rem' },
                             fontWeight: 700,
-                            color: theme.accentColor,
+                            // Readable-on-white card label (onTileColor) — the raw accent (e.g. Rummet
+                            // cyan) was too light on the white clay card; darkens only if needed.
+                            color: theme.onTileColor,
                             textAlign: 'center',
                             lineHeight: 1.1,
                             mt: 0.5,

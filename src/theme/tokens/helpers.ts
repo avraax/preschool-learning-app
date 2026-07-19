@@ -80,6 +80,15 @@ export const ensureContrast = (fg: string, bg = '#FFFFFF', ratio = 4.5): string 
 // (gold/orange) become a deep amber/rust; already-dark accents (navy/green) are barely touched.
 export const onCardColor = (accent: string): string => ensureContrast(accent, '#FFFFFF', 7.5)
 
+// AA label colour for accent TEXT/GLYPHS drawn on an (essentially WHITE) answer-tile / card /
+// memory-face surface — `tileSurface` is white→faint-accent, luminance ~1.0, so 4.5:1 vs white is
+// the correct, sufficient target (unlike frosted menu cards, which need `onCardColor`'s 7.5:1).
+// It's a NO-OP when the accent already clears 4.5:1, so readable accents (most of the default kid
+// skin) are untouched and keep their vividness; only genuinely-too-light accents (e.g. Rummet's
+// cyan #00ACC1 → #007c8b, Havet's yellow #F9A825 → #9f6c18) darken just enough to read. Keeps the
+// hue — the tiles stay colourful, they stop being illegible. See `ensureContrast`.
+export const onTileColor = (accent: string): string => ensureContrast(accent, '#FFFFFF', 4.5)
+
 // Section-tinted idle answer-tile surface (white → faint accent tint). `dark` deepens the tint
 // slightly so it still reads over dark worlds. Replaces the old hardcoded `#ECF1F8`.
 export const tileSurface = (accent: string, dark = false): string =>

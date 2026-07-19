@@ -456,7 +456,8 @@ const ComparisonGame: React.FC = () => {
               sx={{
                 fontSize: { xs: '3rem', md: '4rem' },
                 fontWeight: 700,
-                color: category.accentColor,
+                // Readable-on-white count-card numeral (onTileColor) — see CategoryTheme.onTileColor.
+                color: category.onTileColor,
                 lineHeight: 1,
                 '@media (orientation: landscape)': { fontSize: { xs: '2rem', md: '2.8rem' } },
                 [PHONE_LANDSCAPE]: { fontSize: '1.6rem' }
@@ -524,7 +525,8 @@ const ComparisonGame: React.FC = () => {
               fontFamily: '"Comic Sans MS", "Comic Neue", sans-serif',
               fontWeight: 700,
               fontSize: { xs: '1.05rem', md: '1.35rem' },
-              color: muiTheme.scene.dark ? '#FFFFFF' : category.accentColor,
+              // Prompt text: white on dark scenes, readable-on-white accent on light scenes.
+              color: muiTheme.scene.dark ? '#FFFFFF' : category.onTileColor,
               textShadow: muiTheme.scene.dark ? '0 2px 8px rgba(0,0,0,0.5)' : 'none',
               textAlign: 'center',
               [PHONE_LANDSCAPE]: { fontSize: '0.85rem' },

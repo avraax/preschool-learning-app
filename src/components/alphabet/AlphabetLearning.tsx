@@ -200,7 +200,10 @@ const AlphabetLearning: React.FC = () => {
                     flexDirection: 'column',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    gap: { xs: 0.5, md: 1 },
+                    // PRD-18 W5: enlarge + vertically centre the bloom so the letter + picture fill the
+                    // band above the grid (they used to sit small and high with a dead band). A bit more
+                    // breathing room between the giant glyph and the picture+word row.
+                    gap: { xs: 0.75, md: 1.5 },
                     width: '100%',
                     height: '100%',
                   }}
@@ -215,15 +218,17 @@ const AlphabetLearning: React.FC = () => {
                         : audio.isPlaying
                           ? `0 0 24px ${hexToRgba(ALPHABET_ACCENT, 0.45)}`
                           : 'none',
-                      fontSize: 'clamp(2.75rem, 15vh, 6.5rem)',
+                      // Bigger hero glyph (PRD-18 W5) — fills the focal band; phone-landscape keeps its
+                      // tight vh-capped size so the ~85px stage there never overflows.
+                      fontSize: 'clamp(3.25rem, 20vh, 9rem)',
                       transition: 'text-shadow 0.3s ease',
-                      [PHONE_LANDSCAPE]: { fontSize: 'clamp(1.9rem, 22vh, 2.6rem)' },
+                      [PHONE_LANDSCAPE]: { fontSize: 'clamp(1.9rem, 22vh, 2.8rem)' },
                     }}
                   >
                     {letter}
                   </Typography>
                   {data && (
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 0.75, md: 1.25 } }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, md: 1.5 } }}>
                       {art && (
                         <Box
                           component="img"
@@ -232,13 +237,14 @@ const AlphabetLearning: React.FC = () => {
                           aria-hidden
                           draggable={false}
                           sx={{
-                            height: 'clamp(2.5rem, 9vh, 4rem)',
+                            // Bigger baked picture beside the word (PRD-18 W5).
+                            height: 'clamp(3rem, 14vh, 6.5rem)',
                             width: 'auto',
                             objectFit: 'contain',
                             userSelect: 'none',
                             pointerEvents: 'none',
                             filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.18))',
-                            [PHONE_LANDSCAPE]: { height: '1.8rem' },
+                            [PHONE_LANDSCAPE]: { height: '2rem' },
                           }}
                         />
                       )}
@@ -246,8 +252,8 @@ const AlphabetLearning: React.FC = () => {
                         sx={{
                           fontWeight: 700,
                           color: muiTheme.scene.dark ? 'rgba(255,255,255,0.85)' : 'text.secondary',
-                          fontSize: 'clamp(1rem, 3.5vh, 1.6rem)',
-                          [PHONE_LANDSCAPE]: { fontSize: '0.9rem' },
+                          fontSize: 'clamp(1.15rem, 4.2vh, 2.1rem)',
+                          [PHONE_LANDSCAPE]: { fontSize: '0.95rem' },
                         }}
                       >
                         {data.word}

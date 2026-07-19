@@ -133,7 +133,8 @@ const GameSelectionLayout: React.FC<GameSelectionLayoutProps> = ({
               sx={{
                 fontFamily: theme.titleFontFamily,
                 fontWeight: 700,
-                color: darkScene ? '#FFFFFF' : catTheme.accentColor,
+                // Readable-on-white accent on light scenes (onTileColor); white on dark scenes.
+                color: darkScene ? '#FFFFFF' : catTheme.onTileColor,
                 textShadow: darkScene
                   ? '0 0 16px rgba(120,170,255,0.6), 0 2px 8px rgba(0,0,0,0.55)'
                   : immersive

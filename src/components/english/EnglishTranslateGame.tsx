@@ -5,7 +5,6 @@ import { stickerSetForSection } from '../../config/stickers'
 import { EnglishScoreChip } from '../common/ScoreChip'
 import { EnglishRepeatButton } from '../common/RepeatButton'
 import { quizEnglishWords, pickDistractorWords, englishThemes, EnglishWord } from '../../config/englishVocab'
-import { englishArt, englishArtId } from '../../assets/games/english'
 import { progressStore, type DifficultyLevel } from '../../services/progressStore'
 import { shuffle } from '../../utils/shuffle'
 
@@ -43,8 +42,13 @@ const pickWordsForLevel = (correct: EnglishWord, level: DifficultyLevel): Englis
   return shuffle([correct, ...picks])
 }
 
-// Dansk til Engelsk: show + speak a Danish word the child knows (with emoji); the child
-// picks the English equivalent (text). Bridges from the native language.
+// Dansk til Engelsk: show + speak a Danish word the child knows (Danish text + Danish voice, NO
+// picture); the child picks the English equivalent (text). Bridges from the native language.
+//
+// Liveliness PRD-17 W1 — differentiation: this game DROPS the baked picture that Find det Engelske
+// Ord keeps. Find is a picture→English recognition task; this is a Danish-word→English translation
+// task (no picture crutch) — a genuinely harder, distinct skill. The only shared surface is the W7
+// audition (hear each English tile before committing), which keeps it winnable for a pre-reader.
 const EnglishTranslateGame: React.FC = () => {
   const toWordItem = (w: EnglishWord): QuizItem => ({
     value: w.en,
@@ -61,11 +65,11 @@ const EnglishTranslateGame: React.FC = () => {
       const word = quizEnglishWords[Math.floor(Math.random() * quizEnglishWords.length)]
       return {
         ...toWordItem(word),
-        // Baked soft-3D picture (PRD-07 hero path) + the Danish caption `word.da` beneath it
-        // (rendered small via the engine's `qv.word` path — the picture makes the word a caption,
-        // so it uses the small type size, not the big word-only size). Every English word is baked
-        // now (PRD-12). The English word ANSWERS stay type (the lesson — never baked).
-        questionVisual: { word: word.da, art: englishArt(englishArtId(word.en)) }
+        // W1 (PRD-17): NO picture — the prompt is the Danish word ALONE. With no `art`/`emoji` the
+        // engine's renderHero renders `qv.word` as the BIG word-only prompt (not a small caption), so
+        // the child hears+reads the Danish word and must translate. This is the differentiator from
+        // Find det Engelske Ord (which keeps its picture). The English word ANSWERS stay type.
+        questionVisual: { word: word.da }
       }
     },
 

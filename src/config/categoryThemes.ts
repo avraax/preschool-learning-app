@@ -9,6 +9,7 @@
 import type { ThemeTokens } from '../theme/tokens/types'
 import { getActiveTokens } from '../theme/tokens/activeTokens'
 import { kidThemeTokens } from '../theme/tokens/kidTheme.tokens'
+import { onTileColor } from '../theme/tokens/helpers'
 
 export interface Game {
   id: string
@@ -23,7 +24,8 @@ export interface CategoryTheme {
   name: string
   gradient: string
   accentColor: string
-  onCardColor: string      // AA-guaranteed label colour for text on frosted cards/menus
+  onCardColor: string      // AA-guaranteed label colour for text on frosted cards/menus (7.5:1 vs white)
+  onTileColor: string      // AA label colour for accent text/glyphs on the WHITE tile/card surface (4.5:1 vs white)
   tileSurface: string      // section-tinted idle answer-tile surface
   borderColor: string
   hoverBorderColor: string
@@ -253,6 +255,9 @@ const toCategoryTheme = (id: CategoryId, tokens: ThemeTokens): CategoryTheme => 
     gradient: palette.gradient,
     accentColor: palette.accent,
     onCardColor: palette.onCard,
+    // Derived here (not a token) so every skin — incl. the hand-authored kid theme — gets a
+    // readable-on-white tile label without touching each token file. See `onTileColor`.
+    onTileColor: onTileColor(palette.accent),
     tileSurface: palette.tileSurface,
     borderColor: palette.border,
     hoverBorderColor: palette.hoverBorder,

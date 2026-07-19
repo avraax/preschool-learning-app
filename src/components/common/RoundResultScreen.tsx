@@ -230,7 +230,8 @@ const RoundResultScreen: React.FC<RoundResultScreenProps> = ({
           fontWeight: 700,
           fontSize: 'clamp(1.6rem, 6vw, 2.6rem)',
           [PHONE_LANDSCAPE]: { fontSize: '1.25rem' },
-          color: dark ? '#FFFFFF' : accent,
+          // Readable-on-white accent on light scenes (onTileColor); white on dark scenes.
+          color: dark ? '#FFFFFF' : category.onTileColor,
           textShadow: dark ? '0 0 16px rgba(120,170,255,0.5), 0 2px 8px rgba(0,0,0,0.5)' : 'none',
           m: 0,
         }}
@@ -313,7 +314,8 @@ const RoundResultScreen: React.FC<RoundResultScreenProps> = ({
             fontFamily: COMIC,
             fontWeight: 700,
             fontSize: 'clamp(1rem, 3.4vw, 1.3rem)',
-            color: dark ? '#FFE7A8' : accent,
+            // Gold on dark scenes; readable-on-white accent on light scenes.
+            color: dark ? '#FFE7A8' : category.onTileColor,
           }}
         >
           🔥 {longestStreak} i træk!

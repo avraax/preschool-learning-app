@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { Box, Typography } from '@mui/material'
+import { Sun, Moon } from 'lucide-react'
 import { useTheme } from '@mui/material/styles'
+import { useReducedMotion } from '../../hooks/useReducedMotion'
 import { getCategoryTheme } from '../../config/categoryThemes'
 import { SHADES, HUE_ORDER, COLOR_SWATCH, DANISH_OBJECTS, spokenColor } from '../../config/colorContent'
 import { hexToRgba } from '../../theme/tokens/helpers'
@@ -20,12 +22,16 @@ import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 
 const FarverLearning: React.FC = () => {
   const muiTheme = useTheme()
+  const reduce = useReducedMotion()
   const t = getCategoryTheme('colors')
   const dark = muiTheme.scene.dark
   const audio = useSimplifiedAudioHook({ componentId: 'FarverLearning', autoInitialize: false })
 
   const [currentHue, setCurrentHue] = useState<string>(HUE_ORDER[0])
   const [playing, setPlaying] = useState<string | null>(null)
+  // W4 (PRD-16): one-time gentle idle-pulse on the example objects at first mount, signalling they're
+  // tappable. Fires once for the opening ~2s, then never again (not per hue change).
+  const [pulseExamples, setPulseExamples] = useState(true)
 
   const { showCelebration, celebrationIntensity, celebrationDuration, stopCelebration } = useCelebration()
 
@@ -54,6 +60,12 @@ const FarverLearning: React.FC = () => {
     if (audio.isAudioReady && !welcomeTriggered.current) playWelcome()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [audio.isAudioReady])
+
+  // Stop the first-mount example pulse after it has played once.
+  useEffect(() => {
+    const id = setTimeout(() => setPulseExamples(false), 2000)
+    return () => clearTimeout(id)
+  }, [])
 
   const playWelcome = async () => {
     if (welcomeTriggered.current || hasInteractedRef.current) return
@@ -129,7 +141,9 @@ const FarverLearning: React.FC = () => {
               textTransform: 'uppercase',
               letterSpacing: '0.03em',
               lineHeight: 1,
-              color: dark ? '#FFFFFF' : t.accentColor,
+              // Hue headline on the focal-zone light-pool: readable-on-white accent on light scenes
+              // (Farver's accent fails on white across skins), white on dark scenes. See onTileColor.
+              color: dark ? '#FFFFFF' : t.onTileColor,
               textShadow: dark ? '0 2px 10px rgba(0,0,0,0.5)' : 'none',
               fontSize: 'clamp(1.3rem, 5.5vh, 2.2rem)',
               [PHONE_LANDSCAPE]: { display: 'none' },
@@ -166,7 +180,8 @@ const FarverLearning: React.FC = () => {
                       fontFamily: '"Comic Sans MS", "Comic Neue", sans-serif',
                       fontWeight: big ? 800 : 600,
                       fontSize: big ? 'clamp(0.9rem, 3vw, 1.25rem)' : 'clamp(0.65rem, 2vw, 0.85rem)',
-                      color: dark ? '#FFFFFF' : (big ? t.accentColor : 'text.secondary'),
+                      // Middle (canonical) shade name uses the readable-on-white accent on light scenes.
+                      color: dark ? '#FFFFFF' : (big ? t.onTileColor : 'text.secondary'),
                       lineHeight: 1.1,
                       textAlign: 'center',
                       [PHONE_LANDSCAPE]: { fontSize: big ? '0.75rem' : '0.6rem' },
@@ -178,27 +193,59 @@ const FarverLearning: React.FC = () => {
               })}
             </Box>
 
+            {/* W4: Lys → Mørk direction cue — pre-teaches the ordering direction Nuancer tests
+                (continuity across the section). Icon-led (language-light); hidden on phone landscape
+                like the headline/objects (stage budget too short there). */}
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 1, [PHONE_LANDSCAPE]: { display: 'none' } }}>
+              <Box aria-hidden sx={{ display: 'flex', color: '#F59E0B', '& svg': { width: '1.2rem', height: 'auto' } }}>
+                <Sun strokeWidth={2.5} />
+              </Box>
+              <Typography sx={{
+                fontFamily: '"Comic Sans MS", "Comic Neue", sans-serif',
+                fontWeight: 700,
+                fontSize: 'clamp(0.8rem, 2.4vw, 1rem)',
+                color: dark ? 'rgba(255,255,255,0.85)' : 'text.secondary'
+              }}>
+                lys → mørk
+              </Typography>
+              <Box aria-hidden sx={{ display: 'flex', color: dark ? '#CBD5E1' : '#64748B', '& svg': { width: '1.2rem', height: 'auto' } }}>
+                <Moon strokeWidth={2.5} />
+              </Box>
+            </Box>
+
             {/* Example objects in this color. Hidden on phone landscape (see note above). */}
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 0.75, md: 1.25 }, [PHONE_LANDSCAPE]: { display: 'none' } }}>
-              {examples.map((obj) => (
-                <motion.div key={obj.objectName} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-                  {/* PRD-09: baked example object resting in the world (no #ECF1F8 holder). */}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, md: 1.5 }, [PHONE_LANDSCAPE]: { display: 'none' } }}>
+              {examples.map((obj, i) => {
+                // One-time first-mount pulse (W4): a gentle staggered bob so the objects read as
+                // tappable content, not decoration. Reduced-motion keeps them static.
+                const doPulse = pulseExamples && !reduce
+                return (
+                <motion.div
+                  key={obj.objectName}
+                  animate={doPulse ? { scale: [1, 1.14, 1] } : { scale: 1 }}
+                  transition={doPulse ? { duration: 1, delay: 0.4 + i * 0.14, ease: 'easeInOut' } : { duration: 0.2 }}
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                >
+                  {/* PRD-09/16: bigger baked example object resting in the world (no holder), grounded
+                      by a stronger contact shadow (elevation 2) so it reads as a real, tappable thing. */}
                   <Box
                     onClick={() => tapSpeak(`obj-${currentHue}-${obj.objectName}`, `${obj.objectNameDefinite} er ${spokenColor(currentHue, obj.neuter)}`)}
                     sx={{
-                      width: { xs: 44, md: 54 },
-                      height: { xs: 44, md: 54 },
-                      [PHONE_LANDSCAPE]: { width: 38, height: 38 },
+                      width: { xs: 56, md: 64 },
+                      height: { xs: 56, md: 64 },
+                      [PHONE_LANDSCAPE]: { width: 44, height: 44 },
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       cursor: 'pointer',
                     }}
                   >
-                    <ObjectArt art={obj.art} size="100%" elevation={1} alt={obj.objectName} />
+                    <ObjectArt art={obj.art} size="100%" elevation={2} alt={obj.objectName} />
                   </Box>
                 </motion.div>
-              ))}
+                )
+              })}
             </Box>
           </Box>
         } />

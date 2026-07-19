@@ -135,11 +135,16 @@ const FarvejagtGame: React.FC = () => {
   // between shades because the object arrays get reshuffled per board (P4).
   const getTargetColorHex = () => COLOR_SWATCH[targetColor] || '#dc2626'
 
-  // Random position generator avoiding center area
+  // Random position generator: avoids the centre well, the screen-edge margins, and the bottom-left
+  // corner where GameShell seats the mascot. W2 (PRD-16): tightened from the old 10–90% full-bleed
+  // scatter to a reachable 18–82% band so every object is grabbable and no drag is a long diagonal
+  // for 5yo motor control. Position-only — the collision/snap/spring-back logic is untouched.
   const generateRandomPositions = (itemCount: number) => {
     const positions: Array<{x: number, y: number}> = []
     const centerX = 50, centerY = 50, centerRadius = 25
     const minDistance = itemCount > 12 ? 9 : 12
+    // Bottom-left keep-out for the corner mascot (board coords ≈ screen coords in that corner).
+    const inMascotCorner = (p: {x: number, y: number}) => p.x < 30 && p.y > 68
 
     for (let i = 0; i < itemCount; i++) {
       let attempts = 0
@@ -147,13 +152,14 @@ const FarvejagtGame: React.FC = () => {
 
       do {
         position = {
-          x: Math.random() * 80 + 10, // 10-90% range
-          y: Math.random() * 80 + 10  // 10-90% range
+          x: Math.random() * 64 + 18, // 18–82% reachable band (was 10–90)
+          y: Math.random() * 64 + 18  // 18–82% reachable band (was 10–90)
         }
         attempts++
       } while (
         attempts < 80 && (
           Math.sqrt((position.x - centerX) ** 2 + (position.y - centerY) ** 2) < centerRadius ||
+          inMascotCorner(position) ||
           positions.some(pos =>
             Math.sqrt((position.x - pos.x) ** 2 + (position.y - pos.y) ** 2) < minDistance
           )
@@ -452,6 +458,9 @@ const FarvejagtGame: React.FC = () => {
 
   const targetItems = displayGameItems.filter(i => i.isTarget)
   const collectedCount = targetItems.filter(i => i.collected).length
+  // W2 (PRD-16): the well visibly FILLS as targets land — a rising liquid level (collected / total)
+  // so the child feels the hunt shrinking. Pure derived value; no mechanics touched.
+  const fillPct = totalTarget > 0 ? Math.min(1, collectedCount / totalTarget) : 0
   const boardItems = displayGameItems.filter(i => !i.collected) // distractors + uncollected targets
   const targetHex = getTargetColorHex()
   const displayHintItemId = forcedFx === 'hint' ? (hintItemId ?? targetItems.find(i => !i.collected)?.id ?? null) : hintItemId
@@ -617,9 +626,31 @@ const FarvejagtGame: React.FC = () => {
                       alignItems: 'center',
                       justifyContent: 'center',
                       pointerEvents: 'auto',
+                      position: 'relative',
+                      overflow: 'hidden', // clip the rising fill to the circular well
                       transition: 'box-shadow 0.25s ease',
                     }}
-                  />
+                  >
+                    {/* W2 rising fill — the well fills with the target colour as items land, so
+                        progress is felt, not just counted. Clipped to the circle by overflow:hidden;
+                        it's a saturated wash over the faint empty tint. Height transitions smoothly
+                        (reduced-motion just snaps — no motion component needed). */}
+                    <Box
+                      aria-hidden
+                      sx={{
+                        position: 'absolute',
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        height: `${fillPct * 100}%`,
+                        background: `linear-gradient(180deg, ${targetHex}D9 0%, ${targetHex}B3 100%)`,
+                        borderTop: fillPct > 0 ? `2px solid ${targetHex}` : 'none',
+                        boxShadow: fillPct > 0 ? `0 -2px 8px ${targetHex}66` : 'none',
+                        transition: reduce ? 'none' : 'height 0.45s cubic-bezier(0.22,1,0.36,1)',
+                        pointerEvents: 'none',
+                      }}
+                    />
+                  </DroppableZone>
                 </motion.div>
 
                 {/* Progress pips around the circle perimeter — one per target item. */}
@@ -636,14 +667,14 @@ const FarvejagtGame: React.FC = () => {
                         position: 'absolute',
                         left,
                         top,
-                        width: 14,
-                        height: 14,
-                        marginLeft: -7,
-                        marginTop: -7,
+                        width: 18,
+                        height: 18,
+                        marginLeft: -9,
+                        marginTop: -9,
                         borderRadius: '50%',
                         backgroundColor: lit ? targetHex : (muiTheme.scene.dark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.12)'),
-                        border: '2px solid rgba(255,255,255,0.85)',
-                        boxShadow: lit ? `0 0 8px ${targetHex}` : 'none',
+                        border: '2px solid rgba(255,255,255,0.9)',
+                        boxShadow: lit ? `0 0 10px ${targetHex}` : 'none',
                         pointerEvents: 'none',
                         zIndex: 2,
                       }}
