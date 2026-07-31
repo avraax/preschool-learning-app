@@ -49,6 +49,62 @@ export const LETTER_WORDS: Record<string, { word: string }> = {
   Å: { word: 'Ål' },
 }
 
+// ----- Spoken letter↔word lines (the ONLY place this text is built) ---------------------------
+//
+// Two closed-set narration templates put a letter inside a Danish sentence:
+//   letterPhrase()      "{bogstav} som {ord}"        — Lær Alfabetet tap + Hukommelse match
+//   startsWithPhrase()  "{ord} starter med {bogstav}" — Bogstav Quiz correct-answer fact
+//
+// Build them ONLY through these helpers. `shared-narration-clips.js` calls the same two, so the
+// prebaked keys always match what the app asks for at runtime; if they drift, the fixed line falls
+// back to live Azure and never surfaces in /audit (see letterWords.test.ts + audio-system.md).
+//
+// Azure da-DK misreads two letters in sentence context, and the two defects have DIFFERENT shapes:
+//
+//   Z — a SPELLING defect. The bare glyph reads English-ish; 'zet' gives the Danish letter name
+//       [sɛd̥]. Owner-verified in /voicelab against 'set' / 'zæt' / the raw glyph. Position-
+//       independent, so it applies in both templates.
+//
+//   I — a PHRASING defect, NOT a spelling one, and it took TWO stacked fixes (both owner-verified by
+//       ear in /voicelab). Every respelling ('i', 'ih') failed because the token itself is fine: read
+//       alone it is correct, but among neighbours Azure demotes it to the pronoun/preposition "i" —
+//       short, unstressed, no stød. See LETTER_LINE below for the resulting line.
+const LETTER_SPELLING: Record<string, string> = {
+  Z: 'zet',
+}
+
+// Whole-line overrides for letters whose defect is PHRASING rather than spelling — punctuation and
+// function words can't be expressed as a letter substitution. Derived FROM the manifest word, so
+// editing LETTER_WORDS can never leave a stale hand-written line behind.
+const LETTER_LINE: Record<string, (word: string) => string> = {
+  // I — two defects in sequence, each fix exposing the next:
+  //  1. The LETTER: a bare "I" reads as the pronoun. A COMMA gives it its own prosodic phrase, which
+  //     restores the length + stød of the letter name [iːˀ].
+  //  2. The WORD: that boundary then made Azure carry the letter-name ("characters") reading into the
+  //     next token and spell the short capitalised "Is" as I-S. The indefinite ARTICLE + lowercase
+  //     makes it unambiguously a noun again.
+  // DON'T SHORTEN THIS. It is deliberately the only line of 29 that deviates from the plain
+  // "{bogstav} som {ord}" frame, and every smaller variant was auditioned and REJECTED by ear:
+  // 'I som Is' (letter wrong), 'i'/'ih' respellings (letter wrong), 'I, som Is' and 'I, som is'
+  // (word spelled I-S), 'i, som is' / 'i, som Is' (still wrong). The article is load-bearing.
+  I: (word) => `I, som en ${word.toLowerCase()}`,
+}
+
+/** The spelling to speak for `letter` inside a sentence (position-independent). */
+export const spokenLetter = (letter: string): string => LETTER_SPELLING[letter] ?? letter
+
+/** "{bogstav} som {ord}" — Lær Alfabetet's tap echo and Hukommelse's match echo. */
+export const letterPhrase = (letter: string, word: string): string =>
+  LETTER_LINE[letter]?.(word) ?? `${spokenLetter(letter)} som ${word}`
+
+/**
+ * "{ord} starter med {bogstav}" — Bogstav Quiz's correct-answer fact. The letter is sentence-FINAL
+ * here, so the comma trick doesn't transfer; I is still known-wrong in this position (candidates are
+ * queued in voicelabData.ts).
+ */
+export const startsWithPhrase = (letter: string, word: string): string =>
+  `${word} starter med ${spokenLetter(letter)}`
+
 // Letters Bogstav Quiz asks about (the correct answer is one of these). W, X and Å are asked too
 // (owner request — they have honest picturable words: Wienerbrød / Xylofon / Å-stream). Only Q stays
 // excluded — "Quiz" (a question mark) has no natural spoken first-sound word — so Q appears in the

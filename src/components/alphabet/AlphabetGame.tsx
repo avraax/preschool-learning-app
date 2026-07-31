@@ -6,7 +6,7 @@ import { AlphabetScoreChip } from '../common/ScoreChip'
 import { AlphabetRepeatButton } from '../common/RepeatButton'
 import { progressStore, type DifficultyLevel } from '../../services/progressStore'
 import { shuffle } from '../../utils/shuffle'
-import { LETTER_WORDS, WORD_LETTERS } from '../../config/letterWords'
+import { LETTER_WORDS, WORD_LETTERS, startsWithPhrase } from '../../config/letterWords'
 import { letterArt } from '../../assets/games/alphabet'
 
 // Full Danish alphabet including special characters
@@ -136,7 +136,12 @@ const AlphabetGame: React.FC = () => {
     // closed-set phrase → prebaked + auditioned (see docs/audit).
     speakCorrectFact: async (item: QuizItem, audio: any) => {
       const data = LETTER_WORDS[item.value as string]
-      return data ? audio.speak(`${data.word} starter med ${item.value}`) : audio.speakLetter(item.value)
+      // Shared builder — carries the sentence-context respellings (Z → 'zet'). NOTE: I is still
+      // known-wrong in this sentence-FINAL position; the comma fix that works for "I, som Is" doesn't
+      // transfer here (see startsWithPhrase).
+      return data
+        ? audio.speak(startsWithPhrase(item.value as string, data.word))
+        : audio.speakLetter(item.value)
     },
 
     getRepeatAudio: async (item: QuizItem, audio: any) => {

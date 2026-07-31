@@ -4,8 +4,9 @@
 // green screen and keyed with the `sharp` pipeline (`.claude/rules/scene-assets.md`).
 //
 // GLYPHS ARE NOT ART: the letterform stays Typography everywhere (recognising the letter IS the
-// lesson) — only the *depicted subject* is baked. Q/W/X/Å are intentionally picture-less (owner
-// decision — glyph-only), so they never get a file here.
+// lesson) — only the *depicted subject* is baked. All 29 letters have a subject now, including Q/W/X/Å
+// (added on owner request); they are DISPLAY-ONLY — pictured in the browse + Hukommelse, but Q/W/X are
+// never asked by Bogstav Quiz (see WORD_LETTERS in src/config/letterWords.ts).
 //
 // ART-GATED (PRD-06/-07): this globs whatever WebP the owner has dropped into THIS directory. Until
 // the batch lands the manifest is empty and `letterArt()` returns `undefined`, so every consumer

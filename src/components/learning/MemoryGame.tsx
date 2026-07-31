@@ -6,7 +6,7 @@ import { AlphabetScoreChip, MathScoreChip } from '../common/ScoreChip'
 import { AlphabetRestartButton, MathRestartButton } from '../common/RestartButton'
 import { AlphabetRepeatButton, MathRepeatButton } from '../common/RepeatButton'
 import { shuffle } from '../../utils/shuffle'
-import { LETTER_WORDS } from '../../config/letterWords'
+import { LETTER_WORDS, letterPhrase } from '../../config/letterWords'
 import { letterArt } from '../../assets/games/alphabet'
 import { countingObjectForNumber, artForObject } from '../../config/countingObjects'
 
@@ -63,7 +63,8 @@ const MemoryGame: React.FC = () => {
     speakMatchedItem: async (letter: string, audio: any) => {
       const letterData = LETTER_WORDS[letter]
       if (letterData) {
-        return audio.speak(`${letter} som ${letterData.word}`)
+        // Shared builder — carries the per-letter pronunciation fixes (Z → 'zet', I comma-isolated).
+        return audio.speak(letterPhrase(letter, letterData.word))
       }
       return audio.speak(letter)
     },

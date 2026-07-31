@@ -35,11 +35,18 @@ gameIds are `<section>.<game>`.
 - The equation/comparison symbols `+ − = ? > <` are **baked soft-3D `SymbolTile` art**
   (`src/assets/symbols`), not emoji/glyphs — don't re-bake or emoji them. Numerals stay Typography.
 
-## Alphabet — `alphabet.quiz`
+## Alphabet — `alphabet.quiz` (+ Lær Alfabetet browse)
 - Bogstav Quiz is **all word-association**: show a picture, tap the letter the word starts with (the
   trivial "hør bogstavet" recognition mode was removed). The prompt subject is baked soft-3D art (not a
-  flat emoji). Distractors random; **Q is the only letter never asked** (distractor-only) — W/X/Å are
-  askable. The askable set is `WORD_LETTERS`; the full display manifest (incl. Q) is `LETTER_WORDS`.
+  flat emoji). **Q is the only letter never asked** (distractor-only) — W/X/Å are askable. The askable
+  set is `WORD_LETTERS`; the full display manifest (incl. Q) is `LETTER_WORDS`.
+- Distractors are **confusable-seeded**, not random: Normal/Svær draw from the correct letter's
+  look-/sound-alike group (M/N, B/D/P, Æ/Ø/Å…) so a right answer means the child told them apart, and
+  **Let deliberately EXCLUDES that group** so its options read as maximally dissimilar.
+- Lær Alfabetet (browse) speaks **"{bogstav} som {ord}"**, never the bare letter name — a child who
+  already knows every letter learns nothing from the name. Both this and the quiz's correct-answer fact
+  go through the shared builders in `src/config/letterWords.ts` (per-letter pronunciation overrides —
+  see `audio-system.md`).
 
 ## Ordleg — `ordleg.read/.spelling/.mic`
 - Læs Ordet **never AUTO-reads the prompt word** — silent decoding IS the exercise (the prompt carries

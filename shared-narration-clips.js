@@ -26,7 +26,7 @@ import { allEnglishWords } from './src/config/englishVocab.ts'
 import { HUE_ORDER, SHADES, DANISH_OBJECTS, spokenColor } from './src/config/colorContent.ts'
 import { REWARD_CHAPTERS } from './src/config/stickers.ts'
 import { REWARD_SLOTS } from './src/config/progression.ts'
-import { LETTER_WORDS, WORD_LETTERS } from './src/config/letterWords.ts'
+import { LETTER_WORDS, WORD_LETTERS, letterPhrase, startsWithPhrase } from './src/config/letterWords.ts'
 
 // Danish narration + English section voices, straight from the single source of voice truth.
 const DA = TTS_CONFIG.voices.primary // da-DK-ChristelNeural / da-DK
@@ -64,10 +64,14 @@ export function collectNarrationClips() {
   // Letter↔word association lines (PRD-14 W3). Two closed sets over the shared LETTER_WORDS table:
   //   "{bogstav} som {ord}"    — Lær Alfabetet tap + Hukommelse match (speakMatchedItem), all 29 letters
   //   "{ord} starter med {bogstav}" — Bogstav Quiz correct-answer fact (speakCorrectFact), askable letters
-  for (const letter of Object.keys(LETTER_WORDS)) da('letters', `${letter} som ${LETTER_WORDS[letter].word}`)
+  // Built by the SAME two helpers the components call (they carry the per-letter pronunciation fixes:
+  // Z respelled 'zet', I comma-isolated), so the baked keys match the runtime requests exactly.
+  for (const letter of Object.keys(LETTER_WORDS)) {
+    da('letters', letterPhrase(letter, LETTER_WORDS[letter].word))
+  }
   for (const letter of WORD_LETTERS) {
     const data = LETTER_WORDS[letter]
-    if (data) da('letters', `${data.word} starter med ${letter}`)
+    if (data) da('letters', startsWithPhrase(letter, data.word))
   }
 
   // Numbers 0–100 — quiz/echo rate (default) AND Lær Tal browse rate (1.2).

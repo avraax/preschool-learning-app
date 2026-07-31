@@ -4,6 +4,8 @@
 // Danish voices (Christel / Jeppe / multilingual) + the en-GB candidates against fixed samples,
 // WITH the pronunciation lexicon applied, then lock the production voices. Deleted after lock.
 
+import { DANISH_LETTER_NAMES, getDanishLetterName } from '../../config/danish-phrases'
+
 export type Gender = 'F' | 'M'
 
 export interface VoiceEntry {
@@ -226,9 +228,64 @@ export const SAMPLE_SEGMENTS: SampleSegment[] = [
     id: 'bogstaver',
     label: 'Bogstaver',
     groups: [
-      // The Danish letter NAMES the app actually speaks (controller getDanishLetterName).
-      { label: 'Bogstavnavne', items: 'a be se de e ef ge hå i jåd kå el em en o pe ku er es te u ve dobbelt-ve eks y set æ ø å'.split(' ') },
+      // The Danish letter NAMES the app actually speaks — read from the SINGLE source
+      // (DANISH_LETTER_NAMES / getDanishLetterName) instead of a hand-copied list. The old literal
+      // here still held the RETIRED phonetic respellings ('be se de … jåd … set'), so auditioning it
+      // tested strings the app hasn't spoken since PRD-11.
+      { label: 'Bogstavnavne', items: Object.keys(DANISH_LETTER_NAMES).map(getDanishLetterName) },
       { label: 'Glyffer (rå)', items: 'A B C D E F G H I J K L M N O P Q R S T U V W X Y Z Æ Ø Å'.split(' ') },
+      // A/B candidates for the two letters the owner hears wrong (I and Z). The defect is the LETTER
+      // inside a SENTENCE — the "{bogstav} som {ord}" / "{ord} starter med {bogstav}" templates
+      // interpolate the RAW GLYPH, bypassing DANISH_LETTER_NAMES — so the candidates must be
+      // auditioned in that exact context, not as bare glyphs. Pick the winner per letter, then wire
+      // it into the templates' spelling override and re-run `npm run tts:prebake`.
+      // Z: SETTLED — 'zet' won (now wired via spokenLetter in letterWords.ts). Kept so the winner can
+      // be re-checked against the losers after a voice change.
+      {
+        label: 'Kandidater: Z i sætning',
+        items: ['zet som Zebra', 'Z som Zebra', 'set som Zebra', 'zæt som Zebra', 'Zebra starter med zet'],
+      },
+      // I: SETTLED — 'I, som en is' won and is now wired via letterPhrase(). It took two fixes, each
+      // exposing the next: the COMMA made the letter read as a name instead of the pronoun, which then
+      // made Azure carry the "characters" reading into the next token and spell "Is" as I-S; the
+      // indefinite ARTICLE + lowercase restored it to a noun (lowercase alone was not enough). Kept so
+      // the winner can be re-checked against the losers after a voice change.
+      {
+        label: 'Kandidater: I + ordet',
+        items: [
+          'I, som is',
+          'I, som en is',
+          'I, som Is',
+          'I, som is.',
+          'I. Som is',
+          'I, ligesom is',
+        ],
+      },
+      // MINIMALITY check: RUN AND CLOSED. 'I, som en is' is the only line of 29 that deviates from the
+      // "{bogstav} som {ord}" frame, so every shorter variant was hunted — including a LOWERCASE letter
+      // (the theory being that characters-mode carry-over, not capitalisation, spells "Is" as I-S).
+      // Owner verdict: none of these read correctly; the article is load-bearing. Kept as the record so
+      // the experiment isn't repeated, and as a re-check set after a voice change.
+      {
+        label: 'Kandidater: I minimal (afvist)',
+        items: ['i, som is', 'i, som Is', 'I, som is', 'i, som en is', 'I, som en is'],
+      },
+      // I, SENTENCE-FINAL position: still OPEN. Bogstav Quiz's correct-answer fact puts the letter
+      // last ("Is starter med I"), where a trailing comma does nothing — so the lead fix doesn't
+      // transfer. These try the equivalent isolation from the other side: a boundary BEFORE the
+      // letter, an explicit "bogstavet" carrier, or trailing punctuation that may force phrase-final
+      // lengthening. Pick a winner and it goes into startsWithPhrase().
+      {
+        label: 'Kandidater: I sidst (quiz-linjen)',
+        items: [
+          'Is starter med I',
+          'Is starter med bogstavet I',
+          'Is starter med, I',
+          'Is starter med I.',
+          'Is starter med ... I',
+          'Is — den starter med I',
+        ],
+      },
     ],
   },
   {

@@ -6,7 +6,7 @@ Danish educational web app for children aged 5-7. Alphabet, math, colors, and me
 
 - React 19 + TypeScript, Vite 8, Material-UI v9 (no Tailwind)
 - Framer Motion for animations, Howler.js for sound effects
-- Audio: `SimplifiedAudioController` singleton → `ttsClient` playback engine → **Azure AI Speech** (single TTS provider) → Web Speech API (fallback) → Howler (SFX). Danish da-DK voice (Christel) for most sections; Azure en-US Ava (multilingual) for the Engelsk section. The VoiceOverridePanel (opened from the "Til de voksne" corner menu) can swap the Danish narration voice live among all Azure VoiceLab voices. Danish pronunciation is corrected via a hosted W3C PLS lexicon (`public/da-DK.pls`) + inline IPA. (Google TTS was removed in the Audio v2 rebuild; Google STT still powers "Sig et Ord".)
+- Audio: `SimplifiedAudioController` singleton → `ttsClient` playback engine → **Azure AI Speech** (single TTS provider) → Web Speech API (fallback) → Howler (SFX). Danish da-DK voice (Christel) for most sections; Azure en-US Ava (multilingual) for the Engelsk section. The VoiceOverridePanel (opened from the "Til de voksne" corner menu) can swap the Danish narration voice live among all Azure VoiceLab voices. Danish pronunciation is corrected via a hosted W3C PLS lexicon (`public/da-DK.pls`) and per-letter phrasing overrides (`.claude/rules/audio-system.md`); inline IPA wraps a WHOLE utterance and exists only as a VoiceLab audition tool, not a per-word app fix. (Google TTS was removed in the Audio v2 rebuild; Google STT still powers "Sig et Ord".)
 - Speech input (Sig et Ord): Google Cloud Speech-to-Text v2 via `/api/stt` + `useSpeechInput` hook
 - React Router DOM v7 (route components lazy-loaded via `lazyWithReload` — stale-chunk → reload-once recovery). Single hand-authored PWA manifest (`public/manifest.json`); **no service worker** (network-only)
 - Deployment: Vercel (auto-deploy on push to `master`)
@@ -121,4 +121,6 @@ curl -s -o /tmp/shot.jpg "<screenshotUrl from the response>"                    
 - **After fixing a bug, re-break the code to prove the new test/probe actually fails.** A test seeded
   with the wrong *shape* stays green while the product is broken — that is how the OAuth-claim bug
   shipped (it parked a raw session token where the real callback parks a signed one). Same trap: an
-  unchecked `until()`/wait that times out silently makes every assertion after it vacuous.
+  unchecked `until()`/wait that times out silently makes every assertion after it vacuous. And a test
+  that compares two sides which move TOGETHER (app vs. the prebake enumerator) passes vacuously when a
+  fix is deleted from both — so also pin the value itself, not just the agreement.

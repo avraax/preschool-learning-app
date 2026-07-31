@@ -11,7 +11,7 @@ import LearningGrid from '../common/LearningGrid'
 import PromptFocus from '../common/PromptFocus'
 import { useCelebration } from '../common/CelebrationEffect'
 import { useBrowseXp } from '../../hooks/useBrowseXp'
-import { LETTER_WORDS } from '../../config/letterWords'
+import { LETTER_WORDS, letterPhrase } from '../../config/letterWords'
 import { letterArt } from '../../assets/games/alphabet'
 import { hexToRgba } from '../../theme/tokens/helpers'
 import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
@@ -34,8 +34,9 @@ const DANISH_ALPHABET = [
 const ALPHABET_ACCENT = categoryThemes.alphabet.accentColor
 
 // Example word + baked-art subject for the bloomed letter come from the shared LETTER_WORDS manifest.
-// Only letters with a clear, child-friendly Danish word are included — Q/W/X/Å have none, so their
-// bloom is glyph-only (PromptFocus renders the giant letter alone, no picture/word row).
+// All 29 letters carry a word + picture now (Q/W/X/Å were added on owner request), so every letter
+// blooms with the picture/word row; the glyph-only fallback below only triggers if a letter ever loses
+// its LETTER_WORDS entry. Q/W/X stay DISPLAY-ONLY — Bogstav Quiz never asks them (see WORD_LETTERS).
 
 const AlphabetLearning: React.FC = () => {
   const muiTheme = useTheme()
@@ -122,8 +123,11 @@ const AlphabetLearning: React.FC = () => {
       // instead. These exact strings already ship (the memory game's speakMatchedItem uses the same
       // LETTER_WORDS table for all 29 letters), so no new narration is introduced. Falls back to the
       // name-only read only if a letter ever lacks a LETTER_WORDS entry.
+      // `letterPhrase` is the single builder for this line — it carries the per-letter pronunciation
+      // fixes (Z respelled 'zet'; I comma-isolated so Azure reads the letter name, not the pronoun)
+      // and is shared with the prebake enumerator so the clip keys can't drift.
       const data = LETTER_WORDS[letter]
-      await (data ? audio.speak(`${letter} som ${data.word}`) : audio.speakLetter(letter))
+      await (data ? audio.speak(letterPhrase(letter, data.word)) : audio.speakLetter(letter))
     } catch (error) {
       logError('Error speaking letter', {
         letter,

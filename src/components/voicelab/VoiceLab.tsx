@@ -54,6 +54,12 @@ const VoiceLab: React.FC = () => {
   const [active, setActive] = useState<ActiveVoice>({ kind: 'azure', entry: CURRENT_VOICE })
   const [segmentId, setSegmentId] = useState(SAMPLE_SEGMENTS[0].id)
   const [useLexicon, setUseLexicon] = useState(true)
+  // Prosody rate for the Azure samples. The app can already speak ANY line at a custom rate
+  // (`speak(text, voice, ssml, customSpeed)`; the rate is part of the TTS cache key, and Lær Tal's
+  // 1.2 browse rate is the precedent) — but this page always used the server default, so a
+  // "reads too fast" defect was untestable here. Slower rates lengthen the vowel and let stød land,
+  // which is what a clipped Danish letter name inside a sentence is missing.
+  const [rate, setRate] = useState<number>(TTS_CONFIG.speakingRate)
 
   useEffect(() => {
     audioRef.current = new Audio()
@@ -106,6 +112,7 @@ const VoiceLab: React.FC = () => {
           voiceName: entry.name,
           lang: entry.lang,
           useLexicon, // da-DK only; server ignores for non-da voices
+          speed: rate, // audition tempo — buildSsml maps this onto <prosody rate>
         }),
       })
       if (!res.ok) {
@@ -123,7 +130,7 @@ const VoiceLab: React.FC = () => {
       audio.src = `data:${AUDIO_MIME};base64,${audioContent}`
       await audio.play()
     },
-    [useLexicon],
+    [useLexicon, rate],
   )
 
   const playWebSpeech = useCallback((text: string, voice: SpeechSynthesisVoice) => {
@@ -286,11 +293,34 @@ const VoiceLab: React.FC = () => {
           Aktiv stemme: <strong>{activeLabel}</strong>
         </Typography>
 
-        <FormControlLabel
-          control={<Switch checked={useLexicon} onChange={(e) => setUseLexicon(e.target.checked)} />}
-          label={`Udtale-leksikon (da-DK): ${useLexicon ? 'til' : 'fra'}`}
-          sx={{ mb: 2, '& .MuiFormControlLabel-label': { fontFamily: FONT } }}
-        />
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap', mb: 2 }}>
+          <FormControlLabel
+            control={<Switch checked={useLexicon} onChange={(e) => setUseLexicon(e.target.checked)} />}
+            label={`Udtale-leksikon (da-DK): ${useLexicon ? 'til' : 'fra'}`}
+            sx={{ '& .MuiFormControlLabel-label': { fontFamily: FONT } }}
+          />
+          {/* Tempo. `1.05` is production; the slower steps are for auditioning lines that read too
+              fast (a clipped letter name in a sentence). Whatever wins here can be shipped as-is —
+              a per-line rate is already supported and prebaked separately (rate is in the cache key). */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Typography variant="body2" sx={{ fontFamily: FONT }}>
+              Tempo:
+            </Typography>
+            <Stack direction="row" spacing={0.5}>
+              {[TTS_CONFIG.speakingRate, 0.95, 0.9, 0.85, 0.8, 0.7].map((r) => (
+                <Button
+                  key={r}
+                  size="small"
+                  variant={rate === r ? 'contained' : 'outlined'}
+                  onClick={() => setRate(r)}
+                  sx={{ minWidth: 52, fontFamily: FONT, textTransform: 'none' }}
+                >
+                  {r === TTS_CONFIG.speakingRate ? `${r} (app)` : r}
+                </Button>
+              ))}
+            </Stack>
+          </Box>
+        </Box>
 
         {errorMsg && (
           <Box

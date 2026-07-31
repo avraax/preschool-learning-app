@@ -63,6 +63,13 @@ serves only genuinely dynamic text or a non-default VoiceLab voice.
   audio DELETIONS unrelated to your change = pre-existing content drift (content edited since the last
   prebake) being synced. Expected, not a bug — confirm the pruned keys are genuinely gone from current
   content (`grep` the phrase) and commit the deletions as part of the prebake output.
+- **Editing `public/da-DK.pls` alone changes NOTHING you can hear.** The cache key records the lexicon
+  as a boolean (`lex…` via `shared-tts-key.js`), not a content hash, and prebake reuses any existing
+  file on disk — so a prebaked clip keeps its old pronunciation until you DELETE its mp3 + manifest
+  line and re-run. Two more lexicon traps: PLS graphemes are **case-sensitive and lowercase**, so a
+  capitalised content word never matches (the shipped `hund` stød entry has never applied to `"Hund"`);
+  and prebake synthesizes against the **prod** lexicon URL while local dev has none (Azure can't fetch
+  localhost), so a local `/voicelab` audition is not necessarily the baked clip.
 - **Then audition it** (PRD-11): the closed set is enumerated once in `shared-narration-clips.js`
   (shared by prebake + the dev-only `/audit` harness). `npm run audit:check` flags any clip not signed
   off in `docs/audit/narration-audit.json` (the audited-OK manifest), so new content surfaces as
@@ -72,11 +79,36 @@ serves only genuinely dynamic text or a non-default VoiceLab voice.
   build it via `shared-tts-key.js` (single source — don't hand-roll the key format).
 - Build scripts (`prebake-tts.mjs`, `tts-voice-eval.mjs`) + the shared enumerator
   `shared-narration-clips.js` `import` `src/**/*.ts` directly (Node ≥22 strips types) — generate from
-  the real source arrays, never a hand-copied duplicate. **Relative imports anywhere in that
+  the real source arrays, never a hand-copied duplicate — this covers `/voicelab`'s sample lists
+  (`voicelabData.ts`) too: its hand-typed letter-name group silently kept auditioning the respellings
+  the app dropped at PRD-11. **Relative imports anywhere in that
   transitive graph need an explicit `.ts` extension** (e.g. `'../utils/shuffle.ts'`): Node's ESM
   resolver rejects extensionless imports even though Vite/tsc accept them, so a build script silently
   breaks on a source file the app imports fine. `allowImportingTsExtensions` makes the extension safe
   in Vite/tsc too.
+
+## Pronunciation fixes (da-DK)
+
+Azure da-DK reads a letter **differently inside a sentence than standing alone** — `DANISH_LETTER_NAMES`
+governs only the standalone `speakLetter` read (and its own entries are ear-audited for that context;
+don't assume they transfer). So the letter↔word narration lines are built ONLY through
+`letterPhrase()` / `startsWithPhrase()` in `src/config/letterWords.ts`, which carry the per-letter
+overrides — components AND `shared-narration-clips.js` call the same builders, guarded by
+`letterWords.test.ts`.
+
+- **Phrasing beats spelling.** A context-driven misread usually can't be respelled, because the token
+  alone is already correct — the sentence is what demotes it (a lone Danish letter becomes a function
+  word: short, unstressed, no stød). Punctuation is the lever: a comma gives the letter its own
+  prosodic phrase.
+- **Fixing one token can push the defect to the NEXT one.** After a phrase boundary Azure carries its
+  letter-name/"characters" reading forward, so a short capitalised noun right after it gets spelled out
+  as an initialism. An article or carrier noun re-anchors it as a word.
+- **The oracle is the owner's ear**, auditioned in `/voicelab` in **full sentence context** — never as
+  bare tokens, which is exactly the reading that isn't broken. Vary tempo too (the Tempo control), since
+  "too fast / no depth" is a real defect shape for a clipped letter name.
+- **Record the rejected variants** in a comment beside the fix. These strings look like typos
+  (a stray comma, a "misspelled" letter, an odd article), so without the negative results someone
+  tidies them away and silently regresses the pronunciation.
 
 ## Mandatory Rules
 
