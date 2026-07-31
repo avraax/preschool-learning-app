@@ -141,6 +141,13 @@ re-unlocks via the document-wide listeners. Both the ✕ AND the "Start lyd nu" 
 (dismiss must not depend on the async unlock result). Re-arming the modal on every transient iOS
 suspend was the "modal won't close / button does nothing" bug.
 
+**ONE BLOCKING OVERLAY AT A TIME.** The final render decision is `shouldRenderAudioPrompt()` in the same
+policy module: it also stands the modal down while `authUiOpen` (any auth/onboarding surface — lock
+screen, PIN pad, mandatory PIN setup, "who is playing?") and under `?nogate=1`. "Turn on sound" is
+meaningless before you know who is playing, and this modal painted over the PIN-setup dialog twice —
+the first fix was a z-index bump, which is the wrong shape. **A new blocking surface claims `authUiOpen`
+(see `AuthContext`) instead of joining a z-index arms race.**
+
 iOS robustness gotchas (PRD-06), easy to regress:
 - **iOS consumes the transient user-activation across an `await`.** Everything that needs the gesture —
   `resume()`, `primePlaybackElement()`, `speechSynthesis.speak()` — must run **synchronously before the

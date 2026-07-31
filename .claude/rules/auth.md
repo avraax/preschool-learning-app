@@ -147,7 +147,10 @@ read model is derived from it and is **byte-identical to the pre-accounts shape*
 
 ## Verifying
 
-- `npm test` — the pure modules, the merge algebra, the v3 fixture, the store surgery, legacy adoption.
+- `npm test` — the pure modules, the merge algebra and the store surgery.
+- **Never verify against the shared Neon DB.** It is the owner's REAL account: test rows land in his
+  play-test. Two child profiles and a test PIN reached him that way. Use a scratch account, or wipe
+  immediately afterwards (`scripts/auth-dev-session.mjs` creates; deleting the `user` row cascades).
 - `curl http://127.0.0.1:3001` per `.claude/rules/api-endpoints.md`. **Restart the dev-server after
   editing anything under `lib/`** — a stale instance 404s every auth route while its banner looks
   healthy. Emoji passed through curl on Git Bash arrive mangled; create profiles from the browser.

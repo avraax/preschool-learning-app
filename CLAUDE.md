@@ -118,3 +118,7 @@ curl -s -o /tmp/shot.jpg "<screenshotUrl from the response>"                    
 - Comic Sans MS for child-facing typography
 - Danish language for all user-facing content
 - Minimum 44px touch targets
+- **After fixing a bug, re-break the code to prove the new test/probe actually fails.** A test seeded
+  with the wrong *shape* stays green while the product is broken — that is how the OAuth-claim bug
+  shipped (it parked a raw session token where the real callback parks a signed one). Same trap: an
+  unchecked `until()`/wait that times out silently makes every assertion after it vacuous.

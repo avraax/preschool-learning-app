@@ -537,6 +537,11 @@ export const progressInvariantViolations: (p: PersistedProgress) => string[]
 
 ### 5.3 The v3 → v4 migration — the single most dangerous change
 
+> **SUPERSEDED — DO NOT IMPLEMENT.** After the first play-test the owner ruled for a CLEAN SHEET: all
+> progress is reset at the accounts release and no code may migrate it. `migrateToV4`, `readPersisted`
+> and the whole v3 branch are DELETED; `src/utils/storageReset.ts` sweeps the pre-accounts keys once per
+> device instead. `attach()` reads `normalizePersisted` only. Kept below for the reasoning only.
+
 `normalize()` currently contains, at `src/services/progressStore.ts:224`:
 
 ```ts
@@ -707,6 +712,11 @@ onCommit(cb: (meta: SyncMeta) => void): () => void
 `markSynced` **must not bump `rev`** or the profile is permanently dirty and push-loops.
 
 ### 5.5 Legacy adoption — `src/services/legacyAdoption.ts`
+
+> **SUPERSEDED — DO NOT IMPLEMENT.** Built, then REMOVED on the owner's clean-sheet ruling (see §5.3).
+> `legacyAdoption.ts`, its test suite and `AdoptLegacyDialog.tsx` are deleted, as is the transitional
+> `'local'` profile — nothing is ever pre-added, and an account with no children gets the mandatory
+> create dialog. Kept below for the reasoning only.
 
 ```ts
 export interface LegacyPreview {
@@ -1271,7 +1281,7 @@ family out of their own app.
 | **W6** | Passkeys: gesture-safe register + unlock with **pre-fetched** options, RP-ID env plumbing, preview disable. | Face ID works on the 17.7 iPad in Safari **and** installed-PWA. CDP virtual-authenticator test green. |
 | **W7** | **Google sign-in:** the cookie-free PKCE pair, `flowId` claim, polling recovery, `WrongContextNotice`, and the `AUTH_ALLOWED_EMAILS` hook (§4.8). | Sign-in completes on the installed iPad PWA; a wrong `flowId` never yields a token; claiming twice → 410; a non-allowlisted email is refused. |
 | **W8** | `deviceId.ts`; the store surgery (inert default, `attach`/`detach`, key-safe writes, persisted-form mutators, `derive`, `structuredClone` replacing the whitelist); update `progressStore.test.ts`. **This is where `SCHEMA_VERSION` becomes 4 — only after W2 is green.** | All pre-existing economy tests pass unmodified in substance; **`StickerAlbum.tsx` untouched**. |
-| **W9** | `profileStore` + `useProfiles` + profile picker + PIN-gated switching + theme profile-scoping; then `legacyAdoption.ts` + `AdoptLegacyDialog`. | Two profiles coexist with separate books; the detached DEV warn never fires. **On a copy of the owner's real blob:** the son's 45-reward book, level, gold-pass position, difficulty overrides and explored set survive byte-for-byte; adopting twice is a provable no-op; the legacy key is unmodified afterwards. |
+| **W9** | `profileStore` + `useProfiles` + profile picker + PIN-gated switching + theme profile-scoping. (`legacyAdoption.ts` + `AdoptLegacyDialog` were built and then REMOVED — see the SUPERSEDED notes on §5.3/§5.5.) | Two profiles coexist with separate books; the detached DEV warn never fires. **On a copy of the owner's real blob:** the son's 45-reward book, level, gold-pass position, difficulty overrides and explored set survive byte-for-byte; adopting twice is a provable no-op; the legacy key is unmodified afterwards. |
 | **W10** | `api/progress.ts` + `progressSync.ts` + `useSyncStatus` + the `☁️ Synkronisering` line + `👤 Profiler` + `🔑 Login og sikkerhed` + profile/account deletion. | Two browsers converge; airplane-mode play then reconnect loses nothing and double-counts nothing; two devices offline concurrently → XP sums exactly; a reset on A survives a pull from B. |
 | **W11** | Bundle hygiene (`auth-vendor` in `manualChunks` — one line, it's a function in Vite 8), a CSP header in `vercel.json` (the app ships none today), re-capture `docs/ui-reference/`, update `CLAUDE.md`, `.claude/rules/api-endpoints.md`, the `ui-screenshot` skill doc, and add `.claude/rules/auth.md`. | `npm run build && npm run lint && npm test` green; screenshots refreshed. |
 

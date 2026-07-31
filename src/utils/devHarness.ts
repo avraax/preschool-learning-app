@@ -7,7 +7,9 @@
 //   ?fx=correct|wrong|hint|streak   force one tile/board/mix into that state
 //   ?theme=<id>                      set the theme without click-chaining the selector
 //   ?seed=<n>                        deterministic questions (seeds Math.random)
-//   ?nogate=1                        skip the audio welcome/permission gate
+//   ?nogate=1                        skip the audio welcome/permission gate — AND the auth gate
+//   ?noauth=1                        skip only the auth gate
+//   ?oauthflow=<flowId>              seed a pending Google flow (drives the OAuth return/recovery)
 //   ?reduce=1                        force reduced-motion (test the parity path headlessly)
 //   ?nyt=1                           force a "nyt!" badge in Min Bog
 //   ?rewards=<n>                     seed the book at n collected rewards (Reward Book PRD-01 W9)
@@ -56,7 +58,8 @@ export const devMusicOn = (): boolean => DEV && readParams().get('music') === '1
 //
 // It grants the XP that genuinely reaches that point on the real curve and then hands the owed slots
 // over through the real `grantPendingRewards()`, so the seeded state is indistinguishable from played
-// state — including the `collectedCount() === globalLevel() - 1` invariant. `?rewards=0` resets.
+// state — including the store invariants (note the real one is an INEQUALITY:
+// `grantedSlots <= collectedFromLevel(globalLevel())`, the gap being a pending ceremony). `?rewards=0` resets.
 // Kept out of progressStore itself: this is harness-only, and it must go through the public API to
 // prove the public API produces it.
 export const installDevRewards = async (): Promise<void> => {

@@ -173,6 +173,22 @@ An async `--eval` IIFE (`awaitPromise` is on) can drive a whole round and assert
 - Advance dwell + the echo `await` mean a correct answer takes ~2s+ to advance — size detection
   windows generously and use a high `--timeout` for full-round drives.
 
+### Authoring a long `--eval` (do this before it wastes runs)
+Inline heredocs get mangled by the shell: `${…}` becomes `bad substitution`, `\"` inside a selector is
+stripped, and the failure looks like a page bug. Write the JS to a **file in the scratchpad** and pass
+`--eval "$(cat <file>)"`.
+- Use the **scratchpad path from the system prompt, not `/tmp`** — Node on Windows resolves `/tmp` as
+  `C:\tmp`, so a file `cat`-ed there by bash isn't found.
+- Inject secrets/ids by *prepending a line* to that file (`window.__PROBE_TOKEN = "…";`) rather than
+  interpolating into the JS.
+- **Wrap the IIFE in `try/catch` and return an accumulated `log` array.** A throw surfaces only as
+  `eval: {}` (the serialized error) and you lose every earlier result — that empty object is almost
+  always "it threw", not "it returned nothing".
+- **Check what your wait helper returns.** A timed-out `until()` you don't assert on makes every later
+  line vacuous — the probe reports success against an element that never appeared.
+- Prefer driving via the app's own listeners over DOM selectors when one exists (e.g. `PinPad` handles
+  `window` keydown, so `dispatchEvent(new KeyboardEvent('keydown',{key:'5'}))` beats hunting tiles).
+
 ## Gotchas (built-in, but know them)
 - **Run the driver on the Windows side too** when working from WSL: WSL cannot reach the
   Windows-bound servers or Chrome's CDP port (NAT). Use

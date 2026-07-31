@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { shouldShowAudioPrompt } from './audioPromptPolicy.ts'
+import { shouldShowAudioPrompt, shouldRenderAudioPrompt } from './audioPromptPolicy.ts'
 
 const base = { needsUserAction: true, isWorking: false, hasUnlockedOnce: false, userDismissed: false }
 
@@ -21,10 +21,42 @@ test('THE FIX: does not re-arm after a transient iOS suspend once audio has unlo
   )
 })
 
-test('THE FIX: stays closed after the user explicitly dismisses it (button or ✕)', () => {
+test('THE FIX: stays closed after the user explicitly dismisses it (button or close icon)', () => {
   assert.equal(shouldShowAudioPrompt({ ...base, userDismissed: true }), false)
 })
 
 test('still stays hidden when no user action is needed', () => {
   assert.equal(shouldShowAudioPrompt({ ...base, needsUserAction: false }), false)
+})
+
+// ----- shouldRenderAudioPrompt: ONE blocking overlay at a time -----------------------------------
+// The audio modal painted over the mandatory PIN setup and "who is playing?" — twice, because the
+// first fix was a z-index bump. These cases pin the composed decision.
+
+test('an open auth/onboarding surface suppresses the audio modal', () => {
+  assert.equal(
+    shouldRenderAudioPrompt({ showPrompt: true, authUiOpen: true, devNoGate: false }),
+    false,
+  )
+})
+
+test('with nothing else blocking, a wanted prompt renders', () => {
+  assert.equal(
+    shouldRenderAudioPrompt({ showPrompt: true, authUiOpen: false, devNoGate: false }),
+    true,
+  )
+})
+
+test('devNoGate (?nogate=1) suppresses it so every screenshot recipe keeps working', () => {
+  assert.equal(
+    shouldRenderAudioPrompt({ showPrompt: true, authUiOpen: false, devNoGate: true }),
+    false,
+  )
+})
+
+test('the audio verdict is still required — suppression never FORCES the modal open', () => {
+  assert.equal(
+    shouldRenderAudioPrompt({ showPrompt: false, authUiOpen: false, devNoGate: false }),
+    false,
+  )
 })

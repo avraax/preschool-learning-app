@@ -7,21 +7,25 @@ import { useSimplifiedAudio } from '../../contexts/SimplifiedAudioContext'
 import { audioDebugSession } from '../../utils/remoteConsole'
 import { devNoGate } from '../../utils/devHarness'
 import { useAuthContext } from '../../contexts/AuthContext'
+import { shouldRenderAudioPrompt } from '../../contexts/audioPromptPolicy'
 
 const SimplifiedAudioPermission: React.FC = () => {
   const theme = useTheme()
   const { state, initializeAudio, hidePrompt } = useSimplifiedAudio()
   const auth = useAuthContext()
 
-  // DEV screenshot harness: ?nogate=1 suppresses the audio welcome gate so states are capturable.
-  if (devNoGate()) return null
-
-  // ONE blocking overlay at a time. While an auth/onboarding surface is up — the lock screen, the PIN
-  // pad, mandatory PIN setup, "who is playing?", "add a child" — this modal must not paint over it:
-  // "turn on sound" is meaningless before you know who is playing, and it was literally covering the
-  // PIN-setup dialog. `authUiOpen` is the same flag that makes AdultCorner's hold gesture inert, so
-  // there is one notion of "an auth surface is open" rather than a z-index arms race.
-  if (auth?.authUiOpen) return null
+  // The whole show/hide decision is the pure, unit-tested `shouldRenderAudioPrompt` — including
+  // ?nogate=1 (DEV screenshot harness) and `authUiOpen` (one blocking overlay at a time; this modal
+  // was painting over the mandatory PIN setup and "who is playing?"). See audioPromptPolicy.ts.
+  if (
+    !shouldRenderAudioPrompt({
+      showPrompt: state.showPrompt,
+      authUiOpen: auth?.authUiOpen ?? false,
+      devNoGate: devNoGate(),
+    })
+  ) {
+    return null
+  }
 
   const handleEnableAudio = () => {
     // [audio-unlock] diagnostic (captured in bug-report diagnostics ring) — proves the tap handler
