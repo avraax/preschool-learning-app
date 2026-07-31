@@ -26,6 +26,15 @@ export async function captureScreenshot(opts?: {
         // Safari's font embedding is the slow path; fallback glyphs are fine for diagnosis.
         embedFonts: false,
         backgroundColor: '#ffffff',
+        // NEVER capture an auth surface (accounts PRD §8.1 layer b). Reports land in a PUBLIC-access
+        // Vercel Blob, so a PIN pad or a sign-in screen must not be renderable into one. `remove`
+        // (not `hide`) so the nodes are dropped from the clone entirely.
+        //
+        // This is one of THREE independent layers — AdultCorner's hold gesture is inert while an auth
+        // dialog is open, and PinPad renders dots rather than digits — because one layer is not enough
+        // for a public blob.
+        exclude: ['[data-bl-redact]'],
+        excludeMode: 'remove',
       })
       return canvas.toDataURL('image/jpeg', quality)
     })()

@@ -29,7 +29,7 @@ import { Settings } from 'lucide-react'
 import { BUILD_INFO } from '../../config/version'
 import { useProgress } from '../../hooks/useProgress'
 import { captureScreenshot } from '../../services/screenshotService'
-import AdultGate, { makeGateCode } from '../common/AdultGate'
+import { useAuthContext } from '../../contexts/AuthContext'
 
 // Adult-only dialogs are lazy-loaded (PRD-07): they pull in VoiceLab data (~282 lines), the bug
 // reporter, and the difficulty panel, none of which are needed until the adult menu opens. Keeping
@@ -42,7 +42,7 @@ const ThemePanel = React.lazy(() => import('./ThemePanel'))
 
 const HOLD_MS = 2000
 
-type AdultView = null | 'menu' | 'report' | 'voice' | 'difficulty' | 'theme' | 'resetGate' | 'resetDone'
+type AdultView = null | 'menu' | 'report' | 'voice' | 'difficulty' | 'theme' | 'resetConfirm' | 'resetDone'
 
 interface AdultCornerProps {
   /** A newer build is live → show the hold-gated "⬆️ Opdater app" item in the menu (PRD-09 P4). */
@@ -54,11 +54,11 @@ interface AdultCornerProps {
 
 const AdultCorner: React.FC<AdultCornerProps> = ({ updateAvailable = false, onApplyUpdate }) => {
   const progress = useProgress()
+  const auth = useAuthContext()
   const [view, setView] = useState<AdultView>(null)
   // Which lazy dialogs have been opened at least once — once true they stay mounted so their
   // open/close transitions animate (and their chunk only loads on first open).
   const [mounted, setMounted] = useState<{ report?: boolean; voice?: boolean; difficulty?: boolean; theme?: boolean }>({})
-  const [gateCode, setGateCode] = useState('')
   const [screenshot, setScreenshot] = useState<string | null>(null)
   const [capturing, setCapturing] = useState(false)
   const [wiggle, setWiggle] = useState(false)
@@ -72,10 +72,20 @@ const AdultCorner: React.FC<AdultCornerProps> = ({ updateAvailable = false, onAp
     const shot = await captureScreenshot()
     setScreenshot(shot)
     setCapturing(false)
+    // Opening the menu now costs a PIN (or Face ID), which replaces the per-action Danish-number-word
+    // gate entirely (D4). Verified LOCALLY, so it still works on a plane. Unlocked ~5 min afterwards.
+    if (auth) {
+      const ok = await auth.requirePin('adultMenu')
+      if (!ok) {
+        setScreenshot(null)
+        return
+      }
+    }
     setView('menu')
   }
 
   const startHold = () => {
+    if (auth?.authUiOpen) return // see handleClick: the gesture is inert over any auth surface
     holdFired.current = false
     if (holdTimer.current) clearTimeout(holdTimer.current)
     holdTimer.current = setTimeout(() => { void fireHold() }, HOLD_MS)
@@ -92,6 +102,9 @@ const AdultCorner: React.FC<AdultCornerProps> = ({ updateAvailable = false, onAp
       holdFired.current = false
       return
     }
+    // An auth surface is open (lock screen, PIN pad, PIN setup): the gesture is INERT, so a PIN
+    // screen can never be captured into a bug report at all (§8.1 layer a).
+    if (auth?.authUiOpen) return
     // Headless-test hook: CDP automation can't hold a pointer down for 2s.
     if (import.meta.env.DEV && new URLSearchParams(window.location.search).has('adult-tap')) {
       void fireHold()
@@ -218,10 +231,7 @@ const AdultCorner: React.FC<AdultCornerProps> = ({ updateAvailable = false, onAp
             </ListItem>
             <ListItemButton
               aria-label="Nulstil al fremgang"
-              onClick={() => {
-                setGateCode(makeGateCode())
-                setView('resetGate')
-              }}
+              onClick={() => setView('resetConfirm')}
               sx={{ borderRadius: 1, minHeight: 48 }}
             >
               <ListItemText primary="♻️ Nulstil al fremgang" />
@@ -254,20 +264,36 @@ const AdultCorner: React.FC<AdultCornerProps> = ({ updateAvailable = false, onAp
         )}
       </React.Suspense>
 
-      <AdultGate
-        open={view === 'resetGate'}
-        code={gateCode}
-        description={
-          <>Dette nulstiller <strong>alle</strong> klistermærker, rekorder og stjerner.</>
-        }
-        confirmLabel="Nulstil"
-        confirmColor="error"
-        onClose={() => setView('menu')}
-        onSuccess={() => {
-          progress.resetAll()
-          setView('resetDone')
-        }}
-      />
+      {/* Second confirmation. The PIN was already proven to OPEN the menu, so this is the "are you
+          sure" — but it is still routed through requirePin('resetProgress'), which re-asks if the
+          ~5-minute unlocked window has lapsed. */}
+      <Dialog open={view === 'resetConfirm'} onClose={() => setView('menu')} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ fontWeight: 700 }}>Nulstil fremgang? ♻️</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Dette nulstiller <strong>alle</strong> klistermærker, rekorder og stjerner. Lyd, musik og
+            sværhedsgrad beholdes.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setView('menu')} aria-label="Annullér">Annullér</Button>
+          <Button
+            variant="contained"
+            color="error"
+            aria-label="Nulstil"
+            onClick={async () => {
+              if (auth) {
+                const ok = await auth.requirePin('resetProgress')
+                if (!ok) return
+              }
+              progress.resetAll()
+              setView('resetDone')
+            }}
+          >
+            Nulstil
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       <Dialog open={view === 'resetDone'} onClose={closeAll} maxWidth="xs" fullWidth>
         <DialogContent sx={{ textAlign: 'center', py: 4 }}>

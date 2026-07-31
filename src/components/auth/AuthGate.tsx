@@ -17,6 +17,7 @@
 import React from 'react'
 import { gateBlocks } from '../../contexts/authGatePolicy'
 import { AuthProvider, useAuthContext } from '../../contexts/AuthContext'
+import AuthDialogs from './AuthDialogs'
 import LockScreen from './LockScreen'
 import OAuthReturnHandler from './OAuthReturnHandler'
 
@@ -33,6 +34,8 @@ const GateBody: React.FC<{ children: React.ReactNode }> = ({ children }) => {
           while blocked — it is what UNBLOCKS the gate after a Google round trip. */}
       <OAuthReturnHandler />
       {blocked ? <LockScreen /> : children}
+      {/* Above the gate on purpose: `requirePin('unlockSession')` is demanded FROM the lock screen. */}
+      <AuthDialogs />
     </>
   )
 }

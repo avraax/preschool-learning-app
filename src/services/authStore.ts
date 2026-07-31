@@ -22,6 +22,7 @@ import {
   type ServerVerdict,
 } from '../contexts/authGatePolicy'
 import { devNoAuth } from '../utils/devHarness'
+import { dropLocalVerifier, dropStaleVerifier } from './pinVerifier'
 import { forgetSecret, registerSecret } from './redact'
 import type { PasskeyRequestOptions } from './authSignIn'
 
@@ -251,6 +252,9 @@ class AuthStore {
     this.access = null
     this.lockedByAdult = false
     this.verdict = verdict
+    // The cached local PIN verifier belongs to a SESSION on this device. A sign-out (or a revoked
+    // session) must not leave an offline-usable adult gate behind for the next person.
+    dropLocalVerifier()
     try {
       localStorage.removeItem(ACCOUNT_KEY)
     } catch {
@@ -321,11 +325,82 @@ class AuthStore {
         passkeyCount: typeof data.passkeyCount === 'number' ? data.passkeyCount : 0,
         webauthnEnabled: data.webauthnEnabled === true,
       }
+      // CROSS-DEVICE PIN CHANGE: if the server's PIN is newer than the one this device cached a
+      // verifier for, drop that cache so the next adult-gate open forces an online verify. Without
+      // this, a PIN changed on the iPhone leaves the iPad honouring the old one indefinitely (§7.2).
+      dropStaleVerifier(this.info.pinUpdatedAt)
       this.persist()
       this.publish()
       return this.info
     } catch {
       return this.info
+    }
+  }
+
+  // ----- PIN (server-authoritative) --------------------------------------------------------------
+
+  /**
+   * Server-verified PIN check. `pin_attempt` in Postgres is the authority — the local counter is
+   * best-effort only. Returns the Danish message the PIN pad shows, so the routing lives in one place.
+   */
+  async verifyPinOnServer(pin: string): Promise<{
+    ok: boolean
+    pinUpdatedAt?: number
+    message?: string
+  }> {
+    if (!this.token) return { ok: false, message: 'Ingen forbindelse til kontoen.' }
+    try {
+      const res = await fetch('/api/auth/family/pin/verify', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${this.token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pin }),
+      })
+      const body = (await res.json().catch(() => null)) as
+        | { ok?: boolean; pinUpdatedAt?: number; message?: string; attemptsLeft?: number; lockedUntil?: number | null }
+        | null
+      if (res.ok && body?.ok) {
+        void this.refreshStatus()
+        return { ok: true, pinUpdatedAt: body.pinUpdatedAt }
+      }
+      if (res.status === 429 || res.status === 423) {
+        return { ok: false, message: body?.message ?? 'For mange forsøg. Prøv igen senere.' }
+      }
+      const left = typeof body?.attemptsLeft === 'number' ? body.attemptsLeft : null
+      return {
+        ok: false,
+        message:
+          left != null
+            ? `Koden er ikke rigtig. ${left} forsøg tilbage.`
+            : body?.message ?? 'Koden er ikke rigtig.',
+      }
+    } catch {
+      // Offline with no local verifier: say so plainly rather than reporting a wrong PIN.
+      return { ok: false, message: 'Ingen forbindelse. Prøv igen når du er på nettet.' }
+    }
+  }
+
+  /** Set or change the PIN. `currentPin` is required (and server-verified) when one already exists. */
+  async setPin(
+    pin: string,
+    currentPin?: string,
+  ): Promise<{ ok: boolean; pinUpdatedAt?: number; message?: string }> {
+    if (!this.token) return { ok: false, message: 'Ingen forbindelse til kontoen.' }
+    try {
+      const res = await fetch('/api/auth/family/pin/set', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${this.token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(currentPin ? { pin, currentPin } : { pin }),
+      })
+      const body = (await res.json().catch(() => null)) as
+        | { ok?: boolean; pinUpdatedAt?: number; message?: string }
+        | null
+      if (res.ok && body?.ok) {
+        await this.refreshStatus()
+        return { ok: true, pinUpdatedAt: body.pinUpdatedAt }
+      }
+      return { ok: false, message: body?.message ?? 'Koden kunne ikke gemmes.' }
+    } catch {
+      return { ok: false, message: 'Ingen forbindelse. Prøv igen når du er på nettet.' }
     }
   }
 
