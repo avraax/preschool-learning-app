@@ -65,6 +65,10 @@ export const installDevRewards = async (): Promise<void> => {
   if (raw == null) return
   const { progressStore } = await import('../services/progressStore')
   const { REWARD_XP, FAST_SLOTS, REWARD_SLOTS } = await import('../config/progression')
+  // The store is INERT until profileStore attaches a child (accounts PRD §5.4), and main.tsx fires
+  // this at import — long before the auth gate opens. Without waiting, every call below is a silent
+  // no-op and the `?rewards=n` harness dies without an error (§10.7).
+  await progressStore.whenAttached()
   // Allow seeding past 45 to exercise the gold pass.
   const want = Math.max(0, Math.min(REWARD_SLOTS * 2, Math.floor(Number(raw) || 0)))
   progressStore.resetAll()

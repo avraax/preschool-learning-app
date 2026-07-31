@@ -4,7 +4,7 @@
 // importable outside a browser on purpose — its localStorage access is try/catch-guarded and its
 // lifecycle hooks are `typeof window` gated — so these tests exercise the REAL singleton, not a mock
 // of it. `resetAll()` between tests gives each case a clean book while preserving settings.
-import { test, beforeEach } from 'node:test'
+import { test, before, beforeEach } from 'node:test'
 import assert from 'node:assert/strict'
 import { progressStore } from './progressStore.ts'
 import { REWARD_PATH, REWARD_CHAPTERS } from '../config/stickers.ts'
@@ -34,6 +34,12 @@ const assertInvariant = () => {
     'collectedCount() drifted from collectedFromLevel(globalLevel())',
   )
 }
+
+// The store is INERT until a profile is attached (accounts PRD §5.4) — attaching is what a real
+// session does through profileStore. Without this every mutator below would correctly no-op.
+before(() => {
+  progressStore.attach('test-child')
+})
 
 beforeEach(() => {
   progressStore.resetAll()

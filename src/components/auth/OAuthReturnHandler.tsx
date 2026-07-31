@@ -115,7 +115,7 @@ const WrongContextNotice: React.FC<{ onClose: () => void }> = ({ onClose }) => (
   >
     <Paper elevation={12} sx={{ p: 4, borderRadius: 4, maxWidth: 400, textAlign: 'center' }}>
       <Typography variant="h5" component="h2" sx={{ fontWeight: 600, mb: 1.5 }}>
-        Næsten færdig 👍
+        Næsten færdig
       </Typography>
       <Typography variant="body1">
         Vend tilbage til Børnelæring-appen for at fortsætte. Du er allerede logget ind.

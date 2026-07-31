@@ -6,9 +6,10 @@
 // centred motion.div at maxWidth 400, <Paper elevation={12} p:4 borderRadius:4>, AnimatePresence with
 // a { stiffness: 300, damping: 30 } spring.
 //
-// Danish conventions matched from every other adult surface: trailing emoji on the title, du-form,
-// ≤2 sentences of body copy, `Prøv igen` / `Luk` button verbs, and a Danish aria-label on every
-// interactive element. The word "trin" appears nowhere.
+// Danish conventions matched from every other adult surface: du-form, ≤2 sentences of body copy,
+// `Prøv igen` / `Luk` button verbs, and a Danish aria-label on every interactive element. The word
+// "trin" appears nowhere. (The PRD's "trailing emoji on titles" convention is superseded by the
+// concurrent de-emoji work — adult surfaces carry a lucide icon instead, as here.)
 //
 // `data-bl-redact` on the root: screenshotService removes it from a bug-report capture, one of the
 // three independent layers protecting a PIN screen from a public blob (accounts PRD §8.1).
@@ -42,15 +43,15 @@ interface Copy {
 const COPY: Record<Exclude<AuthPhase, 'authed' | 'offlineGrace'>, Copy> = {
   booting: { headline: 'Et øjeblik …', body: '' },
   signedOut: {
-    headline: 'Velkommen til Børnelæring 👋',
+    headline: 'Velkommen til Børnelæring',
     body: 'En voksen skal logge ind én gang på denne enhed.',
   },
   locked: {
-    headline: 'Velkommen tilbage 👋',
+    headline: 'Velkommen tilbage',
     body: 'Bekræft at det er dig.',
   },
   offlineExpired: {
-    headline: 'Ingen forbindelse 📡',
+    headline: 'Ingen forbindelse',
     body: "Børnelæring skal på nettet igen. Slut iPad'en til wi-fi og prøv igen.",
   },
 }

@@ -85,6 +85,17 @@ const RewardOverlay: React.FC = () => {
       owed = progressStore.grantPendingRewards()
       setGrants(owed)
     }
+    // THE EMPTY-CEREMONY GUARD (accounts PRD §6.3, guard 2). With nothing owed there is no reward to
+    // reveal, yet everything below would still fire: `sfx.play('level-up')`, `mascotBus.emit('round')`,
+    // `celebrateTier('levelup')` and a CONTENTLESS overlay held for DISMISS_MS — confetti about
+    // nothing. Only the spoken line was guarded (by `if (headline)`). A cross-device merge can create
+    // that state easily, so bail out and just advance the cursor.
+    if (owed.length === 0) {
+      progressStore.markLevelCelebrated(event.level)
+      dismiss()
+      return
+    }
+
     const headline = owed[0]
     const chapterDone = owed.some((g) => g.chapterCompleted)
     const bookDone = owed.some((g) => g.bookCompleted)

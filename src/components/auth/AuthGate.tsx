@@ -14,22 +14,31 @@
 // JWT that cannot be minted offline, so letting the app keep PLAYING costs nothing. Strictness belongs
 // on the token, not on playtime.
 
-import React from 'react'
+import React, { useEffect } from 'react'
 // Side-effect import: registers the real passkey / Google implementations into authSignIn.
 import '../../services/authSignInRegistry'
 import { gateBlocks } from '../../contexts/authGatePolicy'
 import { AuthProvider, useAuthContext } from '../../contexts/AuthContext'
+import { profileStore } from '../../services/profileStore'
 import AuthDialogs from './AuthDialogs'
 import LockScreen from './LockScreen'
 import OAuthReturnHandler from './OAuthReturnHandler'
 
 const GateBody: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const auth = useAuthContext()
+  const blocked = !!auth && gateBlocks(auth.phase)
+
+  // progressStore is INERT until a child is attached (§5.4), and profileStore is the ONLY thing
+  // allowed to attach. Do it the moment the gate opens, and detach when it closes again — playing on
+  // behind a lock screen would write to the previous child's key.
+  useEffect(() => {
+    if (blocked) return
+    profileStore.hydrate(auth?.user?.id ?? null)
+  }, [blocked, auth?.user?.id])
+
   // No context (shouldn't happen) → fail OPEN rather than bricking the app behind a gate that can't
   // decide. The paid endpoints are still protected server-side, which is the control that matters.
   if (!auth) return <>{children}</>
-
-  const blocked = gateBlocks(auth.phase)
   return (
     <>
       {/* Handles the `#bl_auth=1` return fragment and the polling/cold-boot recovery. Mounted even
