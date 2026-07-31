@@ -21,12 +21,18 @@ Treat them as a trust boundary. Shared helpers live in `lib/server-utils.ts`.
   `logServerError` — never in the client response body (no `details: error.message`).
 - **CORS lives in the functions, not `vercel.json`.** The blanket `Access-Control-Allow-Origin: *`
   was removed; `applyCors` sets a scoped origin. Don't reintroduce a `/api` header block.
+- **`tsconfig.json` includes only `src`, so `api/` and `lib/` are NOT type-checked by `npm run build`.**
+  Server-side type errors stay invisible until runtime — check them explicitly (a `noEmit` tsconfig
+  covering `api`/`lib`) before trusting a green build.
 
 ## Two sources that MUST stay in sync
 
 Each `api/*.ts` is mirrored in `dev-server.js` (Express, port 3001) for local dev. Change one →
 change both, or dev and prod drift. `dev-server.js` reads a bit looser (e.g. bug-report GET is open
 unless `BUG_REPORT_READ_KEY` is set locally; prod is fail-closed).
+
+**`dev-server.js` is Express 5, which rejects bare wildcards** — `app.all('/x/*', …)` throws a
+path-to-regexp "Missing parameter name". Name the wildcard: `app.all('/x/*splat', …)`.
 
 ## Per-endpoint specifics
 
