@@ -14,7 +14,7 @@ after fixes.
 3. Listen through each group. For every clip: **✓ OK** or **✗ Fejl**, plus a note and (optionally) a
    candidate IPA / respelling.
 
-Prebaked `.ogg` playback (the default — "as the child hears it") works without Azure creds. The
+Prebaked `.mp3` playback (the default — "as the child hears it") works without Azure creds. The
 **Tving live**, **lex ✗**, **alt. stemme**, and **candidate IPA** controls call Azure and need creds.
 
 ## Where verdicts live (three layers, PRD-11 §3.5)

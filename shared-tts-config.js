@@ -7,10 +7,14 @@
 export const TTS_CONFIG = {
   provider: 'azure',
 
-  // Azure REST output format. Opus in an Ogg container is iOS-Safari friendly and small.
-  // The client must label the data-URL to match: audio/ogg (see `mime`).
-  outputFormat: 'ogg-24khz-16bit-mono-opus',
-  mime: 'audio/ogg',
+  // Azure REST output format. **MP3, not Ogg/Opus** — Apple only added Ogg *container* support in
+  // iOS/iPadOS 18.4, so every Ogg clip is undecodable on older iPads (an iPad Pro 2nd gen tops out
+  // at 17.7 → the whole app went silent apart from the mp3 music bed). MP3 plays on every Safari.
+  // Three things must agree: this format, the `mime` used for the data-URL label, and `fileExt`
+  // (the prebaked file extension in public/sounds/tts/) — see prebake-tts.mjs.
+  outputFormat: 'audio-24khz-48kbitrate-mono-mp3',
+  mime: 'audio/mpeg',
+  fileExt: 'mp3',
 
   // Speaking rate as an Azure <prosody rate> multiplier (1.0 = natural). Slightly above natural.
   speakingRate: 1.05,

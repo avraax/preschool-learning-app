@@ -100,6 +100,15 @@ JS
 )"
 ```
 
+**Prebaked clips bypass `/api/tts-azure` → the fetch hook returns empty.** Most of the closed set
+(English words, numbers, letters, the letter↔word phrases, colours) plays a committed `.mp3` directly
+and never hits Azure, so `window.__tts` comes back `[]` — do NOT read that as "no audio fired." To
+prove the exact spoken text of a prebaked clip, hook the shared `<audio>` element instead and map the
+file back to its text: patch `HTMLMediaElement.prototype.play` to push `this.currentSrc` (the
+`.mp3` name) into a global, drive the taps, then `grep <hash> src/config/prebakedTts.ts` — the manifest
+key embeds the exact text (e.g. `…|Yoyo starter med Y` → `c85cfd7…mp3`). Combine both hooks when a flow
+mixes prebaked + live (dynamic) speech.
+
 ## Options
 - Core: `--url` (req) · `--out <png>` · `--w/--h` (viewport, default 540x940)
 - Waiting (prefer over sleeps): `--wait-for "<css>"` · `--wait-for-text "<txt>"` · `--timeout <ms>`
@@ -119,6 +128,11 @@ An async `--eval` IIFE (`awaitPromise` is on) can drive a whole round and assert
   `.perGame[<gameId>]` (`bestStars`, `roundsCompleted`), lifetime tallies at `.totals`
   (`totalStars`, `totalStickers`). (It's `.perGame`, NOT `.games`.) Snapshot before/after to prove a
   double-tap records once, a mis-tap doesn't drop a star, etc.
+- **Force difficulty live**: DEV exposes the store as `window.__progress`.
+  `window.__progress.setDifficulty({global:'let'|'normal'|'svaer'})` inside an `--eval` switches the
+  level and the current game **regenerates its question at the new level** — the way to headlessly
+  verify difficulty-gated content (Læs Ordet option count, Ram Farven target pool, math ranges)
+  without the adult menu. Give it ~900ms to re-render before you screenshot/assert.
 - **Catch ghost audio after navigation** by patching `window.fetch` + `XMLHttpRequest.open` for
   `/api/tts-azure` and timestamping calls, then asserting none fire after the route change.
 - Advance dwell + the echo `await` mean a correct answer takes ~2s+ to advance — size detection
@@ -151,6 +165,17 @@ An async `--eval` IIFE (`awaitPromise` is on) can drive a whole round and assert
   "Start lyd nu"). Use `--keep-audio-modal` only to screenshot the modal itself.
 - **Measure, don't eyeball, for overflow.** A scaled thumbnail can hide a button clipped past a
   popover edge; `rect.r > container.r` is unambiguous (this caught the sample-button overflow).
+  **`document.scrollWidth <= innerWidth` is NOT proof of no-clip** — GameShell's no-scroll root is
+  `overflow:hidden`, so content that overflows the viewport is *clipped, not scrollable*, and
+  scrollWidth still equals innerWidth. Prove on-screen by comparing each element's
+  `getBoundingClientRect()` left/right against `[0, innerWidth]` (this caught a Ram Farven
+  phone-landscape row clipped −64px left / +22px right that read as "no overflow").
+- **MUI `sx` compiles to an emotion CLASS, not inline style** → in an `--eval`, `el.style.border` /
+  `el.style.borderRadius` is **empty** for a `<Box sx={{…}}>`. Only raw `style={{}}` props show up in
+  `el.style` — in practice the dnd primitives (`DroppableZone`/`DraggableItem`) and scatter `left/top%`.
+  So `[...divs].filter(d => d.style.border.includes('dashed'))` silently matches nothing on sx-styled
+  nodes and the eval returns `{}`. Select/measure MUI-styled elements via `getComputedStyle(el)` (styles)
+  or `getBoundingClientRect()` (geometry) instead.
 - App sizes to `--vh`; default 540x940 is representative. Useful selectors: the adult menu opens
   via `[aria-label="Til de voksne"]` (add `?adult-tap=1` to the URL so a plain click opens it —
   the real gesture is a 2s hold); inside it `[aria-label="Stemme-test"]` opens the voice panel.

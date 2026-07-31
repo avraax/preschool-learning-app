@@ -11,7 +11,7 @@
 //   npm run tts:prebake            # synthesize + write files + regenerate the manifest
 //   npm run tts:prebake -- --dry-run   # enumerate + report coverage, NO Azure calls, NO writes
 //
-// After a real run, commit BOTH public/sounds/tts/*.ogg AND src/config/prebakedTts.ts.
+// After a real run, commit BOTH public/sounds/tts/*.mp3 AND src/config/prebakedTts.ts.
 //
 // Keep in sync with the app: content is imported from the SAME source modules the app uses
 // (Node strips the TS types), and the cache key is built with the SAME shared helper as the client
@@ -51,7 +51,10 @@ function collectEntries() {
   return collectNarrationClips()
 }
 
-const fileFor = (key) => `${createHash('sha1').update(key).digest('hex').slice(0, 16)}.ogg`
+// Extension follows the shared output format (MP3 — Ogg is undecodable on iOS < 18.4), so the
+// container, the data-URL mime and the on-disk files can never drift apart.
+const fileFor = (key) =>
+  `${createHash('sha1').update(key).digest('hex').slice(0, 16)}.${TTS_CONFIG.fileExt}`
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 
@@ -106,7 +109,7 @@ function renderManifest(map) {
 // so the closed content set never hits Azure and has no first-tap fetch latency (PRD-06 §1).
 //
 // Regenerate with \`npm run tts:prebake\` (needs Azure creds). Commit this file together with the
-// public/sounds/tts/*.ogg it references. A non-default narration voice (VoiceLab override) has a
+// public/sounds/tts/*.mp3 it references. A non-default narration voice (VoiceLab override) has a
 // different cache key and correctly misses → live synthesis.
 export const PREBAKED_TTS: Record<string, string> = {
 ${lines}
@@ -179,9 +182,10 @@ async function main() {
     }
   })
 
-  // Drop orphaned .ogg files no longer referenced (content changed since a prior run).
+  // Drop orphaned clips no longer referenced (content changed since a prior run) — and any clip in
+  // a retired container (the .ogg set from before the MP3 switch).
   for (const f of await readdir(OUT_DIR)) {
-    if (f.endsWith('.ogg') && !wanted.has(f)) await rm(path.join(OUT_DIR, f))
+    if (/\.(ogg|mp3)$/.test(f) && !wanted.has(f)) await rm(path.join(OUT_DIR, f))
   }
 
   await writeFile(MANIFEST_TS, renderManifest(map), 'utf-8')

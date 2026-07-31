@@ -39,13 +39,30 @@ a slow synth/fetch bails instead of pre-empting a later tap; don't reintroduce p
 ## Prebaked TTS
 
 The narrated inventory is a large but CLOSED set, so it's synthesized once at the **default
-voice/rate** into `public/sounds/tts/*.ogg` with a committed manifest (`src/config/prebakedTts.ts`).
+voice/rate** into `public/sounds/tts/*.mp3` with a committed manifest (`src/config/prebakedTts.ts`).
 `ttsClient.synthesizeAndPlay` plays the prebaked file directly **before** touching Azure; Azure now
 serves only genuinely dynamic text or a non-default VoiceLab voice.
 
+- **Every audio file the app ships is MP3 — never Ogg/Opus.** Apple added Ogg *container* support only
+  in iOS/iPadOS **18.4**, so Ogg clips are undecodable on an older iPad (an iPad Pro 2nd gen caps at
+  17.7) and the whole app goes silent except the mp3 music bed — narration, SFX, everything. Three
+  things must agree and are asserted by `src/services/audioFormat.test.ts`: `TTS_CONFIG.outputFormat`
+  (`audio-24khz-48kbitrate-mono-mp3`), `TTS_CONFIG.mime` (`audio/mpeg`, the data-URL label) and
+  `TTS_CONFIG.fileExt` (the prebaked extension). SFX pass Howler an explicit `format: ['mp3']` —
+  Howler probes a `.ogg` URL against `codecs="vorbis"`, which Opus-in-Ogg never matched. Re-encode
+  curated cues with `node scripts/transcode-sfx.mjs` (ffmpeg-static devDependency).
 - **After changing any narrated closed-set content** (letter words, phrases, sticker labels, English
-  words, numbers, colours), run `npm run tts:prebake` and **commit** the regenerated `.ogg` files +
+  words, numbers, colours), run `npm run tts:prebake` and **commit** the regenerated `.mp3` files +
   `prebakedTts.ts`. It fails soft — a missing key just falls back to live Azure (slower), never breaks.
+- **A NEW spoken-phrase TEMPLATE must be added to `shared-narration-clips.js`** — the enumerator bakes
+  only what its loops emit from the source arrays, so the app *speaking* a new pattern (e.g. W3's
+  `"{ord} starter med {bogstav}"`) does NOT make it a prebaked/closed-set clip until you add the loop;
+  otherwise it silently falls back to live Azure and is never auditioned. Don't trust "already ships" —
+  the memory game's `"{bogstav} som {ord}"` lines were never actually prebaked until PRD-14 added them.
+- **`tts:prebake` regenerates the manifest and PRUNES orphaned clips**, so a prebake commit can show
+  audio DELETIONS unrelated to your change = pre-existing content drift (content edited since the last
+  prebake) being synced. Expected, not a bug — confirm the pruned keys are genuinely gone from current
+  content (`grep` the phrase) and commit the deletions as part of the prebake output.
 - **Then audition it** (PRD-11): the closed set is enumerated once in `shared-narration-clips.js`
   (shared by prebake + the dev-only `/audit` harness). `npm run audit:check` flags any clip not signed
   off in `docs/audit/narration-audit.json` (the audited-OK manifest), so new content surfaces as
@@ -116,13 +133,25 @@ delay, gating interaction on a `gameReady` flag. Welcome strings live in `GAME_W
 
 Audio cancels automatically on navigation via `NavigationAudioCleanup` in `App.tsx` and the controller's
 own listeners. Permission is session-based and automatic; `SimplifiedAudioPermission` handles the iOS
-prompt. iOS suspension recovery: if the AudioContext later suspends or playback hits a
-`NotAllowedError`, the engine calls back into the provider (`markNeedsUserAction`) to re-prompt.
+prompt. iOS suspension recovery is **silent**: a later suspend/`interrupted` or a `NotAllowedError`
+still calls `markNeedsUserAction`, but the big permission modal is **never auto-re-shown** once audio
+has unlocked once OR the user closed it (`hasUnlockedRef`/`userDismissedRef`; the show decision is the
+pure `shouldShowAudioPrompt()` in `src/contexts/audioPromptPolicy.ts`) — the next real interaction
+re-unlocks via the document-wide listeners. Both the ✕ AND the "Start lyd nu" button hard-dismiss
+(dismiss must not depend on the async unlock result). Re-arming the modal on every transient iOS
+suspend was the "modal won't close / button does nothing" bug.
 
 iOS robustness gotchas (PRD-06), easy to regress:
+- **iOS consumes the transient user-activation across an `await`.** Everything that needs the gesture —
+  `resume()`, `primePlaybackElement()`, `speechSynthesis.speak()` — must run **synchronously before the
+  first `await`** in the unlock path: kick `resume()` (don't await it), prime + speak in-gesture, THEN
+  await resume only to verify. Priming *after* `await resume()` silently failed → **no sound at all**.
 - The unlock gesture must prime **`ttsClient`'s shared `<audio>` element** (`primePlaybackElement()`),
   not just the probe `AudioContext` — narration plays through that element, so it's the one iOS needs
   user-activated, or the first post-fetch `play()` throws `NotAllowedError`.
+- Howler 2.2.4's iOS `_cleanBuffer` crash (`undefined is not an object (evaluating '…bufferSource')`,
+  from its internal `_ended` timer on a torn-down node) is patched once at load in
+  `src/services/howlerGuard.ts` — keep it; upstream is unfixed.
 - Match `'interrupted'` (iOS calls/Siri/backgrounding) alongside `'suspended'` everywhere recovery is
   armed — WebKit uses `'interrupted'`, which is outside the TS `AudioContextState` union.
 - `visibilitychange:hidden` cancels TTS so the stall timer is disarmed; otherwise a backgrounded PWA

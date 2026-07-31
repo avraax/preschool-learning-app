@@ -48,32 +48,32 @@ export type SfxCue =
 // New drag/game cues (pick-up/spring-back/chomp/match) reuse curated files for now (real sound,
 // distinct cue names); swap to dedicated files when available — missing files degrade to silence.
 const CUE_FILES: Record<SfxCue, string> = {
-  tap: '/sounds/ui/tap.ogg',
-  'pick-up': '/sounds/ui/tap.ogg',
-  'spring-back': '/sounds/ui/wrong.ogg',
-  chomp: '/sounds/ui/drop-snap.ogg',
-  match: '/sounds/ui/correct.ogg',
-  correct: '/sounds/ui/correct.ogg',
-  wrong: '/sounds/ui/wrong.ogg',
-  'drop-snap': '/sounds/ui/drop-snap.ogg',
-  flip: '/sounds/ui/flip.ogg',
-  'streak-up': '/sounds/ui/streak-up.ogg',
-  star: '/sounds/ui/star.ogg',
-  'sticker-reveal': '/sounds/ui/sticker-reveal.ogg',
-  'round-complete': '/sounds/ui/round-complete.ogg',
-  'page-complete': '/sounds/ui/page-complete.ogg',
+  tap: '/sounds/ui/tap.mp3',
+  'pick-up': '/sounds/ui/tap.mp3',
+  'spring-back': '/sounds/ui/wrong.mp3',
+  chomp: '/sounds/ui/drop-snap.mp3',
+  match: '/sounds/ui/correct.mp3',
+  correct: '/sounds/ui/correct.mp3',
+  wrong: '/sounds/ui/wrong.mp3',
+  'drop-snap': '/sounds/ui/drop-snap.mp3',
+  flip: '/sounds/ui/flip.mp3',
+  'streak-up': '/sounds/ui/streak-up.mp3',
+  star: '/sounds/ui/star.mp3',
+  'sticker-reveal': '/sounds/ui/sticker-reveal.mp3',
+  'round-complete': '/sounds/ui/round-complete.mp3',
+  'page-complete': '/sounds/ui/page-complete.mp3',
   // Level-up fanfare (Liveliness PRD-01). Aliases the page-complete jingle until a dedicated cue
   // ships (missing files degrade to silence anyway); the biggest celebratory moment in the app.
-  'level-up': '/sounds/ui/page-complete.ogg',
+  'level-up': '/sounds/ui/page-complete.mp3',
   // Navigation cues (Liveliness PRD-02). Reuse existing curated files until dedicated
-  // /sounds/ui/{card-pop,nav-*,menu-open,back}.ogg ship; missing files degrade to silence.
-  'card-pop': '/sounds/ui/tap.ogg',
-  'nav-whoosh': '/sounds/ui/flip.ogg',
-  'nav-wave': '/sounds/ui/flip.ogg',
-  'nav-warp': '/sounds/ui/flip.ogg',
-  'nav-stomp': '/sounds/ui/drop-snap.ogg',
-  'menu-open': '/sounds/ui/star.ogg',
-  back: '/sounds/ui/flip.ogg',
+  // /sounds/ui/{card-pop,nav-*,menu-open,back}.mp3 ship; missing files degrade to silence.
+  'card-pop': '/sounds/ui/tap.mp3',
+  'nav-whoosh': '/sounds/ui/flip.mp3',
+  'nav-wave': '/sounds/ui/flip.mp3',
+  'nav-warp': '/sounds/ui/flip.mp3',
+  'nav-stomp': '/sounds/ui/drop-snap.mp3',
+  'menu-open': '/sounds/ui/star.mp3',
+  back: '/sounds/ui/flip.mp3',
 }
 
 // Per-cue base volume — keep cues subtle so they don't fight narration.
@@ -139,12 +139,17 @@ class SfxClient {
     try {
       howl = new Howl({
         src: [src],
+        // Be explicit instead of letting Howler infer from the URL: it maps a `.ogg` extension to a
+        // `canPlayType('audio/ogg; codecs="vorbis"')` probe, which Safari fails (our old cues were
+        // Opus-in-Ogg, and Apple has no Ogg container at all before iOS 18.4) → it refused to load
+        // and every cue was silent on older iPads. MP3 + a stated format can't be mis-probed.
+        format: ['mp3'],
         volume: CUE_VOLUME[cue] ?? 0.5,
         preload: true,
         html5: false, // WebAudio: low-latency + supports per-play rate; cues are tiny
         onloaderror: (_id, err) => {
-          // [audio-unlock] diagnostic: an OGG decode failure on iOS surfaces HERE (Safari <17.4 can't
-          // decode Ogg Vorbis via WebAudio) → SFX silently do nothing. Captured in bug-report ring.
+          // [audio-unlock] diagnostic: a decode/codec failure surfaces HERE → SFX silently do
+          // nothing. Captured in the bug-report diagnostics ring.
           console.warn('[audio-unlock] SFX load error:', cue, src, err)
         },
         onplayerror: (_id, err) => {
