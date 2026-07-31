@@ -105,7 +105,7 @@ const WrongContextNotice: React.FC<{ onClose: () => void }> = ({ onClose }) => (
     sx={{
       position: 'fixed',
       inset: 0,
-      zIndex: 10000,
+      zIndex: 10001, // above the profile picker (10000) — a wrong-context return needs the last word
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',

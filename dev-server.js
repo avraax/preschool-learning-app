@@ -10,7 +10,7 @@ import {
   lexiconUriForRequest,
 } from './shared-azure-tts.js';
 import { renderAuditMarkdown } from './shared-audit-render.js';
-import { toNodeHandler } from 'better-auth/node';
+import { toNodeHandler, fromNodeHeaders } from 'better-auth/node';
 // Loaded through Node's type-stripping (>=22.18) — which is why lib/auth.ts and everything it
 // imports must use explicit `.ts` extensions on their relative specifiers.
 import { auth } from './lib/auth.ts';
@@ -458,6 +458,132 @@ app.post('/api/audit-save', (req, res) => {
   } catch (error) {
     logDevError('AuditSave', error);
     res.status(500).json({ error: 'Failed to write audit checklist' });
+  }
+});
+
+// --- Child profiles (dev mirror of api/profiles.ts) ------------------------------------------------
+// Same shapes, same validation, same ownership checks — the two sources MUST stay in sync
+// (.claude/rules/api-endpoints.md). Both go through better-auth's adapter, so the row shapes and the
+// session resolution are literally the same code as production.
+async function devSession(req, res) {
+  try {
+    const result = await auth.api.getSession({ headers: fromNodeHeaders(req.headers) });
+    if (result?.user?.id && result.session?.id) {
+      return { userId: result.user.id, sessionId: result.session.id };
+    }
+  } catch (error) {
+    logDevError('Session', error);
+  }
+  res.setHeader('WWW-Authenticate', 'Bearer');
+  res.status(401).json({ error: 'Unauthorized' });
+  return null;
+}
+
+const PROFILE_MAX = 8;
+const cleanAvatar = (v) => {
+  if (typeof v !== 'string') return null;
+  const s = v.trim();
+  if (!s || s.length > 12) return null;
+  if (/[a-zA-Z0-9<>&"'/\\]/.test(s)) return null;
+  return s;
+};
+const cleanName = (v) => {
+  if (v === undefined) return undefined;
+  if (v === null) return null;
+  if (typeof v !== 'string') return undefined;
+  const s = v.trim().replace(/\s+/g, ' ');
+  return s ? s.slice(0, 24) : null;
+};
+const profileShape = (r) => ({
+  id: r.id,
+  name: r.name ?? undefined,
+  avatarEmoji: r.avatarEmoji,
+  createdAt: new Date(r.createdAt).getTime(),
+});
+
+app.all('/api/profiles', async (req, res) => {
+  if (!isAllowedOrigin(req)) return res.status(403).json({ error: 'Forbidden origin' });
+  const session = await devSession(req, res);
+  if (!session) return;
+  if (!rateLimit(req, res, { scope: 'profiles', limit: 60, windowMs: 60_000, subject: session.userId })) return;
+  try {
+    const ctx = await auth.$context;
+    const db = ctx.adapter;
+    const owned = async (id) => {
+      const row = await db.findOne({ model: 'childProfile', where: [{ field: 'id', value: id }] });
+      return row && row.userId === session.userId && !row.deletedAt ? row : null;
+    };
+
+    if (req.method === 'GET') {
+      const rows = await db.findMany({
+        model: 'childProfile',
+        where: [{ field: 'userId', value: session.userId }],
+        sortBy: { field: 'createdAt', direction: 'asc' },
+      });
+      return res.json({ profiles: rows.filter((r) => !r.deletedAt).map(profileShape) });
+    }
+
+    if (req.method === 'POST') {
+      const avatarEmoji = cleanAvatar(req.body?.avatarEmoji);
+      if (!avatarEmoji) return res.status(400).json({ error: 'avatarEmoji (one emoji) is required' });
+      const existing = await db.findMany({
+        model: 'childProfile',
+        where: [{ field: 'userId', value: session.userId }],
+      });
+      if (existing.filter((r) => !r.deletedAt).length >= PROFILE_MAX) {
+        return res.status(409).json({ error: 'For mange profiler' });
+      }
+      const created = await db.create({
+        model: 'childProfile',
+        data: {
+          userId: session.userId,
+          name: cleanName(req.body?.name) ?? null,
+          avatarEmoji,
+          createdAt: new Date(),
+          deletedAt: null,
+        },
+      });
+      return res.json({ profile: profileShape(created) });
+    }
+
+    if (req.method === 'PATCH') {
+      if (typeof req.body?.id !== 'string') return res.status(400).json({ error: 'id is required' });
+      const row = await owned(req.body.id);
+      if (!row) return res.status(404).json({ error: 'Ukendt profil' });
+      const update = {};
+      const name = cleanName(req.body.name);
+      if (name !== undefined) update.name = name;
+      if (req.body.avatarEmoji !== undefined) {
+        const avatarEmoji = cleanAvatar(req.body.avatarEmoji);
+        if (!avatarEmoji) return res.status(400).json({ error: 'avatarEmoji (one emoji) is required' });
+        update.avatarEmoji = avatarEmoji;
+      }
+      if (!Object.keys(update).length) return res.json({ profile: profileShape(row) });
+      const updated = await db.update({
+        model: 'childProfile',
+        where: [{ field: 'id', value: row.id }],
+        update,
+      });
+      return res.json({ profile: profileShape(updated ?? { ...row, ...update }) });
+    }
+
+    if (req.method === 'DELETE') {
+      const id = typeof req.body?.id === 'string' ? req.body.id : req.query.id;
+      if (typeof id !== 'string') return res.status(400).json({ error: 'id is required' });
+      const row = await owned(id);
+      if (!row) return res.status(404).json({ error: 'Ukendt profil' });
+      await db.update({
+        model: 'childProfile',
+        where: [{ field: 'id', value: row.id }],
+        update: { deletedAt: new Date() },
+      });
+      return res.json({ ok: true });
+    }
+
+    return res.status(405).json({ error: 'Method not allowed' });
+  } catch (error) {
+    logDevError('Profiles', error);
+    res.status(500).json({ error: 'Profil-handlingen mislykkedes' });
   }
 });
 

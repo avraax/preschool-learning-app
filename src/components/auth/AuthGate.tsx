@@ -23,6 +23,7 @@ import { profileStore } from '../../services/profileStore'
 import AuthDialogs from './AuthDialogs'
 import LockScreen from './LockScreen'
 import OAuthReturnHandler from './OAuthReturnHandler'
+import ProfileGate from './ProfileGate'
 
 const GateBody: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const auth = useAuthContext()
@@ -44,7 +45,8 @@ const GateBody: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       {/* Handles the `#bl_auth=1` return fragment and the polling/cold-boot recovery. Mounted even
           while blocked — it is what UNBLOCKS the gate after a Google round trip. */}
       <OAuthReturnHandler />
-      {blocked ? <LockScreen /> : children}
+      {/* Inside the auth gate, ProfileGate decides whether a CHILD still has to be chosen. */}
+      {blocked ? <LockScreen /> : <ProfileGate>{children}</ProfileGate>}
       {/* Above the gate on purpose: `requirePin('unlockSession')` is demanded FROM the lock screen. */}
       <AuthDialogs />
     </>

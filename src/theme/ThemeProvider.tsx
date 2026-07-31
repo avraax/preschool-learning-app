@@ -1,10 +1,11 @@
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { ThemeProvider as MuiThemeProvider } from '@mui/material/styles'
 import { buildTheme } from './buildTheme'
 import { defaultThemeId, getThemeTokens, themeOptions, type ThemeOption } from './themes'
 import { loadTitleFont } from './titleFonts'
 import { devThemeId } from '../utils/devHarness'
 import { musicClient } from '../services/musicClient'
+import { progressStore } from '../services/progressStore'
 
 // Runtime theme switching. Holds the selected theme id (persisted to localStorage),
 // rebuilds the MUI theme on change, and exposes the selection via `useThemeSwitch()`.
@@ -13,6 +14,11 @@ import { musicClient } from '../services/musicClient'
 // reflect the active skin. The selector lives on the home page (which consumes the theme),
 // so it re-renders on switch; other screens re-mount with the new skin on next navigation.
 
+// The DEVICE-level FIRST-PAINT HINT. The TRUTH moved to the profile's `settings.themeId`, which syncs
+// across devices for free (accounts PRD §5.8) — but this key stays, and stays read SYNCHRONOUSLY in a
+// useState initialiser, because replacing it with an async read flashes white on the dark immersive
+// skins (§10.3). It is rewritten on every theme change, so it is always the last-used skin.
+// bugReporter also reads it.
 const STORAGE_KEY = 'bornelaering-theme'
 
 interface ThemeSwitchContextValue {
@@ -42,6 +48,10 @@ const readStoredThemeId = (): string => {
 
 export const AppThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [themeId, setThemeIdState] = useState<string>(readStoredThemeId)
+  // A ref, not the state value: the store subscription is registered once and must compare against the
+  // CURRENT id without re-subscribing on every theme change.
+  const themeIdRef = useRef(themeId)
+  themeIdRef.current = themeId
 
   const setThemeId = useCallback((id: string) => {
     setThemeIdState(id)
@@ -50,6 +60,28 @@ export const AppThemeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     } catch {
       // Ignore storage failures (private mode etc.) — selection still applies for the session.
     }
+    // Truth: the skin belongs to the CHILD and follows them to another device. A no-op while the store
+    // is detached, which is correct — nobody's preference to record yet.
+    progressStore.setSetting('themeId', id)
+  }, [])
+
+  // Adopt the attached profile's skin. Fires on attach and on a profile switch (progressStore notifies
+  // on both), and on a sync pull that brought a newer themeId from another device.
+  useEffect(() => {
+    const sync = () => {
+      const stored = progressStore.get().settings.themeId
+      if (stored && stored !== themeIdRef.current) {
+        themeIdRef.current = stored
+        setThemeIdState(stored)
+        try {
+          localStorage.setItem(STORAGE_KEY, stored)
+        } catch {
+          /* ignore */
+        }
+      }
+    }
+    sync()
+    return progressStore.subscribe(sync)
   }, [])
 
   const theme = useMemo(() => buildTheme(getThemeTokens(themeId)), [themeId])

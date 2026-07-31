@@ -21,15 +21,34 @@ import {
   List,
   ListItem,
   ListItemButton,
+  ListItemIcon,
   ListItemText,
   Switch,
   Typography,
 } from '@mui/material'
-import { Settings } from 'lucide-react'
+import {
+  ArrowUp,
+  Bug,
+  CircleCheck,
+  KeyRound,
+  Lock,
+  Mic,
+  Music,
+  Palette,
+  Repeat,
+  RotateCcw,
+  Settings,
+  SlidersHorizontal,
+  Users,
+  Volume2,
+  VolumeX,
+} from 'lucide-react'
 import { BUILD_INFO } from '../../config/version'
 import { useProgress } from '../../hooks/useProgress'
+import { useProfiles } from '../../hooks/useProfiles'
 import { captureScreenshot } from '../../services/screenshotService'
 import { useAuthContext } from '../../contexts/AuthContext'
+import { profileStore } from '../../services/profileStore'
 
 // Adult-only dialogs are lazy-loaded (PRD-07): they pull in VoiceLab data (~282 lines), the bug
 // reporter, and the difficulty panel, none of which are needed until the adult menu opens. Keeping
@@ -40,13 +59,18 @@ const BugReportDialog = React.lazy(() => import('./BugReportDialog'))
 const DifficultyPanel = React.lazy(() => import('./DifficultyPanel'))
 const ThemePanel = React.lazy(() => import('./ThemePanel'))
 const LoginSecurityPanel = React.lazy(() => import('./LoginSecurityPanel'))
+const ProfilesPanel = React.lazy(() => import('./ProfilesPanel'))
 
 const HOLD_MS = 2000
+const ICON = 20
+// Tighter than MUI's 56px default so a leading icon doesn't indent the labels into a second column
+// (de-emoji PRD-01 W1: these rows used to lead with an emoji sitting inline in the text).
+const iconSlot = { minWidth: 32, color: 'inherit' } as const
 
-type AdultView = null | 'menu' | 'report' | 'voice' | 'difficulty' | 'theme' | 'login' | 'resetConfirm' | 'resetDone'
+type AdultView = null | 'menu' | 'report' | 'voice' | 'difficulty' | 'theme' | 'login' | 'profiles' | 'resetConfirm' | 'resetDone'
 
 interface AdultCornerProps {
-  /** A newer build is live → show the hold-gated "⬆️ Opdater app" item in the menu (PRD-09 P4). */
+  /** A newer build is live → show the hold-gated "Opdater app" item in the menu (PRD-09 P4). */
   updateAvailable?: boolean
   /** Apply the update (hard reload). Only reachable from inside the adult menu, so it's gated by
    *  the same ~2s hold that opens the menu — a child can't trigger it. */
@@ -56,10 +80,14 @@ interface AdultCornerProps {
 const AdultCorner: React.FC<AdultCornerProps> = ({ updateAvailable = false, onApplyUpdate }) => {
   const progress = useProgress()
   const auth = useAuthContext()
+  const account = useProfiles()
+  // Named in the reset confirmation. `undefined` for an unnamed child (the name is optional), in which
+  // case the copy falls back to the generic wording rather than saying "for undefined".
+  const activeChild = account.profiles.find((p) => p.id === account.activeProfileId)?.name
   const [view, setView] = useState<AdultView>(null)
   // Which lazy dialogs have been opened at least once — once true they stay mounted so their
   // open/close transitions animate (and their chunk only loads on first open).
-  const [mounted, setMounted] = useState<{ report?: boolean; voice?: boolean; difficulty?: boolean; theme?: boolean; login?: boolean }>({})
+  const [mounted, setMounted] = useState<{ report?: boolean; voice?: boolean; difficulty?: boolean; theme?: boolean; login?: boolean; profiles?: boolean }>({})
   const [screenshot, setScreenshot] = useState<string | null>(null)
   const [capturing, setCapturing] = useState(false)
   const [wiggle, setWiggle] = useState(false)
@@ -167,7 +195,10 @@ const AdultCorner: React.FC<AdultCornerProps> = ({ updateAvailable = false, onAp
 
       {/* The adult menu */}
       <Dialog open={view === 'menu'} onClose={closeAll} maxWidth="xs" fullWidth>
-        <DialogTitle sx={{ fontWeight: 700 }}>Til de voksne 🔒</DialogTitle>
+        <DialogTitle sx={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Lock size={ICON} aria-hidden />
+          Til de voksne
+        </DialogTitle>
         <DialogContent sx={{ pb: 0.5 }}>
           <List sx={{ py: 0 }}>
             {updateAvailable && onApplyUpdate && (
@@ -183,7 +214,8 @@ const AdultCorner: React.FC<AdultCornerProps> = ({ updateAvailable = false, onAp
                   '&:hover': { bgcolor: 'primary.dark' },
                 }}
               >
-                <ListItemText primary="⬆️ Opdater app (ny version klar)" />
+                <ListItemIcon sx={iconSlot}><ArrowUp size={ICON} aria-hidden /></ListItemIcon>
+                <ListItemText primary="Opdater app (ny version klar)" />
               </ListItemButton>
             )}
             <ListItemButton
@@ -191,31 +223,38 @@ const AdultCorner: React.FC<AdultCornerProps> = ({ updateAvailable = false, onAp
               onClick={() => { setMounted((m) => ({ ...m, report: true })); setView('report') }}
               sx={{ borderRadius: 1, minHeight: 48 }}
             >
-              <ListItemText primary="🐞 Rapportér et problem" />
+              <ListItemIcon sx={iconSlot}><Bug size={ICON} aria-hidden /></ListItemIcon>
+              <ListItemText primary="Rapportér et problem" />
             </ListItemButton>
             <ListItemButton
               aria-label="Stemme-test"
               onClick={() => { setMounted((m) => ({ ...m, voice: true })); setView('voice') }}
               sx={{ borderRadius: 1, minHeight: 48 }}
             >
-              <ListItemText primary="🎙️ Stemme-test" />
+              <ListItemIcon sx={iconSlot}><Mic size={ICON} aria-hidden /></ListItemIcon>
+              <ListItemText primary="Stemme-test" />
             </ListItemButton>
             <ListItemButton
               aria-label="Sværhedsgrad"
               onClick={() => { setMounted((m) => ({ ...m, difficulty: true })); setView('difficulty') }}
               sx={{ borderRadius: 1, minHeight: 48 }}
             >
-              <ListItemText primary="🎚️ Sværhedsgrad" />
+              <ListItemIcon sx={iconSlot}><SlidersHorizontal size={ICON} aria-hidden /></ListItemIcon>
+              <ListItemText primary="Sværhedsgrad" />
             </ListItemButton>
             <ListItemButton
               aria-label="Tema"
               onClick={() => { setMounted((m) => ({ ...m, theme: true })); setView('theme') }}
               sx={{ borderRadius: 1, minHeight: 48 }}
             >
-              <ListItemText primary="🎨 Tema" />
+              <ListItemIcon sx={iconSlot}><Palette size={ICON} aria-hidden /></ListItemIcon>
+              <ListItemText primary="Tema" />
             </ListItemButton>
             <ListItem sx={{ minHeight: 48 }}>
-              <ListItemText primary="🔊 Lydeffekter" />
+              <ListItemIcon sx={iconSlot}>
+                {progress.state.settings.sfxEnabled ? <Volume2 size={ICON} aria-hidden /> : <VolumeX size={ICON} aria-hidden />}
+              </ListItemIcon>
+              <ListItemText primary="Lydeffekter" />
               <Switch
                 checked={progress.state.settings.sfxEnabled}
                 onChange={(_, v) => progress.setSetting('sfxEnabled', v)}
@@ -223,7 +262,8 @@ const AdultCorner: React.FC<AdultCornerProps> = ({ updateAvailable = false, onAp
               />
             </ListItem>
             <ListItem sx={{ minHeight: 48 }}>
-              <ListItemText primary="🎵 Musik" />
+              <ListItemIcon sx={iconSlot}><Music size={ICON} aria-hidden /></ListItemIcon>
+              <ListItemText primary="Musik" />
               <Switch
                 checked={progress.state.settings.musicEnabled}
                 onChange={(_, v) => progress.setSetting('musicEnabled', v)}
@@ -231,18 +271,39 @@ const AdultCorner: React.FC<AdultCornerProps> = ({ updateAvailable = false, onAp
               />
             </ListItem>
             <ListItemButton
+              aria-label="Profiler"
+              onClick={() => { setMounted((m) => ({ ...m, profiles: true })); setView('profiles') }}
+              sx={{ borderRadius: 1, minHeight: 48 }}
+            >
+              <ListItemIcon sx={iconSlot}><Users size={ICON} aria-hidden /></ListItemIcon>
+              <ListItemText primary="Profiler" />
+            </ListItemButton>
+            {/* Deliberately NOT PIN-gated here: clearing the selection only brings up the picker, and
+                picking a child at that point is exactly what a child is allowed to do. Switching from
+                INSIDE Profiler (i.e. while already playing as someone) IS gated. */}
+            <ListItemButton
+              aria-label="Skift barn"
+              onClick={() => { closeAll(); profileStore.clearSelection() }}
+              sx={{ borderRadius: 1, minHeight: 48 }}
+            >
+              <ListItemIcon sx={iconSlot}><Repeat size={ICON} aria-hidden /></ListItemIcon>
+              <ListItemText primary="Skift barn" />
+            </ListItemButton>
+            <ListItemButton
               aria-label="Login og sikkerhed"
               onClick={() => { setMounted((m) => ({ ...m, login: true })); setView('login') }}
               sx={{ borderRadius: 1, minHeight: 48 }}
             >
-              <ListItemText primary="🔑 Login og sikkerhed" />
+              <ListItemIcon sx={iconSlot}><KeyRound size={ICON} aria-hidden /></ListItemIcon>
+              <ListItemText primary="Login og sikkerhed" />
             </ListItemButton>
             <ListItemButton
               aria-label="Nulstil al fremgang"
               onClick={() => setView('resetConfirm')}
               sx={{ borderRadius: 1, minHeight: 48 }}
             >
-              <ListItemText primary="♻️ Nulstil al fremgang" />
+              <ListItemIcon sx={iconSlot}><RotateCcw size={ICON} aria-hidden /></ListItemIcon>
+              <ListItemText primary="Nulstil al fremgang" />
             </ListItemButton>
           </List>
           <Typography
@@ -273,17 +334,25 @@ const AdultCorner: React.FC<AdultCornerProps> = ({ updateAvailable = false, onAp
         {mounted.login && (
           <LoginSecurityPanel open={view === 'login'} onClose={() => setView('menu')} />
         )}
+        {mounted.profiles && (
+          <ProfilesPanel open={view === 'profiles'} onClose={() => setView('menu')} />
+        )}
       </React.Suspense>
 
       {/* Second confirmation. The PIN was already proven to OPEN the menu, so this is the "are you
           sure" — but it is still routed through requirePin('resetProgress'), which re-asks if the
           ~5-minute unlocked window has lapsed. */}
       <Dialog open={view === 'resetConfirm'} onClose={() => setView('menu')} maxWidth="xs" fullWidth>
-        <DialogTitle sx={{ fontWeight: 700 }}>Nulstil fremgang? ♻️</DialogTitle>
+        <DialogTitle sx={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: 1 }}>
+          <RotateCcw size={ICON} aria-hidden />
+          {/* PRODUCT CHANGE (accounts PRD §5.6): reset is now PER CHILD, so the copy must NAME the
+              child or a parent will nuke the wrong kid's book. */}
+          {activeChild ? `Nulstil fremgang for ${activeChild}?` : 'Nulstil fremgang?'}
+        </DialogTitle>
         <DialogContent>
           <Typography>
-            Dette nulstiller <strong>alle</strong> klistermærker, rekorder og stjerner. Lyd, musik og
-            sværhedsgrad beholdes.
+            Dette nulstiller <strong>alle</strong> {activeChild ? `${activeChild}s ` : ''}klistermærker,
+            rekorder og stjerner. Andre børn røres ikke. Lyd, musik og sværhedsgrad beholdes.
           </Typography>
         </DialogContent>
         <DialogActions>
@@ -308,7 +377,9 @@ const AdultCorner: React.FC<AdultCornerProps> = ({ updateAvailable = false, onAp
 
       <Dialog open={view === 'resetDone'} onClose={closeAll} maxWidth="xs" fullWidth>
         <DialogContent sx={{ textAlign: 'center', py: 4 }}>
-          <Typography sx={{ fontSize: '2.5rem', mb: 1 }}>✅</Typography>
+          <Typography component="div" sx={{ color: 'success.main', mb: 1, lineHeight: 0 }}>
+            <CircleCheck size={40} aria-hidden />
+          </Typography>
           <Typography sx={{ fontWeight: 700 }}>Al fremgang er nulstillet.</Typography>
           <DialogActions sx={{ justifyContent: 'center', mt: 2 }}>
             <Button onClick={closeAll} variant="contained">Luk</Button>
