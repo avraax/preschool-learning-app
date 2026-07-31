@@ -22,7 +22,8 @@ the UI would make the answer more correct, use it. Skip it for pure logic/backen
    - API:  `node --env-file=.env.local dev-server.js`            (port 3001)
    - Vite: `node node_modules/vite/bin/vite.js --host 127.0.0.1` (port 5173)
    Vite HMR picks up source edits — re-run the driver after a change without rebuilding.
-2. Chrome defaults to `C:/Program Files/Google/Chrome/Application/chrome.exe` (override `CHROME_PATH`).
+2. **The app is auth-gated.** Add `?nogate=1` to reach any screen (it implies no-auth too), or seed a real session in the same run with `window.__auth.adoptSession(token, user)` — mint one via `node --env-file=.env.local scripts/auth-dev-session.mjs`. DEV handles: `__auth`, `__profiles`, `__progress`, `__sync`.
+3. Chrome defaults to `C:/Program Files/Google/Chrome/Application/chrome.exe` (override `CHROME_PATH`).
 
 Then **view a saved PNG with the Read tool** (it renders images).
 

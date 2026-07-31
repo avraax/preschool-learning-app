@@ -405,6 +405,26 @@ class AuthStore {
   }
 
   /**
+   * Delete the account for real (§8.4). Requires the current PIN, verified server-side under the same
+   * pin_attempt lockout; ON DELETE CASCADE removes every child, book, credential and counter.
+   */
+  async deleteAccount(pin: string): Promise<{ ok: boolean; message?: string; fatal?: boolean }> {
+    if (!this.token) return { ok: false, message: 'Ingen forbindelse til kontoen.', fatal: true }
+    try {
+      const res = await fetch('/api/auth/family/delete-account', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${this.token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pin }),
+      })
+      const body = (await res.json().catch(() => null)) as { ok?: boolean; message?: string } | null
+      if (res.ok && body?.ok) return { ok: true }
+      return { ok: false, message: body?.message ?? 'Kontoen kunne ikke slettes.', fatal: res.status >= 500 }
+    } catch {
+      return { ok: false, message: 'Ingen forbindelse. Prøv igen når du er på nettet.', fatal: true }
+    }
+  }
+
+  /**
    * PRE-FETCH the WebAuthn request options.
    *
    * The lock screen calls this on mount and every ~4 minutes, NOT at tap time: iOS consumes the

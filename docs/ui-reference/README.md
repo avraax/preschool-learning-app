@@ -13,6 +13,12 @@ folder always reflects the shipped UI.
   auto-dismissed). JPEG q85. To re-capture the full set, ask Claude — the capture script
   pattern lives in the git history of `.bug-reports/uiref.ps1` and in this README.
 
+**Accounts build (2026-07-31):** the `overlays/` set gained `auth-lock-screen`, `auth-pin-pad` and
+`auth-profile-picker`, and `adult-menu` was re-captured (it is PIN-gated now and carries Profiler /
+Skift barn / Synkronisering / Login og sikkerhed). `reset-gate.jpg` was DELETED — the
+Danish-number-word `AdultGate` it showed no longer exists. The `ipad/`, `phone/` and `portrait/` sets
+still date from 2026-07-13; capture them with `?nogate=1` now that the app is auth-gated.
+
 ## Folders
 
 | Folder | Viewport | What |
@@ -20,7 +26,7 @@ folder always reflects the shipped UI.
 | `ipad/` | 1180×820 (iPad Air landscape) | **Primary design surface** — every route |
 | `phone/` | 844×390 (iPhone 13 Pro landscape) | The phone-compact variant (`src/theme/phoneMedia.ts` guards) — every route |
 | `portrait/` | 390×844 | Key portrait references (home, menu, quiz, drag board, memory-20, album) |
-| `overlays/` | 1180×820 | States routes can't show: adult menu, bug reporter, voice panel, reset gate, crash screen, audio-permission modal |
+| `overlays/` | 1180×820 | States routes can't show: adult menu, bug reporter, voice panel, crash screen, audio-permission modal, and the auth surfaces (`auth-lock-screen`, `auth-pin-pad`, `auth-profile-picker`) |
 
 ## File → view map (`ipad/` and `phone/` share names)
 

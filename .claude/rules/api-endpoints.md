@@ -3,6 +3,8 @@ paths:
   - "api/*.ts"
   - "dev-server.js"
   - "lib/server-utils.ts"
+  - "lib/session.ts"
+  - "api/auth/**"
   - "vercel.json"
 ---
 
@@ -25,11 +27,31 @@ Treat them as a trust boundary. Shared helpers live in `lib/server-utils.ts`.
   Server-side type errors stay invisible until runtime — check them explicitly (a `noEmit` tsconfig
   covering `api`/`lib`) before trusting a green build.
 
+## The auth surface is different — do NOT wrap it in the helpers above
+
+`api/auth/[...all].ts` is a Web-standard **`fetch` export** (@vercel/node routes it through
+`createWebHandler`, which builds the Request from the raw unconsumed stream). It must NOT go through
+`applyCors`/`isAllowedOrigin`/`rateLimit` — those are `VercelRequest`-shaped, and better-auth already
+owns origin validation (`trustedOrigins`) and DB-backed rate limiting for its paths. Its own
+`try/catch` is required: the runtime's catch is a bare **unlogged** 500.
+
+`vercel.json` `functions` keys are **globs**, so a `api/auth/[...all].ts` key parses `[...all]` as a
+character class and silently matches nothing — use `"api/auth/**"`.
+
+`/api/profiles` and `/api/progress` are ordinary functions but resolve the bearer session through
+`lib/session.ts` (better-auth's own `getSession`), so they can never disagree with `/api/auth` about
+what a valid session is. They live OUTSIDE `/api/auth` on purpose: `redact.sanitizeUrl` strips the
+entire query+fragment from auth paths, so keeping these separate leaves them diagnosable.
+
 ## Two sources that MUST stay in sync
 
 Each `api/*.ts` is mirrored in `dev-server.js` (Express, port 3001) for local dev. Change one →
 change both, or dev and prod drift. `dev-server.js` reads a bit looser (e.g. bug-report GET is open
 unless `BUG_REPORT_READ_KEY` is set locally; prod is fail-closed).
+
+The full mirror list is now: tts-azure, stt, log-error, bug-report, audit-save, version, **the whole
+better-auth handler** (`toNodeHandler`), **`/api/profiles`** and **`/api/progress`**. A missing mirror
+shows up as a 404 only in dev — that is exactly how profile creation silently failed once.
 
 **`dev-server.js` is Express 5, which rejects bare wildcards** — `app.all('/x/*', …)` throws a
 path-to-regexp "Missing parameter name". Name the wildcard: `app.all('/x/*splat', …)`.
@@ -46,7 +68,7 @@ Curl `http://127.0.0.1:3001` with/without an `Origin` header, an oversized body,
 test without disturbing a running dev-server, launch a throwaway instance on another port:
 `PORT=3009 node dev-server.js`.
 
-**A running dev-server holds the shared config in memory** — after editing `shared-*.js` (voices,
+**A running dev-server holds the shared config in memory** (and now also the better-auth instance) — after editing `shared-*.js` (voices,
 output format, lexicon), kill the process on 3001 and restart, or you verify against the OLD values.
 A `curl` 200 only proves *something* is listening, and starting a second instance silently no-ops on
 a bound port: this is how a "verified" TTS response came back as Ogg while the source said MP3.

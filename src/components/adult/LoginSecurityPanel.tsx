@@ -1,4 +1,4 @@
-// "🔑 Login og sikkerhed" — the adult's credential surface.
+// "Login og sikkerhed" — the adult's credential surface.
 //
 // Set/change the PIN, add or remove Face ID ON THIS DEVICE, sign out here, sign out everywhere.
 //
@@ -21,11 +21,13 @@ import {
   List,
   ListItem,
   ListItemButton,
+  ListItemIcon,
   ListItemText,
   Stack,
   TextField,
   Typography,
 } from '@mui/material'
+import { KeyRound, LockKeyhole } from 'lucide-react'
 import { useAuthContext } from '../../contexts/AuthContext'
 import { authStore } from '../../services/authStore'
 import {
@@ -35,6 +37,8 @@ import {
   type PasskeyRegisterOptions,
 } from '../../services/passkeyClient'
 import PinSetupDialog from '../auth/PinSetupDialog'
+import PinPad from '../auth/PinPad'
+import { profileStore } from '../../services/profileStore'
 
 /** A stale challenge is a clean retryable error, so refreshing on a timer is safe (§9). */
 const OPTIONS_REFRESH_MS = 4 * 60 * 1000
@@ -59,6 +63,8 @@ const LoginSecurityPanel: React.FC<LoginSecurityPanelProps> = ({ open, onClose }
   const [message, setMessage] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [changingPin, setChangingPin] = useState(false)
+  const [deletingAccount, setDeletingAccount] = useState(false)
+  const [confirmingDeletePin, setConfirmingDeletePin] = useState(false)
 
   const webauthnEnabled = auth?.info?.webauthnEnabled === true
 
@@ -107,7 +113,7 @@ const LoginSecurityPanel: React.FC<LoginSecurityPanelProps> = ({ open, onClose }
     setBusy(true)
     registerPasskey(registerOptions, deviceName.trim() || 'Denne enhed')
       .then(async (result) => {
-        setMessage(result.ok ? 'Face ID er tilføjet på denne enhed. 👍' : (result.message ?? null))
+        setMessage(result.ok ? 'Face ID er tilføjet på denne enhed.' : (result.message ?? null))
         if (result.ok) await loadPasskeys()
       })
       .finally(() => setBusy(false))
@@ -176,7 +182,10 @@ const LoginSecurityPanel: React.FC<LoginSecurityPanelProps> = ({ open, onClose }
   return (
     <>
       <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
-        <DialogTitle sx={{ fontWeight: 700 }}>Login og sikkerhed 🔑</DialogTitle>
+        <DialogTitle sx={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: 1 }}>
+          <KeyRound size={20} aria-hidden />
+          Login og sikkerhed
+        </DialogTitle>
         <DialogContent>
           {auth?.user?.email && (
             <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1.5 }}>
@@ -196,7 +205,10 @@ const LoginSecurityPanel: React.FC<LoginSecurityPanelProps> = ({ open, onClose }
               disabled={busy}
               sx={{ borderRadius: 1, minHeight: 48 }}
             >
-              <ListItemText primary={auth?.info?.hasPin ? '🔢 Skift kode' : '🔢 Lav en kode'} />
+              <ListItemIcon sx={{ minWidth: 32, color: 'inherit' }}>
+                <LockKeyhole size={20} aria-hidden />
+              </ListItemIcon>
+              <ListItemText primary={auth?.info?.hasPin ? 'Skift kode' : 'Lav en kode'} />
             </ListItemButton>
           </List>
 
@@ -280,6 +292,16 @@ const LoginSecurityPanel: React.FC<LoginSecurityPanelProps> = ({ open, onClose }
             >
               Log ud alle steder
             </Button>
+            {/* §8.4: deletion that actually deletes rows, reachable from the adult menu. */}
+            <Button
+              color="error"
+              onClick={() => setDeletingAccount(true)}
+              disabled={busy}
+              aria-label="Slet kontoen helt"
+              sx={{ minHeight: 48, textTransform: 'none' }}
+            >
+              Slet kontoen helt
+            </Button>
           </Stack>
         </DialogContent>
         <DialogActions>
@@ -289,17 +311,115 @@ const LoginSecurityPanel: React.FC<LoginSecurityPanelProps> = ({ open, onClose }
         </DialogActions>
       </Dialog>
 
+      {/* Two barriers: an explicit confirmation, then the CURRENT PIN typed into the pad. The server
+          verifies that PIN under the same pin_attempt lockout, and ON DELETE CASCADE does the rest. */}
+      <Dialog
+        open={deletingAccount}
+        onClose={() => setDeletingAccount(false)}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle sx={{ fontWeight: 700 }}>Slet kontoen helt?</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Alt slettes: alle børn, alle bøger, alle rekorder, koden og Face ID. Det kan ikke fortrydes.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeletingAccount(false)} aria-label="Annullér">
+            Annullér
+          </Button>
+          <Button
+            color="error"
+            variant="contained"
+            aria-label="Slet kontoen"
+            onClick={() => {
+              setDeletingAccount(false)
+              setConfirmingDeletePin(true)
+            }}
+          >
+            Slet
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <DeleteAccountPinDialog
+        open={confirmingDeletePin}
+        onCancel={() => setConfirmingDeletePin(false)}
+        onDone={async () => {
+          setConfirmingDeletePin(false)
+          onClose()
+          profileStore.signOut()
+          await authStore.signOut()
+        }}
+        onError={(m) => {
+          setConfirmingDeletePin(false)
+          setMessage(m)
+        }}
+      />
+
       <PinSetupDialog
         open={changingPin}
         dismissible
         requireCurrent={auth?.info?.hasPin === true}
         onDone={() => {
           setChangingPin(false)
-          setMessage('Koden er skiftet. 👍')
+          setMessage('Koden er skiftet.')
         }}
         onCancel={() => setChangingPin(false)}
       />
     </>
+  )
+}
+
+/** The PIN pad shown as the second barrier before an account is deleted. */
+const DeleteAccountPinDialog: React.FC<{
+  open: boolean
+  onCancel: () => void
+  onDone: () => void | Promise<void>
+  onError: (message: string) => void
+}> = ({ open, onCancel, onDone, onError }) => {
+  const [wrong, setWrong] = useState(false)
+  const [hint, setHint] = useState('')
+  const [busy, setBusy] = useState(false)
+
+  const submit = useCallback(
+    async (pin: string) => {
+      setBusy(true)
+      const result = await authStore.deleteAccount(pin)
+      setBusy(false)
+      if (result.ok) {
+        setHint('')
+        await onDone()
+        return
+      }
+      setWrong(true)
+      setHint(result.message ?? 'Koden er ikke rigtig.')
+      if (result.fatal) onError(result.message ?? 'Kontoen kunne ikke slettes.')
+    },
+    [onDone, onError],
+  )
+
+  if (!open) return null
+  return (
+    <Dialog open onClose={onCancel} maxWidth="xs" fullWidth slotProps={{ paper: { 'data-bl-redact': true } as never }}>
+      <DialogTitle sx={{ fontWeight: 700 }}>Bekræft med koden</DialogTitle>
+      <DialogContent>
+        <PinPad
+          onComplete={(pin) => void submit(pin)}
+          wrong={wrong}
+          onWrongConsumed={() => setWrong(false)}
+          disabled={busy}
+          hint={hint}
+          label="Tast koden for at slette"
+        />
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onCancel} aria-label="Annullér">
+          Annullér
+        </Button>
+      </DialogActions>
+    </Dialog>
   )
 }
 

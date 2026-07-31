@@ -421,6 +421,47 @@ export const familyPlugin = (): BetterAuthPlugin => ({
     ),
 
     /**
+     * Delete the whole account, for real (§8.4: "deletion that actually deletes rows").
+     *
+     * ON DELETE CASCADE on every table that references `user` means one delete removes the sessions,
+     * the OAuth accounts, the passkeys, the PIN, the attempt counter, the child profiles and — through
+     * childProfile — every progress document. Requires the current PIN, because this is the most
+     * destructive account-scoped mutation there is.
+     */
+    familyDeleteAccount: createAuthEndpoint(
+      '/family/delete-account',
+      { method: 'POST', use: [sessionMiddleware], body: pinBodySchema },
+      async (ctx) => {
+        const session = ctx.context.session
+        if (!session) throw new APIError('UNAUTHORIZED')
+        const adapter = ctx.context.adapter as unknown as Adapter
+        const userId = session.user.id
+        const now = Date.now()
+
+        const { row, state } = await readLockout(adapter, userId)
+        if (isLockedOut(state, now)) {
+          throw new APIError('LOCKED', { message: 'For mange forsøg. Prøv igen senere.' })
+        }
+        const stored = await adapter.findOne<{ hash: string }>({
+          model: 'familyPin',
+          where: [{ field: 'userId', value: userId }],
+        })
+        const ok = !!stored && isPinShape(ctx.body.pin) && (await verifyPin(ctx.body.pin, stored.hash))
+        if (!ok) {
+          const next = registerFailure(state, now)
+          await writeLockout(adapter, userId, row, next, now)
+          throw new APIError('UNAUTHORIZED', { message: 'Koden er ikke rigtig.' })
+        }
+
+        await (adapter as unknown as { delete: (x: unknown) => Promise<void> }).delete({
+          model: 'user',
+          where: [{ field: 'id', value: userId }],
+        })
+        return ctx.json({ ok: true })
+      },
+    ),
+
+    /**
      * Step 2 of §4.5: the app has already written `flowId` into its OWN localStorage (step 1 — that
      * write happening in the app's storage context is the entire point). We store only sha256(flowId),
      * so the plaintext claim credential is never at rest server-side, and generate a SEPARATE random

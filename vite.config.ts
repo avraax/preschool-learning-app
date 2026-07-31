@@ -108,6 +108,10 @@ export default defineConfig({
           if (id.includes('@mui')) return 'mui-vendor'
           if (id.includes('framer-motion')) return 'motion-vendor'
           if (id.includes('howler')) return 'media-vendor'
+          // Auth (accounts PRD §4.1). Deliberately NOT co-bundled with `media-vendor`, which is
+          // howler-only because sfxClient loads it EAGERLY — anything sharing that chunk would be
+          // pulled into first paint.
+          if (id.includes('@simplewebauthn')) return 'auth-vendor'
           if (id.includes('@dnd-kit')) return 'dnd-vendor'
           if (id.includes('react-router') || id.includes('react-dom') || id.includes('scheduler') || /node_modules[\\/]react[\\/]/.test(id)) return 'react-vendor'
         }
