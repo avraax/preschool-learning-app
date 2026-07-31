@@ -10,11 +10,25 @@ import {
   lexiconUriForRequest,
 } from './shared-azure-tts.js';
 import { renderAuditMarkdown } from './shared-audit-render.js';
+import { toNodeHandler } from 'better-auth/node';
+// Loaded through Node's type-stripping (>=22.18) — which is why lib/auth.ts and everything it
+// imports must use explicit `.ts` extensions on their relative specifiers.
+import { auth } from './lib/auth.ts';
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3001;
 
+// --- better-auth (mirrors api/auth/[...all].ts) ------------------------------------------------
+// TWO ordering traps live in these four lines (accounts PRD §4.3):
+//  1. `toNodeHandler` MUST be mounted BEFORE express.json(). better-auth reads the raw body itself;
+//     if express has already consumed the stream the client just hangs on "pending". This is why the
+//     express.json() line below moved DOWN here from the top of the file.
+//  2. Express 5 (this repo is on 5.2.1) rejects bare wildcards — `'/api/auth/*'` throws a
+//     path-to-regexp "Missing parameter name" error. It has to be a NAMED wildcard: `*splat`.
+app.all('/api/auth/*splat', toNodeHandler(auth));
+
 // 5mb to comfortably hold a short base64-encoded audio clip from the mic game.
+// Deliberately mounted AFTER the auth handler — see trap 1 above.
 app.use(express.json({ limit: '5mb' }));
 
 // --- in-process error log (dev mirror of /api/log-error) ---
