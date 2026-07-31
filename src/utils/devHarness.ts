@@ -80,6 +80,22 @@ export const installDevRewards = async (): Promise<void> => {
   }
 }
 
+// DEV `?oauthflow=<flowId>`: seed a PENDING Google flow before React mounts, so the return/recovery
+// path (accounts PRD §4.5 step 6) is drivable headlessly. Without this there is no way to test it:
+// each ui-screenshot run gets a fresh Chrome profile, so localStorage can't be pre-seeded, and the
+// recovery listeners only arm when a pending flow exists AT MOUNT — which in real life is guaranteed
+// because the return from Google is always a fresh page load.
+export const installDevOauthFlow = (): void => {
+  if (!DEV) return
+  const flowId = readParams().get('oauthflow')
+  if (!flowId) return
+  try {
+    localStorage.setItem('bl-oauth-flow', JSON.stringify({ flowId, startedAt: Date.now() }))
+  } catch {
+    /* private mode — nothing to seed */
+  }
+}
+
 // Seedable RNG (mulberry32). When `?seed=<n>` is present in DEV, replace Math.random so every
 // generator that relies on it yields a deterministic sequence — no per-game plumbing required.
 export const installDevSeed = (): void => {

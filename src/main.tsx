@@ -25,8 +25,11 @@ import { sweepLegacyServiceWorkers } from './utils/swCleanup'
 sweepLegacyServiceWorkers()
 
 // DEV screenshot harness: seed Math.random when ?seed=<n> is present (deterministic questions).
-import { installDevSeed, installDevRewards } from './utils/devHarness'
+import { installDevSeed, installDevRewards, installDevOauthFlow } from './utils/devHarness'
 installDevSeed()
+// DEV ?oauthflow=<flowId>: seed a pending Google flow BEFORE React mounts, so the OAuth return and
+// polling-recovery paths are drivable headlessly (accounts PRD §4.5 / §12).
+installDevOauthFlow()
 // DEV ?rewards=<n>: seed the Reward Book so its surfaces are capturable at any point on the path.
 // Fire-and-forget (dynamic imports) — the store commits synchronously and notifies subscribers, so a
 // render that already happened just re-renders.

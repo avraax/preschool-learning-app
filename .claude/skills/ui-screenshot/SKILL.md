@@ -99,6 +99,15 @@ the `set-auth-token` handoff — but **not** the iOS gesture rule (activation co
   (`Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(el, x)`) then
   dispatch `input`.
 
+### `import()` inside `--eval` can give you a DIFFERENT module instance
+Vite dev serves edited modules at HMR-timestamped URLs (`authSignIn.ts?t=1785…`). An `--eval` doing
+`await import('/src/services/x.ts')` (no `?t=`) therefore gets a **second, separate instance** — so any
+module-level state the app registered (singletons, registries, `let` caches) reads as empty and the
+test fails while the product is fine. Symptom: a function that should hit the network returns its
+"not registered" default with no request in the network log.
+Drive the real path instead (a DEV `?param=` harness hook that seeds state before React mounts, as
+`?oauthflow=`/`?rewards=` do), or assert through `window.__*` debug handles the app itself installed.
+
 ### Verifying spoken audio (what Danish the app actually says)
 To check narration/grammar/pronunciation, capture the **TTS request bodies** — the network ring
 doesn't expose POST payloads, so hook `window.fetch` at the START of an `--eval` IIFE (before any

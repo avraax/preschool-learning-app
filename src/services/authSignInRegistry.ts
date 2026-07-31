@@ -7,5 +7,7 @@
 
 import { registerPasskeyUnlock } from './authSignIn'
 import { unlockWithPasskey } from './passkeyClient'
+// Registers itself on import (startGoogleSignIn + claimPendingFlow).
+import './googleSignIn'
 
 registerPasskeyUnlock((opts) => unlockWithPasskey(opts))
