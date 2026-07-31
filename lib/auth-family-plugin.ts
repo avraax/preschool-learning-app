@@ -656,7 +656,17 @@ export const familyPlugin = (): BetterAuthPlugin => ({
         // consent screen, and what the client's 3s poll expects.
         if (!row.sessionToken) return ctx.json({ status: 'pending' as const })
 
-        const session = await ctx.context.internalAdapter.findSession(row.sessionToken)
+        // `set-auth-token` carries the session COOKIE value, i.e. the SIGNED form
+        // `<rawToken>.<hmacSignature>` — but `findSession()` takes the RAW token. Looking the signed
+        // value up directly always returns null, which made every real Google sign-in throw GONE here
+        // and bounce the adult back to the lock screen even though the session had been created.
+        // (The bearer plugin accepts either form on the way IN, which is why the passkey path — which
+        // hands the same signed value straight to the client — worked.)
+        const rawToken = row.sessionToken.split('.')[0]
+        const session =
+          (await ctx.context.internalAdapter.findSession(rawToken)) ??
+          // Fallback in case a future better-auth stops signing the cookie value.
+          (await ctx.context.internalAdapter.findSession(row.sessionToken))
         // Delete on successful read: the token is handed over exactly once.
         await adapter.delete({ model: 'oauthFlow', where: [{ field: 'id', value: row.id }] })
         if (!session) throw new APIError('GONE', { message: 'Sessionen findes ikke længere.' })

@@ -12,6 +12,7 @@
 //
 // Prints `TOKEN=<session token>` on the last line so a shell can capture it.
 
+import { serializeSignedCookie } from 'better-call'
 import { auth } from '../lib/auth.ts'
 import { isEmailAllowed, runtime } from '../lib/env.ts'
 
@@ -43,6 +44,13 @@ if (!user) {
 
 const session = await internal.createSession(user.id, undefined, true)
 console.log(`session ${session.id} expires ${new Date(session.expiresAt).toISOString()}`)
+// A real sign-in hands the client the SIGNED cookie value (what the bearer plugin exposes as
+// `set-auth-token`), not the raw token. Print BOTH — using the raw one in a test is exactly how the
+// OAuth claim bug hid behind a green test (see scripts/auth-probe-claim.mjs).
+const signed = (
+  await serializeSignedCookie('', session.token, process.env.BETTER_AUTH_SECRET)
+).replace('=', '')
 console.log(`USER_ID=${user.id}`)
 console.log(`TOKEN=${session.token}`)
+console.log(`SIGNED_TOKEN=${signed}`)
 process.exit(0)

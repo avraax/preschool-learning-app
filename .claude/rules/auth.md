@@ -90,6 +90,14 @@ table, and our five (`childProfile`, `profileProgress`, `familyPin`, `pinAttempt
   query+fragment on `/api/auth`. Auth surfaces carry `data-bl-redact`, `screenshotService` removes
   those nodes, the hold gesture is inert while an auth dialog is open, and `PinPad` renders dots.
 
+- **`set-auth-token` is the SIGNED cookie value** (`<rawToken>.<hmac>`), NOT `session.token`.
+  `internalAdapter.findSession()` takes the RAW token, so the OAuth claim must split on `.` first —
+  looking the signed value up returns null and bounces the adult back to the lock screen *after* a
+  successful Google sign-in. The bearer plugin accepts EITHER form on the way IN, which is why the
+  passkey path (same signed value handed straight to the client) always worked. Guarded by
+  `node --env-file=.env.local scripts/auth-probe-claim.mjs`, which parks the signed shape a real
+  callback produces — seeding a RAW token is precisely how this hid behind a green test.
+
 ## progressStore is INERT until a profile is attached
 
 The store hydrates at module-import time, before React, the router or the gate — so it cannot know
