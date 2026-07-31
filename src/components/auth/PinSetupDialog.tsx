@@ -18,6 +18,7 @@
 
 import React, { useCallback, useState } from 'react'
 import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Typography } from '@mui/material'
+import { Lock } from 'lucide-react'
 import PinPad from './PinPad'
 import { authStore } from '../../services/authStore'
 import { storeLocalVerifier } from '../../services/pinVerifier'
@@ -135,8 +136,17 @@ const PinSetupDialog: React.FC<PinSetupDialogProps> = ({
         } as never,
       }}
     >
-      <DialogTitle sx={{ fontWeight: 700, [PHONE_LANDSCAPE]: { py: 1, fontSize: '1.05rem' } }}>
-        {requireCurrent ? 'Skift kode 🔒' : 'Lav en voksenkode 🔒'}
+      <DialogTitle
+        sx={{
+          fontWeight: 700,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1,
+          [PHONE_LANDSCAPE]: { py: 1, fontSize: '1.05rem' },
+        }}
+      >
+        <Lock size={20} aria-hidden />
+        {requireCurrent ? 'Skift kode' : 'Lav en voksenkode'}
       </DialogTitle>
       <DialogContent sx={{ [PHONE_LANDSCAPE]: { py: 0.5 } }}>
         {!requireCurrent && (
@@ -155,6 +165,9 @@ const PinSetupDialog: React.FC<PinSetupDialogProps> = ({
           disabled={step === 'saving'}
           hint={hint}
           label={LABELS[step]}
+          // Each step asks for a DIFFERENT code, so the entry must start empty — otherwise "type it
+          // again" arrives pre-filled and inert.
+          resetKey={step}
         />
       </DialogContent>
       {dismissible && (

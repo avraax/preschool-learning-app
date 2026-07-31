@@ -38,6 +38,15 @@ export interface PinPadProps {
   /** Danish helper line under the dots (attempts left, lockout countdown, …). */
   hint?: string
   label?: string
+  /**
+   * Change this whenever the host starts asking for a DIFFERENT code, and the entry is cleared.
+   *
+   * Needed because the pad only self-clears on a WRONG attempt. In a multi-step flow (choose → confirm)
+   * a *successful* step change left the four dots filled, and since the entry was already full every
+   * further tap was ignored — the second step looked pre-filled and unusable until you deleted four
+   * digits by hand. PinSetupDialog passes its `step`.
+   */
+  resetKey?: string | number
 }
 
 const PinPad: React.FC<PinPadProps> = ({
@@ -47,6 +56,7 @@ const PinPad: React.FC<PinPadProps> = ({
   disabled = false,
   hint,
   label = 'Tast koden',
+  resetKey,
 }) => {
   const theme = useTheme()
   const reduced = useReducedMotion()
@@ -62,6 +72,12 @@ const PinPad: React.FC<PinPadProps> = ({
     const id = setTimeout(() => onWrongConsumed?.(), 450)
     return () => clearTimeout(id)
   }, [wrong, onWrongConsumed])
+
+  // A new question ⇒ a fresh entry. See `resetKey`.
+  useEffect(() => {
+    digitsRef.current = ''
+    setDigits('')
+  }, [resetKey])
 
   const press = useCallback(
     (key: string) => {
