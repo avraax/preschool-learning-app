@@ -41,14 +41,19 @@ Authored 2026-07-31. Status: **authored, not implemented.**
     `AZURE_SPEECH_REGION` and `BUG_REPORT_READ_KEY` exist **only** in that local file. Pull to a scratch path and
     copy across.
 
-**One blocker left, and it requires the owner in a browser — it cannot be automated:**
+- **The Google OAuth Web client is created and verified.** `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` are set in
+  Vercel across all three environments and in `.env.local`, under Google Cloud project
+  `preschool-learning-app-466719`. **Verified live** by exchanging a deliberately malformed code at
+  `https://oauth2.googleapis.com/token`: the response is `invalid_grant` ("Malformed auth code"), **not**
+  `invalid_client` or `redirect_uri_mismatch` — which proves the client id/secret authenticate and that all four
+  redirect URIs from §4.9 are registered. The consent screen is on **Testing** with `allanvraa@gmail.com` as a test
+  user (deliberate — avoids app verification, and the 7-day-refresh-token caveat doesn't apply because the design
+  uses `access_type=online` and only consumes a one-shot `id_token`).
 
-- **The Google OAuth Web client (§4.9).** Console-only — there is **no API for this**. `gcloud iap oauth-clients`
-  is deprecated, was shut down in March 2026, and required a Workspace org anyway (the owner is on a personal
-  Gmail). Create it at console.cloud.google.com → project `preschool-learning-app-466719` → APIs & Services →
-  Credentials → Create credentials → OAuth client ID → **Web application**, with the four redirect URIs and two
-  JavaScript origins listed in §4.9. Then set `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` in Vercel (all three
-  environments) and in `.env.local`.
+**Setup is complete. There are no remaining owner blockers — W0 through W11 can all proceed.**
+
+The only thing W0 still has to do is the `tsconfig.server.json` type-checking work; provisioning is finished. Note
+that a **`vercel env pull` is now safe to run into a scratch path but never over `.env.local`**.
 
 **What can start before those land:** all of **W2** (every pure module + its `node --test` suite —
 `authGatePolicy`, `pinPolicy`, `redact`, `accessToken`, `pinHash`, `progressSchema`, `progressMerge`) needs zero
