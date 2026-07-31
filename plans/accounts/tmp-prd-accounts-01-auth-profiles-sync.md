@@ -27,19 +27,28 @@ Authored 2026-07-31. Status: **authored, not implemented.**
   **`preschool-learning-app-466719`** — the same project as the existing STT credentials, so the OAuth client
   belongs there.
 
-**Two blockers that require the owner in a browser — neither can be automated:**
+- **Neon Postgres is provisioned and verified.** Free plan (`free_v3`), region **`eu-central-1` (Frankfurt)**,
+  Neon's own auth product disabled (`-m auth=false` — we use better-auth). Connected to production / preview /
+  development, and Vercel injected `DATABASE_URL` (pooled `-pooler` host) plus `DATABASE_URL_UNPOOLED` and the
+  `POSTGRES_*` / `PG*` aliases. **Verified live:** authenticates as `neondb_owner` on PostgreSQL 17, and
+  `create table` / `drop table` both succeed, so the schema migration will run. Resource
+  `rough-silence-90309729`, installation `icfg_e15xIqlOp5bF9Ldl9A7rxsm8`.
+  - **Gotcha for W1:** `node-postgres` now warns that `sslmode=require` (which is what Vercel's injected URL uses)
+    is currently treated as `verify-full` but will adopt weaker libpq semantics in pg v9. Pin the intent
+    explicitly — either `sslmode=verify-full` or `uselibpqcompat=true&sslmode=require` — rather than inheriting a
+    behaviour change on a future dependency bump.
+  - Never run a bare `vercel env pull`: it overwrites `.env.local`, and `GOOGLE_CLOUD_PRIVATE_KEY_BASE64`,
+    `AZURE_SPEECH_REGION` and `BUG_REPORT_READ_KEY` exist **only** in that local file. Pull to a scratch path and
+    copy across.
 
-1. **Neon marketplace terms.** `vercel integration add neon --plan free_v3 -m region=fra1 -m auth=false` returns
-   `integration_terms_acceptance_required`; a Neon EULA must be accepted at
-   `https://vercel.com/allan-brink-vraas-projects/~/integrations/accept-terms/neon?source=cli`. Once accepted,
-   re-run that **exact** command (note `-m auth=false`: Neon's built-in auth product is not wanted, we use
-   better-auth) — it auto-injects `DATABASE_URL`. **Pass `--no-env-pull`**: the default `env pull` overwrites
-   `.env.local` and would destroy the Azure/STT credentials. Add `DATABASE_URL` to `.env.local` by hand.
-2. **The Google OAuth Web client (§4.9).** Console-only — there is **no API for this**. `gcloud iap oauth-clients`
-   is deprecated, was shut down in March 2026, and required a Workspace org anyway (the owner is on a personal
-   Gmail). Create it at console.cloud.google.com → project `preschool-learning-app-466719` → APIs & Services →
-   Credentials → Create credentials → OAuth client ID → **Web application**, with the four redirect URIs and two
-   JavaScript origins listed in §4.9. Then set `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`.
+**One blocker left, and it requires the owner in a browser — it cannot be automated:**
+
+- **The Google OAuth Web client (§4.9).** Console-only — there is **no API for this**. `gcloud iap oauth-clients`
+  is deprecated, was shut down in March 2026, and required a Workspace org anyway (the owner is on a personal
+  Gmail). Create it at console.cloud.google.com → project `preschool-learning-app-466719` → APIs & Services →
+  Credentials → Create credentials → OAuth client ID → **Web application**, with the four redirect URIs and two
+  JavaScript origins listed in §4.9. Then set `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` in Vercel (all three
+  environments) and in `.env.local`.
 
 **What can start before those land:** all of **W2** (every pure module + its `node --test` suite —
 `authGatePolicy`, `pinPolicy`, `redact`, `accessToken`, `pinHash`, `progressSchema`, `progressMerge`) needs zero
