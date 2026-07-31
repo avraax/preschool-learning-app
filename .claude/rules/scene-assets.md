@@ -1,3 +1,14 @@
+---
+paths:
+  - "src/assets/themes/**"
+  - "src/components/common/scene/*.tsx"
+  - "src/components/common/scene/*.ts"
+  - "src/theme/sceneAssets.ts"
+  - "src/theme/tokens/*.tokens.ts"
+  - "art-src/**"
+  - "scripts/optimize-theme-art.mjs"
+---
+
 # Theme-World Art & the Green-Screen Keying Pipeline
 
 How the per-skin immersive worlds are built from baked art, and the non-obvious rules for turning the

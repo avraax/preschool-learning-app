@@ -1,3 +1,12 @@
+---
+paths:
+  - "src/components/common/dnd/*.ts"
+  - "src/components/common/dnd/*.tsx"
+  - "src/components/farver/*.tsx"
+  - "src/config/colorContent.ts"
+  - "src/utils/shuffle.ts"
+---
+
 # Drag-and-Drop Rules
 
 The Farver games are the app's only drag games. They use **`@dnd-kit/core`** through shared
