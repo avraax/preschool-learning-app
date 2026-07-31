@@ -10,6 +10,42 @@
 
 Authored 2026-07-31. Status: **authored, not implemented.**
 
+## 0. Setup state as of 2026-07-31 — read this before starting W0
+
+**Already done — do not redo:**
+
+- **9 env vars are set in Vercel** across production / preview / development, and mirrored into
+  `.env.local` (the pre-existing Azure + Google-STT + bug-report keys there were appended to, not replaced):
+  `BETTER_AUTH_SECRET`, `ACCESS_TOKEN_SECRET`, `PIN_PEPPER` (32 random bytes each, three distinct values),
+  `BETTER_AUTH_URL`, `WEBAUTHN_RP_ID`, `WEBAUTHN_RP_NAME`, `AUTH_ALLOWED_EMAILS`, plus `AUTH_DEV_BYPASS=1` in
+  `.env.local` only.
+- `BETTER_AUTH_URL` and `WEBAUTHN_RP_ID` are **deliberately unset on preview** (§4.9).
+- `AUTH_ALLOWED_EMAILS` = **`allanvraa@gmail.com`** only. **Never add the owner's work email/domain to this
+  project** (§4.10).
+- CLI state: Vercel CLI 54.12.2 authenticated as `allanvraa-3250` (team `allan-brink-vraas-projects`), project
+  linked. gcloud 572.0.0 authenticated as `allanvraa@gmail.com`, active project
+  **`preschool-learning-app-466719`** — the same project as the existing STT credentials, so the OAuth client
+  belongs there.
+
+**Two blockers that require the owner in a browser — neither can be automated:**
+
+1. **Neon marketplace terms.** `vercel integration add neon --plan free_v3 -m region=fra1 -m auth=false` returns
+   `integration_terms_acceptance_required`; a Neon EULA must be accepted at
+   `https://vercel.com/allan-brink-vraas-projects/~/integrations/accept-terms/neon?source=cli`. Once accepted,
+   re-run that **exact** command (note `-m auth=false`: Neon's built-in auth product is not wanted, we use
+   better-auth) — it auto-injects `DATABASE_URL`. **Pass `--no-env-pull`**: the default `env pull` overwrites
+   `.env.local` and would destroy the Azure/STT credentials. Add `DATABASE_URL` to `.env.local` by hand.
+2. **The Google OAuth Web client (§4.9).** Console-only — there is **no API for this**. `gcloud iap oauth-clients`
+   is deprecated, was shut down in March 2026, and required a Workspace org anyway (the owner is on a personal
+   Gmail). Create it at console.cloud.google.com → project `preschool-learning-app-466719` → APIs & Services →
+   Credentials → Create credentials → OAuth client ID → **Web application**, with the four redirect URIs and two
+   JavaScript origins listed in §4.9. Then set `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`.
+
+**What can start before those land:** all of **W2** (every pure module + its `node --test` suite —
+`authGatePolicy`, `pinPolicy`, `redact`, `accessToken`, `pinHash`, `progressSchema`, `progressMerge`) needs zero
+infrastructure and is the largest independently-testable chunk of the build. The `tsconfig.server.json` half of W0
+also needs nothing. **W1 onward needs `DATABASE_URL`.**
+
 ---
 
 ## 1. Context — why this is being built
