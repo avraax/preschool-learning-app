@@ -21,7 +21,9 @@ import {
   type AuthPhase,
   type ServerVerdict,
 } from '../contexts/authGatePolicy'
+import { devNoAuth } from '../utils/devHarness'
 import { forgetSecret, registerSecret } from './redact'
+import type { PasskeyRequestOptions } from './authSignIn'
 
 export interface AccountUser {
   id: string
@@ -327,6 +329,28 @@ class AuthStore {
     }
   }
 
+  /**
+   * PRE-FETCH the WebAuthn request options.
+   *
+   * The lock screen calls this on mount and every ~4 minutes, NOT at tap time: iOS consumes the
+   * transient user activation across an `await`, so `navigator.credentials.get()` must run in the same
+   * task as the tap (§9). A stale challenge is a clean, retryable error, which is what makes
+   * pre-fetching safe. Returns null when passkeys aren't available here (e.g. a preview deployment).
+   */
+  async fetchPasskeyRequestOptions(): Promise<PasskeyRequestOptions | null> {
+    try {
+      const res = await fetch('/api/auth/passkey/generate-authenticate-options', {
+        headers: this.token ? { Authorization: `Bearer ${this.token}` } : {},
+      })
+      if (!res.ok) return null
+      const options = (await res.json()) as PasskeyRequestOptions['options']
+      if (!options?.challenge) return null
+      return { fetchedAt: Date.now(), options }
+    } catch {
+      return null
+    }
+  }
+
   // ----- the access JWT --------------------------------------------------------------------------
 
   /**
@@ -436,15 +460,10 @@ class AuthStore {
   }
 }
 
-/**
- * DEV-only bypass. `?nogate=1` implies no-auth so that every pre-existing `ui-screenshot` recipe keeps
- * working unchanged (W4), and `?noauth=1` is the explicit spelling.
- */
+/** DEV-only bypass — one source of truth in devHarness, so the screenshot recipes can't drift. */
 function detectDevBypass(): boolean {
-  if (!import.meta.env?.DEV) return false
   try {
-    const q = new URLSearchParams(window.location.search)
-    return q.get('noauth') === '1' || q.get('nogate') === '1'
+    return devNoAuth()
   } catch {
     return false
   }

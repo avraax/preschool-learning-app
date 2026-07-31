@@ -32,6 +32,16 @@ export const devThemeId = (): string | null => (DEV ? readParams().get('theme') 
 /** Whether to skip the audio welcome/permission gate. */
 export const devNoGate = (): boolean => DEV && readParams().has('nogate')
 
+/**
+ * Whether to skip the AUTH gate (accounts PRD W4).
+ *
+ * `?nogate=1` deliberately implies no-auth as well, so every pre-existing `ui-screenshot` recipe
+ * keeps working unchanged instead of needing a second param bolted on. `?noauth=1` is the explicit
+ * spelling for when only the auth gate should be skipped.
+ */
+export const devNoAuth = (): boolean =>
+  DEV && (readParams().has('nogate') || readParams().get('noauth') === '1')
+
 /** Whether to force the reduced-motion path (so its parity can be captured headlessly). */
 export const devReduceMotion = (): boolean => DEV && readParams().get('reduce') === '1'
 

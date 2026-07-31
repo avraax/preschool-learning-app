@@ -10,6 +10,8 @@ import { CssBaseline } from '@mui/material'
 import App from './App.tsx'
 import { AppThemeProvider } from './theme/ThemeProvider'
 import AppErrorBoundary from './components/common/AppErrorBoundary'
+// The hard auth gate (accounts PRD D5/W4). NOT lazy: a blocking gate must not wait on a chunk.
+import AuthGate from './components/auth/AuthGate'
 // Self-hosted kid-friendly font (bundled, identical on every OS/device)
 import '@fontsource/comic-neue/400.css'
 import '@fontsource/comic-neue/700.css'
@@ -44,7 +46,12 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
       <AppThemeProvider>
         <CssBaseline />
         <AppErrorBoundary>
-          <App />
+          {/* Between the boundary and App: a gate crash must still be caught, and while the gate
+              blocks, <App /> (and therefore the audio-permission modal) never mounts — so only one
+              blocking overlay is ever on screen. */}
+          <AuthGate>
+            <App />
+          </AuthGate>
         </AppErrorBoundary>
       </AppThemeProvider>
     </BrowserRouter>
