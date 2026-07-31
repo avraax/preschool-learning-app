@@ -4,7 +4,6 @@ import UnifiedMemoryGame, { UnifiedMemoryConfig, MemoryItemDisplay } from '../co
 import { categoryThemes } from '../../config/categoryThemes'
 import { AlphabetScoreChip, MathScoreChip } from '../common/ScoreChip'
 import { AlphabetRestartButton, MathRestartButton } from '../common/RestartButton'
-import { stickerSetForSection } from '../../config/stickers'
 import { AlphabetRepeatButton, MathRepeatButton } from '../common/RepeatButton'
 import { shuffle } from '../../utils/shuffle'
 import { LETTER_WORDS } from '../../config/letterWords'
@@ -42,7 +41,6 @@ const MemoryGame: React.FC = () => {
     gameId: `memory.letters.${boardPairs}`,
     boardPairs,
     starThresholds,
-    stickerSetId: stickerSetForSection('alphabet'),
 
     generateItems: () => {
       // Shuffle the full alphabet; the engine slices boardPairs items for the board.
@@ -86,7 +84,6 @@ const MemoryGame: React.FC = () => {
     gameId: `memory.numbers.${boardPairs}`,
     boardPairs,
     starThresholds,
-    stickerSetId: stickerSetForSection('math'),
 
     generateItems: () => {
       // Shuffle 1–20; the engine slices boardPairs (random 10, or all 20).

@@ -1,34 +1,48 @@
-// Sticker album content (Overhaul Foundation — System 2).
+// The reward path (Reward Book PRD-01 §6).
 //
-// The shared collectible pool. Stickers are emoji-based in v1 (consistent with the app's emoji
-// content). Sets are APP-WIDE pages, not per-section: any game awards from the global pool.
-// Adding a set or sticker is data-only — append below and the album page picks it up.
+// 45 rewards in 5 chapters of 9. This flat ORDERED path IS the journey: reaching level N+1 awards
+// slot N (see progression.ts `collectedFromLevel`), so the ring in every game header, the book at
+// /album, and the ceremony all show the same object at the same time.
 //
-// Danish labels are spoken aloud (TTS) on reveal and when tapped in the album, so keep them
-// simple, child-recognisable words.
+// **THE ORDER MUST NEVER BE SHUFFLED.** No `shuffle()`, no random pick, no reordering — anywhere in
+// this system. Determinism is the whole point: the child can always see the next prize, and the same
+// prize is what the ring is filling toward.
+//
+// Danish labels are spoken aloud (TTS) on reveal and when tapped in the book, so keep them simple,
+// child-recognisable words.
+//
+// **This module must stay Node-importable**: shared-narration-clips.js imports it directly (in plain
+// Node, type-stripped) to enumerate the closed narration set, so it must not transitively import a
+// `.webp` or touch `import.meta.glob`. That's why the art-gated hook (PRD §6.2) is NOT an `art` field
+// on `Reward` but a lookup — `rewardArt(reward.id)` from `src/assets/rewards/index.ts`, which globs
+// whatever renders have landed. Every render site calls that; a missing render → the emoji shows.
+// See plans/reward-book/reward-book-art-prompts.md.
 
-export type StickerRarity = 'normal' | 'shiny'
+// NB the explicit `.ts` extension: shared-narration-clips.js imports THIS file in plain Node, which
+// does not resolve extensionless relative specifiers. Vite/tsc accept it (allowImportingTsExtensions).
+import { chapterOfSlot } from './progression.ts'
 
-export interface Sticker {
-  id: string // stable, unique across ALL sets (used as the progress key)
+export interface Reward {
+  id: string // stable, unique across ALL chapters (used as the progress key)
   label: string // Danish name, spoken on reveal/tap
-  emoji: string
-  rarity?: StickerRarity
+  emoji: string // fallback + silhouette source when no baked render exists yet
 }
 
-export interface StickerSet {
+export interface RewardChapter {
   id: string
-  title: string // Danish page title
-  emoji: string // page/tab icon
-  stickers: Sticker[]
+  title: string // Danish chapter title
+  emoji: string // chapter/tab icon
+  rewards: Reward[] // exactly CHAPTER_SIZE
 }
 
-export const STICKER_SETS: StickerSet[] = [
+// Chapters map 1:1 onto the 5 companion growth stages (PRD D3), and the slot map is fixed:
+// 1-9 Dyr · 10-18 Køretøjer · 19-27 Mad · 28-36 Natur · 37-45 Havet.
+export const REWARD_CHAPTERS: RewardChapter[] = [
   {
     id: 'dyr',
     title: 'Dyr',
     emoji: '🐾',
-    stickers: [
+    rewards: [
       { id: 'dyr-hund', label: 'Hund', emoji: '🐕' },
       { id: 'dyr-kat', label: 'Kat', emoji: '🐱' },
       { id: 'dyr-ko', label: 'Ko', emoji: '🐄' },
@@ -44,7 +58,7 @@ export const STICKER_SETS: StickerSet[] = [
     id: 'koeretoejer',
     title: 'Køretøjer',
     emoji: '🚗',
-    stickers: [
+    rewards: [
       { id: 'kt-bil', label: 'Bil', emoji: '🚗' },
       { id: 'kt-bus', label: 'Bus', emoji: '🚌' },
       { id: 'kt-tog', label: 'Tog', emoji: '🚂' },
@@ -60,7 +74,7 @@ export const STICKER_SETS: StickerSet[] = [
     id: 'mad',
     title: 'Mad',
     emoji: '🍎',
-    stickers: [
+    rewards: [
       { id: 'mad-aeble', label: 'Æble', emoji: '🍎' },
       { id: 'mad-banan', label: 'Banan', emoji: '🍌' },
       { id: 'mad-jordbaer', label: 'Jordbær', emoji: '🍓' },
@@ -76,7 +90,7 @@ export const STICKER_SETS: StickerSet[] = [
     id: 'natur',
     title: 'Natur',
     emoji: '🌳',
-    stickers: [
+    rewards: [
       { id: 'natur-trae', label: 'Træ', emoji: '🌳' },
       { id: 'natur-blomst', label: 'Blomst', emoji: '🌸' },
       { id: 'natur-sol', label: 'Sol', emoji: '☀️' },
@@ -92,7 +106,7 @@ export const STICKER_SETS: StickerSet[] = [
     id: 'havet',
     title: 'Havet',
     emoji: '🌊',
-    stickers: [
+    rewards: [
       { id: 'hav-fisk', label: 'Fisk', emoji: '🐟' },
       { id: 'hav-haj', label: 'Haj', emoji: '🦈' },
       { id: 'hav-hval', label: 'Hval', emoji: '🐳' },
@@ -104,72 +118,31 @@ export const STICKER_SETS: StickerSet[] = [
       { id: 'hav-musling', label: 'Musling', emoji: '🐚' },
     ],
   },
-  {
-    id: 'smaakryb',
-    title: 'Småkryb',
-    emoji: '🐞',
-    stickers: [
-      { id: 'kryb-sommerfugl', label: 'Sommerfugl', emoji: '🦋' },
-      { id: 'kryb-bi', label: 'Bi', emoji: '🐝' },
-      { id: 'kryb-mariehoene', label: 'Mariehøne', emoji: '🐞' },
-      { id: 'kryb-myre', label: 'Myre', emoji: '🐜' },
-      { id: 'kryb-edderkop', label: 'Edderkop', emoji: '🕷️' },
-      { id: 'kryb-snegl', label: 'Snegl', emoji: '🐌' },
-      { id: 'kryb-larve', label: 'Larve', emoji: '🐛' },
-      { id: 'kryb-bille', label: 'Bille', emoji: '🪲' },
-      { id: 'kryb-graeshoppe', label: 'Græshoppe', emoji: '🦗' },
-    ],
-  },
-  {
-    id: 'legetoej',
-    title: 'Legetøj',
-    emoji: '🧸',
-    stickers: [
-      { id: 'leg-bold', label: 'Bold', emoji: '⚽' },
-      { id: 'leg-ballon', label: 'Ballon', emoji: '🎈' },
-      { id: 'leg-bamse', label: 'Bamse', emoji: '🧸' },
-      { id: 'leg-drage', label: 'Drage', emoji: '🪁' },
-      { id: 'leg-terning', label: 'Terning', emoji: '🎲' },
-      { id: 'leg-robot', label: 'Robot', emoji: '🤖' },
-      { id: 'leg-puslespil', label: 'Puslespil', emoji: '🧩' },
-      { id: 'leg-tromme', label: 'Tromme', emoji: '🥁' },
-      { id: 'leg-guitar', label: 'Guitar', emoji: '🎸' },
-    ],
-  },
 ]
 
-// Which set each section biases its awards toward (PRD-09 P3 — per-section page payoffs). A game
-// draws from its section's set until that page is full, then falls back to the global uncollected
-// pool (see progressStore.grantSticker), so the album still completes across a multi-week tail.
-export type StickerSection = 'alphabet' | 'math' | 'colors' | 'english' | 'ordleg'
-const SECTION_STICKER_SET: Record<StickerSection, string> = {
-  alphabet: 'dyr',
-  math: 'koeretoejer',
-  colors: 'natur',
-  english: 'mad',
-  ordleg: 'havet',
-}
-export const stickerSetForSection = (section: StickerSection): string =>
-  SECTION_STICKER_SET[section]
+// ----- the path + lookups (built once) -----
 
-// ----- lookups (built once) -----
+// The flat ordered journey. Its length + per-chapter size are asserted against the economy constants
+// in src/config/progression.test.ts (this module stays side-effect-free so Node can import it).
+export const REWARD_PATH: Reward[] = REWARD_CHAPTERS.flatMap((c) => c.rewards)
 
-const ALL_STICKERS: Sticker[] = STICKER_SETS.flatMap((s) => s.stickers)
-const STICKER_BY_ID = new Map<string, Sticker>(ALL_STICKERS.map((s) => [s.id, s]))
-const SET_BY_STICKER_ID = new Map<string, StickerSet>(
-  STICKER_SETS.flatMap((set) => set.stickers.map((s) => [s.id, set] as const)),
+const REWARD_BY_ID = new Map<string, Reward>(REWARD_PATH.map((r) => [r.id, r]))
+const SLOT_BY_ID = new Map<string, number>(REWARD_PATH.map((r, i) => [r.id, i]))
+const CHAPTER_BY_REWARD_ID = new Map<string, RewardChapter>(
+  REWARD_CHAPTERS.flatMap((c) => c.rewards.map((r) => [r.id, c] as const)),
 )
 
-export const allStickers = (): Sticker[] => ALL_STICKERS
-export const totalStickerCount = (): number => ALL_STICKERS.length
-export const findSticker = (id: string): Sticker | undefined => STICKER_BY_ID.get(id)
-export const findSet = (setId: string): StickerSet | undefined =>
-  STICKER_SETS.find((s) => s.id === setId)
-export const setForStickerId = (id: string): StickerSet | undefined => SET_BY_STICKER_ID.get(id)
+// The reward at a 0-based slot index (null past the end of the path — see the gold pass in
+// progressStore.grantSlot, which wraps instead).
+export const rewardAt = (slotIndex0: number): Reward | null => REWARD_PATH[slotIndex0] ?? null
+export const chapterAt = (slotIndex0: number): RewardChapter | undefined =>
+  REWARD_CHAPTERS[chapterOfSlot(slotIndex0)]
+export const slotOfReward = (id: string): number => SLOT_BY_ID.get(id) ?? -1
 
-// The pool a game awards from: a specific set if `setId` is given (and valid), else everything.
-export const stickerPool = (setId?: string): Sticker[] => {
-  if (!setId) return ALL_STICKERS
-  const set = findSet(setId)
-  return set ? set.stickers : ALL_STICKERS
-}
+export const allRewards = (): Reward[] => REWARD_PATH
+export const totalRewardCount = (): number => REWARD_PATH.length
+export const findReward = (id: string): Reward | undefined => REWARD_BY_ID.get(id)
+export const findChapter = (chapterId: string): RewardChapter | undefined =>
+  REWARD_CHAPTERS.find((c) => c.id === chapterId)
+export const chapterForRewardId = (id: string): RewardChapter | undefined =>
+  CHAPTER_BY_REWARD_ID.get(id)

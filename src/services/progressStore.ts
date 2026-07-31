@@ -8,21 +8,40 @@
 // Schema is VERSIONED (`version` field). Unknown/old shapes are normalised forward or reset —
 // reading bad data never throws.
 
+// Explicit `.ts` extensions: src/services/progressStore.test.ts imports this module in plain Node
+// (which won't resolve extensionless relative specifiers). Vite/tsc accept them
+// (allowImportingTsExtensions), and it keeps this file testable outside a browser.
 import {
-  allStickers,
-  findSet,
-  setForStickerId,
-  stickerPool,
-  totalStickerCount,
-  type Sticker,
-} from '../config/stickers'
-import { levelFromXp, bloomStage, bloomFill, roundXp, taskXp } from '../config/progression'
+  REWARD_PATH,
+  allRewards,
+  chapterForRewardId,
+  chapterAt,
+  rewardAt,
+  totalRewardCount,
+  type Reward,
+  type RewardChapter,
+} from '../config/stickers.ts'
+import {
+  levelFromXp,
+  bloomStage,
+  bloomFill,
+  roundXp,
+  taskXp,
+  BROWSE_TASK_XP,
+  CHAPTER_SIZE,
+  REWARD_SLOTS,
+  chapterOfSlot,
+  collectedFromLevel,
+  companionStageForCollected,
+} from '../config/progression.ts'
 
 const STORAGE_KEY = 'bornelaering-progress'
-// v2 (Liveliness PRD-01): adds the `progression` slice (global XP/level + per-section bloom).
-// normalize() still resets on any version mismatch, so v1 blobs wipe to a fresh v2 default — the
-// owner accepted losing already-earned stickers/stars on this bump (migration stays trivial).
-const SCHEMA_VERSION = 2 as const
+// v3 (Reward Book PRD-01 D8): trin and the sticker album collapsed into ONE track (trin ≡ slot), the
+// 63-sticker pool became a 45-reward ordered path, and `progression.explored` was added. A v2 blob's
+// random-pool sticker set can't be mapped onto the deterministic path, so — as with the v1→v2 bump —
+// normalize() hard-resets on a version mismatch. `resetAll()`-style settings preservation is handled
+// there too, so sound/music/difficulty survive.
+const SCHEMA_VERSION = 3 as const
 
 export interface PerGameStats {
   bestStreak: number // longest correct-in-a-row (first try) ever
@@ -58,13 +77,13 @@ const isLevel = (v: unknown): v is DifficultyLevel =>
 // Canonical section list (note: colors is `colors`, route is `/farver`).
 const SECTION_IDS: SectionId[] = ['alphabet', 'math', 'colors', 'english', 'ordleg']
 
-// ----- Progression (Liveliness PRD-01) -------------------------------------------------------
+// ----- Progression (Reward Book PRD-01) ------------------------------------------------------
 // One play feeds BOTH layers: the amount adds to the cross-game `globalXp` AND to the attributed
-// section's `bloom`. Level and bloom stage/fill are DERIVED from XP (see src/config/progression.ts)
-// so they can never desync; the only stored cursor is `lastCelebratedLevel` (fires the level-up
-// ceremony exactly once, reload/cross-tab safe).
-export type XpReason = 'round' | 'browse-milestone' | 'sticker' | 'best' | 'page'
-
+// section's `bloom`. The level and the bloom stage/fill are DERIVED from XP (see
+// src/config/progression.ts) so they can never desync — and the COLLECTED COUNT is derived from the
+// level (`collectedFromLevel`), which is what makes the ring and the book literally the same track.
+// The only stored cursors are `lastCelebratedLevel` (fires the ceremony exactly once, reload/
+// cross-tab safe) and `explored` (browse keys that already paid out).
 export interface SectionBloom {
   xp: number
   updatedAt: number
@@ -74,6 +93,9 @@ export interface ProgressionState {
   globalXp: number // lifetime global XP (monotonic)
   lastCelebratedLevel: number // highest level the ceremony has already fired for
   bloom: Record<SectionId, SectionBloom>
+  // Browse items that have ALREADY paid out their one-time XP, per section. Persisted (v3) because
+  // the old component-local useRef made browse XP re-farmable on every re-entry.
+  explored: Record<SectionId, string[]>
   updatedAt: number
 }
 
@@ -104,12 +126,17 @@ export interface XpGrantResult {
 const defaultBloom = (): SectionBloom => ({ xp: 0, updatedAt: 0 })
 const defaultProgression = (): ProgressionState => ({
   globalXp: 0,
-  // Everyone STARTS at trin 1, so it's already "reached" — celebrating it would fire a bogus
-  // ceremony on first load. The first real level-up (1→2) is the first celebration.
+  // Everyone STARTS at level 1 (an empty book), so it's already "reached" — celebrating it would
+  // fire a bogus ceremony on first load. The first real crossing (1→2, i.e. reward slot 1) is the
+  // first celebration.
   lastCelebratedLevel: 1,
   bloom: Object.fromEntries(SECTION_IDS.map((s) => [s, defaultBloom()])) as Record<
     SectionId,
     SectionBloom
+  >,
+  explored: Object.fromEntries(SECTION_IDS.map((s) => [s, [] as string[]])) as Record<
+    SectionId,
+    string[]
   >,
   updatedAt: 0,
 })
@@ -118,8 +145,8 @@ export interface ProgressState {
   version: typeof SCHEMA_VERSION
   stickers: {
     collected: Record<string, { count: number; firstAt: number }>
-    // Ids first collected but not yet seen in the album — drive the "nyt!" badge. Cleared when
-    // the album is opened (markStickersSeen).
+    // Ids first collected but not yet seen in the book — drive the "nyt!" badge. Cleared when
+    // the book is opened (markStickersSeen).
     newIds: string[]
   }
   perGame: Record<string, PerGameStats>
@@ -131,13 +158,19 @@ export interface ProgressState {
   settings: ProgressSettings
 }
 
-export interface StickerAward {
-  sticker: Sticker
-  setId: string
-  setTitle: string
+// One reward handed over by a ceremony. Deterministic: `slot` came straight off the path, never a
+// random pick — the ring had been showing this exact object while it filled.
+export interface RewardGrant {
+  reward: Reward
+  slot: number // 0-based index into REWARD_PATH
+  chapter: RewardChapter
+  chapterIndex: number // 0..4
+  slotInChapter: number // 0..8 (drives the ceremony's 9-dot strip)
+  chapterCompleted: boolean // this grant filled the last empty slot of its chapter
+  bookCompleted: boolean // this grant filled slot 45 for the first time
+  gold: boolean // past the end of the path → a shiny duplicate (the gold pass)
   isNew: boolean // first time ever collected
-  isShiny: boolean // a duplicate (album full for this pool) → sparkle variant
-  count: number // total owned of this sticker after the award
+  count: number // total owned of this reward after the grant
 }
 
 export interface RoundResultInput {
@@ -148,7 +181,6 @@ export interface RoundResultInput {
 
 export interface RoundResultOptions {
   starThresholds?: { three: number; two: number } // MISTAKES allowed; default 3★=0, 2★≤2
-  stickerSetId?: string // bias the award toward one set; else global pool
 }
 
 export interface RoundOutcome {
@@ -161,10 +193,8 @@ export interface RoundOutcome {
   previousBests: { streak: number; stars: number; count: number }
   newBests: { streak: boolean; stars: boolean; count: boolean }
   anyNewBest: boolean
-  stickers: StickerAward[] // round sticker + optional best-bonus sticker
-  pageCompleted: { id: string; title: string; emoji: string } | null
   totals: { totalStars: number; totalStickers: number }
-  xp: XpGrantResult // Liveliness PRD-01: XP folded into the same atomic round commit
+  xp: XpGrantResult // round-END bonus XP, folded into the same atomic round commit
 }
 
 const DEFAULT_THRESHOLDS = { three: 0, two: 2 }
@@ -185,8 +215,6 @@ const defaultState = (): ProgressState => ({
   progression: defaultProgression(),
   settings: { sfxEnabled: true, musicEnabled: true, musicDefaultOn: true, difficulty: { global: 'normal' } },
 })
-
-const pick = <T>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)]
 
 // Forward-safe normaliser: keep any known good data, fill missing slices, drop the rest.
 const normalize = (raw: unknown): ProgressState => {
@@ -241,14 +269,14 @@ const normalize = (raw: unknown): ProgressState => {
       }
     }
   }
-  // Progression slice (v2). Fill each numeric field defensively (same style as perGame/settings);
+  // Progression slice (v3). Fill each numeric field defensively (same style as perGame/settings);
   // missing sections fall back to defaultBloom(), unknown section keys are ignored.
   if (r.progression && typeof r.progression === 'object') {
     const p = r.progression as Partial<ProgressionState>
     const num = (x: unknown) => Math.max(0, Math.floor(Number(x) || 0))
     state.progression.globalXp = num(p.globalXp)
     // Keep the default (1) when the field is absent so an older/partial blob can't reset the cursor
-    // to 0 and re-celebrate trin 1.
+    // to 0 and re-celebrate the starting level.
     if (p.lastCelebratedLevel != null) state.progression.lastCelebratedLevel = num(p.lastCelebratedLevel)
     state.progression.updatedAt = num(p.updatedAt)
     if (p.bloom && typeof p.bloom === 'object') {
@@ -261,11 +289,28 @@ const normalize = (raw: unknown): ProgressState => {
         }
       }
     }
+    if (p.explored && typeof p.explored === 'object') {
+      const rawExplored = p.explored as Record<string, unknown>
+      for (const s of SECTION_IDS) {
+        const list = rawExplored[s]
+        if (Array.isArray(list)) {
+          state.progression.explored[s] = list.filter((k): k is string => typeof k === 'string')
+        }
+      }
+    }
   }
-  // Recompute derived totals defensively so the album count always matches reality.
+  // Drop ids that are no longer on the path (e.g. a reward renamed in a later data edit) so the
+  // "{n} / 45" count can never exceed the book, then recompute the derived total.
+  for (const id of Object.keys(state.stickers.collected)) {
+    if (!ON_PATH.has(id)) delete state.stickers.collected[id]
+  }
+  state.stickers.newIds = state.stickers.newIds.filter((id) => !!state.stickers.collected[id])
   state.totals.totalStickers = Object.keys(state.stickers.collected).length
   return state
 }
+
+// Ids that actually exist on the reward path — the guard for the pruning above.
+const ON_PATH = new Set(allRewards().map((r) => r.id))
 
 type Listener = () => void
 
@@ -388,63 +433,116 @@ class ProgressStore {
     }
   }
 
-  // ----- sticker awarding -----
-  // Mutates the given (already-cloned) draft. Returns the award + the set that JUST became
-  // complete because of it (else null).
-  private grantSticker(
-    draft: ProgressState,
-    setId?: string,
-  ): { award: StickerAward; completedSetId: string | null } {
-    const biasedPool = stickerPool(setId)
-    let uncollected = biasedPool.filter((s) => !draft.stickers.collected[s.id])
-    // PRD-09 P3: if this section's page is already full, fall back to the global uncollected pool
-    // so awards keep filling OTHER pages (the album stays completable) instead of endlessly
-    // handing out shiny duplicates from one finished set.
-    if (setId && uncollected.length === 0) {
-      uncollected = stickerPool().filter((s) => !draft.stickers.collected[s.id])
-    }
-    const isNew = uncollected.length > 0
-    // New → next uncollected (biased first, else global); nothing left anywhere → a section-
-    // flavoured shiny duplicate.
-    const sticker = isNew ? pick(uncollected) : pick(biasedPool)
-    const set = setForStickerId(sticker.id) ?? findSet(setId ?? '')
+  // ----- reward awarding (deterministic — Reward Book PRD-01 §7) -----
+  // Award the reward at ONE 0-based slot index. Mutates the given (already-cloned) draft.
+  //
+  // There is NO randomness anywhere in here: the slot index comes from the level cursor and the
+  // reward comes straight off REWARD_PATH, which is exactly why the corner ring can show the prize
+  // BEFORE it's earned. Past the end of the path (slot ≥ 45) the **gold pass** wraps deterministically
+  // — slot 46 is a gold duplicate of slot 1 — so late play is still a path, not a random duplicate.
+  private grantSlot(draft: ProgressState, slotIndex0: number): RewardGrant {
+    const slot = Math.max(0, Math.floor(slotIndex0))
+    const gold = slot >= REWARD_SLOTS
+    const pathIndex = gold ? (slot - REWARD_SLOTS) % REWARD_SLOTS : slot
+    const reward = rewardAt(pathIndex) ?? REWARD_PATH[0]
+    const chapter = chapterForRewardId(reward.id) ?? chapterAt(pathIndex)!
+    const chapterIndex = chapterOfSlot(pathIndex)
 
-    const existing = draft.stickers.collected[sticker.id]
-    const wasSetComplete = set ? set.stickers.every((s) => !!draft.stickers.collected[s.id]) : true
+    const existing = draft.stickers.collected[reward.id]
+    const isNew = !existing
+    const wasChapterComplete = chapter.rewards.every((r) => !!draft.stickers.collected[r.id])
+    const wasBookComplete = REWARD_PATH.every((r) => !!draft.stickers.collected[r.id])
 
     if (existing) {
-      draft.stickers.collected[sticker.id] = { ...existing, count: existing.count + 1 }
+      draft.stickers.collected[reward.id] = { ...existing, count: existing.count + 1 }
     } else {
-      draft.stickers.collected[sticker.id] = { count: 1, firstAt: Date.now() }
-      // First-ever collect → flag as "new" until the album is opened.
-      if (!draft.stickers.newIds.includes(sticker.id)) draft.stickers.newIds.push(sticker.id)
+      draft.stickers.collected[reward.id] = { count: 1, firstAt: Date.now() }
+      // First-ever collect → flag as "new" until the book is opened.
+      if (!draft.stickers.newIds.includes(reward.id)) draft.stickers.newIds.push(reward.id)
     }
     draft.totals.totalStickers = Object.keys(draft.stickers.collected).length
 
-    const nowSetComplete = set
-      ? set.stickers.every((s) => !!draft.stickers.collected[s.id])
-      : false
-    const completedSetId = set && !wasSetComplete && nowSetComplete ? set.id : null
+    const nowChapterComplete = chapter.rewards.every((r) => !!draft.stickers.collected[r.id])
+    const nowBookComplete = draft.totals.totalStickers >= REWARD_SLOTS
 
     return {
-      award: {
-        sticker,
-        setId: set?.id ?? '',
-        setTitle: set?.title ?? '',
-        isNew,
-        isShiny: !isNew,
-        count: draft.stickers.collected[sticker.id].count,
-      },
-      completedSetId,
+      reward,
+      slot: pathIndex,
+      chapter,
+      chapterIndex,
+      slotInChapter: pathIndex - chapterIndex * CHAPTER_SIZE,
+      chapterCompleted: !wasChapterComplete && nowChapterComplete,
+      bookCompleted: !wasBookComplete && nowBookComplete,
+      gold,
+      isNew,
+      count: draft.stickers.collected[reward.id].count,
     }
   }
 
-  // Public single-award entry (used by free-exploration milestone rewards). Persists + notifies.
-  awardSticker(setId?: string): StickerAward {
+  // How many slots have been HANDED OVER in total, duplicates included — i.e. the position of the
+  // cursor along the (endless, gold-pass-wrapping) path. Every grantSlot() adds exactly 1 to some
+  // reward's count, so the sum of counts IS that total; no extra stored field is needed.
+  //
+  // This, not `collectedCount()`, is what the owed calculation must compare against: the book
+  // saturates at 45 distinct rewards while the level keeps climbing, so using the distinct count
+  // would report an ever-growing debt and dump a fistful of gold duplicates on every ceremony.
+  private grantedSlots(): number {
+    let n = 0
+    for (const v of Object.values(this.state.stickers.collected)) n += v.count
+    return n
+  }
+
+  // How many rewards the level cursor says are OWED but not yet handed over. Normally 0 or 1; can be
+  // 2 when one round crosses two fast-tier slots, or more after a browse binge.
+  private owedRewards(): number {
+    return Math.max(0, collectedFromLevel(this.globalLevel()) - this.grantedSlots())
+  }
+
+  // Hand over EVERY owed slot in ONE commit (called once per ceremony, by RewardOverlay). Returns
+  // them in path order so the ceremony can headline the first and trail the rest.
+  grantPendingRewards(): RewardGrant[] {
+    const owed = this.owedRewards()
+    if (owed <= 0) return []
     const draft = structuredCloneState(this.state)
-    const { award } = this.grantSticker(draft, setId)
+    const grants: RewardGrant[] = []
+    const start = this.grantedSlots() // read BEFORE mutating; the draft isn't live yet
+    for (let i = 0; i < owed; i++) grants.push(this.grantSlot(draft, start + i))
     this.commit(draft)
-    return award
+    return grants
+  }
+
+  // How many rewards are in the book right now — DISTINCT ids, so a gold duplicate doesn't inflate
+  // the "{n} / 45" the child reads. Below 45 there are no duplicates yet (grantSlot walks distinct
+  // indices 0..44), so this equals `grantedSlots()` for the whole first pass through the book.
+  collectedCount(): number {
+    return Object.keys(this.state.stickers.collected).length
+  }
+
+  // The reward the corner ring is filling toward and the book previews as a silhouette — the SINGLE
+  // source for the ring, the book, the home shelf and the result meter. `null` once the book is full
+  // (surfaces then show a gold ✨ instead of a silhouette).
+  nextReward(): { reward: Reward; slot: number; chapter: RewardChapter } | null {
+    const slot = this.grantedSlots()
+    if (slot >= REWARD_SLOTS) return null
+    const reward = rewardAt(slot)
+    if (!reward) return null
+    return { reward, slot, chapter: chapterForRewardId(reward.id) ?? chapterAt(slot)! }
+  }
+
+  // The companion's growth stage (0..4) — the 5 chapters ARE the 5 stages.
+  companionStage(): number {
+    return companionStageForCollected(this.collectedCount())
+  }
+
+  // Record that a browse item paid out its one-time XP. Returns true ONLY the first time ever for
+  // this (section, key) — persisted, so leaving and re-entering a browse screen can't re-farm XP.
+  markBrowsed(section: SectionId, key: string): boolean {
+    const list = this.state.progression.explored[section] ?? []
+    if (list.includes(key)) return false
+    const draft = structuredCloneState(this.state)
+    draft.progression.explored[section] = [...list, key]
+    this.commit(draft)
+    return true
   }
 
   // ----- the main round path -----
@@ -481,29 +579,12 @@ class ProgressStore {
     }
     draft.totals.totalStars += stars
 
-    // Stickers are NO LONGER granted per round (Liveliness PRD-04): they became the trophy of a
-    // LEVEL-UP (see grantLevelUpSticker), so the two rewards no longer fire at the same cadence.
-    // A normal round reveals no sticker; `pageCompleted` therefore stays null here (a page can only
-    // complete via a level-up trophy now).
-    const stickers: StickerAward[] = []
-    const pageCompleted: RoundOutcome['pageCompleted'] = null
-
-    // Fold the round-END BONUS XP into the SAME draft/commit (Liveliness PRD-04): bonuses ONLY
-    // (perfect-round / new-best / page-complete) — the per-task portion was already granted live
-    // during play. Computed from round STRUCTURE only, never the difficulty setting (fairness). One
-    // play feeds both the global level and the section's bloom.
-    const xp = this.applyXp(
-      draft,
-      sectionForGameId(gameId),
-      roundXp({
-        correct: input.correct,
-        total: input.total,
-        mistakes,
-        anyNewBest,
-        stickerCount: 0,
-        pageCompleted: false,
-      }),
-    )
+    // Rewards are NOT granted here. A round's XP moves the ring, and the reward is handed over by the
+    // ceremony (grantPendingRewards) — one track, one grant point. Fold the round-END BONUS XP into
+    // the SAME draft/commit: bonuses ONLY (perfect-round / new-best) — the per-task portion was
+    // already granted live during play. Computed from round STRUCTURE only, never the difficulty
+    // setting (fairness). One play feeds both the global level and the section's bloom.
+    const xp = this.applyXp(draft, sectionForGameId(gameId), roundXp({ mistakes, anyNewBest }))
 
     this.commit(draft)
 
@@ -517,8 +598,6 @@ class ProgressStore {
       previousBests,
       newBests,
       anyNewBest,
-      stickers,
-      pageCompleted,
       totals: { totalStars: draft.totals.totalStars, totalStickers: draft.totals.totalStickers },
       xp,
     }
@@ -567,39 +646,36 @@ class ProgressStore {
     }
   }
 
-  // Feed BOTH layers in one commit. Used by browse-milestone grants (rounds go through
-  // recordRoundResult). `reason` is reserved for future telemetry; the amount is fully caller-owned.
-  grantXp(section: SectionId, amount: number, _reason: XpReason): XpGrantResult {
+  // Feed BOTH layers in one commit. Kept for the DEV seed harness (?rewards=n) — normal play goes
+  // through grantTaskXp / recordRoundResult, which own their own amounts.
+  grantXp(section: SectionId, amount: number): XpGrantResult {
     const draft = structuredCloneState(this.state)
     const result = this.applyXp(draft, section, amount)
     this.commit(draft)
     return result
   }
 
-  // Live per-task XP (Liveliness PRD-04). Called once per COMPLETED TASK in any game (a question
-  // answered, a pair matched, a color board finished, a new browse item explored). Weighted per game
-  // (see TASK_XP) + a first-try bonus; NEVER difficulty-dependent (fairness). Feeds both the global
-  // level and the section's bloom in one commit and returns the grant so the caller can fire the
-  // "+X" flyer / mid-game flourish (via `XpGrantResult.global.leveledUp`). For `gameId === 'browse'`
-  // the caller passes the real section (browse screens know it); every other id derives its section.
-  grantTaskXp(gameId: string, opts: { firstTry: boolean; section?: SectionId }): XpGrantResult {
+  // Live per-task XP. Called once per COMPLETED TASK in any game (a question answered, a pair
+  // matched, a color board finished, a new browse item explored). "A round is a round" (Reward Book
+  // §5): the amount is REWARD_XP / tasksInRound + a first-try bonus, so ANY completed round is worth
+  // ≈ one reward regardless of how it's subdivided. NEVER difficulty-dependent (fairness). Feeds both
+  // the global level and the section's bloom in one commit and returns the grant so the caller can
+  // fire the "+X" flyer / mid-game flourish (via `XpGrantResult.global.leveledUp`).
+  //
+  // `tasksInRound` defaults to 8 (the standard round length). For `gameId === 'browse'` the caller
+  // passes the real section (browse screens know it) and the flat BROWSE_TASK_XP applies, since a
+  // browse screen has no round to normalise against; every other id derives its section.
+  grantTaskXp(
+    gameId: string,
+    opts: { firstTry: boolean; tasksInRound?: number; section?: SectionId },
+  ): XpGrantResult {
     const draft = structuredCloneState(this.state)
-    const section = gameId === 'browse' ? opts.section ?? 'alphabet' : sectionForGameId(gameId)
-    const result = this.applyXp(draft, section, taskXp(gameId, opts.firstTry))
+    const isBrowse = gameId === 'browse'
+    const section = isBrowse ? opts.section ?? 'alphabet' : sectionForGameId(gameId)
+    const amount = isBrowse ? BROWSE_TASK_XP : taskXp(opts.tasksInRound ?? 8, opts.firstTry)
+    const result = this.applyXp(draft, section, amount)
     this.commit(draft)
     return result
-  }
-
-  // Grant the ONE trophy sticker of a level-up (Liveliness PRD-04): stickers stopped dropping per
-  // round/browse and now mark a level-up, so the album becomes a "timeline of levels". Reuses the
-  // private next-uncollected → shiny-duplicate `grantSticker`. Called by the level-up ceremony
-  // (LevelUpOverlay) so the sticker reveals inside that moment. Returns the award + the set that
-  // JUST completed because of it (else null), so the ceremony can add a page-complete flourish.
-  grantLevelUpSticker(): { award: StickerAward; pageCompleted: { id: string; title: string; emoji: string } | null } {
-    const draft = structuredCloneState(this.state)
-    const { award, completedSetId } = this.grantSticker(draft)
-    this.commit(draft)
-    return { award, pageCompleted: completedSetId ? setSummary(completedSetId) : null }
   }
 
   globalLevel(): number {
@@ -655,7 +731,7 @@ class ProgressStore {
     this.commit(draft)
   }
 
-  // PRD-09 P5: reset progress ONLY (stickers, per-game bests, lifetime stars) — the gate text
+  // PRD-09 P5: reset progress ONLY (the book, per-game bests, lifetime stars) — the gate text
   // promises "alle klistermærker, rekorder og stjerner". Sound/music/difficulty are device
   // preferences, not progress, so they're carried across (the less-surprising choice).
   resetAll(): void {
@@ -678,6 +754,9 @@ function structuredCloneState(s: ProgressState): ProgressState {
       bloom: Object.fromEntries(
         SECTION_IDS.map((id) => [id, { ...(s.progression.bloom[id] ?? defaultBloom()) }]),
       ) as Record<SectionId, SectionBloom>,
+      explored: Object.fromEntries(
+        SECTION_IDS.map((id) => [id, [...(s.progression.explored[id] ?? [])]]),
+      ) as Record<SectionId, string[]>,
       updatedAt: s.progression.updatedAt,
     },
     settings: {
@@ -690,11 +769,6 @@ function structuredCloneState(s: ProgressState): ProgressState {
       },
     },
   }
-}
-
-function setSummary(setId: string): { id: string; title: string; emoji: string } | null {
-  const set = findSet(setId)
-  return set ? { id: set.id, title: set.title, emoji: set.emoji } : null
 }
 
 // Map a gameId to the section its XP/bloom is attributed to. `<section>.<game>` for the five
@@ -711,9 +785,12 @@ function sectionForGameId(gameId: string): SectionId {
 export const progressStore = new ProgressStore()
 
 // DEV: expose for the headless verification harness (e.g. asserting live difficulty changes).
-if (import.meta.env.DEV && typeof window !== 'undefined') {
+// `import.meta.env?.` — optional, because src/services/progressStore.test.ts imports this module in
+// plain Node (where `import.meta.env` is undefined); the localStorage/window accesses above are
+// already guarded by try/catch and `typeof window`.
+if (import.meta.env?.DEV && typeof window !== 'undefined') {
   ;(window as unknown as { __progress?: ProgressStore }).__progress = progressStore
 }
 
-// Convenience re-exports used around the album UI.
-export { allStickers, totalStickerCount }
+// Convenience re-exports used around the book UI.
+export { allRewards, totalRewardCount }

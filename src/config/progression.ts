@@ -1,18 +1,27 @@
-// Progression curves (Liveliness PRD-01) — the single source of the XP → level and XP → bloom math.
+// Progression curves (Reward Book PRD-01) — the single source of the XP → reward-slot math.
 //
 // PURE + unit-testable: no imports, no side effects, no store access. The progressStore stores only
-// raw XP counters; every displayed level / bloom stage / ring fill is DERIVED here so it can never
-// desync from the curve. Build/test scripts import this .ts directly (Node ≥22 strips types).
+// raw XP counters; every displayed level / collected count / bloom stage is DERIVED here so it can
+// never desync from the curve. Build/test scripts import this .ts directly (Node ≥22 strips types).
+//
+// THE MODEL (Reward Book PRD-01 D1): **trin ≡ sticker slot number**. There is one track. Reaching
+// level N+1 awards reward-path slot N, so `collected === level - 1` always. The word "trin" never
+// reaches the child — the level integer is an internal cursor for "how many rewards are owed".
 
-// ----- Global level curve --------------------------------------------------------------------
-// 1-based level → XP required to advance from that level to the NEXT one (Liveliness PRD-04:
-// "steady climb, climb forever"). A gentle linear ramp with a low floor and a soft cap so consistent
-// effort earns a level at a steady pace: the first level-up lands inside a session or two, and late
-// levels stay reachable (~4 rounds/level) instead of ballooning. No level cap — the number climbs
-// forever; the companion just reaches its final visual form via companionStageForLevel.
-//   L1→2 = 50, L2→3 = 60, L3→4 = 70 … capped at 160/level by ~L12.
+// ----- The reward path shape ------------------------------------------------------------------
+export const REWARD_XP = 40 // XP that equals one completed round
+export const FAST_SLOTS = 18 // slots 1..18 land one-per-round (chapters 1-2)
+export const CHAPTER_SIZE = 9
+export const CHAPTER_COUNT = 5
+export const REWARD_SLOTS = 45 // CHAPTER_SIZE * CHAPTER_COUNT
+
+// ----- Global level curve ---------------------------------------------------------------------
+// 1-based level → XP required to advance from that level to the NEXT one. Two tiers only (PRD §5):
+// the first 18 slots cost one round each so the book visibly moves from the very first session;
+// from slot 19 on a reward costs ~2 rounds. No cap and no level ceiling — past slot 45 the gold pass
+// keeps handing out shiny duplicates at the slow rate.
 export const xpToNext = (level: number): number =>
-  Math.min(160, 50 + 10 * Math.max(0, level - 1))
+  level <= FAST_SLOTS ? REWARD_XP : REWARD_XP * 2
 
 export interface LevelInfo {
   level: number // current 1-based level
@@ -33,7 +42,20 @@ export function levelFromXp(totalXp: number): LevelInfo {
   return { level, xpIntoLevel: remaining, xpForThisLevel: need, xpToNextLevel: need - remaining }
 }
 
-// ----- Per-section bloom ---------------------------------------------------------------------
+// ----- The ONE mapping (PRD §13: the only real hazard — never recompute this inline) -----------
+// Level 1 = an empty book. Reaching level 2 awards slot 1 (index 0).
+export const collectedFromLevel = (level: number): number => Math.max(0, level - 1)
+
+// 0-based slot index → its chapter index (0..4).
+export const chapterOfSlot = (slotIndex0: number): number =>
+  Math.floor(Math.max(0, slotIndex0) / CHAPTER_SIZE)
+
+// Companion growth stage from the collected count: the 5 chapters ARE the 5 stages, so the
+// companion is literally a picture of how far through the book the child is.
+export const companionStageForCollected = (collected: number): number =>
+  Math.min(CHAPTER_COUNT - 1, Math.floor(Math.max(0, collected) / CHAPTER_SIZE))
+
+// ----- Per-section bloom (UNCHANGED — Reward Book D7 leaves the world alone) -------------------
 // Cumulative XP thresholds for bloom stages 0..4 (drives how alive a section's menu world looks).
 export const BLOOM_STAGE_XP = [0, 40, 120, 260, 480] as const // stages 0..4
 export const BLOOM_MAX_XP = 480
@@ -45,46 +67,42 @@ export const bloomStage = (xp: number): number =>
 // 0..1 fill toward full bloom (BLOOM_MAX_XP), clamped.
 export const bloomFill = (xp: number): number => Math.min(1, Math.max(0, xp) / BLOOM_MAX_XP)
 
-// ----- Per-task XP (Liveliness PRD-04) --------------------------------------------------------
-// XP is now earned PER COMPLETED TASK, live, in whatever game is being played (a question answered,
-// a pair matched, a color board finished) — not lumped at round end. Base + a small first-try bonus,
-// keyed by gameId (fallback 'default'), tuned so a few minutes of ANY game earns roughly comparable
-// XP (per-game fairness). NEVER difficulty-dependent (fairness: no adaptive-difficulty leverage).
-export const TASK_XP: Record<string, { base: number; firstTry: number }> = {
-  default: { base: 3, firstTry: 1 }, // quiz question, math op, comparison, læsordet, english, mic
-  'ordleg.spelling': { base: 4, firstTry: 2 }, // per completed word
-  memory: { base: 2, firstTry: 0 }, // per matched pair (many per board; no first-try notion)
-  'colors.farvejagt': { base: 6, firstTry: 2 }, // per completed board (big task)
-  'colors.ramfarven': { base: 5, firstTry: 2 }, // per correct mix
-  'colors.nuancer': { base: 5, firstTry: 2 }, // per completed shade-set
-  'colors.quiz': { base: 3, firstTry: 1 }, // per question
-  browse: { base: 1, firstTry: 0 }, // per NEW item explored
-}
+// ----- Per-task XP ----------------------------------------------------------------------------
+// XP is earned PER COMPLETED TASK, live, in whatever game is being played (a question answered, a
+// pair matched, a color board finished). Reward Book PRD-01 §5 replaced the old per-game weight
+// table with "a round is a round": one task is worth REWARD_XP / tasksInRound, so ANY completed
+// round is worth ≈ REWARD_XP regardless of how it's subdivided. That's both fairer across games and
+// self-balancing — the pacing promise ("chapters 1-2: one reward per round") holds everywhere.
+// NEVER difficulty-dependent (fairness: no adaptive-difficulty leverage).
+export const taskXp = (tasksInRound: number, firstTry: boolean): number =>
+  Math.max(1, Math.ceil(REWARD_XP / Math.max(1, tasksInRound))) + (firstTry ? 1 : 0)
 
-// XP for one completed task in `gameId`, with a first-try bonus. Difficulty never enters here.
-export function taskXp(gameId: string, firstTry: boolean): number {
-  const t = TASK_XP[gameId] ?? TASK_XP.default
-  return t.base + (firstTry ? t.firstTry : 0)
-}
+// XP per NEW browse item, once ever (browse screens have no round to normalise against).
+export const BROWSE_TASK_XP = 2
 
-// ----- Per-round XP (now BONUSES ONLY) --------------------------------------------------------
-// Per-task XP is granted live during play (taskXp above), so the round END only adds the extras that
-// can't be attributed to a single task: a perfect round, a new personal best, and a completed sticker
-// page. Derived from round STRUCTURE only — never the difficulty setting (fairness). NO base, NO
-// per-correct, NO per-sticker term (those would double-count the live per-task grants).
+// ----- Per-round XP (BONUSES ONLY) ------------------------------------------------------------
+// Per-task XP is granted live during play (taskXp above), so the round END only adds the extras
+// that can't be attributed to a single task: a perfect round and a new personal best. They carry
+// into the NEXT reward rather than granting one. Derived from round STRUCTURE only — never the
+// difficulty setting (fairness).
 export interface RoundXpInput {
-  correct: number // first-try-correct count in the round (kept for future tuning; unused here)
-  total: number // round length (kept for future tuning; unused here)
   mistakes: number // wrong taps across the round
   anyNewBest: boolean // beat a personal best (streak/stars/count)
-  stickerCount: number // stickers awarded this round (kept for shape; unused — no per-sticker XP)
-  pageCompleted: boolean // a sticker set just completed (from a level-up trophy; see progressStore)
 }
 
 export function roundXp(i: RoundXpInput): number {
   let xp = 0
   if (i.mistakes === 0) xp += 6 // perfect-round bonus
   if (i.anyNewBest) xp += 8 // new personal best
-  if (i.pageCompleted) xp += 15 // a sticker page just completed
   return xp
 }
+
+// The largest XP a single round can produce: a full 8-task round with every answer first-try
+// (8 × taskXp(8,true) = 48) + the perfect bonus (6) + a new personal best (8) = 62.
+//
+// NB the PRD quotes 54 here, having treated "perfect" and "new best" as alternatives; they aren't —
+// a perfect round very often IS a new best (3★ / 8 correct). 62 still can't cross two slots in the
+// SLOW tier (80/slot), but in the FAST tier (40/slot) a 62-XP round landing mid-slot can cross two.
+// That's precisely why `grantPendingRewards()` awards EVERY owed slot in one commit and the ceremony
+// trails the extras — the multi-slot path is a real (if rare) case, not just a browse-binge net.
+export const MAX_ROUND_XP = 62

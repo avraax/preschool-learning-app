@@ -2,7 +2,6 @@ import React from 'react'
 import UnifiedQuizGame, { UnifiedQuizConfig, QuizItem } from '../common/UnifiedQuizGame'
 import { DANISH_PHRASES } from '../../config/danish-phrases'
 import { categoryThemes } from '../../config/categoryThemes'
-import { stickerSetForSection } from '../../config/stickers'
 import { AlphabetScoreChip } from '../common/ScoreChip'
 import { AlphabetRepeatButton } from '../common/RepeatButton'
 import { progressStore, type DifficultyLevel } from '../../services/progressStore'
@@ -116,7 +115,7 @@ const AlphabetGame: React.FC = () => {
     // Bounded round (Overhaul Foundation §3) — reference wiring / smoke test. 8 questions,
     // then the result/reward hero. 3★ = no mistakes, 2★ ≤ 2, else 1★. Global sticker pool.
     gameId: 'alphabet.quiz',
-    round: { length: 8, starThresholds: { three: 0, two: 2 }, stickerSetId: stickerSetForSection('alphabet') },
+    round: { length: 8, starThresholds: { three: 0, two: 2 } },
 
     // Never-fail hint (PRD-05 P1): after 2 wrong taps the correct letter tile pulses.
     hintAfterNWrong: 2,

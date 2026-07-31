@@ -7,29 +7,30 @@ import { useReducedMotion } from '../../hooks/useReducedMotion'
 import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 import { useThemeSwitch } from '../../theme/ThemeProvider'
 import { loadSceneAssets } from '../../theme/sceneAssets'
-import { LEVEL_UP_TAP, levelUpLine } from '../../config/danish-phrases'
+import { companionStageForCollected } from '../../config/progression'
+import { collectedCountLine } from '../../config/danish-phrases'
 
-// The child-facing growth display (Liveliness PRD-01): a filling XP ring wrapped around a small
-// companion that grows in discrete stages, plus a level-number badge. Glanceable "I'm growing" for
-// a pre-reader. Used on the home page (tappable → speaks the level) and, enlarged, inside the
-// level-up ceremony. Token-driven (theme.scene.progressionCompanion) with a generic default so flat
-// skins fall back gracefully. Reduced motion → renders statically (no growth pop / ring spring).
+// The child-facing growth display: a filling reward ring wrapped around a small companion that grows
+// in discrete stages, plus a badge showing HOW MANY REWARDS ARE IN THE BOOK. Glanceable "look how far
+// I've got" for a pre-reader. Used on the home page (tappable → speaks the count) and inside the
+// reward ceremony's chapter-completion beat. Token-driven (theme.scene.progressionCompanion) with a
+// generic default so flat skins fall back gracefully. Reduced motion → renders statically.
+//
+// Reward Book PRD-01 W6: the 5 chapters ARE the 5 growth stages (companionStageForCollected), so the
+// companion is literally a picture of how far through the book the child is — and the badge shows the
+// SAME number as the book, never a level, since that off-by-one was exactly the confusion being removed.
 
 // Generic default companion (a plant that blooms) — theme-neutral, matches the "world bloom" idea.
 export const COMPANION_DEFAULT_STAGES = ['🌱', '🌿', '🌷', '🌳', '🌟'] as const
 
-// Companion grows one stage every ~3 levels, clamped to the available stages.
-export const companionStageForLevel = (level: number, stageCount: number): number =>
-  Math.max(0, Math.min(stageCount - 1, Math.floor((Math.max(1, level) - 1) / 3)))
-
 interface ProgressionCompanionProps {
   size?: number
-  // Overrides for the level-up ceremony (else read live from the store).
-  level?: number
+  // Overrides for the ceremony (else read live from the store).
+  collected?: number
   fill?: number
   stage?: number
   showBadge?: boolean
-  interactive?: boolean // tappable → speaks "Du er på trin {n}!" (home). Default true.
+  interactive?: boolean // tappable → speaks "Du har {n} klistermærker!" (home). Default true.
   // A one-shot growth pop (the ceremony sets this when the stage advances).
   celebrating?: boolean
   sx?: SxProps<Theme>
@@ -37,7 +38,7 @@ interface ProgressionCompanionProps {
 
 const ProgressionCompanion: React.FC<ProgressionCompanionProps> = ({
   size = 96,
-  level: levelProp,
+  collected: collectedProp,
   fill: fillProp,
   stage: stageProp,
   showBadge = true,
@@ -48,7 +49,7 @@ const ProgressionCompanion: React.FC<ProgressionCompanionProps> = ({
   const theme = useTheme()
   const reduce = useReducedMotion()
   const { themeId } = useThemeSwitch()
-  const { globalLevel, xpProgress } = useProgress()
+  const { collectedCount, xpProgress } = useProgress()
   const audio = useSimplifiedAudioHook({ componentId: 'ProgressionCompanion', autoInitialize: false })
 
   // Baked growing-companion art per world (Liveliness PRD-05 W7 / batch B6). When a theme ships
@@ -65,11 +66,14 @@ const ProgressionCompanion: React.FC<ProgressionCompanionProps> = ({
     }
   }, [themeId])
 
-  const level = levelProp ?? globalLevel()
+  const collected = collectedProp ?? collectedCount()
   const fill = Math.max(0, Math.min(1, fillProp ?? xpProgress().fill))
 
   const stages = artStages ?? theme.scene?.progressionCompanion?.stages ?? [...COMPANION_DEFAULT_STAGES]
-  const stage = stageProp ?? companionStageForLevel(level, stages.length)
+  // Chapters ⇔ stages. Clamped to whatever stage art the skin actually ships, so a theme with fewer
+  // than CHAPTER_COUNT stages degrades instead of indexing off the end.
+  const stage =
+    stageProp ?? Math.min(stages.length - 1, companionStageForCollected(collected))
   const face = stages[Math.max(0, Math.min(stages.length - 1, stage))]
 
   const ringColor = theme.scene?.progressionCompanion?.ringColor ?? theme.palette.primary.main
@@ -84,9 +88,11 @@ const ProgressionCompanion: React.FC<ProgressionCompanionProps> = ({
 
   const handleTap = () => {
     if (!interactive) return
+    // At 0 collected there's no count worth speaking (and the badge is hidden) — the tap just pops.
+    if (collected <= 0) return
     try {
       audio.updateUserInteraction()
-      audio.speak(levelUpLine(LEVEL_UP_TAP, level)).catch(() => {})
+      audio.speak(collectedCountLine(collected)).catch(() => {})
     } catch {
       /* audio best-effort */
     }
@@ -157,8 +163,9 @@ const ProgressionCompanion: React.FC<ProgressionCompanionProps> = ({
         )}
       </Box>
 
-      {/* Level-number badge */}
-      {showBadge && (
+      {/* Collected-count badge — the SAME number as the book's "{n} / 45". Hidden at 0 so a fresh
+          profile doesn't advertise an empty score. */}
+      {showBadge && collected > 0 && (
         <Box
           sx={{
             position: 'absolute',
@@ -181,7 +188,7 @@ const ProgressionCompanion: React.FC<ProgressionCompanionProps> = ({
             boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
           }}
         >
-          {level}
+          {collected}
         </Box>
       )}
     </Box>

@@ -12,7 +12,6 @@ import { useCelebration } from '../common/CelebrationEffect'
 import { ColorRepeatButton } from '../common/RepeatButton'
 import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 import { ColorProgressChip } from '../common/ScoreChip'
-import { stickerSetForSection } from '../../config/stickers'
 import { useRound } from '../../hooks/useRound'
 import { progressStore, type RoundOutcome } from '../../services/progressStore'
 import { sfx } from '../../services/sfxClient'
@@ -330,7 +329,7 @@ const FarvejagtGame: React.FC = () => {
     const outcome = progressStore.recordRoundResult(
       'colors.farvejagt',
       { correct: firstTryCorrect, total: round.length, longestStreak },
-      { starThresholds: { three: 0, two: 2 }, stickerSetId: stickerSetForSection('colors') },
+      { starThresholds: { three: 0, two: 2 } },
     )
     setRoundOutcome(outcome)
   }

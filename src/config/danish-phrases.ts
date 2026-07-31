@@ -98,26 +98,25 @@ export const getDanishLetterName = (letter: string): string => {
   return DANISH_LETTER_NAMES[key] ?? letter
 }
 
-// Level-up praise (Liveliness PRD-01). "trin" = warm, concrete; avoids the formal "niveau". The
-// level number is spoken as Danish words (getDanishNumberText) so it reads naturally to a pre-reader.
-// `{n}` is the substitution point. These are a CLOSED set → prebaked + auditioned for levels
-// 2..LEVELUP_PREBAKE_MAX (first level-up is 1→2; levels beyond the cap fall back to live Azure).
-export const LEVEL_UP_PRAISE: string[] = [
-  'Sådan! Du er nået til trin {n}!',
-  'Wow! Du voksede til trin {n}!',
-  'Se dig! Trin {n}!',
-  'Du bliver dygtigere! Trin {n}!',
-]
+// ----- Reward Book narration (Reward Book PRD-01 §9) -----
+// The word "trin" has left the app: the child collects rewards into a book, and the only number
+// anywhere is how many are in it. Every line here is a CLOSED set → enumerated in
+// shared-narration-clips.js, prebaked and auditioned.
 
-// Spoken when the child taps their home companion.
-export const LEVEL_UP_TAP = 'Du er på trin {n}!'
+// Spoken as a reward is revealed in the ceremony. `{label}` is the reward's Danish name.
+export const rewardLine = (label: string): string => `Nyt klistermærke! ${label}`
+// The gold pass (a duplicate past slot 45) — "skinnende", never "nyt".
+export const goldRewardLine = (label: string): string => `Skinnende klistermærke! ${label}`
+// Spoken INSTEAD of the reward line when the grant closes a chapter / the whole book.
+export const CHAPTER_DONE_LINE = 'Sådan! Hele siden er samlet!'
+export const BOOK_DONE_LINE = 'Wow! Hele bogen er samlet!'
 
-// How many levels of level-up praise to prebake (see shared-narration-clips.js).
-export const LEVELUP_PREBAKE_MAX = 20
-
-// Fill a level-up template with the spoken Danish level number.
-export const levelUpLine = (template: string, level: number): string =>
-  template.replace('{n}', getDanishNumberText(level))
+// Spoken when the child taps their home companion — the count, as Danish words. "ét" (not "en") is
+// the counting form here, so it doesn't read as the article.
+export const collectedCountLine = (collected: number): string =>
+  collected === 1
+    ? 'Du har ét klistermærke!'
+    : `Du har ${getDanishNumberText(collected)} klistermærker!`
 
 // Function to convert numbers to Danish text
 export const getDanishNumberText = (number: number): string => {

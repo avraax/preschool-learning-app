@@ -8,8 +8,7 @@ import RoundResultScreen from '../common/RoundResultScreen'
 import ThemeScene from '../common/scene/ThemeScene'
 import SceneObject from '../common/scene/SceneObject'
 import type { MascotEvent } from '../../services/mascotBus'
-import { allStickers } from '../../config/stickers'
-import type { RoundOutcome, StickerAward, XpGrantResult } from '../../services/progressStore'
+import type { RoundOutcome, XpGrantResult } from '../../services/progressStore'
 import { getCategoryTheme } from '../../config/categoryThemes'
 import { sectionIconImages, type SectionIconId } from '../../assets/themes/icons'
 import { defaultHomeAnchors, SCENE_SECTION_ORDER } from '../../theme/tokens/helpers'
@@ -44,26 +43,17 @@ export const DevMascot: React.FC = () => {
   )
 }
 
-// /dev/round-result?stars=3&record=1&sticker=1
+// /dev/round-result?stars=3&record=1
 export const DevRoundResult: React.FC = () => {
   const { search } = useLocation()
   const p = new URLSearchParams(search)
   const stars = Math.min(3, Math.max(1, Number(p.get('stars') ?? 3)))
   const record = p.get('record') === '1'
-  const showSticker = p.get('sticker') !== '0'
 
-  const sampleSticker = allStickers()[0]
-  const award: StickerAward = {
-    sticker: sampleSticker,
-    setId: '',
-    setTitle: '',
-    isNew: true,
-    isShiny: false,
-    count: 1,
-  }
   const correct = stars === 3 ? 8 : stars === 2 ? 6 : 4
-  // Liveliness PRD-01: ?levelup=1&level=N forces the XP meter to fill fully + hands off to the
-  // level-up overlay, so the ceremony is capturable in the screenshot harness.
+  // ?levelup=1&level=N forces the reward meter to fill fully. NB the actual ceremony handoff is keyed
+  // off the STORE cursor (globalLevel > lastCelebratedLevel), not this flag — seed real progress with
+  // ?rewards=<n> to capture the ceremony (see src/utils/devHarness.ts).
   const levelup = p.get('levelup') === '1'
   const lvl = Math.max(1, Number(p.get('level') ?? 3))
   const xp: XpGrantResult = {
@@ -99,8 +89,6 @@ export const DevRoundResult: React.FC = () => {
     previousBests: { streak: record ? 3 : 8, stars: record ? 2 : 3, count: record ? 5 : 8 },
     newBests: { streak: record, stars: record, count: record },
     anyNewBest: record,
-    stickers: showSticker ? [award] : [],
-    pageCompleted: null,
     totals: { totalStars: 12, totalStickers: 5 },
     xp,
   }

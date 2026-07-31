@@ -1,13 +1,13 @@
-// Live per-task XP event bus (Liveliness PRD-04). Mirrors mascotBus / levelUpBus: a tiny global
+// Live per-task XP event bus. Mirrors mascotBus / rewardBus: a tiny global
 // emitter so the few earning choke points (useRound.completeQuestion, UnifiedMemoryGame's match
-// branch, the browse-XP helper) can tell the in-game/menu LevelRingMini indicator that XP was just
+// branch, the browse-XP helper) can tell the in-game/menu RewardRing indicator that XP was just
 // granted — WITHOUT prop-drilling through every game. The ring itself reads the live value from the
 // progress store (useProgress); this bus only drives the transient flourish: the "+X" flyer, the
 // ring "tick"/"pop", and (in-game only) a non-interrupting level-up burst.
 //
 // Decoupled from the audio channels, the scene/world layer, and the big level-up ceremony
-// (levelUpBus). A mid-game level-up sets `leveledUp` here for the small flourish but does NOT emit
-// levelUpBus — the big ceremony is deferred to a safe surface (round-result / next menu).
+// (rewardBus). A mid-game crossing sets `leveledUp` here for the small flourish but does NOT emit
+// rewardBus — the big ceremony is deferred to a safe surface (round-result / next menu).
 
 export interface XpTickEvent {
   amount: number // XP granted by this single task (already weighted; the "+N" the flyer shows)

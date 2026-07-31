@@ -1,24 +1,28 @@
 import React from 'react'
-import { Box, Typography } from '@mui/material'
+import { Box, Typography, type SxProps, type Theme } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { motion } from 'framer-motion'
 import { hexToRgba, onTileColor } from '../../theme/tokens/helpers'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
-import type { StickerAward } from '../../services/progressStore'
+import { rewardArt } from '../../assets/rewards'
+import type { RewardGrant } from '../../services/progressStore'
 
-// The sticker reveal moment (Overhaul Foundation — System 2). A sticker pops into a themed slot
-// with a spring scale + sparkle, under a "Nyt klistermærke!" banner. Shiny duplicates get extra
-// shimmer (a positive "ooh, a shiny!" — never a "you already have this" sadness).
+// The reward reveal moment. The prize pops into a themed slot with a spring scale + sparkle, under a
+// "Nyt klistermærke!" banner. Gold-pass duplicates get extra shimmer (a positive "ooh, a shiny!" —
+// never a "you already have this" sadness).
 //
-// Pure visual; speaking the sticker name is left to the caller (RoundResultScreen composes one
-// TTS line for the whole result so clips don't cancel each other — there is only one TTS channel).
+// Renders the baked soft-3D art when it exists and the emoji until then (art-gated, Reward Book D4).
+//
+// Pure visual; speaking the reward name is left to the caller — there is ONE TTS channel and no queue,
+// so a ceremony must compose exactly one utterance rather than let each beat speak.
 // Matches the depth language of AnswerTile (top-light surface, coloured rim, layered shadow).
 
 interface StickerRevealProps {
-  award: StickerAward
+  award: RewardGrant
   accent: string // section accent (themed slot tint)
   delay?: number // entrance delay (staggered when several reveal together)
   size?: number // slot size in px (responsive caller can scale)
+  sx?: SxProps<Theme> // outer wrapper (callers scale it down in phone-landscape)
 }
 
 const SPARKLES = [
@@ -29,11 +33,15 @@ const SPARKLES = [
   { left: '88%', top: '74%', s: 15, d: 0.1 },
 ]
 
-const StickerReveal: React.FC<StickerRevealProps> = ({ award, accent, delay = 0, size = 132 }) => {
+const StickerReveal: React.FC<StickerRevealProps> = ({ award, accent, delay = 0, size = 132, sx = {} }) => {
   const theme = useTheme()
   const reduce = useReducedMotion()
   const dark = theme.scene.dark
-  const { sticker, isShiny } = award
+  const { reward } = award
+  // "Shiny" is now exactly the gold pass (a deterministic duplicate past slot 45), not a pool-empty
+  // accident — so the gold treatment always means "you've been round the whole book".
+  const isShiny = award.gold
+  const art = rewardArt(reward.id)
 
   const lip = hexToRgba(accent, 0.55)
   const ambientShadow = dark ? '0 14px 30px rgba(0,0,0,0.5)' : '0 12px 26px rgba(0,0,0,0.18)'
@@ -41,7 +49,7 @@ const StickerReveal: React.FC<StickerRevealProps> = ({ award, accent, delay = 0,
   const ringColor = isShiny ? shinyGold : accent
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1, ...sx }}>
       {/* Banner */}
       <motion.div
         initial={reduce ? false : { opacity: 0, y: -8 }}
@@ -88,12 +96,27 @@ const StickerReveal: React.FC<StickerRevealProps> = ({ award, accent, delay = 0,
             : `0 8px 0 ${lip}, ${ambientShadow}`,
         }}
       >
-        <Typography
-          component="span"
-          sx={{ fontSize: size * 0.5, lineHeight: 1, userSelect: 'none' }}
-        >
-          {sticker.emoji}
-        </Typography>
+        {art ? (
+          <Box
+            component="img"
+            src={art}
+            alt=""
+            sx={{
+              width: size * 0.72,
+              height: size * 0.72,
+              objectFit: 'contain',
+              userSelect: 'none',
+              pointerEvents: 'none',
+            }}
+          />
+        ) : (
+          <Typography
+            component="span"
+            sx={{ fontSize: size * 0.5, lineHeight: 1, userSelect: 'none' }}
+          >
+            {reward.emoji}
+          </Typography>
+        )}
 
         {/* Shiny shimmer sweep */}
         {isShiny && !reduce && (
@@ -155,7 +178,7 @@ const StickerReveal: React.FC<StickerRevealProps> = ({ award, accent, delay = 0,
             textShadow: dark ? '0 2px 8px rgba(0,0,0,0.5)' : 'none',
           }}
         >
-          {sticker.label}
+          {reward.label}
           {award.count > 1 ? ` ×${award.count}` : ''}
         </Typography>
       </motion.div>

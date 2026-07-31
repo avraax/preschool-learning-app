@@ -437,6 +437,9 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
     // Engage the advance-lock SYNCHRONOUSLY on a correct tap — before the `await` below — so a
     // second tap fired in the same tick is already blocked by the guard above (PRD-02 P1/P2).
     if (isCorrect) isAdvancingRef.current = true
+    // When the tap happened. The celebration dwell is measured FROM HERE, so the spoken echo and the
+    // dwell run CONCURRENTLY instead of end-to-end (see the advance timer below).
+    const tappedAt = Date.now()
 
     // INSTANT visual feedback: mark the tapped tile (correct/wrong border + glow/sparkle/shake)
     // and cue the corner guide BEFORE any audio await, so the red/green feedback never waits on
@@ -451,10 +454,16 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
     // Otherwise echo the tapped item (identification — e.g. the letter/number/word). The win/lose
     // narration (announceGameResult "correct/try-again") stays removed; success/fail is otherwise
     // SFX + visuals only.
+    //
+    // EXCEPT on a `previewBeforeCommit` quiz: reaching here means this tile was already the auditioned
+    // one, so the child heard this exact word ~a second ago. Re-speaking it added a second full clip
+    // the advance then waited on — a dead ~1s of green tile that reads as "my tap didn't register" and
+    // invites more tapping. The audition IS the echo; don't repeat it.
+    const alreadyAuditioned = !!config.previewBeforeCommit
     try {
       if (isCorrect && config.speakCorrectFact) {
         await config.speakCorrectFact(currentItem, audio)
-      } else {
+      } else if (!alreadyAuditioned) {
         await config.speakClickedItem(selectedItem, audio)
       }
     } catch {
@@ -505,7 +514,14 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
         } else {
           generateNewQuestion()
         }
-      }, DWELL_CORRECT()) // unified celebration/advance dwell
+        // DWELL_CORRECT is the celebration window measured FROM THE TAP, not extra time bolted on
+        // AFTER the spoken echo. Awaiting the echo and then waiting a further full dwell made the
+        // green-tile pause `clip + 1400ms` — up to 4.5s in Bogstav Quiz, whose `speakCorrectFact`
+        // sentence is ~3s. A child reads that as a dropped tap and keeps tapping (every extra tap is
+        // correctly swallowed by the advance-lock, which makes it feel even more broken). Subtracting
+        // the elapsed echo never cuts audio short: if the clip outran the dwell, the remainder is 0
+        // and we advance the moment it finishes.
+      }, Math.max(0, DWELL_CORRECT() - (Date.now() - tappedAt))) // celebration dwell, from the tap
     }
   }
 
@@ -525,13 +541,14 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
     }
   }
 
-  // Round ended → record to the progress store (stars/bests/stickers) and show the result hero.
+  // Round ended → record to the progress store (stars/bests/bonus XP) and show the result hero. The
+  // REWARD itself isn't granted here — the ceremony owns that (progressStore.grantPendingRewards).
   const finishRound = (firstTryCorrect: number, longestStreak: number) => {
     const gameId = config.gameId ?? `quiz.${config.quizType}`
     const outcome = progressStore.recordRoundResult(
       gameId,
       { correct: firstTryCorrect, total: round.length, longestStreak },
-      { starThresholds: config.round?.starThresholds, stickerSetId: config.round?.stickerSetId },
+      { starThresholds: config.round?.starThresholds },
     )
     setRoundOutcome(outcome)
   }

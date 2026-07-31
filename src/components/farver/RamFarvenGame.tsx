@@ -14,7 +14,6 @@ import { useCelebration } from '../common/CelebrationEffect'
 import { ColorRepeatButton } from '../common/RepeatButton'
 import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 import { getCategoryTheme } from '../../config/categoryThemes'
-import { stickerSetForSection } from '../../config/stickers'
 import { hexToRgba } from '../../theme/tokens/helpers'
 import { SNAP, BOUNCE } from '../../theme/motion'
 import { useRound } from '../../hooks/useRound'
@@ -303,7 +302,7 @@ const RamFarvenGame: React.FC = () => {
     const outcome = progressStore.recordRoundResult(
       'colors.ramfarven',
       { correct: firstTryCorrect, total: round.length, longestStreak },
-      { starThresholds: { three: 0, two: 2 }, stickerSetId: stickerSetForSection('colors') },
+      { starThresholds: { three: 0, two: 2 } },
     )
     setRoundOutcome(outcome)
   }

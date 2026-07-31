@@ -23,8 +23,12 @@ import { sweepLegacyServiceWorkers } from './utils/swCleanup'
 sweepLegacyServiceWorkers()
 
 // DEV screenshot harness: seed Math.random when ?seed=<n> is present (deterministic questions).
-import { installDevSeed } from './utils/devHarness'
+import { installDevSeed, installDevRewards } from './utils/devHarness'
 installDevSeed()
+// DEV ?rewards=<n>: seed the Reward Book so its surfaces are capturable at any point on the path.
+// Fire-and-forget (dynamic imports) — the store commits synchronously and notifies subscribers, so a
+// render that already happened just re-renders.
+void installDevRewards()
 
 // Initialize viewport height before React renders
 const setInitialViewportHeight = () => {

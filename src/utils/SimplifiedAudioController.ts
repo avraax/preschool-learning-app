@@ -4,8 +4,6 @@ import {
   DANISH_PHRASES,
   getDanishNumberText,
   getDanishLetterName,
-  LEVEL_UP_PRAISE,
-  levelUpLine,
 } from '../config/danish-phrases'
 // Remote console logging removed for production
 
@@ -217,14 +215,12 @@ export class SimplifiedAudioController {
     })
   }
 
-  // Level-up praise (Liveliness PRD-01). Rotates a closed set of praise templates by level so the
-  // same level always speaks the same line (deterministic → prebake-friendly, no Math.random), with
-  // the level number spoken as Danish words. Routes through speak() so its cache key matches the
-  // prebaked Danish phrase path exactly. One call → single TTS channel (no queue).
-  async speakLevelUp(level: number): Promise<string> {
-    const lvl = Math.max(1, Math.floor(level))
-    const template = LEVEL_UP_PRAISE[lvl % LEVEL_UP_PRAISE.length]
-    return this.speak(levelUpLine(template, lvl))
+  // Reward-ceremony narration (Reward Book PRD-01 §9). The CALLER picks the one line for the moment
+  // (reward / gold / chapter-done / book-done — see src/config/danish-phrases.ts), because there is a
+  // single TTS channel with no queue: a ceremony must speak exactly ONE utterance or the beats cancel
+  // each other. Routes through speak() so the cache key matches the prebaked Danish phrase path.
+  async speakReward(text: string): Promise<string> {
+    return this.speak(text)
   }
 
   /**

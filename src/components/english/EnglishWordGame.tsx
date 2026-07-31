@@ -1,7 +1,6 @@
 import React from 'react'
 import UnifiedQuizGame, { UnifiedQuizConfig, QuizItem } from '../common/UnifiedQuizGame'
 import { getCategoryTheme } from '../../config/categoryThemes'
-import { stickerSetForSection } from '../../config/stickers'
 import { EnglishScoreChip } from '../common/ScoreChip'
 import { EnglishRepeatButton } from '../common/RepeatButton'
 import { quizEnglishWords, pickDistractorWords, englishThemes, EnglishWord } from '../../config/englishVocab'
@@ -48,8 +47,9 @@ const pickWordsForLevel = (correct: EnglishWord, level: DifficultyLevel): Englis
 //
 // Liveliness PRD-17 W1 — differentiation: this game KEEPS its picture prompt; the sibling Dansk til
 // Engelsk drops it and prompts with a Danish word instead. So Find = picture→English (recognition),
-// Translate = Danish-word→English (translation) — two distinct skills, both winnable by a pre-reader
-// via the shared W7 tile audition (hear each English tile before committing).
+// Translate = Danish-word→English (translation) — two distinct skills. Both are winnable by a
+// pre-reader because the PROMPT speaks the target word (here also alongside the picture), so the child
+// matches sound + picture to print; the old two-tap tile audition was removed (see below).
 const EnglishWordGame: React.FC = () => {
   const toWordItem = (w: EnglishWord): QuizItem => ({
     value: w.en,
@@ -88,15 +88,17 @@ const EnglishWordGame: React.FC = () => {
 
     gameWelcomeType: 'englishword',
     gameId: 'english.word',
-    round: { length: 8, starThresholds: { three: 0, two: 2 }, stickerSetId: stickerSetForSection('english') },
+    round: { length: 8, starThresholds: { three: 0, two: 2 } },
 
     // Never-fail hint (PRD-05 P1): after 2 wrong taps the correct word tile pulses.
     hintAfterNWrong: 2,
 
-    // Hear-before-commit (PRD-14 W7): the answer tiles are WRITTEN English words a pre-reader can't
-    // read, so the first tap auditions the tile's word (raises it) and only a second tap commits —
-    // turning an unreadable guess into real auditory matching.
-    previewBeforeCommit: true,
+    // SINGLE TAP commits (owner decision, 2026-07-31). This game previously opted into the
+    // `previewBeforeCommit` two-tap audition (PRD-14 W7): tap 1 spoke the tile's English word, tap 2
+    // committed. In real play with a 5-year-old that read as a broken game — the first tap looked
+    // ignored, so he kept tapping. The prompt already speaks the target word, so a single tap keeps
+    // this a genuine print-recognition task. The engine still supports `previewBeforeCommit` if the
+    // audition is ever wanted back; no game opts in today.
 
     // Speak the target English word as an audio hint alongside the picture.
     speakQuizPrompt: async (item: QuizItem, audio: any) => audio.speakEnglish(String(item.value)),

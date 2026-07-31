@@ -16,14 +16,16 @@ import {
   DANISH_LETTER_NAMES,
   getDanishLetterName,
   getDanishNumberText,
-  LEVEL_UP_PRAISE,
-  LEVEL_UP_TAP,
-  LEVELUP_PREBAKE_MAX,
-  levelUpLine,
+  rewardLine,
+  goldRewardLine,
+  collectedCountLine,
+  CHAPTER_DONE_LINE,
+  BOOK_DONE_LINE,
 } from './src/config/danish-phrases.ts'
 import { allEnglishWords } from './src/config/englishVocab.ts'
 import { HUE_ORDER, SHADES, DANISH_OBJECTS, spokenColor } from './src/config/colorContent.ts'
-import { STICKER_SETS } from './src/config/stickers.ts'
+import { REWARD_CHAPTERS } from './src/config/stickers.ts'
+import { REWARD_SLOTS } from './src/config/progression.ts'
 import { LETTER_WORDS, WORD_LETTERS } from './src/config/letterWords.ts'
 
 // Danish narration + English section voices, straight from the single source of voice truth.
@@ -90,17 +92,22 @@ export function collectNarrationClips() {
     )
   }
 
-  // Sticker reveal lines ("Nyt klistermærke! {label}") — closed album pool (mixed-language clip).
-  for (const set of STICKER_SETS) for (const s of set.stickers) da('mixed', `Nyt klistermærke! ${s.label}`)
+  // The Reward Book (Reward Book PRD-01 §9). Three lines per reward — the ceremony's reveal line, its
+  // gold-pass variant, and the bare label spoken when the reward is tapped in Min Bog. All 45 rewards
+  // are a CLOSED set, so this is the whole reachable inventory.
+  for (const chapter of REWARD_CHAPTERS) {
+    for (const r of chapter.rewards) {
+      da('mixed', rewardLine(r.label)) // "Nyt klistermærke! {label}"
+      da('mixed', goldRewardLine(r.label)) // "Skinnende klistermærke! {label}"
+      da('mixed', r.label) // Min Bog slot tap
+    }
+  }
 
-  // Level-up praise (Liveliness PRD-01). The controller rotates templates by level (lvl % len), so
-  // enumerate the exact line each level speaks. First level-up is 1→2; tap label reachable at trin 1.
-  for (let lvl = 2; lvl <= LEVELUP_PREBAKE_MAX; lvl++) {
-    da('levelup', levelUpLine(LEVEL_UP_PRAISE[lvl % LEVEL_UP_PRAISE.length], lvl))
-  }
-  for (let lvl = 1; lvl <= LEVELUP_PREBAKE_MAX; lvl++) {
-    da('levelup', levelUpLine(LEVEL_UP_TAP, lvl))
-  }
+  // Ceremony escalations + the home companion's spoken count (1..45 — the book can't exceed 45, so
+  // the count line is closed too).
+  da('levelup', CHAPTER_DONE_LINE)
+  da('levelup', BOOK_DONE_LINE)
+  for (let n = 1; n <= REWARD_SLOTS; n++) da('levelup', collectedCountLine(n))
 
   // English words — spoken via the en-US voice, no lexicon.
   for (const w of allEnglishWords) en('english', w.en)

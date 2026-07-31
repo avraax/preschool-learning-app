@@ -6,7 +6,6 @@ import {
 } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { getCategoryTheme } from '../../config/categoryThemes'
-import { stickerSetForSection } from '../../config/stickers'
 import { tileSurface } from '../../theme/tokens/helpers'
 import { softShadow } from '../../theme/depth'
 import GameShell from '../common/GameShell'
@@ -142,6 +141,8 @@ const SpellingGame: React.FC = () => {
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
   // The two nested post-completion timers (PRD-02 P4): the echo delay and the advance delay. Tracked
   // so they're cleared on unmount and never speak/advance over the next screen.
+  // When the final correct letter was tapped (drives the concurrent celebration window in completeWord).
+  const completedAtRef = useRef(0)
   const completeTimerRef = useRef<NodeJS.Timeout | null>(null)
   const advanceTimerRef = useRef<NodeJS.Timeout | null>(null)
   // False after unmount — checked inside the async completion callback (which awaits the word echo)
@@ -301,7 +302,7 @@ const SpellingGame: React.FC = () => {
     const outcome = progressStore.recordRoundResult(
       'ordleg.spelling',
       { correct: firstTryCorrect, total: round.length, longestStreak },
-      { starThresholds: { three: 0, two: 2 }, stickerSetId: stickerSetForSection('ordleg') },
+      { starThresholds: { three: 0, two: 2 } },
     )
     setRoundOutcome(outcome)
   }
@@ -349,7 +350,13 @@ const SpellingGame: React.FC = () => {
       // BEFORE the echo await below. Otherwise a tap on a leftover distractor tile during the ~1s
       // echo slips past the top-of-handler guard, hits the wrong branch (expectedLetter is
       // undefined) and steals the just-earned star.
-      if (newFilled === targetLetters.length) isAdvancing.current = true
+      if (newFilled === targetLetters.length) {
+        isAdvancing.current = true
+        // Stamp the completing tap: the word-complete celebration window is measured FROM HERE, so the
+        // letter echo + the read-back run CONCURRENTLY with it instead of all end-to-end (see
+        // completeWord). Measured before the fix: 7.3s from the final letter to the next word.
+        completedAtRef.current = Date.now()
+      }
 
       // Echo the placed letter (identification). No win/lose narration.
       try {
@@ -413,7 +420,12 @@ const SpellingGame: React.FC = () => {
         }
         if (r.done) finishRound(r.firstTryCorrect, r.longestStreak)
         else generateNewWord()
-      }, isIOS() ? 1500 : 2000)
+        // The celebration window, measured FROM THE COMPLETING TAP rather than bolted on after the
+        // letter echo + the 400ms beat + the word read-back. Those three already ran serially, so
+        // adding a further full 2s made the finished-word pause ~7s — long enough that a child assumes
+        // the game is stuck. Subtracting the elapsed time never truncates the read-back: if it outran
+        // the window, the remainder is 0 and we advance the moment it ends.
+      }, Math.max(0, (isIOS() ? 1500 : 2000) - (Date.now() - completedAtRef.current)))
     }, 400)
   }
 

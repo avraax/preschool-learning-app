@@ -53,8 +53,8 @@ const AuditHarness = lazy(() => import('./components/audit/AuditHarness'))
 import UpdateBanner from './components/common/UpdateBanner'
 import AdultCorner from './components/adult/AdultCorner'
 import PersistentWorld from './components/common/scene/PersistentWorld'
-import LevelUpOverlay from './components/common/LevelUpOverlay'
-import LevelUpWatcher from './components/common/LevelUpWatcher'
+import RewardOverlay from './components/common/RewardOverlay'
+import RewardWatcher from './components/common/RewardWatcher'
 import HomePage from './components/home/HomePage'
 import { TransitionProvider } from './components/common/transition/TransitionProvider'
 import TransitionOverlay from './components/common/transition/TransitionOverlay'
@@ -239,11 +239,11 @@ function App() {
             nothing for flat skins. */}
         <PersistentWorld />
 
-        {/* Cross-game progression (Liveliness PRD-01): the level-up ceremony fires from any play
-            context via levelUpBus; the watcher is the reload/cross-tab safety net. Both mounted
-            once at app root, above the world layer. */}
-        <LevelUpOverlay />
-        <LevelUpWatcher />
+        {/* The Reward Book (Reward Book PRD-01): the reward ceremony fires from any play context via
+            rewardBus; the watcher is the reload/cross-tab/mid-game safety net. Both mounted once at
+            app root, above the world layer. */}
+        <RewardOverlay />
+        <RewardWatcher />
 
         {/* Foreground pages render over the steady world. Positioned wrapper ABOVE the world
             layer (z-index:0). The themed wipe overlay (below) covers the page mount/unmount, so the

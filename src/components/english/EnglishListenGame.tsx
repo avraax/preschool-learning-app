@@ -1,7 +1,6 @@
 import React from 'react'
 import UnifiedQuizGame, { UnifiedQuizConfig, QuizItem } from '../common/UnifiedQuizGame'
 import { getCategoryTheme } from '../../config/categoryThemes'
-import { stickerSetForSection } from '../../config/stickers'
 import { EnglishScoreChip } from '../common/ScoreChip'
 import { EnglishRepeatButton } from '../common/RepeatButton'
 import { quizEnglishWords, pickDistractorWords, englishThemes, EnglishWord } from '../../config/englishVocab'
@@ -82,7 +81,7 @@ const EnglishListenGame: React.FC = () => {
 
     gameWelcomeType: 'englishlisten',
     gameId: 'english.listen',
-    round: { length: 8, starThresholds: { three: 0, two: 2 }, stickerSetId: stickerSetForSection('english') },
+    round: { length: 8, starThresholds: { three: 0, two: 2 } },
 
     // Never-fail hint (PRD-05 P1): after 2 wrong taps the correct picture tile pulses.
     hintAfterNWrong: 2,

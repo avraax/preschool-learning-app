@@ -53,13 +53,15 @@ Most task-based quizzes are a thin **config** over `src/components/common/Unifie
 - **Custom hero**: `renderHero(item)` renders a richer subject in the focal zone (`PromptFocus`)
   instead of the default glyph/emoji — used today by Tal Quiz (numeral + counted objects) and Hvad
   Mangler (the sequence with a pulsing "?").
-- **Hear-before-commit** (PRD-14 W7): `previewBeforeCommit` opts a quiz into a two-tap answer for
-  UNREADABLE answer tiles (english.word/.translate — written English words a pre-reader can't read).
-  1st tap on a tile AUDITIONS it (`speakClickedItem` + raises it to the shared `'selected'`
-  `TactileTile`/`AnswerTile` state — a lifted accent outline, NOT correct/wrong colours) and returns
-  WITHOUT scoring; a 2nd tap on the SAME tile commits; tapping a different tile moves the audition.
-  Every commit invariant (advance-lock, first-try, `hintAfterNWrong`) runs ONLY on the committing tap.
-  Reuse this flag + the `'selected'` state rather than reinventing an audition.
+- **Hear-before-commit** (`previewBeforeCommit`) — supported by the engine but **NO game opts in
+  today**. It makes a tap a two-step answer: 1st tap AUDITIONS the tile (`speakClickedItem` + the
+  shared `'selected'` state — a lifted accent outline, NOT correct/wrong colours) and returns WITHOUT
+  scoring; a 2nd tap on the SAME tile commits. english.word/.translate used it (PRD-14 W7) so a
+  pre-reader could hear each unreadable English word before choosing — **removed 2026-07-31 after
+  play-testing**: the owner's 5-year-old read the ignored first tap as a broken game and kept tapping.
+  Their prompts already speak the target word, so single-tap keeps them real print recognition.
+  **Before re-enabling it anywhere, solve the discoverability problem** — an unscored first tap needs a
+  signal a pre-reader actually reads.
 - **First-letter cue** (PRD-18 W1): `questionVisual.emphasizeFirstLetter` renders a word-only prompt
   with an oversized full-strength first grapheme + muted rest — a SILENT decode nudge (Læs Ordet).
   Opt-in **because the word-only prompt render is shared with Dansk til Engelsk** (a plain word) — never

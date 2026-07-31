@@ -7,7 +7,6 @@ import {
 import { useTheme } from '@mui/material/styles'
 import { Mic, MicOff } from 'lucide-react'
 import { getCategoryTheme } from '../../config/categoryThemes'
-import { stickerSetForSection } from '../../config/stickers'
 import { darken, hexToRgba, onTileColor } from '../../theme/tokens/helpers'
 import { softShadow, contactShadow } from '../../theme/depth'
 import GameShell from '../common/GameShell'
@@ -459,7 +458,7 @@ const SpeakWordGame: React.FC = () => {
     const outcome = progressStore.recordRoundResult(
       'ordleg.mic',
       { correct: firstTryCorrect, total: round.length, longestStreak },
-      { starThresholds: { three: 0, two: 2 }, stickerSetId: stickerSetForSection('ordleg') },
+      { starThresholds: { three: 0, two: 2 } },
     )
     setRoundOutcome(outcome)
   }

@@ -8,7 +8,6 @@ import { kidCollision } from '../common/dnd/kidCollision'
 import { DraggableItem } from '../common/dnd/DraggableItem'
 import { DroppableZone } from '../common/dnd/DroppableZone'
 import { getCategoryTheme } from '../../config/categoryThemes'
-import { stickerSetForSection } from '../../config/stickers'
 import { DANISH_OBJECTS, COLOR_SWATCH, HUE_ORDER, spokenColor } from '../../config/colorContent'
 import { hexToRgba } from '../../theme/tokens/helpers'
 import { SNAP } from '../../theme/motion'
@@ -196,7 +195,7 @@ const FarveQuizGame: React.FC = () => {
     const outcome = progressStore.recordRoundResult(
       'colors.quiz',
       { correct: firstTryCorrect, total: round.length, longestStreak },
-      { starThresholds: { three: 0, two: 2 }, stickerSetId: stickerSetForSection('colors') },
+      { starThresholds: { three: 0, two: 2 } },
     )
     setRoundOutcome(outcome)
   }

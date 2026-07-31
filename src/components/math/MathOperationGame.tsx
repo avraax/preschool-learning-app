@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Typography, Box, useMediaQuery } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { getCategoryTheme } from '../../config/categoryThemes'
-import { stickerSetForSection } from '../../config/stickers'
 import { DANISH_PHRASES, getDanishNumberText } from '../../config/danish-phrases'
 import GameShell from '../common/GameShell'
 import AnswerTile, { type AnswerTileState } from '../common/AnswerTile'
@@ -409,6 +408,9 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
     // Engage the advance-lock SYNCHRONOUSLY on a correct tap (before the await below) so a second
     // tap fired in the same tick is already blocked by the guard above.
     if (isCorrect) isAdvancingRef.current = true
+    // When the tap happened. The celebration dwell is measured FROM HERE so the spoken echo and the
+    // dwell run CONCURRENTLY instead of end-to-end (see the advance timer below).
+    const tappedAt = Date.now()
 
     // Mark the tapped tile + cue the corner guide, clearing the reaction a beat later.
     setFeedback({ value: selectedAnswer, correct: isCorrect })
@@ -463,7 +465,11 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
         } else {
           generateNewProblem()
         }
-      }, DWELL_CORRECT()) // unified celebration/advance dwell
+        // DWELL_CORRECT is the celebration window measured FROM THE TAP, not extra time after the
+        // spoken echo — awaiting the echo and then waiting a further full dwell made the green-tile
+        // pause `clip + 1400ms`, which reads as a dropped tap. Subtracting the elapsed echo never cuts
+        // audio short (if the clip outran the dwell the remainder is 0).
+      }, Math.max(0, DWELL_CORRECT() - (Date.now() - tappedAt))) // celebration dwell, from the tap
     }
   }
 
@@ -472,7 +478,7 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
     const outcome = progressStore.recordRoundResult(
       gameId,
       { correct: firstTryCorrect, total: round.length, longestStreak },
-      { starThresholds: { three: 0, two: 2 }, stickerSetId: stickerSetForSection('math') },
+      { starThresholds: { three: 0, two: 2 } },
     )
     setRoundOutcome(outcome)
   }

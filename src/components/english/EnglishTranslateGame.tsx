@@ -1,7 +1,6 @@
 import React from 'react'
 import UnifiedQuizGame, { UnifiedQuizConfig, QuizItem } from '../common/UnifiedQuizGame'
 import { getCategoryTheme } from '../../config/categoryThemes'
-import { stickerSetForSection } from '../../config/stickers'
 import { EnglishScoreChip } from '../common/ScoreChip'
 import { EnglishRepeatButton } from '../common/RepeatButton'
 import { quizEnglishWords, pickDistractorWords, englishThemes, EnglishWord } from '../../config/englishVocab'
@@ -89,15 +88,17 @@ const EnglishTranslateGame: React.FC = () => {
 
     gameWelcomeType: 'englishtranslate',
     gameId: 'english.translate',
-    round: { length: 8, starThresholds: { three: 0, two: 2 }, stickerSetId: stickerSetForSection('english') },
+    round: { length: 8, starThresholds: { three: 0, two: 2 } },
 
     // Never-fail hint (PRD-05 P1): after 2 wrong taps the correct word tile pulses.
     hintAfterNWrong: 2,
 
-    // Hear-before-commit (PRD-14 W7): the answer tiles are WRITTEN English words a pre-reader can't
-    // read, so the first tap auditions the tile's English word (raises it) and only a second tap
-    // commits — the child hears the Danish prompt, then hears each English candidate before choosing.
-    previewBeforeCommit: true,
+    // SINGLE TAP commits (owner decision, 2026-07-31). This game previously opted into the
+    // `previewBeforeCommit` two-tap audition (PRD-14 W7): tap 1 spoke the tile's English word, tap 2
+    // committed. In real play with a 5-year-old that read as a broken game — the first tap looked
+    // ignored, so he kept tapping. The prompt already speaks the target word, so a single tap keeps
+    // this a genuine print-recognition task. The engine still supports `previewBeforeCommit` if the
+    // audition is ever wanted back; no game opts in today.
 
     // Prompt is the Danish word (Danish voice); tapping an option speaks the English word.
     speakQuizPrompt: async (item: QuizItem, audio: any) => audio.speak(String(item.audioPrompt)),

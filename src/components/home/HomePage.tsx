@@ -8,11 +8,15 @@ import { useTransitionNav } from '../../hooks/useTransitionNav'
 import { useTransitionContext } from '../common/transition/TransitionProvider'
 import { useIdleAttract } from '../../hooks/useIdleAttract'
 import { PHONE_ANY, PHONE_LANDSCAPE } from '../../theme/phoneMedia'
-import { totalStickerCount } from '../../config/stickers'
+import { REWARD_SLOTS } from '../../config/progression'
+import { rewardArt } from '../../assets/rewards'
+import { collectedCountLine } from '../../config/danish-phrases'
+import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 import { sectionIconImages } from '../../assets/themes/icons'
 import { defaultHomeAnchors, SCENE_SECTION_ORDER } from '../../theme/tokens/helpers'
 import type { SceneSectionId } from '../../theme/tokens/types'
 import ProgressionCompanion from '../common/ProgressionCompanion'
+import RewardRing from '../common/RewardRing'
 import ThemeMascot from '../common/ThemeMascot'
 import LivingCard from '../common/LivingCard'
 import SceneObjectField, { type SceneFieldItem } from '../common/scene/SceneObjectField'
@@ -59,10 +63,27 @@ const HomePage: React.FC = () => {
   const immersive = theme.scene.layers.length > 0
   const darkScene = theme.scene.dark // dark backdrop (e.g. Rummet) → light title + floating objects
   const burstMotion = theme.scene.ambient.motion
-  const { state: progress } = useProgress()
-  const stickersOwned = Object.keys(progress.stickers.collected).length
-  const stickersTotal = totalStickerCount()
-  const albumFill = stickersTotal > 0 ? stickersOwned / stickersTotal : 0
+  const { collectedCount, nextReward } = useProgress()
+  // ONE total, from the economy constant — this used to be computed three different ways across the
+  // album/home surfaces. `nextReward` puts the prize he's working toward right on the shelf.
+  const rewardsOwned = collectedCount()
+  const nextPrize = nextReward()
+  const nextPrizeArt = nextPrize ? rewardArt(nextPrize.reward.id) : undefined
+  const albumFill = rewardsOwned / REWARD_SLOTS
+
+  // Tapping the corner ring says how many rewards are in the book ("Du har tolv klistermærker!") — the
+  // affordance the growing companion carried before it moved into the shelf card. Silent at 0: there's
+  // no count worth announcing on a fresh profile.
+  const homeAudio = useSimplifiedAudioHook({ componentId: 'HomePage', autoInitialize: false })
+  const speakCollectedCount = useCallback(() => {
+    if (rewardsOwned <= 0) return
+    try {
+      homeAudio.updateUserInteraction()
+      homeAudio.speak(collectedCountLine(rewardsOwned)).catch(() => {})
+    } catch {
+      /* audio best-effort */
+    }
+  }, [homeAudio, rewardsOwned])
 
   // The 5 section objects, built FROM the theme's home anchors so item ↔ anchor stay index-aligned
   // regardless of the authored order. Each is a tappable soft-3D object that lives in the world.
@@ -179,7 +200,7 @@ const HomePage: React.FC = () => {
           [PHONE_LANDSCAPE]: { py: 0.75 },
         }}
       >
-        {/* Header row: brand lockup (left) + prominent progression companion (right). */}
+        {/* Header row: brand lockup (left) + the reward ring (right). */}
         <Box sx={{ position: 'relative', zIndex: 2, pointerEvents: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2, mb: { xs: 1.5, md: 2 }, [PHONE_LANDSCAPE]: { mb: 0.75 } }}>
           <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1.25, md: 2 } }}>
@@ -219,10 +240,19 @@ const HomePage: React.FC = () => {
             </Box>
           </motion.div>
 
-          {/* Growing companion (PRD-01/-04/-07) — the PRIMARY reward. Enlarged on immersive home so
-              progress reads as the emotional spine (the world grows with the child). */}
+          {/* The NEXT REWARD, exactly as the section menus and every game header show it (owner
+              decision, 2026-07-31). Home used to put the growing companion here instead — a different
+              object in the same corner position, which undercut the whole point of the one-track model:
+              the child had to learn that the top-right circle means two different things depending on
+              which screen he's on. Now every surface in the app previews the same prize in the same
+              place. The companion moved down beside the Min Bog shelf, where book progress lives. */}
           <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5, delay: 0.15 }}>
-            <ProgressionCompanion size={immersive ? 104 : 84} sx={{ [PHONE_LANDSCAPE]: { transform: 'scale(0.62)' }, [PHONE_ANY]: { transform: 'scale(0.7)' } }} />
+            <RewardRing
+              size={immersive ? 52 : 48}
+              onTap={speakCollectedCount}
+              ariaLabel={`Du har ${rewardsOwned} klistermærker`}
+              sx={{ [PHONE_LANDSCAPE]: { width: 36, height: 36 } }}
+            />
           </motion.div>
         </Box>
 
@@ -393,7 +423,17 @@ const HomePage: React.FC = () => {
                 [PHONE_LANDSCAPE]: { py: 0.4, '&:last-child': { pb: 0.4 }, gap: 0.75 },
               }}
             >
-              <Box sx={{ fontSize: { xs: '1.5rem', md: '1.9rem' }, lineHeight: 1, flex: '0 0 auto', [PHONE_LANDSCAPE]: { fontSize: '1.2rem' } }}>📖</Box>
+              {/* The growing companion sits INSIDE the shelf as its icon: the 5 reward chapters ARE its
+                  5 stages, so it belongs on the card that shows book progress rather than competing with
+                  the reward ring for the corner. Non-interactive here (the whole card opens the book —
+                  the right destination); the spoken count moved to the corner ring's tap. Placed beside
+                  the shelf it collided with the corner mascot and clipped the viewport edge in portrait. */}
+              <ProgressionCompanion
+                size={34}
+                showBadge={false}
+                interactive={false}
+                sx={{ flex: '0 0 auto', [PHONE_LANDSCAPE]: { width: 26, height: 26 } }}
+              />
               <Box sx={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 0.4 }}>
                 <Typography sx={{ fontWeight: 800, fontSize: { xs: '0.9rem', md: '1.05rem' }, color: '#6B3F00', lineHeight: 1, [PHONE_LANDSCAPE]: { fontSize: '0.85rem' } }}>
                   Min Bog
@@ -403,8 +443,42 @@ const HomePage: React.FC = () => {
                 </Box>
               </Box>
               <Typography sx={{ flex: '0 0 auto', fontWeight: 800, fontSize: { xs: '0.8rem', md: '0.95rem' }, color: '#5C3800', whiteSpace: 'nowrap', [PHONE_LANDSCAPE]: { fontSize: '0.75rem' } }}>
-                {stickersOwned} / {stickersTotal} · ⭐ {progress.totals.totalStars}
+                {rewardsOwned} / {REWARD_SLOTS}
               </Typography>
+              {/* The next prize, as the same silhouette the corner ring and the book show — so home
+                  also answers "what am I working toward?". Book full → a gold ✨. */}
+              <Box
+                aria-hidden
+                sx={{
+                  flex: '0 0 auto',
+                  width: { xs: 26, md: 32 },
+                  height: { xs: 26, md: 32 },
+                  [PHONE_LANDSCAPE]: { width: 22, height: 22 },
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: { xs: '1.15rem', md: '1.4rem' },
+                  lineHeight: 1,
+                }}
+              >
+                {nextPrize ? (
+                  nextPrizeArt ? (
+                    <Box
+                      component="img"
+                      src={nextPrizeArt}
+                      alt=""
+                      draggable={false}
+                      sx={{ width: '100%', height: '100%', objectFit: 'contain', filter: 'brightness(0)', opacity: 0.32 }}
+                    />
+                  ) : (
+                    <Box component="span" sx={{ filter: 'brightness(0)', opacity: 0.32 }}>
+                      {nextPrize.reward.emoji}
+                    </Box>
+                  )
+                ) : (
+                  '✨'
+                )}
+              </Box>
             </CardContent>
           </Card>
         </Box>

@@ -3,7 +3,6 @@ import { Box, Typography } from '@mui/material'
 import UnifiedQuizGame, { UnifiedQuizConfig, QuizItem } from '../common/UnifiedQuizGame'
 import { DANISH_PHRASES } from '../../config/danish-phrases'
 import { categoryThemes, getCategoryTheme } from '../../config/categoryThemes'
-import { stickerSetForSection } from '../../config/stickers'
 import { MathScoreChip } from '../common/ScoreChip'
 import { MathRepeatButton } from '../common/RepeatButton'
 import { progressStore, type DifficultyLevel } from '../../services/progressStore'
@@ -199,7 +198,7 @@ const MathGame: React.FC = () => {
 
     // Bounded round + reward flow (Foundation §3). 8 questions, 3★ = no mistakes, 2★ ≤ 2.
     gameId: 'math.counting',
-    round: { length: 8, starThresholds: { three: 0, two: 2 }, stickerSetId: stickerSetForSection('math') },
+    round: { length: 8, starThresholds: { three: 0, two: 2 } },
 
     // Never-fail hint (PRD-05 P1): after 2 wrong taps the correct number tile pulses.
     hintAfterNWrong: 2,

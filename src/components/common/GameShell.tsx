@@ -6,7 +6,7 @@ import GameMotif from './GameMotif'
 import Mascot from './Mascot'
 import BackButton from './BackButton'
 import CelebrationEffect from './CelebrationEffect'
-import LevelRingMini from './LevelRingMini'
+import RewardRing from './RewardRing'
 import { getCategoryTheme } from '../../config/categoryThemes'
 import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 import { mascotBus } from '../../services/mascotBus'
@@ -130,7 +130,7 @@ const GameShell: React.FC<GameShellProps> = ({
               gets a smaller, flyer-less variant so it never fights the inline title/score row. */}
           <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, md: 1.5 } }}>
             {levelIndicator && (
-              <LevelRingMini flourish compact={phoneLandscape} size={phoneLandscape ? 34 : 46} />
+              <RewardRing flourish compact={phoneLandscape} size={phoneLandscape ? 34 : 46} />
             )}
             {score}
           </Box>

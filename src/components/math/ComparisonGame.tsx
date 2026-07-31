@@ -11,7 +11,6 @@ import type { GuideReaction } from '../common/ThemeMascot'
 import { useCelebration } from '../common/CelebrationEffect'
 import { MathScoreChip } from '../common/ScoreChip'
 import { getCategoryTheme } from '../../config/categoryThemes'
-import { stickerSetForSection } from '../../config/stickers'
 import { getDanishNumberText } from '../../config/danish-phrases'
 import { MathRepeatButton } from '../common/RepeatButton'
 import { useGameState } from '../../hooks/useGameState'
@@ -280,7 +279,7 @@ const ComparisonGame: React.FC = () => {
     const outcome = progressStore.recordRoundResult(
       'math.comparison',
       { correct: firstTryCorrect, total: round.length, longestStreak },
-      { starThresholds: { three: 0, two: 2 }, stickerSetId: stickerSetForSection('math') },
+      { starThresholds: { three: 0, two: 2 } },
     )
     setRoundOutcome(outcome)
   }
@@ -318,6 +317,9 @@ const ComparisonGame: React.FC = () => {
       isAdvancingRef.current = true
       setLocked(true)
     }
+    // When the tap happened. The celebration dwell is measured FROM HERE so the spoken echo and the
+    // dwell run CONCURRENTLY instead of end-to-end (see the advance timer below).
+    const tappedAt = Date.now()
 
     setChosen({ side, correct: isCorrect })
     setGuideReaction(isCorrect ? 'cheer' : 'think')
@@ -362,7 +364,11 @@ const ComparisonGame: React.FC = () => {
         } else {
           generateNewProblem()
         }
-      }, DWELL_CORRECT()) // unified celebration/advance dwell
+        // DWELL_CORRECT is the celebration window measured FROM THE TAP, not extra time after the
+        // spoken echo — awaiting the echo and then waiting a further full dwell made the green-tile
+        // pause `clip + 1400ms`, which reads as a dropped tap. Subtracting the elapsed echo never cuts
+        // audio short (if the clip outran the dwell the remainder is 0).
+      }, Math.max(0, DWELL_CORRECT() - (Date.now() - tappedAt))) // celebration dwell, from the tap
     } else {
       // Gentle, non-punishing: break the first-try flag, soft SFX, the mouth stays shut, retry.
       firstAttemptRef.current = false

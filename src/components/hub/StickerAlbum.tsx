@@ -1,31 +1,41 @@
 import React, { useEffect, useState } from 'react'
 import { AppBar, Box, Container, Toolbar, Typography } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
-import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
+import { PHONE_LANDSCAPE, PHONE_PORTRAIT } from '../../theme/phoneMedia'
 import { motion } from 'framer-motion'
 import BackButton from '../common/BackButton'
-import { STICKER_SETS } from '../../config/stickers'
+import { REWARD_CHAPTERS, type Reward } from '../../config/stickers'
+import { CHAPTER_SIZE, REWARD_SLOTS, chapterOfSlot } from '../../config/progression'
+import { rewardArt } from '../../assets/rewards'
 import { useProgress } from '../../hooks/useProgress'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
 import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 import { sfx } from '../../services/sfxClient'
-import { hexToRgba } from '../../theme/tokens/helpers'
+import { hexToRgba, tileSurface, onTileColor } from '../../theme/tokens/helpers'
+import { softShadow, contactShadow } from '../../theme/depth'
 import { devNyt } from '../../utils/devHarness'
 
-// The sticker album (Overhaul Foundation — System 2) at /album. A themed "book" with one page
-// per set: collected stickers are bright; uncollected are faint "?" silhouettes. Tapping a
-// collected sticker pops it and speaks its Danish name (no fail state). Full-viewport no-scroll,
-// themed across all 6 skins (transparent over the persistent immersive world; gradient + dots on
-// flat skins — mirrors GameShell / HomePage so it sits at the visual quality floor).
+// Min Bog (Reward Book PRD-01 W5) at /album — the other half of the model the corner ring shows.
+//
+// Slots render in PATH ORDER in exactly three states:
+//   • collected — full-colour art (or emoji) + Danish label; gold when it's a gold-pass duplicate,
+//   • next      — the SAME silhouette treatment as the corner ring, plus an accent glow + slow pulse.
+//                 Exactly ONE slot in the whole book is ever in this state,
+//   • locked    — a blank tactile plate. Deliberately blank: the old version showed every uncollected
+//                 sticker greyed-out with a "?", which spoiled all 45 and made the next one
+//                 unremarkable. Anticipation needs exactly one visible target.
+//
+// The chapter tab auto-opens where the child is, so "where am I" answers itself; future chapters stay
+// tappable (no locks, no walls for a 5-year-old). Full-viewport no-scroll, themed across all skins.
 
 const COMIC = '"Comic Sans MS", "Comic Neue", sans-serif'
+const GOLD = '#FFB300'
 
 const StickerAlbum: React.FC = () => {
   const theme = useTheme()
   const reduce = useReducedMotion()
-  const { state, markStickersSeen } = useProgress()
+  const { state, markStickersSeen, collectedCount, nextReward } = useProgress()
   const audio = useSimplifiedAudioHook({ componentId: 'StickerAlbum', autoInitialize: false })
-  const [activeIndex, setActiveIndex] = useState(0)
   const [poppedId, setPoppedId] = useState<string | null>(null)
   const [wiggleId, setWiggleId] = useState<string | null>(null)
   const forceNyt = devNyt()
@@ -34,39 +44,45 @@ const StickerAlbum: React.FC = () => {
   const dark = theme.scene.dark
   const collected = state.stickers.collected
   const newIds = state.stickers.newIds
-  const activeSet = STICKER_SETS[activeIndex]
   const accent = theme.palette.primary.main
+  const totalCollected = collectedCount()
+  const next = nextReward()
 
-  const collectedInSet = activeSet.stickers.filter((s) => collected[s.id]).length
-  const setComplete = collectedInSet === activeSet.stickers.length
+  // Auto-open at the chapter the child is actually working on. Held in state (not derived) so tapping
+  // another tab to browse ahead sticks — it only seeds the initial view.
+  const [activeIndex, setActiveIndex] = useState(() =>
+    Math.min(REWARD_CHAPTERS.length - 1, chapterOfSlot(totalCollected)),
+  )
+  const activeChapter = REWARD_CHAPTERS[activeIndex]
 
-  // Opening the album marks the "new" stickers as seen (the badges clear on the next visit). The
+  const collectedInChapter = activeChapter.rewards.filter((r) => collected[r.id]).length
+  const chapterComplete = collectedInChapter === activeChapter.rewards.length
+
+  // Opening the book marks the "new" rewards as seen (the badges clear on the next visit). The
   // ?nyt=1 harness keeps them so the badge is capturable.
   useEffect(() => {
     if (forceNyt) return
     const t = window.setTimeout(() => markStickersSeen(), 1600)
     return () => window.clearTimeout(t)
   }, [forceNyt, markStickersSeen])
-  const totalStickersOwned = Object.keys(collected).length
-  const grandTotal = STICKER_SETS.reduce((n, s) => n + s.stickers.length, 0)
 
   const titleColor = dark ? '#FFFFFF' : theme.decor.titleColor
 
-  const handleStickerTap = (id: string, label: string) => {
-    if (!collected[id]) {
-      // Not yet earned. A silent no-op reads as "broken" at 5 — give a gentle wiggle + a soft
-      // "not yet" tap cue instead (PRD-09 P6). No sad/wrong sound; the slot just nudges.
-      setWiggleId(id)
+  const handleSlotTap = (reward: Reward, owned: boolean) => {
+    if (!owned) {
+      // Not yet earned. A silent no-op reads as "broken" at 5 — give a gentle wiggle + a soft tap
+      // cue instead. Never a sad/wrong sound; the slot just nudges.
+      setWiggleId(reward.id)
       sfx.play('tap')
-      window.setTimeout(() => setWiggleId((cur) => (cur === id ? null : cur)), 500)
+      window.setTimeout(() => setWiggleId((cur) => (cur === reward.id ? null : cur)), 500)
       return
     }
-    setPoppedId(id)
+    setPoppedId(reward.id)
     sfx.play('drop-snap')
     audio.updateUserInteraction()
     audio.cancelCurrentAudio()
-    audio.speak(label).catch(() => {})
-    window.setTimeout(() => setPoppedId((cur) => (cur === id ? null : cur)), 600)
+    audio.speak(reward.label).catch(() => {})
+    window.setTimeout(() => setPoppedId((cur) => (cur === reward.id ? null : cur)), 600)
   }
 
   return (
@@ -87,16 +103,14 @@ const StickerAlbum: React.FC = () => {
           : `${theme.decor.pageBackground},\n${theme.decor.dots}`,
       }}
     >
-      {/* Header: back (left) + lifetime stats (right) */}
+      {/* Header: back (left) + the ONE count (right). The old lifetime ⭐ pill is gone (PRD D10) —
+          a third score with no purpose next to the number that actually matters. */}
       <AppBar position="static" color="transparent" elevation={0}>
         <Toolbar sx={{ justifyContent: 'space-between', py: 2, color: titleColor, [PHONE_LANDSCAPE]: { py: 0.25, minHeight: '48px !important' } }}>
           {/* Shared themed back button — reverses the wipe, consistent with every other surface. */}
           <BackButton to="/" variant="menu" />
 
-          <Box sx={{ display: 'flex', gap: 1 }}>
-            <StatPill label={`⭐ ${state.totals.totalStars}`} accent={accent} />
-            <StatPill label={`📒 ${totalStickersOwned} / ${grandTotal}`} accent={accent} />
-          </Box>
+          <StatPill label={`📒 ${totalCollected} / ${REWARD_SLOTS}`} accent={accent} />
         </Toolbar>
       </AppBar>
 
@@ -104,7 +118,7 @@ const StickerAlbum: React.FC = () => {
         maxWidth="md"
         sx={{ flex: 1, display: 'flex', flexDirection: 'column', py: { xs: 1, md: 2 }, overflow: 'hidden' }}
       >
-        {/* Title */}
+        {/* Title — one name for one thing (the home card says "Min Bog" too). */}
         <Typography
           sx={{
             textAlign: 'center',
@@ -120,27 +134,32 @@ const StickerAlbum: React.FC = () => {
             [PHONE_LANDSCAPE]: { fontSize: '1.05rem', mb: 0.5 },
           }}
         >
-          📖 Min Klistermærkebog
+          📖 Min Bog
         </Typography>
 
-        {/* Page tabs */}
+        {/* 5 chapter tabs. They fit on ONE row at every landscape size (measured: 274→906 of 1180 on
+            iPad, and inside 844 on phone-landscape), which is the point of dropping from 7 sets to 5.
+            `flexWrap` is still on as a SAFETY NET: at 390px portrait five tabs genuinely don't fit and
+            a nowrap row silently CLIPPED the first and last one off both screen edges. Wrapping to two
+            rows there is the correct degradation — never an unreachable tab. */}
         <Box
           sx={{
             display: 'flex',
+            flexWrap: 'wrap',
             gap: { xs: 0.75, md: 1.25 },
             justifyContent: 'center',
-            flexWrap: 'wrap',
             mb: { xs: 1, md: 1.5 },
             flex: '0 0 auto',
             [PHONE_LANDSCAPE]: { mb: 0.5, gap: 0.5 },
+            [PHONE_PORTRAIT]: { gap: 0.5, rowGap: 0.5 },
           }}
         >
-          {STICKER_SETS.map((set, i) => {
-            const done = set.stickers.every((s) => collected[s.id])
+          {REWARD_CHAPTERS.map((chapter, i) => {
+            const done = chapter.rewards.every((r) => collected[r.id])
             const active = i === activeIndex
             return (
               <Box
-                key={set.id}
+                key={chapter.id}
                 component="button"
                 onClick={() => {
                   sfx.play('tap')
@@ -153,6 +172,9 @@ const StickerAlbum: React.FC = () => {
                   borderRadius: '14px',
                   px: { xs: 1.25, md: 2 },
                   py: { xs: 0.5, md: 0.75 },
+                  // 44px minimum touch target (the 5-tab row has plenty of horizontal slack; the old
+                  // 7-tab version measured 40px). Phone-landscape trades height for fitting the row.
+                  minHeight: 44,
                   display: 'flex',
                   alignItems: 'center',
                   gap: 0.75,
@@ -167,17 +189,20 @@ const StickerAlbum: React.FC = () => {
                       : 'rgba(255,255,255,0.8)',
                   boxShadow: active ? `0 4px 14px ${hexToRgba(accent, 0.45)}` : 'none',
                   transition: 'all 0.2s ease',
+                  whiteSpace: 'nowrap',
+                  [PHONE_LANDSCAPE]: { px: 0.9, py: 0.25, fontSize: '0.7rem', gap: 0.4, minHeight: 32 },
+                  [PHONE_PORTRAIT]: { px: 1, fontSize: '0.8rem', gap: 0.4 },
                 }}
               >
-                <span>{set.emoji}</span>
-                <span>{set.title}</span>
+                <span>{chapter.emoji}</span>
+                <span>{chapter.title}</span>
                 {done && <span aria-label="komplet">✅</span>}
               </Box>
             )
           })}
         </Box>
 
-        {/* Per-page progress */}
+        {/* Per-chapter progress */}
         <Typography
           sx={{
             textAlign: 'center',
@@ -190,12 +215,11 @@ const StickerAlbum: React.FC = () => {
             [PHONE_LANDSCAPE]: { mb: 0.25, fontSize: '0.75rem' },
           }}
         >
-          {collectedInSet} / {activeSet.stickers.length} samlet
+          {collectedInChapter} / {CHAPTER_SIZE} samlet
         </Typography>
 
-        {/* Set-complete payoff — a shining "hele siden!" ribbon when every sticker on the page is
-            collected (the album teases toward this). */}
-        {setComplete && (
+        {/* Chapter-complete payoff — a shining ribbon when every reward on the page is collected. */}
+        {chapterComplete && (
           <Box
             component={motion.div}
             initial={reduce ? false : { opacity: 0, scale: 0.85 }}
@@ -239,8 +263,8 @@ const StickerAlbum: React.FC = () => {
           </Box>
         )}
 
-        {/* Sticker grid (3 columns) — seated on a soft "page" panel so the collection reads as a
-            treasured book page inside the world (PRD-05 W10), not a bare floating grid. */}
+        {/* Reward grid (3 columns) — seated on a soft "page" panel so the collection reads as a
+            treasured book page inside the world, not a bare floating grid. */}
         <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 0 }}>
           <Box
             sx={{
@@ -272,21 +296,28 @@ const StickerAlbum: React.FC = () => {
               [PHONE_LANDSCAPE]: { gridTemplateColumns: 'repeat(5, 1fr)', gap: '8px', maxWidth: 430 },
             }}
           >
-            {activeSet.stickers.map((sticker, i) => {
-              const entry = collected[sticker.id]
+            {activeChapter.rewards.map((reward, i) => {
+              const entry = collected[reward.id]
               // ?nyt=1 harness: force the first slot owned+new so the badge is capturable.
               const forcedHere = forceNyt && i === 0
               const owned = !!entry || forcedHere
-              const shiny = !!entry && entry.count > 1
-              const isNew = forcedHere || newIds.includes(sticker.id)
-              const popped = poppedId === sticker.id
-              const wiggling = wiggleId === sticker.id
+              const gold = !!entry && entry.count > 1
+              const isNew = forcedHere || newIds.includes(reward.id)
+              const isNext = !owned && next?.reward.id === reward.id
+              const popped = poppedId === reward.id
+              const wiggling = wiggleId === reward.id
+              const art = rewardArt(reward.id)
+              // The next slot gets the SAME silhouette treatment as the corner ring, so the two
+              // surfaces are unmistakably showing one object. Locked slots show NOTHING.
+              const silhouette = dark
+                ? { filter: 'brightness(0) invert(1)', opacity: 0.45 }
+                : { filter: 'brightness(0)', opacity: 0.3 }
               return (
                 <Box
-                  key={sticker.id}
+                  key={reward.id}
                   component={motion.button}
                   type="button"
-                  onClick={() => handleStickerTap(sticker.id, sticker.label)}
+                  onClick={() => handleSlotTap(reward, owned)}
                   animate={
                     reduce
                       ? { scale: 1 }
@@ -294,71 +325,102 @@ const StickerAlbum: React.FC = () => {
                         ? { scale: [1, 1.18, 1], rotate: [0, -6, 6, 0] }
                         : wiggling
                           ? { rotate: [0, -7, 7, -5, 5, 0] }
-                          : { scale: 1 }
+                          : isNext
+                            ? { scale: [1, 1.045, 1] }
+                            : { scale: 1 }
                   }
-                  transition={{ duration: 0.5 }}
+                  transition={
+                    isNext && !popped && !wiggling && !reduce
+                      ? { duration: 2.2, repeat: Infinity, ease: 'easeInOut' }
+                      : { duration: 0.5 }
+                  }
                   sx={{
                     position: 'relative',
                     border: '3px solid',
                     borderColor: owned
-                      ? shiny
-                        ? '#FFB300'
+                      ? gold
+                        ? GOLD
                         : hexToRgba(accent, 0.55)
-                      : hexToRgba(dark ? '#FFFFFF' : '#000000', 0.12),
+                      : isNext
+                        ? accent
+                        : hexToRgba(dark ? '#FFFFFF' : '#000000', 0.12),
                     borderRadius: '20px',
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
                     justifyContent: 'center',
                     cursor: owned ? 'pointer' : 'default',
+                    // Same soft-3D clay material as TactileTile in the games (no more #ECF1F8).
                     background: owned
-                      ? shiny
-                        ? 'linear-gradient(180deg, #FFFDF5 0%, rgba(255,200,61,0.25) 100%)'
-                        : 'linear-gradient(180deg, #FFFFFF 0%, #ECF1F8 100%)'
+                      ? gold
+                        ? `linear-gradient(180deg, #FFFDF5 0%, ${hexToRgba(GOLD, 0.25)} 100%)`
+                        : tileSurface(accent, dark)
                       : dark
                         ? 'rgba(255,255,255,0.06)'
                         : 'rgba(255,255,255,0.45)',
                     boxShadow: owned
-                      ? `0 6px 0 ${shiny ? hexToRgba('#FFB300', 0.6) : hexToRgba(accent, 0.5)}, 0 8px 18px rgba(0,0,0,0.15)`
-                      : 'inset 0 2px 8px rgba(0,0,0,0.08)',
+                      ? `0 6px 0 ${gold ? hexToRgba(GOLD, 0.6) : hexToRgba(accent, 0.5)}, 0 8px 18px rgba(0,0,0,0.15)`
+                      : isNext
+                        ? `0 0 0 4px ${hexToRgba(accent, 0.28)}, 0 6px 18px ${hexToRgba(accent, 0.35)}`
+                        : 'inset 0 2px 8px rgba(0,0,0,0.08)',
                     WebkitTapHighlightColor: 'transparent',
                     outline: 'none',
                   }}
                 >
-                  {/* Locked slots show the real sticker as a faint grayscale silhouette (teasing
-                      what's still uncollected) rather than a bare "?". */}
-                  <Typography
-                    component="span"
-                    sx={{
-                      fontSize: 'clamp(2rem, 11vw, 3.4rem)',
-                      lineHeight: 1,
-                      filter: owned ? 'none' : 'grayscale(1)',
-                      opacity: owned ? 1 : 0.28,
-                      userSelect: 'none',
-                    }}
-                  >
-                    {sticker.emoji}
-                  </Typography>
-                  {/* Faint "?" hint + gentle glint over locked slots — teases without revealing. */}
-                  {!owned && (
+                  {/* Grounding contact shadow under a collected reward — the shell's clay language. */}
+                  {owned && !reduce && (
                     <Box
                       aria-hidden
                       sx={{
                         position: 'absolute',
-                        inset: 0,
-                        borderRadius: '18px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
+                        bottom: 6,
+                        left: '18%',
+                        width: '64%',
+                        height: 10,
+                        borderRadius: '50%',
+                        background: contactShadow(gold ? GOLD : accent, 0.7),
+                        filter: 'blur(3px)',
                         pointerEvents: 'none',
-                        background:
-                          'radial-gradient(circle at 30% 25%, rgba(255,255,255,0.35) 0%, transparent 55%)',
                       }}
-                    >
-                      <Box component="span" sx={{ fontSize: 'clamp(0.9rem, 3.5vw, 1.4rem)', fontWeight: 800, color: hexToRgba(dark ? '#FFFFFF' : '#000000', 0.28) }}>?</Box>
-                    </Box>
+                    />
                   )}
-                  {/* "nyt!" badge on a freshly collected sticker (clears on next album visit). */}
+
+                  {/* The reward itself — full colour when collected, a silhouette for the NEXT one,
+                      and nothing at all for a locked slot (a blank plate). */}
+                  {(owned || isNext) &&
+                    (art ? (
+                      <Box
+                        component="img"
+                        src={art}
+                        alt=""
+                        draggable={false}
+                        sx={{
+                          position: 'relative',
+                          width: '62%',
+                          height: '62%',
+                          objectFit: 'contain',
+                          userSelect: 'none',
+                          pointerEvents: 'none',
+                          filter: owned && !reduce ? softShadow(1) : undefined,
+                          ...(isNext ? silhouette : {}),
+                        }}
+                      />
+                    ) : (
+                      <Typography
+                        component="span"
+                        sx={{
+                          position: 'relative',
+                          fontSize: 'clamp(2rem, 11vw, 3.4rem)',
+                          lineHeight: 1,
+                          userSelect: 'none',
+                          ...(isNext ? silhouette : {}),
+                        }}
+                      >
+                        {reward.emoji}
+                      </Typography>
+                    ))}
+
+                  {/* "nyt!" badge on a freshly collected reward (clears on the next visit). */}
                   {owned && isNew && (
                     <Box
                       data-nyt-badge
@@ -385,18 +447,20 @@ const StickerAlbum: React.FC = () => {
                   {owned && (
                     <Typography
                       sx={{
+                        position: 'relative',
                         fontFamily: COMIC,
                         fontWeight: 700,
                         fontSize: 'clamp(0.6rem, 2vw, 0.85rem)',
-                        color: theme.palette.text.primary,
+                        // Accent-on-white surface → the AA-safe variant, never the raw accent.
+                        color: gold ? '#5A3A00' : onTileColor(accent),
                         lineHeight: 1.1,
                         mt: 0.25,
                       }}
                     >
-                      {sticker.label}
+                      {reward.label}
                     </Typography>
                   )}
-                  {shiny && (
+                  {gold && (
                     <Box
                       aria-hidden
                       sx={{

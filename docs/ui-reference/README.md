@@ -26,7 +26,7 @@ folder always reflects the shipped UI.
 
 | File | Route | View |
 |---|---|---|
-| `home` | `/` | Front page (section cards + Min Bog shelf) |
+| `home` | `/` | Front page (section cards + Min Bog shelf) — captured at `?rewards=12` |
 | `alphabet` | `/alphabet` | Alfabetet menu |
 | `alphabet-learn` | `/alphabet/learn` | Lær Alfabetet (A–Å browse) |
 | `alphabet-quiz` | `/alphabet/quiz` | Bogstav Quiz (word-association) |
@@ -51,7 +51,7 @@ folder always reflects the shipped UI.
 | `ordleg-mic` | `/ordleg/mic` | Sig et Ord (mic button) |
 | `learning-memory-letters-10` | `/learning/memory/letters/10` | Memory 10-pair board |
 | `learning-memory-numbers-20` | `/learning/memory/numbers/20` | Memory 20-pair board |
-| `album` | `/album` | Min Klistermærkebog (sticker album) |
+| `album` | `/album` | Min Bog (the Reward Book) — captured at `?rewards=12` so all three slot states show (collected / next silhouette / blank) |
 
 ## Not captured (needs live play — grab manually or extend the script later)
 

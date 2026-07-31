@@ -17,7 +17,7 @@ import ThemeMascot from './ThemeMascot'
 import LivingCard from './LivingCard'
 import GameTileIcon from './GameTileIcon'
 import BackButton from './BackButton'
-import LevelRingMini from './LevelRingMini'
+import RewardRing from './RewardRing'
 import SceneObjectField, { type SceneFieldItem } from './scene/SceneObjectField'
 import { softShadow } from '../../theme/depth'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
@@ -150,7 +150,7 @@ const GameSelectionLayout: React.FC<GameSelectionLayoutProps> = ({
           {/* Level is primary (Liveliness PRD-04 §7): the shared cross-game ring on the section menu
               too, so progress is visible everywhere. */}
           <Box sx={{ flexGrow: 1 }} />
-          <LevelRingMini size={44} />
+          <RewardRing size={44} />
         </Toolbar>
       </AppBar>
 

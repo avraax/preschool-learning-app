@@ -16,10 +16,10 @@ import { xpBus } from '../services/xpBus'
 export interface RoundConfig {
   length: number // questions per round (e.g. 8)
   starThresholds?: { three: number; two: number } // MISTAKES allowed; default 3★=0, 2★≤2
-  stickerSetId?: string // optional sticker-pool bias
-  // Live per-task XP (Liveliness PRD-04). When set, each completed question grants weighted XP
-  // immediately (base + first-try bonus) and pings the XP indicator via xpBus. One edit here covers
-  // all 9 useRound games. Absent → no per-task XP (endless / XP-less rounds).
+  // Live per-task XP. When set, each completed question grants XP immediately and pings the reward
+  // ring via xpBus. The amount is normalised by `length` ("a round is a round" — Reward Book §5), so
+  // ANY completed round is worth about one reward whatever its length. One edit here covers all 13
+  // useRound games. Absent → no per-task XP (endless / XP-less rounds).
   gameId?: string
 }
 
@@ -66,11 +66,14 @@ export const useRound = (config?: RoundConfig): UseRound => {
       const next: RoundState = { index, firstTryCorrect, streak, longestStreak, done }
       ref.current = next
       setState(next)
-      // Live per-task XP (Liveliness PRD-04): grant on THIS completed question (base + first-try
-      // bonus, weighted per game, difficulty-independent) and ping the header ring. A crossed level
-      // drives only the small in-game flourish here — the big ceremony is deferred (result/menu).
+      // Live per-task XP: grant on THIS completed question (round-normalised + first-try bonus,
+      // difficulty-independent) and ping the corner reward ring. A crossed slot drives only the small
+      // in-game flourish here — the reward ceremony itself is deferred (result screen / next menu).
       if (config?.gameId) {
-        const grant = progressStore.grantTaskXp(config.gameId, { firstTry })
+        const grant = progressStore.grantTaskXp(config.gameId, {
+          firstTry,
+          tasksInRound: config.length,
+        })
         xpBus.emit({ amount: grant.granted, leveledUp: grant.global.leveledUp })
       }
       return next

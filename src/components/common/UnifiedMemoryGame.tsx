@@ -85,7 +85,6 @@ export interface UnifiedMemoryConfig {
   gameId: string                             // stable per-board id, e.g. 'memory.letters.10'
   boardPairs: number                         // 10 | 20 — pairs on the board (one board = one round)
   starThresholds: { three: number; two: number }  // in MISTAKES (= mismatched turns)
-  stickerSetId?: string                      // bias awards toward one album page (PRD-09 P3)
 
   // Content generation
   generateItems: () => string[]              // pool of items; engine slices boardPairs for pairs
@@ -376,11 +375,15 @@ const UnifiedMemoryGame: React.FC<UnifiedMemoryGameProps> = ({ config }) => {
         incrementScore()
         teacher.wave()
 
-        // Live per-task XP (Liveliness PRD-04): each matched pair is a completed task. Grant the
-        // weighted 'memory' XP and ping the header ring (a crossed level only mini-flourishes here;
-        // the big ceremony is deferred to the round result). No first-try notion for a pair.
+        // Live per-task XP: each matched pair is a completed task, and the board IS the round — so
+        // pass `boardPairs` as the round length and a 10- and a 20-pair board are worth the same one
+        // reward ("a round is a round", Reward Book §5). Ping the corner reward ring (a crossed slot
+        // only mini-flourishes here; the ceremony is deferred). No first-try notion for a pair.
         {
-          const grant = progressStore.grantTaskXp('memory', { firstTry: false })
+          const grant = progressStore.grantTaskXp(config.gameId, {
+            firstTry: false,
+            tasksInRound: config.boardPairs,
+          })
           xpBus.emit({ amount: grant.granted, leveledUp: grant.global.leveledUp })
         }
 
@@ -456,7 +459,7 @@ const UnifiedMemoryGame: React.FC<UnifiedMemoryGameProps> = ({ config }) => {
         total: config.boardPairs + mismatchesRef.current,
         longestStreak: longestMatchStreakRef.current,
       },
-      { starThresholds: config.starThresholds, stickerSetId: config.stickerSetId },
+      { starThresholds: config.starThresholds },
     )
     setRoundOutcome(outcome)
   }

@@ -1,7 +1,6 @@
 import React, { useRef } from 'react'
 import UnifiedQuizGame, { UnifiedQuizConfig, QuizItem } from '../common/UnifiedQuizGame'
 import { getCategoryTheme } from '../../config/categoryThemes'
-import { stickerSetForSection } from '../../config/stickers'
 import { OrdlegScoreChip } from '../common/ScoreChip'
 import { OrdlegRepeatButton } from '../common/RepeatButton'
 import { progressStore, type DifficultyLevel } from '../../services/progressStore'
@@ -140,7 +139,7 @@ const LaesOrdetGame: React.FC = () => {
     // Bounded round of 8 + shared reward flow (Overhaul Ordleg §1). The engine handles
     // everything: rounds, first-try/streak tracking, celebration tiers, wrong SFX, and the
     // RoundResultScreen → progressStore.recordRoundResult('ordleg.read', …).
-    round: { length: 8, starThresholds: { three: 0, two: 2 }, stickerSetId: stickerSetForSection('ordleg') },
+    round: { length: 8, starThresholds: { three: 0, two: 2 } },
     gameId: 'ordleg.read',
 
     // Never-fail hint (PRD-05 P1): after 2 wrong picture taps the correct picture pulses.

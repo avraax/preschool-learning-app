@@ -9,6 +9,8 @@
 //   ?seed=<n>                        deterministic questions (seeds Math.random)
 //   ?nogate=1                        skip the audio welcome/permission gate
 //   ?reduce=1                        force reduced-motion (test the parity path headlessly)
+//   ?nyt=1                           force a "nyt!" badge in Min Bog
+//   ?rewards=<n>                     seed the book at n collected rewards (Reward Book PRD-01 W9)
 
 export const DEV = import.meta.env.DEV
 
@@ -38,6 +40,35 @@ export const devNyt = (): boolean => DEV && readParams().get('nyt') === '1'
 
 /** Whether to force music on (default is off) so the music system can be verified headlessly. */
 export const devMusicOn = (): boolean => DEV && readParams().get('music') === '1'
+
+// Seed the Reward Book at N collected rewards (Reward Book PRD-01 W9), so the book / corner ring /
+// ceremony / home shelf are all capturable at 0 / 1 / 8 / 9 / 44 / 45 without playing ~72 rounds.
+//
+// It grants the XP that genuinely reaches that point on the real curve and then hands the owed slots
+// over through the real `grantPendingRewards()`, so the seeded state is indistinguishable from played
+// state — including the `collectedCount() === globalLevel() - 1` invariant. `?rewards=0` resets.
+// Kept out of progressStore itself: this is harness-only, and it must go through the public API to
+// prove the public API produces it.
+export const installDevRewards = async (): Promise<void> => {
+  if (!DEV) return
+  const raw = readParams().get('rewards')
+  if (raw == null) return
+  const { progressStore } = await import('../services/progressStore')
+  const { REWARD_XP, FAST_SLOTS, REWARD_SLOTS } = await import('../config/progression')
+  // Allow seeding past 45 to exercise the gold pass.
+  const want = Math.max(0, Math.min(REWARD_SLOTS * 2, Math.floor(Number(raw) || 0)))
+  progressStore.resetAll()
+  if (want === 0) return
+  const xp =
+    Math.min(want, FAST_SLOTS) * REWARD_XP + Math.max(0, want - FAST_SLOTS) * REWARD_XP * 2
+  progressStore.grantXp('alphabet', xp)
+  progressStore.grantPendingRewards()
+  // Mark the seeded rewards as already celebrated so the ceremony doesn't fire on the first menu —
+  // otherwise every seeded screenshot opens behind the overlay. Force it with ?rewards=n&celebrate=0.
+  if (readParams().get('celebrate') !== '0') {
+    progressStore.markLevelCelebrated(progressStore.globalLevel())
+  }
+}
 
 // Seedable RNG (mulberry32). When `?seed=<n>` is present in DEV, replace Math.random so every
 // generator that relies on it yields a deterministic sequence — no per-game plumbing required.
