@@ -31,6 +31,8 @@ private-key-base64.txt
 !package.json
 !package-lock.json
 !tsconfig.json
+!tsconfig.node.json
+!tsconfig.server.json
 !vite.config.ts
 !vercel.json
 # Committed narration audited-OK manifest (PRD-11 §6 regression guard source of truth)

@@ -196,7 +196,14 @@ async function handleGet(req: VercelRequest, res: VercelResponse) {
       await Promise.all(
         reports.slice(0, 10).map(async (r) => {
           try {
-            const full = await (await fetch(r.url)).json()
+            // Blob JSON is untrusted shape — describe only the fields the summary reads.
+            const full = (await (await fetch(r.url)).json()) as {
+              type?: string
+              category?: string
+              app?: { route?: string; version?: string }
+              note?: unknown
+              error?: { message?: unknown }
+            }
             r.summary = {
               type: full.type,
               category: full.category,

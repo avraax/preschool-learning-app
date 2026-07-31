@@ -9,6 +9,8 @@ export declare function buildSsml(opts: {
   voiceName: string;
   lang?: string;
   speed?: number;
+  /** Azure <prosody pitch> (e.g. "+35%" / "-25%") — the VoiceLab mascot auditioner. */
+  pitch?: string | null;
   lexiconUri?: string | null;
   ipa?: string | null;
 }): string;

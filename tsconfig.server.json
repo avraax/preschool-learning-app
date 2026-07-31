@@ -1,0 +1,29 @@
+{
+  // Type-checks the SERVER half of the repo (`lib/` + `api/`), which tsconfig.json deliberately
+  // excludes (`include: ["src"]`). Before this existed, a type error in a Vercel function was
+  // invisible until runtime — unacceptable for auth code (accounts PRD §10.15). Wired into
+  // `npm run build` so a broken endpoint fails the build, not production.
+  //
+  // No "DOM" in `lib`: server code must not reach for `window`/`localStorage`, and the shared pure
+  // modules under src/config (progressSchema, progressMerge) are imported by both halves — leaving
+  // DOM out here is what mechanically enforces their Node-importability.
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2023"],
+    "types": ["node"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": false,
+    "noEmit": true,
+    "skipLibCheck": true,
+
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true
+  },
+  "include": ["lib", "api"]
+}

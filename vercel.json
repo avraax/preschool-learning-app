@@ -3,9 +3,19 @@
   "outputDirectory": "dist",
   "installCommand": "npm install",
   "framework": "vite",
+  "regions": ["fra1"],
   "functions": {
     "api/tts-azure.ts": {
       "maxDuration": 10
+    },
+    "api/auth/**": {
+      "maxDuration": 15
+    },
+    "api/progress.ts": {
+      "maxDuration": 15
+    },
+    "api/profiles.ts": {
+      "maxDuration": 15
     }
   },
   "headers": [
