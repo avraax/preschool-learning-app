@@ -4,8 +4,11 @@
 //
 // The fallback deliberately uses NO MUI and no theme — if the crash came from the theme
 // or an MUI portal, a MUI-based fallback would crash again and blank the screen anyway.
+// The two lucide icons are the one allowed import (de-emoji PRD-01 §3): pure SVG components with
+// no theme/context dependency, already loaded eagerly by App.tsx long before a crash can happen.
 
 import React from 'react'
+import { Frown, RefreshCw } from 'lucide-react'
 import { reportCrash } from '../../services/bugReporter'
 
 interface AppErrorBoundaryProps {
@@ -55,7 +58,9 @@ export default class AppErrorBoundary extends React.Component<
           color: '#4a3b56',
         }}
       >
-        <div style={{ fontSize: '5rem', lineHeight: 1 }}>🙈</div>
+        <div style={{ lineHeight: 0, opacity: 0.8 }}>
+          <Frown size={80} strokeWidth={1.5} aria-hidden />
+        </div>
         <div style={{ fontSize: '1.8rem', fontWeight: 700 }}>Ups! Noget gik galt.</div>
         <div style={{ fontSize: '1rem', maxWidth: 420 }}>
           Vi har fået besked om fejlen. Tryk på knappen for at prøve igen.
@@ -75,9 +80,13 @@ export default class AppErrorBoundary extends React.Component<
             cursor: 'pointer',
             minHeight: '44px',
             boxShadow: '0 4px 12px rgba(124, 77, 255, 0.4)',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '10px',
           }}
         >
-          Prøv igen 🔄
+          Prøv igen
+          <RefreshCw size={20} aria-hidden />
         </button>
       </div>
     )

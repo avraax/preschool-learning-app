@@ -2,6 +2,7 @@ import React, { useRef } from 'react'
 import { Box } from '@mui/material'
 import { motion, type Easing, type TargetAndTransition } from 'framer-motion'
 import { useTransitionContext } from './TransitionProvider'
+import { useAmbientSprites } from '../../../hooks/useAmbientSprites'
 
 // The OPAQUE wipe overlay (Liveliness PRD-02 §1-4). Rendered once in App's host Box, ABOVE pages
 // (z1) and mascots (z6) but below the level-up overlay. It only exists while a wipe is in flight
@@ -17,6 +18,10 @@ const OVERLAY_Z = 50
 const TransitionOverlay: React.FC = () => {
   const ctx = useTransitionContext()
   const phaseRef = useRef<'idle' | 'covering' | 'revealing'>('idle')
+  // The signature motif rides on the skin's own baked ambient motes (de-emoji PRD-01 W5) — a star for
+  // Rummet's warp, leaves for Dinosaurer's sweep, cloud puffs for Regnbue's iris. Sprites are plain
+  // <img> transforms, so the panel stays opaque-paint-only (no backdrop-filter). No art → no motif.
+  const sprites = useAmbientSprites()
 
   if (!ctx) return null
   const { phase, direction, descriptor, reducedFade, withUsher, usherUrl, onCoverComplete, onRevealComplete } = ctx
@@ -151,7 +156,7 @@ const TransitionOverlay: React.FC = () => {
             }}
           />
         )}
-        {!reducedFade && descriptor.motif === 'rocket' && (
+        {!reducedFade && descriptor.motif === 'rocket' && sprites.length > 0 && (
           <Box
             component={motion.div}
             aria-hidden
@@ -163,29 +168,44 @@ const TransitionOverlay: React.FC = () => {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: 'clamp(3rem, 12vw, 6rem)',
-              filter: 'drop-shadow(0 6px 14px rgba(0,0,0,0.5))',
             }}
           >
-            🚀
+            <Box
+              component="img"
+              src={sprites[0]}
+              alt=""
+              draggable={false}
+              sx={{
+                width: 'clamp(3rem, 12vw, 6rem)',
+                height: 'clamp(3rem, 12vw, 6rem)',
+                objectFit: 'contain',
+                filter: 'drop-shadow(0 6px 14px rgba(0,0,0,0.5))',
+              }}
+            />
           </Box>
         )}
-        {!reducedFade && descriptor.motif === 'leaves' && (
-          <Box aria-hidden sx={{ position: 'absolute', top: 0, bottom: 0, [back ? 'left' : 'right']: '6%', display: 'flex', flexDirection: 'column', justifyContent: 'space-around', fontSize: 'clamp(1.6rem, 5vw, 2.6rem)' }}>
-            {['🍃', '🍂', '🍃', '🍂'].map((leaf, i) => (
+        {!reducedFade && descriptor.motif === 'leaves' && sprites.length > 0 && (
+          <Box aria-hidden sx={{ position: 'absolute', top: 0, bottom: 0, [back ? 'left' : 'right']: '6%', display: 'flex', flexDirection: 'column', justifyContent: 'space-around' }}>
+            {[0, 1, 2, 3].map((i) => (
               <Box
                 key={i}
-                component={motion.div}
+                component={motion.img}
+                src={sprites[i % sprites.length]}
+                alt=""
+                draggable={false}
                 animate={{ rotate: [0, 18, -12, 0], y: [0, 8, 0] }}
                 transition={{ duration: 1.1 + i * 0.15, repeat: Infinity, ease: 'easeInOut' }}
-                sx={{ filter: 'drop-shadow(0 3px 5px rgba(0,0,0,0.35))' }}
-              >
-                {leaf}
-              </Box>
+                sx={{
+                  width: 'clamp(1.8rem, 5.5vw, 2.9rem)',
+                  height: 'clamp(1.8rem, 5.5vw, 2.9rem)',
+                  objectFit: 'contain',
+                  filter: 'drop-shadow(0 3px 5px rgba(0,0,0,0.35))',
+                }}
+              />
             ))}
           </Box>
         )}
-        {!reducedFade && descriptor.motif === 'sparkle' && (
+        {!reducedFade && descriptor.motif === 'sparkle' && sprites.length > 0 && (
           <Box aria-hidden sx={{ position: 'absolute', inset: 0, overflow: 'hidden' }}>
             {[
               { top: '18%', left: '22%', d: 1.1 },
@@ -196,13 +216,24 @@ const TransitionOverlay: React.FC = () => {
             ].map((s, i) => (
               <Box
                 key={i}
-                component={motion.div}
-                animate={{ scale: [0.5, 1, 0.5], opacity: [0.3, 1, 0.3] }}
+                component={motion.img}
+                src={sprites[i % sprites.length]}
+                alt=""
+                draggable={false}
+                // A baked mote is softer than the ✨ glyph it replaces (Regnbue's is a white cloud puff
+                // on a bright gradient), so it rides a little larger and never fades as far down.
+                animate={{ scale: [0.6, 1, 0.6], opacity: [0.5, 1, 0.5] }}
                 transition={{ duration: s.d, repeat: Infinity, ease: 'easeInOut' }}
-                sx={{ position: 'absolute', top: s.top, left: s.left, fontSize: 'clamp(1rem, 3.5vw, 2rem)', filter: 'drop-shadow(0 0 6px rgba(255,255,255,0.9))' }}
-              >
-                ✨
-              </Box>
+                sx={{
+                  position: 'absolute',
+                  top: s.top,
+                  left: s.left,
+                  width: 'clamp(1.9rem, 5.5vw, 3.2rem)',
+                  height: 'clamp(1.9rem, 5.5vw, 3.2rem)',
+                  objectFit: 'contain',
+                  filter: 'drop-shadow(0 0 6px rgba(255,255,255,0.9))',
+                }}
+              />
             ))}
           </Box>
         )}

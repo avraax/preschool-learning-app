@@ -1,12 +1,11 @@
 import type { ThemeTokens } from './types'
-import { COMIC_FONT, SECTION_ICONS, WHITE_DOTS, category, neutralShadows } from './helpers'
+import { COMIC_FONT, WHITE_DOTS, category, neutralShadows } from './helpers.ts'
 
 // 🦕 Dinosaurer (Dinosaurs) — earthy prehistoric adventure: fern green, swamp teal,
 // volcano orange-red, stone slate and amber bone.
 export const dinoThemeTokens: ThemeTokens = {
   id: 'dino',
   name: 'Dinosaurer',
-  selectorEmoji: '🦕',
   fontFamily: COMIC_FONT,
 
   palette: {
@@ -24,11 +23,11 @@ export const dinoThemeTokens: ThemeTokens = {
   },
 
   categories: {
-    alphabet: category(['#E8F5E9', '#C8E6C9', '#A5D6A7'], '#558B2F', '#8BC34A', '#33691E', '#E8F5E9', SECTION_ICONS.alphabet),
-    math: category(['#E0F2F1', '#B2DFDB', '#80CBC4'], '#00796B', '#4DB6AC', '#004D40', '#E0F2F1', SECTION_ICONS.math),
-    colors: category(['#FBE9E7', '#FFCCBC', '#FFAB91'], '#D84315', '#FF7043', '#BF360C', '#FBE9E7', SECTION_ICONS.colors),
-    english: category(['#ECEFF1', '#CFD8DC', '#B0BEC5'], '#455A64', '#78909C', '#263238', '#ECEFF1', SECTION_ICONS.english),
-    ordleg: category(['#FFF8E1', '#FFECB3', '#FFE082'], '#FF8F00', '#FFB300', '#E65100', '#FFF8E1', SECTION_ICONS.ordleg),
+    alphabet: category(['#E8F5E9', '#C8E6C9', '#A5D6A7'], '#558B2F', '#8BC34A', '#33691E', '#E8F5E9'),
+    math: category(['#E0F2F1', '#B2DFDB', '#80CBC4'], '#00796B', '#4DB6AC', '#004D40', '#E0F2F1'),
+    colors: category(['#FBE9E7', '#FFCCBC', '#FFAB91'], '#D84315', '#FF7043', '#BF360C', '#FBE9E7'),
+    english: category(['#ECEFF1', '#CFD8DC', '#B0BEC5'], '#455A64', '#78909C', '#263238', '#ECEFF1'),
+    ordleg: category(['#FFF8E1', '#FFECB3', '#FFE082'], '#FF8F00', '#FFB300', '#E65100', '#FFF8E1'),
   },
 
   decor: {
@@ -62,7 +61,9 @@ export const dinoThemeTokens: ThemeTokens = {
     ],
     ambient: {
       // B7 art motes (index-aligned to SceneAssets.ambientSprites): leaf + fern frond, falling.
-      sprites: [{ src: '', size: [18, 34] }, { src: '', size: [16, 30] }],
+      // De-emoji W5: sprite art re-keyed + trimmed, so these ranges are now the true on-screen size
+      // (scaled from the old padded canvases to preserve the tuned look).
+      sprites: [{ src: '', size: [13, 24] }, { src: '', size: [12, 22] }],
       count: 12,
       motion: 'fall',
     },

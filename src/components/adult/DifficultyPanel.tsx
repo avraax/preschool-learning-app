@@ -8,6 +8,7 @@ import {
   ToggleButtonGroup,
   Typography,
 } from '@mui/material'
+import { SlidersHorizontal } from 'lucide-react'
 import AdultBackHeader from './AdultBackHeader'
 import { useProgress } from '../../hooks/useProgress'
 import type { DifficultyLevel, SectionId } from '../../services/progressStore'
@@ -43,7 +44,7 @@ const DifficultyPanel: React.FC<DifficultyPanelProps> = ({ open, onClose }) => {
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
-      <AdultBackHeader title="Sværhedsgrad 🎚️" onBack={onClose} />
+      <AdultBackHeader title="Sværhedsgrad" icon={<SlidersHorizontal size={20} aria-hidden />} onBack={onClose} />
       <DialogContent>
         <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1.5 }}>
           Vælg et niveau for alle spil. <strong>Normal</strong> er standard. Du kan give enkelte

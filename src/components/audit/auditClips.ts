@@ -9,7 +9,10 @@ import { ttsCacheKey } from '../../../shared-tts-key.js'
 import { TTS_CONFIG } from '../../config/tts-config'
 import { DANISH_PHRASES, getDanishNumberText } from '../../config/danish-phrases'
 
-export type AuditGroup = 'letters' | 'numbers' | 'phrases' | 'colours' | 'mixed' | 'english'
+// Must cover EVERY group `collectNarrationClips()` emits — the harness buckets by this key and an
+// unknown group crashed the whole /audit route (`out[clip.group].push` on undefined). `levelup`
+// arrived with the reward ceremony's spoken line and had no bucket here.
+export type AuditGroup = 'letters' | 'numbers' | 'phrases' | 'colours' | 'mixed' | 'english' | 'levelup'
 
 export interface AuditClip {
   key: string // ttsCacheKey — the verdict + prebaked-manifest key
@@ -22,16 +25,21 @@ export interface AuditClip {
   dynamic: boolean // true = never prebaked (composed at runtime) → force-live only
 }
 
-export const GROUP_ORDER: AuditGroup[] = ['letters', 'numbers', 'phrases', 'colours', 'mixed', 'english']
+export const GROUP_ORDER: AuditGroup[] = ['letters', 'numbers', 'phrases', 'colours', 'levelup', 'mixed', 'english']
 
 export const GROUP_LABELS: Record<AuditGroup, string> = {
   letters: 'Bogstaver',
   numbers: 'Tal (0–100)',
   phrases: 'Sætninger',
   colours: 'Farver',
+  levelup: 'Belønninger',
   mixed: 'Blandet',
   english: 'Engelsk',
 }
+
+/** One empty bucket per group — derived, so a new group can never desync from GROUP_ORDER again. */
+export const emptyGroups = (): Record<AuditGroup, AuditClip[]> =>
+  Object.fromEntries(GROUP_ORDER.map((g) => [g, [] as AuditClip[]])) as Record<AuditGroup, AuditClip[]>
 
 const DA = TTS_CONFIG.voices.primary
 const RATE = TTS_CONFIG.speakingRate

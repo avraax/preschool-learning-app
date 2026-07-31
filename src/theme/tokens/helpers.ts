@@ -112,25 +112,19 @@ export const darken = (hex: string, amount: number): string => {
 export const cardSurface = (tint: string): string =>
   `linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, ${hexToRgba(tint, 0.9)} 100%)`
 
-// Section emojis stay constant across themes so children keep recognising each section;
-// a theme changes colours/decor, not what a section IS.
-export const SECTION_ICONS = {
-  alphabet: '📚',
-  math: '🧮',
-  colors: '🎨',
-  english: '🌍',
-  ordleg: '🗣️',
-} as const
-
 // Build one section palette. `gradientStops` = the 3 stops of the section-page background;
 // `tint` = the very-light colour blended into the home card.
+//
+// A section's GLYPH is not a palette token: it is theme-constant baked art in
+// `src/assets/themes/icons/`, identical on every skin so children keep recognising each section.
+// The old `SECTION_ICONS` emoji map + the `icon`/`iconSize` fields it fed were dead behind that
+// art and were deleted by de-emoji PRD-01 W4.
 export const category = (
   gradientStops: [string, string, string],
   accent: string,
   border: string,
   hoverBorder: string,
-  tint: string,
-  icon: string
+  tint: string
 ): CategoryPalette => ({
   gradient: gradient3(...gradientStops),
   accent,
@@ -138,8 +132,6 @@ export const category = (
   tileSurface: tileSurface(accent),
   border,
   hoverBorder,
-  icon,
-  iconSize: '4rem',
   cardSurface: cardSurface(tint),
   cardBlur: 'blur(15px)',
 })

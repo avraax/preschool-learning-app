@@ -1,11 +1,10 @@
 import type { ThemeTokens } from './types'
-import { COMIC_FONT, SECTION_ICONS, WHITE_DOTS, category, neutralShadows } from './helpers'
+import { COMIC_FONT, WHITE_DOTS, category, neutralShadows } from './helpers.ts'
 
 // 🌊 Havet (Ocean) — cool blues & teals with a warm coral pop and sandy gold.
 export const oceanThemeTokens: ThemeTokens = {
   id: 'ocean',
   name: 'Havet',
-  selectorEmoji: '🌊',
   fontFamily: COMIC_FONT,
 
   palette: {
@@ -23,11 +22,11 @@ export const oceanThemeTokens: ThemeTokens = {
   },
 
   categories: {
-    alphabet: category(['#E1F5FE', '#B3E5FC', '#81D4FA'], '#0277BD', '#4FC3F7', '#01579B', '#E1F5FE', SECTION_ICONS.alphabet),
-    math: category(['#E0F2F1', '#B2DFDB', '#80CBC4'], '#00897B', '#4DB6AC', '#00695C', '#E0F2F1', SECTION_ICONS.math),
-    colors: category(['#FBE9E7', '#FFCCBC', '#FFAB91'], '#E64A19', '#FF8A65', '#BF360C', '#FBE9E7', SECTION_ICONS.colors),
-    english: category(['#FFFDE7', '#FFF9C4', '#FFF59D'], '#F9A825', '#FFD54F', '#F57F17', '#FFFDE7', SECTION_ICONS.english),
-    ordleg: category(['#EDE7F6', '#D1C4E9', '#B39DDB'], '#5E35B1', '#9575CD', '#4527A0', '#EDE7F6', SECTION_ICONS.ordleg),
+    alphabet: category(['#E1F5FE', '#B3E5FC', '#81D4FA'], '#0277BD', '#4FC3F7', '#01579B', '#E1F5FE'),
+    math: category(['#E0F2F1', '#B2DFDB', '#80CBC4'], '#00897B', '#4DB6AC', '#00695C', '#E0F2F1'),
+    colors: category(['#FBE9E7', '#FFCCBC', '#FFAB91'], '#E64A19', '#FF8A65', '#BF360C', '#FBE9E7'),
+    english: category(['#FFFDE7', '#FFF9C4', '#FFF59D'], '#F9A825', '#FFD54F', '#F57F17', '#FFFDE7'),
+    ordleg: category(['#EDE7F6', '#D1C4E9', '#B39DDB'], '#5E35B1', '#9575CD', '#4527A0', '#EDE7F6'),
   },
 
   decor: {
@@ -65,7 +64,9 @@ export const oceanThemeTokens: ThemeTokens = {
     ],
     ambient: {
       // B7 art motes (index-aligned to SceneAssets.ambientSprites): bubble + bubble cluster, rising.
-      sprites: [{ src: '', size: [12, 28] }, { src: '', size: [18, 36] }],
+      // De-emoji W5: sprite art re-keyed + trimmed, so these ranges are now the true on-screen size
+      // (scaled from the old padded canvases to preserve the tuned look).
+      sprites: [{ src: '', size: [8, 18] }, { src: '', size: [22, 44] }],
       count: 12,
       motion: 'rise',
     },

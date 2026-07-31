@@ -26,7 +26,10 @@ export interface SceneAssets {
   // ---- Structured World (Liveliness PRD-05) — all optional; absence → today's look ----
   mascotPoses?: MascotPoses     // reactive guide poses (W6); falls back to { idle: mascot }
   bloomScenery?: string[]       // aligns index-for-index with SceneTokens.bloomScenery (W7)
-  companionStages?: string[]    // baked growing-companion art, seed→full (W7)
+  // Baked growing-companion art, seed→full (W7). REQUIRED since de-emoji PRD-01 W2 deleted the
+  // emoji stage fallback: a world without this art has no companion to show at all, so a new skin
+  // must not be able to ship without it.
+  companionStages: string[]
 }
 
 // Each loader dynamic-imports ONLY that theme's asset module (which re-exports the hashed

@@ -6,7 +6,9 @@ import { motion } from 'framer-motion'
 import BackButton from '../common/BackButton'
 import { REWARD_CHAPTERS, type Reward } from '../../config/stickers'
 import { CHAPTER_SIZE, REWARD_SLOTS, chapterOfSlot } from '../../config/progression'
+import { Check } from 'lucide-react'
 import { rewardArt } from '../../assets/rewards'
+import { uiArt } from '../../assets/ui'
 import { useProgress } from '../../hooks/useProgress'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
 import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
@@ -110,7 +112,7 @@ const StickerAlbum: React.FC = () => {
           {/* Shared themed back button — reverses the wipe, consistent with every other surface. */}
           <BackButton to="/" variant="menu" />
 
-          <StatPill label={`📒 ${totalCollected} / ${REWARD_SLOTS}`} accent={accent} />
+          <StatPill label={`${totalCollected} / ${REWARD_SLOTS}`} icon={uiArt.book} accent={accent} />
         </Toolbar>
       </AppBar>
 
@@ -133,8 +135,24 @@ const StickerAlbum: React.FC = () => {
             flex: '0 0 auto',
             [PHONE_LANDSCAPE]: { fontSize: '1.05rem', mb: 0.5 },
           }}
+          component="h1"
         >
-          📖 Min Bog
+          <Box
+            component="img"
+            src={uiArt.book}
+            alt=""
+            aria-hidden
+            draggable={false}
+            sx={{
+              width: { xs: '1.7rem', md: '2.2rem' },
+              height: { xs: '1.7rem', md: '2.2rem' },
+              objectFit: 'contain',
+              verticalAlign: '-0.35em',
+              mr: 0.75,
+              [PHONE_LANDSCAPE]: { width: '1.1rem', height: '1.1rem', mr: 0.5 },
+            }}
+          />
+          Min Bog
         </Typography>
 
         {/* 5 chapter tabs. They fit on ONE row at every landscape size (measured: 274→906 of 1180 on
@@ -196,7 +214,8 @@ const StickerAlbum: React.FC = () => {
               >
                 <span>{chapter.emoji}</span>
                 <span>{chapter.title}</span>
-                {done && <span aria-label="komplet">✅</span>}
+                {/* Chapter complete — a UI affordance, so lucide, not baked art (PRD D2/§4 W3). */}
+                {done && <Check size={16} strokeWidth={3.5} aria-label="komplet" style={{ flex: '0 0 auto' }} />}
               </Box>
             )
           })}
@@ -258,7 +277,7 @@ const StickerAlbum: React.FC = () => {
             }}
           >
             <Typography sx={{ fontFamily: COMIC, fontWeight: 800, color: '#5A3A00', fontSize: 'clamp(0.85rem, 2.8vw, 1.05rem)', position: 'relative', zIndex: 1, [PHONE_LANDSCAPE]: { fontSize: '0.72rem' } }}>
-              🎉 Hele siden er samlet!
+              Hele siden er samlet!
             </Typography>
           </Box>
         )}
@@ -462,16 +481,20 @@ const StickerAlbum: React.FC = () => {
                   )}
                   {gold && (
                     <Box
+                      component="img"
+                      src={uiArt.sparkle}
+                      alt=""
                       aria-hidden
+                      draggable={false}
                       sx={{
                         position: 'absolute',
                         top: 4,
                         right: 6,
-                        fontSize: 'clamp(0.7rem, 2.4vw, 1rem)',
+                        width: 'clamp(0.7rem, 2.4vw, 1rem)',
+                        height: 'clamp(0.7rem, 2.4vw, 1rem)',
+                        objectFit: 'contain',
                       }}
-                    >
-                      ✨
-                    </Box>
+                    />
                   )}
                 </Box>
               )
@@ -484,7 +507,7 @@ const StickerAlbum: React.FC = () => {
   )
 }
 
-const StatPill: React.FC<{ label: string; accent: string }> = ({ label, accent }) => (
+const StatPill: React.FC<{ label: string; accent: string; icon?: string }> = ({ label, accent, icon }) => (
   <Box
     sx={{
       px: 1.5,
@@ -496,8 +519,21 @@ const StatPill: React.FC<{ label: string; accent: string }> = ({ label, accent }
       fontWeight: 700,
       fontSize: '1rem',
       boxShadow: `0 4px 14px ${hexToRgba(accent, 0.4)}`,
+      display: 'flex',
+      alignItems: 'center',
+      gap: 0.6,
     }}
   >
+    {icon && (
+      <Box
+        component="img"
+        src={icon}
+        alt=""
+        aria-hidden
+        draggable={false}
+        sx={{ width: '1.2rem', height: '1.2rem', objectFit: 'contain', flex: '0 0 auto' }}
+      />
+    )}
     {label}
   </Box>
 )

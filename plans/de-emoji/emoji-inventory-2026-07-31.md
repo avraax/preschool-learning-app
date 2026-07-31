@@ -7,6 +7,22 @@ Markdown rather than JSON on purpose: `.gitignore` globally ignores `*.json`.
 
 Regenerate with the script in §W0 of the PRD (`src/config/noEmoji.test.ts` once it exists).
 
+> **This file is the ORIGINAL audit snapshot — it is not updated as workstreams land.** The live truth is
+> `src/config/noEmoji.test.ts` (its `ALLOWED_FILES` map is what remains) — dump the current inventory with
+> `EMOJI_REPORT=scan.md node --test src/config/noEmoji.test.ts`. Landed so far: **W0–W5**. W5 = confetti +
+> the transition wipes now draw each skin's baked `ambientSprites` (every row below for `CelebrationEffect.tsx` and
+> `transition/TransitionOverlay.tsx` is gone — 36 glyphs). W3 = `src/assets/ui/` (star · trophy · flame · book ·
+> sparkle) replaced the load-bearing chrome glyphs, and the Min Bog chapter-complete ✅ became a lucide `Check`, so
+> the rows for `RoundResultScreen`, `StickerAlbum`, `RewardRing`, `StickerReveal` and `HomePage` are gone too.
+> W4 = the theme/section/game data was **all** dead fallback behind art that already shipped, so it was deleted
+> rather than replaced: `Game.emoji` + `GameTileIcon`'s `fallbackEmoji` (24), `SECTION_ICONS` + the
+> `CategoryPalette.icon`/`iconSize` pair nothing ever rendered (5+10), and every skin's `selectorEmoji` (6). Three
+> coverage guards replaced them so a missing render can't reintroduce a glyph — `gameIcons.test.ts` (all 24
+> `<section>.<id>` keys resolve), `themes.test.ts` (every registered skin ships `selectorThumb`), and W2's required
+> `companionStages`. 208 → **87** glyphs. **Still open: W6** (`stickers.ts` — the 45 reward renders), **W7** (empty
+> the allowlist), plus the accounts-era child-profile avatars (12; prompts speced in
+> `de-emoji-avatar-prompts.md`, but that surface also needs a profile-schema migration — see the doc).
+
 ## A · reward data (art-gated) — 50 occurrences
 
 | File | Line | Glyphs | Context |

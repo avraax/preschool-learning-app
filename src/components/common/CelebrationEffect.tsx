@@ -4,6 +4,7 @@ import { Box, SxProps, Theme } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { motion, AnimatePresence } from 'framer-motion'
 import { sfx, type SfxCue } from '../../services/sfxClient'
+import { useAmbientSprites } from '../../hooks/useAmbientSprites'
 
 interface CelebrationEffectProps {
   show: boolean
@@ -25,18 +26,11 @@ const CelebrationEffect: React.FC<CelebrationEffectProps> = ({
   const theme = useTheme()
   // Default confetti palette comes from the active theme; callers can still override.
   const effectiveConfettiColors = confettiColors ?? theme.decor.confettiColors
-  // Themed reward emojis: match the active world's ambient style (stars for space, bubbles for
-  // ocean, leaves for dino, sparkles otherwise). Flat skins keep the classic celebration set.
-  const celebrationEmojis = React.useMemo<string[]>(() => {
-    if (!theme.scene.layers.length) return ['⭐', '🌟', '✨', '🎊', '🎈', '🏆']
-    switch (theme.scene.ambient.motion) {
-      case 'twinkle': return ['⭐', '🌟', '✨', '💫', '🌠', '🚀']
-      case 'rise': return ['🫧', '✨', '🐠', '🌊', '⭐', '🐚']
-      case 'fall': return ['🍃', '🍂', '✨', '🌿', '⭐', '🦋']
-      case 'drift':
-      default: return ['⭐', '🌟', '✨', '🌈', '🎈', '🎊']
-    }
-  }, [theme.scene])
+  // The flying particles are the active world's own baked ambient motes (de-emoji PRD-01 W5): stars
+  // for Rummet, bubbles for Havet, leaves for Dinosaurer, cloud puffs for Regnbue — so a celebration
+  // bursts in the art of the world it happens in. A skin with no world art shows paper confetti only
+  // (there is no emoji fallback by design — D5).
+  const sprites = useAmbientSprites()
   const [showConfetti, setShowConfetti] = useState(false)
   const [windowDimensions, setWindowDimensions] = useState({
     width: window.innerWidth,
@@ -130,34 +124,42 @@ const CelebrationEffect: React.FC<CelebrationEffectProps> = ({
           )}
 
 
-          {/* Floating Success Emojis — more of them for the bigger tiers. */}
-          {!reduceMotion && [...Array(intensity === 'high' ? 12 : intensity === 'low' ? 4 : 7)].map((_, index) => (
-            <motion.div
-              key={index}
-              initial={{ 
-                x: Math.random() * windowDimensions.width,
-                y: windowDimensions.height + 50,
-                scale: 0
-              }}
-              animate={{ 
-                y: -50,
-                scale: [0, 1, 1, 0],
-                rotate: [0, 360]
-              }}
-              transition={{
-                duration: 3,
-                delay: index * 0.2,
-                ease: "easeOut"
-              }}
-              style={{
-                position: 'absolute',
-                fontSize: '2rem',
-                pointerEvents: 'none'
-              }}
-            >
-              {celebrationEmojis[index % celebrationEmojis.length]}
-            </motion.div>
-          ))}
+          {/* Floating success motes — the skin's baked ambient sprites, more of them for the bigger
+              tiers. No art (unregistered skin) → the paper confetti carries the moment alone. */}
+          {!reduceMotion && sprites.length > 0 &&
+            [...Array(intensity === 'high' ? 12 : intensity === 'low' ? 4 : 7)].map((_, index) => (
+              <motion.img
+                key={index}
+                src={sprites[index % sprites.length]}
+                alt=""
+                aria-hidden
+                draggable={false}
+                initial={{
+                  x: Math.random() * windowDimensions.width,
+                  y: windowDimensions.height + 50,
+                  scale: 0
+                }}
+                animate={{
+                  y: -50,
+                  scale: [0, 1, 1, 0],
+                  rotate: [0, 360]
+                }}
+                transition={{
+                  duration: 3,
+                  delay: index * 0.2,
+                  ease: "easeOut"
+                }}
+                style={{
+                  position: 'absolute',
+                  // Sized like the 2rem glyph it replaces, with a little per-mote variety.
+                  width: `calc(clamp(30px, 6vw, 46px) * ${[1, 0.82, 1.14][index % 3]})`,
+                  height: `calc(clamp(30px, 6vw, 46px) * ${[1, 0.82, 1.14][index % 3]})`,
+                  objectFit: 'contain',
+                  filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.28))',
+                  pointerEvents: 'none'
+                }}
+              />
+            ))}
         </Box>
       )}
     </AnimatePresence>

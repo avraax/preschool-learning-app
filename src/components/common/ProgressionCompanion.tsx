@@ -13,15 +13,13 @@ import { collectedCountLine } from '../../config/danish-phrases'
 // The child-facing growth display: a filling reward ring wrapped around a small companion that grows
 // in discrete stages, plus a badge showing HOW MANY REWARDS ARE IN THE BOOK. Glanceable "look how far
 // I've got" for a pre-reader. Used on the home page (tappable → speaks the count) and inside the
-// reward ceremony's chapter-completion beat. Token-driven (theme.scene.progressionCompanion) with a
-// generic default so flat skins fall back gracefully. Reduced motion → renders statically.
+// reward ceremony's chapter-completion beat. The companion itself is BAKED ART per world
+// (SceneAssets.companionStages, now required); the ring and badge are drawn. Reduced motion →
+// renders statically.
 //
 // Reward Book PRD-01 W6: the 5 chapters ARE the 5 growth stages (companionStageForCollected), so the
 // companion is literally a picture of how far through the book the child is — and the badge shows the
 // SAME number as the book, never a level, since that off-by-one was exactly the confusion being removed.
-
-// Generic default companion (a plant that blooms) — theme-neutral, matches the "world bloom" idea.
-export const COMPANION_DEFAULT_STAGES = ['🌱', '🌿', '🌷', '🌳', '🌟'] as const
 
 interface ProgressionCompanionProps {
   size?: number
@@ -52,9 +50,9 @@ const ProgressionCompanion: React.FC<ProgressionCompanionProps> = ({
   const { collectedCount, xpProgress } = useProgress()
   const audio = useSimplifiedAudioHook({ componentId: 'ProgressionCompanion', autoInitialize: false })
 
-  // Baked growing-companion art per world (Liveliness PRD-05 W7 / batch B6). When a theme ships
-  // `SceneAssets.companionStages`, those seed→full renders REPLACE the emoji token stages; until
-  // then the emoji default shows (no regression). Cached loader, so this is cheap.
+  // Baked growing-companion art per world (Liveliness PRD-05 W7 / batch B6) — the ONLY source of
+  // the companion's face since de-emoji PRD-01 W2 deleted the emoji stages. Until it resolves (and
+  // on a theme with no world) the ring and badge render alone. Cached loader, so this is cheap.
   const [artStages, setArtStages] = useState<string[] | null>(null)
   useEffect(() => {
     let alive = true
@@ -69,12 +67,12 @@ const ProgressionCompanion: React.FC<ProgressionCompanionProps> = ({
   const collected = collectedProp ?? collectedCount()
   const fill = Math.max(0, Math.min(1, fillProp ?? xpProgress().fill))
 
-  const stages = artStages ?? theme.scene?.progressionCompanion?.stages ?? [...COMPANION_DEFAULT_STAGES]
+  const stages = artStages ?? theme.scene?.progressionCompanion?.stages ?? []
   // Chapters ⇔ stages. Clamped to whatever stage art the skin actually ships, so a theme with fewer
   // than CHAPTER_COUNT stages degrades instead of indexing off the end.
   const stage =
     stageProp ?? Math.min(stages.length - 1, companionStageForCollected(collected))
-  const face = stages[Math.max(0, Math.min(stages.length - 1, stage))]
+  const face = stages.length ? stages[Math.max(0, Math.min(stages.length - 1, stage))] : null
 
   const ringColor = theme.scene?.progressionCompanion?.ringColor ?? theme.palette.primary.main
   const dark = theme.scene?.dark
@@ -143,25 +141,25 @@ const ProgressionCompanion: React.FC<ProgressionCompanionProps> = ({
         />
       </svg>
 
-      {/* Companion face (emoji default; an <img> when the stage is an asset URL) */}
-      <Box
-        key={`stage-${stage}`}
-        component={motion.div}
-        initial={reduce ? false : { scale: 0.6, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={reduce ? { duration: 0 } : { type: 'spring', stiffness: 300, damping: 16 }}
-        sx={{
-          fontSize: size * 0.5,
-          lineHeight: 1,
-          filter: 'drop-shadow(0 3px 6px rgba(0,0,0,0.28))',
-        }}
-      >
-        {typeof face === 'string' && /^(https?:|\/|data:)/.test(face) ? (
-          <Box component="img" src={face} alt="" draggable={false} sx={{ width: size * 0.56, height: size * 0.56, objectFit: 'contain' }} />
-        ) : (
-          face
-        )}
-      </Box>
+      {/* Companion face — a baked stage render, or nothing. Never a text/emoji stand-in (D5). */}
+      {face && /^(https?:|\/|data:)/.test(face) && (
+        <Box
+          key={`stage-${stage}`}
+          component={motion.div}
+          initial={reduce ? false : { scale: 0.6, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={reduce ? { duration: 0 } : { type: 'spring', stiffness: 300, damping: 16 }}
+          sx={{ lineHeight: 0, filter: 'drop-shadow(0 3px 6px rgba(0,0,0,0.28))' }}
+        >
+          <Box
+            component="img"
+            src={face}
+            alt=""
+            draggable={false}
+            sx={{ width: size * 0.56, height: size * 0.56, objectFit: 'contain' }}
+          />
+        </Box>
+      )}
 
       {/* Collected-count badge — the SAME number as the book's "{n} / 45". Hidden at 0 so a fresh
           profile doesn't advertise an empty score. */}

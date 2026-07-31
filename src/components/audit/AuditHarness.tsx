@@ -29,11 +29,21 @@ import {
   ToggleButtonGroup,
   Typography,
 } from '@mui/material'
-import { ChevronDown, ChevronRight, Play, Volume2 } from 'lucide-react'
+import {
+  Check,
+  ChevronDown,
+  ChevronRight,
+  Download,
+  Headphones,
+  Play,
+  TriangleAlert,
+  Volume2,
+  X,
+} from 'lucide-react'
 import { TTS_CONFIG } from '../../config/tts-config'
 import { PREBAKED_TTS } from '../../config/prebakedTts'
 import { VOICE_TIERS } from '../voicelab/voicelabData'
-import { buildAuditClips, GROUP_LABELS, GROUP_ORDER, type AuditClip, type AuditGroup } from './auditClips'
+import { buildAuditClips, emptyGroups, GROUP_LABELS, GROUP_ORDER, type AuditClip, type AuditGroup } from './auditClips'
 import { authorizedFetch } from '../../services/authorizedFetch'
 
 const AUDIO_MIME = TTS_CONFIG.mime
@@ -281,9 +291,7 @@ const AuditHarness: React.FC = () => {
 
   const grouped = useMemo(() => {
     const q = search.trim().toLowerCase()
-    const out: Record<AuditGroup, AuditClip[]> = {
-      letters: [], numbers: [], phrases: [], colours: [], mixed: [], english: [],
-    }
+    const out = emptyGroups()
     for (const clip of clips) {
       const v = records[clip.key]?.verdict ?? null
       if (filter === 'ok' && v !== 'ok') continue
@@ -337,9 +345,23 @@ const AuditHarness: React.FC = () => {
           {clip.dynamic ? (
             <Chip size="small" color="warning" label="dynamisk (kun live)" sx={{ height: 20, fontSize: '0.65rem' }} />
           ) : hasPrebaked ? (
-            <Chip size="small" color="success" variant="outlined" label="prebaked ✓" sx={{ height: 20, fontSize: '0.65rem' }} />
+            <Chip
+              size="small"
+              color="success"
+              variant="outlined"
+              icon={<Check size={12} />}
+              label="prebaked"
+              sx={{ height: 20, fontSize: '0.65rem' }}
+            />
           ) : (
-            <Chip size="small" color="error" variant="outlined" label="prebaked ✗" sx={{ height: 20, fontSize: '0.65rem' }} />
+            <Chip
+              size="small"
+              color="error"
+              variant="outlined"
+              icon={<X size={12} />}
+              label="prebaked"
+              sx={{ height: 20, fontSize: '0.65rem' }}
+            />
           )}
 
           <Box sx={{ flex: 1 }} />
@@ -354,7 +376,11 @@ const AuditHarness: React.FC = () => {
               sx={{ fontFamily: FONT, textTransform: 'none', minHeight: 32 }}
               title="Afspil live UDEN leksikon"
             >
-              {busyKey === `${clip.key}:nolex` ? <CircularProgress size={14} /> : 'lex ✗'}
+              {busyKey === `${clip.key}:nolex` ? (
+                <CircularProgress size={14} />
+              ) : (
+                <>lex <X size={13} /></>
+              )}
             </Button>
           )}
 
@@ -392,11 +418,11 @@ const AuditHarness: React.FC = () => {
             value={rec.verdict}
             onChange={(_, v) => updateRecord(clip, { verdict: v as Verdict })}
           >
-            <ToggleButton value="ok" color="success" sx={{ minHeight: 32, px: 1.5 }}>
-              ✓ OK
+            <ToggleButton value="ok" color="success" sx={{ minHeight: 32, px: 1.5, gap: 0.5 }}>
+              <Check size={15} /> OK
             </ToggleButton>
-            <ToggleButton value="wrong" color="error" sx={{ minHeight: 32, px: 1.5 }}>
-              ✗ Fejl
+            <ToggleButton value="wrong" color="error" sx={{ minHeight: 32, px: 1.5, gap: 0.5 }}>
+              <X size={15} /> Fejl
             </ToggleButton>
           </ToggleButtonGroup>
         </Box>
@@ -448,8 +474,12 @@ const AuditHarness: React.FC = () => {
   return (
     <Box sx={{ height: 'calc(var(--vh, 1vh) * 100)', overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
       <Container maxWidth="lg" sx={{ py: 2 }}>
-        <Typography variant="h4" sx={{ fontFamily: FONT, fontWeight: 700, mb: 0.5 }}>
-          🎧 Narration-audit (PRD-11)
+        <Typography
+          variant="h4"
+          sx={{ fontFamily: FONT, fontWeight: 700, mb: 0.5, display: 'flex', alignItems: 'center', gap: 1 }}
+        >
+          <Headphones size={28} aria-hidden />
+          Narration-audit (PRD-11)
         </Typography>
         <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1.5 }}>
           Dev-værktøj: afspil hver klip i det lukkede narrations-sæt, og markér OK/fejl. Standard =
@@ -511,11 +541,37 @@ const AuditHarness: React.FC = () => {
 
           <Box sx={{ flex: 1 }} />
 
-          <Button variant="outlined" size="small" onClick={download} sx={{ fontFamily: FONT, textTransform: 'none' }}>
-            ⬇ Download JSON
+          <Button
+            variant="outlined"
+            size="small"
+            onClick={download}
+            startIcon={<Download size={15} />}
+            sx={{ fontFamily: FONT, textTransform: 'none' }}
+          >
+            Download JSON
           </Button>
-          <Typography sx={{ fontSize: '0.75rem', color: saveState === 'error' ? 'error.main' : 'text.secondary', minWidth: 90 }}>
-            {saveState === 'saving' ? 'Gemmer…' : saveState === 'saved' ? '✓ Gemt i repo' : saveState === 'error' ? '⚠ repo-gem fejl' : ''}
+          <Typography
+            component="div"
+            sx={{
+              fontSize: '0.75rem',
+              color: saveState === 'error' ? 'error.main' : 'text.secondary',
+              minWidth: 90,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 0.5,
+            }}
+          >
+            {saveState === 'saving' && 'Gemmer…'}
+            {saveState === 'saved' && (
+              <>
+                <Check size={13} /> Gemt i repo
+              </>
+            )}
+            {saveState === 'error' && (
+              <>
+                <TriangleAlert size={13} /> repo-gem fejl
+              </>
+            )}
           </Typography>
         </Box>
 
@@ -537,8 +593,20 @@ const AuditHarness: React.FC = () => {
         </Box>
 
         {errorMsg && (
-          <Box sx={{ mb: 2, p: 1.5, borderRadius: 2, bgcolor: 'error.light', color: 'error.contrastText' }}>
-            ⚠️ {errorMsg}
+          <Box
+            sx={{
+              mb: 2,
+              p: 1.5,
+              borderRadius: 2,
+              bgcolor: 'error.light',
+              color: 'error.contrastText',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
+            }}
+          >
+            <TriangleAlert size={18} aria-hidden />
+            {errorMsg}
           </Box>
         )}
 

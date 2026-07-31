@@ -22,6 +22,7 @@ import LivingCard from '../common/LivingCard'
 import SceneObjectField, { type SceneFieldItem } from '../common/scene/SceneObjectField'
 import { sfx } from '../../services/sfxClient'
 import appLogo from '../../assets/logo.webp'
+import { uiArt } from '../../assets/ui'
 
 // Home base (Liveliness PRD-02 §10; RESKINNED by PRD-05 W3 into the "Structured World"). For
 // IMMERSIVE skins the frosted card grid is replaced by the 5 section objects seated in the world
@@ -446,7 +447,7 @@ const HomePage: React.FC = () => {
                 {rewardsOwned} / {REWARD_SLOTS}
               </Typography>
               {/* The next prize, as the same silhouette the corner ring and the book show — so home
-                  also answers "what am I working toward?". Book full → a gold ✨. */}
+                  also answers "what am I working toward?". Book full → the gold sparkle. */}
               <Box
                 aria-hidden
                 sx={{
@@ -476,7 +477,13 @@ const HomePage: React.FC = () => {
                     </Box>
                   )
                 ) : (
-                  '✨'
+                  <Box
+                    component="img"
+                    src={uiArt.sparkle}
+                    alt=""
+                    draggable={false}
+                    sx={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                  />
                 )}
               </Box>
             </CardContent>

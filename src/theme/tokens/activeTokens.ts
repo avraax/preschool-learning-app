@@ -1,5 +1,5 @@
 import type { ThemeTokens } from './types'
-import { kidThemeTokens } from './kidTheme.tokens'
+import { kidThemeTokens } from './kidTheme.tokens.ts'
 
 // The currently active theme tokens. `buildTheme()` sets this whenever it builds a theme,
 // so non-React helpers (e.g. `getCategoryTheme` in config/categoryThemes.ts) can read the

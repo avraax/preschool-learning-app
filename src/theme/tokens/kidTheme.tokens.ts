@@ -1,5 +1,5 @@
 import type { ThemeTokens } from './types'
-import { onCardColor, tileSurface } from './helpers'
+import { onCardColor, tileSurface } from './helpers.ts'
 
 // DEFAULT THEME — "kid" skin.
 // Holds today's EXACT values so the app looks identical after the token migration.
@@ -13,7 +13,6 @@ const FONT_FAMILY = '"Comic Neue", "Comic Sans MS", "Comic Sans", sans-serif'
 export const kidThemeTokens: ThemeTokens = {
   id: 'kid',
   name: 'Regnbue',
-  selectorEmoji: '🌈',
   fontFamily: FONT_FAMILY,
 
   palette: {
@@ -38,8 +37,6 @@ export const kidThemeTokens: ThemeTokens = {
       tileSurface: tileSurface('#1976D2'),
       border: '#64B5F6',
       hoverBorder: '#1976D2',
-      icon: '📚',
-      iconSize: '4rem',
       cardSurface: 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(227, 242, 253, 0.9) 100%)',
       cardBlur: 'blur(15px)',
     },
@@ -50,8 +47,6 @@ export const kidThemeTokens: ThemeTokens = {
       tileSurface: tileSurface('#9C27B0'),
       border: '#BA68C8',
       hoverBorder: '#9C27B0',
-      icon: '🧮',
-      iconSize: '4rem',
       cardSurface: 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(243, 229, 245, 0.9) 100%)',
       cardBlur: 'blur(15px)',
     },
@@ -62,8 +57,6 @@ export const kidThemeTokens: ThemeTokens = {
       tileSurface: tileSurface('#E65100'),
       border: '#FFB74D',
       hoverBorder: '#FF6B00',
-      icon: '🎨',
-      iconSize: '4rem',
       cardSurface: 'linear-gradient(135deg, rgba(255, 243, 224, 0.95) 0%, rgba(255, 224, 178, 0.95) 100%)',
       cardBlur: 'blur(10px)',
     },
@@ -74,8 +67,6 @@ export const kidThemeTokens: ThemeTokens = {
       tileSurface: tileSurface('#2E7D32'),
       border: '#66BB6A',
       hoverBorder: '#2E7D32',
-      icon: '🌍',
-      iconSize: '4rem',
       cardSurface: 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(232, 245, 233, 0.9) 100%)',
       cardBlur: 'blur(15px)',
     },
@@ -86,8 +77,6 @@ export const kidThemeTokens: ThemeTokens = {
       tileSurface: tileSurface('#00796B'),
       border: '#4DB6AC',
       hoverBorder: '#00796B',
-      icon: '🗣️',
-      iconSize: '4rem',
       cardSurface: 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(224, 242, 241, 0.9) 100%)',
       cardBlur: 'blur(15px)',
     },
@@ -134,7 +123,9 @@ export const kidThemeTokens: ThemeTokens = {
     ambient: {
       // B7 art motes (index-aligned to SceneAssets.ambientSprites): soft cloud puffs drifting.
       // B2 (scene-fixes): denser + larger to fill the vast pale mid-sky.
-      sprites: [{ src: '', size: [24, 60] }],
+      // De-emoji W5: sprite art re-keyed + trimmed, so this range is now the true on-screen size
+      // (scaled from the old padded canvas to preserve the tuned look).
+      sprites: [{ src: '', size: [30, 74] }],
       count: 14,
       motion: 'drift',
     },

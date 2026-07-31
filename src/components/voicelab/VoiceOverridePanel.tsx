@@ -1,5 +1,5 @@
 // VoiceOverridePanel — dialog to audition Danish voices inside the real games.
-// Opened from the "Til de voksne" adult menu (the old floating 🎙️ button was consolidated
+// Opened from the "Til de voksne" adult menu (the old floating mic button was consolidated
 // into that menu). THROWAWAY internal tool (see tmp-prd-voicelab.md / voiceOverride.ts).
 //
 // Picking a voice/speed here sets a runtime override on ttsClient that applies app-wide, so
@@ -20,6 +20,7 @@ import {
   Stack,
   Typography,
 } from '@mui/material'
+import { Mic } from 'lucide-react'
 import { ttsClient } from '../../services/ttsClient'
 import { TTS_CONFIG } from '../../config/tts-config'
 import { OVERRIDE_VOICES, VOICE_TIERS } from './voicelabData'
@@ -83,7 +84,7 @@ const VoiceOverridePanel: React.FC<VoiceOverridePanelProps> = ({ open, onClose }
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
-      <AdultBackHeader title="🎙️ Stemme-test" onBack={onClose} />
+      <AdultBackHeader title="Stemme-test" icon={<Mic size={20} aria-hidden />} onBack={onClose} />
       <DialogContent sx={{ fontFamily: FONT }}>
         <Typography sx={{ fontFamily: FONT, fontSize: '0.75rem', color: 'text.secondary', mb: 0.5 }}>
           Skifter den danske fortælle-stemme (engelsk sektion upåvirket).

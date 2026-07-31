@@ -11,7 +11,7 @@ import {
 } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import {
-  ArrowLeft
+  Home
 } from 'lucide-react'
 
 // Route page components are lazy-loaded so the home screen ships a small initial
@@ -64,7 +64,6 @@ import { useViewportHeight } from './hooks/useViewportHeight'
 // Simplified Audio System imports
 import { SimplifiedAudioProvider } from './contexts/SimplifiedAudioContext'
 import SimplifiedAudioPermission from './components/common/SimplifiedAudioPermission'
-import LottieCharacter, { useCharacterState } from './components/common/LottieCharacter'
 import { useUpdateChecker } from './hooks/useUpdateChecker'
 import { useNativeAppFeel } from './hooks/useNativeAppFeel'
 import { sfx } from './services/sfxClient'
@@ -72,15 +71,12 @@ import { musicClient } from './services/musicClient'
 import { recordRoute } from './services/diagnosticsBuffer'
 import { simplifiedAudioController } from './utils/SimplifiedAudioController'
 
-// 404 Not Found Component
+// 404 Not Found Component. Deliberately illustration-free since de-emoji PRD-01 W2: the animal
+// emoji it used to animate (via LottieCharacter) and the balloon/thinking/magnifier glyphs were four
+// flat glyphs on an off-happy-path screen, so they were deleted rather than commissioned as art (D4).
 const NotFoundPage = () => {
   const navigate = useNavigate()
   const theme = useTheme()
-  const sadCharacter = useCharacterState('encourage')
-
-  React.useEffect(() => {
-    sadCharacter.encourage()
-  }, [])
 
   return (
     <Box
@@ -94,30 +90,21 @@ const NotFoundPage = () => {
       }}
     >
       <Container maxWidth="sm" sx={{ textAlign: 'center' }}>
-        <Box sx={{ mb: 3 }}>
-          <LottieCharacter
-            character={sadCharacter.character}
-            state={sadCharacter.state}
-            size={120}
-            onClick={sadCharacter.encourage}
-          />
-        </Box>
-        <Typography variant="h1" sx={{ fontSize: '4rem', mb: 2 }}>🎈</Typography>
         <Typography variant="h4" sx={{ mb: 2, fontWeight: 700 }}>
-          Hovsa! 🤔
+          Hovsa!
         </Typography>
         <Typography variant="body1" sx={{ mb: 4, color: 'text.secondary', fontSize: '1.2rem' }}>
-          Denne side findes ikke 🔍
+          Denne side findes ikke
         </Typography>
         <Button
           variant="contained"
           color="primary"
           size="large"
-          startIcon={<ArrowLeft size={24} />}
+          startIcon={<Home size={24} />}
           onClick={() => navigate('/')}
           sx={{ py: 1.5, px: 3, fontSize: '1.1rem', borderRadius: 3 }}
         >
-          🏠 Hjem
+          Hjem
         </Button>
       </Container>
     </Box>

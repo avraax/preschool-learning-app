@@ -6,6 +6,7 @@ import { useProgress } from '../../hooks/useProgress'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
 import { xpBus } from '../../services/xpBus'
 import { rewardArt } from '../../assets/rewards'
+import { uiArt } from '../../assets/ui'
 import { useCelebration } from './CelebrationEffect'
 import CelebrationEffect from './CelebrationEffect'
 
@@ -119,9 +120,11 @@ const RewardRing: React.FC<RewardRingProps> = ({
     if (flashTimer.current) clearTimeout(flashTimer.current)
   }, [])
 
-  // What the centre shows: the flashing won prize, else the next silhouette, else (book full) a gold ✨.
-  const art = flash ? flash.art : next ? rewardArt(next.reward.id) : undefined
-  const emoji = flash ? flash.emoji : next ? next.reward.emoji : '✨'
+  // What the centre shows: the flashing won prize, else the next silhouette, else (book full) the gold
+  // sparkle. Book-full always resolves to art now (de-emoji W3), so `emoji` is only the per-reward
+  // fallback that W6 deletes with the last reward render.
+  const art = flash ? flash.art : next ? rewardArt(next.reward.id) : uiArt.sparkle
+  const emoji = flash ? flash.emoji : next ? next.reward.emoji : ''
   const bookFull = !next && !flash
   // Silhouette treatment: the real colours must NEVER read while it's unearned — it has to be
   // obviously "not mine yet". White shape on a dark world, dark shape on a light one.

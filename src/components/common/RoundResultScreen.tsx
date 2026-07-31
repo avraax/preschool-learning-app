@@ -15,6 +15,7 @@ import { rewardBus } from '../../services/rewardBus'
 import { progressStore } from '../../services/progressStore'
 import { levelFromXp } from '../../config/progression'
 import { rewardArt } from '../../assets/rewards'
+import { uiArt } from '../../assets/ui'
 import CelebrationEffect from './CelebrationEffect'
 import type { RoundOutcome } from '../../services/progressStore'
 
@@ -225,7 +226,7 @@ const RoundResultScreen: React.FC<RoundResultScreenProps> = ({
           m: 0,
         }}
       >
-        Færdig! 🎉
+        Færdig!
       </Typography>
 
       {/* Stars */}
@@ -244,8 +245,12 @@ const RoundResultScreen: React.FC<RoundResultScreenProps> = ({
                   : { type: 'spring', stiffness: 360, damping: 10, delay: dly(t.starBase + i * t.starStep) }
               }
               sx={{
-                fontSize: 'clamp(2.6rem, 11vw, 4.2rem)',
-                [PHONE_LANDSCAPE]: { fontSize: '2rem' },
+                // Baked art, so the box needs an explicit size (the ⭐ glyph it replaced was sized by
+                // fontSize) — same values, so the row height is unchanged. Unearned reuses the SAME
+                // gold render, greyed + dimmed; there is no separate empty-star asset.
+                width: 'clamp(2.6rem, 11vw, 4.2rem)',
+                height: 'clamp(2.6rem, 11vw, 4.2rem)',
+                [PHONE_LANDSCAPE]: { width: '2rem', height: '2rem' },
                 lineHeight: 1,
                 filter: earned
                   ? 'drop-shadow(0 4px 10px rgba(255,180,0,0.55))'
@@ -254,7 +259,14 @@ const RoundResultScreen: React.FC<RoundResultScreenProps> = ({
                 userSelect: 'none',
               }}
             >
-              ⭐
+              <Box
+                component="img"
+                src={uiArt.star}
+                alt=""
+                aria-hidden
+                draggable={false}
+                sx={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }}
+              />
             </Box>
           )
         })}
@@ -281,9 +293,28 @@ const RoundResultScreen: React.FC<RoundResultScreenProps> = ({
             boxShadow: '0 6px 16px rgba(255,152,0,0.45)',
           }}
         >
-          <Typography sx={{ fontFamily: COMIC, fontWeight: 700, color: '#5A3A00', fontSize: 'clamp(1rem, 3.6vw, 1.3rem)' }}>
-            🏆 Ny rekord!
-          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.75 }}>
+            <Box
+              component="img"
+              src={uiArt.trophy}
+              alt=""
+              aria-hidden
+              draggable={false}
+              sx={{
+                // Bigger + a soft dark shadow: the baked trophy is GOLD and the ribbon is a gold
+                // gradient, so at glyph size it vanished into its own background.
+                width: 'clamp(1.7rem, 5.4vw, 2.15rem)',
+                height: 'clamp(1.7rem, 5.4vw, 2.15rem)',
+                objectFit: 'contain',
+                flex: '0 0 auto',
+                filter: 'drop-shadow(0 1px 2px rgba(90,58,0,0.55))',
+                [PHONE_LANDSCAPE]: { width: '1.6rem', height: '1.6rem' },
+              }}
+            />
+            <Typography sx={{ fontFamily: COMIC, fontWeight: 700, color: '#5A3A00', fontSize: 'clamp(1rem, 3.6vw, 1.3rem)' }}>
+              Ny rekord!
+            </Typography>
+          </Box>
           {bestLines.map((l) => (
             <Typography key={l} sx={{ fontFamily: COMIC, fontWeight: 600, color: '#7A4F00', fontSize: 'clamp(0.75rem, 2.6vw, 0.95rem)' }}>
               {l}
@@ -294,21 +325,39 @@ const RoundResultScreen: React.FC<RoundResultScreenProps> = ({
 
       {/* Streak readout */}
       {longestStreak >= 3 && (
-        <Typography
+        <Box
           component={motion.div}
           initial={reduce ? false : { opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: dly(t.starBase + starsSpan + 350) }}
-          sx={{
-            fontFamily: COMIC,
-            fontWeight: 700,
-            fontSize: 'clamp(1rem, 3.4vw, 1.3rem)',
-            // Gold on dark scenes; readable-on-white accent on light scenes.
-            color: dark ? '#FFE7A8' : category.onTileColor,
-          }}
+          sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}
         >
-          🔥 {longestStreak} i træk!
-        </Typography>
+          <Box
+            component="img"
+            src={uiArt.flame}
+            alt=""
+            aria-hidden
+            draggable={false}
+            sx={{
+              width: 'clamp(1.5rem, 4.8vw, 1.9rem)',
+              height: 'clamp(1.5rem, 4.8vw, 1.9rem)',
+              objectFit: 'contain',
+              flex: '0 0 auto',
+              [PHONE_LANDSCAPE]: { width: '1.45rem', height: '1.45rem' },
+            }}
+          />
+          <Typography
+            sx={{
+              fontFamily: COMIC,
+              fontWeight: 700,
+              fontSize: 'clamp(1rem, 3.4vw, 1.3rem)',
+              // Gold on dark scenes; readable-on-white accent on light scenes.
+              color: dark ? '#FFE7A8' : category.onTileColor,
+            }}
+          >
+            {longestStreak} i træk!
+          </Typography>
+        </Box>
       )}
 
       {/* Reward-meter beat — the bar fills toward the NEXT PRIZE, whose silhouette sits at the head
@@ -326,7 +375,7 @@ const RoundResultScreen: React.FC<RoundResultScreenProps> = ({
           width: 'min(340px, 82%)',
         }}
       >
-        {/* The next prize, as a silhouette — book full → a gold ✨. */}
+        {/* The next prize, as a silhouette — book full → the gold sparkle. */}
         <Box
           aria-hidden
           sx={{
@@ -355,7 +404,13 @@ const RoundResultScreen: React.FC<RoundResultScreenProps> = ({
               </Box>
             )
           ) : (
-            '✨'
+            <Box
+              component="img"
+              src={uiArt.sparkle}
+              alt=""
+              draggable={false}
+              sx={{ width: '100%', height: '100%', objectFit: 'contain' }}
+            />
           )}
         </Box>
         {/* Fill bar */}

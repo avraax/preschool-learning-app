@@ -11,6 +11,7 @@
 
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Typography } from '@mui/material'
+import { Lock } from 'lucide-react'
 import PinPad from './PinPad'
 import {
   registerPinPrompt,
@@ -29,14 +30,16 @@ import {
 import { attemptsLeft, isLockedOut, lockoutMessage } from '../../config/pinPolicy'
 import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 
+// Plain strings — they double as the dialog's aria-label, and the padlock is drawn as a lucide icon
+// beside the title instead of living in the text (de-emoji PRD-01 W1).
 const TITLES: Record<PinReason, string> = {
-  adultMenu: 'Kun for voksne 🔒',
-  resetProgress: 'Kun for voksne 🔒',
-  switchProfile: 'Skift barn 🔒',
-  unlockSession: 'Lås op 🔒',
-  changePin: 'Skift kode 🔒',
-  manageCredentials: 'Login og sikkerhed 🔒',
-  revokeSessions: 'Kun for voksne 🔒',
+  adultMenu: 'Kun for voksne',
+  resetProgress: 'Kun for voksne',
+  switchProfile: 'Skift barn',
+  unlockSession: 'Lås op',
+  changePin: 'Skift kode',
+  manageCredentials: 'Login og sikkerhed',
+  revokeSessions: 'Kun for voksne',
 }
 
 interface Pending {
@@ -144,7 +147,16 @@ const PinDialog: React.FC = () => {
         } as never,
       }}
     >
-      <DialogTitle sx={{ fontWeight: 700, [PHONE_LANDSCAPE]: { py: 1, fontSize: '1.05rem' } }}>
+      <DialogTitle
+        sx={{
+          fontWeight: 700,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1,
+          [PHONE_LANDSCAPE]: { py: 1, fontSize: '1.05rem' },
+        }}
+      >
+        <Lock size={20} aria-hidden />
         {TITLES[pending.reason]}
       </DialogTitle>
       <DialogContent sx={{ [PHONE_LANDSCAPE]: { py: 0.5 } }}>

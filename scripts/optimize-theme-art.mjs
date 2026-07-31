@@ -30,6 +30,14 @@ const SYMBOL_OUT = join(ROOT, 'src', 'assets', 'symbols')
 const SYMBOL_WIDTH = 160
 const SYMBOL_QUALITY = 90
 
+// UI symbols (de-emoji PRD-01 W3) — theme-CONSTANT chrome glyphs, GREEN-screen keyed (see optimizeUi).
+const UI_OUT = join(ROOT, 'src', 'assets', 'ui')
+const UI_SIZE = 192 // renders at ≤67px CSS; covers a 3× iPad DPR
+const UI_FILL = 0.81 // matches src/assets/themes/icons/*.webp
+const UI_VIVID = 60 // flood-fill seed: unmistakable screen green
+const UI_FAINT = 18 // grow: the darkened green under the render's baked contact shadow
+const UI_DESPILL = 8
+
 // Section icons (theme-constant, used app-wide). Magenta-keyed cutouts.
 const ICON_ROLES = ['alphabet', 'math', 'colors', 'english', 'ordleg']
 
@@ -140,12 +148,148 @@ async function optimizeSymbols() {
   console.log(`  ${'TOTAL'.padEnd(9)}   ${String(kb(total)).padStart(4)} KB`)
 }
 
+// UI symbols (de-emoji PRD-01 W3) — the chrome glyphs that carry meaning: trophy/flame/sparkle.
+// art-src/ui/<name>.{png,jpg} → src/assets/ui/<name>.webp.
+//
+// GREEN screen here, not magenta: this batch is warm gold/orange, and `.claude/rules/scene-assets.md`'s
+// green-EXCESS key is the current house pipeline. The renders arrive as JPEG, so edges carry more chroma
+// noise than a PNG would — hence the low despill threshold and the hysteresis grow, which also eats the
+// baked contact shadow that darkened the screen green under each subject.
+async function optimizeUi() {
+  const srcDir = join(SRC_ROOT, 'ui')
+  if (!existsSync(srcDir)) {
+    console.error('! no art-src/ui — skipping')
+    return
+  }
+  await mkdir(UI_OUT, { recursive: true })
+  const files = (await readdir(srcDir)).filter((f) => /\.(png|jpe?g|webp)$/i.test(f))
+  let total = 0
+  console.log('\n=== ui ===')
+  for (const file of files) {
+    const name = basename(file, extname(file)).toLowerCase()
+    const outPath = join(UI_OUT, `${name}.webp`)
+    const { data, info } = await sharp(join(srcDir, file)).ensureAlpha().raw().toBuffer({ resolveWithObject: true })
+    const { width: w, height: h, channels: c } = info
+    const px = Buffer.from(data)
+    const excess = new Int16Array(w * h)
+    for (let q = 0; q < w * h; q++) {
+      const i = q * c
+      excess[q] = px[i + 1] - Math.max(px[i], px[i + 2])
+    }
+
+    // Hysteresis flood-fill from the border: seed through VIVID screen, grow through FAINT green.
+    const clear = new Uint8Array(w * h)
+    const stack = []
+    const push = (q) => {
+      if (!clear[q] && excess[q] > UI_FAINT) {
+        clear[q] = 1
+        stack.push(q)
+      }
+    }
+    for (let x = 0; x < w; x++) {
+      if (excess[x] > UI_VIVID) push(x)
+      const b = (h - 1) * w + x
+      if (excess[b] > UI_VIVID) push(b)
+    }
+    for (let y = 0; y < h; y++) {
+      if (excess[y * w] > UI_VIVID) push(y * w)
+      const r = y * w + w - 1
+      if (excess[r] > UI_VIVID) push(r)
+    }
+    while (stack.length) {
+      const q = stack.pop()
+      const x = q % w
+      const y = (q - x) / w
+      if (x > 0) push(q - 1)
+      if (x < w - 1) push(q + 1)
+      if (y > 0) push(q - w)
+      if (y < h - 1) push(q + w)
+    }
+    // Enclosed pockets the fill can't reach (inside the trophy's handles) — safe to take globally,
+    // because none of these subjects is green.
+    for (let q = 0; q < w * h; q++) {
+      if (clear[q] || excess[q] > UI_VIVID) px[q * c + 3] = 0
+    }
+
+    // Keep only the largest component — drops the Gemini "✦" watermark and any keying dust.
+    const owner = new Int32Array(w * h).fill(-1)
+    const comps = []
+    for (let s = 0; s < w * h; s++) {
+      if (owner[s] !== -1 || px[s * c + 3] <= 8) continue
+      const id = comps.length
+      const st = [s]
+      owner[s] = id
+      let n = 0
+      while (st.length) {
+        const q = st.pop()
+        n++
+        const x = q % w
+        const y = (q - x) / w
+        for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+          const nx = x + dx
+          const ny = y + dy
+          if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue
+          const nq = ny * w + nx
+          if (owner[nq] === -1 && px[nq * c + 3] > 8) {
+            owner[nq] = id
+            st.push(nq)
+          }
+        }
+      }
+      comps.push({ id, n })
+    }
+    const biggest = comps.reduce((a, b) => (b.n > a.n ? b : a), comps[0])
+    for (let q = 0; q < w * h; q++) {
+      if (px[q * c + 3] !== 0 && owner[q] !== biggest.id) px[q * c + 3] = 0
+    }
+
+    // Despill, then trim + square-contain to the house 81% fill (matches the section icons).
+    for (let q = 0; q < w * h; q++) {
+      const i = q * c
+      if (px[i + 3] === 0) continue
+      const base = Math.max(px[i], px[i + 2])
+      if (px[i + 1] - base > UI_DESPILL) px[i + 1] = base
+    }
+    let minX = w
+    let minY = h
+    let maxX = -1
+    let maxY = -1
+    for (let q = 0; q < w * h; q++) {
+      if (px[q * c + 3] <= 24) continue
+      const x = q % w
+      const y = (q - x) / w
+      if (x < minX) minX = x
+      if (y < minY) minY = y
+      if (x > maxX) maxX = x
+      if (y > maxY) maxY = y
+    }
+    const inner = Math.round(UI_SIZE * UI_FILL)
+    const subject = await sharp(px, { raw: { width: w, height: h, channels: c } })
+      .extract({ left: minX, top: minY, width: maxX - minX + 1, height: maxY - minY + 1 })
+      .resize({ width: inner, height: inner, fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
+      .png()
+      .toBuffer()
+    await sharp({ create: { width: UI_SIZE, height: UI_SIZE, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } } })
+      .composite([{ input: subject, gravity: 'center' }])
+      .webp({ quality: 90, effort: 6 })
+      .toFile(outPath)
+    const size = (await stat(outPath)).size
+    total += size
+    console.log(`  ${name.padEnd(9)} → ${name}.webp  ${String(kb(size)).padStart(4)} KB [green keyed]`)
+  }
+  console.log(`  ${'TOTAL'.padEnd(9)}   ${String(kb(total)).padStart(4)} KB`)
+}
+
 const args = process.argv.slice(2)
 const themes = args.length ? args : await readdir(SRC_ROOT)
 
 for (const id of themes) {
   if (id === 'symbols') {
     await optimizeSymbols()
+    continue
+  }
+  if (id === 'ui') {
+    await optimizeUi()
     continue
   }
   if (!(await stat(join(SRC_ROOT, id)).then((s) => s.isDirectory()).catch(() => false))) continue

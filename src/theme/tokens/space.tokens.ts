@@ -1,12 +1,11 @@
 import type { ThemeTokens } from './types'
-import { COMIC_FONT, SECTION_ICONS, WHITE_DOTS, category, neutralShadows } from './helpers'
+import { COMIC_FONT, WHITE_DOTS, category, neutralShadows } from './helpers.ts'
 
 // 🚀 Rummet (Space) — light cosmic skin: periwinkle base with vivid nebula purples,
 // rocket red, alien cyan and star gold (kept light so cards/text stay readable).
 export const spaceThemeTokens: ThemeTokens = {
   id: 'space',
   name: 'Rummet',
-  selectorEmoji: '🚀',
   fontFamily: COMIC_FONT,
 
   palette: {
@@ -24,11 +23,11 @@ export const spaceThemeTokens: ThemeTokens = {
   },
 
   categories: {
-    alphabet: category(['#E8EAF6', '#C5CAE9', '#9FA8DA'], '#3949AB', '#7986CB', '#283593', '#E8EAF6', SECTION_ICONS.alphabet),
-    math: category(['#F3E5F5', '#E1BEE7', '#CE93D8'], '#8E24AA', '#BA68C8', '#6A1B9A', '#F3E5F5', SECTION_ICONS.math),
-    colors: category(['#FFEBEE', '#FFCDD2', '#EF9A9A'], '#E53935', '#EF5350', '#C62828', '#FFEBEE', SECTION_ICONS.colors),
-    english: category(['#E0F7FA', '#B2EBF2', '#80DEEA'], '#00ACC1', '#4DD0E1', '#00838F', '#E0F7FA', SECTION_ICONS.english),
-    ordleg: category(['#FFF8E1', '#FFECB3', '#FFE082'], '#FF8F00', '#FFB300', '#FF6F00', '#FFF8E1', SECTION_ICONS.ordleg),
+    alphabet: category(['#E8EAF6', '#C5CAE9', '#9FA8DA'], '#3949AB', '#7986CB', '#283593', '#E8EAF6'),
+    math: category(['#F3E5F5', '#E1BEE7', '#CE93D8'], '#8E24AA', '#BA68C8', '#6A1B9A', '#F3E5F5'),
+    colors: category(['#FFEBEE', '#FFCDD2', '#EF9A9A'], '#E53935', '#EF5350', '#C62828', '#FFEBEE'),
+    english: category(['#E0F7FA', '#B2EBF2', '#80DEEA'], '#00ACC1', '#4DD0E1', '#00838F', '#E0F7FA'),
+    ordleg: category(['#FFF8E1', '#FFECB3', '#FFE082'], '#FF8F00', '#FFB300', '#FF6F00', '#FFF8E1'),
   },
 
   decor: {
@@ -61,7 +60,9 @@ export const spaceThemeTokens: ThemeTokens = {
     ambient: {
       // B7 art motes (index-aligned to SceneAssets.ambientSprites): two soft stars, twinkling.
       // Fewer than the CSS star count — the backdrop is already dense with painted stars.
-      sprites: [{ src: '', size: [10, 20] }, { src: '', size: [12, 24] }],
+      // De-emoji W5: the sprite art was re-keyed + TRIMMED (it was padded to ~33% of its canvas), so
+      // these ranges are now the true on-screen size and were scaled to preserve the tuned look.
+      sprites: [{ src: '', size: [4, 8] }, { src: '', size: [5, 10] }],
       count: 16,
       motion: 'twinkle',
     },

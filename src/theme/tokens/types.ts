@@ -26,8 +26,9 @@ export interface CategoryPalette {
   tileSurface: string     // section-tinted idle answer-tile surface (white→accent tint)
   border: string
   hoverBorder: string
-  icon: string            // emoji glyph
-  iconSize: string
+  // NB there is no `icon` here: the section glyph is theme-CONSTANT baked art
+  // (`src/assets/themes/icons/<section>.webp`), not a per-skin token. De-emoji PRD-01 W4 deleted
+  // the emoji field + its `iconSize` partner — both were dead behind that art.
   cardSurface: string     // frosted home-card background (white→tint gradient)
   cardBlur: string        // home-card backdrop-filter blur
 }
@@ -193,8 +194,10 @@ export interface TransitionTokens {
 
 export interface ThemeTokens {
   id: string
-  name: string            // human label shown in the front-page theme selector
-  selectorEmoji: string   // emoji shown in the front-page theme selector
+  name: string            // human label shown in the theme selector
+  // NB there is no `selectorEmoji`: the selector shows the world's baked `selectorThumb`
+  // (`SceneAssets`), and a skin with no world art shows no glyph at all rather than a flat one
+  // (de-emoji PRD-01 D5). `themes.test.ts` asserts every REGISTERED skin ships a thumb.
   fontFamily: string
 
   palette: ThemePalette

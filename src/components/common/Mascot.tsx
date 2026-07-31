@@ -13,11 +13,11 @@ import { PHONE_LANDSCAPE, PHONE_PORTRAIT } from '../../theme/phoneMedia'
 // Reactive corner mascot (UI/UX Overhaul PRD §5.5). ONE reusable emotional guide that reacts to
 // gameplay events (correct/wrong/streak/round/hint/sticker/welcome) via the `mascotBus`. Games
 // emit from the same handler as their celebration/SFX; this component translates each event into
-// a distinct pose + a short Danish speech bubble. Reduced motion → static pose swap (no transform
-// animation) with the bubble + a small expression badge still communicating the reaction.
+// a distinct pose + a short Danish speech bubble. Reduced motion → no transform animation, so the
+// bubble carries the reaction on its own.
 //
-// Reuses the per-world sprite from `loadSceneAssets`; falls back to a world-appropriate emoji so
-// the mascot is always PRESENT (and reactive) even before the sprite resolves.
+// Reuses the per-world sprite from `loadSceneAssets` and renders NOTHING until it resolves — the
+// old emoji stand-in (and the emoji expression badge) are gone per de-emoji PRD-01 D5.
 
 // Short Danish copy pools per event (Appendix C). Pick one at random on emit (event handler, not
 // during render, so Math.random is safe).
@@ -30,19 +30,6 @@ const COPY: Partial<Record<MascotEvent, string[]>> = {
   sticker: ['Et nyt klistermærke!'],
   hint: ['Kig her!', 'Prøv den her!'],
 }
-
-// A tiny expression badge shown per pose — the primary "static pose swap" under reduced motion,
-// and a subtle accent otherwise.
-const BADGE: Partial<Record<MascotEvent, string>> = {
-  correct: '⭐',
-  // wrong: intentionally no badge (encouragement is the lean-in pose + spoken line, not an icon)
-  streak: '🔥',
-  round: '🎉',
-  sticker: '✨',
-  hint: '👉',
-  welcome: '👋',
-}
-
 
 // How long a reaction pose holds before easing back to idle (ms).
 const HOLD_MS: Partial<Record<MascotEvent, number>> = {
@@ -77,15 +64,6 @@ const poseAnim = (event: MascotEvent): { animate: TargetAndTransition; transitio
     case 'idle':
     default:
       return { animate: { y: [0, -6, 0] }, transition: { duration: 3.2, repeat: Infinity, ease: 'easeInOut' } }
-  }
-}
-
-const emojiFallback = (motionKind: string): string => {
-  switch (motionKind) {
-    case 'twinkle': return '🚀'
-    case 'rise': return '🐙'
-    case 'fall': return '🦕'
-    default: return '🦄'
   }
 }
 
@@ -159,7 +137,6 @@ const Mascot: React.FC<MascotProps> = ({ sx, forceEvent }) => {
 
   const url = loaded && loaded.id === themeId ? loaded.mascot : ''
   const { animate, transition } = poseAnim(pose)
-  const badge = BADGE[pose]
 
   return (
     <Box
@@ -220,24 +197,6 @@ const Mascot: React.FC<MascotProps> = ({ sx, forceEvent }) => {
         </Box>
       )}
 
-      {/* Expression badge — the static pose swap under reduced motion; a small accent otherwise. */}
-      {badge && (
-        <Box
-          aria-hidden
-          sx={{
-            position: 'absolute',
-            top: -4,
-            right: -2,
-            fontSize: { xs: '1.3rem', md: '1.7rem' },
-            lineHeight: 1,
-            filter: 'drop-shadow(0 2px 3px rgba(0,0,0,0.3))',
-            zIndex: 1,
-          }}
-        >
-          {badge}
-        </Box>
-      )}
-
       <Box
         component={motion.button}
         type="button"
@@ -258,7 +217,8 @@ const Mascot: React.FC<MascotProps> = ({ sx, forceEvent }) => {
           outline: 'none',
         }}
       >
-        {url ? (
+        {/* Nothing until the sprite resolves — never a flat emoji stand-in (de-emoji PRD-01 D5). */}
+        {url && (
           <Box
             component="img"
             src={url}
@@ -272,20 +232,6 @@ const Mascot: React.FC<MascotProps> = ({ sx, forceEvent }) => {
               userSelect: 'none',
             }}
           />
-        ) : (
-          <Box
-            sx={{
-              width: '100%',
-              height: '100%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: { xs: '3rem', md: '4.2rem' },
-              filter: 'drop-shadow(0 6px 12px rgba(0,0,0,0.28))',
-            }}
-          >
-            {emojiFallback(theme.scene.ambient.motion)}
-          </Box>
         )}
       </Box>
     </Box>

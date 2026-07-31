@@ -29,7 +29,6 @@ import { PHONE_ANY, PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 interface Game {
   id: string
   title: string
-  emoji: string
   route: string
   gradient: string
 }
@@ -282,7 +281,7 @@ const GameSelectionLayout: React.FC<GameSelectionLayoutProps> = ({
                       p: { xs: 1, md: 1.5 },
                       '&:last-child': { pb: { xs: 1, md: 1.5 } }
                     }}>
-                      <GameTileIcon section={categoryId} id={game.id} fallbackEmoji={game.emoji} />
+                      <GameTileIcon section={categoryId} id={game.id} />
                       <Typography
                         sx={{
                           fontWeight: 700,

@@ -3,11 +3,13 @@ import { Box, IconButton, Typography } from '@mui/material'
 import { useTheme, alpha } from '@mui/material/styles'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Close as CloseIcon } from '@mui/icons-material'
+import { ArrowUp, Settings } from 'lucide-react'
 
 // Update announcement pill (PRD-09 P4). Deliberately does NOT reload on tap — a child could
 // otherwise mid-game tap a big "Opdater app" Fab and lose their round. It only ANNOUNCES that a
-// new version is ready and points the adult to the ⚙️ corner menu (the actual, hold-gated
-// "⬆️ Opdater app" action lives there). A small ✕ dismisses it (wires dismissUpdate). Anchored
+// new version is ready and points the adult to the corner gear menu (the actual, hold-gated
+// "Opdater app" action lives there) — drawn as the SAME lucide gear the corner button uses, so the
+// instruction is literal. A small close button dismisses it (wires dismissUpdate). Anchored
 // bottom-centre so it never overlaps the bottom-right gear or the bottom-left mascot.
 
 interface UpdateBannerProps {
@@ -49,6 +51,7 @@ const UpdateBanner: React.FC<UpdateBannerProps> = ({ show, onDismiss }) => {
               backdropFilter: 'blur(6px)',
             }}
           >
+            <ArrowUp size={18} aria-hidden style={{ flex: '0 0 auto' }} />
             <Typography
               sx={{
                 fontFamily: '"Comic Sans MS", "Comic Neue", sans-serif',
@@ -60,7 +63,8 @@ const UpdateBanner: React.FC<UpdateBannerProps> = ({ show, onDismiss }) => {
                 textOverflow: 'ellipsis',
               }}
             >
-              🎉 Ny version — åbn ⚙️ for at opdatere
+              Ny version — åbn <Settings size={15} aria-hidden style={{ verticalAlign: '-2px' }} /> for at
+              opdatere
             </Typography>
             <IconButton
               aria-label="Skjul opdatering"

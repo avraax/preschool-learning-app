@@ -1,12 +1,11 @@
 import type { ThemeTokens } from './types'
-import { COMIC_FONT, SECTION_ICONS, WHITE_DOTS, category, neutralShadows } from './helpers'
+import { COMIC_FONT, WHITE_DOTS, category, neutralShadows } from './helpers'
 
 // 🌴 Junglen (Jungle) — lush leaf greens & tropical teal with parrot orange, macaw blue
 // and jungle-flower pink.
 export const jungleThemeTokens: ThemeTokens = {
   id: 'jungle',
   name: 'Junglen',
-  selectorEmoji: '🌴',
   fontFamily: COMIC_FONT,
 
   palette: {
@@ -24,11 +23,11 @@ export const jungleThemeTokens: ThemeTokens = {
   },
 
   categories: {
-    alphabet: category(['#E8F5E9', '#C8E6C9', '#A5D6A7'], '#2E7D32', '#66BB6A', '#1B5E20', '#E8F5E9', SECTION_ICONS.alphabet),
-    math: category(['#E0F2F1', '#B2DFDB', '#80CBC4'], '#00897B', '#4DB6AC', '#00695C', '#E0F2F1', SECTION_ICONS.math),
-    colors: category(['#FFF3E0', '#FFE0B2', '#FFCC80'], '#EF6C00', '#FFA726', '#E65100', '#FFF3E0', SECTION_ICONS.colors),
-    english: category(['#E3F2FD', '#BBDEFB', '#90CAF9'], '#1565C0', '#42A5F5', '#0D47A1', '#E3F2FD', SECTION_ICONS.english),
-    ordleg: category(['#FCE4EC', '#F8BBD0', '#F48FB1'], '#C2185B', '#EC407A', '#880E4F', '#FCE4EC', SECTION_ICONS.ordleg),
+    alphabet: category(['#E8F5E9', '#C8E6C9', '#A5D6A7'], '#2E7D32', '#66BB6A', '#1B5E20', '#E8F5E9'),
+    math: category(['#E0F2F1', '#B2DFDB', '#80CBC4'], '#00897B', '#4DB6AC', '#00695C', '#E0F2F1'),
+    colors: category(['#FFF3E0', '#FFE0B2', '#FFCC80'], '#EF6C00', '#FFA726', '#E65100', '#FFF3E0'),
+    english: category(['#E3F2FD', '#BBDEFB', '#90CAF9'], '#1565C0', '#42A5F5', '#0D47A1', '#E3F2FD'),
+    ordleg: category(['#FCE4EC', '#F8BBD0', '#F48FB1'], '#C2185B', '#EC407A', '#880E4F', '#FCE4EC'),
   },
 
   decor: {

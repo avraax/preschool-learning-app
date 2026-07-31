@@ -5,6 +5,7 @@ import { motion } from 'framer-motion'
 import { hexToRgba, onTileColor } from '../../theme/tokens/helpers'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
 import { rewardArt } from '../../assets/rewards'
+import { uiArt } from '../../assets/ui'
 import type { RewardGrant } from '../../services/progressStore'
 
 // The reward reveal moment. The prize pops into a themed slot with a spring scale + sparkle, under a
@@ -56,18 +57,31 @@ const StickerReveal: React.FC<StickerRevealProps> = ({ award, accent, delay = 0,
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay, duration: 0.35 }}
       >
-        <Typography
-          sx={{
-            fontFamily: '"Comic Sans MS", "Comic Neue", sans-serif',
-            fontWeight: 700,
-            fontSize: 'clamp(1rem, 3.5vw, 1.4rem)',
-            // Readable-on-white accent on light scenes (onTileColor); white on dark scenes.
-            color: dark ? '#FFFFFF' : onTileColor(accent),
-            textShadow: dark ? '0 2px 8px rgba(0,0,0,0.5)' : 'none',
-          }}
-        >
-          {isShiny ? 'Skinnende! ✨' : 'Nyt klistermærke!'}
-        </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.75 }}>
+          <Typography
+            sx={{
+              fontFamily: '"Comic Sans MS", "Comic Neue", sans-serif',
+              fontWeight: 700,
+              fontSize: 'clamp(1rem, 3.5vw, 1.4rem)',
+              // Readable-on-white accent on light scenes (onTileColor); white on dark scenes.
+              color: dark ? '#FFFFFF' : onTileColor(accent),
+              textShadow: dark ? '0 2px 8px rgba(0,0,0,0.5)' : 'none',
+            }}
+          >
+            {isShiny ? 'Skinnende!' : 'Nyt klistermærke!'}
+          </Typography>
+          {/* The gold duplicate's badge — baked sparkle, not the ✨ glyph (de-emoji W3). */}
+          {isShiny && (
+            <Box
+              component="img"
+              src={uiArt.sparkle}
+              alt=""
+              aria-hidden
+              draggable={false}
+              sx={{ width: 'clamp(1.1rem, 3.8vw, 1.5rem)', height: 'clamp(1.1rem, 3.8vw, 1.5rem)', objectFit: 'contain', flex: '0 0 auto' }}
+            />
+          )}
+        </Box>
       </motion.div>
 
       {/* Slot + sticker */}

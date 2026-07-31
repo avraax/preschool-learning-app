@@ -22,6 +22,7 @@ import {
   ToggleButtonGroup,
   Typography,
 } from '@mui/material'
+import { ArrowLeftRight, Mic, PawPrint, TriangleAlert, Volume2 } from 'lucide-react'
 import { TTS_CONFIG } from '../../config/tts-config'
 import { authorizedFetch } from '../../services/authorizedFetch'
 import {
@@ -270,8 +271,12 @@ const VoiceLab: React.FC = () => {
       }}
     >
       <Container maxWidth="lg" sx={{ py: 3, fontFamily: FONT }}>
-        <Typography variant="h4" sx={{ fontFamily: FONT, fontWeight: 700, mb: 0.5 }}>
-          🎙️ VoiceLab (Azure)
+        <Typography
+          variant="h4"
+          sx={{ fontFamily: FONT, fontWeight: 700, mb: 0.5, display: 'flex', alignItems: 'center', gap: 1 }}
+        >
+          <Mic size={28} aria-hidden />
+          VoiceLab (Azure)
         </Typography>
         <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
           Skjult værktøj til at sammenligne Azure-stemmer og finjustere udtale-leksikonet. Vælg en
@@ -288,8 +293,20 @@ const VoiceLab: React.FC = () => {
         />
 
         {errorMsg && (
-          <Box sx={{ mb: 2, p: 1.5, borderRadius: 2, bgcolor: 'error.light', color: 'error.contrastText' }}>
-            ⚠️ {errorMsg}
+          <Box
+            sx={{
+              mb: 2,
+              p: 1.5,
+              borderRadius: 2,
+              bgcolor: 'error.light',
+              color: 'error.contrastText',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
+            }}
+          >
+            <TriangleAlert size={18} aria-hidden />
+            {errorMsg}
           </Box>
         )}
 
@@ -393,7 +410,7 @@ const VoiceLab: React.FC = () => {
                             color: 'text.secondary',
                           }}
                         >
-                          {refBusy ? <CircularProgress size={16} /> : '↔'}
+                          {refBusy ? <CircularProgress size={16} /> : <ArrowLeftRight size={16} />}
                         </Button>
                       </Box>
                     )
@@ -402,16 +419,26 @@ const VoiceLab: React.FC = () => {
               </Box>
             ))}
 
-            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-              ↔ = afspil samme tekst med <strong>{CURRENT_VOICE.name}</strong> (lead) til A/B-sammenligning.
+            <Typography
+              variant="caption"
+              sx={{ color: 'text.secondary', display: 'flex', alignItems: 'center', gap: 0.5, flexWrap: 'wrap' }}
+            >
+              <ArrowLeftRight size={13} aria-hidden />
+              <span>
+                = afspil samme tekst med <strong>{CURRENT_VOICE.name}</strong> (lead) til A/B-sammenligning.
+              </span>
             </Typography>
           </Box>
         </Box>
 
         {/* ---- Mascot tap-sounds: audition candidates, pick one per mascot ---- */}
         <Divider sx={{ my: 3 }} />
-        <Typography variant="h6" sx={{ fontFamily: FONT, mb: 0.5 }}>
-          🐾 Maskot-lyde
+        <Typography
+          variant="h6"
+          sx={{ fontFamily: FONT, mb: 0.5, display: 'flex', alignItems: 'center', gap: 1 }}
+        >
+          <PawPrint size={20} aria-hidden />
+          Maskot-lyde
         </Typography>
         <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
           Lyden maskotten siger når man trykker på den (spawner et tema-pust). Hør forslagene og
@@ -422,7 +449,7 @@ const VoiceLab: React.FC = () => {
           {MASCOT_SOUNDS.map((sound) => (
             <Box key={sound.id} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2, p: 1.5 }}>
               <Typography sx={{ fontFamily: FONT, fontWeight: 700, mb: 1 }}>
-                {sound.emoji} {sound.label}{' '}
+                {sound.label}{' '}
                 <Typography component="span" sx={{ fontFamily: FONT, fontWeight: 400, fontSize: '0.8rem', color: 'text.secondary' }}>
                   — spawner {sound.burst} · {sound.voiceName.replace('da-DK-', '').replace('Neural', '')} · tone {sound.pitch}
                 </Typography>
@@ -437,7 +464,7 @@ const VoiceLab: React.FC = () => {
                       variant="outlined"
                       sx={{ fontFamily: FONT, textTransform: 'none', minHeight: 44, px: 1.5, gap: 0.5, borderRadius: 2 }}
                     >
-                      {busyKey === key ? <CircularProgress size={16} /> : '🔊'} {text}
+                      {busyKey === key ? <CircularProgress size={16} /> : <Volume2 size={16} />} {text}
                     </Button>
                   )
                 })}
@@ -448,8 +475,12 @@ const VoiceLab: React.FC = () => {
 
         {/* ---- Real SFX (CC-BY) — audition the candidate sound files per mascot ---- */}
         <Divider sx={{ my: 3 }} />
-        <Typography variant="h6" sx={{ fontFamily: FONT, mb: 0.5 }}>
-          🔊 Rigtige lyde (SFX)
+        <Typography
+          variant="h6"
+          sx={{ fontFamily: FONT, mb: 0.5, display: 'flex', alignItems: 'center', gap: 1 }}
+        >
+          <Volume2 size={20} aria-hidden />
+          Rigtige lyde (SFX)
         </Typography>
         <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
           Rigtige lydeffekter (CC-BY, Google Sound Library). Hør forslagene og vælg din favorit (eller
@@ -461,7 +492,7 @@ const VoiceLab: React.FC = () => {
           {MASCOT_SFX.map((m) => (
             <Box key={m.id} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2, p: 1.5 }}>
               <Typography sx={{ fontFamily: FONT, fontWeight: 700, mb: 1 }}>
-                {m.emoji} {m.label}{' '}
+                {m.label}{' '}
                 <Typography component="span" sx={{ fontFamily: FONT, fontWeight: 400, fontSize: '0.8rem', color: 'text.secondary' }}>
                   — spawner {m.burst}
                 </Typography>
@@ -476,7 +507,7 @@ const VoiceLab: React.FC = () => {
                       variant="outlined"
                       sx={{ fontFamily: FONT, textTransform: 'none', minHeight: 44, px: 1.5, gap: 0.5, borderRadius: 2 }}
                     >
-                      {busyKey === key ? <CircularProgress size={16} /> : '🔊'} {f.label}
+                      {busyKey === key ? <CircularProgress size={16} /> : <Volume2 size={16} />} {f.label}
                     </Button>
                   )
                 })}

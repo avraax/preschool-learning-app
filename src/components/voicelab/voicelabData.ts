@@ -77,7 +77,6 @@ export const OVERRIDE_VOICES: VoiceEntry[] = VOICE_TIERS.flatMap((t) => t.voices
 export interface MascotSound {
   id: string
   label: string
-  emoji: string
   /** What the tap spawns — so the chosen sound can match it. */
   burst: string
   voiceName: string
@@ -92,22 +91,22 @@ export interface MascotSound {
 
 export const MASCOT_SOUNDS: MascotSound[] = [
   {
-    id: 'octopus', label: 'Blæksprutte', emoji: '🐙', burst: 'bobler',
+    id: 'octopus', label: 'Blæksprutte', burst: 'bobler',
     voiceName: 'da-DK-ChristelNeural', lang: 'da-DK', pitch: '+35%', rate: 1.05,
     candidates: ['Blub blub blub!', 'Svup!', 'Plask!', 'Bobbib bobbib!', 'Hihi, det kilder!', 'Boblebob!', 'Skvulp!', 'Pluf!', 'Blup blup!'],
   },
   {
-    id: 'astronaut', label: 'Astronaut', emoji: '🚀', burst: 'stjerner',
+    id: 'astronaut', label: 'Astronaut', burst: 'stjerner',
     voiceName: 'da-DK-ChristelNeural', lang: 'da-DK', pitch: '+20%', rate: 1.0,
     candidates: ['Stjernedrys!', 'Blinke-blink!', 'Op i rummet!', 'Bib-bib-boop!', 'Måne-hop!', 'Raket-start!', 'Stjerneregn!', 'Tjuhej, stjerner!'],
   },
   {
-    id: 'bear', label: 'Bjørn (Regnbue)', emoji: '🧸', burst: 'stjerner/gnister',
+    id: 'bear', label: 'Bjørn (Regnbue)', burst: 'stjerner/gnister',
     voiceName: 'da-DK-ChristelNeural', lang: 'da-DK', pitch: '+25%', rate: 1.05,
     candidates: ['Knus!', 'Pyt-pyt, stjerner!', 'Krammebjørn!', 'Hokus pokus!', 'Glimmer-glimt!', 'Trylle-trylle!', 'Stjernekram!', 'Putte-bjørn!'],
   },
   {
-    id: 'dino', label: 'Dinosaur', emoji: '🦖', burst: 'blade',
+    id: 'dino', label: 'Dinosaur', burst: 'blade',
     voiceName: 'da-DK-ChristelNeural', lang: 'da-DK', pitch: '+30%', rate: 1.05,
     candidates: ['Hop hop!', 'Nam-nam, blade!', 'Brøl!', 'Trip-trap!', 'Dino-dans!', 'Rumle-rumle!', 'Blade-fest!'],
   },
@@ -126,7 +125,6 @@ export interface MascotSfxFile {
 export interface MascotSfx {
   id: string
   label: string
-  emoji: string
   burst: string
   files: MascotSfxFile[]
 }
@@ -138,7 +136,7 @@ const sfx = (id: string, n: string, label: string): MascotSfxFile => ({
 
 export const MASCOT_SFX: MascotSfx[] = [
   {
-    id: 'octopus', label: 'Blæksprutte', emoji: '🐙', burst: 'bobler',
+    id: 'octopus', label: 'Blæksprutte', burst: 'bobler',
     files: [
       sfx('octopus', '01-pop', 'Pop'),
       sfx('octopus', '02-suction-pop', 'Suge-pop'),
@@ -153,7 +151,7 @@ export const MASCOT_SFX: MascotSfx[] = [
     ],
   },
   {
-    id: 'astronaut', label: 'Astronaut', emoji: '🚀', burst: 'stjerner',
+    id: 'astronaut', label: 'Astronaut', burst: 'stjerner',
     files: [
       sfx('astronaut', '01-ufo-zip', 'UFO-zip'),
       sfx('astronaut', '02-slide-up', 'Fløjte op'),
@@ -168,7 +166,7 @@ export const MASCOT_SFX: MascotSfx[] = [
     ],
   },
   {
-    id: 'dino', label: 'Dinosaur', emoji: '🦖', burst: 'blade',
+    id: 'dino', label: 'Dinosaur', burst: 'blade',
     files: [
       sfx('dino', '01-boing', 'Boing'),
       sfx('dino', '02-woodblock', 'Træblok'),
@@ -183,7 +181,7 @@ export const MASCOT_SFX: MascotSfx[] = [
     ],
   },
   {
-    id: 'bear', label: 'Bjørn (Regnbue)', emoji: '🧸', burst: 'stjerner/gnister',
+    id: 'bear', label: 'Bjørn (Regnbue)', burst: 'stjerner/gnister',
     files: [
       sfx('bear', '01-pop', 'Pop'),
       sfx('bear', '02-boing', 'Boing'),

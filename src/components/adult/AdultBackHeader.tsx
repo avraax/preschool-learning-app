@@ -7,14 +7,22 @@ import { ArrowLeft } from 'lucide-react'
 // back — Escape isn't available on iPad/iPhone. Keeps the adult area's look consistent.
 interface AdultBackHeaderProps {
   title: string
+  /** A lucide icon for the panel, sitting between the back arrow and the title. These titles used
+   *  to carry a leading emoji (de-emoji PRD-01 W1) — adult tools take real icons, not glyphs. */
+  icon?: React.ReactNode
   onBack: () => void
 }
 
-const AdultBackHeader: React.FC<AdultBackHeaderProps> = ({ title, onBack }) => (
+const AdultBackHeader: React.FC<AdultBackHeaderProps> = ({ title, icon, onBack }) => (
   <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1, fontWeight: 700, py: 1.25, pr: 2 }}>
     <IconButton onClick={onBack} aria-label="Tilbage" edge="start" size="small" sx={{ flex: '0 0 auto' }}>
       <ArrowLeft size={22} />
     </IconButton>
+    {icon && (
+      <Box component="span" sx={{ flex: '0 0 auto', display: 'flex', color: 'text.secondary' }}>
+        {icon}
+      </Box>
+    )}
     <Box component="span" sx={{ flex: 1, minWidth: 0, fontSize: '1.15rem' }}>{title}</Box>
   </DialogTitle>
 )

@@ -1,8 +1,8 @@
 import type { ThemeTokens } from './tokens/types'
-import { kidThemeTokens } from './tokens/kidTheme.tokens'
-import { oceanThemeTokens } from './tokens/ocean.tokens'
-import { spaceThemeTokens } from './tokens/space.tokens'
-import { dinoThemeTokens } from './tokens/dino.tokens'
+import { kidThemeTokens } from './tokens/kidTheme.tokens.ts'
+import { oceanThemeTokens } from './tokens/ocean.tokens.ts'
+import { spaceThemeTokens } from './tokens/space.tokens.ts'
+import { dinoThemeTokens } from './tokens/dino.tokens.ts'
 
 // Registry of all selectable skins. Order = order shown in the front-page selector.
 // To add a theme: author a new `*.tokens.ts`, import it, and append it here.
@@ -21,14 +21,15 @@ export const getThemeTokens = (id: string | null | undefined): ThemeTokens =>
   themes.find((t) => t.id === id) ?? kidThemeTokens
 
 // Lightweight metadata for the selector (no need to ship full token objects to the UI).
+// The picture comes from the skin's baked `selectorThumb` (loaded lazily via `loadSceneAssets`),
+// never a glyph — de-emoji PRD-01 W4 deleted the `selectorEmoji` fallback. `themes.test.ts`
+// asserts every registered skin ships that thumbnail, so the fallback can't be needed.
 export interface ThemeOption {
   id: string
   name: string
-  emoji: string
 }
 
 export const themeOptions: ThemeOption[] = themes.map((t) => ({
   id: t.id,
   name: t.name,
-  emoji: t.selectorEmoji,
 }))

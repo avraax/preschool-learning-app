@@ -25,6 +25,7 @@ import {
   type BugReportPayload,
   type SubmitResult,
 } from '../../services/bugReporter'
+import { Bug, CircleCheck, TriangleAlert } from 'lucide-react'
 import AdultBackHeader from './AdultBackHeader'
 
 type Phase = 'compose' | 'sending' | 'success' | 'error'
@@ -85,7 +86,7 @@ const BugReportDialog: React.FC<BugReportDialogProps> = ({ open, screenshot, onC
     <Dialog open={open} onClose={phase === 'sending' ? undefined : onClose} maxWidth="xs" fullWidth>
       {phase === 'compose' && (
         <>
-          <AdultBackHeader title="🐞 Rapportér et problem" onBack={onClose} />
+          <AdultBackHeader title="Rapportér et problem" icon={<Bug size={20} aria-hidden />} onBack={onClose} />
           <DialogContent>
             <Typography sx={{ fontSize: '0.85rem', color: 'text.secondary', mb: 1.5 }}>
               Rapporten indeholder automatisk skærmbillede, seneste hændelser og teknisk info.
@@ -135,7 +136,14 @@ const BugReportDialog: React.FC<BugReportDialogProps> = ({ open, screenshot, onC
       {phase === 'success' && result && (
         <>
           <DialogContent sx={{ textAlign: 'center', py: 3 }}>
-            <Typography sx={{ fontWeight: 700, mb: 1 }}>Tak! Rapporten er sendt ✅</Typography>
+            <Typography
+              sx={{ fontWeight: 700, mb: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.75 }}
+            >
+              <Box component="span" sx={{ display: 'flex', color: 'success.main' }}>
+                <CircleCheck size={20} aria-hidden />
+              </Box>
+              Tak! Rapporten er sendt
+            </Typography>
             <Typography
               sx={{ fontSize: '2.6rem', fontWeight: 800, letterSpacing: '0.4rem', my: 1.5 }}
             >
@@ -157,7 +165,14 @@ const BugReportDialog: React.FC<BugReportDialogProps> = ({ open, screenshot, onC
       {phase === 'error' && (
         <>
           <DialogContent sx={{ textAlign: 'center', py: 3 }}>
-            <Typography sx={{ fontWeight: 700, mb: 1 }}>Rapporten kunne ikke sendes 😕</Typography>
+            <Typography
+              sx={{ fontWeight: 700, mb: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.75 }}
+            >
+              <Box component="span" sx={{ display: 'flex', color: 'warning.main' }}>
+                <TriangleAlert size={20} aria-hidden />
+              </Box>
+              Rapporten kunne ikke sendes
+            </Typography>
             <Typography sx={{ fontSize: '0.9rem', color: 'text.secondary' }}>
               Tjek internetforbindelsen og prøv igen — eller gem rapporten som en fil, og send den senere.
             </Typography>

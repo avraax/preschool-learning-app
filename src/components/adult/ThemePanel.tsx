@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { Box, Dialog, DialogContent, Typography } from '@mui/material'
 import { useTheme, alpha } from '@mui/material/styles'
 import { motion } from 'framer-motion'
+import { Palette } from 'lucide-react'
 import AdultBackHeader from './AdultBackHeader'
 import { useThemeSwitch } from '../../theme/ThemeProvider'
 import { loadSceneAssets } from '../../theme/sceneAssets'
@@ -20,7 +21,8 @@ const ThemePanel: React.FC<ThemePanelProps> = ({ open, onClose }) => {
   const theme = useTheme()
   const { themeId, setThemeId, availableThemes } = useThemeSwitch()
   // Lazily collect each world's scene thumbnail (tiny URL strings; bytes load only when the
-  // <img> renders). Themes without a world keep their emoji.
+  // <img> renders). Every registered skin ships one (asserted by `themes.test.ts`), so the
+  // pre-load state is a blank tinted disc — never a flat emoji (de-emoji PRD-01 D5).
   const [thumbs, setThumbs] = useState<Record<string, string>>({})
 
   useEffect(() => {
@@ -40,7 +42,7 @@ const ThemePanel: React.FC<ThemePanelProps> = ({ open, onClose }) => {
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
-      <AdultBackHeader title="Tema 🎨" onBack={onClose} />
+      <AdultBackHeader title="Tema" icon={<Palette size={20} aria-hidden />} onBack={onClose} />
       <DialogContent>
         <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
           Vælg appens udseende. Ændringen sker med det samme.
@@ -100,19 +102,15 @@ const ThemePanel: React.FC<ThemePanelProps> = ({ open, onClose }) => {
                     boxShadow: isActive
                       ? `0 0 0 3px ${alpha(theme.palette.primary.main, 0.22)}`
                       : '0 1px 5px rgba(0,0,0,0.12)',
-                    fontSize: '2rem',
-                    lineHeight: 1,
                   }}
                 >
-                  {thumbs[t.id] ? (
+                  {thumbs[t.id] && (
                     <Box
                       component="img"
                       src={thumbs[t.id]}
                       alt=""
                       sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     />
-                  ) : (
-                    <Box component="span">{t.emoji}</Box>
                   )}
                 </Box>
                 <Box
