@@ -124,6 +124,16 @@ table, and our five (`childProfile`, `profileProgress`, `familyPin`, `pinAttempt
   or a new session — the mandatory PIN nag hangs off that answer); `persist()` throttles timestamp-only
   writes; and `publish()` drops a notify whose snapshot is materially unchanged, since `AuthProvider`
   sits above `<App />` and every publish re-renders the whole app.
+- **Logging out is a top-level item in the adult menu, and the lock phase is UNREACHABLE.** The owner
+  chose a plain "Log ud" over a "Lås appen" action, so `authStore.lock()` has no caller and
+  `phase: 'locked'` — LockScreen's "Velkommen tilbage" branch, "Brug kode i stedet", and
+  `pinVerifierFor('unlockSession')`, the one row that depends on connectivity — is dead by decision, not
+  by accident. The machinery stays for a future idle auto-lock (`authGatePolicy` reserves
+  `idleSinceMs`); do not read that branch as live. "Log ud" routes through
+  `requirePin('manageCredentials')`, i.e. SERVER-verified per §7.2 — which also guarantees the adult is
+  online at the moment they sign out, which is exactly when signing back in is possible. It confirms
+  first (naming the account) because the consequence lands on the CHILD, and it pushes progress before
+  clearing the token. "Log ud alle steder" and account deletion stay in "Login og sikkerhed".
 - **Auth overlay stacking lives in `src/components/auth/authOverlayZ.ts`.** The lock screen and the
   profile picker are hand-rolled `fixed` boxes at ~10 000; a MUI `<Dialog>` defaults to **1300**. So a
   dialog opened FROM one of them mounts *underneath* it — live, interactive and invisible, which is a

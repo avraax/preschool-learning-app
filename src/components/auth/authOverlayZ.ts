@@ -8,7 +8,10 @@
 // the lock action:
 //
 //   * "Brug kode i stedet" on the lock screen (9999) opened PinDialog at 1300 — invisible. This is part
-//     of why the whole `locked` phase could sit unnoticed as dead code.
+//     of why the whole `locked` phase could sit unnoticed as dead code. (That phase is unreachable again
+//     by decision — the adult menu offers a plain logout instead — so PinDialog's value here is now
+//     correct-but-unexercised ordering. It is still the right value, and the next surface that raises a
+//     PIN over a full-screen box will need it.)
 //   * "Lav en ny profil" in the profile picker (10 000) opened CreateProfileDialog at 1300 — invisible,
 //     on a path reachable by any household with two children. Measured both ways with a hit-test at the
 //     dialog's centre: `elementFromPoint` returned the PICKER before the fix and the dialog after it.

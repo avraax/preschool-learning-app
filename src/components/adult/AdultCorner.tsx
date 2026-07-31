@@ -33,6 +33,7 @@ import {
   Cloud,
   KeyRound,
   Lock,
+  LogOut,
   Mic,
   Music,
   Palette,
@@ -50,6 +51,7 @@ import { useProfiles } from '../../hooks/useProfiles'
 import { captureScreenshot } from '../../services/screenshotService'
 import { useAuthContext } from '../../contexts/AuthContext'
 import { authStore } from '../../services/authStore'
+import { progressSync } from '../../services/progressSync'
 import { profileStore } from '../../services/profileStore'
 
 // Adult-only dialogs are lazy-loaded (PRD-07): they pull in VoiceLab data (~282 lines), the bug
@@ -70,7 +72,7 @@ const ICON = 20
 // (de-emoji PRD-01 W1: these rows used to lead with an emoji sitting inline in the text).
 const iconSlot = { minWidth: 32, color: 'inherit' } as const
 
-type AdultView = null | 'menu' | 'report' | 'voice' | 'difficulty' | 'theme' | 'login' | 'profiles' | 'sync' | 'resetConfirm' | 'resetDone'
+type AdultView = null | 'menu' | 'report' | 'voice' | 'difficulty' | 'theme' | 'login' | 'profiles' | 'sync' | 'resetConfirm' | 'resetDone' | 'logoutConfirm'
 
 interface AdultCornerProps {
   /** A newer build is live → show the hold-gated "Opdater app" item in the menu (PRD-09 P4). */
@@ -308,21 +310,20 @@ const AdultCorner: React.FC<AdultCornerProps> = ({ updateAvailable = false, onAp
               <ListItemIcon sx={iconSlot}><KeyRound size={ICON} aria-hidden /></ListItemIcon>
               <ListItemText primary="Login og sikkerhed" />
             </ListItemButton>
-            {/* THE ONLY CALLER of authStore.lock(). Without it the whole `locked` phase was dead code:
-                authGatePolicy could never reach it, so the lock screen's "Velkommen tilbage" branch,
-                its "Brug kode i stedet" button and the one connectivity-dependent row in
-                pinVerifierFor ('unlockSession') were all unreachable. Not PIN-gated on the way IN —
-                locking is the safe direction, and opening this menu already cost a PIN. */}
+            {/* Logging out was only reachable two levels down, inside "Login og sikkerhed", and nothing
+                out here even revealed which account the device was signed in as. It stays a CREDENTIAL
+                action either way: the confirmation below routes through requirePin('manageCredentials'),
+                which is server-verified and never accepts the menu's earlier local unlock. */}
             <ListItemButton
-              aria-label="Lås appen"
-              onClick={() => { closeAll(); authStore.lock() }}
+              aria-label="Log ud"
+              onClick={() => setView('logoutConfirm')}
               sx={{ borderRadius: 1, minHeight: 48 }}
             >
-              <ListItemIcon sx={iconSlot}><Lock size={ICON} aria-hidden /></ListItemIcon>
-              <ListItemText
-                primary="Lås appen"
-                secondary="Der skal en voksen til at låse op igen."
-              />
+              <ListItemIcon sx={iconSlot}><LogOut size={ICON} aria-hidden /></ListItemIcon>
+              {/* Single-line, like every other row — including the more destructive "Nulstil al
+                  fremgang". The consequence belongs in the confirmation, not in a second line that
+                  makes this row the one the eye lands on. */}
+              <ListItemText primary="Log ud" />
             </ListItemButton>
             <ListItemButton
               aria-label="Nulstil al fremgang"
@@ -334,15 +335,14 @@ const AdultCorner: React.FC<AdultCornerProps> = ({ updateAvailable = false, onAp
             </ListItemButton>
           </List>
           {/* Which account is this device signed in as. It used to appear ONLY inside "Login og
-              sikkerhed", so an adult had no way to see the account — or to know that is where logging
-              out lives — without digging two levels down. The sign-out itself deliberately STAYS in
-              that panel: it is a credential action and belongs behind its own server-verified PIN. */}
+              sikkerhed", so an adult had no way to see the account without digging two levels down —
+              and "Log ud" above it is meaningless if you cannot see WHAT you are logging out of. */}
           {auth?.user?.email && (
             <Typography
               variant="caption"
               sx={{ display: 'block', textAlign: 'center', color: 'text.secondary', mt: 1 }}
             >
-              Logget ind som {auth.user.email} · log ud under &quot;Login og sikkerhed&quot;
+              Logget ind som {auth.user.email}
             </Typography>
           )}
           <Typography
@@ -384,6 +384,51 @@ const AdultCorner: React.FC<AdultCornerProps> = ({ updateAvailable = false, onAp
       {/* Second confirmation. The PIN was already proven to OPEN the menu, so this is the "are you
           sure" — but it is still routed through requirePin('resetProgress'), which re-asks if the
           ~5-minute unlocked window has lapsed. */}
+      {/* Logging out. Worth a confirmation even though a PIN follows: the PIN pad on its own gives no
+          reason, and on a family device the consequence lands on the CHILD, not on the adult tapping. */}
+      <Dialog open={view === 'logoutConfirm'} onClose={() => setView('menu')} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: 1 }}>
+          <LogOut size={ICON} aria-hidden />
+          Log ud?
+        </DialogTitle>
+        <DialogContent>
+          {/* du-form and two sentences, like every other adult surface. It NAMES the account (a shared
+              iPad can have had more than one adult on it), states the consequence for the child, and
+              answers the question a parent actually has — "do we lose the stickers?" — in the same
+              breath. */}
+          <Typography>
+            {auth?.user?.email
+              ? `Du logger ud af ${auth.user.email} på denne enhed. `
+              : 'Du logger ud på denne enhed. '}
+            Der kan ikke spilles, før en voksen logger ind igen — al fremgang er gemt.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setView('menu')} aria-label="Annullér">Annullér</Button>
+          <Button
+            variant="contained"
+            color="error"
+            aria-label="Log ud"
+            onClick={async () => {
+              // SERVER-verified: signing out is a credential action, so per §7.2's table it never
+              // accepts the local unlock that opened this menu. It also means the adult is online at
+              // this moment — which is exactly when signing back in is possible.
+              if (auth) {
+                const ok = await auth.requirePin('manageCredentials')
+                if (!ok) return
+              }
+              closeAll()
+              // Last chance to get the book onto the server: the push needs the bearer token that
+              // signOut() is about to clear.
+              await progressSync.push('manual')
+              await authStore.signOut()
+            }}
+          >
+            Log ud
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       <Dialog open={view === 'resetConfirm'} onClose={() => setView('menu')} maxWidth="xs" fullWidth>
         <DialogTitle sx={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: 1 }}>
           <RotateCcw size={ICON} aria-hidden />

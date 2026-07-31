@@ -283,7 +283,18 @@ class AuthStore {
     void this.getAccessToken()
   }
 
-  /** An adult chose to lock, or a profile switch needs re-proving. Keeps the session. */
+  /**
+   * Suspend play without ending the session — the adult proves it's them and carries on.
+   *
+   * NO CALLER TODAY, and that is a product decision, not an oversight: the adult menu offers a plain
+   * "Log ud" instead (the owner's call), so `phase: 'locked'` — and with it LockScreen's "Velkommen
+   * tilbage" branch, its "Brug kode i stedet" button and `pinVerifierFor('unlockSession')` — is
+   * currently unreachable. Kept because it is the mechanism a future idle auto-lock would use
+   * (`authGatePolicy` already reserves `idleSinceMs` for it), and because a lock is NOT a logout: it
+   * keeps the session, so it works offline where signing back in would not.
+   *
+   * Don't read the lock screen's locked branch as live plumbing. See `.claude/rules/auth.md`.
+   */
   lock(): void {
     if (!this.token) return
     this.lockedByAdult = true
