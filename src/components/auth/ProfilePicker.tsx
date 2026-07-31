@@ -15,6 +15,7 @@ import { alpha, useTheme } from '@mui/material/styles'
 import { motion } from 'framer-motion'
 import { profileStore, type ChildProfile } from '../../services/profileStore'
 import { PHONE_ANY } from '../../theme/phoneMedia'
+import { AUTH_Z } from './authOverlayZ'
 
 export interface ProfilePickerProps {
   profiles: ChildProfile[]
@@ -52,7 +53,7 @@ const ProfilePicker: React.FC<ProfilePickerProps> = ({
         // on sound" — and since this surface is opaque and full-screen, the audio modal is simply
         // hidden behind it and reappears once a child is chosen. One blocking overlay at a time, which
         // is the same rule the auth gate follows.
-        zIndex: 10000,
+        zIndex: AUTH_Z.profilePicker,
         background: theme.decor.notFoundBackground,
         display: 'flex',
         alignItems: 'center',

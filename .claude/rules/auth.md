@@ -96,6 +96,44 @@ table, and our five (`childProfile`, `profileProgress`, `familyPin`, `pinAttempt
   `swCleanup`). Sweeping the roster + verifier is not cosmetic: without it a device keeps offering
   stale child profiles and keeps honouring a PIN the server no longer has. Nothing is ever
   pre-added — an account with no children gets the mandatory create dialog.
+- **The OAuth callback answers with a 302, never a page that scripts itself.** `vercel.json`'s `/(.*)`
+  header rule applies `script-src 'self'` to EVERY path, API routes included (`curl -I` the deployed
+  callback to see it). The callback used to hand back via an inline
+  `<script>location.replace('/#bl_auth=1')</script>`, and W11's CSP shipped *after* it — so the automatic
+  return silently died and the adult had to notice the link and tap it. No error, no log, and only
+  reachable through a real Google sign-in. A 302 from inside a `createAuthEndpoint` handler passes
+  through better-auth's router untouched (verified with curl). Guarded by `lib/server-html-csp.test.ts`:
+  no server-generated HTML may contain a `<script>` tag.
+- **Sign-out is a SUBSCRIPTION, not a call at the buttons.** `authStore.clearLocal()` fires
+  `signOutListeners`, and `profileStore` registers `signOut()` there at module scope. That covers the
+  path no component can intercept — a 401 on a background validate — and it is why the child gets
+  detached and the cached roster dropped at all. Before it, signing out left `progressStore` attached to
+  the previous adult's child and the roster on disk, so the next adult briefly played as that child.
+  `authStore` cannot call `profileStore` (the import points the other way); keep it a subscription.
+  `AuthGate` deliberately does NOT detach when the gate blocks — `<App />` is unmounted there, so no game
+  exists to write anything.
+- **"No children" and "we haven't asked yet" are different states.** `AccountState.rosterSettled` is true
+  only once a roster refresh has ANSWERED (either way), and `contexts/profileGatePolicy.ts` — pure, like
+  `authGatePolicy` — is what decides between nothing / the picker / the mandatory create dialog. Reading
+  `profiles.length === 0` directly raised the UN-DISMISSIBLE create dialog for the length of every cold
+  boot's `/api/profiles` round trip, and since `storageReset` wipes the cached roster once per device,
+  that was the accounts release's first impression on any account whose children were made elsewhere.
+- **The resume path is throttled, and publishing is change-gated.** `visibilitychange:visible` fires on
+  every iPad app switch. `validate()` dedupes in-flight callers and skips a verdict fresher than 60s;
+  `refreshStatus()` is throttled to 5 min and takes `force` (pass it after a PIN set, a passkey change,
+  or a new session — the mandatory PIN nag hangs off that answer); `persist()` throttles timestamp-only
+  writes; and `publish()` drops a notify whose snapshot is materially unchanged, since `AuthProvider`
+  sits above `<App />` and every publish re-renders the whole app.
+- **Auth overlay stacking lives in `src/components/auth/authOverlayZ.ts`.** The lock screen and the
+  profile picker are hand-rolled `fixed` boxes at ~10 000; a MUI `<Dialog>` defaults to **1300**. So a
+  dialog opened FROM one of them mounts *underneath* it — live, interactive and invisible, which is a
+  dead button with no error anywhere. That is why the lock screen's "Brug kode i stedet" never worked and
+  why the picker's "Tilføj et barn" was hidden (both measured with `elementFromPoint` at the surface's
+  centre, before and after). Never write a z-index literal in that directory.
+- **The DEV bypass attaches a stand-in child** (`DEV_PROFILE`, id `dev-local`, in `profileStore`).
+  `?nogate=1` has no account and never will, so without it `progressStore` stays inert — `?rewards=n`
+  awaits `whenAttached()` forever and the mandatory create dialog covers every screenshot recipe. It is
+  never written to the roster cache, and `progressSync` already refuses to sync under the bypass.
 - **`set-auth-token` is the SIGNED cookie value** (`<rawToken>.<hmac>`), NOT `session.token`.
   `internalAdapter.findSession()` takes the RAW token, so the OAuth claim must split on `.` first —
   looking the signed value up returns null and bounces the adult back to the lock screen *after* a
@@ -147,7 +185,15 @@ read model is derived from it and is **byte-identical to the pre-accounts shape*
 
 ## Verifying
 
-- `npm test` — the pure modules, the merge algebra and the store surgery.
+- `npm test` — the pure modules, the merge algebra, the store surgery, and the auth guards:
+  `authSignOut.test.ts` (detach on both sign-out paths, roster settling, resume throttling),
+  `profileGatePolicy.test.ts`, `authOverlayZ.test.ts`, `lib/server-html-csp.test.ts`. The
+  client-side auth graph is Node-importable — keep the `.ts` extensions on its relative imports and
+  `import.meta.env?.` optional, or the suite stops loading.
+- **A dead auth surface fails no test and throws no error.** Two shipped ones were only found by
+  hit-testing: `document.elementFromPoint(centre of the element)` must return that element, not the
+  overlay above it. Use that, not a screenshot — an obscured dialog simply isn't drawn, so the picture
+  looks fine.
 - **Never verify against the shared Neon DB.** It is the owner's REAL account: test rows land in his
   play-test. Two child profiles and a test PIN reached him that way. Use a scratch account, or wipe
   immediately afterwards (`scripts/auth-dev-session.mjs` creates; deleting the `user` row cascades).

@@ -24,6 +24,7 @@ import { authStore } from '../../services/authStore'
 import { storeLocalVerifier } from '../../services/pinVerifier'
 import { validateNewPin } from '../../config/pinPolicy'
 import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
+import { AUTH_Z } from './authOverlayZ'
 
 type Step = 'current' | 'choose' | 'confirm' | 'saving'
 
@@ -129,6 +130,9 @@ const PinSetupDialog: React.FC<PinSetupDialogProps> = ({
       maxWidth="xs"
       fullWidth
       aria-label={requireCurrent ? 'Skift kode' : 'Lav en voksenkode'}
+      // Same stack as PinDialog — see authOverlayZ. Mandatory setup must outrank anything it can
+      // appear over.
+      sx={{ zIndex: AUTH_Z.pin }}
       slotProps={{
         paper: {
           'data-bl-redact': true,

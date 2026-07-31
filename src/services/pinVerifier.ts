@@ -17,7 +17,7 @@ import {
   isLockedOut,
   registerFailure,
   type LockoutState,
-} from '../config/pinPolicy'
+} from '../config/pinPolicy.ts'
 
 const VERIFIER_KEY = 'bl-pin-verifier'
 const ATTEMPTS_KEY = 'bl-pin-attempts'

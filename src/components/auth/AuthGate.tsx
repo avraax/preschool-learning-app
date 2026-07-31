@@ -29,9 +29,14 @@ const GateBody: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const auth = useAuthContext()
   const blocked = !!auth && gateBlocks(auth.phase)
 
-  // progressStore is INERT until a child is attached (§5.4), and profileStore is the ONLY thing
-  // allowed to attach. Do it the moment the gate opens, and detach when it closes again — playing on
-  // behind a lock screen would write to the previous child's key.
+  // progressStore is INERT until a child is attached (§5.4), and profileStore is the ONLY thing allowed
+  // to attach. Do it the moment the gate opens.
+  //
+  // There is deliberately NO detach here, and the comment that used to claim one was simply wrong.
+  // While the gate blocks, <App /> is not rendered at all, so no game exists to write to the previous
+  // child's key — a detach would buy nothing. The case that DOES need one is a change of identity, and
+  // that is handled where it belongs: `authStore.onSignOut` → `profileStore.signOut()`, which fires on
+  // the adult's own sign-out and on a revoked session alike.
   useEffect(() => {
     if (blocked) return
     profileStore.hydrate(auth?.user?.id ?? null)

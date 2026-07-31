@@ -49,6 +49,7 @@ import { useProgress } from '../../hooks/useProgress'
 import { useProfiles } from '../../hooks/useProfiles'
 import { captureScreenshot } from '../../services/screenshotService'
 import { useAuthContext } from '../../contexts/AuthContext'
+import { authStore } from '../../services/authStore'
 import { profileStore } from '../../services/profileStore'
 
 // Adult-only dialogs are lazy-loaded (PRD-07): they pull in VoiceLab data (~282 lines), the bug
@@ -307,6 +308,22 @@ const AdultCorner: React.FC<AdultCornerProps> = ({ updateAvailable = false, onAp
               <ListItemIcon sx={iconSlot}><KeyRound size={ICON} aria-hidden /></ListItemIcon>
               <ListItemText primary="Login og sikkerhed" />
             </ListItemButton>
+            {/* THE ONLY CALLER of authStore.lock(). Without it the whole `locked` phase was dead code:
+                authGatePolicy could never reach it, so the lock screen's "Velkommen tilbage" branch,
+                its "Brug kode i stedet" button and the one connectivity-dependent row in
+                pinVerifierFor ('unlockSession') were all unreachable. Not PIN-gated on the way IN —
+                locking is the safe direction, and opening this menu already cost a PIN. */}
+            <ListItemButton
+              aria-label="Lås appen"
+              onClick={() => { closeAll(); authStore.lock() }}
+              sx={{ borderRadius: 1, minHeight: 48 }}
+            >
+              <ListItemIcon sx={iconSlot}><Lock size={ICON} aria-hidden /></ListItemIcon>
+              <ListItemText
+                primary="Lås appen"
+                secondary="Der skal en voksen til at låse op igen."
+              />
+            </ListItemButton>
             <ListItemButton
               aria-label="Nulstil al fremgang"
               onClick={() => setView('resetConfirm')}
@@ -316,6 +333,18 @@ const AdultCorner: React.FC<AdultCornerProps> = ({ updateAvailable = false, onAp
               <ListItemText primary="Nulstil al fremgang" />
             </ListItemButton>
           </List>
+          {/* Which account is this device signed in as. It used to appear ONLY inside "Login og
+              sikkerhed", so an adult had no way to see the account — or to know that is where logging
+              out lives — without digging two levels down. The sign-out itself deliberately STAYS in
+              that panel: it is a credential action and belongs behind its own server-verified PIN. */}
+          {auth?.user?.email && (
+            <Typography
+              variant="caption"
+              sx={{ display: 'block', textAlign: 'center', color: 'text.secondary', mt: 1 }}
+            >
+              Logget ind som {auth.user.email} · log ud under &quot;Login og sikkerhed&quot;
+            </Typography>
+          )}
           <Typography
             variant="caption"
             sx={{ display: 'block', textAlign: 'center', color: 'text.secondary', mt: 1, mb: 1 }}

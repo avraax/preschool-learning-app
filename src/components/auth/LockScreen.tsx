@@ -28,6 +28,7 @@ import {
   type PasskeyRequestOptions,
 } from '../../services/authSignIn'
 import { PHONE_ANY } from '../../theme/phoneMedia'
+import { AUTH_Z } from './authOverlayZ'
 
 /**
  * A stale WebAuthn challenge is a clean, retryable error — so we PRE-FETCH the options on mount and
@@ -152,7 +153,7 @@ const LockScreen: React.FC = () => {
         sx={{
           position: 'fixed',
           inset: 0,
-          zIndex: 9999,
+          zIndex: AUTH_Z.lockScreen,
           // The gate is the ONLY thing on screen (App — and therefore PersistentWorld — has not
           // mounted), so this paints the whole first-run surface. Use the skin's own page gradient
           // rather than a scrim over browser white, which read as a flat grey void.

@@ -14,6 +14,7 @@
 import React, { useEffect, useState } from 'react'
 import { useProfiles } from '../../hooks/useProfiles'
 import { useAuthContext } from '../../contexts/AuthContext'
+import { profileGateBlocks, profileGateSurface } from '../../contexts/profileGatePolicy'
 import { profileStore } from '../../services/profileStore'
 import CreateProfileDialog from './CreateProfileDialog'
 import ProfilePicker from './ProfilePicker'
@@ -23,13 +24,17 @@ const ProfileGate: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const auth = useAuthContext()
   const [creating, setCreating] = useState(false)
 
-  const needsFirstProfile = account.status !== 'signed-out' && account.profiles.length === 0
-  const needsPicker = account.status === 'choosing' && account.profiles.length > 0
+  // The decision itself is a PURE function in contexts/profileGatePolicy.ts — extracted because the
+  // "no children yet" case was wrong here in a way no test could reach. See that module for why
+  // `rosterSettled` (rather than `profiles.length === 0`) is what may raise a mandatory dialog.
+  const surface = profileGateSurface(account, creating)
+  const needsFirstProfile = surface === 'create' && !creating
+  const needsPicker = surface === 'picker'
 
   // These are onboarding surfaces, so they claim the same "an auth surface is open" flag as the lock
   // screen and the PIN pad: it keeps AdultCorner's hold gesture inert AND stops the audio-permission
   // modal painting over them.
-  const blocking = needsPicker || needsFirstProfile || creating
+  const blocking = profileGateBlocks(surface)
   useEffect(() => {
     if (!blocking) return
     auth?.setAuthUiOpen(true)

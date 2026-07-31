@@ -7,10 +7,10 @@
 // network still knows who the children are and can attach the right book immediately. The server is
 // only consulted to refresh.
 
-import { ACTIVE_PROFILE_KEY } from '../config/progressSchema'
-import { authStore } from './authStore'
-import { progressStore } from './progressStore'
-import { progressSync } from './progressSync'
+import { ACTIVE_PROFILE_KEY } from '../config/progressSchema.ts'
+import { authStore } from './authStore.ts'
+import { progressStore } from './progressStore.ts'
+import { progressSync } from './progressSync.ts'
 
 export interface ChildProfile {
   id: string
@@ -28,12 +28,35 @@ export interface AccountState {
   activeProfileId: string | null
   /** True while the roster is being fetched for the first time. */
   loading: boolean
+  /**
+   * Has a roster refresh finished (either way) on this page load?
+   *
+   * This exists so an EMPTY `profiles` can be told apart from a `profiles` we simply haven't fetched
+   * yet. ProfileGate's mandatory create dialog is gated on it: without that, every cold boot showed the
+   * un-dismissible "lav en profil" dialog for the length of the /api/profiles round trip — and since
+   * `utils/storageReset.ts` deliberately drops the cached roster once per device, THAT is what the
+   * accounts release shows on the first sign-in of an account whose children were created elsewhere.
+   * On a slow connection the adult can act on it and create a duplicate child.
+   *
+   * Deliberately set on FAILURE too: offline with no cached roster really has nothing to play as, and
+   * the create dialog's own "du skal være online" error is the honest answer there.
+   */
+  rosterSettled: boolean
   error: string | null
 }
 
 type Listener = () => void
 
 const ROSTER_KEY = 'bornelaering-profiles'
+
+/**
+ * The stand-in child for the DEV auth bypass — see `hydrate`. Its own localStorage key
+ * (`bornelaering-progress:dev-local`) keeps harness state out of any real child's book.
+ *
+ * `avatarEmoji` is a LETTER, not an emoji: this file is not on the de-emoji allow-list, and a glyph
+ * here would trip `src/config/noEmoji.test.ts` for a surface only a developer ever sees.
+ */
+const DEV_PROFILE: ChildProfile = { id: 'dev-local', name: 'Dev', avatarEmoji: 'D' }
 
 const readPointer = (): string | null => {
   try {
@@ -89,6 +112,7 @@ class ProfileStore {
     profiles: [],
     activeProfileId: null,
     loading: false,
+    rosterSettled: false,
     error: null,
   }
   private listeners = new Set<Listener>()
@@ -120,6 +144,21 @@ class ProfileStore {
     const already = this.hydratedFor === key
     this.hydratedFor = key
 
+    // DEV BYPASS (`?nogate=1` / `?noauth=1`): there is no account, so there is no roster to fetch and
+    // never will be. Without a stand-in child the bypass is not actually usable:
+    //   * progressStore stays INERT, so `?rewards=n` awaits whenAttached() forever and every seeded
+    //     screenshot recipe dies silently (exactly the §10.7 trap, from the other side), and
+    //   * an empty settled roster means ProfileGate raises its UN-DISMISSIBLE create dialog over
+    //     whatever screen was being captured — against a server that would refuse the create anyway.
+    // Attach a fixed local child instead. Deliberately NOT written to the roster cache: a later real
+    // session must not see it, and a stale pointer is already ignored (hydrate only honours a pointer
+    // that appears in the fetched roster).
+    if (!already && authStore.isDevBypass()) {
+      this.publish({ status: 'choosing', accountId, profiles: [DEV_PROFILE], rosterSettled: true })
+      this.selectProfile(DEV_PROFILE.id, accountId)
+      return
+    }
+
     const cached = readRoster()
     const pointer = readPointer()
 
@@ -148,18 +187,22 @@ class ProfileStore {
 
   /** Pull the roster. Never throws — offline just keeps the cached list. */
   async refreshRoster(accountId: string | null = this.state.accountId): Promise<ChildProfile[]> {
-    if (!authStore.sessionToken()) return this.state.profiles
+    // Nothing to fetch: settled by definition, so the gate can stop waiting on us.
+    if (!authStore.sessionToken()) {
+      this.publish({ rosterSettled: true })
+      return this.state.profiles
+    }
     this.publish({ loading: true })
     try {
       const res = await fetch('/api/profiles', { headers: authHeaders() })
       if (!res.ok) {
-        this.publish({ loading: false })
+        this.publish({ loading: false, rosterSettled: true })
         return this.state.profiles
       }
       const { profiles } = (await res.json()) as { profiles?: ChildProfile[] }
       const list = Array.isArray(profiles) ? profiles : []
       writeRoster(list)
-      this.publish({ profiles: list, accountId, loading: false, error: null })
+      this.publish({ profiles: list, accountId, loading: false, rosterSettled: true, error: null })
 
       // If the pointer names a profile that no longer exists (deleted on another device), stop playing
       // as it rather than writing to a dead book.
@@ -173,7 +216,10 @@ class ProfileStore {
       }
       return list
     } catch {
-      this.publish({ loading: false })
+      // Settled on FAILURE too. The gate is waiting on this flag, so leaving it false offline would
+      // hang the onboarding decision forever instead of letting the create dialog say "du skal være
+      // online" — which is the honest answer when there is no cached child either.
+      this.publish({ loading: false, rosterSettled: true })
       return this.state.profiles
     }
   }
@@ -280,6 +326,13 @@ class ProfileStore {
     }
   }
 
+  /**
+   * Wired to `authStore.onSignOut` at the bottom of this module, so it runs on BOTH sign-out paths —
+   * the adult's own, and a 401 telling us the session was revoked from another device.
+   *
+   * `progressStore.detach()` flushes any pending debounced write under the OLD key first, so nothing is
+   * lost and nothing can land in the next child's book.
+   */
   signOut(): void {
     progressStore.detach()
     writePointer(null)
@@ -294,6 +347,8 @@ class ProfileStore {
       accountId: null,
       profiles: [],
       activeProfileId: null,
+      // A new sign-in must WAIT for its own roster rather than inheriting this one's "settled".
+      rosterSettled: false,
       error: null,
     })
   }
@@ -305,6 +360,13 @@ class ProfileStore {
 }
 
 export const profileStore = new ProfileStore()
+
+// THE ONLY reliable place to hang this. A sign-out clears the session inside authStore — including the
+// revocation path, where no component is involved at all — and the child must be detached and the
+// cached roster dropped at that same moment. authStore cannot call us (this module imports it), so the
+// dependency stays one-directional and the wiring is a subscription. AuthGate imports profileStore, so
+// this registration is always in the graph before a sign-out can happen.
+authStore.onSignOut(() => profileStore.signOut())
 
 if (import.meta.env?.DEV && typeof window !== 'undefined') {
   ;(window as unknown as { __profiles?: ProfileStore }).__profiles = profileStore

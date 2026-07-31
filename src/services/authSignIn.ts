@@ -14,7 +14,7 @@
 // are EXACTLY the shape @simplewebauthn/browser accepts, instead of a hand-written near-copy that
 // silently drifts (e.g. `transports: string[]` vs its narrower union).
 import type { PublicKeyCredentialRequestOptionsJSON } from '@simplewebauthn/browser'
-import { authStore, type AccountUser } from './authStore'
+import { authStore, type AccountUser } from './authStore.ts'
 
 export interface SignInResult {
   ok: boolean

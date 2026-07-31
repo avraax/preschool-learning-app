@@ -29,6 +29,7 @@ import {
 } from '../../services/pinVerifier'
 import { attemptsLeft, isLockedOut, lockoutMessage } from '../../config/pinPolicy'
 import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
+import { AUTH_Z } from './authOverlayZ'
 
 // Plain strings — they double as the dialog's aria-label, and the padlock is drawn as a lucide icon
 // beside the title instead of living in the text (de-emoji PRD-01 W1).
@@ -138,6 +139,10 @@ const PinDialog: React.FC = () => {
       maxWidth="xs"
       fullWidth
       aria-label={TITLES[pending.reason]}
+      // A PIN can be demanded from the LOCK SCREEN (`unlockSession`), which is a fixed box at ~10 000
+      // — far above a MUI Dialog's default 1300. Without this, "Brug kode i stedet" mounted a pad that
+      // was live and completely invisible.
+      sx={{ zIndex: AUTH_Z.pin }}
       slotProps={{
         paper: {
           'data-bl-redact': true,

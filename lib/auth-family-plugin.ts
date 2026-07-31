@@ -207,9 +207,32 @@ interface OauthFlowRow {
   claimedAt: Date | null
 }
 
-/** The terminal page. NO secret in this HTML or in the URL it navigates to. */
-function callbackHtml(message: string, ok: boolean): string {
-  const target = ok ? '/#bl_auth=1' : '/'
+/** Where the app resumes. Carries NO secret — only "the flow finished", and in the FRAGMENT. */
+const RETURN_URL = '/#bl_auth=1'
+
+/**
+ * SUCCESS IS A REDIRECT, NOT A PAGE — and that is a fix, not a style choice.
+ *
+ * This used to answer with HTML whose inline `<script>location.replace(…)</script>` performed the
+ * hand-back. W11's CSP (`script-src 'self'`) is applied by vercel.json's `/(.*)` rule to EVERY path
+ * including this one — verified with `curl -I` against the deployed callback — so that inline script
+ * was blocked and the automatic return silently stopped working: the adult had to notice and tap the
+ * link. A 302 needs no script, so it needs no CSP exception.
+ *
+ * Keep it a 302 (not a 303/307): the request is already a GET, and every browser follows it with the
+ * fragment intact.
+ */
+const returnToApp = (): Response =>
+  new Response(null, {
+    status: 302,
+    headers: { location: RETURN_URL, 'cache-control': 'no-store' },
+  })
+
+/**
+ * The FAILURE page. Also script-free for the CSP reason above, so the link is genuinely the only way
+ * onward — it is not decoration behind an automatic redirect.
+ */
+function failureHtml(message: string): string {
   return `<!doctype html><html lang="da"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Børnelæring</title>
@@ -218,12 +241,14 @@ align-items:center;justify-content:center;background:#F8FAFC;color:#1e293b;text-
 main{max-width:22rem}a{display:inline-block;margin-top:1.25rem;padding:.9rem 1.4rem;border-radius:14px;
 background:#6d28d9;color:#fff;text-decoration:none;font-weight:600;min-height:44px}</style></head>
 <body><main><h1 style="font-size:1.25rem">${message}</h1>
-<a href="${target}">Tilbage til Børnelæring</a></main>
-<script>location.replace(${JSON.stringify(target)})</script></body></html>`
+<a href="/">Tilbage til Børnelæring</a></main></body></html>`
 }
 
 const htmlResponse = (body: string, status = 200): Response =>
-  new Response(body, { status, headers: { 'content-type': 'text/html; charset=utf-8' } })
+  new Response(body, {
+    status,
+    headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' },
+  })
 
 export const familyPlugin = (): BetterAuthPlugin => ({
   id: 'family',
@@ -320,8 +345,12 @@ export const familyPlugin = (): BetterAuthPlugin => ({
           where: [{ field: 'userId', value: userId }],
         })
 
+        // ONE read of the attempt row, reused by both the verify below and the clear at the end. It
+        // used to be read twice on the success path, i.e. an extra round trip per PIN change.
+        const lockout = await readLockout(adapter, userId)
+
         if (existing) {
-          const { row, state } = await readLockout(adapter, userId)
+          const { row, state } = lockout
           if (isLockedOut(state, now)) {
             throw new APIError('LOCKED', {
               message: 'For mange forsøg. Prøv igen senere.',
@@ -356,9 +385,12 @@ export const familyPlugin = (): BetterAuthPlugin => ({
             data: { userId, hash, updatedAt },
           })
         }
-        // A successful change clears the attempt counter for the NEW secret.
-        const { row } = await readLockout(adapter, userId)
-        await writeLockout(adapter, userId, row, clearAttempts(), now)
+        // A successful change clears the attempt counter for the NEW secret — but only if there is a
+        // counter to clear. Writing one for a user who has never failed would create the row on every
+        // first-run PIN setup for nothing.
+        if (lockout.row) {
+          await writeLockout(adapter, userId, lockout.row, clearAttempts(), now)
+        }
 
         return ctx.json({ ok: true, pinUpdatedAt: now })
       },
@@ -446,7 +478,17 @@ export const familyPlugin = (): BetterAuthPlugin => ({
           model: 'familyPin',
           where: [{ field: 'userId', value: userId }],
         })
-        const ok = !!stored && isPinShape(ctx.body.pin) && (await verifyPin(ctx.body.pin, stored.hash))
+        // NO PIN, no deletion — but say WHY. The PIN stays mandatory here (this is the most destructive
+        // account-scoped mutation there is, so it does not fall back to the session alone), and an
+        // account that somehow has none would otherwise be told "Koden er ikke rigtig" about a code
+        // that does not exist, and would look undeletable for no stated reason.
+        if (!stored) {
+          throw new APIError('BAD_REQUEST', {
+            message: 'Lav en kode først — den skal bruges for at bekræfte sletningen.',
+            code: 'no_pin',
+          })
+        }
+        const ok = isPinShape(ctx.body.pin) && (await verifyPin(ctx.body.pin, stored.hash))
         if (!ok) {
           const next = registerFailure(state, now)
           await writeLockout(adapter, userId, row, next, now)
@@ -544,7 +586,7 @@ export const familyPlugin = (): BetterAuthPlugin => ({
         const now = Date.now()
 
         if (ctx.query?.error || !ctx.query?.code || !ctx.query?.state) {
-          return htmlResponse(callbackHtml('Login blev afbrudt.', false), 400)
+          return htmlResponse(failureHtml('Login blev afbrudt.'), 400)
         }
 
         const row = await adapter.findOne<OauthFlowRow>({
@@ -552,12 +594,12 @@ export const familyPlugin = (): BetterAuthPlugin => ({
           where: [{ field: 'state', value: ctx.query.state }],
         })
         if (!row || new Date(row.expiresAt).getTime() < now) {
-          return htmlResponse(callbackHtml('Login-linket er udløbet. Prøv igen i appen.', false), 410)
+          return htmlResponse(failureHtml('Login-linket er udløbet. Prøv igen i appen.'), 410)
         }
         // Single-use: a replayed callback finds the token already parked and is refused. (One adult,
         // one browser at family scale, so a guarded read is sufficient here.)
         if (row.sessionToken) {
-          return htmlResponse(callbackHtml('Dette login er allerede brugt.', false), 410)
+          return htmlResponse(failureHtml('Dette login er allerede brugt.'), 410)
         }
         // Invalidate the state BEFORE the network hop, so a double-submit can't exchange twice.
         await adapter.update({
@@ -589,13 +631,13 @@ export const familyPlugin = (): BetterAuthPlugin => ({
           if (!tokenRes.ok || !body.id_token) {
             // Deliberately no detail in the page — Google's error text can echo request material.
             console.error('[auth] google token exchange failed', tokenRes.status, body.error)
-            return htmlResponse(callbackHtml('Login mislykkedes. Prøv igen i appen.', false), 400)
+            return htmlResponse(failureHtml('Login mislykkedes. Prøv igen i appen.'), 400)
           }
           idToken = body.id_token
           accessToken = body.access_token
         } catch (e) {
           console.error('[auth] google token exchange threw', e)
-          return htmlResponse(callbackHtml('Login mislykkedes. Prøv igen i appen.', false), 500)
+          return htmlResponse(failureHtml('Login mislykkedes. Prøv igen i appen.'), 500)
         }
 
         let sessionToken: string | null
@@ -608,15 +650,14 @@ export const familyPlugin = (): BetterAuthPlugin => ({
           const forbidden = e instanceof APIError && e.status === 'FORBIDDEN'
           if (!forbidden) console.error('[auth] signInSocial(idToken) failed', e)
           return htmlResponse(
-            callbackHtml(
+            failureHtml(
               forbidden ? 'Denne konto har ikke adgang til Børnelæring.' : 'Login mislykkedes. Prøv igen i appen.',
-              false,
             ),
             forbidden ? 403 : 500,
           )
         }
         if (!sessionToken) {
-          return htmlResponse(callbackHtml('Login mislykkedes. Prøv igen i appen.', false), 500)
+          return htmlResponse(failureHtml('Login mislykkedes. Prøv igen i appen.'), 500)
         }
 
         await adapter.update({
@@ -625,7 +666,8 @@ export const familyPlugin = (): BetterAuthPlugin => ({
           update: { sessionToken, expiresAt: new Date(now + OAUTH_CLAIM_TTL_MS) },
         })
 
-        return htmlResponse(callbackHtml('Du er logget ind. 👍', true))
+        // Straight back into the app — no interstitial, no inline script, nothing for a CSP to block.
+        return returnToApp()
       },
     ),
 
@@ -667,9 +709,13 @@ export const familyPlugin = (): BetterAuthPlugin => ({
           (await ctx.context.internalAdapter.findSession(rawToken)) ??
           // Fallback in case a future better-auth stops signing the cookie value.
           (await ctx.context.internalAdapter.findSession(row.sessionToken))
-        // Delete on successful read: the token is handed over exactly once.
-        await adapter.delete({ model: 'oauthFlow', where: [{ field: 'id', value: row.id }] })
+        // Only a SUCCESSFUL read consumes the flow. Deleting before this check meant a transient
+        // database hiccup burned the flow permanently and sent the adult back through Google, even
+        // though the session existed — while single-use is still guaranteed, because the one path that
+        // hands the token over is also the one that deletes. An unclaimed row expires in 5 minutes and
+        // the next /oauth/start sweeps it.
         if (!session) throw new APIError('GONE', { message: 'Sessionen findes ikke længere.' })
+        await adapter.delete({ model: 'oauthFlow', where: [{ field: 'id', value: row.id }] })
 
         return ctx.json({
           token: row.sessionToken,

@@ -18,6 +18,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { Box, Paper, Typography } from '@mui/material'
 import { AUTH_FRAGMENT, claimPendingFlow, readPendingFlow } from '../../services/authSignIn'
+import { AUTH_Z } from './authOverlayZ'
 
 const POLL_INTERVAL_MS = 3000
 const POLL_WINDOW_MS = 3 * 60 * 1000
@@ -105,7 +106,7 @@ const WrongContextNotice: React.FC<{ onClose: () => void }> = ({ onClose }) => (
     sx={{
       position: 'fixed',
       inset: 0,
-      zIndex: 10001, // above the profile picker (10000) — a wrong-context return needs the last word
+      zIndex: AUTH_Z.wrongContext, // above the picker — a wrong-context return needs the last word
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',

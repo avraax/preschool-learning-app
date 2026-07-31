@@ -99,7 +99,9 @@ export function registerPasskey(
         const body = (await res.json().catch(() => null)) as { message?: string } | null
         return { ok: false, message: body?.message ?? 'Face ID kunne ikke gemmes.' }
       }
-      await authStore.refreshStatus()
+      // FORCED past the throttle: `passkeyCount` just went from 0 to 1, and that is what makes the lock
+      // screen offer Face ID at all.
+      await authStore.refreshStatus(true)
       return { ok: true }
     })
     .catch((e: unknown) => ({ ok: false, message: danishError(e) }))

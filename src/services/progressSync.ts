@@ -6,10 +6,10 @@
 // The UI never awaits any of this. Gameplay already runs off local state, so a sync is pure background
 // reconciliation; a failure is invisible except in the adult menu's "Synkronisering" line.
 
-import { progressStore } from './progressStore'
-import { authStore } from './authStore'
-import { normalizePersisted } from '../config/progressSchema'
-import { routeKind } from '../components/common/scene/routeKind'
+import { progressStore } from './progressStore.ts'
+import { authStore } from './authStore.ts'
+import { normalizePersisted } from '../config/progressSchema.ts'
+import { routeKind } from '../components/common/scene/routeKind.ts'
 
 export type SyncReason =
   | 'attach'

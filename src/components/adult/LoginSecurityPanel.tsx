@@ -39,6 +39,7 @@ import {
 import PinSetupDialog from '../auth/PinSetupDialog'
 import PinPad from '../auth/PinPad'
 import { profileStore } from '../../services/profileStore'
+import { progressSync } from '../../services/progressSync'
 
 /** A stale challenge is a clean retryable error, so refreshing on a timer is safe (§9). */
 const OPTIONS_REFRESH_MS = 4 * 60 * 1000
@@ -89,12 +90,21 @@ const LoginSecurityPanel: React.FC<LoginSecurityPanelProps> = ({ open, onClose }
     void passkeysUsableHere().then(setUsable)
   }, [open, loadPasskeys])
 
+  // DEBOUNCED name. The pre-fetch below depends on it, so binding it straight to `deviceName` fired a
+  // fresh /generate-register-options — and restarted the refresh interval — on every single keystroke
+  // in the text field.
+  const [optionsName, setOptionsName] = useState('')
+  useEffect(() => {
+    const id = setTimeout(() => setOptionsName(deviceName.trim()), 400)
+    return () => clearTimeout(id)
+  }, [deviceName])
+
   // PRE-FETCH the creation options while the panel is open, so the "Tilføj Face ID" tap handler can
   // stay synchronous — iOS spends the user activation on any `await` before navigator.credentials.*.
   useEffect(() => {
     if (!open || !webauthnEnabled || !usable) return
     let cancelled = false
-    const name = deviceName.trim() || 'Denne enhed'
+    const name = optionsName || 'Denne enhed'
     const load = async () => {
       const opts = await fetchPasskeyRegisterOptions(name)
       if (!cancelled) setRegisterOptions(opts)
@@ -105,7 +115,7 @@ const LoginSecurityPanel: React.FC<LoginSecurityPanelProps> = ({ open, onClose }
       cancelled = true
       clearInterval(id)
     }
-  }, [open, webauthnEnabled, usable, deviceName])
+  }, [open, webauthnEnabled, usable, optionsName])
 
   // NOT async, and nothing is awaited before registerPasskey — see the note above.
   const onAddPasskey = useCallback(() => {
@@ -135,7 +145,8 @@ const LoginSecurityPanel: React.FC<LoginSecurityPanelProps> = ({ open, onClose }
         })
         setMessage(res.ok ? 'Face ID er fjernet.' : 'Kunne ikke fjerne Face ID.')
         await loadPasskeys()
-        await authStore.refreshStatus()
+        // FORCED: removing the last passkey has to take the Face ID button off the lock screen.
+        await authStore.refreshStatus(true)
       } finally {
         setBusy(false)
       }
@@ -153,6 +164,11 @@ const LoginSecurityPanel: React.FC<LoginSecurityPanelProps> = ({ open, onClose }
     const ok = await auth.requirePin('manageCredentials')
     if (!ok) return
     onClose()
+    // Get the book onto the server BEFORE the token goes away. Signing out detaches the child and drops
+    // the cached roster (authStore.onSignOut → profileStore.signOut), and the local blob stays on disk,
+    // but a push needs the bearer token that is about to be cleared — so it has to happen here, not
+    // after. Never awaited for correctness: it fails silently offline and the local state is intact.
+    await progressSync.push('manual')
     await authStore.signOut()
   }, [auth, onClose])
 
@@ -175,6 +191,8 @@ const LoginSecurityPanel: React.FC<LoginSecurityPanelProps> = ({ open, onClose }
       setBusy(false)
     }
     onClose()
+    // Same reason as onSignOut: last chance to push while a token still exists.
+    await progressSync.push('manual')
     // Every session including this one is gone → drop the local one too.
     await authStore.signOut()
   }, [auth, onClose])

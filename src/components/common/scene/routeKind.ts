@@ -4,7 +4,7 @@
 // idle mascot. Every deeper route is a `game` screen: the world keeps living but a dim/blur
 // scrim fades over it and the idle mascot hides (GameShell's in-game Mascot companion takes over).
 
-import { SECTION_MENU_PATHS } from '../../../utils/menuPaths'
+import { SECTION_MENU_PATHS } from '../../../utils/menuPaths.ts'
 
 export type RouteKind = 'menu' | 'game'
 

@@ -20,6 +20,7 @@ import { motion } from 'framer-motion'
 import { profileStore, type ChildProfile } from '../../services/profileStore'
 import { useProfiles } from '../../hooks/useProfiles'
 import { PHONE_ANY } from '../../theme/phoneMedia'
+import { AUTH_Z } from './authOverlayZ'
 
 /** A small, deliberately child-friendly set — a full emoji keyboard would be a worse choice here. */
 const AVATARS = [
@@ -60,7 +61,16 @@ const CreateProfileDialog: React.FC<CreateProfileDialogProps> = ({
   }, [avatar, name, onDone])
 
   return (
-    <Dialog open={open} onClose={dismissible ? onCancel : undefined} maxWidth="xs" fullWidth>
+    // zIndex: this is opened FROM the profile picker, which is a hand-rolled fixed box at 10 000. A
+    // MUI Dialog defaults to 1300, so without this the "Lav en ny profil" button appeared to do
+    // nothing — the dialog was mounted and interactive, behind an opaque full-screen surface.
+    <Dialog
+      open={open}
+      onClose={dismissible ? onCancel : undefined}
+      maxWidth="xs"
+      fullWidth
+      sx={{ zIndex: AUTH_Z.createProfile }}
+    >
       <DialogTitle sx={{ fontWeight: 700 }}>Tilføj et barn</DialogTitle>
       <DialogContent>
         <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>

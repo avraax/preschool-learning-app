@@ -14,17 +14,17 @@
 // content, no third-party scripts and no analytics, and W11 adds a CSP. The ACCESS JWT is held in
 // memory only — one extra mint per reload, one fewer secret at rest.
 
-import { ACCOUNT_KEY } from '../config/progressSchema'
+import { ACCOUNT_KEY } from '../config/progressSchema.ts'
 import {
   authGateDecision,
   DEFAULT_GRACE_MS,
   type AuthPhase,
   type ServerVerdict,
-} from '../contexts/authGatePolicy'
-import { devNoAuth } from '../utils/devHarness'
-import { dropLocalVerifier, dropStaleVerifier } from './pinVerifier'
-import { forgetSecret, registerSecret } from './redact'
-import type { PasskeyRequestOptions } from './authSignIn'
+} from '../contexts/authGatePolicy.ts'
+import { devNoAuth } from '../utils/devHarness.ts'
+import { dropLocalVerifier, dropStaleVerifier } from './pinVerifier.ts'
+import { forgetSecret, registerSecret } from './redact.ts'
+import type { PasskeyRequestOptions } from './authSignIn.ts'
 
 export interface AccountUser {
   id: string
@@ -71,7 +71,56 @@ const STATUS_PATH = '/api/auth/family/status'
 /** Re-mint a little before the real expiry so a call never races the boundary. */
 const ACCESS_TOKEN_SKEW_MS = 60_000
 
+/**
+ * RESUME BUDGET. `visibilitychange:visible` fires on every app switch on an iPad, and it used to cost
+ * a `/get-session` + a `/family/status` + two localStorage writes + a full re-render of everything
+ * under the gate — every single time. None of that is free on the oldest device we support, and none
+ * of it is useful twice in a minute: session revocation is bounded by the 15-minute access JWT, not by
+ * how eagerly we poll.
+ */
+const VALIDATE_MIN_INTERVAL_MS = 60_000
+const STATUS_MIN_INTERVAL_MS = 5 * 60_000
+const PERSIST_MIN_INTERVAL_MS = 60_000
+
 type Listener = () => void
+
+/**
+ * Is this snapshot materially different from that one? Used to drop a publish that would re-render the
+ * whole app for nothing.
+ *
+ * `lastVerifiedAt` is DELIBERATELY EXCLUDED: it changes on every successful validate, so including it
+ * would make every comparison unequal and defeat the whole guard. It is rendered in exactly one place
+ * — the "Sidst bekræftet …" line on the offlineExpired lock screen — and the transition INTO that phase
+ * changes `phase`, which does force a publish carrying the current value.
+ */
+function sameSnapshot(a: AuthSnapshot, b: AuthSnapshot): boolean {
+  return (
+    a.phase === b.phase &&
+    a.canPlay === b.canPlay &&
+    a.canCallPaidApis === b.canCallPaidApis &&
+    a.hasToken === b.hasToken &&
+    a.serverVerdict === b.serverVerdict &&
+    a.busy === b.busy &&
+    a.error === b.error &&
+    a.user?.id === b.user?.id &&
+    a.user?.email === b.user?.email &&
+    a.user?.name === b.user?.name &&
+    sameInfo(a.info, b.info)
+  )
+}
+
+function sameInfo(a: AuthMethodInfo | null, b: AuthMethodInfo | null): boolean {
+  if (a === b) return true
+  if (!a || !b) return false
+  return (
+    a.hasPin === b.hasPin &&
+    a.pinUpdatedAt === b.pinUpdatedAt &&
+    a.passkeyCount === b.passkeyCount &&
+    a.webauthnEnabled === b.webauthnEnabled &&
+    a.methods.length === b.methods.length &&
+    a.methods.every((m, i) => m === b.methods[i])
+  )
+}
 
 function readStored(): StoredAccount | null {
   try {
@@ -106,9 +155,21 @@ class AuthStore {
   private accessInFlight: Promise<string | null> | null = null
 
   private listeners = new Set<Listener>()
+  /**
+   * Fired by `clearLocal()`, i.e. on BOTH sign-out paths — the adult's own, and the server telling us
+   * with a 401 that the session is revoked. profileStore subscribes here so the child is detached and
+   * the cached roster dropped; it cannot be called directly because profileStore imports THIS module.
+   */
+  private signOutListeners = new Set<Listener>()
   private snapshot: AuthSnapshot
   private booted = false
   private devBypass = false
+
+  private validateInFlight: Promise<ServerVerdict> | null = null
+  private statusInFlight: Promise<AuthMethodInfo | null> | null = null
+  private lastValidateAt = 0
+  private lastStatusAt = 0
+  private lastPersistAt = 0
 
   constructor() {
     this.snapshot = this.computeSnapshot()
@@ -182,6 +243,14 @@ class AuthStore {
     }
   }
 
+  /** Subscribe to "this device is no longer signed in" — see `signOutListeners`. */
+  onSignOut(l: Listener): () => void {
+    this.signOutListeners.add(l)
+    return () => {
+      this.signOutListeners.delete(l)
+    }
+  }
+
   sessionToken(): string | null {
     return this.token
   }
@@ -204,9 +273,13 @@ class AuthStore {
     this.busy = null
     this.access = null
     registerSecret(token)
-    this.persist()
+    // A new session: force BOTH the disk write and the status refresh past their throttles. This is the
+    // one moment where "which sign-in methods exist, and is there a PIN yet?" must be re-asked — the
+    // mandatory PIN-setup nag hangs off that answer.
+    this.lastValidateAt = Date.now()
+    this.persist(true)
     this.publish()
-    void this.refreshStatus()
+    void this.refreshStatus(true)
     void this.getAccessToken()
   }
 
@@ -252,6 +325,9 @@ class AuthStore {
     this.access = null
     this.lockedByAdult = false
     this.verdict = verdict
+    this.lastValidateAt = 0
+    this.lastStatusAt = 0
+    this.lastPersistAt = 0
     // The cached local PIN verifier belongs to a SESSION on this device. A sign-out (or a revoked
     // session) must not leave an offline-usable adult gate behind for the next person.
     dropLocalVerifier()
@@ -260,6 +336,11 @@ class AuthStore {
     } catch {
       /* private mode */
     }
+    // BEFORE the publish, so the gate never renders a signed-out phase while a child is still attached:
+    // this is what detaches progressStore and drops the cached roster + pointer. Without it the next
+    // adult to sign in on this device briefly played as the PREVIOUS adult's child, reading and writing
+    // that child's local book until the roster refresh pruned it.
+    this.signOutListeners.forEach((l) => l())
     this.publish()
   }
 
@@ -270,16 +351,35 @@ class AuthStore {
    * ignoring grace, because that is the revocation path. A fetch that THREW is `unreachable` —
    * never `invalid` — because a flaky network must not log a family out of their own iPad.
    */
-  async validate(): Promise<ServerVerdict> {
+  async validate(force = false): Promise<ServerVerdict> {
     if (!this.token) {
       this.verdict = 'unknown'
       this.publish()
       return 'unknown'
     }
+    // Two guards, both about the resume path (see the RESUME BUDGET note). Deduping is the important
+    // one: `online` and `visibilitychange` can fire together, and two concurrent validates race each
+    // other's publish for one answer.
+    if (this.validateInFlight) return this.validateInFlight
+    const now = Date.now()
+    if (!force && this.verdict === 'valid' && now - this.lastValidateAt < VALIDATE_MIN_INTERVAL_MS) {
+      return 'valid'
+    }
+
+    this.validateInFlight = this.runValidate()
+    try {
+      return await this.validateInFlight
+    } finally {
+      this.validateInFlight = null
+    }
+  }
+
+  private async runValidate(): Promise<ServerVerdict> {
     try {
       const res = await fetch(GET_SESSION_PATH, {
         headers: { Authorization: `Bearer ${this.token}` },
       })
+      this.lastValidateAt = Date.now()
       if (res.status === 401 || res.status === 403) {
         this.clearLocal('invalid')
         return 'invalid'
@@ -295,10 +395,15 @@ class AuthStore {
         this.clearLocal('invalid')
         return 'invalid'
       }
+      const identityChanged =
+        this.user?.id !== data.user.id ||
+        this.user?.email !== data.user.email ||
+        this.user?.name !== data.user.name
       this.user = { id: data.user.id, email: data.user.email, name: data.user.name }
       this.lastVerifiedAt = Date.now()
       this.verdict = 'valid'
-      this.persist()
+      this.persist(identityChanged)
+      // No-ops when nothing changed, which on a plain resume is the normal case.
       this.publish()
       void this.refreshStatus()
       return 'valid'
@@ -309,28 +414,55 @@ class AuthStore {
     }
   }
 
-  /** /family/status: which methods exist, and the cross-device PIN-change signal. */
-  async refreshStatus(): Promise<AuthMethodInfo | null> {
+  /**
+   * /family/status: which methods exist, and the cross-device PIN-change signal.
+   *
+   * Pass `force` after anything that CHANGES the answer (a PIN set, a passkey added or removed, a fresh
+   * session). Everything else — including the resume-triggered validate — takes the throttled path,
+   * because a credential set that changed on another device is not urgent to the millisecond.
+   */
+  async refreshStatus(force = false): Promise<AuthMethodInfo | null> {
     if (!this.token) return null
+    if (this.statusInFlight) return this.statusInFlight
+    const now = Date.now()
+    if (!force && this.info && now - this.lastStatusAt < STATUS_MIN_INTERVAL_MS) return this.info
+
+    this.statusInFlight = this.runRefreshStatus()
+    try {
+      return await this.statusInFlight
+    } finally {
+      this.statusInFlight = null
+    }
+  }
+
+  private async runRefreshStatus(): Promise<AuthMethodInfo | null> {
     try {
       const res = await fetch(STATUS_PATH, {
         headers: { Authorization: `Bearer ${this.token}` },
       })
       if (!res.ok) return this.info
+      this.lastStatusAt = Date.now()
       const data = (await res.json()) as Partial<AuthMethodInfo>
-      this.info = {
+      const next: AuthMethodInfo = {
         methods: Array.isArray(data.methods) ? data.methods : ['google'],
         hasPin: data.hasPin === true,
         pinUpdatedAt: typeof data.pinUpdatedAt === 'number' ? data.pinUpdatedAt : null,
         passkeyCount: typeof data.passkeyCount === 'number' ? data.passkeyCount : 0,
         webauthnEnabled: data.webauthnEnabled === true,
       }
+      const changed = !sameInfo(this.info, next)
+      this.info = next
       // CROSS-DEVICE PIN CHANGE: if the server's PIN is newer than the one this device cached a
       // verifier for, drop that cache so the next adult-gate open forces an online verify. Without
       // this, a PIN changed on the iPhone leaves the iPad honouring the old one indefinitely (§7.2).
-      dropStaleVerifier(this.info.pinUpdatedAt)
-      this.persist()
-      this.publish()
+      // Checked on EVERY answer, not only a changed one — the local cache is what goes stale, and it
+      // can be older than an unchanged server value.
+      dropStaleVerifier(next.pinUpdatedAt)
+      // Only touch disk / re-render when the answer actually moved. On a plain app resume it does not.
+      if (changed) {
+        this.persist(true)
+        this.publish()
+      }
       return this.info
     } catch {
       return this.info
@@ -395,7 +527,9 @@ class AuthStore {
         | { ok?: boolean; pinUpdatedAt?: number; message?: string }
         | null
       if (res.ok && body?.ok) {
-        await this.refreshStatus()
+        // FORCED: `hasPin` and `pinUpdatedAt` just changed, and the mandatory setup nag is gated on
+        // exactly those. A throttled refresh here would leave the nag on screen after a successful set.
+        await this.refreshStatus(true)
         return { ok: true, pinUpdatedAt: body.pinUpdatedAt }
       }
       return { ok: false, message: body?.message ?? 'Koden kunne ikke gemmes.' }
@@ -510,8 +644,16 @@ class AuthStore {
 
   // ----- internals -------------------------------------------------------------------------------
 
-  private persist(): void {
+  /**
+   * `force` for anything that changes the stored IDENTITY (a new token, a new user, new status). A
+   * throttled call carries only a fresher `lastVerifiedAt`, and that timestamp starts a 30-day offline
+   * grace window — being a minute stale on disk cannot matter, whereas writing it on every app resume
+   * is a real cost on the oldest iPad.
+   */
+  private persist(force = false): void {
     if (!this.token) return
+    const now = Date.now()
+    if (!force && now - this.lastPersistAt < PERSIST_MIN_INTERVAL_MS) return
     try {
       const doc: StoredAccount = {
         token: this.token,
@@ -520,6 +662,7 @@ class AuthStore {
         status: this.info,
       }
       localStorage.setItem(ACCOUNT_KEY, JSON.stringify(doc))
+      this.lastPersistAt = now
     } catch {
       /* quota / private mode — the session then lasts only this page load */
     }
@@ -548,9 +691,16 @@ class AuthStore {
     }
   }
 
+  /**
+   * A NEW snapshot object whenever something changed, so useSyncExternalStore sees it — and NOTHING
+   * when it didn't. AuthProvider's context value is derived from this snapshot and sits above <App />,
+   * so every publish re-renders the entire app; a resume used to spend two or three of those on an
+   * answer identical to the one already on screen.
+   */
   private publish(): void {
-    // A NEW object each time so useSyncExternalStore sees the change; the whole snapshot is cheap.
-    this.snapshot = this.computeSnapshot()
+    const next = this.computeSnapshot()
+    if (sameSnapshot(this.snapshot, next)) return
+    this.snapshot = next
     this.listeners.forEach((l) => l())
   }
 }

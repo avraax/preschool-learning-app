@@ -14,7 +14,10 @@
 //   ?nyt=1                           force a "nyt!" badge in Min Bog
 //   ?rewards=<n>                     seed the book at n collected rewards (Reward Book PRD-01 W9)
 
-export const DEV = import.meta.env.DEV
+// `import.meta.env?.` — optional, because this module is now in the transitive graph of a Node
+// `--test` suite (via authStore), and `import.meta.env` is undefined outside Vite. Same reason
+// progressStore.ts guards every one of its own reads.
+export const DEV = import.meta.env?.DEV ?? false
 
 const readParams = (): URLSearchParams =>
   new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '')
