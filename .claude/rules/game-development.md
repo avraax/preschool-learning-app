@@ -53,6 +53,17 @@ Most task-based quizzes are a thin **config** over `src/components/common/Unifie
 - **Custom hero**: `renderHero(item)` renders a richer subject in the focal zone (`PromptFocus`)
   instead of the default glyph/emoji — used today by Tal Quiz (numeral + counted objects) and Hvad
   Mangler (the sequence with a pulsing "?").
+- **Hear-before-commit** (PRD-14 W7): `previewBeforeCommit` opts a quiz into a two-tap answer for
+  UNREADABLE answer tiles (english.word/.translate — written English words a pre-reader can't read).
+  1st tap on a tile AUDITIONS it (`speakClickedItem` + raises it to the shared `'selected'`
+  `TactileTile`/`AnswerTile` state — a lifted accent outline, NOT correct/wrong colours) and returns
+  WITHOUT scoring; a 2nd tap on the SAME tile commits; tapping a different tile moves the audition.
+  Every commit invariant (advance-lock, first-try, `hintAfterNWrong`) runs ONLY on the committing tap.
+  Reuse this flag + the `'selected'` state rather than reinventing an audition.
+- **First-letter cue** (PRD-18 W1): `questionVisual.emphasizeFirstLetter` renders a word-only prompt
+  with an oversized full-strength first grapheme + muted rest — a SILENT decode nudge (Læs Ordet).
+  Opt-in **because the word-only prompt render is shared with Dansk til Engelsk** (a plain word) — never
+  blanket-change that render; scope via the flag.
 
 Only hand-roll a full component for genuinely novel mechanics (e.g. SpellingGame, SpeakWordGame, and
 the dnd-kit Farver games — see `.claude/rules/drag-and-drop.md`). **MathOperationGame (+/−) and
@@ -77,7 +88,9 @@ needs that hook added first (it would touch all 7 config quizzes, so verify care
   swap auto-upgraded only the **shared engines** (`UnifiedQuizGame`/`UnifiedMemoryGame`/`LearningGrid`);
   **hand-rolled games + screens that render `PromptStage` directly still show the old frosted card** and
   must be migrated to `PromptFocus` per area — check with a `PromptStage` import grep before assuming a
-  game already upgraded.
+  game already upgraded. Dense no-scroll grids (Lær Tal at 1–100 = 10 rows) must pass `TactileTile`'s
+  **`compact`** prop — otherwise its 44px min-height + padding overflow the short rows and tiles overlap
+  the row below; `LearningGrid` trips it automatically for numbers >60.
 - **Baked game-art** (pictorial subjects, per-section) → `src/assets/games/<section>/index.ts`
   eager-`import.meta.glob`s `*.webp` keyed by content id → a sync `letterArt()`-style helper.
   **Art-gated**: empty until the owner's keyed WebP are dropped in (auto-registers, no code change);

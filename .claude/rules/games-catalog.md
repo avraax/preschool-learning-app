@@ -27,6 +27,9 @@ gameIds are `<section>.<game>`.
   capped object row that misrepresents the count.
 - Plus/Minus/Sammenlign **speak the completed fact** on a correct tap ("tre plus fire er syv"); Hvad
   Mangler reads the finished sequence — instead of echoing the tapped number.
+- Plus/Minus render a **countable ten-frame** under the number sentence (the two addends in distinct
+  tints; subtraction fades + strikes the removed dots) so a finger-counter can *solve*, not guess.
+  Additive layer — the `?`→answer POP + spoken fact are unchanged.
 - Sammenlign Tal: tap the **bigger** number (crocodile >/< "eats" it); **equality was dropped**; the
   object piles are fixed-height shrink-to-fit and order-match the numerals.
 - The equation/comparison symbols `+ − = ? > <` are **baked soft-3D `SymbolTile` art**
@@ -39,8 +42,11 @@ gameIds are `<section>.<game>`.
   askable. The askable set is `WORD_LETTERS`; the full display manifest (incl. Q) is `LETTER_WORDS`.
 
 ## Ordleg — `ordleg.read/.spelling/.mic`
-- Læs Ordet **never reads the prompt word aloud** — silent decoding IS the exercise. Thin
-  `UnifiedQuizGame`; after 2 wrong picture taps the correct picture pulses.
+- Læs Ordet **never AUTO-reads the prompt word** — silent decoding IS the exercise (the prompt carries
+  a silent first-letter decode cue via `questionVisual.emphasizeFirstLetter`, styling only). The
+  correct-tap **does** speak the tapped picture's name — that names the child's *choice*, not the
+  prompt, so it's not a violation. Thin `UnifiedQuizGame`; after 2 wrong picture taps the correct
+  picture pulses.
 - Stav Ordet (hand-rolled): after 2 wrong taps on a slot the correct tile pulses (never-fail
   next-letter hint; reduced-motion → static glow; using it costs a star).
 - Sig et Ord is **open-ended** — say any word → it's spelled back. **No target word, no STT grading**;
@@ -48,8 +54,14 @@ gameIds are `<section>.<game>`.
 
 ## English — `english.listen/.word/.translate`
 - Thin `UnifiedQuizGame` configs. Distractors **random**, themes **mixed** (no minimal-pairs, no
-  per-theme rounds) — a deliberate beginner floor. The green `EnglishRepeatButton` is the only audio
-  affordance (no "audio playing" cue).
+  per-theme rounds) — a deliberate beginner floor.
+- **The three are distinct skills** (PRD-17 W1 — don't collapse them): Lyt og Find = audio→picture;
+  **Find det Engelske Ord** = picture→English word (recognition, keeps the baked picture prompt);
+  **Dansk til Engelsk** = Danish word, NO picture → English word (translation). Picture-presence is
+  the deliberate differentiator — never re-add a picture to Translate.
+- Lyt og Find's listen-hero equalizer is driven by the **real `audio.isPlaying`** state (bars dance
+  during playback, settle when idle) — read the audio hook, never a component-level `isPlaying`.
+- English words spoken by en-US Ava (`speakEnglish`); Translate's Danish prompt uses the Danish voice.
 
 ## Farver — `colors.farvejagt/.ramfarven/.quiz/.nuancer` (+ Lær Farver browse)
 All drag-based except the calm Lær Farver browse; hand-rolled dnd-kit — see `drag-and-drop.md`.
