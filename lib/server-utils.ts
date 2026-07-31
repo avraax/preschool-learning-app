@@ -43,14 +43,18 @@ const rateBuckets = new Map<string, RateBucket>()
 /**
  * Fixed-window rate limit. Returns true if the request is allowed; on refusal it has already
  * written a 429 (with Retry-After) to `res`, so the caller should just `return`.
+ *
+ * `subject` (accounts PRD §4.6): once a route requires a verified access JWT, key the bucket on the
+ * token's `sub` instead of the IP. Two iPads behind one CGNAT then stop sharing a bucket, and the
+ * limit finally means something per ACCOUNT rather than per network.
  */
 export function rateLimit(
   req: VercelRequest,
   res: VercelResponse,
-  opts: { scope: string; limit: number; windowMs: number }
+  opts: { scope: string; limit: number; windowMs: number; subject?: string }
 ): boolean {
   const now = Date.now()
-  const key = `${opts.scope}:${clientIp(req)}`
+  const key = `${opts.scope}:${opts.subject || clientIp(req)}`
 
   // Opportunistic prune so the map can't grow unbounded across a long-lived instance.
   if (rateBuckets.size > 5000) {
@@ -81,7 +85,13 @@ export function applyCors(req: VercelRequest, res: VercelResponse): void {
   res.setHeader('Access-Control-Allow-Origin', origin && isAllowedOrigin(req) ? origin : 'null')
   res.setHeader('Vary', 'Origin')
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
+  // `Authorization` is needed by the paid endpoints' access JWT. NB this is CORRECTNESS, not
+  // load-bearing (accounts PRD §8.3): in prod the SPA is same-origin with /api, and in dev Vite
+  // proxies /api → 127.0.0.1:3001 so the browser never preflights. It's here for curl, the
+  // /debug-report skill and any future cross-origin caller.
+  //
+  // Still NO Access-Control-Allow-Credentials — we never send cookies cross-origin.
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
 }
 
 /**

@@ -1,6 +1,7 @@
 import { VercelRequest, VercelResponse } from '@vercel/node'
 import { v2 } from '@google-cloud/speech'
 import { logServerError, applyCors, isAllowedOrigin, rateLimit } from '../lib/server-utils.js'
+import { requirePaidAccess } from '../lib/paid-guard.ts'
 
 const { SpeechClient } = v2
 
@@ -63,8 +64,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (!isAllowedOrigin(req)) {
     return res.status(403).json({ error: 'Forbidden origin' })
   }
-  // Billing guard: recognition is a paid Google call. Generous for a hold-to-talk game.
-  if (!rateLimit(req, res, { scope: 'stt', limit: 40, windowMs: 60_000 })) {
+  // HARD GATE (accounts PRD §4.6): recognition is a paid Google call, so it requires a
+  // server-minted access JWT. 401 { code: 'need_access_token' } tells the client to mint-and-retry
+  // once rather than to log the adult out.
+  const access = await requirePaidAccess(req, res)
+  if (!access) return
+  // Billing guard, now keyed on the ACCOUNT rather than the IP: two iPads behind one CGNAT no
+  // longer share a bucket. Generous for a hold-to-talk game.
+  if (!rateLimit(req, res, { scope: 'stt', limit: 40, windowMs: 60_000, subject: access.sub })) {
     return
   }
 

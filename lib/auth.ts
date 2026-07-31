@@ -9,6 +9,7 @@ import { betterAuth } from 'better-auth'
 import { bearer } from 'better-auth/plugins/bearer'
 import { APIError } from 'better-auth/api'
 import { getPool } from './db.ts'
+import { familyPlugin } from './auth-family-plugin.ts'
 import { baseURL, isEmailAllowed, requireEnv, runtime, trustedOrigins } from './env.ts'
 
 export const auth = betterAuth({
@@ -89,6 +90,9 @@ export const auth = betterAuth({
     // PWA has its own storage jar and out-of-scope OAuth navigation runs in an in-app browser view,
     // so a Set-Cookie during that hop can land in a context the app can never read.
     bearer(),
+    // Our own surface: /family/access-token, /family/status, and (from W5/W7) the PIN routes and the
+    // cookie-free Google PKCE leg. Also declares our five tables so they migrate together.
+    familyPlugin(),
   ],
 })
 

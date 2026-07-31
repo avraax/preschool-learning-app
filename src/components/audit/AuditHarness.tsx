@@ -34,6 +34,7 @@ import { TTS_CONFIG } from '../../config/tts-config'
 import { PREBAKED_TTS } from '../../config/prebakedTts'
 import { VOICE_TIERS } from '../voicelab/voicelabData'
 import { buildAuditClips, GROUP_LABELS, GROUP_ORDER, type AuditClip, type AuditGroup } from './auditClips'
+import { authorizedFetch } from '../../services/authorizedFetch'
 
 const AUDIO_MIME = TTS_CONFIG.mime
 const LS_KEY = 'bornelaering-narration-audit-v1'
@@ -215,7 +216,7 @@ const AuditHarness: React.FC = () => {
           useLexicon,
         }
         if (opts.ipa) body.ipa = opts.ipa
-        const res = await fetch('/api/tts-azure', {
+        const res = await authorizedFetch('/api/tts-azure', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(body),

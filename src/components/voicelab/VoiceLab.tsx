@@ -23,6 +23,7 @@ import {
   Typography,
 } from '@mui/material'
 import { TTS_CONFIG } from '../../config/tts-config'
+import { authorizedFetch } from '../../services/authorizedFetch'
 import {
   CURRENT_VOICE,
   MASCOT_SFX,
@@ -96,7 +97,7 @@ const VoiceLab: React.FC = () => {
 
   const playAzure = useCallback(
     async (text: string, entry: VoiceEntry) => {
-      const res = await fetch('/api/tts-azure', {
+      const res = await authorizedFetch('/api/tts-azure', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -167,7 +168,7 @@ const VoiceLab: React.FC = () => {
       setErrorMsg(null)
       setBusyKey(key)
       try {
-        const res = await fetch('/api/tts-azure', {
+        const res = await authorizedFetch('/api/tts-azure', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

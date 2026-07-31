@@ -14,6 +14,8 @@ import { toNodeHandler } from 'better-auth/node';
 // Loaded through Node's type-stripping (>=22.18) — which is why lib/auth.ts and everything it
 // imports must use explicit `.ts` extensions on their relative specifiers.
 import { auth } from './lib/auth.ts';
+import { verifyAccessToken } from './lib/access-token.ts';
+import { devBypassEnabled } from './lib/env.ts';
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3001;
@@ -30,6 +32,19 @@ app.all('/api/auth/*splat', toNodeHandler(auth));
 // 5mb to comfortably hold a short base64-encoded audio clip from the mic game.
 // Deliberately mounted AFTER the auth handler — see trap 1 above.
 app.use(express.json({ limit: '5mb' }));
+
+// CORS mirror of lib/server-utils.ts applyCors(). Not load-bearing in dev (Vite proxies /api so the
+// browser sees a same-origin request and never preflights) but kept in sync so the two sources don't
+// drift — `Authorization` is what the paid endpoints' access JWT needs.
+app.use('/api', (req, res, next) => {
+  const origin = req.headers.origin;
+  res.setHeader('Access-Control-Allow-Origin', origin && isAllowedOrigin(req) ? origin : 'null');
+  res.setHeader('Vary', 'Origin');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  if (req.method === 'OPTIONS') return res.status(200).end();
+  next();
+});
 
 // --- in-process error log (dev mirror of /api/log-error) ---
 let errorLogs = [];
@@ -73,11 +88,13 @@ function clientIp(req) {
   return first || req.socket?.remoteAddress || 'unknown';
 }
 
-// Fixed-window per-IP rate limit. Returns true if allowed; on refusal writes a 429 and returns false.
+// Fixed-window rate limit. Returns true if allowed; on refusal writes a 429 and returns false.
+// `subject` mirrors lib/server-utils.ts: once a route requires an access JWT, key on the token's
+// `sub` so the limit means something per account rather than per network.
 const rateBuckets = new Map();
-function rateLimit(req, res, { scope, limit, windowMs }) {
+function rateLimit(req, res, { scope, limit, windowMs, subject }) {
   const now = Date.now();
-  const key = `${scope}:${clientIp(req)}`;
+  const key = `${scope}:${subject || clientIp(req)}`;
   let bucket = rateBuckets.get(key);
   if (!bucket || bucket.resetAt <= now) {
     bucket = { count: 0, resetAt: now + windowMs };
@@ -92,13 +109,26 @@ function rateLimit(req, res, { scope, limit, windowMs }) {
   return true;
 }
 
+// Paid-endpoint gate (mirrors lib/paid-guard.ts). Returns the claims, or null after writing a 401.
+// The distinct `code` is what tells the client to mint-and-retry once instead of signing out.
+async function requirePaidAccess(req, res) {
+  if (devBypassEnabled()) return { sub: 'dev-bypass', sid: 'dev-bypass', exp: 0 };
+  const claims = await verifyAccessToken(req.headers.authorization);
+  if (claims) return claims;
+  res.setHeader('WWW-Authenticate', 'Bearer');
+  res.status(401).json({ error: 'Unauthorized', code: 'need_access_token' });
+  return null;
+}
+
 // --- Azure TTS endpoint (mirrors api/tts-azure.ts via the shared core) ---
 const VOICE_TYPES = new Set(['primary', 'backup', 'male', 'english']);
 const MAX_AUDIO_BASE64_CHARS = 1_500_000;
 
 app.post('/api/tts-azure', async (req, res) => {
   if (!isAllowedOrigin(req)) return res.status(403).json({ error: 'Forbidden origin' });
-  if (!rateLimit(req, res, { scope: 'tts', limit: 200, windowMs: 60_000 })) return;
+  const access = await requirePaidAccess(req, res);
+  if (!access) return;
+  if (!rateLimit(req, res, { scope: 'tts', limit: 200, windowMs: 60_000, subject: access.sub })) return;
   try {
     const { text, voiceType = 'primary', voiceName, lang, speed, pitch, useLexicon = true, ipa } = req.body ?? {};
 
@@ -190,7 +220,9 @@ function initializeSttClient() {
 
 app.post('/api/stt', async (req, res) => {
   if (!isAllowedOrigin(req)) return res.status(403).json({ error: 'Forbidden origin' });
-  if (!rateLimit(req, res, { scope: 'stt', limit: 40, windowMs: 60_000 })) return;
+  const access = await requirePaidAccess(req, res);
+  if (!access) return;
+  if (!rateLimit(req, res, { scope: 'stt', limit: 40, windowMs: 60_000, subject: access.sub })) return;
   try {
     const { audioContent } = req.body;
 

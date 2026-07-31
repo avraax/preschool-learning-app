@@ -10,6 +10,7 @@ import { logAudioIssue } from '../utils/remoteConsole'
 import { loadVoiceOverride, saveVoiceOverride, type VoiceOverride } from '../config/voiceOverride'
 import { ttsCacheKey } from '../../shared-tts-key.js'
 import { PREBAKED_TTS } from '../config/prebakedTts'
+import { authorizedFetch } from './authorizedFetch'
 
 type VoiceType = 'primary' | 'backup' | 'male' | 'english'
 
@@ -266,7 +267,7 @@ export class TtsClient {
     if (now - this.lastFailureTime >= this.FAILURE_RESET_MS) this.failureCount = 0
 
     try {
-      const response = await fetch('/api/tts-azure', {
+      const response = await authorizedFetch('/api/tts-azure', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),

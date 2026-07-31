@@ -2,6 +2,7 @@ import { VercelRequest, VercelResponse } from '@vercel/node'
 import { buildSsml, synthesizeAzure, resolveVoice, lexiconUriForRequest } from '../shared-azure-tts.js'
 import { TTS_CONFIG } from '../shared-tts-config.js'
 import { logServerError, applyCors, isAllowedOrigin, rateLimit } from '../lib/server-utils.js'
+import { requirePaidAccess } from '../lib/paid-guard.ts'
 
 const VOICE_TYPES = new Set(['primary', 'backup', 'male', 'english'])
 
@@ -17,9 +18,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (!isAllowedOrigin(req)) {
     return res.status(403).json({ error: 'Forbidden origin' })
   }
-  // Billing guard on the paid Azure call. High ceiling: a fast-tapping game session legitimately
-  // fires many short syntheses/minute (most are served from the client + edge cache, not here).
-  if (!rateLimit(req, res, { scope: 'tts', limit: 200, windowMs: 60_000 })) {
+  // HARD GATE (accounts PRD §4.6): Azure bills per character synthesized, so this route requires a
+  // server-minted access JWT. 401 { code: 'need_access_token' } tells the client to mint-and-retry
+  // once rather than to log the adult out. Note the PREBAKED narration under /sounds/tts/ stays
+  // public and ungated — only this live fallback is gated.
+  const access = await requirePaidAccess(req, res)
+  if (!access) return
+  // Billing guard, now keyed on the ACCOUNT rather than the IP. High ceiling: a fast-tapping game
+  // session legitimately fires many short syntheses/minute (most are served from the client +
+  // edge cache, not here).
+  if (!rateLimit(req, res, { scope: 'tts', limit: 200, windowMs: 60_000, subject: access.sub })) {
     return
   }
 

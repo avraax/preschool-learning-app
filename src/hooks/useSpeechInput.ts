@@ -1,4 +1,5 @@
 import { useRef, useState, useCallback } from 'react'
+import { authorizedFetch } from '../services/authorizedFetch'
 
 export interface SpeechResult {
   transcript: string
@@ -148,7 +149,7 @@ export const useSpeechInput = () => {
 
     try {
       const base64 = await blobToBase64(blob)
-      const response = await fetch('/api/stt', {
+      const response = await authorizedFetch('/api/stt', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ audioContent: base64, mimeType: blob.type })
