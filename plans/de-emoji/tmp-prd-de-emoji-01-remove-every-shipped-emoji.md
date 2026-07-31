@@ -166,8 +166,9 @@ devtools and in captured bug-report diagnostics rings, where they make scanning 
 
 ## 11. Kickoff prompts (paste one per session)
 
-The full inventory is committed beside this PRD as `plans/de-emoji/emoji-audit-2026-07-31.json`
-(52 files, 208 occurrences, keyed by file → line/glyphs/code) so no session has to re-derive it.
+The full inventory is committed beside this PRD as `plans/de-emoji/emoji-inventory-2026-07-31.md`
+(every occurrence as file · line · glyph · context, grouped by the §1 buckets) so no session has to
+re-derive it. It is Markdown, not JSON, because `.gitignore` globally ignores `*.json`.
 
 **Session 1 — no art needed, ~75% of the work:**
 > Implement W0-W2 of plans/de-emoji/tmp-prd-de-emoji-01-remove-every-shipped-emoji.md: the noEmoji test guard first, then adult/dev UI to lucide, then the pure deletions.
