@@ -18,25 +18,15 @@
 // Vercel function api/progress.ts imports this file directly (so there is exactly one schema), and
 // `node --test` imports it in plain Node — hence the explicit `.ts` extensions below.
 
-import {
-  REWARD_PATH,
-  allRewards,
-  rewardAt,
-  slotOfReward,
-} from './stickers.ts'
+import { REWARD_PATH, allRewards, rewardAt } from './stickers.ts'
 import { REWARD_SLOTS, collectedFromLevel, levelFromXp } from './progression.ts'
 
 export const SCHEMA_VERSION = 4 as const
 
 // ----- Storage keys (accounts PRD §5.8) ---------------------------------------------------------
-/** The v3 anonymous blob. Adoption SOURCE only: never written again, never deleted. */
-export const LEGACY_STORAGE_KEY = 'bornelaering-progress'
-/** Ledger key that legacy XP is adopted under. MUST differ from any real deviceId (§5.5 guard 2). */
-export const LEGACY_DEVICE_ID = 'legacy-v3'
 export const DEVICE_ID_KEY = 'bornelaering-device-id'
 export const ACCOUNT_KEY = 'bornelaering-account'
 export const ACTIVE_PROFILE_KEY = 'bornelaering-active-profile'
-export const LEGACY_ADOPTION_KEY = 'bornelaering-legacy-adoption'
 /** Device-level first-paint hint. Truth lives in `settings.themeId` (profile-scoped, syncs). */
 export const THEME_HINT_KEY = 'bornelaering-theme'
 
@@ -552,152 +542,4 @@ export function normalizePersisted(raw: unknown): PersistedProgress | null {
   }
   clampCelebratedCursor(base)
   return base
-}
-
-// ----- the v3 → v4 migration (§5.3) -------------------------------------------------------------
-
-/** The v3 read model, described loosely because we're reading untrusted stored JSON. */
-interface V3Blob {
-  version?: unknown
-  stickers?: { collected?: Record<string, { count?: unknown; firstAt?: unknown }>; newIds?: unknown }
-  perGame?: Record<string, unknown>
-  totals?: { totalStars?: unknown }
-  progression?: {
-    globalXp?: unknown
-    lastCelebratedLevel?: unknown
-    bloom?: Record<string, { xp?: unknown }>
-    explored?: Record<string, unknown>
-    updatedAt?: unknown
-  }
-  settings?: unknown
-}
-
-export interface MigrateContext {
-  deviceId: string
-  now: number
-  /** `bornelaering-theme` — carried into settings.themeId so the skin survives the migration. */
-  themeIdHint?: string
-  /** Ledger entry to attribute the migrated counters to. Legacy adoption passes LEGACY_DEVICE_ID. */
-  ledgerKey?: string
-}
-
-/**
- * v3 → v4. A PURE STRUCTURAL upgrade — unlike v1→v2 and v2→v3, whose random sticker pools genuinely
- * could not be mapped onto a deterministic path. Bumping SCHEMA_VERSION without this branch is what
- * would delete the son's 45-reward book (§5.3), which is why the store's old unconditional
- * `if (r.version !== SCHEMA_VERSION) return base` must be replaced by a version-directed chain.
- */
-export function migrateToV4(raw: unknown, ctx: MigrateContext): PersistedProgress | null {
-  const r = asRecord(raw) as V3Blob | null
-  if (!r || r.version !== 3) return null
-
-  const key = ctx.ledgerKey ?? ctx.deviceId
-  const out = defaultPersisted(null, ctx.deviceId, ctx.now)
-
-  const xp = nonNegInt(r.progression?.globalXp)
-
-  // The multiset cursor: Σ counts IS the number of slots handed over, gold duplicates included.
-  let slots = 0
-  const collected = asRecord(r.stickers?.collected) ?? {}
-  for (const [id, v] of Object.entries(collected)) {
-    const c = asRecord(v)
-    if (!c) continue
-    const count = Math.max(1, Math.floor(Number(c.count) || 1))
-    slots += count
-    if (ON_PATH.has(id)) {
-      const at = Number(c.firstAt)
-      out.stickers.firstAt[id] = Number.isFinite(at) && at > 0 ? Math.floor(at) : ctx.now
-    }
-  }
-  // Repair clamp: a v3 blob whose counts exceed what its XP can justify (only reachable through a
-  // hand-edit or an old bug) is trimmed rather than carried forward as an invariant violation.
-  slots = Math.min(slots, collectedFromLevel(levelFromXp(xp).level))
-
-  const bloom: Partial<Record<SectionId, number>> = {}
-  const rawBloom = asRecord(r.progression?.bloom)
-  if (rawBloom) {
-    for (const s of SECTION_IDS) {
-      const n = nonNegInt(asRecord(rawBloom[s])?.xp)
-      if (n > 0) bloom[s] = n
-    }
-  }
-
-  out.ledger = { [key]: { xp, slots, bloom } }
-  out.stickers.grantedSlots = slots
-
-  // Preserve pending "nyt!" badges: the lowest slot still flagged new becomes the seen cursor.
-  const newIds = Array.isArray(r.stickers?.newIds)
-    ? (r.stickers.newIds as unknown[]).filter((v): v is string => typeof v === 'string')
-    : []
-  const newSlots = newIds.map((id) => slotOfReward(id)).filter((s) => s >= 0)
-  out.stickers.seenThroughSlot = newSlots.length
-    ? Math.max(0, Math.min(...newSlots))
-    : Math.min(REWARD_SLOTS, slots)
-  out.stickers.seenThroughSlot = Math.min(
-    out.stickers.seenThroughSlot,
-    Math.min(REWARD_SLOTS, slots),
-  )
-
-  out.progression.lastCelebratedLevel = Math.max(1, nonNegInt(r.progression?.lastCelebratedLevel ?? 1))
-  out.progression.updatedAt = nonNegInt(r.progression?.updatedAt)
-  const ex = asRecord(r.progression?.explored)
-  if (ex) {
-    for (const s of SECTION_IDS) {
-      const list = ex[s]
-      if (Array.isArray(list)) {
-        out.progression.explored[s] = Array.from(
-          new Set(list.filter((k): k is string => typeof k === 'string')),
-        )
-      }
-    }
-  }
-
-  const pg = asRecord(r.perGame)
-  if (pg) {
-    for (const [id, v] of Object.entries(pg)) {
-      const s = asRecord(v)
-      if (!s) continue
-      out.perGame[id] = { ...emptyGameStats() }
-      for (const f of Object.keys(emptyGameStats()) as (keyof PerGameStats)[]) {
-        out.perGame[id][f] = nonNegInt(s[f])
-      }
-    }
-  }
-  out.totals.totalStars = nonNegInt(r.totals?.totalStars)
-
-  out.settings = normalizeSettings(r.settings)
-  if (!out.settings.themeId && ctx.themeIdHint) out.settings.themeId = ctx.themeIdHint
-
-  // Stamp every carried setting so an ADOPTED legacy preference beats an untouched fresh profile
-  // (whose defaults are stamped at 0) but loses to any later explicit change on another device.
-  const stampAt = out.progression.updatedAt || 1
-  const stamp = (path: string) => {
-    out.settingsMeta[path] = { at: stampAt, by: 'legacy' }
-  }
-  stamp('sfxEnabled')
-  stamp('musicEnabled')
-  stamp('difficulty.global')
-  if (out.settings.themeId) stamp('themeId')
-  for (const s of Object.keys(out.settings.difficulty.perSection ?? {})) {
-    stamp(`difficulty.perSection.${s}`)
-  }
-
-  out.sync = {
-    rev: 1,
-    updatedAt: ctx.now,
-    epoch: 0,
-    syncedRev: 0,
-    serverRev: 0,
-    originDevice: ctx.deviceId,
-  }
-  clampCelebratedCursor(out)
-  return out
-}
-
-/**
- * The version-directed chain that replaces v3's unconditional hard reset.
- * `null` ⇒ nothing usable; the CALLER decides what that means.
- */
-export function readPersisted(raw: unknown, ctx: MigrateContext): PersistedProgress | null {
-  return normalizePersisted(raw) ?? migrateToV4(raw, ctx)
 }

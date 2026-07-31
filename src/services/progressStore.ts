@@ -53,11 +53,11 @@ import {
   emptyDeviceCounters,
   emptyGameStats,
   inertState,
+  normalizePersisted,
   owedRewards as owedFromDoc,
   pathIndexForSlot,
   progressInvariantViolations,
   progressKeyFor,
-  readPersisted,
   rebuildCollected,
   totalSlots,
   totalXp,
@@ -225,7 +225,9 @@ class ProgressStore {
     let doc: PersistedProgress | null = null
     try {
       const raw = localStorage.getItem(this.key)
-      if (raw) doc = readPersisted(JSON.parse(raw), { deviceId, now })
+      // No migration path by design (owner: clean sheet). A non-v4 blob normalises to null and the
+      // child simply starts fresh; utils/storageReset.ts sweeps the pre-accounts keys once per device.
+      if (raw) doc = normalizePersisted(JSON.parse(raw))
     } catch {
       /* malformed / private mode → fall through to defaults */
     }
@@ -291,7 +293,7 @@ class ProgressStore {
     if (this.key && e.key === this.key && e.newValue != null && this.persisted) {
       let remote: PersistedProgress | null
       try {
-        remote = readPersisted(JSON.parse(e.newValue), { deviceId: getDeviceId(), now: nowMs() })
+        remote = normalizePersisted(JSON.parse(e.newValue))
       } catch {
         return
       }

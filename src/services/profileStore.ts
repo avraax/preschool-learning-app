@@ -12,13 +12,6 @@ import { authStore } from './authStore'
 import { progressStore } from './progressStore'
 import { progressSync } from './progressSync'
 
-/**
- * The implicit profile used before any real child exists (and by the W4–W8 window, before profiles
- * shipped). W9 adopts its blob into the first real child, using the same merge path legacy adoption
- * uses — so nobody who played during that window loses anything.
- */
-export const TRANSITIONAL_PROFILE_ID = 'local'
-
 export interface ChildProfile {
   id: string
   name?: string
@@ -134,14 +127,12 @@ class ProfileStore {
       // Attach immediately so the very first render sees the child's real data (no level-1 flash).
       const target =
         (pointer && cached.some((p) => p.id === pointer) ? pointer : null) ??
-        (cached.length === 1 ? cached[0].id : null) ??
-        // No roster yet (first run, or the W4–W8 window): the transitional profile keeps the app
-        // playable, and W9's adoption moves it into the first real child.
-        (cached.length === 0 ? (pointer ?? TRANSITIONAL_PROFILE_ID) : null)
+        (cached.length === 1 ? cached[0].id : null)
 
       if (target) this.selectProfile(target, accountId)
       else {
-        // More than one child and no valid pointer ⇒ the picker decides. Nothing is attached yet, so
+        // No cached child, or more than one and no valid pointer ⇒ let ProfileGate decide (the
+        // mandatory create dialog, or the picker). NOTHING is attached and nothing is pre-added, so
         // nothing can be written to the wrong book in the meantime.
         this.publish({
           status: 'choosing',
@@ -173,7 +164,7 @@ class ProfileStore {
       // If the pointer names a profile that no longer exists (deleted on another device), stop playing
       // as it rather than writing to a dead book.
       const active = this.state.activeProfileId
-      if (active && active !== TRANSITIONAL_PROFILE_ID && !list.some((p) => p.id === active)) {
+      if (active && !list.some((p) => p.id === active)) {
         this.clearSelection()
       } else if (!active && list.length === 1) {
         this.selectProfile(list[0].id, accountId)
@@ -197,11 +188,9 @@ class ProfileStore {
     progressStore.attach(id)
     this.publish({ status: 'ready', accountId, activeProfileId: id, error: null })
     // Reconcile with the server in the background — NEVER awaited, because gameplay already runs off
-    // the local state that attach() just hydrated. The transitional profile has no server row.
-    if (id !== TRANSITIONAL_PROFILE_ID) {
-      progressSync.start()
-      void progressSync.syncNow('attach')
-    }
+    // the local state that attach() just hydrated.
+    progressSync.start()
+    void progressSync.syncNow('attach')
   }
 
   /** Drop the child selection ("🔄 Skift barn", or a profile that vanished). */

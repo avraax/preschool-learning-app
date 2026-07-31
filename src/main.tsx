@@ -24,6 +24,11 @@ import './utils/remoteConsole'
 import { sweepLegacyServiceWorkers } from './utils/swCleanup'
 sweepLegacyServiceWorkers()
 
+// Accounts release: clean sheet. Drops pre-accounts progress, the cached roster/session and the cached
+// local PIN verifier ONCE per device. Must run before progressStore or authStore read anything.
+import { sweepPreAccountsStorage } from './utils/storageReset'
+sweepPreAccountsStorage()
+
 // DEV screenshot harness: seed Math.random when ?seed=<n> is present (deterministic questions).
 import { installDevSeed, installDevRewards, installDevOauthFlow } from './utils/devHarness'
 installDevSeed()

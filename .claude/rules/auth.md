@@ -18,7 +18,7 @@ paths:
   - "src/services/profileStore.ts"
   - "src/services/progressStore.ts"
   - "src/services/progressSync.ts"
-  - "src/services/legacyAdoption.ts"
+  - "src/utils/storageReset.ts"
   - "src/services/redact.ts"
   - "src/config/progressSchema.ts"
   - "src/config/progressMerge.ts"
@@ -89,7 +89,13 @@ table, and our five (`childProfile`, `profileProgress`, `familyPin`, `pinAttempt
   registry of live secret strings (caught by identity, not pattern); `sanitizeUrl` strips the whole
   query+fragment on `/api/auth`. Auth surfaces carry `data-bl-redact`, `screenshotService` removes
   those nodes, the hold gesture is inert while an auth dialog is open, and `PinPad` renders dots.
-
+- **CLEAN SHEET, no migration.** The owner chose to reset all progress at the accounts release, so
+  there is deliberately NO v3→v4 migration and no legacy-adoption flow. A non-v4 blob normalises to
+  `null` and the child starts fresh; `src/utils/storageReset.ts` sweeps the pre-accounts keys, the
+  cached roster and the cached local PIN verifier ONCE per device (marker-guarded, same shape as
+  `swCleanup`). Sweeping the roster + verifier is not cosmetic: without it a device keeps offering
+  stale child profiles and keeps honouring a PIN the server no longer has. Nothing is ever
+  pre-added — an account with no children gets the mandatory create dialog.
 - **`set-auth-token` is the SIGNED cookie value** (`<rawToken>.<hmac>`), NOT `session.token`.
   `internalAdapter.findSession()` takes the RAW token, so the OAuth claim must split on `.` first —
   looking the signed value up returns null and bounces the adult back to the lock screen *after* a
@@ -117,7 +123,7 @@ whose data it holds. It therefore starts inert and **`profileStore` is the ONLY 
 ## The v4 document and the merge
 
 Persisted form (`src/config/progressSchema.ts`, schema **v4**) is a composition of CRDTs; the in-memory
-read model is derived from it and is **byte-identical to v3's shape**, which is why no consumer changed
+read model is derived from it and is **byte-identical to the pre-accounts shape**, which is why no consumer changed
 (the design's acceptance test was "StickerAlbum.tsx needs zero edits").
 
 - **XP/slots/bloom are a per-device G-Counter ledger.** A `max()` on totals doesn't merely under-count —
