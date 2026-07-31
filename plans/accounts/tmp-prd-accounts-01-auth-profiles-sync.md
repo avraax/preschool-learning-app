@@ -394,7 +394,9 @@ plaintext), and `sendVerificationOTP` calling a `lib/mailer.ts` `afterResponse()
 for free. Send responses are `{ success: true }` **unconditionally** (no account-existence oracle); allowlist rejection
 happens later at user creation.
 
-When it does ship it needs a **domain you control** for SPF+DKIM — e.g. `no-reply@mail.cyberpilot.io`. You cannot
+When it does ship it needs a **domain acquired for this app** for SPF+DKIM — e.g. `no-reply@mail<app-domain>`.
+**Do not use the owner's work domain or work email address for anything in this project** — not as a sending domain,
+not in the allowlist, not as a contact address. The only account identity in use is `allanvraa@gmail.com`. You cannot
 DKIM-sign `preschool-learning-app.vercel.app`. Recommended EU providers: **Brevo** (France, REST API, ~300/day free),
 Mailjet (FR) or Scaleway TEM (FR). Resend defaults to US — only with its EU region enabled.
 
