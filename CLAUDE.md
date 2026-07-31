@@ -124,3 +124,8 @@ curl -s -o /tmp/shot.jpg "<screenshotUrl from the response>"                    
   unchecked `until()`/wait that times out silently makes every assertion after it vacuous. And a test
   that compares two sides which move TOGETHER (app vs. the prebake enumerator) passes vacuously when a
   fix is deleted from both — so also pin the value itself, not just the agreement.
+- **A probe of an external service has THREE outcomes, not two.** Rate-limits, partial reads and
+  fail-closed 403s must classify as UNKNOWN and retry with backoff — never fold into one of the real
+  verdicts (a `.dk` whois rate-limit banner read as "domain registered" produced two false results
+  here). Only match a response you positively recognise, and calibrate with a known-positive **and** a
+  known-negative control, or the sweep is confidently wrong.
