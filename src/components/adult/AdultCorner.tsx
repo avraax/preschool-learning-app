@@ -39,10 +39,11 @@ const VoiceOverridePanel = React.lazy(() => import('../voicelab/VoiceOverridePan
 const BugReportDialog = React.lazy(() => import('./BugReportDialog'))
 const DifficultyPanel = React.lazy(() => import('./DifficultyPanel'))
 const ThemePanel = React.lazy(() => import('./ThemePanel'))
+const LoginSecurityPanel = React.lazy(() => import('./LoginSecurityPanel'))
 
 const HOLD_MS = 2000
 
-type AdultView = null | 'menu' | 'report' | 'voice' | 'difficulty' | 'theme' | 'resetConfirm' | 'resetDone'
+type AdultView = null | 'menu' | 'report' | 'voice' | 'difficulty' | 'theme' | 'login' | 'resetConfirm' | 'resetDone'
 
 interface AdultCornerProps {
   /** A newer build is live → show the hold-gated "⬆️ Opdater app" item in the menu (PRD-09 P4). */
@@ -58,7 +59,7 @@ const AdultCorner: React.FC<AdultCornerProps> = ({ updateAvailable = false, onAp
   const [view, setView] = useState<AdultView>(null)
   // Which lazy dialogs have been opened at least once — once true they stay mounted so their
   // open/close transitions animate (and their chunk only loads on first open).
-  const [mounted, setMounted] = useState<{ report?: boolean; voice?: boolean; difficulty?: boolean; theme?: boolean }>({})
+  const [mounted, setMounted] = useState<{ report?: boolean; voice?: boolean; difficulty?: boolean; theme?: boolean; login?: boolean }>({})
   const [screenshot, setScreenshot] = useState<string | null>(null)
   const [capturing, setCapturing] = useState(false)
   const [wiggle, setWiggle] = useState(false)
@@ -230,6 +231,13 @@ const AdultCorner: React.FC<AdultCornerProps> = ({ updateAvailable = false, onAp
               />
             </ListItem>
             <ListItemButton
+              aria-label="Login og sikkerhed"
+              onClick={() => { setMounted((m) => ({ ...m, login: true })); setView('login') }}
+              sx={{ borderRadius: 1, minHeight: 48 }}
+            >
+              <ListItemText primary="🔑 Login og sikkerhed" />
+            </ListItemButton>
+            <ListItemButton
               aria-label="Nulstil al fremgang"
               onClick={() => setView('resetConfirm')}
               sx={{ borderRadius: 1, minHeight: 48 }}
@@ -261,6 +269,9 @@ const AdultCorner: React.FC<AdultCornerProps> = ({ updateAvailable = false, onAp
         )}
         {mounted.theme && (
           <ThemePanel open={view === 'theme'} onClose={() => setView('menu')} />
+        )}
+        {mounted.login && (
+          <LoginSecurityPanel open={view === 'login'} onClose={() => setView('menu')} />
         )}
       </React.Suspense>
 

@@ -7,10 +7,17 @@
 
 import { betterAuth } from 'better-auth'
 import { bearer } from 'better-auth/plugins/bearer'
+import { passkey } from '@better-auth/passkey'
 import { APIError } from 'better-auth/api'
 import { getPool } from './db.ts'
 import { familyPlugin } from './auth-family-plugin.ts'
-import { baseURL, isEmailAllowed, requireEnv, runtime, trustedOrigins } from './env.ts'
+import { baseURL, isEmailAllowed, requireEnv, runtime, trustedOrigins, webauthn } from './env.ts'
+
+// `vercel.app` is on the Public Suffix List and a preview origin is not a registrable-domain suffix
+// of the production RP ID, so passkeys CANNOT work on a preview deployment (PRD §9). We leave the
+// plugin out entirely there rather than shipping a Face ID button that always fails; the client
+// learns this from /family/status's `webauthnEnabled`.
+const wa = webauthn()
 
 export const auth = betterAuth({
   appName: 'Børnelæring',
@@ -90,9 +97,31 @@ export const auth = betterAuth({
     // PWA has its own storage jar and out-of-scope OAuth navigation runs in an in-app browser view,
     // so a Set-Cookie during that hop can land in a context the app can never read.
     bearer(),
-    // Our own surface: /family/access-token, /family/status, and (from W5/W7) the PIN routes and the
+    // Our own surface: /family/access-token, /family/status, the PIN routes and (from W7) the
     // cookie-free Google PKCE leg. Also declares our five tables so they migrate together.
     familyPlugin(),
+    ...(wa.enabled
+      ? [
+          passkey({
+            rpID: wa.rpID,
+            rpName: wa.rpName,
+            // An ARRAY on purpose, so adding a custom domain later is config, not code.
+            origin: wa.origins,
+            authenticatorSelection: {
+              // What makes username-less unlock possible at all — the credential is discoverable,
+              // so the lock screen needs no account hint.
+              residentKey: 'required',
+              requireResidentKey: true,
+              // Face ID / Touch ID. NOT device lock-in: iCloud Keychain still syncs a platform
+              // passkey across the family's Apple devices.
+              authenticatorAttachment: 'platform',
+              // Safe *because* attachment is platform — Apple always performs user verification.
+              // It would be the wrong choice with security keys allowed.
+              userVerification: 'required',
+            },
+          }),
+        ]
+      : []),
   ],
 })
 

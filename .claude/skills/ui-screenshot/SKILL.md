@@ -80,6 +80,25 @@ JS
 )"
 ```
 
+### Driving passkeys / Face ID (`--webauthn`)
+`--webauthn` installs a CDP **virtual authenticator** (ctap2, internal transport, resident key + user
+verification, auto-presence) before the page loads, so passkey register + unlock can be exercised
+headlessly. It proves the real plumbing — options endpoint, `navigator.credentials.*`, verification,
+the `set-auth-token` handoff — but **not** the iOS gesture rule (activation consumed across an
+`await`); only the real iPad can.
+- **Use `http://localhost:5173`, never `127.0.0.1`.** With `WEBAUTHN_RP_ID=localhost` the RP ID must
+  be a registrable suffix of the page's domain, so `127.0.0.1` fails with a `SecurityError` that reads
+  exactly like "this device doesn't support Face ID".
+- The lock screen's Face ID button stays **disabled until the pre-fetched WebAuthn options land**
+  (~400ms) — that's by design, since the tap handler must not await. Poll for `!btn.disabled` before
+  clicking, or the click is a no-op.
+- Seed a session in the same run with `window.__auth.adoptSession(token, user)` (DEV only); each run
+  gets a fresh Chrome profile, so nothing persists between invocations. Mint a token with
+  `node --env-file=.env.local scripts/auth-dev-session.mjs`.
+- A MUI `TextField` will NOT pick up `el.value = x`; use the native setter
+  (`Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(el, x)`) then
+  dispatch `input`.
+
 ### Verifying spoken audio (what Danish the app actually says)
 To check narration/grammar/pronunciation, capture the **TTS request bodies** — the network ring
 doesn't expose POST payloads, so hook `window.fetch` at the START of an `--eval` IIFE (before any

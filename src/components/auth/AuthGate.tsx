@@ -15,6 +15,8 @@
 // on the token, not on playtime.
 
 import React from 'react'
+// Side-effect import: registers the real passkey / Google implementations into authSignIn.
+import '../../services/authSignInRegistry'
 import { gateBlocks } from '../../contexts/authGatePolicy'
 import { AuthProvider, useAuthContext } from '../../contexts/AuthContext'
 import AuthDialogs from './AuthDialogs'

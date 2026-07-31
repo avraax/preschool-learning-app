@@ -90,6 +90,13 @@ export interface WebAuthnConfig {
  *
  * `origins` stays an ARRAY so adding a custom domain later is a config change, not a code change.
  */
+/**
+ * DEV GOTCHA, verified the hard way: with `WEBAUTHN_RP_ID=localhost` the browser must be on
+ * `http://localhost:5173`, NOT `http://127.0.0.1:5173`. WebAuthn requires the RP ID to be a
+ * registrable suffix of the page's effective domain, and `127.0.0.1` is not `localhost` — the
+ * `navigator.credentials.create()` call fails with a SecurityError that looks exactly like "this
+ * device doesn't support Face ID". Drive passkey tests from `localhost`.
+ */
 export function webauthn(): WebAuthnConfig {
   const rpID = optionalEnv('WEBAUTHN_RP_ID') ?? (runtime() === 'dev' ? 'localhost' : '')
   const rpName = optionalEnv('WEBAUTHN_RP_NAME') ?? 'Børnelæring'

@@ -10,6 +10,10 @@
 // and `signIn.passkey()` fetch the options and THEN call navigator.credentials.*, which is exactly the
 // pattern that fails.
 
+// Type-only, so it costs nothing at runtime — but it means the pre-fetched options we carry around
+// are EXACTLY the shape @simplewebauthn/browser accepts, instead of a hand-written near-copy that
+// silently drifts (e.g. `transports: string[]` vs its narrower union).
+import type { PublicKeyCredentialRequestOptionsJSON } from '@simplewebauthn/browser'
 import { authStore, type AccountUser } from './authStore'
 
 export interface SignInResult {
@@ -95,15 +99,6 @@ export async function claimPendingFlow(flowId: string): Promise<SignInResult> {
 export interface PasskeyRequestOptions {
   fetchedAt: number
   options: PublicKeyCredentialRequestOptionsJSON
-}
-
-/** The subset of the WebAuthn JSON shape we pass straight through to @simplewebauthn/browser. */
-export interface PublicKeyCredentialRequestOptionsJSON {
-  challenge: string
-  rpId?: string
-  timeout?: number
-  userVerification?: UserVerificationRequirement
-  allowCredentials?: Array<{ id: string; type: 'public-key'; transports?: string[] }>
 }
 
 type PasskeyUnlockImpl = (opts: PasskeyRequestOptions) => Promise<SignInResult>
