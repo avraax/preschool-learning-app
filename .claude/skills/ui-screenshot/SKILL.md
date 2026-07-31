@@ -109,6 +109,12 @@ file back to its text: patch `HTMLMediaElement.prototype.play` to push `this.cur
 key embeds the exact text (e.g. `…|Yoyo starter med Y` → `c85cfd7…mp3`). Combine both hooks when a flow
 mixes prebaked + live (dynamic) speech.
 
+To verify audio **plumbing** rather than wording (codecs, missing files, silent fallbacks), read
+`performance.getEntriesByType('resource')` filtered to `/sounds/` — a request is itself proof Howler's
+codec gate passed, since a rejected codec makes **no** request at all — and hook `console.warn` to
+collect `[audio-unlock]` / "→ Web Speech" lines, because the driver only surfaces console *errors*.
+A clean run shows cue + `tts/*.mp3` requests, zero media `error` events, and zero fallbacks.
+
 ## Options
 - Core: `--url` (req) · `--out <png>` · `--w/--h` (viewport, default 540x940)
 - Waiting (prefer over sleeps): `--wait-for "<css>"` · `--wait-for-text "<txt>"` · `--timeout <ms>`

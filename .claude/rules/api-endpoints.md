@@ -39,3 +39,8 @@ unless `BUG_REPORT_READ_KEY` is set locally; prod is fail-closed).
 Curl `http://127.0.0.1:3001` with/without an `Origin` header, an oversized body, and `&key=`. To
 test without disturbing a running dev-server, launch a throwaway instance on another port:
 `PORT=3009 node dev-server.js`.
+
+**A running dev-server holds the shared config in memory** — after editing `shared-*.js` (voices,
+output format, lexicon), kill the process on 3001 and restart, or you verify against the OLD values.
+A `curl` 200 only proves *something* is listening, and starting a second instance silently no-ops on
+a bound port: this is how a "verified" TTS response came back as Ogg while the source said MP3.
