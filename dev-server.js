@@ -16,6 +16,8 @@ import { toNodeHandler, fromNodeHeaders } from 'better-auth/node';
 import { auth } from './lib/auth.ts';
 import { verifyAccessToken } from './lib/access-token.ts';
 import { devBypassEnabled } from './lib/env.ts';
+import { normalizePersisted, progressInvariantViolations } from './src/config/progressSchema.ts';
+import { mergeProgress } from './src/config/progressMerge.ts';
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3001;
@@ -584,6 +586,90 @@ app.all('/api/profiles', async (req, res) => {
   } catch (error) {
     logDevError('Profiles', error);
     res.status(500).json({ error: 'Profil-handlingen mislykkedes' });
+  }
+});
+
+// --- Progress sync (dev mirror of api/progress.ts) -------------------------------------------------
+// Both halves import the SAME pure modules (src/config/progressSchema.ts + progressMerge.ts), so the
+// validation, the merge and the anti-rollback check are literally the same code as production.
+app.all('/api/progress', async (req, res) => {
+  if (!isAllowedOrigin(req)) return res.status(403).json({ error: 'Forbidden origin' });
+  const session = await devSession(req, res);
+  if (!session) return;
+  if (!rateLimit(req, res, { scope: 'progress', limit: 240, windowMs: 60_000, subject: session.userId })) return;
+  try {
+    const ctx = await auth.$context;
+    const db = ctx.adapter;
+    const profileId = req.method === 'GET' ? req.query.profileId : req.body?.profileId;
+    if (typeof profileId !== 'string' || !profileId) {
+      return res.status(400).json({ error: 'profileId is required' });
+    }
+    const profile = await db.findOne({ model: 'childProfile', where: [{ field: 'id', value: profileId }] });
+    if (!profile || profile.userId !== session.userId || profile.deletedAt) {
+      return res.status(404).json({ error: 'Ukendt profil' });
+    }
+    const existing = await db.findOne({
+      model: 'profileProgress',
+      where: [{ field: 'profileId', value: profileId }],
+    });
+
+    if (req.method === 'GET') {
+      if (!existing) return res.status(404).json({ error: 'Ingen fremgang gemt endnu' });
+      return res.json({
+        rev: Number(existing.rev),
+        epoch: existing.epoch,
+        updatedAt: new Date(existing.updatedAt).getTime(),
+        blob: existing.doc,
+      });
+    }
+
+    if (req.method === 'PUT') {
+      const incoming = normalizePersisted(req.body?.blob);
+      if (!incoming) return res.status(400).json({ error: 'blob is not a valid v4 document' });
+      const violations = progressInvariantViolations(incoming);
+      if (violations.length) return res.status(422).json({ error: 'blob failed validation', violations });
+      const baseRev = Number(req.body?.baseRev) || 0;
+
+      if (!existing) {
+        const created = await db.create({
+          model: 'profileProgress',
+          data: { profileId, doc: incoming, rev: 1, epoch: incoming.sync.epoch, updatedAt: new Date() },
+        });
+        return res.json({ rev: Number(created.rev) });
+      }
+      const serverRev = Number(existing.rev);
+      if (baseRev !== serverRev) return res.status(409).json({ rev: serverRev, blob: existing.doc });
+
+      const stored = normalizePersisted(existing.doc);
+      let next = incoming;
+      if (stored) {
+        // Anti-rollback: ledger entries are monotonic by construction, so a decrease is a stale replay
+        // or a tamper. A HIGHER epoch is a declared reset and may drop everything.
+        if (incoming.sync.epoch === stored.sync.epoch) {
+          for (const [device, before] of Object.entries(stored.ledger)) {
+            const after = incoming.ledger[device];
+            if (!after || after.xp < before.xp || after.slots < before.slots) {
+              return res.status(409).json({ rev: serverRev, blob: existing.doc, reason: `ledger[${device}] regressed` });
+            }
+          }
+        } else if (incoming.sync.epoch < stored.sync.epoch) {
+          return res.status(409).json({ rev: serverRev, blob: existing.doc, reason: 'epoch regressed' });
+        }
+        next = mergeProgress(stored, incoming, { now: Date.now(), deviceId: 'server' }).merged;
+      }
+      const nextRev = serverRev + 1;
+      await db.update({
+        model: 'profileProgress',
+        where: [{ field: 'profileId', value: profileId }],
+        update: { doc: next, rev: nextRev, epoch: next.sync.epoch, updatedAt: new Date() },
+      });
+      return res.json({ rev: nextRev });
+    }
+
+    return res.status(405).json({ error: 'Method not allowed' });
+  } catch (error) {
+    logDevError('Progress', error);
+    res.status(500).json({ error: 'Synkronisering mislykkedes' });
   }
 });
 

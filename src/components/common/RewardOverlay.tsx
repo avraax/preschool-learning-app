@@ -6,6 +6,7 @@ import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
 import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 import { progressStore, type RewardGrant } from '../../services/progressStore'
+import { progressSync } from '../../services/progressSync'
 import { rewardBus, type RewardEvent } from '../../services/rewardBus'
 import { mascotBus } from '../../services/mascotBus'
 import { sfx } from '../../services/sfxClient'
@@ -69,6 +70,9 @@ const RewardOverlay: React.FC = () => {
     dismissTimer.current = null
     // Advance the celebrated cursor so neither this tab nor another re-fires for this level.
     progressStore.markLevelCelebrated(event.level)
+    // The reward the child just saw is the moment a parent is most likely to check the other iPad, so
+    // this one gets an immediate push rather than waiting for the 8s commit debounce (§6.4).
+    void progressSync.push('ceremony')
     setEvent(null)
     setGrants([])
     grantedRef.current = false
@@ -262,7 +266,7 @@ const RewardOverlay: React.FC = () => {
                   textShadow: dark ? '0 0 18px rgba(120,170,255,0.6), 0 2px 10px rgba(0,0,0,0.5)' : 'none',
                 }}
               >
-                {bookDone ? 'Hele bogen er samlet!' : '🎉 Hele siden er samlet!'}
+                {bookDone ? 'Hele bogen er samlet!' : 'Hele siden er samlet!'}
               </Typography>
             </>
           )}

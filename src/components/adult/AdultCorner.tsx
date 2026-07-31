@@ -30,6 +30,7 @@ import {
   ArrowUp,
   Bug,
   CircleCheck,
+  Cloud,
   KeyRound,
   Lock,
   Mic,
@@ -60,6 +61,7 @@ const DifficultyPanel = React.lazy(() => import('./DifficultyPanel'))
 const ThemePanel = React.lazy(() => import('./ThemePanel'))
 const LoginSecurityPanel = React.lazy(() => import('./LoginSecurityPanel'))
 const ProfilesPanel = React.lazy(() => import('./ProfilesPanel'))
+const SyncPanel = React.lazy(() => import('./SyncPanel'))
 
 const HOLD_MS = 2000
 const ICON = 20
@@ -67,7 +69,7 @@ const ICON = 20
 // (de-emoji PRD-01 W1: these rows used to lead with an emoji sitting inline in the text).
 const iconSlot = { minWidth: 32, color: 'inherit' } as const
 
-type AdultView = null | 'menu' | 'report' | 'voice' | 'difficulty' | 'theme' | 'login' | 'profiles' | 'resetConfirm' | 'resetDone'
+type AdultView = null | 'menu' | 'report' | 'voice' | 'difficulty' | 'theme' | 'login' | 'profiles' | 'sync' | 'resetConfirm' | 'resetDone'
 
 interface AdultCornerProps {
   /** A newer build is live → show the hold-gated "Opdater app" item in the menu (PRD-09 P4). */
@@ -87,7 +89,7 @@ const AdultCorner: React.FC<AdultCornerProps> = ({ updateAvailable = false, onAp
   const [view, setView] = useState<AdultView>(null)
   // Which lazy dialogs have been opened at least once — once true they stay mounted so their
   // open/close transitions animate (and their chunk only loads on first open).
-  const [mounted, setMounted] = useState<{ report?: boolean; voice?: boolean; difficulty?: boolean; theme?: boolean; login?: boolean; profiles?: boolean }>({})
+  const [mounted, setMounted] = useState<{ report?: boolean; voice?: boolean; difficulty?: boolean; theme?: boolean; login?: boolean; profiles?: boolean; sync?: boolean }>({})
   const [screenshot, setScreenshot] = useState<string | null>(null)
   const [capturing, setCapturing] = useState(false)
   const [wiggle, setWiggle] = useState(false)
@@ -290,6 +292,14 @@ const AdultCorner: React.FC<AdultCornerProps> = ({ updateAvailable = false, onAp
               <ListItemText primary="Skift barn" />
             </ListItemButton>
             <ListItemButton
+              aria-label="Synkronisering"
+              onClick={() => { setMounted((m) => ({ ...m, sync: true })); setView('sync') }}
+              sx={{ borderRadius: 1, minHeight: 48 }}
+            >
+              <ListItemIcon sx={iconSlot}><Cloud size={ICON} aria-hidden /></ListItemIcon>
+              <ListItemText primary="Synkronisering" />
+            </ListItemButton>
+            <ListItemButton
               aria-label="Login og sikkerhed"
               onClick={() => { setMounted((m) => ({ ...m, login: true })); setView('login') }}
               sx={{ borderRadius: 1, minHeight: 48 }}
@@ -336,6 +346,9 @@ const AdultCorner: React.FC<AdultCornerProps> = ({ updateAvailable = false, onAp
         )}
         {mounted.profiles && (
           <ProfilesPanel open={view === 'profiles'} onClose={() => setView('menu')} />
+        )}
+        {mounted.sync && (
+          <SyncPanel open={view === 'sync'} onClose={() => setView('menu')} />
         )}
       </React.Suspense>
 

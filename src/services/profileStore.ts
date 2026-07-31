@@ -10,6 +10,7 @@
 import { ACTIVE_PROFILE_KEY } from '../config/progressSchema'
 import { authStore } from './authStore'
 import { progressStore } from './progressStore'
+import { progressSync } from './progressSync'
 
 /**
  * The implicit profile used before any real child exists (and by the W4–W8 window, before profiles
@@ -195,6 +196,12 @@ class ProfileStore {
     writePointer(id)
     progressStore.attach(id)
     this.publish({ status: 'ready', accountId, activeProfileId: id, error: null })
+    // Reconcile with the server in the background — NEVER awaited, because gameplay already runs off
+    // the local state that attach() just hydrated. The transitional profile has no server row.
+    if (id !== TRANSITIONAL_PROFILE_ID) {
+      progressSync.start()
+      void progressSync.syncNow('attach')
+    }
   }
 
   /** Drop the child selection ("🔄 Skift barn", or a profile that vanished). */
