@@ -23,6 +23,7 @@ paths:
   - "src/config/progressSchema.ts"
   - "src/config/progressMerge.ts"
   - "src/config/pinPolicy.ts"
+  - "src/config/avatars.ts"
   - "src/components/auth/**"
   - "src/contexts/AuthContext.tsx"
   - "src/contexts/authGatePolicy.ts"
@@ -168,6 +169,24 @@ whose data it holds. It therefore starts inert and **`profileStore` is the ONLY 
 - Anything running before the gate opens must `await progressStore.whenAttached()` (e.g. the
   `?rewards=n` harness), or it silently no-ops.
 
+## The `avatarEmoji` column does NOT hold an emoji
+
+It holds an **avatar id** (`'fox'`) from the closed set in `src/config/avatars.ts` — the app ships no
+emoji (CLAUDE.md), so the child avatars became baked art in `src/assets/avatars/`. The COLUMN kept its
+old name deliberately: renaming it means a migration against the owner's live DB for zero behavioural
+gain, so the id↔column mapping lives only in `publicShape`/`cleanAvatar` in `api/profiles.ts` (mirrored
+in `dev-server.js`). Expect the name to lie; don't "fix" it by writing a glyph back.
+
+- `src/config/avatars.ts` is PURE and Node-importable precisely so the client, `api/profiles.ts` and
+  `dev-server.js` validate against ONE list. Its legacy glyph→id table is written as `\u{…}` escapes so
+  the file itself stays emoji-free.
+- **`cleanAvatar` is an ALLOW-LIST, and its old rule was the exact opposite.** It used to reject ASCII
+  letters/digits on the grounds that "an avatar is a pictograph" — backwards once avatars ARE ascii ids.
+  It still accepts a known legacy glyph (so a client running older JS mid-deploy isn't rejected) but
+  refuses an unrecognised one rather than defaulting.
+- Reads normalise through `normalizeAvatarId`, so a row written before the swap still resolves. Writes
+  only ever store an id.
+
 ## The v4 document and the merge
 
 Persisted form (`src/config/progressSchema.ts`, schema **v4**) is a composition of CRDTs; the in-memory
@@ -207,6 +226,15 @@ read model is derived from it and is **byte-identical to the pre-accounts shape*
 - **Never verify against the shared Neon DB.** It is the owner's REAL account: test rows land in his
   play-test. Two child profiles and a test PIN reached him that way. Use a scratch account, or wipe
   immediately afterwards (`scripts/auth-dev-session.mjs` creates; deleting the `user` row cascades).
+  **`auth-dev-session.mjs`'s own "LOCAL DEV ONLY" banner does not protect you** — its guard is
+  `runtime() !== 'dev'`, which checks where the CODE runs, not which database it points at, and
+  `.env.local` holds the PRODUCTION Neon URL. So it reads as safe while minting a real year-long
+  session on the owner's account (that is exactly how one got minted just for screenshots). For a
+  screenshot use `?nogate=1`, which attaches a stand-in child and touches nothing.
+- **Before deleting anything in that DB, re-derive the identifier FROM the DB** rather than trusting an
+  id you remember from earlier in the session. A scoped query returning zero rows can mean *wrong
+  scope*, not *already clean* — a stale user id read as "nothing to revoke" when the row had simply
+  been recreated under a new id. List the table first, confirm the row is the one you mean, then act.
 - `curl http://127.0.0.1:3001` per `.claude/rules/api-endpoints.md`. **Restart the dev-server after
   editing anything under `lib/`** — a stale instance 404s every auth route while its banner looks
   healthy. Emoji passed through curl on Git Bash arrive mangled; create profiles from the browser.

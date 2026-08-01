@@ -1,6 +1,10 @@
 ---
 paths:
   - "src/assets/themes/**"
+  - "src/assets/avatars/**"
+  - "src/assets/rewards/**"
+  - "src/assets/ui/**"
+  - "src/assets/symbols/**"
   - "src/components/common/scene/*.tsx"
   - "src/components/common/scene/*.ts"
   - "src/theme/sceneAssets.ts"
@@ -88,7 +92,33 @@ manifest/subject choices with the owner first, and save it in the relevant plan 
 This front-half is a standing part of **every** baked-art area — each area PRD's steps should include it
 so a fresh session does it automatically.
 
+## Art replaces a glyph? Delete the fallback and add a COVERAGE GUARD
+
+The app ships **no emoji** (CLAUDE.md Conventions). So when baked art takes over a surface, the rule is
+*not* "render art, else the glyph" — a fallback that can silently reappear is the thing we removed. Delete
+the fallback branch entirely, render the art unconditionally, and add a test that **fails the build** when
+a render goes missing. A hole is visible in review; a glyph ships.
+
+Live examples to copy, one per manifest: `src/config/gameIcons.test.ts` · `src/theme/themes.test.ts` ·
+`src/config/avatars.test.ts` · `src/config/rewardArtCoverage.test.ts`. Each also asserts the reverse —
+no ORPHAN art for a subject that left the set.
+
+They share one technique worth knowing: **the asset manifests are Vite-only** (`import.meta.glob`, or
+`.webp` imports Node can't evaluate), so a `node --test` guard cannot import them. Check the DIRECTORY
+instead, or read the manifest `index.ts` as TEXT and parse its keys. For the same reason the id list must
+live in a PURE module (`src/config/avatars.ts`, `stickers.ts`) separate from the art manifest — that
+separation is what lets the server and the tests share it.
+
 ## Keying — the core gotcha: key by green-EXCESS, not greenness
+
+**Two screens exist.** Magenta (`#FF00FF`) is the LEGACY convention and still the source for the mascots,
+the section icons and the math symbols; **everything generated since is green** (`#00FF00`). Check which
+one an `art-src/` batch is on before keying — `chromaKeyMagenta` and `greenKeySprite` are separate paths in
+`scripts/optimize-theme-art.mjs`.
+
+**Reusing art that is ALREADY keyed** (e.g. a reward subject that already ships as a game asset) is a
+third path: **re-trim it, never re-key it.** It has a real alpha channel and no screen left to remove, so
+running it through a keyer corrupts it. `retrimSprite()` does the trim + square-contain half only.
 
 Subject greens (jungle foliage, the rainbow, ocean seaweed, the globe) **share the screen's hue** but
 are muted; the screen green is vivid. So key on **`g - max(r,b)` (green excess)**, NOT distance to
