@@ -43,6 +43,20 @@ character class and silently matches nothing — use `"api/auth/**"`.
 what a valid session is. They live OUTSIDE `/api/auth` on purpose: `redact.sanitizeUrl` strips the
 entire query+fragment from auth paths, so keeping these separate leaves them diagnosable.
 
+## The CSP reaches API responses too — server-rendered HTML must be script-free
+
+`vercel.json`'s `/(.*)` header rule is not "the app": it applies `Content-Security-Policy` (including
+`script-src 'self'`) to **every** path, `/api/**` included. Confirm with `curl -I` against the deployed
+function, never local dev.
+
+So an inline `<script>` in HTML a function generates is dead on arrival — silently, with no error
+anywhere. The Google OAuth callback handed control back via
+`<script>location.replace('/#bl_auth=1')</script>` and the CSP shipped a workstream later; the automatic
+return just stopped working and the adult had to notice the link and tap it. **If a page must navigate,
+answer with a redirect** (a 302 returned from inside a better-auth `createAuthEndpoint` handler passes
+through its router untouched); if it must inform, give it a plain link. Guarded by
+`lib/server-html-csp.test.ts`.
+
 ## Two sources that MUST stay in sync
 
 Each `api/*.ts` is mirrored in `dev-server.js` (Express, port 3001) for local dev. Change one →

@@ -119,9 +119,9 @@ table, and our five (`childProfile`, `profileProgress`, `familyPin`, `pinAttempt
   boot's `/api/profiles` round trip, and since `storageReset` wipes the cached roster once per device,
   that was the accounts release's first impression on any account whose children were made elsewhere.
 - **The resume path is throttled, and publishing is change-gated.** `visibilitychange:visible` fires on
-  every iPad app switch. `validate()` dedupes in-flight callers and skips a verdict fresher than 60s;
-  `refreshStatus()` is throttled to 5 min and takes `force` (pass it after a PIN set, a passkey change,
-  or a new session — the mandatory PIN nag hangs off that answer); `persist()` throttles timestamp-only
+  every iPad app switch. `validate()` dedupes in-flight callers and skips a verdict that is still fresh;
+  `refreshStatus()` is throttled independently and takes `force` (pass it after a PIN set, a passkey
+  change, or a new session — the mandatory PIN nag hangs off that answer); `persist()` throttles timestamp-only
   writes; and `publish()` drops a notify whose snapshot is materially unchanged, since `AuthProvider`
   sits above `<App />` and every publish re-renders the whole app.
 - **Logging out is a top-level item in the adult menu, and the lock phase is UNREACHABLE.** The owner

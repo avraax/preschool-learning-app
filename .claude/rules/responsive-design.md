@@ -90,6 +90,21 @@ Adjust for landscape orientation.
 - Scale up on larger screens
 - Use padding to increase tap areas without affecting visual size
 
+## Overlays & stacking
+
+A MUI `<Dialog>` defaults to `theme.zIndex.modal` = **1300**, while this app's blocking surfaces are
+hand-rolled `position: fixed` boxes at ~10000 (lock screen, profile picker, audio permission). So a
+dialog opened FROM one of those mounts **underneath** it: live, interactive, and simply not drawn. That
+is a dead button with no error, no failing test and a screenshot that looks right — it shipped twice.
+
+- Give any dialog that can appear over a full-screen surface an explicit z-index above it, from a shared
+  constant — `src/components/auth/authOverlayZ.ts` is the pattern (one documented ordering, no literals
+  at the call sites, guarded by its own test).
+- **Prove it with a hit-test, not a screenshot**: `document.elementFromPoint(cx, cy)` at the element's
+  centre must return that element, not the thing above it. See the `ui-screenshot` skill.
+- Prefer standing the lower surface DOWN over out-stacking it — one blocking overlay at a time is the
+  app's rule (see `authUiOpen` in `.claude/rules/audio-system.md`). The z-index is the backstop.
+
 ## Don'ts
 
 - No fixed heights like `height: 200px`
