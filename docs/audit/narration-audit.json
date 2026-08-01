@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-07-15T10:08:28.813Z",
+  "updatedAt": "2026-08-01T06:07:34.562Z",
   "clips": {
     "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|b": {
       "verdict": "ok",
@@ -3832,6 +3832,30 @@
       "text": "a",
       "group": "letters",
       "updatedAt": 1784110108813
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|jåd": {
+      "verdict": "wrong",
+      "note": "send glyph \"j\" (respelling jåd is wrong)",
+      "candidateIpa": "",
+      "text": "jåd",
+      "group": "letters",
+      "updatedAt": 1784105075326
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|I, som en is": {
+      "verdict": "ok",
+      "note": "",
+      "candidateIpa": "",
+      "text": "I, som en is",
+      "group": "letters",
+      "updatedAt": 1785564440829
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|zet som Zebra": {
+      "verdict": "ok",
+      "note": "",
+      "candidateIpa": "",
+      "text": "zet som Zebra",
+      "group": "letters",
+      "updatedAt": 1785564453748
     }
   }
 }

@@ -97,13 +97,26 @@ export const spokenLetter = (letter: string): string => LETTER_SPELLING[letter] 
 export const letterPhrase = (letter: string, word: string): string =>
   LETTER_LINE[letter]?.(word) ?? `${spokenLetter(letter)} som ${word}`
 
+// Whole-line overrides for the "starter med" template. A letter sitting sentence-FINAL is in the
+// weakest prosodic position there is, so the comma trick that fixed the browse line has nothing to
+// isolate against and does not transfer.
+const STARTS_WITH_LINE: Record<string, (word: string) => string> = {
+  // I — every sentence-final phrasing was auditioned and REJECTED by ear: 'Is starter med I',
+  // '… bogstavet I', '… med, I', '… med I.', '… med ... I', 'Is — den starter med I', at several
+  // tempos. Owner ruling: speak the proven browse line instead. I is therefore the ONE letter whose
+  // correct-answer fact names the letter + its picture rather than the first sound — a deliberate
+  // exception to the quiz's "{ord} starter med {bogstav}" frame, taken because a mispronounced letter
+  // teaches worse than a differently-framed correct one. It also resolves to a string that is
+  // byte-identical to letterPhrase('I', …), so it reuses that already-prebaked, already-audited clip.
+  I: (word) => letterPhrase('I', word),
+}
+
 /**
- * "{ord} starter med {bogstav}" — Bogstav Quiz's correct-answer fact. The letter is sentence-FINAL
- * here, so the comma trick doesn't transfer; I is still known-wrong in this position (candidates are
- * queued in voicelabData.ts).
+ * "{ord} starter med {bogstav}" — Bogstav Quiz's correct-answer fact, with the per-letter overrides
+ * above (I speaks the browse line instead; Z is respelled).
  */
 export const startsWithPhrase = (letter: string, word: string): string =>
-  `${word} starter med ${spokenLetter(letter)}`
+  STARTS_WITH_LINE[letter]?.(word) ?? `${word} starter med ${spokenLetter(letter)}`
 
 // Letters Bogstav Quiz asks about (the correct answer is one of these). W, X and Å are asked too
 // (owner request — they have honest picturable words: Wienerbrød / Xylofon / Å-stream). Only Q stays

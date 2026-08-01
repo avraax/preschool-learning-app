@@ -45,6 +45,12 @@ test('the owner-verified pronunciation fixes are still in force', () => {
   assert.equal(letterPhrase('I', 'Is'), 'I, som en is')
   assert.equal(letterPhrase('Z', 'Zebra'), 'zet som Zebra') // Danish letter name, not the glyph
   assert.equal(letterPhrase('A', 'Abe'), 'A som Abe') // unfixed letters stay byte-identical
+  // The quiz's correct-answer fact: I speaks the browse line (no sentence-final phrasing read right),
+  // which also means it reuses that clip rather than needing its own.
+  assert.equal(startsWithPhrase('I', 'Is'), 'I, som en is')
+  assert.equal(startsWithPhrase('I', 'Is'), letterPhrase('I', 'Is'))
+  assert.equal(startsWithPhrase('Z', 'Zebra'), 'Zebra starter med zet')
+  assert.equal(startsWithPhrase('A', 'Abe'), 'Abe starter med A') // frame intact for the other 27
 })
 
 test('a whole-line override follows the manifest word instead of hardcoding it', () => {

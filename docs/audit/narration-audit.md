@@ -3,9 +3,9 @@
 > AUTO-GENERATED (by the `/audit` harness via the dev-server, or `npm run audit:approve-all`).
 > Do not hand-edit — source of truth is `narration-audit.json`.
 
-Last updated: 2026-07-15T10:08:28.813Z
+Last updated: 2026-08-01T06:07:34.562Z
 
-**479 OK · 0 wrong · 0 unaudited** (of 479 clips)
+**481 OK · 1 wrong · 0 unaudited** (of 482 clips)
 
 ## Bogstaver
 
@@ -21,7 +21,9 @@ Last updated: 2026-07-15T10:08:28.813Z
 | ✅ | g | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | h | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | i | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | I, som en is |  |  |
 | ✅ | j | Bulk-approved (PRD-11 owner listen pass) |  |
+| ❌ | jåd | send glyph "j" (respelling jåd is wrong) |  |
 | ✅ | k | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | l | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | m | Bulk-approved (PRD-11 owner listen pass) |  |
@@ -36,6 +38,7 @@ Last updated: 2026-07-15T10:08:28.813Z
 | ✅ | v | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | w | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | y | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | zet som Zebra |  |  |
 | ✅ | zæt | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | æ | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | ø | Bulk-approved (PRD-11 owner listen pass) |  |
