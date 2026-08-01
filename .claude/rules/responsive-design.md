@@ -69,6 +69,16 @@ reuse them before inventing new ones.
 
 When using aspect ratios, set `gridAutoRows: 'auto'` and let aspect ratio determine height.
 
+## The focal band is already full — adding to it means re-measuring
+
+`PromptFocus` sits in GameShell's fixed 40%/30% band, and the browse blooms were deliberately sized
+(PRD-18 W5) to fill that whole band. So **putting anything in the `repeat` slot costs ~58px of it** (pill
++ gap) and the bloom then overflows its own subject zone and paints UNDER the pill — flex does not save
+you, because a fixed `clamp()`/vh glyph or `<img>` never shrinks. Trim the bloom's vh caps and prove
+`subject.bottom <= pill.top` with `--measure` (not by eye) at **1024×768, 844×390 and 667×375** — phone
+landscape has only ~95px of band and fails on its own after iPad passes. If it still won't fit, drop the
+secondary element on that viewport rather than clipping it.
+
 ## Typography
 
 Use `clamp()` for responsive text: `fontSize: 'clamp(1rem, 3.5vw, 1.5rem)'`.
