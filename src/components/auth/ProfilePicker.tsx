@@ -16,6 +16,7 @@ import { motion } from 'framer-motion'
 import { profileStore, type ChildProfile } from '../../services/profileStore'
 import { PHONE_ANY } from '../../theme/phoneMedia'
 import { AUTH_Z } from './authOverlayZ'
+import { avatarArt } from '../../assets/avatars'
 
 export interface ProfilePickerProps {
   profiles: ChildProfile[]
@@ -133,14 +134,21 @@ const ProfilePicker: React.FC<ProfilePickerProps> = ({
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      fontSize: '2rem',
-                      lineHeight: 1,
+                      overflow: 'hidden',
                       background: alpha(theme.palette.primary.main, 0.08),
                       border: `3px solid ${ring}`,
-                      [PHONE_ANY]: { width: 52, height: 52, fontSize: '1.6rem' },
+                      [PHONE_ANY]: { width: 52, height: 52 },
                     }}
                   >
-                    {p.avatarEmoji}
+                    {/* Baked portrait, never a glyph (de-emoji PRD-01 D5). `contain` inside the round
+                        badge so the head isn't cropped by the circle. */}
+                    <Box
+                      component="img"
+                      src={avatarArt(p.avatarId)}
+                      alt=""
+                      draggable={false}
+                      sx={{ width: '100%', height: '100%', objectFit: 'contain', userSelect: 'none' }}
+                    />
                   </Box>
                   <Typography
                     variant="body2"

@@ -124,6 +124,10 @@ curl -s -o /tmp/shot.jpg "<screenshotUrl from the response>"                    
   unchecked `until()`/wait that times out silently makes every assertion after it vacuous. And a test
   that compares two sides which move TOGETHER (app vs. the prebake enumerator) passes vacuously when a
   fix is deleted from both — so also pin the value itself, not just the agreement.
+- **Another session may be working in this same tree.** When `tsc`/`npm test` fails in files your change
+  never touched, run `git status` before touching anything — it's usually a parallel session mid-refactor
+  (a half-done `avatarEmoji`→`avatarId` rename did exactly this). Leave their work alone, and say whose
+  the failure is: never "fix" it into a collision, and never report their red build as your own result.
 - **A probe of an external service has THREE outcomes, not two.** Rate-limits, partial reads and
   fail-closed 403s must classify as UNKNOWN and retry with backoff — never fold into one of the real
   verdicts (a `.dk` whois rate-limit banner read as "domain registered" produced two false results

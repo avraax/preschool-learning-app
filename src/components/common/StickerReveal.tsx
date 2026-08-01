@@ -12,7 +12,8 @@ import type { RewardGrant } from '../../services/progressStore'
 // "Nyt klistermærke!" banner. Gold-pass duplicates get extra shimmer (a positive "ooh, a shiny!" —
 // never a "you already have this" sadness).
 //
-// Renders the baked soft-3D art when it exists and the emoji until then (art-gated, Reward Book D4).
+// Renders the baked soft-3D art. All 45 renders ship since de-emoji W6, so there is no glyph path —
+// `rewardArtCoverage.test.ts` is what keeps that assumption honest.
 //
 // Pure visual; speaking the reward name is left to the caller — there is ONE TTS channel and no queue,
 // so a ceremony must compose exactly one utterance rather than let each beat speak.
@@ -110,27 +111,18 @@ const StickerReveal: React.FC<StickerRevealProps> = ({ award, accent, delay = 0,
             : `0 8px 0 ${lip}, ${ambientShadow}`,
         }}
       >
-        {art ? (
-          <Box
-            component="img"
-            src={art}
-            alt=""
-            sx={{
-              width: size * 0.72,
-              height: size * 0.72,
-              objectFit: 'contain',
-              userSelect: 'none',
-              pointerEvents: 'none',
-            }}
-          />
-        ) : (
-          <Typography
-            component="span"
-            sx={{ fontSize: size * 0.5, lineHeight: 1, userSelect: 'none' }}
-          >
-            {reward.emoji}
-          </Typography>
-        )}
+        <Box
+          component="img"
+          src={art}
+          alt=""
+          sx={{
+            width: size * 0.72,
+            height: size * 0.72,
+            objectFit: 'contain',
+            userSelect: 'none',
+            pointerEvents: 'none',
+          }}
+        />
 
         {/* Shiny shimmer sweep */}
         {isShiny && !reduce && (

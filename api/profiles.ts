@@ -1,8 +1,13 @@
 // Child-profile CRUD (accounts PRD §4.3).
 //
-// A child profile is a PLAYABLE IDENTITY, never a credential: it has an emoji avatar, an optional FIRST
+// A child profile is a PLAYABLE IDENTITY, never a credential: it has an avatar, an optional FIRST
 // name and nothing else. It is selected, not logged into, and it never authenticates. That is the whole
 // data-minimisation story (D9) — no surname, no birthdate, no photo.
+//
+// The avatar is an ID from the closed `AVATAR_IDS` set (de-emoji PRD-01) — `'fox'`, not `'🦊'` — and the
+// baked portrait is resolved client-side. The DB COLUMN is still named `avatarEmoji` because renaming
+// it would mean a migration against the owner's live Neon database for zero behavioural gain; the
+// mapping to the `avatarId` wire field happens here, at the only boundary that touches the row shape.
 //
 // DELETE is a SOFT delete. A device that still points at the profile then resolves it to "gone" rather
 // than silently falling through to a sibling's book, and the child's progress row survives long enough
@@ -11,6 +16,12 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { applyCors, isAllowedOrigin, logServerError, rateLimit } from '../lib/server-utils.js'
 import { adapter, requireSession } from '../lib/session.ts'
+import {
+  AVATAR_IDS,
+  LEGACY_AVATAR_GLYPHS as LEGACY_GLYPHS,
+  isAvatarId,
+  normalizeAvatarId,
+} from '../src/config/avatars.ts'
 
 const MAX_PROFILES = 8
 const MAX_NAME_LENGTH = 24
@@ -27,18 +38,28 @@ interface ChildProfileRow {
 const publicShape = (r: ChildProfileRow) => ({
   id: r.id,
   name: r.name ?? undefined,
-  avatarEmoji: r.avatarEmoji,
+  // Rows written before the baked avatars hold the glyph; normalise so a client only ever sees an id.
+  avatarId: normalizeAvatarId(r.avatarEmoji),
   createdAt: new Date(r.createdAt).getTime(),
 })
 
-/** A single emoji (possibly with modifiers), and nothing else — never arbitrary markup. */
+const AVATAR_ERROR = `avatarId must be one of: ${AVATAR_IDS.join(', ')}`
+
+/**
+ * An id from the closed set, and nothing else.
+ *
+ * An ALLOW-LIST, not a pattern (the old rule was "reject ASCII, an avatar is a pictograph" — exactly
+ * backwards now that avatars ARE ascii ids). The set is small, fixed and shared with the client via
+ * `src/config/avatars.ts`, so nothing outside it has any reason to reach the column. A legacy glyph is
+ * still accepted on the way in and stored as its id, so a client running older JS mid-deploy is not
+ * rejected — but an unrecognised glyph is refused rather than silently defaulting to a fox.
+ */
 function cleanAvatar(v: unknown): string | null {
   if (typeof v !== 'string') return null
   const s = v.trim()
-  if (!s || s.length > 12) return null
-  // Reject anything with ASCII letters/digits/markup; an avatar is a pictograph.
-  if (/[a-zA-Z0-9<>&"'/\\]/.test(s)) return null
-  return s
+  if (!s || s.length > 24) return null
+  if (isAvatarId(s)) return s
+  return LEGACY_GLYPHS.has(s) ? normalizeAvatarId(s) : null
 }
 
 /** Optional FIRST name only. Empty → stored as absent. */
@@ -84,9 +105,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     if (req.method === 'POST') {
-      const body = (req.body ?? {}) as { name?: unknown; avatarEmoji?: unknown }
-      const avatarEmoji = cleanAvatar(body.avatarEmoji)
-      if (!avatarEmoji) return res.status(400).json({ error: 'avatarEmoji (one emoji) is required' })
+      const body = (req.body ?? {}) as { name?: unknown; avatarId?: unknown }
+      const avatarEmoji = cleanAvatar(body.avatarId)
+      if (!avatarEmoji) return res.status(400).json({ error: AVATAR_ERROR })
 
       const existing = await db.findMany<ChildProfileRow>({
         model: 'childProfile',
@@ -111,7 +132,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     if (req.method === 'PATCH') {
-      const body = (req.body ?? {}) as { id?: unknown; name?: unknown; avatarEmoji?: unknown }
+      const body = (req.body ?? {}) as { id?: unknown; name?: unknown; avatarId?: unknown }
       if (typeof body.id !== 'string') return res.status(400).json({ error: 'id is required' })
       const row = await owned(body.id)
       if (!row) return res.status(404).json({ error: 'Ukendt profil' })
@@ -119,9 +140,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const update: Record<string, unknown> = {}
       const name = cleanName(body.name)
       if (name !== undefined) update.name = name
-      if (body.avatarEmoji !== undefined) {
-        const avatarEmoji = cleanAvatar(body.avatarEmoji)
-        if (!avatarEmoji) return res.status(400).json({ error: 'avatarEmoji (one emoji) is required' })
+      if (body.avatarId !== undefined) {
+        const avatarEmoji = cleanAvatar(body.avatarId)
+        if (!avatarEmoji) return res.status(400).json({ error: AVATAR_ERROR })
         update.avatarEmoji = avatarEmoji
       }
       if (!Object.keys(update).length) return res.status(200).json({ profile: publicShape(row) })

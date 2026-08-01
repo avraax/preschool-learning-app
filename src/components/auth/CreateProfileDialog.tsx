@@ -1,8 +1,12 @@
 // "Tilføj et barn" — the only place a child profile is created.
 //
-// Data minimisation is the design (D9/§8.4): an emoji avatar and an OPTIONAL first name. No surname, no
+// Data minimisation is the design (D9/§8.4): an avatar and an OPTIONAL first name. No surname, no
 // birthdate, no photo, nothing else — and the name is genuinely optional, because the avatar is what a
 // pre-reader recognises anyway.
+//
+// The avatars are baked soft-3D portraits keyed by id (de-emoji PRD-01), not OS-font emoji: this is a
+// child-facing surface, and a glyph here changes shape between the iPadOS 17.7 floor device and a
+// newer one. The closed id set lives in `src/config/avatars.ts`; the art in `src/assets/avatars/`.
 
 import React, { useCallback, useState } from 'react'
 import {
@@ -20,13 +24,10 @@ import { motion } from 'framer-motion'
 import { profileStore, type ChildProfile } from '../../services/profileStore'
 import { useProfiles } from '../../hooks/useProfiles'
 import { PHONE_ANY } from '../../theme/phoneMedia'
+import { AVATAR_IDS, AVATAR_LABELS, DEFAULT_AVATAR_ID, type AvatarId } from '../../config/avatars'
+import { avatarArt } from '../../assets/avatars'
 import { AUTH_Z } from './authOverlayZ'
 
-/** A small, deliberately child-friendly set — a full emoji keyboard would be a worse choice here. */
-const AVATARS = [
-  '🦊', '🐻', '🐰', '🦉', '🐱', '🐶',
-  '🦄', '🐸', '🐧', '🦋', '🐢', '🦁',
-] as const
 
 export interface CreateProfileDialogProps {
   open: boolean
@@ -43,7 +44,7 @@ const CreateProfileDialog: React.FC<CreateProfileDialogProps> = ({
 }) => {
   const theme = useTheme()
   const account = useProfiles()
-  const [avatar, setAvatar] = useState<string>(AVATARS[0])
+  const [avatar, setAvatar] = useState<AvatarId>(DEFAULT_AVATAR_ID)
   const [name, setName] = useState('')
   const [busy, setBusy] = useState(false)
 
@@ -51,7 +52,7 @@ const CreateProfileDialog: React.FC<CreateProfileDialogProps> = ({
     setBusy(true)
     const created = await profileStore.createProfile({
       name: name.trim() || undefined,
-      avatarEmoji: avatar,
+      avatarId: avatar,
     })
     setBusy(false)
     if (created) {
@@ -94,23 +95,25 @@ const CreateProfileDialog: React.FC<CreateProfileDialogProps> = ({
             [PHONE_ANY]: { gap: 0.5 },
           }}
         >
-          {AVATARS.map((emoji) => {
-            const isActive = emoji === avatar
+          {AVATAR_IDS.map((id) => {
+            const isActive = id === avatar
             return (
               <Box
-                key={emoji}
+                key={id}
                 component={motion.button}
                 type="button"
-                onClick={() => setAvatar(emoji)}
+                onClick={() => setAvatar(id)}
                 aria-pressed={isActive}
-                aria-label={`Billede ${emoji}`}
-                data-avatar-choice={emoji}
+                aria-label={`Billede ${AVATAR_LABELS[id]}`}
+                data-avatar-choice={id}
                 whileTap={{ scale: 0.92 }}
                 sx={{
                   aspectRatio: '1 / 1',
                   minHeight: 44,
-                  fontSize: '1.6rem',
-                  lineHeight: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  p: 0.25,
                   cursor: 'pointer',
                   borderRadius: 2,
                   background: isActive
@@ -122,7 +125,15 @@ const CreateProfileDialog: React.FC<CreateProfileDialogProps> = ({
                   WebkitTapHighlightColor: 'transparent',
                 }}
               >
-                {emoji}
+                {/* Sized by the tile, not by a font: the glyph these replaced scaled off `fontSize`,
+                    so an <img> needs explicit bounds or the row's intrinsic height changes. */}
+                <Box
+                  component="img"
+                  src={avatarArt(id)}
+                  alt=""
+                  draggable={false}
+                  sx={{ width: '100%', height: '100%', objectFit: 'contain', userSelect: 'none' }}
+                />
               </Box>
             )
           })}

@@ -71,7 +71,7 @@ const RewardRing: React.FC<RewardRingProps> = ({
   const flyerId = useRef(0)
   // Full-colour flash of the prize that was just won. Holds the OLD reward's visuals for FLASH_MS,
   // because by the time the bus fires the store already advanced to the next slot.
-  const [flash, setFlash] = useState<{ art?: string; emoji: string } | null>(null)
+  const [flash, setFlash] = useState<{ art?: string } | null>(null)
   const flashTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const shownRef = useRef(next)
   shownRef.current = next
@@ -105,7 +105,7 @@ const RewardRing: React.FC<RewardRingProps> = ({
         if (leveledUp) {
           const won = shownRef.current
           if (won) {
-            setFlash({ art: rewardArt(won.reward.id), emoji: won.reward.emoji })
+            setFlash({ art: rewardArt(won.reward.id) })
             if (flashTimer.current) clearTimeout(flashTimer.current)
             flashTimer.current = setTimeout(() => setFlash(null), FLASH_MS)
           }
@@ -121,10 +121,8 @@ const RewardRing: React.FC<RewardRingProps> = ({
   }, [])
 
   // What the centre shows: the flashing won prize, else the next silhouette, else (book full) the gold
-  // sparkle. Book-full always resolves to art now (de-emoji W3), so `emoji` is only the per-reward
-  // fallback that W6 deletes with the last reward render.
+  // sparkle. Always resolves to art since W6 landed all 45 renders — no glyph path remains.
   const art = flash ? flash.art : next ? rewardArt(next.reward.id) : uiArt.sparkle
-  const emoji = flash ? flash.emoji : next ? next.reward.emoji : ''
   const bookFull = !next && !flash
   // Silhouette treatment: the real colours must NEVER read while it's unearned — it has to be
   // obviously "not mine yet". White shape on a dark world, dark shape on a light one.
@@ -182,7 +180,7 @@ const RewardRing: React.FC<RewardRingProps> = ({
         </svg>
 
         {/* The next prize — a silhouette while unearned, full colour for the win flash. */}
-        {art ? (
+        {art && (
           <Box
             component="img"
             src={art}
@@ -196,18 +194,6 @@ const RewardRing: React.FC<RewardRingProps> = ({
               ...centreStyle,
             }}
           />
-        ) : (
-          <Box
-            sx={{
-              position: 'relative',
-              fontSize: Math.round(size * 0.44),
-              lineHeight: 1,
-              transition: reduce ? 'none' : 'filter 220ms ease, opacity 220ms ease',
-              ...centreStyle,
-            }}
-          >
-            {emoji}
-          </Box>
         )}
       </Box>
 

@@ -4,20 +4,32 @@ Canonical screenshots of **every view in the app**, captured headlessly for UI/U
 ("pixel perfect" pass). Reference these before/while redesigning — and re-capture after, so this
 folder always reflects the shipped UI.
 
-- **Captured**: 2026-07-13, build `ad084ab` (v1.0.45) — **after the UI/UX/Gameplay overhaul**
-  (PromptStage focal zones, tactile tile juice, reactive corner mascot, unified pip ScoreChip +
-  "Hør igen", reward/album spectacle, ambient music, per-game feel upgrades).
+- **Captured**: 2026-08-01, v1.0.45 — **the entire set, in one pass, after the de-emoji PRD completed.**
+  Nothing here predates it, so the per-build notes this file used to carry are gone.
 - **Theme**: Regnbue (default — forced via `?theme=kid`). Other skins (Havet, Rummet, Junglen,
   Slikland, Dinosaurer) share the same layout; only tokens differ.
-- **Capture tool**: `.claude/skills/ui-screenshot/cdp.mjs` (headless Chrome, audio modal
-  auto-dismissed). JPEG q85. To re-capture the full set, ask Claude — the capture script
-  pattern lives in the git history of `.bug-reports/uiref.ps1` and in this README.
+- **Capture tool**: `.claude/skills/ui-screenshot/cdp.mjs` (headless Chrome). JPEG q85. The route
+  sweep is scripted in the gitignored **`.bug-reports/uiref.sh`** — run it with both dev servers up
+  (Windows PowerShell, not WSL). The `overlays/` set needs per-dialog `--eval` clicks and is not in
+  that script.
+- **`?nogate=1` is mandatory** since the accounts release: it bypasses the auth gate AND the audio
+  welcome, and attaches a stand-in dev child so `progressStore` isn't inert. Without it, every capture
+  is just the lock screen.
+- Opening the adult menu headlessly needs `?adult-tap=1` **and ~4.5s of settle** — it captures a
+  snapdom screenshot before rendering, so a shorter wait silently yields the un-opened page.
+- **`overlays/audio-permission.jpg` and `overlays/auth-pin-pad.jpg` cannot be re-captured headlessly**
+  and are deliberately older than the rest. The driver launches Chrome with autoplay allowed, so the
+  "Tænd for lyd" modal never appears (`--keep-audio-modal` doesn't help — there is nothing to keep);
+  and the PIN pad needs a PIN actually set on the account. Overwriting them yields a picture of the
+  page *behind* the overlay, which is worse than a slightly old but correct one — if you try, check
+  the result before committing.
 
-**Accounts build (2026-07-31):** the `overlays/` set gained `auth-lock-screen`, `auth-pin-pad` and
-`auth-profile-picker`, and `adult-menu` was re-captured (it is PIN-gated now and carries Profiler /
-Skift barn / Synkronisering / Login og sikkerhed). `reset-gate.jpg` was DELETED — the
-Danish-number-word `AdultGate` it showed no longer exists. The `ipad/`, `phone/` and `portrait/` sets
-still date from 2026-07-13; capture them with `?nogate=1` now that the app is auth-gated.
+**What this pass shows (de-emoji PRD, complete):** **no view in the app renders an OS-font emoji any
+more.** Section-menu game tiles and home cards are baked icon art; Min Bog's 45 reward slots, its 5
+chapter tabs and the corner RewardRing are baked reward art; the result screen's star/trophy/flame and
+Min Bog's book/sparkle come from `src/assets/ui/`; the theme picker shows baked skin thumbnails; child
+profiles show baked avatar portraits; and every adult dialog is on lucide icons.
+`overlays/profiles-panel.jpg` is NEW in this pass.
 
 ## Folders
 
@@ -26,7 +38,7 @@ still date from 2026-07-13; capture them with `?nogate=1` now that the app is au
 | `ipad/` | 1180×820 (iPad Air landscape) | **Primary design surface** — every route |
 | `phone/` | 844×390 (iPhone 13 Pro landscape) | The phone-compact variant (`src/theme/phoneMedia.ts` guards) — every route |
 | `portrait/` | 390×844 | Key portrait references (home, menu, quiz, drag board, memory-20, album) |
-| `overlays/` | 1180×820 | States routes can't show: adult menu, bug reporter, voice panel, crash screen, audio-permission modal, and the auth surfaces (`auth-lock-screen`, `auth-pin-pad`, `auth-profile-picker`) |
+| `overlays/` | 1180×820 | States routes can't show: adult menu, the four adult panels (`profiles-panel`, `theme-panel`, `difficulty-panel`, `voice-panel`), bug reporter, crash screen, audio-permission modal, and the auth surfaces (`auth-lock-screen`, `auth-pin-pad`, `auth-profile-picker`) |
 
 ## File → view map (`ipad/` and `phone/` share names)
 

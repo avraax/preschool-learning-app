@@ -1,5 +1,17 @@
 # Reward Book — Gemini generation prompts (45 rewards, 5 chapters × 9)
 
+> **STATUS: DONE (2026-08-01).** The owner generated the 16 🆕 and I re-trimmed the 29 reuses, so all
+> 45 ship in `src/assets/rewards/`. `Reward.emoji` and `RewardChapter.emoji` are deleted;
+> `rewardArtCoverage.test.ts` now guards the set. Build the assets with
+> `node scripts/optimize-theme-art.mjs rewards` (the reuse map lives in that script). Kept as the
+> record of the batch — re-run a prompt below if a subject ever needs regenerating.
+>
+> Two things worth knowing before regenerating: the **chapter tab icons** are now the art of each
+> chapter's FIRST reward (Hund / Bil / Æble / Træ / Fisk), so those five carry a second job; and
+> `natur-blad` needs the per-image keying override in `REWARD_KEY_OVERRIDES` — a green leaf on a green
+> screen defeats both the default flood-fill AND the despill (it came out first as a black streak,
+> then as a grey leaf). Details are in the script's comments.
+
 Self-contained prompts for the **Reward Book** art (Reward Book PRD-01 §8 W0 / D4). Each of the 45 rewards on the
 path gets one baked soft-3D render, keyed on the `#00FF00` green screen per `.claude/rules/scene-assets.md`, and
 dropped into `src/assets/rewards/<rewardId>.webp`.

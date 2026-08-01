@@ -7,7 +7,7 @@ import { profileGateBlocks, profileGateSurface } from './profileGatePolicy.ts'
 // device for the accounts release), NOT because the family has no children — and the old condition
 // raised the un-dismissible create dialog on exactly that state.
 const inFlight = { status: 'choosing' as const, profiles: [], rosterSettled: false }
-const kid = { id: 'kid-1', avatarEmoji: 'A' }
+const kid = { id: 'kid-1', avatarId: 'fox' as const }
 
 test('an unanswered roster shows NOTHING — never the mandatory dialog', () => {
   assert.equal(profileGateSurface(inFlight), 'none')
@@ -25,7 +25,7 @@ test('two children and none chosen is the picker', () => {
   assert.equal(
     profileGateSurface({
       status: 'choosing',
-      profiles: [kid, { id: 'kid-2', avatarEmoji: 'B' }],
+      profiles: [kid, { id: 'kid-2', avatarId: 'fox' as const }],
       rosterSettled: true,
     }),
     'picker',

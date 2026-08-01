@@ -212,7 +212,15 @@ const StickerAlbum: React.FC = () => {
                   [PHONE_PORTRAIT]: { px: 1, fontSize: '0.8rem', gap: 0.4 },
                 }}
               >
-                <span>{chapter.emoji}</span>
+                {/* Tab icon = the chapter's FIRST reward's art (Hund / Bil / Æble / Træ / Fisk) —
+                    the same subject its emoji stood for, so the tabs cost no extra render. */}
+                <Box
+                  component="img"
+                  src={rewardArt(chapter.rewards[0].id)}
+                  alt=""
+                  draggable={false}
+                  sx={{ width: 20, height: 20, objectFit: 'contain', flex: '0 0 auto', userSelect: 'none' }}
+                />
                 <span>{chapter.title}</span>
                 {/* Chapter complete — a UI affordance, so lucide, not baked art (PRD D2/§4 W3). */}
                 {done && <Check size={16} strokeWidth={3.5} aria-label="komplet" style={{ flex: '0 0 auto' }} />}
@@ -406,38 +414,24 @@ const StickerAlbum: React.FC = () => {
 
                   {/* The reward itself — full colour when collected, a silhouette for the NEXT one,
                       and nothing at all for a locked slot (a blank plate). */}
-                  {(owned || isNext) &&
-                    (art ? (
-                      <Box
-                        component="img"
-                        src={art}
-                        alt=""
-                        draggable={false}
-                        sx={{
-                          position: 'relative',
-                          width: '62%',
-                          height: '62%',
-                          objectFit: 'contain',
-                          userSelect: 'none',
-                          pointerEvents: 'none',
-                          filter: owned && !reduce ? softShadow(1) : undefined,
-                          ...(isNext ? silhouette : {}),
-                        }}
-                      />
-                    ) : (
-                      <Typography
-                        component="span"
-                        sx={{
-                          position: 'relative',
-                          fontSize: 'clamp(2rem, 11vw, 3.4rem)',
-                          lineHeight: 1,
-                          userSelect: 'none',
-                          ...(isNext ? silhouette : {}),
-                        }}
-                      >
-                        {reward.emoji}
-                      </Typography>
-                    ))}
+                  {(owned || isNext) && (
+                    <Box
+                      component="img"
+                      src={art}
+                      alt=""
+                      draggable={false}
+                      sx={{
+                        position: 'relative',
+                        width: '62%',
+                        height: '62%',
+                        objectFit: 'contain',
+                        userSelect: 'none',
+                        pointerEvents: 'none',
+                        filter: owned && !reduce ? softShadow(1) : undefined,
+                        ...(isNext ? silhouette : {}),
+                      }}
+                    />
+                  )}
 
                   {/* "nyt!" badge on a freshly collected reward (clears on the next visit). */}
                   {owned && isNew && (

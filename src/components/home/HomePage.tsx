@@ -463,19 +463,13 @@ const HomePage: React.FC = () => {
                 }}
               >
                 {nextPrize ? (
-                  nextPrizeArt ? (
-                    <Box
-                      component="img"
-                      src={nextPrizeArt}
-                      alt=""
-                      draggable={false}
-                      sx={{ width: '100%', height: '100%', objectFit: 'contain', filter: 'brightness(0)', opacity: 0.32 }}
-                    />
-                  ) : (
-                    <Box component="span" sx={{ filter: 'brightness(0)', opacity: 0.32 }}>
-                      {nextPrize.reward.emoji}
-                    </Box>
-                  )
+                  <Box
+                    component="img"
+                    src={nextPrizeArt}
+                    alt=""
+                    draggable={false}
+                    sx={{ width: '100%', height: '100%', objectFit: 'contain', filter: 'brightness(0)', opacity: 0.32 }}
+                  />
                 ) : (
                   <Box
                     component="img"

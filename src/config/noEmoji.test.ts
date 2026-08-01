@@ -31,28 +31,33 @@ const GLYPH = new RegExp(`[\\p{Extended_Pictographic}${ICONIC_SYMBOLS}]`, 'gu')
 // scanning easier. Flip to false to strip them too.
 const ALLOW_LOG_PREFIXES = true
 const LOG_CALL = /\b(?:console\.\w+|originalConsole|addLog)\s*\(/
+// A glyph on a log payload's `message:` field is the same thing as one on a `console.*` call — it is
+// read in devtools and in bug-report diagnostics rings, never rendered. Without this, the last such
+// line (remoteConsole's audio-debug report) would be the sole reason to keep an allowlist alive.
+const LOG_FIELD = /^\s*message:\s*[`'"]/
 
 // file → { max: glyphs still allowed, why }. `max` counts only occurrences the log rule does NOT
 // already cover, so it can only ever shrink.
-const ALLOWED_FILES: Record<string, { max: number; why: string }> = {
-  // W6 — the 45 reward renders; `Reward.emoji` dies with the last one.
-  'src/config/stickers.ts': { max: 50, why: 'W6 reward art' },
-  // Bucket E, but the prefix sits on a `message:` field rather than on the log call itself.
-  'src/utils/remoteConsole.ts': { max: 1, why: 'log prefix (PRD §7)' },
-  // NOT in the de-emoji inventory — the child-profile avatars arrived with the accounts work AFTER
-  // it was taken. They are child-facing (D1) AND persisted (`ChildProfile.avatarEmoji`, validated
-  // server-side by `cleanAvatar` in api/profiles.ts as "a pictograph"), so removing them needs baked
-  // avatar art PLUS a profile-schema migration — its own batch. Prompts are speced in
-  // plans/de-emoji/de-emoji-avatar-prompts.md (12 portraits, owner-locked 2026-07-31).
-  // Any further surface that renders an avatar needs art or its own entry here.
-  'src/components/auth/CreateProfileDialog.tsx': { max: 12, why: 'accounts: child-profile avatars, needs art + schema' },
-}
+//
+// **W7: this list is now EMPTY.** Every shipped emoji is gone — the app renders baked soft-3D art
+// everywhere a glyph used to be, and the only glyphs left in the tree are the `console.*` prefixes
+// the owner chose to keep (covered by ALLOW_LOG_PREFIXES above, not by this list). Adding an entry
+// back means shipping a flat OS-font glyph on a device whose Safari 17 renders it differently —
+// don't. Add baked art and a coverage test instead, the way each workstream below did.
+const ALLOWED_FILES: Record<string, { max: number; why: string }> = {}
 
-// W4 removed, verified against art coverage before deletion (see `gameIcons.test.ts` /
-// `themes.test.ts` for the invariants that replaced them):
-//   categoryThemes.ts (24)  · every `<section>.<game.id>` resolves in the baked icon registry
-//   helpers.ts SECTION_ICONS (5) + kidTheme icon/iconSize · nothing ever rendered `CategoryTheme.icon`
-//   *.tokens.ts selectorEmoji (6) · every registered skin ships `selectorThumb`
+// NB `src/config/avatars.ts` needs no entry either: its `LEGACY_GLYPH_TO_ID` migration table writes
+// the 12 old profile glyphs as `\u{…}` ESCAPES, so the file carries no literal emoji for this scan to
+// find — the same trick `ICONIC_SYMBOLS` above uses to keep this guard from being its own offender.
+//
+// How each bucket was retired, and the invariant that replaced its fallback:
+//   W1 adult/dev (49)      · lucide-react icons
+//   W2 deletions (~20)     · redundant/filler glyphs cut; `companionStages` made REQUIRED in tokens
+//   W3 chrome (6)          · src/assets/ui/ (star · trophy · flame · book · sparkle) + lucide Check
+//   W4 theme/section/game  · all dead fallbacks — `gameIcons.test.ts`, `themes.test.ts`
+//   W4 confetti/wipes (36) · each skin's baked `ambientSprites`
+//   avatars (12)           · src/assets/avatars/ + closed id set — `avatars.test.ts`
+//   W6 rewards (50)        · src/assets/rewards/, all 45 — `rewardArtCoverage.test.ts`
 
 type Hit = { file: string; line: number; glyphs: string; count: number; text: string; logged: boolean }
 
@@ -120,7 +125,7 @@ const scan = (): Hit[] => {
           glyphs: [...new Set(found)].join(' '),
           count: found.length,
           text: raw[i].trim().slice(0, 100),
-          logged: LOG_CALL.test(line),
+          logged: LOG_CALL.test(line) || LOG_FIELD.test(line),
         })
       })
   }

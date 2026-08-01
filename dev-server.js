@@ -18,6 +18,12 @@ import { verifyAccessToken } from './lib/access-token.ts';
 import { devBypassEnabled } from './lib/env.ts';
 import { normalizePersisted, progressInvariantViolations } from './src/config/progressSchema.ts';
 import { mergeProgress } from './src/config/progressMerge.ts';
+import {
+  AVATAR_IDS,
+  LEGACY_AVATAR_GLYPHS,
+  isAvatarId,
+  normalizeAvatarId,
+} from './src/config/avatars.ts';
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3001;
@@ -482,12 +488,15 @@ async function devSession(req, res) {
 }
 
 const PROFILE_MAX = 8;
+// Avatars are IDs from a closed set (de-emoji PRD-01), not emoji — the DB column keeps its
+// `avatarEmoji` name to avoid a migration, but the value is `'fox'`. Mirrors api/profiles.ts.
+const AVATAR_ERROR = `avatarId must be one of: ${AVATAR_IDS.join(', ')}`;
 const cleanAvatar = (v) => {
   if (typeof v !== 'string') return null;
   const s = v.trim();
-  if (!s || s.length > 12) return null;
-  if (/[a-zA-Z0-9<>&"'/\\]/.test(s)) return null;
-  return s;
+  if (!s || s.length > 24) return null;
+  if (isAvatarId(s)) return s;
+  return LEGACY_AVATAR_GLYPHS.has(s) ? normalizeAvatarId(s) : null;
 };
 const cleanName = (v) => {
   if (v === undefined) return undefined;
@@ -499,7 +508,7 @@ const cleanName = (v) => {
 const profileShape = (r) => ({
   id: r.id,
   name: r.name ?? undefined,
-  avatarEmoji: r.avatarEmoji,
+  avatarId: normalizeAvatarId(r.avatarEmoji),
   createdAt: new Date(r.createdAt).getTime(),
 });
 
@@ -526,8 +535,8 @@ app.all('/api/profiles', async (req, res) => {
     }
 
     if (req.method === 'POST') {
-      const avatarEmoji = cleanAvatar(req.body?.avatarEmoji);
-      if (!avatarEmoji) return res.status(400).json({ error: 'avatarEmoji (one emoji) is required' });
+      const avatarEmoji = cleanAvatar(req.body?.avatarId);
+      if (!avatarEmoji) return res.status(400).json({ error: AVATAR_ERROR });
       const existing = await db.findMany({
         model: 'childProfile',
         where: [{ field: 'userId', value: session.userId }],
@@ -555,9 +564,9 @@ app.all('/api/profiles', async (req, res) => {
       const update = {};
       const name = cleanName(req.body.name);
       if (name !== undefined) update.name = name;
-      if (req.body.avatarEmoji !== undefined) {
-        const avatarEmoji = cleanAvatar(req.body.avatarEmoji);
-        if (!avatarEmoji) return res.status(400).json({ error: 'avatarEmoji (one emoji) is required' });
+      if (req.body.avatarId !== undefined) {
+        const avatarEmoji = cleanAvatar(req.body.avatarId);
+        if (!avatarEmoji) return res.status(400).json({ error: AVATAR_ERROR });
         update.avatarEmoji = avatarEmoji;
       }
       if (!Object.keys(update).length) return res.json({ profile: profileShape(row) });

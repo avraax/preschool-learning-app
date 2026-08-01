@@ -8,6 +8,7 @@
 // only consulted to refresh.
 
 import { ACTIVE_PROFILE_KEY } from '../config/progressSchema.ts'
+import { DEFAULT_AVATAR_ID, normalizeAvatarId, type AvatarId } from '../config/avatars.ts'
 import { authStore } from './authStore.ts'
 import { progressStore } from './progressStore.ts'
 import { progressSync } from './progressSync.ts'
@@ -15,7 +16,8 @@ import { progressSync } from './progressSync.ts'
 export interface ChildProfile {
   id: string
   name?: string
-  avatarEmoji: string
+  /** One of the closed `AVATAR_IDS` set — a baked-art key, never an emoji (de-emoji PRD-01). */
+  avatarId: AvatarId
   createdAt?: number
 }
 
@@ -53,10 +55,8 @@ const ROSTER_KEY = 'bornelaering-profiles'
  * The stand-in child for the DEV auth bypass — see `hydrate`. Its own localStorage key
  * (`bornelaering-progress:dev-local`) keeps harness state out of any real child's book.
  *
- * `avatarEmoji` is a LETTER, not an emoji: this file is not on the de-emoji allow-list, and a glyph
- * here would trip `src/config/noEmoji.test.ts` for a surface only a developer ever sees.
  */
-const DEV_PROFILE: ChildProfile = { id: 'dev-local', name: 'Dev', avatarEmoji: 'D' }
+const DEV_PROFILE: ChildProfile = { id: 'dev-local', name: 'Dev', avatarId: DEFAULT_AVATAR_ID }
 
 const readPointer = (): string | null => {
   try {
@@ -81,14 +81,28 @@ const readRoster = (): ChildProfile[] => {
     if (!raw) return []
     const parsed = JSON.parse(raw) as unknown
     if (!Array.isArray(parsed)) return []
-    return parsed.filter(
-      (p): p is ChildProfile =>
-        !!p && typeof (p as ChildProfile).id === 'string' && typeof (p as ChildProfile).avatarEmoji === 'string',
-    )
+    // Normalise on READ so a roster cached before the baked avatars (which stored the glyph in an
+    // `avatarEmoji` field) still resolves to a real portrait instead of dropping the child.
+    return parsed
+      .filter((p): p is ChildProfile => !!p && typeof (p as ChildProfile).id === 'string')
+      .map((p) => ({
+        ...p,
+        avatarId: normalizeAvatarId(
+          (p as ChildProfile).avatarId ?? (p as unknown as { avatarEmoji?: unknown }).avatarEmoji,
+        ),
+      }))
   } catch {
     return []
   }
 }
+
+// Server rows are already normalised by `api/profiles.ts`, but a row written by an older client (or
+// read straight from the pre-baked-avatar column) can still carry a glyph — so coerce here too. This
+// is the only path a raw server shape enters the store by.
+const fromServer = (p: ChildProfile): ChildProfile => ({
+  ...p,
+  avatarId: normalizeAvatarId(p.avatarId ?? (p as unknown as { avatarEmoji?: unknown }).avatarEmoji),
+})
 
 const writeRoster = (profiles: ChildProfile[]): void => {
   try {
@@ -200,7 +214,7 @@ class ProfileStore {
         return this.state.profiles
       }
       const { profiles } = (await res.json()) as { profiles?: ChildProfile[] }
-      const list = Array.isArray(profiles) ? profiles : []
+      const list = (Array.isArray(profiles) ? profiles : []).map(fromServer)
       writeRoster(list)
       this.publish({ profiles: list, accountId, loading: false, rosterSettled: true, error: null })
 
@@ -246,7 +260,7 @@ class ProfileStore {
     this.publish({ status: 'choosing', activeProfileId: null })
   }
 
-  async createProfile(input: { name?: string; avatarEmoji: string }): Promise<ChildProfile | null> {
+  async createProfile(input: { name?: string; avatarId: AvatarId }): Promise<ChildProfile | null> {
     if (!authStore.sessionToken()) {
       this.publish({ error: 'Du skal være online for at lave en profil.' })
       return null
@@ -263,7 +277,7 @@ class ProfileStore {
         return null
       }
       const { profile } = (await res.json()) as { profile: ChildProfile }
-      const list = [...this.state.profiles, profile]
+      const list = [...this.state.profiles, fromServer(profile)]
       writeRoster(list)
       this.publish({ profiles: list, error: null })
       return profile
@@ -275,7 +289,7 @@ class ProfileStore {
 
   async updateProfile(
     id: string,
-    input: { name?: string | null; avatarEmoji?: string },
+    input: { name?: string | null; avatarId?: AvatarId },
   ): Promise<boolean> {
     try {
       const res = await fetch('/api/profiles', {
@@ -285,7 +299,7 @@ class ProfileStore {
       })
       if (!res.ok) return false
       const { profile } = (await res.json()) as { profile: ChildProfile }
-      const list = this.state.profiles.map((p) => (p.id === id ? profile : p))
+      const list = this.state.profiles.map((p) => (p.id === id ? fromServer(profile) : p))
       writeRoster(list)
       this.publish({ profiles: list })
       return true

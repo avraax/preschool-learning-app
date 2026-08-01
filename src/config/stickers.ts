@@ -13,9 +13,14 @@
 //
 // **This module must stay Node-importable**: shared-narration-clips.js imports it directly (in plain
 // Node, type-stripped) to enumerate the closed narration set, so it must not transitively import a
-// `.webp` or touch `import.meta.glob`. That's why the art-gated hook (PRD §6.2) is NOT an `art` field
-// on `Reward` but a lookup — `rewardArt(reward.id)` from `src/assets/rewards/index.ts`, which globs
-// whatever renders have landed. Every render site calls that; a missing render → the emoji shows.
+// `.webp` or touch `import.meta.glob`. That's why the art hook (PRD §6.2) is NOT an `art` field on
+// `Reward` but a lookup — `rewardArt(reward.id)` from `src/assets/rewards/index.ts`, which globs the
+// baked renders. Every render site calls that.
+//
+// The art is NO LONGER GATED: all 45 renders ship (16 new + 29 re-trimmed from the game art — see
+// `REWARD_REUSE` in scripts/optimize-theme-art.mjs), so de-emoji PRD-01 W6 deleted the `emoji`
+// fallback from both `Reward` and `RewardChapter`. `rewardArtCoverage.test.ts` fails the build if a
+// render ever goes missing, which is what makes rendering it unconditionally safe.
 // See plans/reward-book/reward-book-art-prompts.md.
 
 // NB the explicit `.ts` extension: shared-narration-clips.js imports THIS file in plain Node, which
@@ -23,15 +28,15 @@
 import { chapterOfSlot } from './progression.ts'
 
 export interface Reward {
-  id: string // stable, unique across ALL chapters (used as the progress key)
+  id: string // stable, unique across ALL chapters (used as the progress key AND the art key)
   label: string // Danish name, spoken on reveal/tap
-  emoji: string // fallback + silhouette source when no baked render exists yet
 }
 
 export interface RewardChapter {
   id: string
   title: string // Danish chapter title
-  emoji: string // chapter/tab icon
+  // No `emoji`: the tab icon is the art of the chapter's FIRST reward (Hund / Bil / Æble / Træ /
+  // Fisk), which is already the subject each chapter emoji stood for — so the tabs cost no new art.
   rewards: Reward[] // exactly CHAPTER_SIZE
 }
 
@@ -41,81 +46,76 @@ export const REWARD_CHAPTERS: RewardChapter[] = [
   {
     id: 'dyr',
     title: 'Dyr',
-    emoji: '🐾',
     rewards: [
-      { id: 'dyr-hund', label: 'Hund', emoji: '🐕' },
-      { id: 'dyr-kat', label: 'Kat', emoji: '🐱' },
-      { id: 'dyr-ko', label: 'Ko', emoji: '🐄' },
-      { id: 'dyr-hest', label: 'Hest', emoji: '🐴' },
-      { id: 'dyr-gris', label: 'Gris', emoji: '🐷' },
-      { id: 'dyr-faar', label: 'Får', emoji: '🐑' },
-      { id: 'dyr-kanin', label: 'Kanin', emoji: '🐰' },
-      { id: 'dyr-raev', label: 'Ræv', emoji: '🦊' },
-      { id: 'dyr-bjoern', label: 'Bjørn', emoji: '🐻' },
+      { id: 'dyr-hund', label: 'Hund' },
+      { id: 'dyr-kat', label: 'Kat' },
+      { id: 'dyr-ko', label: 'Ko' },
+      { id: 'dyr-hest', label: 'Hest' },
+      { id: 'dyr-gris', label: 'Gris' },
+      { id: 'dyr-faar', label: 'Får' },
+      { id: 'dyr-kanin', label: 'Kanin' },
+      { id: 'dyr-raev', label: 'Ræv' },
+      { id: 'dyr-bjoern', label: 'Bjørn' },
     ],
   },
   {
     id: 'koeretoejer',
     title: 'Køretøjer',
-    emoji: '🚗',
     rewards: [
-      { id: 'kt-bil', label: 'Bil', emoji: '🚗' },
-      { id: 'kt-bus', label: 'Bus', emoji: '🚌' },
-      { id: 'kt-tog', label: 'Tog', emoji: '🚂' },
-      { id: 'kt-fly', label: 'Fly', emoji: '✈️' },
-      { id: 'kt-baad', label: 'Båd', emoji: '⛵' },
-      { id: 'kt-cykel', label: 'Cykel', emoji: '🚲' },
-      { id: 'kt-lastbil', label: 'Lastbil', emoji: '🚚' },
-      { id: 'kt-helikopter', label: 'Helikopter', emoji: '🚁' },
-      { id: 'kt-raket', label: 'Raket', emoji: '🚀' },
+      { id: 'kt-bil', label: 'Bil' },
+      { id: 'kt-bus', label: 'Bus' },
+      { id: 'kt-tog', label: 'Tog' },
+      { id: 'kt-fly', label: 'Fly' },
+      { id: 'kt-baad', label: 'Båd' },
+      { id: 'kt-cykel', label: 'Cykel' },
+      { id: 'kt-lastbil', label: 'Lastbil' },
+      { id: 'kt-helikopter', label: 'Helikopter' },
+      { id: 'kt-raket', label: 'Raket' },
     ],
   },
   {
     id: 'mad',
     title: 'Mad',
-    emoji: '🍎',
     rewards: [
-      { id: 'mad-aeble', label: 'Æble', emoji: '🍎' },
-      { id: 'mad-banan', label: 'Banan', emoji: '🍌' },
-      { id: 'mad-jordbaer', label: 'Jordbær', emoji: '🍓' },
-      { id: 'mad-gulerod', label: 'Gulerod', emoji: '🥕' },
-      { id: 'mad-broed', label: 'Brød', emoji: '🍞' },
-      { id: 'mad-ost', label: 'Ost', emoji: '🧀' },
-      { id: 'mad-is', label: 'Is', emoji: '🍦' },
-      { id: 'mad-kage', label: 'Kage', emoji: '🍰' },
-      { id: 'mad-pizza', label: 'Pizza', emoji: '🍕' },
+      { id: 'mad-aeble', label: 'Æble' },
+      { id: 'mad-banan', label: 'Banan' },
+      { id: 'mad-jordbaer', label: 'Jordbær' },
+      { id: 'mad-gulerod', label: 'Gulerod' },
+      { id: 'mad-broed', label: 'Brød' },
+      { id: 'mad-ost', label: 'Ost' },
+      { id: 'mad-is', label: 'Is' },
+      { id: 'mad-kage', label: 'Kage' },
+      { id: 'mad-pizza', label: 'Pizza' },
     ],
   },
   {
     id: 'natur',
     title: 'Natur',
-    emoji: '🌳',
     rewards: [
-      { id: 'natur-trae', label: 'Træ', emoji: '🌳' },
-      { id: 'natur-blomst', label: 'Blomst', emoji: '🌸' },
-      { id: 'natur-sol', label: 'Sol', emoji: '☀️' },
-      { id: 'natur-maane', label: 'Måne', emoji: '🌙' },
-      { id: 'natur-stjerne', label: 'Stjerne', emoji: '⭐' },
-      { id: 'natur-regnbue', label: 'Regnbue', emoji: '🌈' },
-      { id: 'natur-sky', label: 'Sky', emoji: '☁️' },
-      { id: 'natur-svamp', label: 'Svamp', emoji: '🍄' },
-      { id: 'natur-blad', label: 'Blad', emoji: '🍁' },
+      { id: 'natur-trae', label: 'Træ' },
+      { id: 'natur-blomst', label: 'Blomst' },
+      { id: 'natur-sol', label: 'Sol' },
+      { id: 'natur-maane', label: 'Måne' },
+      { id: 'natur-stjerne', label: 'Stjerne' },
+      { id: 'natur-regnbue', label: 'Regnbue' },
+      { id: 'natur-sky', label: 'Sky' },
+      { id: 'natur-svamp', label: 'Svamp' },
+      { id: 'natur-blad', label: 'Blad' },
     ],
   },
   {
     id: 'havet',
     title: 'Havet',
-    emoji: '🌊',
     rewards: [
-      { id: 'hav-fisk', label: 'Fisk', emoji: '🐟' },
-      { id: 'hav-haj', label: 'Haj', emoji: '🦈' },
-      { id: 'hav-hval', label: 'Hval', emoji: '🐳' },
-      { id: 'hav-delfin', label: 'Delfin', emoji: '🐬' },
-      { id: 'hav-sael', label: 'Sæl', emoji: '🦭' },
-      { id: 'hav-krabbe', label: 'Krabbe', emoji: '🦀' },
-      { id: 'hav-blaeksprutte', label: 'Blæksprutte', emoji: '🐙' },
-      { id: 'hav-skildpadde', label: 'Skildpadde', emoji: '🐢' },
-      { id: 'hav-musling', label: 'Musling', emoji: '🐚' },
+      { id: 'hav-fisk', label: 'Fisk' },
+      { id: 'hav-haj', label: 'Haj' },
+      { id: 'hav-hval', label: 'Hval' },
+      { id: 'hav-delfin', label: 'Delfin' },
+      { id: 'hav-sael', label: 'Sæl' },
+      { id: 'hav-krabbe', label: 'Krabbe' },
+      { id: 'hav-blaeksprutte', label: 'Blæksprutte' },
+      { id: 'hav-skildpadde', label: 'Skildpadde' },
+      { id: 'hav-musling', label: 'Musling' },
     ],
   },
 ]

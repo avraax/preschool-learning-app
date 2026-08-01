@@ -83,6 +83,14 @@ serves only genuinely dynamic text or a non-default VoiceLab voice.
   queue = new audio cancels current), and keep the step ≥ the longest spoken part + that startup or it
   cuts names off mid-word (see `src/config/alphabetGroups.ts`). `ttsClient.prefetchPrebaked()` /
   `controller.prefetchLetters()` warm the files first; that trims the fetch, NOT the padding.
+- **Measure a clip, never guess it**, before choosing any timing: `ffmpeg silencedetect` over the
+  prebaked mp3 gives the real speech start/end inside the padding (ffmpeg-static is already a
+  devDependency — `spawnSync(ffmpeg, ['-i', file, '-af', 'silencedetect=noise=-45dB:d=0.04', '-f',
+  'null', '-'])`, read `stderr`). File size ÷ bitrate is NOT the spoken length.
+- **A custom `speakingRate` is part of the cache key**, so a screen that speaks at a non-default rate
+  needs its own baked set — and that rate must be ONE exported constant read by the component *and*
+  `shared-narration-clips.js` (Lær Tal: `NUMBER_BROWSE_RATE` in `src/config/numberAutoplay.ts`). A bare
+  literal in the component silently un-prebakes every clip it touches to live Azure, unauditioned.
 - The manifest cache key **must** match between `ttsClient.resolveRequest` and the build script; both
   build it via `shared-tts-key.js` (single source — don't hand-roll the key format).
 - Build scripts (`prebake-tts.mjs`, `tts-voice-eval.mjs`) + the shared enumerator

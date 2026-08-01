@@ -43,12 +43,33 @@ the owner can paste straight in. **Do this proactively** (don't wait to be asked
 manifest/subject choices with the owner first, and save it in the relevant plan dir (e.g.
 `plans/<program>/<area>-art-prompts.md`). Each doc contains:
 
-- **One prompt per asset, each COMPLETE on its own** (the owner copies them one at a time): a subject
-  line + the full style guide inlined — PRD-05 §8.2: *soft-3D claymation / Pixar-lite, rounded matte
-  clay, soft top-left key + rim light, soft contact shadow, warm & child-safe (nothing scary/sharp),
-  slight 3/4 top-down, single centered subject, no text/letters, flat solid `#00FF00` background
-  edge-to-edge, 1:1*. Add per-subject child-safety notes where they matter (friendly/no sharp teeth,
-  blunt horns, gentle volcano…).
+- **BATCH THE PROMPTS FOUR AT A TIME — this is the standard, not one-at-a-time.** Proven 2026-08-01 on
+  the 16 reward renders: Gemini returns four separate full-resolution images from one message, so a
+  16-subject batch is 4 messages instead of 16, and four subjects rendered in one pass share identical
+  lighting, which makes a chapter/set look like a set. Use exactly this opener, then a numbered list:
+
+  > Generate 4 SEPARATE images, one per subject below — not a collage.
+  > Each: single centered subject, soft-3D claymation style, Pixar-lite, rounded matte clay, soft
+  > top-left key light, gentle rim light, soft contact shadow, warm and child-safe, slight 3/4 top-down
+  > angle, no text or letters, flat solid #00FF00 background edge to edge, square 1:1, highest resolution.
+
+  Keep a batch in **one chat thread** so the style carries. Google's docs say the model won't reliably
+  honour an exact requested count, so if a message ever returns a collage instead, fall back to asking
+  for one 2×2 grid on a single green background and split it into quadrants before keying (1024 ÷ 2 =
+  512 per subject, still well above the 256 the art needs). Don't go to 3×3.
+- **Per-subject style/keying notes go INLINE in the numbered line**, not in a preamble the owner has to
+  cross-reference — e.g. *"A single leaf in a DEEP forest green, not a bright yellow-green"*. Anything
+  that shares the screen's hue needs one (see the green-subject trap below).
+- The full style guide is PRD-05 §8.2: *soft-3D claymation / Pixar-lite, rounded matte clay, soft
+  top-left key + rim light, soft contact shadow, warm & child-safe (nothing scary/sharp), slight 3/4
+  top-down, single centered subject, no text/letters, flat solid `#00FF00` background edge-to-edge,
+  1:1*. Add per-subject child-safety notes where they matter (friendly/no sharp teeth, blunt horns,
+  gentle volcano…). A doc may still list prompts singly for reference, but hand the owner the batched-4
+  form to actually paste.
+- **Check what already exists before commissioning anything.** 29 of the Reward Book's 45 subjects were
+  already baked in `src/assets/games/` (a dog is a dog), so the owner drew 16 rather than 45 — the
+  reuse map lives in `scripts/optimize-theme-art.mjs` and the copies are re-trimmed, never re-keyed
+  (they have real alpha and no screen left to remove).
 - **Reference-image guidance:** attach 2–3 existing `src/assets/themes/icons/*.webp` (or the higher-res
   `art-src/icons/*.png`) as STYLE references on every generation so the batch matches the app, and have
   the owner re-use their first good render as a consistency anchor for the rest. Decide per-subject
@@ -84,6 +105,21 @@ pure `#00FF00` and NOT raw "is it greenish" — the latter two eat the subject.
   cast reads as green, neutralize on **`g - r`** instead.
 - **Enclosed** green (a pocket surrounded by subject, not touching the border) survives a pure
   flood-fill → it needs the global or despeckle pass.
+- **A green SUBJECT defeats the pipeline TWICE, and the second one is silent.** Both bit us on the
+  Reward Book's leaf (`natur-blad`), which is why `greenKeySprite` takes per-image `vivid`/`faint`/
+  `despill` and `optimizeRewards` carries a `REWARD_KEY_OVERRIDES` map:
+  1. the hysteresis **grow** runs straight through the subject and deletes it — first render came out
+     as a thin black streak;
+  2. then, with the thresholds fixed, the **despill** flattens `g` to `max(r,b)` on anything greener
+     than ~8 and the subject comes out GREY with a perfect silhouette — measured `rgb(51,104,52)` →
+     `rgb(52,53,52)`. Shape-only checks pass this; it is invisible unless you look at colour.
+
+  So for a green subject raise **all three** thresholds above the subject's own green excess, picked
+  from the histogram valley (the leaf: subject ~40–80, screen 180+, so vivid 150 / faint 110 /
+  despill 90). **Verify by comparing the output's average opaque RGB against the source's**, not just
+  by eyeballing the cut-out. Measure per image rather than assuming — the frog, turtle and rainbow in
+  the same batches all keyed correctly on the shared defaults (their subject/screen gap was 16 vs 134,
+  2 vs 141), so a blanket "green subject ⇒ override" would be wrong too.
 
 ## Other pipeline gotchas (each bit us once)
 

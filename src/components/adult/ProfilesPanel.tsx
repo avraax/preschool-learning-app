@@ -27,6 +27,7 @@ import { useAuthContext } from '../../contexts/AuthContext'
 import { useProfiles } from '../../hooks/useProfiles'
 import { profileStore } from '../../services/profileStore'
 import CreateProfileDialog from '../auth/CreateProfileDialog'
+import { avatarArt } from '../../assets/avatars'
 
 export interface ProfilesPanelProps {
   open: boolean
@@ -119,9 +120,13 @@ const ProfilesPanel: React.FC<ProfilesPanelProps> = ({ open, onClose }) => {
                     </Box>
                   }
                 >
-                  <Box sx={{ fontSize: '1.7rem', lineHeight: 1, width: 40, textAlign: 'center' }}>
-                    {p.avatarEmoji}
-                  </Box>
+                  <Box
+                    component="img"
+                    src={avatarArt(p.avatarId)}
+                    alt=""
+                    draggable={false}
+                    sx={{ width: 40, height: 40, objectFit: 'contain', userSelect: 'none', flex: '0 0 auto' }}
+                  />
                   {editingId === p.id ? (
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flex: 1 }}>
                       <TextField

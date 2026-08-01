@@ -19,9 +19,20 @@ Regenerate with the script in §W0 of the PRD (`src/config/noEmoji.test.ts` once
 > `CategoryPalette.icon`/`iconSize` pair nothing ever rendered (5+10), and every skin's `selectorEmoji` (6). Three
 > coverage guards replaced them so a missing render can't reintroduce a glyph — `gameIcons.test.ts` (all 24
 > `<section>.<id>` keys resolve), `themes.test.ts` (every registered skin ships `selectorThumb`), and W2's required
-> `companionStages`. 208 → **87** glyphs. **Still open: W6** (`stickers.ts` — the 45 reward renders), **W7** (empty
-> the allowlist), plus the accounts-era child-profile avatars (12; prompts speced in
-> `de-emoji-avatar-prompts.md`, but that surface also needs a profile-schema migration — see the doc).
+> `companionStages`. 208 → **87** glyphs.
+>
+> **The 12 accounts-era child-profile avatars then landed too (2026-08-01)** — baked portraits in
+> `src/assets/avatars/`, keyed by a closed id set (`src/config/avatars.ts`, shared with `api/profiles.ts` +
+> `dev-server.js`), guarded by `avatars.test.ts`. No DB migration: the column keeps its `avatarEmoji` name and the
+> value became an id. 87 → **75** glyphs.
+>
+> **W6 + W7 LANDED 2026-08-01 — the PRD is COMPLETE.** All 45 reward renders ship (16 new + 29 re-trimmed from the
+> game art), `Reward.emoji` and `RewardChapter.emoji` are deleted, the chapter tabs draw each chapter's first
+> reward, and `rewardArtCoverage.test.ts` guards the set. **`ALLOWED_FILES` in `noEmoji.test.ts` is now EMPTY.**
+>
+> **208 → 25 glyphs**, and all 25 are `console.*` log prefixes (bucket E, owner option (a) — never rendered,
+> excused by the log rule rather than by an allowlist). Nothing child- or adult-FACING renders an emoji anywhere.
+> Remaining follow-up: re-capture `docs/ui-reference/`.
 
 ## A · reward data (art-gated) — 50 occurrences
 

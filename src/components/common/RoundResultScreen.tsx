@@ -390,19 +390,13 @@ const RoundResultScreen: React.FC<RoundResultScreenProps> = ({
           }}
         >
           {nextPrize ? (
-            nextPrizeArt ? (
-              <Box
-                component="img"
-                src={nextPrizeArt}
-                alt=""
-                draggable={false}
-                sx={{ width: '100%', height: '100%', objectFit: 'contain', ...silhouette }}
-              />
-            ) : (
-              <Box component="span" sx={silhouette}>
-                {nextPrize.reward.emoji}
-              </Box>
-            )
+            <Box
+              component="img"
+              src={nextPrizeArt}
+              alt=""
+              draggable={false}
+              sx={{ width: '100%', height: '100%', objectFit: 'contain', ...silhouette }}
+            />
           ) : (
             <Box
               component="img"

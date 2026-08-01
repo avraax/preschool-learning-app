@@ -218,13 +218,12 @@ test('REWARD_PATH: 45 rewards, 5 chapters of 9, unique ids, all labelled', () =>
   assert.equal(REWARD_PATH.length, REWARD_SLOTS)
   for (const c of REWARD_CHAPTERS) {
     assert.equal(c.rewards.length, CHAPTER_SIZE, `chapter ${c.id} is not ${CHAPTER_SIZE} long`)
-    assert.ok(c.title && c.emoji, `chapter ${c.id} missing title/emoji`)
+    assert.ok(c.title, `chapter ${c.id} missing title`)
   }
   const ids = new Set(REWARD_PATH.map((r) => r.id))
   assert.equal(ids.size, REWARD_SLOTS, 'duplicate reward id on the path')
   for (const r of REWARD_PATH) {
     assert.ok(r.label.length > 0, `${r.id} has no label`)
-    assert.ok(r.emoji.length > 0, `${r.id} has no emoji fallback`)
   }
   // The dropped sets are really gone (PRD §6.1).
   assert.ok(!REWARD_CHAPTERS.some((c) => c.id === 'smaakryb' || c.id === 'legetoej'))

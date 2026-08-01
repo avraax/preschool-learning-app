@@ -1,5 +1,10 @@
 # Gemini prompts — child-profile avatars (12 portraits)
 
+> **STATUS: DONE (2026-08-01).** All 12 renders landed, were keyed by
+> `node scripts/optimize-theme-art.mjs avatars`, and are wired. Kept as the record of the batch —
+> re-run the prompts below if a subject ever needs regenerating. What the wiring actually took is at
+> the bottom, in *Implementer notes*, corrected against what was found.
+
 **Date:** 2026-07-31 · **For:** de-emoji PRD-01, the last child-facing emoji surface
 (`src/components/auth/CreateProfileDialog.tsx`, the 12 `AVATARS` glyphs).
 **Owner decisions (locked 2026-07-31):** 12 **new dedicated portrait renders** · **today's 12 animals**,
@@ -158,38 +163,40 @@ over the folder path. Filenames from Gemini are random hashes, so the ids are ho
 
 ---
 
-## Implementer notes (for the session that keys and wires these)
+## Implementer notes — what the wiring actually took (2026-08-01)
 
-Not owner-facing — this is the hand-off half.
+**Keying.** `node scripts/optimize-theme-art.mjs avatars` (192px, 0.94 fill). The W3 `optimizeUi` pass
+was generalised into a shared `greenKeySprite()` + `optimizeGreenBatch()` — the UI outputs came back
+byte-identical, so the refactor is a proven no-op.
 
-**Keying.** Standard sprite path from `.claude/rules/scene-assets.md`: hysteresis flood-fill on
-**green-EXCESS** (`g − max(r,b)`), then trim + square-contain (these are sprites, not scene layers), then
-despeckle to drop any ✦ watermark. `frog` and `turtle` are the two subjects sharing the screen's hue —
-run the green-excess histogram on those two and **skip the faint-green grow** for them, exactly as the
-jungle-foliage sprites do. Verify all 12 composited over **magenta** before wiring.
+The faint-grow skip anticipated for `frog`/`turtle` turned out to be **unnecessary**: the measured
+green-excess gap is huge (subject max **16** and **2** vs screen **134** and **141**), so the shared
+hysteresis clears them untouched. Worst residual green-excess across all 12 after keying is 18. Verified
+over magenta — no fringe, no stray ✦.
 
-**Landing spot.** `src/assets/avatars/` with the same glob-manifest shape as `src/assets/rewards/` and
-`src/assets/ui/` — `avatarArt(id)` returning the WebP or `undefined`.
+**Landing spot.** `src/assets/avatars/` (glob manifest, `avatarArt(id)`), ids + labels + the legacy map
+in `src/config/avatars.ts` — PURE and Node-importable, so `api/profiles.ts` and `dev-server.js`
+validate against the SAME list as the client.
 
-**This surface needs a SCHEMA change, not just a swap — it is the reason W4 left it allowlisted.**
-`ChildProfile.avatarEmoji` is *persisted* (localStorage roster + the `childProfile` Postgres table via
-`lib/auth-family-plugin.ts`) and *validated server-side*: `cleanAvatar` in `api/profiles.ts`
-deliberately **rejects anything with ASCII letters or digits**, on the grounds that "an avatar is a
-pictograph". So storing `'fox'` fails validation today. The wiring batch must:
+**The schema change was smaller than expected — no DB migration.** The wire/TS field is now `avatarId`
+carrying `'fox'`, but the Postgres **column keeps its `avatarEmoji` name**: renaming it would mean a
+migration against the owner's live Neon DB (which `.claude/rules/auth.md` says never to touch for
+verification) for zero behavioural gain. The mapping happens in `publicShape`/`cleanAvatar`, the only
+code that touches the row shape.
 
-1. Add an `avatarId` concept alongside `avatarEmoji` (don't repurpose the field — existing rows hold
-   glyphs, and profiles sync across devices, so old and new clients coexist).
-2. Widen or replace `cleanAvatar` to accept the closed id set, and keep rejecting free text/markup —
-   an allow-LIST of the 12 ids is the right shape here, not a looser pattern.
-3. Map the 12 legacy glyphs → the 12 new ids for existing profiles (1:1 by design — the owner kept the
-   same 12 subjects precisely so nobody's avatar changes meaning).
-4. Update all **four** render sites, not just the picker:
-   `CreateProfileDialog` · `ProfilePicker` · `ProfilesPanel` · `AdoptLegacyDialog`.
-5. Then drop the `CreateProfileDialog.tsx` entry from `ALLOWED_FILES` in `src/config/noEmoji.test.ts`
-   and add an `avatarArt(id)` coverage assertion for all 12 (the D5 pattern used by
-   `gameIcons.test.ts` / `themes.test.ts`).
+`cleanAvatar` was **inverted**, not widened: the old rule was "reject ASCII letters/digits, an avatar is
+a pictograph" — exactly backwards once avatars ARE ascii ids. It is now an **allow-list** over the 12,
+still accepting a known legacy glyph (so a client running older JS mid-deploy isn't rejected) but
+refusing an unrecognised one rather than silently defaulting to a fox.
 
-**Sizing.** The current grid tiles are `aspectRatio: 1/1, minHeight: 44` with the glyph at
-`fontSize: 1.6rem`. An `<img>` has different intrinsic sizing than a text glyph, so give it explicit
-width/height (PRD-01 §10 — measure the rects, don't eyeball) and re-check `390×844` portrait, where the
-6-column grid is tightest.
+Corrections to the plan above:
+- **Three render sites, not four** — `AdoptLegacyDialog` was deleted by the accounts clean-sheet commit.
+  The live set is `CreateProfileDialog` · `ProfilePicker` · `ProfilesPanel`.
+- **`dev-server.js` also had to change** (`.claude/rules/api-endpoints.md`: every endpoint is mirrored).
+  Missing that shows up as a 404/400 only in dev.
+- **`src/config/avatars.ts` needs no `noEmoji` allowlist entry**: the legacy glyph table is written as
+  `\u{…}` escapes, so the file carries no literal emoji.
+
+**Sizing.** Measured, not eyeballed: tiles are 59×59 on iPad, 60×60 phone-landscape, 44×44 phone-portrait
+(the `minHeight: 44` floor holds), all inside the dialog bounds, and the dialog's own height is unchanged
+from the emoji version.
