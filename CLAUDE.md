@@ -123,7 +123,10 @@ curl -s -o /tmp/shot.jpg "<screenshotUrl from the response>"                    
   shipped (it parked a raw session token where the real callback parks a signed one). Same trap: an
   unchecked `until()`/wait that times out silently makes every assertion after it vacuous. And a test
   that compares two sides which move TOGETHER (app vs. the prebake enumerator) passes vacuously when a
-  fix is deleted from both — so also pin the value itself, not just the agreement.
+  fix is deleted from both — so also pin the value itself, not just the agreement. **The break must
+  target what the test MEASURES**, and the specific test must be the one that flips: breaking something
+  adjacent and watching the suite stay green proves nothing, which is how two vacuous tests survived a
+  re-break pass in the accounts session.
 - **Another session may be working in this same tree.** When `tsc`/`npm test` fails in files your change
   never touched, run `git status` before touching anything — it's usually a parallel session mid-refactor
   (a half-done `avatarEmoji`→`avatarId` rename did exactly this). Leave their work alone, and say whose

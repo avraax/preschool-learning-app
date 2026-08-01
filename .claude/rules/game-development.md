@@ -50,9 +50,9 @@ Most task-based quizzes are a thin **config** over `src/components/common/Unifie
 - **Never-fail hint** (PRD-05): `hintAfterNWrong` (2 for every config quiz) pulses the correct
   `AnswerTile` after that many wrong taps (reduced-motion → static glow). The 2 wrongs already broke
   first-try, so no extra star bookkeeping.
-- **Custom hero**: `renderHero(item)` renders a richer subject in the focal zone (`PromptFocus`)
-  instead of the default glyph/emoji — used today by Tal Quiz (numeral + counted objects) and Hvad
-  Mangler (the sequence with a pulsing "?").
+- **Custom hero**: `renderHero(item, ctx)` renders a richer subject in the focal zone (`PromptFocus`)
+  instead of the default glyph/emoji — used today by Tal Quiz (the shared `ListenHero`, since its answer
+  is audio-only) and Hvad Mangler (the sequence with a pulsing "?").
 - **Hear-before-commit** (`previewBeforeCommit`) — supported by the engine but **NO game opts in
   today**. It makes a tap a two-step answer: 1st tap AUDITIONS the tile (`speakClickedItem` + the
   shared `'selected'` state — a lifted accent outline, NOT correct/wrong colours) and returns WITHOUT
