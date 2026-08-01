@@ -2,12 +2,12 @@ import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import { Typography, Box } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
-import { Volume2 } from 'lucide-react'
 import { isIOS } from '../../utils/deviceDetection'
 import { CategoryTheme } from '../../config/categoryThemes'
 import GameShell from './GameShell'
 import AnswerTile, { type AnswerTileState } from './AnswerTile'
 import PromptFocus from './PromptFocus'
+import ListenHero from './ListenHero'
 import { HeroEmoji, HeroArt, TileArt } from './PromptArt'
 import type { GuideReaction } from './ThemeMascot'
 import { useCelebration } from '../common/CelebrationEffect'
@@ -145,8 +145,10 @@ export interface UnifiedQuizConfig {
   // Optional custom PromptStage hero (UI/UX Overhaul §6A). When provided, the quiz renders this in
   // the PromptStage instead of the default (questionVisual emoji/word, English "listen" card, or the
   // item glyph). Use for richer subjects — e.g. Tal Quiz's numeral + counted objects, or Hvad
-  // Mangler's sequence with a pulsing "?". Receives the live QuizItem.
-  renderHero?: (item: QuizItem) => React.ReactNode
+  // Mangler's sequence with a pulsing "?". Receives the live QuizItem, plus the engine's live audio
+  // state so a hero can react to playback (Tal Quiz's numeral band renders the shared ListenHero) —
+  // read `speaking` from here, never a component-level isPlaying (see audio-system.md).
+  renderHero?: (item: QuizItem, ctx: { speaking: boolean }) => React.ReactNode
 
   // When the welcome message already conveys the first question's prompt (e.g. Hvad Mangler?, whose
   // welcome "Hvad mangler" equals its per-question prompt "Hvad mangler?"), set this so the engine
@@ -598,7 +600,7 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
     const item = currentItem
     if (!item) return null
     // Config-supplied custom hero takes precedence (Tal counted objects, Hvad Mangler sequence…).
-    if (config.renderHero) return config.renderHero(item)
+    if (config.renderHero) return config.renderHero(item, { speaking: audio.isPlaying })
     const qv = item.questionVisual
     if (qv && (qv.art || qv.emoji || qv.word)) {
       // A picture above the word makes the word a small CAPTION (Dansk til Engelsk's Danish gloss);
@@ -668,46 +670,10 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
       )
     }
     if (config.quizType === 'english') {
-      // Listening task (Lyt og Find): an "equalizer" wonder card — a subject without revealing the
+      // Listening task (Lyt og Find): the shared "listen" hero — a subject without revealing the
       // picture. PRD-17 W2: the indicator tracks REAL audio-playback state (`audio.isPlaying`, read
-      // from the hook — never a component-level isPlaying, per audio-system.md). While the clip plays
-      // the bars dance (the app is speaking); when idle they settle flat and the speaker calmly
-      // pulses to signal "your turn" (tap a picture / Hør igen). Reduced motion → both static.
-      const speaking = audio.isPlaying
-      return (
-        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
-          {/* A "listen" control glyph — a Lucide speaker, NEVER a picture (it must not reveal the
-              answer for the audio-only Lyt og Find task). It calmly pulses ONLY when idle (his turn);
-              it holds steady while the word plays (the bars carry the motion then). */}
-          <Box
-            aria-hidden
-            component={motion.div}
-            animate={reduce || speaking ? undefined : { scale: [1, 1.09, 1] }}
-            transition={reduce || speaking ? undefined : { duration: 1.7, repeat: Infinity, ease: 'easeInOut' }}
-            sx={{ display: 'flex', color: config.theme.accentColor, '& svg': { width: 'clamp(3.5rem, 14vh, 7rem)', height: 'auto' }, [PHONE_LANDSCAPE]: { '& svg': { width: 'clamp(2.2rem, 18vh, 3.2rem)' } } }}
-          >
-            <Volume2 strokeWidth={2.25} />
-          </Box>
-          <Box aria-hidden sx={{ display: 'flex', alignItems: 'flex-end', gap: '4px', height: 24 }}>
-            {[0, 1, 2, 3, 4].map((i) => (
-              <Box
-                key={i}
-                component={motion.div}
-                // Dance only while audio actually plays; otherwise settle to a calm low resting bar.
-                animate={reduce ? undefined : speaking ? { scaleY: [0.4, 1, 0.5, 0.9, 0.4] } : { scaleY: 0.3 }}
-                transition={
-                  reduce
-                    ? undefined
-                    : speaking
-                      ? { duration: 0.9, repeat: Infinity, delay: i * 0.1, ease: 'easeInOut' }
-                      : { duration: 0.3, ease: 'easeOut' }
-                }
-                sx={{ width: 6, height: 24, transformOrigin: 'bottom', borderRadius: 3, bgcolor: config.theme.accentColor, opacity: reduce || speaking ? 1 : 0.55 }}
-              />
-            ))}
-          </Box>
-        </Box>
-      )
+      // from the hook — never a component-level isPlaying, per audio-system.md).
+      return <ListenHero accent={config.theme.accentColor} speaking={audio.isPlaying} />
     }
     return <HeroEmoji>{item.display}</HeroEmoji>
   }

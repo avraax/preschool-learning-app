@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-08-01T06:17:35.233Z",
+  "updatedAt": "2026-08-01T21:33:25.348Z",
   "clips": {
     "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|b": {
       "verdict": "ok",
@@ -5384,6 +5384,806 @@
       "text": "Du har femogfyrre klistermærker!",
       "group": "levelup",
       "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 1": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 1",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 2": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 2",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 3": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 3",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 4": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 4",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 5": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 5",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 6": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 6",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 7": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 7",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 8": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 8",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 9": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 9",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 10": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 10",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 11": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 11",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 12": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 12",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 13": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 13",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 14": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 14",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 15": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 15",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 16": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 16",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 17": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 17",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 18": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 18",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 19": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 19",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 20": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 20",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 21": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 21",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 22": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 22",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 23": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 23",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 24": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 24",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 25": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 25",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 26": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 26",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 27": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 27",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 28": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 28",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 29": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 29",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 30": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 30",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 31": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 31",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 32": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 32",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 33": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 33",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 34": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 34",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 35": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 35",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 36": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 36",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 37": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 37",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 38": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 38",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 39": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 39",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 40": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 40",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 41": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 41",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 42": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 42",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 43": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 43",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 44": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 44",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 45": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 45",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 46": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 46",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 47": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 47",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 48": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 48",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 49": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 49",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 50": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 50",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 51": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 51",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 52": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 52",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 53": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 53",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 54": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 54",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 55": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 55",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 56": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 56",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 57": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 57",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 58": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 58",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 59": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 59",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 60": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 60",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 61": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 61",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 62": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 62",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 63": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 63",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 64": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 64",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 65": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 65",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 66": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 66",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 67": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 67",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 68": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 68",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 69": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 69",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 70": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 70",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 71": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 71",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 72": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 72",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 73": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 73",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 74": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 74",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 75": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 75",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 76": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 76",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 77": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 77",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 78": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 78",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 79": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 79",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 80": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 80",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 81": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 81",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 82": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 82",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 83": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 83",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 84": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 84",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 85": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 85",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 86": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 86",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 87": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 87",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 88": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 88",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 89": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 89",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 90": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 90",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 91": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 91",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 92": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 92",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 93": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 93",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 94": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 94",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 95": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 95",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 96": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 96",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 97": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 97",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 98": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 98",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 99": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 99",
+      "group": "numbers",
+      "updatedAt": 1785620005348
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 100": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find tallet 100",
+      "group": "numbers",
+      "updatedAt": 1785620005348
     }
   }
 }

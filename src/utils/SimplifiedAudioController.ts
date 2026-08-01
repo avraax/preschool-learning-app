@@ -199,6 +199,22 @@ export class SimplifiedAudioController {
     return this.speak(getDanishLetterName(letter))
   }
 
+  /**
+   * Warm the prebaked clips for these letters so a TIMED letter sequence isn't paced by each file's
+   * first fetch (see `ttsClient.prefetchPrebaked`). Fire-and-forget; plays nothing.
+   */
+  prefetchLetters(letters: string[]): void {
+    this.ttsClient.prefetchPrebaked(letters.map(getDanishLetterName))
+  }
+
+  /**
+   * Same for a timed NUMBER sequence. `speakingRate` must match what the run passes to `speakNumber`
+   * (Lær Tal uses `NUMBER_BROWSE_RATE`) — the rate is part of the prebake key.
+   */
+  prefetchNumbers(numbers: number[], speakingRate?: number): void {
+    this.ttsClient.prefetchPrebaked(numbers.map(getDanishNumberText), 'primary', speakingRate)
+  }
+
   async speakNumber(number: number, customSpeed?: number): Promise<string> {
     // Speaking number
     
@@ -436,11 +452,6 @@ export class SimplifiedAudioController {
   }
 
   // ===== COMPATIBILITY / LEARNING-MODE HELPERS =====
-
-  async announcePosition(currentIndex: number, totalItems: number, itemType: string): Promise<string> {
-    const text = `Du er ved ${itemType} ${currentIndex + 1} ud af ${totalItems}`
-    return this.speak(text)
-  }
 
   async speakColorHuntInstructions(phrase: string): Promise<string> {
     return this.speak(phrase)

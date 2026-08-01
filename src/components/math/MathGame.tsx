@@ -1,28 +1,28 @@
 import React from 'react'
-import { Box, Typography } from '@mui/material'
 import UnifiedQuizGame, { UnifiedQuizConfig, QuizItem } from '../common/UnifiedQuizGame'
+import ListenHero from '../common/ListenHero'
 import { DANISH_PHRASES } from '../../config/danish-phrases'
 import { categoryThemes, getCategoryTheme } from '../../config/categoryThemes'
 import { MathScoreChip } from '../common/ScoreChip'
 import { MathRepeatButton } from '../common/RepeatButton'
 import { progressStore, type DifficultyLevel } from '../../services/progressStore'
-import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 import { shuffle } from '../../utils/shuffle'
-import { countingObjectForNumber, artForObject } from '../../config/countingObjects'
 
 // Comprehensive math settings for counting quiz. Difficulty (Overhaul §5.7/Appendix A) sets the
 // range: Let 1–20, Normal 1–50, Svær 1–100. The manual adult-menu level stays authoritative.
 const MAX_NUMBER_BY_LEVEL: Record<DifficultyLevel, number> = { let: 20, normal: 50, svaer: 100 }
 const maxNumberForLevel = (level: DifficultyLevel): number => MAX_NUMBER_BY_LEVEL[level]
 
-// Count-the-objects mode (PRD-05 P3): for n ≤ 20 the prompt HIDES the numeral, shows exactly n
-// objects and asks the child "Hvor mange?" — so counting actually happens (a child who counts to
-// 70 finds "find the giant 37" trivial symbol-matching). For n > 20 (only reachable on Normal/Svær)
-// the numeral is shown and the task stays numeral recognition ("Find tallet 37"), with NO object
-// row so the shown quantity can never contradict the numeral (the old capped-dots bug).
-const COUNT_OBJECTS_MAX = 20
-const isCountingMode = (n: number): boolean => n <= COUNT_OBJECTS_MAX
-
+// Tal Quiz is a LISTEN-then-recognise task, at every n: the number lives ONLY in the spoken prompt
+// ("Find tallet 37" + Hør igen) and the focal zone shows the shared ListenHero — no numeral, and no
+// object row (owner ruling 2026-08-01). Both of those visuals handed the answer over:
+//   - printing "37" above a tile row that CONTAINS 37 made the tap pure shape-matching;
+//   - showing exactly n objects (the old PRD-05 "Hvor mange?" counting mode) is a second visible
+//     copy of the answer — a child who can count just counts the pile instead of hearing the number.
+// What makes the task real is Danish's inverted number word: "syvogtredive" is seven-and-thirty, so
+// telling 37 from 73 by ear is the whole lesson — which is exactly what the digit-swap distractors
+// below serve. Countable, solve-it-with-fingers work lives in Plus/Minus's ten-frames instead.
+//
 // Swap the tens/units digit of a two-digit number (23 → 32). Returns null for single-digit or
 // palindromic numbers (11, 22, …) where the swap isn't a distinct confusable.
 const swapDigits = (n: number): number | null => {
@@ -33,106 +33,21 @@ const swapDigits = (n: number): number | null => {
   return units * 10 + tens
 }
 
-// A number as a quiz item. In counting mode (n ≤ 20) the spoken prompt is "Hvor mange?" — it must
-// NOT say the number (that would give away the answer to count). In numeral mode it's "Find tallet
-// N". (For OPTION tiles the prompt/repeat text is unused, so the mode only matters for the target.)
+// A number as a quiz item. The prompt is always "Find tallet N" — spoken, never shown. (For OPTION
+// tiles the prompt/repeat text is unused; only the target's matters.)
 const makeNumberItem = (n: number): QuizItem => ({
   value: n,
   display: n,
-  audioPrompt: isCountingMode(n) ? 'Hvor mange?' : DANISH_PHRASES.gamePrompts.findNumber(n),
-  repeatWord: isCountingMode(n) ? '' : n.toString(),
+  audioPrompt: DANISH_PHRASES.gamePrompts.findNumber(n),
+  repeatWord: n.toString(),
 })
 
-// The counting object is picked from the SHARED section set (src/config/countingObjects.ts) the same
-// deterministic way everywhere — `countingObjectForNumber(n)` rotates by `n % 8` (NOT Math.random) so
-// a) the same question always renders the same object and b) it never consumes the seeded RNG stream
-// used for content generation (which would desync `?seed=`). Baked soft-3D WebP (PRD-08) when the art
-// has landed; the object's emoji is the art-gated fallback.
-
-// Object size shrinks as the pile grows so up to 20 stay tidy inside the hero. One clamp used for
-// both the emoji fallback (fontSize) and the baked <img> (height) so the two look identical in scale.
-// W4 (PRD-15): for a COUNTING task the countable objects should own the space — at low n (≤6) the
-// objects are scaled up big so they fill the focal pool instead of clustering tiny in empty space;
-// the per-object size still shrinks as n grows so high counts stay tidy.
-const heroObjectFontSize = (n: number): string =>
-  n <= 3 ? 'clamp(2.4rem, 13vh, 4.6rem)'
-    : n <= 6 ? 'clamp(1.9rem, 9.5vh, 3.4rem)'
-    : n <= 8 ? 'clamp(1.4rem, 6vh, 2.4rem)'
-    : n <= 14 ? 'clamp(1rem, 4vh, 1.7rem)'
-    : 'clamp(0.8rem, 3.2vh, 1.3rem)'
-const HERO_OBJECT_PHONE_SIZE = 'clamp(0.6rem, 8vh, 1rem)'
-
-// Tal Quiz hero (UI/UX Overhaul §6A / PRD-05 P3):
-//   counting mode (n ≤ 20) → EXACTLY n objects, numeral HIDDEN — the child counts them.
-//   numeral mode  (n > 20) → the numeral alone (no misleading object row) — numeral recognition.
-const renderCountingHero = (item: QuizItem): React.ReactNode => {
-  const n = item.value as number
-  const accent = getCategoryTheme('math').accentColor
-
-  if (!isCountingMode(n)) {
-    return (
-      <Typography
-        component="span"
-        sx={{
-          fontWeight: 800,
-          lineHeight: 1,
-          userSelect: 'none',
-          color: accent,
-          fontSize: 'clamp(2.4rem, 12vh, 5.5rem)',
-          [PHONE_LANDSCAPE]: { fontSize: 'clamp(1.6rem, 14vh, 2.6rem)' },
-        }}
-      >
-        {n}
-      </Typography>
-    )
-  }
-
-  const obj = countingObjectForNumber(n)
-  const art = artForObject(obj)
-  // W4: relax the pool width at low n so the few (now-bigger) objects fill the focal pool instead
-  // of being squeezed into a narrow centre column. Higher counts keep the tighter 520 cap so 20
-  // objects wrap tidily rather than sprawling into a thin single row.
-  const poolMaxWidth = n <= 6 ? 720 : 520
-  return (
-    <Box
-      aria-hidden
-      sx={{
-        display: 'flex',
-        flexWrap: 'wrap',
-        justifyContent: 'center',
-        alignContent: 'center',
-        alignItems: 'center',
-        gap: n <= 6 ? { xs: '10px', md: '16px' } : { xs: '4px', md: '6px' },
-        width: '100%',
-        maxWidth: poolMaxWidth,
-        height: '100%',
-        minHeight: 0,
-        overflow: 'hidden',
-      }}
-    >
-      {art
-        ? Array.from({ length: n }).map((_, i) => (
-            <Box
-              key={i}
-              component="img"
-              src={art}
-              alt=""
-              draggable={false}
-              sx={{
-                height: heroObjectFontSize(n),
-                width: 'auto',
-                objectFit: 'contain',
-                userSelect: 'none',
-                pointerEvents: 'none',
-                flex: '0 0 auto',
-                [PHONE_LANDSCAPE]: { height: HERO_OBJECT_PHONE_SIZE },
-              }}
-            />
-          ))
-        : null}
-    </Box>
-  )
-}
+// Tal Quiz hero: the shared "listen" card at every n — the number is spoken only, so the focal zone
+// must not print it or depict it. The never-fail hint (2 wrong taps → the correct tile pulses) plus
+// Hør igen keep it fair without showing the answer.
+const renderListenHero = (_item: QuizItem, ctx: { speaking: boolean }): React.ReactNode => (
+  <ListenHero accent={getCategoryTheme('math').accentColor} speaking={ctx.speaking} />
+)
 
 const MathGame: React.FC = () => {
   // Configuration for counting quiz
@@ -179,9 +94,8 @@ const MathGame: React.FC = () => {
       return shuffle(options)
     },
 
-    // Hero subject (Overhaul §6A) — huge numeral + matching object count, replacing the old
-    // audio-only void.
-    renderHero: renderCountingHero,
+    // Focal zone shows a "listen" card only — the number is spoken, never shown (see above).
+    renderHero: renderListenHero,
     
     // Display configuration
     title: 'Tal Quiz',

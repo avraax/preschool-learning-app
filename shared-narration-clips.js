@@ -27,12 +27,16 @@ import { HUE_ORDER, SHADES, DANISH_OBJECTS, spokenColor } from './src/config/col
 import { REWARD_CHAPTERS } from './src/config/stickers.ts'
 import { REWARD_SLOTS } from './src/config/progression.ts'
 import { LETTER_WORDS, WORD_LETTERS, letterPhrase, startsWithPhrase } from './src/config/letterWords.ts'
+import { NUMBER_BROWSE_RATE as NUMBER_RATE } from './src/config/numberAutoplay.ts'
 
 // Danish narration + English section voices, straight from the single source of voice truth.
 const DA = TTS_CONFIG.voices.primary // da-DK-ChristelNeural / da-DK
 const EN = TTS_CONFIG.voices.english // en-US Ava / en-US
 export const DEFAULT_RATE = TTS_CONFIG.speakingRate // default prosody rate (1.05)
-export const NUMBER_BROWSE_RATE = 1.2 // Lær Tal speaks numbers with speakNumber(n, 1.2)
+// Lær Tal speaks numbers (tap AND the "Hør tallene" autoplay) at this rate — re-exported from the app
+// config so the enumerator can't drift from what the screen actually asks for. A rate is part of the
+// cache key, so drift = every number falling back to live Azure, unauditioned.
+export const NUMBER_BROWSE_RATE = NUMBER_RATE
 
 // Welcome titles = the game card titles (SimplifiedAudioController.GAME_WELCOME_MESSAGES values).
 // Kept here so the harness and prebake share one list; keep aligned with that map if a game is
@@ -79,6 +83,11 @@ export function collectNarrationClips() {
     da('numbers', getDanishNumberText(n), DEFAULT_RATE)
     da('numbers', getDanishNumberText(n), NUMBER_BROWSE_RATE)
   }
+
+  // Tal Quiz prompts — "Find tallet N", 1–100 (the game's range ceiling at Svær). This IS the whole
+  // question now that the numeral and the counting-object row were both removed as giveaways
+  // (2026-08-01), so it must be a prebaked clip and not a live Azure round-trip per question.
+  for (let n = 1; n <= 100; n++) da('numbers', DANISH_PHRASES.gamePrompts.findNumber(n))
 
   // Fixed spoken phrases.
   DANISH_PHRASES.success.forEach((t) => da('phrases', t))

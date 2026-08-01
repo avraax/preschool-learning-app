@@ -75,6 +75,14 @@ serves only genuinely dynamic text or a non-default VoiceLab voice.
   off in `docs/audit/narration-audit.json` (the audited-OK manifest), so new content surfaces as
   UNAUDITED — listen in `/audit`, mark OK, commit. Letter names live in `DANISH_LETTER_NAMES`
   (glyph-first: bare glyph for most, `X:'eks'`/`Z:'zæt'`; number 1 stays `'en'`, not `'et'`).
+- **Never `await` a prebaked clip to pace a timed sequence.** Azure pads every clip: measured across the
+  29 letter names, ~0.22 s of silence before the name and 0.4–0.7 s after it (clip 1.25–1.73 s, name only
+  0.2–0.83 s), and the shared `<audio>` element then takes another ~250 ms to start producing sound.
+  Awaiting `speak*` therefore waits out padding you can't hear — it made the alphabet autoplay plod at
+  2.4 s per letter. Pace on a fixed step instead and let the next clip cancel the previous tail (no
+  queue = new audio cancels current), and keep the step ≥ the longest spoken part + that startup or it
+  cuts names off mid-word (see `src/config/alphabetGroups.ts`). `ttsClient.prefetchPrebaked()` /
+  `controller.prefetchLetters()` warm the files first; that trims the fetch, NOT the padding.
 - The manifest cache key **must** match between `ttsClient.resolveRequest` and the build script; both
   build it via `shared-tts-key.js` (single source — don't hand-roll the key format).
 - Build scripts (`prebake-tts.mjs`, `tts-voice-eval.mjs`) + the shared enumerator

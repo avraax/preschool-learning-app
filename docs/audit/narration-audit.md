@@ -3,9 +3,9 @@
 > AUTO-GENERATED (by the `/audit` harness via the dev-server, or `npm run audit:approve-all`).
 > Do not hand-edit — source of truth is `narration-audit.json`.
 
-Last updated: 2026-08-01T06:17:35.233Z
+Last updated: 2026-08-01T21:33:25.348Z
 
-**672 OK · 1 wrong · 0 unaudited** (of 673 clips)
+**772 OK · 1 wrong · 0 unaudited** (of 773 clips)
 
 ## Bogstaver
 
@@ -146,6 +146,106 @@ Last updated: 2026-08-01T06:17:35.233Z
 | ✅ | femogtyve | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | femten | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | femten | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 1 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 10 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 100 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 11 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 12 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 13 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 14 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 15 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 16 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 17 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 18 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 19 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 2 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 20 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 21 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 22 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 23 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 24 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 25 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 26 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 27 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 28 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 29 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 3 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 30 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 31 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 32 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 33 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 34 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 35 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 36 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 37 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 38 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 39 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 4 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 40 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 41 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 42 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 43 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 44 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 45 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 46 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 47 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 48 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 49 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 5 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 50 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 51 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 52 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 53 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 54 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 55 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 56 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 57 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 58 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 59 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 6 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 60 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 61 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 62 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 63 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 64 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 65 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 66 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 67 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 68 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 69 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 7 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 70 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 71 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 72 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 73 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 74 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 75 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 76 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 77 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 78 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 79 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 8 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 80 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 81 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 82 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 83 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 84 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 85 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 86 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 87 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 88 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 89 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 9 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 90 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 91 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 92 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 93 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 94 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 95 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 96 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 97 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 98 | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find tallet 99 | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | fire | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | fire | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | fireogfirs | Bulk-approved (PRD-11 owner listen pass) |  |

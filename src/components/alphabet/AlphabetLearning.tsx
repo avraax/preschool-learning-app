@@ -1,20 +1,24 @@
 import React, { useState, useEffect, useRef } from 'react'
 import {
   Typography,
-  Box,
-  LinearProgress
+  Box
 } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
-import { categoryThemes } from '../../config/categoryThemes'
+import { Play, Square } from 'lucide-react'
+import { categoryThemes, getCategoryTheme } from '../../config/categoryThemes'
 import GameShell from '../common/GameShell'
 import LearningGrid from '../common/LearningGrid'
 import PromptFocus from '../common/PromptFocus'
+import TactilePill from '../common/TactilePill'
 import { useCelebration } from '../common/CelebrationEffect'
 import { useBrowseXp } from '../../hooks/useBrowseXp'
 import { LETTER_WORDS, letterPhrase } from '../../config/letterWords'
+import { ALPHABET_GROUPS, DANISH_ALPHABET, LETTER_STEP_MS, GROUP_PAUSE_MS } from '../../config/alphabetGroups'
+import { FIRST_ITEM_EXTRA_MS } from '../../config/autoplayPace'
 import { letterArt } from '../../assets/games/alphabet'
-import { hexToRgba } from '../../theme/tokens/helpers'
+import { hexToRgba, relLuminance } from '../../theme/tokens/helpers'
 import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
+import { sfx } from '../../services/sfxClient'
 // Simplified audio system
 import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 
@@ -26,12 +30,9 @@ const logError = (message: string, data?: any) => {
 }
 
 
-const DANISH_ALPHABET = [
-  'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
-  'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'Æ', 'Ø', 'Å'
-]
-
 const ALPHABET_ACCENT = categoryThemes.alphabet.accentColor
+
+const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 
 // Example word + baked-art subject for the bloomed letter come from the shared LETTER_WORDS manifest.
 // All 29 letters carry a word + picture now (Q/W/X/Å were added on owner request), so every letter
@@ -53,6 +54,25 @@ const AlphabetLearning: React.FC = () => {
   const welcomeTriggered = useRef(false)
   // True once the child taps → suppresses a (possibly late) welcome from talking over their play.
   const hasInteractedRef = useRef(false)
+
+  // "Hør alfabetet" autoplay (PRD alfabet-autoplay). The run is a plain await-loop modelled on
+  // SpeakWordGame's runSpellingSequence, but it needs TWO guards, not one: `mountedRef` for unmount
+  // and an incrementing `runIdRef` so a letter tap or a re-press aborts the loop. The audio
+  // controller has no queue (new audio cancels current), so a tap already silences the in-flight
+  // letter — the run token is what stops the LOOP from carrying on and talking over it.
+  const [isRunning, setIsRunning] = useState(false)
+  const runIdRef = useRef(0)
+  const mountedRef = useRef(true)
+
+  // Owns its own empty-dep effect (see game-development.md): folded into another effect's cleanup it
+  // gets stranded false by StrictMode's mount→cleanup→remount.
+  useEffect(() => {
+    mountedRef.current = true
+    return () => {
+      mountedRef.current = false
+      runIdRef.current += 1 // nothing may keep speaking over the next screen
+    }
+  }, [])
 
   const { showCelebration, celebrationIntensity, celebrationDuration, stopCelebration } = useCelebration()
 
@@ -101,9 +121,68 @@ const AlphabetLearning: React.FC = () => {
     }
   }
 
+  // Aborts any in-flight autoplay run. Bumping the token stops the LOOP (every await re-checks it);
+  // cancelling the audio silences the letter already in flight, so "Stop" is immediate rather than
+  // trailing one more letter name. Safe to call when nothing is running.
+  const stopRun = () => {
+    runIdRef.current += 1
+    setIsRunning(false)
+    audio.cancelCurrentAudio()
+  }
+
+  // Speak A→Å at a fixed tempo, grouped the way the alphabet is recited, driving `currentIndex` so
+  // the grid ring and the bloom travel in step (the highlight leads each letter's sound). No XP: a
+  // 38s run touching all 29 letters would mint the whole section's browse allowance in one press.
+  const playAlphabet = async () => {
+    // Claim this run and abort any previous one in the same move.
+    const runId = ++runIdRef.current
+    const alive = () => mountedRef.current && runIdRef.current === runId
+
+    hasInteractedRef.current = true // a late welcome must not talk over the run
+    sfx.play('tap')
+    audio.updateUserInteraction() // iOS: refresh the gesture timestamp before playback
+    audio.cancelCurrentAudio()
+    setIsRunning(true)
+
+    // Warm all 29 clips up front. On a timed run the per-clip first fetch is taken out of the
+    // letter's SPEAKING time, not out of the pause, so without this the step has to be padded by
+    // ~250ms of dead air per letter (or it cuts the longest names off — measured on W).
+    audio.prefetchLetters(DANISH_ALPHABET)
+
+    for (let g = 0; g < ALPHABET_GROUPS.length; g++) {
+      for (const letter of ALPHABET_GROUPS[g]) {
+        if (!alive()) return
+        setCurrentIndex(DANISH_ALPHABET.indexOf(letter))
+        // The bare letter NAME here — not the browse tap's "{bogstav} som {ord}". The lesson of this
+        // button is the SEQUENCE, and 29 example words would bury it (and take ~3 minutes).
+        //
+        // Deliberately NOT awaited (this is the one place the run departs from runSpellingSequence):
+        // the clip is 1.25–1.73s but the NAME is over in ≤1.04s, so awaiting it means sitting through
+        // Azure's trailing silence and the letters land ~1.7s apart — the plod the owner rejected. We
+        // pace on LETTER_STEP_MS and let the next letter cancel the previous clip's dead tail.
+        audio.speakLetter(letter).catch((error) => {
+          logError('Error speaking letter', { letter, error: error?.toString() })
+        })
+        // The pickup beat carries the cold audio-unlock cost; every letter after it is on the beat.
+        await wait(letter === 'A' ? LETTER_STEP_MS + FIRST_ITEM_EXTRA_MS : LETTER_STEP_MS)
+        if (!alive()) return
+      }
+      // The audible phrasing: one extra breath after the group, on top of that letter's step.
+      if (g < ALPHABET_GROUPS.length - 1) {
+        await wait(GROUP_PAUSE_MS)
+        if (!alive()) return
+      }
+    }
+
+    setIsRunning(false) // stops on Å: no loop, no celebration
+  }
+
   const goToLetter = async (index: number) => {
     const letter = DANISH_ALPHABET[index]
     hasInteractedRef.current = true
+
+    // A tap stops the autoplay run, then behaves exactly as it always has (incl. browse XP).
+    stopRun()
 
     // Critical iOS fix: Update user interaction timestamp BEFORE audio call
     audio.updateUserInteraction()
@@ -137,8 +216,14 @@ const AlphabetLearning: React.FC = () => {
   }
 
 
-  const progress = ((currentIndex + 1) / DANISH_ALPHABET.length) * 100
+  // The autoplay pill takes its accent from the ACTIVE skin (getCategoryTheme, never the static map)
+  // and RepeatButton's legible-on-accent rule, so it matches the HUD family on every theme.
+  const autoplayAccent = getCategoryTheme('alphabet').accentColor
+  const onAutoplayAccent = relLuminance(autoplayAccent) > 0.5 ? '#1F2937' : '#FFFFFF'
 
+  // Deliberately NO `score` slot: the "18 / 29" position counter, its tap-to-announce and the progress
+  // bar beside it were removed — a browse has no score and no finish line, so a filling bar only
+  // implied the child was working through a list. The header keeps the shared reward ring.
   return (
     <GameShell
       categoryId="alphabet"
@@ -147,42 +232,6 @@ const AlphabetLearning: React.FC = () => {
       dense
       guide={false}
       celebration={{ show: showCelebration, intensity: celebrationIntensity, duration: celebrationDuration, onComplete: stopCelebration }}
-      score={
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <Typography
-            variant="body2"
-            onClick={async () => {
-              // Critical iOS fix: Update user interaction timestamp BEFORE audio call
-              audio.updateUserInteraction()
-              try {
-                await audio.announcePosition(currentIndex, DANISH_ALPHABET.length, 'bogstav')
-              } catch (error) {
-                logError('Error announcing position', { error: error?.toString() })
-              }
-            }}
-            sx={{
-              color: muiTheme.scene.dark ? '#FFFFFF' : 'primary.dark',
-              fontWeight: 600,
-              cursor: 'pointer',
-              padding: '4px 8px',
-              borderRadius: 1,
-              '&:hover': {
-                backgroundColor: 'primary.50',
-                boxShadow: 1
-              }
-            }}
-          >
-            {currentIndex + 1} / {DANISH_ALPHABET.length}
-          </Typography>
-          <Box sx={{ width: { xs: 120, sm: 200 }, bgcolor: 'white', borderRadius: 1, p: 0.5 }}>
-            <LinearProgress
-              variant="determinate"
-              value={progress}
-              sx={{ height: 8, borderRadius: 1 }}
-            />
-          </Box>
-        </Box>
-      }
       promptStage={
         // Selected letter blooms large in the calm world (PRD-07): PromptFocus grounds it on a
         // light-pool + contact shadow (no frosted card). The giant glyph stays the lesson; the baked
@@ -205,9 +254,12 @@ const AlphabetLearning: React.FC = () => {
                     alignItems: 'center',
                     justifyContent: 'center',
                     // PRD-18 W5: enlarge + vertically centre the bloom so the letter + picture fill the
-                    // band above the grid (they used to sit small and high with a dead band). A bit more
-                    // breathing room between the giant glyph and the picture+word row.
-                    gap: { xs: 0.75, md: 1.5 },
+                    // band above the grid (they used to sit small and high with a dead band). Trimmed
+                    // back a notch by the autoplay PRD: the focal band now also carries the "Hør
+                    // alfabetet" pill, and W5's sizes overflowed the subject zone into it (measured:
+                    // the picture ran 30px UNDER the pill on a 1024×768 iPad). Still well above the
+                    // pre-W5 sizes — the vh caps below are the levers if the band ever changes.
+                    gap: { xs: 0.5, md: 1 },
                     width: '100%',
                     height: '100%',
                   }}
@@ -222,11 +274,12 @@ const AlphabetLearning: React.FC = () => {
                         : audio.isPlaying
                           ? `0 0 24px ${hexToRgba(ALPHABET_ACCENT, 0.45)}`
                           : 'none',
-                      // Bigger hero glyph (PRD-18 W5) — fills the focal band; phone-landscape keeps its
-                      // tight vh-capped size so the ~85px stage there never overflows.
-                      fontSize: 'clamp(3.25rem, 20vh, 9rem)',
+                      // Big hero glyph (PRD-18 W5, trimmed to share the band with the pill);
+                      // phone-landscape keeps its own tight vh-capped size so the short stage there
+                      // never overflows.
+                      fontSize: 'clamp(2.6rem, 13vh, 7rem)',
                       transition: 'text-shadow 0.3s ease',
-                      [PHONE_LANDSCAPE]: { fontSize: 'clamp(1.9rem, 22vh, 2.8rem)' },
+                      [PHONE_LANDSCAPE]: { fontSize: 'clamp(1.2rem, 12vh, 1.6rem)' },
                     }}
                   >
                     {letter}
@@ -241,14 +294,14 @@ const AlphabetLearning: React.FC = () => {
                           aria-hidden
                           draggable={false}
                           sx={{
-                            // Bigger baked picture beside the word (PRD-18 W5).
-                            height: 'clamp(3rem, 14vh, 6.5rem)',
+                            // Baked picture beside the word (PRD-18 W5, trimmed for the pill).
+                            height: 'clamp(2.25rem, 7.5vh, 5rem)',
                             width: 'auto',
                             objectFit: 'contain',
                             userSelect: 'none',
                             pointerEvents: 'none',
                             filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.18))',
-                            [PHONE_LANDSCAPE]: { height: '2rem' },
+                            [PHONE_LANDSCAPE]: { height: '1.3rem' },
                           }}
                         />
                       )}
@@ -256,8 +309,8 @@ const AlphabetLearning: React.FC = () => {
                         sx={{
                           fontWeight: 700,
                           color: muiTheme.scene.dark ? 'rgba(255,255,255,0.85)' : 'text.secondary',
-                          fontSize: 'clamp(1.15rem, 4.2vh, 2.1rem)',
-                          [PHONE_LANDSCAPE]: { fontSize: '0.95rem' },
+                          fontSize: 'clamp(1.05rem, 3.6vh, 1.8rem)',
+                          [PHONE_LANDSCAPE]: { fontSize: '0.75rem' },
                         }}
                       >
                         {data.word}
@@ -265,6 +318,30 @@ const AlphabetLearning: React.FC = () => {
                     </Box>
                   )}
                 </Box>
+              }
+              repeat={
+                // The floating pill slot the quizzes fill with "Hør igen" — empty here until now.
+                // Same TactilePill material as RepeatButton, so it reads as one HUD family. lucide
+                // icons only (noEmoji.test.ts fails the build on a pictographic glyph in src/**).
+                <TactilePill
+                  accent={autoplayAccent}
+                  onClick={isRunning ? stopRun : playAlphabet}
+                  ariaLabel={isRunning ? 'Stop' : 'Hør alfabetet'}
+                  sx={{
+                    color: onAutoplayAccent,
+                    gap: 1,
+                    px: 3.5,
+                    py: 1.5,
+                    fontSize: '1.1rem',
+                    fontWeight: 700,
+                    [PHONE_LANDSCAPE]: { px: 2, py: 0.75, fontSize: '0.9rem', minHeight: 44 },
+                  }}
+                >
+                  <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center' }}>
+                    {isRunning ? <Square size={22} /> : <Play size={22} />}
+                  </Box>
+                  {isRunning ? 'Stop' : 'Hør alfabetet'}
+                </TactilePill>
               }
             />
           )

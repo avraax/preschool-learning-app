@@ -12,6 +12,10 @@ export interface SimplifiedAudioHook {
   
   // Specialized Danish audio functions
   speakLetter: (letter: string) => Promise<string>
+  /** Warm the prebaked clips for a timed letter sequence (plays nothing). */
+  prefetchLetters: (letters: string[]) => void
+  /** Warm the prebaked clips for a timed number sequence at a given rate (plays nothing). */
+  prefetchNumbers: (numbers: number[], speakingRate?: number) => void
   speakNumber: (number: number, customSpeed?: number) => Promise<string>
   speakEnglish: (text: string) => Promise<string>
   speakReward: (text: string) => Promise<string>
@@ -39,7 +43,6 @@ export interface SimplifiedAudioHook {
   }
   
   // Additional game-specific methods
-  announcePosition: (currentIndex: number, totalItems: number, itemType: string) => Promise<string>
   speakColorHuntInstructions: (phrase: string) => Promise<string>
   speakColorMixingInstructions: (targetColor: string) => Promise<string>
 
@@ -67,6 +70,8 @@ const STABLE_AUDIO_METHODS = {
 
   // Specialized Danish audio functions
   speakLetter: simplifiedAudioController.speakLetter.bind(simplifiedAudioController),
+  prefetchLetters: simplifiedAudioController.prefetchLetters.bind(simplifiedAudioController),
+  prefetchNumbers: simplifiedAudioController.prefetchNumbers.bind(simplifiedAudioController),
   speakNumber: simplifiedAudioController.speakNumber.bind(simplifiedAudioController),
   speakEnglish: simplifiedAudioController.speakEnglish.bind(simplifiedAudioController),
   speakReward: simplifiedAudioController.speakReward.bind(simplifiedAudioController),
@@ -90,7 +95,6 @@ const STABLE_AUDIO_METHODS = {
   getTTSStatus: simplifiedAudioController.getTTSStatus.bind(simplifiedAudioController),
 
   // Additional game-specific methods
-  announcePosition: simplifiedAudioController.announcePosition.bind(simplifiedAudioController),
   speakColorHuntInstructions: simplifiedAudioController.speakColorHuntInstructions.bind(simplifiedAudioController),
   speakColorMixingInstructions: simplifiedAudioController.speakColorMixingInstructions.bind(simplifiedAudioController),
 } as const

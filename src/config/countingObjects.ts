@@ -35,8 +35,9 @@ export const COUNTING_OBJECTS: CountingObject[] = [
 export const countingObjectForNumber = (n: number): CountingObject =>
   COUNTING_OBJECTS[((n % COUNTING_OBJECTS.length) + COUNTING_OBJECTS.length) % COUNTING_OBJECTS.length]
 
-// The canonical "star" object — Lær Tal's fixed choice (decision 1).
-export const STAR_OBJECT: CountingObject = COUNTING_OBJECTS.find((o) => o.id === 'star')!
+// (The `STAR_OBJECT` shortcut lived here for Lær Tal's count cluster. That cluster was removed
+// 2026-08-01 — the browse shows the numeral alone — and nothing else pinned a single object, so the
+// export went with it. `star` is still in COUNTING_OBJECTS for the games that rotate through the set.)
 
 // The baked WebP URL for a counting object, or `undefined` (→ caller keeps its emoji fallback).
 export const artForObject = (obj: CountingObject): string | undefined => countingObjectArt(obj.id)

@@ -253,6 +253,30 @@ export class TtsClient {
     return { cacheKey, body }
   }
 
+  /**
+   * Warm the browser HTTP cache for a set of prebaked clips. Best-effort and fire-and-forget: a miss,
+   * a 404 or an offline device changes nothing.
+   *
+   * Why this exists: the prebaked branch of `synthesizeAndPlay` points the shared `<audio>` element at
+   * a static URL, so the file is fetched only when playback begins (~250ms measured in dev). A clip
+   * played on its own never notices, but a TIMED sequence does — the alphabet autoplay steps every
+   * ~1.1s, and that startup cost is taken out of the letter's speaking time, cutting the end off the
+   * longest names. Warming the files first turns the step into (almost) pure speaking time.
+   */
+  prefetchPrebaked(texts: string[], voiceType: VoiceType = 'primary', speed?: number): void {
+    for (const text of texts) {
+      // `speed` is part of the cache key — Lær Tal speaks numbers faster than the default, so omitting
+      // it here would warm a DIFFERENT file than the one the run plays.
+      const { cacheKey } = this.resolveRequest(text, voiceType, speed)
+      const file = PREBAKED_TTS[cacheKey]
+      if (!file) continue // dynamic text, or a VoiceLab override is active → nothing static to warm
+      // The body must be READ for the response to land in the HTTP cache.
+      void fetch(prebakedUrl(file), { cache: 'force-cache' })
+        .then((r) => r.arrayBuffer())
+        .catch(() => { /* best-effort */ })
+    }
+  }
+
   async synthesize(text: string, voiceType: VoiceType = 'primary', speed?: number): Promise<string> {
     const { cacheKey, body } = this.resolveRequest(text, voiceType, speed)
 

@@ -24,7 +24,6 @@ import { devFx } from '../../utils/devHarness'
 import { BOUNCE, DWELL_CORRECT, motionOr } from '../../theme/motion'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
 import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
-import { COUNTING_OBJECTS, artForObject, type CountingObject } from '../../config/countingObjects'
 import { crocodileArt } from '../../assets/games/math'
 // Simplified audio system
 import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
@@ -38,43 +37,16 @@ import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 // UI/UX Overhaul PRD §6B: the krokodille is the star (enlarged) and lunges + its mouth chomps
 // toward the bigger side (motion.BOUNCE + "chomp" SFX + mascot cheer) on a correct tap. Games Visual
 // Uplift (PRD-08 §3.4): the frosted PromptStage card is retired — the arena now rests in PromptFocus's
-// in-world light-pool; the object piles + the krokodille are baked soft-3D art (emoji fallback until
-// the batch lands). The whole arena is a top-anchored layout (there's no separate "answer grid" here,
-// the count-cards ARE the tappable answers). The chomp motion + >/< SymbolTile are unchanged.
-
-// The counting objects are the ONE shared section set (src/config/countingObjects.ts) — same objects
-// as Tal Quiz / Lær Tal / Memory so counting "feels" the same across Math. Each carries a stable art
-// id (→ baked soft-3D WebP, PRD-08) plus the honest Danish plural for the spoken/label ("fire bolde")
-// and an emoji fallback until the art lands.
-const OBJECT_TYPES = COUNTING_OBJECTS
-
-// Object-pile emoji size (PRD-05 P3). Shrinks as the count grows so a full pile of up to 20 fits
-// its fixed-height box in EVERY viewport WITHOUT clipping — the shown quantity must always match
-// the numeral (the old `overflow: hidden` + fixed size clipped high counts, so 18 could look like
-// 20). Sizes are picked so the tightest layouts (phone-landscape's short box, narrow phone-portrait
-// sides) still show every object.
+// in-world light-pool; the krokodille is baked soft-3D art. The whole arena is a top-anchored layout
+// (there's no separate "answer grid" here, the count-cards ARE the tappable answers). The chomp motion
+// + >/< SymbolTile are unchanged.
 //
-// The baked-art pile item (PRD-08): a soft-3D <img> sized by a count-based `height` so a full pile of
-// up to 20 still fits its fixed-height box in every viewport WITHOUT clipping — the shown quantity
-// must always match the numeral. Returned as an sx object so it can carry the media overrides.
-const imgPileSx = (count: number) => ({
-  height: count <= 8 ? '1.9rem' : count <= 14 ? '1.5rem' : '1.15rem',
-  width: 'auto',
-  objectFit: 'contain' as const,
-  userSelect: 'none' as const,
-  pointerEvents: 'none' as const,
-  flex: '0 0 auto',
-  '@media (orientation: landscape)': {
-    height: count <= 8 ? '1.5rem' : count <= 14 ? '1.15rem' : '0.95rem',
-  },
-  [PHONE_LANDSCAPE]: { height: count <= 10 ? '0.85rem' : '0.7rem' },
-})
+// The two cards show NUMERALS ONLY (2026-08-01, owner) — the counted object piles were removed, so
+// reading the numerals is the only way through. Nothing here consumes the counting-object set any more.
 
 interface ComparisonProblem {
   leftNumber: number
   rightNumber: number
-  leftObjects: CountingObject
-  rightObjects: CountingObject
 }
 
 type Side = 'left' | 'right'
@@ -237,19 +209,7 @@ const ComparisonGame: React.FC = () => {
       }
     }
 
-    // Distinct object types for visual clarity.
-    const leftObjectType = OBJECT_TYPES[randInt(0, OBJECT_TYPES.length - 1)]
-    let rightObjectType = OBJECT_TYPES[randInt(0, OBJECT_TYPES.length - 1)]
-    while (rightObjectType === leftObjectType) {
-      rightObjectType = OBJECT_TYPES[randInt(0, OBJECT_TYPES.length - 1)]
-    }
-
-    setCurrentProblem({
-      leftNumber: leftNum,
-      rightNumber: rightNum,
-      leftObjects: leftObjectType,
-      rightObjects: rightObjectType,
-    })
+    setCurrentProblem({ leftNumber: leftNum, rightNumber: rightNum })
     setChosen(null)
     setLocked(false)
     setMouthOpen(false)
@@ -414,7 +374,6 @@ const ComparisonGame: React.FC = () => {
   const renderSide = (side: Side) => {
     if (!currentProblem) return null
     const num = side === 'left' ? currentProblem.leftNumber : currentProblem.rightNumber
-    const obj = side === 'left' ? currentProblem.leftObjects : currentProblem.rightObjects
     return (
       <Box sx={{ minHeight: { xs: 180, md: 230 }, '@media (orientation: landscape)': { minHeight: { xs: 120, md: 150 } }, [PHONE_LANDSCAPE]: { minHeight: 96 } }}>
         <AnswerTile
@@ -423,56 +382,25 @@ const ComparisonGame: React.FC = () => {
           state={sideState(side)}
           disabled={locked}
         >
-          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5, width: '100%' }}>
-            {/* Objects — a fixed-height pile that always shows EXACTLY `num` objects (never clipped),
-                so the visible quantity order-matches the numeral (PRD-05 P3). alignContent centres
-                the wrapped rows; the emoji size (emojiPileSx) shrinks with the count so even 20 fit. */}
-            <Box sx={{
-              height: { xs: 104, md: 128 },
-              display: 'flex',
-              flexWrap: 'wrap',
-              justifyContent: 'center',
-              alignItems: 'center',
-              alignContent: 'center',
-              gap: '3px',
-              '@media (orientation: landscape)': { height: { xs: 56, md: 76 } },
-              [PHONE_LANDSCAPE]: { height: 34 }
-            }}>
-              {Array.from({ length: num }, (_, i) => {
-                const art = artForObject(obj)
-                return (
-                  <Box
-                    component={motion.span}
-                    key={i}
-                    initial={reduce ? false : { opacity: 0, scale: 0 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: reduce ? 0 : i * 0.05 }}
-                    sx={{ display: 'inline-flex', lineHeight: 1 }}
-                  >
-                    {art ? (
-                      <Box component="img" src={art} alt="" draggable={false} sx={imgPileSx(num)} />
-                    ) : null}
-                  </Box>
-                )
-              })}
-            </Box>
-            {/* Numeral */}
+          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%' }}>
+            {/* The NUMERAL is the whole card (2026-08-01, owner). The object pile that used to sit above
+                it was removed: comparing two piles of blobs let the child win without ever reading the
+                numerals, which is the skill this game teaches. It now fills the space the pile held.
+                (The "{n} {word}" caption went earlier, PRD-14 W5 — unreadable for a pre-reader.) */}
             <Typography
               variant="h1"
               sx={{
-                fontSize: { xs: '3rem', md: '4rem' },
+                fontSize: { xs: '5.5rem', md: '7.5rem' },
                 fontWeight: 700,
                 // Readable-on-white count-card numeral (onTileColor) — see CategoryTheme.onTileColor.
                 color: category.onTileColor,
                 lineHeight: 1,
-                '@media (orientation: landscape)': { fontSize: { xs: '2rem', md: '2.8rem' } },
-                [PHONE_LANDSCAPE]: { fontSize: '1.6rem' }
+                '@media (orientation: landscape)': { fontSize: { xs: '3.5rem', md: '5rem' } },
+                [PHONE_LANDSCAPE]: { fontSize: '2.4rem' }
               }}
             >
               {num}
             </Typography>
-            {/* The "{n} {word}" caption was dropped (PRD-14 W5 / audit §A5): unreadable for a
-                pre-reader — the object pile + numeral + the spoken completed fact already carry it. */}
           </Box>
         </AnswerTile>
       </Box>

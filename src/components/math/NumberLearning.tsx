@@ -1,75 +1,33 @@
 import React, { useState, useEffect, useRef } from 'react'
 import {
   Typography,
-  Box,
-  LinearProgress
+  Box
 } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
+import { Play, Square } from 'lucide-react'
 import GameShell from '../common/GameShell'
 import LearningGrid from '../common/LearningGrid'
 import PromptFocus from '../common/PromptFocus'
+import TactilePill from '../common/TactilePill'
 import { useCelebration } from '../common/CelebrationEffect'
-import { categoryThemes } from '../../config/categoryThemes'
+import { categoryThemes, getCategoryTheme } from '../../config/categoryThemes'
 import { useBrowseXp } from '../../hooks/useBrowseXp'
-import { STAR_OBJECT, artForObject } from '../../config/countingObjects'
-import { hexToRgba } from '../../theme/tokens/helpers'
+import { NUMBER_BROWSE_RATE, NUMBER_STEP_MS } from '../../config/numberAutoplay'
+import { FIRST_ITEM_EXTRA_MS } from '../../config/autoplayPace'
+import { hexToRgba, relLuminance } from '../../theme/tokens/helpers'
 import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 import { useDifficulty } from '../../hooks/useDifficulty'
+import { sfx } from '../../services/sfxClient'
 // Simplified audio system
 import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
+
+const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 
 // Lær Tal — a calm 1–100 browse. Tapping a number speaks it; exploring distinct numbers earns a
 // sticker at each milestone. Instant load: the grid is interactive from the first render and the
 // welcome narrates over it.
 
 const MATH_ACCENT = categoryThemes.math.accentColor
-
-// Count-reinforcement cluster for the bloomed number (UI/UX Overhaul PRD §6B — mirrors Tal Quiz's
-// counted-objects idea so the numeral isn't the only channel). Chunky recognisable stars at small
-// counts; crisp small dots once the count gets dense (emoji glyphs turn to mush under ~12px, dots
-// stay legible) — always renders exactly `n` items so the visual count is real, up to 100.
-const ObjectCount: React.FC<{ n: number; accent: string }> = ({ n, accent }) => {
-  const useDots = n > 30
-  const size = n <= 10 ? 30 : n <= 20 ? 24 : n <= 30 ? 18 : n <= 60 ? 10 : 7
-  // The shared section counting object (PRD-08 decision 1: Lær Tal uses `star`), a baked soft-3D WebP.
-  // Dense counts (n > 30) stay plain accent dots — a baked object at <10px is mush, dots stay legible
-  // (this shrink-to-dots stays).
-  const starArt = artForObject(STAR_OBJECT)
-  return (
-    <Box
-      aria-hidden
-      sx={{
-        display: 'flex',
-        flexWrap: 'wrap',
-        alignItems: 'center',
-        justifyContent: 'center',
-        alignContent: 'center',
-        gap: useDots ? '3px' : '5px',
-        maxWidth: '92%',
-        maxHeight: '100%',
-        overflow: 'hidden',
-      }}
-    >
-      {Array.from({ length: n }).map((_, i) =>
-        useDots ? (
-          <Box
-            key={i}
-            sx={{ width: size, height: size, borderRadius: '50%', bgcolor: accent, opacity: 0.85, flex: '0 0 auto' }}
-          />
-        ) : starArt ? (
-          <Box
-            key={i}
-            component="img"
-            src={starArt}
-            alt=""
-            draggable={false}
-            sx={{ height: `${size}px`, width: 'auto', objectFit: 'contain', flex: '0 0 auto', userSelect: 'none', pointerEvents: 'none' }}
-          />
-        ) : null
-      )}
-    </Box>
-  )
-}
 
 const NumberLearning: React.FC = () => {
   const muiTheme = useTheme()
@@ -86,6 +44,25 @@ const NumberLearning: React.FC = () => {
   const welcomeTriggered = useRef(false)
   // True once the child taps → suppresses a (possibly late) welcome from talking over their play.
   const hasInteractedRef = useRef(false)
+
+  // "Hør tallene" autoplay — the number sibling of Lær Alfabetet's "Hør alfabetet". Same mechanism:
+  // an incrementing run token checked after every await (a tap, a re-press or unmount aborts the loop;
+  // `mountedRef` alone can't see the first two), and the clips are paced on a fixed onset step rather
+  // than awaited, because awaiting Azure's padded clips halves the pace (see autoplayPace.ts).
+  // No grouping and no tempo change here — counting is one steady flow (owner decision).
+  const [isRunning, setIsRunning] = useState(false)
+  const runIdRef = useRef(0)
+  const mountedRef = useRef(true)
+
+  // Owns its own empty-dep effect (see game-development.md): folded into another effect's cleanup it
+  // gets stranded false by StrictMode's mount→cleanup→remount.
+  useEffect(() => {
+    mountedRef.current = true
+    return () => {
+      mountedRef.current = false
+      runIdRef.current += 1 // nothing may keep counting over the next screen
+    }
+  }, [])
 
   const { showCelebration, celebrationIntensity, celebrationDuration, stopCelebration } = useCelebration()
 
@@ -148,10 +125,55 @@ const NumberLearning: React.FC = () => {
     }
   }
 
+  // Aborts any in-flight autoplay run. Bumping the token stops the LOOP (every await re-checks it);
+  // cancelling the audio silences the number already in flight. Safe to call when nothing is running.
+  const stopRun = () => {
+    runIdRef.current += 1
+    setIsRunning(false)
+    audio.cancelCurrentAudio()
+  }
+
+  // Count 1→N out loud at a steady pace, driving `currentIndex` so the grid ring and the bloomed
+  // numeral travel in step. Follows the VISIBLE range (so it ends at the difficulty's
+  // ceiling — 100 at Normal/Svær, 60 at Let), because the highlight has to have a cell to land on.
+  // No XP: one press would touch every number and mint the section's whole browse allowance.
+  const playNumbers = async () => {
+    // Claim this run and abort any previous one in the same move.
+    const runId = ++runIdRef.current
+    const alive = () => mountedRef.current && runIdRef.current === runId
+
+    hasInteractedRef.current = true // a late welcome must not talk over the run
+    sfx.play('tap')
+    audio.updateUserInteraction() // iOS: refresh the gesture timestamp before playback
+    audio.cancelCurrentAudio()
+    setIsRunning(true)
+
+    // Warm the clips at the SAME rate the run speaks them (the rate is part of the prebake key).
+    audio.prefetchNumbers(numbers, NUMBER_BROWSE_RATE)
+
+    for (let i = 0; i < numbers.length; i++) {
+      if (!alive()) return
+      setCurrentIndex(i)
+      // Deliberately NOT awaited — the clip is ~1.3–1.7s but the number is spoken in ≤1.14s, so
+      // awaiting it would sit through Azure's trailing silence. The next number cancels that tail.
+      audio.speakNumber(numbers[i], NUMBER_BROWSE_RATE).catch((error) => {
+        logError('Error speaking number', { number: numbers[i], error: error?.toString() })
+      })
+      // The pickup beat carries the cold audio-unlock cost; every number after it is on the beat.
+      await wait(i === 0 ? NUMBER_STEP_MS + FIRST_ITEM_EXTRA_MS : NUMBER_STEP_MS)
+      if (!alive()) return
+    }
+
+    setIsRunning(false) // stops on the last number: no loop, no celebration
+  }
+
   const goToNumber = async (index: number) => {
     hasInteractedRef.current = true
     audio.updateUserInteraction()
     if (audio.isPlaying) audio.cancelCurrentAudio()
+
+    // A tap stops the autoplay run, then behaves exactly as it always has (incl. browse XP).
+    stopRun()
 
     setCurrentIndex(index)
 
@@ -161,15 +183,22 @@ const NumberLearning: React.FC = () => {
     awardBrowseXp(String(number))
 
     try {
-      // Slightly faster for number counting.
-      await audio.speakNumber(number, 1.2)
+      // Slightly faster for number counting — the shared rate the autoplay and the prebake use.
+      await audio.speakNumber(number, NUMBER_BROWSE_RATE)
     } catch (error) {
       logError('Error speaking number', { number, error: error?.toString() })
     }
   }
 
-  const progress = ((currentIndex + 1) / numbers.length) * 100
+  // The autoplay pill takes its accent from the ACTIVE skin (getCategoryTheme, never the static map)
+  // and RepeatButton's legible-on-accent rule, so it matches the HUD family on every theme.
+  const autoplayAccent = getCategoryTheme('math').accentColor
+  const onAutoplayAccent = relLuminance(autoplayAccent) > 0.5 ? '#1F2937' : '#FFFFFF'
 
+  // Deliberately NO `score` slot: the "N / 100" position counter, its tap-to-announce and the progress
+  // bar beside it were removed — a browse has no score and no finish line, so a filling bar only implied
+  // the child was working through a list. Matches Lær Alfabetet; the other two browses (Lær Engelsk, Lær
+  // Farver) never had one. The header keeps the shared reward ring.
   return (
     <GameShell
       categoryId="math"
@@ -178,34 +207,6 @@ const NumberLearning: React.FC = () => {
       dense
       guide={false}
       celebration={{ show: showCelebration, intensity: celebrationIntensity, duration: celebrationDuration, onComplete: stopCelebration }}
-      score={
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, md: 2 } }}>
-          <Typography
-            variant="body2"
-            onClick={async () => {
-              audio.updateUserInteraction()
-              try {
-                await audio.announcePosition(currentIndex, numbers.length, 'tal')
-              } catch (error) {
-                logError('Error announcing position', { error: error?.toString() })
-              }
-            }}
-            sx={{
-              color: muiTheme.scene.dark ? '#FFFFFF' : 'secondary.dark',
-              fontWeight: 600,
-              cursor: 'pointer',
-              padding: '4px 8px',
-              borderRadius: 1,
-              '&:hover': { backgroundColor: 'secondary.50', boxShadow: 1 }
-            }}
-          >
-            {currentIndex + 1} / {numbers.length}
-          </Typography>
-          <Box sx={{ width: { xs: 120, sm: 200 }, bgcolor: 'white', borderRadius: 1, p: 0.5 }}>
-            <LinearProgress variant="determinate" value={progress} color="secondary" sx={{ height: 8, borderRadius: 1 }} />
-          </Box>
-        </Box>
-      }
       promptStage={
         // Selected number blooms large + its counted objects (§6B). Games Visual Uplift (PRD-08
         // §3.7): the frosted PromptStage card is retired — the bloom now rests in PromptFocus's
@@ -236,15 +237,40 @@ const NumberLearning: React.FC = () => {
                     : audio.isPlaying
                       ? `0 0 24px ${hexToRgba(MATH_ACCENT, 0.45)}`
                       : 'none',
-                  fontSize: 'clamp(2.75rem, 15vh, 6.5rem)',
+                  // The numeral is now the ONLY thing in the bloom (the count cluster was removed), so
+                  // it takes the space the stars/dots used to hold and reads as the hero of the screen.
+                  fontSize: 'clamp(3rem, 19vh, 8rem)',
                   transition: 'text-shadow 0.3s ease',
-                  [PHONE_LANDSCAPE]: { fontSize: 'clamp(1.9rem, 24vh, 2.6rem)' },
+                  [PHONE_LANDSCAPE]: { fontSize: 'clamp(1.9rem, 22vh, 2.6rem)' },
                 }}
               >
                 {numbers[currentIndex]}
               </Typography>
-              <ObjectCount n={numbers[currentIndex]} accent={MATH_ACCENT} />
             </Box>
+          }
+          repeat={
+            // The floating pill slot the quizzes fill with "Hør igen" — empty here until now. Same
+            // TactilePill material as RepeatButton so it reads as one HUD family. lucide icons only
+            // (noEmoji.test.ts fails the build on a pictographic glyph in src/**).
+            <TactilePill
+              accent={autoplayAccent}
+              onClick={isRunning ? stopRun : playNumbers}
+              ariaLabel={isRunning ? 'Stop' : 'Hør tallene'}
+              sx={{
+                color: onAutoplayAccent,
+                gap: 1,
+                px: 3.5,
+                py: 1.5,
+                fontSize: '1.1rem',
+                fontWeight: 700,
+                [PHONE_LANDSCAPE]: { px: 2, py: 0.75, fontSize: '0.9rem', minHeight: 44 },
+              }}
+            >
+              <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center' }}>
+                {isRunning ? <Square size={22} /> : <Play size={22} />}
+              </Box>
+              {isRunning ? 'Stop' : 'Hør tallene'}
+            </TactilePill>
           }
         />
       }
