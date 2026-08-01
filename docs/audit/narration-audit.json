@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-08-01T06:07:34.562Z",
+  "updatedAt": "2026-08-01T06:17:35.233Z",
   "clips": {
     "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|b": {
       "verdict": "ok",
@@ -3856,6 +3856,1534 @@
       "text": "zet som Zebra",
       "group": "letters",
       "updatedAt": 1785564453748
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|A som Abe": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "A som Abe",
+      "group": "letters",
+      "updatedAt": 1785565055232
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|B som Bil": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "B som Bil",
+      "group": "letters",
+      "updatedAt": 1785565055232
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|C som Cykel": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "C som Cykel",
+      "group": "letters",
+      "updatedAt": 1785565055232
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|D som Drage": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "D som Drage",
+      "group": "letters",
+      "updatedAt": 1785565055232
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|E som Elefant": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "E som Elefant",
+      "group": "letters",
+      "updatedAt": 1785565055232
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|F som Fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "F som Fisk",
+      "group": "letters",
+      "updatedAt": 1785565055232
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|G som Giraf": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "G som Giraf",
+      "group": "letters",
+      "updatedAt": 1785565055232
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|H som Hund": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "H som Hund",
+      "group": "letters",
+      "updatedAt": 1785565055232
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|J som Jul": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "J som Jul",
+      "group": "letters",
+      "updatedAt": 1785565055232
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|K som Kat": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "K som Kat",
+      "group": "letters",
+      "updatedAt": 1785565055232
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|L som Løve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "L som Løve",
+      "group": "letters",
+      "updatedAt": 1785565055232
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|M som Mus": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "M som Mus",
+      "group": "letters",
+      "updatedAt": 1785565055232
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|N som Næsehorn": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "N som Næsehorn",
+      "group": "letters",
+      "updatedAt": 1785565055232
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|O som Orm": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "O som Orm",
+      "group": "letters",
+      "updatedAt": 1785565055232
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|P som Panda": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "P som Panda",
+      "group": "letters",
+      "updatedAt": 1785565055232
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|R som Raket": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "R som Raket",
+      "group": "letters",
+      "updatedAt": 1785565055232
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|S som Sol": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "S som Sol",
+      "group": "letters",
+      "updatedAt": 1785565055232
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|T som Tog": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "T som Tog",
+      "group": "letters",
+      "updatedAt": 1785565055232
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|U som Ugle": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "U som Ugle",
+      "group": "letters",
+      "updatedAt": 1785565055232
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|V som Vulkan": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "V som Vulkan",
+      "group": "letters",
+      "updatedAt": 1785565055232
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Y som Yoyo": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Y som Yoyo",
+      "group": "letters",
+      "updatedAt": 1785565055232
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Æ som Æble": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Æ som Æble",
+      "group": "letters",
+      "updatedAt": 1785565055232
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Ø som Ørn": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Ø som Ørn",
+      "group": "letters",
+      "updatedAt": 1785565055232
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Q som Quiz": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Q som Quiz",
+      "group": "letters",
+      "updatedAt": 1785565055232
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|W som Wienerbrød": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "W som Wienerbrød",
+      "group": "letters",
+      "updatedAt": 1785565055232
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|X som Xylofon": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "X som Xylofon",
+      "group": "letters",
+      "updatedAt": 1785565055232
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Å som Ål": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Å som Ål",
+      "group": "letters",
+      "updatedAt": 1785565055232
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Abe starter med A": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Abe starter med A",
+      "group": "letters",
+      "updatedAt": 1785565055232
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Bil starter med B": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Bil starter med B",
+      "group": "letters",
+      "updatedAt": 1785565055232
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Cykel starter med C": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Cykel starter med C",
+      "group": "letters",
+      "updatedAt": 1785565055232
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Drage starter med D": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Drage starter med D",
+      "group": "letters",
+      "updatedAt": 1785565055232
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Elefant starter med E": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Elefant starter med E",
+      "group": "letters",
+      "updatedAt": 1785565055232
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fisk starter med F": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fisk starter med F",
+      "group": "letters",
+      "updatedAt": 1785565055232
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Giraf starter med G": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Giraf starter med G",
+      "group": "letters",
+      "updatedAt": 1785565055232
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Hund starter med H": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Hund starter med H",
+      "group": "letters",
+      "updatedAt": 1785565055232
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Jul starter med J": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Jul starter med J",
+      "group": "letters",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Kat starter med K": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Kat starter med K",
+      "group": "letters",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Løve starter med L": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Løve starter med L",
+      "group": "letters",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Mus starter med M": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Mus starter med M",
+      "group": "letters",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Næsehorn starter med N": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Næsehorn starter med N",
+      "group": "letters",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Orm starter med O": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Orm starter med O",
+      "group": "letters",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Panda starter med P": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Panda starter med P",
+      "group": "letters",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Raket starter med R": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Raket starter med R",
+      "group": "letters",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Sol starter med S": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Sol starter med S",
+      "group": "letters",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tog starter med T": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tog starter med T",
+      "group": "letters",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Ugle starter med U": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Ugle starter med U",
+      "group": "letters",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Vulkan starter med V": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Vulkan starter med V",
+      "group": "letters",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Wienerbrød starter med W": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Wienerbrød starter med W",
+      "group": "letters",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Xylofon starter med X": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Xylofon starter med X",
+      "group": "letters",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Yoyo starter med Y": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Yoyo starter med Y",
+      "group": "letters",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Zebra starter med zet": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Zebra starter med zet",
+      "group": "letters",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Æble starter med Æ": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Æble starter med Æ",
+      "group": "letters",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Ørn starter med Ø": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Ørn starter med Ø",
+      "group": "letters",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Ål starter med Å": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Ål starter med Å",
+      "group": "letters",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Skinnende klistermærke! Hund": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Skinnende klistermærke! Hund",
+      "group": "mixed",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Hund": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Hund",
+      "group": "mixed",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Skinnende klistermærke! Kat": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Skinnende klistermærke! Kat",
+      "group": "mixed",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Kat": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Kat",
+      "group": "mixed",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Skinnende klistermærke! Ko": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Skinnende klistermærke! Ko",
+      "group": "mixed",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Ko": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Ko",
+      "group": "mixed",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Skinnende klistermærke! Hest": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Skinnende klistermærke! Hest",
+      "group": "mixed",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Hest": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Hest",
+      "group": "mixed",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Skinnende klistermærke! Gris": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Skinnende klistermærke! Gris",
+      "group": "mixed",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Gris": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Gris",
+      "group": "mixed",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Skinnende klistermærke! Får": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Skinnende klistermærke! Får",
+      "group": "mixed",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Får": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Får",
+      "group": "mixed",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Skinnende klistermærke! Kanin": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Skinnende klistermærke! Kanin",
+      "group": "mixed",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Kanin": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Kanin",
+      "group": "mixed",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Skinnende klistermærke! Ræv": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Skinnende klistermærke! Ræv",
+      "group": "mixed",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Ræv": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Ræv",
+      "group": "mixed",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Skinnende klistermærke! Bjørn": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Skinnende klistermærke! Bjørn",
+      "group": "mixed",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Bjørn": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Bjørn",
+      "group": "mixed",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Skinnende klistermærke! Bil": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Skinnende klistermærke! Bil",
+      "group": "mixed",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Bil": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Bil",
+      "group": "mixed",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Skinnende klistermærke! Bus": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Skinnende klistermærke! Bus",
+      "group": "mixed",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Bus": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Bus",
+      "group": "mixed",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Skinnende klistermærke! Tog": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Skinnende klistermærke! Tog",
+      "group": "mixed",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tog": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tog",
+      "group": "mixed",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Skinnende klistermærke! Fly": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Skinnende klistermærke! Fly",
+      "group": "mixed",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fly": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fly",
+      "group": "mixed",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Skinnende klistermærke! Båd": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Skinnende klistermærke! Båd",
+      "group": "mixed",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Båd": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Båd",
+      "group": "mixed",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Skinnende klistermærke! Cykel": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Skinnende klistermærke! Cykel",
+      "group": "mixed",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Cykel": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Cykel",
+      "group": "mixed",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Skinnende klistermærke! Lastbil": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Skinnende klistermærke! Lastbil",
+      "group": "mixed",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Lastbil": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Lastbil",
+      "group": "mixed",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Skinnende klistermærke! Helikopter": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Skinnende klistermærke! Helikopter",
+      "group": "mixed",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Helikopter": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Helikopter",
+      "group": "mixed",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Skinnende klistermærke! Raket": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Skinnende klistermærke! Raket",
+      "group": "mixed",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Raket": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Raket",
+      "group": "mixed",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Skinnende klistermærke! Æble": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Skinnende klistermærke! Æble",
+      "group": "mixed",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Æble": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Æble",
+      "group": "mixed",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Skinnende klistermærke! Banan": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Skinnende klistermærke! Banan",
+      "group": "mixed",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Banan": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Banan",
+      "group": "mixed",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Skinnende klistermærke! Jordbær": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Skinnende klistermærke! Jordbær",
+      "group": "mixed",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Jordbær": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Jordbær",
+      "group": "mixed",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Skinnende klistermærke! Gulerod": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Skinnende klistermærke! Gulerod",
+      "group": "mixed",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Gulerod": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Gulerod",
+      "group": "mixed",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Skinnende klistermærke! Brød": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Skinnende klistermærke! Brød",
+      "group": "mixed",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Brød": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Brød",
+      "group": "mixed",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Skinnende klistermærke! Ost": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Skinnende klistermærke! Ost",
+      "group": "mixed",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Ost": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Ost",
+      "group": "mixed",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Skinnende klistermærke! Is": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Skinnende klistermærke! Is",
+      "group": "mixed",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Is": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Is",
+      "group": "mixed",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Skinnende klistermærke! Kage": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Skinnende klistermærke! Kage",
+      "group": "mixed",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Kage": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Kage",
+      "group": "mixed",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Skinnende klistermærke! Pizza": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Skinnende klistermærke! Pizza",
+      "group": "mixed",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Pizza": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Pizza",
+      "group": "mixed",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Skinnende klistermærke! Træ": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Skinnende klistermærke! Træ",
+      "group": "mixed",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Træ": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Træ",
+      "group": "mixed",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Skinnende klistermærke! Blomst": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Skinnende klistermærke! Blomst",
+      "group": "mixed",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Blomst": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Blomst",
+      "group": "mixed",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Skinnende klistermærke! Sol": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Skinnende klistermærke! Sol",
+      "group": "mixed",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Sol": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Sol",
+      "group": "mixed",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Skinnende klistermærke! Måne": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Skinnende klistermærke! Måne",
+      "group": "mixed",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Måne": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Måne",
+      "group": "mixed",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Skinnende klistermærke! Stjerne": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Skinnende klistermærke! Stjerne",
+      "group": "mixed",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Stjerne": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Stjerne",
+      "group": "mixed",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Skinnende klistermærke! Regnbue": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Skinnende klistermærke! Regnbue",
+      "group": "mixed",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Regnbue": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Regnbue",
+      "group": "mixed",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Skinnende klistermærke! Sky": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Skinnende klistermærke! Sky",
+      "group": "mixed",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Sky": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Sky",
+      "group": "mixed",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Skinnende klistermærke! Svamp": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Skinnende klistermærke! Svamp",
+      "group": "mixed",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Svamp": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Svamp",
+      "group": "mixed",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Skinnende klistermærke! Blad": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Skinnende klistermærke! Blad",
+      "group": "mixed",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Blad": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Blad",
+      "group": "mixed",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Skinnende klistermærke! Fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Skinnende klistermærke! Fisk",
+      "group": "mixed",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fisk",
+      "group": "mixed",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Skinnende klistermærke! Haj": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Skinnende klistermærke! Haj",
+      "group": "mixed",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Haj": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Haj",
+      "group": "mixed",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Skinnende klistermærke! Hval": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Skinnende klistermærke! Hval",
+      "group": "mixed",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Hval": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Hval",
+      "group": "mixed",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Skinnende klistermærke! Delfin": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Skinnende klistermærke! Delfin",
+      "group": "mixed",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Delfin": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Delfin",
+      "group": "mixed",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Skinnende klistermærke! Sæl": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Skinnende klistermærke! Sæl",
+      "group": "mixed",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Sæl": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Sæl",
+      "group": "mixed",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Skinnende klistermærke! Krabbe": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Skinnende klistermærke! Krabbe",
+      "group": "mixed",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Krabbe": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Krabbe",
+      "group": "mixed",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Skinnende klistermærke! Blæksprutte": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Skinnende klistermærke! Blæksprutte",
+      "group": "mixed",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Blæksprutte": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Blæksprutte",
+      "group": "mixed",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Skinnende klistermærke! Skildpadde": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Skinnende klistermærke! Skildpadde",
+      "group": "mixed",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Skildpadde": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Skildpadde",
+      "group": "mixed",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Skinnende klistermærke! Musling": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Skinnende klistermærke! Musling",
+      "group": "mixed",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Musling": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Musling",
+      "group": "mixed",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Sådan! Hele siden er samlet!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Sådan! Hele siden er samlet!",
+      "group": "levelup",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Wow! Hele bogen er samlet!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Wow! Hele bogen er samlet!",
+      "group": "levelup",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Du har ét klistermærke!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Du har ét klistermærke!",
+      "group": "levelup",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Du har to klistermærker!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Du har to klistermærker!",
+      "group": "levelup",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Du har tre klistermærker!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Du har tre klistermærker!",
+      "group": "levelup",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Du har fire klistermærker!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Du har fire klistermærker!",
+      "group": "levelup",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Du har fem klistermærker!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Du har fem klistermærker!",
+      "group": "levelup",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Du har seks klistermærker!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Du har seks klistermærker!",
+      "group": "levelup",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Du har syv klistermærker!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Du har syv klistermærker!",
+      "group": "levelup",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Du har otte klistermærker!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Du har otte klistermærker!",
+      "group": "levelup",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Du har ni klistermærker!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Du har ni klistermærker!",
+      "group": "levelup",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Du har ti klistermærker!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Du har ti klistermærker!",
+      "group": "levelup",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Du har elleve klistermærker!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Du har elleve klistermærker!",
+      "group": "levelup",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Du har tolv klistermærker!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Du har tolv klistermærker!",
+      "group": "levelup",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Du har tretten klistermærker!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Du har tretten klistermærker!",
+      "group": "levelup",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Du har fjorten klistermærker!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Du har fjorten klistermærker!",
+      "group": "levelup",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Du har femten klistermærker!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Du har femten klistermærker!",
+      "group": "levelup",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Du har seksten klistermærker!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Du har seksten klistermærker!",
+      "group": "levelup",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Du har sytten klistermærker!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Du har sytten klistermærker!",
+      "group": "levelup",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Du har atten klistermærker!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Du har atten klistermærker!",
+      "group": "levelup",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Du har nitten klistermærker!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Du har nitten klistermærker!",
+      "group": "levelup",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Du har tyve klistermærker!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Du har tyve klistermærker!",
+      "group": "levelup",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Du har enogtyve klistermærker!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Du har enogtyve klistermærker!",
+      "group": "levelup",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Du har toogtyve klistermærker!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Du har toogtyve klistermærker!",
+      "group": "levelup",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Du har treogtyve klistermærker!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Du har treogtyve klistermærker!",
+      "group": "levelup",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Du har fireogtyve klistermærker!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Du har fireogtyve klistermærker!",
+      "group": "levelup",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Du har femogtyve klistermærker!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Du har femogtyve klistermærker!",
+      "group": "levelup",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Du har seksogtyve klistermærker!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Du har seksogtyve klistermærker!",
+      "group": "levelup",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Du har syvogtyve klistermærker!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Du har syvogtyve klistermærker!",
+      "group": "levelup",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Du har otteogtyve klistermærker!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Du har otteogtyve klistermærker!",
+      "group": "levelup",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Du har niogtyve klistermærker!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Du har niogtyve klistermærker!",
+      "group": "levelup",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Du har tredive klistermærker!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Du har tredive klistermærker!",
+      "group": "levelup",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Du har enogtredive klistermærker!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Du har enogtredive klistermærker!",
+      "group": "levelup",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Du har toogtredive klistermærker!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Du har toogtredive klistermærker!",
+      "group": "levelup",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Du har treogtredive klistermærker!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Du har treogtredive klistermærker!",
+      "group": "levelup",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Du har fireogtredive klistermærker!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Du har fireogtredive klistermærker!",
+      "group": "levelup",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Du har femogtredive klistermærker!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Du har femogtredive klistermærker!",
+      "group": "levelup",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Du har seksogtredive klistermærker!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Du har seksogtredive klistermærker!",
+      "group": "levelup",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Du har syvogtredive klistermærker!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Du har syvogtredive klistermærker!",
+      "group": "levelup",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Du har otteogtredive klistermærker!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Du har otteogtredive klistermærker!",
+      "group": "levelup",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Du har niogtredive klistermærker!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Du har niogtredive klistermærker!",
+      "group": "levelup",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Du har fyrre klistermærker!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Du har fyrre klistermærker!",
+      "group": "levelup",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Du har enogfyrre klistermærker!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Du har enogfyrre klistermærker!",
+      "group": "levelup",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Du har toogfyrre klistermærker!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Du har toogfyrre klistermærker!",
+      "group": "levelup",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Du har treogfyrre klistermærker!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Du har treogfyrre klistermærker!",
+      "group": "levelup",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Du har fireogfyrre klistermærker!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Du har fireogfyrre klistermærker!",
+      "group": "levelup",
+      "updatedAt": 1785565055233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Du har femogfyrre klistermærker!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Du har femogfyrre klistermærker!",
+      "group": "levelup",
+      "updatedAt": 1785565055233
     }
   }
 }
