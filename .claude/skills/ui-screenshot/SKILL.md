@@ -22,7 +22,15 @@ the UI would make the answer more correct, use it. Skip it for pure logic/backen
    - API:  `node --env-file=.env.local dev-server.js`            (port 3001)
    - Vite: `node node_modules/vite/bin/vite.js --host 127.0.0.1` (port 5173)
    Vite HMR picks up source edits — re-run the driver after a change without rebuilding.
-2. **The app is auth-gated.** Add `?nogate=1` to reach any screen (it implies no-auth too), or seed a real session in the same run with `window.__auth.adoptSession(token, user)` — mint one via `node --env-file=.env.local scripts/auth-dev-session.mjs`. DEV handles: `__auth`, `__profiles`, `__progress`, `__sync`.
+2. **The app is auth-gated.** Add `?nogate=1` to reach any screen (it implies no-auth too). It also
+   attaches a stand-in child (`dev-local`), so `progressStore` is live — without that the store stays
+   INERT, `?rewards=n` awaits `whenAttached()` forever and the un-dismissible "add a child" dialog
+   covers whatever you were capturing. DEV handles: `__auth`, `__profiles`, `__progress`, `__sync`.
+   **Do NOT mint a session with `scripts/auth-dev-session.mjs` just to take a screenshot** — it writes a
+   real user + session into the owner's PRODUCTION Neon database, and test rows have reached his
+   play-test that way before (`.claude/rules/auth.md`). Reserve it for passkey work that genuinely
+   needs a server session, and delete the `user` row afterwards (it cascades). For everything else,
+   set the fields you need on `window.__auth` in the same `--eval` — no network, no database.
 3. Chrome defaults to `C:/Program Files/Google/Chrome/Application/chrome.exe` (override `CHROME_PATH`).
 
 Then **view a saved PNG with the Read tool** (it renders images).
@@ -138,6 +146,16 @@ file back to its text: patch `HTMLMediaElement.prototype.play` to push `this.cur
 key embeds the exact text (e.g. `…|Yoyo starter med Y` → `c85cfd7…mp3`). Combine both hooks when a flow
 mixes prebaked + live (dynamic) speech.
 
+**Read `this.getAttribute('src')`, NOT `currentSrc`, in that hook.** `currentSrc` is only set when the
+resource-selection task runs, so at `play()` time it still holds the PREVIOUS clip — every entry is
+off by one and you end up chasing a phantom (a letter that looked like it played twice).
+
+**Proving a timed sequence didn't clip its audio** (autoplay browses — see `.claude/rules/audio-system.md`
+on why they don't await): patch `play()` **and** `load()`; on each src swap record the outgoing
+element's `currentTime`, then compare it against that clip's measured speech end (`ffmpeg silencedetect`).
+`currentTime < speechEnd` = the step cut the word off. Onset-to-onset gaps between `play()` calls give
+you the real cadence — the step constant alone doesn't, because playback starts ~250ms late.
+
 To verify audio **plumbing** rather than wording (codecs, missing files, silent fallbacks), read
 `performance.getEntriesByType('resource')` filtered to `/sounds/` — a request is itself proof Howler's
 codec gate passed, since a rejected codec makes **no** request at all — and hook `console.warn` to
@@ -186,10 +204,27 @@ stripped, and the failure looks like a page bug. Write the JS to a **file in the
   always "it threw", not "it returned nothing".
 - **Check what your wait helper returns.** A timed-out `until()` you don't assert on makes every later
   line vacuous — the probe reports success against an element that never appeared.
+- **Wait for the state to START before waiting for it to END.** `while (label() !== 'Stop')` right after
+  the click exits on the first poll — React hasn't re-rendered yet, so the button still says its idle
+  label — and the whole run is then "over" in 0.6s with every later assertion vacuous. Wait for `Stop` to
+  appear (bail if it never does), THEN wait for it to go away. An `eval: undefined` usually means a wait
+  like this fell through, not that the eval timed out — 75s+ evals complete fine.
+- **Write `--eval` from the Bash tool, not PowerShell** (`--eval "$(cat <file>)"`). PowerShell mangles
+  multi-line JS and you get `eval: undefined` with no error to explain it.
 - Prefer driving via the app's own listeners over DOM selectors when one exists (e.g. `PinPad` handles
   `window` keydown, so `dispatchEvent(new KeyboardEvent('keydown',{key:'5'}))` beats hunting tiles).
 
 ## Gotchas (built-in, but know them)
+- **A screenshot cannot prove a surface is on top — hit-test it.** An overlay that renders UNDERNEATH
+  another is live and interactive but simply not drawn, so the picture looks perfectly correct and every
+  `--wait-for`/`--measure` still passes (the element exists and has a rect). Assert
+  `document.elementFromPoint(cx, cy)` at the element's centre returns it (or a descendant), not the
+  thing above it. This is what found two shipped dead buttons: a MUI `<Dialog>` defaults to
+  `theme.zIndex.modal` (1300) while this app's blocking surfaces are hand-rolled `fixed` boxes at
+  ~10000, so any dialog opened FROM one of those mounts behind it.
+- **A killed run leaves Chrome holding port 9333**, and the next invocation then hangs forever against
+  that dead instance (looks like the page never loads). After any timeout/interrupt:
+  `powershell.exe -Command "Get-Process chrome -EA SilentlyContinue | Stop-Process -Force"`.
 - **Run the driver on the Windows side too** when working from WSL: WSL cannot reach the
   Windows-bound servers or Chrome's CDP port (NAT). Use
   `powershell.exe -Command "node .claude/skills/ui-screenshot/cdp.mjs --url '...' ..."`.
