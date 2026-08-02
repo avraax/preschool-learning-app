@@ -209,9 +209,21 @@ export const pickQuizNumber = (level: DifficultyLevel, rnd: Rnd = Math.random): 
   randInt(rnd, 1, MATH_COUNTING[level].max)
 
 /**
+ * The minimum distance a `far` (Let) distractor must keep from the answer, DERIVED from the level's
+ * own ceiling rather than fixed at 10.
+ *
+ * A flat 10 is unsatisfiable in a narrow range: inside 1–20 the only number ≥10 from 11 is 1, so the
+ * generator silently fell through to a random top-up and Let produced boards like `11 → 1, 8, 11` —
+ * the exact opposite of "maximally dissimilar". A quarter of the range is the same *relative* gap the
+ * flat 10 gave at the old 1–50 ceiling, and it stays capped at 10 so a wider range can't demand more
+ * separation than the policy ever intended.
+ */
+export const farMinGap = (max: number): number => Math.min(10, Math.max(3, Math.floor(max / 4)))
+
+/**
  * Tal Quiz's wrong tiles.
- *   Let (`far`)         — ≥10 away AND sharing neither digit position, so the options read as
- *                          maximally dissimilar.
+ *   Let (`far`)         — `farMinGap(max)` away AND sharing neither digit position, so the options
+ *                          read as maximally dissimilar.
  *   Normal (`near`)     — digit-swap + off-by-one/ten (the real confusions at this scale); small
  *                          counts have no meaningful swap/±10, so they bias to ±1/±2.
  *   Svær (`confusable`) — the digit-swap is ALWAYS offered when one exists (else ±1), then the near
@@ -232,10 +244,11 @@ export const numberDistractors = (
   }
 
   if (distractors === 'far') {
+    const gap = farMinGap(max)
     const far: number[] = []
     const justFar: number[] = []
     for (let c = 1; c <= max; c++) {
-      if (!valid(c) || Math.abs(c - n) < 10) continue
+      if (!valid(c) || Math.abs(c - n) < gap) continue
       justFar.push(c)
       if (c % 10 === n % 10) continue
       if (Math.floor(c / 10) === Math.floor(n / 10)) continue

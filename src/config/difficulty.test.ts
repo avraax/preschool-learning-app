@@ -43,6 +43,7 @@ import {
   numberDistractors,
   operationDistractors,
   pickQuizNumber,
+  farMinGap,
   sequenceDistractors,
   swapDigits,
 } from './mathProblems.ts'
@@ -86,8 +87,8 @@ test('the narration ceilings are exactly these (the tables must stay inside them
 
 test('the §4 per-game tables are exactly these values', () => {
   assert.deepEqual(MATH_COUNTING, {
-    let: { options: 3, max: 50, distractors: 'far' },
-    normal: { options: 4, max: 100, distractors: 'near' },
+    let: { options: 3, max: 20, distractors: 'far' },
+    normal: { options: 4, max: 50, distractors: 'near' },
     svaer: { options: 5, max: 100, distractors: 'confusable' },
   })
   assert.deepEqual(MATH_ADDITION, {
@@ -324,14 +325,46 @@ test('Sammenlign: never equal, inside the level range, inside the level gap band
 // Sampled behaviour — Tal Quiz
 // ------------------------------------------------------------------------------------------------
 
-test('Tal Quiz Let: every distractor is ≥10 away from the answer', () => {
+// The gap is `farMinGap(max)` — a quarter of the range, capped at 10 — not a flat 10, which is
+// unsatisfiable inside 1–20 (nothing is 10 from 11 except 1). The literal 5 is pinned rather than
+// recomputed from the helper: a test that calls the same formula agrees with itself for free.
+test('Tal Quiz Let: every distractor is ≥5 away from the answer (a quarter of the 1–20 range)', () => {
+  assert.equal(farMinGap(MATH_COUNTING.let.max), 5)
   for (let i = 0; i < SAMPLES; i++) {
     const n = pickQuizNumber('let')
-    assert.ok(n >= 1 && n <= 50, `Let asked for ${n}, outside 1–50`)
+    assert.ok(n >= 1 && n <= 20, `Let asked for ${n}, outside 1–20`)
     for (const d of numberDistractors(n, 'let', 2)) {
-      assert.ok(Math.abs(d - n) >= 10, `Let offered ${d} against ${n} (only ${Math.abs(d - n)} away)`)
-      assert.ok(d >= 1 && d <= 50)
+      assert.ok(Math.abs(d - n) >= 5, `Let offered ${d} against ${n} (only ${Math.abs(d - n)} away)`)
+      assert.ok(d >= 1 && d <= 20)
     }
+  }
+})
+
+// The rule, not just the number: Danish inverts from 21 up ("enogtyve" = one-and-twenty), which is the
+// hardest thing this game asks. At Let it must never come up — nothing on the board, prompt or tile.
+// Before the owner's 2026-08-02 play-test the Let ceiling was 50, so 60% of Let questions were an
+// inverted compound and measured boards looked like `ask 43 → 17, 20, 43`.
+test('Tal Quiz Let never asks or offers an inverted Danish number word (21+)', () => {
+  for (let i = 0; i < SAMPLES; i++) {
+    const n = pickQuizNumber('let')
+    assert.ok(n <= 20, `Let asked ${n} — "${n}" inverts in Danish`)
+    for (const d of numberDistractors(n, 'let', 2)) {
+      assert.ok(d <= 20, `Let offered ${d} against ${n} — "${d}" inverts in Danish`)
+    }
+  }
+})
+
+// The range has to be a real axis at all three levels. Normal and Svær were BOTH 1–100, so between
+// them only the distractor policy moved — half a level of separation.
+test('Tal Quiz: each level widens the range strictly', () => {
+  assert.ok(
+    MATH_COUNTING.let.max < MATH_COUNTING.normal.max &&
+      MATH_COUNTING.normal.max < MATH_COUNTING.svaer.max,
+    `ranges must strictly widen, got ${MATH_COUNTING.let.max}/${MATH_COUNTING.normal.max}/${MATH_COUNTING.svaer.max}`,
+  )
+  for (let i = 0; i < SAMPLES; i++) {
+    assert.ok(pickQuizNumber('normal') <= MATH_COUNTING.normal.max)
+    assert.ok(pickQuizNumber('svaer') <= MATH_COUNTING.svaer.max)
   }
 })
 

@@ -100,13 +100,22 @@ export interface CountingTuning {
 }
 
 /**
- * Tal Quiz (`math.counting`). The task is hearing the INVERTED Danish number word
- * ("syvogtredive" = 37), so at Svær the step up is the distractor policy, not a wider range — 1–100
- * is already the prebaked ceiling.
+ * Tal Quiz (`math.counting`). The task is hearing the INVERTED Danish number word ("syvogtredive" =
+ * 37), and **Danish only inverts from 21** — 1–20 are ordinary words (tretten, nitten, tyve). That
+ * split IS the range axis:
+ *
+ *   Let    1–20   no inverted compound at all — recognising numbers he already owns
+ *   Normal 1–50   the inverted form, at the scale he counts to (~60% of questions)
+ *   Svær   1–100  the full range, incl. the halv- tens (halvtreds/halvfjerds)
+ *
+ * The Let ceiling was 50 and Normal/Svær were BOTH 1–100 (owner play-test, 2026-08-02). So the range
+ * wasn't an axis between Normal and Svær at all, and at "Let" 60% of questions were the hardest thing
+ * the game has — measured boards like `ask 43 → 17, 20, 43`. The distractor policy remains the second,
+ * independent axis; 1–100 is still the prebaked ceiling, so no level needs new narration.
  */
 export const MATH_COUNTING: Record<DifficultyLevel, CountingTuning> = {
-  let: { options: 3, max: 50, distractors: 'far' },
-  normal: { options: 4, max: NUMBER_MAX, distractors: 'near' },
+  let: { options: 3, max: 20, distractors: 'far' },
+  normal: { options: 4, max: 50, distractors: 'near' },
   svaer: { options: 5, max: NUMBER_MAX, distractors: 'confusable' },
 }
 
