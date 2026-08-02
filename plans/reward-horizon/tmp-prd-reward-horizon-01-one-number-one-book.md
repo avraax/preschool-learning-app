@@ -504,7 +504,43 @@ tree would silently include it.
 
 ---
 
-## 10. Two-liner prompt to start implementation
+## 10. Adding chapter 9 (and 10, and 11) later
+
+The point of W1 is that a new chapter is **content, not engineering**. This is the whole recipe.
+
+**Append 9 rewards to `REWARD_CHAPTERS` in `src/config/stickers.ts`.** Never insert, never reorder —
+`firstAt` is keyed by reward id and `rebuildCollected` walks slots through the path, so touching the
+existing order silently re-assigns every child's book (§3.2). New ids must be unique across all
+chapters.
+
+Everything below then follows with **no code change**: `REWARD_SLOTS` / `CHAPTER_COUNT`, the ring's
+next-prize silhouette, the album's chapter chips and auto-opened tab, `chapterOfSlot`, the
+end-of-book cap in `owedRewards()`, `BOOK_DONE_LINE`'s trigger point, and the `?rewards=n` dev seed.
+
+What you still have to do:
+
+1. **9 baked soft-3D WebP renders** into `src/assets/rewards/`, keyed by reward id, via
+   `.claude/rules/scene-assets.md`. `rewardArtCoverage.test.ts` **fails the build until all 9
+   exist** — that is the gate doing its job, not a problem to work around.
+2. **`npm run tts:prebake`** (9 labels × `rewardLine` + the bare label = 18 clips), commit the mp3s
+   + `prebakedTts.ts`, then `npm run audit:check` → `npm run audit:approve-all` → commit
+   `docs/audit/*`. Skip this and the new labels quietly fall back to live Azure, unauditioned.
+3. **Bump the two pinned literals** in `stickers.test.ts` — `REWARD_SLOTS` and `CHAPTER_COUNT`.
+   They are pinned precisely so the path cannot grow by accident; updating them is the deliberate
+   act of saying "yes, I meant to".
+
+Two standing ceilings, neither urgent:
+
+- **The companion stops at `COMPANION_STAGES` (5).** There are only 5 baked stages per world, so
+  from chapter 6 onward it is fully grown and stays that way. Correct — it must never regress.
+- **The spoken count is baked to `COUNT_LINE_MAX` (100).** Past 100 rewards `collectedCountLine`
+  falls through to live Azure. Widen the constant and re-prebake somewhere around chapter 11.
+
+Pacing: a chapter is 9 × 80 XP = 720 XP ≈ **18 rounds**.
+
+---
+
+## 11. Two-liner prompt to start implementation
 
 ```
 Implement plans/reward-horizon/tmp-prd-reward-horizon-01-one-number-one-book.md — one number, one
