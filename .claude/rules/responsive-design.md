@@ -21,6 +21,10 @@ import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 sx={{ fontSize: '1.6rem', [PHONE_LANDSCAPE]: { fontSize: '1.05rem' } }}
 ```
 
+The SAME constant also works in JS — `useMediaQuery(PHONE_ANY)` (MUI strips a leading `@media`), so a
+layout that has to *branch* rather than restyle (single-pane vs. two-pane) uses one definition of
+"phone", not a second hand-written query that drifts.
+
 No phone reaches 480 CSS px on its short side's counterpart (max is ~440, iPhone Pro Max), and no
 tablet goes below ~600 — so these guards can never affect iPads. When adding a new game/screen,
 verify it at 844×390 (and 667×375) with the ui-screenshot skill. GameShell/GameSelectionLayout/
@@ -125,6 +129,12 @@ A MUI `<Dialog>` defaults to `theme.zIndex.modal` = **1300**, while this app's b
 hand-rolled `position: fixed` boxes at ~10000 (lock screen, profile picker, audio permission). So a
 dialog opened FROM one of those mounts **underneath** it: live, interactive, and simply not drawn. That
 is a dead button with no error, no failing test and a screenshot that looks right — it shipped twice.
+
+**Two MUI Dialogs are the same trap without the 10 000.** Both default to 1300, so a nested dialog
+raised FROM another dialog is on top only by DOM mount order — it looks right until something changes
+the mount order, and nothing fails. The account-deletion PIN pad shipped like that over the settings
+surface. Give the raised one an explicit z-index from the shared constant; see the `AUTH_Z` notes in
+`.claude/rules/auth.md`.
 
 - Give any dialog that can appear over a full-screen surface an explicit z-index above it, from a shared
   constant — `src/components/auth/authOverlayZ.ts` is the pattern (one documented ordering, no literals

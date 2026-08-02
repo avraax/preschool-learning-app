@@ -125,6 +125,10 @@ curl -s -o /tmp/shot.jpg "<screenshotUrl from the response>"                    
 ## Conventions
 
 - camelCase variables, PascalCase components
+- **Never edit a source file with a PowerShell text pipeline** (`Get-Content -Raw … -replace … |
+  Set-Content`). It re-encodes the whole file and every `æøå` and `—` becomes mojibake — and EVERY
+  file here is Danish, so this corrupts far more than the line you meant to change. Use the Edit tool
+  (`git diff` then shows the damage as a whole-file rewrite, which is the tell).
 - TypeScript strict mode
 - Feature-based file organization
 - Comic Sans MS for child-facing typography
@@ -143,7 +147,10 @@ curl -s -o /tmp/shot.jpg "<screenshotUrl from the response>"                    
   fix is deleted from both — so also pin the value itself, not just the agreement. **The break must
   target what the test MEASURES**, and the specific test must be the one that flips: breaking something
   adjacent and watching the suite stay green proves nothing, which is how two vacuous tests survived a
-  re-break pass in the accounts session.
+  re-break pass in the accounts session. **A guard that greps SOURCE must strip comments before
+  matching** — several here do (`noEmoji`, `authOverlayZ`, `rewardArtCoverage`), and a plain
+  `src.includes('AUTH_Z.pin')` was satisfied by the prose comment explaining the fix, so deleting the
+  fix left it green. The re-break is what exposes this; the comment is written by the same hand.
 - **Another session may be working in this same tree.** When `tsc`/`npm test` fails in files your change
   never touched, run `git status` before touching anything — it's usually a parallel session mid-refactor
   (a half-done `avatarEmoji`→`avatarId` rename did exactly this). Leave their work alone, and say whose
@@ -154,11 +161,15 @@ curl -s -o /tmp/shot.jpg "<screenshotUrl from the response>"                    
   **(a) never leave work STAGED** — their `git add -A` will hoover your index into THEIR commit, so your
   fix ends up under an unrelated message (this is how the section-landmark + audio-✕ fixes landed inside
   a settings-PRD commit). Stage and commit in one step.
-  **(b) verify the COMMITTED tree, not your working tree, before pushing** — `git worktree add` a
-  throwaway checkout at HEAD + a `mklink /J` junction to `node_modules`, then run tsc/test/build there.
-  Otherwise their uncommitted WIP is silently part of what you just claimed to verify (and their
-  half-saved file can crash the app mid-verification — see the crash-screen trap in the
-  `ui-screenshot` skill).
+  **(b) verify the COMMITTED tree, not your working tree, before pushing** — otherwise their
+  uncommitted WIP is silently part of what you just claimed to verify (and their half-saved file can
+  crash the app mid-verification — see the crash-screen trap in the `ui-screenshot` skill). **If
+  `git status` is empty the working tree IS HEAD**, so a green run you already did covers the commit —
+  the throwaway checkout is only needed when you commit a SUBSET of a dirty tree. When you do need it
+  (`git worktree add` at HEAD + a `mklink /J` junction to `node_modules`), **check the junction
+  exists** before believing the result: it fails silently, and then `tsc` "passes" because it never
+  ran and the suite fails on missing deps — which reads exactly like a real regression you just
+  introduced.
   **(c) `node_modules` collides too** — a half-finished install of theirs leaves whole `@scope` dirs
   gone, so `tsc` dies with `Cannot find module '@mui/material'` across files you never touched. It
   reads exactly like your own broken build. Say it's theirs; don't `npm install` over it without asking.

@@ -42,17 +42,17 @@ Then **view a saved PNG with the Read tool** (it renders images).
 node .claude/skills/ui-screenshot/cdp.mjs --url http://127.0.0.1:5173/alphabet/quiz \
   --wait-for '#root > *' --out shot.png
 
-# Open the adult menu (a plain click — the old 2s hold is gone; a PIN pad may intercept), then a
-# sub-dialog, wait for it, tight-crop just that element
+# Open "Til de voksne" (a plain click; a PIN pad may intercept) and select a settings pane.
+# The ~4.5s settle is REQUIRED — a snapdom screenshot runs before the surface renders, so a shorter
+# wait silently yields the un-opened page.
 node .claude/skills/ui-screenshot/cdp.mjs --url 'http://127.0.0.1:5173/alphabet/quiz' \
-  --click '[aria-label="Til de voksne"]' --wait-for '.MuiDialog-paper' \
-  --click '[aria-label="Stemme-test"]' --wait-for-text 'Hastighed' \
+  --click '[aria-label="Til de voksne"]' --wait-for '.MuiDialog-paper' --settle 4500 \
+  --click '[data-rail-item=lyd]' --settle 700 \
   --clip '.MuiDialog-paper' --out panel.png
 
 # PROVE no overflow/clipping (compare child rect.r to the container's inner right edge)
 node .claude/skills/ui-screenshot/cdp.mjs --url 'http://127.0.0.1:5173/alphabet/quiz' \
-  --click '[aria-label="Til de voksne"]' --wait-for '.MuiDialog-paper' \
-  --click '[aria-label="Stemme-test"]' --wait-for-text 'Hastighed' \
+  --click '[aria-label="Til de voksne"]' --wait-for '.MuiDialog-paper' --settle 4500 \
   --measure '.MuiDialog-paper, .MuiDialog-paper button'
 
 # Check a different viewport (landscape) for responsive layout
@@ -318,10 +318,17 @@ stripped, and the failure looks like a page bug. Write the JS to a **file in the
   So `[...divs].filter(d => d.style.border.includes('dashed'))` silently matches nothing on sx-styled
   nodes and the eval returns `{}`. Select/measure MUI-styled elements via `getComputedStyle(el)` (styles)
   or `getBoundingClientRect()` (geometry) instead.
-- App sizes to `--vh`; default 540x940 is representative. Useful selectors: the adult menu opens
-  via a plain click on `[aria-label="Til de voksne"]` (the old 2s hold and its `?adult-tap=1`
-  workaround are gone); inside it `[aria-label="Stemme-test"]` opens the voice panel.
-  MUI dialogs render under `.MuiDialog-paper`, popovers under `.MuiPopover-paper`.
+- App sizes to `--vh`; default 540x940 is representative. Useful selectors: the adult settings surface
+  opens via a plain click on `[aria-label="Til de voksne"]` (the old 2s hold and its `?adult-tap=1`
+  workaround are gone), needs **~4.5s settle**, and its five panes are
+  `[data-rail-item=barn|laering|lyd|udseende|konto]`. **On a phone-sized viewport the rail only exists
+  at the ROOT** — the surface opens onto the last-viewed pane, so click `[aria-label="Tilbage"]` first
+  or the rail selector is simply absent. MUI dialogs render under `.MuiDialog-paper`, popovers under
+  `.MuiPopover-paper`.
+- **`?nogate=1` also disables `requirePin`** (`authStore.isDevBypass()` short-circuits it), so PIN pads
+  raised via `requirePin` never appear headlessly and a "PIN-gated" path is really being driven
+  un-gated. The only pad you can exercise is one a component raises DIRECTLY — e.g. the
+  account-deletion pad in the Konto pane, which is how the settings dialog↔pad stacking was hit-tested.
 - **DEV query params force states deterministically for capture** (all DEV-only — see
   `src/utils/devHarness.ts`): `?fx=correct|wrong|hint|streak` forces one tile/board into that feedback
   state (no need to solve), `?seed=<n>` makes questions deterministic (probe with `--eval` to find a
