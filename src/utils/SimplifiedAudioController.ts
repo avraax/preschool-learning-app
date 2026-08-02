@@ -5,6 +5,9 @@ import {
   getDanishNumberText,
   getDanishLetterName,
 } from '../config/danish-phrases'
+// Composed spoken lines come from ONE place so the prebake enumerator bakes the exact same strings
+// (see src/config/gamePhrases.ts and the protocol in .claude/rules/audio-system.md).
+import { mathPromptText, colorMixTargetText } from '../config/gamePhrases'
 // Remote console logging removed for production
 
 // Production logging - only critical errors
@@ -215,6 +218,15 @@ export class SimplifiedAudioController {
     this.ttsClient.prefetchPrebaked(numbers.map(getDanishNumberText), 'primary', speakingRate)
   }
 
+  /**
+   * Warm a line so it plays instantly when it's needed — for a sentence a game can compose in advance,
+   * e.g. the math games' correct-answer fact, known the moment the problem is generated. Handles either
+   * path (prebaked file fetch or live synth). Fire-and-forget; plays nothing, cancels nothing.
+   */
+  warmSpeech(text: string): void {
+    this.ttsClient.warmDynamic(text)
+  }
+
   async speakNumber(number: number, customSpeed?: number): Promise<string> {
     // Speaking number
     
@@ -282,8 +294,7 @@ export class SimplifiedAudioController {
         return
       }
       
-      const problemText = `${DANISH_PHRASES.gamePrompts.mathQuestion.prefix} ${getDanishNumberText(num1)} ${DANISH_PHRASES.math.plus} ${getDanishNumberText(num2)}`
-      await this.ttsClient.synthesizeAndPlay(problemText, voiceType, true)
+      await this.ttsClient.synthesizeAndPlay(mathPromptText('addition', num1, num2), voiceType, true)
     })
   }
 
@@ -297,8 +308,7 @@ export class SimplifiedAudioController {
         return
       }
 
-      const problemText = `${DANISH_PHRASES.gamePrompts.mathQuestion.prefix} ${getDanishNumberText(num1)} ${DANISH_PHRASES.math.minus} ${getDanishNumberText(num2)}`
-      await this.ttsClient.synthesizeAndPlay(problemText, voiceType, true)
+      await this.ttsClient.synthesizeAndPlay(mathPromptText('subtraction', num1, num2), voiceType, true)
     })
   }
 
@@ -458,8 +468,7 @@ export class SimplifiedAudioController {
   }
 
   async speakColorMixingInstructions(targetColor: string): Promise<string> {
-    const text = `Lav ${targetColor} farve ved at blande farverne`
-    return this.speak(text)
+    return this.speak(colorMixTargetText(targetColor))
   }
 
   /**

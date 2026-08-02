@@ -11,7 +11,7 @@ import type { GuideReaction } from '../common/ThemeMascot'
 import { useCelebration } from '../common/CelebrationEffect'
 import { MathScoreChip } from '../common/ScoreChip'
 import { getCategoryTheme } from '../../config/categoryThemes'
-import { getDanishNumberText } from '../../config/danish-phrases'
+import { COMPARE_PROMPT, comparisonFactText, COMPARE_MAX } from '../../config/gamePhrases'
 import { MathRepeatButton } from '../common/RepeatButton'
 import { useGameState } from '../../hooks/useGameState'
 import { useRound } from '../../hooks/useRound'
@@ -21,7 +21,7 @@ import { mascotBus } from '../../services/mascotBus'
 import { isIOS } from '../../utils/deviceDetection'
 import { useDifficulty } from '../../hooks/useDifficulty'
 import { devFx } from '../../utils/devHarness'
-import { BOUNCE, DWELL_CORRECT, motionOr } from '../../theme/motion'
+import { BOUNCE, DWELL_FACT, motionOr } from '../../theme/motion'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
 import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 import { crocodileArt } from '../../assets/games/math'
@@ -50,7 +50,9 @@ interface ComparisonProblem {
 }
 
 type Side = 'left' | 'right'
-const COMPARE_PROMPT = 'Tryk på det største tal.'
+// The prompt + the correct-answer fact come from the shared builders (src/config/gamePhrases.ts),
+// which the prebake enumerator also calls — so the played text and the baked clip can't drift.
+const comparisonFact = comparisonFactText
 
 const ComparisonGame: React.FC = () => {
   const reduce = useReducedMotion()
@@ -93,10 +95,8 @@ const ComparisonGame: React.FC = () => {
   // guard closes the same-tick double-tap window that `locked` alone leaves open.
   const isAdvancingRef = useRef(false)
   const guideReactionTimer = useRef<NodeJS.Timeout | null>(null)
-  // False after unmount (PRD-02 P4): the advance timer is scheduled after the `await speakNumber`
-  // echo, so this flag stops the post-await continuation from scheduling a ghost prompt if the child
-  // navigates away during the echo. Owned by its own effect so StrictMode's dev remount restores it.
-  const mountedRef = useRef(true)
+  // (PRD-02 P4's `mountedRef` is gone as of 2026-08-02: the tap handler no longer awaits narration, so
+  // the advance timer is created synchronously and the unmount cleanup always has it to clear.)
 
   const { showCelebration, celebrationIntensity, celebrationDuration, celebrateTier, stopCelebration } = useCelebration()
 
@@ -135,14 +135,6 @@ const ComparisonGame: React.FC = () => {
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
-  // Owns the mounted flag (PRD-02 P4, StrictMode-safe): true on (re)mount, false on unmount.
-  useEffect(() => {
-    mountedRef.current = true
-    return () => {
-      mountedRef.current = false
-    }
   }, [])
 
   // When audio unlocks after mount, play the welcome (board already visible). Interaction-guarded
@@ -189,27 +181,31 @@ const ComparisonGame: React.FC = () => {
 
     if (level === 'let') {
       // Let: large gaps (≥8) so the bigger number is obvious.
-      leftNum = randInt(1, 20)
+      leftNum = randInt(1, COMPARE_MAX)
       const farChoices: number[] = []
       for (let n = 1; n <= 20; n++) if (Math.abs(n - leftNum) >= 8) farChoices.push(n)
       rightNum = farChoices.length ? farChoices[randInt(0, farChoices.length - 1)] : (leftNum > 10 ? 1 : 20)
     } else if (level === 'svaer') {
       // Svær: close pairs (±1–2).
-      leftNum = randInt(1, 20)
+      leftNum = randInt(1, COMPARE_MAX)
       const gap = randInt(1, 2)
       const sign = randInt(0, 1) === 0 ? -1 : 1
       const candidate = leftNum + sign * gap
       rightNum = candidate >= 1 && candidate <= 20 ? candidate : leftNum - sign * gap
     } else {
       // Normal (TODAY, unchanged).
-      leftNum = randInt(1, 20)
-      rightNum = randInt(1, 20)
+      leftNum = randInt(1, COMPARE_MAX)
+      rightNum = randInt(1, COMPARE_MAX)
       while (rightNum === leftNum) {
-        rightNum = randInt(1, 20)
+        rightNum = randInt(1, COMPARE_MAX)
       }
     }
 
     setCurrentProblem({ leftNumber: leftNum, rightNumber: rightNum })
+    // Warm this problem's fact line NOW, while the child is still comparing — it's a dynamic sentence
+    // (not prebaked), so synthesizing it on the correct tap put Azure's ~1.1s round-trip right in the
+    // middle of the chomp. Plays nothing, cancels nothing.
+    audio.warmSpeech(comparisonFact(Math.max(leftNum, rightNum), Math.min(leftNum, rightNum)))
     setChosen(null)
     setLocked(false)
     setMouthOpen(false)
@@ -271,41 +267,33 @@ const ComparisonGame: React.FC = () => {
     const isCorrect = side === biggerSide
     const tappedNumber = side === 'left' ? currentProblem.leftNumber : currentProblem.rightNumber
 
-    // Engage the advance-lock + disable tiles SYNCHRONOUSLY on a correct tap — before the await
-    // below — so a second tap in the same tick is already blocked.
+    // Engage the advance-lock + disable tiles SYNCHRONOUSLY on a correct tap so a second tap in the
+    // same tick is already blocked.
     if (isCorrect) {
       isAdvancingRef.current = true
       setLocked(true)
     }
-    // When the tap happened. The celebration dwell is measured FROM HERE so the spoken echo and the
-    // dwell run CONCURRENTLY instead of end-to-end (see the advance timer below).
-    const tappedAt = Date.now()
 
     setChosen({ side, correct: isCorrect })
     setGuideReaction(isCorrect ? 'cheer' : 'think')
     if (guideReactionTimer.current) clearTimeout(guideReactionTimer.current)
     guideReactionTimer.current = setTimeout(() => setGuideReaction(null), 1100)
 
-    // Speak the completed FACT on a correct tap ("sytten er større end ni") — the reinforcement
-    // moment (PRD-05 P2). A wrong tap just echoes the tapped number. Single audio channel, so the
-    // fact REPLACES the number echo, never stacks.
-    try {
-      if (isCorrect) {
-        const bigger = Math.max(currentProblem.leftNumber, currentProblem.rightNumber)
-        const smaller = Math.min(currentProblem.leftNumber, currentProblem.rightNumber)
-        await audio.speak(`${getDanishNumberText(bigger)} er større end ${getDanishNumberText(smaller)}`)
-      } else {
-        await audio.speakNumber(tappedNumber)
-      }
-    } catch {
-      // ignore number audio errors
+    // Narration is FIRE-AND-FORGET alongside the dwell, never awaited (see theme/motion.ts). A correct
+    // tap speaks the completed FACT ("sytten er større end ni") — the reinforcement moment (PRD-05 P2);
+    // a wrong tap echoes the tapped number. Single audio channel, so the fact REPLACES the echo.
+    if (isCorrect) {
+      const bigger = Math.max(currentProblem.leftNumber, currentProblem.rightNumber)
+      const smaller = Math.min(currentProblem.leftNumber, currentProblem.rightNumber)
+      void audio.speak(comparisonFact(bigger, smaller)).catch(() => {})
+    } else {
+      void audio.speakNumber(tappedNumber).catch(() => {})
     }
 
-    // Navigated away during the echo → don't advance/celebrate (PRD-02 P4).
-    if (!mountedRef.current) return
-
     if (isCorrect) {
-      // (advance-lock + setLocked already engaged synchronously above)
+      // Resolve SYNCHRONOUSLY — the chomp, score and celebration land on the tap instead of after the
+      // spoken fact finished (2026-08-02); the krokodille used to bite ~4s late, right as the board
+      // changed.
       setMouthOpen(true) // krokodille chomps toward the bigger number
       incrementScore()
       celebrateTier('micro')
@@ -324,11 +312,10 @@ const ComparisonGame: React.FC = () => {
         } else {
           generateNewProblem()
         }
-        // DWELL_CORRECT is the celebration window measured FROM THE TAP, not extra time after the
-        // spoken echo — awaiting the echo and then waiting a further full dwell made the green-tile
-        // pause `clip + 1400ms`, which reads as a dropped tap. Subtracting the elapsed echo never cuts
-        // audio short (if the clip outran the dwell the remainder is 0).
-      }, Math.max(0, DWELL_CORRECT() - (Date.now() - tappedAt))) // celebration dwell, from the tap
+        // A fixed celebration window from the tap. The correct branch always speaks a sentence fact,
+        // so it always gets DWELL_FACT — long enough that the next problem's prompt only cancels the
+        // clip's trailing silence, never the spoken fact.
+      }, DWELL_FACT)
     } else {
       // Gentle, non-punishing: break the first-try flag, soft SFX, the mouth stays shut, retry.
       firstAttemptRef.current = false

@@ -16,6 +16,8 @@ export interface SimplifiedAudioHook {
   prefetchLetters: (letters: string[]) => void
   /** Warm the prebaked clips for a timed number sequence at a given rate (plays nothing). */
   prefetchNumbers: (numbers: number[], speakingRate?: number) => void
+  /** Warm ONE dynamic line (e.g. a math fact known at question time) so it plays instantly later. */
+  warmSpeech: (text: string) => void
   speakNumber: (number: number, customSpeed?: number) => Promise<string>
   speakEnglish: (text: string) => Promise<string>
   speakReward: (text: string) => Promise<string>
@@ -72,6 +74,7 @@ const STABLE_AUDIO_METHODS = {
   speakLetter: simplifiedAudioController.speakLetter.bind(simplifiedAudioController),
   prefetchLetters: simplifiedAudioController.prefetchLetters.bind(simplifiedAudioController),
   prefetchNumbers: simplifiedAudioController.prefetchNumbers.bind(simplifiedAudioController),
+  warmSpeech: simplifiedAudioController.warmSpeech.bind(simplifiedAudioController),
   speakNumber: simplifiedAudioController.speakNumber.bind(simplifiedAudioController),
   speakEnglish: simplifiedAudioController.speakEnglish.bind(simplifiedAudioController),
   speakReward: simplifiedAudioController.speakReward.bind(simplifiedAudioController),

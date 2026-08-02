@@ -9,6 +9,7 @@ import { kidCollision } from '../common/dnd/kidCollision'
 import { DraggableItem } from '../common/dnd/DraggableItem'
 import { DroppableZone } from '../common/dnd/DroppableZone'
 import { getCategoryTheme } from '../../config/categoryThemes'
+import { NUANCER_INSTRUCTION } from '../../config/gamePhrases'
 import { SHADES, HUE_ORDER, type ColorShade } from '../../config/colorContent'
 import { hexToRgba } from '../../theme/tokens/helpers'
 import { SNAP } from '../../theme/motion'
@@ -108,7 +109,7 @@ const NuancerGame: React.FC = () => {
     guideReactionTimer.current = setTimeout(() => setGuideReaction(null), 1100)
   }
 
-  const INSTRUCTION = 'Sæt farverne fra lys til mørk'
+  const INSTRUCTION = NUANCER_INSTRUCTION
 
   // Pick a fresh hue (avoid immediate repeat) and scramble its shades. `voice=false` skips audio.
   const setupQuestion = (voice = true) => {

@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Typography, Box, useMediaQuery } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { getCategoryTheme } from '../../config/categoryThemes'
-import { DANISH_PHRASES, getDanishNumberText } from '../../config/danish-phrases'
+import { mathFactText, ADDEND_MAX, MINUEND_MAX } from '../../config/gamePhrases'
 import GameShell from '../common/GameShell'
 import AnswerTile, { type AnswerTileState } from '../common/AnswerTile'
 import PromptFocus from '../common/PromptFocus'
@@ -22,7 +22,7 @@ import { mascotBus } from '../../services/mascotBus'
 import { useDifficulty } from '../../hooks/useDifficulty'
 import { isIOS } from '../../utils/deviceDetection'
 import { devFx } from '../../utils/devHarness'
-import { POP, DWELL_CORRECT, motionOr } from '../../theme/motion'
+import { POP, DWELL_FACT, EXIT_FAST, motionOr } from '../../theme/motion'
 import { darken, hexToRgba, tileSurface } from '../../theme/tokens/helpers'
 import { softShadow } from '../../theme/depth'
 import { shuffle } from '../../utils/shuffle'
@@ -33,106 +33,19 @@ import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 // exactly from the previous AdditionGame/SubtractionGame for 'normal'; only the operator,
 // problem generation, spoken prompt, title and welcome differ by `operation`.
 //
-// Games Visual Uplift (PRD-08 §3.3): the equation "number sentence" now rests as CLAY in
-// PromptFocus's in-world light-pool — the frosted PromptStage card (border + backdrop-filter) is
-// retired. On a correct answer the "?" flips to the revealed answer with a motion.POP before the
-// unified DWELL_CORRECT auto-advance — that bespoke reveal is preserved exactly; only its container
-// material changed.
+// Games Visual Uplift (PRD-08 §3.3): the equation "number sentence" rests as CLAY in PromptFocus's
+// in-world light-pool — the frosted PromptStage card (border + backdrop-filter) is retired. On a
+// correct answer the "?" flips to the revealed answer with a motion.POP (enter) + EXIT_FAST (the
+// leaving "?"), then the DWELL_FACT auto-advance.
 interface MathOperationGameProps {
   operation: 'addition' | 'subtraction'
 }
 
-// W1 (PRD-15) — concrete quantity layer: a ten-frame the child can actually COUNT so a finger-counter
-// can *solve* the number sentence instead of guessing (he adds to 20 on his fingers; a symbol-only
-// board gave him nothing to count). Pure CSS dots, NO art.
-//   Addition a+b: `a` dots in tint A then `b` dots in tint B, filled continuously across one or two
-//     ten-frames so crossing-ten is legible (the first frame fills to 10, the second begins).
-//   Subtraction a−b: `a` dots with the last `b` faded + struck through ("take away"); the remaining
-//     filled dots = the answer.
-// Two ten-frames sit side by side (10 cols × 2 rows) so it stays SHORT (2 rows) under the equation and
-// never scrolls. Reduced motion → static (no per-dot pop-in). Tints are two guaranteed-distinct,
-// skin-aware section accents (token contract §2: every skin gives the 5 sections readable accents).
-type ConcreteOp = MathOperationGameProps['operation']
-const TenFrameLayer: React.FC<{ op: ConcreteOp; a: number; b: number; reduce: boolean; dark: boolean }> = ({
-  op,
-  a,
-  b,
-  reduce,
-  dark,
-}) => {
-  const tintA = getCategoryTheme('math').accentColor
-  const tintB = getCategoryTheme('alphabet').accentColor
-  const total = op === 'addition' ? a + b : a
-  const capacity = total <= 10 ? 10 : 20
-  type Fill = 'empty' | 'a' | 'b' | 'remain' | 'removed'
-  const cells: Fill[] = Array.from({ length: capacity }, (_, i) => {
-    if (op === 'addition') return i < a ? 'a' : i < a + b ? 'b' : 'empty'
-    return i < a - b ? 'remain' : i < a ? 'removed' : 'empty'
-  })
-  const frames = capacity === 20 ? [cells.slice(0, 10), cells.slice(10, 20)] : [cells]
-
-  const cellSx = {
-    width: { xs: 14, md: 19 },
-    height: { xs: 14, md: 19 },
-    borderRadius: '4px',
-    border: `1.5px solid ${hexToRgba(tintA, dark ? 0.45 : 0.22)}`,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    position: 'relative' as const,
-    '@media (orientation: landscape)': { width: { xs: 13, md: 19 }, height: { xs: 13, md: 19 } },
-    [PHONE_LANDSCAPE]: { width: 9, height: 9, borderRadius: '2px' },
-  }
-
-  return (
-    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: { xs: 1, md: 1.5 }, [PHONE_LANDSCAPE]: { gap: 0.5 } }}>
-      {frames.map((frame, fi) => (
-        <Box
-          key={fi}
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(5, auto)',
-            gridAutoRows: 'auto',
-            gap: { xs: '2px', md: '3px' },
-            [PHONE_LANDSCAPE]: { gap: '1px' },
-          }}
-        >
-          {frame.map((c, i) => {
-            const filled = c !== 'empty'
-            const removed = c === 'removed'
-            const color = c === 'b' ? tintB : tintA
-            return (
-              <Box key={i} sx={cellSx}>
-                {filled && (
-                  <Box
-                    component={motion.div}
-                    initial={reduce ? false : { scale: 0, opacity: 0 }}
-                    animate={{ scale: 1, opacity: removed ? 0.32 : 1 }}
-                    transition={reduce ? undefined : { delay: (fi * 10 + i) * 0.03, type: 'spring', stiffness: 500, damping: 24 }}
-                    sx={{ width: '68%', height: '68%', borderRadius: '50%', bgcolor: color }}
-                  />
-                )}
-                {removed && (
-                  <Box
-                    sx={{
-                      position: 'absolute',
-                      width: '118%',
-                      height: 2,
-                      bgcolor: tintA,
-                      transform: 'rotate(-45deg)',
-                      borderRadius: 2,
-                    }}
-                  />
-                )}
-              </Box>
-            )
-          })}
-        </Box>
-      ))}
-    </Box>
-  )
-}
-
+// The number sentence is the WHOLE prompt (owner 2026-08-02). PRD-15 W1's countable ten-frame under
+// the equation was removed: `a` dots + `b` dots is a second rendering of the two numerals already on
+// screen, so it doubled the visual load and let the child answer by counting dots instead of reading
+// the sentence. This matches the same call made on Sammenlign Tal's object piles, Lær Tal's dot
+// cluster and Tal Quiz's object row — nothing on a math board restates a number that's already shown.
 const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
   const muiTheme = useTheme()
   const reduce = useReducedMotion()
@@ -144,6 +57,10 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
   const title = isAddition ? 'Plus Opgaver' : 'Minus Opgaver'
   const operator = isAddition ? '+' : '-'
   const gameId = isAddition ? 'math.addition' : 'math.subtraction'
+
+  // The correct-answer fact comes from the shared builder (src/config/gamePhrases.ts), which the
+  // prebake enumerator also calls — so the played text and the baked clip can never drift apart.
+  const factText = (a: number, b: number, answer: number): string => mathFactText(operation, a, b, answer)
 
   const [num1, setNum1] = useState<number | null>(null)
   const [num2, setNum2] = useState<number | null>(null)
@@ -184,10 +101,8 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
   // first-try. A ref so it's readable synchronously within the same event-loop tick.
   const isAdvancingRef = useRef(false)
   const guideReactionTimer = useRef<NodeJS.Timeout | null>(null)
-  // False after unmount (PRD-02 P4): the advance timer is scheduled after the `await speakNumber`
-  // echo, so this flag stops the post-await continuation from scheduling a ghost prompt if the child
-  // navigates away during the echo. Owned by its own effect so StrictMode's dev remount restores it.
-  const mountedRef = useRef(true)
+  // (PRD-02 P4's `mountedRef` is gone as of 2026-08-02: the tap handler no longer awaits narration, so
+  // the advance timer is created synchronously and the unmount cleanup always has it to clear.)
   // Live current problem (so it can be voiced after the welcome) + interaction guard (so a late
   // welcome never talks over active play).
   const problemRef = useRef<{ a: number; b: number } | null>(null)
@@ -233,14 +148,6 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
-  // Owns the mounted flag (PRD-02 P4, StrictMode-safe): true on (re)mount, false on unmount.
-  useEffect(() => {
-    mountedRef.current = true
-    return () => {
-      mountedRef.current = false
-    }
   }, [])
 
   // When audio unlocks after mount, play the welcome (board already visible). Interaction-guarded
@@ -296,15 +203,18 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
     let secondNum: number
     let answer: number
 
+    // NOTE: the ceilings below are `ADDEND_MAX` / `MINUEND_MAX` from config/gamePhrases.ts, which the
+    // prebake enumerator uses to bake every "Hvad er a plus b" + "a plus b er c". Raising a range here
+    // without raising the constant would silently drop the new questions back to live Azure.
     if (isAddition) {
       if (level === 'let') {
         // Let: sums ≤10.
-        firstNum = randInt(1, 9)
-        secondNum = randInt(1, Math.max(1, 10 - firstNum))
+        firstNum = randInt(1, ADDEND_MAX - 1)
+        secondNum = randInt(1, Math.max(1, ADDEND_MAX - firstNum))
       } else if (level === 'svaer') {
         // Svær: sums ≤20, biased so almost every problem carries (crosses the ten).
-        firstNum = randInt(2, 10)
-        secondNum = randInt(Math.max(1, 10 - firstNum), 10)
+        firstNum = randInt(2, ADDEND_MAX)
+        secondNum = randInt(Math.max(1, ADDEND_MAX - firstNum), ADDEND_MAX)
       } else {
         // Normal (PRD-05 P3): sums ≤20 (matches "adds to 20"), but both addends ≥2 so the floor
         // isn't trivial (+1 / tiny sums). The child adds to 20 on fingers, so this is his level.
@@ -320,12 +230,12 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
         secondNum = randInt(1, firstNum)
       } else if (level === 'svaer') {
         // Svær: two-digit minuend (11–20) so it's clearly harder than Normal.
-        firstNum = randInt(11, 20)
+        firstNum = randInt(11, MINUEND_MAX)
         secondNum = randInt(1, firstNum - 1)
       } else {
         // Normal (PRD-05 P3): minuend up to 20 (was ≤10 — the harder range used to be gated behind
         // Svær). Result ≥1 so there's always a real subtraction to do.
-        firstNum = randInt(2, 20)
+        firstNum = randInt(2, MINUEND_MAX)
         secondNum = randInt(1, firstNum - 1)
       }
       answer = firstNum - secondNum // non-negative
@@ -335,6 +245,11 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
     setNum2(secondNum)
     setCorrectAnswer(answer)
     problemRef.current = { a: firstNum, b: secondNum }
+
+    // Warm this problem's fact line while the child is still working the problem out, so nothing is
+    // paid on the correct tap — the one moment that must feel immediate. The fact is prebaked now, so
+    // this warms the clip's HTTP fetch; if a clip is ever missing it warms the synth instead.
+    audio.warmSpeech(factText(firstNum, secondNum, answer))
 
     // Near-answer distractors (off-by-one/two + the operands) clamped to the valid result range,
     // so wrong options are plausible confusions rather than random noise. Top up with random
@@ -405,12 +320,9 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
 
     const isCorrect = selectedAnswer === correctAnswer
 
-    // Engage the advance-lock SYNCHRONOUSLY on a correct tap (before the await below) so a second
-    // tap fired in the same tick is already blocked by the guard above.
+    // Engage the advance-lock SYNCHRONOUSLY on a correct tap so a second tap fired in the same tick
+    // is already blocked by the guard above.
     if (isCorrect) isAdvancingRef.current = true
-    // When the tap happened. The celebration dwell is measured FROM HERE so the spoken echo and the
-    // dwell run CONCURRENTLY instead of end-to-end (see the advance timer below).
-    const tappedAt = Date.now()
 
     // Mark the tapped tile + cue the corner guide, clearing the reaction a beat later.
     setFeedback({ value: selectedAnswer, correct: isCorrect })
@@ -418,25 +330,10 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
     if (guideReactionTimer.current) clearTimeout(guideReactionTimer.current)
     guideReactionTimer.current = setTimeout(() => setGuideReaction(null), 1100)
 
-    // Speak the completed FACT on a correct tap ("tre plus fire er syv") — the reinforcement moment
-    // (PRD-05 P2). A wrong tap just echoes the tapped number (identification). Single audio channel,
-    // so the fact REPLACES the number echo, never stacks. The win/lose narration stays removed.
-    try {
-      if (isCorrect && correctAnswer !== null && num1 !== null && num2 !== null) {
-        const op = isAddition ? DANISH_PHRASES.math.plus : DANISH_PHRASES.math.minus
-        await audio.speak(
-          `${getDanishNumberText(num1)} ${op} ${getDanishNumberText(num2)} er ${getDanishNumberText(correctAnswer)}`,
-        )
-      } else {
-        await audio.speakNumber(selectedAnswer)
-      }
-    } catch {
-      // ignore number audio errors
-    }
-
-    // Navigated away during the echo → don't score/celebrate/schedule the advance (PRD-02 P4).
-    if (!mountedRef.current) return
-
+    // Resolve SYNCHRONOUSLY — score, celebration and the "?"→answer POP all land on the tap
+    // (2026-08-02). They used to sit after `await`ing the spoken fact, which on this game meant a 1.09s
+    // live synth + a 2.64s clip: the equation's answer didn't appear for ~4s and then the board changed
+    // in the same frame, so the reveal and the confetti were never actually seen.
     if (isCorrect) {
       incrementScore()
       celebrateTier('micro') // light per-answer sparkle + soft "correct" SFX
@@ -446,6 +343,16 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
       // problem's first-try flag (round streak/star accounting) + a gentle SFX.
       firstAttemptRef.current = false
       sfx.play('wrong')
+    }
+
+    // Narration is FIRE-AND-FORGET alongside the dwell, never awaited (see theme/motion.ts). A correct
+    // tap speaks the completed FACT ("tre plus fire er syv") — the reinforcement moment (PRD-05 P2);
+    // a wrong tap echoes the tapped number (identification). Single audio channel, so the fact
+    // REPLACES the echo, never stacks. The win/lose narration stays removed.
+    if (isCorrect && correctAnswer !== null && num1 !== null && num2 !== null) {
+      void audio.speak(factText(num1, num2, correctAnswer)).catch(() => {})
+    } else {
+      void audio.speakNumber(selectedAnswer).catch(() => {})
     }
 
     // Auto-advance after a short celebration window (correct only; wrong stays for retry).
@@ -465,11 +372,10 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
         } else {
           generateNewProblem()
         }
-        // DWELL_CORRECT is the celebration window measured FROM THE TAP, not extra time after the
-        // spoken echo — awaiting the echo and then waiting a further full dwell made the green-tile
-        // pause `clip + 1400ms`, which reads as a dropped tap. Subtracting the elapsed echo never cuts
-        // audio short (if the clip outran the dwell the remainder is 0).
-      }, Math.max(0, DWELL_CORRECT() - (Date.now() - tappedAt))) // celebration dwell, from the tap
+        // A fixed celebration window from the tap. The correct branch always speaks a sentence fact,
+        // so it always gets DWELL_FACT — long enough that the next problem's prompt only cancels the
+        // clip's trailing silence, never the spoken fact.
+      }, DWELL_FACT)
     }
   }
 
@@ -577,13 +483,12 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
               // matching the TactileTile chip material. The SymbolTile operators + big numerals stay.
               <Box
                 sx={{
-                  // W1: the clay tile is now a COLUMN — the number sentence on top, the concrete
-                  // ten-frame the child counts beneath it (the concrete→abstract bridge).
+                  // One row: the number sentence alone on the clay tile (the ten-frame beneath it was
+                  // removed — see the note above the component).
                   display: 'flex',
-                  flexDirection: 'column',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: { xs: 1, md: 1.5 },
+                  gap: { xs: 1.25, md: 2 },
                   background: tileSurface(category.accentColor, muiTheme.scene.dark),
                   borderRadius: 4,
                   border: `1px solid ${hexToRgba(category.accentColor, muiTheme.scene.dark ? 0.4 : 0.26)}`,
@@ -592,19 +497,10 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
                   filter: softShadow(muiTheme.scene.dark ? 1.6 : 1.2),
                   boxShadow: `inset 0 2px 3px ${hexToRgba('#FFFFFF', muiTheme.scene.dark ? 0.3 : 0.6)}`,
                   '@media (orientation: landscape)': { py: { xs: 1, md: 1.5 } },
-                  [PHONE_LANDSCAPE]: { py: 0.25, px: 1, gap: 0.4 },
+                  [PHONE_LANDSCAPE]: { py: 0.25, px: 1, gap: 0.5 },
                 }}
               >
-                {/* Number sentence (unchanged): num1 op num2 = ?→answer POP */}
-                <Box
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: { xs: 1.25, md: 2 },
-                    [PHONE_LANDSCAPE]: { gap: 0.5 },
-                  }}
-                >
+                {/* num1 op num2 = ?→answer POP */}
                 <Typography variant="h1" component="span" sx={numberSx}>{num1}</Typography>
                 <SymbolTile op={operator} sx={symbolSx} />
                 <Typography variant="h1" component="span" sx={numberSx}>{num2}</Typography>
@@ -619,7 +515,7 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
                         key="answer"
                         initial={reduce ? false : { scale: 0.4, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
-                        exit={{ opacity: 0 }}
+                        exit={{ opacity: 0, transition: EXIT_FAST }}
                         transition={motionOr(POP, reduce)}
                         style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                       >
@@ -654,7 +550,7 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
                         key="question"
                         initial={reduce ? false : { scale: 0.7, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
-                        exit={{ opacity: 0 }}
+                        exit={{ opacity: 0, transition: EXIT_FAST }}
                         transition={motionOr(POP, reduce)}
                         style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                       >
@@ -663,18 +559,6 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
                     )}
                   </AnimatePresence>
                 </Box>
-                </Box>
-
-                {/* W1 concrete quantity layer — countable dots so a finger-counter can SOLVE, not
-                    guess. Keyed on the problem so the pop-in replays each question. */}
-                <TenFrameLayer
-                  key={`tf-${num1}-${num2}`}
-                  op={operation}
-                  a={num1!}
-                  b={num2!}
-                  reduce={reduce}
-                  dark={muiTheme.scene.dark}
-                />
               </Box>
               ) : null
             }

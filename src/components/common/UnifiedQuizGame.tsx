@@ -20,7 +20,7 @@ import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 import { sfx } from '../../services/sfxClient'
 import { mascotBus } from '../../services/mascotBus'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
-import { DWELL_CORRECT } from '../../theme/motion'
+import { DWELL_CORRECT, DWELL_FACT } from '../../theme/motion'
 import { devFx } from '../../utils/devHarness'
 import RoundResultScreen from './RoundResultScreen'
 // Simplified audio system
@@ -221,12 +221,9 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
   // Clears the guide reaction a beat after an answer so the mascot returns to idle and the
   // next (possibly identical) reaction re-fires.
   const guideReactionTimer = useRef<NodeJS.Timeout | null>(null)
-  // False after unmount (PRD-02 P4). The advance timer is scheduled only AFTER the `await
-  // speakClickedItem` echo — so if the child navigates away DURING that echo, unmount has already
-  // run (nothing to clear yet) and the post-await continuation would still schedule a timer that
-  // speaks the next prompt over the menu. This flag lets that continuation bail. Owned by its own
-  // effect so StrictMode's dev remount restores it to true.
-  const mountedRef = useRef(true)
+  // (PRD-02 P4's `mountedRef` is gone as of 2026-08-02: the tap handler no longer awaits narration, so
+  // the advance timer is created synchronously and the unmount cleanup below always has it to clear.
+  // There is no post-await continuation left that could schedule a ghost prompt over the next screen.)
 
   const [gameReady, setGameReady] = useState(false)
   const hasInitialized = useRef(false)
@@ -359,15 +356,6 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
     }
   }, [])
 
-  // Owns the mounted flag (PRD-02 P4, StrictMode-safe): the dev mount→cleanup→remount cycle leaves
-  // it TRUE. Declared after the teardown effect so it re-sets true last on a remount.
-  useEffect(() => {
-    mountedRef.current = true
-    return () => {
-      mountedRef.current = false
-    }
-  }, [])
-
   // When audio unlocks after mount, play the welcome (board is already visible). Ref-guarded +
   // interaction-guarded inside playWelcomeThenPrompt so it never talks over active play.
   useEffect(() => {
@@ -436,48 +424,21 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
 
     const isCorrect = selectedItem.value === currentItem.value
 
-    // Engage the advance-lock SYNCHRONOUSLY on a correct tap — before the `await` below — so a
-    // second tap fired in the same tick is already blocked by the guard above (PRD-02 P1/P2).
+    // Engage the advance-lock SYNCHRONOUSLY on a correct tap so a second tap fired in the same tick
+    // is already blocked by the guard above (PRD-02 P1/P2).
     if (isCorrect) isAdvancingRef.current = true
-    // When the tap happened. The celebration dwell is measured FROM HERE, so the spoken echo and the
-    // dwell run CONCURRENTLY instead of end-to-end (see the advance timer below).
-    const tappedAt = Date.now()
 
     // INSTANT visual feedback: mark the tapped tile (correct/wrong border + glow/sparkle/shake)
-    // and cue the corner guide BEFORE any audio await, so the red/green feedback never waits on
-    // the spoken number/letter. (Audio timing below is unchanged.)
+    // and cue the corner guide.
     setFeedback({ value: selectedItem.value, correct: isCorrect })
     setGuideReaction(isCorrect ? 'cheer' : 'think')
     if (guideReactionTimer.current) clearTimeout(guideReactionTimer.current)
     guideReactionTimer.current = setTimeout(() => setGuideReaction(null), 1100)
 
-    // On a correct tap, speak the completed FACT if the config supplies one (e.g. Hvad Mangler's
-    // finished sequence) — INSTEAD of echoing the tapped item (single audio channel, no stacking).
-    // Otherwise echo the tapped item (identification — e.g. the letter/number/word). The win/lose
-    // narration (announceGameResult "correct/try-again") stays removed; success/fail is otherwise
-    // SFX + visuals only.
-    //
-    // EXCEPT on a `previewBeforeCommit` quiz: reaching here means this tile was already the auditioned
-    // one, so the child heard this exact word ~a second ago. Re-speaking it added a second full clip
-    // the advance then waited on — a dead ~1s of green tile that reads as "my tap didn't register" and
-    // invites more tapping. The audition IS the echo; don't repeat it.
-    const alreadyAuditioned = !!config.previewBeforeCommit
-    try {
-      if (isCorrect && config.speakCorrectFact) {
-        await config.speakCorrectFact(currentItem, audio)
-      } else if (!alreadyAuditioned) {
-        await config.speakClickedItem(selectedItem, audio)
-      }
-    } catch {
-      // best-effort: tile audio is non-critical, so ignore playback errors here
-    }
-
-    // Navigated away during the echo → don't score/celebrate/schedule the advance (PRD-02 P4). The
-    // advance timer is scheduled below, AFTER this await, so this guard is what stops a ghost prompt
-    // speaking over the next screen (unmount ran before the timer existed, so there was nothing to
-    // clear).
-    if (!mountedRef.current) return
-
+    // Resolve the answer SYNCHRONOUSLY — score, celebration and the wrong-branch SFX/hint all land on
+    // the tap (2026-08-02). These used to sit AFTER `await`ing the narration, so the confetti didn't
+    // appear until the clip had finished and then the board changed immediately: the celebration was
+    // effectively invisible and the whole beat read as ~4s of dead green tile.
     if (isCorrect) {
       incrementScore()
       celebrateTier('micro') // light per-answer sparkle + soft "correct" SFX
@@ -490,6 +451,24 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
       // (Only fires on the wrong branch, so the advance-lock — which gates the correct/resolve
       // window at the top of this handler — can never let it run mid-resolve.)
       if (registerHintWrong()) mascotBus.emit('hint')
+    }
+
+    // Narration is FIRE-AND-FORGET, never awaited — it plays alongside the dwell below (see the
+    // DWELL_* note in theme/motion.ts). On a correct tap speak the completed FACT if the config
+    // supplies one (e.g. Hvad Mangler's finished sequence) INSTEAD of echoing the tapped item (single
+    // audio channel, no stacking); otherwise echo the tapped item (identification).
+    //
+    // EXCEPT on a `previewBeforeCommit` quiz: reaching here means this tile was already the auditioned
+    // one, so the child heard this exact word ~a second ago. The audition IS the echo; don't repeat it.
+    const alreadyAuditioned = !!config.previewBeforeCommit
+    // A sentence fact needs the longer dwell so it isn't cut mid-word; a one-word echo doesn't.
+    const spokeFact = isCorrect && !!config.speakCorrectFact
+    // `.catch` on the promise, not try/catch — nothing awaits these, so a rejection would otherwise
+    // surface as an unhandled rejection (and the crash reporter would upload it).
+    if (spokeFact) {
+      void config.speakCorrectFact!(currentItem, audio).catch(() => {})
+    } else if (!alreadyAuditioned) {
+      void config.speakClickedItem(selectedItem, audio).catch(() => {})
     }
 
     // Auto-advance after a short celebration window (correct only; wrong stays for retry).
@@ -516,14 +495,12 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
         } else {
           generateNewQuestion()
         }
-        // DWELL_CORRECT is the celebration window measured FROM THE TAP, not extra time bolted on
-        // AFTER the spoken echo. Awaiting the echo and then waiting a further full dwell made the
-        // green-tile pause `clip + 1400ms` — up to 4.5s in Bogstav Quiz, whose `speakCorrectFact`
-        // sentence is ~3s. A child reads that as a dropped tap and keeps tapping (every extra tap is
-        // correctly swallowed by the advance-lock, which makes it feel even more broken). Subtracting
-        // the elapsed echo never cuts audio short: if the clip outran the dwell, the remainder is 0
-        // and we advance the moment it finishes.
-      }, Math.max(0, DWELL_CORRECT() - (Date.now() - tappedAt))) // celebration dwell, from the tap
+        // A fixed celebration window from the tap — nothing above it awaits audio, so this timer is
+        // created synchronously and the unmount cleanup can always clear it (which also retires the
+        // old "timer scheduled after an await, so unmount had nothing to clear" ghost-prompt hazard).
+        // The next question's own prompt delay (200/300ms) sits on top, so it only ever cancels the
+        // narration's trailing silence.
+      }, spokeFact ? DWELL_FACT : DWELL_CORRECT())
     }
   }
 

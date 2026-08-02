@@ -118,6 +118,14 @@ const STARTS_WITH_LINE: Record<string, (word: string) => string> = {
 export const startsWithPhrase = (letter: string, word: string): string =>
   STARTS_WITH_LINE[letter]?.(word) ?? `${word} starter med ${spokenLetter(letter)}`
 
+/**
+ * "Hvad starter {Ord} med?" — Bogstav Quiz's spoken QUESTION (the picture's word, then "starts with
+ * what"). Only the word is spoken, so no per-letter override applies here. Built through this helper
+ * for the same reason as the two above: `shared-narration-clips.js` calls it too, so the baked clip
+ * and the runtime request can't drift (drift = a silent fall back to live Azure, never auditioned).
+ */
+export const startsWithQuestion = (word: string): string => `Hvad starter ${word} med?`
+
 // Letters Bogstav Quiz asks about (the correct answer is one of these). W, X and Å are asked too
 // (owner request — they have honest picturable words: Wienerbrød / Xylofon / Å-stream). Only Q stays
 // excluded — "Quiz" (a question mark) has no natural spoken first-sound word — so Q appears in the

@@ -23,10 +23,20 @@ import {
   BOOK_DONE_LINE,
 } from './src/config/danish-phrases.ts'
 import { allEnglishWords } from './src/config/englishVocab.ts'
-import { HUE_ORDER, SHADES, DANISH_OBJECTS, spokenColor } from './src/config/colorContent.ts'
+import { HUE_ORDER, SHADES, DANISH_OBJECTS, spokenColor, COLOR_TARGETS } from './src/config/colorContent.ts'
 import { REWARD_CHAPTERS } from './src/config/stickers.ts'
 import { REWARD_SLOTS } from './src/config/progression.ts'
-import { LETTER_WORDS, WORD_LETTERS, letterPhrase, startsWithPhrase } from './src/config/letterWords.ts'
+import { LETTER_WORDS, WORD_LETTERS, letterPhrase, startsWithPhrase, startsWithQuestion } from './src/config/letterWords.ts'
+// Composed game lines — the app builds every one of these through the SAME builders (see the
+// protocol in .claude/rules/audio-system.md), so what gets baked is exactly what gets spoken.
+import {
+  additionPairs, subtractionPairs, comparisonPairs,
+  mathPromptText, mathFactText,
+  COMPARE_PROMPT, comparisonFactText,
+  HVAD_MANGLER_PROMPT, sequenceFactText, sequenceStarts, sequenceNumbers,
+  NUANCER_INSTRUCTION, colorMixTargetText, colorMixResultText,
+} from './src/config/gamePhrases.ts'
+import { possibleTargets, mixingRules } from './src/config/colorMixing.ts'
 import { NUMBER_BROWSE_RATE as NUMBER_RATE } from './src/config/numberAutoplay.ts'
 
 // Danish narration + English section voices, straight from the single source of voice truth.
@@ -88,6 +98,44 @@ export function collectNarrationClips() {
   // question now that the numeral and the counting-object row were both removed as giveaways
   // (2026-08-01), so it must be a prebaked clip and not a live Azure round-trip per question.
   for (let n = 1; n <= 100; n++) da('numbers', DANISH_PHRASES.gamePrompts.findNumber(n))
+
+  // Plus/Minus/Sammenlign — the spoken QUESTION and the correct-answer FACT for every problem each
+  // game can generate (2026-08-02). All four sets come from the same builders + bounds the games use
+  // (src/config/gamePhrases.ts), so a range change there changes what gets baked here.
+  for (const [a, b] of additionPairs()) {
+    da('math', mathPromptText('addition', a, b))
+    da('math', mathFactText('addition', a, b, a + b))
+  }
+  for (const [a, b] of subtractionPairs()) {
+    da('math', mathPromptText('subtraction', a, b))
+    da('math', mathFactText('subtraction', a, b, a - b))
+  }
+  da('math', COMPARE_PROMPT)
+  for (const [bigger, smaller] of comparisonPairs()) da('math', comparisonFactText(bigger, smaller))
+
+  // Bogstav Quiz's spoken question, "Hvad starter {Ord} med?" — one per askable letter's word.
+  for (const letter of WORD_LETTERS) {
+    const data = LETTER_WORDS[letter]
+    if (data) da('letters', startsWithQuestion(data.word))
+  }
+
+  // Hvad Mangler? — the fixed prompt plus every completed sequence it can read back.
+  da('math', HVAD_MANGLER_PROMPT)
+  for (const spec of sequenceStarts) da('math', sequenceFactText(sequenceNumbers(spec)))
+
+  // Farver spoken lines that aren't already in the colours block below: Nuancer's instruction, Ram
+  // Farven's target instruction (one per mixable goal) and its recipe reveal (one per rule, and both
+  // droplet orders are real rules), and Farvejagt's hunt phrases (data in colorContent).
+  da('colours', NUANCER_INSTRUCTION)
+  for (const tgt of possibleTargets) da('colours', colorMixTargetText(tgt.name))
+  for (const key of Object.keys(mixingRules)) {
+    const [c1, c2] = key.split('+')
+    da('colours', colorMixResultText(c1, c2, mixingRules[key].name))
+  }
+  for (const t of COLOR_TARGETS) if (t.phrase) da('colours', t.phrase)
+
+  // Dansk til Engelsk speaks the DANISH word as its prompt (the English side is the `en` voice below).
+  for (const w of allEnglishWords) if (w.da) da('english-da', w.da)
 
   // Fixed spoken phrases.
   DANISH_PHRASES.success.forEach((t) => da('phrases', t))

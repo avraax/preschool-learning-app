@@ -9,7 +9,7 @@ import { MathScoreChip } from '../common/ScoreChip'
 import { MathRepeatButton } from '../common/RepeatButton'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
 import { hexToRgba } from '../../theme/tokens/helpers'
-import { getDanishNumberText } from '../../config/danish-phrases'
+import { HVAD_MANGLER_PROMPT, sequenceFactText, SEQUENCE_LENGTH } from '../../config/gamePhrases'
 import { progressStore, type DifficultyLevel } from '../../services/progressStore'
 import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 import { shuffle } from '../../utils/shuffle'
@@ -141,22 +141,22 @@ const HvadManglerGame: React.FC = () => {
 
       if (r < cut1) {
         // count by 1
-        const seq = buildNumberSequence(randInt(1, 10), 1, 5)
+        const seq = buildNumberSequence(randInt(1, 10), 1, SEQUENCE_LENGTH)
         value = seq.missing
         display = seq.display
       } else if (r < cut2) {
         // skip by 2
-        const seq = buildNumberSequence(randInt(0, 3) * 2, 2, 5)
+        const seq = buildNumberSequence(randInt(0, 3) * 2, 2, SEQUENCE_LENGTH)
         value = seq.missing
         display = seq.display
       } else if (r < cut3) {
         // skip by 5
-        const seq = buildNumberSequence(5 * randInt(1, 3), 5, 5)
+        const seq = buildNumberSequence(5 * randInt(1, 3), 5, SEQUENCE_LENGTH)
         value = seq.missing
         display = seq.display
       } else if (r < cut4) {
         // skip by 10
-        const seq = buildNumberSequence(10, 10, 5)
+        const seq = buildNumberSequence(10, 10, SEQUENCE_LENGTH)
         value = seq.missing
         display = seq.display
       } else {
@@ -169,7 +169,7 @@ const HvadManglerGame: React.FC = () => {
           display,
           // The correct option's tile renders a clay pip (PRD-12 §2B), not the id text.
           node: <ClayPip token={seq.missing} variant="tile" />,
-          audioPrompt: 'Hvad mangler?',
+          audioPrompt: HVAD_MANGLER_PROMPT,
           repeatWord: '',
           questionVisual: { emoji: '', word: seq.display }
         }
@@ -178,7 +178,7 @@ const HvadManglerGame: React.FC = () => {
       return {
         value,
         display: value,
-        audioPrompt: 'Hvad mangler?',
+        audioPrompt: HVAD_MANGLER_PROMPT,
         repeatWord: '',
         questionVisual: { emoji: '', word: display }
       }
@@ -301,10 +301,10 @@ const HvadManglerGame: React.FC = () => {
       )
     },
 
-    speakQuizPrompt: async (_item: QuizItem, audio: any) => audio.speak('Hvad mangler?'),
+    speakQuizPrompt: async (_item: QuizItem, audio: any) => audio.speak(HVAD_MANGLER_PROMPT),
     speakClickedItem: async (item: QuizItem, audio: any) =>
       typeof item.value === 'number' ? audio.speakNumber(item.value) : Promise.resolve(''),
-    getRepeatAudio: async (_item: QuizItem, audio: any) => audio.speak('Hvad mangler?'),
+    getRepeatAudio: async (_item: QuizItem, audio: any) => audio.speak(HVAD_MANGLER_PROMPT),
 
     // Speak the fact (PRD-05 P2): on a correct answer, read the COMPLETED sequence aloud (the blank
     // filled with the answer) — e.g. "to, fire, seks, otte, ti" — reinforcing the pattern. Visual
@@ -313,7 +313,7 @@ const HvadManglerGame: React.FC = () => {
       const tokens = (item.questionVisual?.word ?? '').split(/\s+/).filter(Boolean)
       const filled = tokens.map((t) => (t === '?' ? String(item.value) : t))
       if (filled.length > 0 && filled.every((t) => /^\d+$/.test(t))) {
-        return audio.speak(filled.map((t) => getDanishNumberText(Number(t))).join(', '))
+        return audio.speak(sequenceFactText(filled.map(Number)))
       }
       return ''
     }

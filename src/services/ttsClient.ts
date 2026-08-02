@@ -277,6 +277,27 @@ export class TtsClient {
     }
   }
 
+  /**
+   * Warm ONE line so it plays with no startup cost when it's finally needed, taking whichever path
+   * actually serves it: a prebaked clip gets its file fetched into the HTTP cache (~250ms saved), a
+   * dynamic line gets synthesized and cached (~1.1s saved). Fire-and-forget, plays nothing, and never
+   * touches the shared `<audio>` element or the epoch — so it can't cancel what's currently speaking.
+   *
+   * Why this exists: the math games' fact lines used to be synthesized ON the correct tap — the one
+   * moment that must feel immediate. Warming moves that cost to question-generation time, while the
+   * child is still working the problem out. Callers don't need to know which path applies, so this stays
+   * correct if a line moves in or out of the prebaked set.
+   */
+  warmDynamic(text: string, voiceType: VoiceType = 'primary', speed?: number): void {
+    const { cacheKey } = this.resolveRequest(text, voiceType, speed)
+    if (PREBAKED_TTS[cacheKey]) {
+      this.prefetchPrebaked([text], voiceType, speed) // static file → warm the HTTP cache
+      return
+    }
+    if (this.getCached(cacheKey)) return // already synthesized this session
+    void this.synthesize(text, voiceType, speed).catch(() => { /* best-effort */ })
+  }
+
   async synthesize(text: string, voiceType: VoiceType = 'primary', speed?: number): Promise<string> {
     const { cacheKey, body } = this.resolveRequest(text, voiceType, speed)
 

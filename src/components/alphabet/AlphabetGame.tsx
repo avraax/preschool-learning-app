@@ -6,7 +6,7 @@ import { AlphabetScoreChip } from '../common/ScoreChip'
 import { AlphabetRepeatButton } from '../common/RepeatButton'
 import { progressStore, type DifficultyLevel } from '../../services/progressStore'
 import { shuffle } from '../../utils/shuffle'
-import { LETTER_WORDS, WORD_LETTERS, startsWithPhrase } from '../../config/letterWords'
+import { LETTER_WORDS, WORD_LETTERS, startsWithPhrase, startsWithQuestion } from '../../config/letterWords'
 import { letterArt } from '../../assets/games/alphabet'
 
 // Full Danish alphabet including special characters
@@ -55,7 +55,7 @@ const AlphabetGame: React.FC = () => {
       return {
         value: letter,
         display: letter,
-        audioPrompt: `Hvad starter ${word} med?`,
+        audioPrompt: startsWithQuestion(word),
         repeatWord: word,
         // Show only the picture — NOT the word — so the child must recognise the starting letter from
         // the image, not just read it off the label. The subject is the baked soft-3D object (PRD-07;

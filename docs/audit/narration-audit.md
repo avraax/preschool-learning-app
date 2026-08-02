@@ -3,9 +3,9 @@
 > AUTO-GENERATED (by the `/audit` harness via the dev-server, or `npm run audit:approve-all`).
 > Do not hand-edit — source of truth is `narration-audit.json`.
 
-Last updated: 2026-08-01T21:33:25.348Z
+Last updated: 2026-08-02T07:13:53.982Z
 
-**772 OK · 1 wrong · 0 unaudited** (of 773 clips)
+**1729 OK · 1 wrong · 0 unaudited** (of 1730 clips)
 
 ## Bogstaver
 
@@ -36,6 +36,34 @@ Last updated: 2026-08-01T21:33:25.348Z
 | ✅ | h | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | H som Hund | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hund starter med H | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvad starter Abe med? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvad starter Bil med? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvad starter Cykel med? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvad starter Drage med? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvad starter Elefant med? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvad starter Fisk med? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvad starter Giraf med? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvad starter Hund med? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvad starter Is med? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvad starter Jul med? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvad starter Kat med? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvad starter Løve med? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvad starter Mus med? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvad starter Næsehorn med? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvad starter Orm med? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvad starter Panda med? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvad starter Raket med? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvad starter Sol med? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvad starter Tog med? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvad starter Ugle med? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvad starter Vulkan med? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvad starter Wienerbrød med? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvad starter Xylofon med? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvad starter Yoyo med? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvad starter Zebra med? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvad starter Æble med? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvad starter Ørn med? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvad starter Ål med? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | i | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | I, som en is |  |  |
 | ✅ | j | Bulk-approved (PRD-11 owner listen pass) |  |
@@ -470,14 +498,24 @@ Last updated: 2026-08-01T21:33:25.348Z
 | ✅ | bilen er rød | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | bladet er grønt | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | blomsten er lilla | Bulk-approved (PRD-11 owner listen pass) |  |
-| ✅ | blå | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | blå og gul bliver grøn | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | blå og hvid bliver lyseblå | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | blå og rød bliver lilla | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | blå og sort bliver mørkeblå | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | blåbærret er blåt | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | bolden er rød | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | druerne er lilla | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | ferskenen er orange | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find alle blå ting | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find alle grønne ting | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find alle gule ting | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find alle lilla ting | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find alle orange ting | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Find alle røde ting | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | græskarret er orange | Bulk-approved (PRD-11 owner listen pass) |  |
-| ✅ | grøn | Bulk-approved (PRD-11 owner listen pass) |  |
-| ✅ | gul | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | gul og blå bliver grøn | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | gul og hvid bliver lysegul | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | gul og rød bliver orange | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | guleroden er orange | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | hatten er rød | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | havet er blåt | Bulk-approved (PRD-11 owner listen pass) |  |
@@ -486,18 +524,29 @@ Last updated: 2026-08-01T21:33:25.348Z
 | ✅ | hjertet er orange | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | hjertet er rødt | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | hvalen er blå | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | hvid og blå bliver lyseblå | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | hvid og gul bliver lysegul | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | hvid og rød bliver lyserød | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | hvid og sort bliver grå | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | jordbærret er rødt | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | kløveren er grøn | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | krystallet er lilla | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | kyllingen er gul | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | lastbilen er blå | Bulk-approved (PRD-11 owner listen pass) |  |
-| ✅ | lilla | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Lav grøn farve ved at blande farverne | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Lav grå farve ved at blande farverne | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Lav lilla farve ved at blande farverne | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Lav lyseblå farve ved at blande farverne | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Lav lysegul farve ved at blande farverne | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Lav lyserød farve ved at blande farverne | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Lav mørkeblå farve ved at blande farverne | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Lav mørkerød farve ved at blande farverne | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Lav orange farve ved at blande farverne | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | lys lilla | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | lys orange | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | lyseblå | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | lysegrøn | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | lysegul | Bulk-approved (PRD-11 owner listen pass) |  |
-| ✅ | lyserød | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | majsen er gul | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | mørk lilla | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | mørk orange | Bulk-approved (PRD-11 owner listen pass) |  |
@@ -505,16 +554,22 @@ Last updated: 2026-08-01T21:33:25.348Z
 | ✅ | mørkegrøn | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | mørkegul | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | mørkerød | Bulk-approved (PRD-11 owner listen pass) |  |
-| ✅ | orange | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | rosen er rød | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | ræven er orange | Bulk-approved (PRD-11 owner listen pass) |  |
-| ✅ | rød | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | rød og blå bliver lilla | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | rød og gul bliver orange | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | rød og hvid bliver lyserød | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | rød og sort bliver mørkerød | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | salaten er grøn | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | skildpadden er grøn | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | skjorten er blå | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | smørret er gult | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | solen er gul | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | sort og blå bliver mørkeblå | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | sort og hvid bliver grå | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | sort og rød bliver mørkerød | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | stjernen er gul | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Sæt farverne fra lys til mørk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | træet er grønt | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | æblet er rødt | Bulk-approved (PRD-11 owner listen pass) |  |
 

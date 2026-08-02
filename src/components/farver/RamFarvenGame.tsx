@@ -14,6 +14,8 @@ import { useCelebration } from '../common/CelebrationEffect'
 import { ColorRepeatButton } from '../common/RepeatButton'
 import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 import { getCategoryTheme } from '../../config/categoryThemes'
+import { primaryColors, possibleTargets, mixingRules, type ColorDroplet, type TargetColor } from '../../config/colorMixing'
+import { colorMixResultText } from '../../config/gamePhrases'
 import { hexToRgba } from '../../theme/tokens/helpers'
 import { SNAP, BOUNCE } from '../../theme/motion'
 import { useRound } from '../../hooks/useRound'
@@ -39,21 +41,8 @@ const BLEND_MS = 600               // swirl/merge animation duration
 const REVEAL_MS = 1900             // recipe-reveal hold (lets the spoken rule play)
 const FIZZ_MS = 950                // wrong-mix "fizz out" before the pot resets
 
-// Game interfaces
-interface ColorDroplet {
-  id: string
-  color: string
-  colorName: string
-  hex: string
-  isUsed: boolean
-}
-
-interface TargetColor {
-  color: string
-  name: string
-  hex: string
-}
-
+// Game interfaces (ColorDroplet/TargetColor + the recipe data itself now live in
+// src/config/colorMixing.ts so the prebake enumerator can reach the spoken mix lines).
 interface BlendResult {
   hex: string         // the colour the pot fills with
   name: string | null // the rule's result name (null = no rule for this combo)
@@ -69,58 +58,13 @@ interface RecipeReveal {
   targetName: string
 }
 
-// ── Educational color data + pure helpers (module scope: not themeable, not render-derived) ───
-const primaryColors: ColorDroplet[] = [
-  { id: 'red', color: 'rød', colorName: 'rød', hex: '#EF4444', isUsed: false },
-  { id: 'blue', color: 'blå', colorName: 'blå', hex: '#3B82F6', isUsed: false },
-  { id: 'yellow', color: 'gul', colorName: 'gul', hex: '#FDE047', isUsed: false },
-  { id: 'white', color: 'hvid', colorName: 'hvid', hex: '#F8FAFC', isUsed: false },
-  { id: 'black', color: 'sort', colorName: 'sort', hex: '#1F2937', isUsed: false }
-]
-
-const possibleTargets: TargetColor[] = [
-  // Secondary colors (two primaries)
-  { color: 'lilla', name: 'lilla', hex: '#A855F7' },
-  { color: 'orange', name: 'orange', hex: '#F97316' },
-  { color: 'grøn', name: 'grøn', hex: '#10B981' },
-  // Tints (primary + white)
-  { color: 'lyserød', name: 'lyserød', hex: '#FFB3BA' },
-  { color: 'lyseblå', name: 'lyseblå', hex: '#BFDBFE' },
-  { color: 'lysegul', name: 'lysegul', hex: '#FEF9C3' },
-  // Shades (primary + black) and grey
-  { color: 'mørkerød', name: 'mørkerød', hex: '#991B1B' },
-  { color: 'mørkeblå', name: 'mørkeblå', hex: '#1E3A8A' },
-  { color: 'grå', name: 'grå', hex: '#9CA3AF' }
-]
+// ── Pure helpers (module scope: not themeable, not render-derived). The colour data itself is
+// imported from src/config/colorMixing.ts ─────────────────────────────────────────────────────
 
 // W3 (PRD-16): pale-tint targets are near-white and vanish against the light cloud/sky world, so the
 // child can't perceive the colour they're aiming for. These get a neutral backing disc behind the
 // goal swatch so the pale hue reads as a distinct colour (and is distinguishable from a white droplet).
 const PALE_TARGET_HEXES = new Set(['#FFB3BA', '#BFDBFE', '#FEF9C3', '#9CA3AF'])
-
-const mixingRules: Record<string, TargetColor> = {
-  // Secondaries
-  'rød+blå': { color: 'lilla', name: 'lilla', hex: '#A855F7' },
-  'blå+rød': { color: 'lilla', name: 'lilla', hex: '#A855F7' },
-  'rød+gul': { color: 'orange', name: 'orange', hex: '#F97316' },
-  'gul+rød': { color: 'orange', name: 'orange', hex: '#F97316' },
-  'blå+gul': { color: 'grøn', name: 'grøn', hex: '#10B981' },
-  'gul+blå': { color: 'grøn', name: 'grøn', hex: '#10B981' },
-  // Tints (+ white)
-  'rød+hvid': { color: 'lyserød', name: 'lyserød', hex: '#FFB3BA' },
-  'hvid+rød': { color: 'lyserød', name: 'lyserød', hex: '#FFB3BA' },
-  'blå+hvid': { color: 'lyseblå', name: 'lyseblå', hex: '#BFDBFE' },
-  'hvid+blå': { color: 'lyseblå', name: 'lyseblå', hex: '#BFDBFE' },
-  'gul+hvid': { color: 'lysegul', name: 'lysegul', hex: '#FEF9C3' },
-  'hvid+gul': { color: 'lysegul', name: 'lysegul', hex: '#FEF9C3' },
-  // Shades (+ black)
-  'rød+sort': { color: 'mørkerød', name: 'mørkerød', hex: '#991B1B' },
-  'sort+rød': { color: 'mørkerød', name: 'mørkerød', hex: '#991B1B' },
-  'blå+sort': { color: 'mørkeblå', name: 'mørkeblå', hex: '#1E3A8A' },
-  'sort+blå': { color: 'mørkeblå', name: 'mørkeblå', hex: '#1E3A8A' },
-  'sort+hvid': { color: 'grå', name: 'grå', hex: '#9CA3AF' },
-  'hvid+sort': { color: 'grå', name: 'grå', hex: '#9CA3AF' }
-}
 
 // Static-difficulty target pools (progressStore.difficultyFor — no adaptivity). Let: just the 3
 // iconic two-primary secondaries. Normal: + the 3 tints (primary + white). Svær: all 9, adding the
@@ -393,7 +337,7 @@ const RamFarvenGame: React.FC = () => {
     // naming of the result (identification), not win/lose narration.
     setRecipe({ aHex: c1.hex, bHex: c2.hex, targetHex: result.hex, aName: c1.colorName, bName: c2.colorName, targetName: result.name })
     audio.cancelCurrentAudio()
-    audio.speak(`${c1.colorName} og ${c2.colorName} bliver ${result.name}`).catch(() => {})
+    audio.speak(colorMixResultText(c1.colorName, c2.colorName, result.name!)).catch(() => {})
 
     if (commitTimer.current) clearTimeout(commitTimer.current)
     commitTimer.current = setTimeout(() => {
