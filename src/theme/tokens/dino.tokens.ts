@@ -76,14 +76,15 @@ export const dinoThemeTokens: ThemeTokens = {
     // Structured World (PRD-05 W3): objects rest on the jungle canopy/ridge in a gentle arc, the
     // centre one lifted above the volcano peak so it isn't obscured. Refine onto the mossy ridge
     // once B3 near-layer art lands.
-    // Seated on the jungle canopy at varied heights; colors rides higher on the centre vine bridge.
-    // B1 (scene-fixes): lower the flanking objects so they nestle onto the mountain
-    // ridge instead of floating in open sky; centre (colors) stays lifted to clear the
-    // volcano peak.
+    // B1 (scene-fixes): the flanking objects nestle onto the mountain ridge instead of floating in
+    // open sky. Heights follow the SHARED home arc — outer pair lowest, centre highest — the same
+    // shape every skin uses, so the five labels read as one band. The arc as a whole sits low here
+    // to match the ridge; colors used to be lifted to 52 (14 above its neighbours) to clear the
+    // volcano peak, which pulled its label right out of the row.
     homeAnchors: [
       { section: 'alphabet', xPct: 15, yPct: 70, scale: 0.96, rotate: -3, depth: 0.3 },
       { section: 'math', xPct: 33, yPct: 66, scale: 1.04, rotate: 2, depth: 0.32 },
-      { section: 'colors', xPct: 50, yPct: 52, scale: 1.14, rotate: 0, depth: 0.34 },
+      { section: 'colors', xPct: 50, yPct: 64, scale: 1.14, rotate: 0, depth: 0.34 },
       { section: 'english', xPct: 68, yPct: 66, scale: 1.04, rotate: -2, depth: 0.32 },
       { section: 'ordleg', xPct: 85, yPct: 70, scale: 0.96, rotate: 3, depth: 0.3 },
     ],
