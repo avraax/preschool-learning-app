@@ -100,6 +100,9 @@ const StickerAlbum: React.FC = () => {
         paddingTop: 'calc(env(safe-area-inset-top) + 8px)',
         paddingLeft: 'env(safe-area-inset-left)',
         paddingRight: 'env(safe-area-inset-right)',
+        // The page panel now grows into whatever is left, so the bottom inset has to be real padding
+        // — otherwise the last row of slots sits under the home indicator.
+        paddingBottom: 'calc(env(safe-area-inset-bottom) + 4px)',
         background: immersive
           ? 'transparent'
           : `${theme.decor.pageBackground},\n${theme.decor.dots}`,
@@ -108,7 +111,17 @@ const StickerAlbum: React.FC = () => {
       {/* Header: back (left) + the ONE count (right). The old lifetime ⭐ pill is gone (PRD D10) —
           a third score with no purpose next to the number that actually matters. */}
       <AppBar position="static" color="transparent" elevation={0}>
-        <Toolbar sx={{ justifyContent: 'space-between', py: 2, color: titleColor, [PHONE_LANDSCAPE]: { py: 0.25, minHeight: '48px !important' } }}>
+        {/* Compact toolbar: a back button + one pill never needed the default 64px row, and every px
+            spent here comes straight out of the reward page below it. */}
+        <Toolbar
+          sx={{
+            justifyContent: 'space-between',
+            py: 0.5,
+            minHeight: '56px !important',
+            color: titleColor,
+            [PHONE_LANDSCAPE]: { py: 0.25, minHeight: '44px !important' },
+          }}
+        >
           {/* Shared themed back button — reverses the wipe, consistent with every other surface. */}
           <BackButton to="/" variant="menu" />
 
@@ -118,7 +131,7 @@ const StickerAlbum: React.FC = () => {
 
       <Container
         maxWidth="md"
-        sx={{ flex: 1, display: 'flex', flexDirection: 'column', py: { xs: 1, md: 2 }, overflow: 'hidden' }}
+        sx={{ flex: 1, display: 'flex', flexDirection: 'column', py: { xs: 0.75, md: 1.25 }, overflow: 'hidden' }}
       >
         {/* Title — one name for one thing (the home card says "Min Bog" too). */}
         <Typography
@@ -131,9 +144,9 @@ const StickerAlbum: React.FC = () => {
             textShadow: dark
               ? '0 0 16px rgba(120,170,255,0.55), 0 2px 8px rgba(0,0,0,0.5)'
               : `1px 1px 2px ${hexToRgba(theme.decor.titleColor, 0.2)}`,
-            mb: { xs: 1, md: 1.5 },
+            mb: { xs: 0.75, md: 1 },
             flex: '0 0 auto',
-            [PHONE_LANDSCAPE]: { fontSize: '1.05rem', mb: 0.5 },
+            [PHONE_LANDSCAPE]: { fontSize: '1.05rem', mb: 0.25 },
           }}
           component="h1"
         >
@@ -166,7 +179,7 @@ const StickerAlbum: React.FC = () => {
             flexWrap: 'wrap',
             gap: { xs: 0.75, md: 1.25 },
             justifyContent: 'center',
-            mb: { xs: 1, md: 1.5 },
+            mb: { xs: 0.75, md: 1 },
             flex: '0 0 auto',
             [PHONE_LANDSCAPE]: { mb: 0.5, gap: 0.5 },
             [PHONE_PORTRAIT]: { gap: 0.5, rowGap: 0.5 },
@@ -237,7 +250,7 @@ const StickerAlbum: React.FC = () => {
             fontWeight: 700,
             color: dark ? '#FFE7A8' : accent,
             fontSize: 'clamp(0.9rem, 2.8vw, 1.1rem)',
-            mb: { xs: 1, md: 1.5 },
+            mb: { xs: 0.5, md: 0.75 },
             flex: '0 0 auto',
             [PHONE_LANDSCAPE]: { mb: 0.25, fontSize: '0.75rem' },
           }}
@@ -291,11 +304,34 @@ const StickerAlbum: React.FC = () => {
         )}
 
         {/* Reward grid (3 columns) — seated on a soft "page" panel so the collection reads as a
-            treasured book page inside the world, not a bare floating grid. */}
-        <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 0 }}>
+            treasured book page inside the world, not a bare floating grid.
+            The panel is sized off the LEFTOVER space in BOTH axes: the wrapper is a size container,
+            so `min(100cqw, 100cqh)` makes the page the largest square that fits what's actually left
+            after the header/title/tabs/count. A width-only cap (the old `maxWidth: 520` + square
+            cells) had no idea how tall the leftover was, so the third row was simply clipped off the
+            bottom of the viewport on anything shorter than ~880px — and, because the wrapper centres
+            its overflow, the panel also grew UP over the "x / 9 samlet" line. */}
+        <Box
+          sx={{
+            flex: 1,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            minHeight: 0,
+            containerType: 'size',
+          }}
+        >
           <Box
+            data-album-panel
             sx={{
               position: 'relative',
+              // Panel aspect ratio = the grid's shape (3x3 square; the phone-landscape 5x2 override
+              // below re-points it). Uniform padding keeps the inner content box square too, so the
+              // 1fr rows/columns come out as squares without per-cell aspect ratios.
+              '--album-ar': '1',
+              width: 'min(100cqw, calc(100cqh * var(--album-ar)), 600px)',
+              aspectRatio: 'var(--album-ar)',
+              boxSizing: 'border-box',
               p: { xs: 1.5, sm: 2, md: 2.75 },
               borderRadius: '26px',
               border: '1px solid',
@@ -308,19 +344,26 @@ const StickerAlbum: React.FC = () => {
               boxShadow: dark
                 ? '0 14px 40px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.14)'
                 : '0 14px 40px rgba(0,0,0,0.14), inset 0 1px 0 rgba(255,255,255,0.7)',
-              [PHONE_LANDSCAPE]: { p: 1, borderRadius: '18px' },
+              // Phone landscape has ~230px of leftover height: a square page would shrink the slots to
+              // ~70px, so the page turns wide (5 columns x 2 rows) instead. 5*s+4*gap by 2*s+gap plus
+              // the uniform padding ≈ 2.4:1 whatever s resolves to.
+              [PHONE_LANDSCAPE]: { '--album-ar': '2.4', p: 1, borderRadius: '18px' },
             }}
           >
           <Box
+            data-album-grid
             sx={{
               display: 'grid',
               gridTemplateColumns: 'repeat(3, 1fr)',
+              gridTemplateRows: 'repeat(3, 1fr)',
               gap: { xs: '10px', sm: '14px', md: '18px' },
               width: '100%',
-              maxWidth: { xs: 360, sm: 440, md: 520 },
-              '& > *': { aspectRatio: '1 / 1' },
-              // Phone landscape: 3 square rows are too tall — 5 narrow columns → 2 rows.
-              [PHONE_LANDSCAPE]: { gridTemplateColumns: 'repeat(5, 1fr)', gap: '8px', maxWidth: 430 },
+              height: '100%',
+              [PHONE_LANDSCAPE]: {
+                gridTemplateColumns: 'repeat(5, 1fr)',
+                gridTemplateRows: 'repeat(2, 1fr)',
+                gap: '8px',
+              },
             }}
           >
             {activeChapter.rewards.map((reward, i) => {
