@@ -14,6 +14,7 @@ import {
   Dialog,
   DialogActions,
   DialogContent,
+  DialogTitle,
   FormControlLabel,
   TextField,
   Typography,
@@ -26,7 +27,6 @@ import {
   type SubmitResult,
 } from '../../services/bugReporter'
 import { Bug, CircleCheck, TriangleAlert } from 'lucide-react'
-import AdultBackHeader from './AdultBackHeader'
 
 type Phase = 'compose' | 'sending' | 'success' | 'error'
 
@@ -86,7 +86,12 @@ const BugReportDialog: React.FC<BugReportDialogProps> = ({ open, screenshot, onC
     <Dialog open={open} onClose={phase === 'sending' ? undefined : onClose} maxWidth="xs" fullWidth>
       {phase === 'compose' && (
         <>
-          <AdultBackHeader title="Rapportér et problem" icon={<Bug size={20} aria-hidden />} onBack={onClose} />
+          {/* A nested TASK dialog gets exactly two buttons — Annullér leading, the action trailing
+              (Settings PRD-01 §6.4). No back arrow: it would be a third way out of the same dialog. */}
+          <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Bug size={19} aria-hidden />
+            Rapportér et problem
+          </DialogTitle>
           <DialogContent>
             <Typography sx={{ fontSize: '0.85rem', color: 'text.secondary', mb: 1.5 }}>
               Rapporten indeholder automatisk skærmbillede, seneste hændelser og teknisk info.
@@ -156,8 +161,9 @@ const BugReportDialog: React.FC<BugReportDialogProps> = ({ open, screenshot, onC
               Nævn koden, når du beskriver problemet — eller bed bare om den nyeste rapport.
             </Typography>
           </DialogContent>
+          {/* "Luk" belongs to the settings header alone (§6.1) — this only ends the report. */}
           <DialogActions sx={{ justifyContent: 'center' }}>
-            <Button onClick={onClose} variant="contained">Luk</Button>
+            <Button onClick={onClose} variant="contained" aria-label="Færdig">Færdig</Button>
           </DialogActions>
         </>
       )}
@@ -189,7 +195,7 @@ const BugReportDialog: React.FC<BugReportDialogProps> = ({ open, screenshot, onC
             >
               Gem som fil
             </Button>
-            <Button onClick={onClose}>Luk</Button>
+            <Button onClick={onClose} aria-label="Annullér">Annullér</Button>
           </DialogActions>
         </>
       )}

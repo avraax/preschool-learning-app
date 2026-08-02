@@ -83,13 +83,17 @@ table, and our five (`childProfile`, `profileProgress`, `familyPin`, `pinAttempt
 - **The local PIN verifier is cached ONLY after a successful ONLINE verify on that device**, and dropped
   when `/family/status` reports a newer `pinUpdatedAt` (else a PIN changed on the iPhone is honoured on
   the iPad forever) and on sign-out.
-- **`requirePin(reason)` is ONE table** (`pinVerifierFor` in AuthContext). Local authorises anything
-  whose blast radius is this device's local state; SERVER is required whenever the outcome is a
-  credential, a spend, or an account-scoped mutation.
+- **`requirePin(reason)` is ONE table** — `pinVerifierFor`, now in the PURE `src/config/pinReasons.ts`
+  and re-exported from `AuthContext` so every call site is unchanged. It moved out of the `.tsx` so a
+  plain-Node test can read it: `src/config/adultSettingsIa.test.ts` asserts every account-scoped
+  destructive SETTING resolves to the server verifier, and a test that re-declared the server set
+  itself would pass vacuously. Local authorises anything whose blast radius is this device's local
+  state; SERVER is required whenever the outcome is a credential, a spend, or an account-scoped
+  mutation.
 - **Never add request-body capture to diagnostics.** The PIN travels in a POST body. `redact.ts` keeps a
   registry of live secret strings (caught by identity, not pattern); `sanitizeUrl` strips the whole
   query+fragment on `/api/auth`. Auth surfaces carry `data-bl-redact`, `screenshotService` removes
-  those nodes, the hold gesture is inert while an auth dialog is open, and `PinPad` renders dots.
+  those nodes, the ⚙️ corner tap is inert while an auth dialog is open, and `PinPad` renders dots.
 - **CLEAN SHEET, no migration.** The owner chose to reset all progress at the accounts release, so
   there is deliberately NO v3→v4 migration and no legacy-adoption flow. A non-v4 blob normalises to
   `null` and the child starts fresh; `src/utils/storageReset.ts` sweeps the pre-accounts keys, the
@@ -125,7 +129,7 @@ table, and our five (`childProfile`, `profileProgress`, `familyPin`, `pinAttempt
   change, or a new session — the mandatory PIN nag hangs off that answer); `persist()` throttles timestamp-only
   writes; and `publish()` drops a notify whose snapshot is materially unchanged, since `AuthProvider`
   sits above `<App />` and every publish re-renders the whole app.
-- **Logging out is a top-level item in the adult menu, and the lock phase is UNREACHABLE.** The owner
+- **Logging out lives in the Konto pane's destructive strip, and the lock phase is UNREACHABLE.** The owner
   chose a plain "Log ud" over a "Lås appen" action, so `authStore.lock()` has no caller and
   `phase: 'locked'` — LockScreen's "Velkommen tilbage" branch, "Brug kode i stedet", and
   `pinVerifierFor('unlockSession')`, the one row that depends on connectivity — is dead by decision, not
@@ -134,13 +138,20 @@ table, and our five (`childProfile`, `profileProgress`, `familyPin`, `pinAttempt
   `requirePin('manageCredentials')`, i.e. SERVER-verified per §7.2 — which also guarantees the adult is
   online at the moment they sign out, which is exactly when signing back in is possible. It confirms
   first (naming the account) because the consequence lands on the CHILD, and it pushes progress before
-  clearing the token. "Log ud alle steder" and account deletion stay in "Login og sikkerhed".
+  clearing the token. "Log ud alle steder" and account deletion sit beside it in the same strip
+  (Settings PRD-01 gathered them; "Login og sikkerhed" as a separate panel is gone).
 - **Auth overlay stacking lives in `src/components/auth/authOverlayZ.ts`.** The lock screen and the
   profile picker are hand-rolled `fixed` boxes at ~10 000; a MUI `<Dialog>` defaults to **1300**. So a
   dialog opened FROM one of them mounts *underneath* it — live, interactive and invisible, which is a
   dead button with no error anywhere. That is why the lock screen's "Brug kode i stedet" never worked and
   why the picker's "Tilføj et barn" was hidden (both measured with `elementFromPoint` at the surface's
   centre, before and after). Never write a z-index literal in that directory.
+  **A PIN surface can also live OUTSIDE that directory** — the account-deletion pad sits in the adult
+  settings tree, where it and the settings Dialog were both at MUI's 1300 and the pad won only by DOM
+  order. `authOverlayZ.test.ts` therefore sweeps all of `src/` for a `<PinPad>` inside a `<Dialog>`
+  without `zIndex: AUTH_Z.pin`, **with comments stripped first**: a prose mention of the constant in the
+  "why" comment above the fix satisfied a plain `includes()` and kept the guard green after the fix
+  itself had been removed.
 - **The DEV bypass attaches a stand-in child** (`DEV_PROFILE`, id `dev-local`, in `profileStore`).
   `?nogate=1` has no account and never will, so without it `progressStore` stays inert — `?rewards=n`
   awaits `whenAttached()` forever and the mandatory create dialog covers every screenshot recipe. It is

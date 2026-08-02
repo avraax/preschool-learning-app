@@ -196,16 +196,16 @@ function App() {
         <NavigationAudioCleanup />
 
         {/* Update announcement — a dismissible bottom-centre pill that points the adult to the
-            ⚙️ menu (PRD-09 P4). The actual apply-update is the hold-gated menu item, never a
+            ⚙️ menu (PRD-09 P4). The actual apply-update is the PIN-gated menu item, never a
             child-tappable button. */}
         <UpdateBanner
           show={updateStatus.updateAvailable || DEV_SHOW_UPDATE_BANNER}
           onDismiss={updateStatus.dismissUpdate}
         />
 
-        {/* "Til de voksne" corner button — hold 2s → adult menu (bug reporter, voice test,
-            SFX toggle, progress reset, version info, and the gated "⬆️ Opdater app"). Stays
-            bottom-right; the update pill is bottom-centre so it no longer dodges onto the mascot. */}
+        {/* "Til de voksne" corner button — tap → PIN → the lazy AdultSettings surface (Barn /
+            Læring / Lyd / Udseende / Konto + the support footer). Stays bottom-right; the update
+            pill is bottom-centre so it no longer dodges onto the mascot. */}
         <AdultCorner
           updateAvailable={updateStatus.updateAvailable || DEV_SHOW_UPDATE_BANNER}
           onApplyUpdate={updateStatus.applyUpdate}

@@ -13,38 +13,14 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useR
 import { authStore } from '../services/authStore'
 import { useAuth } from '../hooks/useAuth'
 import type { AuthSnapshot } from '../services/authStore'
+import { pinVerifierFor, type PinReason, type PinVerifier } from '../config/pinReasons.ts'
 
-/** Every action that can demand the adult PIN. */
-export type PinReason =
-  | 'adultMenu'
-  | 'resetProgress'
-  | 'switchProfile'
-  | 'unlockSession'
-  | 'changePin'
-  | 'manageCredentials'
-  | 'revokeSessions'
-
-export type PinVerifier = 'local' | 'server'
-
-/**
- * WHERE each reason is verified. `unlockSession` is the one entry that depends on connectivity:
- * online it mints a new access token, which spends money, so it needs server authority; offline it
- * unlocks LOCAL play only and the paid endpoints stay 401 until the network returns.
- */
-export function pinVerifierFor(reason: PinReason, online: boolean): PinVerifier {
-  switch (reason) {
-    case 'adultMenu': // must work on a plane; blast radius is this device's UI
-    case 'resetProgress': // progressStore is localStorage — local data, local authority
-    case 'switchProfile': // ditto
-      return 'local'
-    case 'unlockSession':
-      return online ? 'server' : 'local'
-    case 'changePin': // a credential
-    case 'manageCredentials': // adding/removing a sign-in method
-    case 'revokeSessions': // account-scoped mutation
-      return 'server'
-  }
-}
+// The reason TABLE itself now lives in `src/config/pinReasons.ts` — PURE, so a plain-Node test can
+// import it (`adultSettingsIa.test.ts` asserts every account-scoped destructive setting is
+// server-verified, and a test that re-declares the server set would pass vacuously). The values are
+// unchanged; it is re-exported here so every existing call site keeps importing it from this module.
+export { pinVerifierFor }
+export type { PinReason, PinVerifier }
 
 /** How long an adult stays unlocked after proving the PIN once (§7.3). */
 export const ADULT_UNLOCK_MS = 5 * 60 * 1000

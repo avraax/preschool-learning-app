@@ -52,6 +52,38 @@ test('every MUI Dialog in the auth stack sets its z-index explicitly', () => {
   )
 })
 
+test('a PIN pad rendered OUTSIDE this directory still sets its z-index', () => {
+  // The previous test only walks `src/components/auth/`. The account-deletion pad lives in the adult
+  // settings tree, so it slipped through: it and the settings Dialog were both at MUI's default 1300
+  // and the pad was on top only by DOM order. Anywhere a <PinPad> is mounted inside a <Dialog>, the
+  // dialog must carry AUTH_Z — wherever that file happens to live.
+  const SRC = path.resolve(HERE, '..', '..')
+  const offenders: string[] = []
+  const walk = (dir: string) => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, entry.name)
+      if (entry.isDirectory()) {
+        walk(full)
+        continue
+      }
+      if (!/\.tsx$/.test(entry.name)) continue
+      const src = readFileSync(full, 'utf8')
+      if (!/<PinPad[\s/>]/.test(src)) continue
+      if (!/<Dialog[\s>]/.test(src)) continue
+      // Strip comments FIRST. A prose mention of the constant in the "why" comment above the fix
+      // satisfied `includes()` and kept this test green after the fix itself had been deleted.
+      const code = src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$/gm, '$1')
+      if (!/zIndex:\s*AUTH_Z\.pin/.test(code)) offenders.push(path.relative(SRC, full))
+    }
+  }
+  walk(SRC)
+  assert.deepEqual(
+    offenders,
+    [],
+    `these mount a PIN pad in a <Dialog> with no AUTH_Z.pin: ${offenders.join(', ')}`,
+  )
+})
+
 test('no auth overlay carries a hand-written z-index literal', () => {
   const offenders: string[] = []
   for (const name of readdirSync(HERE)) {

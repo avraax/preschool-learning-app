@@ -15,8 +15,9 @@ folder always reflects the shipped UI.
 - **`?nogate=1` is mandatory** since the accounts release: it bypasses the auth gate AND the audio
   welcome, and attaches a stand-in dev child so `progressStore` isn't inert. Without it, every capture
   is just the lock screen.
-- Opening the adult menu headlessly needs `?adult-tap=1` **and ~4.5s of settle** — it captures a
-  snapdom screenshot before rendering, so a shorter wait silently yields the un-opened page.
+- Opening the adult menu is a plain click (the `?adult-tap=1` hold-workaround is gone) but still needs
+  **~4.5s of settle** — it captures a snapdom screenshot before rendering, so a shorter wait silently
+  yields the un-opened page.
 - **`overlays/audio-permission.jpg` and `overlays/auth-pin-pad.jpg` cannot be re-captured headlessly**
   and are deliberately older than the rest. The driver launches Chrome with autoplay allowed, so the
   "Tænd for lyd" modal never appears (`--keep-audio-modal` doesn't help — there is nothing to keep);
@@ -31,6 +32,15 @@ Min Bog's book/sparkle come from `src/assets/ui/`; the theme picker shows baked 
 profiles show baked avatar portraits; and every adult dialog is on lucide icons.
 `overlays/profiles-panel.jpg` is NEW in this pass.
 
+**Adult settings, re-captured 2026-08-02 (Settings PRD-01).** The `overlays/` set no longer contains
+`adult-menu`, `profiles-panel`, `theme-panel`, `difficulty-panel` or `voice-panel` — that flat
+13-row scrolling dialog and its six sibling sub-panels were replaced by ONE two-pane surface with a
+persistent rail (Barn / Læring / Lyd / Udseende / Konto) and a support footer. `overlays/phone/` is
+new: the adult area had never been captured at a phone size at all. Recipe for these:
+`--click '[aria-label="Til de voksne"]' --wait-for '.MuiDialog-paper' --settle 4500`, then
+`--click '[data-rail-item=<group>]'` for a pane (on 844×390 the rail is only rendered at the root, so
+click `[aria-label="Tilbage"]` first).
+
 ## Folders
 
 | Folder | Viewport | What |
@@ -38,7 +48,8 @@ profiles show baked avatar portraits; and every adult dialog is on lucide icons.
 | `ipad/` | 1180×820 (iPad Air landscape) | **Primary design surface** — every route |
 | `phone/` | 844×390 (iPhone 13 Pro landscape) | The phone-compact variant (`src/theme/phoneMedia.ts` guards) — every route |
 | `portrait/` | 390×844 | Key portrait references (home, menu, quiz, drag board, memory-20, album) |
-| `overlays/` | 1180×820 | States routes can't show: adult menu, the four adult panels (`profiles-panel`, `theme-panel`, `difficulty-panel`, `voice-panel`), bug reporter, crash screen, audio-permission modal, and the auth surfaces (`auth-lock-screen`, `auth-pin-pad`, `auth-profile-picker`) |
+| `overlays/` | 1180×820 | States routes can't show: the five settings panes (`settings-barn`, `settings-laering`, `settings-lyd`, `settings-udseende`, `settings-konto`), their nested task dialogs (`settings-reset-confirm`, `settings-logout-confirm`, `settings-create-profile`, `settings-delete-account-pin`), bug reporter, crash screen, audio-permission modal, and the auth surfaces (`auth-lock-screen`, `auth-pin-pad`, `auth-profile-picker`) |
+| `overlays/phone/` | 844×390 | The settings surface's COMPACT variant — the root list (`settings-root`) plus each pushed pane. The adult area had zero phone coverage before the settings rework |
 
 ## File → view map (`ipad/` and `phone/` share names)
 
