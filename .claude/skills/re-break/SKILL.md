@@ -1,0 +1,62 @@
+---
+name: re-break
+description: Prove a new or changed test actually catches the bug it was written for, by mechanically re-breaking each invariant and requiring THAT test to go red. Use whenever you have just added or tightened a test, guard, invariant or probe — after fixing a bug, after writing a coverage/pin test, before reporting "verified" or "tests pass" on a fix. Also use when a suite is suspiciously green, or when you need to show which assertions are load-bearing versus vacuous.
+---
+
+# Re-break: prove the test is load-bearing
+
+CLAUDE.md mandates this after every bug fix — *"re-break the code to prove the new test/probe actually
+fails"*. This skill is the mechanical form, because doing it by hand is where it goes wrong: it's easy to
+break something adjacent, watch the suite go red, and record a pass that proved nothing.
+
+## The rule being enforced
+
+For each invariant you claim to have pinned:
+
+1. Break **exactly what that test MEASURES** — not a neighbour, not the whole module.
+2. Run **only that test file**.
+3. Require the **specific test** to be the one that flips. A red suite is not enough.
+4. Restore the file byte-for-byte and move on.
+
+Three outcomes, and two of them are failures:
+
+| Result | Meaning |
+|---|---|
+| the expected test goes red | the assertion is load-bearing |
+| a *different* test goes red | your break missed the measured thing — re-target it |
+| everything stays green | **VACUOUS** — the test does not measure what you think. Fix the test, not the break |
+
+The third outcome is the whole point. It has caught real vacuity here: a pinned "sequence count" that a
+Normal-level change couldn't move (the union is defined by Svær), and two tests that survived a hand
+re-break pass in the accounts session.
+
+## Doing it
+
+Write a throwaway harness (scratchpad, not the repo) holding a table of
+`{ name, file, from, to, expect, testFile? }` — `from`/`to` are exact string swaps, `expect` is a
+substring of the test's *name*. For each entry: read the file, assert the anchor exists (a missed anchor
+is a silent skip — count it as a failure), write the mutation, run `node --test <testFile>`, restore the
+original, then check the red lines for `expect`. Exit non-zero unless every entry flipped its own test.
+Run it from the **repo root** — relative paths break otherwise, and a mid-run crash can leave a file
+mutated.
+
+Prefer breaking **both** sides where an invariant spans two layers: mutate the *table* for one entry and
+the *generator* for another. A table-only break can pass while the code ignores the table entirely.
+
+## Anchors worth targeting in this repo
+
+- A tuning/parameter table (`src/config/difficulty.ts`) — flip one level's value.
+- A pure generator (`src/config/mathProblems.ts`) — remove the clamp/branch the invariant names.
+- A derived range (`sequenceStarts`) — truncate it, to prove prebake coverage is really asserted.
+- A shared data list — insert a value that violates the rule (an unspellable word, a missing art id).
+
+## Non-test probes
+
+The same discipline applies to headless probes, which fail differently: they report success against a
+page that never rendered. Prove the probe's guards fire — a deliberately wrong expected element count,
+and `?crash-test=1` — before trusting a sweep. See `.claude/skills/ui-screenshot/SKILL.md`.
+
+## Reporting
+
+Say how many invariants were re-broken and that each flipped **its own** test. If you replaced a vacuous
+break, say so and what you replaced it with — that is the finding, not an embarrassment.

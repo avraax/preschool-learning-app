@@ -243,12 +243,30 @@ stripped, and the failure looks like a page bug. Write the JS to a **file in the
   thing above it. This is what found two shipped dead buttons: a MUI `<Dialog>` defaults to
   `theme.zIndex.modal` (1300) while this app's blocking surfaces are hand-rolled `fixed` boxes at
   ~10000, so any dialog opened FROM one of those mounts behind it.
+- **A CRASHED route still satisfies `--wait-for`, and then your probe passes VACUOUSLY.**
+  `AppErrorBoundary`'s "Prøv igen" is a real `[role=button]`, so a wait/selector aimed at page content
+  matches it, every `--measure` succeeds, and an "is anything overlapping?" probe cheerfully reports
+  **0 overlaps on a page with 0 tiles**. This is not hypothetical: a parallel session's half-saved file
+  crashed `/math` mid-sweep and would have turned 100 configurations green. So before reporting, **bail
+  on `document.body.innerText.includes('Noget gik galt')` AND assert the EXPECTED element count** — then
+  prove both guards fire (a deliberately wrong count, and `?crash-test=1`) before you trust the run.
+  Distinct from the silent-dead-iteration trap below: there the run fails quietly; here it lies.
 - **A killed run leaves Chrome holding port 9333**, and the next invocation then hangs forever against
   that dead instance (looks like the page never loads). After any timeout/interrupt:
   `powershell.exe -Command "Get-Process chrome -EA SilentlyContinue | Stop-Process -Force"`.
+- **Two driver runs cannot share port 9333** — they are not just slow, they collide. A long background
+  sweep therefore blocks every other capture until it ends (a screenshot fired alongside one hung until
+  its own timeout). Sequence them, or give the second run `--port`.
+- **The "Tænd for lyd" modal cannot be reached headlessly.** `?nogate=1` is the only way past the auth
+  gate, and `shouldRenderAudioPrompt` explicitly stands the modal down under it (an iPad user-agent
+  override does NOT help) — and minting a real session just for a screenshot writes into the owner's
+  production DB. Verify its geometry by reproducing the **px** case in any live page instead; see the
+  corner-inset section of `.claude/rules/responsive-design.md`.
 - **Back-to-back runs occasionally die inside `getJSON`** (the previous Chrome hasn't released the port
   yet) — that's launcher contention, NOT a page bug, so don't go debugging the app. `sleep 2` between
-  consecutive invocations, and re-run the one that failed.
+  consecutive invocations, and re-run the one that failed. A sweep over several viewports in one shell
+  loop **hides** this: the dead iteration prints nothing and the loop carries on, so count one
+  `measure:`/`screenshot saved:` line **per viewport** before claiming "verified at all sizes".
 - **Run the driver on the Windows side too** when working from WSL: WSL cannot reach the
   Windows-bound servers or Chrome's CDP port (NAT). Use
   `powershell.exe -Command "node .claude/skills/ui-screenshot/cdp.mjs --url '...' ..."`.

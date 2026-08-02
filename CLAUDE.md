@@ -150,7 +150,15 @@ curl -s -o /tmp/shot.jpg "<screenshotUrl from the response>"                    
   the failure is: never "fix" it into a collision, and never report their red build as your own result.
   Check `git log` too, not just `git status`: **HEAD moves under you**, and part of your own work may
   already be committed by that session — reporting "nothing is committed" from memory of what you did is
-  how a whole area got mis-reported as pending.
+  how a whole area got mis-reported as pending. Two ways that goes further than it sounds:
+  **(a) never leave work STAGED** — their `git add -A` will hoover your index into THEIR commit, so your
+  fix ends up under an unrelated message (this is how the section-landmark + audio-✕ fixes landed inside
+  a settings-PRD commit). Stage and commit in one step.
+  **(b) verify the COMMITTED tree, not your working tree, before pushing** — `git worktree add` a
+  throwaway checkout at HEAD + a `mklink /J` junction to `node_modules`, then run tsc/test/build there.
+  Otherwise their uncommitted WIP is silently part of what you just claimed to verify (and their
+  half-saved file can crash the app mid-verification — see the crash-screen trap in the
+  `ui-screenshot` skill).
 - **A probe of an external service has THREE outcomes, not two.** Rate-limits, partial reads and
   fail-closed 403s must classify as UNKNOWN and retry with backoff — never fold into one of the real
   verdicts (a `.dk` whois rate-limit banner read as "domain registered" produced two false results
