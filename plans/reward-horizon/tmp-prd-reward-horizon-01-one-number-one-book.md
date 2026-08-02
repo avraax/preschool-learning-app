@@ -76,10 +76,11 @@ failure, and a 3-row grid makes each row readable at a glance).
 |---|---|
 | **D1** | The rising number ships **everywhere child-facing**, including the corner reward ring. |
 | **D2** | The endless axis is **new real chapters** (6, 7, 8 …), each 9 slots. Not gold duplicates, not a world-only growth mechanic. |
-| **D3** | **The ring is the door.** Tapping the reward ring on home and every section menu opens Min Bog. The home pill is restyled to visibly be the same object as the ring. |
+| **D3** | **The ring is the ONLY door.** Tapping the reward ring on home and every section menu opens Min Bog. The front-page Min Bog pill is **deleted** — two doors to the same place on one screen taught nothing the ring doesn't, and home gets the space back. (Owner ruling 2026-08-02, revised from "restyle the pill".) |
 | **D4** | **Art is not the constraint.** This PRD ships 3 new chapters (27 renders). The data model must make chapter 9+ a pure content addition. |
 | **D5** | Name stays **"Min Bog"**. Nothing is renamed — the confusion was structural (two objects, one system), not lexical, and "Min Bog" is already spoken, prebaked and understood. |
 | **D6** | The displayed number is **`grantedSlots`** — rewards actually handed over — never `globalLevel()`. See §3.1; this is the single largest correctness hazard in the change. |
+| **D7** | **The gold pass is deleted outright** — flag, narration line, shimmer, duplicate counts, wrap. The book ends at its last authored chapter and the number stops there. See §3.5. (Owner ruling 2026-08-02.) |
 
 ---
 
@@ -113,9 +114,8 @@ The alternative (number = `collectedFromLevel(globalLevel())`) would let the rin
 book header disagree by one for the 2.5 s `RewardWatcher` grace — and since D3 makes the ring the
 door into the book, that is a very likely path. Rejected.
 
-`collectedCount()` (distinct ids) stays what the **book's chapter counts** use. `rewardNumber()`
-and `collectedCount()` are equal until the gold wrap (now slot 72), which is far past anything
-reachable in this release.
+`collectedCount()` (distinct ids) stays what the **book's chapter counts** use. With the gold pass
+gone (§3.5) there are no duplicates, so `rewardNumber() === collectedCount()` **always** — assert it.
 
 ### 3.2 The path becomes open-ended
 
@@ -163,7 +163,7 @@ that pins the first 45 ids in order (§7).
 
 *Gift, not a bug:* any child who somehow already holds gold duplicates (slot ≥ 45) will, on next
 load, see those slots re-derive into the real chapter-6/7/8 rewards. Strictly better; no migration
-needed. (Realistically nobody is there yet.)
+needed. (Realistically nobody is there yet — see §3.5.)
 
 ### 3.3 The content of chapters 6–8
 
@@ -213,6 +213,46 @@ that is precisely the grind the new chapters exist to avoid.
 `taskXp` / `roundXp` / `MAX_ROUND_XP` / `BROWSE_TASK_XP` / bloom: **untouched**. XP stays
 difficulty-independent (fairness rule).
 
+### 3.5 Delete the gold pass
+
+Today, once every slot is collected the path **wraps** — `pathIndexForSlot: (slot - N) % N` — and
+hands back duplicates flagged `gold`, announced "Skinnende klistermærke!" instead of "Nyt". It
+carries its weight across the whole system: a `gold` flag on `RewardGrant`, a **second prebaked
+narration line for every single reward** (72 clips after this PRD, essentially none of which will
+ever play), the `isShiny` shimmer sweep in `StickerReveal`, the gold border + `×{count}` treatment
+in `StickerAlbum`, and duplicate counting inside `rebuildCollected` — i.e. inside the CRDT-derived
+layer that `api/progress.ts` shares, which is the most expensive place in this app to carry an
+unexercised branch.
+
+It also isn't a horizon. Re-earning a dog you already own is Zagal's GRINDING with a shinier
+border; it is the fake version of exactly what chapters 6–8 provide for real.
+
+**Remove it entirely.** Concretely:
+
+- `progressSchema.ts` — delete `pathIndexForSlot` (it becomes the identity) and its call sites;
+  `rebuildCollected` walks slots straight onto `REWARD_PATH` and no longer counts duplicates.
+- `progressStore.grantSlot` — drop `gold`; `RewardGrant.count` is always 1 (consider deleting the
+  field). **`grantPendingRewards` must now stop at the cap**: the XP ledger is a G-Counter that
+  keeps climbing across devices, so `owedRewards()` has to clamp to `REWARD_SLOTS - grantedSlots`
+  rather than relying on the wrap to always produce a reward. This is the one piece of real new
+  logic in the removal — without it `rewardAt(slot)` returns `null` past the end.
+- `danish-phrases.ts` — delete `goldRewardLine`; `shared-narration-clips.js` stops enumerating it
+  (the prebake prune will delete the existing mp3s, which is expected output, not drift).
+- `StickerReveal.tsx` — drop `isShiny`, the shimmer sweep and the "Skinnende!" banner.
+- `StickerAlbum.tsx` — drop the gold border / sparkle / `×{count}` slot state.
+- `RewardOverlay.tsx` — the `headline.gold` branch in the spoken-line choice goes.
+
+**The book now has a real ending, and that is the point.** When the last authored chapter fills,
+`nextReward()` returns `null`, the ring shows the existing full-book sparkle, `BOOK_DONE_LINE`
+("Wow! Hele bogen er samlet!") fires, and the number rests. Make that state look deliberate rather
+than accidental — it is a "du gjorde det", and it is the owner's cue that it's time to add chapter
+9, which this PRD has made a pure data + art change. A frozen number is honest; a number that
+climbs by re-handing things the child already owns is not.
+
+*Nobody is affected.* No child is anywhere near slot 45, so there is no gold state in the wild to
+migrate. If one somehow existed, `grantedSlots` re-derives from the ledger and those slots simply
+resolve to the new chapters 6–8 — strictly better.
+
 ---
 
 ## 4. Surfaces
@@ -240,13 +280,20 @@ difficulty-independent (fairness rule).
 - `GameSelectionLayout.tsx:151-152` — the section-menu ring gains the navigate handler + aria label.
 - `HomePage.tsx:251-256` — the header ring's `onTap` changes from *speak the count* to *navigate to
   /album*. (The count is spoken on arrival instead — §4.3.)
-- `HomePage.tsx:358-485` — the **Min Bog pill is restyled to contain a real `<RewardRing>`** in
-  place of the current `ProgressionCompanion` + separate fill bar + `{n} / 45` + separate
-  silhouette. Result: same circle, same fill, same silhouette, same number as the corner — plus the
-  word "Min Bog". Delete the duplicate `albumFill` bar and the `REWARD_SLOTS` denominator. The
-  `ProgressionCompanion` moves to the pill's right side (or is dropped from home — implementer's
-  call once measured; it is still used in the ceremony either way).
-- Delete the stale comment at `HomePage.tsx:358-359` about "the LEVEL is the primary reward".
+- `HomePage.tsx:358-485` — **delete the whole Min Bog shelf.** The pill, its `minBogShimmer` sweep,
+  the gold border, `albumFill`, the `{n} / {REWARD_SLOTS}` label, its duplicate next-prize
+  silhouette, and the stale "the LEVEL is the primary reward" comment all go. The corner ring is the
+  only door; a second entrance to the same screen taught nothing it didn't.
+- `ProgressionCompanion` loses its only home-screen mount. **Keep the component** — the ceremony
+  still uses it (`RewardOverlay.tsx:246-251`) — but it is no longer on the front page. If the
+  companion's growth should stay visible on home, that is a follow-up with its own placement
+  decision, not a quiet re-add of the shelf.
+- The freed vertical space is real: on immersive skins the world's seating area grows, so
+  **re-check `theme.scene.homeAnchors` and `bloomScenery` placement** — object anchors were tuned
+  against a home screen that had a pill at the bottom.
+- `src/config/sceneFurniture.ts` **must lose the Min Bog shelf rect** — it is listed there as
+  persistent furniture that bloom scenery has to clear, and leaving a phantom rect permanently
+  reserves a strip of the world for nothing. Re-run `bloomAnchors.test.ts`.
 
 ### 4.3 Min Bog — 8+ chapters, uncapped header
 
@@ -320,10 +367,11 @@ play-tested before any art exists.
 | **W1** | **Open-ended path.** Move `REWARD_SLOTS`/`CHAPTER_COUNT` to `stickers.ts` as derived values; add `COMPANION_STAGES`; re-point all importers; fix `companionStageForCollected`'s clamp. **No chapters added yet** — the app must be byte-for-byte identical in behaviour. Tests updated + re-break. |
 | **W2** | **The number.** `rewardNumber()` in `progression.ts` + `progressStore`; `showCount` badge on `RewardRing`; flyer nudge. |
 | **W3** | **The door.** `onTap` → `/album` on the home header ring and the section-menu ring; `/album` speaks the count on arrival; `collectedCountLine` enumeration widened to 1..100 (`COUNT_LINE_MAX`) + prebake + `audit:approve-all`. |
-| **W4** | **Home pill = the ring.** Restyle the Min Bog shelf around a real `<RewardRing>`; drop the duplicate bar/denominator/silhouette; delete the stale comment. Re-measure home at all viewports and against `src/config/sceneFurniture.ts` (the pill is persistent furniture that bloom scenery must clear). |
+| **W4** | **Delete the home Min Bog shelf** (§4.2). Remove its rect from `src/config/sceneFurniture.ts`, re-run `bloomAnchors.test.ts`, and re-measure home on all 4 skins × all viewports — the world's seating area grows, so `homeAnchors`/`bloomScenery` need a look. |
+| **W4b** | **Delete the gold pass** (§3.5). `pathIndexForSlot`, the `gold` flag, `goldRewardLine`, the shimmer/"Skinnende!" banner, the album's `×{count}` state, duplicate counting in `rebuildCollected` — and clamp `owedRewards()` to the cap so `grantPendingRewards` stops handing out slots past the last chapter. Touches `progressSchema`/`progressMerge`, which `api/progress.ts` shares — keep them free of `window`/`Date.now`/`crypto`. |
 | **W5** | **Album for N chapters.** Icon-only chapter chips; uncapped header; chapter title into the progress line; dimmed-but-tappable future chapters; re-measure the page panel. **RewardOverlay**: number tick-up + 3×3 chapter strip. |
 | **W6** | **Content: chapters 6–8.** Append the 27 rewards to `REWARD_CHAPTERS`. Generate 27 baked soft-3D WebP renders through `.claude/rules/scene-assets.md` (green screen + key + trim), land them in `src/assets/rewards/`. `rewardArtCoverage.test.ts` goes red until they all exist — that is the gate working. |
-| **W7** | **Narration.** `npm run tts:prebake` (27 labels × `rewardLine` + `goldRewardLine` + bare label = 81 clips, plus the widened count lines), commit the mp3s + `prebakedTts.ts`, then `npm run audit:check` → `npm run audit:approve-all` → commit `docs/audit/*`. Per `feedback_blanket-audit-approval`: report the clips as approved-but-unheard. |
+| **W7** | **Narration.** `npm run tts:prebake` — 27 new labels × (`rewardLine` + bare label) = 54 clips, plus the widened count lines, **minus every `goldRewardLine` clip** (the prune will delete 45 existing mp3s; that is expected output of W4b, not content drift). Commit the mp3s + `prebakedTts.ts`, then `npm run audit:check` → `npm run audit:approve-all` → commit `docs/audit/*`. Per `feedback_blanket-audit-approval`: report the clips as approved-but-unheard. |
 | **W8** | **Adult view.** Extend `BarnPane` per §4.6. |
 | **W9** | **Verification** (§8) + `/re-break` pass over every new invariant. |
 
@@ -339,11 +387,14 @@ play-tested before any art exists.
 
 **Surfaces**
 - `src/components/common/RewardRing.tsx` — badge, flyer nudge
-- `src/components/common/RewardOverlay.tsx` — number tick, 3×3 strip
-- `src/components/hub/StickerAlbum.tsx` — chips, uncapped header, spoken arrival
-- `src/components/home/HomePage.tsx` — ring is the door; pill rebuilt around the ring
+- `src/components/common/RewardOverlay.tsx` — number tick, 3×3 strip, gold branch removed
+- `src/components/common/StickerReveal.tsx` — `isShiny` / shimmer / "Skinnende!" removed
+- `src/components/hub/StickerAlbum.tsx` — chips, uncapped header, spoken arrival, gold slot state removed
+- `src/components/home/HomePage.tsx` — ring is the only door; **Min Bog shelf deleted**
 - `src/components/common/GameSelectionLayout.tsx` — ring is the door
-- `src/components/common/ProgressionCompanion.tsx` — clamp comment; possibly dropped from home
+- `src/components/common/ProgressionCompanion.tsx` — clamp fix; loses its home mount (kept for the ceremony)
+- `src/config/sceneFurniture.ts` — Min Bog shelf rect removed
+- `src/config/danish-phrases.ts` — `goldRewardLine` deleted
 - `src/components/adult/panes/BarnPane.tsx` — adult status rows
 
 **Content / build**
@@ -377,18 +428,25 @@ literal value too**; and breaking something adjacent while the suite stays green
 4. **Companion never indexes past its art.** `companionStageForCollected(n) <= COMPANION_STAGES - 1`
    for n up to 200, and is monotone non-decreasing. Re-break: restore the `CHAPTER_COUNT - 1` clamp
    → red at n ≥ 45.
-5. **Wrap moves to 72.** `pathIndexForSlot(71) === 71`, `pathIndexForSlot(72) === 0`,
-   `pathIndexForSlot(73) === 1`; `grantSlot(72).gold === true`, `grantSlot(71).gold === false`.
+5. **The book ends; it does not wrap.** `nextReward()` is non-null at `grantedSlots = 71` and
+   `null` at 72. With XP seeded far past the end (simulating the G-Counter ledger),
+   `grantPendingRewards()` returns exactly the slots up to 72 and then `[]` forever —
+   `grantedSlots` never exceeds `REWARD_SLOTS` and `rewardAt()` is never called with `null`.
+   Re-break: remove the `owedRewards()` clamp → red.
+   Also assert **no duplicates exist**: `rewardNumber() === collectedCount()` at every seeded point.
 6. **Art coverage.** `rewardArtCoverage.test.ts` already enumerates `allRewards()` — it picks the 27
    up for free. Confirm it is genuinely red before the renders land (that is the gate).
-7. **Narration coverage.** Every new label's `rewardLine` / `goldRewardLine` / bare label is in the
-   enumerated set; `collectedCountLine(n)` enumerated for 1..`COUNT_LINE_MAX`. Pin one literal
-   string (e.g. `rewardLine('Nøgle') === 'Nyt klistermærke! Nøgle'`).
+7. **Narration coverage.** Every new label's `rewardLine` + bare label is in the enumerated set;
+   `collectedCountLine(n)` enumerated for 1..`COUNT_LINE_MAX`. Pin one literal string (e.g.
+   `rewardLine('Nøgle') === 'Nyt klistermærke! Nøgle'`). Assert `goldRewardLine` no longer exists
+   and that **no clip key matches `Skinnende`** — otherwise the deleted line lingers in the manifest.
 8. **No emoji.** `src/config/noEmoji.test.ts` — the allowlist stays empty; the badge is a numeral,
    the chapter chips are baked art, the `Check` is lucide (adult/dev-class affordance, already
    allowed there).
 9. **No child-facing distance.** Assert `StickerAlbum`'s header pill label contains no `/` and no
    `af`, and that `RewardRing` renders no text node other than the badge and the `+N` flyer.
+10. **One door only.** Assert `HomePage` contains no `/album` navigation other than the ring's
+    `onTap`, so the shelf can't quietly come back as a second entrance.
 
 ---
 
@@ -401,9 +459,11 @@ tree would silently include it.
 1. `npm run build` (tsc + vite), `npm run lint`, `npm test`.
 2. `npm run audit:check` — clean after W7.
 3. **Progression walk** with the dev seed, per `useProgress`/`devHarness`:
-   `?rewards=0`, `8`, `9`, `44`, `45`, `46`, `53`, `54`, `71`, `72`, `73`.
-   At each: the ring badge, the album header and the album chapter counts must agree; the wrap must
-   not fire before 72; the companion must be at stage 4 from 36 upward and never regress.
+   `?rewards=0`, `8`, `9`, `44`, `45`, `46`, `53`, `54`, `71`, `72`, `90`.
+   At each: the ring badge, the album header and the album chapter counts must agree; the companion
+   must be at stage 4 from 36 upward and never regress. At **72 and 90** the book must be full and
+   identical — sparkle in the ring, number resting at 72, no duplicate anywhere, and playing another
+   round must grant nothing and celebrate nothing.
 4. **Live crossing.** Play one round to a slot crossing: ring flashes → `levelup-mini` → badge
    unchanged in-game → ceremony on the next menu → sticker revealed, number ticks up, exactly one
    spoken line.
@@ -413,8 +473,10 @@ tree would silently include it.
    on all 4 registered skins + `prefers-reduced-motion`:
    - Min Bog: 8 chips on one row, no wrap, 44 px targets; page panel `rect.bottom <= innerHeight`
      proved with `--measure`, not a screenshot.
-   - Home: the rebuilt pill does not collide with the mascot or the corner gear; update
-     `src/config/sceneFurniture.ts` if its rect changed, and re-run `bloomAnchors.test.ts`.
+   - Home: with the shelf gone, nothing is left floating where it used to sit and the world's
+     seated objects still clear the mascot and the corner gear. `sceneFurniture.ts` no longer
+     reserves the shelf strip — re-run `bloomAnchors.test.ts` and eyeball a bloomed home
+     (`?rewards=45`) on each skin, since bloom scenery is invisible until it's earned.
    - The ring badge is legible on light **and** dark scenes (Havet/Rummet are the stress cases) —
      check against `theme.onTileColor` guidance if the accent is pale.
    - Guard the probe: bail on "Noget gik galt" and assert an expected element count, or "0 overlaps"
@@ -434,6 +496,9 @@ tree would silently include it.
 - No world-growth mechanic in this PRD (the "each chapter plants a landmark in the persistent
   world" idea is a good follow-up, but it is a separate art + `bloomScenery` anchoring job).
 - No reordering or re-theming of the existing 45.
+- No replacement for the gold pass. When the book fills, it is finished — the answer is a new
+  chapter, not a recycled prize.
+- No new home-screen entrance to Min Bog. The ring is the door.
 - No schema version bump — the persisted shape does not change (v4 stays; `grantedSlots` is already
   unbounded).
 
@@ -444,8 +509,8 @@ tree would silently include it.
 ```
 Implement plans/reward-horizon/tmp-prd-reward-horizon-01-one-number-one-book.md — one number, one
 book, one ring, one door: derive REWARD_SLOTS/CHAPTER_COUNT from REWARD_CHAPTERS, add the
-child-facing rewardNumber() badge to RewardRing, make the ring the door to Min Bog, rebuild the home
-pill around that ring, rework the album for icon-only chapter chips, and append chapters 6-8.
-Work W1→W9 in order, hold the append-only path invariant, and run the /re-break pass in §7 plus the
-worktree verification in §8 before reporting done.
+child-facing rewardNumber() badge to RewardRing, make that ring the ONLY door to Min Bog (delete the
+home shelf), delete the gold pass, rework the album for icon-only chapter chips, and append chapters
+6-8. Work W1→W9 in order, hold the append-only path invariant, and run the /re-break pass in §7 plus
+the worktree verification in §8 before reporting done.
 ```
