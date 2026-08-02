@@ -17,6 +17,7 @@ import { FIRST_ITEM_EXTRA_MS } from '../../config/autoplayPace'
 import { hexToRgba, relLuminance } from '../../theme/tokens/helpers'
 import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 import { useDifficulty } from '../../hooks/useDifficulty'
+import { MATH_LEARN } from '../../config/difficulty'
 import { sfx } from '../../services/sfxClient'
 // Simplified audio system
 import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
@@ -73,9 +74,11 @@ const NumberLearning: React.FC = () => {
   // W3 (PRD-15): the range scales with the MANUAL difficulty level (authoritative, no adaptivity).
   // Let stays at his comfortable ~60 ceiling — 6 clean rows of big ≥44px tiles. Normal/Svær go to the
   // full 100 (owner ask); the smaller tiles at 100 are the accepted trade-off, and the 10-column
-  // hundreds-chart keeps the tens aligned (base-10 pattern) at any size.
+  // hundreds-chart keeps the tens aligned (base-10 pattern) at any size. Lær Tal is on the EXEMPT list
+  // (an ungraded browse — Difficulty PRD-01 §4.6): the visible RANGE is the only thing that responds,
+  // and it reads it from the shared table rather than a literal here.
   const difficulty = useDifficulty('math')
-  const maxNumber = difficulty === 'let' ? 60 : 100
+  const maxNumber = MATH_LEARN[difficulty].max
   const numbers = Array.from({ length: maxNumber }, (_, i) => i + 1)
 
   // If the adult lowers the difficulty mid-browse (Normal/Svær → Let), the range shrinks — keep the

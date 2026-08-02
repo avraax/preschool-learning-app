@@ -8,7 +8,8 @@ import { kidCollision } from '../common/dnd/kidCollision'
 import { DraggableItem } from '../common/dnd/DraggableItem'
 import { DroppableZone } from '../common/dnd/DroppableZone'
 import { getCategoryTheme } from '../../config/categoryThemes'
-import { DANISH_OBJECTS, COLOR_SWATCH, HUE_ORDER, spokenColor } from '../../config/colorContent'
+import { DANISH_OBJECTS, COLOR_SWATCH, HUE_ORDER, adjacentHues, spokenColor } from '../../config/colorContent'
+import { COLORS_QUIZ, starThresholdsFor } from '../../config/difficulty'
 import { hexToRgba } from '../../theme/tokens/helpers'
 import { SNAP } from '../../theme/motion'
 import GameShell from '../common/GameShell'
@@ -42,7 +43,8 @@ import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 
 const ROUND_QUESTIONS = 8
 const WRONG_BEFORE_HINT = 2
-const OPTION_COUNT = 4 // NORMAL baseline (today, unchanged) — difficulty below adjusts Let/Svær
+// Option count + hue policy come from the shared difficulty table (Difficulty PRD-01 §4.5):
+// Let 3 swatches, non-adjacent hues · Normal 4, random · Svær 5, wheel-adjacent only.
 
 interface QuizObject { color: string; objectName: string; objectNameDefinite: string; art?: string; neuter: boolean }
 
@@ -80,7 +82,7 @@ const FarveQuizGame: React.FC = () => {
   const audio = useSimplifiedAudioHook({ componentId: 'FarveQuizGame', autoInitialize: false })
   const [gameReady, setGameReady] = useState(false)
 
-  const round = useRound({ length: ROUND_QUESTIONS, starThresholds: { three: 0, two: 2 }, gameId: 'colors.quiz' })
+  const round = useRound({ length: ROUND_QUESTIONS, gameId: 'colors.quiz' })
   const firstAttemptRef = useRef(true)
   const [roundOutcome, setRoundOutcome] = useState<RoundOutcome | null>(null)
 
@@ -119,12 +121,21 @@ const FarveQuizGame: React.FC = () => {
     const obj = pool[Math.floor(Math.random() * pool.length)]
     previousObject.current = `${obj.color}-${obj.objectName}`
 
-    // Static difficulty (progressStore.difficultyFor — no adaptivity). Let: 3 options. Normal
-    // (today, unchanged): 4. Svær: 5. Distractors stay random per the section's design.
-    const difficulty = progressStore.difficultyFor('colors')
-    const optionCount = difficulty === 'let' ? 3 : difficulty === 'svaer' ? 5 : OPTION_COUNT
-    const distractors = shuffle(HUE_ORDER.filter((c) => c !== obj.color)).slice(0, optionCount - 1)
-    const opts = shuffle([obj.color, ...distractors])
+    // Static difficulty (progressStore.difficultyFor — no adaptivity), table-driven. The DISTRACTOR
+    // HUES are the axis now: Let excludes the answer's wheel neighbours (so no near-miss is on the
+    // board), Normal is random (unchanged), Svær offers the neighbours FIRST — rød/orange, blå/lilla —
+    // so telling adjacent hues apart is the task. `HUE_WHEEL`, not `HUE_ORDER`: the display order's
+    // neighbours (rød/blå) aren't the ones a child confuses.
+    const { options: optionCount, hues } = COLORS_QUIZ[progressStore.difficultyFor('colors')]
+    const neighbours = adjacentHues(obj.color)
+    const others = HUE_ORDER.filter((c) => c !== obj.color)
+    const ranked =
+      hues === 'adjacent'
+        ? [...shuffle(others.filter((c) => neighbours.includes(c))), ...shuffle(others.filter((c) => !neighbours.includes(c)))]
+        : hues === 'non-adjacent'
+          ? [...shuffle(others.filter((c) => !neighbours.includes(c))), ...shuffle(others.filter((c) => neighbours.includes(c)))]
+          : shuffle(others)
+    const opts = shuffle([obj.color, ...ranked.slice(0, optionCount - 1)])
 
     currentRef.current = obj
     setCurrent(obj)
@@ -195,7 +206,9 @@ const FarveQuizGame: React.FC = () => {
     const outcome = progressStore.recordRoundResult(
       'colors.quiz',
       { correct: firstTryCorrect, total: round.length, longestStreak },
-      { starThresholds: { three: 0, two: 2 } },
+      // Svær tolerates 1 mistake for 3★ / 3 for 2★ (Difficulty PRD-01 W6) — a harder level must not
+      // cost the child stars, the same fairness rule that keeps XP difficulty-independent.
+      { starThresholds: starThresholdsFor(progressStore.difficultyFor('colors')) },
     )
     setRoundOutcome(outcome)
   }

@@ -184,3 +184,46 @@ export const pickDistractorWords = (
   }
   return shuffle(options)
 }
+
+/** The other words in a word's own theme (cow/horse/pig…), or the whole pool if it has no theme. */
+export const themeMatesOf = (word: EnglishWord): EnglishWord[] => {
+  const theme = englishThemes.find(t => t.words.some(w => w.en === word.en))
+  return (theme ? theme.words : quizEnglishWords).filter(w => w.en !== word.en)
+}
+
+/**
+ * The option set for an English quiz at a level — ONE implementation shared by all three games
+ * (Difficulty PRD-01 W4; it was copy-pasted three times before, which is how a per-game drift would
+ * have gone unnoticed). The word POOL is identical at every level (the deliberate beginner floor);
+ * only tile count and distractor THEME move:
+ *   Let    — different-theme only (maximally distinct: cow vs apple)
+ *   Normal — the fully random mixed pool (unchanged from what shipped)
+ *   Svær   — same-theme mates only (cow vs horse — genuinely confusable)
+ * Tops up from the general pool if a theme is too small to fill the tiles.
+ */
+export const pickWordsForLevel = (
+  correct: EnglishWord,
+  theme: 'different' | 'random' | 'same',
+  optionCount: number,
+): EnglishWord[] => {
+  if (theme === 'random') return pickDistractorWords(correct, optionCount)
+
+  const sameTheme = themeMatesOf(correct)
+  const biasPool =
+    theme === 'same'
+      ? sameTheme
+      : quizEnglishWords.filter(w => w.en !== correct.en && !sameTheme.some(s => s.en === w.en))
+
+  const picks: EnglishWord[] = []
+  for (const w of shuffle(biasPool)) {
+    if (picks.length >= optionCount - 1) break
+    picks.push(w)
+  }
+  if (picks.length < optionCount - 1) {
+    for (const w of shuffle(quizEnglishWords)) {
+      if (picks.length >= optionCount - 1) break
+      if (w.en !== correct.en && !picks.some(p => p.en === w.en)) picks.push(w)
+    }
+  }
+  return shuffle([correct, ...picks])
+}

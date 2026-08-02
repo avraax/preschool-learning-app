@@ -6,6 +6,8 @@ import { AlphabetScoreChip, MathScoreChip } from '../common/ScoreChip'
 import { AlphabetRestartButton, MathRestartButton } from '../common/RestartButton'
 import { AlphabetRepeatButton, MathRepeatButton } from '../common/RepeatButton'
 import { shuffle } from '../../utils/shuffle'
+import { MEMORY_BOARD, memoryStarThresholds } from '../../config/difficulty'
+import { useDifficulty } from '../../hooks/useDifficulty'
 import { LETTER_WORDS, letterPhrase } from '../../config/letterWords'
 import { letterArt } from '../../assets/games/alphabet'
 import { countingObjectForNumber, artForObject } from '../../config/countingObjects'
@@ -22,23 +24,27 @@ const NUMBERS = Array.from({ length: 20 }, (_, i) => (i + 1).toString())
 // gone). Q/W/X/Å have no entry → their memory cards are glyph-only (owner decision — glyph-only).
 
 const MemoryGame: React.FC = () => {
-  const { type, size } = useParams<{ type: 'letters' | 'numbers'; size: '10' | '20' }>()
+  const { type } = useParams<{ type: 'letters' | 'numbers' }>()
   const gameType = type as 'letters' | 'numbers' || 'letters'
-  // Static-difficulty: the board size is the game's identity (two separate routes), not a picker.
-  // The 10-pair board is the primary/default (PRD-14 W4 / audit §A4 — 20 pairs / 40 cards exceeds a
-  // 5yo's working memory); 20 is the explicit optional "harder" tile. Only an explicit :size of 20
-  // opens the stretch board — a size-less or invalid bookmark defaults to 10.
-  const boardPairs = size === '20' ? 20 : 10
-  // Star thresholds are in MISTAKES (= mismatched turns). Tunable constants; static difficulty.
-  // Retuned (PRD-05 P3) so a strong-but-imperfect child can actually reach 3★ — the old
-  // {10:6, 20:14} demanded near-perfect recall and left a flat reward curve on the games he plays
-  // most. Now 3★ tolerates ~1 mismatch per pair (10-pair) / ~0.9 (20-pair).
-  const starThresholds = boardPairs === 10 ? { three: 9, two: 18 } : { three: 18, two: 34 }
+  // **The LEVEL owns the board** (Difficulty PRD-01 W5): Let 6 pairs · Normal 10 · Svær 15. The board
+  // size used to BE the game's identity — two tiles per section, one of them literally titled
+  // "Hukommelse 20 (svær)", which was the only place a difficulty was ever named in the child UI. Both
+  // tiles collapsed into one, `:size` is gone from the route, and the Sværhedsgrad panel drives it.
+  //
+  // ONE `gameId` per type (not per board size), so a level change can't fragment the child's bests —
+  // the same reason XP is difficulty-independent.
+  const level = useDifficulty(gameType === 'letters' ? 'alphabet' : 'math')
+  const boardPairs = MEMORY_BOARD[level].pairs
+  // Star thresholds are in MISTAKES (= mismatched turns), scaled to the board by the shared helper:
+  // ~0.9 mismatches per pair for 3★ / ~1.8 for 2★ (the reachable curve PRD-05 P3 tuned on the 10-pair
+  // board — `{9, 18}` — now expressed once so 6 and 15 pairs inherit it), plus the spine's Svær
+  // tolerance on top so the bigger board doesn't cost stars.
+  const starThresholds = memoryStarThresholds(boardPairs, level)
 
   // Configuration for letters memory game
   const lettersConfig: UnifiedMemoryConfig = {
     gameType: 'letters',
-    gameId: `memory.letters.${boardPairs}`,
+    gameId: 'memory.letters',
     boardPairs,
     starThresholds,
 
@@ -82,7 +88,7 @@ const MemoryGame: React.FC = () => {
   // Configuration for numbers memory game
   const numbersConfig: UnifiedMemoryConfig = {
     gameType: 'numbers',
-    gameId: `memory.numbers.${boardPairs}`,
+    gameId: 'memory.numbers',
     boardPairs,
     starThresholds,
 

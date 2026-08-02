@@ -3,44 +3,16 @@ import UnifiedQuizGame, { UnifiedQuizConfig, QuizItem } from '../common/UnifiedQ
 import { getCategoryTheme } from '../../config/categoryThemes'
 import { EnglishScoreChip } from '../common/ScoreChip'
 import { EnglishRepeatButton } from '../common/RepeatButton'
-import { quizEnglishWords, pickDistractorWords, englishThemes, EnglishWord } from '../../config/englishVocab'
+import { quizEnglishWords, pickWordsForLevel, EnglishWord } from '../../config/englishVocab'
 import { englishArt, englishArtId } from '../../assets/games/english'
-import { progressStore, type DifficultyLevel } from '../../services/progressStore'
-import { shuffle } from '../../utils/shuffle'
+import { progressStore } from '../../services/progressStore'
+import { ENGLISH_QUIZ } from '../../config/difficulty'
 
-// Difficulty-aware distractor pool (Overhaul §6A/Appendix A). Normal is untouched — today's fully
-// random `pickDistractorWords` across all mixed themes (regression-safe). Svær biases toward
-// SAME-theme words (harder to tell apart — e.g. cow vs horse, not cow vs apple); Let biases toward
-// a DIFFERENT theme (maximally distinct/easy). The shared quiz grid is fixed at 4 tiles, so this
-// raises difficulty via word choice rather than distractor COUNT.
-const themeMatesOf = (word: EnglishWord): EnglishWord[] => {
-  const theme = englishThemes.find(t => t.words.some(w => w.en === word.en))
-  return (theme ? theme.words : quizEnglishWords).filter(w => w.en !== word.en)
-}
-
-const pickWordsForLevel = (correct: EnglishWord, level: DifficultyLevel): EnglishWord[] => {
-  if (level === 'normal') return pickDistractorWords(correct, 4)
-
-  const sameTheme = themeMatesOf(correct)
-  const biasPool =
-    level === 'svaer'
-      ? sameTheme
-      : quizEnglishWords.filter(w => w.en !== correct.en && !sameTheme.some(s => s.en === w.en))
-
-  const picks: EnglishWord[] = []
-  for (const w of shuffle(biasPool)) {
-    if (picks.length >= 3) break
-    picks.push(w)
-  }
-  // Top up from the general pool if a theme was too small to fill 3 distractors.
-  if (picks.length < 3) {
-    for (const w of pickDistractorWords(correct, 4)) {
-      if (picks.length >= 3) break
-      if (w.en !== correct.en && !picks.some(p => p.en === w.en)) picks.push(w)
-    }
-  }
-  return shuffle([correct, ...picks])
-}
+// Difficulty (PRD-01 §4.4) is a table + ONE shared helper now: `pickWordsForLevel` in
+// src/config/englishVocab.ts, driven by `ENGLISH_QUIZ[level]`. All three English quizzes share it — the
+// per-game copies of this function were byte-identical, so a fix to one would silently have missed the
+// others. Tiles 3/4/5; distractor theme different / random / same. The word POOL stays identical at every
+// level (the deliberate beginner floor), and the three games' distinct skills are untouched.
 
 // Lyt og Find: the app speaks an English word (en-US Ava); the child taps the matching
 // picture from 4 options. Pure listening comprehension.
@@ -65,10 +37,10 @@ const EnglishListenGame: React.FC = () => {
       return toPictureItem(word)
     },
 
-    generateOptions: (correct: QuizItem) => {
+    generateOptions: (correct: QuizItem, optionCount: number) => {
       const correctWord = quizEnglishWords.find(w => w.en === correct.value) || quizEnglishWords[0]
-      const level = progressStore.difficultyFor('english')
-      return pickWordsForLevel(correctWord, level).map(toPictureItem)
+      const { theme } = ENGLISH_QUIZ[progressStore.difficultyFor('english')]
+      return pickWordsForLevel(correctWord, theme, optionCount).map(toPictureItem)
     },
 
     title: 'Lyt og Find',
@@ -81,7 +53,8 @@ const EnglishListenGame: React.FC = () => {
 
     gameWelcomeType: 'englishlisten',
     gameId: 'english.listen',
-    round: { length: 8, starThresholds: { three: 0, two: 2 } },
+    // Star thresholds come from the difficulty spine (Difficulty PRD-01 W6).
+    round: { length: 8 },
 
     // Never-fail hint (PRD-05 P1): after 2 wrong taps the correct picture tile pulses.
     hintAfterNWrong: 2,

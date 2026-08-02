@@ -136,3 +136,18 @@ export const SHADES: Record<string, ColorShade[]> = {
 
 // Stable hue order for browse grids / round rotation.
 export const HUE_ORDER = ['rød', 'blå', 'grøn', 'gul', 'lilla', 'orange'] as const
+
+// The same 6 hues in COLOUR-WHEEL order (Difficulty PRD-01 W4). `HUE_ORDER` is a display order — its
+// neighbours are rød/blå and grøn/gul, which is not what a child confuses — so adjacency has to come
+// from the wheel instead: rød → orange → gul → grøn → blå → lilla → back to rød. That's what makes
+// Hvilken Farve?'s Svær ("adjacent hues only") the real pairs, rød/orange and blå/lilla, and Let
+// ("non-adjacent") genuinely far apart. CYCLIC: the last entry neighbours the first.
+export const HUE_WHEEL = ['rød', 'orange', 'gul', 'grøn', 'blå', 'lilla'] as const
+
+/** The two wheel neighbours of a hue (wrapping), or `[]` for an unknown hue. */
+export const adjacentHues = (hue: string): string[] => {
+  const i = HUE_WHEEL.indexOf(hue as (typeof HUE_WHEEL)[number])
+  if (i < 0) return []
+  const n = HUE_WHEEL.length
+  return [HUE_WHEEL[(i - 1 + n) % n], HUE_WHEEL[(i + 1) % n]]
+}

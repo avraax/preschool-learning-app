@@ -6,7 +6,7 @@ import { gameIconImages } from '../../assets/themes/icons/games'
 // and section-menu tiles both render the same soft-3D icon art.
 //
 // The registry (`gameIconImages`, in src/assets/themes/icons) is keyed COLLISION-FREE by
-// `<section>.<id>` — the bare game.id collides (alphabet.memory10 vs math.memory10). Callers pass
+// `<section>.<id>` — the bare game.id collides (alphabet.memory vs math.memory). Callers pass
 // BOTH `section` and `id`; this builds the key.
 //
 // There is NO emoji fallback any more (de-emoji PRD-01 W4 / D5): all 24 keys resolve, so the

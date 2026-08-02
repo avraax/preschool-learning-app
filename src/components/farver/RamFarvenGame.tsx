@@ -20,6 +20,7 @@ import { hexToRgba } from '../../theme/tokens/helpers'
 import { SNAP, BOUNCE } from '../../theme/motion'
 import { useRound } from '../../hooks/useRound'
 import { progressStore, type RoundOutcome } from '../../services/progressStore'
+import { COLORS_RAMFARVEN, starThresholdsFor, type DifficultyLevel } from '../../config/difficulty'
 import { sfx } from '../../services/sfxClient'
 import { mascotBus } from '../../services/mascotBus'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
@@ -66,14 +67,19 @@ interface RecipeReveal {
 // goal swatch so the pale hue reads as a distinct colour (and is distinguishable from a white droplet).
 const PALE_TARGET_HEXES = new Set(['#FFB3BA', '#BFDBFE', '#FEF9C3', '#9CA3AF'])
 
-// Static-difficulty target pools (progressStore.difficultyFor — no adaptivity). Let: just the 3
-// iconic two-primary secondaries. Normal: + the 3 tints (primary + white). Svær: all 9, adding the
-// black-based shades + grey (mørkerød/mørkeblå/grå) which force the child to reach for black.
-const TARGET_NAMES_BY_DIFFICULTY: Record<string, string[]> = {
-  let: ['lilla', 'orange', 'grøn'],
-  normal: ['lilla', 'orange', 'grøn', 'lyserød', 'lyseblå', 'lysegul'],
-  svaer: possibleTargets.map((tgt) => tgt.name)
-}
+// Static-difficulty target pools (progressStore.difficultyFor — no adaptivity). The SIZE comes from
+// `COLORS_RAMFARVEN[level]` (Difficulty PRD-01 §4.5) and this list fixes the ORDER the pool grows in:
+// the 3 iconic two-primary secondaries, then `lyserød` (Let's 4th — with only 3 goals, an 8-mix round
+// repeats each ~2.7×, which reads as the game being stuck rather than easy), the remaining tints, then
+// the black-based shades + grey that force the child to reach for black.
+const TARGET_PRIORITY = [
+  'lilla', 'orange', 'grøn',
+  'lyserød', 'lyseblå', 'lysegul',
+  'mørkerød', 'mørkeblå', 'grå',
+]
+
+const targetNamesFor = (level: DifficultyLevel): string[] =>
+  TARGET_PRIORITY.slice(0, COLORS_RAMFARVEN[level].targets)
 
 // The 2 source colors that mix to a target (for the recipe reveal + hint).
 const recipeFor = (targetName: string): [ColorDroplet, ColorDroplet] | null => {
@@ -115,7 +121,7 @@ const RamFarvenGame: React.FC = () => {
   const [gameReady, setGameReady] = useState(false)
 
   // Bounded round + reward flow (Overhaul Farver §Ram Farven). 8 mixes, 3★ = 0 wrong mixes, 2★ ≤ 2.
-  const round = useRound({ length: ROUND_MIXES, starThresholds: { three: 0, two: 2 }, gameId: 'colors.ramfarven' })
+  const round = useRound({ length: ROUND_MIXES, gameId: 'colors.ramfarven' })
   const firstAttemptRef = useRef(true)  // first-try flag for the CURRENT target
   const [roundOutcome, setRoundOutcome] = useState<RoundOutcome | null>(null)
 
@@ -151,8 +157,7 @@ const RamFarvenGame: React.FC = () => {
   // `prevHex` lets the caller avoid an immediate repeat (state read in the closure may be stale
   // inside chained timeouts, so the caller passes the just-finished target's hex explicitly).
   const setupTarget = (voice = true, prevHex?: string) => {
-    const difficulty = progressStore.difficultyFor('colors')
-    const allowedNames = TARGET_NAMES_BY_DIFFICULTY[difficulty] ?? TARGET_NAMES_BY_DIFFICULTY.normal
+    const allowedNames = targetNamesFor(progressStore.difficultyFor('colors'))
     const difficultyPool = possibleTargets.filter(target => allowedNames.includes(target.name))
 
     const avoid = prevHex ?? lastTargetHexRef.current
@@ -246,7 +251,9 @@ const RamFarvenGame: React.FC = () => {
     const outcome = progressStore.recordRoundResult(
       'colors.ramfarven',
       { correct: firstTryCorrect, total: round.length, longestStreak },
-      { starThresholds: { three: 0, two: 2 } },
+      // Svær tolerates 1 mistake for 3★ / 3 for 2★ (Difficulty PRD-01 W6) — a harder level must not
+      // cost the child stars, the same fairness rule that keeps XP difficulty-independent.
+      { starThresholds: starThresholdsFor(progressStore.difficultyFor('colors')) },
     )
     setRoundOutcome(outcome)
   }

@@ -11,8 +11,18 @@ paths:
 # Games catalog (per section)
 
 What each game is + its `gameId` + the **durable design invariants** (the *why*). Tuning values —
-star thresholds, milestone tap-counts, number ranges, round lengths — live in each component's
-"tuning levers", NOT here. How to build a game: `game-development.md`. Drag games: `drag-and-drop.md`.
+milestone tap-counts, round lengths — live in each component's "tuning levers", NOT here. How to build
+a game: `game-development.md`. Drag games: `drag-and-drop.md`.
+
+**Everything that varies BY LEVEL now lives in `src/config/difficulty.ts`** (Difficulty PRD-01), not in
+the components: answer-tile counts, number ranges, distractor policies, board/tray sizes, word-length
+bands, and the star thresholds. A game reads its own table there and nothing re-derives a level inline.
+Two durable rules that module enforces via `difficulty.test.ts`: **no non-exempt game may produce the
+same parameters at two levels** (a dead level is a bug — Bogstav Quiz's Svær shipped byte-identical to
+Normal), and every game that legitimately ignores the level is in `EXEMPT` **with a reason**
+(`alphabet.learn`, `math.learn`, `english.learn`, `colors.learn` — ungraded browses; `ordleg.mic` — no
+target word exists). Svær's star budget is deliberately looser (3★ ≤1 mistake): **choosing a harder level
+must never cost rewards**, the same fairness rule that keeps XP difficulty-independent.
 
 **Browses carry no counter and no progress bar** (removed 2026-08-01, owner: no educational purpose) —
 a browse has no score and no finish line, so a filling bar only implied a list to get through. The only
@@ -26,6 +36,16 @@ are the **trophy of a level-up** now (not per-round / per-browse) — see CLAUDE
 gameIds are `<section>.<game>`.
 
 ## Math — `math.counting/.addition/.subtraction/.comparison/.patterns`
+- **The generators are PURE functions** in `src/config/mathProblems.ts` (`makeAdditionProblem`,
+  `makeSubtractionProblem`, `makeComparisonPair`, `makeSequenceQuestion`, `pickQuizNumber`,
+  `numberDistractors`…), not component code — that's what lets `difficulty.test.ts` sample thousands of
+  problems per level, and what lets the prebake enumerator reach the same ranges. The components keep all
+  their animation + audio behaviour and just call these.
+- **Minus never borrows below Svær.** Counting *on* to 20 on fingers is a skill the child has; counting
+  *back* across the ten is not, so at Normal the subtrahend never exceeds the minuend's units digit
+  (18−6, 15−3) while Plus at Normal *does* cross (8+7). Equal effort, deliberately unequal arithmetic
+  structure — that pairing IS the calibration, and PRD-15 removing the countable ten-frame is what made a
+  borrowing Normal unwinnable. Svær is the reverse of both: always crosses / always borrows.
 - Distractors are **near-number** (digit-swap, off-by-one/ten), not random.
 - **NOTHING on a math board restates a number that's already on it.** Every countable stand-in has now
   been removed by the owner: Lær Tal's star/dot cluster and Sammenlign Tal's piles (2026-08-01), Tal
@@ -120,9 +140,17 @@ All drag-based except the calm Lær Farver browse; hand-rolled dnd-kit — see `
   `ColorObject` carries a `neuter` flag, and objects whose emoji contradict their color (⚽/👒/☁️/🌸)
   carry `quizSafe:false` so Hvilken Farve never scores the child on a misleading picture.
 
-## Memory — `memory.letters.10/.20`, `memory.numbers.10/.20`
-- One engine (`UnifiedMemoryGame.tsx`) + config factory (`MemoryGame.tsx`); letters/numbers × 10/20
-  pairs as separate static-difficulty routes.
+## Memory — `memory.letters`, `memory.numbers`
+- One engine (`UnifiedMemoryGame.tsx`) + config factory (`MemoryGame.tsx`); **one tile per section**, and
+  the **difficulty LEVEL owns the board** (6 / 10 / 15 pairs — `MEMORY_BOARD`). It used to be two tiles
+  per section, one of them titled "Hukommelse 20 (svær)" — the only place a difficulty was ever named in
+  the child-facing UI. `:size` survives in the route only so old bookmarks land somewhere; it is ignored.
+- **One `gameId` per TYPE, never per board size** — a level change must not fragment the child's bests,
+  for the same reason XP is difficulty-independent. Star thresholds scale with the board via
+  `memoryStarThresholds(pairs, level)`, which preserves PRD-05's reachable 10-pair curve (`{9, 18}`).
+- **A board-size change has to DEAL A NEW BOARD.** The engine's init effect is `hasInitialized`-guarded,
+  so without an explicit `config.boardPairs` effect the old card array survives: measured 20 cards on
+  screen while the chip read "Par: 0/6", i.e. the round would "finish" with 8 cards still face-down.
 - **One board = one round** (no `useRound` — every pair is always found, so the only skill signal is
   mismatches): `recordRoundResult(gameId, { correct: pairs, total: pairs + mismatches, longestStreak })`
   → stars scale with mismatches, and longest match-streak is the record.

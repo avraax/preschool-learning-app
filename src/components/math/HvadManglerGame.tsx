@@ -9,8 +9,9 @@ import { MathScoreChip } from '../common/ScoreChip'
 import { MathRepeatButton } from '../common/RepeatButton'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
 import { hexToRgba } from '../../theme/tokens/helpers'
-import { HVAD_MANGLER_PROMPT, sequenceFactText, SEQUENCE_LENGTH } from '../../config/gamePhrases'
-import { progressStore, type DifficultyLevel } from '../../services/progressStore'
+import { HVAD_MANGLER_PROMPT, sequenceFactText } from '../../config/gamePhrases'
+import { makeSequenceQuestion, sequenceDistractors } from '../../config/mathProblems'
+import { progressStore } from '../../services/progressStore'
 import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 import { shuffle } from '../../utils/shuffle'
 
@@ -84,37 +85,21 @@ const ClayPip: React.FC<{ token: string; variant: 'hero' | 'tile' }> = ({ token,
   )
 }
 
-const randInt = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min
+// Sequence generation moved to `src/config/mathProblems.ts` (Difficulty PRD-01 W2): the branch weights
+// AND the START are now level-scaled and drawn from `sequenceSpecsForLevel`, so every sequence the game
+// emits is one the prebake enumerator baked a read-back for. Before this, skip-10 always emitted the
+// identical `10 20 30 40 50` — 30% of every Svær round — and no range moved with the level at all.
+// This component keeps the VISUALS: the clay-pip tokens (which are React, not data) and the hero.
 
-// Static, manual difficulty (UI/UX Overhaul PRD §5.7/Appendix A) — cumulative branch weights for
-// {count-by-1, skip2, skip5, skip10}; the visual repeating pattern takes the remainder. 'normal'
-// reproduces today's exact weights (0.25/0.20/0.15/0.12, remainder 0.28) unchanged.
-const SEQUENCE_WEIGHTS: Record<DifficultyLevel, [number, number, number, number]> = {
-  let: [0.55, 0.15, 0.05, 0.05], // count-by-1 weighted
-  normal: [0.25, 0.2, 0.15, 0.12], // TODAY — mixed skip 2/5/10
-  svaer: [0.1, 0.15, 0.3, 0.3], // skip 5/10 weighted
-}
+// Render a numeric sequence's display string, with the missing slot blanked to "?".
+const numberDisplay = (numbers: number[], missingIndex: number): string =>
+  numbers.map((n, i) => (i === missingIndex ? '?' : String(n))).join('   ')
 
-// Build a numeric sequence with one slot blanked out.
-const buildNumberSequence = (start: number, step: number, length: number) => {
-  const full = Array.from({ length }, (_, i) => start + i * step)
-  // Prefer blanking the last or a middle slot (not the first, which gives no context).
-  const missingIndex = Math.random() < 0.5 ? length - 1 : randInt(1, length - 1)
-  const missing = full[missingIndex]
-  const display = full.map((n, i) => (i === missingIndex ? '?' : String(n))).join('   ')
-  return { missing, display }
-}
-
-const buildVisualPattern = () => {
-  // Repeating pattern from 2-3 distinct clay-pip tokens, e.g. ABAB? or ABCABC?
-  const palette = shuffle([...PATTERN_TOKENS])
-  const unit = palette.slice(0, Math.random() < 0.5 ? 2 : 3)
-  const length = unit.length === 2 ? 5 : 6
+// Build the visual repeating pattern's tokens from the pure question's shape (unit size + length).
+const patternDisplay = (unitSize: number, length: number, missingIndex: number) => {
+  const unit = shuffle([...PATTERN_TOKENS]).slice(0, unitSize)
   const full = Array.from({ length }, (_, i) => unit[i % unit.length])
-  const missingIndex = Math.random() < 0.6 ? length - 1 : randInt(1, length - 1)
-  const missing = full[missingIndex]
-  const display = full.map((e, i) => (i === missingIndex ? '?' : e)).join('  ')
-  return { missing, display, pool: unit }
+  return { missing: full[missingIndex], display: full.map((e, i) => (i === missingIndex ? '?' : e)).join('  ') }
 }
 
 const HvadManglerGame: React.FC = () => {
@@ -126,84 +111,45 @@ const HvadManglerGame: React.FC = () => {
     quizType: 'counting',
 
     generateQuizItem: () => {
-      // Static, manual difficulty (PRD §5.7/Appendix A) — read fresh per question. 'normal'
-      // reproduces today's exact cutoffs (0.25/0.45/0.6/0.72) unchanged.
-      const level = progressStore.difficultyFor('math')
-      const [wBy1, wSkip2, wSkip5, wSkip10] = SEQUENCE_WEIGHTS[level]
-      const cut1 = wBy1
-      const cut2 = cut1 + wSkip2
-      const cut3 = cut2 + wSkip5
-      const cut4 = cut3 + wSkip10
+      // Static, manual difficulty — read fresh per question. The pure generator owns the branch
+      // weights AND the level-scaled random start (Let ≤10 · Normal ≤40 · Svær ≤60, every element ≤100).
+      const q = makeSequenceQuestion(progressStore.difficultyFor('math'))
 
-      const r = Math.random()
-      let value: string | number
-      let display: string
-
-      if (r < cut1) {
-        // count by 1
-        const seq = buildNumberSequence(randInt(1, 10), 1, SEQUENCE_LENGTH)
-        value = seq.missing
-        display = seq.display
-      } else if (r < cut2) {
-        // skip by 2
-        const seq = buildNumberSequence(randInt(0, 3) * 2, 2, SEQUENCE_LENGTH)
-        value = seq.missing
-        display = seq.display
-      } else if (r < cut3) {
-        // skip by 5
-        const seq = buildNumberSequence(5 * randInt(1, 3), 5, SEQUENCE_LENGTH)
-        value = seq.missing
-        display = seq.display
-      } else if (r < cut4) {
-        // skip by 10
-        const seq = buildNumberSequence(10, 10, SEQUENCE_LENGTH)
-        value = seq.missing
-        display = seq.display
-      } else {
-        // visual repeating pattern
-        const seq = buildVisualPattern()
-        value = seq.missing
-        display = seq.missing
+      if (q.kind === 'pattern') {
+        const { missing, display } = patternDisplay(q.unitSize, q.length, q.missingIndex)
         return {
-          value,
-          display,
+          value: missing,
+          display: missing,
           // The correct option's tile renders a clay pip (PRD-12 §2B), not the id text.
-          node: <ClayPip token={seq.missing} variant="tile" />,
+          node: <ClayPip token={missing} variant="tile" />,
           audioPrompt: HVAD_MANGLER_PROMPT,
           repeatWord: '',
-          questionVisual: { emoji: '', word: seq.display }
+          questionVisual: { emoji: '', word: display }
         }
       }
 
       return {
-        value,
-        display: value,
+        value: q.missing,
+        display: q.missing,
         audioPrompt: HVAD_MANGLER_PROMPT,
         repeatWord: '',
-        questionVisual: { emoji: '', word: display }
+        questionVisual: { emoji: '', word: numberDisplay(q.numbers, q.missingIndex) }
       }
     },
 
-    generateOptions: (correct: QuizItem) => {
+    generateOptions: (correct: QuizItem, optionCount: number) => {
       const options: QuizItem[] = [correct]
 
       if (typeof correct.value === 'number') {
-        const base = correct.value
-        // Near-value distractors (PRD-14 W2 / audit §A6): prefer the (shuffled) ±1/±2 neighbours so a
-        // wrong option is a real sequence error, not a far +10 outlier; +5/+10 stay only as a fallback
-        // tail so the option count never drops below 4 if the near neighbours run out.
-        const candidates = [...shuffle([base - 2, base - 1, base + 1, base + 2]), base + 5, base + 10]
-          .filter(n => n >= 0 && n !== base)
-        for (const n of candidates) {
-          if (options.length >= 4) break
-          if (!options.find(o => o.value === n)) {
-            options.push({ value: n, display: n, audioPrompt: '', repeatWord: '' })
-          }
+        // Near-value distractors (PRD-14 W2 / audit §A6): ±1/±2 neighbours first so a wrong option is a
+        // real sequence error, not a far +10 outlier; +5/+10 are the fallback tail so the tile count is
+        // always met (5 tiles at Svær need one more than the four near neighbours can give).
+        for (const n of sequenceDistractors(correct.value, optionCount - 1)) {
+          options.push({ value: n, display: n, audioPrompt: '', repeatWord: '' })
         }
       } else {
-        const pool = shuffle([...PATTERN_TOKENS])
-        for (const tk of pool) {
-          if (options.length >= 4) break
+        for (const tk of shuffle([...PATTERN_TOKENS])) {
+          if (options.length >= optionCount) break
           if (!options.find(o => o.value === tk)) {
             options.push({ value: tk, display: tk, node: <ClayPip token={tk} variant="tile" />, audioPrompt: '', repeatWord: '' })
           }
@@ -223,9 +169,10 @@ const HvadManglerGame: React.FC = () => {
 
     gameWelcomeType: 'patterns',
 
-    // Bounded round + reward flow (Foundation §3). 8 questions, 3★ = no mistakes, 2★ ≤ 2.
+    // Bounded round + reward flow (Foundation §3). 8 questions; star thresholds come from the
+    // difficulty spine (Difficulty PRD-01 W6).
     gameId: 'math.patterns',
-    round: { length: 8, starThresholds: { three: 0, two: 2 } },
+    round: { length: 8 },
 
     // Never-fail hint (PRD-05 P1): after 2 wrong taps the correct tile pulses.
     hintAfterNWrong: 2,

@@ -331,6 +331,9 @@ const SpeakWordGame: React.FC = () => {
   // In-round word count + bounded round (Overhaul Ordleg §3). Open-ended: a "question" = one
   // recognized word; there is NO target word and NO STT grading.
   const { score, incrementScore, resetScore, isScoreNarrating, handleScoreClick } = useGameState()
+  // Sig et Ord is on the difficulty EXEMPT list (open-ended by design — there is no target word to
+  // grade), so it keeps fixed star thresholds: nothing gets harder at Svær here, so loosening them
+  // would just be a free 3★. See `EXEMPT` in src/config/difficulty.ts.
   const round = useRound({ length: 8, starThresholds: { three: 0, two: 2 }, gameId: 'ordleg.mic' })
   const firstTryRef = useRef(true)
   const [roundOutcome, setRoundOutcome] = useState<RoundOutcome | null>(null)

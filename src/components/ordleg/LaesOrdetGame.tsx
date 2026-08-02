@@ -3,7 +3,9 @@ import UnifiedQuizGame, { UnifiedQuizConfig, QuizItem } from '../common/UnifiedQ
 import { getCategoryTheme } from '../../config/categoryThemes'
 import { OrdlegScoreChip } from '../common/ScoreChip'
 import { OrdlegRepeatButton } from '../common/RepeatButton'
-import { progressStore, type DifficultyLevel } from '../../services/progressStore'
+import { progressStore } from '../../services/progressStore'
+import { ORDLEG_READ } from '../../config/difficulty'
+import { READING_WORDS, type OrdlegWord } from '../../config/ordlegWords'
 import { shuffle } from '../../utils/shuffle'
 import { ordlegArt } from '../../assets/games/ordleg'
 
@@ -16,43 +18,13 @@ import { ordlegArt } from '../../assets/games/ordleg'
 // answer *pictures* are baked soft-3D word-pictures — `art` is the ASCII art id (§4; Danish glyphs
 // aliased: æg→aeg, ræv→raev), resolved via `ordlegArt(w.art)`. The whole pool is concrete/depictable
 // and fully baked (PRD-12 dropped the emoji fallback), so a question is always all-picture tiles.
-interface ReadingWord {
-  word: string
-  art: string
-}
-
-const READING_WORDS: ReadingWord[] = [
-  { word: 'ko', art: 'ko' },
-  { word: 'is', art: 'is' },
-  { word: 'æg', art: 'aeg' },
-  { word: 'ur', art: 'ur' },
-  { word: 'so', art: 'so' },
-  { word: 'kat', art: 'kat' },
-  { word: 'sol', art: 'sol' },
-  { word: 'hus', art: 'hus' },
-  { word: 'bil', art: 'bil' },
-  { word: 'bog', art: 'bog' },
-  { word: 'mus', art: 'mus' },
-  { word: 'and', art: 'and' },
-  { word: 'sko', art: 'sko' },
-  { word: 'hat', art: 'hat' },
-  { word: 'ost', art: 'ost' },
-  { word: 'tog', art: 'tog' },
-  { word: 'bus', art: 'bus' },
-  { word: 'ræv', art: 'raev' },
-  { word: 'ged', art: 'ged' },
-  { word: 'haj', art: 'haj' },
-  { word: 'abe', art: 'abe' },
-  { word: 'ski', art: 'ski' }
-]
-
-// Let (Overhaul §5.7/Appendix A): restrict the PROMPT word to the shortest (2-letter) entries —
-// gentler than Normal's 2–3-letter mix. Distractor pictures still draw from the full list (below)
-// so the option pool never runs dry. Ordleg's floor never grows past 3 letters at any level.
-const TWO_LETTER_WORDS = READING_WORDS.filter(w => w.word.length === 2)
+//
+// The word list itself moved to `src/config/ordlegWords.ts` (Difficulty PRD-01 W5): this game SPEAKS
+// the tapped picture's name, and a list stranded in a `.tsx` can never be enumerated for prebake — so
+// most of these words were quietly falling through to live Azure.
 
 const LaesOrdetGame: React.FC = () => {
-  const toItem = (w: ReadingWord): QuizItem => ({
+  const toItem = (w: OrdlegWord): QuizItem => ({
     value: w.word,
     // The tile renders the baked picture (`art`); `display` is only the non-visual label (never an
     // emoji) used if art were ever missing.
@@ -72,10 +44,11 @@ const LaesOrdetGame: React.FC = () => {
     quizType: 'ordleg',
 
     generateQuizItem: () => {
-      const level: DifficultyLevel = progressStore.difficultyFor('ordleg')
-      // Let draws only 2-letter prompt words (gentler); Normal/Svær keep today's full 2–3-letter
-      // pool — Svær's extra challenge is MORE distractor pictures below, never longer words.
-      const pool = level === 'let' ? TWO_LETTER_WORDS : READING_WORDS
+      const { wordMaxLen } = ORDLEG_READ[progressStore.difficultyFor('ordleg')]
+      // Let draws only 2-letter prompt words (gentler); Normal/Svær keep the full 2–3-letter pool —
+      // Svær's extra challenge is MORE distractor pictures below, never longer words (standing owner
+      // rule: he can't spell yet), which is why `wordMaxLen` never exceeds 3.
+      const pool = READING_WORDS.filter((w) => w.word.length <= wordMaxLen)
       // Avoid the most-recent words (window shrinks to fit a small pool so there's always a choice).
       const window = Math.min(3, Math.max(1, pool.length - 1))
       const recent = new Set(recentRef.current.slice(-window))
@@ -93,20 +66,18 @@ const LaesOrdetGame: React.FC = () => {
       }
     },
 
-    generateOptions: (correct: QuizItem) => {
-      const level: DifficultyLevel = progressStore.difficultyFor('ordleg')
-      // Option count scales with level (PRD-18 W1): Let = 3 (gentler floor for the youngest reader),
-      // Normal = 4, Svær = 6 (more distractor PICTURES — the one difficulty axis left once word length
-      // is fixed gentle at every level).
-      const optionCount = level === 'let' ? 3 : level === 'svaer' ? 6 : 4
+    // `optionCount` now arrives from the engine's shared axis (Difficulty PRD-01 W3) — 3 / 4 / **6**,
+    // the 6 kept because these tiles are PICTURES rather than glyphs, so they stay readable in a 3×2 grid.
+    generateOptions: (correct: QuizItem, optionCount: number) => {
+      const { sharedInitials } = ORDLEG_READ[progressStore.difficultyFor('ordleg')]
       const correctWord = READING_WORDS.find(w => w.word === correct.value) || READING_WORDS[0]
       const correctInitial = correctWord.word[0]
       // Let/Normal (PRD-14 W2 / audit §F): distractor pictures must NOT share the correct word's
       // initial letter, so decoding the FIRST SOUND is a winning strategy instead of a trap. The word
-      // is still never read aloud (silent decoding IS the exercise). Svær keeps the full pool (shared
-      // initials allowed) as its extra challenge, alongside the 6-picture grid.
+      // is still never read aloud (silent decoding IS the exercise). Svær allows shared initials as its
+      // extra challenge, alongside the 6-picture grid.
       const distractorPool =
-        level === 'svaer' ? READING_WORDS : READING_WORDS.filter(w => w.word[0] !== correctInitial)
+        sharedInitials ? READING_WORDS : READING_WORDS.filter(w => w.word[0] !== correctInitial)
       const options: QuizItem[] = [toItem(correctWord)]
       for (const w of shuffle(distractorPool)) {
         if (options.length >= optionCount) break
@@ -139,7 +110,8 @@ const LaesOrdetGame: React.FC = () => {
     // Bounded round of 8 + shared reward flow (Overhaul Ordleg §1). The engine handles
     // everything: rounds, first-try/streak tracking, celebration tiers, wrong SFX, and the
     // RoundResultScreen → progressStore.recordRoundResult('ordleg.read', …).
-    round: { length: 8, starThresholds: { three: 0, two: 2 } },
+    // Star thresholds come from the difficulty spine (Difficulty PRD-01 W6).
+    round: { length: 8 },
     gameId: 'ordleg.read',
 
     // Never-fail hint (PRD-05 P1): after 2 wrong picture taps the correct picture pulses.

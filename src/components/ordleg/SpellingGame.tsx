@@ -20,8 +20,11 @@ import { OrdlegRepeatButton } from '../common/RepeatButton'
 import { useGameState } from '../../hooks/useGameState'
 import { useRound } from '../../hooks/useRound'
 import { useNeverFailHint } from '../../hooks/useNeverFailHint'
+import { useDifficulty } from '../../hooks/useDifficulty'
 import { shuffle } from '../../utils/shuffle'
 import { progressStore, type RoundOutcome } from '../../services/progressStore'
+import { ORDLEG_SPELL, starThresholdsFor } from '../../config/difficulty'
+import { spellingWordsFor } from '../../config/ordlegWords'
 import { sfx } from '../../services/sfxClient'
 import { mascotBus } from '../../services/mascotBus'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
@@ -31,55 +34,18 @@ import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 // Simplified audio system
 import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 
-// 2-3 letter child-friendly Danish words. Duplicates from the source list removed.
-// Includes Æ, Ø, Å to practise the Danish-specific letters.
-//
 // Visual uplift (PRD-10 §3.4): the prompt PICTURE is a baked soft-3D word-picture (§4) grounded in
 // PromptFocus — `art` is the ASCII art id (Danish glyphs aliased: æg→aeg, ræv→raev, bær→baer,
-// løg→loeg, ål→aal, sø→soe), resolved via `ordlegArt(w.art)`. EVERY word is baked now (PRD-12 Phase B):
-// the 7 formerly-abstract words reuse cross-section art via `ordlegArt`'s shared/english fallback —
-// hej→`hello`, arm→`arm`, ben→`leg`, fod→`foot`, mor→`mom`, far→`dad` (the shared body/people pool),
-// hul→`hul` (this dir) — so the emoji fallback is retired. The letter TILES + SLOTS + spelled letters
-// stay type (the lesson). `os` (os ≠ cheese — a stray dup of `ost`) and `øl` (beer, off-brand)
-// removed per owner decision §6.2; Ø is still practised via `sø`/`løg`.
-const SPELLING_WORDS: { word: string; art: string }[] = [
-  { word: 'ko', art: 'ko' },
-  { word: 'bi', art: 'bi' },
-  { word: 'is', art: 'is' },
-  { word: 'sol', art: 'sol' },
-  { word: 'hus', art: 'hus' },
-  { word: 'bil', art: 'bil' },
-  { word: 'kat', art: 'kat' },
-  { word: 'hej', art: 'hello' },
-  { word: 'hat', art: 'hat' },
-  { word: 'mus', art: 'mus' },
-  { word: 'bus', art: 'bus' },
-  { word: 'ost', art: 'ost' },
-  { word: 'fod', art: 'foot' },
-  { word: 'bog', art: 'bog' },
-  { word: 'and', art: 'and' },
-  { word: 'arm', art: 'arm' },
-  { word: 'ben', art: 'leg' },
-  { word: 'hul', art: 'hul' },
-  { word: 'sø', art: 'soe' },
-  { word: 'ål', art: 'aal' },
-  // More easy 2-3 letter words
-  { word: 'æg', art: 'aeg' },
-  { word: 'te', art: 'te' },
-  { word: 'ur', art: 'ur' },
-  { word: 'sko', art: 'sko' },
-  { word: 'haj', art: 'haj' },
-  { word: 'abe', art: 'abe' },
-  { word: 'ræv', art: 'raev' },
-  { word: 'ulv', art: 'ulv' },
-  { word: 'ged', art: 'ged' },
-  { word: 'tog', art: 'tog' },
-  { word: 'mor', art: 'mom' },
-  { word: 'far', art: 'dad' },
-  { word: 'bær', art: 'baer' },
-  { word: 'løg', art: 'loeg' },
-  { word: 'ski', art: 'ski' },
-]
+// løg→loeg, ål→aal, sø→soe), resolved via `ordlegArt(w.art)`. EVERY word is baked (PRD-12 Phase B):
+// the abstract ones reuse cross-section art via `ordlegArt`'s shared/english fallback — hej→`hello`,
+// arm→`arm`, ben→`leg`, fod→`foot`, mor→`mom`, far→`dad`, hul→`hul` — so the emoji fallback is retired.
+// The letter TILES + SLOTS + spelled letters stay type (the lesson).
+//
+// **Difficulty is a NEW lever here** (Difficulty PRD-01 W5): this game ignored the Sværhedsgrad setting
+// completely. Now `ORDLEG_SPELL[level]` sets both the word length band (Let 2 · Normal 2–3 · Svær 3–4)
+// and the number of distractor letter tiles (1 · 3 · 4). The word lists live in
+// `src/config/ordlegWords.ts` because this game SPEAKS the word — a list stranded in a `.tsx` can't be
+// enumerated for prebake, which is why most of these words were on live Azure until now.
 
 const DANISH_ALPHABET = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'R', 'S', 'T', 'U', 'V', 'Y', 'Z', 'Æ', 'Ø', 'Å']
 
@@ -133,7 +99,7 @@ const SpellingGame: React.FC = () => {
   const { incrementScore, resetScore, isScoreNarrating, handleScoreClick } = useGameState()
 
   // Bounded round + reward flow (Overhaul Ordleg §2). 8 words, 3 stars = no mistakes, 2 stars <= 2.
-  const round = useRound({ length: 8, starThresholds: { three: 0, two: 2 }, gameId: 'ordleg.spelling' })
+  const round = useRound({ length: 8, gameId: 'ordleg.spelling' })
   const firstAttemptRef = useRef(true)
   const [roundOutcome, setRoundOutcome] = useState<RoundOutcome | null>(null)
 
@@ -243,12 +209,12 @@ const SpellingGame: React.FC = () => {
     if (wordRef.current && !hasInteractedRef.current) speakWord(wordRef.current)
   }
 
-  // Build a shuffled tile pool: the word's letters + a few distractor letters
-  const buildTiles = (letters: string[]): LetterTile[] => {
+  // Build a shuffled tile pool: the word's letters + `distractorCount` distractor letters (the level's
+  // second axis — Let 1, Normal 3, Svær 4).
+  const buildTiles = (letters: string[], distractorCount: number): LetterTile[] => {
     const wordLetterSet = new Set(letters)
     const distractorPool = DANISH_ALPHABET.filter(l => !wordLetterSet.has(l))
     const distractors: string[] = []
-    const distractorCount = 3
     const shuffledPool = shuffle(distractorPool)
     for (let i = 0; i < distractorCount && i < shuffledPool.length; i++) {
       distractors.push(shuffledPool[i])
@@ -266,9 +232,11 @@ const SpellingGame: React.FC = () => {
     isAdvancing.current = false
     wordSeq.current += 1 // fresh key namespace for this word's tiles (see wordSeq)
 
-    // Pick a word, avoiding an immediate repeat
-    let candidates = SPELLING_WORDS.filter(w => w.word !== previousWord.current)
-    if (candidates.length === 0) candidates = SPELLING_WORDS
+    // Pick a word from the LEVEL's pool, avoiding an immediate repeat.
+    const level = progressStore.difficultyFor('ordleg')
+    const pool = spellingWordsFor(level)
+    let candidates = pool.filter(w => w.word !== previousWord.current)
+    if (candidates.length === 0) candidates = pool
     const next = candidates[Math.floor(Math.random() * candidates.length)]
     previousWord.current = next.word
     wordRef.current = next.word
@@ -280,7 +248,7 @@ const SpellingGame: React.FC = () => {
     setFilledCount(0)
     setUsedTileIds(new Set())
     setShakeTileId(null)
-    setTiles(buildTiles(letters))
+    setTiles(buildTiles(letters, ORDLEG_SPELL[level].distractors))
     // Fresh word → fresh first-try flag + hint state.
     firstAttemptRef.current = true
     resetHint()
@@ -302,7 +270,9 @@ const SpellingGame: React.FC = () => {
     const outcome = progressStore.recordRoundResult(
       'ordleg.spelling',
       { correct: firstTryCorrect, total: round.length, longestStreak },
-      { starThresholds: { three: 0, two: 2 } },
+      // Svær tolerates 1 mistake for 3★ / 3 for 2★ (Difficulty PRD-01 W6) — a harder level must not
+      // cost the child stars, the same fairness rule that keeps XP difficulty-independent.
+      { starThresholds: starThresholdsFor(progressStore.difficultyFor('ordleg')) },
     )
     setRoundOutcome(outcome)
   }
@@ -439,6 +409,18 @@ const SpellingGame: React.FC = () => {
       console.error('🎵 SpellingGame: Error repeating word:', error)
     }
   }
+
+  // Live difficulty (Difficulty PRD-01 W5): pick a fresh word at the new level when the adult changes
+  // it in the "Til de voksne" menu — no refresh. Every other calibrated game already had this effect;
+  // Stav Ordet didn't, because it ignored the setting entirely. Skips the result screen + first mount.
+  const difficultyLevel = useDifficulty('ordleg')
+  const prevDifficultyRef = useRef(difficultyLevel)
+  useEffect(() => {
+    if (prevDifficultyRef.current === difficultyLevel) return
+    prevDifficultyRef.current = difficultyLevel
+    if (roundOutcome || !gameReady) return
+    generateNewWord()
+  }, [difficultyLevel]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Live, skin-aware ordleg theme (§3.6) — the static `categoryThemes.ordleg` shows kid-skin colours
   // on Havet/Rummet/Dino. Re-runs on skin change (muiTheme drives the re-render).

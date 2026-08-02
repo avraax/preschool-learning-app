@@ -61,17 +61,14 @@ const categoryContent: Record<CategoryId, CategoryContent> = {
         route: '/alphabet/quiz',
         gradient: 'linear-gradient(135deg, #2196F3 0%, #1976D2 100%)'
       },
+      // ONE Hukommelse tile (Difficulty PRD-01 W5): the board size follows the Sværhedsgrad level
+      // (6 / 10 / 15 pairs). The old second tile was literally titled "Hukommelse 20 (svær)" — the only
+      // place a difficulty was ever named in the child-facing UI.
       {
-        id: 'memory10',
-        title: 'Hukommelse 10',
-        route: '/learning/memory/letters/10',
+        id: 'memory',
+        title: 'Hukommelse',
+        route: '/learning/memory/letters',
         gradient: 'linear-gradient(135deg, #1976D2 0%, #1565C0 100%)'
-      },
-      {
-        id: 'memory20',
-        title: 'Hukommelse 20 (svær)',
-        route: '/learning/memory/letters/20',
-        gradient: 'linear-gradient(135deg, #1565C0 0%, #0D47A1 100%)'
       }
     ]
   },
@@ -115,17 +112,12 @@ const categoryContent: Record<CategoryId, CategoryContent> = {
         route: '/math/patterns',
         gradient: 'linear-gradient(135deg, #7E57C2 0%, #5E35B1 100%)'
       },
+      // ONE Hukommelse tile — see the note on the alphabet section's tile above.
       {
-        id: 'memory10',
-        title: 'Hukommelse 10',
-        route: '/learning/memory/numbers/10',
+        id: 'memory',
+        title: 'Hukommelse',
+        route: '/learning/memory/numbers',
         gradient: 'linear-gradient(135deg, #7B1FA2 0%, #6A1B9A 100%)'
-      },
-      {
-        id: 'memory20',
-        title: 'Hukommelse 20 (svær)',
-        route: '/learning/memory/numbers/20',
-        gradient: 'linear-gradient(135deg, #6A1B9A 0%, #4A148C 100%)'
       }
     ]
   },

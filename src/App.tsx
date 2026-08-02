@@ -279,9 +279,11 @@ function App() {
         <Route path="/ordleg/mic" element={<SpeakWordGame />} />
 
         {/* Learning Routes */}
-        <Route path="/learning/memory/:type/:size" element={<MemoryGame />} />
-        {/* Size-less bookmarks → default to the 10-pair board (PRD-14 W4; MemoryGame defaults size). */}
+        {/* One route per memory TYPE — the board size is the difficulty level now, not the URL
+            (Difficulty PRD-01 W5). The `:size` segment is kept purely so old bookmarks and the
+            pre-PRD menu tiles still land somewhere real; it is IGNORED. */}
         <Route path="/learning/memory/:type" element={<MemoryGame />} />
+        <Route path="/learning/memory/:type/:size" element={<MemoryGame />} />
 
         {/* Sticker album / reward hub */}
         <Route path="/album" element={<StickerAlbum />} />

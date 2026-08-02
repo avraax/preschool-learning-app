@@ -15,6 +15,7 @@ import {
   sequenceFactText,
   sequenceStarts,
   sequenceNumbers,
+  SEQUENCE_LENGTH,
   NUANCER_INSTRUCTION,
   colorMixTargetText,
   colorMixResultText,
@@ -62,6 +63,21 @@ test('the shared bounds match the games ranges', () => {
   for (const [a, b] of additionPairs()) assert.ok(a >= 1 && a <= ADDEND_MAX && b >= 1 && b <= ADDEND_MAX)
   for (const [a, b] of subtractionPairs()) assert.ok(b <= a && a <= MINUEND_MAX)
   for (const [big, small] of comparisonPairs()) assert.ok(small < big && big <= COMPARE_MAX)
+  // `sequenceStarts` is DERIVED from the difficulty table now (Difficulty PRD-01 W7) — it used to be a
+  // hardcoded list of 18 narrow starts whose only skip-10 entry was `{start:10}`. Pin the COUNT and the
+  // ceiling here: "the app and the enumerator agree" passes vacuously when both read the same derivation.
+  assert.equal(sequenceStarts.length, 109)
+  assert.equal(SEQUENCE_LENGTH, 5)
+  for (const spec of sequenceStarts) {
+    const numbers = sequenceNumbers(spec)
+    assert.equal(numbers.length, SEQUENCE_LENGTH)
+    assert.ok(Math.max(...numbers) <= 100, `sequence ${spec.start}/${spec.step} runs past 100`)
+  }
+  // The four steps are all still reachable, with more than one start each past Let.
+  for (const step of [1, 2, 5, 10]) {
+    const starts = sequenceStarts.filter((s) => s.step === step)
+    assert.ok(starts.length > 1, `step ${step} has only ${starts.length} start(s)`)
+  }
 })
 
 test('every composed game line is enumerated for prebake', () => {

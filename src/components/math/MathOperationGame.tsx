@@ -3,7 +3,10 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Typography, Box, useMediaQuery } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { getCategoryTheme } from '../../config/categoryThemes'
-import { mathFactText, ADDEND_MAX, MINUEND_MAX } from '../../config/gamePhrases'
+import { mathFactText } from '../../config/gamePhrases'
+import { optionCountFor, starThresholdsFor } from '../../config/difficulty'
+import { makeAdditionProblem, makeSubtractionProblem, operationDistractors } from '../../config/mathProblems'
+import { answerGridSx } from '../common/answerGrid'
 import GameShell from '../common/GameShell'
 import AnswerTile, { type AnswerTileState } from '../common/AnswerTile'
 import PromptFocus from '../common/PromptFocus'
@@ -86,8 +89,9 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
 
   const { incrementScore, resetScore, isScoreNarrating, handleScoreClick } = useGameState()
 
-  // Bounded round + reward flow (Foundation §3). 8 questions, 3★ = no mistakes, 2★ ≤ 2.
-  const round = useRound({ length: 8, starThresholds: { three: 0, two: 2 }, gameId })
+  // Bounded round + reward flow (Foundation §3). 8 questions; the star thresholds come from the
+  // difficulty spine at finish time (Difficulty PRD-01 W6), so they're not pinned here.
+  const round = useRound({ length: 8, gameId })
   // True until the first wrong tile is tapped for the current problem (gates streak/star).
   const firstAttemptRef = useRef(true)
   const [roundOutcome, setRoundOutcome] = useState<RoundOutcome | null>(null)
@@ -194,52 +198,18 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
     firstAttemptRef.current = true
     isAdvancingRef.current = false
 
-    // Static, manual difficulty (UI/UX Overhaul PRD §5.7/Appendix A) — read fresh per problem.
-    // 'normal' reproduces today's exact ranges unchanged.
+    // Static, manual difficulty — read fresh per problem. The generation itself is a PURE function in
+    // src/config/mathProblems.ts, sampled by difficulty.test.ts (Difficulty PRD-01 W2):
+    //   Plus  — Let sums ≤10 · Normal sums ≤20, both addends ≥2, crossing allowed · Svær ALWAYS crosses
+    //   Minus — Let minuend ≤10 · Normal minuend ≤20 and NEVER borrows · Svær 11–20 and ALWAYS borrows
+    // Minus at Normal is the headline fix: it used to draw any subtrahend, so a round was dominated by
+    // borrow problems (16−9) with nothing left on the board to count with (the ten-frame was removed
+    // 2026-08-02). Plus at Normal keeps crossing the ten on purpose — counting ON to 20 on fingers is a
+    // skill he has; counting BACK across it is not. Equal effort, not equal arithmetic structure.
     const level = progressStore.difficultyFor('math')
-    const randInt = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min
-
-    let firstNum: number
-    let secondNum: number
-    let answer: number
-
-    // NOTE: the ceilings below are `ADDEND_MAX` / `MINUEND_MAX` from config/gamePhrases.ts, which the
-    // prebake enumerator uses to bake every "Hvad er a plus b" + "a plus b er c". Raising a range here
-    // without raising the constant would silently drop the new questions back to live Azure.
-    if (isAddition) {
-      if (level === 'let') {
-        // Let: sums ≤10.
-        firstNum = randInt(1, ADDEND_MAX - 1)
-        secondNum = randInt(1, Math.max(1, ADDEND_MAX - firstNum))
-      } else if (level === 'svaer') {
-        // Svær: sums ≤20, biased so almost every problem carries (crosses the ten).
-        firstNum = randInt(2, ADDEND_MAX)
-        secondNum = randInt(Math.max(1, ADDEND_MAX - firstNum), ADDEND_MAX)
-      } else {
-        // Normal (PRD-05 P3): sums ≤20 (matches "adds to 20"), but both addends ≥2 so the floor
-        // isn't trivial (+1 / tiny sums). The child adds to 20 on fingers, so this is his level.
-        firstNum = randInt(2, 10)
-        const maxSecondNum = Math.min(20 - firstNum, 10) // ensure sum ≤ 20
-        secondNum = randInt(2, Math.max(2, maxSecondNum))
-      }
-      answer = firstNum + secondNum
-    } else {
-      if (level === 'let') {
-        // Let: minuend ≤10, no borrow (kept single-digit so there's no "10 minus x" crossing).
-        firstNum = randInt(1, 9)
-        secondNum = randInt(1, firstNum)
-      } else if (level === 'svaer') {
-        // Svær: two-digit minuend (11–20) so it's clearly harder than Normal.
-        firstNum = randInt(11, MINUEND_MAX)
-        secondNum = randInt(1, firstNum - 1)
-      } else {
-        // Normal (PRD-05 P3): minuend up to 20 (was ≤10 — the harder range used to be gated behind
-        // Svær). Result ≥1 so there's always a real subtraction to do.
-        firstNum = randInt(2, MINUEND_MAX)
-        secondNum = randInt(1, firstNum - 1)
-      }
-      answer = firstNum - secondNum // non-negative
-    }
+    const { a: firstNum, b: secondNum, answer } = isAddition
+      ? makeAdditionProblem(level)
+      : makeSubtractionProblem(level)
 
     setNum1(firstNum)
     setNum2(secondNum)
@@ -251,28 +221,11 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
     // this warms the clip's HTTP fetch; if a clip is ever missing it warms the synth instead.
     audio.warmSpeech(factText(firstNum, secondNum, answer))
 
-    // Near-answer distractors (off-by-one/two + the operands) clamped to the valid result range,
-    // so wrong options are plausible confusions rather than random noise. Top up with random
-    // in-range values only if too few distinct confusables exist.
-    const lo = isAddition ? 1 : 0
-    // Subtraction results now reach 19 on Normal/Svær (P3), so distractors must span up to 20 there
-    // (only Let stays single-digit). Otherwise a right answer like 15 could get ≤10 distractors,
-    // making it trivially obvious.
-    const hi = isAddition ? 20 : (level === 'let' ? 10 : 20)
-    const confusables = (isAddition
-      ? [answer - 1, answer + 1, answer - 2, answer + 2]
-      : [answer - 1, answer + 1, answer + 2, firstNum, secondNum]
-    ).filter((c) => c >= lo && c <= hi && c !== answer)
-
-    const picks: number[] = []
-    for (const c of shuffle(confusables)) {
-      if (picks.length >= 3) break
-      if (!picks.includes(c)) picks.push(c)
-    }
-    while (picks.length < 3) {
-      const r = randInt(lo, hi)
-      if (r !== answer && !picks.includes(r)) picks.push(r)
-    }
+    // Near-answer distractors (off-by-one/two + the operands) clamped to the valid result range, so
+    // wrong options are plausible confusions rather than random noise. The COUNT is the shared tile
+    // axis now (3 / 4 / 5 — Difficulty PRD-01 W3), resolved from the same table the config quizzes use.
+    const optionCount = optionCountFor(gameId, level)
+    const picks = operationDistractors(operation, { a: firstNum, b: secondNum, answer }, level, optionCount - 1)
 
     optionSeq.current += 1 // fresh key namespace for this problem's option tiles
     setOptions(shuffle([answer, ...picks]))
@@ -384,7 +337,9 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
     const outcome = progressStore.recordRoundResult(
       gameId,
       { correct: firstTryCorrect, total: round.length, longestStreak },
-      { starThresholds: { three: 0, two: 2 } },
+      // Svær tolerates 1 mistake for 3★ / 3 for 2★ — choosing a harder level must not cost stars
+      // (Difficulty PRD-01 W6, mirroring the rule that XP is never difficulty-dependent).
+      { starThresholds: starThresholdsFor(progressStore.difficultyFor('math')) },
     )
     setRoundOutcome(outcome)
   }
@@ -588,37 +543,10 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
         [PHONE_LANDSCAPE]: { alignItems: 'center', pt: 0 },
       }}>
         <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(2, 1fr)',
-            gridAutoRows: 'auto',
-            gap: { xs: '16px', sm: '20px', md: '24px' },
-            width: '100%',
-            maxWidth: { xs: '400px', sm: '500px', md: '600px' },
-            justifyContent: 'center',
-            alignItems: 'center',
-            '& > *': {
-              aspectRatio: '4/3',
-              minHeight: { xs: '80px', sm: '90px', md: '100px' },
-              maxHeight: { xs: '120px', sm: '140px', md: '160px' },
-              width: '100%'
-            },
-            '@media (orientation: landscape)': {
-              gridTemplateColumns: 'repeat(4, 1fr)',
-              maxWidth: { xs: '600px', sm: '700px', md: '800px' },
-              '& > *': {
-                aspectRatio: '4/3',
-                minHeight: { xs: '60px', sm: '70px', md: '80px' },
-                maxHeight: { xs: '100px', sm: '110px', md: '120px' }
-              }
-            },
-            // Phone landscape: fixed tile height instead of aspect-driven (see UnifiedQuizGame).
-            [PHONE_LANDSCAPE]: {
-              gap: '10px',
-              maxWidth: '680px',
-              '& > *': { aspectRatio: 'auto', height: '84px', minHeight: '84px', maxHeight: '84px' }
-            }
-          }}
+          // Shared with UnifiedQuizGame (Difficulty PRD-01 W3): the columns + width envelope follow the
+          // TILE COUNT, which is now 3 / 4 / 5 by level. Falls back to the level's own count before the
+          // first problem exists so the zone never reflows on the first render.
+          sx={answerGridSx(options.length || optionCountFor(gameId, difficultyLevel))}
         >
           {showEquation ? options.map((option, index) => (
             <motion.div

@@ -5,13 +5,9 @@ import { DANISH_PHRASES } from '../../config/danish-phrases'
 import { categoryThemes, getCategoryTheme } from '../../config/categoryThemes'
 import { MathScoreChip } from '../common/ScoreChip'
 import { MathRepeatButton } from '../common/RepeatButton'
-import { progressStore, type DifficultyLevel } from '../../services/progressStore'
+import { progressStore } from '../../services/progressStore'
+import { numberDistractors, pickQuizNumber } from '../../config/mathProblems'
 import { shuffle } from '../../utils/shuffle'
-
-// Comprehensive math settings for counting quiz. Difficulty (Overhaul §5.7/Appendix A) sets the
-// range: Let 1–20, Normal 1–50, Svær 1–100. The manual adult-menu level stays authoritative.
-const MAX_NUMBER_BY_LEVEL: Record<DifficultyLevel, number> = { let: 20, normal: 50, svaer: 100 }
-const maxNumberForLevel = (level: DifficultyLevel): number => MAX_NUMBER_BY_LEVEL[level]
 
 // Tal Quiz is a LISTEN-then-recognise task, at every n: the number lives ONLY in the spoken prompt
 // ("Find tallet 37" + Hør igen) and the focal zone shows the shared ListenHero — no numeral, and no
@@ -21,17 +17,12 @@ const maxNumberForLevel = (level: DifficultyLevel): number => MAX_NUMBER_BY_LEVE
 //     copy of the answer — a child who can count just counts the pile instead of hearing the number.
 // What makes the task real is Danish's inverted number word: "syvogtredive" is seven-and-thirty, so
 // telling 37 from 73 by ear is the whole lesson — which is exactly what the digit-swap distractors
-// below serve. Countable, solve-it-with-fingers work lives in Plus/Minus's ten-frames instead.
+// serve.
 //
-// Swap the tens/units digit of a two-digit number (23 → 32). Returns null for single-digit or
-// palindromic numbers (11, 22, …) where the swap isn't a distinct confusable.
-const swapDigits = (n: number): number | null => {
-  if (n < 10) return null
-  const tens = Math.floor(n / 10)
-  const units = n % 10
-  if (tens === units) return null
-  return units * 10 + tens
-}
+// Difficulty (PRD-01 §4.1) is now a table + pure generators in src/config/{difficulty,mathProblems}.ts:
+// Let 1–50 · 3 tiles · distractors ≥10 away in both digits · Normal 1–100 · 4 tiles · digit-swap +
+// ±1/±10 · Svær 1–100 · 5 tiles · the digit-swap ALWAYS present when one exists. The range stops at
+// Svær because 1–100 is the prebaked ceiling — the distractor policy is the step up instead.
 
 // A number as a quiz item. The prompt is always "Find tallet N" — spoken, never shown. (For OPTION
 // tiles the prompt/repeat text is unused; only the target's matters.)
@@ -55,43 +46,16 @@ const MathGame: React.FC = () => {
     // Quiz identification
     quizType: 'counting',
 
-    // Content generation
-    generateQuizItem: () => {
-      const maxNumber = maxNumberForLevel(progressStore.difficultyFor('math'))
-      const number = Math.floor(Math.random() * maxNumber) + 1
-      return makeNumberItem(number)
-    },
+    // Content generation — the range comes from the difficulty table (Let 1–50, Normal/Svær 1–100).
+    generateQuizItem: () => makeNumberItem(pickQuizNumber(progressStore.difficultyFor('math'))),
 
-    // Near-number distractors target real confusions — digit order (23↔32) and off-by-one/ten —
-    // so a correct answer means something (vs the old purely-random options). Falls back to
-    // random-in-range only when too few valid confusables exist (small/large edge numbers).
-    generateOptions: (correctAnswer: QuizItem) => {
-      const maxNumber = maxNumberForLevel(progressStore.difficultyFor('math'))
-      const n = correctAnswer.value as number
-      // Near-number distractors (PRD-14 W2 / audit §A2). For n≥10 keep the digit-order (23↔32) and
-      // off-by-one/ten confusions — the real errors at that scale. Small counts (n<10) have no
-      // meaningful digit-swap/±10 confusable, so a "3 vs 13" outlier taught nothing → bias them to
-      // ±1/±2 so a correct count actually discriminates near neighbours. Random top-up still fills in.
-      const confusables = (
-        n < 10
-          ? [n - 1, n + 1, n - 2, n + 2]
-          : [swapDigits(n), n - 1, n + 1, n - 10, n + 10]
-      ).filter((c): c is number => c !== null && c >= 1 && c <= maxNumber && c !== n)
-
-      // Dedupe, shuffle, take up to 3 distinct confusables.
-      const picks: number[] = []
-      for (const c of shuffle(confusables)) {
-        if (picks.length >= 3) break
-        if (!picks.includes(c)) picks.push(c)
-      }
-      // Top up with random distinct numbers if fewer than 3 confusables were available.
-      while (picks.length < 3) {
-        const r = Math.floor(Math.random() * maxNumber) + 1
-        if (r !== n && !picks.includes(r)) picks.push(r)
-      }
-
-      const options: QuizItem[] = [correctAnswer, ...picks.map(makeNumberItem)]
-      return shuffle(options)
+    // The distractor POLICY is this game's difficulty axis (see the note above the component), so it
+    // lives in `numberDistractors` — one pure function, sampled by difficulty.test.ts, returning
+    // exactly `optionCount - 1` distinct in-range numbers at every level.
+    generateOptions: (correctAnswer: QuizItem, optionCount: number) => {
+      const level = progressStore.difficultyFor('math')
+      const picks = numberDistractors(correctAnswer.value as number, level, optionCount - 1)
+      return shuffle([correctAnswer, ...picks.map(makeNumberItem)])
     },
 
     // Focal zone shows a "listen" card only — the number is spoken, never shown (see above).
@@ -110,9 +74,10 @@ const MathGame: React.FC = () => {
     // Audio configuration
     gameWelcomeType: 'math',
 
-    // Bounded round + reward flow (Foundation §3). 8 questions, 3★ = no mistakes, 2★ ≤ 2.
+    // Bounded round + reward flow (Foundation §3). 8 questions; the star thresholds come from the
+    // difficulty spine (Difficulty PRD-01 W6), so the config no longer declares its own.
     gameId: 'math.counting',
-    round: { length: 8, starThresholds: { three: 0, two: 2 } },
+    round: { length: 8 },
 
     // Never-fail hint (PRD-05 P1): after 2 wrong taps the correct number tile pulses.
     hintAfterNWrong: 2,

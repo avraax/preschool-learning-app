@@ -1,9 +1,10 @@
 // Per-game soft-3D icons (theme-CONSTANT), keyed COLLISION-FREE by `<section>.<id>` — NOT the
-// bare game.id, because alphabet.memory10 and math.memory10 share an id but need distinct art
+// bare game.id, because alphabet.memory and math.memory share an id but need distinct art
 // (Liveliness PRD-05 W4.1 / batch B2). Kept in its OWN module (not beside sectionIconImages) so the
 // 22 game icons bundle with the section-menu chunk and stay OFF the home first-paint.
 //
-// The two "memory" games in each section (10- and 20-pair boards) share one icon by design.
+// Each section has ONE "memory" tile now — the board size follows the difficulty level rather than
+// being two separate games (Difficulty PRD-01 W5).
 import alphabetLearn from './alphabet.learn.webp'
 import alphabetQuiz from './alphabet.quiz.webp'
 import alphabetMemory from './alphabet.memory.webp'
@@ -31,16 +32,14 @@ import ordlegMic from './ordleg.mic.webp'
 export const gameIconImages: Record<string, string> = {
   'alphabet.learn': alphabetLearn,
   'alphabet.quiz': alphabetQuiz,
-  'alphabet.memory10': alphabetMemory,
-  'alphabet.memory20': alphabetMemory,
+  'alphabet.memory': alphabetMemory,
   'math.numbers': mathNumbers,
   'math.counting': mathCounting,
   'math.addition': mathAddition,
   'math.subtraction': mathSubtraction,
   'math.comparison': mathComparison,
   'math.patterns': mathPatterns,
-  'math.memory10': mathMemory,
-  'math.memory20': mathMemory,
+  'math.memory': mathMemory,
   'colors.laer': colorsLaer,
   'colors.farvejagt': colorsFarvejagt,
   'colors.farvequiz': colorsFarvequiz,

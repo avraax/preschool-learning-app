@@ -4,7 +4,9 @@ import { DANISH_PHRASES } from '../../config/danish-phrases'
 import { categoryThemes } from '../../config/categoryThemes'
 import { AlphabetScoreChip } from '../common/ScoreChip'
 import { AlphabetRepeatButton } from '../common/RepeatButton'
-import { progressStore, type DifficultyLevel } from '../../services/progressStore'
+import { progressStore } from '../../services/progressStore'
+import { ALPHABET_QUIZ } from '../../config/difficulty'
+import { confusablePoolFor, confusablesFor, shapeMatesFor } from '../../config/letterConfusables'
 import { shuffle } from '../../utils/shuffle'
 import { LETTER_WORDS, WORD_LETTERS, startsWithPhrase, startsWithQuestion } from '../../config/letterWords'
 import { letterArt } from '../../assets/games/alphabet'
@@ -12,28 +14,10 @@ import { letterArt } from '../../assets/games/alphabet'
 // Full Danish alphabet including special characters
 const DANISH_ALPHABET = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'Æ', 'Ø', 'Å']
 
-// Svær (Overhaul §5.7/Appendix A): letters commonly confused — visually similar shapes, or
-// Danish vowels that sound alike — biasing distractors toward a genuine reading challenge
-// instead of uniformly random letters. Let uses these same groups the OTHER way: distractors
-// are kept OUT of the correct letter's group, so they read as maximally easy/dissimilar.
-const CONFUSABLE_GROUPS: string[][] = [
-  ['M', 'N'],
-  ['Æ', 'Ø', 'Å'],
-  ['B', 'D', 'P'],
-  ['E', 'Æ'],
-  ['O', 'Å'],
-  ['I', 'Y'],
-]
-
-const confusablesFor = (letter: string): string[] => {
-  const set = new Set<string>()
-  for (const group of CONFUSABLE_GROUPS) {
-    if (group.includes(letter)) {
-      for (const g of group) if (g !== letter) set.add(g)
-    }
-  }
-  return [...set]
-}
+// Which letters are confusable with which is DATA (src/config/letterConfusables.ts) — two tiers, the
+// tight look-/sound-alike groups (M/N, B/D/P, Æ/Ø/Å…) and the broader shape/sound families. It lives in
+// config so `difficulty.test.ts` can assert Svær never has to fall back to random letters; see that
+// module's header for why the broad tier exists at all.
 
 // Word-association mode: child sees an emoji + Danish word and picks the starting letter.
 // Only letters with a clear, child-friendly Danish word are included (Q, W, X omitted).
@@ -64,7 +48,15 @@ const AlphabetGame: React.FC = () => {
       }
     },
     
-    generateOptions: (correctAnswer: QuizItem) => {
+    // Distractor POLICY is the difficulty axis (Difficulty PRD-01 §4.2), and this is where Svær used to
+    // be DEAD: `level === 'normal' || level === 'svaer'` seeded the identical group, so the two levels
+    // were byte-identical. Now:
+    //   Let    (`exclude`) — every confusable, tight AND broad, kept OUT: maximally dissimilar, 3 tiles.
+    //   Normal (`seed`)    — the tight group first, random top-up: unchanged behaviour, 4 tiles.
+    //   Svær   (`only`)    — the confusable pool is the WHOLE set (tight first, then the shape/sound
+    //                        families), random only if it somehow ran short: 5 tiles.
+    // Q/W/X can only ever appear as distractors (never the asked letter — see WORD_LETTERS above).
+    generateOptions: (correctAnswer: QuizItem, optionCount: number) => {
       const toLetterItem = (letter: string): QuizItem => ({
         value: letter,
         display: letter,
@@ -72,23 +64,28 @@ const AlphabetGame: React.FC = () => {
         repeatWord: letter
       })
 
-      const level: DifficultyLevel = progressStore.difficultyFor('alphabet')
-
+      const { confusables } = ALPHABET_QUIZ[progressStore.difficultyFor('alphabet')]
       const correctLetter = correctAnswer.value as string
-      // Near-confusable distractors are now the DEFAULT (PRD-14 W2 / audit §A2). Normal + Svær both
-      // seed with the correct letter's confusable group (M/N, Æ/Ø/Å, B/D/P, look-/sound-alike vowels)
-      // so a right answer means the child actually told them apart — not just spotted an outlier. Let
-      // still EXCLUDES that group so its distractors stay maximally dissimilar (easiest). Q/W/X can
-      // only ever appear as random top-ups (never the correct answer — see WORD_LETTERS above).
-      const preferred = level === 'normal' || level === 'svaer' ? shuffle(confusablesFor(correctLetter)) : []
-      const excluded = level === 'let' ? new Set(confusablesFor(correctLetter)) : null
+      const need = optionCount - 1
+
+      const preferred =
+        confusables === 'only'
+          ? // Tight group first (the sharpest confusions), then the broad families — shuffled WITHIN
+            // each tier so the ordering stays a preference, not a fixed answer pattern.
+            [...shuffle(confusablesFor(correctLetter)), ...shuffle(shapeMatesFor(correctLetter))]
+          : confusables === 'seed'
+            ? shuffle(confusablesFor(correctLetter))
+            : []
+      // Let excludes BOTH tiers, so nothing on the board is a near-miss.
+      const excluded = confusables === 'exclude' ? new Set(confusablePoolFor(correctLetter)) : null
 
       const picks: string[] = []
       for (const letter of preferred) {
-        if (picks.length >= 3) break
-        picks.push(letter)
+        if (picks.length >= need) break
+        if (!picks.includes(letter)) picks.push(letter)
       }
-      while (picks.length < 3) {
+      let guard = 0
+      while (picks.length < need && guard++ < 500) {
         const randomLetter = DANISH_ALPHABET[Math.floor(Math.random() * DANISH_ALPHABET.length)]
         if (randomLetter === correctLetter || picks.includes(randomLetter)) continue
         if (excluded && excluded.has(randomLetter)) continue
@@ -112,10 +109,10 @@ const AlphabetGame: React.FC = () => {
     // Audio configuration
     gameWelcomeType: 'alphabet',
 
-    // Bounded round (Overhaul Foundation §3) — reference wiring / smoke test. 8 questions,
-    // then the result/reward hero. 3★ = no mistakes, 2★ ≤ 2, else 1★. Global sticker pool.
+    // Bounded round (Overhaul Foundation §3) — reference wiring / smoke test. 8 questions, then the
+    // result/reward hero. Star thresholds come from the difficulty spine (Difficulty PRD-01 W6).
     gameId: 'alphabet.quiz',
-    round: { length: 8, starThresholds: { three: 0, two: 2 } },
+    round: { length: 8 },
 
     // Never-fail hint (PRD-05 P1): after 2 wrong taps the correct letter tile pulses.
     hintAfterNWrong: 2,

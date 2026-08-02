@@ -37,6 +37,7 @@ import {
   NUANCER_INSTRUCTION, colorMixTargetText, colorMixResultText,
 } from './src/config/gamePhrases.ts'
 import { possibleTargets, mixingRules } from './src/config/colorMixing.ts'
+import { spokenOrdlegWords } from './src/config/ordlegWords.ts'
 import { NUMBER_BROWSE_RATE as NUMBER_RATE } from './src/config/numberAutoplay.ts'
 
 // Danish narration + English section voices, straight from the single source of voice truth.
@@ -133,6 +134,14 @@ export function collectNarrationClips() {
     da('colours', colorMixResultText(c1, c2, mixingRules[key].name))
   }
   for (const t of COLOR_TARGETS) if (t.phrase) da('colours', t.phrase)
+
+  // Ordleg's own words: Læs Ordet names the tapped PICTURE and Stav Ordet says the prompt word + reads
+  // the finished spelling back — both plain `speak(word)` with the bare lowercase word. These were only
+  // baked by COINCIDENCE before (a few happen to be Danish glosses in englishVocab); the rest — tog,
+  // ulv, ged, abe, haj, ski, mus, bus, sø, ål, løg, bær, te, ur, ræv, hul, ben, arm, hus, bi — were
+  // falling through to live, unauditioned Azure. Now the lists live in src/config/ordlegWords.ts and are
+  // enumerated here (Difficulty PRD-01 W5/W7).
+  for (const word of spokenOrdlegWords()) da('ordleg', word)
 
   // Dansk til Engelsk speaks the DANISH word as its prompt (the English side is the `en` voice below).
   for (const w of allEnglishWords) if (w.da) da('english-da', w.da)

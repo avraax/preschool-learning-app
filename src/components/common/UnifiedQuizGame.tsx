@@ -16,6 +16,8 @@ import { useRound, type RoundConfig } from '../../hooks/useRound'
 import { useNeverFailHint } from '../../hooks/useNeverFailHint'
 import { progressStore, type RoundOutcome, type SectionId } from '../../services/progressStore'
 import { useDifficulty } from '../../hooks/useDifficulty'
+import { optionCountFor, starThresholdsFor } from '../../config/difficulty'
+import { answerGridSx } from './answerGrid'
 import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 import { sfx } from '../../services/sfxClient'
 import { mascotBus } from '../../services/mascotBus'
@@ -89,10 +91,13 @@ export interface UnifiedQuizConfig {
   // Quiz identification
   quizType: 'alphabet' | 'counting' | 'arithmetic' | 'english' | 'ordleg'
   
-  // Content generation
+  // Content generation. `optionCount` is resolved CENTRALLY by the engine from the difficulty table
+  // (Difficulty PRD-01 W3 — `optionCountFor(gameId, level)`: 3/4/5, or 3/4/6 for Læs Ordet's picture
+  // tiles), so no config hand-rolls it any more. Each game still owns *which* distractors it picks —
+  // it just has to return exactly `optionCount` items (correct answer included).
   generateQuizItem: () => QuizItem
-  generateOptions: (correctAnswer: QuizItem) => QuizItem[]
-  
+  generateOptions: (correctAnswer: QuizItem, optionCount: number) => QuizItem[]
+
   // Display configuration
   title: string                // "Bogstav Quiz" or "Tal Quiz"
   // Legacy game-identity glyph — never rendered (kept optional only for back-compat; PRD-12 dropped
@@ -177,6 +182,13 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
   const muiTheme = useTheme()
   // Live difficulty for this section — re-renders + regenerates on an adult-menu change (no refresh).
   const difficultyLevel = useDifficulty(config.theme.id as SectionId)
+  // The shared answer-tile axis (Difficulty PRD-01 W3): 3 / 4 / 5 tiles (Læs Ordet 3/4/6), resolved
+  // ONCE here from the level so no config quiz hand-rolls it. `generateOptions` receives the count and
+  // keeps ownership of WHICH distractors it picks. Read via a ref inside the generator so the callback
+  // identity (and therefore the init effect) doesn't churn on every level change.
+  const optionCount = optionCountFor(config.gameId, difficultyLevel)
+  const optionCountRef = useRef(optionCount)
+  optionCountRef.current = optionCount
 
   // Component initialization - no logging needed in production
 
@@ -262,7 +274,7 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
     currentItemRef.current = quizItem
     setCurrentItem(quizItem)
     questionSeq.current += 1 // fresh key namespace for this question's option tiles
-    setShowOptions(config.generateOptions(quizItem))
+    setShowOptions(config.generateOptions(quizItem, optionCountRef.current))
 
     // Clear any existing timeout
     if (timeoutRef.current) {
@@ -524,10 +536,14 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
   // REWARD itself isn't granted here — the ceremony owns that (progressStore.grantPendingRewards).
   const finishRound = (firstTryCorrect: number, longestStreak: number) => {
     const gameId = config.gameId ?? `quiz.${config.quizType}`
+    // Star thresholds come from the SPINE (Difficulty PRD-01 W6), read LIVE at finish time — not from
+    // the config, which is why every quiz config stopped declaring its own `{three:0,two:2}`. Svær
+    // tolerates 1 mistake for 3★ / 3 for 2★: choosing a harder level must not cost the child stars,
+    // the same fairness rule that keeps XP difficulty-independent.
     const outcome = progressStore.recordRoundResult(
       gameId,
       { correct: firstTryCorrect, total: round.length, longestStreak },
-      { starThresholds: config.round?.starThresholds },
+      { starThresholds: starThresholdsFor(difficultyLevel) },
     )
     setRoundOutcome(outcome)
   }
@@ -715,44 +731,14 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
           [PHONE_LANDSCAPE]: { alignItems: 'center', pt: 0 },
         }}>
           <Box
-            sx={{ 
-              display: 'grid',
-              gridTemplateColumns: 'repeat(2, 1fr)',
-              gridAutoRows: 'auto',
-              gap: { xs: '16px', sm: '20px', md: '24px' },
-              width: '100%',
-              maxWidth: { xs: '400px', sm: '500px', md: '600px' },
-              justifyContent: 'center',
-              alignItems: 'center',
-              // Individual card aspect ratio and constraints
-              '& > *': {
-                aspectRatio: '4/3',
-                minHeight: { xs: '80px', sm: '90px', md: '100px' },
-                maxHeight: { xs: '120px', sm: '140px', md: '160px' },
-                width: '100%'
-              },
-              // Orientation specific adjustments
-              '@media (orientation: landscape)': {
-                gridTemplateColumns: 'repeat(4, 1fr)',
-                maxWidth: { xs: '600px', sm: '700px', md: '800px' },
-                '& > *': {
-                  aspectRatio: '4/3',
-                  minHeight: { xs: '60px', sm: '70px', md: '80px' },
-                  maxHeight: { xs: '100px', sm: '110px', md: '120px' }
-                }
-              },
-              // Phone landscape: aspect-driven tiles (150px wide → 112px tall) blew the
-              // ≤480px height budget — fix the tile height instead of the aspect.
-              [PHONE_LANDSCAPE]: {
-                gap: '10px',
-                maxWidth: '680px',
-                '& > *': { aspectRatio: 'auto', height: '84px', minHeight: '84px', maxHeight: '84px' }
-              }
-            }}
+            // Columns + width envelope now follow the TILE COUNT (Difficulty PRD-01 W3) — shared with
+            // MathOperationGame's hand-rolled grid so the two answer zones can't drift. While the board
+            // is still shimmering there are no options yet, so fall back to the level's own count.
+            sx={answerGridSx(showPlaceholders ? optionCount : showOptions.length)}
           >
           {showPlaceholders
             ? // Loading shimmer (welcome gate pending) — same footprint as the real tiles.
-              [0, 1, 2, 3].map((i) => (
+              Array.from({ length: optionCount }, (_, i) => i).map((i) => (
                 <Box
                   key={`placeholder-${i}`}
                   aria-hidden

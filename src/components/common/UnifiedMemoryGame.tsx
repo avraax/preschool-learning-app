@@ -82,8 +82,10 @@ export interface MemoryItemDisplay {
 export interface UnifiedMemoryConfig {
   // Game identification
   gameType: 'letters' | 'numbers' | 'colors' | 'shapes'
-  gameId: string                             // stable per-board id, e.g. 'memory.letters.10'
-  boardPairs: number                         // 10 | 20 — pairs on the board (one board = one round)
+  gameId: string                             // stable id, e.g. 'memory.letters' — one per TYPE, not per
+                                             // board size, so a difficulty change can't split the bests
+  boardPairs: number                         // pairs on the board (one board = one round); 6 | 10 | 15
+                                             // from MEMORY_BOARD[level] — Difficulty PRD-01 W5
   starThresholds: { three: number; two: number }  // in MISTAKES (= mismatched turns)
 
   // Content generation
@@ -191,6 +193,20 @@ const UnifiedMemoryGame: React.FC<UnifiedMemoryGameProps> = ({ config }) => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [audio.isAudioReady])
+
+  // Live difficulty (Difficulty PRD-01 W5): the LEVEL owns the board size, so a change in the adult
+  // menu has to DEAL A NEW BOARD, not just relabel the old one. Without this the init effect's
+  // `hasInitialized` guard leaves the previous card array in place: measured 20 cards still on screen
+  // while the score chip read "Par: 0/6", so the round would have "finished" with 8 cards face-down.
+  // Skips the result screen (a finished board keeps its stars) and the initial mount.
+  const prevBoardPairs = useRef(config.boardPairs)
+  useEffect(() => {
+    if (prevBoardPairs.current === config.boardPairs) return
+    prevBoardPairs.current = config.boardPairs
+    if (roundOutcome) return
+    initializeGame()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [config.boardPairs])
 
   // DEV screenshot harness (?fx=correct|wrong|hint|streak): nudge the mascot bus once per force so
   // the reaction is capturable. The matching VISUAL override (which cards look matched/revealed/
@@ -544,16 +560,46 @@ const UnifiedMemoryGame: React.FC<UnifiedMemoryGameProps> = ({ config }) => {
     }
   }
 
-  // Grid columns derive from board size so both boards fill the viewport with no scroll.
-  const gridCols = config.boardPairs === 10
-    ? { xs: 'repeat(4, 1fr)', sm: 'repeat(5, 1fr)', md: 'repeat(5, 1fr)' }
-    : { xs: 'repeat(5, 1fr)', sm: 'repeat(8, 1fr)', md: 'repeat(10, 1fr)' }
-  const gridColsLandscape = config.boardPairs === 10
-    ? { xs: 'repeat(5, 1fr)', sm: 'repeat(7, 1fr)', md: 'repeat(7, 1fr)' }
-    : { xs: 'repeat(8, 1fr)', sm: 'repeat(10, 1fr)', md: 'repeat(10, 1fr)' }
-  const gridMaxWidth = config.boardPairs === 10
-    ? { md: '640px', lg: '760px' }
-    : { md: '1000px', lg: '1200px' }
+  // Grid columns derive from board size so EVERY board fills the viewport with no scroll. The board is
+  // difficulty-driven now (Difficulty PRD-01 W5), so this covers 6 / 10 / 15 pairs = 12 / 20 / 30 cards
+  // instead of the old two hardcoded sizes. Column counts are chosen to divide the card count evenly
+  // wherever possible (12 → 6×2 landscape, 30 → 10×3) so no row is left holding one or two cards.
+  const plan =
+    config.boardPairs <= 6
+      ? {
+          cols: { xs: 'repeat(4, 1fr)', sm: 'repeat(4, 1fr)', md: 'repeat(4, 1fr)' },
+          colsLandscape: { xs: 'repeat(6, 1fr)', sm: 'repeat(6, 1fr)', md: 'repeat(6, 1fr)' },
+          maxWidth: { md: '520px', lg: '600px' },
+          phoneLandscapeCols: 'repeat(6, 1fr)',
+          phoneLandscapeMaxHeight: '86px',
+          phonePortrait: null as null | Record<string, unknown>,
+        }
+      : config.boardPairs <= 10
+        ? {
+            cols: { xs: 'repeat(4, 1fr)', sm: 'repeat(5, 1fr)', md: 'repeat(5, 1fr)' },
+            colsLandscape: { xs: 'repeat(5, 1fr)', sm: 'repeat(7, 1fr)', md: 'repeat(7, 1fr)' },
+            maxWidth: { md: '640px', lg: '760px' },
+            phoneLandscapeCols: 'repeat(10, 1fr)',
+            phoneLandscapeMaxHeight: '86px',
+            phonePortrait: null as null | Record<string, unknown>,
+          }
+        : {
+            cols: { xs: 'repeat(5, 1fr)', sm: 'repeat(6, 1fr)', md: 'repeat(6, 1fr)' },
+            colsLandscape: { xs: 'repeat(6, 1fr)', sm: 'repeat(10, 1fr)', md: 'repeat(10, 1fr)' },
+            maxWidth: { md: '900px', lg: '1080px' },
+            phoneLandscapeCols: 'repeat(10, 1fr)',
+            phoneLandscapeMaxHeight: '62px',
+            // Phone portrait: many rows of tall cards overflow, so shrink the cap (this is the
+            // successor to the old 20-pair-only override).
+            phonePortrait: {
+              gridTemplateColumns: 'repeat(6, 1fr)',
+              gap: '5px',
+              '& > *': { aspectRatio: '3/4', minHeight: '48px', maxHeight: '84px' },
+            } as null | Record<string, unknown>,
+          }
+  const gridCols = plan.cols
+  const gridColsLandscape = plan.colsLandscape
+  const gridMaxWidth = plan.maxWidth
 
   return (
     <GameShell
@@ -630,25 +676,19 @@ const UnifiedMemoryGame: React.FC<UnifiedMemoryGameProps> = ({ config }) => {
                 maxHeight: { xs: '80px', sm: '90px', md: '100px' }
               }
             },
-            // Phone landscape: many narrow columns so 2 (10-pair) / 3 (20-pair) rows fit
-            // inside a ≤480px-tall viewport without clipping.
+            // Phone landscape: many narrow columns so 2–3 rows fit inside a ≤480px-tall viewport
+            // without clipping.
             [PHONE_LANDSCAPE]: {
-              gridTemplateColumns: config.boardPairs === 10 ? 'repeat(10, 1fr)' : 'repeat(14, 1fr)',
+              gridTemplateColumns: plan.phoneLandscapeCols,
               gap: '5px',
               '& > *': {
                 aspectRatio: '3/4',
                 minHeight: '48px',
-                maxHeight: config.boardPairs === 10 ? '86px' : '62px'
+                maxHeight: plan.phoneLandscapeMaxHeight
               }
             },
-            // Phone portrait: the 20-pair board (5 cols × 8 rows) overflowed — 6 columns.
-            ...(config.boardPairs === 20 && {
-              [PHONE_PORTRAIT]: {
-                gridTemplateColumns: 'repeat(6, 1fr)',
-                gap: '5px',
-                '& > *': { aspectRatio: '3/4', minHeight: '48px', maxHeight: '84px' }
-              }
-            })
+            // Phone portrait: only the biggest board needs its own cap (5 cols × many rows overflowed).
+            ...(plan.phonePortrait ? { [PHONE_PORTRAIT]: plan.phonePortrait } : {})
           }}>
             {gameReady && cards.length > 0 ? cards.map((card, index) => {
               const displayData = config.getDisplayData(card.content)

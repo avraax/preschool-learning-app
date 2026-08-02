@@ -24,6 +24,7 @@ import { useDifficulty } from '../../hooks/useDifficulty'
 import { ColorRepeatButton } from '../common/RepeatButton'
 import { useRound } from '../../hooks/useRound'
 import { progressStore, type RoundOutcome } from '../../services/progressStore'
+import { COLORS_NUANCER, starThresholdsFor } from '../../config/difficulty'
 import { sfx } from '../../services/sfxClient'
 import { mascotBus } from '../../services/mascotBus'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
@@ -80,7 +81,7 @@ const NuancerGame: React.FC = () => {
   const audio = useSimplifiedAudioHook({ componentId: 'NuancerGame', autoInitialize: false })
   const [gameReady, setGameReady] = useState(false)
 
-  const round = useRound({ length: ROUND_QUESTIONS, starThresholds: { three: 0, two: 2 }, gameId: 'colors.nuancer' })
+  const round = useRound({ length: ROUND_QUESTIONS, gameId: 'colors.nuancer' })
   const firstAttemptRef = useRef(true)
   const [roundOutcome, setRoundOutcome] = useState<RoundOutcome | null>(null)
 
@@ -120,11 +121,11 @@ const NuancerGame: React.FC = () => {
     previousHue.current = hue
 
     const fullShades = SHADES[hue]
-    const difficulty = progressStore.difficultyFor('colors')
-    // Let: order just the lightest + darkest (2 slots — a simpler binary task).
-    // Normal: all 3 shades (today, unchanged — regression-safe).
-    // Svær: all 3 shades too (see the decoy tile below for the added challenge).
-    const correct = difficulty === 'let' ? [fullShades[0], fullShades[fullShades.length - 1]] : fullShades
+    // Table-driven (Difficulty PRD-01 §4.5): Let orders just the lightest + darkest (2 slots — a
+    // simpler binary task); Normal all 3; Svær all 3 plus a decoy tile (below).
+    const { slots: slotCount, decoy: wantDecoy } = COLORS_NUANCER[progressStore.difficultyFor('colors')]
+    const correct =
+      slotCount >= fullShades.length ? fullShades : [fullShades[0], fullShades[fullShades.length - 1]]
     setOrder(correct)
 
     // Re-shuffle until the scrambled order isn't already sorted, so it's always a real task.
@@ -137,7 +138,7 @@ const NuancerGame: React.FC = () => {
     // Svær: fold in one decoy shade from a different hue — it has no slot, so the child must
     // recognise it doesn't belong to this hue's light→dark run (Appendix A: "more distractors"),
     // built purely from the existing exported SHADES data (colorContent.ts stays untouched).
-    if (difficulty === 'svaer') {
+    if (wantDecoy) {
       const otherHues = HUE_ORDER.filter((h) => h !== hue)
       const decoyHue = otherHues[Math.floor(Math.random() * otherHues.length)]
       const decoyShades = SHADES[decoyHue]
@@ -219,7 +220,9 @@ const NuancerGame: React.FC = () => {
     const outcome = progressStore.recordRoundResult(
       'colors.nuancer',
       { correct: firstTryCorrect, total: round.length, longestStreak },
-      { starThresholds: { three: 0, two: 2 } },
+      // Svær tolerates 1 mistake for 3★ / 3 for 2★ (Difficulty PRD-01 W6) — a harder level must not
+      // cost the child stars, the same fairness rule that keeps XP difficulty-independent.
+      { starThresholds: starThresholdsFor(progressStore.difficultyFor('colors')) },
     )
     setRoundOutcome(outcome)
   }

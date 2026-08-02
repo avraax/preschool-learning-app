@@ -14,20 +14,23 @@
 // ESM resolver rejects extensionless relative imports even though Vite/tsc accept them (see
 // audio-system.md). Dropping it breaks the prebake script while the app keeps working.
 import { DANISH_PHRASES, getDanishNumberText } from './danish-phrases.ts'
+import {
+  ADDEND_MAX,
+  MINUEND_MAX,
+  COMPARE_MAX,
+  SEQUENCE_LENGTH,
+  allSequenceSpecs,
+  type SequenceSpec,
+} from './difficulty.ts'
 
 export type MathOp = 'addition' | 'subtraction'
 
 // --- Bounds shared with the prebake enumerator -------------------------------------------------
-// The games' per-difficulty ranges are shaped inline (Let/Normal/Svær each pick differently), but they
-// all sit inside these ceilings, and the enumerator bakes the full rectangle inside them. Keep the
-// GAMES reading these constants: a bound raised in a game without touching the constant here would
-// silently drop the new questions' narration back to live, unauditioned Azure.
-/** Largest addend in Plus Opgaver (all levels); sums stay ≤ 20. */
-export const ADDEND_MAX = 10
-/** Largest minuend in Minus Opgaver (all levels). */
-export const MINUEND_MAX = 20
-/** Largest number compared in Sammenlign Tal (both sides). */
-export const COMPARE_MAX = 20
+// The ceilings themselves now live in `difficulty.ts` alongside the per-level tables that must stay
+// inside them (Difficulty PRD-01 W1) — re-exported here so this module stays the one place the
+// enumerator and the games read narration bounds from. A bound raised in a table without raising the
+// ceiling would silently drop those questions' narration back to live, unauditioned Azure.
+export { ADDEND_MAX, MINUEND_MAX, COMPARE_MAX, SEQUENCE_LENGTH }
 
 /** Every (a, b) Plus Opgaver can ask. A superset is safe (it only bakes a clip nothing plays); a
  *  SUBSET is not (the missing question falls back to live Azure), so keep this generous. */
@@ -78,18 +81,14 @@ export const sequenceFactText = (numbers: number[]): string =>
   numbers.map(getDanishNumberText).join(', ')
 
 /**
- * Every numeric sequence Hvad Mangler? can complete. Mirrors the four generators in
- * `HvadManglerGame` (count by 1 / skip 2 / skip 5 / skip 10, all length `SEQUENCE_LENGTH`) — the
- * starts are the same small closed sets, so this is the whole reachable inventory of read-backs.
+ * Every numeric sequence Hvad Mangler? can complete — **DERIVED from the difficulty table**, never
+ * hand-copied (Difficulty PRD-01 W7). It used to be a hardcoded list of exactly the old narrow starts
+ * (count-by-1 1–10, skip-2 0/2/4/6, skip-5 5/10/15, skip-10 **only** 10), which is also what pinned
+ * `skip-10` to the identical `10 20 30 40 50` question forever. `makeSequenceQuestion` draws from
+ * `sequenceSpecsForLevel`, so this union is exactly the reachable inventory of spoken read-backs.
  */
-export const SEQUENCE_LENGTH = 5
-export const sequenceStarts: Array<{ start: number; step: number }> = [
-  ...Array.from({ length: 10 }, (_, i) => ({ start: i + 1, step: 1 })), // count by 1, start 1..10
-  ...Array.from({ length: 4 }, (_, i) => ({ start: i * 2, step: 2 })), // skip 2, start 0/2/4/6
-  ...Array.from({ length: 3 }, (_, i) => ({ start: (i + 1) * 5, step: 5 })), // skip 5, start 5/10/15
-  { start: 10, step: 10 }, // skip 10
-]
-export const sequenceNumbers = ({ start, step }: { start: number; step: number }): number[] =>
+export const sequenceStarts: SequenceSpec[] = allSequenceSpecs()
+export const sequenceNumbers = ({ start, step }: SequenceSpec): number[] =>
   Array.from({ length: SEQUENCE_LENGTH }, (_, i) => start + i * step)
 
 // --- Farver -------------------------------------------------------------------------------------

@@ -14,6 +14,7 @@ import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 import { ColorProgressChip } from '../common/ScoreChip'
 import { useRound } from '../../hooks/useRound'
 import { progressStore, type RoundOutcome } from '../../services/progressStore'
+import { COLORS_FARVEJAGT, starThresholdsFor } from '../../config/difficulty'
 import { sfx } from '../../services/sfxClient'
 import { mascotBus } from '../../services/mascotBus'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
@@ -32,7 +33,8 @@ import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 
 // ── Tuning levers (static difficulty — edit here, no adaptive logic) ──────────────────────────
 const ROUND_BOARDS = 5            // boards (questions) per round → RoundResultScreen
-const DISTRACTORS_PER_COLOR = 1   // calmer ~12-item board (was 2) — the NORMAL baseline
+// Board SIZE is this game's difficulty axis (Difficulty PRD-01 §4.5) — `COLORS_FARVEJAGT[level]`:
+// Let 3 distractor colours ×1 (~6 items) · Normal all others ×1 (~12) · Svær all ×2 (~20).
 const WRONG_DROPS_BEFORE_HINT = 2 // pulse a correct item after this many wrong drops on a board
 const CIRCLE = 180                // target circle diameter (px); ring + pip geometry derive from it
 const FLOURISH_MS = 700           // board-complete ring spin/pop before advancing
@@ -94,7 +96,7 @@ const FarvejagtGame: React.FC = () => {
   const [gameReady, setGameReady] = useState(false)
 
   // Bounded round + reward flow (Overhaul Farver §Farvejagt). 5 boards, 3★ = 0 wrong-drop boards, 2★ ≤ 2.
-  const round = useRound({ length: ROUND_BOARDS, starThresholds: { three: 0, two: 2 }, gameId: 'colors.farvejagt' })
+  const round = useRound({ length: ROUND_BOARDS, gameId: 'colors.farvejagt' })
   const firstAttemptRef = useRef(true)   // first-try flag for the CURRENT board
   const [roundOutcome, setRoundOutcome] = useState<RoundOutcome | null>(null)
 
@@ -191,14 +193,11 @@ const FarvejagtGame: React.FC = () => {
     const distractorObjects: any[] = []
     const allOtherColors = Object.keys(DANISH_OBJECTS).filter(color => color !== target.color)
 
-    // Static difficulty (progressStore.difficultyFor — no adaptivity). Let: fewer distractor
-    // colors (calmer board). Normal (today, unchanged): every other color, 1 distractor each.
-    // Svær: every other color, 2 distractors each (+distractors, per Appendix A).
-    const difficulty = progressStore.difficultyFor('colors')
-    const distractorColors = difficulty === 'let'
-      ? shuffle(allOtherColors).slice(0, 3)
-      : allOtherColors
-    const perColor = difficulty === 'svaer' ? DISTRACTORS_PER_COLOR + 1 : DISTRACTORS_PER_COLOR
+    // Static difficulty (progressStore.difficultyFor — no adaptivity), table-driven: how many OTHER
+    // hues contribute distractors, and how many each contributes.
+    const { distractorColors: colorCount, perColor } = COLORS_FARVEJAGT[progressStore.difficultyFor('colors')]
+    const distractorColors =
+      colorCount === null ? allOtherColors : shuffle(allOtherColors).slice(0, colorCount)
 
     distractorColors.forEach(color => {
       const colorObjects = DANISH_OBJECTS[color as keyof typeof DANISH_OBJECTS]
@@ -329,7 +328,9 @@ const FarvejagtGame: React.FC = () => {
     const outcome = progressStore.recordRoundResult(
       'colors.farvejagt',
       { correct: firstTryCorrect, total: round.length, longestStreak },
-      { starThresholds: { three: 0, two: 2 } },
+      // Svær tolerates 1 mistake for 3★ / 3 for 2★ (Difficulty PRD-01 W6) — a harder level must not
+      // cost the child stars, the same fairness rule that keeps XP difficulty-independent.
+      { starThresholds: starThresholdsFor(progressStore.difficultyFor('colors')) },
     )
     setRoundOutcome(outcome)
   }

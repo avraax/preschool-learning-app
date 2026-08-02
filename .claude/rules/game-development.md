@@ -30,8 +30,14 @@ Most task-based quizzes are a thin **config** over `src/components/common/Unifie
 (see AlphabetGame, MathGame, the three English games, LaesOrdetGame, HvadManglerGame). The config
 (`UnifiedQuizConfig`) provides:
 
-- **Content**: `generateQuizItem()`, `generateOptions(correct)` (return the shuffled tile set — use
-  `shuffle()` from `src/utils/shuffle.ts`, never a biased `.sort(() => Math.random())`).
+- **Content**: `generateQuizItem()`, `generateOptions(correct, optionCount)` (return the shuffled tile set
+  — use `shuffle()` from `src/utils/shuffle.ts`, never a biased `.sort(() => Math.random())`).
+  **`optionCount` is resolved CENTRALLY by the engine** from the difficulty table
+  (`optionCountFor(gameId, level)` — 3/4/5, or 3/4/6 for Læs Ordet's picture tiles), so no config
+  hand-rolls it; each game still owns *which* distractors it picks and must return exactly that many
+  items. The grid's columns + width envelope follow the count via the shared
+  `src/components/common/answerGrid.ts` (also used by the hand-rolled `MathOperationGame`) — never
+  hardcode `repeat(2)`/`repeat(4)` in a game again, and never leave a row holding a single tile.
 - **Chrome**: `title`, `emoji`, `theme` (a `CategoryTheme`), `ScoreChipComponent`,
   `RepeatButtonComponent`, `backRoute`, `showRepeat` (default true).
 - **Audio**: `gameWelcomeType` (add the string to `GAME_WELCOME_MESSAGES` in
@@ -40,8 +46,10 @@ Most task-based quizzes are a thin **config** over `src/components/common/Unifie
   INSTEAD of echoing the tapped item (single channel — replaces, never stacks; e.g. Hvad Mangler's
   finished sequence). `skipFirstPrompt` suppresses voicing the first prompt when the welcome already
   said it.
-- **Bounded round + rewards** (opt-in): set `round` (a `RoundConfig`, default 8 questions,
-  `starThresholds`) **and** `gameId` (stable progress id, e.g. `'alphabet.quiz'`). The engine then
+- **Bounded round + rewards** (opt-in): set `round` (a `RoundConfig`, default 8 questions) **and**
+  `gameId` (stable progress id, e.g. `'alphabet.quiz'`). **Don't set `starThresholds`** — they come from
+  the difficulty spine at finish time (`starThresholdsFor(level)`), which is what makes Svær more
+  forgiving; a config that pins its own would opt that game out of the fairness rule. The engine then
   runs the round via `useRound`, ends on `RoundResultScreen`, and records to `progressStore`
   (stars/bests). Absent → legacy endless behavior. Wrong answers never punish; they only
   break the question's first-try flag. Put the `gameId` on the **`RoundConfig`** too (hand-rolls pass
