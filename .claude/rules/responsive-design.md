@@ -105,6 +105,54 @@ is a dead button with no error, no failing test and a screenshot that looks righ
 - Prefer standing the lower surface DOWN over out-stacking it — one blocking overlay at a time is the
   app's rule (see `authUiOpen` in `.claude/rules/audio-system.md`). The z-index is the backstop.
 
+## Decor next to content: RESERVE the space, don't tune a percentage
+
+Background decor positioned as `position: absolute; left/top: N%` cannot be tuned to clear content whose
+extent it doesn't know. The section-menu landmark (`GameSelectionLayout`) sat at `left:2%; top:54%` while
+the game-tile flow sized itself from the game COUNT × viewport × orientation — so it collided in exactly
+the configurations nobody screenshotted: measured a 106×46px overlap with "Lær Tal" at 1254×872 and
+79×116px into "Sammenlign Tal" at 768×1024 (portrait wraps the flow down into the landmark), while
+1024×768 looked perfectly fine. Every "fix the percentage" is a fix for one viewport.
+
+- Make the decor and the content **siblings in one flex container** so the decor reserves its own track
+  and the content lays out in what's left. Clearance then holds for every section, skin, device and
+  orientation *by construction* — no magic numbers to re-tune.
+- **Reserve along the axis that has slack, and check what the reservation costs.** A left COLUMN is the
+  obvious move and it was wrong here: it stole ~1.8 tiles of width and wrapped Tal og Regning's 7 tiles
+  to 6 + a lone "Hukommelse" — trading an overlap for the orphan row we refuse in the quiz grids. A
+  COLUMN direction (tiles, then decor beneath, `alignSelf: flex-end` to dodge the corner mascot) costs
+  nothing, because this layout's spare space is vertical (~200px of ~700 used on iPad landscape).
+  So measure the row shape too, not just the overlap — otherwise the "fix" quietly degrades composition.
+- A vertical-only idle float stays inside its own track, so decor can still breathe.
+- The same class covers ThemeScene's stage-gated `bloomScenery` sprites (also absolute-percent, and
+  invisible until the child has bloomed — seed with `?rewards=45` or you will never see them) and the
+  corner mascot. **Drifting `AmbientField` sprites are exempt**: they cross the whole sky by design, so a
+  momentary pass behind a tile is the feature. Don't carve a hole in the sky — a cloud that vanishes
+  mid-flight is worse than one that passes behind a puzzle piece.
+- Verify by **measuring rect intersections** across sections × skins × viewports × both orientations, not
+  by eye. And guard the probe: a crashed route still satisfies `--wait-for` on the error boundary's
+  "Prøv igen" button, and "0 overlaps" is then vacuously true because there are no tiles at all —
+  assert the expected tile count and bail on `Noget gik galt` (this bit for real when a parallel
+  session's half-saved file crashed the route mid-sweep).
+
+## A corner-inset control is a CLIPPING problem, not a spacing one
+
+`theme.shape.borderRadius` is **16** here, so an sx `borderRadius: 4` is **64px** — and a card with
+`overflow: hidden` silently *cuts* anything straying outside that arc. The audio-permission modal's ✕ (a
+32px `size="small"` button at `top/right: 8`) had its disc centre 24px in against a 64px arc, so the
+corner ate a crescent of it: it read as "too close to the edge" when it was actually being clipped.
+
+A round control of diameter `d` inset `i` from both edges of a corner radius `R` is fully inside iff
+`√2·(R − (i + d/2)) + d/2 ≤ R`. For R=64 and d=44 that needs `i ≥ ~13`; the shipped value is 16
+(58.8 ≤ 64, ~5px slack). Recompute when the radius or the size changes, and **don't read MUI's
+`borderRadius: N` as N pixels** — it multiplies `shape.borderRadius`.
+
+Verifying this one is awkward because the modal is unreachable headlessly (`?nogate=1` — the only way
+past the auth gate — explicitly stands it down via `shouldRenderAudioPrompt`, and minting a real session
+just for a screenshot writes into the owner's production DB). Reproduce the **px geometry** in any live
+page instead (two discs on two `overflow:hidden` cards of the same radius) and screenshot the A/B — the
+clipped crescent is unmistakable.
+
 ## Don'ts
 
 - No fixed heights like `height: 200px`

@@ -109,23 +109,35 @@ const SimplifiedAudioPermission: React.FC = () => {
                 }
               }}
             >
-              {/* Close button */}
+              {/* Close button. The inset is COMPUTED against the card's corner arc, not eyeballed.
+                  This theme sets `shape.borderRadius: 16`, so the Paper's `borderRadius: 4` is **64px** —
+                  and the Paper is `overflow: hidden`, so anything straying outside that arc is silently
+                  CLIPPED. The old 32px `size="small"` button at top/right 8 put its disc centre 24px in;
+                  the arc's centre of curvature is 64px in, so √2·(64−24) = 57 > 64−16 and the disc was
+                  cut by the corner. That clipping is what read as "too close to the edge".
+                  A 44px disc (also the app's touch minimum, which `size="small"` missed) at inset 16
+                  centres 38px in: √2·(64−38) + 22 = 58.8 ≤ 64, so the whole disc clears the curve with
+                  ~5px to spare. Recompute this if the radius or the button size ever changes.
+                  The translucent backing gives it a body on the gradient — a bare white glyph on
+                  mid-purple is easy to miss, and this is one of the two controls that MUST dismiss
+                  (see audio-system.md). */}
               <IconButton
                 onClick={hidePrompt}
+                aria-label="Luk"
                 sx={{
                   position: 'absolute',
-                  top: 8,
-                  right: 8,
+                  top: 16,
+                  right: 16,
+                  width: 44,
+                  height: 44,
                   color: 'white',
-                  opacity: 0.8,
+                  backgroundColor: 'rgba(255,255,255,0.14)',
                   '&:hover': {
-                    opacity: 1,
-                    backgroundColor: 'rgba(255,255,255,0.1)'
+                    backgroundColor: 'rgba(255,255,255,0.26)'
                   }
                 }}
-                size="small"
               >
-                <Close />
+                <Close fontSize="small" />
               </IconButton>
 
               {/* Audio icon with animation */}

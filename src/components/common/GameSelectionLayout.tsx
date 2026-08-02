@@ -171,23 +171,61 @@ const GameSelectionLayout: React.FC<GameSelectionLayoutProps> = ({
         }}
       >
         {immersive ? (
-          <>
+          /* The landmark and the tile flow are SIBLINGS IN A COLUMN, so the landmark reserves space the
+             tiles can never be laid into — while the tiles keep the FULL width they had.
+             The landmark used to be `position:absolute; left:2%; top:54%` while the flow sized itself
+             independently, so it collided as soon as the flow got wide or wrapped: measured a 106×46px
+             overlap with "Lær Tal" at 1254×872 and 79×116px into "Sammenlign Tal" at 768×1024. Tuning
+             those percentages can only ever fix one viewport, because the flow's extent depends on the
+             game COUNT × viewport × orientation.
+             Why a column and not a row: reserving a left COLUMN also works, but it steals ~1.8 tiles of
+             width, which wrapped Tal og Regning's 7 tiles to 6 + a lone "Hukommelse" — the same orphan
+             row we refuse in the quiz grids. Vertical space is what this layout actually has spare (the
+             tile band uses ~200px of ~700 on iPad landscape), so the landmark takes its clearance there
+             and sits in the empty lower band. Structural either way; this one costs no composition. */
+          <Box
+            sx={{
+              position: 'relative',
+              zIndex: 1,
+              width: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'stretch',
+              justifyContent: 'center',
+              gap: { xs: 1, md: 2 },
+              minHeight: 0,
+            }}
+          >
+            {/* Game tiles as tactile soft-3D objects in a count-aware tactile flow (never a grid). */}
+            <Box sx={{ flex: '0 0 auto', width: '100%' }}>
+              <SceneObjectField
+                items={tileItems}
+                frozen={frozen}
+                burstMotion={burstMotion}
+                attractKey={attractKey}
+                float={darkScene}
+                flowSize="clamp(66px, 12vh, 116px)"
+              />
+            </Box>
+
             {/* Enlarged section landmark resting large in the framed scene — reinforces "you are in
                 the reading/counting place." Decorative (we're already here → non-interactive). Hidden
-                on phones to keep the compact layout uncluttered. */}
+                on phones to keep the compact layout uncluttered. Aligned RIGHT because the corner
+                mascot owns the bottom-left; the idle float is vertical-only and stays inside this
+                track, so it can never drift into the tiles. `flexShrink` lets it give up height first
+                on a short viewport rather than pushing the tiles off-screen. */}
             <Box
               aria-hidden
               component={motion.div}
               animate={reduce ? undefined : { y: [0, -10, 0] }}
               transition={reduce ? undefined : { duration: 5.5, repeat: Infinity, ease: 'easeInOut' }}
               sx={{
-                position: 'absolute',
-                left: '2%',
-                top: '54%',
-                transform: 'translateY(-50%)',
-                width: 'clamp(120px, 22vh, 230px)',
+                flex: '0 1 auto',
+                minHeight: 0,
+                alignSelf: 'flex-end',
+                mr: { xs: '2%', md: '4%' },
+                width: 'clamp(110px, 18vh, 200px)',
                 pointerEvents: 'none',
-                zIndex: 0,
                 opacity: 0.96,
                 [PHONE_ANY]: { display: 'none' },
               }}
@@ -200,19 +238,7 @@ const GameSelectionLayout: React.FC<GameSelectionLayoutProps> = ({
                 sx={{ display: 'block', width: '100%', height: 'auto', objectFit: 'contain', filter: softShadow(2.4), userSelect: 'none' }}
               />
             </Box>
-
-            {/* Game tiles as tactile soft-3D objects in a count-aware tactile flow (never a grid). */}
-            <Box sx={{ position: 'relative', zIndex: 1, width: '100%' }}>
-              <SceneObjectField
-                items={tileItems}
-                frozen={frozen}
-                burstMotion={burstMotion}
-                attractKey={attractKey}
-                float={darkScene}
-                flowSize="clamp(66px, 12vh, 116px)"
-              />
-            </Box>
-          </>
+          </Box>
         ) : (
           <Box
             sx={{
