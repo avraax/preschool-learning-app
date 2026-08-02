@@ -2,7 +2,6 @@ import React from 'react'
 import UnifiedQuizGame, { UnifiedQuizConfig, QuizItem } from '../common/UnifiedQuizGame'
 import { DANISH_PHRASES } from '../../config/danish-phrases'
 import { categoryThemes } from '../../config/categoryThemes'
-import { AlphabetScoreChip } from '../common/ScoreChip'
 import { AlphabetRepeatButton } from '../common/RepeatButton'
 import { progressStore } from '../../services/progressStore'
 import { ALPHABET_QUIZ } from '../../config/difficulty'
@@ -103,7 +102,6 @@ const AlphabetGame: React.FC = () => {
     backRoute: '/alphabet',
     
     // Component configuration
-    ScoreChipComponent: AlphabetScoreChip,
     RepeatButtonComponent: AlphabetRepeatButton,
     
     // Audio configuration

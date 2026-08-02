@@ -2,7 +2,6 @@ import React from 'react'
 import { useParams } from 'react-router-dom'
 import UnifiedMemoryGame, { UnifiedMemoryConfig, MemoryItemDisplay } from '../common/UnifiedMemoryGame'
 import { categoryThemes } from '../../config/categoryThemes'
-import { AlphabetScoreChip, MathScoreChip } from '../common/ScoreChip'
 import { AlphabetRestartButton, MathRestartButton } from '../common/RestartButton'
 import { AlphabetRepeatButton, MathRepeatButton } from '../common/RepeatButton'
 import { shuffle } from '../../utils/shuffle'
@@ -80,7 +79,6 @@ const MemoryGame: React.FC = () => {
     backPath: '/alphabet',
     theme: categoryThemes.alphabet,
 
-    ScoreComponent: AlphabetScoreChip,
     RepeatButtonComponent: AlphabetRepeatButton,
     RestartButtonComponent: AlphabetRestartButton
   }
@@ -120,7 +118,6 @@ const MemoryGame: React.FC = () => {
     backPath: '/math',
     theme: categoryThemes.math,
 
-    ScoreComponent: MathScoreChip,
     RepeatButtonComponent: MathRepeatButton,
     RestartButtonComponent: MathRestartButton
   }

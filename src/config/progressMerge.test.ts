@@ -17,8 +17,8 @@ import {
   bloomXpFor,
   type PersistedProgress,
 } from './progressSchema.ts'
-import { REWARD_PATH } from './stickers.ts'
-import { FAST_SLOTS, REWARD_SLOTS, REWARD_XP, collectedFromLevel, levelFromXp } from './progression.ts'
+import { REWARD_PATH, REWARD_SLOTS } from './stickers.ts'
+import { FAST_SLOTS, REWARD_XP, collectedFromLevel, levelFromXp } from './progression.ts'
 
 const NOW = 1_800_000_000_000
 const CTX = { now: NOW, deviceId: 'device-A' }
@@ -49,12 +49,16 @@ function doc(
   return normalizePersisted(JSON.parse(JSON.stringify(p)))!
 }
 
-/** Four states spanning the interesting regions of the path. */
+/** Four states spanning the interesting regions of the path.
+ *
+ * There is no past-the-end sample any more: the gold pass is deleted (Reward Horizon PRD-01 §3.5), so
+ * a cursor beyond REWARD_SLOTS is now a CORRUPT state the merge repairs rather than a legal one it has
+ * to preserve — see 'a cursor past the end of the book is CLAMPED' below. */
 const SAMPLES = () => ({
   fresh: doc(0),
   midBook: doc(7),
-  exactly45: doc(REWARD_SLOTS),
-  goldPass: doc(REWARD_SLOTS + 6),
+  nearlyFull: doc(REWARD_SLOTS - 1),
+  fullBook: doc(REWARD_SLOTS),
 })
 
 // ----- the three laws ----------------------------------------------------------------------------
@@ -74,8 +78,8 @@ test('LAW 2 — commutative: merge(a, b) and merge(b, a) agree on content', () =
   const s = SAMPLES()
   const pairs: Array<[PersistedProgress, PersistedProgress, string]> = [
     [s.fresh, s.midBook, 'fresh/mid'],
-    [s.midBook, s.exactly45, 'mid/45'],
-    [s.exactly45, s.goldPass, '45/gold'],
+    [s.midBook, s.nearlyFull, 'mid/nearly'],
+    [s.nearlyFull, s.fullBook, 'nearly/full'],
     [doc(4, 'device-A'), doc(9, 'device-B'), 'two devices'],
   ]
   for (const [a, b, name] of pairs) {
@@ -169,17 +173,23 @@ test('a device only ever increments ITS OWN entry, so a stale remote copy cannot
   assert.equal(report.changed, false)
 })
 
-test('GOLD-PASS CURSOR preserved for a past-45 player (no phantom fistful of golds)', () => {
-  const a = doc(REWARD_SLOTS + 6, 'device-A')
-  const b = doc(REWARD_SLOTS + 6, 'device-A') // the same device, synced
+test('a cursor past the end of the book is CLAMPED, not preserved', () => {
+  // Reachable for real: the ledger is a G-Counter, so two devices that each filled the book offline
+  // sum to 2×REWARD_SLOTS. The gold pass used to absorb that by wrapping into duplicates; with it gone
+  // the cursor has to be capped here, or `rewardNumber()` out-runs the pictures that exist.
+  const a = doc(REWARD_SLOTS, 'device-A')
+  const b = doc(REWARD_SLOTS, 'device-B')
   const { merged } = mergeProgress(a, b, CTX)
-  assert.equal(merged.stickers.grantedSlots, REWARD_SLOTS + 6)
-  assert.equal(owedRewards(merged), 0)
-  // The book still reads 45, and the duplicates are on the right rewards.
+  assert.equal(merged.stickers.grantedSlots, REWARD_SLOTS)
+  assert.equal(totalSlots(merged), REWARD_SLOTS, 'the ledger is trimmed too, or the invariant breaks')
+  assert.equal(owedRewards(merged), 0, 'a full book owes nothing however much XP is behind it')
+  assert.deepEqual(progressInvariantViolations(merged), [])
+
+  // The book reads exactly the path, once each — no duplicate anywhere.
   const s = derive(merged, NOW)
   assert.equal(s.totals.totalStickers, REWARD_SLOTS)
-  assert.equal(s.stickers.collected[REWARD_PATH[5].id].count, 2)
-  assert.equal(s.stickers.collected[REWARD_PATH[6].id].count, 1)
+  assert.equal(s.stickers.collected[REWARD_PATH[5].id].count, 1)
+  assert.equal(s.stickers.collected[REWARD_PATH[REWARD_SLOTS - 1].id].count, 1)
 })
 
 test('membership is re-derived from SLOTS, not the level — a pending ceremony survives a merge', () => {

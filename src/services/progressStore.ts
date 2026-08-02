@@ -21,7 +21,7 @@
 // (which won't resolve extensionless relative specifiers). Vite/tsc accept them
 // (allowImportingTsExtensions), and it keeps this file testable outside a browser.
 import {
-  REWARD_PATH,
+  REWARD_SLOTS,
   allRewards,
   chapterForRewardId,
   chapterAt,
@@ -38,9 +38,9 @@ import {
   taskXp,
   BROWSE_TASK_XP,
   CHAPTER_SIZE,
-  REWARD_SLOTS,
   chapterOfSlot,
   companionStageForCollected,
+  rewardNumber,
 } from '../config/progression.ts'
 import {
   ACCOUNT_KEY,
@@ -55,7 +55,6 @@ import {
   inertState,
   normalizePersisted,
   owedRewards as owedFromDoc,
-  pathIndexForSlot,
   progressInvariantViolations,
   progressKeyFor,
   rebuildCollected,
@@ -117,17 +116,19 @@ export interface XpGrantResult {
 
 // One reward handed over by a ceremony. Deterministic: `slot` came straight off the path, never a
 // random pick — the ring had been showing this exact object while it filled.
+//
+// There is no `gold` / `count` any more (Reward Horizon PRD-01 §3.5): the path never wraps, so a
+// reward is handed over AT MOST ONCE and `isNew` is always true. The pair is kept as a field only
+// because a ceremony still wants to know whether this was the book's first sighting of that slot.
 export interface RewardGrant {
   reward: Reward
   slot: number // 0-based index into REWARD_PATH
   chapter: RewardChapter
-  chapterIndex: number // 0..4
-  slotInChapter: number // 0..8 (drives the ceremony's 9-dot strip)
+  chapterIndex: number // 0-based
+  slotInChapter: number // 0..8 (drives the ceremony's 3x3 chapter grid)
   chapterCompleted: boolean // this grant filled the last empty slot of its chapter
-  bookCompleted: boolean // this grant filled slot 45 for the first time
-  gold: boolean // past the end of the path → a shiny duplicate (the gold pass)
+  bookCompleted: boolean // this grant filled the LAST slot of the last chapter, for the first time
   isNew: boolean // first time ever collected
-  count: number // total owned of this reward after the grant
 }
 
 export interface RoundResultInput {
@@ -447,16 +448,14 @@ class ProgressStore {
    *
    * There is NO randomness anywhere in here: the slot comes from the level cursor and the reward comes
    * straight off REWARD_PATH, which is exactly why the corner ring can show the prize BEFORE it's
-   * earned. Past the end of the path the GOLD PASS wraps deterministically — cursor 45 is a gold
-   * duplicate of slot 1 — so late play is still a path, not a random duplicate.
+   * earned. Past the end of the path there is now NOTHING — the gold pass is deleted, the book has a
+   * real ending, and `owedRewards()` clamps so this is never reached out of range.
    */
   private grantSlot(draft: PersistedProgress, cursor0: number): RewardGrant {
     const slot = Math.max(0, Math.floor(cursor0))
-    const gold = slot >= REWARD_SLOTS
-    const pathIndex = pathIndexForSlot(slot)
-    const reward = rewardAt(pathIndex) ?? REWARD_PATH[0]
-    const chapter = chapterForRewardId(reward.id) ?? chapterAt(pathIndex)!
-    const chapterIndex = chapterOfSlot(pathIndex)
+    const reward = rewardAt(slot)!
+    const chapter = chapterForRewardId(reward.id) ?? chapterAt(slot)!
+    const chapterIndex = chapterOfSlot(slot)
 
     const now = nowMs()
     const before = rebuildCollected(slot, draft.stickers.firstAt, now)
@@ -476,29 +475,43 @@ class ProgressStore {
 
     return {
       reward,
-      slot: pathIndex,
+      slot,
       chapter,
       chapterIndex,
-      slotInChapter: pathIndex - chapterIndex * CHAPTER_SIZE,
+      slotInChapter: slot - chapterIndex * CHAPTER_SIZE,
       chapterCompleted: !wasChapterComplete && nowChapterComplete,
       bookCompleted: !wasBookComplete && nowBookComplete,
-      gold,
       isNew,
-      count: after[reward.id]?.count ?? 1,
     }
   }
 
   /**
-   * How many slots have been HANDED OVER in total, duplicates included — the cursor position along the
-   * (endless, gold-pass-wrapping) path. Now O(1) off the ledger, which also FIXES a latent bug: the old
+   * How many slots have been HANDED OVER in total — the cursor position along the path, which now has
+   * a real end (no gold-pass wrap). Now O(1) off the ledger, which also FIXES a latent bug: the old
    * version summed `stickers.collected[*].count`, and normalize()'s off-path pruning could decrement
    * that sum and manufacture phantom debt the first time someone edited stickers.ts (§10.11).
+   *
+   * PUBLIC since Reward Horizon PRD-01: it is the sole input to `rewardNumber()`, the one number the
+   * child sees, and the tests pin the two against each other.
    */
-  private grantedSlots(): number {
+  grantedSlots(): number {
     return this.persisted ? totalSlots(this.persisted) : 0
   }
 
-  /** Rewards the level cursor says are OWED but not yet handed over. Normally 0 or 1. */
+  /**
+   * THE child-facing number — how many rewards are in the book. Deliberately `grantedSlots`, never
+   * `collectedFromLevel(globalLevel())`: that one is the debt CEILING and runs one ahead while a
+   * ceremony is pending, so the ring badge and the book header would disagree by one for the length of
+   * the RewardWatcher grace — on the very path (ring → book) the door now makes routine (§3.1).
+   *
+   * Consequence, and it is the intended two-beat: mid-game a crossing flashes the won prize in the
+   * ring but does NOT move the number; the number ticks up in the ceremony, with the sticker reveal.
+   */
+  rewardNumber(): number {
+    return rewardNumber(this.grantedSlots())
+  }
+
+  /** Rewards the level cursor says are OWED but not yet handed over. Normally 0 or 1, 0 past the end. */
   private owedRewards(): number {
     return this.persisted ? owedFromDoc(this.persisted) : 0
   }
@@ -516,14 +529,17 @@ class ProgressStore {
     return grants
   }
 
-  /** DISTINCT ids in the book, so a gold duplicate doesn't inflate the "{n} / 45" the child reads. */
+  /**
+   * DISTINCT ids in the book. What the BOOK's per-chapter counts are derived from. With the gold pass
+   * gone there are no duplicates, so this equals `rewardNumber()` always — asserted, not assumed.
+   */
   collectedCount(): number {
     return Object.keys(this.state.stickers.collected).length
   }
 
   /**
    * The reward the corner ring is filling toward and the book previews as a silhouette — the SINGLE
-   * source for the ring, the book, the home shelf and the result meter. `null` once the book is full.
+   * source for the ring, the book and the result meter. `null` once the book is full.
    */
   nextReward(): { reward: Reward; slot: number; chapter: RewardChapter } | null {
     const slot = this.grantedSlots()
@@ -533,7 +549,7 @@ class ProgressStore {
     return { reward, slot, chapter: chapterForRewardId(reward.id) ?? chapterAt(slot)! }
   }
 
-  /** The companion's growth stage (0..4) — the 5 chapters ARE the 5 stages. */
+  /** The companion's growth stage (0..COMPANION_STAGES-1) — one per chapter, then fully grown. */
   companionStage(): number {
     return companionStageForCollected(this.collectedCount())
   }

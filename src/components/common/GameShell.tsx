@@ -13,7 +13,7 @@ import { mascotBus } from '../../services/mascotBus'
 import type { GuideReaction } from './ThemeMascot'
 
 // Shared in-game scaffold (Game-Page Rework + UI/UX Overhaul PRD §5.3). Every game renders its
-// body into this: the dimmed world backdrop (GameMotif), a themed header (back / title / score),
+// body into this: the dimmed world backdrop (GameMotif), a themed header (back / title / reward ring),
 // the reactive corner Mascot, and the themed CelebrationEffect.
 //
 // Layout: when a `promptStage` is supplied the body becomes a top-anchored 3-zone column
@@ -25,10 +25,17 @@ interface GameShellProps {
   categoryId: string                 // 'alphabet' | 'math' | 'colors' | 'english' | 'ordleg'
   title: string
   backRoute: string
-  score?: React.ReactNode
-  // Live cross-game XP indicator (Liveliness PRD-04): a compact level ring shown in the header,
-  // beside the score, on EVERY game. Set false for a rare opt-out. Ticks/pops per task and does a
-  // non-interrupting burst on a mid-game level-up (the big ceremony is deferred).
+  // Live cross-game XP indicator (Liveliness PRD-04): the reward ring, on EVERY game. Set false for a
+  // rare opt-out. Ticks/pops per task and does a non-interrupting burst on a mid-game level-up (the
+  // big ceremony is deferred).
+  //
+  // It is the ONLY thing in this corner. There used to be a `score` slot beside it holding a
+  // `ScoreChip` — a pill of one pip per question in the round — and every game passed one. It was a
+  // SECOND progress meter inches from the first, with nothing on screen to say that one counts this
+  // round and the other counts the whole book; and eight identical pips is past the subitizing limit
+  // (4-5), so it invited counting rather than reading. Owner removed it, 2026-08-02. The round is
+  // still bounded at 8 and `RoundResultScreen` still reports it — the child just isn't shown a
+  // second meter mid-play. Do not reintroduce a header slot here.
   levelIndicator?: boolean
   guideReaction?: GuideReaction      // 'cheer' on correct, 'think' on wrong (bridged to mascotBus)
   celebration?: { show: boolean; intensity?: 'low' | 'medium' | 'high'; duration?: number; onComplete?: () => void }
@@ -46,7 +53,6 @@ const GameShell: React.FC<GameShellProps> = ({
   categoryId,
   title,
   backRoute,
-  score,
   levelIndicator = true,
   guideReaction = null,
   celebration,
@@ -60,7 +66,7 @@ const GameShell: React.FC<GameShellProps> = ({
   const dark = theme.scene.dark
   const immersive = theme.scene.layers.length > 0
   // Phone landscape: play-surface first — the title moves INTO the header row (between back
-  // and score) so its own row's height goes to the game body instead.
+  // and the ring) so its own row's height goes to the game body instead.
   const phoneLandscape = useMediaQuery(PHONE_LANDSCAPE.replace('@media ', ''))
 
   // Bridge the legacy `guideReaction` prop onto the mascot bus so EVERY game that already reports
@@ -90,7 +96,7 @@ const GameShell: React.FC<GameShellProps> = ({
           world from the persistent layer, so GameMotif renders nothing there. */}
       <GameMotif categoryId={categoryId} />
 
-      {/* Header: back (left) + score (right). The themed title sits below, centred. */}
+      {/* Header: back (left) + the reward ring (right). The themed title sits below, centred. */}
       <AppBar position="static" color="transparent" elevation={0}>
         <Toolbar
           sx={{
@@ -125,14 +131,13 @@ const GameShell: React.FC<GameShellProps> = ({
             </Typography>
           )}
 
-          {/* Right cluster: live cross-game level ring (Liveliness PRD-04) + the game's own score
-              chip. The ring reads the shared store so it keeps climbing across games; phone-landscape
-              gets a smaller, flyer-less variant so it never fights the inline title/score row. */}
+          {/* Right cluster: the live cross-game reward ring (Liveliness PRD-04), alone. It reads the
+              shared store so it keeps climbing across games; phone-landscape gets a smaller,
+              flyer-less variant so it never fights the inline title row. */}
           <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, md: 1.5 } }}>
             {levelIndicator && (
               <RewardRing flourish compact={phoneLandscape} size={phoneLandscape ? 34 : 46} />
             )}
-            {score}
           </Box>
         </Toolbar>
       </AppBar>

@@ -108,7 +108,6 @@ export interface UnifiedQuizConfig {
   backRoute: string
   
   // Component configuration
-  ScoreChipComponent: React.ComponentType<any>
   RepeatButtonComponent: React.ComponentType<any>
   // Hide the "Gentag" repeat button (e.g. Læs Ordet, where the word must not be read aloud).
   showRepeat?: boolean        // default true
@@ -199,7 +198,10 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
   })
 
   // Centralized game state management
-  const { score, incrementScore, resetScore, handleScoreClick } = useGameState()
+  // `score` itself is no longer READ anywhere — the header chip that displayed it is gone. The
+  // counter is kept because `incrementScore`/`resetScore` still drive the endless-mode tally that
+  // `useRound` doesn't own.
+  const { incrementScore, resetScore } = useGameState()
 
   // Celebration management (rendered by GameShell)
   const { showCelebration, celebrationIntensity, celebrationDuration, celebrateTier, stopCelebration } = useCelebration()
@@ -557,7 +559,6 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
     generateNewQuestion()
   }
 
-  const ScoreChip = config.ScoreChipComponent
   const RepeatButton = config.RepeatButtonComponent
 
   // Per-tile feedback state for the most-recently tapped answer. In DEV, ?fx=correct|wrong forces
@@ -581,9 +582,6 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
   // Until the welcome gate opens (or the resilience fallback fires) the board shows shimmer
   // placeholders instead of an empty grid, so it never looks broken while audio warms up.
   const showPlaceholders = !gameReady || showOptions.length === 0
-
-  const gameId = config.gameId ?? `quiz.${config.quizType}`
-  const bestStars = progressStore.getGame(gameId).bestStars
 
   // Hero subject for the PromptStage (§6A). Uses the config's questionVisual when present; audio-
   // only English (Lyt og Find) shows a neutral "listen" card so it never reveals the answer;
@@ -677,16 +675,6 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
       title={config.title}
       backRoute={config.backRoute}
       guideReaction={guideReaction}
-      score={
-        <ScoreChip
-          answered={round.enabled ? round.state.index : score}
-          total={round.enabled ? round.length : 0}
-          record={bestStars}
-          value={score}
-          disabled={false}
-          onClick={handleScoreClick}
-        />
-      }
       promptStage={
         roundOutcome ? undefined : (
           <PromptFocus

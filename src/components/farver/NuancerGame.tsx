@@ -19,7 +19,6 @@ import PromptFocus from '../common/PromptFocus'
 import RoundResultScreen from '../common/RoundResultScreen'
 import type { GuideReaction } from '../common/ThemeMascot'
 import { useCelebration } from '../common/CelebrationEffect'
-import { ColorProgressChip } from '../common/ScoreChip'
 import { useDifficulty } from '../../hooks/useDifficulty'
 import { ColorRepeatButton } from '../common/RepeatButton'
 import { useRound } from '../../hooks/useRound'
@@ -470,7 +469,6 @@ const NuancerGame: React.FC = () => {
         backRoute="/farver"
         dense
         guideReaction={guideReaction}
-        score={<ColorProgressChip answered={round.state.index} total={ROUND_QUESTIONS} onClick={repeatInstruction} />}
         promptStage={promptStageContent}
         celebration={{ show: showCelebration, intensity: celebrationIntensity, duration: celebrationDuration, onComplete: stopCelebration }}
       >

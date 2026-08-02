@@ -4,6 +4,7 @@ import { useTheme } from '@mui/material/styles'
 import { motion, useAnimationControls, AnimatePresence } from 'framer-motion'
 import { useProgress } from '../../hooks/useProgress'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
+import { onTileColor } from '../../theme/tokens/helpers'
 import { xpBus } from '../../services/xpBus'
 import { rewardArt } from '../../assets/rewards'
 import { uiArt } from '../../assets/ui'
@@ -14,8 +15,17 @@ import CelebrationEffect from './CelebrationEffect'
 //
 // **The ring's centre IS the next prize**, shown as a silhouette; the ring fills around it. The same
 // object sits in the same next slot of Min Bog, so nothing has to be explained: play → the ring around
-// the next prize fills → it's full → that prize is mine, in my book. There is deliberately **no
-// number** here (PRD D9) — a pre-reader reads the picture, and the only count in the app is the book's.
+// the next prize fills → it's full → that prize is mine, in my book.
+//
+// **The badge is THE number** (Reward Horizon PRD-01 D1, reversing Reward Book D9's "no number
+// anywhere"). It equals `progressStore.rewardNumber()` — how many pictures are in the book — and it is
+// never a distance: no "n of 72", no percentage, no "x to go". Only the ring's fill signals nearness.
+// It is drawn PLAIN on purpose (flat disc, one numeral, no soft-3D, no gradient, no shadow): decorating
+// a symbolic progress element measurably increases the cognitive load for a preschooler.
+//
+// It also does not move on a mid-game crossing — the sticker has not been handed over yet
+// (`grantPendingRewards` runs in the ceremony, which is gated off game routes). The prize flashes here;
+// the number ticks there. That two-beat is the model, not a lag.
 //
 // Shown in the in-game header (GameShell) and on the section menus, reading the live store
 // (useProgress), so switching games keeps the SAME ring climbing. Transient flourish via `xpBus`:
@@ -33,10 +43,12 @@ interface RewardRingProps {
   flourish?: boolean
   // Phone-landscape: shrink and hide the "+N" flyer so it never fights the title/score row.
   compact?: boolean
-  // Optional tap. Menus/games leave this off (the ring is pure status there, and a stray tap during
-  // play must never do anything). HOME passes a handler so tapping it speaks how many rewards are in
-  // the book — the affordance the growing companion used to carry before it moved into the Min Bog
-  // card. Supplying it also makes the ring focusable/labelled instead of aria-hidden.
+  // The count badge. On by default — it is the number, not decor, so it survives phone-landscape too.
+  showCount?: boolean
+  // Optional tap. GAMES leave this off (the ring is pure status there, and a stray tap during play
+  // must never do anything). Home and the section menus pass a handler that navigates to Min Bog —
+  // **the ring is the only door** (Reward Horizon PRD-01 D3). Routing deliberately stays at the CALL
+  // SITE, not in here. Supplying it also makes the ring focusable/labelled instead of aria-hidden.
   onTap?: () => void
   ariaLabel?: string
   sx?: SxProps<Theme>
@@ -54,18 +66,20 @@ const RewardRing: React.FC<RewardRingProps> = ({
   size = 46,
   flourish = false,
   compact = false,
+  showCount = true,
   onTap,
   ariaLabel,
   sx = {},
 }) => {
   const theme = useTheme()
   const reduce = useReducedMotion()
-  const { nextReward, xpProgress } = useProgress()
+  const { nextReward, xpProgress, rewardNumber } = useProgress()
   const controls = useAnimationControls()
   const { showCelebration, celebrationIntensity, celebrationDuration, celebrateTier, stopCelebration } = useCelebration()
 
   const next = nextReward()
   const fill = Math.max(0, Math.min(1, xpProgress().fill))
+  const count = rewardNumber()
 
   const [flyers, setFlyers] = useState<Flyer[]>([])
   const flyerId = useRef(0)
@@ -85,6 +99,12 @@ const RewardRing: React.FC<RewardRingProps> = ({
   const ringColor = theme.scene?.progressionCompanion?.ringColor ?? theme.palette.primary.main
   const dark = theme.scene?.dark
   const trackColor = dark ? 'rgba(255,255,255,0.22)' : 'rgba(0,0,0,0.12)'
+
+  // Badge geometry + colour. The numeral is white, so the DISC has to carry the contrast: a pale skin
+  // accent (Havet yellow, Rummet cyan) is unreadable under white text, and `onTileColor` darkens it to
+  // AA while being a no-op on an accent that already reads. Same rule as every accent-on-light surface.
+  const badgeSize = Math.max(20, Math.round(size * 0.46))
+  const badgeFill = onTileColor(ringColor)
 
   // React to every live grant: tick/pop the ring, spawn a "+N" flyer, and on a crossing flash the won
   // prize to full colour + (in-game) burst. Reads live-store fill on re-render, so the animation only
@@ -197,7 +217,39 @@ const RewardRing: React.FC<RewardRingProps> = ({
         )}
       </Box>
 
-      {/* "+N" flyers — float up into the ring on each grant. */}
+      {/* THE NUMBER. Flat opaque disc, one numeral, nothing else — see the header. Hidden at 0: an
+          empty badge on a fresh profile teaches nothing and is one more thing to decode. */}
+      {showCount && count > 0 && (
+        <Box
+          data-reward-count
+          sx={{
+            position: 'absolute',
+            right: -Math.round(size * 0.06),
+            bottom: -Math.round(size * 0.06),
+            minWidth: badgeSize,
+            height: badgeSize,
+            px: count >= 100 ? 0.5 : 0, // widens to a pill at 3 digits
+            borderRadius: '999px',
+            bgcolor: badgeFill,
+            color: '#FFFFFF',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontFamily: '"Comic Sans MS", "Comic Neue", sans-serif',
+            fontWeight: 800,
+            fontSize: Math.round(badgeSize * 0.62),
+            lineHeight: 1,
+            // Deliberately NO softShadow/contactShadow/gradient/border — see the header.
+            pointerEvents: 'none',
+            zIndex: 4,
+          }}
+        >
+          {count}
+        </Box>
+      )}
+
+      {/* "+N" flyers — float up into the ring on each grant. Spawned left of centre so they don't fly
+          straight through the badge in the bottom-right. */}
       <AnimatePresence>
         {flyers.map((f) => (
           <Box
@@ -209,7 +261,7 @@ const RewardRing: React.FC<RewardRingProps> = ({
             transition={{ duration: 0.9, ease: 'easeOut', times: [0, 0.25, 0.7, 1] }}
             sx={{
               position: 'absolute',
-              left: '50%',
+              left: '30%',
               top: 0,
               transform: 'translateX(-50%)',
               pointerEvents: 'none',

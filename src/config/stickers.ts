@@ -1,12 +1,17 @@
-// The reward path (Reward Book PRD-01 §6).
+// The reward path (Reward Book PRD-01 §6, extended by Reward Horizon PRD-01 §3.2/§3.3).
 //
-// 45 rewards in 5 chapters of 9. This flat ORDERED path IS the journey: reaching level N+1 awards
-// slot N (see progression.ts `collectedFromLevel`), so the ring in every game header, the book at
-// /album, and the ceremony all show the same object at the same time.
+// Chapters of 9, and the totals are DERIVED from this data (see REWARD_SLOTS / CHAPTER_COUNT below) —
+// so **a new chapter is content, not engineering**. This flat ORDERED path IS the journey: reaching
+// level N+1 awards slot N (see progression.ts `collectedFromLevel`), so the ring in every game header,
+// the book at /album, and the ceremony all show the same object at the same time.
 //
 // **THE ORDER MUST NEVER BE SHUFFLED.** No `shuffle()`, no random pick, no reordering — anywhere in
 // this system. Determinism is the whole point: the child can always see the next prize, and the same
 // prize is what the ring is filling toward.
+//
+// **APPEND-ONLY, FOREVER.** `firstAt` is keyed by reward id and `rebuildCollected` walks slots through
+// the path, so inserting or reordering silently re-assigns every existing child's book. New chapters
+// go on the END. `stickers.test.ts` pins the first 45 ids in exact order to make that mechanical.
 //
 // Danish labels are spoken aloud (TTS) on reveal and when tapped in the book, so keep them simple,
 // child-recognisable words.
@@ -17,11 +22,12 @@
 // `Reward` but a lookup — `rewardArt(reward.id)` from `src/assets/rewards/index.ts`, which globs the
 // baked renders. Every render site calls that.
 //
-// The art is NO LONGER GATED: all 45 renders ship (16 new + 29 re-trimmed from the game art — see
-// `REWARD_REUSE` in scripts/optimize-theme-art.mjs), so de-emoji PRD-01 W6 deleted the `emoji`
-// fallback from both `Reward` and `RewardChapter`. `rewardArtCoverage.test.ts` fails the build if a
-// render ever goes missing, which is what makes rendering it unconditionally safe.
-// See plans/reward-book/reward-book-art-prompts.md.
+// The art is NOT gated by a fallback: every surface renders `rewardArt(id)` unconditionally (de-emoji
+// PRD-01 W6 deleted the `emoji` field from both `Reward` and `RewardChapter`), and
+// `rewardArtCoverage.test.ts` FAILS THE BUILD when a render is missing. That guard going red after a
+// chapter is appended is the gate doing its job — key the renders, don't reintroduce a fallback.
+// See plans/reward-book/reward-book-art-prompts.md and
+// plans/reward-horizon/chapters-6-8-art-prompts.md.
 
 // NB the explicit `.ts` extension: shared-narration-clips.js imports THIS file in plain Node, which
 // does not resolve extensionless relative specifiers. Vite/tsc accept it (allowImportingTsExtensions).
@@ -40,8 +46,11 @@ export interface RewardChapter {
   rewards: Reward[] // exactly CHAPTER_SIZE
 }
 
-// Chapters map 1:1 onto the 5 companion growth stages (PRD D3), and the slot map is fixed:
-// 1-9 Dyr · 10-18 Køretøjer · 19-27 Mad · 28-36 Natur · 37-45 Havet.
+// The slot map is fixed and append-only:
+// 1-9 Dyr · 10-18 Køretøjer · 19-27 Mad · 28-36 Natur · 37-45 Havet · 46-54 Hjemmet ·
+// 55-63 Leg og musik · 64-72 Fugle og småkryb.
+// The first FIVE chapters map 1:1 onto the 5 baked companion growth stages; past that the companion is
+// fully grown and stays that way (COMPANION_STAGES in progression.ts, deliberately not CHAPTER_COUNT).
 export const REWARD_CHAPTERS: RewardChapter[] = [
   {
     id: 'dyr',
@@ -118,6 +127,56 @@ export const REWARD_CHAPTERS: RewardChapter[] = [
       { id: 'hav-musling', label: 'Musling' },
     ],
   },
+  // ----- Reward Horizon PRD-01 §3.3: chapters 6-8, APPENDED, never inserted -------------------
+  // Chosen for reward PROXIMITY (a reward made of the activity beats a decorative token), so every
+  // label is a plain high-frequency Danish noun that already overlaps the app's own word pools.
+  // They deliberately avoid the existing chapters: `Dyr` is mammals, so birds and småkryb are a new
+  // set, and `Natur` already owns Sol/Måne/Stjerne/Sky/Regnbue, so there is no weather chapter.
+  {
+    id: 'hjemmet',
+    title: 'Hjemmet',
+    rewards: [
+      { id: 'hj-seng', label: 'Seng' },
+      { id: 'hj-stol', label: 'Stol' },
+      { id: 'hj-bord', label: 'Bord' },
+      { id: 'hj-doer', label: 'Dør' },
+      { id: 'hj-lampe', label: 'Lampe' },
+      { id: 'hj-ur', label: 'Ur' },
+      { id: 'hj-kop', label: 'Kop' },
+      { id: 'hj-ske', label: 'Ske' },
+      { id: 'hj-noegle', label: 'Nøgle' },
+    ],
+  },
+  {
+    id: 'leg',
+    title: 'Leg og musik',
+    rewards: [
+      { id: 'leg-bold', label: 'Bold' },
+      { id: 'leg-bamse', label: 'Bamse' },
+      { id: 'leg-dukke', label: 'Dukke' },
+      { id: 'leg-klods', label: 'Klods' },
+      { id: 'leg-ballon', label: 'Ballon' },
+      { id: 'leg-tromme', label: 'Tromme' },
+      { id: 'leg-guitar', label: 'Guitar' },
+      { id: 'leg-floejte', label: 'Fløjte' },
+      { id: 'leg-puslespil', label: 'Puslespil' },
+    ],
+  },
+  {
+    id: 'smaakryb',
+    title: 'Fugle og småkryb',
+    rewards: [
+      { id: 'sk-ugle', label: 'Ugle' },
+      { id: 'sk-and', label: 'And' },
+      { id: 'sk-hoene', label: 'Høne' },
+      { id: 'sk-svane', label: 'Svane' },
+      { id: 'sk-papegoeje', label: 'Papegøje' },
+      { id: 'sk-sommerfugl', label: 'Sommerfugl' },
+      { id: 'sk-bi', label: 'Bi' },
+      { id: 'sk-myre', label: 'Myre' },
+      { id: 'sk-mariehoene', label: 'Mariehøne' },
+    ],
+  },
 ]
 
 // ----- the path + lookups (built once) -----
@@ -132,8 +191,19 @@ const CHAPTER_BY_REWARD_ID = new Map<string, RewardChapter>(
   REWARD_CHAPTERS.flatMap((c) => c.rewards.map((r) => [r.id, c] as const)),
 )
 
-// The reward at a 0-based slot index (null past the end of the path — see the gold pass in
-// progressStore.grantSlot, which wraps instead).
+// The economy's two totals, DERIVED from the chapter data (Reward Horizon PRD-01 §3.2). They used to
+// be literals in progression.ts, which is what made "add a chapter" an engineering job. They live
+// HERE, next to the data they measure, because progression.ts must not import this module — the
+// dependency already points the other way and a cycle has to survive plain Node too.
+//
+// Adding a chapter therefore changes nothing but this file plus its art and narration. See §10 of the
+// PRD for the full recipe; the pinned literals in stickers.test.ts are the deliberate "yes, I meant to".
+export const CHAPTER_COUNT = REWARD_CHAPTERS.length
+export const REWARD_SLOTS = REWARD_PATH.length // === CHAPTER_COUNT * CHAPTER_SIZE
+
+// The reward at a 0-based slot index. `null` past the end of the path — and past the end is where the
+// book ENDS: the gold pass (which used to wrap `(slot - 45) % 45` into shiny duplicates) is gone, so
+// `owedRewards` clamps at REWARD_SLOTS and this is never called out of range.
 export const rewardAt = (slotIndex0: number): Reward | null => REWARD_PATH[slotIndex0] ?? null
 export const chapterAt = (slotIndex0: number): RewardChapter | undefined =>
   REWARD_CHAPTERS[chapterOfSlot(slotIndex0)]

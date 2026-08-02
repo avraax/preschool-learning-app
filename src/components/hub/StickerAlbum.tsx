@@ -1,11 +1,12 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { AppBar, Box, Container, Toolbar, Typography } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { PHONE_LANDSCAPE, PHONE_PORTRAIT } from '../../theme/phoneMedia'
 import { motion } from 'framer-motion'
 import BackButton from '../common/BackButton'
-import { REWARD_CHAPTERS, type Reward } from '../../config/stickers'
-import { CHAPTER_SIZE, REWARD_SLOTS, chapterOfSlot } from '../../config/progression'
+import { REWARD_CHAPTERS, CHAPTER_COUNT, type Reward } from '../../config/stickers'
+import { CHAPTER_SIZE, chapterOfSlot } from '../../config/progression'
+import { collectedCountLine } from '../../config/danish-phrases'
 import { Check } from 'lucide-react'
 import { rewardArt } from '../../assets/rewards'
 import { uiArt } from '../../assets/ui'
@@ -17,26 +18,31 @@ import { hexToRgba, tileSurface, onTileColor } from '../../theme/tokens/helpers'
 import { softShadow, contactShadow } from '../../theme/depth'
 import { devNyt } from '../../utils/devHarness'
 
-// Min Bog (Reward Book PRD-01 W5) at /album — the other half of the model the corner ring shows.
+// Min Bog (Reward Book PRD-01 W5) at /album — the other half of the model the corner ring shows, and
+// since Reward Horizon PRD-01 D3 the ONLY thing the ring's tap leads to.
 //
 // Slots render in PATH ORDER in exactly three states:
-//   • collected — full-colour art (or emoji) + Danish label; gold when it's a gold-pass duplicate,
+//   • collected — full-colour art + Danish label,
 //   • next      — the SAME silhouette treatment as the corner ring, plus an accent glow + slow pulse.
 //                 Exactly ONE slot in the whole book is ever in this state,
 //   • locked    — a blank tactile plate. Deliberately blank: the old version showed every uncollected
-//                 sticker greyed-out with a "?", which spoiled all 45 and made the next one
+//                 sticker greyed-out with a "?", which spoiled the whole path and made the next one
 //                 unremarkable. Anticipation needs exactly one visible target.
 //
-// The chapter tab auto-opens where the child is, so "where am I" answers itself; future chapters stay
-// tappable (no locks, no walls for a 5-year-old). Full-viewport no-scroll, themed across all skins.
+// There is no gold/duplicate state any more (the gold pass is deleted, §3.5), and the header count has
+// **no denominator**: it is the child's ever-rising number, never a distance. The chapter chips are
+// ICON-ONLY so the strip scales past 8 chapters without wrapping; the active one auto-opens where the
+// child is, and chapters not yet reached stay dimmed BUT TAPPABLE — seeing that there is more book to
+// come is the horizon. Full-viewport no-scroll, themed across all skins.
 
 const COMIC = '"Comic Sans MS", "Comic Neue", sans-serif'
-const GOLD = '#FFB300'
+// Arrival beat: speak the count once, after the wipe has cleared (never awaited, never repeated).
+const SPEAK_COUNT_DELAY_MS = 400
 
 const StickerAlbum: React.FC = () => {
   const theme = useTheme()
   const reduce = useReducedMotion()
-  const { state, markStickersSeen, collectedCount, nextReward } = useProgress()
+  const { state, markStickersSeen, rewardNumber, nextReward } = useProgress()
   const audio = useSimplifiedAudioHook({ componentId: 'StickerAlbum', autoInitialize: false })
   const [poppedId, setPoppedId] = useState<string | null>(null)
   const [wiggleId, setWiggleId] = useState<string | null>(null)
@@ -47,13 +53,16 @@ const StickerAlbum: React.FC = () => {
   const collected = state.stickers.collected
   const newIds = state.stickers.newIds
   const accent = theme.palette.primary.main
-  const totalCollected = collectedCount()
+  // THE number — rewards handed over, identical to the ring badge (no duplicates exist, so this is
+  // also the count of distinct pictures in the book).
+  const totalCollected = rewardNumber()
   const next = nextReward()
 
   // Auto-open at the chapter the child is actually working on. Held in state (not derived) so tapping
-  // another tab to browse ahead sticks — it only seeds the initial view.
+  // another chip to browse ahead sticks — it only seeds the initial view. Clamped for the full-book
+  // case, where the cursor sits one past the last chapter.
   const [activeIndex, setActiveIndex] = useState(() =>
-    Math.min(REWARD_CHAPTERS.length - 1, chapterOfSlot(totalCollected)),
+    Math.min(CHAPTER_COUNT - 1, chapterOfSlot(totalCollected)),
   )
   const activeChapter = REWARD_CHAPTERS[activeIndex]
 
@@ -67,6 +76,25 @@ const StickerAlbum: React.FC = () => {
     const t = window.setTimeout(() => markStickersSeen(), 1600)
     return () => window.clearTimeout(t)
   }, [forceNyt, markStickersSeen])
+
+  // Speak the count ONCE on arrival — "Du har treogtyve klistermærker!". This is the one moment the
+  // numeral is on screen as a TOTAL while it is read aloud, which is the whole justification for
+  // showing a numeral to a pre-reader at all. Delayed past the themed wipe, ref-guarded so a re-render
+  // can't re-speak it, and skipped at 0 (there is no count worth announcing on a fresh book).
+  const spokenRef = useRef(false)
+  useEffect(() => {
+    if (spokenRef.current || totalCollected <= 0) return
+    spokenRef.current = true
+    const t = window.setTimeout(() => {
+      try {
+        audio.updateUserInteraction()
+        audio.speak(collectedCountLine(totalCollected)).catch(() => {})
+      } catch {
+        /* audio best-effort */
+      }
+    }, SPEAK_COUNT_DELAY_MS)
+    return () => window.clearTimeout(t)
+  }, [audio, totalCollected])
 
   const titleColor = dark ? '#FFFFFF' : theme.decor.titleColor
 
@@ -108,8 +136,9 @@ const StickerAlbum: React.FC = () => {
           : `${theme.decor.pageBackground},\n${theme.decor.dots}`,
       }}
     >
-      {/* Header: back (left) + the ONE count (right). The old lifetime ⭐ pill is gone (PRD D10) —
-          a third score with no purpose next to the number that actually matters. */}
+      {/* Header: back (left) + THE number (right). No denominator: "{n} / 72" is a DISTANCE, and a
+          5-year-old reads neither the fraction nor the ratio — only the ring's fill signals nearness.
+          The honest "how far is left" lives in the adult pane, where the literate party is. */}
       <AppBar position="static" color="transparent" elevation={0}>
         {/* Compact toolbar: a back button + one pill never needed the default 64px row, and every px
             spent here comes straight out of the reward page below it. */}
@@ -125,7 +154,7 @@ const StickerAlbum: React.FC = () => {
           {/* Shared themed back button — reverses the wipe, consistent with every other surface. */}
           <BackButton to="/" variant="menu" />
 
-          <StatPill label={`${totalCollected} / ${REWARD_SLOTS}`} icon={uiArt.book} accent={accent} />
+          <StatPill label={`${totalCollected}`} icon={uiArt.book} accent={accent} />
         </Toolbar>
       </AppBar>
 
@@ -168,16 +197,19 @@ const StickerAlbum: React.FC = () => {
           Min Bog
         </Typography>
 
-        {/* 5 chapter tabs. They fit on ONE row at every landscape size (measured: 274→906 of 1180 on
-            iPad, and inside 844 on phone-landscape), which is the point of dropping from 7 sets to 5.
-            `flexWrap` is still on as a SAFETY NET: at 390px portrait five tabs genuinely don't fit and
-            a nowrap row silently CLIPPED the first and last one off both screen edges. Wrapping to two
-            rows there is the correct degradation — never an unreachable tab. */}
+        {/* Chapter chips — ICON ONLY. The old text tabs were measured to *just* fit one landscape row
+            at 5 chapters (274→906 of 1180 on iPad); 8 do not, and wrapping pushes the page panel down
+            into the space the 3×3 grid is sized from. A 44px round chip showing the chapter's first
+            reward costs 8×44 + gaps ≈ 400px — inside iPad landscape, phone landscape AND 390px
+            portrait — and keeps scaling to 12+ chapters, which is the point.
+            `flexWrap` stays on as the SAFETY NET it always was: a nowrap row silently CLIPS the end
+            chips off the screen edges, and an unreachable chapter is the one thing this must never do.
+            The chapter's NAME moved into the progress line below (it was the only thing lost). */}
         <Box
           sx={{
             display: 'flex',
             flexWrap: 'wrap',
-            gap: { xs: 0.75, md: 1.25 },
+            gap: { xs: 0.75, md: 1 },
             justifyContent: 'center',
             mb: { xs: 0.75, md: 1 },
             flex: '0 0 auto',
@@ -188,30 +220,34 @@ const StickerAlbum: React.FC = () => {
           {REWARD_CHAPTERS.map((chapter, i) => {
             const done = chapter.rewards.every((r) => collected[r.id])
             const active = i === activeIndex
+            // "Not reached yet" = nothing in it is collected. Dimmed, NEVER locked: a 5-year-old gets
+            // no walls, and seeing that the book keeps going IS the horizon this PRD is about.
+            const reached = chapter.rewards.some((r) => collected[r.id])
             return (
               <Box
                 key={chapter.id}
                 component="button"
+                aria-label={chapter.title}
+                aria-current={active ? 'true' : undefined}
                 onClick={() => {
                   sfx.play('tap')
                   setActiveIndex(i)
                 }}
                 sx={{
                   cursor: 'pointer',
+                  position: 'relative',
                   border: '2px solid',
                   borderColor: active ? accent : hexToRgba(accent, 0.3),
-                  borderRadius: '14px',
-                  px: { xs: 1.25, md: 2 },
-                  py: { xs: 0.5, md: 0.75 },
-                  // 44px minimum touch target (the 5-tab row has plenty of horizontal slack; the old
-                  // 7-tab version measured 40px). Phone-landscape trades height for fitting the row.
-                  minHeight: 44,
+                  borderRadius: '999px',
+                  p: 0,
+                  width: 44,
+                  height: 44,
+                  flex: '0 0 auto',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: 0.75,
-                  fontFamily: COMIC,
-                  fontWeight: 700,
-                  fontSize: 'clamp(0.85rem, 2.6vw, 1.05rem)',
+                  justifyContent: 'center',
+                  opacity: reached || active ? 1 : 0.45,
+                  transform: active ? 'scale(1.12)' : 'none',
                   color: active ? '#fff' : dark ? '#fff' : theme.palette.text.primary,
                   background: active
                     ? accent
@@ -220,29 +256,47 @@ const StickerAlbum: React.FC = () => {
                       : 'rgba(255,255,255,0.8)',
                   boxShadow: active ? `0 4px 14px ${hexToRgba(accent, 0.45)}` : 'none',
                   transition: 'all 0.2s ease',
-                  whiteSpace: 'nowrap',
-                  [PHONE_LANDSCAPE]: { px: 0.9, py: 0.25, fontSize: '0.7rem', gap: 0.4, minHeight: 32 },
-                  [PHONE_PORTRAIT]: { px: 1, fontSize: '0.8rem', gap: 0.4 },
+                  // The chip is already at the 44px minimum, so phone variants keep the TARGET and
+                  // only shrink the art — never the box.
+                  [PHONE_LANDSCAPE]: { width: 44, height: 44 },
                 }}
               >
-                {/* Tab icon = the chapter's FIRST reward's art (Hund / Bil / Æble / Træ / Fisk) —
-                    the same subject its emoji stood for, so the tabs cost no extra render. */}
+                {/* Chip icon = the chapter's FIRST reward's art (Hund / Bil / Æble / …) — already the
+                    subject the chapter stands for, so the strip costs no extra render. */}
                 <Box
                   component="img"
                   src={rewardArt(chapter.rewards[0].id)}
                   alt=""
                   draggable={false}
-                  sx={{ width: 20, height: 20, objectFit: 'contain', flex: '0 0 auto', userSelect: 'none' }}
+                  sx={{ width: 26, height: 26, objectFit: 'contain', flex: '0 0 auto', userSelect: 'none' }}
                 />
-                <span>{chapter.title}</span>
                 {/* Chapter complete — a UI affordance, so lucide, not baked art (PRD D2/§4 W3). */}
-                {done && <Check size={16} strokeWidth={3.5} aria-label="komplet" style={{ flex: '0 0 auto' }} />}
+                {done && (
+                  <Box
+                    aria-hidden
+                    sx={{
+                      position: 'absolute',
+                      right: -2,
+                      bottom: -2,
+                      width: 18,
+                      height: 18,
+                      borderRadius: '50%',
+                      bgcolor: accent,
+                      color: '#fff',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <Check size={12} strokeWidth={3.5} />
+                  </Box>
+                )}
               </Box>
             )
           })}
         </Box>
 
-        {/* Per-chapter progress */}
+        {/* Per-chapter progress — and the chapter's NAME, which the icon-only chips gave up. */}
         <Typography
           sx={{
             textAlign: 'center',
@@ -255,7 +309,7 @@ const StickerAlbum: React.FC = () => {
             [PHONE_LANDSCAPE]: { mb: 0.25, fontSize: '0.75rem' },
           }}
         >
-          {collectedInChapter} / {CHAPTER_SIZE} samlet
+          {activeChapter.title} · {collectedInChapter} / {CHAPTER_SIZE} samlet
         </Typography>
 
         {/* Chapter-complete payoff — a shining ribbon when every reward on the page is collected. */}
@@ -371,7 +425,6 @@ const StickerAlbum: React.FC = () => {
               // ?nyt=1 harness: force the first slot owned+new so the badge is capturable.
               const forcedHere = forceNyt && i === 0
               const owned = !!entry || forcedHere
-              const gold = !!entry && entry.count > 1
               const isNew = forcedHere || newIds.includes(reward.id)
               const isNext = !owned && next?.reward.id === reward.id
               const popped = poppedId === reward.id
@@ -408,9 +461,7 @@ const StickerAlbum: React.FC = () => {
                     position: 'relative',
                     border: '3px solid',
                     borderColor: owned
-                      ? gold
-                        ? GOLD
-                        : hexToRgba(accent, 0.55)
+                      ? hexToRgba(accent, 0.55)
                       : isNext
                         ? accent
                         : hexToRgba(dark ? '#FFFFFF' : '#000000', 0.12),
@@ -422,14 +473,12 @@ const StickerAlbum: React.FC = () => {
                     cursor: owned ? 'pointer' : 'default',
                     // Same soft-3D clay material as TactileTile in the games (no more #ECF1F8).
                     background: owned
-                      ? gold
-                        ? `linear-gradient(180deg, #FFFDF5 0%, ${hexToRgba(GOLD, 0.25)} 100%)`
-                        : tileSurface(accent, dark)
+                      ? tileSurface(accent, dark)
                       : dark
                         ? 'rgba(255,255,255,0.06)'
                         : 'rgba(255,255,255,0.45)',
                     boxShadow: owned
-                      ? `0 6px 0 ${gold ? hexToRgba(GOLD, 0.6) : hexToRgba(accent, 0.5)}, 0 8px 18px rgba(0,0,0,0.15)`
+                      ? `0 6px 0 ${hexToRgba(accent, 0.5)}, 0 8px 18px rgba(0,0,0,0.15)`
                       : isNext
                         ? `0 0 0 4px ${hexToRgba(accent, 0.28)}, 0 6px 18px ${hexToRgba(accent, 0.35)}`
                         : 'inset 0 2px 8px rgba(0,0,0,0.08)',
@@ -448,7 +497,7 @@ const StickerAlbum: React.FC = () => {
                         width: '64%',
                         height: 10,
                         borderRadius: '50%',
-                        background: contactShadow(gold ? GOLD : accent, 0.7),
+                        background: contactShadow(accent, 0.7),
                         filter: 'blur(3px)',
                         pointerEvents: 'none',
                       }}
@@ -508,30 +557,13 @@ const StickerAlbum: React.FC = () => {
                         fontWeight: 700,
                         fontSize: 'clamp(0.6rem, 2vw, 0.85rem)',
                         // Accent-on-white surface → the AA-safe variant, never the raw accent.
-                        color: gold ? '#5A3A00' : onTileColor(accent),
+                        color: onTileColor(accent),
                         lineHeight: 1.1,
                         mt: 0.25,
                       }}
                     >
                       {reward.label}
                     </Typography>
-                  )}
-                  {gold && (
-                    <Box
-                      component="img"
-                      src={uiArt.sparkle}
-                      alt=""
-                      aria-hidden
-                      draggable={false}
-                      sx={{
-                        position: 'absolute',
-                        top: 4,
-                        right: 6,
-                        width: 'clamp(0.7rem, 2.4vw, 1rem)',
-                        height: 'clamp(0.7rem, 2.4vw, 1rem)',
-                        objectFit: 'contain',
-                      }}
-                    />
                   )}
                 </Box>
               )

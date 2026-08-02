@@ -20,6 +20,7 @@ import BackButton from './BackButton'
 import RewardRing from './RewardRing'
 import SceneObjectField, { type SceneFieldItem } from './scene/SceneObjectField'
 import { softShadow } from '../../theme/depth'
+import { useProgress } from '../../hooks/useProgress'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
 import { useTransitionNav } from '../../hooks/useTransitionNav'
 import { useTransitionContext } from './transition/TransitionProvider'
@@ -46,6 +47,8 @@ const GameSelectionLayout: React.FC<GameSelectionLayoutProps> = ({
   const transitionPhase = useTransitionContext()?.phase ?? 'idle'
   const frozen = transitionPhase !== 'idle'
   const reduce = useReducedMotion()
+  const { rewardNumber } = useProgress()
+  const rewardCount = rewardNumber()
   // Category colors/content (active skin) + the built theme for themed title/cards. The world layer
   // (scene + ambient + mascot + parallax) is rendered once, app-wide, by <PersistentWorld/>, which
   // ALSO frames the scene on this section's locale + applies the accent tint (PRD-05 W4).
@@ -146,10 +149,15 @@ const GameSelectionLayout: React.FC<GameSelectionLayoutProps> = ({
             </Typography>
           </Box>
 
-          {/* Level is primary (Liveliness PRD-04 §7): the shared cross-game ring on the section menu
-              too, so progress is visible everywhere. */}
+          {/* The ring is on every section menu so progress is visible everywhere — and since Reward
+              Horizon PRD-01 D3 it is also THE DOOR to Min Bog, on home and here. There is no second
+              entrance anywhere; the shelf that used to be one is deleted. */}
           <Box sx={{ flexGrow: 1 }} />
-          <RewardRing size={44} />
+          <RewardRing
+            size={44}
+            onTap={() => navigateWithTransition('/album')}
+            ariaLabel={`Min Bog — ${rewardCount} klistermærker`}
+          />
         </Toolbar>
       </AppBar>
 

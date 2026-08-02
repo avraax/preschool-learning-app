@@ -17,15 +17,14 @@ import {
   getDanishLetterName,
   getDanishNumberText,
   rewardLine,
-  goldRewardLine,
   collectedCountLine,
+  COUNT_LINE_MAX,
   CHAPTER_DONE_LINE,
   BOOK_DONE_LINE,
 } from './src/config/danish-phrases.ts'
 import { allEnglishWords } from './src/config/englishVocab.ts'
 import { HUE_ORDER, SHADES, DANISH_OBJECTS, spokenColor, COLOR_TARGETS } from './src/config/colorContent.ts'
 import { REWARD_CHAPTERS } from './src/config/stickers.ts'
-import { REWARD_SLOTS } from './src/config/progression.ts'
 import { LETTER_WORDS, WORD_LETTERS, letterPhrase, startsWithPhrase, startsWithQuestion } from './src/config/letterWords.ts'
 // Composed game lines — the app builds every one of these through the SAME builders (see the
 // protocol in .claude/rules/audio-system.md), so what gets baked is exactly what gets spoken.
@@ -162,22 +161,24 @@ export function collectNarrationClips() {
     )
   }
 
-  // The Reward Book (Reward Book PRD-01 §9). Three lines per reward — the ceremony's reveal line, its
-  // gold-pass variant, and the bare label spoken when the reward is tapped in Min Bog. All 45 rewards
-  // are a CLOSED set, so this is the whole reachable inventory.
+  // The Reward Book (Reward Book PRD-01 §9). TWO lines per reward — the ceremony's reveal line and
+  // the bare label spoken when the reward is tapped in Min Bog. The gold-pass variant
+  // ("Skinnende klistermærke! {label}") is GONE with the pass itself (Reward Horizon PRD-01 §3.5); the
+  // prebake prune deleting those mp3s is expected output, not content drift. The whole path is a
+  // CLOSED set, so this is the entire reachable inventory however many chapters ship.
   for (const chapter of REWARD_CHAPTERS) {
     for (const r of chapter.rewards) {
       da('mixed', rewardLine(r.label)) // "Nyt klistermærke! {label}"
-      da('mixed', goldRewardLine(r.label)) // "Skinnende klistermærke! {label}"
       da('mixed', r.label) // Min Bog slot tap
     }
   }
 
-  // Ceremony escalations + the home companion's spoken count (1..45 — the book can't exceed 45, so
-  // the count line is closed too).
+  // Ceremony escalations + the count spoken on arriving in Min Bog. Baked to COUNT_LINE_MAX rather
+  // than REWARD_SLOTS: the book now grows by appending chapters, so tying the loop to the current
+  // total would silently drop the top of the range to live Azure the day chapter 9 lands.
   da('levelup', CHAPTER_DONE_LINE)
   da('levelup', BOOK_DONE_LINE)
-  for (let n = 1; n <= REWARD_SLOTS; n++) da('levelup', collectedCountLine(n))
+  for (let n = 1; n <= COUNT_LINE_MAX; n++) da('levelup', collectedCountLine(n))
 
   // English words — spoken via the en-US voice, no lexicon.
   for (const w of allEnglishWords) en('english', w.en)

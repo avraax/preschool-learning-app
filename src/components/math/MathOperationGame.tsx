@@ -13,7 +13,6 @@ import PromptFocus from '../common/PromptFocus'
 import SymbolTile from '../common/SymbolTile'
 import type { GuideReaction } from '../common/ThemeMascot'
 import { useCelebration } from '../common/CelebrationEffect'
-import { MathScoreChip } from '../common/ScoreChip'
 import { MathRepeatButton } from '../common/RepeatButton'
 import RoundResultScreen from '../common/RoundResultScreen'
 import { useGameState } from '../../hooks/useGameState'
@@ -87,7 +86,7 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
   const startedRef = useRef(false)
   const welcomeTriggered = useRef(false)
 
-  const { incrementScore, resetScore, isScoreNarrating, handleScoreClick } = useGameState()
+  const { incrementScore, resetScore } = useGameState()
 
   // Bounded round + reward flow (Foundation §3). 8 questions; the star thresholds come from the
   // difficulty spine at finish time (Difficulty PRD-01 W6), so they're not pinned here.
@@ -417,7 +416,6 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
       title={title}
       backRoute="/math"
       guideReaction={guideReaction}
-      score={<MathScoreChip answered={round.state.index} total={round.length} disabled={isScoreNarrating} onClick={handleScoreClick} />}
       celebration={{ show: showCelebration, intensity: celebrationIntensity, duration: celebrationDuration, onComplete: stopCelebration }}
       promptStage={
         roundOutcome ? undefined : (

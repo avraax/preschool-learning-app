@@ -43,8 +43,9 @@ export const REFERENCE_VIEWPORTS: Viewport[] = [
 export const MENU_FURNITURE: Array<{ id: string; rect: Rect }> = [
   // ThemeMascot — bottom-left on home AND on every section menu (bigger on home).
   { id: 'mascot', rect: { x0: 0, x1: 0.27, y0: 0.73, y1: 1 } },
-  // The "Min Bog" shelf on home (bottom-centre).
-  { id: 'min-bog-shelf', rect: { x0: 0.16, x1: 0.76, y0: 0.88, y1: 1 } },
+  // NB there is no `min-bog-shelf` rect any more: the shelf was deleted with Reward Horizon PRD-01 D3
+  // (the corner ring is the only door to the book). A phantom rect here would permanently reserve a
+  // strip of the world's bottom-centre for nothing, which is the opposite of what freeing it was for.
   // The "Til de voksne" corner button (bottom-right).
   { id: 'adult-corner', rect: { x0: 0.85, x1: 1, y0: 0.85, y1: 1 } },
   // RewardRing (top-right on home and on section menus).

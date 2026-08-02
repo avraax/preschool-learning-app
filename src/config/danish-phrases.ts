@@ -104,15 +104,22 @@ export const getDanishLetterName = (letter: string): string => {
 // shared-narration-clips.js, prebaked and auditioned.
 
 // Spoken as a reward is revealed in the ceremony. `{label}` is the reward's Danish name.
+// There is no gold variant any more: `goldRewardLine` ("Skinnende klistermærke! {label}") went with
+// the gold pass itself (Reward Horizon PRD-01 §3.5). A reward is handed over at most once, so "nyt"
+// is always true — don't reintroduce a second line for a duplicate that can no longer happen.
 export const rewardLine = (label: string): string => `Nyt klistermærke! ${label}`
-// The gold pass (a duplicate past slot 45) — "skinnende", never "nyt".
-export const goldRewardLine = (label: string): string => `Skinnende klistermærke! ${label}`
 // Spoken INSTEAD of the reward line when the grant closes a chapter / the whole book.
 export const CHAPTER_DONE_LINE = 'Sådan! Hele siden er samlet!'
 export const BOOK_DONE_LINE = 'Wow! Hele bogen er samlet!'
 
-// Spoken when the child taps their home companion — the count, as Danish words. "ét" (not "en") is
-// the counting form here, so it doesn't read as the article.
+// How far the spoken count is baked. NOT `REWARD_SLOTS` — the book grows by appending chapters, and
+// pinning the loop to the current total would drop the top of the range to live, unauditioned Azure
+// the day a new chapter shipped. Widen this (and re-prebake) somewhere around chapter 11.
+export const COUNT_LINE_MAX = 100
+
+// Spoken on ARRIVING in Min Bog — the count, as Danish words, at the one moment the numeral is on
+// screen as a total (Sesame Workshop's rule: a numeral appears when it is being counted aloud). "ét"
+// (not "en") is the counting form here, so it doesn't read as the article.
 export const collectedCountLine = (collected: number): string =>
   collected === 1
     ? 'Du har ét klistermærke!'

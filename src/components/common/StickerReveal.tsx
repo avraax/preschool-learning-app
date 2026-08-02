@@ -5,12 +5,14 @@ import { motion } from 'framer-motion'
 import { hexToRgba, onTileColor } from '../../theme/tokens/helpers'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
 import { rewardArt } from '../../assets/rewards'
-import { uiArt } from '../../assets/ui'
 import type { RewardGrant } from '../../services/progressStore'
 
 // The reward reveal moment. The prize pops into a themed slot with a spring scale + sparkle, under a
-// "Nyt klistermærke!" banner. Gold-pass duplicates get extra shimmer (a positive "ooh, a shiny!" —
-// never a "you already have this" sadness).
+// "Nyt klistermærke!" banner.
+//
+// There is no "shiny" variant any more (Reward Horizon PRD-01 §3.5): the gold pass is deleted, so a
+// reward is handed over at most once and the banner is always "Nyt". Re-earning something the child
+// already owns is not a horizon — a new chapter is.
 //
 // Renders the baked soft-3D art. All 45 renders ship since de-emoji W6, so there is no glyph path —
 // `rewardArtCoverage.test.ts` is what keeps that assumption honest.
@@ -40,15 +42,10 @@ const StickerReveal: React.FC<StickerRevealProps> = ({ award, accent, delay = 0,
   const reduce = useReducedMotion()
   const dark = theme.scene.dark
   const { reward } = award
-  // "Shiny" is now exactly the gold pass (a deterministic duplicate past slot 45), not a pool-empty
-  // accident — so the gold treatment always means "you've been round the whole book".
-  const isShiny = award.gold
   const art = rewardArt(reward.id)
 
   const lip = hexToRgba(accent, 0.55)
   const ambientShadow = dark ? '0 14px 30px rgba(0,0,0,0.5)' : '0 12px 26px rgba(0,0,0,0.18)'
-  const shinyGold = '#FFC83D'
-  const ringColor = isShiny ? shinyGold : accent
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1, ...sx }}>
@@ -69,19 +66,8 @@ const StickerReveal: React.FC<StickerRevealProps> = ({ award, accent, delay = 0,
               textShadow: dark ? '0 2px 8px rgba(0,0,0,0.5)' : 'none',
             }}
           >
-            {isShiny ? 'Skinnende!' : 'Nyt klistermærke!'}
+            Nyt klistermærke!
           </Typography>
-          {/* The gold duplicate's badge — baked sparkle, not the ✨ glyph (de-emoji W3). */}
-          {isShiny && (
-            <Box
-              component="img"
-              src={uiArt.sparkle}
-              alt=""
-              aria-hidden
-              draggable={false}
-              sx={{ width: 'clamp(1.1rem, 3.8vw, 1.5rem)', height: 'clamp(1.1rem, 3.8vw, 1.5rem)', objectFit: 'contain', flex: '0 0 auto' }}
-            />
-          )}
         </Box>
       </motion.div>
 
@@ -102,13 +88,9 @@ const StickerReveal: React.FC<StickerRevealProps> = ({ award, accent, delay = 0,
           alignItems: 'center',
           justifyContent: 'center',
           border: '4px solid',
-          borderColor: ringColor,
-          background: isShiny
-            ? `linear-gradient(180deg, #FFFDF5 0%, ${hexToRgba(shinyGold, 0.28)} 100%)`
-            : `linear-gradient(180deg, #FFFFFF 0%, ${hexToRgba(accent, 0.14)} 100%)`,
-          boxShadow: isShiny
-            ? `0 0 0 4px ${hexToRgba(shinyGold, 0.4)}, 0 8px 0 ${hexToRgba(shinyGold, 0.6)}, ${ambientShadow}`
-            : `0 8px 0 ${lip}, ${ambientShadow}`,
+          borderColor: accent,
+          background: `linear-gradient(180deg, #FFFFFF 0%, ${hexToRgba(accent, 0.14)} 100%)`,
+          boxShadow: `0 8px 0 ${lip}, ${ambientShadow}`,
         }}
       >
         <Box
@@ -123,25 +105,6 @@ const StickerReveal: React.FC<StickerRevealProps> = ({ award, accent, delay = 0,
             pointerEvents: 'none',
           }}
         />
-
-        {/* Shiny shimmer sweep */}
-        {isShiny && !reduce && (
-          <Box
-            aria-hidden
-            component={motion.div}
-            initial={{ x: '-120%' }}
-            animate={{ x: '120%' }}
-            transition={{ delay: delay + 0.4, duration: 1.1, repeat: Infinity, repeatDelay: 1.2 }}
-            sx={{
-              position: 'absolute',
-              inset: 0,
-              borderRadius: '22px',
-              background:
-                'linear-gradient(115deg, transparent 35%, rgba(255,255,255,0.85) 50%, transparent 65%)',
-              pointerEvents: 'none',
-            }}
-          />
-        )}
 
         {/* Sparkle pop */}
         {!reduce &&
@@ -185,7 +148,6 @@ const StickerReveal: React.FC<StickerRevealProps> = ({ award, accent, delay = 0,
           }}
         >
           {reward.label}
-          {award.count > 1 ? ` ×${award.count}` : ''}
         </Typography>
       </motion.div>
     </Box>

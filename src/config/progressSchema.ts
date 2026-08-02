@@ -18,8 +18,8 @@
 // Vercel function api/progress.ts imports this file directly (so there is exactly one schema), and
 // `node --test` imports it in plain Node — hence the explicit `.ts` extensions below.
 
-import { REWARD_PATH, allRewards, rewardAt } from './stickers.ts'
-import { REWARD_SLOTS, collectedFromLevel, levelFromXp } from './progression.ts'
+import { REWARD_PATH, REWARD_SLOTS, allRewards, rewardAt } from './stickers.ts'
+import { collectedFromLevel, levelFromXp } from './progression.ts'
 
 export const SCHEMA_VERSION = 4 as const
 
@@ -129,7 +129,7 @@ export interface PersistedProgress {
   version: typeof SCHEMA_VERSION
   profileId: string | null
   stickers: {
-    /** The path cursor: how many slots have been handed over, duplicates (gold pass) included. */
+    /** The path cursor: how many slots have been handed over. Never exceeds REWARD_SLOTS. */
     grantedSlots: number
     /** Slots already SEEN in the book. `newIds` is the contiguous suffix above this (§6.2d). */
     seenThroughSlot: number
@@ -233,14 +233,15 @@ export function bloomXpFor(p: PersistedProgress, section: SectionId): number {
   return n
 }
 
-/** 0-based handed-over slot → its index on REWARD_PATH, wrapping deterministically past 45. */
-export const pathIndexForSlot = (slot: number): number =>
-  slot >= REWARD_SLOTS ? (slot - REWARD_SLOTS) % REWARD_SLOTS : slot
-
 /**
- * Rebuild the collected multiset from the slot CURSOR. Path order + the `(slot-45) % 45` gold wrap,
- * exactly as `grantSlot` walks it — that determinism is what lets the ring preview a prize before
- * it's earned, and it means membership never has to be merged.
+ * Rebuild the collected SET from the slot CURSOR: a straight walk of REWARD_PATH's prefix, exactly as
+ * `grantSlot` walks it — that determinism is what lets the ring preview a prize before it's earned,
+ * and it means membership never has to be merged.
+ *
+ * There is no `pathIndexForSlot` any more (Reward Horizon PRD-01 §3.5). It wrapped `(slot-45) % 45`
+ * into gold duplicates and `count` counted them; both are gone, so a slot past the end of the path is
+ * simply skipped and `count` is permanently 1. A cross-device G-Counter can still push `grantedSlots`
+ * past the cap in principle, hence the `if (!reward) break` rather than a bare index.
  */
 export function rebuildCollected(
   grantedSlots: number,
@@ -250,17 +251,13 @@ export function rebuildCollected(
   const out: ProgressState['stickers']['collected'] = {}
   const n = Math.max(0, Math.floor(grantedSlots))
   for (let slot = 0; slot < n; slot++) {
-    const reward = rewardAt(pathIndexForSlot(slot))
-    if (!reward) continue
-    const existing = out[reward.id]
-    if (existing) existing.count += 1
-    else {
-      const stamped = firstAt[reward.id]
-      out[reward.id] = {
-        count: 1,
-        // A prefix id missing on both sides of a merge falls back to `now` rather than 1970.
-        firstAt: typeof stamped === 'number' && stamped > 0 ? stamped : now,
-      }
+    const reward = rewardAt(slot)
+    if (!reward) break
+    const stamped = firstAt[reward.id]
+    out[reward.id] = {
+      count: 1,
+      // A prefix id missing on both sides of a merge falls back to `now` rather than 1970.
+      firstAt: typeof stamped === 'number' && stamped > 0 ? stamped : now,
     }
   }
   return out
@@ -268,8 +265,8 @@ export function rebuildCollected(
 
 /**
  * "New since the book was last opened" is always a CONTIGUOUS SUFFIX of the granted prefix — rewards
- * are handed out strictly in path order and gold duplicates are never `isNew` — so an unmergeable
- * array becomes a max-register (§6.2d).
+ * are handed out strictly in path order and never repeat — so an unmergeable array becomes a
+ * max-register (§6.2d).
  */
 export function deriveNewIds(grantedSlots: number, seenThroughSlot: number): string[] {
   const end = Math.min(REWARD_SLOTS, Math.max(0, Math.floor(grantedSlots)))
@@ -347,6 +344,8 @@ export function progressInvariantViolations(p: PersistedProgress): string[] {
     v.push(`grantedSlots ${p.stickers.grantedSlots} !== Σ ledger.slots ${slots}`)
   }
   if (slots > ceiling) v.push(`granted ${slots} slots but the level only owes ${ceiling}`)
+  // The book has a real ending now (no gold pass), so the cursor can never run past the last chapter.
+  if (slots > REWARD_SLOTS) v.push(`granted ${slots} slots but the book only has ${REWARD_SLOTS}`)
   if (p.stickers.seenThroughSlot > Math.min(REWARD_SLOTS, slots)) {
     v.push(`seenThroughSlot ${p.stickers.seenThroughSlot} exceeds the granted prefix`)
   }
@@ -363,9 +362,19 @@ export function progressInvariantViolations(p: PersistedProgress): string[] {
   return v
 }
 
-/** Rewards owed by the level cursor but not yet handed over. Normally 0 or 1. */
-export const owedRewards = (p: PersistedProgress): number =>
-  Math.max(0, collectedFromLevel(levelFromXp(totalXp(p)).level) - totalSlots(p))
+/**
+ * Rewards owed by the level cursor but not yet handed over. Normally 0 or 1.
+ *
+ * **Clamped at the end of the book** (Reward Horizon PRD-01 §3.5 — this is the one piece of real new
+ * logic in deleting the gold pass). The XP ledger is a G-Counter that keeps climbing across devices
+ * forever, and the wrap used to guarantee every owed slot resolved to *some* reward. Without the clamp
+ * a full book would hand `grantSlot` a cursor past REWARD_PATH and `rewardAt()` would return null.
+ */
+export const owedRewards = (p: PersistedProgress): number => {
+  const granted = totalSlots(p)
+  const owed = collectedFromLevel(levelFromXp(totalXp(p)).level) - granted
+  return Math.max(0, Math.min(owed, REWARD_SLOTS - granted))
+}
 
 /**
  * The static half of the empty-ceremony guard (§6.3). With NO debt outstanding, the level has already

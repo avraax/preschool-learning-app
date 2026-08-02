@@ -15,7 +15,6 @@ import TactileTile from '../common/TactileTile'
 import RoundResultScreen from '../common/RoundResultScreen'
 import type { GuideReaction } from '../common/ThemeMascot'
 import { useCelebration } from '../common/CelebrationEffect'
-import { OrdlegScoreChip } from '../common/ScoreChip'
 import { OrdlegRepeatButton } from '../common/RepeatButton'
 import { useGameState } from '../../hooks/useGameState'
 import { useRound } from '../../hooks/useRound'
@@ -96,7 +95,7 @@ const SpellingGame: React.FC = () => {
   const hasInteractedRef = useRef(false)
 
   // Centralized game state management
-  const { incrementScore, resetScore, isScoreNarrating, handleScoreClick } = useGameState()
+  const { incrementScore, resetScore } = useGameState()
 
   // Bounded round + reward flow (Overhaul Ordleg §2). 8 words, 3 stars = no mistakes, 2 stars <= 2.
   const round = useRound({ length: 8, gameId: 'ordleg.spelling' })
@@ -436,14 +435,6 @@ const SpellingGame: React.FC = () => {
       backRoute="/ordleg"
       dense
       guideReaction={guideReaction}
-      score={
-        <OrdlegScoreChip
-          answered={round.state.index}
-          total={round.length}
-          disabled={isScoreNarrating}
-          onClick={handleScoreClick}
-        />
-      }
       celebration={{ show: showCelebration, intensity: celebrationIntensity, duration: celebrationDuration, onComplete: stopCelebration }}
       promptStage={
         roundOutcome || !(gameReady && current) ? undefined : (

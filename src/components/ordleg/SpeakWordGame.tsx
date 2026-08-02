@@ -15,7 +15,6 @@ import TactileTile from '../common/TactileTile'
 import RoundResultScreen from '../common/RoundResultScreen'
 import type { GuideReaction } from '../common/ThemeMascot'
 import { useCelebration } from '../common/CelebrationEffect'
-import { OrdlegScoreChip } from '../common/ScoreChip'
 import { useGameState } from '../../hooks/useGameState'
 import { useRound } from '../../hooks/useRound'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
@@ -330,7 +329,7 @@ const SpeakWordGame: React.FC = () => {
 
   // In-round word count + bounded round (Overhaul Ordleg §3). Open-ended: a "question" = one
   // recognized word; there is NO target word and NO STT grading.
-  const { score, incrementScore, resetScore, isScoreNarrating, handleScoreClick } = useGameState()
+  const { incrementScore, resetScore } = useGameState()
   // Sig et Ord is on the difficulty EXEMPT list (open-ended by design — there is no target word to
   // grade), so it keeps fixed star thresholds: nothing gets harder at Svær here, so loosening them
   // would just be a free 3★. See `EXEMPT` in src/config/difficulty.ts.
@@ -573,7 +572,6 @@ const SpeakWordGame: React.FC = () => {
       backRoute="/ordleg"
       dense
       guideReaction={guideReaction}
-      score={<OrdlegScoreChip answered={score} total={8} disabled={isScoreNarrating} onClick={handleScoreClick} />}
       celebration={{ show: showCelebration, intensity: celebrationIntensity, duration: celebrationDuration, onComplete: stopCelebration }}
       promptStage={
         roundOutcome ? undefined : (

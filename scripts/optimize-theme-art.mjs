@@ -93,6 +93,14 @@ const REWARD_REUSE = {
   'natur-maane': 'english/moon', 'natur-stjerne': 'english/star', 'natur-sky': 'english/cloud',
   'hav-fisk': 'english/fish', 'hav-haj': 'ordleg/haj', 'hav-hval': 'farver/whale',
   'hav-skildpadde': 'farver/turtle',
+  // Reward Horizon PRD-01 chapters 6-8. Same rule as above: check what already ships BEFORE
+  // commissioning anything — a bed is a bed. 10 of the 27 new subjects were already baked, so the
+  // owner draws 17. Deliberately NOT reused: `leg-bamse` (english/bear is already `dyr-bjoern`, and
+  // two slots with identical art read as a bug) and `sk-hoene` (farver/chick is a chick, not a hen).
+  'hj-seng': 'english/bed', 'hj-stol': 'english/chair', 'hj-doer': 'english/door',
+  'hj-ur': 'ordleg/ur', 'hj-kop': 'english/cup', 'hj-noegle': 'english/key',
+  'leg-bold': 'english/ball', 'leg-ballon': 'math/balloon',
+  'sk-and': 'ordleg/and', 'sk-bi': 'ordleg/bi',
 }
 
 // Section icons (theme-constant, used app-wide). Magenta-keyed cutouts.

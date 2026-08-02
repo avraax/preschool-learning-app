@@ -5,7 +5,6 @@ import { useTheme } from '@mui/material/styles'
 import { motion } from 'framer-motion'
 import UnifiedQuizGame, { UnifiedQuizConfig, QuizItem } from '../common/UnifiedQuizGame'
 import { getCategoryTheme } from '../../config/categoryThemes'
-import { MathScoreChip } from '../common/ScoreChip'
 import { MathRepeatButton } from '../common/RepeatButton'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
 import { hexToRgba } from '../../theme/tokens/helpers'
@@ -164,7 +163,6 @@ const HvadManglerGame: React.FC = () => {
     theme: category,
     backRoute: '/math',
 
-    ScoreChipComponent: MathScoreChip,
     RepeatButtonComponent: MathRepeatButton,
 
     gameWelcomeType: 'patterns',

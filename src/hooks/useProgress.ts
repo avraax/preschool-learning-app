@@ -36,6 +36,8 @@ export interface UseProgress {
   // The Reward Book (PRD-01 §7): the single source shared by the corner ring, the book, the home
   // shelf and the result meter — so those surfaces can never show different prizes.
   collectedCount: () => number
+  /** THE child-facing number: rewards HANDED OVER (Reward Horizon PRD-01 §3.1). Never the level. */
+  rewardNumber: () => number
   nextReward: () => { reward: Reward; slot: number; chapter: RewardChapter } | null
   companionStage: () => number
 }
@@ -68,6 +70,7 @@ export const useProgress = (): UseProgress => {
   const bloomFor = useCallback((section: SectionId) => progressStore.bloomFor(section), [])
   const markLevelCelebrated = useCallback((level: number) => progressStore.markLevelCelebrated(level), [])
   const collectedCount = useCallback(() => progressStore.collectedCount(), [])
+  const rewardNumber = useCallback(() => progressStore.rewardNumber(), [])
   const nextReward = useCallback(() => progressStore.nextReward(), [])
   const companionStage = useCallback(() => progressStore.companionStage(), [])
 
@@ -83,6 +86,7 @@ export const useProgress = (): UseProgress => {
     bloomFor,
     markLevelCelebrated,
     collectedCount,
+    rewardNumber,
     nextReward,
     companionStage,
   }

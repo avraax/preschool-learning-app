@@ -11,9 +11,23 @@
 // (ProfilePicker, raised by ProfileGate) is untouched; only the mid-session shortcut goes away, and it
 // lived inside a PIN-gated surface anyway.
 //
-// "Sådan går det" is READ-ONLY and fully DERIVED — no new state, no new persistence. In particular the
-// collected count comes from `collectedFromLevel(globalLevel())`, which is THE mapping (Reward Book
-// PRD-01) and is guarded by `progressInvariantViolations`; never recompute it inline.
+// "Sådan går det" is READ-ONLY and fully DERIVED — no new state, no new persistence — and it is THREE
+// ROWS on purpose: how far he is, what is next, what he has played. That is what a parent asks.
+//
+// It is the one place the DISTANCE legitimately belongs (Reward Horizon PRD-01 §4.6) — the parent is
+// the literate party, and "6 af 72" is exactly what the child-facing surfaces must never show. The
+// count is `progressStore.rewardNumber()` (rewards HANDED OVER), never
+// `collectedFromLevel(globalLevel())`, which is the debt CEILING and reads one ahead of the book while
+// a ceremony is pending.
+//
+// **Do not put `globalLevel()` back here.** §4.6 asked for a "Niveau" row and it shipped for exactly
+// one review cycle: level 1 is an empty book, so the level is ALWAYS stickers + 1 and can never agree
+// with the number beside it or with the ring in the corner. The owner read it as a bug within seconds
+// of seeing "6" in the ring and "Niveau 7" in the pane — which is the same off-by-one this PRD spent
+// its whole design removing from the child's side. `Samlet XP` (no scale a parent can read),
+// `Stjerner i alt` (≈ rounds played, so near-duplicate) and a per-section bloom row (five numbers on
+// an unlabelled 0-4 scale) went with it. All four are still one `progress.*` call away if a future
+// diagnostic surface needs them; none belongs on the page a parent opens.
 
 import React, { useCallback, useEffect, useState } from 'react'
 import {
@@ -35,7 +49,7 @@ import { useProfiles } from '../../../hooks/useProfiles'
 import { useProgress } from '../../../hooks/useProgress'
 import { profileStore } from '../../../services/profileStore'
 import { avatarArt } from '../../../assets/avatars'
-import { collectedFromLevel, REWARD_SLOTS } from '../../../config/progression'
+import { REWARD_SLOTS } from '../../../config/stickers'
 import { SECTION_LABELS } from '../../../config/adultSectionLabels'
 import { adultItem } from '../../../config/adultSettingsIa'
 import type { SectionId } from '../../../services/progressStore'
@@ -117,7 +131,7 @@ const BarnPane: React.FC<BarnPaneProps> = ({ closeAll }) => {
   )
 
   // ---- "Sådan går det" — every number DERIVED, nothing stored ----------------------------------
-  const collected = collectedFromLevel(progress.globalLevel())
+  const collected = progress.rewardNumber()
   const next = progress.nextReward()
   const played = SECTION_IDS.filter(
     (s) =>
@@ -163,7 +177,6 @@ const BarnPane: React.FC<BarnPaneProps> = ({ closeAll }) => {
         <PaneSection title="Sådan går det">
           <SummaryRow label="Klistermærker" value={`${collected} af ${REWARD_SLOTS}`} />
           <SummaryRow label="Næste belønning" value={next ? next.reward.label : 'Bogen er fuld'} />
-          <SummaryRow label="Stjerner i alt" value={String(progress.state.totals.totalStars)} />
           <SummaryRow
             label="Har spillet"
             value={played.length ? played.map((s) => SECTION_LABELS[s]).join(' · ') : 'Ikke begyndt endnu'}

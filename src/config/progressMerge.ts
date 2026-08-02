@@ -22,18 +22,15 @@
 //      WHOLESALE, with no join at all, because a reset is a declared fresh start.
 //
 //  (d) `newIds` as a set would resurrect dismissed "nyt!" badges. Rewards are handed out strictly in
-//      path order and gold duplicates are never new, so "new" is always a contiguous suffix of the
-//      granted prefix: store `seenThroughSlot` and merge it with `max`.
+//      path order and never repeat, so "new" is always a contiguous suffix of the granted prefix:
+//      store `seenThroughSlot` and merge it with `max`.
 //
 // The payoff of the whole thing being `idempotent ∧ commutative ∧ associative` is that
 // `applyRemote()` can be applied AT ANY INSTANT — mid-round, mid-ceremony — with no lock and no
 // queue. That property is worth more than the arithmetic.
 
-import {
-  REWARD_SLOTS,
-  collectedFromLevel,
-  levelFromXp,
-} from './progression.ts'
+import { collectedFromLevel, levelFromXp } from './progression.ts'
+import { REWARD_SLOTS } from './stickers.ts'
 import {
   SECTION_IDS,
   emptyGameStats,
@@ -302,15 +299,23 @@ export function mergeProgress(
   const level = levelFromXp(mergedXp).level
   const ceiling = collectedFromLevel(level)
 
-  // (a) The cursor is Σ slots. The clamp is REPAIR-ONLY and provably inert on valid input: each side
-  // satisfies slots_i ≤ collectedFromLevel(level(xp_i)), and that function is monotone in xp, so
+  // (a) The cursor is Σ slots, bounded by BOTH the level ceiling and the END OF THE BOOK.
+  //
+  // The level half is REPAIR-ONLY and provably inert on valid input: each side satisfies
+  // slots_i ≤ collectedFromLevel(level(xp_i)), and that function is monotone in xp, so
   // max_i slots_i ≤ collectedFromLevel(level(max_i xp_i)). It firing means one side was corrupt.
-  const clampedSlots = mergedSlots > ceiling
-  merged.stickers.grantedSlots = Math.min(ceiling, mergedSlots)
+  //
+  // The REWARD_SLOTS half is a REAL bound and reachable (Reward Horizon PRD-01 §3.5): each device
+  // clamps its own grants at the cap, but the ledger is a G-Counter, so two devices that each filled
+  // the book offline sum to 2×REWARD_SLOTS. The gold pass used to absorb that by wrapping; without it
+  // the cursor has to be capped here, or `rewardNumber()` would out-run the 72 pictures in the book.
+  const cap = Math.min(ceiling, REWARD_SLOTS)
+  const clampedSlots = mergedSlots > cap
+  merged.stickers.grantedSlots = Math.min(cap, mergedSlots)
   if (clampedSlots) {
     // Keep the invariant `grantedSlots === Σ ledger.slots` true by trimming the ledger too, largest
     // contributor first, so the repair is deterministic.
-    let excess = mergedSlots - ceiling
+    let excess = mergedSlots - cap
     for (const device of Object.keys(merged.ledger).sort((a, b) =>
       merged.ledger[b].slots - merged.ledger[a].slots || (a < b ? -1 : 1),
     )) {

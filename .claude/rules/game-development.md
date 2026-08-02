@@ -38,8 +38,10 @@ Most task-based quizzes are a thin **config** over `src/components/common/Unifie
   items. The grid's columns + width envelope follow the count via the shared
   `src/components/common/answerGrid.ts` (also used by the hand-rolled `MathOperationGame`) — never
   hardcode `repeat(2)`/`repeat(4)` in a game again, and never leave a row holding a single tile.
-- **Chrome**: `title`, `emoji`, `theme` (a `CategoryTheme`), `ScoreChipComponent`,
-  `RepeatButtonComponent`, `backRoute`, `showRepeat` (default true).
+- **Chrome**: `title`, `emoji`, `theme` (a `CategoryTheme`), `RepeatButtonComponent`, `backRoute`,
+  `showRepeat` (default true). There is **no score/progress chip** — `ScoreChip` and GameShell's
+  `score` slot were deleted (owner, 2026-08-02): a per-question pip row was a second progress meter
+  inches from the reward ring, and 8 pips is past the subitizing limit. The ring is the only meter.
 - **Audio**: `gameWelcomeType` (add the string to `GAME_WELCOME_MESSAGES` in
   `SimplifiedAudioController.playGameWelcome`) + the callbacks `speakQuizPrompt`, `speakClickedItem`,
   `getRepeatAudio`. Optional `speakCorrectFact(item)` speaks a **completed fact** on a correct tap
@@ -92,7 +94,7 @@ needs that hook added first (it would touch all 7 config quizzes, so verify care
   `.sort(() => Math.random() - 0.5)` idiom, and never sort shared config in place.
 - **Drag games** → the `src/components/common/dnd/` primitives (see `.claude/rules/drag-and-drop.md`).
 - **Game-board surfaces** → `TactileTile` (pressable clay tile), `PromptFocus` (in-world focal zone),
-  `TactilePill` (HUD pills; `AnswerTile`/`ScoreChip`/`RepeatButton` ride these) via `src/theme/depth.ts`
+  `TactilePill` (HUD pills; `AnswerTile`/`RepeatButton` ride these) via `src/theme/depth.ts`
   (`softShadow`/`contactShadow`). New or hand-rolled game surfaces reuse these — don't re-invent tile
   depth, a keyboard-lip button, or a frosted `PromptStage` card (PRD-06 F1/F2/F4). The Foundation's
   swap auto-upgraded only the **shared engines** (`UnifiedQuizGame`/`UnifiedMemoryGame`/`LearningGrid`);
@@ -219,7 +221,6 @@ From `src/components/common/RepeatButton.tsx`:
 - `EnglishRepeatButton` — green
 - `OrdlegRepeatButton` — teal
 
-(`ScoreChip` has matching per-category variants.)
 
 ## Audio in Games
 

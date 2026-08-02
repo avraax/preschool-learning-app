@@ -11,7 +11,8 @@ import { rewardBus, type RewardEvent } from '../../services/rewardBus'
 import { mascotBus } from '../../services/mascotBus'
 import { sfx } from '../../services/sfxClient'
 import { CHAPTER_SIZE } from '../../config/progression'
-import { rewardLine, goldRewardLine, CHAPTER_DONE_LINE, BOOK_DONE_LINE } from '../../config/danish-phrases'
+import { rewardLine, CHAPTER_DONE_LINE, BOOK_DONE_LINE } from '../../config/danish-phrases'
+import { onTileColor } from '../../theme/tokens/helpers'
 import { useCelebration } from './CelebrationEffect'
 import CelebrationEffect from './CelebrationEffect'
 import ProgressionCompanion from './ProgressionCompanion'
@@ -20,11 +21,11 @@ import StickerReveal from './StickerReveal'
 // The reward ceremony (Reward Book PRD-01 W4) — a dedicated full-screen overlay mounted once at app
 // root so ANY play context (round-result, browse, memory) fires it via `rewardBus`.
 //
-// **The reward is the headline.** The old "Trin {level}! 🎉" line is gone (PRD D9): the child sees the
-// prize the corner ring had been filling around, land in their book. Beats: opaque scrim → confetti +
-// fanfare → mascot cheer → the reward pops (StickerReveal) → a 9-dot chapter strip shows WHERE it went
-// → exactly ONE spoken line. Closing a chapter escalates to the 'page' tier + a companion stage-up and
-// speaks the chapter line instead; filling the book is a one-time finale.
+// **The reward is the headline.** The child sees the prize the corner ring had been filling around,
+// land in their book. Beats: opaque scrim → confetti + fanfare → mascot cheer → the reward pops
+// (StickerReveal) → a 3×3 chapter grid shows WHERE it went → the NUMBER ticks up → exactly ONE spoken
+// line. Closing a chapter escalates to the 'page' tier + a companion stage-up and speaks the chapter
+// line instead; filling the last authored chapter is a one-time finale.
 //
 // Auto-dismisses or on tap; on dismiss it advances the celebrated-level cursor so it never re-fires
 // (reload/cross-tab safe). Reduced motion → no confetti/growth animation, but the reward + the spoken
@@ -35,6 +36,60 @@ const DISMISS_MS = 3200
 const CHAPTER_DISMISS_MS = 4600
 // Extra owed slots (rare — a fast-tier round crossing two, or a browse binge) trail in fast, silently.
 const TRAIL_MS = 400
+// The number's count-up: let the sticker land before it starts, then one step per owed reward.
+const COUNT_START_MS = 700
+const COUNT_STEP_MS = 420
+
+/**
+ * The child-facing number, counting up to its new value with one spring pop on the final digit.
+ *
+ * Owns its own timers rather than driving them from the ceremony's beats effect, so mounting it IS
+ * arming it — there is no second place where the count can get out of step with the reveal. Plain by
+ * design (flat disc, one numeral, no depth), exactly like the ring badge.
+ */
+const RewardCounter: React.FC<{
+  from: number
+  to: number
+  fill: string
+  size: number
+  reduce: boolean
+}> = ({ from, to, fill, size, reduce }) => {
+  const [n, setN] = useState(reduce ? to : from)
+  useEffect(() => {
+    if (reduce || n >= to) return
+    const t = setTimeout(() => setN((v) => v + 1), n === from ? COUNT_START_MS : COUNT_STEP_MS)
+    return () => clearTimeout(t)
+  }, [n, to, from, reduce])
+
+  const landed = n >= to
+  return (
+    <Box
+      data-reward-count
+      component={motion.div}
+      animate={landed && !reduce ? { scale: [1, 1.3, 1] } : { scale: 1 }}
+      transition={{ duration: 0.45, ease: 'easeOut' }}
+      sx={{
+        position: 'relative',
+        zIndex: 12002,
+        minWidth: size,
+        height: size,
+        px: n >= 100 ? 1 : 0,
+        borderRadius: '999px',
+        bgcolor: fill,
+        color: '#FFFFFF',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontFamily: COMIC,
+        fontWeight: 800,
+        fontSize: Math.round(size * 0.56),
+        lineHeight: 1,
+      }}
+    >
+      {n}
+    </Box>
+  )
+}
 
 const RewardOverlay: React.FC = () => {
   const theme = useTheme()
@@ -120,9 +175,7 @@ const RewardOverlay: React.FC = () => {
         ? BOOK_DONE_LINE
         : chapterDone
           ? CHAPTER_DONE_LINE
-          : headline.gold
-            ? goldRewardLine(headline.reward.label)
-            : rewardLine(headline.reward.label)
+          : rewardLine(headline.reward.label)
       audio.updateUserInteraction()
       audio.speakReward(line).catch(() => {})
     }
@@ -193,10 +246,21 @@ const RewardOverlay: React.FC = () => {
             </Box>
           )}
 
-          {/* Where it went: a 9-dot chapter strip with the just-filled dot popping. Position without
-              reading — the child sees "that's the 4th one on this page". */}
+          {/* Where it went: the chapter's 9 dots as a 3×3 GRID, with the just-filled dot popping.
+              Position without reading — the child sees "that's the 4th one on this page". A single row
+              of nine invited counting (subitizing tops out at 4–5, and Boyer & Levine's "seduced by
+              counting" failure starts right there); three rows of three read at a glance. */}
           {headline && (
-            <Box sx={{ position: 'relative', zIndex: 12002, display: 'flex', gap: 0.75 }}>
+            <Box
+              sx={{
+                position: 'relative',
+                zIndex: 12002,
+                display: 'grid',
+                gridTemplateColumns: 'repeat(3, auto)',
+                gap: 0.75,
+                justifyContent: 'center',
+              }}
+            >
               {Array.from({ length: CHAPTER_SIZE }, (_, i) => {
                 const filled = i <= headline.slotInChapter
                 const isJustFilled = i === headline.slotInChapter
@@ -221,6 +285,22 @@ const RewardOverlay: React.FC = () => {
                 )
               })}
             </Box>
+          )}
+
+          {/* THE NUMBER TICKS HERE (Reward Horizon PRD-01 §4.4). The ring's badge deliberately did not
+              move when the ring filled mid-game — the sticker had not been handed over yet. It moves
+              now, with the reveal, so "a sticker landed" and "the number grew" are one event. Same flat
+              disc as the ring badge, so the child recognises it as the same object. SILENT: the
+              ceremony speaks exactly one line (spokenRef), and this is not it — the number is spoken on
+              arriving in Min Bog, where it is on screen while it is read. */}
+          {headline && (
+            <RewardCounter
+              from={Math.max(0, progressStore.rewardNumber() - grants.length)}
+              to={progressStore.rewardNumber()}
+              fill={onTileColor(accent)}
+              size={phoneLandscape ? 34 : 48}
+              reduce={reduce}
+            />
           )}
 
           {/* Extra owed rewards (rare) trail in fast behind the headline, with no extra speech. */}

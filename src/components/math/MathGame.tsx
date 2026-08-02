@@ -3,7 +3,6 @@ import UnifiedQuizGame, { UnifiedQuizConfig, QuizItem } from '../common/UnifiedQ
 import ListenHero from '../common/ListenHero'
 import { DANISH_PHRASES } from '../../config/danish-phrases'
 import { categoryThemes, getCategoryTheme } from '../../config/categoryThemes'
-import { MathScoreChip } from '../common/ScoreChip'
 import { MathRepeatButton } from '../common/RepeatButton'
 import { progressStore } from '../../services/progressStore'
 import { numberDistractors, pickQuizNumber } from '../../config/mathProblems'
@@ -19,10 +18,13 @@ import { shuffle } from '../../utils/shuffle'
 // telling 37 from 73 by ear is the whole lesson — which is exactly what the digit-swap distractors
 // serve.
 //
-// Difficulty (PRD-01 §4.1) is now a table + pure generators in src/config/{difficulty,mathProblems}.ts:
-// Let 1–50 · 3 tiles · distractors ≥10 away in both digits · Normal 1–100 · 4 tiles · digit-swap +
-// ±1/±10 · Svær 1–100 · 5 tiles · the digit-swap ALWAYS present when one exists. The range stops at
-// Svær because 1–100 is the prebaked ceiling — the distractor policy is the step up instead.
+// Difficulty (PRD-01 §4.1) is a table + pure generators in src/config/{difficulty,mathProblems}.ts.
+// TWO independent axes — the RANGE and the distractor policy:
+//   Let    1–20  · 3 tiles · distractors ≥10 away in both digits
+//   Normal 1–50  · 4 tiles · digit-swap + ±1/±10
+//   Svær   1–100 · 5 tiles · the digit-swap ALWAYS present when one exists
+// The range split is not arbitrary: Danish only inverts from 21 ("enogtyve"), so Let deliberately
+// stays below the inverted form entirely. See the MATH_COUNTING doc comment.
 
 // A number as a quiz item. The prompt is always "Find tallet N" — spoken, never shown. (For OPTION
 // tiles the prompt/repeat text is unused; only the target's matters.)
@@ -46,7 +48,7 @@ const MathGame: React.FC = () => {
     // Quiz identification
     quizType: 'counting',
 
-    // Content generation — the range comes from the difficulty table (Let 1–50, Normal/Svær 1–100).
+    // Content generation — the range comes from the difficulty table (Let 1–20 / Normal 1–50 / Svær 1–100).
     generateQuizItem: () => makeNumberItem(pickQuizNumber(progressStore.difficultyFor('math'))),
 
     // The distractor POLICY is this game's difficulty axis (see the note above the component), so it
@@ -68,7 +70,6 @@ const MathGame: React.FC = () => {
     backRoute: '/math',
     
     // Component configuration
-    ScoreChipComponent: MathScoreChip,
     RepeatButtonComponent: MathRepeatButton,
     
     // Audio configuration

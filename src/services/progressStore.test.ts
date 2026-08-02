@@ -7,10 +7,9 @@
 import { test, before, beforeEach } from 'node:test'
 import assert from 'node:assert/strict'
 import { progressStore } from './progressStore.ts'
-import { REWARD_PATH, REWARD_CHAPTERS } from '../config/stickers.ts'
+import { REWARD_PATH, REWARD_CHAPTERS, REWARD_SLOTS } from '../config/stickers.ts'
 import {
   REWARD_XP,
-  REWARD_SLOTS,
   FAST_SLOTS,
   CHAPTER_SIZE,
   collectedFromLevel,
@@ -26,8 +25,28 @@ const seedRounds = (rounds: number) => {
 const xpForSlots = (n: number) =>
   Math.min(n, FAST_SLOTS) * REWARD_XP + Math.max(0, n - FAST_SLOTS) * REWARD_XP * 2
 
-// The PRD's core invariant, checked after every case: the ring and the book can never disagree.
+// The core invariants, checked after every case — the surfaces can never disagree.
+//
+//  • The number the child sees IS grantedSlots (Reward Horizon §3.1 / D6), and with the gold pass gone
+//    there are no duplicates, so it also equals the count of distinct pictures in the book.
+//  • It is ≤ the level's debt CEILING, never equal to it by definition: the gap IS a pending ceremony.
+//    Pointing `rewardNumber()` at `globalLevel()` (the off-by-one this PRD is most at risk of
+//    reintroducing) breaks the first assertion, not this one.
 const assertInvariant = () => {
+  assert.equal(
+    progressStore.rewardNumber(),
+    progressStore.grantedSlots(),
+    'rewardNumber() is not grantedSlots — it must never be derived from the level',
+  )
+  assert.equal(
+    progressStore.rewardNumber(),
+    progressStore.collectedCount(),
+    'rewardNumber() drifted from the distinct pictures in the book (a duplicate exists?)',
+  )
+  assert.ok(
+    progressStore.rewardNumber() <= collectedFromLevel(progressStore.globalLevel()),
+    'the book holds more rewards than the level ever owed',
+  )
   assert.equal(
     progressStore.collectedCount(),
     Math.min(REWARD_SLOTS, collectedFromLevel(progressStore.globalLevel())),
@@ -76,7 +95,6 @@ test('one completed round grants exactly ONE slot, and it is REWARD_PATH[0] (det
   assert.equal(grants[0].reward.id, REWARD_PATH[0].id)
   assert.equal(grants[0].slot, 0)
   assert.equal(grants[0].isNew, true)
-  assert.equal(grants[0].gold, false)
   assert.equal(grants[0].chapterCompleted, false)
   assert.equal(grants[0].chapterIndex, 0)
   assert.equal(grants[0].slotInChapter, 0)
@@ -195,66 +213,73 @@ test('chapters 3-5 cost two rounds per reward (the slow tier), still one slot at
   assertInvariant()
 })
 
-test('book completion fires exactly once, on slot 45', () => {
-  progressStore.grantXp('alphabet', xpForSlots(REWARD_SLOTS - 1)) // 44 owed
+test('book completion fires exactly once, on the LAST slot of the last chapter', () => {
+  progressStore.grantXp('alphabet', xpForSlots(REWARD_SLOTS - 1))
   let grants = progressStore.grantPendingRewards()
   assert.equal(grants.length, REWARD_SLOTS - 1)
   assert.ok(!grants.some((g) => g.bookCompleted))
-  assert.equal(progressStore.collectedCount(), 44)
-  assert.equal(progressStore.companionStage(), 4)
-  assert.equal(progressStore.nextReward()?.reward.id, 'hav-musling')
+  assert.equal(progressStore.rewardNumber(), REWARD_SLOTS - 1)
+  assert.equal(progressStore.companionStage(), 4) // fully grown long before the end now
+  assert.equal(progressStore.nextReward()?.reward.id, REWARD_PATH[REWARD_SLOTS - 1].id)
 
   progressStore.grantXp('alphabet', REWARD_XP * 2)
   grants = progressStore.grantPendingRewards()
   assert.equal(grants.length, 1)
   assert.equal(grants[0].slot, REWARD_SLOTS - 1)
   assert.equal(grants[0].bookCompleted, true)
-  assert.equal(grants[0].chapterCompleted, true) // slot 45 also closes chapter 5
-  assert.equal(progressStore.collectedCount(), REWARD_SLOTS)
-  // Book full → no silhouette to preview (surfaces show the gold ✨ instead).
+  assert.equal(grants[0].chapterCompleted, true) // the last slot also closes the last chapter
+  assert.equal(progressStore.rewardNumber(), REWARD_SLOTS)
+  // Book full → no silhouette to preview (the ring shows its full-book sparkle instead).
   assert.equal(progressStore.nextReward(), null)
   assertInvariant()
 })
 
-test('gold pass: the 46th reward is a GOLD duplicate of slot 1, and the count stops at 45', () => {
-  progressStore.grantXp('alphabet', xpForSlots(REWARD_SLOTS)) // fill the book
-  progressStore.grantPendingRewards()
-  assert.equal(progressStore.collectedCount(), REWARD_SLOTS)
-
-  progressStore.grantXp('alphabet', REWARD_XP * 2) // one more reward's worth
-  const grants = progressStore.grantPendingRewards()
-  assert.equal(grants.length, 1)
-  assert.equal(grants[0].gold, true)
-  assert.equal(grants[0].isNew, false)
-  assert.equal(grants[0].reward.id, REWARD_PATH[0].id) // deterministic wrap, not a random dupe
-  assert.equal(grants[0].count, 2)
-  assert.equal(grants[0].bookCompleted, false) // already complete — never re-fires
-  // The displayed "{n} / 45" does NOT inflate past 45.
-  assert.equal(progressStore.collectedCount(), REWARD_SLOTS)
-
-  // And the NEXT gold reward is slot 2, not a repeat of slot 1 — the wrap keeps walking.
-  progressStore.grantXp('alphabet', REWARD_XP * 2)
-  const more = progressStore.grantPendingRewards()
-  assert.equal(more.length, 1)
-  assert.equal(more[0].reward.id, REWARD_PATH[1].id)
-  assert.equal(more[0].gold, true)
-  assertInvariant()
-})
-
-test('the gold pass does NOT stack up owed rewards once the book is full (regression)', () => {
-  // The debt must be measured against slots HANDED OVER (duplicates included), not distinct ids —
-  // otherwise the saturating book reports a growing debt and dumps a fistful of golds per ceremony.
-  progressStore.grantXp('alphabet', xpForSlots(REWARD_SLOTS))
-  progressStore.grantPendingRewards()
-  for (let i = 0; i < 5; i++) {
-    progressStore.grantXp('alphabet', REWARD_XP * 2)
-    const grants = progressStore.grantPendingRewards()
-    assert.equal(grants.length, 1, `ceremony ${i + 1} handed over ${grants.length} rewards`)
-    assert.equal(grants[0].reward.id, REWARD_PATH[i].id)
+test('THE NUMBER is grantedSlots, and the gap to the level ceiling IS the pending ceremony', () => {
+  // Walk a realistic run and check the relationship at EVERY point, not just after a ceremony.
+  for (let round = 1; round <= 40; round++) {
+    for (let q = 0; q < 8; q++) {
+      progressStore.grantTaskXp('alphabet.quiz', { firstTry: true, tasksInRound: 8 })
+      // MID-ROUND, mid-crossing: the number must not move. The ring flashes the won prize here; the
+      // sticker is handed over in the ceremony, and that is where the number ticks (§3.1).
+      assert.equal(progressStore.rewardNumber(), progressStore.grantedSlots())
+      assert.ok(progressStore.rewardNumber() <= collectedFromLevel(progressStore.globalLevel()))
+    }
+    const owedBefore = collectedFromLevel(progressStore.globalLevel()) - progressStore.rewardNumber()
+    const before = progressStore.rewardNumber()
+    const granted = progressStore.grantPendingRewards()
+    // The ceremony closes exactly the gap that was open.
+    assert.equal(granted.length, owedBefore, `round ${round}: ceremony did not clear the debt`)
+    assert.equal(progressStore.rewardNumber(), before + granted.length)
+    assertInvariant()
   }
+  // A pointer at globalLevel() would have read one HIGH here for the whole of every pending window.
+  assert.ok(progressStore.rewardNumber() > 0)
+  assert.notEqual(progressStore.rewardNumber(), progressStore.globalLevel())
 })
 
-test('every reward on the path is reachable, in order, exactly once per pass', () => {
+test('THE BOOK ENDS: past the last slot nothing is granted, ever again', () => {
+  // This is the whole of "the gold pass is deleted" (Reward Horizon §3.5), stated as behaviour. The
+  // old build wrapped `(slot - 45) % 45` and handed back shiny duplicates forever.
+  progressStore.grantXp('alphabet', xpForSlots(REWARD_SLOTS)) // fill the book
+  assert.equal(progressStore.grantPendingRewards().length, REWARD_SLOTS)
+  assert.equal(progressStore.rewardNumber(), REWARD_SLOTS)
+
+  // The XP ledger is a G-Counter and keeps climbing forever. Play a LOT more: nothing is owed, nothing
+  // is handed over, the number rests, and no duplicate appears anywhere.
+  for (let i = 0; i < 10; i++) {
+    progressStore.grantXp('alphabet', REWARD_XP * 4)
+    assert.deepEqual(progressStore.grantPendingRewards(), [], `ceremony ${i + 1} handed something over`)
+    assert.equal(progressStore.rewardNumber(), REWARD_SLOTS)
+    assert.equal(progressStore.nextReward(), null)
+    assertInvariant() // includes rewardNumber() === collectedCount(), i.e. no duplicates
+  }
+  // Every id exactly once — `rewardAt()` was never called past the end.
+  const collected = progressStore.get().stickers.collected
+  assert.equal(Object.keys(collected).length, REWARD_SLOTS)
+  for (const r of REWARD_PATH) assert.equal(collected[r.id].count, 1, `${r.id} is a duplicate`)
+})
+
+test('every reward on the path is reachable, in order, exactly once — ever', () => {
   progressStore.grantXp('alphabet', xpForSlots(REWARD_SLOTS))
   const grants = progressStore.grantPendingRewards()
   assert.equal(grants.length, REWARD_SLOTS)
@@ -262,7 +287,8 @@ test('every reward on the path is reachable, in order, exactly once per pass', (
     grants.map((g) => g.reward.id),
     REWARD_PATH.map((r) => r.id),
   )
-  // Exactly 5 chapter completions, one per chapter, in chapter order.
+  assert.ok(grants.every((g) => g.isNew), 'a reward can only be handed over once now')
+  // Exactly one chapter completion per chapter, in chapter order.
   const closers = grants.filter((g) => g.chapterCompleted)
   assert.equal(closers.length, REWARD_CHAPTERS.length)
   assert.deepEqual(

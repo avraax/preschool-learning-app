@@ -1,7 +1,6 @@
 import React from 'react'
 import UnifiedQuizGame, { UnifiedQuizConfig, QuizItem } from '../common/UnifiedQuizGame'
 import { getCategoryTheme } from '../../config/categoryThemes'
-import { EnglishScoreChip } from '../common/ScoreChip'
 import { EnglishRepeatButton } from '../common/RepeatButton'
 import { quizEnglishWords, pickWordsForLevel, EnglishWord } from '../../config/englishVocab'
 import { progressStore } from '../../services/progressStore'
@@ -55,7 +54,6 @@ const EnglishTranslateGame: React.FC = () => {
     theme: getCategoryTheme('english'),
     backRoute: '/english',
 
-    ScoreChipComponent: EnglishScoreChip,
     RepeatButtonComponent: EnglishRepeatButton,
 
     gameWelcomeType: 'englishtranslate',

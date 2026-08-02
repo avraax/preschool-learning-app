@@ -19,14 +19,14 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '.
 const ART_DIR = path.join(ROOT, 'src', 'assets', 'rewards')
 const artPath = (id: string): string => path.join(ART_DIR, `${id}.webp`)
 
-test('every one of the 45 rewards has baked art', () => {
+test('every reward on the path has baked art', () => {
   const missing = REWARD_PATH.filter((r) => !existsSync(artPath(r.id))).map((r) => `${r.id} (${r.label})`)
   assert.deepEqual(missing, [], 'key the render into src/assets/rewards/ — there is no emoji fallback left')
 })
 
 test('every chapter tab resolves art via its first reward', () => {
-  // StickerAlbum draws the tab icon from `chapter.rewards[0]`, so that specific slot must resolve
-  // even though the assertion above already covers all 45 — this is the coupling, stated.
+  // StickerAlbum draws the chapter CHIP from `chapter.rewards[0]`, so that specific slot must resolve
+  // even though the assertion above already covers the whole path — this is the coupling, stated.
   const missing = REWARD_CHAPTERS
     .filter((c) => !existsSync(artPath(c.rewards[0].id)))
     .map((c) => `${c.title} → ${c.rewards[0].id}`)

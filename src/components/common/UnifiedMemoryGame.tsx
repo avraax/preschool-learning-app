@@ -103,7 +103,6 @@ export interface UnifiedMemoryConfig {
   theme: CategoryTheme     // card-back MOTIF is theme/world-driven now (see WORLD_MOTIF), not config
 
   // Component overrides
-  ScoreComponent: React.ComponentType<any>
   RepeatButtonComponent: React.ComponentType<any>
   RestartButtonComponent: React.ComponentType<any>
 }
@@ -136,7 +135,7 @@ const UnifiedMemoryGame: React.FC<UnifiedMemoryGameProps> = ({ config }) => {
   const [roundOutcome, setRoundOutcome] = useState<RoundOutcome | null>(null)
 
   // Centralized game state management
-  const { incrementScore, resetScore, isScoreNarrating, handleScoreClick } = useGameState()
+  const { incrementScore, resetScore } = useGameState()
   
   // Simplified audio system
   const audio = useSimplifiedAudioHook({ 
@@ -507,7 +506,6 @@ const UnifiedMemoryGame: React.FC<UnifiedMemoryGameProps> = ({ config }) => {
     }
   }
 
-  const ScoreComponent = config.ScoreComponent
   const RepeatButtonComponent = config.RepeatButtonComponent
   const RestartButtonComponent = config.RestartButtonComponent
 
@@ -608,13 +606,6 @@ const UnifiedMemoryGame: React.FC<UnifiedMemoryGameProps> = ({ config }) => {
       backRoute={config.backPath}
       dense
       guide={false}
-      score={
-        <ScoreComponent
-          disabled={isScoreNarrating}
-          onClick={handleScoreClick}
-          customLabel={`Par: ${matchedPairs}/${config.boardPairs}`}
-        />
-      }
       celebration={{ show: showCelebration, intensity: celebrationIntensity, duration: celebrationDuration, onComplete: stopCelebration }}
     >
         <style>{flipStyles}</style>

@@ -13,7 +13,6 @@ import {
   inertState,
   normalizePersisted,
   owedRewards,
-  pathIndexForSlot,
   progressInvariantViolations,
   progressKeyFor,
   rebuildCollected,
@@ -22,8 +21,8 @@ import {
   bloomXpFor,
   type PersistedProgress,
 } from './progressSchema.ts'
-import { REWARD_PATH } from './stickers.ts'
-import { REWARD_SLOTS, FAST_SLOTS, REWARD_XP, levelFromXp } from './progression.ts'
+import { REWARD_PATH, REWARD_SLOTS } from './stickers.ts'
+import { FAST_SLOTS, REWARD_XP, levelFromXp } from './progression.ts'
 
 const NOW = 1_800_000_000_000
 const DEV = 'device-A'
@@ -84,19 +83,36 @@ test('the ledger sums: three devices contribute XP, slots and bloom additively',
   assert.equal(bloomXpFor(p, 'english'), 0)
 })
 
-test('rebuildCollected walks the path in order and wraps into the gold pass at 45', () => {
+test('rebuildCollected walks the path prefix and NEVER wraps (the gold pass is gone)', () => {
   const first = rebuildCollected(3, {}, NOW)
   assert.deepEqual(Object.keys(first), REWARD_PATH.slice(0, 3).map((r) => r.id))
   assert.equal(first[REWARD_PATH[0].id].count, 1)
 
-  // Slot 46 (index 45) is a GOLD duplicate of slot 1 — deterministic, not a random dupe.
-  assert.equal(pathIndexForSlot(REWARD_SLOTS), 0)
-  assert.equal(pathIndexForSlot(REWARD_SLOTS + 1), 1)
-  const gold = rebuildCollected(REWARD_SLOTS + 2, {}, NOW)
-  assert.equal(Object.keys(gold).length, REWARD_SLOTS) // the count never inflates past 45
-  assert.equal(gold[REWARD_PATH[0].id].count, 2)
-  assert.equal(gold[REWARD_PATH[1].id].count, 2)
-  assert.equal(gold[REWARD_PATH[2].id].count, 1)
+  // A full book is exactly the path, each id ONCE. `pathIndexForSlot` used to wrap
+  // `(slot - 45) % 45` here and `count` counted the duplicates; both are deleted (§3.5).
+  const full = rebuildCollected(REWARD_SLOTS, {}, NOW)
+  assert.equal(Object.keys(full).length, REWARD_SLOTS)
+  for (const r of REWARD_PATH) assert.equal(full[r.id].count, 1, `${r.id} has a duplicate`)
+
+  // A cursor past the end (only reachable via a cross-device G-Counter) stops at the last slot rather
+  // than re-handing anything — no duplicate can exist, so `count` is permanently 1.
+  const past = rebuildCollected(REWARD_SLOTS + 5, {}, NOW)
+  assert.deepEqual(Object.keys(past), Object.keys(full))
+  for (const r of REWARD_PATH) assert.equal(past[r.id].count, 1)
+})
+
+test('owedRewards CLAMPS at the end of the book (no gold wrap to absorb the debt)', () => {
+  // The XP ledger keeps climbing forever across devices, so without this clamp a full book would
+  // report growing debt and `grantSlot` would be handed a cursor with no reward on it.
+  const p = withSlots(REWARD_SLOTS)
+  assert.equal(owedRewards(p), 0)
+  p.ledger[DEV].xp += REWARD_XP * 200 // a lot more play after the book is full
+  assert.equal(owedRewards(p), 0, 'a finished book must owe nothing, forever')
+
+  // One slot short: still exactly one owed, and no more.
+  const nearly = withSlots(REWARD_SLOTS - 1)
+  nearly.ledger[DEV].xp += REWARD_XP * 200
+  assert.equal(owedRewards(nearly), 1)
 })
 
 test('rebuildCollected falls back to `now` for a missing stamp, never to 1970', () => {
@@ -111,7 +127,7 @@ test('deriveNewIds is the contiguous suffix of the granted prefix', () => {
   assert.deepEqual(deriveNewIds(0, 0), [])
   assert.deepEqual(deriveNewIds(3, 3), [])
   assert.deepEqual(deriveNewIds(3, 1), [REWARD_PATH[1].id, REWARD_PATH[2].id])
-  // Gold duplicates are never "new", so the suffix stops at 45.
+  // The suffix stops at the end of the book — there is nothing past it to be "new".
   assert.deepEqual(deriveNewIds(REWARD_SLOTS + 5, REWARD_SLOTS), [])
   // A seen cursor ahead of the granted prefix clamps rather than producing nonsense.
   assert.deepEqual(deriveNewIds(2, 9), [])
@@ -129,6 +145,13 @@ test('invariants: grantedSlots must equal Σ ledger.slots and must not exceed th
   overGranted.ledger[DEV].slots = 9
   overGranted.stickers.grantedSlots = 9
   assert.match(progressInvariantViolations(overGranted).join(' '), /the level only owes/)
+
+  // …and the book's own end is an invariant now that nothing wraps past it.
+  const pastTheEnd = withSlots(REWARD_SLOTS)
+  pastTheEnd.ledger[DEV].slots = REWARD_SLOTS + 1
+  pastTheEnd.stickers.grantedSlots = REWARD_SLOTS + 1
+  pastTheEnd.ledger[DEV].xp = xpForSlots(REWARD_SLOTS + 1) // enough level to owe it, so only the cap bites
+  assert.match(progressInvariantViolations(pastTheEnd).join(' '), /the book only has/)
 })
 
 test('the invariant is an INEQUALITY: a pending ceremony (debt) is legal, not a violation', () => {

@@ -8,27 +8,24 @@ import { useTransitionNav } from '../../hooks/useTransitionNav'
 import { useTransitionContext } from '../common/transition/TransitionProvider'
 import { useIdleAttract } from '../../hooks/useIdleAttract'
 import { PHONE_ANY, PHONE_LANDSCAPE } from '../../theme/phoneMedia'
-import { REWARD_SLOTS } from '../../config/progression'
-import { rewardArt } from '../../assets/rewards'
-import { collectedCountLine } from '../../config/danish-phrases'
-import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 import { sectionIconImages } from '../../assets/themes/icons'
 import { defaultHomeAnchors, SCENE_SECTION_ORDER } from '../../theme/tokens/helpers'
 import type { SceneSectionId } from '../../theme/tokens/types'
-import ProgressionCompanion from '../common/ProgressionCompanion'
 import RewardRing from '../common/RewardRing'
 import ThemeMascot from '../common/ThemeMascot'
 import LivingCard from '../common/LivingCard'
 import SceneObjectField, { type SceneFieldItem } from '../common/scene/SceneObjectField'
-import { sfx } from '../../services/sfxClient'
 import appLogo from '../../assets/logo.webp'
-import { uiArt } from '../../assets/ui'
 
 // Home base (Liveliness PRD-02 §10; RESKINNED by PRD-05 W3 into the "Structured World"). For
 // IMMERSIVE skins the frosted card grid is replaced by the 5 section objects seated in the world
-// (SceneObjectField at theme.scene.homeAnchors), progress is made prominent (the companion grows),
-// and Min Bog stays as a small secondary shelf. FLAT/unregistered skins keep the original card
+// (SceneObjectField at theme.scene.homeAnchors). FLAT/unregistered skins keep the original card
 // grid untouched. Content/layout config only; all styling comes from theme tokens.
+//
+// **There is no Min Bog shelf here any more** (Reward Horizon PRD-01 D3/§4.2). The corner ring is the
+// ONE door to the book: two objects at opposite ends of the same screen, both meaning "your rewards",
+// is the confusion the whole PRD exists to remove — and home gets the space back for the world. Do not
+// re-add a second entrance; `rewardSurfaces.test.ts` fails the build if one appears.
 type HomeCardId = 'alphabet' | 'math' | 'colors' | 'english' | 'ordleg'
 
 // Section → its menu route (the SectionId `colors` lives at `/farver`).
@@ -64,27 +61,9 @@ const HomePage: React.FC = () => {
   const immersive = theme.scene.layers.length > 0
   const darkScene = theme.scene.dark // dark backdrop (e.g. Rummet) → light title + floating objects
   const burstMotion = theme.scene.ambient.motion
-  const { collectedCount, nextReward } = useProgress()
-  // ONE total, from the economy constant — this used to be computed three different ways across the
-  // album/home surfaces. `nextReward` puts the prize he's working toward right on the shelf.
-  const rewardsOwned = collectedCount()
-  const nextPrize = nextReward()
-  const nextPrizeArt = nextPrize ? rewardArt(nextPrize.reward.id) : undefined
-  const albumFill = rewardsOwned / REWARD_SLOTS
-
-  // Tapping the corner ring says how many rewards are in the book ("Du har tolv klistermærker!") — the
-  // affordance the growing companion carried before it moved into the shelf card. Silent at 0: there's
-  // no count worth announcing on a fresh profile.
-  const homeAudio = useSimplifiedAudioHook({ componentId: 'HomePage', autoInitialize: false })
-  const speakCollectedCount = useCallback(() => {
-    if (rewardsOwned <= 0) return
-    try {
-      homeAudio.updateUserInteraction()
-      homeAudio.speak(collectedCountLine(rewardsOwned)).catch(() => {})
-    } catch {
-      /* audio best-effort */
-    }
-  }, [homeAudio, rewardsOwned])
+  const { rewardNumber } = useProgress()
+  // THE number — rewards handed over, the same one the ring badge and the book header show.
+  const rewardsOwned = rewardNumber()
 
   // The 5 section objects, built FROM the theme's home anchors so item ↔ anchor stay index-aligned
   // regardless of the authored order. Each is a tappable soft-3D object that lives in the world.
@@ -160,8 +139,8 @@ const HomePage: React.FC = () => {
       }}
     >
       {/* IMMERSIVE: the 5 section objects seated in the world, spanning the full scene (behind the
-          header/Min Bog chrome, which sit in the top/bottom safe bands the anchors keep clear). On
-          phones/portrait this falls back to a centred tactile flow (never a card grid). */}
+          header chrome, which sits in the top safe band the anchors keep clear). On phones/portrait
+          this falls back to a centred tactile flow (never a card grid). */}
       {immersive && (
         <Box
           sx={{
@@ -171,7 +150,8 @@ const HomePage: React.FC = () => {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            // In flow mode (phones) keep the band clear of the header + Min Bog shelf.
+            // In flow mode (phones) keep the band clear of the header (top) and the mascot + corner
+            // gear (bottom) — the Min Bog shelf that used to claim the bottom band is gone.
             py: { xs: 'clamp(72px, 16vh, 120px)', md: 0 },
           }}
         >
@@ -196,7 +176,7 @@ const HomePage: React.FC = () => {
           position: 'relative',
           zIndex: 3,
           // Immersive: the middle is the world's seating area — let taps fall through to the objects
-          // there; only the header + Min Bog rows are interactive.
+          // there; only the header row is interactive.
           pointerEvents: immersive ? 'none' : 'auto',
           [PHONE_LANDSCAPE]: { py: 0.75 },
         }}
@@ -241,17 +221,15 @@ const HomePage: React.FC = () => {
             </Box>
           </motion.div>
 
-          {/* The NEXT REWARD, exactly as the section menus and every game header show it (owner
-              decision, 2026-07-31). Home used to put the growing companion here instead — a different
-              object in the same corner position, which undercut the whole point of the one-track model:
-              the child had to learn that the top-right circle means two different things depending on
-              which screen he's on. Now every surface in the app previews the same prize in the same
-              place. The companion moved down beside the Min Bog shelf, where book progress lives. */}
+          {/* The NEXT REWARD, exactly as the section menus and every game header show it — same object,
+              same corner, on every screen. Tapping it OPENS MIN BOG: the ring is the door (D3), which
+              is why the tap no longer just speaks the count. The count is spoken on ARRIVAL in the book
+              instead, where the numeral is actually on screen while it is read aloud. */}
           <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5, delay: 0.15 }}>
             <RewardRing
               size={immersive ? 52 : 48}
-              onTap={speakCollectedCount}
-              ariaLabel={`Du har ${rewardsOwned} klistermærker`}
+              onTap={() => navigateWithTransition('/album')}
+              ariaLabel={`Min Bog — ${rewardsOwned} klistermærker`}
               sx={{ [PHONE_LANDSCAPE]: { width: 36, height: 36 } }}
             />
           </motion.div>
@@ -355,134 +333,6 @@ const HomePage: React.FC = () => {
         {/* Immersive: a flexible spacer fills the middle (the world's seating area shows through). */}
         {immersive && <Box sx={{ flex: 1, minHeight: 0 }} />}
 
-        {/* Reward shelf — Min Bog. De-emphasized (Liveliness PRD-04 §7): the LEVEL is the primary
-            reward (the header companion + rings lead), so the album shelf is a slimmer secondary pill. */}
-        <Box
-          component={motion.div}
-          initial={{ opacity: 0, y: 24 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.5 }}
-          whileHover={{ scale: 1.015 }}
-          whileTap={{ scale: 0.985 }}
-          sx={{ width: '100%', maxWidth: { xs: 380, md: 520 }, mx: 'auto', pointerEvents: 'auto' }}
-        >
-          <Card
-            onClick={() => { sfx.play('card-pop'); navigateWithTransition('/album') }}
-            sx={{
-              width: '100%',
-              cursor: 'pointer',
-              position: 'relative',
-              overflow: 'hidden',
-              borderRadius: '18px',
-              border: '3px solid',
-              borderColor: alpha('#FFB300', 0.85),
-              background: immersive
-                ? darkScene
-                  ? 'linear-gradient(135deg, rgba(255,248,222,0.96) 0%, rgba(255,226,140,0.94) 100%)'
-                  : 'linear-gradient(135deg, rgba(255,247,214,0.82) 0%, rgba(255,228,150,0.7) 100%)'
-                : 'linear-gradient(135deg, rgba(255,250,235,0.97) 0%, rgba(255,221,130,0.95) 100%)',
-              backdropFilter: immersive ? 'blur(16px) saturate(1.1)' : 'blur(15px)',
-              WebkitBackdropFilter: immersive ? 'blur(16px) saturate(1.1)' : 'blur(15px)',
-              boxShadow: `0 6px 26px ${alpha('#FFB300', 0.45)}`,
-              '&:hover': {
-                borderColor: '#FF9800',
-                boxShadow: `0 10px 36px ${alpha('#FFB300', 0.6)}`,
-                transform: 'translateY(-2px)',
-              },
-              transition: 'box-shadow 0.3s ease, border-color 0.3s ease, transform 0.3s ease',
-              '@media (prefers-reduced-motion: no-preference)': {
-                '&::after': {
-                  content: '""',
-                  position: 'absolute',
-                  top: 0,
-                  bottom: 0,
-                  left: '-30%',
-                  width: '30%',
-                  background: 'linear-gradient(100deg, transparent 0%, rgba(255,255,255,0.55) 50%, transparent 100%)',
-                  transform: 'skewX(-18deg)',
-                  animation: 'minBogShimmer 4.5s ease-in-out infinite',
-                  pointerEvents: 'none',
-                },
-              },
-              '@keyframes minBogShimmer': {
-                '0%': { left: '-30%' },
-                '55%': { left: '130%' },
-                '100%': { left: '130%' },
-              },
-            }}
-          >
-            <CardContent
-              sx={{
-                position: 'relative',
-                zIndex: 1,
-                display: 'flex',
-                alignItems: 'center',
-                gap: { xs: 1.25, md: 1.75 },
-                px: { xs: 1.5, md: 2 },
-                py: { xs: 0.75, md: 1 },
-                '&:last-child': { pb: { xs: 0.75, md: 1 } },
-                [PHONE_LANDSCAPE]: { py: 0.4, '&:last-child': { pb: 0.4 }, gap: 0.75 },
-              }}
-            >
-              {/* The growing companion sits INSIDE the shelf as its icon: the 5 reward chapters ARE its
-                  5 stages, so it belongs on the card that shows book progress rather than competing with
-                  the reward ring for the corner. Non-interactive here (the whole card opens the book —
-                  the right destination); the spoken count moved to the corner ring's tap. Placed beside
-                  the shelf it collided with the corner mascot and clipped the viewport edge in portrait. */}
-              <ProgressionCompanion
-                size={34}
-                showBadge={false}
-                interactive={false}
-                sx={{ flex: '0 0 auto', [PHONE_LANDSCAPE]: { width: 26, height: 26 } }}
-              />
-              <Box sx={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 0.4 }}>
-                <Typography sx={{ fontWeight: 800, fontSize: { xs: '0.9rem', md: '1.05rem' }, color: '#6B3F00', lineHeight: 1, [PHONE_LANDSCAPE]: { fontSize: '0.85rem' } }}>
-                  Min Bog
-                </Typography>
-                <Box sx={{ position: 'relative', height: 8, borderRadius: 4, bgcolor: alpha('#C77800', 0.2), overflow: 'hidden', width: '100%', [PHONE_LANDSCAPE]: { height: 6 } }}>
-                  <Box sx={{ position: 'absolute', inset: 0, width: `${Math.round(albumFill * 100)}%`, background: 'linear-gradient(90deg, #FFD86B 0%, #FFB300 100%)', boxShadow: '0 0 10px rgba(255,179,0,0.6)', transition: 'width 0.7s cubic-bezier(0.34, 1.56, 0.64, 1)' }} />
-                </Box>
-              </Box>
-              <Typography sx={{ flex: '0 0 auto', fontWeight: 800, fontSize: { xs: '0.8rem', md: '0.95rem' }, color: '#5C3800', whiteSpace: 'nowrap', [PHONE_LANDSCAPE]: { fontSize: '0.75rem' } }}>
-                {rewardsOwned} / {REWARD_SLOTS}
-              </Typography>
-              {/* The next prize, as the same silhouette the corner ring and the book show — so home
-                  also answers "what am I working toward?". Book full → the gold sparkle. */}
-              <Box
-                aria-hidden
-                sx={{
-                  flex: '0 0 auto',
-                  width: { xs: 26, md: 32 },
-                  height: { xs: 26, md: 32 },
-                  [PHONE_LANDSCAPE]: { width: 22, height: 22 },
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: { xs: '1.15rem', md: '1.4rem' },
-                  lineHeight: 1,
-                }}
-              >
-                {nextPrize ? (
-                  <Box
-                    component="img"
-                    src={nextPrizeArt}
-                    alt=""
-                    draggable={false}
-                    sx={{ width: '100%', height: '100%', objectFit: 'contain', filter: 'brightness(0)', opacity: 0.32 }}
-                  />
-                ) : (
-                  <Box
-                    component="img"
-                    src={uiArt.sparkle}
-                    alt=""
-                    draggable={false}
-                    sx={{ width: '100%', height: '100%', objectFit: 'contain' }}
-                  />
-                )}
-              </Box>
-            </CardContent>
-          </Card>
-        </Box>
       </Container>
 
       {/* Per-world mascot — rendered INSIDE the page (flicker-safe). Idle-attract nudges it. */}

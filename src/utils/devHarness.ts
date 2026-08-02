@@ -70,12 +70,14 @@ export const installDevRewards = async (): Promise<void> => {
   const raw = readParams().get('rewards')
   if (raw == null) return
   const { progressStore } = await import('../services/progressStore')
-  const { REWARD_XP, FAST_SLOTS, REWARD_SLOTS } = await import('../config/progression')
+  const { REWARD_XP, FAST_SLOTS } = await import('../config/progression')
+  const { REWARD_SLOTS } = await import('../config/stickers')
   // The store is INERT until profileStore attaches a child (accounts PRD §5.4), and main.tsx fires
   // this at import — long before the auth gate opens. Without waiting, every call below is a silent
   // no-op and the `?rewards=n` harness dies without an error (§10.7).
   await progressStore.whenAttached()
-  // Allow seeding past 45 to exercise the gold pass.
+  // Seeding past the end is allowed and must be INDISTINGUISHABLE from a full book — that's the
+  // end-of-book state the verification walk checks at ?rewards=72 vs ?rewards=90.
   const want = Math.max(0, Math.min(REWARD_SLOTS * 2, Math.floor(Number(raw) || 0)))
   progressStore.resetAll()
   if (want === 0) return

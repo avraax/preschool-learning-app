@@ -1,7 +1,6 @@
 import React, { useRef } from 'react'
 import UnifiedQuizGame, { UnifiedQuizConfig, QuizItem } from '../common/UnifiedQuizGame'
 import { getCategoryTheme } from '../../config/categoryThemes'
-import { OrdlegScoreChip } from '../common/ScoreChip'
 import { OrdlegRepeatButton } from '../common/RepeatButton'
 import { progressStore } from '../../services/progressStore'
 import { ORDLEG_READ } from '../../config/difficulty'
@@ -100,7 +99,6 @@ const LaesOrdetGame: React.FC = () => {
     theme: getCategoryTheme('ordleg'),
     backRoute: '/ordleg',
 
-    ScoreChipComponent: OrdlegScoreChip,
     RepeatButtonComponent: OrdlegRepeatButton,
     // No "Gentag" button — there's nothing to repeat; the child reads the word silently.
     showRepeat: false,

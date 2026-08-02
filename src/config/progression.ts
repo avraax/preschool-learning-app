@@ -12,14 +12,25 @@
 export const REWARD_XP = 40 // XP that equals one completed round
 export const FAST_SLOTS = 18 // slots 1..18 land one-per-round (chapters 1-2)
 export const CHAPTER_SIZE = 9
-export const CHAPTER_COUNT = 5
-export const REWARD_SLOTS = 45 // CHAPTER_SIZE * CHAPTER_COUNT
+
+// How many baked companion growth stages every world ships (SceneAssets.companionStages).
+// DELIBERATELY NOT the chapter count any more (Reward Horizon PRD-01 §3.2): the book grows by
+// appending chapters, the companion art does not, so tying the clamp to CHAPTER_COUNT would index
+// past the last baked stage the moment chapter 6 shipped. The companion finishes growing at chapter
+// 5 and stays grown — it must never regress.
+export const COMPANION_STAGES = 5
+
+// NB `REWARD_SLOTS` / `CHAPTER_COUNT` live in stickers.ts now, DERIVED from REWARD_CHAPTERS, so a new
+// chapter is content rather than engineering. They are not re-exported here on purpose: this module
+// must not import stickers.ts (stickers.ts imports THIS one, and a cycle has to survive plain Node in
+// shared-narration-clips.js as well as Vite).
 
 // ----- Global level curve ---------------------------------------------------------------------
 // 1-based level → XP required to advance from that level to the NEXT one. Two tiers only (PRD §5):
 // the first 18 slots cost one round each so the book visibly moves from the very first session;
-// from slot 19 on a reward costs ~2 rounds. No cap and no level ceiling — past slot 45 the gold pass
-// keeps handing out shiny duplicates at the slow rate.
+// from slot 19 on a reward costs ~2 rounds. There is deliberately NO third, slower tier — that is the
+// grind the extra chapters exist to avoid. The curve has no ceiling; the BOOK does (see
+// `owedRewards`, which clamps at REWARD_SLOTS now that the gold pass is gone).
 export const xpToNext = (level: number): number =>
   level <= FAST_SLOTS ? REWARD_XP : REWARD_XP * 2
 
@@ -46,14 +57,23 @@ export function levelFromXp(totalXp: number): LevelInfo {
 // Level 1 = an empty book. Reaching level 2 awards slot 1 (index 0).
 export const collectedFromLevel = (level: number): number => Math.max(0, level - 1)
 
-// 0-based slot index → its chapter index (0..4).
+// THE child-facing number (Reward Horizon PRD-01 §3.1). Equals the count of rewards in the book,
+// always, on every surface. It is `grantedSlots` — what the ceremony has actually HANDED OVER — and
+// never `collectedFromLevel(level)`, which is the debt CEILING and runs one ahead for the length of a
+// pending ceremony. Since the ring is the door into the book, a one-off disagreement between the ring
+// badge and the book header is a very likely path; this definition makes it impossible.
+export const rewardNumber = (grantedSlots: number): number =>
+  Math.max(0, Math.floor(grantedSlots))
+
+// 0-based slot index → its chapter index (0-based, unbounded — the book can grow).
 export const chapterOfSlot = (slotIndex0: number): number =>
   Math.floor(Math.max(0, slotIndex0) / CHAPTER_SIZE)
 
-// Companion growth stage from the collected count: the 5 chapters ARE the 5 stages, so the
-// companion is literally a picture of how far through the book the child is.
+// Companion growth stage from the collected count: one stage per chapter, clamped at the last BAKED
+// stage (COMPANION_STAGES, not the chapter count — see the constant). Monotone non-decreasing: the
+// companion grows and then stays grown, never regresses.
 export const companionStageForCollected = (collected: number): number =>
-  Math.min(CHAPTER_COUNT - 1, Math.floor(Math.max(0, collected) / CHAPTER_SIZE))
+  Math.min(COMPANION_STAGES - 1, Math.floor(Math.max(0, collected) / CHAPTER_SIZE))
 
 // ----- Per-section bloom (UNCHANGED — Reward Book D7 leaves the world alone) -------------------
 // Cumulative XP thresholds for bloom stages 0..4 (drives how alive a section's menu world looks).

@@ -11,7 +11,6 @@ import type { GuideReaction } from '../common/ThemeMascot'
 import { useCelebration } from '../common/CelebrationEffect'
 import { ColorRepeatButton } from '../common/RepeatButton'
 import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
-import { ColorProgressChip } from '../common/ScoreChip'
 import { useRound } from '../../hooks/useRound'
 import { progressStore, type RoundOutcome } from '../../services/progressStore'
 import { COLORS_FARVEJAGT, starThresholdsFor } from '../../config/difficulty'
@@ -486,13 +485,6 @@ const FarvejagtGame: React.FC = () => {
       backRoute="/farver"
       dense
       guideReaction={guideReaction}
-      score={
-        <ColorProgressChip
-          answered={round.state.index}
-          total={ROUND_BOARDS}
-          onClick={repeatInstructions}
-        />
-      }
       celebration={{ show: showCelebration, intensity: celebrationIntensity, duration: celebrationDuration, onComplete: stopCelebration }}
     >
       {roundOutcome ? (

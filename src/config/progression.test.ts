@@ -6,8 +6,7 @@ import {
   REWARD_XP,
   FAST_SLOTS,
   CHAPTER_SIZE,
-  CHAPTER_COUNT,
-  REWARD_SLOTS,
+  COMPANION_STAGES,
   MAX_ROUND_XP,
   BROWSE_TASK_XP,
   xpToNext,
@@ -21,14 +20,19 @@ import {
   collectedFromLevel,
   chapterOfSlot,
   companionStageForCollected,
+  rewardNumber,
 } from './progression.ts'
-import { REWARD_CHAPTERS, REWARD_PATH, rewardAt, chapterAt, slotOfReward } from './stickers.ts'
+import { REWARD_SLOTS } from './stickers.ts'
 
-test('economy constants hang together', () => {
-  assert.equal(REWARD_SLOTS, CHAPTER_SIZE * CHAPTER_COUNT)
-  assert.equal(REWARD_SLOTS, 45)
+test('economy constants hang together', async () => {
   assert.equal(FAST_SLOTS, CHAPTER_SIZE * 2) // chapters 1-2 are the fast tier
   assert.equal(REWARD_XP, 40)
+  // REWARD_SLOTS / CHAPTER_COUNT are DERIVED and live in stickers.ts now — pinned in stickers.test.ts.
+  // What must hold HERE is that progression.ts does not re-export them, or "add a chapter" grows a
+  // second definition that can drift from the data.
+  const mod = await import('./progression.ts')
+  assert.equal('REWARD_SLOTS' in mod, false)
+  assert.equal('CHAPTER_COUNT' in mod, false)
 })
 
 test('xpToNext: exactly two tiers — one round per slot, then two', () => {
@@ -37,7 +41,10 @@ test('xpToNext: exactly two tiers — one round per slot, then two', () => {
   assert.equal(xpToNext(FAST_SLOTS), REWARD_XP) // level 18 still fast (awards slot 18)
   assert.equal(xpToNext(FAST_SLOTS + 1), REWARD_XP * 2) // level 19 → the slow tier
   assert.equal(xpToNext(45), REWARD_XP * 2)
-  assert.equal(xpToNext(60), REWARD_XP * 2) // stays there forever (gold pass)
+  // Stays at two rounds per reward FOREVER. There is deliberately no third, slower tier: that is
+  // exactly the grind the extra chapters exist to avoid (Reward Horizon PRD-01 §3.4).
+  assert.equal(xpToNext(60), REWARD_XP * 2)
+  assert.equal(xpToNext(200), REWARD_XP * 2)
   // Strictly non-decreasing across the interesting range.
   for (let l = 1; l < 60; l++) assert.ok(xpToNext(l + 1) >= xpToNext(l))
 })
@@ -56,10 +63,10 @@ test('levelFromXp: thresholds, remainder bookkeeping, monotonic across the tier 
   assert.equal(levelFromXp(799).level, 19)
   assert.equal(levelFromXp(800).level, 20)
 
-  // Filling the whole book = 18×40 + 27×80 = 720 + 2160 = 2880 XP → level 46, 45 collected.
-  const full = 18 * REWARD_XP + 27 * REWARD_XP * 2
-  assert.equal(full, 2880)
-  assert.equal(levelFromXp(full).level, 46)
+  // Filling the whole book = 18×40 + 54×80 = 720 + 4320 = 5040 XP → level 73, 72 collected.
+  const full = FAST_SLOTS * REWARD_XP + (REWARD_SLOTS - FAST_SLOTS) * REWARD_XP * 2
+  assert.equal(full, 5040)
+  assert.equal(levelFromXp(full).level, REWARD_SLOTS + 1)
   assert.equal(collectedFromLevel(levelFromXp(full).level), REWARD_SLOTS)
 
   // Remainder fields stay consistent with the curve on both sides of the tier change.
@@ -160,10 +167,23 @@ test('collectedFromLevel: THE mapping (level 1 = empty book)', () => {
   assert.equal(collectedFromLevel(1), 0)
   assert.equal(collectedFromLevel(2), 1) // reaching level 2 awards slot 1
   assert.equal(collectedFromLevel(19), 18) // end of the fast tier
-  assert.equal(collectedFromLevel(46), 45) // book full
-  assert.equal(collectedFromLevel(47), 46) // gold pass keeps counting
+  assert.equal(collectedFromLevel(73), 72) // book full
+  // The LEVEL curve keeps climbing past the end of the book — it is the debt CEILING, not the book.
+  // `owedRewards` is what clamps, so the extra levels simply owe nothing (see progressStore.test.ts).
+  assert.equal(collectedFromLevel(74), 73)
   assert.equal(collectedFromLevel(0), 0) // guarded
   assert.equal(collectedFromLevel(-5), 0)
+})
+
+test('rewardNumber: the child-facing number is grantedSlots, floored and non-negative', () => {
+  assert.equal(rewardNumber(0), 0)
+  assert.equal(rewardNumber(23), 23)
+  assert.equal(rewardNumber(REWARD_SLOTS), REWARD_SLOTS)
+  assert.equal(rewardNumber(-4), 0) // guarded
+  assert.equal(rewardNumber(7.9), 7)
+  // It is NOT the level. `collectedFromLevel(level)` runs one ahead during a pending ceremony, and
+  // the store test pins the inequality across a seeded run; this pins the shape.
+  assert.equal(rewardNumber.length, 1)
 })
 
 test('chapterOfSlot: 9-slot chapters, boundaries exact', () => {
@@ -177,19 +197,35 @@ test('chapterOfSlot: 9-slot chapters, boundaries exact', () => {
   assert.equal(chapterOfSlot(35), 3)
   assert.equal(chapterOfSlot(36), 4)
   assert.equal(chapterOfSlot(44), 4)
+  assert.equal(chapterOfSlot(45), 5) // chapter 6 — the book grows, this function does not cap
+  assert.equal(chapterOfSlot(63), 7)
   assert.equal(chapterOfSlot(-1), 0) // guarded
 })
 
-test('companionStageForCollected: 5 chapters ⇔ 5 stages, clamped at the top', () => {
+test('companionStageForCollected: clamped at the BAKED stages, never the chapter count', () => {
+  assert.equal(COMPANION_STAGES, 5) // 5 baked stages per world; the book has more chapters than this
   assert.equal(companionStageForCollected(0), 0)
   assert.equal(companionStageForCollected(8), 0)
   assert.equal(companionStageForCollected(9), 1) // chapter 1 complete → stage up
   assert.equal(companionStageForCollected(18), 2)
   assert.equal(companionStageForCollected(27), 3)
-  assert.equal(companionStageForCollected(36), 4)
-  assert.equal(companionStageForCollected(45), CHAPTER_COUNT - 1) // clamped, not 5
-  assert.equal(companionStageForCollected(1000), CHAPTER_COUNT - 1)
+  assert.equal(companionStageForCollected(36), 4) // fully grown at chapter 5
+  // THE regression this replaces: clamping on CHAPTER_COUNT - 1 (now 7) would index past the 5th
+  // baked stage the moment chapter 6 shipped, i.e. an empty companion in the middle of a ceremony.
+  assert.equal(companionStageForCollected(45), COMPANION_STAGES - 1)
+  assert.equal(companionStageForCollected(72), COMPANION_STAGES - 1)
+  assert.equal(companionStageForCollected(1000), COMPANION_STAGES - 1)
   assert.equal(companionStageForCollected(-3), 0)
+
+  // Never past its art, and MONOTONE NON-DECREASING — the companion grows and stays grown; a
+  // regression ("it shrank") is the one thing a growth display must never do.
+  let prev = 0
+  for (let n = 0; n <= 200; n++) {
+    const s = companionStageForCollected(n)
+    assert.ok(s <= COMPANION_STAGES - 1, `stage ${s} at ${n} collected is past the baked art`)
+    assert.ok(s >= prev, `companion regressed from ${prev} to ${s} at ${n} collected`)
+    prev = s
+  }
 })
 
 test('bloomStage / bloomFill: UNCHANGED by the reward-book bump (D7 — the world is out of scope)', () => {
@@ -211,69 +247,17 @@ test('bloomStage / bloomFill: UNCHANGED by the reward-book bump (D7 — the worl
   assert.equal(bloomFill(-50), 0)
 })
 
-// ----- the reward path itself (data shape the whole economy assumes) --------------------------
-
-test('REWARD_PATH: 45 rewards, 5 chapters of 9, unique ids, all labelled', () => {
-  assert.equal(REWARD_CHAPTERS.length, CHAPTER_COUNT)
-  assert.equal(REWARD_PATH.length, REWARD_SLOTS)
-  for (const c of REWARD_CHAPTERS) {
-    assert.equal(c.rewards.length, CHAPTER_SIZE, `chapter ${c.id} is not ${CHAPTER_SIZE} long`)
-    assert.ok(c.title, `chapter ${c.id} missing title`)
-  }
-  const ids = new Set(REWARD_PATH.map((r) => r.id))
-  assert.equal(ids.size, REWARD_SLOTS, 'duplicate reward id on the path')
-  for (const r of REWARD_PATH) {
-    assert.ok(r.label.length > 0, `${r.id} has no label`)
-  }
-  // The dropped sets are really gone (PRD §6.1).
-  assert.ok(!REWARD_CHAPTERS.some((c) => c.id === 'smaakryb' || c.id === 'legetoej'))
-})
-
-test('the slot map is the documented one and lookups agree with it', () => {
-  // 1-9 Dyr · 10-18 Køretøjer · 19-27 Mad · 28-36 Natur · 37-45 Havet.
-  assert.deepEqual(
-    REWARD_CHAPTERS.map((c) => c.id),
-    ['dyr', 'koeretoejer', 'mad', 'natur', 'havet'],
-  )
-  assert.equal(rewardAt(0)?.id, 'dyr-hund') // the very first prize
-  assert.equal(rewardAt(9)?.id, 'kt-bil')
-  assert.equal(rewardAt(18)?.id, 'mad-aeble')
-  assert.equal(rewardAt(27)?.id, 'natur-trae')
-  assert.equal(rewardAt(36)?.id, 'hav-fisk')
-  assert.equal(rewardAt(44)?.id, 'hav-musling') // the last
-  assert.equal(rewardAt(45), null) // past the end → the store's gold pass wraps
-  assert.equal(rewardAt(-1), null)
-
-  for (let slot = 0; slot < REWARD_SLOTS; slot++) {
-    const r = rewardAt(slot)!
-    assert.equal(slotOfReward(r.id), slot, `${r.id} disagrees about its slot`)
-    assert.equal(chapterAt(slot)?.id, REWARD_CHAPTERS[chapterOfSlot(slot)].id)
-    assert.ok(chapterAt(slot)!.rewards.includes(r), `${r.id} is not in the chapter at its slot`)
-  }
-  assert.equal(slotOfReward('not-a-reward'), -1)
-})
-
-test('gold pass: past 45 the wrap is deterministic, never random', () => {
-  // The store computes `(slot - REWARD_SLOTS) % REWARD_SLOTS`; pin the arithmetic here so a change
-  // to REWARD_SLOTS can't silently break "slot 46 is a gold slot 1".
-  const wrap = (slot: number) => (slot - REWARD_SLOTS) % REWARD_SLOTS
-  assert.equal(wrap(45), 0) // 46th reward → gold Hund
-  assert.equal(wrap(46), 1) // → gold Kat
-  assert.equal(wrap(89), 44) // → gold Musling
-  assert.equal(wrap(90), 0) // → gold Hund again, forever
-  assert.equal(rewardAt(wrap(45))?.id, 'dyr-hund')
-})
-
-test('the journey is ≈72 rounds (the pacing promise in PRD §5)', () => {
+test('the journey is ≈126 rounds — same curve, longer path (Reward Horizon §3.4)', () => {
   // A completed round with no bonuses is REWARD_XP; walk rounds until the book is full.
   let xp = 0
   let rounds = 0
-  while (collectedFromLevel(levelFromXp(xp).level) < REWARD_SLOTS && rounds < 500) {
+  while (collectedFromLevel(levelFromXp(xp).level) < REWARD_SLOTS && rounds < 1000) {
     xp += REWARD_XP
     rounds++
   }
   assert.equal(collectedFromLevel(levelFromXp(xp).level), REWARD_SLOTS)
-  assert.equal(rounds, 72) // 18 fast + 54 slow
+  assert.equal(rounds, 126) // 18 fast + 108 slow (54 slots × 2 rounds)
+  assert.equal(xp, 5040)
   // And chapters 1-2 really are one-per-round.
   for (let r = 1; r <= FAST_SLOTS; r++) {
     assert.equal(collectedFromLevel(levelFromXp(r * REWARD_XP).level), r)

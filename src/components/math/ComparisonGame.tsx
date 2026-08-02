@@ -9,7 +9,6 @@ import SymbolTile from '../common/SymbolTile'
 import RoundResultScreen from '../common/RoundResultScreen'
 import type { GuideReaction } from '../common/ThemeMascot'
 import { useCelebration } from '../common/CelebrationEffect'
-import { MathScoreChip } from '../common/ScoreChip'
 import { getCategoryTheme } from '../../config/categoryThemes'
 import { COMPARE_PROMPT, comparisonFactText } from '../../config/gamePhrases'
 import { starThresholdsFor } from '../../config/difficulty'
@@ -81,7 +80,7 @@ const ComparisonGame: React.FC = () => {
   const hasInteractedRef = useRef(false)
 
   // Centralized game state management
-  const { incrementScore, resetScore, isScoreNarrating, handleScoreClick } = useGameState()
+  const { incrementScore, resetScore } = useGameState()
 
   // Bounded round + reward flow (Foundation §3). 8 questions; star thresholds come from the difficulty
   // spine at finish time (Difficulty PRD-01 W6).
@@ -391,7 +390,6 @@ const ComparisonGame: React.FC = () => {
       title="Sammenlign Tal"
       backRoute="/math"
       guideReaction={guideReaction}
-      score={<MathScoreChip answered={round.state.index} total={round.length} disabled={isScoreNarrating} onClick={handleScoreClick} />}
       celebration={{ show: showCelebration, intensity: celebrationIntensity, duration: celebrationDuration, onComplete: stopCelebration }}
     >
       {roundOutcome ? (

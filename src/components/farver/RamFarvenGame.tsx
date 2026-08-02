@@ -6,7 +6,6 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { DndContext, DragEndEvent, DragStartEvent } from '@dnd-kit/core'
 import { useDragOnlySensors } from '../common/dnd/useDragOnlySensors'
 import { kidCollision } from '../common/dnd/kidCollision'
-import { ColorProgressChip } from '../common/ScoreChip'
 import { DraggableItem } from '../common/dnd/DraggableItem'
 import { DroppableZone } from '../common/dnd/DroppableZone'
 import type { GuideReaction } from '../common/ThemeMascot'
@@ -463,13 +462,6 @@ const RamFarvenGame: React.FC = () => {
       backRoute="/farver"
       dense
       guideReaction={guideReaction}
-      score={
-        <ColorProgressChip
-          answered={round.state.index}
-          total={ROUND_MIXES}
-          onClick={repeatInstructions}
-        />
-      }
       celebration={{ show: showCelebration, intensity: celebrationIntensity, duration: celebrationDuration, onComplete: stopCelebration }}
     >
       {roundOutcome ? (
