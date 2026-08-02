@@ -162,6 +162,27 @@ codec gate passed, since a rejected codec makes **no** request at all — and ho
 collect `[audio-unlock]` / "→ Web Speech" lines, because the driver only surfaces console *errors*.
 A clean run shows cue + `tts/*.mp3` requests, zero media `error` events, and zero fallbacks.
 
+### Proving what PAINTS a region (A/B pixel test)
+For "is there a background / veil / grey panel behind this?", **a DOM inspection is not proof.** Walking
+a tile's ancestors and finding every one transparent proves no *ancestor* paints it — and still misses the
+real cause, because the wash can come from many **siblings**: at chart density each tile's own
+`drop-shadow` (reach = offset + blur, ~24px) spills past 3px gaps, and ~200 overlapping shadows pool into
+an even grey slab covering exactly the board's bounding box, which no single element owns. That's how
+Lær Tal's "background" was first mis-reported as "nothing paints it".
+
+Measure instead: screenshot twice — once normally, once with the suspect paint layer killed via `--eval`
+(`el.style.filter='none'`, hide `blur(6px)` ellipses, `el.style.boxShadow='none'`) — then compare pixels.
+`ffmpeg-static` is already a devDependency, so read raw pixels without any new package:
+`spawnSync(ffmpeg, ['-i', png, '-f','rawvideo','-pix_fmt','rgb24','-'])` → index `(y*width + x)*3`.
+Write that script **inside the project** (a scratchpad file can't resolve `node_modules`) and delete it after.
+
+Two rules make the result trustworthy:
+- **Always sample a control region outside the board.** If the control moves too, the two captures differ
+  for some other reason and the comparison is void. A valid run shows `0,0,0` there.
+- **Compare tile FACES against the GAPS** — this is the discriminator between healthy depth and a defect:
+  gaps darkened while faces stay untouched = shadows doing their job (Hukommelse measured face −0.0);
+  faces as dark as the gaps = an even wash, i.e. a slab (Lær Tal measured face −32 / gap −35).
+
 ## Options
 - Core: `--url` (req) · `--out <png>` · `--w/--h` (viewport, default 540x940)
 - Waiting (prefer over sleeps): `--wait-for "<css>"` · `--wait-for-text "<txt>"` · `--timeout <ms>`
@@ -225,6 +246,9 @@ stripped, and the failure looks like a page bug. Write the JS to a **file in the
 - **A killed run leaves Chrome holding port 9333**, and the next invocation then hangs forever against
   that dead instance (looks like the page never loads). After any timeout/interrupt:
   `powershell.exe -Command "Get-Process chrome -EA SilentlyContinue | Stop-Process -Force"`.
+- **Back-to-back runs occasionally die inside `getJSON`** (the previous Chrome hasn't released the port
+  yet) — that's launcher contention, NOT a page bug, so don't go debugging the app. `sleep 2` between
+  consecutive invocations, and re-run the one that failed.
 - **Run the driver on the Windows side too** when working from WSL: WSL cannot reach the
   Windows-bound servers or Chrome's CDP port (NAT). Use
   `powershell.exe -Command "node .claude/skills/ui-screenshot/cdp.mjs --url '...' ..."`.

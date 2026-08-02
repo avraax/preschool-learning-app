@@ -92,7 +92,13 @@ needs that hook added first (it would touch all 7 config quizzes, so verify care
   must be migrated to `PromptFocus` per area — check with a `PromptStage` import grep before assuming a
   game already upgraded. Dense no-scroll grids (Lær Tal at 1–100 = 10 rows) must pass `TactileTile`'s
   **`compact`** prop — otherwise its 44px min-height + padding overflow the short rows and tiles overlap
-  the row below; `LearningGrid` trips it automatically for numbers >60.
+  the row below; `LearningGrid` trips it automatically for numbers >60. A 2D grid of many small cells
+  additionally needs **`field`**: the primitive's defaults are built for a roomy board, and at chart
+  density they broke three ways at once (opaque tops merging into one white slab over the world, an outer
+  state ring clipped by the grid's `overflow:hidden` stage, and every tile's drop-shadow pooling into a grey
+  wash across the whole board). `field` swaps in a translucent surface, an inset ring and a tight
+  shadow — the two props are separate axes, so set both. Measurements + rationale live on the prop's doc
+  comment and `depth.ts`'s `fieldShadow()`.
 - **Baked game-art** (pictorial subjects, per-section) → `src/assets/games/<section>/index.ts`
   eager-`import.meta.glob`s `*.webp` keyed by content id → a sync `letterArt()`-style helper.
   **Art-gated**: empty until the owner's keyed WebP are dropped in (auto-registers, no code change);
@@ -116,6 +122,24 @@ internally, so only hand-rolled games can drift (this drift has bitten several g
   cheer/think); `round` comes free via `RoundResultScreen`'s own `'round'` emit; `welcome` comes free
   via the themed wipe's `mascotBus.emit('welcome')` game-arrival cue. So a hand-rolled game only needs
   `tap` + `streak` + `hint` wired by hand.
+- **NEVER `await` narration in a tap handler** (2026-08-02). Resolve the answer SYNCHRONOUSLY — score,
+  `celebrateTier`, any reveal — then fire the echo/fact with `void audio.speak(…).catch(() => {})` and
+  schedule the advance on a fixed dwell from the tap: `DWELL_FACT` if a sentence was spoken, else
+  `DWELL_CORRECT()` (`src/theme/motion.ts` documents the measured basis). Awaiting had put the whole
+  celebration AFTER the clip — measured 4s on Plus Opgaver, whose confetti and answer-reveal then landed
+  in the same frame as the next problem. The Farver drag games were always the correct pattern; copy
+  those. Two bonuses: the advance timer is now created synchronously, so the unmount cleanup always has
+  it to clear (PRD-02 P4's `mountedRef` guard is retired in the games that no longer await), and a
+  `.catch` on the promise keeps a rejection from reaching the crash reporter.
+- **An `AnimatePresence mode="wait"` swap must exit on a TWEEN, never a spring** — use `EXIT_FAST`
+  (`src/theme/motion.ts`). `mode="wait"` holds the incoming element until the outgoing one's animation
+  completes, and a spring on `opacity: 0` takes ~1s to settle: Plus Opgaver's `?`→answer reveal was
+  measured 1043ms late even though the state flipped on the tap. The ENTER keeps its bouncy `POP`; only
+  the leaving element has to get out of the way fast.
+- **A dynamic (non-prebaked) line a game can compose EARLY should be warmed early** — `audio.warmSpeech(text)`
+  at question-generation time (see the math games' `factText`). Azure costs ~1.1s, and paying it on the
+  correct tap is paying it at the one moment that must feel instant. Build the text in ONE helper used by
+  both the warm and the playback: the cache is keyed on the exact string, so any drift silently misses.
 
 ## Entry-audio pattern for hand-rolled task-based games
 

@@ -29,8 +29,13 @@ git push origin master  # Deploy to production (Vercel)
 ```
 
 **Prebaked TTS (PRD-06):** the closed narration set is synthesized once into `public/sounds/tts/` +
-a committed manifest; `ttsClient` plays those before Azure. Rerun `npm run tts:prebake` and commit
-the output after changing narrated content — see `.claude/rules/audio-system.md`.
+a committed manifest; `ttsClient` plays those before Azure. **Every line the app speaks is prebaked**
+(since 2026-08-02 that includes the composed sentences — math questions/facts, comparison facts,
+sequence read-backs, colour-mix lines); the ONLY live-Azure text left is Sig et Ord's read-back of an
+arbitrary spoken word. Composed lines are built by shared builders in `src/config/gamePhrases.ts` /
+`letterWords.ts` so the enumerator bakes the exact same strings. **Adding or changing any spoken line
+follows the 8-step protocol in `.claude/rules/audio-system.md`** (build in config → enumerate → pin in
+a test → prebake → audit sign-off).
 
 ## Routes
 
@@ -138,6 +143,9 @@ curl -s -o /tmp/shot.jpg "<screenshotUrl from the response>"                    
   never touched, run `git status` before touching anything — it's usually a parallel session mid-refactor
   (a half-done `avatarEmoji`→`avatarId` rename did exactly this). Leave their work alone, and say whose
   the failure is: never "fix" it into a collision, and never report their red build as your own result.
+  Check `git log` too, not just `git status`: **HEAD moves under you**, and part of your own work may
+  already be committed by that session — reporting "nothing is committed" from memory of what you did is
+  how a whole area got mis-reported as pending.
 - **A probe of an external service has THREE outcomes, not two.** Rate-limits, partial reads and
   fail-closed 403s must classify as UNKNOWN and retry with backoff — never fold into one of the real
   verdicts (a `.dk` whois rate-limit banner read as "domain registered" produced two false results

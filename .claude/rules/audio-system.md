@@ -43,6 +43,41 @@ voice/rate** into `public/sounds/tts/*.mp3` with a committed manifest (`src/conf
 `ttsClient.synthesizeAndPlay` plays the prebaked file directly **before** touching Azure; Azure now
 serves only genuinely dynamic text or a non-default VoiceLab voice.
 
+**As of 2026-08-02 EVERY line the app speaks is prebaked**, including the composed sentences (math
+questions + facts, comparison facts, sequence read-backs, colour-mix lines, quiz questions). The one
+deliberate exception is Sig et Ord, which reads back whatever word the child said — genuinely
+unbounded. Treat "this line hits Azure at runtime" as a bug to be fixed, not a normal state.
+
+## PROTOCOL: adding or changing a spoken line
+
+Follow this every time, for any new narration — a new prompt, a new fact, a reworded line, a new
+game. Skipping a step doesn't fail loudly; it just leaves that line on live Azure (~1.1s of latency
+per utterance, measured) and invisible to `/audit`, which is how several lines quietly ended up there.
+
+1. **Build the string in `src/config/`, never inline in a component.** Pronunciation-sensitive
+   letter↔word lines → `letterWords.ts`; every other composed sentence → `gamePhrases.ts`. The
+   enumerator is a plain Node script: it can import `src/config/*.ts` and nothing else, so a string
+   composed in a `.tsx` is unreachable and therefore unbakeable.
+2. **If the line varies over a range, export the BOUNDS from that module too** and have the game read
+   them (`ADDEND_MAX`, `MINUEND_MAX`, `COMPARE_MAX`, `SEQUENCE_LENGTH`). A range widened in a game
+   against a hardcoded literal outruns the baked set silently.
+3. **Enumerate it in `shared-narration-clips.js` by calling the SAME builder** — never a hand-copied
+   template. Enumerating a SUPERSET is safe (an unplayed clip costs disk); a subset is not.
+4. **Guard it with a test that pins the exact string** *and* asserts it's enumerated — see
+   `gamePhrases.test.ts` / `letterWords.test.ts`. Pin the literal value: app and enumerator call the
+   same builder, so "the two sides agree" passes vacuously when the builder itself changes.
+5. **`npm run tts:prebake`** and commit the new `.mp3`s + `prebakedTts.ts` (it also prunes orphans).
+6. **`npm run audit:check`** → the new lines show as UNAUDITED → listen in `/audit` and sign off (owner
+   bulk path: `npm run audit:approve-all`), then commit `docs/audit/*`.
+7. **Only genuinely unbounded text stays live.** If it's bounded but only known late, `warmSpeech(text)`
+   it as early as the app can compose it (see `warmDynamic` below) instead of leaving it on the tap.
+8. **Never `await` narration to pace anything** — not a timed sequence, not a game's advance. See the
+   `DWELL_*` note in `src/theme/motion.ts` and `.claude/rules/game-development.md`.
+
+New **SFX** cues follow the sibling rules instead: MP3 only, trimmed short (a cue plays in full — no
+sprite), re-encoded with `node scripts/transcode-sfx.mjs`, into `public/sounds/ui/`, played through
+`sfx`, never through `SimplifiedAudioController`.
+
 - **Every audio file the app ships is MP3 — never Ogg/Opus.** Apple added Ogg *container* support only
   in iOS/iPadOS **18.4**, so Ogg clips are undecodable on an older iPad (an iPad Pro 2nd gen caps at
   17.7) and the whole app goes silent except the mp3 music bed — narration, SFX, everything. Three
@@ -83,6 +118,14 @@ serves only genuinely dynamic text or a non-default VoiceLab voice.
   queue = new audio cancels current), and keep the step ≥ the longest spoken part + that startup or it
   cuts names off mid-word (see `src/config/alphabetGroups.ts`). `ttsClient.prefetchPrebaked()` /
   `controller.prefetchLetters()` warm the files first; that trims the fetch, NOT the padding.
+  **The same rule governs a game's correct-answer beat** — never `await` the echo/fact before
+  celebrating or advancing; see `.claude/rules/game-development.md` and the `DWELL_*` note in
+  `src/theme/motion.ts`.
+- **Warm a dynamic line before you need it**: `controller.warmSpeech(text)` → `ttsClient.warmDynamic`
+  runs the synth and caches it (in-memory + localStorage, keyed on the exact text) while playing and
+  cancelling nothing. Live Azure costs ~1.1 s measured, so a sentence a screen can compose in advance
+  (the math games' fact line, known when the problem is generated) should never be synthesized at the
+  moment it must play. Prebaked text short-circuits — that's `prefetchPrebaked`'s job.
 - **Measure a clip, never guess it**, before choosing any timing: `ffmpeg silencedetect` over the
   prebaked mp3 gives the real speech start/end inside the padding (ffmpeg-static is already a
   devDependency — `spawnSync(ffmpeg, ['-i', file, '-af', 'silencedetect=noise=-45dB:d=0.04', '-f',
