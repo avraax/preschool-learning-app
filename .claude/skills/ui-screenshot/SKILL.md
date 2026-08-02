@@ -353,6 +353,53 @@ stripped, and the failure looks like a page bug. Write the JS to a **file in the
   lands post-animation). Verify steady states + console cleanliness instead; for a "no white-flash"
   regression check, use a DARK skin (`?theme=space`) where any white frame would be unmissable.
 
+## Verifying a bug-report capture (snapdom A/B)
+
+The bug-report screenshot is NOT a photograph — snapdom clones the DOM, copies each node's *computed*
+style onto the clone and rasterises that through an SVG `<foreignObject>` (CLAUDE.md, adult-tools
+bullet). The only way to prove a capture change is to A/B it against a real screenshot of the SAME
+frame, so do this for ANY edit to `screenshotService.ts` or its snapdom options.
+
+One run gives you both: `--eval` fires the app's own `captureScreenshot()` and prints its data URL,
+then `--out` takes the CDP screenshot. Redirect stdout to a file, slice the base64 after
+`DATA:data:image/jpeg;base64,`, and pixel-diff the two with `sharp` (already a devDependency) from a
+script **inside the project**.
+
+```bash
+node .claude/skills/ui-screenshot/cdp.mjs --url 'http://127.0.0.1:5173/?nogate=1&theme=ocean' \
+  --w 1251 --h 869 --wait-for '#root > *' --settle 2000 --out real.png \
+  --eval "(async()=>{const m=await import('/src/services/screenshotService.ts');
+           const d=await m.captureScreenshot(); return 'DATA:'+d})()" > out.txt
+```
+
+Four things that make the result trustworthy:
+
+- **`--eval` runs BEFORE `--out`**, so ~1s of ambient drift (bubbles, idle breathe, mascot pose) sits
+  between the two frames and shows up as a real-looking diff. Discount moving decor; judge text,
+  boxes and colour. Freeze what you can (`?reduce=1`) before blaming the capture.
+- **A near-zero diff is a FAILURE signal, not a pass.** Two blank captures diff to `0.00`. A parallel
+  session's mid-edit `SyntaxError` (a missing export) stopped the app mounting, and the run reported
+  `ms=45`, `mean abs diff: 0.00` — perfect scores on an app that never rendered. Always read the
+  driver's `TIMEOUT waiting for selector` / `page exceptions` lines before believing a number.
+- **Assert nothing leaked.** `stabilizeForCapture` mutates the live DOM and restores it in a `finally`.
+  In the same `--eval`, after the capture, count `[style]` nodes still carrying
+  `margin-left: …!important` / `backdrop-filter: none !important` / `overflow: visible !important` —
+  it must be 0, or the child is left looking at a page you edited.
+- **Cover the shapes, not just one page**: a centred pill (home's Min Bog shelf → `margin:auto`), a
+  long label near its `max-width` (home's "Tal og Regning" → false ellipsis), a frosted card over
+  art (→ `backdrop-filter`), a dark skin, and phone landscape.
+
+To attribute a defect, get at the clone itself rather than guessing — pass a plugin and keep the
+context: `plugins: [{name:'spy', afterClone(ctx){ ref = ctx }}]` gives you `ctx.clone` (the styled
+clone) and `ctx.classCSS` (the flat `.cNN{…}` rules snapdom generated), and `snapdom(...).url` is the
+SVG data URL you can `decodeURIComponent` and read. Bare `import('@zumer/snapdom')` does NOT resolve
+in `--eval`; use `/node_modules/@zumer/snapdom/dist/snapdom.mjs`.
+
+**Known unexplained residual:** `/album`'s "x / 9 samlet" line does not paint, while the clone holds
+the element with the right box, colour and font and the surrounding layout is pixel-identical. Ruled
+out: font family, snapdom's `::first-letter` materialisation, multi-text-node children, geometry, and
+snapdom 2.23.1 with and without `reconcile`. Don't re-run those four.
+
 ## Cleanup
 Delete temp PNGs when done. Chrome is killed each run. Stop the dev servers (free 3001/5173) if you
 started them only for the test.
