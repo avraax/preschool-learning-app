@@ -2,8 +2,8 @@ import React, { useState } from 'react'
 import { Box, type SxProps, type Theme } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { motion } from 'framer-motion'
-import { hexToRgba, tileSurface } from '../../theme/tokens/helpers'
-import { softShadow, contactShadow, usePointerTilt } from '../../theme/depth'
+import { hexToRgba, tileSurface, translucentTileSurface } from '../../theme/tokens/helpers'
+import { softShadow, contactShadow, fieldShadow, usePointerTilt } from '../../theme/depth'
 import { useLivingCard } from '../../hooks/useLivingCard'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
 import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
@@ -43,6 +43,17 @@ interface TactileTileProps {
   // overflowing it and overlapping the row below. Owner-accepted trade-off for the full 100 on one
   // screen; the tap target stays as tall as the row allows.
   compact?: boolean
+  // This tile is one cell in a FIELD of many small cells — Lær Tal's 10-column hundreds-chart, the only
+  // caller today. Two consequences, both owner-reported on 2026-08-02 and both caused by the density
+  // rather than by any single tile:
+  //   · surface goes translucent on LIGHT scenes, because ~60–100 opaque white tops stop reading as
+  //     separate tiles and merge into one slab laid over the parallax world. (Dark scenes keep the
+  //     opaque top — a nebula showing through would eat the dark numeral's contrast.)
+  //   · the state ring is drawn INSET, because an outer ring gets clipped by the grid's overflow:hidden
+  //     stage (measured: 2px of headroom for a 5px ring on the first row) and spills over neighbours.
+  // Set on the whole chart, NOT just its dense variant, so flipping difficulty (1–60 ↔ 1–100) doesn't
+  // change the material mid-game.
+  field?: boolean
   interactive?: boolean                          // default true; false = pure display (no press/tilt)
   size?: number | string                         // optional; default fills the caller's grid cell (100%)
   index?: number                                 // phase offset for the optional idle-breathe
@@ -75,6 +86,7 @@ const TactileTile: React.FC<TactileTileProps> = ({
   disabled = false,
   variant = 'tile',
   compact = false,
+  field = false,
   interactive = true,
   size = '100%',
   index = 0,
@@ -99,12 +111,17 @@ const TactileTile: React.FC<TactileTileProps> = ({
 
   // Surface: soft matte, section-tinted (feedback states tint toward success/error). Reuses the
   // shell's `tileSurface` — the same white→faint-accent gradient the menus use.
+  // A `field` cell (the hundreds-chart) takes the translucent veil on a light scene so the chart stops
+  // reading as one white slab over the world; dark scenes keep the opaque top (the dark numeral needs
+  // it). Feedback states keep their own tint either way. See the `field` prop for the full rationale.
   const surface =
     state === 'correct'
       ? `linear-gradient(180deg, #FFFFFF 0%, ${hexToRgba(success, 0.16)} 100%)`
       : state === 'wrong'
         ? `linear-gradient(180deg, #FFFFFF 0%, ${hexToRgba(error, 0.1)} 100%)`
-        : tileSurface(accent, dark)
+        : field && !dark
+          ? translucentTileSurface(accent)
+          : tileSurface(accent, dark)
 
   // A hairline accent edge for definition only (NOT a frame). Feedback states tint it; the raised
   // 'selected' state gets a strong accent edge so the auditioned tile reads as "confirm this one".
@@ -120,14 +137,20 @@ const TactileTile: React.FC<TactileTileProps> = ({
   // Depth = grounded contact ellipse (sibling, below) + layered softShadow() on the surface. The
   // top inner-light highlight gives the clay read; a success/hint ring adds the feedback verdict.
   const innerHighlight = `inset 0 2px 3px ${hexToRgba('#FFFFFF', dark ? 0.3 : 0.6)}`
-  const ring =
+  // A `compact` tile draws its ring INSET. Measured on Lær Tal's 1–100 chart: the first row has only
+  // 2px of headroom inside the grid's overflow:hidden stage, so a 5px OUTER ring is visibly cut off
+  // along the top (and at a 3px gap it also spills over the neighbouring tiles). Inset needs no space,
+  // so the same verdict reads at any density — with a stronger alpha, since a thin inset line on white
+  // carries less weight than a 5px halo.
+  const ringSpec: { spread: string; color: string } | null =
     state === 'correct'
-      ? `0 0 0 5px ${hexToRgba(success, 0.45)}`
+      ? { spread: field ? 'inset 0 0 0 3px' : '0 0 0 5px', color: hexToRgba(success, field ? 0.75 : 0.45) }
       : state === 'selected'
-        ? `0 0 0 4px ${hexToRgba(accent, dark ? 0.6 : 0.5)}` // steady accent ring (no pulse)
+        ? { spread: field ? 'inset 0 0 0 3px' : '0 0 0 4px', color: hexToRgba(accent, field ? 0.85 : dark ? 0.6 : 0.5) }
         : showHint
-          ? `0 0 0 5px ${hexToRgba(accent, dark ? 0.55 : 0.45)}`
+          ? { spread: field ? 'inset 0 0 0 3px' : '0 0 0 5px', color: hexToRgba(accent, field ? 0.8 : dark ? 0.55 : 0.45) }
           : null
+  const ring = ringSpec ? `${ringSpec.spread} ${ringSpec.color}` : null
   const boxShadow = [innerHighlight, ring].filter(Boolean).join(', ')
 
   // Contact-shadow tint follows the feedback so a correct tile casts a warm success cast.
@@ -159,8 +182,11 @@ const TactileTile: React.FC<TactileTileProps> = ({
     // Outer Box: caller sizing / grid cell. The breathe (CSS) is opt-in and lives here so it never
     // fights the framer feedback layer below.
     <Box sx={[{ position: 'relative', width: size, height: size }, ...(breathe && !reduce ? [breatheSx] : []), ...(Array.isArray(sx) ? sx : [sx])] as SxProps<Theme>}>
-      {/* Grounded contact-shadow ellipse beneath the tile — shrinks on press (the tile settles). */}
-      <Box
+      {/* Grounded contact-shadow ellipse beneath the tile — shrinks on press (the tile settles). Not
+          rendered for a field cell: it sits BELOW the tile (bottom:-6%, blurred 6px), which in a 3px-gap
+          grid means it lands on the tile underneath and adds to the same grey pool as the drop-shadows.
+          Grounding one object in the world is its job; a chart of cells isn't that. */}
+      {!field && <Box
         aria-hidden
         sx={{
           position: 'absolute',
@@ -175,7 +201,7 @@ const TactileTile: React.FC<TactileTileProps> = ({
           pointerEvents: 'none',
           zIndex: 0,
         }}
-      />
+      />}
 
       {/* Framer feedback layer — owns the pop/shake/hint transform. */}
       <Box
@@ -217,7 +243,9 @@ const TactileTile: React.FC<TactileTileProps> = ({
             borderRadius: radiusFor(variant),
             background: surface,
             boxShadow,
-            filter: softShadow(dark ? 1.6 : 1.2),
+            // A field cell gets the tight near-shadow instead of softShadow()'s lifted-object pair —
+            // see fieldShadow() for the measurement of what 100 of the latter do to a dense grid.
+            filter: field ? fieldShadow() : softShadow(dark ? 1.6 : 1.2),
             cursor: canPress ? 'pointer' : 'default',
             WebkitTapHighlightColor: 'transparent',
             outline: 'none',

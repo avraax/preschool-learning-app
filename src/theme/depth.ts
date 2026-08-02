@@ -16,6 +16,18 @@ export const softShadow = (elevation = 1): string => {
   return `${near} ${far}`
 }
 
+/**
+ * Whisper-thin lift for one cell in a dense FIELD of tiles (Lær Tal's hundreds-chart).
+ *
+ * `softShadow()` is built for an object with space around it: its far layer is a ~17px blur offset
+ * ~8px down. In a grid of 35px-tall tiles with 3px gaps, each tile's shadow lands on its neighbours
+ * and in the gaps, so ~200 overlapping black shadows at 20–22% alpha pool into an even grey wash that
+ * reads as a translucent panel behind the whole chart — measured 2026-08-02 as −35 RGB across the grid
+ * area (and −32 on the tile faces themselves), with 0 change outside it. One tight near-shadow keeps
+ * the cells distinct without pooling; the tiles' hairline edge + inner highlight carry the rest.
+ */
+export const fieldShadow = (): string => 'drop-shadow(0 1px 1.5px rgba(0,0,0,0.14))'
+
 // The soft contact-shadow ellipse that sits BENEATH an object and grounds it in the world.
 // Returns a `background` (radial gradient) for a blurred `Box`; tint it with the section accent
 // (a hint of the object's own colour, not flat grey) so it reads as a warm cast shadow.

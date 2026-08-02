@@ -106,6 +106,9 @@ const LearningGrid: React.FC<LearningGridProps> = ({
               accent={active}
               variant="card"
               compact={dense}
+              // The numbers hundreds-chart is a FIELD of small cells: translucent surface + inset ring
+              // (see TactileTile). The 29-card letters grid stays opaque clay with its outer ring.
+              field={!isAlphabet}
               hint={isActive}
               disabled={disabled}
               sx={{ opacity: disabled ? 0.5 : 1 }}

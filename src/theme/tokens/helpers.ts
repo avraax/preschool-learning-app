@@ -94,6 +94,18 @@ export const onTileColor = (accent: string): string => ensureContrast(accent, '#
 export const tileSurface = (accent: string, dark = false): string =>
   `linear-gradient(180deg, #FFFFFF 0%, ${hexToRgba(accent, dark ? 0.14 : 0.08)} 100%)`
 
+/**
+ * The same clay surface with the white top made TRANSLUCENT — for a dense grid where ~100 tiles sit
+ * 3px apart (Lær Tal's 1–100 hundreds-chart). At that density the opaque tops stop reading as separate
+ * tiles and merge into one white slab laid over the parallax world (owner, 2026-08-02); a veil keeps
+ * each tile's shape and depth while the world stays visible behind the chart.
+ *
+ * LIGHT scenes only. On a dark skin the tile top must stay opaque white, or the nebula behind it eats
+ * the contrast of the dark numeral sitting on top.
+ */
+export const translucentTileSurface = (accent: string): string =>
+  `linear-gradient(180deg, ${hexToRgba('#FFFFFF', 0.58)} 0%, ${hexToRgba(accent, 0.1)} 100%)`
+
 // Darken a hex colour toward black by `amount` (0–1). Used for the soft-3D "edge/lip" under
 // tactile tiles (AnswerTile/SymbolTile) so the bottom shadow reads as a coloured rim of the
 // section accent rather than flat grey.
