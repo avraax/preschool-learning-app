@@ -1,0 +1,48 @@
+diff --git a/src/theme/tokens/ocean.tokens.ts b/src/theme/tokens/ocean.tokens.ts
+index 4907d12..52caa39 100644
+--- a/src/theme/tokens/ocean.tokens.ts
++++ b/src/theme/tokens/ocean.tokens.ts
+@@ -79,12 +80,15 @@ export const oceanThemeTokens: ThemeTokens = {
+     // Structured World (PRD-05 W3): objects hover in the sunlit open water above the seabed, in a
+     // gentle arc clear of the coral clusters at the left/right edges. Refine onto shore/coral once
+     // B3 near-layer art lands.
+-    // Seated on the reef mounds at varied heights (colors sinks into the centre reef valley,
+-    // the others rest on the coral peaks) so the band reads organic, not a flat row.
++    // Seated on the reef mounds in the SHARED home arc — outer pair lowest, centre highest — the
++    // same shape every skin uses (kid/space/dino), so the five labels read as one band. A skin may
++    // shift the whole arc up/down to match its horizon, but must NOT re-order it: ocean's colors
++    // used to sit at 68 (BELOW its neighbours' 58) to settle the palette on the centre reef, and
++    // the label dropped ~10% of the viewport out of the row.
+     homeAnchors: [
+       { section: 'alphabet', xPct: 15, yPct: 62, scale: 0.96, rotate: -3, depth: 0.3 },
+       { section: 'math', xPct: 33, yPct: 58, scale: 1.04, rotate: 2, depth: 0.32 },
+-      { section: 'colors', xPct: 50, yPct: 68, scale: 1.14, rotate: 0, depth: 0.34 }, // B3 (scene-fixes): settle palette onto the centre reef
++      { section: 'colors', xPct: 50, yPct: 56, scale: 1.14, rotate: 0, depth: 0.34 },
+       { section: 'english', xPct: 67, yPct: 58, scale: 1.04, rotate: -2, depth: 0.32 },
+       { section: 'ordleg', xPct: 85, yPct: 61, scale: 0.96, rotate: 3, depth: 0.3 },
+     ],
+diff --git a/src/theme/tokens/dino.tokens.ts b/src/theme/tokens/dino.tokens.ts
+index 5b5cc2e..5f00085 100644
+--- a/src/theme/tokens/dino.tokens.ts
++++ b/src/theme/tokens/dino.tokens.ts
+@@ -76,14 +77,15 @@ export const dinoThemeTokens: ThemeTokens = {
+     // Structured World (PRD-05 W3): objects rest on the jungle canopy/ridge in a gentle arc, the
+     // centre one lifted above the volcano peak so it isn't obscured. Refine onto the mossy ridge
+     // once B3 near-layer art lands.
+-    // Seated on the jungle canopy at varied heights; colors rides higher on the centre vine bridge.
+-    // B1 (scene-fixes): lower the flanking objects so they nestle onto the mountain
+-    // ridge instead of floating in open sky; centre (colors) stays lifted to clear the
+-    // volcano peak.
++    // B1 (scene-fixes): the flanking objects nestle onto the mountain ridge instead of floating in
++    // open sky. Heights follow the SHARED home arc — outer pair lowest, centre highest — the same
++    // shape every skin uses, so the five labels read as one band. The arc as a whole sits low here
++    // to match the ridge; colors used to be lifted to 52 (14 above its neighbours) to clear the
++    // volcano peak, which pulled its label right out of the row.
+     homeAnchors: [
+       { section: 'alphabet', xPct: 15, yPct: 70, scale: 0.96, rotate: -3, depth: 0.3 },
+       { section: 'math', xPct: 33, yPct: 66, scale: 1.04, rotate: 2, depth: 0.32 },
+-      { section: 'colors', xPct: 50, yPct: 52, scale: 1.14, rotate: 0, depth: 0.34 },
++      { section: 'colors', xPct: 50, yPct: 64, scale: 1.14, rotate: 0, depth: 0.34 },
+       { section: 'english', xPct: 68, yPct: 66, scale: 1.04, rotate: -2, depth: 0.32 },
+       { section: 'ordleg', xPct: 85, yPct: 70, scale: 0.96, rotate: 3, depth: 0.3 },
+     ],

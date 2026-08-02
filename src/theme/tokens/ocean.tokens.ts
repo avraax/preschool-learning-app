@@ -60,7 +60,8 @@ export const oceanThemeTokens: ThemeTokens = {
       { src: '', depth: 0.14, anchor: 'center' }, // far: sunlit water + god-rays
       // mid reef nudged DOWN so its base sinks onto the near sandbar instead of floating in mid-water.
       { src: '', depth: 0.44, anchor: 'center', offsetY: 15 }, // mid: reef
-      { src: '', depth: 0.82, anchor: 'center' }, // near: sandbar + coral
+      // GROUND layer → bottom-anchored so the seabed always reaches the bottom edge (see ParallaxLayer).
+      { src: '', depth: 0.82, anchor: 'bottom' }, // near: sandbar + coral
     ],
     ambient: {
       // B7 art motes (index-aligned to SceneAssets.ambientSprites): bubble + bubble cluster, rising.
@@ -99,11 +100,13 @@ export const oceanThemeTokens: ThemeTokens = {
       ordleg: { xPct: 78, yPct: 55, zoom: 1.32 },
     },
     // Earned bloom scenery (PRD-05 W7). Layout only; `src:''` → URL from SceneAssets.bloomScenery
-    // by INDEX (batch B5, order: coral, seashell, starfish). Seated low on the seabed.
+    // by INDEX (batch B5, order: coral, seashell, starfish). Seated on the seabed, but clear of the
+    // mascot / Min Bog shelf / corner button on every reference viewport — the coral used to sit
+    // behind the octopus and the starfish under the shelf (`bloomAnchors.test.ts`).
     bloomScenery: [
-      { src: '', minStage: 1, xPct: 10, yPct: 86, depth: 0.6, scale: 1 },
-      { src: '', minStage: 2, xPct: 90, yPct: 84, depth: 0.55, scale: 0.9 },
-      { src: '', minStage: 3, xPct: 50, yPct: 90, depth: 0.62, scale: 1.1 },
+      { src: '', minStage: 1, xPct: 42, yPct: 76, depth: 0.6, scale: 1 },
+      { src: '', minStage: 2, xPct: 79, yPct: 77, depth: 0.55, scale: 0.9 },
+      { src: '', minStage: 3, xPct: 64, yPct: 76, depth: 0.62, scale: 1.1 },
     ],
   },
 

@@ -1,4 +1,11 @@
 import { useEffect } from 'react'
+import {
+  PARALLAX_DRIFT_X,
+  PARALLAX_DRIFT_Y,
+  PARALLAX_POINTER_X,
+  PARALLAX_POINTER_Y,
+  PARALLAX_STRENGTH,
+} from '../../../config/parallax'
 
 // Gentle parallax driver (Theme Worlds PRD §5.3).
 //
@@ -10,12 +17,14 @@ import { useEffect } from 'react'
 
 interface ParallaxOptions {
   disabled?: boolean
-  strength?: number // max offset in px the nearest layer (depth 1) would travel
 }
 
+// The amplitudes live in `src/config/parallax.ts` (pure) because the overscan `ParallaxLayer`
+// reserves and the bloom-anchor guard are both DERIVED from them — a change here that isn't visible
+// to those is how a layer starts sliding off its own edge.
 export function useParallax(
   ref: React.RefObject<HTMLElement | null>,
-  { disabled = false, strength = 40 }: ParallaxOptions = {}
+  { disabled = false }: ParallaxOptions = {}
 ): void {
   useEffect(() => {
     const el = ref.current
@@ -45,15 +54,15 @@ export function useParallax(
       const t = ts - start
       // Moderate autonomous drift (~16s cycles) — a gentle, perceptible glide that sits
       // between "barely breathing" and the earlier sloshy wave. Touch/pointer adds on top.
-      const driftX = Math.sin(t * 0.0004) * 0.6
-      const driftY = Math.cos(t * 0.00032) * 0.42
-      const targetX = driftX + ptrX * 0.5
-      const targetY = driftY + ptrY * 0.4
+      const driftX = Math.sin(t * 0.0004) * PARALLAX_DRIFT_X
+      const driftY = Math.cos(t * 0.00032) * PARALLAX_DRIFT_Y
+      const targetX = driftX + ptrX * PARALLAX_POINTER_X
+      const targetY = driftY + ptrY * PARALLAX_POINTER_Y
       // Critically-damped-ish smoothing.
       curX += (targetX - curX) * 0.04
       curY += (targetY - curY) * 0.04
-      el.style.setProperty('--parallax-x', `${(curX * strength).toFixed(2)}px`)
-      el.style.setProperty('--parallax-y', `${(curY * strength).toFixed(2)}px`)
+      el.style.setProperty('--parallax-x', `${(curX * PARALLAX_STRENGTH).toFixed(2)}px`)
+      el.style.setProperty('--parallax-y', `${(curY * PARALLAX_STRENGTH).toFixed(2)}px`)
       raf = requestAnimationFrame(tick)
     }
     raf = requestAnimationFrame(tick)
@@ -62,7 +71,7 @@ export function useParallax(
       cancelAnimationFrame(raf)
       window.removeEventListener('pointermove', onPointer)
     }
-  }, [ref, disabled, strength])
+  }, [ref, disabled])
 }
 
 export default useParallax

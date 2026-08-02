@@ -7,7 +7,7 @@ import { ArrowUp, Settings } from 'lucide-react'
 
 // Update announcement pill (PRD-09 P4). Deliberately does NOT reload on tap — a child could
 // otherwise mid-game tap a big "Opdater app" Fab and lose their round. It only ANNOUNCES that a
-// new version is ready and points the adult to the corner gear menu (the actual, hold-gated
+// new version is ready and points the adult to the corner gear menu (the actual, PIN-gated
 // "Opdater app" action lives there) — drawn as the SAME lucide gear the corner button uses, so the
 // instruction is literal. A small close button dismisses it (wires dismissUpdate). Anchored
 // bottom-centre so it never overlaps the bottom-right gear or the bottom-left mascot.

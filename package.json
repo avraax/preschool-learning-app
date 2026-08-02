@@ -38,7 +38,7 @@
     "@mui/system": "^9.1.1",
     "@simplewebauthn/browser": "^13.3.0",
     "@vercel/blob": "^2.6.1",
-    "@zumer/snapdom": "^2.15.0",
+    "@zumer/snapdom": "^2.23.1",
     "better-auth": "^1.6.25",
     "framer-motion": "^12.40.0",
     "howler": "^2.2.4",

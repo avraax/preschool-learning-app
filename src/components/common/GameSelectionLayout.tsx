@@ -171,60 +171,49 @@ const GameSelectionLayout: React.FC<GameSelectionLayoutProps> = ({
         }}
       >
         {immersive ? (
-          /* The landmark and the tile flow are SIBLINGS IN A COLUMN, so the landmark reserves space the
-             tiles can never be laid into — while the tiles keep the FULL width they had.
-             The landmark used to be `position:absolute; left:2%; top:54%` while the flow sized itself
-             independently, so it collided as soon as the flow got wide or wrapped: measured a 106×46px
-             overlap with "Lær Tal" at 1254×872 and 79×116px into "Sammenlign Tal" at 768×1024. Tuning
-             those percentages can only ever fix one viewport, because the flow's extent depends on the
-             game COUNT × viewport × orientation.
-             Why a column and not a row: reserving a left COLUMN also works, but it steals ~1.8 tiles of
-             width, which wrapped Tal og Regning's 7 tiles to 6 + a lone "Hukommelse" — the same orphan
-             row we refuse in the quiz grids. Vertical space is what this layout actually has spare (the
-             tile band uses ~200px of ~700 on iPad landscape), so the landmark takes its clearance there
-             and sits in the empty lower band. Structural either way; this one costs no composition. */
+          /* LANDMARK COLUMN + tile flow, as SIBLINGS IN A ROW (owner's call). The landmark owns a
+             reserved left column and the tiles take everything to its right, both vertically centred
+             on the same axis, so the section object reads as part of the place rather than as a
+             leftover object parked in a corner.
+             It must stay a SIBLING, never `position:absolute` as it originally was (`left:2%;top:54%`
+             while the flow sized itself independently) — that overlapped the tiles as soon as the flow
+             got wide or wrapped (measured 106×46px into "Lær Tal" at 1254×872 and 79×116px into
+             "Sammenlign Tal" at 768×1024), and no set of percentages can fix that, because the flow's
+             extent depends on game COUNT × viewport × orientation.
+             The cost of the column is width: it takes ~1.8 tiles' worth, which is enough to wrap Tal og
+             Regning's 7 tiles. `flowSize` is therefore a touch smaller here than the free-standing flow
+             would use, and when 7 tiles DO wrap they must wrap 4+3, never 6+1 — the same orphan row the
+             quiz grids refuse. Both are verified by measuring every section on every reference viewport
+             (the landmark carries `data-bl-landmark` for that probe); re-run it after touching this. */
           <Box
             sx={{
               position: 'relative',
               zIndex: 1,
               width: '100%',
               display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'stretch',
+              flexDirection: 'row',
+              alignItems: 'center',
               justifyContent: 'center',
               gap: { xs: 1, md: 2 },
               minHeight: 0,
             }}
           >
-            {/* Game tiles as tactile soft-3D objects in a count-aware tactile flow (never a grid). */}
-            <Box sx={{ flex: '0 0 auto', width: '100%' }}>
-              <SceneObjectField
-                items={tileItems}
-                frozen={frozen}
-                burstMotion={burstMotion}
-                attractKey={attractKey}
-                float={darkScene}
-                flowSize="clamp(66px, 12vh, 116px)"
-              />
-            </Box>
-
             {/* Enlarged section landmark resting large in the framed scene — reinforces "you are in
                 the reading/counting place." Decorative (we're already here → non-interactive). Hidden
-                on phones to keep the compact layout uncluttered. Aligned RIGHT because the corner
-                mascot owns the bottom-left; the idle float is vertical-only and stays inside this
-                track, so it can never drift into the tiles. `flexShrink` lets it give up height first
-                on a short viewport rather than pushing the tiles off-screen. */}
+                on phones, where there is no width to spare and the compact flow owns the screen. The
+                idle float is vertical-only, so it stays inside this column. */}
             <Box
               aria-hidden
+              // Layout hook for the clearance probe — the landmark has no text or role to select by.
+              data-bl-landmark=""
               component={motion.div}
               animate={reduce ? undefined : { y: [0, -10, 0] }}
               transition={reduce ? undefined : { duration: 5.5, repeat: Infinity, ease: 'easeInOut' }}
               sx={{
-                flex: '0 1 auto',
-                minHeight: 0,
-                alignSelf: 'flex-end',
-                mr: { xs: '2%', md: '4%' },
-                width: 'clamp(110px, 18vh, 200px)',
+                flex: '0 0 auto',
+                alignSelf: 'center',
+                ml: { xs: '1%', md: '2%' },
+                width: 'clamp(100px, 19vh, 190px)',
                 pointerEvents: 'none',
                 opacity: 0.96,
                 [PHONE_ANY]: { display: 'none' },
@@ -236,6 +225,23 @@ const GameSelectionLayout: React.FC<GameSelectionLayoutProps> = ({
                 alt=""
                 draggable={false}
                 sx={{ display: 'block', width: '100%', height: 'auto', objectFit: 'contain', filter: softShadow(2.4), userSelect: 'none' }}
+              />
+            </Box>
+
+            {/* Game tiles as tactile soft-3D objects in a count-aware tactile flow (never a grid). */}
+            {/* `maxWidth` is an ORPHAN BRAKE, not a cosmetic cap. Flex wrap fills each line greedily,
+                so a row that is *almost* wide enough for all 7 Tal og Regning tiles drops exactly one
+                onto a second line — the orphan the quiz grids refuse. Narrowing the track forces the
+                break earlier and the wrap comes out balanced (5+2 / 4+3) instead. */}
+            <Box data-bl-tileflow="" sx={{ flex: '1 1 auto', minWidth: 0, maxWidth: 860 }}>
+              <SceneObjectField
+                items={tileItems}
+                frozen={frozen}
+                burstMotion={burstMotion}
+                attractKey={attractKey}
+                float={darkScene}
+                flowSize="clamp(62px, 10.5vh, 100px)"
+                flowGapX="clamp(10px, 2vw, 26px)"
               />
             </Box>
           </Box>

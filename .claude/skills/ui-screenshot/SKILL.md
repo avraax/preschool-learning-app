@@ -42,15 +42,15 @@ Then **view a saved PNG with the Read tool** (it renders images).
 node .claude/skills/ui-screenshot/cdp.mjs --url http://127.0.0.1:5173/alphabet/quiz \
   --wait-for '#root > *' --out shot.png
 
-# Open the adult menu (needs ?adult-tap=1 — a 2s hold can't be driven headlessly), then a
+# Open the adult menu (a plain click — the old 2s hold is gone; a PIN pad may intercept), then a
 # sub-dialog, wait for it, tight-crop just that element
-node .claude/skills/ui-screenshot/cdp.mjs --url 'http://127.0.0.1:5173/alphabet/quiz?adult-tap=1' \
+node .claude/skills/ui-screenshot/cdp.mjs --url 'http://127.0.0.1:5173/alphabet/quiz' \
   --click '[aria-label="Til de voksne"]' --wait-for '.MuiDialog-paper' \
   --click '[aria-label="Stemme-test"]' --wait-for-text 'Hastighed' \
   --clip '.MuiDialog-paper' --out panel.png
 
 # PROVE no overflow/clipping (compare child rect.r to the container's inner right edge)
-node .claude/skills/ui-screenshot/cdp.mjs --url 'http://127.0.0.1:5173/alphabet/quiz?adult-tap=1' \
+node .claude/skills/ui-screenshot/cdp.mjs --url 'http://127.0.0.1:5173/alphabet/quiz' \
   --click '[aria-label="Til de voksne"]' --wait-for '.MuiDialog-paper' \
   --click '[aria-label="Stemme-test"]' --wait-for-text 'Hastighed' \
   --measure '.MuiDialog-paper, .MuiDialog-paper button'
@@ -232,6 +232,9 @@ stripped, and the failure looks like a page bug. Write the JS to a **file in the
   like this fell through, not that the eval timed out — 75s+ evals complete fine.
 - **Write `--eval` from the Bash tool, not PowerShell** (`--eval "$(cat <file>)"`). PowerShell mangles
   multi-line JS and you get `eval: undefined` with no error to explain it.
+- **Never put a `//` comment in an array you `.join('')` into one line** — it comments out the entire
+  rest of the probe. The run then fails to parse on every viewport at once, which reads like the app
+  broke, not the harness. Put comments *between* the string elements, or use `/* … */`.
 - Prefer driving via the app's own listeners over DOM selectors when one exists (e.g. `PinPad` handles
   `window` keydown, so `dispatchEvent(new KeyboardEvent('keydown',{key:'5'}))` beats hunting tiles).
 
@@ -270,8 +273,11 @@ stripped, and the failure looks like a page bug. Write the JS to a **file in the
 - **Run the driver on the Windows side too** when working from WSL: WSL cannot reach the
   Windows-bound servers or Chrome's CDP port (NAT). Use
   `powershell.exe -Command "node .claude/skills/ui-screenshot/cdp.mjs --url '...' ..."`.
-  PowerShell 5.1 strips embedded double quotes from native args — use **quote-free CSS
-  selectors** (`[aria-label^=Til]`, `.MuiDialog-paper [role=button]`), never `[aria-label="..."]`.
+  PowerShell 5.1 strips embedded double quotes from native args, and the symptom is a silent
+  `TIMEOUT waiting for selector` / `eval: undefined`, not a quoting error. Either use **quote-free CSS
+  selectors** (`[aria-label^=Til]`, `.MuiDialog-paper [role=button]`) or — more generally, since CSS
+  accepts either quote — **single-quote the string INSIDE the selector**:
+  `--click "[aria-label='Til de voksne']"`. That survives PS arg passing and keeps exact matching.
 - **Clicks use `element.click()`**, not synthetic mouse coordinates — MUI ignores synthetic coords.
   So `--click` takes a CSS selector. (`element.click()` fires no `pointerdown`, so tap-listeners
   like the diagnostics breadcrumbs won't see driver clicks.)
@@ -291,6 +297,14 @@ stripped, and the failure looks like a page bug. Write the JS to a **file in the
   **injectable** with a default (`fn = () => window.location.reload()`) and pass a spy from the eval.
 - **Audio modal ("Tænd for lyd")** is auto-dismissed (launches with autoplay allowed + clicks
   "Start lyd nu"). Use `--keep-audio-modal` only to screenshot the modal itself.
+- **A layout probe's failures are meaningless without a BASELINE.** Before calling any of them a
+  regression, `git stash`/`git checkout --` the file, re-run the SAME probe at HEAD, and diff the two
+  failure sets. Five of seven "failures" from a section-menu sweep were pre-existing — the shipped code
+  was already violating the invariant a code comment in it claimed to hold. Report the delta (fixed /
+  introduced / untouched), never the raw count. Same run, same trap in the other direction: **scope the
+  selector to a `data-bl-*` hook on the container.** A bare `[aria-label]` sweep also matched the app-bar
+  ring and the mascot, which bucketed into phantom extra "rows" and reported 25 failures on a page with
+  none. Over-selecting fails loudly; under-selecting passes silently — both lie.
 - **Measure, don't eyeball, for overflow.** A scaled thumbnail can hide a button clipped past a
   popover edge; `rect.r > container.r` is unambiguous (this caught the sample-button overflow).
   **`document.scrollWidth <= innerWidth` is NOT proof of no-clip** — GameShell's no-scroll root is
@@ -305,8 +319,8 @@ stripped, and the failure looks like a page bug. Write the JS to a **file in the
   nodes and the eval returns `{}`. Select/measure MUI-styled elements via `getComputedStyle(el)` (styles)
   or `getBoundingClientRect()` (geometry) instead.
 - App sizes to `--vh`; default 540x940 is representative. Useful selectors: the adult menu opens
-  via `[aria-label="Til de voksne"]` (add `?adult-tap=1` to the URL so a plain click opens it —
-  the real gesture is a 2s hold); inside it `[aria-label="Stemme-test"]` opens the voice panel.
+  via a plain click on `[aria-label="Til de voksne"]` (the old 2s hold and its `?adult-tap=1`
+  workaround are gone); inside it `[aria-label="Stemme-test"]` opens the voice panel.
   MUI dialogs render under `.MuiDialog-paper`, popovers under `.MuiPopover-paper`.
 - **DEV query params force states deterministically for capture** (all DEV-only — see
   `src/utils/devHarness.ts`): `?fx=correct|wrong|hint|streak` forces one tile/board into that feedback

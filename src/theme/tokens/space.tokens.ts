@@ -54,8 +54,9 @@ export const spaceThemeTokens: ThemeTokens = {
     layers: [
       { src: '', depth: 0.12, anchor: 'center' }, // far: nebula + stars (dark backdrop)
       { src: '', depth: 0.42, anchor: 'center' }, // mid: planet + ring (whole — no clip)
-      // near asteroids nudged up a touch so they occlude the planet's lower bulge/smudge naturally.
-      { src: '', depth: 0.8, anchor: 'center', offsetY: -4 }, // near: asteroids + rocket
+      // GROUND layer → bottom-anchored so it always reaches the bottom edge (see ParallaxLayer). The
+      // old -4% lift is gone with it: it was the same "slides off its own edge" shape as Regnbue's.
+      { src: '', depth: 0.8, anchor: 'bottom' }, // near: asteroids + rocket
     ],
     ambient: {
       // B7 art motes (index-aligned to SceneAssets.ambientSprites): two soft stars, twinkling.
@@ -93,7 +94,8 @@ export const spaceThemeTokens: ThemeTokens = {
     // by INDEX (batch B5, order: little planet, comet, star cluster). Float in the star field.
     bloomScenery: [
       { src: '', minStage: 1, xPct: 14, yPct: 24, depth: 0.35, scale: 1 },
-      { src: '', minStage: 2, xPct: 86, yPct: 18, depth: 0.28, scale: 0.9 },
+      // Nudged in from 86%/18%, where the comet drifted under the corner RewardRing.
+      { src: '', minStage: 2, xPct: 81, yPct: 22, depth: 0.28, scale: 0.9 },
       { src: '', minStage: 3, xPct: 62, yPct: 68, depth: 0.4, scale: 1.05 },
     ],
   },

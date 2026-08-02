@@ -117,8 +117,10 @@ export const kidThemeTokens: ThemeTokens = {
     layers: [
       { src: '', depth: 0.14, anchor: 'center' }, // far: rainbow sky
       { src: '', depth: 0.44, anchor: 'center' }, // mid: floating clouds
-      // B2 (scene-fixes): raise the near cloud bank into frame to reclaim the empty lower-middle.
-      { src: '', depth: 0.82, anchor: 'center', offsetY: -6 }, // near: cloud bank
+      // GROUND layer → bottom-anchored: it must always reach the bottom edge. As a drifting `center`
+      // layer (with a -6% lift on top of that) it slid up off the viewport bottom and the far sky
+      // showed through as a blue line that came and went with the drift.
+      { src: '', depth: 0.82, anchor: 'bottom' }, // near: cloud bank
     ],
     ambient: {
       // B7 art motes (index-aligned to SceneAssets.ambientSprites): soft cloud puffs drifting.
@@ -157,11 +159,14 @@ export const kidThemeTokens: ThemeTokens = {
     // Earned bloom scenery (PRD-05 W7). Layout only; `src:''` → the URL comes from
     // SceneAssets.bloomScenery by INDEX (batch B5, order: flower, sparkle-star, cloud puff).
     // B2 (scene-fixes): larger + more spread so a progressing profile fills more of the frame
-    // (stage 2 rides high in the mid sky where the world reads emptiest).
+    // (stage 2 rides high in the mid sky where the world reads emptiest). The two ground anchors
+    // moved off the bottom-left corner: at 12%/82% the flower stood exactly where the mascot does,
+    // so it read as growing out of the bear. Kept clear of the mascot / Min Bog shelf / corner
+    // button on every reference viewport by `bloomAnchors.test.ts` — re-run it after any nudge.
     bloomScenery: [
-      { src: '', minStage: 1, xPct: 12, yPct: 82, depth: 0.55, scale: 1.15 },
+      { src: '', minStage: 1, xPct: 41, yPct: 76, depth: 0.55, scale: 1.15 },
       { src: '', minStage: 2, xPct: 88, yPct: 26, depth: 0.3, scale: 1.05 },
-      { src: '', minStage: 3, xPct: 72, yPct: 86, depth: 0.6, scale: 1.3 },
+      { src: '', minStage: 3, xPct: 72, yPct: 75, depth: 0.6, scale: 1.3 },
     ],
   },
 

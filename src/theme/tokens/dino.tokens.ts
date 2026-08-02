@@ -57,7 +57,8 @@ export const dinoThemeTokens: ThemeTokens = {
       { src: '', depth: 0.14, anchor: 'center' }, // far: sunrise sky + volcano + distant green mountains
       // (mid jungle strip dropped — owner call; it always read as a floating band and the far
       //  mountains already cover the mid-ground)
-      { src: '', depth: 0.82, anchor: 'center' }, // near: mossy ridge / foreground jungle
+      // GROUND layer → bottom-anchored so the ridge always reaches the bottom edge (see ParallaxLayer).
+      { src: '', depth: 0.82, anchor: 'bottom' }, // near: mossy ridge / foreground jungle
     ],
     ambient: {
       // B7 art motes (index-aligned to SceneAssets.ambientSprites): leaf + fern frond, falling.
@@ -96,11 +97,13 @@ export const dinoThemeTokens: ThemeTokens = {
       ordleg: { xPct: 78, yPct: 68, zoom: 1.32 },
     },
     // Earned bloom scenery (PRD-05 W7). Layout only; `src:''` → URL from SceneAssets.bloomScenery
-    // by INDEX (batch B5, order: fern sprout, egg, mushroom). Rest on the jungle ridge.
+    // by INDEX (batch B5, order: fern sprout, egg, mushroom). Rest on the jungle ridge, clear of the
+    // mascot / Min Bog shelf / corner button on every reference viewport — the fern used to sit
+    // behind the dino buddy (`bloomAnchors.test.ts`).
     bloomScenery: [
-      { src: '', minStage: 1, xPct: 10, yPct: 78, depth: 0.55, scale: 1 },
-      { src: '', minStage: 2, xPct: 90, yPct: 80, depth: 0.5, scale: 0.95 },
-      { src: '', minStage: 3, xPct: 30, yPct: 84, depth: 0.58, scale: 1.05 },
+      { src: '', minStage: 1, xPct: 41, yPct: 76, depth: 0.55, scale: 1 },
+      { src: '', minStage: 2, xPct: 88, yPct: 75, depth: 0.5, scale: 0.95 },
+      { src: '', minStage: 3, xPct: 64, yPct: 76, depth: 0.58, scale: 1.05 },
     ],
   },
 

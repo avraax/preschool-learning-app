@@ -34,6 +34,10 @@ interface SceneObjectFieldProps {
   attractKey?: string | null    // item.key currently doing the idle-attract wiggle
   float?: boolean               // dark world → floating shadow (objects hang in space, not grounded)
   flowSize?: string             // per-item width in flow mode
+  // Horizontal gap in flow mode. Tighter when the caller has given part of the row away (the section
+  // menus reserve a left column for the landmark) — the gap is what decides whether the widest
+  // section still fits on one line instead of dropping a lone orphan tile onto a second.
+  flowGapX?: string
 }
 
 const SceneObjectField: React.FC<SceneObjectFieldProps> = ({
@@ -44,6 +48,7 @@ const SceneObjectField: React.FC<SceneObjectFieldProps> = ({
   attractKey = null,
   float = false,
   flowSize = 'clamp(72px, 12vh, 116px)',
+  flowGapX = 'clamp(14px, 3vw, 40px)',
 }) => {
   const isPhone = useMediaQuery(PHONE_ANY)
   const seated = !!anchors && anchors.length === items.length && !isPhone
@@ -91,7 +96,7 @@ const SceneObjectField: React.FC<SceneObjectFieldProps> = ({
         flexWrap: 'wrap',
         justifyContent: 'center',
         alignItems: 'flex-end',
-        gap: 'clamp(10px, 2.4vh, 26px) clamp(14px, 3vw, 40px)',
+        gap: `clamp(10px, 2.4vh, 26px) ${flowGapX}`,
         px: 2,
       }}
     >

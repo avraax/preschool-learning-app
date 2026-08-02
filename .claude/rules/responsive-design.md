@@ -67,7 +67,19 @@ reuse them before inventing new ones.
 | Action buttons | 3:2 to 4:3 | 44px | - |
 | Display cards | 1:1 to 4:3 | - | - |
 
-When using aspect ratios, set `gridAutoRows: 'auto'` and let aspect ratio determine height.
+When using aspect ratios, set `gridAutoRows: 'auto'` and let aspect ratio determine height — but only
+where the container's height is unbounded. Inside a no-scroll column it needs a height budget:
+
+**An aspect-ratio'd panel in a no-scroll column must be sized from BOTH axes.** `aspect-ratio` + a width
+cap knows nothing about the leftover height, so rows past the budget are simply clipped — and because the
+centring flex parent overflows *both* ways, the panel also grows UP over whatever sits above it (Min Bog
+ate its own "x / 9 samlet" line, which reads as a missing element, not as an overflow). Give the wrapper
+`containerType: 'size'` and size the panel `width: min(100cqw, calc(100cqh * var(--ar)), <cap>)` with
+`aspectRatio: var(--ar)` — one custom property per layout variant (`StickerAlbum.tsx` is the reference: 1
+for its 3×3 page, 2.4 for the phone-landscape 5×2). Don't over-constrain: `height: 100%` *and*
+`aspect-ratio` *and* `max-width` fight, and CSS resolves it by dropping your square. Prove it with
+`--measure` (`rect.b <= innerHeight`), never a screenshot. Container-query units are Safari 16+, so
+they're safe on the iOS 17 floor.
 
 ## The focal band is already full — adding to it means re-measuring
 
@@ -78,6 +90,23 @@ you, because a fixed `clamp()`/vh glyph or `<img>` never shrinks. Trim the bloom
 `subject.bottom <= pill.top` with `--measure` (not by eye) at **1024×768, 844×390 and 667×375** — phone
 landscape has only ~95px of band and fails on its own after iPad passes. If it still won't fit, drop the
 secondary element on that viewport rather than clipping it.
+
+## A wrapping flow next to a fixed neighbour
+
+Two rules, both learned the hard way on the section menus (`GameSelectionLayout` — a decorative section
+landmark beside the wrapping game-tile flow):
+
+- **The neighbour must be a flex SIBLING, never `position:absolute`.** A wrapping flow's extent depends
+  on ITEM COUNT × viewport × orientation, so no set of `left`/`top` percentages can clear it — tuning
+  them fixes one viewport and breaks another (this shipped as a landmark sitting on top of two game
+  tiles). Give it its own track in a row/column and the overlap becomes structurally impossible.
+- **Flex wrap has no orphan brake — `maxWidth` is the brake.** Each line is filled greedily, so a track
+  that is *almost* wide enough for N items drops exactly ONE onto a second row (6+1), the same orphan the
+  quiz grids refuse via `answerGrid.ts`. Narrowing the track forces the break earlier and the wrap comes
+  out balanced (5+2 / 4+3). Counter-intuitively, *tightening* gaps/sizes can create an orphan by letting
+  one more item squeeze onto the first line — so re-measure every section at every viewport after any
+  sizing tweak, and compare against the BASELINE (see the `ui-screenshot` skill) before calling a wrap a
+  regression: this layout already shipped with orphan rows.
 
 ## Typography
 

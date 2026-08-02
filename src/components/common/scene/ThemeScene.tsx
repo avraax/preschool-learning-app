@@ -6,6 +6,7 @@ import { loadSceneAssets, type SceneAssets } from '../../../theme/sceneAssets'
 import { useReducedMotion } from '../../../hooks/useReducedMotion'
 import { motion } from 'framer-motion'
 import type { SceneSectionId } from '../../../theme/tokens/types'
+import { BLOOM_SPRITE_PX, BLOOM_SPRITE_VMIN } from '../../../config/sceneFurniture'
 import ParallaxLayer from './ParallaxLayer'
 import AmbientField from './AmbientField'
 
@@ -113,7 +114,10 @@ const ThemeScene: React.FC<ThemeSceneProps> = ({
                     position: 'absolute',
                     left: `${sp.xPct}%`,
                     top: `${sp.yPct}%`,
-                    width: `${Math.round(64 * sp.scale)}px`,
+                    // Authored size on a tablet, but capped in vmin so one flower doesn't cover a
+                    // fifth of a phone screen (and so the anchors keep clear of the furniture there
+                    // — the same numbers drive `sceneFurniture.bloomSpriteSize`).
+                    width: `min(${BLOOM_SPRITE_PX * sp.scale}px, ${BLOOM_SPRITE_VMIN * sp.scale}vmin)`,
                     height: 'auto',
                     zIndex: 40, // above the parallax layers, below the readability scrim (50)
                     transform: `translate(-50%, -50%) translate3d(calc(var(--parallax-x, 0px) * ${sp.depth}), calc(var(--parallax-y, 0px) * ${sp.depth}), 0)`,
