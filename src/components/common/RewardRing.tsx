@@ -8,8 +8,7 @@ import { onTileColor } from '../../theme/tokens/helpers'
 import { xpBus } from '../../services/xpBus'
 import { rewardArt } from '../../assets/rewards'
 import { uiArt } from '../../assets/ui'
-import { useCelebration } from './CelebrationEffect'
-import CelebrationEffect from './CelebrationEffect'
+import { sfx } from '../../services/sfxClient'
 import {
   badgeBottomOffset,
   badgeSize as badgeSizeFor,
@@ -44,7 +43,7 @@ import {
 // Shown in the in-game header (GameShell) and on the section menus, reading the live store
 // (useProgress), so switching games keeps the SAME ring climbing. Transient flourish via `xpBus`:
 //   • ring "tick"/"pop" on every grant,
-//   • (in-game only, `flourish`) a non-interrupting burst when a grant crosses a slot,
+//   • (in-game only, `flourish`) ONE SOFT CUE when a grant crosses a slot — see D7 at the call site,
 //   • and the beat that TEACHES the system: on a crossing the silhouette drops its filter for ~900ms
 //     so the prize flashes to full colour, then the NEXT silhouette takes its place.
 // Reduced motion → the fill still updates, but no spring, pop or colour flash.
@@ -55,8 +54,8 @@ import {
 
 interface RewardRingProps {
   size?: number
-  // In-game instance: fire the non-interrupting confetti + fanfare on a mid-game crossing. Menu
-  // instances leave this false — the big ceremony (RewardOverlay) owns the celebration there.
+  // In-game instance: play the soft crossing cue (D7). Menu instances leave this false — there the
+  // ceremony (RewardOverlay) fires at once and owns the sound.
   flourish?: boolean
   // Phone-landscape: drives the smaller `size` at the call site and lowers the badge's px floor to
   // 16 (20px on a 34px ring is 59% of the diameter — the actual defect behind the old tight fit).
@@ -88,7 +87,6 @@ const RewardRing: React.FC<RewardRingProps> = ({
   const reduce = useReducedMotion()
   const { nextReward, xpProgress, rewardNumber } = useProgress()
   const controls = useAnimationControls()
-  const { showCelebration, celebrationIntensity, celebrationDuration, celebrateTier, stopCelebration } = useCelebration()
 
   const next = nextReward()
   const fill = Math.max(0, Math.min(1, xpProgress().fill))
@@ -141,10 +139,22 @@ const RewardRing: React.FC<RewardRingProps> = ({
           }
         }
       }
-      // Non-interrupting mid-game crossing burst (in-game only). The big ceremony is deferred.
-      if (leveledUp && flourish) celebrateTier('levelup-mini')
+      // THE QUIET CROSSING (Reward Pacing PRD-01 D7). This used to be `celebrateTier('levelup-mini')`
+      // — confetti plus the `level-up` fanfare, mid-play — and then the FULL ceremony fired minutes
+      // later on the result screen or the next menu. Two celebrations for one event, and under the old
+      // pacing that happened basically every round.
+      //
+      // A crossing is now ~every third round, which makes it worth marking — but as a PROMISE, not a
+      // payoff. One quiet promise, one loud payoff. The ring pop and the 900ms full-colour flash stay
+      // (that beat is what teaches the whole model); the confetti and the fanfare belong to the
+      // ceremony. `sticker-reveal` is the soft cue for it: a short chime, on the SFX channel, so it
+      // never touches narration.
+      //
+      // Menus stay silent here (`flourish` is in-game only) — there the ceremony fires immediately and
+      // owns the sound.
+      if (leveledUp && flourish) sfx.play('sticker-reveal')
     })
-  }, [controls, reduce, flourish, celebrateTier])
+  }, [controls, reduce, flourish])
 
   useEffect(() => () => {
     if (flashTimer.current) clearTimeout(flashTimer.current)
@@ -274,15 +284,6 @@ const RewardRing: React.FC<RewardRingProps> = ({
         </Box>
       )}
 
-      {/* Non-interrupting mid-game crossing burst (in-game only). */}
-      {flourish && (
-        <CelebrationEffect
-          show={showCelebration}
-          intensity={celebrationIntensity}
-          duration={celebrationDuration}
-          onComplete={stopCelebration}
-        />
-      )}
     </Box>
   )
 }

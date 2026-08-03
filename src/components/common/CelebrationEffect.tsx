@@ -199,6 +199,15 @@ const TIER_MAP: Record<
   'levelup-mini': { intensity: 'medium', duration: 1600, sfx: 'level-up' },
 }
 
+// FOUR OF THESE TIERS NOW HAVE NO CALL SITES: `round`, `best`, `sticker` (dead since the reveal moved
+// into RewardOverlay) and, as of Reward Pacing PRD-01 D7, `levelup-mini` — the mid-game crossing is a
+// soft `sfx.play('sticker-reveal')` in RewardRing now, not a confetti burst.
+//
+// DELIBERATELY NOT PRUNED here (PRD §7). `celebrateTier` is public API across every game, the map is
+// the documentation of what tiers MEAN, and removing entries is a separate and wider cleanup that
+// should be done in one pass with the call-site audit — not as a side effect of a pacing change.
+// Recorded so the next person doesn't read the silence as "these are used somewhere".
+
 // Hook for managing celebration effects
 export const useCelebration = () => {
   const [showCelebration, setShowCelebration] = useState(false)
