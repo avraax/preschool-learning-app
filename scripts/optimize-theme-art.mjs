@@ -76,6 +76,11 @@ const REWARD_FILL = 0.88
 // it deliberately has no entry — verified, not assumed.
 const REWARD_KEY_OVERRIDES = {
   'natur-blad': { vivid: 150, faint: 110, despill: 90 },
+  // Reward Horizon chapters 6-8: the puzzle has a genuinely GREEN piece. Measured interior
+  // green-excess maxes at 80 (6473 px above 60) against a screen at 201 — so the same window as the
+  // leaf works. Without it the despill flattens g to max(r,b) on anything greener than ~8 and the
+  // piece comes out GREY with a perfect silhouette, which every shape-based check passes.
+  'leg-puslespil': { vivid: 150, faint: 110, despill: 90 },
 }
 
 // reward id → the shipped game asset to reuse. Kept HERE rather than in src/ because it is a

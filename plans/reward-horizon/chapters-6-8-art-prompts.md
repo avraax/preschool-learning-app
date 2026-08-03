@@ -1,8 +1,45 @@
 # Reward art — chapters 6, 7, 8 (Reward Horizon PRD-01 W6)
 
-**Status:** awaiting the owner's Gemini renders. Until they land,
-`src/config/rewardArtCoverage.test.ts` fails the build — that is the gate doing its job, not a
-problem to work around (there is no glyph fallback left anywhere in the app).
+**Status (2026-08-03): 25 of 27 done.** 10 re-trimmed from existing game art, 15 keyed from the
+owner's first batch. `rewardArtCoverage.test.ts` is still red on **`sk-mariehoene`** — that is the
+gate doing its job, not a problem to work around (there is no glyph fallback left in the app).
+
+## Outstanding — 2 renders
+
+**1. `sk-mariehoene` (Mariehøne) — never generated.** The first batch returned 16 images for 17
+subjects. Prompt is batch 4 item 5 below.
+
+**2. `leg-floejte` (Fløjte) — RE-RENDER.** The render itself is fine and on-style; it fails as an
+*icon*. The reward art appears at ~24px in the `RewardRing` centre as a pure **silhouette** while it
+is the next prize — that is the whole "see the prize before you earn it" mechanic — and a thin
+diagonal recorder collapses to an anonymous diagonal bar. Measured 10% ink coverage of its 256×256
+square, the lowest in the batch (`leg-tromme` 62%, `leg-klods` 61%, `sk-hoene` 40%).
+
+Checked at true size before deciding, which is worth repeating for any future subject: `hj-ske`
+(14% ink) was the other candidate and **passes** — a spoon's bowl-plus-handle profile is still
+unmistakable at 24px, where the flute is not. Ink coverage alone is not the test; the silhouette is.
+
+> Generate 1 image. Single centered subject, soft-3D claymation style, Pixar-lite, rounded matte clay,
+> soft top-left key light, gentle rim light, soft contact shadow, warm and child-safe, slight 3/4
+> top-down angle, no text or letters, flat solid #00FF00 background edge to edge, square 1:1, highest
+> resolution.
+>
+> A simple recorder-style flute standing UPRIGHT and nearly vertical, filling most of the frame, cream
+> -white clay, with a clearly flared mouthpiece at the top and a visibly wider bell at the bottom so
+> the outline is not a uniform bar, finger holes down the front. `leg-floejte`
+
+## Notes from keying the first batch
+
+- Every render was clean #00FF00 (screen green-excess 200–211) and the Gemini ✦ watermark keyed out
+  with the screen on all of them (its excess measured 131–141, above the `vivid` 90 threshold) — no
+  despeckle needed and no stray islands in any output.
+- **`leg-puslespil` has a genuinely green puzzle piece** (6473 interior pixels above green-excess 60)
+  and needed a `REWARD_KEY_OVERRIDES` entry — the `natur-blad` case exactly. Without it the despill
+  flattens the piece to grey behind a perfect silhouette, which every shape-based check passes.
+  Confirmed fixed by comparing average subject RGB source-vs-output (Δg +4) and by checking the output
+  still holds pixels at green-excess 90.
+- `sk-sommerfugl` came back warm orange as prompted, so the green-wing trap never fired.
+- All 16 are inside the 20 KB budget (13 KB worst).
 
 The three new chapters add 27 rewards. **Ten of them were already baked** as game art and are wired
 into `REWARD_REUSE` in `scripts/optimize-theme-art.mjs`, so they need re-trimming, not drawing:
