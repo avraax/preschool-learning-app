@@ -8,9 +8,18 @@ import { kidCollision } from '../common/dnd/kidCollision'
 import { DraggableItem } from '../common/dnd/DraggableItem'
 import { DroppableZone } from '../common/dnd/DroppableZone'
 import { getCategoryTheme } from '../../config/categoryThemes'
-import { DANISH_OBJECTS, COLOR_SWATCH, HUE_ORDER, adjacentHues, spokenColor } from '../../config/colorContent'
+import {
+  COLOR_SWATCH,
+  COLORS_QUIZ_ROUND,
+  HUE_ORDER,
+  adjacentHues,
+  quizObjectPool,
+  spokenColor,
+  type QuizObject,
+} from '../../config/colorContent'
 import { COLORS_QUIZ, starThresholdsFor } from '../../config/difficulty'
 import { hexToRgba } from '../../theme/tokens/helpers'
+import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 import { SNAP } from '../../theme/motion'
 import GameShell from '../common/GameShell'
 import RoundResultScreen from '../common/RoundResultScreen'
@@ -31,36 +40,28 @@ import { useDragActive } from '../common/dnd/useDragActive'
 import ObjectArt from './farverArt'
 import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 
-// Hvilken Farve? — drag an object onto the matching COLOR. Tests object→color association and
-// keeps the section's drag language (Farvejagt/Ram Farven/Nuancer are all dnd-kit). A wrong color
-// bounces the object back (gentle SFX); after 2 wrong drops the correct color pulses (never-fail
-// hint, costs a star). Bounded round of 8 → RoundResultScreen. Static difficulty.
+// Hvilken Farve? — drag an object onto the matching COLOR. A wrong color bounces the object back
+// (gentle SFX); after 2 wrong drops the correct color pulses (never-fail hint, costs a star).
+// Bounded round of 8 → RoundResultScreen. Static difficulty. Keeps the section's drag language
+// (Farvejagt/Ram Farven/Nuancer are all dnd-kit).
+//
+// **The object is GREYED OUT above Let** (`COLORS_QUIZ[level].reveal`), and that is what makes this a
+// colour game rather than a pixel match: shown in its true colour, the fox's orange is already on the
+// board next to an orange swatch, so the child never needs the word — the same "a board must not
+// restate its own answer" defect the owner removed from Tal Quiz and from Bogstav Quiz's old
+// hear-the-letter mode. Greyed, "Hvilken farve er ræven?" is the real question, the spoken echo
+// ("ræven er orange") teaches instead of narrating, and the colour comes BACK as the reveal when the
+// object lands in the right swatch. The pool shrinks with it — a greyed car has no right answer, see
+// `canonical` in colorContent.
 //
 // UI/UX Overhaul §6C: shared drag juice — grab = lift + 'pick-up' SFX; a swatch breathes while a
 // compatible item hovers it; a correct swatch ABSORBS the object (scale-in + splash); a wrong drop
 // springs back + 'spring-back' SFX. Reduced motion keeps colour/glow + SFX, drops the travel.
 
-const ROUND_QUESTIONS = 8
 const WRONG_BEFORE_HINT = 2
-// Option count + hue policy come from the shared difficulty table (Difficulty PRD-01 §4.5):
-// Let 3 swatches, non-adjacent hues · Normal 4, random · Svær 5, wheel-adjacent only.
-
-interface QuizObject { color: string; objectName: string; objectNameDefinite: string; art?: string; neuter: boolean }
-
-// Only quiz-safe objects: pictures whose color the child can actually read off the picture. Objects
-// flagged quizSafe:false in colorContent are excluded so the child is never scored wrong for
-// correctly seeing a black-and-white ball or a white cloud.
-const OBJECT_POOL: QuizObject[] = HUE_ORDER.flatMap((color) =>
-  (DANISH_OBJECTS[color] ?? [])
-    .filter((o) => o.quizSafe !== false)
-    .map((o) => ({
-      color,
-      objectName: o.objectName,
-      objectNameDefinite: o.objectNameDefinite,
-      art: o.art,
-      neuter: o.neuter
-    }))
-)
+// Round length, option count, hue policy and reveal mode all come from config (Difficulty PRD-01
+// §4.5): Let 3 swatches / non-adjacent hues / in colour · Normal 4 / random / grey · Svær 5 /
+// wheel-adjacent only / grey.
 
 const FarveQuizGame: React.FC = () => {
   const muiTheme = useTheme()
@@ -70,6 +71,10 @@ const FarveQuizGame: React.FC = () => {
 
   const [current, setCurrent] = useState<QuizObject | null>(null)
   const [options, setOptions] = useState<string[]>([])   // candidate color names
+  // Whether THIS question's object is greyed out. Held in state beside the question (not derived at
+  // render from the live level) so the object can never be greyed while it was drawn from the
+  // colour-mode pool — a mid-question level change regenerates both together.
+  const [greyObject, setGreyObject] = useState(false)
   const [solvedColor, setSolvedColor] = useState<string | null>(null) // the color it landed in (correct)
   const [shakeColor, setShakeColor] = useState<string | null>(null)
   // Never-fail hint: after WRONG_BEFORE_HINT wrong drops on the current question, the correct color
@@ -81,7 +86,7 @@ const FarveQuizGame: React.FC = () => {
   const audio = useSimplifiedAudioHook({ componentId: 'FarveQuizGame', autoInitialize: false })
   const [gameReady, setGameReady] = useState(false)
 
-  const round = useRound({ length: ROUND_QUESTIONS, gameId: 'colors.quiz' })
+  const round = useRound({ length: COLORS_QUIZ_ROUND, gameId: 'colors.quiz' })
   const firstAttemptRef = useRef(true)
   const [roundOutcome, setRoundOutcome] = useState<RoundOutcome | null>(null)
 
@@ -115,17 +120,21 @@ const FarveQuizGame: React.FC = () => {
 
   const setupQuestion = (voice = true) => {
     isAdvancing.current = false
-    let pool = OBJECT_POOL.filter((o) => `${o.color}-${o.objectName}` !== previousObject.current)
-    if (pool.length === 0) pool = OBJECT_POOL
+    // Static difficulty (progressStore.difficultyFor — no adaptivity), table-driven. Two axes: the
+    // REVEAL mode (in colour at Let = the answer is visible; greyed above it = the child recalls it,
+    // which also narrows the pool to canonical-colour objects), and the DISTRACTOR HUES — Let excludes
+    // the answer's wheel neighbours (so no near-miss is on the board), Normal is random, Svær offers
+    // the neighbours FIRST — rød/orange, blå/lilla — so telling adjacent hues apart is the task.
+    // `HUE_WHEEL`, not `HUE_ORDER`: the display order's neighbours (rød/blå) aren't the ones a child
+    // confuses.
+    const { options: optionCount, hues, reveal } = COLORS_QUIZ[progressStore.difficultyFor('colors')]
+
+    const objects = quizObjectPool(reveal)
+    let pool = objects.filter((o) => `${o.color}-${o.objectName}` !== previousObject.current)
+    if (pool.length === 0) pool = objects
     const obj = pool[Math.floor(Math.random() * pool.length)]
     previousObject.current = `${obj.color}-${obj.objectName}`
 
-    // Static difficulty (progressStore.difficultyFor — no adaptivity), table-driven. The DISTRACTOR
-    // HUES are the axis now: Let excludes the answer's wheel neighbours (so no near-miss is on the
-    // board), Normal is random (unchanged), Svær offers the neighbours FIRST — rød/orange, blå/lilla —
-    // so telling adjacent hues apart is the task. `HUE_WHEEL`, not `HUE_ORDER`: the display order's
-    // neighbours (rød/blå) aren't the ones a child confuses.
-    const { options: optionCount, hues } = COLORS_QUIZ[progressStore.difficultyFor('colors')]
     const neighbours = adjacentHues(obj.color)
     const others = HUE_ORDER.filter((c) => c !== obj.color)
     const ranked =
@@ -138,6 +147,7 @@ const FarveQuizGame: React.FC = () => {
 
     currentRef.current = obj
     setCurrent(obj)
+    setGreyObject(reveal === 'grey')
     setOptions(opts)
     setSolvedColor(null)
     setShakeColor(null)
@@ -332,15 +342,22 @@ const FarveQuizGame: React.FC = () => {
           </Box>
 
           {/* The object to drag onto a color. W5: pulled tight to the swatch row below (smaller mb)
-              so the object + swatches read as one cluster and the drag is short. */}
+              so the object + swatches read as one cluster and the drag is short.
+
+              Sized off PHONE_LANDSCAPE, not a blanket `orientation: landscape`: the bare orientation
+              query also caught the iPad — the app's PRIMARY device — and shrank the object to 80px,
+              SMALLER than the 92px swatches, with ~200px of the column left unused. Harmless while the
+              object was shown in colour (its hue was the answer, and hue survives any size), but in
+              grey mode the SILHOUETTE is the entire question, so the prompt has to be the biggest
+              thing on the board. Phones keep the compact size — they have no slack to give. */}
           <Box sx={{
             flex: '0 0 auto',
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
             mb: { xs: 0.5, md: 1 },
-            minHeight: { xs: 96, md: 120 },
-            '@media (orientation: landscape)': { mb: 0.5, minHeight: 84 }
+            minHeight: { xs: 116, md: 148 },
+            [PHONE_LANDSCAPE]: { mb: 0.5, minHeight: 84 }
           }}>
             {!displaySolvedColor && (
               <Box>
@@ -358,19 +375,26 @@ const FarveQuizGame: React.FC = () => {
                     }
                   >
                     {/* PRD-09: the object is a baked soft-3D thing resting in the world (no #ECF1F8
-                        holder, no border, no lip). Its true colour reads off the art; the child drags
-                        it onto the matching swatch. */}
+                        holder, no border, no lip). Above Let it is GREYED (`greyObject`), so the child
+                        has to know the colour instead of matching it off the art; the colour returns
+                        on the copy that lands in the swatch below. */}
                     <Box sx={{
-                      width: { xs: 92, md: 112 },
-                      height: { xs: 92, md: 112 },
-                      '@media (orientation: landscape)': { width: 80, height: 80 },
+                      width: { xs: 112, md: 140 },
+                      height: { xs: 112, md: 140 },
+                      [PHONE_LANDSCAPE]: { width: 80, height: 80 },
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       cursor: 'grab',
                       '&:active': { cursor: 'grabbing' }
                     }}>
-                      <ObjectArt art={current.art} size="100%" elevation={isLiftedObject ? 3 : 1} alt={current.objectName} />
+                      <ObjectArt
+                        art={current.art}
+                        size="100%"
+                        elevation={isLiftedObject ? 3 : 1}
+                        alt={current.objectName}
+                        desaturate={greyObject}
+                      />
                     </Box>
                   </motion.div>
                 </DraggableItem>
@@ -387,7 +411,12 @@ const FarveQuizGame: React.FC = () => {
             gap: { xs: 1.5, md: 2 },
             justifyItems: 'center',
             alignContent: 'center',
-            maxWidth: 640,
+            // The envelope has to hold the WIDEST level, not the middle one. At 5 swatches the fixed
+            // 128px circles need 5×128 + 4×16 = 704px, so inside a 640 cap each 1fr cell was 115px and
+            // every circle overflowed its own cell — measured 8px of the outer two clipped off the
+            // right edge of an iPad in portrait (Svær only; landscape's 92px circles always fit).
+            // Kept level-dependent so PRD-16 W5's deliberately tight 3/4-swatch cluster is unchanged.
+            maxWidth: options.length >= 5 ? 720 : 640,
             mx: 'auto',
             width: '100%',
             px: 1,
@@ -449,7 +478,9 @@ const FarveQuizGame: React.FC = () => {
                         transition: 'box-shadow 0.25s ease, border-color 0.25s ease'
                       }}
                     >
-                      {/* The object lands here when correct — absorbed with a scale-in pop. */}
+                      {/* The object lands here when correct — absorbed with a scale-in pop, and always
+                          in FULL COLOUR: in grey mode this pop IS the answer reveal (the greyed copy
+                          above unmounts as this one mounts). */}
                       {isSolved && (
                         <motion.div
                           initial={reduce ? false : { scale: 0, opacity: 0 }}

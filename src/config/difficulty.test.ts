@@ -134,10 +134,12 @@ test('the §4 per-game tables are exactly these values', () => {
     normal: { options: 4, theme: 'random' },
     svaer: { options: 5, theme: 'same' },
   })
+  // `reveal` is the load-bearing one: 'colour' puts the answer on the board (the fox IS orange next
+  // to an orange swatch), so only Let may use it.
   assert.deepEqual(COLORS_QUIZ, {
-    let: { options: 3, hues: 'non-adjacent' },
-    normal: { options: 4, hues: 'random' },
-    svaer: { options: 5, hues: 'adjacent' },
+    let: { options: 3, hues: 'non-adjacent', reveal: 'colour' },
+    normal: { options: 4, hues: 'random', reveal: 'grey' },
+    svaer: { options: 5, hues: 'adjacent', reveal: 'grey' },
   })
   assert.deepEqual(COLORS_FARVEJAGT, {
     let: { distractorColors: 3, perColor: 1 },

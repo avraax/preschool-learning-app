@@ -10,11 +10,12 @@
 // **NO ADAPTIVITY.** This is and stays a static, manual, adult-set level (standing owner rule).
 // Nothing in this file — or anything reading it — looks at the child's performance.
 //
-// **PURE + NODE-IMPORTABLE.** No React, no side effects, and the only import is a TYPE (erased at
+// **PURE + NODE-IMPORTABLE.** No React, no side effects, and every import is a TYPE (erased at
 // runtime). `shared-narration-clips.js` derives the baked sequence read-backs from this module, so
 // relative imports in this graph need an explicit `.ts` extension (Node's ESM resolver rejects
 // extensionless imports even though Vite/tsc accept them — see `.claude/rules/audio-system.md`).
 import type { DifficultyLevel } from './progressSchema.ts'
+import type { ColorReveal } from './colorContent.ts'
 
 export type { DifficultyLevel }
 
@@ -394,13 +395,25 @@ export interface ColorQuizTuning {
    * `adjacent`     — wheel neighbours ONLY (rød/orange, blå/lilla).
    */
   hues: 'non-adjacent' | 'random' | 'adjacent'
+  /** Whether the object is shown in its true colour (answer visible) or greyed out (recall). */
+  reveal: ColorReveal
 }
 
-/** Hvilken Farve? (`colors.quiz`). Adjacency comes from `HUE_WHEEL` in `colorContent.ts`. */
+/**
+ * Hvilken Farve? (`colors.quiz`). Adjacency comes from `HUE_WHEEL` in `colorContent.ts`.
+ *
+ * `reveal` is the axis that makes this game a colour game at all. Shown in colour, the answer is on
+ * the board — the child matches the fox's orange to the orange swatch without ever needing the word,
+ * which is the same defect the owner removed from Tal Quiz (nothing on a board may restate its own
+ * answer) and from Bogstav Quiz's old "hear the letter, tap the letter" mode. So only **Let** keeps
+ * the visible version, as the youngest child's winnable tier; Normal and Svær grey the object out and
+ * ask what the title asks. The hue axis still stacks on top: greyed + wheel-neighbours-only at Svær
+ * means recalling that a fox is orange and not rød or gul.
+ */
 export const COLORS_QUIZ: Record<DifficultyLevel, ColorQuizTuning> = {
-  let: { options: 3, hues: 'non-adjacent' },
-  normal: { options: 4, hues: 'random' },
-  svaer: { options: 5, hues: 'adjacent' },
+  let: { options: 3, hues: 'non-adjacent', reveal: 'colour' },
+  normal: { options: 4, hues: 'random', reveal: 'grey' },
+  svaer: { options: 5, hues: 'adjacent', reveal: 'grey' },
 }
 
 export interface FarvejagtTuning {

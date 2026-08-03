@@ -11,7 +11,19 @@ export interface ColorObject {
   hex: string                 // the object's true color (drives the draggable tile color)
   neuter: boolean             // true = et-word (neuter gender) → color predicate takes -t ("rødt")
   quizSafe?: boolean          // false = picture contradicts its color → excluded from Hvilken Farve?
+  canonical?: boolean         // false = the object's color is NOT world knowledge → grey-mode unsafe
 }
+
+/**
+ * How Hvilken Farve? presents the object (per-level, see `COLORS_QUIZ` in `difficulty.ts`).
+ *
+ * `colour` — the object is shown in its true colour, so the answer is visible on the board and the
+ *            task is a pixel match. Deliberately kept for the easiest level only.
+ * `grey`   — the object is DESATURATED, so the child must know that a fox is orange and a banana
+ *            yellow. That is the question the game's title asks, and the colour returns as the
+ *            reveal when the object lands in the right swatch.
+ */
+export type ColorReveal = 'colour' | 'grey'
 
 // Neuter (-t) forms of the declinable base colors. Common-gender objects speak the base name;
 // lilla/orange are indeclinable (no -t form). Used so the spoken "{objektet} er {farve}" echo
@@ -34,18 +46,25 @@ export const spokenColor = (hue: string, neuter: boolean): string =>
 // near-duplicate roles. Reused by Farvejagt (hunt + distractors), Hvilken Farve? (dragged object),
 // and Lær Farver (examples). `objectName`/`objectNameDefinite` are unchanged for every retained
 // object so the spoken echoes stay identical (no new narration → no prebake/audit cycle).
+//
+// `canonical: false` marks the objects whose colour is a PROPERTY OF THIS PICTURE rather than world
+// knowledge — a car, a shirt and a crystal can be any colour, and this `hjerte` is authored lilla
+// while any child would answer rød. Harmless while the object is shown in colour (the answer is on
+// screen), unfair the moment it is greyed out, so Hvilken Farve?'s grey levels drop them. That is 18
+// of the 24 left, with grøn/gul/orange at four each and rød/blå/lilla at two — guarded in
+// `colorContent.test.ts`, which is also where to look after adding art for a canonical red or blue.
 export const DANISH_OBJECTS: Record<string, ColorObject[]> = {
   rød: [
     { objectName: 'æble', objectNameDefinite: 'æblet', art: 'apple', hex: '#dc2626', neuter: true },
-    { objectName: 'bil', objectNameDefinite: 'bilen', art: 'car', hex: '#ef4444', neuter: false },
-    { objectName: 'rose', objectNameDefinite: 'rosen', art: 'rose', hex: '#f87171', neuter: false },
+    { objectName: 'bil', objectNameDefinite: 'bilen', art: 'car', hex: '#ef4444', neuter: false, canonical: false },
+    { objectName: 'rose', objectNameDefinite: 'rosen', art: 'rose', hex: '#f87171', neuter: false, canonical: false },
     { objectName: 'jordbær', objectNameDefinite: 'jordbærret', art: 'strawberry', hex: '#991b1b', neuter: true }
   ],
   blå: [
     { objectName: 'hval', objectNameDefinite: 'hvalen', art: 'whale', hex: '#1d4ed8', neuter: false },
     { objectName: 'blåbær', objectNameDefinite: 'blåbærret', art: 'blueberry', hex: '#3730a3', neuter: true },
-    { objectName: 'lastbil', objectNameDefinite: 'lastbilen', art: 'truck', hex: '#2563eb', neuter: false },
-    { objectName: 'skjorte', objectNameDefinite: 'skjorten', art: 'shirt', hex: '#1e40af', neuter: false }
+    { objectName: 'lastbil', objectNameDefinite: 'lastbilen', art: 'truck', hex: '#2563eb', neuter: false, canonical: false },
+    { objectName: 'skjorte', objectNameDefinite: 'skjorten', art: 'shirt', hex: '#1e40af', neuter: false, canonical: false }
   ],
   grøn: [
     { objectName: 'agurk', objectNameDefinite: 'agurken', art: 'cucumber', hex: '#16a34a', neuter: false },
@@ -62,8 +81,8 @@ export const DANISH_OBJECTS: Record<string, ColorObject[]> = {
   lilla: [
     { objectName: 'druer', objectNameDefinite: 'druerne', art: 'grapes', hex: '#a855f7', neuter: false },
     { objectName: 'aubergine', objectNameDefinite: 'auberginen', art: 'eggplant', hex: '#9333ea', neuter: false },
-    { objectName: 'krystal', objectNameDefinite: 'krystallet', art: 'crystal', hex: '#7c3aed', neuter: true },
-    { objectName: 'hjerte', objectNameDefinite: 'hjertet', art: 'heart', hex: '#8b5cf6', neuter: true }
+    { objectName: 'krystal', objectNameDefinite: 'krystallet', art: 'crystal', hex: '#7c3aed', neuter: true, canonical: false },
+    { objectName: 'hjerte', objectNameDefinite: 'hjertet', art: 'heart', hex: '#8b5cf6', neuter: true, canonical: false }
   ],
   orange: [
     { objectName: 'appelsin', objectNameDefinite: 'appelsinen', art: 'orange_fruit', hex: '#f97316', neuter: false },
@@ -151,3 +170,37 @@ export const adjacentHues = (hue: string): string[] => {
   const n = HUE_WHEEL.length
   return [HUE_WHEEL[(i - 1 + n) % n], HUE_WHEEL[(i + 1) % n]]
 }
+
+// ---- Hvilken Farve? content pool -----------------------------------------------------------------
+
+/** Questions in one Hvilken Farve? round. Exported so the game AND the pool guard read ONE value. */
+export const COLORS_QUIZ_ROUND = 8
+
+/** One asked object, flattened out of `DANISH_OBJECTS` with its hue attached. */
+export interface QuizObject {
+  color: string
+  objectName: string
+  objectNameDefinite: string
+  art: string
+  neuter: boolean
+}
+
+/**
+ * The objects Hvilken Farve? may ask at a given reveal mode.
+ *
+ * Both modes drop `quizSafe:false` (a picture that contradicts its own colour); `grey` additionally
+ * drops `canonical:false`, because a greyed-out car has no right answer. Pure + module-level data, so
+ * `colorContent.test.ts` can assert the pool never falls below `COLORS_QUIZ_ROUND`.
+ */
+export const quizObjectPool = (reveal: ColorReveal): QuizObject[] =>
+  HUE_ORDER.flatMap((color) =>
+    (DANISH_OBJECTS[color] ?? [])
+      .filter((o) => o.quizSafe !== false && (reveal === 'colour' || o.canonical !== false))
+      .map((o) => ({
+        color,
+        objectName: o.objectName,
+        objectNameDefinite: o.objectNameDefinite,
+        art: o.art,
+        neuter: o.neuter,
+      })),
+  )

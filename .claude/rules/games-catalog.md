@@ -145,7 +145,16 @@ All drag-based except the calm Lær Farver browse; hand-rolled dnd-kit — see `
   can never be enumerated for prebake (see `audio-system.md`'s protocol). The pot mechanics and the
   **difficulty-gated** target pool (Let → Normal → Svær widen from the iconic secondaries to all 9) stay
   in the game.
-- Hvilken Farve?: drag the object onto the matching color swatch.
+- Hvilken Farve?: drag the object onto the matching color swatch — and **above Let the object is
+  DESATURATED** (`COLORS_QUIZ[level].reveal`), because shown in its true colour the answer is already on
+  the board and the child matches the fox's orange to the orange swatch without ever needing the word.
+  Same "a board must not restate its own answer" rule as Tal Quiz's removed numeral/object row and
+  Bogstav Quiz's dropped hear-the-letter mode; matching is a ~2–3 year milestone, and the rest of this
+  section already covers the 5–6 skills (sorting, shades, mixing). The colour comes BACK on the copy
+  that lands in the swatch — that pop is the reveal, so never grey it too. Grey mode also narrows the
+  pool to `canonical` objects: a greyed car, shirt or crystal has no right answer, and the authored
+  lilla `hjerte` would score rød wrong. Guarded in `colorContent.test.ts` (pool ≥ round, per-hue floor,
+  and the game's `desaturate` wiring read as source — the tables being right proves nothing on its own).
 - Nuancer: drag 3 shades into slots **light→dark** (left = lightest).
 - **Educational color content is data** in `src/config/colorContent.ts` (NOT themeable); color hexes
   stay data, never themed.

@@ -11,14 +11,20 @@ import { softShadow } from '../../theme/depth'
 //
 // `elevation` raises the shadow while an object is lifted/grabbed (3 ≈ "in the air"). The visual
 // is inert to pointer events; the caller owns drag/press/hint motion on its own wrapper.
+//
+// `desaturate` strips the colour out entirely (Hvilken Farve?'s grey levels — the child supplies the
+// colour from knowledge, and it returns when the object lands in the right swatch). It is FULL
+// grayscale on purpose: any residual saturation is a leak the child can match against a swatch,
+// which is the giveaway the grey mode exists to remove.
 interface ObjectArtProps {
   art?: string
   size: number | string
   elevation?: number
   alt?: string
+  desaturate?: boolean
 }
 
-const ObjectArt: React.FC<ObjectArtProps> = ({ art, size, elevation = 1, alt }) => {
+const ObjectArt: React.FC<ObjectArtProps> = ({ art, size, elevation = 1, alt, desaturate = false }) => {
   const url = colorObjectArt(art)
   if (!url) return null
   return (
@@ -33,7 +39,7 @@ const ObjectArt: React.FC<ObjectArtProps> = ({ art, size, elevation = 1, alt }) 
         objectFit: 'contain',
         userSelect: 'none',
         pointerEvents: 'none',
-        filter: softShadow(elevation),
+        filter: desaturate ? `grayscale(1) ${softShadow(elevation)}` : softShadow(elevation),
       }}
     />
   )
