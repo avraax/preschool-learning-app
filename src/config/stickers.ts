@@ -158,7 +158,13 @@ export const REWARD_CHAPTERS: RewardChapter[] = [
       { id: 'leg-ballon', label: 'Ballon' },
       { id: 'leg-tromme', label: 'Tromme' },
       { id: 'leg-guitar', label: 'Guitar' },
-      { id: 'leg-floejte', label: 'Fløjte' },
+      // Was `leg-floejte` / "Fløjte" (owner, 2026-08-03). The render was fine in the book but a
+      // recorder is a thin tube, so it collapsed to an anonymous vertical bar at the ~24px SILHOUETTE
+      // the RewardRing previews the next prize at — 8% ink coverage, the lowest in the set, where the
+      // guitar (20%) and the spoon (14%) both still read. A chunky instrument fixes it by shape.
+      // Safe to change: this is chapter 7, which no child has reached; the append-only rule protects
+      // the first 45 slots (see the header) and those are untouched.
+      { id: 'leg-xylofon', label: 'Xylofon' },
       { id: 'leg-puslespil', label: 'Puslespil' },
     ],
   },

@@ -3,9 +3,9 @@
 > AUTO-GENERATED (by the `/audit` harness via the dev-server, or `npm run audit:approve-all`).
 > Do not hand-edit — source of truth is `narration-audit.json`.
 
-Last updated: 2026-08-02T19:34:15.382Z
+Last updated: 2026-08-03T06:16:25.045Z
 
-**1940 OK · 1 wrong · 0 unaudited** (of 1941 clips)
+**1942 OK · 1 wrong · 0 unaudited** (of 1943 clips)
 
 ## Bogstaver
 
@@ -703,6 +703,7 @@ Last updated: 2026-08-02T19:34:15.382Z
 | ✅ | Nyt klistermærke! Træ | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Nyt klistermærke! Ugle | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Nyt klistermærke! Ur | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Nyt klistermærke! Xylofon | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Nyt klistermærke! Æble | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Nøgle | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Ost | Bulk-approved (PRD-11 owner listen pass) |  |
@@ -773,6 +774,7 @@ Last updated: 2026-08-02T19:34:15.382Z
 | ✅ | Træ | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Ugle | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Ur | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Xylofon | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Æble | Bulk-approved (PRD-11 owner listen pass) |  |
 
 ## Engelsk

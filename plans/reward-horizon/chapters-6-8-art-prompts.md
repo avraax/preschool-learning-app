@@ -1,32 +1,42 @@
 # Reward art — chapters 6, 7, 8 (Reward Horizon PRD-01 W6)
 
 **Status (2026-08-03): 25 of 27 done.** 10 re-trimmed from existing game art, 15 keyed from the
-owner's first batch. `rewardArtCoverage.test.ts` is still red on **`sk-mariehoene`** — that is the
-gate doing its job, not a problem to work around (there is no glyph fallback left in the app).
+owner's batches. `rewardArtCoverage.test.ts` is red on the **two** below — that is the gate doing its
+job, not a problem to work around (there is no glyph fallback left in the app).
 
 ## Outstanding — 2 renders
 
-**1. `sk-mariehoene` (Mariehøne) — never generated.** The first batch returned 16 images for 17
-subjects. Prompt is batch 4 item 5 below.
+Both fit in one message; use the batch header from §Batch 1 and this numbered pair.
 
-**2. `leg-floejte` (Fløjte) — RE-RENDER.** The render itself is fine and on-style; it fails as an
-*icon*. The reward art appears at ~24px in the `RewardRing` centre as a pure **silhouette** while it
-is the next prize — that is the whole "see the prize before you earn it" mechanic — and a thin
-diagonal recorder collapses to an anonymous diagonal bar. Measured 10% ink coverage of its 256×256
-square, the lowest in the batch (`leg-tromme` 62%, `leg-klods` 61%, `sk-hoene` 40%).
+> 1. A ladybird seen from above, round bright red shell with black spots, small black head — clearly
+>    red, not orange. `sk-mariehoene`
+> 2. A child's xylophone seen from a slight 3/4 top-down angle, filling most of the frame: a row of
+>    five or six flat bars in rainbow colours mounted on a warm wooden frame, one beater resting
+>    across it. Chunky and solid, not thin. `leg-xylofon`
 
-Checked at true size before deciding, which is worth repeating for any future subject: `hj-ske`
-(14% ink) was the other candidate and **passes** — a spoon's bowl-plus-handle profile is still
-unmistakable at 24px, where the flute is not. Ink coverage alone is not the test; the silhouette is.
+### Why Xylofon and not Fløjte
 
-> Generate 1 image. Single centered subject, soft-3D claymation style, Pixar-lite, rounded matte clay,
-> soft top-left key light, gentle rim light, soft contact shadow, warm and child-safe, slight 3/4
-> top-down angle, no text or letters, flat solid #00FF00 background edge to edge, square 1:1, highest
-> resolution.
->
-> A simple recorder-style flute standing UPRIGHT and nearly vertical, filling most of the frame, cream
-> -white clay, with a clearly flared mouthpiece at the top and a visibly wider bell at the bottom so
-> the outline is not a uniform bar, finger holes down the front. `leg-floejte`
+**THE SILHOUETTE IS THE ACCEPTANCE TEST, not ink coverage, and not how it looks in the book.** The
+reward art appears at ~24px in the `RewardRing` centre as a pure **silhouette** while it is the next
+prize — that is the whole "see the prize before you earn it" mechanic, and it is the art's hardest
+job.
+
+Fløjte was rendered twice and cut. Both were on-style and both read perfectly at book-slot size
+(88px, full colour); both collapsed to an anonymous bar in the ring. The second attempt was upright
+with a flared mouthpiece and a wider bell, which made it *narrower* — ink coverage went 10% → 8%, the
+lowest in the set. A recorder is a thin tube; no camera angle fixes that. So the subject changed
+rather than the render (`stickers.ts` carries the note; chapter 7 is unreached, so the path data was
+safe to edit — the append-only rule protects the first 45 slots and those were untouched).
+
+Worth keeping for future subjects: `hj-ske` has almost as little ink (14%) and **passes** — a spoon's
+bowl-plus-handle profile is unmistakable at 24px. `leg-guitar` (20%) passes too. Judge the 24px
+silhouette, zoomed; don't judge the thumbnail and don't judge the coverage number.
+
+**Narration for "Xylofon" is already baked and approved** (the "Fløjte" pair was pruned). The
+X-initial was the pronunciation risk here — `DANISH_LETTER_NAMES` maps X to "eks" and this repo has
+form for Azure reading a capitalised token as an initialism. Measured as read-as-a-word, not spelled:
+0.82 s of speech over 3 syllables = 0.27 s/syllable, against Papegøje 0.29 and Sommerfugl 0.29. That
+is a duration proxy, not a listen — worth an ear-check in `/voicelab` if anything sounds off.
 
 ## Notes from keying the first batch
 

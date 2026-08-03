@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-08-02T19:34:15.382Z",
+  "updatedAt": "2026-08-03T06:16:25.045Z",
   "clips": {
     "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|b": {
       "verdict": "ok",
@@ -15528,6 +15528,22 @@
       "text": "Du har et hundrede klistermærker!",
       "group": "levelup",
       "updatedAt": 1785699255382
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Nyt klistermærke! Xylofon": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Nyt klistermærke! Xylofon",
+      "group": "mixed",
+      "updatedAt": 1785737785045
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Xylofon": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Xylofon",
+      "group": "mixed",
+      "updatedAt": 1785737785045
     }
   }
 }
