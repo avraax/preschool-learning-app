@@ -146,13 +146,41 @@ gameIds are `<section>.<game>`.
 All drag-based except the calm Lær Farver browse; hand-rolled dnd-kit — see `drag-and-drop.md`.
 - Farvejagt: drag objects into the target-color circle; a correct drop snaps into a ring + spoken
   "{objektet} er {farve}".
-- Ram Farven: drag 2 droplets into the pot; correct → recipe reveal + spoken "rød og blå bliver
-  lilla"; wrong → fizz, **no spoken feedback**; `Tøm` empties the pot. Its mixing recipes
-  (`primaryColors`/`possibleTargets`/`mixingRules`) live in **`src/config/colorMixing.ts`** — moved out of
-  the component 2026-08-02 because the game speaks lines built from them, and data stranded in a `.tsx`
-  can never be enumerated for prebake (see `audio-system.md`'s protocol). The pot mechanics and the
-  **difficulty-gated** target pool (Let → Normal → Svær widen from the iconic secondaries to all 9) stay
-  in the game.
+- Ram Farven: drag 2 droplets into the pot; correct → recipe reveal + spoken "rød og blå bliver lilla";
+  `Tøm` empties the pot. Wrong → fizz + **no win/lose narration** — but if the mix made a REAL colour it
+  is NAMED (owner 2026-08-03): aiming for lilla and mixing rød+gul makes orange, and that discovery used
+  to fizz away unnamed. Naming is identification, not feedback — the same distinction that lets the
+  correct branch speak a recipe instead of "rigtigt!".
+  Its recipes (`primaryColors`/`possibleTargets`/`mixingRules`/`TARGET_PRIORITY`/`makeTargetBag`) live in
+  **`src/config/colorMixing.ts`** — moved out of the component 2026-08-02 because the game speaks lines
+  built from them, and data stranded in a `.tsx` can never be enumerated for prebake. Three invariants
+  there, all guarded by `colorMixing.test.ts`:
+  - **Every unordered pair of the 5 sources maps to a goal, in BOTH orders** — 10 pairs, 10 goals, no
+    dead ends. `gul+sort → mørkegul` closed the last gap (it used to fall through to an unnamed
+    `color-mix()` sludge that was always wrong), which is also what makes the naming above total. The
+    ceiling follows: 5 sources give 10 pairs and all 10 are used, so **more goals need a new SOURCE
+    colour** — deliberately not done, since adding grøn as a droplet while teaching blå+gul=grøn is
+    muddy for a 5-year-old.
+  - **The level owns the TRAY as well as the pool** (`COLORS_RAMFARVEN` = targets + `sources`). Pool size
+    used to be the only axis, and the side effect was that **black was a dead droplet at Let AND Normal**
+    — nothing at either level uses it. Now Let offers 4 droplets (no black, so every droplet is in some
+    answer), Normal introduces black AS the decoy, Svær opens all 10 goals. `primaryColors`' ORDER is
+    therefore load-bearing (black last — the tray is `slice(0, sources)`), and the test that matters is
+    **every goal a level asks for must be mixable from that level's droplets**; reading `TARGET_PRIORITY`
+    out of the `.tsx` with a regex made a first attempt at that guard vacuous, which is why the list is
+    config now. Let's 4 droplets can make 6 colours while it asks for 4 — that headroom is deliberate
+    (the spare tints are what the child stumbles into and hears named), so it is a SUBSET invariant, not
+    an equality.
+  - **Goals are drawn from a BAG**, not sampled (`makeTargetBag`, pure + seedable). Avoiding only the
+    previous target let 8 mixes from Let's 4 goals hand out lilla four times; a shuffled pass makes Let
+    two clean passes and Normal show all 6 before repeating. `avoidFirst` is what stops a repeat
+    straddling the seam between two bags. Let's pool (4) is intentionally BELOW the round length (8),
+    contra the pool-≥-round rule above: this pool is the mixable SPACE, not a content list.
+  The pale-tint goals (lyserød/lyseblå/lysegul/grå) need a neutral ring to read against the pale world,
+  and it must be a **padded box that reserves its own space** — as a `118%` absolute disc it reserved
+  none and measured **7.5px INSIDE the "Mål" chip** (a non-pale target measured 8px clear), the overlap
+  the owner reported. It is always rendered and only painted when pale, so bench geometry stays constant
+  as targets rotate. `.claude/rules/responsive-design.md`, "reserve the space, don't tune a percentage".
 - Hvilken Farve?: drag the object onto the matching color swatch — and **above Let the object is
   DESATURATED** (`COLORS_QUIZ[level].reveal`), because shown in its true colour the answer is already on
   the board and the child matches the fox's orange to the orange swatch without ever needing the word.

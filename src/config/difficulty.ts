@@ -431,18 +431,34 @@ export const COLORS_FARVEJAGT: Record<DifficultyLevel, FarvejagtTuning> = {
 }
 
 export interface RamFarvenTuning {
-  /** Size of the mixable-goal pool. */
+  /** Size of the mixable-goal pool (walked in the game's `TARGET_PRIORITY` order). */
   targets: number
+  /** Droplets the tray offers, taken from the HEAD of `primaryColors` — so 4 = no black. */
+  sources: number
 }
 
 /**
  * Ram Farven (`colors.ramfarven`). Let grows from 3 to **4** goals: over an 8-mix round, 3 targets
  * repeat ~2.7× each, which reads as the game being stuck rather than easy.
+ *
+ * `sources` is the second axis, added 2026-08-03. The pool size used to be the ONLY thing a level
+ * changed, and the side effect nobody noticed was that **black was a dead droplet at Let AND Normal**
+ * — none of Let's 4 goals (the 3 secondaries + lyserød) or Normal's 6 (+ the white tints) use it, so
+ * the youngest child stared at a source that could not be part of any answer while Normal, where such
+ * a decoy is a genuine step up, got no credit for it. Now: Let offers only droplets that appear in
+ * some answer, Normal introduces black AS the decoy (and because a wrong-but-valid mix is named
+ * aloud, reaching for it teaches mørkerød rather than just failing), and Svær opens all 10 goals so
+ * every pair is a real recipe and the child must aim instead of fish. Compare Nuancer's `decoy`.
+ *
+ * Let's pool (4) is deliberately BELOW the round length (8), contra the games-catalog "pool ≥ round"
+ * rule: this pool is the mixable SPACE, not an arbitrary content list — only 10 pairs exist at all —
+ * and under the bag draw (`makeTargetBag`) 4 goals over 8 mixes is two clean passes, not the random
+ * clustering that rule exists to prevent. Don't "fix" it by padding Let with black-based goals.
  */
 export const COLORS_RAMFARVEN: Record<DifficultyLevel, RamFarvenTuning> = {
-  let: { targets: 4 },
-  normal: { targets: 6 },
-  svaer: { targets: 9 },
+  let: { targets: 4, sources: 4 },
+  normal: { targets: 6, sources: 5 },
+  svaer: { targets: 10, sources: 5 },
 }
 
 export interface NuancerTuning {

@@ -3,9 +3,9 @@
 > AUTO-GENERATED (by the `/audit` harness via the dev-server, or `npm run audit:approve-all`).
 > Do not hand-edit — source of truth is `narration-audit.json`.
 
-Last updated: 2026-08-03T06:16:25.045Z
+Last updated: 2026-08-03T19:05:48.314Z
 
-**1942 OK · 1 wrong · 0 unaudited** (of 1943 clips)
+**1946 OK · 1 wrong · 0 unaudited** (of 1947 clips)
 
 ## Bogstaver
 
@@ -513,9 +513,12 @@ Last updated: 2026-08-03T06:16:25.045Z
 | ✅ | Find alle orange ting | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Find alle røde ting | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | græskarret er orange | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | grøn | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | grå | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | gul og blå bliver grøn | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | gul og hvid bliver lysegul | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | gul og rød bliver orange | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | gul og sort bliver mørkegul | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | guleroden er orange | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | hatten er rød | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | havet er blåt | Bulk-approved (PRD-11 owner listen pass) |  |
@@ -540,13 +543,16 @@ Last updated: 2026-08-03T06:16:25.045Z
 | ✅ | Lav lysegul farve ved at blande farverne | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Lav lyserød farve ved at blande farverne | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Lav mørkeblå farve ved at blande farverne | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Lav mørkegul farve ved at blande farverne | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Lav mørkerød farve ved at blande farverne | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Lav orange farve ved at blande farverne | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | lilla | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | lys lilla | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | lys orange | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | lyseblå | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | lysegrøn | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | lysegul | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | lyserød | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | majsen er gul | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | mørk lilla | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | mørk orange | Bulk-approved (PRD-11 owner listen pass) |  |
@@ -554,6 +560,7 @@ Last updated: 2026-08-03T06:16:25.045Z
 | ✅ | mørkegrøn | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | mørkegul | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | mørkerød | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | orange | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | rosen er rød | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | ræven er orange | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | rød og blå bliver lilla | Bulk-approved (PRD-11 owner listen pass) |  |
@@ -566,6 +573,7 @@ Last updated: 2026-08-03T06:16:25.045Z
 | ✅ | smørret er gult | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | solen er gul | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | sort og blå bliver mørkeblå | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | sort og gul bliver mørkegul | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | sort og hvid bliver grå | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | sort og rød bliver mørkerød | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | stjernen er gul | Bulk-approved (PRD-11 owner listen pass) |  |

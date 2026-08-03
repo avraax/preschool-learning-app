@@ -128,6 +128,12 @@ export function collectNarrationClips() {
   // droplet orders are real rules), and Farvejagt's hunt phrases (data in colorContent).
   da('colours', NUANCER_INSTRUCTION)
   for (const tgt of possibleTargets) da('colours', colorMixTargetText(tgt.name))
+  // Ram Farven speaks a target's BARE name in two places — tapping the goal swatch, and (since
+  // 2026-08-03) naming a wrong-but-valid mix so a real discovery gets identified. Most names come
+  // free from the hue/SHADES loops below, but `grå` belongs to no hue family and was therefore
+  // reaching live Azure on every goal-swatch tap. Enumerate the target names directly so a new goal
+  // can never re-open that hole.
+  for (const tgt of possibleTargets) da('colours', tgt.name)
   for (const key of Object.keys(mixingRules)) {
     const [c1, c2] = key.split('+')
     da('colours', colorMixResultText(c1, c2, mixingRules[key].name))

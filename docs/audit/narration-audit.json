@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-08-03T06:16:25.045Z",
+  "updatedAt": "2026-08-03T19:05:48.314Z",
   "clips": {
     "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|b": {
       "verdict": "ok",
@@ -2246,7 +2246,7 @@
       "note": "Bulk-approved (PRD-11 owner listen pass)",
       "candidateIpa": "",
       "text": "lyserød",
-      "group": "english-da",
+      "group": "colours",
       "updatedAt": 1784110101652
     },
     "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|mørkerød": {
@@ -2390,7 +2390,7 @@
       "note": "Bulk-approved (PRD-11 owner listen pass)",
       "candidateIpa": "",
       "text": "grøn",
-      "group": "english-da",
+      "group": "colours",
       "updatedAt": 1784110101652
     },
     "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|lysegrøn": {
@@ -2534,7 +2534,7 @@
       "note": "Bulk-approved (PRD-11 owner listen pass)",
       "candidateIpa": "",
       "text": "lilla",
-      "group": "english-da",
+      "group": "colours",
       "updatedAt": 1784110101652
     },
     "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|lys lilla": {
@@ -2598,7 +2598,7 @@
       "note": "Bulk-approved (PRD-11 owner listen pass)",
       "candidateIpa": "",
       "text": "orange",
-      "group": "english-da",
+      "group": "colours",
       "updatedAt": 1784110101652
     },
     "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|lys orange": {
@@ -15544,6 +15544,38 @@
       "text": "Xylofon",
       "group": "mixed",
       "updatedAt": 1785737785045
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Lav mørkegul farve ved at blande farverne": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Lav mørkegul farve ved at blande farverne",
+      "group": "colours",
+      "updatedAt": 1785783948314
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|grå": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "grå",
+      "group": "colours",
+      "updatedAt": 1785783948314
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|gul og sort bliver mørkegul": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "gul og sort bliver mørkegul",
+      "group": "colours",
+      "updatedAt": 1785783948314
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|sort og gul bliver mørkegul": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "sort og gul bliver mørkegul",
+      "group": "colours",
+      "updatedAt": 1785783948314
     }
   }
 }

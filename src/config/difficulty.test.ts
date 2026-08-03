@@ -146,8 +146,14 @@ test('the §4 per-game tables are exactly these values', () => {
     normal: { distractorColors: null, perColor: 1 },
     svaer: { distractorColors: null, perColor: 2 },
   })
-  // Let grows from 3 to 4 goals: with 3, an 8-mix round repeats each ~2.7×.
-  assert.deepEqual(COLORS_RAMFARVEN, { let: { targets: 4 }, normal: { targets: 6 }, svaer: { targets: 9 } })
+  // Let grows from 3 to 4 goals: with 3, an 8-mix round repeats each ~2.7×. `sources` is the second
+  // axis — Let's tray omits black (nothing at Let uses it), so no droplet on its board is outside
+  // every answer; Svær opens all 10 goals, which is every pair the 5 sources can make.
+  assert.deepEqual(COLORS_RAMFARVEN, {
+    let: { targets: 4, sources: 4 },
+    normal: { targets: 6, sources: 5 },
+    svaer: { targets: 10, sources: 5 },
+  })
   assert.deepEqual(COLORS_NUANCER, {
     let: { slots: 2, decoy: false },
     normal: { slots: 3, decoy: false },

@@ -13,7 +13,7 @@ import { useCelebration } from '../common/CelebrationEffect'
 import { ColorRepeatButton } from '../common/RepeatButton'
 import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 import { getCategoryTheme } from '../../config/categoryThemes'
-import { primaryColors, possibleTargets, mixingRules, type ColorDroplet, type TargetColor } from '../../config/colorMixing'
+import { primaryColors, possibleTargets, mixingRules, makeTargetBag, TARGET_PRIORITY, type ColorDroplet, type TargetColor } from '../../config/colorMixing'
 import { colorMixResultText } from '../../config/gamePhrases'
 import { hexToRgba } from '../../theme/tokens/helpers'
 import { SNAP, BOUNCE } from '../../theme/motion'
@@ -62,23 +62,33 @@ interface RecipeReveal {
 // imported from src/config/colorMixing.ts ─────────────────────────────────────────────────────
 
 // W3 (PRD-16): pale-tint targets are near-white and vanish against the light cloud/sky world, so the
-// child can't perceive the colour they're aiming for. These get a neutral backing disc behind the
-// goal swatch so the pale hue reads as a distinct colour (and is distinguishable from a white droplet).
+// child can't perceive the colour they're aiming for. These get a neutral RING around the goal swatch
+// so the pale hue reads as a distinct colour (and is distinguishable from a white droplet).
 const PALE_TARGET_HEXES = new Set(['#FFB3BA', '#BFDBFE', '#FEF9C3', '#9CA3AF'])
 
-// Static-difficulty target pools (progressStore.difficultyFor — no adaptivity). The SIZE comes from
-// `COLORS_RAMFARVEN[level]` (Difficulty PRD-01 §4.5) and this list fixes the ORDER the pool grows in:
-// the 3 iconic two-primary secondaries, then `lyserød` (Let's 4th — with only 3 goals, an 8-mix round
-// repeats each ~2.7×, which reads as the game being stuck rather than easy), the remaining tints, then
-// the black-based shades + grey that force the child to reach for black.
-const TARGET_PRIORITY = [
-  'lilla', 'orange', 'grøn',
-  'lyserød', 'lyseblå', 'lysegul',
-  'mørkerød', 'mørkeblå', 'grå',
-]
+// How far the neutral ring extends past the goal swatch, per side.
+//
+// It used to be an `absolute` disc at `118%` of the swatch, which reserved NO layout space: measured at
+// 1251×872 the plate's bottom landed 7.5px INSIDE the "Mål" chip below it (a non-pale target measured
+// 8px clear), which is the overlap the owner reported. A percentage cannot be tuned to clear a sibling
+// whose extent it doesn't know — `.claude/rules/responsive-design.md`, "RESERVE the space, don't tune a
+// percentage" — so the ring is a real padded box now and the column's own gap does the clearing. It is
+// ALWAYS rendered (transparent when the target isn't pale) so the bench geometry stays constant as
+// targets rotate; only the fill changes. Freed from having to stay small to dodge the label, it is also
+// wider and darker than the old 9% plate so pale hues genuinely read.
+const GOAL_RING_PX = 16
 
+// Static-difficulty target pools (progressStore.difficultyFor — no adaptivity). The SIZE comes from
+// `COLORS_RAMFARVEN[level]` (Difficulty PRD-01 §4.5) and the ORDER from `TARGET_PRIORITY`, which lives
+// in colorMixing.ts beside the recipes so the test can prove every level's goals are actually mixable
+// from that level's droplets.
 const targetNamesFor = (level: DifficultyLevel): string[] =>
   TARGET_PRIORITY.slice(0, COLORS_RAMFARVEN[level].targets)
+
+// The droplets a level offers — the head of `primaryColors`, whose order is load-bearing for exactly
+// this reason (black last). 4 = no black, so nothing on Let's board is outside every answer.
+const sourcesFor = (level: DifficultyLevel): ColorDroplet[] =>
+  primaryColors.slice(0, COLORS_RAMFARVEN[level].sources)
 
 // The 2 source colors that mix to a target (for the recipe reveal + hint).
 const recipeFor = (targetName: string): [ColorDroplet, ColorDroplet] | null => {
@@ -135,10 +145,12 @@ const RamFarvenGame: React.FC = () => {
   const welcomeTriggered = useRef(false)
   const targetNameRef = useRef<string>('')
   const hasInteractedRef = useRef(false)
-  // Last target's hex, to avoid an immediate repeat. Starts null so the FIRST target is unrestricted
-  // (previously the default 'lilla' state leaked in as an avoid, permanently excluding lilla from the
-  // first mix of every session/replay — P5).
-  const lastTargetHexRef = useRef<string | null>(null)
+  // Bag draw (see `makeTargetBag`): the remaining names of one shuffled pass over the level's pool,
+  // plus the pool it was built from so a level change rebuilds instead of dealing out stale goals.
+  // Starts empty so the FIRST target is unrestricted — the old `lastTargetHexRef` had defaulted to
+  // the initial 'lilla' state and permanently excluded lilla from the first mix of every session (P5).
+  const bagRef = useRef<string[]>([])
+  const bagPoolRef = useRef<string>('')
 
   const logError = (message: string, data?: any) => {
     if (message.includes('Error') || message.includes('error')) {
@@ -153,21 +165,28 @@ const RamFarvenGame: React.FC = () => {
   }
 
   // Set up a fresh target. `voice=false` skips speaking (used for the instant first reveal).
-  // `prevHex` lets the caller avoid an immediate repeat (state read in the closure may be stale
-  // inside chained timeouts, so the caller passes the just-finished target's hex explicitly).
-  const setupTarget = (voice = true, prevHex?: string) => {
-    const allowedNames = targetNamesFor(progressStore.difficultyFor('colors'))
-    const difficultyPool = possibleTargets.filter(target => allowedNames.includes(target.name))
+  // `prevName` lets the caller name the just-finished target explicitly (state read in the closure may
+  // be stale inside chained timeouts) so a refill can't repeat it across the bag seam.
+  const setupTarget = (voice = true, prevName?: string) => {
+    const level = progressStore.difficultyFor('colors')
+    const allowedNames = targetNamesFor(level)
 
-    const avoid = prevHex ?? lastTargetHexRef.current
-    let pool = avoid ? difficultyPool.filter(target => target.hex !== avoid) : difficultyPool
-    if (pool.length === 0) pool = difficultyPool // never over-filter to empty
-    const next = pool[Math.floor(Math.random() * pool.length)]
-    lastTargetHexRef.current = next.hex
+    // Bag draw, not a random pick — see `makeTargetBag`. Rebuild whenever the level's pool changes,
+    // otherwise a mid-round difficulty switch would keep dealing the old level's goals.
+    const poolKey = allowedNames.join('|')
+    if (poolKey !== bagPoolRef.current) {
+      bagPoolRef.current = poolKey
+      bagRef.current = []
+    }
+    if (bagRef.current.length === 0) {
+      bagRef.current = makeTargetBag(allowedNames, Math.random, prevName ?? targetNameRef.current)
+    }
+    const nextName = bagRef.current.shift()!
+    const next = possibleTargets.find(target => target.name === nextName) ?? possibleTargets[0]
     targetNameRef.current = next.name
 
     setTargetColor(next)
-    setAvailableColors(shuffle(primaryColors))
+    setAvailableColors(shuffle(sourcesFor(level)))
     setMixingZone([])
     setBlendResult(null)
     setRecipe(null)
@@ -261,6 +280,8 @@ const RamFarvenGame: React.FC = () => {
     stopCelebration()
     setRoundOutcome(null)
     round.reset()
+    // Fresh bag for a fresh round, so a replay doesn't finish the previous round's leftovers.
+    bagRef.current = []
     setupTarget(true)
   }
 
@@ -329,7 +350,7 @@ const RamFarvenGame: React.FC = () => {
     if (commitTimer.current) clearTimeout(commitTimer.current)
     commitTimer.current = setTimeout(() => {
       if (isCorrect && result) handleCorrectMix(c1, c2, result)
-      else handleWrongMix()
+      else handleWrongMix(result)
     }, BLEND_MS)
   }
 
@@ -354,16 +375,26 @@ const RamFarvenGame: React.FC = () => {
         mascotBus.emit('streak') // mascot does its streak pose, matching the shared quiz engine
       }
       if (r.done) finishRound(r.firstTryCorrect, r.longestStreak)
-      else setupTarget(true, result.hex)
+      else setupTarget(true, result.name)
     }, reduce ? 1200 : REVEAL_MS)
   }
 
-  const handleWrongMix = () => {
+  const handleWrongMix = (result?: TargetColor) => {
     firstAttemptRef.current = false
     sfx.play('spring-back')
     reactGuide('think')
-    // Wrong = SFX (spring-back) + the brief wrong-colour fizz-puff visual only; no spoken feedback
-    // (owner request).
+    // Wrong = SFX (spring-back) + the brief wrong-colour fizz-puff visual. No win/lose narration
+    // (standing owner rule) — but if the mix produced a REAL colour, name it (owner, 2026-08-03).
+    // Aiming for lilla and mixing rød+gul makes orange: the child discovered a genuine rule, and it
+    // used to fizz away unnamed. Naming it is identification, not feedback — the same distinction that
+    // lets the correct branch speak "rød og blå bliver lilla" instead of "rigtigt!". It also gives
+    // Normal's black decoy a purpose: reaching for it teaches mørkerød rather than just failing.
+    // Never awaited (the tap-handler rule); a nonsense mix stays silent — and since `mørkegul` closed
+    // the last unmapped pair, there are no nonsense mixes left to be silent about.
+    if (result) {
+      audio.cancelCurrentAudio()
+      void audio.speak(result.name).catch(() => {})
+    }
 
     // After N wrong mixes on this target, pulse the 2 correct droplets (never-fail scaffold).
     if (registerHintWrong()) mascotBus.emit('hint')
@@ -540,34 +571,46 @@ const RamFarvenGame: React.FC = () => {
                         background: `radial-gradient(circle, ${hexToRgba('#FFFFFF', muiTheme.scene.dark ? 0.3 : 0.55)} 0%, ${hexToRgba(targetColor.hex, 0.24)} 44%, ${hexToRgba(targetColor.hex, 0)} 70%)`,
                         filter: 'blur(12px)', pointerEvents: 'none', zIndex: 0,
                       }} />
-                      {/* W3 neutral backing disc — only for pale tints, so the near-white goal reads
-                          as a distinct colour against the pale world (and vs. the white droplet). A
-                          soft mid-neutral plate peeking ~9% around the swatch frames its edge. */}
-                      {isPaleTarget && (
-                        <Box aria-hidden sx={{
-                          position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)',
-                          width: '118%', height: '118%', borderRadius: '50%',
-                          backgroundColor: muiTheme.scene.dark ? 'rgba(15,23,42,0.55)' : '#8A93A3',
-                          boxShadow: muiTheme.scene.dark
-                            ? 'inset 0 2px 6px rgba(0,0,0,0.4)'
-                            : 'inset 0 2px 6px rgba(0,0,0,0.22), 0 3px 8px rgba(0,0,0,0.14)',
-                          pointerEvents: 'none', zIndex: 0,
-                        }} />
-                      )}
+                      {/* W3 neutral RING — a real padded box, not a `118%` absolute disc, so it
+                          RESERVES its own space and the column's gap keeps it off the "Mål" chip (that
+                          overlap measured 7.5px; see GOAL_RING_PX). Always rendered so the bench
+                          geometry is constant across targets; the fill only appears for pale tints,
+                          where the near-white goal would otherwise vanish into the pale world and read
+                          the same as a white droplet. */}
                       <Box
-                        onClick={speakTargetColor}
+                        aria-hidden={!isPaleTarget}
                         sx={{
-                          ...circleSizeSx,
                           position: 'relative',
                           zIndex: 1,
+                          p: `${GOAL_RING_PX}px`,
                           borderRadius: '50%',
-                          backgroundColor: targetColor.hex,
-                          backgroundImage: 'linear-gradient(160deg, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0) 45%)',
-                          border: '4px solid white',
-                          cursor: 'pointer',
-                          boxShadow: `0 12px 28px ${hexToRgba(targetColor.hex, 0.42)}, 0 4px 10px rgba(0,0,0,0.18)`
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          backgroundColor: isPaleTarget
+                            ? (muiTheme.scene.dark ? 'rgba(15,23,42,0.62)' : '#7C8595')
+                            : 'transparent',
+                          boxShadow: isPaleTarget
+                            ? (muiTheme.scene.dark
+                                ? 'inset 0 2px 8px rgba(0,0,0,0.45)'
+                                : 'inset 0 2px 8px rgba(0,0,0,0.26), 0 3px 10px rgba(0,0,0,0.16)')
+                            : 'none',
+                          transition: 'background-color 0.3s ease',
                         }}
-                      />
+                      >
+                        <Box
+                          onClick={speakTargetColor}
+                          sx={{
+                            ...circleSizeSx,
+                            borderRadius: '50%',
+                            backgroundColor: targetColor.hex,
+                            backgroundImage: 'linear-gradient(160deg, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0) 45%)',
+                            border: '4px solid white',
+                            cursor: 'pointer',
+                            boxShadow: `0 12px 28px ${hexToRgba(targetColor.hex, 0.42)}, 0 4px 10px rgba(0,0,0,0.18)`
+                          }}
+                        />
+                      </Box>
                     </Box>
                   </motion.div>
                   <Box sx={{
@@ -781,7 +824,9 @@ const RamFarvenGame: React.FC = () => {
               <Box sx={{
                 flex: '0 0 auto',
                 display: 'grid',
-                gridTemplateColumns: 'repeat(5, 1fr)',
+                // Follows the LEVEL's droplet count (Let offers 4 — no black), never a hardcoded 5:
+                // the same reason `answerGrid.ts` exists, so a level can't leave an orphan column.
+                gridTemplateColumns: `repeat(${availableColors.length || 5}, 1fr)`,
                 gap: { xs: 1.5, sm: 1.75, md: 2.25 },
                 maxWidth: { xs: '380px', sm: '460px', md: '540px' },
                 mx: 'auto',
@@ -793,7 +838,7 @@ const RamFarvenGame: React.FC = () => {
                 // so it sits at natural width; the whole bench+tray group stays centred. This targets
                 // the iPad landscape surface (the primary one) where the row + bench co-fit.
                 '@media (orientation: landscape)': {
-                  gridTemplateColumns: 'repeat(5, 1fr)',
+                  gridTemplateColumns: `repeat(${availableColors.length || 5}, 1fr)`,
                   gap: { xs: 1, sm: 1.5, md: 2 },
                   maxWidth: 'none',
                   mx: 0,
