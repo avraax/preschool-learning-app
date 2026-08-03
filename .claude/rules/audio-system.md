@@ -96,8 +96,25 @@ sprite), re-encoded with `node scripts/transcode-sfx.mjs`, into `public/sounds/u
   the memory game's `"{bogstav} som {ord}"` lines were never actually prebaked until PRD-14 added them.
 - **`tts:prebake` regenerates the manifest and PRUNES orphaned clips**, so a prebake commit can show
   audio DELETIONS unrelated to your change = pre-existing content drift (content edited since the last
-  prebake) being synced. Expected, not a bug — confirm the pruned keys are genuinely gone from current
-  content (`grep` the phrase) and commit the deletions as part of the prebake output.
+  prebake) being synced. Expected, not a bug — commit the deletions as part of the prebake output.
+  **But verify a prune by DIFFING the manifest, never by grepping the phrase you removed.** Clips dedupe
+  by cache key, so a word is baked if ANY loop emits it — which means **a clip can be baked purely as a
+  side effect of an unrelated game's content**, and deleting that game's enumerator loop silently
+  un-bakes words a surviving game still speaks. Removing Dansk til Engelsk dropped the Danish-gloss loop
+  and took `hvid` and `sort` with it; Ram Farven speaks those on every white/black droplet drop, and they
+  had never had a loop of their own. Get the exact list, then check each entry against the surviving
+  `speak()` call sites:
+  ```bash
+  git show HEAD:src/config/prebakedTts.ts | grep -oE '"azure\|[^"]*"' | sed 's/.*lex1|//; s/"$//' | sort > /tmp/o
+  grep -oE '"azure\|[^"]*"' src/config/prebakedTts.ts | sed 's/.*lex1|//; s/"$//' | sort | comm -23 /tmp/o -
+  ```
+  The durable fix is the same shape every time: enumerate the words a game speaks **from that game's own
+  data** (`primaryColors`/`possibleTargets` for Ram Farven), so no game's clips depend on another's.
+- **The `/audit` manifest is never pruned** — `docs/audit/narration-audit.json` keeps sign-off records
+  for clips that have left the closed set (102 of them today, mostly PRD-09's dropped `quizSafe:false`
+  objects). `audit:check` reports clean anyway, because it only asks whether every *current* clip is
+  signed off. So a stale record is not a bug and not evidence your change went wrong — don't chase them
+  mid-task.
 - **Editing `public/da-DK.pls` alone changes NOTHING you can hear.** The cache key records the lexicon
   as a boolean (`lex…` via `shared-tts-key.js`), not a content hash, and prebake reuses any existing
   file on disk — so a prebaked clip keeps its old pronunciation until you DELETE its mp3 + manifest

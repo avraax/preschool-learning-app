@@ -172,7 +172,11 @@ curl -s -o /tmp/shot.jpg "<screenshotUrl from the response>"                    
   unstaged file is just as exposed** — an in-progress service + its new sibling module were committed
   out from under a session mid-edit, and so was a `npm install` bump that same session meant to revert
   (`git checkout -- package.json` was then a silent no-op, because the version was already in HEAD).
-  The protection is committing your own work promptly, not keeping the index clean.
+  The protection is committing your own work promptly, not keeping the index clean. **And a
+  subset commit by explicit pathspec can leave YOUR OWN edit behind** — listing files by hand to avoid
+  taking their WIP is exactly when you drop one of yours (`SimplifiedAudioController.ts` sat exposed
+  after a commit meant to include it). Re-check `git status` **after** a subset commit, not just before:
+  anything still dirty that you touched is yours to commit now.
   **They may also PUSH, and `master` is the deploy trigger** — a sibling session running
   `git push origin master` carries every commit under HEAD with it, including yours. So "committed but
   not pushed" is NOT "not deployed": check `git rev-list origin/master..HEAD` before telling the owner

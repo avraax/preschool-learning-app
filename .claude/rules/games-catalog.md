@@ -24,6 +24,16 @@ Normal), and every game that legitimately ignores the level is in `EXEMPT` **wit
 target word exists). Svær's star budget is deliberately looser (3★ ≤1 mistake): **choosing a harder level
 must never cost rewards**, the same fairness rule that keeps XP difficulty-independent.
 
+**A BOARD MUST NOT RESTATE ITS OWN ANSWER.** The app-wide version of a rule that started as a math one,
+now that the owner has removed the third instance: Tal Quiz's printed numeral *and* its counting row,
+Bogstav Quiz's old "hear the letter, tap the letter" mode, and Hvilken Farve's object shown in its true
+colour beside a swatch of that colour. Each let the child win by matching two copies of the answer on
+screen instead of exercising the skill — and each looked like a helpful visual, which is why they all
+shipped. The test to apply to any prompt: **can the child answer this without the thing the game is
+supposed to teach?** If yes, the giveaway comes off, even if that makes the game harder (the fix is
+usually to move the answer into speech, or to strip the attribute being asked about). A per-section
+"don't re-add it as a counting aid / a picture crutch" note lives in each section below.
+
 Two more invariants that module enforces, both learned by shipping the bug twice:
 
 - **A level's content POOL must be at least the ROUND LENGTH.** Smaller, and a single round has to

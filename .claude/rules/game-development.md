@@ -89,6 +89,26 @@ ComparisonGame stay hand-rolled** despite ~cloning the engine's scaffold: they h
 receding) and the engine has no `onCorrectAnimate`-style callback — absorbing them into `UnifiedQuizGame`
 needs that hook added first (it would touch all 7 config quizzes, so verify carefully).
 
+## Guarding a game feature: config data must be IMPORTABLE, and the wiring needs its own guard
+
+Two ways a game guard passes while the feature is broken. Both hit in one session, on the same change.
+
+- **If a test needs to read a list, that list belongs in `src/config/`** — not in the `.tsx`. Pulling
+  `TARGET_PRIORITY` out of `RamFarvenGame.tsx` with a regex matched every single-quoted lowercase word in
+  the file, so the guard was satisfied by anything and proved nothing. Moving it to `colorMixing.ts` let
+  the test import it and assert what actually mattered (**every goal a level asks for is mixable from
+  that level's droplets**). This is the same rule as "data stranded in a `.tsx` can never be enumerated
+  for prebake" — testability is the second reason, and it applies to any per-level content list.
+- **A config/data test cannot see whether the component USES the config.** Every table can be perfect
+  while the feature is entirely absent: deleting the single `desaturate={greyObject}` prop reverts
+  Hvilken Farve to the pixel match, and reverting Ram Farven's goal ring to a percentage-sized absolute
+  disc brings back the label overlap — with every data test green in both cases. Pair the data test with
+  a **source-read guard** on the consuming component (comments stripped — see the `codeOf` helper in
+  `src/components/rewardSurfaces.test.ts`), asserting the wiring exists and, where it matters, its
+  CARDINALITY: exactly one `desaturate=` site, since two would grey the answer reveal too.
+- Then prove both halves with `/re-break` — mutate the table for one entry and the component for another.
+  A table-only break can pass while the component ignores the table completely.
+
 ## Shared primitives — reuse, don't re-fragment
 
 - **Never-fail hint** → `useNeverFailHint` (`src/hooks/useNeverFailHint.ts`), used by the engine AND

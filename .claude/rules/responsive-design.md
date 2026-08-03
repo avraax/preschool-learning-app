@@ -75,6 +75,25 @@ reuse them before inventing new ones.
 - Example: `gridTemplateColumns: { xs: 'repeat(6, 1fr)', sm: 'repeat(8, 1fr)', md: 'repeat(10, 1fr)' }`
 - Add `'@media (orientation: landscape)'` overrides for column counts
 
+### A bare `orientation: landscape` query also catches the iPad — the PRIMARY device
+
+Almost every landscape override in this codebase was written while fixing a phone, and a bare
+orientation query hits the 1024×768 iPad just as hard. It is not a clipping bug, so nothing fails and no
+screenshot looks wrong — the board is simply small, with the slack sitting unused. Measured twice in one
+session: Hvilken Farve's prompt object rendered at **80px, smaller than its own 92px answer swatches**,
+and Ram Farven's bench capped at 172px with **~215px of column height unused**.
+
+- **Sizes go on `PHONE_LANDSCAPE`** (`src/theme/phoneMedia.ts`); **structure stays on the bare
+  orientation query** — row-vs-column direction and column counts are genuinely orientation-driven and
+  usually correct for both device classes. They are separate axes in the same `sx`; splitting them is
+  the fix, not swapping one for the other.
+- **Because the breakpoints are overridden (`lg` = 1024, see above), `lg` INSIDE a landscape query is
+  iPad-only** — no phone reaches 1024 CSS px in landscape. So raising just that one value fixes the iPad
+  without touching any phone, which is usually the smallest possible change.
+- Growing something costs width you may not have: the same measurement pass showed 1024×768 landscape
+  with only **25px of horizontal margin** left, so treat a size increase there as vertical-only, and
+  size the element as a card — closing a void is not the same as filling it.
+
 ## Aspect Ratios
 
 | Element | Ratio | Min Height | Max Height |
