@@ -46,7 +46,6 @@ export function buildTheme(tokens: ThemeTokens): Theme {
     ...baseScene,
     homeAnchors: baseScene.homeAnchors ?? defaultHomeAnchors(),
     sectionFocus: baseScene.sectionFocus ?? defaultSectionFocus(),
-    bloomScenery: baseScene.bloomScenery ?? [],
   }
   const materials = tokens.materials ?? noMaterials()
   const transition = tokens.transition ?? defaultTransition(tokens)

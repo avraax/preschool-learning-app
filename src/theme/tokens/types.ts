@@ -127,17 +127,6 @@ export interface SceneFocus {
   zoom: number            // scene scale at rest in that section (~1.1–1.4)
 }
 
-// A discrete, stage-gated scenery sprite that fades/pops in as the section's bloom stage rises.
-export interface BloomSprite {
-  src: string             // resolved sprite URL (or '' to use a loader-provided one by index)
-  minStage: number        // appears once bloomStage ≥ this (0–4)
-  xPct: number
-  yPct: number
-  depth: number           // parallax ride strength
-  scale: number
-  section?: SceneSectionId // optional: only bloom in this section's framed scene (else home/all)
-}
-
 export interface SceneTokens {
   dark: boolean                 // dark decorative backdrop (Space). Cards/text stay light.
   layers: ParallaxLayerSpec[]   // back→front; rendered behind content with parallax
@@ -159,7 +148,9 @@ export interface SceneTokens {
   // ---- Structured World (Liveliness PRD-05) — all optional, defaulted in buildTheme ----
   homeAnchors?: HomeAnchor[]                          // per-theme seating of the 5 section objects (W3)
   sectionFocus?: Partial<Record<SceneSectionId, SceneFocus>> // per-section camera focus (W2/W4/W5)
-  bloomScenery?: BloomSprite[]                        // discrete stage-gated scenery sprites (W7)
+  // NB there is deliberately no `bloomScenery` here any more. Stage-gated sprites seated in the world
+  // by hand-authored xPct/yPct were removed 2026-08-03 (owner: they read as misplaced). Progress shows
+  // in the world through `ambient.count` scaling only — see ThemeScene's `bloomExtra`.
 }
 
 export interface MaterialTokens {

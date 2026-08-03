@@ -1,7 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { themes } from '../themes.ts'
-import { REFERENCE_VIEWPORTS } from '../../config/sceneFurniture.ts'
+import { REFERENCE_VIEWPORTS } from '../../config/referenceViewports.ts'
 import { overscanPx, parallaxTravelX, parallaxTravelY } from '../../config/parallax.ts'
 
 // THE BLUE LINE. A parallax layer that drifts further than it over-hangs the viewport slides off its

@@ -163,9 +163,13 @@ the configurations nobody screenshotted: measured a 106×46px overlap with "Lær
   nothing, because this layout's spare space is vertical (~200px of ~700 used on iPad landscape).
   So measure the row shape too, not just the overlap — otherwise the "fix" quietly degrades composition.
 - A vertical-only idle float stays inside its own track, so decor can still breathe.
-- The same class covers ThemeScene's stage-gated `bloomScenery` sprites (also absolute-percent, and
-  invisible until the child has bloomed — seed with `?rewards=45` or you will never see them) and the
-  corner mascot. **Drifting `AmbientField` sprites are exempt**: they cross the whole sky by design, so a
+- The same class covers the corner mascot. It also covered ThemeScene's stage-gated `bloomScenery`
+  sprites — absolute-percent decor seated in the world, invisible until the child had bloomed — and
+  those were **deleted rather than fixed** (owner, 2026-08-03: "it looks misplaced"). That is the
+  outcome to remember: percentage anchors survived two rounds of tuning and a per-viewport guard that
+  proved they cleared the mascot and the shelf, and they *still* read as clutter, because clearing
+  furniture is not the same as composing with the art. Reserve the space or drop the element.
+  **Drifting `AmbientField` sprites are exempt**: they cross the whole sky by design, so a
   momentary pass behind a tile is the feature. Don't carve a hole in the sky — a cloud that vanishes
   mid-flight is worse than one that passes behind a puzzle piece.
 - Verify by **measuring rect intersections** across sections × skins × viewports × both orientations, not

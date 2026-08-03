@@ -99,15 +99,6 @@ export const oceanThemeTokens: ThemeTokens = {
       english: { xPct: 64, yPct: 48, zoom: 1.34 },
       ordleg: { xPct: 78, yPct: 55, zoom: 1.32 },
     },
-    // Earned bloom scenery (PRD-05 W7). Layout only; `src:''` → URL from SceneAssets.bloomScenery
-    // by INDEX (batch B5, order: coral, seashell, starfish). Seated on the seabed, but clear of the
-    // mascot / Min Bog shelf / corner button on every reference viewport — the coral used to sit
-    // behind the octopus and the starfish under the shelf (`bloomAnchors.test.ts`).
-    bloomScenery: [
-      { src: '', minStage: 1, xPct: 42, yPct: 76, depth: 0.6, scale: 1 },
-      { src: '', minStage: 2, xPct: 79, yPct: 77, depth: 0.55, scale: 0.9 },
-      { src: '', minStage: 3, xPct: 64, yPct: 76, depth: 0.62, scale: 1.1 },
-    ],
   },
 
   materials: {

@@ -156,18 +156,6 @@ export const kidThemeTokens: ThemeTokens = {
       english: { xPct: 64, yPct: 46, zoom: 1.34 },
       ordleg: { xPct: 78, yPct: 52, zoom: 1.32 },
     },
-    // Earned bloom scenery (PRD-05 W7). Layout only; `src:''` → the URL comes from
-    // SceneAssets.bloomScenery by INDEX (batch B5, order: flower, sparkle-star, cloud puff).
-    // B2 (scene-fixes): larger + more spread so a progressing profile fills more of the frame
-    // (stage 2 rides high in the mid sky where the world reads emptiest). The two ground anchors
-    // moved off the bottom-left corner: at 12%/82% the flower stood exactly where the mascot does,
-    // so it read as growing out of the bear. Kept clear of the mascot / Min Bog shelf / corner
-    // button on every reference viewport by `bloomAnchors.test.ts` — re-run it after any nudge.
-    bloomScenery: [
-      { src: '', minStage: 1, xPct: 41, yPct: 76, depth: 0.55, scale: 1.15 },
-      { src: '', minStage: 2, xPct: 88, yPct: 26, depth: 0.3, scale: 1.05 },
-      { src: '', minStage: 3, xPct: 72, yPct: 75, depth: 0.6, scale: 1.3 },
-    ],
   },
 
   materials: {

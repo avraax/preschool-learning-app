@@ -96,15 +96,6 @@ export const dinoThemeTokens: ThemeTokens = {
       english: { xPct: 64, yPct: 65, zoom: 1.34 },
       ordleg: { xPct: 78, yPct: 68, zoom: 1.32 },
     },
-    // Earned bloom scenery (PRD-05 W7). Layout only; `src:''` → URL from SceneAssets.bloomScenery
-    // by INDEX (batch B5, order: fern sprout, egg, mushroom). Rest on the jungle ridge, clear of the
-    // mascot / Min Bog shelf / corner button on every reference viewport — the fern used to sit
-    // behind the dino buddy (`bloomAnchors.test.ts`).
-    bloomScenery: [
-      { src: '', minStage: 1, xPct: 41, yPct: 76, depth: 0.55, scale: 1 },
-      { src: '', minStage: 2, xPct: 88, yPct: 75, depth: 0.5, scale: 0.95 },
-      { src: '', minStage: 3, xPct: 64, yPct: 76, depth: 0.58, scale: 1.05 },
-    ],
   },
 
   materials: {
