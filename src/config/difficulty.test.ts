@@ -103,7 +103,7 @@ test('the §4 per-game tables are exactly these values', () => {
   })
   assert.deepEqual(MATH_COMPARISON, {
     let: { max: 10, gapMin: 5, gapMax: 9 },
-    normal: { max: 20, gapMin: 1, gapMax: 19 },
+    normal: { max: 20, gapMin: 3, gapMax: 19 },
     svaer: { max: 20, gapMin: 1, gapMax: 2 },
   })
   assert.deepEqual(MATH_SEQUENCE, {
@@ -318,6 +318,28 @@ test('Sammenlign: never equal, inside the level range, inside the level gap band
       assert.ok(gap >= gapMin && gap <= gapMax, `${level}: gap ${gap} outside ${gapMin}–${gapMax}`)
       assert.ok(Math.max(left, right) <= COMPARE_MAX)
     }
+  }
+})
+
+// The gap IS this game's difficulty axis (it's EXEMPT from the tile axis), so a level whose band
+// contains another level's band isn't a step — it's the same game with extra dice. Normal shipped at
+// gapMin 1, i.e. a strict superset of Svær's 1–2, so ~1 in 5 Normal questions was a Svær question
+// (13 vs 14 — two-digit place-value comparison). The pinned table above would happily accept that
+// again, since it just records whatever the numbers are; this asserts the RELATIONSHIP.
+test('Sammenlign: Normal does not serve Svær-tight pairs', () => {
+  const normal = MATH_COMPARISON.normal
+  const svaer = MATH_COMPARISON.svaer
+  assert.ok(
+    normal.gapMin > svaer.gapMax,
+    `Normal's gap floor (${normal.gapMin}) must sit above Svær's ceiling (${svaer.gapMax}) — otherwise Normal contains Svær and stops being its own level`,
+  )
+  // And prove it on real output, not just on the table: no sampled Normal pair may be Svær-tight.
+  for (let i = 0; i < SAMPLES; i++) {
+    const { left, right } = makeComparisonPair('normal')
+    assert.ok(
+      Math.abs(left - right) > svaer.gapMax,
+      `Normal produced ${left} vs ${right}, a gap of ${Math.abs(left - right)} — that's a Svær pair`,
+    )
   }
 })
 

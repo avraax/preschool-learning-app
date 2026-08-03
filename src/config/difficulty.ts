@@ -173,12 +173,18 @@ export interface ComparisonTuning {
 
 /**
  * Sammenlign Tal (`math.comparison`). **Exempt from the TILE axis only** — the mechanic is two
- * numbers — and already the best-calibrated game in the app: the gap IS its axis. Only the Let range
- * tightens (was 1–20 with a ≥8 gap).
+ * numbers — so the GAP is its axis: obvious (Let) → clear (Normal) → place-value-close (Svær).
+ *
+ * **Normal's floor is 3, not 1** (2026-08-03). At `gapMin: 1` its band was a strict SUPERSET of
+ * Svær's, so roughly one Normal question in five was a Svær question — 13 vs 14, which needs
+ * two-digit place-value comparison rather than "which one is obviously bigger". It satisfied the
+ * "no two levels identical" guard on a technicality while not existing as a step. The three bands are
+ * now disjoint except where they should overlap (Normal's wide gaps are a superset of Let's, which is
+ * correct — Let is Normal's easy end, restricted to 1–10).
  */
 export const MATH_COMPARISON: Record<DifficultyLevel, ComparisonTuning> = {
   let: { max: 10, gapMin: 5, gapMax: 9 },
-  normal: { max: COMPARE_MAX, gapMin: 1, gapMax: COMPARE_MAX - 1 },
+  normal: { max: COMPARE_MAX, gapMin: 3, gapMax: COMPARE_MAX - 1 },
   svaer: { max: COMPARE_MAX, gapMin: 1, gapMax: 2 },
 }
 

@@ -9,6 +9,7 @@ import { mascotBus, type MascotEvent } from '../../services/mascotBus'
 import { hexToRgba } from '../../theme/tokens/helpers'
 import { getTapAnims, TAP_ANIM_MAX_MS, type TapAnim } from '../../theme/mascotAnimations'
 import { PHONE_LANDSCAPE, PHONE_PORTRAIT } from '../../theme/phoneMedia'
+import { MASCOT_CORNER_PHONE_PORTRAIT, MASCOT_CORNER_SIZE } from './mascotCorner'
 
 // Reactive corner mascot (UI/UX Overhaul PRD §5.5). ONE reusable emotional guide that reacts to
 // gameplay events (correct/wrong/streak/round/hint/sticker/welcome) via the `mascotBus`. Games
@@ -138,6 +139,9 @@ const Mascot: React.FC<MascotProps> = ({ sx, forceEvent }) => {
   const url = loaded && loaded.id === themeId ? loaded.mascot : ''
   const { animate, transition } = poseAnim(pose)
 
+  // The corner footprint comes from `mascotCorner.ts` — full-bleed play surfaces RESERVE that same
+  // value, so resizing the companion here can't leave a game overlapping it.
+
   return (
     <Box
       data-mascot-event={pose}
@@ -146,12 +150,12 @@ const Mascot: React.FC<MascotProps> = ({ sx, forceEvent }) => {
         zIndex: 6,
         left: 'calc(env(safe-area-inset-left) + 6px)',
         bottom: 'calc(env(safe-area-inset-bottom) + 2px)',
-        width: { xs: 84, md: 120 },
-        height: { xs: 84, md: 120 },
+        width: MASCOT_CORNER_SIZE,
+        height: MASCOT_CORNER_SIZE,
         pointerEvents: 'none',
         // Phones: play surface first — hide in landscape, small in portrait.
         [PHONE_LANDSCAPE]: { display: 'none' },
-        [PHONE_PORTRAIT]: { width: 52, height: 52 },
+        [PHONE_PORTRAIT]: { width: MASCOT_CORNER_PHONE_PORTRAIT, height: MASCOT_CORNER_PHONE_PORTRAIT },
         ...sx,
       }}
     >

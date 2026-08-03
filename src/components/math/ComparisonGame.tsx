@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { Box, Typography } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
-import { motion } from 'framer-motion'
+import { AnimatePresence, motion } from 'framer-motion'
 import GameShell from '../common/GameShell'
 import AnswerTile, { type AnswerTileState } from '../common/AnswerTile'
-import PromptFocus from '../common/PromptFocus'
 import SymbolTile from '../common/SymbolTile'
 import RoundResultScreen from '../common/RoundResultScreen'
 import type { GuideReaction } from '../common/ThemeMascot'
@@ -14,36 +13,58 @@ import { COMPARE_PROMPT, comparisonFactText } from '../../config/gamePhrases'
 import { starThresholdsFor } from '../../config/difficulty'
 import { makeComparisonPair } from '../../config/mathProblems'
 import { MathRepeatButton } from '../common/RepeatButton'
-import { useGameState } from '../../hooks/useGameState'
 import { useRound } from '../../hooks/useRound'
+import { useNeverFailHint } from '../../hooks/useNeverFailHint'
 import { progressStore, type RoundOutcome } from '../../services/progressStore'
 import { sfx } from '../../services/sfxClient'
 import { mascotBus } from '../../services/mascotBus'
 import { isIOS } from '../../utils/deviceDetection'
 import { useDifficulty } from '../../hooks/useDifficulty'
 import { devFx } from '../../utils/devHarness'
-import { BOUNCE, DWELL_FACT, motionOr } from '../../theme/motion'
+import {
+  CHARGE,
+  CHARGE_IN_OPACITY,
+  CHARGE_IN_SCALE,
+  DWELL_FACT,
+  EXIT_FAST,
+  POP,
+  motionOr,
+} from '../../theme/motion'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
-import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
-import { crocodileArt } from '../../assets/games/math'
+import { MASCOT_CORNER_PHONE_PORTRAIT, MASCOT_CORNER_SIZE } from '../common/mascotCorner'
+import { PHONE_LANDSCAPE, PHONE_PORTRAIT } from '../../theme/phoneMedia'
 // Simplified audio system
 import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 
-// Sammenlign Tal — ONE consistent rule (Math Overhaul §3): two different quantities are shown and
-// the child taps the bigger number's side. On a correct tap an animated krokodille >/< "mouth"
-// springs open toward the chosen (bigger) number — "the mouth eats the bigger one" — reinforcing
-// the symbol. Removed (vs the old game): the equality case, the largest/smallest/equal variance,
-// and the long wrong-answer explanation path. No punishment: a wrong tap → gentle SFX + retry.
+// Sammenlign Tal — ONE consistent rule (Math Overhaul §3): two different numbers are shown and the
+// child taps the bigger one. Removed (vs the old game): the equality case, the
+// largest/smallest/equal variance, and the long wrong-answer explanation path. No punishment: a
+// wrong tap → gentle SFX + retry, and after 2 wrongs the correct tile pulses (never-fail hint).
 //
-// UI/UX Overhaul PRD §6B: the krokodille is the star (enlarged) and lunges + its mouth chomps
-// toward the bigger side (motion.BOUNCE + "chomp" SFX + mascot cheer) on a correct tap. Games Visual
-// Uplift (PRD-08 §3.4): the frosted PromptStage card is retired — the arena now rests in PromptFocus's
-// in-world light-pool; the krokodille is baked soft-3D art. The whole arena is a top-anchored layout
-// (there's no separate "answer grid" here, the count-cards ARE the tappable answers). The chomp motion
-// + >/< SymbolTile are unchanged.
+// The board is a NUMBER SENTENCE, matching Plus/Minus Opgaver's `a + b = ?` grammar: `2 [?] 8` while
+// the question stands, resolving to `2 [<] 8` on the correct tap — the winning tile pops and stays
+// lit, the other recedes, and the spoken fact says the same thing out loud. The two numerals ARE the
+// answer tiles, so the arena IS the whole game body: two tiles as large as the board allows, with the
+// symbol slot between them. Numerals are sized in container-query units off each tile, not from a
+// breakpoint ladder, so phone landscape follows by derivation.
 //
-// The two cards show NUMERALS ONLY (2026-08-01, owner) — the counted object piles were removed, so
-// reading the numerals is the only way through. Nothing here consumes the counting-object set any more.
+// Two things were REMOVED here on 2026-08-03 (owner) and should not come back:
+//   · **The krokodille.** It was meant to teach `>`/`<` as a mouth eating the bigger number, and did
+//     the opposite: the art is a mouth-CLOSED side profile that was never mirrored, so with the
+//     bigger number on the left it lunged tail-first at it — the mnemonic taught backwards on half of
+//     all questions. It also rendered at ~a third of its nominal size (512×205 of ink on a 606² canvas,
+//     sized by height) and sat 30px above the tiles' centre line, because the middle column reserved
+//     92px for a symbol that only appeared after the answer. The symbol slot now carries the meaning.
+//   · **`PromptFocus`.** This was the app's only game that rendered it OUTSIDE GameShell's
+//     `promptStage` slot, so instead of the 40% band it stretched over the whole body: a 512px focal
+//     zone holding a 114px answer tile (78% empty), "Hør igen" stranded at the viewport bottom, and a
+//     centred circular light-pool wide enough to read as a magenta smudge on light skins. Each tile is
+//     grounded by TactileTile's own contact shadow instead; the per-question charge-in beat PromptFocus
+//     used to supply is re-applied to the arena row here.
+//
+// The tiles show NUMERALS ONLY (2026-08-01, owner) — the counted object piles were removed, so reading
+// the numerals is the only way through. Don't re-add a countable layer, and don't let tile SIZE encode
+// the values either: that would hand over the answer the same way the piles did.
 
 interface ComparisonProblem {
   leftNumber: number
@@ -51,6 +72,17 @@ interface ComparisonProblem {
 }
 
 type Side = 'left' | 'right'
+
+// The symbol slot's inner layers. The AnimatePresence child must carry a definite width or the
+// percentage-sized glyph inside it has nothing to resolve against (framer takes a raw `style`, not sx).
+const SLOT_LAYER: React.CSSProperties = {
+  width: '100%',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+}
+// Square, filling the slot's width — SymbolTile's ink correction assumes a square box.
+const SLOT_GLYPH = { width: '100%', height: 'auto', aspectRatio: '1' } as const
 // The prompt + the correct-answer fact come from the shared builders (src/config/gamePhrases.ts),
 // which the prebake enumerator also calls — so the played text and the baked clip can't drift.
 const comparisonFact = comparisonFactText
@@ -65,9 +97,12 @@ const ComparisonGame: React.FC = () => {
   // True while a correct answer is being processed/advancing (taps disabled). Wrong taps stay
   // re-enabled so the child can retry.
   const [locked, setLocked] = useState(false)
-  // The krokodille mouth opens toward the bigger number only after a correct tap.
-  const [mouthOpen, setMouthOpen] = useState(false)
+  // The middle slot holds `?` until a correct tap, then the resolved `>`/`<`.
+  const [revealSymbol, setRevealSymbol] = useState(false)
   const [guideReaction, setGuideReaction] = useState<GuideReaction>(null)
+  // Never-fail hint: after 2 wrong taps the correct tile pulses (reduced-motion → static glow, owned
+  // by TactileTile). Resets per question. Like Stav Ordet, this game doesn't nudge the mascot on hint.
+  const { hint: hintActive, registerWrong: registerHintWrong, reset: resetHint } = useNeverFailHint<boolean>(2)
 
   // Simplified audio system
   const audio = useSimplifiedAudioHook({ componentId: 'ComparisonGame', autoInitialize: false })
@@ -78,9 +113,6 @@ const ComparisonGame: React.FC = () => {
   const welcomeTriggered = useRef(false)
   // True once the child taps → suppresses a (possibly late) welcome from talking over their play.
   const hasInteractedRef = useRef(false)
-
-  // Centralized game state management
-  const { incrementScore, resetScore } = useGameState()
 
   // Bounded round + reward flow (Foundation §3). 8 questions; star thresholds come from the difficulty
   // spine at finish time (Difficulty PRD-01 W6).
@@ -97,15 +129,15 @@ const ComparisonGame: React.FC = () => {
   // guard closes the same-tick double-tap window that `locked` alone leaves open.
   const isAdvancingRef = useRef(false)
   const guideReactionTimer = useRef<NodeJS.Timeout | null>(null)
+  // Clears the wrong-tap tile feedback. Tracked like every other timer so nothing fires post-unmount.
+  const wrongResetTimer = useRef<NodeJS.Timeout | null>(null)
   // (PRD-02 P4's `mountedRef` is gone as of 2026-08-02: the tap handler no longer awaits narration, so
   // the advance timer is created synchronously and the unmount cleanup always has it to clear.)
 
   const { showCelebration, celebrationIntensity, celebrationDuration, celebrateTier, stopCelebration } = useCelebration()
 
-  const logError = (message: string, data?: any) => {
-    if (message.includes('Error') || message.includes('error')) {
-      console.error(`🎵 ComparisonGame: ${message}`, data)
-    }
+  const logError = (message: string, data?: unknown) => {
+    console.error(`🎵 ComparisonGame: ${message}`, data)
   }
 
   useEffect(() => {
@@ -134,6 +166,10 @@ const ComparisonGame: React.FC = () => {
       if (guideReactionTimer.current) {
         clearTimeout(guideReactionTimer.current)
         guideReactionTimer.current = null
+      }
+      if (wrongResetTimer.current) {
+        clearTimeout(wrongResetTimer.current)
+        wrongResetTimer.current = null
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -174,27 +210,32 @@ const ComparisonGame: React.FC = () => {
   const generateNewProblem = (voice = true) => {
     // Static, manual difficulty — read fresh per problem, generated by a PURE function
     // (src/config/mathProblems.ts). This game is **exempt from the tile axis only** (the mechanic is two
-    // numbers) and was already the best-calibrated game in the app: the GAP is its axis. Let 1–10 with
-    // a gap ≥5 (tightened from 1–20/≥8) · Normal 1–20 any distinct pair (unchanged) · Svær 1–20, gap
-    // 1–2. Never equal — one clear rule: tap the bigger.
+    // numbers): the GAP is its axis. Let 1–10 with a gap ≥5 · Normal 1–20 with a gap ≥3 · Svær 1–20,
+    // gap 1–2. Never equal — one clear rule: tap the bigger.
     const level = progressStore.difficultyFor('math')
     const { left: leftNum, right: rightNum } = makeComparisonPair(level)
 
     setCurrentProblem({ leftNumber: leftNum, rightNumber: rightNum })
-    // Warm this problem's fact line NOW, while the child is still comparing — it's a dynamic sentence
-    // (not prebaked), so synthesizing it on the correct tap put Azure's ~1.1s round-trip right in the
-    // middle of the chomp. Plays nothing, cancels nothing.
+    // Warm this problem's fact line NOW, while the child is still comparing. Every comparison fact IS
+    // prebaked (`comparisonPairs()` enumerates all 190), so this resolves to prefetching the static
+    // mp3 rather than a synth — cheap, and it keeps working if the range ever outruns the baked set.
+    // Plays nothing, cancels nothing.
     audio.warmSpeech(comparisonFact(Math.max(leftNum, rightNum), Math.min(leftNum, rightNum)))
     setChosen(null)
     setLocked(false)
-    setMouthOpen(false)
+    setRevealSymbol(false)
     setGuideReaction(null)
+    resetHint()
     firstAttemptRef.current = true
     isAdvancingRef.current = false // release the advance-lock for the new problem
 
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current)
       timeoutRef.current = null
+    }
+    if (wrongResetTimer.current) {
+      clearTimeout(wrongResetTimer.current)
+      wrongResetTimer.current = null
     }
     if (!voice) return
     const delay = isIOS() ? 100 : 500
@@ -223,7 +264,6 @@ const ComparisonGame: React.FC = () => {
     stopCelebration()
     setRoundOutcome(null)
     round.reset()
-    resetScore()
     generateNewProblem()
   }
 
@@ -270,13 +310,12 @@ const ComparisonGame: React.FC = () => {
     }
 
     if (isCorrect) {
-      // Resolve SYNCHRONOUSLY — the chomp, score and celebration land on the tap instead of after the
-      // spoken fact finished (2026-08-02); the krokodille used to bite ~4s late, right as the board
-      // changed.
-      setMouthOpen(true) // krokodille chomps toward the bigger number
-      incrementScore()
+      // Resolve SYNCHRONOUSLY — the reveal and celebration land on the tap instead of after the spoken
+      // fact finished (2026-08-02). `celebrateTier` fires the tier's own SFX cue, so there is no second
+      // sfx.play here: the old `sfx.play('chomp')` was a cue stacked on top of it that no other game
+      // has (and it was aliased to the drag-and-drop snap anyway).
+      setRevealSymbol(true) // `?` → the resolved `>`/`<`, completing the sentence
       celebrateTier('micro')
-      sfx.play('chomp')
 
       advanceTimerRef.current = setTimeout(() => {
         advanceTimerRef.current = null
@@ -296,10 +335,17 @@ const ComparisonGame: React.FC = () => {
         // clip's trailing silence, never the spoken fact.
       }, DWELL_FACT)
     } else {
-      // Gentle, non-punishing: break the first-try flag, soft SFX, the mouth stays shut, retry.
+      // Gentle, non-punishing: break the first-try flag, soft SFX, `?` stays put, retry. After the
+      // 2nd wrong the correct tile pulses (never-fail hint) — those wrongs already broke first-try, so
+      // there's no extra star bookkeeping.
       firstAttemptRef.current = false
       sfx.play('wrong')
-      setTimeout(() => setChosen(null), 900)
+      registerHintWrong()
+      if (wrongResetTimer.current) clearTimeout(wrongResetTimer.current)
+      wrongResetTimer.current = setTimeout(() => {
+        wrongResetTimer.current = null
+        setChosen(null)
+      }, 900)
     }
   }
 
@@ -314,60 +360,92 @@ const ComparisonGame: React.FC = () => {
     }
   }
 
-  // DEV screenshot harness (?fx=correct|wrong): the forced chomp/tile state is DERIVED (no
+  // DEV screenshot harness (?fx=correct|wrong|hint): the forced tile/symbol state is DERIVED (no
   // setState-in-effect) so it's persistent and capturable — mirrors UnifiedQuizGame's
   // `tileStateFor`. No-op in production.
   const forcedFx = devFx()
-  const biggerSideForced: Side | null = currentProblem
+  const biggerSide: Side | null = currentProblem
     ? (currentProblem.leftNumber > currentProblem.rightNumber ? 'left' : 'right')
     : null
   const effectiveChosen: { side: Side; correct: boolean } | null =
-    forcedFx === 'correct' && biggerSideForced
-      ? { side: biggerSideForced, correct: true }
-      : forcedFx === 'wrong' && biggerSideForced
-        ? { side: (biggerSideForced === 'left' ? 'right' : 'left') as Side, correct: false }
+    forcedFx === 'correct' && biggerSide
+      ? { side: biggerSide, correct: true }
+      : forcedFx === 'wrong' && biggerSide
+        ? { side: (biggerSide === 'left' ? 'right' : 'left') as Side, correct: false }
         : chosen
-  const effectiveMouthOpen = mouthOpen || (forcedFx === 'correct' && !!currentProblem)
+  const effectiveReveal = revealSymbol || (forcedFx === 'correct' && !!currentProblem)
+  const effectiveHint = hintActive || forcedFx === 'hint'
 
   const sideState = (side: Side): AnswerTileState =>
     effectiveChosen && effectiveChosen.side === side ? (effectiveChosen.correct ? 'correct' : 'wrong') : 'idle'
 
   // The comparison symbol: > if left is bigger, < if right is bigger.
-  const mouthOp: '>' | '<' | null = currentProblem
+  const compareOp: '>' | '<' | null = currentProblem
     ? currentProblem.leftNumber > currentProblem.rightNumber ? '>' : '<'
     : null
+
+  // The tile that LOST recedes once the sentence is complete, so the eye lands on the bigger number.
+  // Opacity only under reduced motion (the verdict still reads — colour + ring do the work).
+  const recede = (side: Side) =>
+    effectiveReveal && biggerSide !== null && side !== biggerSide
+      ? reduce ? { opacity: 0.5 } : { opacity: 0.5, scale: 0.94 }
+      : { opacity: 1, scale: 1 }
 
   const renderSide = (side: Side) => {
     if (!currentProblem) return null
     const num = side === 'left' ? currentProblem.leftNumber : currentProblem.rightNumber
     return (
-      <Box sx={{ minHeight: { xs: 180, md: 230 }, '@media (orientation: landscape)': { minHeight: { xs: 120, md: 150 } }, [PHONE_LANDSCAPE]: { minHeight: 96 } }}>
+      <Box
+        component={motion.div}
+        animate={recede(side)}
+        transition={motionOr(POP, reduce)}
+        sx={{
+          // The tile fills this track in BOTH axes — no aspect-ratio, which in a no-scroll column gets
+          // clipped and grows upward over its neighbours (see responsive-design.md). `containerType`
+          // makes the tile its own query container so the numeral below can size off it.
+          flex: '1 1 0',
+          minWidth: 0,
+          minHeight: 0,
+          maxWidth: { xs: 260, md: 290 },
+          containerType: 'size',
+        }}
+      >
         <AnswerTile
           onClick={() => handleSideClick(side)}
           accent={category.accentColor}
           state={sideState(side)}
+          hint={effectiveHint && side === biggerSide}
           disabled={locked}
         >
-          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%' }}>
-            {/* The NUMERAL is the whole card (2026-08-01, owner). The object pile that used to sit above
-                it was removed: comparing two piles of blobs let the child win without ever reading the
-                numerals, which is the skill this game teaches. It now fills the space the pile held.
-                (The "{n} {word}" caption went earlier, PRD-14 W5 — unreadable for a pre-reader.) */}
-            <Typography
-              variant="h1"
-              sx={{
-                fontSize: { xs: '5.5rem', md: '7.5rem' },
-                fontWeight: 700,
-                // Readable-on-white count-card numeral (onTileColor) — see CategoryTheme.onTileColor.
-                color: category.onTileColor,
-                lineHeight: 1,
-                '@media (orientation: landscape)': { fontSize: { xs: '3.5rem', md: '5rem' } },
-                [PHONE_LANDSCAPE]: { fontSize: '2.4rem' }
-              }}
-            >
-              {num}
-            </Typography>
-          </Box>
+          {/* The NUMERAL is the whole tile (2026-08-01, owner). The object pile that used to sit above
+              it was removed: comparing two piles of blobs let the child win without ever reading the
+              numerals, which is the skill this game teaches.
+              (The "{n} {word}" caption went earlier, PRD-14 W5 — unreadable for a pre-reader.) */}
+          <Typography
+            variant="h1"
+            sx={{
+              // Derived from the TILE, not a breakpoint ladder: `cqw` is the binding constraint for a
+              // two-digit number (up to 20, so never wider than ~1.1em), `cqh` for a short tile, so
+              // `min()` of the two always fits and every viewport — including phone landscape —
+              // follows without its own override. Container query units are Safari 16+, safe on the
+              // iOS 17 floor.
+              //
+              // Equal coefficients, so this is simply **52% of the tile's SHORTER side** — one rule
+              // instead of two tuned numbers, and it can't be read as independent of the tile caps
+              // above (it isn't: change a cap and the numeral moves with it). ~114px at iPad landscape,
+              // which is where the owner landed after 281px and 177px both read as too big.
+              // A two-digit number is ~1.1em of digit advance = ~57% of the tile's shorter side, so it
+              // still clears the tile's ~16px padding on the narrowest tile the app produces
+              // (phone portrait, ~141px wide).
+              fontSize: 'min(52cqh, 52cqw)',
+              fontWeight: 700,
+              // Readable-on-white numeral (onTileColor) — see CategoryTheme.onTileColor.
+              color: category.onTileColor,
+              lineHeight: 1,
+            }}
+          >
+            {num}
+          </Typography>
         </AnswerTile>
       </Box>
     )
@@ -407,14 +485,29 @@ const ComparisonGame: React.FC = () => {
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
+            // Centred: the arena IS the game body (two tiles + the symbol slot), so there is no focal
+            // band to anchor to and no answer grid below. Any slack splits above and below the board.
+            justifyContent: 'center',
             minHeight: 0,
-            // Top-anchored layout (§6B): the arena sits right under the title instead of vertically
-            // centred with a dead gap above it — PromptStage still supplies the frame/charge-in/
-            // idle float, it's just placed here directly (there's no separate answer grid; the
-            // count-cards below ARE the tappable answers).
-            justifyContent: 'flex-start',
-            gap: { xs: 0.75, md: 1.25 },
-            [PHONE_LANDSCAPE]: { gap: 0.5 },
+            gap: { xs: 1, md: 2 },
+            // RESERVE the corner companion's band as padding on the whole column, so the board can
+            // never reach into it (.claude/rules/responsive-design.md — reserve the space, don't tune a
+            // percentage). Two honest notes:
+            //   · The 94×34px overlap that motivated this was measured against the FIRST pass's
+            //     442px-tall tiles. At the shipped ~220px it no longer reproduces (re-broken: setting
+            //     `pb: 0` keeps the layout probe green), so this is DEFENSIVE — it is what keeps a
+            //     future cap increase from silently re-introducing the overlap.
+            //   · It still earns its place compositionally: reserving the band lifts the whole board
+            //     ~60px, closing the gap that otherwise opens between the title and the arena.
+            // As PADDING rather than a tall bottom row: the row would be 120px holding a 48px pill,
+            // which pushed the whole board down away from the title.
+            //
+            // NB the explicit `px` — `pb` is a SPACING prop, so `pb: 120` is 120 × the 8px unit = 960px
+            // (unlike `width: 120`, which is 120px). Passing the raw constant collapsed the tiles to
+            // TactileTile's 44px floor and pushed them off the top of the screen.
+            pb: { xs: `${MASCOT_CORNER_SIZE.xs}px`, md: `${MASCOT_CORNER_SIZE.md}px` },
+            [PHONE_PORTRAIT]: { pb: `${MASCOT_CORNER_PHONE_PORTRAIT}px` },
+            [PHONE_LANDSCAPE]: { gap: 0.5, pb: 0 }, // companion is hidden in phone landscape
           }}
         >
           {/* Prompt */}
@@ -434,90 +527,93 @@ const ComparisonGame: React.FC = () => {
             Tryk på det største tal
           </Typography>
 
-          <Box sx={{ flex: '1 1 auto', minHeight: 0, width: '100%', maxWidth: 860, display: 'flex' }}>
-            <PromptFocus
-              accent={category.accentColor}
-              chargeKey={`${currentProblem.leftNumber}-${currentProblem.rightNumber}-${round.state.index}`}
-              repeat={<MathRepeatButton onClick={repeatProblem} disabled={false} />}
-              subject={
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: { xs: 0.5, md: 1.5 }, width: '100%' }}>
-                <Box sx={{ flex: '1 1 0', minWidth: 0 }}>{renderSide('left')}</Box>
+          {/* The arena: `2 [?] 8`. Charges in per question — the anticipation beat PromptFocus used to
+              supply, re-applied here on the same shared constants. */}
+          <Box
+            component={motion.div}
+            key={`${currentProblem.leftNumber}-${currentProblem.rightNumber}-${round.state.index}`}
+            initial={reduce ? false : { opacity: 0, scale: CHARGE_IN_SCALE[0] }}
+            animate={reduce ? {} : { opacity: [...CHARGE_IN_OPACITY], scale: [...CHARGE_IN_SCALE] }}
+            transition={reduce ? undefined : CHARGE}
+            sx={{
+              flex: '1 1 auto',
+              minHeight: 0,
+              // Capped so the tiles read as two CARDS rather than two slabs filling the screen. Settled
+              // at ~290×220 on iPad landscape over three owner passes (2026-08-03): 396×370, then
+              // 340×260, then this. The column centres whatever is left over, so the world stays
+              // visible above and below the board — leftover sky is fine, a 396×114 letterbox was not.
+              //
+              // PORTRAIT gets a taller cap, because there the tiles are also NARROWER (~276px at iPad
+              // portrait): a flat landscape cap left a card pair filling 32% of an 820px column, i.e.
+              // the void this rework exists to close, back in a milder form.
+              maxHeight: 300,
+              '@media (orientation: landscape)': { maxHeight: 220 },
+              width: '100%',
+              maxWidth: 1000,
+              display: 'flex',
+              alignItems: 'stretch',
+              justifyContent: 'center',
+              gap: { xs: 1, md: 2.5 },
+              [PHONE_LANDSCAPE]: { gap: 0.75 },
+              // Deliberately NO extra cap for phone portrait, where two side-by-side tiles can only be
+              // ~137px wide and the pair therefore comes out ~1:2.8. A width-tied cap was tried and
+              // reverted: the numeral is bound by `cqw` at that width, so shrinking the height buys a
+              // tidier aspect ratio and nothing else, while making the tap target smaller.
+            }}
+          >
+            {renderSide('left')}
 
-                {/* Krokodille: the star. It lunges + its mouth chomps toward the bigger side on a
-                    correct tap (motion.BOUNCE). Reduced motion: instant — SFX + mascot still fire. */}
-                <Box sx={{ flex: '0 0 auto', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: { xs: 0.25, md: 0.5 } }}>
-                  <Box
-                    component={motion.div}
-                    animate={
-                      effectiveMouthOpen && mouthOp
-                        ? { x: mouthOp === '>' ? [0, -24, 0] : [0, 24, 0], scale: [1, 1.25, 1] }
-                        : { x: 0, scale: 1 }
-                    }
-                    transition={motionOr(BOUNCE, reduce)}
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      // Sizes the krokodille; the baked <img> below reads this as its box. W2
-                      // (PRD-15): enlarged so it's the arena's CENTREPIECE between the two cards —
-                      // the >/< "the mouth eats the bigger number" mnemonic only teaches when the
-                      // croc is the star, not a small blob dwarfed by the side cards.
-                      fontSize: { xs: '4.8rem', md: '8.2rem' },
-                      lineHeight: 1,
-                      // The iPad verification viewport is landscape — this override is what's
-                      // actually seen there, so the krokodille is sized generously here too.
-                      '@media (orientation: landscape)': { fontSize: { xs: '4.4rem', md: '9.6rem' } },
-                      [PHONE_LANDSCAPE]: { fontSize: '2.9rem' },
-                    }}
+            {/* The symbol slot — the middle of the number sentence, and the only thing between the two
+                numbers now. It is ALWAYS occupied (`?` while the question stands), which is what keeps
+                the row optically centred: the old layout reserved this space for a symbol that only
+                appeared after the answer, so the croc above it sat 30px high of the tiles' centre. */}
+            <Box
+              sx={{
+                flex: '0 0 auto',
+                width: { xs: 52, md: 96 },
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                [PHONE_LANDSCAPE]: { width: 44 },
+              }}
+            >
+              <AnimatePresence mode="wait" initial={false}>
+                {effectiveReveal && compareOp ? (
+                  <motion.div
+                    key="op"
+                    initial={reduce ? false : { scale: 0.4, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    // TWEEN on exit, never a spring: `mode="wait"` holds the incoming element until the
+                    // outgoing one finishes, and a spring on opacity takes ~1s to settle.
+                    exit={{ opacity: 0, transition: EXIT_FAST }}
+                    transition={motionOr(POP, reduce)}
+                    style={SLOT_LAYER}
                   >
-                    {/* The baked soft-3D krokodille (PRD-08) — the section's one character. The
-                        lunge/chomp BOUNCE motion + sfx('chomp') are unchanged. Sized to the box's
-                        font-size (1em) so it fills the arena the same either way. */}
-                    {crocodileArt() ? (
-                      <Box
-                        component="img"
-                        src={crocodileArt()}
-                        alt=""
-                        draggable={false}
-                        sx={{ height: '1em', width: 'auto', objectFit: 'contain', userSelect: 'none', pointerEvents: 'none' }}
-                      />
-                    ) : null}
-                  </Box>
-                  <Box
-                    sx={{
-                      height: { xs: 52, md: 76 },
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      '@media (orientation: landscape)': { height: { xs: 48, md: 92 } },
-                      [PHONE_LANDSCAPE]: { height: 34 },
-                    }}
+                    <SymbolTile op={compareOp} sx={SLOT_GLYPH} />
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="unknown"
+                    initial={reduce ? false : { scale: 0.7, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ opacity: 0, transition: EXIT_FAST }}
+                    transition={motionOr(POP, reduce)}
+                    style={SLOT_LAYER}
                   >
-                    {effectiveMouthOpen && mouthOp && (
-                      <Box
-                        component={motion.div}
-                        initial={reduce ? false : { scale: 0, rotate: mouthOp === '>' ? 30 : -30 }}
-                        animate={{ scale: 1, rotate: 0 }}
-                        transition={motionOr(BOUNCE, reduce)}
-                      >
-                        <SymbolTile
-                          op={mouthOp}
-                          sx={{
-                            width: { xs: 52, md: 76 },
-                            height: { xs: 52, md: 76 },
-                            '@media (orientation: landscape)': { width: { xs: 48, md: 92 }, height: { xs: 48, md: 92 } },
-                            [PHONE_LANDSCAPE]: { width: 32, height: 32 },
-                          }}
-                        />
-                      </Box>
-                    )}
-                  </Box>
-                </Box>
+                    <SymbolTile op="?" sx={SLOT_GLYPH} />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </Box>
 
-                <Box sx={{ flex: '1 1 0', minWidth: 0 }}>{renderSide('right')}</Box>
-              </Box>
-              }
-            />
+            {renderSide('right')}
+          </Box>
+
+          {/* "Hør igen" sits directly under the arena — it used to ride PromptFocus's repeat slot, which
+              (stretched over the whole body) stranded it at the bottom of the viewport. Disabled during
+              the advance window so it can't cancel the spoken fact mid-beat. */}
+          <Box sx={{ flex: '0 0 auto' }}>
+            <MathRepeatButton onClick={repeatProblem} disabled={locked} />
           </Box>
         </Box>
       ) : null}

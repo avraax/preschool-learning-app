@@ -17,6 +17,7 @@ import { MathRepeatButton } from '../common/RepeatButton'
 import RoundResultScreen from '../common/RoundResultScreen'
 import { useGameState } from '../../hooks/useGameState'
 import { useRound } from '../../hooks/useRound'
+import { useNeverFailHint } from '../../hooks/useNeverFailHint'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
 import { progressStore, type RoundOutcome } from '../../services/progressStore'
 import { sfx } from '../../services/sfxClient'
@@ -73,6 +74,9 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
   const [guideReaction, setGuideReaction] = useState<GuideReaction>(null)
   // The equation's "?" flips to the revealed answer (motion.POP) once the tapped tile is correct.
   const [revealAnswer, setRevealAnswer] = useState(false)
+  // Never-fail hint: after 2 wrong taps the correct answer tile pulses (reduced-motion → static glow,
+  // owned by TactileTile). Resets per problem. No mascot nudge — matching Stav Ordet.
+  const { hint: hintActive, registerWrong: registerHintWrong, reset: resetHint } = useNeverFailHint<boolean>(2)
 
   const audio = useSimplifiedAudioHook({
     componentId: isAddition ? 'AdditionGame' : 'SubtractionGame',
@@ -193,6 +197,7 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
     setFeedback(null)
     setGuideReaction(null)
     setRevealAnswer(false)
+    resetHint()
     // New problem → first attempt fresh again and the advance-lock releases (tiles tappable again).
     firstAttemptRef.current = true
     isAdvancingRef.current = false
@@ -292,9 +297,12 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
       setRevealAnswer(true) // the equation's "?" flips to the answer (motion.POP)
     } else {
       // Wrong answers don't advance/punish (retry-until-right preserved); they only break this
-      // problem's first-try flag (round streak/star accounting) + a gentle SFX.
+      // problem's first-try flag (round streak/star accounting) + a gentle SFX. After the 2nd wrong
+      // the correct tile pulses (never-fail hint) — the same scaffold every config quiz has; those
+      // wrongs already broke first-try, so there is no extra star bookkeeping.
       firstAttemptRef.current = false
       sfx.play('wrong')
+      registerHintWrong()
     }
 
     // Narration is FIRE-AND-FORGET alongside the dwell, never awaited (see theme/motion.ts). A correct
@@ -371,6 +379,7 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
   const forcedFx = devFx()
   const fxWrongValue = forcedFx === 'wrong' ? options.find((o) => o !== correctAnswer) : undefined
   const effectiveRevealAnswer = revealAnswer || (forcedFx === 'correct' && showEquation && correctAnswer !== null)
+  const effectiveHint = hintActive || forcedFx === 'hint'
   const effectiveFeedback: { value: number; correct: boolean } | null =
     forcedFx === 'correct' && showEquation && correctAnswer !== null
       ? { value: correctAnswer, correct: true }
@@ -392,11 +401,23 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
     '@media (orientation: landscape)': { fontSize: { xs: '2.4rem', md: '3.4rem' } },
     [PHONE_LANDSCAPE]: { fontSize: '1.3rem' },
   }
+  // The `?`/answer SLOT. Sized for the revealed-answer chip (a bordered box around a 2.4rem numeral),
+  // not for the glyph — so it stays as it was.
   const symbolSx = {
     width: { xs: 56, md: 80 },
     height: { xs: 56, md: 80 },
     '@media (orientation: landscape)': { width: { xs: 44, md: 64 }, height: { xs: 44, md: 64 } },
     [PHONE_LANDSCAPE]: { width: 26, height: 26 },
+  }
+  // The operators (`+ − =`), roughly half the numerals' font-size. Separate from `symbolSx` because
+  // `SymbolTile`'s box now IS the rendered glyph: it used to deliver only ~39% of its box (the `=`
+  // came out as a small blob), so re-using the slot size here would make the operators taller than
+  // the numbers they sit between.
+  const operatorSx = {
+    width: { xs: 26, md: 36 },
+    height: { xs: 26, md: 36 },
+    '@media (orientation: landscape)': { width: { xs: 20, md: 28 }, height: { xs: 20, md: 28 } },
+    [PHONE_LANDSCAPE]: { width: 12, height: 12 },
   }
 
   // Live difficulty: regenerate the current problem when the level changes in the adult menu
@@ -455,9 +476,9 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
               >
                 {/* num1 op num2 = ?→answer POP */}
                 <Typography variant="h1" component="span" sx={numberSx}>{num1}</Typography>
-                <SymbolTile op={operator} sx={symbolSx} />
+                <SymbolTile op={operator} sx={operatorSx} />
                 <Typography variant="h1" component="span" sx={numberSx}>{num2}</Typography>
-                <SymbolTile op="=" sx={symbolSx} />
+                <SymbolTile op="=" sx={operatorSx} />
 
                 {/* The "?" flips to the revealed answer with a motion.POP once correct (reduced
                     motion: instant swap — the colour/glow + SFX still land). */}
@@ -507,7 +528,10 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
                         transition={motionOr(POP, reduce)}
                         style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                       >
-                        <SymbolTile op="?" sx={{ width: '100%', height: '100%' }} />
+                        {/* 80% of the slot: the slot is sized for the answer chip, and the `?` glyph
+                            now fills whatever box it's given, so 100% would make it taller than the
+                            numerals beside it. */}
+                        <SymbolTile op="?" sx={{ width: '80%', height: '80%' }} />
                       </motion.div>
                     )}
                   </AnimatePresence>
@@ -558,6 +582,7 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
                 onClick={() => handleAnswerClick(option)}
                 accent={category.accentColor}
                 state={(effectiveFeedback && effectiveFeedback.value === option ? (effectiveFeedback.correct ? 'correct' : 'wrong') : 'idle') as AnswerTileState}
+                hint={effectiveHint && option === correctAnswer}
                 // Tiles visibly stop responding once a correct answer is resolving (PRD-02). The
                 // correct tap's setRevealAnswer/setFeedback re-render reads the just-set ref.
                 disabled={isAdvancingRef.current}
