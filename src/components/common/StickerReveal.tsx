@@ -2,13 +2,17 @@ import React from 'react'
 import { Box, Typography, type SxProps, type Theme } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { motion } from 'framer-motion'
-import { hexToRgba, onTileColor } from '../../theme/tokens/helpers'
+import { hexToRgba } from '../../theme/tokens/helpers'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
 import { rewardArt } from '../../assets/rewards'
 import type { RewardGrant } from '../../services/progressStore'
 
-// The reward reveal moment. The prize pops into a themed slot with a spring scale + sparkle, under a
-// "Nyt klistermærke!" banner.
+// The reward reveal moment. The prize pops into a themed slot with a spring scale + sparkle, its
+// Danish name underneath, and (in the ceremony) the child-facing count as a corner badge on the frame.
+//
+// The "Nyt klistermærke!" banner is DELETED (Reward Pacing PRD-01 D6). Two texts around one picture IS
+// the clutter the re-cut is about, the spoken line already says exactly those words, and a pre-reader
+// gets nothing from the written form of a sentence being read to them at the same moment.
 //
 // There is no "shiny" variant any more (Reward Horizon PRD-01 §3.5): the gold pass is deleted, so a
 // reward is handed over at most once and the banner is always "Nyt". Re-earning something the child
@@ -26,6 +30,10 @@ interface StickerRevealProps {
   accent: string // section accent (themed slot tint)
   delay?: number // entrance delay (staggered when several reveal together)
   size?: number // slot size in px (responsive caller can scale)
+  // Optional corner badge on the frame — the ceremony passes its `RewardCounter` here so the number
+  // rides ON the picture instead of taking a row of its own (D6 §6.2). Same flat-disc grammar as the
+  // ring's badge, so the child recognises it as the same object.
+  badge?: React.ReactNode
   sx?: SxProps<Theme> // outer wrapper (callers scale it down in phone-landscape)
 }
 
@@ -37,7 +45,7 @@ const SPARKLES = [
   { left: '88%', top: '74%', s: 15, d: 0.1 },
 ]
 
-const StickerReveal: React.FC<StickerRevealProps> = ({ award, accent, delay = 0, size = 132, sx = {} }) => {
+const StickerReveal: React.FC<StickerRevealProps> = ({ award, accent, delay = 0, size = 132, badge, sx = {} }) => {
   const theme = useTheme()
   const reduce = useReducedMotion()
   const dark = theme.scene.dark
@@ -49,28 +57,6 @@ const StickerReveal: React.FC<StickerRevealProps> = ({ award, accent, delay = 0,
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1, ...sx }}>
-      {/* Banner */}
-      <motion.div
-        initial={reduce ? false : { opacity: 0, y: -8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay, duration: 0.35 }}
-      >
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.75 }}>
-          <Typography
-            sx={{
-              fontFamily: '"Comic Sans MS", "Comic Neue", sans-serif',
-              fontWeight: 700,
-              fontSize: 'clamp(1rem, 3.5vw, 1.4rem)',
-              // Readable-on-white accent on light scenes (onTileColor); white on dark scenes.
-              color: dark ? '#FFFFFF' : onTileColor(accent),
-              textShadow: dark ? '0 2px 8px rgba(0,0,0,0.5)' : 'none',
-            }}
-          >
-            Nyt klistermærke!
-          </Typography>
-        </Box>
-      </motion.div>
-
       {/* Slot + sticker */}
       <Box
         component={motion.div}
@@ -130,6 +116,22 @@ const StickerReveal: React.FC<StickerRevealProps> = ({ award, accent, delay = 0,
               }}
             />
           ))}
+
+        {/* The count, riding on the frame's bottom-right corner (D6 §6.2). The frame has no
+            `overflow: hidden`, so the overhang is safe — see the corner-CLIPPING note in
+            responsive-design.md for the case where it is not. */}
+        {badge && (
+          <Box
+            sx={{
+              position: 'absolute',
+              right: -Math.round(size * 0.06),
+              bottom: -Math.round(size * 0.06),
+              display: 'flex',
+            }}
+          >
+            {badge}
+          </Box>
+        )}
       </Box>
 
       {/* Name */}
