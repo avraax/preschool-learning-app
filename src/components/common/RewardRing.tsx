@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { Box, type SxProps, type Theme } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
-import { motion, useAnimationControls, AnimatePresence } from 'framer-motion'
+import { motion, useAnimationControls } from 'framer-motion'
 import { useProgress } from '../../hooks/useProgress'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
 import { onTileColor } from '../../theme/tokens/helpers'
@@ -10,6 +10,14 @@ import { rewardArt } from '../../assets/rewards'
 import { uiArt } from '../../assets/ui'
 import { useCelebration } from './CelebrationEffect'
 import CelebrationEffect from './CelebrationEffect'
+import {
+  badgeBottomOffset,
+  badgeSize as badgeSizeFor,
+  gaugeRotationDeg,
+  ringRadius,
+  ringStroke,
+  sweepFrac,
+} from './rewardRingGeometry'
 
 // The corner reward ring (Reward Book PRD-01 W3) — the in-game half of the whole model.
 //
@@ -23,6 +31,12 @@ import CelebrationEffect from './CelebrationEffect'
 // It is drawn PLAIN on purpose (flat disc, one numeral, no soft-3D, no gradient, no shadow): decorating
 // a symbolic progress element measurably increases the cognitive load for a preschooler.
 //
+// **The ring is a GAUGE with a gap at the bottom, and the badge sits in the gap** (Reward Pacing PRD-01
+// D4). On a closed ring the badge is inside the swept path wherever you put it — at bottom-right it
+// occluded fill 29%..46%, a quarter of the range in the middle of it. All the geometry is DERIVED from
+// the badge in `rewardRingGeometry.ts` (pure, unit-tested at every shipped size); nothing here is a
+// tuned percentage.
+//
 // It also does not move on a mid-game crossing — the sticker has not been handed over yet
 // (`grantPendingRewards` runs in the ceremony, which is gated off game routes). The prize flashes here;
 // the number ticks there. That two-beat is the model, not a lag.
@@ -30,18 +44,22 @@ import CelebrationEffect from './CelebrationEffect'
 // Shown in the in-game header (GameShell) and on the section menus, reading the live store
 // (useProgress), so switching games keeps the SAME ring climbing. Transient flourish via `xpBus`:
 //   • ring "tick"/"pop" on every grant,
-//   • a small "+N" flyer that floats up into the ring,
 //   • (in-game only, `flourish`) a non-interrupting burst when a grant crosses a slot,
 //   • and the beat that TEACHES the system: on a crossing the silhouette drops its filter for ~900ms
 //     so the prize flashes to full colour, then the NEXT silhouette takes its place.
-// Reduced motion → the fill still updates, but no spring, flyer, pop or colour flash.
+// Reduced motion → the fill still updates, but no spring, pop or colour flash.
+//
+// The "+N" flyer is DELETED (Reward Pacing D5). Since the pacing change one answer moves the arc ~4%,
+// so the numeral it floated was meaningless to a pre-reader — and it was the second number on a 46px
+// control whose whole job is to carry exactly one.
 
 interface RewardRingProps {
   size?: number
   // In-game instance: fire the non-interrupting confetti + fanfare on a mid-game crossing. Menu
   // instances leave this false — the big ceremony (RewardOverlay) owns the celebration there.
   flourish?: boolean
-  // Phone-landscape: shrink and hide the "+N" flyer so it never fights the title/score row.
+  // Phone-landscape: drives the smaller `size` at the call site and lowers the badge's px floor to
+  // 16 (20px on a 34px ring is 59% of the diameter — the actual defect behind the old tight fit).
   compact?: boolean
   // The count badge. On by default — it is the number, not decor, so it survives phone-landscape too.
   showCount?: boolean
@@ -52,11 +70,6 @@ interface RewardRingProps {
   onTap?: () => void
   ariaLabel?: string
   sx?: SxProps<Theme>
-}
-
-interface Flyer {
-  id: number
-  amount: number
 }
 
 // How long the just-won prize stays in full colour before the next silhouette replaces it.
@@ -81,8 +94,6 @@ const RewardRing: React.FC<RewardRingProps> = ({
   const fill = Math.max(0, Math.min(1, xpProgress().fill))
   const count = rewardNumber()
 
-  const [flyers, setFlyers] = useState<Flyer[]>([])
-  const flyerId = useRef(0)
   // Full-colour flash of the prize that was just won. Holds the OLD reward's visuals for FLASH_MS,
   // because by the time the bus fires the store already advanced to the next slot.
   const [flash, setFlash] = useState<{ art?: string } | null>(null)
@@ -90,11 +101,15 @@ const RewardRing: React.FC<RewardRingProps> = ({
   const shownRef = useRef(next)
   shownRef.current = next
 
-  // Ring geometry (mirrors ProgressionCompanion).
-  const stroke = Math.max(4, Math.round(size * 0.1))
-  const r = (size - stroke) / 2
+  // Gauge geometry — all DERIVED, see rewardRingGeometry.ts. `arc` is the painted sweep's length; the
+  // dash gap is deliberately `2c - arc` so the pattern cannot repeat within one revolution (a period
+  // of exactly `c` would wrap the fill back around through the gap at low fills).
+  const stroke = ringStroke(size)
+  const r = ringRadius(size)
   const c = 2 * Math.PI * r
-  const dash = c * (1 - fill)
+  const arc = c * sweepFrac(size, compact)
+  const dashArray = `${arc} ${2 * c - arc}`
+  const dash = arc * (1 - fill)
 
   const ringColor = theme.scene?.progressionCompanion?.ringColor ?? theme.palette.primary.main
   const dark = theme.scene?.dark
@@ -103,24 +118,19 @@ const RewardRing: React.FC<RewardRingProps> = ({
   // Badge geometry + colour. The numeral is white, so the DISC has to carry the contrast: a pale skin
   // accent (Havet yellow, Rummet cyan) is unreadable under white text, and `onTileColor` darkens it to
   // AA while being a no-op on an accent that already reads. Same rule as every accent-on-light surface.
-  const badgeSize = Math.max(20, Math.round(size * 0.46))
+  const badgeSize = badgeSizeFor(size, compact)
   const badgeFill = onTileColor(ringColor)
 
-  // React to every live grant: tick/pop the ring, spawn a "+N" flyer, and on a crossing flash the won
-  // prize to full colour + (in-game) burst. Reads live-store fill on re-render, so the animation only
-  // needs the transient beats.
+  // React to every live grant: tick/pop the ring, and on a crossing flash the won prize to full colour
+  // + (in-game) burst. Reads live-store fill on re-render, so the animation only needs the transient
+  // beats.
   useEffect(() => {
-    return xpBus.subscribe(({ amount, leveledUp }) => {
+    return xpBus.subscribe(({ leveledUp }) => {
       if (!reduce) {
         controls.start({
           scale: leveledUp ? [1, 1.35, 1] : [1, 1.14, 1],
           transition: { duration: leveledUp ? 0.55 : 0.35, ease: 'easeOut' },
         })
-        if (amount > 0 && !compact) {
-          const id = ++flyerId.current
-          setFlyers((f) => [...f, { id, amount }])
-          setTimeout(() => setFlyers((f) => f.filter((x) => x.id !== id)), 1000)
-        }
         // The teaching beat: the silhouette that was filling becomes a real, full-colour prize.
         if (leveledUp) {
           const won = shownRef.current
@@ -134,7 +144,7 @@ const RewardRing: React.FC<RewardRingProps> = ({
       // Non-interrupting mid-game crossing burst (in-game only). The big ceremony is deferred.
       if (leveledUp && flourish) celebrateTier('levelup-mini')
     })
-  }, [controls, reduce, compact, flourish, celebrateTier])
+  }, [controls, reduce, flourish, celebrateTier])
 
   useEffect(() => () => {
     if (flashTimer.current) clearTimeout(flashTimer.current)
@@ -180,9 +190,22 @@ const RewardRing: React.FC<RewardRingProps> = ({
           width={size}
           height={size}
           viewBox={`0 0 ${size} ${size}`}
-          style={{ position: 'absolute', inset: 0, transform: 'rotate(-90deg)' }}
+          style={{
+            position: 'absolute',
+            inset: 0,
+            transform: `rotate(${gaugeRotationDeg(size, compact)}deg)`,
+          }}
         >
-          <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={trackColor} strokeWidth={stroke} />
+          <circle
+            cx={size / 2}
+            cy={size / 2}
+            r={r}
+            fill="none"
+            stroke={trackColor}
+            strokeWidth={stroke}
+            strokeLinecap="round"
+            strokeDasharray={dashArray}
+          />
           <motion.circle
             cx={size / 2}
             cy={size / 2}
@@ -191,8 +214,8 @@ const RewardRing: React.FC<RewardRingProps> = ({
             stroke={ringColor}
             strokeWidth={stroke}
             strokeLinecap="round"
-            strokeDasharray={c}
-            initial={reduce ? false : { strokeDashoffset: c }}
+            strokeDasharray={dashArray}
+            initial={reduce ? false : { strokeDashoffset: arc }}
             animate={{ strokeDashoffset: dash }}
             transition={reduce ? { duration: 0 } : { duration: 0.6, ease: [0.34, 1.56, 0.64, 1] }}
             style={{ filter: `drop-shadow(0 0 4px ${ringColor})` }}
@@ -217,15 +240,18 @@ const RewardRing: React.FC<RewardRingProps> = ({
         )}
       </Box>
 
-      {/* THE NUMBER. Flat opaque disc, one numeral, nothing else — see the header. Hidden at 0: an
-          empty badge on a fresh profile teaches nothing and is one more thing to decode. */}
+      {/* THE NUMBER, seated in the gauge's gap at bottom centre. Flat opaque disc, one numeral,
+          nothing else — see the header. Hidden at 0: an empty badge on a fresh profile teaches
+          nothing and is one more thing to decode. The offset is DERIVED (badgeBottomOffset) so the
+          badge's centre lands on the ring path, which is what makes the gap's angle exact. */}
       {showCount && count > 0 && (
         <Box
           data-reward-count
           sx={{
             position: 'absolute',
-            right: -Math.round(size * 0.06),
-            bottom: -Math.round(size * 0.06),
+            left: '50%',
+            transform: 'translateX(-50%)',
+            bottom: badgeBottomOffset(size, compact),
             minWidth: badgeSize,
             height: badgeSize,
             px: count >= 100 ? 0.5 : 0, // widens to a pill at 3 digits
@@ -247,37 +273,6 @@ const RewardRing: React.FC<RewardRingProps> = ({
           {count}
         </Box>
       )}
-
-      {/* "+N" flyers — float up into the ring on each grant. Spawned left of centre so they don't fly
-          straight through the badge in the bottom-right. */}
-      <AnimatePresence>
-        {flyers.map((f) => (
-          <Box
-            key={f.id}
-            component={motion.div}
-            initial={{ opacity: 0, y: size * 0.55, scale: 0.7 }}
-            animate={{ opacity: [0, 1, 1, 0], y: -size * 0.15, scale: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.9, ease: 'easeOut', times: [0, 0.25, 0.7, 1] }}
-            sx={{
-              position: 'absolute',
-              left: '30%',
-              top: 0,
-              transform: 'translateX(-50%)',
-              pointerEvents: 'none',
-              fontFamily: '"Comic Sans MS", "Comic Neue", sans-serif',
-              fontWeight: 800,
-              fontSize: Math.round(size * 0.4),
-              color: ringColor,
-              textShadow: '0 1px 4px rgba(0,0,0,0.35), 0 0 8px rgba(255,255,255,0.6)',
-              whiteSpace: 'nowrap',
-              zIndex: 5,
-            }}
-          >
-            +{f.amount}
-          </Box>
-        ))}
-      </AnimatePresence>
 
       {/* Non-interrupting mid-game crossing burst (in-game only). */}
       {flourish && (

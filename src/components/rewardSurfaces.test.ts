@@ -106,15 +106,43 @@ test('the game header holds the reward ring and NOTHING else', () => {
   assert.ok(!existsSync(path.join(SRC, 'components/common/ScoreChip.tsx')), 'ScoreChip.tsx is back')
 })
 
-test('the ring renders no text but the badge and the +N flyer', () => {
+test('the ring renders ONE text node: the count badge', () => {
   const code = codeOf('components/common/RewardRing.tsx')
-  // The two intended text nodes. Anything else — a label, a "n af 72", a "til næste" — is a distance
+  // The one intended text node. Anything else — a label, a "n af 72", a "til næste" — is a distance
   // or a word a pre-reader cannot read, in the one corner that must stay a picture plus a number.
   assert.ok(code.includes('{count}'), 'the count badge is gone')
-  assert.ok(code.includes('+{f.amount}'), 'the +N flyer is gone')
   assert.ok(!code.includes('REWARD_SLOTS'), 'the ring shows the total, i.e. a distance')
   assert.ok(!/\bxpToNextLevel\b/.test(code), 'the ring shows "XP to next", i.e. a distance')
+  // The "+N" flyer is DELETED (Reward Pacing D5): at ~4% of the arc per answer the numeral means
+  // nothing to a pre-reader, and it was a SECOND number on a 46px control. This replaces the old
+  // assertion that the flyer must EXIST — deleting that one without putting anything in its place
+  // would have left the file silently unguarded on the thing D5 actually decided.
+  assert.ok(!/\+\{[^}]*amount\}/.test(code), 'the +N flyer is back')
+  assert.ok(!/\bflyers?\b/i.test(code), 'the +N flyer state is back')
   // Deliberately plain: no soft-3D depth on a symbolic progress element.
   assert.ok(!code.includes('softShadow'), 'the badge has depth — it must be a flat disc')
   assert.ok(!code.includes('contactShadow'), 'the badge has depth — it must be a flat disc')
+})
+
+test('the ring is a GAUGE and its geometry is derived, never tuned (Reward Pacing D4)', () => {
+  const code = codeOf('components/common/RewardRing.tsx')
+  // Every geometric quantity comes from the pure, unit-tested module. A literal reappearing here is
+  // the regression: the badge occluded fill 29%..46% precisely because its position was a tuned
+  // `-round(size * 0.06)` offset on a CLOSED ring, where no offset can be correct.
+  for (const derived of [
+    'ringStroke(size)',
+    'ringRadius(size)',
+    'sweepFrac(size, compact)',
+    'gaugeRotationDeg(size, compact)',
+    'badgeBottomOffset(size, compact)',
+    'badgeSizeFor(size, compact)',
+  ]) {
+    assert.ok(code.includes(derived), `the ring stopped deriving its geometry: ${derived}`)
+  }
+  // A gap exists — i.e. the fill is scaled by the swept fraction, not the whole circumference.
+  assert.match(code, /const arc = c \* sweepFrac\(/, 'the arc is no longer the swept fraction')
+  assert.match(code, /const dash = arc \* \(1 - fill\)/, 'the fill offset is not measured off the arc')
+  // …and the badge is at bottom CENTRE, not back in the corner it was occluding from.
+  assert.ok(!/right: -/.test(code), 'the count badge is back in the bottom-right corner')
+  assert.match(code, /left: '50%'[\s\S]{0,200}bottom: badgeBottomOffset/, 'the badge is not bottom-centre')
 })
