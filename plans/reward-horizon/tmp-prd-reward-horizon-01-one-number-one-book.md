@@ -1,8 +1,14 @@
 # PRD — Reward Horizon: one number, one book, one ring, one door
 
-Status: authored 2026-08-02, NOT implemented. Supersedes the child-facing parts of Reward Book
-PRD-01 §D9 (which deliberately removed every level number) and Liveliness PRD-04 §7 (which
-de-emphasised the Min Bog shelf).
+Status: authored 2026-08-02, **IMPLEMENTED 2026-08-03** — commits `4d283e1` (the release),
+`7edaaa6` + `b5dbbff` (chapters 6–8 art), `34935a1` (the in-game ring opens Min Bog), `e8877dc`
+(debrief). Three deliberate deviations from what is written below are listed in §5. Its **economy** was
+subsequently re-tuned by Reward Pacing PRD-01
+(`plans/reward-pacing/tmp-prd-reward-pacing-01-slower-book-focused-ceremony.md`) — §3.4's curve and
+§4.4's ceremony layout are superseded there; every decision D1–D7 still stands.
+
+Supersedes the child-facing parts of Reward Book PRD-01 §D9 (which deliberately removed every level
+number) and Liveliness PRD-04 §7 (which de-emphasised the Min Bog shelf).
 
 ---
 
@@ -360,6 +366,23 @@ Small, self-contained, no new panel needed.
 
 Ordered so each lands green on its own. **W1–W5 change no reward content** and can ship and be
 play-tested before any art exists.
+
+**All of W0–W9 are DONE** (see the status header). Three deviations from what is written below, all
+deliberate — do not "fix" them back:
+
+1. **§4.1 was reversed.** This PRD said `GameShell` must pass no `onTap` ("a stray tap during play
+   must do nothing"). `34935a1` gave the in-game ring the `/album` handler: the shared back button
+   sits ~40px away in that same header and already leaves the game on a stray tap, so muting the ring
+   protected nothing and only made one control behave differently per screen. CLAUDE.md records it —
+   *don't re-mute it.*
+2. **§4.6 was narrowed.** `BarnPane` ships only `Klistermærker — n af 72`. The `Niveau`
+   (`globalLevel()`), `Samlet XP`, `Stjerner i alt` and bloom rows shipped for one review cycle and
+   were pulled; `globalLevel()` is now banned on every surface, adult included.
+3. **§4.2/W4's scenery work is moot.** `sceneFurniture.ts` and `bloomAnchors.test.ts` no longer
+   exist — the stage-gated `bloomScenery` sprites were deleted wholesale in `87eabc5` (owner: "it
+   looks misplaced"). Bloom shows in the world as ambient **density** only.
+
+Also: `leg-floejte` became `leg-xylofon` (`7edaaa6`) — the flute lost the 24px silhouette test.
 
 | W | Scope |
 |---|---|
