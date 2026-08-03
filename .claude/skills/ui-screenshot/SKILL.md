@@ -207,6 +207,29 @@ An async `--eval` IIFE (`awaitPromise` is on) can drive a whole round and assert
   level and the current game **regenerates its question at the new level** — the way to headlessly
   verify difficulty-gated content (Læs Ordet option count, Ram Farven target pool, math ranges)
   without the adult menu. Give it ~900ms to re-render before you screenshot/assert.
+
+### Sweeping difficulty across EVERY game
+To audit whether the Sværhedsgrad setting reaches all of them, loop the three levels inside ONE
+`--eval` per route (set → sleep ~1.2s → measure) rather than one run per level-and-game. The catch is
+that **the observable differs per game family**, so a single selector reports "no change" on half the
+app:
+
+| family | what actually moves |
+|---|---|
+| config quizzes, Plus/Minus | `[data-answer-tile]` count |
+| Farvejagt, Nuancer | `[aria-roledescription="draggable"]` count |
+| Hvilken Farve | swatch count — neither of the above; a `div` count delta shows it |
+| Hukommelse | board size; count `div`s (cards carry no stable hook) |
+| Sammenlign, Lær Tal | the NUMBERS in `document.body.innerText`, not any count |
+| Ram Farven | **nothing** — its axis is the target POOL, invisible in one board. Read the source. |
+
+Two limits to state honestly when reporting:
+- **This proves PLUMBING ONLY.** Tile counts moving 3→4→5 says the setting arrives; it says nothing
+  about whether the content is age-appropriate. For that, sample the PURE generators in Node
+  (`src/config/mathProblems.ts`, `ordlegWords.ts`) — see CLAUDE.md's Difficulty bullet.
+- A route crashed by a parallel session's mid-edit passes every assertion here (see the crashed-route
+  trap above) — and a pixel-diff of two such runs reads `0.00`. Check the driver's `TIMEOUT` /
+  `page exceptions` lines before believing a sweep.
 - **Catch ghost audio after navigation** by patching `window.fetch` + `XMLHttpRequest.open` for
   `/api/tts-azure` and timestamping calls, then asserting none fire after the route change.
 - Advance dwell + the echo `await` mean a correct answer takes ~2s+ to advance — size detection

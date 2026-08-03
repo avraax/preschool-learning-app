@@ -24,6 +24,20 @@ Normal), and every game that legitimately ignores the level is in `EXEMPT` **wit
 target word exists). Svær's star budget is deliberately looser (3★ ≤1 mistake): **choosing a harder level
 must never cost rewards**, the same fairness rule that keeps XP difficulty-independent.
 
+Two more invariants that module enforces, both learned by shipping the bug twice:
+
+- **A level's content POOL must be at least the ROUND LENGTH.** Smaller, and a single round has to
+  repeat itself, which reads as the game being stuck rather than easy — Ram Farven's Let targets and
+  then Læs Ordet's Let words (5 words, 8 questions). And **guard a pool against the real round
+  constant, not a magic floor**: the assertion that was supposed to protect Læs Ordet asked for `>= 4`
+  and therefore passed the exact 5-word bug it existed to catch. Export the round length from the
+  content module so the game's `RoundConfig` and the guard read one value.
+- **A "maximally dissimilar distractor" rule must DERIVE its distance from the level's range**, never
+  fix it absolutely. A flat "≥10 away" is unsatisfiable inside 1–20 (nothing is 10 from 11 but 1), so
+  the generator fell through to its random top-up and produced `11 → 1, 8, 11` — the exact opposite of
+  the policy, with nothing failing. `farMinGap` in `mathProblems.ts` is the shape: a fraction of the
+  range, capped at the value the wide range used to give.
+
 **Browses carry no counter and no progress bar** (removed 2026-08-01, owner: no educational purpose) —
 a browse has no score and no finish line, so a filling bar only implied a list to get through. The only
 thing in a browse's HUD is the shared reward ring; `answered/total` pips belong to bounded ROUNDS. This
