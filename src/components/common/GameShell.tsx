@@ -10,6 +10,7 @@ import RewardRing from './RewardRing'
 import { getCategoryTheme } from '../../config/categoryThemes'
 import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 import { mascotBus } from '../../services/mascotBus'
+import { useTransitionNav } from '../../hooks/useTransitionNav'
 import type { GuideReaction } from './ThemeMascot'
 
 // Shared in-game scaffold (Game-Page Rework + UI/UX Overhaul PRD §5.3). Every game renders its
@@ -68,6 +69,7 @@ const GameShell: React.FC<GameShellProps> = ({
   // Phone landscape: play-surface first — the title moves INTO the header row (between back
   // and the ring) so its own row's height goes to the game body instead.
   const phoneLandscape = useMediaQuery(PHONE_LANDSCAPE.replace('@media ', ''))
+  const { navigateWithTransition } = useTransitionNav()
 
   // Bridge the legacy `guideReaction` prop onto the mascot bus so EVERY game that already reports
   // cheer/think gets a reactive mascot with no per-file wiring. Richer events (streak/round/hint/
@@ -133,10 +135,23 @@ const GameShell: React.FC<GameShellProps> = ({
 
           {/* Right cluster: the live cross-game reward ring (Liveliness PRD-04), alone. It reads the
               shared store so it keeps climbing across games; phone-landscape gets a smaller,
-              flyer-less variant so it never fights the inline title row. */}
+              flyer-less variant so it never fights the inline title row.
+
+              The ring is a door to Min Bog HERE TOO (owner, 2026-08-03: "clickable and work on all
+              pages"). It used to be pure status in games, on the reasoning that a stray tap mid-play
+              must do nothing — but the shared back button sits ~40px away in this same header and
+              already leaves the game on a stray tap, so that protection was never real. Leaving
+              mid-round abandons the round; the per-task XP is already banked, so nothing earned is
+              lost. */}
           <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, md: 1.5 } }}>
             {levelIndicator && (
-              <RewardRing flourish compact={phoneLandscape} size={phoneLandscape ? 34 : 46} />
+              <RewardRing
+                flourish
+                compact={phoneLandscape}
+                size={phoneLandscape ? 34 : 46}
+                onTap={() => navigateWithTransition('/album')}
+                ariaLabel="Min Bog"
+              />
             )}
           </Box>
         </Toolbar>

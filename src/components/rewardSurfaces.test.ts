@@ -56,18 +56,25 @@ test('the ring is THE ONLY door to Min Bog on home', () => {
   }
 })
 
-test('every section menu opens the book from its ring, and games never do', () => {
-  const menu = codeOf('components/common/GameSelectionLayout.tsx')
-  assert.match(
-    menu,
-    /<RewardRing[\s\S]*?onTap=\{\(\) => navigateWithTransition\('\/album'\)\}/,
-    'the section-menu ring is not a door to Min Bog',
-  )
-  // In-game, a stray tap during play must do NOTHING — GameShell's ring passes no handler.
-  const shell = codeOf('components/common/GameShell.tsx')
-  assert.ok(shell.includes('<RewardRing'), 'GameShell no longer renders the ring — re-point this guard')
-  assert.ok(!/<RewardRing[^>]*onTap/.test(shell), 'the in-game ring is tappable — a stray tap would leave the game')
-  assert.ok(!shell.includes("'/album'"), 'a game routes to Min Bog')
+// The ring opens Min Bog from EVERY surface that renders one — home, the five section menus, and
+// (since 2026-08-03, owner) in-game too. The in-game ring was deliberately inert, so that a stray tap
+// during play couldn't leave the game; the owner overruled it, and the reasoning didn't hold anyway —
+// the shared back button is ~40px away in the same header and already leaves on a stray tap. Do not
+// re-mute it. What must NOT come back is a SECOND door on one screen (the deleted Min Bog shelf) —
+// that is what the per-surface "only one door" assertions above and below cover.
+test('every surface that shows the ring opens the book from it', () => {
+  for (const file of ['components/common/GameSelectionLayout.tsx', 'components/common/GameShell.tsx']) {
+    const code = codeOf(file)
+    assert.ok(code.includes('<RewardRing'), `${file} no longer renders the ring — re-point this guard`)
+    assert.match(
+      code,
+      /<RewardRing[\s\S]*?onTap=\{\(\) => navigateWithTransition\('\/album'\)\}/,
+      `${file}'s ring is not a door to Min Bog`,
+    )
+    // Exactly one route to the book per surface — the ring's own tap, never a second entrance.
+    const doors = code.match(/'\/album'/g) ?? []
+    assert.equal(doors.length, 1, `${file} has ${doors.length} routes to /album — the ring is the only door`)
+  }
 })
 
 test('the adult pane shows the DISTANCE but never the level', () => {
