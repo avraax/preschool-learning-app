@@ -1,9 +1,14 @@
 # PRD — Reward Pacing: a slower book, an unobstructed ring, a focused ceremony
 
-Status: authored 2026-08-03, NOT implemented. Extends Reward Horizon PRD-01 (which set the model —
-one number, one book, one ring, one door) by re-tuning its **economy** and simplifying its
-**ceremony**. Every Reward Horizon decision D1–D7 survives; only the curve constants, the ring's
-geometry and the overlay's element list change.
+Status: authored 2026-08-03, **IMPLEMENTED 2026-08-03** — W1–W7 on `master`
+(`6afa0b8` xpForSlots · `4b47b46` the curve · `68bfc55` the gauge ring · `27fb94f` the ceremony ·
+`31c3ec7` the quiet crossing · `db11c6d` CLAUDE.md · `0403748` + `28a5f8a` probe hooks and guards).
+Chapters 9–10 (§10, D8) are **spec only** as intended — no renders, no prebake. Two deliberate
+deviations are recorded in §6.4 and §13 below.
+
+Extends Reward Horizon PRD-01 (which set the model — one number, one book, one ring, one door) by
+re-tuning its **economy** and simplifying its **ceremony**. Every Reward Horizon decision D1–D7
+survives; only the curve constants, the ring's geometry and the overlay's element list change.
 
 ---
 
@@ -401,6 +406,17 @@ If the measurement comes out awkwardly long (> ~3s), the fallback is to keep tod
 behaviour (chapter close replaces the name) and let state 2 be silent. Take that fallback rather than
 shipping a truncation.
 
+> **MEASURED, and the FALLBACK WAS TAKEN.** `ffmpeg silencedetect=noise=-45dB:d=0.04` over all 72
+> prebaked `rewardLine` clips: longest spoken end **3.054s** ("Nyt klistermærke! Mariehøne"; its mp3 is
+> 3.96s, the remainder is Azure padding), shortest 2.532s ("And"). Plus the ~250ms element startup that
+> is **3.304s — over the ~3s bar**, and splitting the audio would have made a chapter ceremony 6.5s+ of
+> two utterances. So state 2 is silent and the chapter line plays across both beats. Still exactly one
+> spoken line per ceremony.
+>
+> `STICKER_MS = 3400` comes from the same measurement. Note the old `DISMISS_MS = 3200` was already
+> below it — the longest names were being cut off ON SCREEN, though not in the audio: nothing stops
+> `SimplifiedAudioController` when the overlay unmounts, so the clip finished playing regardless.
+
 ### 6.5 Layout budget
 
 `RewardOverlay` sizes by prop, not `transform: scale()`, because the tall variant already overflowed a
@@ -623,6 +639,27 @@ All currently guarded; none of them is relaxed by this PRD.
 - **Two tiers only.** Still true.
 
 ---
+
+## 12b. What the implementation found that this document did not predict
+
+- **The curve is CONVEX, so `progressMerge`'s level clamp is not "repair-only".** That comment carried a
+  proof stated over `max_i slots_i`, but the cursor is `Σ slots_i`, and Σ`xpForSlots(nᵢ)` <
+  `xpForSlots(Σnᵢ)` — so two perfectly valid offline devices can sum to more slots than their summed XP
+  justifies and the clamp fires on good data. **Not introduced here**: the old 18/×2 curve did it at
+  15 + 15 slots; 9/×3 moves the threshold down to 5 + 5. The merge LOGIC is untouched (§11's "not
+  touched" holds) — the false proof is corrected in a comment and the behaviour is now pinned by a
+  CONVEXITY test rather than waiting to surface as a bug report. Three existing merge tests used
+  slot counts that straddle the new boundary and were re-based inside the fast tier, since they measure
+  `newIds` / `rev` / the G-Counter, not the clamp.
+- **§5.2's `badgeSubtend + 8° ≤ gapDeg` omits the rounded linecap**, which is real paint: at `size = 34`
+  it is 7.6° per end, most of the clearance that formulation thinks it has. The shipped geometry test
+  asserts the cap-aware clearance instead and keeps the PRD's simpler form alongside it.
+- **Neither half of the size-34 fix breaks the clearance assertion alone** — a fixed 90° gap with the
+  16px floor still clears (5.1°), and a 20px floor with the derived gap opens it to 120° and also
+  clears. Only both together fail (−4.5°). The re-break covers all three.
+- **The count badge can never reach three digits, and the derived gap does not allow for it.** The pill
+  widens by 8px at 3 digits, which is not in `badgeSubtendDeg`; at `size = 34` that pill subtends 106°
+  against its own 94° gap. `REWARD_SLOTS < 100` is guarded — chapters 9–10 take it to 90.
 
 ## 13. Two-liner prompt to start implementation
 
