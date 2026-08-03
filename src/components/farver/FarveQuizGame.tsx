@@ -238,14 +238,22 @@ const FarveQuizGame: React.FC = () => {
   const handleDragEnd = (event: DragEndEvent) => {
     const { over } = event
     clearActive()
-    if (!gameReady || isAdvancing.current || !current) return
-    hasInteractedRef.current = true
-    audio.updateUserInteraction()
-
     if (!over) return
     const m = /^color-(.+)$/.exec(String(over.id))
     if (!m) return
-    const droppedColor = m[1]
+    resolveColor(m[1])
+  }
+
+  // ONE resolution path for both gestures: dropping the object on a swatch, and a plain TAP on that
+  // swatch (DroppableZone's `onActivate` — owner, 2026-08-03; a tap used to do nothing at all).
+  // Note the tap lives on the ZONE here, not the draggable: this game has a single draggable (the
+  // object being placed), so tapping IT could not name a colour. The child's choice is the swatch.
+  const resolveColor = (droppedColor: string, viaTap = false) => {
+    if (!gameReady || isAdvancing.current || !current) return
+    hasInteractedRef.current = true
+    audio.updateUserInteraction()
+    // "Every tap is felt": the drag path already ticked on pick-up, so only the tap owes the press.
+    if (viaTap) sfx.play('tap')
 
     if (droppedColor === current.color) {
       // Correct — the object "lands" in the color (absorb + splash).
@@ -458,6 +466,8 @@ const FarveQuizGame: React.FC = () => {
                     <DroppableZone
                       id={`color-${color}`}
                       overColor={hexToRgba(hex, 0.55)}
+                      // Tap the swatch = the same answer as dropping the object on it.
+                      onActivate={() => resolveColor(color, true)}
                       style={{
                         width: '100%',
                         height: '100%',

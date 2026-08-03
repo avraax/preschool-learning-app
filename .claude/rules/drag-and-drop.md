@@ -9,9 +9,50 @@ paths:
 
 # Drag-and-Drop Rules
 
-The Farver games are the app's only drag games. They use **`@dnd-kit/core`** through shared
+## EVERY drag game also answers on a TAP, and vice versa
+
+Owner, 2026-08-03, on the Farver games: drag worked, a plain tap did nothing. A 5-year-old taps. So
+**a game must never accept only one of the two gestures**, and both must run the SAME resolve function —
+never a second copy of the scoring, or the advance-lock/first-try/hint bookkeeping drifts between them.
+Where the tap lives depends on which side is the child's CHOICE:
+
+| game | drag | tap goes on |
+|---|---|---|
+| Farvejagt | object → circle | the **object** (`DraggableItem onActivate`) |
+| Ram Farven | droplet → pot | the **droplet** |
+| Nuancer | shade → slot | the **shade** → fills the leftmost EMPTY slot |
+| Hvilken Farve? | object → swatch | the **swatch** (`DroppableZone onActivate`) — the single draggable is only the thing being placed, so tapping it can't name a colour |
+| Stav Ordet | letter → the word ROW | the letter tile (unchanged; `TactileTile`'s own button) |
+| Plus / Minus | answer tile → the `?` | the tile (unchanged; `AnswerTile`'s own button) |
+| Hvad Mangler | answer tile → the `?` | the tile (unchanged) — engine opt-in `dragToPromptSlot` |
+
+**Nuancer is the one game a tap can't fully express** (shade × slot is 2-D). It commits to the leftmost
+empty slot rather than asking for a select-then-place first tap — that is the shape
+`previewBeforeCommit` was removed for (an unscored first tap read as a broken game). Don't "fix" it into
+two taps.
+
+**A drag target must already exist in the prompt.** Sammenlign Tal, Tal Quiz, Bogstav Quiz, Læs Ordet
+and the English quizzes stay tap-only: they ask a question rather than show a gap, so a drop zone there
+would be invented furniture. `UnifiedQuizGame` therefore mounts **no DndContext at all** unless a config
+sets `dragToPromptSlot` (guarded — see `dragActivation.test.ts`).
+
+## One threshold, or one gesture answers twice
+
+`DRAG_ACTIVATION_DISTANCE` (`dnd/dragActivation.ts`) is the single source: the PointerSensor's
+activation constraint and `useTapActivate`'s "was this a tap?" test are complements of that one number.
+Two independent values leave a band where a gesture is BOTH — a drag past dnd-kit's threshold that ends
+back over its own tile fires `onDragEnd` **and** the browser's trailing click.
+- `useTapActivate` returns `onClickCapture` too, which swallows that trailing click before a child
+  `<button>` (AnswerTile / TactileTile) can see it. On desktop Chrome dnd-kit already suppresses it
+  (measured); the guard is for **touch**, where the click is synthesized after teardown — the same
+  late-click that made the audio modal press the board behind it (`audio-system.md`).
+- **Compose dnd-kit's `onPointerDown`, never replace it.** `{...listeners}` already contains one;
+  overwriting it kills dragging while the tap keeps working, and nothing fails.
+
+The Farver games plus Stav Ordet, Plus/Minus and Hvad Mangler use **`@dnd-kit/core`** through shared
 primitives in `src/components/common/dnd/` — **reuse those, don't re-implement**: `kidCollision`,
-`useDragOnlySensors`, `DroppableZone`, `DraggableItem`, and `useDragActive` (the shared
+`useDragOnlySensors`, `DroppableZone`, `DraggableItem` (`inline` for tray layouts, `fill` when a sized
+grid cell must pass its box through), and `useDragActive` (the shared
 `activeId`/`overId` lift-and-breathe state + `onDragOver`/`clearActive` — wire it into the DndContext;
 only `onDragStart` stays per-game). `DraggableItem` defaults to absolute `left/top%` placement (scatter
 boards); pass **`inline`** for in-flow tray layouts (Hvilken Farve?, Nuancer, Ram Farven's palette) —

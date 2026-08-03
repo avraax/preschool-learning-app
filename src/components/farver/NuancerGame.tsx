@@ -258,21 +258,37 @@ const NuancerGame: React.FC = () => {
     sfx.play('pick-up')
   }
 
-  const handleDragEnd = async (event: DragEndEvent) => {
+  const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event
     clearActive()
-    if (!gameReady || isAdvancing.current) return
-
-    const shadeName = active.id as string
-    if (slots.includes(shadeName)) return // already placed
-    hasInteractedRef.current = true
-    audio.updateUserInteraction()
-
     if (!over) return // dropped on empty space → springs back
     const m = /^slot-(\d+)$/.exec(String(over.id))
     if (!m) return
-    const i = Number(m[1])
+    resolveShade(String(active.id), Number(m[1]))
+  }
+
+  // A TAP on a shade places it in the LEFTMOST EMPTY slot (owner, 2026-08-03; a tap used to do nothing
+  // at all). This game is the only one of the four where a tap cannot carry everything a drag does —
+  // shade × slot is two-dimensional — and the alternative was select-then-place, i.e. a first tap that
+  // scores nothing. That is exactly the shape the engine's `previewBeforeCommit` was removed for: the
+  // owner's 5-year-old read the ignored first tap as a broken game. So the tap commits, and the slot it
+  // commits to is the one the instruction already asks for next ("lightest first", filling left to
+  // right). Nothing about scoring changes — placing the wrong shade in that slot is wrong either way.
+  const tapShade = (shadeName: string) => {
+    const firstEmpty = slots.findIndex((s) => !s)
+    if (firstEmpty < 0) return
+    resolveShade(shadeName, firstEmpty, true)
+  }
+
+  // ONE resolution path for both gestures.
+  const resolveShade = (shadeName: string, i: number, viaTap = false) => {
+    if (!gameReady || isAdvancing.current) return
+    if (slots.includes(shadeName)) return // already placed
+    hasInteractedRef.current = true
+    audio.updateUserInteraction()
     if (slots[i]) return // slot already filled → springs back
+    // "Every tap is felt": the drag path already ticked on pick-up, so only the tap owes the press.
+    if (viaTap) sfx.play('tap')
 
     if (order[i] && shadeName === order[i].name) {
       // Correct slot → lock it in with a SNAP + a localized burst.
@@ -522,7 +538,14 @@ const NuancerGame: React.FC = () => {
                       : { duration: 0.25 }
                 return (
                   <Box key={shade.name}>
-                    <DraggableItem id={shade.name} inline disabled={!gameReady} data={shade}>
+                    <DraggableItem
+                      id={shade.name}
+                      inline
+                      disabled={!gameReady}
+                      data={shade}
+                      // Tap = place this shade in the next empty slot (see tapShade).
+                      onActivate={() => tapShade(shade.name)}
+                    >
                       <motion.div animate={animate} transition={transition}>
                         <Box sx={{
                           ...tileSx,

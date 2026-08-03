@@ -53,6 +53,12 @@ a browse has no score and no finish line, so a filling bar only implied a list t
 thing in a browse's HUD is the shared reward ring; `answered/total` pips belong to bounded ROUNDS. This
 retired `announcePosition` ("Du er ved tal 18 ud af 100") from the audio controller entirely.
 
+**BOTH GESTURES, EVERYWHERE THEY BOTH MAKE SENSE.** A game that accepts a drag must also accept a tap
+and vice versa, through one shared resolve function — owner, 2026-08-03, after the Farver games ignored
+plain taps. Which games, where the tap/drop goes, and the single-threshold rule that stops one gesture
+answering twice: **`.claude/rules/drag-and-drop.md`** (its first two sections). The games that stay
+tap-only are the ones whose prompt has no gap to drop into, and that is a content fact, not an omission.
+
 Shared shape: task games run bounded rounds → `RoundResultScreen`, grant **live per-task XP** (via
 `useRound`'s `gameId`), and never punish wrong answers (they only break a question's first-try flag).
 Calm "Lær …" browses run no round — they earn **per-new-item browse XP** (`useBrowseXp`). Stickers

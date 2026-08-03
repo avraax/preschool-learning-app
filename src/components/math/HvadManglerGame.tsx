@@ -3,7 +3,8 @@ import { Box } from '@mui/material'
 import { Star, Heart } from 'lucide-react'
 import { useTheme } from '@mui/material/styles'
 import { motion } from 'framer-motion'
-import UnifiedQuizGame, { UnifiedQuizConfig, QuizItem } from '../common/UnifiedQuizGame'
+import UnifiedQuizGame, { UnifiedQuizConfig, QuizItem, QUIZ_PROMPT_SLOT_ID } from '../common/UnifiedQuizGame'
+import { DroppableZone } from '../common/dnd/DroppableZone'
 import { getCategoryTheme } from '../../config/categoryThemes'
 import { MathRepeatButton } from '../common/RepeatButton'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
@@ -179,10 +180,17 @@ const HvadManglerGame: React.FC = () => {
     // prompt right after it — otherwise the title is heard twice on entry.
     skipFirstPrompt: true,
 
+    // Answer by TAP or by DRAG onto the "?" (owner, 2026-08-03). This is the only config quiz that
+    // opts in, because it is the only one whose PROMPT contains the slot the answer belongs in — the
+    // others ask a question ("which letter does this start with?") and would need an invented drop
+    // target. The engine wires the whole gesture; this config only has to make its blank the zone.
+    dragToPromptSlot: true,
+
     // Focal hero (§6A/Phase 5): the sequence rendered as individual slots, the blank "?" one pulsing
     // so it reads as the thing to fill in. Visual-pattern slots render CSS clay pips (PRD-12 §2B); the
-    // numeric slots + the blank stay type.
-    renderHero: (item: QuizItem) => {
+    // numeric slots + the blank stay type. The blank is also the DROP ZONE (see dragToPromptSlot):
+    // `dropActive` rings it while a tile hovers.
+    renderHero: (item: QuizItem, { dropActive }) => {
       const tokens = (item.questionVisual?.word ?? '').split(/\s+/).filter(Boolean)
       if (tokens.length === 0) return null
       return (
@@ -202,7 +210,7 @@ const HvadManglerGame: React.FC = () => {
             if (!isBlank && isPatternToken(token)) {
               return <ClayPip key={i} token={token} variant="hero" />
             }
-            return (
+            const slot = (
               <Box
                 key={i}
                 component={motion.span}
@@ -240,6 +248,25 @@ const HvadManglerGame: React.FC = () => {
               >
                 {token}
               </Box>
+            )
+            // Only the blank is a drop target — the filled slots are already answered.
+            if (!isBlank) return slot
+            return (
+              <DroppableZone
+                key={i}
+                id={QUIZ_PROMPT_SLOT_ID}
+                // The cue is the accent ring: a white wash inside a dashed accent box reads as a
+                // rendering glitch on the light skins.
+                overColor="transparent"
+                style={{
+                  borderRadius: '20px',
+                  outline: dropActive ? `4px solid ${category.accentColor}` : '4px solid transparent',
+                  outlineOffset: '4px',
+                  transition: 'outline-color 0.2s ease',
+                }}
+              >
+                {slot}
+              </DroppableZone>
             )
           })}
         </Box>

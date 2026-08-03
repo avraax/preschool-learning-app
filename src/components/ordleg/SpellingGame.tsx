@@ -5,6 +5,12 @@ import {
   Typography
 } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
+import { DndContext, DragEndEvent, DragStartEvent } from '@dnd-kit/core'
+import { useDragOnlySensors } from '../common/dnd/useDragOnlySensors'
+import { kidCollision } from '../common/dnd/kidCollision'
+import { DraggableItem } from '../common/dnd/DraggableItem'
+import { DroppableZone } from '../common/dnd/DroppableZone'
+import { useDragActive } from '../common/dnd/useDragActive'
 import { getCategoryTheme } from '../../config/categoryThemes'
 import { tileSurface } from '../../theme/tokens/helpers'
 import { softShadow } from '../../theme/depth'
@@ -56,6 +62,14 @@ interface LetterTile {
 const SpellingGame: React.FC = () => {
   const muiTheme = useTheme()
   const reduce = useReducedMotion()
+  // Drag as well as tap (owner, 2026-08-03): a letter can be DRAGGED onto the word row, or tapped
+  // exactly as before. The drop target is the whole ROW rather than a per-letter slot, because this
+  // game is strictly sequential — a tile always fills the next empty slot — so a per-slot target
+  // would invent a choice the game does not have (and would make dropping on the "right" letter's
+  // slot out of order a new kind of wrong). Both gestures land on `handleTileClick`, so scoring, the
+  // hint counter and the advance-lock are untouched.
+  const sensors = useDragOnlySensors()
+  const { activeId, overId, setActiveId, onDragOver, clearActive } = useDragActive()
 
   // Current word and its uppercase letters
   const [current, setCurrent] = useState<{ word: string; emoji?: string; art?: string } | null>(null)
@@ -293,7 +307,23 @@ const SpellingGame: React.FC = () => {
     }
   }
 
-  const handleTileClick = async (tile: LetterTile) => {
+  const handleDragStart = (event: DragStartEvent) => {
+    audio.cancelCurrentAudio()
+    setActiveId(String(event.active.id))
+    sfx.play('pick-up')
+  }
+
+  // A drop anywhere on the word row = the same answer as tapping the tile. `kidCollision` returns
+  // nothing when the pointer is over nothing, so an abortive drag springs back without scoring.
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event
+    clearActive()
+    if (!over || over.id !== 'word-row') return
+    const tile = tiles.find((t) => t.id === String(active.id))
+    if (tile) void handleTileClick(tile, true)
+  }
+
+  const handleTileClick = async (tile: LetterTile, viaDrag = false) => {
     if (!gameReady || !current || isAdvancing.current) return
     if (usedTileIds.has(tile.id)) return
     // The child is playing → suppress any pending/late welcome from talking over them.
@@ -303,8 +333,9 @@ const SpellingGame: React.FC = () => {
     audio.cancelCurrentAudio()
 
     // Every tap is felt: a soft tick synced to the press (separate SFX channel, never TTS) —
-    // matching UnifiedQuizGame so the interaction language is consistent app-wide.
-    sfx.play('tap')
+    // matching UnifiedQuizGame so the interaction language is consistent app-wide. A DROP already
+    // sounded its press on pick-up, so it skips the tick rather than stacking a third cue.
+    if (!viaDrag) sfx.play('tap')
 
     const expectedLetter = targetLetters[filledCount]
 
@@ -459,6 +490,14 @@ const SpellingGame: React.FC = () => {
             onReplay={handleReplay}
           />
         ) : gameReady && current && (
+          <DndContext
+            sensors={sensors}
+            collisionDetection={kidCollision}
+            onDragStart={handleDragStart}
+            onDragOver={onDragOver}
+            onDragEnd={handleDragEnd}
+            onDragCancel={clearActive}
+          >
           <Box
             sx={{
               flex: 1,
@@ -478,7 +517,16 @@ const SpellingGame: React.FC = () => {
           >
             {/* Letter slots — grounded, still type. Dashed "fill me" targets keep the accent border +
                 green-fill-on-placed, but sit on the tactile clay surface (tileSurface + softShadow)
-                so they stop reading as bare MUI boxes (§3.4). No baked art — the answer is the letters. */}
+                so they stop reading as bare MUI boxes (§3.4). No baked art — the answer is the letters.
+                The whole ROW is the drop target (one `word-row` zone, not one per slot — the game is
+                sequential, see the note at the top of the component); it lifts a ring while a letter
+                hovers it. `overColor` is transparent because the visible cue is that ring: a white wash
+                behind dashed slots on a light skin reads as a rendering glitch. */}
+            <DroppableZone
+              id="word-row"
+              overColor="transparent"
+              style={{ padding: '10px', borderRadius: '24px', flex: '0 0 auto' }}
+            >
             <Box
               sx={{
                 display: 'flex',
@@ -486,6 +534,10 @@ const SpellingGame: React.FC = () => {
                 alignItems: 'center',
                 gap: { xs: 1, md: 1.5 },
                 flex: '0 0 auto',
+                borderRadius: '18px',
+                outline: overId === 'word-row' ? `4px solid ${theme.accentColor}` : '4px solid transparent',
+                outlineOffset: '8px',
+                transition: 'outline-color 0.2s ease',
               }}
             >
               {targetLetters.map((letter, index) => {
@@ -522,6 +574,7 @@ const SpellingGame: React.FC = () => {
                 )
               })}
             </Box>
+            </DroppableZone>
 
             {/* Scrambled letter tiles — tactile clay (TactileTile), NOT the old keyboard-lip Paper.
                 TactileTile owns the wrong-shake (state='wrong') + hint-breathe/ring (hint) + press
@@ -554,11 +607,13 @@ const SpellingGame: React.FC = () => {
                 {availableTiles.map((tile) => {
                     const isHint = tile.id === hintTileId
                     const isShaking = shakeTileId === tile.id
+                    // Grabbed tile LIFTS, matching the Farver games' shared drag juice (§6C).
+                    const isLifted = activeId === tile.id && !reduce
                     return (
                     <motion.div
                       key={tile.id}
                       initial={reduce ? false : { opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
+                      animate={{ opacity: 1, scale: isLifted ? 1.12 : 1 }}
                       transition={{ duration: 0.2 }}
                     >
                       <Box
@@ -567,6 +622,16 @@ const SpellingGame: React.FC = () => {
                           height: { xs: 56, sm: 64, md: 76 },
                         }}
                       >
+                        {/* Draggable wrapper, tap unchanged: the TactileTile keeps its own `onActivate`
+                            (that is what gives it the press animation and the button semantics), and
+                            DraggableItem's capture-phase guard swallows the trailing click of a real
+                            drag so one gesture can never place two letters. Hence no `onActivate` here. */}
+                        <DraggableItem
+                          id={tile.id}
+                          inline
+                          disabled={!gameReady || usedTileIds.has(tile.id) || isAdvancing.current}
+                          data={tile}
+                        >
                         <TactileTile
                           onActivate={() => handleTileClick(tile)}
                           accent={theme.accentColor}
@@ -587,6 +652,7 @@ const SpellingGame: React.FC = () => {
                             {tile.letter}
                           </Typography>
                         </TactileTile>
+                        </DraggableItem>
                       </Box>
                     </motion.div>
                     )
@@ -594,6 +660,7 @@ const SpellingGame: React.FC = () => {
               </Box>
             </Box>
           </Box>
+          </DndContext>
         )}
     </GameShell>
   )

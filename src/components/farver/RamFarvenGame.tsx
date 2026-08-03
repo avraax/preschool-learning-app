@@ -417,14 +417,22 @@ const RamFarvenGame: React.FC = () => {
   }
 
   const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event
-    hasInteractedRef.current = true
+    const { over, active } = event
     clearActive()
-
     if (!over || over.id !== 'mixing-zone') return
+    resolveDroplet(String(active.id))
+  }
 
-    const draggedColor = availableColors.find(color => color.id === active.id)
+  // ONE path into the pot for both gestures: a drop on the pot, and a plain TAP on the droplet
+  // (DraggableItem's `onActivate` — owner, 2026-08-03; a tap used to do nothing at all). A tap can
+  // never double with a drop — `useTapActivate` fires only below the drag sensor's own threshold.
+  const resolveDroplet = (colorId: string, viaTap = false) => {
+    hasInteractedRef.current = true
+
+    const draggedColor = availableColors.find(color => color.id === colorId)
     if (draggedColor && !draggedColor.isUsed && !committing && mixingZone.length < 2) {
+      // "Every tap is felt": the drag path already ticked on pick-up, so only the tap owes the press.
+      if (viaTap) sfx.play('tap')
       addToMixingZone(draggedColor)
     }
   }
@@ -885,6 +893,8 @@ const RamFarvenGame: React.FC = () => {
                           inline
                           disabled={!gameReady || color.isUsed || committing}
                           data={color}
+                          // Tap = "put this droplet in the pot", the same resolution a drop gets.
+                          onActivate={() => resolveDroplet(color.id, true)}
                         >
                           <Box sx={{
                             width: { xs: '54px', sm: '60px', md: '68px', lg: '74px' },

@@ -2,6 +2,12 @@ import React, { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Typography, Box, useMediaQuery } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
+import { DndContext, DragEndEvent, DragStartEvent, MeasuringStrategy } from '@dnd-kit/core'
+import { useDragOnlySensors } from '../common/dnd/useDragOnlySensors'
+import { kidCollision } from '../common/dnd/kidCollision'
+import { DraggableItem } from '../common/dnd/DraggableItem'
+import { DroppableZone } from '../common/dnd/DroppableZone'
+import { useDragActive } from '../common/dnd/useDragActive'
 import { getCategoryTheme } from '../../config/categoryThemes'
 import { mathFactText } from '../../config/gamePhrases'
 import { optionCountFor, starThresholdsFor } from '../../config/difficulty'
@@ -56,6 +62,9 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
   // Phone landscape's PromptStage slot is short (~26-34% of an already-short body) — the repeat
   // button shrinks there so the equation keeps its full height instead of being squeezed/clipped.
   const phoneLandscape = useMediaQuery(PHONE_LANDSCAPE.replace('@media ', ''))
+  // Answer by TAP or by DRAG onto the "?" (see handleDragEnd).
+  const sensors = useDragOnlySensors()
+  const { activeId, overId, setActiveId, onDragOver, clearActive } = useDragActive()
   const isAddition = operation === 'addition'
   const title = isAddition ? 'Plus Opgaver' : 'Minus Opgaver'
   const operator = isAddition ? '+' : '-'
@@ -260,7 +269,26 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
     }
   }
 
-  const handleAnswerClick = async (selectedAnswer: number) => {
+  const handleDragStart = (event: DragStartEvent) => {
+    audio.cancelCurrentAudio()
+    setActiveId(String(event.active.id))
+    sfx.play('pick-up')
+  }
+
+  // Drag an answer tile onto the "?" (owner, 2026-08-03: every game that can support both gestures
+  // should). The equation already HAS a slot the answer belongs in, which is what makes a drag mean
+  // something here — unlike Sammenlign Tal, where the two numerals ARE the answer tiles and there is
+  // nowhere to drag to. Both gestures end in `handleAnswerClick`, so the advance-lock, the first-try
+  // flag, the hint counter and the reveal are all untouched.
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event
+    clearActive()
+    if (!over || over.id !== 'answer-slot') return // released elsewhere → springs back, nothing scored
+    const value = Number(String(active.id).replace(/^opt-/, ''))
+    if (!Number.isNaN(value)) void handleAnswerClick(value, true)
+  }
+
+  const handleAnswerClick = async (selectedAnswer: number, viaDrag = false) => {
     if (correctAnswer === null) return
     // Advance-lock (PRD-02 P1/P2): ignore every tap once a correct answer is resolving — blocks the
     // double-tap double-record and the celebration-tap star theft.
@@ -272,8 +300,9 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
     audio.cancelCurrentAudio()
 
     // Every tap is felt: a soft tick synced to the press (separate SFX channel, never TTS) —
-    // matching UnifiedQuizGame so the interaction language is consistent app-wide.
-    sfx.play('tap')
+    // matching UnifiedQuizGame so the interaction language is consistent app-wide. A DROP already
+    // sounded its press on pick-up, so it skips the tick rather than stacking a third cue.
+    if (!viaDrag) sfx.play('tap')
 
     const isCorrect = selectedAnswer === correctAnswer
 
@@ -432,6 +461,19 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
   }, [difficultyLevel]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
+    // The DndContext wraps the whole shell because the two halves of the gesture live in different
+    // GameShell slots: the "?" droppable is inside `promptStage`, the draggable tiles are in
+    // `children`. `MeasuringStrategy.Always` is mandatory — PromptFocus idle-floats, so a rect measured
+    // once at drag start would judge the drop against a stale position (drag-and-drop.md).
+    <DndContext
+      sensors={sensors}
+      collisionDetection={kidCollision}
+      measuring={{ droppable: { strategy: MeasuringStrategy.Always } }}
+      onDragStart={handleDragStart}
+      onDragOver={onDragOver}
+      onDragEnd={handleDragEnd}
+      onDragCancel={clearActive}
+    >
     <GameShell
       categoryId="math"
       title={title}
@@ -481,7 +523,20 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
                 <SymbolTile op="=" sx={operatorSx} />
 
                 {/* The "?" flips to the revealed answer with a motion.POP once correct (reduced
-                    motion: instant swap — the colour/glow + SFX still land). */}
+                    motion: instant swap — the colour/glow + SFX still land). It is also the DROP
+                    TARGET for an answer tile: the slot the answer belongs in is the only honest place
+                    to drop one. `overColor` transparent — the cue is the accent ring below, since a
+                    white wash inside the clay tile just looks like a paint bug. */}
+                <DroppableZone
+                  id="answer-slot"
+                  overColor="transparent"
+                  style={{
+                    borderRadius: '16px',
+                    outline: overId === 'answer-slot' ? `4px solid ${category.accentColor}` : '4px solid transparent',
+                    outlineOffset: '4px',
+                    transition: 'outline-color 0.2s ease',
+                  }}
+                >
                 <Box sx={{ ...symbolSx, position: 'relative' }}>
                   <AnimatePresence mode="wait" initial={false}>
                     {effectiveRevealAnswer && correctAnswer !== null ? (
@@ -536,6 +591,7 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
                     )}
                   </AnimatePresence>
                 </Box>
+                </DroppableZone>
               </Box>
               ) : null
             }
@@ -574,10 +630,22 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
             <motion.div
               key={`o${optionSeq.current}-${option}-${index}`}
               initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
+              // Grabbed tile LIFTS, matching the Farver games' shared drag juice (§6C).
+              animate={{ opacity: 1, scale: activeId === `opt-${option}` && !reduce ? 1.08 : 1 }}
               transition={{ delay: index * 0.08 }}
               style={{ height: '100%' }}
             >
+              {/* Draggable wrapper, tap unchanged: AnswerTile keeps its own onClick (that is its press
+                  animation + button semantics) and DraggableItem's capture-phase guard swallows the
+                  trailing click of a real drag, so one gesture can never answer twice. `fill` because
+                  the grid cell is what sizes the tile. */}
+              <DraggableItem
+                id={`opt-${option}`}
+                inline
+                fill
+                disabled={isAdvancingRef.current}
+                data={{ option }}
+              >
               <AnswerTile
                 onClick={() => handleAnswerClick(option)}
                 accent={category.accentColor}
@@ -604,6 +672,7 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
                   {option}
                 </Typography>
               </AnswerTile>
+              </DraggableItem>
             </motion.div>
           )) : null}
         </Box>
@@ -611,6 +680,7 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
       </>
       )}
     </GameShell>
+    </DndContext>
   )
 }
 

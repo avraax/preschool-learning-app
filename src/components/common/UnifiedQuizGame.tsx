@@ -2,6 +2,11 @@ import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import { Typography, Box } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
+import { DndContext, DragEndEvent, DragStartEvent, MeasuringStrategy } from '@dnd-kit/core'
+import { useDragOnlySensors } from './dnd/useDragOnlySensors'
+import { kidCollision } from './dnd/kidCollision'
+import { DraggableItem } from './dnd/DraggableItem'
+import { useDragActive } from './dnd/useDragActive'
 import { isIOS } from '../../utils/deviceDetection'
 import { CategoryTheme } from '../../config/categoryThemes'
 import GameShell from './GameShell'
@@ -57,6 +62,14 @@ const isWordLabel = (display: string | number): boolean => {
   const combining = new Set([0xFE0E, 0xFE0F, 0x200D, 0x20E3])
   return [...s].filter((ch) => !combining.has(ch.codePointAt(0)!)).length > 1
 }
+
+// The droppable id a `dragToPromptSlot` quiz's hero must use for its gap (see the config field).
+// Exported so the config and the engine can never disagree about the string.
+export const QUIZ_PROMPT_SLOT_ID = 'quiz-prompt-slot'
+
+// Stable per-option drag id. Keyed on `value` (the matchable primitive) rather than the render index so
+// a re-render mid-drag can't retarget the gesture at a different tile.
+const dragIdFor = (item: QuizItem) => `opt-${item.value}`
 
 // Quiz item interface for flexible content
 export interface QuizItem {
@@ -151,7 +164,19 @@ export interface UnifiedQuizConfig {
   // Mangler's sequence with a pulsing "?". Receives the live QuizItem, plus the engine's live audio
   // state so a hero can react to playback (Tal Quiz's numeral band renders the shared ListenHero) —
   // read `speaking` from here, never a component-level isPlaying (see audio-system.md).
-  renderHero?: (item: QuizItem, ctx: { speaking: boolean }) => React.ReactNode
+  renderHero?: (item: QuizItem, ctx: { speaking: boolean; dropActive: boolean }) => React.ReactNode
+
+  // Answer by DRAG as well as by tap (owner, 2026-08-03). OPT-IN, and only meaningful for a quiz whose
+  // PROMPT contains the slot the answer belongs in — Hvad Mangler's "?" in the sequence. The other
+  // config quizzes ask a question rather than show a gap ("which letter does this start with?"), so a
+  // drop target there would be invented furniture; they leave this unset and the engine mounts no
+  // DndContext at all, so this addition is completely inert for them.
+  //
+  // Contract: the config's `renderHero` must wrap its gap in a
+  // `<DroppableZone id={QUIZ_PROMPT_SLOT_ID}>`, and can ring it using `ctx.dropActive`. A drop there
+  // runs the SAME `handleItemClick` a tap runs, so the advance-lock, first-try flag, hint counter and
+  // round bookkeeping are shared — there is no second scoring path.
+  dragToPromptSlot?: boolean
 
   // When the welcome message already conveys the first question's prompt (e.g. Hvad Mangler?, whose
   // welcome "Hvad mangler" equals its per-question prompt "Hvad mangler?"), set this so the engine
@@ -175,6 +200,10 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
   // nothing is selected. Only used when config.previewBeforeCommit is on. Cleared per question.
   const [previewValue, setPreviewValue] = useState<string | number | null>(null)
   const reduce = useReducedMotion()
+  // Drag-to-the-gap support (opt-in via config.dragToPromptSlot — inert otherwise; the hooks are cheap
+  // and unconditional so the hook order never depends on config).
+  const sensors = useDragOnlySensors()
+  const { activeId, overId, setActiveId, onDragOver, clearActive } = useDragActive()
   // Scene darkness — the focal-zone prompt word rides the light-pool: light accent on a DARK scene,
   // but the darkened readable-on-white accent on a LIGHT scene (see the qv.word hero below).
   const muiTheme = useTheme()
@@ -397,7 +426,24 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
     generateNewQuestion()
   }, [difficultyLevel, gameReady, roundOutcome, generateNewQuestion])
 
-  const handleItemClick = async (selectedItem: QuizItem) => {
+  const handleDragStart = (event: DragStartEvent) => {
+    audio.cancelCurrentAudio()
+    setActiveId(String(event.active.id))
+    sfx.play('pick-up')
+  }
+
+  // A drop on the prompt's gap resolves exactly as a tap on that tile would (see `dragToPromptSlot`).
+  // `kidCollision` returns nothing when the pointer is over nothing, so an abortive drag springs back
+  // without scoring or breaking first-try.
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event
+    clearActive()
+    if (!over || over.id !== QUIZ_PROMPT_SLOT_ID) return
+    const item = showOptions.find((o) => dragIdFor(o) === String(active.id))
+    if (item) void handleItemClick(item, true)
+  }
+
+  const handleItemClick = async (selectedItem: QuizItem, viaDrag = false) => {
     // Only prevent clicks if game isn't ready
     if (!gameReady || !currentItem) {
       return
@@ -415,8 +461,9 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
     // Always cancel current audio for fast tapping
     audio.cancelCurrentAudio()
 
-    // Every tap is felt: a soft tick synced to the press (separate SFX channel, never TTS).
-    sfx.play('tap')
+    // Every tap is felt: a soft tick synced to the press (separate SFX channel, never TTS). A DROP
+    // already sounded its press on pick-up, so it skips the tick rather than stacking a third cue.
+    if (!viaDrag) sfx.play('tap')
 
     // Hear-before-commit (PRD-14 W7): when enabled, the FIRST tap on a tile (or on a DIFFERENT tile
     // than the one currently raised) AUDITIONS it — speak its word + raise it — and returns WITHOUT
@@ -590,7 +637,12 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
     const item = currentItem
     if (!item) return null
     // Config-supplied custom hero takes precedence (Tal counted objects, Hvad Mangler sequence…).
-    if (config.renderHero) return config.renderHero(item, { speaking: audio.isPlaying })
+    if (config.renderHero) {
+      return config.renderHero(item, {
+        speaking: audio.isPlaying,
+        dropActive: overId === QUIZ_PROMPT_SLOT_ID,
+      })
+    }
     const qv = item.questionVisual
     if (qv && (qv.art || qv.emoji || qv.word)) {
       // A picture above the word makes the word a small CAPTION; a word with no picture is the BIG
@@ -642,7 +694,7 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
     return <HeroEmoji>{item.display}</HeroEmoji>
   }
 
-  return (
+  const board = (
     <GameShell
       categoryId={config.theme.id}
       title={config.title}
@@ -726,10 +778,23 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
                 <motion.div
                   key={`q${questionSeq.current}-${item.value}-${index}`}
                   initial={reduce ? false : { opacity: 0, scale: 0.8 }}
-                  animate={reduce ? { opacity: 1 } : { opacity: 1, scale: [0.8, 1.04, 1] }}
+                  animate={
+                    reduce
+                      ? { opacity: 1 }
+                      : activeId === dragIdFor(item)
+                        // Grabbed tile LIFTS (the Farver games' shared drag juice). A plain number, not
+                        // the entrance keyframes — a keyframe array would restart the pop mid-drag.
+                        ? { opacity: 1, scale: 1.08 }
+                        : { opacity: 1, scale: [0.8, 1.04, 1] }
+                  }
                   transition={reduce ? { duration: 0 } : { delay: index * 0.08, duration: 0.25, ease: 'easeOut' }}
                   style={{ height: '100%' }}
                 >
+                  <DragWrap
+                    enabled={config.dragToPromptSlot === true}
+                    id={dragIdFor(item)}
+                    disabled={isAdvancingRef.current}
+                  >
                   <AnswerTile
                     onClick={() => handleItemClick(item)}
                     accent={config.theme.accentColor}
@@ -782,6 +847,7 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
                     </Typography>
                     )}
                   </AnswerTile>
+                  </DragWrap>
                 </motion.div>
               ))}
           </Box>
@@ -789,6 +855,43 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
         </>
         )}
     </GameShell>
+  )
+
+  // Only a `dragToPromptSlot` quiz mounts a DndContext, so the four quizzes that answer by tap alone
+  // are byte-identical to before. `MeasuringStrategy.Always` is mandatory: PromptFocus idle-floats, so
+  // a rect measured once at drag start judges the drop against a stale position (drag-and-drop.md).
+  if (!config.dragToPromptSlot) return board
+
+  return (
+    <DndContext
+      sensors={sensors}
+      collisionDetection={kidCollision}
+      measuring={{ droppable: { strategy: MeasuringStrategy.Always } }}
+      onDragStart={handleDragStart}
+      onDragOver={onDragOver}
+      onDragEnd={handleDragEnd}
+      onDragCancel={clearActive}
+    >
+      {board}
+    </DndContext>
+  )
+}
+
+// Wraps an answer tile in a draggable ONLY when the quiz opted into drag; otherwise renders the tile
+// untouched (no extra DOM, no dnd-kit hook) so the tap-only quizzes are unaffected. The tile keeps its
+// own onClick for the tap — DraggableItem's capture-phase guard swallows the trailing click of a real
+// drag, so one gesture can never answer twice.
+const DragWrap: React.FC<{ enabled: boolean; id: string; disabled: boolean; children: React.ReactNode }> = ({
+  enabled,
+  id,
+  disabled,
+  children,
+}) => {
+  if (!enabled) return <>{children}</>
+  return (
+    <DraggableItem id={id} inline fill disabled={disabled}>
+      {children}
+    </DraggableItem>
   )
 }
 

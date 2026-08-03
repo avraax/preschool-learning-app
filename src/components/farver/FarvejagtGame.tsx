@@ -370,15 +370,26 @@ const FarvejagtGame: React.FC = () => {
   // Handle drag end
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event
+    clearActive()
+    if (!over || over.id !== 'target-zone') return // dropped elsewhere → springs back automatically
+    resolveItem(String(active.id))
+  }
+
+  // ONE resolution path for both ways of answering: a drop on the target circle, and a plain TAP on
+  // the object (DraggableItem's `onActivate` — owner, 2026-08-03; a tap used to do nothing at all).
+  // The tap cannot double up with a drop: `useTapActivate` only fires below the same distance that
+  // arms the drag sensor.
+  const resolveItem = (itemId: string, viaTap = false) => {
     // The child is playing → suppress any pending/late welcome from talking over them.
     hasInteractedRef.current = true
     audio.updateUserInteraction()
-    clearActive()
     if (isAdvancing.current) return // board-complete flourish in progress → ignore late drops (P3)
 
-    const draggedItem = gameItems.find(item => item.id === active.id)
+    const draggedItem = gameItems.find(item => item.id === itemId)
     if (!draggedItem || draggedItem.collected) return
-    if (!over || over.id !== 'target-zone') return // dropped elsewhere → springs back automatically
+    // "Every tap is felt" (see game-development.md): the drag path already ticked on pick-up, so only
+    // the tap path owes the synchronous press sound before the resolution cue.
+    if (viaTap) sfx.play('tap')
 
     if (draggedItem.isTarget) {
       // Correct: SNAP into the collected ring with a splash burst + sound, keep the spoken
@@ -388,7 +399,7 @@ const FarvejagtGame: React.FC = () => {
       const slotIndex = targetItemsNow.findIndex(i => i.id === draggedItem.id)
       const collectedTargetsNow = targetItemsNow.filter(i => i.collected).length
       setGameItems(prev => prev.map(item =>
-        item.id === active.id ? { ...item, collected: true } : item
+        item.id === itemId ? { ...item, collected: true } : item
       ))
       setHintItemId(null)
       celebrateTier('micro')
@@ -413,11 +424,11 @@ const FarvejagtGame: React.FC = () => {
       sfx.play('spring-back')
       reactGuide('think')
       setGameItems(prev => prev.map(item =>
-        item.id === active.id ? { ...item, returning: true } : item
+        item.id === itemId ? { ...item, returning: true } : item
       ))
       setTimeout(() => {
         setGameItems(prev => prev.map(item =>
-          item.id === active.id ? { ...item, returning: false } : item
+          item.id === itemId ? { ...item, returning: false } : item
         ))
       }, 500)
 
@@ -754,6 +765,8 @@ const FarvejagtGame: React.FC = () => {
                     disabled={!gameReady || item.returning}
                     position={{ x: item.x, y: item.y }}
                     data={item}
+                    // Tap = "put this one in the circle", the same resolution a drop gets.
+                    onActivate={() => resolveItem(item.id, true)}
                   >
                     <motion.div
                       key={`${boardKey}-${item.id}`}
