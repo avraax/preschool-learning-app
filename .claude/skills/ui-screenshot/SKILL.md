@@ -277,6 +277,19 @@ stripped, and the failure looks like a page bug. Write the JS to a **file in the
   on `document.body.innerText.includes('Noget gik galt')` AND assert the EXPECTED element count** — then
   prove both guards fire (a deliberately wrong count, and `?crash-test=1`) before you trust the run.
   Distinct from the silent-dead-iteration trap below: there the run fails quietly; here it lies.
+- **A MISTYPED ROUTE lies the same way, and it's easier to do.** A 404 renders `NotFound`, which has no
+  game chrome at all — so the probe reports "the element is missing" and that reads as a bug in the
+  feature you're verifying, not as a bad URL. Enumerate the routes from `App.tsx` instead of guessing
+  them from the section names; three guesses in a row were wrong in one sweep (it is `/farver/jagt` not
+  `/farver/farvejagt`, `/english/learn` not `/english/laer`, `/ordleg/spelling` not `/ordleg/stav`).
+  Cheap insurance: bail on the NotFound copy the same way you bail on `Noget gik galt`.
+- **A CSS-transformed element's rect is its PAINTED box, not its layout box** — so a rect-overlap sweep
+  reports collisions that do not exist. `SymbolTile` scales its glyph ~2.5–3× to correct for the
+  render's transparent padding (see `.claude/rules/scene-assets.md`), which made
+  `getBoundingClientRect()` over-report it by that factor: measured 58px into each of Sammenlign Tal's
+  answer tiles and ~9px into Plus Opgaver's numerals, with no visual and no hit-test consequence in
+  either case. Derive the ink box (it is centred on the rect: `rect.width × inkW/160`), or drop the rect
+  comparison and **hit-test** instead — `elementFromPoint` answers the question you actually care about.
 - **A killed run leaves Chrome holding port 9333**, and the next invocation then hangs forever against
   that dead instance (looks like the page never loads). After any timeout/interrupt:
   `powershell.exe -Command "Get-Process chrome -EA SilentlyContinue | Stop-Process -Force"`.

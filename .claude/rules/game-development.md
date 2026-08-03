@@ -80,8 +80,8 @@ Most task-based quizzes are a thin **config** over `src/components/common/Unifie
 Only hand-roll a full component for genuinely novel mechanics (e.g. SpellingGame, SpeakWordGame, and
 the dnd-kit Farver games — see `.claude/rules/drag-and-drop.md`). **MathOperationGame (+/−) and
 ComparisonGame stay hand-rolled** despite ~cloning the engine's scaffold: they have bespoke
-*post-correct-tap* animations (the equation reveal; the krokodille mouth chomping toward the bigger
-number) and the engine has no `onCorrectAnimate`-style callback — absorbing them into `UnifiedQuizGame`
+*post-correct-tap* animations (the equation reveal; Sammenlign's `?`→`>`/`<` swap plus the losing tile
+receding) and the engine has no `onCorrectAnimate`-style callback — absorbing them into `UnifiedQuizGame`
 needs that hook added first (it would touch all 7 config quizzes, so verify carefully).
 
 ## Shared primitives — reuse, don't re-fragment
@@ -100,7 +100,13 @@ needs that hook added first (it would touch all 7 config quizzes, so verify care
   swap auto-upgraded only the **shared engines** (`UnifiedQuizGame`/`UnifiedMemoryGame`/`LearningGrid`);
   **hand-rolled games + screens that render `PromptStage` directly still show the old frosted card** and
   must be migrated to `PromptFocus` per area — check with a `PromptStage` import grep before assuming a
-  game already upgraded. Dense no-scroll grids (Lær Tal at 1–100 = 10 rows) must pass `TactileTile`'s
+  game already upgraded. **`PromptFocus` goes in GameShell's `promptStage` slot, never in `children`.**
+  In the slot it is sized to the anti-void 40% band; in `children` it stretches over the whole body, and
+  ComparisonGame was the one game doing that (measured: a 512px focal zone holding a 114px answer tile,
+  "Hør igen" stranded at the bottom of the viewport, and the centred circular light-pool wide enough to
+  read as a magenta smudge — on LIGHT skins only, which is why dark-skin review never caught it). A game
+  whose answers ARE its focal content has no prompt/answer split, so it should own its column directly
+  rather than wrap it in `PromptFocus` (see Sammenlign Tal). Dense no-scroll grids (Lær Tal at 1–100 = 10 rows) must pass `TactileTile`'s
   **`compact`** prop — otherwise its 44px min-height + padding overflow the short rows and tiles overlap
   the row below; `LearningGrid` trips it automatically for numbers >60. A 2D grid of many small cells
   additionally needs **`field`**: the primitive's defaults are built for a roomy board, and at chart

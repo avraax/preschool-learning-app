@@ -31,6 +31,19 @@ verify it at 844×390 (and 667×375) with the ui-screenshot skill. GameShell/Gam
 UnifiedQuizGame/LearningGrid/UnifiedMemoryGame/RoundResultScreen already carry compact variants —
 reuse them before inventing new ones.
 
+## MUI units & this project's breakpoints — two things that don't read like traps
+
+- **The breakpoints are OVERRIDDEN** in `src/theme/buildTheme.ts`: `sm 600 · md 768 · lg 1024`. So `md`
+  is iPad **PORTRAIT**, not desktop, and `lg` is what means iPad landscape. Consequences that have
+  actually misled a session: an `{ xs, md }` pair applies its `md` value to an 844-wide phone in
+  LANDSCAPE (which is also `PHONE_LANDSCAPE`), while a 667-wide one gets `xs` — so the two phone
+  landscape viewports can take different branches of the same responsive object.
+- **A spacing prop multiplies; a size prop does not.** `width: 120` is 120px, but `pb: 120` is
+  120 × the 8px spacing unit = **960px** (same for `p`/`m`/`gap`). Passing a px constant straight to
+  `pb` collapsed a game's answer tiles to their 44px floor and pushed them off the top of the screen;
+  the viewport that happened to get screenshotted looked fine, and only a rect measurement caught it.
+  Write `pb: '120px'` when the value is a real length.
+
 ## Layout Pattern
 
 ```typescript
@@ -163,7 +176,11 @@ the configurations nobody screenshotted: measured a 106×46px overlap with "Lær
   nothing, because this layout's spare space is vertical (~200px of ~700 used on iPad landscape).
   So measure the row shape too, not just the overlap — otherwise the "fix" quietly degrades composition.
 - A vertical-only idle float stays inside its own track, so decor can still breathe.
-- The same class covers the corner mascot. It also covered ThemeScene's stage-gated `bloomScenery`
+- The same class covers the corner mascot — and its footprint is now **exported**, so reserve that
+  rather than re-measuring it per game: `MASCOT_CORNER_SIZE` in `src/components/common/mascotCorner.ts`
+  (Sammenlign Tal reserves it as padding on its body column; phone landscape hides the companion, so
+  there is nothing to reserve there). A game whose play surface FILLS the viewport has nothing for a
+  `position: fixed` companion to be positioned "around" — it must give up the band. It also covered ThemeScene's stage-gated `bloomScenery`
   sprites — absolute-percent decor seated in the world, invisible until the child had bloomed — and
   those were **deleted rather than fixed** (owner, 2026-08-03: "it looks misplaced"). That is the
   outcome to remember: percentage anchors survived two rounds of tuning and a per-viewport guard that

@@ -132,6 +132,28 @@ render. Ride it along with whatever renders you already owe.
 
 The same reasoning applies wherever art appears very small; the ring is just the worst case.
 
+## Sizing baked art: the element box is NOT the drawing — measure the INK
+
+A render is a subject floating on a canvas, so a CSS size applies to the canvas and the *ink* comes out
+some unknown fraction of it. This has now shipped twice, and neither time did it look like a bug — just
+art that read "too small", with nothing to point at:
+
+- the Sammenlign krokodille was **512×205 of ink on a 606² canvas**, so `height: '1em'` on a generously
+  sized box delivered about a third of the intended size (and a comment claiming it was "the arena's
+  CENTREPIECE");
+- the math symbols are ~**43×55 on a 160×87** canvas, so `objectFit: 'contain'` into a square box
+  delivered **12–15%** — Plus Opgaver's `=` had stopped reading as an equals sign at all.
+
+So **measure the alpha bounding box with `sharp` before choosing any size** (the pattern is in
+`src/assets/symbols/symbolContentBox.test.ts`, which re-derives every box from the committed WebPs so a
+re-export at a different crop fails a test instead of silently shrinking the glyph). Two corollaries:
+
+- If you correct for the padding with a `transform: scale()`, the element's **painted** box grows past
+  its layout box — see the rect-over-reporting note in the `ui-screenshot` skill before you trust any
+  overlap measurement of it.
+- Prefer trimming the art in the pipeline when you own the source; scaling in CSS is the fix for art
+  that is already committed and keyed.
+
 ## Keying — the core gotcha: key by green-EXCESS, not greenness
 
 **Two screens exist.** Magenta (`#FF00FF`) is the LEGACY convention and still the source for the mascots,

@@ -84,10 +84,18 @@ gameIds are `<section>.<game>`.
   enumerator all read it (a rate is part of the cache key).
 - Plus/Minus's prompt is the **number sentence alone** on its clay tile (`a op b = ?`), with the
   `?`→answer POP on a correct tap. PRD-15 W1's countable ten-frame beneath it is gone (see above).
-- Sammenlign Tal: tap the **bigger** number (crocodile >/< "eats" it); **equality was dropped**. It shows
-  **numerals ONLY** — the counted object piles beside them were removed 2026-08-01 (owner): comparing two
-  piles of blobs let the child win without reading either numeral, which is the whole skill. Don't
-  re-add them as a "counting aid".
+- Sammenlign Tal: tap the **bigger** number; **equality was dropped**. The board is a NUMBER SENTENCE
+  (`2 [?] 8`, resolving to `2 [<] 8` on a correct tap — winner lit, loser receding), matching
+  Plus/Minus's `a + b = ?` grammar. The two numerals ARE the answer tiles, so the arena is the whole
+  game body — no `promptStage` band, and nothing else in it.
+  **The krokodille was deleted 2026-08-03** (owner: "what does it reflect"). It was meant to teach
+  `>`/`<` as a mouth eating the bigger number and taught it **backwards on half of all questions**: the
+  art is mouth-CLOSED and was never mirrored, so with the bigger number on the left it lunged
+  tail-first at it. The durable lesson, not the removal: **a mnemonic whose meaning depends on
+  ORIENTATION must mirror with the content — otherwise don't carry it with a character.**
+  It shows **numerals ONLY** — the counted object piles beside them were removed 2026-08-01 (owner):
+  comparing two piles of blobs let the child win without reading either numeral, which is the whole
+  skill. Don't re-add them as a "counting aid", and don't let tile SIZE encode the values either.
 - The equation/comparison symbols `+ − = ? > <` are **baked soft-3D `SymbolTile` art**
   (`src/assets/symbols`), not emoji/glyphs — don't re-bake or emoji them. Numerals stay Typography.
 

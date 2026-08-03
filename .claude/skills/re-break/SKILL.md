@@ -30,6 +30,25 @@ The third outcome is the whole point. It has caught real vacuity here: a pinned 
 Normal-level change couldn't move (the union is defined by Svær), and two tests that survived a hand
 re-break pass in the accounts session.
 
+## "Everything stayed green" has THREE explanations — rule out two before blaming the test
+
+1. **The mutation never arrived.** For a source test the harness proves this itself (a missed anchor
+   must exit non-zero). For a headless probe nothing does, so **read the mutated value back in the same
+   run** — `getComputedStyle(el).pointerEvents`, the computed `padding-bottom`, whatever the break
+   touched — and only then interpret the result. Assuming the dev server served your edit is how a
+   fine test gets rewritten.
+2. **The fix is real but no longer LOAD-BEARING.** Two fixes survived their own re-break in one session
+   because the geometry they protected had since changed: a corner-companion overlap fix whose tiles
+   were later shrunk on owner feedback (the 94×34px overlap stopped reproducing), and a
+   `pointer-events: none` on scaled art whose neighbour turned out to win the hit-test anyway on
+   `z-index`. Neither test was vacuous and neither fix was wrong — the *justification written in the
+   comment* was. **This is a finding, not a failure.** Keep a cheap forward-looking guard, and say
+   *defensive* in the comment instead of implying it currently prevents something; an overstated
+   comment is exactly what misleads the next session into trusting protection it doesn't have.
+   To show such a guard is still worth keeping, re-break the CONDITION rather than the fix — restoring
+   the old geometry reproduced the original overlap byte-for-byte and proved the assertion can fire.
+3. **Only then**: the test is vacuous. Fix the test, not the break.
+
 ## Doing it
 
 Write a throwaway harness (scratchpad, not the repo) holding a table of
