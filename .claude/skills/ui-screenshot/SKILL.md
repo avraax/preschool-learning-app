@@ -385,9 +385,9 @@ Four things that make the result trustworthy:
   In the same `--eval`, after the capture, count `[style]` nodes still carrying
   `margin-left: …!important` / `backdrop-filter: none !important` / `overflow: visible !important` —
   it must be 0, or the child is left looking at a page you edited.
-- **Cover the shapes, not just one page**: a centred pill (home's Min Bog shelf → `margin:auto`), a
+- **Cover the shapes, not just one page**: a centred pill (Min Bog's header count → `margin:auto`), a
   long label near its `max-width` (home's "Tal og Regning" → false ellipsis), a frosted card over
-  art (→ `backdrop-filter`), a dark skin, and phone landscape.
+  art (Min Bog's page panel → `backdrop-filter`), a dark skin, and phone landscape.
 
 To attribute a defect, get at the clone itself rather than guessing — pass a plugin and keep the
 context: `plugins: [{name:'spy', afterClone(ctx){ ref = ctx }}]` gives you `ctx.clone` (the styled

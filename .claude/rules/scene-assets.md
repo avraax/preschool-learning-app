@@ -111,6 +111,27 @@ instead, or read the manifest `index.ts` as TEXT and parse its keys. For the sam
 live in a PURE module (`src/config/avatars.ts`, `stickers.ts`) separate from the art manifest — that
 separation is what lets the server and the tests share it.
 
+## Accepting a render: the SILHOUETTE is the test, not the thumbnail
+
+A reward render's hardest job is not the book — it is the **~24px pure silhouette** the `RewardRing`
+draws in its centre while that reward is the next prize (`brightness(0)`, ~30% opacity). That is the
+"see the prize before you earn it" beat the whole reward model rests on, and it is invisible from the
+source image, from a contact sheet, and from the full-colour render.
+
+**So judge a new subject by rendering its silhouette at true size and zooming it** (nearest-neighbour,
+~6×). Ink coverage is NOT the criterion and will mislead you: a spoon at 14% coverage passes because
+bowl-plus-handle is unmistakable, while a recorder at 8% is an anonymous bar. Ask "would a 5-year-old
+know what this is from the shape alone?"
+
+**If a subject can't form a silhouette, change the SUBJECT, not the render.** A recorder is a thin
+tube — it was rendered twice (diagonal, then upright with a flared bell, which made it *narrower*) and
+both failed; swapping it for a xylophone fixed it by shape in one pass. Reward path data is safe to
+edit for any chapter no child has reached — the append-only rule protects only the frozen prefix
+(CLAUDE.md's Reward Book bullet) — and a swap costs one prebake + audit run, cheaper than a third
+render. Ride it along with whatever renders you already owe.
+
+The same reasoning applies wherever art appears very small; the ring is just the worst case.
+
 ## Keying — the core gotcha: key by green-EXCESS, not greenness
 
 **Two screens exist.** Magenta (`#FF00FF`) is the LEGACY convention and still the source for the mascots,
@@ -149,9 +170,18 @@ pure `#00FF00` and NOT raw "is it greenish" — the latter two eat the subject.
   So for a green subject raise **all three** thresholds above the subject's own green excess, picked
   from the histogram valley (the leaf: subject ~40–80, screen 180+, so vivid 150 / faint 110 /
   despill 90). **Verify by comparing the output's average opaque RGB against the source's**, not just
-  by eyeballing the cut-out. Measure per image rather than assuming — the frog, turtle and rainbow in
-  the same batches all keyed correctly on the shared defaults (their subject/screen gap was 16 vs 134,
-  2 vs 141), so a blanket "green subject ⇒ override" would be wrong too.
+  by eyeballing the cut-out.
+
+  **A saturated green REGION always needs the override; a merely green-ISH subject usually doesn't.**
+  That distinction is the whole rule, and it took three cases to see: the leaf, the puzzle's green
+  piece and the xylophone's green bar all needed one (3-for-3, same 150/110/90 window each time),
+  while the frog, turtle and rainbow keyed correctly on the defaults — their subject/screen gap was
+  16 vs 134 and 2 vs 141, i.e. barely green at all. So don't spend a measurement pass on "is this
+  green enough": if a distinct part of the subject reads green to the EYE, set the override, then
+  prove it. **The proof is to key it BOTH ways and count green pixels in the output** — on defaults
+  the xylophone's bar came out with *zero* pixels above green-excess 25 (a grey bar behind a perfect
+  silhouette), with the override 885 of them at mean RGB 123,176,85. An average-RGB check over the
+  whole subject can miss this when only one part of a multi-coloured object is green.
 
 ## Other pipeline gotchas (each bit us once)
 

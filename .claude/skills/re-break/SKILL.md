@@ -40,8 +40,28 @@ original, then check the red lines for `expect`. Exit non-zero unless every entr
 Run it from the **repo root** — relative paths break otherwise, and a mid-run crash can leave a file
 mutated.
 
+**Every source file in this repo is CRLF**, so a multi-line `from` written with `\n` never matches and
+the entry silently skips — 5 of 22 breaks vanished that way in one pass, and the harness still printed a
+pass rate. Normalise both sides to the file's own endings (`s.replace(/\r?\n/g, '\r\n')` when the file
+contains `\r\n`), and make a missed anchor exit non-zero rather than log-and-continue.
+
 Prefer breaking **both** sides where an invariant spans two layers: mutate the *table* for one entry and
 the *generator* for another. A table-only break can pass while the code ignores the table entirely.
+
+## Two shapes of vacuity this has caught (look for them in your own guards)
+
+- **A regex the target's own syntax closes early.** A source-text guard matched
+  `label=\{([^}]*)\}` to forbid a denominator — but a template literal's own `${…}` closes `[^}]*`, so
+  `` label={`${n} / ${TOTAL}`} `` captured just `` `${n `` and the guard passed against the exact string
+  it existed to forbid. Any `[^X]*` capture over code containing `X` is suspect; anchor on the real
+  delimiters (backticks here) instead. This is why the break must produce the *forbidden* value rather
+  than something merely different.
+- **Breaking HALF of a removed mechanism, when only the whole is observable.** Deleting a gold-pass wrap
+  looked untested: re-adding the wrap alone changed nothing, because the same commit had also pinned the
+  duplicate `count` at 1, so a re-visited slot just rewrote its own entry. The invariant was real; the
+  mutation was half. Restore the entire mechanism (wrap **and** the counting) and it flips. If a break
+  produces no observable difference, ask whether the mechanism has more than one part before concluding
+  the test is vacuous.
 
 ## Anchors worth targeting in this repo
 
