@@ -1,18 +1,10 @@
 # Reward art — chapters 6, 7, 8 (Reward Horizon PRD-01 W6)
 
-**Status (2026-08-03): 25 of 27 done.** 10 re-trimmed from existing game art, 15 keyed from the
-owner's batches. `rewardArtCoverage.test.ts` is red on the **two** below — that is the gate doing its
-job, not a problem to work around (there is no glyph fallback left in the app).
+**Status (2026-08-03): COMPLETE — all 27 keyed.** 10 re-trimmed from existing game art, 17 keyed from
+the owner's Gemini batches. `rewardArtCoverage.test.ts` is GREEN, and with it the whole Reward Horizon
+suite (299/299).
 
-## Outstanding — 2 renders
-
-Both fit in one message; use the batch header from §Batch 1 and this numbered pair.
-
-> 1. A ladybird seen from above, round bright red shell with black spots, small black head — clearly
->    red, not orange. `sk-mariehoene`
-> 2. A child's xylophone seen from a slight 3/4 top-down angle, filling most of the frame: a row of
->    five or six flat bars in rainbow colours mounted on a warm wooden frame, one beater resting
->    across it. Chunky and solid, not thin. `leg-xylofon`
+Kept for the next chapter, because this is the recipe that worked:
 
 ### Why Xylofon and not Fløjte
 
@@ -38,7 +30,7 @@ form for Azure reading a capitalised token as an initialism. Measured as read-as
 0.82 s of speech over 3 syllables = 0.27 s/syllable, against Papegøje 0.29 and Sommerfugl 0.29. That
 is a duration proxy, not a listen — worth an ear-check in `/voicelab` if anything sounds off.
 
-## Notes from keying the first batch
+## Notes from keying
 
 - Every render was clean #00FF00 (screen green-excess 200–211) and the Gemini ✦ watermark keyed out
   with the screen on all of them (its excess measured 131–141, above the `vivid` 90 threshold) — no
@@ -48,8 +40,12 @@ is a duration proxy, not a listen — worth an ear-check in `/voicelab` if anyth
   flattens the piece to grey behind a perfect silhouette, which every shape-based check passes.
   Confirmed fixed by comparing average subject RGB source-vs-output (Δg +4) and by checking the output
   still holds pixels at green-excess 90.
-- `sk-sommerfugl` came back warm orange as prompted, so the green-wing trap never fired.
-- All 16 are inside the 20 KB budget (13 KB worst).
+- **`leg-xylofon` has a green BAR** and needed the same override (interior excess 83, 571 px above 60,
+  screen 204). A green subject is now **3-for-3** on needing one — assume it for anything with a green
+  part rather than measuring first.
+- `sk-sommerfugl` came back warm orange as prompted, so the green-wing trap never fired, and
+  `sk-mariehoene` came back red not orange — no green anywhere in it (max excess 9).
+- All 17 are inside the 20 KB budget (13 KB worst).
 
 The three new chapters add 27 rewards. **Ten of them were already baked** as game art and are wired
 into `REWARD_REUSE` in `scripts/optimize-theme-art.mjs`, so they need re-trimming, not drawing:
@@ -126,7 +122,9 @@ square, trimmed, transparent). `rewardArtCoverage.test.ts` goes green when all 2
 > top-left key light, gentle rim light, soft contact shadow, warm and child-safe, slight 3/4 top-down
 > angle, no text or letters, flat solid #00FF00 background edge to edge, square 1:1, highest resolution.
 >
-> 1. A simple recorder-style flute lying at a slight diagonal, cream-white clay with a soft mouthpiece, finger holes visible. `leg-floejte`
+> 1. ~~A simple recorder-style flute…~~ **CUT — see §Why Xylofon and not Fløjte.** The shipped subject
+>    is a xylophone: a row of five or six flat rainbow bars on a warm wooden frame, one beater across
+>    it, chunky and filling the frame. `leg-xylofon`
 > 2. Four chunky jigsaw puzzle pieces loosely joined into a small square, each a different bright colour, thick rounded clay edges. `leg-puslespil`
 > 3. A friendly round owl perched facing forward, big soft eyes, warm brown and cream feathers, small blunt beak — nothing sharp or staring. `sk-ugle`
 > 4. A plump hen standing side-on, white and warm-brown feathers, small red comb, gentle round eye — an adult hen, not a chick. `sk-hoene`

@@ -81,6 +81,10 @@ const REWARD_KEY_OVERRIDES = {
   // leaf works. Without it the despill flattens g to max(r,b) on anything greener than ~8 and the
   // piece comes out GREY with a perfect silhouette, which every shape-based check passes.
   'leg-puslespil': { vivid: 150, faint: 110, despill: 90 },
+  // Same again for the xylophone's green BAR: interior green-excess maxes at 83 (571 px above 60)
+  // against a screen at 204, so the window between subject and screen is wide and the leaf's numbers
+  // fit. A green subject is now 3-for-3 on needing this — assume it for anything with a green part.
+  'leg-xylofon': { vivid: 150, faint: 110, despill: 90 },
 }
 
 // reward id → the shipped game asset to reuse. Kept HERE rather than in src/ because it is a
