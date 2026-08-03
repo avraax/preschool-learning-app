@@ -61,6 +61,14 @@ const SimplifiedAudioPermission: React.FC = () => {
     <AnimatePresence>
       {state.showPrompt && (
         <Box
+          // A tap ANYWHERE on this overlay dismisses it, on `click`. Two reasons, both load-bearing:
+          // (1) the overlay covers the viewport, so every tap while it is up lands on it — with the
+          //     async hide removed from initializeAudio (see SimplifiedAudioContext), a tap on the
+          //     scrim or the card body would otherwise unlock audio and leave the modal standing;
+          // (2) `click` is the only safe event to close on. The gesture's touchstart already unlocked
+          //     audio via the document-wide listener, and closing any earlier than the click makes the
+          //     tap fall through to whatever was behind the modal.
+          onClick={hidePrompt}
           sx={{
             position: 'fixed',
             top: 0,

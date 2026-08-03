@@ -232,6 +232,24 @@ re-unlocks via the document-wide listeners. Both the ✕ AND the "Start lyd nu" 
 (dismiss must not depend on the async unlock result). Re-arming the modal on every transient iOS
 suspend was the "modal won't close / button does nothing" bug.
 
+**`hidePrompt` is the ONLY thing that may close the modal, and every caller must be a `click`
+handler** (the scrim, the ✕, the button — a tap anywhere on the overlay dismisses it, since with the
+async close gone a scrim tap would otherwise unlock audio and leave the modal standing). This is a
+**tap-through** rule, not a style one: `initializeAudio` used to set `showPrompt: false` itself, and the
+provider's document-wide `touchstart` listener calls it — so its async continuation unmounted the modal
+**between the tap's `touchstart` and the `click` that same tap produces**, and the browser then
+hit-tested that click against the page the modal had been covering. One tap on "Start lyd nu" also
+pressed the answer tile behind it (owner, 2026-08-03). A click is the LAST event of a tap and its
+target is resolved before the handler runs, so closing there cannot retarget anything; closing on
+`pointerdown`/`touchstart` — **or from any async work a down-event can start** — always can. The same
+edit removed the catch branch's `showPrompt: isIOS()`, which both re-armed past the
+`userDismissed`/`hasUnlockedOnce` guards on iOS and did this exact mid-gesture close everywhere else;
+flipping `needsUserAction`/`isWorking` is enough, because the delayed effect re-consults
+`shouldShowAudioPrompt`. Guarded by source-reading assertions in `audioPromptPolicy.test.ts` (they
+strip comments first — the rule is explained in a comment right beside the code it protects).
+**Generalise it to any blocking overlay**: an overlay that closes itself off a down-event or off async
+work hands the rest of the gesture to whatever it was covering.
+
 **ONE BLOCKING OVERLAY AT A TIME.** The final render decision is `shouldRenderAudioPrompt()` in the same
 policy module: it also stands the modal down while `authUiOpen` (any auth/onboarding surface — lock
 screen, PIN pad, mandatory PIN setup, "who is playing?") and under `?nogate=1`. "Turn on sound" is

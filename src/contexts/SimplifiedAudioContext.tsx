@@ -183,11 +183,17 @@ export const SimplifiedAudioProvider: React.FC<SimplifiedAudioProviderProps> = (
       // (a later transient iOS suspension recovers silently on the next interaction, no modal).
       if (isWorking) hasUnlockedRef.current = true
 
+      // NOTE: this deliberately does NOT touch `showPrompt`. Only `hidePrompt` closes the modal, and
+      // it is only ever called from a CLICK handler — see the click-through note there. Hiding from
+      // here used to be a third, invisible dismiss path: the document-wide `touchstart` listener below
+      // calls updateUserInteraction → initializeAudio, whose async continuation resolved and unmounted
+      // the modal BETWEEN touchstart and the click that same tap produces. The browser then hit-tested
+      // the click against whatever the modal had been covering, so one tap on "Start lyd nu" also
+      // pressed the answer tile / section object behind it (owner-reported, 2026-08-03).
       setState(prev => ({
         ...prev,
         isWorking,
         needsUserAction: !isWorking,
-        showPrompt: false // Hide prompt on successful initialization
       }))
 
       initializedRef.current = true
@@ -203,11 +209,17 @@ export const SimplifiedAudioProvider: React.FC<SimplifiedAudioProviderProps> = (
         errorType: error?.constructor?.name
       })
 
+      // Same rule as the success path: don't touch `showPrompt` here. This used to force it to
+      // `isIOS()`, which was wrong in both directions — on iOS it re-armed the modal past the
+      // `userDismissed` / `hasUnlockedOnce` guards in `shouldShowAudioPrompt` (the un-dismissable-modal
+      // bug those guards exist to prevent), and everywhere else it CLOSED the modal from an async
+      // continuation, which is the mid-gesture close that made a tap fall through to the page behind.
+      // Flipping these two booleans is enough: the effect below re-runs and re-shows the modal after
+      // its delay if and only if the policy still wants it.
       setState(prev => ({
         ...prev,
         isWorking: false,
         needsUserAction: true,
-        showPrompt: isIOS() // Only show prompt on iOS where this is more critical
       }))
 
       return false
@@ -238,9 +250,15 @@ export const SimplifiedAudioProvider: React.FC<SimplifiedAudioProviderProps> = (
   }, [initializeAudio])
 
   const hidePrompt = useCallback(() => {
-    // Explicit close (✕ or the post-unlock hide): keep it closed for the session. The next real
-    // interaction still silently (re)unlocks audio via updateUserInteraction — we just never force
-    // the blocking modal back on the child.
+    // Explicit close (the button, the ✕, or a tap on the scrim): keep it closed for the session. The
+    // next real interaction still silently (re)unlocks audio via updateUserInteraction — we just never
+    // force the blocking modal back on the child.
+    //
+    // **This is the ONLY thing that may set `showPrompt: false`, and every caller must be a `click`
+    // handler.** A click is the LAST event a tap produces and its target is resolved before the handler
+    // runs, so unmounting the modal here cannot retarget anything. Close the modal from `touchstart`/
+    // `pointerdown` — or from an async continuation that can land in that window, which is how
+    // initializeAudio used to do it — and the tap's trailing click lands on whatever was behind it.
     userDismissedRef.current = true
     setState(prev => ({ ...prev, showPrompt: false }))
     updateUserInteraction()

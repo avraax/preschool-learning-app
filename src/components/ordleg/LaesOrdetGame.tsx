@@ -58,10 +58,11 @@ const LaesOrdetGame: React.FC = () => {
       if (recentRef.current.length > 6) recentRef.current.shift()
       return {
         ...toItem(w),
-        // Word shown as text, no picture in the prompt — the child must read it. `emphasizeFirstLetter`
-        // (PRD-18 W1) renders the first letter larger + accent-coloured as a SILENT "sound out this
-        // letter first" cue; the word is still never spoken (the whole point of the game).
-        questionVisual: { emoji: '', word: w.word.toUpperCase(), emphasizeFirstLetter: true }
+        // Word shown as text, no picture in the prompt — the child must read it (never spoken: the
+        // whole point of the game). Every letter renders identically; PRD-18 W1's larger/bolder
+        // first-letter decode cue was removed 2026-08-03 (owner: too much focus, and it made the
+        // uppercase remainder read as lowercase).
+        questionVisual: { emoji: '', word: w.word.toUpperCase() }
       }
     },
 
