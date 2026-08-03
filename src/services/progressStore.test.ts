@@ -14,6 +14,7 @@ import {
   CHAPTER_SIZE,
   collectedFromLevel,
   levelFromXp,
+  xpForSlots,
 } from '../config/progression.ts'
 
 // Seed lifetime XP directly, the way the DEV ?rewards= harness does. `grantXp` feeds the same
@@ -21,9 +22,6 @@ import {
 const seedRounds = (rounds: number) => {
   for (let i = 0; i < rounds; i++) progressStore.grantXp('alphabet', REWARD_XP)
 }
-// XP needed to have `n` rewards owed (n rounds in the fast tier, then 2 rounds each).
-const xpForSlots = (n: number) =>
-  Math.min(n, FAST_SLOTS) * REWARD_XP + Math.max(0, n - FAST_SLOTS) * REWARD_XP * 2
 
 // The core invariants, checked after every case — the surfaces can never disagree.
 //

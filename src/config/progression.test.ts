@@ -10,6 +10,7 @@ import {
   MAX_ROUND_XP,
   BROWSE_TASK_XP,
   xpToNext,
+  xpForSlots,
   levelFromXp,
   BLOOM_STAGE_XP,
   BLOOM_MAX_XP,
@@ -47,6 +48,33 @@ test('xpToNext: exactly two tiers — one round per slot, then two', () => {
   assert.equal(xpToNext(200), REWARD_XP * 2)
   // Strictly non-decreasing across the interesting range.
   for (let l = 1; l < 60; l++) assert.ok(xpToNext(l + 1) >= xpToNext(l))
+})
+
+test('xpForSlots: the ONE definition of "XP to have been awarded n slots" (D9)', () => {
+  // It walks the real curve, so it can never carry a stale hand-copied multiplier (it was copied
+  // verbatim in four files, one of them the shipping ?rewards=n dev seed).
+  assert.equal(xpForSlots(0), 0)
+  assert.equal(xpForSlots(1), xpToNext(1))
+  assert.equal(xpForSlots(FAST_SLOTS), FAST_SLOTS * REWARD_XP)
+  assert.equal(xpForSlots(FAST_SLOTS + 1), FAST_SLOTS * REWARD_XP + xpToNext(FAST_SLOTS + 1))
+  assert.equal(xpForSlots(-3), 0) // guarded
+  assert.equal(xpForSlots(2.9), xpForSlots(2)) // floored
+
+  // THE property that makes it usable as a seed: spending exactly xpForSlots(n) owes exactly n.
+  for (let n = 0; n <= REWARD_SLOTS; n++) {
+    assert.equal(
+      collectedFromLevel(levelFromXp(xpForSlots(n)).level),
+      n,
+      `xpForSlots(${n}) does not land exactly on slot ${n}`,
+    )
+    if (n > 0) {
+      assert.equal(
+        collectedFromLevel(levelFromXp(xpForSlots(n) - 1).level),
+        n - 1,
+        `xpForSlots(${n}) overshoots — one XP less should still owe ${n - 1}`,
+      )
+    }
+  }
 })
 
 test('levelFromXp: thresholds, remainder bookkeeping, monotonic across the tier change', () => {

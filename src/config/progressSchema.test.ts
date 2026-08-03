@@ -22,13 +22,10 @@ import {
   type PersistedProgress,
 } from './progressSchema.ts'
 import { REWARD_PATH, REWARD_SLOTS } from './stickers.ts'
-import { FAST_SLOTS, REWARD_XP, levelFromXp } from './progression.ts'
+import { REWARD_XP, levelFromXp, xpForSlots } from './progression.ts'
 
 const NOW = 1_800_000_000_000
 const DEV = 'device-A'
-
-const xpForSlots = (n: number) =>
-  Math.min(n, FAST_SLOTS) * REWARD_XP + Math.max(0, n - FAST_SLOTS) * REWARD_XP * 2
 
 /** A v4 doc with `slots` handed over and exactly enough XP to justify them. */
 function withSlots(slots: number, device = DEV): PersistedProgress {

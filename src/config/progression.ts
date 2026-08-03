@@ -34,6 +34,17 @@ export const COMPANION_STAGES = 5
 export const xpToNext = (level: number): number =>
   level <= FAST_SLOTS ? REWARD_XP : REWARD_XP * 2
 
+// Total lifetime XP needed to have been AWARDED n reward slots. DERIVED by walking the curve so a
+// tier change can never leave a hand-copied multiplier behind: this exact expression was copied
+// verbatim in four places (Reward Pacing PRD-01 D9), one of them the shipping `?rewards=n` dev seed —
+// which would have silently seeded the WRONG XP for every seeded screenshot and verification walk.
+// A wrong baseline is worse than a failing test, so this landed before the curve changed.
+export const xpForSlots = (slots: number): number => {
+  let xp = 0
+  for (let level = 1; level <= Math.max(0, Math.floor(slots)); level++) xp += xpToNext(level)
+  return xp
+}
+
 export interface LevelInfo {
   level: number // current 1-based level
   xpIntoLevel: number // XP accumulated inside the current level
