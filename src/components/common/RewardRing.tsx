@@ -173,6 +173,9 @@ const RewardRing: React.FC<RewardRingProps> = ({
 
   return (
     <Box
+      // Stable hook for the geometry probe (§8.3). NB the <svg> inside is rotated, so ITS
+      // getBoundingClientRect is the painted box (size × √2), not the layout box — measure from here.
+      data-reward-ring
       sx={{
         position: 'relative',
         width: size,

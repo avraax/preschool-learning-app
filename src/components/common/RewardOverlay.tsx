@@ -252,6 +252,10 @@ const RewardOverlay: React.FC = () => {
       {event && (
         <Box
           component={motion.div}
+          // Stable hooks for the layout/hit-test probes (§8.4): which beat is on screen, and where
+          // the scrim is. A screenshot cannot prove the menu stopped showing through it.
+          data-reward-overlay
+          data-reward-beat={beat}
           onClick={dismiss}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
