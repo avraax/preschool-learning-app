@@ -301,9 +301,14 @@ export function mergeProgress(
 
   // (a) The cursor is Σ slots, bounded by BOTH the level ceiling and the END OF THE BOOK.
   //
-  // The level half is REPAIR-ONLY and provably inert on valid input: each side satisfies
-  // slots_i ≤ collectedFromLevel(level(xp_i)), and that function is monotone in xp, so
-  // max_i slots_i ≤ collectedFromLevel(level(max_i xp_i)). It firing means one side was corrupt.
+  // The level half is NOT merely repair. It was documented as "provably inert on valid input", with a
+  // proof over `max_i slots_i` — but the cursor is `Σ slots_i`, and the curve is CONVEX (a slot costs
+  // REWARD_XP inside the fast tier, 3× after), so Σ xpForSlots(n_i) < xpForSlots(Σ n_i). Two perfectly
+  // valid devices that each played offline can therefore sum to more slots than their summed XP
+  // justifies, and this clamp fires on good data. The old 18/×2 curve did it at 15 + 15 slots; the
+  // 9/×3 curve does it at 5 + 5 (Reward Pacing PRD-01 moved the threshold down, it did not create it).
+  // Pinned by the CONVEXITY case in progressMerge.test.ts. Keeping the clamp is what keeps
+  // `grantedSlots ≤ collectedFromLevel(globalLevel())` — the inequality the read model rests on — true.
   //
   // The REWARD_SLOTS half is a REAL bound and reachable (Reward Horizon PRD-01 §3.5): each device
   // clamps its own grants at the cap, but the ledger is a G-Counter, so two devices that each filled

@@ -139,25 +139,61 @@ test('NEVER loses a reward: totalSlots(merged) ≥ max(totalSlots(a), totalSlots
   }
 })
 
-test('TWO IPADS OFFLINE: 200 + 200 XP → 400 XP and 10 slots, exactly (the §6.2b case)', () => {
-  // Each device earned 200 XP and its child physically celebrated 5 rewards.
+test('TWO IPADS OFFLINE: 160 + 160 XP → 320 XP and 8 slots, exactly (the §6.2b case)', () => {
+  // Each device earned 160 XP and its child physically celebrated 4 rewards. Both sides stay INSIDE
+  // the fast tier, where the curve is linear and the sums therefore compose exactly — see the
+  // convexity test below for what happens when they straddle the boundary.
   const a = defaultPersisted('kid-1', 'iPad-A', NOW)
-  a.ledger['iPad-A'] = { xp: 200, slots: 5, bloom: { alphabet: 200 } }
-  a.stickers.grantedSlots = 5
+  a.ledger['iPad-A'] = { xp: 160, slots: 4, bloom: { alphabet: 160 } }
+  a.stickers.grantedSlots = 4
   const b = defaultPersisted('kid-1', 'iPad-B', NOW)
-  b.ledger['iPad-B'] = { xp: 200, slots: 5, bloom: { math: 200 } }
-  b.stickers.grantedSlots = 5
+  b.ledger['iPad-B'] = { xp: 160, slots: 4, bloom: { math: 160 } }
+  b.stickers.grantedSlots = 4
 
   const { merged, report } = mergeProgress(a, b, CTX)
-  assert.equal(totalXp(merged), 400, 'a naive max() would have said 200')
-  assert.equal(totalSlots(merged), 10, 'and would have erased 5 celebrated rewards')
-  assert.equal(merged.stickers.grantedSlots, 10)
+  assert.equal(totalXp(merged), 320, 'a naive max() would have said 160')
+  assert.equal(totalSlots(merged), 8, 'and would have erased 4 celebrated rewards')
+  assert.equal(merged.stickers.grantedSlots, 8)
   assert.equal(report.clampedSlots, false, 'valid input must never trip the repair clamp')
-  assert.equal(owedRewards(merged), 0, '400 XP owes exactly 10 fast-tier slots')
+  assert.equal(owedRewards(merged), 0, '320 XP owes exactly 8 fast-tier slots')
   assert.deepEqual(progressInvariantViolations(merged), [])
   // Both sections' bloom survives.
-  assert.equal(bloomXpFor(merged, 'alphabet'), 200)
-  assert.equal(bloomXpFor(merged, 'math'), 200)
+  assert.equal(bloomXpFor(merged, 'alphabet'), 160)
+  assert.equal(bloomXpFor(merged, 'math'), 160)
+})
+
+// The level half of the merge clamp is documented in progressMerge.ts as "repair-only, provably inert
+// on valid input". That proof is stated over `max_i slots_i`, but the cursor is `Σ slots_i` — and for
+// any CONVEX cost curve Σ xpForSlots(n_i) < xpForSlots(Σ n_i), so two VALID offline devices can sum to
+// more slots than their summed XP justifies and the clamp fires on good data.
+//
+// This is NOT new in Reward Pacing PRD-01 and the merge is deliberately untouched by it: the old
+// 18/×2 curve did exactly the same at 15 + 15 slots (1200 XP summed against the 1680 that 30 slots
+// cost). Making the fast tier shorter only moves the threshold down, from ~15 slots each to ~5. Pinned
+// here so the behaviour is a known, deliberate property rather than a surprise in a bug report — the
+// clamp is what keeps `grantedSlots ≤ collectedFromLevel(globalLevel())` true, and that inequality is
+// the invariant the whole read model rests on.
+test('CONVEXITY: two offline devices straddling the tier boundary get clamped, by design', () => {
+  const a = defaultPersisted('kid-1', 'iPad-A', NOW)
+  a.ledger['iPad-A'] = { xp: xpForSlots(5), slots: 5, bloom: { alphabet: xpForSlots(5) } }
+  a.stickers.grantedSlots = 5
+  const b = defaultPersisted('kid-1', 'iPad-B', NOW)
+  b.ledger['iPad-B'] = { xp: xpForSlots(5), slots: 5, bloom: { math: xpForSlots(5) } }
+  b.stickers.grantedSlots = 5
+
+  // 5 slots cost 200 each, but 10 slots cost 480 — so 400 XP justifies only 9.
+  assert.equal(xpForSlots(5) * 2, 400)
+  assert.equal(xpForSlots(10), 480)
+
+  const { merged, report } = mergeProgress(a, b, CTX)
+  assert.equal(totalXp(merged), 400, 'XP still sums — the G-Counter is never the thing that loses')
+  assert.equal(report.clampedSlots, true)
+  assert.equal(merged.stickers.grantedSlots, 9, 'clamped to what the summed XP actually justifies')
+  // The point of the clamp: whatever it costs, the invariant holds and nothing owes twice.
+  assert.deepEqual(progressInvariantViolations(merged), [])
+  assert.equal(owedRewards(merged), 0)
+  // The ledger is trimmed to match, so `grantedSlots === Σ ledger.slots` stays true.
+  assert.equal(totalSlots(merged), 9)
 })
 
 test('a device only ever increments ITS OWN entry, so a stale remote copy cannot roll us back', () => {
@@ -254,13 +290,15 @@ test('newIds NEVER resurrects: a dismissed badge stays dismissed after a merge',
 })
 
 test('a genuinely NEW reward from another device still shows as new', () => {
-  const local = doc(5, 'device-A', { seen: 5 })
-  const remote = doc(7, 'device-B', { seen: 5 })
+  // Both sides inside the fast tier so the summed XP justifies the summed slots exactly — this test
+  // is about the `seen` cursor, and a clamp firing here would make it measure the wrong thing.
+  const local = doc(3, 'device-A', { seen: 3 })
+  const remote = doc(5, 'device-B', { seen: 3 })
   const { merged } = mergeProgress(local, remote, CTX)
-  // Σ slots = 12, and the seen cursor stays at 5 → slots 5..11 are new.
-  assert.equal(merged.stickers.grantedSlots, 12)
-  assert.equal(merged.stickers.seenThroughSlot, 5)
-  assert.equal(derive(merged, NOW).stickers.newIds.length, 7)
+  // Σ slots = 8, and the seen cursor stays at 3 → slots 3..7 are new.
+  assert.equal(merged.stickers.grantedSlots, 8)
+  assert.equal(merged.stickers.seenThroughSlot, 3)
+  assert.equal(derive(merged, NOW).stickers.newIds.length, 5)
 })
 
 test('a seen cursor ahead of the granted prefix is clamped, not trusted', () => {
@@ -457,15 +495,17 @@ test('the guard does NOT suppress a real pending ceremony (debt keeps the cursor
 // ----- report / rev bookkeeping -----------------------------------------------------------------
 
 test('rev advances only when something changed, and the report describes the delta', () => {
-  const a = doc(4, 'device-A')
-  const b = doc(9, 'device-B')
+  // Fast tier both sides (see the CONVEXITY case) — this test is about `rev` and the delta report,
+  // not about the clamp.
+  const a = doc(3, 'device-A')
+  const b = doc(5, 'device-B')
   const { merged, report } = mergeProgress(a, b, CTX)
   assert.equal(report.changed, true)
   assert.equal(merged.sync.rev, Math.max(a.sync.rev, b.sync.rev) + 1)
   assert.equal(report.xpBefore, totalXp(a))
   assert.equal(report.xpAfter, totalXp(merged))
-  assert.equal(report.slotsBefore, 4)
-  assert.equal(report.slotsAfter, 13)
+  assert.equal(report.slotsBefore, 3)
+  assert.equal(report.slotsAfter, 8)
   // syncedRev is OUR numbering and must not be touched by a merge.
   assert.equal(merged.sync.syncedRev, a.sync.syncedRev)
   assert.equal(merged.sync.originDevice, a.sync.originDevice)

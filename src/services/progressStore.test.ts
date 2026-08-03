@@ -178,36 +178,42 @@ test('chapter completion fires on slot 9 and 18 — and only there', () => {
   // The book's next preview crosses into chapter 2.
   assert.equal(progressStore.nextReward()?.chapter.id, 'koeretoejer')
 
-  // Slots 10..18 (9 more rounds): only the last of them, slot 18, closes chapter 2.
-  seedRounds(CHAPTER_SIZE)
+  // Chapter 1 was the whole fast tier (Reward Pacing D2) — from here a slot costs THREE rounds.
+  assert.equal(progressStore.collectedCount(), FAST_SLOTS)
+
+  // Slots 10..18 now take 27 rounds, and only the last of them, slot 18, closes chapter 2.
+  seedRounds(3 * CHAPTER_SIZE)
   grants = progressStore.grantPendingRewards()
   assert.equal(grants.length, CHAPTER_SIZE)
   assert.equal(grants.filter((g) => g.chapterCompleted).length, 1)
   const closer = grants.find((g) => g.chapterCompleted)!
   assert.equal(closer.slot, 2 * CHAPTER_SIZE - 1)
   assert.equal(closer.chapter.id, 'koeretoejer')
-  assert.equal(progressStore.collectedCount(), FAST_SLOTS)
+  assert.equal(progressStore.collectedCount(), 2 * CHAPTER_SIZE)
   assert.equal(progressStore.companionStage(), 2)
   assertInvariant()
 })
 
-test('chapters 3-5 cost two rounds per reward (the slow tier), still one slot at a time', () => {
-  seedRounds(FAST_SLOTS) // through slot 18
+test('chapter 2 onward costs THREE rounds per reward (the slow tier), still one slot at a time', () => {
+  seedRounds(FAST_SLOTS) // through slot 9 — chapter 1, the whole fast tier
   progressStore.grantPendingRewards()
   assert.equal(progressStore.collectedCount(), FAST_SLOTS)
 
-  // ONE more round is not enough now.
+  // ONE more round is not enough now. Nor are two — this is the pacing promise, at the store level.
+  seedRounds(1)
+  assert.deepEqual(progressStore.grantPendingRewards(), [])
+  assert.equal(progressStore.collectedCount(), FAST_SLOTS)
   seedRounds(1)
   assert.deepEqual(progressStore.grantPendingRewards(), [])
   assert.equal(progressStore.collectedCount(), FAST_SLOTS)
 
-  // The second round lands slot 19 — the first of chapter 3 (Mad).
+  // The THIRD round lands slot 10 — the first of chapter 2 (Køretøjer).
   seedRounds(1)
   const grants = progressStore.grantPendingRewards()
   assert.equal(grants.length, 1)
   assert.equal(grants[0].slot, FAST_SLOTS)
-  assert.equal(grants[0].reward.id, 'mad-aeble')
-  assert.equal(grants[0].chapter.id, 'mad')
+  assert.equal(grants[0].reward.id, 'kt-bil')
+  assert.equal(grants[0].chapter.id, 'koeretoejer')
   assertInvariant()
 })
 
@@ -220,7 +226,8 @@ test('book completion fires exactly once, on the LAST slot of the last chapter',
   assert.equal(progressStore.companionStage(), 4) // fully grown long before the end now
   assert.equal(progressStore.nextReward()?.reward.id, REWARD_PATH[REWARD_SLOTS - 1].id)
 
-  progressStore.grantXp('alphabet', REWARD_XP * 2)
+  // The cost of the final slot, read off the curve rather than re-typed as a multiplier.
+  progressStore.grantXp('alphabet', xpForSlots(REWARD_SLOTS) - xpForSlots(REWARD_SLOTS - 1))
   grants = progressStore.grantPendingRewards()
   assert.equal(grants.length, 1)
   assert.equal(grants[0].slot, REWARD_SLOTS - 1)

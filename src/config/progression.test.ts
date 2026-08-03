@@ -26,7 +26,7 @@ import {
 import { REWARD_SLOTS } from './stickers.ts'
 
 test('economy constants hang together', async () => {
-  assert.equal(FAST_SLOTS, CHAPTER_SIZE * 2) // chapters 1-2 are the fast tier
+  assert.equal(FAST_SLOTS, CHAPTER_SIZE * 1) // chapter 1 — and ONLY chapter 1 — is the fast tier
   assert.equal(REWARD_XP, 40)
   // REWARD_SLOTS / CHAPTER_COUNT are DERIVED and live in stickers.ts now — pinned in stickers.test.ts.
   // What must hold HERE is that progression.ts does not re-export them, or "add a chapter" grows a
@@ -36,16 +36,19 @@ test('economy constants hang together', async () => {
   assert.equal('CHAPTER_COUNT' in mod, false)
 })
 
-test('xpToNext: exactly two tiers — one round per slot, then two', () => {
+test('xpToNext: exactly two tiers — one round per slot, then THREE', () => {
   assert.equal(xpToNext(1), REWARD_XP) // first reward costs one round
   assert.equal(xpToNext(0), REWARD_XP) // guarded floor
-  assert.equal(xpToNext(FAST_SLOTS), REWARD_XP) // level 18 still fast (awards slot 18)
-  assert.equal(xpToNext(FAST_SLOTS + 1), REWARD_XP * 2) // level 19 → the slow tier
-  assert.equal(xpToNext(45), REWARD_XP * 2)
-  // Stays at two rounds per reward FOREVER. There is deliberately no third, slower tier: that is
-  // exactly the grind the extra chapters exist to avoid (Reward Horizon PRD-01 §3.4).
-  assert.equal(xpToNext(60), REWARD_XP * 2)
-  assert.equal(xpToNext(200), REWARD_XP * 2)
+  assert.equal(xpToNext(FAST_SLOTS), REWARD_XP) // level 9 still fast (awards slot 9, closing ch. 1)
+  assert.equal(xpToNext(FAST_SLOTS + 1), REWARD_XP * 3) // level 10 → the slow tier, ~3 rounds
+  assert.equal(xpToNext(45), REWARD_XP * 3)
+  // Stays at three rounds per reward FOREVER. There is deliberately no third, slower tier: that is
+  // exactly the grind the extra chapters exist to avoid (Reward Pacing PRD-01 D3 / §9).
+  assert.equal(xpToNext(60), REWARD_XP * 3)
+  assert.equal(xpToNext(200), REWARD_XP * 3)
+  // TWO distinct values across the whole curve — a third tier would show up here as a third value.
+  const tiers = new Set(Array.from({ length: 400 }, (_, i) => xpToNext(i + 1)))
+  assert.deepEqual([...tiers].sort((a, b) => a - b), [40, 120])
   // Strictly non-decreasing across the interesting range.
   for (let l = 1; l < 60; l++) assert.ok(xpToNext(l + 1) >= xpToNext(l))
 })
@@ -80,20 +83,21 @@ test('xpForSlots: the ONE definition of "XP to have been awarded n slots" (D9)',
 test('levelFromXp: thresholds, remainder bookkeeping, monotonic across the tier change', () => {
   assert.equal(levelFromXp(0).level, 1)
   assert.equal(levelFromXp(39).level, 1)
-  assert.equal(levelFromXp(40).level, 2) // first reward
+  assert.equal(levelFromXp(40).level, 2) // first reward — still one round (level 1 costs REWARD_XP)
   assert.equal(levelFromXp(79).level, 2)
-  assert.equal(levelFromXp(80).level, 3)
+  assert.equal(levelFromXp(80).level, 3) // …and so is the second, inside chapter 1
 
-  // 18 fast levels cost 18 × 40 = 720 XP and land on level 19 (18 rewards collected).
-  assert.equal(levelFromXp(720).level, 19)
-  assert.equal(collectedFromLevel(levelFromXp(720).level), FAST_SLOTS)
-  // From there each reward costs 80: level 20 at 800.
-  assert.equal(levelFromXp(799).level, 19)
-  assert.equal(levelFromXp(800).level, 20)
+  // 9 fast levels cost 9 × 40 = 360 XP and land on level 10 (chapter 1 full, 9 rewards collected).
+  assert.equal(xpForSlots(FAST_SLOTS), 360)
+  assert.equal(levelFromXp(360).level, 10)
+  assert.equal(collectedFromLevel(levelFromXp(360).level), FAST_SLOTS)
+  // From there each reward costs 120 (three rounds): level 11 at 480, not 400.
+  assert.equal(levelFromXp(479).level, 10)
+  assert.equal(levelFromXp(480).level, 11)
 
-  // Filling the whole book = 18×40 + 54×80 = 720 + 4320 = 5040 XP → level 73, 72 collected.
-  const full = FAST_SLOTS * REWARD_XP + (REWARD_SLOTS - FAST_SLOTS) * REWARD_XP * 2
-  assert.equal(full, 5040)
+  // Filling the whole book = 9×40 + 63×120 = 360 + 7560 = 7920 XP → level 73, 72 collected.
+  const full = xpForSlots(REWARD_SLOTS)
+  assert.equal(full, 7920)
   assert.equal(levelFromXp(full).level, REWARD_SLOTS + 1)
   assert.equal(collectedFromLevel(levelFromXp(full).level), REWARD_SLOTS)
 
@@ -169,11 +173,16 @@ test('one round can never skip a slot in the SLOW tier (and the fast-tier case i
   assert.equal(8 * taskXp(8, true) + roundXp({ mistakes: 0, anyNewBest: true }), MAX_ROUND_XP)
   assert.equal(MAX_ROUND_XP, 62)
 
-  // Slow tier (80/slot): even starting 1 XP short of a slot, a max round crosses at most ONE.
-  const slowStart = 18 * REWARD_XP + REWARD_XP * 2 - 1 // 1 XP shy of slot 20
+  // Slow tier (120/slot): even starting 1 XP short of a slot, a max round crosses at most ONE.
+  const slowStart = xpForSlots(FAST_SLOTS + 1) - 1 // 1 XP shy of slot 10
   const slowBefore = collectedFromLevel(levelFromXp(slowStart).level)
   const slowAfter = collectedFromLevel(levelFromXp(slowStart + MAX_ROUND_XP).level)
   assert.equal(slowAfter - slowBefore, 1)
+
+  // …and it now can't even reach a whole slot from a standing start — 62 < 120. So past slot 9 the
+  // trailing-grant path in RewardOverlay is unreachable from PLAY (Reward Pacing §4.2). It is kept as
+  // the cross-device CRDT-merge net, not pruned; this pins WHY it looks dead.
+  assert.ok(MAX_ROUND_XP < xpToNext(FAST_SLOTS + 1))
 
   // Fast tier (40/slot): 62 XP CAN cross two — the PRD's "max round = 54" understated it by treating
   // perfect and new-best as alternatives. grantPendingRewards() awards every owed slot in one commit
@@ -194,7 +203,7 @@ test('one round can never skip a slot in the SLOW tier (and the fast-tier case i
 test('collectedFromLevel: THE mapping (level 1 = empty book)', () => {
   assert.equal(collectedFromLevel(1), 0)
   assert.equal(collectedFromLevel(2), 1) // reaching level 2 awards slot 1
-  assert.equal(collectedFromLevel(19), 18) // end of the fast tier
+  assert.equal(collectedFromLevel(10), 9) // end of the fast tier — chapter 1 full
   assert.equal(collectedFromLevel(73), 72) // book full
   // The LEVEL curve keeps climbing past the end of the book — it is the debt CEILING, not the book.
   // `owedRewards` is what clamps, so the extra levels simply owe nothing (see progressStore.test.ts).
@@ -275,19 +284,51 @@ test('bloomStage / bloomFill: UNCHANGED by the reward-book bump (D7 — the worl
   assert.equal(bloomFill(-50), 0)
 })
 
-test('the journey is ≈126 rounds — same curve, longer path (Reward Horizon §3.4)', () => {
-  // A completed round with no bonuses is REWARD_XP; walk rounds until the book is full.
-  let xp = 0
-  let rounds = 0
-  while (collectedFromLevel(levelFromXp(xp).level) < REWARD_SLOTS && rounds < 1000) {
-    xp += REWARD_XP
-    rounds++
+// THE PACING PIN (Reward Pacing PRD-01 §8.2). These are LITERALS on purpose: they are the owner's
+// actual complaint turned into numbers, and every one of them moves if `xpToNext`'s multiplier or
+// `FAST_SLOTS` is touched. Deriving them from the curve would make this file agree with itself while
+// the product regressed — the same vacuous shape CLAUDE.md warns about for the prebake enumerator.
+test('the pacing: a sticker costs ~3 rounds and the book ~172 (Reward Pacing D1/D2)', () => {
+  // Walk whole rounds until the book is full, at both ends of a round's real XP range.
+  const roundsToFillAt = (perRound: number) => {
+    let xp = 0
+    let rounds = 0
+    while (collectedFromLevel(levelFromXp(xp).level) < REWARD_SLOTS && rounds < 5000) {
+      xp += perRound
+      rounds++
+    }
+    assert.equal(collectedFromLevel(levelFromXp(xp).level), REWARD_SLOTS, 'never filled the book')
+    return rounds
   }
-  assert.equal(collectedFromLevel(levelFromXp(xp).level), REWARD_SLOTS)
-  assert.equal(rounds, 126) // 18 fast + 108 slow (54 slots × 2 rounds)
-  assert.equal(xp, 5040)
-  // And chapters 1-2 really are one-per-round.
+
+  // The whole book, as XP. 9 × 40 + 63 × 120.
+  assert.equal(xpForSlots(REWARD_SLOTS), 7920)
+
+  // The range: a flat-40 round (no first-tries, no bonuses) → 198; a maximal 62-XP round → 128.
+  // Before this change they were 126 and 81.
+  assert.equal(roundsToFillAt(REWARD_XP), 198)
+  assert.equal(roundsToFillAt(MAX_ROUND_XP), 128)
+  // An ORDINARY round (8 tasks all first-try, no bonuses = 48) sits in between at ~165 — this is the
+  // "~172 rounds / ~8 weeks at 3 rounds a day" promise in §4.1.
+  assert.equal(roundsToFillAt(8 * taskXp(8, true)), 165)
+
+  // A sticker costs ~3 ordinary rounds past chapter 1 — the headline promise. 120 / 46ish.
+  assert.equal(xpToNext(FAST_SLOTS + 1) / REWARD_XP, 3)
+
+  // The ring therefore moves about a THIRD per round instead of past-full. §1.1's table, as a range:
+  // one flat round over one slow slot.
+  const arcPerRound = REWARD_XP / xpToNext(FAST_SLOTS + 1)
+  assert.ok(arcPerRound > 0.3 && arcPerRound < 0.4, `the ring moves ${arcPerRound} per round`)
+  // …and one ANSWER moves it ~4-5%, not 12-15% (D5's reason for deleting the "+N" flyer: at this
+  // rate the numeral is meaningless).
+  const arcPerAnswer = taskXp(8, true) / xpToNext(FAST_SLOTS + 1)
+  assert.ok(arcPerAnswer > 0.04 && arcPerAnswer < 0.051, `one answer moves ${arcPerAnswer}`)
+
+  // And chapter 1 — ONLY chapter 1 — really is one-per-round.
   for (let r = 1; r <= FAST_SLOTS; r++) {
     assert.equal(collectedFromLevel(levelFromXp(r * REWARD_XP).level), r)
   }
+  assert.equal(collectedFromLevel(levelFromXp((FAST_SLOTS + 1) * REWARD_XP).level), FAST_SLOTS)
+  assert.equal(collectedFromLevel(levelFromXp((FAST_SLOTS + 2) * REWARD_XP).level), FAST_SLOTS)
+  assert.equal(collectedFromLevel(levelFromXp((FAST_SLOTS + 3) * REWARD_XP).level), FAST_SLOTS + 1)
 })

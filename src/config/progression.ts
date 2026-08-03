@@ -10,7 +10,7 @@
 
 // ----- The reward path shape ------------------------------------------------------------------
 export const REWARD_XP = 40 // XP that equals one completed round
-export const FAST_SLOTS = 18 // slots 1..18 land one-per-round (chapters 1-2)
+export const FAST_SLOTS = 9 // slots 1..9 land one-per-round — chapter 1 IS the tutorial page
 export const CHAPTER_SIZE = 9
 
 // How many baked companion growth stages every world ships (SceneAssets.companionStages).
@@ -26,13 +26,24 @@ export const COMPANION_STAGES = 5
 // shared-narration-clips.js as well as Vite).
 
 // ----- Global level curve ---------------------------------------------------------------------
-// 1-based level → XP required to advance from that level to the NEXT one. Two tiers only (PRD §5):
-// the first 18 slots cost one round each so the book visibly moves from the very first session;
-// from slot 19 on a reward costs ~2 rounds. There is deliberately NO third, slower tier — that is the
-// grind the extra chapters exist to avoid. The curve has no ceiling; the BOOK does (see
-// `owedRewards`, which clamps at REWARD_SLOTS now that the gold pass is gone).
+// 1-based level → XP required to advance from that level to the NEXT one. **Exactly two tiers, still**
+// (Reward Pacing PRD-01 D3) — only the boundary and the multiplier moved, from 18/×2 to 9/×3.
+//
+// Chapter 1 (slots 1..9) costs one round each: dense-then-thin is the *recommended* shape for a token
+// system, not a compromise — you establish the behaviour on continuous reinforcement, then thin the
+// schedule (D2, §2.1). So the first page is a rule the child can experience: it fills one per round,
+// and the page-complete beat is taught early. From slot 10 on a reward costs THREE rounds.
+//
+// The pacing promise this buys, measured (§4.1): the ring moves ~38% per round instead of ~115% —
+// i.e. it is a progress meter rather than a spinner that resets — and the 72-slot book costs 7920 XP,
+// ~172 rounds of ordinary play (~8 weeks at 3 rounds/day) instead of ~110.
+//
+// There is deliberately NO third, slower tier — that is the grind the extra chapters exist to avoid,
+// and slowing further is the one direction the evidence says can't overshoot into harm (§2.2), which
+// is why the answer to "still too fast" is a new chapter, never a fourth multiplier. The curve has no
+// ceiling; the BOOK does (see `owedRewards`, which clamps at REWARD_SLOTS now the gold pass is gone).
 export const xpToNext = (level: number): number =>
-  level <= FAST_SLOTS ? REWARD_XP : REWARD_XP * 2
+  level <= FAST_SLOTS ? REWARD_XP : REWARD_XP * 3
 
 // Total lifetime XP needed to have been AWARDED n reward slots. DERIVED by walking the curve so a
 // tier change can never leave a hand-copied multiplier behind: this exact expression was copied
@@ -132,8 +143,12 @@ export function roundXp(i: RoundXpInput): number {
 // (8 × taskXp(8,true) = 48) + the perfect bonus (6) + a new personal best (8) = 62.
 //
 // NB the PRD quotes 54 here, having treated "perfect" and "new best" as alternatives; they aren't —
-// a perfect round very often IS a new best (3★ / 8 correct). 62 still can't cross two slots in the
-// SLOW tier (80/slot), but in the FAST tier (40/slot) a 62-XP round landing mid-slot can cross two.
-// That's precisely why `grantPendingRewards()` awards EVERY owed slot in one commit and the ceremony
-// trails the extras — the multi-slot path is a real (if rare) case, not just a browse-binge net.
+// a perfect round very often IS a new best (3★ / 8 correct).
+//
+// A single round can cross two slots only while a slot costs ≤ 62, i.e. **only inside the fast tier**
+// now that the slow tier is 120/slot. Past slot 9 the trailing-grant path in `RewardOverlay` is
+// therefore unreachable from play — and it is KEPT anyway (Reward Pacing PRD-01 §4.2): it is still
+// the net for a cross-device CRDT merge (the XP ledger is a G-Counter, so two devices that each
+// played offline sum), and `grantPendingRewards()` handing over every owed slot in ONE commit is a
+// load-bearing invariant, not an optimisation for the rare double.
 export const MAX_ROUND_XP = 62
