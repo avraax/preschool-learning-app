@@ -60,7 +60,38 @@ node .claude/skills/ui-screenshot/cdp.mjs --url http://127.0.0.1:5173/math/count
   --w 900 --h 440 --wait-for '#root > *' --out landscape.png
 ```
 
-### Driving dnd-kit drag-and-drop (the Farver games)
+### Driving a TAP (and why a bad probe reports a working tap as broken)
+Every drag game also answers on a tap and vice versa (`.claude/rules/drag-and-drop.md`), so a gesture
+sweep has to drive both. `--click`'s `element.click()` fires no `pointerdown`, and the tap path measures
+pointer travel — so dispatch the real trio at ONE point: `pointerdown`, `pointerup`, then a `click`,
+all with the same `clientX/Y`.
+
+**Dispatch on the DEEPEST element, not the wrapper.** A finger lands on the innermost node and the click
+bubbles up; a synthetic click on an ancestor never reaches a descendant `<button>`'s handler — and the
+tap handlers live on those buttons (`TactileTile`, `AnswerTile`). Getting this wrong is a **false
+negative**: it reported Stav Ordet's tap as broken when the product was fine, which is the expensive
+direction of wrong. Resolve the target as `el.querySelector('button') || el` in both your tap AND drag
+helpers.
+
+```js
+const hit = el.querySelector('button') || el
+const r = hit.getBoundingClientRect(), x = Math.round(r.left+r.width/2), y = Math.round(r.top+r.height/2)
+fire('pointerdown',x,y,hit); await sleep(30); fire('pointerup',x,y,hit)
+hit.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,composed:true,clientX:x,clientY:y}))
+```
+
+Then prove a drag does **not** also fire that tap — one gesture must not answer twice. Dispatch the
+trailing click your helper would suppress (a browser fires one whenever pointerdown/up share an
+ancestor) and assert nothing scored, in both shapes: **release ~70px into empty space**, and a
+**wiggle-and-return** that moves well past the threshold and releases back on the tile.
+
+Pick the observable per game — a count is usually the honest one (draggables remaining,
+`[aria-disabled="true"]`, `[data-tile-state]` leaving `idle`); see the difficulty-sweep table below for
+which signal each family actually moves. Two that mislead: Hvilken Farve?'s prompt object is **not**
+inside `[data-prompt-focus]` (its "solved" signal is an `<img>` appearing inside the swatch droppable),
+and a correct answer ADVANCES the question, so allow >2s before re-reading state.
+
+### Driving dnd-kit drag-and-drop (the drag games)
 `--click` uses `element.click()`, which fires **no** `pointerdown` — so it cannot exercise a
 `@dnd-kit` drag. `--eval` runs with `awaitPromise:true`, so pass an async IIFE that dispatches a
 synthetic PointerEvent sequence: `pointerdown` on the draggable, a few `pointermove`s on `document`
