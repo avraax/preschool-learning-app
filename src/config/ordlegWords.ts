@@ -21,15 +21,34 @@ export interface OrdlegWord {
 }
 
 /**
+ * Questions in a Læs Ordet round. Exported so the POOL can be guarded against it — a level whose word
+ * pool is smaller than this has to repeat words inside a single round, which reads as the game being
+ * stuck rather than easy. `LaesOrdetGame` reads this for its `RoundConfig`, so the two can't drift.
+ */
+export const READING_ROUND_LENGTH = 8
+
+/**
  * Læs Ordet's pool. Concrete, depictable, and **2–3 letters at every level** (standing owner rule: he
  * can't spell yet) — Svær's extra challenge is more distractor PICTURES, never a longer prompt word.
  */
 export const READING_WORDS: OrdlegWord[] = [
+  // ---- 2 letters: the whole pool at Let (ORDLEG_READ.let.wordMaxLen) ----------------------------
+  // There were only FIVE of these, so a Let round of 8 questions had to show most words twice
+  // (owner, 2026-08-03 — the same "reads as stuck rather than easy" complaint that grew Ram Farven's
+  // Let target pool). `bi`/`sø`/`ål`/`te` were already shipping in SPELLING_WORDS with baked art and
+  // prebaked narration, so they cost nothing — and they bring Ø and Å into the reading pool, which
+  // previously practised only Æ (via `æg`). Keep this list ≥ the round length; `ordlegWords.test.ts`
+  // fails the build otherwise.
   { word: 'ko', art: 'ko' },
   { word: 'is', art: 'is' },
   { word: 'æg', art: 'aeg' },
   { word: 'ur', art: 'ur' },
   { word: 'so', art: 'so' },
+  { word: 'bi', art: 'bi' },
+  { word: 'sø', art: 'soe' },
+  { word: 'ål', art: 'aal' },
+  { word: 'te', art: 'te' },
+  // ---- 3 letters: added at Normal and above ----------------------------------------------------
   { word: 'kat', art: 'kat' },
   { word: 'sol', art: 'sol' },
   { word: 'hus', art: 'hus' },

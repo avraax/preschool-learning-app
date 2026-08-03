@@ -50,7 +50,7 @@ import {
 import { sequenceFactText, sequenceNumbers, sequenceStarts } from './gamePhrases.ts'
 import { confusablePoolFor } from './letterConfusables.ts'
 import { WORD_LETTERS } from './letterWords.ts'
-import { ALL_SPELLING_WORDS, READING_WORDS, spellingWordsFor, spokenOrdlegWords } from './ordlegWords.ts'
+import { ALL_SPELLING_WORDS, READING_ROUND_LENGTH, READING_WORDS, spellingWordsFor, spokenOrdlegWords } from './ordlegWords.ts'
 import { collectNarrationClips } from '../../shared-narration-clips.js'
 
 // Difficulty PRD-01 §7. Three independent kinds of guard, because each one alone passes vacuously:
@@ -522,7 +522,22 @@ test('Læs Ordet never grows past 3-letter prompt words at any level', () => {
   // Standing owner rule: he can't spell yet, so Svær's axis is picture COUNT, never a longer word.
   for (const level of LEVELS) assert.ok(ORDLEG_READ[level].wordMaxLen <= 3)
   for (const w of READING_WORDS) assert.ok(w.word.length <= 3, `"${w.word}" is too long for Læs Ordet`)
-  assert.ok(READING_WORDS.filter((w) => w.word.length === 2).length >= 4, 'Let needs a 2-letter pool')
+})
+
+// A pool smaller than the round has to repeat words inside one round, which reads as the game being
+// stuck rather than easy — the same complaint that grew Ram Farven's Let target pool. Let's pool WAS 5
+// words for 8 questions, and the old guard here asked only for `>= 4`, so it passed happily. Tying it
+// to READING_ROUND_LENGTH is what makes the rule real: raise the round and this fails first.
+test('every level has at least a full round of distinct Læs Ordet words', () => {
+  for (const level of LEVELS) {
+    const { wordMaxLen } = ORDLEG_READ[level]
+    const pool = READING_WORDS.filter((w) => w.word.length <= wordMaxLen)
+    assert.ok(
+      pool.length >= READING_ROUND_LENGTH,
+      `Læs Ordet at ${level} draws from ${pool.length} words for a ${READING_ROUND_LENGTH}-question round`,
+    )
+    assert.equal(new Set(pool.map((w) => w.word)).size, pool.length, `${level} pool has a duplicate`)
+  }
 })
 
 test('memory star thresholds scale with the board and keep the 10-pair curve', () => {

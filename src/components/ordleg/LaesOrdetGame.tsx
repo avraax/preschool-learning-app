@@ -4,7 +4,7 @@ import { getCategoryTheme } from '../../config/categoryThemes'
 import { OrdlegRepeatButton } from '../common/RepeatButton'
 import { progressStore } from '../../services/progressStore'
 import { ORDLEG_READ } from '../../config/difficulty'
-import { READING_WORDS, type OrdlegWord } from '../../config/ordlegWords'
+import { READING_ROUND_LENGTH, READING_WORDS, type OrdlegWord } from '../../config/ordlegWords'
 import { shuffle } from '../../utils/shuffle'
 import { ordlegArt } from '../../assets/games/ordleg'
 
@@ -109,7 +109,9 @@ const LaesOrdetGame: React.FC = () => {
     // everything: rounds, first-try/streak tracking, celebration tiers, wrong SFX, and the
     // RoundResultScreen → progressStore.recordRoundResult('ordleg.read', …).
     // Star thresholds come from the difficulty spine (Difficulty PRD-01 W6).
-    round: { length: 8 },
+    // From config, not a literal: `ordlegWords.test.ts` guards every level's word pool against it, so
+    // a pool can never again be smaller than the round it has to fill (Let had 5 words for 8 questions).
+    round: { length: READING_ROUND_LENGTH },
     gameId: 'ordleg.read',
 
     // Never-fail hint (PRD-05 P1): after 2 wrong picture taps the correct picture pulses.
