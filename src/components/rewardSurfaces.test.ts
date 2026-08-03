@@ -124,6 +124,51 @@ test('the ring renders ONE text node: the count badge', () => {
   assert.ok(!code.includes('contactShadow'), 'the badge has depth — it must be a flat disc')
 })
 
+// The ceremony's element list is a DECISION, not an accident (Reward Pacing D6), and every deleted
+// element reads as a harmless addition if someone puts it back — "show them where it went on the
+// page", "say Nyt klistermærke! so they can read along". That is exactly the shape this file exists
+// to guard: the owner's screenshot was eight stacked elements, each individually defensible.
+test('the ceremony is one picture — the dots and the banner stay deleted', () => {
+  const overlay = codeOf('components/common/RewardOverlay.tsx')
+  const reveal = codeOf('components/common/StickerReveal.tsx')
+
+  // The 3x3 chapter dot grid. It answered "which of 9 is this?" — a 6-8-year-old competence — and
+  // Min Bog answers it properly, with the pictures.
+  assert.ok(!overlay.includes('CHAPTER_SIZE'), 'the chapter dot grid is back in the ceremony')
+  assert.ok(!/gridTemplateColumns/.test(overlay), 'the ceremony grew a grid again')
+
+  // The banner. Two texts around one picture IS the clutter, and the spoken line says these words.
+  assert.ok(!reveal.includes('Nyt klistermærke!'), 'the reveal banner is back')
+
+  // But the NUMBER is only MOVED, never removed: the grant happens at the start of the beats effect,
+  // so without it the count would change while nobody is looking (Reward Horizon D6's failure mode).
+  assert.ok(overlay.includes('data-reward-count'), 'the ceremony lost its count entirely')
+  // `\sbadge=` — the leading whitespace matters. Without it the assertion matches ANY prop whose name
+  // ends in "badge", which is how the re-break's own `data-not-a-badge={` swap kept this green.
+  assert.match(overlay, /<StickerReveal[\s\S]{0,400}\sbadge=\{/, 'the count is no longer on the frame')
+
+  // Chapter completion is a SECOND BEAT, not more rows in the same column.
+  assert.match(overlay, /beat === 'sticker'/, 'the ceremony lost its sticker beat')
+  assert.match(overlay, /beat === 'chapter'/, 'the chapter close is back in the sticker column')
+
+  // The scrim must be near-solid. The old 0.86/0.92 stops left the menu readable through it — the
+  // light skins especially, cream on cream.
+  // Match the GRADIENTS themselves, both of them. Two narrower attempts were vacuous and /re-break
+  // caught it: a bare rgba() sweep of the file picks up text-shadows (there is a 0.6 among them) and
+  // fails on a passing file, while anchoring on `background: dark …100%)'` captured only the FIRST
+  // gradient — the dark one — leaving the LIGHT scrim unguarded. The light scrim is the one the PRD
+  // names as the actual failure (cream-on-cream, the menu readable straight through it).
+  const grads = [...overlay.matchAll(/radial-gradient\([^']*\)/g)].map((m) => m[0])
+  assert.equal(grads.length, 2, 'expected a light AND a dark scrim gradient — re-point this guard')
+  const alphas = grads.flatMap((g) =>
+    [...g.matchAll(/rgba\([\d\s,]+?([\d.]+)\)/g)].map((m) => Number(m[1])).filter((a) => a < 1),
+  )
+  assert.ok(alphas.length > 0, 'could not find the scrim stops — re-point this guard')
+  for (const a of alphas) {
+    assert.ok(a >= 0.99, `the ceremony scrim is see-through again (alpha ${a})`)
+  }
+})
+
 test('the ring is a GAUGE and its geometry is derived, never tuned (Reward Pacing D4)', () => {
   const code = codeOf('components/common/RewardRing.tsx')
   // Every geometric quantity comes from the pure, unit-tested module. A literal reappearing here is
