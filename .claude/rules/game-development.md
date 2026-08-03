@@ -66,16 +66,21 @@ Most task-based quizzes are a thin **config** over `src/components/common/Unifie
 - **Hear-before-commit** (`previewBeforeCommit`) — supported by the engine but **NO game opts in
   today**. It makes a tap a two-step answer: 1st tap AUDITIONS the tile (`speakClickedItem` + the
   shared `'selected'` state — a lifted accent outline, NOT correct/wrong colours) and returns WITHOUT
-  scoring; a 2nd tap on the SAME tile commits. english.word/.translate used it (PRD-14 W7) so a
-  pre-reader could hear each unreadable English word before choosing — **removed 2026-07-31 after
-  play-testing**: the owner's 5-year-old read the ignored first tap as a broken game and kept tapping.
-  Their prompts already speak the target word, so single-tap keeps them real print recognition.
+  scoring; a 2nd tap on the SAME tile commits. english.word (and english.translate, before that game
+  was removed) used it (PRD-14 W7) so a pre-reader could hear each unreadable English word before
+  choosing — **removed 2026-07-31 after play-testing**: the owner's 5-year-old read the ignored first
+  tap as a broken game and kept tapping. Their prompts already speak the target word, so single-tap
+  keeps them real print recognition.
   **Before re-enabling it anywhere, solve the discoverability problem** — an unscored first tap needs a
   signal a pre-reader actually reads.
-- **First-letter cue** (PRD-18 W1): `questionVisual.emphasizeFirstLetter` renders a word-only prompt
-  with an oversized full-strength first grapheme + muted rest — a SILENT decode nudge (Læs Ordet).
-  Opt-in **because the word-only prompt render is shared with Dansk til Engelsk** (a plain word) — never
-  blanket-change that render; scope via the flag.
+- **A prompt WORD renders as one uniform string** — never per-letter size/weight/opacity. PRD-18 W1's
+  `emphasizeFirstLetter` flag (oversized bold first grapheme + muted rest, as a silent "sound this out
+  first" nudge on Læs Ordet) was **deleted 2026-08-03** on sight: owner "it looks wrong and takes too
+  much focus. All letters should be displayed the same no matter what." It also mis-taught the thing the
+  game teaches — the prompt is `textTransform: uppercase`, so a shrunk + faded capital O reads as a
+  lowercase one and "SO" looked like Title Case "So". The durable rule: **typography may not encode a
+  hint inside text the child is being asked to decode**, because the child cannot tell your emphasis
+  from the letter's actual shape.
 
 Only hand-roll a full component for genuinely novel mechanics (e.g. SpellingGame, SpeakWordGame, and
 the dnd-kit Farver games — see `.claude/rules/drag-and-drop.md`). **MathOperationGame (+/−) and

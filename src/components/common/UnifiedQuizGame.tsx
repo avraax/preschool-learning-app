@@ -67,12 +67,10 @@ export interface QuizItem {
   // Optional visual question shown in the prompt area (e.g. word-association mode:
   // show an emoji + word and ask which letter it starts with). When present, the
   // quiz renders this above the answer grid instead of relying on audio alone.
-  // `emphasizeFirstLetter` (Liveliness PRD-18 W1): opt-in SILENT typographic cue for a word-only
-  // prompt — the first grapheme renders larger + full-strength accent, the rest muted, modelling
-  // "sound out this letter first." Purely visual (the word is still fully shown and NEVER spoken —
-  // Læs Ordet's invariant). Scoped to Læs Ordet; other word-only prompts (Dansk til Engelsk) leave it
-  // unset and render the plain word exactly as before.
-  questionVisual?: { emoji?: string; word?: string; art?: string; emphasizeFirstLetter?: boolean }
+  // A prompt word renders as ONE uniform string — no per-letter size/weight/opacity. PRD-18 W1's
+  // `emphasizeFirstLetter` flag lived here and was removed 2026-08-03 (owner: "all letters should be
+  // displayed the same no matter what"); see the render site for why it also mis-taught letter case.
+  questionVisual?: { emoji?: string; word?: string; art?: string }
   // Optional baked soft-3D picture rendered on THIS OPTION's answer tile (Liveliness PRD-10 §3.1) —
   // distinct from `questionVisual.art`, which is the *prompt's* art. Used by Læs Ordet, whose answers
   // ARE the pictures (the prompt is the word to read). When set the tile renders a <TileArt> instead
@@ -132,7 +130,8 @@ export interface UnifiedQuizConfig {
   hintAfterNWrong?: number
 
   // Hear-before-commit (PRD-14 W7 — the flagship). OPT-IN, for quizzes whose ANSWER tiles are
-  // written words a pre-reader cannot read (english.word / english.translate). When on, the FIRST
+  // written words a pre-reader cannot read (english.word; also english.translate before that game was
+  // removed in 2026-08-03). When on, the FIRST
   // tap on a tile AUDITIONS it — speaks the tile's word and raises it ('selected') WITHOUT scoring,
   // advancing, breaking first-try, or arming the hint. Only a SECOND tap on the SAME raised tile
   // COMMITS (runs the normal correct/wrong path). Tapping a DIFFERENT tile moves the audition.
@@ -594,49 +593,24 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
     if (config.renderHero) return config.renderHero(item, { speaking: audio.isPlaying })
     const qv = item.questionVisual
     if (qv && (qv.art || qv.emoji || qv.word)) {
-      // A picture above the word makes the word a small CAPTION (Dansk til Engelsk's Danish gloss);
-      // a word with no picture is the BIG prompt subject (Læs Ordet, Hvad Mangler's sequence). Art is
-      // the picture now — emoji is the retired fallback, so treat either as "has picture".
+      // A picture above the word makes the word a small CAPTION; a word with no picture is the BIG
+      // prompt subject (Læs Ordet, Hvad Mangler's sequence). Art is the picture now — emoji is the
+      // retired fallback, so treat either as "has picture". (The caption branch has no consumer since
+      // Dansk til Engelsk was removed 2026-08-03 — Find det Engelske Ord passes `word: ''` — but the
+      // rule is kept: it is what makes a picture+word prompt legible if one is ever added back.)
       const hasPicture = !!(qv.art || qv.emoji)
       return (
         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: { xs: 0.5, md: 1 } }}>
           {/* Baked soft-3D subject when the area has art (PRD-07); emoji is the retired art-gated fallback. */}
           {qv.art ? <HeroArt src={qv.art} /> : qv.emoji ? <HeroEmoji>{qv.emoji}</HeroEmoji> : null}
           {qv.word && (
-            // First-letter decode cue (PRD-18 W1): a word-only prompt flagged `emphasizeFirstLetter`
-            // splits into an oversized full-strength first grapheme + a muted remainder — a SILENT
-            // "sound out this letter first" nudge (Læs Ordet). The whole word stays shown (silent
-            // decoding intact) and is never spoken. Every other prompt renders the plain word.
-            qv.emphasizeFirstLetter && !hasPicture ? (
-              (() => {
-                const [firstChar, ...restChars] = [...qv.word!]
-                const baseColor = muiTheme.scene.dark ? config.theme.accentColor : config.theme.onTileColor
-                return (
-                  <Typography
-                    component="div"
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'baseline',
-                      justifyContent: 'center',
-                      color: baseColor,
-                      lineHeight: 1,
-                      userSelect: 'none',
-                      letterSpacing: '0.06em',
-                      textTransform: 'uppercase',
-                      fontSize: 'clamp(2.4rem, 10vw, 4.5rem)',
-                      [PHONE_LANDSCAPE]: { fontSize: '2rem' },
-                    }}
-                  >
-                    {/* Decode-me first letter: bigger + heavier + full accent strength. */}
-                    <Box component="span" sx={{ fontSize: '1.12em', fontWeight: 900 }}>{firstChar}</Box>
-                    {/* The rest of the word: muted + slightly smaller, still fully readable. */}
-                    <Box component="span" sx={{ fontSize: '0.82em', fontWeight: 700, opacity: 0.5 }}>
-                      {restChars.join('')}
-                    </Box>
-                  </Typography>
-                )
-              })()
-            ) : (
+            // EVERY letter of a prompt word renders identically — same size, weight and opacity
+            // (owner, 2026-08-03). PRD-18 W1's first-letter decode cue (oversized bold first grapheme,
+            // muted remainder) is DELETED: it stole the focus of the whole board, and because the word
+            // is `textTransform: uppercase`, shrinking + fading the remainder made a capital O read as a
+            // lowercase one — "SO" looked like Title Case "So", teaching the wrong letter shapes to a
+            // child who is learning exactly that. Don't re-introduce per-letter styling on a word the
+            // child is supposed to read.
             <Typography
               sx={{
                 fontWeight: 800,
@@ -655,7 +629,6 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
             >
               {qv.word}
             </Typography>
-            )
           )}
         </Box>
       )

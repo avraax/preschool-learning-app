@@ -22,7 +22,6 @@ import colorsRamFarven from './colors.ram-farven.webp'
 import colorsNuancer from './colors.nuancer.webp'
 import englishListen from './english.listen.webp'
 import englishWord from './english.word.webp'
-import englishTranslate from './english.translate.webp'
 import englishLearn from './english.learn.webp'
 import ordlegRead from './ordleg.read.webp'
 import ordlegSpelling from './ordleg.spelling.webp'
@@ -47,7 +46,6 @@ export const gameIconImages: Record<string, string> = {
   'colors.nuancer': colorsNuancer,
   'english.listen': englishListen,
   'english.word': englishWord,
-  'english.translate': englishTranslate,
   'english.learn': englishLearn,
   'ordleg.read': ordlegRead,
   'ordleg.spelling': ordlegSpelling,

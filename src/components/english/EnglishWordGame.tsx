@@ -11,16 +11,16 @@ import { ENGLISH_QUIZ } from '../../config/difficulty'
 // src/config/englishVocab.ts, driven by `ENGLISH_QUIZ[level]`. All three English quizzes share it — the
 // per-game copies of this function were byte-identical, so a fix to one would silently have missed the
 // others. Tiles 3/4/5; distractor theme different / random / same. The word POOL stays identical at every
-// level (the deliberate beginner floor), and the three games' distinct skills are untouched.
+// level (the deliberate beginner floor), and the games' distinct skills are untouched.
 
 // Find det Engelske Ord: show a baked picture, the child picks the correct written English word
 // from 4 text options. Early English reading (meaning→print recognition).
 //
-// Liveliness PRD-17 W1 — differentiation: this game KEEPS its picture prompt; the sibling Dansk til
-// Engelsk drops it and prompts with a Danish word instead. So Find = picture→English (recognition),
-// Translate = Danish-word→English (translation) — two distinct skills. Both are winnable by a
-// pre-reader because the PROMPT speaks the target word (here also alongside the picture), so the child
-// matches sound + picture to print; the old two-tap tile audition was removed (see below).
+// It is winnable by a pre-reader because the PROMPT speaks the target word alongside the picture, so
+// the child matches sound + picture to print; the old two-tap tile audition was removed (see below).
+// (Until 2026-08-03 this game's picture prompt was also what distinguished it from a sibling, Dansk til
+// Engelsk, which prompted with a Danish word and no picture. That game was removed at the owner's
+// request, so the picture here is no longer a differentiator — it is just the prompt.)
 const EnglishWordGame: React.FC = () => {
   const toWordItem = (w: EnglishWord): QuizItem => ({
     value: w.en,

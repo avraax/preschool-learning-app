@@ -174,12 +174,6 @@ const categoryContent: Record<CategoryId, CategoryContent> = {
         gradient: 'linear-gradient(135deg, #4CAF50 0%, #388E3C 100%)'
       },
       {
-        id: 'translate',
-        title: 'Dansk til Engelsk',
-        route: '/english/translate',
-        gradient: 'linear-gradient(135deg, #43A047 0%, #2E7D32 100%)'
-      },
-      {
         id: 'learn',
         title: 'Lær Engelsk',
         route: '/english/learn',

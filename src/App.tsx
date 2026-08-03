@@ -34,7 +34,6 @@ const FarverLearning = lazy(() => import('./components/farver/FarverLearning'))
 const EnglishSelection = lazy(() => import('./components/english/EnglishSelection'))
 const EnglishListenGame = lazy(() => import('./components/english/EnglishListenGame'))
 const EnglishWordGame = lazy(() => import('./components/english/EnglishWordGame'))
-const EnglishTranslateGame = lazy(() => import('./components/english/EnglishTranslateGame'))
 const EnglishLearning = lazy(() => import('./components/english/EnglishLearning'))
 const OrdlegSelection = lazy(() => import('./components/ordleg/OrdlegSelection'))
 const LaesOrdetGame = lazy(() => import('./components/ordleg/LaesOrdetGame'))
@@ -269,7 +268,6 @@ function App() {
         <Route path="/english" element={<EnglishSelection />} />
         <Route path="/english/listen" element={<EnglishListenGame />} />
         <Route path="/english/word" element={<EnglishWordGame />} />
-        <Route path="/english/translate" element={<EnglishTranslateGame />} />
         <Route path="/english/learn" element={<EnglishLearning />} />
 
         {/* Ordleg Routes */}

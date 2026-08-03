@@ -18,7 +18,7 @@ deliberate non-goal.
 | **Alfabetet** | Lær Alfabetet · Bogstav Quiz · Hukommelse 10 / 20 |
 | **Tal og Regning** | Lær Tal · Tal Quiz · Plus · Minus · Sammenlign Tal · Hvad Mangler? · Hukommelse 10 / 20 |
 | **Farver** | Lær Farver · Farvejagt · Hvilken Farve? · Ram Farven · Nuancer (all drag-and-drop) |
-| **Engelsk** | Lyt og Find · Find det Engelske Ord · Dansk til Engelsk · Lær Engelsk |
+| **Engelsk** | Lyt og Find · Find det Engelske Ord · Lær Engelsk |
 | **Ordleg** | Læs Ordet · Stav Ordet · Sig et Ord (the child speaks into the mic; the app spells the word back) |
 
 Progress is one unified **reward book** (`/album`): a fixed path of collectible rewards in themed

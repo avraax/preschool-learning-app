@@ -209,7 +209,6 @@ test('option counts resolve to 3/4/5 for every quiz (Læs Ordet 3/4/6)', () => {
     'ordleg.read': [3, 4, 6],
     'english.listen': [3, 4, 5],
     'english.word': [3, 4, 5],
-    'english.translate': [3, 4, 5],
     'colors.quiz': [3, 4, 5],
   }
   assert.deepEqual(Object.keys(OPTION_COUNTS).sort(), Object.keys(expected).sort())

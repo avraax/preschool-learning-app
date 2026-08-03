@@ -121,26 +121,32 @@ gameIds are `<section>.<game>`.
   unmount — `mountedRef` alone is not enough.
 
 ## Ordleg — `ordleg.read/.spelling/.mic`
-- Læs Ordet **never AUTO-reads the prompt word** — silent decoding IS the exercise (the prompt carries
-  a silent first-letter decode cue via `questionVisual.emphasizeFirstLetter`, styling only). The
-  correct-tap **does** speak the tapped picture's name — that names the child's *choice*, not the
-  prompt, so it's not a violation. Thin `UnifiedQuizGame`; after 2 wrong picture taps the correct
-  picture pulses.
+- Læs Ordet **never AUTO-reads the prompt word** — silent decoding IS the exercise. The correct-tap
+  **does** speak the tapped picture's name — that names the child's *choice*, not the prompt, so it's
+  not a violation. Thin `UnifiedQuizGame`; after 2 wrong picture taps the correct picture pulses.
+  The prompt word is **plain uniform uppercase type, every letter identical** — PRD-18 W1's
+  first-letter emphasis is gone (see `game-development.md`); the only help this game gives is the
+  picture-tap hint.
 - Stav Ordet (hand-rolled): after 2 wrong taps on a slot the correct tile pulses (never-fail
   next-letter hint; reduced-motion → static glow; using it costs a star).
 - Sig et Ord is **open-ended** — say any word → it's spelled back. **No target word, no STT grading**;
   a recognized word counts, an STT mishear stays on the same question without counting.
 
-## English — `english.listen/.word/.translate`
+## English — `english.listen/.word` (+ Lær Engelsk browse)
 - Thin `UnifiedQuizGame` configs. Distractors **random**, themes **mixed** (no minimal-pairs, no
   per-theme rounds) — a deliberate beginner floor.
-- **The three are distinct skills** (PRD-17 W1 — don't collapse them): Lyt og Find = audio→picture;
-  **Find det Engelske Ord** = picture→English word (recognition, keeps the baked picture prompt);
-  **Dansk til Engelsk** = Danish word, NO picture → English word (translation). Picture-presence is
-  the deliberate differentiator — never re-add a picture to Translate.
+- **The two are distinct skills** (PRD-17 W1 — don't collapse them): Lyt og Find = audio→picture;
+  **Find det Engelske Ord** = picture→English word (recognition, keeps the baked picture prompt).
 - Lyt og Find's listen-hero equalizer is driven by the **real `audio.isPlaying`** state (bars dance
   during playback, settle when idle) — read the audio hook, never a component-level `isPlaying`.
-- English words spoken by en-US Ava (`speakEnglish`); Translate's Danish prompt uses the Danish voice.
+- English words are spoken by en-US Ava (`speakEnglish`). **Nothing speaks the Danish gloss (`w.da`)
+  any more** — Lær Engelsk only DISPLAYS it — so it is deliberately NOT enumerated for prebake. Adding
+  a surface that speaks a Danish gloss means re-adding that loop (`audio-system.md`'s protocol).
+- **There was a third quiz, `english.translate` (Dansk til Engelsk)** — Danish word, no picture →
+  English word. **Removed entirely 2026-08-03** at the owner's request: component, route, tile, baked
+  icon, difficulty entries, welcome line and its prebaked clips. Its removal is the reason the Danish
+  glosses left the closed narration set, and the reason Find det Engelske Ord's picture is no longer a
+  "differentiator" (it is just the prompt). Don't reintroduce it as a variant of Find.
 
 ## Farver — `colors.farvejagt/.ramfarven/.quiz/.nuancer` (+ Lær Farver browse)
 All drag-based except the calm Lær Farver browse; hand-rolled dnd-kit — see `drag-and-drop.md`.

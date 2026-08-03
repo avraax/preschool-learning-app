@@ -374,10 +374,12 @@ export interface EnglishTuning {
 }
 
 /**
- * All three English quizzes (`english.listen` / `.word` / `.translate`) share one table — the word
- * POOL is identical at every level (the deliberate beginner floor stays), so only tiles + distractor
- * theme move. The three games' distinct skills (audio→picture / picture→word / word→word with no
- * picture) are untouched.
+ * Both English quizzes (`english.listen` / `.word`) share one table — the word POOL is identical at
+ * every level (the deliberate beginner floor stays), so only tiles + distractor theme move. Their
+ * distinct skills (audio→picture / picture→word) are untouched.
+ *
+ * There was a third, `english.translate` (Dansk til Engelsk — Danish word, no picture → English word).
+ * Removed entirely 2026-08-03 at the owner's request.
  */
 export const ENGLISH_QUIZ: Record<DifficultyLevel, EnglishTuning> = {
   let: { options: 3, theme: 'different' },
@@ -498,7 +500,6 @@ export const TUNING: Record<string, Record<DifficultyLevel, object>> = {
   'ordleg.spelling': ORDLEG_SPELL,
   'english.listen': ENGLISH_QUIZ,
   'english.word': ENGLISH_QUIZ,
-  'english.translate': ENGLISH_QUIZ,
   'colors.quiz': COLORS_QUIZ,
   'colors.farvejagt': COLORS_FARVEJAGT,
   'colors.ramfarven': COLORS_RAMFARVEN,
@@ -542,7 +543,6 @@ export const OPTION_COUNTS: Record<string, Record<DifficultyLevel, number>> = {
   'ordleg.read': levelMap(ORDLEG_READ, (t) => t.options),
   'english.listen': levelMap(ENGLISH_QUIZ, (t) => t.options),
   'english.word': levelMap(ENGLISH_QUIZ, (t) => t.options),
-  'english.translate': levelMap(ENGLISH_QUIZ, (t) => t.options),
   'colors.quiz': levelMap(COLORS_QUIZ, (t) => t.options),
 }
 

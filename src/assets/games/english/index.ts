@@ -4,9 +4,8 @@
 // `#00FF00` green screen and keyed with the `sharp` pipeline (`.claude/rules/scene-assets.md`).
 // Copied from src/assets/games/ordleg/index.ts (the id-keyed variant).
 //
-// WORDS + CAPTIONS ARE NOT ART (§0.4): the English WORD on the answer tiles (Find det Engelske Ord,
-// Dansk til Engelsk) and the Danish caption under the Translate prompt stay Comic Sans Typography —
-// reading the English word IS the lesson; the caption is a scaffold. Only the *depicted picture*
+// WORDS ARE NOT ART (§0.4): the English WORD on Find det Engelske Ord's answer tiles stays Comic Sans
+// Typography — reading the English word IS the lesson. Only the *depicted picture*
 // (the dog/car/apple) is baked. Abstract words with no clean depiction (greetings) and — by owner
 // decision — people/body words (family/body) have no art id file → they keep their emoji via the
 // art-gated fallback automatically.

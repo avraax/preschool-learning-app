@@ -35,7 +35,7 @@ import {
   HVAD_MANGLER_PROMPT, sequenceFactText, sequenceStarts, sequenceNumbers,
   NUANCER_INSTRUCTION, colorMixTargetText, colorMixResultText,
 } from './src/config/gamePhrases.ts'
-import { possibleTargets, mixingRules } from './src/config/colorMixing.ts'
+import { primaryColors, possibleTargets, mixingRules } from './src/config/colorMixing.ts'
 import { spokenOrdlegWords } from './src/config/ordlegWords.ts'
 import { NUMBER_BROWSE_RATE as NUMBER_RATE } from './src/config/numberAutoplay.ts'
 
@@ -55,7 +55,7 @@ export const WELCOME_TITLES = [
   'Bogstav Quiz', 'Lær Alfabetet', 'Tal Quiz', 'Lær Tal', 'Plus Opgaver', 'Minus Opgaver',
   'Stav Ordet', 'Sammenlign Tal', 'Hukommelsesspil', 'Farver', 'Farvejagt', 'Ram Farven',
   'Lær Farver', 'Hvilken Farve?', 'Nuancer', 'Lyt og Find', 'Find det Engelske Ord',
-  'Dansk til Engelsk', 'Sig et Ord', 'Læs Ordet', 'Hvad Mangler?',
+  'Sig et Ord', 'Læs Ordet', 'Hvad Mangler?',
 ]
 
 /**
@@ -128,11 +128,14 @@ export function collectNarrationClips() {
   // droplet orders are real rules), and Farvejagt's hunt phrases (data in colorContent).
   da('colours', NUANCER_INSTRUCTION)
   for (const tgt of possibleTargets) da('colours', colorMixTargetText(tgt.name))
-  // Ram Farven speaks a target's BARE name in two places — tapping the goal swatch, and (since
-  // 2026-08-03) naming a wrong-but-valid mix so a real discovery gets identified. Most names come
-  // free from the hue/SHADES loops below, but `grå` belongs to no hue family and was therefore
-  // reaching live Azure on every goal-swatch tap. Enumerate the target names directly so a new goal
-  // can never re-open that hole.
+  // Ram Farven speaks BARE colour names in three places: the dropped droplet's name, the goal swatch
+  // on tap, and (since 2026-08-03) a wrong-but-valid mix's result. Most come free from the hue/SHADES
+  // loops below, but `grå` belongs to no hue family and `hvid`/`sort` are not hues at all — those three
+  // were reaching live Azure, or worse, were baked only as a SIDE EFFECT of the Danish glosses that
+  // Dansk til Engelsk used to speak (removing that game pruned `hvid` and `sort` on the spot, caught by
+  // diffing the manifest). Enumerate both source and target names from the data so neither hole can
+  // reopen when a droplet or goal is added.
+  for (const src of primaryColors) da('colours', src.colorName)
   for (const tgt of possibleTargets) da('colours', tgt.name)
   for (const key of Object.keys(mixingRules)) {
     const [c1, c2] = key.split('+')
@@ -148,8 +151,12 @@ export function collectNarrationClips() {
   // enumerated here (Difficulty PRD-01 W5/W7).
   for (const word of spokenOrdlegWords()) da('ordleg', word)
 
-  // Dansk til Engelsk speaks the DANISH word as its prompt (the English side is the `en` voice below).
-  for (const w of allEnglishWords) if (w.da) da('english-da', w.da)
+  // NOTE: the Danish glosses (`w.da`) are NO LONGER enumerated. They were baked only because Dansk til
+  // Engelsk spoke the Danish word as its prompt, and that game was removed 2026-08-03 — every surviving
+  // English surface speaks the ENGLISH side (the `en` voice below), and Lær Engelsk only DISPLAYS the
+  // gloss. Do not re-add this loop to "be safe": a superset is cheap, but these clips were also the
+  // accidental reason ~20 Ordleg words were ever baked (CLAUDE.md), and leaving them in hides that
+  // coupling. The words a game actually speaks are enumerated by that game's own loop.
 
   // Fixed spoken phrases.
   DANISH_PHRASES.success.forEach((t) => da('phrases', t))

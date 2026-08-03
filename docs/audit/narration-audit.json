@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-08-03T19:05:48.314Z",
+  "updatedAt": "2026-08-03T19:44:50.980Z",
   "clips": {
     "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|b": {
       "verdict": "ok",
@@ -2238,7 +2238,7 @@
       "note": "Bulk-approved (PRD-11 owner listen pass)",
       "candidateIpa": "",
       "text": "rød",
-      "group": "english-da",
+      "group": "colours",
       "updatedAt": 1784110101652
     },
     "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|lyserød": {
@@ -2318,7 +2318,7 @@
       "note": "Bulk-approved (PRD-11 owner listen pass)",
       "candidateIpa": "",
       "text": "blå",
-      "group": "english-da",
+      "group": "colours",
       "updatedAt": 1784110101652
     },
     "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|lyseblå": {
@@ -2462,7 +2462,7 @@
       "note": "Bulk-approved (PRD-11 owner listen pass)",
       "candidateIpa": "",
       "text": "gul",
-      "group": "english-da",
+      "group": "colours",
       "updatedAt": 1784110101652
     },
     "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|lysegul": {
@@ -13566,7 +13566,7 @@
       "note": "Bulk-approved (PRD-11 owner listen pass)",
       "candidateIpa": "",
       "text": "sort",
-      "group": "english-da",
+      "group": "colours",
       "updatedAt": 1785654833982
     },
     "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|hvid": {
@@ -13574,7 +13574,7 @@
       "note": "Bulk-approved (PRD-11 owner listen pass)",
       "candidateIpa": "",
       "text": "hvid",
-      "group": "english-da",
+      "group": "colours",
       "updatedAt": 1785654833982
     },
     "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|brun": {
