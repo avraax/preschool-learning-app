@@ -360,7 +360,6 @@ export class SimplifiedAudioController {
       nuancer: 'Nuancer',
       englishlisten: 'Lyt og Find',
       englishword: 'Find det Engelske Ord',
-      englishtranslate: 'Dansk til Engelsk',
       micword: 'Sig et Ord',
       laesordet: 'Læs Ordet',
       patterns: 'Hvad Mangler?'
