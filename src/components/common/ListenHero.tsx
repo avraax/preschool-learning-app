@@ -1,5 +1,5 @@
 import React from 'react'
-import { Box } from '@mui/material'
+import { Box, Typography } from '@mui/material'
 import { motion } from 'framer-motion'
 import { Volume2 } from 'lucide-react'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
@@ -14,6 +14,17 @@ interface ListenHeroProps {
    * child's turn.
    */
   speaking: boolean
+  /**
+   * DEGRADED MODE (Practice Loop PRD-01 W4). When narration is dead, the answer is printed here — the
+   * spoken number for Tal Quiz, the English word for Lyt og Find.
+   *
+   * This **deliberately re-creates the giveaway the owner removed**: the board now restates its own
+   * answer and the task degrades to shape-matching. That is the correct trade ONLY here, because these
+   * two boards are unanswerable in silence, and the alternative is a child tapping at random until an
+   * adult notices. Pass `undefined` whenever narration is healthy — the caller reads
+   * `audio.narrationHealthy`, never `isAudioReady` (see `config/narrationHealth.ts`).
+   */
+  reveal?: string
 }
 
 /**
@@ -26,7 +37,7 @@ interface ListenHeroProps {
  * The speaker pulses ONLY when idle ("your turn — tap, or Hør igen") and holds steady while the clip
  * plays, so the two states never both animate. Reduced motion → both static.
  */
-const ListenHero: React.FC<ListenHeroProps> = ({ accent, speaking }) => {
+const ListenHero: React.FC<ListenHeroProps> = ({ accent, speaking, reveal }) => {
   const reduce = useReducedMotion()
   return (
     // The column must FIT the focal zone, which is only ~50px tall in phone landscape: the old
@@ -61,6 +72,12 @@ const ListenHero: React.FC<ListenHeroProps> = ({ accent, speaking }) => {
       >
         <Volume2 strokeWidth={2.25} />
       </Box>
+      {/* The equalizer is HIDDEN in degraded mode — partly because bars that report on playback are
+          meaningless when nothing can play, and partly because the focal band has no room for both:
+          phone landscape gives it ~95px total, and measured with the bars still in, the revealed word
+          overlapped the "Hør igen" pill by 2px at 844×390 and 667×375. Reserving by removing the
+          element beats shaving pixels off it (responsive-design.md). */}
+      {reveal ? null : (
       <Box
         aria-hidden
         sx={{
@@ -97,6 +114,28 @@ const ListenHero: React.FC<ListenHeroProps> = ({ accent, speaking }) => {
           />
         ))}
       </Box>
+      )}
+      {/* Degraded mode: the answer, as type. See the `reveal` prop for why this giveaway is correct
+          here and nowhere else. It appears and disappears with the live health signal, so a round
+          recovers mid-play the moment a clip actually sounds. No warning glyph beside it — no emoji
+          ships, child surfaces take baked art only, and a warning is for the adult, who already gets
+          audio health in the bug report. */}
+      {reveal ? (
+        <Typography
+          data-narration-fallback
+          sx={{
+            fontWeight: 800,
+            color: accent,
+            lineHeight: 1,
+            letterSpacing: '0.04em',
+            userSelect: 'none',
+            fontSize: 'clamp(1.6rem, 6vh, 3rem)',
+            [PHONE_LANDSCAPE]: { fontSize: '1.1rem' },
+          }}
+        >
+          {reveal}
+        </Typography>
+      ) : null}
     </Box>
   )
 }

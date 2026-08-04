@@ -39,8 +39,21 @@ const makeNumberItem = (n: number): QuizItem => ({
 // Tal Quiz hero: the shared "listen" card at every n — the number is spoken only, so the focal zone
 // must not print it or depict it. The never-fail hint (2 wrong taps → the correct tile pulses) plus
 // Hør igen keep it fair without showing the answer.
-const renderListenHero = (_item: QuizItem, ctx: { speaking: boolean }): React.ReactNode => (
-  <ListenHero accent={getCategoryTheme('math').accentColor} speaking={ctx.speaking} />
+const renderListenHero = (
+  item: QuizItem,
+  ctx: { speaking: boolean; narrationHealthy: boolean },
+): React.ReactNode => (
+  <ListenHero
+    accent={getCategoryTheme('math').accentColor}
+    speaking={ctx.speaking}
+    // DEGRADED MODE (Practice Loop PRD-01 W4). With narration dead this board is a speaker and an
+    // equalizer and nothing else — literally unanswerable — so it prints the numeral. That is the
+    // giveaway the owner REMOVED (a printed numeral above a tile row containing it makes the tap pure
+    // shape-matching), deliberately re-created for this state only: a solvable board beats an
+    // unanswerable one, and the alternative is a child tapping at random until an adult notices.
+    // The round is then recorded as `degraded` (see `audioOnly`), so it earns XP but no personal best.
+    reveal={ctx.narrationHealthy ? undefined : String(item.value)}
+  />
 )
 
 const MathGame: React.FC = () => {
@@ -79,6 +92,8 @@ const MathGame: React.FC = () => {
     // Bounded round + reward flow (Foundation §3). 8 questions; the star thresholds come from the
     // difficulty spine (Difficulty PRD-01 W6), so the config no longer declares its own.
     gameId: 'math.counting',
+    // The board is audio-only, so a round played in silence is a shape-match: no personal best (W4).
+    audioOnly: true,
     round: { length: 8 },
 
     // Never-fail hint (PRD-05 P1): after 2 wrong taps the correct number tile pulses — and the prompt is

@@ -330,3 +330,44 @@ test('the persisted document is v4 and round-trips through disk unchanged', () =
   assert.deepEqual(progressStore.get().stickers, before.stickers)
   assert.equal(progressStore.get().progression.globalXp, before.progression.globalXp)
 })
+
+// A DEGRADED round — narration was dead, so an audio-only board revealed its own answer and the task
+// became a shape-match (Practice Loop PRD-01 W4 §6.2). Asserted as BEHAVIOUR, not as a source regex:
+// the regex version of this passed while any of the three bests could still have been written.
+test('a degraded round grants XP as normal but records NO personal best', () => {
+  progressStore.attach('kid-1')
+
+  // A real round first, so there are bests to protect.
+  progressStore.recordRoundResult('math.counting', { correct: 8, total: 8, longestStreak: 8 })
+  const real = progressStore.get().perGame['math.counting']
+  assert.equal(real.bestStars, 3)
+  assert.equal(real.bestStreak, 8)
+  assert.equal(real.bestCount, 8)
+
+  // Now a degraded round that would beat nothing…
+  const xpBefore = progressStore.get().progression.globalXp
+  const out = progressStore.recordRoundResult(
+    'math.counting',
+    { correct: 8, total: 8, longestStreak: 8 },
+    { degraded: true },
+  )
+  assert.equal(out.anyNewBest, false, 'a degraded round must never claim a new best')
+  assert.deepEqual(out.newBests, { streak: false, stars: false, count: false })
+  // …and one that WOULD have beaten them all, on a fresh game.
+  const fresh = progressStore.recordRoundResult(
+    'english.listen',
+    { correct: 8, total: 8, longestStreak: 8 },
+    { degraded: true },
+  )
+  assert.equal(fresh.anyNewBest, false)
+  const degraded = progressStore.get().perGame['english.listen']
+  assert.equal(degraded.bestStars, 0, 'a degraded round wrote a best on a fresh game')
+  assert.equal(degraded.bestStreak, 0)
+  assert.equal(degraded.bestCount, 0)
+  // Everything else about it is a normal round: it counts as played, its stars count, and it EARNS XP —
+  // a broken iPad must never cost the child rewards.
+  assert.equal(degraded.roundsCompleted, 1)
+  assert.equal(degraded.lifetimeCorrect, 8)
+  assert.equal(fresh.stars, 3)
+  assert.ok(progressStore.get().progression.globalXp > xpBefore, 'a degraded round earned no XP')
+})

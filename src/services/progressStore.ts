@@ -140,6 +140,15 @@ export interface RoundResultInput {
 
 export interface RoundResultOptions {
   starThresholds?: { three: number; two: number } // MISTAKES allowed; default 3★=0, 2★≤2
+  /**
+   * The round was played in the DEGRADED audio mode (Practice Loop PRD-01 W4): narration was dead, so
+   * an audio-only board revealed its own answer and the task degraded to shape-matching.
+   *
+   * XP is granted as normal — he played, and we never punish a child for a broken iPad — but no PERSONAL
+   * BEST is recorded, because a trivial board must not overwrite a real one. Stars and totals still
+   * count (they are this round's outcome, not a record).
+   */
+  degraded?: boolean
 }
 
 export interface RoundOutcome {
@@ -598,17 +607,22 @@ class ProgressStore {
     const prev = draft.perGame[gameId] ?? emptyGameStats()
 
     const previousBests = { streak: prev.bestStreak, stars: prev.bestStars, count: prev.bestCount }
-    const newBests = {
-      streak: input.longestStreak > prev.bestStreak,
-      stars: stars > prev.bestStars,
-      count: input.correct > prev.bestCount,
-    }
+    // A DEGRADED round (W4: the board revealed its own answer because narration was dead) records NO new
+    // best — it was a shape-match, and it must not overwrite a real record or fire a "Ny rekord!" ribbon.
+    // Everything else about it is normal: stars, totals, rounds played, and the XP below.
+    const newBests = options.degraded
+      ? { streak: false, stars: false, count: false }
+      : {
+          streak: input.longestStreak > prev.bestStreak,
+          stars: stars > prev.bestStars,
+          count: input.correct > prev.bestCount,
+        }
     const anyNewBest = newBests.streak || newBests.stars || newBests.count
 
     draft.perGame[gameId] = {
-      bestStreak: Math.max(prev.bestStreak, input.longestStreak),
-      bestStars: Math.max(prev.bestStars, stars),
-      bestCount: Math.max(prev.bestCount, input.correct),
+      bestStreak: options.degraded ? prev.bestStreak : Math.max(prev.bestStreak, input.longestStreak),
+      bestStars: options.degraded ? prev.bestStars : Math.max(prev.bestStars, stars),
+      bestCount: options.degraded ? prev.bestCount : Math.max(prev.bestCount, input.correct),
       roundsCompleted: prev.roundsCompleted + 1,
       lifetimeCorrect: prev.lifetimeCorrect + input.correct,
     }

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { simplifiedAudioController } from '../utils/SimplifiedAudioController'
 import { useSimplifiedAudio as useSimplifiedAudioContext } from '../contexts/SimplifiedAudioContext'
+import { isNarrationHealthy } from '../config/narrationHealth'
 
 // Interface for component-level audio operations
 export interface SimplifiedAudioHook {
@@ -52,6 +53,15 @@ export interface SimplifiedAudioHook {
   isAudioReady: boolean
   needsUserAction: boolean
   initializeAudio: () => Promise<boolean>
+
+  /**
+   * Is narration alive enough for an AUDIO-ONLY board? (Practice Loop PRD-01 W4)
+   *
+   * Read this — never `isAudioReady` — when a game is unanswerable without sound. `isAudioReady` was
+   * TRUE right through the Ogg silence on the target iPad; only the playback-failure count saw it. The
+   * rule is the pure `isNarrationHealthy` in `src/config/narrationHealth.ts`.
+   */
+  narrationHealthy: boolean
 }
 
 interface UseSimplifiedAudioOptions {
@@ -139,6 +149,13 @@ export const useSimplifiedAudioHook = (options: UseSimplifiedAudioOptions = {}):
   const isAudioReady = audioContext.state.isWorking
   const needsUserAction = audioContext.state.needsUserAction
   const initializeAudio = audioContext.initializeAudio
+  // W4: the degraded-mode signal. Both inputs are reactive, so a game revealing its answer reverts
+  // automatically on the first clip that plays.
+  const narrationHealthy = isNarrationHealthy({
+    isWorking: audioContext.state.isWorking,
+    unlockedOnce: audioContext.state.unlockedOnce,
+    consecutivePlaybackFailures: audioContext.state.playbackFailures,
+  })
 
   // Stable return identity (PRD-02 §3): the object only changes when a reactive field changes, so
   // consumers that put `audio` in a dependency array don't re-run/re-cleanup on every render. The
@@ -152,7 +169,8 @@ export const useSimplifiedAudioHook = (options: UseSimplifiedAudioOptions = {}):
     isAudioReady,
     needsUserAction,
     initializeAudio,
-  }), [isPlaying, isAudioReady, needsUserAction, initializeAudio])
+    narrationHealthy,
+  }), [isPlaying, isAudioReady, needsUserAction, initializeAudio, narrationHealthy])
 }
 
 // Backward compatibility export

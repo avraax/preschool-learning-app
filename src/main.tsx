@@ -30,8 +30,11 @@ import { sweepPreAccountsStorage } from './utils/storageReset'
 sweepPreAccountsStorage()
 
 // DEV screenshot harness: seed Math.random when ?seed=<n> is present (deterministic questions).
-import { installDevSeed, installDevRewards, installDevOauthFlow } from './utils/devHarness'
+import { installDevSeed, installDevRewards, installDevOauthFlow, installDevMuteTts } from './utils/devHarness'
 installDevSeed()
+// DEV ?mute-tts=1: force narration unhealthy so the two audio-only games' degraded boards are
+// capturable (Practice Loop PRD-01 W4). Fire-and-forget — the health change notifies subscribers.
+void installDevMuteTts()
 // DEV ?oauthflow=<flowId>: seed a pending Google flow BEFORE React mounts, so the OAuth return and
 // polling-recovery paths are drivable headlessly (accounts PRD §4.5 / §12).
 installDevOauthFlow()

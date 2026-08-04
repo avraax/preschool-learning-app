@@ -13,6 +13,7 @@
 //   ?reduce=1                        force reduced-motion (test the parity path headlessly)
 //   ?nyt=1                           force a "nyt!" badge in Min Bog
 //   ?rewards=<n>                     seed the book at n collected rewards (Reward Book PRD-01 W9)
+//   ?mute-tts=1                      force narration UNHEALTHY (Practice Loop PRD-01 W4 degraded mode)
 
 // `import.meta.env?.` — optional, because this module is now in the transitive graph of a Node
 // `--test` suite (via authStore), and `import.meta.env` is undefined outside Vite. Same reason
@@ -126,6 +127,22 @@ export const installDevOauthFlow = (): void => {
 
 // Seedable RNG (mulberry32). When `?seed=<n>` is present in DEV, replace Math.random so every
 // generator that relies on it yields a deterministic sequence — no per-game plumbing required.
+/**
+ * `?mute-tts=1` — pin `ttsClient`'s consecutive-playback-failure count so the two audio-only games show
+ * their DEGRADED board (Practice Loop PRD-01 W4 §6.3), without having to actually break audio.
+ *
+ * Dynamic import so `ttsClient` (and its localStorage cache load) stays out of this module's graph, which
+ * a Node `--test` suite pulls in. Same `DEV || __HARNESS__` gate as everything else here, so the whole
+ * call folds away in a deploy build.
+ */
+export const installDevMuteTts = async (): Promise<void> => {
+  if (!DEV) return
+  if (readParams().get('mute-tts') !== '1') return
+  const { ttsClient } = await import('../services/ttsClient')
+  const { PLAYBACK_FAILURES_UNHEALTHY } = await import('../config/narrationHealth')
+  ttsClient.forcePlaybackFailures(PLAYBACK_FAILURES_UNHEALTHY)
+}
+
 export const installDevSeed = (): void => {
   if (!DEV) return
   const raw = readParams().get('seed')

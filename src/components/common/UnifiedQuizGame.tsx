@@ -173,7 +173,14 @@ export interface UnifiedQuizConfig {
   // Mangler's sequence with a pulsing "?". Receives the live QuizItem, plus the engine's live audio
   // state so a hero can react to playback (Tal Quiz's numeral band renders the shared ListenHero) —
   // read `speaking` from here, never a component-level isPlaying (see audio-system.md).
-  renderHero?: (item: QuizItem, ctx: { speaking: boolean; dropActive: boolean }) => React.ReactNode
+  // `narrationHealthy` is the W4 degraded-mode signal: false → an audio-only board must reveal its own
+  // answer, because it is otherwise unanswerable (Tal Quiz shows nothing but a speaker). Read it from
+  // here rather than the hook so a hero can't accidentally read `isAudioReady`, which was TRUE through
+  // the Ogg silence.
+  renderHero?: (
+    item: QuizItem,
+    ctx: { speaking: boolean; dropActive: boolean; narrationHealthy: boolean },
+  ) => React.ReactNode
 
   // Answer by DRAG as well as by tap (owner, 2026-08-03). OPT-IN, and only meaningful for a quiz whose
   // PROMPT contains the slot the answer belongs in — Hvad Mangler's "?" in the sequence. The other
@@ -186,6 +193,14 @@ export interface UnifiedQuizConfig {
   // runs the SAME `handleItemClick` a tap runs, so the advance-lock, first-try flag, hint counter and
   // round bookkeeping are shared — there is no second scoring path.
   dragToPromptSlot?: boolean
+
+  // This board is UNANSWERABLE without narration (Practice Loop PRD-01 W4) — Tal Quiz shows nothing but
+  // a speaker, Lyt og Find is audio→picture. Set it and the engine (a) tracks whether narration died at
+  // any point in the round and (b) records that round as `degraded`, which grants XP as normal but
+  // records NO personal best: the board revealed its own answer, so it was a shape-match.
+  //
+  // Do NOT set it on a board that survives silence (Bogstav Quiz is picture→letter and reads fine).
+  audioOnly?: boolean
 
   // When the welcome message already conveys the first question's prompt (e.g. Hvad Mangler?, whose
   // welcome "Hvad mangler" equals its per-question prompt "Hvad mangler?"), set this so the engine
@@ -257,6 +272,11 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
   const { hint: showHint, registerWrong: registerHintWrong, reset: resetHint } = useNeverFailHint<boolean>(config.hintAfterNWrong ?? Infinity)
   // When set, the round is over and the reward/result hero replaces the answer grid.
   const [roundOutcome, setRoundOutcome] = useState<RoundOutcome | null>(null)
+  // W4: did narration die at ANY point during this round? Sticky until the next round, because a round
+  // that revealed its answer for even part of its length was partly a shape-match — recording a personal
+  // best off it would let a broken iPad overwrite a real record.
+  const degradedThisRoundRef = useRef(false)
+  if (config.audioOnly && !audio.narrationHealthy) degradedThisRoundRef.current = true
 
   // Timeout ref for cleanup (per-question prompt timer)
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
@@ -620,7 +640,12 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
     const outcome = progressStore.recordRoundResult(
       gameId,
       { correct: firstTryCorrect, total: round.length, longestStreak },
-      { starThresholds: starThresholdsFor(difficultyLevel) },
+      {
+        starThresholds: starThresholdsFor(difficultyLevel),
+        // W4: an audio-only board that had to reveal its own answer this round. XP is unchanged (he
+        // played); the personal best is withheld.
+        degraded: degradedThisRoundRef.current,
+      },
     )
     setRoundOutcome(outcome)
   }
@@ -631,6 +656,9 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
     setRoundOutcome(null)
     round.reset()
     resetScore()
+    // A fresh round starts un-degraded; the render-time check above re-arms it immediately if narration
+    // is still dead, so recovery between rounds is honoured too.
+    degradedThisRoundRef.current = false
     generateNewQuestion()
   }
 
@@ -670,6 +698,7 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
       return config.renderHero(item, {
         speaking: audio.isPlaying,
         dropActive: overId === QUIZ_PROMPT_SLOT_ID,
+        narrationHealthy: audio.narrationHealthy,
       })
     }
     const qv = item.questionVisual
@@ -718,7 +747,16 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
       // Listening task (Lyt og Find): the shared "listen" hero — a subject without revealing the
       // picture. PRD-17 W2: the indicator tracks REAL audio-playback state (`audio.isPlaying`, read
       // from the hook — never a component-level isPlaying, per audio-system.md).
-      return <ListenHero accent={config.theme.accentColor} speaking={audio.isPlaying} />
+      //
+      // W4: with narration DEAD this board is audio→picture with no audio, i.e. unanswerable — so it
+      // reveals the English word as type. Deliberately the giveaway; see ListenHero's `reveal`.
+      return (
+        <ListenHero
+          accent={config.theme.accentColor}
+          speaking={audio.isPlaying}
+          reveal={audio.narrationHealthy ? undefined : String(item.value)}
+        />
+      )
     }
     return <HeroEmoji>{item.display}</HeroEmoji>
   }

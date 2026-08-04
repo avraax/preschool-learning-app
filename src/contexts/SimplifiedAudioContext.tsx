@@ -21,6 +21,18 @@ interface SimplifiedAudioState {
   isWorking: boolean          // Can we play audio right now?
   needsUserAction: boolean    // Do we need user to click something?
   showPrompt: boolean         // Should we show the permission modal?
+  /**
+   * Consecutive PLAYBACK failures from `ttsClient` (Practice Loop PRD-01 W4). Kept in state so the two
+   * listening games can react — `isWorking` alone was TRUE through the Ogg silence; see
+   * `config/narrationHealth.ts` for why that distinction is the whole feature.
+   */
+  playbackFailures: number
+  /**
+   * Has audio unlocked at least once this session? Mirrors the `hasUnlockedRef` latch into STATE so the
+   * degraded-mode rule can tell "nobody has tapped yet" from "narration died" — before the first unlock,
+   * a false `isWorking` is the former (Practice Loop PRD-01 W4; see config/narrationHealth.ts).
+   */
+  unlockedOnce: boolean
 }
 
 export interface SimplifiedAudioContextType {
@@ -45,7 +57,9 @@ export const SimplifiedAudioProvider: React.FC<SimplifiedAudioProviderProps> = (
   const [state, setState] = useState<SimplifiedAudioState>({
     isWorking: false,
     needsUserAction: true,
-    showPrompt: false
+    showPrompt: false,
+    playbackFailures: ttsClient.getHealth().consecutivePlaybackFailures,
+    unlockedOnce: false
   })
 
   // Single global AudioContext - create once, reuse forever
@@ -182,6 +196,8 @@ export const SimplifiedAudioProvider: React.FC<SimplifiedAudioProviderProps> = (
       // Latch: audio has unlocked at least once this session → the big modal must never auto-return
       // (a later transient iOS suspension recovers silently on the next interaction, no modal).
       if (isWorking) hasUnlockedRef.current = true
+      // …and into state, for the W4 degraded-mode rule (the ref alone is invisible to React).
+      if (isWorking) setState((prev) => (prev.unlockedOnce ? prev : { ...prev, unlockedOnce: true }))
 
       // NOTE: this deliberately does NOT touch `showPrompt`. Only `hidePrompt` closes the modal, and
       // it is only ever called from a CLICK handler — see the click-through note there. Hiding from
@@ -281,6 +297,19 @@ export const SimplifiedAudioProvider: React.FC<SimplifiedAudioProviderProps> = (
         document.removeEventListener(event, handleUserInteraction)
       })
     }
+  }, [])
+
+  // Mirror `ttsClient`'s playback-failure count into state so the two audio-only games can degrade and
+  // RECOVER mid-round (Practice Loop PRD-01 W4). A subscription, not a poll: the recovery must land on
+  // the first clip that plays, not up to a second later.
+  useEffect(() => {
+    const sync = () =>
+      setState(prev => {
+        const next = ttsClient.getHealth().consecutivePlaybackFailures
+        return prev.playbackFailures === next ? prev : { ...prev, playbackFailures: next }
+      })
+    sync()
+    return ttsClient.onHealthChange(sync)
   }, [])
 
   // Show the prompt when audio is needed — on ALL platforms (desktop/Android included), not just

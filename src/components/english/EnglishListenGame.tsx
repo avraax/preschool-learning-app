@@ -60,6 +60,9 @@ const EnglishListenGame: React.FC = () => {
 
     gameWelcomeType: 'englishlisten',
     gameId: 'english.listen',
+    // Audio→picture, so with narration dead the board is unanswerable: the engine's listen hero reveals
+    // the English word as type, and the round records no personal best (Practice Loop PRD-01 W4).
+    audioOnly: true,
     // Star thresholds come from the difficulty spine (Difficulty PRD-01 W6). ONE round length: the
     // bag's no-repeat window reads the same constant (Practice Loop PRD-01 W1).
     round: { length: ENGLISH_ROUND },

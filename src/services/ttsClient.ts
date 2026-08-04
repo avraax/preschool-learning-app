@@ -53,6 +53,25 @@ export class TtsClient {
   private readonly MAX_FAILURES = 3
   private readonly FAILURE_RESET_MS = 30_000
 
+  /**
+   * Consecutive PLAYBACK failures — a `play()` rejection, a decode error, a fetch failure (Practice
+   * Loop PRD-01 W4). Distinct from `failureCount`, which counts *synthesis* failures and only chooses
+   * between Azure and Web Speech.
+   *
+   * This is the number the degraded mode reads, because `isWorking` alone is NOT enough: it answers
+   * "can we play audio at all", which was already false during the iOS suspension case but **true**
+   * during the Ogg failure, where the element existed and the bytes were simply undecodable. That is
+   * the exact bug W4 has to catch — two games are unanswerable without narration, and the app has
+   * shipped total silence on the target device twice over.
+   *
+   * Cancellations (the documented no-queue pre-emption) neither increment nor reset it: a cancelled
+   * clip is no evidence either way, and treating it as success is how a real failure streak would hide.
+   */
+  private consecutivePlaybackFailures = 0
+  private healthListeners = new Set<() => void>()
+  /** DEV/harness only — `?mute-tts=1` pins the counter so the degraded UI is capturable. */
+  private forcedPlaybackFailures: number | null = null
+
   /** App-wide Danish voice override for the VoiceLab panel (throwaway tool). */
   private voiceOverride: VoiceOverride | null = loadVoiceOverride()
 
@@ -177,6 +196,9 @@ export class TtsClient {
         if (done) return
         done = true
         teardown()
+        // Every path into here is a real playback failure — decode error, timeout, NotAllowedError.
+        // Cancellations go through finishResolve instead and are deliberately neutral (see the field).
+        this.notePlaybackFailure()
         reject(err)
       }
       // Cancellation resolves quietly — callers ignore it, nothing is logged.
@@ -184,12 +206,18 @@ export class TtsClient {
 
       const armTimeout = () => {
         clearTimeout(timer)
+        // The element accepted playback and reported a duration — the strongest "audio really works"
+        // signal there is, and precisely what the Ogg case could never reach (W4).
+        this.notePlaybackOk()
         const d = audio.duration
         const ms = isFinite(d) && d > 0 ? d * 1000 + 2000 : 15000
         timer = setTimeout(() => finishReject(new Error('Audio playback timeout')), ms)
       }
 
-      const onEnded = () => finishResolve()
+      const onEnded = () => {
+        this.notePlaybackOk()
+        finishResolve()
+      }
       const onError = () => {
         // src cleared / empty network state ⇒ this is a stop/navigation cancellation, not an error.
         if (!audio.getAttribute('src') || audio.networkState === HTMLMediaElement.NETWORK_EMPTY) {
@@ -520,14 +548,59 @@ export class TtsClient {
     this.saveCacheToStorage()
   }
 
-  /** Read-only circuit-breaker health — snapshotted into bug reports. */
-  getHealth(): { failureCount: number; lastFailureTime: number; circuitOpen: boolean } {
+  // ===== playback health (Practice Loop PRD-01 W4) =====
+
+  private notePlaybackOk(): void {
+    if (this.consecutivePlaybackFailures === 0) return
+    this.consecutivePlaybackFailures = 0
+    this.emitHealth()
+  }
+
+  private notePlaybackFailure(): void {
+    this.consecutivePlaybackFailures++
+    this.emitHealth()
+  }
+
+  private emitHealth(): void {
+    this.healthListeners.forEach((l) => {
+      try {
+        l()
+      } catch {
+        /* a listener must never break playback */
+      }
+    })
+  }
+
+  /** Subscribe to playback-health changes (the degraded-mode signal). Returns an unsubscribe. */
+  onHealthChange(listener: () => void): () => void {
+    this.healthListeners.add(listener)
+    return () => this.healthListeners.delete(listener)
+  }
+
+  /**
+   * DEV/harness only: pin the consecutive-failure count so the degraded board can be screenshotted
+   * without breaking real audio. Called from `?mute-tts=1` (see `utils/devHarness.ts`), which is gated
+   * `DEV || __HARNESS__` so this path is statically absent from a deploy build.
+   */
+  forcePlaybackFailures(n: number | null): void {
+    this.forcedPlaybackFailures = n
+    this.emitHealth()
+  }
+
+  /** Read-only circuit-breaker + playback health — snapshotted into bug reports. */
+  getHealth(): {
+    failureCount: number
+    lastFailureTime: number
+    circuitOpen: boolean
+    consecutivePlaybackFailures: number
+  } {
     const now = Date.now()
     return {
       failureCount: this.failureCount,
       lastFailureTime: this.lastFailureTime,
       circuitOpen:
         this.failureCount >= this.MAX_FAILURES && now - this.lastFailureTime < this.FAILURE_RESET_MS,
+      consecutivePlaybackFailures: this.forcedPlaybackFailures ?? this.consecutivePlaybackFailures,
     }
   }
 
