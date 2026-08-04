@@ -252,7 +252,7 @@ Once the renders are in a folder, hand over the path. Then, in order:
    `.claude/rules/scene-assets.md`), and add `toej-hat` to `REWARD_REUSE` in
    `scripts/optimize-theme-art.mjs` so it is copied and re-trimmed from `games/ordleg/hat.webp` rather
    than re-keyed (it already has real alpha and no screen to remove).
-   **They export at 256×256** (), like all the others. The 230px ceremony sticker does
+   **They export at 256×256** (`REWARD_SIZE`), like all the others. The 230px ceremony sticker does
    upscale 256 by ~1.3× on a 2× iPad, but that was measured at only 3–6% edge sharpness — mean pixel
    difference 1.7/255, invisible on soft clay — and the script bakes one global size, so mixing 384 in
    for nine subjects would grow the bundle for no visible gain. All 90 sit at 9KB average, 17KB worst,
