@@ -108,9 +108,22 @@ const GUARD = `(()=>{const t=(document.body.innerText||'');
 // overflow:hidden, so overflowing content is CLIPPED, not scrollable — scrollWidth proves nothing.
 // It ALSO returns the crash/404/title facts, because "nothing is off-screen" is trivially true on a page
 // that rendered almost nothing — a crashed route would otherwise sail through the layout phase.
+// It measures VISUAL bounds, not the element's own rect. Farvejagt's draggable wrapper sits at the
+// scatter anchor while its only child is translate(-50%,-50%)'d away, so the wrapper's rect hangs up to
+// 40px below the painted object — that reported 3 "off-screen" objects whose ink and hit-target were
+// both fully inside (verified with elementFromPoint). The mirror of the documented transform trap.
+// The union of DESCENDANT rects is the right measure: it follows the translate on Farvejagt, and still
+// covers a card's text labels, which an <img>-only rule would have missed — that rule would have hidden
+// the real Lær Engelsk overflow, where the clipped part was the label rows.
 const BOUNDS = `(()=>{const bad=[];const W=innerWidth,H=innerHeight;const t=(document.body.innerText||'');
+ const visualRect=(e)=>{const kids=e.querySelectorAll('*');
+   if(!kids.length) return e.getBoundingClientRect();
+   let l=Infinity,tp=Infinity,rt=-Infinity,b=-Infinity,seen=0;
+   kids.forEach(k=>{const kr=k.getBoundingClientRect(); if(kr.width<1||kr.height<1) return;
+     seen++; l=Math.min(l,kr.left); tp=Math.min(tp,kr.top); rt=Math.max(rt,kr.right); b=Math.max(b,kr.bottom)});
+   return seen? {left:l,top:tp,right:rt,bottom:b,width:rt-l,height:b-tp} : e.getBoundingClientRect()};
  document.querySelectorAll('button,[data-answer-tile],[aria-roledescription="draggable"],[data-prompt-focus]').forEach(e=>{
-  const r=e.getBoundingClientRect(); if(r.width<2||r.height<2) return;
+  const r=visualRect(e); if(r.width<2||r.height<2) return;
   if(r.left<-1||r.right>W+1||r.top<-1||r.bottom>H+1)
    bad.push({t:(e.getAttribute('aria-label')||e.textContent||e.tagName).replace(/\\s+/g,' ').slice(0,32),
              l:Math.round(r.left),r:Math.round(r.right),tp:Math.round(r.top),b:Math.round(r.bottom)});

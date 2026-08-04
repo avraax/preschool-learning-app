@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Box, Typography, Chip } from '@mui/material'
 import { PawPrint, Apple, Blocks, Hash, Palette, PersonStanding, Users, Trees, Hand, type LucideIcon } from 'lucide-react'
 import { useTheme } from '@mui/material/styles'
-import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
+import { PHONE_LANDSCAPE, PHONE_PORTRAIT } from '../../theme/phoneMedia'
 import { getCategoryTheme } from '../../config/categoryThemes'
 import { hexToRgba } from '../../theme/tokens/helpers'
 import { softShadow } from '../../theme/depth'
@@ -146,7 +146,8 @@ const EnglishLearning: React.FC = () => {
             gap: { xs: 0.75, md: 1 },
             mb: { xs: 1.5, md: 2 },
             flex: '0 0 auto',
-            [PHONE_LANDSCAPE]: { gap: 0.5, mb: 0.75 }
+            [PHONE_LANDSCAPE]: { gap: 0.5, mb: 0.75 },
+            [PHONE_PORTRAIT]: { gap: 0.5, mb: 0.75 }
           }}
         >
           {englishThemes.map(t => {
@@ -214,7 +215,23 @@ const EnglishLearning: React.FC = () => {
               '@media (orientation: landscape)': {
                 gridTemplateColumns: { xs: 'repeat(5, 1fr)', md: 'repeat(5, 1fr)' }
               },
-              [PHONE_LANDSCAPE]: { gap: '6px' }
+              [PHONE_LANDSCAPE]: { gap: '6px' },
+              // Phone PORTRAIT had no variant at all, so it inherited xs: two columns of 96px cards.
+              // Ten words then need five rows, which together with the hero and the two chip rows
+              // overflows an 844px phone — the grid painted straight over the chips and pig/duck/bear/
+              // lion fell below a viewport that does not scroll (body overflow is hidden).
+              // Three columns at 390px leaves ~120px per card, enough for the shrunk art + both labels.
+              // FIVE columns on phone portrait, matching what landscape already does. Phone portrait had
+              // no variant at all, so it inherited xs: two columns of 96px cards. Ten words then need
+              // five rows, which with the hero and two chip rows overflowed even an 844px phone — the
+              // grid painted over the chips and pig/duck/bear/lion fell below a viewport that does not
+              // scroll (body overflow is hidden).
+              // The binding constraint is the ROW COUNT, not card height: the grid is centred in a flex
+              // parent, so an overflow is clipped at BOTH ends and shaving card px moved the last row
+              // barely at all (74→66 changed nothing measurable). Four columns fixed 390x844 but still
+              // clipped 375x667 (iPhone SE, 177px shorter — the viewport responsive-design.md names).
+              // Five columns puts ten words in exactly two rows and clears both.
+              [PHONE_PORTRAIT]: { gridTemplateColumns: 'repeat(5, 1fr)', gap: '5px' }
             }}
           >
             <AnimatePresence mode="popLayout">
@@ -241,7 +258,7 @@ const EnglishLearning: React.FC = () => {
                       onActivate={() => handleWordClick(word)}
                       hint={playingWord === word.en}
                       breathe={false}
-                      sx={{ minHeight: { xs: 96, md: 120 }, [PHONE_LANDSCAPE]: { minHeight: 64 } }}
+                      sx={{ minHeight: { xs: 96, md: 120 }, [PHONE_LANDSCAPE]: { minHeight: 64 }, [PHONE_PORTRAIT]: { minHeight: 64 } }}
                     >
                       <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 0.25 }}>
                         {art && (
@@ -260,6 +277,7 @@ const EnglishLearning: React.FC = () => {
                               userSelect: 'none',
                               pointerEvents: 'none',
                               [PHONE_LANDSCAPE]: { height: '1.3rem' },
+                              [PHONE_PORTRAIT]: { height: '1.45rem' },
                             }}
                           />
                         )}
@@ -273,7 +291,8 @@ const EnglishLearning: React.FC = () => {
                             textAlign: 'center',
                             lineHeight: 1.1,
                             mt: 0.5,
-                            [PHONE_LANDSCAPE]: { fontSize: '0.8rem', mt: 0.25 }
+                            [PHONE_LANDSCAPE]: { fontSize: '0.8rem', mt: 0.25 },
+                            [PHONE_PORTRAIT]: { fontSize: '0.72rem', mt: 0.2 }
                           }}
                         >
                           {word.en}
@@ -284,7 +303,8 @@ const EnglishLearning: React.FC = () => {
                             color: 'text.secondary',
                             textAlign: 'center',
                             lineHeight: 1,
-                            [PHONE_LANDSCAPE]: { fontSize: '0.65rem' }
+                            [PHONE_LANDSCAPE]: { fontSize: '0.65rem' },
+                            [PHONE_PORTRAIT]: { fontSize: '0.58rem' }
                           }}
                         >
                           {word.da}
