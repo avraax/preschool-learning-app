@@ -9,11 +9,25 @@ const { SpeechClient } = v2
 // audio) is a generous ceiling that still blocks someone POSTing large blobs to burn STT minutes.
 const MAX_AUDIO_BASE64_CHARS = 1_500_000
 
-// Danish is NOT served from `global`; the `short` model is available from the `eu`
-// regional endpoint. The trailing `_` recognizer is the inline default recognizer
+// Danish is NOT served from `global`; the trailing `_` recognizer is the inline default recognizer
 // (no need to pre-create one).
 const STT_LOCATION = 'eu'
 const STT_API_ENDPOINT = 'eu-speech.googleapis.com'
+
+// **The model is the whole game.** Sig et Ord sends ONE isolated word, and `short` — what shipped —
+// returns **zero results** for that: measured 2026-08-04 over 16 common Danish words at four
+// distortion levels, `eu/short` heard 0–1 of 16 while a full SENTENCE from the same voice transcribed
+// at confidence 0.94. It is not a credentials, container, level or length problem (all controlled for):
+// the da-DK `short`/`long` models simply discard a lone monosyllable. `chirp_3` heard 12/16 clean and
+// 8–10/16 with child-like pitch/noise/rush, so this line is the difference between a game that works
+// and one that always says "det hørte jeg ikke helt".
+//
+// `chirp_3` is only in the EU multi-region (`chirp`/`chirp_2` are NOT in `eu` — they need
+// europe-west4, and chirp_2 measured worse: 8/16 clean, 3/16 distorted). EU data residency is kept.
+// FALLBACK is deliberate: model availability is a Google-side fact, so an INVALID_ARGUMENT about the
+// model retries once on `short` rather than turning the game off.
+const STT_MODEL = 'chirp_3'
+const STT_MODEL_FALLBACK = 'short'
 
 let speechClient: InstanceType<typeof SpeechClient> | null = null
 let cachedProjectId: string | null = null
@@ -92,20 +106,35 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const { client, projectId } = initializeClient()
 
-    const [response] = await client.recognize({
-      recognizer: `projects/${projectId}/locations/${STT_LOCATION}/recognizers/_`,
-      config: {
-        // Auto-detects container/codec from the file header — supports both
-        // WEBM_OPUS (Chrome) and MP4_AAC (Safari). Do NOT set encoding/sampleRate here.
-        autoDecodingConfig: {},
-        languageCodes: ['da-DK'],
-        model: 'short',
-        // Child-safety: mask profanity in the transcript (comes back like "f****"). Sig et Ord
-        // spells the recognized word aloud, so an unfiltered slur would be celebrated + spelled out.
-        features: { profanityFilter: true }
-      },
-      content: audioBytes
-    })
+    const recognizeWith = (model: string) =>
+      client.recognize({
+        recognizer: `projects/${projectId}/locations/${STT_LOCATION}/recognizers/_`,
+        config: {
+          // Auto-detects container/codec from the file header — supports both WEBM_OPUS (Chrome) and
+          // MP4_AAC (Safari); both verified end-to-end 2026-08-04. Do NOT set encoding/sampleRate here.
+          autoDecodingConfig: {},
+          languageCodes: ['da-DK'],
+          model,
+          // Child-safety: mask profanity in the transcript (comes back like "f****"). Sig et Ord
+          // spells the recognized word aloud, so an unfiltered slur would be celebrated + spelled out.
+          // `chirp_3` ACCEPTS this flag; whether it honours it is not documented, so the client also
+          // carries a Danish blocklist (`normalizeSpokenWord`) — belt and braces on the one thing here
+          // that must not fail.
+          features: { profanityFilter: true }
+        },
+        content: audioBytes
+      })
+
+    let response
+    try {
+      ;[response] = await recognizeWith(STT_MODEL)
+    } catch (modelError) {
+      // Only a MODEL-availability error earns the fallback; anything else is a real failure.
+      const message = String((modelError as { message?: string })?.message ?? '')
+      if (!/model/i.test(message) || !/does not exist|not supported|INVALID_ARGUMENT/i.test(message)) throw modelError
+      await logServerError(req, 'STT model fallback', modelError)
+      ;[response] = await recognizeWith(STT_MODEL_FALLBACK)
+    }
 
     const alternative = response.results?.[0]?.alternatives?.[0]
     const transcript = alternative?.transcript ?? ''

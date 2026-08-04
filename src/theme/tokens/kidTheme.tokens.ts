@@ -144,8 +144,8 @@ export const kidThemeTokens: ThemeTokens = {
       { section: 'alphabet', xPct: 15, yPct: 65, scale: 0.94, rotate: -3, depth: 0.3 },
       { section: 'math', xPct: 33, yPct: 61, scale: 1.02, rotate: 2, depth: 0.32 },
       { section: 'colors', xPct: 50, yPct: 59, scale: 1.14, rotate: 0, depth: 0.34 },
-      { section: 'english', xPct: 67, yPct: 61, scale: 1.02, rotate: -2, depth: 0.32 },
-      { section: 'ordleg', xPct: 85, yPct: 65, scale: 0.94, rotate: 3, depth: 0.3 },
+      { section: 'ordleg', xPct: 67, yPct: 61, scale: 1.02, rotate: -2, depth: 0.32 },
+      { section: 'english', xPct: 85, yPct: 65, scale: 0.94, rotate: 3, depth: 0.3 },
     ],
     // Section framing (PRD-05 W4/W5): each section pushes into the region where its object sat,
     // so /alphabet feels like a different corner of the sky than /math (continuity with the push-in).
@@ -153,6 +153,10 @@ export const kidThemeTokens: ThemeTokens = {
       alphabet: { xPct: 22, yPct: 52, zoom: 1.32 },
       math: { xPct: 36, yPct: 46, zoom: 1.34 },
       colors: { xPct: 50, yPct: 44, zoom: 1.36 },
+      // NOT swapped with the home seats above (owner, 2026-08-04: the re-framing was visible and
+      // unwanted). Each section keeps its own framing, so english/ordleg no longer push into exactly
+      // the spot their home object sits in — a deliberate deviation from the "push into the region
+      // where its object sat" note above. Don't "fix" it back.
       english: { xPct: 64, yPct: 46, zoom: 1.34 },
       ordleg: { xPct: 78, yPct: 52, zoom: 1.32 },
     },

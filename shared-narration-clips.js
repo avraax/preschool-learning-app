@@ -34,6 +34,7 @@ import {
   COMPARE_PROMPT, comparisonFactText,
   HVAD_MANGLER_PROMPT, sequenceFactText, sequenceStarts, sequenceNumbers,
   NUANCER_INSTRUCTION, colorMixTargetText, colorMixResultText, colorObjectFactText,
+  MIC_RETRY_LINE, MIC_HOLD_HINT, MIC_READY_LINE,
 } from './src/config/gamePhrases.ts'
 import { primaryColors, possibleTargets, mixingRules } from './src/config/colorMixing.ts'
 import { spokenOrdlegWords } from './src/config/ordlegWords.ts'
@@ -150,6 +151,15 @@ export function collectNarrationClips() {
   // falling through to live, unauditioned Azure. Now the lists live in src/config/ordlegWords.ts and are
   // enumerated here (Difficulty PRD-01 W5/W7).
   for (const word of spokenOrdlegWords()) da('ordleg', word)
+
+  // Sig et Ord's coaching lines. The READ-BACK of a spoken word is genuinely unbounded and stays on
+  // live Azure by design — these three are not: they are fixed strings the game says when the
+  // recognizer heard nothing, when the press was too short to record, and when the mic finished
+  // opening after the child let go. The retry line was reaching live Azure at the worst possible
+  // moment (the child is already stuck) simply because it was composed inside the .tsx.
+  da('ordleg', MIC_RETRY_LINE)
+  da('ordleg', MIC_HOLD_HINT)
+  da('ordleg', MIC_READY_LINE)
 
   // NOTE: the Danish glosses (`w.da`) are NO LONGER enumerated. They were baked only because Dansk til
   // Engelsk spoke the Danish word as its prompt, and that game was removed 2026-08-03 — every surviving

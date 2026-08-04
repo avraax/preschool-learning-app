@@ -195,8 +195,8 @@ export const defaultHomeAnchors = (): HomeAnchor[] => [
   { section: 'alphabet', xPct: 16, yPct: 54, scale: 1, depth: 0.3 },
   { section: 'math', xPct: 33, yPct: 47, scale: 1, depth: 0.32 },
   { section: 'colors', xPct: 50, yPct: 44, scale: 1.04, depth: 0.34 },
-  { section: 'english', xPct: 67, yPct: 47, scale: 1, depth: 0.32 },
-  { section: 'ordleg', xPct: 84, yPct: 54, scale: 1, depth: 0.3 },
+  { section: 'ordleg', xPct: 67, yPct: 47, scale: 1, depth: 0.32 },
+  { section: 'english', xPct: 84, yPct: 54, scale: 1, depth: 0.3 },
 ]
 
 // A neutral centred focus per section (no zoom-in) — themes override to frame their own locale.

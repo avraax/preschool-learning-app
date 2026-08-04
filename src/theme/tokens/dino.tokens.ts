@@ -86,13 +86,14 @@ export const dinoThemeTokens: ThemeTokens = {
       { section: 'alphabet', xPct: 15, yPct: 70, scale: 0.96, rotate: -3, depth: 0.3 },
       { section: 'math', xPct: 33, yPct: 66, scale: 1.04, rotate: 2, depth: 0.32 },
       { section: 'colors', xPct: 50, yPct: 64, scale: 1.14, rotate: 0, depth: 0.34 },
-      { section: 'english', xPct: 68, yPct: 66, scale: 1.04, rotate: -2, depth: 0.32 },
-      { section: 'ordleg', xPct: 85, yPct: 70, scale: 0.96, rotate: 3, depth: 0.3 },
+      { section: 'ordleg', xPct: 68, yPct: 66, scale: 1.04, rotate: -2, depth: 0.32 },
+      { section: 'english', xPct: 85, yPct: 70, scale: 0.96, rotate: 3, depth: 0.3 },
     ],
     sectionFocus: {
       alphabet: { xPct: 22, yPct: 68, zoom: 1.32 },
       math: { xPct: 36, yPct: 65, zoom: 1.34 },
       colors: { xPct: 50, yPct: 53, zoom: 1.36 },
+      // Section framing is deliberately NOT swapped with the home seats — see kidTheme.tokens.ts.
       english: { xPct: 64, yPct: 65, zoom: 1.34 },
       ordleg: { xPct: 78, yPct: 68, zoom: 1.32 },
     },

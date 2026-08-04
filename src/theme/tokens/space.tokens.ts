@@ -80,13 +80,14 @@ export const spaceThemeTokens: ThemeTokens = {
       { section: 'alphabet', xPct: 18, yPct: 45, scale: 1, rotate: -3, depth: 0.3 },
       { section: 'math', xPct: 35, yPct: 38, scale: 1, rotate: 2, depth: 0.32 },
       { section: 'colors', xPct: 50, yPct: 35, scale: 1.06, rotate: 0, depth: 0.34 },
-      { section: 'english', xPct: 65, yPct: 38, scale: 1, rotate: -2, depth: 0.32 },
-      { section: 'ordleg', xPct: 82, yPct: 45, scale: 1, rotate: 3, depth: 0.3 },
+      { section: 'ordleg', xPct: 65, yPct: 38, scale: 1, rotate: -2, depth: 0.32 },
+      { section: 'english', xPct: 82, yPct: 45, scale: 1, rotate: 3, depth: 0.3 },
     ],
     sectionFocus: {
       alphabet: { xPct: 24, yPct: 46, zoom: 1.32 },
       math: { xPct: 37, yPct: 40, zoom: 1.34 },
       colors: { xPct: 50, yPct: 38, zoom: 1.36 },
+      // Section framing is deliberately NOT swapped with the home seats — see kidTheme.tokens.ts.
       english: { xPct: 63, yPct: 40, zoom: 1.34 },
       ordleg: { xPct: 76, yPct: 46, zoom: 1.32 },
     },

@@ -192,6 +192,10 @@ app.post('/api/tts-azure', async (req, res) => {
 const { SpeechClient } = speechV2;
 const STT_LOCATION = 'eu';
 const STT_API_ENDPOINT = 'eu-speech.googleapis.com';
+// Mirrors api/stt.ts — see the long comment there for WHY the model changed (`short` returns zero
+// results for a single isolated Danish word; `chirp_3` hears it). Keep the two in sync.
+const STT_MODEL = 'chirp_3';
+const STT_MODEL_FALLBACK = 'short';
 
 let sttClient = null;
 let sttProjectId = null;
@@ -248,17 +252,28 @@ app.post('/api/stt', async (req, res) => {
 
     const { client, projectId } = initializeSttClient();
 
-    const [response] = await client.recognize({
-      recognizer: `projects/${projectId}/locations/${STT_LOCATION}/recognizers/_`,
-      config: {
-        autoDecodingConfig: {},
-        languageCodes: ['da-DK'],
-        model: 'short',
-        // Child-safety: mask profanity (mirrors api/stt.ts). See that file for rationale.
-        features: { profanityFilter: true },
-      },
-      content: audioBytes,
-    });
+    const recognizeWith = (model) =>
+      client.recognize({
+        recognizer: `projects/${projectId}/locations/${STT_LOCATION}/recognizers/_`,
+        config: {
+          autoDecodingConfig: {},
+          languageCodes: ['da-DK'],
+          model,
+          // Child-safety: mask profanity (mirrors api/stt.ts). See that file for rationale.
+          features: { profanityFilter: true },
+        },
+        content: audioBytes,
+      });
+
+    let response;
+    try {
+      [response] = await recognizeWith(STT_MODEL);
+    } catch (modelError) {
+      const message = String(modelError?.message ?? '');
+      if (!/model/i.test(message) || !/does not exist|not supported|INVALID_ARGUMENT/i.test(message)) throw modelError;
+      logDevError('STT model fallback', modelError);
+      [response] = await recognizeWith(STT_MODEL_FALLBACK);
+    }
 
     const alternative = response.results?.[0]?.alternatives?.[0];
     const transcript = alternative?.transcript ?? '';

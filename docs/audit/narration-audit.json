@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-08-04T07:16:44.930Z",
+  "updatedAt": "2026-08-04T17:50:33.138Z",
   "clips": {
     "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|b": {
       "verdict": "ok",
@@ -15856,6 +15856,30 @@
       "text": "Luftballon",
       "group": "mixed",
       "updatedAt": 1785827804930
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Det hørte jeg ikke helt. Prøv igen!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Det hørte jeg ikke helt. Prøv igen!",
+      "group": "ordleg",
+      "updatedAt": 1785865833138
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Hold knappen nede, mens du siger ordet.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Hold knappen nede, mens du siger ordet.",
+      "group": "ordleg",
+      "updatedAt": 1785865833138
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Nu er mikrofonen klar. Prøv igen!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Nu er mikrofonen klar. Prøv igen!",
+      "group": "ordleg",
+      "updatedAt": 1785865833138
     }
   }
 }

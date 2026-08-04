@@ -46,8 +46,8 @@ const homeCards: Array<{
   { id: 'alphabet', route: '/alphabet', initial: { opacity: 0, x: -30 }, delay: 0 },
   { id: 'math', route: '/math', initial: { opacity: 0, y: -30 }, delay: 0.1 },
   { id: 'colors', route: '/farver', initial: { opacity: 0, x: 30 }, delay: 0.2 },
-  { id: 'english', route: '/english', initial: { opacity: 0, y: 30 }, delay: 0.3 },
-  { id: 'ordleg', route: '/ordleg', initial: { opacity: 0, x: 30 }, delay: 0.4 },
+  { id: 'ordleg', route: '/ordleg', initial: { opacity: 0, y: 30 }, delay: 0.3 },
+  { id: 'english', route: '/english', initial: { opacity: 0, x: 30 }, delay: 0.4 },
 ]
 
 const HomePage: React.FC = () => {

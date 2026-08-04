@@ -19,6 +19,9 @@ import {
   NUANCER_INSTRUCTION,
   colorMixTargetText,
   colorMixResultText,
+  MIC_RETRY_LINE,
+  MIC_HOLD_HINT,
+  MIC_READY_LINE,
 } from './gamePhrases.ts'
 import { startsWithQuestion } from './letterWords.ts'
 import { possibleTargets, mixingRules } from './colorMixing.ts'
@@ -48,6 +51,11 @@ test('spoken math/comparison/sequence/colour lines are exactly these strings', (
   assert.equal(colorMixTargetText('lilla'), 'Lav lilla farve ved at blande farverne')
   assert.equal(colorMixResultText('rød', 'blå', 'lilla'), 'rød og blå bliver lilla')
   assert.equal(startsWithQuestion('Æble'), 'Hvad starter Æble med?')
+  // Sig et Ord's coaching lines — a hold-to-talk gesture can only be coached out loud (the child
+  // can't read), so these three must be baked, not live.
+  assert.equal(MIC_RETRY_LINE, 'Det hørte jeg ikke helt. Prøv igen!')
+  assert.equal(MIC_HOLD_HINT, 'Hold knappen nede, mens du siger ordet.')
+  assert.equal(MIC_READY_LINE, 'Nu er mikrofonen klar. Prøv igen!')
 })
 
 test('the shared bounds match the games ranges', () => {
@@ -102,4 +110,7 @@ test('every composed game line is enumerated for prebake', () => {
     const [c1, c2] = key.split('+')
     want(colorMixResultText(c1, c2, mixingRules[key].name))
   }
+  want(MIC_RETRY_LINE)
+  want(MIC_HOLD_HINT)
+  want(MIC_READY_LINE)
 })
