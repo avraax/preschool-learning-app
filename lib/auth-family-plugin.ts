@@ -818,7 +818,15 @@ async function signInWithIdToken(
 ): Promise<string | null> {
   // A DYNAMIC import breaks what would otherwise be a static cycle (lib/auth.ts imports this module
   // to register the plugin). By the time this runs, lib/auth.ts is fully evaluated.
-  const { auth } = await import('./auth.ts')
+  //
+  // **`.js`, NOT `.ts`** — this is the trap in `.claude/rules/api-endpoints.md`, and it took Google
+  // sign-in down in production while every local check stayed green. Vercel compiles each file to a
+  // sibling `.js` and rewrites NO specifiers, so `'./auth.ts'` shipped verbatim and threw
+  // `ERR_MODULE_NOT_FOUND: /var/task/lib/auth.ts` at the one moment it is reached — after the Google
+  // round trip, inside the callback. `dev-server.js` runs the real `.ts` off disk under type stripping,
+  // so it can never reproduce this; a DYNAMIC import also can't be caught by `typecheck:server`, which
+  // resolves `.ts` happily under `allowImportingTsExtensions`. Guarded now by `serverImports.test.ts`.
+  const { auth } = await import('./auth.js')
   const res = await auth.api.signInSocial({
     body: {
       provider: 'google',
