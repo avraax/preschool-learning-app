@@ -20,13 +20,20 @@ on crashes. Each has a short id like `R7K3F`. Storage: production = Vercel Blob 
 - **A report exists only if an adult actually sent one.** Check `uploadedAt` on the listing before
   concluding anything: an empty or days-old list means nothing was reported, NOT that the device is
   fine — debug the described symptom from the code instead of waiting for a report that never came.
-- **Two whole classes of failure can NEVER produce a report**, so don't read their absence as health:
-  the ⚙️ that sends one lives inside `<App />`, behind the auth gate, so **nothing can be reported from
-  the login screen**; and only a CRASH auto-uploads, so a *handled* error (a Danish message on screen,
-  a non-ok fetch) sends nothing however broken it is. For any symptom at or before the gate — sign-in,
-  profile picker, PIN — go straight to the server instead: `npx vercel logs <url> --json` for the real
-  stack, and `curl` the endpoint the failing message came from. That is how a total production outage of
-  every accounts endpoint was found with an empty, three-weeks-old report list.
+- **SIGN-IN failures now DO report** (`type: "auth"`, `category: "login"`, since 2026-08-04). They are
+  the exception to the rule below, because they had to be: the ⚙️ lives behind the gate, so a failed
+  login used to leave nothing anywhere, twice. `authDiagnostics.reportAuthFailure` auto-uploads with a
+  screenshot, and the lock screen prints the short code so the adult can read it out. Read
+  `report.auth` first: `{stage, reason, status, code, errorName, trail}` — the trail is the step-by-step
+  of the attempt, and `reason` is a stable slug (`poll-window-exhausted`, `returned-without-pending-flow`,
+  `claim-http-error`, `webauthn-error`, …). Deduped by `stage|reason`, max 3 per session, so a 3s poll
+  can't storm the endpoint — one report per distinct fault, not per attempt.
+- **The other handled failures still produce NOTHING**, so don't read their absence as health: only a
+  CRASH auto-uploads otherwise, so a handled error (a Danish message on screen, a non-ok fetch) sends
+  nothing however broken it is. For a symptom at the gate that ISN'T one of the reported sign-in stages —
+  profile picker, PIN — go straight to the server: `npx vercel logs <url> --json` for the real stack, and
+  `curl` the endpoint the failing message came from. That is how a total production outage of every
+  accounts endpoint was found with an empty, three-weeks-old report list.
 - ALWAYS use curl, not WebFetch.
 
 ## 2. Resolve which report(s) to debug

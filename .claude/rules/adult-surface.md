@@ -80,7 +80,19 @@ circuit-breaker + playback-failure count + permission snapshot, progress state, 
 code (e.g. `R7K3F`) shown to the adult; offline/failure → "Gem som fil" downloads the same JSON.
 **Crashes auto-upload** slim reports (no screenshot): window `error`/`unhandledrejection` hooks + the global
 `AppErrorBoundary` (kid-friendly "Ups!" + reload; `?crash-test=1` throws on purpose), deduped by signature,
-max 3/session. Locally `dev-server.js` mirrors the endpoint into the gitignored `.bug-reports/` folder, so
+max 3/session.
+
+**Failed SIGN-INS auto-upload too** (`type: 'auth'`, WITH a screenshot — `src/services/authDiagnostics.ts`).
+They needed their own channel because they are invisible to both mechanisms above: the ⚙️ is inside
+`<App />`, i.e. behind the gate, and every sign-in failure is *handled*, so it never reaches the crash
+hooks. Two failed logins on the iPad left no data at all before this. `noteAuthStep` records a trail
+(mirrored to `console`, so it also rides along in any later manual report), `reportAuthFailure` uploads,
+and **the lock screen prints the short code** — the only surface that can, since the adult is not past the
+gate. The worst offender it closes: `OAuthReturnHandler`'s 3-minute poll used to give up with
+`clearInterval` and nothing else. Throttling is stricter than the crash path (dedupe by `stage|reason`,
+max 3/session, 30s floor) because `google-claim` runs inside a 3s poll. **Every recorded field is an enum,
+a status code or an error name** — never a body, URL, email or token; `authDiagnostics.test.ts` fails if a
+field that could carry one is added. Locally `dev-server.js` mirrors the endpoint into the gitignored `.bug-reports/` folder, so
 the whole flow works without Blob.
 
 **To debug a report, use the `/debug-report` skill** — it handles "newest report", one code, or many.

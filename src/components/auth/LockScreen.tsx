@@ -22,6 +22,7 @@ import { Fingerprint, Lock, WifiOff } from 'lucide-react'
 import type { AuthPhase } from '../../contexts/authGatePolicy'
 import { useAuthContext } from '../../contexts/AuthContext'
 import { authStore } from '../../services/authStore'
+import { getLastAuthReportCode, subscribeAuthReportCode } from '../../services/authDiagnostics'
 import {
   startGoogleSignIn,
   startPasskeyUnlock,
@@ -75,6 +76,11 @@ const LockScreen: React.FC = () => {
   const auth = useAuthContext()
   const [passkeyOptions, setPasskeyOptions] = useState<PasskeyRequestOptions | null>(null)
   const [localBusy, setLocalBusy] = useState(false)
+  // The short code of an auto-uploaded login-failure report (see `authDiagnostics`). Seeded from the
+  // module so a report sent before this screen mounted — e.g. the OAuth return handler's give-up, which
+  // fires while the lock screen is still booting — still shows its code.
+  const [authReportCode, setAuthReportCode] = useState<string | null>(getLastAuthReportCode())
+  useEffect(() => subscribeAuthReportCode(setAuthReportCode), [])
 
   const phase = auth?.phase ?? 'booting'
   const canOfferPasskey =
@@ -239,6 +245,15 @@ const LockScreen: React.FC = () => {
                 sx={{ mb: 2, fontWeight: 600, color: '#fff3f3', textShadow: '0 1px 2px rgba(0,0,0,.4)' }}
               >
                 {auth.error}
+              </Typography>
+            )}
+            {/* A failed sign-in auto-uploads a report (authDiagnostics). This is the ONLY place its code
+                can be shown: the ⚙️ that normally reports lives inside <App />, behind this very gate, so
+                without this line the adult has a failure and no way to point anyone at it. Adult-facing
+                and deliberately plain — the child never reaches this screen. */}
+            {authReportCode && (
+              <Typography variant="caption" sx={{ display: 'block', mb: 2, opacity: 0.85 }}>
+                Fejlrapport sendt. Kode: <strong>{authReportCode}</strong>
               </Typography>
             )}
 

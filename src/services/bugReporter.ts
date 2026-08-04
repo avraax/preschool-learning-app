@@ -21,7 +21,33 @@ import {
 } from './diagnosticsBuffer'
 import type { VoiceOverride } from '../config/voiceOverride'
 
-export type BugCategory = 'lyd' | 'udseende' | 'spil' | 'andet' | 'crash'
+export type BugCategory = 'lyd' | 'udseende' | 'spil' | 'andet' | 'crash' | 'login'
+
+/**
+ * A failed sign-in, attached to an auto-uploaded report. This exists because a login failure was
+ * previously INVISIBLE: the ⚙️ that sends a report lives inside `<App />`, i.e. behind the auth gate, so
+ * nothing can be reported from the lock screen — and only a CRASH auto-uploads, while every sign-in
+ * failure is *handled* (a Danish message, or in the worst case a poll loop that just stops). Twice now
+ * the owner has hit failed logins on the iPad with no data anywhere.
+ *
+ * Deliberately field-by-field rather than a free-form blob: everything here is an enum, a status code or
+ * an error NAME, so no token, flowId, PIN or email can ride along. `authReportRedaction.test.ts` holds
+ * that line.
+ */
+export interface AuthFailureInfo {
+  /** Which leg of sign-in failed. */
+  stage: string
+  /** Why, as a stable machine-readable reason (not a Danish sentence). */
+  reason: string
+  /** HTTP status, when the failure was a response. */
+  status?: number
+  /** The API's own error `code`, when it sent one. */
+  code?: string
+  /** DOMException / Error `name` — e.g. `NotAllowedError` for a cancelled or stale Face ID prompt. */
+  errorName?: string
+  /** The step trail leading up to it (see `authDiagnostics`). */
+  trail: string[]
+}
 
 export interface BugReportError {
   message: string
@@ -32,12 +58,13 @@ export interface BugReportError {
 
 export interface BugReportPayload {
   schema: 1
-  type: 'manual' | 'crash'
+  type: 'manual' | 'crash' | 'auth'
   createdAt: string
   sessionId: string
   category: BugCategory
   note: string
   error?: BugReportError
+  auth?: AuthFailureInfo
   app: {
     version: string
     commitHash: string
@@ -77,10 +104,11 @@ function safe<T>(fn: () => T, fallback: T): T {
 }
 
 export function buildReportPayload(input: {
-  type: 'manual' | 'crash'
+  type: 'manual' | 'crash' | 'auth'
   category: BugCategory
   note: string
   error?: BugReportError
+  auth?: AuthFailureInfo
 }): BugReportPayload {
   return {
     schema: 1,
@@ -90,6 +118,7 @@ export function buildReportPayload(input: {
     category: input.category,
     note: input.note,
     error: input.error,
+    auth: input.auth,
     app: {
       version: BUILD_INFO.version,
       commitHash: BUILD_INFO.commitHash,

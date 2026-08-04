@@ -14,6 +14,7 @@ import {
 } from './authSignIn'
 import { authStore, type AccountUser } from './authStore'
 import { registerSecret } from './redact'
+import { noteAuthStep, reportAuthFailure, resetAuthTrail } from './authDiagnostics'
 
 const START_PATH = '/api/auth/family/oauth/start'
 const CLAIM_PATH = '/api/auth/family/oauth/claim'
@@ -27,11 +28,13 @@ function newFlowId(): string {
 
 async function startGoogle(): Promise<SignInResult> {
   const flowId = newFlowId()
+  noteAuthStep('google-start', 'begin')
   try {
     // Write FIRST, in our own storage context. If we navigated before this landed there would be
     // nothing to claim with when we came back.
     localStorage.setItem(OAUTH_FLOW_KEY, JSON.stringify({ flowId, startedAt: Date.now() }))
   } catch {
+    void reportAuthFailure('google-start', 'localstorage-unavailable')
     return {
       ok: false,
       message: 'Kan ikke gemme login på denne enhed. Slå privat browsing fra og prøv igen.',
@@ -48,13 +51,16 @@ async function startGoogle(): Promise<SignInResult> {
     })
     if (!res.ok) {
       clearPendingFlow()
+      void reportAuthFailure('google-start', 'start-http-error', { status: res.status })
       return { ok: false, message: 'Kunne ikke starte Google-login. Prøv igen.' }
     }
     const { authorizeUrl } = (await res.json()) as { authorizeUrl?: string }
     if (!authorizeUrl) {
       clearPendingFlow()
+      void reportAuthFailure('google-start', 'no-authorize-url', { status: res.status })
       return { ok: false, message: 'Kunne ikke starte Google-login. Prøv igen.' }
     }
+    noteAuthStep('google-start', 'ok', { status: res.status })
 
     // ALWAYS location.assign, NEVER window.open: in standalone (installed-PWA) mode a popup can
     // escape to Safari and lose the return path entirely (§9). It is also popup-blocker-proof as a
@@ -62,8 +68,11 @@ async function startGoogle(): Promise<SignInResult> {
     window.location.assign(authorizeUrl)
     // The lock screen switches to "Venter på Google…" and starts polling; we never resolve "ok" here.
     return { ok: true }
-  } catch {
+  } catch (e) {
     clearPendingFlow()
+    void reportAuthFailure('google-start', 'start-network-error', {
+      errorName: e instanceof Error ? e.name : undefined,
+    })
     return { ok: false, message: 'Ingen forbindelse. Prøv igen når du er på nettet.' }
   }
 }
@@ -77,24 +86,41 @@ async function claim(flowId: string): Promise<SignInResult> {
     })
     if (res.status === 404 || res.status === 410) {
       // Expired, already claimed, or never existed → stop polling and let the adult retry cleanly.
+      // This is a DECISIVE failure and one of the shapes the owner sees as "login didn't work", so it
+      // reports rather than just setting a message.
       clearPendingFlow()
       authStore.setError('Login-forsøget udløb. Prøv igen.')
+      void reportAuthFailure('google-claim', 'flow-expired-or-claimed', { status: res.status })
       return { ok: false }
     }
-    if (!res.ok) return { ok: false }
+    if (!res.ok) {
+      // A 5xx here used to be indistinguishable from a normal "still pending" poll — the loop just kept
+      // going and the adult waited. Report it (deduped by stage|reason, so a 60-poll window sends one).
+      void reportAuthFailure('google-claim', 'claim-http-error', { status: res.status })
+      return { ok: false }
+    }
 
     const body = (await res.json()) as
       | { status: 'pending' }
       | { token: string; user: AccountUser }
-    // Still on Google's consent screen — the expected answer for most polls.
+    // Still on Google's consent screen — the expected answer for most polls, and NOT a failure.
     if ('status' in body && body.status === 'pending') return { ok: false }
-    if (!('token' in body) || !body.token) return { ok: false }
+    if (!('token' in body) || !body.token) {
+      void reportAuthFailure('google-claim', 'claim-ok-but-no-token', { status: res.status })
+      return { ok: false }
+    }
 
     clearPendingFlow()
+    noteAuthStep('google-claim', 'ok', { status: res.status })
     authStore.adoptSession(body.token, body.user ?? null)
+    resetAuthTrail()
     return { ok: true }
-  } catch {
-    // A network blip mid-poll is not a failure; the next tick tries again.
+  } catch (e) {
+    // A network blip mid-poll is not a failure; the next tick tries again. Recorded, not reported.
+    noteAuthStep('google-claim', 'fail', {
+      note: 'poll-network-blip',
+      errorName: e instanceof Error ? e.name : undefined,
+    })
     return { ok: false }
   }
 }

@@ -18,6 +18,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { Box, Paper, Typography } from '@mui/material'
 import { AUTH_FRAGMENT, claimPendingFlow, readPendingFlow } from '../../services/authSignIn'
+import { noteAuthStep, reportAuthFailure } from '../../services/authDiagnostics'
 import { AUTH_Z } from './authOverlayZ'
 
 const POLL_INTERVAL_MS = 3000
@@ -65,11 +66,24 @@ const OAuthReturnHandler: React.FC = () => {
     if (fragment && !pending) {
       // We are running somewhere that never started the flow — an in-app browser view, or a link
       // opened on the wrong device. There is nothing to claim here, by design.
+      //
+      // It is ALSO what an installed-PWA storage-jar mismatch looks like (the flow started in Safari and
+      // came back into the home-screen app, or vice versa), which is indistinguishable from here and is a
+      // genuine dead end for the adult. Report it: this is the single most likely shape of "I tried to log
+      // in twice and nothing happened".
       setWrongContext(true)
       stripFragment()
+      void reportAuthFailure('google-return', 'returned-without-pending-flow', {
+        note: window.matchMedia?.('(display-mode: standalone)')?.matches ? 'standalone' : 'browser',
+      })
       return
     }
-    if (fragment) stripFragment()
+    if (fragment) {
+      stripFragment()
+      noteAuthStep('google-return', 'ok', {
+        note: window.matchMedia?.('(display-mode: standalone)')?.matches ? 'standalone' : 'browser',
+      })
+    }
 
     // Cold boot with a pending flow counts as a recovery attempt too.
     if (!pending) return
@@ -81,7 +95,18 @@ const OAuthReturnHandler: React.FC = () => {
     document.addEventListener('visibilitychange', onVisible)
 
     const poll = setInterval(() => {
-      if (Date.now() - startedAt.current > POLL_WINDOW_MS || !readPendingFlow()) {
+      if (Date.now() - startedAt.current > POLL_WINDOW_MS) {
+        // THE SILENT DEAD END. This used to just `clearInterval` and return: three minutes of polling,
+        // then nothing — no message, no log, no report, and a lock screen that simply sat there. It is
+        // the reason a failed login left no data twice over. A give-up is a decisive failure; report it.
+        clearInterval(poll)
+        void reportAuthFailure('google-claim', 'poll-window-exhausted', {
+          note: `${Math.round(POLL_WINDOW_MS / 1000)}s`,
+        })
+        return
+      }
+      if (!readPendingFlow()) {
+        // The flow was claimed or cleared elsewhere — the normal, successful way out of the loop.
         clearInterval(poll)
         return
       }

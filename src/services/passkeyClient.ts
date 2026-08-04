@@ -23,6 +23,7 @@ import type {
 } from '@simplewebauthn/browser'
 import { authStore, type AccountUser } from './authStore'
 import { adoptSignedInSession, type PasskeyRequestOptions, type SignInResult } from './authSignIn'
+import { noteAuthStep, reportAuthFailure, resetAuthTrail } from './authDiagnostics'
 
 const REGISTER_OPTIONS_PATH = '/api/auth/passkey/generate-register-options'
 const VERIFY_REGISTRATION_PATH = '/api/auth/passkey/verify-registration'
@@ -114,7 +115,13 @@ export function registerPasskey(
  * awaits `browserSupportsWebAuthnAutofill()` before `get()`, which spends the gesture.
  */
 export function unlockWithPasskey(pre: PasskeyRequestOptions | null): Promise<SignInResult> {
-  if (!pre) return Promise.resolve({ ok: false, message: 'Face ID er ikke klar. Prøv igen.' })
+  if (!pre) {
+    void reportAuthFailure('passkey-unlock', 'options-not-prefetched')
+    return Promise.resolve({ ok: false, message: 'Face ID er ikke klar. Prøv igen.' })
+  }
+  // Age of the challenge is diagnostic gold: a stale one produces a `NotAllowedError` that is otherwise
+  // indistinguishable from the adult cancelling the Face ID sheet.
+  noteAuthStep('passkey-unlock', 'begin', { note: `challenge-age=${Date.now() - pre.fetchedAt}ms` })
 
   return startAuthentication({ optionsJSON: pre.options, useBrowserAutofill: false })
     .then(async (response: AuthenticationResponseJSON) => {
@@ -125,16 +132,30 @@ export function unlockWithPasskey(pre: PasskeyRequestOptions | null): Promise<Si
       })
       if (!res.ok) {
         const body = (await res.json().catch(() => null)) as { message?: string } | null
+        void reportAuthFailure('passkey-unlock', 'verify-http-error', { status: res.status })
         return { ok: false, message: body?.message ?? 'Face ID blev ikke godkendt.' }
       }
       // The bearer plugin hands the new session token back in a RESPONSE HEADER, never a cookie.
       const token = res.headers.get('set-auth-token')
       const body = (await res.json().catch(() => null)) as { user?: AccountUser } | null
-      if (!token) return { ok: false, message: 'Kunne ikke starte en session. Prøv Google i stedet.' }
+      if (!token) {
+        // Verified, but no session came back — the shape of the `set-auth-token` bug in auth.md.
+        void reportAuthFailure('passkey-unlock', 'verified-but-no-session-token', { status: res.status })
+        return { ok: false, message: 'Kunne ikke starte en session. Prøv Google i stedet.' }
+      }
       adoptSignedInSession(token, body?.user ?? null)
+      noteAuthStep('passkey-unlock', 'ok', { status: res.status })
+      resetAuthTrail()
       return { ok: true }
     })
-    .catch((e: unknown) => ({ ok: false, message: danishError(e) }))
+    .catch((e: unknown) => {
+      const name = e instanceof Error ? e.name : undefined
+      // A cancelled sheet and an expired challenge BOTH arrive as NotAllowedError, so this is reported
+      // (with the challenge age in the trail) rather than shrugged off — it is exactly the ambiguity that
+      // made "Face ID didn't work" undiagnosable.
+      void reportAuthFailure('passkey-unlock', 'webauthn-error', { errorName: name })
+      return { ok: false, message: danishError(e) }
+    })
 }
 
 /** True when this browser can do platform WebAuthn at all. Safe to await — it is not in a gesture. */
