@@ -4,6 +4,7 @@ import { getCategoryTheme } from '../../config/categoryThemes'
 import { EnglishRepeatButton } from '../common/RepeatButton'
 import { quizEnglishWords, pickWordsForLevel, EnglishWord } from '../../config/englishVocab'
 import { ENGLISH_ROUND, englishPromptPool, englishWordKey } from '../../config/promptPools'
+import { englishHintLine } from '../../config/hintLines'
 import { usePromptBag } from '../../hooks/usePromptBag'
 import { englishArt, englishArtId } from '../../assets/games/english'
 import { progressStore } from '../../services/progressStore'
@@ -75,6 +76,10 @@ const EnglishWordGame: React.FC = () => {
 
     // Never-fail hint (PRD-05 P1): after 2 wrong taps the correct word tile pulses.
     hintAfterNWrong: 2,
+    // …and it SPEAKS the answer again (Practice Loop PRD-01 W3): the target English word, in the
+    // English voice. No new narration — the prompt already says this exact word.
+    speakHint: async (item: QuizItem, audio: any) =>
+      audio.speakEnglish(englishHintLine(String(item.value))),
 
     // SINGLE TAP commits (owner decision, 2026-07-31). This game previously opted into the
     // `previewBeforeCommit` two-tap audition (PRD-14 W7): tap 1 spoke the tile's English word, tap 2

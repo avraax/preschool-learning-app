@@ -5,7 +5,8 @@ import { Sun, Moon } from 'lucide-react'
 import { useTheme } from '@mui/material/styles'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
 import { getCategoryTheme } from '../../config/categoryThemes'
-import { SHADES, HUE_ORDER, COLOR_SWATCH, DANISH_OBJECTS, spokenColor } from '../../config/colorContent'
+import { SHADES, HUE_ORDER, COLOR_SWATCH, DANISH_OBJECTS, spokenColor } from '../../config/colorContent'
+import { colorObjectFactText } from '../../config/gamePhrases'
 import { hexToRgba } from '../../theme/tokens/helpers'
 import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 import GameShell from '../common/GameShell'
@@ -230,7 +231,7 @@ const FarverLearning: React.FC = () => {
                   {/* PRD-09/16: bigger baked example object resting in the world (no holder), grounded
                       by a stronger contact shadow (elevation 2) so it reads as a real, tappable thing. */}
                   <Box
-                    onClick={() => tapSpeak(`obj-${currentHue}-${obj.objectName}`, `${obj.objectNameDefinite} er ${spokenColor(currentHue, obj.neuter)}`)}
+                    onClick={() => tapSpeak(`obj-${currentHue}-${obj.objectName}`, colorObjectFactText(obj.objectNameDefinite, spokenColor(currentHue, obj.neuter)))}
                     sx={{
                       width: { xs: 56, md: 64 },
                       height: { xs: 56, md: 64 },

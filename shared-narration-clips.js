@@ -33,7 +33,7 @@ import {
   mathPromptText, mathFactText,
   COMPARE_PROMPT, comparisonFactText,
   HVAD_MANGLER_PROMPT, sequenceFactText, sequenceStarts, sequenceNumbers,
-  NUANCER_INSTRUCTION, colorMixTargetText, colorMixResultText,
+  NUANCER_INSTRUCTION, colorMixTargetText, colorMixResultText, colorObjectFactText,
 } from './src/config/gamePhrases.ts'
 import { primaryColors, possibleTargets, mixingRules } from './src/config/colorMixing.ts'
 import { spokenOrdlegWords } from './src/config/ordlegWords.ts'
@@ -169,8 +169,11 @@ export function collectNarrationClips() {
   for (const hue of HUE_ORDER) {
     da('colours', hue)
     ;(SHADES[hue] ?? []).forEach((s) => da('colours', s.name))
+    // Through the SHARED builder, not a hand-copied template (audio-system.md step 3). It agreed with
+// the two `.tsx` call sites by luck until Practice Loop PRD-01 W3 gave the line a fourth caller —
+    // Hvilken Farve's never-fail hint — whose guard has to prove it is exactly the baked string.
     ;(DANISH_OBJECTS[hue] ?? []).forEach((o) =>
-      da('colours', `${o.objectNameDefinite} er ${spokenColor(hue, o.neuter)}`),
+      da('colours', colorObjectFactText(o.objectNameDefinite, spokenColor(hue, o.neuter))),
     )
   }
 

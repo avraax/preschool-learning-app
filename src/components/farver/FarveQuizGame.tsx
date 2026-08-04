@@ -17,6 +17,7 @@ import {
   type QuizObject,
 } from '../../config/colorContent'
 import { COLORS_QUIZ, starThresholdsFor } from '../../config/difficulty'
+import { colorObjectFactText } from '../../config/gamePhrases'
 import { colorQuizPromptPool, quizObjectKey } from '../../config/promptPools'
 import { usePromptBag } from '../../hooks/usePromptBag'
 import { hexToRgba } from '../../theme/tokens/helpers'
@@ -270,7 +271,7 @@ const FarveQuizGame: React.FC = () => {
 
       // Identify the object's colour (educational echo). No win/lose narration.
       audio.cancelCurrentAudio()
-      audio.speak(`${current.objectNameDefinite} er ${spokenColor(current.color, current.neuter)}`).catch(() => {})
+      audio.speak(colorObjectFactText(current.objectNameDefinite, spokenColor(current.color, current.neuter))).catch(() => {})
 
       if (advanceTimer.current) clearTimeout(advanceTimer.current)
       advanceTimer.current = setTimeout(() => {
@@ -290,7 +291,16 @@ const FarveQuizGame: React.FC = () => {
       setShakeColor(droppedColor)
       reactGuide('think')
       setTimeout(() => setShakeColor(null), 450)
-      if (registerHintWrong(() => current.color)) mascotBus.emit('hint')
+      if (registerHintWrong(() => current.color)) {
+        mascotBus.emit('hint')
+        // …and NAME the colour (Practice Loop PRD-01 W3) — the same identification line a correct drop
+        // speaks, through the same shared builder, so it is provably the baked clip. Above Let the object
+        // is greyed, which makes this the one thing that can unstick a child who doesn't recall the
+        // colour. Fire-and-forget; the `spring-back` SFX is a separate channel and survives it.
+        audio
+          .speak(colorObjectFactText(current.objectNameDefinite, spokenColor(current.color, current.neuter)))
+          .catch(() => {})
+      }
     }
   }
 

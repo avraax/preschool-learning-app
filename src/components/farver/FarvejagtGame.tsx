@@ -26,6 +26,7 @@ import { shuffle } from '../../utils/shuffle'
 import { useNeverFailHint } from '../../hooks/useNeverFailHint'
 import { useDragActive } from '../common/dnd/useDragActive'
 import { DANISH_OBJECTS, COLOR_TARGETS, COLOR_SWATCH, spokenColor } from '../../config/colorContent'
+import { colorObjectFactText } from '../../config/gamePhrases'
 import { FARVEJAGT_ROUND, colorTargetKey, farvejagtPromptPool } from '../../config/promptPools'
 import { usePromptBag } from '../../hooks/usePromptBag'
 import ObjectArt from './farverArt'
@@ -416,7 +417,7 @@ const FarvejagtGame: React.FC = () => {
 
       // Identify the object's colour (educational echo). No win/lose narration.
       audio.cancelCurrentAudio()
-      audio.speak(`${draggedItem.objectNameDefinite} er ${spokenColor(draggedItem.colorName, draggedItem.neuter)}`).catch(() => {})
+      audio.speak(colorObjectFactText(draggedItem.objectNameDefinite, spokenColor(draggedItem.colorName, draggedItem.neuter))).catch(() => {})
 
       if (collectedTargetsNow + 1 >= totalTarget) {
         handleBoardComplete()
@@ -437,7 +438,7 @@ const FarvejagtGame: React.FC = () => {
 
       // Identify the dropped object's colour (educational echo). No win/lose narration.
       audio.cancelCurrentAudio()
-      audio.speak(`${draggedItem.objectNameDefinite} er ${spokenColor(draggedItem.colorName, draggedItem.neuter)}`).catch(() => {})
+      audio.speak(colorObjectFactText(draggedItem.objectNameDefinite, spokenColor(draggedItem.colorName, draggedItem.neuter))).catch(() => {})
 
       // After N wrong drops on this board, pulse an uncollected target (never-fail scaffold).
       if (registerHintWrong(() => gameItems.find(i => i.isTarget && !i.collected)?.id ?? null)) {

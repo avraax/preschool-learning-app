@@ -99,3 +99,16 @@ export const colorMixTargetText = (targetName: string): string =>
 /** Ram Farven's recipe reveal on a correct mix: "rød og blå bliver lilla". */
 export const colorMixResultText = (a: string, b: string, result: string): string =>
   `${a} og ${b} bliver ${result}`
+/**
+ * The colour-identification line: "æblet er rødt" — Farvejagt's correct-drop echo, Hvilken Farve's
+ * correct-drop echo, and (Practice Loop PRD-01 W3) Hvilken Farve's never-fail hint.
+ *
+ * It was composed INLINE in both `.tsx` games and again as a hand-copied template in
+ * `shared-narration-clips.js`. The three agreed, but only by luck — that is exactly the drift step 1 of
+ * `audio-system.md`'s protocol exists to prevent, and W3 gave it a fourth caller that has to be
+ * provably the baked string. `spokenColor` supplies the gender agreement ("havet er blåt").
+ */
+export const colorObjectFactText = (
+  objectNameDefinite: string,
+  spokenHue: string,
+): string => `${objectNameDefinite} er ${spokenHue}`

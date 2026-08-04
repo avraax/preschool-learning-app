@@ -32,6 +32,7 @@ import { practiceLedger } from '../../services/practiceLedger'
 import { ORDLEG_SPELL, starThresholdsFor } from '../../config/difficulty'
 import { type OrdlegWord } from '../../config/ordlegWords'
 import { SPELLING_ROUND, ordlegWordKey, spellingPromptPool } from '../../config/promptPools'
+import { spellingHintLine } from '../../config/hintLines'
 import { usePromptBag } from '../../hooks/usePromptBag'
 import { sfx } from '../../services/sfxClient'
 import { mascotBus } from '../../services/mascotBus'
@@ -397,10 +398,20 @@ const SpellingGame: React.FC = () => {
       reactGuide('think')
       setTimeout(() => setShakeTileId(null), 450)
 
-      // After 2 wrong taps on this slot, point at the correct tile (never-fail scaffold).
-      registerHintWrong(
-        () => tiles.find(t => !usedTileIds.has(t.id) && t.letter === targetLetters[filledCount])?.id ?? null,
-      )
+      // After 2 wrong taps on this slot, point at the correct tile (never-fail scaffold) — and SAY the
+      // letter (Practice Loop PRD-01 W3). Unlike the other games this game deliberately does NOT nudge
+      // the mascot on hint, and that stays; the spoken letter name is the whole addition. It is exactly
+      // what placing a letter already echoes (`speakLetter`), so no new narration.
+      // NOTE it is the letter NAME, not "K som Kat" — PRD §5.2 asked for the latter, but that template
+      // asserts the word STARTS with the letter, which is false for a letter mid-word ("O som ko").
+      if (
+        registerHintWrong(
+          () => tiles.find(t => !usedTileIds.has(t.id) && t.letter === targetLetters[filledCount])?.id ?? null,
+        )
+      ) {
+        const nextLetter = targetLetters[filledCount]
+        if (nextLetter) void audio.speak(spellingHintLine(nextLetter)).catch(() => {})
+      }
     }
   }
 

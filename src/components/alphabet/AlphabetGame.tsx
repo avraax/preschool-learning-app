@@ -9,6 +9,7 @@ import { confusablePoolFor, confusablesFor, shapeMatesFor } from '../../config/l
 import { shuffle } from '../../utils/shuffle'
 import { LETTER_WORDS, startsWithPhrase, startsWithQuestion } from '../../config/letterWords'
 import { ALPHABET_ROUND, alphabetPromptPool } from '../../config/promptPools'
+import { alphabetHintLine } from '../../config/hintLines'
 import { usePromptBag } from '../../hooks/usePromptBag'
 import { letterArt } from '../../assets/games/alphabet'
 
@@ -124,8 +125,12 @@ const AlphabetGame: React.FC = () => {
     // ONE round length: the bag's no-repeat window reads the same constant (Practice Loop PRD-01 W1).
     round: { length: ALPHABET_ROUND },
 
-    // Never-fail hint (PRD-05 P1): after 2 wrong taps the correct letter tile pulses.
+    // Never-fail hint (PRD-05 P1): after 2 wrong taps the correct letter tile pulses — and SPEAKS the
+    // first-sound fact (Practice Loop PRD-01 W3), the same already-baked line the correct tap says.
+    // Until now that sentence was only ever heard by the child who didn't need it.
     hintAfterNWrong: 2,
+    speakHint: async (item: QuizItem, audio: any) =>
+      audio.speak(alphabetHintLine(item.value as string)),
 
     // Audio methods
     speakQuizPrompt: async (item: QuizItem, audio: any) => {

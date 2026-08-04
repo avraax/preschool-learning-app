@@ -6,6 +6,7 @@ import { categoryThemes, getCategoryTheme } from '../../config/categoryThemes'
 import { MathRepeatButton } from '../common/RepeatButton'
 import { progressStore } from '../../services/progressStore'
 import { numberDistractors, pickQuizNumber } from '../../config/mathProblems'
+import { numberHintLine } from '../../config/hintLines'
 import { shuffle } from '../../utils/shuffle'
 
 // Tal Quiz is a LISTEN-then-recognise task, at every n: the number lives ONLY in the spoken prompt
@@ -80,8 +81,13 @@ const MathGame: React.FC = () => {
     gameId: 'math.counting',
     round: { length: 8 },
 
-    // Never-fail hint (PRD-05 P1): after 2 wrong taps the correct number tile pulses.
+    // Never-fail hint (PRD-05 P1): after 2 wrong taps the correct number tile pulses — and the prompt is
+    // SPOKEN again (Practice Loop PRD-01 W3). On a listen-only board the prompt IS the fact: a child who
+    // has guessed twice has usually mis-heard "syvogtredive", and the one thing that helps is hearing it
+    // again. No new narration ("Find tallet N" is baked for the whole 1–100 range).
     hintAfterNWrong: 2,
+    speakHint: async (item: QuizItem, audio: any) =>
+      audio.speak(numberHintLine(item.value as number)),
 
     // Audio methods
     speakQuizPrompt: async (item: QuizItem, audio: any) => {

@@ -102,6 +102,21 @@ const patternDisplay = (unitSize: number, length: number, missingIndex: number) 
   return { missing: full[missingIndex], display: full.map((e, i) => (i === missingIndex ? '?' : e)).join('  ') }
 }
 
+/**
+ * The completed sequence, read aloud: "to, fire, seks, otte, ti". Used by BOTH the correct-answer fact
+ * and the never-fail hint (Practice Loop PRD-01 W3) — the same function rather than two copies, so the
+ * hint can never drift from the fact. A visual (pip) pattern has no natural spoken form, so it returns
+ * '' and stays silent in both.
+ */
+const sequenceFact = async (item: QuizItem, audio: any): Promise<string> => {
+  const tokens = (item.questionVisual?.word ?? '').split(/\s+/).filter(Boolean)
+  const filled = tokens.map((t) => (t === '?' ? String(item.value) : t))
+  if (filled.length > 0 && filled.every((t) => /^\d+$/.test(t))) {
+    return audio.speak(sequenceFactText(filled.map(Number)))
+  }
+  return ''
+}
+
 const HvadManglerGame: React.FC = () => {
   const reduce = useReducedMotion()
   const muiTheme = useTheme()
@@ -281,14 +296,12 @@ const HvadManglerGame: React.FC = () => {
     // Speak the fact (PRD-05 P2): on a correct answer, read the COMPLETED sequence aloud (the blank
     // filled with the answer) — e.g. "to, fire, seks, otte, ti" — reinforcing the pattern. Visual
     // (emoji) patterns have no natural spoken fact, so they stay silent (as before).
-    speakCorrectFact: async (item: QuizItem, audio: any) => {
-      const tokens = (item.questionVisual?.word ?? '').split(/\s+/).filter(Boolean)
-      const filled = tokens.map((t) => (t === '?' ? String(item.value) : t))
-      if (filled.length > 0 && filled.every((t) => /^\d+$/.test(t))) {
-        return audio.speak(sequenceFactText(filled.map(Number)))
-      }
-      return ''
-    }
+    speakCorrectFact: sequenceFact,
+
+    // The never-fail hint speaks the SAME completed sequence (Practice Loop PRD-01 W3) — the one line
+    // that names the answer here, already baked for every sequence. Deliberately the identical function,
+    // not a copy: the two must never drift, and a visual pattern stays silent in both.
+    speakHint: sequenceFact,
   }
 
   return <UnifiedQuizGame config={config} />

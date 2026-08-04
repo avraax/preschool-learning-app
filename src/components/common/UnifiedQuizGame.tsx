@@ -132,6 +132,14 @@ export interface UnifiedQuizConfig {
   speakClickedItem: (item: QuizItem, audio: any) => Promise<string>
   getRepeatAudio: (item: QuizItem, audio: any) => Promise<string>
 
+  // The never-fail hint SPEAKS the answer (Practice Loop PRD-01 W3). Called when `hintAfterNWrong` is
+  // crossed, alongside the tile pulse — fire-and-forget, never awaited. The argument is the CURRENT
+  // item, i.e. the right answer, NOT the tile that was tapped. What each game says is data in
+  // `src/config/hintLines.ts`, so the guard reads the same value the game speaks.
+  //
+  // A game may omit this and stay silent — Læs Ordet must (it never reads its prompt word aloud).
+  speakHint?: (item: QuizItem, audio: any) => Promise<string>
+
   // Optional: on a CORRECT answer, speak the completed fact (e.g. Hvad Mangler's finished sequence)
   // INSTEAD OF echoing the tapped item (single audio channel — replaces, never stacks). Receives
   // the current (correct) QuizItem. When absent, a correct tap echoes speakClickedItem as before.
@@ -523,7 +531,15 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
       // Never-fail hint (PRD-05 P1): after N wrong taps on this question, pulse the correct tile.
       // (Only fires on the wrong branch, so the advance-lock — which gates the correct/resolve
       // window at the top of this handler — can never let it run mid-resolve.)
-      if (registerHintWrong()) mascotBus.emit('hint')
+      if (registerHintWrong()) {
+        mascotBus.emit('hint')
+        // …and SPEAK the answer (Practice Loop PRD-01 W3). A pointer is not an explanation, and the app
+        // already had the right sentence — it just only ever said it to the child who got it right.
+        // Fire-and-forget (audio-system.md step 8): the single channel means this replaces whatever is
+        // playing, which is correct, and the `wrong` SFX is a separate channel that survives it.
+        // `currentItem` — the ANSWER — never `selectedItem`.
+        if (config.speakHint) void config.speakHint(currentItem, audio).catch(() => {})
+      }
     }
 
     // Narration is FIRE-AND-FORGET, never awaited — it plays alongside the dwell below (see the
