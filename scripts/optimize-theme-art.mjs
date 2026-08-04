@@ -85,6 +85,19 @@ const REWARD_KEY_OVERRIDES = {
   // against a screen at 204, so the window between subject and screen is wide and the leaf's numbers
   // fit. A green subject is now 3-for-3 on needing this — assume it for anything with a green part.
   'leg-xylofon': { vivid: 150, faint: 110, despill: 90 },
+  // Reward Pacing chapter 9: the glasses are MINT GREEN, and on the shared defaults they vanished
+  // COMPLETELY — the keyed output was 0.2 KB of nothing, the most total version of this failure so
+  // far (the leaf came out as a streak, the xylophone bar came out grey). Measured histogram: the
+  // frames sit at green-excess 40..125 with the bulk at 60..79, the screen at 140..155, and a real
+  // valley at 105..125 (~1.4-2.5k px per 5-wide bin vs 345k at 145). Hence vivid 140 / faint 126.
+  // `despill` must clear the subject's own maximum (125) or the mint flattens to grey — same trap as
+  // the xylophone. A green subject is now 4-for-4 on needing an entry here; assume it.
+  //
+  // NB the raised window also lets the ✦ download watermark survive the flood-fill (it keys away
+  // normally, its excess being above the default faint of 18). This file's existing largest-component
+  // pass is what removes it — verified, because a hand-rolled key WITHOUT that pass left the sparkle in
+  // and inflated the trim box to 823x574 instead of the frames' ~823x330.
+  'toej-briller': { vivid: 140, faint: 126, despill: 126 },
 }
 
 // reward id → the shipped game asset to reuse. Kept HERE rather than in src/ because it is a
@@ -110,6 +123,10 @@ const REWARD_REUSE = {
   'hj-ur': 'ordleg/ur', 'hj-kop': 'english/cup', 'hj-noegle': 'english/key',
   'leg-bold': 'english/ball', 'leg-ballon': 'math/balloon',
   'sk-and': 'ordleg/and', 'sk-bi': 'ordleg/bi',
+  // Reward Pacing PRD-01 chapter 9 (Tøj). Same check first: `ordleg/hat` is a bowler hat with a clear
+  // BRIM, which is exactly what the PRD asked the hat render for (the brim is what keeps its silhouette
+  // apart from the mitten's) — so the owner drew 8 of the 9, not 9.
+  'toej-hat': 'ordleg/hat',
 }
 
 // Section icons (theme-constant, used app-wide). Magenta-keyed cutouts.

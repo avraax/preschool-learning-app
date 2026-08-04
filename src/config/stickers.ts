@@ -183,6 +183,29 @@ export const REWARD_CHAPTERS: RewardChapter[] = [
       { id: 'sk-mariehoene', label: 'Mariehøne' },
     ],
   },
+  // Reward Pacing PRD-01 D8 / §10, chapter 9. APPENDED — never inserted or reordered: `firstAt` is
+  // keyed by reward id and `rebuildCollected` walks slots through the path, so moving anything
+  // silently re-assigns every existing child's book.
+  //
+  // `toej-rygsaek` replaces the PRD's `toej-paraply`: the umbrella is a weather object and moved to
+  // chapter 10 to fill one of four slots the PRD had accidentally assigned to rewards that already
+  // exist (Natur already owns Sol, Måne, Sky and Regnbue). See
+  // `plans/reward-pacing/chapters-9-10-art-prompts.md`.
+  {
+    id: 'toej',
+    title: 'Tøj',
+    rewards: [
+      { id: 'toej-stoevle', label: 'Støvle' },
+      { id: 'toej-hat', label: 'Hat' },
+      { id: 'toej-sok', label: 'Sok' },
+      { id: 'toej-troeje', label: 'Trøje' },
+      { id: 'toej-bukser', label: 'Bukser' },
+      { id: 'toej-jakke', label: 'Jakke' },
+      { id: 'toej-vante', label: 'Vante' },
+      { id: 'toej-rygsaek', label: 'Rygsæk' },
+      { id: 'toej-briller', label: 'Briller' },
+    ],
+  },
 ]
 
 // ----- the path + lookups (built once) -----
