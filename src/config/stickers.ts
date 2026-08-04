@@ -206,6 +206,30 @@ export const REWARD_CHAPTERS: RewardChapter[] = [
       { id: 'toej-briller', label: 'Briller' },
     ],
   },
+  // Reward Pacing PRD-01 D8 / §10, chapter 10. APPEND-ONLY, same rule as above.
+  //
+  // Four of the PRD's nine subjects are gone, for two different reasons, both recorded in
+  // `plans/reward-pacing/chapters-9-10-art-prompts.md`:
+  //   * Sol / Måne / Sky / Regnbue were already shipped in chapter 4 (Natur) — a duplicate picture
+  //     under a new id, which `stickers.test.ts`'s label-uniqueness guard would have caught here.
+  //   * Kælk and Vindmølle rendered fine but FAILED the ~24px ring silhouette (an anonymous low blob,
+  //     and a 2px tower) — so the SUBJECT changed, not the render, exactly as leg-floejte → leg-xylofon.
+  // Hence Græskar (autumn) and Sandslot (summer), which also give the chapter its four-season spread.
+  {
+    id: 'vejr',
+    title: 'Vejr og årstider',
+    rewards: [
+      { id: 'vejr-lyn', label: 'Lyn' },
+      { id: 'vejr-regndraabe', label: 'Regndråbe' },
+      { id: 'vejr-paraply', label: 'Paraply' },
+      { id: 'vejr-snemand', label: 'Snemand' },
+      { id: 'vejr-sneskovl', label: 'Sneskovl' },
+      { id: 'vejr-graeskar', label: 'Græskar' },
+      { id: 'vejr-sandslot', label: 'Sandslot' },
+      { id: 'vejr-drage', label: 'Drage' },
+      { id: 'vejr-luftballon', label: 'Luftballon' },
+    ],
+  },
 ]
 
 // ----- the path + lookups (built once) -----

@@ -3,9 +3,9 @@
 > AUTO-GENERATED (by the `/audit` harness via the dev-server, or `npm run audit:approve-all`).
 > Do not hand-edit — source of truth is `narration-audit.json`.
 
-Last updated: 2026-08-04T06:57:39.988Z
+Last updated: 2026-08-04T07:16:44.930Z
 
-**1964 OK · 1 wrong · 0 unaudited** (of 1965 clips)
+**1981 OK · 1 wrong · 0 unaudited** (of 1982 clips)
 
 ## Bogstaver
 
@@ -609,6 +609,7 @@ Last updated: 2026-08-04T06:57:39.988Z
 | ✅ | Båd | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Cykel | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Delfin | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Drage | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Dukke | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Dør | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Fisk | Bulk-approved (PRD-11 owner listen pass) |  |
@@ -616,6 +617,7 @@ Last updated: 2026-08-04T06:57:39.988Z
 | ✅ | Fløjte | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Får | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Gris | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Græskar | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Guitar | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Gulerod | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Haj | Bulk-approved (PRD-11 owner listen pass) |  |
@@ -637,6 +639,8 @@ Last updated: 2026-08-04T06:57:39.988Z
 | ✅ | Krabbe | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Lampe | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Lastbil | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Luftballon | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Lyn | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Mariehøne | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Musling | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Myre | Bulk-approved (PRD-11 owner listen pass) |  |
@@ -671,6 +675,7 @@ Last updated: 2026-08-04T06:57:39.988Z
 | ✅ | Nyt klistermærke! Får | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Nyt klistermærke! Gris | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Nyt klistermærke! Græshoppe | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Nyt klistermærke! Græskar | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Nyt klistermærke! Guitar | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Nyt klistermærke! Gulerod | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Nyt klistermærke! Haj | Bulk-approved (PRD-11 owner listen pass) |  |
@@ -693,6 +698,8 @@ Last updated: 2026-08-04T06:57:39.988Z
 | ✅ | Nyt klistermærke! Lampe | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Nyt klistermærke! Larve | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Nyt klistermærke! Lastbil | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Nyt klistermærke! Luftballon | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Nyt klistermærke! Lyn | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Nyt klistermærke! Mariehøne | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Nyt klistermærke! Musling | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Nyt klistermærke! Myre | Bulk-approved (PRD-11 owner listen pass) |  |
@@ -700,18 +707,23 @@ Last updated: 2026-08-04T06:57:39.988Z
 | ✅ | Nyt klistermærke! Nøgle | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Nyt klistermærke! Ost | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Nyt klistermærke! Papegøje | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Nyt klistermærke! Paraply | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Nyt klistermærke! Pizza | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Nyt klistermærke! Puslespil | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Nyt klistermærke! Raket | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Nyt klistermærke! Regnbue | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Nyt klistermærke! Regndråbe | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Nyt klistermærke! Robot | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Nyt klistermærke! Rygsæk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Nyt klistermærke! Ræv | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Nyt klistermærke! Sandslot | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Nyt klistermærke! Seng | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Nyt klistermærke! Ske | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Nyt klistermærke! Skildpadde | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Nyt klistermærke! Sky | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Nyt klistermærke! Snegl | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Nyt klistermærke! Snemand | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Nyt klistermærke! Sneskovl | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Nyt klistermærke! Sok | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Nyt klistermærke! Sol | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Nyt klistermærke! Sommerfugl | Bulk-approved (PRD-11 owner listen pass) |  |
@@ -734,12 +746,15 @@ Last updated: 2026-08-04T06:57:39.988Z
 | ✅ | Nøgle | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Ost | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Papegøje | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Paraply | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Pizza | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Puslespil | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Raket | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Regnbue | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Regndråbe | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Rygsæk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Ræv | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Sandslot | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Seng | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Ske | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Skildpadde | Bulk-approved (PRD-11 owner listen pass) |  |
@@ -789,6 +804,8 @@ Last updated: 2026-08-04T06:57:39.988Z
 | ✅ | Skinnende klistermærke! Træ | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Skinnende klistermærke! Æble | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Sky | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Snemand | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Sneskovl | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Sok | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Sol | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Sommerfugl | Bulk-approved (PRD-11 owner listen pass) |  |

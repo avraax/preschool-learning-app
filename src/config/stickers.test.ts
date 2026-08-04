@@ -44,8 +44,8 @@ test('derived totals — and the literals they must currently equal', () => {
   // The derivation alone is vacuous (both sides move together when a chapter is appended), so the
   // CURRENT totals are pinned as literals too. Updating these two lines is the deliberate act of
   // saying "yes, I meant to grow the book" (PRD §10 step 3).
-  assert.equal(REWARD_SLOTS, 81)
-  assert.equal(CHAPTER_COUNT, 9)
+  assert.equal(REWARD_SLOTS, 90)
+  assert.equal(CHAPTER_COUNT, 10)
 
   assert.equal(REWARD_SLOTS, CHAPTER_COUNT * CHAPTER_SIZE)
   assert.equal(REWARD_PATH.length, REWARD_SLOTS)
@@ -69,10 +69,10 @@ test('ids and labels are unique across ALL chapters', () => {
 
 test('the slot map is the documented one and lookups agree with it', () => {
   // 1-9 Dyr · 10-18 Køretøjer · 19-27 Mad · 28-36 Natur · 37-45 Havet ·
-  // 46-54 Hjemmet · 55-63 Leg og musik · 64-72 Fugle og småkryb · 73-81 Tøj.
+  // 46-54 Hjemmet · 55-63 Leg og musik · 64-72 Fugle og småkryb · 73-81 Tøj · 82-90 Vejr og årstider.
   assert.deepEqual(
     REWARD_CHAPTERS.map((c) => c.id),
-    ['dyr', 'koeretoejer', 'mad', 'natur', 'havet', 'hjemmet', 'leg', 'smaakryb', 'toej'],
+    ['dyr', 'koeretoejer', 'mad', 'natur', 'havet', 'hjemmet', 'leg', 'smaakryb', 'toej', 'vejr'],
   )
   assert.equal(rewardAt(0)?.id, 'dyr-hund') // the very first prize
   assert.equal(rewardAt(36)?.id, 'hav-fisk')
@@ -81,7 +81,8 @@ test('the slot map is the documented one and lookups agree with it', () => {
   assert.equal(rewardAt(54)?.id, 'leg-bold')
   assert.equal(rewardAt(63)?.id, 'sk-ugle')
   assert.equal(rewardAt(72)?.id, 'toej-stoevle') // chapter 9 starts where the 8-chapter book ended
-  assert.equal(rewardAt(REWARD_SLOTS - 1)?.id, 'toej-briller') // the last prize in the book
+  assert.equal(rewardAt(81)?.id, 'vejr-lyn') // chapter 10 starts where the 9-chapter book ended
+  assert.equal(rewardAt(REWARD_SLOTS - 1)?.id, 'vejr-luftballon') // the last prize in the book
 
   for (let slot = 0; slot < REWARD_SLOTS; slot++) {
     const r = rewardAt(slot)!

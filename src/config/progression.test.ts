@@ -95,9 +95,9 @@ test('levelFromXp: thresholds, remainder bookkeeping, monotonic across the tier 
   assert.equal(levelFromXp(479).level, 10)
   assert.equal(levelFromXp(480).level, 11)
 
-  // Filling the whole book = 9×40 + 72×120 = 360 + 8640 = 9000 XP → level 82, 81 collected.
+  // Filling the whole book = 9×40 + 81×120 = 360 + 9720 = 10080 XP → level 91, 90 collected.
   const full = xpForSlots(REWARD_SLOTS)
-  assert.equal(full, 9000)
+  assert.equal(full, 10080)
   assert.equal(levelFromXp(full).level, REWARD_SLOTS + 1)
   assert.equal(collectedFromLevel(levelFromXp(full).level), REWARD_SLOTS)
 
@@ -301,17 +301,17 @@ test('the pacing: a sticker costs ~3 rounds and the book ~172 (Reward Pacing D1/
     return rounds
   }
 
-  // The whole book, as XP. 9 × 40 + 72 × 120, across NINE chapters (chapter 9 "Tøj" landed with its
-  // art; chapter 10 is still spec + 4 outstanding renders).
-  assert.equal(xpForSlots(REWARD_SLOTS), 9000)
+  // The whole book, as XP. 9 × 40 + 81 × 120, across TEN chapters — the full path D8 specified, built.
+  assert.equal(xpForSlots(REWARD_SLOTS), 10080)
 
-  // The range: a flat-40 round (no first-tries, no bonuses) → 225; a maximal 62-XP round → 146.
+  // The range: a flat-40 round (no first-tries, no bonuses) → 252; a maximal 62-XP round → 163.
   // At 72 slots those were 198 and 128; before the pacing change, 126 and 81.
-  assert.equal(roundsToFillAt(REWARD_XP), 225)
-  assert.equal(roundsToFillAt(MAX_ROUND_XP), 146)
-  // An ORDINARY round (8 tasks all first-try, no bonuses = 48) sits in between at 188 — the "~3 rounds
-  // a sticker" promise of §4.1, now over a 9-chapter book (~10 weeks at 3 rounds/day).
-  assert.equal(roundsToFillAt(8 * taskXp(8, true)), 188)
+  assert.equal(roundsToFillAt(REWARD_XP), 252)
+  assert.equal(roundsToFillAt(MAX_ROUND_XP), 163)
+  // An ORDINARY round (8 tasks all first-try, no bonuses = 48) sits in between at 210 — the "~3 rounds
+  // a sticker" promise of §4.1 over the whole 10-chapter book, and §4.1's own projection for 90 slots
+  // (~10 weeks at 3 rounds a day).
+  assert.equal(roundsToFillAt(8 * taskXp(8, true)), 210)
 
   // A sticker costs ~3 ordinary rounds past chapter 1 — the headline promise. 120 / 46ish.
   assert.equal(xpToNext(FAST_SLOTS + 1) / REWARD_XP, 3)
