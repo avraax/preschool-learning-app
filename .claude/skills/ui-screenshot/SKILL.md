@@ -605,7 +605,10 @@ stripped, and the failure looks like a page bug. Write the JS to a **file in the
   `src/utils/devHarness.ts`): `?fx=correct|wrong|hint|streak` forces one tile/board into that feedback
   state (no need to solve), `?seed=<n>` makes questions deterministic (probe with `--eval` to find a
   seed that yields the case you want, e.g. a count-mode number or a high comparison pile), `?nogate=1`
-  skips the audio welcome/permission gate, `?reduce=1` forces reduced-motion, `?theme=<id>` sets the skin.
+  skips the audio welcome/permission gate, `?reduce=1` forces reduced-motion, `?theme=<id>` sets the skin,
+  `?mute-tts=1` forces narration UNHEALTHY so the two audio-only boards (Tal Quiz, Lyt og Find) show their
+  degraded state — they print the answer as type, which is the only way to capture that path without
+  actually breaking audio (see the narration-health section in `.claude/rules/audio-system.md`).
 - **`?theme=` takes a REGISTERED id and an unknown one SILENTLY HALF-WORKS.** The ids are
   `kid`/`ocean`/`space`/`dino` (`src/theme/themes.ts`) — Regnbue is **`kid`**, not `rainbow`. A bogus id
   falls back to the default TOKENS, so the page looks like the default skin and nothing errors, but

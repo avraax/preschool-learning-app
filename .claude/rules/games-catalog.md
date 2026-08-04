@@ -24,6 +24,18 @@ Normal), and every game that legitimately ignores the level is in `EXEMPT` **wit
 target word exists). Svær's star budget is deliberately looser (3★ ≤1 mistake): **choosing a harder level
 must never cost rewards**, the same fairness rule that keeps XP difficulty-independent.
 
+**The practice ledger is NOT adaptivity, and it is worth knowing that before you delete it.**
+`practiceLedger` (device-local, per child, its own key — deliberately outside the synced v4 document)
+records per-item misses, and `src/config/practiceWeights.ts` turns them into prompt ORDER inside the
+level's own pool: a missed item is re-asked a few draws later, and a pool's most-missed items lead a new
+pass. It never reads or writes a LEVEL, so `difficulty.ts`'s "NO ADAPTIVITY … nothing reading it looks at
+the child's performance" is still true — which is exactly the sentence that would otherwise justify
+deleting this on sight. The separation is mechanical, not a promise: `practiceWeights` imports NOTHING,
+the difficulty layer may not name the ledger, and the ledger's READ surface has exactly one consumer (the
+prompt bag) so nothing that decides a level can even see a miss. Games only `recordAttempt`.
+Guarded by `practiceWeights.test.ts`; the drill it guards AGAINST is a round becoming the same three
+letters, not under-drilling.
+
 **A BOARD MUST NOT RESTATE ITS OWN ANSWER.** The app-wide version of a rule that started as a math one,
 now that the owner has removed the third instance: Tal Quiz's printed numeral *and* its counting row,
 Bogstav Quiz's old "hear the letter, tap the letter" mode, and Hvilken Farve's object shown in its true
@@ -36,12 +48,18 @@ usually to move the answer into speech, or to strip the attribute being asked ab
 
 Two more invariants that module enforces, both learned by shipping the bug twice:
 
-- **A level's content POOL must be at least the ROUND LENGTH.** Smaller, and a single round has to
-  repeat itself, which reads as the game being stuck rather than easy — Ram Farven's Let targets and
-  then Læs Ordet's Let words (5 words, 8 questions). And **guard a pool against the real round
-  constant, not a magic floor**: the assertion that was supposed to protect Læs Ordet asked for `>= 4`
-  and therefore passed the exact 5-word bug it existed to catch. Export the round length from the
-  content module so the game's `RoundConfig` and the guard read one value.
+- **A level's content POOL must be at least the ROUND LENGTH — necessary, and NOT sufficient.** Smaller,
+  and a single round *has* to repeat itself, which reads as the game being stuck rather than easy (Ram
+  Farven's Let targets, then Læs Ordet's Let words: 5 words, 8 questions). And **guard a pool against
+  the real round constant, not a magic floor**: the assertion that was supposed to protect Læs Ordet
+  asked for `>= 4` and therefore passed the exact 5-word bug it existed to catch. Export the round
+  length from the content module so the game's `RoundConfig` and the guard read one value.
+  **But the pool rule alone can never deliver what it was bought for, because the DRAW is the other
+  half.** Sampling with replacement repeats at *any* pool size, so growing Læs Ordet's Let pool from 5
+  to 9 words changed nothing measurable — 98% of Let rounds still repeated a word, and the worst asked
+  three distinct words in eight questions. Every prompt therefore comes from a **bag** whose no-repeat
+  WINDOW is that game's round length (`usePromptBag` — see `game-development.md`); with pool ≥ round
+  that makes in-round repeats structurally impossible rather than merely unlikely.
 - **A "maximally dissimilar distractor" rule must DERIVE its distance from the level's range**, never
   fix it absolutely. A flat "≥10 away" is unsatisfiable inside 1–20 (nothing is 10 from 11 but 1), so
   the generator fell through to its random top-up and produced `11 → 1, 8, 11` — the exact opposite of

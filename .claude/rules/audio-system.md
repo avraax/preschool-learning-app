@@ -110,6 +110,12 @@ sprite), re-encoded with `node scripts/transcode-sfx.mjs`, into `public/sounds/u
   ```
   The durable fix is the same shape every time: enumerate the words a game speaks **from that game's own
   data** (`primaryColors`/`possibleTargets` for Ram Farven), so no game's clips depend on another's.
+- **To prove a refactor changed NO clip, check every enumerated key against the manifest** — don't eyeball
+  the strings. Folding a line that was composed inline in a `.tsx` *and* hand-copied in the enumerator into
+  one shared builder is a routine and worthwhile change (the two agree only by luck until they don't), and
+  this is the check that makes it safe: `collectNarrationClips()` → assert `PREBAKED_TTS[c.key]` for every
+  clip and report `0 of N missing`. A single altered character shows up as a miss, so a green run means the
+  refactor is byte-identical and no prebake is needed.
 - **The `/audit` manifest is never pruned** — `docs/audit/narration-audit.json` keeps sign-off records
   for clips that have left the closed set (102 of them today, mostly PRD-09's dropped `quizSafe:false`
   objects). `audit:check` reports clean anyway, because it only asks whether every *current* clip is
@@ -191,6 +197,12 @@ overrides — components AND `shared-narration-clips.js` call the same builders,
 - **Record the rejected variants** in a comment beside the fix. These strings look like typos
   (a stray comma, a "misspelled" letter, an odd article), so without the negative results someone
   tidies them away and silently regresses the pronunciation.
+- **`letterPhrase` asserts a FACT, so it is only reusable where the fact holds.** "{bogstav} som {ord}"
+  means *"K, as in Kat"* — true only when the word STARTS with that letter. Reaching for it to name a
+  letter at some POSITION in a word produces a false line ("O som ko"), which mis-teaches the child
+  exactly what he is learning; it would also need one clip per letter×word (156 of them for Stav Ordet's
+  pool). To name a letter that isn't a word's initial, speak the letter NAME — baked for all 29, and
+  already what placing a letter echoes.
 
 ## Mandatory Rules
 
@@ -297,6 +309,33 @@ iOS robustness gotchas (PRD-06), easy to regress:
   re-speaks the clip (in the Web Speech voice) on return.
 - `ensureAudioReady` is **async** and awaits `initializeAudio()`, so the first tap after load/suspension
   isn't silently swallowed.
+
+## Narration health: `isWorking` is not "the child can hear it"
+
+Two games are UNANSWERABLE in silence by design — Tal Quiz (a speaker and an equalizer, nothing else) and
+Lyt og Find (audio→picture). Both are correct *while audio works*, and this app has shipped total silence
+on the target iPad twice. So a board like that reads **`audio.narrationHealthy`**, never `isAudioReady`.
+
+- **`isWorking` was TRUE right through the Ogg failure.** The `<audio>` element existed and accepted a
+  src; the bytes were simply undecodable. So "can we play audio at all" is the wrong question — the signal
+  is `ttsClient`'s **consecutive PLAYBACK failure** count (decode error, timeout, blocked `play()`), reset
+  by a clip that actually plays, and exposed in the bug-report health snapshot. The pure rule is
+  `src/config/narrationHealth.ts`.
+- **A cancellation is NEUTRAL** — neither a failure nor a success. The no-queue model pre-empts constantly
+  (a healthy run reports several `AbortError`s), so counting a cancel as success is exactly how a real
+  failure streak would hide, and counting it as failure would degrade normal fast tapping.
+- **"Not unlocked yet" is not "dead".** Requiring positive evidence — two failed plays, or audio that
+  worked and then stopped — is load-bearing, not a refinement: the naive `isWorking && failures < 2` form
+  called a COLD START dead and printed Tal Quiz's numeral over its own answer tiles on entry. A giveaway
+  flash on every cold launch is worse than the bug the degraded mode fixes.
+- While unhealthy those two boards **reveal their answer as type** and revert automatically when a clip
+  sounds. That deliberately re-creates a giveaway the owner removed, and it is the right trade only there:
+  a solvable board beats an unanswerable one. The round then grants XP as normal (never punish a child for
+  a broken iPad) but records **no personal best** — `recordRoundResult`'s `degraded` flag, sticky for the
+  round. No child-facing warning: a warning is for the adult, who already gets audio health in the report.
+- Drive it on rung 1 with **`?mute-tts=1`** (`DEV || __HARNESS__`, so absent from a deploy build), and
+  remember the focal band is already full — anything added there needs re-measuring at phone landscape
+  (`.claude/rules/responsive-design.md`).
 
 ## Speech INPUT (separate from playback)
 

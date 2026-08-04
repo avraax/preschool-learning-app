@@ -59,7 +59,17 @@ Most task-based quizzes are a thin **config** over `src/components/common/Unifie
   grants **live per-task XP** — see CLAUDE.md Progression. Stickers are level-up trophies, not per-round.
 - **Never-fail hint** (PRD-05): `hintAfterNWrong` (2 for every config quiz) pulses the correct
   `AnswerTile` after that many wrong taps (reduced-motion → static glow). The 2 wrongs already broke
-  first-try, so no extra star bookkeeping.
+  first-try, so no extra star bookkeeping. It also **SPEAKS the answer** via `config.speakHint(item)` —
+  a pulse is a pointer, not an explanation, and the app already had the right sentence but only ever said
+  it on the CORRECT tap, i.e. only to the child who didn't need it. The argument is the CURRENT item (the
+  answer), never the tapped one; fire-and-forget, never awaited.
+- **What each game's hint SAYS is data**, in `src/config/hintLines.ts` keyed by `gameId` — read by the
+  games *and* by the guard, because a test with its own copy passes against a value nothing renders. The
+  rule is "speak the already-baked line that names the answer; where none exists, re-speak the prompt;
+  where the prompt must stay silent, stay silent" — so it costs no new narration, and
+  `hintLines.test.ts` asserts every line resolves in `prebakedTts.ts` (a hint must never reach live Azure
+  at the one moment the child is already stuck). The table is TOTAL over games that HAVE a hint: a
+  deliberately silent one (Læs Ordet never reads its prompt word) carries `voice: null` + a reason.
 - **Custom hero**: `renderHero(item, ctx)` renders a richer subject in the focal zone (`PromptFocus`)
   instead of the default glyph/emoji — used today by Tal Quiz (the shared `ListenHero`, since its answer
   is audio-only) and Hvad Mangler (the sequence with a pulsing "?").
@@ -115,6 +125,18 @@ Two ways a game guard passes while the feature is broken. Both hit in one sessio
   the hand-rolled games. Each game keeps its OWN reset boundary (per question / slot / board / target)
   and decides whether to nudge the mascot — that variance is **intentional, not drift; don't "unify"
   it**. The hook owns only the wrong-counter + threshold trip + the pulse state.
+- **Prompt draw** → `usePromptBag` (`src/hooks/usePromptBag.ts`) over the game's pool from
+  `src/config/promptPools.ts`. **Never `Math.random()` over a content pool** — that idiom is what made a
+  round repeat itself (see the pool invariant in `games-catalog.md`), and `promptDraw.test.ts` fails on
+  any new one that isn't in `promptBag.ts`'s `EXEMPT` map with a reason. Pass the game's round-length
+  constant as the bag's `window`: one value feeds the `RoundConfig`, the no-repeat window and the
+  measured simulation, so they cannot drift. Two things that are easy to get wrong:
+  **(a) don't keep a second anti-repeat mechanism beside it** — the old `recentRef` / `previousObject` /
+  `previousHue` / `previousWord` refs were DELETED, not kept alongside, because two mechanisms is how one
+  gets bypassed (and each of them bounded ADJACENCY, which was never the defect).
+  **(b) the per-level FILTER belongs in `promptPools.ts`, not the `.tsx`** — a guard cannot read a list
+  out of a component, so a simulation would have to re-derive the pool, and a guard that re-derives its
+  subject agrees with itself while the product regresses.
 - **Shuffle** → `shuffle()` (`src/utils/shuffle.ts`), a non-mutating Fisher-Yates. Never the biased
   `.sort(() => Math.random() - 0.5)` idiom, and never sort shared config in place.
 - **Drag games** → the `src/components/common/dnd/` primitives (see `.claude/rules/drag-and-drop.md`).

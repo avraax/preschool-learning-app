@@ -47,7 +47,11 @@ re-break pass in the accounts session.
    comment is exactly what misleads the next session into trusting protection it doesn't have.
    To show such a guard is still worth keeping, re-break the CONDITION rather than the fix — restoring
    the old geometry reproduced the original overlap byte-for-byte and proved the assertion can fire.
-3. **Only then**: the test is vacuous. Fix the test, not the break.
+3. **The MUTATION is non-deterministic, not the test.** A break that reverses a two-element ordering is
+   50/50 under a fixed seed, so it can produce the correct answer by luck and read as VACUOUS. Before
+   rewriting a test, check the mutation can only ever be WRONG (`[...lead].reverse()` beats
+   `filter(...).reverse()`); re-run it once more if in doubt.
+4. **Only then**: the test is vacuous. Fix the test, not the break.
 
 ## Doing it
 
@@ -63,6 +67,10 @@ mutated.
 the entry silently skips — 5 of 22 breaks vanished that way in one pass, and the harness still printed a
 pass rate. Normalise both sides to the file's own endings (`s.replace(/\r?\n/g, '\r\n')` when the file
 contains `\r\n`), and make a missed anchor exit non-zero rather than log-and-continue.
+**The same trap lives in the TEST**, not just the harness: a source-reading guard whose own multi-line
+anchor is written with `\n` never matches, and the assertion that fires is "could not find X — re-point
+this guard" rather than the defect. Normalise in the `codeOf` helper (`.replace(/\r\n/g, '\n')` alongside
+the comment-stripping) so every anchor in that file can be written naturally.
 
 Prefer breaking **both** sides where an invariant spans two layers: mutate the *table* for one entry and
 the *generator* for another. A table-only break can pass while the code ignores the table entirely.
@@ -87,6 +95,15 @@ the *generator* for another. A table-only break can pass while the code ignores 
   `badge={`, so the guard stayed green and read as vacuous when it was merely loose. Require the real
   delimiter (`\sbadge=`). Corollary: when a break appears to prove vacuity, first check the mutated text
   doesn't still match.
+- **A lazy `[\s\S]*?` escapes the block you meant to guard.** `/registerHintWrong\(…\)\) \{[\s\S]*?speak\(/`
+  was meant to prove the line is spoken *inside* the hint branch — but the lazy match happily crosses the
+  branch's closing brace, so moving the speak OUT to fire on every wrong answer stayed green. A regex
+  cannot see block structure: **slice the block first** (`indexOf(opener)` → `indexOf('\n      }')`) and
+  assert against that substring. Suspect any `[\s\S]*?` that spans what should be one branch.
+- **Two loose `includes` where the invariant is a COMPOSITION.** "The file mentions `usePromptBag`" +
+  "the file mentions `colorQuizPromptPool(`" both survived replacing the draw with
+  `colorQuizPromptPool(level)[0]` — the tokens were still there, the feature was gone. Assert the composed
+  call (`.draw(colorQuizPromptPool(`), i.e. the thing that can only be true if the wiring exists.
 - **Breaking HALF of a removed mechanism, when only the whole is observable.** Deleting a gold-pass wrap
   looked untested: re-adding the wrap alone changed nothing, because the same commit had also pinned the
   duplicate `count` at 1, so a re-visited slot just rewrote its own entry. The invariant was real; the
