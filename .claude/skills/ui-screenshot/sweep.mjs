@@ -74,14 +74,19 @@ const GUARD = `(()=>{const t=(document.body.innerText||'');
 
 // Bounds guard: every interactive element must sit inside the viewport. GameShell's root is
 // overflow:hidden, so overflowing content is CLIPPED, not scrollable — scrollWidth proves nothing.
-const BOUNDS = `(()=>{const bad=[];const W=innerWidth,H=innerHeight;
+// It ALSO returns the crash/404/title facts, because "nothing is off-screen" is trivially true on a page
+// that rendered almost nothing — a crashed route would otherwise sail through the layout phase.
+const BOUNDS = `(()=>{const bad=[];const W=innerWidth,H=innerHeight;const t=(document.body.innerText||'');
  document.querySelectorAll('button,[data-answer-tile],[aria-roledescription="draggable"],[data-prompt-focus]').forEach(e=>{
   const r=e.getBoundingClientRect(); if(r.width<2||r.height<2) return;
   if(r.left<-1||r.right>W+1||r.top<-1||r.bottom>H+1)
    bad.push({t:(e.getAttribute('aria-label')||e.textContent||e.tagName).replace(/\\s+/g,' ').slice(0,32),
              l:Math.round(r.left),r:Math.round(r.right),tp:Math.round(r.top),b:Math.round(r.bottom)});
  });
- return JSON.stringify({W:W,H:H,off:bad.slice(0,8),offCount:bad.length})})()`
+ return JSON.stringify({W:W,H:H,off:bad.slice(0,8),offCount:bad.length,
+  crashed:/Noget gik galt|Ups!/.test(t), notFound:/Denne side findes ikke/.test(t),
+  rootKids:(document.querySelector('#root')||{children:[]}).children.length,
+  text:t.replace(/\\s+/g,' ').slice(0,160)})})()`
 
 // Which narration trigger each screen offers. Discovered, not assumed: quizzes carry RepeatButton
 // ("Hør igen"), browses narrate on tapping an item, and Sig et Ord is speech INPUT with nothing to
@@ -110,7 +115,14 @@ const AUDIO_TRIGGER = `(async()=>{const sleep=ms=>new Promise(r=>setTimeout(r,ms
  await sleep(4500);
  return JSON.stringify({trigger:used,text:(document.body.innerText||'').replace(/\\s+/g,' ').slice(0,160)})})()`
 
+// Mirrors src/config/referenceViewports.ts. Leads with iPad Pro sizes: the child's device is a Pro 2nd
+// gen on iPadOS 17.7.11, and the 12.9" numbers are measured from the household's M1 12.9" Pro (both
+// generations share CSS geometry). `ipad105` is the other candidate size. See docs/device-testing.md.
 const VIEWPORTS = [
+  { name: 'iPadPro-land', w: 1366, h: 992, device: 'ipad-pro' },
+  { name: 'iPadPro-port', w: 1024, h: 1334, device: 'ipad-pro-portrait' },
+  { name: 'iPadPro-split', w: 678, h: 992, device: 'ipad-pro-split' },
+  { name: 'iPad105-land', w: 1112, h: 810, device: 'ipad-105' },
   { name: 'ipad-land', w: 1024, h: 768, device: 'ipad' },
   { name: 'ipad-port', w: 768, h: 1024, device: 'ipad-portrait' },
   { name: 'wide', w: 1254, h: 872, device: 'wide' },
@@ -191,15 +203,29 @@ function judge(job, r) {
     else if (/NO AUDIO/.test(v)) w.push(`audio NO AUDIO ATTEMPTED despite trigger ${g.trigger}`)
     return { status: w.length ? 'FAIL' : 'PASS', why: w.join(' | '), guard: g, audio: `${g.trigger} → ${v}` }
   }
+  // Same shape trap as the audio phase: the layout --eval returns {W,H,off,offCount}, so the GUARD field
+  // checks below would read undefined `rootKids` and report "#root empty" on every healthy page. Any
+  // phase with its own --eval payload must be judged on its OWN fields.
+  if (PHASE === 'layout') {
+    const w = []
+    if (g.crashed) w.push('CRASH BOUNDARY')
+    if (g.notFound) w.push('NOT FOUND (bad route)')
+    if (!g.rootKids) w.push('#root empty')
+    if (!new RegExp(job.route.expect.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i').test(g.text || ''))
+      w.push(`expected title "${job.route.expect}" not on screen`)
+    if (pexc) w.push(`${pexc} page exception(s)`)
+    if (cerr) w.push(`${cerr} console error(s)`)
+    if (g.offCount) w.push(`${g.offCount} element(s) off-screen: ${JSON.stringify(g.off)}`)
+    return { status: w.length ? 'FAIL' : 'PASS', why: w.join(' | '), guard: g }
+  }
   const why = []
   if (g.crashed) why.push('CRASH BOUNDARY (Noget gik galt/Ups)')
   if (g.notFound) why.push('NOT FOUND (bad route)')
   if (!g.rootKids) why.push('#root empty')
   if (pexc) why.push(`${pexc} page exception(s)`)
   if (cerr) why.push(`${cerr} console error(s)`)
-  if (PHASE !== 'layout' && !new RegExp(job.route.expect.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i').test(g.text || ''))
+  if (!new RegExp(job.route.expect.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i').test(g.text || ''))
     why.push(`expected title "${job.route.expect}" not on screen`)
-  if (PHASE === 'layout' && g.offCount) why.push(`${g.offCount} element(s) off-screen: ${JSON.stringify(g.off)}`)
   return { status: why.length ? 'FAIL' : 'PASS', why: why.join(' | '), guard: g, audio: (r.out.match(/^audio verdict: (.*)$/m) || [])[1] }
 }
 

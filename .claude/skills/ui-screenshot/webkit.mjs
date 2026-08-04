@@ -20,7 +20,9 @@
 //   node .claude/skills/ui-screenshot/webkit.mjs --url <url> [options]
 //
 // Device / viewport:
-//   --device <name>       ipad | ipad-portrait | iphone | iphone-landscape | wide  (default ipad)
+//   --device <name>       ipad-pro | ipad-pro-portrait | ipad-pro-split | ipad-105  <- iPad Pro sizes;
+//                         the child's device is a Pro 2nd gen on iPadOS 17.7.11 (size unconfirmed)
+//                         ipad | ipad-portrait | iphone | iphone-landscape | wide  (default ipad-pro)
 //                         iPad/iPhone presets set an iOS UA + touch + meta-viewport handling.
 //                         Sizes mirror src/config/referenceViewports.ts.
 //   --w <px> --h <px>     Override the preset's viewport.
@@ -64,13 +66,24 @@ if (!URL_) { console.error('Missing --url'); process.exit(2) }
 const IOS_17 = 'Mozilla/5.0 (iPad; CPU OS 17_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.6 Safari/605.1.15'
 const IPHONE_17 = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.6 Safari/605.1.15'
 const DEVICES = {
+  // Lead with an iPad Pro, not the generic 1024x768 (which is no current Pro at all). The child's device
+  // is an iPad Pro 2nd gen (A10X, 2017) on iPadOS 17.7.11 — the compatibility floor — but WHICH SIZE is
+  // unconfirmed and his iPad has never sent a bug report. The 12.9" numbers below are measured from the
+  // household's M1 12.9" Pro (prod K2HXP/WSNHY); both 12.9" generations share CSS geometry, so they
+  // transfer if his is the 12.9". `ipad-105` is the other candidate. See docs/device-testing.md.
+  // The 992/810 heights are the ~32px status strip iOS keeps even in standalone PWA mode — not a typo.
+  'ipad-pro': { w: 1366, h: 992, dsf: 2, ua: IOS_17, touch: true, mobile: true },
+  'ipad-pro-portrait': { w: 1024, h: 1334, dsf: 2, ua: IOS_17, touch: true, mobile: true },
+  'ipad-pro-split': { w: 678, h: 992, dsf: 2, ua: IOS_17, touch: true, mobile: true },
+  'ipad-105': { w: 1112, h: 810, dsf: 2, ua: IOS_17, touch: true, mobile: true },
   ipad: { w: 1024, h: 768, dsf: 2, ua: IOS_17, touch: true, mobile: true },
   'ipad-portrait': { w: 768, h: 1024, dsf: 2, ua: IOS_17, touch: true, mobile: true },
   iphone: { w: 390, h: 844, dsf: 3, ua: IPHONE_17, touch: true, mobile: true },
   'iphone-landscape': { w: 844, h: 390, dsf: 3, ua: IPHONE_17, touch: true, mobile: true },
   wide: { w: 1254, h: 872, dsf: 1, ua: undefined, touch: false, mobile: false },
 }
-const devName = opt('--device', 'ipad')
+// Default to an iPad Pro, not the generic 1024x768 — that size is no current iPad Pro at all.
+const devName = opt('--device', 'ipad-pro')
 const dev = DEVICES[devName]
 if (!dev) { console.error(`Unknown --device ${devName}. Use: ${Object.keys(DEVICES).join(' | ')}`); process.exit(2) }
 

@@ -1,5 +1,49 @@
 # Verifying on devices — what exists, what it costs, what it can't do
 
+## THE TARGET DEVICE — verify against this one, always
+
+The child plays on an **iPad Pro 2nd generation (A10X Fusion, 2017) on iPadOS 17.7.11**, its terminal
+OS. That is the compatibility floor in CLAUDE.md and the device every check should lead with.
+
+**Its window size is NOT measured, and one open question remains.** That iPad has never sent a bug
+report, so there is no first-party telemetry from it. The 2nd gen shipped in two sizes and nobody has
+confirmed which one it is:
+
+| candidate | CSS points | landscape window (minus the ~32px status strip) |
+|---|---|---|
+| iPad Pro 12.9" 2nd gen | 1366 × 1024 | ~1366 × 992 |
+| iPad Pro 10.5" 2nd gen | 1112 × 834 | ~1112 × 810 |
+
+Both are in `REFERENCE_VIEWPORTS` until it is settled. **Ask the owner rather than assume** — or read it
+off a bug report the moment one arrives from that device.
+
+What IS measured, and where the numbers came from: production reports `K2HXP`/`WSNHY` (2026-07-14) are
+from the household's **M1** iPad Pro 12.9", not the child's — `platform: MacIntel`, `isM1iPad: true`,
+UA `Macintosh … Version/26.5`, because M1+ iPads send a desktop-class UA. From those: screen 1024 × 1366
+@dpr 2, PWA landscape window **1366 × 992**, and **678 × 992 Split View** (so Split View is real usage,
+and a full-width-only assumption is wrong). Both 12.9" Pro generations share the same CSS geometry, so
+those numbers transfer to the child's device *if* his is the 12.9". This distinction was nearly
+documented wrong: the CSS resolution alone cannot tell a 2017 12.9" Pro from an M1 one — only
+`isM1iPad` / the UA can.
+
+Also note **`1024 × 768` is not any current iPad Pro.** It is kept only as the tighter small-iPad case.
+
+A second real device from the reports (390 × 844 @dpr 3, PWA, both orientations) already matches the
+existing phone entries.
+
+How to verify: `webkit.mjs --device ipad-pro` / `--device ipad-pro-split` / `--device ipad-105`, and
+`sweep.mjs --phase layout`, which leads with the iPad Pro viewports.
+
+**Audio on this device is the known danger zone.** It is why every shipped file is MP3 (Ogg needs
+iPadOS 18.4) and why the codec snapshot matters — see `.claude/rules/audio-system.md`.
+
+**Performance caveat:** `cdp.mjs --cpu-throttle` approximates a slow CPU but is not an A10X, and it
+scales CPU only. Worse, production-bundle numbers are currently **unobtainable locally**: `?nogate=1` is
+`DEV &&`-gated and `import.meta.env.DEV` is false in any `vite build`, so the dev harness is tree-shaken
+out and a preview build stops at the login screen. Dev-server figures overstate load badly — use them for
+relative comparison only, never as predictions for this iPad.
+
+
 Researched 2026-08-04. The question was: can an online service (simulated or real devices) replace
 "please test this on your iPad", so a session can verify its own work at device quality?
 
