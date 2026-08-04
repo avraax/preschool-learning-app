@@ -72,6 +72,13 @@ the accounts release shipped straight into both — every auth/profiles/progress
   and dies at import with `ERR_MODULE_NOT_FOUND` for a path ending `.ts`. Plain-node entries then need
   `--import ./scripts/js-to-ts-resolve.mjs` (already wired into every relevant npm script) — see that
   file for why an in-entry `register()` cannot work.
+  **Now enforced by `lib/serverImports.test.ts`** — after this shipped a SECOND time: one dynamic
+  `await import('./auth.ts')` in the OAuth callback took Google sign-in down in production, failing only
+  after a real round trip to Google, and was invisible to everything local. The guard matches
+  `import(...)` as well as `from '…'` for exactly that reason, and also rejects extensionless specifiers.
+  Note `typecheck:server` structurally CANNOT catch this class: `allowImportingTsExtensions` resolves
+  `.ts` happily and tsc only permits that flag under `noEmit`, so it type-checks a bundler that does not
+  exist at deploy time.
 - **`dev-server.js` cannot catch this class of bug** — it runs the real `.ts` files off disk under
   Node's type stripping, so the local mirror is green while production is uniformly broken. The
   mirror rule below protects against divergence in BEHAVIOUR; it says nothing about deployability.
