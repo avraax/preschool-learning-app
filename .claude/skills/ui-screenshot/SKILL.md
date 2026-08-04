@@ -473,13 +473,25 @@ stripped, and the failure looks like a page bug. Write the JS to a **file in the
 - **Audio modal ("Tænd for lyd")** is auto-dismissed (launches with autoplay allowed + clicks
   "Start lyd nu"). Use `--keep-audio-modal` only to screenshot the modal itself.
 - **A layout probe's failures are meaningless without a BASELINE.** Before calling any of them a
-  regression, `git stash`/`git checkout --` the file, re-run the SAME probe at HEAD, and diff the two
-  failure sets. Five of seven "failures" from a section-menu sweep were pre-existing — the shipped code
+  regression, re-run the SAME probe at HEAD and diff the two failure sets. **COMMIT YOUR OWN WORK
+  FIRST** — this used to read "`git stash`/`git checkout --` the file", and `git checkout HEAD -- <file>`
+  silently discards whatever is uncommitted in that file, including the `data-*` probe hook you added
+  minutes ago for this very sweep. Restoring the file afterwards brings back HEAD, not your edit, so the
+  probe then reports the feature as broken/absent and you debug a phantom (a ceremony "never appeared"
+  for three runs). Commit, or use a throwaway `git worktree` at HEAD, and re-check `git status` after. Five of seven "failures" from a section-menu sweep were pre-existing — the shipped code
   was already violating the invariant a code comment in it claimed to hold. Report the delta (fixed /
   introduced / untouched), never the raw count. Same run, same trap in the other direction: **scope the
   selector to a `data-bl-*` hook on the container.** A bare `[aria-label]` sweep also matched the app-bar
   ring and the mascot, which bucketed into phantom extra "rows" and reported 25 failures on a page with
   none. Over-selecting fails loudly; under-selecting passes silently — both lie.
+- **A CELEBRATION overlay is not just its content — scope the measurement to the content column.**
+  `CelebrationEffect` mounts a **full-viewport `<canvas>`** as a sibling of the column, and react-confetti
+  also injects **off-screen sprite `<img>`s**. So a `overlay.querySelectorAll('*')` bounding-box union
+  reports a "column" 1213px wide on an 844px viewport (→ a false overflow failure), and
+  `overlay.querySelector('img')` returns a **confetti particle** rather than the reward — which then
+  measures 59px and looks like the sticker rendered at the wrong size. Both were probe bugs, not layout
+  bugs. Pick the non-canvas direct child (`[...o.children].find(e => e.tagName !== 'CANVAS' &&
+  !e.querySelector('canvas'))`) and measure inside that.
 - **Measure, don't eyeball, for overflow.** A scaled thumbnail can hide a button clipped past a
   popover edge; `rect.r > container.r` is unambiguous (this caught the sample-button overflow).
   **`document.scrollWidth <= innerWidth` is NOT proof of no-clip** — GameShell's no-scroll root is
@@ -509,6 +521,13 @@ stripped, and the failure looks like a page bug. Write the JS to a **file in the
   state (no need to solve), `?seed=<n>` makes questions deterministic (probe with `--eval` to find a
   seed that yields the case you want, e.g. a count-mode number or a high comparison pile), `?nogate=1`
   skips the audio welcome/permission gate, `?reduce=1` forces reduced-motion, `?theme=<id>` sets the skin.
+- **`?theme=` takes a REGISTERED id and an unknown one SILENTLY HALF-WORKS.** The ids are
+  `kid`/`ocean`/`space`/`dino` (`src/theme/themes.ts`) — Regnbue is **`kid`**, not `rainbow`. A bogus id
+  falls back to the default TOKENS, so the page looks like the default skin and nothing errors, but
+  `loadSceneAssets(id)` returns `null` — so the parallax world, the mascot poses and the
+  `ProgressionCompanion` all render **art-less**. An empty companion ring in a ceremony was chased as a
+  missing-art bug for several runs before the URL turned out to be the cause. If art is inexplicably
+  absent, check the theme id first.
 - **Auto-played game TTS often doesn't fire in headless** (no real audio device), so the fetch-capture
   audio recipe is unreliable for a game's welcome/prompt — it works for **tap-triggered** echoes (browse
   screens, answer taps), not the gated auto-play. Confirmed with `--audio-report`: a bare Chrome run of

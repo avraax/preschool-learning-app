@@ -72,10 +72,23 @@ manifest/subject choices with the owner first, and save it in the relevant plan 
   1:1*. Add per-subject child-safety notes where they matter (friendly/no sharp teeth, blunt horns,
   gentle volcano…). A doc may still list prompts singly for reference, but hand the owner the batched-4
   form to actually paste.
-- **Check what already exists before commissioning anything.** 29 of the Reward Book's 45 subjects were
-  already baked in `src/assets/games/` (a dog is a dog), so the owner drew 16 rather than 45 — the
-  reuse map lives in `scripts/optimize-theme-art.mjs` and the copies are re-trimmed, never re-keyed
-  (they have real alpha and no screen left to remove).
+- **A SUBJECT THAT LIVES IN THE SKY MAKES THE MODEL PAINT A SKY**, overriding "flat solid `#00FF00`
+  background edge to edge" even though the instruction is right there in the prompt. A hot-air balloon
+  and a kite both came back on a painted blue sky with clouds and a grass horizon — **unkeyable**, since
+  the border flood-fill has no screen to seed from. Cheap detector before you key anything: the fraction
+  of the frame that is screen green. A good render is ~75–95%; those two were 15% and 30%, and 82% / 64%
+  of the frame survived the key (a good one leaves ~15% opaque). The fix that worked on the retry is to
+  state the anti-scene rule **twice** — once in the shared preamble and again inside that subject's own
+  numbered line ("Remember: flat solid #00FF00 behind it, NOT a sky"). Do this for anything airborne,
+  underwater, or otherwise implying a setting.
+- **Check what already exists before commissioning anything** — for TWO different reasons.
+  - *Reuse:* 29 of the Reward Book's 45 subjects were already baked in `src/assets/games/` (a dog is a
+    dog), so the owner drew 16 rather than 45 — the reuse map lives in `scripts/optimize-theme-art.mjs`
+    and the copies are re-trimmed, never re-keyed (they have real alpha and no screen left to remove).
+  - *Collision:* diff the proposed subjects against the shipped LABEL set of whatever manifest they join.
+    A reward PRD once assigned four subjects that another chapter already owned; under new ids nothing
+    type-checks it, and only `stickers.test.ts`'s label-uniqueness assertion catches it — which fires
+    after the renders are already paid for. Grep the labels, then write the prompts.
 - **Reference-image guidance:** attach 2–3 existing `src/assets/themes/icons/*.webp` (or the higher-res
   `art-src/icons/*.png`) as STYLE references on every generation so the batch matches the app, and have
   the owner re-use their first good render as a consistency anchor for the rest. Decide per-subject
@@ -123,6 +136,11 @@ source image, from a contact sheet, and from the full-colour render.
 bowl-plus-handle is unmistakable, while a recorder at 8% is an anonymous bar. Ask "would a 5-year-old
 know what this is from the shape alone?"
 
+**A CLEAN KEY TELLS YOU NOTHING ABOUT THE SILHOUETTE — they are independent failures.** A sled and a
+wind turbine both keyed flawlessly (zero leftover green, every enclosed gap cut through) and were still
+rejected: at 24px the sled's slat gaps close up into an anonymous low blob, and the turbine's tower is a
+2px line. Run both checks on every batch; passing the one you can see does not buy the one you can't.
+
 **If a subject can't form a silhouette, change the SUBJECT, not the render.** A recorder is a thin
 tube — it was rendered twice (diagonal, then upright with a flared bell, which made it *narrower*) and
 both failed; swapping it for a xylophone fixed it by shape in one pass. Reward path data is safe to
@@ -153,6 +171,15 @@ re-export at a different crop fails a test instead of silently shrinking the gly
   overlap measurement of it.
 - Prefer trimming the art in the pipeline when you own the source; scaling in CSS is the fix for art
   that is already committed and keyed.
+
+**When a SURFACE grows, measure whether the source resolution still suffices — don't re-export on a
+hunch.** `REWARD_SIZE` is one global value for all reward art, so "the new ones should be bigger" really
+means re-exporting everything, and inconsistent sizes buy nothing. The ceremony sticker grew ~1.5× and
+pushed the art past 1:1 on a 2× iPad; measured with `sharp` (Sobel gradient energy on the ideal render
+vs the shipped one upscaled to the same device pixels, plus a mean-absolute-pixel diff), the cost was
+**3–6% edge sharpness and 1.7/255 mean difference — invisible**, because soft-3D clay has no fine
+detail to lose. A whole re-export was correctly skipped. Line-art or text would not survive the same
+upscale, so measure rather than generalise from this.
 
 ## Keying — the core gotcha: key by green-EXCESS, not greenness
 
@@ -194,18 +221,35 @@ pure `#00FF00` and NOT raw "is it greenish" — the latter two eat the subject.
   despill 90). **Verify by comparing the output's average opaque RGB against the source's**, not just
   by eyeballing the cut-out.
 
-  **A saturated green REGION always needs the override; a merely green-ISH subject usually doesn't.**
-  That distinction is the whole rule, and it took three cases to see: the leaf, the puzzle's green
-  piece and the xylophone's green bar all needed one (3-for-3, same 150/110/90 window each time),
-  while the frog, turtle and rainbow keyed correctly on the defaults — their subject/screen gap was
-  16 vs 134 and 2 vs 141, i.e. barely green at all. So don't spend a measurement pass on "is this
-  green enough": if a distinct part of the subject reads green to the EYE, set the override, then
-  prove it. **The proof is to key it BOTH ways and count green pixels in the output** — on defaults
+  **THE EYE IS NOT THE INSTRUMENT — `g - max(r,b)` is.** This rule used to say "if a distinct part of
+  the subject reads green to the EYE, set the override, and don't spend a measurement pass". That is
+  wrong, and by a wide margin: a kite with four saturated colour panels and a rainbow-striped hot-air
+  balloon both look *plainly* green in part and measure a green-excess of **16 and 19** — under the
+  default `faint` of 18, so they keyed perfectly with no entry at all. Meanwhile a **pale mint** glasses
+  frame, which reads as barely-green, measures **134** and vanished COMPLETELY on the defaults (0.2 KB
+  of nothing — the most total version of this failure so far).
+
+  The reason is that a mid-tone "green" keeps substantial red and blue, while a pale tint pushes green
+  far above both. So the question is never "does this look green" but "where does this subject's
+  green-excess histogram sit relative to `faint`/`vivid` and the screen's". Six of the nine known cases
+  now sit on one side and three on the other, and the eye mispredicts several of them.
+
+  Measure first — one pass over the source is cheap, and there is an even cheaper screen: key on the
+  defaults, then count OPAQUE output pixels with excess > `faint`. Zero means nothing was ever at risk.
+  **Then prove it by keying BOTH ways and counting green pixels in the output** — on defaults
   the xylophone's bar came out with *zero* pixels above green-excess 25 (a grey bar behind a perfect
   silhouette), with the override 885 of them at mean RGB 123,176,85. An average-RGB check over the
   whole subject can miss this when only one part of a multi-coloured object is green.
 
 ## Other pipeline gotchas (each bit us once)
+
+- **Don't hand-roll a key to QA a batch — run `optimize-theme-art.mjs` and inspect its output.**
+  `greenKeySprite` is not just the hysteresis fill: it then clears **enclosed pockets** globally at the
+  vivid threshold (green trapped inside a handle or between slats, which the border fill can never
+  reach) and keeps only the **largest connected component** (which is what removes the ✦ download
+  watermark). A reimplementation that stops after the flood-fill reports both of those as defects —
+  a surviving sparkle inflating the trim box, and green pockets inside every loop — and you then go
+  fix a pipeline that was already correct. Point the real script at `art-src/` and read the WebP.
 
 - **AI-baked contact shadows leave a green crescent under centered sprites.** The render's soft ground
   shadow darkens the screen green (lower excess) right where it meets the subject, so a plain

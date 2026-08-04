@@ -75,6 +75,18 @@ the *generator* for another. A table-only break can pass while the code ignores 
   it existed to forbid. Any `[^X]*` capture over code containing `X` is suspect; anchor on the real
   delimiters (backticks here) instead. This is why the break must produce the *forbidden* value rather
   than something merely different.
+- **MATCH-COUNT vacuity: the rule covers N branches, the regex captures the first.** A guard asserting
+  the ceremony's scrim is near-solid anchored on `background: dark …` and stopped at the first
+  `100%)'` — which is the DARK gradient. Reverting the **light** one stayed green, and the light case was
+  the actual defect (cream-on-cream, the menu readable straight through). Whenever a rule applies to a
+  light/dark pair, an `if/else`, or a per-skin table, use a `/g` match and **assert the expected count**
+  (`assert.equal(matches.length, 2)`) before checking the values — otherwise half the rule is unguarded
+  and the suite looks fine. Then break EACH branch separately, not just the convenient one.
+- **A break that accidentally satisfies the pattern.** `/<StickerReveal[\s\S]*badge=\{/` was meant to
+  prove the count sits on the frame; the mutation `badge={` → `data-not-a-badge={` still *contains*
+  `badge={`, so the guard stayed green and read as vacuous when it was merely loose. Require the real
+  delimiter (`\sbadge=`). Corollary: when a break appears to prove vacuity, first check the mutated text
+  doesn't still match.
 - **Breaking HALF of a removed mechanism, when only the whole is observable.** Deleting a gold-pass wrap
   looked untested: re-adding the wrap alone changed nothing, because the same commit had also pinned the
   duplicate `count` at 1, so a re-visited slot just rewrote its own entry. The invariant was real; the
