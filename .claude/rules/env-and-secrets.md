@@ -35,6 +35,13 @@ region, and the bug-report read key — but **check, don't trust this list.**
   own hint suggests the command you just ran. Pass an explicit **empty** third argument to mean
   all preview branches: `vercel env add NAME preview "" --value … --yes`.
 - Use `--no-sensitive` for non-secret config so it stays readable later; leave real secrets sensitive.
+- **`vercel build` is SAFE for `.env.local`** — it writes only under `.vercel/` (verified by hashing
+  `.env.local` before and after). It is the cheapest way to inspect what actually deploys; see
+  `.claude/rules/api-endpoints.md`. `vercel dev`, by contrast, runs the package.json `dev` script and
+  dies if port 5173 is already taken.
+- **`vercel deploy` aborts uploading this repo** ("Upload aborted", after several minutes of file
+  hashing — there are thousands of prebaked mp3s). Pass **`--archive=tgz`** and it completes. Note a
+  preview deployment is then behind Vercel's SSO wall, so `curl` gets a 302 and cannot verify anything.
 
 ## Provisioning marketplace resources
 

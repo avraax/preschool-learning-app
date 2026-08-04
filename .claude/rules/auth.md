@@ -117,6 +117,13 @@ table, and our five (`childProfile`, `profileProgress`, `familyPin`, `pinAttempt
   `authStore` cannot call `profileStore` (the import points the other way); keep it a subscription.
   `AuthGate` deliberately does NOT detach when the gate blocks — `<App />` is unmounted there, so no game
   exists to write anything.
+- **What sits ABOVE the gate runs before login, so app-wide side effects must be GATE-REPORTED, not
+  route-inferred.** `AppThemeProvider` is above `AuthGate` in `main.tsx` and it starts the music bed;
+  the lock screen lives at `/`, which is a menu path, so the bed played over the login screen and
+  through the whole Google round trip while being perfectly correct about the route. `AuthGate` and
+  `ProfileGate` therefore call `musicClient.setGateBlocking(...)` — the gate is the only thing that
+  knows. Anything else a pre-gate provider can kick off (audio, sync, timers) needs the same shape;
+  `authUiOpen` covers the *overlay* question, not this one.
 - **"No children" and "we haven't asked yet" are different states.** `AccountState.rosterSettled` is true
   only once a roster refresh has ANSWERED (either way), and `contexts/profileGatePolicy.ts` — pure, like
   `authGatePolicy` — is what decides between nothing / the picker / the mandatory create dialog. Reading
@@ -228,8 +235,11 @@ read model is derived from it and is **byte-identical to the pre-accounts shape*
 - `npm test` — the pure modules, the merge algebra, the store surgery, and the auth guards:
   `authSignOut.test.ts` (detach on both sign-out paths, roster settling, resume throttling),
   `profileGatePolicy.test.ts`, `authOverlayZ.test.ts`, `lib/server-html-csp.test.ts`. The
-  client-side auth graph is Node-importable — keep the `.ts` extensions on its relative imports and
-  `import.meta.env?.` optional, or the suite stops loading.
+  client-side auth graph is Node-importable — keep its relative imports explicitly extensioned and
+  `import.meta.env?.` optional, or the suite stops loading. **Which extension differs by half:** the
+  client/test graph uses `.ts`; `lib/**` and `api/**` use `.js`, because Vercel ships the compiled
+  sibling (`.claude/rules/api-endpoints.md`). Getting that backwards is not a test failure — it is a
+  silent production-only 500 across every accounts endpoint, which is exactly how they shipped.
 - **A dead auth surface fails no test and throws no error.** Two shipped ones were only found by
   hit-testing: `document.elementFromPoint(centre of the element)` must return that element, not the
   overlay above it. Use that, not a screenshot — an obscured dialog simply isn't drawn, so the picture

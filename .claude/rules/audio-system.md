@@ -161,7 +161,13 @@ sprite), re-encoded with `node scripts/transcode-sfx.mjs`, into `public/sounds/u
   transitive graph need an explicit `.ts` extension** (e.g. `'../utils/shuffle.ts'`): Node's ESM
   resolver rejects extensionless imports even though Vite/tsc accept them, so a build script silently
   breaks on a source file the app imports fine. `allowImportingTsExtensions` makes the extension safe
-  in Vite/tsc too.
+  in Vite/tsc too. **`.ts` is right HERE and wrong for a Vercel function** — `api/**`/`lib/**` and the
+  `src/config` modules they import use `.js`, because Vercel ships the compiled sibling
+  (`.claude/rules/api-endpoints.md`). The two graphs OVERLAP at `src/config`, so an extension change
+  for one side silently breaks the other: switching `stickers.ts` for the server took
+  `tts:prebake` / `tts:eval` / `audit:*` down with it, and nothing type-checks those `.mjs` entries.
+  They now carry `--import ./scripts/js-to-ts-resolve.mjs`; after touching any extension, RUN each
+  script (`npm run audit:check` is the cheap one) rather than reasoning about the graph.
 
 ## Pronunciation fixes (da-DK)
 

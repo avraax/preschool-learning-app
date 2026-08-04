@@ -25,7 +25,10 @@ Treat them as a trust boundary. Shared helpers live in `lib/server-utils.ts`.
   was removed; `applyCors` sets a scoped origin. Don't reintroduce a `/api` header block.
 - **`tsconfig.json` includes only `src`, so `api/` and `lib/` are NOT type-checked by `npm run build`.**
   Server-side type errors stay invisible until runtime — check them explicitly (a `noEmit` tsconfig
-  covering `api`/`lib`) before trusting a green build.
+  covering `api`/`lib`) before trusting a green build. `tsconfig.server.json` now does this, but note
+  its `moduleResolution: "bundler"` + `allowImportingTsExtensions` describe a bundler that **does not
+  exist at deploy time** — so it type-checks a `.ts` specifier that cannot resolve in production. A
+  green `typecheck:server` is not evidence the function loads; see the section below for what is.
 
 ## The auth surface is different — do NOT wrap it in the helpers above
 
@@ -56,6 +59,45 @@ return just stopped working and the adult had to notice the link and tap it. **I
 answer with a redirect** (a 302 returned from inside a better-auth `createAuthEndpoint` handler passes
 through its router untouched); if it must inform, give it a plain link. Guarded by
 `lib/server-html-csp.test.ts`.
+
+## The deployed function is NOT what `dev-server.js` runs
+
+Vercel compiles each `api/**` + `lib/**` file to a **sibling `.js`** and copies the tree into the
+function. It does **not** bundle and it does **not** rewrite import specifiers. Two consequences, and
+the accounts release shipped straight into both — every auth/profiles/progress/tts/stt endpoint was a
+500 from the day it landed:
+
+- **Relative imports in the server-reachable graph must end in `.js`** (`'../lib/session.js'`), and
+  that graph includes the `src/config` modules a function imports. A `.ts` specifier ships verbatim
+  and dies at import with `ERR_MODULE_NOT_FOUND` for a path ending `.ts`. Plain-node entries then need
+  `--import ./scripts/js-to-ts-resolve.mjs` (already wired into every relevant npm script) — see that
+  file for why an in-entry `register()` cannot work.
+- **`dev-server.js` cannot catch this class of bug** — it runs the real `.ts` files off disk under
+  Node's type stripping, so the local mirror is green while production is uniformly broken. The
+  mirror rule below protects against divergence in BEHAVIOUR; it says nothing about deployability.
+
+### Verify a function without deploying
+
+`npx vercel build --prod` produces the real artifact under `.vercel/output/`, and both halves of the
+above are checkable there in seconds:
+
+```bash
+d=".vercel/output/functions/api/profiles.func"
+( cd "$d" && node --env-file=/path/to/.env.local -e "import('./api/profiles.js')" )   # module resolution
+node -e "const c=require('./.vercel/output/config.json'); console.log(c.routes)"       # the REAL route table
+```
+
+A missing env var (`[env] missing required …`) means it loaded — that is a pass for this check.
+`.vercel/output/config.json` is the routing that ships, so read the post-`filesystem` phase there
+rather than reasoning about `vercel.json`: user `rewrites` precede the generated dynamic routes, and
+the generated catch-all for `api/auth/[...all]` matched only ONE path segment, so multi-segment
+better-auth paths need the explicit rewrite that is now in `vercel.json`.
+
+**Two rungs that look available and are not:** a preview deployment sits behind Vercel's SSO wall, so
+every `curl` 302s to a login page (the API is unreachable, not broken), and `vercel dev` runs the
+package.json `dev` script, so it fails outright when port 5173 is already taken. When only production
+can answer, deploy and `curl` — and say that is the rung you used. `npx vercel logs <url> --json`
+gives the full stack that the truncated table view hides.
 
 ## Two sources that MUST stay in sync
 
