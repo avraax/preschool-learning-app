@@ -29,8 +29,9 @@
 // `applyRemote()` can be applied AT ANY INSTANT — mid-round, mid-ceremony — with no lock and no
 // queue. That property is worth more than the arithmetic.
 
-import { collectedFromLevel, levelFromXp } from './progression.ts'
-import { REWARD_SLOTS } from './stickers.ts'
+// `.js` specifiers: this module is imported DIRECTLY by `api/progress.ts` — see progressSchema.ts.
+import { collectedFromLevel, levelFromXp } from './progression.js'
+import { REWARD_SLOTS } from './stickers.js'
 import {
   SECTION_IDS,
   emptyGameStats,
@@ -43,7 +44,7 @@ import {
   type PersistedProgress,
   type ProgressSettings,
   type SectionId,
-} from './progressSchema.ts'
+} from './progressSchema.js'
 
 export interface MergeContext {
   now: number

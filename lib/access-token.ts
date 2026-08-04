@@ -14,7 +14,7 @@
 // compares server absolute time against its own.
 
 import { SignJWT, jwtVerify } from 'jose'
-import { baseURL, requireEnv } from './env.ts'
+import { baseURL, requireEnv } from './env.js'
 
 export const ACCESS_TOKEN_TTL_SECONDS = 900
 const AUDIENCE = 'bl-paid'

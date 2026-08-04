@@ -10,9 +10,9 @@ import { createHash, randomBytes } from 'node:crypto'
 import { createAuthEndpoint, sessionMiddleware, APIError } from 'better-auth/api'
 import type { BetterAuthPlugin } from 'better-auth'
 import * as z from 'zod'
-import { signAccessToken } from './access-token.ts'
-import { baseURL, requireEnv, webauthn } from './env.ts'
-import { hashPin, verifyPin } from './pin-hash.ts'
+import { signAccessToken } from './access-token.js'
+import { baseURL, requireEnv, webauthn } from './env.js'
+import { hashPin, verifyPin } from './pin-hash.js'
 import {
   attemptsLeft,
   clearAttempts,
@@ -21,7 +21,7 @@ import {
   registerFailure,
   validateNewPin,
   type LockoutState,
-} from '../src/config/pinPolicy.ts'
+} from '../src/config/pinPolicy.js'
 
 /**
  * Our tables, declared here so `npm run auth:migrate` creates them alongside better-auth's.

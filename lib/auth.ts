@@ -9,9 +9,9 @@ import { betterAuth } from 'better-auth'
 import { bearer } from 'better-auth/plugins/bearer'
 import { passkey } from '@better-auth/passkey'
 import { APIError } from 'better-auth/api'
-import { getPool } from './db.ts'
-import { familyPlugin } from './auth-family-plugin.ts'
-import { baseURL, isEmailAllowed, requireEnv, runtime, trustedOrigins, webauthn } from './env.ts'
+import { getPool } from './db.js'
+import { familyPlugin } from './auth-family-plugin.js'
+import { baseURL, isEmailAllowed, requireEnv, runtime, trustedOrigins, webauthn } from './env.js'
 
 // `vercel.app` is on the Public Suffix List and a preview origin is not a registrable-domain suffix
 // of the production RP ID, so passkeys CANNOT work on a preview deployment (PRD §9). We leave the

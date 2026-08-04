@@ -7,7 +7,7 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { fromNodeHeaders } from 'better-auth/node'
-import { auth } from './auth.ts'
+import { auth } from './auth.js'
 
 export interface SessionInfo {
   userId: string

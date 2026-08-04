@@ -14,7 +14,7 @@
 
 import { createHmac, randomBytes, scrypt as scryptCb, timingSafeEqual } from 'node:crypto'
 import { promisify } from 'node:util'
-import { requireEnv } from './env.ts'
+import { requireEnv } from './env.js'
 
 const scrypt = promisify(scryptCb) as (
   password: string | Buffer,

@@ -15,13 +15,13 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { applyCors, isAllowedOrigin, logServerError, rateLimit } from '../lib/server-utils.js'
-import { adapter, requireSession } from '../lib/session.ts'
+import { adapter, requireSession } from '../lib/session.js'
 import {
   AVATAR_IDS,
   LEGACY_AVATAR_GLYPHS as LEGACY_GLYPHS,
   isAvatarId,
   normalizeAvatarId,
-} from '../src/config/avatars.ts'
+} from '../src/config/avatars.js'
 
 const MAX_PROFILES = 8
 const MAX_NAME_LENGTH = 24

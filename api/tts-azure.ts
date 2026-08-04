@@ -2,7 +2,7 @@ import { VercelRequest, VercelResponse } from '@vercel/node'
 import { buildSsml, synthesizeAzure, resolveVoice, lexiconUriForRequest } from '../shared-azure-tts.js'
 import { TTS_CONFIG } from '../shared-tts-config.js'
 import { logServerError, applyCors, isAllowedOrigin, rateLimit } from '../lib/server-utils.js'
-import { requirePaidAccess } from '../lib/paid-guard.ts'
+import { requirePaidAccess } from '../lib/paid-guard.js'
 
 const VOICE_TYPES = new Set(['primary', 'backup', 'male', 'english'])
 

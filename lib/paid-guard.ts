@@ -11,8 +11,8 @@
 // ungated — only the live Azure fallback and STT are gated.
 
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { verifyAccessToken, type AccessClaims } from './access-token.ts'
-import { devBypassEnabled } from './env.ts'
+import { verifyAccessToken, type AccessClaims } from './access-token.js'
+import { devBypassEnabled } from './env.js'
 
 /** The subject a paid call is billed to. `dev-bypass` only ever appears on a local machine. */
 export const DEV_BYPASS_SUBJECT = 'dev-bypass'

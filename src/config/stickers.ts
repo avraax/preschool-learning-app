@@ -31,7 +31,8 @@
 
 // NB the explicit `.ts` extension: shared-narration-clips.js imports THIS file in plain Node, which
 // does not resolve extensionless relative specifiers. Vite/tsc accept it (allowImportingTsExtensions).
-import { chapterOfSlot } from './progression.ts'
+// `.js` specifier: reached from `api/progress.ts` via progressSchema — see that file's note.
+import { chapterOfSlot } from './progression.js'
 
 export interface Reward {
   id: string // stable, unique across ALL chapters (used as the progress key AND the art key)

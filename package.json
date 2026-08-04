@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "dev:api": "node --env-file=.env.local dev-server.js",
-    "test": "node --test \"src/**/*.test.ts\" \"lib/**/*.test.ts\"",
+    "dev:api": "node --env-file=.env.local --import ./scripts/js-to-ts-resolve.mjs dev-server.js",
+    "test": "node --import ./scripts/js-to-ts-resolve.mjs --test \"src/**/*.test.ts\" \"lib/**/*.test.ts\"",
     "tts:eval": "node --env-file=.env.local tts-voice-eval.mjs",
     "tts:prebake": "node --env-file=.env.local prebake-tts.mjs",
     "audit:check": "node scripts/narration-audit.mjs",
@@ -17,7 +17,9 @@
     "build:production": "tsc && tsc -p tsconfig.server.json && vite build --minify",
     "build:harness": "tsc && tsc -p tsconfig.server.json && vite build --mode harness",
     "typecheck:server": "tsc -p tsconfig.server.json",
-    "auth:migrate": "node --env-file=.env.local scripts/auth-migrate.mjs",
+    "auth:migrate": "node --env-file=.env.local --import ./scripts/js-to-ts-resolve.mjs scripts/auth-migrate.mjs",
+    "auth:dev-session": "node --env-file=.env.local --import ./scripts/js-to-ts-resolve.mjs scripts/auth-dev-session.mjs",
+    "auth:probe-claim": "node --env-file=.env.local --import ./scripts/js-to-ts-resolve.mjs scripts/auth-probe-claim.mjs",
     "lint": "eslint .",
     "preview": "vite preview",
     "icons:generate": "node generate-png-icons.cjs"

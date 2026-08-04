@@ -1,7 +1,7 @@
 import { VercelRequest, VercelResponse } from '@vercel/node'
 import { v2 } from '@google-cloud/speech'
 import { logServerError, applyCors, isAllowedOrigin, rateLimit } from '../lib/server-utils.js'
-import { requirePaidAccess } from '../lib/paid-guard.ts'
+import { requirePaidAccess } from '../lib/paid-guard.js'
 
 const { SpeechClient } = v2
 

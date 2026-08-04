@@ -18,8 +18,11 @@
 // Vercel function api/progress.ts imports this file directly (so there is exactly one schema), and
 // `node --test` imports it in plain Node — hence the explicit `.ts` extensions below.
 
-import { REWARD_PATH, REWARD_SLOTS, allRewards, rewardAt } from './stickers.ts'
-import { collectedFromLevel, levelFromXp } from './progression.ts'
+// NOTE: `.js` specifiers, not `.ts` — these two modules are imported DIRECTLY by `api/progress.ts`,
+// and Vercel ships the compiled sibling (`progression.js`), never the source. See
+// scripts/js-to-ts-resolve-hooks.mjs; plain-node runs get that hook via `--import`.
+import { REWARD_PATH, REWARD_SLOTS, allRewards, rewardAt } from './stickers.js'
+import { collectedFromLevel, levelFromXp } from './progression.js'
 
 export const SCHEMA_VERSION = 4 as const
 

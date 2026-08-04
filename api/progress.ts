@@ -14,13 +14,13 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { applyCors, isAllowedOrigin, logServerError, rateLimit } from '../lib/server-utils.js'
-import { adapter, requireSession } from '../lib/session.ts'
+import { adapter, requireSession } from '../lib/session.js'
 import {
   normalizePersisted,
   progressInvariantViolations,
   type PersistedProgress,
-} from '../src/config/progressSchema.ts'
-import { mergeProgress } from '../src/config/progressMerge.ts'
+} from '../src/config/progressSchema.js'
+import { mergeProgress } from '../src/config/progressMerge.js'
 
 interface ProgressRow {
   id: string

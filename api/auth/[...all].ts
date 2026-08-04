@@ -14,7 +14,7 @@
 // would never apply and a cold DB connect would die at the default timeout. The key is
 // `"api/auth/**"`.
 
-import { auth } from '../../lib/auth.ts'
+import { auth } from '../../lib/auth.js'
 
 export const fetch = async (request: Request): Promise<Response> => {
   try {

@@ -5,7 +5,7 @@
 // same-region hop rather than a transatlantic one.
 
 import pg from 'pg'
-import { requireEnv } from './env.ts'
+import { requireEnv } from './env.js'
 
 /**
  * node-postgres currently treats `sslmode=require` (what Vercel's injected Neon URL uses) as
