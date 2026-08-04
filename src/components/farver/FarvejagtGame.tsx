@@ -26,12 +26,16 @@ import { shuffle } from '../../utils/shuffle'
 import { useNeverFailHint } from '../../hooks/useNeverFailHint'
 import { useDragActive } from '../common/dnd/useDragActive'
 import { DANISH_OBJECTS, COLOR_TARGETS, COLOR_SWATCH, spokenColor } from '../../config/colorContent'
+import { FARVEJAGT_ROUND, colorTargetKey, farvejagtPromptPool } from '../../config/promptPools'
+import { usePromptBag } from '../../hooks/usePromptBag'
 import ObjectArt from './farverArt'
 // Simplified audio system
 import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 
 // ── Tuning levers (static difficulty — edit here, no adaptive logic) ──────────────────────────
-const ROUND_BOARDS = 5            // boards (questions) per round → RoundResultScreen
+// Boards (questions) per round → `FARVEJAGT_ROUND` in config/promptPools, read directly below: it is
+// also the bag's no-repeat window (Practice Loop PRD-01 W1) and the measured simulation's round length,
+// so an alias here would just be a third name for one number.
 // Board SIZE is this game's difficulty axis (Difficulty PRD-01 §4.5) — `COLORS_FARVEJAGT[level]`:
 // Let 3 distractor colours ×1 (~6 items) · Normal all others ×1 (~12) · Svær all ×2 (~20).
 const WRONG_DROPS_BEFORE_HINT = 2 // pulse a correct item after this many wrong drops on a board
@@ -95,7 +99,7 @@ const FarvejagtGame: React.FC = () => {
   const [gameReady, setGameReady] = useState(false)
 
   // Bounded round + reward flow (Overhaul Farver §Farvejagt). 5 boards, 3★ = 0 wrong-drop boards, 2★ ≤ 2.
-  const round = useRound({ length: ROUND_BOARDS, gameId: 'colors.farvejagt' })
+  const round = useRound({ length: FARVEJAGT_ROUND, gameId: 'colors.farvejagt' })
   const firstAttemptRef = useRef(true)   // first-try flag for the CURRENT board
   const [roundOutcome, setRoundOutcome] = useState<RoundOutcome | null>(null)
 
@@ -107,7 +111,13 @@ const FarvejagtGame: React.FC = () => {
   const burstTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const hasInitialized = useRef(false)
-  const previousColor = useRef<string>('')
+  // The hunted COLOUR comes from a bag (Practice Loop PRD-01 W1); the old `previousColor` ref is
+  // deleted, not kept beside it. A round is 5 boards over 6 colours, so a bag makes every round 5
+  // DISTINCT hunts — with replacement, ~60% of rounds hunted some colour twice.
+  const colorBag = usePromptBag<{ color: string; phrase: string }>({
+    key: colorTargetKey,
+    window: FARVEJAGT_ROUND,
+  })
   const startedRef = useRef(false)
   const isAdvancing = useRef(false)  // locks drops during the board-complete flourish (P3)
   const welcomeTriggered = useRef(false)
@@ -171,15 +181,8 @@ const FarvejagtGame: React.FC = () => {
     return positions
   }
 
-  // Select random target color (avoid consecutive repeats)
-  const selectRandomTarget = () => {
-    let availableTargets = COLOR_TARGETS.filter(target => target.color !== previousColor.current)
-    if (availableTargets.length === 0) availableTargets = COLOR_TARGETS
-
-    const selected = availableTargets[Math.floor(Math.random() * availableTargets.length)]
-    previousColor.current = selected.color
-    return selected
-  }
+  // The next hunt colour — one shuffled pass over the 6 targets (W1's bag), not a random pick.
+  const selectRandomTarget = () => colorBag.draw(farvejagtPromptPool())
 
   // Generate one board's items: 5-6 targets + distractors (count/spread tuned by difficulty).
   const generateGameItems = () => {

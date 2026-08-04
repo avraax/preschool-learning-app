@@ -1,10 +1,12 @@
-import React, { useRef } from 'react'
+import React from 'react'
 import UnifiedQuizGame, { UnifiedQuizConfig, QuizItem } from '../common/UnifiedQuizGame'
 import { getCategoryTheme } from '../../config/categoryThemes'
 import { OrdlegRepeatButton } from '../common/RepeatButton'
 import { progressStore } from '../../services/progressStore'
 import { ORDLEG_READ } from '../../config/difficulty'
 import { READING_ROUND_LENGTH, READING_WORDS, type OrdlegWord } from '../../config/ordlegWords'
+import { ordlegWordKey, readingPromptPool } from '../../config/promptPools'
+import { usePromptBag } from '../../hooks/usePromptBag'
 import { shuffle } from '../../utils/shuffle'
 import { ordlegArt } from '../../assets/games/ordleg'
 
@@ -34,28 +36,22 @@ const LaesOrdetGame: React.FC = () => {
     art: ordlegArt(w.art)
   })
 
-  // Anti-repeat guard (PRD-05 P4): remember the last few prompt words so the small Let pool doesn't
-  // show the same word back-to-back. Persists across questions (LaesOrdetGame has no state, so it
-  // renders once and this ref is stable).
-  const recentRef = useRef<string[]>([])
+  // Prompt words come from a BAG (Practice Loop PRD-01 W1), and the old recent-3 window is DELETED
+  // rather than kept beside it — it bounded ADJACENCY, not frequency, so the 9-word Let pool could
+  // still hand out four words across a round of 8 while five went unasked. That is also why growing
+  // this pool from 5 to 9 words (2026-08-03, against "reads as stuck rather than easy") didn't fix what
+  // it was bought for: sampling with replacement repeats at any pool size.
+  const wordBag = usePromptBag<OrdlegWord>({ key: ordlegWordKey, window: READING_ROUND_LENGTH })
 
   const config: UnifiedQuizConfig = {
     quizType: 'ordleg',
 
     generateQuizItem: () => {
-      const { wordMaxLen } = ORDLEG_READ[progressStore.difficultyFor('ordleg')]
       // Let draws only 2-letter prompt words (gentler); Normal/Svær keep the full 2–3-letter pool —
       // Svær's extra challenge is MORE distractor pictures below, never longer words (standing owner
-      // rule: he can't spell yet), which is why `wordMaxLen` never exceeds 3.
-      const pool = READING_WORDS.filter((w) => w.word.length <= wordMaxLen)
-      // Avoid the most-recent words (window shrinks to fit a small pool so there's always a choice).
-      const window = Math.min(3, Math.max(1, pool.length - 1))
-      const recent = new Set(recentRef.current.slice(-window))
-      const candidates = pool.filter((w) => !recent.has(w.word))
-      const choices = candidates.length > 0 ? candidates : pool
-      const w = choices[Math.floor(Math.random() * choices.length)]
-      recentRef.current.push(w.word)
-      if (recentRef.current.length > 6) recentRef.current.shift()
+      // rule: he can't spell yet), which is why `wordMaxLen` never exceeds 3. The per-level filter is
+      // `readingPromptPool` so the simulation in promptBag.test.ts measures this exact pool.
+      const w = wordBag.draw(readingPromptPool(progressStore.difficultyFor('ordleg')))
       return {
         ...toItem(w),
         // Word shown as text, no picture in the prompt — the child must read it (never spoken: the

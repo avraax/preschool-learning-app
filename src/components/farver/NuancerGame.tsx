@@ -24,6 +24,8 @@ import { ColorRepeatButton } from '../common/RepeatButton'
 import { useRound } from '../../hooks/useRound'
 import { progressStore, type RoundOutcome } from '../../services/progressStore'
 import { COLORS_NUANCER, starThresholdsFor } from '../../config/difficulty'
+import { NUANCER_ROUND, nuancerPromptPool } from '../../config/promptPools'
+import { usePromptBag } from '../../hooks/usePromptBag'
 import { sfx } from '../../services/sfxClient'
 import { mascotBus } from '../../services/mascotBus'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
@@ -47,7 +49,9 @@ import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 // motion drops the travel/particles but keeps colour/glow + SFX.
 
 // ── Tuning levers ─────────────────────────────────────────────────────────────────────────────
-const ROUND_QUESTIONS = 8          // orderings per round → RoundResultScreen
+// Orderings per round → `NUANCER_ROUND` in config/promptPools, read directly below: it is also the bag's
+// no-repeat window (Practice Loop PRD-01 W1) and the measured simulation's round length, so an alias
+// here would just be a third name for one number.
 const WRONG_BEFORE_HINT = 2        // pulse the correct next tile after this many wrong drops
 
 const NuancerGame: React.FC = () => {
@@ -80,7 +84,7 @@ const NuancerGame: React.FC = () => {
   const audio = useSimplifiedAudioHook({ componentId: 'NuancerGame', autoInitialize: false })
   const [gameReady, setGameReady] = useState(false)
 
-  const round = useRound({ length: ROUND_QUESTIONS, gameId: 'colors.nuancer' })
+  const round = useRound({ length: NUANCER_ROUND, gameId: 'colors.nuancer' })
   const firstAttemptRef = useRef(true)
   const [roundOutcome, setRoundOutcome] = useState<RoundOutcome | null>(null)
 
@@ -94,7 +98,8 @@ const NuancerGame: React.FC = () => {
   const startedRef = useRef(false)
   const welcomeTriggered = useRef(false)
   const hasInteractedRef = useRef(false)
-  const previousHue = useRef<string>('')
+  // The prompt HUE comes from a bag (W1); the old `previousHue` ref is deleted, not kept beside it.
+  const hueBag = usePromptBag<string>({ window: NUANCER_ROUND })
   const isAdvancing = useRef(false)
 
   const logError = (message: string, data?: any) => {
@@ -111,13 +116,13 @@ const NuancerGame: React.FC = () => {
 
   const INSTRUCTION = NUANCER_INSTRUCTION
 
-  // Pick a fresh hue (avoid immediate repeat) and scramble its shades. `voice=false` skips audio.
+  // Draw the next hue from a BAG and scramble its shades. `voice=false` skips audio.
   const setupQuestion = (voice = true) => {
     isAdvancing.current = false
-    let hues = HUE_ORDER.filter((h) => h !== previousHue.current)
-    if (hues.length === 0) hues = [...HUE_ORDER]
-    const hue = hues[Math.floor(Math.random() * hues.length)]
-    previousHue.current = hue
+    // Practice Loop PRD-01 W1: the old avoid-the-previous-hue ref is DELETED. With 6 hues over 8
+    // questions two must repeat, but sampling with replacement made the DISTRIBUTION arbitrary — a bag
+    // shows all 6 before anything comes back, and the seam rule keeps the refill off the last hue.
+    const hue = hueBag.draw(nuancerPromptPool())
 
     const fullShades = SHADES[hue]
     // Table-driven (Difficulty PRD-01 §4.5): Let orders just the lightest + darkest (2 slots — a
@@ -360,7 +365,7 @@ const NuancerGame: React.FC = () => {
 
   // The slot row IS the prompt (§6C: "raise the light→dark slot row into PromptStage height" —
   // kills the old top void). Charge-in re-triggers per question via chargeKey (derived from STATE,
-  // not the `previousHue` ref, so it's safe to read during render).
+  // never from the bag/refs, so it's safe to read during render).
   const promptStageContent =
     roundOutcome || !gameReady || order.length === 0 ? undefined : (
       <PromptFocus

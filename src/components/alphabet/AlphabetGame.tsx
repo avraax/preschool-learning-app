@@ -7,7 +7,9 @@ import { progressStore } from '../../services/progressStore'
 import { ALPHABET_QUIZ } from '../../config/difficulty'
 import { confusablePoolFor, confusablesFor, shapeMatesFor } from '../../config/letterConfusables'
 import { shuffle } from '../../utils/shuffle'
-import { LETTER_WORDS, WORD_LETTERS, startsWithPhrase, startsWithQuestion } from '../../config/letterWords'
+import { LETTER_WORDS, startsWithPhrase, startsWithQuestion } from '../../config/letterWords'
+import { ALPHABET_ROUND, alphabetPromptPool } from '../../config/promptPools'
+import { usePromptBag } from '../../hooks/usePromptBag'
 import { letterArt } from '../../assets/games/alphabet'
 
 // Full Danish alphabet including special characters
@@ -24,6 +26,13 @@ const DANISH_ALPHABET = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
 // also used by Lær Alfabetet — kept in one place so the two never drift.
 
 const AlphabetGame: React.FC = () => {
+  // Prompt letters come from a BAG, not a random pick (Practice Loop PRD-01 W1): 8 questions sampled
+  // with replacement from 28 letters repeated something ~66% of rounds, which is why a child could be
+  // asked the same picture twice while 20 letters went unasked. One shuffled pass = 8 distinct letters,
+  // every time.
+  // The no-repeat WINDOW is the round length, so a round can't repeat even across a bag refill.
+  const letterBag = usePromptBag<string>({ window: ALPHABET_ROUND })
+
   // Configuration for alphabet quiz
   const alphabetConfig: UnifiedQuizConfig = {
     // Quiz identification
@@ -33,7 +42,7 @@ const AlphabetGame: React.FC = () => {
     // the letter the word starts with — training the first-sound/reading-precursor skill. The old
     // ~50% "hear the letter" recognition mode was retired (he knows every letter already).
     generateQuizItem: () => {
-      const letter = WORD_LETTERS[Math.floor(Math.random() * WORD_LETTERS.length)]
+      const letter = letterBag.draw(alphabetPromptPool())
       const { word } = LETTER_WORDS[letter]
       return {
         value: letter,
@@ -110,7 +119,8 @@ const AlphabetGame: React.FC = () => {
     // Bounded round (Overhaul Foundation §3) — reference wiring / smoke test. 8 questions, then the
     // result/reward hero. Star thresholds come from the difficulty spine (Difficulty PRD-01 W6).
     gameId: 'alphabet.quiz',
-    round: { length: 8 },
+    // ONE round length: the bag's no-repeat window reads the same constant (Practice Loop PRD-01 W1).
+    round: { length: ALPHABET_ROUND },
 
     // Never-fail hint (PRD-05 P1): after 2 wrong taps the correct letter tile pulses.
     hintAfterNWrong: 2,

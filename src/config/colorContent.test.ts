@@ -10,6 +10,7 @@ import {
   quizObjectPool,
 } from './colorContent.ts'
 import { COLORS_QUIZ, LEVELS } from './difficulty.ts'
+import { colorQuizPromptPool } from './promptPools.ts'
 
 const SRC = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 
@@ -82,9 +83,19 @@ test('the game actually greys the object it asks about — and only that one', (
   // feature silently reverts to the pixel match with all three tables still perfect.
   const code = codeOf('components/farver/FarveQuizGame.tsx')
 
-  // The pool must be derived from the level's reveal mode, not a module-level all-objects array.
-  assert.match(code, /quizObjectPool\(reveal\)/)
+  // The pool must be derived from the level's reveal mode, not a module-level all-objects array. Since
+  // Practice Loop PRD-01 W1 the game reads it through `colorQuizPromptPool(level)` (so the prompt-bag
+  // simulation can sample the same pool), so BOTH links of that chain are asserted — the component
+  // calling it, and it still being the reveal-mode pool.
+  assert.match(code, /colorQuizPromptPool\(level\)/)
   assert.match(code, /reveal\s*}\s*=\s*COLORS_QUIZ\[/)
+  for (const level of LEVELS) {
+    assert.deepEqual(
+      colorQuizPromptPool(level),
+      quizObjectPool(COLORS_QUIZ[level].reveal),
+      `colorQuizPromptPool(${level}) no longer follows the level's reveal mode`,
+    )
+  }
 
   // EXACTLY ONE desaturate site. Zero = the wiring is gone; two = the copy that lands in the swatch
   // is greyed too, which kills the colour-returns reveal that carries the lesson.

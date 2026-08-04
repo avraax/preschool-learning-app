@@ -13,11 +13,12 @@ import {
   COLORS_QUIZ_ROUND,
   HUE_ORDER,
   adjacentHues,
-  quizObjectPool,
   spokenColor,
   type QuizObject,
 } from '../../config/colorContent'
 import { COLORS_QUIZ, starThresholdsFor } from '../../config/difficulty'
+import { colorQuizPromptPool, quizObjectKey } from '../../config/promptPools'
+import { usePromptBag } from '../../hooks/usePromptBag'
 import { hexToRgba } from '../../theme/tokens/helpers'
 import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 import { SNAP } from '../../theme/motion'
@@ -99,7 +100,11 @@ const FarveQuizGame: React.FC = () => {
   const startedRef = useRef(false)
   const welcomeTriggered = useRef(false)
   const hasInteractedRef = useRef(false)
-  const previousObject = useRef<string>('')
+  // Prompt objects come from a BAG (Practice Loop PRD-01 W1). The old `previousObject` ref is DELETED,
+  // not kept beside it — avoiding only the previous object bounded ADJACENCY, so a round of 8 still
+  // repeated objects out of an 18–24 item pool while most went unasked (two mechanisms is how one gets
+  // bypassed). Reveal mode moves the pool, so `reset()` deals from the new one on a level change.
+  const objectBag = usePromptBag<QuizObject>({ key: quizObjectKey, window: COLORS_QUIZ_ROUND })
   const isAdvancing = useRef(false)
   // Live current object so the post-welcome prompt voices the right one (state is async at mount).
   const currentRef = useRef<QuizObject | null>(null)
@@ -127,13 +132,12 @@ const FarveQuizGame: React.FC = () => {
     // the neighbours FIRST — rød/orange, blå/lilla — so telling adjacent hues apart is the task.
     // `HUE_WHEEL`, not `HUE_ORDER`: the display order's neighbours (rød/blå) aren't the ones a child
     // confuses.
-    const { options: optionCount, hues, reveal } = COLORS_QUIZ[progressStore.difficultyFor('colors')]
+    const level = progressStore.difficultyFor('colors')
+    const { options: optionCount, hues, reveal } = COLORS_QUIZ[level]
 
-    const objects = quizObjectPool(reveal)
-    let pool = objects.filter((o) => `${o.color}-${o.objectName}` !== previousObject.current)
-    if (pool.length === 0) pool = objects
-    const obj = pool[Math.floor(Math.random() * pool.length)]
-    previousObject.current = `${obj.color}-${obj.objectName}`
+    // `colorQuizPromptPool(level)` IS `quizObjectPool(reveal)` — read through promptPools so the
+    // measured simulation samples the same per-level pool this board asks from.
+    const obj = objectBag.draw(colorQuizPromptPool(level))
 
     const neighbours = adjacentHues(obj.color)
     const others = HUE_ORDER.filter((c) => c !== obj.color)

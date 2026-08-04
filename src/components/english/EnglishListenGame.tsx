@@ -3,6 +3,8 @@ import UnifiedQuizGame, { UnifiedQuizConfig, QuizItem } from '../common/UnifiedQ
 import { getCategoryTheme } from '../../config/categoryThemes'
 import { EnglishRepeatButton } from '../common/RepeatButton'
 import { quizEnglishWords, pickWordsForLevel, EnglishWord } from '../../config/englishVocab'
+import { ENGLISH_ROUND, englishPromptPool, englishWordKey } from '../../config/promptPools'
+import { usePromptBag } from '../../hooks/usePromptBag'
 import { englishArt, englishArtId } from '../../assets/games/english'
 import { progressStore } from '../../services/progressStore'
 import { ENGLISH_QUIZ } from '../../config/difficulty'
@@ -28,13 +30,14 @@ const EnglishListenGame: React.FC = () => {
     repeatWord: w.en
   })
 
+  // Prompt words come from a BAG, not a random pick (Practice Loop PRD-01 W1) — 8 of 74 words sampled
+  // with replacement repeated ~30% of rounds. One shuffled pass = 8 distinct words.
+  const wordBag = usePromptBag<EnglishWord>({ key: englishWordKey, window: ENGLISH_ROUND })
+
   const config: UnifiedQuizConfig = {
     quizType: 'english',
 
-    generateQuizItem: () => {
-      const word = quizEnglishWords[Math.floor(Math.random() * quizEnglishWords.length)]
-      return toPictureItem(word)
-    },
+    generateQuizItem: () => toPictureItem(wordBag.draw(englishPromptPool())),
 
     generateOptions: (correct: QuizItem, optionCount: number) => {
       const correctWord = quizEnglishWords.find(w => w.en === correct.value) || quizEnglishWords[0]
@@ -51,8 +54,9 @@ const EnglishListenGame: React.FC = () => {
 
     gameWelcomeType: 'englishlisten',
     gameId: 'english.listen',
-    // Star thresholds come from the difficulty spine (Difficulty PRD-01 W6).
-    round: { length: 8 },
+    // Star thresholds come from the difficulty spine (Difficulty PRD-01 W6). ONE round length: the
+    // bag's no-repeat window reads the same constant (Practice Loop PRD-01 W1).
+    round: { length: ENGLISH_ROUND },
 
     // Never-fail hint (PRD-05 P1): after 2 wrong taps the correct picture tile pulses.
     hintAfterNWrong: 2,

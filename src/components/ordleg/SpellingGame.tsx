@@ -29,7 +29,9 @@ import { useDifficulty } from '../../hooks/useDifficulty'
 import { shuffle } from '../../utils/shuffle'
 import { progressStore, type RoundOutcome } from '../../services/progressStore'
 import { ORDLEG_SPELL, starThresholdsFor } from '../../config/difficulty'
-import { spellingWordsFor } from '../../config/ordlegWords'
+import { type OrdlegWord } from '../../config/ordlegWords'
+import { SPELLING_ROUND, ordlegWordKey, spellingPromptPool } from '../../config/promptPools'
+import { usePromptBag } from '../../hooks/usePromptBag'
 import { sfx } from '../../services/sfxClient'
 import { mascotBus } from '../../services/mascotBus'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
@@ -97,7 +99,10 @@ const SpellingGame: React.FC = () => {
   // unlocked at mount; the welcome plays at most once.
   const startedRef = useRef(false)
   const welcomeTriggered = useRef(false)
-  const previousWord = useRef<string | null>(null)
+  // Prompt words come from a BAG (Practice Loop PRD-01 W1). The old `previousWord` ref is DELETED, not
+  // kept beside it: avoiding only the immediately-previous word bounded adjacency, so a round of 8 could
+  // still ask 5 of Let's 8 words twice each.
+  const wordBag = usePromptBag<OrdlegWord>({ key: ordlegWordKey, window: SPELLING_ROUND })
   const isAdvancing = useRef(false)
   // Bumps every word so tile React keys never collide across words. Without it two consecutive
   // words that share an index+letter (e.g. a distractor, or S) reuse the same motion.div, and
@@ -112,7 +117,8 @@ const SpellingGame: React.FC = () => {
   const { incrementScore, resetScore } = useGameState()
 
   // Bounded round + reward flow (Overhaul Ordleg §2). 8 words, 3 stars = no mistakes, 2 stars <= 2.
-  const round = useRound({ length: 8, gameId: 'ordleg.spelling' })
+  // ONE round length: the bag's no-repeat window reads the same constant (Practice Loop PRD-01 W1).
+  const round = useRound({ length: SPELLING_ROUND, gameId: 'ordleg.spelling' })
   const firstAttemptRef = useRef(true)
   const [roundOutcome, setRoundOutcome] = useState<RoundOutcome | null>(null)
 
@@ -245,13 +251,10 @@ const SpellingGame: React.FC = () => {
     isAdvancing.current = false
     wordSeq.current += 1 // fresh key namespace for this word's tiles (see wordSeq)
 
-    // Pick a word from the LEVEL's pool, avoiding an immediate repeat.
+    // Draw from the LEVEL's pool as a bag pass (W1) — `spellingPromptPool` is the same function the
+    // measured simulation samples, so the guard can't drift from what the game asks.
     const level = progressStore.difficultyFor('ordleg')
-    const pool = spellingWordsFor(level)
-    let candidates = pool.filter(w => w.word !== previousWord.current)
-    if (candidates.length === 0) candidates = pool
-    const next = candidates[Math.floor(Math.random() * candidates.length)]
-    previousWord.current = next.word
+    const next = wordBag.draw(spellingPromptPool(level))
     wordRef.current = next.word
 
     const letters = next.word.toUpperCase().split('')
