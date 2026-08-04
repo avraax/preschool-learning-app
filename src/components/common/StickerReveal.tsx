@@ -144,7 +144,13 @@ const StickerReveal: React.FC<StickerRevealProps> = ({ award, accent, delay = 0,
           sx={{
             fontFamily: '"Comic Sans MS", "Comic Neue", sans-serif',
             fontWeight: 700,
-            fontSize: 'clamp(1.1rem, 4vw, 1.5rem)',
+            // DERIVED from the frame, like everything else here, rather than a viewport clamp. The
+            // old `clamp(1.1rem, 4vw, 1.5rem)` capped at 24px, which was tuned against a 150px frame
+            // that also had a banner above it — against D6's 230px frame with the banner gone it read
+            // thin (ratio 0.10 vs the old 0.16). Measured 24/30/36 side by side: 24 is undersized, 36
+            // competes with the picture, 30 balances. It also fixes the inverse case, which the clamp
+            // got wrong in the other direction: a 74px TRAILING sticker was getting the same 24px.
+            fontSize: `${Math.max(18, Math.round(size * 0.13))}px`,
             color: dark ? '#FFFFFF' : theme.palette.text.primary,
             textShadow: dark ? '0 2px 8px rgba(0,0,0,0.5)' : 'none',
           }}
