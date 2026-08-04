@@ -88,6 +88,40 @@ class MusicClient {
   private inGame = false // suppressed because the current route is a game/content screen (not a menu)
   private lastError: string | null = null
 
+  // Gate suppression — the bed must stay silent until the app is actually ON SCREEN. This is not
+  // route-based and cannot be: `AppThemeProvider` (which calls setWorld) sits ABOVE the auth gate in
+  // main.tsx, and the lock screen lives at '/', a menu path — so the bed started playing over
+  // "Velkommen til Børnelæring" and through the whole Google round trip. `boot` starts true because
+  // that setWorld can land before any gate has reported; AuthGate always mounts, and clears it.
+  private gateBlocks = { boot: true, auth: false, profile: false }
+
+  private gateBlocking(): boolean {
+    return this.gateBlocks.boot || this.gateBlocks.auth || this.gateBlocks.profile
+  }
+
+  /** True while the bed must not sound: inside a game/browse screen, or before the gate opens. */
+  private suppressed(): boolean {
+    return this.inGame || this.gateBlocking()
+  }
+
+  // Reported by AuthGate (login screen) and ProfileGate ("hvem spiller?" / first-profile dialog).
+  setGateBlocking(source: 'auth' | 'profile', blocking: boolean): void {
+    // `was` is read BEFORE clearing `boot`, or the very first report ("the gate is open") would look
+    // like no change at all and the bed would never start.
+    const was = this.suppressed()
+    this.gateBlocks.boot = false
+    this.gateBlocks[source] = blocking
+    const now = this.suppressed()
+    if (was === now) return
+    if (now) {
+      this.stop()
+      this.log(`suppress (gate: ${source})`)
+    } else {
+      this.log('unsuppress (gate open)')
+      if (this.enabled && !this.hiddenPaused && this.desiredWorld) this.crossFadeTo(this.desiredWorld)
+    }
+  }
+
   constructor() {
     try {
       this.enabled = progressStore.get().settings.musicEnabled || devMusicOn()
@@ -167,7 +201,7 @@ class MusicClient {
   setWorld(world: string, url?: string): void {
     this.desiredWorld = world
     if (url) this.worldUrl[world] = url
-    if (!this.enabled || this.inGame) return
+    if (!this.enabled || this.suppressed()) return
     if (this.current?.world === world) return
     this.crossFadeTo(world)
   }
@@ -187,6 +221,8 @@ class MusicClient {
       this.log('suppress (entered game)')
     } else {
       // Back to a menu/front page → recreate + fade the bed in (same proven path as first start).
+      // Still nothing if a gate is up: leaving a game does not mean the app is on screen.
+      if (this.gateBlocking()) return
       this.log('unsuppress (back to menu)')
       if (this.enabled && !this.hiddenPaused && this.desiredWorld) this.crossFadeTo(this.desiredWorld)
     }
@@ -270,7 +306,7 @@ class MusicClient {
 
   // Start/resume the desired world's loop (call on the first user gesture / when music is enabled).
   resume(): void {
-    if (!this.enabled || !this.desiredWorld || this.inGame) return
+    if (!this.enabled || !this.desiredWorld || this.suppressed()) return
     if (this.current) {
       // Already have a track — make sure it's audible and at the right (possibly ducked) volume.
       try {
@@ -318,7 +354,7 @@ class MusicClient {
 
   // App foregrounded: resume only if we paused it for backgrounding (respect a user disable).
   private resumeFromBackground(): void {
-    if (!this.enabled || !this.hiddenPaused || this.inGame) return
+    if (!this.enabled || !this.hiddenPaused || this.suppressed()) return
     this.hiddenPaused = false
     if (this.current) {
       try {
@@ -364,6 +400,7 @@ class MusicClient {
     html5: true
     hiddenPaused: boolean
     inGame: boolean
+    gateBlocking: boolean
     ctxState: string | null
     lastError: string | null
   } {
@@ -389,6 +426,7 @@ class MusicClient {
       html5: true,
       hiddenPaused: this.hiddenPaused,
       inGame: this.inGame,
+      gateBlocking: this.gateBlocking(),
       ctxState,
       lastError: this.lastError,
     }

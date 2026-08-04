@@ -19,6 +19,7 @@ import React, { useEffect } from 'react'
 import '../../services/authSignInRegistry'
 import { gateBlocks } from '../../contexts/authGatePolicy'
 import { AuthProvider, useAuthContext } from '../../contexts/AuthContext'
+import { musicClient } from '../../services/musicClient'
 import { profileStore } from '../../services/profileStore'
 import AuthDialogs from './AuthDialogs'
 import LockScreen from './LockScreen'
@@ -41,6 +42,13 @@ const GateBody: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     if (blocked) return
     profileStore.hydrate(auth?.user?.id ?? null)
   }, [blocked, auth?.user?.id])
+
+  // The music bed must not play over the login screen or through the Google round trip. It cannot be
+  // route-based: `AppThemeProvider` starts the bed and sits ABOVE this gate, and the lock screen is at
+  // '/', which IS a menu path. So the gate reports itself. Runs on the `!auth` fail-open path too.
+  useEffect(() => {
+    musicClient.setGateBlocking('auth', blocked)
+  }, [blocked])
 
   // No context (shouldn't happen) → fail OPEN rather than bricking the app behind a gate that can't
   // decide. The paid endpoints are still protected server-side, which is the control that matters.

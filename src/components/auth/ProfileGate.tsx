@@ -15,6 +15,7 @@ import React, { useEffect, useState } from 'react'
 import { useProfiles } from '../../hooks/useProfiles'
 import { useAuthContext } from '../../contexts/AuthContext'
 import { profileGateBlocks, profileGateSurface } from '../../contexts/profileGatePolicy'
+import { musicClient } from '../../services/musicClient'
 import { profileStore } from '../../services/profileStore'
 import CreateProfileDialog from './CreateProfileDialog'
 import ProfilePicker from './ProfilePicker'
@@ -40,6 +41,11 @@ const ProfileGate: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     auth?.setAuthUiOpen(true)
     return () => auth?.setAuthUiOpen(false)
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [blocking])
+
+  // …and the same surfaces keep the music bed silent: nobody is playing yet. See AuthGate.
+  useEffect(() => {
+    musicClient.setGateBlocking('profile', blocking)
   }, [blocking])
 
   return (
