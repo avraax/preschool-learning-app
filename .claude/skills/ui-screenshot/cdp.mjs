@@ -26,6 +26,10 @@
 //   --clip "<css>"            Screenshot ONLY that element (tight crop + small padding).
 //   --full-page               Full scrollable-page screenshot (instead of viewport).
 //   --eval "<js>"             Evaluate JS in the page; print the returned value.
+//   --audio-report            Inject audio-probe.js before app scripts; print whether playback actually
+//                             produced sound (verdict OK / SILENT / NO AUDIO ATTEMPTED). Exit 1 on SILENT.
+//                             Chrome here proves the app's own plumbing; it says nothing about Safari
+//                             codec support — for that use webkit.mjs, and ultimately a real device.
 //   (console errors + page exceptions are ALWAYS captured and summarised at the end.)
 //
 // Behaviour:
@@ -40,9 +44,10 @@
 //  * Run dev servers FIRST in Windows PowerShell (not WSL): `npm run dev` + `npm run dev:api`.
 
 import { spawn } from 'node:child_process'
-import { mkdtempSync, writeFileSync } from 'node:fs'
+import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { dirname, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 
 const args = process.argv.slice(2)
 const opt = (name, def) => { const i = args.indexOf(name); return i >= 0 ? args[i + 1] : def }
@@ -143,6 +148,13 @@ if (has('--webauthn')) {
   console.log(`virtual authenticator: ${auth?.authenticatorId ?? 'FAILED'}`)
 }
 
+// The probe must be installed BEFORE app scripts run — it patches HTMLMediaElement.play and
+// decodeAudioData, and ttsClient's first clip can be in flight within a few hundred ms of mount.
+if (has('--audio-report')) {
+  const source = readFileSync(join(dirname(fileURLToPath(import.meta.url)), 'audio-probe.js'), 'utf8')
+  await send('Page.addScriptToEvaluateOnNewDocument', { source })
+}
+
 await send('Page.navigate', { url: URL })
 
 // Readiness gate: wait for the SPA to mount (default), unless an explicit fixed --wait is given.
@@ -210,6 +222,22 @@ if (OUT) {
   const { result } = await send('Page.captureScreenshot', params)
   writeFileSync(OUT, Buffer.from(result.data, 'base64'))
   console.log(`screenshot saved: ${OUT}`)
+}
+
+if (has('--audio-report')) {
+  const report = await evaluate('window.__audioProbe ? JSON.stringify(window.__audioProbe.report()) : null')
+  if (!report) {
+    console.error('audio: probe missing (addScriptToEvaluateOnNewDocument did not run)')
+    exitCode = 1
+  } else {
+    const r = JSON.parse(report)
+    console.log('audio verdict:', r.verdict)
+    console.log('audio formats:', JSON.stringify(r.formats))
+    console.log('audio media:', JSON.stringify(r.media))
+    console.log('audio webaudio:', JSON.stringify(r.webaudio))
+    if (r.notes.length) console.log('audio notes:', JSON.stringify(r.notes))
+    if (/^SILENT/.test(r.verdict)) exitCode = 1
+  }
 }
 
 console.log(`console errors: ${consoleErrors.length}${consoleErrors.length ? ' ' + JSON.stringify(consoleErrors.slice(0, 5)) : ''}`)

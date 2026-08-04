@@ -1,9 +1,34 @@
 ---
 name: ui-screenshot
-description: Headlessly drive the local app in Chrome to SEE and verify UI — screenshot a route or component, click into modals/popovers, wait for elements, and measure element rects to catch layout bugs (overflow, clipping, wrapping) plus runtime console errors. Use PROACTIVELY and automatically — without waiting to be asked — whenever the work involves the app's visible UI: after making or reviewing a change to any component/layout/style/theme, when the user asks to "look at / see / check / verify how X looks", when diagnosing a visual or layout issue, or before reporting a UI change as done. This is a Vite + MUI app; the dev servers must be running.
+description: Headlessly drive the local app to SEE and verify UI — screenshot a route or component, click into modals/popovers, wait for elements, and measure element rects to catch layout bugs (overflow, clipping, wrapping) plus runtime console errors. Also drives REAL WebKit with an iPad user agent (webkit.mjs) for Safari-engine and iOS-code-path checks, and asserts that audio ACTUALLY PRODUCED SOUND (--audio-report) instead of asking the owner to listen. Use PROACTIVELY and automatically — without waiting to be asked — whenever the work involves the app's visible UI or its audio: after making or reviewing a change to any component/layout/style/theme, when the user asks to "look at / see / check / verify how X looks", when diagnosing a visual or layout issue, or before reporting a UI or narration change as done. This is a Vite + MUI app; the dev servers must be running.
 ---
 
 # UI screenshot & layout verification
+
+## How far each rung can actually verify (read this before promising anything)
+
+Three rungs, in increasing cost and decreasing convenience. **Say which rung a claim came from** — the
+owner's standing complaint is being asked to play-test things a machine could have checked, and the
+opposite error (calling a WebKit run "verified on iPad") is worse.
+
+| rung | command | proves | cannot prove |
+|---|---|---|---|
+| 1. Chrome | `cdp.mjs` | layout, interaction, game logic, progress, **and that audio produced sound** (`--audio-report`) | anything Safari-specific; Chrome plays Ogg happily, so it can NEVER catch the codec floor |
+| 2. real WebKit | `webkit.mjs` | Safari-engine layout, the app's **iOS branches** (`deviceDetection` sees an iPad UA), and codec support via `canPlayType` — it correctly reports `audio/ogg` as unsupported | audio PLAYBACK (see below), Mobile-Safari scroll/`fixed`/viewport quirks, iOS transient user-activation, iPadOS 17.7 engine gaps |
+| 3. real device | the owner's iPad | everything, including whether it sounds right | — |
+
+**Rung 2 cannot play audio at all.** Playwright's WebKit build on Windows has **no WebAudio and no
+speechSynthesis** — `typeof AudioContext === 'undefined'`, verified directly. The app therefore logs
+`initializeAudio: ctxState= undefined speechAvail= false` and narration never starts. That is an
+environment limit, **not an app bug** — do not go debugging the app when you see it. Audio *playback*
+assertions belong on rung 1; WebKit's audio contribution is the `canPlayType` snapshot, which is a
+static codec table and needs no device.
+
+**What rung 1 + 2 together replace:** every "does it render / lay out / respond / score / actually make
+a sound" question. **What still needs the owner:** does the Danish sound *right* (wording, pronunciation,
+pacing to the ear), real-iPad touch feel, and true iPadOS 17.7 engine behaviour. See
+`docs/device-testing.md` for why no paid service removes the listening step, and what a device farm
+would cost if we ever want rung 3 automated.
 
 Drive the locally-running app in **headless Chrome** (already installed) via the Chrome DevTools
 Protocol, using the zero-dependency driver `cdp.mjs` here (Node 22+ global WebSocket/fetch — no
@@ -32,6 +57,8 @@ the UI would make the answer more correct, use it. Skip it for pure logic/backen
    needs a server session, and delete the `user` row afterwards (it cascades). For everything else,
    set the fields you need on `window.__auth` in the same `--eval` — no network, no database.
 3. Chrome defaults to `C:/Program Files/Google/Chrome/Application/chrome.exe` (override `CHROME_PATH`).
+4. For `webkit.mjs`: the `playwright` devDependency (installed) + `npx playwright install webkit`
+   (one-time, ~150MB into the user cache, not the repo). If it reports a missing browser, re-run that.
 
 Then **view a saved PNG with the Read tool** (it renders images).
 
@@ -59,6 +86,84 @@ node .claude/skills/ui-screenshot/cdp.mjs --url 'http://127.0.0.1:5173/alphabet/
 node .claude/skills/ui-screenshot/cdp.mjs --url http://127.0.0.1:5173/math/counting \
   --w 900 --h 440 --wait-for '#root > *' --out landscape.png
 ```
+
+### Real WebKit / iOS code paths (`webkit.mjs`)
+
+Same flags as `cdp.mjs` (`--url --out --clip --measure --eval --wait-for --settle --click --click-text
+--type --full-page --timeout`), plus `--device`, `--dark`, `--reduced-motion`, `--tap`, `--dom-click`.
+Requires the `playwright` devDependency and a one-time `npx playwright install webkit`.
+
+```bash
+# iPad landscape, real Safari engine, iPad UA → the app takes its iOS branches
+node .claude/skills/ui-screenshot/webkit.mjs --url 'http://127.0.0.1:5173/math/addition?nogate=1' \
+  --device ipad --settle 4000 --out shot.png
+
+# dark skin + reduced motion, phone landscape
+node .claude/skills/ui-screenshot/webkit.mjs --url 'http://127.0.0.1:5173/album?nogate=1&rewards=12' \
+  --device iphone-landscape --dark --reduced-motion --out album.png
+```
+
+- `--device`: `ipad` (1024x768) · `ipad-portrait` (768x1024) · `iphone` (390x844) ·
+  `iphone-landscape` (844x390) · `wide` (1254x872, desktop UA). Sizes mirror `referenceViewports.ts`;
+  `--w/--h` override. All but `wide` set an iPad/iPhone UA + touch + meta-viewport handling.
+- **`--click` here is REAL trusted input** (unlike `cdp.mjs`'s `element.click()`), so it fires
+  `pointerdown`/`pointerup` and exercises the paths dnd-kit and the diagnostics breadcrumbs listen on.
+  `--tap` sends touch events; `--dom-click` falls back to `element.click()` when an overlay intercepts.
+- **`--settle` matters more here than in Chrome.** The default 500ms caught a Plus board mid-generation:
+  the screenshot showed the title and "Hør igen" with **no problem and no answer tiles**, which reads
+  exactly like a phone-landscape layout bug. It rendered fine at `--settle 4000`. Before reporting an
+  empty/partial board, re-run with a longer settle AND compare the same size in `cdp.mjs`.
+- The UA's `Version/17.6` is a **string**, not an engine. It flips `isIOS`/`isIPad`/`version` in
+  `deviceDetection.ts` (which regexes the UA), so iOS-only code runs — it does **not** give you Safari 17.
+- `maxTouchPoints` stays `0` and `navigator.platform` stays `Win32`, so the `isM1iPad` branch
+  (`platform === 'MacIntel' && maxTouchPoints > 1`) is NOT reachable here. `'ontouchstart' in window` is
+  true, so `touchSupported` is.
+
+### Proving audio actually made a sound (`--audio-report`)
+
+Works on `cdp.mjs` (playback + codecs) and `webkit.mjs` (codecs only — see the ladder). It injects
+`audio-probe.js` before app scripts, patching `HTMLMediaElement.play` and `decodeAudioData`, then prints
+a one-line verdict and exits **1** on `SILENT`, so it can gate a script.
+
+```bash
+node .claude/skills/ui-screenshot/cdp.mjs --url 'http://127.0.0.1:5173/alphabet/quiz?nogate=1' \
+  --audio-report --settle 2500 --click '[aria-label="Hør igen"]' --settle 3000
+# audio verdict: OK — 1/2 clips played (1 pre-empted by design, 1 silent unlock primes, 0 webaudio sources)
+```
+
+**You must drive a trigger.** Nothing plays on mount (narration is gated on interaction), so a bare run
+reports `NO AUDIO ATTEMPTED`. `[aria-label="Hør igen"]` is the reliable one in task games.
+
+The probe sorts every `play()` into four buckets, and the classification is the whole difficulty —
+three of the four look like silence and are not:
+- **prime** — deliberately silent unlock clips: ttsClient's `SILENT_UNLOCK_CLIP` (`data:audio/wav`) and
+  Howler's `_unlockAudio` walking its 10-node html5 pool. Under an iPad UA that pool produced **22**
+  src-less `play()` calls in one run; a naive rule reads them as 22 silent clips. Any element with **no
+  src** is a prime by definition.
+- **preempted** — `play()` rejected `AbortError`. This is the app's documented no-queue model (new audio
+  cancels current; `ttsClient.play` treats `AbortError` as a cancellation too). Normal on fast taps.
+- **failed** — real silence: `NotAllowedError` (the iOS gesture rule), `NotSupportedError` /
+  `MEDIA_ERR_DECODE` (the Ogg shape), muted, volume 0, or play() **resolved and the clock never moved**.
+- **sounded** — `currentTime` actually advanced past 50ms.
+
+Verdict is `SILENT` if anything **failed**, or if a decode failed, or if nothing ever sounded (all
+pre-empted = something is cancelling narration, a bug class this repo has hit).
+
+Two ordering traps, both found by re-breaking rather than by reading:
+- **Check muted/volume BEFORE the clock.** A silenced element advances `currentTime` perfectly normally,
+  so testing progress first scores the loudest possible bug as a success.
+- **`AbortError` is not failure**, but *only* pre-empted with nothing ever heard still must fail.
+
+Proven by re-break (each mutation reverted; each produced a distinct correct verdict): `volume = 0` in
+`ttsClient.play` → `2 of 2 clips genuinely failed` + exit 1; a bad `src` → `NotSupportedError` naming the
+file; a `load()` 60ms after `play()` → `nothing was ever heard: all 2 clips were pre-empted`.
+
+**Limits — state these when reporting.** It proves the browser decoded audio and the clock advanced. It
+cannot prove loudness, that the right Danish words were spoken (use the prebaked-src → manifest recipe
+below for that), mix balance, or that a device's hardware route was audible. For Howler's WebAudio path
+(SFX) the ceiling is "decoded + source started" — there is no clock to read. Under `--audio-report`
+`webkit.mjs` also prints the app's own `[audio-unlock]`/`[tts]`/Howler **warnings**, which the drivers
+otherwise drop (they surface only console *errors*) and which are usually the most informative lines.
 
 ### Driving a TAP (and why a bad probe reports a working tap as broken)
 Every drag game also answers on a tap and vice versa (`.claude/rules/drag-and-drop.md`), so a gesture
@@ -187,10 +292,10 @@ element's `currentTime`, then compare it against that clip's measured speech end
 `currentTime < speechEnd` = the step cut the word off. Onset-to-onset gaps between `play()` calls give
 you the real cadence — the step constant alone doesn't, because playback starts ~250ms late.
 
-To verify audio **plumbing** rather than wording (codecs, missing files, silent fallbacks), read
-`performance.getEntriesByType('resource')` filtered to `/sounds/` — a request is itself proof Howler's
-codec gate passed, since a rejected codec makes **no** request at all — and hook `console.warn` to
-collect `[audio-unlock]` / "→ Web Speech" lines, because the driver only surfaces console *errors*.
+To verify audio **plumbing** rather than wording (codecs, missing files, silent fallbacks), use
+**`--audio-report`** (above) — it supersedes the hand-rolled version of this check. The older technique
+is still a useful cross-check: read `performance.getEntriesByType('resource')` filtered to `/sounds/` —
+a request is itself proof Howler's codec gate passed, since a rejected codec makes **no** request at all.
 A clean run shows cue + `tts/*.mp3` requests, zero media `error` events, and zero fallbacks.
 
 ### Proving what PAINTS a region (A/B pixel test)
@@ -222,8 +327,11 @@ Two rules make the result trustworthy:
   `--type "<css>::<text>"`
 - Output: `--measure "<s1,s2>"` (rects) · `--clip "<css>"` (crop to element) · `--full-page` ·
   `--eval "<js>"`. Console errors + page exceptions are ALWAYS captured + summarised.
-- Behaviour: `--keep-audio-modal` · `--port <n>`. Exit code is non-zero if a `--wait-for`/click
-  target never appears (so failures are loud, not silently green).
+- Behaviour: `--keep-audio-modal` · `--port <n>` · `--audio-report` (see above; exits 1 on `SILENT`).
+  Exit code is non-zero if a `--wait-for`/click target never appears (so failures are loud, not
+  silently green).
+- `webkit.mjs` adds `--device <ipad|ipad-portrait|iphone|iphone-landscape|wide>` · `--dark` ·
+  `--reduced-motion` · `--tap "<css>"` · `--dom-click "<css>"`, and its `--click` is real trusted input.
 
 ## Verifying game logic & progress (not just pixels)
 An async `--eval` IIFE (`awaitPromise` is on) can drive a whole round and assert the outcome:
@@ -403,7 +511,10 @@ stripped, and the failure looks like a page bug. Write the JS to a **file in the
   skips the audio welcome/permission gate, `?reduce=1` forces reduced-motion, `?theme=<id>` sets the skin.
 - **Auto-played game TTS often doesn't fire in headless** (no real audio device), so the fetch-capture
   audio recipe is unreliable for a game's welcome/prompt — it works for **tap-triggered** echoes (browse
-  screens, answer taps), not the gated auto-play. To identify which quiz **subject** is showing without
+  screens, answer taps), not the gated auto-play. Confirmed with `--audio-report`: a bare Chrome run of
+  `/alphabet/quiz` reports `NO AUDIO ATTEMPTED`, and tapping `[aria-label="Hør igen"]` then plays a real
+  prebaked clip (clock advances ~1.5s of a 2.0s file). So **drive a trigger; never read "nothing played"
+  on mount as a defect.** To identify which quiz **subject** is showing without
   audio, read the hero image src: `[data-prompt-focus] img` → the filename (Vite keeps the content id,
   e.g. `.../X.webp`). Combine with `?seed=<n>` to force a specific question deterministically.
 - Always check the printed "console errors"/"page exceptions" lines — a clean screenshot can still
