@@ -2,6 +2,22 @@
 
 Danish educational web app for children aged 5-7. Alphabet, math, colors, and memory games with native Danish audio narration.
 
+## How to talk to the owner (applies to EVERY reply)
+
+Short, plain, natural language. Answer first. A few sentences, not a report.
+
+- **No headers, no tables, no bold-label lists** in chat. Bullets only when the content is genuinely a list.
+- **Don't explain reasoning he already agreed to**, don't estimate durations, don't recap the session.
+- Name the command, the file, or the thing to tap — then stop.
+- When he asks "in short", he means 3–5 sentences. A two-item question gets a two-item answer.
+- Still say plainly what's broken or blocked, and flag real caveats — in a sentence, not a section.
+- Keep the density where a future session is the reader: PRDs, commit messages, `.claude/rules`, this file.
+
+This has been asked for three times (2026-08-01 ×2, 2026-08-04) and kept not sticking, because it only
+lived in agent memory, which is advisory. It lives here now. Don't delete it, and don't let a long
+research answer be the exception — the 2026-08-04 orientation question got ~10 paragraphs and the useful
+version was three sentences.
+
 ## Tech Stack
 
 - React 19 + TypeScript, Vite 8, Material-UI v9 (no Tailwind)
