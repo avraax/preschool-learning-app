@@ -1,0 +1,117 @@
+---
+paths:
+  - "src/components/adult/*.tsx"
+  - "src/components/adult/panes/*.tsx"
+  - "src/config/adultSettingsIa.ts"
+  - "src/config/pinReasons.ts"
+  - "src/services/bugReporter.ts"
+  - "src/services/diagnosticsBuffer.ts"
+  - "src/services/screenshotService.ts"
+  - "src/services/screenshotFidelity.ts"
+  - "api/bug-report.ts"
+  - "api/log-error.ts"
+---
+
+# The adult surface & bug reports
+
+Settings PRD-01. The **"Til de voksne" corner button** (`AdultCorner`, mounted globally in `App.tsx`,
+bottom-right, **a plain tap opens it** — the old ~2s hold went once the 4-digit PIN became the real gate)
+is ONLY the gear + the screenshot capture + `requirePin('adultMenu')` + a mount point for the lazy
+`AdultSettings` surface.
+
+## The two-pane IA is a contract
+
+A `maxWidth="md"` Dialog (MUI's default z-index 1300) with a persistent left rail of **five
+mutually-exclusive groups** — **Barn** (active child + read-only "Sådan går det" + roster/switch/rename/
+add/delete + reset strip) · **Læring** (difficulty; `panes/LaeringPane.tsx` **EXPLAINS the selected level in
+Danish** and labels the setting as per-child) · **Lyd** (SFX/music + narration voice + tempo) ·
+**Udseende** (skin) · **Konto** (email + sync + PIN + Face ID + log out / log out everywhere / delete
+account) — plus a **persistent rail footer** (bug report + tap-to-copy version) reachable from every pane.
+It replaced 13 flat rows in a scrolling `xs` dialog and six sibling sub-panels.
+
+The reset lives in **Barn**, in that pane's destructive strip (it is per-child, so it sits next to the
+child) → "Nulstil fremgang for {navn}" → a confirmation that **names the active child** →
+`progressStore.resetAll()`, which clears that child's book/bests/stars/XP, **preserves** sound/music/
+difficulty/theme (those are preferences, not progress) and bumps `sync.epoch` so the next pull can't
+resurrect it (`.claude/rules/auth.md`).
+
+- **Group/item structure is DATA** in `src/config/adultSettingsIa.ts`, guarded by
+  `adultSettingsIa.test.ts`, whose load-bearing assertions read the REAL `pinVerifierFor` table (pure, in
+  `src/config/pinReasons.ts`, re-exported from `AuthContext`) so **no account-scoped destructive action can
+  be downgraded to the local ~5-minute unlock**.
+- **Every `irreversible` action is TYPE-TO-CONFIRM**: the button stays disabled until the adult types a
+  fixed Danish word (`NULSTIL` reset · `SLET` delete child · `SLET ALT` delete account — all distinct, so
+  a child-deletion habit can't carry into wiping the account), via the shared
+  `panes/DestructiveConfirmDialog.tsx`, with the word read from the IA module so the guard can't pass
+  against a value nothing renders. **A PIN does not substitute for it** — inside the unlock window
+  `requirePin` returns true without prompting, and where a pad IS shown (account deletion) it arrives
+  AFTER the confirm, which left that confirm a single tap identical in weight to the reversible "Log ud"
+  beside it. Reversible actions deliberately demand no typing; the test enforces both directions.
+- **Navigation grammar**: **one** "Luk" (top-right, no other control uses that word), **no back arrow at
+  regular width** (the rail is the way back) and exactly one on a pushed compact pane titled with its rail
+  label, nested TASK dialogs only, **max modal depth 3**. On phones (`PHONE_ANY`, or below the `md`
+  breakpoint) it goes `fullScreen` single-pane push-nav; the last-viewed pane is restored across opens
+  (module variable, not persisted).
+- **Auth surfaces are deliberately NOT re-skinned** — `PinSetupDialog`, `CreateProfileDialog` and the
+  account-deletion `PinPad` render inside `<AppSkin>`, which restores the app theme within the adult tree.
+
+## Bug reporting
+
+`diagnosticsBuffer` (`src/services/diagnosticsBuffer.ts`, installed as the FIRST import in `main.tsx`)
+always records rings of console lines, network calls and route/tap breadcrumbs. Opening the menu captures a
+**screenshot** (snapdom, before the menu renders).
+
+**snapdom is a computed-style CLONE rasterised through an SVG `<foreignObject>`, not a photograph**, so
+whatever `getComputedStyle` doesn't round-trip is silently lost and the report shows an app that never
+existed:
+
+- `margin:auto` reports `0px` → every centred block slams left
+- without `embedFonts` the fallback face is wider → text reflows and ellipsises
+- `backdrop-filter` paints an oversized washed rectangle over real content
+- computed *widths* are pinned, so `text-overflow` fires on sub-pixel rounding
+
+`stabilizeForCapture` in `src/services/screenshotService.ts` re-states those on the live DOM and restores
+them; the pure decision rules are `screenshotFidelity.ts`. Never "optimise" an option back off without the
+A/B in the `ui-screenshot` skill.
+
+"Rapportér et problem" → `bugReporter.buildReportPayload()` (build info, device, audio health incl. the TTS
+circuit-breaker + playback-failure count + permission snapshot, progress state, diagnostics rings) → POST
+`/api/bug-report` → **Vercel Blob** (`bug-reports/<date>/<ID>/report.json` + `screenshot.jpg`) → a short
+code (e.g. `R7K3F`) shown to the adult; offline/failure → "Gem som fil" downloads the same JSON.
+**Crashes auto-upload** slim reports (no screenshot): window `error`/`unhandledrejection` hooks + the global
+`AppErrorBoundary` (kid-friendly "Ups!" + reload; `?crash-test=1` throws on purpose), deduped by signature,
+max 3/session. Locally `dev-server.js` mirrors the endpoint into the gitignored `.bug-reports/` folder, so
+the whole flow works without Blob.
+
+**To debug a report, use the `/debug-report` skill** — it handles "newest report", one code, or many.
+
+One-time prod setup: Vercel dashboard → Storage → create a **Blob** store → connect to the project (adds
+`BLOB_READ_WRITE_TOKEN`). **Required:** set `BUG_REPORT_READ_KEY` in the Vercel env — GET reads are
+**fail-closed** (403 until the key is set) since reports contain child screenshots; once set, every GET must
+pass `&key=<value>` (PRD-03). Settable from here: `vercel env add BUG_REPORT_READ_KEY production`.
+
+```bash
+# ALWAYS use curl, not WebFetch (large JSON). Local base: http://127.0.0.1:3001 (open; prod needs the key).
+curl -s "https://preschool-learning-app.vercel.app/api/bug-report?list=10&expand=1&key=$BUG_REPORT_READ_KEY"
+curl -s "https://preschool-learning-app.vercel.app/api/bug-report?id=R7K3F&key=$BUG_REPORT_READ_KEY"
+curl -s -o /tmp/shot.jpg "<screenshotUrl from the response>"   # then Read the jpg
+```
+
+## Client logging is dev-only
+
+`remoteConsole` is **OFF in production** (Audio v2 decision — no durable storage), so end users no longer
+POST to `/api/log-error` and that endpoint receives ~no traffic. Server-side errors are recorded via
+`lib/server-utils.ts` `logServerError` (Vercel function logs + absolute-URL POST). Force client logging on
+with `?enable-console=true`.
+
+```bash
+curl -s "https://preschool-learning-app.vercel.app/api/log-error?limit=50&device=iPad&level=error"
+# params: limit, level (error/warn/info/log), device, since (ISO date)
+```
+
+## Update banner
+
+PRD-09: `useUpdateChecker` polls the deployed build; when a newer build is live `UpdateBanner` shows a
+**dismissible** bottom-centre pill (no reload) and the apply-update is a **PIN-gated item in the
+`AdultCorner` menu** — never a child-tappable reload button. Pairs with the network-only / `lazyWithReload`
+recovery (`.claude/rules/pwa-and-device.md`).
