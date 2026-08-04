@@ -5,43 +5,64 @@
 The child plays on an **iPad Pro 2nd generation (A10X Fusion, 2017) on iPadOS 17.7.11**, its terminal
 OS. That is the compatibility floor in CLAUDE.md and the device every check should lead with.
 
-**Its window size is NOT measured, and one open question remains.** That iPad has never sent a bug
-report, so there is no first-party telemetry from it. The 2nd gen shipped in two sizes and nobody has
-confirmed which one it is:
+**Size confirmed by the owner: the 12.9".** Its window numbers are measured from a real 12.9" iPad Pro
+PWA — the household's **M1** one, because the child's iPad has never sent a bug report. Both 12.9"
+generations share identical CSS geometry, so they transfer:
 
-| candidate | CSS points | landscape window (minus the ~32px status strip) |
-|---|---|---|
-| iPad Pro 12.9" 2nd gen | 1366 × 1024 | ~1366 × 992 |
-| iPad Pro 10.5" 2nd gen | 1112 × 834 | ~1112 × 810 |
+| property | value |
+|---|---|
+| screen (CSS px) | 1024 × 1366 @ `devicePixelRatio` 2 → 2048 × 2732 native |
+| **landscape window (PWA)** | **1366 × 992** |
+| portrait window | 1024 × 1334 |
+| **Split View** | **678 × 992** (a report proves it happens) |
+| iPadOS | 17.7.11 — terminal, never gets newer Safari |
 
-Both are in `REFERENCE_VIEWPORTS` until it is settled. **Ask the owner rather than assume** — or read it
-off a bug report the moment one arrives from that device.
+Keep one thing in mind anyway: **CSS resolution alone cannot identify an iPad model.** The reports above
+(`K2HXP`/`WSNHY`, 2026-07-14) were nearly filed as the child's device; they are the M1 iPad —
+`platform: MacIntel`, `isM1iPad: true`, UA `Macintosh … Version/26.5`, because M1+ iPads send a
+desktop-class UA. Only `isM1iPad` or the UA distinguishes them.
 
-What IS measured, and where the numbers came from: production reports `K2HXP`/`WSNHY` (2026-07-14) are
-from the household's **M1** iPad Pro 12.9", not the child's — `platform: MacIntel`, `isM1iPad: true`,
-UA `Macintosh … Version/26.5`, because M1+ iPads send a desktop-class UA. From those: screen 1024 × 1366
-@dpr 2, PWA landscape window **1366 × 992**, and **678 × 992 Split View** (so Split View is real usage,
-and a full-width-only assumption is wrong). Both 12.9" Pro generations share the same CSS geometry, so
-those numbers transfer to the child's device *if* his is the 12.9". This distinction was nearly
-documented wrong: the CSS resolution alone cannot tell a 2017 12.9" Pro from an M1 one — only
-`isM1iPad` / the UA can.
+Also note **`1024 × 768` is not any current iPad Pro.** It stays in the guard set only as the tighter
+small-iPad case.
 
-Also note **`1024 × 768` is not any current iPad Pro.** It is kept only as the tighter small-iPad case.
+## Measuring the REAL bundle (`npm run build:harness`)
+
+`?nogate=1` is `DEV &&`-gated and `import.meta.env.DEV` is false in every `vite build` regardless of
+`--mode`, so a normal build tree-shakes the dev harness away and a preview build stops at the login
+screen — which made production perf and route sweeps impossible. `npm run build:harness` builds a
+**production-shaped** bundle (NODE_ENV forced to production, so React and minification match a deploy)
+that still answers the dev params, then `vite preview` serves it.
+
+It is a separate build-time flag, never a widening of DEV: `__HARNESS__` is statically replaced with
+`false` for every other mode, so the bypass is **absent** from deploy output, not merely inert. Verified:
+a plain `vite build` contains zero occurrences of `nogate` or `__HARNESS__`; the harness build contains
+them. `src/utils/harnessBuild.test.ts` pins the wiring and fails if any deploy script selects the mode
+(re-broken to confirm). **Never deploy a harness build.**
+
+Measured on the harness build at 1366 × 992 (`--cpu-throttle`, 2026-08-04) — load is comfortable even at
+a 6× CPU handicap: FCP 224–368 ms at 1×, 700–1400 ms at 6×; LCP ≤ 1.4 s at 6× on home/quiz/album.
+**Read frame numbers with suspicion**: the driver runs headless with `--disable-gpu`, so rasterisation is
+software and its median frame time (33 ms even at 1×) is an artifact, not a prediction of the device's
+compositor. The one durable RELATIVE signal is that `/album` (Min Bog) is the consistent worst case for
+frame time and jank at every throttle level — it renders the whole reward path — so it is the screen to
+watch if he ever reports sluggishness.
+
+The build target is now pinned (`target: ['safari17','ios17']` in `vite.config.ts`) so the syntax floor
+matches this device instead of following Vite's default.
 
 A second real device from the reports (390 × 844 @dpr 3, PWA, both orientations) already matches the
 existing phone entries.
 
-How to verify: `webkit.mjs --device ipad-pro` / `--device ipad-pro-split` / `--device ipad-105`, and
-`sweep.mjs --phase layout`, which leads with the iPad Pro viewports.
+How to verify: `webkit.mjs --device ipad-pro` (the DEFAULT) / `--device ipad-pro-portrait` /
+`--device ipad-pro-split`, and `sweep.mjs`, which leads with the TARGET viewports.
 
 **Audio on this device is the known danger zone.** It is why every shipped file is MP3 (Ogg needs
 iPadOS 18.4) and why the codec snapshot matters — see `.claude/rules/audio-system.md`.
 
-**Performance caveat:** `cdp.mjs --cpu-throttle` approximates a slow CPU but is not an A10X, and it
-scales CPU only. Worse, production-bundle numbers are currently **unobtainable locally**: `?nogate=1` is
-`DEV &&`-gated and `import.meta.env.DEV` is false in any `vite build`, so the dev harness is tree-shaken
-out and a preview build stops at the login screen. Dev-server figures overstate load badly — use them for
-relative comparison only, never as predictions for this iPad.
+**Performance caveat:** `cdp.mjs --cpu-throttle` approximates a slow CPU but is not an A10X — it scales
+CPU only, leaving GPU, memory bandwidth, decode and Safari's own JIT untouched. Always measure the
+**harness build** (above), never the dev server: unbundled dev ESM overstates load by roughly an order of
+magnitude (FCP 1.3 s vs 0.3 s on the same screen).
 
 
 Researched 2026-08-04. The question was: can an online service (simulated or real devices) replace
@@ -84,10 +105,11 @@ There is **no permanent free real-device tier** anywhere any more. "Free" means 
 
 ## Prerequisite if we ever buy rung 3
 
-The app is hard-gated behind Google OIDC + passkey and `?nogate=1` is **DEV-only**. A cloud device
-loading a Vercel preview hits that wall: passkeys are useless on a shared farm device, and Google
-routinely blocks sign-in from device-farm IPs. A preview-only, env-flagged gate bypass has to exist
-first. Also relevant: no service worker + `no-store` on `/(.*)` means the farm device needs live
+The app is hard-gated behind Google OIDC + passkey, and a cloud device loading a Vercel preview hits that
+wall: passkeys are useless on a shared farm device, and Google routinely blocks sign-in from device-farm
+IPs. **This is solved for local work by `npm run build:harness` (above)** — but a farm would need that
+bundle actually deployed somewhere reachable, which is the one thing a harness build must never be. So
+plan on a throwaway preview host, not the production project. Also relevant: no service worker + `no-store` on `/(.*)` means the farm device needs live
 network throughout (see CLAUDE.md's PWA bullet) — never design a farm test around offline behaviour.
 
 ## Recommendation on record

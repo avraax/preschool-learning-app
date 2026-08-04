@@ -17,7 +17,25 @@
 // `import.meta.env?.` — optional, because this module is now in the transitive graph of a Node
 // `--test` suite (via authStore), and `import.meta.env` is undefined outside Vite. Same reason
 // progressStore.ts guards every one of its own reads.
-export const DEV = import.meta.env?.DEV ?? false
+const IS_DEV = import.meta.env?.DEV ?? false
+
+// HARNESS BUILD (`npm run build:harness`). A production-shaped bundle that still answers these params,
+// which is the ONLY way to measure or sweep the real bundle: `import.meta.env.DEV` is false in every
+// `vite build` regardless of `--mode`, so a normal build tree-shakes this whole module away and a
+// preview build stops at the login screen — no perf numbers, no route sweep, nothing.
+//
+// It is a SEPARATE opt-in, never a widening of DEV, and it is build-time so the safety property is the
+// same one DEV has: `__HARNESS__` is statically replaced with `false` for any other build, so every
+// guard below folds to a constant and the bypass is not merely inert but ABSENT from the output.
+// `harnessBuild.test.ts` pins that (a) it defaults off and (b) no deploy path enables it — a plain
+// `vite build`, which is what Vercel runs, must never contain the string `nogate`.
+//
+// NEVER deploy a harness build, and never reach for it to "make the gate go away" while developing —
+// the dev server already gives you DEV.
+declare const __HARNESS__: boolean | undefined
+const HARNESS = typeof __HARNESS__ !== 'undefined' && __HARNESS__ === true
+
+export const DEV = IS_DEV || HARNESS
 
 const readParams = (): URLSearchParams =>
   new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '')

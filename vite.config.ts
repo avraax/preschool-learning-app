@@ -62,7 +62,18 @@ export default BUILD_INFO`
 }
 
 // https://vitejs.dev/config/
-export default defineConfig({
+// `--mode harness` builds a PRODUCTION-shaped bundle that still answers the dev query params, so the
+// real bundle can be perf-measured and route-swept (see src/utils/devHarness.ts for why nothing else
+// can). NODE_ENV is forced to production so React/minification match a real deploy — the mode name
+// alone would otherwise make Vite treat this as a development build and the numbers would be useless.
+// Any other mode statically defines __HARNESS__ = false, so the bypass is absent from deploy output.
+export default defineConfig(({ mode }) => {
+  const harness = mode === 'harness'
+  return {
+  define: {
+    __HARNESS__: JSON.stringify(harness),
+    ...(harness ? { 'process.env.NODE_ENV': '"production"' } : {}),
+  },
   // NOTE (PRD-08 §P3): no vite-plugin-pwa. The app is deliberately network-only — there is no
   // service worker. The single PWA manifest is the hand-authored public/manifest.json (linked from
   // index.html); the plugin used to inject a SECOND manifest (/manifest.webmanifest) and emit a
@@ -94,6 +105,13 @@ export default defineConfig({
     },
   },
   build: {
+    // PIN THE SYNTAX FLOOR TO THE TARGET DEVICE. The child plays on an iPad Pro 12.9" 2nd gen on
+    // iPadOS 17.7.11 — its terminal OS (CLAUDE.md's compatibility floor). Nothing used to pin this:
+    // Vite 8's default `baseline-widely-available` happens to resolve to safari16.4/ios16.4, which is
+    // safely below the floor, but it is a DEFAULT — a Vite upgrade could raise it past 17.7, and the
+    // only symptom would be a blank screen on that one device while every newer iPad in the house
+    // renders fine. That is the same shape as the Ogg-audio incident. Explicit beats lucky.
+    target: ['safari17', 'ios17'],
     minify: 'esbuild',
     rollupOptions: {
       output: {
@@ -119,5 +137,6 @@ export default defineConfig({
     },
     sourcemap: false,
     emptyOutDir: true
+  }
   }
 })

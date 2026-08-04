@@ -115,14 +115,12 @@ const AUDIO_TRIGGER = `(async()=>{const sleep=ms=>new Promise(r=>setTimeout(r,ms
  await sleep(4500);
  return JSON.stringify({trigger:used,text:(document.body.innerText||'').replace(/\\s+/g,' ').slice(0,160)})})()`
 
-// Mirrors src/config/referenceViewports.ts. Leads with iPad Pro sizes: the child's device is a Pro 2nd
-// gen on iPadOS 17.7.11, and the 12.9" numbers are measured from the household's M1 12.9" Pro (both
-// generations share CSS geometry). `ipad105` is the other candidate size. See docs/device-testing.md.
+// Mirrors src/config/referenceViewports.ts. Leads with THE TARGET DEVICE — the child's iPad Pro 12.9"
+// 2nd gen on iPadOS 17.7.11 (12.9" confirmed by the owner). See docs/device-testing.md.
 const VIEWPORTS = [
   { name: 'iPadPro-land', w: 1366, h: 992, device: 'ipad-pro' },
   { name: 'iPadPro-port', w: 1024, h: 1334, device: 'ipad-pro-portrait' },
   { name: 'iPadPro-split', w: 678, h: 992, device: 'ipad-pro-split' },
-  { name: 'iPad105-land', w: 1112, h: 810, device: 'ipad-105' },
   { name: 'ipad-land', w: 1024, h: 768, device: 'ipad' },
   { name: 'ipad-port', w: 768, h: 1024, device: 'ipad-portrait' },
   { name: 'wide', w: 1254, h: 872, device: 'wide' },

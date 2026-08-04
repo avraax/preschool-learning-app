@@ -15,6 +15,7 @@
     "build": "tsc && tsc -p tsconfig.server.json && vite build",
     "build:debug": "tsc && tsc -p tsconfig.server.json && vite build --mode debug",
     "build:production": "tsc && tsc -p tsconfig.server.json && vite build --minify",
+    "build:harness": "tsc && tsc -p tsconfig.server.json && vite build --mode harness",
     "typecheck:server": "tsc -p tsconfig.server.json",
     "auth:migrate": "node --env-file=.env.local scripts/auth-migrate.mjs",
     "lint": "eslint .",
