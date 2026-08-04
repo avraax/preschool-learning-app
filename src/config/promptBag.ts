@@ -79,7 +79,18 @@ const signatureOf = <T>(list: readonly T[], key: (t: T) => string): string =>
  */
 export function makePromptBag<T>(
   items: readonly T[],
-  opts: { key?: (t: T) => string; rnd?: () => number; window?: number } = {},
+  opts: {
+    key?: (t: T) => string
+    rnd?: () => number
+    window?: number
+    /**
+     * W2's front-load: the keys that should LEAD the next pass, most-missed first. Called on each
+     * refill with the live pool, so it always reflects what the child has missed since. The bag itself
+     * knows nothing about misses — `practiceWeights.frontLoadKeys` decides, and caps it at 2 per pass
+     * so a round never becomes a drill of the same three letters.
+     */
+    frontLoad?: (pool: readonly T[]) => readonly string[]
+  } = {},
 ): PromptBag<T> {
   const key = opts.key ?? (defaultKey as (t: T) => string)
   const rnd = opts.rnd ?? Math.random
@@ -114,6 +125,20 @@ export function makePromptBag<T>(
       if (seen.length > window - 1) seen.shift()
     }
     pass = dealt
+    // Then W2's front-load: the pool's most-missed items lead the pass. Placed before the promised
+    // re-asks are prepended, so an item that is BOTH stays at its scheduled distance rather than being
+    // pulled to the head twice.
+    const lead = opts.frontLoad?.(pool) ?? []
+    if (lead.length > 0) {
+      const leading = new Set(lead)
+      // In `lead`'s OWN order (most-missed first), not the shuffle's — filtering the pass by membership
+      // would put the two front-loaded items in an arbitrary order relative to each other, which quietly
+      // throws away the ranking `frontLoadKeys` computed.
+      const ordered = lead
+        .map((k) => pass.find((i) => key(i) === k))
+        .filter((i): i is T => i !== undefined)
+      pass = [...ordered, ...pass.filter((i) => !leading.has(key(i)))]
+    }
     // The promised items go in AFTER the window pass is dealt: a requeued item is by construction one
     // just missed, so the window would push W2's re-ask straight back out of its scheduled slot.
     if (front.length > 0) {

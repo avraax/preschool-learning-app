@@ -113,3 +113,13 @@ export const PROMPT_POOLS: readonly PromptPoolSpec[] = [
   spec('colors.nuancer', NUANCER_ROUND, nuancerPromptPool, (h: string) => h),
   spec('colors.farvejagt', FARVEJAGT_ROUND, farvejagtPromptPool, colorTargetKey),
 ]
+
+/**
+ * Does this game draw its prompts from a pool a bag can reorder?
+ *
+ * The practice ledger (W2) is gated on this: its only consumer is a prompt bag, so recording items no
+ * bag will ever reorder — the math generators are a parameter SPACE, not a content list — would only
+ * push the useful entries out through the ledger's 300-entry cap. The gated total is well inside it.
+ */
+export const hasPromptPool = (gameId: string | undefined): boolean =>
+  !!gameId && PROMPT_POOLS.some((p) => p.gameId === gameId)

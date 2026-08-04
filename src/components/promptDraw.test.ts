@@ -160,6 +160,49 @@ test("the bag's no-repeat window is the game's OWN round length", () => {
   }
 })
 
+test('the practice ledger is written at the branch that already knows first-try', () => {
+  // W2's write points. The pure re-ask logic is proven in `practiceWeights.test.ts`; this is the wiring
+  // half — which item is recorded, and from where.
+  const engine = codeOf('common/UnifiedQuizGame.tsx')
+  assert.match(
+    engine,
+    /practiceLedger\.recordAttempt\(\s*config\.gameId,\s*String\(currentItem\.value\),\s*isCorrect\s*\)/,
+    'the engine must record the CURRENT item (what he was asked) with the tap outcome',
+  )
+  // Never the tapped tile: recording `selectedItem` would build a ledger of wrong ANSWERS, and re-ask
+  // the child the distractors he happened to touch.
+  assert.doesNotMatch(engine, /recordAttempt\([^)]*selectedItem/, 'the engine records the TAPPED item')
+  // Guarded so a correct tap after a wrong one doesn't record that question's miss twice.
+  assert.match(engine, /config\.gameId && \(!isCorrect \|\| firstAttemptRef\.current\)/)
+
+  // Stav Ordet is hand-rolled, so it owns both halves: exactly two calls, the miss and the seen, both on
+  // the WORD (the prompt the bag can re-ask) rather than the letter tapped.
+  const spelling = codeOf('ordleg/SpellingGame.tsx')
+  assert.equal((spelling.match(/practiceLedger\.recordAttempt\(/g) ?? []).length, 2)
+  assert.match(spelling, /recordAttempt\('ordleg\.spelling', current\.word, false\)/)
+  assert.match(spelling, /recordAttempt\('ordleg\.spelling', current\.word, true\)/)
+
+  // The bag listens on the SAME gameId the ledger is written under — a mismatch is a silent no-ask, since
+  // nothing about play looks different when a re-ask never arrives.
+  const LEDGER_WIRED: Record<string, string> = {
+    'alphabet/AlphabetGame.tsx': 'alphabet.quiz',
+    'english/EnglishListenGame.tsx': 'english.listen',
+    'english/EnglishWordGame.tsx': 'english.word',
+    'ordleg/LaesOrdetGame.tsx': 'ordleg.read',
+    'ordleg/SpellingGame.tsx': 'ordleg.spelling',
+  }
+  for (const [rel, gameId] of Object.entries(LEDGER_WIRED)) {
+    const code = codeOf(rel)
+    const ids = code.match(new RegExp(`gameId: '${gameId.replace('.', '\\.')}'`, 'g')) ?? []
+    assert.ok(
+      ids.length >= 2,
+      `${rel} names ${gameId} ${ids.length}× — the bag and the round/config must use the SAME id`,
+    )
+    // Nothing may be wired to a game the registry doesn't know: `hasPromptPool` gates every write.
+    assert.ok(PROMPT_POOLS.some((p) => p.gameId === gameId), `${gameId} is not a pool-drawn game`)
+  }
+})
+
 test('the retired anti-repeat mechanisms are GONE, not kept beside the bag', () => {
   // Two mechanisms is how one gets bypassed (PRD §3.2). Each of these bounded ADJACENCY only, and their
   // presence is what made the pool-size fixes look like they should have worked.

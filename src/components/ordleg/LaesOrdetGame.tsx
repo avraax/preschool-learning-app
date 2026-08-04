@@ -41,7 +41,12 @@ const LaesOrdetGame: React.FC = () => {
   // still hand out four words across a round of 8 while five went unasked. That is also why growing
   // this pool from 5 to 9 words (2026-08-03, against "reads as stuck rather than easy") didn't fix what
   // it was bought for: sampling with replacement repeats at any pool size.
-  const wordBag = usePromptBag<OrdlegWord>({ key: ordlegWordKey, window: READING_ROUND_LENGTH })
+  // `gameId` also wires W2's re-ask + front-load (order only — never the level).
+  const wordBag = usePromptBag<OrdlegWord>({
+    key: ordlegWordKey,
+    window: READING_ROUND_LENGTH,
+    gameId: 'ordleg.read',
+  })
 
   const config: UnifiedQuizConfig = {
     quizType: 'ordleg',

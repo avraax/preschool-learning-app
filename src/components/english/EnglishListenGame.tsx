@@ -32,7 +32,12 @@ const EnglishListenGame: React.FC = () => {
 
   // Prompt words come from a BAG, not a random pick (Practice Loop PRD-01 W1) — 8 of 74 words sampled
   // with replacement repeated ~30% of rounds. One shuffled pass = 8 distinct words.
-  const wordBag = usePromptBag<EnglishWord>({ key: englishWordKey, window: ENGLISH_ROUND })
+  // `gameId` also wires W2's re-ask + front-load (order only — never the level).
+  const wordBag = usePromptBag<EnglishWord>({
+    key: englishWordKey,
+    window: ENGLISH_ROUND,
+    gameId: 'english.listen',
+  })
 
   const config: UnifiedQuizConfig = {
     quizType: 'english',

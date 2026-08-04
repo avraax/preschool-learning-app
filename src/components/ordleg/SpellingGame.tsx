@@ -28,6 +28,7 @@ import { useNeverFailHint } from '../../hooks/useNeverFailHint'
 import { useDifficulty } from '../../hooks/useDifficulty'
 import { shuffle } from '../../utils/shuffle'
 import { progressStore, type RoundOutcome } from '../../services/progressStore'
+import { practiceLedger } from '../../services/practiceLedger'
 import { ORDLEG_SPELL, starThresholdsFor } from '../../config/difficulty'
 import { type OrdlegWord } from '../../config/ordlegWords'
 import { SPELLING_ROUND, ordlegWordKey, spellingPromptPool } from '../../config/promptPools'
@@ -102,7 +103,13 @@ const SpellingGame: React.FC = () => {
   // Prompt words come from a BAG (Practice Loop PRD-01 W1). The old `previousWord` ref is DELETED, not
   // kept beside it: avoiding only the immediately-previous word bounded adjacency, so a round of 8 could
   // still ask 5 of Let's 8 words twice each.
-  const wordBag = usePromptBag<OrdlegWord>({ key: ordlegWordKey, window: SPELLING_ROUND })
+  // `gameId` also wires W2's re-ask + front-load (order only — never the level). This game is
+  // hand-rolled, so it records its own attempts — see the wrong-slot branch in handleTileClick.
+  const wordBag = usePromptBag<OrdlegWord>({
+    key: ordlegWordKey,
+    window: SPELLING_ROUND,
+    gameId: 'ordleg.spelling',
+  })
   const isAdvancing = useRef(false)
   // Bumps every word so tile React keys never collide across words. Without it two consecutive
   // words that share an index+letter (e.g. a distractor, or S) reuse the same motion.div, and
@@ -378,6 +385,12 @@ const SpellingGame: React.FC = () => {
       }
     } else {
       // Wrong letter: gentle SFX + shake, leave it in the pool, break the first-try flag.
+      // Practice ledger (Practice Loop PRD-01 W2) — this game is hand-rolled, so it records its own
+      // miss here, at the branch that already knows first-try. The miss is on the WORD (the prompt), not
+      // on the letter tapped: the word is what the bag can re-ask. Recorded on the FIRST wrong letter
+      // only, so a 4-letter word can't count four misses for one question. The `seen` counterpart is in
+      // `completeWord`.
+      if (firstAttemptRef.current) practiceLedger.recordAttempt('ordleg.spelling', current.word, false)
       firstAttemptRef.current = false
       sfx.play('wrong')
       setShakeTileId(tile.id)
@@ -396,6 +409,10 @@ const SpellingGame: React.FC = () => {
     // guard only needs the current-word check; it's still called exactly once per word.
     if (!current) return
     isAdvancing.current = true
+
+    // The `seen` counterpart of the wrong-slot branch's miss (W2): only a word spelled with no wrong
+    // letter counts as seen — one record per word either way.
+    if (firstAttemptRef.current) practiceLedger.recordAttempt('ordleg.spelling', current.word, true)
 
     incrementScore()
     celebrateTier('micro')

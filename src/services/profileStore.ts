@@ -10,6 +10,7 @@
 import { ACTIVE_PROFILE_KEY } from '../config/progressSchema.ts'
 import { DEFAULT_AVATAR_ID, normalizeAvatarId, type AvatarId } from '../config/avatars.ts'
 import { authStore } from './authStore.ts'
+import { practiceLedger } from './practiceLedger.ts'
 import { progressStore } from './progressStore.ts'
 import { progressSync } from './progressSync.ts'
 
@@ -246,6 +247,9 @@ class ProfileStore {
   selectProfile(id: string, accountId: string | null = this.state.accountId): void {
     writePointer(id)
     progressStore.attach(id)
+    // The practice ledger (Practice Loop PRD-01 W2) is per-child and device-local, so it follows the
+    // same attach/detach lifecycle — this store is the only caller for it too.
+    practiceLedger.attach(id)
     this.publish({ status: 'ready', accountId, activeProfileId: id, error: null })
     // Reconcile with the server in the background — NEVER awaited, because gameplay already runs off
     // the local state that attach() just hydrated.
@@ -256,6 +260,7 @@ class ProfileStore {
   /** Drop the child selection ("🔄 Skift barn", or a profile that vanished). */
   clearSelection(): void {
     progressStore.detach()
+    practiceLedger.detach()
     writePointer(null)
     this.publish({ status: 'choosing', activeProfileId: null })
   }
@@ -334,6 +339,9 @@ class ProfileStore {
       } catch {
         /* ignore */
       }
+      // …and the child's practice ledger (Practice Loop PRD-01 W2). A deleted child must not leave a
+      // record of what they got wrong on the device — it is per-child data like the book.
+      practiceLedger.clear(id)
       return true
     } catch {
       return false
@@ -349,6 +357,7 @@ class ProfileStore {
    */
   signOut(): void {
     progressStore.detach()
+    practiceLedger.detach()
     writePointer(null)
     try {
       localStorage.removeItem(ROSTER_KEY)

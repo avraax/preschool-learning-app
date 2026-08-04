@@ -31,7 +31,9 @@ const AlphabetGame: React.FC = () => {
   // asked the same picture twice while 20 letters went unasked. One shuffled pass = 8 distinct letters,
   // every time.
   // The no-repeat WINDOW is the round length, so a round can't repeat even across a bag refill.
-  const letterBag = usePromptBag<string>({ window: ALPHABET_ROUND })
+  // `gameId` also wires W2: a missed letter is re-asked ~3 questions later, and the letters he misses
+  // most lead each new pass. Order only — never the level (see config/practiceWeights.ts).
+  const letterBag = usePromptBag<string>({ window: ALPHABET_ROUND, gameId: 'alphabet.quiz' })
 
   // Configuration for alphabet quiz
   const alphabetConfig: UnifiedQuizConfig = {

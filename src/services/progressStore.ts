@@ -66,6 +66,7 @@ import {
 } from '../config/progressSchema.ts'
 import { mergeProgress, type MergeReport } from '../config/progressMerge.ts'
 import { getDeviceId } from './deviceId.ts'
+import { practiceLedger } from './practiceLedger.ts'
 
 // Re-exported so all 45 consumers keep importing their types from here, unchanged.
 export type {
@@ -784,6 +785,10 @@ class ProgressStore {
       return
     }
     const prev = this.persisted!
+    // "Nulstil fremgang" means everything this child has built up on the device, so it takes the
+    // practice ledger with it (Practice Loop PRD-01 W2) — otherwise a reset book still re-asks the
+    // letters the previous run got wrong. Settings survive; a miss record is not a preference.
+    practiceLedger.clear(prev.profileId)
     const next = defaultPersisted(prev.profileId, getDeviceId(), nowMs())
     next.settings = structuredClone(prev.settings)
     next.settingsMeta = structuredClone(prev.settingsMeta)

@@ -20,6 +20,7 @@ import { useGameState } from '../../hooks/useGameState'
 import { useRound, type RoundConfig } from '../../hooks/useRound'
 import { useNeverFailHint } from '../../hooks/useNeverFailHint'
 import { progressStore, type RoundOutcome, type SectionId } from '../../services/progressStore'
+import { practiceLedger } from '../../services/practiceLedger'
 import { useDifficulty } from '../../hooks/useDifficulty'
 import { optionCountFor, starThresholdsFor } from '../../config/difficulty'
 import { answerGridSx } from './answerGrid'
@@ -499,6 +500,18 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
     // the tap (2026-08-02). These used to sit AFTER `await`ing the narration, so the confetti didn't
     // appear until the clip had finished and then the board changed immediately: the celebration was
     // effectively invisible and the whole beat read as ~4s of dead green tile.
+    // Practice ledger (Practice Loop PRD-01 W2): recorded HERE because this is the point that already
+    // knows first-try, so there is no new bookkeeping. Three rules in one line: the item recorded is
+    // always the CURRENT one — what he was ASKED — never the tile he tapped; a wrong tap is a miss; and a
+    // correct tap counts as `seen` only when it was FIRST-TRY, because a correct tap after a wrong one
+    // already recorded that question's miss and must not record it twice. It feeds prompt ORDER only,
+    // never a level (see `practiceWeights.ts`), and no-ops for a game whose prompts aren't pool-drawn.
+    // `currentItem.value` IS the bag's item key for every pool-drawn quiz (letter / w.en / w.word); a
+    // mismatch would silently drop the re-ask, so `usePromptBag` warns about it in DEV.
+    if (config.gameId && (!isCorrect || firstAttemptRef.current)) {
+      practiceLedger.recordAttempt(config.gameId, String(currentItem.value), isCorrect)
+    }
+
     if (isCorrect) {
       incrementScore()
       celebrateTier('micro') // light per-answer sparkle + soft "correct" SFX
