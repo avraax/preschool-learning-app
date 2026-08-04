@@ -17,6 +17,13 @@
 // clock advanced, i.e. the browser believes it emitted samples. It cannot prove loudness, that the
 // right words were spoken, mix balance, or that a device's hardware route was audible. For Howler's
 // WebAudio path (sfx) the honest ceiling is "decoded + source started" — there is no clock to read.
+//
+// ONE KNOWN AMBIGUITY, so a rare red is not chased as a bug: a clip cancelled AFTER its play() promise
+// already RESOLVED cannot be told apart from a genuinely silent one. Both look like "resolved, clock
+// never moved" — the cancel produces no AbortError because there was no pending promise left to reject.
+// Lær Tal's autoplay browse tripped this once in ~6 runs (a fully-loaded 1.32s clip, readyState 4, zero
+// progress) and was clean 5/5 afterwards. So treat a single non-reproducing "no progress" on an autoplay
+// SEQUENCE as suspect-but-unproven, and re-run before filing it. A repeatable one is real.
 ;(function () {
   if (window.__audioProbe) return
 
@@ -43,6 +50,11 @@
       if (!a) return
       a.timeupdates++
       if (el.currentTime > a.maxTime) a.maxTime = el.currentTime
+      // Volume/mute must be sampled ACROSS the attempt, not at play() time. musicClient starts its bed
+      // at volume 0 and FADES IN, so a play()-time sample reports the healthy music bed as "silenced" —
+      // it produced 12 false positives across every menu before this was tracked over time.
+      if (el.volume > a.maxVolume) a.maxVolume = el.volume
+      if (!el.muted) a.everUnmuted = true
     })
     el.addEventListener('ended', function () { if (el.__probeAttempt) el.__probeAttempt.ended = true })
     el.addEventListener('stalled', function () { if (el.__probeAttempt) el.__probeAttempt.stalled++ })
@@ -67,6 +79,8 @@
         rawSrc: String(el.currentSrc || el.src || el.getAttribute('src') || '').slice(0, 40),
         muted: !!el.muted,
         volume: typeof el.volume === 'number' ? el.volume : 1,
+        maxVolume: typeof el.volume === 'number' ? el.volume : 1,
+        everUnmuted: !el.muted,
         rejected: null,
         mediaError: null,
         maxTime: 0,
@@ -185,10 +199,15 @@
     if (/^data:audio\/wav/.test(a.rawSrc || '')) return 'prime'
     // muted / volume 0 MUST be tested before the clock, because a silenced element still advances
     // currentTime perfectly normally — that is the whole reason this check exists, and ordering it
-    // after `maxTime` scores the loudest possible bug as a success.
-    if (a.muted || a.volume === 0) return 'failed'
+    // after `maxTime` scores the loudest possible bug as a success. Judge on the MAX seen over the
+    // attempt's life (a fade-in legitimately starts at 0); silent for its whole life is the defect.
+    if (!a.everUnmuted || a.maxVolume === 0) return 'failed'
     if (a.maxTime > MIN_PROGRESS) return 'sounded'
     if (a.rejected === 'AbortError') return 'preempted'
+    // Too young to judge: a clip whose play() landed just before the report (live Azure synth is ~1.1s,
+    // and a prebaked fetch adds more) has had no chance to advance. Calling that SILENT invents a
+    // defect and makes the verdict a race against the driver's own settle time.
+    if (a.ageAtReport < 700) return 'pending'
     return 'failed'
   }
 
@@ -204,9 +223,9 @@
   window.__audioProbe = {
     reset: function () { attempts.length = 0; notes.length = 0; wa.decodeOk = 0; wa.decodeFail = 0; wa.decodeFailures.length = 0; wa.sourceStarts = 0 },
     report: function () {
-      var by = { sounded: [], preempted: [], failed: [], prime: [] }
-      attempts.forEach(function (a) { by[bucket(a)].push(a) })
-      var real = attempts.length - by.prime.length // attempts that were meant to be heard
+      var by = { sounded: [], preempted: [], failed: [], prime: [], pending: [] }
+      attempts.forEach(function (a) { a.ageAtReport = now() - a.at; by[bucket(a)].push(a) })
+      var real = attempts.length - by.prime.length - by.pending.length // attempts meant to be heard AND old enough to judge
       var broken = by.failed.length > 0 || wa.decodeFail > 0
       var mute = real > 0 && by.sounded.length === 0 // everything cancelled / nothing ever heard
       return {
@@ -217,15 +236,18 @@
           sounded: by.sounded.length,
           preempted: by.preempted.length,
           primes: by.prime.length,
+          pending: by.pending.length,
           failed: by.failed.map(function (a) { return { n: a.n, src: a.src, why: reason(a), maxTime: +a.maxTime.toFixed(3), timeupdates: a.timeupdates, readyState: a.readyState } }),
           detail: attempts.map(function (a) {
-            return { n: a.n, bucket: bucket(a), src: a.src, maxTime: +a.maxTime.toFixed(3), dur: a.duration, ended: a.ended, muted: a.muted, vol: a.volume, rejected: a.rejected, err: a.mediaError }
+            return { n: a.n, bucket: bucket(a), src: a.src, maxTime: +a.maxTime.toFixed(3), dur: a.duration, ended: a.ended, muted: a.muted, vol: a.volume, maxVol: a.maxVolume, age: a.ageAtReport, rejected: a.rejected, err: a.mediaError }
           }),
         },
         webaudio: { contexts: wa.contexts, states: wa.states, decodeOk: wa.decodeOk, decodeFail: wa.decodeFail, decodeFailures: wa.decodeFailures.slice(0, 5), sourceStarts: wa.sourceStarts },
         notes: notes.slice(-30),
         // The one line a caller should gate on.
-        verdict: (real === 0 && wa.sourceStarts === 0)
+        verdict: (real === 0 && wa.sourceStarts === 0 && by.pending.length > 0)
+          ? 'PENDING — ' + by.pending.length + ' clip(s) started too recently to judge; give the driver a longer settle'
+          : (real === 0 && wa.sourceStarts === 0)
           ? 'NO AUDIO ATTEMPTED (nothing called play() or started a buffer — did the trigger fire?)'
           : broken
             ? 'SILENT — ' + by.failed.length + ' of ' + real + ' clips genuinely failed, ' + wa.decodeFail + ' decode failures'

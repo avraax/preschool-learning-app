@@ -36,6 +36,13 @@
 //   --keep-audio-modal        Do NOT auto-dismiss the "Tænd for lyd" permission modal.
 //   --port <n>                CDP debug port (default 9333).
 //
+// Performance (the owner's floor device is an iPad Pro 2nd gen / A10X, 2017, on iPadOS 17.7):
+//   --cpu-throttle <n>        CDP CPU throttling multiplier (4 ≈ A10X-ish vs this desktop; 6 = harsher).
+//                             An APPROXIMATION of a slow CPU, NOT a model of that iPad: it scales CPU
+//                             only — GPU, memory bandwidth, decode and Safari's own JIT are untouched.
+//   --perf                    Collect long tasks, LCP, CLS, frame times + JS heap and print a summary.
+//                             Combine with --cpu-throttle to see what the handicap actually costs.
+//
 // Notes:
 //  * Launches with --autoplay-policy=no-user-gesture-required so the audio modal usually never
 //    shows; also clicks "Start lyd nu" as a fallback unless --keep-audio-modal.
@@ -155,6 +162,24 @@ if (has('--audio-report')) {
   await send('Page.addScriptToEvaluateOnNewDocument', { source })
 }
 
+// Perf collectors must also predate the app: LCP and long-task entries are not buffered forever, and a
+// PerformanceObserver installed after mount misses exactly the expensive startup we care about.
+if (has('--perf')) {
+  await send('Page.addScriptToEvaluateOnNewDocument', {
+    source: `(function(){window.__perf={long:[],lcp:0,cls:0,frames:[]};
+      try{new PerformanceObserver(function(l){l.getEntries().forEach(function(e){window.__perf.long.push(Math.round(e.duration))})}).observe({type:'longtask',buffered:true})}catch(e){}
+      try{new PerformanceObserver(function(l){var es=l.getEntries();window.__perf.lcp=Math.round(es[es.length-1].startTime)}).observe({type:'largest-contentful-paint',buffered:true})}catch(e){}
+      try{new PerformanceObserver(function(l){l.getEntries().forEach(function(e){if(!e.hadRecentInput)window.__perf.cls+=e.value})}).observe({type:'layout-shift',buffered:true})}catch(e){}
+      var last=0;function tick(t){if(last)window.__perf.frames.push(t-last);last=t;requestAnimationFrame(tick)}requestAnimationFrame(tick);})()`,
+  })
+}
+
+const CPU = parseFloat(opt('--cpu-throttle', '0'))
+if (CPU > 1) {
+  await send('Emulation.setCPUThrottlingRate', { rate: CPU })
+  console.log(`cpu throttle: ${CPU}x`)
+}
+
 await send('Page.navigate', { url: URL })
 
 // Readiness gate: wait for the SPA to mount (default), unless an explicit fixed --wait is given.
@@ -222,6 +247,25 @@ if (OUT) {
   const { result } = await send('Page.captureScreenshot', params)
   writeFileSync(OUT, Buffer.from(result.data, 'base64'))
   console.log(`screenshot saved: ${OUT}`)
+}
+
+if (has('--perf')) {
+  const p = await evaluate(`(()=>{const t=performance.getEntriesByType('navigation')[0]||{};
+    const fcp=(performance.getEntriesByName('first-contentful-paint')[0]||{}).startTime||0;
+    const f=(window.__perf&&window.__perf.frames||[]).slice(10); // drop warm-up frames
+    const sorted=f.slice().sort((a,b)=>a-b);
+    const long=(window.__perf&&window.__perf.long)||[];
+    return JSON.stringify({
+      fcp:Math.round(fcp), lcp:(window.__perf||{}).lcp||0,
+      domReady:Math.round(t.domContentLoadedEventEnd||0), load:Math.round(t.loadEventEnd||0),
+      cls:+(((window.__perf||{}).cls)||0).toFixed(3),
+      longTasks:long.length, longTotalMs:long.reduce((a,b)=>a+b,0), longWorstMs:long.length?Math.max.apply(null,long):0,
+      frames:f.length, medianFrameMs:sorted.length?+sorted[Math.floor(sorted.length/2)].toFixed(1):0,
+      p95FrameMs:sorted.length?+sorted[Math.floor(sorted.length*0.95)].toFixed(1):0,
+      jankFrames:f.filter(x=>x>50).length,
+      heapMB:performance.memory?+(performance.memory.usedJSHeapSize/1048576).toFixed(1):null,
+    })})()`)
+  console.log('perf:', p)
 }
 
 if (has('--audio-report')) {
