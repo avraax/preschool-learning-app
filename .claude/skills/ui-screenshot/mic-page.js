@@ -132,6 +132,56 @@
       if (performance.now() - tRelease > 25000) break
     }
 
+    // Composition check AT THE MOMENT OF THE REVEAL — the mic, the bloom art and the spelled word share
+    // one centred column, and a centred flex column overflows at BOTH ends (clipped, not scrollable,
+    // because the shell is overflow:hidden). A screenshot of the idle state would never show this.
+    let overflow = null
+    if (heard) {
+      const body = document.querySelector('[data-game-body]')
+      if (body) {
+        const kids = [...body.querySelectorAll('*')].filter((el) => {
+          const b = el.getBoundingClientRect()
+          return b.width > 8 && b.height > 8 && getComputedStyle(el).visibility !== 'hidden'
+        })
+        let worstTop = 0, worstBottom = 0
+        for (const el of kids) {
+          const b = el.getBoundingClientRect()
+          worstTop = Math.min(worstTop, Math.round(b.top))
+          worstBottom = Math.max(worstBottom, Math.round(b.bottom - window.innerHeight))
+        }
+        overflow = { aboveViewport: worstTop < 0 ? -worstTop : 0, belowViewport: worstBottom > 0 ? worstBottom : 0 }
+      }
+    }
+    // Vertical centring: how much empty space sits above the content vs below it. The owner's complaint
+    // was a group pinned to the top with half the screen unused, so this is the number that proves it.
+    // Measure the CONTENT, not the container: the column and its wrappers are `flex:1` and fill the body
+    // exactly, so measuring a child gave a vacuous "0px above, 0px below" on a visibly top-heavy board.
+    // Union the visible descendants that are meaningfully SHORTER than the body — that is the ink.
+    let centring = null
+    {
+      const body = document.querySelector('[data-game-body]')
+      if (body) {
+        const bb = body.getBoundingClientRect()
+        let top = Infinity, bottom = -Infinity
+        for (const el of body.querySelectorAll('*')) {
+          const b = el.getBoundingClientRect()
+          if (b.width < 8 || b.height < 8) continue
+          if (b.height > bb.height * 0.9) continue // a full-height wrapper, not content
+          if (getComputedStyle(el).visibility === 'hidden') continue
+          top = Math.min(top, b.top)
+          bottom = Math.max(bottom, b.bottom)
+        }
+        if (Number.isFinite(top)) {
+          centring = {
+            above: Math.round(top - bb.top),
+            below: Math.round(bb.bottom - bottom),
+            content: Math.round(bottom - top),
+            body: Math.round(bb.height),
+          }
+        }
+      }
+    }
+
     let verdict
     if (heard) verdict = 'HEARD'
     else if (trail.includes('hørte jeg ikke helt')) verdict = 'NOT_HEARD (product retry state)'
@@ -144,7 +194,7 @@
 
     return {
       verdict, heard, orb: orbBox, hitTarget, hitAt: slopHit ? 'centre+slop' : (hitTarget ? 'centre only' : 'none'),
-      trail, tListen, tResult,
+      trail, tListen, tResult, overflow, centring,
       levels: { max: Number(maxScale.toFixed(3)), samples },
       stt: window.__stt, rec: window.__rec,
       notes,

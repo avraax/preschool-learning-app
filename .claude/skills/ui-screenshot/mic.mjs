@@ -157,6 +157,8 @@ for (const word of list) {
     console.log(`  status trail: ${(v.trail || []).join(' → ')}`)
     console.log(`  mic level   : ${v.levels ? `max bar scale ${v.levels.max} (idle 0.35), samples ${v.levels.samples}` : 'n/a'}`)
     console.log(`  timings     : press→listening ${v.tListen ?? '?'}ms, release→result ${v.tResult ?? '?'}ms`)
+    if (v.centring) console.log(`  centring    : ${v.centring.content}px of content in a ${v.centring.body}px body — ${v.centring.above}px above, ${v.centring.below}px below (equal = centred)`)
+    if (v.overflow) console.log(`  reveal fit  : ${v.overflow.aboveViewport === 0 && v.overflow.belowViewport === 0 ? 'no overflow' : `OVERFLOW ${v.overflow.aboveViewport}px above / ${v.overflow.belowViewport}px below the viewport`}`)
     if (v.rec?.length) console.log(`  recorder    : ${v.rec.map((e) => `${e.event}${e.size !== undefined ? `(${e.size}B)` : ''}${e.mime ? `(${e.mime})` : ''}`).join(' → ')}`)
     console.log(`  /api/stt    : ${v.stt?.length ? v.stt.map((e) => JSON.stringify(e)).join(' → ') : 'NEVER CALLED'}`)
     if (v.notes?.length) console.log(`  notes       : ${v.notes.join(' | ')}`)

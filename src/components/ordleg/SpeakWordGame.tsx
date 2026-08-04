@@ -27,6 +27,7 @@ import { isIOS } from '../../utils/deviceDetection'
 import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 import { useSpeechInput, SpeechResult } from '../../hooks/useSpeechInput'
 import { normalizeSpokenWord, spokenWordArtId } from '../../config/spokenWordInput'
+import { letterStepMs } from '../../config/letterClipTiming'
 import { MIC_RETRY_LINE, MIC_HOLD_HINT, MIC_READY_LINE } from '../../config/gamePhrases'
 import { ordlegArt } from '../../assets/games/ordleg'
 
@@ -729,20 +730,23 @@ const SpeakWordGame: React.FC = () => {
     try {
       await audio.speak(word)
     } catch { /* ignore */ }
-    await wait(400)
+    await wait(200)
     if (!mountedRef.current) return
 
-    // Spell it out one letter at a time with the Danish letter sound.
+    // Spell it out, paced on each letter's MEASURED spoken length — fire-and-forget, never awaited.
+    // Awaiting `speakLetter` waits out Azure's 0.4–0.7s of trailing silence per letter, which is what
+    // made the spell-out plod (~1.5–1.9s a letter for names that take 0.42–1.04s to say). The next
+    // clip cancels the previous tail (single channel, no queue), so stepping on the letter's own
+    // duration + playback startup is both faster and safe. See `src/config/letterClipTiming.ts` and
+    // the DWELL note in `.claude/rules/audio-system.md`.
     for (let i = 0; i < letters.length; i++) {
       if (!mountedRef.current) return
       setRevealCount(i + 1)
-      try {
-        await audio.speakLetter(letters[i])
-      } catch { /* ignore */ }
-      await wait(180)
+      void audio.speakLetter(letters[i]).catch(() => {})
+      await wait(letterStepMs(letters[i]))
     }
 
-    await wait(250)
+    await wait(150)
     if (!mountedRef.current) return
 
     // Celebrate and say the whole word again.
@@ -784,51 +788,12 @@ const SpeakWordGame: React.FC = () => {
       dense
       guideReaction={guideReaction}
       celebration={{ show: showCelebration, intensity: celebrationIntensity, duration: celebrationDuration, onComplete: stopCelebration }}
-      promptStage={
-        roundOutcome ? undefined : (
-          // The mic is grounded IN the calm world (PRD-10 §3.5) — a static light-pool beneath it,
-          // NO frosted PromptStage card. Deliberately NOT PromptFocus: its idle-float would drift the
-          // mic under a still finger (aborting the hold-to-talk gesture) and its per-phase chargeKey
-          // would remount MicHero mid-gesture (losing the pointer capture — the "never remounts
-          // mid-gesture" invariant). So: bespoke + static.
-          <Box sx={{ position: 'relative', width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            {/* Grounding light-pool — a warm pool of light the mic seats in (reused from PromptFocus:
-                warm-white core → accent edge; brighter on dark worlds). Static. */}
-            <Box
-              aria-hidden
-              sx={{
-                position: 'absolute',
-                left: '50%',
-                top: '52%',
-                transform: 'translate(-50%, -50%)',
-                width: 'clamp(180px, 34vh, 300px)',
-                height: 'clamp(180px, 34vh, 300px)',
-                borderRadius: '50%',
-                background: `radial-gradient(circle, ${hexToRgba('#FFFFFF', dark ? 0.32 : 0.5)} 0%, ${hexToRgba(theme.accentColor, 0.2)} 40%, ${hexToRgba(theme.accentColor, 0)} 70%)`,
-                filter: 'blur(12px)',
-                pointerEvents: 'none',
-                zIndex: 0,
-                [PHONE_LANDSCAPE]: { display: 'none' },
-              }}
-            />
-            <Box sx={{ position: 'relative', zIndex: 1, width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <MicHero
-                phase={phase}
-                supported={supported}
-                isBusy={isBusy}
-                accent={theme.accentColor}
-                onTileColor={theme.onTileColor}
-                dark={dark}
-                reduce={reduce}
-                caption={showingIdleCta ? idleCta : null}
-                getLevel={speech.getLevel}
-                onPressStart={handlePressStart}
-                onPressEnd={handlePressEnd}
-              />
-            </Box>
-          </Box>
-        )
-      }
+      // NO `promptStage` — deliberately (owner, 2026-08-04: "it looked better when the elements in this
+      // game were centered vertically"). GameShell's prompt slot is a FIXED 40% band at the TOP with the
+      // body under it, which is right for a prompt-then-answer board. This game has no such split: the mic
+      // IS the whole board, and at idle the body below it is empty, so the group sat in the top 40% with
+      // half the screen unused. Same reasoning as Sammenlign Tal (see `.claude/rules/game-development.md`)
+      // — a game whose focal content IS its interaction owns its column, and GameShell then centres it.
     >
       {roundOutcome ? (
         <RoundResultScreen
@@ -850,6 +815,50 @@ const SpeakWordGame: React.FC = () => {
             gap: { xs: 1.5, md: 2 },
           }}
         >
+          {/* The mic, grounded IN the calm world (PRD-10 §3.5) — a static light-pool beneath it, NO
+              frosted PromptStage card. Deliberately NOT PromptFocus: its idle-float would drift the mic
+              under a still finger (aborting the hold-to-talk gesture) and its per-phase chargeKey would
+              remount MicHero mid-gesture (losing the pointer capture — the "never remounts mid-gesture"
+              invariant). So: bespoke + static, and now a normal flex child so the whole group centres. */}
+          {!micBlocked && (
+            <Box sx={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: '0 0 auto' }}>
+              {/* Grounding light-pool — a warm pool of light the mic seats in (reused from PromptFocus:
+                  warm-white core → accent edge; brighter on dark worlds). Static. */}
+              <Box
+                aria-hidden
+                sx={{
+                  position: 'absolute',
+                  left: '50%',
+                  top: '48%',
+                  transform: 'translate(-50%, -50%)',
+                  width: 'clamp(180px, 34vh, 300px)',
+                  height: 'clamp(180px, 34vh, 300px)',
+                  borderRadius: '50%',
+                  background: `radial-gradient(circle, ${hexToRgba('#FFFFFF', dark ? 0.32 : 0.5)} 0%, ${hexToRgba(theme.accentColor, 0.2)} 40%, ${hexToRgba(theme.accentColor, 0)} 70%)`,
+                  filter: 'blur(12px)',
+                  pointerEvents: 'none',
+                  zIndex: 0,
+                  [PHONE_LANDSCAPE]: { display: 'none' },
+                }}
+              />
+              <Box sx={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <MicHero
+                  phase={phase}
+                  supported={supported}
+                  isBusy={isBusy}
+                  accent={theme.accentColor}
+                  onTileColor={theme.onTileColor}
+                  dark={dark}
+                  reduce={reduce}
+                  caption={showingIdleCta ? idleCta : null}
+                  getLevel={speech.getLevel}
+                  onPressStart={handlePressStart}
+                  onPressEnd={handlePressEnd}
+                />
+              </Box>
+            </Box>
+          )}
+
           {micBlocked ? (
             // Mic unavailable / refused. Adult-facing (the child can't act on it) and RECOVERABLE:
             // the retry re-runs getUserMedia, which succeeds the moment access is granted — the old
@@ -896,7 +905,11 @@ const SpeakWordGame: React.FC = () => {
                     position: 'relative',
                     flex: '0 1 auto',
                     minHeight: 0,
-                    maxHeight: '42%',
+                    // 30%, not 42%: the column now spans the WHOLE body (no 40% prompt band), so the mic
+                    // shares this space with the bloom and the banner. Measured at 1254×872, 1024×768,
+                    // 768×1024, 844×390 and 375×667 — the reveal must not overflow, and a centred flex
+                    // column overflows at BOTH ends (it would eat the mic above it).
+                    maxHeight: '30%',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
