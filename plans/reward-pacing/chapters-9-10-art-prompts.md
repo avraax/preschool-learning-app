@@ -75,10 +75,10 @@ Slots renumbered: chapter 9 took 73–81, so chapter 10 is **82–90**.
 | 84 | `vejr-paraply` | Paraply | ✅ rendered, silhouette passes |
 | 85 | `vejr-snemand` | Snemand | ✅ rendered, silhouette passes |
 | 86 | `vejr-sneskovl` | Sneskovl | ✅ rendered, silhouette passes |
-| 87 |  | Græskar | ✅ **replaced Kælk** (blob silhouette) |
-| 88 |  | Sandslot | ✅ **replaced Vindmølle** (2px tower) |
-| 89 |  | Drage | ✅ re-rendered on flat green |
-| 90 |  | Luftballon | ✅ re-rendered on flat green |
+| 87 | `vejr-graeskar` | Græskar | ✅ **replaced Kælk** (blob silhouette) |
+| 88 | `vejr-sandslot` | Sandslot | ✅ **replaced Vindmølle** (2px tower) |
+| 89 | `vejr-drage` | Drage | ✅ re-rendered on flat green |
+| 90 | `vejr-luftballon` | Luftballon | ✅ re-rendered on flat green |
 
 The two swaps also give the chapter a real four-seasons spread rather than a rain-and-snow list: rain
 (Lyn, Regndråbe, Paraply), winter (Snemand, Sneskovl), spring/sky (Drage, Luftballon), **autumn
