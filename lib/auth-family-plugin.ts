@@ -232,7 +232,14 @@ const returnToApp = (): Response =>
  * The FAILURE page. Also script-free for the CSP reason above, so the link is genuinely the only way
  * onward — it is not decoration behind an automatic redirect.
  */
-function failureHtml(message: string): string {
+function failureHtml(message: string, code?: string | null): string {
+  // The CODE is the whole point of this page beyond the apology. This failure happens on the SERVER —
+  // the SPA never boots on this response — so the client-side auto-reporter (`authDiagnostics`) cannot
+  // fire, and a failed Google sign-in produced literally no data anywhere. Twice. The adult reads this
+  // code out; `reportOauthFailure` has already stored the real cause under it.
+  const codeBlock = code
+    ? `<p style="margin-top:1rem;font-size:.95rem;color:#475569">Fejlkode: <strong style="font-family:ui-monospace,monospace;letter-spacing:.05em">${escapeHtml(code)}</strong></p>`
+    : ''
   return `<!doctype html><html lang="da"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Børnelæring</title>
@@ -240,8 +247,61 @@ function failureHtml(message: string): string {
 align-items:center;justify-content:center;background:#F8FAFC;color:#1e293b;text-align:center;padding:24px}
 main{max-width:22rem}a{display:inline-block;margin-top:1.25rem;padding:.9rem 1.4rem;border-radius:14px;
 background:#6d28d9;color:#fff;text-decoration:none;font-weight:600;min-height:44px}</style></head>
-<body><main><h1 style="font-size:1.25rem">${message}</h1>
+<body><main><h1 style="font-size:1.25rem">${escapeHtml(message)}</h1>
+${codeBlock}
 <a href="/">Tilbage til Børnelæring</a></main></body></html>`
+}
+
+const escapeHtml = (s: string): string =>
+  s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+
+/**
+ * Store WHY the OAuth callback failed, and return a short code to print on the page.
+ *
+ * The detail (Google's own `error` string, the HTTP status, which branch) goes into the report, NOT into
+ * the page — that split is deliberate and preserves the original rule here: Google's error text can echo
+ * request material, and this page is rendered to whoever holds the callback URL, while report READS are
+ * fail-closed behind `BUG_REPORT_READ_KEY`.
+ *
+ * Best-effort by construction: it posts to our own `/api/bug-report`, and any failure to store simply
+ * means no code on the page — a diagnostic must never turn a handled error into a broken response.
+ */
+async function reportOauthFailure(
+  reason: string,
+  detail: { status?: number; googleError?: string; message?: string },
+): Promise<string | null> {
+  try {
+    const res = await fetch(`${baseURL()}/api/bug-report`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        report: {
+          schema: 1,
+          type: 'auth',
+          category: 'login',
+          createdAt: new Date().toISOString(),
+          sessionId: 'server',
+          note: `OAuth callback mislykkedes: ${reason}`,
+          auth: {
+            stage: 'oauth-callback',
+            reason,
+            status: detail.status,
+            code: detail.googleError,
+            // Message text only — never a token, a code or a URL with a query.
+            errorName: detail.message?.slice(0, 200),
+            trail: [`server ${new Date().toISOString()} ${reason}`],
+          },
+          app: { route: '/api/auth/family/oauth/callback', online: true },
+          diagnostics: { console: [], network: [], breadcrumbs: [] },
+        },
+      }),
+    })
+    if (!res.ok) return null
+    const body = (await res.json()) as { id?: string }
+    return body.id ?? null
+  } catch {
+    return null
+  }
 }
 
 const htmlResponse = (body: string, status = 200): Response =>
@@ -629,15 +689,23 @@ export const familyPlugin = (): BetterAuthPlugin => ({
             error?: string
           }
           if (!tokenRes.ok || !body.id_token) {
-            // Deliberately no detail in the page — Google's error text can echo request material.
+            // Deliberately no detail in the PAGE — Google's error text can echo request material. The
+            // detail goes into the report instead, which is read-gated; the page shows only its code.
             console.error('[auth] google token exchange failed', tokenRes.status, body.error)
-            return htmlResponse(failureHtml('Login mislykkedes. Prøv igen i appen.'), 400)
+            const code = await reportOauthFailure('token-exchange-rejected', {
+              status: tokenRes.status,
+              googleError: body.error,
+            })
+            return htmlResponse(failureHtml('Login mislykkedes. Prøv igen i appen.', code), 400)
           }
           idToken = body.id_token
           accessToken = body.access_token
         } catch (e) {
           console.error('[auth] google token exchange threw', e)
-          return htmlResponse(failureHtml('Login mislykkedes. Prøv igen i appen.'), 500)
+          const code = await reportOauthFailure('token-exchange-threw', {
+            message: e instanceof Error ? `${e.name}: ${e.message}` : String(e),
+          })
+          return htmlResponse(failureHtml('Login mislykkedes. Prøv igen i appen.', code), 500)
         }
 
         let sessionToken: string | null
@@ -649,15 +717,24 @@ export const familyPlugin = (): BetterAuthPlugin => ({
           // legitimately burning Azure and Google quota.
           const forbidden = e instanceof APIError && e.status === 'FORBIDDEN'
           if (!forbidden) console.error('[auth] signInSocial(idToken) failed', e)
+          // A forbidden address is a WORKING refusal, not a fault — it already says exactly what is
+          // wrong, so it needs no code and no report. Everything else is a fault we cannot otherwise see.
+          const code = forbidden
+            ? null
+            : await reportOauthFailure('signin-with-id-token-failed', {
+                message: e instanceof Error ? `${e.name}: ${e.message}` : String(e),
+              })
           return htmlResponse(
             failureHtml(
               forbidden ? 'Denne konto har ikke adgang til Børnelæring.' : 'Login mislykkedes. Prøv igen i appen.',
+              code,
             ),
             forbidden ? 403 : 500,
           )
         }
         if (!sessionToken) {
-          return htmlResponse(failureHtml('Login mislykkedes. Prøv igen i appen.'), 500)
+          const code = await reportOauthFailure('no-session-token-after-signin', {})
+          return htmlResponse(failureHtml('Login mislykkedes. Prøv igen i appen.', code), 500)
         }
 
         await adapter.update({
