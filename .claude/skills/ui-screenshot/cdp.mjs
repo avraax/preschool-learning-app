@@ -136,6 +136,16 @@ sessionId = (await send('Target.attachToTarget', { targetId: tgt.targetId, flatt
 await send('Page.enable'); await send('Runtime.enable'); await send('Network.enable')
 await send('Emulation.setDeviceMetricsOverride', { width: W, height: H, deviceScaleFactor: 1, mobile: false })
 
+// --ipad-ua: run the app's iOS branches in CHROME. This is the only place audio can be verified on an
+// iOS code path at all: Playwright's WebKit has no WebAudio/speechSynthesis, and Chrome does — so an
+// iPad UA here exercises `deviceDetection`'s isIOS/isIPad, the unlock path and Howler's touch-platform
+// html5 pool WHILE clips can still actually play. It is not Safari, and it is not the device.
+if (has('--ipad-ua')) {
+  const UA = 'Mozilla/5.0 (iPad; CPU OS 17_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.6 Safari/605.1.15'
+  await send('Emulation.setUserAgentOverride', { userAgent: UA, platform: 'iPad' })
+  console.log('ua override: iPad / iPadOS 17.7')
+}
+
 // --webauthn: install a CDP VIRTUAL AUTHENTICATOR before the page loads, so passkey register/unlock
 // can be exercised headlessly (accounts PRD §12). It proves the real plumbing — options endpoint,
 // navigator.credentials.*, verification, the set-auth-token handoff — but it does NOT prove the iOS

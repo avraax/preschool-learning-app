@@ -56,6 +56,38 @@ function inventory() {
   ]
 }
 
+// Difficulty exemptions, DERIVED from src/config/difficulty.ts's own EXEMPT map (with its reason
+// strings) rather than hand-listed here — a game added to that map must stop being reported as a defect
+// without anyone editing this file. Route→gameId because the map is keyed by gameId.
+function parseMap(name) {
+  const src = readFileSync(join(repo, 'src', 'config', 'difficulty.ts'), 'utf8')
+  const start = src.indexOf(`export const ${name}`)
+  const block = src.slice(start, src.indexOf('\n}', start))
+  const out = {}
+  for (const m of block.matchAll(/'([a-z]+\.[a-z-]+)':\s*'([^']+)'/g)) out[m[1]] = m[2]
+  return out
+}
+const EXEMPT_BY_GAMEID = parseMap('EXEMPT')
+// Games that express difficulty on a NON-tile axis, with difficulty.ts's own reason strings. Most of
+// those axes ARE observable (item count, tray slots, board pairs) and the probe measures them; the
+// exception is Ram Farven's target POOL, which cannot be seen in a single board.
+const TILE_AXIS_EXEMPT = parseMap('TILE_AXIS_EXEMPT')
+const ROUTE_TO_GAMEID = {
+  '/alphabet/learn': 'alphabet.learn', '/math/numbers': 'math.learn',
+  '/english/learn': 'english.learn', '/farver/laer': 'colors.learn', '/ordleg/mic': 'ordleg.mic',
+}
+// The one axis a single board cannot show. Reason string comes from difficulty.ts, not from here.
+const DIFFICULTY_UNOBSERVABLE = {
+  '/farver/ram-farven': `${TILE_AXIS_EXEMPT['colors.ramfarven'] || 'axis is the target pool'} — invisible in one board; audit by SAMPLING the source, not the DOM`,
+}
+// Routes where a DIV-COUNT delta is the legitimate signal rather than ambient noise, per SKILL.md's
+// per-game observable table: Hukommelse's axis is board size, and Hvilken Farve's is swatch count —
+// "neither of the above; a div count delta shows it". Excluding divs everywhere reported both as a
+// broken setting when both were working.
+const BOARD_SIZE_IS_THE_AXIS = new Set([
+  '/learning/memory/letters', '/learning/memory/numbers', '/farver/quiz',
+])
+
 // Two memory routes share one title; dedupe by route, not title.
 const ROUTES = inventory().filter((r, i, a) => a.findIndex((x) => x.route === r.route) === i)
   .filter((r) => !ONLY || r.route.includes(ONLY))
@@ -149,8 +181,10 @@ const countOf = (out, re) => { const m = out.match(re); return m ? parseInt(m[1]
 function jobsFor() {
   const jobs = []
   const engines = ENGINE === 'both' ? ['chrome', 'webkit'] : [ENGINE]
+  // Rounds and difficulty only exist inside games — running them over menus just manufactures N/A rows.
+  const routes = (PHASE === 'round' || PHASE === 'difficulty') ? ROUTES.filter((r) => r.kind === 'game') : ROUTES
   for (const eng of engines) {
-    for (const r of ROUTES) {
+    for (const r of routes) {
       if (PHASE === 'layout') {
         for (const v of VIEWPORTS) jobs.push({ eng, route: r, vp: v })
       } else {
@@ -165,7 +199,9 @@ function cmdFor(job, port) {
   const url = `${BASE}${job.route.route.replace(':type', 'letters')}?nogate=1`
   const settle = PHASE === 'audio' ? '2500' : '4000' // math boards need time to generate
   const evalJs = PHASE === 'layout' ? BOUNDS : PHASE === 'triggers' ? TRIGGERS
-    : PHASE === 'audio' ? AUDIO_TRIGGER : GUARD
+    : PHASE === 'audio' ? AUDIO_TRIGGER
+    : PHASE === 'round' ? readFileSync(join(here, 'round-probe.js'), 'utf8')
+    : PHASE === 'difficulty' ? readFileSync(join(here, 'difficulty-probe.js'), 'utf8') : GUARD
   if (job.eng === 'webkit') {
     const c = [join(here, 'webkit.mjs'), '--url', url, '--device', job.vp.device, '--settle', settle, '--eval', evalJs]
     if (PHASE === 'audio') c.push('--audio-report')
@@ -178,7 +214,7 @@ function cmdFor(job, port) {
 }
 
 function judge(job, r) {
-  const g = parseEval(r.out)
+  let g = parseEval(r.out)
   const cerr = countOf(r.out, /console errors: (\d+)/)
   const pexc = countOf(r.out, /page exceptions: (\d+)/)
   // DEAD = the run never produced its own telemetry. Never fold this into FAIL: it means "we learned
@@ -215,6 +251,54 @@ function judge(job, r) {
     if (cerr) w.push(`${cerr} console error(s)`)
     if (g.offCount) w.push(`${g.offCount} element(s) off-screen: ${JSON.stringify(g.off)}`)
     return { status: w.length ? 'FAIL' : 'PASS', why: w.join(' | '), guard: g }
+  }
+  // Each of these phases returns its OWN payload shape, so each is judged on its own fields (the trap
+  // that made the layout phase report "#root empty" on healthy pages).
+  if (PHASE === 'round') {
+    if (g.notCovered) return { status: 'N/A', why: g.notCovered, guard: g }
+    // Games blind candidate-cycling cannot SOLVE. Not defects and not coverage either — UNKNOWN, so they
+    // stay visible as unverified instead of being laundered into a pass or invented as a failure.
+    const UNSOLVABLE_BY_CYCLING = {
+      '/farver/ram-farven': 'colour MIXING toward a target — droplets register (60 board changes observed) but a task can only be completed by choosing the right combination, which cycling cannot do',
+      '/farver/quiz': 'the prompt object must be DRAGGED onto a swatch (its solved signal is an <img> appearing inside the swatch droppable); a tap on the swatch alone does not resolve',
+    }
+    if (!g.resultScreen && UNSOLVABLE_BY_CYCLING[job.route.route]) {
+      return { status: 'UNKNOWN', why: `not driveable by this probe: ${UNSOLVABLE_BY_CYCLING[job.route.route]}`, guard: g }
+    }
+    const w = []
+    if (g.crashed) w.push('CRASH BOUNDARY mid-round')
+    if (pexc) w.push(`${pexc} page exception(s)`)
+    if (cerr) w.push(`${cerr} console error(s)`)
+    if (!g.resultScreen) w.push(`round never ended: ${g.stuck || `${g.advances} advance(s), ${g.clicks} clicks, no RoundResultScreen`}`)
+    // A round that ends must pay about ONE REWARD's worth of XP. `xpAfter > xpBefore` is NOT enough:
+    // with `taskXp` zeroed the round still credited 8 (bonuses only) and that loose check passed on a
+    // broken product. REWARD_XP is 40 and taskXp normalises so any completed round lands near it, so a
+    // floor of 30 catches per-task XP dying while tolerating a short round and lost first-try bonuses.
+    // UNKNOWN, not FAIL, when the store was never readable — see the note in round-probe.js.
+    if (g.xpBefore === null || g.xpAfter === null) {
+      return { status: 'UNKNOWN', why: 'progressStore unreadable — XP could not be judged (round itself: ' + (g.resultScreen ? 'completed' : 'did not complete') + ')', guard: g }
+    }
+    const gain = g.xpAfter - g.xpBefore
+    if (g.resultScreen && gain < 30) w.push(`round ended but paid only ${gain} XP (expected ~40 = one reward; per-task XP may be broken)`)
+    return { status: w.length ? 'FAIL' : 'PASS', why: w.join(' | '), guard: g,
+      audio: `${g.advances} advances / ${g.clicks} clicks, xp ${g.xpBefore}→${g.xpAfter}` }
+  }
+  if (PHASE === 'difficulty') {
+    const rt = job.route.route
+    // Hukommelse's axis IS its board size, so the div-count delta the probe treats as weak elsewhere is
+    // the real signal here. Promote it rather than calling a working setting broken.
+    const moved = g.moved || (BOARD_SIZE_IS_THE_AXIS.has(rt) && (g.changedKeys || []).includes('divs'))
+    g = { ...g, moved }
+    const exemptReason = EXEMPT_BY_GAMEID[ROUTE_TO_GAMEID[rt]] || DIFFICULTY_UNOBSERVABLE[rt]
+    // An exempt game must still be REPORTED (with its reason), never silently skipped — but only when it
+    // genuinely showed no change. If an "exempt" game DID move, that is worth seeing, so fall through.
+    if (exemptReason && !g.moved) return { status: 'N/A', why: exemptReason, guard: g }
+    const w = []
+    if (g.error) w.push(`probe error: ${g.error}`)
+    if (!g.moved) w.push(`difficulty did not change anything observable${g.note ? ` (${g.note})` : ''}`)
+    if (pexc) w.push(`${pexc} page exception(s)`)
+    return { status: w.length ? 'FAIL' : 'PASS', why: w.join(' | '), guard: g,
+      audio: `moved via: ${(g.changedKeys || []).join(',') || 'nothing'}` }
   }
   const why = []
   if (g.crashed) why.push('CRASH BOUNDARY (Noget gik galt/Ups)')
@@ -265,7 +349,8 @@ async function worker(id) {
       r = judge(job, await run(cmdFor(job, port)))
     }
     results.push({ ...r, route: job.route.route, engine: job.eng, vp: job.vp.name })
-    const tag = r.status === 'PASS' ? 'ok  ' : r.status === 'FAIL' ? 'FAIL' : r.status === 'N/A' ? 'n/a ' : 'DEAD'
+    const tag = r.status === 'PASS' ? 'ok  ' : r.status === 'FAIL' ? 'FAIL'
+      : r.status === 'N/A' ? 'n/a ' : r.status === 'UNKNOWN' ? '??? ' : 'DEAD'
     console.log(`${tag} ${job.eng.padEnd(6)} ${job.vp.name.padEnd(10)} ${job.route.route.padEnd(28)} ${r.status === 'PASS' ? (r.audio || '') : r.why}`)
   }
 }
@@ -274,9 +359,10 @@ await Promise.all(Array.from({ length: Math.max(1, CONC) }, (_, i) => worker(i))
 const by = (s) => results.filter((r) => r.status === s)
 console.log(`\nplanned ${jobs.length} · ran ${results.length} · PASS ${by('PASS').length} · FAIL ${by('FAIL').length} · N/A ${by('N/A').length} · DEAD ${by('DEAD').length}`)
 for (const r of by('N/A')) console.log(`n/a  ${r.route}: ${r.why}`)
+for (const r of by('UNKNOWN')) console.log(`???  ${r.route}: ${r.why}`)
 if (results.length !== jobs.length) console.log('!! ran ≠ planned — coverage hole, do not report this sweep as complete')
 for (const r of by('FAIL')) console.log(`FAIL ${r.engine} ${r.vp} ${r.route}: ${r.why}`)
 for (const r of by('DEAD')) console.log(`DEAD ${r.engine} ${r.vp} ${r.route}: ${r.why}`)
 const jsonOut = opt('--json')
 if (jsonOut) writeFileSync(jsonOut, JSON.stringify(results, null, 2))
-process.exit(by('FAIL').length || by('DEAD').length ? 1 : 0)
+process.exit(by('FAIL').length || by('DEAD').length || by('UNKNOWN').length ? 1 : 0)
