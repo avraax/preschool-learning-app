@@ -252,11 +252,11 @@ Once the renders are in a folder, hand over the path. Then, in order:
    `.claude/rules/scene-assets.md`), and add `toej-hat` to `REWARD_REUSE` in
    `scripts/optimize-theme-art.mjs` so it is copied and re-trimmed from `games/ordleg/hat.webp` rather
    than re-keyed (it already has real alpha and no screen to remove).
-   **Export at 384×384, not 256.** The existing 72 are 256, which was right when the ceremony sticker
-   was 150px; Reward Pacing grew it to 230px, i.e. ~332 device px on a 2× iPad. Measured, the upscale
-   costs only 3–6% edge sharpness on soft clay and is invisible — so the existing 72 are NOT being
-   re-exported — but there is no reason to bake new art short. Watch the ≤20KB budget (today: 9KB
-   average, 17KB worst).
+   **They export at 256×256** (), like all the others. The 230px ceremony sticker does
+   upscale 256 by ~1.3× on a 2× iPad, but that was measured at only 3–6% edge sharpness — mean pixel
+   difference 1.7/255, invisible on soft clay — and the script bakes one global size, so mixing 384 in
+   for nine subjects would grow the bundle for no visible gain. All 90 sit at 9KB average, 17KB worst,
+   inside the 20KB budget.
 2. **Append both chapters** to `REWARD_CHAPTERS` in `src/config/stickers.ts`. Append only — never
    insert or reorder, `firstAt` is keyed by reward id and `rebuildCollected` walks slots through the
    path, so reordering silently re-assigns every existing child's book.
