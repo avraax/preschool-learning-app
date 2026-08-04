@@ -164,7 +164,11 @@ gameIds are `<section>.<game>`.
 - Stav Ordet (hand-rolled): after 2 wrong taps on a slot the correct tile pulses (never-fail
   next-letter hint; reduced-motion → static glow; using it costs a star).
 - Sig et Ord is **open-ended** — say any word → it's spelled back. **No target word, no STT grading**;
-  a recognized word counts, an STT mishear stays on the same question without counting.
+  a recognized word counts, an STT mishear stays on the same question without counting. It stays
+  **hold-to-talk** (owner, 2026-08-04, offered tap-to-talk with auto-stop and chose the hold), and the mic
+  is opened once per visit rather than per press. It has **no `promptStage`**: the mic IS the board, so it
+  owns its column and GameShell centres it — the prompt band left half the screen empty at idle. The
+  capture rules (model, mic lifecycle, transcript normalisation) are in `.claude/rules/audio-system.md`.
 
 ## English — `english.listen/.word` (+ Lær Engelsk browse)
 - Thin `UnifiedQuizGame` configs. Distractors **random**, themes **mixed** (no minimal-pairs, no

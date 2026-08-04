@@ -100,6 +100,12 @@ the *generator* for another. A table-only break can pass while the code ignores 
   branch's closing brace, so moving the speak OUT to fire on every wrong answer stayed green. A regex
   cannot see block structure: **slice the block first** (`indexOf(opener)` → `indexOf('\n      }')`) and
   assert against that substring. Suspect any `[\s\S]*?` that spans what should be one branch.
+- **A fixed-size WINDOW around a match spills into neighbouring code.** A guard counted `failureHtml(`
+  call sites whose next 260 characters mentioned `code`, to prove each failure page prints its report
+  code — and stayed green when a page stopped passing it, because the window ran past the call and into
+  adjacent lines using the same identifier. Any `slice(0, N)` / `.{0,N}` around a match is suspect: anchor
+  on the construct's real end, or (better) tie the assertion to the *specific* thing it is about — here,
+  from each REASON to its own `failureHtml(` call, so one branch can't be covered by another's text.
 - **Two loose `includes` where the invariant is a COMPOSITION.** "The file mentions `usePromptBag`" +
   "the file mentions `colorQuizPromptPool(`" both survived replacing the draw with
   `colorQuizPromptPool(level)[0]` — the tokens were still there, the feature was gone. Assert the composed

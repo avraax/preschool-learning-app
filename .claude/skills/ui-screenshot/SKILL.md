@@ -495,6 +495,10 @@ stripped, and the failure looks like a page bug. Write the JS to a **file in the
 - **Wrap the IIFE in `try/catch` and return an accumulated `log` array.** A throw surfaces only as
   `eval: {}` (the serialized error) and you lose every earlier result — that empty object is almost
   always "it threw", not "it returned nothing".
+- **The diagnostics rings hold OBJECTS, not strings.** `getDiagnosticsSnapshot().console` entries are
+  `{t, level, msg}` (network/breadcrumbs likewise), so `entries.filter(e => String(e).includes('…'))`
+  stringifies to `[object Object]` and silently matches nothing — which reads as "the app never logged
+  it" rather than "my filter is wrong". Filter on `e.msg`.
 - **Check what your wait helper returns.** A timed-out `until()` you don't assert on makes every later
   line vacuous — the probe reports success against an element that never appeared.
 - **Wait for the state to START before waiting for it to END.** `while (label() !== 'Stop')` right after

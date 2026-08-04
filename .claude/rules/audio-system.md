@@ -141,6 +141,9 @@ sprite), re-encoded with `node scripts/transcode-sfx.mjs`, into `public/sounds/u
   queue = new audio cancels current), and keep the step ≥ the longest spoken part + that startup or it
   cuts names off mid-word (see `src/config/alphabetGroups.ts`). `ttsClient.prefetchPrebaked()` /
   `controller.prefetchLetters()` warm the files first; that trims the fetch, NOT the padding.
+  **For a SPELL-OUT the step is per LETTER**, not one fixed value: `src/config/letterClipTiming.ts` holds
+  each letter name's measured spoken length (422ms for A, 1044ms for W), so a word costs what its own
+  letters cost instead of the worst case — Sig et Ord's awaited version plodded at ~1.5–1.9s per letter.
   **The same rule governs a game's correct-answer beat** — never `await` the echo/fact before
   celebrating or advancing; see `.claude/rules/game-development.md` and the `DWELL_*` note in
   `src/theme/motion.ts`.
@@ -343,9 +346,33 @@ on the target iPad twice. So a board like that reads **`audio.narrationHealthy`*
 This is the *capture* side and sits beside the controller. It must NOT record while TTS is playing — call
 `audio.stopAll()` before starting capture.
 
-`start()` guards against a mid-flight unmount with a **generation counter** (`genRef`):
-`cancel()`/`stopAndRecognize()` bump it, and `start()` re-checks after each `await`, stopping the
-granted tracks if it went stale — so the OS mic never lingers when the child taps mic then navigates
-away (`SpeakWordGame`'s unmount calls `speech.cancel()`). `extractFirstWord` drops any `*`-masked
-(profanity-filtered) STT token so it's never read back / spelled aloud. See the STT server side
-(`features.profanityFilter`) in `.claude/rules/api-endpoints.md`.
+- **THE MODEL IS THE GAME.** This screen sends ONE isolated word, and the `short` model returns **zero
+  results** for that — measured over 16 common Danish words × 4 child-like distortions: 0–1 of 16, while a
+  full SENTENCE from the same voice transcribed at 0.94. Not credentials, container, level or length; the
+  da-DK `short`/`long` models simply discard a lone monosyllable. `chirp_3` hears them, and lives ONLY in
+  the `eu` multi-region (`chirp`/`chirp_2` are not there, and chirp_2 via europe-west4 measured worse).
+  `api/stt.ts` carries the numbers; **`src/config/sttConfig.test.ts` pins the model, the `da-DK` language,
+  the EU region and the profanity flag in BOTH `api/stt.ts` and its `dev-server.js` mirror**, which is the
+  only thing stopping a "simplification" back to `short` from silently returning the game to
+  "det hørte jeg ikke helt" on every attempt.
+- **The mic is opened ONCE per visit and held** (`prime()`), so `startRecording()` is **synchronous**.
+  Opening it inside the press cost 100–500ms during which the board already said "Jeg lytter" — the first
+  syllable, often the whole word, was never captured. **Never let the UI claim to be listening before the
+  recorder is actually running**; the honest in-between is its own state.
+- **`prime()` owns the generation counter** (`genRef`), and `release()`/`cancel()` bump it: an in-flight
+  `getUserMedia` self-aborts and stops the granted tracks, so the OS mic never lingers after the child
+  navigates away. `stopAndRecognize()` deliberately does NOT bump it (it keeps the stream for the next
+  word). The hook releases on unmount itself, so a component can't leak the indicator by forgetting.
+- **Recognition must be bounded by a race, not an abort signal.** `authorizedFetch` awaits a token mint
+  BEFORE `fetch`, which no `AbortController` can cancel — that left the board on "Lad mig tænke…" forever.
+  The board carries a second, longer watchdog for the same reason: two independent brakes, because one of
+  them is inside the thing that could be wedged.
+- **`normalizeSpokenWord`** (`src/config/spokenWordInput.ts`, replaces the old `extractFirstWord`) is the
+  one place a transcript becomes a word: masked/blocked profanity → nothing, a leading one-letter token
+  dropped, a one-letter result rejected, digits → Danish number words, lowercased (the prebaked key AND the
+  case-sensitive PLS lexicon both need it), and a measured-only table repairing non-Danish spellings of
+  Danish homophones ("cat" → "kat"). **The Danish blocklist is load-bearing, not belt-and-braces**:
+  measured, `chirp_3` masks English profanity and passes Danish through in the clear — and this game
+  SPELLS ALOUD whatever it hears. Server side in `.claude/rules/api-endpoints.md`.
+- Verify it end-to-end without a voice: `.claude/skills/ui-screenshot/mic.mjs` (fake microphone fed real
+  Danish, plus silence and short-press runs). Rung 3 still owns "does it understand a real 5-year-old".

@@ -182,7 +182,15 @@ Adjust for landscape orientation.
 
 - Minimum 44px touch areas (accessibility requirement)
 - Scale up on larger screens
-- Use padding to increase tap areas without affecting visual size
+- Use padding to increase tap areas without affecting visual size — **and cancel it with a matching
+  NEGATIVE MARGIN** (`p: '16px', m: '-16px'`), so the layout box stays the size of the art and nothing on
+  the board moves because a target grew. Put the handlers on that padded wrapper, with the visual element
+  as its child.
+- **A `::after` ring is NOT a touch target.** The obvious trick — an absolutely-positioned pseudo-element
+  with a negative `inset` — looks right in computed style and Chrome does **not** hit-test it: measured
+  with `elementFromPoint` just outside the art, which returned the ancestor, not the button. Slop has to be
+  a real box. Prove it the same way (hit-test a point *inside the slop, outside the ink*), never by eye —
+  a screenshot cannot show where a press would land.
 
 ## Overlays & stacking
 

@@ -95,6 +95,18 @@ node -e "const c=require('./.vercel/output/config.json'); console.log(c.routes)"
 ```
 
 A missing env var (`[env] missing required …`) means it loaded — that is a pass for this check.
+
+**Without the Vercel CLI** (it is not installed here by default), compile the server graph yourself and
+read the OUTPUT — enough to settle any `.ts`/`.js` specifier question in seconds:
+
+```bash
+npx tsc -p tsconfig.server.json --noEmit false --outDir /tmp/srvbuild   # emits despite the TS5096 warning
+grep -o "import('\./[^']*')" /tmp/srvbuild/lib/auth-family-plugin.js    # the specifier that will SHIP
+test -f /tmp/srvbuild/lib/auth.js && echo "sibling exists"              # …and whether it resolves
+```
+
+That is how the `import('./auth.ts')` fix was confirmed: the emitted file must name a `.js` sibling that
+is actually emitted beside it.
 `.vercel/output/config.json` is the routing that ships, so read the post-`filesystem` phase there
 rather than reasoning about `vercel.json`: user `rewrites` precede the generated dynamic routes, and
 the generated catch-all for `api/auth/[...all]` matched only ONE path segment, so multi-segment
@@ -123,7 +135,10 @@ path-to-regexp "Missing parameter name". Name the wildcard: `app.all('/x/*splat'
 
 - `bug-report` GET is **fail-closed** on `BUG_REPORT_READ_KEY` (prod: 403 until the env is set,
   since reports contain child screenshots; then every GET needs `&key=`).
-- `stt` sets `features.profanityFilter` on the recognizer + caps the base64 audio size.
+- `stt` sets `features.profanityFilter` on the recognizer + caps the base64 audio size. **The filter is
+  requested but NOT sufficient**: measured, `chirp_3` masks English profanity and passes Danish through in
+  the clear, so the real protection is the blocklist in `normalizeSpokenWord` (the game spells aloud what
+  it hears). Model/region choice and the guard that pins them: `.claude/rules/audio-system.md`.
 
 ## Verify locally
 

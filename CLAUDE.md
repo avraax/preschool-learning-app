@@ -6,7 +6,6 @@ Danish educational web app for children aged 5-7. Alphabet, math, colors, and me
 
 Short, plain, natural language. Answer first. A few sentences, not a report.
 
-- **No headers, no tables, no bold-label lists** in chat. Bullets only when the content is genuinely a list.
 - **Don't explain reasoning he already agreed to**, don't estimate durations, don't recap the session.
 - Name the command, the file, or the thing to tap — then stop.
 - When he asks "in short", he means 3–5 sentences. A two-item question gets a two-item answer.
@@ -23,7 +22,8 @@ version was three sentences.
 - React 19 + TypeScript, Vite 8, Material-UI v9 (no Tailwind)
 - Framer Motion for animations, Howler.js for sound effects
 - Audio: `SimplifiedAudioController` singleton → `ttsClient` playback engine → **Azure AI Speech** (single TTS provider) → Web Speech API (fallback) → Howler (SFX). Danish da-DK voice (Christel) for most sections; Azure en-US Ava (multilingual) for the Engelsk section. The VoiceOverridePanel (opened from the "Til de voksne" corner menu) can swap the Danish narration voice live among all Azure VoiceLab voices. Danish pronunciation is corrected via a hosted W3C PLS lexicon (`public/da-DK.pls`) and per-letter phrasing overrides (`.claude/rules/audio-system.md`); inline IPA wraps a WHOLE utterance and exists only as a VoiceLab audition tool, not a per-word app fix. (Google TTS was removed in the Audio v2 rebuild; Google STT still powers "Sig et Ord".)
-- Speech input (Sig et Ord): Google Cloud Speech-to-Text v2 via `/api/stt` + `useSpeechInput` hook
+- Speech input (Sig et Ord): Google Cloud STT v2 via `/api/stt` + `useSpeechInput` — recognizer
+  **`eu/chirp_3`**, because `short` returns ZERO results for a single isolated Danish word (measured)
 - React Router DOM v7 (route components lazy-loaded via `lazyWithReload` — stale-chunk → reload-once recovery). Single hand-authored PWA manifest (`public/manifest.json`); **no service worker** (network-only)
 - Deployment: Vercel (auto-deploy on push to `master`)
 
@@ -118,7 +118,8 @@ Three rungs, and **a claim must name the rung it came from**: **(1)** headless C
 interaction, game logic, and `--audio-report`, which asserts audio actually made a sound), **(2)** real
 WebKit with an iPad UA (`webkit.mjs` — the Safari engine, the app's iOS branches, and the codec table that
 rung 1 structurally cannot catch; it can render but **cannot play audio at all**), **(3)** the owner's iPad
-— the residue: whether the Danish sounds RIGHT, real touch feel, true iPadOS 17.7 behaviour. App-wide
+— the residue: whether the Danish sounds RIGHT, real touch feel, true iPadOS 17.7 behaviour. Speech
+INPUT is drivable at rung 1 too — `mic.mjs` feeds Chrome a fake microphone from real Danish audio. App-wide
 checking runs through `sweep.mjs --phase …` (`--selftest` first — it proves the guards fire).
 
 **Unverified is not broken; say UNKNOWN.** Across the sweep sessions the probes' own defects outnumbered the

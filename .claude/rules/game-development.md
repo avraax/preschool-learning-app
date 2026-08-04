@@ -153,7 +153,11 @@ Two ways a game guard passes while the feature is broken. Both hit in one sessio
   "Hør igen" stranded at the bottom of the viewport, and the centred circular light-pool wide enough to
   read as a magenta smudge — on LIGHT skins only, which is why dark-skin review never caught it). A game
   whose answers ARE its focal content has no prompt/answer split, so it should own its column directly
-  rather than wrap it in `PromptFocus` (see Sammenlign Tal). Dense no-scroll grids (Lær Tal at 1–100 = 10 rows) must pass `TactileTile`'s
+  rather than wrap it in `PromptFocus` (see Sammenlign Tal). **The same applies to the `promptStage` SLOT
+  itself** — a fixed 40% band at the TOP with the body beneath, right for prompt-then-answer and wrong when
+  the focal element IS the interaction: Sig et Ord's mic sat in that band with an empty body under it, so
+  the board hugged the top with half the screen unused (owner, 2026-08-04). Pass no `promptStage` and
+  GameShell centres the column. Dense no-scroll grids (Lær Tal at 1–100 = 10 rows) must pass `TactileTile`'s
   **`compact`** prop — otherwise its 44px min-height + padding overflow the short rows and tiles overlap
   the row below; `LearningGrid` trips it automatically for numbers >60. A 2D grid of many small cells
   additionally needs **`field`**: the primitive's defaults are built for a roomy board, and at chart
