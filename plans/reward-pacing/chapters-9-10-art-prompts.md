@@ -1,9 +1,28 @@
 # Reward Book chapters 9 & 10 — Gemini prompt doc
 
+> **STATUS 2026-08-04.** Chapter 9 **"Tøj" is SHIPPED** (`8176206`) — 81 slots, 9 chapters, art keyed,
+> 18 clips prebaked and signed off. Chapter 10 is **BLOCKED on 4 renders**; its 7 usable sources are
+> archived in `art-src/rewards/_pending/` (that folder is a directory, so the optimizer's file filter
+> skips it and no orphan art is produced). What is outstanding, and why:
+>
+> | id | problem | what to do |
+> |---|---|---|
+> | `vejr-luftballon` | rendered on a **painted blue sky with clouds**, not flat `#00FF00` — unkeyable. Measured: 82% of the frame survives the key (a good render leaves ~15%). | re-render, batch 6 below |
+> | `vejr-drage` | same — painted sky + grass, 64% survives | re-render, batch 6 below |
+> | `vejr-kaelk` | keys perfectly, but the **silhouette fails**: at 24px the slat gaps disappear and it is an anonymous low blob, the `leg-floejte` failure mode | **change the subject** |
+> | `vejr-vindmoelle` | keys perfectly, silhouette is a **2px vertical line** with blades — thin-bar failure, and a re-render cannot fix thinness | **change the subject** |
+>
+> Both "sky" failures are one lesson: **naming a subject that lives in the sky invites the model to paint
+> the sky**, and it overrides "flat solid #00FF00 background edge to edge". Any future airborne subject
+> needs the anti-scene instruction spelled out (batch 6 does this).
+>
+> The 7 that passed and are waiting: `vejr-lyn`, `vejr-regndraabe`, `vejr-paraply`, `vejr-snemand`,
+> `vejr-sneskovl` — plus `vejr-kaelk` / `vejr-vindmoelle` which are archived but should be replaced.
+
 For Reward Pacing PRD-01 §10 / D8. The PRD settled these two chapters as **spec only**; this is the
 art brief that turns them into renders. Paste the batches below into Gemini as-is.
 
-**17 renders, not 18** — `Hat` is already baked as game art (`src/assets/games/ordleg/hat.webp`,
+**17 renders were requested, not 18** — `Hat` is already baked as game art (`src/assets/games/ordleg/hat.webp`,
 512×512) and gets reused rather than redrawn, the same way 29 of the first 45 rewards were
 (`REWARD_REUSE` in `scripts/optimize-theme-art.mjs`).
 
@@ -44,22 +63,30 @@ Everything else in the PRD's spec — ids, ASCII folding, the silhouette discipl
 
 ### Chapter 10 — `vejr` "Vejr og årstider"
 
-| slot | id | label | render? |
+Slots renumbered: chapter 9 took 73–81, so chapter 10 is **82–90**.
+
+| slot | id | label | status |
 |---|---|---|---|
-| 82 | `vejr-lyn` | Lyn | yes |
-| 83 | `vejr-regndraabe` | Regndråbe | yes |
-| 84 | `vejr-paraply` | Paraply | yes ← moved from chapter 9 |
-| 85 | `vejr-snemand` | Snemand | yes |
-| 86 | `vejr-kaelk` | Kælk | yes ← replaces Sky |
-| 87 | `vejr-sneskovl` | Sneskovl | yes ← replaces Regnbue |
-| 88 | `vejr-drage` | Drage | yes |
-| 89 | `vejr-luftballon` | Luftballon | yes ← replaces Måne |
-| 90 | `vejr-vindmoelle` | Vindmølle | yes ← replaces Sol (was already ch10) |
+| 82 | `vejr-lyn` | Lyn | ✅ rendered, silhouette passes |
+| 83 | `vejr-regndraabe` | Regndråbe | ✅ rendered, silhouette passes |
+| 84 | `vejr-paraply` | Paraply | ✅ rendered, silhouette passes |
+| 85 | `vejr-snemand` | Snemand | ✅ rendered, silhouette passes |
+| 86 | `vejr-sneskovl` | Sneskovl | ✅ rendered, silhouette passes |
+| 87 | `vejr-graeskar` | Græskar | ⬜ **replaces Kælk** (blob silhouette) |
+| 88 | `vejr-sandslot` | Sandslot | ⬜ **replaces Vindmølle** (2px tower) |
+| 89 | `vejr-drage` | Drage | ⬜ re-render, flat green |
+| 90 | `vejr-luftballon` | Luftballon | ⬜ re-render, flat green |
+
+The two swaps also give the chapter a real four-seasons spread rather than a rain-and-snow list: rain
+(Lyn, Regndråbe, Paraply), winter (Snemand, Sneskovl), spring/sky (Drage, Luftballon), **autumn
+(Græskar)**, **summer (Sandslot)** — which is what the title "Vejr og årstider" was widened for.
 
 Deliberately **avoided**, and why, so nobody re-adds them: `Sko` (vs Støvle), `Hue`/`Kasket` (vs Hat),
 `Snefnug` and `Stjerneskud` (vs the existing Sol and Stjerne — both read as spiky radial blobs at ring
-size), `Gummistøvle` (vs Støvle), `Regnfrakke` (vs Jakke), `Solbriller` (vs Briller), `Termometer` and
-`Istap` (thin bars — the `leg-floejte` failure mode), `Vandpyt` (no silhouette at all).
+size), `Gummistøvle` and `Skøjte` (vs the now-shipped Støvle), `Regnfrakke` (vs Jakke), `Solbriller`
+(vs Briller), `Termometer` and `Istap` (thin bars — the `leg-floejte` failure mode), `Vandpyt`,
+`Snebold` and `Isterning` (no silhouette at all), `Tulipan` (vs Blomst), `Badebold` (vs Bold),
+`Sneugle` (vs Ugle).
 
 ---
 
@@ -154,6 +181,36 @@ Name each file by its **id** from the tables above (`toej-stoevle.png`, `vejr-ly
 > 1. A modern white wind turbine seen from the front — a tall slim tower with THREE long blades
 >    radiating from the hub, spaced evenly like a three-pointed star.
 
+### Batch 6 — the four outstanding chapter-10 subjects
+
+Two of these are re-renders of subjects the model insisted on putting in a scene. **The anti-scene
+instruction is spelled out twice on purpose** — the first attempt lost both of them to a painted sky,
+and 82% / 64% of the frame survived the green key as a result. Two are replacement subjects whose
+silhouettes will hold up where a sled and a wind turbine did not.
+
+> Generate 4 SEPARATE images, one per subject below — not a collage.
+> Each: single centered subject, soft-3D claymation style, Pixar-lite, rounded matte clay, soft
+> top-left key light, gentle rim light, soft contact shadow, warm and child-safe, slight 3/4 top-down
+> angle, no text or letters, square 1:1, highest resolution.
+> **The background must be ONE flat solid #00FF00 green, edge to edge — no sky, no clouds, no ground,
+> no horizon, no scenery of any kind, even for subjects that would normally be outdoors. The subject
+> must float on plain green.**
+>
+> 1. A hot-air balloon — a large round balloon in bright rainbow stripes, with a small SQUARE wicker
+>    basket hanging clearly below it on short ropes. The basket must be obvious. Remember: flat solid
+>    #00FF00 behind it, NOT a sky.
+> 2. A diamond-shaped kite in bright colours, seen from the front, with a long ribbon tail hanging
+>    below it in a gentle wave. The tail is essential. Remember: flat solid #00FF00 behind it, NOT a
+>    sky and NOT grass.
+> 3. An autumn pumpkin — WIDE and squat rather than tall, in warm orange, with clearly visible vertical
+>    ribs and a short chunky stem on top. Keep it distinctly wider than it is tall, so its outline can
+>    never be mistaken for an apple.
+> 4. A child's sandcastle — a broad sand-coloured base with THREE stepped towers on top, the middle one
+>    tallest, each with a small flag-less rounded cap. Chunky and simple, not detailed.
+
+Save with right-click, name them `vejr-luftballon.png`, `vejr-drage.png`, `vejr-graeskar.png`,
+`vejr-sandslot.png`, and drop the folder path.
+
 ---
 
 ## 4. Accepting the renders — the silhouette IS the test
@@ -175,6 +232,8 @@ blob, and each has a note in its prompt above aimed at exactly that:
 | Paraply vs Luftballon | shallow wide canopy + hook handle vs full sphere + square basket |
 | Snemand vs Luftballon | two stacked balls with a waist vs one ball + basket |
 | Sneskovl vs Drage | blade + straight handle vs diamond + wavy tail |
+| Græskar vs Æble (ch. 3) | the pumpkin must be visibly WIDER than tall, with ribs |
+| Sandslot vs Snemand | three stepped towers vs two stacked balls |
 
 **If a subject can't form a silhouette, change the SUBJECT, not the render.** That is what turned
 `leg-floejte` into `leg-xylofon` after two failed attempts. These chapters are unreached by any child,
@@ -208,6 +267,6 @@ Once the renders are in a folder, hand over the path. Then, in order:
 6. **`npm run build && npm test && npm run lint`**, then check the new chapter chips in Min Bog
    (`/album?rewards=90`) and one ceremony at `?rewards=80` → chapter 9 close.
 
-Expected totals afterwards: **90 slots, 10 chapters**, `xpForSlots(90) = 10 080 XP` ≈ 210–220 rounds of
+Expected totals once chapter 10 lands: **90 slots, 10 chapters**, `xpForSlots(90) = 10 080 XP` ≈ 210–220 rounds of
 ordinary play (210 at a clean 48-XP round, 219 at the PRD's 46-XP average). `COMPANION_STAGES` stays 5 — the book grows, the companion art does not, and it must
 never regress.
