@@ -31,6 +31,35 @@ verify it at 844×390 (and 667×375) with the ui-screenshot skill. GameShell/Gam
 UnifiedQuizGame/LearningGrid/UnifiedMemoryGame/RoundResultScreen already carry compact variants —
 reuse them before inventing new ones.
 
+### A `PHONE_LANDSCAPE` variant with no `PHONE_PORTRAIT` sibling is a bug waiting to be measured
+
+Phone landscape gets fixed first because it is the obviously cramped one, and phone PORTRAIT is then left
+inheriting `xs` — which in this codebase is a roomy tablet-ish layout, not a phone one. Lær Engelsk shipped
+that way: two columns of 96px cards, i.e. five rows, under a hero and two chip rows, so the category chips
+painted straight OVER the word cards and four animals fell below the fold. **Body overflow is `hidden`, so
+"below the fold" here means unreachable, not scrollable** — always check `scrollHeight` vs `innerHeight`
+and for a scrollable ancestor before deciding an overflow is benign.
+
+Two things that make the fix converge instead of oscillating:
+
+- **The binding constraint is usually the ROW COUNT, not the item height.** The grid is centred in a flex
+  parent, so an overflow is clipped at BOTH ends and shrinking cards moves the last row by half of what
+  you removed — 74→66px changed nothing measurable. Removing a whole row does. Match the column count the
+  landscape variant already uses (5 for a 10-item grid) rather than shaving pixels.
+- **Verify at 375×667, not just 390×844.** Four columns cleared the taller phone and still clipped the
+  iPhone SE, which is 177px shorter. Both sizes are named in this file for that reason.
+
+### A green unit suite is NOT device coverage
+
+`sceneLayers.test.ts` is the ONLY unit consumer of `REFERENCE_VIEWPORTS`, and it is **insensitive to
+viewport size**: `overscanPx` is `max(fraction × size, ceil(travel) + 6)`, so its `overscan < travel` term
+can never be true at any viewport, and the one term that scales with height (`offsetY`) sits on a single
+layer that is in `OFFSET_EXEMPT`. Adding a 1×1 viewport still passed. It remains worth keeping — it catches
+a NEW nudged edge-covering layer, which is what it was written for — but **adding a viewport to that array
+buys no layout coverage.** Device-size checking comes from the browser sweep
+(`.claude/skills/ui-screenshot/sweep.mjs --phase layout`), which measures real rects in a real engine and
+confirms them by hit-test.
+
 ## MUI units & this project's breakpoints — two things that don't read like traps
 
 - **The breakpoints are OVERRIDDEN** in `src/theme/buildTheme.ts`: `sm 600 · md 768 · lg 1024`. So `md`

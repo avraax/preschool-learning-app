@@ -101,7 +101,7 @@ const GUARD = `(()=>{const t=(document.body.innerText||'');
   buttons: document.querySelectorAll('button').length,
   tiles: document.querySelectorAll('[data-answer-tile]').length,
   drags: document.querySelectorAll('[aria-roledescription="draggable"]').length,
-  text: t.replace(/\\s+/g,' ').slice(0,160)
+  text: t.replace(/\\s+/g,' ').slice(0,800)
  })})()`
 
 // Bounds guard: every interactive element must sit inside the viewport. GameShell's root is
@@ -124,14 +124,28 @@ const BOUNDS = `(()=>{const bad=[];const W=innerWidth,H=innerHeight;const t=(doc
    return seen? {left:l,top:tp,right:rt,bottom:b,width:rt-l,height:b-tp} : e.getBoundingClientRect()};
  document.querySelectorAll('button,[data-answer-tile],[aria-roledescription="draggable"],[data-prompt-focus]').forEach(e=>{
   const r=visualRect(e); if(r.width<2||r.height<2) return;
-  if(r.left<-1||r.right>W+1||r.top<-1||r.bottom>H+1)
+  if(!(r.left<-1||r.right>W+1||r.top<-1||r.bottom>H+1)) return;
+  // A rect that leaves the viewport is only a DEFECT if the child cannot reach the thing. Neither the
+  // element's own rect nor its descendants' union is the ink: Farvejagt's wrapper sits 40px below its
+  // translated child, and ObjectArt/SymbolTile scale their <img> ~2.5-3x over transparent padding, so
+  // the union over-reports by that factor. Both directions produced false positives here. So confirm by
+  // HIT-TESTING the on-screen part, which is the question that actually matters (SKILL.md says the same
+  // about the transform trap). Reachable => not a finding; unreachable => real, and that is the shape
+  // the genuine Lær Engelsk overflow had (cards wholly below an unscrollable fold).
+  const cx=Math.min(W-2,Math.max(2,(Math.max(0,r.left)+Math.min(W,r.right))/2));
+  const cy=Math.min(H-2,Math.max(2,(Math.max(0,r.top)+Math.min(H,r.bottom))/2));
+  const hit=document.elementFromPoint(Math.round(cx),Math.round(cy));
+  const reachable=!!hit && (hit===e || e.contains(hit) || hit.contains(e));
+  if(!reachable)
    bad.push({t:(e.getAttribute('aria-label')||e.textContent||e.tagName).replace(/\\s+/g,' ').slice(0,32),
              l:Math.round(r.left),r:Math.round(r.right),tp:Math.round(r.top),b:Math.round(r.bottom)});
  });
  return JSON.stringify({W:W,H:H,off:bad.slice(0,8),offCount:bad.length,
   crashed:/Noget gik galt|Ups!/.test(t), notFound:/Denne side findes ikke/.test(t),
   rootKids:(document.querySelector('#root')||{children:[]}).children.length,
-  text:t.replace(/\\s+/g,' ').slice(0,160)})})()`
+  // 800, not 160: the runner regexes the route's expected Danish title against this, and a denser board
+  // pushed the title past a 160-char slice — reporting a title that WAS on screen as missing.
+  text:t.replace(/\\s+/g,' ').slice(0,800)})})()`
 
 // Which narration trigger each screen offers. Discovered, not assumed: quizzes carry RepeatButton
 // ("Hør igen"), browses narrate on tapping an item, and Sig et Ord is speech INPUT with nothing to

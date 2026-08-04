@@ -87,6 +87,63 @@ node .claude/skills/ui-screenshot/cdp.mjs --url http://127.0.0.1:5173/math/count
   --w 900 --h 440 --wait-for '#root > *' --out landscape.png
 ```
 
+### Sweeping the WHOLE app (`sweep.mjs`) — and why not a shell loop
+
+```bash
+node .claude/skills/ui-screenshot/sweep.mjs --selftest              # ALWAYS first: proves the guards fire
+node .claude/skills/ui-screenshot/sweep.mjs --phase smoke --engine both
+node .claude/skills/ui-screenshot/sweep.mjs --phase layout --concurrency 4 --json out.json
+#   phases: smoke | layout | audio | round | difficulty | triggers
+#   --only <substr>  --engine chrome|webkit|both  --concurrency n
+```
+It plans every job up front and each must end PASS / FAIL / N/A / UNKNOWN; anything else is DEAD,
+retried once, then reported. Routes and expected Danish titles are DERIVED from `categoryThemes.ts`, and
+difficulty exemptions from `difficulty.ts`'s own `EXEMPT`/`TILE_AXIS_EXEMPT` maps — so a stale hand-list
+can't become a silent coverage hole. A full sweep takes 10+ min: run it with `run_in_background`, because
+the Bash tool caps at 10 minutes.
+
+**A shell `for` loop over the drivers lies in two directions.** A dead iteration prints nothing and the
+loop carries on, so a "5-viewport sweep" silently covers 3 (this bit twice in one session — including
+once while measuring perf, where it produced two blank rows I nearly ignored). And a crashed or mistyped
+route satisfies every wait and passes vacuously. Count one result line per planned job, or use the runner.
+
+### A probe needs FOUR outcomes, not two
+
+The single most expensive lesson of the sweep sessions: **almost every defect a new probe reports is the
+probe's own.** Roughly ten probe bugs to two real ones. They were all the same mistake — folding a state
+that isn't a failure into the failure bucket. Budget for this, and give every probe:
+
+- **N/A** — the feature legitimately doesn't exist here. Læs Ordet has no replay by design (the child
+  can't spell yet), Sig et Ord is speech INPUT, browses have no round, `EXEMPT` games ignore difficulty.
+- **UNKNOWN** — the measurement didn't work. A dependency wasn't ready (`progressStore` is INERT until
+  `profileStore.attach()`, so an early XP read is `null` — folding that into "XP didn't move" reported a
+  game paying 53 XP as paying 0), or the probe can't drive the mechanic (colour-mixing needs the right
+  combination; Hvilken Farve needs a real drag). **Unverified is not broken**, and laundering it into a
+  pass is worse than both.
+- **Expected-but-odd states must be enumerated WITH REASONS**, or they read as bugs: the music bed starts
+  at `volume 0` and fades in; Howler's `_unlockAudio` walks a 10-node html5 pool of src-less elements on
+  every touch platform; `AbortError` is the documented no-queue cancel; the in-game mascot tap is
+  animation-only.
+- **Assertions must be tight enough to fail.** `xpAfter > xpBefore` passed on a product with `taskXp`
+  zeroed, because bonuses still credited 8. Assert the contract (~one reward per round), not mere motion.
+
+Corollary: **a phase with its own `--eval` payload must be judged on its OWN fields.** Reusing another
+phase's judging read undefined values and reported "#root empty" on every healthy page — twice.
+
+### Two rect traps, in opposite directions — hit-test instead
+
+`getBoundingClientRect()` is not the ink, and it errs both ways:
+- **Too low**: Farvejagt's draggable wrapper sits at the scatter anchor while its only child is
+  `translate(-50%,-50%)`'d away, so the wrapper hangs 40px below the painted object — 3 phantom
+  "off-screen" objects whose ink and hit-target were both inside.
+- **Too big**: `ObjectArt`/`SymbolTile` scale their `<img>` ~2.5–3× over transparent padding, so a
+  union-of-descendants measure over-reports by that factor (the documented `SymbolTile` trap).
+
+An `<img>`-only rule "fixes" the first and hides real text-label overflow. **So confirm any off-screen
+rect with `document.elementFromPoint` at the on-screen part**: reachable → not a finding; unreachable →
+real, which is the shape a genuine clipped-below-an-unscrollable-fold bug has. `sweep.mjs --phase layout`
+does this.
+
 ### Real WebKit / iOS code paths (`webkit.mjs`)
 
 Same flags as `cdp.mjs` (`--url --out --clip --measure --eval --wait-for --settle --click --click-text
@@ -119,6 +176,22 @@ node .claude/skills/ui-screenshot/webkit.mjs --url 'http://127.0.0.1:5173/album?
   (`platform === 'MacIntel' && maxTouchPoints > 1`) is NOT reachable here. `'ontouchstart' in window` is
   true, so `touchSupported` is.
 
+### Performance on the target device (`--cpu-throttle`, `--perf`, `build:harness`)
+
+```bash
+npm run build:harness && node node_modules/vite/bin/vite.js preview --port 4173 --host 127.0.0.1
+node .claude/skills/ui-screenshot/cdp.mjs --url 'http://127.0.0.1:4173/album?nogate=1' \
+  --w 1366 --h 992 --settle 4500 --perf --cpu-throttle 4
+```
+**Measure the harness build, never the dev server** — unbundled ESM overstates load ~10× (FCP 1.3s vs
+0.3s on the same screen), and my first "production" numbers were actually the login screen at 6.4MB heap,
+caught only because the number was implausible. `?nogate=1` is `DEV &&`-gated and `import.meta.env.DEV` is
+false in EVERY `vite build` regardless of `--mode`, so a normal build tree-shakes the harness away;
+`build:harness` is the production-shaped bundle that keeps it (see `docs/device-testing.md`).
+`--cpu-throttle` scales CPU only — not an A10X. **Frame/jank numbers are not trustworthy**: headless runs
+`--disable-gpu`, so raster is software and a 33ms median at 1× is an artifact. Load timings and the
+relative ranking between screens are the usable signals.
+
 ### Proving audio actually made a sound (`--audio-report`)
 
 Works on `cdp.mjs` (playback + codecs) and `webkit.mjs` (codecs only — see the ladder). It injects
@@ -132,7 +205,15 @@ node .claude/skills/ui-screenshot/cdp.mjs --url 'http://127.0.0.1:5173/alphabet/
 ```
 
 **You must drive a trigger.** Nothing plays on mount (narration is gated on interaction), so a bare run
-reports `NO AUDIO ATTEMPTED`. `[aria-label="Hør igen"]` is the reliable one in task games.
+reports `NO AUDIO ATTEMPTED`. `[aria-label="Hør igen"]` is the reliable one in task games; browses use
+`Hør alfabetet` / `Hør tallene`, menus `Snak med figuren`. **Never `Tryk på figuren`** — the in-game
+mascot's handler is animation-only (`Mascot.handleTap`), so using it as a trigger reports correct games as
+silent. A trigger candidate must actually be a narration control.
+
+**`cdp.mjs --ipad-ua` is the only way to check audio ON an iOS code path.** WebKit has no WebAudio and
+Chrome has no Safari codec table, so an iPad UA in Chrome is the one place `deviceDetection`'s isIOS
+branches, the unlock path and Howler's touch-platform pool run WHILE clips can still play. It is not
+Safari and not the device — the codec verdict still only comes from `webkit.mjs`.
 
 The probe sorts every `play()` into four buckets, and the classification is the whole difficulty —
 three of the four look like silence and are not:
@@ -445,6 +526,10 @@ stripped, and the failure looks like a page bug. Write the JS to a **file in the
   consecutive invocations, and re-run the one that failed. A sweep over several viewports in one shell
   loop **hides** this: the dead iteration prints nothing and the loop carries on, so count one
   `measure:`/`screenshot saved:` line **per viewport** before claiming "verified at all sizes".
+- **Git Bash mangles a leading-slash ARGUMENT into a Windows path.** `--only /math/numbers` reached the
+  script as `C:/Program Files/Git/math/numbers`, so the filter matched nothing and three runs printed no
+  results at all — which reads like the sweep being broken. Drop the leading slash (`--only math/numbers`)
+  or set `MSYS_NO_PATHCONV=1`. Same class as the PowerShell quote-stripping note below.
 - **Run the driver on the Windows side too** when working from WSL: WSL cannot reach the
   Windows-bound servers or Chrome's CDP port (NAT). Use
   `powershell.exe -Command "node .claude/skills/ui-screenshot/cdp.mjs --url '...' ..."`.
