@@ -1,23 +1,26 @@
 # Reward Book chapters 9 & 10 — Gemini prompt doc
 
-> **STATUS 2026-08-04.** Chapter 9 **"Tøj" is SHIPPED** (`8176206`) — 81 slots, 9 chapters, art keyed,
-> 18 clips prebaked and signed off. Chapter 10 is **BLOCKED on 4 renders**; its 7 usable sources are
-> archived in `art-src/rewards/_pending/` (that folder is a directory, so the optimizer's file filter
-> skips it and no orphan art is produced). What is outstanding, and why:
+> **STATUS 2026-08-04 — BOTH CHAPTERS SHIPPED. The book is 90 slots / 10 chapters.**
+> Chapter 9 "Tøj" in `8176206`, chapter 10 "Vejr og årstider" in `9b0a24e`. 21 renders delivered over
+> two rounds, 19 used (Hat reused from game art; Kælk and Vindmølle dropped). 36 clips prebaked and
+> signed off. Nothing outstanding here — kept for the four lessons below, which apply to every future
+> art round.
 >
-> | id | problem | what to do |
-> |---|---|---|
-> | `vejr-luftballon` | rendered on a **painted blue sky with clouds**, not flat `#00FF00` — unkeyable. Measured: 82% of the frame survives the key (a good render leaves ~15%). | re-render, batch 6 below |
-> | `vejr-drage` | same — painted sky + grass, 64% survives | re-render, batch 6 below |
-> | `vejr-kaelk` | keys perfectly, but the **silhouette fails**: at 24px the slat gaps disappear and it is an anonymous low blob, the `leg-floejte` failure mode | **change the subject** |
-> | `vejr-vindmoelle` | keys perfectly, silhouette is a **2px vertical line** with blades — thin-bar failure, and a re-render cannot fix thinness | **change the subject** |
->
-> Both "sky" failures are one lesson: **naming a subject that lives in the sky invites the model to paint
-> the sky**, and it overrides "flat solid #00FF00 background edge to edge". Any future airborne subject
-> needs the anti-scene instruction spelled out (batch 6 does this).
->
-> The 7 that passed and are waiting: `vejr-lyn`, `vejr-regndraabe`, `vejr-paraply`, `vejr-snemand`,
-> `vejr-sneskovl` — plus `vejr-kaelk` / `vejr-vindmoelle` which are archived but should be replaced.
+> 1. **Naming a subject that lives in the sky makes the model paint a sky**, overriding "flat solid
+>    #00FF00 edge to edge". Luftballon and Drage came back unkeyable on the first pass — measured, 82%
+>    and 64% of the frame survived the green key where a good render leaves ~15%. Stating the
+>    anti-scene rule twice per subject (batch 6) fixed both on the retry, at 75–94% green.
+> 2. **A green subject only needs a keying override when its green is near the SCREEN's value.** The
+>    mint glasses vanished entirely on the defaults; the kite's and balloon's saturated green panels
+>    needed nothing, because they sit far from the screen and are interior, where the border flood-fill
+>    never reaches. Measure before assuming an override.
+> 3. **Keying cleanly and silhouetting well are independent.** Kælk and Vindmølle keyed perfectly and
+>    still failed — a sled's slat gaps vanish at 24px into an anonymous blob, and a turbine tower is a
+>    2px line. Per `.claude/rules/scene-assets.md` the fix is a new SUBJECT, so they became Græskar and
+>    Sandslot.
+> 4. **Check the shipped labels BEFORE writing prompts.** Four of the PRD's chapter-10 subjects already
+>    existed in chapter 4. `stickers.test.ts` would have caught it at build time, so the cost of missing
+>    it is wasted renders, not a bug.
 
 For Reward Pacing PRD-01 §10 / D8. The PRD settled these two chapters as **spec only**; this is the
 art brief that turns them into renders. Paste the batches below into Gemini as-is.
@@ -72,10 +75,10 @@ Slots renumbered: chapter 9 took 73–81, so chapter 10 is **82–90**.
 | 84 | `vejr-paraply` | Paraply | ✅ rendered, silhouette passes |
 | 85 | `vejr-snemand` | Snemand | ✅ rendered, silhouette passes |
 | 86 | `vejr-sneskovl` | Sneskovl | ✅ rendered, silhouette passes |
-| 87 | `vejr-graeskar` | Græskar | ⬜ **replaces Kælk** (blob silhouette) |
-| 88 | `vejr-sandslot` | Sandslot | ⬜ **replaces Vindmølle** (2px tower) |
-| 89 | `vejr-drage` | Drage | ⬜ re-render, flat green |
-| 90 | `vejr-luftballon` | Luftballon | ⬜ re-render, flat green |
+| 87 |  | Græskar | ✅ **replaced Kælk** (blob silhouette) |
+| 88 |  | Sandslot | ✅ **replaced Vindmølle** (2px tower) |
+| 89 |  | Drage | ✅ re-rendered on flat green |
+| 90 |  | Luftballon | ✅ re-rendered on flat green |
 
 The two swaps also give the chapter a real four-seasons spread rather than a rain-and-snow list: rain
 (Lyn, Regndråbe, Paraply), winter (Snemand, Sneskovl), spring/sky (Drage, Luftballon), **autumn
@@ -267,6 +270,6 @@ Once the renders are in a folder, hand over the path. Then, in order:
 6. **`npm run build && npm test && npm run lint`**, then check the new chapter chips in Min Bog
    (`/album?rewards=90`) and one ceremony at `?rewards=80` → chapter 9 close.
 
-Expected totals once chapter 10 lands: **90 slots, 10 chapters**, `xpForSlots(90) = 10 080 XP` ≈ 210–220 rounds of
+Final totals: **90 slots, 10 chapters**, `xpForSlots(90) = 10 080 XP` ≈ 210–220 rounds of
 ordinary play (210 at a clean 48-XP round, 219 at the PRD's 46-XP average). `COMPANION_STAGES` stays 5 — the book grows, the companion art does not, and it must
 never regress.
