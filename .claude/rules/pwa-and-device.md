@@ -73,6 +73,16 @@ PRD-07. **`rewrites` and `headers` obey OPPOSITE rules, and the rewrite one is l
   `sfxClient`) — don't co-bundle lazy-only libs with it (react-confetti rides the lazy
   `CelebrationEffect`/`StickerReveal` chunk). The whole adult area is ONE `React.lazy` chunk
   (`AdultSettings`), leaving only the gear button eager in `AdultCorner`.
+- **`manualChunks` is NOT what decides the eager set — the preload walk is.** Vite 8 / Rolldown emits a
+  `<link rel="modulepreload">` for chunks reachable through a **dynamic** import too, so `index.html` was
+  preloading whole lazy routes (`dnd-vendor`, `colorContent`) although nothing in `App.tsx`'s static graph
+  touches them. A preload FETCHES AND COMPILES a module — real parse work on a 2017 iPad, before first
+  paint, for a screen the child may never open. `build.modulePreload.resolveDependencies` prunes them for
+  **`hostType === 'html'` only**, so `__vitePreload` still resolves their dependencies at navigation.
+  Adding a name to that list is deliberate: prune something the entry really needs and the symptom is a
+  slower first paint, not a failure — so re-check the lazy routes still mount. The eager list, the
+  re-derivation command and the current total live in `docs/device-testing.md`; **derive it from
+  `dist/index.html`, never by reasoning about the import graph** (that is what got this wrong).
 
 ## The compatibility floor IS the target device
 

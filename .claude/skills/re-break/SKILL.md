@@ -116,6 +116,14 @@ the *generator* for another. A table-only break can pass while the code ignores 
   mutation was half. Restore the entire mechanism (wrap **and** the counting) and it flips. If a break
   produces no observable difference, ask whether the mechanism has more than one part before concluding
   the test is vacuous.
+- **The comment-stripping itself is unproven until you break IT.** Every source-reading guard here strips
+  comments first, because the "why" comment sitting right above a fix names the forbidden thing — written
+  by the same hand as the guard. So `stripComments` is load-bearing, and a guard can pass either because
+  the fix is present or because the stripping is silently working. **Re-break it in both directions**:
+  add a prose mention of the forbidden thing to a guarded file (the suite must stay GREEN), then disable
+  the stripping in the helper (it must go RED on that comment alone). Adding
+  `// Never reach for content-visibility … no repeat: Infinity loops` to one file turned 5 tests red the
+  moment stripping was off — that is the proof the strip does real work, and it costs two runs.
 
 ## Anchors worth targeting in this repo
 

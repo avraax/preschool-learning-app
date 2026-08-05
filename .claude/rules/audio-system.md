@@ -48,6 +48,17 @@ questions + facts, comparison facts, sequence read-backs, colour-mix lines, quiz
 deliberate exception is Sig et Ord, which reads back whatever word the child said — genuinely
 unbounded. Treat "this line hits Azure at runtime" as a bug to be fixed, not a normal state.
 
+**The manifest is a DYNAMIC import, and the lookup MUST NOT await it** (Performance PRD-01 W7). It is
+166 KB of lookup table that nothing needs at mount, so it was the third-largest thing in the eager
+preload; `ttsClient` now `import()`s it and kicks that load at module init. The constraint is the iOS one
+already stated below: **iOS consumes the transient user-activation across an `await`**, and the prebaked
+branch of `synthesizeAndPlay` reaches `this.play()` with NOTHING awaited in front of it — that is what
+keeps the first tap in-gesture. So `prebakedFor()` reads a synchronously-available map or reports a
+**MISS**, and a miss falls through to live Azure, which is the path dynamic text already takes: a slower
+first clip, never silence. Awaiting the manifest inside the lookup would trade a load win for silent
+first-tap failures on the one device this matters on. Verify with `cdp.mjs --audio-report` — the first tap
+must play a `/sounds/tts/<hash>.mp3`, not a live synth.
+
 ## PROTOCOL: adding or changing a spoken line
 
 Follow this every time, for any new narration — a new prompt, a new fact, a reworded line, a new

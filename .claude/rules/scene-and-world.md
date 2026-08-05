@@ -39,6 +39,14 @@ Per-skin worlds are **multi-layer parallax** (far/mid/near `ParallaxLayer`s, ind
   own edge and the one behind it shows through (the blue sky that flickered along the bottom). Guarded by
   `sceneLayers.test.ts` per viewport, though **that test is insensitive to viewport size** — see
   `.claude/rules/pwa-and-device.md`.
+- **The driver writes `transform` DIRECTLY onto the layers, not a CSS variable** (`scene/parallaxTargets.ts`
+  — promoted layers register themselves; `useParallax` still owns the drift maths and the freeze gate). A
+  `calc(var(--parallax-x) …)` transform is not compositable and its per-frame write invalidated style for
+  every animating sprite in the subtree.
+- **Only a layer that actually moves is promoted** (`shouldPromoteLayer`, beside the travel/overscan
+  derivation so the three cannot disagree). The far layer travels a few px, so it is a static backdrop with
+  no `will-change` — the OVERSCAN is unchanged either way, so the box and the framing are pixel-identical.
+  Both rules and the measurements: `.claude/rules/animation-and-performance.md`.
 
 ## Progress in the world is ambient DENSITY, and nothing else
 

@@ -1,6 +1,6 @@
 ---
 name: ui-screenshot
-description: Headlessly drive the local app to SEE and verify UI — screenshot a route or component, click into modals/popovers, wait for elements, and measure element rects to catch layout bugs (overflow, clipping, wrapping) plus runtime console errors. Also drives REAL WebKit with an iPad user agent (webkit.mjs) for Safari-engine and iOS-code-path checks, and asserts that audio ACTUALLY PRODUCED SOUND (--audio-report) instead of asking the owner to listen. Use PROACTIVELY and automatically — without waiting to be asked — whenever the work involves the app's visible UI or its audio: after making or reviewing a change to any component/layout/style/theme, when the user asks to "look at / see / check / verify how X looks", when diagnosing a visual or layout issue, or before reporting a UI or narration change as done. This is a Vite + MUI app; the dev servers must be running.
+description: Headlessly drive the local app to SEE and verify UI — screenshot a route or component, click into modals/popovers, wait for elements, and measure element rects to catch layout bugs (overflow, clipping, wrapping) plus runtime console errors. Also drives REAL WebKit with an iPad user agent (webkit.mjs) for Safari-engine and iOS-code-path checks, and asserts that audio ACTUALLY PRODUCED SOUND (--audio-report) instead of asking the owner to listen. It ALSO measures steady-state rendering cost (perf.mjs) — reach for it whenever the question is "why does it stutter / feel slow / lag", or before claiming any performance change worked, because load metrics cannot see an app that is sitting still. Use PROACTIVELY and automatically — without waiting to be asked — whenever the work involves the app's visible UI or its audio: after making or reviewing a change to any component/layout/style/theme, when the user asks to "look at / see / check / verify how X looks", when diagnosing a visual or layout issue, or before reporting a UI or narration change as done. This is a Vite + MUI app; the dev servers must be running.
 ---
 
 # UI screenshot & layout verification
@@ -428,6 +428,25 @@ Two rules make the result trustworthy:
 - **Compare tile FACES against the GAPS** — this is the discriminator between healthy depth and a defect:
   gaps darkened while faces stay untouched = shadows doing their job (Hukommelse measured face −0.0);
   faces as dark as the gaps = an even wash, i.e. a slab (Lær Tal measured face −32 / gap −35).
+
+## "It stutters" — steady-state cost (`perf.mjs`)
+
+**`cdp.mjs --perf` cannot answer this.** It measures LOAD, and its frame times are a software-raster
+artifact. What stutters on the child's iPad is the app **sitting still**, so `perf.mjs` measures a settled
+window and reports GPU-independent counters (`recalcPerSec`/`recalcMsPerSec`, `busyPct`, `layers`/`layerMB`,
+and an `animated`/`willChange`/`filtered` computed-style census). Harness build + `?nogate=1`, never dev.
+
+```bash
+node .claude/skills/ui-screenshot/perf.mjs --url "http://127.0.0.1:4173/?nogate=1" --label home --cpu-throttle 6
+```
+
+Its point is a **subtraction, not a number** — `--reduce-motion` (the floor), `--inject-css`,
+`--no-parallax-vars`, `--eval`, `--inject-js-pre`, `--click`, `--wait-for`.
+
+**Read `perf.md` (sibling) before trusting any result.** Four traps live there, each of which produced a
+wrong conclusion in the PRD-01 session: gate on `recalcMsPerSec` not `recalcPerSec`; take a same-build
+NOISE FLOOR before believing any screenshot A/B; a dpr 1-vs-2 run separates raster from CPU; and an
+attribution measured while something else saturates the thread is worthless.
 
 ## Options
 - Core: `--url` (req) · `--out <png>` · `--w/--h` (viewport, default 540x940)

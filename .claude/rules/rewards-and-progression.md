@@ -163,4 +163,14 @@ never violate the invariants. Merge algebra + the G-Counter/epoch rules: `.claud
 is NO v3 migration** — the accounts release was a deliberate clean sheet, and `utils/storageReset.ts`
 sweeps the old keys once per device.
 
+**A new `settings` field must be COPIED EXPLICITLY in `normalizeSettings`, or it is silently dropped on
+load.** That function builds a fresh object from `defaultSettings()` and copies field by field, so an
+addition to the `ProgressSettings` interface type-checks, persists, round-trips through the pane's own
+read, and then vanishes the moment the document is re-hydrated. This shipped the "Flydende grafik" toggle
+doing NOTHING with every unit test green (the setting was written, read back from `localStorage` by the
+test, and never reached the renderer). An OPTIONAL field whose absence means the default needs no schema
+bump and no migration — that is the `themeId` / `smoothGraphics` pattern — but it still needs the copy.
+The tell is that the pane shows the right value while behaviour doesn't change; check the normaliser
+before anything else, and prefer an end-to-end check over a unit test that only re-reads storage.
+
 The word **"trin" no longer appears anywhere** child- or adult-facing.
