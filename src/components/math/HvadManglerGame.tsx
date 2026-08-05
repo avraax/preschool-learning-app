@@ -2,13 +2,13 @@ import React from 'react'
 import { Box } from '@mui/material'
 import { Star, Heart } from 'lucide-react'
 import { useTheme } from '@mui/material/styles'
-import { motion } from 'framer-motion'
 import UnifiedQuizGame, { UnifiedQuizConfig, QuizItem, QUIZ_PROMPT_SLOT_ID } from '../common/UnifiedQuizGame'
 import { DroppableZone } from '../common/dnd/DroppableZone'
 import { getCategoryTheme } from '../../config/categoryThemes'
 import { MathRepeatButton } from '../common/RepeatButton'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
 import { hexToRgba } from '../../theme/tokens/helpers'
+import { idlePulse } from '../../theme/idleMotion'
 import { HVAD_MANGLER_PROMPT, sequenceFactText } from '../../config/gamePhrases'
 import { makeSequenceQuestion, sequenceDistractors } from '../../config/mathProblems'
 import { progressStore } from '../../services/progressStore'
@@ -119,6 +119,7 @@ const sequenceFact = async (item: QuizItem, audio: any): Promise<string> => {
 
 const HvadManglerGame: React.FC = () => {
   const reduce = useReducedMotion()
+  const blankPulse = idlePulse(reduce, { peak: 1.18, durationS: 1.1, as: 'span' })
   const muiTheme = useTheme()
   const category = getCategoryTheme('math')
 
@@ -228,10 +229,11 @@ const HvadManglerGame: React.FC = () => {
             const slot = (
               <Box
                 key={i}
-                component={motion.span}
-                animate={isBlank && !reduce ? { scale: [1, 1.18, 1] } : undefined}
-                transition={isBlank && !reduce ? { duration: 1.1, repeat: Infinity, ease: 'easeInOut' } : undefined}
-                sx={{
+                component="span"
+                // The blank slot's "put something here" pulse — CSS keyframes, same 1.18 / 1.1s
+                // (Performance PRD-01 W1). No framer transform on this element, so it can carry it.
+                {...blankPulse.props}
+                sx={[{
                   display: 'inline-flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -259,7 +261,7 @@ const HvadManglerGame: React.FC = () => {
                       px: 0.25,
                     }),
                   },
-                }}
+                }, isBlank ? blankPulse.sx : {}]}
               >
                 {token}
               </Box>

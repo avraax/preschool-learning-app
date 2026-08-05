@@ -17,6 +17,7 @@ import { primaryColors, possibleTargets, mixingRules, makeTargetBag, TARGET_PRIO
 import { colorMixResultText } from '../../config/gamePhrases'
 import { hexToRgba } from '../../theme/tokens/helpers'
 import { SNAP, BOUNCE } from '../../theme/motion'
+import { idleFloat } from '../../theme/idleMotion'
 import { useRound } from '../../hooks/useRound'
 import { progressStore, type RoundOutcome } from '../../services/progressStore'
 import { COLORS_RAMFARVEN, starThresholdsFor, type DifficultyLevel } from '../../config/difficulty'
@@ -106,6 +107,8 @@ const recipeFor = (targetName: string): [ColorDroplet, ColorDroplet] | null => {
 const RamFarvenGame: React.FC = () => {
   const muiTheme = useTheme()
   const reduce = useReducedMotion()
+  // "Drop here" arrow nudge — negative distance = downward (PRD-01 W1: CSS, not a framer loop).
+  const dropNudge = idleFloat(reduce, { distance: -4, durationS: 1.4 })
   const t = getCategoryTheme('colors')
   const sensors = useDragOnlySensors()
 
@@ -756,14 +759,14 @@ const RamFarvenGame: React.FC = () => {
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
                           pointerEvents: 'none'
                         }}>
-                          <motion.div
-                            animate={reduce ? {} : { y: [0, 4, 0] }}
-                            transition={reduce ? undefined : { duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
-                          >
+                          {/* The "drop here" nudge bobs DOWNWARD (negative distance) for as long as the
+                              pot is empty — always-on, so CSS keyframes rather than a framer
+                              `repeat: Infinity` loop, same 4px / 1.4s (PRD-01 W1). */}
+                          <Box {...dropNudge.props} sx={[{}, dropNudge.sx]}>
                             <Box aria-hidden sx={{ display: 'flex', opacity: 0.6, color: muiTheme.scene.dark ? 'rgba(255,255,255,0.85)' : t.accentColor, '& svg': { width: 'clamp(1.6rem, 6vw, 2.4rem)', height: 'auto' } }}>
                               <ArrowDown strokeWidth={2.75} />
                             </Box>
-                          </motion.div>
+                          </Box>
                         </Box>
                       )}
 

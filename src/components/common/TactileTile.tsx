@@ -4,6 +4,7 @@ import { useTheme } from '@mui/material/styles'
 import { motion } from 'framer-motion'
 import { hexToRgba, tileSurface, translucentTileSurface } from '../../theme/tokens/helpers'
 import { softShadow, contactShadow, fieldShadow, usePointerTilt } from '../../theme/depth'
+import { hintPulse } from '../../theme/idleMotion'
 import { useLivingCard } from '../../hooks/useLivingCard'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
 import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
@@ -156,7 +157,10 @@ const TactileTile: React.FC<TactileTileProps> = ({
   // Contact-shadow tint follows the feedback so a correct tile casts a warm success cast.
   const contactTint = state === 'correct' ? success : state === 'wrong' ? error : accent
 
-  // Framer feedback keyframes (balanced register: softer pop, shorter shake than the old tile).
+  // Framer feedback keyframes (balanced register: softer pop, shorter shake than the old tile). All
+  // ONE-SHOT — the never-fail hint pulse used to be a branch here on a 1.1s `repeat: Infinity`, and it
+  // ran PER TILE, so a 6-answer board spent six JS animation loops writing inline styles every frame
+  // (Performance PRD-01 F4). It is now a CSS keyframe animation on its own nested layer below.
   const animate = reduce
     ? undefined
     : state === 'wrong'
@@ -165,16 +169,13 @@ const TactileTile: React.FC<TactileTileProps> = ({
         ? { scale: [1, 1.08, 1] }
         : state === 'selected'
           ? { y: -6, scale: 1.04 } // sustained lift — the auditioned tile "rises" toward the child
-          : showHint
-            ? { scale: [1, 1.05, 1] }
-            : { x: 0, y: 0, scale: 1 } // reset (incl. y so a deselect settles back down)
+          : { x: 0, y: 0, scale: 1 } // reset (incl. y so a deselect settles back down)
 
-  const transition =
-    state === 'wrong'
-      ? { duration: 0.4 }
-      : showHint && state === 'idle'
-        ? { duration: 1.1, repeat: Infinity, ease: 'easeInOut' as const }
-        : { duration: 0.3, ease: 'easeOut' as const }
+  const transition = state === 'wrong' ? { duration: 0.4 } : { duration: 0.3, ease: 'easeOut' as const }
+
+  // The hint pulse, as CSS, on a layer of its own between the caller's breathe layer and the framer
+  // feedback layer — the two must never share an element (both write `transform`, last writer wins).
+  const hintMotion = hintPulse(reduce || !showHint)
 
   const clearPressed = () => setPressed(false)
 
@@ -203,12 +204,17 @@ const TactileTile: React.FC<TactileTileProps> = ({
         }}
       />}
 
-      {/* Framer feedback layer — owns the pop/shake/hint transform. */}
+      {/* Hint layer (CSS keyframes) → framer feedback layer (pop/shake) → surface. Three nested
+          transforms that compose; sharing one element would make them fight. */}
+      <Box
+        {...hintMotion.props}
+        sx={[{ position: 'relative', zIndex: 1, width: '100%', height: '100%' }, hintMotion.sx]}
+      >
       <Box
         component={motion.div}
         animate={animate}
         transition={transition}
-        sx={{ position: 'relative', zIndex: 1, width: '100%', height: '100%', perspective: '600px' }}
+        sx={{ position: 'relative', width: '100%', height: '100%', perspective: '600px' }}
       >
         {/* Surface (the clay). Interactive → a real <button>; display-only → a plain box. Press-travel
             is CSS on THIS element (sinks toward the contact shadow); the tilt lives on the child. */}
@@ -300,6 +306,7 @@ const TactileTile: React.FC<TactileTileProps> = ({
             </Box>
           )}
         </Box>
+      </Box>
       </Box>
     </Box>
   )

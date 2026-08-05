@@ -23,6 +23,7 @@ import { usePromptBag } from '../../hooks/usePromptBag'
 import { hexToRgba } from '../../theme/tokens/helpers'
 import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 import { SNAP } from '../../theme/motion'
+import { idleFloat } from '../../theme/idleMotion'
 import GameShell from '../common/GameShell'
 import RoundResultScreen from '../common/RoundResultScreen'
 import type { GuideReaction } from '../common/ThemeMascot'
@@ -68,6 +69,9 @@ const WRONG_BEFORE_HINT = 2
 const FarveQuizGame: React.FC = () => {
   const muiTheme = useTheme()
   const reduce = useReducedMotion()
+  // The prompt object's resting float (PRD-01 W1: CSS keyframes, not a framer loop). `lifted` stands
+  // it down so the drag's spring owns the transform on its own.
+  const objectFloat = (lifted: boolean) => idleFloat(reduce || lifted, { distance: 6, durationS: 1.6 })
   const t = getCategoryTheme('colors')
   const sensors = useDragOnlySensors()
 
@@ -384,17 +388,16 @@ const FarveQuizGame: React.FC = () => {
             {!displaySolvedColor && (
               <Box>
                 <DraggableItem id="object" inline disabled={!gameReady} data={current}>
-                  <motion.div
-                    animate={
-                      isLiftedObject && !reduce
-                        ? { scale: 1.12, rotate: 5, y: 0 }
-                        : reduce ? {} : { y: [0, -6, 0], scale: 1, rotate: 0 }
-                    }
-                    transition={
-                      isLiftedObject && !reduce
-                        ? SNAP
-                        : reduce ? undefined : { duration: 1.6, repeat: Infinity, ease: 'easeInOut' }
-                    }
+                  {/* The prompt object's resting float ran the whole time the board was up, as a
+                      framer `repeat: Infinity` loop; it is now a CSS keyframe animation (same 6px /
+                      1.6s) on the SAME element — safe here because the two states are mutually
+                      exclusive (`isLiftedObject`), and a running CSS animation outranks framer's
+                      inline transform in the cascade, so an overlap would swallow the lift. PRD-01 W1. */}
+                  <Box
+                    component={motion.div}
+                    animate={isLiftedObject && !reduce ? { scale: 1.12, rotate: 5, y: 0 } : { scale: 1, rotate: 0, y: 0 }}
+                    transition={isLiftedObject && !reduce ? SNAP : { duration: 0.2 }}
+                    sx={[objectFloat(isLiftedObject).sx]}
                   >
                     {/* PRD-09: the object is a baked soft-3D thing resting in the world (no #ECF1F8
                         holder, no border, no lip). Above Let it is GREYED (`greyObject`), so the child
@@ -418,7 +421,7 @@ const FarveQuizGame: React.FC = () => {
                         desaturate={greyObject}
                       />
                     </Box>
-                  </motion.div>
+                  </Box>
                 </DraggableItem>
               </Box>
             )}

@@ -6,6 +6,7 @@ import { useThemeSwitch } from '../../theme/ThemeProvider'
 import { loadSceneAssets, type MascotPoses } from '../../theme/sceneAssets'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
 import { getTapAnims, TAP_ANIM_MAX_MS, type TapAnim } from '../../theme/mascotAnimations'
+import { idleFloat } from '../../theme/idleMotion'
 import ThemedBurst, { type ThemedBurstHandle } from './ThemedBurst'
 
 // Per-world mascot (Theme Worlds PRD §5.4) — upgraded to the reactive GUIDE (Liveliness PRD-05 W6).
@@ -142,6 +143,12 @@ const ThemeMascot: React.FC<ThemeMascotProps> = ({
     onTap?.()
   }
 
+  // Framer owns the ONE-SHOT reactions only (cheer / think / tap). The resting idle bob used to be the
+  // fall-through branch here as `{ y: [0, -7, 0] }` on a 3.4s `repeat: Infinity` — a JS loop writing an
+  // inline style every rAF on a mascot standing still, which is 60 style recalculations a second
+  // (Performance PRD-01 F1/F4). It is now a CSS keyframe animation on the pose stack ONE LAYER DOWN,
+  // so the two transforms compose instead of the last writer winning.
+  const reacting = reaction === 'cheer' || reaction === 'think' || !!tapAnim
   const animate = reduce
     ? undefined
     : reaction === 'cheer'
@@ -150,7 +157,7 @@ const ThemeMascot: React.FC<ThemeMascotProps> = ({
         ? { rotate: [0, -7, 7, -5, 0] }
         : tapAnim
           ? tapAnim.animate
-          : { y: [0, -7, 0] }
+          : undefined
 
   const transition = reduce
     ? undefined
@@ -160,7 +167,9 @@ const ThemeMascot: React.FC<ThemeMascotProps> = ({
         ? { duration: 0.6, ease: 'easeInOut' as const }
         : tapAnim
           ? tapAnim.transition
-          : { duration: 3.4, repeat: Infinity, ease: 'easeInOut' as const }
+          : undefined
+
+  const bob = idleFloat(reduce || reacting, { distance: 7, durationS: 3.4 })
 
   return (
     <Box
@@ -190,6 +199,9 @@ const ThemeMascot: React.FC<ThemeMascotProps> = ({
           position: 'relative',
         }}
       >
+        {/* Idle-bob layer (CSS keyframes; inert while a reaction pose owns the motion). It wraps the
+            pose stack rather than sharing the button with framer's reaction transforms. */}
+        <Box {...bob.props} sx={[{ position: 'absolute', inset: 0 }, bob.sx]}>
         {/* Cross-fade pose stack — all present poses mounted; only the active one is opaque. */}
         {layers.map(({ pose, url }) => (
           <Box
@@ -213,6 +225,7 @@ const ThemeMascot: React.FC<ThemeMascotProps> = ({
             }}
           />
         ))}
+        </Box>
       </Box>
 
       {/* Tap / cheer / attract burst — rises out of the mascot and pops (shared ThemedBurst). */}

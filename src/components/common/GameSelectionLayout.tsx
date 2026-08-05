@@ -20,6 +20,7 @@ import BackButton from './BackButton'
 import RewardRing from './RewardRing'
 import SceneObjectField, { type SceneFieldItem } from './scene/SceneObjectField'
 import { softShadow } from '../../theme/depth'
+import { idleFloat } from '../../theme/idleMotion'
 import { useProgress } from '../../hooks/useProgress'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
 import { useTransitionNav } from '../../hooks/useTransitionNav'
@@ -59,6 +60,10 @@ const GameSelectionLayout: React.FC<GameSelectionLayoutProps> = ({
   const immersive = theme.scene.layers.length > 0
   const darkScene = theme.scene.dark // dark backdrop (e.g. Rummet) → light header text + floating tiles
   const burstMotion = theme.scene.ambient.motion
+  // The section landmark's vertical-only idle float — CSS keyframes, not a framer `repeat: Infinity`
+  // loop (Performance PRD-01 W1). Same 10px / 5.5s it always had, and still vertical-only so it stays
+  // inside its own flex track.
+  const landmarkFloat = idleFloat(reduce, { distance: 10, durationS: 5.5 })
 
   // Game tiles as tactile soft-3D objects seated on the framed scene (immersive). Built with the
   // per-game icon art (B2 registry, keyed <section>.<id>), falling back to the section object.
@@ -214,18 +219,19 @@ const GameSelectionLayout: React.FC<GameSelectionLayoutProps> = ({
               aria-hidden
               // Layout hook for the clearance probe — the landmark has no text or role to select by.
               data-bl-landmark=""
-              component={motion.div}
-              animate={reduce ? undefined : { y: [0, -10, 0] }}
-              transition={reduce ? undefined : { duration: 5.5, repeat: Infinity, ease: 'easeInOut' }}
-              sx={{
-                flex: '0 0 auto',
-                alignSelf: 'center',
-                ml: { xs: '1%', md: '2%' },
-                width: 'clamp(100px, 19vh, 190px)',
-                pointerEvents: 'none',
-                opacity: 0.96,
-                [PHONE_ANY]: { display: 'none' },
-              }}
+              {...landmarkFloat.props}
+              sx={[
+                {
+                  flex: '0 0 auto',
+                  alignSelf: 'center',
+                  ml: { xs: '1%', md: '2%' },
+                  width: 'clamp(100px, 19vh, 190px)',
+                  pointerEvents: 'none',
+                  opacity: 0.96,
+                  [PHONE_ANY]: { display: 'none' },
+                },
+                landmarkFloat.sx,
+              ]}
             >
               <Box
                 component="img"

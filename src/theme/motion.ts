@@ -42,14 +42,11 @@ export const CHARGE_IN_SCALE = [0.8, 1.04, 1] as const
 /** Opacity keyframes to fade a charge-in reveal. */
 export const CHARGE_IN_OPACITY = [0, 1, 1] as const
 
-/** Gentle idle float for a focal subject (PromptStage hero). 3.2s loop, reduced-motion → none. */
-export const idleFloat = (reduce: boolean) =>
-  reduce
-    ? { animate: {}, transition: undefined as Transition | undefined }
-    : {
-        animate: { y: [0, -4, 0] },
-        transition: { duration: 3.2, repeat: Infinity, ease: 'easeInOut' as const },
-      }
+// The gentle idle float for a focal subject used to live here as a framer loop (`idleFloat`, 3.2s,
+// `repeat: Infinity`). It MOVED to `src/theme/idleMotion.ts` as a CSS keyframe animation — measured at
+// 60 style recalculations a second while the app sat still (Performance PRD-01 F1/F4). There is
+// deliberately only ONE idle vocabulary: continuous stateless motion is CSS, framer keeps the one-shot
+// event feedback above. Don't re-add a `repeat: Infinity` here.
 
 // --- Canonical dwell timings (ms) ------------------------------------------------------------
 // One source of truth for auto-advance, replacing the ad-hoc 1500/2000/2500 values.

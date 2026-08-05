@@ -1,8 +1,8 @@
 import React from 'react'
 import { Box, Typography } from '@mui/material'
-import { motion } from 'framer-motion'
 import { Volume2 } from 'lucide-react'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
+import { equalizerBar, idlePulse } from '../../theme/idleMotion'
 import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 
 interface ListenHeroProps {
@@ -39,6 +39,9 @@ interface ListenHeroProps {
  */
 const ListenHero: React.FC<ListenHeroProps> = ({ accent, speaking, reveal }) => {
   const reduce = useReducedMotion()
+  // The speaker pulses ONLY when idle ("your turn") and holds steady while the clip plays — so the two
+  // states never both animate. Same 1.09 / 1.7s, now as CSS keyframes (PRD-01 W1).
+  const speakerPulse = idlePulse(reduce || speaking, { peak: 1.09, durationS: 1.7 })
   return (
     // The column must FIT the focal zone, which is only ~50px tall in phone landscape: the old
     // 51px glyph + 24px bars overflowed upward and the speaker was clipped by GameShell's
@@ -58,17 +61,18 @@ const ListenHero: React.FC<ListenHeroProps> = ({ accent, speaking, reveal }) => 
     >
       <Box
         aria-hidden
-        component={motion.div}
-        animate={reduce || speaking ? undefined : { scale: [1, 1.09, 1] }}
-        transition={reduce || speaking ? undefined : { duration: 1.7, repeat: Infinity, ease: 'easeInOut' }}
-        sx={{
-          display: 'flex',
-          color: accent,
-          '& svg': { width: 'clamp(3.5rem, 14vh, 7rem)', height: 'auto' },
-          // Sized with headroom for the 1.09 idle pulse — the zone leaves only ~47px once the
-          // "Hør igen" pill takes its share, so the resting glyph has to stay well under that.
-          [PHONE_LANDSCAPE]: { '& svg': { width: 'clamp(1.3rem, 8vh, 1.7rem)' } },
-        }}
+        {...speakerPulse.props}
+        sx={[
+          {
+            display: 'flex',
+            color: accent,
+            '& svg': { width: 'clamp(3.5rem, 14vh, 7rem)', height: 'auto' },
+            // Sized with headroom for the 1.09 idle pulse — the zone leaves only ~47px once the
+            // "Hør igen" pill takes its share, so the resting glyph has to stay well under that.
+            [PHONE_LANDSCAPE]: { '& svg': { width: 'clamp(1.3rem, 8vh, 1.7rem)' } },
+          },
+          speakerPulse.sx,
+        ]}
       >
         <Volume2 strokeWidth={2.25} />
       </Box>
@@ -89,30 +93,34 @@ const ListenHero: React.FC<ListenHeroProps> = ({ accent, speaking, reveal }) => 
           [PHONE_LANDSCAPE]: { height: 10, gap: '3px' },
         }}
       >
-        {[0, 1, 2, 3, 4].map((i) => (
+        {[0, 1, 2, 3, 4].map((i) => {
+          // Dance only while audio actually plays; otherwise settle to a calm low resting bar. The
+          // dance is a CSS keyframe animation (staggered by `delay`, same 0.9s as before); the resting
+          // bar is a plain static transform, so neither costs a frameloop tick (PRD-01 W1).
+          const bar = equalizerBar(reduce || !speaking, i)
+          return (
           <Box
             key={i}
-            component={motion.div}
-            // Dance only while audio actually plays; otherwise settle to a calm low resting bar.
-            animate={reduce ? undefined : speaking ? { scaleY: [0.4, 1, 0.5, 0.9, 0.4] } : { scaleY: 0.3 }}
-            transition={
-              reduce
-                ? undefined
-                : speaking
-                  ? { duration: 0.9, repeat: Infinity, delay: i * 0.1, ease: 'easeInOut' }
-                  : { duration: 0.3, ease: 'easeOut' }
-            }
-            sx={{
-              width: 6,
-              height: '100%',
-              transformOrigin: 'bottom',
-              borderRadius: 3,
-              bgcolor: accent,
-              opacity: reduce || speaking ? 1 : 0.55,
-              [PHONE_LANDSCAPE]: { width: 4 },
-            }}
+            {...bar.props}
+            sx={[
+              {
+                width: 6,
+                height: '100%',
+                transformOrigin: 'bottom',
+                borderRadius: 3,
+                bgcolor: accent,
+                opacity: reduce || speaking ? 1 : 0.55,
+                // Reduced motion kept the bars at FULL height (framer's `animate` was `undefined`,
+                // not `scaleY: 0.3`) — preserve that, or the calm variant silently gets shorter bars.
+                transform: reduce || speaking ? undefined : 'scaleY(0.3)',
+                transition: reduce ? 'none' : 'transform 0.3s ease-out',
+                [PHONE_LANDSCAPE]: { width: 4 },
+              },
+              bar.sx,
+            ]}
           />
-        ))}
+          )
+        })}
       </Box>
       )}
       {/* Degraded mode: the answer, as type. See the `reveal` prop for why this giveaway is correct

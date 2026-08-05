@@ -5,7 +5,8 @@ import { motion } from 'framer-motion'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
 import { hexToRgba } from '../../theme/tokens/helpers'
 import { contactShadow } from '../../theme/depth'
-import { CHARGE, CHARGE_IN_OPACITY, CHARGE_IN_SCALE, idleFloat } from '../../theme/motion'
+import { CHARGE, CHARGE_IN_OPACITY, CHARGE_IN_SCALE } from '../../theme/motion'
+import { idleFloat } from '../../theme/idleMotion'
 import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 
 // PromptFocus (Liveliness PRD-06 F2) — the in-world focal presentation that RETIRES the frosted
@@ -34,6 +35,9 @@ const PromptFocus: React.FC<PromptFocusProps> = ({ accent, chargeKey, subject, r
   const theme = useTheme()
   const reduce = useReducedMotion()
   const dark = theme.scene.dark
+  // Idle float: a CSS keyframe animation on its own nested layer, so it never fights the charge-in
+  // framer transform on the parent (Performance PRD-01 W1 — this ONE component was two framer idle
+  // loops on two nested `motion.div`s, i.e. every game board paid it twice).
   const float = idleFloat(reduce)
 
   return (
@@ -142,16 +146,17 @@ const PromptFocus: React.FC<PromptFocusProps> = ({ accent, chargeKey, subject, r
           }}
         >
           <Box
-            component={motion.div}
-            animate={float.animate}
-            transition={float.transition}
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: '100%',
-              height: '100%',
-            }}
+            {...float.props}
+            sx={[
+              {
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '100%',
+                height: '100%',
+              },
+              float.sx,
+            ]}
           >
             {subject}
           </Box>

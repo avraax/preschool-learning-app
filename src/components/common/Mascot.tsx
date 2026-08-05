@@ -8,6 +8,7 @@ import { useReducedMotion } from '../../hooks/useReducedMotion'
 import { mascotBus, type MascotEvent } from '../../services/mascotBus'
 import { hexToRgba } from '../../theme/tokens/helpers'
 import { getTapAnims, TAP_ANIM_MAX_MS, type TapAnim } from '../../theme/mascotAnimations'
+import { idleFloat } from '../../theme/idleMotion'
 import { PHONE_LANDSCAPE, PHONE_PORTRAIT } from '../../theme/phoneMedia'
 import { MASCOT_CORNER_PHONE_PORTRAIT, MASCOT_CORNER_SIZE } from './mascotCorner'
 
@@ -45,8 +46,12 @@ const HOLD_MS: Partial<Record<MascotEvent, number>> = {
 
 const pick = (arr: string[]): string => arr[Math.floor(Math.random() * arr.length)]
 
-// Motion keyframes per pose (skipped under reduced motion).
-const poseAnim = (event: MascotEvent): { animate: TargetAndTransition; transition: Transition } => {
+// Motion keyframes per pose (skipped under reduced motion). Every pose is a ONE-SHOT reaction that
+// ends back at identity, which is what framer is for. The `idle` bob is NOT here any more: it was an
+// infinite framer loop recalculating style 60× a second on a mascot that is doing nothing, and it now
+// rides the sprite as a CSS keyframe animation (`idleFloat`) one layer down — see
+// `src/theme/idleMotion.ts` and the nested-layer rule (Performance PRD-01 W1/F4).
+const poseAnim = (event: MascotEvent): { animate?: TargetAndTransition; transition?: Transition } => {
   switch (event) {
     case 'correct':
       return { animate: { y: [0, -30, 0, -12, 0], scale: [1, 1.16, 0.94, 1.06, 1] }, transition: { duration: 0.9, ease: 'easeInOut' } }
@@ -64,7 +69,7 @@ const poseAnim = (event: MascotEvent): { animate: TargetAndTransition; transitio
       return { animate: { rotate: [0, -12, 12, -8, 0] }, transition: { duration: 0.95, ease: 'easeInOut' } }
     case 'idle':
     default:
-      return { animate: { y: [0, -6, 0] }, transition: { duration: 3.2, repeat: Infinity, ease: 'easeInOut' } }
+      return {}
   }
 }
 
@@ -138,6 +143,10 @@ const Mascot: React.FC<MascotProps> = ({ sx, forceEvent }) => {
 
   const url = loaded && loaded.id === themeId ? loaded.mascot : ''
   const { animate, transition } = poseAnim(pose)
+  // The idle bob, as CSS, on the SPRITE — one layer below the framer feedback on the button, so the
+  // two transforms compose instead of overwriting each other. Stood down while a reaction pose or a
+  // tap animation owns the motion, exactly as the old framer loop was.
+  const bob = idleFloat(reduce || pose !== 'idle' || !!tapAnim, { distance: 6, durationS: 3.2, as: 'img' })
 
   // The corner footprint comes from `mascotCorner.ts` — full-bleed play surfaces RESERVE that same
   // value, so resizing the companion here can't leave a game overlapping it.
@@ -224,17 +233,21 @@ const Mascot: React.FC<MascotProps> = ({ sx, forceEvent }) => {
         {/* Nothing until the sprite resolves — never a flat emoji stand-in (de-emoji PRD-01 D5). */}
         {url && (
           <Box
+            {...bob.props}
             component="img"
             src={url}
             alt=""
             draggable={false}
-            sx={{
-              width: '100%',
-              height: '100%',
-              objectFit: 'contain',
-              filter: 'drop-shadow(0 6px 12px rgba(0,0,0,0.28))',
-              userSelect: 'none',
-            }}
+            sx={[
+              {
+                width: '100%',
+                height: '100%',
+                objectFit: 'contain',
+                filter: 'drop-shadow(0 6px 12px rgba(0,0,0,0.28))',
+                userSelect: 'none',
+              },
+              bob.sx,
+            ]}
           />
         )}
       </Box>

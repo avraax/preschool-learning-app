@@ -22,6 +22,7 @@ import { useReducedMotion } from '../../hooks/useReducedMotion'
 import { progressStore, type RoundOutcome } from '../../services/progressStore'
 import { mascotBus } from '../../services/mascotBus'
 import { CHARGE, POP } from '../../theme/motion'
+import { idlePulse } from '../../theme/idleMotion'
 import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 import { isIOS } from '../../utils/deviceDetection'
 import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
@@ -82,6 +83,8 @@ interface MicHeroProps {
 
 const MicHero: React.FC<MicHeroProps> = ({ phase, supported, isBusy, accent, onTileColor, dark, reduce, caption, getLevel, onPressStart, onPressEnd }) => {
   const recording = phase === 'recording'
+  // "I'm listening" pulse — CSS keyframes, same 1.1 / 1s as the framer loop it replaces (PRD-01 W1).
+  const micPulse = idlePulse(reduce || !recording, { peak: 1.1, durationS: 1 })
   const barsRef = useRef<Array<HTMLDivElement | null>>([])
 
   // Level-driven meter. Runs on a rAF loop writing transforms directly — no React state at 60fps.
@@ -158,10 +161,14 @@ const MicHero: React.FC<MicHeroProps> = ({ phase, supported, isBusy, accent, onT
             zIndex: 0,
           }}
         />
-        <motion.div
-          animate={reduce ? undefined : recording ? { scale: [1, 1.1, 1] } : { scale: 1 }}
-          transition={reduce ? undefined : recording ? { duration: 1, repeat: Infinity, ease: 'easeInOut' } : { duration: 0.2 }}
-          style={{ display: 'inline-block', position: 'relative', zIndex: 1 }}
+        {/* "I'm listening" pulse — CSS keyframes, same 1.1 / 1s (Performance PRD-01 W1). It runs only
+            while recording, and this element carries no framer transform, so it can own it. */}
+        <Box
+          {...micPulse.props}
+          sx={[
+            { display: 'inline-block', position: 'relative', zIndex: 1, transition: reduce ? 'none' : 'transform 0.2s ease' },
+            micPulse.sx,
+          ]}
         >
           {/* HIT-SLOP WRAPPER. The pressable element is this padded box, not the clay circle, so the
               touch target is ~16px larger than the art on every side (~26px on phone landscape, where the
@@ -237,7 +244,7 @@ const MicHero: React.FC<MicHeroProps> = ({ phase, supported, isBusy, accent, onT
             <Mic size={44} color="white" />
           </Box>
           </Box>
-        </motion.div>
+        </Box>
       </Box>
 
       {/* Live level meter — real mic amplitude while recording, a still row otherwise/reduced motion.

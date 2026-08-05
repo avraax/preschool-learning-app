@@ -16,6 +16,7 @@ import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 import { sfx } from '../../services/sfxClient'
 import { hexToRgba, tileSurface, onTileColor } from '../../theme/tokens/helpers'
 import { softShadow, contactShadow } from '../../theme/depth'
+import { idlePulse } from '../../theme/idleMotion'
 import { devNyt } from '../../utils/devHarness'
 
 // Min Bog (Reward Book PRD-01 W5) at /album — the other half of the model the corner ring shows, and
@@ -441,6 +442,12 @@ const StickerAlbum: React.FC = () => {
                   component={motion.button}
                   type="button"
                   onClick={() => handleSlotTap(reward, owned)}
+                  // The "next prize" breathe used to be the fall-through branch of this framer animate
+                  // on a 2.2s `repeat: Infinity` — a JS loop running on an idle album page (PRD-01 W1).
+                  // It is now a CSS keyframe animation in the `sx` below. Sharing an element with framer
+                  // is safe HERE and only here, because the two are mutually exclusive by construction
+                  // (`isNext && !popped && !wiggling`) — a running CSS animation outranks framer's
+                  // inline transform in the cascade, so an overlap would silently swallow the pop.
                   animate={
                     reduce
                       ? { scale: 1 }
@@ -448,16 +455,10 @@ const StickerAlbum: React.FC = () => {
                         ? { scale: [1, 1.18, 1], rotate: [0, -6, 6, 0] }
                         : wiggling
                           ? { rotate: [0, -7, 7, -5, 5, 0] }
-                          : isNext
-                            ? { scale: [1, 1.045, 1] }
-                            : { scale: 1 }
+                          : { scale: 1 }
                   }
-                  transition={
-                    isNext && !popped && !wiggling && !reduce
-                      ? { duration: 2.2, repeat: Infinity, ease: 'easeInOut' }
-                      : { duration: 0.5 }
-                  }
-                  sx={{
+                  transition={{ duration: 0.5 }}
+                  sx={[idlePulse(reduce || !isNext || popped || wiggling, { peak: 1.045, durationS: 2.2 }).sx, {
                     position: 'relative',
                     border: '3px solid',
                     borderColor: owned
@@ -484,7 +485,7 @@ const StickerAlbum: React.FC = () => {
                         : 'inset 0 2px 8px rgba(0,0,0,0.08)',
                     WebkitTapHighlightColor: 'transparent',
                     outline: 'none',
-                  }}
+                  }]}
                 >
                   {/* Grounding contact shadow under a collected reward — the shell's clay language. */}
                   {owned && !reduce && (

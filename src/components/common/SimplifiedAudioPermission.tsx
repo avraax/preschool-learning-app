@@ -8,6 +8,12 @@ import { audioDebugSession } from '../../utils/remoteConsole'
 import { devNoGate } from '../../utils/devHarness'
 import { useAuthContext } from '../../contexts/AuthContext'
 import { shouldRenderAudioPrompt } from '../../contexts/audioPromptPolicy'
+import { idleWobble } from '../../theme/idleMotion'
+
+// This modal's icon wobble has never been gated on `prefers-reduced-motion` (the framer loop it
+// replaces ran unconditionally), and W1 is a MECHANISM change only — so `false` here is faithful, not
+// an oversight. If it should be gated, that is a separate look change with its own screenshot pass.
+const iconWobble = idleWobble(false)
 
 const SimplifiedAudioPermission: React.FC = () => {
   const theme = useTheme()
@@ -148,18 +154,11 @@ const SimplifiedAudioPermission: React.FC = () => {
                 <Close fontSize="small" />
               </IconButton>
 
-              {/* Audio icon with animation */}
-              <motion.div
-                animate={{ 
-                  scale: [1, 1.1, 1],
-                  rotate: [0, -5, 5, 0]
-                }}
-                transition={{ 
-                  duration: 2,
-                  repeat: Infinity,
-                  repeatType: 'reverse'
-                }}
-              >
+              {/* Audio icon with animation. CSS keyframes, not a framer loop (Performance PRD-01 W1) —
+                  ONLY the animation mechanism changed here. The dismiss path is a tap-through rule
+                  (`.claude/rules/audio-system.md`: `hidePrompt` is the only thing that may close this,
+                  and every caller must be a `click` handler) and is untouched. */}
+              <Box {...iconWobble.props} sx={[{}, iconWobble.sx]}>
                 <Box
                   sx={{
                     width: 80,
@@ -175,7 +174,7 @@ const SimplifiedAudioPermission: React.FC = () => {
                 >
                   <VolumeUp sx={{ fontSize: 40, color: 'white' }} />
                 </Box>
-              </motion.div>
+              </Box>
 
               {/* Main message - more direct and clear */}
               <Typography 

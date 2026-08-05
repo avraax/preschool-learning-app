@@ -17,6 +17,7 @@ import { COLORS_FARVEJAGT, starThresholdsFor } from '../../config/difficulty'
 import { sfx } from '../../services/sfxClient'
 import { mascotBus } from '../../services/mascotBus'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
+import { idleGlow } from '../../theme/idleMotion'
 import { useDifficulty } from '../../hooks/useDifficulty'
 import { devFx } from '../../utils/devHarness'
 import GameShell from '../common/GameShell'
@@ -76,6 +77,8 @@ const ringSlotPx = (slot: number, total: number, radius: number) => {
 const FarvejagtGame: React.FC = () => {
   const muiTheme = useTheme()
   const reduce = useReducedMotion()
+  // Always-on ambient halo behind the collection well (PRD-01 W1: CSS, not a framer loop).
+  const wellGlow = idleGlow(reduce, { from: 0.35, to: 0.6, durationS: 2.6 })
   const sensors = useDragOnlySensors()
 
   // Game state
@@ -592,20 +595,22 @@ const FarvejagtGame: React.FC = () => {
                   zIndex: 0,
                 }}
               >
-                {/* Glowing collection well — ambient halo behind the ring (§6C Farvejagt delta). */}
-                <motion.div
+                {/* Glowing collection well — ambient halo behind the ring (§6C Farvejagt delta).
+                    This one runs the WHOLE time the board is up, so it is a CSS keyframe animation
+                    (same 0.35→0.6 over 2.6s), not a framer `repeat: Infinity` loop — PRD-01 W1. */}
+                <Box
                   aria-hidden
-                  animate={reduce ? { opacity: 0.5 } : { opacity: [0.35, 0.6, 0.35] }}
-                  transition={reduce ? { duration: 0 } : { duration: 2.6, repeat: Infinity, ease: 'easeInOut' }}
-                  style={{
+                  {...wellGlow.props}
+                  sx={[{
                     position: 'absolute',
-                    inset: -18,
+                    inset: '-18px',
                     borderRadius: '50%',
                     background: `radial-gradient(circle, ${targetHex}55 0%, ${targetHex}00 70%)`,
                     filter: 'blur(6px)',
                     pointerEvents: 'none',
                     zIndex: 0,
-                  }}
+                    opacity: reduce ? 0.5 : undefined,
+                  }, wellGlow.sx]}
                 />
 
                 <motion.div
