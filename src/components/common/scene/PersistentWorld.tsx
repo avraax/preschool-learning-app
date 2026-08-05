@@ -93,6 +93,7 @@ const PersistentWorld: React.FC = () => {
           off), so the *place* stays felt and the game's own tiles/subject read as resting IN it. */}
       <Box
         aria-hidden
+        data-world-frame
         sx={{
           // ABSOLUTE, not fixed: the host is a full-viewport no-scroll container, and Chrome blanks
           // `position: fixed` layers during touch pan gestures (press-hold → white until release).
@@ -106,16 +107,41 @@ const PersistentWorld: React.FC = () => {
           pointerEvents: 'none',
           // Dark worlds paint their base immediately so there's no light flash before art loads.
           backgroundColor: dark ? '#070B1A' : 'transparent',
-          filter: inGame ? 'blur(2.5px)' : 'none',
-          // Game routes: light veil scale (just enough to hide the soft blur edge). Section menus:
-          // push-in toward the section's focal locale. Home / no framing: neutral. (Mutually
-          // exclusive states — a game is never framed.)
+          // TRANSFORM ONLY on this box (Performance PRD-01 W3). Game routes: light veil scale (just
+          // enough to hide the soft blur edge). Section menus: push-in toward the section's focal
+          // locale. Home / no framing: neutral. (Mutually exclusive states — a game is never framed.)
           transformOrigin: framing ? `${framing.xPct}% ${framing.yPct}%` : 'center',
           transform: inGame ? 'scale(1.03)' : framing ? `scale(${framing.zoom})` : 'none',
-          transition: `filter ${ease} ease, transform ${ease} ease`,
+          transition: `transform ${ease} ease`,
         }}
       >
-        <ThemeScene paused={inGame} bloomExtra={bloomExtra} />
+        {/* The in-game readability blur lives on its OWN box, one layer in (PRD-01 W3). `filter` and
+            `transform` on the SAME element force one combined render surface per state change, so the
+            reframe/veil scale could not stay a pure compositor transform while the blur was attached to
+            it. Split, the scale composites and the blur is a separate, static pass.
+            `data-world-scene` is the harness handle for A/B-ing the blur's cost. */}
+        <Box
+          aria-hidden
+          data-world-scene
+          sx={{
+            position: 'absolute',
+            inset: 0,
+            filter: inGame ? 'blur(2.5px)' : 'none',
+            // A JUSTIFIED `will-change` spend, and the only one added by this PRD (rule 2 says budget
+            // it, not never use it). In game the world is FROZEN, so the blurred result never changes
+            // and this lets the compositor keep it instead of re-filtering a full-viewport surface.
+            // Measured on /alphabet/learn at 6x: blur off 24.7% busy, blur on 31.5%, blur on with this
+            // hint 28.3% — about half the blur's cost back, with `layerMB` unchanged at 42.7. Two
+            // alternatives measured and rejected: adding `translateZ(0)` made it WORSE (35.3%) and
+            // `contain: paint` did nothing (31.1%).
+            // Scoped to `inGame` so a menu route never pays a promotion to hold a filter of `none`, and
+            // so the hint is cleared at idle — the same discipline the wipe overlay follows.
+            willChange: inGame ? 'filter' : 'auto',
+            transition: `filter ${ease} ease`,
+          }}
+        >
+          <ThemeScene paused={inGame} bloomExtra={bloomExtra} />
+        </Box>
       </Box>
 
       {/* Section accent tint (PRD-05 W4) — a gentle wash in the section's colour, fading in on the
