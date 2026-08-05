@@ -14,6 +14,7 @@
 //   ?nyt=1                           force a "nyt!" badge in Min Bog
 //   ?rewards=<n>                     seed the book at n collected rewards (Reward Book PRD-01 W9)
 //   ?mute-tts=1                      force narration UNHEALTHY (Practice Loop PRD-01 W4 degraded mode)
+//   ?audio-cue=1                     let the "Tryk for lyd" cue render under ?nogate=1 (see below)
 
 // `import.meta.env?.` — optional, because this module is now in the transitive graph of a Node
 // `--test` suite (via authStore), and `import.meta.env` is undefined outside Vite. Same reason
@@ -55,6 +56,21 @@ export const devThemeId = (): string | null => (DEV ? readParams().get('theme') 
 
 /** Whether to skip the audio welcome/permission gate. */
 export const devNoGate = (): boolean => DEV && readParams().has('nogate')
+
+/**
+ * `?audio-cue=1` — lift ONLY the `?nogate=1` stand-down on the "Tryk for lyd" cue, so it is reachable
+ * at rung 1 (Audio activation PRD-01 §5.1's third case).
+ *
+ * It exists because the cue is otherwise unobservable headlessly: `?nogate=1` is the only way past the
+ * auth gate and it stands the cue down, while WITHOUT it `authUiOpen` stands the cue down instead. So
+ * every headless run showed no cue, whatever the app believed.
+ *
+ * **It does NOT force the verdict.** The cue still only appears if the evidence genuinely reaches
+ * `blocked` — pair it with `cdp.mjs --block-autoplay` plus a TRUSTED tap (`--trusted-tap`; a scripted
+ * `element.click()` grants no user activation, so `hasBeenActive` stays false and the verdict correctly
+ * stays `idle`). A forced render would have proven only that the component can paint.
+ */
+export const devForceAudioCue = (): boolean => DEV && readParams().get('audio-cue') === '1'
 
 /**
  * Whether to skip the AUTH gate (accounts PRD W4).

@@ -26,6 +26,10 @@
 //   --clip "<css>"            Screenshot ONLY that element (tight crop + small padding).
 //   --full-page               Full scrollable-page screenshot (instead of viewport).
 //   --eval "<js>"             Evaluate JS in the page; print the returned value.
+//   --trusted-tap "<css>"     REAL browser input at the element's centre (CDP Input.dispatchMouseEvent).
+//                             The only click here that grants `navigator.userActivation` — element.click()
+//                             does not. Needed for anything gated on user activation (the audio verdict).
+//                             Prints hasBeenActive afterwards so a failed activation is visible.
 //   --audio-report            Inject audio-probe.js before app scripts; print whether playback actually
 //                             produced sound (verdict OK / SILENT / NO AUDIO ATTEMPTED). Exit 1 on SILENT.
 //                             Chrome here proves the app's own plumbing; it says nothing about Safari
@@ -34,6 +38,12 @@
 //
 // Behaviour:
 //   --port <n>                CDP debug port (default 9333).
+//   --block-autoplay          Launch with document-user-activation-required instead of autoplay-allowed.
+//   --simulate-audio-blocked  Inject audio-blocked-sim.js: play() rejects NotAllowedError and
+//                             AudioContext.resume() never runs the clock. The ONLY way to reach the
+//                             app's `blocked` audio verdict headlessly — a launch flag cannot, because
+//                             the gesture that grants activation also unlocks playback. Pair with
+//                             --trusted-tap and the app's `?audio-cue=1`.
 //
 // Performance (the owner's floor device is an iPad Pro 2nd gen / A10X, 2017, on iPadOS 17.7):
 //   --cpu-throttle <n>        CDP CPU throttling multiplier (4 ≈ A10X-ish vs this desktop; 6 = harsher).
@@ -180,6 +190,15 @@ if (has('--audio-report')) {
   await send('Page.addScriptToEvaluateOnNewDocument', { source })
 }
 
+// --simulate-audio-blocked: make this look like a device whose audio really IS blocked (see the header
+// of audio-blocked-sim.js for why no launch flag can produce that state). Must also predate app scripts.
+// Order matters: injected AFTER the probe, so the probe wraps the ALREADY-rejecting play() and reports
+// the rejection rather than being bypassed by it.
+if (has('--simulate-audio-blocked')) {
+  const source = readFileSync(join(dirname(fileURLToPath(import.meta.url)), 'audio-blocked-sim.js'), 'utf8')
+  await send('Page.addScriptToEvaluateOnNewDocument', { source })
+}
+
 // Perf collectors must also predate the app: LCP and long-task entries are not buffered forever, and a
 // PerformanceObserver installed after mount misses exactly the expensive startup we care about.
 if (has('--perf')) {
@@ -207,6 +226,27 @@ await sleep(SETTLE)
 
 // (Nothing to dismiss here any more — the blocking audio modal is gone. See the Notes at the top.)
 
+// --trusted-tap: REAL browser input via CDP, at the element's centre. The ONLY thing here that grants
+// `navigator.userActivation` — a scripted `element.click()` does not, so anything the app gates on user
+// activation (the audio-readiness verdict: Audio activation PRD-01) stays correctly untriggered under
+// `--click`. Use this when the assertion is about activation; `--click` remains right for everything
+// else, since it does not depend on hit-testing a coordinate.
+for (const sel of all('--trusted-tap')) {
+  if (await waitForSelector(sel)) {
+    const box = await evaluate(
+      `(()=>{const e=document.querySelector(${JSON.stringify(sel)});if(!e)return null;const r=e.getBoundingClientRect();` +
+      `return {x:Math.round(r.left+r.width/2),y:Math.round(r.top+r.height/2)}})()`,
+    )
+    if (!box) { console.log(`trusted-tap ${sel}: NOT FOUND`); exitCode = 1; continue }
+    const common = { x: box.x, y: box.y, button: 'left', clickCount: 1, buttons: 1 }
+    await send('Input.dispatchMouseEvent', { type: 'mousePressed', ...common })
+    await send('Input.dispatchMouseEvent', { type: 'mouseReleased', ...common, buttons: 0 })
+    // Report what the page now believes, so a failed activation is visible rather than inferred.
+    const active = await evaluate('!!navigator.userActivation && navigator.userActivation.hasBeenActive')
+    console.log(`trusted-tap ${sel}: ok at ${box.x},${box.y}  userActivation.hasBeenActive=${active}`)
+    await sleep(SETTLE)
+  }
+}
 for (const sel of all('--click')) {
   if (await waitForSelector(sel)) {
     const ok = await evaluate(`(()=>{const e=document.querySelector(${JSON.stringify(sel)});if(e){e.click();return true}return false})()`)

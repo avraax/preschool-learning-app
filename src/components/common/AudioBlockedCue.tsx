@@ -11,6 +11,15 @@
 // title), and the corner mascot is bottom-left, so this collides with nothing by construction rather
 // than by a tuned percentage (`.claude/rules/responsive-design.md`). z-index sits BELOW MUI's modal
 // default (1300) so an adult dialog covers it.
+//
+// **PHONE LANDSCAPE IS THE EXCEPTION, and it is measured, not assumed.** There GameShell moves the game
+// title INTO the header row (to give its own row's height back to the play surface), so the top-centre
+// slot is occupied: measured at 844×390 the chip painted straight over "Bogstav Quiz" and the prompt art
+// (a 154×46 chip against a title at 376–482). It therefore moves to bottom-centre on `PHONE_LANDSCAPE`
+// only, where that shell hides the corner mascot and the board has left the band free. It shares that
+// spot with `UpdateBanner` (also bottom-centre, z-index 1000) — the two can only coincide when a new
+// build is live AND audio is blocked, and this chip sits above it, which is the right order: a child who
+// cannot hear anything matters more than an adult's update pill.
 
 import React from 'react'
 import { Box } from '@mui/material'
@@ -19,11 +28,12 @@ import { VolumeOff } from '@mui/icons-material'
 import TactilePill from './TactilePill'
 import { useSimplifiedAudio } from '../../contexts/SimplifiedAudioContext'
 import { useAuthContext } from '../../contexts/AuthContext'
-import { devNoGate } from '../../utils/devHarness'
+import { devForceAudioCue, devNoGate } from '../../utils/devHarness'
 import { shouldShowAudioCue } from '../../config/audioReadiness'
 import { hintPulse } from '../../theme/idleMotion'
 import { relLuminance } from '../../theme/tokens/helpers'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
+import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 import { audioDebugSession } from '../../utils/remoteConsole'
 
 const AudioBlockedCue: React.FC = () => {
@@ -38,7 +48,10 @@ const AudioBlockedCue: React.FC = () => {
   const show = shouldShowAudioCue({
     readiness: state.readiness,
     authUiOpen: auth?.authUiOpen ?? false,
-    devNoGate: devNoGate(),
+    // `?audio-cue=1` lifts ONLY the ?nogate=1 stand-down, so the cue is reachable at rung 1 — see
+    // `devForceAudioCue`. The override lives HERE, at the DEV call site, so the pure policy above keeps
+    // exactly one meaning of "stand down" and its unit tests stay about the real rule.
+    devNoGate: devNoGate() && !devForceAudioCue(),
   })
 
   // A CSS keyframe animation, never a framer `repeat: Infinity` — `idleMotionBudget.test.ts` would fail
@@ -75,6 +88,11 @@ const AudioBlockedCue: React.FC = () => {
         left: '50%',
         transform: 'translateX(-50%)',
         zIndex: 1200,
+        // See the header: phone landscape puts the game title in the header row, so this band is taken.
+        [PHONE_LANDSCAPE]: {
+          top: 'auto',
+          bottom: 'calc(env(safe-area-inset-bottom, 0px) + 10px)',
+        },
       }}
     >
       <Box {...pulse.props} sx={[{ display: 'inline-flex' }, pulse.sx]}>
