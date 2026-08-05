@@ -47,6 +47,48 @@ compositor. The one durable RELATIVE signal is that `/album` (Min Bog) is the co
 frame time and jank at every throttle level — it renders the whole reward path — so it is the screen to
 watch if he ever reports sluggishness.
 
+### Eager JavaScript at first paint (Performance PRD-01 W7, 2026-08-05)
+
+What the document actually fetches before it can paint — the entry `<script type="module">` plus every
+`<link rel="modulepreload">` in `dist/index.html`. Re-derive it after any chunking change:
+
+```bash
+npm run build:harness && node -e "const fs=require('fs');const h=fs.readFileSync('dist/index.html','utf8');
+  const pre=[...h.matchAll(/modulepreload[^>]*assets\/([^\"]+)/g)].map(m=>m[1]);
+  const ent=[...h.matchAll(/<script[^>]*type=\"module\"[^>]*src=\"[^\"]*assets\/([^\"]+)\"/g)].map(m=>m[1]);
+  const kb=f=>fs.statSync('dist/assets/'+f).size/1024, all=[...ent,...pre];
+  console.log(all.map(f=>kb(f).toFixed(0)+'KB '+f).join('
+'));
+  console.log('TOTAL '+(all.reduce((s,f)=>s+kb(f),0)/1024).toFixed(3)+' MB across '+all.length)"
+```
+
+| | chunks | total |
+|---|---|---|
+| before | 20 | **1.138 MB** |
+| after `prebakedTts` made lazy | 20 | 0.975 MB |
+| after pruning the lazy-route preloads | **18** | **0.916 MB** |
+
+Today's list: `index` 153 · `mui-vendor` 281 · `react-vendor` 222 · `motion-vendor` 131 ·
+`media-vendor` 35 · `depth` 27 · `ttsClient` 22 · `authorizedFetch` 17 · `progressStore` 17 ·
+`musicClient` 11 · `auth-vendor` 8 · `progressSchema` 5 · `stickers` 4 · `danish-phrases` 2 ·
+`gamePhrases` 1 · `progression` 1 · `rolldown-runtime` 1 · `shared-tts-key` 0 (KB).
+
+Two things worth knowing before touching this again:
+
+- **The 166 KB narration manifest is now a dynamic import, and the lookup MUST NOT await it.** iOS
+  consumes the transient user-activation across an `await`, and the prebaked branch of
+  `synthesizeAndPlay` reaches `play()` with nothing awaited in front of it — that is what keeps the
+  first tap in-gesture. So `prebakedFor()` reads a synchronously-available map or reports a MISS, which
+  falls through to live Azure (a slower first clip, never silence). The load is kicked at `ttsClient`
+  module init, so that window is a few ms. Verified with `cdp.mjs --audio-report`: the first tap on
+  Lær Alfabetet still plays `/sounds/tts/<hash>.mp3`, i.e. the prebaked file, not a live synth.
+- **Vite 8 / Rolldown preloads chunks reachable through a DYNAMIC import too.** `index.html` was
+  preloading `dnd-vendor` (49 KB of @dnd-kit) and `colorContent` although nothing in `App.tsx`'s static
+  graph touches either — every importer is a lazy route component. PRD-01 F8 guessed a `manualChunks`
+  artifact; it is the preload-graph walk. `build.modulePreload.resolveDependencies` prunes them for
+  `hostType === 'html'` only, so on-demand loading at navigation is untouched (verified: /farver/jagt,
+  /ordleg/spelling, /math/addition and /alphabet/quiz all still mount with their drag targets).
+
 The build target is now pinned (`target: ['safari17','ios17']` in `vite.config.ts`) so the syntax floor
 matches this device instead of following Vite's default.
 

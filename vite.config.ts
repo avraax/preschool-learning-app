@@ -4,6 +4,12 @@ import fs from 'fs'
 import path from 'path'
 import { execSync } from 'child_process'
 
+// Chunks reachable ONLY through a lazy route (or the lazy adult surface), pruned from index.html's
+// preload list — see `modulePreload` below. Named rather than pattern-matched so adding one is a
+// deliberate act: getting this wrong the other way (pruning something the entry really needs) would
+// show up as a slower first paint, not as a failure.
+const LAZY_ONLY_CHUNKS = ['dnd-vendor', 'colorContent']
+
 function generateVersionPlugin(): Plugin {
   let versionInfo: any
 
@@ -113,6 +119,22 @@ export default defineConfig(({ mode }) => {
     // renders fine. That is the same shape as the Ogg-audio incident. Explicit beats lucky.
     target: ['safari17', 'ios17'],
     minify: 'esbuild',
+    // COLD LAUNCH: don't `<link modulepreload>` the LAZY routes (Performance PRD-01 W7.2).
+    //
+    // Vite 8 / Rolldown emits a preload link for chunks reachable through a DYNAMIC import too, so
+    // `index.html` was preloading `dnd-vendor` (49 KB of @dnd-kit) and `colorContent` even though
+    // nothing in App.tsx's static graph touches either — every importer is a lazily-loaded route
+    // component or the lazy AdultSettings. F8 guessed a `manualChunks` artifact; it is actually the
+    // preload-graph walk. Verified by grep: no eager module imports `components/common/dnd/**`.
+    //
+    // A preload FETCHES AND COMPILES the module (it just doesn't execute it), so on a 2017 iPad this is
+    // real parse work taken before first paint for a screen the child may never open. The chunks are
+    // still emitted and still load on demand when a game route mounts — `__vitePreload` handles their
+    // dependencies at that point, which is why dropping the eager link costs nothing at navigation.
+    modulePreload: {
+      resolveDependencies: (_filename, deps, { hostType }) =>
+        hostType === 'html' ? deps.filter((d) => !LAZY_ONLY_CHUNKS.some((n) => d.includes(`/${n}-`))) : deps,
+    },
     rollupOptions: {
       output: {
         entryFileNames: 'assets/[name]-[hash].js',

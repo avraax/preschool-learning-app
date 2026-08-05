@@ -9,7 +9,41 @@ import { TTS_CONFIG } from '../config/tts-config'
 import { logAudioIssue } from '../utils/remoteConsole'
 import { loadVoiceOverride, saveVoiceOverride, type VoiceOverride } from '../config/voiceOverride'
 import { ttsCacheKey } from '../../shared-tts-key.js'
-import { PREBAKED_TTS } from '../config/prebakedTts'
+// The prebaked NARRATION MANIFEST is loaded lazily (Performance PRD-01 W7.1). It is 166 KB of lookup
+// table that nothing needs at mount — `ttsClient` consults it on the first spoken line — and it was the
+// third-largest thing in the eager preload, behind only MUI and React.
+//
+// TWO RULES MAKE THIS SAFE, and both matter on the target device:
+//
+//  1. **The lookup never awaits.** iOS consumes the transient user-activation across an `await`, and the
+//     prebaked branch of `synthesizeAndPlay` currently reaches `this.play()` with NO await in front of
+//     it — that is what keeps the first tap in-gesture (`.claude/rules/audio-system.md`). So the lookup
+//     reads a synchronously-available map or treats it as a MISS. A miss falls through to live Azure,
+//     which is the path that already exists for dynamic text: a slower first clip, never silence.
+//  2. **The load is kicked at module init**, so the window in which a miss is possible is the few ms
+//     between the app's scripts running and the first tap. It is not on the critical path for paint,
+//     because it is a dynamic import: fetched after the entry, not preloaded before it.
+//
+// Do NOT change the cache-key derivation to work around this — `shared-tts-key.js` is the single source
+// and `.claude/rules/audio-system.md` owns that contract.
+let prebakedManifest: Record<string, string> | null = null
+const loadPrebakedManifest = (): void => {
+  if (prebakedManifest) return
+  void import('../config/prebakedTts')
+    .then((m) => {
+      prebakedManifest = m.PREBAKED_TTS
+    })
+    .catch(() => {
+      /* best-effort: every lookup site degrades to live Azure, which is the dynamic-text path */
+    })
+}
+loadPrebakedManifest()
+
+/**
+ * The prebaked file for a cache key, or `undefined` — including while the manifest is still loading.
+ * NEVER async: see rule 1 above.
+ */
+const prebakedFor = (cacheKey: string): string | undefined => prebakedManifest?.[cacheKey]
 import { authorizedFetch } from './authorizedFetch'
 
 type VoiceType = 'primary' | 'backup' | 'male' | 'english'
@@ -296,7 +330,7 @@ export class TtsClient {
       // `speed` is part of the cache key — Lær Tal speaks numbers faster than the default, so omitting
       // it here would warm a DIFFERENT file than the one the run plays.
       const { cacheKey } = this.resolveRequest(text, voiceType, speed)
-      const file = PREBAKED_TTS[cacheKey]
+      const file = prebakedFor(cacheKey)
       if (!file) continue // dynamic text, or a VoiceLab override is active → nothing static to warm
       // The body must be READ for the response to land in the HTTP cache.
       void fetch(prebakedUrl(file), { cache: 'force-cache' })
@@ -318,7 +352,7 @@ export class TtsClient {
    */
   warmDynamic(text: string, voiceType: VoiceType = 'primary', speed?: number): void {
     const { cacheKey } = this.resolveRequest(text, voiceType, speed)
-    if (PREBAKED_TTS[cacheKey]) {
+    if (prebakedFor(cacheKey)) {
       this.prefetchPrebaked([text], voiceType, speed) // static file → warm the HTTP cache
       return
     }
@@ -380,7 +414,7 @@ export class TtsClient {
 
     // 1. Prebaked static file (the closed content set, default voice only) — no fetch, no Azure,
     //    no first-tap latency. A VoiceLab override changes the cacheKey so it misses here on purpose.
-    const prebakedFile = PREBAKED_TTS[cacheKey]
+    const prebakedFile = prebakedFor(cacheKey)
     if (prebakedFile) {
       try {
         await this.play(prebakedUrl(prebakedFile))
