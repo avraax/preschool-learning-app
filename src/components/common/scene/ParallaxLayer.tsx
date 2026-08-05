@@ -1,7 +1,8 @@
-import React from 'react'
+import React, { useEffect, useRef } from 'react'
 import { Box } from '@mui/material'
 import type { ParallaxLayerSpec } from '../../../theme/tokens/types'
-import { overscanCss, parallaxTravelX, parallaxTravelY } from '../../../config/parallax'
+import { overscanCss, parallaxTravelX, parallaxTravelY, shouldPromoteLayer } from '../../../config/parallax'
+import { registerParallaxTarget } from './parallaxTargets'
 
 // One parallax scene layer (Theme Worlds PRD §5.3). Renders a single full-bleed image, offset by
 // `var(--parallax-x/y) * depth` (set by useParallax on the parent). Decorative only.
@@ -34,13 +35,12 @@ const ParallaxLayer: React.FC<ParallaxLayerProps> = ({ spec, url, index }) => {
   // Horizontal drift for every layer; vertical drift only for center layers (anchored strips
   // stay pinned to their edge so they never expose a gap there). A static `offsetY` (% of the
   // layer height, − = up) is added so independently-generated layers can be lined up.
-  const tx = `calc(var(--parallax-x, 0px) * ${spec.depth})`
-  const drift = anchor === 'center' ? `calc(var(--parallax-y, 0px) * ${spec.depth})` : '0px'
-  // NB: format the sign explicitly — `calc(x + -7%)` is INVALID CSS (drops the whole transform);
-  // it must be `calc(x - 7%)`.
-  const ty = spec.offsetY
-    ? `calc(${drift} ${spec.offsetY < 0 ? '-' : '+'} ${Math.abs(spec.offsetY)}%)`
-    : drift
+  //
+  // The `transform` is written per frame by `useParallax` straight onto this element, via the
+  // registration below — it used to be a `calc(var(--parallax-x) * depth)` in the stylesheet, which
+  // made the transform un-compositable and invalidated the whole subtree on every write (the
+  // measurement is in `parallaxTargets.ts`). The maths is unchanged: same depths, same amplitudes,
+  // same sign handling for `offsetY` (`calc(x + -7%)` is INVALID CSS and drops the whole transform).
 
   // `offsetY` slides the art off one edge on top of the drift, so that edge needs the nudge added to
   // its bleed (a % of the container, matching the transform's unit). Only meaningful for center
@@ -55,8 +55,32 @@ const ParallaxLayer: React.FC<ParallaxLayerProps> = ({ spec, url, index }) => {
     return extra ? `calc(${bleedY} + ${extra}%)` : bleedY
   }
 
+  // PROMOTION — "only promote what actually moves" (Performance PRD-01 W2.2). A full-bleed layer is a
+  // ~22 MB compositing texture at dpr 2, and the far layer (depth 0.14) travels at most ~6px in total.
+  // Below `PROMOTE_MIN_TRAVEL_PX` it gets NO transform and NO `will-change` — it is a static backdrop,
+  // which is what it always looked like. The overscan is unchanged either way, so the box and therefore
+  // the framing are pixel-identical; the threshold lives in `config/parallax.ts` beside the travel and
+  // overscan derivation so those three can never disagree.
+  //
+  // `offsetY` is the exception: it is a STATIC art nudge, not drift, so a layer that carries one still
+  // needs its transform even when it doesn't move.
+  const promote = shouldPromoteLayer(spec.depth)
+  const needsStaticNudge = !promote && anchor === 'center' && !!spec.offsetY
+
+  // Only a promoted layer registers with the driver; a de-promoted one is a static backdrop and its
+  // (nudge-only) transform is plain CSS below.
+  const elRef = useRef<HTMLDivElement>(null)
+  const driftY = anchor === 'center'
+  const offsetYPct = anchor === 'center' ? (spec.offsetY ?? 0) : 0
+  useEffect(() => {
+    const el = elRef.current
+    if (!promote || !el) return
+    return registerParallaxTarget({ el, depth: spec.depth, driftY, offsetYPct })
+  }, [promote, spec.depth, driftY, offsetYPct])
+
   return (
     <Box
+      ref={elRef}
       aria-hidden
       sx={{
         position: 'absolute',
@@ -70,8 +94,14 @@ const ParallaxLayer: React.FC<ParallaxLayerProps> = ({ spec, url, index }) => {
         backgroundSize,
         backgroundPosition,
         backgroundRepeat: 'no-repeat',
-        transform: `translate3d(${tx}, ${ty}, 0)`,
-        willChange: 'transform',
+        // A promoted layer's transform is owned by the driver (written on the element per frame), so
+        // it must NOT also be declared here — an sx `transform` would fight the inline write on every
+        // re-render. `will-change` stays: this one genuinely moves every frame.
+        ...(promote
+          ? { willChange: 'transform' }
+          : needsStaticNudge
+            ? { transform: `translate3d(0, ${spec.offsetY! < 0 ? '-' : ''}${Math.abs(spec.offsetY!)}%, 0)` }
+            : {}),
         pointerEvents: 'none',
       }}
     />

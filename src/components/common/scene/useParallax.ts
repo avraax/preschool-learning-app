@@ -6,21 +6,32 @@ import {
   PARALLAX_POINTER_Y,
   PARALLAX_STRENGTH,
 } from '../../../config/parallax'
+import { writeParallaxFrame } from './parallaxTargets'
 
 // Gentle parallax driver (Theme Worlds PRD §5.3).
 //
-// Writes CSS variables `--parallax-x` / `--parallax-y` (in px) onto the given element every
-// frame; ParallaxLayer reads them and multiplies by its own `depth`. Driving the effect
-// through CSS vars means NO React re-renders during animation. The offset blends a slow
-// autonomous drift (sine over time) with a clamped, smoothed pointer/touch response — no
-// gyroscope, no motion permission. When `disabled` (reduced motion), vars are pinned to 0.
+// Every frame it computes ONE offset — a slow autonomous drift (sine over time) blended with a
+// clamped, smoothed pointer/touch response, no gyroscope and no motion permission — and writes the
+// resulting `transform` DIRECTLY onto each registered scene layer (`parallaxTargets.ts`). Still no
+// React re-renders during the animation. When `disabled` (reduced motion, or a game route where the
+// world is frozen) it writes the resting transform once and stops.
+//
+// It used to write `--parallax-x/y` as CSS custom properties on the root instead, and the layers read
+// them through `calc()`. That cost ~24 percentage points of main-thread busy on home at 6x throttle
+// once W1 stopped masking it — a var-driven transform is not hardware accelerated, and the write
+// invalidated style for every animating sprite in the subtree. The full measurement and the
+// superseded PRD finding are recorded in `parallaxTargets.ts`.
+//
+// `ref` is no longer the write target (the layers register themselves), but it is still the driver's
+// SCOPE and the pointer listener's owner, and keeping it means PersistentWorld's freeze logic is
+// unchanged.
 
 interface ParallaxOptions {
   disabled?: boolean
 }
 
 // The amplitudes live in `src/config/parallax.ts` (pure) because the overscan `ParallaxLayer`
-// reserves and the bloom-anchor guard are both DERIVED from them — a change here that isn't visible
+// reserves and the promotion threshold are both DERIVED from them — a change here that isn't visible
 // to those is how a layer starts sliding off its own edge.
 export function useParallax(
   ref: React.RefObject<HTMLElement | null>,
@@ -31,9 +42,12 @@ export function useParallax(
     if (!el) return
 
     if (disabled) {
-      el.style.setProperty('--parallax-x', '0px')
-      el.style.setProperty('--parallax-y', '0px')
-      return
+      // Rest at zero. Written on a short retry as well as immediately, because the layers mount
+      // asynchronously (lazy art) and a frozen scene has no loop to catch up later — without this a
+      // game route entered from a drifted menu would leave the layers wherever they stopped.
+      writeParallaxFrame(0, 0)
+      const settle = setTimeout(() => writeParallaxFrame(0, 0), 600)
+      return () => clearTimeout(settle)
     }
 
     let raf = 0
@@ -61,8 +75,7 @@ export function useParallax(
       // Critically-damped-ish smoothing.
       curX += (targetX - curX) * 0.04
       curY += (targetY - curY) * 0.04
-      el.style.setProperty('--parallax-x', `${(curX * PARALLAX_STRENGTH).toFixed(2)}px`)
-      el.style.setProperty('--parallax-y', `${(curY * PARALLAX_STRENGTH).toFixed(2)}px`)
+      writeParallaxFrame(curX * PARALLAX_STRENGTH, curY * PARALLAX_STRENGTH)
       raf = requestAnimationFrame(tick)
     }
     raf = requestAnimationFrame(tick)

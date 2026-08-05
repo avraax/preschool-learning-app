@@ -179,7 +179,11 @@ const AmbientField: React.FC<AmbientFieldProps> = ({ scene, sprites, themeId, di
             '--drift': `${item.drift}px`,
             animation: `${animName} ${item.duration}s ${motion === 'twinkle' ? 'ease-in-out' : 'linear'} ${item.delay}s infinite`,
             animationPlayState: paused ? 'paused' : 'running',
-            willChange: 'transform, opacity',
+            // NO `will-change` (Performance PRD-01 W2.1). `will-change: transform, opacity` used to sit
+            // on EVERY sprite — and `count + bloomExtra` reaches AMBIENT_PROMOTED_MAX, so that was up to
+            // 28 promoted compositing layers whose own transform/opacity keyframes promote them anyway.
+            // The hint bought nothing and cost a texture each, at dpr 2 on a GPU that shares system
+            // memory with the 2048x2732 backing store. `will-change` is spent, not sprinkled.
           }}
         />
       ))}
@@ -197,7 +201,7 @@ const AmbientField: React.FC<AmbientFieldProps> = ({ scene, sprites, themeId, di
               '--shoot-dy': s.dy,
               animation: `ambient-shoot ${s.duration} ease-out ${s.delay} infinite`,
               animationPlayState: paused ? 'paused' : 'running',
-              willChange: 'transform, opacity',
+              // No `will-change` — see the sprite above (PRD-01 W2.1).
             }}
           >
             <Box

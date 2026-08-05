@@ -26,7 +26,6 @@ type Pose = keyof MascotPoses // 'idle' | 'greet' | 'point' | 'celebrate'
 interface ThemeMascotProps {
   sx?: SxProps<Theme>
   onTap?: () => void
-  parallaxDepth?: number
   reaction?: GuideReaction
   attract?: boolean
 }
@@ -37,7 +36,6 @@ const POINT_MS = 1400
 const ThemeMascot: React.FC<ThemeMascotProps> = ({
   sx,
   onTap,
-  parallaxDepth = 0.45,
   reaction = null,
   attract = false,
 }) => {
@@ -176,8 +174,15 @@ const ThemeMascot: React.FC<ThemeMascotProps> = ({
       sx={{
         position: 'fixed',
         zIndex: 6,
-        transform: `translate3d(calc(var(--parallax-x, 0px) * ${parallaxDepth}), calc(var(--parallax-y, 0px) * ${parallaxDepth}), 0)`,
-        willChange: 'transform',
+        // NO parallax transform, and no `will-change` (Performance PRD-01 W2). This element used to
+        // carry `translate3d(calc(var(--parallax-x, 0px) * depth), …)`, which MEASURED as
+        // `matrix(1, 0, 0, 1, 0, 0)` on a live home screen: the mascot is rendered INSIDE the page
+        // (deliberately — a persistent mascot in the world layer made Chrome thrash the scene's
+        // compositing), and the page is a SIBLING of PersistentWorld, so it never inherited the
+        // custom property the driver wrote. The mascot has therefore been static since it moved, while
+        // paying for a promoted compositing layer to hold a transform that never changed.
+        // The `parallaxDepth` prop went with it: BOTH call sites already passed 0, so the mascot could
+        // not have moved even if the property had reached it.
         ...sx,
       }}
     >

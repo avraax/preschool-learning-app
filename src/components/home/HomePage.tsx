@@ -337,7 +337,6 @@ const HomePage: React.FC = () => {
 
       {/* Per-world mascot — rendered INSIDE the page (flicker-safe). Idle-attract nudges it. */}
       <ThemeMascot
-        parallaxDepth={0}
         attract={attractOn}
         sx={{
           left: 'calc(env(safe-area-inset-left) + 6px)',

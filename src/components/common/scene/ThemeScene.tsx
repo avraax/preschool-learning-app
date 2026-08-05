@@ -66,6 +66,13 @@ const ThemeScene: React.FC<ThemeSceneProps> = ({ paused = false, bloomExtra = 0 
         // Dark worlds paint their base colour IMMEDIATELY (before the art loads) so a dark
         // theme is dark from the first frame — no flash of the light default/rainbow on reload.
         backgroundColor: scene.dark ? '#070B1A' : 'transparent',
+        // An invalidation inside the world (a drifting sprite, a layer transform) must not be able to
+        // escape into the page laid over it (Performance PRD-01 W2.3). `layout paint` is Safari 17-safe;
+        // `content-visibility` is Safari 18 and is OFF THE TABLE on the 17.7 floor device — that is the
+        // same shape of mistake as the Ogg audio that silenced the app (PRD-01 F9, and W8.3 guards it).
+        // `size` is deliberately NOT included: this box is `inset: 0` on its parent and must keep
+        // measuring from it.
+        contain: 'layout paint',
       }}
     >
       {/* Only the art fades in; the base colour above is instant. */}
