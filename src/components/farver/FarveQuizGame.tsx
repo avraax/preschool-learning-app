@@ -44,27 +44,31 @@ import ObjectArt from './farverArt'
 import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 
 // Hvilken Farve? — drag an object onto the matching COLOR. A wrong color bounces the object back
-// (gentle SFX); after 2 wrong drops the correct color pulses (never-fail hint, costs a star).
-// Bounded round of 8 → RoundResultScreen. Static difficulty. Keeps the section's drag language
-// (Farvejagt/Ram Farven/Nuancer are all dnd-kit).
+// (gentle SFX); after the level's `hintAfter` wrong drops the correct color pulses and is NAMED
+// (never-fail hint, costs a star). Bounded round of 8 → RoundResultScreen. Static difficulty. Keeps
+// the section's drag language (Farvejagt/Ram Farven/Nuancer are all dnd-kit).
 //
-// **The object is GREYED OUT above Let** (`COLORS_QUIZ[level].reveal`), and that is what makes this a
-// colour game rather than a pixel match: shown in its true colour, the fox's orange is already on the
-// board next to an orange swatch, so the child never needs the word — the same "a board must not
-// restate its own answer" defect the owner removed from Tal Quiz and from Bogstav Quiz's old
-// hear-the-letter mode. Greyed, "Hvilken farve er ræven?" is the real question, the spoken echo
-// ("ræven er orange") teaches instead of narrating, and the colour comes BACK as the reveal when the
-// object lands in the right swatch. The pool shrinks with it — a greyed car has no right answer, see
-// `canonical` in colorContent.
+// **The object is ALWAYS DESATURATED — at every Sværhedsgrad, with no axis that can undo it**
+// (Difficulty PRD-02, owner 2026-08-05). That is what makes this a colour game rather than a pixel
+// match: shown in its true colour, the fox's orange is already on the board next to an orange swatch,
+// so the child never needs the word — the same "a board must not restate its own answer" defect the
+// owner removed from Tal Quiz and from Bogstav Quiz's old hear-the-letter mode. PRD-01 confined the
+// visible version to Let as "the youngest child's winnable tier"; that was still the giveaway, so the
+// `reveal` axis is gone rather than narrowed. Greyed, "Hvilken farve er ræven?" is the real question,
+// the spoken echo ("ræven er orange") teaches instead of narrating, and the colour comes BACK — only —
+// on the copy that lands in the right swatch. Never re-condition the `desaturate` prop on a level.
+//
+// Let is eased on axes that leak nothing instead: the smaller `pool` (12 unambiguous subjects — see
+// `obvious` in colorContent), 3 swatches, distractor hues off the answer's wheel neighbours, and the
+// naming hint after ONE wrong drop. Non-canonical subjects (a car, a shirt) are askable nowhere.
 //
 // UI/UX Overhaul §6C: shared drag juice — grab = lift + 'pick-up' SFX; a swatch breathes while a
 // compatible item hovers it; a correct swatch ABSORBS the object (scale-in + splash); a wrong drop
 // springs back + 'spring-back' SFX. Reduced motion keeps colour/glow + SFX, drops the travel.
 
-const WRONG_BEFORE_HINT = 2
-// Round length, option count, hue policy and reveal mode all come from config (Difficulty PRD-01
-// §4.5): Let 3 swatches / non-adjacent hues / in colour · Normal 4 / random / grey · Svær 5 /
-// wheel-adjacent only / grey.
+// Round length, option count, hue policy, object pool and the hint threshold all come from config
+// (Difficulty PRD-01 §4.5 + PRD-02): Let 3 swatches / non-adjacent hues / obvious pool / hint after 1
+// · Normal 4 / random / all 18 / 2 · Svær 5 / wheel-adjacent only / all 18 / 2.
 
 const FarveQuizGame: React.FC = () => {
   const muiTheme = useTheme()
@@ -77,15 +81,16 @@ const FarveQuizGame: React.FC = () => {
 
   const [current, setCurrent] = useState<QuizObject | null>(null)
   const [options, setOptions] = useState<string[]>([])   // candidate color names
-  // Whether THIS question's object is greyed out. Held in state beside the question (not derived at
-  // render from the live level) so the object can never be greyed while it was drawn from the
-  // colour-mode pool — a mid-question level change regenerates both together.
-  const [greyObject, setGreyObject] = useState(false)
   const [solvedColor, setSolvedColor] = useState<string | null>(null) // the color it landed in (correct)
   const [shakeColor, setShakeColor] = useState<string | null>(null)
-  // Never-fail hint: after WRONG_BEFORE_HINT wrong drops on the current question, the correct color
-  // pulses. `hintColor` holds that color name (or null). Reset per question (see setupQuestion).
-  const { hint: hintColor, setHint: setHintColor, registerWrong: registerHintWrong, reset: resetHint } = useNeverFailHint<string>(WRONG_BEFORE_HINT)
+  // Live difficulty (read here, above the hint hook, because the hint THRESHOLD is per-level now).
+  // The regenerate-on-change effect lives at the bottom of the component.
+  const difficultyLevel = useDifficulty('colors')
+  // Never-fail hint: after the level's `hintAfter` wrong drops on the current question, the correct
+  // color pulses and is named. `hintColor` holds that color name (or null). Reset per question (see
+  // setupQuestion). `useNeverFailHint` lists `threshold` in `registerWrong`'s deps, so an adult
+  // changing the level mid-game takes effect without a remount.
+  const { hint: hintColor, setHint: setHintColor, registerWrong: registerHintWrong, reset: resetHint } = useNeverFailHint<string>(COLORS_QUIZ[difficultyLevel].hintAfter)
   // Shared lift/breathe drag state (activeId = grabbed object, overId = swatch under the pointer).
   const { activeId, overId, setActiveId, onDragOver, clearActive } = useDragActive()
 
@@ -130,18 +135,18 @@ const FarveQuizGame: React.FC = () => {
 
   const setupQuestion = (voice = true) => {
     isAdvancing.current = false
-    // Static difficulty (progressStore.difficultyFor — no adaptivity), table-driven. Two axes: the
-    // REVEAL mode (in colour at Let = the answer is visible; greyed above it = the child recalls it,
-    // which also narrows the pool to canonical-colour objects), and the DISTRACTOR HUES — Let excludes
-    // the answer's wheel neighbours (so no near-miss is on the board), Normal is random, Svær offers
-    // the neighbours FIRST — rød/orange, blå/lilla — so telling adjacent hues apart is the task.
-    // `HUE_WHEEL`, not `HUE_ORDER`: the display order's neighbours (rød/blå) aren't the ones a child
-    // confuses.
+    // Static difficulty (progressStore.difficultyFor — no adaptivity), table-driven. The object is
+    // desaturated regardless, so the axes here are the POOL (Let asks only the 12 subjects whose
+    // colour is unambiguous at 5; Normal/Svær ask all 18 canonical ones) and the DISTRACTOR HUES —
+    // Let excludes the answer's wheel neighbours (so no near-miss is on the board), Normal is random,
+    // Svær offers the neighbours FIRST — rød/orange, blå/lilla — so telling adjacent hues apart is the
+    // task. `HUE_WHEEL`, not `HUE_ORDER`: the display order's neighbours (rød/blå) aren't the ones a
+    // child confuses.
     const level = progressStore.difficultyFor('colors')
-    const { options: optionCount, hues, reveal } = COLORS_QUIZ[level]
+    const { options: optionCount, hues } = COLORS_QUIZ[level]
 
-    // `colorQuizPromptPool(level)` IS `quizObjectPool(reveal)` — read through promptPools so the
-    // measured simulation samples the same per-level pool this board asks from.
+    // `colorQuizPromptPool(level)` IS `quizObjectPool(COLORS_QUIZ[level].pool)` — read through
+    // promptPools so the measured simulation samples the same per-level pool this board asks from.
     const obj = objectBag.draw(colorQuizPromptPool(level))
 
     const neighbours = adjacentHues(obj.color)
@@ -156,7 +161,6 @@ const FarveQuizGame: React.FC = () => {
 
     currentRef.current = obj
     setCurrent(obj)
-    setGreyObject(reveal === 'grey')
     setOptions(opts)
     setSolvedColor(null)
     setShakeColor(null)
@@ -298,9 +302,10 @@ const FarveQuizGame: React.FC = () => {
       if (registerHintWrong(() => current.color)) {
         mascotBus.emit('hint')
         // …and NAME the colour (Practice Loop PRD-01 W3) — the same identification line a correct drop
-        // speaks, through the same shared builder, so it is provably the baked clip. Above Let the object
-        // is greyed, which makes this the one thing that can unstick a child who doesn't recall the
-        // colour. Fire-and-forget; the `spring-back` SFX is a separate channel and survives it.
+        // speaks, through the same shared builder, so it is provably the baked clip. The object is
+        // greyed at every level, which makes this the one thing that can unstick a child who doesn't
+        // recall the colour — and why Let trips it after a SINGLE wrong drop (`hintAfter`).
+        // Fire-and-forget; the `spring-back` SFX is a separate channel and survives it.
         audio
           .speak(colorObjectFactText(current.objectNameDefinite, spokenColor(current.color, current.neuter)))
           .catch(() => {})
@@ -332,8 +337,8 @@ const FarveQuizGame: React.FC = () => {
   const displayHintColor = forcedFx === 'hint' && current ? (hintColor ?? current.color) : hintColor
 
   // Live difficulty: rebuild the current question when the level changes in the adult menu (no
-  // refresh). Skips the result screen + the initial mount.
-  const difficultyLevel = useDifficulty('colors')
+  // refresh). Skips the result screen + the initial mount. (`difficultyLevel` itself is read at the
+  // top of the component — the hint hook needs it.)
   const prevDifficultyRef = useRef(difficultyLevel)
   useEffect(() => {
     if (prevDifficultyRef.current === difficultyLevel) return
@@ -372,10 +377,11 @@ const FarveQuizGame: React.FC = () => {
 
               Sized off PHONE_LANDSCAPE, not a blanket `orientation: landscape`: the bare orientation
               query also caught the iPad — the app's PRIMARY device — and shrank the object to 80px,
-              SMALLER than the 92px swatches, with ~200px of the column left unused. Harmless while the
-              object was shown in colour (its hue was the answer, and hue survives any size), but in
-              grey mode the SILHOUETTE is the entire question, so the prompt has to be the biggest
-              thing on the board. Phones keep the compact size — they have no slack to give. */}
+              SMALLER than the 92px swatches, with ~200px of the column left unused. That was merely
+              ugly back when the object was shown in colour at Let (its hue was the answer, and hue
+              survives any size); now the SILHOUETTE is the entire question at every level, so the
+              prompt has to be the biggest thing on the board. Phones keep the compact size — they
+              have no slack to give. */}
           <Box sx={{
             flex: '0 0 auto',
             display: 'flex',
@@ -400,9 +406,10 @@ const FarveQuizGame: React.FC = () => {
                     sx={[objectFloat(isLiftedObject).sx]}
                   >
                     {/* PRD-09: the object is a baked soft-3D thing resting in the world (no #ECF1F8
-                        holder, no border, no lip). Above Let it is GREYED (`greyObject`), so the child
-                        has to know the colour instead of matching it off the art; the colour returns
-                        on the copy that lands in the swatch below. */}
+                        holder, no border, no lip). It is GREYED at EVERY level (PRD-02 — a BARE
+                        `desaturate` prop, deliberately not an expression), so the child has to know
+                        the colour instead of matching it off the art; the colour returns only on the
+                        copy that lands in the swatch below. */}
                     <Box sx={{
                       width: { xs: 112, md: 140 },
                       height: { xs: 112, md: 140 },
@@ -418,7 +425,7 @@ const FarveQuizGame: React.FC = () => {
                         size="100%"
                         elevation={isLiftedObject ? 3 : 1}
                         alt={current.objectName}
-                        desaturate={greyObject}
+                        desaturate
                       />
                     </Box>
                   </Box>

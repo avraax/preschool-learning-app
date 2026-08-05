@@ -64,11 +64,12 @@ export const spellingPromptPool = (level: DifficultyLevel): readonly OrdlegWord[
   spellingWordsFor(level)
 
 /**
- * Hvilken Farve?: the objects askable at this level's REVEAL mode — grey mode drops non-canonical
- * colours, because a greyed-out car has no right answer.
+ * Hvilken Farve?: the objects askable from this level's POOL. The object is desaturated at every
+ * level, so non-canonical colours are gone everywhere (a greyed-out car has no right answer) and Let
+ * additionally asks only the subjects whose colour is unambiguous at 5.
  */
 export const colorQuizPromptPool = (level: DifficultyLevel): readonly QuizObject[] =>
-  quizObjectPool(COLORS_QUIZ[level].reveal)
+  quizObjectPool(COLORS_QUIZ[level].pool)
 
 /** Nuancer asks a HUE (all 6 at every level; the level moves slots + the decoy). */
 export const nuancerPromptPool = (): readonly string[] => HUE_ORDER

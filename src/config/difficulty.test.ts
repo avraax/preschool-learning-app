@@ -134,12 +134,15 @@ test('the §4 per-game tables are exactly these values', () => {
     normal: { options: 4, theme: 'random' },
     svaer: { options: 5, theme: 'same' },
   })
-  // `reveal` is the load-bearing one: 'colour' puts the answer on the board (the fox IS orange next
-  // to an orange swatch), so only Let may use it.
+  // There is NO reveal axis — the object is desaturated at every level (PRD-02; the inverted guard
+  // lives in `colorContent.test.ts`). Let is eased on the three axes that leak nothing instead: the
+  // `obvious` pool (12 subjects), 3 swatches with no wheel-neighbour on the board, and the naming hint
+  // after a single wrong drop. Normal/Svær share pool + hintAfter and differ on options + hues, which
+  // is what keeps the distinctness guard below satisfied without `reveal`.
   assert.deepEqual(COLORS_QUIZ, {
-    let: { options: 3, hues: 'non-adjacent', reveal: 'colour' },
-    normal: { options: 4, hues: 'random', reveal: 'grey' },
-    svaer: { options: 5, hues: 'adjacent', reveal: 'grey' },
+    let: { options: 3, hues: 'non-adjacent', pool: 'obvious', hintAfter: 1 },
+    normal: { options: 4, hues: 'random', pool: 'all', hintAfter: 2 },
+    svaer: { options: 5, hues: 'adjacent', pool: 'all', hintAfter: 2 },
   })
   assert.deepEqual(COLORS_FARVEJAGT, {
     let: { distractorColors: 3, perColor: 1 },

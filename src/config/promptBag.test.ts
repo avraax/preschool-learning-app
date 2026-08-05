@@ -190,9 +190,11 @@ const EXPECTED: Record<string, Record<DifficultyLevel, Pinned>> = {
     normal: { pool: 35, round: 8, before: 0.52, beforeWorst: 5, after: 0, distinct: 8 },
     svaer: { pool: 42, round: 8, before: 0.51, beforeWorst: 5, after: 0, distinct: 8 },
   },
-  // Grey mode (Normal/Svær) narrows the pool to canonical colours, so the harder levels repeated MORE.
+  // Difficulty PRD-02 moved this game's pools: the object is desaturated at every level now, so the six
+  // non-canonical colours are askable nowhere (18, not 24) and LET asks only the 12 unambiguous
+  // subjects. Let is therefore the SMALLEST pool here and the one the old draw served worst.
   'colors.quiz': {
-    let: { pool: 24, round: 8, before: 0.7, beforeWorst: 5, after: 0, distinct: 8 },
+    let: { pool: 12, round: 8, before: 0.97, beforeWorst: 4, after: 0, distinct: 8 },
     normal: { pool: 18, round: 8, before: 0.8, beforeWorst: 4, after: 0, distinct: 8 },
     svaer: { pool: 18, round: 8, before: 0.8, beforeWorst: 4, after: 0, distinct: 8 },
   },

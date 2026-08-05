@@ -12,10 +12,10 @@ import { softShadow } from '../../theme/depth'
 // `elevation` raises the shadow while an object is lifted/grabbed (3 ≈ "in the air"). The visual
 // is inert to pointer events; the caller owns drag/press/hint motion on its own wrapper.
 //
-// `desaturate` strips the colour out entirely (Hvilken Farve?'s grey levels — the child supplies the
-// colour from knowledge, and it returns when the object lands in the right swatch). It is FULL
-// grayscale on purpose: any residual saturation is a leak the child can match against a swatch,
-// which is the giveaway the grey mode exists to remove.
+// `desaturate` strips the colour out entirely (Hvilken Farve?'s prompt object, at EVERY level since
+// Difficulty PRD-02 — the child supplies the colour from knowledge, and it returns only on the copy
+// that lands in the right swatch). It is FULL grayscale on purpose: any residual saturation is a leak
+// the child can match against a swatch, which is the giveaway greying the object exists to remove.
 interface ObjectArtProps {
   art?: string
   size: number | string

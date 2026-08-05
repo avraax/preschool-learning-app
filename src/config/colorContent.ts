@@ -11,19 +11,22 @@ export interface ColorObject {
   hex: string                 // the object's true color (drives the draggable tile color)
   neuter: boolean             // true = et-word (neuter gender) → color predicate takes -t ("rødt")
   quizSafe?: boolean          // false = picture contradicts its color → excluded from Hvilken Farve?
-  canonical?: boolean         // false = the object's color is NOT world knowledge → grey-mode unsafe
+  canonical?: boolean         // false = the object's color is NOT world knowledge → never askable
+  obvious?: boolean           // false = colour is real but not unambiguous at 5 → held back from Let
 }
 
 /**
- * How Hvilken Farve? presents the object (per-level, see `COLORS_QUIZ` in `difficulty.ts`).
+ * Which objects Hvilken Farve? asks from (per-level, see `COLORS_QUIZ` in `difficulty.ts`).
  *
- * `colour` — the object is shown in its true colour, so the answer is visible on the board and the
- *            task is a pixel match. Deliberately kept for the easiest level only.
- * `grey`   — the object is DESATURATED, so the child must know that a fox is orange and a banana
- *            yellow. That is the question the game's title asks, and the colour returns as the
- *            reveal when the object lands in the right swatch.
+ * The object is DESATURATED at every level, so the pool is a FAIRNESS surface: the child answers from
+ * what they know about the subject, never from the picture.
+ *
+ * `all`     — every canonical subject (18). Normal and Svær.
+ * `obvious` — only the subjects whose colour a Danish 5-year-old holds without hesitation (12), so a
+ *             cob of corn that reads yellow-and-green or a blue-grey whale can't cost the easiest
+ *             level a question. Let.
  */
-export type ColorReveal = 'colour' | 'grey'
+export type ColorPool = 'obvious' | 'all'
 
 // Neuter (-t) forms of the declinable base colors. Common-gender objects speak the base name;
 // lilla/orange are indeclinable (no -t form). Used so the spoken "{objektet} er {farve}" echo
@@ -47,12 +50,19 @@ export const spokenColor = (hue: string, neuter: boolean): string =>
 // and Lær Farver (examples). `objectName`/`objectNameDefinite` are unchanged for every retained
 // object so the spoken echoes stay identical (no new narration → no prebake/audit cycle).
 //
+// TWO independent "not askable in Hvilken Farve?" flags, because they record different reasons:
+//
 // `canonical: false` marks the objects whose colour is a PROPERTY OF THIS PICTURE rather than world
 // knowledge — a car, a shirt and a crystal can be any colour, and this `hjerte` is authored lilla
-// while any child would answer rød. Harmless while the object is shown in colour (the answer is on
-// screen), unfair the moment it is greyed out, so Hvilken Farve?'s grey levels drop them. That is 18
-// of the 24 left, with grøn/gul/orange at four each and rød/blå/lilla at two — guarded in
-// `colorContent.test.ts`, which is also where to look after adding art for a canonical red or blue.
+// while any child would answer rød. The object is desaturated at EVERY level now (Difficulty PRD-02),
+// so these six have no right answer anywhere and leave the quiz entirely. That is 18 of the 24 left,
+// with grøn/gul/orange at four each and rød/blå/lilla at two — guarded in `colorContent.test.ts`,
+// which is also where to look after adding art for a canonical red or blue.
+//
+// `obvious: false` marks the six whose colour IS real world knowledge but not unambiguous to a Danish
+// 5-year-old (a cob reads yellow-and-green, whales read blue-grey, pumpkins also come white). They are
+// asked at Normal/Svær and held back from Let's pool — one of Let's four easing axes now that the
+// reveal axis is gone. Default-true by omission, the same convention as `canonical`.
 export const DANISH_OBJECTS: Record<string, ColorObject[]> = {
   rød: [
     { objectName: 'æble', objectNameDefinite: 'æblet', art: 'apple', hex: '#dc2626', neuter: true },
@@ -61,32 +71,37 @@ export const DANISH_OBJECTS: Record<string, ColorObject[]> = {
     { objectName: 'jordbær', objectNameDefinite: 'jordbærret', art: 'strawberry', hex: '#991b1b', neuter: true }
   ],
   blå: [
-    { objectName: 'hval', objectNameDefinite: 'hvalen', art: 'whale', hex: '#1d4ed8', neuter: false },
+    // A whale reads blue-GREY as often as blue — real, but not what Let should hinge on.
+    { objectName: 'hval', objectNameDefinite: 'hvalen', art: 'whale', hex: '#1d4ed8', neuter: false, obvious: false },
     { objectName: 'blåbær', objectNameDefinite: 'blåbærret', art: 'blueberry', hex: '#3730a3', neuter: true },
     { objectName: 'lastbil', objectNameDefinite: 'lastbilen', art: 'truck', hex: '#2563eb', neuter: false, canonical: false },
     { objectName: 'skjorte', objectNameDefinite: 'skjorten', art: 'shirt', hex: '#1e40af', neuter: false, canonical: false }
   ],
   grøn: [
     { objectName: 'agurk', objectNameDefinite: 'agurken', art: 'cucumber', hex: '#16a34a', neuter: false },
-    { objectName: 'skildpadde', objectNameDefinite: 'skildpadden', art: 'turtle', hex: '#15803d', neuter: false },
-    { objectName: 'kløver', objectNameDefinite: 'kløveren', art: 'clover', hex: '#166534', neuter: false },
+    // Turtles read brown to a child, and kløver is an unfamiliar subject at 5 — both Normal-and-up.
+    { objectName: 'skildpadde', objectNameDefinite: 'skildpadden', art: 'turtle', hex: '#15803d', neuter: false, obvious: false },
+    { objectName: 'kløver', objectNameDefinite: 'kløveren', art: 'clover', hex: '#166534', neuter: false, obvious: false },
     { objectName: 'træ', objectNameDefinite: 'træet', art: 'tree', hex: '#14532d', neuter: true }
   ],
   gul: [
     { objectName: 'sol', objectNameDefinite: 'solen', art: 'sun', hex: '#eab308', neuter: false },
     { objectName: 'banan', objectNameDefinite: 'bananen', art: 'banana', hex: '#facc15', neuter: false },
-    { objectName: 'majs', objectNameDefinite: 'majsen', art: 'corn', hex: '#fde047', neuter: false },
+    // A cob reads yellow-AND-green (husk + kernels), so it is not a clean gul question.
+    { objectName: 'majs', objectNameDefinite: 'majsen', art: 'corn', hex: '#fde047', neuter: false, obvious: false },
     { objectName: 'kylling', objectNameDefinite: 'kyllingen', art: 'chick', hex: '#facc15', neuter: false }
   ],
   lilla: [
     { objectName: 'druer', objectNameDefinite: 'druerne', art: 'grapes', hex: '#a855f7', neuter: false },
-    { objectName: 'aubergine', objectNameDefinite: 'auberginen', art: 'eggplant', hex: '#9333ea', neuter: false },
+    // Aubergine's colour is not world knowledge at 5 (and the subject itself often isn't either).
+    { objectName: 'aubergine', objectNameDefinite: 'auberginen', art: 'eggplant', hex: '#9333ea', neuter: false, obvious: false },
     { objectName: 'krystal', objectNameDefinite: 'krystallet', art: 'crystal', hex: '#7c3aed', neuter: true, canonical: false },
     { objectName: 'hjerte', objectNameDefinite: 'hjertet', art: 'heart', hex: '#8b5cf6', neuter: true, canonical: false }
   ],
   orange: [
     { objectName: 'appelsin', objectNameDefinite: 'appelsinen', art: 'orange_fruit', hex: '#f97316', neuter: false },
-    { objectName: 'græskar', objectNameDefinite: 'græskarret', art: 'pumpkin', hex: '#ea580c', neuter: true },
+    // Pumpkins also come white and green, so orange is a likely answer rather than a certain one.
+    { objectName: 'græskar', objectNameDefinite: 'græskarret', art: 'pumpkin', hex: '#ea580c', neuter: true, obvious: false },
     { objectName: 'ræv', objectNameDefinite: 'ræven', art: 'fox', hex: '#ea580c', neuter: false },
     { objectName: 'gulerod', objectNameDefinite: 'guleroden', art: 'carrot', hex: '#f97316', neuter: false }
   ]
@@ -186,16 +201,18 @@ export interface QuizObject {
 }
 
 /**
- * The objects Hvilken Farve? may ask at a given reveal mode.
+ * The objects Hvilken Farve? may ask from a given pool.
  *
- * Both modes drop `quizSafe:false` (a picture that contradicts its own colour); `grey` additionally
- * drops `canonical:false`, because a greyed-out car has no right answer. Pure + module-level data, so
- * `colorContent.test.ts` can assert the pool never falls below `COLORS_QUIZ_ROUND`.
+ * Both pools drop `quizSafe:false` (a picture that contradicts its own colour) AND `canonical:false`
+ * (a greyed-out car has no right answer, and the object is greyed at every level now) — 18 objects.
+ * `'obvious'` additionally drops `obvious:false`, leaving Let the 12 subjects whose colour is
+ * unambiguous at 5. Pure + module-level data, so `colorContent.test.ts` can assert neither pool ever
+ * falls below `COLORS_QUIZ_ROUND`.
  */
-export const quizObjectPool = (reveal: ColorReveal): QuizObject[] =>
+export const quizObjectPool = (pool: ColorPool): QuizObject[] =>
   HUE_ORDER.flatMap((color) =>
     (DANISH_OBJECTS[color] ?? [])
-      .filter((o) => o.quizSafe !== false && (reveal === 'colour' || o.canonical !== false))
+      .filter((o) => o.quizSafe !== false && o.canonical !== false && (pool === 'all' || o.obvious !== false))
       .map((o) => ({
         color,
         objectName: o.objectName,

@@ -46,6 +46,15 @@ supposed to teach?** If yes, the giveaway comes off, even if that makes the game
 usually to move the answer into speech, or to strip the attribute being asked about). A per-section
 "don't re-add it as a counting aid / a picture crutch" note lives in each section below.
 
+**CONFINING A GIVEAWAY TO *LET* IS NOT REMOVING IT** — the fourth instance, and the one worth
+generalising (Difficulty PRD-02, owner 2026-08-05). Hvilken Farve kept the true-colour object at Let as
+"the youngest child's winnable tier", which reads as a reasonable compromise and is not: the level an
+adult sets for a 5-year-old is the level he actually plays, so the giveaway simply became the default
+experience with a difficulty label on it. **The rule is total over levels**, and a level that leans on
+the giveaway for its easiness is a level that needs re-easing on axes that leak nothing — pool
+membership, option count, distractor distance, an earlier hint. Same shape as the fairness rule below:
+a harder level must not cost rewards, and an *easier* one must not cost the lesson.
+
 Two more invariants that module enforces, both learned by shipping the bug twice:
 
 - **A level's content POOL must be at least the ROUND LENGTH — necessary, and NOT sufficient.** Smaller,
@@ -225,16 +234,24 @@ All drag-based except the calm Lær Farver browse; hand-rolled dnd-kit — see `
   none and measured **7.5px INSIDE the "Mål" chip** (a non-pale target measured 8px clear), the overlap
   the owner reported. It is always rendered and only painted when pale, so bench geometry stays constant
   as targets rotate. `.claude/rules/responsive-design.md`, "reserve the space, don't tune a percentage".
-- Hvilken Farve?: drag the object onto the matching color swatch — and **above Let the object is
-  DESATURATED** (`COLORS_QUIZ[level].reveal`), because shown in its true colour the answer is already on
-  the board and the child matches the fox's orange to the orange swatch without ever needing the word.
-  Same "a board must not restate its own answer" rule as Tal Quiz's removed numeral/object row and
-  Bogstav Quiz's dropped hear-the-letter mode; matching is a ~2–3 year milestone, and the rest of this
-  section already covers the 5–6 skills (sorting, shades, mixing). The colour comes BACK on the copy
-  that lands in the swatch — that pop is the reveal, so never grey it too. Grey mode also narrows the
-  pool to `canonical` objects: a greyed car, shirt or crystal has no right answer, and the authored
-  lilla `hjerte` would score rød wrong. Guarded in `colorContent.test.ts` (pool ≥ round, per-hue floor,
-  and the game's `desaturate` wiring read as source — the tables being right proves nothing on its own).
+- Hvilken Farve?: drag the object onto the matching color swatch — and the object is **DESATURATED at
+  EVERY level, with no tuning axis that can undo it** (Difficulty PRD-02; the `reveal` axis is deleted,
+  not narrowed). Shown in its true colour the answer is already on the board and the child matches the
+  fox's orange to the orange swatch without ever needing the word — same "a board must not restate its
+  own answer" rule as Tal Quiz's removed numeral/object row and Bogstav Quiz's dropped hear-the-letter
+  mode; matching is a ~2–3 year milestone, and the rest of this section already covers the 5–6 skills
+  (sorting, shades, mixing). The colour comes BACK only on the copy that lands in the swatch — that pop
+  is the reveal and the whole lesson, so never grey it too, and there is **exactly one `desaturate` site
+  in the component, a BARE prop** (an `=` there means someone re-conditioned it on a level).
+  `canonical:false` objects are askable at **no** level: a greyed car, shirt or crystal has no right
+  answer, and the authored lilla `hjerte` would score rød wrong (18 of the 24 left).
+  **Let is eased on four axes that leak nothing**: the `obvious` pool (12 subjects whose colour is
+  unambiguous at 5 — majs, græskar, hval, skildpadde, kløver and aubergine are held back to
+  Normal/Svær), 3 swatches, distractor hues kept off the answer's wheel neighbours, and the naming hint
+  after ONE wrong drop instead of two. Guarded in `colorContent.test.ts` (both pools ≥ round, per-hue
+  floors for each, the by-name membership of both held-back sets, an INVERTED test that no level may
+  carry a colour reveal, and the `desaturate` + `hintAfter` wiring read as source — the tables being
+  right proves nothing on its own).
 - Nuancer: drag 3 shades into slots **light→dark** (left = lightest).
 - **Educational color content is data** in `src/config/colorContent.ts` (NOT themeable); color hexes
   stay data, never themed.

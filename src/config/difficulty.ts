@@ -15,7 +15,7 @@
 // relative imports in this graph need an explicit `.ts` extension (Node's ESM resolver rejects
 // extensionless imports even though Vite/tsc accept them — see `.claude/rules/audio-system.md`).
 import type { DifficultyLevel } from './progressSchema.ts'
-import type { ColorReveal } from './colorContent.ts'
+import type { ColorPool } from './colorContent.ts'
 
 export type { DifficultyLevel }
 
@@ -397,25 +397,33 @@ export interface ColorQuizTuning {
    * `adjacent`     — wheel neighbours ONLY (rød/orange, blå/lilla).
    */
   hues: 'non-adjacent' | 'random' | 'adjacent'
-  /** Whether the object is shown in its true colour (answer visible) or greyed out (recall). */
-  reveal: ColorReveal
+  /** Which object pool the level asks from (`colorContent.ts`). */
+  pool: ColorPool
+  /** Wrong drops before the never-fail hint pulses AND names the colour. */
+  hintAfter: number
 }
 
 /**
  * Hvilken Farve? (`colors.quiz`). Adjacency comes from `HUE_WHEEL` in `colorContent.ts`.
  *
- * `reveal` is the axis that makes this game a colour game at all. Shown in colour, the answer is on
- * the board — the child matches the fox's orange to the orange swatch without ever needing the word,
- * which is the same defect the owner removed from Tal Quiz (nothing on a board may restate its own
- * answer) and from Bogstav Quiz's old "hear the letter, tap the letter" mode. So only **Let** keeps
- * the visible version, as the youngest child's winnable tier; Normal and Svær grey the object out and
- * ask what the title asks. The hue axis still stacks on top: greyed + wheel-neighbours-only at Svær
- * means recalling that a fox is orange and not rød or gul.
+ * **The object is DESATURATED at every level, and there is no axis that can undo that** (Difficulty
+ * PRD-02, owner 2026-08-05). Shown in its true colour the answer is already on the board — the child
+ * matches the fox's orange to the orange swatch without ever needing the word, the same "a board must
+ * not restate its own answer" defect the owner removed from Tal Quiz and from Bogstav Quiz's old
+ * "hear the letter, tap the letter" mode. PRD-01 confined it to Let as the youngest child's winnable
+ * tier; that was still the giveaway, so the `reveal` axis is DELETED rather than narrowed. Don't
+ * re-add it, in any form, at any level.
+ *
+ * Let is therefore eased on four axes that leak nothing: the smallest `pool` (only subjects whose
+ * colour is unambiguous to a 5-year-old), 3 swatches, distractor hues kept OFF the answer's wheel
+ * neighbours (so no near miss is even on the board), and the never-fail hint — which NAMES the
+ * colour — after a single wrong drop instead of two. Svær stacks the other way: 5 swatches and
+ * wheel-neighbours FIRST, so telling rød from orange is the task.
  */
 export const COLORS_QUIZ: Record<DifficultyLevel, ColorQuizTuning> = {
-  let: { options: 3, hues: 'non-adjacent', reveal: 'colour' },
-  normal: { options: 4, hues: 'random', reveal: 'grey' },
-  svaer: { options: 5, hues: 'adjacent', reveal: 'grey' },
+  let: { options: 3, hues: 'non-adjacent', pool: 'obvious', hintAfter: 1 },
+  normal: { options: 4, hues: 'random', pool: 'all', hintAfter: 2 },
+  svaer: { options: 5, hues: 'adjacent', pool: 'all', hintAfter: 2 },
 }
 
 export interface FarvejagtTuning {

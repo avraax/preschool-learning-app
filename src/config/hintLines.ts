@@ -117,8 +117,11 @@ export const HINT_LINES: Record<string, HintSpec> = {
   },
   'colors.quiz': {
     voice: 'da',
-    // The 'colour' pool is a superset of the 'grey' one, so this covers every level.
-    lines: () => quizObjectPool('colour').map(colorQuizHintLine),
+    // The 'all' pool is a superset of Let's 'obvious' one, so this covers every level. It shrank from
+    // 24 to 18 with Difficulty PRD-02: the six non-canonical objects are askable at no level now, so
+    // they can never be the thing a hint names. Their clips stay baked — Farvejagt and Lær Farver
+    // still speak them.
+    lines: () => quizObjectPool('all').map(colorQuizHintLine),
   },
   'ordleg.spelling': {
     voice: 'da',
