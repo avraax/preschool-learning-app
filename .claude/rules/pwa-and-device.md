@@ -25,15 +25,31 @@ offline"** — only an already-resident app resuming survives.
 - Exactly one manifest: hand-authored `public/manifest.json` (linked in `index.html`). Keep its
   `theme_color`/`background_color` consistent with the `theme-color` meta, and `orientation: any`
   (landscape-first design).
+- **`.gitignore` carries a blanket `*.json`** (for credentials) with a handful of `!` exceptions, and the
+  manifest was not one of them — so it lived on ONE disk and reached no deploy for as long as the app has
+  existed. A shipped asset caught by that rule is invisible locally **by construction**: dev, `vite
+  preview` and even a local `vercel build` all read the working tree. Any new non-code asset needs its own
+  `!` negation. Guarded by `src/config/pwaAssets.test.ts` — every path `index.html` and the manifest
+  reference must exist in `public/` **and** be tracked (`git ls-files`), plus `display: standalone`.
 - **`display: standalone` only pays off from SAFARI's "Føj til hjemmeskærm"** — on iPadOS a shortcut added
   from Chrome opens as a tab inside Chrome, and no manifest field, `display_override` or
-  `apple-mobile-web-app-*` meta overrides that. So "it doesn't start fullscreen" is answered by which
-  browser added it, never by a code change.
+  `apple-mobile-web-app-*` meta overrides that.
+- **But "it opens in the browser" is NOT automatically the adult's fault — CHECK THE DEPLOYED MANIFEST
+  FIRST.** Added from Safari, it still opened in Chrome, because `curl -sI …/manifest.json` answered
+  **200 `text/html`**: with no installable manifest Safari adds a plain BOOKMARK, and a bookmark opens in
+  the DEFAULT browser. This rule used to say the symptom was "never a code change" — it was a code change.
+  One `curl` separates the two causes; ask which browser added it only after the manifest checks out.
+  (An existing home-screen icon does not upgrade itself — it has to be deleted and re-added.)
 - Lazy routes are wrapped in `lazyWithReload`: a stale-chunk/dynamic-import failure after a deploy triggers
   a single `location.reload()` (sessionStorage-guarded against loops) instead of crashing into
   `AppErrorBoundary`.
 - `progressStore` flushes synchronously on `pagehide`/`visibilitychange:hidden` (survives a fast PWA
   swipe-away) and re-hydrates from a cross-tab `storage` event (last-writer-wins).
+- **The installed app keeps its LOADED BUNDLE until it is swiped away** in the app switcher — reopening
+  the icon resumes the old JS. So "the fix is deployed but the iPad still misbehaves" is expected for one
+  more launch, and a play-test right after a push tests the PREVIOUS build: confirm `/api/version`'s
+  `commitHash` before treating a result as a verdict on the fix. (It is also a separate storage jar from
+  Safari — the session does not carry over; see `.claude/rules/auth.md`.)
 
 ## Delivery / caching (`vercel.json`)
 
@@ -44,6 +60,10 @@ PRD-07. **`rewrites` and `headers` obey OPPOSITE rules, and the rewrite one is l
   `api/**/[...param]` route, which answers 200 `text/html` and reads as a routing mystery, not a failure.
   Keep `/api` out of that fallback and route a catch-all function explicitly
   (`.claude/rules/api-endpoints.md`).
+  **The fallback sits AFTER `handle: filesystem`, though** (read `.vercel/output/config.json`), so a real
+  static file always wins. That makes the inference one step: **if the SPA fallback answers for a STATIC
+  path, the file is missing from the BUILD — the routing is fine.** Sibling assets still serving (the
+  PNGs did) is the tell; go look at why that one file didn't ship rather than at `vercel.json`.
 - **Headers are the reverse**: all matching rules apply, and for a duplicate key the **last** matching entry
   wins — so the `/(.*)` `no-store` catch-all is overridden by more-specific rules placed **after** it
   (`/assets` + `/sounds/tts/` immutable; `/sounds/(.*)`, images, `manifest.json`, `da-DK.pls` = 1-day).

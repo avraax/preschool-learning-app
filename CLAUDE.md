@@ -20,7 +20,7 @@ version was three sentences.
 ## Tech Stack
 
 - React 19 + TypeScript, Vite 8, Material-UI v9 (no Tailwind)
-- Framer Motion for animations, Howler.js for sound effects
+- Framer Motion for ONE-SHOT animation + gestures (continuous idle motion is CSS — see below), Howler.js for sound effects
 - Audio: `SimplifiedAudioController` singleton → `ttsClient` playback engine → **Azure AI Speech** (single TTS provider) → Web Speech API (fallback) → Howler (SFX). Danish da-DK voice (Christel) for most sections; Azure en-US Ava (multilingual) for the Engelsk section. The VoiceOverridePanel (opened from the "Til de voksne" corner menu) can swap the Danish narration voice live among all Azure VoiceLab voices. Danish pronunciation is corrected via a hosted W3C PLS lexicon (`public/da-DK.pls`) and per-letter phrasing overrides (`.claude/rules/audio-system.md`); inline IPA wraps a WHOLE utterance and exists only as a VoiceLab audition tool, not a per-word app fix. (Google TTS was removed in the Audio v2 rebuild; Google STT still powers "Sig et Ord".)
 - Speech input (Sig et Ord): Google Cloud STT v2 via `/api/stt` + `useSpeechInput` — recognizer
   **`eu/chirp_3`**, because `short` returns ZERO results for a single isolated Danish word (measured)
@@ -167,6 +167,13 @@ The ladder table, the recipes, the DEV query params and the silence-vs-cancellat
   matching** — several here do (`noEmoji`, `authOverlayZ`, `rewardArtCoverage`), and a plain
   `src.includes('AUTH_Z.pin')` was satisfied by the prose comment explaining the fix, so deleting the
   fix left it green. The re-break is what exposes this; the comment is written by the same hand.
+- **LOCAL GREEN PROVES NOTHING ABOUT THE DEPLOYED ARTIFACT.** Two production outages in ONE session were
+  correct here and broken only in what Vercel shipped: a dynamic `import('./auth.ts')` (compiled to a
+  sibling `.js`, specifiers not rewritten → Google sign-in died *after* the round trip) and
+  `public/manifest.json` caught by `.gitignore`'s blanket `*.json` (→ `/manifest.json` served
+  `index.html`, so the iPad icon was a bookmark that opened in Chrome). Dev, `vite preview` and a local
+  `vercel build` all read the WORKING TREE, so none can see either — **`curl` the deployed URL or read
+  the built output**, and guard it mechanically (`lib/serverImports.test.ts`, `pwaAssets.test.ts`).
 - **Another session may be working in this same tree.** When `tsc`/`npm test` fails in files your change
   never touched, run `git status` before touching anything — it's usually a parallel session mid-refactor.
   Leave their work alone and say whose the failure is: never "fix" it into a collision, never report their

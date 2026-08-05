@@ -61,9 +61,9 @@ curl -s -o /tmp/bug-R7K3F.jpg "<screenshotUrl>"  # then READ the jpg — actuall
    `commitHash` can. Match code with `git show <commitHash>:<file>` if the deploy has moved on.
    **When confirming a fix discussed in this conversation**, note the fix commit and classify every
    report: `commitHash` at/after the fix = real signal about the fix; a report still on an older
-   commit = a stale session that hadn't reloaded (especially the PWA / iPad home-screen app, which
-   keeps the old service worker until fully reopened) — that's NOT a regression, so say so instead
-   of chasing it. If unsure what's actually live, establish it first:
+   commit = a stale session that hadn't reloaded (especially the iPad home-screen app, which keeps its
+   LOADED BUNDLE until swiped away in the app switcher — there is no service worker to blame) — that's
+   NOT a regression, so say so instead of chasing it. If unsure what's actually live, establish it first:
    `curl -s "$BASE/api/version"` (returns `{buildTime, version, commitHash}`) + `git log --oneline`.
    Then `online`, `viewport`.
 3. `report.error` — crashes only: message/stack/componentStack.
