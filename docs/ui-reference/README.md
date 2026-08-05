@@ -32,6 +32,13 @@ Min Bog's book/sparkle come from `src/assets/ui/`; the theme picker shows baked 
 profiles show baked avatar portraits; and every adult dialog is on lucide icons.
 `overlays/profiles-panel.jpg` is NEW in this pass.
 
+**Hvilken Farve?, re-captured 2026-08-05 (Difficulty PRD-02).** `ipad/farver-quiz` and
+`phone/farver-quiz` were the last stragglers from before the object was greyed out at all — the old pair
+showed a **red car in full colour**, i.e. both the pixel-match giveaway and a non-canonical subject the
+game no longer asks. New `ipad/farver-quiz-let` covers the 3-swatch Let board. These three are the only
+game captures taken at `?rewards=12` besides `home`/`album`, so the header ring reads as played rather
+than empty; the rest of the set has an empty gauge because a fresh Chrome profile has no progress.
+
 **Adult settings, re-captured 2026-08-02 (Settings PRD-01).** The `overlays/` set no longer contains
 `adult-menu`, `profiles-panel`, `theme-panel`, `difficulty-panel` or `voice-panel` — that flat
 13-row scrolling dialog and its six sibling sub-panels were replaced by ONE two-pane surface with a
@@ -68,7 +75,8 @@ click `[aria-label="Tilbage"]` first).
 | `farver` | `/farver` | Farver menu (5 cards) |
 | `farver-laer` | `/farver/laer` | Lær Farver (shade trio browse) |
 | `farver-jagt` | `/farver/jagt` | Farvejagt (drag board + target ring) |
-| `farver-quiz` | `/farver/quiz` | Hvilken Farve? (drag onto swatch) |
+| `farver-quiz` | `/farver/quiz` | Hvilken Farve? (drag onto swatch) — the prompt object is DESATURATED at every level (Difficulty PRD-02) |
+| `farver-quiz-let` (ipad only) | `/farver/quiz` | The same board at **Let**: 3 swatches, and no wheel neighbour of the answer among them. Captured with `window.__progress.setDifficulty({global:'let'})` in an `--eval`, since Let is where PRD-02 changed the board |
 | `farver-ram-farven` | `/farver/ram-farven` | Ram Farven (mixing station + droplets) |
 | `farver-nuancer` | `/farver/nuancer` | Nuancer (light→dark slots) |
 | `english` | `/english` | Engelsk menu |
