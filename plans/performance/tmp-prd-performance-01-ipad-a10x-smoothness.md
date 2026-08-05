@@ -1,6 +1,8 @@
 # PRD — Performance 01: making the app smooth on the child's iPad without changing how it looks
 
-Status: **authored 2026-08-05, NOT implemented.** Measured on the harness build with a new probe
+Status: **authored 2026-08-05; W1-W9 IMPLEMENTED 2026-08-05** (commits `1997aff`..`b30a7d9` on `master`,
+one per work item). Results, the gates that were NOT met and why, and the three findings this PRD got
+wrong are in **§7**. Awaiting the owner's iPad play-test (§12). Measured on the harness build with a new probe
 (`.claude/skills/ui-screenshot/perf.mjs`, committed with this PRD — it is the instrument every
 acceptance gate below is written against).
 
@@ -436,6 +438,80 @@ Measured with `perf.mjs`, harness build, `--cpu-throttle 6`, 1366×992 @ dpr 2:
 | `filtered`, `/alphabet/learn` | 68 | **< 20** |
 | eager `modulepreload` JS | ~1.19 MB | **< 1.0 MB** |
 | screenshot diff vs `docs/ui-reference/` | — | **no visible change, 4 skins** |
+
+
+### Measured RESULT (2026-08-05, after W1-W7)
+
+Same instrument, same commands, harness build, `--cpu-throttle 6`, 1366x992 @ dpr 2. Ranges are the
+spread over two full sweep runs — **these numbers are noisy on the menu routes (up to ~10 points
+run-to-run), so a single run must not be quoted as a result.** Every row was verified to have actually
+rendered its own Danish title, so none of the good numbers is vacuous.
+
+| screen | busy% before → after | recalcMs/s before → after | layers | layerMB | filtered | willChange |
+|---|---|---|---|---|---|---|
+| home | 81–92 → **77–85** | 385–458 → 354–403 | 34 → 33 | 41.7 → **35.1** | 22 → 22 | 23 → **7** |
+| `/alphabet` (menu) | 70–87 → **67–75** | 311–383 → 243–311 | 33–35 → 36 | 41.3 → 40.5 | 19 → 19 | 21 → **5** |
+| `/alphabet/learn` | 78–81 → **16–24** | 96–105 → 51–82 | 84 → 84 | 53.3 → **42.7** | 68 → 67 | 17 → **3** |
+| `/alphabet/quiz` | 50–78 → **14–23** | 99–193 → 39–65 | 35–37 → 35 | 51.1 → **39.7** | 19 → 18 | 17 → **3** |
+| `/farver/ram-farven` | 63–74 → **21–33** | 147–171 → 53–88 | 27 → 28 | 50.6 → **39.3** | 8 → 7 | 17 → **3** |
+| `/math/addition` | 53–62 → **21–25** | 117–147 → 64–81 | 35 → 35 | 51.1 → **39.9** | 22 → 21 | 17 → **3** |
+| `/album` | 49–50 → **22–31** | 148–167 → 56–83 | 31 → 29 | 53.6 → **41.8** | 5 → 5 | 17 → **3** |
+
+Eager `modulepreload` + entry JS: **1.138 MB → 0.916 MB** across 20 → 18 chunks (W7).
+
+### Gate verdicts — four of eight met, and the four misses are not close
+
+| gate | target | result | verdict |
+|---|---|---|---|
+| `recalcPerSec`, every screen | ≤ 5 | 47–60 | **UNREACHABLE AS WRITTEN** |
+| `busyPct`, home | ≤ 25 | 77–85 | **NOT MET** |
+| `busyPct`, every other screen | ≤ 25 | menu 67–75; all five game screens 14–33 | **PARTLY MET** |
+| `layers`, home / `/alphabet` | ≤ 18 | 33 / 36 | **NOT MET** |
+| `layerMB`, home / `/alphabet` | ≤ 32 | 35.1 / 40.5 | **NOT MET** (close) |
+| `filtered`, `/alphabet/learn` | < 20 | 67 | **NOT MET** |
+| eager `modulepreload` JS | < 1.0 MB | 0.916 MB | **MET** |
+| screenshot diff vs 4 skins | no visible change | ≤ 1.22/255 mean, at/below the same-load noise floor | **MET** |
+
+**Why `recalcPerSec ≤ 5` cannot be met while the app animates at all.** Blink counts one style
+recalculation per FRAME on which anything is animating, whatever the mechanism. Measured on home at 6x:
+stripping every CSS keyframe animation leaves it at **60.1**; neutering the parallax driver leaves it at
+**59.3**; only `--reduce-motion`, which removes ALL animation, reaches **0**. The §3 target was read off
+run C of F1's table, which is the reduced-motion run — i.e. it is the number for an app with no
+animation, not a target for one that keeps its ambient world. **`recalcMsPerSec` is the number that
+actually moved** (e.g. ram-farven 171 → 53, quiz 193 → 39) and is what a future session should gate on.
+
+**Why home and `/alphabet` cannot reach `busyPct ≤ 25`.** After W1 and W2 the entire remaining cost on a
+menu route is the ambient field's own animation. Measured on home at 6x, everything else held constant:
+
+| home, 6x | busy% | recalcMs/s |
+|---|---|---|
+| after W1–W7 | 78–85 | 354–403 |
+| parallax layers pinned still | 78.3 | 491 |
+| **ambient animations PAUSED** | **39.7** | **63** |
+| reduced motion (the floor) | 10.6 | 0 |
+
+Two hypotheses were tested and REJECTED: it is not rasterisation (dpr 1 and dpr 2 measure the same, 84.7
+vs 85.7) and `translate3d` in the keyframes changes nothing (85.6). So **F3 is superseded too** — "the
+ambient field's CSS animations are free" was a subtraction taken while 25 framer loops saturated the
+thread. CSS is still ~5–10x cheaper per element than a JS loop, but 14 sprites are not free.
+The only remaining lever is the sprite COUNT, and §9 explicitly forbids touching it. **That is the
+owner's call, not the implementer's** — see §12.4.
+
+**Why `layers` ≤ 18 and `layerMB` ≤ 32 cannot be met.** A `transform`/`opacity` keyframe animation
+promotes its element by itself — that is exactly why W2.1 could delete the `will-change` hints. So the
+14–17 ambient sprites are 14–17 layers by construction, and the floor for a screen with a live ambient
+field is roughly `9 + count`. The `will-change` CENSUS is the number that moved as intended (23 → 7 on
+home, 17 → 3 everywhere else) and `layerMB` fell 6–12 MB per screen.
+
+**Why `filtered` on `/alphabet/learn` stays at 67.** W4's premise is incomplete: `box-shadow` is the same
+picture as `drop-shadow` only for an OPAQUE box, and every tile surface here is translucent toward the
+bottom (`tileSurface` ends at `rgba(accent, 0.08)`), so the drop-shadow shows THROUGH the tile's own face
+and is load-bearing for the material. Measured: converting lifted a tile face from rgb(208,210,219) to
+rgb(228,230,240) and lightened the shadow band beneath it by 11 RGB, with DOM rects byte-identical. Of
+the 68, 30 were those chained drop-shadows and 35 were `blur()` on contact-shadow ellipses, which were
+never drop-shadows and never in W4's scope — the gate looks like it was computed assuming all 68 were.
+The full conversion is worth **layers 84 → 59 and busy 25.9% → 22.6%** on that screen and is available
+whenever the owner accepts the material change.
 
 `busyPct ≤ 25` is chosen against the measured floor: reduced motion sits at 7.7–12.6%, so 25% leaves
 real headroom for the animation the app is keeping. The reduced-motion run **is** the target, minus the

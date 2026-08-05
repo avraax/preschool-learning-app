@@ -47,6 +47,47 @@ compositor. The one durable RELATIVE signal is that `/album` (Min Bog) is the co
 frame time and jank at every throttle level — it renders the whole reward path — so it is the screen to
 watch if he ever reports sluggishness.
 
+### Steady-state main-thread cost (Performance PRD-01, 2026-08-05)
+
+Load was never the problem — the app STANDING STILL was. `cdp.mjs --perf` cannot see that at all (it
+measures load, and its frame times are the software-raster artifact noted above), so
+`.claude/skills/ui-screenshot/perf.mjs` was written for it: a settled steady-state window reporting
+GPU-independent counters. Measured on the harness build at `--cpu-throttle 6`, 1366 x 992 @ dpr 2, range
+over two sweep runs.
+
+| screen | busy% before → after | recalcMs/s | layerMB | willChange |
+|---|---|---|---|---|
+| home | 81–92 → **77–85** | 385–458 → 354–403 | 41.7 → 35.1 | 23 → 7 |
+| `/alphabet` | 70–87 → **67–75** | 311–383 → 243–311 | 41.3 → 40.5 | 21 → 5 |
+| `/alphabet/learn` | 78–81 → **16–24** | 96–105 → 51–82 | 53.3 → 42.7 | 17 → 3 |
+| `/alphabet/quiz` | 50–78 → **14–23** | 99–193 → 39–65 | 51.1 → 39.7 | 17 → 3 |
+| `/farver/ram-farven` | 63–74 → **21–33** | 147–171 → 53–88 | 50.6 → 39.3 | 17 → 3 |
+| `/math/addition` | 53–62 → **21–25** | 117–147 → 64–81 | 51.1 → 39.9 | 17 → 3 |
+| `/album` | 49–50 → **22–31** | 148–167 → 56–83 | 53.6 → 41.8 | 17 → 3 |
+
+**The menu routes are noisy — up to ~10 points run-to-run.** Never quote a single run as a result, and
+always confirm the screen actually rendered its own Danish title (a crashed route satisfies a
+`--wait-for` and makes every later number vacuously good).
+
+Four facts worth not re-deriving:
+
+- **`recalcPerSec` cannot be driven below ~60 while anything animates.** Blink counts one style
+  recalculation per animating FRAME, whatever the mechanism. On home at 6x: stripping every CSS keyframe
+  animation leaves it at 60.1, neutering the parallax driver leaves it at 59.3, and only reduced motion
+  reaches 0. **`recalcMsPerSec` is the number to gate on.**
+- **What remains on a MENU route is the ambient field's own animation, and nothing else.** Home at 6x:
+  78–85% busy running, **39.7% with the ambient animations paused**, 10.6% under reduced motion. Pinning
+  the parallax layers still changes nothing (78.3%). Not rasterisation — dpr 1 and dpr 2 measure the same
+  (84.7 vs 85.7) — and `translate3d` in the keyframes changes nothing. The only lever left is the sprite
+  COUNT, which is the visible bloom.
+- **A `transform`/`opacity` keyframe animation promotes its own element**, which is why the
+  `will-change` hints could be deleted with no visual change. So a screen with a live ambient field has a
+  layer floor of roughly `9 + sprite count`; `layers ≤ 18` on home is not reachable with the world running.
+- **`filter: drop-shadow` is load-bearing on a TRANSLUCENT surface** and cannot be swapped for
+  `box-shadow` there. `tileSurface()` ends at `rgba(accent, 0.08)`, so the shadow shows through the
+  tile's own face: converting lifted a tile face by 20 RGB with DOM rects byte-identical. Only opaque
+  boxes (TactilePill, the Sig et Ord orb) were converted.
+
 ### Eager JavaScript at first paint (Performance PRD-01 W7, 2026-08-05)
 
 What the document actually fetches before it can paint — the entry `<script type="module">` plus every
