@@ -25,6 +25,28 @@ desktop-class UA. Only `isM1iPad` or the UA distinguishes them.
 Also note **`1024 × 768` is not any current iPad Pro.** It stays in the guard set only as the tighter
 small-iPad case.
 
+## Rung 3 owed: the audio-activation checks (Audio activation PRD-01 §5.3)
+
+**Status: NOT YET RUN.** Rungs 1 and 2 are done (the verdict's plumbing, the cue's geometry at four
+viewports, the blocked→recover cycle); everything below is unreachable at either rung, so it is the whole
+residue of that change. Record the answers here rather than in a session.
+
+**Confirm `/api/version`'s `commitHash` FIRST.** The installed PWA keeps its loaded bundle until it is
+swiped out of the app switcher, so a play-test right after a push tests the PREVIOUS build
+(`.claude/rules/pwa-and-device.md`).
+
+| check | what a pass looks like | result |
+|---|---|---|
+| Cold launch ×5 from the home-screen icon | no "Tryk for lyd" chip, narration audible | — |
+| App-switcher round trip (background, wait, return) | no chip, narration still works — this is the `suspended`-aftermath path AND the frozen-clock recovery | — |
+| Siri / a phone call mid-game | recovers with no chip | — |
+| **Control Centre silent / mute switch ON** | the only way to test `audioSession.type = 'playback'`. **A/B against the previous build**: if muted-but-audible is NEW, that confirms `ambient` was the second root cause (WebKit 237322) | — |
+| Audio genuinely off (whatever the owner's occasional case is) | the chip appears, one tap fixes it, it withdraws by itself | — |
+
+If a check fails, the bug report now carries everything needed to tell the three causes apart in one
+round trip — `readiness`, `primeResult`, `playbackOkOnce`, `hasBeenActive` + `userActivationSupported`,
+`appCtx`/`howlerCtx` state *and* clock, `audioSessionType`, `everWorked`. Use `/debug-report`.
+
 ## Measuring the REAL bundle (`npm run build:harness`)
 
 `?nogate=1` is `DEV &&`-gated and `import.meta.env.DEV` is false in every `vite build` regardless of

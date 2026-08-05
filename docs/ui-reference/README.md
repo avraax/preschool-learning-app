@@ -18,11 +18,21 @@ folder always reflects the shipped UI.
 - Opening the adult menu is a plain click (the `?adult-tap=1` hold-workaround is gone) but still needs
   **~4.5s of settle** — it captures a snapdom screenshot before rendering, so a shorter wait silently
   yields the un-opened page.
-- **`overlays/audio-permission.jpg` NO LONGER EXISTS IN THE APP.** The blocking "Tænd for lyd" modal was
-  deleted (Audio activation PRD-01) and replaced by a small non-blocking "Tryk for lyd" chip that shows
-  only while the evidence-based verdict is `blocked`. The old shot is kept as a historical record of what
-  was removed; **do not treat it as current UI**, and do not try to re-capture it. The chip is likewise
-  unreachable headlessly — `?nogate=1` stands it down, exactly as it stood the modal down.
+- **`overlays/audio-blocked-cue.jpg` replaced `overlays/audio-permission.jpg`.** The blocking "Tænd for
+  lyd" modal was deleted (Audio activation PRD-01); the small non-blocking "Tryk for lyd" chip shows only
+  while the evidence-based verdict is `blocked`. The old shot was removed rather than kept — a reference
+  picture of UI that can never appear again is a trap, not a record.
+  **It IS re-capturable**, unlike most overlays, but only with the whole recipe — the cue is unreachable
+  by default because `?nogate=1` stands it down and, without `?nogate=1`, `authUiOpen` does:
+  ```bash
+  node .claude/skills/ui-screenshot/cdp.mjs --url "http://127.0.0.1:5173/alphabet?nogate=1&audio-cue=1" \
+    --w 1024 --h 768 --block-autoplay --simulate-audio-blocked --wait-for '#root > *' --settle 1500 \
+    --trusted-tap '[aria-label="Bogstav Quiz"]' --settle 2500 \
+    --out docs/ui-reference/overlays/audio-blocked-cue.jpg
+  ```
+  `--trusted-tap` is load-bearing: `element.click()` grants no `navigator.userActivation`, so the verdict
+  correctly stays `idle` and no cue appears. The phone shot uses `--w 844 --h 390` — a DIFFERENT layout
+  there (bottom-centre, because that shell moves the game title into the header row), so capture both.
 - **`overlays/auth-pin-pad.jpg` cannot be re-captured headlessly** and is deliberately older than the
   rest: the PIN pad needs a PIN actually set on the account. Overwriting it yields a picture of the page
   *behind* the overlay, which is worse than a slightly old but correct one — if you try, check the
