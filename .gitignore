@@ -37,6 +37,11 @@ private-key-base64.txt
 !vercel.json
 # Committed narration audited-OK manifest (PRD-11 §6 regression guard source of truth)
 !docs/audit/narration-audit.json
+# The PWA manifest is a SHIPPED ASSET, not config. The blanket `*.json` above kept it out of git, so it
+# existed on the owner's disk and nowhere else: Vercel built without it, `/manifest.json` fell through to
+# the SPA rewrite and answered with index.html, and Safari — finding no installable web app — added a
+# plain BOOKMARK to the home screen, which opens in the default browser instead of standalone.
+!public/manifest.json
 
 # Audio cache
 public/audio-cache/
