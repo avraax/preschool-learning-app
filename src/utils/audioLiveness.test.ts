@@ -1,6 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import {
+  classifyPrimeFailure,
   LIVENESS_PROBE_MS,
   probeAnyContextLive,
   probeContextLive,
@@ -133,6 +134,25 @@ test('recovery never throws, and skips a closed context', async () => {
     resume: async () => void calls.push('resume'),
   })
   assert.deepEqual(calls, [], 'a closed context was suspend/resumed')
+})
+
+// ----- classifying the prime rejection: the app's one real activation signal ----------------------
+
+test('THE FIX: only NotAllowedError is an activation refusal — everything else is `error`', () => {
+  // A decode/format failure is NOT a blocked gesture. Conflating them is how the Ogg silence would have
+  // been mislabelled "blocked", accusing a device whose problem was the bytes.
+  assert.equal(classifyPrimeFailure({ name: 'NotAllowedError' }), 'blocked')
+  for (const other of [
+    { name: 'NotSupportedError' },
+    { name: 'AbortError' },
+    { name: 'EncodingError' },
+    new Error('boom'),
+    'a string',
+    null,
+    undefined,
+  ]) {
+    assert.equal(classifyPrimeFailure(other), 'error', String(other && (other as { name?: string }).name))
+  }
 })
 
 // ----- feature detection: unsupported must read as "no accusation" -------------------------------

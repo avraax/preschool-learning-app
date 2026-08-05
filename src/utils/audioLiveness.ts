@@ -100,6 +100,21 @@ export async function recoverFrozenContext(ctx: RecoverableContext | null | unde
 }
 
 /**
+ * Why did the silent-unlock clip's `play()` reject? This is THE line that turns the app's one real
+ * evidence signal into a verdict, so it lives here — pure and testable — rather than inline in
+ * `ttsClient.primePlaybackElement()`, where nothing could reach it.
+ *
+ * `NotAllowedError` is an ACTIVATION refusal: the element is not user-activated, which is the
+ * "no sound after tapping" signature. Anything else is a decode/format/network problem, which is NOT an
+ * activation problem and must not be reported as one — that class is what `consecutivePlaybackFailures`
+ * sees, and conflating them is how the Ogg silence would have been mislabelled as "blocked".
+ */
+export function classifyPrimeFailure(e: unknown): 'blocked' | 'error' {
+  const name = (e as { name?: string } | null | undefined)?.name
+  return name === 'NotAllowedError' ? 'blocked' : 'error'
+}
+
+/**
  * `navigator.userActivation` (Safari 16.4+, so the floor device has it) — the only way to tell
  * "audio is blocked" from "nobody has tapped yet". Reported SEPARATELY in the bug report so an
  * unsupported environment stays distinguishable from a genuinely untapped one (PRD §3.1).

@@ -9,6 +9,7 @@ import { TTS_CONFIG } from '../config/tts-config'
 import { logAudioIssue } from '../utils/remoteConsole'
 import { loadVoiceOverride, saveVoiceOverride, type VoiceOverride } from '../config/voiceOverride'
 import { ttsCacheKey } from '../../shared-tts-key.js'
+import { classifyPrimeFailure } from '../utils/audioLiveness'
 // The prebaked NARRATION MANIFEST is loaded lazily (Performance PRD-01 W7.1). It is 166 KB of lookup
 // table that nothing needs at mount — `ttsClient` consults it on the first spoken line — and it was the
 // third-largest thing in the eager preload, behind only MUI and React.
@@ -189,9 +190,10 @@ export class TtsClient {
       (e: unknown) => {
         // Blocked → element NOT user-activated (no gesture / called outside activation). This is
         // the "no sound after tapping" signature; the real speak will surface NotAllowedError too.
-        const name = (e as { name?: string })?.name
-        console.warn('[audio-unlock] playback element prime BLOCKED:', name || String(e))
-        return name === 'NotAllowedError' ? ('blocked' as const) : ('error' as const)
+        console.warn('[audio-unlock] playback element prime BLOCKED:', (e as { name?: string })?.name || String(e))
+        // The classification is pure and unit-tested in utils/audioLiveness.ts — an activation refusal
+        // (NotAllowedError) is not the same finding as a decode/format failure.
+        return classifyPrimeFailure(e)
       },
     )
   }
