@@ -23,7 +23,6 @@ import {
   Select,
   Slider,
   Stack,
-  Switch,
   Typography,
 } from '@mui/material'
 import { Music, Play, Volume2, VolumeX } from 'lucide-react'
@@ -32,7 +31,7 @@ import { ttsClient } from '../../../services/ttsClient'
 import { TTS_CONFIG } from '../../../config/tts-config'
 import { OVERRIDE_VOICES } from '../../voicelab/voicelabData'
 import { LETTER_WORDS, letterPhrase } from '../../../config/letterWords'
-import { PaneSection } from './paneParts'
+import { PaneSection, ToggleRow } from './paneParts'
 
 const DEFAULT_RATE = TTS_CONFIG.speakingRate // 1.05
 const DEFAULT_VOICE = TTS_CONFIG.voices.primary.name
@@ -132,30 +131,5 @@ const LydPane: React.FC = () => {
     </Stack>
   )
 }
-
-const ToggleRow: React.FC<{
-  icon: React.ReactNode
-  label: string
-  hint?: string
-  checked: boolean
-  onChange: (v: boolean) => void
-}> = ({ icon, label, hint, checked, onChange }) => (
-  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, minHeight: 48 }}>
-    <Box sx={{ display: 'flex', color: 'text.secondary', flex: '0 0 auto' }}>{icon}</Box>
-    <Box sx={{ flex: 1, minWidth: 0 }}>
-      <Typography sx={{ fontSize: '0.95rem', fontWeight: 600 }}>{label}</Typography>
-      {hint && (
-        <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-          {hint}
-        </Typography>
-      )}
-    </Box>
-    <Switch
-      checked={checked}
-      onChange={(_, v) => onChange(v)}
-      slotProps={{ input: { 'aria-label': `${label} til/fra` } }}
-    />
-  </Box>
-)
 
 export default LydPane

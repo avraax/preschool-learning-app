@@ -10,6 +10,7 @@ import type { SectionId } from '../../../services/progressStore'
 import { useParallax } from './useParallax'
 import { routeKind, isHomeRoute } from './routeKind'
 import ThemeScene from './ThemeScene'
+import { perfProfile } from '../../../config/perfProfile'
 
 const BLOOM_SECTIONS: SectionId[] = ['alphabet', 'math', 'colors', 'english', 'ordleg']
 
@@ -136,7 +137,9 @@ const PersistentWorld: React.FC = () => {
             // `contain: paint` did nothing (31.1%).
             // Scoped to `inGame` so a menu route never pays a promotion to hold a filter of `none`, and
             // so the hint is cleared at idle — the same discipline the wipe overlay follows.
-            willChange: inGame ? 'filter' : 'auto',
+            // "Flydende grafik" off → no hint, i.e. re-filter the surface as before. Same blur,
+            // same radius, same picture; only whether the compositor may keep the result changes.
+            willChange: inGame && perfProfile().cacheInGameBlur ? 'filter' : 'auto',
             transition: `filter ${ease} ease`,
           }}
         >

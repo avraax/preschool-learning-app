@@ -3,6 +3,7 @@ import { Box } from '@mui/material'
 import type { ParallaxLayerSpec } from '../../../theme/tokens/types'
 import { overscanCss, parallaxTravelX, parallaxTravelY, shouldPromoteLayer } from '../../../config/parallax'
 import { registerParallaxTarget } from './parallaxTargets'
+import { perfProfile } from '../../../config/perfProfile'
 
 // One parallax scene layer (Theme Worlds PRD §5.3). Renders a single full-bleed image, offset by
 // `var(--parallax-x/y) * depth` (set by useParallax on the parent). Decorative only.
@@ -64,7 +65,9 @@ const ParallaxLayer: React.FC<ParallaxLayerProps> = ({ spec, url, index }) => {
   //
   // `offsetY` is the exception: it is a STATIC art nudge, not drift, so a layer that carries one still
   // needs its transform even when it doesn't move.
-  const promote = shouldPromoteLayer(spec.depth)
+  // "Flydende grafik" off → promote and translate every layer as before. Compositing ONLY: the
+  // overscan is computed above either way, so the layer's box and the framing are identical.
+  const promote = perfProfile().promoteOnlyMovingLayers ? shouldPromoteLayer(spec.depth) : true
   const needsStaticNudge = !promote && anchor === 'center' && !!spec.offsetY
 
   // Only a promoted layer registers with the driver; a de-promoted one is a static backdrop and its

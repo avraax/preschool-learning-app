@@ -132,7 +132,14 @@ export const ADULT_IA: AdultGroup[] = [
   {
     id: 'udseende',
     label: 'Udseende',
-    items: [{ id: 'udseende.theme', label: 'Tema' }],
+    items: [
+      { id: 'udseende.theme', label: 'Tema' },
+      // "Flydende grafik" (Performance PRD-01 W6) — a plain switch, ON by default, that falls BACK to
+      // the pre-PRD rendering path. Not destructive and not PIN-gated beyond the adult menu itself: it
+      // changes only how things are drawn, never any data. It lives HERE because the group/item
+      // structure is DATA and guarded; adding it in the pane alone would fail that guard.
+      { id: 'udseende.smoothGraphics', label: 'Flydende grafik' },
+    ],
   },
   {
     id: 'konto',

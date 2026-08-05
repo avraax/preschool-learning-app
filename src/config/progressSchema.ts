@@ -56,6 +56,16 @@ export interface ProgressSettings {
   difficulty: DifficultySetting
   /** v4: the chosen skin follows the child across devices. */
   themeId?: string
+  /**
+   * "Flydende grafik" (Performance PRD-01 W6) — the PERMANENT adult escape hatch for the rendering
+   * profile. OPTIONAL and **absence means the FAST path**, which is why this needs no schema bump and
+   * no migration: an existing v4 document simply has no key and resolves to the default, exactly like
+   * `themeId`. `false` is the only value that changes anything. Resolved by `config/perfProfile.ts`,
+   * which is the ONE branch point; nothing else reads this field.
+   *
+   * It affects RENDERING ONLY — never XP, difficulty, narration or any game logic.
+   */
+  smoothGraphics?: boolean
 }
 
 export interface PerGameStats {
@@ -410,6 +420,11 @@ function normalizeSettings(raw: unknown): ProgressSettings {
   s.musicEnabled = r.musicDefaultOn === true ? r.musicEnabled !== false : true
   s.musicDefaultOn = true
   if (typeof r.themeId === 'string' && r.themeId) s.themeId = r.themeId
+  // "Flydende grafik" (Performance PRD-01 W6). ONLY an explicit `false` is carried: this normaliser
+  // builds a FRESH object from `defaultSettings()`, so any field it does not copy is silently dropped
+  // on load — which is exactly how this setting first shipped doing nothing at all. Absence means the
+  // fast path, so `true` needs no representation.
+  if (r.smoothGraphics === false) s.smoothGraphics = false
   const d = asRecord(r.difficulty)
   if (d) {
     s.difficulty.global = isDifficultyLevel(d.global) ? d.global : 'normal'

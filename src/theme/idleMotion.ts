@@ -35,8 +35,10 @@
 // REDUCED MOTION STILL WINS. Every helper takes the `reduce` flag first and returns nothing at all
 // when it is set, exactly as the framer loops did.
 
+import { motion } from 'framer-motion'
 import type { Theme } from '@mui/material/styles'
 import type { SystemStyleObject } from '@mui/system'
+import { perfProfile } from '../config/perfProfile'
 
 export interface IdleMotionBundle {
   /** Spread onto the idle layer. Empty on the CSS path. */
@@ -69,16 +71,41 @@ export const IDLE_NONE: IdleMotionBundle = { props: {}, sx: {}, as: 'div' }
 // `useLivingCard` can phase 8 cards off one `livingCardBreathe`.)
 const tag = (n: number): string => String(n).replace('-', 'n').replace('.', '_')
 
-const css = (
+// THE ONE BRANCH POINT for "Flydende grafik" (W6). Every helper below goes through here, so no call
+// site knows or cares which mechanism is running — and there is no second `if` anywhere in the tree.
+//
+// The legacy branch reconstructs the exact framer loop each helper replaced. `framer` is passed as the
+// keyframes + duration/delay the ORIGINAL loop used, so the two forms can never drift: they are written
+// side by side, from the same numbers, in one place.
+const bundle = (
   name: string,
   keyframes: Record<string, unknown>,
   animation: string,
+  framer: { animate: Record<string, unknown>; durationS: number; delayS?: number },
   as: IdleAs = 'div',
-): IdleMotionBundle => ({
-  props: {},
-  sx: { [`@keyframes ${name}`]: keyframes, animation } as SystemStyleObject<Theme>,
-  as,
-})
+): IdleMotionBundle => {
+  if (!perfProfile().useCssIdleMotion) {
+    return {
+      props: {
+        component: motion[as],
+        animate: framer.animate,
+        transition: {
+          duration: framer.durationS,
+          delay: framer.delayS ?? 0,
+          repeat: Infinity,
+          ease: 'easeInOut' as const,
+        },
+      },
+      sx: {},
+      as,
+    }
+  }
+  return {
+    props: {},
+    sx: { [`@keyframes ${name}`]: keyframes, animation } as SystemStyleObject<Theme>,
+    as,
+  }
+}
 
 // --- float ------------------------------------------------------------------------------------
 /**
@@ -100,10 +127,11 @@ export const idleFloat = (
 ): IdleMotionBundle => {
   if (reduce) return IDLE_NONE
   const name = `blIdleFloat_${tag(distance)}`
-  return css(
+  return bundle(
     name,
     { '0%, 100%': { transform: 'translateY(0)' }, '50%': { transform: `translateY(${-distance}px)` } },
     `${name} ${durationS}s ease-in-out ${delayS}s infinite`,
+    { animate: { y: [0, -distance, 0] }, durationS, delayS },
     as,
   )
 }
@@ -125,10 +153,11 @@ export const idlePulse = (
 ): IdleMotionBundle => {
   if (reduce) return IDLE_NONE
   const name = `blIdlePulse_${tag(peak)}`
-  return css(
+  return bundle(
     name,
     { '0%, 100%': { transform: 'scale(1)' }, '50%': { transform: `scale(${peak})` } },
     `${name} ${durationS}s ease-in-out ${delayS}s infinite`,
+    { animate: { scale: [1, peak, 1] }, durationS, delayS },
     as,
   )
 }
@@ -151,10 +180,11 @@ export const idleGlow = (
 ): IdleMotionBundle => {
   if (reduce) return IDLE_NONE
   const name = `blIdleGlow_${tag(from)}_${tag(to)}`
-  return css(
+  return bundle(
     name,
     { '0%, 100%': { opacity: from }, '50%': { opacity: to } },
     `${name} ${durationS}s ease-in-out infinite`,
+    { animate: { opacity: [from, to, from] }, durationS },
   )
 }
 
@@ -167,7 +197,7 @@ export const idleGlow = (
 export const equalizerBar = (reduce: boolean, index: number): IdleMotionBundle => {
   if (reduce) return IDLE_NONE
   const name = 'blEqualizerBar'
-  return css(
+  return bundle(
     name,
     {
       '0%, 100%': { transform: 'scaleY(0.4)' },
@@ -176,6 +206,7 @@ export const equalizerBar = (reduce: boolean, index: number): IdleMotionBundle =
       '75%': { transform: 'scaleY(0.9)' },
     },
     `${name} 0.9s ease-in-out ${index * 0.1}s infinite`,
+    { animate: { scaleY: [0.4, 1, 0.5, 0.9, 0.4] }, durationS: 0.9, delayS: index * 0.1 },
   )
 }
 
@@ -188,7 +219,7 @@ export const equalizerBar = (reduce: boolean, index: number): IdleMotionBundle =
 export const idleWobble = (reduce: boolean): IdleMotionBundle => {
   if (reduce) return IDLE_NONE
   const name = 'blIdleWobble'
-  return css(
+  return bundle(
     name,
     {
       '0%, 100%': { transform: 'scale(1) rotate(0deg)' },
@@ -196,6 +227,7 @@ export const idleWobble = (reduce: boolean): IdleMotionBundle => {
       '66%': { transform: 'scale(1.05) rotate(5deg)' },
     },
     `${name} 2s ease-in-out infinite`,
+    { animate: { scale: [1, 1.1, 1], rotate: [0, -5, 5, 0] }, durationS: 2 },
   )
 }
 
@@ -210,7 +242,7 @@ export const idleWobble = (reduce: boolean): IdleMotionBundle => {
 export const wipeRocket = (reduce: boolean): IdleMotionBundle => {
   if (reduce) return IDLE_NONE
   const name = 'blWipeRocket'
-  return css(
+  return bundle(
     name,
     {
       '0%, 100%': { transform: 'translateY(0) rotate(0deg)' },
@@ -218,6 +250,7 @@ export const wipeRocket = (reduce: boolean): IdleMotionBundle => {
       '66%': { transform: 'translateY(-5px) rotate(4deg)' },
     },
     `${name} 1.2s ease-in-out infinite`,
+    { animate: { y: [0, -10, 0], rotate: [0, -4, 4, 0] }, durationS: 1.2 },
   )
 }
 
@@ -225,7 +258,7 @@ export const wipeRocket = (reduce: boolean): IdleMotionBundle => {
 export const wipeLeaf = (reduce: boolean, index: number): IdleMotionBundle => {
   if (reduce) return IDLE_NONE
   const name = 'blWipeLeaf'
-  return css(
+  return bundle(
     name,
     {
       '0%, 100%': { transform: 'translateY(0) rotate(0deg)' },
@@ -233,6 +266,7 @@ export const wipeLeaf = (reduce: boolean, index: number): IdleMotionBundle => {
       '66%': { transform: 'translateY(4px) rotate(-12deg)' },
     },
     `${name} ${1.1 + index * 0.15}s ease-in-out infinite`,
+    { animate: { rotate: [0, 18, -12, 0], y: [0, 8, 0] }, durationS: 1.1 + index * 0.15 },
     'img',
   )
 }
@@ -241,13 +275,14 @@ export const wipeLeaf = (reduce: boolean, index: number): IdleMotionBundle => {
 export const wipeSparkle = (reduce: boolean, durationS: number): IdleMotionBundle => {
   if (reduce) return IDLE_NONE
   const name = 'blWipeSparkle'
-  return css(
+  return bundle(
     name,
     {
       '0%, 100%': { transform: 'scale(0.6)', opacity: 0.5 },
       '50%': { transform: 'scale(1)', opacity: 1 },
     },
     `${name} ${durationS}s ease-in-out infinite`,
+    { animate: { scale: [0.6, 1, 0.6], opacity: [0.5, 1, 0.5] }, durationS },
     'img',
   )
 }

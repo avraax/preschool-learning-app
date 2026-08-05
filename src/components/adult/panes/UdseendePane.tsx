@@ -8,12 +8,15 @@
 // skin can only be REGISTERED once its world art exists.
 
 import React, { useEffect, useState } from 'react'
-import { Box } from '@mui/material'
+import { Box, Stack } from '@mui/material'
 import { alpha, useTheme } from '@mui/material/styles'
 import { motion } from 'framer-motion'
 import { useThemeSwitch } from '../../../theme/ThemeProvider'
 import { loadSceneAssets } from '../../../theme/sceneAssets'
-import { PaneSection } from './paneParts'
+import { PaneSection, ToggleRow } from './paneParts'
+import { useProgress } from '../../../hooks/useProgress'
+import { SMOOTH_GRAPHICS_HINT, SMOOTH_GRAPHICS_LABEL } from '../../../config/perfProfile'
+import { Sparkles } from 'lucide-react'
 
 export interface UdseendePaneProps {
   childName?: string
@@ -22,6 +25,7 @@ export interface UdseendePaneProps {
 const UdseendePane: React.FC<UdseendePaneProps> = ({ childName }) => {
   const theme = useTheme()
   const { themeId, setThemeId, availableThemes } = useThemeSwitch()
+  const progress = useProgress()
   // Lazily collect each world's thumbnail (tiny URL strings; bytes load only when the <img> renders).
   const [thumbs, setThumbs] = useState<Record<string, string>>({})
 
@@ -40,6 +44,7 @@ const UdseendePane: React.FC<UdseendePaneProps> = ({ childName }) => {
   }, [availableThemes])
 
   return (
+    <Stack spacing={2.5}>
     <PaneSection
       title={childName ? `Tema for ${childName}` : 'Tema'}
       caps={!childName}
@@ -118,6 +123,28 @@ const UdseendePane: React.FC<UdseendePaneProps> = ({ childName }) => {
         })}
       </Box>
     </PaneSection>
+
+    {/* "Flydende grafik" (Performance PRD-01 W6) — the PERMANENT escape hatch for the rendering
+        profile. ON is the fast path, so it reads as a feature to turn OFF rather than a workaround to
+        enable; `perfProfileGuard` pins that default. It exists because you cannot type a query
+        parameter into a standalone PWA, so this switch is the only way to A/B the two rendering paths
+        ON the child's iPad — and the only way to back out of a regression without a deploy. It changes
+        RENDERING ONLY: never XP, difficulty, narration or any game logic.
+
+        The item also lives in `src/config/adultSettingsIa.ts`, because the group/item structure is DATA
+        and is guarded — adding it here alone would fail that guard. */}
+    <PaneSection title="Ydelse">
+      <ToggleRow
+        icon={<Sparkles size={19} />}
+        label={SMOOTH_GRAPHICS_LABEL}
+        hint={SMOOTH_GRAPHICS_HINT}
+        // Absence means the fast path, so `!== false` — not a bare truthiness check, which would show
+        // the switch OFF for every child who has never touched it.
+        checked={progress.state.settings.smoothGraphics !== false}
+        onChange={(v) => progress.setSetting('smoothGraphics', v)}
+      />
+    </PaneSection>
+    </Stack>
   )
 }
 

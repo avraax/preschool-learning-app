@@ -93,15 +93,24 @@ test('W8.1 — every allowlist entry is real, and carries a reason', () => {
   }
 })
 
-test('W8.1 — the shared idle vocabulary has no JS loop of its own, and motion.ts does not re-add one', () => {
-  for (const rel of ['theme/idleMotion.ts', 'theme/motion.ts']) {
-    assert.ok(
-      !/repeat:\s*Infinity/.test(codeOf(rel)),
-      `${rel} declares an infinite JS loop — continuous stateless motion is a CSS keyframe animation`,
-    )
-  }
-  // And the CSS vocabulary is actually there to be used (a guard that only forbids is half a guard).
+test('W8.1 — the ONE remaining JS loop is the legacy branch, and it is gated on perfProfile', () => {
+  // `theme/motion.ts` must stay clean: its `idleFloat` moved out, and the vocabulary must not fork back.
+  assert.ok(
+    !/repeat:\s*Infinity/.test(codeOf('theme/motion.ts')),
+    'theme/motion.ts declares an infinite JS loop again — continuous stateless motion is CSS now',
+  )
+  // `idleMotion.ts` legitimately declares EXACTLY ONE, because "Flydende grafik" off has to reconstruct
+  // the old framer loops (W6). One, not two: a second would mean some helper grew its own legacy branch
+  // instead of going through `bundle()`, which is the single-branch-point rule this PRD is built on.
   const idle = codeOf('theme/idleMotion.ts')
+  const loops = (idle.match(/repeat:\s*Infinity/g) ?? []).length
+  assert.equal(loops, 1, `idleMotion.ts has ${loops} infinite JS loops; exactly one (bundle()'s legacy branch) is right`)
+  assert.match(
+    idle,
+    /if \(!perfProfile\(\)\.useCssIdleMotion\)/,
+    "idleMotion.ts's JS loop is not gated on perfProfile — the FAST path would be running framer loops",
+  )
+  // And the CSS vocabulary is actually there to be used (a guard that only forbids is half a guard).
   for (const helper of ['idleFloat', 'idlePulse', 'idleGlow', 'equalizerBar', 'idleWobble']) {
     assert.match(idle, new RegExp(`export const ${helper}\\b`), `idleMotion.ts is missing ${helper}`)
   }

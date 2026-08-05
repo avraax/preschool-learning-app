@@ -6,6 +6,7 @@ import { loadTitleFont } from './titleFonts'
 import { devThemeId } from '../utils/devHarness'
 import { musicClient } from '../services/musicClient'
 import { progressStore } from '../services/progressStore'
+import { setPerfProfileFromSetting } from '../config/perfProfile'
 
 // Runtime theme switching. Holds the selected theme id (persisted to localStorage),
 // rebuilds the MUI theme on change, and exposes the selection via `useThemeSwitch()`.
@@ -65,10 +66,25 @@ export const AppThemeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     progressStore.setSetting('themeId', id)
   }, [])
 
+  // "Flydende grafik" (Performance PRD-01 W6) lives in the same subscription as the skin, for the same
+  // reason: both are per-child settings that can arrive on attach, on a profile switch, or on a sync
+  // pull. `perfProfile` is a module value rather than a context because `idleMotion`'s helpers are plain
+  // functions called from render bodies across the tree — threading a context to 20 call sites is the
+  // "second branch point" that module exists to prevent. So this state bump exists ONLY to force a
+  // re-render when the profile actually changes; nothing reads it.
+  //
+  // It matters that the flip is immediate: the adult menu is an overlay, so closing it does not remount
+  // the page underneath, and the owner's whole reason for wanting this switch is to stand on the iPad
+  // and compare the two paths back to back.
+  const [, bumpPerfProfile] = useState(0)
+
   // Adopt the attached profile's skin. Fires on attach and on a profile switch (progressStore notifies
   // on both), and on a sync pull that brought a newer themeId from another device.
   useEffect(() => {
     const sync = () => {
+      if (setPerfProfileFromSetting(progressStore.get().settings.smoothGraphics)) {
+        bumpPerfProfile((n) => n + 1)
+      }
       const stored = progressStore.get().settings.themeId
       if (stored && stored !== themeIdRef.current) {
         themeIdRef.current = stored
