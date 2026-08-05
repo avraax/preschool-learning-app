@@ -8,7 +8,7 @@ import { useTheme } from '@mui/material/styles'
 import { Mic, MicOff } from 'lucide-react'
 import { getCategoryTheme } from '../../config/categoryThemes'
 import { darken, hexToRgba, onTileColor } from '../../theme/tokens/helpers'
-import { softShadow, contactShadow } from '../../theme/depth'
+import { boxSoftShadow, contactShadow } from '../../theme/depth'
 import GameShell from '../common/GameShell'
 import { HeroArt } from '../common/PromptArt'
 import TactileTile from '../common/TactileTile'
@@ -230,13 +230,16 @@ const MicHero: React.FC<MicHeroProps> = ({ phase, supported, isBusy, accent, onT
                 ? `radial-gradient(circle at 50% 40%, #FF8A80 0%, ${accent} 100%)`
                 : `linear-gradient(160deg, ${accent} 0%, ${darken(accent, 0.28)} 100%)`,
               border: '6px solid white',
-              // Clay depth (matches the tactile language): a layered softShadow drop-shadow + top
+              // Clay depth (matches the tactile language): a layered grounding shadow + top
               // inner-light highlight — NOT the old flat glossy `0 8px 24px`. The recording halo
-              // (the accent ring) stays as a boxShadow ring on top.
-              boxShadow: recording
-                ? `0 0 0 10px ${hexToRgba(accent, 0.3)}, inset 0 3px 5px rgba(255,255,255,0.45)`
-                : 'inset 0 3px 5px rgba(255,255,255,0.45)',
-              filter: softShadow(dark ? 1.7 : 1.4),
+              // (the accent ring) rides the same box-shadow list. The grounding shadow was a chained
+              // `filter: drop-shadow()` pair; the orb is a CIRCLE, so box-shadow draws the same
+              // picture without the filter passes (Performance PRD-01 W4).
+              boxShadow: [
+                recording ? `0 0 0 10px ${hexToRgba(accent, 0.3)}` : null,
+                'inset 0 3px 5px rgba(255,255,255,0.45)',
+                boxSoftShadow(dark ? 1.7 : 1.4),
+              ].filter(Boolean).join(', '),
               opacity: isBusy ? 0.6 : 1,
               transition: 'background 0.2s ease, box-shadow 0.2s ease',
             }}

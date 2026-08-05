@@ -17,6 +17,50 @@ export const softShadow = (elevation = 1): string => {
 }
 
 /**
+ * The `box-shadow` equivalent of `softShadow()` — the SAME two layers (a tight near shadow plus a wide
+ * soft far one), for a rectangle or a rounded rectangle.
+ *
+ * **`box-shadow` for OPAQUE boxes; `drop-shadow` for alpha cut-outs AND for translucent surfaces**
+ * (Performance PRD-01 W4/F6 — the second half of that rule was MEASURED here, not in the PRD).
+ *
+ * F6 says "for a rectangle or a rounded rectangle, `box-shadow` is the same picture at a fraction of the
+ * cost". That is only true when the rectangle is OPAQUE. `drop-shadow` paints the element's own
+ * silhouette BEHIND the element, so on a translucent surface the shadow shows through the element's own
+ * face and darkens it; `box-shadow` is clipped to outside the border box and cannot. Every tile surface
+ * in this app is translucent toward the bottom — `tileSurface()` ends at `rgba(accent, 0.08)` — so the
+ * drop-shadow there is load-bearing for the MATERIAL, not just the outline. Measured on a
+ * `/alphabet/learn` tile: swapping mechanisms lifted the face from rgb(208,210,219) to rgb(228,230,240)
+ * and lightened the shadow band beneath it by 11 RGB. A compensating background wash closed only 3 of
+ * those 17, because the two mismatches have different causes. So `TactileTile`, Plus/Minus's equation
+ * tile and Stav Ordet's slots deliberately KEEP `softShadow()`.
+ *
+ * Use this for a box whose fill is opaque: `TactilePill` (an accent fill under a sheen), Sig et Ord's
+ * clay orb. There the two are pixel-equivalent and the filter passes are pure cost.
+ * `softShadow()` returns two CHAINED `drop-shadow()` filters, which means two input paths, channel
+ * swizzling, a blur and a blend **per element** — and on mobile Safari chained `drop-shadow` is
+ * documented as both slow and visually buggy (shadows left behind when the element moves, wrong on
+ * first render, flicker). For a rounded rectangle it also buys nothing: the shadow of a rectangle IS a
+ * rectangle, so `box-shadow` draws the same picture. `UnifiedMemoryGame` already noted this, standing
+ * a layered box-shadow in for exactly this reason.
+ *
+ * Keep `softShadow()` where the shadow must hug a cut-out silhouette — `SceneObject`, `PromptArt`, the
+ * section landmark, `farverArt`, `EnglishLearning`. There, the filter is doing work `box-shadow` cannot.
+ *
+ * Offsets, blurs and alphas are COPIED from `softShadow()` **1:1, with no rescaling.** The Filter
+ * Effects spec defines `drop-shadow()`'s third length as a blur radius "interpreted as in box-shadow"
+ * — both are σ = radius/2 — so the same numbers give the same softness. Doubling them (on the theory
+ * that the two units differ) was tried and measured: `/alphabet/learn` went from 25.9% to 44.3% busy at
+ * 6x and its layer texture grew 6 MB, because a 34px blur on 29 tiles paints far outside each tile's
+ * box. If these values ever look wrong, A/B a screenshot — don't rescale them from first principles.
+ */
+export const boxSoftShadow = (elevation = 1): string => {
+  const e = Math.max(0, elevation)
+  const near = `0 ${1 + e}px ${2 + e * 1.5}px rgba(0,0,0,0.20)`
+  const far = `0 ${4 + e * 3}px ${10 + e * 6}px rgba(0,0,0,0.22)`
+  return `${near}, ${far}`
+}
+
+/**
  * Whisper-thin lift for one cell in a dense FIELD of tiles (Lær Tal's hundreds-chart).
  *
  * `softShadow()` is built for an object with space around it: its far layer is a ~17px blur offset
@@ -27,6 +71,10 @@ export const softShadow = (elevation = 1): string => {
  * the cells distinct without pooling; the tiles' hairline edge + inner highlight carry the rest.
  */
 export const fieldShadow = (): string => 'drop-shadow(0 1px 1.5px rgba(0,0,0,0.14))'
+
+// There is deliberately NO `box-shadow` form of `fieldShadow()`. A field cell's surface is the MOST
+// translucent one in the app (`translucentTileSurface`, a 58%-alpha white top), so it is the last place
+// the substitution above would be equivalent — see `boxSoftShadow`'s note.
 
 // The soft contact-shadow ellipse that sits BENEATH an object and grounds it in the world.
 // Returns a `background` (radial gradient) for a blurred `Box`; tint it with the section accent
