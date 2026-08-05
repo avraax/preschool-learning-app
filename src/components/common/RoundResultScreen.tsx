@@ -1,10 +1,10 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { Box, Button, Typography, useMediaQuery } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
-import { RotateCcw, Home, BookOpen } from 'lucide-react'
+import { RotateCcw, Home } from 'lucide-react'
 import { getCategoryTheme } from '../../config/categoryThemes'
 import { hexToRgba } from '../../theme/tokens/helpers'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
@@ -21,9 +21,31 @@ import type { RoundOutcome } from '../../services/progressStore'
 
 // The round result screen (Overhaul Foundation — System 3 + 5). Renders INSIDE GameShell's body
 // (replacing the answer grid), so the themed backdrop/header/score stay put. Choreographs the beats —
-// stars fly in, a "Ny rekord!" ribbon on a new best, a streak readout, the REWARD METER, then the
-// action buttons — each a juice beat (confetti + SFX + one spoken Danish summary). No-scroll, themed
-// across all skins, reduced-motion friendly.
+// stars fly in, a wordless "Ny rekord!" ribbon on a new best, the REWARD METER, then the action
+// buttons — each a juice beat (confetti + SFX + one spoken Danish summary). No-scroll, themed across
+// all skins, reduced-motion friendly.
+//
+// TRIMMED 2026-08-05 (owner, on sight of the live screen: "way too many elements"). Three things left,
+// and each removal has a reason a future session should not undo by "restoring" it:
+//
+//   • **The record DELTA lines are gone** ("Længste stime: 0 → 6", "Stjerner: 0 → 2"). Two rows of small
+//     text with numeric arrows is adult telemetry on a screen whose reader is five and cannot read. The
+//     ribbon keeps the trophy + "Ny rekord!" as the wordless signal that something was beaten; the
+//     numbers do not move to the adult pane, they simply do not exist any more (owner: "just
+//     disappears"). `outcome.previousBests` therefore has no UI consumer — it stays in `RoundOutcome`
+//     because `anyNewBest` is derived from `newBests` and feeds `roundXp`'s new-best bonus.
+//   • **The streak READOUT row is gone** ("6 i træk!" + the flame). It restated what the ribbon had just
+//     said, in text, after the streak had ALREADY been celebrated during play (`mascotBus.emit('streak')`
+//     + `celebrateTier('streak')`). It is still SPOKEN in `speakSummary` — hearing it works for a
+//     pre-reader where reading does not, which is the whole reason the row was the redundant half.
+//   • **"Se bog" is gone.** CLAUDE.md's invariant is that the ring is the ONLY door to Min Bog on every
+//     screen, and this button was a second one — sitting under a header that already renders the ring.
+//     The per-surface guard in `rewardSurfaces.test.ts` only covered `GameShell`/`GameSelectionLayout`,
+//     so it never saw this file; it now does.
+//
+// What deliberately STAYED: the stars (the score, and the only thing a pre-reader reads instantly) and
+// the reward meter with the next prize's silhouette (wordless, and the "this round earned that" link to
+// the ring the child watched all round — Reward Horizon design, not clutter).
 //
 // Reward Book PRD-01 W7: this screen no longer reveals rewards. It shows the meter filling toward the
 // next prize — the visible "this round earned that" link — and hands the actual reveal to the app-root
@@ -64,18 +86,6 @@ const RoundResultScreen: React.FC<RoundResultScreenProps> = ({
   const [buttonsReady, setButtonsReady] = useState(false)
 
   const { stars, anyNewBest, longestStreak } = outcome
-
-  // Improved bests, as old→new lines for the ribbon.
-  const bestLines = useMemo(() => {
-    const lines: string[] = []
-    if (outcome.newBests.streak)
-      lines.push(`Længste stime: ${outcome.previousBests.streak} → ${longestStreak}`)
-    if (outcome.newBests.stars)
-      lines.push(`Stjerner: ${outcome.previousBests.stars} → ${stars}`)
-    if (outcome.newBests.count)
-      lines.push(`Rigtige: ${outcome.previousBests.count} → ${outcome.correct}`)
-    return lines.slice(0, 2)
-  }, [outcome, longestStreak, stars])
 
   // Timeline (ms). Reduced motion collapses the stagger. The star span is the ACTUAL star count
   // (not a fixed 3), so a 1★ result doesn't sit through three empty star-steps of dead air.
@@ -315,48 +325,6 @@ const RoundResultScreen: React.FC<RoundResultScreenProps> = ({
               Ny rekord!
             </Typography>
           </Box>
-          {bestLines.map((l) => (
-            <Typography key={l} sx={{ fontFamily: COMIC, fontWeight: 600, color: '#7A4F00', fontSize: 'clamp(0.75rem, 2.6vw, 0.95rem)' }}>
-              {l}
-            </Typography>
-          ))}
-        </Box>
-      )}
-
-      {/* Streak readout */}
-      {longestStreak >= 3 && (
-        <Box
-          component={motion.div}
-          initial={reduce ? false : { opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: dly(t.starBase + starsSpan + 350) }}
-          sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}
-        >
-          <Box
-            component="img"
-            src={uiArt.flame}
-            alt=""
-            aria-hidden
-            draggable={false}
-            sx={{
-              width: 'clamp(1.5rem, 4.8vw, 1.9rem)',
-              height: 'clamp(1.5rem, 4.8vw, 1.9rem)',
-              objectFit: 'contain',
-              flex: '0 0 auto',
-              [PHONE_LANDSCAPE]: { width: '1.45rem', height: '1.45rem' },
-            }}
-          />
-          <Typography
-            sx={{
-              fontFamily: COMIC,
-              fontWeight: 700,
-              fontSize: 'clamp(1rem, 3.4vw, 1.3rem)',
-              // Gold on dark scenes; readable-on-white accent on light scenes.
-              color: dark ? '#FFE7A8' : category.onTileColor,
-            }}
-          >
-            {longestStreak} i træk!
-          </Typography>
         </Box>
       )}
 
@@ -464,21 +432,6 @@ const RoundResultScreen: React.FC<RoundResultScreenProps> = ({
           }}
         >
           Spil igen
-        </Button>
-        <Button
-          variant="outlined"
-          onClick={() => navigate('/album')}
-          startIcon={<BookOpen size={22} />}
-          sx={{
-            ...buttonBase,
-            color: dark ? '#fff' : accent,
-            borderColor: accent,
-            borderWidth: 2,
-            bgcolor: 'rgba(255,255,255,0.7)',
-            '&:hover': { borderWidth: 2, borderColor: accent, bgcolor: 'rgba(255,255,255,0.9)' },
-          }}
-        >
-          Se bog
         </Button>
         <Button
           variant="text"

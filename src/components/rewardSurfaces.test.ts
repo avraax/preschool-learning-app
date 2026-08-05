@@ -77,6 +77,22 @@ test('every surface that shows the ring opens the book from it', () => {
   }
 })
 
+// The loop above only looks at the files that RENDER a ring, so it structurally could not see a second
+// door added by something drawn INSIDE one of those surfaces. `RoundResultScreen` is exactly that: it
+// replaces GameShell's body while GameShell's header keeps showing the ring, and it shipped a "Se bog"
+// button — a second entrance on a screen that already had one, which is the thing the one-door rule
+// exists to forbid. Removed 2026-08-05 (owner). A surface with NO ring of its own must have NO door.
+test('a screen drawn inside a ring surface adds no second door to Min Bog', () => {
+  const code = codeOf('components/common/RoundResultScreen.tsx')
+  assert.ok(!code.includes('<RewardRing'), 'RoundResultScreen renders a ring now — re-point this guard')
+  const doors = code.match(/'\/album'/g) ?? []
+  assert.equal(
+    doors.length,
+    0,
+    `RoundResultScreen has ${doors.length} route(s) to /album — GameShell's ring above it is the only door`,
+  )
+})
+
 test('the adult pane shows the DISTANCE but never the level', () => {
   const code = codeOf('components/adult/panes/BarnPane.tsx')
   // The distance belongs here and only here — the parent is the literate party.

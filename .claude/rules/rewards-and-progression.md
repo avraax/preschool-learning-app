@@ -142,11 +142,31 @@ slot in one commit (normally 1; a perfect+new-best fast-tier round can cross 2) 
 ## Rounds & art
 
 Rounds are bounded (`useRound`, default 8, no timer; wrong answers only break a question's first-try flag)
-and end on `RoundResultScreen` (stars → "Ny rekord!" ribbon → streak → reward meter → replay/book/back),
+and end on `RoundResultScreen` (stars → a **wordless** "Ny rekord!" ribbon → reward meter → replay/back),
 whose buttons stay `pointer-events:none` until they animate in and whose beats **fast-forward** on a tap
 via a keyed `<Fragment>` remount (framer won't reschedule an already-pending delayed animation just by
 lowering its `delay`). A round played in the W4 degraded audio mode passes `degraded` and records no
 personal best — see the narration-health section in `.claude/rules/audio-system.md`.
+
+**That screen was TRIMMED on sight, 2026-08-05 ("way too many elements") — from 11 elements to 5, and the
+principle generalises to any child-facing surface: the reader is five and cannot read.** What went, and
+why none of it should be "restored":
+
+- The record **delta lines** (`Længste stime: 0 → 6`, `Stjerner: 0 → 2`) — numeric arrows in small text
+  are adult telemetry. They did NOT move to the adult pane; they no longer exist (owner). `previousBests`
+  survives in `RoundOutcome` only because `anyNewBest` feeds `roundXp`'s new-best bonus.
+- The **streak readout row** (`6 i træk!` + the flame) — it restated the ribbon, in text, after the streak
+  had already been celebrated *during* play. It is still **spoken** in `speakSummary`: hearing works for a
+  pre-reader where reading does not, which is what made the row the redundant half. `uiArt.flame` was its
+  only consumer and is deleted with it rather than left exported as a dead symbol.
+- **"Se bog"** — a second door to Min Bog on a screen whose header already shows the ring. The one-door
+  guard only inspected the files that RENDER a ring (`GameShell`/`GameSelectionLayout`), so it structurally
+  could not see a door added by a screen drawn INSIDE one; `rewardSurfaces.test.ts` now also asserts
+  `RoundResultScreen` has **zero** `/album` routes (re-broken).
+
+What deliberately stayed: the **stars** (the score, and the only thing a pre-reader reads instantly) and
+the **reward meter with the next prize's silhouette** — wordless, and the "this round earned that" link to
+the ring the child watched all round. It looks like clutter and is not.
 
 Reward art: `rewardArt(id)` from `src/assets/rewards/` (glob manifest) — **every surface renders it
 unconditionally, there is no glyph fallback**, so `rewardArtCoverage.test.ts` keeps that safe; a new reward
