@@ -50,10 +50,10 @@ const ProfilePicker: React.FC<ProfilePickerProps> = ({
       sx={{
         position: 'fixed',
         inset: 0,
-        // ABOVE SimplifiedAudioPermission (9999). "Who is playing?" has to be answered before "turn
-        // on sound" — and since this surface is opaque and full-screen, the audio modal is simply
-        // hidden behind it and reappears once a child is chosen. One blocking overlay at a time, which
-        // is the same rule the auth gate follows.
+        // Above the lock screen (9999): "Who is playing?" has to be answered before anything else.
+        // The audio cue doesn't compete for this — it stands itself down under `authUiOpen` and
+        // reappears (if audio really is blocked) once a child is chosen. One blocking overlay at a
+        // time, which is the same rule the auth gate follows.
         zIndex: AUTH_Z.profilePicker,
         background: theme.decor.notFoundBackground,
         display: 'flex',

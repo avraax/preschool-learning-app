@@ -102,6 +102,13 @@ export class TtsClient {
    * clip is no evidence either way, and treating it as success is how a real failure streak would hide.
    */
   private consecutivePlaybackFailures = 0
+  /**
+   * Has a clip EVER reported a duration this session? Set by `notePlaybackOk`, **never cleared** — a
+   * later iOS suspension does not un-hear what was already heard. This is the signal that makes the
+   * readiness verdict (Audio activation PRD-01) stop re-accusing a working device after every app
+   * switch, which is what the old `hasUnlockedRef`/`userDismissedRef` pair was approximating.
+   */
+  private playbackOkOnce = false
   private healthListeners = new Set<() => void>()
   /** DEV/harness only — `?mute-tts=1` pins the counter so the degraded UI is capturable. */
   private forcedPlaybackFailures: number | null = null
@@ -139,31 +146,54 @@ export class TtsClient {
    * user gesture. Priming the probe AudioContext alone is not enough — narration plays through THIS
    * element, so it must be the one that gets user-activated, or the first post-fetch play() throws
    * NotAllowedError. Safe to call repeatedly; the next real play() overwrites the src.
+   *
+   * **The result is the app's one real evidence signal** (Audio activation PRD-01 §4.1): resolving is
+   * the closest thing to proof that narration is unlocked, `NotAllowedError` is proof that it is not.
+   * Both used to be `console.warn`ed and thrown away, which is why the readiness verdict had to guess.
+   *
+   * NOT `async`, and the `a.src = …` / `a.play()` pair stays SYNCHRONOUS: this is called from inside
+   * the unlock gesture and iOS consumes the transient activation across an `await`. Only the *result*
+   * became observable; the call shape did not change. The `console.warn`s stay too — the bug-report
+   * diagnostics ring reads them, and `[audio-unlock]` is how a production report is debugged today.
+   *
+   * `'error'` means a decode/format/no-promise problem, i.e. NOT an activation problem — the readiness
+   * model treats it as no evidence either way (`consecutivePlaybackFailures` is what sees that class).
    */
-  primePlaybackElement(): void {
+  primePlaybackElement(): Promise<'ok' | 'blocked' | 'error'> {
+    let a: HTMLAudioElement
+    let p: Promise<void> | undefined
     try {
-      const a = this.getAudio()
+      a = this.getAudio()
       a.src = SILENT_UNLOCK_CLIP
-      const p = a.play()
-      if (p && typeof p.then === 'function') {
-        p.then(() => {
-          // [audio-unlock] diagnostic (captured in bug-report diagnostics ring): the narration
-          // <audio> element accepted play() → narration is unlocked for the session.
-          console.warn('[audio-unlock] playback element primed OK')
-          try {
-            a.pause()
-          } catch {
-            /* ignore */
-          }
-        }).catch((e: unknown) => {
-          // Blocked → element NOT user-activated (no gesture / called outside activation). This is
-          // the "no sound after tapping" signature; the real speak will surface NotAllowedError too.
-          console.warn('[audio-unlock] playback element prime BLOCKED:', (e as { name?: string })?.name || String(e))
-        })
-      }
+      p = a.play()
     } catch (e) {
       console.warn('[audio-unlock] primePlaybackElement threw:', e)
+      return Promise.resolve('error')
     }
+    if (!p || typeof p.then !== 'function') {
+      // Pre-promise `play()` — nothing to observe, so claim nothing.
+      return Promise.resolve('error')
+    }
+    return p.then(
+      () => {
+        // [audio-unlock] diagnostic (captured in bug-report diagnostics ring): the narration
+        // <audio> element accepted play() → narration is unlocked for the session.
+        console.warn('[audio-unlock] playback element primed OK')
+        try {
+          a.pause()
+        } catch {
+          /* ignore */
+        }
+        return 'ok' as const
+      },
+      (e: unknown) => {
+        // Blocked → element NOT user-activated (no gesture / called outside activation). This is
+        // the "no sound after tapping" signature; the real speak will surface NotAllowedError too.
+        const name = (e as { name?: string })?.name
+        console.warn('[audio-unlock] playback element prime BLOCKED:', name || String(e))
+        return name === 'NotAllowedError' ? ('blocked' as const) : ('error' as const)
+      },
+    )
   }
 
   /** Stop whatever is playing. pause + clear src (NO DOM-wide teardown), one speechSynthesis cancel. */
@@ -585,7 +615,13 @@ export class TtsClient {
   // ===== playback health (Practice Loop PRD-01 W4) =====
 
   private notePlaybackOk(): void {
-    if (this.consecutivePlaybackFailures === 0) return
+    // `playbackOkOnce` is the strongest "the child heard something" signal the app can produce, and it
+    // is what stops a transient iOS suspend from re-accusing the device (Audio activation PRD-01 §3).
+    // Set BEFORE the early-out below, and emit on the flip even when the failure count was already 0 —
+    // otherwise the very first successful clip (the common case) would never reach the verdict.
+    const firstOk = !this.playbackOkOnce
+    this.playbackOkOnce = true
+    if (this.consecutivePlaybackFailures === 0 && !firstOk) return
     this.consecutivePlaybackFailures = 0
     this.emitHealth()
   }
@@ -627,6 +663,7 @@ export class TtsClient {
     lastFailureTime: number
     circuitOpen: boolean
     consecutivePlaybackFailures: number
+    playbackOkOnce: boolean
   } {
     const now = Date.now()
     return {
@@ -635,6 +672,7 @@ export class TtsClient {
       circuitOpen:
         this.failureCount >= this.MAX_FAILURES && now - this.lastFailureTime < this.FAILURE_RESET_MS,
       consecutivePlaybackFailures: this.forcedPlaybackFailures ?? this.consecutivePlaybackFailures,
+      playbackOkOnce: this.playbackOkOnce,
     }
   }
 

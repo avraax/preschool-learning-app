@@ -36,8 +36,13 @@ const EXACT_KEYS = [
 const PREFIXES = ['bornelaering-progress:']
 
 /**
- * DELIBERATELY KEPT: `bornelaering-device-id` (identity, not progress — and the ledger key) and
- * `bornelaering-theme` (a preference, and the synchronous first-paint hint).
+ * DELIBERATELY KEPT: `bornelaering-device-id` (identity, not progress — and the ledger key),
+ * `bornelaering-theme` (a preference, and the synchronous first-paint hint) and
+ * `bl-audio-ever-worked` (a fact about the DEVICE, not the child — Audio activation PRD-01 §4.5; it
+ * feeds the adult "Lyd har virket på denne enhed" line and the bug report, and gates nothing).
+ *
+ * The sweep is marker-guarded and enumerates exact keys plus one prefix, so a new key is untouched by
+ * default — this comment is what stops a future session from "tidying" one into `EXACT_KEYS`.
  */
 export function sweepPreAccountsStorage(): void {
   if (typeof window === 'undefined') return

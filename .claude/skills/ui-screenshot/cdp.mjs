@@ -33,7 +33,6 @@
 //   (console errors + page exceptions are ALWAYS captured and summarised at the end.)
 //
 // Behaviour:
-//   --keep-audio-modal        Do NOT auto-dismiss the "Tænd for lyd" permission modal.
 //   --port <n>                CDP debug port (default 9333).
 //
 // Performance (the owner's floor device is an iPad Pro 2nd gen / A10X, 2017, on iPadOS 17.7):
@@ -44,8 +43,10 @@
 //                             Combine with --cpu-throttle to see what the handicap actually costs.
 //
 // Notes:
-//  * Launches with --autoplay-policy=no-user-gesture-required so the audio modal usually never
-//    shows; also clicks "Start lyd nu" as a fallback unless --keep-audio-modal.
+//  * Launches with --autoplay-policy=no-user-gesture-required, so audio is unlocked from the start and
+//    the app's "Tryk for lyd" cue never appears. There is NOTHING to dismiss any more: the blocking
+//    "Tænd for lyd" modal is gone (Audio activation PRD-01), and `--keep-audio-modal` went with it.
+//    To exercise the cue on purpose, block autoplay instead — `--block-autoplay`.
 //  * Clicks use element.click() (NOT synthetic mouse coords — MUI ignores those).
 //  * Exit code is non-zero if a --wait-for / click target never appears, so failures are loud.
 //  * Run dev servers FIRST in Windows PowerShell (not WSL): `npm run dev` + `npm run dev:api`.
@@ -75,9 +76,16 @@ const CHROME = process.env.CHROME_PATH || 'C:/Program Files/Google/Chrome/Applic
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 let exitCode = 0
 
+// `--block-autoplay` flips the ONE launch flag that makes the app's audio verdict reach `blocked`:
+// every `play()` then rejects with NotAllowedError until a real gesture happens, which is what the
+// "Tryk for lyd" cue keys on (Audio activation PRD-01 §5.1). Without it Chrome unlocks audio at launch
+// and the cue is correctly never shown — so a cue-absence assertion under the default flag proves the
+// cue does not appear spuriously, and only this flag proves it appears when it should.
 const chrome = spawn(CHROME, [
   '--headless=new', `--remote-debugging-port=${PORT}`, '--no-first-run', '--no-default-browser-check',
-  '--autoplay-policy=no-user-gesture-required', '--disable-gpu', `--window-size=${W},${H}`,
+  has('--block-autoplay') ? '--autoplay-policy=document-user-activation-required'
+                          : '--autoplay-policy=no-user-gesture-required',
+  '--disable-gpu', `--window-size=${W},${H}`,
   `--user-data-dir=${mkdtempSync(join(tmpdir(), 'cdp-'))}`, 'about:blank',
 ], { stdio: 'ignore' })
 
@@ -197,10 +205,7 @@ if (has('--wait')) await sleep(FIXED_WAIT)
 else await waitFor('!!document.querySelector("#root") && document.querySelector("#root").children.length>0', 'app mount (#root)')
 await sleep(SETTLE)
 
-if (!has('--keep-audio-modal')) {
-  await evaluate(`(()=>{const b=[...document.querySelectorAll('button')].find(x=>/Start lyd nu/i.test(x.textContent||''));if(b){b.click();return true}return false})()`)
-  await sleep(300)
-}
+// (Nothing to dismiss here any more — the blocking audio modal is gone. See the Notes at the top.)
 
 for (const sel of all('--click')) {
   if (await waitForSelector(sel)) {

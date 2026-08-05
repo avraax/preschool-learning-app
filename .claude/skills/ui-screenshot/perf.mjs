@@ -146,8 +146,9 @@ const mounted = await (async () => {
 })()
 if (!mounted) { console.error(`MOUNT TIMEOUT ${LABEL}`); ws.close(); chrome.kill(); process.exit(1) }
 
-// Dismiss the audio modal if it stands (it would sit over the screen under test).
-await evaluate(`(()=>{const b=[...document.querySelectorAll('button')].find(x=>/Start lyd nu/i.test(x.textContent||''));if(b){b.click();return true}return false})()`)
+// (No audio modal to dismiss any more — the blocking "Tænd for lyd" surface is gone, and its
+// replacement is a small non-blocking chip that never appears while Chrome allows autoplay.
+// Audio activation PRD-01 §4.4.)
 
 for (const sel of all('--click')) {
   let ok = false

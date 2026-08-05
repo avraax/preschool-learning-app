@@ -31,6 +31,7 @@ import { ttsClient } from '../../../services/ttsClient'
 import { TTS_CONFIG } from '../../../config/tts-config'
 import { OVERRIDE_VOICES } from '../../voicelab/voicelabData'
 import { LETTER_WORDS, letterPhrase } from '../../../config/letterWords'
+import { audioEverWorked } from '../../../utils/audioEverWorked'
 import { PaneSection, ToggleRow } from './paneParts'
 
 const DEFAULT_RATE = TTS_CONFIG.speakingRate // 1.05
@@ -45,6 +46,8 @@ const SAMPLE_TEXT = letterPhrase('A', LETTER_WORDS.A.word)
 const LydPane: React.FC = () => {
   const progress = useProgress()
   const existing = ttsClient.getVoiceOverride()
+  // Read once per open — it only ever flips false→true, and the pane is a modal snapshot.
+  const [everWorked] = useState(() => audioEverWorked())
   const [name, setName] = useState(existing?.name ?? DEFAULT_VOICE)
   const [rate, setRate] = useState(existing?.speakingRate ?? DEFAULT_RATE)
 
@@ -127,6 +130,16 @@ const LydPane: React.FC = () => {
         <Button onClick={playSample} startIcon={<Play size={16} />} aria-label="Hør et eksempel" sx={{ mt: 1 }}>
           Hør et eksempel
         </Button>
+      </PaneSection>
+
+      {/* Read-only. The ONE audio fact the adult cannot get anywhere else: whether sound has EVER
+          worked on this device, which separates "it has never worked here" from "it worked and then
+          stopped". Device-scoped (`bl-audio-ever-worked`), never per-child, and it gates nothing —
+          a device where audio worked yesterday can be blocked today (Audio activation PRD-01 §4.5). */}
+      <PaneSection title="Lyd på denne enhed">
+        <Typography sx={{ fontSize: '0.9rem', opacity: 0.85 }}>
+          {everWorked ? 'Lyd har virket på denne enhed.' : 'Lyd har endnu ikke virket på denne enhed.'}
+        </Typography>
       </PaneSection>
     </Stack>
   )

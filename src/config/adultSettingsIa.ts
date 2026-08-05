@@ -127,6 +127,11 @@ export const ADULT_IA: AdultGroup[] = [
       { id: 'lyd.voice', label: 'Stemme' },
       { id: 'lyd.rate', label: 'Tempo' },
       { id: 'lyd.sample', label: 'Hør et eksempel' },
+      // Read-only status (Audio activation PRD-01 §4.5): the ONE thing the adult cannot otherwise tell
+      // apart — "sound has never worked on this iPad" vs "it worked and then stopped". Device-scoped
+      // (`bl-audio-ever-worked`), not per-child, and it gates nothing. Listed HERE because the
+      // group/item structure is DATA and guarded; adding it in the pane alone would fail that guard.
+      { id: 'lyd.everWorked', label: 'Lyd på denne enhed' },
     ],
   },
   {

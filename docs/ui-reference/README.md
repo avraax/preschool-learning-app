@@ -18,12 +18,15 @@ folder always reflects the shipped UI.
 - Opening the adult menu is a plain click (the `?adult-tap=1` hold-workaround is gone) but still needs
   **~4.5s of settle** — it captures a snapdom screenshot before rendering, so a shorter wait silently
   yields the un-opened page.
-- **`overlays/audio-permission.jpg` and `overlays/auth-pin-pad.jpg` cannot be re-captured headlessly**
-  and are deliberately older than the rest. The driver launches Chrome with autoplay allowed, so the
-  "Tænd for lyd" modal never appears (`--keep-audio-modal` doesn't help — there is nothing to keep);
-  and the PIN pad needs a PIN actually set on the account. Overwriting them yields a picture of the
-  page *behind* the overlay, which is worse than a slightly old but correct one — if you try, check
-  the result before committing.
+- **`overlays/audio-permission.jpg` NO LONGER EXISTS IN THE APP.** The blocking "Tænd for lyd" modal was
+  deleted (Audio activation PRD-01) and replaced by a small non-blocking "Tryk for lyd" chip that shows
+  only while the evidence-based verdict is `blocked`. The old shot is kept as a historical record of what
+  was removed; **do not treat it as current UI**, and do not try to re-capture it. The chip is likewise
+  unreachable headlessly — `?nogate=1` stands it down, exactly as it stood the modal down.
+- **`overlays/auth-pin-pad.jpg` cannot be re-captured headlessly** and is deliberately older than the
+  rest: the PIN pad needs a PIN actually set on the account. Overwriting it yields a picture of the page
+  *behind* the overlay, which is worse than a slightly old but correct one — if you try, check the
+  result before committing.
 
 **What this pass shows (de-emoji PRD, complete):** **no view in the app renders an OS-font emoji any
 more.** Section-menu game tiles and home cards are baked icon art; Min Bog's 45 reward slots, its 5

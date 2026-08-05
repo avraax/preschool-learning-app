@@ -1,7 +1,7 @@
 // Pure decision for WHICH onboarding surface the profile gate shows — none, the picker, or the
 // mandatory "add a child" dialog.
 //
-// Same directory, same shape and the same reason as authGatePolicy.ts and audioPromptPolicy.ts: this is
+// Same shape and the same reason as authGatePolicy.ts and `config/audioReadiness.ts`: this is
 // three booleans that are easy to get wrong inside a component and impossible to get wrong here. It was
 // extracted after the condition WAS wrong in a way no test could see.
 //

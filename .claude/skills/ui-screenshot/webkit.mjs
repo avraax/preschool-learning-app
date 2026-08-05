@@ -37,7 +37,14 @@
 // Audio:
 //   --audio-report        Inject audio-probe.js before app scripts and print its verdict at the end.
 //                         Gate on the verdict line: OK / SILENT / NO AUDIO ATTEMPTED.
-//   --keep-audio-modal    Do NOT auto-dismiss "Tænd for lyd".
+//
+// AUDIO VERDICT HAZARD — read before reporting anything from this driver (Audio activation PRD-01 §5.2):
+//   **This engine cannot play audio at all.** Under the evidence-based readiness model that means a real
+//   WebKit run LEGITIMATELY reaches `blocked` once a gesture happens, and the app then LEGITIMATELY
+//   shows its "Tryk for lyd" cue. That is the app being correct, not a regression. Rung 2 may assert
+//   layout, no-crash and the cue's GEOMETRY; it may NEVER be cited as evidence about the verdict itself.
+//   (`?nogate=1`, which every recipe here uses, also stands the cue down — so its absence proves
+//   nothing either.) For the verdict use cdp.mjs `--audio-report`; for the truth, the owner's iPad.
 //
 // Notes:
 //  * --click uses REAL trusted input (unlike cdp.mjs's element.click()), so it exercises the pointer
@@ -148,15 +155,9 @@ await sleep(SETTLE)
 
 console.log(`device: ${devName} ${W}x${H}@${dev.dsf}x  engine: WebKit  ua: ${dev.ua ? 'iOS' : 'default'}`)
 
-if (!has('--keep-audio-modal')) {
-  // A real click, not element.click(): the modal's dismiss rule is that only a `click` handler may
-  // close it (audio-system.md tap-through rule), so a trusted click is what actually exercises it.
-  const btn = page.locator('button', { hasText: /Start lyd nu/i }).first()
-  if (await btn.count()) {
-    await btn.click({ timeout: 2000 }).catch(() => {})
-    await sleep(300)
-  }
-}
+// (Nothing to dismiss here any more — the blocking audio modal is gone, and its replacement never
+// covers anything. See the AUDIO VERDICT HAZARD note at the top before reading anything into the cue's
+// presence or absence in this engine.)
 
 for (const sel of all('--click')) {
   if (!(await waitForSelector(sel))) continue

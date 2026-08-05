@@ -5,7 +5,9 @@ paths:
   - "src/hooks/useSimplifiedAudio.ts"
   - "src/hooks/useSpeechInput.ts"
   - "src/services/ttsClient.ts"
-  - "src/components/common/SimplifiedAudioPermission.tsx"
+  - "src/config/audioReadiness.ts"
+  - "src/utils/audioLiveness.ts"
+  - "src/components/common/AudioBlockedCue.tsx"
   - "src/components/**/*.tsx"
 ---
 
@@ -17,9 +19,11 @@ All audio in this app goes through one centralized system. No exceptions.
 
 ```
 SimplifiedAudioController (src/utils/SimplifiedAudioController.ts)  -- singleton, single-audio playback (NO queue)
-├── SimplifiedAudioContext (src/contexts/SimplifiedAudioContext.tsx)  -- React permission + readiness state
+├── SimplifiedAudioContext (src/contexts/SimplifiedAudioContext.tsx)  -- unlock path + the EVIDENCE behind the verdict
 ├── useSimplifiedAudioHook() (src/hooks/useSimplifiedAudio.ts)        -- component hook interface
-└── SimplifiedAudioPermission (src/components/common/SimplifiedAudioPermission.tsx)  -- session permission modal (iOS)
+├── config/audioReadiness.ts                                          -- PURE verdict: idle | live | blocked
+├── utils/audioLiveness.ts                                            -- clock probe, 263627 recovery, userActivation, audioSession
+└── AudioBlockedCue (src/components/common/AudioBlockedCue.tsx)        -- small NON-BLOCKING "Tryk for lyd" chip
 ```
 
 Stack: Azure AI Speech (single TTS provider) -> Web Speech API (fallback) -> Howler.js (sound effects).
@@ -269,51 +273,98 @@ Task-based games play a welcome (`audio.playGameWelcome(<type>)`) then start aft
 delay, gating interaction on a `gameReady` flag. Welcome strings live in `GAME_WELCOME_MESSAGES` inside
 `SimplifiedAudioController.playGameWelcome` — add an entry there for a new game's `gameWelcomeType`.
 
-## Navigation Cleanup & Permission
+## Navigation cleanup, and the audio-readiness verdict
 
 Audio cancels automatically on navigation via `NavigationAudioCleanup` in `App.tsx` and the controller's
-own listeners. Permission is session-based and automatic; `SimplifiedAudioPermission` handles the iOS
-prompt. iOS suspension recovery is **silent**: a later suspend/`interrupted` or a `NotAllowedError`
-still calls `markNeedsUserAction`, but the big permission modal is **never auto-re-shown** once audio
-has unlocked once OR the user closed it (`hasUnlockedRef`/`userDismissedRef`; the show decision is the
-pure `shouldShowAudioPrompt()` in `src/contexts/audioPromptPolicy.ts`) — the next real interaction
-re-unlocks via the document-wide listeners. Both the ✕ AND the "Start lyd nu" button hard-dismiss
-(dismiss must not depend on the async unlock result). Re-arming the modal on every transient iOS
-suspend was the "modal won't close / button does nothing" bug.
+own listeners.
 
-**`hidePrompt` is the ONLY thing that may close the modal, and every caller must be a `click`
-handler** (the scrim, the ✕, the button — a tap anywhere on the overlay dismisses it, since with the
-async close gone a scrim tap would otherwise unlock audio and leave the modal standing). This is a
-**tap-through** rule, not a style one: `initializeAudio` used to set `showPrompt: false` itself, and the
-provider's document-wide `touchstart` listener calls it — so its async continuation unmounted the modal
-**between the tap's `touchstart` and the `click` that same tap produces**, and the browser then
-hit-tested that click against the page the modal had been covering. One tap on "Start lyd nu" also
-pressed the answer tile behind it (owner, 2026-08-03). A click is the LAST event of a tap and its
-target is resolved before the handler runs, so closing there cannot retarget anything; closing on
-`pointerdown`/`touchstart` — **or from any async work a down-event can start** — always can. The same
-edit removed the catch branch's `showPrompt: isIOS()`, which both re-armed past the
-`userDismissed`/`hasUnlockedOnce` guards on iOS and did this exact mid-gesture close everywhere else;
-flipping `needsUserAction`/`isWorking` is enough, because the delayed effect re-consults
-`shouldShowAudioPrompt`. Guarded by source-reading assertions in `audioPromptPolicy.test.ts` (they
-strip comments first — the rule is explained in a comment right beside the code it protects).
-**Generalise it to any blocking overlay**: an overlay that closes itself off a down-event or off async
-work hands the rest of the gesture to whatever it was covering.
+**There is NO blocking permission modal.** The old full-screen "Tænd for lyd" primer was deleted (Audio
+activation PRD-01) because it was wrong in both directions on the owner's iPad: it covered a board that
+was already talking, and dismissing it changed nothing. Unlock happens on the **first gesture anywhere**
+— the document-wide listeners in `SimplifiedAudioContext` — which is what every reference implementation
+does (Howler's `_unlockAudio`, Tone.js, PlayCanvas, Chrome's own autoplay guidance), and the child has to
+tap the home menu to reach any game, so a primer had no job to do.
 
-**ONE BLOCKING OVERLAY AT A TIME.** The final render decision is `shouldRenderAudioPrompt()` in the same
-policy module: it also stands the modal down while `authUiOpen` (any auth/onboarding surface — lock
-screen, PIN pad, mandatory PIN setup, "who is playing?") and under `?nogate=1`. "Turn on sound" is
-meaningless before you know who is playing, and this modal painted over the PIN-setup dialog twice —
-the first fix was a z-index bump, which is the wrong shape. **A new blocking surface claims `authUiOpen`
-(see `AuthContext`) instead of joining a z-index arms race.**
+**The verdict is EVIDENCE-BASED, and the evidence is only ever something that made (or provably failed to
+make) a sound.** `src/config/audioReadiness.ts` is pure and returns `idle | live | blocked` from five
+inputs: `primePlaybackElement()`'s result, `playbackOkOnce`, a moving AudioContext clock, the consecutive
+playback-failure count, and `hasBeenActive`. `blocked` — and only `blocked` — renders the small
+non-blocking `AudioBlockedCue` chip ("Tryk for lyd"). Nothing latches: there is no `showPrompt`, no arming
+timer and no dismiss flag, so the cue cannot go stale over an app that has started talking.
+
+What each rule is protecting against, because each one cost a wrong verdict:
+
+- **`speechSynthesis.speak(<empty utterance>)` NOT THROWING IS NOT EVIDENCE.** No `onstart`, no `onend`,
+  nothing observed. It used to be OR'd into the verdict, where it could single-handedly latch a whole
+  session as "working". The call is kept (it does unlock Web Speech); its "success" is discarded.
+  Guarded by a source-reading assertion in `src/config/audioReadiness.test.ts`.
+- **`ctx.state === 'running'` IS NOT LIVENESS, in either direction.** Narration plays through
+  `ttsClient`'s `<audio>` element, SFX through `Howler.ctx`, music through Howler's HTML5 backend — all
+  three can be audible while a probe context sits `suspended` (that was the reported false negative). And
+  WebKit bug 263627 (open, iOS 17.0.3) has a context report `running` with `currentTime` **frozen**.
+  Liveness is a **moving clock over ~120 ms** (`probeContextLive`); the recovery for a frozen one is
+  `suspend()` → `resume()` (`recoverFrozenContext`, run on `visibilitychange → visible`, throttled).
+  The readiness model takes **no `state` input at all**, and a test asserts that structurally.
+- **An interruption ENDS IN `suspended`, not `running`** (WebKit's own
+  `LayoutTests/webaudio/audiocontext-state-interrupted.html`: "running AudioContexts will not resume
+  after an interruption ends"). So `onstatechange → suspended | interrupted` is the NORMAL aftermath of
+  every iPad app switch, Siri call and phone call. It re-arms silent re-unlock via `markNeedsUserAction`
+  and **must never feed `blocked`** — accusing the device there is what made the old modal bounce back
+  after every dismiss. `playbackOkOnce` (never cleared) is what makes this hold: audio that has been
+  heard once is not un-heard by a suspend.
+- **`hasBeenActive` is what separates "blocked" from "untapped"** (`navigator.userActivation`, Safari
+  16.4+). **Unsupported ⇒ `false` ⇒ never `blocked`** — fail toward silence, never toward a false
+  accusation, and report support as its own field so an unsupported environment stays distinguishable
+  from a genuinely untapped one.
+- **`navigator.audioSession.type = 'playback'` is set in-gesture**, feature-detected, as the first
+  statement of the synchronous block. Since iOS 17 the default type is `ambient`, which is **silenced by
+  the device mute state** (WebKit 237322, Apple's own answer) — a candidate root cause of the "sometimes
+  audio really IS off" half of the report. Only `.type` is unconditionally exposed in WebKit's IDL, so
+  feature-detect, don't assume.
+- **`bl-audio-ever-worked`** (device-scoped localStorage, NOT `progressStore`) records that the verdict
+  once reached `live`. It **gates nothing** — a device where audio worked yesterday can be blocked today.
+  Its jobs are the adult "Lyd på denne enhed" line and a bug-report field.
+- **The unverified state is `idle`, not `blocked`.** Tapped, nothing positive, nothing negative ⇒ say
+  nothing. Same rule as `narrationHealth`: a cold start must never read as dead.
+
+**The tap-through rule, unchanged and general to ANY overlay**: an overlay that acts on a down-event —
+`pointerdown`/`touchstart` — **or from any async work a down-event can start** hands the rest of the
+gesture to whatever it was covering. A `click` is the LAST event of a tap and its target is resolved
+before the handler runs, so acting there cannot retarget anything. This shipped twice: the deleted modal
+closed itself from `initializeAudio`'s async continuation, so one tap on its button ALSO pressed the
+answer tile behind it (owner, 2026-08-03). The cue is small, so its blast radius is smaller; the rule is
+unconditional, and `audioReadiness.test.ts` asserts `AudioBlockedCue` carries no early-event handler.
+
+**ONE BLOCKING OVERLAY AT A TIME still applies even though the cue does not block.** The final render
+decision is `shouldShowAudioCue()` in the same pure module: it stands the cue down while `authUiOpen`
+(any auth/onboarding surface — lock screen, PIN pad, mandatory PIN setup, "who is playing?") and under
+`?nogate=1`. "Tryk for lyd" is meaningless before you know who is playing, and the modal it replaced
+painted over the PIN-setup dialog twice — the first fix was a z-index bump, which is the wrong shape.
+**A new blocking surface claims `authUiOpen` (see `AuthContext`) instead of joining a z-index arms
+race.** The cue itself sits below MUI's modal tier (1300), so an adult dialog covers it.
+
+**Verifying it: `webkit.mjs` cannot play audio at all**, so a real WebKit run legitimately reaches
+`blocked` and legitimately shows the cue. Rung 2 may assert layout, no-crash and the cue's geometry; it
+may **never** be cited as evidence about the verdict. Use `cdp.mjs --audio-report` for that (and
+`--block-autoplay` to make the cue appear on purpose), and the owner's iPad for the residue — cold
+launch, app-switcher round trip, Siri, and the Control-Centre mute switch, which is the only way to test
+`audioSession.type`.
 
 iOS robustness gotchas (PRD-06), easy to regress:
 - **iOS consumes the transient user-activation across an `await`.** Everything that needs the gesture —
-  `resume()`, `primePlaybackElement()`, `speechSynthesis.speak()` — must run **synchronously before the
-  first `await`** in the unlock path: kick `resume()` (don't await it), prime + speak in-gesture, THEN
-  await resume only to verify. Priming *after* `await resume()` silently failed → **no sound at all**.
+  `audioSession.type`, `resume()`, `primePlaybackElement()`, `speechSynthesis.speak()` — must run
+  **synchronously before the first `await`** in the unlock path: set the session type, kick `resume()`
+  (don't await it), prime + speak in-gesture, THEN await only to verify. Priming *after* `await resume()`
+  silently failed → **no sound at all**. WebKit is stricter than the spec here on purpose:
+  `shouldDocumentAllowWebAudioToAutoPlay` in `AudioContext.cpp` requires `hasTransientActivation()` —
+  the sticky `hasHadUserInteraction()` branch is a site quirk for zoom.com. **The clock probe
+  (`probeContextLive`) must therefore run AFTER the gesture's synchronous work**, never inside it.
 - The unlock gesture must prime **`ttsClient`'s shared `<audio>` element** (`primePlaybackElement()`),
   not just the probe `AudioContext` — narration plays through that element, so it's the one iOS needs
-  user-activated, or the first post-fetch `play()` throws `NotAllowedError`.
+  user-activated, or the first post-fetch `play()` throws `NotAllowedError`. **Its `src=`/`play()` pair
+  stays synchronous**; only its RESULT is observable (`'ok' | 'blocked' | 'error'`), and that result is
+  the app's single strongest activation signal. `'error'` (a decode/format problem) is deliberately NOT
+  an activation verdict — that class is what `consecutivePlaybackFailures` sees.
 - Howler 2.2.4's iOS `_cleanBuffer` crash (`undefined is not an object (evaluating '…bufferSource')`,
   from its internal `_ended` timer on a torn-down node) is patched once at load in
   `src/services/howlerGuard.ts` — keep it; upstream is unfixed.
@@ -335,6 +386,14 @@ on the target iPad twice. So a board like that reads **`audio.narrationHealthy`*
   is `ttsClient`'s **consecutive PLAYBACK failure** count (decode error, timeout, blocked `play()`), reset
   by a clip that actually plays, and exposed in the bug-report health snapshot. The pure rule is
   `src/config/narrationHealth.ts`.
+- **`isWorking` is DELIBERATELY PERMISSIVE, and that is not the same field as the readiness verdict.** It
+  is now `readiness !== 'blocked'`, because `ensureAudioReady()` SKIPS a `speak()` when it is false and
+  the games gate their welcome on it — and attempting playback is how evidence gets gathered in the first
+  place, so a stricter reading would make the app mute itself into permanent uncertainty. What changed is
+  that it can now go false on real proof, where before only a suspended probe context could lower it and
+  the speechSynthesis lie kept raising it. `narrationHealth`'s BEHAVIOUR is unchanged by design (Audio
+  activation PRD-01 §4.6) — its `unlockedOnce && !isWorking` clause exists because the naive form printed
+  Tal Quiz's numeral over its own answer tiles on every cold launch. Don't "unify" the two.
 - **A cancellation is NEUTRAL** — neither a failure nor a success. The no-queue model pre-empts constantly
   (a healthy run reports several `AbortError`s), so counting a cancel as success is exactly how a real
   failure streak would hide, and counting it as failure would degrade normal fast tapping.

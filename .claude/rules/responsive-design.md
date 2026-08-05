@@ -254,20 +254,22 @@ the configurations nobody screenshotted: measured a 106×46px overlap with "Lær
 ## A corner-inset control is a CLIPPING problem, not a spacing one
 
 `theme.shape.borderRadius` is **16** here, so an sx `borderRadius: 4` is **64px** — and a card with
-`overflow: hidden` silently *cuts* anything straying outside that arc. The audio-permission modal's ✕ (a
-32px `size="small"` button at `top/right: 8`) had its disc centre 24px in against a 64px arc, so the
-corner ate a crescent of it: it read as "too close to the edge" when it was actually being clipped.
+`overflow: hidden` silently *cuts* anything straying outside that arc. The (now-deleted)
+audio-permission modal's ✕ — a 32px `size="small"` button at `top/right: 8` — had its disc centre 24px in
+against a 64px arc, so the corner ate a crescent of it: it read as "too close to the edge" when it was
+actually being clipped. **The arithmetic below still governs every corner-inset control here**
+(LockScreen's ✕ is the live one, built to the same recipe).
 
 A round control of diameter `d` inset `i` from both edges of a corner radius `R` is fully inside iff
 `√2·(R − (i + d/2)) + d/2 ≤ R`. For R=64 and d=44 that needs `i ≥ ~13`; the shipped value is 16
 (58.8 ≤ 64, ~5px slack). Recompute when the radius or the size changes, and **don't read MUI's
 `borderRadius: N` as N pixels** — it multiplies `shape.borderRadius`.
 
-Verifying this one is awkward because the modal is unreachable headlessly (`?nogate=1` — the only way
-past the auth gate — explicitly stands it down via `shouldRenderAudioPrompt`, and minting a real session
-just for a screenshot writes into the owner's production DB). Reproduce the **px geometry** in any live
-page instead (two discs on two `overflow:hidden` cards of the same radius) and screenshot the A/B — the
-clipped crescent is unmistakable.
+Verifying an app-root overlay like this is awkward headlessly (`?nogate=1` — the only way past the auth
+gate — stands the auth surfaces AND the audio cue down, and minting a real session just for a screenshot
+writes into the owner's production DB). Reproduce the **px geometry** in any live page instead (two discs
+on two `overflow:hidden` cards of the same radius) and screenshot the A/B — the clipped crescent is
+unmistakable.
 
 ## Don'ts
 

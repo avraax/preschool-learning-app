@@ -62,7 +62,7 @@ import { useViewportHeight } from './hooks/useViewportHeight'
 
 // Simplified Audio System imports
 import { SimplifiedAudioProvider } from './contexts/SimplifiedAudioContext'
-import SimplifiedAudioPermission from './components/common/SimplifiedAudioPermission'
+import AudioBlockedCue from './components/common/AudioBlockedCue'
 import { useUpdateChecker } from './hooks/useUpdateChecker'
 import { useNativeAppFeel } from './hooks/useNativeAppFeel'
 import { sfx } from './services/sfxClient'
@@ -186,7 +186,10 @@ function App() {
 
   return (
     <SimplifiedAudioProvider>
-      <SimplifiedAudioPermission />
+      {/* Non-blocking "Tryk for lyd" chip — shown ONLY while the evidence-based verdict is `blocked`
+          (Audio activation PRD-01). It replaced a full-screen modal that appeared on every cold launch
+          and covered a board that was already talking. */}
+      <AudioBlockedCue />
       {/* Themed route transitions (Liveliness PRD-02) — provides navigateWithTransition/goBack to
           the menus + games and drives the opaque wipe overlay below. */}
       <TransitionProvider>

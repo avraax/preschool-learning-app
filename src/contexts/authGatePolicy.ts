@@ -1,8 +1,9 @@
 // Pure decision for WHICH auth phase the app is in — i.e. whether the blocking lock screen shows,
 // whether the child can play, and whether the paid endpoints may be called.
 //
-// Same directory and same shape as audioPromptPolicy.ts, which exists precisely because an iOS
-// re-arm bug was untestable inside React. The rules below encode three things that are easy to get
+// Same shape as `config/audioReadiness.ts` (and its deleted predecessor `audioPromptPolicy.ts`), which
+// exists precisely because an iOS re-arm bug was untestable inside React. The rules below encode three
+// things that are easy to get
 // wrong in an effect and impossible to get wrong here (accounts PRD §4.7 / §7.1):
 //
 //  1. `invalid` (a 401/403 from the server) ⇒ signed out IMMEDIATELY, ignoring grace. That is the

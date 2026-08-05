@@ -213,6 +213,21 @@ class SfxClient {
     return this.enabled
   }
 
+  /**
+   * Howler's WebAudio context, **re-read on every call** (Audio activation PRD-01 §4.2). Howler unlocks
+   * in the CAPTURE phase and, on iPad (48 kHz ≠ 44.1 kHz), *closes and rebuilds* `Howler.ctx` inside the
+   * first touch — so a cached reference goes stale silently, and the liveness probe must ask again each
+   * time. Exposed here rather than importing `howler` into a util, so `Howler` stays behind this
+   * service (`.claude/rules/audio-system.md`: never touch Howler directly outside it).
+   */
+  getWebAudioContext(): AudioContext | null {
+    try {
+      return (Howler.ctx as AudioContext | undefined) ?? null
+    } catch {
+      return null
+    }
+  }
+
   stopAll(): void {
     this.howls.forEach((howl) => {
       try {

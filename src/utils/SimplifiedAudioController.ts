@@ -8,7 +8,20 @@ import {
 // Composed spoken lines come from ONE place so the prebake enumerator bakes the exact same strings
 // (see src/config/gamePhrases.ts and the protocol in .claude/rules/audio-system.md).
 import { mathPromptText, colorMixTargetText } from '../config/gamePhrases'
+import { sfx } from '../services/sfxClient'
+import { userActivationSupported } from './audioLiveness'
+import { audioEverWorked } from './audioEverWorked'
 // Remote console logging removed for production
+
+/** One synchronous, honest reading of an AudioContext for the bug report — see getPermissionSnapshot. */
+const readCtx = (ctx: AudioContext | null | undefined): { state: string; currentTime: number } | null => {
+  if (!ctx) return null
+  try {
+    return { state: ctx.state as string, currentTime: Math.round(ctx.currentTime * 1000) / 1000 }
+  } catch {
+    return null
+  }
+}
 
 // Production logging - only critical errors
 const logError = (message: string, data?: any) => {
@@ -474,19 +487,61 @@ export class SimplifiedAudioController {
    * Read-only permission/readiness snapshot for bug reports. The provider instance is
    * module-private (set via setSimplifiedAudioContext) — this is the only outside window into it.
    */
+  /**
+   * The audio-activation snapshot for a bug report (Audio activation PRD-01 §4.7). The field set is
+   * chosen so ONE future report answers "was it blocked, was it muted, or was it silent?" without a
+   * second round trip to the owner:
+   *   * `readiness` + the evidence behind it (prime result, a clip that sounded, the clock),
+   *   * `userActivationSupported` SEPARATELY from `hasBeenActive`, so an unsupported environment stays
+   *     distinguishable from a genuinely untapped one (§3.1 — unsupported reads as `false`),
+   *   * app-context and `Howler.ctx` liveness as two fields, because they routinely disagree,
+   *   * `audioSessionType`, which is the "muted by the device switch" question (WebKit 237322),
+   *   * `everWorked`, which separates "never worked on this device" from "worked and then stopped".
+   *
+   * `audioContextState` is kept for continuity with older reports, and is NOT a liveness signal —
+   * WebKit 263627 has it read `running` with a frozen clock.
+   */
   getPermissionSnapshot(): {
     available: boolean
     isWorking?: boolean
     needsUserAction?: boolean
     audioContextState?: string
+    readiness?: string
+    primeResult?: string
+    playbackOkOnce?: boolean
+    playbackFailures?: number
+    hasBeenActive?: boolean
+    userActivationSupported?: boolean
+    ctxLive?: boolean
+    appCtx?: { state: string; currentTime: number } | null
+    howlerCtx?: { state: string; currentTime: number } | null
+    audioSessionType?: string | null
+    everWorked?: boolean
   } {
     if (!simplifiedAudioContextInstance) return { available: false }
     try {
+      const state = simplifiedAudioContextInstance.state
+      const evidence = state?.evidence
       return {
         available: true,
-        isWorking: simplifiedAudioContextInstance.state?.isWorking,
-        needsUserAction: simplifiedAudioContextInstance.state?.needsUserAction,
+        isWorking: state?.isWorking,
+        needsUserAction: state?.needsUserAction,
         audioContextState: simplifiedAudioContextInstance.globalAudioContext?.state,
+        readiness: state?.readiness,
+        primeResult: evidence?.primeResult,
+        playbackOkOnce: evidence?.playbackOkOnce,
+        playbackFailures: evidence?.playbackFailures,
+        hasBeenActive: evidence?.hasBeenActive,
+        userActivationSupported: userActivationSupported(),
+        // `ctxLive` is the OR'd 120ms clock probe. The two per-context readings below are what a single
+        // snapshot can honestly say — `state` plus the clock's value. `running` with `currentTime: 0` is
+        // the WebKit-263627 signature, and the two contexts routinely disagree (Howler closes and
+        // rebuilds its own inside the first touch on iPad).
+        ctxLive: evidence?.ctxLive,
+        appCtx: readCtx(simplifiedAudioContextInstance.globalAudioContext),
+        howlerCtx: readCtx(sfx.getWebAudioContext()),
+        audioSessionType: simplifiedAudioContextInstance.audioSessionType,
+        everWorked: audioEverWorked(),
       }
     } catch {
       return { available: false }

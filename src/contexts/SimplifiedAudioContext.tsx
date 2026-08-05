@@ -3,7 +3,21 @@ import { isIOS } from '../utils/deviceDetection'
 import { audioDebugSession } from '../utils/remoteConsole'
 import { setSimplifiedAudioContext } from '../utils/SimplifiedAudioController'
 import { ttsClient } from '../services/ttsClient'
-import { shouldShowAudioPrompt } from './audioPromptPolicy'
+import { sfx } from '../services/sfxClient'
+import {
+  computeAudioReadiness,
+  type AudioReadiness,
+  type AudioReadinessInput,
+} from '../config/audioReadiness'
+import {
+  probeAnyContextLive,
+  probeContextLive,
+  readHasBeenActive,
+  recoverFrozenContext,
+  requestPlaybackAudioSession,
+  userActivationSupported,
+} from '../utils/audioLiveness'
+import { noteAudioWorked } from '../utils/audioEverWorked'
 
 // Simplified iOS-optimized debugging with remote logging
 const logSimpleAudio = (message: string, data?: any) => {
@@ -16,11 +30,22 @@ const logSimpleAudio = (message: string, data?: any) => {
   })
 }
 
+/**
+ * The raw EVIDENCE, kept separately from the verdict so the verdict is derived on every render and can
+ * never go stale (Audio activation PRD-01 §1.3: the old `showPrompt` was a latch that nothing
+ * withdrew, so a tap whose unlock resolved *after* a 1500 ms timer left the modal standing over an app
+ * that was already talking).
+ */
+type AudioEvidence = AudioReadinessInput
+
 // Simplified state - just what we actually need
 interface SimplifiedAudioState {
   isWorking: boolean          // Can we play audio right now?
   needsUserAction: boolean    // Do we need user to click something?
-  showPrompt: boolean         // Should we show the permission modal?
+  /** The evidence-based verdict. `blocked` — and only `blocked` — surfaces the non-blocking cue. */
+  readiness: AudioReadiness
+  /** The inputs behind `readiness`, snapshotted into bug reports so a report answers "why". */
+  evidence: AudioEvidence
   /**
    * Consecutive PLAYBACK failures from `ttsClient` (Practice Loop PRD-01 W4). Kept in state so the two
    * listening games can react — `isWorking` alone was TRUE through the Ogg silence; see
@@ -28,9 +53,9 @@ interface SimplifiedAudioState {
    */
   playbackFailures: number
   /**
-   * Has audio unlocked at least once this session? Mirrors the `hasUnlockedRef` latch into STATE so the
-   * degraded-mode rule can tell "nobody has tapped yet" from "narration died" — before the first unlock,
-   * a false `isWorking` is the former (Practice Loop PRD-01 W4; see config/narrationHealth.ts).
+   * Has audio unlocked at least once this session? Mirrored into STATE so the degraded-mode rule can
+   * tell "nobody has tapped yet" from "narration died" — before the first unlock, a false `isWorking`
+   * is the former (Practice Loop PRD-01 W4; see config/narrationHealth.ts).
    */
   unlockedOnce: boolean
 }
@@ -39,12 +64,14 @@ export interface SimplifiedAudioContextType {
   state: SimplifiedAudioState
   initializeAudio: () => Promise<boolean>
   updateUserInteraction: () => void
-  hidePrompt: () => void
-  // Called by the audio engine when playback is blocked / the context suspends, so we re-prompt.
+  // Called by the audio engine when playback is blocked / the context suspends, so we re-arm the
+  // silent re-unlock on the next interaction. It does NOT accuse the device — see the note below.
   markNeedsUserAction: () => void
   // Expose the global audio context and speech synthesis for immediate access
   globalAudioContext: AudioContext | null
   speechSynthesis: SpeechSynthesis | null
+  /** Diagnostics only: what `audioSession.type` reads back as after the in-gesture request. */
+  audioSessionType: string | null
 }
 
 export const SimplifiedAudioContext = createContext<SimplifiedAudioContextType | undefined>(undefined)
@@ -53,13 +80,33 @@ interface SimplifiedAudioProviderProps {
   children: ReactNode
 }
 
+const EMPTY_EVIDENCE: AudioEvidence = {
+  hasBeenActive: false,
+  primeResult: 'unknown',
+  playbackFailures: 0,
+  playbackOkOnce: false,
+  ctxLive: false,
+}
+
+/** `visibilitychange → visible` fires on EVERY iPad app switch, so the re-probe is throttled. */
+const RESUME_PROBE_THROTTLE_MS = 3000
+
 export const SimplifiedAudioProvider: React.FC<SimplifiedAudioProviderProps> = ({ children }) => {
-  const [state, setState] = useState<SimplifiedAudioState>({
-    isWorking: false,
-    needsUserAction: true,
-    showPrompt: false,
-    playbackFailures: ttsClient.getHealth().consecutivePlaybackFailures,
-    unlockedOnce: false
+  const [state, setState] = useState<SimplifiedAudioState>(() => {
+    const health = ttsClient.getHealth()
+    const evidence: AudioEvidence = {
+      ...EMPTY_EVIDENCE,
+      playbackFailures: health.consecutivePlaybackFailures,
+      playbackOkOnce: health.playbackOkOnce,
+    }
+    return {
+      isWorking: false,
+      needsUserAction: true,
+      readiness: computeAudioReadiness(evidence),
+      evidence,
+      playbackFailures: health.consecutivePlaybackFailures,
+      unlockedOnce: false,
+    }
   })
 
   // Single global AudioContext - create once, reuse forever
@@ -70,24 +117,42 @@ export const SimplifiedAudioProvider: React.FC<SimplifiedAudioProviderProps> = (
   // De-dupe concurrent init attempts (a tap fires updateUserInteraction AND speak→ensureAudioReady,
   // both of which may call initializeAudio) so we never create two AudioContexts (PRD-06 §5).
   const initPromiseRef = useRef<Promise<boolean> | null>(null)
-  // Once audio has unlocked once, OR the user has explicitly closed the modal, we must NEVER auto-
-  // re-show the big blocking permission modal. On iOS the AudioContext routinely flips to
-  // suspended/interrupted right after the unlock gesture (WebKit does this when the priming
-  // utterance ends / on focus hiccups), which used to re-arm the modal 1.5s later — so neither the
-  // "Start lyd nu" button nor the ✕ could keep it closed (it bounced back). Suspension recovery is
-  // already handled silently by the document-wide interaction listeners (they re-run initializeAudio
-  // on the next tap), so the modal is a first-run primer only.
-  const hasUnlockedRef = useRef<boolean>(false)
-  const userDismissedRef = useRef<boolean>(false)
+  const audioSessionTypeRef = useRef<string | null>(null)
+  const lastResumeProbeRef = useRef<number>(0)
+  // The latest prime verdict, mirrored out of state so `updateUserInteraction` can read it
+  // synchronously. A recorded `'blocked'` must never survive a fresh gesture unexamined — see there.
+  const primeResultRef = useRef<'unknown' | 'ok' | 'blocked'>('unknown')
+
+  // Fold new evidence in and re-derive the verdict. There is deliberately NO latch anywhere in here:
+  // every field is either monotone by construction (`playbackOkOnce`, `hasBeenActive`) or a live
+  // reading, so the cue appears and disappears purely on what the evidence says.
+  const noteEvidence = useCallback((patch: Partial<AudioEvidence>) => {
+    setState((prev) => {
+      const evidence: AudioEvidence = { ...prev.evidence, ...patch }
+      const readiness = computeAudioReadiness(evidence)
+      if (
+        readiness === prev.readiness &&
+        evidence.hasBeenActive === prev.evidence.hasBeenActive &&
+        evidence.primeResult === prev.evidence.primeResult &&
+        evidence.playbackFailures === prev.evidence.playbackFailures &&
+        evidence.playbackOkOnce === prev.evidence.playbackOkOnce &&
+        evidence.ctxLive === prev.evidence.ctxLive
+      ) {
+        return prev
+      }
+      return { ...prev, evidence, readiness }
+    })
+  }, [])
 
   // Start debug session for remote logging
   useEffect(() => {
     audioDebugSession.startSession('SimplifiedAudioSystem')
-    logSimpleAudio('SimplifiedAudioProvider initialized', { 
+    logSimpleAudio('SimplifiedAudioProvider initialized', {
       isIOS: isIOS(),
+      userActivationSupported: userActivationSupported(),
       userAgent: navigator.userAgent.substring(0, 100)
     })
-    
+
     return () => {
       audioDebugSession.endSession('SimplifiedAudioSystem')
     }
@@ -103,11 +168,27 @@ export const SimplifiedAudioProvider: React.FC<SimplifiedAudioProviderProps> = (
     }
   }, [])
 
-  // Flip state back to "needs a gesture". Re-arms the prompt path; the next user interaction
-  // re-runs initializeAudio. Used on autoplay block / AudioContext suspension.
+  // Flip state back to "needs a gesture" so the next user interaction re-runs initializeAudio. Used on
+  // autoplay block / AudioContext suspension.
+  //
+  // **This must never feed the `blocked` verdict.** An interruption ENDS IN `suspended`, not `running`
+  // (WebKit's own `LayoutTests/webaudio/audiocontext-state-interrupted.html`: "running AudioContexts
+  // will not resume after an interruption ends"), so this transition is the NORMAL aftermath of every
+  // iPad app switch, Siri invocation and phone call. Accusing the device here is what made the old
+  // modal bounce back after every dismiss. It only re-arms silent re-unlock — nothing else.
   const markNeedsUserAction = useCallback(() => {
     setState(prev => (prev.needsUserAction && !prev.isWorking ? prev : { ...prev, isWorking: false, needsUserAction: true }))
   }, [])
+
+  /** Probe liveness on our context AND Howler's, re-read at probe time (Howler rebuilds its own). */
+  const probeLiveness = useCallback(async (): Promise<boolean> => {
+    const live = await probeAnyContextLive([
+      () => globalAudioContextRef.current,
+      () => sfx.getWebAudioContext(),
+    ])
+    noteEvidence({ ctxLive: live, hasBeenActive: readHasBeenActive() })
+    return live
+  }, [noteEvidence])
 
   // iOS-optimized audio initialization - immediate, direct, simple. Re-entrant calls in the same
   // tick share one in-flight promise (PRD-06 §5) so we never create two AudioContexts.
@@ -124,8 +205,11 @@ export const SimplifiedAudioProvider: React.FC<SimplifiedAudioProviderProps> = (
     lastUserInteractionRef.current = Date.now()
 
     try {
-      let audioContextWorking = false
-      let speechSynthesisWorking = false
+      // 0. FIRST statement of the synchronous block, before resume(): ask for the `playback` audio
+      // session. Since iOS 17 the default session type is `ambient`, which is SILENCED BY THE DEVICE
+      // MUTE STATE — a candidate root cause of the "sometimes audio really IS off" half of the report.
+      // Feature-detected and try/caught inside the helper; one line, no behaviour anywhere else.
+      audioSessionTypeRef.current = requestPlaybackAudioSession()
 
       // 1. Initialize AudioContext immediately (if not already done)
       if (!globalAudioContextRef.current) {
@@ -139,18 +223,23 @@ export const SimplifiedAudioProvider: React.FC<SimplifiedAudioProviderProps> = (
       }
       // [audio-unlock] diagnostic (captured in bug-report diagnostics ring).
       console.warn('[audio-unlock] initializeAudio: ctxState=', globalAudioContextRef.current?.state,
-        'speechAvail=', !!speechSynthesisRef.current)
+        'speechAvail=', !!speechSynthesisRef.current, 'audioSession=', audioSessionTypeRef.current)
 
       // 2. CRITICAL iOS ORDERING: everything that needs the user-activation (transient activation)
       // must run SYNCHRONOUSLY here, BEFORE the first `await`. iOS/WebKit consumes the activation
       // across an await, so we kick resume() (without awaiting), prime the narration <audio> element,
-      // and unlock speechSynthesis first — then await resume() only to VERIFY. Priming after the
+      // and unlock speechSynthesis first — then await only to VERIFY. Priming after the
       // await (the old order) silently failed on iOS → narration never unlocked → "no sound after
-      // tapping Start lyd nu". (PRD-06 §5 / P3; iOS reports 'interrupted' too, not just 'suspended'.)
+      // tapping the unlock button". (PRD-06 §5 / P3; iOS reports 'interrupted' too, not just 'suspended'.)
+      //
+      // WebKit is stricter than the Web Audio spec here: `shouldDocumentAllowWebAudioToAutoPlay` in
+      // `AudioContext.cpp` requires `hasTransientActivation()` — the sticky `hasHadUserInteraction()`
+      // branch is a site quirk for zoom.com. So this ordering is load-bearing, not defensive.
       let resumePromise: Promise<void> = Promise.resolve()
       if (globalAudioContextRef.current) {
         // Recover automatically: if the context later suspends OR is interrupted (iOS call/Siri/
         // backgrounding), flip back to needsUserAction so the next interaction re-unlocks silently.
+        // Deliberately NOT evidence of blocking — see markNeedsUserAction.
         globalAudioContextRef.current.onstatechange = () => {
           const ctx = globalAudioContextRef.current
           const s = ctx?.state as string | undefined
@@ -166,55 +255,87 @@ export const SimplifiedAudioProvider: React.FC<SimplifiedAudioProviderProps> = (
 
       // 2b. Prime the shared narration <audio> element inside THIS gesture (PRD-06 §5) — BEFORE any
       // await. Narration plays through ttsClient's element, so that element is the one that must
-      // become user-activated; resuming the probe context is not sufficient.
-      ttsClient.primePlaybackElement()
+      // become user-activated; resuming the probe context is not sufficient. Its RESULT is the app's
+      // one real evidence signal, so we keep the promise and await it below (after the sync block).
+      const primePromise = ttsClient.primePlaybackElement()
+      // A fresh attempt SUPERSEDES the previous verdict: while this prime is in flight there is no
+      // negative evidence, so any recorded `'blocked'` is withdrawn now rather than when the new
+      // result lands. Without this, the tap that first sets `hasBeenActive` would compose with the
+      // stale block from the pre-gesture auto-init and flash the cue for the length of the round trip.
+      primeResultRef.current = 'unknown'
+      noteEvidence({ primeResult: 'unknown' })
 
       // 2c. Unlock speechSynthesis with an "empty utterance" — also in-gesture, before any await.
+      // The call is KEPT (it costs nothing and does unlock Web Speech) but it is NO LONGER EVIDENCE:
+      // `speak()` not throwing observes nothing at all — no onstart, no onend — and OR'ing that lie
+      // into the verdict is what let a single non-throwing call latch the whole session as "working"
+      // (Audio activation PRD-01 §1.1).
       if (speechSynthesisRef.current) {
         try {
           const emptyUtterance = new SpeechSynthesisUtterance('')
           emptyUtterance.volume = 0
           emptyUtterance.rate = 10 // Very fast so it finishes quickly
           speechSynthesisRef.current.speak(emptyUtterance)
-          speechSynthesisWorking = true
         } catch (error) {
           // SpeechSynthesis initialization failed
         }
       }
 
-      // 2d. NOW it's safe to await the resume() we kicked off, and verify the context actually runs.
+      // 2d. NOW it's safe to await: the activation has already been spent on the calls above.
       await resumePromise
-      if (globalAudioContextRef.current) {
-        audioContextWorking = (globalAudioContextRef.current.state === 'running')
-        logSimpleAudio('Resumed AudioContext', { newState: globalAudioContextRef.current.state })
+      const primeResult = await primePromise
+      logSimpleAudio('Unlock verified', {
+        ctxState: globalAudioContextRef.current?.state,
+        primeResult,
+      })
+
+      const health = ttsClient.getHealth()
+      // A decode/format error is not an activation problem, so it is no evidence either way.
+      primeResultRef.current = primeResult === 'error' ? 'unknown' : primeResult
+      const evidence: AudioEvidence = {
+        hasBeenActive: readHasBeenActive(),
+        primeResult: primeResultRef.current,
+        playbackFailures: health.consecutivePlaybackFailures,
+        playbackOkOnce: health.playbackOkOnce,
+        // The clock probe AWAITS, so it must not run inside the gesture — it runs in the effect below,
+        // after this call has returned. Carry the previous reading rather than clearing it.
+        ctxLive: false,
       }
 
-      const isWorking = audioContextWorking || speechSynthesisWorking
+      // `isWorking` is what gates playback (`ensureAudioReady` SKIPS a speak when it is false) and the
+      // games' welcome. So it is deliberately PERMISSIVE — anything but a proven block — because
+      // attempting playback is how evidence gets gathered in the first place. What changed is the
+      // bottom: it can now go FALSE on real proof, where before only a suspended probe context (an
+      // object that never makes a sound) could lower it, and the speechSynthesis lie kept raising it.
+      const readinessNow = computeAudioReadiness(evidence)
+      const isWorking = readinessNow !== 'blocked'
       // [audio-unlock] diagnostic (captured in bug-report diagnostics ring).
       console.warn('[audio-unlock] after resume: ctxState=', globalAudioContextRef.current?.state,
-        'audioCtxWorking=', audioContextWorking, 'speechWorking=', speechSynthesisWorking, 'isWorking=', isWorking)
-      // Latch: audio has unlocked at least once this session → the big modal must never auto-return
-      // (a later transient iOS suspension recovers silently on the next interaction, no modal).
-      if (isWorking) hasUnlockedRef.current = true
-      // …and into state, for the W4 degraded-mode rule (the ref alone is invisible to React).
-      if (isWorking) setState((prev) => (prev.unlockedOnce ? prev : { ...prev, unlockedOnce: true }))
+        'primeResult=', primeResult, 'readiness=', readinessNow, 'isWorking=', isWorking)
 
-      // NOTE: this deliberately does NOT touch `showPrompt`. Only `hidePrompt` closes the modal, and
-      // it is only ever called from a CLICK handler — see the click-through note there. Hiding from
-      // here used to be a third, invisible dismiss path: the document-wide `touchstart` listener below
-      // calls updateUserInteraction → initializeAudio, whose async continuation resolved and unmounted
-      // the modal BETWEEN touchstart and the click that same tap produces. The browser then hit-tested
-      // the click against whatever the modal had been covering, so one tap on "Start lyd nu" also
-      // pressed the answer tile / section object behind it (owner-reported, 2026-08-03).
-      setState(prev => ({
-        ...prev,
-        isWorking,
-        needsUserAction: !isWorking,
-      }))
+      setState((prev) => {
+        const merged: AudioEvidence = {
+          ...evidence,
+          // Monotone signals never go backwards; ctxLive is owned by the probe, not by this call.
+          hasBeenActive: prev.evidence.hasBeenActive || evidence.hasBeenActive,
+          playbackOkOnce: prev.evidence.playbackOkOnce || evidence.playbackOkOnce,
+          ctxLive: prev.evidence.ctxLive,
+        }
+        return {
+          ...prev,
+          evidence: merged,
+          readiness: computeAudioReadiness(merged),
+          isWorking,
+          needsUserAction: !isWorking,
+          unlockedOnce: prev.unlockedOnce || isWorking,
+        }
+      })
 
       initializedRef.current = true
-      
-      // Audio initialization completed
+
+      // The clock probe, kicked AFTER the gesture's synchronous work: it awaits ~120ms, and an await
+      // burns the transient activation.
+      void probeLiveness()
 
       return isWorking
 
@@ -225,13 +346,11 @@ export const SimplifiedAudioProvider: React.FC<SimplifiedAudioProviderProps> = (
         errorType: error?.constructor?.name
       })
 
-      // Same rule as the success path: don't touch `showPrompt` here. This used to force it to
-      // `isIOS()`, which was wrong in both directions — on iOS it re-armed the modal past the
-      // `userDismissed` / `hasUnlockedOnce` guards in `shouldShowAudioPrompt` (the un-dismissable-modal
-      // bug those guards exist to prevent), and everywhere else it CLOSED the modal from an async
-      // continuation, which is the mid-gesture close that made a tap fall through to the page behind.
-      // Flipping these two booleans is enough: the effect below re-runs and re-shows the modal after
-      // its delay if and only if the policy still wants it.
+      // A THROW here is not proof that audio is blocked, so it must not accuse the device: flip the
+      // two re-unlock booleans and leave the verdict to the evidence. (This branch used to force
+      // `showPrompt: isIOS()`, which was wrong in both directions — on iOS it re-armed the modal past
+      // its own dismiss guards, and everywhere else it CLOSED the modal from an async continuation,
+      // which is the mid-gesture close that made a tap fall through to the page behind.)
       setState(prev => ({
         ...prev,
         isWorking: false,
@@ -248,42 +367,36 @@ export const SimplifiedAudioProvider: React.FC<SimplifiedAudioProviderProps> = (
       if (initPromiseRef.current === p) initPromiseRef.current = null
     })
     return p
-  }, [markNeedsUserAction])
+  }, [markNeedsUserAction, probeLiveness, noteEvidence])
 
   const updateUserInteraction = useCallback(() => {
     lastUserInteractionRef.current = Date.now()
 
     // If we haven't initialized yet (or a prior session suspended), a fresh gesture is our
     // chance to (re)unlock audio — covers both first-run and suspension recovery.
+    //
+    // `primeResultRef === 'blocked'` is the third trigger and it is load-bearing: a block recorded
+    // OUTSIDE a gesture (the hook's `autoInitialize` runs at mount) must be re-tested by the first real
+    // tap, or the verdict would stay `blocked` on a device where the tap would have unlocked it —
+    // the same false accusation this PRD removed, just with a different latch.
     const ctx = globalAudioContextRef.current
     const s = ctx?.state as string | undefined
     const suspended = s === 'suspended' || s === 'interrupted'
-    if (!initializedRef.current || suspended) {
+    if (!initializedRef.current || suspended || primeResultRef.current === 'blocked') {
       initializeAudio().catch(error => {
         logSimpleAudio('Auto-initialization failed on interaction', { error })
       })
     }
   }, [initializeAudio])
 
-  const hidePrompt = useCallback(() => {
-    // Explicit close (the button, the ✕, or a tap on the scrim): keep it closed for the session. The
-    // next real interaction still silently (re)unlocks audio via updateUserInteraction — we just never
-    // force the blocking modal back on the child.
-    //
-    // **This is the ONLY thing that may set `showPrompt: false`, and every caller must be a `click`
-    // handler.** A click is the LAST event a tap produces and its target is resolved before the handler
-    // runs, so unmounting the modal here cannot retarget anything. Close the modal from `touchstart`/
-    // `pointerdown` — or from an async continuation that can land in that window, which is how
-    // initializeAudio used to do it — and the tap's trailing click lands on whatever was behind it.
-    userDismissedRef.current = true
-    setState(prev => ({ ...prev, showPrompt: false }))
-    updateUserInteraction()
-  }, [updateUserInteraction])
-
-  // Track user interactions for iOS compatibility
+  // Track user interactions for iOS compatibility. This is ALSO where `hasBeenActive` is sampled: the
+  // first-gesture-anywhere unlock is the pattern every reference implementation uses (Howler's
+  // `_unlockAudio`, Tone.js, PlayCanvas, Chrome's own autoplay guidance), and the child has to tap the
+  // home menu to reach any game — so there is no job left for a primer surface to do.
   useEffect(() => {
     const handleUserInteraction = () => {
       updateUserInteraction()
+      if (readHasBeenActive()) noteEvidence({ hasBeenActive: true })
     }
 
     // Only track the most essential interaction events
@@ -297,44 +410,66 @@ export const SimplifiedAudioProvider: React.FC<SimplifiedAudioProviderProps> = (
         document.removeEventListener(event, handleUserInteraction)
       })
     }
-  }, [])
+  }, [updateUserInteraction, noteEvidence])
 
-  // Mirror `ttsClient`'s playback-failure count into state so the two audio-only games can degrade and
-  // RECOVER mid-round (Practice Loop PRD-01 W4). A subscription, not a poll: the recovery must land on
-  // the first clip that plays, not up to a second later.
+  // Mirror `ttsClient`'s playback health into state so the two audio-only games can degrade and
+  // RECOVER mid-round (Practice Loop PRD-01 W4), and so the readiness verdict sees a clip that
+  // actually sounded. A subscription, not a poll: the recovery must land on the first clip that plays,
+  // not up to a second later.
   useEffect(() => {
-    const sync = () =>
+    const sync = () => {
+      const health = ttsClient.getHealth()
       setState(prev => {
-        const next = ttsClient.getHealth().consecutivePlaybackFailures
-        return prev.playbackFailures === next ? prev : { ...prev, playbackFailures: next }
+        const evidence: AudioEvidence = {
+          ...prev.evidence,
+          playbackFailures: health.consecutivePlaybackFailures,
+          playbackOkOnce: prev.evidence.playbackOkOnce || health.playbackOkOnce,
+        }
+        const readiness = computeAudioReadiness(evidence)
+        if (
+          prev.playbackFailures === health.consecutivePlaybackFailures &&
+          prev.evidence.playbackOkOnce === evidence.playbackOkOnce &&
+          prev.readiness === readiness
+        ) {
+          return prev
+        }
+        return { ...prev, playbackFailures: health.consecutivePlaybackFailures, evidence, readiness }
       })
+    }
     sync()
     return ttsClient.onHealthChange(sync)
   }, [])
 
-  // Show the prompt when audio is needed — on ALL platforms (desktop/Android included), not just
-  // iOS (PRD §9.2). A short delay lets a natural interaction unlock audio first without any modal.
-  // Guard: only ever show it BEFORE the first successful unlock and only if the user hasn't already
-  // closed it — otherwise a transient iOS AudioContext suspend/interrupt would re-pop the modal and
-  // it would read as "can't be dismissed" (both the button and the ✕ are defeated by the re-arm).
+  // Record "audio has worked on this device" once the verdict says so (device-scoped, NOT progress —
+  // see utils/audioEverWorked.ts). It gates NOTHING; it is an adult-facing line and a report field.
   useEffect(() => {
-    const inputs = () => ({
-      needsUserAction: state.needsUserAction,
-      isWorking: state.isWorking,
-      hasUnlockedOnce: hasUnlockedRef.current,
-      userDismissed: userDismissedRef.current,
-    })
-    if (shouldShowAudioPrompt(inputs())) {
-      const timer = setTimeout(() => {
-        // Re-check the refs at fire time — audio may have unlocked (or the user dismissed) during the delay.
-        if (shouldShowAudioPrompt(inputs())) {
-          setState(prev => (prev.needsUserAction && !prev.isWorking ? { ...prev, showPrompt: true } : prev))
-        }
-      }, 1500)
+    if (state.readiness === 'live') noteAudioWorked()
+  }, [state.readiness])
 
-      return () => clearTimeout(timer)
+  // Coming back from the app switcher: re-probe the clock, and if a context claims `running` while its
+  // clock is frozen, perform WebKit 263627's documented suspend()→resume() recovery. THROTTLED — this
+  // fires on every iPad app switch (the same hazard `.claude/rules/auth.md` documents for `validate()`).
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState !== 'visible') return
+      const now = Date.now()
+      if (now - lastResumeProbeRef.current < RESUME_PROBE_THROTTLE_MS) return
+      lastResumeProbeRef.current = now
+      void (async () => {
+        const ctx = globalAudioContextRef.current
+        const live = await probeLiveness()
+        if (!live && ctx && (ctx.state as string) === 'running') {
+          logSimpleAudio('Context running with a frozen clock — recovering (WebKit 263627)', {})
+          console.warn('[audio-unlock] frozen clock while running — suspend/resume recovery')
+          await recoverFrozenContext(ctx)
+          const again = await probeContextLive(ctx)
+          noteEvidence({ ctxLive: again })
+        }
+      })()
     }
-  }, [state.needsUserAction, state.isWorking])
+    document.addEventListener('visibilitychange', onVisible)
+    return () => document.removeEventListener('visibilitychange', onVisible)
+  }, [probeLiveness, noteEvidence])
 
   // Memoized so the Provider value and the controller-registration effect below only
   // change when something meaningful changes (previously this object was recreated every
@@ -343,11 +478,11 @@ export const SimplifiedAudioProvider: React.FC<SimplifiedAudioProviderProps> = (
     state,
     initializeAudio,
     updateUserInteraction,
-    hidePrompt,
     markNeedsUserAction,
     globalAudioContext: globalAudioContextRef.current,
-    speechSynthesis: speechSynthesisRef.current
-  }), [state, initializeAudio, updateUserInteraction, hidePrompt, markNeedsUserAction])
+    speechSynthesis: speechSynthesisRef.current,
+    audioSessionType: audioSessionTypeRef.current
+  }), [state, initializeAudio, updateUserInteraction, markNeedsUserAction])
 
   // Connect this context to the SimplifiedAudioController
   useEffect(() => {
@@ -368,10 +503,10 @@ export const SimplifiedAudioProvider: React.FC<SimplifiedAudioProviderProps> = (
 // Hook to use the simplified audio context
 export const useSimplifiedAudio = (): SimplifiedAudioContextType => {
   const context = React.useContext(SimplifiedAudioContext)
-  
+
   if (context === undefined) {
     throw new Error('useSimplifiedAudio must be used within a SimplifiedAudioProvider')
   }
-  
+
   return context
 }

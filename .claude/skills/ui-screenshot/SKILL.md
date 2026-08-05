@@ -321,7 +321,7 @@ synthetic PointerEvent sequence: `pointerdown` on the draggable, a few `pointerm
 ```bash
 # reusable drag(startSel → x,y): fire on the FIRST draggable, release at absolute (ex,ey)
 node .claude/skills/ui-screenshot/cdp.mjs --url http://127.0.0.1:5173/farver/ram-farven \
-  --wait-for '#root > *' --click-text 'Start lyd nu' --settle 1200 --eval "$(cat <<'JS'
+  --wait-for '#root > *' --settle 1200 --eval "$(cat <<'JS'
 (async()=>{const sleep=ms=>new Promise(r=>setTimeout(r,ms));
  const el=document.querySelector('[aria-roledescription=\"draggable\"]'); if(!el) return 'NONE';
  const r=el.getBoundingClientRect(), sx=Math.round(r.left+r.width/2), sy=Math.round(r.top+r.height/2);
@@ -456,7 +456,8 @@ attribution measured while something else saturates the thread is worthless.
   `--type "<css>::<text>"`
 - Output: `--measure "<s1,s2>"` (rects) · `--clip "<css>"` (crop to element) · `--full-page` ·
   `--eval "<js>"`. Console errors + page exceptions are ALWAYS captured + summarised.
-- Behaviour: `--keep-audio-modal` · `--port <n>` · `--audio-report` (see above; exits 1 on `SILENT`).
+- Behaviour: `--port <n>` · `--audio-report` (see above; exits 1 on `SILENT`) · `--block-autoplay`
+  (launch with `document-user-activation-required` so the app's audio verdict can reach `blocked`).
   Exit code is non-zero if a `--wait-for`/click target never appears (so failures are loud, not
   silently green).
 - `webkit.mjs` adds `--device <ipad|ipad-portrait|iphone|iphone-landscape|wide>` · `--dark` ·
@@ -568,11 +569,11 @@ stripped, and the failure looks like a page bug. Write the JS to a **file in the
 - **Two driver runs cannot share port 9333** — they are not just slow, they collide. A long background
   sweep therefore blocks every other capture until it ends (a screenshot fired alongside one hung until
   its own timeout). Sequence them, or give the second run `--port`.
-- **The "Tænd for lyd" modal cannot be reached headlessly.** `?nogate=1` is the only way past the auth
-  gate, and `shouldRenderAudioPrompt` explicitly stands the modal down under it (an iPad user-agent
-  override does NOT help) — and minting a real session just for a screenshot writes into the owner's
-  production DB. Verify its geometry by reproducing the **px** case in any live page instead; see the
-  corner-inset section of `.claude/rules/responsive-design.md`.
+- **The audio cue cannot be reached under `?nogate=1`.** `shouldShowAudioCue` stands it down there (as
+  the old modal's policy did), and `?nogate=1` is the only way past the auth gate — an iPad user-agent
+  override does NOT help, and minting a real session just for a screenshot writes into the owner's
+  production DB. So a run that shows no cue proves nothing about the cue. To see it at all you need a
+  real session plus `--block-autoplay`; to check its px geometry, reproduce the case in any live page.
 - **Back-to-back runs occasionally die inside `getJSON`** (the previous Chrome hasn't released the port
   yet) — that's launcher contention, NOT a page bug, so don't go debugging the app. `sleep 2` between
   consecutive invocations, and re-run the one that failed. A sweep over several viewports in one shell
@@ -607,8 +608,12 @@ stripped, and the failure looks like a page bug. Write the JS to a **file in the
   throws and the *real* reload fires, navigating the page so your eval returns `undefined`. To test
   code that reloads/navigates (e.g. `lazyWithReload`'s chunk recovery), make the side effect
   **injectable** with a default (`fn = () => window.location.reload()`) and pass a spy from the eval.
-- **Audio modal ("Tænd for lyd")** is auto-dismissed (launches with autoplay allowed + clicks
-  "Start lyd nu"). Use `--keep-audio-modal` only to screenshot the modal itself.
+- **There is no audio modal any more.** The blocking "Tænd for lyd" surface is gone (Audio activation
+  PRD-01); its replacement is a small non-blocking "Tryk for lyd" chip that appears only while the
+  evidence-based verdict is `blocked`. Both drivers launch with autoplay allowed, so it never shows —
+  nothing to dismiss, and `--keep-audio-modal` no longer exists. `--block-autoplay` (cdp.mjs) is how you
+  make it show on purpose. **In `webkit.mjs` a shown cue is CORRECT** — that engine cannot play audio at
+  all — so never read it there as a regression.
 - **A layout probe's failures are meaningless without a BASELINE.** Before calling any of them a
   regression, re-run the SAME probe at HEAD and diff the two failure sets. **COMMIT YOUR OWN WORK
   FIRST** — this used to read "`git stash`/`git checkout --` the file", and `git checkout HEAD -- <file>`

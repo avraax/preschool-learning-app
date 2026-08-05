@@ -24,11 +24,12 @@
 // The rule: a surface that can be opened FROM another must sit ABOVE it, and anything that DEMANDS input
 // before the app can continue sits above everything. Add new surfaces here, never with a local literal.
 //
-// (This is ordering WITHIN the auth stack. It is not the audio-permission modal's problem: that one
-// stands down via `authUiOpen` instead of competing — see `contexts/audioPromptPolicy.ts`. Do not
-// re-litigate that with a z-index.)
+// (This is ordering WITHIN the auth stack. It is not the audio cue's problem: that one stands down via
+// `authUiOpen` instead of competing — see `config/audioReadiness.ts`. Do not re-litigate that with a
+// z-index. The cue it replaced used to be a full-screen modal at 9999; the cue itself is non-blocking
+// and deliberately sits BELOW MUI's modal tier, so it is nowhere near this stack.)
 export const AUTH_Z = {
-  /** The gate itself. Matches SimplifiedAudioPermission's 9999 — they are never up together. */
+  /** The gate itself. 9999 is the app's top blocking tier — nothing else claims it. */
   lockScreen: 9999,
   /** "Hvem spiller?" — above the gate, because it appears just INSIDE it. */
   profilePicker: 10_000,

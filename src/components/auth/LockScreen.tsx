@@ -1,8 +1,9 @@
 // The blocking sign-in / unlock overlay.
 //
-// Modelled DIRECTLY on SimplifiedAudioPermission.tsx — the app's existing app-root blocking overlay
-// and the closest structural precedent (session-scoped, must not re-arm spuriously, must dismiss
-// synchronously and never on an async result). Same recipe: fixed inset 0 / zIndex 9999, scrim,
+// Modelled on the app's former audio-permission modal (`SimplifiedAudioPermission.tsx`, deleted by
+// Audio activation PRD-01) — at the time the only app-root blocking overlay, and still the structural
+// precedent this follows (session-scoped, must not re-arm spuriously, must dismiss synchronously and
+// never on an async result). Same recipe: fixed inset 0 / zIndex 9999, scrim,
 // centred motion.div at maxWidth 400, <Paper elevation={12} p:4 borderRadius:4>, AnimatePresence with
 // a { stiffness: 300, damping: 30 } spring.
 //
