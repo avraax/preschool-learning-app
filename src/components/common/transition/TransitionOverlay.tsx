@@ -3,6 +3,7 @@ import { Box } from '@mui/material'
 import { motion, type Easing, type TargetAndTransition } from 'framer-motion'
 import { useTransitionContext } from './TransitionProvider'
 import { useAmbientSprites } from '../../../hooks/useAmbientSprites'
+import { wipeLeaf, wipeRocket, wipeSparkle } from '../../../theme/idleMotion'
 
 // The OPAQUE wipe overlay (Liveliness PRD-02 §1-4). Rendered once in App's host Box, ABOVE pages
 // (z1) and mascots (z6) but below the level-up overlay. It only exists while a wipe is in flight
@@ -12,6 +13,13 @@ import { useAmbientSprites } from '../../../hooks/useAmbientSprites'
 //
 // The PANEL is the single phase driver: its cover-complete commits the route swap; its
 // reveal-complete returns to idle. The signature motif + the mascot usher ride along decoratively.
+//
+// The MOTIF's idle loops are CSS keyframe animations, not framer `repeat: Infinity` loops (Performance
+// PRD-01 W5). They used to be three JS animation loops running DURING the wipe — i.e. during the single
+// most timing-sensitive moment in the app, while a route is mounting and lazy chunks are resolving — so
+// the decoration was competing for the main thread with the mount it exists to cover. The panel and the
+// usher stay on framer: they are one-shot, they drive the phase via `onAnimationComplete`, and their
+// geometry is per-variant.
 
 const OVERLAY_Z = 50
 
@@ -158,17 +166,15 @@ const TransitionOverlay: React.FC = () => {
         )}
         {!reducedFade && descriptor.motif === 'rocket' && sprites.length > 0 && (
           <Box
-            component={motion.div}
             aria-hidden
-            animate={{ y: [0, -10, 0], rotate: [0, -4, 4, 0] }}
-            transition={{ duration: 1.2, repeat: Infinity, ease: 'easeInOut' }}
-            sx={{
+            {...wipeRocket(reducedFade).props}
+            sx={[{
               position: 'absolute',
               inset: 0,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-            }}
+            }, wipeRocket(reducedFade).sx]}
           >
             <Box
               component="img"
@@ -189,18 +195,17 @@ const TransitionOverlay: React.FC = () => {
             {[0, 1, 2, 3].map((i) => (
               <Box
                 key={i}
-                component={motion.img}
+                component="img"
                 src={sprites[i % sprites.length]}
                 alt=""
                 draggable={false}
-                animate={{ rotate: [0, 18, -12, 0], y: [0, 8, 0] }}
-                transition={{ duration: 1.1 + i * 0.15, repeat: Infinity, ease: 'easeInOut' }}
-                sx={{
+                {...wipeLeaf(reducedFade, i).props}
+                sx={[{
                   width: 'clamp(1.8rem, 5.5vw, 2.9rem)',
                   height: 'clamp(1.8rem, 5.5vw, 2.9rem)',
                   objectFit: 'contain',
                   filter: 'drop-shadow(0 3px 5px rgba(0,0,0,0.35))',
-                }}
+                }, wipeLeaf(reducedFade, i).sx]}
               />
             ))}
           </Box>
@@ -216,15 +221,14 @@ const TransitionOverlay: React.FC = () => {
             ].map((s, i) => (
               <Box
                 key={i}
-                component={motion.img}
+                component="img"
                 src={sprites[i % sprites.length]}
                 alt=""
                 draggable={false}
                 // A baked mote is softer than the ✨ glyph it replaces (Regnbue's is a white cloud puff
                 // on a bright gradient), so it rides a little larger and never fades as far down.
-                animate={{ scale: [0.6, 1, 0.6], opacity: [0.5, 1, 0.5] }}
-                transition={{ duration: s.d, repeat: Infinity, ease: 'easeInOut' }}
-                sx={{
+                {...wipeSparkle(reducedFade, s.d).props}
+                sx={[{
                   position: 'absolute',
                   top: s.top,
                   left: s.left,
@@ -232,7 +236,7 @@ const TransitionOverlay: React.FC = () => {
                   height: 'clamp(1.9rem, 5.5vw, 3.2rem)',
                   objectFit: 'contain',
                   filter: 'drop-shadow(0 0 6px rgba(255,255,255,0.9))',
-                }}
+                }, wipeSparkle(reducedFade, s.d).sx]}
               />
             ))}
           </Box>
