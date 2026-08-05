@@ -305,6 +305,15 @@ What each rule is protecting against, because each one cost a wrong verdict:
   Liveness is a **moving clock over ~120 ms** (`probeContextLive`); the recovery for a frozen one is
   `suspend()` → `resume()` (`recoverFrozenContext`, run on `visibilitychange → visible`, throttled).
   The readiness model takes **no `state` input at all**, and a test asserts that structurally.
+  **`ctxLive` is a SAMPLED reading, not a live one** — it is refreshed by an unlock attempt and by a
+  return-to-foreground, nothing else, so a bug report can legitimately show `ctxLive: false` beside a
+  context that has since gone `running` (measured; a report from the blocked simulation shows exactly
+  that). It self-heals in the direction that matters, because `updateUserInteraction` re-runs the unlock
+  — and therefore the probe — whenever the last prime was `blocked`. The other direction (stale `live`
+  over a context that has died) is deliberately left alone: it fails toward silence rather than toward a
+  false accusation, and actual narration death is `narrationHealth`'s job, not the cue's. **Don't "fix"
+  it with a poll** — a periodic probe on a 2017 iPad is exactly the per-frame style cost that
+  `.claude/rules/animation-and-performance.md` exists to keep out.
 - **An interruption ENDS IN `suspended`, not `running`** (WebKit's own
   `LayoutTests/webaudio/audiocontext-state-interrupted.html`: "running AudioContexts will not resume
   after an interruption ends"). So `onstatechange → suspended | interrupted` is the NORMAL aftermath of
