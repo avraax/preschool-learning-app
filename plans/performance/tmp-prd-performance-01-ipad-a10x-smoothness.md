@@ -337,12 +337,17 @@ documented in `.claude/rules/scene-and-world.md`: opaque paint, `transform`/`cli
 Acceptance: navigate menu → game under `--cpu-throttle 6` and show the worst long task during the wipe
 falling; the wipe looks identical per skin (iris/wave/zoom/leaves + the flat `fade` default).
 
-### W6 — "Flydende grafik": one adult toggle, with a sunset clause
+### W6 — "Flydende grafik": one PERMANENT adult toggle
 
-The owner asked for this and the reason is sound: **you cannot type a query parameter into a standalone
-PWA**, so without a persisted switch there is no way to A/B old-vs-new on the actual device, and no way
-to back out without a redeploy. Both matter more here than usual because there is no Mac and no
-profiler on that device.
+The owner asked for this twice, and the reason is sound: **you cannot type a query parameter into a
+standalone PWA**, so without a persisted switch there is no way to A/B old-vs-new on the actual device,
+and no way to back out without a redeploy. Both matter more here than usual because there is no Mac and
+no profiler on that device.
+
+**It is permanent — owner's call, 2026-08-05, stated twice.** An earlier draft of this PRD had it
+sunsetting once the iPad confirmed the fast path; that was rejected in favour of keeping a standing
+escape hatch that can be flipped on production, on the device, without a deploy. Do not re-litigate it,
+and do not quietly delete the legacy path in a later tidy-up. §10 carries the cost this accepts.
 
 Design:
 
@@ -357,10 +362,19 @@ Design:
   pin that default, or this becomes a way to ship the slow app.
 - It changes **rendering only**. It must not touch XP, difficulty, narration, or any game logic — a
   test should assert `taskXp`/round outcomes are identical under both settings.
-- **Sunset clause: delete W6 once the owner confirms the fast path on the iPad.** Two rendering paths ×
-  4 skins × reduced-motion × phone/Split View is a verification surface this app cannot afford to keep,
-  and if the fast path is genuinely look-identical there is nothing for the legacy path to be for. Say
-  so in the commit message so the next session knows it is allowed to remove it.
+- **Because it is permanent, the dual path has to be affordable to verify.** Two rendering paths × 4
+  skins × reduced-motion × 4 viewports is the whole matrix and nobody will run it twice. So bound it by
+  construction:
+  - **The legacy branch is a switch on the animation MECHANISM, never a second layout.** `perfProfile`
+    may only choose *how* a thing animates or whether an element is promoted — never its size,
+    position, count or existence. Then the screenshot sweep is only owed on the default (fast) path,
+    because the other path cannot move a box. Guard it: no `perfProfile` read may appear inside a
+    layout-affecting `sx` key (width/height/gap/padding/position/grid) — a source guard, comments
+    stripped (W8.1's rule).
+  - Reduced motion **overrides both paths** and stays the single calmest branch, so it is one extra
+    state, not two.
+  - The Danish label is adult-facing copy in the Udseende pane; "Flydende grafik" is a suggestion, not
+    a requirement — the owner picks the wording.
 
 ### W7 — Cold launch (lowest priority)
 
@@ -452,8 +466,9 @@ shadow work because both change what the compositor has to blur.
 - **Restructuring the parallax driver** — F2 measured it at ~11%.
 - **A service worker / offline caching.** The app is deliberately network-only
   (`.claude/rules/pwa-and-device.md`); do not reach for one as a load fix.
-- **Adaptive/automatic device tiering.** The owner's answer was "identical everywhere". W6's toggle is
-  an adult-set escape hatch with a sunset clause, not a device tier.
+- **Adaptive/automatic device tiering.** The owner's answer was "identical everywhere". W6's toggle is a
+  permanent adult-set escape hatch, not a device tier — nothing detects hardware and nothing branches on
+  it by itself.
 
 ## 10. Risks
 
@@ -463,7 +478,8 @@ shadow work because both change what the compositor has to blur.
 | The conversion changes timing/amplitude by a hair and the app feels different | 25 sites, hand-converted | one shared `idleMotion.ts`, values copied not re-derived; owner play-test is the oracle |
 | Removing `will-change` de-promotes something that then repaints per frame | the point of `will-change` for non-animated elements | `layerMB` must fall while `recalcMs/s` does **not** rise — check both, per screen |
 | W3's scaled raster softens the game boards visibly | it is a real trade | A/B screenshot at 1366×992 and 375×667 before shipping; back out if visible |
-| The perf toggle doubles the verification surface | 2 paths × 4 skins × reduced-motion × 4 viewports | sunset clause (W6); default pinned fast by a guard |
+| The perf toggle doubles the verification surface, permanently | 2 paths × 4 skins × reduced-motion × 4 viewports, and it is not going away | the toggle may switch only the animation MECHANISM, never a layout — guarded — so the sweep is owed on the fast path alone (W6); default pinned fast by a guard |
+| The legacy path rots unnoticed because nobody plays it | it is off by default and only reached by an adult switch | it is mechanism-only, so "rots" means an animation stops, not a broken board; W8.4 asserts round outcomes are identical under both |
 | Making `prebakedTts` lazy leaves the first clip on live Azure | it already fails soft that way | keep the soft fallback; assert the manifest resolves before the first game welcome |
 | A parallel session is mid-refactor in this tree | it has happened repeatedly | `git status` **and** `git log` before touching anything; never report a sibling's red build as your own |
 
@@ -487,9 +503,12 @@ shadow work because both change what the compositor has to blur.
 
 1. Play-test after W9 on the child's iPad, in the PWA, on the three surfaces he named: home + a section
    menu, one game of each kind, and the wipe between them.
-2. Check Low Power Mode and open-tab count once while there (§11).
-3. If it is smooth: say so, and the next session deletes W6's toggle and the legacy path.
-4. If it still stutters with the toggle on FAST: that is the signal to open the MUI/Emotion question
+2. **Flip "Flydende grafik" off and on while standing there** and compare. That is what W6 is for, and it
+   is the only A/B this project can run on the real device — the toggle survives a PWA relaunch where a
+   `?param` cannot be typed at all. It is also the revert: if a build ever regresses, off is a working
+   app without waiting for a deploy.
+3. Check Low Power Mode and open-tab count once while there (§11).
+4. If it still stutters with the toggle ON (fast): that is the signal to open the MUI/Emotion question
    (§9), and the measurement to bring back is *which* of the three surfaces still does it.
 
 ---
