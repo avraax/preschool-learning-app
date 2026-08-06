@@ -1,0 +1,272 @@
+// The privacy policy and the support page, as DATA.
+//
+// App Store PRD §3.5 (Phase A2) and listing §3.1. App Store Connect demands a **Privacy Policy URL**
+// and a **Support URL**, both fetched without an account, and Guideline 5.1.1(i) additionally requires
+// the policy to be reachable *inside* the app "in an easily accessible manner". Guideline 1.3 forbids
+// links out of a Kids app except behind a parental gate — so the text is RENDERED IN-APP rather than
+// linked out, and the same route doubles as the public URL.
+//
+// WHY THIS IS CONFIG AND NOT JSX: §3.5 names four processors that the policy MUST disclose, and
+// 5.1.1(i) requires an explicit equal-protection confirmation. A prose page cannot be guarded — a
+// well-meaning edit that drops "Neon" is invisible. `legalContent.test.ts` imports this module and
+// asserts every processor and every required clause is present, which is only possible because the
+// content is a data structure a plain-Node test can read. Same rule as every other guarded list here
+// (`.claude/rules/game-development.md`: if a test needs to read a list, it belongs in `src/config/`).
+//
+// PURE + Node-importable: no React, no DOM, explicit `.ts` on relative imports (there are none).
+//
+// This is a factual description of what the app does, written from the code. It is NOT legal advice,
+// and the owner is the data controller who has to stand behind it — see `docs/app-store/phase-a.md`.
+
+/** The four third parties that receive data, per PRD §3.5. Guarded — do not shorten this list. */
+export const PROCESSORS = [
+  {
+    id: 'azure',
+    name: 'Microsoft Azure AI Speech',
+    /** What it receives, in Danish, plainly. */
+    da: 'Den tekst, appen skal læse højt, hvis den ikke allerede ligger færdigindtalt i appen. Der sendes ingen lyd fra barnet hertil.',
+    en: 'The text the app is about to read aloud, in the rare case it is not already pre-recorded inside the app. No audio from the child is sent here.',
+  },
+  {
+    id: 'google-stt',
+    name: 'Google Cloud Speech-to-Text',
+    da: 'Barnets stemmeoptagelse fra spillet "Sig et Ord" — men KUN hvis en voksen har slået mikrofonen til. Optagelsen bruges til at genkende ordet og gemmes ikke.',
+    en: "The child's voice recording from the game \"Sig et Ord\" — but ONLY if an adult has switched the microphone on. The recording is used to recognise the word and is not stored.",
+  },
+  {
+    id: 'neon',
+    name: 'Neon (Postgres-database i EU)',
+    da: 'Kun hvis du opretter en konto: din e-mailadresse, børneprofilernes navne og valgte figurer, og barnets fremgang.',
+    en: 'Only if you create an account: your email address, the child profiles’ names and chosen characters, and the child’s progress.',
+  },
+  {
+    id: 'vercel',
+    name: 'Vercel (hosting, EU-region)',
+    da: 'Leverer appen og dens serverfunktioner. Behandler de tekniske forespørgsler, appen sender.',
+    en: 'Serves the app and its server functions. Handles the technical requests the app makes.',
+  },
+] as const
+
+/**
+ * The equal-protection confirmation 5.1.1(i) requires verbatim in substance: every third party the data
+ * is shared with "will provide the same or equal protection of user data as stated in the app's privacy
+ * policy and required by these Guidelines". Kept as its own constant so the guard can pin it.
+ */
+export const EQUAL_PROTECTION_DA =
+  'Alle fire tjenester ovenfor er databehandlere for Børnelæring. De må kun behandle data efter instruks, ' +
+  'og de giver den samme eller tilsvarende beskyttelse af data som denne politik beskriver. Ingen af dem ' +
+  'må bruge data til deres egne formål, til reklame eller til at træne modeller.'
+
+export const EQUAL_PROTECTION_EN =
+  'All four services above are data processors for Børnelæring. They may process data only on instruction, ' +
+  'and they provide the same or equal protection of user data as this policy describes. None of them may ' +
+  'use the data for their own purposes, for advertising, or to train models.'
+
+/** The owner is the controller. Personal address, never the work one (owner's standing instruction). */
+export const CONTROLLER = {
+  name: 'Allan Brink Vraa',
+  email: 'allanvraa@gmail.com',
+} as const
+
+export interface LegalSection {
+  heading: string
+  /** Plain paragraphs. */
+  body?: string[]
+  /** Bulleted points. */
+  bullets?: string[]
+}
+
+/** Last substantive revision, shown on the page. Bump when the CONTENT changes, not on a typo fix. */
+export const PRIVACY_UPDATED_DA = '6. august 2026'
+export const PRIVACY_UPDATED_EN = '6 August 2026'
+
+export const PRIVACY_DA: { title: string; intro: string[]; sections: LegalSection[] } = {
+  title: 'Privatlivspolitik',
+  intro: [
+    `Børnelæring er en dansk læringsapp til børn. Den er skrevet af en far til hans egen søn, den er gratis, og den tjener ingen penge på data. Der er ingen reklamer, ingen sporing og ingen analyseværktøjer i appen.`,
+    `Denne politik beskriver præcis hvilke data appen behandler, hvornår de forlader enheden, hvem der modtager dem, og hvordan du får dem slettet igen. Dataansvarlig er ${CONTROLLER.name}, ${CONTROLLER.email}.`,
+    `Senest opdateret ${PRIVACY_UPDATED_DA}.`,
+  ],
+  sections: [
+    {
+      heading: 'Du behøver ikke en konto',
+      body: [
+        'Appen kan spilles uden at oprette noget som helst. Spiller du uden konto, bliver alt — fremgang, belønninger, sværhedsgrad og indstillinger — kun gemt på selve enheden. Der sendes ingen personoplysninger nogen steder.',
+        'En konto er frivillig, og den giver to ting: flere børneprofiler, og at fremgangen følger med til en anden enhed.',
+      ],
+    },
+    {
+      heading: 'Hvad appen gemmer på enheden',
+      bullets: [
+        'Barnets fremgang: erfaringspoint, niveau, indsamlede klistermærker og personlige rekorder.',
+        'Indstillinger: lyd, musik, stemme, tempo, tema og sværhedsgrad.',
+        'Hvilke opgaver barnet har svaret forkert på, så de kan komme igen kort efter. Dette forlader aldrig enheden.',
+        'Om mikrofonen er slået til, og om lyd har virket på enheden.',
+        'Hvis du er logget ind: en sessionsnøgle, så du ikke skal logge ind hver gang.',
+      ],
+    },
+    {
+      heading: 'Hvad der sendes ud af enheden, og hvornår',
+      body: [
+        'Appen er lavet så næsten ingenting behøver sendes nogen steder. Al tale er indtalt på forhånd og ligger færdig i appen, så spillene kan læses højt uden internet.',
+      ],
+      bullets: [
+        'Uden konto og med mikrofonen slået fra: intet. Appen spiller helt lokalt.',
+        'Med konto: din e-mailadresse og dit navn fra Google-login, børneprofilernes navne og figurer, og barnets fremgang. Det gemmes for at kunne synkronisere mellem enheder.',
+        'Med mikrofonen slået til: barnets stemmeoptagelse fra "Sig et Ord", når barnet holder mikrofonknappen nede. Optagelsen sendes til genkendelse og gemmes ikke.',
+        'Hvis du selv sender en fejlrapport fra "Til de voksne": et skærmbillede og teknisk information om enheden. Det sker kun, når du trykker på det.',
+        'Hvis appen går ned: en teknisk fejlbeskrivelse uden skærmbillede, så fejlen kan rettes.',
+      ],
+    },
+    {
+      heading: 'Mikrofonen er slået fra som standard',
+      body: [
+        'Spillet "Sig et Ord" bruger mikrofonen. Det er slået FRA, når appen installeres, og barnet kan ikke selv slå det til.',
+        'En voksen skal ind i "Til de voksne" bag talkoden, læse hvad der sker, og aktivt sige ja. Der står tydeligt, at barnets stemme sendes til Google Cloud Speech-to-Text for at blive genkendt, at optagelsen ikke gemmes, og at det kan slås fra igen.',
+        'Du trækker samtykket tilbage ved at slå mikrofonen fra igen på samme sted. Så sendes der ikke længere lyd nogen steder, og spillet er ikke længere tilgængeligt for barnet.',
+      ],
+    },
+    {
+      heading: 'Hvem modtager data',
+      body: [EQUAL_PROTECTION_DA],
+      bullets: PROCESSORS.map((p) => `${p.name}: ${p.da}`),
+    },
+    {
+      heading: 'Hvad appen IKKE gør',
+      bullets: [
+        'Ingen reklamer og ingen reklame-id.',
+        'Ingen sporing på tværs af apps eller websider, og ingen deling med databroggere.',
+        'Ingen analyseværktøjer og ingen tredjeparts-SDK til statistik.',
+        'Ingen chat, ingen beskeder og intet barnet skriver, der deles med andre.',
+        'Appen spørger ikke om fødselsdato, adresse, telefonnummer eller placering, og bruger ikke kamera eller kontakter.',
+        'Data sælges ikke og bruges ikke til at træne modeller.',
+      ],
+    },
+    {
+      heading: 'Hvor længe data gemmes, og hvordan du får dem slettet',
+      bullets: [
+        'Data på enheden bliver der, indtil du sletter dem. "Til de voksne" → Barn → "Nulstil fremgang" sletter et barns fremgang på enheden.',
+        'Har du en konto, sletter "Til de voksne" → Konto → "Slet kontoen helt" kontoen, børneprofilerne og fremgangen på serveren. Det kan ikke fortrydes.',
+        'Stemmeoptagelser gemmes ikke — de bruges til at genkende ordet og forsvinder derefter.',
+        'Fejlrapporter, du selv har sendt, gemmes indtil fejlen er undersøgt. Skriv til ' + CONTROLLER.email + ', hvis du vil have en slettet før det.',
+      ],
+    },
+    {
+      heading: 'Dine rettigheder',
+      body: [
+        `Du kan bede om indsigt i, rettelse af eller sletning af de data, appen har om dig og dit barn, og du kan trække et samtykke tilbage. Skriv til ${CONTROLLER.email}. Du kan også klage til Datatilsynet.`,
+      ],
+    },
+    {
+      heading: 'Ændringer',
+      body: [
+        'Hvis politikken ændres væsentligt, ændres datoen øverst, og den nye version følger med en opdatering af appen.',
+      ],
+    },
+  ],
+}
+
+export const PRIVACY_EN: { title: string; intro: string[]; sections: LegalSection[] } = {
+  title: 'Privacy policy (English)',
+  intro: [
+    'Børnelæring is a Danish learning app for children, written by a father for his own son. It is free, it carries no advertising, no tracking and no analytics, and it makes no money from data.',
+    `This policy describes exactly what the app processes, when anything leaves the device, who receives it, and how to have it deleted. The data controller is ${CONTROLLER.name}, ${CONTROLLER.email}.`,
+    `Last updated ${PRIVACY_UPDATED_EN}.`,
+  ],
+  sections: [
+    {
+      heading: 'No account is required',
+      body: [
+        'The app can be played without creating anything. Without an account, everything — progress, rewards, difficulty and settings — is stored on the device only, and no personal data is sent anywhere.',
+        'An account is optional and buys two things: multiple child profiles, and progress that follows the child to another device.',
+      ],
+    },
+    {
+      heading: 'What leaves the device, and when',
+      bullets: [
+        'Without an account and with the microphone off: nothing. The app plays entirely locally.',
+        "With an account: the adult's email address and name from Google sign-in, child profile names and chosen characters, and the child's progress.",
+        "With the microphone switched on: the child's voice recording from \"Sig et Ord\", while the child holds the microphone button. It is sent for recognition and is not stored.",
+        'If you send a problem report yourself: a screenshot and technical device information. Only when you tap it.',
+        'If the app crashes: a technical error description with no screenshot.',
+      ],
+    },
+    {
+      heading: 'The microphone is off by default',
+      body: [
+        'The game "Sig et Ord" uses the microphone. It is OFF on installation and a child cannot switch it on.',
+        "An adult must open the grown-ups area behind the passcode, read what happens, and actively consent. The screen states plainly that the child's voice is sent to Google Cloud Speech-to-Text for recognition, that the recording is not stored, and that it can be switched off again.",
+        'Consent is withdrawn by switching the microphone off in the same place.',
+      ],
+    },
+    {
+      heading: 'Who receives data',
+      body: [EQUAL_PROTECTION_EN],
+      bullets: PROCESSORS.map((p) => `${p.name}: ${p.en}`),
+    },
+    {
+      heading: 'What the app does not do',
+      bullets: [
+        'No advertising and no advertising identifier.',
+        'No tracking across apps or websites, and no sharing with data brokers.',
+        'No analytics and no third-party statistics SDK.',
+        'No chat, no messaging, and nothing the child writes is shared with anyone.',
+        'The app never asks for date of birth, address, phone number or location, and uses neither camera nor contacts.',
+        'Data is never sold and is never used to train models.',
+      ],
+    },
+    {
+      heading: 'Retention and deletion',
+      bullets: [
+        'Device data stays until you delete it. Grown-ups area → Barn → "Nulstil fremgang" clears a child’s progress on the device.',
+        'With an account, Grown-ups area → Konto → "Slet kontoen helt" deletes the account, the child profiles and the progress on the server. This cannot be undone.',
+        'Voice recordings are not retained — they are used to recognise the word and then discarded.',
+        `To have a problem report deleted sooner, write to ${CONTROLLER.email}.`,
+      ],
+    },
+    {
+      heading: 'Your rights',
+      body: [
+        `You may request access to, correction of or deletion of the data the app holds, and you may withdraw consent, by writing to ${CONTROLLER.email}. You may also complain to the Danish Data Protection Agency (Datatilsynet).`,
+      ],
+    },
+  ],
+}
+
+export const SUPPORT_UPDATED_DA = PRIVACY_UPDATED_DA
+
+export const SUPPORT_DA: { title: string; intro: string[]; sections: LegalSection[] } = {
+  title: 'Support',
+  intro: [
+    'Børnelæring er lavet af én person, og du får svar fra ham. Skriv til ' +
+      CONTROLLER.email +
+      ' — helst på dansk eller engelsk.',
+    'Hvis noget er gået i stykker i appen, hjælper det meget at sende en fejlrapport først: "Til de voksne" → "Rapportér et problem". Så følger et skærmbillede og teknisk information med, og du får en kort kode. Skriv koden i din mail.',
+  ],
+  sections: [
+    {
+      heading: 'De fem ting folk oftest spørger om',
+      bullets: [
+        'Der er ingen lyd: tryk et sted på skærmen først — lyden tændes ved den første berøring. Tjek derefter, at enhedens lydknap ikke er slået fra. Under "Til de voksne" → Lyd står der, om lyd nogensinde har virket på enheden.',
+        'Spillene er for svære eller for lette: "Til de voksne" → Læring. Du kan sætte Let, Normal eller Svær for hele appen eller for én sektion ad gangen. Et sværere niveau koster aldrig belønninger.',
+        'Hvor er mikrofonspillet? "Sig et Ord" er slået fra som standard. Slå det til under "Til de voksne" → Privatliv. Det kræver internet.',
+        'Kan flere børn spille? Ja, men flere børneprofiler kræver en konto. Log ind under "Til de voksne" → Konto.',
+        'Fremgangen forsvandt: hvis appen spilles uden konto, ligger fremgangen kun på den enhed. Log ind på begge enheder, hvis den skal følge med.',
+      ],
+    },
+    {
+      heading: 'Sådan sletter du alt',
+      bullets: [
+        'Et barns fremgang på denne enhed: "Til de voksne" → Barn → "Nulstil fremgang".',
+        'Hele kontoen og alt på serveren: "Til de voksne" → Konto → "Slet kontoen helt".',
+        'Se privatlivspolitikken for hvad der gemmes hvor.',
+      ],
+    },
+    {
+      heading: 'Om appen',
+      body: [
+        'Appen er dansk, gratis, uden reklamer, uden køb inde i appen og uden sporing. Den er skrevet til en 5-årig dreng af hans far og er tænkt til børn på 5-8 år.',
+      ],
+    },
+  ],
+}

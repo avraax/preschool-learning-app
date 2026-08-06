@@ -669,7 +669,6 @@ export const familyPlugin = (): BetterAuthPlugin => ({
         })
 
         let idToken: string | undefined
-        let accessToken: string | undefined
         try {
           const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
             method: 'POST',
@@ -685,7 +684,6 @@ export const familyPlugin = (): BetterAuthPlugin => ({
           })
           const body = (await tokenRes.json()) as {
             id_token?: string
-            access_token?: string
             error?: string
           }
           if (!tokenRes.ok || !body.id_token) {
@@ -698,8 +696,9 @@ export const familyPlugin = (): BetterAuthPlugin => ({
             })
             return htmlResponse(failureHtml('Login mislykkedes. Prøv igen i appen.', code), 400)
           }
+          // The access token Google also returns here is DELIBERATELY DROPPED — see
+          // `signInWithIdToken` below. Not read, not stored, not forwarded.
           idToken = body.id_token
-          accessToken = body.access_token
         } catch (e) {
           console.error('[auth] google token exchange threw', e)
           const code = await reportOauthFailure('token-exchange-threw', {
@@ -710,7 +709,7 @@ export const familyPlugin = (): BetterAuthPlugin => ({
 
         let sessionToken: string | null
         try {
-          sessionToken = await signInWithIdToken(idToken, accessToken)
+          sessionToken = await signInWithIdToken(idToken)
         } catch (e) {
           // The allowlist hook (§4.8) throws FORBIDDEN here for a non-permitted address — the single
           // most important refusal in the whole design, since nothing else stops a stranger from
@@ -811,11 +810,27 @@ export const familyPlugin = (): BetterAuthPlugin => ({
  * Complete sign-in from a verified Google ID token, in-process. Returns the bearer session token the
  * `bearer` plugin puts in the `set-auth-token` RESPONSE HEADER — with bearer transport a redirect has
  * no body the SPA could read, which is why the handoff artefact is structurally required (§4.4).
+ *
+ * **NO GOOGLE TOKEN IS PERSISTED SERVER-SIDE, and the omission below is the mechanism** (App Store PRD
+ * §3.2 / A7). Guideline 5.1.1(v): "An app may not store credentials or tokens to social networks off of
+ * the device and may only use such credentials or tokens to directly connect to the social network from
+ * the app itself while the app is in use." Whether Apple reads "social networks" as covering
+ * Google-as-identity-provider is UNKNOWN (PRD §6 #18) — so the safe design, which costs nothing:
+ *
+ *   * **Refresh token: never issued.** The authorization URL above sets `access_type=online`, and Google
+ *     only returns a refresh token for `access_type=offline`. There is nothing to store.
+ *   * **Access token: deliberately not forwarded.** better-auth's `signInSocial` accepts
+ *     `idToken.accessToken` and writes it straight to `account.accessToken`
+ *     (`api/routes/sign-in.mjs` → `handleOAuthUserInfo`), i.e. off-device at rest in Neon. Nothing in
+ *     this repo ever reads it: Google's own `getUserInfo` decodes the ID TOKEN and ignores the access
+ *     token entirely (`@better-auth/core/src/social-providers/google.ts`), and every API call we make
+ *     carries our own session token or the 15-minute access JWT. So passing it bought nothing and stored
+ *     a live Google credential.
+ *
+ * Guarded by `lib/googleTokens.test.ts`. If a future feature genuinely needs a Google API call, do it
+ * from the client while the app is in use — do not re-add server-side storage.
  */
-async function signInWithIdToken(
-  idToken: string,
-  accessToken: string | undefined,
-): Promise<string | null> {
+async function signInWithIdToken(idToken: string): Promise<string | null> {
   // A DYNAMIC import breaks what would otherwise be a static cycle (lib/auth.ts imports this module
   // to register the plugin). By the time this runs, lib/auth.ts is fully evaluated.
   //
@@ -829,8 +844,10 @@ async function signInWithIdToken(
   const { auth } = await import('./auth.js')
   const res = await auth.api.signInSocial({
     body: {
+      // `idToken` ONLY. Adding `accessToken` here is what would persist a Google credential in Neon —
+      // see the header. There is no `refreshToken` to add.
       provider: 'google',
-      idToken: { token: idToken, ...(accessToken ? { accessToken } : {}) },
+      idToken: { token: idToken },
     },
     asResponse: true,
   })

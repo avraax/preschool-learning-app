@@ -33,6 +33,7 @@ import { useAuthContext } from '../../../contexts/AuthContext'
 import { useSyncStatus } from '../../../hooks/useSyncStatus'
 import { authStore } from '../../../services/authStore'
 import { progressSync } from '../../../services/progressSync'
+import { startGoogleSignIn } from '../../../services/authSignIn'
 import { profileStore } from '../../../services/profileStore'
 import {
   fetchPasskeyRegisterOptions,
@@ -89,6 +90,8 @@ export interface KontoPaneProps {
 const KontoPane: React.FC<KontoPaneProps> = ({ closeAll }) => {
   const auth = useAuthContext()
   const status = useSyncStatus()
+  /** No account at all (A1) — this pane has a different job entirely. See the branch below. */
+  const guest = auth?.phase === 'guest'
 
   const [passkeys, setPasskeys] = useState<PasskeyRow[]>([])
   const [deviceName, setDeviceName] = useState('')
@@ -239,6 +242,54 @@ const KontoPane: React.FC<KontoPaneProps> = ({ closeAll }) => {
         : status.dirty
           ? 'Der er noget der ikke er gemt endnu.'
           : 'Alt er gemt.'
+
+  // GUEST (App Store PRD §3.2 / A1): everything below assumes an account — an email to show, a sync
+  // status, credentials to manage, a session to end, an account to delete. None of it exists here, and
+  // rendering it would show "Ukendt konto", an empty sync panel and four destructive buttons that all
+  // fail. So this pane becomes the ONE thing a guest actually wants from it: the way in.
+  //
+  // This is also the answer to "what does an account buy me?", and it deliberately names both halves —
+  // 5.1.1(v) wants an account offered for account-shaped features, not demanded for play.
+  if (guest) {
+    return (
+      <Stack spacing={2.5}>
+        <PaneSection title="Konto">
+          <Typography sx={{ fontWeight: 600, fontSize: '0.95rem', mb: 0.5 }}>
+            I spiller uden konto
+          </Typography>
+          <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.6 }}>
+            Al fremgang gemmes kun på denne enhed. Det virker fint — men den følger ikke med til en
+            anden iPad, og der kan kun være ét barn.
+          </Typography>
+        </PaneSection>
+
+        <PaneSection title="Hvad giver en konto?">
+          <Box component="ul" sx={{ pl: 3, m: 0 }}>
+            <Box component="li" sx={{ fontSize: '0.92rem', mb: 0.5 }}>
+              Fremgangen synkroniseres mellem jeres enheder.
+            </Box>
+            <Box component="li" sx={{ fontSize: '0.92rem', mb: 0.5 }}>
+              Flere børneprofiler, hver med sin egen bog.
+            </Box>
+            <Box component="li" sx={{ fontSize: '0.92rem' }}>
+              Mikrofonspillet "Sig et Ord" kan slås til.
+            </Box>
+          </Box>
+          <Button
+            variant="contained"
+            onClick={() => void startGoogleSignIn()}
+            aria-label="Log ind med Google"
+            sx={{ mt: 2, minHeight: 44 }}
+          >
+            Log ind med Google
+          </Button>
+          <Typography variant="caption" sx={{ display: 'block', color: 'text.secondary', mt: 1 }}>
+            Fremgangen fra denne enhed flyttes ikke over automatisk.
+          </Typography>
+        </PaneSection>
+      </Stack>
+    )
+  }
 
   return (
     <>

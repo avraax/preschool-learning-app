@@ -51,6 +51,27 @@ offline"** — only an already-resident app resuming survives.
   `commitHash` before treating a result as a verdict on the fix. (It is also a separate storage jar from
   Safari — the session does not carry over; see `.claude/rules/auth.md`.)
 
+## TWO delivery targets, two opposite rules (App Store PRD §3.1)
+
+The rule above — never design a feature around "works offline" — governs the **Vercel deployment**, which
+is unchanged. It is **deliberately inverted for the native iOS shell**, where the whole web build plus
+`public/sounds` ships inside the binary, so the games genuinely work with no network. That is the
+strongest available Guideline 4.2 argument ("beyond a repackaged website") and simply better for a child
+on an iPad. Don't reconcile the two; they are different targets.
+
+- **`src/config/runtimeTarget.ts` is the one place that question is answered**, from the page protocol
+  (`capacitor:` / `ionic:`) — no Capacitor dependency, because the origin already says. `http://localhost`
+  is NOT the shell: that is the dev server, and claiming it disables these guards where they're developed.
+- Three behaviours are shell-gated and each was harmful, not merely useless, left alone: `lazyWithReload`
+  (a reload re-fetches bundled bytes that just failed → loop or masked error), the update banner +
+  `/api/version` (a binary's version comes from App Store review, so it shows a permanent false "ny
+  version"), and `swCleanup` (nothing to sweep). Pinned by `src/config/runtimeTarget.test.ts`.
+- **Never add an OTA / live-update service** (Capawesome Live Updates, Appflow, or similar). Guideline
+  2.5.2 forbids downloading "code which introduces or changes features or functionality of the app".
+  Every change ships as a new build through review.
+- **No service worker in either target.** `vite-plugin-pwa` sits unused in `dependencies`; a SW inside a
+  Capacitor webview is a class of bug nobody wants to debug on a remote CI machine. Guarded.
+
 ## Delivery / caching (`vercel.json`)
 
 PRD-07. **`rewrites` and `headers` obey OPPOSITE rules, and the rewrite one is load-bearing.**

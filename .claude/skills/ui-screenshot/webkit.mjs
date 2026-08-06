@@ -22,7 +22,8 @@
 // Device / viewport:
 //   --device <name>       ipad-pro | ipad-pro-portrait | ipad-pro-split  <- THE TARGET DEVICE, the
 //                         child's iPad Pro 12.9" 2nd gen on iPadOS 17.7.11 (default: ipad-pro)
-//                         ipad | ipad-portrait | iphone | iphone-landscape | wide
+//                         ipad | ipad-portrait | iphone | iphone-landscape
+//                         iphone-69 | iphone-69-landscape (the App Store slot) | wide
 //                         iPad/iPhone presets set an iOS UA + touch + meta-viewport handling.
 //                         Sizes mirror src/config/referenceViewports.ts.
 //   --w <px> --h <px>     Override the preset's viewport.
@@ -83,8 +84,20 @@ const DEVICES = {
   'ipad-pro-split': { w: 678, h: 992, dsf: 2, ua: IOS_17, touch: true, mobile: true },
   ipad: { w: 1024, h: 768, dsf: 2, ua: IOS_17, touch: true, mobile: true },
   'ipad-portrait': { w: 768, h: 1024, dsf: 2, ua: IOS_17, touch: true, mobile: true },
+  // 6.1" geometry (iPhone 14/15/16 class). Fine for a layout check, and WRONG for an App Store
+  // screenshot — see the 6.9" pair below.
   iphone: { w: 390, h: 844, dsf: 3, ua: IPHONE_17, touch: true, mobile: true },
   'iphone-landscape': { w: 844, h: 390, dsf: 3, ua: IPHONE_17, touch: true, mobile: true },
+  // 6.9" — THE MANDATORY APP STORE SLOT. "Required if app runs on iPhone", and the owner chose a
+  // universal app, so this set has to exist. 956x440 at dpr 3 is exactly 2868x1320, which is the
+  // accepted landscape pixel size; portrait is 440x956 → 1320x2868. Added as presets because the
+  // `--w`/`--h` override was easy to forget and a wrong-sized upload is rejected by App Store Connect.
+  //
+  // RUNG 2 IS THE CEILING HERE, PERMANENTLY. These are genuine renders of the real app in real WebKit,
+  // so they legitimately represent it — but the owner has no iPhone, so real touch feel and true
+  // iPhone WebKit behaviour stay UNKNOWN. Never report a green run here as an iPhone verdict.
+  'iphone-69': { w: 440, h: 956, dsf: 3, ua: IPHONE_17, touch: true, mobile: true },
+  'iphone-69-landscape': { w: 956, h: 440, dsf: 3, ua: IPHONE_17, touch: true, mobile: true },
   wide: { w: 1254, h: 872, dsf: 1, ua: undefined, touch: false, mobile: false },
 }
 // Default to an iPad Pro, not the generic 1024x768 — that size is no current iPad Pro at all.

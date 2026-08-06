@@ -1,4 +1,5 @@
 import { lazy, type ComponentType, type LazyExoticComponent } from 'react'
+import { isNativeShell } from '../config/runtimeTarget.ts'
 
 // Stale-chunk recovery for lazy() routes (PRD-08 §P1).
 //
@@ -64,6 +65,13 @@ export function importWithReload<T>(
       return mod
     })
     .catch((err) => {
+      // NEVER RELOAD INSIDE A NATIVE SHELL (App Store PRD §3.10 / A4). The whole premise of this
+      // recovery is that a reload fetches a NEWER index.html from Vercel — but in a bundled shell the
+      // chunks ship inside the binary, cannot be stale, and a reload fetches the identical bytes that
+      // just failed. So the recovery could only ever loop or mask a real error: pure harm. Fall through
+      // to the rethrow, i.e. let AppErrorBoundary show "Ups!" as it would for any other failure. Native
+      // updates come from the App Store.
+      if (isChunkLoadError(err) && isNativeShell()) throw err
       if (isChunkLoadError(err) && typeof window !== 'undefined' && !readFlag()) {
         writeFlag(true)
         doReload()

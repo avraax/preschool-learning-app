@@ -22,6 +22,13 @@ import {
   type ServerVerdict,
 } from '../contexts/authGatePolicy.ts'
 import { devNoAuth } from '../utils/devHarness.ts'
+import {
+  enterGuestMode,
+  exitGuestMode,
+  guestModeActive,
+  noteSignedIn,
+  shouldAutoGuest,
+} from '../utils/guestMode.ts'
 import { dropLocalVerifier, dropStaleVerifier } from './pinVerifier.ts'
 import { forgetSecret, registerSecret } from './redact.ts'
 import type { PasskeyRequestOptions } from './authSignIn.ts'
@@ -172,7 +179,33 @@ class AuthStore {
   private lastPersistAt = 0
 
   constructor() {
+    // AUTO-GUEST, decided here and NOT in `boot()` (A1). `boot()` runs from an effect, i.e. after the
+    // first paint, so deciding there would flash the lock screen for one frame on the single launch
+    // where that matters most: a brand-new install, which is exactly what an App Review reviewer sees.
+    // The constructor runs at module import, before React — the same synchronous-hydration discipline
+    // as the stored session itself.
+    if (shouldAutoGuest() && !readStored()) enterGuestMode()
     this.snapshot = this.computeSnapshot()
+  }
+
+  /**
+   * "Spil uden konto" on the lock screen. Only offered from `signedOut`, i.e. with no stored token —
+   * `locked` and `offlineExpired` still HOLD a session, and letting guest win there would trade an
+   * adult's real account (and the child's synced book) for a fresh empty one.
+   */
+  playAsGuest(): void {
+    if (this.token) return
+    enterGuestMode()
+    this.verdict = 'unknown'
+    this.error = null
+    this.busy = null
+    this.publish()
+  }
+
+  /** The adult signed in from guest, or wants the lock screen back. Leaves progress on disk. */
+  leaveGuestMode(): void {
+    exitGuestMode()
+    this.publish()
   }
 
   // ----- boot / hydration ------------------------------------------------------------------------
@@ -264,6 +297,12 @@ class AuthStore {
   /** Adopt a freshly obtained session token (Google claim, passkey unlock). */
   adoptSession(token: string, user: AccountUser | null): void {
     if (this.token && this.token !== token) forgetSecret(this.token)
+    // A real session takes over from guest play, and the device records that an account has BEEN here
+    // — which is what makes a later sign-out land on the lock screen instead of silently dropping the
+    // child into an empty guest book (`utils/guestMode.ts`). Both sign-in paths (the Google claim and
+    // a passkey unlock) funnel through here, so this is the one place it needs saying.
+    exitGuestMode()
+    noteSignedIn()
     this.token = token
     this.user = user
     this.lastVerifiedAt = Date.now()
@@ -689,6 +728,10 @@ class AuthStore {
       lockedByAdult: this.lockedByAdult,
       idleSinceMs: 0,
       devBypass: this.devBypass,
+      // Read from localStorage on every snapshot rather than cached in a field: `publish()` already
+      // drops a snapshot that didn't change, and a stale cached copy here would mean the gate kept
+      // showing the lock screen for one render after "Spil uden konto".
+      guestMode: guestModeActive(),
     })
     return {
       ...decision,

@@ -16,7 +16,7 @@
 
 import type { PinReason } from './pinReasons.ts'
 
-export type AdultGroupId = 'barn' | 'laering' | 'lyd' | 'udseende' | 'konto'
+export type AdultGroupId = 'barn' | 'laering' | 'lyd' | 'udseende' | 'konto' | 'privatliv'
 
 /**
  * How a destructive action proves the adult.
@@ -196,6 +196,27 @@ export const ADULT_IA: AdultGroup[] = [
         // confirm itself a single tap, identical in weight to the reversible "Log ud" above it.
         verify: { kind: 'pinPad' },
       },
+    ],
+  },
+  {
+    // THE SIXTH GROUP, added deliberately at App Store PRD Phase A (§3.5 / §3.6) — the five-group shape
+    // was a Settings PRD-01 contract and this breaks it on purpose, with the owner's decision on
+    // record (2026-08-06). The reason it is its own group rather than folded in: a Kids Category
+    // reviewer looks for the parental gate, the microphone default and the privacy policy, and all
+    // three are the SAME story. Scattering the mic switch under "Lyd" (which otherwise means playback
+    // volume) and the policy into the rail footer would have made a reviewer hunt for the one thing
+    // that decides Guideline 1.3.
+    //
+    // Nothing here is `destructive`: turning the microphone OFF is the safe direction and revoking
+    // consent must never be harder than giving it. Turning it ON is guarded instead by an explicit
+    // consent screen (`panes/MicConsentDialog.tsx`) that names Google — a switch alone would not be
+    // "the parent explicitly consents".
+    id: 'privatliv',
+    label: 'Privatliv',
+    items: [
+      { id: 'privatliv.microphone', label: 'Mikrofon' },
+      { id: 'privatliv.policy', label: 'Privatlivspolitik' },
+      { id: 'privatliv.support', label: 'Support' },
     ],
   },
 ]

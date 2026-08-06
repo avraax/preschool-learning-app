@@ -54,6 +54,22 @@ export function registerPinPrompt(fn: PinPrompt | null): void {
   pinPrompt = fn
 }
 
+/**
+ * The GUEST parental gate (App Store PRD §3.2 / A1) — registered by the same host as the PIN dialog.
+ *
+ * A guest has no account, so there is no PIN and no server to check one against: `requirePin` would
+ * route to the LOCAL verifier, find nothing cached (it is only written after an ONLINE verify), fall
+ * through to the server, and fail — locking a guest out of "Til de voksne" entirely. The account-less
+ * equivalent is an arithmetic challenge, which is also what Apple's Kids Category means by a parental
+ * gate ("adult-level tasks"). See `src/config/guestAdultGate.ts`.
+ */
+type GuestPrompt = () => Promise<boolean>
+let guestPrompt: GuestPrompt | null = null
+
+export function registerGuestAdultPrompt(fn: GuestPrompt | null): void {
+  guestPrompt = fn
+}
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const snapshot = useAuth()
   const [authUiOpen, setAuthUiOpen] = useState(false)
@@ -89,6 +105,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     async (reason: PinReason): Promise<boolean> => {
       // The dev bypass exists so `ui-screenshot` can drive the adult surfaces headlessly.
       if (authStore.isDevBypass()) return true
+
+      // GUEST: no account ⇒ no PIN to prove. The arithmetic gate stands in, and the same ~5-minute
+      // unlock window applies so an adult adjusting two settings is not asked twice. Everything a guest
+      // can actually reach is device-local by definition (there is no credential, no spend and no
+      // account-scoped mutation without an account), so this cannot downgrade a server-verified action
+      // — the reasons that demand the server are unreachable in this phase.
+      if (snapshot.phase === 'guest') {
+        if (adultUnlocked) return true
+        if (!guestPrompt) return false
+        const ok = await guestPrompt()
+        if (ok) markAdultUnlocked()
+        return ok
+      }
+
       // Already proven recently → don't re-ask for the same 5 minutes. Server-verified reasons ALWAYS
       // re-ask: a credential change or a spend is not covered by an earlier local unlock.
       const verifier = pinVerifierFor(reason, navigator.onLine)
@@ -98,7 +128,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (ok && verifier === 'local') markAdultUnlocked()
       return ok
     },
-    [adultUnlocked, markAdultUnlocked],
+    [adultUnlocked, markAdultUnlocked, snapshot.phase],
   )
 
   const value = useMemo<AuthContextValue>(

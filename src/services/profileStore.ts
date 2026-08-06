@@ -9,6 +9,7 @@
 
 import { ACTIVE_PROFILE_KEY } from '../config/progressSchema.ts'
 import { DEFAULT_AVATAR_ID, normalizeAvatarId, type AvatarId } from '../config/avatars.ts'
+import { guestModeActive } from '../utils/guestMode.ts'
 import { authStore } from './authStore.ts'
 import { practiceLedger } from './practiceLedger.ts'
 import { progressStore } from './progressStore.ts'
@@ -58,6 +59,24 @@ const ROSTER_KEY = 'bornelaering-profiles'
  *
  */
 const DEV_PROFILE: ChildProfile = { id: 'dev-local', name: 'Dev', avatarId: DEFAULT_AVATAR_ID }
+
+/**
+ * The child for GUEST play — no account, this device only (App Store PRD §3.2 / A1).
+ *
+ * This is the whole reason A1 is cheap: `progressStore` is already inert until `attach()`, and already
+ * keys its document by profile id, so local-only play is a new CALLER of existing machinery rather than
+ * a second progress path. The book lives at `bornelaering-progress:local-guest`, so a guest's progress
+ * and a real child's can never overwrite each other.
+ *
+ * `progressSync` needs no guest branch: `canSync()` already requires `authStore.sessionToken()`, and a
+ * guest has none — so nothing can be pushed to a server that has no row to push it to. Deliberately
+ * NOT written to the roster cache, for the same reason as `DEV_PROFILE`: a later real session must not
+ * be offered it as one of the family's children.
+ */
+const GUEST_PROFILE: ChildProfile = { id: 'local-guest', name: 'Gæst', avatarId: DEFAULT_AVATAR_ID }
+
+/** The guest child's id, for the surfaces that must recognise it (the adult panes). */
+export const GUEST_PROFILE_ID = GUEST_PROFILE.id
 
 const readPointer = (): string | null => {
   try {
@@ -174,6 +193,25 @@ class ProfileStore {
       return
     }
 
+    // GUEST play (A1): same shape as the bypass above and for the same structural reason — there is no
+    // account, so there is no roster to fetch and never will be. Attaching a fixed local child is what
+    // makes the app playable at all: without it `progressStore` stays inert, so no XP is recorded, no
+    // reward can be granted, and `ProfileGate` raises its UN-DISMISSIBLE create dialog over the very
+    // first screen a reviewer sees — against a server that would refuse the create anyway.
+    //
+    // `rosterSettled: true` is the load-bearing half: it is what tells `profileGatePolicy` that the
+    // roster has ANSWERED, so an empty one is a real answer rather than "we haven't asked yet".
+    if (!already && guestModeActive()) {
+      this.publish({
+        status: 'choosing',
+        accountId: null,
+        profiles: [GUEST_PROFILE],
+        rosterSettled: true,
+      })
+      this.selectProfile(GUEST_PROFILE.id, null)
+      return
+    }
+
     const cached = readRoster()
     const pointer = readPointer()
 
@@ -266,6 +304,14 @@ class ProfileStore {
   }
 
   async createProfile(input: { name?: string; avatarId: AvatarId }): Promise<ChildProfile | null> {
+    // Guest first, because the generic no-token message below is a LIE here: being offline is not the
+    // problem and going online would not help. Child profiles are the account feature, so this is also
+    // the honest answer to "what does signing in actually buy me?" (Guideline 5.1.1(v) wants exactly
+    // that shape — an account for account-shaped features, not for playing).
+    if (guestModeActive()) {
+      this.publish({ error: 'Flere børneprofiler kræver en konto. Log ind under "Til de voksne".' })
+      return null
+    }
     if (!authStore.sessionToken()) {
       this.publish({ error: 'Du skal være online for at lave en profil.' })
       return null
@@ -296,6 +342,8 @@ class ProfileStore {
     id: string,
     input: { name?: string | null; avatarId?: AvatarId },
   ): Promise<boolean> {
+    // No server row exists for the guest child, so a PATCH would 401 and read as a bug.
+    if (guestModeActive()) return false
     try {
       const res = await fetch('/api/profiles', {
         method: 'PATCH',
@@ -318,6 +366,9 @@ class ProfileStore {
    * progress doesn't sit on disk forever. The server row is soft-deleted, so it stays recoverable.
    */
   async deleteProfile(id: string): Promise<boolean> {
+    // Same as `updateProfile`: no server row, and deleting the ONLY guest child would leave the app
+    // with nobody to play as. "Nulstil fremgang" is the guest's equivalent and it works locally.
+    if (guestModeActive()) return false
     try {
       const res = await fetch('/api/profiles', {
         method: 'DELETE',

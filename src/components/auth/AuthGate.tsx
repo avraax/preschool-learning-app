@@ -15,12 +15,14 @@
 // on the token, not on playtime.
 
 import React, { useEffect } from 'react'
+import { useLocation } from 'react-router-dom'
 // Side-effect import: registers the real passkey / Google implementations into authSignIn.
 import '../../services/authSignInRegistry'
-import { gateBlocks } from '../../contexts/authGatePolicy'
+import { gateBlocks, isPublicPath } from '../../contexts/authGatePolicy'
 import { AuthProvider, useAuthContext } from '../../contexts/AuthContext'
 import { musicClient } from '../../services/musicClient'
 import { profileStore } from '../../services/profileStore'
+import PublicPages from '../legal/PublicPages'
 import AuthDialogs from './AuthDialogs'
 import LockScreen from './LockScreen'
 import OAuthReturnHandler from './OAuthReturnHandler'
@@ -28,7 +30,11 @@ import ProfileGate from './ProfileGate'
 
 const GateBody: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const auth = useAuthContext()
+  const { pathname } = useLocation()
   const blocked = !!auth && gateBlocks(auth.phase)
+  // The privacy policy and the support page are the two URLs App Store Connect demands and Apple
+  // fetches WITHOUT an account (PRD §3.5, listing §3.1). Static text, no child data, nothing to spend.
+  const publicPage = blocked && isPublicPath(pathname)
 
   // progressStore is INERT until a child is attached (§5.4), and profileStore is the ONLY thing allowed
   // to attach. Do it the moment the gate opens.
@@ -59,7 +65,7 @@ const GateBody: React.FC<{ children: React.ReactNode }> = ({ children }) => {
           while blocked — it is what UNBLOCKS the gate after a Google round trip. */}
       <OAuthReturnHandler />
       {/* Inside the auth gate, ProfileGate decides whether a CHILD still has to be chosen. */}
-      {blocked ? <LockScreen /> : <ProfileGate>{children}</ProfileGate>}
+      {publicPage ? <PublicPages /> : blocked ? <LockScreen /> : <ProfileGate>{children}</ProfileGate>}
       {/* Above the gate on purpose: `requirePin('unlockSession')` is demanded FROM the lock screen. */}
       <AuthDialogs />
     </>

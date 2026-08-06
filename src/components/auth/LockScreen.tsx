@@ -43,11 +43,16 @@ interface Copy {
   body: string
 }
 
-const COPY: Record<Exclude<AuthPhase, 'authed' | 'offlineGrace'>, Copy> = {
+// `guest` is excluded alongside `authed`/`offlineGrace`: all three are full-play phases where this
+// screen returns null, so none of them has copy. Keeping it an `Exclude` rather than a partial record is
+// what made the compiler point at this line when the phase was added.
+const COPY: Record<Exclude<AuthPhase, 'authed' | 'offlineGrace' | 'guest'>, Copy> = {
   booting: { headline: 'Et øjeblik …', body: '' },
   signedOut: {
+    // Reworded at A1: "en voksen skal logge ind" was true when the gate was hard and is now a lie —
+    // "Spil uden konto" is right there. Signing in is what SYNC costs, not what playing costs.
     headline: 'Velkommen til Børnelæring',
-    body: 'En voksen skal logge ind én gang på denne enhed.',
+    body: 'Log ind for at gemme fremgangen og bruge flere børneprofiler.',
   },
   locked: {
     headline: 'Velkommen tilbage',
@@ -145,7 +150,16 @@ const LockScreen: React.FC = () => {
     setLocalBusy(false)
   }, [])
 
-  if (!auth || phase === 'authed' || phase === 'offlineGrace') return null
+  // Local-only play. `playAsGuest()` refuses if a token is still stored, so this cannot silently
+  // discard a session even if the button ever escapes its `signedOut` guard below.
+  const onPlayAsGuest = useCallback(() => {
+    authStore.setError(null)
+    authStore.playAsGuest()
+  }, [])
+
+  // `guest` is a full-play phase, so the lock screen must stand down for it exactly as it does for
+  // `authed` — otherwise the overlay covers the app it just let through.
+  if (!auth || phase === 'authed' || phase === 'offlineGrace' || phase === 'guest') return null
 
   const copy = COPY[phase as keyof typeof COPY] ?? COPY.booting
   const busy = localBusy || !!auth.busy
@@ -312,6 +326,26 @@ const LockScreen: React.FC = () => {
                       disabled={busy}
                       accent={theme.decor.audioPermissionAccent}
                     />
+                  )}
+
+                  {/* PLAY WITHOUT AN ACCOUNT — Guideline 5.1.1(v) (App Store PRD §3.2 / A1).
+                      Offered only from `signedOut`, i.e. with NO stored token: `locked` and
+                      `offlineExpired` still hold a real session, and trading that for an empty local
+                      book would lose the child's synced progress to a mis-tap. A device that has never
+                      signed in never reaches this screen at all — it auto-enters guest at boot
+                      (`utils/guestMode.ts`), so this button is the RE-entry, not the main door. */}
+                  {phase === 'signedOut' && (
+                    <>
+                      <SecondaryButton
+                        label="Spil uden konto"
+                        ariaLabel="Spil uden konto, kun på denne enhed"
+                        onClick={onPlayAsGuest}
+                        disabled={busy}
+                      />
+                      <Typography variant="caption" sx={{ opacity: 0.8 }}>
+                        Fremgangen gemmes kun på denne enhed. Log ind senere for at synkronisere.
+                      </Typography>
+                    </>
                   )}
                 </>
               )}

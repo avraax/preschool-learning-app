@@ -37,6 +37,7 @@ import {
   GraduationCap,
   KeyRound,
   Palette,
+  ShieldCheck,
   Users,
   Volume2,
 } from 'lucide-react'
@@ -51,6 +52,7 @@ import LaeringPane from './panes/LaeringPane'
 import LydPane from './panes/LydPane'
 import UdseendePane from './panes/UdseendePane'
 import KontoPane from './panes/KontoPane'
+import PrivatlivPane from './panes/PrivatlivPane'
 
 // The bug reporter is the one nested dialog that is genuinely heavy (it pulls the whole reporter
 // service graph), so it stays lazy inside this already-lazy chunk.
@@ -65,6 +67,7 @@ const RAIL_ICON: Record<AdultGroupId, React.ReactNode> = {
   lyd: <Volume2 size={ICON} aria-hidden />,
   udseende: <Palette size={ICON} aria-hidden />,
   konto: <KeyRound size={ICON} aria-hidden />,
+  privatliv: <ShieldCheck size={ICON} aria-hidden />,
 }
 
 /**
@@ -167,6 +170,8 @@ const AdultSettings: React.FC<AdultSettingsProps> = ({
       <LydPane />
     ) : pane === 'udseende' ? (
       <UdseendePane childName={activeChild} />
+    ) : pane === 'privatliv' ? (
+      <PrivatlivPane closeAll={onClose} />
     ) : (
       <KontoPane closeAll={onClose} />
     )

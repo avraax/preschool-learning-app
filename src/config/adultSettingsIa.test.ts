@@ -16,8 +16,30 @@ test('every group id is unique', () => {
   assert.equal(new Set(ADULT_GROUP_IDS).size, ADULT_GROUP_IDS.length)
 })
 
-test('the surface has exactly the five PRD groups, in rail order', () => {
-  assert.deepEqual(ADULT_GROUP_IDS, ['barn', 'laering', 'lyd', 'udseende', 'konto'])
+test('the surface has exactly the six groups, in rail order', () => {
+  // Settings PRD-01 shipped FIVE. "Privatliv" is the sixth, added at App Store PRD Phase A with the
+  // owner's decision on record (2026-08-06): the microphone default, the parental gate and the privacy
+  // policy are one story, and a Kids Category reviewer looks for them together. Pinned as an exact list
+  // (not a length) so a seventh group is a deliberate act rather than a drift.
+  assert.deepEqual(ADULT_GROUP_IDS, [
+    'barn',
+    'laering',
+    'lyd',
+    'udseende',
+    'konto',
+    'privatliv',
+  ])
+})
+
+test('the microphone consent item is NOT destructive, so withdrawal is never harder than consent', () => {
+  // App Store PRD §3.6: the risky direction is turning the mic ON, and that is guarded by the consent
+  // screen, not by this declaration. Marking the row destructive would put a confirm in front of
+  // switching it OFF — i.e. friction on withdrawing consent, which the privacy policy promises is one
+  // tap (`src/config/legalContent.ts`).
+  const mic = adultItemsWithGroup().find(({ item }) => item.id === 'privatliv.microphone')
+  assert.ok(mic, 'the microphone row has gone missing from the IA')
+  assert.equal(mic!.item.destructive, undefined)
+  assert.equal(mic!.item.typeToConfirm, undefined)
 })
 
 test('every item belongs to exactly one group', () => {

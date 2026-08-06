@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { BUILD_INFO } from '../config/version'
+import { isNativeShell } from '../config/runtimeTarget'
 import { isVersionGreater } from '../utils/semver'
 
 interface VersionInfo {
@@ -35,13 +36,24 @@ export function useUpdateChecker(): UpdateStatus {
     // Prevent concurrent checks
     if (isChecking) return
 
+    // NATIVE SHELL: there is nothing to compare (App Store PRD §3.10 / A4). This check asks whether
+    // Vercel is serving a newer commit than the one running — a question that has no meaning once the
+    // web build is bundled into a binary whose version is set by App Store review, not by a push. Left
+    // alive it is meaningless at best and shows a PERMANENT false "en ny version er klar" pill at worst,
+    // pointing at an apply-update that reloads the same bundled bytes. Native updates come from the
+    // App Store. Return before the fetch so the shell also stops polling /api/version every 10 minutes.
+    if (isNativeShell()) {
+      setIsChecking(false)
+      return
+    }
+
     setIsChecking(true)
     setError(null)
 
     try {
       // Check if we're in development mode
       const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-      
+
       if (isDev) {
         // For development, skip the check
         setIsChecking(false)

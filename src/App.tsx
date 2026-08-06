@@ -1,6 +1,7 @@
 import React, { useEffect, Suspense } from 'react'
 import { lazyWithReload as lazy } from './utils/lazyWithReload'
-import { Routes, Route, useNavigate, useLocation } from 'react-router-dom'
+import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom'
+import { micConsentGiven } from './utils/micConsent'
 import { logIOSIssue } from './utils/remoteConsole'
 import { deviceInfo } from './utils/deviceDetection'
 import {
@@ -41,6 +42,10 @@ const SpellingGame = lazy(() => import('./components/ordleg/SpellingGame'))
 const SpeakWordGame = lazy(() => import('./components/ordleg/SpeakWordGame'))
 const MemoryGame = lazy(() => import('./components/learning/MemoryGame'))
 const StickerAlbum = lazy(() => import('./components/hub/StickerAlbum'))
+// The two public text pages (App Store PRD §3.5 / A2). Also mounted OUTSIDE the gate by AuthGate, so
+// App Review can fetch them with no account — see components/legal/PublicPages.tsx.
+const PrivacyPage = lazy(() => import('./components/legal/PrivacyPage'))
+const SupportPage = lazy(() => import('./components/legal/SupportPage'))
 // Hidden, off-menu internal tool — audition Danish TTS voices. Throwaway (tmp-prd-voicelab.md).
 const VoiceLab = lazy(() => import('./components/voicelab/VoiceLab'))
 // DEV-only screenshot-harness routes (never registered in production builds).
@@ -133,6 +138,17 @@ const NavigationAudioCleanup: React.FC = () => {
 
   return null // This component only handles side effects
 }
+
+// "Sig et Ord" is unreachable until an adult has consented to the microphone (App Store PRD §3.6 / A3).
+//
+// THE GUARD IS OUTSIDE THE GAME, and that placement is the whole substance of it: `SpeakWordGame` warms
+// the microphone in a mount effect, so a check *inside* the component would open the mic before deciding
+// it may not be opened. Hiding the menu tile is not a gate either — every route in this app is
+// deep-linkable and bookmarkable by design (`src/utils/urlParams.ts`), so the URL has to refuse too.
+//
+// `replace` so Back doesn't bounce the child between the menu and a route that keeps redirecting.
+const MicGameRoute: React.FC = () =>
+  micConsentGiven() ? <SpeakWordGame /> : <Navigate to="/ordleg" replace />
 
 // Crash-test probe — visiting any route with ?crash-test=1 throws during render, exercising
 // the AppErrorBoundary fallback AND the automatic crash upload end-to-end. Inert otherwise.
@@ -277,7 +293,8 @@ function App() {
         <Route path="/ordleg" element={<OrdlegSelection />} />
         <Route path="/ordleg/read" element={<LaesOrdetGame />} />
         <Route path="/ordleg/spelling" element={<SpellingGame />} />
-        <Route path="/ordleg/mic" element={<SpeakWordGame />} />
+        {/* Consent-gated — see MicGameRoute above. */}
+        <Route path="/ordleg/mic" element={<MicGameRoute />} />
 
         {/* Learning Routes */}
         {/* One route per memory TYPE — the board size is the difficulty level now, not the URL
@@ -288,6 +305,11 @@ function App() {
 
         {/* Sticker album / reward hub */}
         <Route path="/album" element={<StickerAlbum />} />
+
+        {/* Public, account-free text pages — the two mandatory App Store Connect URLs. Registered
+            here for a signed-in adult; AuthGate mounts the same components when the gate blocks. */}
+        <Route path="/privatliv" element={<PrivacyPage />} />
+        <Route path="/support" element={<SupportPage />} />
 
         {/* Hidden internal tool — not in any menu, reachable only by URL */}
         <Route path="/voicelab" element={<VoiceLab />} />
