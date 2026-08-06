@@ -68,7 +68,7 @@ click `[aria-label="Tilbage"]` first).
 | `ipad/` | 1180×820 (iPad Air landscape) | **Primary design surface** — every route |
 | `phone/` | 844×390 (iPhone 13 Pro landscape) | The phone-compact variant (`src/theme/phoneMedia.ts` guards) — every route |
 | `portrait/` | 390×844 | Key portrait references (home, menu, quiz, drag board, memory-20, album) |
-| `overlays/` | 1180×820 | States routes can't show: the five settings panes (`settings-barn`, `settings-laering`, `settings-lyd`, `settings-udseende`, `settings-konto`), their nested task dialogs (`settings-reset-confirm`, `settings-logout-confirm`, `settings-create-profile`, `settings-delete-account-pin`), bug reporter, crash screen, audio-permission modal, and the auth surfaces (`auth-lock-screen`, `auth-pin-pad`, `auth-profile-picker`) |
+| `overlays/` | 1180×820 | States routes can't show: the five settings panes (`settings-barn`, `settings-laering`, `settings-lyd`, `settings-udseende`, `settings-konto`), their nested task dialogs (`settings-reset-confirm`, `settings-logout-confirm`, `settings-create-profile`, `settings-delete-account-pin`), bug reporter, crash screen, the audio-blocked cue (`audio-blocked-cue`), and the auth surfaces (`auth-lock-screen`, `auth-pin-pad`, `auth-profile-picker`) |
 | `overlays/phone/` | 844×390 | The settings surface's COMPACT variant — the root list (`settings-root`) plus each pushed pane. The adult area had zero phone coverage before the settings rework |
 
 ## File → view map (`ipad/` and `phone/` share names)

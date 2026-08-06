@@ -63,6 +63,13 @@ original, then check the red lines for `expect`. Exit non-zero unless every entr
 Run it from the **repo root** — relative paths break otherwise, and a mid-run crash can leave a file
 mutated.
 
+**The `expect` matcher is itself unproven.** It is a substring of a test NAME, so it fails both ways: too
+narrow (a case mismatch — `'A STRICT increase'` vs `a STRICT increase` — reported WRONG TEST for a break
+that had in fact flipped the right one, the safe direction), and too LOOSE, where it matches a *different*
+red test's name and records a PASS for a break that proved nothing. That is the same vacuity the skill
+exists to catch, one level up. Copy each `expect` from the test name rather than retyping it, and when a
+break reports WRONG TEST, read the red list before touching the mutation.
+
 **Every source file in this repo is CRLF**, so a multi-line `from` written with `\n` never matches and
 the entry silently skips — 5 of 22 breaks vanished that way in one pass, and the harness still printed a
 pass rate. Normalise both sides to the file's own endings (`s.replace(/\r?\n/g, '\r\n')` when the file

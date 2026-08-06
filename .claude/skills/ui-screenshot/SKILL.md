@@ -363,6 +363,13 @@ test fails while the product is fine. Symptom: a function that should hit the ne
 Drive the real path instead (a DEV `?param=` harness hook that seeds state before React mounts, as
 `?oauthflow=`/`?rewards=` do), or assert through `window.__*` debug handles the app itself installed.
 
+**When a singleton has NO `window.__*` handle, make the app hand it over: fire a crash and read the bug
+report.** `dispatchEvent(new ErrorEvent('error', …))` from an `--eval` triggers the crash auto-upload, and
+`dev-server.js` mirrors it to `.bug-reports/<date>/<CODE>/report.json` (gitignored — delete the probe
+report afterwards). That payload carries the audio verdict + evidence, TTS health, progress and the
+diagnostics rings, all read from the app's OWN instances. It verified the audio snapshot's field set here
+in one shot, and it is faster than adding a debug handle for a one-off question.
+
 ### Verifying spoken audio (what Danish the app actually says)
 To check narration/grammar/pronunciation, capture the **TTS request bodies** — the network ring
 doesn't expose POST payloads, so hook `window.fetch` at the START of an `--eval` IIFE (before any
@@ -569,16 +576,40 @@ stripped, and the failure looks like a page bug. Write the JS to a **file in the
 - **Two driver runs cannot share port 9333** — they are not just slow, they collide. A long background
   sweep therefore blocks every other capture until it ends (a screenshot fired alongside one hung until
   its own timeout). Sequence them, or give the second run `--port`.
-- **The audio cue cannot be reached under `?nogate=1`.** `shouldShowAudioCue` stands it down there (as
-  the old modal's policy did), and `?nogate=1` is the only way past the auth gate — an iPad user-agent
-  override does NOT help, and minting a real session just for a screenshot writes into the owner's
-  production DB. So a run that shows no cue proves nothing about the cue. To see it at all you need a
-  real session plus `--block-autoplay`; to check its px geometry, reproduce the case in any live page.
+- **A surface that STANDS DOWN under `?nogate=1` is invisible here, so "it is absent" proves nothing.**
+  This is a trap with no symptom: `?nogate=1` is the only way past the auth gate, and the surfaces that
+  matter stand themselves down under it — while WITHOUT it, `authUiOpen` stands them down instead. Both
+  runs render nothing, whatever the app believes. Before asserting a surface is absent, **prove the
+  selector can ever match** (make it appear once in the same recipe); otherwise the assertion is vacuous.
+  The audio cue is the worked example: it needs `?audio-cue=1` (lifts only the nogate stand-down) plus
+  `--block-autoplay --simulate-audio-blocked` plus a `--trusted-tap`. Minting a real session instead is
+  not an option — it writes into the owner's production DB (`.claude/rules/auth.md`).
+- **`element.click()` grants NO `navigator.userActivation`** — use **`--trusted-tap "<css>"`** (real CDP
+  input) whenever the assertion is about user activation: autoplay/audio unlock, clipboard, fullscreen,
+  popups. Nothing fails when you get this wrong; the app simply stays in its pre-gesture state forever
+  and the test passes for the wrong reason. `--trusted-tap` prints `hasBeenActive` afterwards so a failed
+  activation is visible rather than inferred. `--click` stays right for everything else (it does not
+  depend on hit-testing a coordinate).
+- **`--simulate-audio-blocked` reaches a state no launch flag can produce.** `--block-autoplay` alone
+  blocks playback only UNTIL the first gesture — and that same gesture grants activation, unlocks
+  `play()` and resumes the context — so the app's `blocked` verdict is otherwise unreachable. The sim
+  (`audio-blocked-sim.js`) rejects `play()` with a real `NotAllowedError` and stops
+  `AudioContext.resume()` from running the clock, i.e. it fakes the DEVICE and lets the app's own
+  evidence path reach the verdict, rather than forcing a component to render. **Pair it with
+  `--block-autoplay`**: with autoplay allowed a fresh `AudioContext` is born `running`, so the stubbed
+  `resume()` leaves a live clock and the verdict is correctly `live` (that cost one confusing run). It
+  exposes `window.__audioBlockedSim.restore()`, which is how the RECOVERY leg is testable — proving a
+  cue appears is half a test; proving it withdraws is the other half.
 - **Back-to-back runs occasionally die inside `getJSON`** (the previous Chrome hasn't released the port
   yet) — that's launcher contention, NOT a page bug, so don't go debugging the app. `sleep 2` between
   consecutive invocations, and re-run the one that failed. A sweep over several viewports in one shell
   loop **hides** this: the dead iteration prints nothing and the loop carries on, so count one
   `measure:`/`screenshot saved:` line **per viewport** before claiming "verified at all sizes".
+- **The viewport flags are `--w`/`--h`. `--width`/`--height` are SILENTLY IGNORED** — an unknown flag is
+  not an error, so the run proceeds at the 540×940 default and a four-viewport loop produces four
+  identical results that look like four passes. **Have the probe echo `innerWidth`/`innerHeight` in its
+  own output** and read them; that is what caught it here. Generalise it: any probe parameterised per run
+  must report the parameter it actually used, or a loop cannot be distinguished from a single run.
 - **Git Bash mangles a leading-slash ARGUMENT into a Windows path.** `--only /math/numbers` reached the
   script as `C:/Program Files/Git/math/numbers`, so the filter matched nothing and three runs printed no
   results at all — which reads like the sweep being broken. Drop the leading slash (`--only math/numbers`)
@@ -662,10 +693,17 @@ stripped, and the failure looks like a page bug. Write the JS to a **file in the
   `src/utils/devHarness.ts`): `?fx=correct|wrong|hint|streak` forces one tile/board into that feedback
   state (no need to solve), `?seed=<n>` makes questions deterministic (probe with `--eval` to find a
   seed that yields the case you want, e.g. a count-mode number or a high comparison pile), `?nogate=1`
-  skips the audio welcome/permission gate, `?reduce=1` forces reduced-motion, `?theme=<id>` sets the skin,
+  skips the auth gate (and stands the audio cue down — see above), `?reduce=1` forces reduced-motion,
+  `?theme=<id>` sets the skin,
   `?mute-tts=1` forces narration UNHEALTHY so the two audio-only boards (Tal Quiz, Lyt og Find) show their
   degraded state — they print the answer as type, which is the only way to capture that path without
-  actually breaking audio (see the narration-health section in `.claude/rules/audio-system.md`).
+  actually breaking audio (see the narration-health section in `.claude/rules/audio-system.md`), and
+  `?audio-cue=1` lifts ONLY the `?nogate=1` stand-down on the "Tryk for lyd" cue.
+- **A harness param should lift a STAND-DOWN, not force the state.** `?audio-cue=1` makes the cue
+  *reachable*; it does not make it appear — the app's own evidence still has to reach `blocked`, which is
+  why it is paired with `--simulate-audio-blocked`. Forcing the render would prove only that the component
+  can paint, which is never the thing in doubt. `?mute-tts=1` is the same shape (it pins a real counter
+  the app reads, rather than switching the degraded UI on).
 - **`?theme=` takes a REGISTERED id and an unknown one SILENTLY HALF-WORKS.** The ids are
   `kid`/`ocean`/`space`/`dino` (`src/theme/themes.ts`) — Regnbue is **`kid`**, not `rainbow`. A bogus id
   falls back to the default TOKENS, so the page looks like the default skin and nothing errors, but

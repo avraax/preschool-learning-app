@@ -49,6 +49,17 @@ Two things that make the fix converge instead of oscillating:
 - **Verify at 375×667, not just 390×844.** Four columns cleared the taller phone and still clipped the
   iPhone SE, which is 177px shorter. Both sizes are named in this file for that reason.
 
+### The header band's empty middle is only empty ABOVE phone landscape
+
+`GameShell` puts the game title *below* the toolbar and `GameSelectionLayout` left-aligns its own, so on
+both shells the header's centre is free (back sits left, the reward ring right) — a genuinely safe slot for
+a floating global element. **At `PHONE_LANDSCAPE`, GameShell moves the title INTO the header row**, to give
+that row's height back to the play surface. So the slot is occupied there, and only there: the audio cue
+shipped over "Bogstav Quiz" and the prompt art at 844×390 while 1024×768 and both portraits were spotless.
+Anything `position: fixed` in that band needs a phone-landscape sibling (the cue moves to bottom-centre,
+where that shell hides the corner mascot), and it has to be **measured** — this is the same class as the
+`PHONE_LANDSCAPE`-with-no-sibling rule above, and no screenshot of the iPad would ever have shown it.
+
 ### A green unit suite is NOT device coverage
 
 `sceneLayers.test.ts` is the ONLY unit consumer of `REFERENCE_VIEWPORTS`, and it is **insensitive to
@@ -195,9 +206,14 @@ Adjust for landscape orientation.
 ## Overlays & stacking
 
 A MUI `<Dialog>` defaults to `theme.zIndex.modal` = **1300**, while this app's blocking surfaces are
-hand-rolled `position: fixed` boxes at ~10000 (lock screen, profile picker, audio permission). So a
-dialog opened FROM one of those mounts **underneath** it: live, interactive, and simply not drawn. That
-is a dead button with no error, no failing test and a screenshot that looks right — it shipped twice.
+hand-rolled `position: fixed` boxes at ~10000 (lock screen, profile picker). So a dialog opened FROM one
+of those mounts **underneath** it: live, interactive, and simply not drawn. That is a dead button with no
+error, no failing test and a screenshot that looks right — it shipped twice.
+
+The **audio cue** (`AudioBlockedCue`) is the counter-example worth knowing: it sits **below** 1300 on
+purpose, so an adult dialog covers it rather than competing. A non-blocking chip that outranked the modal
+tier would paint over settings for no benefit. Non-blocking ⇒ go under 1300; blocking ⇒ claim
+`authUiOpen` (see `.claude/rules/audio-system.md`) instead of climbing.
 
 **Two MUI Dialogs are the same trap without the 10 000.** Both default to 1300, so a nested dialog
 raised FROM another dialog is on top only by DOM mount order — it looks right until something changes

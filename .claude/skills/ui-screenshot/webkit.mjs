@@ -2,8 +2,8 @@
 //
 // WHY: cdp.mjs drives headless Chrome, which never takes the app's iOS branches and never uses Safari's
 // engine. This driver runs the SAME app in an actual WebKit build with an iPad/iPhone user agent, so
-// `deviceDetection.ts` reports isIOS/isIPad true and the iOS-only paths execute (audio unlock, the
-// permission modal, `interrupted` AudioContext handling, Safari layout). Published figures put real
+// `deviceDetection.ts` reports isIOS/isIPad true and the iOS-only paths execute (audio unlock,
+// `interrupted` AudioContext handling, Safari layout). Published figures put real
 // WebKit at ~80-90% of WebKit-specific rendering/JS bugs.
 //
 // WHAT IT STILL CANNOT SEE — do not report a green run here as "verified on iPad":

@@ -173,6 +173,9 @@ The ladder table, the recipes, the DEV query params and the silence-vs-cancellat
   matching** — several here do (`noEmoji`, `authOverlayZ`, `rewardArtCoverage`), and a plain
   `src.includes('AUTH_Z.pin')` was satisfied by the prose comment explaining the fix, so deleting the
   fix left it green. The re-break is what exposes this; the comment is written by the same hand.
+- **Node ships a global `navigator` (≥21)**, so a feature-detect test can't use
+  `typeof navigator === 'undefined'` for "unsupported" — that shape is a navigator *without* the API, and
+  swapping it needs `Object.defineProperty` + restore, not assignment.
 - **LOCAL GREEN PROVES NOTHING ABOUT THE DEPLOYED ARTIFACT.** Two production outages in ONE session were
   correct here and broken only in what Vercel shipped: a dynamic `import('./auth.ts')` (compiled to a
   sibling `.js`, specifiers not rewritten → Google sign-in died *after* the round trip) and
@@ -209,6 +212,8 @@ The ladder table, the recipes, the DEV query params and the silence-vs-cancellat
   - **A `node_modules` `@scope` that has gone missing is almost always your OWN interrupted delete**, not a
     colleague's install (the alphabetical cut-off is the signature) — it has been mis-blamed twice.
     `npm install` restores it, but ask first: it touches shared state.
+  - **Dev servers are shared state: never `taskkill //IM node.exe`** — it killed a sibling's Vite (yours
+    failing to start on 5173 means theirs is already up, and a running Vite already serves your edits).
 - **A probe of an external service has THREE outcomes, not two.** Rate-limits, partial reads and
   fail-closed 403s must classify as UNKNOWN and retry with backoff — never fold into one of the real
   verdicts (a `.dk` whois rate-limit banner read as "domain registered" produced two false results

@@ -1,6 +1,6 @@
 ---
 name: audio-debug-expert
-description: Use this agent when audio isn't playing, permissions fail, or platform-specific audio issues occur in the Danish preschool learning app. This includes audio playback failures, TTS synthesis errors, permission modal not appearing, iOS Safari audio context issues, Android Chrome problems, audio cutting off mid-speech, or any runtime audio errors. DO NOT use for code refactoring or consolidation.
+description: Use this agent when audio isn't playing, permissions fail, or platform-specific audio issues occur in the Danish preschool learning app. This includes audio playback failures, TTS synthesis errors, the "Tryk for lyd" cue appearing while audio works (or not appearing while it doesn't), iOS Safari audio context issues, Android Chrome problems, audio cutting off mid-speech, or any runtime audio errors. DO NOT use for code refactoring or consolidation.
 model: sonnet
 color: red
 ---
@@ -17,15 +17,17 @@ DEBUGGING EXPERTISE:
 - Debug TTS synthesis errors and network failures
 - Diagnose permission flow problems
 - Trace navigation cleanup issues
-- Fix audio queue deadlocks
+- Fix cancellation/pre-emption bugs (there is **NO queue** — new audio cancels current, by design)
 
-DIAGNOSTIC TOOLS:
+DIAGNOSTIC TOOLS — the real ones. Read `.claude/rules/audio-system.md` first; it is the design record.
 ```javascript
-audioController.getTTSStatus() // Check queue and cache state
-audioController.testAudioCapability() // Test audio directly
-audioController.checkAudioPermission() // Verify permissions
-audioController.audioContext?.state // Check context state
+simplifiedAudioController.getTTSStatus()          // cache stats + what is playing
+simplifiedAudioController.getPermissionSnapshot() // the readiness VERDICT + the evidence behind it
+ttsClient.getHealth()                             // consecutive playback failures, playbackOkOnce
 ```
+A bug report already carries all three (`audio.*` in the payload) — use the `/debug-report` skill rather
+than asking the owner to reproduce. **Never judge audio by `AudioContext.state`**: it is not liveness in
+either direction (see the rule), which is the exact defect this area's last PRD removed.
 
 PLATFORM-SPECIFIC KNOWLEDGE:
 - iOS Safari: 10-second interaction rule, audio context management, silent probe requirements
@@ -39,11 +41,11 @@ COMMON ISSUES & SOLUTIONS:
    - Test component implementation
    - Review user interaction timing
 
-2. "Permission Modal Missing"
-   - Check session state in localStorage
-   - Verify AudioProvider in App.tsx
-   - Test permission flow manually
-   - Clear cached permission state
+2. "The 'Tryk for lyd' cue is wrong" (showing while audio works, or absent while it doesn't)
+   - Read the readiness verdict + its evidence from a bug report, not from the code
+   - `blocked` needs a gesture AND a refused prime AND no moving clock — check which one disagrees
+   - `authUiOpen` and `?nogate=1` both stand the cue down; that is not a bug
+   - There is no session latch and no dismiss flag to clear — if it is stuck, the evidence is stuck
 
 3. "Audio Cuts Off"
    - Monitor navigation events
