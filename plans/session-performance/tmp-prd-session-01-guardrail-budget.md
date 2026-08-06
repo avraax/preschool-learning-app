@@ -31,28 +31,38 @@ Environment: Claude Code **2.1.223**, model `claude-opus-5[1m]`. Evidence: `.cla
 and the 104 session transcripts (743.3 MB) under
 `~/.claude/projects/C--Source-preschool-learning-app/*.jsonl`.
 
-**Token figures below are `chars ÷ 3.7` estimates.** That divisor is unvalidated. W0 fixes it before
-any budget is treated as real.
+**Token figures below are `chars ÷ 2.52`, and that divisor is MEASURED** (§2.7) — not the 3.7 this
+PRD was first written with. Everything was ~1.47× understated in the first draft; the corrected
+numbers make the case stronger, not weaker. The divisor still comes from a single mixed-content
+sample, so **byte budgets are the thing to gate on** (deterministic, no divisor) and token figures
+are for reporting only.
 
 ### 2.1 The startup baseline
 
 Every session begins at **56,000–63,000 tokens before the first user request does anything.** First
 API turn, four most recent sessions: 56,623 / 60,925 / 62,658 / 63,105.
 
-Of that, ~14,500 tokens are authored by us or by a plugin we chose:
+A headless probe (§2.7) measures the baseline as **54,086 tokens**, reproducible to ±21 across runs.
+Interactive sessions sit a little higher because of the plan-mode reminder and other per-session
+attachments — compare like with like.
+
+Of that baseline, **~21,400 tokens are ours**, i.e. **about 35%**:
 
 | Loaded on every session, unconditionally | Bytes | ≈tokens |
 |---|---:|---:|
-| `CLAUDE.md` (192 lines) | 28,165 | 7,600 |
-| `.claude/rules/animation-and-performance.md` — **has no `paths:` frontmatter** | 8,751 | 2,365 |
-| Vercel plugin `SessionStart` hook (`inject-claude-md.mjs`, the knowledge-update text) | 7,812 | 2,110 |
-| Vercel plugin's share of the skill listing (33 of 52 lines) | 8,819 | 2,384 |
-| Remaining skill descriptions (19 lines, incl. our 4 = 1,886 B) | 7,539 | 2,037 |
-| Vercel plugin `session-start-profiler.mjs` | 192 | 50 |
+| `CLAUDE.md` | 28,637 | 11,364 |
+| `.claude/rules/animation-and-performance.md` — **has no `paths:` frontmatter** | 8,751 | 3,473 |
+| Vercel plugin `SessionStart` hook (`inject-claude-md.mjs`, the knowledge-update text) | 7,812 | 3,100 |
+| Vercel plugin's share of the skill listing (33 of 52 lines) | 8,819 | 3,500 |
+| Remaining skill descriptions (19 lines, incl. our 4 = 1,886 B) | 7,539 | 2,991 |
+| Vercel plugin `session-start-profiler.mjs` | 192 | 76 |
 
-The other ~40,000 tokens are Claude Code's own system prompt and tool schemas. Not ours to cut. MCP
-tool definitions are deferred by default, so the nine `claude.ai` MCP servers contribute names only
-and are **out of scope** — they are not the problem.
+The remaining ~33,000 tokens are Claude Code's own system prompt and tool schemas. Not ours to cut.
+MCP tool definitions are deferred by default, so the nine `claude.ai` MCP servers contribute names
+only and are **out of scope** — they are not the problem.
+
+`CLAUDE.md` was 28,165 B when this PRD was opened and 28,637 B a few hours later: **+472 B, ~187
+tokens, in one working day.** That rate is the reason W4 exists.
 
 ### 2.2 Path-scoped rules work here. Glob width is the leak.
 
@@ -72,13 +82,16 @@ So the architecture is right and two specific things are wrong:
 
   | Rule | Bytes | ≈tokens |
   |---|---:|---:|
-  | `audio-system.md` | 36,782 | 9,940 |
-  | `games-catalog.md` | 24,509 | 6,625 |
-  | `game-development.md` | 21,785 | 5,890 |
-  | `responsive-design.md` | 18,708 | 5,055 |
-  | **total for one component edit** | **101,784** | **≈27,500** |
+  | `audio-system.md` | 36,782 | 14,596 |
+  | `games-catalog.md` | 24,509 | 9,726 |
+  | `game-development.md` | 21,785 | 8,645 |
+  | `responsive-design.md` | 18,708 | 7,424 |
+  | **total for one component edit** | **101,784** | **≈40,400** |
 
-  That is the "heavy" feeling, and it lands on the single most common edit in the repo.
+  **Measured, not inferred:** a probe that reads `MathOperationGame.tsx` (35,380 B) goes from 54,107
+  tokens on turn 1 to **108,546 on turn 2** — a **54,439-token step for opening one file**, which is
+  those four rules plus the file itself. The rules are three-quarters of it. That is the "heavy"
+  feeling, and it lands on the single most common edit in the repo.
 
 ### 2.3 One skill can dwarf all of it
 
@@ -93,15 +106,21 @@ Opus 5 list rates: **$5/M input, $25/M output**; cache write ×1.25 = $6.25/M, c
 $0.50/M. Minimum cacheable prefix on Opus 5 is 512 tokens (halved from 1,024 on Opus 4.8). Cache
 lifetime is 1 hour on a subscription, dropping to 5 minutes on usage credits.
 
-| Session | API turns | first ctx | max ctx | cache write | cache read | output | ≈token-equiv |
-|---|---:|---:|---:|---:|---:|---:|---:|
-| `09b45e44` | 287 | 56,623 | 405,222 | 2,471,856 | 69,003,519 | 333,582 | $58 |
-| `e5afa8cf` | 350 | 60,925 | 354,904 | 1,910,207 | 84,007,534 | 280,313 | $61 |
-| `c1300c1e` | 43 | 62,658 | 185,512 | 402,062 | 5,233,582 | 69,757 | $7 |
-| `f2e53e6b` | 13 | 63,105 | 74,809 | 151,054 | 739,201 | 18,871 | $1 |
+**These figures are deduplicated by `message.id`** — see the trap in §2.7. The first draft of this
+PRD double-counted by 1.6–2.05×, so its dollar figures were roughly twice reality.
 
-**Cache read is 60–70% of the total**, and cache read = context size × turn count. On a subscription
-these are plan-usage equivalents at list price, not a bill.
+| Session | turns | first ctx | max ctx | cache read | output | ≈token-equiv |
+|---|---:|---:|---:|---:|---:|---:|
+| `09b45e44` | 145 | 56,623 | 405,222 | 37,249,668 | 144,811 | ~$30 |
+| `e5afa8cf` | 253 | 60,925 | 384,402 | 65,976,979 | 159,834 | ~$43 |
+| `c1300c1e` | 21 | 62,658 | 185,512 | 2,817,283 | 31,880 | ~$3 |
+
+**Cache read is 60–77% of the total** ($33 of $43 on `e5afa8cf`), and cache read = context size ×
+turn count. The correction *strengthens* this conclusion even as it halves the totals. On a
+subscription these are plan-usage equivalents at list price, not a bill.
+
+A single measured turn is a useful anchor: the trivial `-p` probe cost **$0.34** for four output
+tokens, because it still paid to establish a 54,086-token prefix. Almost all of that is prefix, not work.
 
 The decisive consequence is latency, not money: **time-to-first-token scales with context length
 even on a cache hit.** A session sitting at 400k tokens re-reads 400k every turn, which is exactly
@@ -128,6 +147,58 @@ Be honest about this when reporting progress; do not oversell the baseline cut.
 | W6 `/clear` + subagent habits | largest win | win (less stale context) | **largest cost lever** |
 | W7 statusline + `SessionEnd` report | indirect — makes W6 happen instead of hoping for it | none | indirect, and probably the best effort-to-effect ratio here |
 | W8 periodic audit | none directly | **the only thing that stops model drift** | none directly — it is what keeps W1–W3 from being redone in a few months |
+
+### 2.7 How to measure all of this autonomously
+
+**`/context` is not needed and cannot be scripted** — it is an interactive TUI command, not a tool. A
+headless run measures the same thing better, because it reports the *billed* numbers rather than a UI
+rendering, and it needs no human in the loop:
+
+```
+claude -p "Reply with exactly: OK" --output-format json
+```
+
+The JSON carries everything this PRD gates on: `usage.input_tokens` +
+`usage.cache_creation_input_tokens` + `usage.cache_read_input_tokens` = the context, plus
+**`ttft_ms`** (time-to-first-token — the actual reported symptom, measured directly rather than
+inferred), `total_cost_usd`, `duration_api_ms`, and `modelUsage` with the model and window size.
+
+Two probes give both headline numbers:
+
+| Probe | Prompt | Measures |
+|---|---|---|
+| **A — baseline** | `Reply with exactly: OK` | startup context, TTFT at rest |
+| **B — component edit** | `Read src/components/math/MathOperationGame.tsx and then reply with exactly: DONE` | the rule-injection step, as turn 2 minus turn 1 |
+
+Measured values at authoring time, as the before-picture: **A = 54,086 tokens, TTFT 5,640 ms, $0.34.
+B = 54,107 → 108,546, i.e. a 54,439-token step, $0.89.**
+
+**Five traps, all of which bit this PRD's own first draft.** Any script built here must handle them:
+
+1. **The top-level `usage` in `-p` JSON is an aggregate across turns, not a context size.** Probe B's
+   top-level total reads 162,653, which is turn 1 (54,107) plus turn 2 (108,546). Reporting it as a
+   context size overstates by ~50%. Use the per-message `iterations[]` array, or read the transcript
+   per turn.
+2. **Transcripts contain duplicate records per assistant message** — 1.6× to 2.05× inflation on these
+   files. **Dedupe by `message.id`.** Undeduped, `09b45e44` reads as 287 turns and 69.0M cache-read
+   tokens; deduped it is 145 turns and 37.2M. Every per-turn and per-session total is wrong without
+   this, and it is the single most important line in W5.
+3. **Never measure a live session.** `e5afa8cf`'s raw cache-read total moved from 84.0M to 104.8M
+   between two readings minutes apart, because it was still being written to. Skip files whose mtime
+   is within the last few minutes.
+4. **Headless ≠ interactive.** 54,086 headless against 56.6–63.1k interactive. Compare probe-to-probe,
+   never probe-against-a-past-interactive-session.
+5. **TTFT is noisy** — network and load move it. Run the probe 3–5× and take the median before
+   claiming a latency win. A single reading proves nothing.
+
+Cost of the method: about **$0.35–0.90 per probe run**, so a 5× median on both probes is ~$4. Cheap
+for a number that currently gets guessed at. Pass `--no-session-persistence` so probe runs do not
+litter the transcript directory (verify once — the transcript is not needed, since the JSON carries
+the usage).
+
+**What still needs the owner, and cannot be automated:** verification gate 6, the quality check.
+Whether the right rules fired on a real task, and whether the reply is still short and plain, is a
+judgement call. Everything numeric in this PRD is autonomous; that one is not.
 
 ## 3. Decisions already taken
 
@@ -169,20 +240,30 @@ target is met.
 
 ## 5. Work
 
-### W0 — Calibrate the estimate. Do this first.
+### W0 — Build the probe. Do this first, and it needs no human input.
 
-Every budget in this PRD is provisional until this is done.
+The calibration is already done: **2.52 chars/token, measured** (§2.7), and the before-picture is
+recorded there. W0 is now about turning that one-off measurement into a repeatable script, so every
+later gate is a number rather than a request for the owner to run `/context`.
 
-1. Run `/context` in a fresh session and record the real per-section token counts.
-2. Fit the `chars ÷ 3.7` divisor to the measured `CLAUDE.md` figure and update the constant in
-   `scripts/context-budget.mjs`. Danish text with heavy backtick/code density may not tokenize at
-   the English default — measure, don't assume.
-3. Run `/usage`, press `w` for the 7-day view, and record the **attribution** breakdown (per skill,
-   subagent, plugin, MCP server) plus any **behaviour flags** — `long context` and `cache misses`
-   are flagged at the ≥10% threshold. This is the before-picture. (Per-MCP attribution was
-   over-stated before 2.1.222; we are on 2.1.223, so the figures are trustworthy.)
-4. Write both readings into this PRD as a `### W0 results` section so the after-comparison has a
-   fixed reference.
+1. Write **`scripts/baseline-probe.mjs`** (standalone `.mjs`, plain `node`). It shells out to
+   `claude -p … --output-format json`, runs probe A and probe B from §2.7 **n times (default 5)**,
+   and reports the **median** baseline tokens, rule-step tokens, TTFT and cost. Add
+   `"probe": "node scripts/baseline-probe.mjs"` to `package.json`.
+   Handle all five traps in §2.7 — in particular read `iterations[]`, not the top-level `usage`.
+2. `--save <label>` writes the run to `plans/session-performance/probe-log.tsv`; `--compare <a> <b>`
+   diffs two saved labels and exits non-zero if the baseline did not drop. That exit code is what
+   makes W1.4 and the verification gates self-checking.
+3. Run `node scripts/baseline-probe.mjs --save before` and confirm it reproduces §2.7's numbers
+   within a few hundred tokens. If it does not, the probe is wrong, not the PRD.
+4. Refine the divisor per content type if it turns out to matter: markdown prose, dense
+   backtick-heavy rules and `.tsx` source do not tokenize alike, and 2.52 is a blend of all three.
+   **Do not block on this** — every gate that matters is either measured tokens (the probe) or bytes
+   (the guard). The divisor is for readable reporting only.
+5. Optional, and the only step needing the owner: run `/usage` and press `w` to record the 7-day
+   attribution per skill / subagent / plugin / MCP plus the `long context` and `cache misses`
+   behaviour flags. Useful colour, not a gate. (Per-MCP attribution was overstated before 2.1.222;
+   we are on 2.1.223, so the figures are trustworthy.)
 
 ### W1 — Reclaim the startup baseline (~14,500 → ~7,000 tokens)
 
@@ -258,8 +339,11 @@ This is a **move**, not a delete. Route as follows:
 
 Keep, verbatim and first: the "How to talk to the owner" block.
 
-**W1.4 — Verify.** `/context` in a fresh session. **Target: first-turn baseline ≤50,000 tokens**, of
-which ours ≈7,000. If the number does not move, stop and find out why before continuing to W2.
+**W1.4 — Verify, autonomously.** `node scripts/baseline-probe.mjs --save after-w1` then
+`--compare before after-w1`. **Target: baseline ≤ 43,000 tokens** (from 54,086 — ours dropping from
+~21,400 to ~10,400) and TTFT no worse on the 5-run median. No `/context`, no owner in the loop; the
+script's exit code is the gate. If the number does not move, stop and find out why before starting
+W2 — an assumption in §2.1 is then wrong.
 
 ### W2 — Fix glob width
 
@@ -423,9 +507,18 @@ the file reads that should have been delegated.
 sessions, so W1–W3 can be proven against the next ten sessions rather than argued about.
 
 Read `usage` off each assistant message: total context = `input_tokens +
-cache_read_input_tokens + cache_creation_input_tokens`. Note in the script's header comment that
-`input_tokens` alone is the *uncached remainder*, not the prompt size — reading it as the total is
-the obvious mistake and would under-report by ~100×.
+cache_read_input_tokens + cache_creation_input_tokens`.
+
+**Two mandatory correctness rules, both of which the first draft of this PRD got wrong** (§2.7):
+
+- **Dedupe by `message.id` before summing anything.** These transcripts carry each assistant message
+  1.6–2.05× over. Without this, every total is inflated by roughly double and the script confidently
+  reports fiction. Assert it: a run whose raw row count equals its deduped count on these files is a
+  sign the dedupe is not working.
+- **Skip files modified in the last few minutes** — a live session's totals move while you read them.
+
+Note in the script's header that `input_tokens` alone is the *uncached remainder*, not the prompt
+size; reading it as the total under-reports by ~100×.
 
 State plainly in the output that these are token-equivalent list-price figures, not a subscription
 bill.
@@ -631,10 +724,12 @@ the signal that the practice lapsed.
 
 ## 6. Verification
 
-1. **`/context` before and after W1+W2.** First-turn baseline **≤50,000 tokens** (from 56–63k), ours
-   ≈7,000 (from ~14,500). Primary success criterion.
-2. **Open `src/components/math/PlusMinusGame.tsx` and check `/context`.** Loaded rules should total
-   **under 10,000 tokens**, down from ~27,500.
+1. **`node scripts/baseline-probe.mjs --compare before after`.** Baseline **≤43,000 tokens** (from
+   54,086) on a 5-run median, TTFT no worse. Primary success criterion, autonomous, exit-code gated.
+2. **Probe B in the same run.** The turn-1→turn-2 step must fall **below 28,000 tokens** (from
+   54,439) — the file itself is ~14,000 of that and does not change, so this is the rules going from
+   ~40,400 to under ~14,000. Cross-check with `InstructionsLoaded` (W7.3), which names the files
+   rather than inferring from a delta.
 3. **`npm test` green.** Then the three re-breaks in W4, each turning the specific test red.
 4. **`npm run build` and `npm run lint` clean.** No app behaviour changes, so this is a regression
    check on the new `.mjs` + test files and on the `.ts`-vs-`.js` extension convention only. Run
@@ -694,8 +789,9 @@ around issue #16299, which does not affect 2.1.223.
 ## Kickoff prompt
 
 > Implement `plans/session-performance/tmp-prd-session-01-guardrail-budget.md`, W0 through W8, in
-> order. Show me the diff for each work item before applying it, and stop after W1.4 so we can
-> confirm with `/context` that the baseline actually dropped before going further.
+> order. Verify each numeric gate yourself with `scripts/baseline-probe.mjs` rather than asking me to
+> run `/context`, and show me the diff for each work item before applying it.
 
-Rationale for the stop: W1 is where the measurable win is, and if `/context` does not move after
-W1.1–W1.3 then an assumption in §2.1 is wrong and W2 onwards would be built on it.
+W1.4 is still a hard checkpoint, but it no longer needs the owner: the probe's `--compare` exit code
+is the gate, so the session stops itself if the baseline did not move. The only gate that genuinely
+requires the owner is verification 6, the quality check.
