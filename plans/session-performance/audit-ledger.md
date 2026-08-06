@@ -90,9 +90,20 @@ claimed here**, in either direction. Re-measure in a quiet window before quoting
 
 **Open for the owner**
 
-1. Verification gate 6 — the quality check. Run one real task in a game area and one in an audio area
-   and confirm the right rules fire and the reply is still short and plain. If quality dropped, restore
-   emphasis on the *specific* rule that got ignored, not on everything.
+1. Verification gate 6 — the quality check. **The audio half PASSED**, on a real task rather than a
+   synthetic one: session `c14c13e4` started 12:59Z, 38 minutes after this work landed, and fixed the
+   iOS 18.7 hung-`resume()` bug (`6f2353f`). It edited `SimplifiedAudioController.ts`,
+   `audioLiveness.ts` and `SimplifiedAudioContext.tsx` — inside `audio-system.md`'s narrowed scope, so
+   the deep rule loaded where it should — and it edited
+   `.claude/skills/ui-screenshot/reference/recipes.md`, meaning it found and used the W3.5 split rather
+   than tripping over it. It wrote two test files and a simulation probe, so the verification
+   discipline survived the trim. Its first turn was **47,157 tokens against the 56,623–63,105 range of
+   the four pre-change interactive sessions** — the first interactive confirmation, headless probes
+   aside.
+   **Still open: the game half.** No `src/components/**` file was touched, so `audio-call-sites.md`,
+   `layout-contract.md`, `games-*.md` and `game-development.md` — the biggest restructure — remain
+   unexercised on real work. If quality drops there, restore emphasis on the *specific* rule that got
+   ignored, not on everything.
 2. Gate 5 — `node scripts/session-cost.mjs --aggregate` over the next ten sessions; mean first-turn
    baseline should sit visibly below 57,765.
 3. TTFT — re-measure in a quiet window.
