@@ -109,7 +109,8 @@ points to, loaded when you touch matching files.
   reads its table is not verifying that the level is playable** — audit a level by sampling the
   generators, never by reading the table. A harder level must never cost rewards. → `games-catalog.md`.
 - **PWA / delivery / the target device**: network-only, **no service worker** — so **never design a
-  feature around "works offline"**. **The compatibility floor is the child's device: an iPad Pro 2nd gen
+  feature around "works offline"** (the native shell inverts this).
+  **The compatibility floor is the child's device: an iPad Pro 2nd gen
   on iPadOS 17.7.11.** Check any new web/media API against **Safari 17**, not "latest Safari".
   → `pwa-and-device.md` (device record: `docs/device-testing.md`).
 - **Adult tools / bug reports**: the "Til de voksne" corner button opens the lazy `AdultSettings`. Its
@@ -119,13 +120,12 @@ points to, loaded when you touch matching files.
 - **Update banner**: a newer live build shows a **dismissible** pill; applying it is a PIN-gated
   adult-menu item, never a child-tappable reload.
 - **Accounts / auth**: one adult account (Google OIDC + passkey) with N child profiles and local-first
-  progress sync. The app is hard-gated (`AuthGate`); `/api/tts-azure` + `/api/stt` require a 15-minute
-  access JWT; `?nogate=1` bypasses both gates in DEV. → `auth.md`.
+  progress sync. **Guest play needs no account** — `AuthGate` gates sync, not play. `/api/tts-azure` +
+  `/api/stt` need a 15-minute access JWT; `?nogate=1` bypasses both gates in DEV. → `auth.md`.
 - **API endpoints**: the `api/*.ts` Vercel functions are a trust boundary — scoped CORS + origin
   allow-list + per-IP rate limit + no error-detail leaks, via `lib/server-utils.ts` and **mirrored in
   `dev-server.js`**. → `api-endpoints.md`.
-- **Env & secrets**: `.env.local` is the only home for several prod secrets, so a bare `vercel env pull`
-  destroys them. → `env-and-secrets.md`.
+- **Env & secrets**: a bare `vercel env pull` overwrites `.env.local` wholesale. → `env-and-secrets.md`.
 
 ## Verifying without the owner's iPad
 

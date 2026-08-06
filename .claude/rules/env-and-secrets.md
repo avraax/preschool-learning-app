@@ -14,9 +14,15 @@ Every trap below cost real time or risked destroying credentials.
 
 ## `.env.local` is authoritative for some secrets — never overwrite it
 
-Several keys exist **only** in `.env.local` and are absent from Vercel (they were added before the CLI
-was in use). At the time of writing that includes the base64 Google service-account key, the Azure
-region, and the bug-report read key — but **check, don't trust this list.**
+Keys can exist **only** in `.env.local` and be absent from Vercel, and a pull then deletes them.
+**Measure it, don't trust a list** — this one was wrong within days. As of 2026-08-06 only
+`AUTH_DEV_BYPASS` is local-only; the Azure key, the base64 Google service-account key and the
+bug-report read key have all since been added to Vercel:
+
+```bash
+npx vercel env ls 2>/dev/null | awk 'NR>4 && $1 ~ /^[A-Z]/ {print $1}' | sort -u > /tmp/v
+grep -oE '^[A-Z0-9_]+=' .env.local | tr -d '=' | sort -u | comm -23 - /tmp/v   # local-only
+```
 
 - **`vercel env pull` overwrites the target file wholesale.** Run against `.env.local` it silently
   deletes anything Vercel doesn't know about. Always pull to a scratch path and copy the one key you
@@ -25,6 +31,21 @@ region, and the bug-report read key — but **check, don't trust this list.**
 - Before touching `.env.local`, copy it somewhere outside the repo, then afterwards assert every
   pre-existing key survived. Note `grep -oE '^[A-Z_]+='` **misses names containing digits** (e.g. a
   `…_BASE64` suffix) — use `^[A-Z0-9_]+=`.
+
+## The database is a Vercel MARKETPLACE resource, not a standalone Neon project
+
+`vercel integration ls` shows it (`neon-apricot-leaf`). Consequences:
+
+- **The password lives in 16 integration-owned variables** — `DATABASE_URL`, `DATABASE_URL_UNPOOLED`
+  and 14 `POSTGRES_*`/`PG*` aliases. Hand-editing `DATABASE_URL` leaves fifteen stale copies, and the
+  integration may re-sync over it anyway. They move together or not at all.
+- **Rotating the password is NOT possible from here.** `vercel integration` only adds/connects/removes;
+  there is no `NEON_API_KEY` in the repo. It needs a Neon API key or the console (reachable from the
+  Vercel dashboard), after which the integration re-syncs all 16 and production needs a **redeploy** —
+  env changes never reach an existing deployment.
+- **Never rotate it with `ALTER ROLE` over the existing connection.** The database would reject the old
+  password immediately while Vercel still served it, and the integration has no way to learn the new
+  one — strictly worse than not starting.
 
 ## `vercel env` CLI traps
 

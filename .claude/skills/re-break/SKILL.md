@@ -127,6 +127,12 @@ the *generator* for another. A table-only break can pass while the code ignores 
   mutation was half. Restore the entire mechanism (wrap **and** the counting) and it flips. If a break
   produces no observable difference, ask whether the mechanism has more than one part before concluding
   the test is vacuous.
+- **A STRUCTURAL claim asserted against FLATTENED text.** A guard that a privacy-policy section exists
+  matched `/Retsgrundlag/` against the document flattened to headings + body + bullets — and the
+  inflected form "Retsgrundlag**et**" inside a bullet satisfied it, so renaming the section heading kept
+  it green. Whenever the assertion is about *structure* (a section exists, a field is set, an item is in
+  a list), assert against the **structured field** — `doc.sections.map(s => s.heading)` — not the
+  stringified whole. Any substring match over prose is also satisfied by a longer word containing it.
 - **THE FIXTURE WAS EASIER THAN PRODUCTION.** Every other shape here is a regex mis-reading source
   text; this one is the *input*, and it bit twice in one session. A `SessionEnd` hook was tested with an
   old transcript and worked — but `SessionEnd` fires the moment a session ends, and the reader skipped

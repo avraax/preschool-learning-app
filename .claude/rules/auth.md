@@ -171,6 +171,30 @@ table, and our five (`childProfile`, `profileProgress`, `familyPin`, `pinAttempt
   `node --env-file=.env.local scripts/auth-probe-claim.mjs`, which parks the signed shape a real
   callback produces — seeding a RAW token is precisely how this hid behind a green test.
 
+## Guest play (no account), and the effect-order trap it exposed
+
+App Store Guideline 5.1.1(v) requires the app to open playable without a login, so `authGatePolicy` has
+a **`guest`** phase (full play, `canCallPaidApis: false`) and `profileStore` attaches a fixed local child
+`local-guest`. Cheap only because `progressStore` was already inert-until-`attach()`: guest is a new
+CALLER, not a second progress path, and `canSync()` already requires a session token so no sync branch
+was needed. Device-scoped flags in `utils/guestMode.ts`.
+
+- **`canCallPaidApis: false` is the same control as `AUTH_ALLOWED_EMAILS`, not caution.**
+  `/api/tts-azure` bills per character and `/api/stt` per second. A guest costing nothing is what makes
+  an open guest path safe to ship at all.
+- **Auto-guest is decided in `authStore`'s CONSTRUCTOR, not `boot()`** — `boot()` runs from an effect,
+  i.e. after first paint, so deciding there flashes the lock screen on a brand-new install.
+- **React runs a CHILD's effect before its PARENT's**, and `AuthGate.GateBody`
+  (`profileStore.hydrate`) is a child of `AuthProvider` (`authStore.boot()`). Harmless while a
+  session-less device started `signedOut` — the gate blocked and `hydrate` early-returned. Auto-guest
+  unblocks the gate on the FIRST render, so hydrate now runs BEFORE boot: `isDevBypass()` was still
+  false and `?nogate=1` silently attached the guest child instead of `DEV_PROFILE`, with every headless
+  recipe still passing. **Anything `hydrate` reads must be set at construction, never in `boot()`.**
+- **A guest has no PIN**, so `requirePin` routes to the local verifier, finds nothing cached (it is only
+  written after an ONLINE verify), falls through to a server with no account — and locks the adult out
+  of "Til de voksne" entirely. The account-less gate is an arithmetic challenge
+  (`src/config/guestAdultGate.ts`), which is also what Apple means by a parental gate.
+
 ## progressStore is INERT until a profile is attached
 
 The store hydrates at module-import time, before React, the router or the gate — so it cannot know
