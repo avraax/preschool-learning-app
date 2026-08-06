@@ -52,7 +52,11 @@ function parseArgs(argv) {
 const ctxOf = (u) => (u.input_tokens || 0) + (u.cache_read_input_tokens || 0) + (u.cache_creation_input_tokens || 0)
 const usd = (t) => (t.input * RATE.input + t.cacheWrite * RATE.cacheWrite + t.cacheRead * RATE.cacheRead + t.output * RATE.output) / 1e6
 
-function readSession(file) {
+// `allowFresh` exists because the liveness skip below is right for a DIRECTORY SWEEP and wrong for an
+// explicitly named file. SessionEnd fires the moment a session ends, so the transcript it hands us is
+// always seconds old — with the skip applied, the W7.2 hook logged nothing, silently, forever. Naming
+// a file is the caller asserting which one it wants.
+function readSession(file, allowFresh = false) {
   // Third outcome: an unreadable transcript is UNKNOWN, not an empty session and not a crash. The
   // SessionEnd hook passes whatever path it was given, and a throw here would be swallowed by the
   // hook's `stdio: ignore` and read as "nothing to log".
@@ -62,7 +66,7 @@ function readSession(file) {
   } catch (e) {
     return { file, unreadable: String(e.message || e) }
   }
-  if (Date.now() - mtime < LIVE_WINDOW_MS) return { file, live: true }
+  if (!allowFresh && Date.now() - mtime < LIVE_WINDOW_MS) return { file, live: true }
 
   let lines
   try {
@@ -140,7 +144,8 @@ function sessionFiles() {
 
 const args = parseArgs(process.argv.slice(2))
 const files = args.file ? [args.file] : sessionFiles().slice(0, args.last)
-const sessions = files.map(readSession)
+// An explicitly named --file is never treated as live; see readSession.
+const sessions = files.map((f) => readSession(f, Boolean(args.file)))
 const done = sessions.filter((s) => !s.live && !s.empty && !s.unreadable)
 const live = sessions.filter((s) => s.live)
 const unreadable = sessions.filter((s) => s.unreadable)
