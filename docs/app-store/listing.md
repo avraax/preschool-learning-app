@@ -49,8 +49,8 @@ problem. Describing the age and stage it *suits* is fine; asserting it implement
 **Name availability can force a change and is only settleable in App Store Connect** — the name is reserved
 when the app record is created, and "Børnelæring" is an ordinary Danish compound noun, so a collision is
 plausible. **UNKNOWN until you try it.** If `Børnelæring` itself is taken, the fallbacks in order are
-`Børnelæring ABC: 0. og 1. klasse`, `Min Børnelæring: ABC og tal`, then bare `Børnelæring ABC` — recount
-each against the 30-character limit before using it, and keep the subtitle unchanged.
+`Børnelæring ABC: 0.-1. klasse` (29), `Min Børnelæring: ABC og tal` (27), then bare `Børnelæring ABC` (15).
+Counts verified. Keep the subtitle unchanged — a collision is on the name only.
 
 ### 1.3 Keywords — 100 char limit, comma-separated
 
