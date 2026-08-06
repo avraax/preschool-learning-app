@@ -1,8 +1,7 @@
 # Working in this tree
 
 How to work here rather than what to change, so it has no `paths:` scope — the one declared exception in
-`src/config/contextBudget.test.ts`, capped at 4,000 B. `CLAUDE.md` carries the rule, this file the
-incident.
+`src/config/contextBudget.test.ts`, with a byte cap. `CLAUDE.md` carries the rule, this file the incident.
 
 ## Never edit a file with a shell text pipeline
 
@@ -14,7 +13,7 @@ incident.
   happened twice in one session, and the file stays syntactically fine, so nothing fails.
 
 Use the Edit tool. If you must script a patch, single-quote the JS and make a missing anchor **exit
-non-zero** — that also catches multi-line anchors never matching this repo's CRLF.
+non-zero**.
 
 ## Another session may be working in this same tree
 
@@ -27,8 +26,8 @@ working tree:
 - **Never leave work staged, and a clean index is no protection** — an unstaged file is equally exposed.
   Committing promptly is the protection, not tidiness.
 - **A shell error on a git command does not mean nothing happened.** A PowerShell here-string (`@'…'@`)
-  passed to the Bash tool dies *after* `git add` and `git commit` both ran, leaving a truncated garbage
-  message. Check `git log` before retrying or you double-commit.
+  passed to the Bash tool dies *after* `git add` and `git commit` both ran, leaving a garbage message.
+  Check `git log` before retrying or you double-commit.
 - **A subset commit by pathspec can leave your own edit behind** — re-check `git status` after one.
 - **They may also push, and `master` is the deploy trigger.** "Committed but not pushed" is not "not
   deployed": check `git rev-list origin/master..HEAD` before saying something is still local.
@@ -41,19 +40,22 @@ working tree:
 
 Two outages in one session were correct here and broken only in what Vercel shipped: a dynamic
 `import('./auth.ts')` (compiled to a sibling `.js`, specifiers not rewritten → Google sign-in died after
-the round trip), and `public/manifest.json` caught by `.gitignore`'s blanket `*.json` (`/manifest.json`
-served `index.html`, so the iPad icon was a bookmark opening in Chrome). Dev, `vite preview` and a local
-`vercel build` all read the working tree, so none can see either. `curl` the deployed URL or read the
-built output, and guard it (`lib/serverImports.test.ts`, `pwaAssets.test.ts`).
+the round trip), and an untracked `public/manifest.json` (see the `*.json` trap below). Dev, `vite
+preview` and a local `vercel build` all read the working tree, so none can see either. `curl` the
+deployed URL or read the built output, and guard it (`lib/serverImports.test.ts`, `pwaAssets.test.ts`).
 
 An empty `git status` means the working tree **is** HEAD, so a green run already covers the commit; a
 throwaway checkout is only needed after a subset commit of a dirty tree. If you make one (`git worktree
-add` + a `mklink /J` junction to `node_modules`), **check the junction exists** — it fails silently, and
+add` + a `mklink /J` junction to `node_modules`), **check the junction exists** — it fails silently and
 `tsc` then "passes" because it never ran. Remove it with `git worktree remove`, never `Remove-Item
 -Recurse`, which follows the junction into the real `node_modules`.
 
-## Two smaller traps
+## Three smaller traps
 
+- **`.gitignore` carries a blanket `*.json`** (for credentials) with a short `!` allow-list, and a file
+  it swallows is invisible locally by construction. It took `public/manifest.json` (a production
+  outage) and then `.claude/settings.json`, whose permission list had never been tracked at all. Any
+  `.json` the repo needs versioned wants its own `!` negation.
 - **A probe of an external service has three outcomes.** Rate-limits, partial reads and fail-closed 403s
   are UNKNOWN and retry with backoff, never folded into a real verdict — a `.dk` whois rate-limit banner
   read as "domain registered" produced two false results. Calibrate with a known-positive **and** a

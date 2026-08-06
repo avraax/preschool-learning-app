@@ -127,6 +127,16 @@ the *generator* for another. A table-only break can pass while the code ignores 
   mutation was half. Restore the entire mechanism (wrap **and** the counting) and it flips. If a break
   produces no observable difference, ask whether the mechanism has more than one part before concluding
   the test is vacuous.
+- **THE FIXTURE WAS EASIER THAN PRODUCTION.** Every other shape here is a regex mis-reading source
+  text; this one is the *input*, and it bit twice in one session. A `SessionEnd` hook was tested with an
+  old transcript and worked — but `SessionEnd` fires the moment a session ends, and the reader skipped
+  anything modified in the last five minutes, so in production it would have logged nothing, silently,
+  forever; the first real invocation would have been the first failure, with no symptom. A guard on
+  skill `description` length was written against single-line YAML, but the real files use folded
+  scalars (`>-`), so it measured the two-character string `">-"` and every description passed. Neither
+  is detectable by breaking the *code* — the code was right for what it was handed. **Run the guard on
+  the artifact production actually supplies**: the freshly-written file, the folded YAML, the CRLF
+  copy, the empty payload. If you had to construct the input by hand, ask what the real one looks like.
 - **The comment-stripping itself is unproven until you break IT.** Every source-reading guard here strips
   comments first, because the "why" comment sitting right above a fix names the forbidden thing — written
   by the same hand as the guard. So `stripComments` is load-bearing, and a guard can pass either because
