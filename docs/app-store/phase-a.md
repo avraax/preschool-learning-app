@@ -132,6 +132,15 @@ and Memory: `overflowY: 0` and `overflowX: 0` everywhere. No content clipping, n
 console errors, no page exceptions.** The boxes that escape the viewport are the parallax scene's
 deliberate overscan layers and the corner mascot.
 
+**One finding worth recording, from the group A3 added.** On a 440px-tall landscape phone the adult
+root list is six rows plus a header and a pinned footer, which does not fit: the list scrolls (327px of
+content in a 284px box) and **Privatliv, the last row, is below the fold at rest.** It is NOT a dead
+control — measured with `elementFromPoint` after scrolling (`hittable: true`) and confirmed by a real
+click that opened the pane. Standard scrolling behaviour, and iOS Settings does the same. Left alone:
+clawing back 43px would mean cutting the 44px row floor or the version footer, and both cost more than
+this is worth. Worth knowing if a seventh group is ever added, and it is why the iPhone shot 6 is the
+Læring pane rather than the root list.
+
 Portrait is *airy* rather than broken — a landscape-first design at 440×956 leaves large empty bands
 (Min Bog's chapter chips wrap to an orphan row; Stav Ordet has a dead lower third). **Not chased**,
 because PRD §3.9 locks iPhone to landscape via `UISupportedInterfaceOrientations~iphone` in Phase B, so

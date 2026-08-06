@@ -93,6 +93,26 @@ test('a guest reaches the adult gate INSTEAD of the PIN, and the PIN path is unt
   assert.ok(code.indexOf('isDevBypass()') < guestAt)
 })
 
+test('the DEV bypass is detected at construction, so auto-guest cannot pre-empt it', () => {
+  // Found while capturing App Store screenshots: React runs a CHILD's effect before its parent's, and
+  // `AuthGate.GateBody` (hydrate) is a child of `AuthProvider` (boot). That was harmless while a
+  // session-less device started `signedOut` — the gate blocked and hydrate early-returned. Auto-guest
+  // unblocks the gate on the FIRST render, so hydrate began running before boot, `isDevBypass()` was
+  // still false, and `?nogate=1` silently attached the guest child instead of DEV_PROFILE. Every
+  // headless recipe kept working, which is exactly why this needs a test rather than a fix.
+  const code = readFileSync(path.join(SRC, 'services/authStore.ts'), 'utf8')
+    .replace(/\/\*[\s\S]*?\*\//g, ' ')
+    .replace(/(^|[^:])\/\/.*$/gm, '$1')
+  const ctorAt = code.indexOf('constructor()')
+  const bootAt = code.indexOf('boot(): void')
+  const detectAt = code.indexOf('this.devBypass = detectDevBypass()')
+  assert.ok(ctorAt > 0 && bootAt > ctorAt, 'constructor/boot moved — re-point this guard')
+  assert.ok(detectAt > ctorAt && detectAt < bootAt, 'the dev bypass is no longer detected in the constructor')
+  // …and auto-guest must not run under it, or a harness load leaves the browser in guest mode for
+  // every later non-harness load.
+  assert.match(code, /if \(!this\.devBypass && shouldAutoGuest\(\)/)
+})
+
 test('a new question on every open, and after every wrong answer', () => {
   // The only realistic attack: a child watches the adult once and repeats the taps.
   const code = codeOf('components/auth/GuestAdultGate.tsx')

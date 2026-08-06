@@ -83,10 +83,13 @@ Bag en talkode kan du vælge sværhedsgrad, oprette flere børneprofiler og slå
 Appen er skrevet til en 5-årig dreng af hans far, og er tænkt til børn på 5-8 år.
 ```
 
-**Two lines are promises the app cannot keep yet.** "Ingen konto nødvendig for at spille" depends on the
-guest path (PRD blocker 2) and "spillene virker uden internet" depends on bundling the assets into the
-binary (blocker 1). Both are in Phase A/B and both are the plan — but **if either slips, delete that line
-before submitting.** A description that overstates the app is a Guideline 2.3.1 rejection, and it is the
+**Two lines were promises the app could not keep.** Status as of 2026-08-06:
+
+- **"Ingen konto nødvendig for at spille" is now TRUE** — the guest path shipped in Phase A1.
+- **"Al tale … så spillene virker uden internet" is still NOT true** and depends on Phase B1 bundling the
+  assets into the binary. **If B1 slips, delete that line before submitting** — a description that
+  overstates the app is a Guideline 2.3.1 rejection, and the easiest possible one to avoid. The same
+  sentence appears in the English copy in §1.5. A description that overstates the app is a Guideline 2.3.1 rejection, and it is the
 easiest possible one to avoid.
 
 The last line is deliberate. "Skrevet til en 5-årig dreng af hans far" is true, it explains the absence of
@@ -166,7 +169,37 @@ Optional improvement, not a blocker: the subject sits with generous margins, so 
 book is smaller than it could be. A tighter crop would read better on device. That is an art decision, and
 the current icon is perfectly acceptable.
 
-### 2.2 Screenshots — deferred on purpose, plan ready
+### 2.2 Screenshots — CAPTURED 2026-08-06, in `docs/app-store/shots/`
+
+Twelve files, `<slot>-<n>-<name>.png`. **Verified programmatically before upload: exact pixel size, PNG,
+3 channels, no alpha** — `ipad-*` are 2732×2048 and `iphone-*` are 2868×1320, all landscape.
+
+Taken after Phase A, as this section required: guest mode means shot 1 is the section menu rather than a
+sign-in screen, and shot 6 is captured in **real guest mode through the arithmetic parental gate** (not
+`?nogate=1`), so the adult surface shows what a reviewer actually gets — including "Barn / Gæst".
+
+**Three deviations from the plan below, each deliberate:**
+
+1. **Shot 3 is Plus Opgaver, not a ten-frame or counting objects.** The ten-frame was deleted on
+   2026-08-02 (owner: no countable stand-ins on math boards), and `/math/counting` is Tal Quiz, which is
+   deliberately listen-only — it photographs as a speaker icon and four numbers, which shows a browsing
+   parent nothing.
+2. **Shot 4 is Farvejagt, not the colour quiz.** This section asks for "the most visual appeal of any
+   screen"; Hvilken Farve is a deliberately GREYED object beside four flat swatches (the no-giveaway
+   rule), while Farvejagt is a dozen pieces of full-colour baked art.
+3. **Shot 6 is the Læring pane** (difficulty), with the six-group rail visible so Privatliv — where the
+   microphone switch lives — reads as a destination. The switch itself only renders for a signed-in
+   account: in guest mode `/api/stt` is unreachable, so that pane honestly says the mic game needs one.
+   A screenshot of a control a reviewer cannot reach would be the wrong kind of accurate.
+
+**Both sets are the harness, not a device.** The iPad shots are real WebKit at iPad geometry, *not* the
+son's iPad — capture from the device itself if you want rung 3. The iPhone shots are rung 2 permanently
+(§4.2 of the PRD). And this driver cannot play audio, so ignore any audio state in a frame.
+
+Regenerate with the scripts recorded in `docs/app-store/phase-a.md`; the presets `iphone-69` and
+`iphone-69-landscape` are now permanent in `.claude/skills/ui-screenshot/webkit.mjs`.
+
+### 2.2b The original plan (kept for the reasoning)
 
 **Required slots** (from https://developer.apple.com/help/app-store-connect/reference/screenshot-specifications/,
 read 2026-08-06 — 1 to 10 per slot, `.png`/`.jpg`, **no alpha or transparency**):
@@ -303,9 +336,9 @@ gate, which is another reason to render the text **in-app** rather than linking 
 | Name, subtitle, keywords, description, promo text (DA + EN) | **DONE** — §1, paste-ready |
 | Category, age band, copyright, availability, questionnaire answers | **DONE** — §3.2, §3.3 |
 | Screenshot shot list and capture commands | **DONE** — §2.2 |
-| Screenshot files | **Waiting on Phase A** (guest mode changes the first screens) |
-| Privacy policy page + URL | **Waiting on Phase A** (PRD blocker 4) |
-| Support page + URL | **Waiting on Phase A** |
+| Screenshot files | **DONE** — 12 files in `docs/app-store/shots/`, dimensions and alpha verified (§2.2) |
+| Privacy policy page + URL | **DONE** — `/privatliv`, in-app and public. **The owner must read it** (`phase-a.md`) |
+| Support page + URL | **DONE** — `/support`, in-app and public |
 | Name availability | **Only resolvable in App Store Connect** — needs the paid account |
 | Azure voice redistribution rights | **UNKNOWN** — needs a licence read |
 | Export compliance answer | **UNKNOWN** — read Apple's page at submission time |

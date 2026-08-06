@@ -179,12 +179,26 @@ class AuthStore {
   private lastPersistAt = 0
 
   constructor() {
+    // The DEV bypass is detected HERE, not in `boot()`, and the ordering is load-bearing.
+    //
+    // React runs a CHILD's effect before its parent's, and `AuthGate.GateBody` (which calls
+    // `profileStore.hydrate`) is a child of `AuthProvider` (which calls `boot()`). That was harmless
+    // while a session-less device started `signedOut`: the gate blocked, `hydrate` early-returned, and
+    // by the time it ran for real `boot()` had set the flag. Auto-guest below unblocks the gate on the
+    // FIRST render, so `hydrate` now runs before `boot()` — and with the flag still false, `?nogate=1`
+    // silently attached the guest child instead of `DEV_PROFILE` (observed while capturing screenshots:
+    // the adult pane read "Gæst"). Setting it at construction removes the ordering question entirely.
+    this.devBypass = detectDevBypass()
+
     // AUTO-GUEST, decided here and NOT in `boot()` (A1). `boot()` runs from an effect, i.e. after the
     // first paint, so deciding there would flash the lock screen for one frame on the single launch
     // where that matters most: a brand-new install, which is exactly what an App Review reviewer sees.
     // The constructor runs at module import, before React — the same synchronous-hydration discipline
     // as the stored session itself.
-    if (shouldAutoGuest() && !readStored()) enterGuestMode()
+    //
+    // Skipped under the bypass: `?nogate=1` is already fully authed, so writing a guest flag would
+    // leave that device in guest mode for every LATER, non-harness load of the same browser.
+    if (!this.devBypass && shouldAutoGuest() && !readStored()) enterGuestMode()
     this.snapshot = this.computeSnapshot()
   }
 
@@ -217,6 +231,8 @@ class AuthStore {
   boot(): void {
     if (this.booted) return
     this.booted = true
+    // `devBypass` is already set in the constructor (see the ordering note there). Re-reading it is
+    // harmless and keeps this line honest about what boot() guarantees.
     this.devBypass = detectDevBypass()
 
     const stored = readStored()
