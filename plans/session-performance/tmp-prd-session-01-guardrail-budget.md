@@ -2,8 +2,9 @@
 
 **Status:** authored 2026-08-06, NOT implemented.
 **Scope:** `CLAUDE.md`, `.claude/rules/**`, `.claude/skills/**`, `.claude/agents/**`, the Vercel
-plugin, two new measurement scripts, one build-failing guard, and the existing statusline plus two
-hooks (W7). **No app code, no tests of app behaviour, no art, no narration.**
+plugin, two new measurement scripts, one build-failing guard, the existing statusline plus two hooks
+(W7), and a periodic audit skill with its ledger (W8). **No app code, no tests of app behaviour, no
+art, no narration.**
 
 This PRD is self-contained: every number in it was measured in the authoring session and is
 reproduced here, so an implementer starting cold does not need to re-derive anything.
@@ -126,6 +127,7 @@ Be honest about this when reporting progress; do not oversell the baseline cut.
 | W4/W5 tooling | none | none — it stops regrowth | none |
 | W6 `/clear` + subagent habits | largest win | win (less stale context) | **largest cost lever** |
 | W7 statusline + `SessionEnd` report | indirect — makes W6 happen instead of hoping for it | none | indirect, and probably the best effort-to-effect ratio here |
+| W8 periodic audit | none directly | **the only thing that stops model drift** | none directly — it is what keeps W1–W3 from being redone in a few months |
 
 ## 3. Decisions already taken
 
@@ -524,6 +526,109 @@ and note that `settings.local.json` currently sets `"defaultMode": "bypassPermis
 the `permissions.allow` list in `.claude/settings.json` largely redundant — worth tidying while in
 there, but it is not a performance item and must not be bundled into a claim about token savings.
 
+### W8 — Keep it from happening again
+
+W3.7 stops *silent* regrowth: the W4 guard fails the build when a file exceeds its budget. But a
+guard only enforces a number. It cannot notice that a rule became **wrong**, that a skill nobody
+triggers should be deleted, or that a new model release inverted the advice a rule encodes. Those are
+exactly what rotted this time, and none of them trip a byte limit. Without W8 this PRD gets rewritten
+in a few months.
+
+Three decay modes, three different answers:
+
+| Decay | Detected by | Fix |
+|---|---|---|
+| **Size creep** — files grow | W4 guard, mechanically | already solved |
+| **Staleness** — a rule describes behaviour that no longer exists; a skill never fires | nothing today; detectable from `InstructionsLoaded` logs + `/usage` attribution | W8.2 |
+| **Model drift** — guidance written for an older model becomes a liability | nothing local can see it | W8.3, and it needs the official docs |
+
+Model drift is the expensive one and the reason W3 exists at all. Anthropic's own guidance is
+explicit: prompts are per-model artifacts, re-audit at **every model release**, and each migration
+section doubles as a removal checklist.
+
+**W8.1 — A separate `/guardrail-audit` skill.** New `.claude/skills/guardrail-audit/SKILL.md`.
+Deliberately **not** folded into `session-debrief`: debrief runs at the end of most sessions, so it
+must stay cheap, and making the most frequently-invoked skill the most expensive one is the exact
+pattern this PRD removes. Debrief captures what we learned; audit periodically re-examines whether
+what we captured is still true.
+
+`description` (third person, what + when, ≤1,024 chars) should trigger on: a new Claude model or a
+Claude Code version jump, "sessions feel heavy again", "audit the guardrails", "are our rules still
+current", or an explicit `/guardrail-audit`. Body ≤500 lines with the doc-fact tables in
+`reference/*.md` — the skill must obey the rules it enforces.
+
+Workflow:
+
+1. **Read the ledger** (W8.4) — last audit date, model, Claude Code version, and the doc facts that
+   audit relied on. The point is to *diff*, not to re-derive from scratch every time.
+2. **Numbers.** `npm run context:check`, plus `node scripts/session-cost.mjs --aggregate` for the
+   trend since the last audit.
+3. **Staleness** (W8.2).
+4. **Docs** (W8.3).
+5. **Findings.** Use the `shared/prompt-audit.md` rubric: each finding names the pattern it matches,
+   why it is obsolete for the *current* model, and a confidence level; high/medium confidence get a
+   concrete proposed edit, low confidence is flagged only. Load-bearing content — the §4 invariants,
+   prohibitions against demonstrated failures, fragile exact-sequence instructions — is on the
+   keep-list and is not a finding.
+6. **Propose grouped by area, wait for confirmation**, exactly as `session-debrief` principle #4
+   requires. Nothing under `.claude/**` or `CLAUDE.md` changes without the owner's yes.
+7. **Apply confirmed items, then update the ledger** — including what was *rejected* and why.
+
+**An audit that finds nothing must change nothing.** State this in the skill body as a rule, because
+the failure mode of any recurring review is becoming a ritual that edits files to justify having run.
+"Clean, no changes, here are the numbers" is a successful audit.
+
+**W8.2 — Staleness signals, from data we already collect.** Over the sessions since the last audit:
+
+- Which `.claude/rules/*.md` files loaded at all (W7.3's `InstructionsLoaded` log)?
+- Which skills and subagents were invoked (`/usage` attribution, 7-day view)?
+
+A rule that never loaded in ~30 sessions is **either dead or mis-scoped, and those need opposite
+fixes.** Check the glob before concluding anything — `animation-and-performance.md` was the inverse
+case (loading always, when it should have loaded rarely), and a rule that never loads is the same bug
+mirrored. Only after confirming the scope is right does "never fires" mean "delete it". Never delete
+a rule on the strength of the counter alone.
+
+Same test for subagents: `audio-debug-expert` and `audio-consolidation-expert` are already suspected
+of describing a pre-Audio-v2 world (W3.6). If the counter says they have never been invoked, that is
+the evidence to act on.
+
+**W8.3 — Fetch the official docs each audit.** Working from what we already wrote down cannot catch
+model drift by construction — that is precisely what went undetected until this session. Each audit
+WebFetches and diffs against our guardrails:
+
+| Page | What to check for |
+|---|---|
+| `code.claude.com/docs/en/best-practices` | CLAUDE.md content guidance, context-management features, new failure patterns |
+| `code.claude.com/docs/en/costs` | new inspection commands, caching behaviour, attribution changes |
+| `platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices` | body/description limits, disclosure patterns |
+| `claude-api` skill → `shared/prompt-audit.md` | the current cruft-vs-load-bearing rubric |
+| `claude-api` skill → `shared/model-migration.md`, the section for the **current** model | behavioural shifts; each migration checklist is also a removal checklist |
+| `code.claude.com/docs/en/statusline`, `/hooks` | new fields or events worth using (this is how W7.3 was found) |
+
+Record the date and the specific facts relied on, so the next audit diffs against them.
+
+Two traps, both of which this repo has been bitten by. A probe of an external service has **three**
+outcomes — a rate-limited or partial doc fetch is UNKNOWN, not "unchanged", and must not silently
+become a clean bill of health. And Anthropic's docs describe the general case; where a house rule
+contradicts them for a measured, recorded reason, **the house rule wins** — the audit's job is to
+notice the contradiction and ask, not to defer to the newer document.
+
+**W8.4 — The audit ledger.** `plans/session-performance/audit-ledger.md`, committed, append-only.
+One entry per audit: date, Claude Code version, model, the measured baseline, the doc facts relied on
+with their date, findings applied, and **findings rejected with the reason**. That last column is
+what stops the next audit re-litigating a decision the owner already made — the same job this PRD's
+§3 does for the Vercel plugin and the failing test.
+
+**W8.5 — `session-debrief` gains a handoff, not a second job.** Add to its workflow: read the ledger
+and, if the model or Claude Code version has changed since the last audit, or more than ~20 sessions
+have passed, say so in one line and offer `/guardrail-audit`. It does not run the audit itself. This
+is the only nag in the system, and it is one sentence at the end of a session.
+
+**Honest caveat.** W8 is the item most likely to be quietly skipped, because its payoff is invisible
+when it works — a clean audit produces no diff. The ledger is what makes it visible: a gap in it is
+the signal that the practice lapsed.
+
 ## 6. Verification
 
 1. **`/context` before and after W1+W2.** First-turn baseline **≤50,000 tokens** (from 56–63k), ours
@@ -547,7 +652,12 @@ there, but it is not a performance item and must not be bundled into a claim abo
    session to the log, and ending a session is not measurably slower. `InstructionsLoaded` confirms
    that a docs-only session loads no game or audio rules, and that a game-component session loads
    `audio-call-sites.md` rather than `audio-system.md` — that pair is the direct proof W2 worked.
-8. Confirm `git status` is clean at the end and that nothing was left staged.
+8. **W8 dry run.** Invoke `/guardrail-audit` immediately after W1–W7 land. It should report a clean
+   surface and **propose no changes** — everything it would find was just fixed. If it proposes a pile
+   of edits, the skill is a ritual rather than an audit and needs the "finds nothing → changes
+   nothing" rule made harder. Then write the first ledger entry, which doubles as the after-picture
+   for gate 1.
+9. Confirm `git status` is clean at the end and that nothing was left staged.
 
 ## 7. Out of scope
 
@@ -583,6 +693,9 @@ around issue #16299, which does not affect 2.1.223.
 
 ## Kickoff prompt
 
-> Implement `plans/session-performance/tmp-prd-session-01-guardrail-budget.md`. Start with W0
-> (calibrate the token estimate against `/context`) and W1.1 (the missing `paths:` block), then work
-> through in order, showing me the diff for each work item before you apply it.
+> Implement `plans/session-performance/tmp-prd-session-01-guardrail-budget.md`, W0 through W8, in
+> order. Show me the diff for each work item before applying it, and stop after W1.4 so we can
+> confirm with `/context` that the baseline actually dropped before going further.
+
+Rationale for the stop: W1 is where the measurable win is, and if `/context` does not move after
+W1.1–W1.3 then an assumption in §2.1 is wrong and W2 onwards would be built on it.
