@@ -78,7 +78,7 @@ LAVET TIL BØRN
 • Al tale er dansk, syntetisk og lavet på forhånd, så spillene virker uden internet
 
 FOR DE VOKSNE
-Bag en talkode kan du vælge sværhedsgrad, oprette flere børneprofiler og slå mikrofonspillet til eller fra. Mikrofonen er slået fra som standard. Mikrofonspillet og synkronisering mellem enheder kræver internet.
+I de voksnes område kan du vælge sværhedsgrad, oprette flere børneprofiler, læse hvad appen sender hvorhen, og slå mikrofonspillet til eller fra. Området er beskyttet af en opgave, et barn ikke kan løse. Mikrofonen er slået fra som standard, og mikrofonspillet kræver både en konto og internet. Synkronisering mellem enheder kræver også en konto.
 
 Appen er skrevet til en 5-årig dreng af hans far, og er tænkt til børn på 5-8 år.
 ```
@@ -89,8 +89,7 @@ Appen er skrevet til en 5-årig dreng af hans far, og er tænkt til børn på 5-
 - **"Al tale … så spillene virker uden internet" is still NOT true** and depends on Phase B1 bundling the
   assets into the binary. **If B1 slips, delete that line before submitting** — a description that
   overstates the app is a Guideline 2.3.1 rejection, and the easiest possible one to avoid. The same
-  sentence appears in the English copy in §1.5. A description that overstates the app is a Guideline 2.3.1 rejection, and it is the
-easiest possible one to avoid.
+  sentence appears in the English copy in §1.5 — delete it in both places or neither.
 
 The last line is deliberate. "Skrevet til en 5-årig dreng af hans far" is true, it explains the absence of
 monetisation better than any feature bullet, and reviewers read descriptions.
@@ -119,8 +118,10 @@ MADE FOR CHILDREN
 • All speech is Danish, synthetic and generated in advance, so the games work without internet
 
 FOR GROWN-UPS
-Behind a passcode you can set the difficulty, add more child profiles, and turn the microphone game on or
-off. The microphone is off by default. The microphone game and cross-device sync need internet.
+In the grown-ups' area you can set the difficulty, add child profiles, read what the app sends where, and
+turn the microphone game on or off. The area is protected by a task a child cannot solve. The microphone is
+off by default, and the microphone game needs both an account and internet. Cross-device sync also needs an
+account.
 
 Written for a five-year-old boy by his father, and intended for children aged 5-8.
 ```
