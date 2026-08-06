@@ -69,7 +69,11 @@ curl -s -o /tmp/bug-R7K3F.jpg "<screenshotUrl>"  # then READ the jpg — actuall
 3. `report.error` — crashes only: message/stack/componentStack.
 4. `report.diagnostics.breadcrumbs` — the route + tap trail: what the child actually did.
 5. `report.diagnostics.console` — errors/warnings around the incident (TTS fallbacks appear
-   here as "Azure synthesis failed → Web Speech" etc.).
+   here as "Azure synthesis failed → Web Speech" etc.). **An ABSENT line is evidence too.** The ring is
+   chronological and not full unless its first entry post-dates `startedAt`, so a log line that should
+   follow another and doesn't localizes a hang to the statements BETWEEN the two. That is how J62KA was
+   solved: `[audio-unlock] playback element primed OK` present, the `after resume:` line missing, and one
+   bare `await` on a `resume()` that never settled sitting between them.
 6. `report.diagnostics.network` — failed calls: status 0 = network error; `responseSnippet`
    holds the API's error body.
 7. `report.audio` — for sound issues: `ttsHealth.circuitOpen`/`failureCount`, `permission`

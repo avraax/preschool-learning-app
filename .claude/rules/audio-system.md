@@ -364,7 +364,10 @@ race.** The cue itself sits below MUI's modal tier (1300), so an adult dialog co
 **Verifying it: `webkit.mjs` cannot play audio at all**, so a real WebKit run legitimately reaches
 `blocked` and legitimately shows the cue. Rung 2 may assert layout, no-crash and the cue's geometry; it
 may **never** be cited as evidence about the verdict. Use `cdp.mjs --audio-report` for that (and
-`--block-autoplay` to make the cue appear on purpose), and the owner's iPad for the residue — cold
+`--block-autoplay` to make the cue appear on purpose, `--simulate-hung-resume` for a `resume()` that never
+settles — the only way to reach a hung unlock headlessly, since `--block-autoplay` cannot: Chrome hands
+the app a context that is already `running`, so the code never calls `resume()` at all), and the owner's
+iPad for the residue — cold
 launch, app-switcher round trip, Siri, and the Control-Centre mute switch, which is the only way to test
 `audioSession.type`.
 
@@ -391,7 +394,15 @@ iOS robustness gotchas (PRD-06), easy to regress:
 - `visibilitychange:hidden` cancels TTS so the stall timer is disarmed; otherwise a backgrounded PWA
   re-speaks the clip (in the Web Speech voice) on return.
 - `ensureAudioReady` is **async** and awaits `initializeAudio()`, so the first tap after load/suspension
-  isn't silently swallowed.
+  isn't silently swallowed — but **every await in the unlock path is BOUNDED** (`settleWithin`, with the
+  two budgets in `utils/audioLiveness.ts`). An iOS `AudioContext.resume()` promise **can never settle**,
+  and one bare `await` on it left the whole app mute for a session: `initializeAudio()` never resolved, so
+  its de-dupe promise (`initPromiseRef`) never cleared and every later `speak()` awaited the same dead
+  promise, while Howler's music and SFX played on. Verification is allowed to fail to ARRIVE; it is not
+  allowed to hang. A timeout is **no evidence** (`'unknown'`, never `'blocked'` — the prime had already
+  succeeded) and it **plays anyway**, for the same reason `isWorking` is permissive. Two independent
+  brakes, because the thing that wedges is inside one of them: `resume()`/prime inside `initializeAudio`,
+  and the whole unlock from `ensureAudioReady`.
 
 ## Narration health: `isWorking` is not "the child can hear it"
 

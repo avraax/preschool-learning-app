@@ -70,14 +70,18 @@ red test's name and records a PASS for a break that proved nothing. That is the 
 exists to catch, one level up. Copy each `expect` from the test name rather than retyping it, and when a
 break reports WRONG TEST, read the red list before touching the mutation.
 
-**Every source file in this repo is CRLF**, so a multi-line `from` written with `\n` never matches and
-the entry silently skips — 5 of 22 breaks vanished that way in one pass, and the harness still printed a
-pass rate. Normalise both sides to the file's own endings (`s.replace(/\r?\n/g, '\r\n')` when the file
-contains `\r\n`), and make a missed anchor exit non-zero rather than log-and-continue.
+**Line endings are MIXED in this repo** — most source files are CRLF, but not all (measured:
+`src/contexts/SimplifiedAudioContext.tsx` is LF while its own guard file is CRLF). So a multi-line `from`
+written with `\n` — or with `\r\n` — never matches in half the tree and the entry silently skips: 5 of 22
+breaks vanished that way in one pass, and the harness still printed a pass rate. **Read the target's own
+endings and normalise to those**, never to a repo-wide assumption, and make a missed anchor exit non-zero
+rather than log-and-continue.
 **The same trap lives in the TEST**, not just the harness: a source-reading guard whose own multi-line
 anchor is written with `\n` never matches, and the assertion that fires is "could not find X — re-point
-this guard" rather than the defect. Normalise in the `codeOf` helper (`.replace(/\r\n/g, '\n')` alongside
-the comment-stripping) so every anchor in that file can be written naturally.
+this guard" rather than the defect. Either keep every forbidden anchor **single-line** (so the endings
+can't matter), or normalise in the `codeOf` helper (`.replace(/\r\n/g, '\n')` alongside the
+comment-stripping) so every anchor in that file can be written naturally. A guard that forbids a
+*multi-line* string across a mixed-EOL tree passes vacuously and looks identical to one that holds.
 
 Prefer breaking **both** sides where an invariant spans two layers: mutate the *table* for one entry and
 the *generator* for another. A table-only break can pass while the code ignores the table entirely.
