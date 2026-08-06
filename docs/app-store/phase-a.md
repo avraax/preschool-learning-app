@@ -198,8 +198,19 @@ stripping off.
 
 ## Still the owner's, before this can be submitted
 
-1. **Read the privacy policy** and stand behind it (A2).
-2. **Verify Google Cloud STT data logging / model-improvement is OFF** (PRD §4.3). The policy asserts it.
-3. **Check the Azure AI Speech licence covers redistributing synthesized audio inside a shipped app** —
-   `public/sounds/tts/` is 31 MB of recordings of a licensed voice (listing §3.3, still UNKNOWN).
+**Three of the four items here were closed by the audit in `policy-verification.md`** (2026-08-06),
+which checked every factual claim against the code and every required element against Apple's guidelines
+and GDPR Art. 13. Read that file rather than the policy itself; what remains is short:
+
+1. **Confirm the Google Cloud data-logging box is unticked.** Google's own doc says the default is off
+   ("By default, Cloud Speech-to-Text does not log customer audio data or transcripts") and opting in is
+   deliberate — but the project's actual setting has no API and was not probed. One glance in the console.
+2. **Decide whether the policy is legally sufficient for you.** It now describes the app accurately and
+   contains every Art. 13 element, and four wrong claims were found and fixed — but "accurate and
+   complete" is not "legally sufficient", and that part is a determination, not a fact.
+3. **Cut the "virker uden internet" line from the description if Phase B1 slips.** Still not true today.
 4. Everything in PRD §4.4 Phase C: enrolment and the 99 USD, EU DSA trader status, the ASC API key.
+
+**Closed:** the Azure licence question (Microsoft's Code of Conduct for AI Services contains no
+prohibition on shipping prebuilt-voice output inside your own app — but it *does* require disclosing that
+the voice is synthetic, which the app was failing and the listing contradicted; fixed).

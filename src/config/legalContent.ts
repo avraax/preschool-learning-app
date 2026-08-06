@@ -85,14 +85,26 @@ export const PRIVACY_DA: { title: string; intro: string[]; sections: LegalSectio
   intro: [
     `Børnelæring er en dansk læringsapp til børn. Den er skrevet af en far til hans egen søn, den er gratis, og den tjener ingen penge på data. Der er ingen reklamer, ingen sporing og ingen analyseværktøjer i appen.`,
     `Denne politik beskriver præcis hvilke data appen behandler, hvornår de forlader enheden, hvem der modtager dem, og hvordan du får dem slettet igen. Dataansvarlig er ${CONTROLLER.name}, ${CONTROLLER.email}.`,
+    `Al tale i appen er syntetisk — den er skabt af en computer, ikke indtalt af et menneske. Den er lavet på forhånd og ligger færdig i appen.`,
     `Senest opdateret ${PRIVACY_UPDATED_DA}.`,
   ],
   sections: [
     {
       heading: 'Du behøver ikke en konto',
       body: [
-        'Appen kan spilles uden at oprette noget som helst. Spiller du uden konto, bliver alt — fremgang, belønninger, sværhedsgrad og indstillinger — kun gemt på selve enheden. Der sendes ingen personoplysninger nogen steder.',
+        'Appen kan spilles uden at oprette noget som helst. Spiller du uden konto, bliver alt — fremgang, belønninger, sværhedsgrad og indstillinger — kun gemt på selve enheden. Der sendes ingen oplysninger om barnet nogen steder.',
+        'Appen henter dog stadig sig selv fra vores egen server, og den spørger jævnligt, om der findes en nyere version. Som ved ethvert besøg på en hjemmeside ser serveren en IP-adresse og hvilken slags enhed der spørger. Det bruges ikke til noget andet, deles ikke med nogen og kobles ikke til dit barn.',
         'En konto er frivillig, og den giver to ting: flere børneprofiler, og at fremgangen følger med til en anden enhed.',
+      ],
+    },
+    {
+      heading: 'Retsgrundlag',
+      bullets: [
+        'Spiller I uden konto: appen behandler ingen personoplysninger om barnet, så der er intet at give samtykke til.',
+        'Har du en konto: vi behandler din e-mailadresse, børneprofilerne og fremgangen for at kunne levere det, du har bedt om — synkronisering og flere profiler. Retsgrundlaget er aftalen mellem dig og os (databeskyttelsesforordningens artikel 6, stk. 1, litra b).',
+        'Mikrofonen i "Sig et Ord": dit udtrykkelige samtykke (artikel 6, stk. 1, litra a), givet af en voksen bag talkoden. Du kan trække det tilbage når som helst ved at slå mikrofonen fra igen.',
+        'Fejl- og nedbrudsrapporter: vores legitime interesse i at kunne rette fejl i appen (artikel 6, stk. 1, litra f).',
+        'Appen træffer ingen automatiske afgørelser om dit barn og laver ingen profilering.',
       ],
     },
     {
@@ -116,6 +128,7 @@ export const PRIVACY_DA: { title: string; intro: string[]; sections: LegalSectio
         'Med mikrofonen slået til: barnets stemmeoptagelse fra "Sig et Ord", når barnet holder mikrofonknappen nede. Optagelsen sendes til genkendelse og gemmes ikke.',
         'Hvis du selv sender en fejlrapport fra "Til de voksne": et skærmbillede og teknisk information om enheden. Det sker kun, når du trykker på det.',
         'Hvis appen går ned: en teknisk fejlbeskrivelse uden skærmbillede, så fejlen kan rettes.',
+        'Hvis et login mislykkes: en teknisk rapport med et skærmbillede af login-skærmen, så fejlen kan findes. Den sendes automatisk, uden at du trykker på noget. Selve koden og adgangsnøgler fjernes fra billedet, før det sendes, og rapporten indeholder aldrig din e-mail eller din kode.',
       ],
     },
     {
@@ -130,6 +143,13 @@ export const PRIVACY_DA: { title: string; intro: string[]; sections: LegalSectio
       heading: 'Hvem modtager data',
       body: [EQUAL_PROTECTION_DA],
       bullets: PROCESSORS.map((p) => `${p.name}: ${p.da}`),
+    },
+    {
+      heading: 'Behandling uden for EU',
+      body: [
+        'Alle fire tjenester er valgt og sat op til at køre i EU: databasen ligger i Frankfurt, talegenkendelsen i Googles EU-region, taleoplæsningen i Vesteuropa, og serverfunktionerne i Frankfurt.',
+        'Google, Microsoft og Vercel er amerikanske selskaber, så det kan ikke udelukkes, at data i enkelte tilfælde tilgås fra USA, f.eks. ved support. Overførsler til USA sker i så fald på grundlag af EU-Kommissionens standardkontraktbestemmelser og de pågældende selskabers certificering under EU-US Data Privacy Framework.',
+      ],
     },
     {
       heading: 'Hvad appen IKKE gør',
@@ -154,7 +174,16 @@ export const PRIVACY_DA: { title: string; intro: string[]; sections: LegalSectio
     {
       heading: 'Dine rettigheder',
       body: [
-        `Du kan bede om indsigt i, rettelse af eller sletning af de data, appen har om dig og dit barn, og du kan trække et samtykke tilbage. Skriv til ${CONTROLLER.email}. Du kan også klage til Datatilsynet.`,
+        `Skriv til ${CONTROLLER.email}, så svarer jeg. Du har ret til:`,
+      ],
+      bullets: [
+        'at få indsigt i de data, appen har om dig og dit barn,',
+        'at få rettet noget, der er forkert,',
+        'at få det slettet — det kan du også selv gøre inde i appen,',
+        'at bede om, at behandlingen begrænses, eller at gøre indsigelse mod den,',
+        'at få dine data udleveret i et almindeligt maskinlæsbart format,',
+        'at trække et samtykke tilbage, uden at det påvirker det, der allerede er sket,',
+        'og at klage til Datatilsynet (datatilsynet.dk), hvis du mener, noget er galt.',
       ],
     },
     {
@@ -171,6 +200,7 @@ export const PRIVACY_EN: { title: string; intro: string[]; sections: LegalSectio
   intro: [
     'Børnelæring is a Danish learning app for children, written by a father for his own son. It is free, it carries no advertising, no tracking and no analytics, and it makes no money from data.',
     `This policy describes exactly what the app processes, when anything leaves the device, who receives it, and how to have it deleted. The data controller is ${CONTROLLER.name}, ${CONTROLLER.email}.`,
+    'All speech in the app is synthetic — generated by a computer, not recorded by a person. It is generated in advance and ships inside the app.',
     `Last updated ${PRIVACY_UPDATED_EN}.`,
   ],
   sections: [
@@ -189,6 +219,18 @@ export const PRIVACY_EN: { title: string; intro: string[]; sections: LegalSectio
         "With the microphone switched on: the child's voice recording from \"Sig et Ord\", while the child holds the microphone button. It is sent for recognition and is not stored.",
         'If you send a problem report yourself: a screenshot and technical device information. Only when you tap it.',
         'If the app crashes: a technical error description with no screenshot.',
+        'If a sign-in fails: a technical report with a screenshot of the sign-in screen, sent automatically without you tapping anything. The passcode and any credentials are stripped from the image first, and the report never contains your email or your passcode.',
+      ],
+    },
+    {
+      heading: 'Legal basis, and processing outside the EU',
+      bullets: [
+        'Without an account the app processes no personal data about the child, so there is nothing to consent to.',
+        'With an account: your email address, the child profiles and the progress are processed to deliver what you asked for — sync and multiple profiles. The basis is the contract between you and us (GDPR Article 6(1)(b)).',
+        'The microphone in "Sig et Ord": your explicit consent (Article 6(1)(a)), given by an adult behind the passcode and withdrawable at any time.',
+        'Error and crash reports: our legitimate interest in being able to fix the app (Article 6(1)(f)).',
+        'No automated decision-making and no profiling.',
+        'All four services are configured to run in the EU (database in Frankfurt, speech recognition in Google’s EU region, speech synthesis in West Europe, server functions in Frankfurt). Google, Microsoft and Vercel are US companies, so access from the US cannot be excluded — for example during support. Any such transfer relies on the European Commission’s Standard Contractual Clauses and those companies’ EU-US Data Privacy Framework certification.',
       ],
     },
     {

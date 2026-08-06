@@ -58,7 +58,7 @@ Paste as-is. The bullet character is `•` (U+2022), not an emoji, so it is cons
 no-emoji rule.
 
 ```
-Børnelæring er en rolig, dansk læringsapp til børn i førskole- og indskolingsalderen. Fem verdener, 24 spil og en rigtig dansk stemme, der læser alt højt — så barnet kan spille selv, også før det kan læse.
+Børnelæring er en rolig, dansk læringsapp til børn i førskole- og indskolingsalderen. Fem verdener, 24 spil og en tydelig dansk stemme, der læser alt højt — så barnet kan spille selv, også før det kan læse.
 
 FEM OMRÅDER
 • Alfabetet — find bogstaver, hør deres lyd og stav korte ord
@@ -75,7 +75,7 @@ LAVET TIL BØRN
 • Ingen køb inde i appen
 • Ingen sporing og ingen analyseværktøjer
 • Ingen konto nødvendig for at spille
-• Al tale er dansk og indtalt på forhånd, så spillene virker uden internet
+• Al tale er dansk, syntetisk og lavet på forhånd, så spillene virker uden internet
 
 FOR DE VOKSNE
 Bag en talkode kan du vælge sværhedsgrad, oprette flere børneprofiler og slå mikrofonspillet til eller fra. Mikrofonen er slået fra som standard. Mikrofonspillet og synkronisering mellem enheder kræver internet.
@@ -98,7 +98,7 @@ monetisation better than any feature bullet, and reviewers read descriptions.
 ### 1.5 Description — English (en-US locale, and useful context for the reviewer)
 
 ```
-Børnelæring is a calm Danish learning app for children in preschool and the first school years. Five worlds, 24 games, and a real Danish voice that reads everything aloud — so a child can play alone, even before learning to read.
+Børnelæring is a calm Danish learning app for children in preschool and the first school years. Five worlds, 24 games, and a clear Danish voice that reads everything aloud — so a child can play alone, even before learning to read.
 
 FIVE AREAS
 • The alphabet — find letters, hear their sounds, spell short words
@@ -116,7 +116,7 @@ MADE FOR CHILDREN
 • No in-app purchases
 • No tracking and no analytics
 • No account needed to play
-• All speech is Danish and pre-recorded, so the games work without internet
+• All speech is Danish, synthetic and generated in advance, so the games work without internet
 
 FOR GROWN-UPS
 Behind a passcode you can set the difficulty, add more child profiles, and turn the microphone game on or
@@ -134,10 +134,10 @@ speakers live). Keep this English copy for App Review, not for the store.
 ### 1.6 Promotional text — 170 char limit, editable without a new build
 
 ```
-Fem verdener, 24 spil og en rigtig dansk stemme. Ingen reklamer, ingen køb inde i appen og ingen sporing - bare bogstaver, tal og farver i dit barns eget tempo.
+Fem verdener, 24 spil og en tydelig dansk stemme. Ingen reklamer, ingen køb inde i appen og ingen sporing - bare bogstaver, tal og farver i dit barns eget tempo.
 ```
 
-**160 characters.** This field is the only listing copy you can change without submitting a build, so keep
+**159 characters.** This field is the only listing copy you can change without submitting a build, so keep
 it for news ("Nu med engelsk", "Nye klistermærker") rather than permanent description material.
 
 ### 1.7 What's New
