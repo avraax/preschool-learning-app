@@ -41,6 +41,45 @@ keeps the existing guardrails accurate. It is the maintainer of CLAUDE.md, `.cla
 5. **Flag divergences.** If a change we made diverges from what CLAUDE.md or a rule currently states,
    call it out explicitly and confirm before rewriting maintained prose.
 
+## The budget (PRD session-01) — check it before you propose anything
+
+This system regrew to ~21,400 tokens on every session and ~40,400 tokens injected by opening one game
+component, entirely through debriefs adding a paragraph at a time with nothing to notice. It is now
+enforced by `src/config/contextBudget.test.ts`, which fails the build. So:
+
+- **Run `npm run context:check` first** and show the current numbers with your proposal.
+- **State the byte and token impact of every proposed item**, per artifact. "Adds ~600 B to
+  `games-math.md`" is part of the proposal, not an afterthought.
+- **Every new rule needs a `paths:` block.** The one exception (`working-in-this-tree.md`) is declared
+  in the guard with a reason and a cap; a second exception needs the same.
+- **A glob may not be wider than the rule's subject**, and `src/components/**/*.tsx` is reserved for
+  rules under 6,000 B — it is paid on the single most common edit in the repo. Two small rules own it
+  (`audio-call-sites.md`, `layout-contract.md`); a third is a regression.
+- **Adding to `CLAUDE.md` means removing something**, or arguing that the 12,000 B budget should rise.
+- **Prefer a pointer in `CLAUDE.md` plus detail in a scoped rule** over prose in `CLAUDE.md`.
+- A `SKILL.md` body stays under 500 lines, with detail in one-level-deep `reference/*.md` siblings.
+- Raising a budget is a decision: the numbers are pinned as literals in both the script and the test,
+  so it cannot happen quietly.
+
+## Write it for the current model, not the last one
+
+Prompts are per-model artifacts. Four patterns that cost quality on Opus 5, all of which this repo had:
+
+- **Emphasis without a reason.** When many instructions are marked critical the marker stops carrying
+  information, and the prompt's register becomes the reply's register. Keep every prohibition that
+  encodes a demonstrated failure — with its one-line *because* — and drop the CAPS from the rest.
+  `LOCAL GREEN PROVES NOTHING` becomes `Local green proves nothing about the deployed artifact — two
+  outages in one session were correct in the tree and broken in what Vercel shipped.`
+- **Verification scaffolding.** Opus 5 verifies its own work unprompted, so "double-check", "re-verify
+  before responding" and similar produce over-verification. Don't add them. (The `/re-break` discipline
+  is *not* this — it is a concrete procedure for a demonstrated repeat failure, and it stays.)
+- **Delegation encouragement.** Opus 5 reaches for subagents more readily than 4.8, not less. Never add
+  a "delegate this" line.
+- **Archaeology.** Authority comes from the behaviour prescribed, not the incident that motivated it.
+  Keep at most one trailing *why* clause; move dated narratives out of instruction bodies. Two
+  deliberate exceptions: the "How to talk to the owner" dates, which *are* the argument, and a date
+  that distinguishes a live constraint from a dead one (iPadOS 17.7.11).
+
 ## Workflow
 
 1. **Extract.** From the session, list what's worth keeping: conventions established, gotchas that bit
@@ -99,4 +138,13 @@ constraints, and minimal examples for skills/subagents. The essentials:
 - Confirm a new/edited skill shows in `/skills` (or "what skills are available?") and a subagent in
   the agent list; if it doesn't, check the YAML frontmatter parses.
 - Sanity-check the `description` actually reads like the moment it should trigger.
+- **Run `npm run context:check` again** and report the before/after budget alongside the change list.
 - Report what changed and where, and note anything left for the user to ratify.
+
+## Hand off to `/guardrail-audit` when it is due
+
+Read `plans/session-performance/audit-ledger.md`. If the model or the Claude Code version has changed
+since the last entry, or more than ~20 sessions have passed, say so in **one line** and offer
+`/guardrail-audit`. Do not run the audit here — this skill captures what we learned; the audit
+periodically re-examines whether what we captured is still true, and making the most frequently
+invoked skill the most expensive one is the exact pattern PRD session-01 removed.

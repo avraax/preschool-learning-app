@@ -42,6 +42,9 @@ private-key-base64.txt
 # the SPA rewrite and answered with index.html, and Safari — finding no installable web app — added a
 # plain BOOKMARK to the home screen, which opens in the default browser instead of standalone.
 !public/manifest.json
+# Project Claude config: hooks + the permission allow-list. Shared, no secrets.
+# `.claude/settings.local.json` stays ignored - it is personal (defaultMode, extra allows).
+!.claude/settings.json
 
 # Audio cache
 public/audio-cache/
@@ -58,3 +61,8 @@ tts-samples/
 
 .vercel
 .env*
+
+# PRD session-01: machine-generated session telemetry. probe-log.tsv IS committed (it is the
+# before/after evidence for the guardrail budget); these two grow without bound.
+plans/session-performance/session-log.tsv
+plans/session-performance/instructions-loaded.tsv

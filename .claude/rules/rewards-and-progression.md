@@ -10,7 +10,9 @@ paths:
   - "src/components/common/rewardRingGeometry.ts"
   - "src/components/common/RoundResultScreen.tsx"
   - "src/components/common/StickerReveal.tsx"
-  - "src/hooks/use{Round,BrowseXp,Progress}.ts"
+  - "src/hooks/useRound.ts"
+  - "src/hooks/useBrowseXp.ts"
+  - "src/hooks/useProgress.ts"
   - "src/components/rewardSurfaces.test.ts"
   - "api/progress.ts"
 ---

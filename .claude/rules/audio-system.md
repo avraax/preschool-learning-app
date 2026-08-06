@@ -8,7 +8,10 @@ paths:
   - "src/config/audioReadiness.ts"
   - "src/utils/audioLiveness.ts"
   - "src/components/common/AudioBlockedCue.tsx"
-  - "src/components/**/*.tsx"
+  - "src/services/sfxClient.ts"
+  - "src/services/audioFormat.test.ts"
+  - "prebake-tts.mjs"
+  - "src/config/gamePhrases.ts"
 ---
 
 # Centralized Audio System Rules
@@ -222,13 +225,19 @@ overrides — components AND `shared-narration-clips.js` call the same builders,
   pool). To name a letter that isn't a word's initial, speak the letter NAME — baked for all 29, and
   already what placing a letter echoes.
 
-## Mandatory Rules
+## The five rules, and why each one exists
 
-1. **NEVER** create audio management code outside this system
-2. **NEVER** use Web Speech API, Howler.js, or HTML5 Audio directly in components
-3. **NEVER** create component-level `isPlaying`/audio state (read it from the hook if needed)
-4. **ALWAYS** use the `useSimplifiedAudioHook()` hook in components
-5. **ALWAYS** add new audio capabilities as methods on `SimplifiedAudioController`, exposed through the hook
+1. No audio management outside this system — the single-audio-at-a-time guarantee is enforced in one
+   place, and a second owner reintroduces overlapping narration.
+2. No component importing Web Speech API, Howler or HTML5 Audio directly. The one deliberate exception
+   is `sfx` (`src/services/sfxClient.ts`), a separate short channel that must NOT be folded in here —
+   it is what lets a tap cue and a spoken line overlap.
+3. No component-level `isPlaying`/audio state — two sources of truth drift, and the hook already
+   exposes it.
+4. Components reach audio through `useSimplifiedAudioHook()` (aliased `useSimplifiedAudio`), so
+   cancellation and the readiness verdict apply uniformly.
+5. New capabilities go on `SimplifiedAudioController` and are exposed through the hook, for the same
+   reason as rule 1.
 
 ## Correct Pattern
 

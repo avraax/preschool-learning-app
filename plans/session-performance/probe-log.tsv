@@ -1,0 +1,5 @@
+label	timestamp	n	model	ccVersion	baselineTokens	stepTokens	ttftMs	costUsd	unknowns
+before	2026-08-06T08:23:09.653Z	5	claude-opus-5[1m]	2.1.223	53873	54431	4945	1.6383	0
+after-w1	2026-08-06T09:02:29.203Z	5	claude-opus-5	2.1.223	39282	54439	35432	1.8002	0
+after-w2	2026-08-06T09:48:25.501Z	3	claude-opus-5	2.1.223	39467	26675	48344	1.0538	0
+after	2026-08-06T12:21:04.705Z	5	claude-opus-5	2.1.223	40032	26727	9621	1.2194	0

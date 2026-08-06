@@ -1,10 +1,21 @@
 ---
 paths:
-  - "src/components/**/*.tsx"
+  - "src/theme/phoneMedia.ts"
+  - "src/theme/buildTheme.ts"
   - "src/components/common/LearningGrid.tsx"
+  - "src/components/common/GameShell.tsx"
+  - "src/components/common/GameSelectionLayout.tsx"
+  - "src/components/common/answerGrid.ts"
+  - "src/components/common/mascotCorner.ts"
+  - "src/config/referenceViewports.ts"
+  - "src/components/album/StickerAlbum.tsx"
 ---
 
 # Responsive Design & Layout Rules
+
+The layout contract every component must satisfy is in `.claude/rules/layout-contract.md`, which is what
+loads on a component edit. This file is the deep reference behind it — the derivations, the measured
+numbers and the traps that only bite when the work is layout infrastructure.
 
 ## Core Principle
 
@@ -62,14 +73,9 @@ where that shell hides the corner mascot), and it has to be **measured** — thi
 
 ### A green unit suite is NOT device coverage
 
-`sceneLayers.test.ts` is the ONLY unit consumer of `REFERENCE_VIEWPORTS`, and it is **insensitive to
-viewport size**: `overscanPx` is `max(fraction × size, ceil(travel) + 6)`, so its `overscan < travel` term
-can never be true at any viewport, and the one term that scales with height (`offsetY`) sits on a single
-layer that is in `OFFSET_EXEMPT`. Adding a 1×1 viewport still passed. It remains worth keeping — it catches
-a NEW nudged edge-covering layer, which is what it was written for — but **adding a viewport to that array
-buys no layout coverage.** Device-size checking comes from the browser sweep
-(`.claude/skills/ui-screenshot/sweep.mjs --phase layout`), which measures real rects in a real engine and
-confirms them by hit-test.
+Adding a viewport to `REFERENCE_VIEWPORTS` buys no layout coverage — the derivation is in
+`.claude/rules/pwa-and-device.md`. Device-size checking comes from the browser sweep
+(`.claude/skills/ui-screenshot/sweep.mjs --phase layout`), which measures real rects in a real engine.
 
 ## MUI units & this project's breakpoints — two things that don't read like traps
 

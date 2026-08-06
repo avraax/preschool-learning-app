@@ -1,6 +1,7 @@
 # PRD Session-01 — The guardrail token budget
 
-**Status:** authored 2026-08-06, NOT implemented.
+**Status:** authored 2026-08-06; **W0-W8 IMPLEMENTED 2026-08-06.** Measured results, the corrections
+this PRD needed, and what is left for the owner are in `plans/session-performance/audit-ledger.md`.
 **Scope:** `CLAUDE.md`, `.claude/rules/**`, `.claude/skills/**`, `.claude/agents/**`, the Vercel
 plugin, two new measurement scripts, one build-failing guard, the existing statusline plus two hooks
 (W7), and a periodic audit skill with its ledger (W8). **No app code, no tests of app behaviour, no
@@ -99,6 +100,13 @@ Invoking the bundled `claude-api` skill during the authoring session added rough
 in one tool result** — more than half the startup baseline, in a single call. Our own
 `ui-screenshot/SKILL.md` is **59,006 B (~16,000 tok)** in the body, against Anthropic's documented
 ≤500-line guidance, and every invocation pays it in full.
+
+> **Corrected 2026-08-06 during implementation: that 40,000 was understated ~6×.** `session-cost.mjs`
+> measured the authoring session (`f2e53e6b`) turn by turn: turn 5 → turn 6 went from 79,510 to
+> **323,267** tokens of context — a **+243,757-token single turn**, attributed to `ToolSearch` +
+> `Skill`. That one call is larger than four full sessions' startup baselines combined, and it is why
+> the `/guardrail-audit` skill tells you to load `claude-api` deliberately and preferably in a session
+> you are about to end. `ui-screenshot/SKILL.md` is now **5,652 B / 70 body lines** (W3.5).
 
 ### 2.4 Where the tokens actually go
 
@@ -382,6 +390,27 @@ scoping the catalogue per section, or converting it to a skill with one file per
 Record the decision and the reason for each of the 15 rules in a table in this PRD, so the next
 debrief does not redo the analysis.
 
+**W2.3 as implemented (2026-08-06).** 15 rules became 24. Bytes are post-split.
+
+| Rule | B | Decision | Reason |
+|---|---:|---|---|
+| `audio-system.md` | 36,880 | **narrowed** — dropped `src/components/**/*.tsx`, added `sfxClient.ts`, `audioFormat.test.ts`, `prebake-tts.mjs`, `gamePhrases.ts` | engine + prebake reference; a component author needs none of it |
+| `audio-call-sites.md` | 2,400 | **new**, owns `src/components/**/*.tsx` | the 8 things a component can get wrong |
+| `responsive-design.md` | 20,130 | **narrowed** to layout infrastructure (9 files) | derivations, measured overlaps, aspect-ratio budget, corner-clipping formula |
+| `layout-contract.md` | 5,998 | **new**, owns `src/components/**/*.tsx` | the contract itself, held under the 6,000 B ceiling |
+| `games-catalog.md` | 7,542 | **split** — preamble keeps all six section globs | genuinely cross-game: difficulty spine, no-giveaway, pool-vs-bag, both-gestures |
+| `games-{math,alphabet,ordleg,english,farver,memory}.md` | 1,650–6,336 | **new**, one per section directory | a per-game catalogue is a reference; a math edit has no use for the Farver entries |
+| `game-development.md` | 9,894 | **split** — keeps the five section globs | always-on contract: two game types, interaction parity, entry audio, advance-lock |
+| `game-authoring.md` | 12,597 | **new**, scoped to the primitives themselves | `UnifiedQuizGame` config + shared-primitives catalogue — needed when *creating*, not editing |
+| `animation-and-performance.md` | 9,197 | **scoped** (W1.1) | was the only rule with no `paths:` |
+| `working-in-this-tree.md` | 4,304 | **new**, deliberately unscoped | fires before any file is opened, so no glob can predate it — the one guard allowlist entry |
+| `rewards-and-progression.md` | 13,856 | **glob bug fixed** | `src/hooks/use{Round,BrowseXp,Progress}.ts` used brace expansion of unverified support; expanded to three literals |
+| `adult-surface.md` `api-endpoints.md` `auth.md` `drag-and-drop.md` `env-and-secrets.md` `pwa-and-device.md` `scene-and-world.md` `theming.md` | 3,501–20,547 | **unchanged** | each glob already matches only its own subject |
+| `scene-assets.md` | 22,619 | **unchanged, flagged** | it and `scene-and-world.md` + `animation-and-performance.md` all claim `scene/*.tsx`, so a scene edit loads ~39,000 B. Legitimate — scene work needs all three — but it is the next candidate if scene sessions feel heavy |
+
+Measured effect: one math component edit went from **101,784 B of rules to 30,781 B**, and probe B's
+turn-1→turn-2 step from **54,431 to 26,675 tokens**.
+
 ### W3 — Opus-5-calibrate every rule, skill and agent
 
 Covers all 15 rules, 4 skills, 3 agents, `CLAUDE.md`. **This is an audit that produces a report,
@@ -537,6 +566,12 @@ Short list, goes in `CLAUDE.md` only if it survives the byte budget; otherwise i
 - **Compact instructions**: consider a `# Compact instructions` block so a compaction preserves the
   modified-file list and the test commands.
 
+**As implemented (2026-08-06):** `CLAUDE.md` finished at 11,950 B against a 12,000 B budget, so this
+list did not survive the byte budget and lives here, as the item itself allows. It is owner-facing
+habit, not model instruction, so a rule file would be the wrong home for it anyway. The statusline
+(W7.1) is what makes the `/clear` habit fire without anyone remembering the list: past 200,000 tokens
+the context segment turns bold red and appends the literal word `/clear`.
+
 ### W7 — Make the cost visible without spending tokens to do it
 
 Three additions, all of which run **outside** the conversation and cost zero context. That constraint
@@ -612,7 +647,22 @@ hook. If it proves useful enough to keep, it must stay silent-on-success and wri
 This also gives W4's guard a real cross-check: the guard counts what the globs *should* match;
 `InstructionsLoaded` records what actually loaded. If those two ever disagree, trust the hook.
 
-**W7.4 — Everything in W7 lives in `~/.claude/`, outside the repo.** The statusline script and the
+**W7.4 as implemented — most of W7 was moved INTO the repo instead of appendixed.** Only the
+statusline is genuinely global, so only it lives in `~/.claude/statusline-command.sh` (appendix below).
+The two hooks are project-scoped and therefore versioned:
+
+- `scripts/hooks/session-end-log.mjs` + a `SessionEnd` block in `.claude/settings.json`.
+- `scripts/hooks/instructions-loaded-log.mjs`, with its settings block **commented in the script's own
+  header** rather than wired — it is a temporary instrument, and its 2026-08-06 after-picture is
+  recorded there as the thing to diff against.
+
+**And `.claude/settings.json` was never tracked.** `.gitignore`'s blanket `*.json` was swallowing it,
+exactly like `public/manifest.json` before it — so the permission allow-list had lived on one disk for
+as long as the project has existed, and the new hook block would have vanished with it. Fixed with a
+`!` negation, which is the documented pattern in `pwa-and-device.md`. `.claude/settings.local.json`
+stays ignored: it is personal and carries `defaultMode: bypassPermissions`.
+
+**W7.4 (original) — Everything in W7 lives in `~/.claude/`, outside the repo.** The statusline script and the
 hook block are therefore not covered by the W4 guard, not versioned with the project, and lost on a
 new machine. Paste the final versions of both into an appendix of this PRD so they can be rebuilt,
 and note that `settings.local.json` currently sets `"defaultMode": "bypassPermissions"`, which makes
@@ -783,6 +833,234 @@ around issue #16299, which does not affect 2.1.223.
   is the wrong choice for a session report.
 - [anthropics/claude-code#16299](https://github.com/anthropics/claude-code/issues/16299) — the
   path-scoping bug that does *not* apply to us.
+
+---
+
+## Appendix — `~/.claude/statusline-command.sh` (W7.1, outside the repo)
+
+The only W7 artifact that is not versioned with the project, reproduced so it can be rebuilt on a new
+machine. Verified against the documented stdin schema at four states: green under 80k, yellow 80-200k,
+bold red plus a literal `/clear` past 200k, and silent when `current_usage` is null (before the first
+API call and right after `/compact`).
+
+```bash
+#!/usr/bin/env bash
+# Claude Code status line: dir | git branch (dirty/clean) | model | context | 5h limit | $
+#
+# PRD session-01 W7.1. The defect this replaces: it showed only `N% used`, and a percentage of a 1M
+# window is misleading — 30% reads as comfortable and is 300,000 tokens re-read on EVERY turn. The
+# threshold that matters is a LATENCY threshold, not a window-capacity one, so this shows absolute
+# tokens and colours them by latency:
+#
+#     green  < 80k        yellow  80-200k        red  > 200k  (where `exceeds_200k_tokens` flips —
+#                                                              past where a 200k model would have
+#                                                              compacted, i.e. the /clear nudge)
+#
+# Constraints from the docs, all respected here — do not break them:
+#   - Updates are debounced at 300ms and an in-flight script is CANCELLED when a new one arrives, so
+#     this must stay fast. It already shells out to node plus up to three git calls. DO NOT add a
+#     transcript parse here; that belongs in scripts/session-cost.mjs and the SessionEnd hook.
+#   - `used_percentage` is computed from INPUT tokens only (input + cache_creation + cache_read) and
+#     excludes output_tokens. Anything computed by hand must use the same formula or the two disagree.
+#   - `context_window.current_usage` is null before the first API call and again right after /compact.
+#   - `refreshInterval` stays unset: the event-driven triggers are enough and a timer costs CPU here.
+
+input=$(cat)
+
+# jq is NOT guaranteed to be installed in Git Bash, so parse JSON with Node.js
+# (guaranteed present, since Claude Code itself runs on it) instead of jq.
+mapfile -t __fields < <(printf '%s' "$input" | node -e '
+let data = "";
+process.stdin.on("data", d => { data += d; });
+process.stdin.on("end", () => {
+  let j = {};
+  try { j = JSON.parse(data); } catch (e) {}
+  const dir = (j.workspace && j.workspace.current_dir) || j.cwd || "";
+  const model = (j.model && j.model.display_name) || "Claude";
+  const cw = j.context_window || {};
+  const num = (v) => (typeof v === "number" && isFinite(v)) ? String(v) : "";
+  const out = [
+    dir,
+    model,
+    num(cw.used_percentage),
+    num(cw.total_input_tokens),
+    num(cw.context_window_size),
+    cw.exceeds_200k_tokens === true ? "1" : "",
+    num(j.cost && j.cost.total_cost_usd),
+    num(j.rate_limits && j.rate_limits.five_hour && j.rate_limits.five_hour.used_percentage),
+  ];
+  process.stdout.write(out.join("\n") + "\n");
+});
+')
+
+dir="${__fields[0]}"
+model="${__fields[1]}"
+ctx_used="${__fields[2]}"
+ctx_tokens="${__fields[3]}"
+ctx_size="${__fields[4]}"
+ctx_over200k="${__fields[5]}"
+cost_usd="${__fields[6]}"
+rl_5h="${__fields[7]}"
+
+# Normalize Windows backslashes to slashes before basename (Windows cwd paths
+# use backslashes, e.g. "C:\Source\preschool-learning-app").
+dir_unix="${dir//\\//}"
+dir_name=$(basename "$dir_unix" 2>/dev/null)
+[ -z "$dir_name" ] && dir_name="~"
+[ -z "$model" ] && model="Claude"
+
+branch=""
+dirty=""
+if [ -n "$dir" ] && git -C "$dir" --no-optional-locks rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  branch=$(git -C "$dir" --no-optional-locks branch --show-current 2>/dev/null)
+  if [ -n "$branch" ]; then
+    if [ -n "$(git -C "$dir" --no-optional-locks status --porcelain 2>/dev/null)" ]; then
+      dirty="✗"
+    else
+      dirty="✓"
+    fi
+  fi
+fi
+
+# Dimmed ANSI colors (kept subtle for both light/dark terminals)
+DIM_CYAN=
+
+> Implement `plans/session-performance/tmp-prd-session-01-guardrail-budget.md`, W0 through W8, in
+> order. Verify each numeric gate yourself with `scripts/baseline-probe.mjs` rather than asking me to
+> run `/context`, and show me the diff for each work item before applying it.
+
+W1.4 is still a hard checkpoint, but it no longer needs the owner: the probe's `--compare` exit code
+is the gate, so the session stops itself if the baseline did not move. The only gate that genuinely
+requires the owner is verification 6, the quality check.
+\033[2;36m'
+DIM_YELLOW=
+
+> Implement `plans/session-performance/tmp-prd-session-01-guardrail-budget.md`, W0 through W8, in
+> order. Verify each numeric gate yourself with `scripts/baseline-probe.mjs` rather than asking me to
+> run `/context`, and show me the diff for each work item before applying it.
+
+W1.4 is still a hard checkpoint, but it no longer needs the owner: the probe's `--compare` exit code
+is the gate, so the session stops itself if the baseline did not move. The only gate that genuinely
+requires the owner is verification 6, the quality check.
+\033[2;33m'
+DIM_GREEN=
+
+> Implement `plans/session-performance/tmp-prd-session-01-guardrail-budget.md`, W0 through W8, in
+> order. Verify each numeric gate yourself with `scripts/baseline-probe.mjs` rather than asking me to
+> run `/context`, and show me the diff for each work item before applying it.
+
+W1.4 is still a hard checkpoint, but it no longer needs the owner: the probe's `--compare` exit code
+is the gate, so the session stops itself if the baseline did not move. The only gate that genuinely
+requires the owner is verification 6, the quality check.
+\033[2;32m'
+DIM_MAGENTA=
+
+> Implement `plans/session-performance/tmp-prd-session-01-guardrail-budget.md`, W0 through W8, in
+> order. Verify each numeric gate yourself with `scripts/baseline-probe.mjs` rather than asking me to
+> run `/context`, and show me the diff for each work item before applying it.
+
+W1.4 is still a hard checkpoint, but it no longer needs the owner: the probe's `--compare` exit code
+is the gate, so the session stops itself if the baseline did not move. The only gate that genuinely
+requires the owner is verification 6, the quality check.
+\033[2;35m'
+DIM_WHITE=
+
+> Implement `plans/session-performance/tmp-prd-session-01-guardrail-budget.md`, W0 through W8, in
+> order. Verify each numeric gate yourself with `scripts/baseline-probe.mjs` rather than asking me to
+> run `/context`, and show me the diff for each work item before applying it.
+
+W1.4 is still a hard checkpoint, but it no longer needs the owner: the probe's `--compare` exit code
+is the gate, so the session stops itself if the baseline did not move. The only gate that genuinely
+requires the owner is verification 6, the quality check.
+\033[2;37m'
+BOLD_RED=
+
+> Implement `plans/session-performance/tmp-prd-session-01-guardrail-budget.md`, W0 through W8, in
+> order. Verify each numeric gate yourself with `scripts/baseline-probe.mjs` rather than asking me to
+> run `/context`, and show me the diff for each work item before applying it.
+
+W1.4 is still a hard checkpoint, but it no longer needs the owner: the probe's `--compare` exit code
+is the gate, so the session stops itself if the baseline did not move. The only gate that genuinely
+requires the owner is verification 6, the quality check.
+\033[1;31m'
+RESET=
+
+> Implement `plans/session-performance/tmp-prd-session-01-guardrail-budget.md`, W0 through W8, in
+> order. Verify each numeric gate yourself with `scripts/baseline-probe.mjs` rather than asking me to
+> run `/context`, and show me the diff for each work item before applying it.
+
+W1.4 is still a hard checkpoint, but it no longer needs the owner: the probe's `--compare` exit code
+is the gate, so the session stops itself if the baseline did not move. The only gate that genuinely
+requires the owner is verification 6, the quality check.
+\033[0m'
+
+# Round a token count to a compact "230k" / "1.2M".
+compact() {
+  local n="$1"
+  if [ -z "$n" ]; then printf ''; return; fi
+  awk -v n="$n" 'BEGIN{
+    if (n >= 1000000) printf "%.1fM", n/1000000;
+    else if (n >= 1000) printf "%.0fk", n/1000;
+    else printf "%d", n;
+  }'
+}
+
+parts=()
+parts+=("${DIM_CYAN}${dir_name}${RESET}")
+
+if [ -n "$branch" ]; then
+  if [ "$dirty" = "✗" ]; then
+    parts+=("${DIM_YELLOW}${branch} ${dirty}${RESET}")
+  else
+    parts+=("${DIM_GREEN}${branch} ${dirty}${RESET}")
+  fi
+fi
+
+parts+=("${DIM_MAGENTA}${model}${RESET}")
+
+# Context: absolute tokens first (that is what predicts reply latency), then the window and the
+# percentage. `current_usage` is null before the first API call and right after /compact — in that
+# case we print nothing rather than a misleading 0.
+if [ -n "$ctx_tokens" ]; then
+  ctx_colour="$DIM_GREEN"
+  if [ "$ctx_over200k" = "1" ]; then
+    ctx_colour="$BOLD_RED"
+  elif [ "$ctx_tokens" -ge 80000 ] 2>/dev/null; then
+    ctx_colour="$DIM_YELLOW"
+  fi
+  ctx_str="$(compact "$ctx_tokens")"
+  [ -n "$ctx_size" ] && ctx_str="${ctx_str}/$(compact "$ctx_size")"
+  [ -n "$ctx_used" ] && ctx_str="${ctx_str} ($(printf '%.0f' "$ctx_used")%)"
+  [ "$ctx_over200k" = "1" ] && ctx_str="${ctx_str} /clear"
+  parts+=("${ctx_colour}${ctx_str}${RESET}")
+elif [ -n "$ctx_used" ]; then
+  parts+=("${DIM_WHITE}$(printf '%.0f' "$ctx_used")% used${RESET}")
+fi
+
+# The 5-hour rate limit is the number that actually matters on a subscription.
+if [ -n "$rl_5h" ]; then
+  rl_colour="$DIM_WHITE"
+  awk -v p="$rl_5h" 'BEGIN{exit !(p>=80)}' && rl_colour="$BOLD_RED"
+  parts+=("${rl_colour}5h $(printf '%.0f' "$rl_5h")%${RESET}")
+fi
+
+# Client-side session estimate; resets on /clear.
+if [ -n "$cost_usd" ]; then
+  parts+=("${DIM_WHITE}\$(printf '%.2f' "$cost_usd")${RESET}")
+fi
+
+sep=" ${DIM_WHITE}|${RESET} "
+output=""
+for i in "${!parts[@]}"; do
+  if [ "$i" -eq 0 ]; then
+    output="${parts[$i]}"
+  else
+    output="${output}${sep}${parts[$i]}"
+  fi
+done
+
+printf "%s" "$output"
+```
 
 ---
 

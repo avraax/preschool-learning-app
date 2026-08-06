@@ -1,3 +1,19 @@
+---
+paths:
+  - "src/theme/idleMotion.ts"
+  - "src/theme/motion.ts"
+  - "src/theme/idleMotionBudget.test.ts"
+  - "src/theme/depth.ts"
+  - "src/config/parallax.ts"
+  - "src/config/perfProfile.ts"
+  - "src/config/perfProfile.test.ts"
+  - "src/components/common/scene/*.ts"
+  - "src/components/common/scene/*.tsx"
+  - "src/components/common/LivingCard.tsx"
+  - "src/components/common/TactileTile.tsx"
+  - "src/components/common/TactilePill.tsx"
+---
+
 # Animation mechanism & rendering cost
 
 Performance PRD-01 (`plans/performance/`). The app ran at **~40% of every second in style

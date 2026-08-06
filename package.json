@@ -20,9 +20,12 @@
     "auth:migrate": "node --env-file=.env.local --import ./scripts/js-to-ts-resolve.mjs scripts/auth-migrate.mjs",
     "auth:dev-session": "node --env-file=.env.local --import ./scripts/js-to-ts-resolve.mjs scripts/auth-dev-session.mjs",
     "auth:probe-claim": "node --env-file=.env.local --import ./scripts/js-to-ts-resolve.mjs scripts/auth-probe-claim.mjs",
+    "probe": "node scripts/baseline-probe.mjs",
     "lint": "eslint .",
     "preview": "vite preview",
-    "icons:generate": "node generate-png-icons.cjs"
+    "icons:generate": "node generate-png-icons.cjs",
+    "context:check": "node scripts/context-budget.mjs",
+    "session:cost": "node scripts/session-cost.mjs"
   },
   "dependencies": {
     "@better-auth/passkey": "^1.6.25",
