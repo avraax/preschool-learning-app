@@ -39,6 +39,10 @@
 // Behaviour:
 //   --port <n>                CDP debug port (default 9333).
 //   --block-autoplay          Launch with document-user-activation-required instead of autoplay-allowed.
+//   --simulate-hung-resume    Inject audio-hung-resume-sim.js: AudioContext.resume() never SETTLES
+//                             (report J62KA — iPhone iOS 18.7; music+SFX fine, no narration at all).
+//                             A regression gate for the bounded unlock: the verdict must stay OK,
+//                             because the app waits out its verify budget and plays anyway.
 //   --simulate-audio-blocked  Inject audio-blocked-sim.js: play() rejects NotAllowedError and
 //                             AudioContext.resume() never runs the clock. The ONLY way to reach the
 //                             app's `blocked` audio verdict headlessly — a launch flag cannot, because
@@ -196,6 +200,16 @@ if (has('--audio-report')) {
 // the rejection rather than being bypassed by it.
 if (has('--simulate-audio-blocked')) {
   const source = readFileSync(join(dirname(fileURLToPath(import.meta.url)), 'audio-blocked-sim.js'), 'utf8')
+  await send('Page.addScriptToEvaluateOnNewDocument', { source })
+}
+
+// --simulate-hung-resume: report J62KA — `AudioContext.resume()` never SETTLES (not "resolves without
+// running the clock", which is the blocked sim above). Same ordering requirement, same reason.
+if (has('--simulate-hung-resume')) {
+  const source = readFileSync(
+    join(dirname(fileURLToPath(import.meta.url)), 'audio-hung-resume-sim.js'),
+    'utf8',
+  )
   await send('Page.addScriptToEvaluateOnNewDocument', { source })
 }
 

@@ -100,6 +100,56 @@ export async function recoverFrozenContext(ctx: RecoverableContext | null | unde
 }
 
 /**
+ * How long the unlock waits for an ANSWER from `resume()` / the prime `play()` before giving up on the
+ * answer. Measured on the iPhone report J62KA (2026-08-06): the prime settled in ~250 ms, so this is
+ * ~3× headroom over the only real reading we have.
+ */
+export const UNLOCK_VERIFY_TIMEOUT_MS = 800
+
+/**
+ * How long `ensureAudioReady` waits for the whole unlock before playing anyway. The SECOND, independent
+ * brake — deliberately outside `initializeAudio`, because the thing that can wedge is inside it (same
+ * two-brakes shape as Sig et Ord's recognition watchdog).
+ */
+export const UNLOCK_TOTAL_TIMEOUT_MS = 2500
+
+/** What `settleWithin` observed: the promise answered, or the window closed first. */
+export type SettleOutcome = 'settled' | 'timeout'
+
+/**
+ * Wait for a promise, but never longer than `ms` — and report WHICH happened.
+ *
+ * This exists because **an iOS `AudioContext.resume()` can never settle at all.** Report J62KA
+ * (iPhone, iOS 18.7 / Safari 26.6): the unlock logged `initializeAudio: ctxState= suspended`, the
+ * narration element primed OK, and the very next line in `initializeAudio` never printed — one bare
+ * `await ctx.resume()` sat between them. Nothing timed it out, so `initializeAudio()` never resolved,
+ * its de-dupe promise never cleared, and every later `speak()` awaited the same dead promise: the whole
+ * app went permanently mute while Howler's music and SFX (their own context) played on.
+ *
+ * A rejection is a SETTLE, not a timeout — the caller has its own answer for that. Never rejects, and
+ * always clears its timer, so a bounded wait can't itself leak a pending handle.
+ */
+export function settleWithin(p: Promise<unknown>, ms: number): Promise<SettleOutcome> {
+  return new Promise<SettleOutcome>((resolve) => {
+    // `done` is DEFENSIVE, not load-bearing — a second `resolve()` is already a no-op in the language,
+    // so no test can pin it. `clearTimeout` is the part with observable consequences (a 2500 ms handle
+    // left pending on every tap), and `audioLiveness.test.ts` pins that one.
+    let done = false
+    const finish = (outcome: SettleOutcome) => {
+      if (done) return
+      done = true
+      clearTimeout(timer)
+      resolve(outcome)
+    }
+    const timer = setTimeout(() => finish('timeout'), ms)
+    p.then(
+      () => finish('settled'),
+      () => finish('settled'),
+    )
+  })
+}
+
+/**
  * Why did the silent-unlock clip's `play()` reject? This is THE line that turns the app's one real
  * evidence signal into a verdict, so it lives here — pure and testable — rather than inline in
  * `ttsClient.primePlaybackElement()`, where nothing could reach it.

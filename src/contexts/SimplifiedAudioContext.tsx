@@ -15,6 +15,8 @@ import {
   readHasBeenActive,
   recoverFrozenContext,
   requestPlaybackAudioSession,
+  settleWithin,
+  UNLOCK_VERIFY_TIMEOUT_MS,
   userActivationSupported,
 } from '../utils/audioLiveness'
 import { noteAudioWorked } from '../utils/audioEverWorked'
@@ -282,11 +284,31 @@ export const SimplifiedAudioProvider: React.FC<SimplifiedAudioProviderProps> = (
       }
 
       // 2d. NOW it's safe to await: the activation has already been spent on the calls above.
-      await resumePromise
-      const primeResult = await primePromise
+      //
+      // **Both awaits are BOUNDED** (`settleWithin`), and that is load-bearing: on iOS a
+      // `resume()` promise can NEVER settle, and one bare `await` on it took the whole app mute for a
+      // session — report J62KA, iPhone iOS 18.7, `/alphabet/learn`, no letter made a sound while the
+      // Howler music bed played on. `initializeAudio()` never resolved, so `initPromiseRef` never
+      // cleared, so every later `speak()` awaited the same dead promise. Verification is allowed to
+      // fail to ARRIVE; it is not allowed to hang. Both are raced together so the cap is one window,
+      // not two. Never re-introduce a bare `await` here.
+      const [resumeOutcome, primeOutcome] = await Promise.all([
+        settleWithin(resumePromise, UNLOCK_VERIFY_TIMEOUT_MS),
+        settleWithin(primePromise, UNLOCK_VERIFY_TIMEOUT_MS),
+      ])
+      // A prime that never ANSWERED is no evidence — `'unknown'`, never `'blocked'`. Same rule as the
+      // `'error'` case below: fail toward silence, never toward a false accusation of the device.
+      const primeResult = primeOutcome === 'settled' ? await primePromise : ('unknown' as const)
+      if (resumeOutcome === 'timeout' || primeOutcome === 'timeout') {
+        // [audio-unlock] diagnostic: this is the J62KA signature, now survivable and NAMED in the ring.
+        console.warn('[audio-unlock] verify timed out — resume=', resumeOutcome, 'prime=', primeOutcome,
+          'ctxState=', globalAudioContextRef.current?.state, '— playing anyway')
+      }
       logSimpleAudio('Unlock verified', {
         ctxState: globalAudioContextRef.current?.state,
         primeResult,
+        resumeOutcome,
+        primeOutcome,
       })
 
       const health = ttsClient.getHealth()

@@ -9,7 +9,7 @@ import {
 // (see src/config/gamePhrases.ts and the protocol in .claude/rules/audio-system.md).
 import { mathPromptText, colorMixTargetText } from '../config/gamePhrases'
 import { sfx } from '../services/sfxClient'
-import { userActivationSupported } from './audioLiveness'
+import { settleWithin, UNLOCK_TOTAL_TIMEOUT_MS, userActivationSupported } from './audioLiveness'
 import { audioEverWorked } from './audioEverWorked'
 // Remote console logging removed for production
 
@@ -172,8 +172,24 @@ export class SimplifiedAudioController {
 
     // Not working — try to (re)unlock now (this call is on the tap's gesture stack) and use the
     // authoritative result. Previously we fired-and-forgot init and returned false, dropping the tap.
+    //
+    // **BOUNDED, and the timeout answers TRUE.** This is the second of two independent brakes on the
+    // unlock (the first is inside `initializeAudio`, on `resume()` and the prime), deliberately OUTSIDE
+    // it — the thing that wedged in report J62KA was inside it, and one hung unlock is cached in the
+    // context's de-dupe promise, so every subsequent tap in the session awaited the same dead promise
+    // and the app was permanently mute. `true` is the right answer on a timeout for the same reason
+    // `isWorking` is permissive: attempting playback is how evidence gets gathered, so an unlock that
+    // won't answer must not mute the app — it falls through to a real `play()`, which either sounds or
+    // reports a failure that `narrationHealth` can see.
     try {
-      return await ctx.initializeAudio()
+      const init = ctx.initializeAudio() as Promise<boolean>
+      const outcome = await settleWithin(init, UNLOCK_TOTAL_TIMEOUT_MS)
+      if (outcome === 'timeout') {
+        console.warn('[audio-unlock] ensureAudioReady: unlock did not answer in',
+          UNLOCK_TOTAL_TIMEOUT_MS, 'ms — attempting playback anyway')
+        return true
+      }
+      return await init
     } catch {
       return false
     }

@@ -170,7 +170,40 @@ three of the four look like silence and are not:
 - **sounded** — `currentTime` actually advanced past 50ms.
 
 Verdict is `SILENT` if anything **failed**, or if a decode failed, or if nothing ever sounded (all
-pre-empted = something is cancelling narration, a bug class this repo has hit).
+pre-empted = something is cancelling narration, a bug class this repo has hit), or if **no narration was
+ever REQUESTED while a WebAudio source played** — SFX alive, TTS dead. That last one used to read
+`OK — 0/0 clips played`, and it is the one shape that hid report J62KA perfectly: a hung unlock swallowed
+every `speak()` before it could reach an `<audio>` element, while Howler's music and SFX (their own
+context, their own elements) played on. `real === 0` means nothing was ever meant to be heard, so a live
+SFX buffer cannot redeem it.
+
+### Reproducing a hung unlock (`--simulate-hung-resume`)
+
+Report J62KA (iPhone, iOS 18.7 / Safari 26.6, `/alphabet/learn`): `AudioContext.resume()` never SETTLED —
+not "resolved without running the clock", which is what `--simulate-audio-blocked` does and which the app
+correctly reports as `blocked`. Nothing rejected, nothing timed out, so the app reached no verdict at all
+and every later `speak()` awaited the same dead promise. This is the regression gate for the bounded
+unlock (`settleWithin` in `src/utils/audioLiveness.ts`):
+
+```bash
+node .claude/skills/ui-screenshot/cdp.mjs --url 'http://127.0.0.1:5173/alphabet/learn?nogate=1' \
+  --ipad-ua --audio-report --simulate-hung-resume --block-autoplay --settle 2000 \
+  --trusted-tap 'button[aria-label="Hør alfabetet"]' --settle 6000
+# audio verdict: OK — 2/3 clips played …      ← bounded: the app waits out its budget and plays anyway
+# restore the bare `await resumePromise` and the SAME command reports
+# SILENT — no narration was ever requested … SFX alive, TTS dead
+```
+
+Two things that made this sim silently inert, both found by re-breaking rather than by reading — check
+`window.__hungResumeSim` (`{resumes, statePatched}`) before trusting a green run:
+
+- **Hanging `resume()` alone does nothing here.** Chrome hands the app a context that is already
+  `running`, so `initializeAudio`'s `if (state !== 'running')` never calls `resume()` at all. The state
+  has to be forced to what the iPhone reported (`ctxState= suspended`), and `--block-autoplay` does not
+  do it — the one `resume()` seen in that run was Howler's.
+- **`state` lives on `BaseAudioContext.prototype`, not `AudioContext.prototype`.** Patching the latter
+  returns `undefined` from `getOwnPropertyDescriptor` and the override is skipped, so the run reported
+  `OK` **with the bug restored** — the "mutation never arrived" failure, wearing a passing verdict.
 
 Two ordering traps, both found by re-breaking rather than by reading:
 - **Check muted/volume BEFORE the clock.** A silenced element advances `currentTime` perfectly normally,

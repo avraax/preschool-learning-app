@@ -249,6 +249,15 @@
           ? 'PENDING — ' + by.pending.length + ' clip(s) started too recently to judge; give the driver a longer settle'
           : (real === 0 && wa.sourceStarts === 0)
           ? 'NO AUDIO ATTEMPTED (nothing called play() or started a buffer — did the trigger fire?)'
+          // NARRATION dead while WebAudio lives. This used to fall through to `OK — 0/0 clips played`,
+          // which is the one verdict shape that hides report J62KA exactly: a hung unlock swallowed every
+          // `speak()` so no narration clip was ever REQUESTED, while Howler's SFX/music (its own context,
+          // its own elements) played on — measured, and the reason the owner read the bug as "TTS is
+          // broken" rather than "audio is off". `real === 0` means nothing was ever meant to be heard, so
+          // a live SFX buffer cannot redeem it. SILENT, and therefore exit 1.
+          : (real === 0)
+          ? 'SILENT — no narration was ever requested (0 clips meant to be heard) while ' + wa.sourceStarts +
+            ' webaudio source(s) played: SFX alive, TTS dead — the report-J62KA shape (hung unlock?)'
           : broken
             ? 'SILENT — ' + by.failed.length + ' of ' + real + ' clips genuinely failed, ' + wa.decodeFail + ' decode failures'
             : mute

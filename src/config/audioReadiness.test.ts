@@ -196,6 +196,58 @@ test('THE FIX: the speechSynthesis lie is not back in the unlock verdict', () =>
   )
 })
 
+test('THE FIX: every await in the unlock path is BOUNDED — a resume() that never settles cannot mute the app', () => {
+  // Report J62KA (iPhone, iOS 18.7, /alphabet/learn): the prime logged OK, the line after it never
+  // printed, and one bare `await resumePromise` sat between them — an iOS `resume()` promise that never
+  // settled. `initializeAudio()` never resolved, its de-dupe promise never cleared, and every later
+  // `speak()` awaited the same dead promise: total silence for the session while Howler's music played.
+  const src = readStripped('../contexts/SimplifiedAudioContext.tsx')
+  // Both forbidden forms are single-line on purpose: line endings are MIXED in this repo (this test's
+  // own file is CRLF, `SimplifiedAudioContext.tsx` is LF — measured, not assumed), so a multi-line anchor
+  // matches in one file and passes vacuously in the other. `await primePromise` cannot be
+  // forbidden outright — the ternary below legitimately contains it — so forbid the UNCONDITIONAL form.
+  for (const bare of ['await resumePromise', 'const primeResult = await primePromise']) {
+    assert.ok(
+      !src.includes(bare),
+      `\`${bare}\` is unbounded again — an iOS promise that never settles mutes the whole app`,
+    )
+  }
+  assert.ok(
+    /settleWithin\(resumePromise, UNLOCK_VERIFY_TIMEOUT_MS\)/.test(src),
+    'resume() is no longer raced against a timeout',
+  )
+  assert.ok(
+    /settleWithin\(primePromise, UNLOCK_VERIFY_TIMEOUT_MS\)/.test(src),
+    'the prime play() is no longer raced against a timeout',
+  )
+  // A verification that never ARRIVED is no evidence. `'blocked'` would accuse the device of the one
+  // thing it did not do — the prime had already succeeded in the report that produced this test.
+  assert.ok(
+    /primeOutcome === 'settled' \? await primePromise : \('unknown' as const\)/.test(src),
+    'a timed-out prime no longer falls back to `unknown` (no evidence)',
+  )
+})
+
+test('THE FIX: the second brake — ensureAudioReady never waits on the unlock forever, and plays anyway', () => {
+  // Deliberately OUTSIDE initializeAudio: the thing that wedged is inside it, and one hung unlock is
+  // cached in the context's de-dupe promise, so every tap of the session inherits it.
+  const src = readStripped('../utils/SimplifiedAudioController.ts')
+  assert.ok(
+    !/return await ctx\.initializeAudio\(\)/.test(src),
+    'ensureAudioReady awaits the unlock unbounded again',
+  )
+  assert.ok(
+    /settleWithin\(init, UNLOCK_TOTAL_TIMEOUT_MS\)/.test(src),
+    'the unlock await in ensureAudioReady is no longer bounded',
+  )
+  // TRUE on timeout, for the same reason `isWorking` is permissive: attempting playback is how evidence
+  // gets gathered, so an unlock that will not answer must not mute the app.
+  assert.ok(
+    /if \(outcome === 'timeout'\) \{[\s\S]{0,300}?return true/.test(src),
+    'a timed-out unlock no longer falls through to a real play() attempt',
+  )
+})
+
 test('THE FIX: nothing latches the cue — no showPrompt, no arming timer, no dismiss flag', () => {
   const src = readStripped('../contexts/SimplifiedAudioContext.tsx')
   for (const latch of ['showPrompt', 'hidePrompt', 'userDismissed', 'hasUnlockedRef', '1500']) {

@@ -8,6 +8,9 @@ import {
   recoverFrozenContext,
   readHasBeenActive,
   requestPlaybackAudioSession,
+  settleWithin,
+  UNLOCK_TOTAL_TIMEOUT_MS,
+  UNLOCK_VERIFY_TIMEOUT_MS,
   userActivationSupported,
 } from './audioLiveness.ts'
 
@@ -134,6 +137,57 @@ test('recovery never throws, and skips a closed context', async () => {
     resume: async () => void calls.push('resume'),
   })
   assert.deepEqual(calls, [], 'a closed context was suspend/resumed')
+})
+
+// ----- settleWithin: the promise that never answers (report J62KA) -------------------------------
+
+test('a promise that RESOLVES reports `settled`, with its own value still awaitable', async () => {
+  const p = Promise.resolve('ok')
+  assert.equal(await settleWithin(p, 200), 'settled')
+  assert.equal(await p, 'ok', 'the bounded wait consumed the value')
+})
+
+test('a REJECTION is a settle, not a timeout — and never escapes', async () => {
+  // The caller has its own answer for a rejection (`resume()` is already `.catch()`ed; the prime
+  // classifies its own failure). Reporting it as a timeout would send the unlock down the wrong branch.
+  assert.equal(await settleWithin(Promise.reject(new Error('nope')), 200), 'settled')
+})
+
+test('THE FIX: a promise that NEVER settles reports `timeout` instead of hanging forever', async () => {
+  // Report J62KA: an iOS `AudioContext.resume()` never settled, one bare `await` sat on it, and the app
+  // was mute for the rest of the session because the hung unlock promise was cached and re-awaited.
+  const never = new Promise<void>(() => {})
+  const started = Date.now()
+  assert.equal(await settleWithin(never, 30), 'timeout')
+  assert.ok(Date.now() - started < 2000, 'the bounded wait was not bounded')
+})
+
+test('a settle CLEARS the timer — a bounded wait must not leave a pending handle behind', async () => {
+  // The original version of this test resolved a promise LATE and asserted the verdict didn't flip.
+  // That was vacuous: a second `resolve()` on a settled promise is a silent no-op in the language, so it
+  // passed with the guard removed. What IS observable — and what a 2500 ms budget on every tap would
+  // otherwise leak — is whether the timer is cancelled once the promise answers first.
+  const realClear = globalThis.clearTimeout
+  let cleared = 0
+  globalThis.clearTimeout = ((h: Parameters<typeof realClear>[0]) => {
+    cleared++
+    return realClear(h)
+  }) as typeof clearTimeout
+  try {
+    assert.equal(await settleWithin(Promise.resolve('done'), 60_000), 'settled')
+  } finally {
+    globalThis.clearTimeout = realClear
+  }
+  assert.equal(cleared, 1, 'the 60s timer was left pending — every bounded wait leaks a handle')
+})
+
+test('both unlock budgets are bounded, and the total is the LOOSER of the two', async () => {
+  // The inner brake bounds `resume()`/the prime; the outer one bounds the whole unlock from
+  // `ensureAudioReady`. If the outer were tighter it would fire first every time and the inner
+  // verification would never be read.
+  assert.equal(UNLOCK_VERIFY_TIMEOUT_MS, 800)
+  assert.equal(UNLOCK_TOTAL_TIMEOUT_MS, 2500)
+  assert.ok(UNLOCK_TOTAL_TIMEOUT_MS > UNLOCK_VERIFY_TIMEOUT_MS)
 })
 
 // ----- classifying the prime rejection: the app's one real activation signal ----------------------
