@@ -140,27 +140,37 @@ Written for a five-year-old boy by his father. Suited to children from around fi
 ```
 
 **If you do ship an en-US locale**, it gets its own name and subtitle. Keep the Danish brand name — the app
-is Danish and renaming it in English would misrepresent it — and translate only the subtitle:
+is Danish and renaming it in English would misrepresent it.
 
-| Field | Value | Chars |
-|---|---|---|
-| Name (en-US) | `Børnelæring: ABC, tal, engelsk` | 30 / 30 |
-| Subtitle (en-US) | `Preschool and early school` | 26 / 30 |
+**SETTLED 2026-08-06: the listing ships DANISH ONLY, availability Denmark only** (owner's decision). No
+en-US locale, so there is no English name, subtitle or promotional text to write. An English listing would
+invite English speakers to download a Danish-only app, which earns one-star reviews.
 
-**The app itself stays Danish-only.** This is App Store metadata for the en-US locale, not a translation
-of the UI. Note the tension worth being deliberate about: shipping an English listing invites English
-speakers to download a Danish-only app, which earns one-star reviews. **Recommendation: ship the Danish
-listing only, and restrict availability to Denmark** (and optionally Norway/Sweden/Germany, where Danish
-speakers live). Keep this English copy for App Review, not for the store.
+**The English copy above therefore exists for one purpose: App Review.** Apple's reviewers work in English,
+and a Danish-only product page tells them nothing about what they are looking at. Paste it into the App
+Review notes field (§3.3), not into a store locale. Do not add an en-US locale later without re-reading
+this paragraph.
 
 ### 1.6 Promotional text — 170 char limit, editable without a new build
 
+**SETTLED. Paste this exactly:**
+
 ```
-Fem verdener, 24 spil og en tydelig dansk stemme. Ingen reklamer, ingen køb inde i appen og ingen sporing - bare bogstaver, tal og farver i dit barns eget tempo.
+Fra førskole til 1. klasse: bogstaver, tal, farver og engelsk, læst højt af en tydelig dansk stemme. Ingen reklamer, ingen køb inde i appen og ingen sporing.
 ```
 
-**159 characters.** This field is the only listing copy you can change without submitting a build, so keep
-it for news ("Nu med engelsk", "Nye klistermærker") rather than permanent description material.
+**157 characters, 13 spare.** Rewritten alongside the name and subtitle: it now names the school stage and
+includes Engelsk, neither of which the first draft did ("bare bogstaver, tal og farver" actively understated
+the app).
+
+**This field's job is different from the name and subtitle.** Those three fields — name, subtitle, keywords —
+are the indexed pool and are chosen for search. Promotional text appears above the description and is pure
+persuasion, so "Fra førskole til 1. klasse" is here to let a parent decide in one second whether this is for
+their child, not to win a keyword. `børnehaveklasse` is deliberately *not* spent here; the keywords already
+carry it.
+
+It is also the **only** listing copy you can change without submitting a build, so once launched, reuse it
+for news — "Nu med engelsk", "Nye klistermærker" — rather than leaving permanent description material in it.
 
 ### 1.7 What's New
 
@@ -312,7 +322,7 @@ gate, which is another reason to render the text **in-app** rather than linking 
 | **Age band (Kids Category)** | **6-8.** Bands are "5 and under, 6-8, 9-11"; a 5-7 audience straddles two and 6-8 is the closer fit. |
 | **"Made for Kids"** | **Yes — and this is PERMANENT after App Review approval.** Read PRD §3.7 before ticking it. |
 | **Primary language** | **Danish** |
-| **Availability** | **Denmark only** (see §1.5). Widen later; narrowing after launch is the awkward direction. |
+| **Availability** | **Denmark only — SETTLED** (owner's decision, §1.5). Widen later if you want; narrowing after launch is the awkward direction. |
 | **Copyright** | `2026 Allan Brink Vraa` — year then name, no `©` symbol (ASC adds it) |
 | **Price** | Free, no in-app purchases |
 | **Version** | `1.0` |
