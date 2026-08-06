@@ -406,7 +406,26 @@ const ComparisonGame: React.FC = () => {
           flex: '1 1 0',
           minWidth: 0,
           minHeight: 0,
-          maxWidth: { xs: 260, md: 290 },
+          // NARROWED 290 → 240 (2026-08-06, owner: "out of proportion ... looks a bit weird"). This is
+          // NOT a fourth pass at the card's SIZE — that was settled over three (396×370 → 340×260 →
+          // 290×220, see the arena's maxHeight below) and the area is roughly preserved. What was wrong
+          // was the SHAPE: measured at 1366×992 the card was 290×220 (aspect 1.32) holding a numeral
+          // whose ink was 103×132 (aspect 0.78) — a landscape box around portrait content, with ~94px of
+          // dead white either side of the number. The ink filled **21%** of the card for a two-digit
+          // number and **10%** for a single digit, which is why it read as an empty panel with a small
+          // number in it rather than as a number.
+          //
+          // 240 at the same 220 height gives aspect 1.09, cutting the side margins to ~60px and lifting
+          // ink fill to ~30% for a two-digit number — with the numeral itself UNTOUCHED, which is the
+          // whole point: enlarging it too was tried in the same pass and rejected ("still too large"),
+          // so the shape was the defect and the size was not. Narrowing (never growing) is also the safe
+          // direction: responsive-design.md measures only ~25px of horizontal margin left at 1024×768,
+          // and the row now comes out 616px wide instead of 716px. Tap target stays ~5x the 44px floor.
+          //
+          // The two tiles stay the SAME size whatever their digit count — a single digit fills less of
+          // its card and that is correct, because letting tile size track the value would encode the
+          // answer in the geometry (games-catalog.md: "don't let tile SIZE encode the values either").
+          maxWidth: { xs: 220, md: 240 },
           containerType: 'size',
         }}
       >
@@ -436,7 +455,13 @@ const ComparisonGame: React.FC = () => {
               // which is where the owner landed after 281px and 177px both read as too big.
               // A two-digit number is ~1.1em of digit advance = ~57% of the tile's shorter side, so it
               // still clears the tile's ~16px padding on the narrowest tile the app produces
-              // (phone portrait, ~141px wide).
+              // (phone portrait, ~137px wide).
+              //
+              // RAISING THIS WAS TRIED AND REJECTED (2026-08-06). Narrowing the tile to 240 was paired
+              // with `min(64cqh, 59cqw)` — a 141px numeral, ~39-45% ink fill — and the owner's verdict
+              // on seeing it was "still too large". So the numeral's size was never the disproportion;
+              // the tile's SHAPE was, and the narrowing above fixes it on its own (ink fill roughly
+              // 21% → 30% for a two-digit number with the numeral untouched). Leave this at 52.
               fontSize: 'min(52cqh, 52cqw)',
               fontWeight: 700,
               // Readable-on-white numeral (onTileColor) — see CategoryTheme.onTileColor.
@@ -570,6 +595,10 @@ const ComparisonGame: React.FC = () => {
             <Box
               sx={{
                 flex: '0 0 auto',
+                // Stays 96. Growing it to 118 alongside the narrowed tiles was tried and reverted with
+                // the numeral (2026-08-06, owner: "still too large") — against 240-wide tiles instead of
+                // 290-wide slabs, 96 already reads as the middle TERM of `11 ? 14` rather than a dot
+                // between two panels, because what made it look small was the tiles' width, not its own.
                 width: { xs: 52, md: 96 },
                 display: 'flex',
                 alignItems: 'center',
