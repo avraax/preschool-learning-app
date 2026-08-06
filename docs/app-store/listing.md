@@ -18,39 +18,52 @@ which shows a live counter.
 
 ### 1.1 App name — 30 char limit
 
-| # | Candidate | Chars | Note |
-|---|---|---|---|
-| **A** | **`Børnelæring: Alfabetet og Tal`** | **29** | **Recommended.** Brand first, then the two highest-value search terms. Apple indexes the name, so this is free keyword weight. |
-| B | `Børnelæring` | 11 | Cleanest, most brandable, and worst for discovery — a parent searching "alfabet dansk" never finds it. |
-| C | `Børnelæring - Bogstaver og Tal` | 30 | Exactly at the limit, so any future tweak breaks it. Prefer A's colon. |
+**SETTLED. Paste these two exactly:**
 
-**Name availability is the one thing that can force a change, and it can only be settled in App Store
-Connect** — the name is reserved when the app record is created, and "Børnelæring" is an ordinary Danish
-compound noun, so a collision is plausible. **UNKNOWN until you try it.** Have B as the fallback, or
-`Børnelæring ABC` / `Min Børnelæring` if the bare word is taken.
+| Field | Value | Chars |
+|---|---|---|
+| **Name** | **`Børnelæring: ABC, tal, engelsk`** | 30 / 30 |
+| **Subtitle** | **`Førskole, 0. og 1. klasse`** | 25 / 30 |
 
-### 1.2 Subtitle — 30 char limit
+**Why this split.** Apple indexes name + subtitle + keywords as a single pool, so the two fields are one
+budget and neither has room for both ideas. The name therefore carries the **subjects** — including Engelsk,
+which the first draft left out of the indexed pool entirely — and the subtitle carries the **school stage**,
+førskole through 1. klasse, which is the actual audience. Together they cover brand, all three subjects and
+the full age span, which no single 30-character field can.
 
-| # | Candidate | Chars | Note |
-|---|---|---|---|
-| **A** | **`Lær bogstaver, tal og farver`** | **28** | **Recommended.** Adds three indexed words the name doesn't have. Says what the app *is*. |
-| B | `24 rolige spil for 5-8 år` | 25 | Leads with scale and age. Good for a browsing parent, weaker for search. |
-| C | `Dansk tale, ingen reklamer` | 26 | Leads with the differentiator. Tempting, but spends both indexed slots on words nobody searches. |
+The name sits **exactly at 30**, so treat it as frozen: any later tweak breaks it and needs a re-count.
 
-Do not repeat name words in the subtitle — Apple indexes name, subtitle and keywords as one pool, so a
-repeat is a wasted slot.
+Superseded, for the record: `Børnelæring: Alfabetet og Tal` / `Lær bogstaver, tal og farver` — named no
+school stage and omitted Engelsk.
+
+Danish terminology, since it decides the search terms: **børnehaveklasse** is grade 0 (age ~6) and is what
+parents type; **0. klasse** is the same thing written numerically; **indskoling** is the official term for
+the 0.–3. klasse span; **førskole** covers everything before that. Option A's subtitle spells out `0. og
+1. klasse` because that is what a parent scanning a store page recognises, and `børnehaveklasse` and
+`indskoling` are picked up by the keywords instead.
+
+**Do not claim curriculum alignment.** "Følger Fælles Mål" or similar is a factual claim about the Danish
+national curriculum that this app has never been mapped against, and metadata claims are a Guideline 2.3.1
+problem. Describing the age and stage it *suits* is fine; asserting it implements the curriculum is not.
+
+**Name availability can force a change and is only settleable in App Store Connect** — the name is reserved
+when the app record is created, and "Børnelæring" is an ordinary Danish compound noun, so a collision is
+plausible. **UNKNOWN until you try it.** Fall back to C, or `Børnelæring ABC` / `Min Børnelæring`.
 
 ### 1.3 Keywords — 100 char limit, comma-separated
 
+Matched to name/subtitle option **A**, so nothing here repeats `børnelæring`, `abc`, `tal`, `engelsk`,
+`førskole` or `klasse`:
+
 ```
-stavning,regning,matematik,dansk,engelsk,førskole,indskoling,memory,læsning,plus,minus
+stavning,regning,matematik,dansk,børnehaveklasse,indskoling,læsning,bogstaver,farver,plus,minus
 ```
 
-**86 characters, 14 spare.** Rules applied: no space after commas (a space is a wasted character), no
-word already in the name or subtitle (`børn`, `alfabet`, `tal`, `bogstaver`, `farver`, `lær`), no plurals
-of words already present, no competitor names, no "app"/"spil"/"gratis" (Apple ignores or penalises
-these). Candidates for the 14 spare characters once you see real search behaviour: `hukommelse`,
-`ordleg`, `abc`.
+**95 characters, 5 spare.** `børnehaveklasse` and `indskoling` are the two that carry the school-stage
+intent that would not fit in the subtitle. Rules applied: no space after commas (a space is a wasted
+character), no word already in the name or subtitle, no competitor names, no `app`/`spil`/`gratis` (Apple
+ignores or penalises these). If you pick option **B** instead, swap `dansk` and `matematik` out — they move
+into the subtitle — and spend the freed room on `engelsk`, `førskole` and `memory`.
 
 ### 1.4 Description — Danish (primary), 1257 characters
 
@@ -58,7 +71,7 @@ Paste as-is. The bullet character is `•` (U+2022), not an emoji, so it is cons
 no-emoji rule.
 
 ```
-Børnelæring er en rolig, dansk læringsapp til børn i førskole- og indskolingsalderen. Fem verdener, 24 spil og en tydelig dansk stemme, der læser alt højt — så barnet kan spille selv, også før det kan læse.
+Børnelæring er en rolig, dansk læringsapp til børn i førskolealderen og i 0. og 1. klasse. Fem verdener, 24 spil og en tydelig dansk stemme, der læser alt højt — så barnet kan spille selv, også før det kan læse.
 
 FEM OMRÅDER
 • Alfabetet — find bogstaver, hør deres lyd og stav korte ord
@@ -80,7 +93,7 @@ LAVET TIL BØRN
 FOR DE VOKSNE
 I de voksnes område kan du vælge sværhedsgrad, oprette flere børneprofiler, læse hvad appen sender hvorhen, og slå mikrofonspillet til eller fra. Området er beskyttet af en opgave, et barn ikke kan løse. Mikrofonen er slået fra som standard, og mikrofonspillet kræver både en konto og internet. Synkronisering mellem enheder kræver også en konto.
 
-Appen er skrevet til en 5-årig dreng af hans far, og er tænkt til børn på 5-8 år.
+Appen er skrevet til en 5-årig dreng af hans far. Den passer til børn fra omkring 5 år, gennem børnehaveklassen og ind i 1. klasse.
 ```
 
 **Two lines were promises the app could not keep.** Status as of 2026-08-06:
@@ -97,7 +110,7 @@ monetisation better than any feature bullet, and reviewers read descriptions.
 ### 1.5 Description — English (en-US locale, and useful context for the reviewer)
 
 ```
-Børnelæring is a calm Danish learning app for children in preschool and the first school years. Five worlds, 24 games, and a clear Danish voice that reads everything aloud — so a child can play alone, even before learning to read.
+Børnelæring is a calm Danish learning app for children in preschool and the first two years of Danish primary school (børnehaveklasse and 1. klasse). Five worlds, 24 games, and a clear Danish voice that reads everything aloud — so a child can play alone, even before learning to read.
 
 FIVE AREAS
 • The alphabet — find letters, hear their sounds, spell short words
@@ -123,8 +136,16 @@ turn the microphone game on or off. The area is protected by a task a child cann
 off by default, and the microphone game needs both an account and internet. Cross-device sync also needs an
 account.
 
-Written for a five-year-old boy by his father, and intended for children aged 5-8.
+Written for a five-year-old boy by his father. Suited to children from around five, through the Danish børnehaveklasse and into 1. klasse.
 ```
+
+**If you do ship an en-US locale**, it gets its own name and subtitle. Keep the Danish brand name — the app
+is Danish and renaming it in English would misrepresent it — and translate only the subtitle:
+
+| Field | Value | Chars |
+|---|---|---|
+| Name (en-US) | `Børnelæring: ABC, tal, engelsk` | 30 / 30 |
+| Subtitle (en-US) | `Preschool and early school` | 26 / 30 |
 
 **The app itself stays Danish-only.** This is App Store metadata for the en-US locale, not a translation
 of the UI. Note the tension worth being deliberate about: shipping an English listing invites English
