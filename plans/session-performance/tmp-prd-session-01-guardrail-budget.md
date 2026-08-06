@@ -2,8 +2,8 @@
 
 **Status:** authored 2026-08-06, NOT implemented.
 **Scope:** `CLAUDE.md`, `.claude/rules/**`, `.claude/skills/**`, `.claude/agents/**`, the Vercel
-plugin, plus two new measurement scripts and one build-failing guard. **No app code, no tests of
-app behaviour, no art, no narration.**
+plugin, two new measurement scripts, one build-failing guard, and the existing statusline plus two
+hooks (W7). **No app code, no tests of app behaviour, no art, no narration.**
 
 This PRD is self-contained: every number in it was measured in the authoring session and is
 reproduced here, so an implementer starting cold does not need to re-derive anything.
@@ -125,6 +125,7 @@ Be honest about this when reporting progress; do not oversell the baseline cut.
 | W3 Opus-5 calibration | none | **the main quality item** | none |
 | W4/W5 tooling | none | none — it stops regrowth | none |
 | W6 `/clear` + subagent habits | largest win | win (less stale context) | **largest cost lever** |
+| W7 statusline + `SessionEnd` report | indirect — makes W6 happen instead of hoping for it | none | indirect, and probably the best effort-to-effect ratio here |
 
 ## 3. Decisions already taken
 
@@ -441,6 +442,88 @@ Short list, goes in `CLAUDE.md` only if it survives the byte budget; otherwise i
 - **Compact instructions**: consider a `# Compact instructions` block so a compaction preserves the
   modified-file list and the test commands.
 
+### W7 — Make the cost visible without spending tokens to do it
+
+Three additions, all of which run **outside** the conversation and cost zero context. That constraint
+is the whole point: a monitor that reports into the session spends tokens to measure tokens.
+
+**What was rejected, and why** — so this isn't revisited:
+
+- **A `PostToolUse` logging hook.** Hooks never see token counts. They get the tool's input and
+  output, so at best they measure *bytes*; `usage` (cache read/write, context size) exists only in
+  the API response, which already lands in the transcript. So a per-tool hook produces worse data
+  than W5 already has, and pays a process spawn on every tool call — on Windows that is real latency
+  added to the thing we are trying to speed up.
+- **OpenTelemetry export.** The documented answer for per-user metrics, and correct for a team with
+  a metrics backend. Overkill for one developer on one machine.
+
+**W7.1 — Extend the existing statusline.** `~/.claude/statusline-command.sh` already exists and
+already prints `N% used` from `context_window.used_percentage`. The defect is that **a percentage of
+a 1M window is misleading**: 30% reads as comfortable and is 300,000 tokens re-read on every turn.
+The threshold that matters is a latency threshold, not a window-capacity one.
+
+Add, from the documented stdin schema:
+
+| Field | Use |
+|---|---|
+| `context_window.total_input_tokens` | show **absolute tokens** next to the percentage — this is the number that predicts reply latency |
+| `context_window.context_window_size` | 1,000,000 here; needed to show `230k / 1M` rather than a bare percentage |
+| `exceeds_200k_tokens` | fixed 200k threshold regardless of window size — i.e. *"past where a 200k model would have compacted."* Colour the segment when true; that is the `/clear` nudge |
+| `cost.total_cost_usd` | client-side session estimate, resets on `/clear` |
+| `rate_limits.five_hour.used_percentage` | the number that actually matters on a subscription |
+
+Colour bands tuned to latency, not to capacity: green under ~80k, yellow ~80–200k, red over 200k
+(where `exceeds_200k_tokens` flips). Under the current script a 400k session shows "40% used" in
+plain dim white, which is exactly backwards.
+
+Constraints from the docs, all of which the current script already respects — do not break them:
+
+- Updates are **debounced at 300ms** and an in-flight script is **cancelled** if a new update
+  arrives. The script must stay fast. It already shells out to `node` plus up to three `git` calls;
+  **do not add a transcript parse to the statusline.** That belongs in W5/W7.2.
+- `used_percentage` is calculated from **input tokens only** (`input_tokens + cache_creation +
+  cache_read`); it excludes `output_tokens`. If any figure is computed by hand, use the same formula
+  or the two will disagree.
+- `context_window.current_usage` is `null` before the first API call and again right after
+  `/compact`. Guard for it — the existing script's null-handling for `used_percentage` is the pattern.
+- Leave `refreshInterval` unset. The event-driven triggers are sufficient and a timer costs CPU for
+  nothing here.
+
+**W7.2 — A `SessionEnd` hook that writes the report to disk.** `SessionEnd` fires **once per
+session** (matchers: `clear`, `resume`, `logout`, `prompt_input_exit`, `bypass_permissions_disabled`,
+`other`), receives `transcript_path` and `session_id`, and — importantly — **cannot add content to
+the conversation context**. It is documented as being for side effects: logging and cleanup. That is
+exactly the right shape.
+
+Wire it to run `scripts/session-cost.mjs` against the supplied `transcript_path` and append one line
+per session to `plans/session-performance/session-log.tsv` (gitignored, or committed if the trend is
+worth keeping): timestamp, session id, turns, first-turn baseline, max context, cache read, cost
+estimate, and the count of >10k-token turns. Zero context cost, zero per-turn overhead, and the
+`--aggregate` comparison in W5 gets its data without anyone remembering to run anything.
+
+Keep the hook cheap and non-blocking, and let it fail silently — a session ending must never hang on
+a monitor.
+
+**W7.3 — `InstructionsLoaded`, to verify the glob work empirically.** There is a hook event that
+fires **when a `CLAUDE.md` or `.claude/rules/*.md` file is loaded**. This is the authoritative answer
+to "did my `paths:` scoping actually work", and it beats reasoning about globs or inferring from
+transcripts.
+
+Use it as a **temporary instrument**, not a permanent fixture: enable it, run one session per work
+area (a game component edit, an audio change, an auth change, a docs-only session), log which rule
+files loaded and their sizes, confirm W1.1 and W2 did what they were supposed to, then remove the
+hook. If it proves useful enough to keep, it must stay silent-on-success and write to disk only.
+
+This also gives W4's guard a real cross-check: the guard counts what the globs *should* match;
+`InstructionsLoaded` records what actually loaded. If those two ever disagree, trust the hook.
+
+**W7.4 — Everything in W7 lives in `~/.claude/`, outside the repo.** The statusline script and the
+hook block are therefore not covered by the W4 guard, not versioned with the project, and lost on a
+new machine. Paste the final versions of both into an appendix of this PRD so they can be rebuilt,
+and note that `settings.local.json` currently sets `"defaultMode": "bypassPermissions"`, which makes
+the `permissions.allow` list in `.claude/settings.json` largely redundant — worth tidying while in
+there, but it is not a performance item and must not be bundled into a claim about token savings.
+
 ## 6. Verification
 
 1. **`/context` before and after W1+W2.** First-turn baseline **≤50,000 tokens** (from 56–63k), ours
@@ -459,7 +542,12 @@ Short list, goes in `CLAUDE.md` only if it survives the byte budget; otherwise i
    still fire, the invariants in §4 are still respected, and the reply is still short and plain. If
    quality drops, W3.1 went too far. **Restore emphasis on the specific rule that got ignored, not
    on everything** — a blanket revert loses the whole gain.
-7. Confirm `git status` is clean at the end and that nothing was left staged.
+7. **W7 checks.** The statusline shows absolute tokens and changes colour past 200k — verify by
+   letting a session grow, not by reasoning about it. `SessionEnd` appends exactly one line per
+   session to the log, and ending a session is not measurably slower. `InstructionsLoaded` confirms
+   that a docs-only session loads no game or audio rules, and that a game-component session loads
+   `audio-call-sites.md` rather than `audio-system.md` — that pair is the direct proof W2 worked.
+8. Confirm `git status` is clean at the end and that nothing was left staged.
 
 ## 7. Out of scope
 
@@ -481,6 +569,13 @@ around issue #16299, which does not affect 2.1.223.
   patterns and the keep-list.
 - `claude-api` skill, `shared/model-migration.md` → *Migrating to Claude Opus 5* — over-verification,
   increased delegation, verbosity, pricing, the 512-token cache minimum.
+- [Customize your status line](https://code.claude.com/docs/en/statusline) — the full stdin schema
+  (`context_window.*`, `exceeds_200k_tokens`, `cost.*`, `rate_limits.*`), the 300ms debounce and
+  in-flight cancellation, and the note that `used_percentage` is input-only.
+- [Hooks reference](https://code.claude.com/docs/en/hooks) — the event list and firing frequency.
+  `SessionEnd` is once per session with no context-addition capability; `InstructionsLoaded` fires
+  when a `CLAUDE.md` or `.claude/rules/*.md` file loads; `Stop` is once per *turn*, which is why it
+  is the wrong choice for a session report.
 - [anthropics/claude-code#16299](https://github.com/anthropics/claude-code/issues/16299) — the
   path-scoping bug that does *not* apply to us.
 
