@@ -849,7 +849,9 @@ instead of a briefing.
 
 | | State |
 |---|---|
-| **Phase A** | **DONE** and on the branch. Guest play, `/privatliv` + `/support`, mic consent gate, offline-readiness audit, iPhone 6.9" pass, Google-token audit. Not merged to master, therefore **not deployed** — which is why the Support URL would 404 if Apple fetched it today. |
+| **MERGED + DEPLOYED** | **2026-08-07.** Phases A+B fast-forwarded to `master` and live as `3ffee23` on **`https://boernelaering.dk`**. `/privatliv` and `/support` both answer **200**, so the App Store Connect URLs can now be filled in. Ordering matters if this is ever redone: the shell's server-side half (`capacitor://localhost` in `trustedOrigins`, widened CORS) ships with the web app, so **deploy before building a shell**, or the build under test cannot reach the API. |
+| **OPEN DEFECT** | **`/api/auth/*` 404s on OPTIONS with no CORS headers** — expected to make sign-in, profiles, PIN and passkeys dead in the shell while every game works. **Blocks TestFlight.** Full evidence and the constraints a fix must respect: **§4.0.1**. |
+| **Phase A** | **DONE** and merged. Guest play, `/privatliv` + `/support`, mic consent gate, offline-readiness audit, iPhone 6.9" pass, Google-token audit. |
 | **Phase B** | **DONE 2026-08-07** (B1–B9), commits `14d5a83` + `94bb491`, plus `78841cb` — see the API-origin note below, which was a genuine gap in B and is now closed. The `ios/` tree is committed; **nothing has been compiled** — no Mac has touched it. Deviations below. |
 | **C7** Codemagic | **`codemagic.yaml` DONE** (`7c1908e`). Remaining is **OWNER**: connect the repo, and add the C6 `.p8` under the integration name **`bornelaering-asc`** (or rename it in the yaml). |
 | **C0** Azure paid tier | **DONE 2026-08-07.** Was F0; now S0, all 1884 clips re-synthesized. §3.11. |
@@ -894,6 +896,56 @@ One consequence worth carrying into any future domain move: **`SHELL_API_ORIGIN`
 the app that cannot be an environment variable**, because it is compiled into a reviewed binary. The
 web follows a move on the next request; an installed shell never can. So the old host must keep
 answering until every install has been replaced *through review*.
+
+### 4.0.1 OPEN DEFECT — the same gap survives on `/api/auth/*`
+
+Found 2026-08-07 against the **deployed** `3ffee23`, immediately after Phase A+B merged to master. **Fix
+this before any TestFlight build**, or the build under test cannot sign in.
+
+**Measured on production** (rung 1, `curl` against the live deployment):
+
+| Route | GET | OPTIONS |
+|---|---|---|
+| `/api/progress`, `/api/profiles`, `/api/tts-azure`, `/api/stt` | — | **200**, `Allow-Origin: capacitor://localhost`, `Allow-Headers: Content-Type, Authorization` ✅ |
+| `/api/auth/ok` | 200 | **404, no CORS headers** ❌ |
+| `/api/auth/family/status` | 401 (route alive) | **404, no CORS headers** ❌ |
+
+**Why Phase B's fix missed it.** `78841cb` widened CORS in `lib/server-utils.ts`, which covers every
+ordinary function. `api/auth/[...all].ts` **deliberately bypasses those helpers** — it is a Web-standard
+`fetch` export while `applyCors`/`isAllowedOrigin` are `VercelRequest`-shaped, and better-auth owns
+origin validation via `trustedOrigins`. That decision is documented in `.claude/rules/api-endpoints.md`
+("The auth surface is different — do NOT wrap it in the helpers above") and is not wrong; it simply
+means the auth surface was never reached by the fix.
+
+**Why it is expected to be fatal in the shell.** Every auth call carries a bearer token, `Authorization`
+is not a CORS-safelisted request header, so each one is preflighted. A 404 preflight with no
+`Access-Control-Allow-Origin` is blocked by the webview. `CapacitorHttp` is **not** enabled (no plugins
+block in `capacitor.config.ts`), so there is no native proxy sidestepping CORS. Predicted symptom: the
+shell launches, all 24 games work offline, and sign-in, profiles, PIN, passkeys and sync are silently
+dead — the exact failure class Phase B closed for the other endpoints.
+
+**Confidence: the server behaviour is measured; the browser consequence is NOT device-verified.** It
+follows from standard CORS semantics, not from an observed WKWebView failure. Rung 3 would settle it,
+but the fix is cheap enough that waiting for a device is the wrong trade.
+
+**What the fix must respect** — do not just wrap it in `applyCors`:
+
+- The handler is a `fetch(request: Request): Promise<Response>` export. It needs a **Response-shaped**
+  CORS path, not the `VercelRequest` helpers.
+- It must answer `OPTIONS` itself (short-circuit before `auth.handler`) and echo the request origin only
+  when allowed — a blanket `*` cannot be used, because credentialed requests reject it and because
+  `api-endpoints.md` explicitly killed the blanket `*` for `/api`.
+- **`capacitor://localhost` must stay allowed in exactly one place conceptually.** better-auth's
+  `trustedOrigins()` already lists it (`lib/env.ts`); the CORS layer and `trustedOrigins` must not drift.
+- **Mirror it in `dev-server.js`**, which mounts the same better-auth handler via `toNodeHandler` — an
+  unmirrored change is a 404 only in dev, which `api-endpoints.md` records as how profile creation once
+  failed silently.
+- Guard it: a test asserting `OPTIONS /api/auth/*` answers with the shell origin allowed. The existing
+  `shellAuth.test.ts` and `apiBase.test.ts` are the natural homes.
+- 404-on-OPTIONS may be **Vercel's routing** rather than better-auth's router (the `vercel.json` rewrite
+  for `api/auth/**` may not match `OPTIONS`). Establish which before writing the fix — read
+  `.vercel/output/config.json` per `api-endpoints.md`, because fixing the wrong layer will look like it
+  works locally and still 404 in production.
 
 **UNKNOWNs closed by Phase B** (both were §3.9's, both resolved from the artifact that actually ships,
 not from community reports):
