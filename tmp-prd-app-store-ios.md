@@ -839,6 +839,32 @@ ours.
 Phases A and B are engineering. Phase C mixes engineering with **owner-only steps that this document stops
 at.** Phase D is waiting.
 
+### 4.0 Where this stands — read this first
+
+Updated **2026-08-07**. Keep it updated; it is what lets a fresh session start from a two-line prompt
+instead of a briefing.
+
+**All work lives on the branch `feat/app-store-ios`** (pushed to origin). Never commit App Store work to
+`master`, and do not merge without asking — `master` is the deploy trigger.
+
+| | State |
+|---|---|
+| **Phase A** | **DONE** and on the branch. Guest play, `/privatliv` + `/support`, mic consent gate, offline-readiness audit, iPhone 6.9" pass, Google-token audit. Not merged to master, therefore **not deployed** — which is why the Support URL would 404 if Apple fetched it today. |
+| **Phase B** | **NOT STARTED.** B1–B9, §4.3. This is the next engineering work. |
+| **C0** Azure paid tier | **DONE 2026-08-07.** Was F0; now S0, all 1884 clips re-synthesized. §3.11. |
+| **C1** enrolment | **DONE.** Individual, 99 USD paid. |
+| Free Apps Agreement | **Active.** Paid Apps Agreement deliberately left unsigned — the app is free. |
+| **C2** DSA trader status | **Submitted 2026-08-07, "In Review" with Apple.** Trader path, so the address will publish on the EU product page once verified. Gates EU *distribution*, not building. |
+| **C4** Bundle ID | **`com.vraa.earlylearning`** — Sign in with Apple enabled, **no other capabilities**. Permanent. |
+| **C5** App record | **Created.** Name `Børnelæring: ABC, tal, engelsk` (was available), primary language Danish, SKU `earlylearning`. Version 1.0 metadata, promo text, keywords, copyright and all 12 screenshots uploaded. "Sign-in required" **unticked** (guest play), release set to **Manual**. |
+| **C6** ASC API key | **Created** — Team key, Admin role. The `.p8` lives on the owner's machine **outside the repo**; he uploads it to Codemagic himself. **Never ask him to paste its contents.** Key ID and Issuer ID are safe to handle. |
+| Still unset in ASC | Age rating, **"Made for Kids"** (permanent once approved — do deliberately), the App Privacy questionnaire, and Denmark-only availability. None block Phase B. |
+
+**Decisions already taken — do not re-litigate:** the web build is **bundled**, never `server.url` (§3.1);
+deployment target **17.0** against the iOS 26 SDK (§3.9); **universal**, iPhone landscape-locked; passkeys
+**dropped from the shell** for v1 (§3.3); listing is **Danish-only, Denmark-only**; **no OTA live updates,
+ever** (§3.1).
+
 ### 4.1 Phase A — web app changes (all doable and testable on Windows)
 
 | # | Work | Notes |
