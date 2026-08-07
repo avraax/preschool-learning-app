@@ -38,6 +38,13 @@ workflows:
       # "No matching profiles found for bundle identifier … and distribution type app_store".
       # Codemagic's docs also name MIXING the two paths as a cause of that same error, so the explicit
       # CLI sequence in the signing step REPLACES this block rather than supplementing it.
+      # Codemagic requires every UI-defined variable to live in a GROUP, and a group is invisible to
+      # the build unless it is named here. `CERTIFICATE_PRIVATE_KEY` (secret, set in the Codemagic UI,
+      # never in this repo) is in `signing`. Omit this and the variable simply is not there — the
+      # signing step then fails exactly as if the key had never been added, with no hint that a group
+      # reference is missing.
+      groups:
+        - signing
       vars:
         XCODE_PROJECT: ios/App/App.xcodeproj
         # Capacitor names the target and scheme "App" — not the app's name.
