@@ -769,13 +769,32 @@ pre-approval is required for additional use cases for prebuilt neural voice**"
 (https://learn.microsoft.com/en-us/azure/ai-foundry/responsible-ai/speech-service/text-to-speech/transparency-note,
 read 2026-08-06).
 
-**THE CHECK — was the prebake run on a PAID tier?** The grant reads "For Customers of the paid tier TTS
-Service **only**", and the Product Terms **never define "paid tier"** (one occurrence of the phrase, zero
-of "free tier"). If any of `public/sounds/tts/` was generated on an **F0 free** resource, the output-use
-grant does not on its face cover it. This is **not determinable from the repo** — it is an Azure portal
-check on the resource behind `shared-tts-key.js`. Remedy if it was F0 is cheap: re-run
-`npm run tts:prebake` against an S0 resource and commit the output. **Owner action; do it before Phase B
-bundles them.**
+**THE CHECK — RESOLVED 2026-08-07, and the answer was the bad one.** The grant reads "For Customers of the
+paid tier TTS Service **only**", and the Product Terms **never define "paid tier"** (one occurrence of the
+phrase, zero of "free tier").
+
+The resource — `preschool-tts`, Speech service, resource group `preschool-audio`, West Europe — was on
+**Pricing tier: Free (F0)**. So the entire original prebake was generated outside the output-use grant.
+This was invisible from the repo, which is why it needed a portal check rather than a code read.
+
+Fixed the same day: the resource was switched **in place to Standard (S0)** — the key and endpoint are
+unchanged, so no `.env.local` or Vercel env edit was needed — the 1884 MP3s were **deleted** and
+`npm run tts:prebake` re-ran, writing 1884/1884 with 0 failures.
+
+Two things worth knowing if this ever has to be redone:
+
+- **Deleting the audio first is mandatory, not tidiness.** `prebake-tts.mjs` treats an existing non-empty
+  file as done ("resumable across throttled runs", line ~91). A re-run against a populated directory
+  synthesizes **nothing**, prints a successful-looking summary, and leaves the old clips in place. That is
+  the silent no-op that would make this look fixed while it wasn't.
+- **Only 124 of 1884 files changed bytes**, and `src/config/prebakedTts.ts` came back byte-identical.
+  Azure's neural synthesis is near-deterministic for the same text, voice and settings, so *git cannot
+  show you that this was done*. The regeneration is what satisfies the grant; the diff size is not
+  evidence either way. Do not read a small diff as "the re-run didn't work".
+
+Note the tier change ends the free allowance: S0 bills per character. The one-off prebake is a trivial
+amount, and steady-state spend stays near zero because prebaked files mean the live API is only reached for
+Sig et Ord's read-back. Exact per-character rates were not verified — see UNKNOWN 28.
 
 **THE WORK — an AI-voice disclosure for parents.** This is a real obligation, it is not in Phase A, and it
 survives prebaking, because the audio is still synthetic when it plays off local disk. The Code of Conduct
@@ -882,7 +901,7 @@ exception — it is a plain text change and needs no build at all, so do it firs
 
 | # | Step | Who |
 |---|---|---|
-| C0 | **Confirm the TTS prebake ran on a PAID (S0) Azure resource, not F0.** §3.11. Portal check, not visible from the repo. If it was F0, re-run `npm run tts:prebake` on a paid resource and commit before Phase B bundles the files | **OWNER — Azure portal** |
+| C0 | ~~Confirm the TTS prebake ran on a PAID (S0) Azure resource~~ — **DONE 2026-08-07.** It was **F0**; resource switched in place to **S0**, all 1884 clips deleted and re-synthesized (1884/1884, 0 failed), audit clean. §3.11 | done |
 | C1 | **Enrol in the Apple Developer Program — 99 USD/year.** May require the iPad for photo-ID verification (§2.4). Enrol as an **individual**; note the legal name becomes the App Store seller name | **OWNER — payment and a legal agreement** |
 | C2 | **Declare EU DSA trader status.** Non-trader vs trader is a legal determination and his call (§3.7) | **OWNER — legal declaration** |
 | C3 | Accept the Program License Agreement; free-only apps need no Paid Apps agreement, tax or banking forms | **OWNER — legal agreement** |
@@ -997,8 +1016,9 @@ documentation is silent — not because nobody looked.
 25. Whether the **native `AVAudioSession` category reaches the webview at all.** WebKit bug 167788 is titled "WKWebView seems to ignore AVAudioSession category settings in iOS app", reports go both ways, and Apple's own category doc rendered as a JS shell. So "a native shell fixes the ringer-switch silencing narration" is **NOT established** — it is a lever whose connection to anything here is a **rung-3 device test** in TestFlight. Cheap to try in Phase B; do not design around it, and do not repeat the claim that it helps the `resume()` class of bug, for which there is no evidence either.
 
 **Third-party licensing**
-26. Whether the prebaked TTS was synthesized on a **PAID Azure tier**. The output-use grant is scoped "paid tier… only" and the Product Terms never define the phrase. Not visible from the repo — §3.11, step C0. *(The larger question — whether shipping the MP3s in a binary is allowed at all — was RESOLVED on 2026-08-06: it is. See §3.11.)*
+26. ~~Whether the prebaked TTS was synthesized on a PAID Azure tier.~~ **RESOLVED 2026-08-07: it was NOT — the resource was F0.** Switched to S0 and all 1884 clips re-synthesized. §3.11. *(The larger question — whether shipping the MP3s in a binary is allowed at all — was resolved 2026-08-06: it is.)*
 27. Whether the owner's Azure subscription is under a **negotiated / reseller / CSP agreement**, which would control instead of the published Product Terms (§3.11).
+28. **Azure's current per-character TTS rate.** Never verified against a live pricing page; the "a dollar or two for a full prebake" figure quoted in conversation was an estimate, not a source. Only matters if prebake volume grows a lot — the steady state is near zero.
 
 ---
 
