@@ -45,6 +45,12 @@ private-key-base64.txt
 # Project Claude config: hooks + the permission allow-list. Shared, no secrets.
 # `.claude/settings.local.json` stays ignored - it is personal (defaultMode, extra allows).
 !.claude/settings.json
+# Xcode ASSET CATALOG manifests. `Contents.json` is not config — it is the file that tells Xcode which
+# PNG is the app icon and which is the launch image, so the blanket `*.json` above would have shipped a
+# binary with NO ICON, which App Store Connect rejects at upload. Same shape as the manifest.json
+# outage: invisible locally, because the tree builds fine on the machine that has the files.
+# Capacitor's own ios/.gitignore already excludes the GENERATED capacitor.config.json and config.xml.
+!ios/App/App/Assets.xcassets/**/Contents.json
 
 # Audio cache
 public/audio-cache/

@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  App Store PRD §3.9 / §3.7 (Phase B4). REQUIRED: since 2024-05-01 App Store Connect REJECTS an upload
+  that uses a required-reason API without describing it here, so a missing or malformed manifest is not
+  a review note, it is a failed upload.
+
+  Two things about the shape are easy to get wrong:
+    * It lives at the ROOT OF THE APP BUNDLE on iOS, which is why it sits beside Info.plist and is in
+      the target's Resources build phase (see project.pbxproj).
+    * NSPrivacyAccessedAPICategoryUserDefaults takes reason CA92.1 — "access user defaults to read and
+      write information that is only accessible to the app itself". NOT C56D.1, which is explicitly
+      third-party-SDK-only, and NOT 1C8F.1, which requires an App Group (this app has none). A
+      Capacitor/WKWebView app touches UserDefaults, so the category is not optional.
+
+  The collected-data list mirrors §3.7's table, which is the same set answered in the App Store Connect
+  privacy questionnaire — keep the two in step. All are App Functionality and linked to the user; none
+  are used for tracking.
+
+  Audio Data is declared even though it is arguably NOT "collected" on Apple's own definition (nothing
+  retains it beyond servicing the request in real time). Over-disclosure has never been a rejection
+  reason; under-disclosure has. Note it is ALSO gated: the microphone is off until an adult turns it on.
+-->
+<plist version="1.0">
+<dict>
+	<key>NSPrivacyTracking</key>
+	<false/>
+	<key>NSPrivacyTrackingDomains</key>
+	<array/>
+	<key>NSPrivacyAccessedAPITypes</key>
+	<array>
+		<dict>
+			<key>NSPrivacyAccessedAPIType</key>
+			<string>NSPrivacyAccessedAPICategoryUserDefaults</string>
+			<key>NSPrivacyAccessedAPITypeReasons</key>
+			<array>
+				<string>CA92.1</string>
+			</array>
+		</dict>
+	</array>
+	<key>NSPrivacyCollectedDataTypes</key>
+	<array>
+		<!-- The adult's email from Google / Sign in with Apple. Persists in Neon, so it is collected. -->
+		<dict>
+			<key>NSPrivacyCollectedDataType</key>
+			<string>NSPrivacyCollectedDataTypeEmailAddress</string>
+			<key>NSPrivacyCollectedDataTypeLinked</key>
+			<true/>
+			<key>NSPrivacyCollectedDataTypeTracking</key>
+			<false/>
+			<key>NSPrivacyCollectedDataTypePurposes</key>
+			<array>
+				<string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
+			</array>
+		</dict>
+		<!-- Account id and child-profile ids. -->
+		<dict>
+			<key>NSPrivacyCollectedDataType</key>
+			<string>NSPrivacyCollectedDataTypeUserID</string>
+			<key>NSPrivacyCollectedDataTypeLinked</key>
+			<true/>
+			<key>NSPrivacyCollectedDataTypeTracking</key>
+			<false/>
+			<key>NSPrivacyCollectedDataTypePurposes</key>
+			<array>
+				<string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
+			</array>
+		</dict>
+		<!-- Progress, XP and rewards synced to Neon. Only with an account; guest play syncs nothing. -->
+		<dict>
+			<key>NSPrivacyCollectedDataType</key>
+			<string>NSPrivacyCollectedDataTypeGameplayContent</string>
+			<key>NSPrivacyCollectedDataTypeLinked</key>
+			<true/>
+			<key>NSPrivacyCollectedDataTypeTracking</key>
+			<false/>
+			<key>NSPrivacyCollectedDataTypePurposes</key>
+			<array>
+				<string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
+			</array>
+		</dict>
+		<!-- The child's voice in "Sig et Ord" → Google Cloud Speech-to-Text. Off until an adult
+		     consents behind the parental gate; not retained by anyone. Declared anyway — see header. -->
+		<dict>
+			<key>NSPrivacyCollectedDataType</key>
+			<string>NSPrivacyCollectedDataTypeAudioData</string>
+			<key>NSPrivacyCollectedDataTypeLinked</key>
+			<true/>
+			<key>NSPrivacyCollectedDataTypeTracking</key>
+			<false/>
+			<key>NSPrivacyCollectedDataTypePurposes</key>
+			<array>
+				<string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
+			</array>
+		</dict>
+		<!-- Crash and failed-sign-in reports (api/bug-report.ts, api/log-error.ts). -->
+		<dict>
+			<key>NSPrivacyCollectedDataType</key>
+			<string>NSPrivacyCollectedDataTypeCrashData</string>
+			<key>NSPrivacyCollectedDataTypeLinked</key>
+			<true/>
+			<key>NSPrivacyCollectedDataTypeTracking</key>
+			<false/>
+			<key>NSPrivacyCollectedDataTypePurposes</key>
+			<array>
+				<string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
+			</array>
+		</dict>
+	</array>
+</dict>
+</plist>

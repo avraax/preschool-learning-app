@@ -1,0 +1,14 @@
+/* Danish purpose strings (App Store PRD §3.9 / B3).
+
+   The Info.plist value stays ENGLISH and is the fallback: "If a localized version of a key does not
+   exist, the routines return the value stored in the Info.plist file."
+
+   Guideline 5.1.1(ii) requires a purpose string to "clearly and completely describe your use of the
+   data", so this must name WHERE the recording goes, not merely ask for the microphone. The failure
+   mode for getting the key itself wrong is severe: an app that touches the microphone with no purpose
+   string EXITS.
+
+   `da` must also be listed in the Xcode project's knownRegions, or this .lproj is silently not built
+   into the bundle and the English fallback ships to Danish iPads with nobody noticing. */
+
+"NSMicrophoneUsageDescription" = "Børnelæring bruger kun mikrofonen i spillet \"Sig et Ord\", hvor barnet siger et dansk ord højt. Optagelsen sendes til Google Cloud Speech-to-Text for at genkende ordet og gemmes ikke. Mikrofonen er slået fra, indtil en voksen slår den til.";

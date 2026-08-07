@@ -13,6 +13,7 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
 import {
+  AI_VOICE_DISCLOSURE_DA,
   CONTROLLER,
   EQUAL_PROTECTION_DA,
   EQUAL_PROTECTION_EN,
@@ -166,6 +167,36 @@ test('the synthetic nature of the voice is disclosed', () => {
   // generated voices". Every line the app speaks is Azure TTS output.
   assert.match(textOf(PRIVACY_DA), /syntetisk/)
   assert.match(textOf(PRIVACY_EN), /synthetic/)
+})
+
+test('the AI-voice disclosure reaches the ADULT SURFACE, not just the policy page', () => {
+  // App Store PRD §3.11 / B9. The policy page already says the voice is synthetic, but a privacy policy
+  // is not where a parent looks — the obligation Microsoft's Code of Conduct writes is that parents can
+  // "understand the role of synthetic media and make an informed decision", which means the sentence has
+  // to sit where the parent already is: the Privatliv group in "Til de voksne", beside the microphone
+  // switch. So this pins the CONTENT and the RENDER SITE, because either one alone passes vacuously.
+  assert.match(AI_VOICE_DISCLOSURE_DA.body, /kunstigt fremstillet|AI-genereret/)
+  assert.ok(
+    AI_VOICE_DISCLOSURE_DA.body.length > 40,
+    'the disclosure is too short to disclose anything',
+  )
+
+  const pane = readFileSync(
+    path.join(SRC, 'components/adult/panes/PrivatlivPane.tsx'),
+    'utf8',
+    // Comments first — a prose mention of the constant in the "why" comment above the fix otherwise
+    // keeps this green after the render itself has been deleted (the `authOverlayZ` failure mode).
+  )
+    .replace(/\/\*[\s\S]*?\*\//g, ' ')
+    .replace(/\{\/\*[\s\S]*?\*\/\}/g, ' ')
+    .replace(/(^|[^:])\/\/.*$/gm, '$1')
+  assert.match(pane, /AI_VOICE_DISCLOSURE_DA/, 'the Privatliv pane does not render the disclosure')
+  assert.match(pane, /AI_VOICE_DISCLOSURE_DA\.body/, 'the pane imports the disclosure but never shows the sentence')
+
+  // And it must NOT be on a child-facing surface. The child is not the audience, and no game screen
+  // should carry adult legal copy.
+  const games = readFileSync(path.join(SRC, 'App.tsx'), 'utf8')
+  assert.ok(!/AI_VOICE_DISCLOSURE/.test(games), 'the disclosure leaked onto a child-facing route')
 })
 
 test('the guest claim does not overstate silence', () => {

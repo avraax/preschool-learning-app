@@ -1,6 +1,7 @@
 // "Privatliv" — the sixth adult group (App Store PRD §3.5 + §3.6, Phase A2/A3).
 //
-// Three rows that are one story: whether the microphone may send the child's voice to a third party,
+// Four rows that are one story: whether the microphone may send the child's voice to a third party,
+// that the voice the child hears is synthetic (PRD §3.11 / B9 — Microsoft's obligation, not Apple's),
 // and the two documents that say what happens to data. A Kids Category reviewer goes looking for
 // exactly this, which is why it is its own pane rather than scattered (see `adultSettingsIa.ts`).
 //
@@ -17,6 +18,7 @@ import { Box, Button, Stack, Typography } from '@mui/material'
 import { ChevronRight, FileText, LifeBuoy, Mic, MicOff } from 'lucide-react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuthContext } from '../../../contexts/AuthContext'
+import { AI_VOICE_DISCLOSURE_DA } from '../../../config/legalContent'
 import { grantMicConsent, micConsentGiven, revokeMicConsent } from '../../../utils/micConsent'
 import MicConsentDialog from './MicConsentDialog'
 import { PaneSection, ToggleRow } from './paneParts'
@@ -137,6 +139,20 @@ const PrivatlivPane: React.FC<{ closeAll: () => void }> = ({ closeAll }) => {
             )}
           </>
         )}
+      </PaneSection>
+
+      {/* Microsoft's Code of Conduct obligation, not Apple's — see AI_VOICE_DISCLOSURE_DA. It sits
+          beside the microphone switch on purpose: a parent reading what the app sends where is exactly
+          the parent this disclosure is written for. Adult surface only, never a child-facing screen. */}
+      <PaneSection title={AI_VOICE_DISCLOSURE_DA.title}>
+        <Box sx={{ py: 1 }}>
+          <Typography sx={{ fontSize: '0.95rem', lineHeight: 1.55 }}>
+            {AI_VOICE_DISCLOSURE_DA.body}
+          </Typography>
+          <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.55, mt: 0.75 }}>
+            {AI_VOICE_DISCLOSURE_DA.hint}
+          </Typography>
+        </Box>
       </PaneSection>
 
       <PaneSection title="Dokumenter">
