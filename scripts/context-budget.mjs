@@ -68,6 +68,23 @@ const PROBE_COMPONENT = 'src/components/math/MathOperationGame.tsx'
 
 const tok = (bytes) => Math.round(bytes / CHARS_PER_TOKEN)
 
+/**
+ * Byte length of the CANONICAL (LF) form, not of the working copy.
+ *
+ * `.gitattributes`/`core.autocrlf` give this repo CRLF line endings on a Windows checkout, so every
+ * newline costs an extra byte on disk that does not exist in git and is not content. Measuring the
+ * working copy made the budget PLATFORM-DEPENDENT: CLAUDE.md is 11973 B in git and was 12134 B on
+ * disk, so the guard passed on a LF checkout (CI, Vercel, Linux) and failed on the owner's Windows
+ * machine — 161 B of pure carriage returns, on a 12000 B budget. It had been failing locally on
+ * master before anyone noticed, which is the worst outcome for a guard: red for a reason nobody
+ * believes, so it stops being read.
+ *
+ * This is NOT a budget increase. The budgets still measure the same thing they were authored
+ * against; they just no longer count a line-ending artifact. Raising a budget still means editing
+ * BUDGETS above and saying so in a commit.
+ */
+const canonicalBytes = (src) => Buffer.byteLength(src.replace(/\r\n/g, '\n'), 'utf8')
+
 function repoFiles() {
   const out = execFileSync('git', ['ls-files'], { cwd: REPO, encoding: 'utf8', maxBuffer: 32 * 1024 * 1024 })
   return out.split(/\r?\n/).filter(Boolean)
@@ -102,7 +119,7 @@ function parseRule(file) {
   const src = readFileSync(file, 'utf8')
   const fm = frontmatter(src)
   const globs = fm ? [...fm.matchAll(/-\s*["']?([^"'\r\n]+?)["']?\s*$/gm)].map((m) => m[1].trim()) : []
-  return { src, bytes: Buffer.byteLength(src), hasPaths: fm != null && /(^|\n)paths:/.test(fm), globs }
+  return { src, bytes: canonicalBytes(src), hasPaths: fm != null && /(^|\n)paths:/.test(fm), globs }
 }
 
 function parseSkill(file) {
@@ -127,7 +144,7 @@ function parseSkill(file) {
     return out.join(' ').trim()
   }
   return {
-    bytes: Buffer.byteLength(src),
+    bytes: canonicalBytes(src),
     bodyLines: body.split(/\r?\n/).filter((l, i, a) => !(i === a.length - 1 && l === '')).length,
     name: get('name'),
     description: get('description'),
@@ -162,7 +179,7 @@ function collect() {
       .map((f) => ({ file: f, bytes: statSync(join(agentsDir, f)).size }))
     : []
 
-  const claudeMd = Buffer.byteLength(readFileSync(join(REPO, 'CLAUDE.md'), 'utf8'))
+  const claudeMd = canonicalBytes(readFileSync(join(REPO, 'CLAUDE.md'), 'utf8'))
   const unscoped = rules.filter((r) => !r.hasPaths)
   const alwaysLoaded = claudeMd + unscoped.reduce((a, r) => a + r.bytes, 0)
   const onComponent = rules.filter((r) => !r.hasPaths || matchesAny(r.globs, PROBE_COMPONENT))
