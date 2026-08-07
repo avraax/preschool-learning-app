@@ -16,7 +16,9 @@ import { useProfiles } from '../../hooks/useProfiles'
 import { useAuthContext } from '../../contexts/AuthContext'
 import { profileGateBlocks, profileGateSurface } from '../../contexts/profileGatePolicy'
 import { musicClient } from '../../services/musicClient'
-import { profileStore } from '../../services/profileStore'
+import { GUEST_PROFILE_ID, profileStore } from '../../services/profileStore'
+import { progressStore } from '../../services/progressStore'
+import { markGuestBookClaimed } from '../../utils/guestMode'
 import CreateProfileDialog from './CreateProfileDialog'
 import ProfilePicker from './ProfilePicker'
 
@@ -62,9 +64,18 @@ const ProfileGate: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         open={creating || needsFirstProfile}
         // Mandatory on first run (there is nobody to play as), optional afterwards.
         dismissible={!needsFirstProfile}
-        onDone={(profile) => {
+        onDone={(profile, adoptGuestBook) => {
           setCreating(false)
-          if (profile) profileStore.selectProfile(profile.id)
+          if (!profile) return
+          // ORDER IS LOAD-BEARING: the copy lands BEFORE `selectProfile()` attaches, so `attach()`
+          // reads the adopted book off disk instead of writing `defaultPersisted(...)` over it. A
+          // `false` from `adoptDocument` leaves the guest book untouched and the child simply starts
+          // fresh — profile creation must never be blocked by a failed adoption.
+          if (adoptGuestBook) {
+            if (progressStore.adoptDocument(GUEST_PROFILE_ID, profile.id)) markGuestBookClaimed()
+            else if (import.meta.env?.DEV) console.warn('[profiles] guest book not adopted')
+          }
+          profileStore.selectProfile(profile.id)
         }}
         onCancel={() => setCreating(false)}
       />

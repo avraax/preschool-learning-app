@@ -8,31 +8,51 @@
 // child-facing surface, and a glyph here changes shape between the iPadOS 17.7 floor device and a
 // newer one. The closed id set lives in `src/config/avatars.ts`; the art in `src/assets/avatars/`.
 
-import React, { useCallback, useState } from 'react'
+import React, { useCallback, useMemo, useState } from 'react'
 import {
   Box,
   Button,
+  Checkbox,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
+  FormControlLabel,
   TextField,
   Typography,
 } from '@mui/material'
 import { alpha, useTheme } from '@mui/material/styles'
 import { motion } from 'framer-motion'
-import { profileStore, type ChildProfile } from '../../services/profileStore'
+import { GUEST_PROFILE_ID, profileStore, type ChildProfile } from '../../services/profileStore'
+import { authStore } from '../../services/authStore'
 import { useProfiles } from '../../hooks/useProfiles'
+import { guestAdoptionOffer } from '../../config/guestAdoption'
+import { normalizePersisted, progressKeyFor } from '../../config/progressSchema'
+import { guestBookClaimed } from '../../utils/guestMode'
 import { PHONE_ANY } from '../../theme/phoneMedia'
 import { AVATAR_IDS, AVATAR_LABELS, DEFAULT_AVATAR_ID, type AvatarId } from '../../config/avatars'
 import { avatarArt } from '../../assets/avatars'
 import { AUTH_Z } from './authOverlayZ'
 
+/** Read the guest book off disk. Returns `null` for absent, malformed, or non-v4 (by design). */
+const readGuestDoc = () => {
+  try {
+    const raw = localStorage.getItem(progressKeyFor(GUEST_PROFILE_ID))
+    return raw ? normalizePersisted(JSON.parse(raw)) : null
+  } catch {
+    return null
+  }
+}
 
 export interface CreateProfileDialogProps {
   open: boolean
   dismissible?: boolean
-  onDone: (profile: ChildProfile | null) => void
+  /**
+   * `adoptGuestBook` is the adult's answer to the checkbox below — true only when the offer was
+   * actually made AND left ticked. The CALLER performs the copy, because it has to happen between
+   * `createProfile()` and `selectProfile()` (see `ProfileGate`).
+   */
+  onDone: (profile: ChildProfile | null, adoptGuestBook?: boolean) => void
   onCancel?: () => void
 }
 
@@ -47,6 +67,29 @@ const CreateProfileDialog: React.FC<CreateProfileDialogProps> = ({
   const [avatar, setAvatar] = useState<AvatarId>(DEFAULT_AVATAR_ID)
   const [name, setName] = useState('')
   const [busy, setBusy] = useState(false)
+  const [adopt, setAdopt] = useState(true)
+
+  // THE ASK IS AN ATTRIBUTION QUESTION, NOT A PERMISSION DIALOG (PRD §6.3). The guest book belongs to
+  // one specific child; if this first profile is a sibling rather than the child who has been playing,
+  // a silent transfer puts months of stickers on the wrong kid with no undo. Hence one checkbox,
+  // defaulted on, and no second screen.
+  //
+  // Recomputed while `open` so the roster state is the one at the moment of asking. The predicate is
+  // pure and cheap; the only I/O is the single `localStorage` read above. "Tilføj et barn" from the
+  // picker is excluded for free by `rosterCount === 0`.
+  const offer = useMemo(
+    () =>
+      open
+        ? guestAdoptionOffer({
+            claimed: guestBookClaimed(),
+            guestDoc: readGuestDoc(),
+            rosterCount: account.profiles.length,
+            rosterSettled: account.rosterSettled,
+            hasSessionToken: !!authStore.sessionToken(),
+          })
+        : { offer: false, stickers: 0 },
+    [open, account.profiles.length, account.rosterSettled],
+  )
 
   const submit = useCallback(async () => {
     setBusy(true)
@@ -57,9 +100,9 @@ const CreateProfileDialog: React.FC<CreateProfileDialogProps> = ({
     setBusy(false)
     if (created) {
       setName('')
-      onDone(created)
+      onDone(created, offer.offer && adopt)
     }
-  }, [avatar, name, onDone])
+  }, [avatar, name, onDone, offer.offer, adopt])
 
   return (
     // zIndex: this is opened FROM the profile picker, which is a hand-rolled fixed box at 10 000. A
@@ -150,6 +193,28 @@ const CreateProfileDialog: React.FC<CreateProfileDialogProps> = ({
           sx={{ '& input': { userSelect: 'text', WebkitUserSelect: 'text' } }}
           slotProps={{ htmlInput: { 'aria-label': 'Fornavn', maxLength: 24 } }}
         />
+
+        {offer.offer && (
+          <Box sx={{ mt: 1.5 }}>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={adopt}
+                  onChange={(_, v) => setAdopt(v)}
+                  slotProps={{ input: { 'aria-label': 'Flyt fremgangen fra denne iPad' } }}
+                />
+              }
+              label={`Flyt fremgangen fra denne iPad til ${name.trim() || 'barnet'}`}
+              slotProps={{ typography: { sx: { fontSize: '0.95rem' } } }}
+              sx={{ alignItems: 'flex-start', mr: 0 }}
+            />
+            <Typography variant="caption" sx={{ display: 'block', color: 'text.secondary', pl: 4 }}>
+              {offer.stickers === 1
+                ? '1 klistermærke og alle rekorder følger med.'
+                : `${offer.stickers} klistermærker og alle rekorder følger med.`}
+            </Typography>
+          </Box>
+        )}
       </DialogContent>
       <DialogActions>
         {dismissible && (

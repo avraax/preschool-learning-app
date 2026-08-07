@@ -350,7 +350,8 @@ const LockScreen: React.FC = () => {
                         disabled={busy}
                       />
                       <Typography variant="caption" sx={{ opacity: 0.8 }}>
-                        Fremgangen gemmes kun på denne enhed. Log ind senere for at synkronisere.
+                        Fremgangen gemmes kun på denne enhed. Den kan følge med til det første barn,
+                        du opretter, hvis du logger ind senere.
                       </Typography>
                     </>
                   )}

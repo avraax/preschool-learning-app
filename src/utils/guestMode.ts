@@ -23,6 +23,8 @@
 
 const GUEST_KEY = 'bl-guest-mode'
 const EVER_SIGNED_IN_KEY = 'bl-has-signed-in'
+/** The guest book has been adopted onto a real child. Set once, NEVER cleared. */
+const GUEST_CLAIMED_KEY = 'bl-guest-claimed'
 
 const read = (key: string): boolean => {
   try {
@@ -68,3 +70,25 @@ export const exitGuestMode = (): void => write(GUEST_KEY, false)
  * Deliberately NEVER cleared: "has an account ever been here" is history, not state.
  */
 export const noteSignedIn = (): void => write(EVER_SIGNED_IN_KEY, true)
+
+/**
+ * Has the guest book already been copied onto a real child?
+ *
+ * THIS ONE FAILS THE OTHER WAY. `read()` above answers "unknown" with `false` because for the two flags
+ * it serves, false means playable — the safe direction for a gate whose job is not to block. Here false
+ * means "go ahead and adopt", and the unsafe outcome is adopting the SAME book into a second account,
+ * counting the same XP twice. So a storage throw reads as CLAIMED and the offer simply doesn't appear.
+ *
+ * The flag is device-scoped and never cleared: signing out and tapping "Spil uden konto" resumes play on
+ * the very same guest book, which is intended — it just can never be adopted again.
+ */
+export const guestBookClaimed = (): boolean => {
+  try {
+    return localStorage.getItem(GUEST_CLAIMED_KEY) === '1'
+  } catch {
+    return true
+  }
+}
+
+/** Record that the guest book has been handed to a child. One-way. */
+export const markGuestBookClaimed = (): void => write(GUEST_CLAIMED_KEY, true)

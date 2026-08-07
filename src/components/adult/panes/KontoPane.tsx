@@ -29,7 +29,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material'
-import { Cloud, LockKeyhole, LogOut, RefreshCw, Trash2 } from 'lucide-react'
+import { Cloud, LockKeyhole, LogOut, Mic, RefreshCw, Tablet, Trash2, Users } from 'lucide-react'
 import { useAuthContext } from '../../../contexts/AuthContext'
 import { useSyncStatus } from '../../../hooks/useSyncStatus'
 import { authStore } from '../../../services/authStore'
@@ -84,6 +84,19 @@ const danishWhen = (ms: number): string => {
     return 'ukendt'
   }
 }
+
+/**
+ * One "what an account buys you" line: the `LinkRow` shape from `PrivatlivPane` with the chevron and
+ * the `onClick` removed, because these are STATEMENTS. Not a `Button`, so it never lands in the tab
+ * order between the adult and the sign-in button below it. The icon is decorative — the text carries
+ * the meaning.
+ */
+const BenefitRow: React.FC<{ icon: React.ReactNode; text: string }> = ({ icon, text }) => (
+  <Box sx={{ display: 'flex', alignItems: 'flex-start', py: 0.5 }}>
+    <Box sx={{ display: 'flex', color: 'text.secondary', mr: 1.5, pt: 0.15 }}>{icon}</Box>
+    <Typography sx={{ flex: 1, minWidth: 0, fontSize: '0.95rem', lineHeight: 1.5 }}>{text}</Typography>
+  </Box>
+)
 
 export interface KontoPaneProps {
   closeAll: () => void
@@ -197,6 +210,17 @@ const KontoPane: React.FC<KontoPaneProps> = ({ closeAll }) => {
     setBusy(false)
   }, [])
 
+  // GUEST sign-in. `startGoogleSignIn()` returns a `SignInResult` and this call site used to discard
+  // it, so a failure showed the adult nothing at all — the button simply did nothing. The lock screen
+  // has always surfaced `result.message` (`LockScreen.tsx:128-134`); this mirrors it.
+  const onGuestSignIn = useCallback(async () => {
+    setMessage(null)
+    setBusy(true)
+    const result = await startGoogleSignIn()
+    if (!result.ok) setMessage(result.message ?? 'Login mislykkedes. Prøv igen.')
+    setBusy(false)
+  }, [])
+
   const onSignOut = useCallback(async () => {
     if (!auth) return
     // SERVER-verified: signing out is a credential action. It also means the adult is online at this
@@ -260,33 +284,46 @@ const KontoPane: React.FC<KontoPaneProps> = ({ closeAll }) => {
             I spiller uden konto
           </Typography>
           <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.6 }}>
-            Al fremgang gemmes kun på denne enhed. Det virker fint — men den følger ikke med til en
-            anden iPad, og der kan kun være ét barn.
+            Fremgangen ligger kun på denne iPad, og der kan kun være ét barn.
           </Typography>
         </PaneSection>
 
-        <PaneSection title="Hvad giver en konto?">
-          <Box component="ul" sx={{ pl: 3, m: 0 }}>
-            <Box component="li" sx={{ fontSize: '0.92rem', mb: 0.5 }}>
-              Fremgangen synkroniseres mellem jeres enheder.
-            </Box>
-            <Box component="li" sx={{ fontSize: '0.92rem', mb: 0.5 }}>
-              Flere børneprofiler, hver med sin egen bog.
-            </Box>
-            <Box component="li" sx={{ fontSize: '0.92rem' }}>
-              Mikrofonspillet "Sig et Ord" kan slås til.
-            </Box>
-          </Box>
+        {/* Three statements, not links — so no chevron, no onClick, and no Button wrapper, which also
+            keeps them out of the tab order. Face ID and passkeys are deliberately ABSENT: the shell's
+            `capacitor://localhost` origin can never satisfy the `boernelaering.dk` rpID, and the
+            signed-in branch below already says so. Google or the code, nothing else. */}
+        <PaneSection title="Med en konto">
+          <Stack spacing={0.5}>
+            <BenefitRow
+              icon={<Tablet size={19} aria-hidden />}
+              text="Fremgangen følger med til jeres andre enheder."
+            />
+            <BenefitRow icon={<Users size={19} aria-hidden />} text="Flere børn, hver med sin egen bog." />
+            <BenefitRow
+              icon={<Mic size={19} aria-hidden />}
+              text={'Mikrofonspillet "Sig et Ord" kan slås til.'}
+            />
+          </Stack>
           <Button
             variant="contained"
-            onClick={() => void startGoogleSignIn()}
+            onClick={() => void onGuestSignIn()}
+            disabled={busy}
             aria-label="Log ind med Google"
             sx={{ mt: 2, minHeight: 44 }}
           >
             Log ind med Google
           </Button>
+          {message && (
+            <Typography
+              role="status"
+              variant="body2"
+              sx={{ display: 'block', fontWeight: 600, mt: 1 }}
+            >
+              {message}
+            </Typography>
+          )}
           <Typography variant="caption" sx={{ display: 'block', color: 'text.secondary', mt: 1 }}>
-            Fremgangen fra denne enhed flyttes ikke over automatisk.
+            Fremgangen fra denne iPad kan følge med til det første barn, du opretter.
           </Typography>
         </PaneSection>
       </Stack>

@@ -36,6 +36,7 @@ import {
   ChevronRight,
   GraduationCap,
   KeyRound,
+  LogIn,
   Palette,
   ShieldCheck,
   Users,
@@ -46,6 +47,7 @@ import { BUILD_INFO } from '../../config/version'
 import { PHONE_ANY } from '../../theme/phoneMedia'
 import { AdultThemeProvider, ADULT_FONT } from '../../theme/adultTheme'
 import { useProfiles } from '../../hooks/useProfiles'
+import { useAuthContext } from '../../contexts/AuthContext'
 import AdultBackHeader from './AdultBackHeader'
 import BarnPane from './panes/BarnPane'
 import LaeringPane from './panes/LaeringPane'
@@ -110,6 +112,9 @@ const AdultSettings: React.FC<AdultSettingsProps> = ({
 
   const account = useProfiles()
   const activeChild = account.profiles.find((p) => p.id === account.activeProfileId)?.name
+  const auth = useAuthContext()
+  /** Playing with no account at all — the only state in which signing in is something to offer. */
+  const guest = auth?.phase === 'guest'
 
   // Restore the last pane on each open. On compact that means opening straight onto it, with the
   // back arrow as the way out to the root list.
@@ -257,6 +262,46 @@ const AdultSettings: React.FC<AdultSettingsProps> = ({
                 bgcolor: compact ? 'transparent' : 'background.default',
               }}
             >
+              {/* ---- Sign-in offer, guest only. Deliberately INSIDE the rail column rather than
+                      above the split like the apply-update strip: that strip spans every pane, so it
+                      would follow an adult who came in for the sound settings all the way into Lyd.
+                      Here it costs ~60px of fixed height on the landing, and on compact — where the
+                      rail IS the root list — it disappears the moment a pane pushes over it.
+                      Bordered and unfilled on purpose: `primary.main` is the alert register and this
+                      is an offer, not an alert. ---- */}
+              {guest && (
+                <Box sx={{ flex: '0 0 auto', px: 0.75, pt: 0.75 }}>
+                  <ButtonBase
+                    aria-label="Log ind"
+                    data-guest-signin-promo
+                    onClick={() => select('konto')}
+                    sx={{
+                      width: '100%',
+                      minHeight: 44,
+                      px: 1,
+                      py: 0.75,
+                      gap: 1,
+                      justifyContent: 'flex-start',
+                      textAlign: 'left',
+                      border: '1px solid',
+                      borderColor: 'divider',
+                      borderRadius: 2,
+                    }}
+                  >
+                    <LogIn size={17} aria-hidden />
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Typography sx={{ fontSize: '0.88rem', fontWeight: 600 }}>Log ind</Typography>
+                      {/* Deliberately NOT noWrap: the rail is 200px and the three benefits are the
+                          whole reason the row exists — an ellipsis after "flere enheder" throws away
+                          the half that answers "why would I?". Wrapping costs ~14px of fixed height. */}
+                      <Typography sx={{ fontSize: '0.72rem', lineHeight: 1.3, color: 'text.secondary' }}>
+                        Flere børn, flere enheder, mikrofonspil
+                      </Typography>
+                    </Box>
+                  </ButtonBase>
+                </Box>
+              )}
+
               <List sx={{ flex: 1, minHeight: 0, overflowY: 'auto', py: 0.75, px: 0.75 }}>
                 {ADULT_IA.map((g) => (
                   <ListItemButton
@@ -272,7 +317,15 @@ const AdultSettings: React.FC<AdultSettingsProps> = ({
                     <ListItemIcon sx={{ minWidth: 30, color: 'inherit' }}>{RAIL_ICON[g.id]}</ListItemIcon>
                     <ListItemText
                       primary={g.label}
-                      secondary={g.id === 'barn' ? activeChild : undefined}
+                      // Konto's subtitle makes the destination legible from the landing: the promo row
+                      // above says "log ind", this says where that lives.
+                      secondary={
+                        g.id === 'barn'
+                          ? activeChild
+                          : g.id === 'konto' && guest
+                            ? 'Ikke logget ind'
+                            : undefined
+                      }
                       slotProps={{
                         primary: { sx: { fontSize: '0.95rem', fontWeight: 600 } },
                         secondary: { noWrap: true, sx: { fontSize: '0.78rem' } },

@@ -816,6 +816,70 @@ class ProgressStore {
     this.commit(next)
   }
 
+  // ----- guest-book adoption ---------------------------------------------------------------------
+
+  /**
+   * Copy one profile's stored book onto another profile's key. The ONE sanctioned surface for this —
+   * no caller may reach into `persisted` — and the only user is the guest→first-child adoption
+   * (adult-login-visibility PRD §7).
+   *
+   * DELIBERATELY NOT a merge and deliberately NOT an attach. It refuses if the target already has a
+   * book, so the destination is always empty and no CRDT join ever runs: the per-device G-Counter
+   * ledger moves across INTACT, which is what makes `grantedSlots === Σ ledger.slots` hold by
+   * construction and what stops `mergeLedger`'s per-device `max` from silently discarding the smaller
+   * of two entries that share this device's id. The source key is left byte-identical.
+   *
+   * ORDERING IS LOAD-BEARING: run this BEFORE `profileStore.selectProfile()`. A `false` here then just
+   * means the child starts fresh at `attach()`'s `defaultPersisted(...)` — the existing behaviour, and
+   * a safe floor. Never block profile creation on it.
+   */
+  adoptDocument(fromProfileId: string, toProfileId: string): boolean {
+    if (!fromProfileId || !toProfileId || fromProfileId === toProfileId) return false
+    const fromKey = progressKeyFor(fromProfileId)
+    const toKey = progressKeyFor(toProfileId)
+
+    const doc = ((): PersistedProgress | null => {
+      try {
+        // 1. NEVER overwrite an existing book. This is also what keeps the copy outside the server's
+        //    merge path: a child with a local book may well have a server row too.
+        if (localStorage.getItem(toKey) !== null) return null
+        const raw = localStorage.getItem(fromKey)
+        return raw ? normalizePersisted(JSON.parse(raw)) : null
+      } catch {
+        // Private mode / quota / malformed — fail toward "no adoption", never a partial write.
+        return null
+      }
+    })()
+    if (!doc) return false
+
+    // 2. Re-stamp the owner. `attach()` does this too, but the exposure is a push of the copied doc
+    //    BEFORE anything attaches, so it is stamped here as well.
+    doc.profileId = toProfileId
+
+    // 3. Never-synced-and-dirty, so the child's first push is a first version the server stores
+    //    verbatim. `rev` is KEPT: if `syncedRev >= rev` the document reads clean and is never pushed
+    //    at all. `sync.epoch` is carried AS-IS — if the guest ever used "Nulstil fremgang", that epoch
+    //    is load-bearing and normalising it to 0 would let a stale server state resurrect.
+    doc.sync = {
+      ...doc.sync,
+      serverRev: 0,
+      syncedRev: 0,
+      originDevice: getDeviceId(),
+    }
+
+    // 4. A 422 from `progressInvariantViolations` is the one server error `progressSync` deliberately
+    //    does NOT retry, which would strand the child syncing nothing with no visible symptom. Check
+    //    before writing and refuse rather than hand over a document that can never be pushed.
+    if (progressInvariantViolations(doc).length > 0) return false
+
+    try {
+      localStorage.setItem(toKey, JSON.stringify(doc))
+    } catch {
+      return false
+    }
+    return true
+  }
+
   // ----- sync surface (used only by progressSync and legacyAdoption) -----------------------------
 
   exportPersisted(): PersistedProgress | null {

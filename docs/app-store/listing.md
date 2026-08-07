@@ -203,10 +203,21 @@ Optional improvement, not a blocker: the subject sits with generous margins, so 
 book is smaller than it could be. A tighter crop would read better on device. That is an art decision, and
 the current icon is perfectly acceptable.
 
-### 2.2 Screenshots — CAPTURED 2026-08-06, in `docs/app-store/shots/`
+### 2.2 Screenshots — CAPTURED 2026-08-06, shot 6 RE-CAPTURED 2026-08-07, in `docs/app-store/shots/`
 
 Twelve files, `<slot>-<n>-<name>.png`. **Verified programmatically before upload: exact pixel size, PNG,
 3 channels, no alpha** — `ipad-*` are 2732×2048 and `iphone-*` are 2868×1320, all landscape.
+
+**Shot 6 was re-taken on 2026-08-07** for the adult-login-visibility work, which added a guest-only
+"Log ind" row above the rail list and `Ikke logget ind` under Konto. Only `ipad-6` changes visibly —
+the iPhone slot is compact, so the pushed Læring pane covers the rail entirely — but both were re-shot
+so the pair stays one capture session. Two traps that cost a run each:
+
+- **`.click()` on the ⚙️ corner does nothing in WebKit.** Open it with `webkit.mjs --click` (real
+  trusted input), then drive the arithmetic gate from `--eval`; the gate reads its own prompt, so the
+  answer is computed, not hard-coded.
+- **Playwright writes RGBA.** Both new files came out colour-type 6 and had to be run through
+  `ffmpeg -pix_fmt rgb24`. Re-check byte 25 of the PNG header (2 = RGB) after any re-capture.
 
 Taken after Phase A, as this section required: guest mode means shot 1 is the section menu rather than a
 sign-in screen, and shot 6 is captured in **real guest mode through the arithmetic parental gate** (not
