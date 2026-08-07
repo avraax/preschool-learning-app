@@ -24,6 +24,31 @@ import type {
 import { authStore, type AccountUser } from './authStore'
 import { adoptSignedInSession, type PasskeyRequestOptions, type SignInResult } from './authSignIn'
 import { noteAuthStep, reportAuthFailure, resetAuthTrail } from './authDiagnostics'
+import { isNativeShell } from '../config/runtimeTarget'
+
+/**
+ * PASSKEYS ARE DROPPED INSIDE THE NATIVE SHELL (App Store PRD §3.3 / B6). Not a precaution — an
+ * arithmetic certainty from this repo's own config.
+ *
+ * WebAuthn validates the caller's ORIGIN against the relying party. Production `rpID` is
+ * `preschool-learning-app.vercel.app` with `origins: ['https://preschool-learning-app.vercel.app']`
+ * (`lib/env.ts`, asserted in `lib/env.test.ts`). The shell's webview origin is `capacitor://localhost`,
+ * which matches neither, so every `navigator.credentials.*` call fails origin validation. Making it
+ * work would need an Associated Domains entitlement (`webcredentials:`) plus an
+ * `apple-app-site-association` file — a real feature, not a fix, and not what a first submission should
+ * be carrying.
+ *
+ * Left alone the failure is ugly rather than absent: the lock screen would offer "Log ind med Face ID",
+ * the system sheet would appear, and the adult would get a `SecurityError` that `danishError` reports
+ * as "Face ID kan ikke bruges her. Tjek at iPad'en har en kode" — blaming their iPad for a decision we
+ * made. So the button has to be gone, not merely broken.
+ *
+ * THE WEB DEPLOYMENT IS UNCHANGED. Passkeys keep working in Safari exactly as before; this is the
+ * shell's build only, which is why the adult-facing copy says "app-udgaven" and not "this device".
+ */
+export function passkeysSupportedInThisBuild(): boolean {
+  return !isNativeShell()
+}
 
 const REGISTER_OPTIONS_PATH = '/api/auth/passkey/generate-register-options'
 const VERIFY_REGISTRATION_PATH = '/api/auth/passkey/verify-registration'
@@ -161,6 +186,10 @@ export function unlockWithPasskey(pre: PasskeyRequestOptions | null): Promise<Si
 /** True when this browser can do platform WebAuthn at all. Safe to await — it is not in a gesture. */
 export async function passkeysUsableHere(): Promise<boolean> {
   try {
+    // The shell answers first. A WKWebView on an iPad WILL report a platform authenticator as
+    // available — the hardware is there — so this probe alone says "yes" for a build where the origin
+    // can never validate. Callers that only ask this question must still get the right answer.
+    if (!passkeysSupportedInThisBuild()) return false
     if (!window.PublicKeyCredential) return false
     const fn = (
       window.PublicKeyCredential as unknown as {

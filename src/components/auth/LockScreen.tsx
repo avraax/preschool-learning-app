@@ -29,6 +29,7 @@ import {
   startPasskeyUnlock,
   type PasskeyRequestOptions,
 } from '../../services/authSignIn'
+import { passkeysSupportedInThisBuild } from '../../services/passkeyClient'
 import { PHONE_ANY } from '../../theme/phoneMedia'
 import { AUTH_Z } from './authOverlayZ'
 
@@ -89,8 +90,14 @@ const LockScreen: React.FC = () => {
   useEffect(() => subscribeAuthReportCode(setAuthReportCode), [])
 
   const phase = auth?.phase ?? 'booting'
+  // `passkeysSupportedInThisBuild()` is the NATIVE SHELL gate (App Store PRD §3.3 / B6): the shell's
+  // `capacitor://localhost` origin can never satisfy the production rpID, so offering the button would
+  // open a system sheet that fails and blames the adult's iPad. It comes first because the two server
+  // flags below say nothing about which build is asking.
   const canOfferPasskey =
-    !!auth?.info?.webauthnEnabled && (auth?.info?.passkeyCount ?? 0) > 0
+    passkeysSupportedInThisBuild() &&
+    !!auth?.info?.webauthnEnabled &&
+    (auth?.info?.passkeyCount ?? 0) > 0
 
   // Pre-fetch (and keep fresh) the WebAuthn options so the Face ID tap handler never has to await.
   useEffect(() => {

@@ -8,6 +8,7 @@
 import {
   clearPendingFlow,
   OAUTH_FLOW_KEY,
+  readPendingFlow,
   registerClaimPendingFlow,
   registerGoogleSignIn,
   type SignInResult,
@@ -15,6 +16,8 @@ import {
 import { authStore, type AccountUser } from './authStore'
 import { registerSecret } from './redact'
 import { noteAuthStep, reportAuthFailure, resetAuthTrail } from './authDiagnostics'
+import { isNativeShell } from '../config/runtimeTarget'
+import { closeExternalAuth, openExternalAuthUrl } from './shellBrowser'
 
 const START_PATH = '/api/auth/family/oauth/start'
 const CLAIM_PATH = '/api/auth/family/oauth/claim'
@@ -61,6 +64,30 @@ async function startGoogle(): Promise<SignInResult> {
       return { ok: false, message: 'Kunne ikke starte Google-login. Prøv igen.' }
     }
     noteAuthStep('google-start', 'ok', { status: res.status })
+
+    // NATIVE SHELL: the authorize URL must NOT be loaded in the app's own webview (App Store PRD §3.3
+    // / B5). Google rejects OAuth in a WKWebView with `disallowed_useragent`, so `location.assign`
+    // here — the correct call on the web — is a 403 the owner cannot work around. The system browser
+    // is Google's own prescribed approach.
+    //
+    // Nothing else about the flow changes, and that is the point: the session is claimed with the
+    // `flowId` already written to THIS context's localStorage above, so the system browser never needs
+    // to hand a secret back. There is therefore no deep link, no custom URL scheme and no second
+    // Google client to register — the sheet's dismissal is a nudge, and the existing poll is the
+    // guarantee.
+    if (isNativeShell()) {
+      const opened = await openExternalAuthUrl(authorizeUrl, () => {
+        // Returned from the sheet. Claim NOW rather than waiting up to 3s for the next poll tick.
+        const pending = readPendingFlow()
+        if (pending) void claim(pending.flowId)
+      })
+      if (!opened) {
+        clearPendingFlow()
+        void reportAuthFailure('google-start', 'shell-browser-unavailable')
+        return { ok: false, message: 'Kunne ikke åbne Google-login. Prøv igen.' }
+      }
+      return { ok: true }
+    }
 
     // ALWAYS location.assign, NEVER window.open: in standalone (installed-PWA) mode a popup can
     // escape to Safari and lose the return path entirely (§9). It is also popup-blocker-proof as a
@@ -112,6 +139,9 @@ async function claim(flowId: string): Promise<SignInResult> {
 
     clearPendingFlow()
     noteAuthStep('google-claim', 'ok', { status: res.status })
+    // Dismiss the system browser BEFORE adopting the session, so the adult sees the app change state
+    // rather than a sheet that lingers over an app which has already signed in. No-op off the shell.
+    void closeExternalAuth()
     authStore.adoptSession(body.token, body.user ?? null)
     resetAuthTrail()
     return { ok: true }

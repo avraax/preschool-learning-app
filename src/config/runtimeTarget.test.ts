@@ -68,6 +68,23 @@ test('the update checker returns before the fetch inside the shell', () => {
   assert.ok(guardAt < fetchAt, 'the shell guard sits after the version fetch it is meant to skip')
 })
 
+test('the update pill and the apply-update row hang off updateAvailable and nothing else', () => {
+  // App Store PRD §4.3 / B8. Killing the CHECK is only half of "disable the update banner in the
+  // shell": it works because `updateAvailable` can then never become true. A pill rendered from any
+  // other source — a build-time flag, a route, a stored timestamp — would reappear inside the binary,
+  // where it is a permanent false "en ny version er klar" pointing at a reload of the same bundled
+  // bytes. So pin the wiring, not just the fetch.
+  const app = codeOf('App.tsx')
+  assert.match(app, /show=\{updateStatus\.updateAvailable/, 'the banner is not driven by updateAvailable')
+  assert.match(app, /const DEV_SHOW_UPDATE_BANNER = false/, 'the manual banner override is left ON')
+  // The adult menu's apply-update row is gated on the same flag, so it cannot be reached in the shell.
+  assert.match(
+    codeOf('components/adult/AdultSettings.tsx'),
+    /\{updateAvailable && onApplyUpdate && \(/,
+    'the apply-update row is not gated on updateAvailable',
+  )
+})
+
 test('the legacy service-worker sweep is skipped in the shell', () => {
   // Audited as SAFE (every access is feature-detected or inside the try/catch, and both promises carry a
   // .catch) but POINTLESS: a bundled shell never had a web-era service worker to inherit. Two async

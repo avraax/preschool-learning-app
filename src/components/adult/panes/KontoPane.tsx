@@ -37,6 +37,7 @@ import { startGoogleSignIn } from '../../../services/authSignIn'
 import { profileStore } from '../../../services/profileStore'
 import {
   fetchPasskeyRegisterOptions,
+  passkeysSupportedInThisBuild,
   passkeysUsableHere,
   registerPasskey,
   type PasskeyRegisterOptions,
@@ -354,7 +355,17 @@ const KontoPane: React.FC<KontoPaneProps> = ({ closeAll }) => {
         </PaneSection>
 
         <PaneSection title="Face ID / Touch ID">
-          {!webauthnEnabled ? (
+          {/* THE SHELL BRANCH COMES FIRST, and it says "app-udgaven", not "denne enhed" — the iPad is
+              perfectly capable of Face ID, it is this BUILD that cannot use it (PRD §3.3 / B6). Telling
+              an adult their device is unsupported, when the same device does it in Safari, is the kind
+              of wrong that generates a bug report nobody can reproduce. The existing passkey LIST is
+              deliberately still rendered below: one registered from the web should stay removable. */}
+          {!passkeysSupportedInThisBuild() ? (
+            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+              Face ID kan ikke bruges i app-udgaven. Brug Google eller koden. I browserversionen af
+              Børnelæring virker Face ID som før.
+            </Typography>
+          ) : !webauthnEnabled ? (
             <Typography variant="body2" sx={{ color: 'text.secondary' }}>
               Face ID kan ikke bruges på denne udgave af appen. Brug Google eller koden.
             </Typography>
