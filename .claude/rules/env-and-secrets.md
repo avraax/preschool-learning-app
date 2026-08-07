@@ -78,7 +78,7 @@ grep -oE '^[A-Z0-9_]+=' .env.local | tr -d '=' | sort -u | comm -23 - /tmp/v   #
 - **Google OAuth Web clients must be created in the Cloud Console — there is no API.**
   `gcloud iap oauth-clients` is deprecated, was shut down in March 2026, and only ever worked for an
   internal Workspace brand (a personal Gmail cannot have one). Don't burn time looking for a CLI path.
-- **Verify OAuth credentials without a browser** by exchanging a deliberately malformed code:
+- **Verify the CLIENT ID/SECRET without a browser** by exchanging a deliberately malformed code:
 
   ```bash
   curl -s -X POST https://oauth2.googleapis.com/token \
@@ -86,9 +86,13 @@ grep -oE '^[A-Z0-9_]+=' .env.local | tr -d '=' | sort -u | comm -23 - /tmp/v   #
     -d "redirect_uri=$RU" -d grant_type=authorization_code
   ```
 
-  `invalid_grant` ("Malformed auth code") = the client id/secret authenticate **and** that
-  `redirect_uri` is registered. `invalid_client` = wrong id/secret. `redirect_uri_mismatch` = the URI
-  isn't registered. Loop it over every redirect URI to confirm the whole set in one pass.
+  `invalid_client` = wrong id/secret. `invalid_grant` = the id/secret authenticate.
+  **It does NOT tell you whether `redirect_uri` is registered** — this rule used to claim it did, and
+  that is false. Measured 2026-08-07: a fictional domain and a wrong path both returned `invalid_grant`,
+  i.e. the same answer as the real registered URI. Google rejects the bogus code *before* it validates
+  the redirect URI, so every URI looks registered. Two runs of this probe were about to be reported as a
+  finding; the **known-negative control** below is the only reason they weren't.
+  **Redirect URIs can only be confirmed by eye in the Cloud Console.**
 
 ## Verify a database connection for real
 

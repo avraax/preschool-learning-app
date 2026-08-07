@@ -76,6 +76,15 @@ table, and our five (`childProfile`, `profileProgress`, `familyPin`, `pinAttempt
   suffix of the page's domain, and the SecurityError reads exactly like "no Face ID on this device".
 - **Passkeys cannot work on preview deployments** (`vercel.app` is on the Public Suffix List), so the
   plugin isn't registered there at all.
+- **Production is `boernelaering.dk` since 2026-08-07** (was `preschool-learning-app.vercel.app`, which
+  still serves as a fallback). The switch is env-only — `BETTER_AUTH_URL` + `WEBAUTHN_RP_ID` in Vercel
+  production — because `origins` is an array and `baseURL()` checks `BETTER_AUTH_URL` first.
+  **Changing `WEBAUTHN_RP_ID` INVALIDATES every registered passkey**: a credential is bound to the RP ID,
+  so existing ones must be deleted and re-registered on each device. Google sign-in is the way back in,
+  which is why it must keep working before the RP ID moves. A domain move therefore needs, in this order:
+  the new redirect URIs added in the Google console (BOTH paths — `/api/auth/family/oauth/callback` and
+  `/api/auth/callback/google`), then the env vars, then a **redeploy** (env never reaches a live
+  deployment), then re-registration. Never move the RP ID before the redirect URIs exist.
 - **The PIN lockout is checked BEFORE the hash is compared**, so a CORRECT PIN inside a lock window is
   still refused. `pinAttempt` lives in Postgres precisely because `lib/server-utils.ts`'s `rateLimit()`
   is a per-instance in-memory Map. Don't "optimise" either away — for a 10 000-value keyspace the pepper
