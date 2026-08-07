@@ -84,6 +84,13 @@ Capacitor 8 (SPM, **no CocoaPods — there is no Podfile**), `webDir: dist`, bun
 - **Any new non-code file under `ios/` must be checked against `.gitignore`'s blanket `*.json`.** It
   already ate the asset catalog's `Contents.json` — the file naming the app icon, without which the
   upload is rejected. `git check-ignore -v $(find ios -name '*.json')` before committing.
+- **Every API call goes through `apiUrl()`** (`src/config/apiBase.ts`) — identity on the web, absolute
+  in the shell. A relative `/api/…` there resolves against the app BUNDLE and Capacitor answers it with
+  `index.html`: no 404, no exception, the games still fine, and nothing reaching a server. Guarded by a
+  source sweep in `apiBase.test.ts`. The server half is `SHELL_ORIGINS` in `lib/env.ts` (better-auth
+  validates Origin) plus an `Allow-Methods` covering every verb, since the shell preflights everything.
+  **`SHELL_API_ORIGIN` cannot be an env var** — it is compiled into a reviewed binary, so a domain move
+  is asymmetric and the old host must answer until installs are replaced through review.
 - **Two auth behaviours are shell-gated and must stay so** (`.claude/rules/auth.md` for the mechanism):
   Google OAuth opens in the **system browser** (`@capacitor/browser`, dynamically imported) because
   Google 403s WKWebView, and **passkeys are off** because `capacitor://localhost` can never match the

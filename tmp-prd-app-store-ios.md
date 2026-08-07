@@ -850,8 +850,8 @@ instead of a briefing.
 | | State |
 |---|---|
 | **Phase A** | **DONE** and on the branch. Guest play, `/privatliv` + `/support`, mic consent gate, offline-readiness audit, iPhone 6.9" pass, Google-token audit. Not merged to master, therefore **not deployed** — which is why the Support URL would 404 if Apple fetched it today. |
-| **Phase B** | **DONE 2026-08-07** (B1–B9), commits `14d5a83` + `94bb491`. The `ios/` tree is committed and the shell's auth works; **nothing has been compiled** — no Mac has touched it. Details and the three deviations below. |
-| **C7** Codemagic | **NOT STARTED.** This is the next engineering work: `codemagic.yaml`, the ASC key integration, first build. §4.4. |
+| **Phase B** | **DONE 2026-08-07** (B1–B9), commits `14d5a83` + `94bb491`, plus `78841cb` — see the API-origin note below, which was a genuine gap in B and is now closed. The `ios/` tree is committed; **nothing has been compiled** — no Mac has touched it. Deviations below. |
+| **C7** Codemagic | **`codemagic.yaml` DONE** (`7c1908e`). Remaining is **OWNER**: connect the repo, and add the C6 `.p8` under the integration name **`bornelaering-asc`** (or rename it in the yaml). |
 | **C0** Azure paid tier | **DONE 2026-08-07.** Was F0; now S0, all 1884 clips re-synthesized. §3.11. |
 | **C1** enrolment | **DONE.** Individual, 99 USD paid. |
 | Free Apps Agreement | **Active.** Paid Apps Agreement deliberately left unsigned — the app is free. |
@@ -878,6 +878,22 @@ the commits; none needs re-deciding, but a reader of §4.3 will notice them.
    which is exempt, and without the key **every** TestFlight upload stops for a manual questionnaire.
    It is nevertheless an export-compliance declaration → **OWNER should confirm it**; deleting the key
    is the only change needed to revert.
+
+**THE GAP PHASE B NEARLY SHIPPED — §3.1 says what still needs the network but never said how it is
+ADDRESSED.** Inside the shell the page origin is `capacitor://localhost`, so every relative
+`fetch('/api/…')` resolves against the app bundle, and Capacitor's local server answers it with the
+SPA's `index.html` instead of failing. No 404, no exception, no console error — sign-in, sync, Sig et
+Ord and bug reports would silently never have reached a server, while every game kept working, because
+the games are offline by design. **A build like that passes every check and is dead.** Closed in
+`78841cb`, and it needed three halves, not one: absolute URLs client-side (`src/config/apiBase.ts`),
+`capacitor://localhost` in better-auth's `trustedOrigins()` (it validates Origin and would have refused
+the app anyway), and a widened `Access-Control-Allow-Methods` (the shell preflights *everything*,
+because every call carries `Authorization`).
+
+One consequence worth carrying into any future domain move: **`SHELL_API_ORIGIN` is the one value in
+the app that cannot be an environment variable**, because it is compiled into a reviewed binary. The
+web follows a move on the next request; an installed shell never can. So the old host must keep
+answering until every install has been replaced *through review*.
 
 **UNKNOWNs closed by Phase B** (both were §3.9's, both resolved from the artifact that actually ships,
 not from community reports):
