@@ -16,6 +16,7 @@
 // the tap handler is deliberately NOT async. It looks odd; it is load-bearing.
 
 import React, { useCallback, useEffect, useState } from 'react'
+import { apiUrl } from '../../../config/apiBase'
 import {
   Box,
   Button,
@@ -112,7 +113,7 @@ const KontoPane: React.FC<KontoPaneProps> = ({ closeAll }) => {
     const token = authStore.sessionToken()
     if (!token) return
     try {
-      const res = await fetch('/api/auth/passkey/list-user-passkeys', {
+      const res = await fetch(apiUrl('/api/auth/passkey/list-user-passkeys'), {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (!res.ok) return
@@ -174,7 +175,7 @@ const KontoPane: React.FC<KontoPaneProps> = ({ closeAll }) => {
       if (!token) return
       setBusy(true)
       try {
-        const res = await fetch('/api/auth/passkey/delete-passkey', {
+        const res = await fetch(apiUrl('/api/auth/passkey/delete-passkey'), {
           method: 'POST',
           headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
           body: JSON.stringify({ id }),
@@ -217,7 +218,7 @@ const KontoPane: React.FC<KontoPaneProps> = ({ closeAll }) => {
     if (!token) return
     setBusy(true)
     try {
-      await fetch('/api/auth/revoke-sessions', {
+      await fetch(apiUrl('/api/auth/revoke-sessions'), {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: '{}',

@@ -8,6 +8,7 @@
 // signature dedupe, hard cap — a crash loop can never storm the endpoint.
 
 import { BUILD_INFO } from '../config/version'
+import { apiUrl } from '../config/apiBase'
 import { getDeviceSnapshot } from '../utils/deviceDetection'
 import { simplifiedAudioController } from '../utils/SimplifiedAudioController'
 import { ttsClient } from './ttsClient'
@@ -176,7 +177,7 @@ export async function submitBugReport(
     }
   }
 
-  const res = await fetch('/api/bug-report', {
+  const res = await fetch(apiUrl('/api/bug-report'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),

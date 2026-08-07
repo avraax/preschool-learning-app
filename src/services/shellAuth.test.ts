@@ -1,7 +1,7 @@
 // The two auth changes the native shell forces (App Store PRD §3.3 — Phase B5, B6).
 //
 // Both are CERTAIN, not speculative, and both are invisible from the web deployment: the code that
-// breaks is code that works perfectly at `https://preschool-learning-app.vercel.app` and only fails at
+// breaks is code that works perfectly at the production origin (`https://boernelaering.dk`) and fails at
 // `capacitor://localhost`. Nothing in a build, a lint or a browser harness on Windows can see either,
 // which is why they are pinned by reading source.
 

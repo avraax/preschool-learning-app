@@ -48,7 +48,7 @@ app.use('/api', (req, res, next) => {
   const origin = req.headers.origin;
   res.setHeader('Access-Control-Allow-Origin', origin && isAllowedOrigin(req) ? origin : 'null');
   res.setHeader('Vary', 'Origin');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   if (req.method === 'OPTIONS') return res.status(200).end();
   next();
@@ -80,7 +80,10 @@ function isAllowedOrigin(req) {
   const origin = req.headers.origin;
   if (!origin) return true;
   try {
-    const host = new URL(origin).hostname;
+    const url = new URL(origin);
+    // Mirrors lib/server-utils.ts: the native shell calls cross-origin from capacitor://localhost.
+    if (url.protocol === 'capacitor:' || url.protocol === 'ionic:') return true;
+    const host = url.hostname;
     if (host === 'localhost' || host === '127.0.0.1' || host === '[::1]') return true;
     if (req.headers.host && host === req.headers.host.split(':')[0]) return true;
     return false;

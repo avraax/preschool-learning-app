@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { BUILD_INFO } from '../config/version'
+import { apiUrl } from '../config/apiBase'
 import { isNativeShell } from '../config/runtimeTarget'
 import { isVersionGreater } from '../utils/semver'
 
@@ -60,7 +61,7 @@ export function useUpdateChecker(): UpdateStatus {
         return
       }
 
-      const response = await fetch('/api/version', {
+      const response = await fetch(apiUrl('/api/version'), {
         method: 'GET',
         cache: 'no-cache',
         headers: {

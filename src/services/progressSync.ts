@@ -7,6 +7,7 @@
 // reconciliation; a failure is invisible except in the adult menu's "Synkronisering" line.
 
 import { progressStore } from './progressStore.ts'
+import { apiUrl } from '../config/apiBase.ts'
 import { authStore } from './authStore.ts'
 import { normalizePersisted } from '../config/progressSchema.ts'
 import { routeKind } from '../components/common/scene/routeKind.ts'
@@ -148,7 +149,7 @@ class ProgressSync {
     this.inFlight = (async () => {
       this.publish({ phase: 'pulling', error: null })
       try {
-        const res = await fetch(`/api/progress?profileId=${encodeURIComponent(profileId)}`, {
+        const res = await fetch(apiUrl(`/api/progress?profileId=${encodeURIComponent(profileId)}`), {
           headers: this.headers(),
         })
         if (res.status === 404) {
@@ -196,7 +197,7 @@ class ProgressSync {
 
     this.publish({ phase: 'pushing', error: null })
     try {
-      const res = await fetch('/api/progress', {
+      const res = await fetch(apiUrl('/api/progress'), {
         method: 'PUT',
         headers: this.headers(),
         body: JSON.stringify({ profileId, baseRev: meta.serverRev, blob: doc }),
@@ -268,7 +269,7 @@ class ProgressSync {
     if (payload.length > UNLOAD_PAYLOAD_LIMIT) return
 
     try {
-      void fetch('/api/progress', {
+      void fetch(apiUrl('/api/progress'), {
         method: 'PUT',
         headers: this.headers(),
         body: payload,

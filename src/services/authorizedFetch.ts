@@ -10,6 +10,7 @@
 // untouched, which is what lets ttsClient's circuit breaker and Web Speech fallback keep working.
 
 import { authStore } from './authStore'
+import { apiUrl } from '../config/apiBase'
 
 const NEED_TOKEN = 'need_access_token'
 
@@ -28,8 +29,12 @@ export async function authorizedFetch(
   input: string,
   init?: RequestInit,
 ): Promise<Response> {
+  // Resolved ONCE, here, so both the first attempt and the retry below hit the same URL — and so the
+  // four paid-endpoint call sites (ttsClient, useSpeechInput, VoiceLab, AuditHarness) need no change.
+  // No-op on the web; absolute inside the shell, where a relative path would hit the app bundle.
+  const url = apiUrl(input)
   const token = await authStore.getAccessToken()
-  const first = await fetch(input, withAuth(init, token))
+  const first = await fetch(url, withAuth(init, token))
   if (first.status !== 401) return first
 
   // Read the body from a CLONE: the caller may still want the original 401 if the retry also fails.
@@ -45,5 +50,5 @@ export async function authorizedFetch(
   // No fresh token means the session itself is gone (authStore has already signed out). Hand the
   // original 401 back rather than firing a second doomed request.
   if (!fresh) return first
-  return fetch(input, withAuth(init, fresh))
+  return fetch(url, withAuth(init, fresh))
 }

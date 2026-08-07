@@ -1,6 +1,7 @@
 // Remote console system for iOS debugging without Mac
 
 import { deviceInfo } from './deviceDetection'
+import { apiUrl } from '../config/apiBase'
 import { 
   EnhancedErrorLog, 
   parseStackTrace, 
@@ -237,7 +238,7 @@ class RemoteConsole {
       timestamp: new Date(entry.timestamp).toISOString()
     }
     
-    fetch('/api/log-error', {
+    fetch(apiUrl('/api/log-error'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -275,7 +276,7 @@ class RemoteConsole {
   }
   
   private sendEnhancedErrorToBackend(enhancedError: EnhancedErrorLog) {
-    fetch('/api/log-error', {
+    fetch(apiUrl('/api/log-error'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -322,7 +323,7 @@ class RemoteConsole {
   // Public methods for debugging
   public clearLogs(): void {
     // Clear logs via API
-    fetch('/api/log-error', { method: 'DELETE' }).catch(() => {})
+    fetch(apiUrl('/api/log-error'), { method: 'DELETE' }).catch(() => {})
   }
   
   // Enable/disable console
@@ -425,7 +426,7 @@ class AudioDebugSession {
 
     // Send to API only when remote logging is active (dev-only — PRD §9.3).
     if (remoteConsole.isActive()) {
-      fetch('/api/log-error', {
+      fetch(apiUrl('/api/log-error'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

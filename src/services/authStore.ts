@@ -15,6 +15,7 @@
 // memory only — one extra mint per reload, one fewer secret at rest.
 
 import { ACCOUNT_KEY } from '../config/progressSchema.ts'
+import { apiUrl } from '../config/apiBase.ts'
 import {
   authGateDecision,
   DEFAULT_GRACE_MS,
@@ -372,7 +373,7 @@ class AuthStore {
     this.clearLocal('invalid')
     if (!token) return
     try {
-      await fetch('/api/auth/sign-out', {
+      await fetch(apiUrl('/api/auth/sign-out'), {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
       })
@@ -442,7 +443,7 @@ class AuthStore {
 
   private async runValidate(): Promise<ServerVerdict> {
     try {
-      const res = await fetch(GET_SESSION_PATH, {
+      const res = await fetch(apiUrl(GET_SESSION_PATH), {
         headers: { Authorization: `Bearer ${this.token}` },
       })
       this.lastValidateAt = Date.now()
@@ -503,7 +504,7 @@ class AuthStore {
 
   private async runRefreshStatus(): Promise<AuthMethodInfo | null> {
     try {
-      const res = await fetch(STATUS_PATH, {
+      const res = await fetch(apiUrl(STATUS_PATH), {
         headers: { Authorization: `Bearer ${this.token}` },
       })
       if (!res.ok) return this.info
@@ -548,7 +549,7 @@ class AuthStore {
   }> {
     if (!this.token) return { ok: false, message: 'Ingen forbindelse til kontoen.' }
     try {
-      const res = await fetch('/api/auth/family/pin/verify', {
+      const res = await fetch(apiUrl('/api/auth/family/pin/verify'), {
         method: 'POST',
         headers: { Authorization: `Bearer ${this.token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ pin }),
@@ -584,7 +585,7 @@ class AuthStore {
   ): Promise<{ ok: boolean; pinUpdatedAt?: number; message?: string }> {
     if (!this.token) return { ok: false, message: 'Ingen forbindelse til kontoen.' }
     try {
-      const res = await fetch('/api/auth/family/pin/set', {
+      const res = await fetch(apiUrl('/api/auth/family/pin/set'), {
         method: 'POST',
         headers: { Authorization: `Bearer ${this.token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify(currentPin ? { pin, currentPin } : { pin }),
@@ -611,7 +612,7 @@ class AuthStore {
   async deleteAccount(pin: string): Promise<{ ok: boolean; message?: string; fatal?: boolean }> {
     if (!this.token) return { ok: false, message: 'Ingen forbindelse til kontoen.', fatal: true }
     try {
-      const res = await fetch('/api/auth/family/delete-account', {
+      const res = await fetch(apiUrl('/api/auth/family/delete-account'), {
         method: 'POST',
         headers: { Authorization: `Bearer ${this.token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ pin }),
@@ -634,7 +635,7 @@ class AuthStore {
    */
   async fetchPasskeyRequestOptions(): Promise<PasskeyRequestOptions | null> {
     try {
-      const res = await fetch('/api/auth/passkey/generate-authenticate-options', {
+      const res = await fetch(apiUrl('/api/auth/passkey/generate-authenticate-options'), {
         headers: this.token ? { Authorization: `Bearer ${this.token}` } : {},
       })
       if (!res.ok) return null
@@ -664,7 +665,7 @@ class AuthStore {
 
     this.accessInFlight = (async () => {
       try {
-        const res = await fetch(ACCESS_TOKEN_PATH, {
+        const res = await fetch(apiUrl(ACCESS_TOKEN_PATH), {
           method: 'POST',
           headers: { Authorization: `Bearer ${this.token}`, 'Content-Type': 'application/json' },
           body: '{}',

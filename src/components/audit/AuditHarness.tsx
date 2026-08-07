@@ -9,6 +9,7 @@
 // heard exactly as the child hears them. Gated to dev builds by the route guard in App.tsx.
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { apiUrl } from '../../config/apiBase'
 import {
   Box,
   Button,
@@ -132,7 +133,7 @@ const AuditHarness: React.FC = () => {
       local = {}
     }
     // Pull the committed checklist (shared truth in git) and merge newest-wins per key.
-    fetch('/api/audit-save')
+    fetch(apiUrl('/api/audit-save'))
       .then((r) => (r.ok ? r.json() : Promise.reject()))
       .then((doc: { clips?: Records }) => {
         const committed = doc?.clips ?? {}
@@ -159,7 +160,7 @@ const AuditHarness: React.FC = () => {
     clearTimeout(saveTimer.current)
     saveTimer.current = setTimeout(() => {
       setSaveState('saving')
-      fetch('/api/audit-save', {
+      fetch(apiUrl('/api/audit-save'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ clips: next }),

@@ -110,9 +110,23 @@ export function webauthn(): WebAuthnConfig {
   }
 }
 
-/** Origins better-auth will accept requests from (its own CSRF/origin validation). */
+/**
+ * Origins better-auth will accept requests from (its own CSRF/origin validation).
+ *
+ * THE NATIVE SHELL IS NOT A BROWSER TAB ON OUR DOMAIN. It runs at `capacitor://localhost` and calls
+ * these endpoints CROSS-ORIGIN (App Store PRD §3.1 — the web build is bundled, so it cannot be
+ * same-origin with the API by construction). Without the scheme here, better-auth rejects every auth
+ * request from the app on origin validation, and the symptom is a sign-in that fails only in the
+ * shipped binary — after review, on a device, with the web app perfect.
+ *
+ * These are ORIGINS, not hosts, so they grant nothing to a browser: no page on the public internet
+ * can present `capacitor://localhost` as its origin. `ionic://` is Capacitor's legacy iOS scheme,
+ * included because a Capacitor upgrade can flip the default and the failure is silent.
+ */
+export const SHELL_ORIGINS = ['capacitor://localhost', 'ionic://localhost']
+
 export function trustedOrigins(): string[] {
-  const list = [baseURL()]
+  const list = [baseURL(), ...SHELL_ORIGINS]
   if (runtime() === 'dev') list.push('http://localhost:5173', 'http://127.0.0.1:5173')
   if (process.env.VERCEL_URL) list.push(`https://${process.env.VERCEL_URL}`)
   if (process.env.VERCEL_PROJECT_PRODUCTION_URL) {

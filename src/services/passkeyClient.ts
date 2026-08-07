@@ -16,6 +16,7 @@
 // browserSupportsWebAuthnAutofill() before get().
 
 import { startAuthentication, startRegistration } from '@simplewebauthn/browser'
+import { apiUrl } from '../config/apiBase'
 import type {
   AuthenticationResponseJSON,
   PublicKeyCredentialCreationOptionsJSON,
@@ -31,7 +32,8 @@ import { isNativeShell } from '../config/runtimeTarget'
  * arithmetic certainty from this repo's own config.
  *
  * WebAuthn validates the caller's ORIGIN against the relying party. Production `rpID` is
- * `preschool-learning-app.vercel.app` with `origins: ['https://preschool-learning-app.vercel.app']`
+ * `boernelaering.dk` (since 2026-08-07; `preschool-learning-app.vercel.app` before it, and still a
+ * fallback), with `origins` derived from `baseURL()`
  * (`lib/env.ts`, asserted in `lib/env.test.ts`). The shell's webview origin is `capacitor://localhost`,
  * which matches neither, so every `navigator.credentials.*` call fails origin validation. Making it
  * work would need an Associated Domains entitlement (`webcredentials:`) plus an
@@ -89,7 +91,9 @@ export async function fetchPasskeyRegisterOptions(
   const token = authStore.sessionToken()
   if (!token) return null
   try {
-    const url = `${REGISTER_OPTIONS_PATH}?authenticatorAttachment=platform&name=${encodeURIComponent(deviceName)}`
+    const url = apiUrl(
+      `${REGISTER_OPTIONS_PATH}?authenticatorAttachment=platform&name=${encodeURIComponent(deviceName)}`,
+    )
     const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } })
     if (!res.ok) return null
     const options = (await res.json()) as PublicKeyCredentialCreationOptionsJSON
@@ -114,7 +118,7 @@ export function registerPasskey(
 
   return startRegistration({ optionsJSON: pre.options })
     .then(async (response: RegistrationResponseJSON) => {
-      const res = await fetch(VERIFY_REGISTRATION_PATH, {
+      const res = await fetch(apiUrl(VERIFY_REGISTRATION_PATH), {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
         // The label is stored from the VERIFY call, not from the options fetch — passing `name` only
@@ -150,7 +154,7 @@ export function unlockWithPasskey(pre: PasskeyRequestOptions | null): Promise<Si
 
   return startAuthentication({ optionsJSON: pre.options, useBrowserAutofill: false })
     .then(async (response: AuthenticationResponseJSON) => {
-      const res = await fetch(VERIFY_AUTHENTICATION_PATH, {
+      const res = await fetch(apiUrl(VERIFY_AUTHENTICATION_PATH), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ response }),

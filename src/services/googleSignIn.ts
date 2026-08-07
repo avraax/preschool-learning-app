@@ -14,6 +14,7 @@ import {
   type SignInResult,
 } from './authSignIn'
 import { authStore, type AccountUser } from './authStore'
+import { apiUrl } from '../config/apiBase'
 import { registerSecret } from './redact'
 import { noteAuthStep, reportAuthFailure, resetAuthTrail } from './authDiagnostics'
 import { isNativeShell } from '../config/runtimeTarget'
@@ -47,7 +48,7 @@ async function startGoogle(): Promise<SignInResult> {
   registerSecret(flowId)
 
   try {
-    const res = await fetch(START_PATH, {
+    const res = await fetch(apiUrl(START_PATH), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ flowId }),
@@ -106,7 +107,7 @@ async function startGoogle(): Promise<SignInResult> {
 
 async function claim(flowId: string): Promise<SignInResult> {
   try {
-    const res = await fetch(CLAIM_PATH, {
+    const res = await fetch(apiUrl(CLAIM_PATH), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ flowId }),

@@ -15,7 +15,14 @@ export function isAllowedOrigin(req: VercelRequest): boolean {
   const origin = req.headers.origin
   if (!origin) return true
   try {
-    const host = new URL(origin).hostname
+    const url = new URL(origin)
+    // THE NATIVE SHELL, EXPLICITLY. It calls these endpoints cross-origin from
+    // `capacitor://localhost` (App Store PRD §3.1). It already passed the hostname test below purely
+    // because that origin's hostname happens to parse as `localhost` — i.e. it worked BY ACCIDENT,
+    // and any future tightening of the localhost rule (scheme check, dev-only guard) would have
+    // killed "Sig et Ord" and TTS in the shipped app with no local symptom. Say it on purpose.
+    if (SHELL_SCHEMES.includes(url.protocol)) return true
+    const host = url.hostname
     if (host === 'localhost' || host === '127.0.0.1' || host === '[::1]') return true
     if (req.headers.host && host === req.headers.host.split(':')[0]) return true
     return false
@@ -23,6 +30,9 @@ export function isAllowedOrigin(req: VercelRequest): boolean {
     return false
   }
 }
+
+/** Capacitor's iOS scheme and its legacy one, as `URL.protocol` reports them (trailing colon). */
+const SHELL_SCHEMES = ['capacitor:', 'ionic:']
 
 /** Best-effort client IP for rate limiting (Vercel sets x-forwarded-for). */
 export function clientIp(req: VercelRequest): string {
@@ -84,11 +94,17 @@ export function applyCors(req: VercelRequest, res: VercelResponse): void {
   const origin = req.headers.origin
   res.setHeader('Access-Control-Allow-Origin', origin && isAllowedOrigin(req) ? origin : 'null')
   res.setHeader('Vary', 'Origin')
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
-  // `Authorization` is needed by the paid endpoints' access JWT. NB this is CORRECTNESS, not
-  // load-bearing (accounts PRD §8.3): in prod the SPA is same-origin with /api, and in dev Vite
-  // proxies /api → 127.0.0.1:3001 so the browser never preflights. It's here for curl, the
-  // /debug-report skill and any future cross-origin caller.
+  // Every method any endpoint behind this helper actually serves: `profiles` answers GET/POST/PATCH/
+  // DELETE, `progress` GET/PUT, `bug-report` GET/POST. It advertised POST only, which was harmless
+  // while nothing was cross-origin — and is not any more: the shell preflights ALL of them, because
+  // they carry an `Authorization` header, which makes even a GET non-simple. A missing verb here is a
+  // request the browser refuses to send, so it fails before it reaches any of our code.
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS')
+  // `Authorization` is needed by the paid endpoints' access JWT. This USED TO BE correctness-only
+  // (accounts PRD §8.3) — on the web the SPA is same-origin with /api, and in dev Vite proxies
+  // /api → 127.0.0.1:3001, so the browser never preflights. **The native shell made it
+  // load-bearing**: it is served from the app bundle, so every API call is cross-origin by
+  // construction and every one of them preflights.
   //
   // Still NO Access-Control-Allow-Credentials — we never send cookies cross-origin.
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')

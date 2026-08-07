@@ -63,8 +63,13 @@ test('the update checker returns before the fetch inside the shell', () => {
   // polling /api/version every 10 minutes for an answer it cannot use.
   const code = codeOf('hooks/useUpdateChecker.ts')
   const guardAt = code.indexOf('isNativeShell()')
-  const fetchAt = code.indexOf("fetch('/api/version'")
+  // Matched on the PATH, not on the whole `fetch('/api/version'` call, which is how this guard was
+  // written. That shape broke the moment every call site was wrapped in `apiUrl(...)` for the shell
+  // (`src/config/apiBase.ts`) — indexOf returned -1 and the ordering assertion failed against code
+  // that was still perfectly correct. The path is the stable thing to anchor on.
+  const fetchAt = code.indexOf("'/api/version'")
   assert.ok(guardAt > 0, 'the update checker does not consult the runtime target')
+  assert.ok(fetchAt > 0, 'the update checker no longer references /api/version at all')
   assert.ok(guardAt < fetchAt, 'the shell guard sits after the version fetch it is meant to skip')
 })
 

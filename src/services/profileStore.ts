@@ -8,6 +8,7 @@
 // only consulted to refresh.
 
 import { ACTIVE_PROFILE_KEY } from '../config/progressSchema.ts'
+import { apiUrl } from '../config/apiBase.ts'
 import { DEFAULT_AVATAR_ID, normalizeAvatarId, type AvatarId } from '../config/avatars.ts'
 import { guestModeActive } from '../utils/guestMode.ts'
 import { authStore } from './authStore.ts'
@@ -247,7 +248,7 @@ class ProfileStore {
     }
     this.publish({ loading: true })
     try {
-      const res = await fetch('/api/profiles', { headers: authHeaders() })
+      const res = await fetch(apiUrl('/api/profiles'), { headers: authHeaders() })
       if (!res.ok) {
         this.publish({ loading: false, rosterSettled: true })
         return this.state.profiles
@@ -317,7 +318,7 @@ class ProfileStore {
       return null
     }
     try {
-      const res = await fetch('/api/profiles', {
+      const res = await fetch(apiUrl('/api/profiles'), {
         method: 'POST',
         headers: authHeaders(),
         body: JSON.stringify(input),
@@ -345,7 +346,7 @@ class ProfileStore {
     // No server row exists for the guest child, so a PATCH would 401 and read as a bug.
     if (guestModeActive()) return false
     try {
-      const res = await fetch('/api/profiles', {
+      const res = await fetch(apiUrl('/api/profiles'), {
         method: 'PATCH',
         headers: authHeaders(),
         body: JSON.stringify({ id, ...input }),
@@ -370,7 +371,7 @@ class ProfileStore {
     // with nobody to play as. "Nulstil fremgang" is the guest's equivalent and it works locally.
     if (guestModeActive()) return false
     try {
-      const res = await fetch('/api/profiles', {
+      const res = await fetch(apiUrl('/api/profiles'), {
         method: 'DELETE',
         headers: authHeaders(),
         body: JSON.stringify({ id }),
