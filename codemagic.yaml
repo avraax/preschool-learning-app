@@ -13,9 +13,12 @@
 #      account is a **Personal Account** and does not have that menu — the same setting lives under
 #      plain `Settings`. Do NOT create a team to make the documented path appear: the free macOS
 #      minutes are attached to the personal account, and a team can put you on a different plan.
-#   3. Nothing else. Signing certificates and provisioning profiles are created BY that API key —
-#      `ios_signing` + `xcode-project use-profiles` is Codemagic's automatic-signing path, which is
-#      what removes the "certificates need a Mac" problem (§2.3).
+#   3. Nothing else. The signing certificate and the provisioning profile are CREATED BY that API key
+#      on the first build — `app-store-connect fetch-signing-files … --create`, see the signing step
+#      below. That is what removes the "certificates need a Mac" problem (§2.3): no CSR, no Keychain,
+#      no Mac, and nothing for the owner to create by hand in the Apple portal.
+#      Do NOT add an `environment.ios_signing:` block to "help" — that is the DECLARATIVE path, it
+#      only matches PRE-EXISTING files, and it is what made the first build fail.
 
 workflows:
   ios-testflight:
@@ -28,16 +31,21 @@ workflows:
       app_store_connect: bornelaering-asc
 
     environment:
-      ios_signing:
-        distribution_type: app_store
-        # Registered in the Apple Developer portal with Sign in with Apple and no other capabilities.
-        # Permanent — it matches `capacitor.config.ts`'s appId and the pbxproj's
-        # PRODUCT_BUNDLE_IDENTIFIER, and all three have to stay in step.
-        bundle_identifier: com.vraa.earlylearning
+      # NO `ios_signing:` BLOCK — deliberately, and its absence cost a build to learn. `ios_signing` is
+      # Codemagic's DECLARATIVE signing path: it fetches a certificate and profile that ALREADY EXIST
+      # and matches them by bundle id. Nothing had ever created them — the Apple Developer portal held
+      # only the registered App ID (§4.4 C4) — so the match found nothing and the build died on
+      # "No matching profiles found for bundle identifier … and distribution type app_store".
+      # Codemagic's docs also name MIXING the two paths as a cause of that same error, so the explicit
+      # CLI sequence in the signing step REPLACES this block rather than supplementing it.
       vars:
         XCODE_PROJECT: ios/App/App.xcodeproj
         # Capacitor names the target and scheme "App" — not the app's name.
         XCODE_SCHEME: App
+        # Registered in the Apple Developer portal with Sign in with Apple and no other capabilities.
+        # Permanent — it matches `capacitor.config.ts`'s appId and the pbxproj's
+        # PRODUCT_BUNDLE_IDENTIFIER, and all three have to stay in step (guarded).
+        BUNDLE_ID: com.vraa.earlylearning
       # The repo's own floor; the local toolchain is Node 22.
       node: 22
       # Apple requires uploads to be BUILT WITH THE iOS 26 SDK (since 2026-04-28), which means an
@@ -98,9 +106,29 @@ workflows:
           cd "$CM_BUILD_DIR/ios/App"
           agvtool new-version -all "$PROJECT_BUILD_NUMBER"
 
-      - name: Fetch signing certificates and profiles
-        # Creates/downloads them via the ASC API key — this is what makes a Windows-only setup viable.
-        script: xcode-project use-profiles
+      - name: Create the signing certificate and profile, then apply them
+        # `--create` is the whole point. On the FIRST build nothing exists on Apple's side except the
+        # registered App ID, so anything that merely FETCHES finds nothing. This creates the
+        # distribution certificate and the App Store profile through the API key — which is exactly
+        # what removes the "certificates need a Mac" problem (§2.3), and why the owner never has to
+        # generate a CSR or touch the Apple portal.
+        #
+        # The previous version of this step ran `xcode-project use-profiles` ALONE, under the name
+        # "Fetch signing certificates and profiles". `use-profiles` neither fetches nor creates: it
+        # applies profiles already sitting in ~/Library/MobileDevice/Provisioning Profiles. The step
+        # name described an intention the command never carried out, which is how this shipped.
+        #
+        # `integrations.app_store_connect` above injects APP_STORE_CONNECT_ISSUER_ID,
+        # APP_STORE_CONNECT_KEY_IDENTIFIER and APP_STORE_CONNECT_PRIVATE_KEY, so none of these four
+        # commands needs credentials passed explicitly.
+        script: |
+          set -e
+          keychain initialize
+          app-store-connect fetch-signing-files "$BUNDLE_ID" \
+            --type IOS_APP_STORE \
+            --create
+          keychain add-certificates
+          xcode-project use-profiles
 
       - name: Build the IPA
         script: |

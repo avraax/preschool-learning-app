@@ -263,18 +263,24 @@ test('the app icon is the real one, 1024², and has NO alpha channel', () => {
 
 test('the bundle identifier agrees across all THREE files that declare it', () => {
   // `capacitor.config.ts` (appId), the Xcode project (PRODUCT_BUNDLE_IDENTIFIER) and `codemagic.yaml`
-  // (ios_signing.bundle_identifier) each name it separately, and they are edited months apart. A
-  // mismatch does not fail a build — it fails SIGNING on a remote Mac, or worse, signs an app that
-  // App Store Connect refuses because no such app record exists. The id is permanent (§4.0 C4).
+  // (the `BUNDLE_ID` var) each name it separately, and they are edited months apart. A mismatch does
+  // not fail a build — it fails SIGNING on a remote Mac, or worse, signs an app that App Store Connect
+  // refuses because no such app record exists. The id is permanent (§4.0 C4).
+  //
+  // The yaml key MOVED: it was `ios_signing.bundle_identifier` until that block was deleted for
+  // creating no certificate on a first build (see the yaml's own signing step). This guard caught the
+  // rename immediately, which is what it is for — but note it can only ever check that the THREE
+  // strings agree, never that the CI file still passes the id to anything.
   const ID = 'com.vraa.earlylearning'
   assert.match(stripTs(read(CAP_CONFIG)), new RegExp(`appId:\\s*'${ID.replace(/\./g, '\\.')}'`))
   assert.match(read(...PBXPROJ), new RegExp(`PRODUCT_BUNDLE_IDENTIFIER = ${ID.replace(/\./g, '\\.')};`))
   // ANCHORED to end-of-line. Unanchored, this matched `com.vraa.earlylearning2` and the guard passed
   // against a drifted id — found by re-breaking it, which is the whole point of doing that.
-  assert.match(
-    read('codemagic.yaml'),
-    new RegExp(`bundle_identifier:\\s*${ID.replace(/\./g, '\\.')}\\s*$`, 'm'),
-  )
+  const yaml = read('codemagic.yaml')
+  assert.match(yaml, new RegExp(`BUNDLE_ID:\\s*${ID.replace(/\./g, '\\.')}\\s*$`, 'm'))
+  // …and that the var is actually CONSUMED. Declaring it and never passing it to
+  // `fetch-signing-files` would leave all three strings agreeing while signing the wrong thing.
+  assert.match(yaml, /fetch-signing-files\s+"\$BUNDLE_ID"/)
 })
 
 test('CI publishes to TestFlight and NEVER auto-submits to the App Store', () => {
