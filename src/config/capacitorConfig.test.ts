@@ -195,6 +195,46 @@ test('the asset catalog escapes the blanket *.json gitignore', () => {
   assert.match(tracked, /AppIcon\.appiconset\/AppIcon-512@2x\.png/)
 })
 
+// ---- B7: the microphone spike, static half --------------------------------------------------------
+
+test('the Capacitor bridge still GRANTS WKWebView media-capture permission', () => {
+  // App Store PRD §4.3 / B7. "Sig et Ord" reaches the microphone through plain `getUserMedia` in a
+  // WKWebView, and a WKWebView only gets it if the host app implements the iOS 15+ WKUIDelegate method
+  // `webView:requestMediaCapturePermissionForOrigin:initiatedByFrame:type:decisionHandler:`. Without
+  // it a webview can prompt on EVERY call or refuse silently. The PRD carried this as UNKNOWN because
+  // community reports pointed both ways; it is resolved here by reading Capacitor's own source.
+  //
+  // Verified against the SHIPPED ARTIFACT too, not only this npm mirror: `capacitor-swift-pm` at 8.5.0
+  // is a `binaryTarget` whose `Capacitor.xcframework.zip` matches the checksum pinned in its
+  // Package.swift, and the selector is present in the `ios-arm64` Mach-O inside it. That download also
+  // settled §3.9's other UNKNOWN — the framework carries its own `PrivacyInfo.xcprivacy` per slice and
+  // is code-signed, which is what Apple requires of a listed SDK used as a binary dependency.
+  //
+  // This is a SUPPLY-CHAIN assertion on purpose: a Capacitor upgrade that changed this would break the
+  // microphone in the shell only, on a device, with the web app still perfect.
+  const bridge = readFileSync(
+    path.join(
+      ROOT,
+      'node_modules',
+      '@capacitor',
+      'ios',
+      'Capacitor',
+      'Capacitor',
+      'WebViewDelegationHandler.swift',
+    ),
+    'utf8',
+  )
+  const handler = bridge.match(
+    /requestMediaCapturePermissionFor[\s\S]{0,400}?decisionHandler:\s*@escaping[\s\S]{0,200}?\{([\s\S]{0,200}?)\n\s{4}\}/,
+  )
+  assert.ok(handler, 'the Capacitor bridge no longer implements requestMediaCapturePermissionFor')
+  assert.match(
+    handler[1],
+    /decisionHandler\(\.grant\)/,
+    'the bridge no longer grants media capture — getUserMedia will prompt or fail in the shell',
+  )
+})
+
 test('the app icon is the real one, 1024², and has NO alpha channel', () => {
   // Two separate upload rejections in one file. App Store icons may not carry transparency, and
   // Capacitor scaffolds a PLACEHOLDER icon that is a perfectly valid PNG — so nothing complains locally

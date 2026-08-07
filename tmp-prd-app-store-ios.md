@@ -850,7 +850,8 @@ instead of a briefing.
 | | State |
 |---|---|
 | **Phase A** | **DONE** and on the branch. Guest play, `/privatliv` + `/support`, mic consent gate, offline-readiness audit, iPhone 6.9" pass, Google-token audit. Not merged to master, therefore **not deployed** — which is why the Support URL would 404 if Apple fetched it today. |
-| **Phase B** | **NOT STARTED.** B1–B9, §4.3. This is the next engineering work. |
+| **Phase B** | **DONE 2026-08-07** (B1–B9), commits `14d5a83` + `94bb491`. The `ios/` tree is committed and the shell's auth works; **nothing has been compiled** — no Mac has touched it. Details and the three deviations below. |
+| **C7** Codemagic | **NOT STARTED.** This is the next engineering work: `codemagic.yaml`, the ASC key integration, first build. §4.4. |
 | **C0** Azure paid tier | **DONE 2026-08-07.** Was F0; now S0, all 1884 clips re-synthesized. §3.11. |
 | **C1** enrolment | **DONE.** Individual, 99 USD paid. |
 | Free Apps Agreement | **Active.** Paid Apps Agreement deliberately left unsigned — the app is free. |
@@ -859,6 +860,41 @@ instead of a briefing.
 | **C5** App record | **Created.** Name `Børnelæring: ABC, tal, engelsk` (was available), primary language Danish, SKU `earlylearning`. Version 1.0 metadata, promo text, keywords, copyright and all 12 screenshots uploaded. "Sign-in required" **unticked** (guest play), release set to **Manual**. |
 | **C6** ASC API key | **Created** — Team key, Admin role. The `.p8` lives on the owner's machine **outside the repo**; he uploads it to Codemagic himself. **Never ask him to paste its contents.** Key ID and Issuer ID are safe to handle. |
 | Still unset in ASC | Age rating, **"Made for Kids"** (permanent once approved — do deliberately), the App Privacy questionnaire, and Denmark-only availability. None block Phase B. |
+
+**What Phase B settled, and what it deliberately did differently.** Three deviations, all recorded in
+the commits; none needs re-deciding, but a reader of §4.3 will notice them.
+
+1. **No deep link for the Google return (B5).** The system browser is used, as required — but the
+   `flowId` claim already makes the return URL carry nothing load-bearing, which is exactly what
+   `OAuthReturnHandler`'s poll was built for. The sheet's `browserFinished` event is wired as a nudge
+   that claims immediately; the poll is still the guarantee. This buys the deep link's behaviour with
+   **no custom URL scheme, no second Google client and no server change** — so the Google Cloud console
+   needs no new redirect URI.
+2. **Capacitor 8 uses Swift Package Manager, not CocoaPods.** §3.9's "pod" wording is stale: there is no
+   `Podfile`, and CI needs no `pod install`. Capacitor is a **binary** dependency (a checksum-pinned
+   `Capacitor.xcframework`), which is the case where Apple also requires a signature — satisfied, see
+   below.
+3. **`ITSAppUsesNonExemptEncryption = false` is set in `Info.plist`.** The app uses only standard HTTPS,
+   which is exempt, and without the key **every** TestFlight upload stops for a manual questionnaire.
+   It is nevertheless an export-compliance declaration → **OWNER should confirm it**; deleting the key
+   is the only change needed to revert.
+
+**UNKNOWNs closed by Phase B** (both were §3.9's, both resolved from the artifact that actually ships,
+not from community reports):
+
+- **The Capacitor bridge DOES implement** `webView:requestMediaCapturePermissionForOrigin:…` and calls
+  `decisionHandler(.grant)` unconditionally, so a WKWebView `getUserMedia` will not prompt per call or
+  refuse silently. Confirmed in 8.5.0's source **and** as a selector in the shipped `ios-arm64` Mach-O
+  inside the checksum-matched xcframework. Pinned by `capacitorConfig.test.ts`.
+- **Capacitor's xcframework carries its own `PrivacyInfo.xcprivacy` per slice and is code-signed**, which
+  is what Apple requires of a listed SDK used as a binary dependency.
+
+**Still UNKNOWN, and only the iPad can answer it (rung 3):** whether `getUserMedia` + `MediaRecorder`
+actually capture usable audio from `capacitor://localhost` on iPadOS 17.7 — the OS permission prompt, the
+`AVAudioSession` category interaction with Howler and the Web Audio graph, and the recorded codec. The JS
+path is unchanged from Safari (`MIME_CANDIDATES` already falls back to `audio/mp4`), so the *code* risk is
+low; the *device* risk is untested. Fallback if it fails is unchanged: capture in a native plugin and keep
+`useSpeechInput`'s API shape.
 
 **Decisions already taken — do not re-litigate:** the web build is **bundled**, never `server.url` (§3.1);
 deployment target **17.0** against the iOS 26 SDK (§3.9); **universal**, iPhone landscape-locked; passkeys
@@ -896,6 +932,22 @@ on an iPhone. He owns no iPhone.
 
 ### 4.3 Phase B — the native shell
 
+**ALL DONE 2026-08-07** (`14d5a83`, `94bb491`) — see §4.0 for the deviations and the UNKNOWNs it closed.
+The table is kept as the record of what each item was.
+
+Three things bit that are worth knowing before touching this tree again, all with the same shape — right
+on Windows, wrong on the Mac, and invisible from here:
+
+- **`.gitignore`'s blanket `*.json` swallowed the asset catalog's `Contents.json` files**, i.e. the ones
+  naming which PNG is the app icon. An upload with no icon is rejected. Negated in `.gitignore`; the same
+  trap as the `public/manifest.json` outage.
+- **`npx cap sync ios` writes plugin paths into `Package.swift` with the HOST separator**, so a sync run
+  on Windows emits backslashes that SPM on macOS cannot resolve. Use **`npm run cap:sync`**, never the
+  bare CLI command; `capacitorConfig.test.ts` fails if a backslash returns.
+- **Capacitor scaffolds a placeholder app icon** that is a perfectly valid PNG, so nothing complains
+  locally. Replaced with `art-src/logo/app-store-icon-1024.png`, flattened — alpha is an upload
+  rejection.
+
 | # | Work | Notes |
 |---|---|---|
 | B1 | Capacitor scaffold; `webDir` = `dist`; **bundle `public/sounds` into the binary**; commit the generated `ios/` tree | §3.1. Do NOT set `server.url` |
@@ -908,18 +960,23 @@ on an iPhone. He owns no iPhone.
 | B8 | Disable the update banner in the shell | §3.10 |
 | B9 | **AI-voice disclosure** — one Danish line in the Privatliv group, via `legalContent.ts` so the guard covers it | §3.11. Microsoft Code of Conduct obligation, not an Apple one. Not native work; it is here only because Phase A had shipped before it was found |
 
-**B7 is a genuine spike, not a checkbox.** Capacitor's docs say `localhost` grants the secure context
-`getUserMedia` needs (§3.9), and `NSMicrophoneUsageDescription` covers the OS permission. What is
-**UNKNOWN from first-party sources** is whether Capacitor's bridge implements the iOS 15+ WKUIDelegate
-method `webView:requestMediaCapturePermissionForOrigin:initiatedByFrame:type:decisionHandler:`; without it,
-a WKWebView can prompt on every `getUserMedia` call or refuse silently. Community reports on both sides
-exist (Apple Developer Forums threads 734363 and 692421; ionic-team/capacitor issues 5071 and 6759 — read
-2026-08-06), which is exactly why this is a spike. **Fallback if it fails:** capture audio in a native
-plugin and hand the buffer to the webview, keeping `useSpeechInput`'s API shape. Budget for it.
+**B7 was a genuine spike, and its static half came back clean.** Capacitor's docs say `localhost` grants
+the secure context `getUserMedia` needs (§3.9), and `NSMicrophoneUsageDescription` covers the OS
+permission. What was **UNKNOWN from first-party sources** was whether Capacitor's bridge implements the
+iOS 15+ WKUIDelegate method `webView:requestMediaCapturePermissionForOrigin:initiatedByFrame:type:
+decisionHandler:`; without it, a WKWebView can prompt on every `getUserMedia` call or refuse silently.
+Community reports pointed both ways (Apple Developer Forums threads 734363 and 692421;
+ionic-team/capacitor issues 5071 and 6759 — read 2026-08-06), which is why it needed a spike rather than
+a search.
+
+**Resolved 2026-08-07: it implements it and grants unconditionally** — in 8.5.0's source and as a selector
+in the shipped `ios-arm64` binary (§4.0). **The device half stays UNKNOWN and is rung 3.** The fallback is
+unchanged if it fails on the iPad: capture audio in a native plugin and hand the buffer to the webview,
+keeping `useSpeechInput`'s API shape.
 
 The whole of Phase B can only be *compiled* on Codemagic, so expect the loop "push → CI build → read log"
-rather than local iteration. Keep B1–B9 small and independently pushable for that reason. B9 is the
-exception — it is a plain text change and needs no build at all, so do it first and get it out of the way.
+rather than local iteration — **nothing in Phase B has been compiled yet.** B1–B9 were kept small and
+independently pushable for that reason. B9 was the exception — a plain text change needing no build.
 
 ### 4.4 Phase C — turning that into a submitted build
 
@@ -934,7 +991,7 @@ exception — it is a plain text change and needs no build at all, so do it firs
 | C4 | Register the Bundle ID; enable the Sign in with Apple capability on it | either (web) |
 | C5 | Create the app record in App Store Connect; primary language **Danish** | either (web) |
 | C6 | Create an **App Store Connect API key** (Users and Access → Integrations) and hand the `.p8` to Codemagic | **OWNER — credential creation** |
-| C7 | Connect the repo to Codemagic; author `codemagic.yaml` from its Ionic/Capacitor recipe; ASC API key integration for automatic signing | agent |
+| C7 | Connect the repo to Codemagic; author `codemagic.yaml` from its Ionic/Capacitor recipe; ASC API key integration for automatic signing. **No `pod install` step — Capacitor 8 is SPM.** Run **`npx cap sync ios`** in CI (on macOS it rewrites `Package.swift`'s paths correctly anyway) after `npm ci && npm run build` | agent |
 | C8 | First successful build → uploaded to TestFlight | agent (CI) |
 | C9 | **Install via TestFlight on the iPad and play-test.** Internal testers accept by email and install with the TestFlight app; builds last 90 days | **OWNER — tapping a device** |
 | C10 | Metadata + screenshots + questionnaires (see below) | either |

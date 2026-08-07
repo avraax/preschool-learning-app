@@ -72,6 +72,27 @@ on an iPad. Don't reconcile the two; they are different targets.
 - **No service worker in either target.** `vite-plugin-pwa` sits unused in `dependencies`; a SW inside a
   Capacitor webview is a class of bug nobody wants to debug on a remote CI machine. Guarded.
 
+## The `ios/` tree: authored on Windows, only ever compiled on a Mac
+
+Capacitor 8 (SPM, **no CocoaPods — there is no Podfile**), `webDir: dist`, bundle id
+`com.vraa.earlylearning`, deployment target **17.0**. Everything here is pinned by
+`src/config/capacitorConfig.test.ts`, because none of it can fail on this machine.
+
+- **Never run the bare `npx cap sync ios` — use `npm run cap:sync`.** The CLI writes plugin paths into
+  `ios/App/CapApp-SPM/Package.swift` with the HOST separator, so a sync on Windows emits backslashes SPM
+  on macOS cannot resolve. Nothing local reads that file; the symptom is a CI package-resolution error.
+- **Any new non-code file under `ios/` must be checked against `.gitignore`'s blanket `*.json`.** It
+  already ate the asset catalog's `Contents.json` — the file naming the app icon, without which the
+  upload is rejected. `git check-ignore -v $(find ios -name '*.json')` before committing.
+- **Two auth behaviours are shell-gated and must stay so** (`.claude/rules/auth.md` for the mechanism):
+  Google OAuth opens in the **system browser** (`@capacitor/browser`, dynamically imported) because
+  Google 403s WKWebView, and **passkeys are off** because `capacitor://localhost` can never match the
+  production `rpID`. The web deployment keeps both unchanged — this is a gate, never a removal.
+- **The app icon is a real render, flattened.** Capacitor scaffolds a valid placeholder PNG, and alpha in
+  an icon is an upload rejection rather than a review note.
+- **`ITSAppUsesNonExemptEncryption = false`** is set so uploads don't stop for the export questionnaire.
+  True today (HTTPS only, no custom crypto in the binary); re-check if crypto ever moves client-side.
+
 ## Delivery / caching (`vercel.json`)
 
 PRD-07. **`rewrites` and `headers` obey OPPOSITE rules, and the rewrite one is load-bearing.**
