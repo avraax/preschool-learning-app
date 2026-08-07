@@ -850,7 +850,7 @@ instead of a briefing.
 | | State |
 |---|---|
 | **MERGED + DEPLOYED** | **2026-08-07.** Phases A+B fast-forwarded to `master` and live as `3ffee23` on **`https://boernelaering.dk`**. `/privatliv` and `/support` both answer **200**, so the App Store Connect URLs can now be filled in. Ordering matters if this is ever redone: the shell's server-side half (`capacitor://localhost` in `trustedOrigins`, widened CORS) ships with the web app, so **deploy before building a shell**, or the build under test cannot reach the API. |
-| **OPEN DEFECT** | **`/api/auth/*` 404s on OPTIONS with no CORS headers** — expected to make sign-in, profiles, PIN and passkeys dead in the shell while every game works. **Blocks TestFlight.** Full evidence and the constraints a fix must respect: **§4.0.1**. |
+| ~~**OPEN DEFECT**~~ | **CLOSED 2026-08-07** (`4f52dbb`, live). `/api/auth/*` answered OPTIONS with a bare 404 — and, unrecorded until the fix, real responses carried no `Access-Control-Allow-Origin` either. Both verified fixed against the deployed build. **No longer blocks TestFlight.** §4.0.1. |
 | **Phase A** | **DONE** and merged. Guest play, `/privatliv` + `/support`, mic consent gate, offline-readiness audit, iPhone 6.9" pass, Google-token audit. |
 | **Phase B** | **DONE 2026-08-07** (B1–B9), commits `14d5a83` + `94bb491`, plus `78841cb` — see the API-origin note below, which was a genuine gap in B and is now closed. The `ios/` tree is committed; **nothing has been compiled** — no Mac has touched it. Deviations below. |
 | **C7** Codemagic | **`codemagic.yaml` DONE** (`7c1908e`). Remaining is **OWNER**: connect the repo, and add the C6 `.p8` under the integration name **`bornelaering-asc`** (or rename it in the yaml). |
@@ -897,10 +897,12 @@ the app that cannot be an environment variable**, because it is compiled into a 
 web follows a move on the next request; an installed shell never can. So the old host must keep
 answering until every install has been replaced *through review*.
 
-### 4.0.1 OPEN DEFECT — the same gap survives on `/api/auth/*`
+### 4.0.1 CLOSED — the same gap survived on `/api/auth/*`
 
-Found 2026-08-07 against the **deployed** `3ffee23`, immediately after Phase A+B merged to master. **Fix
-this before any TestFlight build**, or the build under test cannot sign in.
+Found 2026-08-07 against the **deployed** `3ffee23`, immediately after Phase A+B merged to master.
+**Fixed the same day in `4f52dbb`** (`lib/web-cors.ts` + the `dev-server.js` mirror), verified against
+the deployed build. The record below is kept because the *diagnosis* is the reusable part; what the fix
+turned out to be is in **"How it was actually closed"** at the end.
 
 **Measured on production** (rung 1, `curl` against the live deployment):
 
@@ -946,6 +948,45 @@ but the fix is cheap enough that waiting for a device is the wrong trade.
   for `api/auth/**` may not match `OPTIONS`). Establish which before writing the fix — read
   `.vercel/output/config.json` per `api-endpoints.md`, because fixing the wrong layer will look like it
   works locally and still 404 in production.
+
+**How it was actually closed** (`4f52dbb`, verified on the deployed build, rung 1).
+
+**The layer question, settled first, and it did not need the build output.** The 404 was
+**better-auth's router**, not Vercel's routing: it came back **chunked with an empty body** — a function
+response — whereas Vercel's own platform 404 is `text/plain` with a `content-length` (probe
+`/api/definitely-not-a-route` as the control). `POST /api/auth/sign-out` reaching the handler (415)
+confirms the rewrite matches non-GET methods. So `vercel.json` was never involved.
+
+**The defect had a second half §4.0.1 did not name:** a 200 `GET /api/auth/ok` with an `Origin` header
+carried **no `Access-Control-Allow-Origin` either**. Fixing only the preflight would have produced a
+passing preflight followed by a blocked response — the same dead surface, one step later.
+
+`lib/web-cors.ts` is the Response-shaped CORS layer, applied as a preflight short-circuit **before**
+`auth.handler` plus a wrap on every real answer (the 500 path included, so a shell failure is a
+diagnosable 500 rather than an opaque network error). Four decisions inside it:
+
+- **The allow-list IS `trustedOrigins()`** — deriving it is what makes the no-drift constraint
+  structural rather than a convention. An origin echoed here but not trusted there would pass the
+  preflight and then be refused by better-auth, which reads as a credential bug.
+- **A disallowed origin gets no header at all**, deliberately not `applyCors`'s literal `'null'`: a
+  sandboxed iframe and a `data:` document both present the origin `null`, so that string is a grant.
+- **`withCors` rebuilds the `Response`** instead of mutating headers — `Response.redirect()` carries an
+  immutable header guard, and the OAuth callback must stay a redirect (`.claude/rules/auth.md`).
+- **`set-auth-token` is in `Access-Control-Expose-Headers`**, or the bearer plugin's session reads back
+  as `null` from a cross-origin 200.
+
+The `dev-server.js` mirror had to be mounted **above** the auth handler: the general `/api` CORS
+middleware sits below it and never ran for these paths, so dev had the identical hole.
+
+**Measured on production after deploy** — preflight **204** with the shell origin echoed on
+`/api/auth/ok`, `/family/status` and `/sign-out`, `ionic://localhost` likewise, real 200/401 responses
+carrying the header, the web origin unaffected, and four negative controls (`https://evil.example`,
+`capacitor://evil`, `null`, `http://boernelaering.dk`) getting **no** `Access-Control-Allow-Origin`.
+`/api/progress` unchanged. Bodies, status codes and the app itself all still correct.
+
+**Still not device-verified**, and this is unchanged by the fix: the browser consequence was always
+inferred from CORS semantics, never from an observed WKWebView failure. What is now measured is that
+the server answers correctly. Rung 3 remains the only thing that can say the shell signs in.
 
 **UNKNOWNs closed by Phase B** (both were §3.9's, both resolved from the artifact that actually ships,
 not from community reports):
