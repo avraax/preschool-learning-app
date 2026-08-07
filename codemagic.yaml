@@ -6,9 +6,13 @@
 #
 # BEFORE THE FIRST RUN — three things the owner does in the Codemagic UI, not here:
 #   1. Connect this repository.
-#   2. Team settings → Integrations → App Store Connect → add the `.p8` from C6. NAME IT EXACTLY
+#   2. **Settings → Integrations → App Store Connect** → add the `.p8` from C6. NAME IT EXACTLY
 #      `bornelaering-asc` or change `integrations.app_store_connect` below to match. The key never
 #      goes in this file or anywhere in the repo (`.gitignore` refuses `*.p8` outright).
+#      Codemagic's own docs say "Team settings", which is the path only once a TEAM exists. This
+#      account is a **Personal Account** and does not have that menu — the same setting lives under
+#      plain `Settings`. Do NOT create a team to make the documented path appear: the free macOS
+#      minutes are attached to the personal account, and a team can put you on a different plan.
 #   3. Nothing else. Signing certificates and provisioning profiles are created BY that API key —
 #      `ios_signing` + `xcode-project use-profiles` is Codemagic's automatic-signing path, which is
 #      what removes the "certificates need a Mac" problem (§2.3).
