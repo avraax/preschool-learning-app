@@ -16,6 +16,7 @@ import { toNodeHandler, fromNodeHeaders } from 'better-auth/node';
 import { auth } from './lib/auth.ts';
 import { verifyAccessToken } from './lib/access-token.ts';
 import { devBypassEnabled } from './lib/env.ts';
+import { corsHeadersFor } from './lib/web-cors.ts';
 import { normalizePersisted, progressInvariantViolations } from './src/config/progressSchema.ts';
 import { mergeProgress } from './src/config/progressMerge.ts';
 import {
@@ -35,6 +36,17 @@ const PORT = Number(process.env.PORT) || 3001;
 //     express.json() line below moved DOWN here from the top of the file.
 //  2. Express 5 (this repo is on 5.2.1) rejects bare wildcards — `'/api/auth/*'` throws a
 //     path-to-regexp "Missing parameter name" error. It has to be a NAMED wildcard: `*splat`.
+//  3. CORS has to sit ABOVE the auth mount, not in the general `/api` middleware further down — that
+//     one never runs for these paths, so dev had the exact 404-on-OPTIONS hole production had
+//     (App Store PRD §4.0.1). Same source as the deployed function, so the two cannot drift.
+app.use('/api/auth', (req, res, next) => {
+  for (const [k, v] of Object.entries(corsHeadersFor(req.headers.origin))) res.setHeader(k, v);
+  if (req.method === 'OPTIONS') {
+    res.setHeader('Access-Control-Max-Age', '600');
+    return res.status(204).end();
+  }
+  next();
+});
 app.all('/api/auth/*splat', toNodeHandler(auth));
 
 // 5mb to comfortably hold a short base64-encoded audio clip from the mic game.
