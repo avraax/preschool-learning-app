@@ -121,11 +121,25 @@ workflows:
         # `integrations.app_store_connect` above injects APP_STORE_CONNECT_ISSUER_ID,
         # APP_STORE_CONNECT_KEY_IDENTIFIER and APP_STORE_CONNECT_PRIVATE_KEY, so none of these four
         # commands needs credentials passed explicitly.
+        # `--certificate-key` is NOT optional and its absence is a second wasted build. A certificate
+        # is a public key signed by Apple, so CREATING one requires a private key to put inside it, and
+        # the API key cannot supply that — it authenticates, it does not generate keys. Without it the
+        # step dies on "Cannot save Signing Certificates without certificate private key" AFTER
+        # successfully initialising the keychain, which reads like a keychain problem and is not.
+        #
+        # CERTIFICATE_PRIVATE_KEY is an RSA 2048 PKCS#1 key (`-----BEGIN RSA PRIVATE KEY-----`),
+        # pasted into Codemagic as a SECRET variable, NOT base64-encoded, and never committed
+        # (`.gitignore` refuses `*.pem`/`*.key`). Generate a replacement with:
+        #   openssl genrsa -traditional -out ios_distribution_private_key.pem 2048
+        # Verified 2026-08-07 against the live account with `app-store-connect certificates list
+        # --type IOS_DISTRIBUTION` from WINDOWS: zero certificates existed, so there was never
+        # anything for the declarative path to find.
         script: |
           set -e
           keychain initialize
           app-store-connect fetch-signing-files "$BUNDLE_ID" \
             --type IOS_APP_STORE \
+            --certificate-key "@env:CERTIFICATE_PRIVATE_KEY" \
             --create
           keychain add-certificates
           xcode-project use-profiles

@@ -82,3 +82,7 @@ plans/session-performance/instructions-loaded.tsv
 *.mobileprovision
 *.cer
 *.certSigningRequest
+# The RSA key that `fetch-signing-files --create` puts INSIDE the distribution certificate. Leaking it
+# is leaking the ability to sign as this developer. Lives outside the repo; this is the backstop.
+*.pem
+*.key
