@@ -214,15 +214,36 @@ keeps it green while the shipped string is wrong.
 
 W1–W6 are inert without all six of these. None is code.
 
+**Steps 1–3 were done on 2026-08-07, deliberately early** — they have days of latency and they run in
+parallel with v1.0's review, so none of it delays the store submission. Do not re-open them.
+
 1. **Accept the Paid Applications Agreement (Schedule 2)** in App Store Connect — required even for a
-   free app that offers IAP.
-2. **Bank details and tax forms** — a Danish bank account plus the US tax form (**W-8BEN**, individual).
-   Personal legal name, consistent with the individual enrolment already made.
+   free app that offers IAP. **DONE 2026-08-07 → `Processing`**, effective 7. aug. 2026 – 6. aug. 2027.
+   It flips to `Active` when the bank verification clears (~24h). Note the ASC banner: the **legal
+   entity** must be filled in before the agreement can be signed at all — for an individual enrolment
+   that is the owner himself, entity type Individual/Sole proprietor.
+2. **Bank details and tax forms** — **DONE 2026-08-07.** Danish account, `Processing`. Both tax forms
+   read `Active`: the beneficial-owner certificate and the **W-8BEN**. The answers that mattered, since
+   the form is irreversible once submitted:
+   - Type of beneficial owner **Individual/Sole proprietor**; no U.S. TIN, no EIN, no SSN.
+   - **Foreign Tax Identifying Number = the Danish CPR number.** Nominally optional, but with no U.S.
+     TIN it is what makes the treaty claim valid.
+   - Part II line 10: **Article `12(1)`, rate `0`%**, income type "Income from the sale of
+     applications". The US–Denmark treaty taxes royalties only in the residence state, so the correct
+     rate is **zero** — leaving Part II blank would have meant **30% U.S. withholding** on everything
+     Apple pays. (https://www.irs.gov/pub/irs-trty/denmark2.pdf)
+   - Title, signing as an individual: **Owner**.
+   - **Open item:** the bank was registered with **bank currency EUR** against USD royalties. If that
+     is an ordinary DKK account, every payout pays the bank's conversion spread. Apple supports DKK.
+     Worth changing — ASC locks banking edits for ~24h after a change.
 3. **Enrol in the App Store Small Business Program** — **15%** instead of 30%; eligibility is under
    **$1M USD proceeds** in the prior calendar year and *"developers new to the App Store also qualify"*
    (https://developer.apple.com/app-store/small-business-program/, read 2026-08-07). It takes effect
    **15 days after the end of the fiscal month in which enrolment is approved**, so do it early or the
-   first donations pay 30%.
+   first donations pay 30%. **SUBMITTED 2026-08-07** at
+   https://developer.apple.com/app-store/small-business-program/enroll/ — a separate site from ASC.
+   All four "Associated Developer Accounts" questions are **No** for a single individual account, and
+   the form accepts "yes, accepted" for the Paid Apps agreement while it is still `Processing`.
 4. **Create the three IAP products in ASC** and submit them for review **with the build**. Each needs a
    screenshot and review notes.
 5. **Update the App Review notes** (they already exist per `docs/app-store/listing.md` §3.3): state that
