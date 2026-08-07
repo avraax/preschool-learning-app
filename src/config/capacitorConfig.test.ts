@@ -259,6 +259,35 @@ test('the app icon is the real one, 1024², and has NO alpha channel', () => {
   assert.ok(shipped.length > 0, "the project's own 1024 icon is missing from art-src")
 })
 
+// ---- C7: the CI config, which is the only thing that ever compiles this app --------------------
+
+test('the bundle identifier agrees across all THREE files that declare it', () => {
+  // `capacitor.config.ts` (appId), the Xcode project (PRODUCT_BUNDLE_IDENTIFIER) and `codemagic.yaml`
+  // (ios_signing.bundle_identifier) each name it separately, and they are edited months apart. A
+  // mismatch does not fail a build — it fails SIGNING on a remote Mac, or worse, signs an app that
+  // App Store Connect refuses because no such app record exists. The id is permanent (§4.0 C4).
+  const ID = 'com.vraa.earlylearning'
+  assert.match(stripTs(read(CAP_CONFIG)), new RegExp(`appId:\\s*'${ID.replace(/\./g, '\\.')}'`))
+  assert.match(read(...PBXPROJ), new RegExp(`PRODUCT_BUNDLE_IDENTIFIER = ${ID.replace(/\./g, '\\.')};`))
+  // ANCHORED to end-of-line. Unanchored, this matched `com.vraa.earlylearning2` and the guard passed
+  // against a drifted id — found by re-breaking it, which is the whole point of doing that.
+  assert.match(
+    read('codemagic.yaml'),
+    new RegExp(`bundle_identifier:\\s*${ID.replace(/\./g, '\\.')}\\s*$`, 'm'),
+  )
+})
+
+test('CI publishes to TestFlight and NEVER auto-submits to the App Store', () => {
+  // C11 is explicitly the owner's act: a submission is a legal declaration plus a one-way door on
+  // "Made for Kids". `submit_to_app_store: true` is one line away from `submit_to_testflight` in every
+  // Codemagic example, so its absence is worth pinning rather than trusting.
+  const ci = read('codemagic.yaml').replace(/^\s*#.*$/gm, '')
+  assert.match(ci, /submit_to_testflight:\s*true/)
+  assert.ok(!/submit_to_app_store/.test(ci), 'CI would submit to the App Store without the owner')
+  // The work domain must never appear in a file that emails build results.
+  assert.ok(!/cyberpilot/i.test(ci), 'the work domain is in the CI config')
+})
+
 test('the bundled web build carries the prebaked narration', () => {
   // `webDir: 'dist'` is what puts 31 MB of prebaked TTS inside the binary, and it works only because
   // Vite copies `public/` into `dist/` wholesale. A publicDir change, or moving sounds out of public/,

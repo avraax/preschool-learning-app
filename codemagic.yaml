@@ -1,0 +1,125 @@
+# Codemagic — the only machine that ever compiles this app (App Store PRD §1.2, §4.4 C7).
+#
+# The owner develops on Windows and owns no Mac. Everything under `ios/` is authored blind here and
+# first executed on a rented macOS instance, so this file is also where the Windows-authored tree gets
+# its first real verification. Expect the loop "push → CI build → read log", not local iteration.
+#
+# BEFORE THE FIRST RUN — three things the owner does in the Codemagic UI, not here:
+#   1. Connect this repository.
+#   2. Team settings → Integrations → App Store Connect → add the `.p8` from C6. NAME IT EXACTLY
+#      `bornelaering-asc` or change `integrations.app_store_connect` below to match. The key never
+#      goes in this file or anywhere in the repo (`.gitignore` refuses `*.p8` outright).
+#   3. Nothing else. Signing certificates and provisioning profiles are created BY that API key —
+#      `ios_signing` + `xcode-project use-profiles` is Codemagic's automatic-signing path, which is
+#      what removes the "certificates need a Mac" problem (§2.3).
+
+workflows:
+  ios-testflight:
+    name: Børnelæring — iOS → TestFlight
+    instance_type: mac_mini_m2
+    max_build_duration: 60
+
+    integrations:
+      # Must match the name given to the App Store Connect key in Codemagic's UI (see note 2 above).
+      app_store_connect: bornelaering-asc
+
+    environment:
+      ios_signing:
+        distribution_type: app_store
+        # Registered in the Apple Developer portal with Sign in with Apple and no other capabilities.
+        # Permanent — it matches `capacitor.config.ts`'s appId and the pbxproj's
+        # PRODUCT_BUNDLE_IDENTIFIER, and all three have to stay in step.
+        bundle_identifier: com.vraa.earlylearning
+      vars:
+        XCODE_PROJECT: ios/App/App.xcodeproj
+        # Capacitor names the target and scheme "App" — not the app's name.
+        XCODE_SCHEME: App
+      # The repo's own floor; the local toolchain is Node 22.
+      node: 22
+      # Apple requires uploads to be BUILT WITH THE iOS 26 SDK (since 2026-04-28), which means an
+      # Xcode 26.x. `latest` is deliberate rather than a pin: a pinned older Xcode would start
+      # REJECTING at upload the day Apple moves the floor again, and the failure would arrive as an
+      # App Store Connect error rather than a build one. The deployment target is pinned instead
+      # (17.0, in the pbxproj) — that is the number that decides whether the child's iPad can run it,
+      # and SDK and deployment target are independent.
+      xcode: latest
+
+    cache:
+      cache_paths:
+        - $HOME/.npm
+
+    scripts:
+      - name: Install dependencies
+        script: npm ci
+
+      - name: Guard — the tests that can only fail here
+        # `capacitorConfig.test.ts` pins the deployment target, the privacy manifest, the Danish
+        # purpose string, the POSIX paths in Package.swift and the app icon's missing alpha channel.
+        # Every one of those is a silent failure on Windows and an expensive one at upload time, so
+        # they run BEFORE spending twenty minutes of Mac time on a build that cannot be shipped.
+        script: npm test
+
+      - name: Build the web bundle
+        # Fills `dist/`, including `public/` wholesale — which is how the 31 MB of prebaked narration
+        # gets into the binary. Also rewrites `src/config/version.ts`; the dirty tree is expected and
+        # is never committed from CI.
+        script: npm run build
+
+      - name: Verify the narration actually reached dist
+        # The single most expensive silent failure available here: a binary that installs, launches,
+        # renders perfectly and is mute, because `dist/sounds/tts` was empty. It cannot be seen in a
+        # screenshot and the web deployment would be unaffected. Cheap to assert, so assert it.
+        script: |
+          set -e
+          COUNT=$(find dist/sounds/tts -name '*.mp3' | wc -l | tr -d ' ')
+          echo "prebaked clips in dist: $COUNT"
+          if [ "$COUNT" -lt 1800 ]; then
+            echo "FATAL: only $COUNT prebaked clips reached dist/ — the app would ship mute."
+            exit 1
+          fi
+
+      - name: Sync the web build into the iOS project
+        # Copies dist/ into ios/App/App/public and regenerates Package.swift. Run on macOS it writes
+        # POSIX plugin paths, so it also repairs the one thing a Windows `cap sync` gets wrong.
+        script: npx cap sync ios
+
+      - name: Set the build number
+        # TestFlight refuses a CFBundleVersion it has already seen, and the committed value is 1.
+        # MARKETING_VERSION (CFBundleShortVersionString) is deliberately NOT touched: it is the
+        # store-facing version, it must match the App Store Connect record, and bumping it silently
+        # per build would create a new version rather than a new build. Bump it by hand in the pbxproj
+        # when shipping 1.1.
+        script: |
+          set -e
+          cd "$CM_BUILD_DIR/ios/App"
+          agvtool new-version -all "$PROJECT_BUILD_NUMBER"
+
+      - name: Fetch signing certificates and profiles
+        # Creates/downloads them via the ASC API key — this is what makes a Windows-only setup viable.
+        script: xcode-project use-profiles
+
+      - name: Build the IPA
+        script: |
+          set -e
+          xcode-project build-ipa \
+            --project "$XCODE_PROJECT" \
+            --scheme "$XCODE_SCHEME"
+
+    artifacts:
+      - build/ios/ipa/*.ipa
+      # Keep the raw logs: a first-build failure here is the only diagnostic available from Windows.
+      - /tmp/xcodebuild_logs/*.log
+
+    publishing:
+      email:
+        # The owner's PERSONAL address. The work domain is never used in this project.
+        recipients:
+          - allanvraa@gmail.com
+        notify:
+          success: true
+          failure: true
+      app_store_connect:
+        auth: integration
+        # TestFlight only. The store submission itself stays a deliberate, manual act by the owner
+        # (§4.4 C11) — `submit_to_app_store` is intentionally absent and should stay that way.
+        submit_to_testflight: true
