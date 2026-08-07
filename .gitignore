@@ -66,3 +66,13 @@ tts-samples/
 # before/after evidence for the guardrail budget); these two grow without bound.
 plans/session-performance/session-log.tsv
 plans/session-performance/instructions-loaded.tsv
+
+# iOS signing material — NEVER commit. The blanket `*.json` rule above does not cover these
+# extensions, and an App Store Connect API `.p8` is downloadable exactly ONCE, so a leak means
+# revoke-and-reissue, not re-download. Real keys live outside the repo entirely
+# (C:\Users\<user>\Documents\AppleDeveloper). See tmp-prd-app-store-ios.md §4.4 C6.
+*.p8
+*.p12
+*.mobileprovision
+*.cer
+*.certSigningRequest
