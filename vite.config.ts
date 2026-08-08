@@ -78,6 +78,18 @@ export default defineConfig(({ mode }) => {
   return {
   define: {
     __HARNESS__: JSON.stringify(harness),
+    // WHICH BACKEND IS THIS BUILD COMPILED AGAINST (staging PRD W1). Two literals, never a runtime
+    // switch: the value is baked into a binary that goes through App Store review, which has no
+    // environment to read (see src/config/apiBase.ts for the full argument, unchanged by this).
+    //
+    // DEFAULTS TO PRODUCTION ON PURPOSE. A build with no environment — a local `npm run build`, the
+    // Vercel build of the production project, anything unexpected — must be the safe one. A staging
+    // build is an explicit act by the CI workflow that sets these.
+    //
+    // Defined for EVERY mode for the same reason `__HARNESS__` is: an undefined global would leave the
+    // `typeof` guard in src/config/backendTarget.ts un-shakeable instead of constant-folded.
+    __BL_API_ORIGIN__: JSON.stringify(process.env.BL_API_ORIGIN ?? 'https://boernelaering.dk'),
+    __BL_TIER__: JSON.stringify(process.env.BL_TIER ?? 'production'),
     ...(harness ? { 'process.env.NODE_ENV': '"production"' } : {}),
   },
   // NOTE (PRD-08 §P3): no vite-plugin-pwa. The app is deliberately network-only — there is no

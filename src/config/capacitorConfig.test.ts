@@ -273,7 +273,22 @@ test('the bundle identifier agrees across all THREE files that declare it', () =
   // strings agree, never that the CI file still passes the id to anything.
   const ID = 'com.vraa.earlylearning'
   assert.match(stripTs(read(CAP_CONFIG)), new RegExp(`appId:\\s*'${ID.replace(/\./g, '\\.')}'`))
-  assert.match(read(...PBXPROJ), new RegExp(`PRODUCT_BUNDLE_IDENTIFIER = ${ID.replace(/\./g, '\\.')};`))
+
+  // EVERY occurrence, not the first — the same shape the IPHONEOS_DEPLOYMENT_TARGET test above uses,
+  // and it became load-bearing with the staging PRD (W7): `scripts/set-build-tier.mjs` rewrites all of
+  // these on the CI Mac to `com.vraa.earlylearning.staging`, and it mutates a checkout, never a commit.
+  // A `assert.match` on the whole file would happily pass with one configuration left mutated — i.e.
+  // with a leaked staging id in the tree, so the next RELEASE would be signed as staging and rejected
+  // by App Store Connect as a bundle-ID mismatch. The pbxproj has one per build configuration.
+  const ids = [...read(...PBXPROJ).matchAll(/PRODUCT_BUNDLE_IDENTIFIER = ([^;]+);/g)].map((m) =>
+    m[1].trim().replace(/^"|"$/g, ''),
+  )
+  assert.ok(ids.length >= 2, 'no bundle identifier found in the Xcode project')
+  for (const found of ids) {
+    // Exact equality, not a prefix match: `com.vraa.earlylearning.staging` STARTS WITH the production
+    // id, so anything looser accepts precisely the leak this exists to catch.
+    assert.equal(found, ID, `a build configuration is signed as ${found}, not ${ID}`)
+  }
   // ANCHORED to end-of-line. Unanchored, this matched `com.vraa.earlylearning2` and the guard passed
   // against a drifted id — found by re-breaking it, which is the whole point of doing that.
   const yaml = read('codemagic.yaml')

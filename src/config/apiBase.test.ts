@@ -15,6 +15,7 @@ import { readdirSync, readFileSync, statSync } from 'node:fs'
 import path from 'node:path'
 import { apiUrl, SHELL_API_ORIGIN } from './apiBase.ts'
 import { runtimeTargetFor } from './runtimeTarget.ts'
+import { PRODUCTION_API_ORIGIN } from './backendTarget.ts'
 
 const SRC = path.join(import.meta.dirname, '..')
 const ROOT = path.join(SRC, '..')
@@ -58,6 +59,12 @@ test('apiUrl is identity on the web and absolute in the shell', () => {
   assert.equal(runtimeTargetFor('capacitor:'), 'shell')
   assert.ok(!SHELL_API_ORIGIN.endsWith('/'), 'a trailing slash would produce //api/...')
   assert.ok(SHELL_API_ORIGIN.startsWith('https://'), 'the shell must not call the API over plaintext')
+  // `SHELL_API_ORIGIN` became build-configurable with the staging PRD (W1), so what is worth pinning
+  // is its DEFAULT: a build that sets no `BL_API_ORIGIN` — a local `npm run build`, the Vercel build of
+  // the production project, anything unexpected — must be the production one. In plain Node the Vite
+  // `define` does not exist, so this reads exactly that fallback branch. Cross-module on purpose: the
+  // host itself lives in `backendTarget.ts` and repeating the literal here is what this replaced.
+  assert.equal(SHELL_API_ORIGIN, PRODUCTION_API_ORIGIN, 'the default backend is not production')
 })
 
 test('apiUrl ACTUALLY REWRITES when the page is the shell', () => {
@@ -72,7 +79,7 @@ test('apiUrl ACTUALLY REWRITES when the page is the shell', () => {
   const previous = (globalThis as { window?: unknown }).window
   try {
     ;(globalThis as { window?: unknown }).window = { location: { protocol: 'capacitor:' } }
-    assert.equal(apiUrl('/api/progress'), 'https://boernelaering.dk/api/progress')
+    assert.equal(apiUrl('/api/progress'), `${SHELL_API_ORIGIN}/api/progress`)
     assert.equal(
       apiUrl('/api/auth/family/oauth/claim'),
       `${SHELL_API_ORIGIN}/api/auth/family/oauth/claim`,

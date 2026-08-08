@@ -35,8 +35,20 @@ import { isNativeShell } from './runtimeTarget.ts'
  * Production became `boernelaering.dk` on 2026-08-07; both hosts answered `/api/version` with 200
  * when this was written. The canonical one is used, because it is what `baseURL()` reports and
  * therefore what better-auth's `trustedOrigins` and the Google redirect URIs are keyed to.
+ *
+ * BUILD-CONFIGURABLE SINCE THE STAGING PRD (W1), AND STILL NOT AN ENVIRONMENT VARIABLE. Everything
+ * above holds unchanged: this is a constant baked per build, unreachable from the device, never a
+ * setting. What changed is that CI now picks between exactly TWO literals (production and staging),
+ * and the asymmetry argument applies to each of them independently — a staging binary in the field
+ * keeps calling the staging host forever, which is why staging's host must never be recycled for
+ * anything else. `__BL_API_ORIGIN__` is a Vite `define`, defaulting to production for any build that
+ * sets no environment; the `typeof` guard is what lets `apiBase.test.ts` import this in plain Node,
+ * where the global does not exist. Vite replaces the identifier textually, so in a real build the
+ * expression becomes `typeof "https://…"` and constant-folds.
  */
-export const SHELL_API_ORIGIN = 'https://boernelaering.dk'
+declare const __BL_API_ORIGIN__: string | undefined
+export const SHELL_API_ORIGIN =
+  typeof __BL_API_ORIGIN__ !== 'undefined' ? __BL_API_ORIGIN__ : 'https://boernelaering.dk'
 
 /**
  * Resolve an app-relative API path for whichever target this build is.

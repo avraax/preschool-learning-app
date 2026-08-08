@@ -44,6 +44,7 @@ import {
 } from 'lucide-react'
 import { ADULT_IA, type AdultGroupId } from '../../config/adultSettingsIa'
 import { BUILD_INFO } from '../../config/version'
+import { backendHost } from '../../config/backendTarget'
 import { PHONE_ANY } from '../../theme/phoneMedia'
 import { AdultThemeProvider, ADULT_FONT } from '../../theme/adultTheme'
 import { useProfiles } from '../../hooks/useProfiles'
@@ -165,12 +166,17 @@ const AdultSettings: React.FC<AdultSettingsProps> = ({
     setReporting(true)
   }, [])
 
+  // The backend this build talks to (Staging PRD W3). It rides on BOTH forms, because this chip is how
+  // a PRODUCTION binary answers "which backend?" — that one has no corner badge by construction, so
+  // without the host here there would be no way to ask it at all. Same value the badge prints.
+  const host = backendHost()
+
   const versionLine = useMemo(() => {
     const d = new Date(BUILD_INFO.buildTime)
     const date = d.toLocaleDateString('da-DK', { year: 'numeric', month: 'short', day: 'numeric' })
     const time = d.toLocaleTimeString('da-DK', { hour: '2-digit', minute: '2-digit', hour12: false })
-    return `v${BUILD_INFO.version} · ${BUILD_INFO.commitHash} · ${date} ${time}`
-  }, [])
+    return `v${BUILD_INFO.version} · ${BUILD_INFO.commitHash} · ${host} · ${date} ${time}`
+  }, [host])
 
   // Tap-to-copy: the whole line gets read aloud over the phone during support, so the short display
   // form is not what should land on the clipboard.
@@ -394,7 +400,7 @@ const AdultSettings: React.FC<AdultSettingsProps> = ({
                     textAlign: 'left',
                   }}
                 >
-                  {copied ? 'Kopieret!' : `v${BUILD_INFO.version} · ${BUILD_INFO.commitHash}`}
+                  {copied ? 'Kopieret!' : `v${BUILD_INFO.version} · ${BUILD_INFO.commitHash} · ${host}`}
                 </ButtonBase>
               </Box>
             </Box>
