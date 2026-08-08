@@ -138,17 +138,26 @@ test('the badge is NOT DEV-gated, and its early return is intact', () => {
   // It must not eat a tap meant for the board underneath.
   assert.match(badge, /pointerEvents: 'none'/)
 
-  // And it is mounted ONCE at app root, UNCONDITIONALLY — anchored to its own line, which is the
-  // whole assertion. A bare count of `<BackendBadge />` is satisfied by `{false && <BackendBadge />}`
-  // and by any other gate someone wraps it in, so it passed against exactly the mutation it exists to
-  // catch (found by re-breaking). The component decides for itself whether to render; nothing upstream
-  // of it may.
-  const app = stripComments(readFileSync(path.join(SRC, 'App.tsx'), 'utf8'))
+  // Mounted ONCE, UNCONDITIONALLY, and ABOVE THE GATE — anchored to its own line, which is the whole
+  // assertion. A bare count of `<BackendBadge />` is satisfied by `{false && <BackendBadge />}` and by
+  // any other wrapper, so it passed against exactly the mutation it exists to catch (found by
+  // re-breaking). The component decides for itself whether to render; nothing upstream of it may.
+  const main = stripComments(readFileSync(path.join(SRC, 'main.tsx'), 'utf8'))
   assert.equal(
-    (app.match(/^[ \t]*<BackendBadge \/>[ \t]*$/gm) ?? []).length,
+    (main.match(/^[ \t]*<BackendBadge \/>[ \t]*$/gm) ?? []).length,
     1,
-    'the badge is not mounted exactly once, unconditionally, at app root',
+    'the badge is not mounted exactly once, unconditionally, in main.tsx',
   )
+  // ABOVE `<AuthGate>`, not inside it. The gate renders `<LockScreen />` INSTEAD of `<App />`, so a
+  // badge below it is invisible on the one screen where an adult is about to hand credentials to a
+  // backend — which is when knowing WHICH backend matters most (owner, 2026-08-08).
+  assert.ok(
+    main.indexOf('<BackendBadge />') < main.indexOf('<AuthGate>'),
+    'the badge is mounted inside the auth gate — it would vanish on the lock screen',
+  )
+  // …and NOT also in App.tsx, or a signed-in adult gets two pills.
+  const app = stripComments(readFileSync(path.join(SRC, 'App.tsx'), 'utf8'))
+  assert.ok(!/<BackendBadge/.test(app), 'the badge is mounted twice — main.tsx and App.tsx')
 })
 
 test('vite defines both constants for EVERY mode, defaulting to production', () => {

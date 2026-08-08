@@ -54,7 +54,6 @@ const DevScene = lazy(() => import('./components/dev/DevRoutes').then((m) => ({ 
 // DEV-only narration-audit harness (PRD-11) — plays every closed-set clip for a native-ear pass.
 const AuditHarness = lazy(() => import('./components/audit/AuditHarness'))
 import UpdateBanner from './components/common/UpdateBanner'
-import BackendBadge from './components/common/BackendBadge'
 import AdultCorner from './components/adult/AdultCorner'
 import PersistentWorld from './components/common/scene/PersistentWorld'
 import RewardOverlay from './components/common/RewardOverlay'
@@ -229,10 +228,9 @@ function App() {
           onApplyUpdate={updateStatus.applyUpdate}
         />
 
-        {/* Which backend is this build compiled against (Staging PRD W3). Renders NOTHING when the
-            effective origin is production, which is what keeps it off the reviewed App Store binary.
-            Mounted once here, not per route — it is a property of the build, not of a screen. */}
-        <BackendBadge />
+        {/* The backend badge is NOT here. It is mounted in main.tsx, ABOVE AuthGate, because the gate
+            renders the lock screen INSTEAD of <App /> — so a badge here is invisible on exactly the
+            screen where you are about to hand credentials to a backend. See main.tsx. */}
 
         {/* Render-crash test hook for the global error boundary (?crash-test=1) */}
         <CrashTestProbe />

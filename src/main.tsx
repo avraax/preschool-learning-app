@@ -12,6 +12,7 @@ import { AppThemeProvider } from './theme/ThemeProvider'
 import AppErrorBoundary from './components/common/AppErrorBoundary'
 // The hard auth gate (accounts PRD D5/W4). NOT lazy: a blocking gate must not wait on a chunk.
 import AuthGate from './components/auth/AuthGate'
+import BackendBadge from './components/common/BackendBadge'
 // Self-hosted kid-friendly font (bundled, identical on every OS/device)
 import '@fontsource/comic-neue/400.css'
 import '@fontsource/comic-neue/700.css'
@@ -57,6 +58,12 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
       <AppThemeProvider>
         <CssBaseline />
         <AppErrorBoundary>
+          {/* ABOVE the gate on purpose (staging PRD W3, owner 2026-08-08). It started inside <App />,
+              which the gate mounts INSTEAD of the lock screen — so the one moment you most want to know
+              which backend you are about to hand credentials to was the one moment it was invisible.
+              It renders null on production regardless of where it sits, and it cannot participate in the
+              one-blocking-overlay rule below because it is not blocking: pointerEvents: 'none'. */}
+          <BackendBadge />
           {/* Between the boundary and App: a gate crash must still be caught, and while the gate
               blocks, <App /> (and therefore the audio-permission modal) never mounts — so only one
               blocking overlay is ever on screen. */}
