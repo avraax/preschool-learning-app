@@ -73,6 +73,21 @@ test('the failure page escapes what it interpolates and ships no script', () => 
   assert.match(fn, /escapeHtml\(message\)/)
 })
 
+test('the Apple callback accepts the form POST Apple actually sends', () => {
+  // better-auth configures its router with `allowedMediaTypes: ["application/json"]`, and better-call
+  // enforces that in the ROUTER, before the endpoint's own body schema is consulted. Apple's
+  // `response_mode=form_post` is `application/x-www-form-urlencoded`, so without a per-endpoint
+  // override Apple sign-in is a raw 415 JSON blob in the browser — measured on production and staging,
+  // 2026-08-08. Read from the STRIPPED source, so the rationale comment cannot satisfy this.
+  const apple = code.slice(code.indexOf('familyOauthCallbackApple'))
+  const options = apple.slice(0, apple.indexOf('async (ctx)'))
+  assert.match(
+    options,
+    /allowedMediaTypes:\s*\[[^\]]*'application\/x-www-form-urlencoded'/,
+    'the Apple callback must declare metadata.allowedMediaTypes, or the router 415s the form POST',
+  )
+})
+
 test('storing a report can never break the response', () => {
   // A diagnostic that turns a handled error into a 500 is worse than no diagnostic.
   const fn = code.slice(code.indexOf('async function reportOauthFailure'), code.indexOf('export const familyPlugin'))

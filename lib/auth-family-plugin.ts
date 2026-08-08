@@ -735,6 +735,15 @@ export const familyPlugin = (): BetterAuthPlugin => ({
       APPLE_CALLBACK_PATH.replace('/api/auth', ''),
       {
         method: 'POST',
+        // WITHOUT THIS, APPLE SIGN-IN IS A 415 BEFORE THIS HANDLER EVER RUNS. better-auth configures
+        // its router with `allowedMediaTypes: ["application/json"]`, and better-call enforces that in
+        // `getBody()` *inside the router*, so the endpoint's own zod `body` schema never gets a look:
+        // Apple's `response_mode=form_post` POST answered
+        // `{"code":"UNSUPPORTED_MEDIA_TYPE","message":"Content-Type \"application/x-www-form-urlencoded\"
+        // is not allowed…"}` as raw JSON in the browser. A per-endpoint `metadata.allowedMediaTypes`
+        // overrides the router-wide list (better-call `router.mjs`), and `getBody` then parses the form
+        // into the same object shape the schema below expects.
+        metadata: { allowedMediaTypes: ['application/x-www-form-urlencoded'] },
         body: z.object({
           code: z.string().optional(),
           state: z.string().optional(),

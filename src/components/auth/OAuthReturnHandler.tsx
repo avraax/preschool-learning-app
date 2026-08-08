@@ -17,7 +17,12 @@
 
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { Box, Paper, Typography } from '@mui/material'
-import { AUTH_FRAGMENT, claimPendingFlow, readPendingFlow } from '../../services/authSignIn'
+import {
+  AUTH_FRAGMENT,
+  claimPendingFlow,
+  clearPendingFlow,
+  readPendingFlow,
+} from '../../services/authSignIn'
 import { noteAuthStep, reportAuthFailure } from '../../services/authDiagnostics'
 import { AUTH_Z } from './authOverlayZ'
 
@@ -44,7 +49,6 @@ const stripFragment = (): void => {
 
 const OAuthReturnHandler: React.FC = () => {
   const [wrongContext, setWrongContext] = useState(false)
-  const startedAt = useRef<number>(Date.now())
   const claiming = useRef(false)
 
   const attempt = useCallback(async () => {
@@ -86,28 +90,42 @@ const OAuthReturnHandler: React.FC = () => {
     }
 
     // Cold boot with a pending flow counts as a recovery attempt too.
-    if (!pending) return
-    void attempt()
+    if (pending) void attempt()
 
+    // ARMED UNCONDITIONALLY, AND THAT IS THE FIX. This used to `return` here when no flow was pending
+    // AT MOUNT — so a sign-in STARTED LATER in the same page lifetime got no poll and no visibility
+    // listener at all, and nothing ever claimed the session the callback had parked. On the plain web
+    // that was invisible, because `location.assign` unloads the page and the return is a fresh mount.
+    // It is NOT invisible where the app page survives the round trip: an installed PWA (or the shell)
+    // opens the authorize URL in a separate view with its OWN storage jar, so the return context has no
+    // flowId — it correctly shows WrongContextNotice and reports `returned-without-pending-flow` — and
+    // the app that DOES hold the flowId was the one that had stopped listening. Measured shape: report
+    // F9BJX, 2026-08-08, plus four identical ones on 4–5 Aug; the adult's second attempt then works,
+    // because by then a pending flow existed at mount and the poll was armed.
     const onVisible = () => {
       if (document.visibilityState === 'visible') void attempt()
     }
     document.addEventListener('visibilitychange', onVisible)
 
     const poll = setInterval(() => {
-      if (Date.now() - startedAt.current > POLL_WINDOW_MS) {
+      const current = readPendingFlow()
+      // Nothing in flight: idle, and NOT a give-up — the flow may not have started yet.
+      if (!current) return
+      // The window is measured from the FLOW's start, not from this component's mount. Mount time was
+      // wrong the moment the poll outlived a single round trip: an app open for an hour would have
+      // "exhausted" its window before the adult ever tapped the button.
+      if (Date.now() - current.startedAt > POLL_WINDOW_MS) {
         // THE SILENT DEAD END. This used to just `clearInterval` and return: three minutes of polling,
         // then nothing — no message, no log, no report, and a lock screen that simply sat there. It is
         // the reason a failed login left no data twice over. A give-up is a decisive failure; report it.
-        clearInterval(poll)
+        //
+        // It CLEARS the flow rather than the interval now, because the interval has to survive for the
+        // adult's next attempt. Same effect for this flow — the loop goes idle on the next tick — and
+        // the report is deduped by `stage|reason` anyway.
+        clearPendingFlow()
         void reportAuthFailure('google-claim', 'poll-window-exhausted', {
           note: `${Math.round(POLL_WINDOW_MS / 1000)}s`,
         })
-        return
-      }
-      if (!readPendingFlow()) {
-        // The flow was claimed or cleared elsewhere — the normal, successful way out of the loop.
-        clearInterval(poll)
         return
       }
       void attempt()
