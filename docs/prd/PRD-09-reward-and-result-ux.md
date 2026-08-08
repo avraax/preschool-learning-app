@@ -1,5 +1,11 @@
 # PRD-09 — Reward & result-screen UX
 
+> **SUPERSEDED 2026-08-08 — `plans/endless-play/tmp-prd-endless-play-01-no-round-end.md`.**
+> The result screen this PRD is about no longer exists. Its P1 principle DID survive and was carried
+> across deliberately: *"the reward moment is seen before it can be dismissed"* is now `TAP_ARM_MS` on
+> the in-game ceremony, which matters more there than it ever did here — the overlay opens ~1.1–2.0s
+> after a correct tap, exactly where the finger already is.
+
 **Priority:** P2
 **Scope:** Small–Medium
 **Depends on:** none (light overlap with PRD-06 on the audio-permission modal)

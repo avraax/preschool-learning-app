@@ -72,12 +72,13 @@ points to, loaded when you touch matching files.
 - **SFX**: `sfx` (`src/services/sfxClient.ts`, Howler) is a separate short channel — never route SFX
   through `SimplifiedAudioController`. **All shipped audio is MP3, never Ogg/Opus**: Apple has no Ogg
   container before iPadOS 18.4, so Ogg silenced the 17.7 floor device. → `audio-system.md`.
-- **Games**: two patterns — task-based **quizzes** (bounded rounds of 8 → `RoundResultScreen`) and calm
-  **learning browses** (free exploration, no round). Both earn live per-task XP; stickers drop only on a
-  level-up. gameIds are `<section>.<game>`. → `games-catalog.md`, `game-development.md`.
+- **Games**: task-based **quizzes** and calm **learning browses**, and **both are ENDLESS** — no round
+  boundary, no "Færdig!", no stars, no bests. Both earn live per-task XP; the sticker ceremony fires
+  **in-game at the seam**, the moment the ring fills. gameIds are `<section>.<game>`.
+  → `games-catalog.md`, `game-development.md`.
 - **In-game interaction**: one shared vocabulary, and **navigation always flows through the
-  transition system / `RoundResultScreen` — no raw `navigate()` from inside a game.** The header
-  holds the **reward ring and nothing else**. → `game-development.md`.
+  transition system — no raw `navigate()` from inside a game.** The header holds the **reward ring and
+  nothing else**. → `game-development.md`.
 - **Animation mechanism**: a continuous, stateless animation is a **CSS keyframe animation**
   (`src/theme/idleMotion.ts`), never a framer `repeat: Infinity` loop — 25 of those spent ~40% of every
   second recalculating style while the app sat still. **`content-visibility` is Safari 18 → banned**; it

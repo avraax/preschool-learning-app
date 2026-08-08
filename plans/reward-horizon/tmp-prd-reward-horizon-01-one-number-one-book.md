@@ -1,5 +1,10 @@
 # PRD — Reward Horizon: one number, one book, one ring, one door
 
+> **SUPERSEDED IN PART, 2026-08-08 — `plans/endless-play/tmp-prd-endless-play-01-no-round-end.md`.**
+> §4.5's deferred ceremony is reversed: it now fires **in-game, at the seam**, the moment the ring
+> crosses a slot, instead of waiting for a round result or the next menu. One number / one book / one
+> ring / one door are all unchanged, and so is the rule that `globalLevel()` appears nowhere.
+
 Status: authored 2026-08-02, **IMPLEMENTED 2026-08-03** — commits `4d283e1` (the release),
 `7edaaa6` + `b5dbbff` (chapters 6–8 art), `34935a1` (the in-game ring opens Min Bog), `e8877dc`
 (debrief). Three deliberate deviations from what is written below are listed in §5. Its **economy** was

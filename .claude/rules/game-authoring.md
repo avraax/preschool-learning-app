@@ -40,15 +40,14 @@ Most task-based quizzes are a thin **config** over `src/components/common/Unifie
   INSTEAD of echoing the tapped item (single channel — replaces, never stacks; e.g. Hvad Mangler's
   finished sequence). `skipFirstPrompt` suppresses voicing the first prompt when the welcome already
   said it.
-- **Bounded round + rewards** (opt-in): set `round` (a `RoundConfig`, default 8 questions) **and**
-  `gameId` (stable progress id, e.g. `'alphabet.quiz'`). **Don't set `starThresholds`** — they come from
-  the difficulty spine at finish time (`starThresholdsFor(level)`), which is what makes Svær more
-  forgiving; a config that pins its own would opt that game out of the fairness rule. The engine then
-  runs the round via `useRound`, ends on `RoundResultScreen`, and records to `progressStore`
-  (stars/bests). Absent → legacy endless behavior. Wrong answers never punish; they only
-  break the question's first-try flag. Put the `gameId` on the **`RoundConfig`** too (hand-rolls pass
-  it to `useRound`; `UnifiedQuizGame` threads `config.gameId` in) so `useRound.completeQuestion`
-  grants **live per-task XP** — see CLAUDE.md Progression. Stickers are level-up trophies, not per-round.
+- **Endless play + rewards**: set `gameId` (stable progress id, e.g. `'alphabet.quiz'`) and
+  `tasksInRound` (default 8). **`tasksInRound` is NOT a length — nothing counts down to it.** It is the
+  `taskXp` normaliser ("a round is a round", so every game pays the same per notional round) AND the
+  value the game's prompt bag uses as its no-repeat `window`; pass the game's own round constant to
+  both, from config, so they cannot drift. The engine runs `useTaskRun`, grants **live per-task XP**,
+  and fires the sticker ceremony **in-game at the seam** via `run.thenContinue()`. There is no
+  round-end surface and no star/best bookkeeping — see `rewards-and-progression.md`. Wrong answers
+  never punish; they only break the question's first-try flag (which feeds the streak beat).
 - **Never-fail hint** (PRD-05): `hintAfterNWrong` (2 for every config quiz) pulses the correct
   `AnswerTile` after that many wrong taps (reduced-motion → static glow). The 2 wrongs already broke
   first-try, so no extra star bookkeeping. It also **SPEAKS the answer** via `config.speakHint(item)` —

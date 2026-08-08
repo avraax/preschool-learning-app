@@ -432,9 +432,12 @@ on the target iPad twice. So a board like that reads **`audio.narrationHealthy`*
   flash on every cold launch is worse than the bug the degraded mode fixes.
 - While unhealthy those two boards **reveal their answer as type** and revert automatically when a clip
   sounds. That deliberately re-creates a giveaway the owner removed, and it is the right trade only there:
-  a solvable board beats an unanswerable one. The round then grants XP as normal (never punish a child for
-  a broken iPad) but records **no personal best** — `recordRoundResult`'s `degraded` flag, sticky for the
-  round. No child-facing warning: a warning is for the adult, who already gets audio health in the report.
+  a solvable board beats an unanswerable one. Play grants XP as normal throughout (never punish a child
+  for a broken iPad). **The `degraded` flag and the `audioOnly` config flag are DELETED** (Endless Play
+  PRD-01 W3): they existed only to withhold a personal best, and personal bests no longer exist. The
+  reveal hangs directly off `narrationHealthy` at the render site — pinned by `narrationHealth.test.ts`,
+  which now asserts that **exactly two components** contain one. No child-facing warning: a warning is
+  for the adult, who already gets audio health in the report.
 - Drive it on rung 1 with **`?mute-tts=1`** (`DEV || __HARNESS__`, so absent from a deploy build), and
   remember the focal band is already full — anything added there needs re-measuring at phone landscape
   (`.claude/rules/responsive-design.md`).

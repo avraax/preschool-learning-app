@@ -40,8 +40,8 @@ folder always reflects the shipped UI.
 
 **What this pass shows (de-emoji PRD, complete):** **no view in the app renders an OS-font emoji any
 more.** Section-menu game tiles and home cards are baked icon art; Min Bog's 45 reward slots, its 5
-chapter tabs and the corner RewardRing are baked reward art; the result screen's star/trophy/flame and
-Min Bog's book/sparkle come from `src/assets/ui/`; the theme picker shows baked skin thumbnails; child
+chapter tabs and the corner RewardRing are baked reward art; Min Bog's book/sparkle come from
+`src/assets/ui/` (whose star/trophy/flame went with the result screen); the theme picker shows baked skin thumbnails; child
 profiles show baked avatar portraits; and every adult dialog is on lucide icons.
 `overlays/profiles-panel.jpg` is NEW in this pass.
 
@@ -105,7 +105,8 @@ click `[aria-label="Tilbage"]` first).
 
 ## Not captured (needs live play — grab manually or extend the script later)
 
-- `RoundResultScreen` (stars → rekord ribbon → sticker reveal) — appears after 8 answers
+- The reward **ceremony** (`RewardOverlay`) — since Endless Play PRD-01 it fires IN GAME at the seam;
+  seed `?rewards=8` and play to the crossing (there is no round-result screen any more)
 - Answer feedback states (correct glow / wrong shake), memory card flips, drag-in-flight
 - `/voicelab` (hidden throwaway tool — intentionally excluded)
 - Per-theme variants (re-capture `home` after switching skin in the ThemeSelector)

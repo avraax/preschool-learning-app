@@ -31,7 +31,8 @@ It replaced 13 flat rows in a scrolling `xs` dialog and six sibling sub-panels.
 
 The reset lives in **Barn**, in that pane's destructive strip (it is per-child, so it sits next to the
 child) → "Nulstil fremgang for {navn}" → a confirmation that **names the active child** →
-`progressStore.resetAll()`, which clears that child's book/bests/stars/XP, **preserves** sound/music/
+`progressStore.resetAll()`, which clears that child's book and the XP behind it (bests and stars are
+gone app-wide — Endless Play PRD-01 — and the confirmation copy no longer names them), **preserves** sound/music/
 difficulty/theme (those are preferences, not progress) and bumps `sync.epoch` so the next pull can't
 resurrect it (`.claude/rules/auth.md`).
 

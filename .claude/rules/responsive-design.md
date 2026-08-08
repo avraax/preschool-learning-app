@@ -39,7 +39,7 @@ layout that has to *branch* rather than restyle (single-pane vs. two-pane) uses 
 No phone reaches 480 CSS px on its short side's counterpart (max is ~440, iPhone Pro Max), and no
 tablet goes below ~600 — so these guards can never affect iPads. When adding a new game/screen,
 verify it at 844×390 (and 667×375) with the ui-screenshot skill. GameShell/GameSelectionLayout/
-UnifiedQuizGame/LearningGrid/UnifiedMemoryGame/RoundResultScreen already carry compact variants —
+UnifiedQuizGame/LearningGrid/UnifiedMemoryGame already carry compact variants —
 reuse them before inventing new ones.
 
 ### A `PHONE_LANDSCAPE` variant with no `PHONE_PORTRAIT` sibling is a bug waiting to be measured

@@ -212,8 +212,8 @@ whose data it holds. It therefore starts inert and **`profileStore` is the ONLY 
 
 - `getSnapshot()` returns a **frozen module constant** while detached. A fresh object per call is an
   infinite `useSyncExternalStore` loop.
-- Every mutator no-ops while detached, and `recordRoundResult` returns a zero-effect result of the same
-  SHAPE (a caller mid-teardown must not crash).
+- Every mutator no-ops while detached, and `grantTaskXp` returns a zero-effect result of the same SHAPE
+  (a caller mid-teardown must not crash).
 - `attach()` is a **pure read** and **idempotent** (StrictMode double-invokes effects).
 - The debounced write **binds its payload to its key at schedule time**. Flushing before a profile swap
   is necessary but not sufficient; this is what makes a cross-child write impossible.
@@ -252,8 +252,11 @@ read model is derived from it and is **byte-identical to the pre-accounts shape*
 - **`sync.epoch` is how `resetAll()` survives a merge.** No monotone join can express a deletion, so a
   differing epoch means the higher one wins WHOLESALE.
 - **`seenThroughSlot`, not a `newIds` array** — a set union would resurrect dismissed "nyt!" badges.
-- `roundsCompleted` / `lifetimeCorrect` / `totalStars` merge with `max`. **Never `sum`**: the merge runs
-  on every sync, so summing is non-idempotent and the numbers explode.
+- **`perGame` and `totals` left the document** with the round (Endless Play PRD-01 W3), so the "merge
+  counters with `max`, never `sum`" rule has nothing left to govern — but keep the reason: the merge
+  runs on every sync, so summing anything is non-idempotent and the numbers explode. A rolling deploy is
+  safe (an old client's extra keys are simply dropped) and **`SCHEMA_VERSION` stayed 4 on purpose**:
+  there is no migration path, so a bump would wipe every child's book on update.
 - The merge's idempotence/commutativity/associativity tests are the **licence** for calling
   `applyRemote()` mid-round and mid-ceremony with no lock. If they regress, that guarantee is gone.
 - `progressMerge.ts` + `progressSchema.ts` must stay free of `window`, `Date.now()` and `crypto`:

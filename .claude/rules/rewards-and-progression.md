@@ -8,9 +8,9 @@ paths:
   - "src/components/hub/*.tsx"
   - "src/components/common/Reward*.tsx"
   - "src/components/common/rewardRingGeometry.ts"
-  - "src/components/common/RoundResultScreen.tsx"
   - "src/components/common/StickerReveal.tsx"
-  - "src/hooks/useRound.ts"
+  - "src/hooks/useRewardCeremony.ts"
+  - "src/hooks/useTaskRun.ts"
   - "src/hooks/useBrowseXp.ts"
   - "src/hooks/useProgress.ts"
   - "src/components/rewardSurfaces.test.ts"
@@ -19,13 +19,53 @@ paths:
 
 # The Reward Book & progression
 
-**ONE track — one reward slot.** Reward Book PRD-01, extended by Reward Horizon PRD-01 and re-tuned by
-Reward Pacing PRD-01. `progressStore` (`src/services/progressStore.ts`, **per-child** localStorage key
-`bornelaering-progress:<profileId>`, schema **v4**, **INERT until `profileStore.attach()`**,
-private-mode-safe) is the single source of truth: collected rewards, per-game bests, lifetime stars,
-`progression` (`globalXp` + per-section `bloom` + `lastCelebratedLevel` + `explored`). Read it via
-`useProgress()` (`useSyncExternalStore`). **Everything else is DERIVED** in the pure, Node-importable
-`src/config/progression.ts`.
+**ONE track — one reward slot.** Reward Book PRD-01, extended by Reward Horizon PRD-01, re-tuned by
+Reward Pacing PRD-01, and **cut down by Endless Play PRD-01**. `progressStore`
+(`src/services/progressStore.ts`, **per-child** localStorage key `bornelaering-progress:<profileId>`,
+schema **v4**, **INERT until `profileStore.attach()`**, private-mode-safe) is the single source of
+truth: collected rewards and `progression` (`globalXp` + per-section `bloom` + `lastCelebratedLevel` +
+`explored`). Read it via `useProgress()` (`useSyncExternalStore`). **Everything else is DERIVED** in the
+pure, Node-importable `src/config/progression.ts`.
+
+## THE ROUND IS NOT A CHILD-FACING THING (Endless Play PRD-01, owner 2026-08-08)
+
+**This reverses what the rest of this file used to defend**, and the reversal is deliberate — it is
+recorded here so nobody re-derives the old design from its own justification.
+
+The same event was announced three times: the ring flashed the won prize to full colour, the round then
+ended on `RoundResultScreen` (Færdig! · three stars · a "Ny rekord!" ribbon · a reward meter showing the
+prize the ring had *already* shown), and the sticker itself landed later still — 3–4s after the round
+ended and 30–90s after the answer that earned it. For a five-year-old only the sticker means anything.
+This file used to argue that as *"one quiet promise, one loud payoff"*, and of the result screen,
+*"It looks like clutter and is not."* **Overruled.** The two-beat is an adult's sense of pacing.
+
+What is gone, permanently: `RoundResultScreen` (**no round-end surface of any kind, in any form,
+including a "small card"**), stars and star thresholds, personal bests and "Ny rekord!", the round-end
+bonus XP (`roundXp` / `MAX_ROUND_XP`), the ring's crossing flash and crossing chime, and the
+`degraded` flag that only ever suppressed a best. `useRound` is now `useTaskRun`.
+
+- **The ceremony fires AT THE SEAM, in-game** — `useTaskRun.thenContinue()` awaits it between "the task
+  completed" and "generate the next question", with the advance lock still held, so the board can never
+  deal itself under the overlay. Memory does the same around `BOARD_TURNOVER_MS`; `useBrowseXp` after a
+  short echo beat. All of them go through `useRewardCeremony`, which **never grants** — that stays
+  `grantPendingRewards`, in the overlay, the one grant point.
+- **The trigger reads the STORE CURSOR** (`globalLevel() > lastCelebratedLevel`), never
+  `grant.leveledUp`: the cursor also catches a cross-tab write or a CRDT merge, and it is the value
+  `owedRewards()` and `RewardWatcher` agree on.
+- **`TAP_ARM_MS` is not a nicety.** The ceremony opens ~1.1–2.0s after a correct tap, where the finger
+  already is; without the arm an excited tap-burst dismisses the sticker before it appears. Same
+  reasoning as the result screen's old `buttonsReady` gate.
+- **A promise from `celebrateIfOwed` is CANCELLED on unmount, never resolved.** That single rule is what
+  makes deferring the generator safe in all ten games at once, and it retires the per-game `mountedRef`
+  ghost-prompt hazard.
+- **The pace is ~20% slower and the owner accepted that** (D3). Do not re-tune `xpToNext` / `REWARD_XP`
+  / `FAST_SLOTS` to compensate, and never reintroduce a round bonus.
+- **A game with a finite pool cycles the WHOLE pool before repeating** (D7) — `promptBag` already did
+  (the PASS is the cycle); Memory now does too, via `src/config/boardBag.ts`.
+- **NO STOPPING CUE, and that is a decision.**
+  `plans/reward-horizon/research-progression-evidence-2026-08-02.md:766-772` named `RoundResultScreen`
+  as the app's natural break under the ICO Age Appropriate Design Code reasoning. Endless play removes
+  it; the ceremony is now the only pause. Recorded so a future audit finds the choice, not the gap.
 
 ## The three definitions that carry the model
 
@@ -37,8 +77,8 @@ Each has its own way of going wrong.
 - `rewardNumber()` = `grantedSlots` is **THE child-facing number**, on every surface. **NEVER show
   `globalLevel()` anywhere, child- OR adult-facing** — it is always the number + 1, so it can only ever
   contradict whatever sits beside it (an adult "Niveau" row shipped for one review cycle and the owner
-  read it as a bug on sight). Consequence, and it is correct: a mid-game crossing flashes the prize in the
-  ring but does **not** move the number — that happens in the ceremony, with the sticker.
+  read it as a bug on sight). The gap it opens is now momentary: the ceremony fires at the seam, so the
+  number ticks up seconds after the crossing rather than at the end of a round.
 - **The number is never a DISTANCE.** No denominator, percentage or "n to go" on any child-facing surface
   — only the ring's fill signals nearness. The honest "n af N" belongs in the adult pane and nowhere else.
 
@@ -83,28 +123,32 @@ spinner that reset, not a progress meter).
 - The curve is **convex**, so two devices that each played offline can sum to more slots than their summed
   XP justifies and `progressMerge`'s clamp fires on valid data — pinned by its CONVEXITY test, and the
   clamp is what keeps `grantedSlots ≤ collectedFromLevel(globalLevel())` true.
-- `taskXp(tasksInRound, firstTry)` normalises so **ANY completed round ≈ one reward** whatever its length
-  ("a round is a round"), `roundXp` is **bonuses-only** (perfect/new-best, carried into the next prize),
-  and **nothing is difficulty-dependent** (fairness). XP is granted PER COMPLETED TASK, live, at three
-  choke points — `useRound.completeQuestion`, `UnifiedMemoryGame`'s match branch, and `useBrowseXp` (gated
-  on **persisted** `progressStore.markBrowsed` so browse XP isn't re-farmable) — each pinging `xpBus` →
-  `RewardRing`.
+- `taskXp(tasksInRound, firstTry)` normalises so **a notional round ≈ one reward** whatever its length
+  ("a round is a round") and **nothing is difficulty-dependent** (fairness). `tasksInRound` is no longer
+  a length — nothing counts down — it is the normaliser AND the prompt bag's no-repeat window, one value
+  per game feeding both. XP is granted PER COMPLETED TASK, live, at three choke points —
+  `useTaskRun.completeTask`, `UnifiedMemoryGame`'s match branch, and `useBrowseXp` (gated on
+  **persisted** `progressStore.markBrowsed` so browse XP isn't re-farmable) — each pinging `xpBus` →
+  `RewardRing`. **There is no round-END XP** (see the endless-play section above).
 
 ## Surfaces
 
 **All read `progressStore.nextReward()`** so they can never disagree.
 
 - `RewardRing` (game header + home + section menus): centre = the next prize as a **silhouette**, the arc
-  fills around it, full-colour flash on a crossing — that beat teaches the whole system — plus the flat
-  count badge. **It is a GAUGE with a gap at the bottom and the badge seated in the gap**, because on a
+  fills around it, plus the flat count badge. **The ring fills, and that is all it does** — the
+  full-colour crossing flash (which this file used to call "the beat that teaches the whole system"),
+  the bigger level-up pop and the soft crossing chime are all DELETED (Endless Play D4). The ceremony
+  fires immediately now, so it is the entire announcement and the ring has nothing to promise; its
+  absence is the change, not a missing beat.
+  **It is a GAUGE with a gap at the bottom and the badge seated in the gap**, because on a
   closed ring the badge is inside the swept path by construction: at bottom-right it occluded **fill
   29%→46%**, a quarter of the range in the middle of it, and no offset tuning fixes that. Every quantity
   is DERIVED in the pure `rewardRingGeometry.ts` (gap from the badge's own subtend + the rounded linecap,
   badge seated ON the ring path) and unit-tested with no DOM at each shipped size, pinned as a literal
   list naming its call sites.
 - **No "+N" flyer** — at ~4% of the arc per answer the numeral means nothing to a pre-reader, and it was a
-  second number on a 46px control. A mid-game crossing is **one soft `sfx.play('sticker-reveal')`**, never
-  confetti: one quiet promise, one loud payoff.
+  second number on a 46px control.
 - Min Bog (`/album`, `StickerAlbum`): icon-only chapter chips auto-opened at the current chapter,
   unreached chapters dimmed but **tappable**, slots in path order, exactly **one** glowing `next`
   silhouette and every later slot a **blank** plate.
@@ -120,8 +164,10 @@ spinner that reset, not a progress meter).
 ## The ceremony
 
 **Rewards are granted ONLY by the ceremony**: `progressStore.grantPendingRewards()` hands over every owed
-slot in one commit (normally 1; a perfect+new-best fast-tier round can cross 2) → app-root `RewardOverlay`
-(`rewardBus`).
+slot in one commit → app-root `RewardOverlay` (`rewardBus`). It normally hands over exactly 1: with the
+round bonus gone the biggest single XP event is one task (9 XP against a 40 XP slot), so the overlay's
+**trailing-grant** row — extra owed stickers behind the headline — is now reachable ONLY from a
+cross-device CRDT merge. It is KEPT, and `progression.test.ts` pins that as *merge-only, not dead*.
 
 - **ONE PICTURE ON A SOLID SCREEN** (Reward Pacing D6): a near-solid scrim, the sticker at 230px, its
   Danish name, and the count **folded into the frame's corner** — nothing else. The "Nyt klistermærke!"
@@ -136,39 +182,14 @@ slot in one commit (normally 1; a perfect+new-best fast-tier round can cross 2) 
 - Dwells are **measured, never guessed** (`STICKER_MS` = the longest `rewardLine` clip + ~250ms element
   startup). It speaks **exactly one** prebaked line; beat 2 is silent and the chapter line plays across
   both.
-- `RewardWatcher` is gated OFF `game` routes so the ceremony never interrupts play (it fires on the next
-  menu); `RoundResultScreen` emits directly, keyed on the **store cursor**
-  (`globalLevel() > lastCelebratedLevel`, **NOT** `outcome.xp.leveledUp` — the crossing is usually
-  mid-round), and `lastCelebratedLevel` **starts at 1** so the empty book isn't celebrated.
+- **The tap is ARMED** (`TAP_ARM_MS`) — see the endless-play section above; without it the overlay
+  dismisses under the tap-burst that opened it.
+- `RewardWatcher` is a **pure safety net** and is still gated OFF `game` routes — the meaning inverts
+  ("on a game route the in-game seam owns the trigger"), and removing the gate creates a real race with
+  the seam's own 1.1–2.0s dwell. Its grace is ~800ms, not 2.5s, now that no result screen has to win an
+  ordering. `lastCelebratedLevel` **starts at 1** so the empty book isn't celebrated.
 
-## Rounds & art
-
-Rounds are bounded (`useRound`, default 8, no timer; wrong answers only break a question's first-try flag)
-and end on `RoundResultScreen` (stars → a **wordless** "Ny rekord!" ribbon → reward meter → replay/back),
-whose buttons stay `pointer-events:none` until they animate in and whose beats **fast-forward** on a tap
-via a keyed `<Fragment>` remount (framer won't reschedule an already-pending delayed animation just by
-lowering its `delay`). A round played in the W4 degraded audio mode passes `degraded` and records no
-personal best — see the narration-health section in `.claude/rules/audio-system.md`.
-
-**That screen was TRIMMED on sight, 2026-08-05 ("way too many elements") — from 11 elements to 5, and the
-principle generalises to any child-facing surface: the reader is five and cannot read.** What went, and
-why none of it should be "restored":
-
-- The record **delta lines** (`Længste stime: 0 → 6`, `Stjerner: 0 → 2`) — numeric arrows in small text
-  are adult telemetry. They did NOT move to the adult pane; they no longer exist (owner). `previousBests`
-  survives in `RoundOutcome` only because `anyNewBest` feeds `roundXp`'s new-best bonus.
-- The **streak readout row** (`6 i træk!` + the flame) — it restated the ribbon, in text, after the streak
-  had already been celebrated *during* play. It is still **spoken** in `speakSummary`: hearing works for a
-  pre-reader where reading does not, which is what made the row the redundant half. `uiArt.flame` was its
-  only consumer and is deleted with it rather than left exported as a dead symbol.
-- **"Se bog"** — a second door to Min Bog on a screen whose header already shows the ring. The one-door
-  guard only inspected the files that RENDER a ring (`GameShell`/`GameSelectionLayout`), so it structurally
-  could not see a door added by a screen drawn INSIDE one; `rewardSurfaces.test.ts` now also asserts
-  `RoundResultScreen` has **zero** `/album` routes (re-broken).
-
-What deliberately stayed: the **stars** (the score, and the only thing a pre-reader reads instantly) and
-the **reward meter with the next prize's silhouette** — wordless, and the "this round earned that" link to
-the ring the child watched all round. It looks like clutter and is not.
+## Art
 
 Reward art: `rewardArt(id)` from `src/assets/rewards/` (glob manifest) — **every surface renders it
 unconditionally, there is no glyph fallback**, so `rewardArtCoverage.test.ts` keeps that safe; a new reward

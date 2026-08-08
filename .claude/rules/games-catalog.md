@@ -59,18 +59,21 @@ a harder level must not cost rewards, and an *easier* one must not cost the less
 
 Two more invariants that module enforces, both learned by shipping the bug twice:
 
-- **A level's content POOL must be at least the ROUND LENGTH — necessary, and NOT sufficient.** Smaller,
-  and a single round *has* to repeat itself, which reads as the game being stuck rather than easy (Ram
-  Farven's Let targets, then Læs Ordet's Let words: 5 words, 8 questions). And **guard a pool against
-  the real round constant, not a magic floor**: the assertion that was supposed to protect Læs Ordet
-  asked for `>= 4` and therefore passed the exact 5-word bug it existed to catch. Export the round
-  length from the content module so the game's `RoundConfig` and the guard read one value.
+- **A LEVEL'S POOL IS ITS CYCLE LENGTH, and it must be at least that game's round constant.** The bag
+  deals one shuffled PASS over the whole pool, so in endless play the pool size IS the repeat period: a
+  5-word Læs Ordet pool means those five words on a loop of five, forever — a stronger reason than the
+  original "a single bounded round has to repeat itself", which died with the round. And **guard a pool
+  against the real constant, not a magic floor**: the assertion meant to protect Læs Ordet asked for
+  `>= 4` and passed the exact 5-word bug it existed to catch. Export it from the content module so the
+  game's `tasksInRound`, its bag window and the guard all read one value.
   **But the pool rule alone can never deliver what it was bought for, because the DRAW is the other
   half.** Sampling with replacement repeats at *any* pool size, so growing Læs Ordet's Let pool from 5
   to 9 words changed nothing measurable — 98% of Let rounds still repeated a word, and the worst asked
   three distinct words in eight questions. Every prompt therefore comes from a **bag** whose no-repeat
-  WINDOW is that game's round length (`usePromptBag` — see `game-development.md`); with pool ≥ round
-  that makes in-round repeats structurally impossible rather than merely unlikely.
+  WINDOW is that game's round constant (`usePromptBag` — see `game-development.md`); with pool ≥ that
+  constant, a repeat inside any run of that length is structurally impossible rather than merely
+  unlikely. **The window is CLAMPED below the pool**, and must be: at `window === pool.length` the bag
+  deals the same pass in the same order forever (`promptBag.ts` semantics 3).
 - **A "maximally dissimilar distractor" rule must DERIVE its distance from the level's range**, never
   fix it absolutely. A flat "≥10 away" is unsatisfiable inside 1–20 (nothing is 10 from 11 but 1), so
   the generator fell through to its random top-up and produced `11 → 1, 8, 11` — the exact opposite of
@@ -79,8 +82,9 @@ Two more invariants that module enforces, both learned by shipping the bug twice
 
 **Browses carry no counter and no progress bar** (removed 2026-08-01, owner: no educational purpose) —
 a browse has no score and no finish line, so a filling bar only implied a list to get through. The only
-thing in a browse's HUD is the shared reward ring; `answered/total` pips belong to bounded ROUNDS. This
-retired `announcePosition` ("Du er ved tal 18 ud af 100") from the audio controller entirely.
+thing in a browse's HUD is the shared reward ring — and since Endless Play PRD-01 that is true of the
+TASK games too, which have no finish line either. This retired `announcePosition` ("Du er ved tal 18 ud
+af 100") from the audio controller entirely.
 
 **BOTH GESTURES, EVERYWHERE THEY BOTH MAKE SENSE.** A game that accepts a drag must also accept a tap
 and vice versa, through one shared resolve function — owner, 2026-08-03, after the Farver games ignored
@@ -88,8 +92,9 @@ plain taps. Which games, where the tap/drop goes, and the single-threshold rule 
 answering twice: **`.claude/rules/drag-and-drop.md`** (its first two sections). The games that stay
 tap-only are the ones whose prompt has no gap to drop into, and that is a content fact, not an omission.
 
-Shared shape: task games run bounded rounds → `RoundResultScreen`, grant **live per-task XP** (via
-`useRound`'s `gameId`), and never punish wrong answers (they only break a question's first-try flag).
-Calm "Lær …" browses run no round — they earn **per-new-item browse XP** (`useBrowseXp`). Stickers
-are the **trophy of a level-up** now (not per-round / per-browse) — see `rewards-and-progression.md`.
+Shared shape: **both game types are ENDLESS** (Endless Play PRD-01) — no boundary the child can
+perceive, no "Færdig!", no stars, no bests, no replay. Task games grant **live per-task XP** (via
+`useTaskRun`) and never punish wrong answers (they only break a question's first-try flag, which feeds
+the streak beat); "Lær …" browses earn **per-new-item browse XP** (`useBrowseXp`). The sticker ceremony
+fires **in-game at the seam**, the moment the ring fills — see `rewards-and-progression.md`.
 gameIds are `<section>.<game>`.

@@ -1,24 +1,29 @@
-// Drives a REAL round to completion and reports what happened. Injected as the --eval body by
+// Drives REAL play and reports what happened. Injected as the --eval body by
 // `sweep.mjs --phase round` (it returns a JSON string, so it works with any driver's --eval).
 //
+// **THERE IS NO ROUND END ANY MORE** (Endless Play PRD-01). The old success criterion was a `/Se bog/i`
+// button unique to `RoundResultScreen` — a button removed on 2026-08-05 and a screen deleted outright
+// here, so `resultScreen` had been PERMANENTLY FALSE and `sweep.mjs` was reporting every single game as
+// "round never ended". It is gone. The criterion is now the two things endless play can actually
+// promise: the board ADVANCED N times, and the store's XP moved by at least what N tasks are worth.
+//
 // WHY BRUTE FORCE: a wrong answer does NOT advance a question here (it only breaks the first-try flag),
-// so a round can only be completed by finding the CORRECT tile. Nothing in the DOM reveals which one
+// so a task can only be completed by finding the CORRECT tile. Nothing in the DOM reveals which one
 // that is before the tap — `data-tile-state` only turns 'wrong' after. So the probe tries candidates in
 // turn until the question signature changes. That is not a workaround: it exercises the real
-// wrong-answer path (retry, hint-after-N-wrong, first-try bookkeeping) on the way to finishing.
-//
-// The success criterion is `resultScreen` — "Se bog" is a button unique to RoundResultScreen — AND xp
-// actually moving in the store. Counting advances alone would pass on a game that advances forever
-// without ever ending a round, and reading only xp would pass on a single lucky tap.
+// wrong-answer path (retry, hint-after-N-wrong, first-try bookkeeping) on the way through.
 //
 // HONEST LIMIT: Hukommelse is not covered. Its cards carry no stable hook (see the skill's per-game
 // table) and matching pairs needs flip-and-remember, not candidate cycling. It reports notCovered.
 (async () => {
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
   const log = []
+  // How many tasks to drive. The XP floor in sweep.mjs is derived from this.
+  const TARGET_ADVANCES = 8
   const out = {
-    advances: 0, clicks: 0, resultScreen: false, xpBefore: null, xpAfter: null,
-    stuck: null, notCovered: null, crashed: false, log,
+    target: TARGET_ADVANCES,
+    advances: 0, clicks: 0, xpBefore: null, xpAfter: null,
+    ceremony: false, stuck: null, notCovered: null, crashed: false, log,
   }
   try {
     // `progressStore` is INERT until profileStore.attach(), so reading XP too early yields null — and a
@@ -35,9 +40,10 @@
     out.xpBefore = xp()
     if (out.xpBefore === null) out.log.push('progressStore never became readable — XP verdict is UNKNOWN')
 
-    const resultUp = () => [...document.querySelectorAll('button')]
-      .some((b) => /Se bog/i.test(b.textContent || ''))
     const crashUp = () => /Noget gik galt|Ups!/.test(document.body.innerText || '')
+    // The ceremony can legitimately open MID-PLAY now (that is the whole change), and while it is up
+    // the board underneath is inert. Note it and wait it out rather than reading it as "stuck".
+    const ceremonyUp = () => !!document.querySelector('[data-reward-overlay]')
 
     // Question fingerprint: prompt text + every tile's text and image + the draggable count. A correct
     // answer changes at least one of these; a wrong answer changes none of them.
@@ -86,8 +92,14 @@
     }
 
     let guard = 0
-    while (!resultUp() && guard++ < 60) {
+    while (out.advances < TARGET_ADVANCES && guard++ < 60) {
       if (crashUp()) { out.crashed = true; break }
+      // Sit out a ceremony rather than tapping through it — and record that one happened.
+      if (ceremonyUp()) {
+        out.ceremony = true
+        for (let i = 0; i < 30 && ceremonyUp(); i++) await sleep(300)
+        continue
+      }
       const before = sig()
       let advanced = false
       for (const c of candidates()) {
@@ -98,8 +110,8 @@
         hit.click()
         out.clicks++
         await sleep(2300) // advance dwell + echo; a correct answer takes ~2s to move the board
-        if (resultUp()) { advanced = true; break }
         if (crashUp()) { out.crashed = true; advanced = true; break }
+        if (ceremonyUp()) { out.ceremony = true; advanced = true; out.advances++; break }
         if (sig() !== before) { advanced = true; out.advances++; break }
       }
       if (!advanced) {
@@ -107,7 +119,6 @@
         break
       }
     }
-    out.resultScreen = resultUp()
     await sleep(600)
     out.xpAfter = xp()
   } catch (e) {

@@ -93,7 +93,8 @@ Menu-path classification shares `SECTION_MENU_PATHS` (`src/utils/menuPaths.ts`) 
 Liveliness PRD-02. Menu/game navigation goes through `useTransitionNav()` (`navigateWithTransition` /
 `goBack`) → `TransitionProvider` drives a decoupled **opaque wipe overlay**
 (`src/components/common/transition/`) so the page mount/unmount happens fully covered. **Raw `navigate()`
-bypasses the wipe** — only NotFound and `RoundResultScreen` do that intentionally.
+bypasses the wipe** — only NotFound does that intentionally. (`RoundResultScreen` was the other
+exception and it is deleted, so the rule now has essentially none: nothing inside a game navigates.)
 
 **The wipe obeys the SAME compositing-flicker rules as the persistent world**, and that is why it exists in
 this shape: opaque paint, `transform`/`clip-path` only, **no `backdrop-filter`**, `will-change` cleared at

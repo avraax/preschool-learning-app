@@ -1,5 +1,12 @@
 # PRD — Reward Pacing: a slower book, an unobstructed ring, a focused ceremony
 
+> **SUPERSEDED IN PART, 2026-08-08 — `plans/endless-play/tmp-prd-endless-play-01-no-round-end.md`.**
+> The CEREMONY this PRD designed (§11/§12 — one picture on a solid screen, one prebaked line, the
+> chapter second beat) survives **unchanged**; what changed is when it fires. D7's "quiet crossing"
+> (the ring's colour flash + the soft `sticker-reveal` chime) is **deleted**: the ceremony now fires
+> in-game at the seam, immediately, so there is no promise left to make. The round-end bonus XP is
+> deleted with it, which makes the pacing ~20% slower than the numbers below — accepted by the owner.
+
 Status: authored 2026-08-03, **IMPLEMENTED 2026-08-03** — W1–W7 on `master`
 (`6afa0b8` xpForSlots · `4b47b46` the curve · `68bfc55` the gauge ring · `27fb94f` the ceremony ·
 `31c3ec7` the quiet crossing · `db11c6d` CLAUDE.md · `0403748` + `28a5f8a` probe hooks and guards).

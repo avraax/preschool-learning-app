@@ -28,7 +28,7 @@ never affect an iPad.
   you removed. Remove a row.
 - Verify a new screen at **844×390 and 667×375** — four columns cleared the taller phone and still
   clipped the iPhone SE. `GameShell`, `GameSelectionLayout`, `UnifiedQuizGame`, `LearningGrid` and
-  `RoundResultScreen` already carry compact variants; reuse them.
+  already carry compact variants; reuse them.
 
 ## Two MUI facts that don't read like traps
 

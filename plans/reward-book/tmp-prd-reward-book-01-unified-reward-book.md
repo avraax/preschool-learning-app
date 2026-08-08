@@ -1,5 +1,11 @@
 # Reward Book PRD-01 — merge trin + klistermærkebog into ONE reward system
 
+> **SUPERSEDED IN PART, 2026-08-08 — `plans/endless-play/tmp-prd-endless-play-01-no-round-end.md`.**
+> W7's round-result handoff is gone with `RoundResultScreen` itself: the ceremony fires **in-game at
+> the seam**, from `useRewardCeremony`. `useRound` is now `useTaskRun`, and stars / personal bests /
+> round-end bonus XP are deleted. The one-track model, the path, the curve and the ceremony's design
+> are unchanged.
+
 **Date:** 2026-07-31
 **Part of:** Reward Book program (new; supersedes the *earning + visibility* halves of
 `plans/liveliness-overhaul/tmp-prd-liveliness-01-progression-foundation.md` and

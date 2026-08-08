@@ -13,6 +13,8 @@
 //   node .claude/skills/ui-screenshot/sweep.mjs --phase smoke  [--engine chrome|webkit|both]
 //   node .claude/skills/ui-screenshot/sweep.mjs --phase audio  [--engine chrome|webkit]
 //   node .claude/skills/ui-screenshot/sweep.mjs --phase layout [--engine chrome|webkit]
+//   node .claude/skills/ui-screenshot/sweep.mjs --phase round     <- drives 8 tasks; play never "ends"
+//   node .claude/skills/ui-screenshot/sweep.mjs --phase ceremony  <- seeds ?rewards=8 and plays to a crossing
 //   node .claude/skills/ui-screenshot/sweep.mjs --selftest      <- proves the guards actually fire
 //
 //   --concurrency <n>  parallel jobs (default 3; each Chrome job gets its own CDP port)
@@ -209,7 +211,9 @@ function jobsFor() {
   const jobs = []
   const engines = ENGINE === 'both' ? ['chrome', 'webkit'] : [ENGINE]
   // Rounds and difficulty only exist inside games — running them over menus just manufactures N/A rows.
-  const routes = (PHASE === 'round' || PHASE === 'difficulty') ? ROUTES.filter((r) => r.kind === 'game') : ROUTES
+  const routes = (PHASE === 'round' || PHASE === 'difficulty' || PHASE === 'ceremony')
+    ? ROUTES.filter((r) => r.kind === 'game')
+    : ROUTES
   for (const eng of engines) {
     for (const r of routes) {
       if (PHASE === 'layout') {
@@ -223,11 +227,15 @@ function jobsFor() {
 }
 
 function cmdFor(job, port) {
-  const url = `${BASE}${job.route.route.replace(':type', 'letters')}?nogate=1`
+  // `?rewards=8` seeds the book one slot short of the chapter-1 boundary, so a handful of taps crosses
+  // it and the ceremony probe doesn't have to play 200 questions to reach one.
+  const seed = PHASE === 'ceremony' ? '&rewards=8' : ''
+  const url = `${BASE}${job.route.route.replace(':type', 'letters')}?nogate=1${seed}`
   const settle = PHASE === 'audio' ? '2500' : '4000' // math boards need time to generate
   const evalJs = PHASE === 'layout' ? BOUNDS : PHASE === 'triggers' ? TRIGGERS
     : PHASE === 'audio' ? AUDIO_TRIGGER
     : PHASE === 'round' ? readFileSync(join(here, 'round-probe.js'), 'utf8')
+    : PHASE === 'ceremony' ? readFileSync(join(here, 'ceremony-probe.js'), 'utf8')
     : PHASE === 'difficulty' ? readFileSync(join(here, 'difficulty-probe.js'), 'utf8') : GUARD
   if (job.eng === 'webkit') {
     const c = [join(here, 'webkit.mjs'), '--url', url, '--device', job.vp.device, '--settle', settle, '--eval', evalJs]
@@ -288,27 +296,86 @@ function judge(job, r) {
     const UNSOLVABLE_BY_CYCLING = {
       '/farver/ram-farven': 'colour MIXING toward a target — droplets register (60 board changes observed) but a task can only be completed by choosing the right combination, which cycling cannot do',
       '/farver/quiz': 'the prompt object must be DRAGGED onto a swatch (its solved signal is an <img> appearing inside the swatch droppable); a tap on the swatch alone does not resolve',
+      '/learning/memory/letters': 'Hukommelse needs flip-and-remember, not candidate cycling — the probe\'s own documented limit',
+      '/learning/memory/numbers': 'Hukommelse needs flip-and-remember, not candidate cycling — the probe\'s own documented limit',
     }
-    if (!g.resultScreen && UNSOLVABLE_BY_CYCLING[job.route.route]) {
+    const target = g.target || 8
+    // A "Lær …" browse has no task run to drive at all — its taps earn BROWSE_TASK_XP (2, once ever
+    // per item), so applying a round's XP floor to it manufactures a defect out of correct behaviour.
+    // The route list marks these `kind: 'game'`, so they have to be named.
+    const BROWSES = {
+      '/alphabet/learn': 'Lær Alfabetet is a BROWSE — no task run; taps earn BROWSE_TASK_XP once per item',
+      '/math/numbers': 'Lær Tal is a BROWSE — no task run; taps earn BROWSE_TASK_XP once per item',
+      '/english/learn': 'Lær Engelsk is a BROWSE — no task run; taps earn BROWSE_TASK_XP once per item',
+      '/farver/laer': 'Lær Farver is a BROWSE — no task run; taps earn BROWSE_TASK_XP once per item',
+    }
+    if (BROWSES[job.route.route]) return { status: 'N/A', why: BROWSES[job.route.route], guard: g }
+    // Checked BEFORE the advance count, not after: on these games cycling happily registers BOARD
+    // CHANGES (droplets going into the pot) while never completing a single TASK, so "8 advances" is
+    // not evidence of anything and the XP judge below would read correct play as broken.
+    if (UNSOLVABLE_BY_CYCLING[job.route.route]) {
       return { status: 'UNKNOWN', why: `not driveable by this probe: ${UNSOLVABLE_BY_CYCLING[job.route.route]}`, guard: g }
     }
+    // ONE ADVANCE IS NOT ALWAYS ONE TASK, and on these three it isn't: a Farvejagt task is a whole
+    // BOARD, a Nuancer task is a complete light→dark ORDERING, a Stav Ordet task is a whole WORD — so a
+    // signature change is one object landing / one shade / one letter. 8 advances is ~2 tasks, and
+    // judging that against the 8-task floor reads correct play as broken per-task XP.
+    // **This is a real coverage limit, stated rather than hidden**: on these three the probe can only
+    // assert that XP moved AT ALL, so a per-task regression here would need the unit tests to catch it.
+    const ADVANCE_IS_NOT_A_TASK = {
+      '/farver/jagt': 'a task is a whole BOARD, so an advance is one object landing',
+      '/farver/nuancer': 'a task is a complete light→dark ORDERING, so an advance is one shade placed',
+      '/ordleg/spelling': 'a task is a whole WORD, so an advance is one letter placed',
+    }
     const w = []
-    if (g.crashed) w.push('CRASH BOUNDARY mid-round')
+    if (g.crashed) w.push('CRASH BOUNDARY mid-play')
     if (pexc) w.push(`${pexc} page exception(s)`)
     if (cerr) w.push(`${cerr} console error(s)`)
-    if (!g.resultScreen) w.push(`round never ended: ${g.stuck || `${g.advances} advance(s), ${g.clicks} clicks, no RoundResultScreen`}`)
-    // A round that ends must pay about ONE REWARD's worth of XP. `xpAfter > xpBefore` is NOT enough:
-    // with `taskXp` zeroed the round still credited 8 (bonuses only) and that loose check passed on a
-    // broken product. REWARD_XP is 40 and taskXp normalises so any completed round lands near it, so a
-    // floor of 30 catches per-task XP dying while tolerating a short round and lost first-try bonuses.
+    // ENDLESS PLAY (Endless Play PRD-01 W8): there is no round end to detect, so the verdict is the two
+    // things play can promise — the board kept advancing, and the store paid for it. `resultScreen` is
+    // GONE: it detected a `/Se bog/i` button removed on 2026-08-05, so it had been permanently false
+    // and every game was being reported as "round never ended".
+    if (g.advances < target) {
+      w.push(`play stalled at ${g.advances}/${target} advances: ${g.stuck || `${g.clicks} clicks`}`)
+    }
+    // …and the XP must match the work. `xpAfter > xpBefore` is NOT enough: with `taskXp` zeroed a run
+    // still credited the round bonus, and that loose check passed on a broken product. `taskXp`
+    // normalises to REWARD_XP (40) per notional round, so 8 advances are worth ~40-48; the floor of 30
+    // catches per-task XP dying while tolerating a short run and lost first-try bonuses.
     // UNKNOWN, not FAIL, when the store was never readable — see the note in round-probe.js.
     if (g.xpBefore === null || g.xpAfter === null) {
-      return { status: 'UNKNOWN', why: 'progressStore unreadable — XP could not be judged (round itself: ' + (g.resultScreen ? 'completed' : 'did not complete') + ')', guard: g }
+      return { status: 'UNKNOWN', why: `progressStore unreadable — XP could not be judged (${g.advances}/${target} advances)`, guard: g }
     }
     const gain = g.xpAfter - g.xpBefore
-    if (g.resultScreen && gain < 30) w.push(`round ended but paid only ${gain} XP (expected ~40 = one reward; per-task XP may be broken)`)
+    const floor = ADVANCE_IS_NOT_A_TASK[job.route.route] ? 1 : 30
+    if (g.advances >= target && gain < floor) {
+      w.push(ADVANCE_IS_NOT_A_TASK[job.route.route]
+        ? `${g.advances} advances paid NO XP at all — ${ADVANCE_IS_NOT_A_TASK[job.route.route]}, but SOME XP was still owed`
+        : `${g.advances} advances paid only ${gain} XP (expected ~40 = one reward; per-task XP may be broken)`)
+    }
     return { status: w.length ? 'FAIL' : 'PASS', why: w.join(' | '), guard: g,
-      audio: `${g.advances} advances / ${g.clicks} clicks, xp ${g.xpBefore}→${g.xpAfter}` }
+      audio: `${g.advances}/${target} advances / ${g.clicks} clicks, xp ${g.xpBefore}→${g.xpAfter}${g.ceremony ? ', ceremony fired in-game' : ''}` }
+  }
+  // THE CEREMONY FIRES IN GAME (Endless Play PRD-01 W8). Judged on the three properties a screenshot
+  // cannot show: it opened without leaving the game, it COVERS the board (hit-test), and the board did
+  // not deal itself underneath it.
+  if (PHASE === 'ceremony') {
+    if (g.crashed) return { status: 'FAIL', why: 'CRASH BOUNDARY while driving to the crossing', guard: g }
+    if (!g.ceremonyOpened) {
+      // Not a defect and not coverage: the probe may simply never have reached a crossing on a game it
+      // can't solve by cycling. UNKNOWN keeps it visible as unverified.
+      return { status: 'UNKNOWN', why: `never reached a crossing (${g.advances} advance(s), ${g.clicks} clicks)`, guard: g }
+    }
+    const w = []
+    if (pexc) w.push(`${pexc} page exception(s)`)
+    if (cerr) w.push(`${cerr} console error(s)`)
+    if (g.onGameRoute === false) w.push('the ceremony opened on another route — it must fire IN GAME')
+    if (g.beat !== 'sticker') w.push(`the ceremony opened on beat "${g.beat}", expected "sticker"`)
+    if (g.coversBoard === false) w.push('the overlay does NOT own the board centre — a tap would reach the tiles')
+    if (g.boardHeldStill === false) w.push('the board advanced UNDERNEATH the overlay (the generator was not deferred)')
+    if (!g.resumed) w.push('play did not resume after the ceremony closed')
+    return { status: w.length ? 'FAIL' : 'PASS', why: w.join(' | '), guard: g,
+      audio: `crossed after ${g.advances} advance(s), beat=${g.beat}, covers=${g.coversBoard}, held=${g.boardHeldStill}` }
   }
   if (PHASE === 'difficulty') {
     const rt = job.route.route

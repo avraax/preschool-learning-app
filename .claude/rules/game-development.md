@@ -59,7 +59,8 @@ internally, so only hand-rolled games can drift (this drift has bitten several g
 - **`mascotBus.emit('streak')` alongside `celebrateTier('streak')`** on the streak milestone (the
   `r.streak % 3 === 0` line) so the corner mascot does its streak pose.
 - `correct`/`wrong` mascot comes free via GameShell's `guideReaction` bridge (set `guideReaction`
-  cheer/think); `round` comes free via `RoundResultScreen`'s own `'round'` emit; `welcome` comes free
+  cheer/think); `round` comes free via `RewardOverlay`'s `'round'` emit when the ceremony opens (its
+  only trigger now); `welcome` comes free
   via the themed wipe's `mascotBus.emit('welcome')` game-arrival cue. So a hand-rolled game only needs
   `tap` + `streak` + `hint` wired by hand.
 - **Never `await` narration in a tap handler.** Resolve the answer synchronously — score,
