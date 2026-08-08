@@ -128,9 +128,16 @@ const LockScreen: React.FC = () => {
   const onGoogle = useCallback(async () => {
     setLocalBusy(true)
     authStore.setBusy('Venter på Google…')
-    const result = await startGoogleSignIn()
-    if (!result.ok) authStore.setError(result.message ?? 'Login mislykkedes. Prøv igen.')
-    setLocalBusy(false)
+    // Same shape as KontoPane's guest sign-in: a throw must not leave every button on this screen
+    // disabled with only "Venter på Google…" to look at.
+    try {
+      const result = await startGoogleSignIn()
+      if (!result.ok) authStore.setError(result.message ?? 'Login mislykkedes. Prøv igen.')
+    } catch {
+      authStore.setError('Login mislykkedes. Prøv igen.')
+    } finally {
+      setLocalBusy(false)
+    }
   }, [])
 
   // NOT async, and it does NOT await before reaching startPasskeyUnlock: iOS consumes the user

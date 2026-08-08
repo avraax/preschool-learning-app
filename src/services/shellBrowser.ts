@@ -26,17 +26,40 @@ type BrowserPlugin = {
   removeAllListeners: () => Promise<void>
 }
 
-async function loadBrowser(): Promise<BrowserPlugin | null> {
+/**
+ * NEVER RETURN A CAPACITOR PLUGIN PROXY FROM AN ASYNC FUNCTION. Box it first.
+ *
+ * `registerPlugin` returns a `Proxy` whose `get` trap answers EVERY property with a method wrapper —
+ * `then` included (it special-cases `$$typeof` and `toJSON` for this exact class of bug, and not
+ * `then`). So the proxy is a thenable, and an `async` function returning it makes the promise
+ * machinery call `Browser.then(resolve, reject)` to assimilate it.
+ *
+ * That wrapper ignores both callbacks and returns a promise of its own, so the outer promise **NEVER
+ * SETTLES** — `await loadBrowser()` hangs forever, the sign-in button sits disabled, and nothing is
+ * thrown for a `catch` to catch. Meanwhile the wrapper's own promise rejects with
+ * `"Browser.then()" is not implemented on ios` and nobody is holding it, so it surfaces as an
+ * unhandled rejection and auto-uploads a crash (report BV9DJ, iPad Pro 5th gen, shell build b99afb6).
+ *
+ * Boxing it in a plain object makes the assimilation structurally impossible. Same failure SHAPE as
+ * the J62KA audio hang: a promise that never settles is invisible to every error path there is.
+ */
+const box = (plugin: BrowserPlugin | undefined): { plugin: BrowserPlugin } | null =>
+  plugin ? { plugin } : null
+
+async function loadBrowser(): Promise<{ plugin: BrowserPlugin } | null> {
   if (!isNativeShell()) return null
   try {
     const mod = (await import('@capacitor/browser')) as unknown as { Browser?: BrowserPlugin }
-    return mod.Browser ?? null
+    return box(mod.Browser)
   } catch {
     // A shell build with the plugin missing is a packaging error, not a runtime state we can recover
     // from — the caller turns this into an adult-facing message rather than a dead button.
     return null
   }
 }
+
+/** Exported for `shellBrowser.test.ts`, which proves a plugin-shaped thenable survives the boxing. */
+export const boxPluginForTest = box
 
 /**
  * Open `url` in the system browser and call `onReturn` when the adult comes back.
@@ -50,8 +73,9 @@ async function loadBrowser(): Promise<BrowserPlugin | null> {
  * @returns false when the system browser could not be opened; the caller must then say so in Danish.
  */
 export async function openExternalAuthUrl(url: string, onReturn: () => void): Promise<boolean> {
-  const browser = await loadBrowser()
-  if (!browser) return false
+  const boxed = await loadBrowser()
+  if (!boxed) return false
+  const browser = boxed.plugin
   try {
     // Listener BEFORE open: dismissal can be immediate if the adult taps Done straight away.
     await browser.addListener('browserFinished', onReturn)
@@ -72,8 +96,9 @@ export async function openExternalAuthUrl(url: string, onReturn: () => void): Pr
  * error.
  */
 export async function closeExternalAuth(): Promise<void> {
-  const browser = await loadBrowser()
-  if (!browser) return
+  const boxed = await loadBrowser()
+  if (!boxed) return
+  const browser = boxed.plugin
   try {
     await browser.close()
   } catch {

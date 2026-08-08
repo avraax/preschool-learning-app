@@ -286,6 +286,30 @@ export const SAMPLE_SEGMENTS: SampleSegment[] = [
           'Is — den starter med I',
         ],
       },
+      // R, SENTENCE-FINAL: OPEN, reported 2026-08-08 from the iPad. "Raket starter med R" is heard as
+      // "Raket starter med er" — and "er" is a real Danish word, which is what makes this one worse
+      // than a merely muddy letter: the sentence parses as something else entirely. Same mechanism as
+      // I (final unstressed position reduces the letter name to a schwa), and the same asymmetry: R
+      // is CORRECT in Lær Alfabetet, where letterPhrase puts it first and it gets full stress.
+      //
+      // The first item is the SHIPPING line (the control — it must sound wrong, or the diagnosis is
+      // wrong), and the second is a diagnostic: if 'er' is indistinguishable from it, the reduction
+      // hypothesis is confirmed and no respelling will help, only a phrasing change. 'R som Raket' is
+      // the proven-correct browse line, i.e. the ruling already taken for I applied to R — it costs
+      // the quiz's "first sound" frame, so it is the owner's call, not a default.
+      {
+        label: 'Kandidater: R sidst (quiz-linjen)',
+        items: [
+          'Raket starter med R',
+          'Raket starter med er',
+          'Raket starter med bogstavet R',
+          'Raket starter med, R',
+          'Raket starter med R.',
+          'Raket starter med ... R',
+          'Raket starter med ær',
+          'R som Raket',
+        ],
+      },
     ],
   },
   {

@@ -213,12 +213,22 @@ const KontoPane: React.FC<KontoPaneProps> = ({ closeAll }) => {
   // GUEST sign-in. `startGoogleSignIn()` returns a `SignInResult` and this call site used to discard
   // it, so a failure showed the adult nothing at all — the button simply did nothing. The lock screen
   // has always surfaced `result.message` (`LockScreen.tsx:128-134`); this mirrors it.
+  // `finally`, not a trailing `setBusy(false)`: a throw would otherwise leave the button disabled
+  // with no message — a dead grey control, which is strictly worse than the silent one this replaced.
+  // It does NOT cover a HANG (report BV9DJ: the shell's `startGoogleSignIn` never settled), and no
+  // timeout can — on the web the call deliberately never resolves, because `location.assign` has
+  // navigated away by then. A promise that never settles has to be fixed where it hangs.
   const onGuestSignIn = useCallback(async () => {
     setMessage(null)
     setBusy(true)
-    const result = await startGoogleSignIn()
-    if (!result.ok) setMessage(result.message ?? 'Login mislykkedes. Prøv igen.')
-    setBusy(false)
+    try {
+      const result = await startGoogleSignIn()
+      if (!result.ok) setMessage(result.message ?? 'Login mislykkedes. Prøv igen.')
+    } catch {
+      setMessage('Login mislykkedes. Prøv igen.')
+    } finally {
+      setBusy(false)
+    }
   }, [])
 
   const onSignOut = useCallback(async () => {
