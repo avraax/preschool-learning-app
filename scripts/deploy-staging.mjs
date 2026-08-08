@@ -45,7 +45,23 @@ console.log(`[deploy:staging] commit   ${commit}${dirty ? ' (working tree is DIR
 
 const r = spawnSync(
   'npx',
-  ['vercel', 'deploy', '--prod', '--archive=tgz', '--yes', '--scope', 'allan-brink-vraas-projects'],
+  [
+    'vercel',
+    'deploy',
+    '--prod',
+    '--archive=tgz',
+    '--yes',
+    '--scope',
+    'allan-brink-vraas-projects',
+    // `--build-env`, NOT the env below. THE BUILD RUNS ON VERCEL'S MACHINE, so this process's
+    // environment reaches the CLI and stops there — `BL_COMMIT_SHA` was set as a local variable and
+    // `generateVersionPlugin` never saw it, so every staging deployment still reported the "dev" this
+    // whole mechanism exists to avoid (measured against the deployed /api/version, not the build log).
+    // `VERCEL_ORG_ID`/`VERCEL_PROJECT_ID` below are correct as process env: those are read by the CLI
+    // itself, here, to pick the project.
+    '--build-env',
+    `BL_COMMIT_SHA=${commit}`,
+  ],
   {
     stdio: 'inherit',
     shell: process.platform === 'win32',
@@ -53,8 +69,6 @@ const r = spawnSync(
       ...process.env,
       VERCEL_ORG_ID: ORG_ID,
       VERCEL_PROJECT_ID: PROJECT_ID,
-      // Read by vite.config.ts's generateVersionPlugin on the build machine.
-      BL_COMMIT_SHA: commit,
     },
   },
 )
