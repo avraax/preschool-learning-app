@@ -3,9 +3,9 @@
 > AUTO-GENERATED (by the `/audit` harness via the dev-server, or `npm run audit:approve-all`).
 > Do not hand-edit — source of truth is `narration-audit.json`.
 
-Last updated: 2026-08-04T17:50:33.138Z
+Last updated: 2026-08-08T07:49:16.987Z
 
-**1984 OK · 1 wrong · 0 unaudited** (of 1985 clips)
+**1985 OK · 1 wrong · 0 unaudited** (of 1986 clips)
 
 ## Bogstaver
 
@@ -93,6 +93,7 @@ Last updated: 2026-08-04T17:50:33.138Z
 | ✅ | r | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | R som Raket | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Raket starter med R | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Raket starter med, R | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | s | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | S som Sol | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Sol starter med S | Bulk-approved (PRD-11 owner listen pass) |  |

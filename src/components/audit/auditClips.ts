@@ -6,13 +6,31 @@
 
 import { collectNarrationClips, type NarrationClip } from '../../../shared-narration-clips.js'
 import { ttsCacheKey } from '../../../shared-tts-key.js'
-import { TTS_CONFIG } from '../../config/tts-config'
-import { DANISH_PHRASES, getDanishNumberText } from '../../config/danish-phrases'
+// Explicit `.ts`: `auditClips.test.ts` loads this module in plain Node, which does not resolve
+// extensionless relative specifiers. Client/test graph → `.ts` (only `api/`+`lib/` take `.js`).
+import { TTS_CONFIG } from '../../config/tts-config.ts'
+import { DANISH_PHRASES, getDanishNumberText } from '../../config/danish-phrases.ts'
 
 // Must cover EVERY group `collectNarrationClips()` emits — the harness buckets by this key and an
-// unknown group crashed the whole /audit route (`out[clip.group].push` on undefined). `levelup`
+// unknown group crashes the whole /audit route (`out[clip.group].push` on undefined). `levelup`
 // arrived with the reward ceremony's spoken line and had no bucket here.
-export type AuditGroup = 'letters' | 'numbers' | 'phrases' | 'colours' | 'mixed' | 'english' | 'levelup'
+//
+// IT HAPPENED AGAIN, and stayed broken for six days: `math` (921 clips) and `ordleg` (54) landed with
+// 91e1020 on 2026-08-02 and took /audit down completely. Nothing caught it, because the owner signs
+// off through `npm run audit:approve-all` rather than the page, and that CLI path reads the shared
+// enumeration directly and never touches these buckets. So the ONE surface for actually listening to
+// a clip was dead while the audit ledger kept reporting clean. `auditClips.test.ts` now fails the
+// build on an unbucketed group — the warning above was correct and unenforced.
+export type AuditGroup =
+  | 'letters'
+  | 'numbers'
+  | 'math'
+  | 'phrases'
+  | 'colours'
+  | 'ordleg'
+  | 'mixed'
+  | 'english'
+  | 'levelup'
 
 export interface AuditClip {
   key: string // ttsCacheKey — the verdict + prebaked-manifest key
@@ -25,13 +43,25 @@ export interface AuditClip {
   dynamic: boolean // true = never prebaked (composed at runtime) → force-live only
 }
 
-export const GROUP_ORDER: AuditGroup[] = ['letters', 'numbers', 'phrases', 'colours', 'levelup', 'mixed', 'english']
+export const GROUP_ORDER: AuditGroup[] = [
+  'letters',
+  'numbers',
+  'math',
+  'phrases',
+  'colours',
+  'ordleg',
+  'levelup',
+  'mixed',
+  'english',
+]
 
 export const GROUP_LABELS: Record<AuditGroup, string> = {
   letters: 'Bogstaver',
   numbers: 'Tal (0–100)',
+  math: 'Regnestykker',
   phrases: 'Sætninger',
   colours: 'Farver',
+  ordleg: 'Ordleg',
   levelup: 'Belønninger',
   mixed: 'Blandet',
   english: 'Engelsk',

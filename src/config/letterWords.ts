@@ -109,6 +109,23 @@ const STARTS_WITH_LINE: Record<string, (word: string) => string> = {
   // teaches worse than a differently-framed correct one. It also resolves to a string that is
   // byte-identical to letterPhrase('I', …), so it reuses that already-prebaked, already-audited clip.
   I: (word) => letterPhrase('I', word),
+  // R — reported from the iPad 2026-08-08 and auditioned by the owner the same day. "Raket starter
+  // med R" was heard as "Raket starter med er", i.e. the letter collapses into a schwa that reads as
+  // the WORD "er" ("is"). That is worse than a merely muddy letter: the sentence parses as something
+  // else. R is correct in Lær Alfabetet, where letterPhrase puts it first and it takes full stress.
+  //
+  // THE DIAGNOSTIC THAT SETTLED IT: 'Raket starter med er' — the owner reports the "er" is never
+  // pronounced AT ALL. So the defect is not the letter's spelling, it is that ANY final token after
+  // "med" gets swallowed. Every respelling is therefore dead on arrival ('ær' included), and the fix
+  // has to be a prosodic boundary, exactly as it was for I.
+  //
+  // Owner-verified as reading R correctly: '… med, R', '… med ... R', '… med bogstavet R', and the
+  // browse line 'R som Raket'. The COMMA wins because it is the smallest possible deviation — the
+  // spoken words are IDENTICAL to the other 28 quiz lines, only a pause is added, so R keeps teaching
+  // "starts with" where I had to give that up. The second-order defect the comma caused for I (Azure
+  // carrying the letter-name reading into the NEXT token, spelling "Is" as I-S) cannot happen here:
+  // the letter is last, so there is no next token.
+  R: (word) => `${word} starter med, R`,
 }
 
 /**

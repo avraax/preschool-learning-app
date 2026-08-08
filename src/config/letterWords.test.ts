@@ -50,10 +50,19 @@ test('the owner-verified pronunciation fixes are still in force', () => {
   assert.equal(startsWithPhrase('I', 'Is'), 'I, som en is')
   assert.equal(startsWithPhrase('I', 'Is'), letterPhrase('I', 'Is'))
   assert.equal(startsWithPhrase('Z', 'Zebra'), 'Zebra starter med zet')
-  assert.equal(startsWithPhrase('A', 'Abe'), 'Abe starter med A') // frame intact for the other 27
+  // R: the COMMA is the whole fix, and it looks even more like a typo than I's does. Any final token
+  // after "med" is swallowed — the owner heard 'Raket starter med er' drop the "er" entirely — so a
+  // respelling cannot help and only a prosodic boundary does. The words are otherwise identical to
+  // the frame, which is exactly why a "tidy-up" would delete it without noticing.
+  assert.equal(startsWithPhrase('R', 'Raket'), 'Raket starter med, R')
+  assert.notEqual(startsWithPhrase('R', 'Raket'), 'Raket starter med R')
+  // R is fixed ONLY sentence-final: the browse line puts it first, where it already reads correctly.
+  assert.equal(letterPhrase('R', 'Raket'), 'R som Raket')
+  assert.equal(startsWithPhrase('A', 'Abe'), 'Abe starter med A') // frame intact for the other 26
 })
 
 test('a whole-line override follows the manifest word instead of hardcoding it', () => {
   // Guards the stale-line trap: if LETTER_WORDS.I ever changes, the override must move with it.
   assert.equal(letterPhrase('I', 'Isbjørn'), 'I, som en isbjørn')
+  assert.equal(startsWithPhrase('R', 'Ravn'), 'Ravn starter med, R')
 })

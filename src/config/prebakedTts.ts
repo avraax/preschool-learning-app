@@ -789,7 +789,7 @@ export const PREBAKED_TTS: Record<string, string> = {
   "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Q som Quiz": "a9425432dea7394b.mp3",
   "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|R som Raket": "9f26519c0f692f7b.mp3",
   "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Raket": "9f0f5b15a11ff30e.mp3",
-  "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Raket starter med R": "79fea046248a7277.mp3",
+  "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Raket starter med, R": "4ab66f0b96ce9cbd.mp3",
   "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Ram Farven": "d18cf51b00f296e1.mp3",
   "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Regnbue": "a26d6ee3faeb7daa.mp3",
   "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Regndråbe": "1235580827722fae.mp3",
