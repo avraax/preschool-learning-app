@@ -75,7 +75,10 @@ break reports WRONG TEST, read the red list before touching the mutation.
 written with `\n` — or with `\r\n` — never matches in half the tree and the entry silently skips: 5 of 22
 breaks vanished that way in one pass, and the harness still printed a pass rate. **Read the target's own
 endings and normalise to those**, never to a repo-wide assumption, and make a missed anchor exit non-zero
-rather than log-and-continue.
+rather than log-and-continue. **`grep -q $'\r'` under Git Bash LIES** — it reported LF for a file that is
+CRLF throughout, so the anchor written from that answer skipped silently. Ask Node
+(`readFileSync(f,'utf8').includes('\r\n')`) or `file`, per target. The cheapest escape is to keep every
+anchor SINGLE-LINE, where the endings cannot matter at all.
 **The same trap lives in the TEST**, not just the harness: a source-reading guard whose own multi-line
 anchor is written with `\n` never matches, and the assertion that fires is "could not find X — re-point
 this guard" rather than the defect. Either keep every forbidden anchor **single-line** (so the endings

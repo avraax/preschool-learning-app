@@ -35,9 +35,13 @@ node .claude/skills/ui-screenshot/cdp.mjs --url http://127.0.0.1:5173/math/count
 node .claude/skills/ui-screenshot/sweep.mjs --selftest              # ALWAYS first: proves the guards fire
 node .claude/skills/ui-screenshot/sweep.mjs --phase smoke --engine both
 node .claude/skills/ui-screenshot/sweep.mjs --phase layout --concurrency 4 --json out.json
-#   phases: smoke | layout | audio | round | difficulty | triggers
+#   phases: smoke | layout | audio | round | ceremony | difficulty | triggers
 #   --only <substr>  --engine chrome|webkit|both  --concurrency n
 ```
+`round` drives 8 tasks and judges advances + XP (play never "ends" — see `probes.md`). `ceremony` seeds
+`?rewards=8`, plays to the crossing, and asserts the three things a screenshot cannot show: the reward
+overlay opens **without leaving the game**, it **owns the board centre** (`elementFromPoint`), and the
+board does **not** advance underneath it.
 It plans every job up front and each must end PASS / FAIL / N/A / UNKNOWN; anything else is DEAD,
 retried once, then reported. Routes and expected Danish titles are DERIVED from `categoryThemes.ts`, and
 difficulty exemptions from `difficulty.ts`'s own `EXEMPT`/`TILE_AXIS_EXEMPT` maps — so a stale hand-list

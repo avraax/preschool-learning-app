@@ -107,3 +107,49 @@ claimed here**, in either direction. Re-measure in a quiet window before quoting
 2. Gate 5 — `node scripts/session-cost.mjs --aggregate` over the next ten sessions; mean first-turn
    baseline should sit visibly below 57,765.
 3. TTFT — re-measure in a quiet window.
+
+---
+
+## 2026-08-08 — Endless Play PRD-01 (data point, not an audit)
+
+| | |
+|---|---|
+| Claude Code | 2.1.223 |
+| Model | `claude-opus-5[1m]` |
+| Scope | 15 files under `src/components/**`, plus config/services/tests (`a4af460`, `4c8b23a`) |
+
+**This closes gate 6's open half.** The 2026-08-06 entry recorded the audio half passing and flagged
+that `audio-call-sites.md`, `layout-contract.md`, `games-*.md` and `game-development.md` — the biggest
+restructure — remained unexercised on real work. This session exercised all of them: every game
+component changed, plus the memory engine, the quiz engine and the reward surfaces.
+
+**The trimmed game rules held.** Four fired when needed, none of them re-derived:
+
+- **Never edit a file with a shell text pipeline.** Reached for a Python patch script on one file to
+  batch three edits. Caught it on the `git diff` (LF written over a CRLF file), reverted, redid it with
+  the Edit tool. The rule works because it also says how the failure LOOKS.
+- **A probe of an external/dependent thing has three outcomes.** Applied to the sweep verdicts:
+  browses became N/A, Hukommelse and the two uncyclable Farver games UNKNOWN with a named reason,
+  instead of three manufactured FAILs.
+- **A level's pool must be at least the round constant** — carried straight into the endless-play
+  rewrite, where it became the stronger cycle-length rule.
+- **`/re-break`.** 17/17 mutations flipped their own test; the CRLF trap it documents fired exactly as
+  written (one multi-line anchor skipped silently) and its "defensive, not load-bearing" outcome
+  correctly classified one `boardBag` line.
+
+**One guardrail was WRONG, and it was a probe reference.**
+`.claude/skills/ui-screenshot/reference/probes.md` told a session to assert round outcomes at
+`localStorage['bornelaering-progress'].perGame[gameId].bestStars` — fields deleted by this PRD, under a
+key that had been per-child since the accounts release. Fixed here. **The pattern worth watching: the
+stale guardrails are in the SKILL reference files, not the rules.** Rules get updated by the PRD's own
+W8 docs step; skill references have no such trigger and drift silently.
+
+**And a harness failed OPEN for three days.** `round-probe.js` detected round end via a `/Se bog/i`
+button removed 2026-08-05, so `sweep.mjs` reported every game as "round never ended" — 21 routes of
+real-looking defect with the harness apparently healthy, and `--selftest` cannot see it. Now captured
+in `probes.md` as a class: a probe's success signal must be state the product cannot delete without
+the probe failing to RUN, and a failure that uniform is almost never the app.
+
+**Budget after this session's guardrail edits:** ALWAYS LOADED 16,485 / 17,000 · ONE COMPONENT EDIT
+47,980 / 48,000. W8's rule rewrites pushed both over and were trimmed back in the same session; the
+debrief items landed in skill reference files, which are outside both enforced numbers.

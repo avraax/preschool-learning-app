@@ -42,15 +42,48 @@ attribution measured while something else saturates the thread is worthless.
 An async `--eval` IIFE (`awaitPromise` is on) can drive a whole round and assert the outcome:
 - **Each run is a fresh Chrome profile** → `localStorage` starts empty and does NOT persist across
   runs. Read/assert *within one* `--eval`, or seed state at the top of the script.
-- **Round outcomes** live in `localStorage['bornelaering-progress']`: per-game bests at
-  `.perGame[<gameId>]` (`bestStars`, `roundsCompleted`), lifetime tallies at `.totals`
-  (`totalStars`, `totalStickers`). (It's `.perGame`, NOT `.games`.) Snapshot before/after to prove a
-  double-tap records once, a mis-tap doesn't drop a star, etc.
+- **Progress lives behind `window.__progress`, and there are no round outcomes to read.** Stars, bests,
+  `perGame` and `totals.totalStars` are gone (endless play), and the storage key is per-child
+  (`bornelaering-progress:<profileId>`) — so read the store, not localStorage:
+  `__progress.get().progression.globalXp`, `.rewardNumber()`, `.grantedSlots()`,
+  `.get().progression.lastCelebratedLevel`. Snapshot before/after to prove a double-tap grants once, a
+  mis-tap doesn't cost XP, etc. Seed the book with `?rewards=n` to start a run just under a slot.
 - **Force difficulty live**: DEV exposes the store as `window.__progress`.
   `window.__progress.setDifficulty({global:'let'|'normal'|'svaer'})` inside an `--eval` switches the
   level and the current game **regenerates its question at the new level** — the way to headlessly
   verify difficulty-gated content (Læs Ordet option count, Ram Farven target pool, math ranges)
   without the adult menu. Give it ~900ms to re-render before you screenshot/assert.
+
+### A probe fails OPEN, and it looks exactly like a finding
+
+`round-probe.js` decided a round had ended by looking for a `/Se bog/i` button. That button was removed
+three days earlier, so its success flag was permanently false and `sweep.mjs` reported **every game** as
+"round never ended" — 21 routes of real-looking defect, with the harness itself apparently healthy.
+`--selftest` does not catch this: it proves the guards FIRE, not that the thing they look for still
+exists.
+
+- **A probe's success signal must be state the product cannot delete without the probe failing to
+  RUN** — a store value, a `data-` hook — never UI text or a button label. Text is what gets reworded.
+- **When a sweep reports the same failure on every route, suspect the probe first.** A defect that
+  uniform is almost never the app.
+- The same applies to the probe's UNIT (below): a signal that silently stops meaning what it meant is
+  worse than one that breaks.
+
+### One ADVANCE is not always one TASK
+
+The per-family table above is about what a difficulty change moves; this is about what a *completion*
+is. A probe that cycles candidates counts BOARD CHANGES, and on three games several of those make one
+task — so an XP floor of "8 advances ≈ one notional round" reads correct play as broken per-task XP:
+
+| game | one task is | so an advance is |
+|---|---|---|
+| Farvejagt | a whole BOARD (collect every target) | one object landing |
+| Nuancer | a complete light→dark ORDERING | one shade placed |
+| Stav Ordet | a whole WORD | one letter placed |
+
+`sweep.mjs` names these in `ADVANCE_IS_NOT_A_TASK` and drops them to "XP moved at all". **State that as
+a coverage limit when reporting** — on those three, a per-task XP regression has to be caught by the
+unit tests, not the sweep.
 
 ### Sweeping difficulty across EVERY game
 To audit whether the Sværhedsgrad setting reaches all of them, loop the three levels inside ONE
@@ -76,8 +109,9 @@ Two limits to state honestly when reporting:
   `page exceptions` lines before believing a sweep.
 - **Catch ghost audio after navigation** by patching `window.fetch` + `XMLHttpRequest.open` for
   `/api/tts-azure` and timestamping calls, then asserting none fire after the route change.
-- Advance dwell + the echo `await` mean a correct answer takes ~2s+ to advance — size detection
-  windows generously and use a high `--timeout` for full-round drives.
+- The advance dwell means a correct answer takes ~2s+ to advance, and a crossing opens the reward
+  ceremony over the board for ~3.4s more — size detection windows generously, use a high `--timeout`,
+  and poll for `[data-reward-overlay]` rather than assuming a fixed beat.
 
 ### Authoring a long `--eval` (do this before it wastes runs)
 Inline heredocs get mangled by the shell: `${…}` becomes `bad substitution`, `\"` inside a selector is
