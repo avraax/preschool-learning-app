@@ -37,6 +37,90 @@ export function baseURL(): string {
   return 'http://localhost:5173'
 }
 
+export type Tier = 'staging' | 'production'
+
+/**
+ * WHICH BACKEND IS THIS DEPLOYMENT — production, or staging? (Staging PRD W4.)
+ *
+ * Orthogonal to `runtime()`, which answers "dev / preview / production *deployment*". Both tiers have
+ * a production Vercel environment; what separates them is which database is behind it.
+ *
+ * DEFAULTS TO PRODUCTION, and an unrecognised value defaults there too. Same argument as the client's
+ * `BL_TIER` in `src/config/backendTarget.ts`: a process nobody configured must be the safe one, and
+ * "production" is safe here because it is the pairing that the check below will then hold to the
+ * strictest origin list.
+ */
+export function tier(): Tier {
+  return process.env.BL_TIER?.trim() === 'staging' ? 'staging' : 'production'
+}
+
+/**
+ * The origins each tier is allowed to answer on. Two rows, and nothing else is legal.
+ *
+ * Production keeps `preschool-learning-app.vercel.app` because installed shells cannot follow a domain
+ * move (`src/config/apiBase.ts`) — binaries in the field still call it, so it must stay serving.
+ * Staging deliberately has no such fallback: staging binaries are disposable (PRD §9.5).
+ */
+const TIER_ORIGINS: Record<Tier, readonly string[]> = {
+  production: ['https://boernelaering.dk', 'https://preschool-learning-app.vercel.app'],
+  staging: ['https://staging.boernelaering.dk'],
+}
+
+const isLocalOrigin = (url: string): boolean => {
+  try {
+    const h = new URL(url).hostname
+    return h === 'localhost' || h === '127.0.0.1' || h === '::1'
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Pure, so `env.test.ts` can drive every pairing without re-importing the module.
+ *
+ * PREVIEW DEPLOYMENTS ARE EXEMPT, deliberately. A preview's `baseURL()` is a per-deployment
+ * `*.vercel.app` host that no fixed tuple can name, so the check could only ever produce false
+ * failures there — and it would buy nothing anyway, since a preview inherits its own project's
+ * `DATABASE_URL` and `BL_TIER` together and therefore cannot cross the tiers. It is also the same
+ * environment `webauthn()` already stands down in, for a related reason.
+ */
+export function tierMatchesBaseURL(
+  t: Tier = tier(),
+  base: string = baseURL(),
+  rt: Runtime = runtime(),
+): boolean {
+  if (rt === 'preview') return true
+  if (t === 'staging') return TIER_ORIGINS.staging.includes(base) || isLocalOrigin(base)
+  // Localhost counts as production only in DEV. On a real deployment a localhost `BETTER_AUTH_URL` is
+  // a misconfiguration, not a local run, and it must not be waved through.
+  return TIER_ORIGINS.production.includes(base) || (rt === 'dev' && isLocalOrigin(base))
+}
+
+/**
+ * FAIL LOUDLY, AT MODULE INIT, in the same spirit as `isEmailAllowed()` failing closed.
+ *
+ * The failure this prevents is silent by nature: a deployment whose `BL_TIER` and origin disagree is
+ * one where the tier vars were half-applied, and it would serve perfectly well — signing adults in and
+ * writing children's progress into whichever database `DATABASE_URL` happens to name. Nothing in the
+ * app can notice, because every game works offline by design. A dead deployment is a phone call; a
+ * live one writing to the wrong book is a lost Reward Book.
+ *
+ * Note this is deliberately the OPPOSITE choice from `lib/auth.ts`'s Apple provider, which swallows
+ * its init error so a broken Apple key cannot take down every auth route. The difference is blast
+ * radius: a misconfigured Apple leaves the rest of the app correct, whereas a misconfigured tier makes
+ * every write suspect.
+ */
+export function assertTierMatchesBaseURL(): void {
+  if (tierMatchesBaseURL()) return
+  throw new Error(
+    `[env] BL_TIER="${tier()}" does not match baseURL "${baseURL()}" (runtime "${runtime()}"). ` +
+      `Refusing to serve: a half-applied tier would write to the wrong database. ` +
+      `Set BL_TIER and BETTER_AUTH_URL together, then REDEPLOY — env changes never reach a live deployment.`,
+  )
+}
+
+assertTierMatchesBaseURL()
+
 /** Throw loudly at module init rather than fail mysteriously on the first request. */
 export function requireEnv(name: string): string {
   const v = process.env[name]
