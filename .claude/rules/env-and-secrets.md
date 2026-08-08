@@ -28,6 +28,13 @@ grep -oE '^[A-Z0-9_]+=' .env.local | tr -d '=' | sort -u | comm -23 - /tmp/v   #
   deletes anything Vercel doesn't know about. Always pull to a scratch path and copy the one key you
   want across: `vercel env pull /tmp/pulled.env --environment=development`.
 - **`vercel integration add` runs `env pull` by default** → always pass **`--no-env-pull`**.
+- **So does every `vercel blob create-store` / `delete-store`, and there is NO `--no-env-pull` there.**
+  Measured 2026-08-08: a `delete-store` rewrote `.env.local` from the *production* project's
+  *development* env — `BL_TIER`, `AUTH_DEV_BYPASS` and `BUG_REPORT_READ_KEY` gone, and the local DB
+  silently repointed at PRODUCTION's Neon. It also ignores `--non-interactive` and `VERCEL_PROJECT_ID`
+  (it resolves from `.vercel/project.json`). **`cp .env.local` to a scratch path immediately before any
+  `vercel blob` command and `cmp` it after** — the pull is the LAST thing it prints, so a tail-only read
+  of the output looks like a normal success.
 - Before touching `.env.local`, copy it somewhere outside the repo, then afterwards assert every
   pre-existing key survived. Note `grep -oE '^[A-Z_]+='` **misses names containing digits** (e.g. a
   `…_BASE64` suffix) — use `^[A-Z0-9_]+=`.

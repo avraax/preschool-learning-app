@@ -86,7 +86,7 @@ The owner-facing "how do I ship this" version is `docs/releasing.md` — point h
 re-explaining, and keep it true when this section changes.
 
 `com.vraa.earlylearning` / `Børnelæring` (App ID `YMZ44PV8HK`, ASC record `6799119188`) and
-`com.vraa.earlylearning.staging` / `BL Test` (App ID `XU38T75JUS`, ASC record `6799489044`). They are
+`com.vraa.earlylearning.staging` / `BL Staging` (App ID `XU38T75JUS`, ASC record `6799489044`). They are
 **different apps to iOS**: separate profiles, TestFlight tracks, icons — and separate CONTAINERS, which
 is the point. A staging build cannot see, migrate or corrupt the child's real progress.
 
@@ -113,7 +113,7 @@ is the point. A staging build cannot see, migrate or corrupt the child's real pr
   uploads, and internal testers can install from that alone. The flag adds submission to EXTERNAL beta
   review, which requires Beta App Information + Beta App Review contact details on the app record — so
   a workflow can report RED in post-processing after a build that succeeded and is already installable.
-  `ios-staging` deliberately omits it (nobody outside the household installs `BL Test`, and it would put
+  `ios-staging` deliberately omits it (nobody outside the household installs `BL Staging`, and it would put
   a test build in front of an Apple reviewer); `ios-release` keeps it, and `buildTiers.test.ts` pins
   exactly one occurrence.
 - **`bundle-ids enable-capabilities … "Sign In with Apple"` still 409s**, so the staging App ID needed

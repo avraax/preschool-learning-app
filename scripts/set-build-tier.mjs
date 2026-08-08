@@ -26,7 +26,7 @@ export const BUILD_TIERS = {
     bundleId: 'com.vraa.earlylearning.staging',
     // Deliberately not "Børnelæring" — two identical icons on the one iPad is the cost of a separate
     // app, and the name is half of what mitigates it (the badge is the other half).
-    appName: 'BL Test',
+    appName: 'BL Staging',
     apiOrigin: 'https://staging.boernelaering.dk',
   },
 }

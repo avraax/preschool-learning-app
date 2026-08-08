@@ -124,7 +124,7 @@ points to, loaded when you touch matching files.
 - **API endpoints**: the `api/*.ts` Vercel functions are a trust boundary — scoped CORS + origin
   allow-list + per-IP rate limit + no error-detail leaks, via `lib/server-utils.ts` and **mirrored in
   `dev-server.js`**. → `api-endpoints.md`.
-- **Two tiers**: `staging` (local dev + everyday TestFlight, installs as `BL Test`) and
+- **Two tiers**: `staging` (local dev + everyday TestFlight, installs as `BL Staging`) and
   `production`. The badge prints the backend host, **absent exactly on production**; the server throws
   if `BL_TIER` and `baseURL()` disagree. `vercel env pull` overwrites `.env.local`. → `env-and-secrets.md`.
 

@@ -33,7 +33,7 @@ whole reason for the second icon.
 
 | | production | staging |
 |---|---|---|
-| home-screen name | **Børnelæring** | **BL Test** |
+| home-screen name | **Børnelæring** | **BL Staging** |
 | bundle id | `com.vraa.earlylearning` | `com.vraa.earlylearning.staging` |
 | TestFlight track | its own | its own |
 | backend | `boernelaering.dk` | `staging.boernelaering.dk` |

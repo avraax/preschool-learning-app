@@ -103,7 +103,7 @@ test('CI still never auto-submits to the App Store — on EITHER workflow', () =
   assert.ok(!/submit_to_app_store/.test(ci), 'a workflow would submit to the App Store without the owner')
 
   // EXACTLY ONE `submit_to_testflight`, and it is production's. That flag submits to EXTERNAL beta
-  // review; staging deliberately omits it, because nobody outside this household installs `BL Test` and
+  // review; staging deliberately omits it, because nobody outside this household installs `BL Staging` and
   // it would put a test build in front of an Apple reviewer. It also fails post-processing without a
   // Beta App Review contact form the staging record has no reason to carry (measured on the first real
   // staging build — the IPA had already uploaded and installed).

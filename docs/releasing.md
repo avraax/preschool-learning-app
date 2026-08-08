@@ -9,7 +9,7 @@ For the owner, in plain terms. The design record is `.claude/rules/env-and-secre
 |---|---|---|
 | **The website** (`boernelaering.dk`) | `git push origin master` — deploys itself | **Yes.** This is the only accidental path. Pushing *is* releasing. |
 | **The staging website** (`staging.boernelaering.dk`) | `npm run deploy:staging` | No. It has no Git connection, so it never deploys on its own. |
-| **The staging iPad app** (`BL Test`) | Codemagic → `ios-staging` | No. |
+| **The staging iPad app** (`BL Staging`) | Codemagic → `ios-staging` | No. |
 | **The production iPad app** (`Børnelæring`) | Codemagic → `ios-release`, started by hand | No. Nothing triggers it automatically, on purpose. |
 
 **Both iPad builds go through Codemagic.** Same machine, same steps. They differ in exactly three
@@ -27,13 +27,13 @@ So the "Ny version" banner is **switched off inside the App Store app**. It only
 a home-screen shortcut, where a reload genuinely gets new code. In the binary it would show a permanent
 false "there's an update" that tapping could never fix.
 
-This is the main reason `BL Test` exists: you can iterate there as often as you like without spending a
+This is the main reason `BL Staging` exists: you can iterate there as often as you like without spending a
 review on it.
 
 ## The everyday loop
 
 1. Work on `master`. Push. The website updates itself.
-2. Need it on the iPad? Codemagic → `ios-staging` → install `BL Test` from TestFlight.
+2. Need it on the iPad? Codemagic → `ios-staging` → install `BL Staging` from TestFlight.
 3. Play it. Seed and wipe freely (`npm run staging:seed` / `npm run staging:wipe`) — nothing here can
    reach the real Reward Book.
 4. Happy? Codemagic → `ios-release`, same commit. Install it over `Børnelæring` from the production
@@ -44,7 +44,7 @@ review on it.
 
 Three ways, in increasing effort:
 
-1. The icon's name — `Børnelæring` or `BL Test`.
+1. The icon's name — `Børnelæring` or `BL Staging`.
 2. The pill in the top-left corner. It prints the backend the build actually calls, so it is **absent
    only on production**. A mislabelled build is impossible.
 3. "Til de voksne" → the version chip at the bottom of the menu, which names the backend on every tier.
@@ -59,7 +59,7 @@ a staging build without opening Codemagic. It needs tag webhook events turned on
 ## Two things worth knowing before you are surprised by them
 
 - **A passkey does not work across the two apps.** It is bound to the domain, so enrolling Face ID in
-  `BL Test` does nothing for `Børnelæring`. Google sign-in works in both.
+  `BL Staging` does nothing for `Børnelæring`. Google sign-in works in both.
 - **The installed app keeps its loaded code until you swipe it away** in the app switcher. So right
   after installing a build, reopening the icon can still run the old one. Check the version chip before
   concluding a fix didn't work.

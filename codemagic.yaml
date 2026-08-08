@@ -140,7 +140,7 @@ workflows:
         # The build still UPLOADS to App Store Connect and internal testers still get it — that is the
         # publishing block above, not this flag. What this flag adds is submission to EXTERNAL beta
         # review, which for a staging app is both pointless and slightly bad: nobody outside this
-        # household will ever install `BL Test`, and it would put a deliberately-broken test build in
+        # household will ever install `BL Staging`, and it would put a deliberately-broken test build in
         # front of an Apple reviewer.
         #
         # It also FAILED the first real staging build in post-processing: external review requires Beta
