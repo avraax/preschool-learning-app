@@ -153,3 +153,45 @@ the probe failing to RUN, and a failure that uniform is almost never the app.
 **Budget after this session's guardrail edits:** ALWAYS LOADED 16,485 / 17,000 · ONE COMPONENT EDIT
 47,980 / 48,000. W8's rule rewrites pushed both over and were trimmed back in the same session; the
 debrief items landed in skill reference files, which are outside both enforced numbers.
+
+---
+
+## 2026-08-08 — Staging environment PRD W1–W9 (data point, not an audit)
+
+Shipped `staging` alongside `production`: a compile-time backend constant, a corner badge that prints
+the backend HOST, a server-side tier cross-check that throws, marker-gated seed/wipe, two Codemagic
+workflows. W9 updated `env-and-secrets.md`, `ios-shell.md`, `docs/device-testing.md` and CLAUDE.md as
+part of the PRD, so the debrief itself had little left to capture — the pattern the previous entry
+predicted, working as intended.
+
+**Three guardrails were WRONG and were corrected**, all in `env-and-secrets.md`, all measured:
+
+- "`vercel integration add <name> --help` lists that integration's `-m` metadata keys." It does not on
+  CLI 54.12.2 — it prints the generic help. The keys come from the ERROR when you pass a wrong value.
+- The rule implied a region could be chosen. It cannot be prompted for: the command provisions
+  **silently in `us-east-1`**, which is how a staging database landed in Virginia against a Frankfurt
+  production and a privacy policy claiming EU residency. Cost a delete-and-recreate.
+- Nothing recorded that a **sensitive** Vercel variable reads back as `""`, so a round-trip cannot be
+  verified by pulling. Proven by A/B on one variable, not assumed.
+
+**The PRD's own spec was wrong once**, and the measurement won: W7 asked `verify-build-tier.mjs` to
+assert "the other tier's origin is absent from `dist/`", which can never hold because `backendTarget.ts`
+declares the production host as the constant the badge compares against. The shipped rule is asymmetric
+and was proven in both directions by building each tier and verifying it as the other.
+
+**41 re-break mutations across the PRD, each flipping its own test. Three guards were VACUOUS**, all one
+shape — the forbidden token appearing in the guarded file's own user-facing string, where
+comment-stripping does not help (`--yes` inside "Re-run with --yes", `taskkill` inside "Never taskkill
+node"). Added to `re-break/SKILL.md`. **Two failures were the MUTATION's, not the test's**, which the
+skill already warns about and which cost one wrong "vacuous" verdict before being caught.
+
+**One rule was missing its inverse.** `auth.md` recorded that what sits ABOVE `AuthGate` runs before
+login; it did not record that what sits BELOW it does not EXIST before login. The backend badge shipped
+inside `<App />` and was therefore invisible on the lock screen. Added.
+
+**Budget after this session's guardrail edits:** CLAUDE.md 11,993 / 12,000 · ALWAYS LOADED
+16,489 / 17,000 · ONE COMPONENT EDIT 47,984 / 48,000. CLAUDE.md had **2 bytes** of headroom before the
+new tier bullet; it was paid for by deleting the Update banner bullet (fully carried by
+`adult-surface.md`) and trimming three others. `working-in-this-tree.md` sits at 4,496 / 4,500, so two
+candidate items were cut rather than forced in — both files already explain themselves at the point of
+use.

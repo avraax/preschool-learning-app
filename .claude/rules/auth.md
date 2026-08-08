@@ -133,6 +133,12 @@ table, and our five (`childProfile`, `profileProgress`, `familyPin`, `pinAttempt
   `ProfileGate` therefore call `musicClient.setGateBlocking(...)` — the gate is the only thing that
   knows. Anything else a pre-gate provider can kick off (audio, sync, timers) needs the same shape;
   `authUiOpen` covers the *overlay* question, not this one.
+- **And the inverse: what sits BELOW the gate does not EXIST before login.** `AuthGate` renders
+  `LockScreen` *instead of* its children, so anything mounted inside `<App />` is absent from the one
+  screen an adult sees while signing in. The backend badge shipped that way — invisible at exactly the
+  moment you most want to know which backend you are handing credentials to — and moved to `main.tsx`,
+  above the gate (guarded in `backendTarget.test.ts`). Guest auto-play hides this: most cold launches
+  render the app, so the gap only appears after an explicit sign-out.
 - **"No children" and "we haven't asked yet" are different states.** `AccountState.rosterSettled` is true
   only once a roster refresh has ANSWERED (either way), and `contexts/profileGatePolicy.ts` — pure, like
   `authGatePolicy` — is what decides between nothing / the picker / the mandatory create dialog. Reading

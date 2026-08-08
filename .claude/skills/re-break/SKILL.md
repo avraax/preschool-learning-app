@@ -109,6 +109,15 @@ the *generator* for another. A table-only break can pass while the code ignores 
   `badge={`, so the guard stayed green and read as vacuous when it was merely loose. Require the real
   delimiter (`\sbadge=`). Corollary: when a break appears to prove vacuity, first check the mutated text
   doesn't still match.
+- **THE FORBIDDEN TOKEN IS IN THE FILE'S OWN USER-FACING STRING** — and comment-stripping does not save
+  you, because it is not a comment. Three guards in one session: `assert.match(wipe, /--yes/)` was
+  satisfied by the script's *"Re-run with --yes to proceed."* message, so it stayed green with the
+  confirmation deleted; a guard forbidding `taskkill` anywhere went red on the warning *"Never taskkill
+  node"*; and `const violations = []` kept the identifier at the right offset while validating nothing.
+  A file that warns about X, or offers X in its help text, contains X. **Assert the STATEMENT, not the
+  token**: `/if \(!process\.argv\.includes\('--yes'\)\)/`, `/const violations = progressInvariantViolations\(/`,
+  or — for "never do X" — the shape that would actually do it (`/(spawn|exec)\s*\([^)]*taskkill/`),
+  never the word.
 - **A lazy `[\s\S]*?` escapes the block you meant to guard.** `/registerHintWrong\(…\)\) \{[\s\S]*?speak\(/`
   was meant to prove the line is spoken *inside* the hint branch — but the lazy match happily crosses the
   branch's closing brace, so moving the speak OUT to fire on every wrong answer stayed green. A regex
