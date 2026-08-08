@@ -82,6 +82,9 @@ all of which had been proposed first.
 
 ## TWO apps on the iPad, two workflows, one signing history (staging PRD W7)
 
+The owner-facing "how do I ship this" version is `docs/releasing.md` — point him there rather than
+re-explaining, and keep it true when this section changes.
+
 `com.vraa.earlylearning` / `Børnelæring` (App ID `YMZ44PV8HK`, ASC record `6799119188`) and
 `com.vraa.earlylearning.staging` / `BL Test` (App ID `XU38T75JUS`, ASC record `6799489044`). They are
 **different apps to iOS**: separate profiles, TestFlight tracks, icons — and separate CONTAINERS, which
