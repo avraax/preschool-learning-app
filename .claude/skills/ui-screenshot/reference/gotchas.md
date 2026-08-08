@@ -5,6 +5,17 @@ Built-in behaviours worth knowing before you blame the app, plus verifying a bug
 Back to `../SKILL.md`.
 
 ## Gotchas (built-in, but know them)
+- **A long-lived dev server can serve a module graph that no longer exists, and reloading cannot fix
+  it.** If `node_modules/.vite` is wiped while Vite is running, the process keeps handing the browser
+  `?v=<old-hash>` URLs for optimized deps that are gone — `504 (Outdated Optimize Dep)` in the network
+  tab, surfacing as `Failed to fetch dynamically imported module` on whichever route reaches the dep
+  first (here Bogstav Quiz, via `@dnd-kit`). It never re-optimises on its own, so the page looks
+  broken while `npm run build` is perfectly green. **Restart the process, not the tab.** Diagnose by
+  crawling the graph for a non-200 rather than reading the entry module, which itself returns 200.
+- **Restart `npm run dev:api` after editing anything under `lib/`** — a stale instance 404s every auth
+  route while its banner looks healthy. And it is `npm run dev:api`, never a bare
+  `node --env-file=.env.local dev-server.js`: without the `--import ./scripts/js-to-ts-resolve.mjs`
+  hook the `.js` specifiers in `lib/` don't resolve and it dies on `ERR_MODULE_NOT_FOUND lib/db.js`.
 - **A screenshot cannot prove a surface is on top — hit-test it.** An overlay that renders UNDERNEATH
   another is live and interactive but simply not drawn, so the picture looks perfectly correct and every
   `--wait-for`/`--measure` still passes (the element exists and has a rect). Assert

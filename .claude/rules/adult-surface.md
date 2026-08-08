@@ -56,6 +56,27 @@ resurrect it (`.claude/rules/auth.md`).
 - **Auth surfaces are deliberately NOT re-skinned** — `PinSetupDialog`, `CreateProfileDialog` and the
   account-deletion `PinPad` render inside `<AppSkin>`, which restores the app theme within the adult tree.
 
+## The account offer: lead with what is true for every family
+
+Signing in is offered only here, behind the parental gate — nothing adult-directed goes in front of it
+(Kids Guideline 1.3), so a Duolingo-style timed prompt during play is **not available to us**.
+
+- **Outcomes, not features.** Sync, multiple children and the microphone game are each conditional on
+  something a new user may not have; one child on one iPad — the median install — matched none of the
+  three, so the screen said nothing to the person reading it. Every row is title + hint, and the hint
+  carries the outcome.
+- **"Bogen er sikret" leads**, because it is the only line true for everyone: a guest book exists on
+  that iPad alone and a reset destroys it. Say the progress is **uncopied**, never *unsaved* — it is
+  saved, and the distinction is the whole lever.
+- **The offer is progress-aware** (`rewardNumber()` in the rail row), which is the endowed-progress
+  effect pulled in the one place the constraint allows. Never `globalLevel()`, never as a distance.
+- **One trust line at the CTA** — free, no ads, no tracking, no mail. Cost and data handling are the
+  dominant parental objection for a children's app, and all four clauses are load-bearing claims: if
+  any stops being true, the line goes first.
+- **Say the price before the work.** "Tilføj et barn" used to let a guest pick an avatar and type a
+  name before `createProfile` refused; it now states "Kræver en konto" and routes to Konto. A pane asks
+  `AdultSettings` to switch via a `goToPane` prop — `select()` owns the compact push and `lastPane`.
+
 ## Bug reporting
 
 `diagnosticsBuffer` (`src/services/diagnosticsBuffer.ts`, installed as the FIRST import in `main.tsx`)

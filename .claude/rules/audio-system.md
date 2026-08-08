@@ -139,6 +139,14 @@ sprite), re-encoded with `node scripts/transcode-sfx.mjs`, into `public/sounds/u
   objects). `audit:check` reports clean anyway, because it only asks whether every *current* clip is
   signed off. So a stale record is not a bug and not evidence your change went wrong — don't chase them
   mid-task.
+- **A narration group with no bucket in the `/audit` harness takes the whole route down, and
+  `audit:approve-all` hides it.** `AuditHarness` does `out[clip.group].push(clip)` inside a `useMemo`,
+  so an unknown group is `undefined.push` during render → the error boundary. It has happened twice
+  (`levelup`; then `math` + `ordleg`, undetected for six days) because the CLI sign-off path reads
+  `collectNarrationClips()` directly and never builds a bucket — the ledger keeps reporting all clips
+  signed off while the only surface that can PLAY one is a crash screen. `auditClips.test.ts` now
+  fails the build on it; **adding a group to `shared-narration-clips.js` means adding it to
+  `AuditGroup` + `GROUP_ORDER` + `GROUP_LABELS`.**
 - **Editing `public/da-DK.pls` alone changes NOTHING you can hear.** The cache key records the lexicon
   as a boolean (`lex…` via `shared-tts-key.js`), not a content hash, and prebake reuses any existing
   file on disk — so a prebaked clip keeps its old pronunciation until you DELETE its mp3 + manifest

@@ -120,7 +120,7 @@ points to, loaded when you touch matching files.
   use the `/debug-report` skill. → `adult-surface.md`.
 - **Update banner**: a newer live build shows a **dismissible** pill; applying it is a PIN-gated
   adult-menu item, never a child-tappable reload.
-- **Accounts / auth**: one adult account (Google OIDC + passkey) with N child profiles and local-first
+- **Accounts / auth**: one adult account (Google or Apple OIDC + passkey) with N child profiles and local-first
   progress sync. **Guest play needs no account** — `AuthGate` gates sync, not play. `/api/tts-azure` +
   `/api/stt` need a 15-minute access JWT; `?nogate=1` bypasses both gates in DEV. → `auth.md`.
 - **API endpoints**: the `api/*.ts` Vercel functions are a trust boundary — scoped CORS + origin

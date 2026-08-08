@@ -51,7 +51,7 @@ the UI would make the answer more correct, use it. Skip it for pure logic/backen
 1. Dev servers running **in Windows PowerShell, not WSL** (WSL → 502 on /api; memory
    `project_dev-server-windows-not-wsl`). Start both in the background and confirm
    `curl http://127.0.0.1:5173/` → 200:
-   - API:  `node --env-file=.env.local dev-server.js`            (port 3001)
+   - API:  `npm run dev:api`                                     (port 3001)
    - Vite: `node node_modules/vite/bin/vite.js --host 127.0.0.1` (port 5173)
    Vite HMR picks up source edits — re-run the driver after a change without rebuilding.
 2. **The app is auth-gated.** Add `?nogate=1` to reach any screen (it implies no-auth too). It also

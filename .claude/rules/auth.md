@@ -180,6 +180,35 @@ table, and our five (`childProfile`, `profileProgress`, `familyPin`, `pinAttempt
   `node --env-file=.env.local scripts/auth-probe-claim.mjs`, which parks the signed shape a real
   callback produces — seeding a RAW token is precisely how this hid behind a green test.
 
+## Sign in with Apple — required, and shaped differently from Google
+
+**App Store Guideline 4.8** wants a second login option collecting no more than name + email and
+letting the address stay private, whenever a third-party service sets up the primary account.
+**Passkeys do not satisfy it** — they can only unlock an account that already exists — so Google-only
+was a submission risk *and* a dead end for an adult without a Google account. Apple rides the same
+cookie-free flow; only these differ:
+
+- **Apple POSTs.** `response_mode=form_post` is mandatory once any scope is requested, so it gets its
+  own `method: 'POST'` callback path (register that exact URL in the developer portal). Everything
+  after the code — state lookup, replay refusal, pre-flight state invalidation, exchange,
+  `signInSocial({ idToken })`, parking — is shared in `completeOauthCallback`, and the **provider is
+  read off the stored flow row, never off the request**, so a caller can't choose the token endpoint.
+- **The client secret is a JWT we sign** (`lib/apple-client-secret.ts`), not a stored string, and it
+  expires. `crypto.sign` defaults to **DER**, which is a valid ECDSA signature and an invalid JWS —
+  `dsaEncoding: 'ieee-p1363'` is what makes it a 64-byte `r‖s`. `sub` is the **Services ID**, `iss` the
+  Team ID. Every one of those mistakes returns the same `invalid_client`, which reads like a wrong key.
+- **`appleUsable()` is the single gate** — configured *and* the key actually signs. `apple().enabled`
+  only means four env vars are non-empty; a malformed `.p8` passes it and dies at the exchange with
+  the adult blaming their Apple ID. The provider config is also built in a try/catch at module init,
+  because `createPrivateKey` throwing there would take down **every** auth route, not just Apple.
+- **Hide My Email** mints an `@privaterelay.appleid.com` address, which `AUTH_ALLOWED_EMAILS` refuses
+  (it fails closed). Correct, and worth knowing before you read it as a bug.
+
+**`/family/status` cannot answer "which sign-up buttons exist"** — it is session-gated, and the adult
+who needs that answer has no session. Gating the Apple button on `info.methods` hid it on the only two
+surfaces that create an account. The unauthenticated **`/family/providers`** + `signUpProviders.ts`
+is that answer, and it **fails toward `['google']`**: a missing button, never one that cannot work.
+
 ## Guest play (no account), and the effect-order trap it exposed
 
 App Store Guideline 5.1.1(v) requires the app to open playable without a login, so `authGatePolicy` has

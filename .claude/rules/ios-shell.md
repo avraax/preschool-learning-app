@@ -5,6 +5,7 @@ paths:
   - "capacitor.config.ts"
   - "src/config/apiBase.ts"
   - "src/config/runtimeTarget.ts"
+  - "src/services/shellBrowser.ts"
 ---
 
 # The iOS shell & App Store tooling
@@ -12,6 +13,23 @@ paths:
 Design record for the native shell is `tmp-prd-app-store-ios.md` (§3.1 bundling, §3.9 the native
 project, §4.0 current state). This file is the **tooling**: how to find out what Apple actually thinks,
 from a Windows machine, without a build and without asking the owner to screenshot a dashboard.
+
+## A Capacitor plugin proxy is a THENABLE — never return one from an `async` function
+
+`registerPlugin` returns a `Proxy` whose `get` trap answers **every** property with a method wrapper,
+`then` included (`@capacitor/core` special-cases `$$typeof` and `toJSON` to dodge this class of bug,
+and not `then`). So an `async` function that returns the plugin makes the promise machinery call
+`Browser.then(resolve, reject)` to assimilate it — and that wrapper ignores both callbacks.
+
+**The outer promise then never settles.** Nothing throws, so a `try/catch` around the call sees
+nothing; the flow simply stops. Report BV9DJ: the shell's "Log ind med Google" disabled its button and
+sat there forever, and the only reason a report existed at all is that the wrapper's own promise
+rejected unheld. Box the plugin (`{ plugin }`) so assimilation is structurally impossible —
+`shellBrowser.ts` shows the shape, and `shellBrowser.test.ts` asserts a bare proxy really does hang.
+
+Generalises: **a promise that never settles is invisible to every error path there is**, and this is
+the second one here after the J62KA `AudioContext.resume()` hang. When a UI is stuck with no error,
+suspect an unsettled await before suspecting a thrown one.
 
 ## `app-store-connect` runs on WINDOWS — its own docs say otherwise, and they are wrong
 
