@@ -208,8 +208,10 @@ the current icon is perfectly acceptable.
 Twelve files, `<slot>-<n>-<name>.png`. **Verified programmatically before upload: exact pixel size, PNG,
 3 channels, no alpha** — `ipad-*` are 2732×2048 and `iphone-*` are 2868×1320, all landscape.
 
-**Shot 6 was re-taken on 2026-08-07** for the adult-login-visibility work, which added a guest-only
-"Log ind" row above the rail list and `Ikke logget ind` under Konto. Only `ipad-6` changes visibly —
+**Shot 6 was re-taken on 2026-08-07, and again on 2026-08-08** — the second time because the "Log ind"
+row's subtitle became progress-aware, so it now reads "Gem barnets 12 klistermærker" rather than a
+feature list. It is captured at `?rewards=12` for that reason: at 0 the row shows the generic line and
+the screenshot would undersell the offer. Only `ipad-6` changes visibly —
 the iPhone slot is compact, so the pushed Læring pane covers the rail entirely — but both were re-shot
 so the pair stays one capture session. Two traps that cost a run each:
 

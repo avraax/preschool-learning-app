@@ -44,7 +44,8 @@ import { useAuthContext } from '../../../contexts/AuthContext'
 import { useSyncStatus } from '../../../hooks/useSyncStatus'
 import { authStore } from '../../../services/authStore'
 import { progressSync } from '../../../services/progressSync'
-import { startGoogleSignIn } from '../../../services/authSignIn'
+import { startSocialSignIn, type SignInProvider } from '../../../services/authSignIn'
+import { useSignUpProviders } from '../../../services/signUpProviders'
 import { profileStore } from '../../../services/profileStore'
 import {
   fetchPasskeyRegisterOptions,
@@ -129,6 +130,7 @@ export interface KontoPaneProps {
 const KontoPane: React.FC<KontoPaneProps> = ({ closeAll }) => {
   const auth = useAuthContext()
   const status = useSyncStatus()
+  const signUpProviders = useSignUpProviders()
   /** No account at all (A1) — this pane has a different job entirely. See the branch below. */
   const guest = auth?.phase === 'guest'
 
@@ -145,6 +147,11 @@ const KontoPane: React.FC<KontoPaneProps> = ({ closeAll }) => {
   const [deleteAccountPin, setDeleteAccountPin] = useState(false)
 
   const webauthnEnabled = auth?.info?.webauthnEnabled === true
+  /**
+   * From the UNAUTHENTICATED providers endpoint, not `auth.info.methods` — a guest has no session,
+   * so `info` is null here and the Apple button would never render on the one pane that offers it.
+   */
+  const appleAvailable = signUpProviders.includes('apple')
 
   const loadPasskeys = useCallback(async () => {
     const token = authStore.sessionToken()
@@ -242,11 +249,11 @@ const KontoPane: React.FC<KontoPaneProps> = ({ closeAll }) => {
   // It does NOT cover a HANG (report BV9DJ: the shell's `startGoogleSignIn` never settled), and no
   // timeout can — on the web the call deliberately never resolves, because `location.assign` has
   // navigated away by then. A promise that never settles has to be fixed where it hangs.
-  const onGuestSignIn = useCallback(async () => {
+  const onGuestSignIn = useCallback(async (provider: SignInProvider) => {
     setMessage(null)
     setBusy(true)
     try {
-      const result = await startGoogleSignIn()
+      const result = await startSocialSignIn(provider)
       if (!result.ok) setMessage(result.message ?? 'Login mislykkedes. Prøv igen.')
     } catch {
       setMessage('Login mislykkedes. Prøv igen.')
@@ -359,15 +366,33 @@ const KontoPane: React.FC<KontoPaneProps> = ({ closeAll }) => {
               hint={'"Sig et Ord" kræver en konto.'}
             />
           </Stack>
-          <Button
-            variant="contained"
-            onClick={() => void onGuestSignIn()}
-            disabled={busy}
-            aria-label="Log ind med Google"
-            sx={{ mt: 2, minHeight: 44 }}
-          >
-            Log ind med Google
-          </Button>
+          <Stack direction="row" spacing={1} sx={{ mt: 2, flexWrap: 'wrap', gap: 1 }}>
+            <Button
+              variant="contained"
+              onClick={() => void onGuestSignIn('google')}
+              disabled={busy}
+              aria-label="Log ind med Google"
+              sx={{ minHeight: 44 }}
+            >
+              Log ind med Google
+            </Button>
+            {/* Apple appears only when the server says it is configured (`/family/status` methods).
+                Required by App Store Guideline 4.8, which wants a second option collecting no more
+                than name + email and allowing the address to be kept private, whenever a third-party
+                service sets up the primary account. Passkeys do NOT satisfy it — they can only unlock
+                an account that already exists. */}
+            {appleAvailable && (
+              <Button
+                variant="outlined"
+                onClick={() => void onGuestSignIn('apple')}
+                disabled={busy}
+                aria-label="Log ind med Apple"
+                sx={{ minHeight: 44 }}
+              >
+                Log ind med Apple
+              </Button>
+            )}
+          </Stack>
           {message && (
             <Typography
               role="status"

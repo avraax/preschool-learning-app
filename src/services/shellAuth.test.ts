@@ -49,7 +49,15 @@ test('a system browser that will not open fails LOUDLY, in Danish', () => {
   // give-up). A shell build whose Browser plugin is missing must not leave the adult on a spinner.
   const code = codeOf('services/googleSignIn.ts')
   assert.match(code, /shell-browser-unavailable/, 'the open-failure is not reported')
-  assert.match(code, /Kunne ikke åbne Google-login/, 'no Danish message on the open-failure')
+  // Anchored to the BRANCH, not to a bare string. The message became provider-aware when Sign in with
+  // Apple landed (`Kunne ikke åbne ${providerLabel}-login`), and a guard pinned to the old literal
+  // `Kunne ikke åbne Google-login` failed on a change that kept every property it exists to protect.
+  // Tying the Danish to `shell-browser-unavailable` is what actually proves this branch still speaks.
+  assert.match(
+    code,
+    /shell-browser-unavailable[\s\S]{0,200}Kunne ikke åbne/,
+    'no Danish message on the open-failure',
+  )
   assert.match(code, /clearPendingFlow\(\)[\s\S]{0,200}shell-browser-unavailable/, 'the flow is not cleared')
 })
 

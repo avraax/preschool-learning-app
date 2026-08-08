@@ -66,15 +66,32 @@ export function clearPendingFlow(): void {
  * STORAGE CONTEXT before navigating, which is the entire point of the design.
  */
 export async function startGoogleSignIn(): Promise<SignInResult> {
-  const impl = googleImpl
-  if (!impl) {
-    return { ok: false, message: 'Google-login er ikke klar på denne enhed endnu.' }
-  }
-  return impl()
+  return startSocialSignIn('google')
 }
 
-let googleImpl: (() => Promise<SignInResult>) | null = null
-export function registerGoogleSignIn(fn: (() => Promise<SignInResult>) | null): void {
+/**
+ * The two providers that can CREATE an account. Passkeys are deliberately not here — they can only
+ * unlock an existing one, which is also why they do not satisfy App Store Guideline 4.8.
+ */
+export type SignInProvider = 'google' | 'apple'
+
+/**
+ * Both providers ride the SAME cookie-free PKCE-style leg: the client generates the `flowId` in its
+ * own storage context, the server parks a session token against it, and the client claims with the
+ * value only it holds. Only the authorize URL and the token endpoint differ, and both live server-side.
+ */
+export async function startSocialSignIn(provider: SignInProvider): Promise<SignInResult> {
+  const impl = googleImpl
+  if (!impl) {
+    return { ok: false, message: 'Login er ikke klar på denne enhed endnu.' }
+  }
+  return impl(provider)
+}
+
+let googleImpl: ((provider: SignInProvider) => Promise<SignInResult>) | null = null
+export function registerGoogleSignIn(
+  fn: ((provider: SignInProvider) => Promise<SignInResult>) | null,
+): void {
   googleImpl = fn
 }
 

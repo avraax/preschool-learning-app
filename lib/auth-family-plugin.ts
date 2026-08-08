@@ -11,7 +11,8 @@ import { createAuthEndpoint, sessionMiddleware, APIError } from 'better-auth/api
 import type { BetterAuthPlugin } from 'better-auth'
 import * as z from 'zod'
 import { signAccessToken } from './access-token.js'
-import { baseURL, requireEnv, webauthn } from './env.js'
+import { apple, baseURL, requireEnv, webauthn } from './env.js'
+import { appleClientSecret, appleUsable } from './apple-client-secret.js'
 import { hashPin, verifyPin } from './pin-hash.js'
 import {
   attemptsLeft,
@@ -195,6 +196,18 @@ const OAUTH_CLAIM_TTL_MS = 5 * 60 * 1000
 const sha256 = (v: string): string => createHash('sha256').update(v, 'utf8').digest('hex')
 const b64url = (n: number): string => randomBytes(n).toString('base64url')
 
+/**
+ * Apple gets its OWN callback path, and the reason is structural rather than cosmetic: once any scope
+ * is requested, Apple's `response_mode` must be `form_post`, so it answers with an
+ * `application/x-www-form-urlencoded` **POST** instead of a redirect with a query string. The Google
+ * callback is declared `method: 'GET'` and cannot serve both. Register this exact string in the Apple
+ * developer portal's Return URLs.
+ */
+const APPLE_CALLBACK_PATH = '/api/auth/family/oauth/callback/apple'
+
+/** The two providers that can CREATE an account. Passkeys can only unlock an existing one. */
+export type OauthProvider = 'google' | 'apple'
+
 interface OauthFlowRow {
   id: string
   flowIdHash: string
@@ -336,6 +349,23 @@ export const familyPlugin = (): BetterAuthPlugin => ({
     ),
 
     /**
+     * Which providers can CREATE an account here — and deliberately UNAUTHENTICATED.
+     *
+     * `/family/status` below is session-gated, which is correct for it (passkey count, PIN state) and
+     * useless for this question: the adult who needs to know which sign-up buttons exist is precisely
+     * the one with no session. Keying the Apple button off `status.methods` hid it on the only two
+     * surfaces that offer sign-up — the guest Konto pane and the lock screen.
+     *
+     * Leaks nothing: "this deployment has Apple configured" is visible from the button itself. No
+     * secrets, no email, no per-user state, so no session and no rate-limit rule beyond the default.
+     */
+    familyProviders: createAuthEndpoint(
+      '/family/providers',
+      { method: 'GET' },
+      async (ctx) => ctx.json({ providers: ['google', ...(appleUsable() ? ['apple'] : [])] }),
+    ),
+
+    /**
      * What this device may offer the adult. No secrets, and deliberately no email — the client only
      * needs to know which buttons to render.
      */
@@ -360,7 +390,13 @@ export const familyPlugin = (): BetterAuthPlugin => ({
           .catch(() => 0)
 
         const wa = webauthn()
-        const methods = ['google', ...(wa.enabled ? ['passkey'] : [])]
+        // `apple` appears only once all four APPLE_* env vars are set — a half-configured Apple would
+        // render a button that dies at the token exchange, and the adult would blame their Apple ID.
+        const methods = [
+          'google',
+          ...(appleUsable() ? ['apple'] : []),
+          ...(wa.enabled ? ['passkey'] : []),
+        ]
 
         return ctx.json({
           hasPin: !!pin,
@@ -571,7 +607,15 @@ export const familyPlugin = (): BetterAuthPlugin => ({
      */
     familyOauthStart: createAuthEndpoint(
       '/family/oauth/start',
-      { method: 'POST', body: z.object({ flowId: z.string().min(20).max(200) }) },
+      {
+        method: 'POST',
+        body: z.object({
+          flowId: z.string().min(20).max(200),
+          // Optional + defaulted so an older client (or a shell binary mid-rollout) keeps working
+          // unchanged — it simply never asks for Apple.
+          provider: z.enum(['google', 'apple']).optional(),
+        }),
+      },
       async (ctx) => {
         const adapter = ctx.context.adapter as unknown as Adapter & {
           create: (x: unknown) => Promise<unknown>
@@ -591,11 +635,19 @@ export const familyPlugin = (): BetterAuthPlugin => ({
         const codeVerifier = b64url(32)
         const challenge = createHash('sha256').update(codeVerifier).digest('base64url')
 
+        const provider = ctx.body.provider ?? 'google'
+        if (provider === 'apple' && !appleUsable()) {
+          throw new APIError('BAD_REQUEST', {
+            message: 'Apple-login er ikke sat op på denne server.',
+            code: 'apple_not_configured',
+          })
+        }
+
         await adapter.create({
           model: 'oauthFlow',
           data: {
             flowIdHash: sha256(ctx.body.flowId),
-            provider: 'google',
+            provider,
             state,
             codeVerifier,
             sessionToken: null,
@@ -604,6 +656,24 @@ export const familyPlugin = (): BetterAuthPlugin => ({
             claimedAt: null,
           },
         })
+
+        if (provider === 'apple') {
+          const url = new URL('https://appleid.apple.com/auth/authorize')
+          url.searchParams.set('response_type', 'code')
+          url.searchParams.set('client_id', apple().clientId)
+          // A SEPARATE redirect URI, because Apple's response is a POST — see the callback below.
+          url.searchParams.set('redirect_uri', `${baseURL()}${APPLE_CALLBACK_PATH}`)
+          // `email` only. `name` would buy a display name we never show (the CHILD's name is what the
+          // app uses, and that is typed locally), and 4.8 is about collecting LESS.
+          url.searchParams.set('scope', 'email')
+          url.searchParams.set('state', state)
+          // MANDATORY once any scope is requested: Apple then POSTs the result as a form instead of
+          // redirecting with a query string. This is the whole reason Apple needs its own callback.
+          url.searchParams.set('response_mode', 'form_post')
+          // NO PKCE: Apple's authorize endpoint does not document `code_challenge`, and the exchange
+          // is already authenticated by the signed client secret. Sending it would be cargo cult.
+          return ctx.json({ authorizeUrl: url.toString() })
+        }
 
         const url = new URL('https://accounts.google.com/o/oauth2/v2/auth')
         url.searchParams.set('response_type', 'code')
@@ -643,109 +713,47 @@ export const familyPlugin = (): BetterAuthPlugin => ({
         const adapter = ctx.context.adapter as unknown as Adapter & {
           update: (x: unknown) => Promise<unknown>
         }
-        const now = Date.now()
-
-        if (ctx.query?.error || !ctx.query?.code || !ctx.query?.state) {
-          return htmlResponse(failureHtml('Login blev afbrudt.'), 400)
-        }
-
-        const row = await adapter.findOne<OauthFlowRow>({
-          model: 'oauthFlow',
-          where: [{ field: 'state', value: ctx.query.state }],
+        return completeOauthCallback(adapter, {
+          code: ctx.query?.code,
+          state: ctx.query?.state,
+          error: ctx.query?.error,
         })
-        if (!row || new Date(row.expiresAt).getTime() < now) {
-          return htmlResponse(failureHtml('Login-linket er udløbet. Prøv igen i appen.'), 410)
-        }
-        // Single-use: a replayed callback finds the token already parked and is refused. (One adult,
-        // one browser at family scale, so a guarded read is sufficient here.)
-        if (row.sessionToken) {
-          return htmlResponse(failureHtml('Dette login er allerede brugt.'), 410)
-        }
-        // Invalidate the state BEFORE the network hop, so a double-submit can't exchange twice.
-        await adapter.update({
-          model: 'oauthFlow',
-          where: [{ field: 'id', value: row.id }],
-          update: { state: `used:${b64url(16)}` },
-        })
-
-        let idToken: string | undefined
-        try {
-          const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
-            method: 'POST',
-            headers: { 'content-type': 'application/x-www-form-urlencoded' },
-            body: new URLSearchParams({
-              code: ctx.query.code,
-              client_id: requireEnv('GOOGLE_CLIENT_ID'),
-              client_secret: requireEnv('GOOGLE_CLIENT_SECRET'),
-              redirect_uri: `${baseURL()}/api/auth/family/oauth/callback`,
-              grant_type: 'authorization_code',
-              code_verifier: row.codeVerifier,
-            }),
-          })
-          const body = (await tokenRes.json()) as {
-            id_token?: string
-            error?: string
-          }
-          if (!tokenRes.ok || !body.id_token) {
-            // Deliberately no detail in the PAGE — Google's error text can echo request material. The
-            // detail goes into the report instead, which is read-gated; the page shows only its code.
-            console.error('[auth] google token exchange failed', tokenRes.status, body.error)
-            const code = await reportOauthFailure('token-exchange-rejected', {
-              status: tokenRes.status,
-              googleError: body.error,
-            })
-            return htmlResponse(failureHtml('Login mislykkedes. Prøv igen i appen.', code), 400)
-          }
-          // The access token Google also returns here is DELIBERATELY DROPPED — see
-          // `signInWithIdToken` below. Not read, not stored, not forwarded.
-          idToken = body.id_token
-        } catch (e) {
-          console.error('[auth] google token exchange threw', e)
-          const code = await reportOauthFailure('token-exchange-threw', {
-            message: e instanceof Error ? `${e.name}: ${e.message}` : String(e),
-          })
-          return htmlResponse(failureHtml('Login mislykkedes. Prøv igen i appen.', code), 500)
-        }
-
-        let sessionToken: string | null
-        try {
-          sessionToken = await signInWithIdToken(idToken)
-        } catch (e) {
-          // The allowlist hook (§4.8) throws FORBIDDEN here for a non-permitted address — the single
-          // most important refusal in the whole design, since nothing else stops a stranger from
-          // legitimately burning Azure and Google quota.
-          const forbidden = e instanceof APIError && e.status === 'FORBIDDEN'
-          if (!forbidden) console.error('[auth] signInSocial(idToken) failed', e)
-          // A forbidden address is a WORKING refusal, not a fault — it already says exactly what is
-          // wrong, so it needs no code and no report. Everything else is a fault we cannot otherwise see.
-          const code = forbidden
-            ? null
-            : await reportOauthFailure('signin-with-id-token-failed', {
-                message: e instanceof Error ? `${e.name}: ${e.message}` : String(e),
-              })
-          return htmlResponse(
-            failureHtml(
-              forbidden ? 'Denne konto har ikke adgang til Børnelæring.' : 'Login mislykkedes. Prøv igen i appen.',
-              code,
-            ),
-            forbidden ? 403 : 500,
-          )
-        }
-        if (!sessionToken) {
-          const code = await reportOauthFailure('no-session-token-after-signin', {})
-          return htmlResponse(failureHtml('Login mislykkedes. Prøv igen i appen.', code), 500)
-        }
-
-        await adapter.update({
-          model: 'oauthFlow',
-          where: [{ field: 'id', value: row.id }],
-          update: { sessionToken, expiresAt: new Date(now + OAUTH_CLAIM_TTL_MS) },
-        })
-
-        // Straight back into the app — no interstitial, no inline script, nothing for a CSP to block.
-        return returnToApp()
       },
     ),
+
+    /**
+     * Apple's leg of the SAME flow. It exists as a second endpoint only because Apple POSTs:
+     * `response_mode=form_post` is mandatory once a scope is requested, so there is no query string to
+     * read and the Google endpoint's `method: 'GET'` cannot serve it.
+     *
+     * Everything downstream is shared with Google — `completeOauthCallback` does the state lookup, the
+     * single-use invalidation, the token exchange, `signInSocial({ idToken })` and the parking. The
+     * `user` field Apple includes on the FIRST authorization only (the display name) is deliberately
+     * not read: we never show an adult's name, and 4.8 is about collecting less.
+     */
+    familyOauthCallbackApple: createAuthEndpoint(
+      APPLE_CALLBACK_PATH.replace('/api/auth', ''),
+      {
+        method: 'POST',
+        body: z.object({
+          code: z.string().optional(),
+          state: z.string().optional(),
+          error: z.string().optional(),
+          user: z.string().optional(),
+        }),
+      },
+      async (ctx) => {
+        const adapter = ctx.context.adapter as unknown as Adapter & {
+          update: (x: unknown) => Promise<unknown>
+        }
+        return completeOauthCallback(adapter, {
+          code: ctx.body?.code,
+          state: ctx.body?.state,
+          error: ctx.body?.error,
+        })
+      },
+    ),
+
 
     /**
      * Step 6: the app claims with the `flowId` only IT has. A wrong flowId can never yield a token,
@@ -830,7 +838,140 @@ export const familyPlugin = (): BetterAuthPlugin => ({
  * Guarded by `lib/googleTokens.test.ts`. If a future feature genuinely needs a Google API call, do it
  * from the client while the app is in use — do not re-add server-side storage.
  */
-async function signInWithIdToken(idToken: string): Promise<string | null> {
+/**
+ * Everything after the provider hands a code back — shared by Google (GET) and Apple (POST), because
+ * only the transport and the token endpoint differ. The PROVIDER is read off the stored flow row, not
+ * off the request, so a caller cannot pick which token endpoint we talk to.
+ *
+ * Order is load-bearing and unchanged from the Google-only version: look the flow up by `state`,
+ * refuse a replay, invalidate the state BEFORE the network hop, exchange, sign in, then park the
+ * session token for the app to claim with its own `flowId`.
+ */
+async function completeOauthCallback(
+  adapter: Adapter & { update: (x: unknown) => Promise<unknown> },
+  input: { code?: string; state?: string; error?: string },
+): Promise<Response> {
+  const now = Date.now()
+
+  if (input.error || !input.code || !input.state) {
+    return htmlResponse(failureHtml('Login blev afbrudt.'), 400)
+  }
+
+  const row = await adapter.findOne<OauthFlowRow>({
+    model: 'oauthFlow',
+    where: [{ field: 'state', value: input.state }],
+  })
+  if (!row || new Date(row.expiresAt).getTime() < now) {
+    return htmlResponse(failureHtml('Login-linket er udløbet. Prøv igen i appen.'), 410)
+  }
+  // Single-use: a replayed callback finds the token already parked and is refused. (One adult,
+  // one browser at family scale, so a guarded read is sufficient here.)
+  if (row.sessionToken) {
+    return htmlResponse(failureHtml('Dette login er allerede brugt.'), 410)
+  }
+  // Invalidate the state BEFORE the network hop, so a double-submit can't exchange twice.
+  await adapter.update({
+    model: 'oauthFlow',
+    where: [{ field: 'id', value: row.id }],
+    update: { state: `used:${b64url(16)}` },
+  })
+
+  const provider: OauthProvider = row.provider === 'apple' ? 'apple' : 'google'
+
+  let idToken: string | undefined
+  try {
+    const tokenRes = await fetch(
+      provider === 'apple' ? 'https://appleid.apple.com/auth/token' : 'https://oauth2.googleapis.com/token',
+      {
+        method: 'POST',
+        headers: { 'content-type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams(
+          provider === 'apple'
+            ? {
+                code: input.code,
+                client_id: apple().clientId,
+                // NOT a stored string — a freshly signed ES256 JWT. See `apple-client-secret.ts`.
+                client_secret: appleClientSecret(now),
+                redirect_uri: `${baseURL()}${APPLE_CALLBACK_PATH}`,
+                grant_type: 'authorization_code',
+              }
+            : {
+                code: input.code,
+                client_id: requireEnv('GOOGLE_CLIENT_ID'),
+                client_secret: requireEnv('GOOGLE_CLIENT_SECRET'),
+                redirect_uri: `${baseURL()}/api/auth/family/oauth/callback`,
+                grant_type: 'authorization_code',
+                code_verifier: row.codeVerifier,
+              },
+        ),
+      },
+    )
+    const body = (await tokenRes.json()) as { id_token?: string; error?: string }
+    if (!tokenRes.ok || !body.id_token) {
+      // Deliberately no detail in the PAGE — the provider's error text can echo request material. The
+      // detail goes into the report instead, which is read-gated; the page shows only its code.
+      console.error(`[auth] ${provider} token exchange failed`, tokenRes.status, body.error)
+      const code = await reportOauthFailure('token-exchange-rejected', {
+        status: tokenRes.status,
+        googleError: body.error,
+      })
+      return htmlResponse(failureHtml('Login mislykkedes. Prøv igen i appen.', code), 400)
+    }
+    // The access token the provider also returns here is DELIBERATELY DROPPED — see
+    // `signInWithIdToken` below. Not read, not stored, not forwarded.
+    idToken = body.id_token
+  } catch (e) {
+    console.error(`[auth] ${provider} token exchange threw`, e)
+    const code = await reportOauthFailure('token-exchange-threw', {
+      message: e instanceof Error ? `${e.name}: ${e.message}` : String(e),
+    })
+    return htmlResponse(failureHtml('Login mislykkedes. Prøv igen i appen.', code), 500)
+  }
+
+  let sessionToken: string | null
+  try {
+    sessionToken = await signInWithIdToken(idToken, provider)
+  } catch (e) {
+    // The allowlist hook (§4.8) throws FORBIDDEN here for a non-permitted address — the single
+    // most important refusal in the whole design, since nothing else stops a stranger from
+    // legitimately burning Azure and Google quota.
+    //
+    // APPLE MAKES THIS REACHABLE IN A NEW WAY: "Hide My Email" mints an
+    // `@privaterelay.appleid.com` address, which is not on the list and never will be. The refusal is
+    // correct and its message already says so; the adult's fix is to share their real address.
+    const forbidden = e instanceof APIError && e.status === 'FORBIDDEN'
+    if (!forbidden) console.error('[auth] signInSocial(idToken) failed', e)
+    // A forbidden address is a WORKING refusal, not a fault — it already says exactly what is
+    // wrong, so it needs no code and no report. Everything else is a fault we cannot otherwise see.
+    const code = forbidden
+      ? null
+      : await reportOauthFailure('signin-with-id-token-failed', {
+          message: e instanceof Error ? `${e.name}: ${e.message}` : String(e),
+        })
+    return htmlResponse(
+      failureHtml(
+        forbidden ? 'Denne konto har ikke adgang til Børnelæring.' : 'Login mislykkedes. Prøv igen i appen.',
+        code,
+      ),
+      forbidden ? 403 : 500,
+    )
+  }
+  if (!sessionToken) {
+    const code = await reportOauthFailure('no-session-token-after-signin', {})
+    return htmlResponse(failureHtml('Login mislykkedes. Prøv igen i appen.', code), 500)
+  }
+
+  await adapter.update({
+    model: 'oauthFlow',
+    where: [{ field: 'id', value: row.id }],
+    update: { sessionToken, expiresAt: new Date(now + OAUTH_CLAIM_TTL_MS) },
+  })
+
+  // Straight back into the app — no interstitial, no inline script, nothing for a CSP to block.
+  return returnToApp()
+}
+
+async function signInWithIdToken(idToken: string, provider: OauthProvider): Promise<string | null> {
   // A DYNAMIC import breaks what would otherwise be a static cycle (lib/auth.ts imports this module
   // to register the plugin). By the time this runs, lib/auth.ts is fully evaluated.
   //
@@ -844,9 +985,9 @@ async function signInWithIdToken(idToken: string): Promise<string | null> {
   const { auth } = await import('./auth.js')
   const res = await auth.api.signInSocial({
     body: {
-      // `idToken` ONLY. Adding `accessToken` here is what would persist a Google credential in Neon —
-      // see the header. There is no `refreshToken` to add.
-      provider: 'google',
+      // `idToken` ONLY. Adding `accessToken` here is what would persist a provider credential in Neon
+      // — see the header. There is no `refreshToken` to add.
+      provider,
       idToken: { token: idToken },
     },
     asResponse: true,

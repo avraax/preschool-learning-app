@@ -11,6 +11,7 @@ import {
   readPendingFlow,
   registerClaimPendingFlow,
   registerGoogleSignIn,
+  type SignInProvider,
   type SignInResult,
 } from './authSignIn'
 import { authStore, type AccountUser } from './authStore'
@@ -30,7 +31,11 @@ function newFlowId(): string {
   return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
 }
 
-async function startGoogle(): Promise<SignInResult> {
+// One implementation for BOTH providers. The `google-start` diagnostics stage keeps its name on
+// purpose: it is a stable enum in `authDiagnostics` and in every stored bug report, and renaming it
+// would silently orphan the existing dedupe keys. The provider is carried in the request body.
+async function startGoogle(provider: SignInProvider = 'google'): Promise<SignInResult> {
+  const providerLabel = provider === 'apple' ? 'Apple' : 'Google'
   const flowId = newFlowId()
   noteAuthStep('google-start', 'begin')
   try {
@@ -51,18 +56,18 @@ async function startGoogle(): Promise<SignInResult> {
     const res = await fetch(apiUrl(START_PATH), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ flowId }),
+      body: JSON.stringify({ flowId, provider }),
     })
     if (!res.ok) {
       clearPendingFlow()
       void reportAuthFailure('google-start', 'start-http-error', { status: res.status })
-      return { ok: false, message: 'Kunne ikke starte Google-login. Prøv igen.' }
+      return { ok: false, message: `Kunne ikke starte ${providerLabel}-login. Prøv igen.` }
     }
     const { authorizeUrl } = (await res.json()) as { authorizeUrl?: string }
     if (!authorizeUrl) {
       clearPendingFlow()
       void reportAuthFailure('google-start', 'no-authorize-url', { status: res.status })
-      return { ok: false, message: 'Kunne ikke starte Google-login. Prøv igen.' }
+      return { ok: false, message: `Kunne ikke starte ${providerLabel}-login. Prøv igen.` }
     }
     noteAuthStep('google-start', 'ok', { status: res.status })
 
@@ -85,7 +90,7 @@ async function startGoogle(): Promise<SignInResult> {
       if (!opened) {
         clearPendingFlow()
         void reportAuthFailure('google-start', 'shell-browser-unavailable')
-        return { ok: false, message: 'Kunne ikke åbne Google-login. Prøv igen.' }
+        return { ok: false, message: `Kunne ikke åbne ${providerLabel}-login. Prøv igen.` }
       }
       return { ok: true }
     }

@@ -11,13 +11,55 @@ import { passkey } from '@better-auth/passkey'
 import { APIError } from 'better-auth/api'
 import { getPool } from './db.js'
 import { familyPlugin } from './auth-family-plugin.js'
-import { baseURL, isEmailAllowed, requireEnv, runtime, trustedOrigins, webauthn } from './env.js'
+import {
+  apple,
+  baseURL,
+  isEmailAllowed,
+  optionalEnv,
+  requireEnv,
+  runtime,
+  trustedOrigins,
+  webauthn,
+} from './env.js'
+import { appleClientSecret, appleUsable } from './apple-client-secret.js'
 
 // `vercel.app` is on the Public Suffix List and a preview origin is not a registrable-domain suffix
 // of the production RP ID, so passkeys CANNOT work on a preview deployment (PRD §9). We leave the
 // plugin out entirely there rather than shipping a Face ID button that always fails; the client
 // learns this from /family/status's `webauthnEnabled`.
 const wa = webauthn()
+
+/**
+ * Sign in with Apple's provider config, or `null` if it cannot be built.
+ *
+ * BUILT INSIDE A TRY/CATCH ON PURPOSE. `appleClientSecret()` calls `createPrivateKey`, which throws on
+ * a malformed `.p8` — and this runs at MODULE INIT, so an unthrown error here would take down every
+ * auth route in the app (sign-in, PIN, profiles, progress sync), not just Apple. A key pasted with a
+ * missing header line is a plausible one-time mistake; a total auth outage is not a proportionate
+ * consequence. Failing to `null` degrades to exactly the state we shipped yesterday: Google only.
+ *
+ * It is logged loudly, because the symptom otherwise is a button that silently never appears.
+ */
+const appleProvider = (() => {
+  const cfg = apple()
+  if (!appleUsable()) return null
+  try {
+    return {
+      clientId: cfg.clientId,
+      // better-auth needs this only to VERIFY an id_token we already hold; our own token exchange
+      // mints its own short-lived JWT in `apple-client-secret.ts`.
+      clientSecret: appleClientSecret(),
+      // A native sheet would present a bundle-id audience rather than the Services ID. Listing it
+      // keeps one code path if that is ever added; harmless when unset.
+      ...(optionalEnv('APPLE_BUNDLE_ID')
+        ? { appBundleIdentifier: optionalEnv('APPLE_BUNDLE_ID') }
+        : {}),
+    }
+  } catch (e) {
+    console.error('[auth] APPLE_* is set but the client secret could not be signed — Apple disabled', e)
+    return null
+  }
+})()
 
 export const auth = betterAuth({
   appName: 'Børnelæring',
@@ -35,11 +77,18 @@ export const auth = betterAuth({
   // PKCE leg. We never call /sign-in/social from the browser — see lib/auth-family-plugin.ts and
   // PRD §4.5 (better-auth's own social redirect sets a state cookie *before* a session exists,
   // which is exactly the cookie an installed-PWA OAuth hop loses).
+  //
+  // Apple is registered CONDITIONALLY. Its config is what better-auth verifies the ID token's `aud`
+  // against, so a stub entry with empty strings would reject every real Apple token — and the four
+  // APPLE_* vars genuinely may not exist yet (the owner has to create a Services ID and a .p8 key in
+  // the Apple developer portal first). Absent config ⇒ no provider ⇒ `/family/status` omits `apple`
+  // ⇒ no button. One switch, all the way down.
   socialProviders: {
     google: {
       clientId: requireEnv('GOOGLE_CLIENT_ID'),
       clientSecret: requireEnv('GOOGLE_CLIENT_SECRET'),
     },
+    ...(appleProvider ? { apple: appleProvider } : {}),
   },
 
   session: {

@@ -76,6 +76,44 @@ export function devBypassEnabled(): boolean {
   return process.env.AUTH_DEV_BYPASS === '1' && !process.env.VERCEL && runtime() === 'dev'
 }
 
+export interface AppleConfig {
+  enabled: boolean
+  /** The **Services ID** (e.g. `dk.boernelaering.web`), not the app's bundle identifier. */
+  clientId: string
+  teamId: string
+  keyId: string
+  /** Contents of the `.p8` file. Newlines survive Vercel env vars; `\n` escapes are also accepted. */
+  privateKey: string
+}
+
+/**
+ * Sign in with Apple — required by App Store Guideline 4.8, which wants a second login option
+ * limiting collection to name + email and allowing the address to be kept private, whenever a
+ * third-party service (here Google) sets up the primary account. Passkeys do NOT satisfy it: they
+ * cannot create an account, and they are unavailable in the shell anyway (the rpID is
+ * `boernelaering.dk`, the shell's origin is `capacitor://localhost`). So Google-only was our real
+ * state, and it is also a dead end for any adult without a Google account.
+ *
+ * ALL FOUR VALUES OR NOTHING. A half-configured Apple would render a button that fails at the token
+ * exchange — the worst outcome, since the adult would blame their Apple ID. `enabled` therefore gates
+ * both the server branch and the button, through `/family/status`'s `methods` list.
+ */
+export function apple(): AppleConfig {
+  const clientId = optionalEnv('APPLE_CLIENT_ID') ?? ''
+  const teamId = optionalEnv('APPLE_TEAM_ID') ?? ''
+  const keyId = optionalEnv('APPLE_KEY_ID') ?? ''
+  // Vercel's env UI keeps real newlines, but a `.env.local` line cannot — so accept both forms rather
+  // than shipping a key that parses in dev and fails in production (or the reverse).
+  const privateKey = (optionalEnv('APPLE_PRIVATE_KEY') ?? '').replace(/\\n/g, '\n')
+  return {
+    enabled: !!(clientId && teamId && keyId && privateKey),
+    clientId,
+    teamId,
+    keyId,
+    privateKey,
+  }
+}
+
 export interface WebAuthnConfig {
   enabled: boolean
   rpID: string

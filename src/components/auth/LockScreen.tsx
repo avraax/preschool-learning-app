@@ -25,11 +25,13 @@ import { useAuthContext } from '../../contexts/AuthContext'
 import { authStore } from '../../services/authStore'
 import { getLastAuthReportCode, subscribeAuthReportCode } from '../../services/authDiagnostics'
 import {
-  startGoogleSignIn,
   startPasskeyUnlock,
+  startSocialSignIn,
   type PasskeyRequestOptions,
+  type SignInProvider,
 } from '../../services/authSignIn'
 import { passkeysSupportedInThisBuild } from '../../services/passkeyClient'
+import { useSignUpProviders } from '../../services/signUpProviders'
 import { PHONE_ANY } from '../../theme/phoneMedia'
 import { AUTH_Z } from './authOverlayZ'
 
@@ -81,6 +83,7 @@ const danishDate = (ms: number | null): string => {
 const LockScreen: React.FC = () => {
   const theme = useTheme()
   const auth = useAuthContext()
+  const signUpProviders = useSignUpProviders()
   const [passkeyOptions, setPasskeyOptions] = useState<PasskeyRequestOptions | null>(null)
   const [localBusy, setLocalBusy] = useState(false)
   // The short code of an auto-uploaded login-failure report (see `authDiagnostics`). Seeded from the
@@ -98,6 +101,8 @@ const LockScreen: React.FC = () => {
     passkeysSupportedInThisBuild() &&
     !!auth?.info?.webauthnEnabled &&
     (auth?.info?.passkeyCount ?? 0) > 0
+  /** Same reason as KontoPane: `signedOut` has no session, so `auth.info` is null on this screen. */
+  const appleAvailable = signUpProviders.includes('apple')
 
   // Pre-fetch (and keep fresh) the WebAuthn options so the Face ID tap handler never has to await.
   useEffect(() => {
@@ -125,13 +130,14 @@ const LockScreen: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const onGoogle = useCallback(async () => {
+  const onSocial = useCallback(async (provider: SignInProvider) => {
+    const label = provider === 'apple' ? 'Apple' : 'Google'
     setLocalBusy(true)
-    authStore.setBusy('Venter på Google…')
+    authStore.setBusy(`Venter på ${label}…`)
     // Same shape as KontoPane's guest sign-in: a throw must not leave every button on this screen
-    // disabled with only "Venter på Google…" to look at.
+    // disabled with only "Venter på …" to look at.
     try {
-      const result = await startGoogleSignIn()
+      const result = await startSocialSignIn(provider)
       if (!result.ok) authStore.setError(result.message ?? 'Login mislykkedes. Prøv igen.')
     } catch {
       authStore.setError('Login mislykkedes. Prøv igen.')
@@ -329,16 +335,29 @@ const LockScreen: React.FC = () => {
                     <SecondaryButton
                       label="Log ind med Google"
                       ariaLabel="Log ind med Google"
-                      onClick={onGoogle}
+                      onClick={() => void onSocial('google')}
                       disabled={busy}
                     />
                   ) : (
                     <PrimaryButton
                       label="Fortsæt med Google"
                       ariaLabel="Fortsæt med Google"
-                      onClick={onGoogle}
+                      onClick={() => void onSocial('google')}
                       disabled={busy}
                       accent={theme.decor.audioPermissionAccent}
+                    />
+                  )}
+
+                  {/* Guideline 4.8's second option. Shown only when the server declares it, so a
+                      deployment without the four APPLE_* vars never offers a button that would die at
+                      the token exchange. Deliberately SECONDARY: Google stays the primary story
+                      because a domain move invalidates passkeys but never a social login (§13). */}
+                  {appleAvailable && (
+                    <SecondaryButton
+                      label="Log ind med Apple"
+                      ariaLabel="Log ind med Apple"
+                      onClick={() => void onSocial('apple')}
+                      disabled={busy}
                     />
                   )}
 
