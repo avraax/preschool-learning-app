@@ -290,12 +290,39 @@ test('the bundle identifier agrees across all THREE files that declare it', () =
     assert.equal(found, ID, `a build configuration is signed as ${found}, not ${ID}`)
   }
   // ANCHORED to end-of-line. Unanchored, this matched `com.vraa.earlylearning2` and the guard passed
-  // against a drifted id — found by re-breaking it, which is the whole point of doing that.
+  // against a drifted id — found by re-breaking it, which is the whole point of doing that. The
+  // anchoring became load-bearing again with the staging PRD: `com.vraa.earlylearning` is a PREFIX of
+  // `com.vraa.earlylearning.staging`, so an unanchored match is now satisfied by the wrong tier.
   const yaml = read('codemagic.yaml')
   assert.match(yaml, new RegExp(`BUNDLE_ID:\\s*${ID.replace(/\./g, '\\.')}\\s*$`, 'm'))
   // …and that the var is actually CONSUMED. Declaring it and never passing it to
   // `fetch-signing-files` would leave all three strings agreeing while signing the wrong thing.
   assert.match(yaml, /fetch-signing-files\s+"\$BUNDLE_ID"/)
+  // Which of the two workflows owns which id is `src/config/buildTiers.test.ts`'s job — this file only
+  // asserts the COMMITTED tree is production's.
+})
+
+test('the committed tree is always PRODUCTION — a staging mutation must never be committed', () => {
+  // `scripts/set-build-tier.mjs` rewrites the pbxproj and capacitor.config.ts on the CI Mac. It mutates
+  // a checkout and nothing is pushed from CI, so the committed values must stay production's. If a
+  // staging id ever lands in a commit, the next RELEASE build signs as staging and App Store Connect
+  // refuses it with "Cannot determine the Apple ID from Bundle ID" — a failure that arrives at upload,
+  // twenty minutes of Mac time later, and reads like a signing problem.
+  const ID = 'com.vraa.earlylearning'
+  const STAGING = 'com.vraa.earlylearning.staging'
+
+  const cfg = stripTs(read(CAP_CONFIG))
+  assert.ok(!cfg.includes(STAGING), 'capacitor.config.ts carries the STAGING bundle id')
+  assert.match(cfg, /appName:\s*'Børnelæring'/, 'the committed appName is not production’s')
+
+  // The pbxproj: every occurrence, exact equality. `startsWith` would accept the staging id, since it
+  // is production's plus a suffix — the whole reason the loop below compares rather than matches.
+  const pbx = read(...PBXPROJ)
+  const ids = [...pbx.matchAll(/PRODUCT_BUNDLE_IDENTIFIER = ([^;]+);/g)].map((m) =>
+    m[1].trim().replace(/^"|"$/g, ''),
+  )
+  assert.ok(ids.length >= 2, 'no bundle identifier found in the Xcode project')
+  for (const found of ids) assert.equal(found, ID, `a build configuration is committed as ${found}`)
 })
 
 test('CI publishes to TestFlight and NEVER auto-submits to the App Store', () => {

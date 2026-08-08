@@ -28,11 +28,18 @@ function generateVersionPlugin(): Plugin {
         console.log('Could not read version from package.json, using default "1.0.0"')
       }
 
-      let commitHash = 'dev'
-      try {
-        commitHash = execSync('git rev-parse --short HEAD', { encoding: 'utf8' }).trim()
-      } catch {
-        console.log('Could not get git commit hash, using "dev"')
+      // `BL_COMMIT_SHA` first: a `vercel deploy --archive=tgz` uploads a tarball with NO `.git`, so
+      // `git rev-parse` fails on the build machine and every such deployment reports "dev" — two
+      // staging builds then look identical in the adult menu's version chip and in /api/version.
+      // `scripts/deploy-staging.mjs` resolves the hash where the repo exists and passes it through.
+      // Production is unaffected (it builds from the Git integration, where git works).
+      let commitHash = process.env.BL_COMMIT_SHA?.trim() || 'dev'
+      if (commitHash === 'dev') {
+        try {
+          commitHash = execSync('git rev-parse --short HEAD', { encoding: 'utf8' }).trim()
+        } catch {
+          console.log('Could not get git commit hash, using "dev"')
+        }
       }
 
       versionInfo = {

@@ -80,6 +80,38 @@ all of which had been proposed first.
 **`betaTesters.state` is the field to read** before theorising about a tester who "sees nothing":
 `INVITED` = sent, never accepted. `INSTALLED` = it already worked.
 
+## TWO apps on the iPad, two workflows, one signing history (staging PRD W7)
+
+`com.vraa.earlylearning` / `Børnelæring` (App ID `YMZ44PV8HK`, ASC record `6799119188`) and
+`com.vraa.earlylearning.staging` / `BL Test` (App ID `XU38T75JUS`, ASC record `6799489044`). They are
+**different apps to iOS**: separate profiles, TestFlight tracks, icons — and separate CONTAINERS, which
+is the point. A staging build cannot see, migrate or corrupt the child's real progress.
+
+- **`scripts/set-build-tier.mjs <tier>` runs on the Mac, after `npm ci` and before `cap sync`.** It
+  rewrites **every** `PRODUCT_BUNDLE_IDENTIFIER` in the pbxproj (one per build configuration — rewriting
+  the first leaves a project that signs differently per configuration) plus `capacitor.config.ts`'s
+  `appId`/`appName`. **`appId` is not optional**: `cap sync` copies the committed id straight back over
+  the pbxproj otherwise. It mutates a CHECKOUT; nothing is pushed from CI, and the committed tree must
+  always be production's (`capacitorConfig.test.ts`).
+- **`scripts/verify-build-tier.mjs <tier>` reads `dist/`, not the source.** The naive check is wrong:
+  a STAGING bundle legitimately contains the production host, because `backendTarget.ts` declares it as
+  the constant the badge compares against. The exact rule is asymmetric — production ⇒ the staging host
+  appears **zero** times; staging ⇒ **at least once**.
+- **`BUNDLE_ID` stays a `vars:` entry, and every guard on it is END-ANCHORED.** `com.vraa.earlylearning`
+  is a PREFIX of the staging id, so an unanchored match accepts the wrong tier — the same failure that
+  once let `com.vraa.earlylearning2` through.
+- **`--create` works for the second App ID too**, so the staging certificate and profile appear on the
+  first `ios-staging` run with no Mac, exactly as they did for production.
+- **`bundle-ids enable-capabilities … "Sign In with Apple"` still 409s**, so the staging App ID needed
+  the same portal click production needed (verified afterwards: `XU38T75JUS_APPLE_ID_AUTH` with
+  `PRIMARY_APP_CONSENT`). **In-App Purchase appears on every App ID by default and cannot be removed** —
+  not a misconfiguration, don't chase it.
+- **Two `.p8` keys, and they are NOT interchangeable.** `AuthKey_KLY329S52U.p8` is the *Sign in with
+  Apple* key (signs the client-secret JWT; `APPLE_KEY_ID`). `AuthKey_VR8MNH235U.p8` is the *App Store
+  Connect API* key (queries Apple; issuer `62ee49e8-4d0f-4dd1-bb76-84a364d09904`) and is the one
+  Codemagic's `bornelaering-asc` integration uses. Both live in
+  `C:/Users/AllanBrinkVraa/Documents/AppleDeveloper/`, outside the repo.
+
 ## Codemagic: four distinct causes wore the same symptom
 
 Every first-build failure reported as broken signing, and each had a different cause. Read

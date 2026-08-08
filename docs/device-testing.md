@@ -25,6 +25,34 @@ desktop-class UA. Only `isM1iPad` or the UA distinguishes them.
 Also note **`1024 × 768` is not any current iPad Pro.** It stays in the guard set only as the tighter
 small-iPad case.
 
+## THERE ARE NOW TWO APPS ON THAT IPAD — check which one you are looking at
+
+Since the staging PRD, the iPad carries both tiers side by side. They are separate apps to iOS, with
+separate containers, so **a staging build cannot touch the child's real Reward Book** — which is the
+whole reason for the second icon.
+
+| | production | staging |
+|---|---|---|
+| home-screen name | **Børnelæring** | **BL Test** |
+| bundle id | `com.vraa.earlylearning` | `com.vraa.earlylearning.staging` |
+| TestFlight track | its own | its own |
+| backend | `boernelaering.dk` | `staging.boernelaering.dk` |
+| corner badge | **none** | `TEST · staging.boernelaering.dk` |
+| progress, PIN, passkeys | the child's real ones | disposable |
+
+**Three ways to tell them apart, in increasing effort**: the icon's name; the badge in the top-left
+corner (which prints the *origin the build actually calls*, so a mislabelled build is impossible); and
+"Til de voksne" → the version chip in the rail footer, which now carries the backend host on **every**
+tier — that is how a production binary answers the question, since it has no badge.
+
+**The icons are near-identical, and that is unresolved.** Whether it confuses the child in daily use is
+rung-3 residue no probe can close. If it does, the fix is a tinted variant of
+`art-src/logo/app-store-icon-1024.png`, flattened (alpha is an upload rejection).
+
+**A passkey does not cross tiers.** It is bound to the RP ID, so enrolling the iPad on one tier does
+nothing for the other — Google sign-in is the way into either. That is deliberate: sharing the RP ID
+would let staging accept production's passkeys.
+
 ## Rung 3 owed: the audio-activation checks (Audio activation PRD-01 §5.3)
 
 **Status: NOT YET RUN.** Rungs 1 and 2 are done (the verdict's plumbing, the cue's geometry at four

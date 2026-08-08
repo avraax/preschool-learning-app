@@ -20,9 +20,125 @@
 #      Do NOT add an `environment.ios_signing:` block to "help" — that is the DECLARATIVE path, it
 #      only matches PRE-EXISTING files, and it is what made the first build fail.
 
+# TWO WORKFLOWS, ONE SIGNING HISTORY (staging PRD W7). Everything above applies to both; the comments
+# in `ios-release` below are the design record for signing and must not be trimmed when editing either.
+#
+# The workflows differ in exactly THREE variables — BUNDLE_ID, BL_TIER, BL_API_ORIGIN — and
+# `src/config/buildTiers.test.ts` fails if a third workflow appears or if either triple stops matching
+# `scripts/set-build-tier.mjs`'s table. `BUNDLE_ID` stays a `vars:` entry rather than a group variable
+# so that guard can keep matching it with an `m`-anchored regex: unanchored, it once accepted
+# `com.vraa.earlylearning2`, and a SUFFIXED staging id makes that failure mode live again.
+#
+# TRIGGERS: `ios-staging` builds on a `tf-*` tag, so an everyday build is one command from Windows
+# (`git tag tf-46 && git push origin tf-46`). NOT on every push to master — that burns Mac minutes and
+# floods TestFlight processing for commits nobody intends to install. `ios-release` has no trigger at
+# all: a production build stays a deliberate act, started from the Codemagic UI.
+
 workflows:
-  ios-testflight:
-    name: Børnelæring — iOS → TestFlight
+  ios-staging:
+    name: Børnelæring — staging → TestFlight
+    instance_type: mac_mini_m2
+    max_build_duration: 60
+
+    triggering:
+      events:
+        - tag
+      tag_patterns:
+        - pattern: 'tf-*'
+
+    integrations:
+      app_store_connect: bornelaering-asc
+
+    environment:
+      groups:
+        - signing
+      vars:
+        XCODE_PROJECT: ios/App/App.xcodeproj
+        XCODE_SCHEME: App
+        # The SUFFIXED sibling. A different app to iOS: its own App ID, profile, App Store Connect
+        # record, TestFlight track, icon — and, the reason it is worth all of that, its own CONTAINER.
+        # A staging build cannot see, migrate or corrupt the child's real progress, because the two
+        # apps share no storage. Registered as XU38T75JUS with Sign In with Apple enabled.
+        BUNDLE_ID: com.vraa.earlylearning.staging
+        BL_TIER: staging
+        BL_API_ORIGIN: https://staging.boernelaering.dk
+      node: 22
+      xcode: latest
+
+    cache:
+      cache_paths:
+        - $HOME/.npm
+
+    scripts:
+      - name: Install dependencies
+        script: npm ci
+
+      - name: Guard — the tests that can only fail here
+        script: npm test
+
+      - name: Point the native project at this tier
+        # Rewrites EVERY PRODUCT_BUNDLE_IDENTIFIER in the pbxproj plus capacitor.config.ts's appId and
+        # appName, so `cap sync` and the Info.plist display name follow. Mutates this CHECKOUT only —
+        # nothing is ever pushed from CI.
+        script: node scripts/set-build-tier.mjs "$BL_TIER"
+
+      - name: Build the web bundle
+        # BL_TIER / BL_API_ORIGIN are read by vite.config.ts's `define`, which is what bakes the backend
+        # into the binary. They are environment variables HERE, at build time, and nowhere else — the
+        # shipped app has no environment to read.
+        script: npm run build
+
+      - name: Verify the ARTIFACT is a staging build
+        # Reads dist/, not the source. This is the guard for "local green proves nothing about the
+        # deployed artifact", and it also carries the prebaked-narration count.
+        script: node scripts/verify-build-tier.mjs "$BL_TIER"
+
+      - name: Sync the web build into the iOS project
+        script: npx cap sync ios
+
+      - name: Set the build number
+        script: |
+          set -e
+          cd "$CM_BUILD_DIR/ios/App"
+          agvtool new-version -all "$PROJECT_BUILD_NUMBER"
+
+      - name: Create the signing certificate and profile, then apply them
+        # `--create` is what makes the STAGING profile appear on its first run without a Mac, exactly as
+        # it did for production. See the long note in ios-release below for why each flag is here.
+        script: |
+          set -e
+          keychain initialize
+          app-store-connect fetch-signing-files "$BUNDLE_ID" \
+            --type IOS_APP_STORE \
+            --certificate-key "@env:CERTIFICATE_PRIVATE_KEY" \
+            --create
+          keychain add-certificates
+          xcode-project use-profiles
+
+      - name: Build the IPA
+        script: |
+          set -e
+          xcode-project build-ipa \
+            --project "$XCODE_PROJECT" \
+            --scheme "$XCODE_SCHEME"
+
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+
+    publishing:
+      email:
+        recipients:
+          - allanvraa@gmail.com
+        notify:
+          success: true
+          failure: true
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
+
+  ios-release:
+    name: Børnelæring — production → TestFlight
     instance_type: mac_mini_m2
     max_build_duration: 60
 
@@ -53,6 +169,8 @@ workflows:
         # Permanent — it matches `capacitor.config.ts`'s appId and the pbxproj's
         # PRODUCT_BUNDLE_IDENTIFIER, and all three have to stay in step (guarded).
         BUNDLE_ID: com.vraa.earlylearning
+        BL_TIER: production
+        BL_API_ORIGIN: https://boernelaering.dk
       # The repo's own floor; the local toolchain is Node 22.
       node: 22
       # Apple requires uploads to be BUILT WITH THE iOS 26 SDK (since 2026-04-28), which means an
@@ -78,24 +196,32 @@ workflows:
         # they run BEFORE spending twenty minutes of Mac time on a build that cannot be shipped.
         script: npm test
 
+      - name: Point the native project at this tier
+        # A NO-OP THAT STILL VERIFIES for production: it re-derives the committed values from
+        # scripts/set-build-tier.mjs's table and refuses a project that is in any other state. So the
+        # release workflow PROVES the tree is clean rather than assuming it — which matters precisely
+        # because the staging workflow is the one thing that can leave a `.staging` identifier behind.
+        script: node scripts/set-build-tier.mjs "$BL_TIER"
+
       - name: Build the web bundle
         # Fills `dist/`, including `public/` wholesale — which is how the 31 MB of prebaked narration
         # gets into the binary. Also rewrites `src/config/version.ts`; the dirty tree is expected and
         # is never committed from CI.
+        #
+        # BL_TIER / BL_API_ORIGIN are read here by vite.config.ts's `define`. They are build-time
+        # environment variables and nothing else: the shipped binary has no environment to read, which
+        # is the whole argument in src/config/apiBase.ts.
         script: npm run build
 
-      - name: Verify the narration actually reached dist
-        # The single most expensive silent failure available here: a binary that installs, launches,
-        # renders perfectly and is mute, because `dist/sounds/tts` was empty. It cannot be seen in a
-        # screenshot and the web deployment would be unaffected. Cheap to assert, so assert it.
-        script: |
-          set -e
-          COUNT=$(find dist/sounds/tts -name '*.mp3' | wc -l | tr -d ' ')
-          echo "prebaked clips in dist: $COUNT"
-          if [ "$COUNT" -lt 1800 ]; then
-            echo "FATAL: only $COUNT prebaked clips reached dist/ — the app would ship mute."
-            exit 1
-          fi
+      - name: Verify the ARTIFACT is a production build
+        # Reads dist/, not the source — "local green proves nothing about the deployed artifact". It
+        # asserts the staging host is ABSENT (the direction that is exact; see the script's header for
+        # why the reverse cannot be), that the harness never shipped, and the prebaked-clip count.
+        #
+        # That last check REPLACES this workflow's old inline `find dist/sounds/tts | wc -l` step. One
+        # implementation, not two that drift — the failure it catches is a binary that installs,
+        # launches, renders perfectly and is MUTE, invisible in a screenshot.
+        script: node scripts/verify-build-tier.mjs "$BL_TIER"
 
       - name: Sync the web build into the iOS project
         # Copies dist/ into ios/App/App/public and regenerates Package.swift. Run on macOS it writes

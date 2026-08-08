@@ -32,13 +32,42 @@ grep -oE '^[A-Z0-9_]+=' .env.local | tr -d '=' | sort -u | comm -23 - /tmp/v   #
   pre-existing key survived. Note `grep -oE '^[A-Z_]+='` **misses names containing digits** (e.g. a
   `…_BASE64` suffix) — use `^[A-Z0-9_]+=`.
 
+## TWO TIERS, TWO PROJECTS, TWO DATABASES (staging PRD)
+
+`production` = `preschool-learning-app` (`prj_v2udwWWfF0EVyn73hoQsdBaUUEXd`) → `boernelaering.dk`, Neon
+`neon-apricot-leaf`, auto-deploys from `master`. `staging` = `preschool-learning-app-staging`
+(`prj_ZOnA09yX1vZZ4yXdCH680NmmP8gH`) → `staging.boernelaering.dk`, Neon `bl-staging`, **no Git
+connection** — deployed only by `npm run deploy:staging`, which is what makes "on demand" true by
+construction rather than by a setting somebody can flip. Org `team_GacOLmNdUS9It9R5VRX8EZQH`.
+
+- **The CLI resolves its target from `.vercel/project.json`, which is PRODUCTION's** — single-valued and
+  gitignored. Every staging command needs `VERCEL_ORG_ID` + `VERCEL_PROJECT_ID` in the environment
+  instead; `vercel domains add <d> <project>` even REFUSES the two-argument form and would have added
+  the staging subdomain to production. Never rewrite that file.
+- **`--prod` means "this PROJECT's production environment"**, so staging deploys with it. A *preview*
+  deployment sits behind the SSO wall (302 to `curl`), which is also why `lib/env.ts` disables passkeys
+  on `runtime() === 'preview'`.
+- **`--archive=tgz` uploads no `.git`**, so `vite.config.ts`'s `git rev-parse` fails and every staging
+  build reported `commitHash: "dev"`. `scripts/deploy-staging.mjs` resolves it locally and passes
+  `BL_COMMIT_SHA`.
+- **Local development IS the staging tier.** `.env.local` carries `BL_TIER=staging` and the staging Neon
+  URL; `npm run dev:staging` refuses to start without it. Seed/wipe are gated on a `blTier` marker
+  table *in the database* — a positive check that fails closed, so production is never even connected
+  to (`lib/tier.test.ts`).
+
 ## The database is a Vercel MARKETPLACE resource, not a standalone Neon project
 
-`vercel integration ls` shows it (`neon-apricot-leaf`). Consequences:
+`vercel integration ls` shows them (`neon-apricot-leaf`, `bl-staging`). Consequences:
 
-- **The password lives in 16 integration-owned variables** — `DATABASE_URL`, `DATABASE_URL_UNPOOLED`
-  and 14 `POSTGRES_*`/`PG*` aliases. Hand-editing `DATABASE_URL` leaves fifteen stale copies, and the
-  integration may re-sync over it anyway. They move together or not at all.
+- **The password lives in 16 integration-owned variables**, and here they are, since "16" was never a
+  list: `DATABASE_URL`, `DATABASE_URL_UNPOOLED`, `POSTGRES_URL`, `POSTGRES_URL_NON_POOLING`,
+  `POSTGRES_URL_NO_SSL`, `POSTGRES_PRISMA_URL`, `POSTGRES_HOST`, `POSTGRES_USER`, `POSTGRES_PASSWORD`,
+  `POSTGRES_DATABASE`, `PGHOST`, `PGHOST_UNPOOLED`, `PGUSER`, `PGPASSWORD`, `PGDATABASE`,
+  `NEON_PROJECT_ID` — all scoped Production+Preview+Development, all created together. Hand-editing
+  `DATABASE_URL` leaves fifteen stale copies, and the integration may re-sync over it anyway. They move
+  together or not at all.
+- **`--prefix NEON2_` is the escape hatch** if two resources ever have to share one project. Not needed
+  here, because the tiers are separate projects.
 - **Rotating the password is NOT possible from here.** `vercel integration` only adds/connects/removes;
   there is no `NEON_API_KEY` in the repo. It needs a Neon API key or the console (reachable from the
   Vercel dashboard), after which the integration re-syncs all 16 and production needs a **redeploy** —
@@ -56,6 +85,11 @@ grep -oE '^[A-Z0-9_]+=' .env.local | tr -d '=' | sort -u | comm -23 - /tmp/v   #
   own hint suggests the command you just ran. Pass an explicit **empty** third argument to mean
   all preview branches: `vercel env add NAME preview "" --value … --yes`.
 - Use `--no-sensitive` for non-secret config so it stays readable later; leave real secrets sensitive.
+- **A SENSITIVE variable reads back as an empty string** — `vercel env pull` writes `NAME=""` for it, so
+  you cannot verify what you stored. Proven rather than assumed: `APPLE_BUNDLE_ID` was readable while
+  non-sensitive and empty after being re-added as sensitive, same value. So a round-trip check has to be
+  BEHAVIOURAL: deploy, then ask the app (`/api/auth/family/providers` returns `apple` only if the `.p8`
+  actually parsed and signed in the real runtime). Do **not** downgrade a key to sensitive:false to peek.
 - **`vercel build` is SAFE for `.env.local`** — it writes only under `.vercel/` (verified by hashing
   `.env.local` before and after). It is the cheapest way to inspect what actually deploys; see
   `.claude/rules/api-endpoints.md`. `vercel dev`, by contrast, runs the package.json `dev` script and
@@ -69,9 +103,18 @@ grep -oE '^[A-Z0-9_]+=' .env.local | tr -d '=' | sort -u | comm -23 - /tmp/v   #
 - **A browser EULA acceptance is required first.** The first `vercel integration add <name>` returns
   `integration_terms_acceptance_required` with a `verification_uri`; the owner must accept it. Not
   automatable — hand them the URL, then re-run the identical command.
-- **`vercel integration add <name> --help` lists that integration's `-m` metadata keys** (region, plan,
-  bundled add-ons) and its billing plan IDs. This is the only way to avoid a default region
-  non-interactively — always set the region explicitly for EU data residency.
+- **THE REGION DEFAULTS TO `us-east-1` AND IT WILL NOT ASK.** Measured 2026-08-08: `vercel integration
+  add neon --name bl-staging --no-env-pull` provisioned silently, no terms prompt, no region prompt, and
+  landed in Virginia while production is in Frankfurt — breaking the privacy policy's EU data-residency
+  claim and putting the database an ocean away from `vercel.json`'s `regions: ["fra1"]` functions. Neon's
+  region is fixed at creation, so the only fix is delete and re-create.
+- **Pass `-m region=fra1`.** `fra1` is Frankfurt. This rule used to say the keys come from
+  `vercel integration add <name> --help` — **they do not on CLI 54.12.2**, which prints the generic help.
+  They come from the ERROR: pass a wrong value and it lists every valid one
+  (`cle1, iad1, pdx1, fra1, lhr1, syd1, sin1, gru1`). Guessing wrong is free; guessing silently is not.
+- **Then VERIFY the region from the host**, don't trust the flag: pull to a scratch path and read
+  `PGHOST` — `…eu-central-1.aws.neon.tech`. Deleting needs `--disconnect-all`
+  (`vercel integration-resource remove <name> --disconnect-all`).
 
 ## Third-party credentials that cannot be automated
 

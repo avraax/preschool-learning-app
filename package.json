@@ -24,6 +24,8 @@
     "auth:dev-session": "node --env-file=.env.local --import ./scripts/js-to-ts-resolve.mjs scripts/auth-dev-session.mjs",
     "auth:probe-claim": "node --env-file=.env.local --import ./scripts/js-to-ts-resolve.mjs scripts/auth-probe-claim.mjs",
     "dev:staging": "node scripts/dev-staging.mjs",
+    "deploy:staging": "node scripts/deploy-staging.mjs",
+    "verify:tier": "node scripts/verify-build-tier.mjs",
     "staging:init": "node --env-file=.env.local --import ./scripts/js-to-ts-resolve.mjs scripts/staging-init.mjs",
     "staging:seed": "node --env-file=.env.local --import ./scripts/js-to-ts-resolve.mjs scripts/staging-seed.mjs",
     "staging:wipe": "node --env-file=.env.local --import ./scripts/js-to-ts-resolve.mjs scripts/staging-wipe.mjs",

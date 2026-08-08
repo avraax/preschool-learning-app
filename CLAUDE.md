@@ -111,22 +111,22 @@ points to, loaded when you touch matching files.
   generators, never by reading the table. A harder level must never cost rewards. → `games-catalog.md`.
 - **PWA / delivery / the target device**: network-only, **no service worker** — so **never design a
   feature around "works offline"** (the native shell inverts this).
-  **The compatibility floor is the child's device: an iPad Pro 2nd gen
-  on iPadOS 17.7.11.** Check any new web/media API against **Safari 17**, not "latest Safari".
-  → `pwa-and-device.md` (device record: `docs/device-testing.md`).
+  **The compatibility floor is the child's iPad Pro 2nd gen on iPadOS 17.7.11.** Check any new
+  web/media API against **Safari 17**, not "latest Safari".
+  → `pwa-and-device.md`, `docs/device-testing.md`.
 - **Adult tools / bug reports**: the "Til de voksne" corner button opens the lazy `AdultSettings`. Its
   group/item structure is **data** (`src/config/adultSettingsIa.ts`, guarded), and **every irreversible
-  action is type-to-confirm** with a fixed Danish word — a PIN does not substitute. To debug a bug report
-  use the `/debug-report` skill. → `adult-surface.md`.
-- **Update banner**: a newer live build shows a **dismissible** pill; applying it is a PIN-gated
-  adult-menu item, never a child-tappable reload.
+  action is type-to-confirm** with a fixed Danish word — a PIN does not substitute. Debug with
+  `/debug-report`. → `adult-surface.md`.
 - **Accounts / auth**: one adult account (Google or Apple OIDC + passkey) with N child profiles and local-first
   progress sync. **Guest play needs no account** — `AuthGate` gates sync, not play. `/api/tts-azure` +
   `/api/stt` need a 15-minute access JWT; `?nogate=1` bypasses both gates in DEV. → `auth.md`.
 - **API endpoints**: the `api/*.ts` Vercel functions are a trust boundary — scoped CORS + origin
   allow-list + per-IP rate limit + no error-detail leaks, via `lib/server-utils.ts` and **mirrored in
   `dev-server.js`**. → `api-endpoints.md`.
-- **Env & secrets**: a bare `vercel env pull` overwrites `.env.local` wholesale. → `env-and-secrets.md`.
+- **Two tiers**: `staging` (local dev + everyday TestFlight, installs as `BL Test`) and
+  `production`. The badge prints the backend host, **absent exactly on production**; the server throws
+  if `BL_TIER` and `baseURL()` disagree. `vercel env pull` overwrites `.env.local`. → `env-and-secrets.md`.
 
 ## Verifying without the owner's iPad
 
