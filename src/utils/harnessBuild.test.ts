@@ -47,6 +47,16 @@ test('the syntax floor is pinned to the target device, not left to a default', (
   assert.match(viteConfig, /target: \['safari17', 'ios17'\]/)
 })
 
+test('the Node runtime is pinned in the repo, not per Vercel project', () => {
+  // Same shape as the syntax floor above: a DEFAULT that happens to be fine today is not a decision.
+  // Vercel assigns a Node version per PROJECT, and a project created later gets whatever the current
+  // default is — the staging project was created on 24.x while production runs 22.x. Two tiers on
+  // different Node majors makes staging a worse rehearsal for exactly the failures it exists to catch,
+  // and the setting is invisible from this repo. `engines.node` overrides the project setting for BOTH
+  // projects, so the version becomes a tracked, reviewable fact instead of a dashboard toggle.
+  assert.equal(pkg.engines?.node, '22.x', 'the Node runtime is no longer pinned in package.json')
+})
+
 test('no deploy script builds the harness', () => {
   // Vercel runs `npm run build`. Every script that could be a deploy path must not select the mode.
   for (const [name, cmd] of Object.entries(pkg.scripts as Record<string, string>)) {

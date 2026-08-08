@@ -3,6 +3,9 @@
   "private": true,
   "version": "1.0.45",
   "type": "module",
+  "engines": {
+    "node": "22.x"
+  },
   "scripts": {
     "dev": "vite",
     "dev:api": "node --env-file=.env.local --import ./scripts/js-to-ts-resolve.mjs dev-server.js",
