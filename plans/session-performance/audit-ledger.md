@@ -195,3 +195,27 @@ new tier bullet; it was paid for by deleting the Update banner bullet (fully car
 `adult-surface.md`) and trimming three others. `working-in-this-tree.md` sits at 4,496 / 4,500, so two
 candidate items were cut rather than forced in — both files already explain themselves at the point of
 use.
+
+## 2026-08-08 — staging PRD, second debrief (first real CI build)
+
+The first `ios-staging` build succeeded and exposed two things no local check could have.
+
+**A guardrail I had just written was WRONG.** `ios-shell.md` (and two code comments, and the PRD)
+claimed `capacitor.config.ts`'s `appName` makes the Info.plist display name follow. It does not:
+Capacitor reads that file when the native project is SCAFFOLDED, and `cap sync` never touches
+Info.plist. Both apps installed on the iPad as "Børnelæring" — the exact confusion the second name
+exists to prevent, and the mitigation the PRD leans on for two near-identical icons. Corrected in the
+rule and in both comments; `set-build-tier.mjs` now rewrites `CFBundleDisplayName`.
+
+**A green build can report red.** `submit_to_testflight` does not mean "upload" — the publishing block
+already uploads and internal testers install from that. The flag submits to EXTERNAL beta review, which
+needs contact details a never-submitted app has no reason to carry, so post-processing failed after the
+IPA had shipped and installed.
+
+**The pattern worth naming: a guardrail written from a PRD's prose inherits the PRD's errors.** Both
+this and W7's `verify-build-tier` spec were wrong in the document and only fell over against the real
+artifact. Prefer wording a rule from something measured; where that is impossible before the first run,
+say so, and revisit the rule after that run rather than treating the PRD as settled.
+
+**Budget unchanged where enforced:** CLAUDE.md 11,993 / 12,000 · ALWAYS LOADED 16,489 / 17,000 · ONE
+COMPONENT EDIT 47,984 / 48,000. Both items landed in the path-scoped `ios-shell.md`.

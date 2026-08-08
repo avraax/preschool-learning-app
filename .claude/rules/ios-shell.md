@@ -93,9 +93,13 @@ is the point. A staging build cannot see, migrate or corrupt the child's real pr
 - **`scripts/set-build-tier.mjs <tier>` runs on the Mac, after `npm ci` and before `cap sync`.** It
   rewrites **every** `PRODUCT_BUNDLE_IDENTIFIER` in the pbxproj (one per build configuration — rewriting
   the first leaves a project that signs differently per configuration) plus `capacitor.config.ts`'s
-  `appId`/`appName`. **`appId` is not optional**: `cap sync` copies the committed id straight back over
-  the pbxproj otherwise. It mutates a CHECKOUT; nothing is pushed from CI, and the committed tree must
-  always be production's (`capacitorConfig.test.ts`).
+  `appId`/`appName`, **and `CFBundleDisplayName` in `Info.plist`**. It mutates a CHECKOUT; nothing is
+  pushed from CI, and the committed tree must always be production's (`capacitorConfig.test.ts`).
+- **`capacitor.config.ts` is read when the project is SCAFFOLDED, not on sync.** `appId` still has to be
+  rewritten, because `cap sync` copies the committed id back over the pbxproj — but `appName` reaches
+  nothing: the home-screen name is `CFBundleDisplayName` in `ios/App/App/Info.plist`, a literal that
+  `cap sync` never touches. Renaming `appName` alone shipped two apps to the iPad both called
+  "Børnelæring", which is exactly what the second name exists to prevent.
 - **`scripts/verify-build-tier.mjs <tier>` reads `dist/`, not the source.** The naive check is wrong:
   a STAGING bundle legitimately contains the production host, because `backendTarget.ts` declares it as
   the constant the badge compares against. The exact rule is asymmetric — production ⇒ the staging host
@@ -105,6 +109,13 @@ is the point. A staging build cannot see, migrate or corrupt the child's real pr
   once let `com.vraa.earlylearning2` through.
 - **`--create` works for the second App ID too**, so the staging certificate and profile appear on the
   first `ios-staging` run with no Mac, exactly as they did for production.
+- **`submit_to_testflight` does NOT mean "upload".** The `app_store_connect` publishing block already
+  uploads, and internal testers can install from that alone. The flag adds submission to EXTERNAL beta
+  review, which requires Beta App Information + Beta App Review contact details on the app record — so
+  a workflow can report RED in post-processing after a build that succeeded and is already installable.
+  `ios-staging` deliberately omits it (nobody outside the household installs `BL Test`, and it would put
+  a test build in front of an Apple reviewer); `ios-release` keeps it, and `buildTiers.test.ts` pins
+  exactly one occurrence.
 - **`bundle-ids enable-capabilities … "Sign In with Apple"` still 409s**, so the staging App ID needed
   the same portal click production needed (verified afterwards: `XU38T75JUS_APPLE_ID_AUTH` with
   `PRIMARY_APP_CONSENT`). **In-App Purchase appears on every App ID by default and cannot be removed** —

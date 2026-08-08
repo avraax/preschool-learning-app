@@ -77,9 +77,9 @@ workflows:
         script: npm test
 
       - name: Point the native project at this tier
-        # Rewrites EVERY PRODUCT_BUNDLE_IDENTIFIER in the pbxproj plus capacitor.config.ts's appId and
-        # appName, so `cap sync` and the Info.plist display name follow. Mutates this CHECKOUT only —
-        # nothing is ever pushed from CI.
+        # Rewrites EVERY PRODUCT_BUNDLE_IDENTIFIER in the pbxproj, capacitor.config.ts's appId/appName,
+        # and CFBundleDisplayName in Info.plist — which is the ONLY thing that decides the home-screen
+        # name (`cap sync` never touches the plist). Mutates this CHECKOUT only; nothing is pushed from CI.
         script: node scripts/set-build-tier.mjs "$BL_TIER"
 
       - name: Build the web bundle

@@ -73,8 +73,9 @@ export function setBuildTier(tier, { dryRun = false } = {}) {
   )
   if (nextPbx !== pbx) changes.push(`${PBXPROJ}: ${found.length} bundle id(s) -> ${target.bundleId}`)
 
-  // --- 2. capacitor.config.ts's appId and appName, so `cap sync` and the Info.plist display name
-  //        follow. Without appId here the sync writes the committed id back over step 1.
+  // --- 2. capacitor.config.ts's appId and appName. `appId` is load-bearing: without it `cap sync`
+  //        writes the committed id back over step 1. `appName` is NOT — see step 3; it is kept in step
+  //        with the plist only so the two files never disagree about what this app is called.
   const cap = readFileSync(CAP_CONFIG, 'utf8')
   let nextCap = cap.replace(/appId:\s*'[^']*'/, `appId: '${target.bundleId}'`)
   nextCap = nextCap.replace(/appName:\s*'[^']*'/, `appName: '${target.appName}'`)
