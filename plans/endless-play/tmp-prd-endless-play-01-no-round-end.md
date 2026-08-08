@@ -258,6 +258,19 @@ own answer — is driven straight off `audio.narrationHealthy` (`UnifiedQuizGame
 `MathGame.tsx:96`, `EnglishListenGame.tsx:65`), which otherwise becomes an unread config field — the
 exact "silently dead flag" shape this repo's guards exist to catch.
 
+**The adult surface — two sentences of Danish copy still name stars.** `BarnPane` already deleted its
+"Stjerner i alt" row, so these are the last two references and both must be rewritten, not left to
+describe a thing that no longer exists:
+- `BarnPane.tsx:346-347` (the reset-child confirmation) — *"Dette nulstiller **alle** {navn}s
+  klistermærker, rekorder og stjerner."* → drop "rekorder og stjerner"; the book and the XP behind it
+  are the only progress left. Keep the fixed type-to-confirm word `NULSTIL` and the "andre børn røres
+  ikke" clause exactly as they are (`adult-surface.md`).
+- `LaeringPane.tsx:35` (the Svær level description) — *"Stjernerne er lidt mildere her, så et sværere
+  niveau ikke koster belønninger."* → the sentence goes. **The fairness rule it stated is now true by
+  construction**, since stars were the only way a harder level could have cost rewards and XP was
+  already difficulty-independent. Say that in the pane's comment rather than in the adult's copy.
+- Also update `adult-surface.md`'s "clears that child's book/bests/stars/XP" line (W8).
+
 **Schema — strip the dead fields, keep `SCHEMA_VERSION = 4`.** This is load-bearing:
 `normalizePersisted` (`progressSchema.ts:483`) returns `null` for any `version !== 4` and
 `progressStore.attach()` (`:245`) then falls through to `defaultPersisted()` — there is no migration
