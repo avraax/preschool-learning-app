@@ -47,6 +47,7 @@ import { BUILD_INFO } from '../../config/version'
 import { PHONE_ANY } from '../../theme/phoneMedia'
 import { AdultThemeProvider, ADULT_FONT } from '../../theme/adultTheme'
 import { useProfiles } from '../../hooks/useProfiles'
+import { useProgress } from '../../hooks/useProgress'
 import { useAuthContext } from '../../contexts/AuthContext'
 import AdultBackHeader from './AdultBackHeader'
 import BarnPane from './panes/BarnPane'
@@ -116,6 +117,28 @@ const AdultSettings: React.FC<AdultSettingsProps> = ({
   /** Playing with no account at all — the only state in which signing in is something to offer. */
   const guest = auth?.phase === 'guest'
 
+  // THE OFFER GETS CONCRETE ONCE THERE IS SOMETHING TO LOSE. An identical pitch at 0 rewards and at 40
+  // wastes the one moment it is strongest: the endowed-progress effect is why "save your progress"
+  // outperforms "create an account", and naming the real number is what makes it land.
+  //
+  // This is the ONLY place that lever can be pulled here. The owner's constraint is that nothing
+  // adult-directed appears in front of the parental gate (Kids Guideline 1.3), so a timed prompt during
+  // play is out — but the adult is already standing in the adult area, which is fair game.
+  //
+  // `rewardNumber()` is THE child-facing count (`.claude/rules/rewards-and-progression.md`): never
+  // `globalLevel()`, and never as a distance — no "n af 90" on this row.
+  //
+  // Klistermærker is the ONLY thing left to name: `PerGameStats` and `totals.totalStars` were deleted
+  // by Endless Play PRD-01, so "og alle rekorder" would promise to save a thing the app no longer has.
+  const progress = useProgress()
+  const guestRewards = guest ? progress.rewardNumber() : 0
+  const promoHint =
+    guestRewards === 0
+      ? 'Så bogen ikke kun ligger på denne iPad'
+      : guestRewards === 1
+        ? 'Gem barnets første klistermærke'
+        : `Gem barnets ${guestRewards} klistermærker`
+
   // Restore the last pane on each open. On compact that means opening straight onto it, with the
   // back arrow as the way out to the root list.
   const [wasOpen, setWasOpen] = useState(false)
@@ -168,7 +191,8 @@ const AdultSettings: React.FC<AdultSettingsProps> = ({
 
   const paneBody =
     pane === 'barn' ? (
-      <BarnPane closeAll={onClose} />
+      // `select` (not `setPane`): it also records `lastPane` and does the compact push.
+      <BarnPane closeAll={onClose} goToPane={select} />
     ) : pane === 'laering' ? (
       <LaeringPane childName={activeChild} />
     ) : pane === 'lyd' ? (
@@ -291,11 +315,12 @@ const AdultSettings: React.FC<AdultSettingsProps> = ({
                     <LogIn size={17} aria-hidden />
                     <Box sx={{ flex: 1, minWidth: 0 }}>
                       <Typography sx={{ fontSize: '0.88rem', fontWeight: 600 }}>Log ind</Typography>
-                      {/* Deliberately NOT noWrap: the rail is 200px and the three benefits are the
-                          whole reason the row exists — an ellipsis after "flere enheder" throws away
-                          the half that answers "why would I?". Wrapping costs ~14px of fixed height. */}
+                      {/* Deliberately NOT noWrap: an ellipsis would cut exactly the half that answers
+                          "why would I?". Both variants are short enough for one or two lines in the
+                          200px rail; the old feature list ("Flere børn, flere enheder, mikrofonspil")
+                          wrapped to three and still said nothing about an outcome. */}
                       <Typography sx={{ fontSize: '0.72rem', lineHeight: 1.3, color: 'text.secondary' }}>
-                        Flere børn, flere enheder, mikrofonspil
+                        {promoHint}
                       </Typography>
                     </Box>
                   </ButtonBase>

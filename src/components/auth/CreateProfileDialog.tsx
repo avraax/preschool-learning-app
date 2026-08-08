@@ -208,10 +208,12 @@ const CreateProfileDialog: React.FC<CreateProfileDialogProps> = ({
               slotProps={{ typography: { sx: { fontSize: '0.95rem' } } }}
               sx={{ alignItems: 'flex-start', mr: 0 }}
             />
+            {/* Klistermærker only: `PerGameStats` and `totals.totalStars` were deleted by Endless Play
+                PRD-01, so "og alle rekorder" named a thing the app no longer has. */}
             <Typography variant="caption" sx={{ display: 'block', color: 'text.secondary', pl: 4 }}>
               {offer.stickers === 1
-                ? '1 klistermærke og alle rekorder følger med.'
-                : `${offer.stickers} klistermærker og alle rekorder følger med.`}
+                ? '1 klistermærke følger med.'
+                : `${offer.stickers} klistermærker følger med.`}
             </Typography>
           </Box>
         )}

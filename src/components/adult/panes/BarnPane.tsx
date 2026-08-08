@@ -51,7 +51,7 @@ import { profileStore } from '../../../services/profileStore'
 import { avatarArt } from '../../../assets/avatars'
 import { REWARD_SLOTS } from '../../../config/stickers'
 import { SECTION_LABELS } from '../../../config/adultSectionLabels'
-import { adultItem } from '../../../config/adultSettingsIa'
+import { adultItem, type AdultGroupId } from '../../../config/adultSettingsIa'
 import type { SectionId } from '../../../services/progressStore'
 import { AppSkin } from '../../../theme/adultTheme'
 import CreateProfileDialog from '../../auth/CreateProfileDialog'
@@ -69,13 +69,21 @@ const SECTION_IDS: SectionId[] = ['alphabet', 'math', 'colors', 'english', 'ordl
 export interface BarnPaneProps {
   /** Close the whole settings surface — switching child re-attaches the store under the new profile. */
   closeAll: () => void
+  /**
+   * Switch the settings surface to another pane. `AdultSettings` owns pane selection (its `select()`
+   * also handles the compact push and the persisted `lastPane`), so a pane asks rather than navigates.
+   * Used by the guest branch of "Tilføj et barn" below.
+   */
+  goToPane?: (id: AdultGroupId) => void
 }
 
-const BarnPane: React.FC<BarnPaneProps> = ({ closeAll }) => {
+const BarnPane: React.FC<BarnPaneProps> = ({ closeAll, goToPane }) => {
   const theme = useTheme()
   const auth = useAuthContext()
   const account = useProfiles()
   const progress = useProgress()
+  /** No account: child profiles are the account feature, so "Tilføj et barn" cannot succeed here. */
+  const guest = auth?.phase === 'guest'
 
   const [creating, setCreating] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -275,13 +283,36 @@ const BarnPane: React.FC<BarnPaneProps> = ({ closeAll }) => {
               )
             })}
           </Stack>
+          {/* GUEST: say the price BEFORE the work, not after it. `profileStore.createProfile` refuses
+              without an account and does so honestly — but only once the adult has picked an avatar,
+              typed a name and pressed Gem. Asking for effort and then refusing is the wrong order, so
+              here the row states the requirement up front and leads to the pane that can fix it.
+              `createProfile`'s own guard stays as the backstop; this is not a substitute for it. */}
           <Button
-            onClick={() => setCreating(true)}
-            aria-label="Tilføj et barn"
+            onClick={() => (guest ? goToPane?.('konto') : setCreating(true))}
+            aria-label={guest ? 'Tilføj et barn — kræver en konto' : 'Tilføj et barn'}
             startIcon={<UserPlus size={17} />}
-            sx={{ mt: 1 }}
+            sx={{ mt: 1, textAlign: 'left', justifyContent: 'flex-start' }}
           >
-            Tilføj et barn
+            <Box>
+              <Box component="span" sx={{ display: 'block' }}>
+                Tilføj et barn
+              </Box>
+              {guest && (
+                <Box
+                  component="span"
+                  sx={{
+                    display: 'block',
+                    fontSize: '0.72rem',
+                    fontWeight: 400,
+                    color: 'text.secondary',
+                    textTransform: 'none',
+                  }}
+                >
+                  Kræver en konto
+                </Box>
+              )}
+            </Box>
           </Button>
         </PaneSection>
 

@@ -29,7 +29,17 @@ import {
   TextField,
   Typography,
 } from '@mui/material'
-import { Cloud, LockKeyhole, LogOut, Mic, RefreshCw, Tablet, Trash2, Users } from 'lucide-react'
+import {
+  Cloud,
+  LockKeyhole,
+  LogOut,
+  Mic,
+  RefreshCw,
+  ShieldCheck,
+  TabletSmartphone,
+  Trash2,
+  Users,
+} from 'lucide-react'
 import { useAuthContext } from '../../../contexts/AuthContext'
 import { useSyncStatus } from '../../../hooks/useSyncStatus'
 import { authStore } from '../../../services/authStore'
@@ -90,11 +100,25 @@ const danishWhen = (ms: number): string => {
  * the `onClick` removed, because these are STATEMENTS. Not a `Button`, so it never lands in the tab
  * order between the adult and the sign-in button below it. The icon is decorative — the text carries
  * the meaning.
+ *
+ * TITLE + HINT, not one line. The first version stated four FEATURES ("Fremgangen følger med til jeres
+ * andre enheder"), and a feature is only persuasive to someone who already has the thing it needs — one
+ * child on one iPad, which is the median install, matched none of them. The hint carries the OUTCOME,
+ * which is the half that answers "why would I?".
  */
-const BenefitRow: React.FC<{ icon: React.ReactNode; text: string }> = ({ icon, text }) => (
-  <Box sx={{ display: 'flex', alignItems: 'flex-start', py: 0.5 }}>
-    <Box sx={{ display: 'flex', color: 'text.secondary', mr: 1.5, pt: 0.15 }}>{icon}</Box>
-    <Typography sx={{ flex: 1, minWidth: 0, fontSize: '0.95rem', lineHeight: 1.5 }}>{text}</Typography>
+const BenefitRow: React.FC<{ icon: React.ReactNode; title: string; hint: string }> = ({
+  icon,
+  title,
+  hint,
+}) => (
+  <Box sx={{ display: 'flex', alignItems: 'flex-start', py: 0.75 }}>
+    <Box sx={{ display: 'flex', color: 'text.secondary', mr: 1.5, pt: 0.25 }}>{icon}</Box>
+    <Box sx={{ flex: 1, minWidth: 0 }}>
+      <Typography sx={{ fontSize: '0.95rem', fontWeight: 600 }}>{title}</Typography>
+      <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', lineHeight: 1.45 }}>
+        {hint}
+      </Typography>
+    </Box>
   </Box>
 )
 
@@ -289,29 +313,50 @@ const KontoPane: React.FC<KontoPaneProps> = ({ closeAll }) => {
   if (guest) {
     return (
       <Stack spacing={2.5}>
-        <PaneSection title="Konto">
-          <Typography sx={{ fontWeight: 600, fontSize: '0.95rem', mb: 0.5 }}>
-            I spiller uden konto
-          </Typography>
+        {/* `caps={false}`: the pane header already reads "Konto", so a small-caps "KONTO" eyebrow
+            directly beneath it said the same word twice. */}
+        <PaneSection title="I spiller uden konto" caps={false}>
           <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.6 }}>
-            Fremgangen ligger kun på denne iPad, og der kan kun være ét barn.
+            Barnets bog ligger kun her på iPad&apos;en. Der er ingen kopi andre steder.
           </Typography>
         </PaneSection>
 
-        {/* Three statements, not links — so no chevron, no onClick, and no Button wrapper, which also
-            keeps them out of the tab order. Face ID and passkeys are deliberately ABSENT: the shell's
+        {/* Statements, not links — no chevron, no onClick, no Button wrapper, which also keeps them out
+            of the tab order. Face ID and passkeys are deliberately ABSENT: the shell's
             `capacitor://localhost` origin can never satisfy the `boernelaering.dk` rpID, and the
-            signed-in branch below already says so. Google or the code, nothing else. */}
+            signed-in branch below already says so. Google or the code, nothing else.
+
+            THE ORDER IS THE ARGUMENT. Sync, multiple children and the microphone game are all
+            conditional on something a new user may not have — one child on one iPad matches none of
+            them, and that is the median install (and the owner's own household). "Bogen er sikret" is
+            the only line true for EVERY family, so it leads. It is also the honest one: today a guest
+            book dies with the iPad, silently.
+
+            Do NOT reword this into "din fremgang gemmes ikke". It IS saved — it is UNCOPIED, and the
+            distinction is the whole point. */}
         <PaneSection title="Med en konto">
-          <Stack spacing={0.5}>
+          <Stack spacing={0}>
             <BenefitRow
-              icon={<Tablet size={19} aria-hidden />}
-              text="Fremgangen følger med til jeres andre enheder."
+              icon={<ShieldCheck size={19} aria-hidden />}
+              title="Bogen er sikret"
+              hint="Klistermærkerne er der stadig, hvis iPad'en bliver nulstillet eller skiftet ud."
             />
-            <BenefitRow icon={<Users size={19} aria-hidden />} text="Flere børn, hver med sin egen bog." />
+            <BenefitRow
+              // Two devices, not one: a lone `Tablet` rendered as a featureless rectangle beside a
+              // line that is specifically about a SECOND device.
+              icon={<TabletSmartphone size={19} aria-hidden />}
+              title="Den samme bog på flere enheder"
+              hint="Barnet kan spille videre på fx en telefon."
+            />
+            <BenefitRow
+              icon={<Users size={19} aria-hidden />}
+              title="Plads til flere børn"
+              hint="Hvert barn får sin egen bog og sin egen sværhedsgrad."
+            />
             <BenefitRow
               icon={<Mic size={19} aria-hidden />}
-              text={'Mikrofonspillet "Sig et Ord" kan slås til.'}
+              title="Mikrofonspillet kan slås til"
+              hint={'"Sig et Ord" kræver en konto.'}
             />
           </Stack>
           <Button
@@ -332,7 +377,18 @@ const KontoPane: React.FC<KontoPaneProps> = ({ closeAll }) => {
               {message}
             </Typography>
           )}
-          <Typography variant="caption" sx={{ display: 'block', color: 'text.secondary', mt: 1 }}>
+          {/* THE OBJECTION-REMOVER, and it belongs at the moment of the ask rather than one pane away
+              in Privatliv. Cost and data handling are the dominant parental worry for a children's app,
+              and this one is genuinely clean — so saying so is not a boast, it is the answer to the
+              question the adult is already asking.
+
+              EVERY CLAUSE MUST STAY TRUE. No ads, no analytics/tracking, no in-app purchases, and no
+              marketing email — all four are load-bearing claims, mirrored in PrivatlivPane and in the
+              App Store description. If any of them ever stops being true, this line goes first. */}
+          <Typography variant="caption" sx={{ display: 'block', color: 'text.secondary', mt: 1.5 }}>
+            Gratis. Ingen reklamer, ingen sporing — og vi skriver aldrig til dig.
+          </Typography>
+          <Typography variant="caption" sx={{ display: 'block', color: 'text.secondary', mt: 0.5 }}>
             Fremgangen fra denne iPad kan følge med til det første barn, du opretter.
           </Typography>
         </PaneSection>
