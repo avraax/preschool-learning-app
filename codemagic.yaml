@@ -135,7 +135,21 @@ workflows:
           failure: true
       app_store_connect:
         auth: integration
-        submit_to_testflight: true
+        # NO `submit_to_testflight` HERE, and its absence is the point.
+        #
+        # The build still UPLOADS to App Store Connect and internal testers still get it — that is the
+        # publishing block above, not this flag. What this flag adds is submission to EXTERNAL beta
+        # review, which for a staging app is both pointless and slightly bad: nobody outside this
+        # household will ever install `BL Test`, and it would put a deliberately-broken test build in
+        # front of an Apple reviewer.
+        #
+        # It also FAILED the first real staging build in post-processing: external review requires Beta
+        # App Information (feedback email) and Beta App Review Information (name, phone, email) on the
+        # app record, which a never-submitted app has no reason to carry. The IPA had already uploaded
+        # and installed by then, so the red build was reporting a step that should not have run.
+        #
+        # If external staging testers are ever wanted, add the flag back and fill that form once at
+        # https://appstoreconnect.apple.com/apps/6799489044/testflight/test-info
 
   ios-release:
     name: Børnelæring — production → TestFlight

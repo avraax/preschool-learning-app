@@ -33,6 +33,7 @@ export const BUILD_TIERS = {
 
 const PBXPROJ = 'ios/App/App.xcodeproj/project.pbxproj'
 const CAP_CONFIG = 'capacitor.config.ts'
+const INFO_PLIST = 'ios/App/App/Info.plist'
 
 /** Every value the table permits, for the "refuse to write anything else" check. */
 const ALL_BUNDLE_IDS = Object.values(BUILD_TIERS).map((t) => t.bundleId)
@@ -82,9 +83,33 @@ export function setBuildTier(tier, { dryRun = false } = {}) {
   }
   if (nextCap !== cap) changes.push(`${CAP_CONFIG}: ${target.bundleId} / ${target.appName}`)
 
+  // --- 3. THE HOME-SCREEN NAME, which is `CFBundleDisplayName` in Info.plist and NOTHING ELSE.
+  //
+  // `capacitor.config.ts`'s `appName` does NOT reach it. That value is read when the native project is
+  // SCAFFOLDED (`cap add ios`) and never again — `cap sync` copies the web build and regenerates
+  // Package.swift, and leaves Info.plist alone. Step 2 above therefore renames something no installed
+  // app reads. Measured on the first real staging build: both apps arrived on the iPad as
+  // "Børnelæring", identical, which is precisely the confusion the second name exists to prevent.
+  const plist = readFileSync(INFO_PLIST, 'utf8')
+  const displayName = plist.match(/<key>CFBundleDisplayName<\/key>\s*<string>([^<]*)<\/string>/)
+  if (!displayName) throw new Error(`[set-build-tier] no CFBundleDisplayName in ${INFO_PLIST}`)
+  if (!ALL_APP_NAMES.includes(displayName[1])) {
+    throw new Error(
+      `[set-build-tier] ${INFO_PLIST} holds an unrecognised display name ${JSON.stringify(displayName[1])}`,
+    )
+  }
+  const nextPlist = plist.replace(
+    /(<key>CFBundleDisplayName<\/key>\s*<string>)[^<]*(<\/string>)/,
+    `$1${target.appName}$2`,
+  )
+  if (nextPlist !== plist) changes.push(`${INFO_PLIST}: CFBundleDisplayName -> ${target.appName}`)
+
   if (!dryRun) {
     if (nextPbx !== pbx) writeFileSync(PBXPROJ, nextPbx)
     if (nextCap !== cap) writeFileSync(CAP_CONFIG, nextCap)
+    // utf8 both ways — the production name is "Børnelæring" and this repo has mojibaked Danish through
+    // a text pipeline before.
+    if (nextPlist !== plist) writeFileSync(INFO_PLIST, nextPlist, 'utf8')
   }
   return { tier, target, changes }
 }

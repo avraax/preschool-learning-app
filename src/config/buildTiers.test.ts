@@ -101,11 +101,20 @@ test('CI still never auto-submits to the App Store — on EITHER workflow', () =
   // C11 is explicitly the owner's act: a submission is a legal declaration plus a one-way door on
   // "Made for Kids". Adding a second workflow doubled the number of places this line could appear.
   assert.ok(!/submit_to_app_store/.test(ci), 'a workflow would submit to the App Store without the owner')
+
+  // EXACTLY ONE `submit_to_testflight`, and it is production's. That flag submits to EXTERNAL beta
+  // review; staging deliberately omits it, because nobody outside this household installs `BL Test` and
+  // it would put a test build in front of an Apple reviewer. It also fails post-processing without a
+  // Beta App Review contact form the staging record has no reason to carry (measured on the first real
+  // staging build — the IPA had already uploaded and installed).
   assert.equal(
     (ci.match(/submit_to_testflight:\s*true/g) ?? []).length,
-    2,
-    'both workflows must publish to TestFlight',
+    1,
+    'staging must not submit to external beta review, and production must',
   )
+  const releaseBlock = ci.slice(ci.indexOf('\n  ios-release:'))
+  assert.match(releaseBlock, /submit_to_testflight:\s*true/, 'the release workflow stopped publishing')
+
   assert.ok(!/cyberpilot/i.test(yaml), 'the work domain is in the CI config')
 })
 
@@ -132,4 +141,10 @@ test('set-build-tier refuses anything outside the table, and rewrites EVERY occu
   // appId must be rewritten too, or `cap sync` copies the committed id straight back over the pbxproj.
   assert.match(src, /appId:\s*'\$\{target\.bundleId\}'/)
   assert.match(src, /appName:\s*'\$\{target\.appName\}'/)
+  // …and Info.plist, which is the ONLY thing that decides the home-screen name. `appName` above does
+  // not reach it: Capacitor reads that when SCAFFOLDING the project, and `cap sync` leaves the plist
+  // alone. Without this the two apps install under the same name — measured on the first real staging
+  // build, which is the confusion the second name exists to prevent.
+  assert.match(src, /CFBundleDisplayName/, 'the home-screen name is never rewritten')
+  assert.match(src, /writeFileSync\(INFO_PLIST, nextPlist, 'utf8'\)/, 'the plist write is gone or not utf8')
 })

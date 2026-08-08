@@ -315,6 +315,14 @@ test('the committed tree is always PRODUCTION — a staging mutation must never 
   assert.ok(!cfg.includes(STAGING), 'capacitor.config.ts carries the STAGING bundle id')
   assert.match(cfg, /appName:\s*'Børnelæring'/, 'the committed appName is not production’s')
 
+  // THE HOME-SCREEN NAME IS THIS, and only this. `capacitor.config.ts`'s `appName` is read when the
+  // native project is SCAFFOLDED and never again — `cap sync` does not touch Info.plist — so renaming
+  // it alone shipped two apps to the iPad both called "Børnelæring" (measured, first staging build).
+  const plist = stripXml(read(...INFO_PLIST))
+  const display = plist.match(/<key>CFBundleDisplayName<\/key>\s*<string>([^<]*)<\/string>/)
+  assert.ok(display, 'no CFBundleDisplayName — the home-screen name would fall back to the target name')
+  assert.equal(display[1], 'Børnelæring', 'the committed home-screen name is not production’s')
+
   // The pbxproj: every occurrence, exact equality. `startsWith` would accept the staging id, since it
   // is production's plus a suffix — the whole reason the loop below compares rather than matches.
   const pbx = read(...PBXPROJ)
