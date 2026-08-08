@@ -3,12 +3,9 @@ import { useLocation } from 'react-router-dom'
 import { Box, Typography } from '@mui/material'
 import { useTheme, alpha } from '@mui/material/styles'
 import Mascot from '../common/Mascot'
-import GameShell from '../common/GameShell'
-import RoundResultScreen from '../common/RoundResultScreen'
 import ThemeScene from '../common/scene/ThemeScene'
 import SceneObject from '../common/scene/SceneObject'
 import type { MascotEvent } from '../../services/mascotBus'
-import type { RoundOutcome, XpGrantResult } from '../../services/progressStore'
 import { getCategoryTheme } from '../../config/categoryThemes'
 import { sectionIconImages, type SectionIconId } from '../../assets/themes/icons'
 import { defaultHomeAnchors, SCENE_SECTION_ORDER } from '../../theme/tokens/helpers'
@@ -43,63 +40,9 @@ export const DevMascot: React.FC = () => {
   )
 }
 
-// /dev/round-result?stars=3&record=1
-export const DevRoundResult: React.FC = () => {
-  const { search } = useLocation()
-  const p = new URLSearchParams(search)
-  const stars = Math.min(3, Math.max(1, Number(p.get('stars') ?? 3)))
-  const record = p.get('record') === '1'
-
-  const correct = stars === 3 ? 8 : stars === 2 ? 6 : 4
-  // ?levelup=1&level=N forces the reward meter to fill fully. NB the actual ceremony handoff is keyed
-  // off the STORE cursor (globalLevel > lastCelebratedLevel), not this flag — seed real progress with
-  // ?rewards=<n> to capture the ceremony (see src/utils/devHarness.ts).
-  const levelup = p.get('levelup') === '1'
-  const lvl = Math.max(1, Number(p.get('level') ?? 3))
-  const xp: XpGrantResult = {
-    granted: 33,
-    section: 'alphabet',
-    global: {
-      xpBefore: 0,
-      xpAfter: 33,
-      levelBefore: levelup ? Math.max(1, lvl - 1) : lvl,
-      levelAfter: lvl,
-      leveledUp: levelup,
-      xpIntoLevel: levelup ? 13 : 10,
-      xpToNextLevel: 22,
-      xpForThisLevel: 35,
-    },
-    bloom: {
-      xpBefore: 0,
-      xpAfter: 33,
-      stageBefore: 0,
-      stageAfter: 0,
-      stageAdvanced: false,
-      fillBefore: 0,
-      fillAfter: 33 / 480,
-    },
-  }
-  const outcome: RoundOutcome = {
-    gameId: 'dev.sample',
-    correct,
-    total: 8,
-    mistakes: 8 - correct,
-    stars,
-    longestStreak: stars === 3 ? 8 : 4,
-    previousBests: { streak: record ? 3 : 8, stars: record ? 2 : 3, count: record ? 5 : 8 },
-    newBests: { streak: record, stars: record, count: record },
-    anyNewBest: record,
-    totals: { totalStars: 12, totalStickers: 5 },
-    xp,
-  }
-
-  return (
-    <GameShell categoryId="alphabet" title="Resultat (dev)" backRoute="/">
-      <RoundResultScreen outcome={outcome} categoryId="alphabet" backRoute="/" onReplay={() => {}} />
-    </GameShell>
-  )
-}
-
+// (`/dev/round-result` is DELETED — Endless Play PRD-01 W2. There is no round-end surface to preview
+// any more; the reward moment is the ceremony, which is captured by seeding `?rewards=<n>` and playing
+// to the crossing. See `.claude/skills/ui-screenshot/`.)
 // /dev/scene?theme=<id>&section=<alphabet|math|colors|english|ordleg>&bloom=0..4
 // Structured World harness (Liveliness PRD-05 §11). Previews the tactile SceneObject seating,
 // depth (contact shadow), per-theme home anchors, section framing (focus zoom + accent tint),

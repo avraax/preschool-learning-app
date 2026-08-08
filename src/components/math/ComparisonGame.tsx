@@ -5,17 +5,15 @@ import { AnimatePresence, motion } from 'framer-motion'
 import GameShell from '../common/GameShell'
 import AnswerTile, { type AnswerTileState } from '../common/AnswerTile'
 import SymbolTile from '../common/SymbolTile'
-import RoundResultScreen from '../common/RoundResultScreen'
 import type { GuideReaction } from '../common/ThemeMascot'
 import { useCelebration } from '../common/CelebrationEffect'
 import { getCategoryTheme } from '../../config/categoryThemes'
 import { COMPARE_PROMPT, comparisonFactText } from '../../config/gamePhrases'
-import { starThresholdsFor } from '../../config/difficulty'
 import { makeComparisonPair } from '../../config/mathProblems'
 import { MathRepeatButton } from '../common/RepeatButton'
-import { useRound } from '../../hooks/useRound'
+import { useTaskRun } from '../../hooks/useTaskRun'
 import { useNeverFailHint } from '../../hooks/useNeverFailHint'
-import { progressStore, type RoundOutcome } from '../../services/progressStore'
+import { progressStore } from '../../services/progressStore'
 import { sfx } from '../../services/sfxClient'
 import { mascotBus } from '../../services/mascotBus'
 import { isIOS } from '../../utils/deviceDetection'
@@ -114,11 +112,10 @@ const ComparisonGame: React.FC = () => {
   // True once the child taps → suppresses a (possibly late) welcome from talking over their play.
   const hasInteractedRef = useRef(false)
 
-  // Bounded round + reward flow (Foundation §3). 8 questions; star thresholds come from the difficulty
-  // spine at finish time (Difficulty PRD-01 W6).
-  const round = useRound({ length: 8, gameId: 'math.comparison' })
+  // Endless task play (Endless Play PRD-01 W2): live per-task XP, the streak counter, and the in-game
+  // ceremony seam. 8 is the `taskXp` normaliser, not a length — nothing counts down to it.
+  const run = useTaskRun({ tasksInRound: 8, gameId: 'math.comparison' })
   const firstAttemptRef = useRef(true)
-  const [roundOutcome, setRoundOutcome] = useState<RoundOutcome | null>(null)
 
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
   // The post-correct celebration/advance timer (PRD-02 P1/P4) — tracked so it's cleared on unmount
@@ -251,22 +248,6 @@ const ComparisonGame: React.FC = () => {
     }
   }
 
-  const finishRound = (firstTryCorrect: number, longestStreak: number) => {
-    const outcome = progressStore.recordRoundResult(
-      'math.comparison',
-      { correct: firstTryCorrect, total: round.length, longestStreak },
-      { starThresholds: starThresholdsFor(progressStore.difficultyFor('math')) },
-    )
-    setRoundOutcome(outcome)
-  }
-
-  const handleReplay = () => {
-    stopCelebration()
-    setRoundOutcome(null)
-    round.reset()
-    generateNewProblem()
-  }
-
   const handleSideClick = async (side: Side) => {
     // Advance-lock (PRD-02 P1): the ref closes the same-tick double-tap window that the async
     // `locked` state leaves open (a second tap reads stale `locked=false` before React re-renders).
@@ -320,16 +301,15 @@ const ComparisonGame: React.FC = () => {
       advanceTimerRef.current = setTimeout(() => {
         advanceTimerRef.current = null
         stopCelebration()
-        const r = round.completeQuestion(firstAttemptRef.current)
-        if (!r.done && r.streak > 0 && r.streak % 3 === 0) {
+        // THE SEAM (Endless Play PRD-01 §4.1) — the ceremony plays here, before the next problem is
+        // generated, with the advance lock still held.
+        const r = run.completeTask(firstAttemptRef.current)
+        // Suppressed on a crossing: one loud payoff, not two celebrations in the same 200ms.
+        if (r.streak > 0 && r.streak % 3 === 0 && !r.crossedLevel) {
           celebrateTier('streak')
           mascotBus.emit('streak') // mascot does its streak pose, matching the shared quiz engine
         }
-        if (r.done) {
-          finishRound(r.firstTryCorrect, r.longestStreak)
-        } else {
-          generateNewProblem()
-        }
+        run.thenContinue(() => generateNewProblem())
         // A fixed celebration window from the tap. The correct branch always speaks a sentence fact,
         // so it always gets DWELL_FACT — long enough that the next problem's prompt only cancels the
         // clip's trailing silence, never the spoken fact.
@@ -477,13 +457,13 @@ const ComparisonGame: React.FC = () => {
   }
 
   // Live difficulty: regenerate the current problem when the level changes in the adult menu
-  // (no refresh). Skips the result screen + the initial mount.
+  // (no refresh). Skips the initial mount.
   const difficultyLevel = useDifficulty('math')
   const prevDifficultyRef = useRef(difficultyLevel)
   useEffect(() => {
     if (prevDifficultyRef.current === difficultyLevel) return
     prevDifficultyRef.current = difficultyLevel
-    if (roundOutcome || !currentProblem) return
+    if (!currentProblem) return
     generateNewProblem()
   }, [difficultyLevel]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -495,14 +475,7 @@ const ComparisonGame: React.FC = () => {
       guideReaction={guideReaction}
       celebration={{ show: showCelebration, intensity: celebrationIntensity, duration: celebrationDuration, onComplete: stopCelebration }}
     >
-      {roundOutcome ? (
-        <RoundResultScreen
-          outcome={roundOutcome}
-          categoryId="math"
-          backRoute="/math"
-          onReplay={handleReplay}
-        />
-      ) : currentProblem ? (
+      {currentProblem ? (
         <Box
           sx={{
             flex: 1,
@@ -556,7 +529,7 @@ const ComparisonGame: React.FC = () => {
               supply, re-applied here on the same shared constants. */}
           <Box
             component={motion.div}
-            key={`${currentProblem.leftNumber}-${currentProblem.rightNumber}-${round.state.index}`}
+            key={`${currentProblem.leftNumber}-${currentProblem.rightNumber}-${run.state.index}`}
             initial={reduce ? false : { opacity: 0, scale: CHARGE_IN_SCALE[0] }}
             animate={reduce ? {} : { opacity: [...CHARGE_IN_OPACITY], scale: [...CHARGE_IN_SCALE] }}
             transition={reduce ? undefined : CHARGE}

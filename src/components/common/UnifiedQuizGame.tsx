@@ -17,12 +17,12 @@ import { HeroEmoji, HeroArt, TileArt } from './PromptArt'
 import type { GuideReaction } from './ThemeMascot'
 import { useCelebration } from '../common/CelebrationEffect'
 import { useGameState } from '../../hooks/useGameState'
-import { useRound, type RoundConfig } from '../../hooks/useRound'
+import { useTaskRun } from '../../hooks/useTaskRun'
 import { useNeverFailHint } from '../../hooks/useNeverFailHint'
-import { progressStore, type RoundOutcome, type SectionId } from '../../services/progressStore'
+import { type SectionId } from '../../services/progressStore'
 import { practiceLedger } from '../../services/practiceLedger'
 import { useDifficulty } from '../../hooks/useDifficulty'
-import { optionCountFor, starThresholdsFor } from '../../config/difficulty'
+import { optionCountFor } from '../../config/difficulty'
 import { answerGridSx } from './answerGrid'
 import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 import { sfx } from '../../services/sfxClient'
@@ -30,7 +30,6 @@ import { mascotBus } from '../../services/mascotBus'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
 import { DWELL_CORRECT, DWELL_FACT } from '../../theme/motion'
 import { devFx } from '../../utils/devHarness'
-import RoundResultScreen from './RoundResultScreen'
 // Simplified audio system
 import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 
@@ -161,10 +160,10 @@ export interface UnifiedQuizConfig {
   // answers already reveal themselves (picture answers, glyph/number quizzes he can read).
   previewBeforeCommit?: boolean
 
-  // Bounded-round mode (Overhaul Foundation §3). OPTIONAL — absent → today's endless behavior.
-  // When set, the quiz runs `round.length` questions then shows RoundResultScreen and records the
-  // result to the progress store (stars/bests/stickers). Requires `gameId`.
-  round?: RoundConfig
+  // Play is ENDLESS (Endless Play PRD-01 D1) — there is no round boundary and no result surface. This
+  // number is the `taskXp` NORMALISER ("a round is a round"), and at each call site it is the same
+  // constant the game's prompt bag uses as its no-repeat window. Default 8. Requires `gameId` to earn.
+  tasksInRound?: number
   gameId?: string             // stable id for progress, e.g. 'alphabet.quiz'
 
   // Optional custom PromptStage hero (UI/UX Overhaul §6A). When provided, the quiz renders this in
@@ -194,13 +193,12 @@ export interface UnifiedQuizConfig {
   // round bookkeeping are shared — there is no second scoring path.
   dragToPromptSlot?: boolean
 
-  // This board is UNANSWERABLE without narration (Practice Loop PRD-01 W4) — Tal Quiz shows nothing but
-  // a speaker, Lyt og Find is audio→picture. Set it and the engine (a) tracks whether narration died at
-  // any point in the round and (b) records that round as `degraded`, which grants XP as normal but
-  // records NO personal best: the board revealed its own answer, so it was a shape-match.
-  //
-  // Do NOT set it on a board that survives silence (Bogstav Quiz is picture→letter and reads fine).
-  audioOnly?: boolean
+  // (`audioOnly` is DELETED — Endless Play PRD-01 W3. It only ever fed the `degraded` flag on
+  // `recordRoundResult`, i.e. the personal-best suppression, and personal bests are gone. The W4
+  // degraded-mode PRODUCT behaviour is untouched: an unanswerable audio-only board still reveals its
+  // own answer, driven straight off `audio.narrationHealthy` at the render site — never off a config
+  // flag. Keeping the flag would have left an unread config field, which is the exact silently-dead
+  // shape this repo's guards exist to catch.)
 
   // When the welcome message already conveys the first question's prompt (e.g. Hvad Mangler?, whose
   // welcome "Hvad mangler" equals its per-question prompt "Hvad mangler?"), set this so the engine
@@ -249,34 +247,25 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
     autoInitialize: false
   })
 
-  // Centralized game state management
-  // `score` itself is no longer READ anywhere — the header chip that displayed it is gone. The
-  // counter is kept because `incrementScore`/`resetScore` still drive the endless-mode tally that
-  // `useRound` doesn't own.
-  const { incrementScore, resetScore } = useGameState()
+  // Centralized game state management. `score` itself is no longer READ anywhere — the header chip
+  // that displayed it is gone.
+  const { incrementScore } = useGameState()
 
   // Celebration management (rendered by GameShell)
   const { showCelebration, celebrationIntensity, celebrationDuration, celebrateTier, stopCelebration } = useCelebration()
 
-  // Bounded round (no-op when config.round is absent → endless behavior preserved). Thread the
-  // stable gameId in so useRound grants live per-task XP (Liveliness PRD-04) on each question.
-  const round = useRound(
-    config.round ? { ...config.round, gameId: config.gameId ?? `quiz.${config.quizType}` } : undefined,
-  )
-  // True until the first wrong tile is tapped for the current question; gates the streak/star
+  // Endless task play: per-task XP + the streak counter + the ceremony seam (Endless Play PRD-01 W2).
+  const run = useTaskRun({
+    tasksInRound: config.tasksInRound ?? 8,
+    gameId: config.gameId ?? `quiz.${config.quizType}`,
+  })
+  // True until the first wrong tile is tapped for the current question; gates the streak's
   // "first try" accounting. Reset on each new question.
   const firstAttemptRef = useRef(true)
   // Never-fail hint (PRD-05 P1): after `hintAfterNWrong` wrong taps on the current question the
   // correct tile pulses. Shared primitive; `Infinity` threshold disables it when the config omits
   // `hintAfterNWrong`. `showHint` is the boolean the render reads; reset per question.
   const { hint: showHint, registerWrong: registerHintWrong, reset: resetHint } = useNeverFailHint<boolean>(config.hintAfterNWrong ?? Infinity)
-  // When set, the round is over and the reward/result hero replaces the answer grid.
-  const [roundOutcome, setRoundOutcome] = useState<RoundOutcome | null>(null)
-  // W4: did narration die at ANY point during this round? Sticky until the next round, because a round
-  // that revealed its answer for even part of its length was partly a shape-match — recording a personal
-  // best off it would let a broken iPad overwrite a real record.
-  const degradedThisRoundRef = useRef(false)
-  if (config.audioOnly && !audio.narrationHealthy) degradedThisRoundRef.current = true
 
   // Timeout ref for cleanup (per-question prompt timer)
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
@@ -445,15 +434,15 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
   }, [forcedFx, showOptions.length])
 
   // Live difficulty: when the adult changes the level mid-game, regenerate the current question at
-  // the new level right away (the config's generators read difficultyFor live). Skips the result
-  // screen + the initial mount (only reacts to a real change).
+  // the new level right away (the config's generators read difficultyFor live). Skips the initial
+  // mount (only reacts to a real change).
   const prevDifficulty = useRef(difficultyLevel)
   useEffect(() => {
     if (prevDifficulty.current === difficultyLevel) return
     prevDifficulty.current = difficultyLevel
-    if (!gameReady || roundOutcome) return
+    if (!gameReady) return
     generateNewQuestion()
-  }, [difficultyLevel, gameReady, roundOutcome, generateNewQuestion])
+  }, [difficultyLevel, gameReady, generateNewQuestion])
 
   const handleDragStart = (event: DragStartEvent) => {
     audio.cancelCurrentAudio()
@@ -586,24 +575,19 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
         advanceTimerRef.current = null
         stopCelebration()
 
-        if (!round.enabled) {
-          generateNewQuestion()
-          return
-        }
-
-        // Bounded round: record the completed question, fire streak milestones, end or advance.
-        const r = round.completeQuestion(firstAttemptRef.current)
-        if (!r.done && r.streak > 0 && r.streak % 3 === 0) {
+        // THE SEAM (Endless Play PRD-01 §4.1). Record the completed task, fire the streak milestone,
+        // and hand the continuation to `thenContinue` — which plays the ceremony first when this task
+        // crossed a slot, and only then generates the next question. The advance lock is still held
+        // (the generator releases it), so the board is inert underneath the overlay.
+        const r = run.completeTask(firstAttemptRef.current)
+        // Suppressed on a crossing, deliberately: one loud payoff, not two celebrations stacked in the
+        // same 200ms — the same argument that deleted the ring's `levelup-mini`.
+        if (r.streak > 0 && r.streak % 3 === 0 && !r.crossedLevel) {
           // Streak chime pitch ascends with the streak length.
           celebrateTier('streak', { sfxRate: 1 + Math.min(r.streak, 12) * 0.06 })
           mascotBus.emit('streak')
         }
-        if (r.done) {
-          mascotBus.emit('round')
-          finishRound(r.firstTryCorrect, r.longestStreak)
-        } else {
-          generateNewQuestion()
-        }
+        run.thenContinue(() => generateNewQuestion())
         // A fixed celebration window from the tap — nothing above it awaits audio, so this timer is
         // created synchronously and the unmount cleanup can always clear it (which also retires the
         // old "timer scheduled after an await, so unmount had nothing to clear" ghost-prompt hazard).
@@ -627,39 +611,6 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
     } catch (error) {
       console.error('🎵 UnifiedQuizGame: Error repeating item:', error)
     }
-  }
-
-  // Round ended → record to the progress store (stars/bests/bonus XP) and show the result hero. The
-  // REWARD itself isn't granted here — the ceremony owns that (progressStore.grantPendingRewards).
-  const finishRound = (firstTryCorrect: number, longestStreak: number) => {
-    const gameId = config.gameId ?? `quiz.${config.quizType}`
-    // Star thresholds come from the SPINE (Difficulty PRD-01 W6), read LIVE at finish time — not from
-    // the config, which is why every quiz config stopped declaring its own `{three:0,two:2}`. Svær
-    // tolerates 1 mistake for 3★ / 3 for 2★: choosing a harder level must not cost the child stars,
-    // the same fairness rule that keeps XP difficulty-independent.
-    const outcome = progressStore.recordRoundResult(
-      gameId,
-      { correct: firstTryCorrect, total: round.length, longestStreak },
-      {
-        starThresholds: starThresholdsFor(difficultyLevel),
-        // W4: an audio-only board that had to reveal its own answer this round. XP is unchanged (he
-        // played); the personal best is withheld.
-        degraded: degradedThisRoundRef.current,
-      },
-    )
-    setRoundOutcome(outcome)
-  }
-
-  // "Spil igen" → reset round + score and start a fresh round.
-  const handleReplay = () => {
-    stopCelebration()
-    setRoundOutcome(null)
-    round.reset()
-    resetScore()
-    // A fresh round starts un-degraded; the render-time check above re-arms it immediately if narration
-    // is still dead, so recovery between rounds is honoured too.
-    degradedThisRoundRef.current = false
-    generateNewQuestion()
   }
 
   const RepeatButton = config.RepeatButtonComponent
@@ -768,18 +719,16 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
       backRoute={config.backRoute}
       guideReaction={guideReaction}
       promptStage={
-        roundOutcome ? undefined : (
-          <PromptFocus
-            accent={config.theme.accentColor}
-            chargeKey={`${currentItem?.value ?? ''}-${round.state.index}`}
-            subject={showPlaceholders ? null : renderHero()}
-            repeat={
-              config.showRepeat !== false && !showPlaceholders ? (
-                <RepeatButton onClick={repeatItem} disabled={false} />
-              ) : undefined
-            }
-          />
-        )
+        <PromptFocus
+          accent={config.theme.accentColor}
+          chargeKey={`${currentItem?.value ?? ''}-${run.state.index}`}
+          subject={showPlaceholders ? null : renderHero()}
+          repeat={
+            config.showRepeat !== false && !showPlaceholders ? (
+              <RepeatButton onClick={repeatItem} disabled={false} />
+            ) : undefined
+          }
+        />
       }
       celebration={{
         show: showCelebration,
@@ -788,15 +737,6 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
         onComplete: stopCelebration,
       }}
     >
-        {roundOutcome ? (
-          <RoundResultScreen
-            outcome={roundOutcome}
-            categoryId={config.theme.id}
-            backRoute={config.backRoute}
-            onReplay={handleReplay}
-          />
-        ) : (
-        <>
         {/* Answer Options Grid — fills the answer zone beneath the PromptStage. The grid rises to the
             TOP of the body zone (PRD-14 W1) so the tiles sit right beneath the prompt instead of
             hugging the very bottom edge — killing the old dead mid-band. Phone-landscape keeps the
@@ -919,8 +859,6 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
               ))}
           </Box>
         </Box>
-        </>
-        )}
     </GameShell>
   )
 

@@ -5,7 +5,7 @@
 // degraded mode gated on it would never have fired for the exact bug it is meant to catch.
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { readFileSync } from 'node:fs'
+import { readFileSync, readdirSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { PLAYBACK_FAILURES_UNHEALTHY, isNarrationHealthy } from './narrationHealth.ts'
@@ -82,51 +82,47 @@ test('the health signal is REACTIVE — the board recovers mid-round', () => {
   assert.match(hook, /narrationHealthy,\s*\}\), \[[^\]]*narrationHealthy\]/, 'narrationHealthy must be a memo dep, or the hook returns a stale value')
 })
 
+// The wiring pin, UNCHANGED: Tal Quiz prints the numeral, Lyt og Find prints the English word, and
+// each reads `narrationHealthy` — never `isAudioReady`, the mistake the whole module exists to prevent.
 test('both audio-only boards reveal their answer, and ONLY those two', () => {
-  // Tal Quiz prints the numeral; Lyt og Find prints the English word. Each reads `narrationHealthy`,
-  // never `isAudioReady` — which is the mistake the whole module exists to prevent.
   const math = codeOf('components/math/MathGame.tsx')
   assert.match(math, /reveal=\{ctx\.narrationHealthy \? undefined : String\(item\.value\)\}/)
-  assert.match(math, /audioOnly: true/)
   assert.ok(!/isAudioReady/.test(math), 'Tal Quiz must not gate its reveal on isAudioReady')
 
   const engine = codeOf('components/common/UnifiedQuizGame.tsx')
   assert.match(engine, /<ListenHero[\s\S]{0,200}reveal=\{audio\.narrationHealthy \? undefined : String\(item\.value\)\}/)
-  const listen = codeOf('components/english/EnglishListenGame.tsx')
-  assert.match(listen, /audioOnly: true/)
 
-  // No OTHER game may claim audioOnly: a board that survives silence (Bogstav Quiz is picture→letter)
-  // would be silently opting out of its own personal bests.
-  const AUDIO_ONLY = ['components/math/MathGame.tsx', 'components/english/EnglishListenGame.tsx']
-  for (const rel of [
+  // The `audioOnly` CONFIG FLAG is deleted (Endless Play PRD-01 W3): it only ever fed the personal-best
+  // suppression, which went with personal bests. So "no other game may claim audioOnly" is re-pointed
+  // at what is actually load-bearing now — the REVEAL itself. Exactly two components may contain one,
+  // and they are these two. A third would be a board handing out its own answer with nothing to stop it.
+  const REVEALERS = ['components/math/MathGame.tsx', 'components/common/UnifiedQuizGame.tsx']
+  const offenders: string[] = []
+  const walk = (dir: string): void => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, entry.name)
+      if (entry.isDirectory()) walk(full)
+      else if (entry.name.endsWith('.tsx')) {
+        const rel = path.relative(SRC, full).replace(/\\/g, '/')
+        if (REVEALERS.includes(rel)) continue
+        if (/narrationHealthy \? undefined :/.test(codeOf(rel))) offenders.push(rel)
+      }
+    }
+  }
+  walk(path.join(SRC, 'components'))
+  assert.deepEqual(offenders, [], `a third board reveals its own answer:\n${offenders.join('\n')}`)
+
+  // And the flag itself stays gone — an unread config field is the silently-dead shape this repo's
+  // guards exist to catch.
+  for (const rel of REVEALERS.concat([
+    'components/english/EnglishListenGame.tsx',
     'components/alphabet/AlphabetGame.tsx',
     'components/english/EnglishWordGame.tsx',
     'components/ordleg/LaesOrdetGame.tsx',
     'components/math/HvadManglerGame.tsx',
-  ]) {
-    assert.ok(!AUDIO_ONLY.includes(rel) && !codeOf(rel).includes('audioOnly'), `${rel} must not claim audioOnly`)
+  ])) {
+    assert.ok(!codeOf(rel).includes('audioOnly'), `${rel} still carries the deleted audioOnly flag`)
   }
-})
-
-test('a degraded round grants XP but withholds the personal best', () => {
-  const store = codeOf('services/progressStore.ts')
-  // The best is withheld…
-  assert.match(store, /options\.degraded\s*\n?\s*\? \{ streak: false, stars: false, count: false \}/)
-  assert.match(store, /bestStreak: options\.degraded \? prev\.bestStreak/)
-  assert.match(store, /bestStars: options\.degraded \? prev\.bestStars/)
-  assert.match(store, /bestCount: options\.degraded \? prev\.bestCount/)
-  // …and the XP is NOT: he played, and a broken iPad must never cost a child rewards. The xp line must
-  // not mention `degraded` at all.
-  const xpLine = store.split('\n').find((l) => l.includes('this.applyXp(draft, sectionForGameId(gameId)'))
-  assert.ok(xpLine, 'could not find the round XP grant — re-point this guard')
-  assert.ok(!xpLine.includes('degraded'), 'degraded must not change the XP grant')
-
-  // The engine passes it, and it is STICKY for the round: a round that revealed its answer for part of
-  // its length was partly a shape-match.
-  const engine = codeOf('components/common/UnifiedQuizGame.tsx')
-  assert.match(engine, /degraded: degradedThisRoundRef\.current/)
-  assert.match(engine, /if \(config\.audioOnly && !audio\.narrationHealthy\) degradedThisRoundRef\.current = true/)
-  assert.match(engine, /degradedThisRoundRef\.current = false/, 'a replay must start un-degraded')
 })
 
 test('?mute-tts=1 is DEV/harness-gated and absent from a deploy build', () => {

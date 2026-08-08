@@ -51,7 +51,8 @@ const renderListenHero = (
     // giveaway the owner REMOVED (a printed numeral above a tile row containing it makes the tap pure
     // shape-matching), deliberately re-created for this state only: a solvable board beats an
     // unanswerable one, and the alternative is a child tapping at random until an adult notices.
-    // The round is then recorded as `degraded` (see `audioOnly`), so it earns XP but no personal best.
+    // This is the WHOLE of degraded mode now: it hangs off `ctx.narrationHealthy` here, never off a
+    // config flag (Endless Play PRD-01 W3 deleted `audioOnly` with the personal bests it fed).
     reveal={ctx.narrationHealthy ? undefined : String(item.value)}
   />
 )
@@ -89,12 +90,9 @@ const MathGame: React.FC = () => {
     // Audio configuration
     gameWelcomeType: 'math',
 
-    // Bounded round + reward flow (Foundation §3). 8 questions; the star thresholds come from the
-    // difficulty spine (Difficulty PRD-01 W6), so the config no longer declares its own.
     gameId: 'math.counting',
-    // The board is audio-only, so a round played in silence is a shape-match: no personal best (W4).
-    audioOnly: true,
-    round: { length: 8 },
+    // The `taskXp` normaliser (Endless Play PRD-01 W2) — play itself is endless.
+    tasksInRound: 8,
 
     // Never-fail hint (PRD-05 P1): after 2 wrong taps the correct number tile pulses — and the prompt is
     // SPOKEN again (Practice Loop PRD-01 W3). On a listen-only board the prompt IS the fact: a child who

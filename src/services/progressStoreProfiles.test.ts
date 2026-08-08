@@ -84,18 +84,16 @@ test('getSnapshot returns a STABLE reference while detached (or useSyncExternalS
   assert.equal(progressStore.get(), a, 'and the SAME object again after a detach')
 })
 
-test('recordRoundResult while detached returns a zero-effect result of the same SHAPE', () => {
-  const out = progressStore.recordRoundResult('alphabet.quiz', {
-    correct: 8,
-    total: 8,
-    longestStreak: 8,
-  })
-  // A caller mid-teardown must not crash on a missing field.
-  assert.equal(out.stars, 3)
-  assert.equal(out.anyNewBest, false)
-  assert.equal(out.totals.totalStars, 0)
-  assert.equal(out.xp.granted, 0)
-  assert.equal(out.xp.global.levelAfter, 1)
+// `recordRoundResult` is DELETED (Endless Play PRD-01 W3), so the detached-shape guard moves to the
+// grant point that survived it. A caller mid-teardown must still get a zero-effect result of the same
+// shape rather than a crash.
+test('grantTaskXp while detached returns a zero-effect result of the same SHAPE', () => {
+  const out = progressStore.grantTaskXp('alphabet.quiz', { firstTry: true, tasksInRound: 8 })
+  assert.equal(out.granted, 0)
+  assert.equal(out.section, 'alphabet')
+  assert.equal(out.global.levelAfter, 1)
+  assert.equal(out.global.leveledUp, false)
+  assert.equal(out.bloom.stageAfter, 0)
 })
 
 test('attach is a PURE READ — no write, no reset', () => {
@@ -319,10 +317,12 @@ test('the persisted document is v4 and round-trips through disk unchanged', () =
   const onDisk = readKey('kid-1')!
   assert.equal(onDisk.version, SCHEMA_VERSION)
   assert.equal(onDisk.profileId, 'kid-1')
-  // The wire form carries the CURSOR, not the multiset — and no derived totalStickers.
+  // The wire form carries the CURSOR, not the multiset — and no derived totals at all: `totalStickers`
+  // was always derived, and `totals`/`perGame` left the wire entirely with the round (Endless Play W3).
   assert.equal(typeof onDisk.stickers.grantedSlots, 'number')
   assert.equal('collected' in onDisk.stickers, false)
-  assert.equal('totalStickers' in onDisk.totals, false)
+  assert.equal('totals' in onDisk, false)
+  assert.equal('perGame' in onDisk, false)
 
   const before = progressStore.get()
   progressStore.detach()
@@ -331,43 +331,7 @@ test('the persisted document is v4 and round-trips through disk unchanged', () =
   assert.equal(progressStore.get().progression.globalXp, before.progression.globalXp)
 })
 
-// A DEGRADED round — narration was dead, so an audio-only board revealed its own answer and the task
-// became a shape-match (Practice Loop PRD-01 W4 §6.2). Asserted as BEHAVIOUR, not as a source regex:
-// the regex version of this passed while any of the three bests could still have been written.
-test('a degraded round grants XP as normal but records NO personal best', () => {
-  progressStore.attach('kid-1')
-
-  // A real round first, so there are bests to protect.
-  progressStore.recordRoundResult('math.counting', { correct: 8, total: 8, longestStreak: 8 })
-  const real = progressStore.get().perGame['math.counting']
-  assert.equal(real.bestStars, 3)
-  assert.equal(real.bestStreak, 8)
-  assert.equal(real.bestCount, 8)
-
-  // Now a degraded round that would beat nothing…
-  const xpBefore = progressStore.get().progression.globalXp
-  const out = progressStore.recordRoundResult(
-    'math.counting',
-    { correct: 8, total: 8, longestStreak: 8 },
-    { degraded: true },
-  )
-  assert.equal(out.anyNewBest, false, 'a degraded round must never claim a new best')
-  assert.deepEqual(out.newBests, { streak: false, stars: false, count: false })
-  // …and one that WOULD have beaten them all, on a fresh game.
-  const fresh = progressStore.recordRoundResult(
-    'english.listen',
-    { correct: 8, total: 8, longestStreak: 8 },
-    { degraded: true },
-  )
-  assert.equal(fresh.anyNewBest, false)
-  const degraded = progressStore.get().perGame['english.listen']
-  assert.equal(degraded.bestStars, 0, 'a degraded round wrote a best on a fresh game')
-  assert.equal(degraded.bestStreak, 0)
-  assert.equal(degraded.bestCount, 0)
-  // Everything else about it is a normal round: it counts as played, its stars count, and it EARNS XP —
-  // a broken iPad must never cost the child rewards.
-  assert.equal(degraded.roundsCompleted, 1)
-  assert.equal(degraded.lifetimeCorrect, 8)
-  assert.equal(fresh.stars, 3)
-  assert.ok(progressStore.get().progression.globalXp > xpBefore, 'a degraded round earned no XP')
-})
+// The DEGRADED-round guard is DELETED (Endless Play PRD-01 W3). It asserted that a round played in
+// silence recorded no PERSONAL BEST — and personal bests no longer exist, so there is nothing left to
+// withhold. The degraded-mode PRODUCT behaviour is untouched and is guarded where it now lives: the
+// board still reveals its own answer off `audio.narrationHealthy`, pinned in `narrationHealth.test.ts`.

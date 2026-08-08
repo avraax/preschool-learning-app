@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect } from 'react'
 import { Box, type SxProps, type Theme } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { motion, useAnimationControls } from 'framer-motion'
@@ -8,7 +8,6 @@ import { onTileColor } from '../../theme/tokens/helpers'
 import { xpBus } from '../../services/xpBus'
 import { rewardArt } from '../../assets/rewards'
 import { uiArt } from '../../assets/ui'
-import { sfx } from '../../services/sfxClient'
 import {
   badgeBottomOffset,
   badgeSize as badgeSizeFor,
@@ -36,17 +35,18 @@ import {
 // the badge in `rewardRingGeometry.ts` (pure, unit-tested at every shipped size); nothing here is a
 // tuned percentage.
 //
-// It also does not move on a mid-game crossing — the sticker has not been handed over yet
-// (`grantPendingRewards` runs in the ceremony, which is gated off game routes). The prize flashes here;
-// the number ticks there. That two-beat is the model, not a lag.
+// **THE RING FILLS, AND THAT IS ALL IT DOES** (Endless Play PRD-01 D4). It used to announce a crossing
+// three ways over: a full-colour flash of the won prize, a bigger level-up pop, and a soft
+// `sticker-reveal` chime — and *then* the actual sticker arrived, up to 90 seconds later, on the round
+// result screen. The old comment here called the flash "the beat that TEACHES the whole system"; that
+// two-beat ("promise now, payoff later") is an adult's sense of pacing, and for a five-year-old only
+// the sticker meant anything. The ceremony now fires IN GAME, at the seam, immediately — so it is the
+// entire announcement and the ring has nothing left to promise. **Don't restore the flash as a missing
+// beat: its absence is the change.**
 //
 // Shown in the in-game header (GameShell) and on the section menus, reading the live store
-// (useProgress), so switching games keeps the SAME ring climbing. Transient flourish via `xpBus`:
-//   • ring "tick"/"pop" on every grant,
-//   • (in-game only, `flourish`) ONE SOFT CUE when a grant crosses a slot — see D7 at the call site,
-//   • and the beat that TEACHES the system: on a crossing the silhouette drops its filter for ~900ms
-//     so the prize flashes to full colour, then the NEXT silhouette takes its place.
-// Reduced motion → the fill still updates, but no spring, pop or colour flash.
+// (useProgress), so switching games keeps the SAME ring climbing. The only transient left is one
+// modest pop per grant, via `xpBus`. Reduced motion → the fill still updates, but no pop.
 //
 // The "+N" flyer is DELETED (Reward Pacing D5). Since the pacing change one answer moves the arc ~4%,
 // so the numeral it floated was meaningless to a pre-reader — and it was the second number on a 46px
@@ -54,9 +54,6 @@ import {
 
 interface RewardRingProps {
   size?: number
-  // In-game instance: play the soft crossing cue (D7). Menu instances leave this false — there the
-  // ceremony (RewardOverlay) fires at once and owns the sound.
-  flourish?: boolean
   // Phone-landscape: drives the smaller `size` at the call site and lowers the badge's px floor to
   // 16 (20px on a 34px ring is 59% of the diameter — the actual defect behind the old tight fit).
   compact?: boolean
@@ -71,12 +68,8 @@ interface RewardRingProps {
   sx?: SxProps<Theme>
 }
 
-// How long the just-won prize stays in full colour before the next silhouette replaces it.
-const FLASH_MS = 900
-
 const RewardRing: React.FC<RewardRingProps> = ({
   size = 46,
-  flourish = false,
   compact = false,
   showCount = true,
   onTap,
@@ -91,13 +84,6 @@ const RewardRing: React.FC<RewardRingProps> = ({
   const next = nextReward()
   const fill = Math.max(0, Math.min(1, xpProgress().fill))
   const count = rewardNumber()
-
-  // Full-colour flash of the prize that was just won. Holds the OLD reward's visuals for FLASH_MS,
-  // because by the time the bus fires the store already advanced to the next slot.
-  const [flash, setFlash] = useState<{ art?: string } | null>(null)
-  const flashTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const shownRef = useRef(next)
-  shownRef.current = next
 
   // Gauge geometry — all DERIVED, see rewardRingGeometry.ts. `arc` is the painted sweep's length; the
   // dash gap is deliberately `2c - arc` so the pattern cannot repeat within one revolution (a period
@@ -119,57 +105,27 @@ const RewardRing: React.FC<RewardRingProps> = ({
   const badgeSize = badgeSizeFor(size, compact)
   const badgeFill = onTileColor(ringColor)
 
-  // React to every live grant: tick/pop the ring, and on a crossing flash the won prize to full colour
-  // + (in-game) burst. Reads live-store fill on re-render, so the animation only needs the transient
-  // beats.
+  // React to every live grant with ONE modest pop — the same amplitude whether or not this grant
+  // crossed a slot (D4). The old `leveledUp ? 1.35 : 1.14` branch, the 900ms colour flash and the
+  // `sticker-reveal` chime are all gone; the ceremony is the announcement. Reads live-store fill on
+  // re-render, so the animation only needs the transient beat.
   useEffect(() => {
-    return xpBus.subscribe(({ leveledUp }) => {
-      if (!reduce) {
-        controls.start({
-          scale: leveledUp ? [1, 1.35, 1] : [1, 1.14, 1],
-          transition: { duration: leveledUp ? 0.55 : 0.35, ease: 'easeOut' },
-        })
-        // The teaching beat: the silhouette that was filling becomes a real, full-colour prize.
-        if (leveledUp) {
-          const won = shownRef.current
-          if (won) {
-            setFlash({ art: rewardArt(won.reward.id) })
-            if (flashTimer.current) clearTimeout(flashTimer.current)
-            flashTimer.current = setTimeout(() => setFlash(null), FLASH_MS)
-          }
-        }
-      }
-      // THE QUIET CROSSING (Reward Pacing PRD-01 D7). This used to be `celebrateTier('levelup-mini')`
-      // — confetti plus the `level-up` fanfare, mid-play — and then the FULL ceremony fired minutes
-      // later on the result screen or the next menu. Two celebrations for one event, and under the old
-      // pacing that happened basically every round.
-      //
-      // A crossing is now ~every third round, which makes it worth marking — but as a PROMISE, not a
-      // payoff. One quiet promise, one loud payoff. The ring pop and the 900ms full-colour flash stay
-      // (that beat is what teaches the whole model); the confetti and the fanfare belong to the
-      // ceremony. `sticker-reveal` is the soft cue for it: a short chime, on the SFX channel, so it
-      // never touches narration.
-      //
-      // Menus stay silent here (`flourish` is in-game only) — there the ceremony fires immediately and
-      // owns the sound.
-      if (leveledUp && flourish) sfx.play('sticker-reveal')
+    return xpBus.subscribe(() => {
+      if (reduce) return
+      controls.start({ scale: [1, 1.14, 1], transition: { duration: 0.35, ease: 'easeOut' } })
     })
-  }, [controls, reduce, flourish])
+  }, [controls, reduce])
 
-  useEffect(() => () => {
-    if (flashTimer.current) clearTimeout(flashTimer.current)
-  }, [])
-
-  // What the centre shows: the flashing won prize, else the next silhouette, else (book full) the gold
-  // sparkle. Always resolves to art since W6 landed all 45 renders — no glyph path remains.
-  const art = flash ? flash.art : next ? rewardArt(next.reward.id) : uiArt.sparkle
-  const bookFull = !next && !flash
+  // What the centre shows: the next silhouette, else (book full) the gold sparkle. Always resolves to
+  // art — no glyph path remains.
+  const art = next ? rewardArt(next.reward.id) : uiArt.sparkle
+  const bookFull = !next
   // Silhouette treatment: the real colours must NEVER read while it's unearned — it has to be
   // obviously "not mine yet". White shape on a dark world, dark shape on a light one.
   const silhouette = dark
     ? { filter: 'brightness(0) invert(1)', opacity: 0.45 }
     : { filter: 'brightness(0)', opacity: 0.3 }
-  const centreStyle = flash || bookFull ? { filter: 'none', opacity: 1 } : silhouette
+  const centreStyle = bookFull ? { filter: 'none', opacity: 1 } : silhouette
 
   return (
     <Box

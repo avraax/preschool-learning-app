@@ -61,11 +61,12 @@ const EnglishListenGame: React.FC = () => {
     gameWelcomeType: 'englishlisten',
     gameId: 'english.listen',
     // Audio→picture, so with narration dead the board is unanswerable: the engine's listen hero reveals
-    // the English word as type, and the round records no personal best (Practice Loop PRD-01 W4).
-    audioOnly: true,
-    // Star thresholds come from the difficulty spine (Difficulty PRD-01 W6). ONE round length: the
-    // bag's no-repeat window reads the same constant (Practice Loop PRD-01 W1).
-    round: { length: ENGLISH_ROUND },
+    // the English word as type (Practice Loop PRD-01 W4). That reveal is driven off
+    // `ctx.narrationHealthy` at the hero, not off a config flag — the old `audioOnly` flag only ever
+    // fed the personal-best suppression, which Endless Play PRD-01 W3 deleted along with bests.
+    // ONE constant, two jobs (Endless Play PRD-01 W2): the `taskXp` normaliser AND the bag's no-repeat
+    // window. Play itself is endless — nothing counts down to it.
+    tasksInRound: ENGLISH_ROUND,
 
     // Never-fail hint (PRD-05 P1): after 2 wrong taps the correct picture tile pulses.
     hintAfterNWrong: 2,

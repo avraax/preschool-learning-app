@@ -18,18 +18,17 @@ import GameShell from '../common/GameShell'
 import PromptFocus from '../common/PromptFocus'
 import { HeroArt } from '../common/PromptArt'
 import TactileTile from '../common/TactileTile'
-import RoundResultScreen from '../common/RoundResultScreen'
 import type { GuideReaction } from '../common/ThemeMascot'
 import { useCelebration } from '../common/CelebrationEffect'
 import { OrdlegRepeatButton } from '../common/RepeatButton'
 import { useGameState } from '../../hooks/useGameState'
-import { useRound } from '../../hooks/useRound'
+import { useTaskRun } from '../../hooks/useTaskRun'
 import { useNeverFailHint } from '../../hooks/useNeverFailHint'
 import { useDifficulty } from '../../hooks/useDifficulty'
 import { shuffle } from '../../utils/shuffle'
-import { progressStore, type RoundOutcome } from '../../services/progressStore'
+import { progressStore } from '../../services/progressStore'
 import { practiceLedger } from '../../services/practiceLedger'
-import { ORDLEG_SPELL, starThresholdsFor } from '../../config/difficulty'
+import { ORDLEG_SPELL } from '../../config/difficulty'
 import { type OrdlegWord } from '../../config/ordlegWords'
 import { SPELLING_ROUND, ordlegWordKey, spellingPromptPool } from '../../config/promptPools'
 import { spellingHintLine } from '../../config/hintLines'
@@ -122,13 +121,12 @@ const SpellingGame: React.FC = () => {
   const hasInteractedRef = useRef(false)
 
   // Centralized game state management
-  const { incrementScore, resetScore } = useGameState()
+  const { incrementScore } = useGameState()
 
-  // Bounded round + reward flow (Overhaul Ordleg §2). 8 words, 3 stars = no mistakes, 2 stars <= 2.
-  // ONE round length: the bag's no-repeat window reads the same constant (Practice Loop PRD-01 W1).
-  const round = useRound({ length: SPELLING_ROUND, gameId: 'ordleg.spelling' })
+  // Endless task play (Endless Play PRD-01 W2). ONE constant, two jobs: the `taskXp` normaliser AND
+  // the bag's no-repeat window (Practice Loop PRD-01 W1).
+  const run = useTaskRun({ tasksInRound: SPELLING_ROUND, gameId: 'ordleg.spelling' })
   const firstAttemptRef = useRef(true)
-  const [roundOutcome, setRoundOutcome] = useState<RoundOutcome | null>(null)
 
   // Timeout ref for cleanup (per-word prompt timer)
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
@@ -290,25 +288,6 @@ const SpellingGame: React.FC = () => {
     }, delay)
   }
 
-  const finishRound = (firstTryCorrect: number, longestStreak: number) => {
-    const outcome = progressStore.recordRoundResult(
-      'ordleg.spelling',
-      { correct: firstTryCorrect, total: round.length, longestStreak },
-      // Svær tolerates 1 mistake for 3★ / 3 for 2★ (Difficulty PRD-01 W6) — a harder level must not
-      // cost the child stars, the same fairness rule that keeps XP difficulty-independent.
-      { starThresholds: starThresholdsFor(progressStore.difficultyFor('ordleg')) },
-    )
-    setRoundOutcome(outcome)
-  }
-
-  const handleReplay = () => {
-    stopCelebration()
-    setRoundOutcome(null)
-    round.reset()
-    resetScore()
-    generateNewWord()
-  }
-
   const speakWord = async (word: string) => {
     try {
       audio.updateUserInteraction()
@@ -444,13 +423,16 @@ const SpellingGame: React.FC = () => {
       advanceTimerRef.current = setTimeout(() => {
         advanceTimerRef.current = null
         stopCelebration()
-        const r = round.completeQuestion(firstAttemptRef.current)
-        if (!r.done && r.streak > 0 && r.streak % 3 === 0) {
+        // THE SEAM (Endless Play PRD-01 §4.1). This one sits two timers deep behind `mountedRef`; the
+        // hook's own cancellation supersedes that check (it never resolves after unmount), and the
+        // existing guard above is left in place rather than unpicked here.
+        const r = run.completeTask(firstAttemptRef.current)
+        // Suppressed on a crossing: one loud payoff, not two celebrations in the same 200ms.
+        if (r.streak > 0 && r.streak % 3 === 0 && !r.crossedLevel) {
           celebrateTier('streak')
           mascotBus.emit('streak') // mascot does its streak pose, matching the shared quiz engine
         }
-        if (r.done) finishRound(r.firstTryCorrect, r.longestStreak)
-        else generateNewWord()
+        run.thenContinue(() => generateNewWord())
         // The celebration window, measured FROM THE COMPLETING TAP rather than bolted on after the
         // letter echo + the 400ms beat + the word read-back. Those three already ran serially, so
         // adding a further full 2s made the finished-word pause ~7s — long enough that a child assumes
@@ -473,13 +455,13 @@ const SpellingGame: React.FC = () => {
 
   // Live difficulty (Difficulty PRD-01 W5): pick a fresh word at the new level when the adult changes
   // it in the "Til de voksne" menu — no refresh. Every other calibrated game already had this effect;
-  // Stav Ordet didn't, because it ignored the setting entirely. Skips the result screen + first mount.
+  // Stav Ordet didn't, because it ignored the setting entirely. Skips the first mount.
   const difficultyLevel = useDifficulty('ordleg')
   const prevDifficultyRef = useRef(difficultyLevel)
   useEffect(() => {
     if (prevDifficultyRef.current === difficultyLevel) return
     prevDifficultyRef.current = difficultyLevel
-    if (roundOutcome || !gameReady) return
+    if (!gameReady) return
     generateNewWord()
   }, [difficultyLevel]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -499,7 +481,7 @@ const SpellingGame: React.FC = () => {
       guideReaction={guideReaction}
       celebration={{ show: showCelebration, intensity: celebrationIntensity, duration: celebrationDuration, onComplete: stopCelebration }}
       promptStage={
-        roundOutcome || !(gameReady && current) ? undefined : (
+        !(gameReady && current) ? undefined : (
           // The word's PICTURE rests in the focal zone on its light-pool + contact shadow (§3.4):
           // a baked soft-3D word-picture (every word is baked now — PRD-12). Grounds the picture in
           // the world like the menu it launched from; the slots + tiles read directly beneath it
@@ -513,14 +495,7 @@ const SpellingGame: React.FC = () => {
         )
       }
     >
-        {roundOutcome ? (
-          <RoundResultScreen
-            outcome={roundOutcome}
-            categoryId="ordleg"
-            backRoute="/ordleg"
-            onReplay={handleReplay}
-          />
-        ) : gameReady && current && (
+        {gameReady && current && (
           <DndContext
             sensors={sensors}
             collisionDetection={kidCollision}

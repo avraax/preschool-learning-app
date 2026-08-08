@@ -10,7 +10,7 @@ import { DroppableZone } from '../common/dnd/DroppableZone'
 import { useDragActive } from '../common/dnd/useDragActive'
 import { getCategoryTheme } from '../../config/categoryThemes'
 import { mathFactText } from '../../config/gamePhrases'
-import { optionCountFor, starThresholdsFor } from '../../config/difficulty'
+import { optionCountFor } from '../../config/difficulty'
 import { makeAdditionProblem, makeSubtractionProblem, operationDistractors } from '../../config/mathProblems'
 import { answerGridSx } from '../common/answerGrid'
 import GameShell from '../common/GameShell'
@@ -20,12 +20,11 @@ import SymbolTile from '../common/SymbolTile'
 import type { GuideReaction } from '../common/ThemeMascot'
 import { useCelebration } from '../common/CelebrationEffect'
 import { MathRepeatButton } from '../common/RepeatButton'
-import RoundResultScreen from '../common/RoundResultScreen'
 import { useGameState } from '../../hooks/useGameState'
-import { useRound } from '../../hooks/useRound'
+import { useTaskRun } from '../../hooks/useTaskRun'
 import { useNeverFailHint } from '../../hooks/useNeverFailHint'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
-import { progressStore, type RoundOutcome } from '../../services/progressStore'
+import { progressStore } from '../../services/progressStore'
 import { sfx } from '../../services/sfxClient'
 import { mascotBus } from '../../services/mascotBus'
 import { useDifficulty } from '../../hooks/useDifficulty'
@@ -99,14 +98,13 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
   const startedRef = useRef(false)
   const welcomeTriggered = useRef(false)
 
-  const { incrementScore, resetScore } = useGameState()
+  const { incrementScore } = useGameState()
 
-  // Bounded round + reward flow (Foundation §3). 8 questions; the star thresholds come from the
-  // difficulty spine at finish time (Difficulty PRD-01 W6), so they're not pinned here.
-  const round = useRound({ length: 8, gameId })
-  // True until the first wrong tile is tapped for the current problem (gates streak/star).
+  // Endless task play (Endless Play PRD-01 W2): live per-task XP, the streak counter, and the in-game
+  // ceremony seam. 8 is the `taskXp` normaliser, not a length — nothing counts down to it.
+  const run = useTaskRun({ tasksInRound: 8, gameId })
+  // True until the first wrong tile is tapped for the current problem (gates the streak).
   const firstAttemptRef = useRef(true)
-  const [roundOutcome, setRoundOutcome] = useState<RoundOutcome | null>(null)
 
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
   // The post-correct celebration/advance timer (PRD-02 P1/P4) — tracked so it's cleared on unmount
@@ -350,43 +348,21 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
         advanceTimerRef.current = null
         stopCelebration()
 
-        // Bounded round: record the completed question, fire streak milestones, end or advance.
-        const r = round.completeQuestion(firstAttemptRef.current)
-        if (!r.done && r.streak > 0 && r.streak % 3 === 0) {
+        // THE SEAM (Endless Play PRD-01 §4.1): record the completed task, fire the streak milestone,
+        // then hand the continuation to `thenContinue` — which plays the ceremony first when this task
+        // crossed a slot. The advance lock is still held, so the board is inert under the overlay.
+        const r = run.completeTask(firstAttemptRef.current)
+        // Suppressed on a crossing: one loud payoff, not two celebrations in the same 200ms.
+        if (r.streak > 0 && r.streak % 3 === 0 && !r.crossedLevel) {
           celebrateTier('streak')
           mascotBus.emit('streak') // mascot does its streak pose, matching the shared quiz engine
         }
-        if (r.done) {
-          finishRound(r.firstTryCorrect, r.longestStreak)
-        } else {
-          generateNewProblem()
-        }
+        run.thenContinue(() => generateNewProblem())
         // A fixed celebration window from the tap. The correct branch always speaks a sentence fact,
         // so it always gets DWELL_FACT — long enough that the next problem's prompt only cancels the
         // clip's trailing silence, never the spoken fact.
       }, DWELL_FACT)
     }
-  }
-
-  // Round ended → record to the progress store (stars/bests/stickers) and show the result hero.
-  const finishRound = (firstTryCorrect: number, longestStreak: number) => {
-    const outcome = progressStore.recordRoundResult(
-      gameId,
-      { correct: firstTryCorrect, total: round.length, longestStreak },
-      // Svær tolerates 1 mistake for 3★ / 3 for 2★ — choosing a harder level must not cost stars
-      // (Difficulty PRD-01 W6, mirroring the rule that XP is never difficulty-dependent).
-      { starThresholds: starThresholdsFor(progressStore.difficultyFor('math')) },
-    )
-    setRoundOutcome(outcome)
-  }
-
-  // "Spil igen" → reset round + score and start a fresh round.
-  const handleReplay = () => {
-    stopCelebration()
-    setRoundOutcome(null)
-    round.reset()
-    resetScore()
-    generateNewProblem()
   }
 
   const repeatProblem = async () => {
@@ -450,13 +426,13 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
   }
 
   // Live difficulty: regenerate the current problem when the level changes in the adult menu
-  // (no refresh). Skips the result screen + the initial mount.
+  // (no refresh). Skips the initial mount.
   const difficultyLevel = useDifficulty('math')
   const prevDifficultyRef = useRef(difficultyLevel)
   useEffect(() => {
     if (prevDifficultyRef.current === difficultyLevel) return
     prevDifficultyRef.current = difficultyLevel
-    if (roundOutcome || !gameReady) return
+    if (!gameReady) return
     generateNewProblem()
   }, [difficultyLevel]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -481,10 +457,10 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
       guideReaction={guideReaction}
       celebration={{ show: showCelebration, intensity: celebrationIntensity, duration: celebrationDuration, onComplete: stopCelebration }}
       promptStage={
-        roundOutcome ? undefined : (
+        (
           <PromptFocus
             accent={category.accentColor}
-            chargeKey={`${num1}-${num2}-${round.state.index}`}
+            chargeKey={`${num1}-${num2}-${run.state.index}`}
             repeat={
               showEquation ? (
                 <MathRepeatButton onClick={repeatProblem} disabled={false} size={phoneLandscape ? 'small' : 'large'} />
@@ -599,15 +575,6 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
         )
       }
     >
-      {roundOutcome ? (
-        <RoundResultScreen
-          outcome={roundOutcome}
-          categoryId="math"
-          backRoute="/math"
-          onReplay={handleReplay}
-        />
-      ) : (
-      <>
       {/* Answer options — rise to the TOP of the answer zone beneath the equation (PRD-14 W1) so the
           tiles sit close under the prompt instead of hugging the bottom edge (kills the dead mid-band).
           Phone-landscape keeps its centred tiles (tight 30/70 split preserved). */}
@@ -677,8 +644,6 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
           )) : null}
         </Box>
       </Box>
-      </>
-      )}
     </GameShell>
     </DndContext>
   )

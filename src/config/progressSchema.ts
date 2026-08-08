@@ -68,13 +68,14 @@ export interface ProgressSettings {
   smoothGraphics?: boolean
 }
 
-export interface PerGameStats {
-  bestStreak: number
-  bestStars: number
-  bestCount: number
-  roundsCompleted: number
-  lifetimeCorrect: number
-}
+// `PerGameStats` and `totals.totalStars` are DELETED (Endless Play PRD-01 W3) — per-game bests, stars
+// and rounds-completed went with the round-end surface that produced and displayed them.
+//
+// **`SCHEMA_VERSION` STAYS 4, and that is load-bearing.** `normalizePersisted` returns `null` for any
+// other version and `progressStore.attach()` then falls through to `defaultPersisted()` — there is no
+// migration path by design (the accounts release was a clean sheet). A v5 bump would therefore WIPE
+// EVERY CHILD'S BOOK on update. Unknown keys are ignored, so an existing v4 blob still loads and these
+// stale fields simply drop on the next commit.
 
 export interface SectionBloom {
   xp: number
@@ -97,9 +98,8 @@ export interface ProgressState {
     collected: Record<string, { count: number; firstAt: number }>
     newIds: string[]
   }
-  perGame: Record<string, PerGameStats>
+  /** `totalStickers` is DERIVED, free, and pinned — it is the one total that survived. */
   totals: {
-    totalStars: number
     totalStickers: number
   }
   progression: ProgressionState
@@ -149,9 +149,6 @@ export interface PersistedProgress {
     firstAt: Record<string, number>
   }
   ledger: Record<string /* deviceId */, DeviceCounters>
-  perGame: Record<string, PerGameStats>
-  /** `totalStickers` is DERIVED and deliberately absent from the wire. */
-  totals: { totalStars: number }
   progression: {
     lastCelebratedLevel: number
     explored: Record<SectionId, string[]>
@@ -173,14 +170,6 @@ const nonNegInt = (x: unknown): number => Math.max(0, Math.floor(Number(x) || 0)
 
 /** Ids that actually exist on the reward path. */
 const ON_PATH = new Set(allRewards().map((r) => r.id))
-
-export const emptyGameStats = (): PerGameStats => ({
-  bestStreak: 0,
-  bestStars: 0,
-  bestCount: 0,
-  roundsCompleted: 0,
-  lifetimeCorrect: 0,
-})
 
 export const emptyDeviceCounters = (): DeviceCounters => ({ xp: 0, slots: 0, bloom: {} })
 
@@ -204,8 +193,6 @@ export function defaultPersisted(
     profileId,
     stickers: { grantedSlots: 0, seenThroughSlot: 0, firstAt: {} },
     ledger: {},
-    perGame: {},
-    totals: { totalStars: 0 },
     progression: {
       // Everyone STARTS at level 1 (an empty book), so it is already "reached" — celebrating it
       // would fire a bogus ceremony on first load. NEVER 0.
@@ -302,11 +289,7 @@ export function derive(p: PersistedProgress, now: number): ProgressState {
       collected,
       newIds: deriveNewIds(p.stickers.grantedSlots, p.stickers.seenThroughSlot),
     },
-    perGame: Object.fromEntries(
-      Object.entries(p.perGame).map(([id, s]) => [id, { ...s }]),
-    ),
     totals: {
-      totalStars: p.totals.totalStars,
       totalStickers: Object.keys(collected).length,
     },
     progression: {
@@ -519,22 +502,8 @@ export function normalizePersisted(raw: unknown): PersistedProgress | null {
     Math.min(REWARD_SLOTS, base.stickers.grantedSlots),
   )
 
-  const pg = asRecord(r.perGame)
-  if (pg) {
-    for (const [id, v] of Object.entries(pg)) {
-      const s = asRecord(v)
-      if (!s) continue
-      base.perGame[id] = {
-        bestStreak: nonNegInt(s.bestStreak),
-        bestStars: nonNegInt(s.bestStars),
-        bestCount: nonNegInt(s.bestCount),
-        roundsCompleted: nonNegInt(s.roundsCompleted),
-        lifetimeCorrect: nonNegInt(s.lifetimeCorrect),
-      }
-    }
-  }
-
-  base.totals.totalStars = nonNegInt(asRecord(r.totals)?.totalStars)
+  // `perGame` / `totals.totalStars` are no longer read (Endless Play PRD-01 W3). An older v4 blob may
+  // still carry them; unknown keys are simply ignored and drop on the next commit.
 
   const prog = asRecord(r.progression)
   if (prog) {

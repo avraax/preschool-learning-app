@@ -62,20 +62,31 @@ const signatureOf = <T>(list: readonly T[], key: (t: T) => string): string =>
 /**
  * A bag draw over `items`.
  *
+ * **THE PASS IS THE CYCLE** (Endless Play PRD-01 D7 — this is the product rule now, not an
+ * implementation detail). A pass is a `shuffle()` of the WHOLE pool and `next()` walks it, so every
+ * item is dealt exactly once before any of them comes back. Play is endless, so this is what the child
+ * actually experiences: **the pool size IS the repeat period.**
+ *
+ * The `window` governs only the SEAM between passes, and nothing else.
+ *
  * Semantics (each one is an assertion in `promptBag.test.ts`):
- * 1. A pass is a `shuffle()` of the pool and `next()` walks it, so one pass yields every item exactly
- *    once (absent `requeue`, which deliberately inserts a second copy).
- * 2. **No item repeats within `window` consecutive draws** — the generalisation of `makeTargetBag`'s
- *    `avoidFirst`, and the reason it is a window rather than one item: a bag only guarantees "no repeat
- *    inside a PASS", and a round of 8 over a pool of 28 straddles a pass boundary one round in three.
- *    With `avoidFirst` alone (window 2) ~14% of Bogstav Quiz rounds still repeated, because a fresh
- *    shuffle is free to deal a just-asked letter second. Pass the game's ROUND LENGTH as the window and
- *    a round can never repeat, wherever in the pass it starts. Feasible for any pool >= window; below
- *    that (Nuancer asks 8 questions over 6 hues) the repeat is arithmetic, and the refill degrades to
- *    "as late as possible" rather than hanging.
- * 3. A pool of 1 is legal and returns that item forever (Ram Farven's Let pool is 4 — don't throw).
- * 4. `reset()` is idempotent for an unchanged pool.
- * 5. `rnd` is injectable so tests are deterministic (same reason `shuffle` takes it).
+ * 1. One pass yields every item exactly once (absent `requeue`, which deliberately inserts a second
+ *    copy).
+ * 2. **No item repeats within `window` consecutive draws.** A bag only guarantees "no repeat inside a
+ *    PASS", and a sequence of 8 draws over a pool of 28 straddles a pass boundary one time in three,
+ *    where a fresh shuffle is free to deal a just-asked letter second — measured at ~14% with the
+ *    conservative window 2. Pass the game's own round constant as the window and the seam can't repeat
+ *    either.
+ * 3. **`window` is CLAMPED to `pool.length - 1`, and that clamp is load-bearing.** Below the pool the
+ *    old degenerate `idx < 0` fallback ("take the oldest-seen candidate") is unreachable, which is what
+ *    Nuancer (window 8 over a 6-hue pool) was living on. More importantly it makes a real trap
+ *    STRUCTURALLY IMPOSSIBLE: **with `window === pool.length`, `recent` holds the last n−1 draws,
+ *    exactly one candidate survives at every position, and each new pass is forced to repeat the
+ *    previous one in the same order, forever.** "Never twice within a cycle" reads like it wants
+ *    exactly that window; it does not. Do not set it.
+ * 4. A pool of 1 is legal and returns that item forever (Ram Farven's Let pool is 4 — don't throw).
+ * 5. `reset()` is idempotent for an unchanged pool, and re-clamps the window to the new pool.
+ * 6. `rnd` is injectable so tests are deterministic (same reason `shuffle` takes it).
  */
 export function makePromptBag<T>(
   items: readonly T[],
@@ -95,9 +106,12 @@ export function makePromptBag<T>(
   const key = opts.key ?? (defaultKey as (t: T) => string)
   const rnd = opts.rnd ?? Math.random
   // Window 2 = "never twice in a row" = `makeTargetBag`'s `avoidFirst`, the conservative default.
-  const window = Math.max(2, Math.floor(opts.window ?? 2))
+  const requestedWindow = Math.max(2, Math.floor(opts.window ?? 2))
+  /** Clamped BELOW the pool — see semantics 3; `window === pool.length` freezes the bag forever. */
+  const clampWindow = (n: number): number => Math.min(requestedWindow, Math.max(2, n - 1))
 
   let pool: T[] = [...items]
+  let window = clampWindow(pool.length)
   let signature = signatureOf(pool, key)
   /** The remaining draws of the current pass; the head is the next prompt. */
   let pass: T[] = []
@@ -116,8 +130,8 @@ export function makePromptBag<T>(
     const dealt: T[] = []
     while (remaining.length > 0) {
       let idx = remaining.findIndex((i) => !seen.includes(key(i)))
-      // Infeasible only when the pool is SMALLER than the window; take the oldest-seen candidate so the
-      // unavoidable repeat lands as late as it can, rather than looping forever.
+      // Unreachable since the window is clamped below the pool (semantics 3). Kept as a floor rather
+      // than a throw: a bag that hangs mid-round is worse than one unavoidable repeat.
       if (idx < 0) idx = 0
       const [item] = remaining.splice(idx, 1)
       dealt.push(item)
@@ -177,7 +191,11 @@ export function makePromptBag<T>(
       if (nextSignature === signature) return
       signature = nextSignature
       pool = [...nextItems]
+      // Re-clamp: a level change can shrink the pool under the requested window, and an unclamped
+      // window there is the freeze in semantics 3.
+      window = clampWindow(pool.length)
       pass = []
+      while (recent.length > window - 1) recent.shift()
       // Drop promises the new pool can't keep; keep `recent` so the window survives the change.
       front = front.filter((i) => pool.some((p) => key(p) === key(i)))
     },

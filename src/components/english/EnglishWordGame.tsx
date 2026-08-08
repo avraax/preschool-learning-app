@@ -70,9 +70,9 @@ const EnglishWordGame: React.FC = () => {
 
     gameWelcomeType: 'englishword',
     gameId: 'english.word',
-    // Star thresholds come from the difficulty spine (Difficulty PRD-01 W6). ONE round length: the
-    // bag's no-repeat window reads the same constant (Practice Loop PRD-01 W1).
-    round: { length: ENGLISH_ROUND },
+    // ONE constant, two jobs (Endless Play PRD-01 W2): the `taskXp` normaliser AND the bag's no-repeat
+    // window. Play itself is endless — nothing counts down to it.
+    tasksInRound: ENGLISH_ROUND,
 
     // Never-fail hint (PRD-05 P1): after 2 wrong taps the correct word tile pulses.
     hintAfterNWrong: 2,

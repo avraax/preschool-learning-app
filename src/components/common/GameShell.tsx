@@ -27,16 +27,16 @@ interface GameShellProps {
   title: string
   backRoute: string
   // Live cross-game XP indicator (Liveliness PRD-04): the reward ring, on EVERY game. Set false for a
-  // rare opt-out. Ticks/pops per task and does a non-interrupting burst on a mid-game level-up (the
-  // big ceremony is deferred).
+  // rare opt-out. Ticks/pops per task — and nothing else: the crossing flash, the bigger pop and the
+  // soft chime are all gone (Endless Play PRD-01 D4), because the ceremony now fires in-game at the
+  // seam and is the entire announcement.
   //
   // It is the ONLY thing in this corner. There used to be a `score` slot beside it holding a
   // `ScoreChip` — a pill of one pip per question in the round — and every game passed one. It was a
   // SECOND progress meter inches from the first, with nothing on screen to say that one counts this
   // round and the other counts the whole book; and eight identical pips is past the subitizing limit
-  // (4-5), so it invited counting rather than reading. Owner removed it, 2026-08-02. The round is
-  // still bounded at 8 and `RoundResultScreen` still reports it — the child just isn't shown a
-  // second meter mid-play. Do not reintroduce a header slot here.
+  // (4-5), so it invited counting rather than reading. Owner removed it, 2026-08-02; play is endless
+  // now, so there is no round for a second meter to count. Do not reintroduce a header slot here.
   levelIndicator?: boolean
   guideReaction?: GuideReaction      // 'cheer' on correct, 'think' on wrong (bridged to mascotBus)
   celebration?: { show: boolean; intensity?: 'low' | 'medium' | 'high'; duration?: number; onComplete?: () => void }
@@ -146,7 +146,6 @@ const GameShell: React.FC<GameShellProps> = ({
           <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, md: 1.5 } }}>
             {levelIndicator && (
               <RewardRing
-                flourish
                 compact={phoneLandscape}
                 size={phoneLandscape ? 34 : 46}
                 onTap={() => navigateWithTransition('/album')}

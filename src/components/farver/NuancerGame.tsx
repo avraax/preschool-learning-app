@@ -16,14 +16,13 @@ import { SNAP } from '../../theme/motion'
 import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 import GameShell from '../common/GameShell'
 import PromptFocus from '../common/PromptFocus'
-import RoundResultScreen from '../common/RoundResultScreen'
 import type { GuideReaction } from '../common/ThemeMascot'
 import { useCelebration } from '../common/CelebrationEffect'
 import { useDifficulty } from '../../hooks/useDifficulty'
 import { ColorRepeatButton } from '../common/RepeatButton'
-import { useRound } from '../../hooks/useRound'
-import { progressStore, type RoundOutcome } from '../../services/progressStore'
-import { COLORS_NUANCER, starThresholdsFor } from '../../config/difficulty'
+import { useTaskRun } from '../../hooks/useTaskRun'
+import { progressStore } from '../../services/progressStore'
+import { COLORS_NUANCER } from '../../config/difficulty'
 import { NUANCER_ROUND, nuancerPromptPool } from '../../config/promptPools'
 import { usePromptBag } from '../../hooks/usePromptBag'
 import { sfx } from '../../services/sfxClient'
@@ -39,8 +38,9 @@ import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 // Nuancer — order shades of one hue from LIGHT to DARK. The real discrimination stretch in the
 // Farver section: the tiles are the same color family, so the only signal is lightness. DRAG each
 // shade into its slot (left = lightest, right = darkest). A wrong slot bounces back (gentle SFX +
-// shake); after 2 wrong drops the correct tile for the next empty slot pulses (never-fail hint,
-// costs a star). Bounded round of 8 → RoundResultScreen. Static difficulty — edit the levers below.
+// shake); after 2 wrong drops the correct tile for the next empty slot pulses (never-fail hint).
+// Play is ENDLESS — no round boundary; the reward ceremony fires in-game at the seam (Endless Play
+// PRD-01). Static difficulty — edit the levers below.
 //
 // UI/UX Overhaul §6C: the slot row now lives in PromptStage (it IS the prompt — this kills the old
 // top void), and the tray of draggable shades is the answer zone beneath it. Shared drag juice:
@@ -84,9 +84,10 @@ const NuancerGame: React.FC = () => {
   const audio = useSimplifiedAudioHook({ componentId: 'NuancerGame', autoInitialize: false })
   const [gameReady, setGameReady] = useState(false)
 
-  const round = useRound({ length: NUANCER_ROUND, gameId: 'colors.nuancer' })
+  // Endless task play (Endless Play PRD-01 W2). ONE constant, two jobs: the `taskXp` normaliser AND
+  // the bag's no-repeat window.
+  const run = useTaskRun({ tasksInRound: NUANCER_ROUND, gameId: 'colors.nuancer' })
   const firstAttemptRef = useRef(true)
-  const [roundOutcome, setRoundOutcome] = useState<RoundOutcome | null>(null)
 
   const { showCelebration, celebrationIntensity, celebrationDuration, celebrateTier, stopCelebration } = useCelebration()
   const [guideReaction, setGuideReaction] = useState<GuideReaction>(null)
@@ -220,24 +221,6 @@ const NuancerGame: React.FC = () => {
     if (forcedFx === 'hint') mascotBus.emit('hint')
   }, [forcedFx])
 
-  const finishRound = (firstTryCorrect: number, longestStreak: number) => {
-    const outcome = progressStore.recordRoundResult(
-      'colors.nuancer',
-      { correct: firstTryCorrect, total: round.length, longestStreak },
-      // Svær tolerates 1 mistake for 3★ / 3 for 2★ (Difficulty PRD-01 W6) — a harder level must not
-      // cost the child stars, the same fairness rule that keeps XP difficulty-independent.
-      { starThresholds: starThresholdsFor(progressStore.difficultyFor('colors')) },
-    )
-    setRoundOutcome(outcome)
-  }
-
-  const handleReplay = () => {
-    stopCelebration()
-    setRoundOutcome(null)
-    round.reset()
-    setupQuestion(true)
-  }
-
   const completeQuestion = () => {
     if (isAdvancing.current) return
     isAdvancing.current = true
@@ -247,13 +230,15 @@ const NuancerGame: React.FC = () => {
     if (advanceTimer.current) clearTimeout(advanceTimer.current)
     advanceTimer.current = setTimeout(() => {
       stopCelebration()
-      const r = round.completeQuestion(firstAttemptRef.current)
-      if (!r.done && r.streak > 0 && r.streak % 3 === 0) {
+      // THE SEAM (Endless Play PRD-01 §4.1) — the ceremony plays here, before the next question is
+      // set up, with the advance guard still held.
+      const r = run.completeTask(firstAttemptRef.current)
+      // Suppressed on a crossing: one loud payoff, not two celebrations in the same 200ms.
+      if (r.streak > 0 && r.streak % 3 === 0 && !r.crossedLevel) {
         celebrateTier('streak')
         mascotBus.emit('streak') // mascot does its streak pose, matching the shared quiz engine
       }
-      if (r.done) finishRound(r.firstTryCorrect, r.longestStreak)
-      else setupQuestion(true)
+      run.thenContinue(() => setupQuestion(true))
     }, isIOS() ? 1100 : 1400)
   }
 
@@ -367,10 +352,10 @@ const NuancerGame: React.FC = () => {
   // kills the old top void). Charge-in re-triggers per question via chargeKey (derived from STATE,
   // never from the bag/refs, so it's safe to read during render).
   const promptStageContent =
-    roundOutcome || !gameReady || order.length === 0 ? undefined : (
+    !gameReady || order.length === 0 ? undefined : (
       <PromptFocus
         accent={t.accentColor}
-        chargeKey={`${order[0]?.hex ?? ''}-${round.state.index}`}
+        chargeKey={`${order[0]?.hex ?? ''}-${run.state.index}`}
         repeat={phoneLandscape ? undefined : <ColorRepeatButton onClick={repeatInstruction} disabled={false} />}
         subject={
         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
@@ -460,13 +445,13 @@ const NuancerGame: React.FC = () => {
     )
 
   // Live difficulty: rebuild the current question when the level changes in the adult menu (no
-  // refresh). Skips the result screen + the initial mount.
+  // refresh). Skips the initial mount.
   const difficultyLevel = useDifficulty('colors')
   const prevDifficultyRef = useRef(difficultyLevel)
   useEffect(() => {
     if (prevDifficultyRef.current === difficultyLevel) return
     prevDifficultyRef.current = difficultyLevel
-    if (roundOutcome || !gameReady) return
+    if (!gameReady) return
     setupQuestion()
   }, [difficultyLevel]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -493,14 +478,7 @@ const NuancerGame: React.FC = () => {
         promptStage={promptStageContent}
         celebration={{ show: showCelebration, intensity: celebrationIntensity, duration: celebrationDuration, onComplete: stopCelebration }}
       >
-        {roundOutcome ? (
-          <RoundResultScreen
-            outcome={roundOutcome}
-            categoryId="colors"
-            backRoute="/farver"
-            onReplay={handleReplay}
-          />
-        ) : gameReady && order.length > 0 ? (
+        {gameReady && order.length > 0 ? (
           <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
             {/* Phone-landscape only: RepeatButton relocated here from PromptStage (see phoneLandscape
                 above) so the slot row gets the stage's full (short) height. */}

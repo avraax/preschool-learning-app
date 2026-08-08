@@ -7,7 +7,6 @@ import {
   FAST_SLOTS,
   CHAPTER_SIZE,
   COMPANION_STAGES,
-  MAX_ROUND_XP,
   BROWSE_TASK_XP,
   xpToNext,
   xpForSlots,
@@ -16,7 +15,6 @@ import {
   BLOOM_MAX_XP,
   bloomStage,
   bloomFill,
-  roundXp,
   taskXp,
   collectedFromLevel,
   chapterOfSlot,
@@ -159,44 +157,32 @@ test('taskXp: normalised so ANY full round is worth about one reward', () => {
   assert.equal(BROWSE_TASK_XP, 2)
 })
 
-test('roundXp: bonuses ONLY — they carry into the next reward, never grant one', () => {
-  assert.equal(roundXp({ mistakes: 0, anyNewBest: false }), 6) // perfect
-  assert.equal(roundXp({ mistakes: 0, anyNewBest: true }), 14) // perfect + new best
-  assert.equal(roundXp({ mistakes: 2, anyNewBest: true }), 8) // new best only
-  assert.equal(roundXp({ mistakes: 5, anyNewBest: false }), 0) // a weak round adds nothing extra
-  // A bonus alone can never be worth a reward.
-  assert.ok(roundXp({ mistakes: 0, anyNewBest: true }) < REWARD_XP)
-})
+// THE CROSSING PIN, rewritten for endless play (Endless Play PRD-01 D3 / §W7). `roundXp` and
+// `MAX_ROUND_XP` are DELETED, so the biggest single XP event is now ONE TASK — and that changes a
+// load-bearing property: a task can no longer cross two slots at any XP, in either tier.
+//
+// Which is exactly why this pin has to stay. `RewardOverlay` trails EXTRA owed stickers in behind the
+// headline, and with no play path that can reach a double it now looks like dead code. It is not: a
+// cross-device CRDT merge can still owe two (the XP ledger is a G-Counter, two devices that each
+// played offline sum). This test is what records "merge-only, not dead" so nobody deletes it.
+test('no single task can cross two slots — the overlay trail is MERGE-ONLY, not dead', () => {
+  // The smallest `tasksInRound` any shipped game passes is 5 (Farvejagt, whose task is a whole board);
+  // everything else is 6-15. So the biggest real task is 9 XP against a 40 XP slot.
+  const biggestRealTask = taskXp(5, true)
+  assert.equal(biggestRealTask, 9)
+  assert.ok(biggestRealTask < REWARD_XP)
 
-test('one round can never skip a slot in the SLOW tier (and the fast-tier case is handled)', () => {
-  // Biggest single round: 8 first-try tasks (48) + perfect (6) + new best (8) = 62.
-  assert.equal(8 * taskXp(8, true) + roundXp({ mistakes: 0, anyNewBest: true }), MAX_ROUND_XP)
-  assert.equal(MAX_ROUND_XP, 62)
-
-  // Slow tier (120/slot): even starting 1 XP short of a slot, a max round crosses at most ONE.
-  const slowStart = xpForSlots(FAST_SLOTS + 1) - 1 // 1 XP shy of slot 10
-  const slowBefore = collectedFromLevel(levelFromXp(slowStart).level)
-  const slowAfter = collectedFromLevel(levelFromXp(slowStart + MAX_ROUND_XP).level)
-  assert.equal(slowAfter - slowBefore, 1)
-
-  // …and it now can't even reach a whole slot from a standing start — 62 < 120. So past slot 9 the
-  // trailing-grant path in RewardOverlay is unreachable from PLAY (Reward Pacing §4.2). It is kept as
-  // the cross-device CRDT-merge net, not pruned; this pins WHY it looks dead.
-  assert.ok(MAX_ROUND_XP < xpToNext(FAST_SLOTS + 1))
-
-  // Fast tier (40/slot): 62 XP CAN cross two — the PRD's "max round = 54" understated it by treating
-  // perfect and new-best as alternatives. grantPendingRewards() awards every owed slot in one commit
-  // precisely so this is correct rather than a lost reward; asserted here so the property is pinned.
-  const fastStart = REWARD_XP - 1 // 1 XP shy of slot 1
-  const fastBefore = collectedFromLevel(levelFromXp(fastStart).level)
-  const fastAfter = collectedFromLevel(levelFromXp(fastStart + MAX_ROUND_XP).level)
-  assert.equal(fastAfter - fastBefore, 2)
-  // But never THREE, at any starting point in either tier.
-  for (let xp = 0; xp <= 3000; xp++) {
-    const gained =
-      collectedFromLevel(levelFromXp(xp + MAX_ROUND_XP).level) -
-      collectedFromLevel(levelFromXp(xp).level)
-    assert.ok(gained <= 2, `a max round gained ${gained} slots from ${xp} XP`)
+  // Hold it for the whole plausible domain, not just the shipped values: at NO starting XP, in either
+  // tier, can one task from a 2+-task round gain more than one slot. (`tasksInRound: 1` would be 41 XP
+  // and CAN double inside the fast tier — which is why no game has a one-task round; the normaliser
+  // means a game whose "round" is a single task is claiming a whole reward for it.)
+  for (let n = 2; n <= 40; n++) {
+    const amount = taskXp(n, true)
+    for (let xp = 0; xp <= 2000; xp++) {
+      const gained =
+        collectedFromLevel(levelFromXp(xp + amount).level) - collectedFromLevel(levelFromXp(xp).level)
+      assert.ok(gained <= 1, `a task worth ${amount} gained ${gained} slots from ${xp} XP`)
+    }
   }
 })
 
@@ -304,13 +290,15 @@ test('the pacing: a sticker costs ~3 rounds and the book ~172 (Reward Pacing D1/
   // The whole book, as XP. 9 × 40 + 81 × 120, across TEN chapters — the full path D8 specified, built.
   assert.equal(xpForSlots(REWARD_SLOTS), 10080)
 
-  // The range: a flat-40 round (no first-tries, no bonuses) → 252; a maximal 62-XP round → 163.
-  // At 72 slots those were 198 and 128; before the pacing change, 126 and 81.
+  // TWO pins now, not three. The round-END bonus is DELETED (Endless Play D3), so the old
+  // `roundsToFillAt(MAX_ROUND_XP) = 163` row has no referent — 62 XP is no longer reachable from a
+  // notional round. The remaining range is the real one:
+  //   • a flat-40 round (nothing first-try) → 252,
+  //   • an ORDINARY round (8 tasks all first-try = 48) → 210.
+  // **THE OWNER ACCEPTED THE ~20% SLOWER PACE THIS BUYS** (D3): the best case used to be 163 rounds
+  // and is now 210. Do NOT re-tune `xpToNext` / `REWARD_XP` / `FAST_SLOTS` to compensate, and never
+  // reintroduce a round bonus.
   assert.equal(roundsToFillAt(REWARD_XP), 252)
-  assert.equal(roundsToFillAt(MAX_ROUND_XP), 163)
-  // An ORDINARY round (8 tasks all first-try, no bonuses = 48) sits in between at 210 — the "~3 rounds
-  // a sticker" promise of §4.1 over the whole 10-chapter book, and §4.1's own projection for 90 slots
-  // (~10 weeks at 3 rounds a day).
   assert.equal(roundsToFillAt(8 * taskXp(8, true)), 210)
 
   // A sticker costs ~3 ordinary rounds past chapter 1 — the headline promise. 120 / 46ish.

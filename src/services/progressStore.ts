@@ -34,7 +34,6 @@ import {
   levelFromXp,
   bloomStage,
   bloomFill,
-  roundXp,
   taskXp,
   BROWSE_TASK_XP,
   CHAPTER_SIZE,
@@ -51,7 +50,6 @@ import {
   defaultPersisted,
   derive,
   emptyDeviceCounters,
-  emptyGameStats,
   inertState,
   normalizePersisted,
   owedRewards as owedFromDoc,
@@ -72,7 +70,6 @@ import { practiceLedger } from './practiceLedger.ts'
 export type {
   DifficultyLevel,
   DifficultySetting,
-  PerGameStats,
   PersistedProgress,
   ProgressSettings,
   ProgressState,
@@ -88,7 +85,6 @@ import type {
   ProgressState,
   SectionId,
   DifficultyLevel,
-  PerGameStats,
 } from '../config/progressSchema.ts'
 
 export interface XpGrantResult {
@@ -132,40 +128,11 @@ export interface RewardGrant {
   isNew: boolean // first time ever collected
 }
 
-export interface RoundResultInput {
-  correct: number
-  total: number
-  longestStreak: number
-}
-
-export interface RoundResultOptions {
-  starThresholds?: { three: number; two: number } // MISTAKES allowed; default 3★=0, 2★≤2
-  /**
-   * The round was played in the DEGRADED audio mode (Practice Loop PRD-01 W4): narration was dead, so
-   * an audio-only board revealed its own answer and the task degraded to shape-matching.
-   *
-   * XP is granted as normal — he played, and we never punish a child for a broken iPad — but no PERSONAL
-   * BEST is recorded, because a trivial board must not overwrite a real one. Stars and totals still
-   * count (they are this round's outcome, not a record).
-   */
-  degraded?: boolean
-}
-
-export interface RoundOutcome {
-  gameId: string
-  correct: number
-  total: number
-  mistakes: number
-  stars: number // 1–3, always ≥1 (no failure state)
-  longestStreak: number
-  previousBests: { streak: number; stars: number; count: number }
-  newBests: { streak: boolean; stars: boolean; count: boolean }
-  anyNewBest: boolean
-  totals: { totalStars: number; totalStickers: number }
-  xp: XpGrantResult
-}
-
-const DEFAULT_THRESHOLDS = { three: 0, two: 2 }
+// (`RoundResultInput` / `RoundResultOptions` / `RoundOutcome` / `recordRoundResult` are DELETED —
+// Endless Play PRD-01 W3. Stars, star thresholds, personal bests and the round-end bonus XP went with
+// the round that produced them; nothing records them any more. The surviving grant points are
+// `grantTaskXp` (play), `grantXp` (the `?rewards=n` dev seed) and `grantPendingRewards` (the ceremony,
+// the ONLY place a reward is handed over).)
 
 // ONE frozen module constant for the detached read model. `getSnapshot()` MUST return a STABLE
 // reference or `useSyncExternalStore` re-renders forever (§10.1) — returning a fresh defaultState()
@@ -398,10 +365,6 @@ class ProgressStore {
     return this.state
   }
 
-  getGame(gameId: string): PerGameStats {
-    return this.state.perGame[gameId] ?? emptyGameStats()
-  }
-
   difficultyFor(section: SectionId): DifficultyLevel {
     const d = this.state.settings.difficulty
     return d.perSection?.[section] ?? d.global
@@ -575,86 +538,6 @@ class ProgressStore {
     return true
   }
 
-  // ----- the main round path ---------------------------------------------------------------------
-
-  recordRoundResult(
-    gameId: string,
-    input: RoundResultInput,
-    options: RoundResultOptions = {},
-  ): RoundOutcome {
-    const thresholds = options.starThresholds ?? DEFAULT_THRESHOLDS
-    const mistakes = Math.max(0, input.total - input.correct)
-    const stars = mistakes <= thresholds.three ? 3 : mistakes <= thresholds.two ? 2 : 1
-
-    if (!this.isAttached()) {
-      // Zero-effect result with the same SHAPE, so a caller mid-teardown can't crash on it.
-      return {
-        gameId,
-        correct: input.correct,
-        total: input.total,
-        mistakes,
-        stars,
-        longestStreak: input.longestStreak,
-        previousBests: { streak: 0, stars: 0, count: 0 },
-        newBests: { streak: false, stars: false, count: false },
-        anyNewBest: false,
-        totals: { totalStars: 0, totalStickers: 0 },
-        xp: zeroXpGrant(sectionForGameId(gameId)),
-      }
-    }
-
-    const draft = this.draft()
-    const prev = draft.perGame[gameId] ?? emptyGameStats()
-
-    const previousBests = { streak: prev.bestStreak, stars: prev.bestStars, count: prev.bestCount }
-    // A DEGRADED round (W4: the board revealed its own answer because narration was dead) records NO new
-    // best — it was a shape-match, and it must not overwrite a real record or fire a "Ny rekord!" ribbon.
-    // Everything else about it is normal: stars, totals, rounds played, and the XP below.
-    const newBests = options.degraded
-      ? { streak: false, stars: false, count: false }
-      : {
-          streak: input.longestStreak > prev.bestStreak,
-          stars: stars > prev.bestStars,
-          count: input.correct > prev.bestCount,
-        }
-    const anyNewBest = newBests.streak || newBests.stars || newBests.count
-
-    draft.perGame[gameId] = {
-      bestStreak: options.degraded ? prev.bestStreak : Math.max(prev.bestStreak, input.longestStreak),
-      bestStars: options.degraded ? prev.bestStars : Math.max(prev.bestStars, stars),
-      bestCount: options.degraded ? prev.bestCount : Math.max(prev.bestCount, input.correct),
-      roundsCompleted: prev.roundsCompleted + 1,
-      lifetimeCorrect: prev.lifetimeCorrect + input.correct,
-    }
-    draft.totals.totalStars += stars
-
-    // Rewards are NOT granted here. A round's XP moves the ring; the reward is handed over by the
-    // ceremony (grantPendingRewards) — one track, one grant point. Fold the round-END BONUS XP into
-    // the SAME draft/commit: bonuses ONLY (perfect-round / new-best) — the per-task portion was
-    // already granted live during play. Computed from round STRUCTURE only, never the difficulty
-    // setting (fairness).
-    const xp = this.applyXp(draft, sectionForGameId(gameId), roundXp({ mistakes, anyNewBest }))
-
-    this.commit(draft)
-
-    return {
-      gameId,
-      correct: input.correct,
-      total: input.total,
-      mistakes,
-      stars,
-      longestStreak: input.longestStreak,
-      previousBests,
-      newBests,
-      anyNewBest,
-      totals: {
-        totalStars: draft.totals.totalStars,
-        totalStickers: Math.min(REWARD_SLOTS, totalSlots(draft)),
-      },
-      xp,
-    }
-  }
-
   // ----- progression (XP / level / bloom) --------------------------------------------------------
 
   /**
@@ -705,7 +588,7 @@ class ProgressStore {
     }
   }
 
-  /** Kept for the DEV seed harness (?rewards=n); normal play goes through grantTaskXp/recordRoundResult. */
+  /** Kept for the DEV seed harness (?rewards=n); normal play goes through grantTaskXp. */
   grantXp(section: SectionId, amount: number): XpGrantResult {
     if (!this.isAttached()) return zeroXpGrant(section)
     const draft = this.draft()
@@ -786,7 +669,7 @@ class ProgressStore {
   // ----- reset -----------------------------------------------------------------------------------
 
   /**
-   * Reset progress ONLY (the book, per-game bests, lifetime stars, XP). Sound/music/difficulty/theme
+   * Reset progress ONLY (the book and the XP behind it). Sound/music/difficulty/theme
    * are preferences, not progress, so they carry across — as does `settingsMeta`, because resetting the
    * stamps BACKWARDS would let a stale remote setting win the next merge (§5.6).
    *
@@ -953,7 +836,11 @@ const zeroXpGrant = (section: SectionId): XpGrantResult => ({
 
 // Map a gameId to the section its XP/bloom is attributed to. `<section>.<game>` for the five sections;
 // the off-menu Memory boards fold into the alphabet / math worlds by content type.
-function sectionForGameId(gameId: string): SectionId {
+//
+// EXPORTED since Endless Play PRD-01: the in-game ceremony seam (`useTaskRun`/`useRewardCeremony`)
+// tags its `rewardBus` event with the same section the XP was attributed to, and a second copy of this
+// mapping in a hook is exactly how the two would drift.
+export function sectionForGameId(gameId: string): SectionId {
   const head = gameId.split('.')[0]
   if ((SECTION_IDS as string[]).includes(head)) return head as SectionId
   if (gameId.startsWith('memory.numbers')) return 'math'

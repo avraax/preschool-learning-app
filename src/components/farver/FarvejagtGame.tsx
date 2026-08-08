@@ -11,9 +11,9 @@ import type { GuideReaction } from '../common/ThemeMascot'
 import { useCelebration } from '../common/CelebrationEffect'
 import { ColorRepeatButton } from '../common/RepeatButton'
 import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
-import { useRound } from '../../hooks/useRound'
-import { progressStore, type RoundOutcome } from '../../services/progressStore'
-import { COLORS_FARVEJAGT, starThresholdsFor } from '../../config/difficulty'
+import { useTaskRun } from '../../hooks/useTaskRun'
+import { progressStore } from '../../services/progressStore'
+import { COLORS_FARVEJAGT } from '../../config/difficulty'
 import { sfx } from '../../services/sfxClient'
 import { mascotBus } from '../../services/mascotBus'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
@@ -21,7 +21,6 @@ import { idleGlow } from '../../theme/idleMotion'
 import { useDifficulty } from '../../hooks/useDifficulty'
 import { devFx } from '../../utils/devHarness'
 import GameShell from '../common/GameShell'
-import RoundResultScreen from '../common/RoundResultScreen'
 import { isIOS } from '../../utils/deviceDetection'
 import { shuffle } from '../../utils/shuffle'
 import { useNeverFailHint } from '../../hooks/useNeverFailHint'
@@ -102,10 +101,10 @@ const FarvejagtGame: React.FC = () => {
   })
   const [gameReady, setGameReady] = useState(false)
 
-  // Bounded round + reward flow (Overhaul Farver §Farvejagt). 5 boards, 3★ = 0 wrong-drop boards, 2★ ≤ 2.
-  const round = useRound({ length: FARVEJAGT_ROUND, gameId: 'colors.farvejagt' })
+  // Endless task play (Endless Play PRD-01 W2). ONE constant, two jobs: the `taskXp` normaliser AND
+  // the bag's no-repeat window. A board is one task here, so there are fewer of them per notional round.
+  const run = useTaskRun({ tasksInRound: FARVEJAGT_ROUND, gameId: 'colors.farvejagt' })
   const firstAttemptRef = useRef(true)   // first-try flag for the CURRENT board
-  const [roundOutcome, setRoundOutcome] = useState<RoundOutcome | null>(null)
 
   // Celebration (corner guide reacts via guideReaction)
   const { showCelebration, celebrationIntensity, celebrationDuration, celebrateTier, stopCelebration } = useCelebration()
@@ -330,25 +329,7 @@ const FarvejagtGame: React.FC = () => {
     if (forcedFx === 'hint') mascotBus.emit('hint')
   }, [forcedFx])
 
-  const finishRound = (firstTryCorrect: number, longestStreak: number) => {
-    const outcome = progressStore.recordRoundResult(
-      'colors.farvejagt',
-      { correct: firstTryCorrect, total: round.length, longestStreak },
-      // Svær tolerates 1 mistake for 3★ / 3 for 2★ (Difficulty PRD-01 W6) — a harder level must not
-      // cost the child stars, the same fairness rule that keeps XP difficulty-independent.
-      { starThresholds: starThresholdsFor(progressStore.difficultyFor('colors')) },
-    )
-    setRoundOutcome(outcome)
-  }
-
-  const handleReplay = () => {
-    stopCelebration()
-    setRoundOutcome(null)
-    round.reset()
-    setupBoard(true)
-  }
-
-  // A board is fully collected → flourish, then advance the round (or finish).
+  // A board is fully collected → flourish, then the next board.
   const handleBoardComplete = () => {
     isAdvancing.current = true // lock out drops during the flourish so a late drop can't fail a perfect board (P3)
     reactGuide('cheer')
@@ -357,13 +338,15 @@ const FarvejagtGame: React.FC = () => {
     if (flourishTimer.current) clearTimeout(flourishTimer.current)
     flourishTimer.current = setTimeout(() => {
       setBoardFlourish(false)
-      const r = round.completeQuestion(firstAttemptRef.current)
-      if (!r.done && r.streak > 0 && r.streak % 3 === 0) {
+      // THE SEAM (Endless Play PRD-01 §4.1) — the ceremony plays here, before the next board is dealt,
+      // with the advance guard still held.
+      const r = run.completeTask(firstAttemptRef.current)
+      // Suppressed on a crossing: one loud payoff, not two celebrations in the same 200ms.
+      if (r.streak > 0 && r.streak % 3 === 0 && !r.crossedLevel) {
         celebrateTier('streak')
         mascotBus.emit('streak') // mascot does its streak pose, matching the shared quiz engine
       }
-      if (r.done) finishRound(r.firstTryCorrect, r.longestStreak)
-      else setupBoard(true)
+      run.thenContinue(() => setupBoard(true))
     }, reduce ? 250 : FLOURISH_MS)
   }
 
@@ -486,13 +469,13 @@ const FarvejagtGame: React.FC = () => {
   const isOverWell = overId === 'target-zone'
 
   // Live difficulty: rebuild the current board when the level changes in the adult menu (no
-  // refresh). Skips the result screen + the initial mount.
+  // refresh). Skips the initial mount.
   const difficultyLevel = useDifficulty('colors')
   const prevDifficultyRef = useRef(difficultyLevel)
   useEffect(() => {
     if (prevDifficultyRef.current === difficultyLevel) return
     prevDifficultyRef.current = difficultyLevel
-    if (roundOutcome || !gameReady) return
+    if (!gameReady) return
     setupBoard()
   }, [difficultyLevel]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -505,14 +488,7 @@ const FarvejagtGame: React.FC = () => {
       guideReaction={guideReaction}
       celebration={{ show: showCelebration, intensity: celebrationIntensity, duration: celebrationDuration, onComplete: stopCelebration }}
     >
-      {roundOutcome ? (
-        <RoundResultScreen
-          outcome={roundOutcome}
-          categoryId="colors"
-          backRoute="/farver"
-          onReplay={handleReplay}
-        />
-      ) : gameReady && (
+      {gameReady && (
         <>
           {/* Phone landscape: prompt pill + repeat button share ONE row (display:contents
               keeps the stacked layout everywhere else) — the board gets the saved height. */}

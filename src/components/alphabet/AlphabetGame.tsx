@@ -119,11 +119,10 @@ const AlphabetGame: React.FC = () => {
     // Audio configuration
     gameWelcomeType: 'alphabet',
 
-    // Bounded round (Overhaul Foundation §3) — reference wiring / smoke test. 8 questions, then the
-    // result/reward hero. Star thresholds come from the difficulty spine (Difficulty PRD-01 W6).
     gameId: 'alphabet.quiz',
-    // ONE round length: the bag's no-repeat window reads the same constant (Practice Loop PRD-01 W1).
-    round: { length: ALPHABET_ROUND },
+    // ONE constant, two jobs (Endless Play PRD-01 W2): the `taskXp` normaliser AND the bag's no-repeat
+    // window. Play itself is endless — nothing counts down to it.
+    tasksInRound: ALPHABET_ROUND,
 
     // Never-fail hint (PRD-05 P1): after 2 wrong taps the correct letter tile pulses — and SPEAKS the
     // first-sound fact (Practice Loop PRD-01 W3), the same already-baked line the correct tap says.

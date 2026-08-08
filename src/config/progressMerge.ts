@@ -34,13 +34,11 @@ import { collectedFromLevel, levelFromXp } from './progression.js'
 import { REWARD_SLOTS } from './stickers.js'
 import {
   SECTION_IDS,
-  emptyGameStats,
   totalSlots,
   totalXp,
   type DeviceCounters,
   type DifficultyLevel,
   type LwwStamp,
-  type PerGameStats,
   type PersistedProgress,
   type ProgressSettings,
   type SectionId,
@@ -181,8 +179,6 @@ export function contentFingerprint(p: PersistedProgress): string {
   return stableStringify({
     stickers: p.stickers,
     ledger: p.ledger,
-    perGame: p.perGame,
-    totals: p.totals,
     progression: p.progression,
     settings: p.settings,
     settingsMeta: p.settingsMeta,
@@ -216,27 +212,9 @@ function mergeLedger(
   return out
 }
 
-function mergePerGame(
-  a: Record<string, PerGameStats>,
-  b: Record<string, PerGameStats>,
-): Record<string, PerGameStats> {
-  const out: Record<string, PerGameStats> = {}
-  for (const id of new Set([...Object.keys(a), ...Object.keys(b)])) {
-    const x = a[id] ?? emptyGameStats()
-    const y = b[id] ?? emptyGameStats()
-    out[id] = {
-      bestStreak: Math.max(x.bestStreak, y.bestStreak),
-      bestStars: Math.max(x.bestStars, y.bestStars),
-      bestCount: Math.max(x.bestCount, y.bestCount),
-      // NB these two are COUNTERS, not bests. `max` under-counts slightly under concurrency; `sum`
-      // would be catastrophic — the merge runs on every sync, so summing is non-idempotent and the
-      // numbers explode. Promoting them to the ledger is Phase B.
-      roundsCompleted: Math.max(x.roundsCompleted, y.roundsCompleted),
-      lifetimeCorrect: Math.max(x.lifetimeCorrect, y.lifetimeCorrect),
-    }
-  }
-  return out
-}
+// (`mergePerGame` is DELETED with `perGame` and `totals` — Endless Play PRD-01 W3. A rolling deploy is
+// safe: an old client can push a document still carrying those keys and this merge simply drops them.
+// The fingerprint shape change costs exactly one extra push per device, once.)
 
 export function mergeProgress(
   local: PersistedProgress,
@@ -350,9 +328,6 @@ export function mergeProgress(
     Math.max(local.stickers.seenThroughSlot, remote.stickers.seenThroughSlot),
     Math.min(REWARD_SLOTS, merged.stickers.grantedSlots),
   )
-
-  merged.perGame = mergePerGame(local.perGame, remote.perGame)
-  merged.totals = { totalStars: Math.max(local.totals.totalStars, remote.totals.totalStars) }
 
   merged.progression.lastCelebratedLevel = Math.max(
     local.progression.lastCelebratedLevel,

@@ -43,6 +43,13 @@ import StickerReveal from './StickerReveal'
 // Auto-dismisses or on tap; on dismiss it advances the celebrated-level cursor so it never re-fires
 // (reload/cross-tab safe). Reduced motion → no confetti/growth animation, but the reward + the spoken
 // line are kept.
+//
+// THE TAP IS ARMED (Endless Play PRD-01 §4.3), and that is not a nicety. The ceremony used to open on
+// `RoundResultScreen`, after the child had already sat through the star beats; it now opens ~1.1–2.0s
+// after a correct tap, IN GAME, exactly where the finger already is. An excited tap-burst would
+// dismiss the sticker before `StickerReveal` finished its spring. Same reasoning as the result
+// screen's own `buttonsReady` gate (PRD-09 P1: "the reward moment is seen before it can be
+// dismissed") — carried across rather than lost with that file.
 
 const COMIC = '"Comic Sans MS", "Comic Neue", sans-serif'
 
@@ -60,6 +67,9 @@ const TRAIL_MS = 400
 // The number's count-up: let the sticker land before it starts, then one step per owed reward.
 const COUNT_START_MS = 700
 const COUNT_STEP_MS = 420
+// How long the surface ignores taps after the ceremony opens (§4.3). Long enough to outlast a 5yo's
+// tap-burst on the tile they just answered; short enough that a deliberate "next!" tap still works.
+export const TAP_ARM_MS = 700
 
 /**
  * The child-facing number, counting up to its new value with one spring pop on the final digit.
@@ -134,17 +144,27 @@ const RewardOverlay: React.FC = () => {
   const [grants, setGrants] = useState<RewardGrant[]>([])
   // Which BEAT is on screen (D6 §6.3). A plain grant never leaves 'sticker'.
   const [beat, setBeat] = useState<'sticker' | 'chapter'>('sticker')
+  // The tap is inert until this flips (TAP_ARM_MS — see the header).
+  const [armed, setArmed] = useState(false)
   const grantedRef = useRef(false)
   const spokenRef = useRef(false)
   const dismissTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const beatTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const armTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // Every caller waiting on THIS ceremony. A SET, not the latest event's callback: two emits collapse
+  // into one ceremony below, and dropping the first one would leave its game's deferred
+  // `generateNewQuestion()` never called — a frozen board.
+  const doneCallbacks = useRef(new Set<() => void>())
 
   // Subscribe to the bus. While an overlay is already showing, a further emit keeps the HIGHEST level
   // (a multi-slot jump collapses to one climactic ceremony).
   useEffect(() => {
     return rewardBus.subscribe((e) => {
+      if (e.onDone) doneCallbacks.current.add(e.onDone)
       setEvent((prev) =>
-        prev ? { level: Math.max(prev.level, e.level), section: e.section ?? prev.section } : e,
+        prev
+          ? { level: Math.max(prev.level, e.level), section: e.section ?? prev.section }
+          : { level: e.level, section: e.section },
       )
     })
   }, [])
@@ -155,6 +175,8 @@ const RewardOverlay: React.FC = () => {
     dismissTimer.current = null
     if (beatTimer.current) clearTimeout(beatTimer.current)
     beatTimer.current = null
+    if (armTimer.current) clearTimeout(armTimer.current)
+    armTimer.current = null
     // Advance the celebrated cursor so neither this tab nor another re-fires for this level.
     progressStore.markLevelCelebrated(event.level)
     // The reward the child just saw is the moment a parent is most likely to check the other iPad, so
@@ -163,9 +185,39 @@ const RewardOverlay: React.FC = () => {
     setEvent(null)
     setGrants([])
     setBeat('sticker')
+    setArmed(false)
     grantedRef.current = false
     spokenRef.current = false
+    // Release every waiting seam LAST, after the cursor moved and the push was queued — a game's
+    // continuation may read the store immediately. Cleared first so a re-entrant emit can't double-fire.
+    const waiting = [...doneCallbacks.current]
+    doneCallbacks.current.clear()
+    waiting.forEach((cb) => {
+      try {
+        cb()
+      } catch {
+        /* one game's continuation must never break another's */
+      }
+    })
   }
+
+  // Arm the dismiss tap (§4.3). Separate from the beats effect on purpose: the beats effect bails out
+  // early on the empty-ceremony guard, and arming must not depend on that path.
+  useEffect(() => {
+    if (!event) {
+      setArmed(false)
+      return
+    }
+    armTimer.current = setTimeout(() => {
+      armTimer.current = null
+      setArmed(true)
+    }, TAP_ARM_MS)
+    return () => {
+      if (armTimer.current) clearTimeout(armTimer.current)
+      armTimer.current = null
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [event?.level])
 
   // Run the ceremony beats when an event appears.
   useEffect(() => {
@@ -256,7 +308,9 @@ const RewardOverlay: React.FC = () => {
           // the scrim is. A screenshot cannot prove the menu stopped showing through it.
           data-reward-overlay
           data-reward-beat={beat}
-          onClick={dismiss}
+          // ARMED tap only (§4.3). `cursor: pointer` stays below either way — the surface still IS
+          // tappable, it just isn't listening yet; changing the cursor would only tell a mouse user.
+          onClick={armed ? dismiss : undefined}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}

@@ -52,14 +52,6 @@ const seedGuestBook = (xp = 240, slots = 3): void => {
   doc.stickers.grantedSlots = slots
   doc.stickers.firstAt = { 'dyr-hund': 1_700_000_000_001, 'dyr-kat': 1_700_000_000_002, 'dyr-hest': 1_700_000_000_003 }
   doc.stickers.seenThroughSlot = 1
-  doc.totals.totalStars = 17
-  doc.perGame['alphabet.quiz'] = {
-    bestStreak: 6,
-    bestStars: 3,
-    bestCount: 8,
-    roundsCompleted: 4,
-    lifetimeCorrect: 29,
-  }
   doc.sync = { ...doc.sync, rev: 12, syncedRev: 12, serverRev: 9, epoch: 2 }
   storage.setItem(progressKeyFor(GUEST), JSON.stringify(doc))
 }
@@ -94,9 +86,8 @@ test('the happy path: the whole document moves, and the LEDGER moves intact', ()
   // The book's identity: which pictures, and when each was first seen.
   assert.deepEqual(after.stickers.firstAt, before.stickers.firstAt)
   assert.equal(after.stickers.seenThroughSlot, before.stickers.seenThroughSlot)
-  // Records and totals.
-  assert.equal(after.totals.totalStars, 17)
-  assert.deepEqual(after.perGame['alphabet.quiz'], before.perGame['alphabet.quiz'])
+  // (`totals`/`perGame` left the document with the round — Endless Play PRD-01 W3. The book, the
+  // ledger and the explored set are the whole of a child's progress now.)
 })
 
 test('the copy is re-stamped for the new owner', () => {
@@ -135,7 +126,7 @@ test('the SOURCE key is left byte-identical', () => {
 test('refuses when the target already has a book, and writes nothing', () => {
   seedGuestBook()
   const existing = defaultPersisted(CHILD, getDeviceId(), 1_700_000_100_000)
-  existing.totals.totalStars = 99
+  existing.stickers.grantedSlots = 0
   storage.setItem(progressKeyFor(CHILD), JSON.stringify(existing))
   const snapshot = storage.getItem(progressKeyFor(CHILD))
 

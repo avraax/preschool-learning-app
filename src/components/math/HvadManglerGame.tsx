@@ -184,10 +184,9 @@ const HvadManglerGame: React.FC = () => {
 
     gameWelcomeType: 'patterns',
 
-    // Bounded round + reward flow (Foundation §3). 8 questions; star thresholds come from the
-    // difficulty spine (Difficulty PRD-01 W6).
     gameId: 'math.patterns',
-    round: { length: 8 },
+    // The `taskXp` normaliser (Endless Play PRD-01 W2) — play itself is endless.
+    tasksInRound: 8,
 
     // Never-fail hint (PRD-05 P1): after 2 wrong taps the correct tile pulses.
     hintAfterNWrong: 2,

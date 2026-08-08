@@ -62,25 +62,11 @@ export const SEQUENCE_LENGTH = 5
 /** The default answer-tile count per level. Games with a different grid override it below. */
 export const OPTION_COUNT: Record<DifficultyLevel, number> = { let: 3, normal: 4, svaer: 5 }
 
-export interface StarThresholds {
-  /** Max MISTAKES still worth 3★. */
-  three: number
-  /** Max MISTAKES still worth 2★. */
-  two: number
-}
-
-/**
- * Round star thresholds in MISTAKES. Svær is deliberately more forgiving (spine ruling 4): picking a
- * harder level must not cost the child stars/records, the same fairness rule that keeps XP
- * difficulty-independent.
- */
-export const STAR_THRESHOLDS: Record<DifficultyLevel, StarThresholds> = {
-  let: { three: 0, two: 2 },
-  normal: { three: 0, two: 2 },
-  svaer: { three: 1, two: 3 },
-}
-
-export const starThresholdsFor = (level: DifficultyLevel): StarThresholds => STAR_THRESHOLDS[level]
+// `StarThresholds` / `STAR_THRESHOLDS` / `starThresholdsFor` are DELETED (Endless Play PRD-01 W3).
+// They existed to hold ruling 4 — "a harder level must never cost rewards" — by making Svær's star
+// budget looser. With stars gone that ruling is TRUE BY CONSTRUCTION: stars were the only channel
+// through which a level could ever have cost the child anything, and XP was already
+// difficulty-independent. Nothing replaces them; don't re-introduce a per-level score.
 
 // ================================================================================================
 // 3. Per-game tables (PRD §4)
@@ -270,17 +256,7 @@ export const MEMORY_BOARD: Record<DifficultyLevel, MemoryTuning> = {
   svaer: { pairs: 15 },
 }
 
-/**
- * Memory stars, in MISTAKES (= mismatched turns), scaled to the board. ~0.9 mismatches per pair for
- * 3★ / ~1.8 for 2★ — the reachable curve PRD-05 tuned for the 10-pair board (`{9, 18}`), now
- * expressed once so 6 and 15 pairs inherit it. Svær adds the spine's star tolerance on top.
- */
-export const memoryStarThresholds = (pairs: number, level: DifficultyLevel): StarThresholds => ({
-  // The per-pair scale IS the baseline (Normal), so Svær adds only the spine's EXTRA tolerance over
-  // Normal — not the absolute values, which would hand every board a free +2.
-  three: Math.round(pairs * 0.9) + (STAR_THRESHOLDS[level].three - STAR_THRESHOLDS.normal.three),
-  two: Math.round(pairs * 1.8) + (STAR_THRESHOLDS[level].two - STAR_THRESHOLDS.normal.two),
-})
+// (`memoryStarThresholds` is DELETED with the stars it scaled — Endless Play PRD-01 W3.)
 
 export interface BrowseRangeTuning {
   /** Highest number/last item shown in the browse grid. */

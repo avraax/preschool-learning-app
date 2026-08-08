@@ -122,33 +122,16 @@ export const taskXp = (tasksInRound: number, firstTry: boolean): number =>
 // XP per NEW browse item, once ever (browse screens have no round to normalise against).
 export const BROWSE_TASK_XP = 2
 
-// ----- Per-round XP (BONUSES ONLY) ------------------------------------------------------------
-// Per-task XP is granted live during play (taskXp above), so the round END only adds the extras
-// that can't be attributed to a single task: a perfect round and a new personal best. They carry
-// into the NEXT reward rather than granting one. Derived from round STRUCTURE only — never the
-// difficulty setting (fairness).
-export interface RoundXpInput {
-  mistakes: number // wrong taps across the round
-  anyNewBest: boolean // beat a personal best (streak/stars/count)
-}
-
-export function roundXp(i: RoundXpInput): number {
-  let xp = 0
-  if (i.mistakes === 0) xp += 6 // perfect-round bonus
-  if (i.anyNewBest) xp += 8 // new personal best
-  return xp
-}
-
-// The largest XP a single round can produce: a full 8-task round with every answer first-try
-// (8 × taskXp(8,true) = 48) + the perfect bonus (6) + a new personal best (8) = 62.
+// ----- There is NO per-round XP any more (Endless Play PRD-01 D3) ------------------------------
+// `roundXp` (+6 perfect / +8 new best) and `MAX_ROUND_XP` are DELETED with the round that fired them.
+// The owner accepted the resulting ~20% slower sticker pace explicitly: **do NOT re-tune `xpToNext`,
+// `REWARD_XP` or `FAST_SLOTS` to compensate, and never reintroduce a round bonus.** If the pace ever
+// does feel wrong, the lever is `xpToNext`/`FAST_SLOTS` above — one constant, pinned as a literal in
+// `progression.test.ts`.
 //
-// NB the PRD quotes 54 here, having treated "perfect" and "new best" as alternatives; they aren't —
-// a perfect round very often IS a new best (3★ / 8 correct).
-//
-// A single round can cross two slots only while a slot costs ≤ 62, i.e. **only inside the fast tier**
-// now that the slow tier is 120/slot. Past slot 9 the trailing-grant path in `RewardOverlay` is
-// therefore unreachable from play — and it is KEPT anyway (Reward Pacing PRD-01 §4.2): it is still
-// the net for a cross-device CRDT merge (the XP ledger is a G-Counter, so two devices that each
-// played offline sum), and `grantPendingRewards()` handing over every owed slot in ONE commit is a
-// load-bearing invariant, not an optimisation for the rare double.
-export const MAX_ROUND_XP = 62
+// This also makes the biggest single XP event ONE TASK. The worst case is `taskXp(1, true) = 41`
+// against a 40 XP slot, so a single task can never cross two slots — which means the trailing-grant
+// loop in `RewardOverlay` (extra owed stickers behind the headline) is now reachable ONLY from a
+// cross-device CRDT merge. It is deliberately KEPT: the XP ledger is a G-Counter, two devices that
+// each played offline sum, and `grantPendingRewards()` handing over every owed slot in ONE commit is a
+// load-bearing invariant. `progression.test.ts` pins that as merge-only-but-not-dead.

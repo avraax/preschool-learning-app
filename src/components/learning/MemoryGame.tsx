@@ -4,8 +4,7 @@ import UnifiedMemoryGame, { UnifiedMemoryConfig, MemoryItemDisplay } from '../co
 import { categoryThemes } from '../../config/categoryThemes'
 import { AlphabetRestartButton, MathRestartButton } from '../common/RestartButton'
 import { AlphabetRepeatButton, MathRepeatButton } from '../common/RepeatButton'
-import { shuffle } from '../../utils/shuffle'
-import { MEMORY_BOARD, memoryStarThresholds } from '../../config/difficulty'
+import { MEMORY_BOARD } from '../../config/difficulty'
 import { useDifficulty } from '../../hooks/useDifficulty'
 import { LETTER_WORDS, letterPhrase } from '../../config/letterWords'
 import { letterArt } from '../../assets/games/alphabet'
@@ -34,24 +33,17 @@ const MemoryGame: React.FC = () => {
   // the same reason XP is difficulty-independent.
   const level = useDifficulty(gameType === 'letters' ? 'alphabet' : 'math')
   const boardPairs = MEMORY_BOARD[level].pairs
-  // Star thresholds are in MISTAKES (= mismatched turns), scaled to the board by the shared helper:
-  // ~0.9 mismatches per pair for 3★ / ~1.8 for 2★ (the reachable curve PRD-05 P3 tuned on the 10-pair
-  // board — `{9, 18}` — now expressed once so 6 and 15 pairs inherit it), plus the spine's Svær
-  // tolerance on top so the bigger board doesn't cost stars.
-  const starThresholds = memoryStarThresholds(boardPairs, level)
 
   // Configuration for letters memory game
   const lettersConfig: UnifiedMemoryConfig = {
     gameType: 'letters',
     gameId: 'memory.letters',
     boardPairs,
-    starThresholds,
 
-    generateItems: () => {
-      // Shuffle the full alphabet; the engine slices boardPairs items for the board.
-      return shuffle(DANISH_ALPHABET)
-    },
-    
+    // The POOL. The engine's `boardBag` owns the shuffle and the cycle now (Endless Play PRD-01 W6) —
+    // a shuffle here would be a second, redundant one and the bag would still deal the same pass.
+    generateItems: () => DANISH_ALPHABET,
+
     getDisplayData: (letter: string): MemoryItemDisplay => {
       const letterData = LETTER_WORDS[letter]
       return {
@@ -88,13 +80,10 @@ const MemoryGame: React.FC = () => {
     gameType: 'numbers',
     gameId: 'memory.numbers',
     boardPairs,
-    starThresholds,
 
-    generateItems: () => {
-      // Shuffle 1–20; the engine slices boardPairs (random 10, or all 20).
-      return shuffle(NUMBERS)
-    },
-    
+    // The POOL — see the letters config above; the engine's `boardBag` owns the shuffle and the cycle.
+    generateItems: () => NUMBERS,
+
     getDisplayData: (number: string): MemoryItemDisplay => {
       // Count cluster (PRD-08 §3.6, owner-locked): the matched front reinforces count ↔ numeral with
       // exactly `n` copies of the shared counting object (same set as Tal Quiz / Sammenlign / Lær Tal,

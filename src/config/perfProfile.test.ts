@@ -137,7 +137,7 @@ test('W8.4 — the profile is RENDERING only: it never reaches XP, difficulty, n
   for (const rel of [
     'config/progression.ts',
     'config/difficulty.ts',
-    'hooks/useRound.ts',
+    'hooks/useTaskRun.ts',
     'services/ttsClient.ts',
     'services/progressStore.ts',
   ]) {

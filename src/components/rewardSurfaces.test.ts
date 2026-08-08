@@ -11,7 +11,7 @@
 // there and kept the guard green after the fix itself had been removed.
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { existsSync, readFileSync } from 'node:fs'
+import { existsSync, readFileSync, readdirSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -77,19 +77,133 @@ test('every surface that shows the ring opens the book from it', () => {
   }
 })
 
-// The loop above only looks at the files that RENDER a ring, so it structurally could not see a second
-// door added by something drawn INSIDE one of those surfaces. `RoundResultScreen` is exactly that: it
-// replaces GameShell's body while GameShell's header keeps showing the ring, and it shipped a "Se bog"
-// button — a second entrance on a screen that already had one, which is the thing the one-door rule
-// exists to forbid. Removed 2026-08-05 (owner). A surface with NO ring of its own must have NO door.
-test('a screen drawn inside a ring surface adds no second door to Min Bog', () => {
-  const code = codeOf('components/common/RoundResultScreen.tsx')
-  assert.ok(!code.includes('<RewardRing'), 'RoundResultScreen renders a ring now — re-point this guard')
-  const doors = code.match(/'\/album'/g) ?? []
-  assert.equal(
-    doors.length,
-    0,
-    `RoundResultScreen has ${doors.length} route(s) to /album — GameShell's ring above it is the only door`,
+// ─── Endless play: the round is not a child-facing thing (Endless Play PRD-01) ────────────────────
+//
+// The guard that used to live here asserted `RoundResultScreen` had no second door to Min Bog. The
+// screen is DELETED, so the guard becomes the stronger one: it must not come back. Same shape as the
+// `ScoreChip` existence check above.
+
+test('RoundResultScreen is deleted and stays deleted (D1)', () => {
+  assert.ok(
+    !existsSync(path.join(SRC, 'components/common/RoundResultScreen.tsx')),
+    'RoundResultScreen.tsx is back — there is no round-end surface, in any form, including a "small card"',
+  )
+})
+
+// The guard that stops a "small celebration screen" growing back by another name. Stars and "Ny
+// rekord!" are the two things a round-end surface is made of, and both read as harmless additions.
+//
+// The two star GLYPHS are built with `fromCharCode` rather than written out: this file is itself swept
+// by `noEmoji.test.ts`, so a literal ⭐ here would fail that guard from inside this one. (Same reason
+// `promptBag.ts` builds its NUL separator that way.)
+const BANNED_SCORE_MARKS = [
+  'uiArt.star',
+  'uiArt.trophy',
+  'Ny rekord',
+  String.fromCharCode(0x2605), // BLACK STAR
+  String.fromCharCode(0x2b50), // WHITE MEDIUM STAR (the emoji)
+]
+
+test('no component renders stars or a record (D2)', () => {
+  const offenders: string[] = []
+  const walk = (dir: string): void => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, entry.name)
+      if (entry.isDirectory()) walk(full)
+      else if (entry.name.endsWith('.tsx')) {
+        const code = codeOf(path.relative(SRC, full))
+        for (const banned of BANNED_SCORE_MARKS) {
+          if (code.includes(banned)) offenders.push(`${path.relative(SRC, full)}: ${banned}`)
+        }
+      }
+    }
+  }
+  walk(path.join(SRC, 'components'))
+  assert.deepEqual(offenders, [], `a star / record readout is back:\n${offenders.join('\n')}`)
+})
+
+// Cardinality, not presence. TWO primary triggers would mean one play path fires the ceremony twice
+// (or, worse, that a game's seam quietly stopped being the one that does).
+test('the ceremony has exactly one primary trigger, plus the watcher (§W7.3)', () => {
+  const emitters: string[] = []
+  const walk = (dir: string): void => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, entry.name)
+      if (entry.isDirectory()) walk(full)
+      else if (/\.tsx?$/.test(entry.name) && !entry.name.includes('.test.')) {
+        const rel = path.relative(SRC, full).replace(/\\/g, '/')
+        // The bus's own definition is not a caller.
+        if (rel === 'services/rewardBus.ts') continue
+        if (codeOf(rel).includes('rewardBus.emit(')) emitters.push(rel)
+      }
+    }
+  }
+  walk(SRC)
+  assert.deepEqual(
+    emitters.sort(),
+    ['components/common/RewardWatcher.tsx', 'hooks/useRewardCeremony.ts'],
+    'the ceremony is fired from somewhere new — it has ONE in-play trigger (the hook) and ONE safety net',
+  )
+})
+
+// §4.2. `grant.global.leveledUp` misses a crossing produced by a cross-tab write or a CRDT merge, and
+// it is not the value `owedRewards()` and `RewardWatcher` agree on. Both triggers must read the cursor.
+test('the ceremony trigger reads the STORE CURSOR, not leveledUp (§4.2)', () => {
+  for (const rel of ['hooks/useRewardCeremony.ts', 'components/common/RewardWatcher.tsx']) {
+    const code = codeOf(rel)
+    assert.match(
+      code,
+      /progressStore\.globalLevel\(\)[\s\S]{0,200}lastCelebratedLevel/,
+      `${rel} no longer keys the ceremony on globalLevel() > lastCelebratedLevel`,
+    )
+    assert.ok(!code.includes('leveledUp'), `${rel} triggers the ceremony off leveledUp — see §4.2`)
+  }
+})
+
+// The single most important wiring guard in the change: EVERY game must route its continuation through
+// the seam, EXACTLY ONCE. Two continuation sites means one path skips the ceremony; zero means the
+// game deals its next question straight over the overlay.
+const SEAM_GAMES = [
+  'components/common/UnifiedQuizGame.tsx',
+  'components/math/MathOperationGame.tsx',
+  'components/math/ComparisonGame.tsx',
+  'components/ordleg/SpellingGame.tsx',
+  'components/ordleg/SpeakWordGame.tsx',
+  'components/farver/FarvejagtGame.tsx',
+  'components/farver/RamFarvenGame.tsx',
+  'components/farver/NuancerGame.tsx',
+  'components/farver/FarveQuizGame.tsx',
+  'components/common/UnifiedMemoryGame.tsx',
+]
+
+test('every game continues through the ceremony seam, exactly once (§W7.5)', () => {
+  for (const rel of SEAM_GAMES) {
+    const code = codeOf(rel)
+    const seams = code.match(/(?:run\.thenContinue|ceremony\.celebrateIfOwed)\(/g) ?? []
+    // Memory has two: the mid-board crossing and the board turnover. Everything else has one.
+    const expected = rel.endsWith('UnifiedMemoryGame.tsx') ? 2 : 1
+    assert.equal(
+      seams.length,
+      expected,
+      `${rel} has ${seams.length} continuation site(s), expected ${expected} — a second one skips the ceremony`,
+    )
+    // …and nothing from the round survives.
+    assert.ok(!/\br\.done\b/.test(code), `${rel} still branches on r.done`)
+    assert.ok(!code.includes('finishRound('), `${rel} still calls finishRound`)
+    assert.ok(!code.includes('RoundResultScreen'), `${rel} still references RoundResultScreen`)
+  }
+})
+
+// §4.3, and the single largest new risk in the change: the ceremony now opens ~1.1-2.0s after a
+// correct tap, IN GAME, exactly where the finger is. Without the arm an excited tap-burst dismisses
+// the sticker before it has finished appearing.
+test('the ceremony tap is ARMED before it can dismiss (§4.3)', () => {
+  const code = codeOf('components/common/RewardOverlay.tsx')
+  assert.match(code, /TAP_ARM_MS\s*=\s*\d+/, 'the ceremony lost its arm delay — see §4.3')
+  assert.match(
+    code,
+    /onClick=\{armed \? dismiss : undefined\}/,
+    'the ceremony dismisses on an unarmed tap again',
   )
 })
 

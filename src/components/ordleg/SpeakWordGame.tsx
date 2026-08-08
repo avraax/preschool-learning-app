@@ -13,13 +13,11 @@ import GameShell from '../common/GameShell'
 import { HeroArt } from '../common/PromptArt'
 import TactileTile from '../common/TactileTile'
 import TactilePill from '../common/TactilePill'
-import RoundResultScreen from '../common/RoundResultScreen'
 import type { GuideReaction } from '../common/ThemeMascot'
 import { useCelebration } from '../common/CelebrationEffect'
 import { useGameState } from '../../hooks/useGameState'
-import { useRound } from '../../hooks/useRound'
+import { useTaskRun } from '../../hooks/useTaskRun'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
-import { progressStore, type RoundOutcome } from '../../services/progressStore'
 import { mascotBus } from '../../services/mascotBus'
 import { CHARGE, POP } from '../../theme/motion'
 import { idlePulse } from '../../theme/idleMotion'
@@ -417,15 +415,11 @@ const SpeakWordGame: React.FC = () => {
 
   const { showCelebration, celebrationIntensity, celebrationDuration, celebrateTier, stopCelebration } = useCelebration()
 
-  // In-round word count + bounded round (Overhaul Ordleg §3). Open-ended: a "question" = one
-  // recognized word; there is NO target word and NO STT grading.
-  const { incrementScore, resetScore } = useGameState()
-  // Sig et Ord is on the difficulty EXEMPT list (open-ended by design — there is no target word to
-  // grade), so it keeps fixed star thresholds: nothing gets harder at Svær here, so loosening them
-  // would just be a free 3★. See `EXEMPT` in src/config/difficulty.ts.
-  const round = useRound({ length: 8, starThresholds: { three: 0, two: 2 }, gameId: 'ordleg.mic' })
+  // Open-ended: a "task" = one recognized word; there is NO target word and NO STT grading.
+  const { incrementScore } = useGameState()
+  // Endless task play (Endless Play PRD-01 W2). 8 is the `taskXp` normaliser, not a length.
+  const run = useTaskRun({ tasksInRound: 8, gameId: 'ordleg.mic' })
   const firstTryRef = useRef(true)
-  const [roundOutcome, setRoundOutcome] = useState<RoundOutcome | null>(null)
 
   const [phase, setPhaseState] = useState<Phase>('idle')
   const [coach, setCoach] = useState<Coach>(null)
@@ -660,26 +654,6 @@ const SpeakWordGame: React.FC = () => {
     }
   }, [phase])
 
-  const finishRound = (firstTryCorrect: number, longestStreak: number) => {
-    const outcome = progressStore.recordRoundResult(
-      'ordleg.mic',
-      { correct: firstTryCorrect, total: round.length, longestStreak },
-      { starThresholds: { three: 0, two: 2 } },
-    )
-    setRoundOutcome(outcome)
-  }
-
-  const handleReplay = () => {
-    stopCelebration()
-    setRoundOutcome(null)
-    round.reset()
-    resetScore()
-    firstTryRef.current = true
-    setCoach(null)
-    setPhase('idle')
-    endingRef.current = false
-  }
-
   // Friendly retry — no failure feeling. Stays on the SAME question (doesn't advance or count); this is
   // the only thing that breaks "first try". Shared by "nothing recognized" and the watchdog.
   const friendlyRetry = async () => {
@@ -714,22 +688,25 @@ const SpeakWordGame: React.FC = () => {
 
     if (!mountedRef.current) return
 
-    // One recognized word = one completed question. Advance the round (or finish it).
-    const r = round.completeQuestion(firstTryRef.current)
-    if (!r.done && r.streak > 0 && r.streak % 3 === 0) {
+    // One recognized word = one completed task. THE SEAM (Endless Play PRD-01 §4.1): everything that
+    // re-opens the board moves INTO the continuation, because it runs after the ceremony. The mic in
+    // particular — priming it before the overlay closed would re-open a live mic underneath the
+    // sticker, and `endingRef` staying true is what keeps a press during the ceremony inert.
+    const r = run.completeTask(firstTryRef.current)
+    // Suppressed on a crossing: one loud payoff, not two celebrations in the same 200ms.
+    if (r.streak > 0 && r.streak % 3 === 0 && !r.crossedLevel) {
       celebrateTier('streak')
       mascotBus.emit('streak') // mascot does its streak pose, matching the shared quiz engine
     }
-    if (r.done) {
-      finishRound(r.firstTryCorrect, r.longestStreak)
-    } else {
+    run.thenContinue(() => {
       firstTryRef.current = true // fresh question
+      setCoach(null)
       setPhase('idle')
-    }
-    endingRef.current = false
-    // Insurance: iPadOS can end the track while the app talks (a call, Siri, another app). Re-open it
-    // during the idle beat so the next press is still instant rather than paying "Et øjeblik…".
-    if (!speech.isPrimed) void speech.prime({ silent: true })
+      endingRef.current = false
+      // Insurance: iPadOS can end the track while the app talks (a call, Siri, another app). Re-open it
+      // during the idle beat so the next press is still instant rather than paying "Et øjeblik…".
+      if (!speech.isPrimed) void speech.prime({ silent: true })
+    })
   }
 
   const runSpellingSequence = async (word: string) => {
@@ -805,14 +782,7 @@ const SpeakWordGame: React.FC = () => {
       // half the screen unused. Same reasoning as Sammenlign Tal (see `.claude/rules/game-development.md`)
       // — a game whose focal content IS its interaction owns its column, and GameShell then centres it.
     >
-      {roundOutcome ? (
-        <RoundResultScreen
-          outcome={roundOutcome}
-          categoryId="ordleg"
-          backRoute="/ordleg"
-          onReplay={handleReplay}
-        />
-      ) : (
+      {(
         <Box
           sx={{
             flex: 1,

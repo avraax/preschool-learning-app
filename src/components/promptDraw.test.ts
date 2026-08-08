@@ -151,11 +151,13 @@ test("the bag's no-repeat window is the game's OWN round length", () => {
       new RegExp(`window:\\s*${constant}\\b`),
       `${rel} must pass window: ${constant} — the same constant its round length reads`,
     )
-    // …and that constant really is the round length, not a second number that happens to match.
+    // …and that constant really is the game's own round constant, not a second number that happens to
+    // match. Since Endless Play PRD-01 W2 the same value feeds `tasksInRound` (the `taskXp` normaliser)
+    // instead of a `RoundConfig.length` — one value, two jobs, so they cannot drift apart.
     assert.match(
       code,
-      new RegExp(`length:\\s*${constant}\\b`),
-      `${rel}'s RoundConfig must read ${constant} too, or the window and the round can drift apart`,
+      new RegExp(`tasksInRound:\\s*${constant}\\b`),
+      `${rel} must read ${constant} as its tasksInRound too, or the window and the normaliser can drift`,
     )
   }
 })

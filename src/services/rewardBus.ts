@@ -12,6 +12,16 @@ import type { SectionId } from './progressStore'
 export interface RewardEvent {
   level: number // the level just REACHED (levelAfter) — the once-only cursor
   section: SectionId | null // the section whose play triggered it (null = unknown/mixed)
+  /**
+   * Fired EXACTLY ONCE when the ceremony is over — on dismiss and on the empty-ceremony bail-out
+   * (Endless Play PRD-01 W1). It is what lets an in-game seam AWAIT the ceremony and only then
+   * generate the next question, so a board can never deal itself under the overlay.
+   *
+   * The overlay collapses two emits into one ceremony (keeping the higher level), so it holds a SET
+   * of pending callbacks rather than the latest event's — otherwise the first caller's continuation
+   * would be dropped and its game would freeze mid-round.
+   */
+  onDone?: () => void
 }
 
 type Listener = (event: RewardEvent) => void

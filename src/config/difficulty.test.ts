@@ -25,11 +25,9 @@ import {
   ORDLEG_READ,
   ORDLEG_SPELL,
   SEQUENCE_LENGTH,
-  STAR_THRESHOLDS,
   TILE_AXIS_EXEMPT,
   TUNING,
   allSequenceSpecs,
-  memoryStarThresholds,
   optionCountFor,
   sequenceSpecsForLevel,
   type DifficultyLevel,
@@ -64,17 +62,18 @@ import { collectNarrationClips } from '../../shared-narration-clips.js'
 
 const SAMPLES = 2000
 
-test('the shared spine is exactly this', () => {
+test('the shared spine is exactly this', async () => {
+  const tuningModule = await import('./difficulty.ts')
   assert.deepEqual([...LEVELS], ['let', 'normal', 'svaer'])
   // Answer tiles: 3 / 4 / 5.
   assert.deepEqual(OPTION_COUNT, { let: 3, normal: 4, svaer: 5 })
-  // Stars in MISTAKES. Svær is more forgiving on purpose: choosing a harder level must not cost the
-  // child stars, the same fairness rule that keeps XP difficulty-independent.
-  assert.deepEqual(STAR_THRESHOLDS, {
-    let: { three: 0, two: 2 },
-    normal: { three: 0, two: 2 },
-    svaer: { three: 1, two: 3 },
-  })
+  // `STAR_THRESHOLDS` is DELETED (Endless Play PRD-01 W3) and must not come back. It existed to hold
+  // ruling 4 — a harder level must never cost rewards — which is now true BY CONSTRUCTION: stars were
+  // the only channel through which a level could cost anything, and XP was already
+  // difficulty-independent. A per-level score reappearing here would re-open the whole question.
+  assert.equal('STAR_THRESHOLDS' in tuningModule, false)
+  assert.equal('starThresholdsFor' in tuningModule, false)
+  assert.equal('memoryStarThresholds' in tuningModule, false)
 })
 
 test('the narration ceilings are exactly these (the tables must stay inside them)', () => {
@@ -572,19 +571,8 @@ test('every level has at least a full round of distinct Læs Ordet words', () =>
   }
 })
 
-test('memory star thresholds scale with the board and keep the 10-pair curve', () => {
-  // 10 pairs at Normal must still be the reachable {9, 18} PRD-05 P3 tuned.
-  assert.deepEqual(memoryStarThresholds(10, 'normal'), { three: 9, two: 18 })
-  assert.deepEqual(memoryStarThresholds(6, 'let'), { three: 5, two: 11 })
-  // Svær = the 15-pair board, and it gets the spine's EXTRA tolerance over Normal (+1/+1) on top.
-  assert.deepEqual(memoryStarThresholds(15, 'svaer'), { three: 15, two: 28 })
-  for (const level of LEVELS) {
-    const pairs = MEMORY_BOARD[level].pairs
-    const t = memoryStarThresholds(pairs, level)
-    assert.ok(t.three < t.two, `${level}: the 3-star budget must be stricter than the 2-star one`)
-    assert.ok(t.three >= 1, `${level}: a memory board with zero mistake tolerance is unreachable`)
-  }
-})
+// (`memoryStarThresholds` and its guard are DELETED with the stars they scaled — Endless Play PRD-01
+// W3. The board SIZE per level is still pinned by the MEMORY_BOARD assertions above.)
 
 // ------------------------------------------------------------------------------------------------
 // Prebake coverage (the gate the PRD calls out)

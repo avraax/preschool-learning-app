@@ -11,14 +11,15 @@ import { useReducedMotion } from '../../hooks/useReducedMotion'
 import { darken, hexToRgba, tileSurface } from '../../theme/tokens/helpers'
 import { memoryBackArt } from '../../assets/games/memory-backs'
 import { shuffle } from '../../utils/shuffle'
-import { progressStore, type RoundOutcome } from '../../services/progressStore'
+import { makeBoardBag, type BoardBag } from '../../config/boardBag'
+import { progressStore, sectionForGameId } from '../../services/progressStore'
 import { sfx } from '../../services/sfxClient'
 import { mascotBus } from '../../services/mascotBus'
 import { xpBus } from '../../services/xpBus'
+import { useRewardCeremony } from '../../hooks/useRewardCeremony'
 import { SNAP } from '../../theme/motion'
 import { devFx } from '../../utils/devHarness'
 import GameShell from './GameShell'
-import RoundResultScreen from './RoundResultScreen'
 // Simplified audio system
 import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 
@@ -49,6 +50,11 @@ const flipStyles = `
     border: 1.5px solid;
   }
 `
+
+// The beat between the last match and the next board (Endless Play PRD-01 W6). It existed already —
+// as the 700ms pause before the result screen replaced the board — precisely so the final pop and its
+// SFX register. The board now DEALS ITSELF after it (and after the ceremony, when one is owed).
+const BOARD_TURNOVER_MS = 700
 
 // Per-world card-back motif (UI/UX Overhaul PRD §6E) — a baked soft-3D emblem (PRD-12; replaced the
 // old emoji, itself a replacement for the generic "ABC"/"123"). Keyed by the active skin's ambient
@@ -84,12 +90,15 @@ export interface UnifiedMemoryConfig {
   gameType: 'letters' | 'numbers' | 'colors' | 'shapes'
   gameId: string                             // stable id, e.g. 'memory.letters' — one per TYPE, not per
                                              // board size, so a difficulty change can't split the bests
-  boardPairs: number                         // pairs on the board (one board = one round); 6 | 10 | 15
-                                             // from MEMORY_BOARD[level] — Difficulty PRD-01 W5
-  starThresholds: { three: number; two: number }  // in MISTAKES (= mismatched turns)
+  boardPairs: number                         // pairs on the board; 6 | 10 | 15 from MEMORY_BOARD[level]
+                                             // — Difficulty PRD-01 W5
 
   // Content generation
-  generateItems: () => string[]              // pool of items; engine slices boardPairs for pairs
+  /**
+   * The POOL, not a board. The engine deals from it through a `boardBag` (Endless Play PRD-01 W6), so
+   * every item is shown once before any repeats — don't shuffle or slice it here.
+   */
+  generateItems: () => string[]
   getDisplayData: (item: string) => MemoryItemDisplay
   
   // Audio configuration
@@ -122,17 +131,21 @@ const UnifiedMemoryGame: React.FC<UnifiedMemoryGameProps> = ({ config }) => {
   // pairId of the pair that just matched → drives a one-shot match pop on those two cards.
   const [poppedPairId, setPoppedPairId] = useState<string | null>(null)
 
-  // Bounded round (one board = one round). No useRound: Memory always finds every pair, so the
-  // only skill signal is how many mismatched turns it took. Tracked in refs (async match logic).
-  const mismatchesRef = useRef(0)
+  // ENDLESS BOARDS (Endless Play PRD-01 W6): a completed board deals itself again, so there is no
+  // round boundary here either. `mismatchesRef`/`longestMatchStreakRef` are gone with the bests they
+  // fed; the match streak survives because it drives the every-3rd beat during play.
   const matchStreakRef = useRef(0)
-  const longestMatchStreakRef = useRef(0)
   // Bumps each board so card React keys never collide across boards. card.id is content-derived
   // (`${item}-1`) and the same letters/numbers reappear on a new board, so without this a reused
   // key could flip a stale card back over + skip the deal-in stagger. (card.id itself is left as-is
   // — the match logic keys off it; only the React key is namespaced.)
   const boardSeq = useRef(0)
-  const [roundOutcome, setRoundOutcome] = useState<RoundOutcome | null>(null)
+  // The full-pool bag every board is dealt from (D7). Keyed on `gameType`, NOT `boardPairs` — the pool
+  // is the same at every level, so a level change must not restart the cycle.
+  const bagRef = useRef<{ type: string; bag: BoardBag<string> } | null>(null)
+  // Fires the sticker ceremony IN GAME at the seam and resolves when it closes.
+  const ceremony = useRewardCeremony()
+  const section = sectionForGameId(config.gameId)
 
   // Centralized game state management
   const { incrementScore, resetScore } = useGameState()
@@ -174,7 +187,7 @@ const UnifiedMemoryGame: React.FC<UnifiedMemoryGameProps> = ({ config }) => {
     teacher.wave()
 
     // Instant load: generate + show the cards immediately (no waiting on the welcome).
-    initializeGame()
+    dealBoard()
     revealBoard()
 
     // Narrate the welcome over the visible board if audio is already unlocked.
@@ -196,14 +209,13 @@ const UnifiedMemoryGame: React.FC<UnifiedMemoryGameProps> = ({ config }) => {
   // Live difficulty (Difficulty PRD-01 W5): the LEVEL owns the board size, so a change in the adult
   // menu has to DEAL A NEW BOARD, not just relabel the old one. Without this the init effect's
   // `hasInitialized` guard leaves the previous card array in place: measured 20 cards still on screen
-  // while the score chip read "Par: 0/6", so the round would have "finished" with 8 cards face-down.
-  // Skips the result screen (a finished board keeps its stars) and the initial mount.
+  // while the score chip read "Par: 0/6", so the board would have "finished" with 8 cards face-down.
+  // Skips the initial mount.
   const prevBoardPairs = useRef(config.boardPairs)
   useEffect(() => {
     if (prevBoardPairs.current === config.boardPairs) return
     prevBoardPairs.current = config.boardPairs
-    if (roundOutcome) return
-    initializeGame()
+    dealBoard()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [config.boardPairs])
 
@@ -240,14 +252,15 @@ const UnifiedMemoryGame: React.FC<UnifiedMemoryGameProps> = ({ config }) => {
     }
   }
 
-  const initializeGame = () => {
-    // Generate the item pool using config
-    const sourceItems = config.generateItems()
+  const dealBoard = () => {
+    // Deal from the BAG, not a fresh `shuffle().slice()` (Endless Play PRD-01 W6 / D7): every item in
+    // the pool is shown once before any of them comes back, and no board holds a duplicate. At 15
+    // pairs from 29 letters that makes the boards 15 / 14+1 / …, which is exactly one full cycle.
+    if (!bagRef.current || bagRef.current.type !== config.gameType) {
+      bagRef.current = { type: config.gameType, bag: makeBoardBag(config.generateItems()) }
+    }
+    const selectedItems = bagRef.current.bag.deal(config.boardPairs)
 
-    // Select boardPairs items (or all if fewer) for this board's pairs
-    const shuffledSource = shuffle(sourceItems)
-    const selectedItems = shuffledSource.slice(0, Math.min(config.boardPairs, sourceItems.length))
-    
     // Create pairs (each item appears twice)
     const cardData: MemoryCard[] = []
     selectedItems.forEach((item, index) => {
@@ -282,10 +295,8 @@ const UnifiedMemoryGame: React.FC<UnifiedMemoryGameProps> = ({ config }) => {
     setIsProcessing(false)
     setPoppedPairId(null)
     setWrongPairIds([])
-    // Fresh board → fresh round counters.
-    mismatchesRef.current = 0
+    // Fresh board → fresh streak.
     matchStreakRef.current = 0
-    longestMatchStreakRef.current = 0
     resetScore()
   }
 
@@ -390,51 +401,57 @@ const UnifiedMemoryGame: React.FC<UnifiedMemoryGameProps> = ({ config }) => {
         incrementScore()
         teacher.wave()
 
-        // Live per-task XP: each matched pair is a completed task, and the board IS the round — so
-        // pass `boardPairs` as the round length and a 10- and a 20-pair board are worth the same one
-        // reward ("a round is a round", Reward Book §5). Ping the corner reward ring (a crossed slot
-        // only mini-flourishes here; the ceremony is deferred). No first-try notion for a pair.
-        {
-          const grant = progressStore.grantTaskXp(config.gameId, {
-            firstTry: false,
-            tasksInRound: config.boardPairs,
-          })
-          xpBus.emit({ amount: grant.granted, leveledUp: grant.global.leveledUp })
-        }
+        // Live per-task XP: each matched pair is a completed task, normalised by `boardPairs` so a 6-
+        // and a 15-pair board are worth the same one reward ("a round is a round", Reward Book §5).
+        // Ping the corner reward ring. No first-try notion for a pair.
+        const grant = progressStore.grantTaskXp(config.gameId, {
+          firstTry: false,
+          tasksInRound: config.boardPairs,
+        })
+        xpBus.emit({ amount: grant.granted, leveledUp: grant.global.leveledUp })
+        // The crossing test reads the STORE CURSOR, never `grant.global.leveledUp` (§4.2).
+        const crossedLevel =
+          progressStore.globalLevel() > progressStore.get().progression.lastCelebratedLevel
 
         // Match juice (UI/UX Overhaul PRD §6E): both cards already pop + glow (poppedPairId scale +
         // the persistent success border/shadow from `isMatched`, computed at render time below) —
         // here we fire the distinct 'match' cue + the reactive mascot. A per-match full-screen
-        // celebration is intentionally skipped (reserved for the streak/round crescendo moments below
-        // and in RoundResultScreen) so a 20-pair board doesn't fire 20 confetti bursts.
+        // celebration is intentionally skipped (reserved for the streak + board-turnover moments) so a
+        // 15-pair board doesn't fire 15 confetti bursts.
         sfx.play('match')
         mascotBus.emit('correct')
         // One-shot match pop on the matched pair (skipped under reduced motion via the render guard).
         setPoppedPairId(firstCard.pairId)
         setTimeout(() => setPoppedPairId(null), 600)
 
-        // Match-streak tracking → "Længste stime" record. Every 3rd in a row gets a streak burst,
-        // but never on the final pair (the round result is the bigger moment).
+        // Every 3rd match in a row gets a streak burst — never on the final pair (the turnover is its
+        // own beat) and never on a crossing (one loud payoff, not two in the same 200ms).
         matchStreakRef.current += 1
-        longestMatchStreakRef.current = Math.max(longestMatchStreakRef.current, matchStreakRef.current)
         const isFinalPair = newMatchedPairs === config.boardPairs
-        if (matchStreakRef.current % 3 === 0 && !isFinalPair) {
+        if (matchStreakRef.current % 3 === 0 && !isFinalPair && !crossedLevel) {
           // celebrateTier fires the 'streak-up' SFX + medium confetti; the mascot joins in.
           celebrateTier('streak')
           mascotBus.emit('streak')
         }
 
-        // Final pair → finish the round. Brief beat so the final pop/celebration registers
-        // before the result screen replaces the board.
+        // THE SEAM (Endless Play PRD-01 §4.1 / W6). `isProcessing` is still true here and is cleared
+        // below, so awaiting the ceremony BEFORE that line spans it for free — the board cannot be
+        // touched, and cannot deal itself, underneath the overlay.
         if (isFinalPair) {
-          setTimeout(() => finishRound(), 700)
+          // The turnover beat exists so the last match registers before the board changes.
+          await new Promise((resolve) => setTimeout(resolve, BOARD_TURNOVER_MS))
+          await ceremony.celebrateIfOwed(section)
+          // A fresh board resets revealedCards/isProcessing itself. `celebrateIfOwed` never resolves
+          // after unmount, so this can't deal a board over the next screen.
+          dealBoard()
+          return
         }
+        await ceremony.celebrateIfOwed(section)
 
       } else {
         // No match - gentle wrong SFX + shake, then flip back. Never punishing, never ends the board.
         sfx.play('wrong')
         mascotBus.emit('wrong')
-        mismatchesRef.current += 1
         matchStreakRef.current = 0
         setWrongPairIds(newRevealedCards.map(c => c.id))
 
@@ -463,33 +480,11 @@ const UnifiedMemoryGame: React.FC<UnifiedMemoryGameProps> = ({ config }) => {
     }
   }
 
-  // Record the round once on the final match. correct = boardPairs (the board always completes),
-  // total = boardPairs + mismatches → progressStore derives mistakes = mismatches, so stars scale
-  // with mismatched turns; longestStreak feeds the "Længste stime" record. (Zero Foundation change.)
-  const finishRound = () => {
-    const outcome = progressStore.recordRoundResult(
-      config.gameId,
-      {
-        correct: config.boardPairs,
-        total: config.boardPairs + mismatchesRef.current,
-        longestStreak: longestMatchStreakRef.current,
-      },
-      { starThresholds: config.starThresholds },
-    )
-    setRoundOutcome(outcome)
-  }
-
-  const handleReplay = () => {
-    stopCelebration()
-    setRoundOutcome(null)
-    initializeGame()
-  }
-
+  // The RestartButton — deals a new board from the SAME bag, so restarting doesn't rewind the cycle.
   const restartGame = () => {
     teacher.wave()
     stopCelebration()
-    setRoundOutcome(null)
-    initializeGame()
+    dealBoard()
   }
 
   // Repeat game instructions
@@ -609,15 +604,6 @@ const UnifiedMemoryGame: React.FC<UnifiedMemoryGameProps> = ({ config }) => {
       celebration={{ show: showCelebration, intensity: celebrationIntensity, duration: celebrationDuration, onComplete: stopCelebration }}
     >
         <style>{flipStyles}</style>
-        {roundOutcome ? (
-          <RoundResultScreen
-            outcome={roundOutcome}
-            categoryId={config.theme.id}
-            backRoute={config.backPath}
-            onReplay={handleReplay}
-          />
-        ) : (
-          <>
         {/* Controls */}
         <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mb: { xs: 1, md: 2 }, flex: '0 0 auto', [PHONE_LANDSCAPE]: { mb: 0.5 } }}>
           <RestartButtonComponent
@@ -884,8 +870,6 @@ const UnifiedMemoryGame: React.FC<UnifiedMemoryGameProps> = ({ config }) => {
             }) : null}
           </Box>
         </Box>
-          </>
-        )}
     </GameShell>
   )
 }

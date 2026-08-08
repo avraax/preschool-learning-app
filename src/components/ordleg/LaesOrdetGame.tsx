@@ -107,13 +107,11 @@ const LaesOrdetGame: React.FC = () => {
 
     gameWelcomeType: 'laesordet',
 
-    // Bounded round of 8 + shared reward flow (Overhaul Ordleg §1). The engine handles
-    // everything: rounds, first-try/streak tracking, celebration tiers, wrong SFX, and the
-    // RoundResultScreen → progressStore.recordRoundResult('ordleg.read', …).
-    // Star thresholds come from the difficulty spine (Difficulty PRD-01 W6).
+    // Endless task play (Endless Play PRD-01 W2) — the engine handles first-try/streak tracking,
+    // celebration tiers, wrong SFX, live per-task XP and the in-game ceremony seam.
     // From config, not a literal: `ordlegWords.test.ts` guards every level's word pool against it, so
-    // a pool can never again be smaller than the round it has to fill (Let had 5 words for 8 questions).
-    round: { length: READING_ROUND_LENGTH },
+    // a pool can never be smaller than this — and in endless play the pool size IS the repeat period.
+    tasksInRound: READING_ROUND_LENGTH,
     gameId: 'ordleg.read',
 
     // Never-fail hint (PRD-05 P1): after 2 wrong picture taps the correct picture pulses.

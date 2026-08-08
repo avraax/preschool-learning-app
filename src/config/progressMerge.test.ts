@@ -27,7 +27,7 @@ const CTX = { now: NOW, deviceId: 'device-A' }
 function doc(
   slots: number,
   device = 'device-A',
-  over: Partial<{ epoch: number; stars: number; seen: number; extraXp: number }> = {},
+  over: Partial<{ epoch: number; seen: number; extraXp: number }> = {},
 ): PersistedProgress {
   const p = defaultPersisted('kid-1', device, NOW)
   const xp = xpForSlots(slots) + (over.extraXp ?? 0)
@@ -37,7 +37,6 @@ function doc(
   for (let i = 0; i < Math.min(REWARD_SLOTS, slots); i++) {
     p.stickers.firstAt[REWARD_PATH[i].id] = NOW - (slots - i) * 1000
   }
-  p.totals.totalStars = over.stars ?? slots * 3
   p.progression.lastCelebratedLevel = levelFromXp(xp).level
   p.sync.epoch = over.epoch ?? 0
   p.sync.rev = 5
@@ -322,39 +321,22 @@ test('firstAt is a MIN-register over positive values (the book shows the earlies
   assert.ok(merged.stickers.firstAt[REWARD_PATH[1].id] > 0)
 })
 
-test('per-game BESTS take the max; the two counters take max, never sum', () => {
+// `perGame` and `totals` are DELETED from the document (Endless Play PRD-01 W3), so the bests/counters
+// merge rules go with them. What replaces those guards is the ROLLING-DEPLOY property: an old client
+// can still push a document carrying those keys, and the merge must simply drop them rather than
+// resurrect a field nothing reads.
+test('a document from an older client keeps its dropped fields OUT of the merge', () => {
   const a = doc(1, 'device-A')
   const b = doc(1, 'device-A')
-  a.perGame['alphabet.quiz'] = {
-    bestStreak: 8,
-    bestStars: 3,
-    bestCount: 8,
-    roundsCompleted: 10,
-    lifetimeCorrect: 60,
-  }
-  b.perGame['alphabet.quiz'] = {
-    bestStreak: 5,
-    bestStars: 2,
-    bestCount: 4,
-    roundsCompleted: 14,
-    lifetimeCorrect: 90,
-  }
-  b.perGame['math.plusminus'] = {
-    bestStreak: 3,
-    bestStars: 1,
-    bestCount: 3,
-    roundsCompleted: 2,
-    lifetimeCorrect: 8,
-  }
+  const legacy = b as unknown as Record<string, unknown>
+  legacy.perGame = { 'alphabet.quiz': { bestStreak: 8, bestStars: 3, bestCount: 8 } }
+  legacy.totals = { totalStars: 30 }
   const { merged } = mergeProgress(a, b, CTX)
-  const q = merged.perGame['alphabet.quiz']
-  assert.equal(q.bestStreak, 8)
-  assert.equal(q.bestStars, 3)
-  assert.equal(q.bestCount, 8)
-  // SUMMING would be non-idempotent — the merge runs on every sync and the numbers would explode.
-  assert.equal(q.roundsCompleted, 14)
-  assert.equal(q.lifetimeCorrect, 90)
-  assert.ok(merged.perGame['math.plusminus'], 'a game only the remote knows must be adopted')
+  const out = merged as unknown as Record<string, unknown>
+  assert.equal(out.perGame, undefined, 'the merge resurrected perGame')
+  assert.equal(out.totals, undefined, 'the merge resurrected totals')
+  // …and the real state is unaffected by their presence.
+  assert.equal(totalSlots(merged), 1)
 })
 
 test('explored is a grow-only set: union, de-duped, order-insensitive', () => {
@@ -369,12 +351,6 @@ test('explored is a grow-only set: union, de-duped, order-insensitive', () => {
   // Reversing the arguments gives the same set (markBrowsed never removes).
   const flipped = mergeProgress(b, a, CTX).merged
   assert.deepEqual(flipped.progression.explored.alphabet, ['A', 'B', 'C'])
-})
-
-test('totalStars takes the max (a cosmetic Phase-A under-count, never a sum)', () => {
-  const a = doc(3, 'device-A', { stars: 30 })
-  const b = doc(3, 'device-A', { stars: 21 })
-  assert.equal(mergeProgress(a, b, CTX).merged.totals.totalStars, 30)
 })
 
 // ----- settings LWW -----------------------------------------------------------------------------

@@ -27,12 +27,18 @@ const LEVELS: { v: DifficultyLevel; label: string }[] = [
 
 // What each level means, in the adult's language. Deliberately about the CHILD's experience, not the
 // parameters: the point is that Normal is his comfortable everyday level and the stretch lives in Svær.
+//
+// Svær's old closing sentence — "Stjernerne er lidt mildere her, så et sværere niveau ikke koster
+// belønninger" — is GONE (Endless Play PRD-01 W3). The fairness rule it stated is now true BY
+// CONSTRUCTION: stars were the only way a harder level could have cost rewards, and XP has always been
+// difficulty-independent. The rule lives here as a comment rather than as reassurance the adult has to
+// read; don't restate it in the copy.
 const LEVEL_HELP: Record<DifficultyLevel, string> = {
   let: 'Ting han allerede kan. 3 svarmuligheder, små tal, og svarene ligner ikke hinanden.',
   normal:
     'Hans hverdagsniveau — kan det med lidt tanke. 4 svarmuligheder, tal op til 20, og forvekslinger han kan klare.',
   svaer:
-    'Næste års niveau. 5 svarmuligheder, kun svar der ligner hinanden — og minus hen over tierne. Stjernerne er lidt mildere her, så et sværere niveau ikke koster belønninger.',
+    'Næste års niveau. 5 svarmuligheder, kun svar der ligner hinanden — og minus hen over tierne.',
 }
 
 const SECTIONS: SectionId[] = ['alphabet', 'math', 'colors', 'english', 'ordleg']

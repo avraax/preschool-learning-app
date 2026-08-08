@@ -18,15 +18,14 @@ import { colorMixResultText } from '../../config/gamePhrases'
 import { hexToRgba } from '../../theme/tokens/helpers'
 import { SNAP, BOUNCE } from '../../theme/motion'
 import { idleFloat } from '../../theme/idleMotion'
-import { useRound } from '../../hooks/useRound'
-import { progressStore, type RoundOutcome } from '../../services/progressStore'
-import { COLORS_RAMFARVEN, starThresholdsFor, type DifficultyLevel } from '../../config/difficulty'
+import { useTaskRun } from '../../hooks/useTaskRun'
+import { progressStore } from '../../services/progressStore'
+import { COLORS_RAMFARVEN, type DifficultyLevel } from '../../config/difficulty'
 import { sfx } from '../../services/sfxClient'
 import { mascotBus } from '../../services/mascotBus'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
 import { useDifficulty } from '../../hooks/useDifficulty'
 import GameShell from '../common/GameShell'
-import RoundResultScreen from '../common/RoundResultScreen'
 import { isIOS } from '../../utils/deviceDetection'
 import { shuffle } from '../../utils/shuffle'
 import { devFx } from '../../utils/devHarness'
@@ -36,7 +35,7 @@ import { useDragActive } from '../common/dnd/useDragActive'
 import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 
 // ── Tuning levers (static difficulty — edit here, no adaptive logic) ──────────────────────────
-const ROUND_MIXES = 8              // correct mixes (questions) per round → RoundResultScreen
+const ROUND_MIXES = 8              // the `taskXp` normaliser: correct mixes per notional round (play is endless)
 const WRONG_MIXES_BEFORE_HINT = 2  // pulse the 2 correct droplets after this many wrong mixes
 const BLEND_MS = 600               // swirl/merge animation duration
 const REVEAL_MS = 1900             // recipe-reveal hold (lets the spoken rule play)
@@ -132,10 +131,10 @@ const RamFarvenGame: React.FC = () => {
   const { activeId, overId, setActiveId, onDragOver, clearActive } = useDragActive()
   const [gameReady, setGameReady] = useState(false)
 
-  // Bounded round + reward flow (Overhaul Farver §Ram Farven). 8 mixes, 3★ = 0 wrong mixes, 2★ ≤ 2.
-  const round = useRound({ length: ROUND_MIXES, gameId: 'colors.ramfarven' })
+  // Endless task play (Endless Play PRD-01 W2): live per-task XP, the streak counter, and the in-game
+  // ceremony seam. `ROUND_MIXES` is the `taskXp` normaliser, not a length.
+  const run = useTaskRun({ tasksInRound: ROUND_MIXES, gameId: 'colors.ramfarven' })
   const firstAttemptRef = useRef(true)  // first-try flag for the CURRENT target
-  const [roundOutcome, setRoundOutcome] = useState<RoundOutcome | null>(null)
 
   // Celebration (corner guide reacts via guideReaction)
   const { showCelebration, celebrationIntensity, celebrationDuration, celebrateTier, stopCelebration } = useCelebration()
@@ -268,26 +267,6 @@ const RamFarvenGame: React.FC = () => {
     if (forcedFx === 'hint') mascotBus.emit('hint')
   }, [forcedFx])
 
-  const finishRound = (firstTryCorrect: number, longestStreak: number) => {
-    const outcome = progressStore.recordRoundResult(
-      'colors.ramfarven',
-      { correct: firstTryCorrect, total: round.length, longestStreak },
-      // Svær tolerates 1 mistake for 3★ / 3 for 2★ (Difficulty PRD-01 W6) — a harder level must not
-      // cost the child stars, the same fairness rule that keeps XP difficulty-independent.
-      { starThresholds: starThresholdsFor(progressStore.difficultyFor('colors')) },
-    )
-    setRoundOutcome(outcome)
-  }
-
-  const handleReplay = () => {
-    stopCelebration()
-    setRoundOutcome(null)
-    round.reset()
-    // Fresh bag for a fresh round, so a replay doesn't finish the previous round's leftovers.
-    bagRef.current = []
-    setupTarget(true)
-  }
-
   const repeatInstructions = async () => {
     audio.updateUserInteraction()
     if (!gameReady || !targetColor) return
@@ -372,13 +351,15 @@ const RamFarvenGame: React.FC = () => {
     if (commitTimer.current) clearTimeout(commitTimer.current)
     commitTimer.current = setTimeout(() => {
       setRecipe(null)
-      const r = round.completeQuestion(firstAttemptRef.current)
-      if (!r.done && r.streak > 0 && r.streak % 3 === 0) {
+      // THE SEAM (Endless Play PRD-01 §4.1) — the ceremony plays here, before the next target is set
+      // up, with `committing` still true so the bench is inert under the overlay.
+      const r = run.completeTask(firstAttemptRef.current)
+      // Suppressed on a crossing: one loud payoff, not two celebrations in the same 200ms.
+      if (r.streak > 0 && r.streak % 3 === 0 && !r.crossedLevel) {
         celebrateTier('streak')
         mascotBus.emit('streak') // mascot does its streak pose, matching the shared quiz engine
       }
-      if (r.done) finishRound(r.firstTryCorrect, r.longestStreak)
-      else setupTarget(true, result.name)
+      run.thenContinue(() => setupTarget(true, result.name))
     }, reduce ? 1200 : REVEAL_MS)
   }
 
@@ -487,13 +468,13 @@ const RamFarvenGame: React.FC = () => {
   }
 
   // Live difficulty: pick a fresh target from the new pool when the level changes in the adult menu
-  // (no refresh). Skips the result screen + the initial mount (mirrors the sibling Farver games).
+  // (no refresh). Skips the initial mount (mirrors the sibling Farver games).
   const difficultyLevel = useDifficulty('colors')
   const prevDifficultyRef = useRef(difficultyLevel)
   useEffect(() => {
     if (prevDifficultyRef.current === difficultyLevel) return
     prevDifficultyRef.current = difficultyLevel
-    if (roundOutcome || !gameReady) return
+    if (!gameReady) return
     setupTarget()
   }, [difficultyLevel]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -506,14 +487,7 @@ const RamFarvenGame: React.FC = () => {
       guideReaction={guideReaction}
       celebration={{ show: showCelebration, intensity: celebrationIntensity, duration: celebrationDuration, onComplete: stopCelebration }}
     >
-      {roundOutcome ? (
-        <RoundResultScreen
-          outcome={roundOutcome}
-          categoryId="colors"
-          backRoute="/farver"
-          onReplay={handleReplay}
-        />
-      ) : gameReady && (
+      {gameReady && (
         <>
           {/* Repeat Instructions Button (replays the spoken "Ram farven: X" target). */}
           <Box sx={{ textAlign: 'center', mb: { xs: 0.75, md: 1 }, flex: '0 0 auto', [PHONE_LANDSCAPE]: { mb: 0.5 } }}>

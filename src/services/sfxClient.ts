@@ -30,9 +30,10 @@ export type SfxCue =
   | 'drop-snap'
   | 'flip'
   | 'streak-up'
-  | 'star'
-  | 'sticker-reveal'
-  | 'round-complete'
+  // `star`, `sticker-reveal` and `round-complete` are DELETED (Endless Play PRD-01 §8): the star
+  // beats and the round jingle went with the result screen, and the crossing chime went with the
+  // ring's flourish — the ceremony is the entire announcement now. The mp3s stay under
+  // `public/sounds/ui/`; a cue name nothing plays is what this list exists to keep out.
   | 'page-complete'
   | 'level-up'
   // Navigation cues (Liveliness PRD-02): a subtle pop on tapping a card, a per-skin travel whoosh
@@ -58,9 +59,6 @@ const CUE_FILES: Record<SfxCue, string> = {
   'drop-snap': '/sounds/ui/drop-snap.mp3',
   flip: '/sounds/ui/flip.mp3',
   'streak-up': '/sounds/ui/streak-up.mp3',
-  star: '/sounds/ui/star.mp3',
-  'sticker-reveal': '/sounds/ui/sticker-reveal.mp3',
-  'round-complete': '/sounds/ui/round-complete.mp3',
   'page-complete': '/sounds/ui/page-complete.mp3',
   // Level-up fanfare (Liveliness PRD-01). Aliases the page-complete jingle until a dedicated cue
   // ships (missing files degrade to silence anyway); the biggest celebratory moment in the app.
@@ -88,9 +86,6 @@ const CUE_VOLUME: Partial<Record<SfxCue, number>> = {
   'drop-snap': 0.5,
   flip: 0.4,
   'streak-up': 0.5,
-  star: 0.5,
-  'sticker-reveal': 0.55,
-  'round-complete': 0.55,
   'page-complete': 0.6,
   'level-up': 0.6,
   'card-pop': 0.35,

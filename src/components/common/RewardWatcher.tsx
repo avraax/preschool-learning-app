@@ -5,21 +5,27 @@ import { progressStore } from '../../services/progressStore'
 import { rewardBus } from '../../services/rewardBus'
 import { routeKind } from './scene/routeKind'
 
-// Reward-ceremony SAFETY NET (Reward Book PRD-01 W4). The primary trigger is the play context
-// itself (RoundResultScreen emitting on `rewardBus`). This watcher guarantees the ceremony still
-// fires when that primary path never ran: a tab closed inside the 250ms write debounce, a reload
-// before the overlay played, a cross-tab grant, OR a level crossed MID-GAME (which now only fires a
-// small in-game flourish and defers the big ceremony) — it lands the moment the child reaches a safe
-// surface (a menu). It subscribes via useProgress() and, when `globalLevel() > lastCelebratedLevel`,
-// DEFERS briefly so the primary path wins the ordering, then re-checks and emits only if still
-// uncelebrated. Duplicate emits collapse inside the overlay, and `lastCelebratedLevel` (advanced on
-// dismiss) makes this last-writer-wins safe.
+// Reward-ceremony SAFETY NET, and since Endless Play PRD-01 W5 that is ALL it is. The primary trigger
+// is the play context itself: `useTaskRun.thenContinue` in every game, `UnifiedMemoryGame`'s match
+// branch, and `useBrowseXp` — each firing the ceremony IN PLACE, at the seam.
 //
-// Route gating: the big full-screen ceremony must NOT interrupt play, so it never fires on a `game`
-// route. On a game surface the mid-game flourish already ran; the deferred ceremony waits for a
-// `menu` route (RoundResultScreen, itself a game route, emits directly when it lands).
+// What is left for this watcher is exactly four cases, all of them "the seam never got to run":
+//   • a reload before the overlay played,
+//   • a tab closed inside the 250ms write debounce,
+//   • a cross-tab grant (or a CRDT merge that created the debt on this device),
+//   • **the child tapping Back during the post-answer dwell** — the advance timer is cleared on
+//     unmount, so that crossing lands here, on the next menu.
+//
+// **THE `game`-ROUTE GATE STAYS, and its meaning INVERTS**: it now means "on a game route the in-game
+// seam owns the trigger." Removing it creates a real race — the seam fires `DWELL_FACT` 2000 /
+// `DWELL_CORRECT()` 1100–1400 ms after the tap, so a watcher landing in the same window would
+// sometimes open the ceremony mid-question instead of at the seam, non-deterministically per game.
+// The gate removes that by construction.
 
-const GRACE_MS = 2500
+// The grace was 2500ms because its job was to let `RoundResultScreen`'s direct emit win the ordering.
+// On a menu this watcher is now the primary path, and 2.5s there is dead air; ~800ms is enough for a
+// route transition to settle and for a cross-tab write to land.
+const GRACE_MS = 800
 
 const RewardWatcher: React.FC = () => {
   const { state } = useProgress()
@@ -27,8 +33,7 @@ const RewardWatcher: React.FC = () => {
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
-    // Never schedule the big ceremony while on a game/browse route — it would interrupt play. The
-    // deferred ceremony fires on a safe menu surface (or via RoundResultScreen's direct emit).
+    // On a game route the in-game seam owns the trigger — see the header. Never race it from here.
     if (routeKind(location.pathname) === 'game') return
     const pending = progressStore.globalLevel() > state.progression.lastCelebratedLevel
     if (!pending) return

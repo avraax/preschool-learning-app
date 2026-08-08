@@ -77,6 +77,35 @@ test('4. reset() is idempotent for an unchanged pool — the pass keeps walking'
   assert.ok(['x', 'y'].includes(bag.next()))
 })
 
+// GUARD 7 (Endless Play PRD-01 §W7). The window is CLAMPED below the pool, and this is what that
+// clamp is for. With `window === pool.length`, `recent` holds the last n-1 draws, exactly one
+// candidate survives the filter at every position, and the new pass is forced to repeat the previous
+// one in the same order — FOREVER. That is the intuitive reading of "never twice within a cycle", and
+// it is wrong; in endless play it would mean the child sees the identical sequence for as long as they
+// play. The clamp makes it unreachable, so this asserts the property rather than the arithmetic.
+test('7. makePromptBag never FREEZES, however large a window is requested', () => {
+  for (const size of [3, 4, 6, 8, 12]) {
+    const pool = Array.from({ length: size }, (_, i) => `i${i}`)
+    for (const requested of [size, size + 1, size * 3]) {
+      const bag = makePromptBag(pool, { rnd: seeded(9000 + size + requested), window: requested })
+      const passes: string[] = []
+      for (let p = 0; p < 12; p++) {
+        const pass = Array.from({ length: size }, () => bag.next())
+        // Each pass is still a full permutation…
+        assert.deepEqual([...pass].sort(), [...pool].sort())
+        passes.push(pass.join(','))
+      }
+      // …and they are not ALL the same permutation, which is exactly what a frozen bag produces.
+      // (Two consecutive passes CAN coincide by chance on a small pool — the freeze is that every one
+      // of them does, forever.)
+      assert.ok(
+        new Set(passes).size > 1,
+        `pool ${size} / window ${requested}: the bag froze — 12 passes, one order`,
+      )
+    }
+  }
+})
+
 test('5. rnd is injectable — two bags on the same seed deal the same pass', () => {
   const pool = ['a', 'b', 'c', 'd', 'e', 'f', 'g']
   const draw = () => {
@@ -198,12 +227,23 @@ const EXPECTED: Record<string, Record<DifficultyLevel, Pinned>> = {
     normal: { pool: 18, round: 8, before: 0.8, beforeWorst: 4, after: 0, distinct: 8 },
     svaer: { pool: 18, round: 8, before: 0.8, beforeWorst: 4, after: 0, distinct: 8 },
   },
-  // Nuancer asks 8 orderings over 6 hues, so a repeat inside the round is arithmetic — `after` stays 1.
-  // What changed: every round now shows all 6 hues (the worst measured round used to show 3).
+  // Nuancer asks 8 orderings over 6 hues, so a repeat inside 8 draws is arithmetic — `after` stays 1.
+  // The old draw's worst run showed 3 distinct hues; the bag's shows 5.
+  //
+  // **`distinct` MOVED 6 → 5 when the window was clamped** (Endless Play PRD-01 W6), and it is the one
+  // pinned number the clamp changed anywhere. Measured, not assumed. Why it is the right trade: this
+  // game requests `window: 8` over a pool of 6, so before the clamp `recent` held SEVEN keys against a
+  // six-item pool, every candidate was forbidden at every refill, and the window was silently ignored
+  // (`idx = 0`). A raw-shuffle pass means any 8 consecutive draws contain a whole pass, hence 6. The
+  // clamp gives the seam a real, honest rule instead — at the cost of one hue in the worst straddling
+  // run — and it is what makes the `window === pool.length` FREEZE structurally unreachable (see
+  // semantics 3 in promptBag.ts: that setting deals the same pass in the same order forever).
+  // The property that actually matters in endless play is unchanged: the PASS is the cycle, so all 6
+  // hues are still asked before any of them comes back.
   'colors.nuancer': {
-    let: { pool: 6, round: 8, before: 1, beforeWorst: 3, after: 1, distinct: 6 },
-    normal: { pool: 6, round: 8, before: 1, beforeWorst: 3, after: 1, distinct: 6 },
-    svaer: { pool: 6, round: 8, before: 1, beforeWorst: 3, after: 1, distinct: 6 },
+    let: { pool: 6, round: 8, before: 1, beforeWorst: 3, after: 1, distinct: 5 },
+    normal: { pool: 6, round: 8, before: 1, beforeWorst: 3, after: 1, distinct: 5 },
+    svaer: { pool: 6, round: 8, before: 1, beforeWorst: 3, after: 1, distinct: 5 },
   },
   // 5 boards from 6 colours: the worst measured round hunted the SAME colour five times.
   'colors.farvejagt': {

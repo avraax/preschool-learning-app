@@ -343,8 +343,12 @@ const BarnPane: React.FC<BarnPaneProps> = ({ closeAll }) => {
           setResetDone(true)
         }}
       >
-        Dette nulstiller <strong>alle</strong> {activeName ? `${activeName}s ` : ''}klistermærker,
-        rekorder og stjerner. Andre børn røres ikke. Lyd, musik og sværhedsgrad beholdes.
+        {/* "rekorder og stjerner" dropped (Endless Play PRD-01 W3): records and stars no longer
+            exist, and copy that names a thing the app doesn't have is worse than terse. The book and
+            the XP behind it ARE the progress now. The fixed type-to-confirm word and the "andre børn
+            røres ikke" clause stay exactly as they are (`.claude/rules/adult-surface.md`). */}
+        Dette nulstiller <strong>alle</strong> {activeName ? `${activeName}s ` : ''}klistermærker.
+        Andre børn røres ikke. Lyd, musik og sværhedsgrad beholdes.
       </DestructiveConfirmDialog>
 
       <Dialog open={resetDone} onClose={() => setResetDone(false)} maxWidth="xs" fullWidth>

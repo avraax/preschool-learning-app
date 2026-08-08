@@ -16,7 +16,7 @@ import {
   spokenColor,
   type QuizObject,
 } from '../../config/colorContent'
-import { COLORS_QUIZ, starThresholdsFor } from '../../config/difficulty'
+import { COLORS_QUIZ } from '../../config/difficulty'
 import { colorObjectFactText } from '../../config/gamePhrases'
 import { colorQuizPromptPool, quizObjectKey } from '../../config/promptPools'
 import { usePromptBag } from '../../hooks/usePromptBag'
@@ -25,13 +25,12 @@ import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 import { SNAP } from '../../theme/motion'
 import { idleFloat } from '../../theme/idleMotion'
 import GameShell from '../common/GameShell'
-import RoundResultScreen from '../common/RoundResultScreen'
 import type { GuideReaction } from '../common/ThemeMascot'
 import { useCelebration } from '../common/CelebrationEffect'
 import { ColorRepeatButton } from '../common/RepeatButton'
-import { useRound } from '../../hooks/useRound'
+import { useTaskRun } from '../../hooks/useTaskRun'
 import { useDifficulty } from '../../hooks/useDifficulty'
-import { progressStore, type RoundOutcome } from '../../services/progressStore'
+import { progressStore } from '../../services/progressStore'
 import { sfx } from '../../services/sfxClient'
 import { mascotBus } from '../../services/mascotBus'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
@@ -45,7 +44,8 @@ import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 
 // Hvilken Farve? — drag an object onto the matching COLOR. A wrong color bounces the object back
 // (gentle SFX); after the level's `hintAfter` wrong drops the correct color pulses and is NAMED
-// (never-fail hint, costs a star). Bounded round of 8 → RoundResultScreen. Static difficulty. Keeps
+// (never-fail hint). Play is ENDLESS — no round boundary; the reward ceremony fires in-game at the
+// seam (Endless Play PRD-01). Static difficulty. Keeps
 // the section's drag language (Farvejagt/Ram Farven/Nuancer are all dnd-kit).
 //
 // **The object is ALWAYS DESATURATED — at every Sværhedsgrad, with no axis that can undo it**
@@ -97,9 +97,10 @@ const FarveQuizGame: React.FC = () => {
   const audio = useSimplifiedAudioHook({ componentId: 'FarveQuizGame', autoInitialize: false })
   const [gameReady, setGameReady] = useState(false)
 
-  const round = useRound({ length: COLORS_QUIZ_ROUND, gameId: 'colors.quiz' })
+  // Endless task play (Endless Play PRD-01 W2). ONE constant, two jobs: the `taskXp` normaliser AND
+  // the bag's no-repeat window.
+  const run = useTaskRun({ tasksInRound: COLORS_QUIZ_ROUND, gameId: 'colors.quiz' })
   const firstAttemptRef = useRef(true)
-  const [roundOutcome, setRoundOutcome] = useState<RoundOutcome | null>(null)
 
   const { showCelebration, celebrationIntensity, celebrationDuration, celebrateTier, stopCelebration } = useCelebration()
   const [guideReaction, setGuideReaction] = useState<GuideReaction>(null)
@@ -224,24 +225,6 @@ const FarveQuizGame: React.FC = () => {
     if (forcedFx === 'hint') mascotBus.emit('hint')
   }, [forcedFx])
 
-  const finishRound = (firstTryCorrect: number, longestStreak: number) => {
-    const outcome = progressStore.recordRoundResult(
-      'colors.quiz',
-      { correct: firstTryCorrect, total: round.length, longestStreak },
-      // Svær tolerates 1 mistake for 3★ / 3 for 2★ (Difficulty PRD-01 W6) — a harder level must not
-      // cost the child stars, the same fairness rule that keeps XP difficulty-independent.
-      { starThresholds: starThresholdsFor(progressStore.difficultyFor('colors')) },
-    )
-    setRoundOutcome(outcome)
-  }
-
-  const handleReplay = () => {
-    stopCelebration()
-    setRoundOutcome(null)
-    round.reset()
-    setupQuestion(true)
-  }
-
   const handleDragStart = (event: DragStartEvent) => {
     audio.cancelCurrentAudio()
     setActiveId(event.active.id as string)
@@ -284,13 +267,15 @@ const FarveQuizGame: React.FC = () => {
       if (advanceTimer.current) clearTimeout(advanceTimer.current)
       advanceTimer.current = setTimeout(() => {
         stopCelebration()
-        const r = round.completeQuestion(firstAttemptRef.current)
-        if (!r.done && r.streak > 0 && r.streak % 3 === 0) {
+        // THE SEAM (Endless Play PRD-01 §4.1) — the ceremony plays here, before the next question is
+        // set up, with the advance guard still held.
+        const r = run.completeTask(firstAttemptRef.current)
+        // Suppressed on a crossing: one loud payoff, not two celebrations in the same 200ms.
+        if (r.streak > 0 && r.streak % 3 === 0 && !r.crossedLevel) {
           celebrateTier('streak')
           mascotBus.emit('streak') // mascot does its streak pose, matching the shared quiz engine
         }
-        if (r.done) finishRound(r.firstTryCorrect, r.longestStreak)
-        else setupQuestion(true)
+        run.thenContinue(() => setupQuestion(true))
       }, isIOS() ? 1200 : 1500)
     } else {
       // Wrong — object springs back (automatic) + gentle SFX + the wrong swatch shakes.
@@ -337,13 +322,13 @@ const FarveQuizGame: React.FC = () => {
   const displayHintColor = forcedFx === 'hint' && current ? (hintColor ?? current.color) : hintColor
 
   // Live difficulty: rebuild the current question when the level changes in the adult menu (no
-  // refresh). Skips the result screen + the initial mount. (`difficultyLevel` itself is read at the
-  // top of the component — the hint hook needs it.)
+  // refresh). Skips the initial mount. (`difficultyLevel` itself is read at the top of the component —
+  // the hint hook needs it.)
   const prevDifficultyRef = useRef(difficultyLevel)
   useEffect(() => {
     if (prevDifficultyRef.current === difficultyLevel) return
     prevDifficultyRef.current = difficultyLevel
-    if (roundOutcome || !gameReady) return
+    if (!gameReady) return
     setupQuestion()
   }, [difficultyLevel]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -356,9 +341,7 @@ const FarveQuizGame: React.FC = () => {
       guideReaction={guideReaction}
       celebration={{ show: showCelebration, intensity: celebrationIntensity, duration: celebrationDuration, onComplete: stopCelebration }}
     >
-      {roundOutcome ? (
-        <RoundResultScreen outcome={roundOutcome} categoryId="colors" backRoute="/farver" onReplay={handleReplay} />
-      ) : gameReady && current && (
+      {gameReady && current && (
         <DndContext
           sensors={sensors}
           onDragStart={handleDragStart}

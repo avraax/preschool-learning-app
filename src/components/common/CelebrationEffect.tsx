@@ -172,15 +172,7 @@ export default CelebrationEffect
 // intensity + duration and fires its matching SFX cue, so big moments feel bigger than the
 // per-answer "micro" sparkle. Reduced-motion is handled inside CelebrationEffect (the SFX +
 // score still land; the heavy animation is skipped).
-export type CelebrationTier =
-  | 'micro'
-  | 'streak'
-  | 'round'
-  | 'best'
-  | 'sticker'
-  | 'page'
-  | 'levelup'
-  | 'levelup-mini'
+export type CelebrationTier = 'micro' | 'streak' | 'page' | 'levelup'
 
 const TIER_MAP: Record<
   CelebrationTier,
@@ -188,25 +180,17 @@ const TIER_MAP: Record<
 > = {
   micro: { intensity: 'low', duration: 1200, sfx: 'correct' },
   streak: { intensity: 'medium', duration: 1600, sfx: 'streak-up' },
-  round: { intensity: 'high', duration: 2600, sfx: 'round-complete' },
-  best: { intensity: 'high', duration: 2200, sfx: 'star' },
-  sticker: { intensity: 'medium', duration: 2000, sfx: 'sticker-reveal' },
   page: { intensity: 'high', duration: 3400, sfx: 'page-complete' },
-  // The biggest moment — a global level-up (Liveliness PRD-01). Longest, most confetti + fanfare.
+  // The biggest moment — the reward ceremony (Liveliness PRD-01). Longest, most confetti + fanfare.
   levelup: { intensity: 'high', duration: 3400, sfx: 'level-up' },
-  // A level-up crossed MID-GAME (Liveliness PRD-04): a short, non-interrupting burst + fanfare that
-  // never stops play. The BIG ceremony (`levelup`) is deferred to the result screen / next menu.
-  'levelup-mini': { intensity: 'medium', duration: 1600, sfx: 'level-up' },
 }
 
-// FOUR OF THESE TIERS NOW HAVE NO CALL SITES: `round`, `best`, `sticker` (dead since the reveal moved
-// into RewardOverlay) and, as of Reward Pacing PRD-01 D7, `levelup-mini` — the mid-game crossing is a
-// soft `sfx.play('sticker-reveal')` in RewardRing now, not a confetti burst.
-//
-// DELIBERATELY NOT PRUNED here (PRD §7). `celebrateTier` is public API across every game, the map is
-// the documentation of what tiers MEAN, and removing entries is a separate and wider cleanup that
-// should be done in one pass with the call-site audit — not as a side effect of a pacing change.
-// Recorded so the next person doesn't read the silence as "these are used somewhere".
+// PRUNED (Endless Play PRD-01 §8). `round`, `best`, `sticker` and `levelup-mini` were already
+// callerless — `round`/`best` with the result screen's beats, `sticker` since the reveal moved into
+// `RewardOverlay`, `levelup-mini` since Reward Pacing D7 quietened the mid-game crossing. Deleting the
+// round makes that permanent, so they go now rather than standing as documentation of tiers nothing
+// can fire. What is left is the whole vocabulary: a per-answer sparkle, a streak, a chapter close, and
+// the ceremony. Their SFX cues went with them (`sfxClient.ts`).
 
 // Hook for managing celebration effects
 export const useCelebration = () => {

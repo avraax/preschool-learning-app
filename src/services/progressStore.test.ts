@@ -6,6 +6,7 @@
 // of it. `resetAll()` between tests gives each case a clean book while preserving settings.
 import { test, before, beforeEach } from 'node:test'
 import assert from 'node:assert/strict'
+import { readFileSync } from 'node:fs'
 import { progressStore } from './progressStore.ts'
 import { REWARD_PATH, REWARD_CHAPTERS, REWARD_SLOTS } from '../config/stickers.ts'
 import {
@@ -76,17 +77,15 @@ test('a fresh book: nothing collected, the first prize is previewed', () => {
 })
 
 test('one completed round grants exactly ONE slot, and it is REWARD_PATH[0] (deterministic)', () => {
-  // A full 8-question round with 2 wrong taps: 6 first-try (6 XP) + 2 not (5 XP) = 46, no bonuses.
+  // A notional 8-task round with 2 wrong taps: 6 first-try (6 XP) + 2 not (5 XP) = 46. There is no
+  // round END any more (Endless Play PRD-01 D3) — the per-task grants ARE the whole economy.
+  let last = 0
   for (let q = 0; q < 8; q++) {
-    progressStore.grantTaskXp('alphabet.quiz', { firstTry: q >= 2, tasksInRound: 8 })
+    last = progressStore.grantTaskXp('alphabet.quiz', { firstTry: q >= 2, tasksInRound: 8 })
+      .global.xpAfter
   }
-  const outcome = progressStore.recordRoundResult('alphabet.quiz', {
-    correct: 6,
-    total: 8,
-    longestStreak: 6,
-  })
-  assert.equal(outcome.mistakes, 2)
-  assert.ok(outcome.xp.global.xpAfter >= REWARD_XP, 'a completed round must clear one reward')
+  assert.equal(last, 46)
+  assert.ok(last >= REWARD_XP, 'a completed round must clear one reward')
 
   const grants = progressStore.grantPendingRewards()
   assert.equal(grants.length, 1)
@@ -109,31 +108,26 @@ test('a reward lands even on a mistake-heavy round (rewards are never a fail sta
   for (let q = 0; q < 8; q++) {
     progressStore.grantTaskXp('math.counting', { firstTry: false, tasksInRound: 8 })
   }
-  progressStore.recordRoundResult('math.counting', { correct: 0, total: 8, longestStreak: 0 })
   assert.equal(progressStore.grantPendingRewards().length, 1)
   assertInvariant()
 })
 
-test('a perfect round: still ONE slot, with the bonuses carried into the next one', () => {
+test('a perfect round: still ONE slot, with the remainder carried into the next one', () => {
+  let last = 0
   for (let q = 0; q < 8; q++) {
-    progressStore.grantTaskXp('alphabet.quiz', { firstTry: true, tasksInRound: 8 })
+    last = progressStore.grantTaskXp('alphabet.quiz', { firstTry: true, tasksInRound: 8 })
+      .global.xpAfter
   }
-  const outcome = progressStore.recordRoundResult('alphabet.quiz', {
-    correct: 8,
-    total: 8,
-    longestStreak: 8,
-  })
-  assert.equal(outcome.stars, 3)
-  assert.equal(outcome.anyNewBest, true)
-  // 8×6 = 48, + perfect 6 + new best 8 = 62.
-  assert.equal(outcome.xp.global.xpAfter, 62)
+  // 8 × 6 = 48. The old +6 perfect / +8 new-best bonuses that made this 62 are DELETED (D3), and the
+  // owner accepted the ~20% slower pace — do not reintroduce them.
+  assert.equal(last, 48)
 
   const grants = progressStore.grantPendingRewards()
-  // 62 XP from zero crosses ONE fast slot (40) with 22 left over — the carryover.
+  // 48 XP from zero crosses ONE fast slot (40) with 8 left over — the carryover.
   assert.equal(grants.length, 1)
   assert.equal(grants[0].slot, 0)
-  assert.ok(levelFromXp(62).xpIntoLevel > 0, 'carryover must survive into the next slot')
-  assert.equal(levelFromXp(62).xpIntoLevel, 22)
+  assert.ok(levelFromXp(48).xpIntoLevel > 0, 'carryover must survive into the next slot')
+  assert.equal(levelFromXp(48).xpIntoLevel, 8)
   assertInvariant()
 })
 
@@ -381,7 +375,7 @@ test('resetAll: clears the book and the level, preserves settings (PRD D8)', () 
   progressStore.resetAll()
   assert.equal(progressStore.collectedCount(), 0)
   assert.equal(progressStore.globalLevel(), 1)
-  assert.equal(progressStore.get().totals.totalStars, 0)
+  assert.equal(progressStore.get().totals.totalStickers, 0)
   assert.equal(progressStore.get().progression.lastCelebratedLevel, 1)
   assert.equal(progressStore.nextReward()?.reward.id, 'dyr-hund')
   // Device preferences survive.
@@ -393,26 +387,29 @@ test('resetAll: clears the book and the level, preserves settings (PRD D8)', () 
   progressStore.setDifficulty({ global: 'normal', section: 'math', level: null })
 })
 
-test('recordRoundResult: bests, stars and the round-END bonus only — it grants NO reward', () => {
-  const first = progressStore.recordRoundResult('ordleg.read', {
-    correct: 8,
-    total: 8,
-    longestStreak: 8,
-  })
-  assert.equal(first.stars, 3)
-  assert.deepEqual(first.newBests, { streak: true, stars: true, count: true })
-  assert.equal(first.xp.granted, 14) // perfect 6 + new best 8
-  // Beating nothing the second time: same stars, no new best.
-  const second = progressStore.recordRoundResult('ordleg.read', {
-    correct: 8,
-    total: 8,
-    longestStreak: 8,
-  })
-  assert.equal(second.anyNewBest, false)
-  assert.equal(second.xp.granted, 6)
-  assert.equal(progressStore.getGame('ordleg.read').roundsCompleted, 2)
-  assert.equal(progressStore.get().totals.totalStars, 6)
-  // Two rounds' worth of BONUS XP alone (20) is not a reward.
-  assert.equal(progressStore.collectedCount(), 0)
-  assertInvariant()
+// THE GRANT-POINT CARDINALITY GUARD (Endless Play PRD-01 §W7). This replaces the old
+// `recordRoundResult` test outright: the round-end path is gone, and what matters now is that nothing
+// grew back to replace it. XP enters the store at exactly three named methods, and a REWARD at exactly
+// one — the ceremony. A fourth XP door is how the pace silently changes; a second reward door is how a
+// sticker gets handed over without a ceremony to show it.
+test('the grant points are exactly these — no round-end economy grew back', async () => {
+  const src = readFileSync(new URL('./progressStore.ts', import.meta.url), 'utf8')
+    .replace(/\/\*[\s\S]*?\*\//g, ' ')
+    .replace(/(^|[^:])\/\/.*$/gm, '$1')
+  for (const gone of ['recordRoundResult', 'roundXp', 'starThresholds', 'totalStars', 'perGame']) {
+    assert.ok(!src.includes(gone), `progressStore still carries the round-end economy: ${gone}`)
+  }
+  // The three surviving XP doors, and nothing else calls applyXp.
+  const applyCalls = (src.match(/this\.applyXp\(/g) ?? []).length
+  assert.equal(applyCalls, 2, `applyXp has ${applyCalls} callers — expected grantXp + grantTaskXp`)
+  const store = await import('./progressStore.ts')
+  const api = store.progressStore as unknown as Record<string, unknown>
+  for (const method of ['grantTaskXp', 'grantXp', 'grantPendingRewards']) {
+    assert.equal(typeof api[method], 'function', `${method} is gone`)
+  }
+  assert.equal(api.recordRoundResult, undefined)
+  assert.equal(api.getGame, undefined)
+  // A reward is handed over in exactly ONE place.
+  const grantSlotCalls = (src.match(/this\.grantSlot\(/g) ?? []).length
+  assert.equal(grantSlotCalls, 1, 'a second reward grant point exists — the ceremony is the only one')
 })
