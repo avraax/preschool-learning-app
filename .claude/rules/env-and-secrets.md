@@ -160,6 +160,8 @@ claims table only had a row for "database", and nothing was there to be falsifie
   `<storeidsuffix-lowercased>.public.blob.vercel-storage.com`. That makes the deployed check exact —
   `/api/bug-report?list=3` returns blob URLs, so the host in them says which store answered. **Env
   changes need a redeploy**, so that host stays on the OLD store until production is rebuilt.
+- **Count with `list()`, not the `Files` column.** `blob list-stores` is eventually consistent and read
+  13 against a live `list()` of 12 right after a delete — enough to fail or fake a migration check.
 - Copy blobs with `put()` from `@vercel/blob` and the pathname verbatim: `addRandomSuffix` defaults to
   false, and `api/bug-report.ts` derives both the listing and the id lookup from `list()` on
   `bug-reports/`, so a suffixed pathname would break every existing report code.
