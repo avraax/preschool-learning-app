@@ -236,3 +236,33 @@ own header, since that is what the failure points at.
 **Budget unchanged:** CLAUDE.md 11,996 / 12,000 · ALWAYS LOADED 16,487 / 17,000 · ONE COMPONENT EDIT
 47,982 / 48,000. All four items landed outside the enforced surfaces (two skills, one reference sibling,
 one source comment).
+
+---
+
+## 2026-08-09 — session-debrief (adult-gate keypad + instant open)
+
+**Rung 1 does not settle a layout claim, and this is the first time the ladder proved it.** A keypad
+measured square, ≥44px, reachable and overflow-free at seven viewports in headless Chrome came back
+36–66px and lopsided in real WebKit: a shrink-to-fit flex item is sized from MIN-CONTENT there, not from
+its `aspect-ratio`. The rung table said rung 1 proves "layout"; it now says Safari-specific layout is
+exactly what it cannot. Recorded in `ui-screenshot/SKILL.md` and `responsive-design.md`.
+
+**Nothing in the guardrails mentioned `env(safe-area-inset-*)`** — and it was the reported bug's actual
+cause. An installed PWA has no browser chrome, so the home indicator is inside the viewport and a MUI
+`fullScreen` Dialog runs straight under it; the symptom the owner saw was "I have to scroll", several
+steps from the cause. Neither a browser tab nor either driver can reproduce it, so it is rung 3.
+
+**A guard that names an identifier survives the deletion of every use site**, because the `import` line
+satisfies it. Two of this session's assertions were vacuous that way and only re-breaking said so —
+distinct from the "unique token, two call sites" shape logged in the entry above: here the token was not
+merely non-unique, it was alive in a line that does nothing. Added to `/re-break`'s vacuity list.
+
+**Stale harness prose costs measurement time.** "The ~4.5s settle is REQUIRED" described the blocking
+screenshot capture that this session deleted; the surface is rail-ready in ~530 ms. A number nobody
+re-measures becomes a floor everyone pays.
+
+**Budget:** CLAUDE.md 11,993 / 12,000 · ALWAYS LOADED 16,489 / 17,000 · ONE COMPONENT EDIT
+47,984 / 48,000. The CLAUDE.md rung clause was paid for by cutting the route enumeration from the Routes
+section — `App.tsx` was already named there as the source of truth, so the list was duplicating it.
+
+**Claude Code 2.1.226** (last audit baseline: 2.1.223, 2026-08-06). Model unchanged, `claude-opus-5[1m]`.

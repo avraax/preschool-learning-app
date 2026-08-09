@@ -12,9 +12,14 @@ run "verified on iPad") is worse than under-claiming.
 
 | rung | tool | proves | cannot prove |
 |---|---|---|---|
-| 1 | `cdp.mjs` (headless Chrome), `mic.mjs`, `perf.mjs`, `sweep.mjs` | layout, interaction, game logic, XP, that audio made a sound | anything Safari-specific; real touch feel |
+| 1 | `cdp.mjs` (headless Chrome), `mic.mjs`, `perf.mjs`, `sweep.mjs` | layout, interaction, game logic, XP, that audio made a sound | anything Safari-specific — **including LAYOUT**; real touch feel |
 | 2 | `webkit.mjs` (real WebKit, iPad UA) | the Safari engine, the app's iOS branches, the codec table | **cannot play audio at all**; not true iPadOS 17.7 |
 | 3 | the owner's iPad | whether the Danish sounds RIGHT, real touch, true 17.7 behaviour | — |
+
+**Rung 1 does not settle a layout claim.** The engines resolve `aspect-ratio` inside flex differently:
+a keypad that measured square and correct at seven viewports in Chrome came back 36px and lopsided in
+WebKit (`.claude/rules/responsive-design.md`). Re-run any sizing claim through `webkit.mjs` before
+calling it verified.
 
 **Unverified is not broken; say UNKNOWN.** Across the sweep sessions the probes' own defects outnumbered
 the app's about five to one, every one a state that isn't a failure folded into the failure bucket. Keep

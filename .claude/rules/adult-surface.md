@@ -98,8 +98,21 @@ Signing in is offered only here, behind the parental gate — nothing adult-dire
 ## Bug reporting
 
 `diagnosticsBuffer` (`src/services/diagnosticsBuffer.ts`, installed as the FIRST import in `main.tsx`)
-always records rings of console lines, network calls and route/tap breadcrumbs. Opening the menu captures a
-**screenshot** (snapdom, before the menu renders).
+always records rings of console lines, network calls and route/tap breadcrumbs. Opening the surface
+captures a **screenshot** (snapdom).
+
+**The capture runs BEHIND the gate, and must never be awaited in front of it.** It used to be
+`await captureScreenshot()` before `requirePin`, which meant a cold snapdom import + a whole-document
+computed-style walk + an `embedFonts` rasterise (~0.9s by its own note) before the modal could paint —
+1-2 seconds of nothing happening on every open. It now starts a beat AFTER the gate is up (snapdom's
+clone is main-thread work; firing it into the enter transition trades a slow open for a janky one), and
+the gate keeps showing the game underneath because every surface that can be open during a capture
+carries **`data-capture-exclude`** (`src/services/captureExclude.ts`). That marker goes on the Dialog
+ROOT, not the paper — MUI's backdrop is a sibling of the paper, so marking the paper leaves a grey slab
+over the whole shot. It is deliberately NOT `data-bl-redact`: that one means "can render a secret", this
+one only means "opened after the capture was asked for", and the guest gate is exactly the surface that
+is the second without being the first. `stabilizeForCapture` skips both, or its live-DOM writes would
+flicker the dialog the adult is reading. Guarded by `components/auth/gateLayout.test.ts`.
 
 **snapdom is a computed-style CLONE rasterised through an SVG `<foreignObject>`, not a photograph**, so
 whatever `getComputedStyle` doesn't round-trip is silently lost and the report shows an app that never
@@ -123,9 +136,9 @@ code (e.g. `R7K3F`) shown to the adult; offline/failure → "Gem som fil" downlo
 max 3/session.
 
 **Failed SIGN-INS auto-upload too** (`type: 'auth'`, WITH a screenshot — `src/services/authDiagnostics.ts`).
-They needed their own channel because they are invisible to both mechanisms above: the ⚙️ is inside
-`<App />`, i.e. behind the gate, and every sign-in failure is *handled*, so it never reaches the crash
-hooks. Two failed logins on the iPad left no data at all before this. `noteAuthStep` records a trail
+They needed their own channel because they are invisible to both mechanisms above: the door to the adult
+surface is inside `<App />`, i.e. behind the gate, and every sign-in failure is *handled*, so it never
+reaches the crash hooks. Two failed logins on the iPad left no data at all before this. `noteAuthStep` records a trail
 (mirrored to `console`, so it also rides along in any later manual report), `reportAuthFailure` uploads,
 and **the lock screen prints the short code** — the only surface that can, since the adult is not past the
 gate. The worst offender it closes: `OAuthReturnHandler`'s 3-minute poll used to give up with

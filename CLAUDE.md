@@ -57,9 +57,9 @@ protocol in `audio-system.md`.**
 
 ## Routes
 
-5 sections — `/alphabet` `/math` `/farver` `/english` `/ordleg` — each a menu + its games, plus `/album`,
-`/learning/memory/:type/:size`, and off-menu `/voicelab` and `/audit`. Features use bookmarkable,
-deep-linkable URLs (`src/utils/urlParams.ts`); routes are enumerated in `App.tsx`.
+5 sections, each a menu + its games, plus `/album`, the memory routes and the off-menu `/voicelab` and
+`/audit` — **enumerated in `App.tsx`**, the source of truth. Features use bookmarkable,
+deep-linkable URLs (`src/utils/urlParams.ts`).
 
 ## Key Architecture
 
@@ -131,9 +131,9 @@ points to, loaded when you touch matching files.
 ## Verifying without the owner's iPad
 
 Three rungs, and **a claim must name the rung it came from**: (1) headless Chrome, (2) real WebKit with
-an iPad UA, (3) the owner's iPad — the residue: whether the Danish sounds right, real touch feel, true
-iPadOS 17.7 behaviour. **Unverified is not broken; say UNKNOWN.** The ladder table, the probes, the
-recipes and the DEV query params live in **`.claude/skills/ui-screenshot/`**; reach for it whenever the
+an iPad UA — **which settles layout, not rung 1; they size flex differently**, (3) the owner's iPad —
+the residue: the Danish sounding right, real touch feel, safe-area insets, true iPadOS 17.7. **Unverified is not broken; say UNKNOWN.** The ladder, probes, recipes
+and DEV query params live in **`.claude/skills/ui-screenshot/`**; reach for it whenever the
 work touches visible UI or audio. Screenshots of every view live in `docs/ui-reference/`.
 
 ## Conventions

@@ -77,7 +77,7 @@ Adding a viewport to `REFERENCE_VIEWPORTS` buys no layout coverage — the deriv
 `.claude/rules/pwa-and-device.md`. Device-size checking comes from the browser sweep
 (`.claude/skills/ui-screenshot/sweep.mjs --phase layout`), which measures real rects in a real engine.
 
-## MUI units & this project's breakpoints — two things that don't read like traps
+## MUI units & this project's breakpoints — three things that don't read like traps
 
 - **The breakpoints are OVERRIDDEN** in `src/theme/buildTheme.ts`: `sm 600 · md 768 · lg 1024`. So `md`
   is iPad **PORTRAIT**, not desktop, and `lg` is what means iPad landscape. Consequences that have
@@ -89,6 +89,10 @@ Adding a viewport to `REFERENCE_VIEWPORTS` buys no layout coverage — the deriv
   `pb` collapsed a game's answer tiles to their 44px floor and pushed them off the top of the screen;
   the viewport that happened to get screenshotted looked fine, and only a rect measurement caught it.
   Write `pb: '120px'` when the value is a real length.
+- **A `maxWidth`/`maxHeight` in a Dialog paper's `sx` silently DEFEATS the Dialog's own `maxWidth="xs"`,**
+  because both land on the same element and `sx` wins on specificity. It looks like a harmless matching
+  tweak next to a `m: 1`; the gate's paper rendered 960px wide on an iPad. Override the paper's box only
+  when you mean to replace the size prop, not to complement it.
 
 ## Layout Pattern
 
@@ -163,6 +167,20 @@ for its 3×3 page, 2.4 for the phone-landscape 5×2). Don't over-constrain: `hei
 `--measure` (`rect.b <= innerHeight`), never a screenshot. Container-query units are Safari 16+, so
 they're safe on the iOS 17 floor.
 
+**"Largest N:M box that fits" = ONE definite axis + `aspect-ratio`, and the definite axis must not come
+from content.** This is how a grid gets square cells on every viewport with no per-device number
+(`components/auth/Keypad.tsx`: a 3:4 box over 3 columns × 4 rows). Two ways to lose the definite axis,
+both silent:
+
+- **A shrink-to-fit flex item (`flex: 0 1 auto`) is sized from MIN-CONTENT in WebKit, not from the
+  ratio** — so grow to a cap (`flex: 1 1 auto` + `max-width`) instead. Chrome derives the width from the
+  ratio and looks perfect; Safari drew the same pad at 123 × 287 with 36px keys. **Rung 1 cannot settle
+  this** — only `webkit.mjs` can.
+- **A parent capped only by `max-height` still shrink-wraps**, so a `flex: 1` child has nothing to grow
+  into and collapses to its intrinsic size. Give the parent a real `height: min(<cap>, calc(var(--vh, 1vh)
+  * 100 - <margin>))`, as `AdultSettings` and `auth/gateDialog.ts` do. Symptom to recognise: the ROOMIEST
+  device gets the SMALLEST element, which reads as anything but a sizing bug.
+
 ## The focal band is already full — adding to it means re-measuring
 
 `PromptFocus` sits in GameShell's fixed 40%/30% band, and the browse blooms were deliberately sized
@@ -234,6 +252,13 @@ surface. Give the raised one an explicit z-index from the shared constant; see t
   centre must return that element, not the thing above it. See the `ui-screenshot` skill.
 - Prefer standing the lower surface DOWN over out-stacking it — one blocking overlay at a time is the
   app's rule (see `authUiOpen` in `.claude/rules/audio-system.md`). The z-index is the backstop.
+
+**A `fullScreen` Dialog must pad itself out of `env(safe-area-inset-*)`, all four sides.** MUI knows
+nothing about safe areas, and the INSTALLED PWA is where it matters: there is no browser chrome, so the
+home indicator and the notch sit *inside* the viewport. The adult gate's bottom key row was underneath
+the home indicator on the owner's iPhone, and the content then scrolled — which is how it was reported,
+several steps away from the cause. `auth/gateDialog.ts` is the shared shell to copy. **A browser tab
+cannot reproduce this and neither can the headless drivers** (no real insets), so it is a rung-3 claim.
 
 ## Decor next to content: RESERVE the space, don't tune a percentage
 

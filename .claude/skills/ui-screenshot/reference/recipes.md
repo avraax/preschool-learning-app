@@ -11,9 +11,10 @@ Back to `../SKILL.md`.
 node .claude/skills/ui-screenshot/cdp.mjs --url http://127.0.0.1:5173/alphabet/quiz \
   --wait-for '#root > *' --out shot.png
 
-# Open "Til de voksne" (a plain click; a PIN pad may intercept) and select a settings pane.
-# The ~4.5s settle is REQUIRED — a snapdom screenshot runs before the surface renders, so a shorter
-# wait silently yields the un-opened page.
+# Open "Til de voksne" (a plain click on the child's avatar; a PIN/guest gate may intercept) and select
+# a settings pane. The settle is now headroom, not a requirement: the capture no longer blocks the
+# surface, and rail-ready measured ~530ms under ?nogate=1. Keep a generous value anyway — the surface is
+# a lazy chunk, and a short wait silently yields the un-opened page rather than an error.
 # PASS --w/--h. Below the `md` breakpoint the surface is fullScreen single-pane push-nav, so the rail
 # does not exist: `[data-rail-item=…]` and the rail-footer "Rapportér et problem" are simply absent
 # and the click misses with no error. cdp.mjs defaults narrow, so OMITTING the size silently gives you

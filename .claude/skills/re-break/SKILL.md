@@ -96,8 +96,14 @@ comment-stripping) so every anchor in that file can be written naturally. A guar
 Prefer breaking **both** sides where an invariant spans two layers: mutate the *table* for one entry and
 the *generator* for another. A table-only break can pass while the code ignores the table entirely.
 
-## Two shapes of vacuity this has caught (look for them in your own guards)
+## Shapes of vacuity this has caught (look for them in your own guards)
 
+- **The IDENTIFIER survives the deletion of every use site.** `assert.match(code, /CAPTURE_EXCLUDE_SELECTOR/)`
+  is satisfied by the `import` line alone, so it stayed green with the filter that used it deleted; the
+  same session's `/fullScreen/` was satisfied by the word occurring anywhere in the file and survived a
+  mutation that renamed the returned field. **Anchor on the USE SITE or the declaration**
+  (`/!isExcluded\(el\)/`, `/const fullScreen = useMediaQuery\(PHONE_ANY\)/`), never on a bare name — an
+  import, a type annotation, a local variable and a prose-free comment all keep a bare name alive.
 - **A regex the target's own syntax closes early.** A source-text guard matched
   `label=\{([^}]*)\}` to forbid a denominator — but a template literal's own `${…}` closes `[^}]*`, so
   `` label={`${n} / ${TOTAL}`} `` captured just `` `${n `` and the guard passed against the exact string

@@ -160,7 +160,9 @@ Back to `../SKILL.md`.
   or `getBoundingClientRect()` (geometry) instead.
 - App sizes to `--vh`; default 540x940 is representative. Useful selectors: the adult settings surface
   opens via a plain click on `[aria-label="Til de voksne"]` (the old 2s hold and its `?adult-tap=1`
-  workaround are gone), needs **~4.5s settle**, and its five panes are
+  workaround are gone; the label is on the child's AVATAR now), is rail-ready in ~530ms under
+  `?nogate=1` — the old "~4.5s is REQUIRED" was the blocking screenshot capture, which is gone, so a
+  generous settle is now headroom for the lazy chunk rather than a floor — and its five panes are
   `[data-rail-item=barn|laering|lyd|udseende|konto]`. **On a phone-sized viewport the rail only exists
   at the ROOT** — the surface opens onto the last-viewed pane, so click `[aria-label="Tilbage"]` first
   or the rail selector is simply absent. MUI dialogs render under `.MuiDialog-paper`, popovers under
@@ -169,6 +171,11 @@ Back to `../SKILL.md`.
   raised via `requirePin` never appear headlessly and a "PIN-gated" path is really being driven
   un-gated. The only pad you can exercise is one a component raises DIRECTLY — e.g. the
   account-deletion pad in the Konto pane, which is how the settings dialog↔pad stacking was hit-tested.
+  **The GUEST arithmetic gate IS drivable, by leaving `?nogate=1` OFF**: a session-less device
+  auto-guests, so the door raises the real challenge (`[data-guest-gate-key]`, `[data-guest-gate-slot]`)
+  and the whole gate layout can be measured. The PIN pad has no such route — reaching it needs an
+  account, and minting one writes into the owner's PRODUCTION Neon DB (`.claude/rules/auth.md`), so a
+  PIN-pad layout claim is made from the shared `<Keypad>`/`gateDialog` code, not from pixels. Say which.
 - **DEV query params force states deterministically for capture** (all DEV-only — see
   `src/utils/devHarness.ts`): `?fx=correct|wrong|hint|streak` forces one tile/board into that feedback
   state (no need to solve), `?seed=<n>` makes questions deterministic (probe with `--eval` to find a
