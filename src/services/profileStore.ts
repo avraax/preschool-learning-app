@@ -217,6 +217,25 @@ class ProfileStore {
     const pointer = readPointer()
 
     if (!already) {
+      // A DIFFERENT IDENTITY IS ASKING, SO THE PREVIOUS ANSWER IS VOID. `rosterSettled` means "a roster
+      // refresh has ANSWERED" — but it answered about whoever was here before, and carrying it across a
+      // change of identity turns it into a lie about this one.
+      //
+      // MEASURED ON THE OWNER'S iPAD, 2026-08-09: guest play sets `rosterSettled: true` (correct — a
+      // guest has no roster and never will). Signing in with Google then re-enters `hydrate` with a real
+      // account id; `guestModeActive()` is already false, this device has no cached roster, so the branch
+      // below published `profiles: []` while `rosterSettled` was still `true` from the guest phase. For
+      // the length of the `/api/profiles` round trip `profileGateSurface` therefore read
+      // "settled AND empty" ⇒ the UN-DISMISSIBLE create dialog, over an account that already had a
+      // child — it flashed up and vanished when the roster arrived, and any tap that landed on it in
+      // that window created a nameless profile.
+      //
+      // This is the SAME defect `profileGatePolicy` was extracted to fix, one moment later: that fix
+      // stopped "we haven't asked yet" reading as "no children", and this stops "we asked, as somebody
+      // else" reading the same way. Reset FIRST, so nothing between here and the refresh can observe the
+      // stale verdict.
+      this.publish({ rosterSettled: false })
+
       // Attach immediately so the very first render sees the child's real data (no level-1 flash).
       const target =
         (pointer && cached.some((p) => p.id === pointer) ? pointer : null) ??
