@@ -28,6 +28,7 @@ your attention.
 | The recording is not stored | **TRUE** on our side | `api/stt.ts` performs no write of any kind — it forwards and returns a transcript |
 | Speech recognition runs in the EU | **TRUE** | `STT_LOCATION = 'eu'`, `eu-speech.googleapis.com` (`api/stt.ts`) |
 | Database is in the EU | **TRUE** | Neon `eu-central-1` (Frankfurt) |
+| **Bug reports are in the EU** | **WAS FALSE → fixed** | Reports carry a screenshot of the child's screen. The Blob store defaulted to `iad1` (Virginia) and stayed there for 27 days, unnoticed **because this table had no row for it** — "database" did not cover it. Now Blob store `bornelaering-bug-reports-eu` in `fra1`; a store's region cannot be changed, so it was recreated and the 25 reports copied across |
 | Speech synthesis region | **TRUE** | Azure `westeurope` |
 | Server functions in Frankfurt | **TRUE** | `vercel.json` `"regions": ["fra1"]` |
 | Deleting the account deletes the server rows | **TRUE** | Every family table declares `onDelete: 'cascade'` against `user` (`lib/auth-family-plugin.ts`) |

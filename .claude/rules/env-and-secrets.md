@@ -35,6 +35,12 @@ grep -oE '^[A-Z0-9_]+=' .env.local | tr -d '=' | sort -u | comm -23 - /tmp/v   #
   (it resolves from `.vercel/project.json`). **`cp .env.local` to a scratch path immediately before any
   `vercel blob` command and `cmp` it after** — the pull is the LAST thing it prints, so a tail-only read
   of the output looks like a normal success.
+- **`--cwd <scratch>` is the escape hatch, and it is total.** The CLI resolves the project *and* writes
+  the pulled `.env.local` from `client.cwd` (read the bundled source if you doubt it:
+  `dist/commands-bulk.js`, `envPullCommandLogic(client, ".env.local", …, client.cwd, …)`). Copy
+  `.vercel/project.json` into a scratch dir and pass `--cwd` — the command stays fully linked to
+  production and the pull lands in the scratch dir. Verified 2026-08-09 across five `blob` /
+  `integration resource` commands: the repo's `.env.local` never changed.
 - Before touching `.env.local`, copy it somewhere outside the repo, then afterwards assert every
   pre-existing key survived. Note `grep -oE '^[A-Z_]+='` **misses names containing digits** (e.g. a
   `…_BASE64` suffix) — use `^[A-Z0-9_]+=`.
@@ -122,6 +128,32 @@ construction rather than by a setting somebody can flip. Org `team_GacOLmNdUS9It
 - **Then VERIFY the region from the host**, don't trust the flag: pull to a scratch path and read
   `PGHOST` — `…eu-central-1.aws.neon.tech`. Deleting needs `--disconnect-all`
   (`vercel integration-resource remove <name> --disconnect-all`).
+
+## Blob stores: region is fixed, and a second store cannot take the default var name
+
+The bug-report store holds screenshots of a child's screen, so its region is a privacy-policy claim —
+it now has its OWN row in `docs/app-store/policy-verification.md`, because "database is in the EU" did
+not cover it and a `iad1` store sat there unnoticed for 27 days.
+
+- **`--region` defaults to `iad1` and cannot be changed afterwards** (Vercel docs, *Choosing your Blob
+  store region*: "You cannot change the region once the store is created"; there is no `update-store`
+  subcommand). Moving one means create + copy + repoint + delete.
+- **`create-store` cannot connect if `BLOB_READ_WRITE_TOKEN` already exists** in any target
+  environment — it creates the store, then fails the connect, leaving it orphaned. Connect it
+  afterwards with **`vercel integration resource connect <store> <project>`** (blob stores show up as
+  marketplace resources), which is also the only command exposing **`--prefix`**. Note the prefix
+  *replaces* `BLOB`: `--prefix EU` yields `EU_READ_WRITE_TOKEN`, not `EU_BLOB_READ_WRITE_TOKEN`.
+- **Let the connection own the var, never hand-add it.** `delete-store` issues
+  `DELETE /connections`, so a hand-made `BLOB_READ_WRITE_TOKEN` sharing that name is at risk when the
+  old store is removed. The clean swap is: `env rm` the old var → `resource disconnect` → `resource
+  connect` the new store unprefixed on all three environments.
+- **The token names its store**: `vercel_blob_rw_<storeIdSuffix>_<secret>`, and the public host is
+  `<storeidsuffix-lowercased>.public.blob.vercel-storage.com`. That makes the deployed check exact —
+  `/api/bug-report?list=3` returns blob URLs, so the host in them says which store answered. **Env
+  changes need a redeploy**, so that host stays on the OLD store until production is rebuilt.
+- Copy blobs with `put()` from `@vercel/blob` and the pathname verbatim: `addRandomSuffix` defaults to
+  false, and `api/bug-report.ts` derives both the listing and the id lookup from `list()` on
+  `bug-reports/`, so a suffixed pathname would break every existing report code.
 
 ## Third-party credentials that cannot be automated
 
