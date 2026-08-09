@@ -81,6 +81,38 @@ test('avatarEmoji can never be written NULL — cleanAvatar is an ALLOW-LIST', (
   )
 })
 
+test('a child cannot be created without a name', () => {
+  // OWNER DECISION, 2026-08-09. The name was optional by design (data minimisation), and that turned
+  // out to be a trap rather than a courtesy: a nameless profile shows in the picker with no way to name
+  // it — renaming lives in the adult menu — so the only affordance is "Tilføj et barn", which creates a
+  // SECOND child. The owner hit exactly that after the create dialog flashed during sign-in.
+  //
+  // TWO controls, because the button alone is not enough: an Enter key or a stray call would otherwise
+  // still reach `createProfile`.
+  assert.match(
+    dialog,
+    /disabled=\{busy \|\| !name\.trim\(\)\}/,
+    'the save button no longer requires a name',
+  )
+  assert.match(dialog, /if \(!name\.trim\(\)\) return/, 'submit() would still create a nameless child')
+  // And it must not pass `undefined` to the store any more, which is what stored NULL.
+  assert.doesNotMatch(dialog, /name: name\.trim\(\) \|\| undefined/, 'a blank name can still be stored')
+  assert.match(dialog, /name: name\.trim\(\),/)
+
+  // The copy has to agree, or the adult reads "valgfrit" next to a button that will not enable.
+  const raw = readFileSync('src/components/auth/CreateProfileDialog.tsx', 'utf8')
+  assert.doesNotMatch(raw, /Navnet er valgfrit|Fornavn \(valgfrit\)/, 'the dialog still says the name is optional')
+  assert.match(raw, /label="Fornavn"\s*\n\s*required/, 'the field is not marked required')
+
+  // The SERVER stays permissive on purpose: `name` is nullable and a profile created before this
+  // change must keep working rather than become unreadable.
+  assert.match(
+    readFileSync('lib/auth-family-plugin.ts', 'utf8'),
+    /name: \{ type: 'string' as const, required: false \}/,
+    'the schema was tightened too — that would break every profile created before this change',
+  )
+})
+
 test('the guest-book offer is default ON and asked exactly once', () => {
   // Default-on because the median case — one iPad, one child, months of play — is that the guest book
   // IS this child's, and an adult who unticks it has said so deliberately. Asked once because

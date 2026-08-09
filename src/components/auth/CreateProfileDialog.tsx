@@ -92,9 +92,12 @@ const CreateProfileDialog: React.FC<CreateProfileDialogProps> = ({
   )
 
   const submit = useCallback(async () => {
+    // Belt and braces with the disabled button: an Enter key or a stray programmatic call must not be
+    // able to create the nameless profile the button now prevents.
+    if (!name.trim()) return
     setBusy(true)
     const created = await profileStore.createProfile({
-      name: name.trim() || undefined,
+      name: name.trim(),
       avatarId: avatar,
     })
     setBusy(false)
@@ -118,7 +121,7 @@ const CreateProfileDialog: React.FC<CreateProfileDialogProps> = ({
       <DialogTitle sx={{ fontWeight: 700 }}>Tilføj et barn</DialogTitle>
       <DialogContent>
         <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
-          Vælg et billede. Navnet er valgfrit.
+          Vælg et billede, og skriv barnets fornavn.
         </Typography>
 
         {account.error && (
@@ -183,7 +186,8 @@ const CreateProfileDialog: React.FC<CreateProfileDialogProps> = ({
         </Box>
 
         <TextField
-          label="Fornavn (valgfrit)"
+          label="Fornavn"
+          required
           size="small"
           fullWidth
           value={name}
@@ -224,10 +228,16 @@ const CreateProfileDialog: React.FC<CreateProfileDialogProps> = ({
             Annullér
           </Button>
         )}
+        {/* THE NAME IS MANDATORY (owner, 2026-08-09), and this is the control that enforces it.
+            It was optional by design — data minimisation — but a nameless profile turned out to be a
+            trap rather than a courtesy: the picker shows it with no way to name it (renaming lives in
+            the adult menu), so the only affordance is "Tilføj et barn", which makes a SECOND child.
+            The owner hit exactly that. The server stays permissive on purpose: `name` is nullable, and
+            a profile created before this change must keep working rather than become unreadable. */}
         <Button
           variant="contained"
           onClick={() => void submit()}
-          disabled={busy}
+          disabled={busy || !name.trim()}
           aria-label="Gem barnet"
         >
           Gem
