@@ -29,6 +29,16 @@ export const AUTH_FRAGMENT = 'bl_auth=1'
 export interface PendingOAuthFlow {
   flowId: string
   startedAt: number
+  /**
+   * Which provider this attempt is for. Stored ALONGSIDE the flowId rather than in a module variable
+   * because the claim frequently runs in a different page lifetime from the start — on the web the
+   * round trip unloads the page entirely — and a report that cannot name the provider is the exact
+   * gap that made three staging failures look like one (sign-in reliability PRD RC6).
+   *
+   * Not a secret and not a credential: the claim still requires the flowId, and the server reads the
+   * provider off its own row, never off the client.
+   */
+  provider?: SignInProvider
 }
 
 /** How long a started flow stays claimable on this device before we call it stale. */
@@ -45,7 +55,8 @@ export function readPendingFlow(): PendingOAuthFlow | null {
       clearPendingFlow()
       return null
     }
-    return { flowId: parsed.flowId, startedAt }
+    const provider = parsed.provider === 'apple' || parsed.provider === 'google' ? parsed.provider : undefined
+    return { flowId: parsed.flowId, startedAt, provider }
   } catch {
     return null
   }

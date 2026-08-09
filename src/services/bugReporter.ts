@@ -46,6 +46,24 @@ export interface AuthFailureInfo {
   code?: string
   /** DOMException / Error `name` — e.g. `NotAllowedError` for a cancelled or stale Face ID prompt. */
   errorName?: string
+  /**
+   * `google` | `apple`, when the failure belongs to one. The `google-*` STAGE names are historical —
+   * they are stable enum values in every stored report and in `authDiagnostics`' dedupe keys, and both
+   * providers ride the same code path — so the stage cannot answer this and never could.
+   */
+  provider?: string
+  /**
+   * WHERE THE ATTEMPT WAS RUNNING. Three enums, and every one of them was a guess until now
+   * (sign-in reliability PRD RC6): report 8AE9T was only known to be the native shell because its
+   * network URLs happened to be absolute, which is an accident of `apiUrl()`, not a field.
+   *
+   * `web` | `shell`. The shell's OAuth failure modes are entirely different from Safari's.
+   */
+  runtimeTarget?: string
+  /** `staging` | `production` — which BUILD, i.e. which App Store record and which database. */
+  tier?: string
+  /** The resolved API ORIGIN. Says which backend actually answered, independently of the tier flag. */
+  apiOrigin?: string
   /** The step trail leading up to it (see `authDiagnostics`). */
   trail: string[]
 }

@@ -43,7 +43,7 @@ function newFlowId(): string {
 async function startGoogle(provider: SignInProvider = 'google'): Promise<SignInResult> {
   const providerLabel = provider === 'apple' ? 'Apple' : 'Google'
   const flowId = newFlowId()
-  noteAuthStep('google-start', 'begin')
+  noteAuthStep('google-start', 'begin', { provider })
 
   // BEFORE the flow is registered, because the answer decides what the callback may hand back. A binary
   // that cannot receive a custom-scheme link must keep getting the terminal page — see `shellReturn.ts`.
@@ -55,9 +55,9 @@ async function startGoogle(provider: SignInProvider = 'google'): Promise<SignInR
   try {
     // Write FIRST, in our own storage context. If we navigated before this landed there would be
     // nothing to claim with when we came back.
-    localStorage.setItem(OAUTH_FLOW_KEY, JSON.stringify({ flowId, startedAt: Date.now() }))
+    localStorage.setItem(OAUTH_FLOW_KEY, JSON.stringify({ flowId, startedAt: Date.now(), provider }))
   } catch {
-    void reportAuthFailure('google-start', 'localstorage-unavailable')
+    void reportAuthFailure('google-start', 'localstorage-unavailable', { provider })
     return {
       ok: false,
       message: 'Kan ikke gemme login på denne enhed. Slå privat browsing fra og prøv igen.',
@@ -83,16 +83,16 @@ async function startGoogle(provider: SignInProvider = 'google'): Promise<SignInR
     })
     if (!res.ok) {
       clearPendingFlow()
-      void reportAuthFailure('google-start', 'start-http-error', { status: res.status })
+      void reportAuthFailure('google-start', 'start-http-error', { provider, status: res.status })
       return { ok: false, message: `Kunne ikke starte ${providerLabel}-login. Prøv igen.` }
     }
     const { authorizeUrl } = (await res.json()) as { authorizeUrl?: string }
     if (!authorizeUrl) {
       clearPendingFlow()
-      void reportAuthFailure('google-start', 'no-authorize-url', { status: res.status })
+      void reportAuthFailure('google-start', 'no-authorize-url', { provider, status: res.status })
       return { ok: false, message: `Kunne ikke starte ${providerLabel}-login. Prøv igen.` }
     }
-    noteAuthStep('google-start', 'ok', { status: res.status })
+    noteAuthStep('google-start', 'ok', { provider, status: res.status })
 
     // NATIVE SHELL: the authorize URL must NOT be loaded in the app's own webview (App Store PRD §3.3
     // / B5). Google rejects OAuth in a WKWebView with `disallowed_useragent`, so `location.assign`
@@ -112,7 +112,7 @@ async function startGoogle(provider: SignInProvider = 'google'): Promise<SignInR
       })
       if (!opened) {
         clearPendingFlow()
-        void reportAuthFailure('google-start', 'shell-browser-unavailable')
+        void reportAuthFailure('google-start', 'shell-browser-unavailable', { provider })
         return { ok: false, message: `Kunne ikke åbne ${providerLabel}-login. Prøv igen.` }
       }
       return { ok: true }
@@ -127,6 +127,7 @@ async function startGoogle(provider: SignInProvider = 'google'): Promise<SignInR
   } catch (e) {
     clearPendingFlow()
     void reportAuthFailure('google-start', 'start-network-error', {
+      provider,
       errorName: e instanceof Error ? e.name : undefined,
     })
     return { ok: false, message: 'Ingen forbindelse. Prøv igen når du er på nettet.' }
@@ -134,6 +135,11 @@ async function startGoogle(provider: SignInProvider = 'google'): Promise<SignInR
 }
 
 async function claim(flowId: string): Promise<SignInResult> {
+  // READ BEFORE THE FIRST `clearPendingFlow()` below, and off the STORED flow rather than a module
+  // variable: on the web the round trip unloads the page, so the claim usually runs in a lifetime that
+  // never saw the start. Without this every claim-side report is silent about which provider failed —
+  // the gap that made three staging reports look like one fault.
+  const provider = readPendingFlow()?.provider
   try {
     const res = await fetch(apiUrl(CLAIM_PATH), {
       method: 'POST',
@@ -163,16 +169,16 @@ async function claim(flowId: string): Promise<SignInResult> {
       // none — so a client report here would either duplicate or add noise. A bare 404/410 with neither
       // is the one case nothing anywhere has recorded.
       if (!body?.code && !body?.message) {
-        void reportAuthFailure('google-claim', 'flow-expired-or-claimed', { status: res.status })
+        void reportAuthFailure('google-claim', 'flow-expired-or-claimed', { provider, status: res.status })
       } else {
-        noteAuthStep('google-claim', 'fail', { status: res.status, code: body?.code })
+        noteAuthStep('google-claim', 'fail', { provider, status: res.status, code: body?.code })
       }
       return { ok: false }
     }
     if (!res.ok) {
       // A 5xx here used to be indistinguishable from a normal "still pending" poll — the loop just kept
       // going and the adult waited. Report it (deduped by stage|reason, so a 60-poll window sends one).
-      void reportAuthFailure('google-claim', 'claim-http-error', { status: res.status })
+      void reportAuthFailure('google-claim', 'claim-http-error', { provider, status: res.status })
       return { ok: false }
     }
 
@@ -182,12 +188,12 @@ async function claim(flowId: string): Promise<SignInResult> {
     // Still on Google's consent screen — the expected answer for most polls, and NOT a failure.
     if ('status' in body && body.status === 'pending') return { ok: false }
     if (!('token' in body) || !body.token) {
-      void reportAuthFailure('google-claim', 'claim-ok-but-no-token', { status: res.status })
+      void reportAuthFailure('google-claim', 'claim-ok-but-no-token', { provider, status: res.status })
       return { ok: false }
     }
 
     clearPendingFlow()
-    noteAuthStep('google-claim', 'ok', { status: res.status })
+    noteAuthStep('google-claim', 'ok', { provider, status: res.status })
     // Dismiss the system browser BEFORE adopting the session, so the adult sees the app change state
     // rather than a sheet that lingers over an app which has already signed in. No-op off the shell.
     void closeExternalAuth()
@@ -197,6 +203,7 @@ async function claim(flowId: string): Promise<SignInResult> {
   } catch (e) {
     // A network blip mid-poll is not a failure; the next tick tries again. Recorded, not reported.
     noteAuthStep('google-claim', 'fail', {
+      provider,
       note: 'poll-network-blip',
       errorName: e instanceof Error ? e.name : undefined,
     })

@@ -23,6 +23,8 @@
 // and an extensionless specifier stops the whole suite loading the moment anything Node-importable
 // reaches this module — which `shellReturn.ts` now does.
 import { redactText } from './redact.ts'
+import { runtimeTarget } from '../config/runtimeTarget.ts'
+import { BL_TIER, effectiveBackend } from '../config/backendTarget.ts'
 
 export type AuthStage =
   | 'google-start'
@@ -40,6 +42,12 @@ export interface AuthStepDetail {
   status?: number
   code?: string
   errorName?: string
+  /**
+   * `google` | `apple`. An enum, and the one question three staging reports could not answer: both
+   * providers ride the same code path, so the `google-*` stage names — stable across every stored
+   * report and every dedupe key — say nothing about which one was being used.
+   */
+  provider?: string
   /** Short, non-secret note (e.g. 'no-authorize-url'). Redacted before it is stored. */
   note?: string
 }
@@ -62,6 +70,7 @@ export function noteAuthStep(stage: AuthStage, outcome: AuthOutcome, detail?: Au
       `+${Date.now() - startedAt}ms`,
       stage,
       outcome,
+      detail?.provider ? `provider=${detail.provider}` : '',
       detail?.status !== undefined ? `status=${detail.status}` : '',
       detail?.code ? `code=${detail.code}` : '',
       detail?.errorName ? `name=${detail.errorName}` : '',
@@ -90,9 +99,48 @@ export function resetAuthTrail(): void {
 
 // ----- auto-reporting ---------------------------------------------------------------------------
 
-const CAP_PER_SESSION = 3
+/**
+ * THE CAP IS A ROLLING TIME WINDOW, NOT A PER-SESSION COUNT — and the difference is the shell.
+ *
+ * A "session" here is a page load, which is a fine unit on the web: the OAuth round trip unloads the
+ * page, so each attempt starts with a fresh budget. In the native shell the page NEVER reloads. The old
+ * cap of 3 per session therefore meant three reports per *app launch*: an entire evening of failed
+ * sign-in attempts could yield three, and every later attempt — including the one the owner would
+ * actually describe to us — went unrecorded with no sign that anything was dropped (RC6).
+ *
+ * Still bounded, and by the same arithmetic that mattered: `google-claim` runs inside a 3s poll, so the
+ * brakes have to survive a server fault that lasts minutes. Three per ten minutes, plus per-signature
+ * dedupe, plus a 30s floor between uploads, is a hard ceiling of a few kilobytes an hour.
+ */
+const CAP_PER_WINDOW = 3
+const CAP_WINDOW_MS = 10 * 60 * 1000
 const SIG_KEY = 'bl-auth-report-signatures'
 const MIN_INTERVAL_MS = 30_000
+
+interface SentReport {
+  /** `stage|reason` — the dedupe key. */
+  sig: string
+  at: number
+}
+
+/** Parse whatever is in storage, tolerating the pre-W6 shape (a bare array of signatures). */
+function readSent(raw: string | null, now: number): SentReport[] {
+  try {
+    const parsed = JSON.parse(raw ?? '[]') as unknown
+    if (!Array.isArray(parsed)) return []
+    return parsed
+      .map((e): SentReport | null => {
+        // The OLD format was `["stage|reason", …]` with no timestamps. Treat those as expired rather
+        // than as "sent just now": a device mid-upgrade should get a fresh budget, not a silent one.
+        if (typeof e === 'string') return null
+        const o = e as Partial<SentReport>
+        return typeof o?.sig === 'string' && typeof o?.at === 'number' ? { sig: o.sig, at: o.at } : null
+      })
+      .filter((e): e is SentReport => !!e && now - e.at < CAP_WINDOW_MS)
+  } catch {
+    return []
+  }
+}
 
 let lastUploadAt = 0
 let lastCode: string | null = null
@@ -148,16 +196,19 @@ export async function reportAuthFailure(
 ): Promise<string | null> {
   noteAuthStep(stage, 'fail', detail)
   const signature = `${stage}|${reason}`
+  const now = Date.now()
   try {
-    const sent: string[] = JSON.parse(sessionStorage.getItem(SIG_KEY) ?? '[]')
-    if (sent.includes(signature) || sent.length >= CAP_PER_SESSION) return null
-    if (Date.now() - lastUploadAt < MIN_INTERVAL_MS) return null
-    sent.push(signature)
+    const sent = readSent(sessionStorage.getItem(SIG_KEY), now)
+    if (sent.some((e) => e.sig === signature) || sent.length >= CAP_PER_WINDOW) return null
+    if (now - lastUploadAt < MIN_INTERVAL_MS) return null
+    sent.push({ sig: signature, at: now })
+    // Rewritten with the expired entries already dropped by `readSent`, so the window really rolls
+    // rather than accumulating forever behind a length check.
     sessionStorage.setItem(SIG_KEY, JSON.stringify(sent))
   } catch {
     return null
   }
-  lastUploadAt = Date.now()
+  lastUploadAt = now
 
   try {
     // Imported lazily so the whole reporting + screenshot graph stays out of the pre-gate bundle path
@@ -174,9 +225,18 @@ export async function reportAuthFailure(
       auth: {
         stage,
         reason,
+        provider: detail?.provider,
         status: detail?.status,
         code: detail?.code,
         errorName: detail?.errorName,
+        // WHERE THIS RAN. Three enums that were previously unknowable: the only reason report 8AE9T
+        // could be attributed to the native shell at all is that its captured network URLs happened to
+        // be absolute, which is an accident of `apiUrl()` rather than a recorded fact. `apiOrigin` is
+        // read rather than derived from the tier, for the same reason the backend badge is: a build
+        // whose flag and host disagree is exactly the one worth catching.
+        runtimeTarget: runtimeTarget(),
+        tier: BL_TIER,
+        apiOrigin: effectiveBackend(),
         trail: getAuthTrail(),
       },
     })
