@@ -32,9 +32,11 @@ grep -oE '^[A-Z0-9_]+=' .env.local | tr -d '=' | sort -u | comm -23 - /tmp/v   #
   Measured 2026-08-08: a `delete-store` rewrote `.env.local` from the *production* project's
   *development* env — `BL_TIER`, `AUTH_DEV_BYPASS` and `BUG_REPORT_READ_KEY` gone, and the local DB
   silently repointed at PRODUCTION's Neon. It also ignores `--non-interactive` and `VERCEL_PROJECT_ID`
-  (it resolves from `.vercel/project.json`). **`cp .env.local` to a scratch path immediately before any
-  `vercel blob` command and `cmp` it after** — the pull is the LAST thing it prints, so a tail-only read
-  of the output looks like a normal success.
+  (it resolves from `.vercel/project.json`). **`cp .env.local` to a scratch path before those two and
+  `cmp` it after** — the pull is the LAST thing it prints, so a tail-only read of the output looks like
+  a normal success. It is only those two: `blob list`, `list-stores`, `get-store`, `empty-store`,
+  `env pull` and `env rm` all left `.env.local` byte-identical (measured 2026-08-09), so treating every
+  `vercel` command as dangerous just makes the real warning cheap.
 - **`--cwd <scratch>` is the escape hatch, and it is total.** The CLI resolves the project *and* writes
   the pulled `.env.local` from `client.cwd` (read the bundled source if you doubt it:
   `dist/commands-bulk.js`, `envPullCommandLogic(client, ".env.local", …, client.cwd, …)`). Copy
@@ -99,7 +101,9 @@ construction rather than by a setting somebody can flip. Org `team_GacOLmNdUS9It
   all preview branches: `vercel env add NAME preview "" --value … --yes`.
 - Use `--no-sensitive` for non-secret config so it stays readable later; leave real secrets sensitive.
 - **A SENSITIVE variable reads back as an empty string** — `vercel env pull` writes `NAME=""` for it, so
-  you cannot verify what you stored. Proven rather than assumed: `APPLE_BUNDLE_ID` was readable while
+  you cannot verify what you stored. `BUG_REPORT_READ_KEY` is one of them, so take it from `.env.local`
+  when you need to `curl` a deployed report; a production pull hands you `""` and a 401 that looks like
+  the key is wrong. Proven rather than assumed: `APPLE_BUNDLE_ID` was readable while
   non-sensitive and empty after being re-added as sensitive, same value. So a round-trip check has to be
   BEHAVIOURAL: deploy, then ask the app (`/api/auth/family/providers` returns `apple` only if the `.p8`
   actually parsed and signed in the real runtime). Do **not** downgrade a key to sensitive:false to peek.
@@ -131,9 +135,10 @@ construction rather than by a setting somebody can flip. Org `team_GacOLmNdUS9It
 
 ## Blob stores: region is fixed, and a second store cannot take the default var name
 
-The bug-report store holds screenshots of a child's screen, so its region is a privacy-policy claim —
-it now has its OWN row in `docs/app-store/policy-verification.md`, because "database is in the EU" did
-not cover it and a `iad1` store sat there unnoticed for 27 days.
+**Every new stateful resource is a data-residency claim, so give it its own row in
+`docs/app-store/policy-verification.md`.** The bug-report store holds screenshots of a child's screen
+and sat in `iad1` unnoticed for 27 days — not because anyone believed it was in the EU, but because the
+claims table only had a row for "database", and nothing was there to be falsified.
 
 - **`--region` defaults to `iad1` and cannot be changed afterwards** (Vercel docs, *Choosing your Blob
   store region*: "You cannot change the region once the store is created"; there is no `update-store`
@@ -158,6 +163,13 @@ not cover it and a `iad1` store sat there unnoticed for 27 days.
 - Copy blobs with `put()` from `@vercel/blob` and the pathname verbatim: `addRandomSuffix` defaults to
   false, and `api/bug-report.ts` derives both the listing and the id lookup from `list()` on
   `bug-reports/`, so a suffixed pathname would break every existing report code.
+
+## The CLI's stored token is not an API token
+
+`auth.json` (under `%APPDATA%\com.vercel.cli\Data\`) holds a CLI session token, and `api.vercel.com`
+rejects it as a bearer with `403 invalidToken`. There is no shortcut around the CLI to the REST API
+from this machine. What IS available: the CLI ships readable bundled source, so
+`grep` in `dist/commands-bulk.js` settles what a command does to your files before you run it.
 
 ## Third-party credentials that cannot be automated
 
