@@ -17,7 +17,12 @@ import {
 import { authStore, type AccountUser } from './authStore'
 import { apiUrl } from '../config/apiBase'
 import { registerSecret } from './redact'
-import { noteAuthStep, reportAuthFailure, resetAuthTrail } from './authDiagnostics'
+import {
+  noteAuthStep,
+  noteServerReportCode,
+  reportAuthFailure,
+  resetAuthTrail,
+} from './authDiagnostics'
 import { isNativeShell } from '../config/runtimeTarget'
 import { closeExternalAuth, openExternalAuthUrl } from './shellBrowser'
 
@@ -56,7 +61,11 @@ async function startGoogle(provider: SignInProvider = 'google'): Promise<SignInR
     const res = await fetch(apiUrl(START_PATH), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ flowId, provider }),
+      // `client` tells the callback which PAGE to render at the end of the round trip — a 302 into the
+      // app for the web, a terminal page for the shell, where that same 302 boots the whole web app
+      // inside the system-browser sheet and lands on "Du er allerede logget ind". Presentation only:
+      // it selects no redirect target and no scheme (PRD W5).
+      body: JSON.stringify({ flowId, provider, client: isNativeShell() ? 'shell' : 'web' }),
     })
     if (!res.ok) {
       clearPendingFlow()
@@ -118,12 +127,32 @@ async function claim(flowId: string): Promise<SignInResult> {
       body: JSON.stringify({ flowId }),
     })
     if (res.status === 404 || res.status === 410) {
-      // Expired, already claimed, or never existed → stop polling and let the adult retry cleanly.
-      // This is a DECISIVE failure and one of the shapes the owner sees as "login didn't work", so it
-      // reports rather than just setting a message.
+      // DECISIVE. Expired, already claimed, never existed — or, since W3, a callback that actually
+      // FAILED and stamped the flow row, which used to be indistinguishable from "the adult is still
+      // at Google" and left the app polling a corpse for its whole window.
+      //
+      // The body is the point: the server sends the Danish sentence it also printed on the callback
+      // page, plus the Fejlkode it already stored a report under. Saying the same thing in both places
+      // is the whole reason the message is stored on the row rather than re-derived here.
+      const body = (await res.json().catch(() => null)) as {
+        message?: string
+        code?: string
+      } | null
       clearPendingFlow()
-      authStore.setError('Login-forsøget udløb. Prøv igen.')
-      void reportAuthFailure('google-claim', 'flow-expired-or-claimed', { status: res.status })
+      // Dismiss the system browser on a decisive FAILURE too, not only on success — otherwise the sheet
+      // sits over an app that has already given up, showing a page the adult cannot act on.
+      void closeExternalAuth()
+      authStore.setError(body?.message || 'Login-forsøget udløb. Prøv igen.')
+      noteServerReportCode(body?.code ?? null)
+      // Report only what the SERVER did not. A stamped failure already stored its own report (that is
+      // where `code` comes from), and a cancel or an allowlist refusal is a working refusal that needs
+      // none — so a client report here would either duplicate or add noise. A bare 404/410 with neither
+      // is the one case nothing anywhere has recorded.
+      if (!body?.code && !body?.message) {
+        void reportAuthFailure('google-claim', 'flow-expired-or-claimed', { status: res.status })
+      } else {
+        noteAuthStep('google-claim', 'fail', { status: res.status, code: body?.code })
+      }
       return { ok: false }
     }
     if (!res.ok) {

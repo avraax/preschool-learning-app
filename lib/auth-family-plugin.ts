@@ -15,6 +15,11 @@ import { apple, baseURL, requireEnv, webauthn } from './env.js'
 import { appleClientSecret, appleUsable } from './apple-client-secret.js'
 import { hashPin, verifyPin } from './pin-hash.js'
 import {
+  classifySignInFailure,
+  readSignInResponse,
+  type SignInOutcome,
+} from './oauth-signin-outcome.js'
+import {
   attemptsLeft,
   clearAttempts,
   isLockedOut,
@@ -104,6 +109,28 @@ export const familySchema = {
       createdAt: { type: 'date' as const, required: true },
       expiresAt: { type: 'date' as const, required: true },
       claimedAt: { type: 'date' as const, required: false },
+      /**
+       * WHICH APP STARTED THIS FLOW — `web` or `shell`. Recorded so the callback can answer the two
+       * runtimes differently (sign-in reliability PRD W5): the shell must never be handed
+       * `/#bl_auth=1`, which boots the ENTIRE web app inside the system-browser sheet and then, having
+       * no flowId there, correctly renders "Du er allerede logget ind" — the modal the owner read as
+       * the app lying to him. NULL means `web`, so existing rows and older clients are unaffected.
+       */
+      client: { type: 'string' as const, required: false },
+      /**
+       * A FAILED CALLBACK MUST BE DISTINGUISHABLE FROM "the adult is still at Google" (RC3). Without
+       * these the row keeps `state = 'used:…'` and `sessionToken` NULL, which is byte-for-byte what a
+       * flow in progress looks like, so `/oauth/claim` answered `{status:'pending'}` and the app polled
+       * a permanently dead flow until its own timer expired. Two such orphans sat in staging's
+       * `oauthFlow` table on 2026-08-09 and are the measured proof.
+       *
+       * `failureCode` is the short Fejlkode the adult can read out (null when the failure needed no
+       * report, e.g. a cancel or an allowlist refusal); `failureMessage` is the Danish sentence, stored
+       * rather than re-derived so the callback page and the app say the SAME thing.
+       */
+      failureCode: { type: 'string' as const, required: false },
+      failureMessage: { type: 'string' as const, required: false },
+      failedAt: { type: 'date' as const, required: false },
     },
   },
 } as const
@@ -218,7 +245,16 @@ interface OauthFlowRow {
   createdAt: Date
   expiresAt: Date
   claimedAt: Date | null
+  client: string | null
+  failureCode: string | null
+  failureMessage: string | null
+  failedAt: Date | null
 }
+
+/** Which app started a flow. NULL on the row (an older client, or a pre-W3 row) means `web`. */
+export type OauthClient = 'web' | 'shell'
+const clientOf = (row: { client?: string | null }): OauthClient =>
+  row.client === 'shell' ? 'shell' : 'web'
 
 /** Where the app resumes. Carries NO secret — only "the flow finished", and in the FRAGMENT. */
 const RETURN_URL = '/#bl_auth=1'
@@ -235,17 +271,50 @@ const RETURN_URL = '/#bl_auth=1'
  * Keep it a 302 (not a 303/307): the request is already a GET, and every browser follows it with the
  * fragment intact.
  */
-const returnToApp = (): Response =>
-  new Response(null, {
+const returnToApp = (client: OauthClient): Response => {
+  // THE SHELL MUST NOT BE 302'd INTO THE APP. On the web this redirect lands in the tab that started
+  // the flow and the fragment triggers the claim on the next paint — correct, and unchanged. In the
+  // native shell the callback is running inside `SFSafariViewController`, so the SAME redirect boots
+  // the ENTIRE web app inside the sheet; that copy holds no flowId, so it renders `WrongContextNotice`
+  // — "Du er allerede logget ind" — over an app that is not, which is exactly the modal the owner
+  // reported. A tiny terminal page instead: the app behind the sheet is already polling, and its
+  // successful claim calls `closeExternalAuth()` and dismisses this within a tick.
+  if (client === 'shell') return htmlResponse(shellDonePage())
+  return new Response(null, {
     status: 302,
     headers: { location: RETURN_URL, 'cache-control': 'no-store' },
   })
+}
+
+/** Shared chrome for both server-rendered pages. Script-free — see the CSP note above. */
+const pageShell = (body: string): string =>
+  `<!doctype html><html lang="da"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Børnelæring</title>
+<style>body{font-family:system-ui,-apple-system,sans-serif;display:flex;min-height:100vh;margin:0;
+align-items:center;justify-content:center;background:#F8FAFC;color:#1e293b;text-align:center;padding:24px}
+main{max-width:22rem}a{display:inline-block;margin-top:1.25rem;padding:.9rem 1.4rem;border-radius:14px;
+background:#6d28d9;color:#fff;text-decoration:none;font-weight:600;min-height:44px}
+p.hint{margin-top:1.25rem;color:#475569}</style></head>
+<body><main>${body}</main></body></html>`
+
+/**
+ * The shell's SUCCESS page. Deliberately terminal and deliberately dull: it is on screen for about as
+ * long as one claim poll, because the app behind the sheet dismisses it as soon as it has the session.
+ * The line below it is there for the case where the sheet is NOT dismissed automatically — the adult
+ * closing it by hand costs one tap and loses nothing, since the claim runs in the app either way.
+ */
+const shellDonePage = (): string =>
+  pageShell(
+    `<h1 style="font-size:1.25rem">Færdig</h1>
+<p class="hint">Du er logget ind. Luk dette vindue for at vende tilbage til Børnelæring.</p>`,
+  )
 
 /**
  * The FAILURE page. Also script-free for the CSP reason above, so the link is genuinely the only way
  * onward — it is not decoration behind an automatic redirect.
  */
-function failureHtml(message: string, code?: string | null): string {
+function failureHtml(message: string, code?: string | null, client: OauthClient = 'web'): string {
   // The CODE is the whole point of this page beyond the apology. This failure happens on the SERVER —
   // the SPA never boots on this response — so the client-side auto-reporter (`authDiagnostics`) cannot
   // fire, and a failed Google sign-in produced literally no data anywhere. Twice. The adult reads this
@@ -253,20 +322,56 @@ function failureHtml(message: string, code?: string | null): string {
   const codeBlock = code
     ? `<p style="margin-top:1rem;font-size:.95rem;color:#475569">Fejlkode: <strong style="font-family:ui-monospace,monospace;letter-spacing:.05em">${escapeHtml(code)}</strong></p>`
     : ''
-  return `<!doctype html><html lang="da"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Børnelæring</title>
-<style>body{font-family:system-ui,-apple-system,sans-serif;display:flex;min-height:100vh;margin:0;
-align-items:center;justify-content:center;background:#F8FAFC;color:#1e293b;text-align:center;padding:24px}
-main{max-width:22rem}a{display:inline-block;margin-top:1.25rem;padding:.9rem 1.4rem;border-radius:14px;
-background:#6d28d9;color:#fff;text-decoration:none;font-weight:600;min-height:44px}</style></head>
-<body><main><h1 style="font-size:1.25rem">${escapeHtml(message)}</h1>
+  // `<a href="/">` IS A DEAD END IN THE SHELL, and worse than nothing. It is root-relative, so it
+  // navigates the SFSafariViewController SHEET into the web app rather than returning to the native
+  // app — the owner reported tapping "Tilbage til Børnelæring" and getting Børnelæring, inside the
+  // sheet, still signed out. There is no URL a script-free page can use to reach the app from here
+  // (the custom scheme is W5 layer 1 and needs a new binary), so say the true thing instead.
+  const onward =
+    client === 'shell'
+      ? `<p class="hint">Luk dette vindue for at vende tilbage til Børnelæring.</p>`
+      : `<a href="/">Tilbage til Børnelæring</a>`
+  return pageShell(`<h1 style="font-size:1.25rem">${escapeHtml(message)}</h1>
 ${codeBlock}
-<a href="/">Tilbage til Børnelæring</a></main></body></html>`
+${onward}`)
 }
 
 const escapeHtml = (s: string): string =>
   s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+
+/**
+ * The DOMAIN of the address an ID token names — never the address itself.
+ *
+ * `gmail.com` vs `privaterelay.appleid.com` is exactly the question a refused Apple sign-in leaves open,
+ * and it cannot be answered from the database (no Apple `account` row has ever been created) or from the
+ * refusal itself (the allowlist hook throws a message with no address in it). A domain is not personal
+ * data in the way the address is, and it is the smallest thing that settles "wrong account" vs "Hide My
+ * Email".
+ *
+ * CALLED ONLY ON THE FORBIDDEN PATH, i.e. strictly AFTER better-auth verified the token's signature and
+ * issuer — so this reads a claim that has already been checked, and the decode is not a trust decision.
+ * The charset test is belt-and-braces on top of `escapeHtml`.
+ */
+function emailDomainOf(idToken: string): string | null {
+  try {
+    const payload = idToken.split('.')[1]
+    if (!payload) return null
+    const claims = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8')) as { email?: unknown }
+    const email = typeof claims.email === 'string' ? claims.email : ''
+    const at = email.lastIndexOf('@')
+    if (at < 0) return null
+    const domain = email.slice(at + 1).toLowerCase()
+    return /^[a-z0-9][a-z0-9.-]{0,78}[a-z0-9]$/.test(domain) ? domain : null
+  } catch {
+    return null
+  }
+}
+
+/** The allowlist refusal, adult-facing. Same text on the page and in the app (via the flow row). */
+const forbiddenMessage = (domain: string | null): string =>
+  domain
+    ? `Denne konto har ikke adgang til Børnelæring. Adressen slutter på @${domain}.`
+    : 'Denne konto har ikke adgang til Børnelæring.'
 
 /**
  * Store WHY the OAuth callback failed, and return a short code to print on the page.
@@ -281,7 +386,17 @@ const escapeHtml = (s: string): string =>
  */
 async function reportOauthFailure(
   reason: string,
-  detail: { status?: number; googleError?: string; message?: string },
+  detail: {
+    /** MANDATORY. Three reports said `no-session-token-after-signin` and none of them said which
+     *  provider, so a Google fault and an Apple fault were indistinguishable in the listing. */
+    provider: OauthProvider
+    status?: number
+    /** The PROVIDER's own `error` string from a token exchange (`invalid_client`, …). */
+    providerError?: string
+    /** better-auth's own error `code` (`FORBIDDEN`, `INVALID_TOKEN`, …) — see `signInWithIdToken`. */
+    code?: string
+    message?: string
+  },
 ): Promise<string | null> {
   try {
     const res = await fetch(`${baseURL()}/api/bug-report`, {
@@ -294,15 +409,22 @@ async function reportOauthFailure(
           category: 'login',
           createdAt: new Date().toISOString(),
           sessionId: 'server',
-          note: `OAuth callback mislykkedes: ${reason}`,
+          // The note is what shows in the report LISTING, so the provider goes in it — that is the
+          // question every one of these reports failed to answer.
+          note: `OAuth callback mislykkedes: ${detail.provider} — ${reason}`,
           auth: {
             stage: 'oauth-callback',
             reason,
+            provider: detail.provider,
             status: detail.status,
-            code: detail.googleError,
+            code: detail.code ?? detail.providerError,
             // Message text only — never a token, a code or a URL with a query.
             errorName: detail.message?.slice(0, 200),
-            trail: [`server ${new Date().toISOString()} ${reason}`],
+            trail: [
+              `server ${new Date().toISOString()} ${detail.provider} ${reason}` +
+                (detail.status !== undefined ? ` status=${detail.status}` : '') +
+                (detail.code ? ` code=${detail.code}` : ''),
+            ],
           },
           app: { route: '/api/auth/family/oauth/callback', online: true },
           diagnostics: { console: [], network: [], breadcrumbs: [] },
@@ -322,6 +444,39 @@ const htmlResponse = (body: string, status = 200): Response =>
     status,
     headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' },
   })
+
+/**
+ * KILL THE FLOW, THEN RENDER ITS PAGE. Every failure branch that HAS a row goes through here.
+ *
+ * The page alone was never enough: it is rendered in the system browser / the other tab, while the app
+ * that is polling sits behind it with no way to learn anything. Stamping the row is what lets
+ * `/oauth/claim` answer 410-with-a-reason instead of `{status:'pending'}`, which is the difference
+ * between the adult seeing a Danish sentence immediately and the app polling a dead flow for its whole
+ * window (RC3).
+ *
+ * Best-effort on the write, deliberately: if the update throws we still render the page, and the client
+ * degrades to exactly the pre-W3 behaviour rather than losing the message too.
+ */
+async function failFlow(
+  adapter: Adapter & { update: (x: unknown) => Promise<unknown> },
+  row: OauthFlowRow,
+  opts: { message: string; code?: string | null; status?: number },
+): Promise<Response> {
+  try {
+    await adapter.update({
+      model: 'oauthFlow',
+      where: [{ field: 'id', value: row.id }],
+      update: {
+        failureCode: opts.code ?? null,
+        failureMessage: opts.message,
+        failedAt: new Date(),
+      },
+    })
+  } catch (e) {
+    console.error('[auth] could not mark the oauth flow as failed', e)
+  }
+  return htmlResponse(failureHtml(opts.message, opts.code, clientOf(row)), opts.status ?? 400)
+}
 
 export const familyPlugin = (): BetterAuthPlugin => ({
   id: 'family',
@@ -614,6 +769,16 @@ export const familyPlugin = (): BetterAuthPlugin => ({
           // Optional + defaulted so an older client (or a shell binary mid-rollout) keeps working
           // unchanged — it simply never asks for Apple.
           provider: z.enum(['google', 'apple']).optional(),
+          /**
+           * WHICH APP IS ASKING. Optional and defaulted to `web` for the same rollout reason.
+           *
+           * This is a HINT ABOUT PRESENTATION ONLY — which page the callback renders — and it is
+           * deliberately the only thing the request gets to choose. It never selects a redirect target,
+           * a scheme or a token endpoint: W5 layer 1's custom scheme is picked from a server-side
+           * allow-list keyed by tier, and the PROVIDER is already read off the stored row rather than
+           * off the request, for exactly this reason.
+           */
+          client: z.enum(['web', 'shell']).optional(),
         }),
       },
       async (ctx) => {
@@ -654,6 +819,10 @@ export const familyPlugin = (): BetterAuthPlugin => ({
             createdAt: new Date(now),
             expiresAt: new Date(now + OAUTH_FLOW_TTL_MS),
             claimedAt: null,
+            client: ctx.body.client ?? 'web',
+            failureCode: null,
+            failureMessage: null,
+            failedAt: null,
           },
         })
 
@@ -787,6 +956,22 @@ export const familyPlugin = (): BetterAuthPlugin => ({
           await adapter.delete({ model: 'oauthFlow', where: [{ field: 'id', value: row.id }] })
           throw new APIError('GONE', { message: 'Login-forsøget er udløbet.' })
         }
+        // THE CALLBACK ALREADY FAILED (W3). Before this branch existed, a dead flow was indistinguishable
+        // from a live one — same `state: 'used:…'`, same NULL `sessionToken` — so this endpoint answered
+        // `{status:'pending'}` and the app polled a corpse until its own timer gave up 220 s later
+        // (report 8AE9T). 410 is a status the client already treats as decisive; the message and the
+        // Fejlkode ride along so the adult reads the same sentence in the app that the callback page
+        // showed in the browser.
+        //
+        // The row is deliberately NOT deleted here: a claim answer that never arrives (a dropped
+        // response is exactly the situation this whole flow exists for) must be re-askable. It expires
+        // on its own and the next `/oauth/start` sweeps it.
+        if (row.failedAt) {
+          throw new APIError('GONE', {
+            message: row.failureMessage ?? 'Login mislykkedes. Prøv igen.',
+            code: row.failureCode ?? undefined,
+          })
+        }
         // The callback hasn't finished yet — this is the normal answer while the adult is on Google's
         // consent screen, and what the client's 3s poll expects.
         if (!row.sessionToken) return ctx.json({ status: 'pending' as const })
@@ -852,9 +1037,14 @@ export const familyPlugin = (): BetterAuthPlugin => ({
  * only the transport and the token endpoint differ. The PROVIDER is read off the stored flow row, not
  * off the request, so a caller cannot pick which token endpoint we talk to.
  *
- * Order is load-bearing and unchanged from the Google-only version: look the flow up by `state`,
+ * Order is load-bearing and mostly unchanged from the Google-only version: look the flow up by `state`,
  * refuse a replay, invalidate the state BEFORE the network hop, exchange, sign in, then park the
  * session token for the app to claim with its own `flowId`.
+ *
+ * ONE THING DID MOVE (W3): the "cancelled / no code" check used to run FIRST, before the row was ever
+ * read, and therefore returned a page while leaving the flow row looking exactly like a flow still in
+ * progress. Every branch that can identify a row now runs through `failFlow`, so the polling app learns
+ * the outcome instead of waiting out its own timer.
  */
 async function completeOauthCallback(
   adapter: Adapter & { update: (x: unknown) => Promise<unknown> },
@@ -862,7 +1052,8 @@ async function completeOauthCallback(
 ): Promise<Response> {
   const now = Date.now()
 
-  if (input.error || !input.code || !input.state) {
+  // No state at all: there is no flow to identify, let alone mark. Nothing can be done for the app here.
+  if (!input.state) {
     return htmlResponse(failureHtml('Login blev afbrudt.'), 400)
   }
 
@@ -873,11 +1064,28 @@ async function completeOauthCallback(
   if (!row || new Date(row.expiresAt).getTime() < now) {
     return htmlResponse(failureHtml('Login-linket er udløbet. Prøv igen i appen.'), 410)
   }
+  const client = clientOf(row)
   // Single-use: a replayed callback finds the token already parked and is refused. (One adult,
   // one browser at family scale, so a guarded read is sufficient here.)
   if (row.sessionToken) {
-    return htmlResponse(failureHtml('Dette login er allerede brugt.'), 410)
+    return htmlResponse(failureHtml('Dette login er allerede brugt.', null, client), 410)
   }
+  // A replayed callback for a flow that ALREADY failed re-renders its recorded verdict rather than
+  // starting a second exchange — same page, same Fejlkode, so the adult can still read the code out.
+  if (row.failedAt) {
+    return htmlResponse(
+      failureHtml(row.failureMessage ?? 'Login mislykkedes. Prøv igen i appen.', row.failureCode, client),
+      410,
+    )
+  }
+  // The adult tapped "Annullér" at the provider, or the provider sent no code. NOT a fault: no report
+  // and no Fejlkode — but decisive, so the app stops polling at once instead of waiting out its window.
+  if (input.error || !input.code) {
+    return failFlow(adapter, row, { message: 'Login blev afbrudt.', status: 400 })
+  }
+  // Bound to a local: narrowing a parameter's property does not survive the `await`s below in any way
+  // worth relying on, and this value is handed to a network call.
+  const authCode: string = input.code
   // Invalidate the state BEFORE the network hop, so a double-submit can't exchange twice.
   await adapter.update({
     model: 'oauthFlow',
@@ -897,7 +1105,7 @@ async function completeOauthCallback(
         body: new URLSearchParams(
           provider === 'apple'
             ? {
-                code: input.code,
+                code: authCode,
                 client_id: apple().clientId,
                 // NOT a stored string — a freshly signed ES256 JWT. See `apple-client-secret.ts`.
                 client_secret: appleClientSecret(now),
@@ -905,7 +1113,7 @@ async function completeOauthCallback(
                 grant_type: 'authorization_code',
               }
             : {
-                code: input.code,
+                code: authCode,
                 client_id: requireEnv('GOOGLE_CLIENT_ID'),
                 client_secret: requireEnv('GOOGLE_CLIENT_SECRET'),
                 redirect_uri: `${baseURL()}/api/auth/family/oauth/callback`,
@@ -921,10 +1129,11 @@ async function completeOauthCallback(
       // detail goes into the report instead, which is read-gated; the page shows only its code.
       console.error(`[auth] ${provider} token exchange failed`, tokenRes.status, body.error)
       const code = await reportOauthFailure('token-exchange-rejected', {
+        provider,
         status: tokenRes.status,
-        googleError: body.error,
+        providerError: body.error,
       })
-      return htmlResponse(failureHtml('Login mislykkedes. Prøv igen i appen.', code), 400)
+      return failFlow(adapter, row, { message: 'Login mislykkedes. Prøv igen i appen.', code, status: 400 })
     }
     // The access token the provider also returns here is DELIBERATELY DROPPED — see
     // `signInWithIdToken` below. Not read, not stored, not forwarded.
@@ -932,43 +1141,64 @@ async function completeOauthCallback(
   } catch (e) {
     console.error(`[auth] ${provider} token exchange threw`, e)
     const code = await reportOauthFailure('token-exchange-threw', {
+      provider,
       message: e instanceof Error ? `${e.name}: ${e.message}` : String(e),
     })
-    return htmlResponse(failureHtml('Login mislykkedes. Prøv igen i appen.', code), 500)
+    return failFlow(adapter, row, { message: 'Login mislykkedes. Prøv igen i appen.', code, status: 500 })
   }
 
-  let sessionToken: string | null
+  let outcome: SignInOutcome
   try {
-    sessionToken = await signInWithIdToken(idToken, provider)
+    outcome = await signInWithIdToken(idToken, provider)
   } catch (e) {
-    // The allowlist hook (§4.8) throws FORBIDDEN here for a non-permitted address — the single
-    // most important refusal in the whole design, since nothing else stops a stranger from
-    // legitimately burning Azure and Google quota.
-    //
-    // APPLE MAKES THIS REACHABLE IN A NEW WAY: "Hide My Email" mints an
-    // `@privaterelay.appleid.com` address, which is not on the list and never will be. The refusal is
-    // correct and its message already says so; the adult's fix is to share their real address.
+    // A GENUINE THROW is now rare and therefore informative: `asResponse` converts every APIError into
+    // a Response (see `SignInOutcome`), so what lands here is a fault OUTSIDE the endpoint contract —
+    // the database being down, the dynamic `./auth.js` import failing, a bug. It keeps its historical
+    // slug so old report codes still resolve to the same thing.
     const forbidden = e instanceof APIError && e.status === 'FORBIDDEN'
-    if (!forbidden) console.error('[auth] signInSocial(idToken) failed', e)
-    // A forbidden address is a WORKING refusal, not a fault — it already says exactly what is
-    // wrong, so it needs no code and no report. Everything else is a fault we cannot otherwise see.
+    if (!forbidden) console.error('[auth] signInSocial(idToken) threw', e)
     const code = forbidden
       ? null
       : await reportOauthFailure('signin-with-id-token-failed', {
+          provider,
           message: e instanceof Error ? `${e.name}: ${e.message}` : String(e),
         })
-    return htmlResponse(
-      failureHtml(
-        forbidden ? 'Denne konto har ikke adgang til Børnelæring.' : 'Login mislykkedes. Prøv igen i appen.',
-        code,
-      ),
-      forbidden ? 403 : 500,
-    )
+    return failFlow(adapter, row, {
+      message: forbidden
+        ? forbiddenMessage(emailDomainOf(idToken))
+        : 'Login mislykkedes. Prøv igen i appen.',
+      code,
+      status: forbidden ? 403 : 500,
+    })
   }
-  if (!sessionToken) {
-    const code = await reportOauthFailure('no-session-token-after-signin', {})
-    return htmlResponse(failureHtml('Login mislykkedes. Prøv igen i appen.', code), 500)
+
+  if (!outcome.ok) {
+    // THE ALLOWLIST REFUSAL (§4.8) — the single most important refusal in the design, since nothing
+    // else stops a stranger from completing sign-in on the public URL and legitimately burning Azure
+    // and Google quota. It arrives as a 403 RESPONSE, not as a throw, which is precisely why this copy
+    // was unreachable through OAuth until now.
+    //
+    // APPLE MAKES IT REACHABLE IN A NEW WAY: "Hide My Email" mints an `@privaterelay.appleid.com`
+    // address, which is not on the list and never will be. So the page names the address's DOMAIN —
+    // `gmail.com` vs `privaterelay.appleid.com` — which is what separates "wrong account" from "Hide My
+    // Email" without ever printing the address. It stays a WORKING refusal: no Fejlkode, no report.
+    const verdict = classifySignInFailure(outcome)
+    if (verdict.kind === 'forbidden') {
+      const domain = emailDomainOf(idToken)
+      console.warn(`[auth] ${provider} sign-in refused by the allowlist (domain: ${domain ?? 'unknown'})`)
+      return failFlow(adapter, row, { message: forbiddenMessage(domain), status: 403 })
+    }
+    console.error(`[auth] ${provider} signInSocial(idToken) refused`, outcome.status, outcome.code)
+    const reason = verdict.reason
+    const code = await reportOauthFailure(reason, {
+      provider,
+      status: outcome.status,
+      code: outcome.code,
+      message: outcome.message,
+    })
+    return failFlow(adapter, row, { message: 'Login mislykkedes. Prøv igen i appen.', code, status: 500 })
   }
+  const sessionToken = outcome.token
 
   await adapter.update({
     model: 'oauthFlow',
@@ -976,11 +1206,12 @@ async function completeOauthCallback(
     update: { sessionToken, expiresAt: new Date(now + OAUTH_CLAIM_TTL_MS) },
   })
 
-  // Straight back into the app — no interstitial, no inline script, nothing for a CSP to block.
-  return returnToApp()
+  // Straight back into the app — no interstitial, no inline script, nothing for a CSP to block. The
+  // shell gets a terminal page instead of the 302; see `returnToApp`.
+  return returnToApp(client)
 }
 
-async function signInWithIdToken(idToken: string, provider: OauthProvider): Promise<string | null> {
+async function signInWithIdToken(idToken: string, provider: OauthProvider): Promise<SignInOutcome> {
   // A DYNAMIC import breaks what would otherwise be a static cycle (lib/auth.ts imports this module
   // to register the plugin). By the time this runs, lib/auth.ts is fully evaluated.
   //
@@ -1001,8 +1232,10 @@ async function signInWithIdToken(idToken: string, provider: OauthProvider): Prom
     },
     asResponse: true,
   })
-  if (!(res instanceof Response)) return null
-  return res.headers.get('set-auth-token')
+  // READ THE BODY — `asResponse` RETURNS an APIError rather than throwing it, so this is the only place
+  // the real reason exists. See `lib/oauth-signin-outcome.ts`, which owns that reading and is unit-
+  // testable against real Response objects.
+  return readSignInResponse(res)
 }
 
 /** Shared by the endpoints that take a 4-digit code. Kept here so both PIN routes agree. */

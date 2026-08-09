@@ -49,11 +49,24 @@ const appleProvider = (() => {
       // better-auth needs this only to VERIFY an id_token we already hold; our own token exchange
       // mints its own short-lived JWT in `apple-client-secret.ts`.
       clientSecret: appleClientSecret(),
-      // A native sheet would present a bundle-id audience rather than the Services ID. Listing it
-      // keeps one code path if that is ever added; harmless when unset.
-      ...(optionalEnv('APPLE_BUNDLE_ID')
-        ? { appBundleIdentifier: optionalEnv('APPLE_BUNDLE_ID') }
-        : {}),
+      // EXPLICIT `audience`, AND NEVER `appBundleIdentifier` — that spread is what killed Apple
+      // sign-in on staging (sign-in reliability PRD RC1). better-auth resolves the expected `aud` as
+      //   options.audience?.length ? options.audience : options.appBundleIdentifier ? options.appBundleIdentifier : options.clientId
+      // (`@better-auth/core/dist/social-providers/apple.mjs`, verifyIdToken), so the bundle id
+      // REPLACES the Services ID rather than joining it. Our `response_mode=form_post` web token
+      // carries `aud` = the Services ID, so `jwtVerify` threw, `verifyIdToken` returned false, and
+      // `signInSocial` raised UNAUTHORIZED/INVALID_TOKEN — with APPLE_BUNDLE_ID *set*, which it is on
+      // staging. The old comment ("harmless when unset") was true as written and missed that it is
+      // harmful when set.
+      //
+      // An ARRAY accepts both: the Services ID for the web sheet we ship today, and a bundle id for a
+      // future native one. `audience` wins the precedence chain outright, which is the whole point —
+      // do not go back to relying on `appBundleIdentifier` being absent. Guarded by
+      // `lib/appleAudience.test.ts`, which also re-reads that expression out of node_modules so a
+      // better-auth bump that changes it fails here rather than on the owner's iPad.
+      audience: [cfg.clientId, optionalEnv('APPLE_BUNDLE_ID')].filter(
+        (a): a is string => !!a,
+      ),
     }
   } catch (e) {
     console.error('[auth] APPLE_* is set but the client secret could not be signed — Apple disabled', e)

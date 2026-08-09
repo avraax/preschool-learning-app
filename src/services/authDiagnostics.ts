@@ -105,6 +105,30 @@ export function getLastAuthReportCode(): string | null {
   return lastCode
 }
 
+const publishCode = (code: string | null): void => {
+  lastCode = code
+  listeners.forEach((fn) => {
+    try {
+      fn(lastCode)
+    } catch {
+      /* ignore */
+    }
+  })
+}
+
+/**
+ * Show a Fejlkode the SERVER minted, not this module.
+ *
+ * The OAuth callback runs where the SPA does not: it stores its own report and prints the code on a
+ * page in the system browser. When the claim then comes back 410-with-that-code (W3), the app is the
+ * only surface the adult is still looking at — and the lock screen already has the one line that can
+ * carry it. Without this the adult reads the code off a sheet they are about to close, or not at all.
+ */
+export function noteServerReportCode(code: string | null): void {
+  if (!code) return
+  publishCode(code)
+}
+
 /**
  * Auto-upload a failed sign-in. Returns the short code, or null if nothing was sent.
  *
@@ -158,14 +182,7 @@ export async function reportAuthFailure(
     // carry the account email or a PIN pad's contents (`.claude/rules/auth.md`).
     const shot = await captureScreenshot().catch(() => null)
     const result = await submitBugReport(payload, shot)
-    lastCode = result.id
-    listeners.forEach((fn) => {
-      try {
-        fn(lastCode)
-      } catch {
-        /* ignore */
-      }
-    })
+    publishCode(result.id)
     return result.id
   } catch {
     // Offline, or the endpoint is down — the trail is still in the console ring for a later report.

@@ -283,9 +283,13 @@ const LockScreen: React.FC = () => {
               </Typography>
             )}
             {/* A failed sign-in auto-uploads a report (authDiagnostics). This is the ONLY place its code
-                can be shown: the ⚙️ that normally reports lives inside <App />, behind this very gate, so
-                without this line the adult has a failure and no way to point anyone at it. Adult-facing
-                and deliberately plain — the child never reaches this screen. */}
+                can be shown: the door to the adult surface lives inside <App />, behind this very gate,
+                so without this line the adult has a failure and no way to point anyone at it.
+                Adult-facing and deliberately plain — the child never reaches this screen.
+                It carries a SERVER-minted code identically (a failed OAuth callback stores its own
+                report and hands the code back on the claim's 410 — sign-in reliability PRD W3): the
+                adult does not care which side stored it, and the page it was printed on is in a
+                system-browser sheet they are about to close. */}
             {authReportCode && (
               <Typography variant="caption" sx={{ display: 'block', mb: 2, opacity: 0.85 }}>
                 Fejlrapport sendt. Kode: <strong>{authReportCode}</strong>

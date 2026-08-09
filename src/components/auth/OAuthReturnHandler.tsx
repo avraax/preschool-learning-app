@@ -7,8 +7,9 @@
 // Three paths, and the second one is NOT belt-and-braces — it is what makes the flow survive iOS
 // simply not handing control back to the app:
 //   * FAST:     the fragment triggers a claim on the next paint.
-//   * RECOVERY: poll every 3s for ≤3 min, PLUS on every visibilitychange:visible, PLUS on the next
-//               cold boot while a pending flow exists.
+//   * RECOVERY: poll every 3s, PLUS on every visibilitychange:visible, PLUS on the next cold boot while
+//               a pending flow exists. The give-up ceiling is the SERVER's flow TTL (10 min) counted in
+//               FOREGROUND time only — see `oauthPollWindow.ts`, and RC4 in the sign-in reliability PRD.
 //   * WRONG CONTEXT: `#bl_auth=1` present but no local flowId ⇒ we are the in-app browser view, which
 //               CANNOT steal the session because it has no flowId. Show WrongContextNotice.
 //
@@ -25,9 +26,12 @@ import {
 } from '../../services/authSignIn'
 import { noteAuthStep, reportAuthFailure } from '../../services/authDiagnostics'
 import { AUTH_Z } from './authOverlayZ'
-
-const POLL_INTERVAL_MS = 3000
-const POLL_WINDOW_MS = 3 * 60 * 1000
+import {
+  createPollWindow,
+  POLL_INTERVAL_MS,
+  sampleWindow,
+  windowExhausted,
+} from './oauthPollWindow'
 
 const hasAuthFragment = (): boolean => {
   try {
@@ -49,6 +53,8 @@ const stripFragment = (): void => {
 
 const OAuthReturnHandler: React.FC = () => {
   const [wrongContext, setWrongContext] = useState(false)
+  // Never go back to Date.now() - current.startedAt > POLL_WINDOW_MS wall-clock accounting,
+  // and never useRef<number>(Date.now()) for the window either.
   const claiming = useRef(false)
 
   const attempt = useCallback(async () => {
@@ -102,7 +108,20 @@ const OAuthReturnHandler: React.FC = () => {
     // the app that DOES hold the flowId was the one that had stopped listening. Measured shape: report
     // F9BJX, 2026-08-08, plus four identical ones on 4–5 Aug; the adult's second attempt then works,
     // because by then a pending flow existed at mount and the poll was armed.
+
+    // THE WINDOW IS FOREGROUND TIME, NOT WALL-CLOCK. See `oauthPollWindow.ts` for the measured reason —
+    // iOS froze this webview for 210 s behind the sign-in sheet, and wall-clock accounting then threw
+    // away a flow the server would still have honoured. It is per-effect state rather than a ref because
+    // it belongs to this poll loop and nothing else reads it.
+    let pollWindow = createPollWindow(Date.now())
+    const sample = () => {
+      pollWindow = sampleWindow(pollWindow, Date.now(), document.visibilityState === 'visible')
+    }
+
     const onVisible = () => {
+      // Sample on BOTH transitions: a hidden stretch that ends here would otherwise be measured only by
+      // whichever tick happened to follow it.
+      sample()
       if (document.visibilityState === 'visible') void attempt()
     }
     document.addEventListener('visibilitychange', onVisible)
@@ -110,25 +129,35 @@ const OAuthReturnHandler: React.FC = () => {
     const poll = setInterval(() => {
       const current = readPendingFlow()
       // Nothing in flight: idle, and NOT a give-up — the flow may not have started yet.
-      if (!current) return
-      // The window is measured from the FLOW's start, not from this component's mount. Mount time was
-      // wrong the moment the poll outlived a single round trip: an app open for an hour would have
-      // "exhausted" its window before the adult ever tapped the button.
-      if (Date.now() - current.startedAt > POLL_WINDOW_MS) {
-        // THE SILENT DEAD END. This used to just `clearInterval` and return: three minutes of polling,
-        // then nothing — no message, no log, no report, and a lock screen that simply sat there. It is
-        // the reason a failed login left no data twice over. A give-up is a decisive failure; report it.
+      if (!current) {
+        // Keep the clock honest for the NEXT flow: an idle stretch must not be charged to it.
+        pollWindow = createPollWindow(Date.now())
+        return
+      }
+      sample()
+
+      // CLAIM FIRST, ALWAYS. This used to evaluate the give-up window and `return` before ever asking the
+      // server, so the very first tick after the sheet closed — the one tick that would have succeeded —
+      // was spent throwing the flow away instead. A flow is only dead when the SERVER says so or when we
+      // have genuinely watched for longer than the server keeps it.
+      void attempt().then(() => {
+        // A decisive answer (404/410, since W3 with the reason and the Fejlkode) has already cleared the
+        // flow and told the adult. That is the one SILENT stop — adding a second report here would file
+        // a duplicate for a fault the server already recorded.
+        if (!readPendingFlow()) return
+        if (!windowExhausted(pollWindow)) return
+        // THE SILENT DEAD END, still reported. This used to just `clearInterval`: three minutes of
+        // polling, then nothing — no message, no log, no report, and a lock screen that simply sat
+        // there. A timer expiry is a decisive failure and stays one.
         //
-        // It CLEARS the flow rather than the interval now, because the interval has to survive for the
+        // It CLEARS the flow rather than the interval, because the interval has to survive for the
         // adult's next attempt. Same effect for this flow — the loop goes idle on the next tick — and
         // the report is deduped by `stage|reason` anyway.
         clearPendingFlow()
         void reportAuthFailure('google-claim', 'poll-window-exhausted', {
-          note: `${Math.round(POLL_WINDOW_MS / 1000)}s`,
+          note: `${Math.round(pollWindow.foregroundMs / 1000)}s foreground`,
         })
-        return
-      }
-      void attempt()
+      })
     }, POLL_INTERVAL_MS)
 
     return () => {
