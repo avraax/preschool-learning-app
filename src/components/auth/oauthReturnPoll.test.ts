@@ -47,6 +47,23 @@ test('the poll and the visibility listener are armed unconditionally', () => {
   )
 })
 
+test('a cold boot with a pending flow claims immediately', () => {
+  // Scenario B4: the app is killed mid-round-trip, and the session the callback parked is still sitting
+  // on the flow row. Nothing else recovers it — the fragment is gone (a cold boot is not the return
+  // navigation), so without this the adult waits a full poll interval at best, and on a shell cold boot
+  // the flow can expire while the app looks idle.
+  assert.match(effect, /if \(pending\) void attempt\(\)/, 'a cold boot no longer claims a pending flow')
+  // It must sit in the EFFECT BODY, not inside the tick — the whole body runs in one synchronous task at
+  // mount, so its position among the other statements there does not matter, but being moved into the
+  // interval would cost a full 3s before the first attempt. Ordering against `setInterval(` is a cheap
+  // forward-looking guard rather than a claim that the current order is load-bearing: re-breaking it by
+  // moving the call a few lines later left the behaviour identical, correctly.
+  assert.ok(
+    effect.indexOf('if (pending) void attempt()') < effect.indexOf('setInterval('),
+    'the cold-boot claim moved into or after the poll — it is no longer a cold-boot claim',
+  )
+})
+
 test('the tick CLAIMS before it evaluates the give-up window', () => {
   // RC4's second half. The tick used to test the window first and `return` — so the one tick that would
   // have succeeded, the first after the sign-in sheet closed, was spent throwing the flow away instead.
