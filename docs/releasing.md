@@ -40,6 +40,33 @@ review on it.
    TestFlight track and play it again.
 5. Only then submit **that exact build** in App Store Connect. Never a build nobody has touched.
 
+## Before you submit to the App Store: re-shoot the screenshots
+
+**Do this last, and treat it as part of submitting rather than as work already done.** The App Store
+screenshots live in `docs/app-store/shots/` and are the one thing that goes stale silently: nothing fails,
+no test goes red, and the store page simply shows an app you no longer ship. Measured once — ten of them
+were three days old and already wrong, because that week had quietened the section-label pills, moved the
+profile badge, shrunk the reward count badge and deleted the floating gear. None of that breaks anything;
+all of it is visible in a screenshot.
+
+So the order on the day is: **finish any UI change → re-shoot → attach the build → submit.** Re-shooting
+before the last UI change just means doing it twice.
+
+Ten of the twelve are one mechanical pass with `webkit.mjs`, using the shot list and exact sizes in
+`docs/app-store/listing.md` §2.2. Two things to get right, both of which have cost a run:
+
+- **Remove the backend pill before capturing** (`[data-backend-badge]`). The dev build shows `TEST ·
+  localhost:5173`; production shows nothing, so deleting it in the capture is honest rather than a cheat.
+- **Playwright writes RGBA and App Store Connect wants RGB.** Check byte 25 of the PNG header is `2`
+  after any capture, and convert with `ffmpeg -pix_fmt rgb24` if it is `6`.
+
+**The two "Til de voksne" shots cannot currently be automated — take them on the iPad.** The harness
+reaches the arithmetic parental gate reliably but crashes WebKit the moment the gate is *solved* and the
+adult surface mounts (four attempts, "Target crashed"). Your iPad Pro 12.9" captures natively at
+2732×2048, which is exactly what the required 13" slot accepts, and TestFlight already has the build — so
+that is the shorter path, not a workaround. The iPhone one has no such escape: an iPhone 13 is 6.1"
+(1170×2532) and the slot wants 6.9" (2868×1320), so it needs the harness fixed or left alone.
+
 ## Which app am I looking at?
 
 Three ways, in increasing effort:
