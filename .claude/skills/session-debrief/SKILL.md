@@ -34,22 +34,25 @@ keeps the existing guardrails accurate. It is the maintainer of CLAUDE.md, `.cla
 3. **No duplication or contradiction.** Read what already exists first; extend it rather than adding a
    second source of truth. If new work contradicts a current guardrail, the guardrail is now wrong —
    fix it.
-4. **Propose before writing — always wait for confirmation.** Present the full proposal first,
-   **grouped by area** (CLAUDE.md · Rules · Skills · Subagents), each item as *what → where → why*
-   with a one-line preview of the change. Do NOT write to `.claude/**` or CLAUDE.md until the user
-   confirms; they may accept a subset. Nothing is a shared, durable action taken behind their back.
-5. **Flag divergences.** If a change we made diverges from what CLAUDE.md or a rule currently states,
-   call it out explicitly and confirm before rewriting maintained prose.
+4. **Apply everything, then report — do not ask which items to keep.** Decide what belongs (that
+   judgement is the job) and write it. Then report **grouped by area** (CLAUDE.md · Rules · Skills ·
+   Subagents), each item as *what → where → why*. The owner asked for this explicitly, twice: a
+   proposal he has to approve item-by-item is a second round of work for a decision he already
+   delegated. Restraint belongs in principle #1 — cut a weak item, don't turn it into a question.
+5. **Flag divergences loudly.** If a change we made contradicts what CLAUDE.md or a rule currently
+   states, rewrite the stale prose and give it **its own line in the report** — the owner maintains
+   that prose, and every edit here is committed, so calling it out is what makes it revertible.
 
-## The budget (PRD session-01) — check it before you propose anything
+## The budget (PRD session-01) — check it before you write anything
 
 This system regrew to ~21,400 tokens on every session and ~40,400 tokens injected by opening one game
 component, entirely through debriefs adding a paragraph at a time with nothing to notice. It is now
 enforced by `src/config/contextBudget.test.ts`, which fails the build. So:
 
-- **Run `npm run context:check` first** and show the current numbers with your proposal.
-- **State the byte and token impact of every proposed item**, per artifact. "Adds ~600 B to
-  `games-math.md`" is part of the proposal, not an afterthought.
+- **Run `npm run context:check` first**, and again after writing; report both numbers.
+- **State the byte and token impact of every item**, per artifact. "Adds ~600 B to `games-math.md`" is
+  part of the report, not an afterthought. An item that cannot justify its bytes gets cut, not asked
+  about.
 - **Every new rule needs a `paths:` block.** The one exception (`working-in-this-tree.md`) is declared
   in the guard with a reason and a cap; a second exception needs the same.
 - **A glob may not be wider than the rule's subject**, and `src/components/**/*.tsx` is reserved for
@@ -91,9 +94,9 @@ Prompts are per-model artifacts. Four patterns that cost quality on Opus 5, all 
 3. **Survey** the existing guardrails: skim `CLAUDE.md`, `.claude/rules/`, `.claude/skills/`,
    `.claude/agents/` so you extend, don't duplicate or contradict.
 4. **Route** each surviving item to the right artifact (see below).
-5. **Propose, grouped by area** (CLAUDE.md · Rules · Skills · Subagents) — see principle #4. Wait for
-   the user to confirm which items to apply.
-6. **Apply** only the confirmed items, then **validate** (see "After writing").
+5. **Apply** every surviving item — no approval round (principle #4).
+6. **Validate** (see "After writing"), then **report, grouped by area** (CLAUDE.md · Rules · Skills ·
+   Subagents).
 
 ## Choosing the artifact
 
@@ -139,7 +142,8 @@ constraints, and minimal examples for skills/subagents. The essentials:
   the agent list; if it doesn't, check the YAML frontmatter parses.
 - Sanity-check the `description` actually reads like the moment it should trigger.
 - **Run `npm run context:check` again** and report the before/after budget alongside the change list.
-- Report what changed and where, and note anything left for the user to ratify.
+- Report what changed and where, name what you deliberately cut and why, and flag any maintained prose
+  you rewrote (principle #5) so the owner can push back on it.
 
 ## Hand off to `/guardrail-audit` when it is due
 
