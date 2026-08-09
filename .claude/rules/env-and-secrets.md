@@ -143,6 +143,10 @@ not cover it and a `iad1` store sat there unnoticed for 27 days.
   afterwards with **`vercel integration resource connect <store> <project>`** (blob stores show up as
   marketplace resources), which is also the only command exposing **`--prefix`**. Note the prefix
   *replaces* `BLOB`: `--prefix EU` yields `EU_READ_WRITE_TOKEN`, not `EU_BLOB_READ_WRITE_TOKEN`.
+- **`delete-store` refuses a non-empty store (409) — but only AFTER it has already dropped the
+  store's project connection.** So a failed delete still changes state; run `vercel blob empty-store
+  --yes --rw-token <that store's token>` first (the token keeps working once disconnected), then
+  delete. Copy and verify before emptying: this is the irreversible step.
 - **Let the connection own the var, never hand-add it.** `delete-store` issues
   `DELETE /connections`, so a hand-made `BLOB_READ_WRITE_TOKEN` sharing that name is at risk when the
   old store is removed. The clean swap is: `env rm` the old var → `resource disconnect` → `resource
