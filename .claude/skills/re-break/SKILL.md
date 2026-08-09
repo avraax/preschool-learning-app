@@ -58,8 +58,24 @@ re-break pass in the accounts session.
 Write a throwaway harness (scratchpad, not the repo) holding a table of
 `{ name, file, from, to, expect, testFile? }` — `from`/`to` are exact string swaps, `expect` is a
 substring of the test's *name*. For each entry: read the file, assert the anchor exists (a missed anchor
-is a silent skip — count it as a failure), write the mutation, run `node --test <testFile>`, restore the
+is a silent skip — count it as a failure), write the mutation, run
+`node --import ./scripts/js-to-ts-resolve.mjs --test <testFile>`, restore the
 original, then check the red lines for `expect`. Exit non-zero unless every entry flipped its own test.
+
+**The loader is not optional, and this file said `node --test <testFile>` until it cost a session.**
+Without `--import ./scripts/js-to-ts-resolve.mjs` the file fails to load at all, so EVERY test in it goes
+red — identically for a real break, a bogus break, and an unmodified file. Three re-breaks were read as
+"the guard fires" before the restored control also came back red and gave it away.
+
+**So run the control FIRST: the unmodified file must PASS.** A red control means the harness is wrong,
+not the guard. This is the same discipline as a probe's known-negative control
+(`.claude/rules/working-in-this-tree.md`) and it fails the same way — a check that answers the same
+thing to every input feels like evidence and is not. The Google redirect-URI probe in
+`.claude/rules/env-and-secrets.md` reported REGISTERED for a fabricated domain for exactly this reason.
+
+**Commit the fix before re-breaking it.** The restore step is `git checkout --` or a blind write-back,
+and either one discards an uncommitted fix along with the mutation — a `git checkout` meant to undo one
+mutation deleted a whole yaml fix that had never been committed.
 Run it from the **repo root** — relative paths break otherwise, and a mid-run crash can leave a file
 mutated.
 

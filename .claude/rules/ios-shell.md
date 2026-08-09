@@ -80,6 +80,18 @@ all of which had been proposed first.
 **`betaTesters.state` is the field to read** before theorising about a tester who "sees nothing":
 `INVITED` = sent, never accepted. `INSTALLED` = it already worked.
 
+**The age rating hangs off `appInfo`, NOT `appStoreVersion`, and the wrong parent 404s rather than
+erroring.** `/v1/appStoreVersions/<id>/ageRatingDeclaration` returns 404 even when the rating is set;
+`/v1/appInfos/<id>/ageRatingDeclaration` is the live one and carries `kidsAgeBand` +
+`parentalControls`. A 404 there was reported to the owner as "Made for Kids did not save" — about the one
+setting that cannot be undone after review — while `appStoreAgeRating: FOUR_PLUS` sat on the appInfo the
+whole time. `appInfo.attributes.kidsAgeBand` is separately unreliable: it reads empty while the
+declaration holds `SIX_TO_EIGHT`. **Read the declaration on the appInfo; trust nothing else.**
+
+**A 404 from this API means "wrong parent" at least as often as "not set".** Before reporting anything
+absent, dump the parent's `relationships` keys and try the ones that exist — that is what distinguished
+a stale endpoint from a missing declaration here.
+
 ## TWO apps on the iPad, two workflows, one signing history (staging PRD W7)
 
 The owner-facing "how do I ship this" version is `docs/releasing.md` — point him there rather than

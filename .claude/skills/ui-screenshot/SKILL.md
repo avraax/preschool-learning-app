@@ -74,6 +74,24 @@ the UI would make the answer more correct, use it. Skip it for pure logic/backen
 
 Then **view a saved PNG with the Read tool** (it renders images).
 
+## Three driver limits that read as app bugs
+
+- **`--eval` is NOT repeatable**, unlike `--click`/`--wait-for`/`--type`. Pass two and only one runs,
+  silently — a multi-step interaction has to be ONE eval that schedules the rest with `setTimeout`, then
+  a `--wait` long enough to cover it. Wrap it as `(()=>{ … })()`: a bare `return` is a syntax error.
+- **Solving the guest arithmetic gate crashes the WebKit target.** `--click '[aria-label="Til de
+  voksne"]'` reaches the gate reliably and `[data-guest-gate-prompt]` reads its own question, but the
+  moment the answer completes and the lazy adult surface mounts, the run dies with "Target crashed" or
+  "context has been closed" — four attempts, reproducible. Not the app: the same path is fine on a
+  device. So **the adult surface cannot currently be captured in real guest mode.** `?nogate=1` reaches
+  it (the badge then reads the dev child, not `Gæst`), or capture on the iPad.
+- **The dev build renders a backend pill** (`[data-backend-badge]`, `TEST · localhost:5173`). Remove it
+  in the `--eval` before any capture that leaves this repo. Production renders none by construction, so
+  deleting it is accurate rather than a cheat — `backendLabel()` returns null there.
+
+App Store captures have their own rules — exact slot sizes, RGB not RGBA, and which screens go in which
+slot — in `docs/app-store/listing.md` §2.2 and `docs/releasing.md`.
+
 ## Cleanup
 Delete temp PNGs when done. Chrome is killed each run. Stop the dev servers (free 3001/5173) if you
 started them only for the test.
