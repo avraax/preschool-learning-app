@@ -178,6 +178,36 @@ table, and our five (`childProfile`, `profileProgress`, `familyPin`, `pinAttempt
   `?nogate=1` has no account and never will, so without it `progressStore` stays inert — `?rewards=n`
   awaits `whenAttached()` forever and the mandatory create dialog covers every screenshot recipe. It is
   never written to the roster cache, and `progressSync` already refuses to sync under the bypass.
+- **better-auth ANSWERS with its errors; it does not throw them, and it rewrites the ones it forwards.**
+  Two separate traps, both of which shipped as "handled" code that could never run:
+  `asResponse: true` makes better-call **return** an `APIError` converted to a Response
+  (`dist/endpoint.mjs`), so a `try/catch` around `signInSocial` is dead — read `res.status` and the JSON
+  body instead. And the allowlist hook's `FORBIDDEN` never arrives as one: `handleOAuthUserInfo` reduces
+  it to `{ error: <message> }` and `sign-in.mjs` re-throws `APIError.from("UNAUTHORIZED", { message,
+  code: "OAUTH_LINK_ERROR" })`, so **the status and the code are both discarded and only the MESSAGE
+  survives**. `ALLOWLIST_REFUSED_MESSAGE` is therefore a contract shared by the hook and
+  `classifySignInFailure`, not copy. Consequence to remember: every distinct OAuth failure looked
+  identical for weeks, and the refusal copy was unreachable — twice, because the first fix only addressed
+  the first trap.
+- **Apple's expected `aud` is `audience` OR `appBundleIdentifier`, never both.** better-auth resolves
+  `options.audience?.length ? options.audience : options.appBundleIdentifier ? … : options.clientId`, so
+  a bundle id **replaces** the Services ID. Our web token carries the Services ID, so setting
+  `APPLE_BUNDLE_ID` alone made every Apple sign-in fail verification — silently, for the life of the
+  feature. Always set an explicit `audience` array.
+- **A failed OAuth callback must STAMP the flow row** (`failureCode`/`failureMessage`/`failedAt`), or it
+  is byte-identical to a flow still on the consent screen and `/oauth/claim` answers `pending` to a
+  corpse. The client's poll counts its give-up window in **foreground time with a per-sample cap**,
+  because iOS freezes the webview behind `SFSafariViewController` and a wall-clock window discards a flow
+  the server would still honour. Claim first, evaluate the window second.
+- **The shell cannot be handed back with a URL the web uses.** `/#bl_auth=1` boots the whole web app
+  inside the sheet; `<a href="/">` navigates the sheet. `/oauth/start` records `client`
+  (`web`/`shell`/`shell-scheme`) and the callback answers accordingly. `shell-scheme` is a **capability**
+  the client claims only after registering `appUrlOpen` — the scheme itself comes from a tier-keyed table
+  on the server, never from the request.
+- **A fake OIDC provider exists for local drives** (`lib/fake-oidc.ts`, `AUTH_FAKE_PROVIDER=1`), gated on
+  the flag + runtime + tier and refused at four doors. `.claude/skills/ui-screenshot/oauth-probe.mjs`
+  drives every branch; budget one full run per 10 minutes against `/oauth/start`'s rate limit. It is what
+  found the `OAUTH_LINK_ERROR` rewrap above, so reach for it before reasoning about a sign-in branch.
 - **`set-auth-token` is the SIGNED cookie value** (`<rawToken>.<hmac>`), NOT `session.token`.
   `internalAdapter.findSession()` takes the RAW token, so the OAuth claim must split on `.` first —
   looking the signed value up returns null and bounces the adult back to the lock screen *after* a
