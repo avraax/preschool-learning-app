@@ -106,7 +106,11 @@ test('the ring stroke and radius still match ProgressionCompanion', () => {
   assert.equal(ringStroke(46), 5)
   assert.equal(ringRadius(46), 20.5)
   assert.equal(ringStroke(34), 4) // the 4px floor bites below size 45
-  assert.equal(badgeSize(46, false), 21)
+  // 20, not the old 21: the ratio dropped 0.46 → 0.36 to match ProfileBadge's letter, so every shipped
+  // non-compact size now rests on the 20px floor. Pinned as a literal so that is a deliberate act.
+  assert.equal(badgeSize(46, false), 20)
+  assert.equal(badgeSize(52, false), 20, 'the home ring badge was 24 at 0.46 — the owner read it as too big')
+  assert.equal(badgeSize(34, true), 16, 'the compact floor is untouched by the ratio change')
 })
 
 test('the badge can never reach three digits, which the derived gap does NOT allow for', () => {

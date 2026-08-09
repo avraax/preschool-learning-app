@@ -231,7 +231,9 @@ const RewardRing: React.FC<RewardRingProps> = ({
             alignItems: 'center',
             justifyContent: 'center',
             fontFamily: '"Comic Sans MS", "Comic Neue", sans-serif',
-            fontWeight: 800,
+            // 700, not 800 (owner, 2026-08-09: the numeral read as "bold and too big"). The disc shrank
+            // with it — see `badgeSize` — and the pair now matches ProfileBadge's letter beside it.
+            fontWeight: 700,
             fontSize: Math.round(badgeSize * 0.62),
             lineHeight: 1,
             // Deliberately NO softShadow/contactShadow/gradient/border — see the header.

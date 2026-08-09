@@ -58,9 +58,19 @@ export const ringRadius = (size: number): number => (size - ringStroke(size)) / 
  * The compact floor is **16, not 20** (D4): 20px on a 34px ring is 59% of the diameter, which is the
  * actual defect behind the tight fit at phone-landscape size — the badge was never the right size
  * there, it was the 20px floor leaking onto a ring less than half the default's area.
+ *
+ * **The ratio is 0.36, down from 0.46** (owner, 2026-08-09: "the number 10 seems bold and too big to
+ * fit in where it is"). At 0.46 the badge was 24px on the 52px home ring — 46% of the diameter — while
+ * `ProfileBadge`'s letter beside it is 34% of its identical disc, so two neighbouring mini-badges used
+ * visibly different proportions. Matching them is the whole change; the numeral also dropped 800 → 700.
+ *
+ * Consequence worth knowing rather than rediscovering: at 0.36 the FLOOR governs every shipped
+ * non-compact size (44…52 all land on 20), so the ratio only takes over above ~56px. That is honest
+ * rather than a defect — a legible two-digit numeral needs ~20px whatever the ring does — but don't
+ * read the multiplication as "it scales across the sizes we ship", because it doesn't.
  */
 export const badgeSize = (size: number, compact: boolean): number =>
-  Math.max(compact ? 16 : 20, Math.round(size * 0.46))
+  Math.max(compact ? 16 : 20, Math.round(size * 0.36))
 
 /**
  * The badge's angular extent as seen from the ring centre.
