@@ -219,3 +219,20 @@ say so, and revisit the rule after that run rather than treating the PRD as sett
 
 **Budget unchanged where enforced:** CLAUDE.md 11,993 / 12,000 · ALWAYS LOADED 16,489 / 17,000 · ONE
 COMPONENT EDIT 47,984 / 48,000. Both items landed in the path-scoped `ios-shell.md`.
+
+## 2026-08-09 — session-debrief (Who-Is-Playing badge → the adult door)
+
+**A source-reading guard can name a unique token and still be vacuous, when the component calls it
+twice.** The badge's "opens the adult surface" guard matched `adultSurfaceBus.open()` anywhere; the
+`onKeyDown` copy kept it green after the `onClick` was deleted. Distinct from the COMPOSITION shape
+already in `/re-break` — nothing was loose, the token simply was not unique, and the second call site
+was legitimate. Anchor on the path you mean whenever a behaviour has both a pointer and a keyboard leg.
+
+**`contextBudget.test.ts` can go red with nothing in `.claude/**` touched.** The glob check counts
+matched REPO files, so splitting `src/components/auth/**` into more, smaller files pushed `auth.md`
+past its ceiling and left master red for a change that never opened a guardrail. Recorded in the test's
+own header, since that is what the failure points at.
+
+**Budget unchanged:** CLAUDE.md 11,996 / 12,000 · ALWAYS LOADED 16,487 / 17,000 · ONE COMPONENT EDIT
+47,982 / 48,000. All four items landed outside the enforced surfaces (two skills, one reference sibling,
+one source comment).

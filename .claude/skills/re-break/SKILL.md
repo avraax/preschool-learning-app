@@ -140,6 +140,13 @@ the *generator* for another. A table-only break can pass while the code ignores 
   "the file mentions `colorQuizPromptPool(`" both survived replacing the draw with
   `colorQuizPromptPool(level)[0]` — the tokens were still there, the feature was gone. Assert the composed
   call (`.draw(colorQuizPromptPool(`), i.e. the thing that can only be true if the wiring exists.
+- **ONE token, TWO call sites — and only one of them is load-bearing.** A guard that the profile badge
+  opens the adult surface matched `adultSurfaceBus.open()` *anywhere* in the file. The component calls it
+  from both `onClick` and `onKeyDown`, so deleting the CLICK — the only way a finger opens it — left the
+  keyboard copy behind and the guard stayed green. Distinct from the COMPOSITION case above: nothing was
+  loose about the token, it was simply not unique, and the second site was legitimate. Whenever a
+  behaviour has a pointer path and a keyboard path (or a phone branch and a tablet branch), anchor on the
+  one you mean — `/onClick=\{[^}]*bus\.open\(\)/` — and assert the other separately.
 - **Breaking HALF of a removed mechanism, when only the whole is observable.** Deleting a gold-pass wrap
   looked untested: re-adding the wrap alone changed nothing, because the same commit had also pinned the
   duplicate `count` at 1, so a re-visited slot just rewrote its own entry. The invariant was real; the

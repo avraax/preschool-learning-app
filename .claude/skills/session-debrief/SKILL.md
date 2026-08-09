@@ -58,6 +58,10 @@ enforced by `src/config/contextBudget.test.ts`, which fails the build. So:
 - **A glob may not be wider than the rule's subject**, and `src/components/**/*.tsx` is reserved for
   rules under 6,000 B — it is paid on the single most common edit in the repo. Two small rules own it
   (`audio-call-sites.md`, `layout-contract.md`); a third is a regression.
+- **A rule that outgrew its 40-file glob ceiling takes an override, not a higher ceiling.**
+  `GLOB_CEILING_OVERRIDES` in `scripts/context-budget.mjs` is the escape hatch, one entry per rule with
+  a reason; `ruleGlobMatchCeiling` is the floor for every rule and moving it weakens all of them. The
+  failure message says "declare an override" without saying where, so this is the pointer.
 - **Adding to `CLAUDE.md` means removing something**, or arguing that the 12,000 B budget should rise.
 - **Prefer a pointer in `CLAUDE.md` plus detail in a scoped rule** over prose in `CLAUDE.md`.
 - A `SKILL.md` body stays under 500 lines, with detail in one-level-deep `reference/*.md` siblings.

@@ -15,6 +15,13 @@ import assert from 'node:assert/strict'
 // derived from the current file sizes would move with the thing it measures and pass vacuously. So
 // the numbers are pinned as literals HERE as well as in the script, and the two must agree. Raising
 // a budget means editing this file, which means saying so in a commit.
+//
+// THIS TEST CAN GO RED WITHOUT ANYONE TOUCHING A GUARDRAIL. The glob check counts how many repo files
+// a rule's `paths:` match, so *adding source files* under an existing glob trips it — a pure code
+// refactor that split `src/components/auth/**` into more, smaller files pushed `auth.md` past its
+// ceiling and left master red, with nothing in `.claude/**` changed. Read the violation line before
+// assuming the failure is yours: it names the rule, and the fix is usually a
+// `GLOB_CEILING_OVERRIDES` entry in the script, never a higher `ruleGlobMatchCeiling`.
 
 // @ts-expect-error - plain .mjs helper, no type declarations
 import { BUDGETS, UNSCOPED_ALLOWLIST, collect, check } from '../../scripts/context-budget.mjs'

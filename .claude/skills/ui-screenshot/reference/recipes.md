@@ -14,7 +14,13 @@ node .claude/skills/ui-screenshot/cdp.mjs --url http://127.0.0.1:5173/alphabet/q
 # Open "Til de voksne" (a plain click; a PIN pad may intercept) and select a settings pane.
 # The ~4.5s settle is REQUIRED — a snapdom screenshot runs before the surface renders, so a shorter
 # wait silently yields the un-opened page.
+# PASS --w/--h. Below the `md` breakpoint the surface is fullScreen single-pane push-nav, so the rail
+# does not exist: `[data-rail-item=…]` and the rail-footer "Rapportér et problem" are simply absent
+# and the click misses with no error. cdp.mjs defaults narrow, so OMITTING the size silently gives you
+# the compact layout on a run you thought was iPad-sized.
+# The trigger is the CHILD'S AVATAR now (the gear is deleted) — same `aria-label`, top-right.
 node .claude/skills/ui-screenshot/cdp.mjs --url 'http://127.0.0.1:5173/alphabet/quiz' \
+  --w 1024 --h 768 \
   --click '[aria-label="Til de voksne"]' --wait-for '.MuiDialog-paper' --settle 4500 \
   --click '[data-rail-item=lyd]' --settle 700 \
   --clip '.MuiDialog-paper' --out panel.png
