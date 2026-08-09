@@ -67,7 +67,7 @@ export function computeAudioReadiness(i: AudioReadinessInput): AudioReadiness {
  *
  * **ONE BLOCKING OVERLAY AT A TIME still holds even though the cue no longer blocks**: "tryk for lyd"
  * is meaningless before you know who is playing, and `authUiOpen` is the app's single notion of that
- * (the same flag that makes AdultCorner's tap inert over an auth surface). This kept the old modal off
+ * (the same flag that makes the adult-surface tap inert over an auth surface). This kept the old modal off
  * the mandatory PIN-setup and "who is playing?" dialogs — the first attempt at that was a z-index bump,
  * which is the wrong shape.
  *

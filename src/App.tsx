@@ -54,7 +54,7 @@ const DevScene = lazy(() => import('./components/dev/DevRoutes').then((m) => ({ 
 // DEV-only narration-audit harness (PRD-11) — plays every closed-set clip for a native-ear pass.
 const AuditHarness = lazy(() => import('./components/audit/AuditHarness'))
 import UpdateBanner from './components/common/UpdateBanner'
-import AdultCorner from './components/adult/AdultCorner'
+import AdultSurface from './components/adult/AdultSurface'
 import PersistentWorld from './components/common/scene/PersistentWorld'
 import RewardOverlay from './components/common/RewardOverlay'
 import RewardWatcher from './components/common/RewardWatcher'
@@ -220,10 +220,11 @@ function App() {
           onDismiss={updateStatus.dismissUpdate}
         />
 
-        {/* "Til de voksne" corner button — tap → PIN → the lazy AdultSettings surface (Barn /
-            Læring / Lyd / Udseende / Konto + the support footer). Stays bottom-right; the update
-            pill is bottom-centre so it no longer dodges onto the mascot. */}
-        <AdultCorner
+        {/* "Til de voksne" — the gate + capture + the lazy AdultSettings surface (Barn / Læring /
+            Lyd / Udseende / Konto + the support footer). It renders NOTHING until asked: the floating
+            gear is gone and the trigger is the child's own avatar in the header (`ProfileBadge`),
+            which reaches this through `adultSurfaceBus`. Owner, 2026-08-09. */}
+        <AdultSurface
           updateAvailable={updateStatus.updateAvailable || DEV_SHOW_UPDATE_BANNER}
           onApplyUpdate={updateStatus.applyUpdate}
         />

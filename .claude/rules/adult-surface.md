@@ -14,10 +14,28 @@ paths:
 
 # The adult surface & bug reports
 
-Settings PRD-01. The **"Til de voksne" corner button** (`AdultCorner`, mounted globally in `App.tsx`,
-bottom-right, **a plain tap opens it** — the old ~2s hold went once the 4-digit PIN became the real gate)
-is ONLY the gear + the screenshot capture + `requirePin('adultMenu')` + a mount point for the lazy
-`AdultSettings` surface.
+Settings PRD-01. **THE DOOR IS THE CHILD'S AVATAR — there is no gear** (owner, 2026-08-09). Tapping
+`ProfileBadge` (the header badge on home, the section menus, Min Bog and every game) opens the adult
+surface: a plain tap → `requirePin('adultMenu')`, or the guest arithmetic gate → the lazy
+`AdultSettings`. This is Khan Academy Kids' pattern, and it removes a permanent adult artifact from a
+child's screen. The old ~2s hold went earlier, once the 4-digit PIN became the real gate.
+
+`AdultSurface` (`src/components/adult/AdultSurface.tsx`, mounted globally in `App.tsx`, **renders
+nothing until asked**) owns the gate + the screenshot capture + the lazy mount; the trigger reaches it
+through `src/services/adultSurfaceBus.ts`. Three things that will bite:
+
+- **`aria-label` is EXACTLY `"Til de voksne"`, and it lives on the badge now.** Every `ui-screenshot`
+  recipe and `sweep.mjs` clicks `[aria-label="Til de voksne"]`. Reword it and the whole verification
+  harness stops finding the door — silently, on every recipe at once.
+- **The `authUiOpen` check stays on the SURFACE side of the bus**, not in the trigger, so a second
+  trigger can never forget it. A PIN screen must never be capturable into a bug report (§8.1 layer a).
+- **No child attached ⇒ no badge ⇒ no door.** That window is the cold boot before the roster settles,
+  where a blocking gate is up and the gear would have been inert anyway — but it is a real difference.
+
+The objection that had to be answered before the gear could go: a report captures `document.body` when
+the surface opens, so the door must be reachable **from the broken screen, mid-game included**, or no
+report can ever show the game that broke. Verified end-to-end — a report filed from `/alphabet/quiz`
+carries the quiz board, not the settings.
 
 ## The two-pane IA is a contract
 
@@ -147,5 +165,5 @@ curl -s "https://preschool-learning-app.vercel.app/api/log-error?limit=50&device
 
 PRD-09: `useUpdateChecker` polls the deployed build; when a newer build is live `UpdateBanner` shows a
 **dismissible** bottom-centre pill (no reload) and the apply-update is a **PIN-gated item in the
-`AdultCorner` menu** — never a child-tappable reload button. Pairs with the network-only / `lazyWithReload`
+adult menu** — never a child-tappable reload button. Pairs with the network-only / `lazyWithReload`
 recovery (`.claude/rules/pwa-and-device.md`).

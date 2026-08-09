@@ -175,7 +175,7 @@ export async function captureScreenshot(opts?: {
         // (not `hide`) so the nodes are dropped from the clone entirely. Every node carrying the
         // attribute is a fixed-position overlay, so removing it doesn't reflow the page beneath.
         //
-        // This is one of THREE independent layers — AdultCorner's tap is inert while an auth
+        // This is one of THREE independent layers — the adult-surface tap is inert while an auth
         // dialog is open, and PinPad renders dots rather than digits — because one layer is not
         // enough for a public blob.
         //

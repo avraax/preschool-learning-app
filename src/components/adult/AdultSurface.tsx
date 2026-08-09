@@ -1,18 +1,31 @@
-// "Til de voksne" corner button (Bug Report feature / adult-tools consolidation).
+// "Til de voksne": the gate, the capture and the mount point — with NO trigger of its own.
 //
-// ONE small semi-transparent button, bottom-right on every page (mounted globally in App.tsx).
-// A plain TAP opens it. It used to need a ~2s hold as the child-resistant gesture, but the real gate
-// is now the 4-digit PIN (or Face ID) — a child who taps just meets the PIN pad, so the hold was pure
-// friction for the adult.
+// **The gear is gone (owner, 2026-08-09). The child's avatar IS the door.** `ProfileBadge` already
+// renders in the header of every screen, so tapping it opens this surface with exactly the behaviour
+// the floating gear had: a plain tap → PIN (or the guest arithmetic gate) → the lazy `AdultSettings`.
+// That is Khan Academy Kids' pattern, and it removes a permanent adult artifact from a child's screen.
+// The trigger reaches this component through `adultSurfaceBus` — see that file for why a bus.
 //
-// This file is now ONLY the button, the screenshot capture, the PIN gate, and the mount point for the
-// lazy `AdultSettings` surface. Everything the adult can DO lives there (Settings PRD-01 W7).
+// The objection that had to be answered first, recorded so it is not re-litigated: a bug report
+// captures `document.body` at the moment this opens, so the door MUST be reachable from the broken
+// screen, mid-game included — otherwise no report can ever show the game that broke. It survives only
+// because the badge is on every screen and behaves identically everywhere. A stray tap in the game
+// header meets a gate the child cannot pass, which is no worse than the reward ring 12px away already
+// leaving the game on a stray tap (owner's own precedent, 2026-08-03).
+//
+// The one behaviour that genuinely changed: `ProfileBadge` renders nothing while no child is attached,
+// so during the cold-boot window before the roster settles there is no adult door. That window also
+// has no child playing, and the gear was inert over the gate anyway — but it is a real difference, so
+// don't be surprised by it.
+//
+// It used to need a ~2s hold as the child-resistant gesture; the real gate is now the 4-digit PIN (or
+// Face ID), so the hold was pure friction for the adult.
 //
 // THAT IS A BUNDLE WIN, NOT A COST (PRD §10). This component is mounted globally, so its module-scope
 // imports are eager. It used to pull MUI List/Dialog/Switch, 17 lucide icons, `useProfiles`,
 // `progressSync` and `profileStore` into first paint, plus seven separate lazy chunks behind them.
-// Collapsing all of that into ONE lazy chunk and leaving only the gear eager makes first paint
-// lighter, not heavier.
+// Collapsing all of that into ONE lazy chunk keeps first paint light; dropping the gear removed the
+// last eager widget here, so this file now renders nothing until the adult asks for it.
 //
 // Screenshot subtlety: a report must show the broken game state, not the settings surface. That USED
 // to be arranged by capturing before anything else could render — `await captureScreenshot()` sat in
@@ -33,10 +46,9 @@
 //
 // The chunk is warmed on `pointerdown` so the import is resolved before the finger lifts.
 
-import React, { useRef, useState } from 'react'
-import { IconButton } from '@mui/material'
-import { Settings } from 'lucide-react'
-import { captureScreenshot, warmScreenshot } from '../../services/screenshotService'
+import React, { useEffect, useRef, useState } from 'react'
+import { captureScreenshot } from '../../services/screenshotService'
+import { adultSurfaceBus } from '../../services/adultSurfaceBus'
 import { useAuthContext } from '../../contexts/AuthContext'
 
 const AdultSettings = React.lazy(() => import('./AdultSettings'))
@@ -44,14 +56,14 @@ const AdultSettings = React.lazy(() => import('./AdultSettings'))
 /** MUI's dialog enter transition is 225ms; give it that plus a frame before stealing the thread. */
 const CAPTURE_AFTER_GATE_MS = 320
 
-interface AdultCornerProps {
+interface AdultSurfaceProps {
   /** A newer build is live → show the update strip inside the settings surface (PRD-09 P4). */
   updateAvailable?: boolean
   /** Apply the update (hard reload). Only reachable from inside the PIN-gated settings surface. */
   onApplyUpdate?: () => void
 }
 
-const AdultCorner: React.FC<AdultCornerProps> = ({ updateAvailable = false, onApplyUpdate }) => {
+const AdultSurface: React.FC<AdultSurfaceProps> = ({ updateAvailable = false, onApplyUpdate }) => {
   const auth = useAuthContext()
   const [open, setOpen] = useState(false)
   // Mount the lazy surface on first open and keep it mounted, so its close transition still animates.
@@ -88,52 +100,30 @@ const AdultCorner: React.FC<AdultCornerProps> = ({ updateAvailable = false, onAp
     }
   }
 
-  const handleClick = () => {
-    // An auth surface is open (lock screen, PIN pad, PIN setup): the tap is INERT, so a PIN screen
-    // can never be captured into a bug report at all (accounts PRD §8.1 layer a).
-    if (auth?.authUiOpen) return
-    void openSettings()
-  }
-
   const closeAll = () => {
     setOpen(false)
     setScreenshot(null)
   }
 
+  // The badge taps through to here. The `authUiOpen` check stays on THIS side of the bus on purpose:
+  // an auth surface is open (lock screen, PIN pad, PIN setup), so the trigger is INERT and a PIN
+  // screen can never be captured into a bug report at all (accounts PRD §8.1 layer a). Keeping it here
+  // rather than in the trigger means a future second trigger cannot forget it.
+  //
+  // `auth` is a dependency: the effect re-registers whenever the context object changes, so the
+  // closure can never hold a stale `authUiOpen` and let a tap through over a live PIN pad.
+  useEffect(
+    () =>
+      adultSurfaceBus.register(() => {
+        if (auth?.authUiOpen) return
+        void openSettings()
+      }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- openSettings is stable enough; `auth` is the live input
+    [auth],
+  )
+
   return (
     <>
-      <IconButton
-        aria-label="Til de voksne"
-        onClick={handleClick}
-        // Resolve the snapdom chunk while the finger is still down. Costs nothing at cold launch —
-        // see `warmScreenshot`.
-        onPointerDown={warmScreenshot}
-        sx={{
-          position: 'fixed',
-          bottom: 'calc(env(safe-area-inset-bottom, 0px) + 8px)',
-          // Always bottom-right (PRD-09 P4): the update pill is bottom-CENTRE, so the gear no longer
-          // has to dodge left onto the mascot when an update is available.
-          right: 'calc(env(safe-area-inset-right, 0px) + 8px)',
-          zIndex: 1001, // above the UpdateBanner pill (1000), below modals
-          width: 40,
-          height: 40,
-          // The old `capturing` pulse (opacity 1 + scale 1.15) is gone with the blocking capture:
-          // there is nothing left to wait for, so a busy signal would only be a lie.
-          opacity: 0.55,
-          bgcolor: 'rgba(255,255,255,0.4)',
-          color: 'rgba(0,0,0,0.6)',
-          backdropFilter: 'blur(6px)',
-          border: '1px solid rgba(255,255,255,0.25)',
-          touchAction: 'manipulation',
-          userSelect: 'none',
-          WebkitTapHighlightColor: 'transparent',
-          transition: 'transform 0.2s ease, opacity 0.2s ease',
-          '&:hover': { opacity: 1, bgcolor: 'rgba(255,255,255,0.55)' },
-        }}
-      >
-        <Settings size={20} />
-      </IconButton>
-
       <React.Suspense fallback={null}>
         {mounted && (
           <AdultSettings
@@ -149,4 +139,4 @@ const AdultCorner: React.FC<AdultCornerProps> = ({ updateAvailable = false, onAp
   )
 }
 
-export default AdultCorner
+export default AdultSurface

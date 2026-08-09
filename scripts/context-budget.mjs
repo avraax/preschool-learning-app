@@ -60,6 +60,7 @@ const GLOB_CEILING_OVERRIDES = {
   'audio-call-sites.md': { max: 120, reason: 'owns the component glob by design; 2.4 KB is the price' },
   'layout-contract.md': { max: 120, reason: 'owns the component glob by design; held under 6 KB' },
   'scene-assets.md': { max: 500, reason: 'owns every art directory; those globs are asset trees, not code' },
+  'auth.md': { max: 60, reason: 'src/components/auth/** IS the subject; the gate refactor split it into more, smaller files' },
 }
 
 const COMPONENT_GLOB = 'src/components/**/*.tsx'

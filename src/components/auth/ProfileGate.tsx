@@ -35,7 +35,7 @@ const ProfileGate: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const needsPicker = surface === 'picker'
 
   // These are onboarding surfaces, so they claim the same "an auth surface is open" flag as the lock
-  // screen and the PIN pad: it keeps AdultCorner's hold gesture inert AND stops the audio-permission
+  // screen and the PIN pad: it keeps the adult-surface trigger inert AND stops the audio-permission
   // modal painting over them.
   const blocking = profileGateBlocks(surface)
   useEffect(() => {

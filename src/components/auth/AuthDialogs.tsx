@@ -43,7 +43,7 @@ const AuthDialogs: React.FC = () => {
     r?.(ok)
   }, [])
 
-  // The gate is an auth surface: it claims `authUiOpen` so AdultCorner's capture stays inert and the
+  // The gate is an auth surface: it claims `authUiOpen` so AdultSurface's capture stays inert and the
   // audio cue stands down, exactly as the PIN pad does.
   useEffect(() => {
     if (!gateOpen) return
@@ -57,7 +57,7 @@ const AuthDialogs: React.FC = () => {
   const needsPin =
     !!auth && auth.phase === 'authed' && !!auth.info && !auth.info.hasPin && !authStore.isDevBypass()
 
-  // Mandatory PIN setup is an auth surface too: mark it so AdultCorner's hold gesture stays inert.
+  // Mandatory PIN setup is an auth surface too: mark it so the adult-surface trigger stays inert.
   useEffect(() => {
     if (!needsPin) return
     auth?.setAuthUiOpen(true)

@@ -131,14 +131,21 @@ test('the gate is never gated on the bug-report screenshot', () => {
   // THE regression this whole change exists to prevent: `await captureScreenshot()` in front of
   // `requirePin` cost a cold snapdom import + a full-document computed-style walk + an embedFonts
   // rasterise (~0.9s by its own measurement) before the modal could paint.
-  const code = codeOf('components/adult/AdultCorner.tsx')
+  // Re-pointed 2026-08-09: the gear is deleted and `AdultCorner.tsx` became `AdultSurface.tsx`, which
+  // owns the gate + capture but has no trigger. The trigger is `ProfileBadge` (the child's avatar), so
+  // the warm-on-press half of this assertion lives with the press now.
+  const code = codeOf('components/adult/AdultSurface.tsx')
   assert.doesNotMatch(
     code,
     /await\s+captureScreenshot/,
-    'the corner button waits for the capture again — the gate cannot paint until it finishes',
+    'the adult surface waits for the capture again — the gate cannot paint until it finishes',
   )
-  assert.match(code, /requirePin\('adultMenu'\)/, 'the adult gate is gone from the corner button')
-  assert.match(code, /onPointerDown=\{warmScreenshot\}/, 'the snapdom chunk is no longer warmed on press')
+  assert.match(code, /requirePin\('adultMenu'\)/, 'the adult gate is gone from the adult surface')
+  assert.match(
+    codeOf('components/common/ProfileBadge.tsx'),
+    /onPointerDown=\{warmScreenshot\}/,
+    'the snapdom chunk is no longer warmed on press',
+  )
 })
 
 test('anything that can be OPEN during a capture removes itself from the picture', () => {

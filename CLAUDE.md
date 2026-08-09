@@ -114,7 +114,7 @@ points to, loaded when you touch matching files.
   **The compatibility floor is the child's iPad Pro 2nd gen on iPadOS 17.7.11.** Check any new
   web/media API against **Safari 17**, not "latest Safari".
   → `pwa-and-device.md`, `docs/device-testing.md`.
-- **Adult tools / bug reports**: the "Til de voksne" corner button opens the lazy `AdultSettings`. Its
+- **Adult tools / bug reports**: tapping the child's avatar opens the lazy `AdultSettings`. Its
   group/item structure is **data** (`src/config/adultSettingsIa.ts`, guarded), and **every irreversible
   action is type-to-confirm** with a fixed Danish word — a PIN does not substitute. Debug with
   `/debug-report`. → `adult-surface.md`.

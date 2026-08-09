@@ -60,7 +60,7 @@ const PinDialog: React.FC = () => {
   const [busy, setBusy] = useState(false)
   const pendingRef = useRef<Pending | null>(null)
 
-  // While the pad is up, AdultCorner's hold gesture must be inert (§8.1 layer a).
+  // While the pad is up, the adult-surface trigger must be inert (§8.1 layer a).
   useEffect(() => {
     if (!pending) return
     auth?.setAuthUiOpen(true)

@@ -123,7 +123,7 @@ const LockScreen: React.FC = () => {
     }
   }, [canOfferPasskey])
 
-  // The gate is an auth surface: suppress AdultCorner's hold gesture while it is up.
+  // The gate is an auth surface: suppress the adult-surface trigger while it is up.
   useEffect(() => {
     auth?.setAuthUiOpen(true)
     return () => auth?.setAuthUiOpen(false)

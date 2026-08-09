@@ -3,7 +3,7 @@
 // Shown at app start ONLY when the account has more than one profile; a single child boots straight in,
 // which is what keeps "the child never sees a login screen" true (accounts PRD §7.4). Picking at boot is
 // NOT PIN-gated — a child choosing their own avatar is the point. Switching MID-SESSION is gated, and
-// that gate lives at the call site (AdultCorner's "Skift barn"), not here.
+// that gate lives at the call site (the adult surface's "Skift barn" in BarnPane), not here.
 //
 // Visual model: ThemePanel's selectable-tile grid — `role="group"`, `motion.button` with `aria-pressed`,
 // a circular thumb and an accent ring when active. That is the app's established "grid of identity

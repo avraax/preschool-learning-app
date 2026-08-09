@@ -35,7 +35,7 @@ export interface AuthActions {
   /** Drop the unlocked window immediately. */
   clearAdultUnlocked: () => void
   /**
-   * Whether ANY auth dialog is open. AdultCorner's hold gesture is disabled while it is true, so a
+   * Whether ANY auth dialog is open. The adult-surface trigger is inert while it is true, so a
    * PIN screen can never be screenshotted into a public bug-report blob (§8.1 layer a).
    */
   authUiOpen: boolean

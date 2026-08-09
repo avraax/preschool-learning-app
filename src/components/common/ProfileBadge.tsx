@@ -6,6 +6,8 @@ import { avatarArt } from '../../assets/avatars'
 import { normalizeAvatarId } from '../../config/avatars'
 import { profileInitial } from '../../config/profileInitial'
 import { onTileColor } from '../../theme/tokens/helpers'
+import { adultSurfaceBus } from '../../services/adultSurfaceBus'
+import { warmScreenshot } from '../../services/screenshotService'
 
 // WHO IS PLAYING — the child-facing half of the profile system (owner, 2026-08-09).
 //
@@ -30,11 +32,22 @@ import { onTileColor } from '../../theme/tokens/helpers'
 // `progressStore`, `rewardNumber`, `xpBus` or `xpProgress`. Don't reach for them; add nothing that
 // fills, counts or animates.
 //
-// **It is deliberately NOT tappable** (owner). Profile switching stays in the adult surface behind
-// `requirePin('switchProfile')` — a 5-year-old must not be able to tap their own face and land in a
-// sibling's book. `pointerEvents: 'none'` is therefore load-bearing rather than tidy: the disc sits
-// ~8px from the ring, which IS a live tap target (the only door to Min Bog), so a near-miss has to fall
-// through and do nothing rather than be swallowed by a control that does nothing anyway.
+// **IT IS THE DOOR TO "TIL DE VOKSNE", AND THE FLOATING GEAR IS DELETED** (owner, 2026-08-09 —
+// reversing this file's own first decision, which was "pure indicator, never tappable"). Tapping it is
+// identical to tapping the old gear: PIN (or the guest arithmetic gate) → the lazy `AdultSettings`.
+// Khan Academy Kids does the same thing. It is safe for the same reason the gear was: the gate is the
+// child-resistant part, not the trigger, so a 5-year-old who taps their own face meets a keypad.
+//
+// Two things this must keep:
+//   - **`aria-label` is EXACTLY "Til de voksne".** Every `ui-screenshot` recipe and `sweep.mjs` clicks
+//     `[aria-label="Til de voksne"]`; that selector moved here with the door. The child's name rides
+//     on `title`, not on the label — the accessible name of a CONTROL is its action.
+//   - **It still must not route to `/album`.** The ring is the only door to Min Bog and
+//     `rewardSurfaces.test.ts` asserts exactly one per surface. Two adjacent same-size discs now go to
+//     two different places; that is the accepted cost, and it is why the two are hit-tested separately.
+//
+// `pointerEvents: 'none'` is GONE with that decision. It used to be load-bearing (a near-miss had to
+// fall through to whatever was behind an inert disc); now the disc is the target.
 //
 // **Sized at PARITY with the ring at every call site** (owner, 2026-08-09, over a recommendation of
 // ~72%). Pass the same `size` the neighbouring `RewardRing` gets, including its phone-landscape value.
@@ -85,10 +98,26 @@ const ProfileBadge: React.FC<ProfileBadgeProps> = ({ size, sx = {} }) => {
     <Box
       // Stable hook for the geometry probe: this rect must never intersect [data-reward-ring].
       data-profile-badge
-      role="img"
-      // `.trim()`, not a bare truthiness check: a whitespace-only name is truthy and announced as
+      role="button"
+      tabIndex={0}
+      // EXACTLY the old gear's label — see the header. This is the selector the whole screenshot
+      // harness clicks, and the accessible name of a control is its action, not its picture.
+      aria-label="Til de voksne"
+      // Who is playing goes here instead, so it is still recoverable without competing with the label.
+      // `.trim()`, not a bare truthiness check: a whitespace-only name is truthy and would announce as
       // "    spiller". Same input the letter already rejects, so the two must agree.
-      aria-label={profile.name?.trim() ? `${profile.name.trim()} spiller` : 'Spiller nu'}
+      title={profile.name?.trim() ? `${profile.name.trim()} spiller` : undefined}
+      onClick={() => adultSurfaceBus.open()}
+      // Enter/Space, since this is a div playing a button.
+      onKeyDown={(e: React.KeyboardEvent) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          adultSurfaceBus.open()
+        }
+      }}
+      // Resolve the snapdom chunk while the finger is still down, exactly as the gear did — the
+      // capture now runs behind the gate, so this is what keeps it off the dialog's enter transition.
+      onPointerDown={warmScreenshot}
       sx={[
         {
           position: 'relative',
@@ -99,9 +128,9 @@ const ProfileBadge: React.FC<ProfileBadgeProps> = ({ size, sx = {} }) => {
           alignItems: 'center',
           justifyContent: 'center',
           userSelect: 'none',
-          // See the header: the ring is 8px away and it navigates. A near-miss must reach what is
-          // BEHIND this disc, not be eaten by an indicator that does nothing.
-          pointerEvents: 'none',
+          cursor: 'pointer',
+          touchAction: 'manipulation',
+          WebkitTapHighlightColor: 'transparent',
         },
         ...(Array.isArray(sx) ? sx : [sx]),
       ]}

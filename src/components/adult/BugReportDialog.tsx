@@ -2,7 +2,7 @@
 //
 // compose → sending → success (big short code to mention to Claude) | error (retry or
 // save the identical report as a local .json file — the offline fallback).
-// The screenshot was captured by AdultCorner at menu-open, BEFORE any dialog rendered,
+// The screenshot was captured by AdultSurface at menu-open, BEFORE any dialog rendered,
 // so it shows the broken moment rather than the menu.
 
 import React, { useRef, useState } from 'react'

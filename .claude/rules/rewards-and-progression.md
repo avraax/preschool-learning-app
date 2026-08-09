@@ -171,21 +171,21 @@ spinner that reset, not a progress meter).
 - **`ProfileBadge`** (`src/components/common/ProfileBadge.tsx` — home, the section menus, Min Bog AND
   every game): the active child's baked animal portrait with their first letter, at PARITY with the
   ring's size, **OUTERMOST — past the ring, not before it** (owner reversed the original ordering,
-  2026-08-09; the cost is that the untappable badge holds the corner the tappable ring used to). It
-  renders as a bare cutout: **no plate, no ring, no border behind the portrait** — the picker's tile
-  backing shipped here by mistake and read as a dim grey circle on the painted world, and the reward
-  ring beside it has no backing either. Guarded by a fill COUNT (the letter's white disc is the only
-  one). It is the child-facing half of the
-  profile system (owner, 2026-08-09); before it, the active child was visible only behind "Til de
-  voksne", so a two-child household could play a whole session as the wrong child. It is **static,
-  untappable and progress-blind**, and that is enforced rather than conventional — `profileBadge.test.ts`
-  fails the build if it imports `useProgress`/`progressStore`/`xpBus`, grows an `onTap`, animates,
-  renders the name as text, or goes missing from any surface that renders a ring. **That guard is why
-  "the ring and nothing else" could be narrowed**: the old rule's real subject was a second progress
-  meter, and a portrait measures nothing. `pointerEvents: 'none'` is load-bearing (it sits ~8px from
-  the ring, which navigates), and switching stays behind `requirePin('switchProfile')` — a 5-year-old
-  must not be able to tap their own face into a sibling's book. An unnamed profile shows the portrait
-  with NO letter (`src/config/profileInitial.ts`); there is no placeholder glyph and no avatar fallback.
+  2026-08-09). It renders as a bare cutout: **no plate, no ring, no border behind the portrait** — the
+  picker's tile backing shipped here by mistake and read as a dim grey circle on the painted world, and
+  the reward ring beside it has no backing either. Guarded by a fill COUNT (the letter's white disc is
+  the only one). Before it existed, the active child was visible only behind "Til de voksne", so a
+  two-child household could play a whole session as the wrong child.
+  **It is also THE DOOR to the adult surface** — see `.claude/rules/adult-surface.md`; there is no gear
+  any more. So the corner now holds two adjacent same-size discs going to two different places, which
+  is the accepted cost of both owner decisions together; hit-test them separately when you touch either.
+  It is **progress-blind**, and that is enforced rather than conventional — `profileBadge.test.ts` fails
+  the build if it imports `useProgress`/`progressStore`/`xpBus`, animates, renders the name as text,
+  routes to `/album`, loses the `aria-label="Til de voksne"` selector, or goes missing from any surface
+  that renders a ring. **That guard is why "the ring and nothing else" could be narrowed**: the old
+  rule's real subject was a second progress meter, and a portrait measures nothing. Switching children
+  still happens only inside the surface, behind `requirePin('switchProfile')`. An unnamed profile shows
+  the portrait with NO letter (`src/config/profileInitial.ts`); no placeholder glyph, no avatar fallback.
 
 ## The ceremony
 

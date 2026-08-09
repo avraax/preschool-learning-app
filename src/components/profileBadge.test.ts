@@ -14,7 +14,7 @@
 // that guard green after the fix had been removed.
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { readdirSync, readFileSync } from 'node:fs'
+import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -57,18 +57,44 @@ test('the badge is NOT a meter — it cannot read progress at all', () => {
   }
 })
 
-test('the badge is a pure indicator — untappable, and not a second door to Min Bog', () => {
-  // Owner's decision: switching stays in the adult surface behind `requirePin('switchProfile')`, so a
-  // 5-year-old cannot tap their own face into a sibling's book. The `/album` half matters separately —
-  // `rewardSurfaces.test.ts` asserts exactly ONE route to the book per surface (the ring's own tap),
-  // so a badge that navigated there would fail that guard from three files at once, with a message
+test('the badge is THE door to "Til de voksne", and the gear is gone', () => {
+  // Owner reversed the original "pure indicator, never tappable" decision (2026-08-09): the avatar IS
+  // the adult entry now and the floating gear is deleted. This replaces the guard that forbade a tap —
+  // deleting that one without putting anything in its place would leave the door unguarded on the two
+  // properties that actually matter.
+  const code = codeOf(BADGE)
+  // Anchored on the CLICK, not on the identifier: a bare `includes('adultSurfaceBus.open()')` was
+  // satisfied by the keyboard handler alone, so deleting the tap — the only way a finger opens this —
+  // kept the guard green. (Found by /re-break; it reported VACUOUS.)
+  assert.match(
+    code,
+    /onClick=\{[^}]*adultSurfaceBus\.open\(\)[^}]*\}/,
+    'a TAP no longer opens the adult surface',
+  )
+  assert.match(code, /onKeyDown=/, 'the badge lost its keyboard path — it is a div playing a button')
+  // THE selector. Every ui-screenshot recipe and sweep.mjs clicks `[aria-label="Til de voksne"]`; it
+  // moved here from the gear, and a reworded label breaks the whole verification harness silently.
+  assert.match(code, /aria-label="Til de voksne"/, 'the badge lost the adult-surface selector')
+  // The snapdom warm moved with the door — without it the capture lands on the dialog's enter
+  // transition instead of ahead of it (see gateLayout.test.ts for the regression it belongs to).
+  assert.match(code, /onPointerDown=\{warmScreenshot\}/, 'the snapdom chunk is no longer warmed on press')
+  // The gear must stay deleted — two doors to the adult area is exactly what this change removed.
+  assert.ok(
+    !existsSync(path.join(SRC, 'components/adult/AdultCorner.tsx')),
+    'AdultCorner.tsx is back — the adult surface has no trigger of its own; the badge is the door',
+  )
+})
+
+test('the badge is NOT a second door to Min Bog', () => {
+  // Separate from the test above on purpose. The badge is now interactive, so the risk inverted: two
+  // adjacent same-size discs, and the one that must NOT lead to the book is the one you can tap.
+  // `rewardSurfaces.test.ts` asserts exactly ONE route to /album per surface (the ring's own tap), so
+  // a badge that navigated there would fail that guard from three files at once with a message
   // pointing at the wrong thing.
   const code = codeOf(BADGE)
-  for (const forbidden of ['onTap', 'onClick', 'navigate', "'/album'", 'useTransitionNav', 'role="button"']) {
-    assert.ok(!code.includes(forbidden), `ProfileBadge became interactive (${forbidden})`)
+  for (const forbidden of ["'/album'", 'useTransitionNav', 'navigateWithTransition']) {
+    assert.ok(!code.includes(forbidden), `the badge routes to Min Bog (${forbidden}) — that is the ring's job`)
   }
-  // And it must actively let taps through: it sits ~8px from the ring, which IS a live tap target.
-  assert.match(code, /pointerEvents:\s*'none'/, 'the badge no longer lets a near-miss tap fall through')
 })
 
 test('the portrait renders unconditionally — no glyph fallback, ever', () => {
