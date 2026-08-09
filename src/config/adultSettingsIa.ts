@@ -28,6 +28,16 @@ export type AdultGroupId = 'barn' | 'laering' | 'lyd' | 'udseende' | 'konto' | '
 export type AdultVerification =
   | { kind: 'requirePin'; reason: PinReason }
   | { kind: 'pinPad' }
+  /**
+   * The confirm dialog IS the verification — no PIN.
+   *
+   * Only legitimate for an action that is account-scoped but **reversible and destroys no data**, which
+   * today means the two log-outs and nothing else. The adult has already passed the parental gate to be
+   * in this surface at all, and the confirm names what will happen; a PIN on top asked the same question
+   * twice (owner, 2026-08-09). Anything that changes a CREDENTIAL or cannot be undone keeps its PIN —
+   * `adultSettingsIa.test.ts` holds that line, and the `irreversible` flag is what separates them.
+   */
+  | { kind: 'confirm' }
 
 export interface AdultItem {
   /** Stable id, unique across the WHOLE surface. */
@@ -168,18 +178,24 @@ export const ADULT_IA: AdultGroup[] = [
         verify: { kind: 'requirePin', reason: 'manageCredentials' },
       },
       {
+        // NO PIN (owner, 2026-08-09). Both log-outs are reversible and destroy nothing: you sign back
+        // in, and the child's book is on the server. The adult already passed the parental gate to
+        // reach this pane, and the confirm names the account — a PIN after that asked the same
+        // question a second time. What the PIN also bought was a guarantee that the adult was ONLINE
+        // at the moment of signing out; that is now covered where it belongs, by the confirm dialog
+        // warning when there is un-pushed progress rather than by a credential prompt.
         id: 'konto.signOut',
         label: 'Log ud på denne enhed',
         destructive: true,
         scope: 'account',
-        verify: { kind: 'requirePin', reason: 'manageCredentials' },
+        verify: { kind: 'confirm' },
       },
       {
         id: 'konto.revokeSessions',
         label: 'Log ud alle steder',
         destructive: true,
         scope: 'account',
-        verify: { kind: 'requirePin', reason: 'revokeSessions' },
+        verify: { kind: 'confirm' },
       },
       {
         id: 'konto.deleteAccount',

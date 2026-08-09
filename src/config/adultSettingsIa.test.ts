@@ -81,6 +81,32 @@ test('every destructive item declares how it is verified', () => {
   }
 })
 
+/**
+ * The two log-outs, which are account-scoped and destructive but REVERSIBLE and destroy no data — you
+ * sign back in, and the book is on the server. Named rather than inferred, so adding a third
+ * confirm-only account action is a decision someone has to make HERE, in front of this comment.
+ */
+const CONFIRM_ONLY = ['konto.signOut', 'konto.revokeSessions']
+
+test('a confirm-only account action is reversible, and there are only the two', () => {
+  // The PIN came off both at the owner's request (2026-08-09): the adult has already passed the
+  // parental gate to be in this pane, and the confirm names the account, so the PIN asked the same
+  // question twice. That reasoning holds ONLY while the action can be undone by signing back in — so
+  // the escape hatch is pinned to those two ids and to `irreversible` being false.
+  const confirmOnly = adultItemsWithGroup().filter(({ item }) => item.verify?.kind === 'confirm')
+  assert.deepEqual(
+    confirmOnly.map(({ item }) => item.id).sort(),
+    [...CONFIRM_ONLY].sort(),
+    'a new action is verified by its confirm alone — that is only defensible if it is reversible',
+  )
+  for (const { item } of confirmOnly) {
+    assert.notEqual(item.irreversible, true, `${item.id} cannot be undone, so a confirm is not enough`)
+    // Still destructive, so it still gets a confirm dialog at all — losing that would make it a
+    // single tap in the destructive strip.
+    assert.equal(item.destructive, true, `${item.id} must stay destructive or it gets no confirm`)
+  }
+})
+
 test('every ACCOUNT-scoped destructive action is verified against the SERVER', () => {
   const accountScoped = adultItemsWithGroup().filter(
     ({ item }) => item.destructive && item.scope === 'account',
@@ -91,6 +117,12 @@ test('every ACCOUNT-scoped destructive action is verified against the SERVER', (
   for (const { item } of accountScoped) {
     const v = item.verify!
     if (v.kind === 'pinPad') continue // the current PIN, typed and server-verified at the moment
+    // The two reversible log-outs are verified by their confirm alone — see the test above, which is
+    // what stops this exemption spreading. Everything else account-scoped still needs the server.
+    if (v.kind === 'confirm') {
+      assert.ok(CONFIRM_ONLY.includes(item.id), `${item.id} claims confirm-only without being listed`)
+      continue
+    }
     // BOTH connectivity states: `unlockSession` is the one reason that goes local when offline, and
     // an account-scoped action must never be reachable through it.
     assert.equal(

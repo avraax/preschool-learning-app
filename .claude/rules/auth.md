@@ -156,12 +156,19 @@ table, and our five (`childProfile`, `profileProgress`, `familyPin`, `pinAttempt
   `phase: 'locked'` — LockScreen's "Velkommen tilbage" branch, "Brug kode i stedet", and
   `pinVerifierFor('unlockSession')`, the one row that depends on connectivity — is dead by decision, not
   by accident. The machinery stays for a future idle auto-lock (`authGatePolicy` reserves
-  `idleSinceMs`); do not read that branch as live. "Log ud" routes through
-  `requirePin('manageCredentials')`, i.e. SERVER-verified per §7.2 — which also guarantees the adult is
-  online at the moment they sign out, which is exactly when signing back in is possible. It confirms
-  first (naming the account) because the consequence lands on the CHILD, and it pushes progress before
-  clearing the token. "Log ud alle steder" and account deletion sit beside it in the same strip
-  (Settings PRD-01 gathered them; "Login og sikkerhed" as a separate panel is gone).
+  `idleSinceMs`); do not read that branch as live. **"Log ud" and "Log ud alle steder" take NO PIN**
+  (owner, 2026-08-09): both are account-scoped and destructive but REVERSIBLE and destroy nothing, the
+  adult already passed the parental gate to reach the pane, and the confirm names the account — so a PIN
+  asked the same question twice. They declare `verify: { kind: 'confirm' }`, and
+  `adultSettingsIa.test.ts` pins that exemption to exactly those two ids, so it cannot spread to a
+  credential change or to account deletion. What the PIN silently ALSO bought was proof the device was
+  online (a server verify) at the moment of signing out; that is now stated where it belongs — the
+  confirm warns when `status.dirty` or the sync is offline instead of promising "al fremgang er gemt"
+  and hoping. It still confirms first because the consequence lands on the CHILD, and still pushes
+  progress before clearing the token. `pinVerifierFor('revokeSessions')` consequently has **no caller** —
+  kept, like `lock()`, for the next account-scoped mutation; do not read it as live. Account deletion
+  sits beside them in the same strip and keeps both its typed word and its PIN pad (Settings PRD-01
+  gathered them; "Login og sikkerhed" as a separate panel is gone).
 - **Auth overlay stacking lives in `src/components/auth/authOverlayZ.ts`.** The lock screen and the
   profile picker are hand-rolled `fixed` boxes at ~10 000; a MUI `<Dialog>` defaults to **1300**. So a
   dialog opened FROM one of them mounts *underneath* it — live, interactive and invisible, which is a

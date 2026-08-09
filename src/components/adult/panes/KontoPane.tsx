@@ -265,22 +265,22 @@ const KontoPane: React.FC<KontoPaneProps> = ({ closeAll }) => {
   }, [])
 
   const onSignOut = useCallback(async () => {
-    if (!auth) return
-    // SERVER-verified: signing out is a credential action. It also means the adult is online at this
-    // moment — which is exactly when signing back in is possible.
-    const ok = await auth.requirePin('manageCredentials')
-    if (!ok) return
+    // NO PIN (owner, 2026-08-09). The adult passed the parental gate to open this surface, and the
+    // confirm below names the account — the PIN asked the same question a second time. Signing out is
+    // reversible and destroys nothing: you sign back in, and the book is on the server.
+    //
+    // What the PIN also bought, without saying so, was a guarantee that the adult was ONLINE at this
+    // moment. The confirm now carries that explicitly (`unpushedWarning`) instead, which is the honest
+    // version — it warns about the actual risk rather than blocking on a credential.
     setConfirmLogout(false)
     closeAll()
     // Last chance to get the book onto the server: the push needs the bearer token signOut() clears.
     await progressSync.push('manual')
     await authStore.signOut()
-  }, [auth, closeAll])
+  }, [closeAll])
 
   const onRevokeAll = useCallback(async () => {
-    if (!auth) return
-    const ok = await auth.requirePin('revokeSessions')
-    if (!ok) return
+    // No PIN here either, same reasoning as onSignOut.
     const token = authStore.sessionToken()
     if (!token) return
     setBusy(true)
@@ -302,6 +302,20 @@ const KontoPane: React.FC<KontoPaneProps> = ({ closeAll }) => {
     // Every session including this one is gone → drop the local one too.
     await authStore.signOut()
   }, [auth, closeAll])
+
+  /**
+   * "al fremgang er gemt" is a CLAIM, and until now nothing checked it — it was true by luck, because
+   * `requirePin` forced a server round trip first and so proved the device was online.
+   *
+   * With the PIN gone (owner, 2026-08-09) the claim has to stand on its own. `onSignOut` still pushes
+   * before clearing the token, but an offline push cannot succeed, and signing out drops the session
+   * the next push would need. So when there is unsent progress, say that instead of promising the
+   * opposite. This is the honest replacement for what the PIN was silently buying.
+   */
+  const unpushedWarning =
+    status.dirty || status.phase === 'offline'
+      ? 'Der er fremgang, som ikke er sendt til serveren endnu. Gå på nettet først, hvis den skal med.'
+      : null
 
   const syncHeadline =
     status.phase === 'offline'
@@ -597,8 +611,14 @@ const KontoPane: React.FC<KontoPaneProps> = ({ closeAll }) => {
             {auth?.user?.email
               ? `Du logger ud af ${auth.user.email} på denne enhed. `
               : 'Du logger ud på denne enhed. '}
-            Der kan ikke spilles, før en voksen logger ind igen — al fremgang er gemt.
+            Der kan ikke spilles, før en voksen logger ind igen
+            {unpushedWarning ? '.' : ' — al fremgang er gemt.'}
           </Typography>
+          {unpushedWarning && (
+            <Typography role="alert" sx={{ mt: 1.5, fontWeight: 600 }} color="error">
+              {unpushedWarning}
+            </Typography>
+          )}
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setConfirmLogout(false)} aria-label="Annullér">
@@ -615,8 +635,13 @@ const KontoPane: React.FC<KontoPaneProps> = ({ closeAll }) => {
         <DialogContent>
           <Typography>
             Alle enheder logges ud — også denne. Der kan ikke spilles nogen steder, før en voksen
-            logger ind igen; al fremgang er gemt.
+            logger ind igen{unpushedWarning ? '.' : '; al fremgang er gemt.'}
           </Typography>
+          {unpushedWarning && (
+            <Typography role="alert" sx={{ mt: 1.5, fontWeight: 600 }} color="error">
+              {unpushedWarning}
+            </Typography>
+          )}
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setConfirmRevoke(false)} aria-label="Annullér">

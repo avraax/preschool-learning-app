@@ -38,6 +38,11 @@ export function pinVerifierFor(reason: PinReason, online: boolean): PinVerifier 
       return 'local'
     case 'unlockSession':
       return online ? 'server' : 'local'
+    // NOTE: `revokeSessions` HAS NO CALLER since 2026-08-09 — "Log ud alle steder" is verified by its
+    // confirm dialog alone, at the owner's decision (both log-outs are reversible and destroy nothing).
+    // Kept rather than deleted, like `authStore.lock()`: the row is one line, and the next
+    // account-scoped mutation — a revoke triggered from somewhere the parental gate has NOT already
+    // been passed, say — will want exactly it. Do not read it as live.
     case 'changePin': // a credential
     case 'manageCredentials': // adding/removing a sign-in method
     case 'revokeSessions': // account-scoped mutation
