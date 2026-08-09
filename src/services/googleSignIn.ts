@@ -25,6 +25,7 @@ import {
 } from './authDiagnostics'
 import { isNativeShell } from '../config/runtimeTarget'
 import { closeExternalAuth, openExternalAuthUrl } from './shellBrowser'
+import { ensureShellReturnListener } from './shellReturn'
 
 const START_PATH = '/api/auth/family/oauth/start'
 const CLAIM_PATH = '/api/auth/family/oauth/claim'
@@ -43,6 +44,14 @@ async function startGoogle(provider: SignInProvider = 'google'): Promise<SignInR
   const providerLabel = provider === 'apple' ? 'Apple' : 'Google'
   const flowId = newFlowId()
   noteAuthStep('google-start', 'begin')
+
+  // BEFORE the flow is registered, because the answer decides what the callback may hand back. A binary
+  // that cannot receive a custom-scheme link must keep getting the terminal page — see `shellReturn.ts`.
+  // On the web this is a resolved `false` and costs nothing.
+  const canReturnToScheme = await ensureShellReturnListener(() => {
+    const pending = readPendingFlow()
+    if (pending) void claim(pending.flowId)
+  })
   try {
     // Write FIRST, in our own storage context. If we navigated before this landed there would be
     // nothing to claim with when we came back.
@@ -61,11 +70,16 @@ async function startGoogle(provider: SignInProvider = 'google'): Promise<SignInR
     const res = await fetch(apiUrl(START_PATH), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      // `client` tells the callback which PAGE to render at the end of the round trip — a 302 into the
-      // app for the web, a terminal page for the shell, where that same 302 boots the whole web app
-      // inside the system-browser sheet and lands on "Du er allerede logget ind". Presentation only:
-      // it selects no redirect target and no scheme (PRD W5).
-      body: JSON.stringify({ flowId, provider, client: isNativeShell() ? 'shell' : 'web' }),
+      // `client` tells the callback how this app can be handed back at the end of the round trip: a 302
+      // into the app on the web; a custom-scheme link if this binary registered a listener for one; and
+      // otherwise a terminal page for the shell, where that same web 302 boots the whole app inside the
+      // system-browser sheet and lands on "Du er allerede logget ind". A CAPABILITY, never a
+      // destination — the scheme itself comes from a tier-keyed table on the server (PRD W5).
+      body: JSON.stringify({
+        flowId,
+        provider,
+        client: isNativeShell() ? (canReturnToScheme ? 'shell-scheme' : 'shell') : 'web',
+      }),
     })
     if (!res.ok) {
       clearPendingFlow()

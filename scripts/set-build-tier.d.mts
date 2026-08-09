@@ -12,6 +12,12 @@ export interface BuildTierSpec {
   appName: string
   /** The backend origin baked into the binary, mirroring `src/config/backendTarget.ts`. */
   apiOrigin: string
+  /**
+   * The custom URL scheme the OAuth callback returns to, written into `CFBundleURLTypes` and mirrored
+   * by `lib/oauth-return-scheme.ts` on the server. Must differ per tier — both apps are installed on
+   * the same iPad, and iOS leaves it undefined which one wins a shared scheme.
+   */
+  returnScheme: string
 }
 
 export declare const BUILD_TIERS: Record<'production' | 'staging', BuildTierSpec>

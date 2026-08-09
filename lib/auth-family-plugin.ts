@@ -11,7 +11,8 @@ import { createAuthEndpoint, sessionMiddleware, APIError } from 'better-auth/api
 import type { BetterAuthPlugin } from 'better-auth'
 import * as z from 'zod'
 import { signAccessToken } from './access-token.js'
-import { apple, baseURL, requireEnv, webauthn } from './env.js'
+import { apple, baseURL, requireEnv, tier, webauthn } from './env.js'
+import { returnSchemeUrl } from './oauth-return-scheme.js'
 import { appleClientSecret, appleUsable } from './apple-client-secret.js'
 import { hashPin, verifyPin } from './pin-hash.js'
 import {
@@ -251,10 +252,22 @@ interface OauthFlowRow {
   failedAt: Date | null
 }
 
-/** Which app started a flow. NULL on the row (an older client, or a pre-W3 row) means `web`. */
-export type OauthClient = 'web' | 'shell'
+/**
+ * Which app started a flow, and what it can be handed back.
+ *
+ * `shell-scheme` is a CAPABILITY, not a preference, and the distinction is what makes the rollout safe:
+ * a binary that has not registered `CFBundleURLTypes` cannot receive a custom-scheme redirect, and
+ * sending one anyway would end a *successful* sign-in on Safari's "the address is invalid" — strictly
+ * worse than the terminal page it replaces. So the client claims it only after the `appUrlOpen`
+ * listener is actually registered, and every already-installed binary keeps layer 2's page.
+ *
+ * NULL on the row (an older client, or a pre-W3 row) means `web`.
+ */
+export type OauthClient = 'web' | 'shell' | 'shell-scheme'
 const clientOf = (row: { client?: string | null }): OauthClient =>
-  row.client === 'shell' ? 'shell' : 'web'
+  row.client === 'shell' || row.client === 'shell-scheme' ? row.client : 'web'
+/** Both shell values render the shell's pages; only one gets the scheme redirect. */
+const isShell = (c: OauthClient): boolean => c !== 'web'
 
 /** Where the app resumes. Carries NO secret — only "the flow finished", and in the FRAGMENT. */
 const RETURN_URL = '/#bl_auth=1'
@@ -272,13 +285,24 @@ const RETURN_URL = '/#bl_auth=1'
  * fragment intact.
  */
 const returnToApp = (client: OauthClient): Response => {
-  // THE SHELL MUST NOT BE 302'd INTO THE APP. On the web this redirect lands in the tab that started
+  // THE SHELL MUST NOT BE 302'd INTO THE WEB APP. On the web this redirect lands in the tab that started
   // the flow and the fragment triggers the claim on the next paint — correct, and unchanged. In the
   // native shell the callback is running inside `SFSafariViewController`, so the SAME redirect boots
   // the ENTIRE web app inside the sheet; that copy holds no flowId, so it renders `WrongContextNotice`
   // — "Du er allerede logget ind" — over an app that is not, which is exactly the modal the owner
-  // reported. A tiny terminal page instead: the app behind the sheet is already polling, and its
-  // successful claim calls `closeExternalAuth()` and dismisses this within a tick.
+  // reported.
+  //
+  // A binary that can receive a custom-scheme link gets one, and iOS brings the app to the front
+  // (W5 layer 1). The scheme comes from a tier-keyed table on THIS side — see `oauth-return-scheme.ts`
+  // for why it is never taken from the request.
+  if (client === 'shell-scheme') {
+    return new Response(null, {
+      status: 302,
+      headers: { location: returnSchemeUrl(tier()), 'cache-control': 'no-store' },
+    })
+  }
+  // Every binary already in the field: a tiny terminal page. The app behind the sheet is polling, and
+  // its successful claim calls `closeExternalAuth()` and dismisses this within a tick.
   if (client === 'shell') return htmlResponse(shellDonePage())
   return new Response(null, {
     status: 302,
@@ -327,10 +351,13 @@ function failureHtml(message: string, code?: string | null, client: OauthClient 
   // app — the owner reported tapping "Tilbage til Børnelæring" and getting Børnelæring, inside the
   // sheet, still signed out. There is no URL a script-free page can use to reach the app from here
   // (the custom scheme is W5 layer 1 and needs a new binary), so say the true thing instead.
-  const onward =
-    client === 'shell'
-      ? `<p class="hint">Luk dette vindue for at vende tilbage til Børnelæring.</p>`
-      : `<a href="/">Tilbage til Børnelæring</a>`
+  // BOTH shell values, which is the whole reason `isShell` exists rather than a `=== 'shell'` test:
+  // a `shell-scheme` binary gets the custom-scheme redirect on SUCCESS, but a FAILURE still renders a
+  // page in the sheet — and giving that page the root-relative link would put it right back where it
+  // was, loading the web app inside SFSafariViewController.
+  const onward = isShell(client)
+    ? `<p class="hint">Luk dette vindue for at vende tilbage til Børnelæring.</p>`
+    : `<a href="/">Tilbage til Børnelæring</a>`
   return pageShell(`<h1 style="font-size:1.25rem">${escapeHtml(message)}</h1>
 ${codeBlock}
 ${onward}`)
@@ -770,15 +797,16 @@ export const familyPlugin = (): BetterAuthPlugin => ({
           // unchanged — it simply never asks for Apple.
           provider: z.enum(['google', 'apple']).optional(),
           /**
-           * WHICH APP IS ASKING. Optional and defaulted to `web` for the same rollout reason.
+           * WHICH APP IS ASKING, AND WHAT IT CAN RECEIVE. Optional and defaulted to `web` for the same
+           * rollout reason.
            *
-           * This is a HINT ABOUT PRESENTATION ONLY — which page the callback renders — and it is
-           * deliberately the only thing the request gets to choose. It never selects a redirect target,
-           * a scheme or a token endpoint: W5 layer 1's custom scheme is picked from a server-side
-           * allow-list keyed by tier, and the PROVIDER is already read off the stored row rather than
-           * off the request, for exactly this reason.
+           * A CAPABILITY, never a destination. `shell-scheme` says only "this binary has an `appUrlOpen`
+           * listener registered"; WHICH scheme it then gets comes from a tier-keyed table on the server
+           * (`oauth-return-scheme.ts`), exactly as the PROVIDER is read off the stored row rather than
+           * off the request. Echoing a caller-supplied scheme would make this an open redirect into an
+           * arbitrary app at the moment a session token is in flight.
            */
-          client: z.enum(['web', 'shell']).optional(),
+          client: z.enum(['web', 'shell', 'shell-scheme']).optional(),
         }),
       },
       async (ctx) => {

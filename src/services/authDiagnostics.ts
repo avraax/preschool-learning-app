@@ -19,7 +19,10 @@
 // token. `redactText` is applied to the one free-text field as a second line of defence, and
 // `authDiagnostics.test.ts` asserts a planted secret cannot reach the payload.
 
-import { redactText } from './redact'
+// Explicit `.ts`: the client-side auth graph is imported by plain-Node tests (`.claude/rules/auth.md`),
+// and an extensionless specifier stops the whole suite loading the moment anything Node-importable
+// reaches this module — which `shellReturn.ts` now does.
+import { redactText } from './redact.ts'
 
 export type AuthStage =
   | 'google-start'

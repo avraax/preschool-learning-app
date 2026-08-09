@@ -21,6 +21,12 @@ export const BUILD_TIERS = {
     // The HOME-SCREEN name, not the App Store listing name. Under an icon there is room for one word.
     appName: 'Børnelæring',
     apiOrigin: 'https://boernelaering.dk',
+    // The custom URL scheme the OAuth callback returns to (sign-in reliability PRD W5 layer 1). It MUST
+    // differ per tier: both apps are installed on the owner's iPad, and iOS leaves it UNDEFINED which
+    // app wins a scheme two apps claim. Mirrored in `lib/oauth-return-scheme.ts`, which is what the
+    // server redirects to; `oauthReturnScheme.test.ts` asserts the two tables agree, because a mismatch
+    // ends a SUCCESSFUL sign-in on Safari's "the address is invalid".
+    returnScheme: 'bl',
   },
   staging: {
     bundleId: 'com.vraa.earlylearning.staging',
@@ -28,6 +34,7 @@ export const BUILD_TIERS = {
     // app, and the name is half of what mitigates it (the badge is the other half).
     appName: 'BL Staging',
     apiOrigin: 'https://staging.boernelaering.dk',
+    returnScheme: 'bl-staging',
   },
 }
 
@@ -38,6 +45,7 @@ const INFO_PLIST = 'ios/App/App/Info.plist'
 /** Every value the table permits, for the "refuse to write anything else" check. */
 const ALL_BUNDLE_IDS = Object.values(BUILD_TIERS).map((t) => t.bundleId)
 const ALL_APP_NAMES = Object.values(BUILD_TIERS).map((t) => t.appName)
+const ALL_RETURN_SCHEMES = Object.values(BUILD_TIERS).map((t) => t.returnScheme)
 
 export function setBuildTier(tier, { dryRun = false } = {}) {
   const target = BUILD_TIERS[tier]
@@ -47,7 +55,11 @@ export function setBuildTier(tier, { dryRun = false } = {}) {
     )
   }
   // Belt and braces: the value must come FROM the table, not merely be compared against it.
-  if (!ALL_BUNDLE_IDS.includes(target.bundleId) || !ALL_APP_NAMES.includes(target.appName)) {
+  if (
+    !ALL_BUNDLE_IDS.includes(target.bundleId) ||
+    !ALL_APP_NAMES.includes(target.appName) ||
+    !ALL_RETURN_SCHEMES.includes(target.returnScheme)
+  ) {
     throw new Error('[set-build-tier] refusing to write a value that is not in the table')
   }
 
@@ -99,11 +111,34 @@ export function setBuildTier(tier, { dryRun = false } = {}) {
       `[set-build-tier] ${INFO_PLIST} holds an unrecognised display name ${JSON.stringify(displayName[1])}`,
     )
   }
-  const nextPlist = plist.replace(
+  let nextPlist = plist.replace(
     /(<key>CFBundleDisplayName<\/key>\s*<string>)[^<]*(<\/string>)/,
     `$1${target.appName}$2`,
   )
   if (nextPlist !== plist) changes.push(`${INFO_PLIST}: CFBundleDisplayName -> ${target.appName}`)
+
+  // --- 4. THE OAUTH RETURN SCHEME, in `CFBundleURLTypes` (sign-in reliability PRD W5 layer 1).
+  //
+  // Same treatment as the display name and for the same reason: it is a literal in the plist that
+  // nothing else rewrites. Getting it wrong is invisible on both machines — the app builds, installs and
+  // runs, and the failure appears only at the END of a real sign-in, as Safari refusing an address no
+  // installed app claims. Both tiers' schemes are in the allow-list, so a plist in an unknown state is
+  // refused rather than overwritten.
+  const scheme = plist.match(/<key>CFBundleURLSchemes<\/key>\s*<array>\s*<string>([^<]*)<\/string>/)
+  if (!scheme) throw new Error(`[set-build-tier] no CFBundleURLSchemes in ${INFO_PLIST}`)
+  if (!ALL_RETURN_SCHEMES.includes(scheme[1])) {
+    throw new Error(
+      `[set-build-tier] ${INFO_PLIST} holds an unrecognised URL scheme ${JSON.stringify(scheme[1])}`,
+    )
+  }
+  const beforeScheme = nextPlist
+  nextPlist = nextPlist.replace(
+    /(<key>CFBundleURLSchemes<\/key>\s*<array>\s*<string>)[^<]*(<\/string>)/,
+    `$1${target.returnScheme}$2`,
+  )
+  if (nextPlist !== beforeScheme) {
+    changes.push(`${INFO_PLIST}: CFBundleURLSchemes -> ${target.returnScheme}`)
+  }
 
   if (!dryRun) {
     if (nextPbx !== pbx) writeFileSync(PBXPROJ, nextPbx)
@@ -120,7 +155,9 @@ export function setBuildTier(tier, { dryRun = false } = {}) {
 if (process.argv[1] && import.meta.url.endsWith(process.argv[1].replace(/\\/g, '/').split('/').pop())) {
   const tier = process.argv[2]
   const { target, changes } = setBuildTier(tier)
-  console.log(`[set-build-tier] ${tier} -> ${target.bundleId} / ${target.appName} / ${target.apiOrigin}`)
+  console.log(
+    `[set-build-tier] ${tier} -> ${target.bundleId} / ${target.appName} / ${target.apiOrigin} / ${target.returnScheme}://`,
+  )
   if (changes.length) {
     for (const c of changes) console.log(`  ${c}`)
   } else {

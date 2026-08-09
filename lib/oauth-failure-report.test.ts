@@ -82,18 +82,25 @@ test('the shell never gets a link that navigates the SHEET', () => {
   // Børnelæring, in the sheet, still signed out. Same for the success 302, which boots the app in a
   // context holding no flowId and renders "Du er allerede logget ind".
   const fn = code.slice(code.indexOf('function failureHtml'), code.indexOf('function emailDomainOf'))
-  assert.match(fn, /client === 'shell'/, 'the failure page must branch on the flow row’s client')
-  const shellBranch = fn.slice(fn.indexOf("client === 'shell'"))
+  // BOTH shell values. A `shell-scheme` binary gets the custom-scheme redirect on success but still
+  // renders this page on failure, so a `=== 'shell'` test here would hand it the link again.
+  assert.match(fn, /isShell\(client\)/, 'the failure page must branch on the flow row’s client')
+  const shellBranch = fn.slice(fn.indexOf('isShell(client)'))
   const shellCopy = shellBranch.slice(0, shellBranch.indexOf(':'))
   assert.doesNotMatch(shellCopy, /<a\s/i, 'the shell branch must not render a link')
   assert.match(shellCopy, /Luk dette vindue/, 'say the true thing instead: close the window')
 
   const success = code.slice(code.indexOf('const returnToApp'), code.indexOf('const pageShell'))
-  assert.match(success, /client === 'shell'/, 'a shell flow must not be 302’d into the app')
+  assert.match(success, /client === 'shell'/, 'a shell flow must not be 302’d into the web app')
+  // The WEB redirect is the last resort, after both shell branches. Anchored on the web redirect's own
+  // target rather than on `status: 302`, which the scheme branch legitimately uses too.
   assert.ok(
-    success.indexOf("client === 'shell'") < success.indexOf('status: 302'),
-    'the shell branch must return BEFORE the redirect',
+    success.indexOf("client === 'shell'") < success.indexOf('location: RETURN_URL'),
+    'the shell branch must return BEFORE the web redirect',
   )
+  // And a scheme redirect may only ever go to the SERVER's table, never to anything off the request.
+  assert.match(success, /returnSchemeUrl\(tier\(\)\)/, 'the scheme must come from the tier-keyed table')
+  assert.doesNotMatch(success, /row\.|input\./, 'the redirect target must not be read off the request')
 })
 
 test('a forbidden account is NOT reported as a fault', () => {
