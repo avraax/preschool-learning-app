@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Container, Card, CardContent, Typography, Box } from '@mui/material'
+import { Container, Card, CardContent, Typography, Box, useMediaQuery } from '@mui/material'
 import { useTheme, alpha } from '@mui/material/styles'
 import { categoryThemes, getCategoryTheme } from '../../config/categoryThemes'
 import { useProgress } from '../../hooks/useProgress'
@@ -12,6 +12,7 @@ import { sectionIconImages } from '../../assets/themes/icons'
 import { defaultHomeAnchors, SCENE_SECTION_ORDER } from '../../theme/tokens/helpers'
 import type { SceneSectionId } from '../../theme/tokens/types'
 import RewardRing from '../common/RewardRing'
+import ProfileBadge from '../common/ProfileBadge'
 import ThemeMascot from '../common/ThemeMascot'
 import LivingCard from '../common/LivingCard'
 import SceneObjectField, { type SceneFieldItem } from '../common/scene/SceneObjectField'
@@ -61,6 +62,8 @@ const HomePage: React.FC = () => {
   const immersive = theme.scene.layers.length > 0
   const darkScene = theme.scene.dark // dark backdrop (e.g. Rummet) → light title + floating objects
   const burstMotion = theme.scene.ambient.motion
+  // The reward ring BRANCHES on phone landscape rather than restyling — see its call site below.
+  const phoneLandscape = useMediaQuery(PHONE_LANDSCAPE)
   const { rewardNumber } = useProgress()
   // THE number — rewards handed over, the same one the ring badge and the book header show.
   const rewardsOwned = rewardNumber()
@@ -226,12 +229,25 @@ const HomePage: React.FC = () => {
               is why the tap no longer just speaks the count. The count is spoken on ARRIVAL in the book
               instead, where the numeral is actually on screen while it is read aloud. */}
           <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5, delay: 0.15 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, md: 1.5 } }}>
+            {/* Who is playing, LEFT of the ring so the ring keeps its position and its tap target.
+                Same size, same corner, on every screen — see ProfileBadge's header. It shares the
+                ring's ONE entrance animation rather than owning motion of its own: the badge is
+                static by construction, and two staggered fades in one corner reads as a wobble. */}
+            <ProfileBadge size={phoneLandscape ? 36 : immersive ? 52 : 48} />
+            {/* SHRINK THE RING WITH `size`, NEVER WITH `sx`. `size` is the ring's ONE dimension: the
+                svg, the badge geometry and the centre art are all derived from it, and only the outer
+                box takes `sx`. A phone-landscape `sx={{width:36,height:36}}` therefore left a 48–52px
+                svg and a 25–27px silhouette inside a 36px box — the silhouette landed 7.5px LEFT of
+                the ring's own centre (measured), which is the "sticker not centered" the owner
+                reported from an iPhone. Same shape as GameShell's header ring. */}
             <RewardRing
-              size={immersive ? 52 : 48}
+              compact={phoneLandscape}
+              size={phoneLandscape ? 36 : immersive ? 52 : 48}
               onTap={() => navigateWithTransition('/album')}
               ariaLabel={`Min Bog — ${rewardsOwned} klistermærker`}
-              sx={{ [PHONE_LANDSCAPE]: { width: 36, height: 36 } }}
             />
+            </Box>
           </motion.div>
         </Box>
 

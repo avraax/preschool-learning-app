@@ -147,6 +147,14 @@ spinner that reset, not a progress meter).
   is DERIVED in the pure `rewardRingGeometry.ts` (gap from the badge's own subtend + the rounded linecap,
   badge seated ON the ring path) and unit-tested with no DOM at each shipped size, pinned as a literal
   list naming its call sites.
+  **`size` is the ring's ONE dimension — resizing it with `sx` ships a broken ring.** `sx` reaches only
+  the outer Box, while the svg, the centre art (`size * 0.52`) and every badge quantity derive from
+  `size`; a smaller box then flex-shrinks the inner div on ONE axis while the absolutely-positioned svg
+  keeps its own width, so the ring's circle and its silhouette end up on different centres. Home shipped
+  exactly that at phone landscape (measured 7.5px apart, ~21% of the diameter — owner report 323FF), and
+  nothing downstream could catch it because a size reached that way never enters `SHIPPED_RING_SIZES`.
+  Branch on the viewport and pass `size`/`compact`, as `GameShell` does; `rewardSurfaces.test.ts`
+  forbids the `sx` shape at every call site.
 - **No "+N" flyer** — at ~4% of the arc per answer the numeral means nothing to a pre-reader, and it was a
   second number on a 46px control.
 - Min Bog (`/album`, `StickerAlbum`): icon-only chapter chips auto-opened at the current chapter,
@@ -158,8 +166,21 @@ spinner that reset, not a progress meter).
   leaves the game on a stray tap, so it protected nothing and only made one control behave differently per
   screen. Don't re-mute it). What must never come back is a SECOND entrance on one screen (two objects
   meaning "your rewards" is the confusion this model exists to remove) — `rewardSurfaces.test.ts` asserts
-  exactly one `/album` route per surface, the ring's own tap. The in-game header holds the ring and
-  **nothing else**: the per-question `ScoreChip` pip row is deleted.
+  exactly one `/album` route per surface, the ring's own tap. The in-game header holds the ring plus the
+  static `ProfileBadge` and **nothing that measures performance**: the `ScoreChip` pip row is deleted.
+- **`ProfileBadge`** (`src/components/common/ProfileBadge.tsx` — home, the section menus, Min Bog AND
+  every game): the active child's baked animal portrait with their first letter, at PARITY with the
+  ring's size, immediately LEFT of it so the ring never moves. It is the child-facing half of the
+  profile system (owner, 2026-08-09); before it, the active child was visible only behind "Til de
+  voksne", so a two-child household could play a whole session as the wrong child. It is **static,
+  untappable and progress-blind**, and that is enforced rather than conventional — `profileBadge.test.ts`
+  fails the build if it imports `useProgress`/`progressStore`/`xpBus`, grows an `onTap`, animates,
+  renders the name as text, or goes missing from any surface that renders a ring. **That guard is why
+  "the ring and nothing else" could be narrowed**: the old rule's real subject was a second progress
+  meter, and a portrait measures nothing. `pointerEvents: 'none'` is load-bearing (it sits ~8px from
+  the ring, which navigates), and switching stays behind `requirePin('switchProfile')` — a 5-year-old
+  must not be able to tap their own face into a sibling's book. An unnamed profile shows the portrait
+  with NO letter (`src/config/profileInitial.ts`); there is no placeholder glyph and no avatar fallback.
 
 ## The ceremony
 

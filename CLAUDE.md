@@ -77,8 +77,8 @@ points to, loaded when you touch matching files.
   **in-game at the seam**, the moment the ring fills. gameIds are `<section>.<game>`.
   → `games-catalog.md`, `game-development.md`.
 - **In-game interaction**: one shared vocabulary, and **navigation always flows through the
-  transition system — no raw `navigate()` from inside a game.** The header holds the **reward ring and
-  nothing else**. → `game-development.md`.
+  transition system — no raw `navigate()` from inside a game.** The header holds the ring +
+  profile badge, **no score**. → `game-development.md`.
 - **Animation mechanism**: a continuous, stateless animation is a **CSS keyframe animation**
   (`src/theme/idleMotion.ts`), never a framer `repeat: Infinity` loop — 25 of those spent ~40% of every
   second recalculating style while the app sat still. **`content-visibility` is Safari 18 → banned**; it

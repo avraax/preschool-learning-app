@@ -63,6 +63,13 @@ original, then check the red lines for `expect`. Exit non-zero unless every entr
 Run it from the **repo root** — relative paths break otherwise, and a mid-run crash can leave a file
 mutated.
 
+**The restore is a blind overwrite, and another session may own that file.** Read → mutate → test →
+write-back takes seconds per entry, and anything a parallel session saves inside that window is
+silently reverted with no diff and no error (see `.claude/rules/working-in-this-tree.md`). So before
+restoring, **assert the on-disk content is still YOUR mutation**; if it isn't, leave the file alone and
+report it rather than overwriting. Prefer mutating files you actually changed this session, and say so
+if a harness touched a file another session was live in — a lost save is invisible from either side.
+
 **The `expect` matcher is itself unproven.** It is a substring of a test NAME, so it fails both ways: too
 narrow (a case mismatch — `'A STRICT increase'` vs `a STRICT increase` — reported WRONG TEST for a break
 that had in fact flipped the right one, the safe direction), and too LOOSE, where it matches a *different*

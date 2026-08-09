@@ -18,6 +18,7 @@ import LivingCard from './LivingCard'
 import GameTileIcon from './GameTileIcon'
 import BackButton from './BackButton'
 import RewardRing from './RewardRing'
+import ProfileBadge from './ProfileBadge'
 import SceneObjectField, { type SceneFieldItem } from './scene/SceneObjectField'
 import { softShadow } from '../../theme/depth'
 import { idleFloat } from '../../theme/idleMotion'
@@ -158,6 +159,8 @@ const GameSelectionLayout: React.FC<GameSelectionLayoutProps> = ({
               Horizon PRD-01 D3 it is also THE DOOR to Min Bog, on home and here. There is no second
               entrance anywhere; the shelf that used to be one is deleted. */}
           <Box sx={{ flexGrow: 1 }} />
+          {/* Who is playing, LEFT of the ring so the ring keeps its position and its tap target. */}
+          <ProfileBadge size={44} />
           <RewardRing
             size={44}
             onTap={() => navigateWithTransition('/album')}

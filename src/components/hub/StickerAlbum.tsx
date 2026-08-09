@@ -4,6 +4,7 @@ import { useTheme } from '@mui/material/styles'
 import { PHONE_LANDSCAPE, PHONE_PORTRAIT } from '../../theme/phoneMedia'
 import { motion } from 'framer-motion'
 import BackButton from '../common/BackButton'
+import ProfileBadge from '../common/ProfileBadge'
 import { REWARD_CHAPTERS, CHAPTER_COUNT, type Reward } from '../../config/stickers'
 import { CHAPTER_SIZE, chapterOfSlot } from '../../config/progression'
 import { collectedCountLine } from '../../config/danish-phrases'
@@ -155,7 +156,13 @@ const StickerAlbum: React.FC = () => {
           {/* Shared themed back button — reverses the wipe, consistent with every other surface. */}
           <BackButton to="/" variant="menu" />
 
-          <StatPill label={`${totalCollected}`} icon={uiArt.book} accent={accent} />
+          {/* Whose book this is. It matters most HERE — the album is the one screen that is entirely
+              one child's property — so the badge sits left of the number, same as every other surface
+              puts it left of the ring. Static and untappable; switching stays behind the adult PIN. */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
+            <ProfileBadge size={44} />
+            <StatPill label={`${totalCollected}`} icon={uiArt.book} accent={accent} />
+          </Box>
         </Toolbar>
       </AppBar>
 

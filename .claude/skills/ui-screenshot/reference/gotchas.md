@@ -23,6 +23,12 @@ Back to `../SKILL.md`.
   thing above it. This is what found two shipped dead buttons: a MUI `<Dialog>` defaults to
   `theme.zIndex.modal` (1300) while this app's blocking surfaces are hand-rolled `fixed` boxes at
   ~10000, so any dialog opened FROM one of those mounts behind it.
+- **`--wait-for '#root > *'` no longer waits for anything.** `BackendBadge` is mounted in `main.tsx`
+  ABOVE `<AuthGate>`, so on any non-production backend it is a direct child of `#root` that renders
+  immediately — the wait is satisfied before React renders a route, and `--measure '#root > *'` returns
+  the BADGE's rect. It reads as a correct measurement of a page that isn't there yet. Wait on something
+  the route itself owns (`[data-reward-ring]`, a heading, `[aria-label="Tilbage"]`), and treat a
+  105×19 rect at (6, 64/88) as the tell that you measured the pill.
 - **A CRASHED route still satisfies `--wait-for`, and then your probe passes VACUOUSLY.**
   `AppErrorBoundary`'s "Prøv igen" is a real `[role=button]`, so a wait/selector aimed at page content
   matches it, every `--measure` succeeds, and an "is anything overlapping?" probe cheerfully reports

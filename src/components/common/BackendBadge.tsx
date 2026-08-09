@@ -3,6 +3,7 @@ import { Box } from '@mui/material'
 import { useTheme, alpha } from '@mui/material/styles'
 import { backendLabel } from '../../config/backendTarget'
 import { ADULT_FONT } from '../../theme/adultTheme'
+import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 
 // WHICH BACKEND AM I LOOKING AT, from across the room (Staging PRD W3 / §4.2).
 //
@@ -41,6 +42,12 @@ const BackendBadge: React.FC = () => {
         // 80px on iPad landscape. 88 clears it by 8 and still reads as the top-left corner. Measured
         // at 1024×768, 768×1024, 844×390 and 667×375; `pointerEvents: 'none'` covers the rest.
         top: 'calc(env(safe-area-inset-top, 0px) + 88px)',
+        // PHONE LANDSCAPE SHORTENS THE HEADER, so the iPad number strands the pill in open sky. The
+        // header measures 8→60 here against 8→96 on iPad landscape (both at `/alphabet/quiz`), and on
+        // home the logo row ends at 50 — so 88 left a ~28px gap and the pill read as a floating
+        // object attached to nothing. Owner report 323FF, from an iPhone at 844×390. 64 clears the
+        // 58px back button by 6 and tucks under the logo row, same as 88 does on iPad.
+        [PHONE_LANDSCAPE]: { top: 'calc(env(safe-area-inset-top, 0px) + 64px)' },
         left: 'calc(env(safe-area-inset-left, 0px) + 6px)',
         // Same tier as the update pill: below the adult corner button (1001) and below every modal, so
         // it never competes with a surface someone is actually using.
@@ -55,7 +62,14 @@ const BackendBadge: React.FC = () => {
         // stay legible. `text.primary` on `background.paper` is AA on all four skins by construction.
         bgcolor: alpha(theme.palette.text.primary, 0.82),
         color: theme.palette.background.paper,
-        boxShadow: theme.customShadows.card,
+        // QUIETER, NOT SMALLER (owner 323FF: "too visible … more subtle and still visible"). Two
+        // changes, and the shadow is the bigger one: `customShadows.card` is what made a 10px
+        // technical string read as a raised OBJECT sitting on the sky, competing with the tiles.
+        // The fade then goes on the whole box rather than on the fill, so the white-on-dark pair
+        // fades TOGETHER and keeps its own contrast — measured ~5:1 at 0.78 over the default sky,
+        // still AA. Fading only `bgcolor` would soften the pill and leave the text stranded; going
+        // much below 0.78 drops under 4.5:1, and this has to be readable from across the room.
+        opacity: 0.78,
         // A host is a technical string, not child-facing typography — Comic Sans mangles a URL. Same
         // system stack the adult surface uses, so there is one definition of "not the child's font".
         fontFamily: ADULT_FONT,

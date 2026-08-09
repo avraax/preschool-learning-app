@@ -32,9 +32,14 @@ export const BADGE_CLEARANCE_PX = 3
 // a new size fails loudly here rather than shipping a badge that overlaps its own arc:
 //   • GameShell.tsx          — 34 (phone landscape, compact) / 46
 //   • GameSelectionLayout.tsx — 44
-//   • HomePage.tsx            — 48 / 52 (immersive)
+//   • HomePage.tsx            — 36 (phone landscape, compact) / 48 / 52 (immersive)
+//
+// A size reached by an `sx` override instead of this prop is NOT in this list by construction, which
+// is exactly how the home ring shipped a 25px silhouette off-centre inside a 36px box (owner report
+// 323FF) — `rewardSurfaces.test.ts` forbids that shape at the call sites.
 export const SHIPPED_RING_SIZES: ReadonlyArray<{ size: number; compact: boolean }> = [
   { size: 34, compact: true },
+  { size: 36, compact: true },
   { size: 44, compact: false },
   { size: 46, compact: false },
   { size: 48, compact: false },

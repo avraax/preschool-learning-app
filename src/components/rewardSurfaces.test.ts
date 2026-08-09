@@ -225,8 +225,16 @@ test('the adult pane shows the DISTANCE but never the level', () => {
   assert.ok(!/bloomFor\([^)]*\)\.stage/.test(code), 'a bloom STAGE number is back in the adult pane')
 })
 
-test('the game header holds the reward ring and NOTHING else', () => {
+test('the game header holds NOTHING THAT MEASURES PERFORMANCE', () => {
   const shell = codeOf('components/common/GameShell.tsx')
+  // This test was "the reward ring and NOTHING else" until 2026-08-09, when the owner added the static
+  // `ProfileBadge` beside the ring (who is playing, on every screen). The rule was NARROWED rather than
+  // dropped, deliberately and in the open: its real subject is a second PROGRESS METER, and a portrait
+  // measures nothing. The narrower half is enforced in `profileBadge.test.ts` — the badge may not import
+  // `useProgress`/`progressStore`/`xpBus`, may not be tappable, and must appear on every ring surface.
+  // Don't widen this back to "nothing else" without deleting the badge, and don't drop it: what it
+  // forbids below is the actual regression.
+  //
   // The per-question pip row (`ScoreChip`) and the `score` slot it hung in are deleted (owner,
   // 2026-08-02). It was a SECOND progress meter inches from the ring, with nothing on screen to say
   // one counts this round and the other counts the whole book — and 8 identical pips is past the
@@ -320,4 +328,43 @@ test('the ring is a GAUGE and its geometry is derived, never tuned (Reward Pacin
   // …and the badge is at bottom CENTRE, not back in the corner it was occluding from.
   assert.ok(!/right: -/.test(code), 'the count badge is back in the bottom-right corner')
   assert.match(code, /left: '50%'[\s\S]{0,200}bottom: badgeBottomOffset/, 'the badge is not bottom-centre')
+})
+
+test('no call site RESIZES the ring with `sx` — `size` is its one dimension', () => {
+  // The bug this exists for (owner report 323FF, iPhone 844x390): HomePage passed
+  // `sx={{ [PHONE_LANDSCAPE]: { width: 36, height: 36 } }}` while `size` stayed 48/52. `sx` reaches
+  // ONLY the outer Box; the svg, the centre art (`size * 0.52`) and every badge quantity are derived
+  // from `size`. So the outer box became 36px, the inner motion.div was flex-SHRUNK to 36 wide but
+  // stayed 52 tall, and the absolutely-positioned svg kept its own 52px width from the left edge —
+  // putting the ring's circle centre at +26 and the silhouette's at +18. Measured: the sticker sat
+  // 7.5px LEFT of the ring it is supposed to be centred in, ~21% of the ring's diameter.
+  //
+  // Nothing type-checks this and no unit test sees it: `sx` is a valid prop and both numbers are
+  // individually sane. It also can't be caught downstream, because a size reached this way never
+  // appears in SHIPPED_RING_SIZES. Branch on the viewport and pass `size`/`compact`, as GameShell does.
+  const callers = ['components/home/HomePage.tsx', 'components/common/GameShell.tsx', 'components/common/GameSelectionLayout.tsx']
+  for (const rel of callers) {
+    const code = codeOf(rel)
+    // The element, from `<RewardRing` to its self-closing `/>`. Comments are already stripped, so the
+    // prose above the fix cannot satisfy this the way it did for authOverlayZ.
+    for (const [, props] of code.matchAll(/<RewardRing\b([\s\S]*?)\/>/g)) {
+      assert.ok(
+        !/\bsx=/.test(props) || !/\b(width|height|minWidth|minHeight|maxWidth|maxHeight)\s*:/.test(props),
+        `${rel} sizes RewardRing through sx — pass \`size\` (and \`compact\`) instead:\n<RewardRing${props}/>`,
+      )
+    }
+  }
+})
+
+test('a phone-landscape ring passes `compact` with its smaller size, not one without the other', () => {
+  // `compact` is not decoration: it lowers the badge's px floor to 16, and 20px on a ~35px ring is
+  // 59% of the diameter — the tight fit that D4 fixed. A small `size` without `compact` reinstates it,
+  // and a `compact` at full size opens the gauge's gap wider than the badge needs.
+  for (const rel of ['components/home/HomePage.tsx', 'components/common/GameShell.tsx']) {
+    const code = codeOf(rel)
+    const el = code.match(/<RewardRing\b[\s\S]*?\/>/)
+    assert.ok(el, `${rel} no longer renders a RewardRing — re-point this guard`)
+    assert.match(el[0], /compact=\{phoneLandscape\}/, `${rel} does not pass compact on phone landscape`)
+    assert.match(el[0], /size=\{phoneLandscape \?/, `${rel} does not branch size on phone landscape`)
+  }
 })

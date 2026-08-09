@@ -1,22 +1,31 @@
 ---
 name: debug-report
-description: Fetch and debug production/local bug reports from the Børnelæring bug-report API. Use whenever the user gives a report code (e.g. "R7K3F"), says they just sent a report from the app/iPad, asks to check "the newest report", "recent bug reports" or "crash reports", or wants to debug a problem reported via the "Til de voksne" menu. Handles a single code, multiple codes, or no code at all (lists newest reports). Fetches the report JSON + screenshot, summarizes findings, then starts debugging.
+description: Fetch and debug production, staging/TestFlight or local bug reports from the Børnelæring bug-report API. Use whenever the user gives a report code (e.g. "R7K3F"), says they just sent a report from the app/iPad, asks to check "the newest report", "recent bug reports" or "crash reports", or wants to debug a problem reported via the "Til de voksne" menu. Handles a single code, multiple codes, or no code at all (lists newest reports). Fetches the report JSON + screenshot, summarizes findings, then starts debugging.
 ---
 
 # Debug a bug report
 
 Reports are created in-app ("Til de voksne" corner menu → "Rapportér et problem") or auto-uploaded
-on crashes. Each has a short id like `R7K3F`. Storage: production = Vercel Blob via
-`api/bug-report.ts`; local dev = `.bug-reports/<date>/<id>/` on disk via `dev-server.js`.
+on crashes. Each has a short id like `R7K3F`. Storage: each deployed tier = its OWN Vercel Blob store
+via `api/bug-report.ts`; local dev = `.bug-reports/<date>/<id>/` on disk via `dev-server.js`.
 
 ## 1. Pick the base URL
 
-- Production (default): `https://preschool-learning-app.vercel.app`
+**THERE ARE TWO PRODUCTION-SHAPED STORES, ONE PER TIER, AND THE LISTINGS DO NOT OVERLAP.** Staging is
+its own Vercel project with its own Blob store, so everything sent from the TestFlight `BL Staging`
+build — and from `staging.boernelaering.dk` — lands there and is invisible from the production URL. An
+owner saying "I sent two reports last night" while the production list's newest is hours older is the
+**tier**, not a lost report: check staging before concluding anything, and when a listing looks wrong,
+check the other tier before you check the code. `report.app.commitHash` tells you which build it was.
+
+- Staging / TestFlight: `https://staging.boernelaering.dk`
+- Production: `https://preschool-learning-app.vercel.app`
 - Local (user says "locally", or the report was made against a dev build): `http://127.0.0.1:3001`
   — or just Read the files under `.bug-reports/` directly.
-- Production GET reads are gated by `BUG_REPORT_READ_KEY` (fail-closed): append `&key=<value>` to
-  every prod GET, or it returns 403 (unset env) / 401 (wrong key). **The value is in `.env.local`**
-  (same key name). Local dev (`127.0.0.1:3001`) stays open unless the key env is set there too.
+- Both remote tiers gate GET reads on `BUG_REPORT_READ_KEY` (fail-closed): append `&key=<value>` or
+  they return 403 (unset env) / 401 (wrong key). **The value is in `.env.local`** (same key name) and
+  is currently the same on both. Local dev (`127.0.0.1:3001`) stays open unless the key env is set
+  there too.
 - **A report exists only if an adult actually sent one.** Check `uploadedAt` on the listing before
   concluding anything: an empty or days-old list means nothing was reported, NOT that the device is
   fine — debug the described symptom from the code instead of waiting for a report that never came.
