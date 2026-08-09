@@ -58,6 +58,8 @@ import { AppSkin } from '../../../theme/adultTheme'
 import PinSetupDialog from '../../auth/PinSetupDialog'
 import PinPad from '../../auth/PinPad'
 import { AUTH_Z } from '../../auth/authOverlayZ'
+import { useGateDialogShell } from '../../auth/gateDialog'
+import { captureExcludeProps } from '../../../services/captureExclude'
 import { adultItem } from '../../../config/adultSettingsIa'
 import DestructiveConfirmDialog from './DestructiveConfirmDialog'
 import { DangerHeading, PaneSection } from './paneParts'
@@ -694,6 +696,7 @@ const DeleteAccountPinDialog: React.FC<{
   onDone: () => void | Promise<void>
   onError: (message: string) => void
 }> = ({ open, onCancel, onDone, onError }) => {
+  const shell = useGateDialogShell()
   const [wrong, setWrong] = useState(false)
   const [hint, setHint] = useState('')
   const [busy, setBusy] = useState(false)
@@ -727,10 +730,14 @@ const DeleteAccountPinDialog: React.FC<{
       // MUI's default 1300 and the pad is on top only by DOM order, which is the accident the auth
       // stack has already shipped twice. Measured with elementFromPoint at the pad's centre.
       sx={{ zIndex: AUTH_Z.pin }}
-      slotProps={{ paper: { 'data-bl-redact': true } as never }}
+      // Same shell as every other gate: full-screen on a phone, safe-area padded, never scrolls. This
+      // pad had no responsive work at all, so it was the worst of the four on a phone.
+      {...captureExcludeProps}
+      fullScreen={shell.fullScreen}
+      slotProps={{ paper: { 'data-bl-redact': true, sx: shell.paperSx } as never }}
     >
-      <DialogTitle sx={{ fontWeight: 700 }}>Bekræft med koden</DialogTitle>
-      <DialogContent>
+      <DialogTitle sx={{ flex: '0 0 auto', fontWeight: 700 }}>Bekræft med koden</DialogTitle>
+      <DialogContent sx={shell.contentSx}>
         <PinPad
           onComplete={(pin) => void submit(pin)}
           wrong={wrong}
@@ -740,7 +747,7 @@ const DeleteAccountPinDialog: React.FC<{
           label="Tast koden for at slette"
         />
       </DialogContent>
-      <DialogActions>
+      <DialogActions sx={{ flex: '0 0 auto' }}>
         <Button onClick={onCancel} aria-label="Annullér">
           Annullér
         </Button>

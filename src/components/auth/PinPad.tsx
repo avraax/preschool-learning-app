@@ -17,15 +17,12 @@ import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { Box, Typography } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { motion } from 'framer-motion'
-import { Delete } from 'lucide-react'
-import TactileTile from '../common/TactileTile'
+import Keypad from './Keypad'
 import { getCategoryTheme } from '../../config/categoryThemes'
-import { onTileColor } from '../../theme/tokens/helpers'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
 import { PHONE_ANY, PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 
 const PIN_LENGTH = 4
-const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', 'del'] as const
 
 export interface PinPadProps {
   /** Fires automatically on the 4th digit — there is no OK button. */
@@ -61,7 +58,6 @@ const PinPad: React.FC<PinPadProps> = ({
   const theme = useTheme()
   const reduced = useReducedMotion()
   const accent = getCategoryTheme('math').accentColor
-  const glyph = onTileColor(accent)
   const [digits, setDigits] = useState('')
   const digitsRef = useRef('')
 
@@ -113,24 +109,31 @@ const PinPad: React.FC<PinPadProps> = ({
   }, [press, disabled])
 
   return (
-    // A phone in LANDSCAPE is only ~375–390px tall, and four 44px rows plus a title and actions do
-    // not fit — the pad ended up needing an internal scroll, which breaks the app's no-scroll rule.
-    // So on a short landscape phone the info block moves BESIDE the keypad (there is plenty of width
-    // there), while portrait phones and tablets keep the natural stacked layout.
+    // A phone in LANDSCAPE is only ~375–390px tall, and a stacked label + dots + hint + four key rows
+    // does not fit — so there the info block moves BESIDE the keypad (there is plenty of width), while
+    // portrait phones and tablets keep the natural stacked layout. That is a STRUCTURE branch, not a
+    // size one: the pad sizes itself from whatever box it lands in either way (see `Keypad`).
+    //
+    // This is a flex COLUMN that fills its host's DialogContent, so the keypad — the only flexible
+    // child — absorbs every pixel the info block does not need.
     <Box
       data-bl-redact
       data-pin-pad
       sx={{
         userSelect: 'none',
+        flex: '1 1 auto',
+        minHeight: 0,
+        display: 'flex',
+        flexDirection: 'column',
         [PHONE_LANDSCAPE]: {
-          display: 'flex',
+          flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'center',
           gap: 2,
         },
       }}
     >
-      <Box sx={{ [PHONE_LANDSCAPE]: { flex: '0 1 auto', maxWidth: 170 } }}>
+      <Box sx={{ flex: '0 0 auto', [PHONE_LANDSCAPE]: { flex: '0 1 auto', maxWidth: 170 } }}>
         <Typography
           sx={{ textAlign: 'center', fontWeight: 600, mb: 1, [PHONE_ANY]: { fontSize: '0.95rem' } }}
         >
@@ -178,63 +181,13 @@ const PinPad: React.FC<PinPadProps> = ({
         )}
       </Box>
 
-      <Box
-        role="group"
-        aria-label="Talpanel"
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(3, 1fr)',
-          gap: 1,
-          maxWidth: 260,
-          mx: 'auto',
-          [PHONE_ANY]: { maxWidth: 216, gap: 0.75 },
-          [PHONE_LANDSCAPE]: { maxWidth: 198, gap: 0.75, mx: 0, flex: '0 0 auto' },
-        }}
-      >
-        {KEYS.map((key, i) =>
-          key === '' ? (
-            <Box key={`spacer-${i}`} />
-          ) : (
-            <Box
-              key={key}
-              sx={{
-                aspectRatio: '3 / 2',
-                minHeight: 44,
-                // Drop the aspect ratio in short landscape so four rows fit exactly; the tap target
-                // stays at the 44px floor, just wider than tall.
-                [PHONE_LANDSCAPE]: { aspectRatio: 'auto', height: 44, minHeight: 44 },
-              }}
-            >
-              <TactileTile
-                accent={accent}
-                variant="chip"
-                state={wrong ? 'wrong' : 'idle'}
-                disabled={disabled}
-                onActivate={() => press(key)}
-                domProps={{
-                  'aria-label': key === 'del' ? 'Slet sidste ciffer' : `Ciffer ${key}`,
-                  'data-pin-key': key,
-                }}
-              >
-                <Box
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    width: '100%',
-                    height: '100%',
-                    color: glyph,
-                    fontWeight: 700,
-                    fontSize: 'clamp(1.1rem, 4vw, 1.5rem)',
-                  }}
-                >
-                  {key === 'del' ? <Delete size={20} /> : key}
-                </Box>
-              </TactileTile>
-            </Box>
-          ),
-        )}
-      </Box>
+      <Keypad
+        accent={accent}
+        wrong={wrong}
+        disabled={disabled}
+        onPress={press}
+        keyAttr="data-pin-key"
+      />
     </Box>
   )
 }

@@ -24,6 +24,8 @@ import { authStore } from '../../services/authStore'
 import { storeLocalVerifier } from '../../services/pinVerifier'
 import { validateNewPin } from '../../config/pinPolicy'
 import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
+import { captureExcludeProps } from '../../services/captureExclude'
+import { useGateDialogShell } from './gateDialog'
 import { AUTH_Z } from './authOverlayZ'
 
 type Step = 'current' | 'choose' | 'confirm' | 'saving'
@@ -53,6 +55,7 @@ const PinSetupDialog: React.FC<PinSetupDialogProps> = ({
   onCancel,
 }) => {
   const firstStep: Step = requireCurrent ? 'current' : 'choose'
+  const shell = useGateDialogShell()
   const [step, setStep] = useState<Step>(firstStep)
   const [currentPin, setCurrentPin] = useState('')
   const [first, setFirst] = useState('')
@@ -133,15 +136,15 @@ const PinSetupDialog: React.FC<PinSetupDialogProps> = ({
       // Same stack as PinDialog — see authOverlayZ. Mandatory setup must outrank anything it can
       // appear over.
       sx={{ zIndex: AUTH_Z.pin }}
-      slotProps={{
-        paper: {
-          'data-bl-redact': true,
-          sx: { [PHONE_LANDSCAPE]: { maxHeight: 'calc(100% - 16px)', m: 1 } },
-        } as never,
-      }}
+      // See PinDialog: a bug-report capture can now run while this is open, and the marker has to sit
+      // on the dialog ROOT so the backdrop goes with it.
+      {...captureExcludeProps}
+      fullScreen={shell.fullScreen}
+      slotProps={{ paper: { 'data-bl-redact': true, sx: shell.paperSx } as never }}
     >
       <DialogTitle
         sx={{
+          flex: '0 0 auto',
           fontWeight: 700,
           display: 'flex',
           alignItems: 'center',
@@ -152,7 +155,7 @@ const PinSetupDialog: React.FC<PinSetupDialogProps> = ({
         <Lock size={20} aria-hidden />
         {requireCurrent ? 'Skift kode' : 'Lav en voksenkode'}
       </DialogTitle>
-      <DialogContent sx={{ [PHONE_LANDSCAPE]: { py: 0.5 } }}>
+      <DialogContent sx={[shell.contentSx, { [PHONE_LANDSCAPE]: { py: 0.5 } }]}>
         {!requireCurrent && (
           <Typography
             variant="body2"
@@ -175,7 +178,7 @@ const PinSetupDialog: React.FC<PinSetupDialogProps> = ({
         />
       </DialogContent>
       {dismissible && (
-        <DialogActions sx={{ [PHONE_LANDSCAPE]: { py: 0.5 } }}>
+        <DialogActions sx={{ flex: '0 0 auto', [PHONE_LANDSCAPE]: { py: 0.5 } }}>
           <Button
             onClick={() => {
               reset()

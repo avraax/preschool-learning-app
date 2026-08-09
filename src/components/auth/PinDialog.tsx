@@ -29,6 +29,8 @@ import {
 } from '../../services/pinVerifier'
 import { attemptsLeft, isLockedOut, lockoutMessage } from '../../config/pinPolicy'
 import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
+import { captureExcludeProps } from '../../services/captureExclude'
+import { useGateDialogShell } from './gateDialog'
 import { AUTH_Z } from './authOverlayZ'
 
 // Plain strings — they double as the dialog's aria-label, and the padlock is drawn as a lucide icon
@@ -51,6 +53,7 @@ interface Pending {
 
 const PinDialog: React.FC = () => {
   const auth = useAuthContext()
+  const shell = useGateDialogShell()
   const [pending, setPending] = useState<Pending | null>(null)
   const [wrong, setWrong] = useState(false)
   const [hint, setHint] = useState('')
@@ -143,17 +146,21 @@ const PinDialog: React.FC = () => {
       // — far above a MUI Dialog's default 1300. Without this, "Brug kode i stedet" mounted a pad that
       // was live and completely invisible.
       sx={{ zIndex: AUTH_Z.pin }}
+      // A capture can now run while this is open (the gear no longer blocks the gate on it), so the
+      // marker goes on the dialog ROOT — the paper's `data-bl-redact` would leave the backdrop.
+      {...captureExcludeProps}
+      fullScreen={shell.fullScreen}
       slotProps={{
         paper: {
           'data-bl-redact': true,
-          // Short landscape phones: reclaim the default 64px of vertical margin so the pad never
-          // needs an internal scroll (the app's no-scroll rule).
-          sx: { [PHONE_LANDSCAPE]: { maxHeight: 'calc(100% - 16px)', m: 1 } },
+          // Full-screen on phones + `--vh` + safe-area insets; see `gateDialog.ts`.
+          sx: shell.paperSx,
         } as never,
       }}
     >
       <DialogTitle
         sx={{
+          flex: '0 0 auto',
           fontWeight: 700,
           display: 'flex',
           alignItems: 'center',
@@ -164,7 +171,7 @@ const PinDialog: React.FC = () => {
         <Lock size={20} aria-hidden />
         {TITLES[pending.reason]}
       </DialogTitle>
-      <DialogContent sx={{ [PHONE_LANDSCAPE]: { py: 0.5 } }}>
+      <DialogContent sx={[shell.contentSx, { [PHONE_LANDSCAPE]: { py: 0.5 } }]}>
         {pending.verifier === 'server' && (
           <Typography variant="body2" sx={{ textAlign: 'center', mb: 1.5, color: 'text.secondary' }}>
             Dette kræver internet.
@@ -178,7 +185,7 @@ const PinDialog: React.FC = () => {
           hint={hint}
         />
       </DialogContent>
-      <DialogActions sx={{ [PHONE_LANDSCAPE]: { py: 0.5 } }}>
+      <DialogActions sx={{ flex: '0 0 auto', [PHONE_LANDSCAPE]: { py: 0.5 } }}>
         <Button onClick={() => finish(false)} aria-label="Annullér">
           Annullér
         </Button>

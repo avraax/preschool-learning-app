@@ -57,6 +57,9 @@ test('a PIN pad rendered OUTSIDE this directory still sets its z-index', () => {
   // settings tree, so it slipped through: it and the settings Dialog were both at MUI's default 1300
   // and the pad was on top only by DOM order. Anywhere a <PinPad> is mounted inside a <Dialog>, the
   // dialog must carry AUTH_Z — wherever that file happens to live.
+  //
+  // <Keypad> is in the pattern too: it is the shared pad PinPad and the guest gate now both render,
+  // so a new gate could mount one WITHOUT going through PinPad and slip past a PinPad-only sweep.
   const SRC = path.resolve(HERE, '..', '..')
   const offenders: string[] = []
   const walk = (dir: string) => {
@@ -68,7 +71,7 @@ test('a PIN pad rendered OUTSIDE this directory still sets its z-index', () => {
       }
       if (!/\.tsx$/.test(entry.name)) continue
       const src = readFileSync(full, 'utf8')
-      if (!/<PinPad[\s/>]/.test(src)) continue
+      if (!/<(PinPad|Keypad)[\s/>]/.test(src)) continue
       if (!/<Dialog[\s>]/.test(src)) continue
       // Strip comments FIRST. A prose mention of the constant in the "why" comment above the fix
       // satisfied `includes()` and kept this test green after the fix itself had been deleted.
@@ -80,7 +83,7 @@ test('a PIN pad rendered OUTSIDE this directory still sets its z-index', () => {
   assert.deepEqual(
     offenders,
     [],
-    `these mount a PIN pad in a <Dialog> with no AUTH_Z.pin: ${offenders.join(', ')}`,
+    `these mount a keypad in a <Dialog> with no AUTH_Z.pin: ${offenders.join(', ')}`,
   )
 })
 

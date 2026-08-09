@@ -12,6 +12,19 @@
 // values on the live DOM (briefly, then restores) so the clone can reproduce them.
 
 import { needsMarginPin, isFalseEllipsis } from './screenshotFidelity'
+import { CAPTURE_EXCLUDE_SELECTOR, CAPTURE_EXCLUDE_SELECTORS } from './captureExclude'
+
+/**
+ * Pull the chunk down without capturing anything. Called on the gear's `pointerdown`, so the ~200KB
+ * module is already resolved by the time the finger lifts.
+ *
+ * This is NOT the preloading `vite.config.ts` refuses to do: that rule is about COLD LAUNCH, where a
+ * `<link modulepreload>` costs parse work before first paint. This fires on a deliberate adult
+ * gesture, minutes into a session.
+ */
+export function warmScreenshot(): void {
+  void import('@zumer/snapdom').catch(() => {})
+}
 
 /** One saved inline-style property, so every mutation can be put back exactly as it was. */
 type Saved = { el: HTMLElement; prop: string; value: string; priority: string }
@@ -30,10 +43,20 @@ const save = (out: Saved[], el: HTMLElement, prop: string) => {
  * that MUST run (finally) — these mutations are on the real DOM the child is looking at.
  *
  * Reads are batched before writes: one forced reflow, not one per node.
+ *
+ * EXCLUDED SUBTREES ARE SKIPPED ENTIRELY, and that is not just an optimisation. The capture now runs
+ * BEHIND the open adult gate rather than before it, and these writes land on the live DOM: killing
+ * `backdrop-filter` and pinning margins under the dialog the adult is reading would flicker it for
+ * the length of the capture. Anything dropped from the clone has nothing to stabilise anyway.
  */
 function stabilizeForCapture(root: HTMLElement): () => void {
   const saved: Saved[] = []
-  const els = [root, ...Array.from(root.querySelectorAll<HTMLElement>('*'))]
+  const excluded = Array.from(root.querySelectorAll<HTMLElement>(CAPTURE_EXCLUDE_SELECTOR))
+  const isExcluded = (el: HTMLElement) =>
+    excluded.length > 0 && excluded.some((x) => x === el || x.contains(el))
+  const els = [root, ...Array.from(root.querySelectorAll<HTMLElement>('*'))].filter(
+    (el) => !isExcluded(el),
+  )
 
   // ---- measure ----------------------------------------------------------------------------
   const marginPins: { el: HTMLElement; left: number; right: number; before: DOMRect }[] = []
@@ -155,7 +178,12 @@ export async function captureScreenshot(opts?: {
         // This is one of THREE independent layers — AdultCorner's tap is inert while an auth
         // dialog is open, and PinPad renders dots rather than digits — because one layer is not
         // enough for a public blob.
-        exclude: ['[data-bl-redact]'],
+        //
+        // `data-capture-exclude` is the SECOND, differently-motivated selector: the adult gate now
+        // opens immediately and the capture runs behind it, so the gate (and the settings surface it
+        // leads to) must remove itself from a picture that is meant to show the game underneath.
+        // See `captureExclude.ts` for why that is not the same concern as redaction.
+        exclude: [...CAPTURE_EXCLUDE_SELECTORS],
         excludeMode: 'remove',
       })
       return canvas.toDataURL('image/jpeg', quality)

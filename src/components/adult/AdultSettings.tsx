@@ -50,6 +50,7 @@ import { AdultThemeProvider, ADULT_FONT } from '../../theme/adultTheme'
 import { useProfiles } from '../../hooks/useProfiles'
 import { useProgress } from '../../hooks/useProgress'
 import { useAuthContext } from '../../contexts/AuthContext'
+import { captureExcludeProps } from '../../services/captureExclude'
 import AdultBackHeader from './AdultBackHeader'
 import BarnPane from './panes/BarnPane'
 import LaeringPane from './panes/LaeringPane'
@@ -220,6 +221,11 @@ const AdultSettings: React.FC<AdultSettingsProps> = ({
         fullWidth
         fullScreen={compact}
         aria-label="Til de voksne"
+        // A bug-report capture now runs behind the gate and can still be in flight when this mounts
+        // (an adult who answers the challenge fast). Without the marker the report would show the
+        // settings surface instead of the game being reported — the exact property the capture was
+        // moved before the gate to protect in the first place.
+        {...captureExcludeProps}
         slotProps={{
           paper: {
             // A stable hook for the screenshot/measure probes; MUI's slot typing has no index

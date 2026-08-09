@@ -16,7 +16,6 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { Box, Button, Dialog, DialogActions, DialogContent, Typography } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { motion } from 'framer-motion'
-import { Delete } from 'lucide-react'
 import {
   ANSWER_DIGITS,
   isGuestAnswerCorrect,
@@ -24,14 +23,12 @@ import {
   type GuestChallenge,
 } from '../../config/guestAdultGate'
 import { getCategoryTheme } from '../../config/categoryThemes'
-// Digit glyphs sit on the white tileSurface, so they use onTileColor(accent), never the raw accent.
-import { onTileColor } from '../../theme/tokens/helpers'
-import { PHONE_ANY, PHONE_LANDSCAPE } from '../../theme/phoneMedia'
+import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
-import TactileTile from '../common/TactileTile'
+import { captureExcludeProps } from '../../services/captureExclude'
+import Keypad from './Keypad'
+import { useGateDialogShell } from './gateDialog'
 import { AUTH_Z } from './authOverlayZ'
-
-const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', 'del'] as const
 
 const GuestAdultGate: React.FC<{
   open: boolean
@@ -40,7 +37,7 @@ const GuestAdultGate: React.FC<{
   const theme = useTheme()
   const reduced = useReducedMotion()
   const accent = getCategoryTheme('math').accentColor
-  const glyph = onTileColor(accent)
+  const shell = useGateDialogShell()
 
   // `nonce` forces a fresh question on every open AND after every wrong answer — see the header.
   //
@@ -119,28 +116,62 @@ const GuestAdultGate: React.FC<{
       // Same reason as PinDialog: this can be demanded over surfaces that are fixed boxes at ~10 000,
       // far above a MUI Dialog's default 1300.
       sx={{ zIndex: AUTH_Z.pin }}
-      slotProps={{ paper: { sx: { borderRadius: 4, p: 1 } } }}
+      // The bug-report screenshot is now taken BEHIND this gate rather than before it, so the gate has
+      // to remove itself from the picture. NOT `data-bl-redact` — see `captureExclude.ts` and this
+      // file's header for why those two are deliberately different things.
+      {...captureExcludeProps}
+      fullScreen={shell.fullScreen}
+      slotProps={{ paper: { sx: shell.paperSx } }}
     >
-      <DialogContent>
-        <Typography sx={{ textAlign: 'center', fontWeight: 700, fontSize: '1.05rem', mb: 0.5 }}>
-          Til de voksne
-        </Typography>
-        <Typography
-          sx={{ textAlign: 'center', color: 'text.secondary', fontSize: '0.9rem', mb: 2 }}
-        >
-          Svar for at fortsætte.
-        </Typography>
-
+      <DialogContent sx={shell.contentSx}>
         <Box
           sx={{
             userSelect: 'none',
-            [PHONE_LANDSCAPE]: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2 },
+            flex: '1 1 auto',
+            minHeight: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            [PHONE_LANDSCAPE]: {
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 2,
+            },
           }}
         >
-          <Box sx={{ [PHONE_LANDSCAPE]: { flex: '0 1 auto', maxWidth: 190 } }}>
+          {/* Title, prompt, answer and status are ONE block. Keeping the title outside put it above
+              the whole row on a landscape phone, i.e. centred over the keypad rather than over the
+              question it names — it read as a stray caption on the pad. */}
+          <Box sx={{ flex: '0 0 auto', [PHONE_LANDSCAPE]: { flex: '0 1 auto', maxWidth: 200 } }}>
+            <Typography sx={{ textAlign: 'center', fontWeight: 700, fontSize: '1.05rem', mb: 0.5 }}>
+              Til de voksne
+            </Typography>
+            <Typography
+              sx={{
+                textAlign: 'center',
+                color: 'text.secondary',
+                fontSize: '0.9rem',
+                mb: 2,
+                // The one line that can go when height is the binding constraint. The prompt below
+                // already says what to do, and a landscape phone is ~390px tall in total.
+                [PHONE_LANDSCAPE]: { display: 'none' },
+              }}
+            >
+              Svar for at fortsætte.
+            </Typography>
+
             <Typography
               data-guest-gate-prompt
-              sx={{ textAlign: 'center', fontWeight: 700, fontSize: '1.35rem', mb: 1.25 }}
+              sx={{
+                textAlign: 'center',
+                fontWeight: 700,
+                fontSize: 'clamp(1.35rem, 5vw, 1.7rem)',
+                mb: 1.25,
+                // A landscape phone is WIDE, so the `vw` term picks the largest size — into a 200px
+                // column, which wrapped "Hvor meget er 4 × 8?" after the 4. The column is narrow
+                // here regardless of how wide the viewport is, so pin the size instead.
+                [PHONE_LANDSCAPE]: { fontSize: '1.15rem', mb: 1 },
+              }}
             >
               {challenge.prompt}
             </Typography>
@@ -156,15 +187,18 @@ const GuestAdultGate: React.FC<{
                   key={i}
                   data-guest-gate-slot={i < typed.length ? 'filled' : 'empty'}
                   sx={{
-                    width: 44,
-                    height: 52,
+                    // Scales with the keys rather than staying at the old fixed 44 × 52. At the old
+                    // size it was visibly smaller than a ~106px key, so the thing being ANSWERED
+                    // looked less important than the buttons used to answer it.
+                    width: 'clamp(52px, 16vw, 72px)',
+                    height: 'clamp(60px, 19vw, 86px)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     // An explicit LENGTH, not `borderRadius: 2` — that multiplies against this theme's
                     // shape token and rendered the two answer slots as ovals (measured).
-                    borderRadius: '12px',
-                    fontSize: '1.6rem',
+                    borderRadius: '16px',
+                    fontSize: 'clamp(1.8rem, 6vw, 2.4rem)',
                     fontWeight: 700,
                     color: wrong ? theme.palette.error.main : accent,
                     border: `2px solid ${wrong ? theme.palette.error.main : accent}`,
@@ -190,63 +224,10 @@ const GuestAdultGate: React.FC<{
             </Typography>
           </Box>
 
-          <Box
-            role="group"
-            aria-label="Talpanel"
-            sx={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(3, 1fr)',
-              gap: 1,
-              maxWidth: 260,
-              mx: 'auto',
-              [PHONE_ANY]: { maxWidth: 216, gap: 0.75 },
-              [PHONE_LANDSCAPE]: { maxWidth: 198, gap: 0.75, mx: 0, flex: '0 0 auto' },
-            }}
-          >
-            {KEYS.map((key, i) =>
-              key === '' ? (
-                <Box key={`spacer-${i}`} />
-              ) : (
-                <Box
-                  key={key}
-                  sx={{
-                    aspectRatio: '3 / 2',
-                    minHeight: 44,
-                    [PHONE_LANDSCAPE]: { aspectRatio: 'auto', height: 44, minHeight: 44 },
-                  }}
-                >
-                  <TactileTile
-                    accent={accent}
-                    variant="chip"
-                    state={wrong ? 'wrong' : 'idle'}
-                    onActivate={() => press(key)}
-                    domProps={{
-                      'aria-label': key === 'del' ? 'Slet sidste ciffer' : `Ciffer ${key}`,
-                      'data-guest-gate-key': key,
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        width: '100%',
-                        height: '100%',
-                        color: glyph,
-                        fontWeight: 700,
-                        fontSize: 'clamp(1.1rem, 4vw, 1.5rem)',
-                      }}
-                    >
-                      {key === 'del' ? <Delete size={20} /> : key}
-                    </Box>
-                  </TactileTile>
-                </Box>
-              ),
-            )}
-          </Box>
+          <Keypad accent={accent} wrong={wrong} onPress={press} keyAttr="data-guest-gate-key" />
         </Box>
       </DialogContent>
-      <DialogActions sx={{ px: 3, pb: 2 }}>
+      <DialogActions sx={{ flex: '0 0 auto', px: 3, pb: 2, [PHONE_LANDSCAPE]: { py: 0.5 } }}>
         <Button onClick={() => onResolve(false)} sx={{ minHeight: 44 }}>
           Annullér
         </Button>
