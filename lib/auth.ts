@@ -14,6 +14,7 @@ import { familyPlugin } from './auth-family-plugin.js'
 import {
   apple,
   baseURL,
+  fakeProviderEnabled,
   isEmailAllowed,
   optionalEnv,
   requireEnv,
@@ -22,6 +23,8 @@ import {
   webauthn,
 } from './env.js'
 import { appleClientSecret, appleUsable } from './apple-client-secret.js'
+import { FAKE_PROVIDER_SLOT, fakeSocialProvider } from './fake-oidc.js'
+import { ALLOWLIST_REFUSED_MESSAGE } from './oauth-signin-outcome.js'
 
 // `vercel.app` is on the Public Suffix List and a preview origin is not a registrable-domain suffix
 // of the production RP ID, so passkeys CANNOT work on a preview deployment (PRD §9). We leave the
@@ -102,6 +105,12 @@ export const auth = betterAuth({
       clientSecret: requireEnv('GOOGLE_CLIENT_SECRET'),
     },
     ...(appleProvider ? { apple: appleProvider } : {}),
+    // THE FAKE PROVIDER (sign-in reliability PRD W7), and it can only appear off production — the gate
+    // is three independent conditions in `lib/env.ts`, each failing closed, pinned by `fakeOidc.test.ts`.
+    // It rides the `microsoft` slot because `signInSocial` resolves its provider from better-auth's own
+    // registry and drops an invented key, and only its `verifyIdToken`/`getUserInfo` are ours — so the
+    // allowlist hook, the session creation and the `set-auth-token` shape all stay under test.
+    ...(fakeProviderEnabled() ? { [FAKE_PROVIDER_SLOT]: fakeSocialProvider() } : {}),
   },
 
   session: {
@@ -146,7 +155,11 @@ export const auth = betterAuth({
         before: async (user) => {
           if (!isEmailAllowed(user.email)) {
             console.warn('[auth] refused sign-up for a non-allowlisted address')
-            throw new APIError('FORBIDDEN', { message: 'Denne konto har ikke adgang.' })
+            // THE MESSAGE IS A CONTRACT, not copy — see ALLOWLIST_REFUSED_MESSAGE. better-auth discards
+            // the FORBIDDEN status and the code on the OAuth path (it re-throws as 401
+            // `OAUTH_LINK_ERROR`), so this string is the only thing the callback can recognise the
+            // refusal by. It is internal; the adult reads `forbiddenMessage(domain)` instead.
+            throw new APIError('FORBIDDEN', { message: ALLOWLIST_REFUSED_MESSAGE })
           }
           return { data: user }
         },

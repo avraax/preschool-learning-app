@@ -160,6 +160,28 @@ export function devBypassEnabled(): boolean {
   return process.env.AUTH_DEV_BYPASS === '1' && !process.env.VERCEL && runtime() === 'dev'
 }
 
+/**
+ * The FAKE OIDC PROVIDER — a stand-in identity provider that lets the whole sign-in round trip be
+ * driven headlessly, with no Google or Apple account involved (sign-in reliability PRD W7).
+ *
+ * THREE INDEPENDENT CONDITIONS, EVERY ONE OF WHICH FAILS CLOSED, modelled on `devBypassEnabled` above:
+ * the explicit flag, the deployment runtime, and the tier. Any single one being wrong is enough to
+ * disable it, and `fakeOidc.test.ts` pins that no combination of environment variables can turn it on
+ * once `VERCEL_ENV=production` — because what this bypasses is the identity check itself.
+ *
+ * NOTE WHAT `runtime() !== 'production'` MEANS HERE, because it is not what it looks like: the STAGING
+ * Vercel project deploys with `--prod`, so `VERCEL_ENV=production` there too and `runtime()` returns
+ * `production` on staging as well. This gate is therefore LOCAL-ONLY in practice, and deliberately left
+ * that way — local development already IS the staging tier (`.env.local` carries `BL_TIER=staging` and
+ * the staging database), and both verification harnesses (`cdp.mjs`, `webkit.mjs`) drive localhost. The
+ * PRD's "for staging and dev" is satisfied by the tier, not by the deployment.
+ */
+export function fakeProviderEnabled(): boolean {
+  return (
+    process.env.AUTH_FAKE_PROVIDER === '1' && runtime() !== 'production' && tier() !== 'production'
+  )
+}
+
 export interface AppleConfig {
   enabled: boolean
   /** The **Services ID** (e.g. `dk.boernelaering.web`), not the app's bundle identifier. */

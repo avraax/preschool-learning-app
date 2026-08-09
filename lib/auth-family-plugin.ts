@@ -11,8 +11,9 @@ import { createAuthEndpoint, sessionMiddleware, APIError } from 'better-auth/api
 import type { BetterAuthPlugin } from 'better-auth'
 import * as z from 'zod'
 import { signAccessToken } from './access-token.js'
-import { apple, baseURL, requireEnv, tier, webauthn } from './env.js'
+import { apple, baseURL, fakeProviderEnabled, requireEnv, tier, webauthn } from './env.js'
 import { returnSchemeUrl } from './oauth-return-scheme.js'
+import { decodeFakeCode, FAKE_PROVIDER_SLOT, signFakeIdToken } from './fake-oidc.js'
 import { appleClientSecret, appleUsable } from './apple-client-secret.js'
 import { hashPin, verifyPin } from './pin-hash.js'
 import {
@@ -233,8 +234,18 @@ const b64url = (n: number): string => randomBytes(n).toString('base64url')
  */
 const APPLE_CALLBACK_PATH = '/api/auth/family/oauth/callback/apple'
 
-/** The two providers that can CREATE an account. Passkeys can only unlock an existing one. */
-export type OauthProvider = 'google' | 'apple'
+/**
+ * The providers that can CREATE an account. Passkeys can only unlock an existing one.
+ *
+ * `fake` is the driven stand-in (PRD W7) and exists ONLY where `fakeProviderEnabled()` is true — three
+ * independent conditions in `lib/env.ts`, none of which can hold on production. Every branch below that
+ * mentions it is gated at `/oauth/start`, so a flow row can never carry `fake` on a deployment where
+ * the gate is shut.
+ */
+export type OauthProvider = 'google' | 'apple' | 'fake'
+
+/** Where the fake authorize "consent screen" lives. Off the auth base path, like the Apple callback. */
+const FAKE_AUTHORIZE_PATH = '/api/auth/family/oauth/fake-authorize'
 
 interface OauthFlowRow {
   id: string
@@ -795,7 +806,13 @@ export const familyPlugin = (): BetterAuthPlugin => ({
           flowId: z.string().min(20).max(200),
           // Optional + defaulted so an older client (or a shell binary mid-rollout) keeps working
           // unchanged — it simply never asks for Apple.
-          provider: z.enum(['google', 'apple']).optional(),
+          provider: z.enum(['google', 'apple', 'fake']).optional(),
+          /**
+           * W7 only, and ignored unless `fakeProviderEnabled()`: which outcome the driven flow should
+           * produce. It is not a redirect and not a credential — it selects between OUR OWN failure
+           * branches so a harness can reach the ones a real provider only produces by accident.
+           */
+          fakeOutcome: z.string().max(200).optional(),
           /**
            * WHICH APP IS ASKING, AND WHAT IT CAN RECEIVE. Optional and defaulted to `web` for the same
            * rollout reason.
@@ -835,6 +852,15 @@ export const familyPlugin = (): BetterAuthPlugin => ({
             code: 'apple_not_configured',
           })
         }
+        // THE ONLY DOOR TO THE FAKE PROVIDER. Refusing here — rather than later, or per branch — is what
+        // makes it impossible for a flow row to carry `fake` anywhere the gate is shut: every downstream
+        // branch reads the provider off the ROW, never off a request.
+        if (provider === 'fake' && !fakeProviderEnabled()) {
+          throw new APIError('BAD_REQUEST', {
+            message: 'Ukendt login-udbyder.',
+            code: 'unknown_provider',
+          })
+        }
 
         await adapter.create({
           model: 'oauthFlow',
@@ -853,6 +879,15 @@ export const familyPlugin = (): BetterAuthPlugin => ({
             failedAt: null,
           },
         })
+
+        if (provider === 'fake') {
+          // The "consent screen": our own page, which redirects straight back to our own callback. The
+          // outcome rides in the URL so the whole scenario is chosen here and needs no server state.
+          const url = new URL(`${baseURL()}${FAKE_AUTHORIZE_PATH}`)
+          url.searchParams.set('state', state)
+          url.searchParams.set('outcome', ctx.body.fakeOutcome ?? 'ok:test@example.com')
+          return ctx.json({ authorizeUrl: url.toString() })
+        }
 
         if (provider === 'apple') {
           const url = new URL('https://appleid.apple.com/auth/authorize')
@@ -960,6 +995,37 @@ export const familyPlugin = (): BetterAuthPlugin => ({
       },
     ),
 
+
+    /**
+     * The FAKE provider's "consent screen" (W7) — a redirect, not a page.
+     *
+     * It stands in for the leg we cannot automate: a real provider showing a real account chooser. There
+     * is nothing to consent to, so it redirects to our own callback immediately, carrying an
+     * authorization code that encodes which outcome the driven scenario wants. Everything downstream is
+     * the REAL code path.
+     *
+     * GATED HERE TOO, not only at `/oauth/start`. Two gates on one feature is the right amount when the
+     * feature is "skip the identity check": this endpoint must 404 on any deployment, whatever any flow
+     * row happens to say.
+     */
+    familyOauthFakeAuthorize: createAuthEndpoint(
+      FAKE_AUTHORIZE_PATH.replace('/api/auth', ''),
+      { method: 'GET', query: z.object({ state: z.string(), outcome: z.string().optional() }) },
+      async (ctx) => {
+        if (!fakeProviderEnabled()) throw new APIError('NOT_FOUND')
+        const outcome = ctx.query?.outcome ?? 'ok:test@example.com'
+        const url = new URL(`${baseURL()}/api/auth/family/oauth/callback`)
+        url.searchParams.set('state', ctx.query.state)
+        // `cancel` reaches the provider-declined branch, which is a real answer a provider gives and
+        // otherwise needs an adult to tap "Annullér" on a consent screen.
+        if (outcome === 'cancel') url.searchParams.set('error', 'access_denied')
+        else url.searchParams.set('code', `fake:${outcome}`)
+        return new Response(null, {
+          status: 302,
+          headers: { location: url.toString(), 'cache-control': 'no-store' },
+        })
+      },
+    ),
 
     /**
      * Step 6: the app claims with the `flowId` only IT has. A wrong flowId can never yield a token,
@@ -1121,7 +1187,35 @@ async function completeOauthCallback(
     update: { state: `used:${b64url(16)}` },
   })
 
-  const provider: OauthProvider = row.provider === 'apple' ? 'apple' : 'google'
+  const provider: OauthProvider =
+    row.provider === 'apple' ? 'apple' : row.provider === 'fake' ? 'fake' : 'google'
+
+  // THE FAKE PROVIDER'S "TOKEN EXCHANGE" (W7): local, and gated a third time. A row can only say `fake`
+  // if the gate was open at `/oauth/start`, but the gate is an environment variable and an environment
+  // can change under a row — so this refuses rather than trusting the row it just read.
+  if (provider === 'fake') {
+    if (!fakeProviderEnabled()) {
+      return failFlow(adapter, row, { message: 'Login mislykkedes. Prøv igen i appen.', status: 400 })
+    }
+    const outcome = decodeFakeCode(authCode)
+    if (!outcome || outcome.kind === 'reject-exchange') {
+      // Deliberately the SAME branch a real rejected exchange takes, report and all — the point of this
+      // provider is to reach our own failure handling, not to shortcut it.
+      const code = await reportOauthFailure('token-exchange-rejected', {
+        provider,
+        status: 400,
+        providerError: 'fake_rejected',
+      })
+      return failFlow(adapter, row, { message: 'Login mislykkedes. Prøv igen i appen.', code, status: 400 })
+    }
+    // `bad-token` mints a token that will not verify — the shape a wrong Apple audience produced (RC1),
+    // which is otherwise reachable only by misconfiguring a real provider.
+    const idToken =
+      outcome.kind === 'bad-token'
+        ? 'not.a.valid.token'
+        : await signFakeIdToken({ sub: `fake-${sha256(outcome.email).slice(0, 16)}`, email: outcome.email })
+    return finishSignIn(adapter, row, { idToken, provider, client, now })
+  }
 
   let idToken: string | undefined
   try {
@@ -1175,6 +1269,23 @@ async function completeOauthCallback(
     return failFlow(adapter, row, { message: 'Login mislykkedes. Prøv igen i appen.', code, status: 500 })
   }
 
+  return finishSignIn(adapter, row, { idToken, provider, client, now })
+}
+
+/**
+ * EVERYTHING FROM A VERIFIED ID TOKEN ONWARDS — sign in, park the session, hand the app back.
+ *
+ * Extracted so the FAKE provider (W7) reaches the identical code rather than a parallel copy of it.
+ * A stand-in that takes its own shortcut past the allowlist hook, the session creation or the
+ * `set-auth-token` split would test nothing that matters; the only thing it replaces is where the ID
+ * token came from.
+ */
+async function finishSignIn(
+  adapter: Adapter & { update: (x: unknown) => Promise<unknown> },
+  row: OauthFlowRow,
+  ctx: { idToken: string; provider: OauthProvider; client: OauthClient; now: number },
+): Promise<Response> {
+  const { idToken, provider, client, now } = ctx
   let outcome: SignInOutcome
   try {
     outcome = await signInWithIdToken(idToken, provider)
@@ -1210,7 +1321,13 @@ async function completeOauthCallback(
     // address, which is not on the list and never will be. So the page names the address's DOMAIN —
     // `gmail.com` vs `privaterelay.appleid.com` — which is what separates "wrong account" from "Hide My
     // Email" without ever printing the address. It stays a WORKING refusal: no Fejlkode, no report.
-    const verdict = classifySignInFailure(outcome)
+    const verdict = classifySignInFailure({
+      status: outcome.status,
+      code: outcome.code,
+      // The MESSAGE is load-bearing here: it is the only field that survives better-auth's rewrap of the
+      // allowlist refusal into a generic 401 link error. Dropping it makes the FORBIDDEN branch dead.
+      message: outcome.message,
+    })
     if (verdict.kind === 'forbidden') {
       const domain = emailDomainOf(idToken)
       console.warn(`[auth] ${provider} sign-in refused by the allowlist (domain: ${domain ?? 'unknown'})`)
@@ -1255,7 +1372,11 @@ async function signInWithIdToken(idToken: string, provider: OauthProvider): Prom
     body: {
       // `idToken` ONLY. Adding `accessToken` here is what would persist a provider credential in Neon
       // — see the header. There is no `refreshToken` to add.
-      provider,
+      //
+      // The FAKE provider rides a real better-auth slot: `signInSocial` resolves its provider from
+      // better-auth's own registry, so an invented key is dropped before the handler runs. Registering
+      // that slot is itself gated (`lib/auth.ts`), so this maps to nothing on production.
+      provider: provider === 'fake' ? FAKE_PROVIDER_SLOT : provider,
       idToken: { token: idToken },
     },
     asResponse: true,

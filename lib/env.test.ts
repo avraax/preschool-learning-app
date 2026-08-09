@@ -8,6 +8,7 @@ import {
   assertTierMatchesBaseURL,
   baseURL,
   devBypassEnabled,
+  fakeProviderEnabled,
   isEmailAllowed,
   runtime,
   tier,
@@ -22,6 +23,7 @@ const KEYS = [
   'VERCEL_PROJECT_PRODUCTION_URL',
   'BETTER_AUTH_URL',
   'AUTH_DEV_BYPASS',
+  'AUTH_FAKE_PROVIDER',
   'AUTH_ALLOWED_EMAILS',
   'WEBAUTHN_RP_ID',
   'WEBAUTHN_RP_NAME',
@@ -166,6 +168,43 @@ test('THE DEV BYPASS IS IMPOSSIBLE ONCE VERCEL IS SET', () => {
   assert.equal(devBypassEnabled(), false, 'a preview deployment must never honour it')
   process.env.VERCEL_ENV = 'production'
   assert.equal(devBypassEnabled(), false, 'and production certainly must not')
+})
+
+test('THE FAKE PROVIDER IS IMPOSSIBLE ON PRODUCTION, BY THREE SEPARATE ROUTES', () => {
+  // What this switch bypasses is the identity check itself — with it on, a request chooses which address
+  // it signs in as. So it is not enough that it is off by default; it must be UNREACHABLE wherever it
+  // would matter, and by more than one condition, so that getting any single environment variable wrong
+  // still fails closed. Same shape of proof as the dev bypass above.
+  process.env.AUTH_FAKE_PROVIDER = '1'
+  process.env.BL_TIER = 'staging'
+  assert.equal(fakeProviderEnabled(), true, 'it should work in local development')
+
+  // 1. The DEPLOYMENT. Note this also shuts it on the staging Vercel project, which deploys with
+  //    `--prod` and therefore reports runtime() === 'production' too — deliberate, and why this is a
+  //    local-only tool in practice.
+  process.env.VERCEL = '1'
+  process.env.VERCEL_ENV = 'production'
+  assert.equal(fakeProviderEnabled(), false, 'a production deployment must never honour it')
+
+  // 2. The TIER, independently — even on a non-production deployment.
+  process.env.VERCEL_ENV = 'preview'
+  process.env.BL_TIER = 'production'
+  assert.equal(fakeProviderEnabled(), false, 'the production tier must never honour it')
+
+  // 3. The FLAG, and it must be exactly '1' — the same trap the dev bypass guards against.
+  process.env.BL_TIER = 'staging'
+  delete process.env.VERCEL
+  delete process.env.VERCEL_ENV
+  for (const v of ['0', 'true', 'yes', '']) {
+    process.env.AUTH_FAKE_PROVIDER = v
+    assert.equal(fakeProviderEnabled(), false, `AUTH_FAKE_PROVIDER=${JSON.stringify(v)}`)
+  }
+
+  // And unset BL_TIER defaults to production (lib/env.ts's tier()), so an unconfigured process — a
+  // one-off script, a misconfigured deployment — cannot turn it on by omission.
+  process.env.AUTH_FAKE_PROVIDER = '1'
+  delete process.env.BL_TIER
+  assert.equal(fakeProviderEnabled(), false, 'an unconfigured process must fail closed')
 })
 
 test('the dev bypass needs the exact flag value, not just any truthy string', () => {

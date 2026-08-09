@@ -51,6 +51,30 @@ export async function readSignInResponse(res: unknown): Promise<SignInOutcome> {
   return { ok: false, status: res.status, code, message }
 }
 
+/**
+ * THE ALLOWLIST HOOK'S MESSAGE, AND IT IS A CONTRACT — the only part of its refusal that survives.
+ *
+ * `databaseHooks.user.create.before` throws `APIError('FORBIDDEN')`, and better-auth does NOT pass that
+ * through. `handleOAuthUserInfo` turns it into `{ error: <message> }` and `sign-in.mjs` re-throws it as
+ *
+ *     APIError.from("UNAUTHORIZED", { message: data.error, code: "OAUTH_LINK_ERROR" })
+ *
+ * — so the status becomes 401 and the code becomes a generic link error shared with every other linking
+ * failure. Measured 2026-08-09 by driving the fake provider (W7) at a non-allowlisted address: the
+ * refusal arrived as `status: 401, code: OAUTH_LINK_ERROR`, was classified as an ordinary fault, and the
+ * adult got "Login mislykkedes" plus a Fejlkode for a working refusal. W2 believed it had made the
+ * FORBIDDEN copy reachable; it had not, and nothing but a driven end-to-end run could have shown that.
+ *
+ * The MESSAGE is ours and it is the one field carried through intact, so it is what we match on. Both
+ * ends import this constant — `lib/auth.ts` throws it, `classifySignInFailure` recognises it — which is
+ * what turns a string comparison into a contract rather than a coincidence.
+ *
+ * Deliberately NOT the adult-facing copy: this text is internal (better-auth logs it and puts it in the
+ * response body), while what the adult reads is `forbiddenMessage(domain)`, which names the address's
+ * domain and never leaves our own page.
+ */
+export const ALLOWLIST_REFUSED_MESSAGE = 'Denne konto har ikke adgang.'
+
 export type SignInVerdict =
   /** The allowlist said no. A WORKING refusal: its own Danish copy, no Fejlkode, no report. */
   | { kind: 'forbidden' }
@@ -67,8 +91,14 @@ export type SignInVerdict =
 export function classifySignInFailure(outcome: {
   status: number
   code?: string
+  message?: string
 }): SignInVerdict {
+  // All three forms, because better-auth reaches us by more than one route: a direct FORBIDDEN (which is
+  // what a future version, or a non-OAuth caller, would produce) and the 401/OAUTH_LINK_ERROR rewrap that
+  // an OAuth sign-in actually produces today. Keeping the first two costs nothing and means a better-auth
+  // change that stops rewrapping silently improves rather than silently breaks.
   if (outcome.status === 403 || outcome.code === 'FORBIDDEN') return { kind: 'forbidden' }
+  if (outcome.message === ALLOWLIST_REFUSED_MESSAGE) return { kind: 'forbidden' }
   if (outcome.status === 200) return { kind: 'fault', reason: 'no-session-token-after-signin' }
   return { kind: 'fault', reason: 'signin-rejected' }
 }

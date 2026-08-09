@@ -1,6 +1,10 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { classifySignInFailure, readSignInResponse } from './oauth-signin-outcome.ts'
+import {
+  ALLOWLIST_REFUSED_MESSAGE,
+  classifySignInFailure,
+  readSignInResponse,
+} from './oauth-signin-outcome.ts'
 
 // THE REASON THREE BUG REPORTS SAID THE SAME THING ABOUT TWO DIFFERENT FAULTS.
 //
@@ -55,6 +59,34 @@ test('a 403 is the allowlist refusal — the branch that was unreachable through
   // A forbidden verdict has no `reason`, which is what makes "no report, no Fejlkode" structural rather
   // than a branch someone has to remember to write.
   assert.ok(!('reason' in classifySignInFailure({ status: 403 })))
+})
+
+test('THE SHAPE AN OAUTH REFUSAL ACTUALLY ARRIVES IN: 401 OAUTH_LINK_ERROR', () => {
+  // Measured 2026-08-09 by driving the fake provider at a non-allowlisted address. Neither the status
+  // nor the code survives: `databaseHooks.user.create.before` throws FORBIDDEN, `handleOAuthUserInfo`
+  // reduces it to `{ error: <message> }`, and sign-in.mjs re-throws
+  //   APIError.from("UNAUTHORIZED", { message: data.error, code: "OAUTH_LINK_ERROR" })
+  // So checking status/code alone left the refusal classified as an ordinary fault — the adult got
+  // "Login mislykkedes" plus a Fejlkode for a working refusal, and W2's claim that it had made the
+  // FORBIDDEN copy reachable was simply false. Only an end-to-end run could show that.
+  assert.deepEqual(
+    classifySignInFailure({
+      status: 401,
+      code: 'OAUTH_LINK_ERROR',
+      message: ALLOWLIST_REFUSED_MESSAGE,
+    }),
+    { kind: 'forbidden' },
+  )
+  // And a DIFFERENT link failure under the same status and code is NOT a refusal — `OAUTH_LINK_ERROR`
+  // is generic, so the message is what distinguishes ours from better-auth's own.
+  assert.deepEqual(
+    classifySignInFailure({
+      status: 401,
+      code: 'OAUTH_LINK_ERROR',
+      message: 'Account already linked to a different user',
+    }),
+    { kind: 'fault', reason: 'signin-rejected' },
+  )
 })
 
 test('a 200 with no token and no body still produces a usable outcome', async () => {
