@@ -274,6 +274,13 @@ Anything only rung 3 can settle is written `UNKNOWN` — never inferred, never f
 2. **Decide `APPLE_BUNDLE_ID`.** W1 works either way; leaving it set is fine once `audience` is explicit.
 3. **W5 layer 1 needs a new TestFlight build** (native plugin + Info.plist). W4 and W5 layer 2 reach the installed
    binary through `npm run deploy:staging`, because the shell's API host is remote even though its bundle is not.
+   **~~W4~~ — THIS IS WRONG, corrected 2026-08-09.** `npm run deploy:staging` reaches the installed binary only for
+   **server-side** changes: the shell has no `server.url`, so `dist/` — every line of client TypeScript — is BAKED
+   INTO THE BINARY. W1, W2, W3's server half and W5 layer 2 are pages and endpoints, so they do reach it. **W4 is
+   `OAuthReturnHandler.tsx`, W6's client half is `authDiagnostics.ts`, and the `rosterSettled` fix is
+   `profileStore.ts` — none of those reach an installed shell without a new build.** Testing a client-side fix
+   against `BL Staging` therefore tests the OLD code while the badge and `/api/version` both look current. Use
+   Safari on `staging.boernelaering.dk` for client fixes, or ship a build.
 4. **Local dev cannot exercise Apple today** — `.env.local` has no `APPLE_*` vars, so `appleUsable()` is false and
    no Apple button appears. Pull them to a **scratch path** and copy the five lines across by hand; never
    `vercel env pull` onto `.env.local`.
