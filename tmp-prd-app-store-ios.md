@@ -841,15 +841,58 @@ at.** Phase D is waiting.
 
 ### 4.0 Where this stands — read this first
 
-Updated **2026-08-07**. Keep it updated; it is what lets a fresh session start from a two-line prompt
-instead of a briefing.
+Updated **2026-08-09**. Keep it updated; it is what lets a fresh session start from a two-line prompt
+instead of a briefing. **When you change any of it, change it here in the same commit.**
 
-**All work lives on the branch `feat/app-store-ios`** (pushed to origin). Never commit App Store work to
-`master`, and do not merge without asking — `master` is the deploy trigger.
+**Work is on `master` now** — the `feat/app-store-ios` branch was merged 2026-08-07 and everything since
+has landed directly. `master` is the deploy trigger, so a push deploys the web app.
+
+## THE ANSWER TO "what is left before I can publish?" — 2026-08-09
+
+Verified against the live App Store Connect API, not from memory (`.claude/rules/ios-shell.md` has the
+how). **App Store Connect is COMPLETE.** Confirmed present: name, subtitle, description, keywords,
+promotional text, privacy-policy URL, support URL, content rights (`DOES_NOT_USE_THIRD_PARTY_CONTENT`),
+age rating **4+**, Made for Kids **`SIX_TO_EIGHT`** with `parentalControls: true`, App Privacy (5 data
+types, all App Functionality / linked / not tracking), review contact + notes, 6 iPad + 6 iPhone
+screenshots, release type **MANUAL**, Free, **Denmark only** (1 available / 174 not), Mac and visionOS
+availability both off, distribution **Public**.
+
+Three things remain, and only one is work:
 
 | | State |
 |---|---|
-| **MERGED + DEPLOYED** | **2026-08-07.** Phases A+B fast-forwarded to `master` and live as `3ffee23` on **`https://boernelaering.dk`**. `/privatliv` and `/support` both answer **200**, so the App Store Connect URLs can now be filled in. Ordering matters if this is ever redone: the shell's server-side half (`capacitor://localhost` in `trustedOrigins`, widened CORS) ships with the web app, so **deploy before building a shell**, or the build under test cannot reach the API. |
+| **DSA trader status** | **"In Review" with Apple since 2026-08-07.** Not approved. Nothing to do but wait; the API does not expose it (every trader-shaped endpoint 404s — see `ios-shell.md`), so it can only be read at **Business → Compliance**. It gates EU *distribution*, and Denmark is the only market, so **do not submit before it clears.** |
+| **A build attached to v1.0** | **None attached.** Builds upload fine (3+ so far, `processingState: VALID`); attaching is a separate act on the version page. Do it last, after any final code change. |
+| **Two stale screenshots** | `ipad-6-voksne.png` and `iphone-6-voksne.png` were last taken **2026-08-08**; the floating gear was deleted **2026-08-09** (`ae4b9cd`), so both show a control that no longer exists. Nothing else about them is wrong. See the re-capture hazard below. |
+
+**The re-capture is currently blocked, and the blocker is the harness, not the app.** `webkit.mjs` reaches
+the arithmetic gate reliably (`--click '[aria-label="Til de voksne"]'`, then `[data-guest-gate-prompt]`),
+but **solving it crashes the WebKit target every time** — four attempts, "Target crashed" or "context has
+been closed", at the moment the lazy adult surface mounts. Two things make it worse: **`--eval` is NOT
+repeatable** (only one runs, so the whole sequence has to be one eval with `setTimeout`s, which the crash
+then interrupts), and the dev build renders a **`TEST · localhost:5173`** pill (`[data-backend-badge]`)
+that must be removed before any capture — it is absent from a production build by construction, because
+`backendLabel()` returns null when the backend is production.
+
+**The cheap way round it: take the iPad shot ON the iPad.** An iPad Pro 12.9" captures natively at
+2732×2048, which is exactly what the required 13" slot accepts, and TestFlight already has the build. The
+iPhone shot cannot be done that way — an iPhone 13 is 6.1" (1170×2532) and the slot wants 6.9"
+(2868×1320) — so that one needs the harness fixed or left alone.
+
+**Also open, from earlier sections rather than App Store Connect:** the AI-voice disclosure (B9,
+`legalContent.ts`) — Microsoft's Code of Conduct requires disclosing that the narration is synthetic, and
+`docs/app-store/listing.md` §4 still lists it as TODO. Worth confirming before submitting, since it is a
+contractual obligation rather than an Apple one.
+
+## History — how it got here
+
+| | State |
+|---|---|
+| **MERGED + DEPLOYED** | **2026-08-07.** Phases A+B fast-forwarded to `master` and live as `3ffee23` on **`https://boernelaering.dk`**. `/privatliv` and `/support` both answer **200**. Ordering matters if this is ever redone: the shell's server-side half (`capacitor://localhost` in `trustedOrigins`, widened CORS) ships with the web app, so **deploy before building a shell**, or the build under test cannot reach the API. |
+| **First successful build** | **2026-08-07**, after five distinct failures wearing one symptom — see `.claude/rules/ios-shell.md`, which records all five so they are not re-derived. The IPA uploaded, was accepted (`usesNonExemptEncryption: false`, min OS 17.0) and installed via TestFlight on the owner's devices. |
+| **Custom domain** | **`boernelaering.dk`** live since 2026-08-07, `www` too. The switch was env-only (`BETTER_AUTH_URL` + `WEBAUTHN_RP_ID`) and **invalidated every existing passkey** — see `.claude/rules/auth.md`. |
+| **Sign-in prominence + guest adoption** | **DONE 2026-08-07** (`b99afb6`), implementing `tmp-prd-adult-login-visibility.md`. A guest-only "Log ind" row in the adult rail, and the guest book copied onto a first child via a defaulted-on checkbox, only when `rosterCount === 0`. |
+| **The adult door** | **2026-08-09** (`ae4b9cd`): the floating gear is deleted, the child's avatar (`ProfileBadge`, `[aria-label="Til de voksne"]`) is the trigger. This is what made the two screenshots stale. |
 | ~~**OPEN DEFECT**~~ | **CLOSED 2026-08-07** (`4f52dbb`, live). `/api/auth/*` answered OPTIONS with a bare 404 — and, unrecorded until the fix, real responses carried no `Access-Control-Allow-Origin` either. Both verified fixed against the deployed build. **No longer blocks TestFlight.** §4.0.1. |
 | **Phase A** | **DONE** and merged. Guest play, `/privatliv` + `/support`, mic consent gate, offline-readiness audit, iPhone 6.9" pass, Google-token audit. |
 | **Phase B** | **DONE 2026-08-07** (B1–B9), commits `14d5a83` + `94bb491`, plus `78841cb` — see the API-origin note below, which was a genuine gap in B and is now closed. The `ios/` tree is committed; **nothing has been compiled** — no Mac has touched it. Deviations below. |
