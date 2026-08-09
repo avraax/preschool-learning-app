@@ -170,7 +170,12 @@ spinner that reset, not a progress meter).
   static `ProfileBadge` and **nothing that measures performance**: the `ScoreChip` pip row is deleted.
 - **`ProfileBadge`** (`src/components/common/ProfileBadge.tsx` — home, the section menus, Min Bog AND
   every game): the active child's baked animal portrait with their first letter, at PARITY with the
-  ring's size, immediately LEFT of it so the ring never moves. It is the child-facing half of the
+  ring's size, **OUTERMOST — past the ring, not before it** (owner reversed the original ordering,
+  2026-08-09; the cost is that the untappable badge holds the corner the tappable ring used to). It
+  renders as a bare cutout: **no plate, no ring, no border behind the portrait** — the picker's tile
+  backing shipped here by mistake and read as a dim grey circle on the painted world, and the reward
+  ring beside it has no backing either. Guarded by a fill COUNT (the letter's white disc is the only
+  one). It is the child-facing half of the
   profile system (owner, 2026-08-09); before it, the active child was visible only behind "Til de
   voksne", so a two-child household could play a whole session as the wrong child. It is **static,
   untappable and progress-blind**, and that is enforced rather than conventional — `profileBadge.test.ts`

@@ -150,15 +150,18 @@ const GameShell: React.FC<GameShellProps> = ({
           <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, md: 1.5 } }}>
             {levelIndicator && (
               <>
-                {/* Who is playing, LEFT of the ring so the ring keeps its position and its tap
-                    target — same size, static, untappable. See ProfileBadge's header. */}
-                <ProfileBadge size={phoneLandscape ? 34 : 46} />
                 <RewardRing
                   compact={phoneLandscape}
                   size={phoneLandscape ? 34 : 46}
                   onTap={() => navigateWithTransition('/album')}
                   ariaLabel="Min Bog"
                 />
+                {/* Who is playing, OUTERMOST (owner, 2026-08-09) — identity is the corner element, the
+                    way Khan Academy Kids and Netflix Kids place it. It shipped on the ring's left and
+                    the owner reversed it. The cost, recorded so nobody "fixes" it back: the untappable
+                    badge now occupies the corner the tappable ring used to hold, so a child aiming at
+                    the far corner for Min Bog hits a dead disc. Same size, static, untappable. */}
+                <ProfileBadge size={phoneLandscape ? 34 : 46} />
               </>
             )}
           </Box>

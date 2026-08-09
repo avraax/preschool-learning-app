@@ -66,7 +66,6 @@ const ProfileBadge: React.FC<ProfileBadgeProps> = ({ size, sx = {} }) => {
   const art = avatarArt(normalizeAvatarId(profile.avatarId))
   const initial = profileInitial(profile.name)
 
-  const dark = theme.scene?.dark
   // The ring's own colour source, so the pair belongs to one family on every skin.
   const accent = theme.scene?.progressionCompanion?.ringColor ?? theme.palette.primary.main
   // The letter sits on WHITE, so it takes the same accent-on-light treatment as every other surface
@@ -75,10 +74,10 @@ const ProfileBadge: React.FC<ProfileBadgeProps> = ({ size, sx = {} }) => {
 
   // Badge geometry, DERIVED — the same discipline as the ring's (`rewardRingGeometry.ts`), for the same
   // reason: a tuned corner offset is correct at exactly one diameter and this renders at five (52/48/46
-  // /44 plus the 36/34 phone-landscape pair). Seat the badge's CENTRE on the portrait's own circle at
-  // 45° down-right: on a circle of radius R that point is R/√2 out along each axis, so the disc reads as
-  // attached to the rim rather than floating in the bounding box's corner. The 16px floor is the ring
-  // badge's floor too — below it a Comic Sans capital stops being legible.
+  // /44 plus the 36/34 phone-landscape pair). Seat the badge's CENTRE on the box's INSCRIBED circle at
+  // 45° down-right: at radius R that point is R/√2 out along each axis, which keeps the letter tucked
+  // against the portrait at every size instead of drifting into the bounding box's empty corner. The
+  // 16px floor is the ring badge's floor too — below it a Comic Sans capital stops being legible.
   const badge = Math.max(16, Math.round(size * 0.34))
   const seat = Math.round((size / 2) * (1 + Math.SQRT1_2) - badge / 2)
 
@@ -107,31 +106,23 @@ const ProfileBadge: React.FC<ProfileBadgeProps> = ({ size, sx = {} }) => {
         ...(Array.isArray(sx) ? sx : [sx]),
       ]}
     >
+      {/* NO DISC BEHIND THE PORTRAIT (owner, 2026-08-09: "a very dim grey circle background").
+          It shipped with the picker's tile backing — `alpha(primary.main, 0.08)` plus a 20% hairline —
+          which is right in a LIST on a paper surface and wrong on the painted world: over the pale sky
+          the purple desaturates into a grey ring around the fox, and the reward ring 12px away has no
+          backing at all (measured `rgba(0,0,0,0)`), so the pair looked like one object had a plate and
+          the other didn't. The avatars are green-screened cutouts (measured alpha 0..255), so they sit
+          on the world exactly like the mascot and the section objects do. The circular clip went with
+          it: its only job was shaping that backing, and `objectFit: contain` puts the art's widest
+          point on the box edge, so a 50% clip was a latent crop of the ears for no visible gain.
+          `contain`, never `cover`. */}
       <Box
-        sx={{
-          width: size,
-          height: size,
-          borderRadius: '50%',
-          overflow: 'hidden',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          // Same backing as the picker's tile, plus a hairline so a light portrait still reads as a
-          // disc on a light world and a dark one still has an edge on a dark world.
-          background: dark ? 'rgba(255,255,255,0.10)' : alpha(theme.palette.primary.main, 0.08),
-          border: `1px solid ${dark ? 'rgba(255,255,255,0.35)' : alpha(ink, 0.2)}`,
-        }}
-      >
-        {/* `contain`, never `cover` — the avatars are head-and-shoulders portraits and `cover` crops
-            the ears off inside a circle. Identical to ProfilePicker / BarnPane. */}
-        <Box
-          component="img"
-          src={art}
-          alt=""
-          draggable={false}
-          sx={{ width: '100%', height: '100%', objectFit: 'contain', userSelect: 'none' }}
-        />
-      </Box>
+        component="img"
+        src={art}
+        alt=""
+        draggable={false}
+        sx={{ width: '100%', height: '100%', objectFit: 'contain', userSelect: 'none' }}
+      />
 
       {/* The letter. Absent when the profile has no name — that is the fallback, and it is a normal
           state, not a defect (the name field is optional). Never an em-dash, never a "?". */}

@@ -230,11 +230,6 @@ const HomePage: React.FC = () => {
               instead, where the numeral is actually on screen while it is read aloud. */}
           <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5, delay: 0.15 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, md: 1.5 } }}>
-            {/* Who is playing, LEFT of the ring so the ring keeps its position and its tap target.
-                Same size, same corner, on every screen — see ProfileBadge's header. It shares the
-                ring's ONE entrance animation rather than owning motion of its own: the badge is
-                static by construction, and two staggered fades in one corner reads as a wobble. */}
-            <ProfileBadge size={phoneLandscape ? 36 : immersive ? 52 : 48} />
             {/* SHRINK THE RING WITH `size`, NEVER WITH `sx`. `size` is the ring's ONE dimension: the
                 svg, the badge geometry and the centre art are all derived from it, and only the outer
                 box takes `sx`. A phone-landscape `sx={{width:36,height:36}}` therefore left a 48–52px
@@ -247,6 +242,10 @@ const HomePage: React.FC = () => {
               onTap={() => navigateWithTransition('/album')}
               ariaLabel={`Min Bog — ${rewardsOwned} klistermærker`}
             />
+            {/* Who is playing, OUTERMOST — see GameShell's header for the ordering decision. It shares
+                the ring's ONE entrance animation rather than owning motion of its own: the badge is
+                static by construction, and two staggered fades in one corner reads as a wobble. */}
+            <ProfileBadge size={phoneLandscape ? 36 : immersive ? 52 : 48} />
             </Box>
           </motion.div>
         </Box>

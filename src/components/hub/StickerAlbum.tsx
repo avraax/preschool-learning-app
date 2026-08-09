@@ -157,11 +157,12 @@ const StickerAlbum: React.FC = () => {
           <BackButton to="/" variant="menu" />
 
           {/* Whose book this is. It matters most HERE — the album is the one screen that is entirely
-              one child's property — so the badge sits left of the number, same as every other surface
-              puts it left of the ring. Static and untappable; switching stays behind the adult PIN. */}
+              one child's property — so the badge sits OUTERMOST past the number, the same ordering
+              every other surface uses past the ring. Static and untappable; switching stays behind
+              the adult PIN. */}
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
-            <ProfileBadge size={44} />
             <StatPill label={`${totalCollected}`} icon={uiArt.book} accent={accent} />
+            <ProfileBadge size={44} />
           </Box>
         </Toolbar>
       </AppBar>

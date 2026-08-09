@@ -104,6 +104,25 @@ test('the badge shows a PICTURE and a letter, never the name as text', () => {
   assert.match(code, /aria-label=/, 'the badge must still say who is playing to a screen reader')
 })
 
+test('the portrait sits on the world — NO plate behind it', () => {
+  // Owner, 2026-08-09: "a very dim grey circle background". It shipped with the ProfilePicker's tile
+  // backing (`alpha(primary.main, 0.08)` + a 20% hairline), which is right in a LIST on a paper
+  // surface and wrong on the painted world — over the pale sky the purple desaturates to grey, while
+  // the reward ring 12px away has no backing at all. The avatars are green-screened cutouts, so they
+  // belong on the scene like the mascot and the section objects.
+  //
+  // Counted rather than name-matched: the ONE legitimate fill is the letter badge's white disc, and a
+  // re-added plate is by definition a SECOND one. A `!includes('alpha(')` guard would instead go red
+  // on the letter's own border and force whoever hits it to weaken the assertion.
+  const code = codeOf(BADGE)
+  const fills = code.match(/\b(?:bgcolor|background|backgroundColor)\s*:/g) ?? []
+  assert.equal(
+    fills.length, 1,
+    `expected exactly one fill (the letter badge's white disc); found ${fills.length} — a plate is back behind the portrait`,
+  )
+  assert.match(code, /bgcolor:\s*'#FFFFFF'/, 'the one fill is no longer the letter badge — re-point this guard')
+})
+
 test('every surface carries exactly ONE badge', () => {
   for (const rel of SURFACES) {
     const code = codeOf(rel)
