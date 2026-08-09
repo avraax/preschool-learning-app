@@ -1,7 +1,8 @@
 # PRD accounts-02 — Sign-in reliability
 
 Follows `plans/accounts/tmp-prd-accounts-01-auth-profiles-sync.md`. Design record: `.claude/rules/auth.md`.
-Authored 2026-08-09. NOT implemented.
+Authored 2026-08-09. **IMPLEMENTED 2026-08-09** — W1–W9, commits `baba625`, `3b50deb`, `ad4c358`,
+`cbcb3e3`, `2c5fca8`, all on staging. See §9 for what was found to be wrong with this document.
 
 **Read `.claude/rules/auth.md` before touching anything here** — it carries the invariants this PRD does
 not repeat (the cookie-free `flowId` design, bearer-not-cookie transport, the fail-closed allowlist, the
@@ -277,3 +278,42 @@ Anything only rung 3 can settle is written `UNKNOWN` — never inferred, never f
    no Apple button appears. Pull them to a **scratch path** and copy the five lines across by hand; never
    `vercel env pull` onto `.env.local`.
 5. `npm run auth:migrate -- --apply` against staging for W3's columns.
+
+## 9. Implementation record — where this document was WRONG
+
+Implemented 2026-08-09 in five commits. The four corrections below matter more than the plan did.
+
+**RC2 was under-stated: fixing it did not make the FORBIDDEN branch reachable.** W2's premise was right —
+`asResponse: true` returns an APIError instead of throwing — but reading the status was not enough.
+better-auth does not pass our refusal through at all: `databaseHooks.user.create.before` throws
+`FORBIDDEN`, `handleOAuthUserInfo` reduces it to `{ error: <message> }`, and `sign-in.mjs` re-throws
+`APIError.from("UNAUTHORIZED", { message, code: "OAUTH_LINK_ERROR" })`. So the status becomes **401** and
+the code becomes a generic link error. Checking status/code alone left the refusal classified as an
+ordinary fault, and the adult still got "Login mislykkedes" plus a Fejlkode for a working refusal. The
+MESSAGE is the only field that survives, so it is now a shared constant (`ALLOWLIST_REFUSED_MESSAGE`)
+thrown by the hook and matched by `classifySignInFailure`. **W7 found this on its first run** — nothing
+short of an end-to-end drive could have, and W2 shipped believing it was already fixed.
+
+**W7's gate is local-only, not "staging and dev".** `runtime() !== 'production'` is false on the staging
+Vercel project too, because it deploys with `--prod`. Left exactly as specified rather than relaxed: local
+development already IS the staging tier, both harnesses drive localhost, and the gate is what stands
+between this and "anyone may sign in as anyone". Verified against the DEPLOYED staging host — both doors
+refuse (`unknown_provider`, and a 404 on the fake authorize endpoint).
+
+**W5 layer 1 needs a capability handshake the PRD did not mention.** Sending a `bl-staging://` redirect to
+a binary that has not registered `CFBundleURLTypes` ends a *successful* sign-in on Safari's "the address
+is invalid" — strictly worse than the page it replaces. So `/oauth/start` takes `client: 'shell-scheme'`,
+claimed only after the `appUrlOpen` listener has actually registered. The scheme itself still comes from
+the server's tier-keyed table; the request states a capability, never a destination.
+
+**Three columns, not two.** `oauthFlow` gained `client` (W5) and `failureMessage` alongside W3's
+`failureCode`/`failedAt` — the Danish sentence is stored rather than re-derived so the callback page and
+the app say the same thing, which is what lets the 410 carry copy the client never has to duplicate.
+
+Scenario coverage, with its rungs, is `docs/auth/signin-scenarios.md`; the rung-1 harness is
+`.claude/skills/ui-screenshot/oauth-probe.mjs`. Still **UNKNOWN — owner's iPad only**: the real Google and
+Apple round trips, whether iOS fires `visibilitychange` under the sign-in sheet, and whether it hands
+`bl-staging://auth` back (that one needs a new TestFlight build; the installed binary keeps layer 2).
+§8's open items stand, except that a rejected Apple exchange on staging returned `invalid_grant` rather
+than `invalid_client` — which proves the Apple client secret signs correctly there, so RC1 was indeed the
+remaining blocker.
