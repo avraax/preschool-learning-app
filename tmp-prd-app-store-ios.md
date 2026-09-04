@@ -857,11 +857,12 @@ types, all App Functionality / linked / not tracking), review contact + notes, 6
 screenshots, release type **MANUAL**, Free, **Denmark only** (1 available / 174 not), Mac and visionOS
 availability both off, distribution **Public**.
 
-Three things remain, and only one is work:
+**Nothing is waiting on Apple any more.** Two things remain, both ours, and the whole sequence fits in one
+sitting: re-shoot the screenshots → attach a build → **Add for Review**.
 
 | | State |
 |---|---|
-| **DSA trader status** | **"In Review" with Apple since 2026-08-07.** Not approved. Nothing to do but wait; the API does not expose it (every trader-shaped endpoint 404s — see `ios-shell.md`), so it can only be read at **Business → Compliance**. It gates EU *distribution*, and Denmark is the only market, so **do not submit before it clears.** |
+| ~~**DSA trader status**~~ | **APPROVED — verified 2026-09-04.** Business → Compliance reads Digital Services Act **Active**, 27 countries (DAC7 Active too). No longer a blocker. Still not readable through the API: every trader-shaped endpoint 404s and the app's attribute set has no such field, so **Business → Compliance is the only place it can be checked** (`ios-shell.md`). A `CANNOT_SELL` in `territoryAvailabilities.contentStatuses` is NOT a trader signal — it sits on the 174 deselected territories too, i.e. it means "unreleased", and it wasted a round of diagnosis. |
 | **A build attached to v1.0** | **None attached.** Builds upload fine (3+ so far, `processingState: VALID`); attaching is a separate act on the version page. Do it last, after any final code change. |
 | **Two stale screenshots** | `ipad-6-voksne.png` and `iphone-6-voksne.png` were last taken **2026-08-08**; the floating gear was deleted **2026-08-09** (`ae4b9cd`), so both show a control that no longer exists. Nothing else about them is wrong. See the re-capture hazard below. |
 
