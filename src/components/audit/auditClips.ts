@@ -28,6 +28,7 @@ export type AuditGroup =
   | 'phrases'
   | 'colours'
   | 'ordleg'
+  | 'memory'
   | 'mixed'
   | 'english'
   | 'levelup'
@@ -50,6 +51,7 @@ export const GROUP_ORDER: AuditGroup[] = [
   'phrases',
   'colours',
   'ordleg',
+  'memory',
   'levelup',
   'mixed',
   'english',
@@ -62,6 +64,7 @@ export const GROUP_LABELS: Record<AuditGroup, string> = {
   phrases: 'Sætninger',
   colours: 'Farver',
   ordleg: 'Ordleg',
+  memory: 'Hukommelsesspil',
   levelup: 'Belønninger',
   mixed: 'Blandet',
   english: 'Engelsk',
