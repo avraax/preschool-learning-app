@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-08-08T07:49:16.987Z",
+  "updatedAt": "2026-09-04T21:04:18.216Z",
   "clips": {
     "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|b": {
       "verdict": "ok",
@@ -15888,6 +15888,22 @@
       "text": "Raket starter med, R",
       "group": "letters",
       "updatedAt": 1786175356987
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find ens bogstaver ved at klikke på kortene": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find ens bogstaver ved at klikke på kortene",
+      "group": "memory",
+      "updatedAt": 1788555858216
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find ens tal ved at klikke på kortene": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Find ens tal ved at klikke på kortene",
+      "group": "memory",
+      "updatedAt": 1788555858216
     }
   }
 }

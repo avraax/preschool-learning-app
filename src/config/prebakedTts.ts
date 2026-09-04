@@ -164,6 +164,8 @@ export const PREBAKED_TTS: Record<string, string> = {
   "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find alle orange ting": "b08bbc9820df2de9.mp3",
   "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find alle røde ting": "d50df49f6fc2728a.mp3",
   "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find det Engelske Ord": "379b49b0b3171bf6.mp3",
+  "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find ens bogstaver ved at klikke på kortene": "d5e7e1aeeae34e85.mp3",
+  "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find ens tal ved at klikke på kortene": "e90c35b7f3ab63b9.mp3",
   "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 1": "c1dff246e0724252.mp3",
   "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 10": "daec209f4b53448a.mp3",
   "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Find tallet 100": "c8e412622dc27288.mp3",

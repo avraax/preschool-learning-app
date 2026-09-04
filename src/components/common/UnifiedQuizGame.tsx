@@ -599,10 +599,20 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
 
   const repeatItem = async () => {
     if (!currentItem) return
-    
+
+    // Asking to hear the prompt again IS the child playing (same flag `handleItemClick` sets), and
+    // without this the LATE WELCOME cancels the very clip they asked for. On a cold load audio is
+    // not unlocked at mount, so the welcome is deferred to the `isAudioReady` effect below — and the
+    // thing that unlocks audio is this tap. So the order was: tap → speak(prompt) → unlock →
+    // `isAudioReady` flips → deferred welcome fires → `playAudio` calls `stopCurrentAudio()` → the
+    // prompt dies before it is heard. Measured as `/math/patterns` reporting SILENT ("all clips
+    // pre-empted") in the QA sweep, and as the "1 pre-empted by design" on every other quiz — which
+    // was never by design, only survivable there because the clip got requested a second time.
+    hasInteractedRef.current = true
+
     // Critical iOS fix: Update user interaction timestamp BEFORE audio call
     audio.updateUserInteraction()
-    
+
     // Always cancel current audio for fast tapping
     audio.cancelCurrentAudio()
     

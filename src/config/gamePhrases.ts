@@ -103,6 +103,16 @@ export const MIC_HOLD_HINT = 'Hold knappen nede, mens du siger ordet.'
 /** The mic finished opening after the child had already let go (only ever the first press). */
 export const MIC_READY_LINE = 'Nu er mikrofonen klar. Prøv igen!'
 
+// --- Hukommelsesspil ----------------------------------------------------------------------------
+// The two board instructions, spoken by the "Hør igen" button and by the game welcome. They lived
+// inline in `MemoryGame.tsx` until 2026-09-04 and were, measurably, the ONLY two spoken lines in the
+// app that no prebaked clip covered — 0 of 1885 manifest keys matched them. So every press reached
+// live Azure, which in the shipped app is **blocked for a guest** (`canCallPaidApis: false`), and
+// then fell through to Web Speech: a different voice, or nothing at all offline. Exactly the failure
+// this file's header exists to prevent.
+export const MEMORY_LETTERS_INSTRUCTION = 'Find ens bogstaver ved at klikke på kortene'
+export const MEMORY_NUMBERS_INSTRUCTION = 'Find ens tal ved at klikke på kortene'
+
 // --- Farver -------------------------------------------------------------------------------------
 export const NUANCER_INSTRUCTION = 'Sæt farverne fra lys til mørk'
 /** Ram Farven's target instruction: "Lav lilla farve ved at blande farverne". */

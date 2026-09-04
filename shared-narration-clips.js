@@ -33,6 +33,7 @@ import {
   mathPromptText, mathFactText,
   COMPARE_PROMPT, comparisonFactText,
   HVAD_MANGLER_PROMPT, sequenceFactText, sequenceStarts, sequenceNumbers,
+  MEMORY_LETTERS_INSTRUCTION, MEMORY_NUMBERS_INSTRUCTION,
   NUANCER_INSTRUCTION, colorMixTargetText, colorMixResultText, colorObjectFactText,
   MIC_RETRY_LINE, MIC_HOLD_HINT, MIC_READY_LINE,
 } from './src/config/gamePhrases.ts'
@@ -127,6 +128,12 @@ export function collectNarrationClips() {
   // Farver spoken lines that aren't already in the colours block below: Nuancer's instruction, Ram
   // Farven's target instruction (one per mixable goal) and its recipe reveal (one per rule, and both
   // droplet orders are real rules), and Farvejagt's hunt phrases (data in colorContent).
+  // Hukommelsesspil's two board instructions ("Hør igen" + the game welcome). Added 2026-09-04:
+  // they were composed inline in MemoryGame.tsx, so nothing here could reach them and both routes
+  // spoke via live Azure — blocked for a guest in the shipped app. See gamePhrases.ts.
+  da('memory', MEMORY_LETTERS_INSTRUCTION)
+  da('memory', MEMORY_NUMBERS_INSTRUCTION)
+
   da('colours', NUANCER_INSTRUCTION)
   for (const tgt of possibleTargets) da('colours', colorMixTargetText(tgt.name))
   // Ram Farven speaks BARE colour names in three places: the dropped droplet's name, the goal swatch

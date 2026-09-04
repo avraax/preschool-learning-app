@@ -489,9 +489,16 @@ const UnifiedMemoryGame: React.FC<UnifiedMemoryGameProps> = ({ config }) => {
 
   // Repeat game instructions
   const repeatInstructions = () => {
+    // Asking to hear the instructions IS the child playing — see the same line in `handleCardClick`.
+    // Without it the deferred welcome (below, on `isAudioReady`) cancels the clip they just asked
+    // for: on a cold load this tap is what unlocks audio, so the unlock fires the welcome, whose
+    // `playAudio` calls `stopCurrentAudio()`. Measured as both memory routes reporting NO AUDIO
+    // ATTEMPTED in the QA sweep — the first press was swallowed whole.
+    hasInteractedRef.current = true
+
     // Critical iOS fix: Update user interaction timestamp BEFORE audio call
     audio.updateUserInteraction()
-    
+
     if (!gameReady) return
     
     try {

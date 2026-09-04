@@ -9,6 +9,7 @@ import { useDifficulty } from '../../hooks/useDifficulty'
 import { LETTER_WORDS, letterPhrase } from '../../config/letterWords'
 import { letterArt } from '../../assets/games/alphabet'
 import { countingObjectForNumber, artForObject } from '../../config/countingObjects'
+import { MEMORY_LETTERS_INSTRUCTION, MEMORY_NUMBERS_INSTRUCTION } from '../../config/gamePhrases'
 
 // Danish alphabet (29 letters)
 const DANISH_ALPHABET = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'Æ', 'Ø', 'Å']
@@ -67,7 +68,7 @@ const MemoryGame: React.FC = () => {
     },
     
     title: 'Hukommelsesspil - Bogstaver',
-    instructions: 'Find ens bogstaver ved at klikke på kortene',
+    instructions: MEMORY_LETTERS_INSTRUCTION,
     backPath: '/alphabet',
     theme: categoryThemes.alphabet,
 
@@ -103,7 +104,7 @@ const MemoryGame: React.FC = () => {
     },
     
     title: 'Hukommelsesspil - Tal',
-    instructions: 'Find ens tal ved at klikke på kortene',
+    instructions: MEMORY_NUMBERS_INSTRUCTION,
     backPath: '/math',
     theme: categoryThemes.math,
 
