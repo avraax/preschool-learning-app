@@ -255,6 +255,16 @@ function judge(job, r) {
   // DEAD = the run never produced its own telemetry. Never fold this into FAIL: it means "we learned
   // nothing", and a retry usually fixes it (port contention). Counting it as FAIL invents defects;
   // counting it as PASS hides holes.
+  // …with ONE structural exception, checked first because it can never produce telemetry. In the
+  // AUDIO phase `/ordleg/mic` redirects to `/ordleg` (the consent gate, below), the redirect drops
+  // `?nogate=1`, so the app reverts to its gated state and `AUDIO_TRIGGER`'s `first-content-button`
+  // fallback clicks a button on the SIGN-IN landing — which navigates and takes the eval context with
+  // it. That is the consent gate working, not a hole: this route's render and no-crash are already
+  // asserted by the smoke and layout phases, which reach it with their own (non-clicking) evals.
+  // Left as DEAD it was a permanent unexplained row, the exact thing the N/A rule below exists for.
+  if (PHASE === 'audio' && job.route.route === '/ordleg/mic' && (g === null || cerr === null)) {
+    return { status: 'N/A', why: 'speech INPUT screen behind the consent gate — the trigger clicks through the sign-in landing and the eval context goes with it (§3.6)' }
+  }
   if (g === null || cerr === null) return { status: 'DEAD', why: (r.err || r.out).split('\n').filter(Boolean).slice(-1)[0] || 'no output' }
   if (PHASE === 'triggers') return { status: 'PASS', why: JSON.stringify(g), guard: g }
   // `/ordleg/mic` REFUSES by design until an adult gives consent (App Store PRD §3.6): App.tsx renders

@@ -29,6 +29,6 @@ work is actually about audio; this file is what always applies.
   rebuilds its context inside the first touch on iPad.
 - **There is no blocking permission modal.** Audio unlocks on the first gesture anywhere; only a
   `blocked` verdict shows the small non-blocking "Tryk for lyd" chip. Don't add a gate.
-- **Adding or changing any spoken line follows the 8-step protocol** in `audio-system.md` — build the
-  string in config, enumerate it, pin it in a test, prebake, sign off. A line composed inline in a
-  component never gets baked and reaches live Azure on the child's iPad.
+- **Adding or changing any spoken line follows the 8-step protocol** in `audio-system.md`. A line
+  composed inline in a component never gets baked and reaches live Azure, **which for a GUEST is
+  silent, not slow** (`canCallPaidApis: false` → Web Speech), and `audit:check` cannot see it.
