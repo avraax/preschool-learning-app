@@ -72,7 +72,16 @@
         for (let i = 0; i < 20 && !overlay(); i++) await sleep(150)
         if (overlay()) {
           out.ceremonyOpened = true
-          sigBeforeCeremony = before
+          // Snapshot the board AS THE OVERLAY OPENS, not from before the click.
+          //
+          // This used to be `before` (pre-click), which made the check "did the board change since I
+          // answered" — guaranteed true for any game whose PROMPT completes on a correct answer.
+          // MathOperationGame does exactly that on purpose: `effectiveRevealAnswer` turns "3 + 4 = ?"
+          // into "3 + 4 = 7", the reinforcement beat. So Plus and Minus reported "the generator was not
+          // deferred" on every run while their generator was correctly deferred, and they were the only
+          // two games that failed BECAUSE they are the only two that rewrite their prompt.
+          // The question this phase exists to answer is whether the board moves WHILE the overlay is up.
+          sigBeforeCeremony = sig()
           out.onGameRoute = !/\/album/.test(location.pathname)
           out.beat = overlay().getAttribute('data-reward-beat')
           // (3) the hit-test — the overlay must own the point the finger was just on.
@@ -91,8 +100,15 @@
     }
 
     if (out.ceremonyOpened) {
-      // (2) the board must be UNCHANGED while the overlay is up — the generator is deferred.
-      out.boardHeldStill = sig() === sigBeforeCeremony
+      // (2) the board must be UNCHANGED while the overlay is up — the generator is deferred. SAMPLED
+      // for the whole life of the overlay, not once: a generator that fires 400ms in would otherwise
+      // pass a single check taken immediately after it opened.
+      let held = true
+      for (let i = 0; i < 60 && overlay(); i++) {
+        if (sig() !== sigBeforeCeremony) { held = false; break }
+        await sleep(200)
+      }
+      out.boardHeldStill = held
       for (let i = 0; i < 60 && overlay(); i++) await sleep(200)
       // …and play RESUMES afterwards: the deferred generator runs once the ceremony closes.
       for (let i = 0; i < 20 && sig() === sigBeforeCeremony; i++) await sleep(200)
