@@ -257,6 +257,18 @@ function judge(job, r) {
   // counting it as PASS hides holes.
   if (g === null || cerr === null) return { status: 'DEAD', why: (r.err || r.out).split('\n').filter(Boolean).slice(-1)[0] || 'no output' }
   if (PHASE === 'triggers') return { status: 'PASS', why: JSON.stringify(g), guard: g }
+  // `/ordleg/mic` REFUSES by design until an adult gives consent (App Store PRD §3.6): App.tsx renders
+  // `micConsentGiven() ? <SpeakWordGame /> : <Navigate to="/ordleg" replace />`. So both title-asserting
+  // phases land on the Ordleg menu — where the tile is ALSO hidden — and can never see "Sig et Ord" in a
+  // fresh profile. It cost 1 FAIL in smoke and 8 in layout, one per viewport, all of them the consent
+  // gate WORKING. Reported as N/A with the reason: a permanent red is a check people learn to ignore.
+  // Still FAILs on a crash or an empty #root, so the route is not simply exempted.
+  // (The redirect also drops the query string, so `?nogate=1` is lost and the app reverts to its gated
+  // state — which is why probing this route by hand shows a lock screen and confuses the diagnosis.)
+  if ((PHASE === 'smoke' || PHASE === 'layout') && job.route.route === '/ordleg/mic'
+      && !g.crashed && !g.notFound && g.rootKids && !pexc) {
+    return { status: 'N/A', why: 'refuses without adult mic consent (§3.6) — redirects to /ordleg', guard: g }
+  }
   // The audio phase's --eval returns {trigger,text}, NOT the GUARD shape — so it must be judged here,
   // before the GUARD field checks below (they would read undefined and invent "#root empty").
   if (PHASE === 'audio') {

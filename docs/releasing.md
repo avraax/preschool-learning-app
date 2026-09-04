@@ -40,6 +40,16 @@ review on it.
    TestFlight track and play it again.
 5. Only then submit **that exact build** in App Store Connect. Never a build nobody has touched.
 
+## Before you submit to the App Store: run the QA pass
+
+**`docs/qa.md`** — the whole pre-release pass, written to be re-run rather than read. It starts with a
+selftest that proves the sweep is not decoration, then drives every route across eight viewports and
+asserts narration actually produced sound, and ends with a device checklist only you can do. It names a
+baseline for every command, so a finding is a *difference* from the baseline.
+
+Run it before submitting, and before merging anything large. It has caught real defects — the first run
+found four screens whose narration never played.
+
 ## Before you submit to the App Store: re-shoot the screenshots
 
 **Do this last, and treat it as part of submitting rather than as work already done.** The App Store
