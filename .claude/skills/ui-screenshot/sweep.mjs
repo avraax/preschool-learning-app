@@ -15,6 +15,7 @@
 //   node .claude/skills/ui-screenshot/sweep.mjs --phase layout [--engine chrome|webkit]
 //   node .claude/skills/ui-screenshot/sweep.mjs --phase round     <- drives 8 tasks; play never "ends"
 //   node .claude/skills/ui-screenshot/sweep.mjs --phase ceremony  <- seeds ?rewards=8 and plays to a crossing
+//   node .claude/skills/ui-screenshot/sweep.mjs --phase live      <- FAILS on any live Azure TTS call
 //   node .claude/skills/ui-screenshot/sweep.mjs --selftest      <- proves the guards actually fire
 //
 //   --concurrency <n>  parallel jobs (default 3; each Chrome job gets its own CDP port)
@@ -211,7 +212,7 @@ function jobsFor() {
   const jobs = []
   const engines = ENGINE === 'both' ? ['chrome', 'webkit'] : [ENGINE]
   // Rounds and difficulty only exist inside games — running them over menus just manufactures N/A rows.
-  const routes = (PHASE === 'round' || PHASE === 'difficulty' || PHASE === 'ceremony')
+  const routes = (PHASE === 'round' || PHASE === 'difficulty' || PHASE === 'ceremony' || PHASE === 'live')
     ? ROUTES.filter((r) => r.kind === 'game')
     : ROUTES
   for (const eng of engines) {
@@ -236,7 +237,8 @@ function cmdFor(job, port) {
     : PHASE === 'audio' ? AUDIO_TRIGGER
     : PHASE === 'round' ? readFileSync(join(here, 'round-probe.js'), 'utf8')
     : PHASE === 'ceremony' ? readFileSync(join(here, 'ceremony-probe.js'), 'utf8')
-    : PHASE === 'difficulty' ? readFileSync(join(here, 'difficulty-probe.js'), 'utf8') : GUARD
+    : PHASE === 'difficulty' ? readFileSync(join(here, 'difficulty-probe.js'), 'utf8')
+    : PHASE === 'live' ? readFileSync(join(here, 'live-tts-probe.js'), 'utf8') : GUARD
   if (job.eng === 'webkit') {
     const c = [join(here, 'webkit.mjs'), '--url', url, '--device', job.vp.device, '--settle', settle, '--eval', evalJs]
     if (PHASE === 'audio') c.push('--audio-report')
@@ -278,6 +280,23 @@ function judge(job, r) {
   if ((PHASE === 'smoke' || PHASE === 'layout') && job.route.route === '/ordleg/mic'
       && !g.crashed && !g.notFound && g.rootKids && !pexc) {
     return { status: 'N/A', why: 'refuses without adult mic consent (§3.6) — redirects to /ordleg', guard: g }
+  }
+  // Every line the app speaks is supposed to be PREBAKED (CLAUDE.md). A live `/api/tts-azure` call
+  // means a line the enumerator never saw — which in the shipped app is not "slower" but a different
+  // VOICE, because a guest has `canCallPaidApis: false` and falls through to Web Speech. Two of these
+  // shipped and were caught by ear rather than by any test; this phase is the mechanical version.
+  if (PHASE === 'live') {
+    // Sig et Ord reads back an arbitrary spoken word — genuinely unbounded, the ONE documented
+    // exception to the closed set. It can never be prebaked, so a live call there is correct.
+    if (job.route.route === '/ordleg/mic') {
+      return { status: 'N/A', why: 'reads back an arbitrary spoken word — the documented live-synth exception', guard: g }
+    }
+    const w = []
+    if (pexc) w.push(`${pexc} page exception(s)`)
+    if (g.liveAzure && g.liveAzure.length) {
+      w.push(`LIVE Azure for ${g.liveAzure.length} line(s), so NOT prebaked: ${JSON.stringify(g.liveAzure.slice(0, 4))}`)
+    }
+    return { status: w.length ? 'FAIL' : 'PASS', why: w.join(' | ') || `${g.prebaked} prebaked clip(s), 0 live`, guard: g }
   }
   // The audio phase's --eval returns {trigger,text}, NOT the GUARD shape — so it must be judged here,
   // before the GUARD field checks below (they would read undefined and invent "#root empty").

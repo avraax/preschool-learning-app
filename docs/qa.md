@@ -40,6 +40,7 @@ and passes vacuously — `AppErrorBoundary`'s "Prøv igen" and NotFound's "Hjem"
 | `sweep --phase difficulty` | Let/Normal/Svær change what the generators produce — not merely that a game reads the table | 16 PASS · 0 FAIL · 5 N/A |
 | `sweep --phase round` | Eight tasks can be driven in a row; play never "ends" | 12 PASS · 0 FAIL · 5 N/A |
 | `sweep --phase ceremony` | Seeds `?rewards=8` and plays to the crossing, so the sticker is paid where it was earned | 9 PASS · 0 FAIL |
+| `sweep --phase live` | **No screen speaks through live Azure** — i.e. every line really is in the prebaked set | 20 PASS · 0 FAIL · 1 N/A |
 
 All sweep commands take `--engine chrome|webkit|both`, `--only <substr>` and `--concurrency <n>`.
 **The layout phase is 224 jobs and takes 10–15 minutes** — run it in the background and read the summary.
@@ -58,6 +59,15 @@ phases assert against a clock, so they report machine load as a defect. Measured
 So: a single red in either phase is not a finding until it has been re-run in isolation
 (`--only <route> --concurrency 1`, nothing else going). A red that survives that is real. The other
 phases don't measure time and can be run wide.
+
+**Why `--phase live` exists, and why the audio phase does not replace it.** The audio phase asks "did
+sound come out", and answers OK whether the clip was prebaked or synthesized live. On 2026-09-05 two
+screens were speaking through live Azure and both sounded fine in the harness — the owner caught them by
+EAR on the iPad. A live call is not merely slow there: a guest has `canCallPaidApis: false`, so
+`/api/tts-azure` is refused and the line falls through to **Web Speech — a different voice**, or silence
+with no network. `?nogate=1` bypasses that gate, which is exactly why the harness could not hear it.
+So this phase judges the REQUEST, not the sound. `/ordleg/mic` is the one true exception (it reads back
+an arbitrary spoken word) and is N/A by name.
 
 ## 2.1 What the first run found, and how it was resolved
 
