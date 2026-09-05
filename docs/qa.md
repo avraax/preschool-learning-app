@@ -30,10 +30,10 @@ and passes vacuously — `AppErrorBoundary`'s "Prøv igen" and NotFound's "Hjem"
 
 | Command | What it actually proves | Baseline |
 |---|---|---|
-| `npm test` | The pure logic: progression algebra, CRDT merge, difficulty tables, guest gate, config guards | 734 pass |
+| `npm test` | The pure logic: progression algebra, CRDT merge, difficulty tables, guest gate, config guards | 738 pass |
 | `npm run lint` | 0 errors (the warnings are pre-existing) | 0 errors, 25 warnings |
 | `npm run context:check` | The guardrail byte budget still fits | under budget |
-| `npm run audit:check` | Every closed-set narration clip is signed off | clean, 1886 clips |
+| `npm run audit:check` | Every closed-set narration clip is signed off | clean, 1910 clips |
 | `sweep --phase smoke` | Every route renders, shows **its own** Danish title, and throws no console error or page exception | 27 PASS · 0 FAIL · 1 N/A |
 | `sweep --phase layout` | The same across **8 viewports** — iPad landscape/portrait/split, small iPad, wide, phone both ways — plus **nothing clipped off-screen** | 216 PASS · 0 FAIL · 8 N/A |
 | `sweep --phase audio` | Narration **actually produced sound**, measured, rather than asking anyone to listen | 26 PASS · 0 FAIL · 2 N/A |
@@ -83,6 +83,15 @@ because the shape of each is what a later run needs in order to tell a regressio
 | audio | `/math/numbers` | SILENT — 1 of 3 clips genuinely failed | **not reproducible** — the autoplay contention above |
 | ceremony | `/math/addition` | the board advanced UNDERNEATH the overlay | **probe artifact** — fixed (`7847e3b`) |
 | ceremony | `/math/subtraction` | same | **probe artifact** — same |
+
+**A second pass on 2026-09-05 found two MORE unprebaked lines, and neither came from this document —
+the owner heard them on the iPad.** Tapping a memory card said *"Stort bogstav X"* in a voice that was
+not Christel. Cause: `MemoryGame` spoke `audio.speak(letter)`, the raw UPPERCASE glyph, while
+`DANISH_LETTER_NAMES` maps to lowercase (`A → 'a'`) with respellings for two (`X → 'eks'`, `Z → 'zæt'`)
+— and the bake holds THAT text, so an uppercase glyph matched 0 of 1886 clips. Sweeping every game for
+live Azure calls then found one more: Hvilken Farve?'s question was a template literal inside
+`FarveQuizGame.tsx`, so not one of its 24 questions had ever been baked. Both fixed (`335fa57`), and
+**`--phase live` is the mechanical version of the ear that caught them.**
 
 **The one root cause behind three of the audio reds: the late welcome ate the "Hør igen" press.** On a
 cold load audio is not unlocked at mount, so a game's welcome is deferred to the `isAudioReady` effect —
