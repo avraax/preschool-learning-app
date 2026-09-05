@@ -35,7 +35,8 @@
     "icons:generate": "node generate-png-icons.cjs",
     "cap:sync": "node scripts/cap-sync.mjs",
     "context:check": "node scripts/context-budget.mjs",
-    "session:cost": "node scripts/session-cost.mjs"
+    "session:cost": "node scripts/session-cost.mjs",
+    "schema:check": "node scripts/schema-check.mjs"
   },
   "dependencies": {
     "@better-auth/passkey": "^1.6.25",

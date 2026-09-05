@@ -34,6 +34,7 @@ and passes vacuously — `AppErrorBoundary`'s "Prøv igen" and NotFound's "Hjem"
 | `npm run lint` | 0 errors (the warnings are pre-existing) | 0 errors, 25 warnings |
 | `npm run context:check` | The guardrail byte budget still fits | under budget |
 | `npm run audit:check` | Every closed-set narration clip is signed off | clean, 1910 clips |
+| `npm run schema:check` | **Both deployments' databases match the code they run** — the check that was missing when sign-in died on production | staging + production IN SYNC |
 | `sweep --phase smoke` | Every route renders, shows **its own** Danish title, and throws no console error or page exception | 27 PASS · 0 FAIL · 1 N/A |
 | `sweep --phase layout` | The same across **8 viewports** — iPad landscape/portrait/split, small iPad, wide, phone both ways — plus **nothing clipped off-screen** | 216 PASS · 0 FAIL · 8 N/A |
 | `sweep --phase audio` | Narration **actually produced sound**, measured, rather than asking anyone to listen | 26 PASS · 0 FAIL · 2 N/A |

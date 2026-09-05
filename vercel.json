@@ -18,6 +18,9 @@
     },
     "api/profiles.ts": {
       "maxDuration": 15
+    },
+    "api/schema-health.ts": {
+      "maxDuration": 15
     }
   },
   "headers": [

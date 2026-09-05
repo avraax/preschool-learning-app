@@ -40,6 +40,37 @@ review on it.
    TestFlight track and play it again.
 5. Only then submit **that exact build** in App Store Connect. Never a build nobody has touched.
 
+## Before you submit: check the DATABASE is in sync with the code
+
+```
+npm run schema:check
+```
+
+Both tiers must say **IN SYNC**. Exits non-zero on drift, so it can gate anything.
+
+**This is not paranoia — it took sign-in down on production for a day.** On 2026-09-05 both Google and
+Apple failed with "Kunne ikke starte …-login", on the website as well as the iPad, because the code had
+shipped four columns on `oauthFlow` (`client`, `failureCode`, `failureMessage`, `failedAt`) that
+`npm run auth:migrate` had only ever been run against the **staging** database. Deploying code does not
+migrate a database, and nothing connected the two.
+
+It was invisible from every angle: every other route answered 200, `/api/auth/family/providers` looked
+healthy, and the failing INSERT returned an empty 500 body by design. Only the auto-uploaded auth report
+(`M7W3W`) named the status code.
+
+**If it says DRIFT**, run the migration against *that* tier's database:
+
+```
+npm run auth:migrate            # dry run — prints the exact SQL
+npm run auth:migrate -- --apply # applies it
+```
+
+`npm run auth:migrate` uses `.env.local`, i.e. whichever database that names. To reach **production** you
+need its own `DATABASE_URL`, and note Vercel will not hand back a **Sensitive**-flagged value at all
+(`BETTER_AUTH_SECRET`, `GOOGLE_CLIENT_SECRET`, `PIN_PEPPER`, `ACCESS_TOKEN_SECRET` all pull back empty) —
+which is exactly the friction that let this happen. That is why `schema:check` asks each *deployment*
+about itself instead: the credentials are already there.
+
 ## Before you submit to the App Store: run the QA pass
 
 **`docs/qa.md`** — the whole pre-release pass, written to be re-run rather than read. It starts with a

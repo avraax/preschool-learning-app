@@ -717,6 +717,24 @@ app.get('/api/version', (_req, res) => {
   res.json({ version: '1.0.0-dev', buildTime: Date.now(), commitHash: 'dev' });
 });
 
+// Mirror of api/schema-health.ts (api-endpoints.md: the dev server must mirror every function, or a
+// route works in one place and 404s in the other). Answers "is this deployment's DB in sync with the
+// code?" — the check that would have caught the 2026-09-05 sign-in outage, where four columns had
+// shipped in code and never been migrated into the production database.
+app.get('/api/schema-health', async (_req, res) => {
+  try {
+    const { getMigrations } = await import('better-auth/db/migration');
+    const { auth } = await import('./lib/auth.ts');
+    const { tier } = await import('./lib/env.ts');
+    const { toBeCreated, toBeAdded } = await getMigrations(auth.options);
+    const tables = toBeCreated.length;
+    const columns = toBeAdded.reduce((n, t) => n + Object.keys(t.fields).length, 0);
+    res.json({ tier: tier(), inSync: tables === 0 && columns === 0, missing: { tables, columns } });
+  } catch {
+    res.status(500).json({ error: 'schema check failed' });
+  }
+});
+
 // --- Start ---
 app.listen(PORT, () => {
   console.log(`[dev-server] API server running at http://localhost:${PORT}`);
@@ -726,4 +744,5 @@ app.listen(PORT, () => {
   console.log(`[dev-server] Bug reports: POST/GET http://localhost:${PORT}/api/bug-report  (→ .bug-reports/)`);
   console.log(`[dev-server] Audit:       POST/GET http://localhost:${PORT}/api/audit-save  (→ docs/audit/)`);
   console.log(`[dev-server] Version:     GET  http://localhost:${PORT}/api/version`);
+  console.log(`[dev-server] Schema:      GET  http://localhost:${PORT}/api/schema-health`);
 });
