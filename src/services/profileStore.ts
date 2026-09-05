@@ -11,6 +11,7 @@ import { ACTIVE_PROFILE_KEY } from '../config/progressSchema.ts'
 import { apiUrl } from '../config/apiBase.ts'
 import { DEFAULT_AVATAR_ID, normalizeAvatarId, type AvatarId } from '../config/avatars.ts'
 import { guestModeActive } from '../utils/guestMode.ts'
+import { devKidCount } from '../utils/devHarness.ts'
 import { authStore } from './authStore.ts'
 import { practiceLedger } from './practiceLedger.ts'
 import { progressStore } from './progressStore.ts'
@@ -62,6 +63,26 @@ const ROSTER_KEY = 'bornelaering-profiles'
 const DEV_PROFILE: ChildProfile = { id: 'dev-local', name: 'Dev', avatarId: DEFAULT_AVATAR_ID }
 
 /**
+ * The bypass's roster: ONE child by default, `?devkids=<n>` for more (Børn picker PRD §6.1).
+ *
+ * The default of one is load-bearing, not a convenience. The boot picker appears at 2+ children, so a
+ * bypass that attached two would put "Hvem spiller?" in front of EVERY existing screenshot recipe and
+ * `sweep.mjs` run at once — silently, since they would still find `#root > *`. Opting in is the only
+ * way to see it, and the only way to see it without minting a real session against the owner's
+ * production database.
+ *
+ * The extras reuse `dev-local`'s shape with a suffixed id, so each still gets its own progress key
+ * (`bornelaering-progress:dev-local-2`) and no harness state can land in a real child's book.
+ */
+const devProfiles = (): ChildProfile[] => {
+  const n = devKidCount()
+  if (n <= 1) return [DEV_PROFILE]
+  return Array.from({ length: n }, (_, i) =>
+    i === 0 ? DEV_PROFILE : { id: `dev-local-${i + 1}`, name: `Dev ${i + 1}`, avatarId: DEFAULT_AVATAR_ID },
+  )
+}
+
+/**
  * The child for GUEST play — no account, this device only (App Store PRD §3.2 / A1).
  *
  * This is the whole reason A1 is cheap: `progressStore` is already inert until `attach()`, and already
@@ -79,14 +100,15 @@ const GUEST_PROFILE: ChildProfile = { id: 'local-guest', name: 'Gæst', avatarId
 /** The guest child's id, for the surfaces that must recognise it (the adult panes). */
 export const GUEST_PROFILE_ID = GUEST_PROFILE.id
 
-const readPointer = (): string | null => {
-  try {
-    return localStorage.getItem(ACTIVE_PROFILE_KEY)
-  } catch {
-    return null
-  }
-}
-
+/**
+ * The "last child who played" pointer. WRITE-ONLY since the Børn picker PRD (§2.1 / §4.6): boot no
+ * longer consults it, because honouring it meant a 2+ child family met the picker exactly once and
+ * silently resumed as whoever played last ever after.
+ *
+ * The write is KEPT deliberately. It costs one line, a later "sidst spillet" marker on the picker
+ * wants it, and removing it is a behaviour change disguised as a tidy-up. There is no `readPointer`
+ * any more — if you find yourself adding one at boot, you are re-introducing the defect.
+ */
 const writePointer = (id: string | null): void => {
   try {
     if (id) localStorage.setItem(ACTIVE_PROFILE_KEY, id)
@@ -189,8 +211,12 @@ class ProfileStore {
     // session must not see it, and a stale pointer is already ignored (hydrate only honours a pointer
     // that appears in the fetched roster).
     if (!already && authStore.isDevBypass()) {
-      this.publish({ status: 'choosing', accountId, profiles: [DEV_PROFILE], rosterSettled: true })
-      this.selectProfile(DEV_PROFILE.id, accountId)
+      const kids = devProfiles()
+      this.publish({ status: 'choosing', accountId, profiles: kids, rosterSettled: true })
+      // ONE child ⇒ select it, exactly as before, so no existing recipe meets the boot picker.
+      // `?devkids=2+` deliberately leaves nothing selected, which is how the picker becomes
+      // driveable at rung 1 (Børn picker PRD §6.1).
+      if (kids.length === 1) this.selectProfile(kids[0].id, accountId)
       return
     }
 
@@ -214,7 +240,6 @@ class ProfileStore {
     }
 
     const cached = readRoster()
-    const pointer = readPointer()
 
     if (!already) {
       // A DIFFERENT IDENTITY IS ASKING, SO THE PREVIOUS ANSWER IS VOID. `rosterSettled` means "a roster
@@ -236,16 +261,29 @@ class ProfileStore {
       // stale verdict.
       this.publish({ rosterSettled: false })
 
-      // Attach immediately so the very first render sees the child's real data (no level-1 flash).
-      const target =
-        (pointer && cached.some((p) => p.id === pointer) ? pointer : null) ??
-        (cached.length === 1 ? cached[0].id : null)
+      // ONE child attaches immediately, so the very first render sees the child's real data (no
+      // level-1 flash) and a single-child family never meets a picker — the accounts-PRD contract
+      // that keeps "the child never sees a login screen" true.
+      //
+      // TWO OR MORE ALWAYS ASK (Børn picker PRD §2.1). The stored pointer is deliberately NOT
+      // consulted here any more: honouring it meant a family met the picker exactly once, on this
+      // device's first launch, and every launch after that silently resumed as whoever played last —
+      // so the second child could only start their own session through the PIN-gated adult menu.
+      // The pointer is still WRITTEN by `selectProfile` (§4.6): it costs one line, a later
+      // "sidst spillet" marker wants it, and deleting the write is a behaviour change disguised as a
+      // tidy-up. It simply no longer decides anything at boot.
+      //
+      // Consequence to keep: with 2+ children the store stays INERT behind the picker, so the app
+      // underneath renders the DEFAULT skin (`themeId` is per-child) until a tile is tapped. The
+      // picker is full-screen at AUTH_Z so nothing shows, and there is a repaint on pick. Do NOT
+      // "fix" that by pre-attaching a guess — that is a write to the wrong book waiting to happen.
+      const target = cached.length === 1 ? cached[0].id : null
 
       if (target) this.selectProfile(target, accountId)
       else {
-        // No cached child, or more than one and no valid pointer ⇒ let ProfileGate decide (the
-        // mandatory create dialog, or the picker). NOTHING is attached and nothing is pre-added, so
-        // nothing can be written to the wrong book in the meantime.
+        // No cached child, or more than one ⇒ let ProfileGate decide (the mandatory create dialog, or
+        // the picker). NOTHING is attached and nothing is pre-added, so nothing can be written to the
+        // wrong book in the meantime.
         this.publish({
           status: 'choosing',
           accountId,
@@ -402,6 +440,13 @@ class ProfileStore {
         progressStore.detach()
         writePointer(null)
         this.publish({ profiles: list, activeProfileId: null, status: 'choosing' })
+        // …and if exactly ONE child is left, select them rather than leaving `choosing` standing.
+        // The boot picker only renders at 2+ (Børn picker PRD §2.1), so a lone survivor would
+        // otherwise leave the app rendered with an INERT store and nobody playing — the
+        // "nobody to play as" hole, reached from the one direction the gate cannot see (§4.3).
+        // Handled HERE, not in `profileGatePolicy`: that module stays a pure statement of what to
+        // SHOW, and this is a question of what to ATTACH.
+        if (list.length === 1) this.selectProfile(list[0].id)
       } else {
         this.publish({ profiles: list })
       }

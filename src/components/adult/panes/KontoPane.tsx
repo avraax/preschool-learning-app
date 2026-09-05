@@ -26,7 +26,7 @@
 // plain-Node test can assert it. A guest sees 1 → 2 → 5 and that is correct: no dead rows, no
 // "requires an account" stubs beyond the one on "Tilføj et barn".
 
-import React, { useCallback, useRef } from 'react'
+import React from 'react'
 import { Box, Stack, Typography } from '@mui/material'
 import { useAuthContext } from '../../../contexts/AuthContext'
 import BoernSection from './konto/BoernSection'
@@ -46,18 +46,13 @@ const KontoPane: React.FC<KontoPaneProps> = ({ closeAll }) => {
   /** Playing with no account at all — the state in which signing in is something to offer. */
   const guest = auth?.phase === 'guest'
 
-  // "Tilføj et barn" used to route a guest ACROSS THE RAIL to Konto. After the merge the thing it was
-  // routing to is at the top of this same pane, so it scrolls instead — the small win §3.2 says the
-  // merge buys for free.
-  const offerRef = useRef<HTMLDivElement | null>(null)
-  const showOffer = useCallback(() => {
-    offerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  }, [])
+  // A guest is no longer offered "Tilføj et barn" at all (Børn picker PRD-01 §2.8), so the scroll-to-
+  // the-offer plumbing this pane carried for one day is gone with it. The offer is still the top block.
 
   return (
     <Stack spacing={2.5}>
       {/* ---- 1. The identity row (§3.1): the account, at the top, as iOS places Apple Account ---- */}
-      <Box ref={offerRef}>
+      <Box>
         {guest ? (
           <SignInOffer />
         ) : (
@@ -71,7 +66,7 @@ const KontoPane: React.FC<KontoPaneProps> = ({ closeAll }) => {
       </Box>
 
       {/* ---- 2. Børn (§3.2) ---- */}
-      <BoernSection closeAll={closeAll} onWantAccount={showOffer} />
+      <BoernSection closeAll={closeAll} />
 
       {/* ---- 3 + 4. Signed in only (§3.3, §3.4). A guest has no credentials to manage and no
               sync state to report, so these do not render at all rather than render empty. ---- */}

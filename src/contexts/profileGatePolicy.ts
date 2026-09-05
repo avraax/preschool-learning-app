@@ -21,7 +21,15 @@ import type { AccountState } from '../services/profileStore.ts'
 
 export type ProfileGateSurface = 'none' | 'picker' | 'create'
 
-/** What the gate must render. `creating` = the adult asked for the create dialog deliberately. */
+/**
+ * What the gate must render.
+ *
+ * `creating` = the adult asked for the create dialog deliberately. It has **no caller** since the Børn
+ * picker PRD-01 §2.3 removed the picker's un-gated "Tilføj et barn" — the only thing that ever set it.
+ * Kept rather than deleted, in the same spirit as `pinReasons.ts`'s `revokeSessions` row: it is one
+ * parameter, it states a real third case, and the next deliberately-opened picker will want exactly
+ * it. Do not read it as live.
+ */
 export function profileGateSurface(
   account: Pick<AccountState, 'status' | 'profiles' | 'rosterSettled'>,
   creating = false,
@@ -31,9 +39,14 @@ export function profileGateSurface(
   if (account.status === 'signed-out') return 'none'
   // MANDATORY: a real, answered, empty roster. There is nobody to play as.
   if (account.rosterSettled && account.profiles.length === 0) return 'create'
-  // More than one child and none chosen ⇒ "Hvem spiller?". One child boots straight in, which is what
-  // keeps "the child never sees a login screen" true.
-  if (account.status === 'choosing' && account.profiles.length > 0) return 'picker'
+  // MORE THAN ONE child and none chosen ⇒ "Hvem spiller?", on every cold start (Børn picker PRD
+  // §2.1). One child boots straight in, which is what keeps "the child never sees a login screen"
+  // true — so the boundary is `> 1`, not `> 0`. It used to be `> 0` while this comment already said
+  // "more than one": the code never matched, and it was invisible because `hydrate` auto-attached
+  // the single cached child before the gate ever ran. Deleting down to one child is the path that
+  // could reach it, and `profileStore.deleteProfile` now selects the survivor rather than relying on
+  // this returning 'picker' for a one-tile list.
+  if (account.status === 'choosing' && account.profiles.length > 1) return 'picker'
   return 'none'
 }
 

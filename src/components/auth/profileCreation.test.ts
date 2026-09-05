@@ -29,12 +29,17 @@ test('a first sign-in reaches an UN-DISMISSIBLE create dialog', () => {
   // There is nobody to play as yet, so a dismissible dialog is a dead end: the adult closes it and the
   // app has no child, no book and no way back except signing out. `dismissible` must be driven by the
   // mandatory case, not defaulted.
-  assert.match(gate, /open=\{creating \|\| needsFirstProfile\}/, 'the dialog is no longer raised by the gate')
-  assert.match(gate, /dismissible=\{!needsFirstProfile\}/, 'the first-run dialog can be dismissed')
+  assert.match(gate, /open=\{needsFirstProfile\}/, 'the dialog is no longer raised by the gate')
+  assert.match(gate, /dismissible=\{false\}/, 'the first-run dialog can be dismissed')
   // And "first run" must come from the POLICY, never from `profiles.length === 0` read inline — that
   // read is what raised the mandatory dialog for the length of every cold boot's roster round trip.
-  assert.match(gate, /const surface = profileGateSurface\(account, creating\)/)
+  assert.match(gate, /const surface = profileGateSurface\(account\)/)
   assert.doesNotMatch(gate, /profiles\.length === 0/, 'the gate is inferring "no children" itself again')
+  // It is now the ONLY dialog the gate raises. `dismissible` used to be derived because the picker
+  // carried an un-gated "Tilføj et barn" that opened the same component optionally; that button is
+  // deleted (Børn picker PRD-01 §2.3) and creating a child lives behind the parental gate. A
+  // `creating` flag coming back here means an un-gated create affordance came back with it.
+  assert.doesNotMatch(gate, /setCreating/, 'the gate raises an optional create dialog again')
 })
 
 test('an avatar is always preselected, from the closed set', () => {

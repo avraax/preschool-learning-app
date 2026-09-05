@@ -1,9 +1,16 @@
 // "Hvem spiller?" — the child picker.
 //
-// Shown at app start ONLY when the account has more than one profile; a single child boots straight in,
-// which is what keeps "the child never sees a login screen" true (accounts PRD §7.4). Picking at boot is
-// NOT PIN-gated — a child choosing their own avatar is the point. Switching MID-SESSION is gated, and
-// that gate lives at the call site (the adult surface's "Skift barn" in BarnPane), not here.
+// Shown at app start whenever the account has more than one profile, on EVERY cold start (Børn picker
+// PRD-01 §2.1). A single child boots straight in, which is what keeps "the child never sees a login
+// screen" true (accounts PRD §7.4). Picking at boot is NOT PIN-gated — a child choosing their own
+// avatar is the point. Switching MID-SESSION is gated, and that gate lives at the call site (the adult
+// surface's roster rows in `panes/konto/BoernSection.tsx`), not here.
+//
+// IT PICKS, AND THAT IS ALL IT DOES (§2.3 / §2.4). It used to carry a "Tilføj et barn" button wired
+// straight to `CreateProfileDialog` with NO gate of any kind — so a five-year-old at this screen could
+// create children on the account. Adding, renaming and deleting now live only behind the parental gate,
+// in "Til de voksne" → Konto → Børn, plus the mandatory first-run dialog `ProfileGate` still owns.
+// **Do not re-add a create affordance here.**
 //
 // Visual model: ThemePanel's selectable-tile grid — `role="group"`, `motion.button` with `aria-pressed`,
 // a circular thumb and an accent ring when active. That is the app's established "grid of identity
@@ -23,15 +30,9 @@ export interface ProfilePickerProps {
   activeProfileId: string | null
   /** Shown when an adult opened the picker deliberately, so they can back out. */
   onCancel?: () => void
-  onCreate?: () => void
 }
 
-const ProfilePicker: React.FC<ProfilePickerProps> = ({
-  profiles,
-  activeProfileId,
-  onCancel,
-  onCreate,
-}) => {
+const ProfilePicker: React.FC<ProfilePickerProps> = ({ profiles, activeProfileId, onCancel }) => {
   const theme = useTheme()
   const [busy, setBusy] = useState(false)
 
@@ -161,18 +162,13 @@ const ProfilePicker: React.FC<ProfilePickerProps> = ({
             })}
           </Box>
 
-          {(onCreate || onCancel) && (
-            <Box sx={{ mt: 3, display: 'flex', gap: 1, justifyContent: 'center' }}>
-              {onCreate && (
-                <Button onClick={onCreate} aria-label="Tilføj et barn" sx={{ textTransform: 'none' }}>
-                  Tilføj et barn
-                </Button>
-              )}
-              {onCancel && (
-                <Button onClick={onCancel} aria-label="Annullér" sx={{ textTransform: 'none' }}>
-                  Annullér
-                </Button>
-              )}
+          {/* Annullér only, and only when an adult opened this deliberately. No "Tilføj et barn" —
+              see the header. */}
+          {onCancel && (
+            <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center' }}>
+              <Button onClick={onCancel} aria-label="Annullér" sx={{ textTransform: 'none' }}>
+                Annullér
+              </Button>
             </Box>
           )}
         </Paper>

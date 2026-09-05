@@ -139,6 +139,26 @@ table, and our five (`childProfile`, `profileProgress`, `familyPin`, `pinAttempt
   moment you most want to know which backend you are handing credentials to — and moved to `main.tsx`,
   above the gate (guarded in `backendTarget.test.ts`). Guest auto-play hides this: most cold launches
   render the app, so the gap only appears after an explicit sign-out.
+- **"HVEM SPILLER?" ON EVERY COLD START, at MORE THAN ONE child** (Børn picker PRD-01, owner
+  2026-09-05). One child still boots straight in — that is what keeps "the child never sees a login
+  screen" true — so the boundary in `profileGatePolicy` is `> 1`. `hydrate` deliberately no longer
+  consults the stored `bornelaering-active-profile` pointer: honouring it meant a family met the picker
+  exactly ONCE, on that device's first launch, and every launch after silently resumed as whoever
+  played last, so the second child could only start a session through the PIN-gated adult menu. The
+  pointer is still WRITTEN (a later "sidst spillet" marker wants it); there is no `readPointer` any
+  more, and adding one back at boot re-introduces the defect.
+  **COLD START ONLY.** Nothing on a resume path may raise it — a picker over a live game loses the
+  round. What guarantees that is `hydrate`'s `already` guard, not a check inside the component.
+  **With 2+ children the store is INERT behind the picker**, so the app underneath renders the default
+  skin (`themeId` is per-child) until a tile is tapped; the picker is full-screen at `AUTH_Z` so nothing
+  shows. Do not "fix" it by pre-attaching a guess — that is a write to the wrong book waiting to happen.
+  **The picker PICKS.** Its "Tilføj et barn" button is deleted: it opened `CreateProfileDialog` with no
+  gate of any kind, so a child at that screen could add children to the account. Creating one now
+  happens only behind the parental gate (`Til de voksne` → `Konto` → `Børn`) or through the MANDATORY
+  first-run dialog, which is a different surface and must stay un-gated — it is the only way into an
+  account with no children, and a brand-new account may have no PIN yet.
+  **`?devkids=<n>`** is how any of this is driveable: `?nogate=1` attaches ONE stand-in child, which is
+  what keeps every existing screenshot recipe from meeting a picker it never asked for.
 - **"No children" and "we haven't asked yet" are different states.** `AccountState.rosterSettled` is true
   only once a roster refresh has ANSWERED (either way), and `contexts/profileGatePolicy.ts` — pure, like
   `authGatePolicy` — is what decides between nothing / the picker / the mandatory create dialog. Reading
@@ -174,7 +194,8 @@ table, and our five (`childProfile`, `profileProgress`, `familyPin`, `pinAttempt
   dialog opened FROM one of them mounts *underneath* it — live, interactive and invisible, which is a
   dead button with no error anywhere. That is why the lock screen's "Brug kode i stedet" never worked and
   why the picker's "Tilføj et barn" was hidden (both measured with `elementFromPoint` at the surface's
-  centre, before and after). Never write a z-index literal in that directory.
+  centre, before and after — that button has since been deleted outright, see above). Never write a
+  z-index literal in that directory.
   **A PIN surface can also live OUTSIDE that directory** — the account-deletion pad sits in the adult
   settings tree, where it and the settings Dialog were both at MUI's 1300 and the pad won only by DOM
   order. `authOverlayZ.test.ts` therefore sweeps all of `src/` for a `<PinPad>` inside a `<Dialog>`

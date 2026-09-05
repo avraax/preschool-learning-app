@@ -55,14 +55,9 @@ const SECTION_IDS: SectionId[] = ['alphabet', 'math', 'colors', 'english', 'ordl
 export interface BoernSectionProps {
   /** Close the whole settings surface — switching child re-attaches the store under the new profile. */
   closeAll: () => void
-  /**
-   * Guest tapped "Tilføj et barn". The sign-in offer is now at the TOP OF THIS SAME PANE, so this
-   * scrolls to it rather than switching rail groups — the small win the merge buys for free.
-   */
-  onWantAccount?: () => void
 }
 
-const BoernSection: React.FC<BoernSectionProps> = ({ closeAll, onWantAccount }) => {
+const BoernSection: React.FC<BoernSectionProps> = ({ closeAll }) => {
   const theme = useTheme()
   const auth = useAuthContext()
   const account = useProfiles()
@@ -238,38 +233,27 @@ const BoernSection: React.FC<BoernSectionProps> = ({ closeAll, onWantAccount }) 
               )
             })}
           </Stack>
-          {/* GUEST: say the price BEFORE the work, not after it. `profileStore.createProfile` refuses
-              without an account and does so honestly — but only once the adult has picked an avatar,
-              typed a name and pressed Gem. Asking for effort and then refusing is the wrong order, so
-              here the row states the requirement up front and leads to the thing that can fix it —
-              which after the merge is the top of THIS pane, not another rail group.
-              `createProfile`'s own guard stays as the backstop; this is not a substitute for it. */}
-          <Button
-            onClick={() => (guest ? onWantAccount?.() : setCreating(true))}
-            aria-label={guest ? 'Tilføj et barn — kræver en konto' : 'Tilføj et barn'}
-            startIcon={<UserPlus size={17} />}
-            sx={{ mt: 1, textAlign: 'left', justifyContent: 'flex-start' }}
-          >
-            <Box>
-              <Box component="span" sx={{ display: 'block' }}>
-                Tilføj et barn
-              </Box>
-              {guest && (
-                <Box
-                  component="span"
-                  sx={{
-                    display: 'block',
-                    fontSize: '0.72rem',
-                    fontWeight: 400,
-                    color: 'text.secondary',
-                    textTransform: 'none',
-                  }}
-                >
-                  Kræver en konto
-                </Box>
-              )}
-            </Box>
-          </Button>
+          {/* A GUEST IS NOT OFFERED THIS AT ALL (Børn picker PRD-01 §2.8). It used to render with a
+              "Kræver en konto" hint that scrolled to the sign-in offer — "say the price before the
+              work", which was right while the offer lived in a different rail group. Since the
+              Barn+Konto merge that offer is a few centimetres ABOVE this row in the same pane, and its
+              `Plads til flere børn` line already says what an account buys, so the row had become a
+              second pointer to something already on screen.
+              `createProfile`'s own guard stays as the backstop; this was never a substitute for it.
+
+              THIS IS ALSO THE ONLY REMAINING WAY IN. The boot picker's un-gated create button is gone
+              (§2.3), so adding a child happens here — behind the parental gate — or through the
+              mandatory first-run dialog. Do not re-add one to an un-gated surface. */}
+          {!guest && (
+            <Button
+              onClick={() => setCreating(true)}
+              aria-label="Tilføj et barn"
+              startIcon={<UserPlus size={17} />}
+              sx={{ mt: 1, textAlign: 'left', justifyContent: 'flex-start' }}
+            >
+              Tilføj et barn
+            </Button>
+          )}
         </PaneSection>
       </Stack>
 

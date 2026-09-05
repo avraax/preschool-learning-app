@@ -113,10 +113,14 @@ Signing in is offered only here, behind the parental gate — nothing adult-dire
 - **One trust line at the CTA** — free, no ads, no tracking, no mail. Cost and data handling are the
   dominant parental objection for a children's app, and all four clauses are load-bearing claims: if
   any stops being true, the line goes first.
-- **Say the price before the work.** "Tilføj et barn" used to let a guest pick an avatar and type a
-  name before `createProfile` refused; it now states "Kræver en konto" and leads to the offer — which
-  after the merge is the top of the SAME pane, so it scrolls there instead of switching rail groups
-  (the old cross-rail `goToPane` prop is gone).
+- **A GUEST IS NOT OFFERED "Tilføj et barn" AT ALL** (Børn picker PRD-01 §2.8). It used to say the
+  price before the work — "Kræver en konto", leading to the offer — which was right while the offer
+  lived in another rail group. Since the merge that offer is a few centimetres above the row in the
+  same pane and its `Plads til flere børn` line already says what an account buys, so the row had
+  become a second pointer to something already on screen.
+  **This row is now the ONLY un-mandatory way to add a child**, because the boot picker's own button
+  was deleted with it. Adding a child is therefore a gated act by construction; do not re-add one to
+  any un-gated surface. `profilePicker.test.ts` holds both halves.
 
 ## Bug reporting
 

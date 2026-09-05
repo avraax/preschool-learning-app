@@ -16,6 +16,7 @@
 //   ?mute-tts=1                      force narration UNHEALTHY (Practice Loop PRD-01 W4 degraded mode)
 //   ?audio-cue=1                     let the "Tryk for lyd" cue render under ?nogate=1 (see below)
 //   ?hidetools=1                     force the adult surface's owner-only tools OFF (see below)
+//   ?devkids=<n>                     seed n stand-in children under ?nogate=1 (see below)
 
 // `import.meta.env?.` — optional, because this module is now in the transitive graph of a Node
 // `--test` suite (via authStore), and `import.meta.env` is undefined outside Vite. Same reason
@@ -189,3 +190,23 @@ export const installDevSeed = (): void => {
  */
 export const devHideTools = (): boolean => DEV && readParams().get('hidetools') === '1'
 
+
+/**
+ * How many stand-in children the DEV auth bypass should attach — `?devkids=<n>`, default 1.
+ *
+ * WITHOUT THIS THE BOOT PICKER IS UNVERIFIABLE. It only appears at 2+ children (Børn picker PRD §2.1),
+ * and `?nogate=1` attaches exactly ONE stand-in child — which is precisely what keeps every existing
+ * screenshot recipe and `sweep.mjs` from meeting a picker they never asked for (§4.5). So the only way
+ * to drive it would be to mint a real session, and that writes a user + session row into the owner's
+ * PRODUCTION Neon database (`.claude/rules/auth.md`). This is the opt-in seam instead: same shape and
+ * same reasoning as `?hidetools=1`.
+ *
+ * Clamped to 1..4 — the picker's grid is the thing under test, not pagination, and an unbounded value
+ * from a URL should not be able to allocate.
+ */
+export const devKidCount = (): number => {
+  if (!DEV) return 1
+  const n = Number(readParams().get('devkids'))
+  if (!Number.isFinite(n)) return 1
+  return Math.max(1, Math.min(4, Math.floor(n)))
+}
