@@ -847,23 +847,48 @@ instead of a briefing. **When you change any of it, change it here in the same c
 **Work is on `master` now** — the `feat/app-store-ios` branch was merged 2026-08-07 and everything since
 has landed directly. `master` is the deploy trigger, so a push deploys the web app.
 
-## THE ANSWER TO "what is left before I can publish?" — 2026-08-09
+## THE ANSWER TO "what is left before I can publish?" — re-verified 2026-09-05
 
-Verified against the live App Store Connect API, not from memory (`.claude/rules/ios-shell.md` has the
-how). **App Store Connect is COMPLETE.** Confirmed present: name, subtitle, description, keywords,
-promotional text, privacy-policy URL, support URL, content rights (`DOES_NOT_USE_THIRD_PARTY_CONTENT`),
-age rating **4+**, Made for Kids **`SIX_TO_EIGHT`** with `parentalControls: true`, App Privacy (5 data
-types, all App Functionality / linked / not tracking), review contact + notes, 6 iPad + 6 iPhone
-screenshots, release type **MANUAL**, Free, **Denmark only** (1 available / 174 not), Mac and visionOS
-availability both off, distribution **Public**.
+Field-by-field against the live App Store Connect API (`.claude/rules/ios-shell.md` has the how), not
+from memory and not from this file. **ONE thing is missing: a build.**
 
-**Nothing is waiting on Apple any more.** Two things remain, both ours, and the whole sequence fits in one
-sitting: re-shoot the screenshots → attach a build → **Add for Review**.
+| Field | Live value | |
+|---|---|---|
+| Name / Subtitle | `Børnelæring: ABC, tal, engelsk` (30/30) · `Førskole, 0. og 1. klasse` (25/30) | OK |
+| Keywords | 97/100, the reworked set (`listing.md` §1.3) | OK |
+| Description | 1457 chars — **was truncated to 523, repaired 2026-09-05** | OK |
+| Promotional text | 157 chars | OK |
+| What's New | empty | correct for 1.0 |
+| Support / Privacy URL | `boernelaering.dk/support` · `/privatliv` | OK |
+| Category | primary **EDUCATION**, secondary **GAMES** | OK |
+| Age rating | **4+**, Made for Kids **`SIX_TO_EIGHT`**, `parentalControls: true` | OK |
+| Content rights | `DOES_NOT_USE_THIRD_PARTY_CONTENT` | OK |
+| Copyright | `2026 Allan Brink Vraa` | OK |
+| Price | price point 10000 → **`customerPrice 0.0`** (free), base territory DNK | OK |
+| Territories | **1 of 175 — DNK only**; `availableInNewTerritories: false` | OK |
+| Release type | **MANUAL** | OK |
+| Review contact | name, email, phone; `demoAccountRequired: false` | OK — guest play |
+| Review notes | 612 chars: the gate's arithmetic, the hidden mic game, synthetic speech | OK |
+| Screenshots | 6 iPad + 6 iPhone, **all 12 replaced 2026-09-05** | OK |
+| **Build** | **NONE attached** | **THE GAP** |
+| Submitted | `reviewSubmissions` empty — never submitted | — |
+
+**Two things this pass caught that a UI glance would not.** The description held **523 of 1457
+characters**, cut after the first section, so everything about ads, purchases, tracking and the parental
+gate was missing from the store page. And **all 12 screenshots were the August set**: the filenames and
+pixel sizes matched, so only `sourceFileChecksum` vs a local MD5 could tell. Both repaired via the API.
+**Compare checksums, not filenames.**
+
+**App Privacy is UNKNOWN through the API** — `appDataUsages` 404s on every path shape tried
+(`/v1/apps/<id>/appDataUsages`, `/v1/appDataUsages?filter[app]=`, `appDataUsagesPublishState`). A 404 is
+UNKNOWN, not a finding: it was recorded complete on 2026-08-09 (5 data types, all App Functionality /
+linked / not tracking) and nothing has touched it since, but **the only way to confirm is to look at the
+App Privacy page in the browser.**
 
 | | State |
 |---|---|
 | ~~**DSA trader status**~~ | **APPROVED — verified 2026-09-04.** Business → Compliance reads Digital Services Act **Active**, 27 countries (DAC7 Active too). No longer a blocker. Still not readable through the API: every trader-shaped endpoint 404s and the app's attribute set has no such field, so **Business → Compliance is the only place it can be checked** (`ios-shell.md`). A `CANNOT_SELL` in `territoryAvailabilities.contentStatuses` is NOT a trader signal — it sits on the 174 deselected territories too, i.e. it means "unreleased", and it wasted a round of diagnosis. |
-| **A build attached to v1.0** | **None attached.** Builds upload fine (3+ so far, `processingState: VALID`); attaching is a separate act on the version page. Do it last, after any final code change. |
+| **A build attached to v1.0** | **None attached, and the three that exist must NOT be used.** Builds 4, 5 and 6 are `VALID` but were uploaded 2026-08-07/08 — before the audio fixes of 2026-09-05, so shipping one would ship Hukommelsesspil's un-prebaked narration (silent for a guest). **A fresh `ios-release` run is required**, and attaching is a separate act on the version page after it processes. |
 | ~~**Two stale screenshots**~~ | **ALL TWELVE re-shot and current** — ten on 2026-09-04 (`8f9621d`), the `voksne` pair on 2026-09-05. Nothing here is owed by the owner any more. The pair had been written off as un-automatable because solving the arithmetic gate crashes the WebKit target; that is a **`webkit.mjs`** limit, not an app limit, and `cdp.mjs` walks the same path fine. The gate states its own question, so an eval reads it and answers it, and a new `--dpr` flag gives the store's pixel sizes off the right CSS layout. **The "drop the stale iPhone shot" decision is therefore reversed** — the iPhone set is six again. Recipe in `.claude/skills/ui-screenshot/SKILL.md`; the re-capture hazard below is now history, kept only for why it looked impossible. |
 | **The QA pass** | **RUN 2026-09-04, and it paid for itself.** `docs/qa.md` found six things; four were real, child-facing audio defects and are fixed (`bdbd7d7`, `53ac68c`), two were probe artifacts (`7847e3b`). The one that mattered here: Hukommelsesspil's two board instructions were never prebaked, so in the shipped app they reached live Azure — **blocked for a guest** — and fell through to Web Speech. That is a guest-path defect on the exact configuration a reviewer plays. Re-run the pass on the commit you actually submit. |
 
