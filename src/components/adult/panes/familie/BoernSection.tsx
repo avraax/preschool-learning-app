@@ -1,9 +1,14 @@
-// "Barn" — everything about the child who is playing (Settings PRD-01 §3 row 1).
+// "Børn" — who is playing, how it is going, and the roster (Familie IA PRD §3.2).
 //
-// ABSORBS three of the old flat rows: "Profiler", "Skift barn" and "Nulstil al fremgang". They were
+// This is the old `BarnPane` minus its destructive strip: `Nulstil fremgang` and `Slet barnet` moved
+// into the `Farligt for {navn}` block at the bottom of the merged pane (§3.5). The per-row BIN went
+// with them — it sat one control away from the rename pencil on adjacent rows, which is exactly the
+// adjacency NN/g warns about, and "delete" was never in this section's job description.
+//
+// ABSORBED three of the old flat rows: "Profiler", "Skift barn" and "Nulstil al fremgang". They were
 // scattered across the menu even though all three act on the same subject; NN/g's rule is that a
 // control belongs next to the content it relates to, which is also why the progress reset moved here
-// from beside the ACCOUNT actions.
+// from beside the ACCOUNT actions — and now, one merge later, they are in the same pane.
 //
 // "Skift barn" is absorbed rather than kept: the old top-level row called `profileStore.clearSelection()`
 // un-gated, which raised the boot picker. Tapping another child here switches directly via
@@ -30,54 +35,34 @@
 // diagnostic surface needs them; none belongs on the page a parent opens.
 
 import React, { useCallback, useEffect, useState } from 'react'
-import {
-  Box,
-  Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  Divider,
-  IconButton,
-  Stack,
-  TextField,
-  Typography,
-} from '@mui/material'
+import { Box, Button, Divider, IconButton, Stack, TextField, Typography } from '@mui/material'
 import { alpha, useTheme } from '@mui/material/styles'
-import { Check, CircleCheck, Pencil, RotateCcw, Trash2, UserPlus } from 'lucide-react'
-import { useAuthContext } from '../../../contexts/AuthContext'
-import { useProfiles } from '../../../hooks/useProfiles'
-import { useProgress } from '../../../hooks/useProgress'
-import { profileStore } from '../../../services/profileStore'
-import { avatarArt } from '../../../assets/avatars'
-import { REWARD_SLOTS } from '../../../config/stickers'
-import { SECTION_LABELS } from '../../../config/adultSectionLabels'
-import { adultItem, type AdultGroupId } from '../../../config/adultSettingsIa'
-import type { SectionId } from '../../../services/progressStore'
-import { AppSkin } from '../../../theme/adultTheme'
-import CreateProfileDialog from '../../auth/CreateProfileDialog'
-import DestructiveConfirmDialog from './DestructiveConfirmDialog'
-import { DangerHeading, PaneSection } from './paneParts'
-
-// Read the required words from the IA declaration rather than typing them here — that module is what
-// `adultSettingsIa.test.ts` asserts on, and a hardcoded duplicate would let the guard pass while the
-// shipped dialog demanded something else.
-const RESET_WORD = adultItem('barn.reset').typeToConfirm!
-const DELETE_WORD = adultItem('barn.delete').typeToConfirm!
+import { Check, Pencil, UserPlus } from 'lucide-react'
+import { useAuthContext } from '../../../../contexts/AuthContext'
+import { useProfiles } from '../../../../hooks/useProfiles'
+import { useProgress } from '../../../../hooks/useProgress'
+import { profileStore } from '../../../../services/profileStore'
+import { avatarArt } from '../../../../assets/avatars'
+import { REWARD_SLOTS } from '../../../../config/stickers'
+import { SECTION_LABELS } from '../../../../config/adultSectionLabels'
+import type { SectionId } from '../../../../services/progressStore'
+import { AppSkin } from '../../../../theme/adultTheme'
+import CreateProfileDialog from '../../../auth/CreateProfileDialog'
+import { PaneSection } from '../paneParts'
 
 const SECTION_IDS: SectionId[] = ['alphabet', 'math', 'colors', 'english', 'ordleg']
 
-export interface BarnPaneProps {
+export interface BoernSectionProps {
   /** Close the whole settings surface — switching child re-attaches the store under the new profile. */
   closeAll: () => void
   /**
-   * Switch the settings surface to another pane. `AdultSettings` owns pane selection (its `select()`
-   * also handles the compact push and the persisted `lastPane`), so a pane asks rather than navigates.
-   * Used by the guest branch of "Tilføj et barn" below.
+   * Guest tapped "Tilføj et barn". The sign-in offer is now at the TOP OF THIS SAME PANE, so this
+   * scrolls to it rather than switching rail groups — the small win the merge buys for free.
    */
-  goToPane?: (id: AdultGroupId) => void
+  onWantAccount?: () => void
 }
 
-const BarnPane: React.FC<BarnPaneProps> = ({ closeAll, goToPane }) => {
+const BoernSection: React.FC<BoernSectionProps> = ({ closeAll, onWantAccount }) => {
   const theme = useTheme()
   const auth = useAuthContext()
   const account = useProfiles()
@@ -88,9 +73,6 @@ const BarnPane: React.FC<BarnPaneProps> = ({ closeAll, goToPane }) => {
   const [creating, setCreating] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [draftName, setDraftName] = useState('')
-  const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
-  const [confirmReset, setConfirmReset] = useState(false)
-  const [resetDone, setResetDone] = useState(false)
   const [busy, setBusy] = useState(false)
 
   useEffect(() => {
@@ -121,23 +103,6 @@ const BarnPane: React.FC<BarnPaneProps> = ({ closeAll, goToPane }) => {
     [draftName],
   )
 
-  const doDelete = useCallback(
-    async (id: string) => {
-      // Deleting drops this device's local copy of that child's book (the server delete is soft), so
-      // the LOCAL verifier is the right authority — same blast radius as a reset, and it still works
-      // offline. Inside the adult's ~5-minute window this costs no extra tap.
-      if (auth) {
-        const ok = await auth.requirePin('resetProgress')
-        if (!ok) return
-      }
-      setBusy(true)
-      await profileStore.deleteProfile(id)
-      setBusy(false)
-      setConfirmDelete(null)
-    },
-    [auth],
-  )
-
   // ---- "Sådan går det" — every number DERIVED, nothing stored ----------------------------------
   const collected = progress.rewardNumber()
   const next = progress.nextReward()
@@ -146,8 +111,6 @@ const BarnPane: React.FC<BarnPaneProps> = ({ closeAll, goToPane }) => {
       progress.bloomFor(s).xp > 0 ||
       (progress.state.progression.explored[s]?.length ?? 0) > 0,
   )
-
-  const deleteTarget = account.profiles.find((p) => p.id === confirmDelete)
 
   return (
     <>
@@ -269,14 +232,6 @@ const BarnPane: React.FC<BarnPaneProps> = ({ closeAll, goToPane }) => {
                       >
                         <Pencil size={17} />
                       </IconButton>
-                      <IconButton
-                        aria-label={`Slet ${p.name || 'barn'}`}
-                        color="error"
-                        onClick={() => setConfirmDelete(p.id)}
-                        disabled={busy || account.profiles.length <= 1}
-                      >
-                        <Trash2 size={17} />
-                      </IconButton>
                     </>
                   )}
                 </Box>
@@ -286,10 +241,11 @@ const BarnPane: React.FC<BarnPaneProps> = ({ closeAll, goToPane }) => {
           {/* GUEST: say the price BEFORE the work, not after it. `profileStore.createProfile` refuses
               without an account and does so honestly — but only once the adult has picked an avatar,
               typed a name and pressed Gem. Asking for effort and then refusing is the wrong order, so
-              here the row states the requirement up front and leads to the pane that can fix it.
+              here the row states the requirement up front and leads to the thing that can fix it —
+              which after the merge is the top of THIS pane, not another rail group.
               `createProfile`'s own guard stays as the backstop; this is not a substitute for it. */}
           <Button
-            onClick={() => (guest ? goToPane?.('konto') : setCreating(true))}
+            onClick={() => (guest ? onWantAccount?.() : setCreating(true))}
             aria-label={guest ? 'Tilføj et barn — kræver en konto' : 'Tilføj et barn'}
             startIcon={<UserPlus size={17} />}
             sx={{ mt: 1, textAlign: 'left', justifyContent: 'flex-start' }}
@@ -315,20 +271,6 @@ const BarnPane: React.FC<BarnPaneProps> = ({ closeAll, goToPane }) => {
             </Box>
           </Button>
         </PaneSection>
-
-        {/* ---- Destructive strip (§7): per-child, so it sits next to the child ---- */}
-        <Box>
-          <Divider sx={{ mb: 1.25 }} />
-          <DangerHeading />
-          <Button
-            color="error"
-            aria-label="Nulstil al fremgang"
-            startIcon={<RotateCcw size={17} />}
-            onClick={() => setConfirmReset(true)}
-          >
-            {activeName ? `Nulstil fremgang for ${activeName}` : 'Nulstil fremgang'}
-          </Button>
-        </Box>
       </Stack>
 
       {/* CreateProfileDialog is shared with the boot picker and deliberately keeps the APP skin (§5). */}
@@ -339,62 +281,6 @@ const BarnPane: React.FC<BarnPaneProps> = ({ closeAll, goToPane }) => {
           onCancel={() => setCreating(false)}
         />
       </AppSkin>
-
-      <DestructiveConfirmDialog
-        open={!!confirmDelete}
-        title={deleteTarget?.name ? `Slet ${deleteTarget.name}?` : 'Slet barnet?'}
-        word={DELETE_WORD}
-        actionLabel="Slet"
-        busy={busy}
-        onCancel={() => setConfirmDelete(null)}
-        onConfirm={() => confirmDelete && void doDelete(confirmDelete)}
-      >
-        {/* "Kontakt os", not "Skriv til os" — the dialog now asks the adult to SKRIVE a word, and two
-            different senses of that verb in one box reads as an instruction. */}
-        {deleteTarget?.name ? `${deleteTarget.name}s bog` : 'Barnets bog'} og rekorder fjernes fra
-        denne enhed. Kontakt os hvis det var et uheld — vi gemmer det stadig på serveren et stykke tid.
-      </DestructiveConfirmDialog>
-
-      {/* The PIN already opened this surface, so this is the "are you sure" — but it still routes
-          through requirePin('resetProgress'), which re-asks if the ~5-minute window has lapsed. */}
-      <DestructiveConfirmDialog
-        open={confirmReset}
-        // Reset is PER CHILD, so the copy must NAME the child or a parent nukes the wrong kid's book.
-        title={activeName ? `Nulstil fremgang for ${activeName}?` : 'Nulstil fremgang?'}
-        word={RESET_WORD}
-        actionLabel="Nulstil"
-        onCancel={() => setConfirmReset(false)}
-        onConfirm={async () => {
-          if (auth) {
-            const ok = await auth.requirePin('resetProgress')
-            if (!ok) return
-          }
-          progress.resetAll()
-          setConfirmReset(false)
-          setResetDone(true)
-        }}
-      >
-        {/* "rekorder og stjerner" dropped (Endless Play PRD-01 W3): records and stars no longer
-            exist, and copy that names a thing the app doesn't have is worse than terse. The book and
-            the XP behind it ARE the progress now. The fixed type-to-confirm word and the "andre børn
-            røres ikke" clause stay exactly as they are (`.claude/rules/adult-surface.md`). */}
-        Dette nulstiller <strong>alle</strong> {activeName ? `${activeName}s ` : ''}klistermærker.
-        Andre børn røres ikke. Lyd, musik og sværhedsgrad beholdes.
-      </DestructiveConfirmDialog>
-
-      <Dialog open={resetDone} onClose={() => setResetDone(false)} maxWidth="xs" fullWidth>
-        <DialogContent sx={{ textAlign: 'center', py: 4 }}>
-          <Typography component="div" sx={{ color: 'success.main', mb: 1, lineHeight: 0 }}>
-            <CircleCheck size={36} aria-hidden />
-          </Typography>
-          <Typography sx={{ fontWeight: 700 }}>Al fremgang er nulstillet.</Typography>
-        </DialogContent>
-        <DialogActions sx={{ justifyContent: 'center' }}>
-          <Button onClick={() => setResetDone(false)} variant="contained" aria-label="Færdig">
-            Færdig
-          </Button>
-        </DialogActions>
-      </Dialog>
     </>
   )
 }
@@ -408,4 +294,4 @@ const SummaryRow: React.FC<{ label: string; value: string }> = ({ label, value }
   </Box>
 )
 
-export default BarnPane
+export default BoernSection

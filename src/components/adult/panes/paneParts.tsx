@@ -2,6 +2,7 @@
 
 import React from 'react'
 import { Box, Switch, Typography } from '@mui/material'
+import { alpha, useTheme } from '@mui/material/styles'
 
 /**
  * A titled block inside a pane, with an optional explanatory line under the title.
@@ -43,24 +44,54 @@ export const PaneSection: React.FC<{
 )
 
 /**
- * The muted heading above a destructive strip (§7). Both strips use the same words so the visual
- * break reads the same in Barn and in Konto.
+ * A destructive block: **its own container, with its own heading** (Familie IA PRD §3.5).
+ *
+ * It used to be a `DangerHeading` over a strip separated by a `<Divider />`, which was fine while the
+ * child actions and the account actions were two different panes. The merge put "Slet barnet" and
+ * "Slet kontoen helt" in one pane, and NN/g is explicit that a divider inside one group still reads as
+ * one group (Gestalt proximity): *"Avoid placing highly consequential actions … directly next to
+ * options that are benign."* So each block gets spatial separation AND a redundant visual signal — a
+ * distinct border and background — and the heading NAMES the blast radius, so it is legible without
+ * reading the buttons.
+ *
+ * `data-danger-block` is the probe handle: two of these must be present and separate when signed in.
  */
-export const DangerHeading: React.FC = () => (
-  <Typography
-    component="h4"
-    sx={{
-      fontSize: '0.72rem',
-      fontWeight: 700,
-      letterSpacing: '0.06em',
-      textTransform: 'uppercase',
-      color: 'text.secondary',
-      mb: 0.75,
-    }}
-  >
-    Farlige handlinger
-  </Typography>
-)
+export const DangerBlock: React.FC<{
+  /** `fareBarn` / `fareKonto` — matches the `block` declared in `adultSettingsIa.ts`. */
+  id: string
+  /** "Farligt for Emil" / "Farligt for kontoen". */
+  title: string
+  children: React.ReactNode
+}> = ({ id, title, children }) => {
+  const theme = useTheme()
+  return (
+    <Box
+      data-danger-block={id}
+      sx={{
+        border: '1px solid',
+        borderColor: alpha(theme.palette.error.main, 0.35),
+        bgcolor: alpha(theme.palette.error.main, 0.05),
+        borderRadius: 2,
+        p: 1.5,
+      }}
+    >
+      <Typography
+        component="h4"
+        sx={{
+          fontSize: '0.72rem',
+          fontWeight: 700,
+          letterSpacing: '0.06em',
+          textTransform: 'uppercase',
+          color: 'error.main',
+          mb: 0.75,
+        }}
+      >
+        {title}
+      </Typography>
+      {children}
+    </Box>
+  )
+}
 
 /**
  * One labelled on/off row. Shared by Lyd (sound, music) and Udseende ("Flydende grafik") so the two

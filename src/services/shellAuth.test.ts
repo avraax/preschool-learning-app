@@ -130,8 +130,10 @@ test('the lock screen cannot offer Face ID inside the shell', () => {
 test('the adult surface blames the BUILD, not the iPad', () => {
   // The same iPad does Face ID in Safari. "Denne enhed understøtter ikke Face ID" is therefore false in
   // the shell, and false in a way that produces an unreproducible bug report.
-  const code = codeOf('components/adult/panes/KontoPane.tsx')
-  assert.match(code, /!passkeysSupportedInThisBuild\(\)/, 'KontoPane has no shell branch')
+  // `KontoPane` became `familie/SikkerhedSection.tsx` when Barn + Konto merged into one Familie pane
+  // (Familie IA PRD, 2026-09-05). The Face ID block moved with it, branch order unchanged.
+  const code = codeOf('components/adult/panes/familie/SikkerhedSection.tsx')
+  assert.match(code, /!passkeysSupportedInThisBuild\(\)/, 'the Sikkerhed section has no shell branch')
   assert.match(code, /app-udgaven/, 'the shell message does not name the app edition')
   const shellBranchAt = code.indexOf('!passkeysSupportedInThisBuild()')
   const deviceBranchAt = code.indexOf('Denne enhed understøtter ikke Face ID')
@@ -149,7 +151,7 @@ test('the WEB deployment keeps passkeys — this is a shell gate, not a removal'
   assert.match(code, /startRegistration\(/, 'the passkey registration implementation is gone')
   // …and it is still reachable: the lock screen and the account pane both import it.
   assert.match(codeOf('components/auth/LockScreen.tsx'), /startPasskeyUnlock/)
-  assert.match(codeOf('components/adult/panes/KontoPane.tsx'), /registerPasskey/)
+  assert.match(codeOf('components/adult/panes/familie/SikkerhedSection.tsx'), /registerPasskey/)
 })
 
 test('the whole passkey probe stays inside its try/catch', () => {

@@ -16,7 +16,39 @@
 
 import type { PinReason } from './pinReasons.ts'
 
-export type AdultGroupId = 'barn' | 'laering' | 'lyd' | 'udseende' | 'konto' | 'privatliv'
+export type AdultGroupId = 'familie' | 'laering' | 'lyd' | 'udseende' | 'privatliv'
+
+/**
+ * The ordered sub-sections of the `Familie` pane (Familie IA PRD §3).
+ *
+ * `Barn` and `Konto` used to be two rail groups, which is not how a parent models it: they are one
+ * thing — the family — seen from two angles, and the argument for signing in ("Bogen er sikret") is a
+ * statement about the CHILD that was filed under account. Merging them also returns the rail to the
+ * five mutually-exclusive groups Settings PRD-01 specified.
+ *
+ * ORDER IS LOAD-BEARING, and it is declared here rather than left to the pane so a plain-Node test can
+ * assert it: identity first (the thing the rest hangs off), then the child, then the two signed-in
+ * sections, and the DANGER LAST — child block, then account block. NN/g, on placing consequential
+ * actions next to benign ones: the remedy is spatial separation plus a redundant visual signal, so
+ * `fareKonto` being last puts "Slet kontoen helt" as far from "Omdøb barnet" as the pane allows.
+ */
+export type FamilieBlock = 'konto' | 'boern' | 'sikkerhed' | 'synk' | 'fareBarn' | 'fareKonto'
+
+/** Top to bottom in the pane. The two danger blocks are last, account last of all (§3.5). */
+export const FAMILIE_BLOCK_ORDER: FamilieBlock[] = [
+  'konto',
+  'boern',
+  'sikkerhed',
+  'synk',
+  'fareBarn',
+  'fareKonto',
+]
+
+/**
+ * The two blocks that render as their own bordered container with its own heading — never one strip
+ * with a divider inside it, which Gestalt proximity still reads as a single group.
+ */
+export const FAMILIE_DANGER_BLOCKS: FamilieBlock[] = ['fareBarn', 'fareKonto']
 
 /**
  * How a destructive action proves the adult.
@@ -53,6 +85,15 @@ export interface AdultItem {
   scope?: 'child' | 'account'
   /** Required on every destructive item. */
   verify?: AdultVerification
+  /**
+   * Which sub-section of the `Familie` pane the item renders in (§3). Only that group declares it —
+   * the other four panes are a single block each.
+   *
+   * It exists so "no child-scoped and account-scoped destructive item shares a block" is assertable as
+   * DATA. Without it the separation lives only in JSX, where a later tidy-up could merge the two danger
+   * strips back into one and nothing would fail.
+   */
+  block?: FamilieBlock
   /**
    * A tool for the OWNER, not a setting for a parent — hidden in the production build (owner,
    * 2026-09-05). Six items qualify, and the reason is not tidiness in two of them:
@@ -105,30 +146,63 @@ export const AMBIGUOUS_LABELS = ['andet', 'diverse', 'øvrigt', 'øvrige', 'mere
  */
 export const ADULT_IA: AdultGroup[] = [
   {
-    id: 'barn',
-    label: 'Barn',
+    // THE MERGE (Familie IA PRD, owner 2026-09-05). `Barn` + `Konto` + the standalone `Log ind` promo
+    // row were three doors to two rooms that are one room to a parent — and `KontoPane` opened with
+    // `if (guest) return <the sign-in offer>`, so the promo row and the `Konto` rail entry led to the
+    // same screen. One group, ordered sub-sections, `block` above.
+    //
+    // THE ITEM IDS DELIBERATELY KEEP THEIR `barn.` / `konto.` PREFIXES. They are declared "stable id,
+    // unique across the WHOLE surface", the panes read `typeToConfirm` through `adultItem(id)`, and the
+    // load-bearing assertions in `adultSettingsIa.test.ts` key off them against the real
+    // `pinVerifierFor` table. Renaming them buys nothing and risks the one guard that stops an
+    // account-scoped destructive action being downgraded to the local unlock. A `barn.*` id under
+    // `familie` is odd; it is the cheaper half of that trade. Do not "fix" it.
+    id: 'familie',
+    label: 'Familie',
     items: [
-      { id: 'barn.active', label: 'Aktivt barn' },
-      { id: 'barn.summary', label: 'Sådan går det' },
+      // ---- §3.1 the identity row: the account, at the top, iOS's Apple-Account placement ----------
+      // Guest: the sign-in offer, and this is now the ONLY place it appears.
+      { id: 'konto.email', label: 'Konto', block: 'konto' },
+
+      // ---- §3.2 Børn ------------------------------------------------------------------------------
+      { id: 'barn.active', label: 'Aktivt barn', block: 'boern' },
+      { id: 'barn.summary', label: 'Sådan går det', block: 'boern' },
       // Switching mid-session is gated; the un-gated BOOT picker (ProfileGate → ProfilePicker) is a
       // different path and is untouched.
-      { id: 'barn.switch', label: 'Skift barn', verify: { kind: 'requirePin', reason: 'switchProfile' } },
-      { id: 'barn.rename', label: 'Omdøb barnet' },
-      { id: 'barn.add', label: 'Tilføj et barn' },
-      // Drops this device's local copy of that child's book (the server delete is soft/recoverable),
-      // so it is LOCAL authority — the same blast radius as a progress reset.
       {
-        id: 'barn.delete',
-        label: 'Slet barnet',
-        destructive: true,
-        scope: 'child',
-        verify: { kind: 'requirePin', reason: 'resetProgress' },
-        // Recoverable on the SERVER for a while, but gone from this device immediately — and the bin
-        // sits one control away from the rename pencil, on adjacent rows, which is the tap this
-        // guards against.
-        irreversible: true,
-        typeToConfirm: 'SLET',
+        id: 'barn.switch',
+        label: 'Skift barn',
+        verify: { kind: 'requirePin', reason: 'switchProfile' },
+        block: 'boern',
       },
+      { id: 'barn.rename', label: 'Omdøb barnet', block: 'boern' },
+      { id: 'barn.add', label: 'Tilføj et barn', block: 'boern' },
+
+      // ---- §3.3 Sikkerhed — signed in only --------------------------------------------------------
+      // PinSetupDialog asks for the CURRENT code and `pin/set` verifies it server-side under the same
+      // lockout — the secret never travels through a generic context callback. Not destructive.
+      { id: 'konto.pin', label: 'Kode', block: 'sikkerhed' },
+      { id: 'konto.addPasskey', label: 'Tilføj Face ID på denne enhed', block: 'sikkerhed' },
+      {
+        id: 'konto.removePasskey',
+        label: 'Fjern Face ID',
+        destructive: true,
+        scope: 'account',
+        verify: { kind: 'requirePin', reason: 'manageCredentials' },
+        // NOT in a danger block: it is per-passkey, so it renders as the "Fjern" button on the row for
+        // the device it removes. A block would have to ask WHICH one, which is the row itself.
+        block: 'sikkerhed',
+      },
+
+      // ---- §3.4 Synkronisering — signed in only ---------------------------------------------------
+      { id: 'konto.sync', label: 'Synkronisering', block: 'synk' },
+      { id: 'konto.syncNow', label: 'Synkronisér nu', devTool: true, block: 'synk' },
+
+      // ---- §3.5 the danger zone: TWO blocks, child first, account LAST ----------------------------
+      // The merge puts "Slet barnet" and "Slet kontoen helt" in one pane for the first time. NN/g:
+      // "Avoid placing highly consequential actions … directly next to options that are benign."
+      // The remedies are spatial separation, a redundant visual signal and Gestalt proximity — hence
+      // two containers with their own headings, the child's one NAMING the child.
       {
         id: 'barn.reset',
         label: 'Nulstil fremgang',
@@ -137,6 +211,62 @@ export const ADULT_IA: AdultGroup[] = [
         verify: { kind: 'requirePin', reason: 'resetProgress' },
         irreversible: true,
         typeToConfirm: 'NULSTIL',
+        block: 'fareBarn',
+      },
+      // Drops this device's local copy of that child's book (the server delete is soft/recoverable),
+      // so it is LOCAL authority — the same blast radius as a progress reset.
+      {
+        id: 'barn.delete',
+        label: 'Slet barnet',
+        destructive: true,
+        scope: 'child',
+        verify: { kind: 'requirePin', reason: 'resetProgress' },
+        // Recoverable on the SERVER for a while, but gone from this device immediately. It used to be
+        // a bin icon on the roster row, one control away from the rename pencil — the exact adjacency
+        // NN/g warns about — so the merge moved it into the block that names its blast radius, where
+        // it acts on the ACTIVE child. Deleting another child now costs a switch first, deliberately.
+        irreversible: true,
+        typeToConfirm: 'SLET',
+        block: 'fareBarn',
+      },
+      {
+        // NO PIN (owner, 2026-08-09). Both log-outs are reversible and destroy nothing: you sign back
+        // in, and the child's book is on the server. The adult already passed the parental gate to
+        // reach this pane, and the confirm names the account — a PIN after that asked the same
+        // question a second time. What the PIN also bought was a guarantee that the adult was ONLINE
+        // at the moment of signing out; that is now covered where it belongs, by the confirm dialog
+        // warning when there is un-pushed progress rather than by a credential prompt.
+        id: 'konto.signOut',
+        label: 'Log ud på denne enhed',
+        destructive: true,
+        scope: 'account',
+        verify: { kind: 'confirm' },
+        block: 'fareKonto',
+      },
+      {
+        id: 'konto.revokeSessions',
+        label: 'Log ud alle steder',
+        destructive: true,
+        scope: 'account',
+        verify: { kind: 'confirm' },
+        block: 'fareKonto',
+      },
+      {
+        id: 'konto.deleteAccount',
+        label: 'Slet kontoen helt',
+        destructive: true,
+        scope: 'account',
+        irreversible: true,
+        // A DIFFERENT word from `barn.delete`'s "SLET" on purpose: the same word on both would let
+        // muscle memory carry a child-deletion habit straight into wiping the whole account. That was
+        // already true when they were two panes apart; now they are in one pane, it is the point.
+        typeToConfirm: 'SLET ALT',
+        // …and THEN the current PIN, typed into the pad and verified by the server under the
+        // pin_attempt lockout (`authStore.deleteAccount`). The two do different jobs — the word is
+        // deliberation at the moment of the tap, the PIN is authorisation. The pad alone left the
+        // confirm itself a single tap, identical in weight to the reversible "Log ud" above it.
+        verify: { kind: 'pinPad' },
+        block: 'fareKonto',
       },
     ],
   },
@@ -177,67 +307,10 @@ export const ADULT_IA: AdultGroup[] = [
     ],
   },
   {
-    id: 'konto',
-    label: 'Konto',
-    items: [
-      { id: 'konto.email', label: 'Konto' },
-      { id: 'konto.sync', label: 'Synkronisering' },
-      { id: 'konto.syncNow', label: 'Synkronisér nu', devTool: true },
-      // PinSetupDialog asks for the CURRENT code and `pin/set` verifies it server-side under the same
-      // lockout — the secret never travels through a generic context callback. Not destructive.
-      { id: 'konto.pin', label: 'Kode' },
-      {
-        id: 'konto.addPasskey',
-        label: 'Tilføj Face ID på denne enhed',
-      },
-      {
-        id: 'konto.removePasskey',
-        label: 'Fjern Face ID',
-        destructive: true,
-        scope: 'account',
-        verify: { kind: 'requirePin', reason: 'manageCredentials' },
-      },
-      {
-        // NO PIN (owner, 2026-08-09). Both log-outs are reversible and destroy nothing: you sign back
-        // in, and the child's book is on the server. The adult already passed the parental gate to
-        // reach this pane, and the confirm names the account — a PIN after that asked the same
-        // question a second time. What the PIN also bought was a guarantee that the adult was ONLINE
-        // at the moment of signing out; that is now covered where it belongs, by the confirm dialog
-        // warning when there is un-pushed progress rather than by a credential prompt.
-        id: 'konto.signOut',
-        label: 'Log ud på denne enhed',
-        destructive: true,
-        scope: 'account',
-        verify: { kind: 'confirm' },
-      },
-      {
-        id: 'konto.revokeSessions',
-        label: 'Log ud alle steder',
-        destructive: true,
-        scope: 'account',
-        verify: { kind: 'confirm' },
-      },
-      {
-        id: 'konto.deleteAccount',
-        label: 'Slet kontoen helt',
-        destructive: true,
-        scope: 'account',
-        irreversible: true,
-        // A DIFFERENT word from `barn.delete`'s "SLET" on purpose: the same word on both would let
-        // muscle memory carry a child-deletion habit straight into wiping the whole account.
-        typeToConfirm: 'SLET ALT',
-        // …and THEN the current PIN, typed into the pad and verified by the server under the
-        // pin_attempt lockout (`authStore.deleteAccount`). The two do different jobs — the word is
-        // deliberation at the moment of the tap, the PIN is authorisation. The pad alone left the
-        // confirm itself a single tap, identical in weight to the reversible "Log ud" above it.
-        verify: { kind: 'pinPad' },
-      },
-    ],
-  },
-  {
-    // THE SIXTH GROUP, added deliberately at App Store PRD Phase A (§3.5 / §3.6) — the five-group shape
-    // was a Settings PRD-01 contract and this breaks it on purpose, with the owner's decision on
-    // record (2026-08-06). The reason it is its own group rather than folded in: a Kids Category
+    // THE FIFTH GROUP, added deliberately at App Store PRD Phase A (§3.5 / §3.6) — it broke the
+    // Settings PRD-01 five-group contract on purpose, with the owner's decision on record
+    // (2026-08-06), and the Familie merge has since restored the count without touching this one.
+    // DO NOT fold it into `Familie`. The reason it is its own group: a Kids Category
     // reviewer looks for the parental gate, the microphone default and the privacy policy, and all
     // three are the SAME story. Scattering the mic switch under "Lyd" (which otherwise means playback
     // volume) and the policy into the rail footer would have made a reviewer hunt for the one thing
@@ -266,6 +339,10 @@ export const adultGroupLabel = (id: AdultGroupId): string =>
 /** Every item, flattened — with the group it was found in. */
 export const adultItemsWithGroup = (): { group: AdultGroupId; item: AdultItem }[] =>
   ADULT_IA.flatMap((g) => g.items.map((item) => ({ group: g.id, item })))
+
+/** The `Familie` items in one sub-section, in declaration order. */
+export const familieBlockItems = (block: FamilieBlock): AdultItem[] =>
+  (ADULT_IA.find((g) => g.id === 'familie')?.items ?? []).filter((i) => i.block === block)
 
 /**
  * One item by id. The panes use this to read `typeToConfirm`, so the word declared above is literally

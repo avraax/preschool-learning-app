@@ -1,9 +1,14 @@
 // "Til de voksne" — the whole settings surface (Settings PRD-01).
 //
 // WHAT REPLACED WHAT: 13 flat, undifferentiated rows in a scrolling `maxWidth="xs"` dialog became a
-// two-pane split — a persistent left rail of five mutually-exclusive groups (Barn / Læring / Lyd /
-// Udseende / Konto) plus a support footer that is reachable from every pane. On a phone the rail IS
-// the root list and a group pushes its pane.
+// two-pane split — a persistent left rail of five mutually-exclusive groups (Familie / Læring / Lyd /
+// Udseende / Privatliv) plus a support footer that is reachable from every pane. On a phone the rail
+// IS the root list and a group pushes its pane.
+//
+// `Familie` is `Barn` + `Konto` merged (Familie IA PRD, owner 2026-09-05), and the standalone `Log
+// ind` promo row that used to sit above the rail went with it: a guest saw the promo row AND a
+// `Konto — Ikke logget ind` rail entry, and both opened the same sign-in offer. The offer now lives
+// once, at the top of the Familie pane. Do not re-add a second door.
 //
 // THE NAVIGATION GRAMMAR (§6), which is the point of the rework:
 //   1. ONE "Luk", top-right, closes everything. No other control in the adult area uses that word.
@@ -35,28 +40,24 @@ import {
   Bug,
   ChevronRight,
   GraduationCap,
-  KeyRound,
-  LogIn,
   Palette,
   ShieldCheck,
   Users,
   Volume2,
 } from 'lucide-react'
-import { ADULT_IA, type AdultGroupId } from '../../config/adultSettingsIa'
+import { ADULT_IA, ADULT_GROUP_IDS, type AdultGroupId } from '../../config/adultSettingsIa'
 import { BUILD_INFO } from '../../config/version'
 import { backendHost } from '../../config/backendTarget'
 import { PHONE_ANY } from '../../theme/phoneMedia'
 import { AdultThemeProvider, ADULT_FONT } from '../../theme/adultTheme'
 import { useProfiles } from '../../hooks/useProfiles'
-import { useProgress } from '../../hooks/useProgress'
 import { useAuthContext } from '../../contexts/AuthContext'
 import { captureExcludeProps } from '../../services/captureExclude'
 import AdultBackHeader from './AdultBackHeader'
-import BarnPane from './panes/BarnPane'
+import FamiliePane from './panes/FamiliePane'
 import LaeringPane from './panes/LaeringPane'
 import LydPane from './panes/LydPane'
 import UdseendePane from './panes/UdseendePane'
-import KontoPane from './panes/KontoPane'
 import PrivatlivPane from './panes/PrivatlivPane'
 
 // The bug reporter is the one nested dialog that is genuinely heavy (it pulls the whole reporter
@@ -67,20 +68,30 @@ const RAIL_W = 200
 const ICON = 19
 
 const RAIL_ICON: Record<AdultGroupId, React.ReactNode> = {
-  barn: <Users size={ICON} aria-hidden />,
+  familie: <Users size={ICON} aria-hidden />,
   laering: <GraduationCap size={ICON} aria-hidden />,
   lyd: <Volume2 size={ICON} aria-hidden />,
   udseende: <Palette size={ICON} aria-hidden />,
-  konto: <KeyRound size={ICON} aria-hidden />,
   privatliv: <ShieldCheck size={ICON} aria-hidden />,
 }
 
+/** The rail's first entry, and the fallback whenever `lastPane` no longer names a real group. */
+const FIRST_PANE: AdultGroupId = ADULT_GROUP_IDS[0]
+
 /**
  * The pane the adult was last on. MODULE-level on purpose — HIG: "people often adjust related
- * settings more than once", and re-opening onto Barn every time punishes exactly that. Deliberately
+ * settings more than once", and re-opening onto Familie every time punishes exactly that. Deliberately
  * NOT persisted to storage: it is a within-session convenience, not a preference.
  */
-let lastPane: AdultGroupId = 'barn'
+let lastPane: AdultGroupId = FIRST_PANE
+
+/**
+ * …and it is read back through this, because the rail's groups can change under it — `barn` and
+ * `konto` were merged into `familie`, and a value that names no group would leave `group` undefined
+ * and the detail pane blank with no error.
+ */
+const validPane = (id: AdultGroupId): AdultGroupId =>
+  ADULT_GROUP_IDS.includes(id) ? id : FIRST_PANE
 
 export interface AdultSettingsProps {
   open: boolean
@@ -105,7 +116,7 @@ const AdultSettings: React.FC<AdultSettingsProps> = ({
   const narrow = useMediaQuery('(max-width: 767.95px)')
   const compact = phone || narrow
 
-  const [pane, setPane] = useState<AdultGroupId>(lastPane)
+  const [pane, setPane] = useState<AdultGroupId>(validPane(lastPane))
   /** Compact only: is a pane pushed over the root list? */
   const [pushed, setPushed] = useState(false)
   const [reporting, setReporting] = useState(false)
@@ -119,34 +130,12 @@ const AdultSettings: React.FC<AdultSettingsProps> = ({
   /** Playing with no account at all — the only state in which signing in is something to offer. */
   const guest = auth?.phase === 'guest'
 
-  // THE OFFER GETS CONCRETE ONCE THERE IS SOMETHING TO LOSE. An identical pitch at 0 rewards and at 40
-  // wastes the one moment it is strongest: the endowed-progress effect is why "save your progress"
-  // outperforms "create an account", and naming the real number is what makes it land.
-  //
-  // This is the ONLY place that lever can be pulled here. The owner's constraint is that nothing
-  // adult-directed appears in front of the parental gate (Kids Guideline 1.3), so a timed prompt during
-  // play is out — but the adult is already standing in the adult area, which is fair game.
-  //
-  // `rewardNumber()` is THE child-facing count (`.claude/rules/rewards-and-progression.md`): never
-  // `globalLevel()`, and never as a distance — no "n af 90" on this row.
-  //
-  // Klistermærker is the ONLY thing left to name: `PerGameStats` and `totals.totalStars` were deleted
-  // by Endless Play PRD-01, so "og alle rekorder" would promise to save a thing the app no longer has.
-  const progress = useProgress()
-  const guestRewards = guest ? progress.rewardNumber() : 0
-  const promoHint =
-    guestRewards === 0
-      ? 'Så bogen ikke kun ligger på denne iPad'
-      : guestRewards === 1
-        ? 'Gem barnets første klistermærke'
-        : `Gem barnets ${guestRewards} klistermærker`
-
   // Restore the last pane on each open. On compact that means opening straight onto it, with the
   // back arrow as the way out to the root list.
   const [wasOpen, setWasOpen] = useState(false)
   if (open && !wasOpen) {
     setWasOpen(true)
-    setPane(lastPane)
+    setPane(validPane(lastPane))
     setPushed(compact)
     setCopied(false)
   } else if (!open && wasOpen) {
@@ -192,15 +181,12 @@ const AdultSettings: React.FC<AdultSettingsProps> = ({
       .catch(() => {})
   }, [versionLine])
 
-  const group = ADULT_IA.find((g) => g.id === pane)!
+  const group = ADULT_IA.find((g) => g.id === pane) ?? ADULT_IA[0]
   const showRail = !compact || !pushed
   const showDetail = !compact || pushed
 
   const paneBody =
-    pane === 'barn' ? (
-      // `select` (not `setPane`): it also records `lastPane` and does the compact push.
-      <BarnPane closeAll={onClose} goToPane={select} />
-    ) : pane === 'laering' ? (
+    pane === 'laering' ? (
       <LaeringPane childName={activeChild} />
     ) : pane === 'lyd' ? (
       <LydPane />
@@ -209,7 +195,7 @@ const AdultSettings: React.FC<AdultSettingsProps> = ({
     ) : pane === 'privatliv' ? (
       <PrivatlivPane closeAll={onClose} />
     ) : (
-      <KontoPane closeAll={onClose} />
+      <FamiliePane closeAll={onClose} />
     )
 
   return (
@@ -298,46 +284,11 @@ const AdultSettings: React.FC<AdultSettingsProps> = ({
                 bgcolor: compact ? 'transparent' : 'background.default',
               }}
             >
-              {/* ---- Sign-in offer, guest only. Deliberately INSIDE the rail column rather than
-                      above the split like the apply-update strip: that strip spans every pane, so it
-                      would follow an adult who came in for the sound settings all the way into Lyd.
-                      Here it costs ~60px of fixed height on the landing, and on compact — where the
-                      rail IS the root list — it disappears the moment a pane pushes over it.
-                      Bordered and unfilled on purpose: `primary.main` is the alert register and this
-                      is an offer, not an alert. ---- */}
-              {guest && (
-                <Box sx={{ flex: '0 0 auto', px: 0.75, pt: 0.75 }}>
-                  <ButtonBase
-                    aria-label="Log ind"
-                    data-guest-signin-promo
-                    onClick={() => select('konto')}
-                    sx={{
-                      width: '100%',
-                      minHeight: 44,
-                      px: 1,
-                      py: 0.75,
-                      gap: 1,
-                      justifyContent: 'flex-start',
-                      textAlign: 'left',
-                      border: '1px solid',
-                      borderColor: 'divider',
-                      borderRadius: 2,
-                    }}
-                  >
-                    <LogIn size={17} aria-hidden />
-                    <Box sx={{ flex: 1, minWidth: 0 }}>
-                      <Typography sx={{ fontSize: '0.88rem', fontWeight: 600 }}>Log ind</Typography>
-                      {/* Deliberately NOT noWrap: an ellipsis would cut exactly the half that answers
-                          "why would I?". Both variants are short enough for one or two lines in the
-                          200px rail; the old feature list ("Flere børn, flere enheder, mikrofonspil")
-                          wrapped to three and still said nothing about an outcome. */}
-                      <Typography sx={{ fontSize: '0.72rem', lineHeight: 1.3, color: 'text.secondary' }}>
-                        {promoHint}
-                      </Typography>
-                    </Box>
-                  </ButtonBase>
-                </Box>
-              )}
+              {/* THE `Log ind` PROMO ROW USED TO SIT HERE and is deliberately gone (Familie IA PRD
+                  §3.1). It duplicated the `Konto` rail entry below it — both opened the same offer —
+                  and a duplicate affordance is worse than a missing one, because it makes the surface
+                  look like it has two different things in it. The offer, including its
+                  progress-aware sticker count, moved into the top of the Familie pane. */}
 
               <List sx={{ flex: 1, minHeight: 0, overflowY: 'auto', py: 0.75, px: 0.75 }}>
                 {ADULT_IA.map((g) => (
@@ -354,14 +305,13 @@ const AdultSettings: React.FC<AdultSettingsProps> = ({
                     <ListItemIcon sx={{ minWidth: 30, color: 'inherit' }}>{RAIL_ICON[g.id]}</ListItemIcon>
                     <ListItemText
                       primary={g.label}
-                      // Konto's subtitle makes the destination legible from the landing: the promo row
-                      // above says "log ind", this says where that lives.
+                      // ONE subtitle on the one merged row, and which of the two it shows is the
+                      // question the adult is more likely to be answering: a guest needs to know
+                      // where signing in lives now that the promo row is gone; everyone else wants
+                      // to see whose settings they are about to change. This is a LABEL, not a
+                      // second door — the offer itself is inside the pane.
                       secondary={
-                        g.id === 'barn'
-                          ? activeChild
-                          : g.id === 'konto' && guest
-                            ? 'Ikke logget ind'
-                            : undefined
+                        g.id !== 'familie' ? undefined : guest ? 'Ikke logget ind' : activeChild
                       }
                       slotProps={{
                         primary: { sx: { fontSize: '0.95rem', fontWeight: 600 } },
