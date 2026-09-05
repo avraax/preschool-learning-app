@@ -54,23 +54,70 @@ Counts verified. Keep the subtitle unchanged — a collision is on the name only
 
 ### 1.3 Keywords — 100 char limit, comma-separated
 
-Matched to the settled name and subtitle, so nothing here repeats `børnelæring`, `abc`, `tal`, `engelsk`,
-`førskole` or `klasse`:
+**LIVE IN ASC as of 2026-09-05** (written via the API, read back identical):
 
 ```
-stavning,regning,matematik,dansk,børnehaveklasse,indskoling,læsning,bogstaver,farver,plus,minus
+alfabet,bogstaver,læse,stavning,regning,matematik,skolestart,indskoling,børnehaveklasse,børn,spil
 ```
 
-**95 characters, 5 spare.** `børnehaveklasse` and `indskoling` are the two that carry the school-stage
-intent that would not fit in the subtitle. Rules applied: no space after commas (a space is a wasted
-character), no word already in the name or subtitle, no competitor names, no `app`/`spil`/`gratis` (Apple
-ignores or penalises these). If you pick option **B** instead, swap `dansk` and `matematik` out — they move
-into the subtitle — and spend the freed room on `engelsk`, `førskole` and `memory`.
+**97 characters, 3 spare.** Nothing here repeats `børnelæring`, `abc`, `tal`, `engelsk`, `førskole` or
+`klasse` — those are already indexed from the name and subtitle, so repeating them buys nothing.
 
-### 1.4 Description — Danish (primary), 1257 characters
+**What search actually reads, first-party** (https://developer.apple.com/app-store/search/ and
+/app-store/product-page/, both read 2026-09-05): results come from *"text relevance (matches for your
+app's title, subtitle, keywords, and primary category), as well as user behavior"*. So the indexed pool
+is those four fields and nothing else. Two corollaries people get wrong here:
 
-Paste as-is. The bullet character is `•` (U+2022), not an emoji, so it is consistent with the app's
-no-emoji rule.
+- **The description is NOT indexed.** Apple's product-page guidance says outright: *"Don't add
+  unnecessary keywords to your description in an attempt to improve search results."* The description
+  earns the *download*, not the *impression*, and its first sentence is the part read without tapping
+  "more". So write it for a parent, never for the algorithm.
+- **Promotional text is not indexed either** — *"promotional text doesn't affect your app's search
+  ranking so it should not be used to display keywords."*
+
+**Why this set, replacing the 95-char one that shipped first.** That set left five words a Danish parent
+of a 5–7-year-old plausibly types out of the pool **entirely**, which is an objective gap rather than a
+guess about volume:
+
+| Added | Why it was missing |
+|---|---|
+| `alfabet` | the pool had `ABC` and `bogstaver`, never this |
+| `læse` | `læsning` is a DIFFERENT token — "lær at læse" matched nothing |
+| `børn` | **`Børnelæring` is one token**, so `børn` alone never matched the name |
+| `skolestart` | the Danish word for exactly the transition this app is for |
+| `spil` | see below |
+
+Dropped to pay for them: `plus` and `minus` (nobody searches those standalone, and both are in the
+description where they belong), `dansk` (ambiguous — the language or the school subject?), `farver`
+(the weakest of the five section names as a search term), and `læsning` folded into `læse`.
+
+**`spil` is deliberate and reverses an earlier rule here.** The previous note said to avoid
+`app`/`spil`/`gratis` because "Apple ignores or penalises these". The real rule is narrower — don't
+repeat your own **primary category**, since it is indexed anyway — and this app's primary category is
+**Education**, not Games. So `spil` is a targeting choice, not a wasted slot. Flagged because the
+first-party page that would settle it (ASC reference → localizable properties) **404s, and a 404 is
+UNKNOWN, not a finding.**
+
+**RELATIVE SEARCH VOLUME HERE IS JUDGMENT, NOT MEASUREMENT.** There is no Danish App Store volume data in
+this repo and none was consulted. What *is* measured is coverage: which tokens exist in the indexed pool
+and which do not. Treat the ranking of the terms as an opinion and the gaps as fact.
+
+**Keywords can only be changed by submitting a version**, so this is settled before v1.0 goes in, not
+after. Alternatives considered and rejected by the owner (2026-09-05): swapping `spil` for `tælle`, and
+keeping `farver` at the cost of `børnehaveklasse`.
+
+### 1.4 Description — Danish (primary), 1457 characters
+
+The bullet character is `•` (U+2022), not an emoji, so it is consistent with the app's no-emoji rule.
+
+**LIVE IN ASC as of 2026-09-05, and it had to be repaired.** A read of the live version found only
+**523 of these 1457 characters** — the text stopped after the FEM OMRÅDER list, so the store page was
+missing *everything* that answers a parent's actual objections: no ads, no in-app purchases, no
+tracking, no account needed, works offline, and the whole FOR DE VOKSNE section explaining the parental
+gate. Almost certainly a paste that got cut. Nothing flagged it: ASC accepts a short description
+happily, and the length is only wrong against this file. **Re-read the live value rather than assuming
+the paste landed** — the API round-trip is in `.claude/rules/ios-shell.md`. Restored via the API and
+verified byte-identical on read-back, all four sections present.
 
 ```
 Børnelæring er en rolig, dansk læringsapp til børn i førskolealderen og i 0. og 1. klasse. Fem verdener, 24 spil og en tydelig dansk stemme, der læser alt højt — så barnet kan spille selv, også før det kan læse.
@@ -98,13 +145,17 @@ I de voksnes område kan du vælge sværhedsgrad, oprette flere børneprofiler, 
 Appen er skrevet til en 5-årig dreng af hans far. Den passer til børn fra omkring 5 år, gennem børnehaveklassen og ind i 1. klasse.
 ```
 
-**Two lines were promises the app could not keep.** Status as of 2026-08-06:
+**Two lines were promises the app could not keep. Both are TRUE now** — re-checked 2026-09-05, because a
+description that overstates the app is a Guideline 2.3.1 rejection and the easiest one to avoid:
 
-- **"Ingen konto nødvendig for at spille" is now TRUE** — the guest path shipped in Phase A1.
-- **"Al tale … så spillene virker uden internet" is still NOT true** and depends on Phase B1 bundling the
-  assets into the binary. **If B1 slips, delete that line before submitting** — a description that
-  overstates the app is a Guideline 2.3.1 rejection, and the easiest possible one to avoid. The same
-  sentence appears in the English copy in §1.5 — delete it in both places or neither.
+- **"Ingen konto nødvendig for at spille"** — true since the guest path shipped in Phase A1.
+- **"Al tale … så spillene virker uden internet"** — true since Phase B1 bundled the assets into the
+  binary (`webDir: dist`, no `server.url`). **It was still false in two places until 2026-09-05**, and
+  not in a way anyone would have guessed: Hukommelsesspil's two board instructions were composed inline
+  in `MemoryGame.tsx`, so the prebake enumerator could never see them and they reached live Azure
+  instead of a bundled clip — i.e. those two lines genuinely did *not* work without internet. Fixed in
+  `bdbd7d7`, found by `docs/qa.md`'s audio sweep. **Before submitting, confirm `npm test` is green**:
+  `memoryPhrases.test.ts` is now what keeps this sentence honest.
 
 The last line is deliberate. "Skrevet til en 5-årig dreng af hans far" is true, it explains the absence of
 monetisation better than any feature bullet, and reviewers read descriptions.
