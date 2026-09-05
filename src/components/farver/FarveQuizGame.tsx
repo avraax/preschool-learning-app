@@ -17,7 +17,7 @@ import {
   type QuizObject,
 } from '../../config/colorContent'
 import { COLORS_QUIZ } from '../../config/difficulty'
-import { colorObjectFactText } from '../../config/gamePhrases'
+import { colorObjectFactText, colorQuizPromptText } from '../../config/gamePhrases'
 import { colorQuizPromptPool, quizObjectKey } from '../../config/promptPools'
 import { usePromptBag } from '../../hooks/usePromptBag'
 import { hexToRgba } from '../../theme/tokens/helpers'
@@ -132,7 +132,8 @@ const FarveQuizGame: React.FC = () => {
     guideReactionTimer.current = setTimeout(() => setGuideReaction(null), 1100)
   }
 
-  const promptFor = (obj: QuizObject) => `Hvilken farve er ${obj.objectNameDefinite}?`
+  // Shared builder — the enumerator calls the SAME one, so what is baked is what is spoken.
+  const promptFor = (obj: QuizObject) => colorQuizPromptText(obj.objectNameDefinite)
 
   const setupQuestion = (voice = true) => {
     isAdvancing.current = false

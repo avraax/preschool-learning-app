@@ -134,3 +134,14 @@ export const colorObjectFactText = (
   objectNameDefinite: string,
   spokenHue: string,
 ): string => `${objectNameDefinite} er ${spokenHue}`
+
+/**
+ * Hvilken Farve?'s spoken question: "Hvilken farve er kyllingen?".
+ *
+ * Lived inline in `FarveQuizGame.tsx` as a local `promptFor` until 2026-09-05, which the enumerator
+ * cannot reach — so NOT ONE of these was baked (0 matches for "Hvilken farve er" across 1886 clips)
+ * and every question in the game reached live Azure. Its sibling `colorObjectFactText`, three lines
+ * up, was enumerated correctly the whole time; only the question was stranded.
+ */
+export const colorQuizPromptText = (objectNameDefinite: string): string =>
+  `Hvilken farve er ${objectNameDefinite}?`

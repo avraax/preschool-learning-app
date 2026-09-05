@@ -35,6 +35,7 @@ import {
   HVAD_MANGLER_PROMPT, sequenceFactText, sequenceStarts, sequenceNumbers,
   MEMORY_LETTERS_INSTRUCTION, MEMORY_NUMBERS_INSTRUCTION,
   NUANCER_INSTRUCTION, colorMixTargetText, colorMixResultText, colorObjectFactText,
+  colorQuizPromptText,
   MIC_RETRY_LINE, MIC_HOLD_HINT, MIC_READY_LINE,
 } from './src/config/gamePhrases.ts'
 import { primaryColors, possibleTargets, mixingRules } from './src/config/colorMixing.ts'
@@ -189,9 +190,13 @@ export function collectNarrationClips() {
     // Through the SHARED builder, not a hand-copied template (audio-system.md step 3). It agreed with
 // the two `.tsx` call sites by luck until Practice Loop PRD-01 W3 gave the line a fourth caller —
     // Hvilken Farve's never-fail hint — whose guard has to prove it is exactly the baked string.
-    ;(DANISH_OBJECTS[hue] ?? []).forEach((o) =>
-      da('colours', colorObjectFactText(o.objectNameDefinite, spokenColor(hue, o.neuter))),
-    )
+    ;(DANISH_OBJECTS[hue] ?? []).forEach((o) => {
+      da('colours', colorObjectFactText(o.objectNameDefinite, spokenColor(hue, o.neuter)))
+      // Hvilken Farve?'s QUESTION. Enumerated over every object, not just the quiz-safe pool: a
+      // superset only costs disk, while a subset drops that question back to live Azure. Added
+      // 2026-09-05 — it had been composed inline in the .tsx, so none of these had ever been baked.
+      da('colours', colorQuizPromptText(o.objectNameDefinite))
+    })
   }
 
   // The Reward Book (Reward Book PRD-01 §9). TWO lines per reward — the ceremony's reveal line and

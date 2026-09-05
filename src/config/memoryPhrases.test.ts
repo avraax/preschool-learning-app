@@ -3,6 +3,8 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { MEMORY_LETTERS_INSTRUCTION, MEMORY_NUMBERS_INSTRUCTION } from './gamePhrases.ts'
 import { getDanishLetterName } from './danish-phrases.ts'
+import { colorQuizPromptText } from './gamePhrases.ts'
+import { DANISH_OBJECTS } from './colorContent.ts'
 import { PREBAKED_TTS } from './prebakedTts.ts'
 import { TTS_CONFIG } from './tts-config.ts'
 import { ttsCacheKey } from '../../shared-tts-key.js'
@@ -97,4 +99,30 @@ test('MemoryGame speaks letters through speakLetter, never raw speak()', () => {
   // …and it does call speakLetter, so the assertion above is not passing because the calls vanished.
   assert.ok((code.match(/audio\.speakLetter\(\s*letter\s*\)/g) || []).length >= 2,
     'expected both letter call sites (speakItem + the Q/W/X/Å fallback) to use speakLetter')
+})
+
+// Hvilken Farve?'s spoken QUESTION, stranded inline in the .tsx until 2026-09-05 (found by sweeping
+// every game for live Azure calls, after the memory-card bug proved the class was not a one-off).
+// Zero of the 1886 clips then existing matched "Hvilken farve er", so every question in the game
+// reached live Azure — which the shipped app refuses for a guest, dropping it to Web Speech.
+//
+// Its sibling `colorObjectFactText` had been enumerated correctly the whole time; only the question
+// was missing. That is why the coverage half of this test walks the SAME data the enumerator does.
+test('every colour-quiz question is prebaked', () => {
+  const all = Object.values(DANISH_OBJECTS).flat()
+  const defs = [...new Set(all.map((o) => o.objectNameDefinite).filter(Boolean))]
+  assert.ok(defs.length >= 24, `expected at least 24 colour objects, got ${defs.length}`)
+  for (const def of defs) {
+    const line = colorQuizPromptText(def)
+    assert.ok(PREBAKED_TTS[daKey(line)], `"${line}" is not prebaked`)
+  }
+  assert.equal(colorQuizPromptText('kyllingen'), 'Hvilken farve er kyllingen?')
+})
+
+test('FarveQuizGame builds its prompt from the shared builder, not a template literal', () => {
+  const src = readFileSync(new URL('../components/farver/FarveQuizGame.tsx', import.meta.url), 'utf8')
+  const code = src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$/gm, '$1')
+  assert.equal(/`Hvilken farve er/.test(code), false,
+    'FarveQuizGame composes the prompt inline — the prebake enumerator cannot reach a .tsx')
+  assert.match(code, /colorQuizPromptText\(/)
 })

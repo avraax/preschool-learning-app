@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-09-04T21:04:18.216Z",
+  "updatedAt": "2026-09-05T09:02:42.703Z",
   "clips": {
     "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|b": {
       "verdict": "ok",
@@ -15904,6 +15904,198 @@
       "text": "Find ens tal ved at klikke på kortene",
       "group": "memory",
       "updatedAt": 1788555858216
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Hvilken farve er æblet?": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Hvilken farve er æblet?",
+      "group": "colours",
+      "updatedAt": 1788598962703
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Hvilken farve er bilen?": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Hvilken farve er bilen?",
+      "group": "colours",
+      "updatedAt": 1788598962703
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Hvilken farve er rosen?": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Hvilken farve er rosen?",
+      "group": "colours",
+      "updatedAt": 1788598962703
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Hvilken farve er jordbærret?": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Hvilken farve er jordbærret?",
+      "group": "colours",
+      "updatedAt": 1788598962703
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Hvilken farve er hvalen?": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Hvilken farve er hvalen?",
+      "group": "colours",
+      "updatedAt": 1788598962703
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Hvilken farve er blåbærret?": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Hvilken farve er blåbærret?",
+      "group": "colours",
+      "updatedAt": 1788598962703
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Hvilken farve er lastbilen?": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Hvilken farve er lastbilen?",
+      "group": "colours",
+      "updatedAt": 1788598962703
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Hvilken farve er skjorten?": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Hvilken farve er skjorten?",
+      "group": "colours",
+      "updatedAt": 1788598962703
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Hvilken farve er agurken?": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Hvilken farve er agurken?",
+      "group": "colours",
+      "updatedAt": 1788598962703
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Hvilken farve er skildpadden?": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Hvilken farve er skildpadden?",
+      "group": "colours",
+      "updatedAt": 1788598962703
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Hvilken farve er kløveren?": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Hvilken farve er kløveren?",
+      "group": "colours",
+      "updatedAt": 1788598962703
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Hvilken farve er træet?": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Hvilken farve er træet?",
+      "group": "colours",
+      "updatedAt": 1788598962703
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Hvilken farve er solen?": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Hvilken farve er solen?",
+      "group": "colours",
+      "updatedAt": 1788598962703
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Hvilken farve er bananen?": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Hvilken farve er bananen?",
+      "group": "colours",
+      "updatedAt": 1788598962703
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Hvilken farve er majsen?": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Hvilken farve er majsen?",
+      "group": "colours",
+      "updatedAt": 1788598962703
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Hvilken farve er kyllingen?": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Hvilken farve er kyllingen?",
+      "group": "colours",
+      "updatedAt": 1788598962703
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Hvilken farve er druerne?": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Hvilken farve er druerne?",
+      "group": "colours",
+      "updatedAt": 1788598962703
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Hvilken farve er auberginen?": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Hvilken farve er auberginen?",
+      "group": "colours",
+      "updatedAt": 1788598962703
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Hvilken farve er krystallet?": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Hvilken farve er krystallet?",
+      "group": "colours",
+      "updatedAt": 1788598962703
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Hvilken farve er hjertet?": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Hvilken farve er hjertet?",
+      "group": "colours",
+      "updatedAt": 1788598962703
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Hvilken farve er appelsinen?": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Hvilken farve er appelsinen?",
+      "group": "colours",
+      "updatedAt": 1788598962703
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Hvilken farve er græskarret?": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Hvilken farve er græskarret?",
+      "group": "colours",
+      "updatedAt": 1788598962703
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Hvilken farve er ræven?": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Hvilken farve er ræven?",
+      "group": "colours",
+      "updatedAt": 1788598962703
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Hvilken farve er guleroden?": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Hvilken farve er guleroden?",
+      "group": "colours",
+      "updatedAt": 1788598962703
     }
   }
 }
