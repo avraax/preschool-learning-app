@@ -81,6 +81,20 @@ baseline for every command, so a finding is a *difference* from the baseline.
 Run it before submitting, and before merging anything large. It has caught real defects — the first run
 found four screens whose narration never played.
 
+## Before you submit: check App Store Connect matches the repo
+
+```
+npm run shots:check      # compare; non-zero on any mismatch
+npm run shots:upload     # replace a set and pin the display order
+```
+
+**Re-shooting is not uploading, and nothing tells you the difference.** ASC will happily show a
+filename, the right pixel size and `COMPLETE` next to the wrong image. It happened three times in one
+day: once the whole set was a month stale, and twice the rail shot was re-taken locally after an
+adult-surface change and never uploaded. Only `sourceFileChecksum` against a local md5 can see it.
+
+`iphone-6-voksne.png` IS the rail, so **any** change to the adult surface invalidates it.
+
 ## Before you submit to the App Store: re-shoot the screenshots
 
 **Do this last, and treat it as part of submitting rather than as work already done.** The App Store

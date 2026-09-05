@@ -35,6 +35,7 @@ and passes vacuously — `AppErrorBoundary`'s "Prøv igen" and NotFound's "Hjem"
 | `npm run context:check` | The guardrail byte budget still fits | under budget |
 | `npm run audit:check` | Every closed-set narration clip is signed off | clean, 1910 clips |
 | `npm run schema:check` | **Both deployments' databases match the code they run** — the check that was missing when sign-in died on production | staging + production IN SYNC |
+| `npm run shots:check` | **App Store Connect holds the same screenshots as the repo** — re-shooting is not uploading, and ASC shows the right filename beside the wrong image | all 12 match |
 | `npm run lexicon:check` | Each PLS lexeme is live **and tested in a real sentence** — a bare word gives a false negative, which cost three wrong diagnoses | `fire` APPLIED |
 | `sweep --phase smoke` | Every route renders, shows **its own** Danish title, and throws no console error or page exception | 27 PASS · 0 FAIL · 1 N/A |
 | `sweep --phase layout` | The same across **8 viewports** — iPad landscape/portrait/split, small iPad, wide, phone both ways — plus **nothing clipped off-screen** | 216 PASS · 0 FAIL · 8 N/A |
