@@ -15,14 +15,14 @@
 //   node --env-file=.env.local scripts/audition-fire.mjs
 import { mkdir, writeFile } from 'node:fs/promises'
 import { synthesizeAzure } from '../shared-azure-tts.js'
-import { TTS_CONFIG } from '../shared-tts-config.js'
+import { TTS_CONFIG, LEXICON_FILE } from '../shared-tts-config.js'
 
 const V = TTS_CONFIG.voices.primary
 const RATE = TTS_CONFIG.speakingRate
 // The PROD lexicon, because that is what the shipped clips were baked against (Azure cannot fetch
 // localhost). It has no "fire" entry today, so it changes nothing for this word — included so the
 // A/B differs from the shipped clip in exactly ONE variable.
-const LEX = 'https://boernelaering.dk/da-DK.pls'
+const LEX = `https://boernelaering.dk/${LEXICON_FILE}`
 
 const speak = (inner) =>
   `<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xml:lang="${V.lang}">` +

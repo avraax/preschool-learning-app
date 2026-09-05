@@ -29,3 +29,20 @@ export const TTS_CONFIG = {
     english: { name: 'en-US-AvaMultilingualNeural', lang: 'en-US' },
   },
 };
+
+// THE LEXICON FILENAME IS VERSIONED, AND THE VERSION MUST BE BUMPED WHENEVER THE FILE CHANGES.
+//
+// `vercel.json` serves it with `Cache-Control: public, max-age=86400`, and Azure fetches the lexicon
+// BY URL and honours that — caching per PATH and ignoring the query string, so `?v=<now>` does not
+// bust it (measured 2026-09-05). Editing the file in place therefore leaves Azure reading a
+// day-stale copy, and it fails SILENTLY: the SSML is valid, synthesis succeeds, the old
+// pronunciation just comes back.
+//
+// It produced a MIXED prebake once: adding the `fire` lexeme and re-baking gave 16 of 125 clips the
+// new pronunciation and 109 the old, because only Azure nodes with no cached copy fetched the new
+// file. Five identical-IPA probe files served from fresh PATHS all applied instantly, which is what
+// isolated the cache from the lexeme.
+//
+// So this is the same discipline as a content-hashed asset: change the file, change the name. The
+// long max-age is CORRECT for an immutable URL — it is only wrong for a mutable one.
+export const LEXICON_FILE = 'da-DK-v2.pls';

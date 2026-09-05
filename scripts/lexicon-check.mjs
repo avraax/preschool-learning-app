@@ -20,13 +20,13 @@
 import { readFileSync } from 'node:fs'
 import { createHash } from 'node:crypto'
 import { synthesizeAzure } from '../shared-azure-tts.js'
-import { TTS_CONFIG } from '../shared-tts-config.js'
+import { TTS_CONFIG, LEXICON_FILE } from '../shared-tts-config.js'
 
 const V = TTS_CONFIG.voices.primary
-const LEX_URL = process.env.AZURE_LEXICON_URI || 'https://boernelaering.dk/da-DK.pls'
-const pls = readFileSync('public/da-DK.pls', 'utf8')
+const LEX_URL = process.env.AZURE_LEXICON_URI || `https://boernelaering.dk/${LEXICON_FILE}`
+const pls = readFileSync('public/' + LEXICON_FILE, 'utf8')
 const graphemes = [...pls.matchAll(/<grapheme>([^<]+)<\/grapheme>/g)].map((m) => m[1])
-if (!graphemes.length) { console.log('no lexemes in public/da-DK.pls'); process.exit(0) }
+if (!graphemes.length) { console.log('no lexemes in public/' + LEXICON_FILE + ''); process.exit(0) }
 
 const md5 = (b) => createHash('md5').update(b).digest('hex').slice(0, 10)
 const gen = async (word, withLex) => {

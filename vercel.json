@@ -81,7 +81,7 @@
       ]
     },
     {
-      "source": "/da-DK.pls",
+      "source": "/da-DK-v2.pls",
       "headers": [
         {
           "key": "Cache-Control",

@@ -5,7 +5,7 @@
 // non-ASCII IPA (e.g. ɛ, ʔ) in the body returns HTTP 400 unless the body is real UTF-8 (PRD §0).
 // NB: Azure da-DK accepts the stød glottal stop as ʔ (U+0294), NOT the look-alike ˀ (U+02C0).
 
-import { TTS_CONFIG } from './shared-tts-config.js';
+import { TTS_CONFIG, LEXICON_FILE } from './shared-tts-config.js';
 
 /** XML-escape text destined for an SSML element body or attribute. */
 export function escapeXml(text) {
@@ -95,13 +95,13 @@ export async function synthesizeAzure({ key, region, ssml, outputFormat }) {
 
 /**
  * Derive the public lexicon URL for da-DK. Prefers AZURE_LEXICON_URI; otherwise serves the
- * app's own public/da-DK.pls (Azure must be able to fetch it, so only for real public hosts —
+ * app's own public/<LEXICON_FILE> (Azure must be able to fetch it, so only for real public hosts —
  * never localhost, where Azure cannot reach back). Returns null when no usable URL exists.
  */
 export function lexiconUriForRequest(host, proto) {
   if (process.env.AZURE_LEXICON_URI) return process.env.AZURE_LEXICON_URI;
   if (host && !host.includes('localhost') && !host.startsWith('127.') && !host.startsWith('[::1]')) {
-    return `${proto || 'https'}://${host}/da-DK.pls`;
+    return `${proto || 'https'}://${host}/${LEXICON_FILE}`;
   }
   return null;
 }

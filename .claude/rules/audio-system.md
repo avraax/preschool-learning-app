@@ -147,15 +147,21 @@ sprite), re-encoded with `node scripts/transcode-sfx.mjs`, into `public/sounds/u
   signed off while the only surface that can PLAY one is a crash screen. `auditClips.test.ts` now
   fails the build on it; **adding a group to `shared-narration-clips.js` means adding it to
   `AuditGroup` + `GROUP_ORDER` + `GROUP_LABELS`.**
-- **A NEW lexeme is not live the moment it deploys — Azure caches the lexicon PER NODE.** Measured
-  2026-09-05: adding `fire` and re-baking straight away produced a MIXED batch, 16 of 125 clips with
-  the new pronunciation and 109 with the old, because different nodes served the run from different
-  cached copies. Nothing failed; it was just half-applied, and a half-applied batch is worse than
-  either end state. **`npm run lexicon:check` is the gate** — it synthesizes each grapheme with and
-  without the lexicon and calls it APPLIED only when the bytes differ (Azure TTS is byte-deterministic
-  for identical input, verified). Run it until clean BEFORE deleting clips and re-baking. This is the
-  other half of the rule below: re-baking too EARLY is as wrong as not re-baking at all, and as silent.
-- **Editing `public/da-DK.pls` alone changes NOTHING you can hear.** The cache key records the lexicon
+- **THE LEXICON FILENAME IS VERSIONED, AND A CHANGE MUST RENAME IT** (`LEXICON_FILE` in
+  `shared-tts-config.js`). `vercel.json` serves it with `Cache-Control: max-age=86400` and Azure
+  fetches it by URL, caching per **PATH** and ignoring the query string — `?v=<now>` does not bust it
+  (measured 2026-09-05). Editing in place therefore leaves Azure reading a day-stale copy, and it
+  fails **silently**: the SSML is valid, synthesis succeeds, the old pronunciation just comes back.
+  It produced a half-applied prebake once — adding the `fire` lexeme and re-baking gave 16 of 125
+  clips the new pronunciation and 109 the old, because only nodes with no cached copy fetched the new
+  file. Five probe files carrying the IDENTICAL IPA, served from fresh paths, all applied instantly,
+  which is what isolated the cache from the lexeme. Same discipline as a content-hashed asset: change
+  the file, change the name; the long max-age is correct for an immutable URL and wrong for a mutable
+  one. `npm run lexicon:check` synthesizes each grapheme with and without the lexicon and reports
+  APPLIED only when the bytes differ (Azure TTS is byte-deterministic for identical input, verified),
+  so run it before re-baking — **re-baking too EARLY is as wrong as not re-baking at all.**
+  Guarded by `src/config/lexiconVersion.test.ts`.
+- **Editing the lexicon alone changes NOTHING you can hear.** The cache key records the lexicon
   as a boolean (`lex…` via `shared-tts-key.js`), not a content hash, and prebake reuses any existing
   file on disk — so a prebaked clip keeps its old pronunciation until you DELETE its mp3 + manifest
   line and re-run. Two more lexicon traps: PLS graphemes are **case-sensitive and lowercase**, so a

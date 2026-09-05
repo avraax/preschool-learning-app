@@ -24,7 +24,7 @@ import { createHash } from 'node:crypto'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-import { TTS_CONFIG } from './shared-tts-config.js'
+import { TTS_CONFIG, LEXICON_FILE } from './shared-tts-config.js'
 import { buildSsml, synthesizeAzure } from './shared-azure-tts.js'
 import { collectNarrationClips } from './shared-narration-clips.js'
 
@@ -43,7 +43,7 @@ const MAX_RETRIES = 6
 const LEXICON_URI =
   process.env.PREBAKE_LEXICON_URI ||
   process.env.AZURE_LEXICON_URI ||
-  'https://preschool-learning-app.vercel.app/da-DK.pls'
+  `https://preschool-learning-app.vercel.app/${LEXICON_FILE}`
 
 // The closed clip list is shared with the /audit harness (shared-narration-clips.js) so "what gets
 // baked" and "what gets auditioned" can never drift. It already dedupes by cache key.

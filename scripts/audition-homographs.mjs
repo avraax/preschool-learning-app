@@ -13,11 +13,11 @@
 //   node --env-file=.env.local scripts/audition-homographs.mjs
 import { mkdir, writeFile } from 'node:fs/promises'
 import { synthesizeAzure } from '../shared-azure-tts.js'
-import { TTS_CONFIG } from '../shared-tts-config.js'
+import { TTS_CONFIG, LEXICON_FILE } from '../shared-tts-config.js'
 import { collectNarrationClips } from '../shared-narration-clips.js'
 
 const V = TTS_CONFIG.voices.primary
-const LEX = 'https://boernelaering.dk/da-DK.pls'
+const LEX = `https://boernelaering.dk/${LEXICON_FILE}`
 const da = collectNarrationClips().filter((c) => c.lang.startsWith('da'))
 
 const CANDIDATES = ['to','tre','fire','fem','ni','ti','en','is','kat','hund','bil','sol','ost','hat',
