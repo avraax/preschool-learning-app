@@ -14,6 +14,7 @@ import { motion } from 'framer-motion'
 import { useThemeSwitch } from '../../../theme/ThemeProvider'
 import { loadSceneAssets } from '../../../theme/sceneAssets'
 import { PaneSection, ToggleRow } from './paneParts'
+import { showDevTools } from '../../../utils/adultDevTools'
 import { useProgress } from '../../../hooks/useProgress'
 import { SMOOTH_GRAPHICS_HINT, SMOOTH_GRAPHICS_LABEL } from '../../../config/perfProfile'
 import { Sparkles } from 'lucide-react'
@@ -133,6 +134,7 @@ const UdseendePane: React.FC<UdseendePaneProps> = ({ childName }) => {
 
         The item also lives in `src/config/adultSettingsIa.ts`, because the group/item structure is DATA
         and is guarded — adding it here alone would fail that guard. */}
+    {showDevTools() && (
     <PaneSection title="Ydelse">
       <ToggleRow
         icon={<Sparkles size={19} />}
@@ -144,6 +146,7 @@ const UdseendePane: React.FC<UdseendePaneProps> = ({ childName }) => {
         onChange={(v) => progress.setSetting('smoothGraphics', v)}
       />
     </PaneSection>
+    )}
     </Stack>
   )
 }

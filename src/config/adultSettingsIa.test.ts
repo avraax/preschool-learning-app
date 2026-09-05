@@ -1,10 +1,14 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
+import { readFileSync } from 'node:fs'
 import {
   ADULT_IA,
   ADULT_GROUP_IDS,
   AMBIGUOUS_LABELS,
   adultItemsWithGroup,
+  adultItem,
+  showsDevTools,
+  devToolItemIds,
 } from './adultSettingsIa.ts'
 import { pinVerifierFor } from './pinReasons.ts'
 
@@ -189,4 +193,61 @@ test('child-scoped destructive actions stay LOCAL, so they work on a plane', () 
     if (v.kind !== 'requirePin') continue
     assert.equal(pinVerifierFor(v.reason, false), 'local', `${item.id} must work offline`)
   }
+})
+
+// ---- Owner-only tools (2026-09-05) -----------------------------------------------------------
+//
+// Six items are tools for the owner rather than settings for a parent, and are hidden in the
+// production build. This is NOT a permission: the app has no roles, and a role tier would today
+// separate the owner from his wife, who is on the same `AUTH_ALLOWED_EMAILS` list. The axis is the
+// BUILD — `BL_TIER === 'staging'`, dev, or the harness.
+//
+// Two of the six are a functional trap rather than clutter: `lyd.voice`/`lyd.rate` write a
+// `voiceOverride` that `ttsClient.resolveRequest` folds into the TTS cache key, so a non-default
+// choice misses EVERY prebaked clip and sends all narration to live Azure — which a guest cannot
+// call, dropping the whole app to Web Speech or to silence offline.
+
+test('showsDevTools is true on staging, in dev and in the harness — and false in a plain production build', () => {
+  // The whole truth table, because the rule is three ORed booleans and the ONE that matters is the
+  // all-false case: that is the App Store build.
+  assert.equal(showsDevTools('production', false, false), false)
+  assert.equal(showsDevTools('staging', false, false), true)
+  assert.equal(showsDevTools('production', true, false), true)
+  assert.equal(showsDevTools('production', false, true), true)
+  assert.equal(showsDevTools('staging', true, true), true)
+})
+
+test('exactly the six agreed items are devTool, named literally', () => {
+  // Named rather than counted: a count passes while the WRONG six carry the flag.
+  assert.deepEqual(devToolItemIds().sort(), [
+    'konto.syncNow', 'lyd.everWorked', 'lyd.rate', 'lyd.sample', 'lyd.voice', 'udseende.smoothGraphics',
+  ])
+})
+
+test('nothing a guideline depends on may ever be marked devTool', () => {
+  // Each of these is load-bearing for App Review, not merely useful:
+  //   konto.deleteAccount — 5.1.1(v) requires in-app account deletion to be FINDABLE
+  //   privatliv.microphone / .policy — the Kids Category story (App Store PRD §3.6); Privatliv was
+  //     made its own group precisely so a reviewer would not have to hunt for them
+  for (const id of ['konto.deleteAccount', 'privatliv.microphone', 'privatliv.policy']) {
+    assert.equal(adultItem(id).devTool, undefined, `${id} must never be hidden from a production build`)
+  }
+  // …and no destructive item may hide either: hiding a delete does not make it safer, it makes it
+  // unreachable on the one build where the data is real.
+  for (const { item } of adultItemsWithGroup()) {
+    if (item.destructive) assert.equal(item.devTool, undefined, `${item.id} is destructive and must stay visible`)
+  }
+})
+
+test('the panes actually gate on showDevTools — the data flag alone renders nothing', () => {
+  // A config test cannot see a component ignoring the config (games-catalog.md). Read the source.
+  const paneOf = (f: string) =>
+    readFileSync(new URL(`../components/adult/panes/${f}`, import.meta.url), 'utf8')
+      .replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$/gm, '$1')
+  for (const f of ['LydPane.tsx', 'UdseendePane.tsx', 'KontoPane.tsx']) {
+    assert.match(paneOf(f), /showDevTools\(\)/, `${f} does not consult showDevTools()`)
+  }
+  // The stranded-override escape hatch: without it, an override already stored on a production
+  // install can never be cleared, because the controls that set it are gone.
+  assert.match(paneOf('LydPane.tsx'), /setVoiceOverride\(null\)/)
 })

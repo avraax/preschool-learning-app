@@ -63,6 +63,7 @@ import { captureExcludeProps } from '../../../services/captureExclude'
 import { adultItem } from '../../../config/adultSettingsIa'
 import DestructiveConfirmDialog from './DestructiveConfirmDialog'
 import { DangerHeading, PaneSection } from './paneParts'
+import { showDevTools } from '../../../utils/adultDevTools'
 
 // Read the word from the IA declaration, not a literal here — that module is what
 // `adultSettingsIa.test.ts` asserts on, and a duplicate would let the guard pass while the shipped
@@ -477,6 +478,9 @@ const KontoPane: React.FC<KontoPaneProps> = ({ closeAll }) => {
             Spillet virker også uden internet. Fremgangen gemmes på enheden med det samme og sendes
             videre, når der er forbindelse.
           </Typography>
+          {/* Owner tool (adultSettingsIa `devTool`): sync is automatic, so a manual trigger is only
+              ever used while debugging one. Absent from the production build. */}
+          {showDevTools() && (
           <Button
             onClick={() => void syncNow()}
             disabled={busy || status.phase === 'pulling' || status.phase === 'pushing'}
@@ -486,6 +490,7 @@ const KontoPane: React.FC<KontoPaneProps> = ({ closeAll }) => {
           >
             Synkronisér nu
           </Button>
+          )}
         </PaneSection>
 
         <PaneSection title="Kode">

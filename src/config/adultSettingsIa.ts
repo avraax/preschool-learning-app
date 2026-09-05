@@ -54,6 +54,26 @@ export interface AdultItem {
   /** Required on every destructive item. */
   verify?: AdultVerification
   /**
+   * A tool for the OWNER, not a setting for a parent — hidden in the production build (owner,
+   * 2026-09-05). Six items qualify, and the reason is not tidiness in two of them:
+   *
+   *   * `lyd.voice` / `lyd.rate` write a `voiceOverride`, which `ttsClient.resolveRequest` folds into
+   *     the TTS cache key (name + lang + rate). A non-default choice therefore misses EVERY prebaked
+   *     clip and sends **all** narration to live Azure — which a guest cannot call
+   *     (`canCallPaidApis: false`), so the whole app drops to Web Speech, or to silence offline. A
+   *     parent nudging a tempo slider could not possibly know that. `/voicelab` remains the real tool.
+   *   * `lyd.sample` only means anything beside those two.
+   *   * `lyd.everWorked`, `udseende.smoothGraphics` and `konto.syncNow` are diagnostics and manual
+   *     triggers for things that are automatic. `everWorked` is already in the bug report, so the row
+   *     is duplicate rather than merely technical.
+   *
+   * NOT a permission — the app has no roles, and a role tier would today separate the owner from his
+   * wife, who is on the same allow-list. The axis is the BUILD: `BL_TIER === 'staging'` (or dev/the
+   * harness), so the tools exist on `BL Staging`, which is where the owner tests, and are absent from
+   * the App Store build. See `showsDevTools`.
+   */
+  devTool?: true
+  /**
    * The result cannot be undone from inside the app. Signing out is destructive but NOT this — you
    * log back in. A reset is: `resetAll()` bumps `sync.epoch` precisely so the next pull cannot
    * resurrect the book.
@@ -134,14 +154,14 @@ export const ADULT_IA: AdultGroup[] = [
     items: [
       { id: 'lyd.sfx', label: 'Lydeffekter' },
       { id: 'lyd.music', label: 'Musik' },
-      { id: 'lyd.voice', label: 'Stemme' },
-      { id: 'lyd.rate', label: 'Tempo' },
-      { id: 'lyd.sample', label: 'Hør et eksempel' },
+      { id: 'lyd.voice', label: 'Stemme', devTool: true },
+      { id: 'lyd.rate', label: 'Tempo', devTool: true },
+      { id: 'lyd.sample', label: 'Hør et eksempel', devTool: true },
       // Read-only status (Audio activation PRD-01 §4.5): the ONE thing the adult cannot otherwise tell
       // apart — "sound has never worked on this iPad" vs "it worked and then stopped". Device-scoped
       // (`bl-audio-ever-worked`), not per-child, and it gates nothing. Listed HERE because the
       // group/item structure is DATA and guarded; adding it in the pane alone would fail that guard.
-      { id: 'lyd.everWorked', label: 'Lyd på denne enhed' },
+      { id: 'lyd.everWorked', label: 'Lyd på denne enhed', devTool: true },
     ],
   },
   {
@@ -153,7 +173,7 @@ export const ADULT_IA: AdultGroup[] = [
       // the pre-PRD rendering path. Not destructive and not PIN-gated beyond the adult menu itself: it
       // changes only how things are drawn, never any data. It lives HERE because the group/item
       // structure is DATA and guarded; adding it in the pane alone would fail that guard.
-      { id: 'udseende.smoothGraphics', label: 'Flydende grafik' },
+      { id: 'udseende.smoothGraphics', label: 'Flydende grafik', devTool: true },
     ],
   },
   {
@@ -162,7 +182,7 @@ export const ADULT_IA: AdultGroup[] = [
     items: [
       { id: 'konto.email', label: 'Konto' },
       { id: 'konto.sync', label: 'Synkronisering' },
-      { id: 'konto.syncNow', label: 'Synkronisér nu' },
+      { id: 'konto.syncNow', label: 'Synkronisér nu', devTool: true },
       // PinSetupDialog asks for the CURRENT code and `pin/set` verifies it server-side under the same
       // lockout — the secret never travels through a generic context callback. Not destructive.
       { id: 'konto.pin', label: 'Kode' },
@@ -257,3 +277,20 @@ export const adultItem = (id: string): AdultItem => {
   if (!found) throw new Error(`unknown adult settings item: ${id}`)
   return found.item
 }
+
+/**
+ * Whether the owner-only tools (`devTool`) render.
+ *
+ * PURE and fully enumerable on purpose — the runtime inputs are bound by the caller
+ * (`src/utils/adultDevTools.ts`), so the RULE can be truth-tabled in plain Node while the binding
+ * stays a one-liner. `BL_TIER` alone is not enough: it defaults to `'production'` when
+ * `__BL_TIER__` is undefined, which is every local `npm run dev` — so a tier-only gate would hide
+ * these from the owner on the machine he develops on.
+ */
+export const showsDevTools = (tier: 'staging' | 'production', isDev: boolean, isHarness: boolean): boolean =>
+  tier === 'staging' || isDev || isHarness
+
+/** The items a production build must not render. */
+export const devToolItemIds = (): string[] =>
+  adultItemsWithGroup().filter((e) => e.item.devTool).map((e) => e.item.id)
+

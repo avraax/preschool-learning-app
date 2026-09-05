@@ -33,6 +33,7 @@ import { OVERRIDE_VOICES } from '../../voicelab/voicelabData'
 import { LETTER_WORDS, letterPhrase } from '../../../config/letterWords'
 import { audioEverWorked } from '../../../utils/audioEverWorked'
 import { PaneSection, ToggleRow } from './paneParts'
+import { showDevTools } from '../../../utils/adultDevTools'
 
 const DEFAULT_RATE = TTS_CONFIG.speakingRate // 1.05
 const DEFAULT_VOICE = TTS_CONFIG.voices.primary.name
@@ -46,6 +47,15 @@ const SAMPLE_TEXT = letterPhrase('A', LETTER_WORDS.A.word)
 const LydPane: React.FC = () => {
   const progress = useProgress()
   const existing = ttsClient.getVoiceOverride()
+  // Owner tools, absent from the production build (adultSettingsIa `devTool`). Voice + tempo are not
+  // preferences: either one writes a `voiceOverride` that changes the TTS cache key, so EVERY line
+  // misses the prebake and goes to live Azure — which a guest cannot call, dropping the whole app to
+  // Web Speech. `/voicelab` is still the full tool.
+  const devTools = showDevTools()
+  // …which strands an override that is ALREADY stored on a production install — the controls that
+  // could clear it are gone. The owner has been testing on the production TestFlight track, so this
+  // is not hypothetical. One row, shown only when there is something to undo.
+  const [strandedOverride, setStrandedOverride] = useState(() => !showDevTools() && !!ttsClient.getVoiceOverride())
   // Read once per open — it only ever flips false→true, and the pane is a modal snapshot.
   const [everWorked] = useState(() => audioEverWorked())
   const [name, setName] = useState(existing?.name ?? DEFAULT_VOICE)
@@ -85,6 +95,7 @@ const LydPane: React.FC = () => {
         />
       </Stack>
 
+      {devTools && (
       <PaneSection title="Oplæsning" hint="Ændrer den danske fortællestemme. Engelsk-sektionen er upåvirket.">
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, minHeight: 44 }}>
           <Typography sx={{ flex: '0 0 auto', width: 82, fontSize: '0.9rem' }}>Stemme</Typography>
@@ -131,16 +142,36 @@ const LydPane: React.FC = () => {
           Hør et eksempel
         </Button>
       </PaneSection>
+      )}
+
+      {/* Production only, and only when there is something to undo. Without this the override is a
+          one-way door: the controls that set it are gone, and every spoken line stays on live Azure. */}
+      {strandedOverride && (
+        <PaneSection title="Stemme">
+          <Typography sx={{ fontSize: '0.9rem', opacity: 0.85 }}>
+            Der er valgt en anden stemme end standard. Al tale hentes online, så spillene virker ikke uden internet.
+          </Typography>
+          <Button
+            onClick={() => { ttsClient.setVoiceOverride(null); setStrandedOverride(false) }}
+            aria-label="Nulstil stemme til standard"
+            sx={{ mt: 1 }}
+          >
+            Nulstil til standard
+          </Button>
+        </PaneSection>
+      )}
 
       {/* Read-only. The ONE audio fact the adult cannot get anywhere else: whether sound has EVER
           worked on this device, which separates "it has never worked here" from "it worked and then
           stopped". Device-scoped (`bl-audio-ever-worked`), never per-child, and it gates nothing —
           a device where audio worked yesterday can be blocked today (Audio activation PRD-01 §4.5). */}
+      {devTools && (
       <PaneSection title="Lyd på denne enhed">
         <Typography sx={{ fontSize: '0.9rem', opacity: 0.85 }}>
           {everWorked ? 'Lyd har virket på denne enhed.' : 'Lyd har endnu ikke virket på denne enhed.'}
         </Typography>
       </PaneSection>
+      )}
     </Stack>
   )
 }
