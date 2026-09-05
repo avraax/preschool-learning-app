@@ -80,16 +80,33 @@ export const AppThemeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   // Adopt the attached profile's skin. Fires on attach and on a profile switch (progressStore notifies
   // on both), and on a sync pull that brought a newer themeId from another device.
+  //
+  // ABSENCE IS A VALUE: a child who never chose a skin means the DEFAULT, not "leave whatever is on
+  // screen". This used to read `if (stored && …)`, so an unthemed child simply inherited the previous
+  // child's skin — and because `STORAGE_KEY` is also the first-paint hint, the leak survived a cold
+  // boot too. The theme is per-child and syncs per-child ("Tema for {navn}"), so that is a sibling
+  // seeing another sibling's world. It was nearly unreachable while the boot pointer pinned one child
+  // per device; the boot picker (Børn picker PRD-01) makes alternating children the normal case, which
+  // is how it surfaced.
+  //
+  // The `isAttached()` guard is the other half and is NOT belt-and-braces. While the store is inert —
+  // before the gate opens, and behind the picker — its snapshot is a frozen DEFAULT document, so
+  // reading it would say "default skin" about nobody and stamp over the synchronous first-paint hint,
+  // which is the white flash on the dark skins that §10.3 exists to prevent. An inert store simply has
+  // no opinion.
   useEffect(() => {
     const sync = () => {
       if (setPerfProfileFromSetting(progressStore.get().settings.smoothGraphics)) {
         bumpPerfProfile((n) => n + 1)
       }
-      const stored = progressStore.get().settings.themeId
-      if (stored && stored !== themeIdRef.current) {
+      if (!progressStore.isAttached()) return
+      const stored = progressStore.get().settings.themeId ?? defaultThemeId
+      if (stored !== themeIdRef.current) {
         themeIdRef.current = stored
         setThemeIdState(stored)
         try {
+          // Written for the fallback too, or the next cold boot first-paints in the PREVIOUS child's
+          // skin and then snaps — the same flash, one launch later.
           localStorage.setItem(STORAGE_KEY, stored)
         } catch {
           /* ignore */
