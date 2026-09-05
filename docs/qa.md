@@ -59,6 +59,18 @@ phases assert against a clock, so they report machine load as a defect. Measured
   `/math/comparison` failed once at `--concurrency 1` **while a second sweep was running in another
   shell**. Both passed 3/3 alone (`held=true`).
 
+**The LAYOUT phase flakes under contention too** (2026-09-06) — the paragraph above named only audio and
+ceremony, and that reads like layout is safe. It is not: six of 224 jobs failed, four of them `#root
+empty`, while a handful of `cdp.mjs` captures ran against the same dev server. All five routes went 8/8
+on a serial re-run. The tell is the SCATTER — the same route passing at other viewports — because a real
+layout defect is viewport-shaped, not random.
+
+**`--only /alphabet/learn` matches NOTHING in Git Bash, and says so as a green line.** MSYS path
+conversion rewrites a leading-slash argument into a Windows path (`C:/Program Files/Git/alphabet/...`),
+so the filter matches no route and the sweep prints `planned 0 · ran 0 · PASS 0 · FAIL 0 · N/A 0 ·
+DEAD 0` — which scans as a pass and is *no evidence at all*. Drop the leading slash: `--only
+alphabet/learn`. **Always check `planned` is non-zero before believing a filtered run.**
+
 So: a single red in either phase is not a finding until it has been re-run in isolation
 (`--only <route> --concurrency 1`, nothing else going). A red that survives that is real. The other
 phases don't measure time and can be run wide.
@@ -220,3 +232,4 @@ difference from the baseline — not the absence of one.
 |---|---|---|
 | 2026-09-04 | `e4a7ceb` | First run. Six reds → §2.1. Four real, two probe artifacts. |
 | 2026-09-05 | `3fc22d2` | **Every phase at baseline.** 734 tests · lint 0 errors · audio 26/0/2 · smoke 27/0/1 · round 12/0/5 · difficulty 16/0/5 · ceremony 9/0 (`held=true` on all nine). Rungs 1–2 only; §5 still owed. |
+| 2026-09-06 | `9387956` | **Corner rework (`e210722`+`53d0720`), every phase at baseline.** 780 tests · lint 0 errors · tsc · build · context 47999/48000 · selftest · smoke 27/0/1 · layout 210/0/8 · ceremony 9/0 · live 20/0/1. One real finding, fixed: the name pill would have shipped a child called **Dev** in all ten store shots (`?kidname=`). Rungs 1–2 only; §5 still owed. |
