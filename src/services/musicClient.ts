@@ -93,10 +93,17 @@ class MusicClient {
   // main.tsx, and the lock screen lives at '/', a menu path — so the bed started playing over
   // "Velkommen til Børnelæring" and through the whole Google round trip. `boot` starts true because
   // that setWorld can land before any gate has reported; AuthGate always mounts, and clears it.
-  private gateBlocks = { boot: true, auth: false, profile: false }
+  //
+  // `sheet` is "Hvem spiller?" opened MID-SESSION from the profile chip (Corner identity PRD-01 §4.4).
+  // It is not a gate, but it is a blocking overlay and takes the same flags for the same reason the
+  // picker does: one blocking overlay at a time, and a music bed playing under a modal is the tell
+  // that a surface forgot to claim them.
+  private gateBlocks = { boot: true, auth: false, profile: false, sheet: false }
 
   private gateBlocking(): boolean {
-    return this.gateBlocks.boot || this.gateBlocks.auth || this.gateBlocks.profile
+    return (
+      this.gateBlocks.boot || this.gateBlocks.auth || this.gateBlocks.profile || this.gateBlocks.sheet
+    )
   }
 
   /** True while the bed must not sound: inside a game/browse screen, or before the gate opens. */
@@ -104,8 +111,9 @@ class MusicClient {
     return this.inGame || this.gateBlocking()
   }
 
-  // Reported by AuthGate (login screen) and ProfileGate ("hvem spiller?" / first-profile dialog).
-  setGateBlocking(source: 'auth' | 'profile', blocking: boolean): void {
+  // Reported by AuthGate (login screen), ProfileGate ("hvem spiller?" / first-profile dialog) and
+  // WhoIsPlayingSheet (the same question, reopened mid-session from the profile chip).
+  setGateBlocking(source: 'auth' | 'profile' | 'sheet', blocking: boolean): void {
     // `was` is read BEFORE clearing `boot`, or the very first report ("the gate is open") would look
     // like no change at all and the bed would never start.
     const was = this.suppressed()

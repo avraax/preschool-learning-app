@@ -101,7 +101,7 @@ Back to `../SKILL.md`.
   `TIMEOUT waiting for selector` / `eval: undefined`, not a quoting error. Either use **quote-free CSS
   selectors** (`[aria-label^=Til]`, `.MuiDialog-paper [role=button]`) or — more generally, since CSS
   accepts either quote — **single-quote the string INSIDE the selector**:
-  `--click "[aria-label='Til de voksne']"`. That survives PS arg passing and keeps exact matching.
+  `--click "[aria-label='Indstillinger']"`. That survives PS arg passing and keeps exact matching.
 - **Clicks use `element.click()`**, not synthetic mouse coordinates — MUI ignores synthetic coords.
   So `--click` takes a CSS selector. (`element.click()` fires no `pointerdown`, so tap-listeners
   like the diagnostics breadcrumbs won't see driver clicks.)
@@ -159,7 +159,8 @@ Back to `../SKILL.md`.
   nodes and the eval returns `{}`. Select/measure MUI-styled elements via `getComputedStyle(el)` (styles)
   or `getBoundingClientRect()` (geometry) instead.
 - App sizes to `--vh`; default 540x940 is representative. Useful selectors: the adult settings surface
-  opens via a plain click on `[aria-label="Til de voksne"]` (the old 2s hold and its `?adult-tap=1`
+  opens via TWO clicks — `[data-profile-chip]` (the child's name pill in the title row), then
+  `[aria-label="Indstillinger"]` in the "Hvem spiller?" sheet. (The old 2s hold and its `?adult-tap=1`
   workaround are gone; the label is on the child's AVATAR now), is rail-ready in ~530ms under
   `?nogate=1` — the old "~4.5s is REQUIRED" was the blocking screenshot capture, which is gone, so a
   generous settle is now headroom for the lazy chunk rather than a floor — and its five panes are

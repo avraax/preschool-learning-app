@@ -61,7 +61,7 @@ export const LEGACY_PROFILE: PerfProfile = {
 }
 
 /**
- * The Danish label + hint as the adult reads them, in "Til de voksne" → Udseende. The switch is ON for
+ * The Danish label + hint as the adult reads them, in "Indstillinger" → Udseende. The switch is ON for
  * the fast path, so it reads as a feature the adult can turn OFF rather than a workaround to enable.
  */
 export const SMOOTH_GRAPHICS_LABEL = 'Flydende grafik'

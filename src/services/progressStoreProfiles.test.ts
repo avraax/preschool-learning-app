@@ -51,7 +51,7 @@ beforeEach(() => {
   progressStore.detach()
   const deviceId = disk[DEVICE_ID_KEY]
   shim.clear()
-  // Keep the device id: resetAll() must never clear it, and neither should a test.
+  // Keep the device id: resetAll('adult-confirmed') must never clear it, and neither should a test.
   if (deviceId) disk[DEVICE_ID_KEY] = deviceId
 })
 
@@ -66,7 +66,7 @@ test('INERT by default: every mutator is a no-op and nothing is written', () => 
   progressStore.setDifficulty({ global: 'svaer' })
   progressStore.markLevelCelebrated(9)
   progressStore.markStickersSeen()
-  progressStore.resetAll()
+  progressStore.resetAll('adult-confirmed')
   assert.deepEqual(progressStore.grantPendingRewards(), [])
   assert.equal(progressStore.markBrowsed('alphabet', 'A'), false)
 
@@ -194,7 +194,7 @@ test('resetAll: per-child, bumps sync.epoch, preserves settings AND settingsMeta
   const before = progressStore.exportPersisted()!
   const deviceId = getDeviceId()
 
-  progressStore.resetAll()
+  progressStore.resetAll('adult-confirmed')
   const after = progressStore.exportPersisted()!
 
   assert.equal(progressStore.collectedCount(), 0)

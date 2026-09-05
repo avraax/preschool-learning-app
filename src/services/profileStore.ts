@@ -367,7 +367,7 @@ class ProfileStore {
     // the honest answer to "what does signing in actually buy me?" (Guideline 5.1.1(v) wants exactly
     // that shape — an account for account-shaped features, not for playing).
     if (guestModeActive()) {
-      this.publish({ error: 'Flere børneprofiler kræver en konto. Log ind under "Til de voksne".' })
+      this.publish({ error: 'Flere børneprofiler kræver en konto. Log ind under "Indstillinger".' })
       return null
     }
     if (!authStore.sessionToken()) {

@@ -1,4 +1,8 @@
-// "Til de voksne" — the whole settings surface (Settings PRD-01).
+// "Indstillinger" — the whole settings surface (Settings PRD-01).
+//
+// **The surface was called "Til de voksne" until 2026-09-05**, when the owner renamed the adult area
+// to `Indstillinger` app-wide. The name is the only thing that changed; every decision below is the
+// same one, and `aria-label="Indstillinger"` is now THE selector the whole screenshot harness clicks.
 //
 // WHAT REPLACED WHAT: 13 flat, undifferentiated rows in a scrolling `maxWidth="xs"` dialog became a
 // two-pane split — a persistent left rail of five mutually-exclusive groups (Konto / Læring / Lyd /
@@ -207,7 +211,7 @@ const AdultSettings: React.FC<AdultSettingsProps> = ({
         maxWidth="md"
         fullWidth
         fullScreen={compact}
-        aria-label="Til de voksne"
+        aria-label="Indstillinger"
         // A bug-report capture now runs behind the gate and can still be in flight when this mounts
         // (an adult who answers the challenge fast). Without the marker the report would show the
         // settings surface instead of the game being reported — the exact property the capture was
@@ -233,7 +237,7 @@ const AdultSettings: React.FC<AdultSettingsProps> = ({
       >
         {/* ---- The ONE header: the single "Luk", plus a back arrow only when a pane is pushed ---- */}
         <AdultBackHeader
-          title={compact && pushed ? group.label : 'Til de voksne'}
+          title={compact && pushed ? group.label : 'Indstillinger'}
           onBack={compact && pushed ? () => setPushed(false) : undefined}
           action={
             <Button onClick={onClose} aria-label="Luk">

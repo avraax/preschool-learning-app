@@ -1,5 +1,5 @@
 // The ADULT skin (Settings PRD-01 §5) — a calm, system-font, tighter-density theme for the
-// "Til de voksne" surface only.
+// "Indstillinger" surface only.
 //
 // Everything child-facing keeps the kid skin: Comic Sans, 16-20px radii, 48px buttons, pastel
 // accents. The adult area inherited all of that wholesale, which is why the settings dialog read

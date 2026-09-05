@@ -1,22 +1,32 @@
-// "Til de voksne": the gate, the capture and the mount point — with NO trigger of its own.
+// "Indstillinger": the gate, the capture and the mount point — with NO trigger of its own.
 //
-// **The gear is gone (owner, 2026-08-09). The child's avatar IS the door.** `ProfileBadge` already
-// renders in the header of every screen, so tapping it opens this surface with exactly the behaviour
-// the floating gear had: a plain tap → PIN (or the guest arithmetic gate) → the lazy `AdultSettings`.
-// That is Khan Academy Kids' pattern, and it removes a permanent adult artifact from a child's screen.
+// **The gear went first (owner, 2026-08-09), then the avatar (Corner identity PRD-01).** For a month
+// the child's own portrait WAS this door, which made one control do two contradictory jobs at once — a
+// passive "who is playing" cue aimed at the child, and an adult control — so a five-year-old who tapped
+// their own face met a keypad. The door is now a LABELLED ROW inside `WhoIsPlayingSheet`, which the
+// profile chip in each page's title row opens, with exactly the behaviour the gear had: PIN (or the
+// guest arithmetic gate) → the lazy `AdultSettings`. Khan Academy Kids does the same. Apple 1.3 requires
+// the parental gate for the adult area; it does not require the door to be the child's face.
 // The trigger reaches this component through `adultSurfaceBus` — see that file for why a bus.
 //
-// The objection that had to be answered first, recorded so it is not re-litigated: a bug report
-// captures `document.body` at the moment this opens, so the door MUST be reachable from the broken
-// screen, mid-game included — otherwise no report can ever show the game that broke. It survives only
-// because the badge is on every screen and behaves identically everywhere. A stray tap in the game
-// header meets a gate the child cannot pass, which is no worse than the reward ring 12px away already
-// leaving the game on a stray tap (owner's own precedent, 2026-08-03).
+// **The surface was called "Til de voksne" until 2026-09-05**, when the owner renamed the adult area to
+// `Indstillinger` app-wide. Only the name changed — and with it the selector every `ui-screenshot`
+// recipe clicks, which is now `[aria-label="Indstillinger"]`.
 //
-// The one behaviour that genuinely changed: `ProfileBadge` renders nothing while no child is attached,
-// so during the cold-boot window before the roster settles there is no adult door. That window also
-// has no child playing, and the gear was inert over the gate anyway — but it is a real difference, so
-// don't be surprised by it.
+// The objection that had to be answered when the gear went, recorded so it is not re-litigated: a bug
+// report captures `document.body` at the moment this opens, so the door MUST be reachable from the
+// broken screen — otherwise no report can ever show the app that broke.
+//
+// **THE ONE PLACE IT IS NO LONGER REACHABLE IS MID-GAME** (§2.5): the in-game header holds the reward
+// ring alone now, and neither the chip nor the sheet renders there. That is a deliberate trade — the
+// corner a child aims at for Min Bog stopped being a dead disc — and the cost is that a report about a
+// game must be filed from the section menu one tap away, on a screen that still shows the same build,
+// the same device and the same diagnostics rings. What it loses is the SCREENSHOT of the broken board.
+// If that turns out to matter, the answer is a route back into the game, not a second door in it.
+//
+// A second behaviour worth knowing: the chip renders nothing while no child is attached, so during the
+// cold-boot window before the roster settles there is no adult door at all. That window also has no
+// child playing, and the gear was inert over the gate anyway.
 //
 // It used to need a ~2s hold as the child-resistant gesture; the real gate is now the 4-digit PIN (or
 // Face ID), so the hold was pure friction for the adult.
@@ -85,10 +95,19 @@ const AdultSurface: React.FC<AdultSurfaceProps> = ({ updateAvailable = false, on
         setTimeout(() => void captureScreenshot().then(resolve), CAPTURE_AFTER_GATE_MS)
       })
       // Opening costs a PIN (or Face ID), which replaced the per-action Danish-number-word gate
-      // entirely. Verified LOCALLY, so it still works on a plane. Unlocked ~5 min afterwards.
+      // entirely. Verified LOCALLY, so it still works on a plane.
       // A guest has no PIN and meets the arithmetic gate instead (`config/guestAdultGate.ts`).
+      //
+      // **`force: true` — THE DOOR ASKS EVERY TIME** (owner, 2026-09-05: *"it is gated first time but
+      // not consecutively. it need to be pin gated always"*). `requirePin` normally short-circuits
+      // inside the ~5-minute adult unlock window, so the second open within five minutes let anyone
+      // straight in. That window is right for repeated actions INSIDE the surface — the adult already
+      // proved themselves to get there, and HIG's "people often adjust related settings more than once"
+      // is why it exists — and wrong for the DOOR, which is now a row one tap from the child's own name
+      // pill on home. A five-minute hole in a parental gate on a child-facing surface is not a gate.
+      // The verifier is unchanged (LOCAL), so this still works offline.
       if (auth) {
-        const ok = await auth.requirePin('adultMenu')
+        const ok = await auth.requirePin('adultMenu', { force: true })
         // Cancelled: the capture is still in flight and is simply thrown away.
         if (!ok) return
       }

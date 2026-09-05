@@ -6,7 +6,7 @@
 //
 // Honest scope, stated because it is smaller than it sounds: with the blocking primer gone there is no
 // first-run modal left for this flag to suppress. Its two real jobs are
-//   1. the "Lyd har virket på denne enhed" line in "Til de voksne" → Lyd, so the adult can tell
+//   1. the "Lyd har virket på denne enhed" line in "Indstillinger" → Lyd, so the adult can tell
 //      "never worked here" from "worked and then stopped"; and
 //   2. a field in the bug report.
 //

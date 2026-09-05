@@ -112,7 +112,7 @@ the Ogg audio that silenced the app twice. Banned outright, guarded by `idleMoti
 `src/config/perfProfile.ts` is the ONE place the rendering profile branches, read by four files. It exists
 because **you cannot type a query parameter into a standalone PWA**: it is the only way to A/B the two
 rendering paths ON the child's iPad, and the only way to back out of a regression without a deploy.
-Persisted as `settings.smoothGraphics`, surfaced in "Til de voksne" → Udseende.
+Persisted as `settings.smoothGraphics`, surfaced in "Indstillinger" → Udseende.
 
 - **PERMANENT** (owner, 2026-08-05, stated twice). Don't re-litigate it and don't delete the legacy path
   in a tidy-up.

@@ -171,7 +171,7 @@ const AUDIO_TRIGGER = `(async()=>{const sleep=ms=>new Promise(r=>setTimeout(r,ms
               '[aria-label="Snak med figuren"]'];
  let used=null;
  for(const s of cands){const e=document.querySelector(s); if(e){e.click(); used=s; break}}
- if(!used){const skip=/Til de voksne|Tilbage|Min Bog|Luk|Hjem/i;
+ if(!used){const skip=/Indstillinger|Tilbage|Min Bog|Luk|Hjem/i;
   const b=[...document.querySelectorAll('button')].find(x=>!skip.test(x.getAttribute('aria-label')||x.textContent||''));
   if(b){b.click(); used='first-content-button'}}
  await sleep(4500);

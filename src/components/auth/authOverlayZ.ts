@@ -29,6 +29,20 @@
 // z-index. The cue it replaced used to be a full-screen modal at 9999; the cue itself is non-blocking
 // and deliberately sits BELOW MUI's modal tier, so it is nowhere near this stack.)
 export const AUTH_Z = {
+  /**
+   * "Hvem spiller?" reopened MID-SESSION from the profile chip (Corner identity PRD-01 §2.6).
+   *
+   * **Deliberately MUI's own modal default, i.e. NOT in the stack below.** It is not a gate and it is
+   * not onboarding: it is a plain dialog opened from the page's title row, and it is reachable only
+   * when none of these surfaces is up — the chip renders nothing until a child is attached, and every
+   * surface below blocks play. It sits here so a reader finds the reasoning where they look for it,
+   * and so the directory sweep in `authOverlayZ.test.ts` (every `<Dialog>` in this folder names an
+   * `AUTH_Z`) can't be satisfied by a hand-written 1300.
+   *
+   * It closes BEFORE the adult surface opens, so the two never stack; if that ever stops being true,
+   * this is the value to raise, not `AdultSettings`'.
+   */
+  whoIsPlayingSheet: 1300,
   /** The gate itself. 9999 is the app's top blocking tier — nothing else claims it. */
   lockScreen: 9999,
   /** "Hvem spiller?" — above the gate, because it appears just INSIDE it. */

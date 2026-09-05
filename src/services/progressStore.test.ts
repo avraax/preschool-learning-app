@@ -3,7 +3,7 @@
 // Runs on the Node built-in test runner with type-stripping: `npm test` (Node ≥22.18). The store is
 // importable outside a browser on purpose — its localStorage access is try/catch-guarded and its
 // lifecycle hooks are `typeof window` gated — so these tests exercise the REAL singleton, not a mock
-// of it. `resetAll()` between tests gives each case a clean book while preserving settings.
+// of it. `resetAll('adult-confirmed')` between tests gives each case a clean book while preserving settings.
 import { test, before, beforeEach } from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
@@ -60,7 +60,7 @@ before(() => {
 })
 
 beforeEach(() => {
-  progressStore.resetAll()
+  progressStore.resetAll('adult-confirmed')
 })
 
 test('a fresh book: nothing collected, the first prize is previewed', () => {
@@ -228,7 +228,9 @@ test('book completion fires exactly once, on the LAST slot of the last chapter',
   assert.equal(grants[0].bookCompleted, true)
   assert.equal(grants[0].chapterCompleted, true) // the last slot also closes the last chapter
   assert.equal(progressStore.rewardNumber(), REWARD_SLOTS)
-  // Book full → no silhouette to preview (the ring shows its full-book sparkle instead).
+  // Book full → nothing left to preview. (The ring no longer reads this at all — its centre is the
+  // child's own book at every point on the path, Corner identity PRD-01 §2.2 — but `nextReward()` is
+  // still what Min Bog's single glowing `next` slot and `owedRewards()`'s clamp key off.)
   assert.equal(progressStore.nextReward(), null)
   assertInvariant()
 })
@@ -319,7 +321,7 @@ test('markBrowsed: a browse item pays out ONCE EVER, per section', () => {
   assert.deepEqual(progressStore.get().progression.explored.alphabet, ['A', 'B'])
   assert.deepEqual(progressStore.get().progression.explored.math, ['A'])
   // resetAll clears it, so a reset child re-earns the browse XP.
-  progressStore.resetAll()
+  progressStore.resetAll('adult-confirmed')
   assert.equal(progressStore.markBrowsed('alphabet', 'A'), true)
 })
 
@@ -334,7 +336,7 @@ test('browse XP is flat and section-attributed, never the round-normalised amoun
 test('grantTaskXp: tasksInRound defaults to 8 and never depends on difficulty', () => {
   progressStore.setDifficulty({ global: 'svaer' })
   const hard = progressStore.grantTaskXp('alphabet.quiz', { firstTry: true }).granted
-  progressStore.resetAll() // preserves settings
+  progressStore.resetAll('adult-confirmed') // preserves settings
   progressStore.setDifficulty({ global: 'let' })
   const easy = progressStore.grantTaskXp('alphabet.quiz', { firstTry: true }).granted
   assert.equal(hard, easy)
@@ -372,7 +374,7 @@ test('resetAll: clears the book and the level, preserves settings (PRD D8)', () 
   progressStore.grantPendingRewards()
   assert.ok(progressStore.collectedCount() > 0)
 
-  progressStore.resetAll()
+  progressStore.resetAll('adult-confirmed')
   assert.equal(progressStore.collectedCount(), 0)
   assert.equal(progressStore.globalLevel(), 1)
   assert.equal(progressStore.get().totals.totalStickers, 0)

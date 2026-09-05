@@ -4,7 +4,7 @@
 // adult area: `requirePin` routes `adultMenu` to the LOCAL verifier, the local verifier is cached only
 // after a successful ONLINE verify (`.claude/rules/auth.md`), and a guest has never had a session — so
 // the PIN path falls through to the server, which has no account to check against. A guest could
-// therefore never open "Til de voksne" at all: no difficulty, no sound settings, no bug report, no
+// therefore never open "Indstillinger" at all: no difficulty, no sound settings, no bug report, no
 // privacy links, and no way to sign in. That would make the guest path PARTIAL, which is exactly the
 // residual rejection risk the App Store PRD names in §5 item 3.
 //

@@ -42,7 +42,7 @@ whole reason for the second icon.
 
 **Three ways to tell them apart, in increasing effort**: the icon's name; the badge in the top-left
 corner (which prints the *origin the build actually calls*, so a mislabelled build is impossible); and
-"Til de voksne" → the version chip in the rail footer, which now carries the backend host on **every**
+"Indstillinger" → the version chip in the rail footer, which now carries the backend host on **every**
 tier — that is how a production binary answers the question, since it has no badge.
 
 **The icons are near-identical, and that is unresolved.** Whether it confuses the child in daily use is

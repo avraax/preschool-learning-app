@@ -106,6 +106,29 @@ export const installDevRewards = async (): Promise<void> => {
   if (!DEV) return
   const raw = readParams().get('rewards')
   if (raw == null) return
+  // **IT ONLY SEEDS A STAND-IN CHILD.** `?rewards=` calls `resetAll()` unconditionally below, and
+  // `resetAll()` is destructive in the one way nothing can undo: it bumps `sync.epoch`, and
+  // `api/progress.ts` treats a higher epoch as a DECLARED RESET that wins wholesale, so the server
+  // mirror is overwritten and no other device can restore the book either.
+  //
+  // That happened to a real child — `Sejer`, 2026-09-05, on a signed-in local dev session. The row was
+  // found at `epoch: 1`, `grantedSlots: 0`, and the epoch is the fingerprint: nothing else in the app
+  // bumps it, and a fresh document starts at 0. The other caller of `resetAll()` is the adult
+  // "Nulstil fremgang", which costs a PIN and typing `NULSTIL`; this one cost a query string that a
+  // person can paste, bookmark or simply leave in the address bar across a reload.
+  //
+  // The DEV bypass is the right fence because it decides WHO is attached: `?nogate=1` / `?noauth=1`
+  // attach the stand-in `dev-local` (`profileStore`'s bypass roster), so a seed can only ever land in
+  // a throwaway book. Every `ui-screenshot` recipe and `sweep.mjs` already pass `?nogate=1`, so this
+  // narrows nothing that was ever used deliberately — it only removes the way to do it by accident.
+  // Guarded by `devHarness.test.ts`.
+  if (!devNoAuth()) {
+    console.warn(
+      '[dev] ?rewards= ignored: it wipes the attached child’s book (resetAll bumps sync.epoch, which ' +
+        'the server treats as a declared reset). Add ?nogate=1 to seed the stand-in child instead.',
+    )
+    return
+  }
   const { progressStore } = await import('../services/progressStore')
   const { xpForSlots } = await import('../config/progression')
   const { REWARD_SLOTS } = await import('../config/stickers')
@@ -116,7 +139,7 @@ export const installDevRewards = async (): Promise<void> => {
   // Seeding past the end is allowed and must be INDISTINGUISHABLE from a full book — that's the
   // end-of-book state the verification walk checks at ?rewards=72 vs ?rewards=90.
   const want = Math.max(0, Math.min(REWARD_SLOTS * 2, Math.floor(Number(raw) || 0)))
-  progressStore.resetAll()
+  progressStore.resetAll('dev-harness')
   if (want === 0) return
   progressStore.grantXp('alphabet', xpForSlots(want))
   progressStore.grantPendingRewards()

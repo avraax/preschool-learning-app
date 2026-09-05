@@ -77,7 +77,7 @@ exported as `MASCOT_CORNER_SIZE` so a layout reserves it rather than re-measurin
 plays a per-world bed on **menu surfaces only** (home + the 5 section menus + `/album`) **and only once the
 auth/profile gate has opened**; entering a game/browse screen fades it out so narration + SFX own the mix.
 It is a **separate channel** from TTS and SFX — never routed through `SimplifiedAudioController` — and it
-honours the Musik switch in "Til de voksne" → Lyd (`progressStore.settings.musicEnabled`).
+honours the Musik switch in "Indstillinger" → Lyd (`progressStore.settings.musicEnabled`).
 
 **The gate half cannot be inferred from the route, and it is not a special case.** `AppThemeProvider` starts
 the bed and sits ABOVE `AuthGate` in `main.tsx`, and the lock screen lives at `/`, which IS a menu path — so

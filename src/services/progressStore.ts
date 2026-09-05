@@ -60,6 +60,7 @@ import {
   totalXp,
   bloomXpFor,
   type PersistedProgress,
+  type ResetReason,
   type SyncMeta,
 } from '../config/progressSchema.ts'
 import { mergeProgress, type MergeReport } from '../config/progressMerge.ts'
@@ -675,13 +676,32 @@ class ProgressStore {
    *
    * NOTE it is now PER CHILD, and it bumps `sync.epoch`: without that, the next pull resurrects
    * everything, because no monotone join can express a deletion (§6.2c).
+   *
+   * **THE `reason` IS A FENCE, NOT A LOG LINE** (2026-09-05). This is the most destructive call in the
+   * app and its blast radius is invisible from the call site: the epoch bump makes `api/progress.ts`
+   * treat the empty document as a DECLARED RESET that wins wholesale, so the deletion propagates to the
+   * server and to every other device, and no copy anywhere can restore it.
+   *
+   * It destroyed a real child's book (`Sejer`, 2026-09-05) through the dev harness's `?rewards=` seed —
+   * a query string, on a signed-in session, with no confirmation of any kind. The deliberate path is
+   * unchanged and stays: an adult passes the parental gate, reaches `Farligt for {navn}` and types
+   * `NULSTIL`. What changed is that a caller must now SAY which of those it is, and the store refuses
+   * the harness reason on any profile that is not a DEV stand-in — so the fence cannot be forgotten by
+   * a future caller the way the old one was, because it does not live at the call site any more.
    */
-  resetAll(): void {
+  resetAll(reason: ResetReason): void {
     if (!this.isAttached()) {
       if (import.meta.env?.DEV) console.warn('[progress] resetAll while detached — dropped')
       return
     }
     const prev = this.persisted!
+    // The harness may only ever wipe a stand-in child. `profileStore`'s DEV bypass roster is
+    // `dev-local` plus `dev-local-<n>`, and nothing else can carry that shape: a real profile id is a
+    // 32-char server-generated string.
+    if (reason === 'dev-harness' && !/^dev-local(-\d+)?$/.test(prev.profileId ?? '')) {
+      console.warn(`[progress] refusing a harness reset of a real child (${prev.profileId})`)
+      return
+    }
     // "Nulstil fremgang" means everything this child has built up on the device, so it takes the
     // practice ledger with it (Practice Loop PRD-01 W2) — otherwise a reset book still re-asks the
     // letters the previous run got wrong. Settings survive; a miss record is not a preference.

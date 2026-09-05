@@ -35,6 +35,10 @@ export const THEME_HINT_KEY = 'bornelaering-theme'
 
 export const progressKeyFor = (profileId: string): string => `bornelaering-progress:${profileId}`
 
+/** Who is asking for a reset — see `progressStore.resetAll`. The store refuses the harness reason
+ *  on any profile that is not a DEV stand-in, so the fence cannot be forgotten at a call site. */
+export type ResetReason = 'adult-confirmed' | 'dev-harness'
+
 // ----- The read model (unchanged shape — moved here so both halves share one definition) ---------
 
 export type DifficultyLevel = 'let' | 'normal' | 'svaer'

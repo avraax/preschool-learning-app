@@ -140,7 +140,7 @@ LAVET TIL BØRN
 • Al tale er dansk, syntetisk og lavet på forhånd, så spillene virker uden internet
 
 FOR DE VOKSNE
-I de voksnes område kan du vælge sværhedsgrad, oprette flere børneprofiler, læse hvad appen sender hvorhen, og slå mikrofonspillet til eller fra. Området er beskyttet af en opgave, et barn ikke kan løse. Mikrofonen er slået fra som standard, og mikrofonspillet kræver både en konto og internet. Synkronisering mellem enheder kræver også en konto.
+Under "Indstillinger" kan du vælge sværhedsgrad, oprette flere børneprofiler, læse hvad appen sender hvorhen, og slå mikrofonspillet til eller fra. Området er beskyttet af en opgave, et barn ikke kan løse. Mikrofonen er slået fra som standard, og mikrofonspillet kræver både en konto og internet. Synkronisering mellem enheder kræver også en konto.
 
 Appen er skrevet til en 5-årig dreng af hans far. Den passer til børn fra omkring 5 år, gennem børnehaveklassen og ind i 1. klasse.
 ```
@@ -321,7 +321,7 @@ seconds: what it is, the breadth, the reward, the adult control.
 3. **A math game mid-round** — the ten-frame or the counting objects, showing something countable.
 4. **A colour game** — carries the most visual appeal of any screen in the app.
 5. **The Reward Book** — collected stickers. This is the shot that explains the progression model.
-6. **"Til de voksne"** — the adult pane, showing difficulty and the microphone switch. Signals to a parent
+6. **"Indstillinger"** — the adult pane, showing difficulty and the microphone switch. Signals to a parent
    that they are in control, and pre-empts a reviewer wondering where the parental gate is.
 
 **Capture commands.** Use the existing harness rather than anything new

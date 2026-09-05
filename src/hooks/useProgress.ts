@@ -59,7 +59,10 @@ export const useProgress = (): UseProgress => {
     [],
   )
   const markStickersSeen = useCallback(() => progressStore.markStickersSeen(), [])
-  const resetAll = useCallback(() => progressStore.resetAll(), [])
+  // `'adult-confirmed'` is the ONLY reason this hook may pass: the hook is reachable from any
+  // component, so it is a call site, not a fence. The store refuses the harness reason on a real
+  // child regardless — see `progressStore.resetAll`.
+  const resetAll = useCallback(() => progressStore.resetAll('adult-confirmed'), [])
 
   const grantXp = useCallback(
     (section: SectionId, amount: number) => progressStore.grantXp(section, amount),

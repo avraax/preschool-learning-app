@@ -68,7 +68,7 @@
     // Third tier: Hvilken Farve's answers are plain 92x92 `cursor:pointer` DIV swatches — no
     // `data-answer-tile`, no draggable role — so a tiles-then-draggables set drove 0 advances there and
     // read as a broken game. Exclude app chrome by aria-label so the back button is never "answered".
-    const CHROME = /Til de voksne|Tilbage|Min Bog|Hør igen|Tryk på figuren|Snak med figuren|Luk|Hjem/i
+    const CHROME = /Indstillinger|Tilbage|Min Bog|Hør igen|Tryk på figuren|Snak med figuren|Luk|Hjem/i
     const candidates = () => {
       const tiles = [...document.querySelectorAll('[data-answer-tile]')]
       if (tiles.length) return tiles

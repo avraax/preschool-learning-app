@@ -3,7 +3,6 @@ import { Box } from '@mui/material'
 import { useTheme, alpha } from '@mui/material/styles'
 import { backendLabel } from '../../config/backendTarget'
 import { ADULT_FONT } from '../../theme/adultTheme'
-import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 
 // WHICH BACKEND AM I LOOKING AT, from across the room (Staging PRD W3 / §4.2).
 //
@@ -36,19 +35,23 @@ const BackendBadge: React.FC = () => {
       data-backend-badge={label}
       sx={{
         position: 'fixed',
-        // BELOW the back button's row, not on it. Top-left is the obvious corner for this, but it is
-        // also where every game and menu puts "Tilbage" — GameShell pads by `safe-area + 8px`, its
-        // toolbar adds `py: 2`, and the button is 48px, so the back button's bottom edge measures at
-        // 80px on iPad landscape. 88 clears it by 8 and still reads as the top-left corner. Measured
-        // at 1024×768, 768×1024, 844×390 and 667×375; `pointerEvents: 'none'` covers the rest.
-        top: 'calc(env(safe-area-inset-top, 0px) + 88px)',
-        // PHONE LANDSCAPE SHORTENS THE HEADER, so the iPad number strands the pill in open sky. The
-        // header measures 8→60 here against 8→96 on iPad landscape (both at `/alphabet/quiz`), and on
-        // home the logo row ends at 50 — so 88 left a ~28px gap and the pill read as a floating
-        // object attached to nothing. Owner report 323FF, from an iPhone at 844×390. 64 clears the
-        // 58px back button by 6 and tucks under the logo row, same as 88 does on iPad.
-        [PHONE_LANDSCAPE]: { top: 'calc(env(safe-area-inset-top, 0px) + 64px)' },
-        left: 'calc(env(safe-area-inset-left, 0px) + 6px)',
+        // BOTTOM-RIGHT (owner, 2026-09-05). It lived top-left, tucked under the back button, and the
+        // whole top row is now spoken for on every surface: brand or back button on the left, the
+        // reward ring and the child's name pill on the right. A technical string wedged into a row a
+        // five-year-old reads is the wrong neighbourhood for it — this belongs to the adult, and an
+        // adult looks for build information at an edge, not in the chrome.
+        //
+        // BOTTOM-RIGHT SPECIFICALLY, not bottom-left: the corner mascot lives bottom-LEFT on home and
+        // on every game that shows one (`MASCOT_CORNER_SIZE`), and it is the one page element with a
+        // reserved footprint down there. Nothing claims the bottom-right corner on any surface — the
+        // game boards are centred in a flex column and Min Bog's grid is `maxWidth="md"` centred, so
+        // this sits over the world rather than over content, which is what `pointerEvents: 'none'`
+        // has always covered.
+        //
+        // The old top values are gone with the position: they existed to clear the back button's row
+        // (88px on iPad, 64 on phone landscape, both measured), and there is nothing to clear here.
+        bottom: 'calc(env(safe-area-inset-bottom, 0px) + 6px)',
+        right: 'calc(env(safe-area-inset-right, 0px) + 6px)',
         // Same tier as the update pill: below the adult corner button (1001) and below every modal, so
         // it never competes with a surface someone is actually using.
         zIndex: 1000,

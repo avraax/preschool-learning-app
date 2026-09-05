@@ -86,7 +86,9 @@ Then **view a saved PNG with the Read tool** (it renders images).
   **not a secret** — the prompt states its own question, so one eval reads it and answers it:
 
   ```js
-  document.querySelector('[aria-label="Til de voksne"]').click()      // the avatar IS the door
+  document.querySelector('[data-profile-chip]').click()                 // the name pill opens the sheet
+  // …then, one frame later:
+  document.querySelector('[aria-label="Indstillinger"]').click()        // the labelled row IS the door
   // …poll for [data-guest-gate-prompt] → "Hvor meget er 4 × 8?"
   const [, a, b] = prompt.textContent.match(/(\d+)\s*[×x*]\s*(\d+)/)
   for (const d of String(a * b)) document.querySelector(`[data-guest-gate-key="${d}"]`).click()

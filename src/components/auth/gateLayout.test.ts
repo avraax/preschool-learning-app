@@ -132,17 +132,27 @@ test('the gate is never gated on the bug-report screenshot', () => {
   // `requirePin` cost a cold snapdom import + a full-document computed-style walk + an embedFonts
   // rasterise (~0.9s by its own measurement) before the modal could paint.
   // Re-pointed 2026-08-09: the gear is deleted and `AdultCorner.tsx` became `AdultSurface.tsx`, which
-  // owns the gate + capture but has no trigger. The trigger is `ProfileBadge` (the child's avatar), so
-  // the warm-on-press half of this assertion lives with the press now.
+  // owns the gate + capture but has no trigger. Re-pointed again 2026-09-05 (Corner identity PRD-01):
+  // the trigger stopped being the child's avatar and became the "Indstillinger" ROW inside
+  // `WhoIsPlayingSheet`, so the warm-on-press half of this assertion follows the press there.
   const code = codeOf('components/adult/AdultSurface.tsx')
   assert.doesNotMatch(
     code,
     /await\s+captureScreenshot/,
     'the adult surface waits for the capture again — the gate cannot paint until it finishes',
   )
-  assert.match(code, /requirePin\('adultMenu'\)/, 'the adult gate is gone from the adult surface')
+  // `force: true` — the door must ASK EVERY TIME. `requirePin` otherwise short-circuits inside the
+  // ~5-minute adult unlock window, so the second open within five minutes let anyone straight in
+  // (owner, 2026-09-05: "it is gated first time but not consecutively"). That window is right for
+  // repeated actions INSIDE the surface and wrong for the door, which is a row one tap from the
+  // child's own name pill. A five-minute hole in a parental gate is not a gate.
   assert.match(
-    codeOf('components/common/ProfileBadge.tsx'),
+    code,
+    /requirePin\('adultMenu', \{ force: true \}\)/,
+    'the adult door honours the 5-minute unlock window again — a second open would ask nothing',
+  )
+  assert.match(
+    codeOf('components/auth/WhoIsPlayingSheet.tsx'),
     /onPointerDown=\{warmScreenshot\}/,
     'the snapdom chunk is no longer warmed on press',
   )

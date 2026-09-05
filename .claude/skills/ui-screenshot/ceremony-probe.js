@@ -36,7 +36,7 @@
         .map((e) => (e.textContent || '') + ((e.querySelector('img') || {}).src || '')).join('|')
       return `${(p && p.textContent) || ''}|${tiles}`
     }
-    const CHROME = /Til de voksne|Tilbage|Min Bog|Hør igen|Luk|Hjem/i
+    const CHROME = /Indstillinger|Tilbage|Min Bog|Hør igen|Luk|Hjem/i
     const candidates = () => {
       const tiles = [...document.querySelectorAll('[data-answer-tile]')]
       if (tiles.length) return tiles

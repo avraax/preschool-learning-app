@@ -7,7 +7,6 @@ import Mascot from './Mascot'
 import BackButton from './BackButton'
 import CelebrationEffect from './CelebrationEffect'
 import RewardRing from './RewardRing'
-import ProfileBadge from './ProfileBadge'
 import { getCategoryTheme } from '../../config/categoryThemes'
 import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 import { mascotBus } from '../../services/mascotBus'
@@ -32,15 +31,15 @@ interface GameShellProps {
   // soft chime are all gone (Endless Play PRD-01 D4), because the ceremony now fires in-game at the
   // seam and is the entire announcement.
   //
-  // This corner holds the ring and the static `ProfileBadge`, and NOTHING THAT MEASURES PERFORMANCE.
+  // This corner holds THE RING AND NOTHING ELSE (Corner identity PRD-01 §2.5), which is where it
+  // started: the static `ProfileBadge` that shared it for a month is deleted, and identity is a pill in
+  // the title row on the surfaces that have one (home, the section menus, Min Bog) and absent here.
   // There used to be a `score` slot here holding a `ScoreChip` — a pill of one pip per question in the
   // round — and every game passed one. It was a SECOND progress meter inches from the first, with
   // nothing on screen to say that one counts this round and the other counts the whole book; and eight
   // identical pips is past the subitizing limit (4-5), so it invited counting rather than reading.
   // Owner removed it, 2026-08-02; play is endless now, so there is no round for a second meter to
-  // count. The badge is allowed here (owner, 2026-08-09) precisely because it measures nothing — it is
-  // a portrait and a letter, static, untappable. Do not reintroduce a header SLOT: the flag below
-  // governs both, so a game that opts out of the ring opts out of the badge with it.
+  // count. Do not reintroduce a header SLOT of any kind.
   levelIndicator?: boolean
   guideReaction?: GuideReaction      // 'cheer' on correct, 'think' on wrong (bridged to mascotBus)
   celebration?: { show: boolean; intensity?: 'low' | 'medium' | 'high'; duration?: number; onComplete?: () => void }
@@ -137,9 +136,19 @@ const GameShell: React.FC<GameShellProps> = ({
             </Typography>
           )}
 
-          {/* Right cluster: the live cross-game reward ring (Liveliness PRD-04), alone. It reads the
-              shared store so it keeps climbing across games; phone-landscape gets a smaller,
-              flyer-less variant so it never fights the inline title row.
+          {/* Right cluster: THE BOOK, ALONE — the live cross-game reward ring (Liveliness PRD-04)
+              with the child's own book at its centre. It reads the shared store so it keeps climbing
+              across games; phone-landscape gets a smaller, flyer-less variant so it never fights the
+              inline title row.
+
+              **NO IDENTITY ELEMENT IN GAME** (Corner identity PRD-01 §2.5). The static `ProfileBadge`
+              that used to sit outermost here is deleted, and identity does not come back as a chip:
+              nobody needs telling who they are mid-round, this is the surface where real estate matters
+              most, and it retires a cost this file recorded against itself — *"the untappable badge now
+              occupies the corner the tappable ring used to hold, so a child aiming at the far corner
+              for Min Bog hits a dead disc."* The book takes the corner back. The adult door leaves the
+              in-game header with it, which is intended: nobody opens settings mid-round, and backing
+              out is one tap on the back button already in this header.
 
               The ring is a door to Min Bog HERE TOO (owner, 2026-08-03: "clickable and work on all
               pages"). It used to be pure status in games, on the reasoning that a stray tap mid-play
@@ -149,20 +158,12 @@ const GameShell: React.FC<GameShellProps> = ({
               lost. */}
           <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, md: 1.5 } }}>
             {levelIndicator && (
-              <>
-                <RewardRing
-                  compact={phoneLandscape}
-                  size={phoneLandscape ? 34 : 46}
-                  onTap={() => navigateWithTransition('/album')}
-                  ariaLabel="Min Bog"
-                />
-                {/* Who is playing, OUTERMOST (owner, 2026-08-09) — identity is the corner element, the
-                    way Khan Academy Kids and Netflix Kids place it. It shipped on the ring's left and
-                    the owner reversed it. The cost, recorded so nobody "fixes" it back: the untappable
-                    badge now occupies the corner the tappable ring used to hold, so a child aiming at
-                    the far corner for Min Bog hits a dead disc. Same size, static, untappable. */}
-                <ProfileBadge size={phoneLandscape ? 34 : 46} />
-              </>
+              <RewardRing
+                compact={phoneLandscape}
+                size={phoneLandscape ? 34 : 46}
+                onTap={() => navigateWithTransition('/album')}
+                ariaLabel="Min Bog"
+              />
             )}
           </Box>
         </Toolbar>

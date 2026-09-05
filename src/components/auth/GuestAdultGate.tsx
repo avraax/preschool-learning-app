@@ -112,7 +112,7 @@ const GuestAdultGate: React.FC<{
       onClose={() => onResolve(false)}
       maxWidth="xs"
       fullWidth
-      aria-label="Til de voksne"
+      aria-label="Indstillinger"
       // Same reason as PinDialog: this can be demanded over surfaces that are fixed boxes at ~10 000,
       // far above a MUI Dialog's default 1300.
       sx={{ zIndex: AUTH_Z.pin }}
@@ -144,7 +144,7 @@ const GuestAdultGate: React.FC<{
               question it names — it read as a stray caption on the pad. */}
           <Box sx={{ flex: '0 0 auto', [PHONE_LANDSCAPE]: { flex: '0 1 auto', maxWidth: 200 } }}>
             <Typography sx={{ textAlign: 'center', fontWeight: 700, fontSize: '1.05rem', mb: 0.5 }}>
-              Til de voksne
+              Indstillinger
             </Typography>
             <Typography
               sx={{

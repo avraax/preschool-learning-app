@@ -5,7 +5,7 @@ description: Fetch and debug production, staging/TestFlight or local bug reports
 
 # Debug a bug report
 
-Reports are created in-app ("Til de voksne" corner menu → "Rapportér et problem") or auto-uploaded
+Reports are created in-app ("Indstillinger" → "Rapportér et problem") or auto-uploaded
 on crashes. Each has a short id like `R7K3F`. Storage: each deployed tier = its OWN Vercel Blob store
 via `api/bug-report.ts`; local dev = `.bug-reports/<date>/<id>/` on disk via `dev-server.js`.
 

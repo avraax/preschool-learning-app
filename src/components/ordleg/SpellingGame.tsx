@@ -454,7 +454,7 @@ const SpellingGame: React.FC = () => {
   }
 
   // Live difficulty (Difficulty PRD-01 W5): pick a fresh word at the new level when the adult changes
-  // it in the "Til de voksne" menu — no refresh. Every other calibrated game already had this effect;
+  // it in the "Indstillinger" menu — no refresh. Every other calibrated game already had this effect;
   // Stav Ordet didn't, because it ignored the setting entirely. Skips the first mount.
   const difficultyLevel = useDifficulty('ordleg')
   const prevDifficultyRef = useRef(difficultyLevel)

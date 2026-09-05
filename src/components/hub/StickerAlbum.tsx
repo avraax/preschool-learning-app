@@ -4,7 +4,7 @@ import { useTheme } from '@mui/material/styles'
 import { PHONE_LANDSCAPE, PHONE_PORTRAIT } from '../../theme/phoneMedia'
 import { motion } from 'framer-motion'
 import BackButton from '../common/BackButton'
-import ProfileBadge from '../common/ProfileBadge'
+import ProfileChip from '../common/ProfileChip'
 import { REWARD_CHAPTERS, CHAPTER_COUNT, type Reward } from '../../config/stickers'
 import { CHAPTER_SIZE, chapterOfSlot } from '../../config/progression'
 import { collectedCountLine } from '../../config/danish-phrases'
@@ -156,13 +156,13 @@ const StickerAlbum: React.FC = () => {
           {/* Shared themed back button — reverses the wipe, consistent with every other surface. */}
           <BackButton to="/" variant="menu" />
 
-          {/* Whose book this is. It matters most HERE — the album is the one screen that is entirely
-              one child's property — so the badge sits OUTERMOST past the number, the same ordering
-              every other surface uses past the ring. Static and untappable; switching stays behind
-              the adult PIN. */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
+          {/* THE NUMBER, then WHOSE BOOK THIS IS — the same right-hand order every other surface uses
+              (owner, 2026-09-05), with the count standing in for the ring, which this screen has no
+              use for: you are already inside the book. Identity matters most here, because the album
+              is the one screen that is entirely one child's property. */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 3.5, minWidth: 0, [PHONE_LANDSCAPE]: { gap: 2.5 } }}>
             <StatPill label={`${totalCollected}`} icon={uiArt.book} accent={accent} />
-            <ProfileBadge size={44} />
+            <ProfileChip />
           </Box>
         </Toolbar>
       </AppBar>

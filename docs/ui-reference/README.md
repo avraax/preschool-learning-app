@@ -58,7 +58,7 @@ than empty; the rest of the set has an empty gauge because a fresh Chrome profil
 persistent rail (**Konto** / Læring / Lyd / Udseende / Privatliv — `Barn` and the old `Konto` merged
 into one `Konto` group on 2026-09-05, so these captures predate that) and a support footer. `overlays/phone/` is
 new: the adult area had never been captured at a phone size at all. Recipe for these:
-`--click '[aria-label="Til de voksne"]' --wait-for '.MuiDialog-paper' --settle 4500`, then
+`--click '[data-profile-chip]' --wait-for '[aria-label="Indstillinger"]' --click '[aria-label="Indstillinger"]' --wait-for '.MuiDialog-paper' --settle 4500`, then
 `--click '[data-rail-item=<group>]'` for a pane (on 844×390 the rail is only rendered at the root, so
 click `[aria-label="Tilbage"]` first).
 

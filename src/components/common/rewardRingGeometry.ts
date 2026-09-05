@@ -52,6 +52,38 @@ export const ringStroke = (size: number): number => Math.max(4, Math.round(size 
 /** Radius of the ring's centre-line (the path the stroke is painted along). */
 export const ringRadius = (size: number): number => (size - ringStroke(size)) / 2
 
+/** Clear diameter INSIDE the painted band — the space the centre art actually has. */
+export const innerClearDiameter = (size: number): number => size - 2 * ringStroke(size)
+
+/**
+ * Fraction of that clear space the centre art fills. Not tuned: it is "nearly all of it, with a hair
+ * of air so the art never optically touches the band".
+ */
+export const CENTRE_ART_FRAC = 0.9
+
+/**
+ * Box the centre art is drawn into (Corner identity PRD-01 §2.1).
+ *
+ * **It was `size * 0.52`, in the component**, which was the right size for a SILHOUETTE — an ink blob
+ * whose job was to be a dark shape inside a ring — and the wrong size for a full-colour object the
+ * child is supposed to recognise. `.claude/rules/scene-assets.md` has the reason in general form: *the
+ * element box is NOT the drawing, measure the INK.* The book is 512×325 of ink on a 556² canvas, so
+ * `objectFit: contain` delivers 92% of the box in width and **58% in height** — at `0.52 × 48` that is
+ * 23 × 15 px of actual drawing, floating inside 13px of empty ring. Two shipped bugs in this repo have
+ * exactly that shape (the Sammenlign crocodile, the math `=`), and neither looked like a bug: just art
+ * that read "too small", with nothing to point at.
+ *
+ * Deriving it from the CLEAR SPACE instead of from `size` is also what makes it correct at every
+ * shipped size rather than at one: the stroke is `0.1 · size` with a 4px floor, so the clear space is
+ * NOT a fixed fraction of `size` at the small end. At `size = 48` this is 34px — the size the PRD
+ * names — and the book's ink then sits 10px above centre at its lowest, clear of the count badge's top
+ * edge at 11.5px. `rewardRingGeometry.test.ts` asserts that clearance at every shipped size, because
+ * "the numeral sits on the book" is the one way this can go wrong and a screenshot at one size
+ * cannot see it.
+ */
+export const centreArtSize = (size: number): number =>
+  Math.round(innerClearDiameter(size) * CENTRE_ART_FRAC)
+
 /**
  * Diameter of the count badge.
  *

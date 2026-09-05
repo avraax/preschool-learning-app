@@ -18,7 +18,7 @@ import LivingCard from './LivingCard'
 import GameTileIcon from './GameTileIcon'
 import BackButton from './BackButton'
 import RewardRing from './RewardRing'
-import ProfileBadge from './ProfileBadge'
+import ProfileChip from './ProfileChip'
 import SceneObjectField, { type SceneFieldItem } from './scene/SceneObjectField'
 import { softShadow } from '../../theme/depth'
 import { idleFloat } from '../../theme/idleMotion'
@@ -117,10 +117,12 @@ const GameSelectionLayout: React.FC<GameSelectionLayoutProps> = ({
         elevation={0}
         sx={{ backgroundColor: 'transparent', flex: '0 0 auto', position: 'relative', zIndex: 3 }}
       >
+        {/* BACK + WHERE (left) · progress then WHO (right) — the same arrangement home uses, so the
+            child meets ONE header on every surface (owner, 2026-09-05). */}
         <Toolbar sx={{ minHeight: '56px !important', gap: 2, [PHONE_LANDSCAPE]: { minHeight: '44px !important' } }}>
           {/* Shared animated back button — reverses the themed wipe (PRD-02 §8). */}
           <BackButton to="/" variant="menu" />
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, flex: '0 0 auto', minWidth: 0 }}>
             {/* Soft-3D section icon (theme-constant) replaces the flat emoji. */}
             <Box
               component="img"
@@ -157,15 +159,21 @@ const GameSelectionLayout: React.FC<GameSelectionLayoutProps> = ({
 
           {/* The ring is on every section menu so progress is visible everywhere — and since Reward
               Horizon PRD-01 D3 it is also THE DOOR to Min Bog, on home and here. There is no second
-              entrance anywhere; the shelf that used to be one is deleted. */}
+              entrance anywhere; the shelf that used to be one is deleted. It is ALONE in this corner
+              again (§2.1): one circular control, the child's book at its centre. */}
           <Box sx={{ flexGrow: 1 }} />
-          <RewardRing
-            size={44}
-            onTap={() => navigateWithTransition('/album')}
-            ariaLabel={`Min Bog — ${rewardCount} klistermærker`}
-          />
-          {/* Who is playing, OUTERMOST — see GameShell's header for the ordering decision. */}
-          <ProfileBadge size={44} />
+          {/* 28px between the two, not 10 — see HomePage's header for why the gap is load-bearing.
+              The eye groups by RELATIVE proximity, so the separator has to beat the widest gap inside
+              either control or the pair reads as one compound thing. */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 3.5, flex: '0 0 auto', minWidth: 0, [PHONE_LANDSCAPE]: { gap: 2.5 } }}>
+            <RewardRing
+              size={44}
+              onTap={() => navigateWithTransition('/album')}
+              ariaLabel={`Min Bog — ${rewardCount} klistermærker`}
+            />
+            {/* WHO IS PLAYING, OUTERMOST — past the ring, in the corner. */}
+            <ProfileChip />
+          </Box>
         </Toolbar>
       </AppBar>
 

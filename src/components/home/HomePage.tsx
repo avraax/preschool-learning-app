@@ -12,7 +12,7 @@ import { sectionIconImages } from '../../assets/themes/icons'
 import { defaultHomeAnchors, SCENE_SECTION_ORDER } from '../../theme/tokens/helpers'
 import type { SceneSectionId } from '../../theme/tokens/types'
 import RewardRing from '../common/RewardRing'
-import ProfileBadge from '../common/ProfileBadge'
+import ProfileChip from '../common/ProfileChip'
 import ThemeMascot from '../common/ThemeMascot'
 import LivingCard from '../common/LivingCard'
 import SceneObjectField, { type SceneFieldItem } from '../common/scene/SceneObjectField'
@@ -184,10 +184,20 @@ const HomePage: React.FC = () => {
           [PHONE_LANDSCAPE]: { py: 0.75 },
         }}
       >
-        {/* Header row: brand lockup (left) + the reward ring (right). */}
+        {/* Header row: BRAND (left) · progress then WHO (right) — owner, 2026-09-05, after seeing both.
+            The intermediate arrangement put the chip alone in the left corner and centred the brand;
+            the owner asked for the wordmark back where an app's wordmark belongs and for identity at
+            the outer right, past the ring.
+            THIS RE-CREATES ADJACENCY, which the PRD named as the original defect — and it is fine now
+            for the reason the PRD itself gave: *"a PILL, never a circle… shape alone carries 'these are
+            different kinds of thing' for a child who cannot read either label."* What was wrong before
+            was two IDENTICAL DISCS at the same size going to two different places. A 44×81 pill wearing
+            a name beside a 52px circular gauge is not that, and `profileChip.test.ts` guards the shape
+            rather than the distance. Identity is OUTERMOST, the way Khan Academy Kids and Netflix Kids
+            place it, and it is the tappable one — so the far corner belongs to a real control again. */}
         <Box sx={{ position: 'relative', zIndex: 2, pointerEvents: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2, mb: { xs: 1.5, md: 2 }, [PHONE_LANDSCAPE]: { mb: 0.75 } }}>
-          <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1.25, md: 2 } }}>
+          <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5 }} style={{ minWidth: 0 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1.25, md: 2 }, flex: '0 0 auto' }}>
               <Box
                 component="img"
                 src={appLogo}
@@ -228,8 +238,17 @@ const HomePage: React.FC = () => {
               same corner, on every screen. Tapping it OPENS MIN BOG: the ring is the door (D3), which
               is why the tap no longer just speaks the count. The count is spoken on ARRIVAL in the book
               instead, where the numeral is actually on screen while it is read aloud. */}
-          <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5, delay: 0.15 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, md: 1.5 } }}>
+          <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5, delay: 0.15 }} style={{ minWidth: 0 }}>
+            {/* THE GAP IS LOAD-BEARING, not spacing (owner, 2026-09-05: *"there needs to be a bit more
+                distance… be sure it does not look like they are related somehow"*). At the 14px it
+                shipped with, the chip's haze plate almost touched the ring and the two read as one
+                compound control — the same reading the original two-disc corner produced, and shape
+                alone was not enough to break it at that distance. 28px (`gap: 3.5`) is twice the
+                widest gap INSIDE either control, which is what makes the pair read as two objects
+                rather than one: the eye groups by relative proximity, so the separator has to beat
+                the internal spacing, not merely exist. Phone landscape keeps 20 — the row is 844 wide
+                there and 28 starts pushing the title. */}
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: { xs: 2.5, md: 3.5 }, minWidth: 0, [PHONE_LANDSCAPE]: { gap: 2.5 } }}>
             {/* SHRINK THE RING WITH `size`, NEVER WITH `sx`. `size` is the ring's ONE dimension: the
                 svg, the badge geometry and the centre art are all derived from it, and only the outer
                 box takes `sx`. A phone-landscape `sx={{width:36,height:36}}` therefore left a 48–52px
@@ -242,10 +261,10 @@ const HomePage: React.FC = () => {
               onTap={() => navigateWithTransition('/album')}
               ariaLabel={`Min Bog — ${rewardsOwned} klistermærker`}
             />
-            {/* Who is playing, OUTERMOST — see GameShell's header for the ordering decision. It shares
-                the ring's ONE entrance animation rather than owning motion of its own: the badge is
-                static by construction, and two staggered fades in one corner reads as a wobble. */}
-            <ProfileBadge size={phoneLandscape ? 36 : immersive ? 52 : 48} />
+            {/* WHO IS PLAYING, OUTERMOST — past the ring, in the corner (owner, 2026-09-05). It shares
+                this ONE entrance animation rather than owning motion of its own: the chip is static by
+                construction, and two staggered fades in one corner reads as a wobble. */}
+            <ProfileChip />
             </Box>
           </motion.div>
         </Box>

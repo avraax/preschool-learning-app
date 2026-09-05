@@ -22,6 +22,8 @@ import {
   gaugeRotationDeg,
   badgeBottomOffset,
   badgeClearanceDeg,
+  centreArtSize,
+  innerClearDiameter,
 } from './rewardRingGeometry.ts'
 import { REWARD_SLOTS } from '../../config/stickers.ts'
 
@@ -120,4 +122,48 @@ test('the badge can never reach three digits, which the derived gap does NOT all
   // future chapter push crosses it, at which point the gap must be derived from the WIDTH, not the
   // diameter. Chapters 9-10 (Reward Pacing D8) would take it to 90 — still safe, deliberately close.
   assert.ok(REWARD_SLOTS < 100, `the book has ${REWARD_SLOTS} slots — the count badge is now a pill`)
+})
+
+// ─── The centre art (Corner identity PRD-01 §2.1) ─────────────────────────────────────────────────
+//
+// The silhouette it replaced was `size * 0.52` written straight into the component. That is a tuned
+// fraction of the WRONG quantity: the stroke has a 4px floor, so the clear space inside the band is not
+// a fixed fraction of `size` at the small end, and the art was floating in 13px of empty ring at the
+// large end. Both halves are now derived and both are asserted here rather than eyeballed once.
+
+/**
+ * The book's ink as a fraction of its box under `objectFit: contain` — 512×325 on a 556² canvas,
+ * measured from the committed WebP. Pinned here because the CLEARANCE assertion below depends on it:
+ * the box is square, but only the middle 58% of it is ever painted, and it is the painted part that
+ * can collide with the count badge. Re-export the art at a different crop and this number moves.
+ */
+const BOOK_INK_HEIGHT_FRAC = 325 / 556
+
+test('the centre art fills the ring, and never touches the band', () => {
+  for (const { size } of SHIPPED_RING_SIZES) {
+    const art = centreArtSize(size)
+    const clear = innerClearDiameter(size)
+    assert.ok(art <= clear, `size ${size}: centre art ${art} overflows the ${clear}px clear space`)
+    // …and it is not the timid 52%-of-size the silhouette used. Below ~80% of the clear space the art
+    // reads as "too small" with nothing to point at — the failure mode in `.claude/rules/scene-assets.md`.
+    assert.ok(art >= clear * 0.8, `size ${size}: centre art ${art} is small inside ${clear}px of space`)
+  }
+  // The size the PRD names, at the size home ships. Pinned as a literal so a ratio change is deliberate.
+  assert.equal(centreArtSize(48), 34)
+})
+
+test('the numeral never sits on the book', () => {
+  // The one way the bigger centre art can go wrong, and a screenshot at ONE size cannot see it: the
+  // count badge is seated with its CENTRE on the ring path, so its top edge is `r - badge/2` from the
+  // ring centre, while the art's lowest ink is `inkHeight/2`. The compact sizes are the tight ones —
+  // their 4px stroke floor leaves proportionally more clear space, so the art grows faster than the
+  // badge retreats.
+  for (const { size, compact } of SHIPPED_RING_SIZES) {
+    const badgeTop = ringRadius(size) - badgeSize(size, compact) / 2
+    const inkBottom = (centreArtSize(size) * BOOK_INK_HEIGHT_FRAC) / 2
+    assert.ok(
+      inkBottom < badgeTop,
+      `size ${size}: the book's ink reaches ${inkBottom.toFixed(1)}px, the badge starts at ${badgeTop.toFixed(1)}px`,
+    )
+  }
 })

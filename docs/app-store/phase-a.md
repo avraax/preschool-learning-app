@@ -28,7 +28,7 @@ The app opens playable with no account. Guideline 5.1.1(v).
   `progressSync` needed no guest branch: `canSync()` already requires a session token.
 - **A gap found and closed while building this.** `requirePin` routed a guest to the LOCAL verifier,
   which is only cached after an ONLINE verify — so it fell through to a server with no account and **a
-  guest could never open "Til de voksne" at all**: no difficulty, no sound, no bug report, no privacy
+  guest could never open "Indstillinger" at all**: no difficulty, no sound, no bug report, no privacy
   links, and no way to sign in. That is precisely the "guest path is partial" residual risk in PRD §5.3.
   The account-less gate is now an arithmetic challenge (`src/config/guestAdultGate.ts`), which is also
   what Apple means by a parental gate — "adult-level tasks", not a secret. Operands are 4–9 (so every
@@ -68,7 +68,7 @@ consent.
 ## A3 — Microphone consent gate (§3.6)
 
 Sig et Ord is **off by default and unreachable** until an adult consents, in the new **Privatliv** group
-in "Til de voksne" (behind the parental gate). Consent is device-scoped localStorage, never synced: a new
+in "Indstillinger" (behind the parental gate). Consent is device-scoped localStorage, never synced: a new
 iPad has not been consented to, and inheriting a `yes` through progress sync would be consent the adult
 never gave there.
 

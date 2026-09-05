@@ -1,8 +1,9 @@
-// The one way to open "Til de voksne", now that the trigger and the surface live in different trees.
+// The one way to open "Indstillinger", now that the trigger and the surface live in different trees.
 //
 // `AdultSurface` is mounted ONCE, globally, in `App.tsx` — it owns the PIN/arithmetic gate, the
-// screenshot capture and the lazy `AdultSettings` chunk. The trigger is `ProfileBadge`, which renders
-// inside each page's header chrome. A React context would have to wrap the router to reach it and
+// screenshot capture and the lazy `AdultSettings` chunk. The trigger is the "Indstillinger" row inside
+// `WhoIsPlayingSheet`, which the profile chip in each page's title row opens (it used to be the child's
+// avatar itself — see `ProfileChip`'s header for why that moved). A React context would have to wrap the router to reach it and
 // would re-render every page on each publish; the app already uses module-scope buses for exactly this
 // shape (`mascotBus`, `rewardBus`, `xpBus`), so this is one more.
 //
@@ -25,8 +26,8 @@ export const adultSurfaceBus = {
     }
   },
   /**
-   * Open the adult surface. A no-op before `AdultSurface` has mounted — the badge can render one frame
-   * earlier, and a tap in that window must do nothing rather than throw.
+   * Open the adult surface. A no-op before `AdultSurface` has mounted — the trigger can render one
+   * frame earlier, and a tap in that window must do nothing rather than throw.
    */
   open(): void {
     opener?.()

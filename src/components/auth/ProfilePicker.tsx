@@ -9,7 +9,7 @@
 // IT PICKS, AND THAT IS ALL IT DOES (§2.3 / §2.4). It used to carry a "Tilføj et barn" button wired
 // straight to `CreateProfileDialog` with NO gate of any kind — so a five-year-old at this screen could
 // create children on the account. Adding, renaming and deleting now live only behind the parental gate,
-// in "Til de voksne" → Konto → Børn, plus the mandatory first-run dialog `ProfileGate` still owns.
+// in "Indstillinger" → Konto → Børn, plus the mandatory first-run dialog `ProfileGate` still owns.
 // **Do not re-add a create affordance here.**
 //
 // Visual model: ThemePanel's selectable-tile grid — `role="group"`, `motion.button` with `aria-pressed`,
@@ -30,9 +30,28 @@ export interface ProfilePickerProps {
   activeProfileId: string | null
   /** Shown when an adult opened the picker deliberately, so they can back out. */
   onCancel?: () => void
+  /**
+   * Told that a child was picked, so a host that keeps the picker mounted can take it down.
+   *
+   * OPTIONAL, and the BOOT path deliberately passes nothing: `ProfileGate` unmounts this component by
+   * re-evaluating `profileGateSurface(account)` once a child is attached, which is the right shape
+   * there — the gate owns the question, not the picker. `WhoIsPlayingSheet` (the mid-session
+   * "Hvem spiller?", behind `requirePin('switchProfile')`) has no such derivation to lean on, and
+   * watching `activeProfileId` instead would hang forever when the adult re-picks the child who is
+   * ALREADY active — a no-op in the store, and a perfectly reasonable thing for a person to do.
+   *
+   * It is a NOTIFICATION, not a hook: the switch has already happened when this fires. Nothing here
+   * may be conditional on it, or the boot path (which passes no callback) would behave differently.
+   */
+  onPicked?: (id: string) => void
 }
 
-const ProfilePicker: React.FC<ProfilePickerProps> = ({ profiles, activeProfileId, onCancel }) => {
+const ProfilePicker: React.FC<ProfilePickerProps> = ({
+  profiles,
+  activeProfileId,
+  onCancel,
+  onPicked,
+}) => {
   const theme = useTheme()
   const [busy, setBusy] = useState(false)
 
@@ -41,7 +60,8 @@ const ProfilePicker: React.FC<ProfilePickerProps> = ({ profiles, activeProfileId
     setBusy(true)
     // Synchronous attach inside selectProfile → the next render already has the child's real book.
     profileStore.selectProfile(id)
-  }, [busy])
+    onPicked?.(id)
+  }, [busy, onPicked])
 
   return (
     <Box

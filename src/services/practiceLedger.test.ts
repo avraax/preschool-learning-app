@@ -103,17 +103,17 @@ test('the cap evicts the OLDEST-SEEN entries, not the most-missed', () => {
   assert.equal(practiceLedger.missesFor(pool, `item-${MAX_ENTRIES + 24}`), 1)
 })
 
-test('resetAll() takes the ledger with it', () => {
+test('resetAll takes the ledger with it', () => {
   // "Nulstil fremgang for {navn}" must not leave the app re-asking the letters the wiped run got wrong.
   progressStore.attach(KID)
   practiceLedger.recordAttempt('alphabet.quiz', 'Æ', false)
   practiceLedger.flush()
   assert.equal(practiceLedger.missesFor('alphabet.quiz', 'Æ'), 1)
 
-  progressStore.resetAll()
+  progressStore.resetAll('adult-confirmed')
 
   assert.equal(practiceLedger.missesFor('alphabet.quiz', 'Æ'), 0)
-  assert.ok(!(practiceKeyFor(KID) in disk), 'the ledger key survived resetAll()')
+  assert.ok(!(practiceKeyFor(KID) in disk), 'the ledger key survived resetAll')
 })
 
 test('clear(id) erases a child who is not the attached one (profile deletion)', () => {

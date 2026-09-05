@@ -173,7 +173,7 @@ test('the AI-voice disclosure reaches the ADULT SURFACE, not just the policy pag
   // App Store PRD §3.11 / B9. The policy page already says the voice is synthetic, but a privacy policy
   // is not where a parent looks — the obligation Microsoft's Code of Conduct writes is that parents can
   // "understand the role of synthetic media and make an informed decision", which means the sentence has
-  // to sit where the parent already is: the Privatliv group in "Til de voksne", beside the microphone
+  // to sit where the parent already is: the Privatliv group in "Indstillinger", beside the microphone
   // switch. So this pins the CONTENT and the RENDER SITE, because either one alone passes vacuously.
   assert.match(AI_VOICE_DISCLOSURE_DA.body, /kunstigt fremstillet|AI-genereret/)
   assert.ok(

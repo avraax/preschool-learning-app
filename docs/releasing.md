@@ -115,7 +115,7 @@ Ten of the twelve are one mechanical pass with `webkit.mjs`, using the shot list
 - **Playwright writes RGBA and App Store Connect wants RGB.** Check byte 25 of the PNG header is `2`
   after any capture, and convert with `ffmpeg -pix_fmt rgb24` if it is `6`.
 
-**All twelve are automatable now, including the two "Til de voksne" ones.** That used to be false, and
+**All twelve are automatable now, including the two "Indstillinger" ones.** That used to be false, and
 the reason it was false is worth keeping: solving the arithmetic parental gate crashes the *WebKit*
 target every time (four attempts, "Target crashed", at the moment the adult surface mounts), so the
 conclusion drawn was "capture those two on the iPad". It was a driver limit, not an app limit —
@@ -132,7 +132,7 @@ Three ways, in increasing effort:
 1. The icon's name — `Børnelæring` or `BL Staging`.
 2. The pill in the top-left corner. It prints the backend the build actually calls, so it is **absent
    only on production**. A mislabelled build is impossible.
-3. "Til de voksne" → the version chip at the bottom of the menu, which names the backend on every tier.
+3. "Indstillinger" → the version chip at the bottom of the menu, which names the backend on every tier.
    That is how the production app answers the question, since it has no pill.
 
 ## Open loose end

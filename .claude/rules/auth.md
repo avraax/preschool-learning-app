@@ -154,7 +154,7 @@ table, and our five (`childProfile`, `profileProgress`, `familyPin`, `pinAttempt
   shows. Do not "fix" it by pre-attaching a guess — that is a write to the wrong book waiting to happen.
   **The picker PICKS.** Its "Tilføj et barn" button is deleted: it opened `CreateProfileDialog` with no
   gate of any kind, so a child at that screen could add children to the account. Creating one now
-  happens only behind the parental gate (`Til de voksne` → `Konto` → `Børn`) or through the MANDATORY
+  happens only behind the parental gate (`Indstillinger` → `Konto` → `Børn`) or through the MANDATORY
   first-run dialog, which is a different surface and must stay un-gated — it is the only way into an
   account with no children, and a brand-new account may have no PIN yet.
   **`?devkids=<n>`** is how any of this is driveable: `?nogate=1` attaches ONE stand-in child, which is
@@ -294,7 +294,7 @@ was needed. Device-scoped flags in `utils/guestMode.ts`.
   recipe still passing. **Anything `hydrate` reads must be set at construction, never in `boot()`.**
 - **A guest has no PIN**, so `requirePin` routes to the local verifier, finds nothing cached (it is only
   written after an ONLINE verify), falls through to a server with no account — and locks the adult out
-  of "Til de voksne" entirely. The account-less gate is an arithmetic challenge
+  of "Indstillinger" entirely. The account-less gate is an arithmetic challenge
   (`src/config/guestAdultGate.ts`), which is also what Apple means by a parental gate.
 
 ## progressStore is INERT until a profile is attached

@@ -64,7 +64,7 @@ Checked against the article text (https://gdpr-info.eu/art-13-gdpr/, read 2026-0
 | Requirement | Status |
 |---|---|
 | 5.1.4(b) — a Kids Category app must include a privacy policy | met |
-| 5.1.1(i) — policy linked in ASC **and** in-app, easily accessible | met: `/privatliv` is a public URL and a pane in "Til de voksne" |
+| 5.1.1(i) — policy linked in ASC **and** in-app, easily accessible | met: `/privatliv` is a public URL and a pane in "Indstillinger" |
 | 5.1.1(i) — identify data collected, how, and all uses | met |
 | 5.1.1(i) — **equal-protection confirmation** for every third party | met, and pinned by a test |
 | 5.1.1(i) — retention/deletion and how to revoke consent | met |

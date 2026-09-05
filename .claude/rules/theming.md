@@ -14,7 +14,7 @@ Fully token-driven. Each theme (skin) = one `ThemeTokens` object in `src/theme/t
 `theme.customShadows`. **No styling values are hardcoded in components** — read them via `useTheme()` or
 `getCategoryTheme(id)`.
 
-The active skin is chosen at runtime in "Til de voksne" → **Udseende** (`panes/UdseendePane.tsx`) via
+The active skin is chosen at runtime in "Indstillinger" → **Udseende** (`panes/UdseendePane.tsx`) via
 `AppThemeProvider` (`src/theme/ThemeProvider.tsx`), persisted to `localStorage` and per-child through
 `progressStore.settings.themeId`.
 

@@ -1,4 +1,4 @@
-// The "Til de voksne" information architecture (Settings PRD-01 §3 + §12) — as DATA, so it can be
+// The "Indstillinger" information architecture (Settings PRD-01 §3 + §12) — as DATA, so it can be
 // guarded by a test.
 //
 // The repo has no jsdom and no component rendering, so the settings surface itself is unguardable.

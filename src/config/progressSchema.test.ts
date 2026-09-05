@@ -203,7 +203,7 @@ test('normalizePersisted never lets lastCelebratedLevel fall below 1', () => {
 
 // ---- Adult settings: the two ways a setting silently does nothing ------------------------------
 //
-// Both were found by a QA sweep of the whole "Til de voksne" surface (2026-09-05), and neither had
+// Both were found by a QA sweep of the whole "Indstillinger" surface (2026-09-05), and neither had
 // any coverage. The FIRST one has already shipped once: "Flydende grafik" persisted, read back in its
 // own unit test, and did nothing, because `normalizeSettings` builds a fresh object from
 // `defaultSettings()` and copies field by field — so a field it forgets is dropped on the next load.
@@ -285,4 +285,41 @@ test('every ProgressSettings field is either LWW-MERGED or declared device-local
   for (const f of DEVICE_LOCAL_SETTINGS) {
     assert.ok(fields.includes(f), `DEVICE_LOCAL_SETTINGS names "${f}", which is not a ProgressSettings field`)
   }
+})
+
+// ─── The one-character wipes (2026-09-05) ─────────────────────────────────────────────────────────
+//
+// A real child's book was destroyed by `?rewards=` calling `resetAll()` on a signed-in session. The
+// sweep that followed found TWO MORE constants with the same shape: a single character changes them,
+// the change looks like housekeeping, every test stays green, and every child on every device loses
+// everything. Both are pinned as LITERALS here — a self-referential assertion
+// (`assert.equal(doc.version, SCHEMA_VERSION)`) agrees with itself while the product wipes.
+
+test('SCHEMA_VERSION is 4, and changing it is a WIPE, not a migration', () => {
+  // `normalizePersisted` returns `null` for any other version and the store starts the child fresh —
+  // there is deliberately no migration path (the accounts release was a clean sheet). So a bump is not
+  // "a new schema", it is "delete every book in the field on the next app update".
+  //
+  // The literal is the point. This file already asserted `s.version === SCHEMA_VERSION`, which is true
+  // for every possible value of SCHEMA_VERSION and therefore cannot notice a bump at all.
+  assert.equal(SCHEMA_VERSION, 4, 'bumping the schema version wipes every child on update — see above')
+  // …and the rejection that makes it a wipe, stated rather than implied.
+  assert.equal(normalizePersisted({ ...defaultPersisted('kid', 'dev', 1), version: 5 }), null)
+})
+
+test('a reset needs a REASON, and the harness reason cannot name a real child', () => {
+  // The fence moved from the call site into the store (`progressStore.resetAll`), because the old one
+  // lived in `devHarness.ts` and a second caller would simply not have had it. Read as source: the
+  // store must branch on the reason before it touches anything.
+  const store = readFileSync(new URL('../services/progressStore.ts', import.meta.url), 'utf8')
+    .replace(/\/\*[\s\S]*?\*\//g, ' ')
+    .replace(/(^|[^:])\/\/.*$/gm, '$1')
+  assert.match(store, /resetAll\(reason: ResetReason\)/, 'resetAll no longer demands a reason')
+  const body = store.slice(store.indexOf('resetAll(reason: ResetReason)'))
+  const fenceAt = body.indexOf("reason === 'dev-harness'")
+  const commitAt = body.indexOf('this.commit(')
+  assert.ok(fenceAt > 0, 'the harness reason is no longer fenced — ?rewards= can wipe a real child')
+  assert.ok(fenceAt < commitAt, 'the fence sits after the commit — the wipe happens first')
+  // The stand-in ids `profileStore` hands out under the DEV bypass, and nothing else.
+  assert.match(body.slice(0, commitAt), /\^dev-local/, 'the fence stopped naming the dev stand-in ids')
 })

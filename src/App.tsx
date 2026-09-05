@@ -220,7 +220,7 @@ function App() {
           onDismiss={updateStatus.dismissUpdate}
         />
 
-        {/* "Til de voksne" — the gate + capture + the lazy AdultSettings surface (Barn / Læring /
+        {/* "Indstillinger" — the gate + capture + the lazy AdultSettings surface (Barn / Læring /
             Lyd / Udseende / Konto + the support footer). It renders NOTHING until asked: the floating
             gear is gone and the trigger is the child's own avatar in the header (`ProfileBadge`),
             which reaches this through `adultSurfaceBus`. Owner, 2026-08-09. */}

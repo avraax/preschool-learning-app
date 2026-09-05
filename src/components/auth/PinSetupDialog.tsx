@@ -161,7 +161,7 @@ const PinSetupDialog: React.FC<PinSetupDialogProps> = ({
             variant="body2"
             sx={{ mb: 2, color: 'text.secondary', [PHONE_LANDSCAPE]: { display: 'none' } }}
           >
-            Koden bruges til at åbne &quot;Til de voksne&quot; og til at skifte barn. Den virker også
+            Koden bruges til at åbne &quot;Indstillinger&quot; og til at skifte barn. Den virker også
             uden internet.
           </Typography>
         )}

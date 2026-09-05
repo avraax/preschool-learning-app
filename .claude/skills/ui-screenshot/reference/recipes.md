@@ -11,7 +11,8 @@ Back to `../SKILL.md`.
 node .claude/skills/ui-screenshot/cdp.mjs --url http://127.0.0.1:5173/alphabet/quiz \
   --wait-for '#root > *' --out shot.png
 
-# Open "Til de voksne" (a plain click on the child's avatar; a PIN/guest gate may intercept) and select
+# Open "Indstillinger" — TWO clicks now: the name pill in the title row opens "Hvem spiller?", and
+# its "Indstillinger" row is the door (a PIN/guest gate may intercept). Then select
 # a settings pane. The settle is now headroom, not a requirement: the capture no longer blocks the
 # surface, and rail-ready measured ~530ms under ?nogate=1. Keep a generous value anyway — the surface is
 # a lazy chunk, and a short wait silently yields the un-opened page rather than an error.
@@ -22,13 +23,13 @@ node .claude/skills/ui-screenshot/cdp.mjs --url http://127.0.0.1:5173/alphabet/q
 # The trigger is the CHILD'S AVATAR now (the gear is deleted) — same `aria-label`, top-right.
 node .claude/skills/ui-screenshot/cdp.mjs --url 'http://127.0.0.1:5173/alphabet/quiz' \
   --w 1024 --h 768 \
-  --click '[aria-label="Til de voksne"]' --wait-for '.MuiDialog-paper' --settle 4500 \
+  --click '[data-profile-chip]' --wait-for '[aria-label="Indstillinger"]' \n  --click '[aria-label="Indstillinger"]' --wait-for '.MuiDialog-paper' --settle 4500 \
   --click '[data-rail-item=lyd]' --settle 700 \
   --clip '.MuiDialog-paper' --out panel.png
 
 # PROVE no overflow/clipping (compare child rect.r to the container's inner right edge)
 node .claude/skills/ui-screenshot/cdp.mjs --url 'http://127.0.0.1:5173/alphabet/quiz' \
-  --click '[aria-label="Til de voksne"]' --wait-for '.MuiDialog-paper' --settle 4500 \
+  --click '[data-profile-chip]' --wait-for '[aria-label="Indstillinger"]' \n  --click '[aria-label="Indstillinger"]' --wait-for '.MuiDialog-paper' --settle 4500 \
   --measure '.MuiDialog-paper, .MuiDialog-paper button'
 
 # Check a different viewport (landscape) for responsive layout

@@ -149,7 +149,7 @@ export const PRIVACY_DA: { title: string; intro: string[]; sections: LegalSectio
         'Uden konto og med mikrofonen slået fra: intet. Appen spiller helt lokalt.',
         'Med konto: din e-mailadresse og dit navn fra Google-login, børneprofilernes navne og figurer, og barnets fremgang. Det gemmes for at kunne synkronisere mellem enheder.',
         'Med mikrofonen slået til: barnets stemmeoptagelse fra "Sig et Ord", når barnet holder mikrofonknappen nede. Optagelsen sendes til genkendelse og gemmes ikke.',
-        'Hvis du selv sender en fejlrapport fra "Til de voksne": et skærmbillede og teknisk information om enheden. Det sker kun, når du trykker på det.',
+        'Hvis du selv sender en fejlrapport fra "Indstillinger": et skærmbillede og teknisk information om enheden. Det sker kun, når du trykker på det.',
         'Hvis appen går ned: en teknisk fejlbeskrivelse uden skærmbillede, så fejlen kan rettes.',
         'Hvis et login mislykkes: en teknisk rapport med et skærmbillede af login-skærmen, så fejlen kan findes. Den sendes automatisk, uden at du trykker på noget. Selve koden og adgangsnøgler fjernes fra billedet, før det sendes, og rapporten indeholder aldrig din e-mail eller din kode.',
       ],
@@ -158,7 +158,7 @@ export const PRIVACY_DA: { title: string; intro: string[]; sections: LegalSectio
       heading: 'Mikrofonen er slået fra som standard',
       body: [
         'Spillet "Sig et Ord" bruger mikrofonen. Det er slået FRA, når appen installeres, og barnet kan ikke selv slå det til.',
-        'En voksen skal ind i "Til de voksne" bag talkoden, læse hvad der sker, og aktivt sige ja. Der står tydeligt, at barnets stemme sendes til Google Cloud Speech-to-Text for at blive genkendt, at optagelsen ikke gemmes, og at det kan slås fra igen.',
+        'En voksen skal ind i "Indstillinger" bag talkoden, læse hvad der sker, og aktivt sige ja. Der står tydeligt, at barnets stemme sendes til Google Cloud Speech-to-Text for at blive genkendt, at optagelsen ikke gemmes, og at det kan slås fra igen.',
         'Du trækker samtykket tilbage ved at slå mikrofonen fra igen på samme sted. Så sendes der ikke længere lyd nogen steder, og spillet er ikke længere tilgængeligt for barnet.',
       ],
     },
@@ -188,8 +188,8 @@ export const PRIVACY_DA: { title: string; intro: string[]; sections: LegalSectio
     {
       heading: 'Hvor længe data gemmes, og hvordan du får dem slettet',
       bullets: [
-        'Data på enheden bliver der, indtil du sletter dem. "Til de voksne" → Barn → "Nulstil fremgang" sletter et barns fremgang på enheden.',
-        'Har du en konto, sletter "Til de voksne" → Konto → "Slet kontoen helt" kontoen, børneprofilerne og fremgangen på serveren. Det kan ikke fortrydes.',
+        'Data på enheden bliver der, indtil du sletter dem. "Indstillinger" → Konto → "Nulstil fremgang" sletter et barns fremgang på enheden.',
+        'Har du en konto, sletter "Indstillinger" → Konto → "Slet kontoen helt" kontoen, børneprofilerne og fremgangen på serveren. Det kan ikke fortrydes.',
         'Stemmeoptagelser gemmes ikke — de bruges til at genkende ordet og forsvinder derefter.',
         'Fejlrapporter, du selv har sendt, gemmes indtil fejlen er undersøgt. Skriv til ' + CONTROLLER.email + ', hvis du vil have en slettet før det.',
       ],
@@ -306,24 +306,24 @@ export const SUPPORT_DA: { title: string; intro: string[]; sections: LegalSectio
     'Børnelæring er lavet af én person, og du får svar fra ham. Skriv til ' +
       CONTROLLER.email +
       ' — helst på dansk eller engelsk.',
-    'Hvis noget er gået i stykker i appen, hjælper det meget at sende en fejlrapport først: "Til de voksne" → "Rapportér et problem". Så følger et skærmbillede og teknisk information med, og du får en kort kode. Skriv koden i din mail.',
+    'Hvis noget er gået i stykker i appen, hjælper det meget at sende en fejlrapport først: "Indstillinger" → "Rapportér et problem". Så følger et skærmbillede og teknisk information med, og du får en kort kode. Skriv koden i din mail.',
   ],
   sections: [
     {
       heading: 'De fem ting folk oftest spørger om',
       bullets: [
-        'Der er ingen lyd: tryk et sted på skærmen først — lyden tændes ved den første berøring. Tjek derefter, at enhedens lydknap ikke er slået fra. Under "Til de voksne" → Lyd står der, om lyd nogensinde har virket på enheden.',
-        'Spillene er for svære eller for lette: "Til de voksne" → Læring. Du kan sætte Let, Normal eller Svær for hele appen eller for én sektion ad gangen. Et sværere niveau koster aldrig belønninger.',
-        'Hvor er mikrofonspillet? "Sig et Ord" er slået fra som standard. Slå det til under "Til de voksne" → Privatliv. Det kræver internet.',
-        'Kan flere børn spille? Ja, men flere børneprofiler kræver en konto. Log ind under "Til de voksne" → Konto.',
+        'Der er ingen lyd: tryk et sted på skærmen først — lyden tændes ved den første berøring. Tjek derefter, at enhedens lydknap ikke er slået fra. Under "Indstillinger" → Lyd står der, om lyd nogensinde har virket på enheden.',
+        'Spillene er for svære eller for lette: "Indstillinger" → Læring. Du kan sætte Let, Normal eller Svær for hele appen eller for én sektion ad gangen. Et sværere niveau koster aldrig belønninger.',
+        'Hvor er mikrofonspillet? "Sig et Ord" er slået fra som standard. Slå det til under "Indstillinger" → Privatliv. Det kræver internet.',
+        'Kan flere børn spille? Ja, men flere børneprofiler kræver en konto. Log ind under "Indstillinger" → Konto.',
         'Fremgangen forsvandt: hvis appen spilles uden konto, ligger fremgangen kun på den enhed. Log ind på begge enheder, hvis den skal følge med.',
       ],
     },
     {
       heading: 'Sådan sletter du alt',
       bullets: [
-        'Et barns fremgang på denne enhed: "Til de voksne" → Barn → "Nulstil fremgang".',
-        'Hele kontoen og alt på serveren: "Til de voksne" → Konto → "Slet kontoen helt".',
+        'Et barns fremgang på denne enhed: "Indstillinger" → Konto → "Nulstil fremgang".',
+        'Hele kontoen og alt på serveren: "Indstillinger" → Konto → "Slet kontoen helt".',
         'Se privatlivspolitikken for hvad der gemmes hvor.',
       ],
     },
