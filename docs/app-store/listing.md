@@ -363,6 +363,12 @@ so `Læring` is one click; **phone is a drill-down** that opens on `Barn`, so cl
 first. The iPad shot uses the `Læring` pane (Sværhedsgrad Let/Normal/Svær); the phone one uses the group
 list, because the `Læring` pane alone is a mostly-empty white screen at that aspect.
 
+**Add `&hidetools=1` to any FUTURE voksne capture.** Six items in Lyd / Udseende / Konto are owner
+tools hidden in the App Store build, but they are still present in a dev capture, so a shot taken
+without it would show controls the shipped app does not have. The two current shots predate this and
+are unaffected — the iPad one is the Læring pane and the iPhone one is the group list, neither of which
+contains any of the six.
+
 Two things the eval must strip, both dev-capture artifacts rather than edits to the product: the backend
 pill (`[data-backend-badge]`), absent on production by construction, and the **backend host the version
 chip appends** — on production that reads `boernelaering.dk`, so leaving `127.0.0.1:5173` in a store

@@ -30,7 +30,7 @@ and passes vacuously — `AppErrorBoundary`'s "Prøv igen" and NotFound's "Hjem"
 
 | Command | What it actually proves | Baseline |
 |---|---|---|
-| `npm test` | The pure logic: progression algebra, CRDT merge, difficulty tables, guest gate, config guards | 738 pass |
+| `npm test` | The pure logic: progression algebra, CRDT merge, difficulty tables, guest gate, config guards | 742 pass |
 | `npm run lint` | 0 errors (the warnings are pre-existing) | 0 errors, 25 warnings |
 | `npm run context:check` | The guardrail byte budget still fits | under budget |
 | `npm run audit:check` | Every closed-set narration clip is signed off | clean, 1910 clips |
@@ -158,6 +158,13 @@ Say UNKNOWN about these rather than implying the sweep covered them.
   pronunciation is correct. Only the owner's ears settle that.
 - **Real touch.** Drag-and-drop is driven with synthetic pointer events. Whether a 5-year-old's finger
   works, and whether a drag also registers as a tap, is rung 3.
+- **The production SHAPE of the adult surface.** Six items are owner tools hidden in the App Store
+  build (`adultSettingsIa` `devTool`). The hidden state is otherwise undriveable — a plain `vite build`
+  hides them correctly but answers no `?nogate=1`, and `build:harness` sets `__HARNESS__`, which is one
+  of the three inputs that turn them back ON — so **`?hidetools=1`** forces the production shape in
+  dev. Verified 2026-09-05 in both directions for five of the six; `konto.syncNow` is unobservable at
+  rung 1 because `KontoPane` returns the sign-in offer to a guest before it reaches the sync section,
+  and it rests on the source-read guard in `adultSettingsIa.test.ts` instead.
 - **The adult surface in guest mode.** The harness crashes solving the arithmetic gate
   (`.claude/skills/ui-screenshot/SKILL.md`), so that screen is uncapturable and untestable at rung 1–2.
 

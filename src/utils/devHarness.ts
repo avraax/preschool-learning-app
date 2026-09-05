@@ -15,6 +15,7 @@
 //   ?rewards=<n>                     seed the book at n collected rewards (Reward Book PRD-01 W9)
 //   ?mute-tts=1                      force narration UNHEALTHY (Practice Loop PRD-01 W4 degraded mode)
 //   ?audio-cue=1                     let the "Tryk for lyd" cue render under ?nogate=1 (see below)
+//   ?hidetools=1                     force the adult surface's owner-only tools OFF (see below)
 
 // `import.meta.env?.` — optional, because this module is now in the transitive graph of a Node
 // `--test` suite (via authStore), and `import.meta.env` is undefined outside Vite. Same reason
@@ -172,3 +173,19 @@ export const installDevSeed = (): void => {
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296
   }
 }
+
+/**
+ * Force the adult surface's owner-only tools OFF, so rung 1 can verify the PRODUCTION shape.
+ *
+ * Without this the hidden state is unreachable by any driveable build: a plain `vite build` hides
+ * them correctly but answers no `?nogate=1`, and `build:harness` — the production-shaped bundle the
+ * sweep exists to measure — sets `__HARNESS__`, which is exactly one of the three inputs that turn
+ * the tools back ON. So the only build a harness can drive is the one where they are visible, and
+ * "they are hidden in production" would be an untested claim. Same shape and same reasoning as
+ * `?mute-tts=1` forcing the degraded narration path.
+ *
+ * DEV/harness only, so it ships nothing: in a production build `DEV` is false and this is always
+ * false — where `showDevTools()` is already false on its own.
+ */
+export const devHideTools = (): boolean => DEV && readParams().get('hidetools') === '1'
+
