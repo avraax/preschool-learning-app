@@ -5,6 +5,8 @@
 // once per device).
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
+import { readFileSync } from 'node:fs'
+import { DEVICE_LOCAL_SETTINGS } from './progressMerge.ts'
 import {
   SCHEMA_VERSION,
   defaultPersisted,
@@ -197,4 +199,90 @@ test('normalizePersisted never lets lastCelebratedLevel fall below 1', () => {
   const raw = JSON.parse(JSON.stringify(defaultPersisted('k', DEV, NOW)))
   raw.progression.lastCelebratedLevel = 0
   assert.equal(normalizePersisted(raw)!.progression.lastCelebratedLevel, 1)
+})
+
+// ---- Adult settings: the two ways a setting silently does nothing ------------------------------
+//
+// Both were found by a QA sweep of the whole "Til de voksne" surface (2026-09-05), and neither had
+// any coverage. The FIRST one has already shipped once: "Flydende grafik" persisted, read back in its
+// own unit test, and did nothing, because `normalizeSettings` builds a fresh object from
+// `defaultSettings()` and copies field by field — so a field it forgets is dropped on the next load.
+
+test('every ProgressSettings field survives the RELOAD path', () => {
+  // Every field at a NON-DEFAULT value, so a dropped one is visible rather than coincidentally right.
+  const doc = defaultPersisted('kid-1', DEV, NOW)
+  doc.settings = {
+    sfxEnabled: false,
+    musicEnabled: false,
+    musicDefaultOn: true,
+    themeId: 'ocean',
+    smoothGraphics: false,
+    difficulty: { global: 'svaer', perSection: { math: 'let', colors: 'normal' } },
+  }
+  const back = normalizePersisted(JSON.parse(JSON.stringify(doc)))
+  assert.ok(back, 'normalizePersisted rejected a document it had just produced')
+  assert.deepEqual(back!.settings, doc.settings)
+
+  // …and the other half: a blob saved BEFORE an optional field existed still loads, with absence
+  // meaning the default. That is what lets `themeId` / `smoothGraphics` skip a schema bump.
+  const older = defaultPersisted('kid-1', DEV, NOW)
+  const back2 = normalizePersisted(JSON.parse(JSON.stringify(older)))
+  assert.equal(back2!.settings.themeId, undefined)
+  assert.equal(back2!.settings.smoothGraphics, undefined)
+})
+
+test('a corrupt difficulty never loads as an unplayable level', () => {
+  // The adult surface writes this, the games read it, and a bad value would reach every generator.
+  for (const junk of [null, 'svaer', 42, { global: 'umulig' }, { global: 'let', perSection: { nope: 'let', math: 'x' } }]) {
+    const d = defaultPersisted('kid-1', DEV, NOW) as unknown as { settings: { difficulty: unknown } }
+    d.settings.difficulty = junk
+    const r = normalizePersisted(JSON.parse(JSON.stringify(d)))
+    assert.ok(['let', 'normal', 'svaer'].includes(r!.settings.difficulty.global), `global from ${JSON.stringify(junk)}`)
+    for (const [k, v] of Object.entries(r!.settings.difficulty.perSection ?? {})) {
+      assert.ok(['let', 'normal', 'svaer'].includes(v), `perSection.${k} = ${v}`)
+    }
+  }
+})
+
+test('every ProgressSettings field is either LWW-MERGED or declared device-local', () => {
+  // The second silent failure. `mergeProgress` starts from `clone(local.settings)`, so a field missing
+  // from `settingsPaths()` keeps the local value forever — it looks synced (it lives in the synced
+  // document, and `setSetting` even stamps it) and never is. Read as SOURCE because `settingsPaths` is
+  // private and its list is a literal.
+  const schema = readFileSync(new URL('./progressSchema.ts', import.meta.url), 'utf8')
+  const iface = schema.match(/export interface ProgressSettings \{([\s\S]*?)\n\}/)
+  assert.ok(iface, 'could not find the ProgressSettings interface — re-point this guard')
+  const fields = [...iface![1].matchAll(/^ {2}(\w+)\??:/gm)].map((m) => m[1])
+  assert.ok(fields.includes('sfxEnabled') && fields.includes('difficulty'), 'the field scrape found nothing')
+
+  const merge = readFileSync(new URL('./progressMerge.ts', import.meta.url), 'utf8')
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/(^|[^:])\/\/.*$/gm, '$1')
+
+  // Anchored on the ENUMERATED path list, not on the field name appearing somewhere in the file: a
+  // field can sit in the `SettingsPath` union and in both switch statements and still never be
+  // enumerated, which is precisely the state that makes it device-local. (A first version of this
+  // guard matched the bare name and stayed green with `themeId` deleted from the list — /re-break.)
+  const baseList = merge.match(/const base: SettingsPath\[\] = \[([^\]]*)\]/)
+  assert.ok(baseList, 'could not find settingsPaths() base list — re-point this guard')
+  const merged = [...baseList![1].matchAll(/'([^']+)'/g)].map((m) => m[1])
+  assert.ok(merged.length >= 3, 'the path scrape found almost nothing')
+
+  for (const f of fields) {
+    if (DEVICE_LOCAL_SETTINGS.includes(f)) continue
+    // A nested field is merged through its own paths (`difficulty` → `difficulty.global` + the
+    // per-section paths pushed below the literal), and `musicDefaultOn` is an OR rather than an LWW
+    // register, so an explicit assignment counts too.
+    const byPath = merged.some((p) => p === f || p.startsWith(`${f}.`))
+    const byAssignment = merge.includes(`merged.settings.${f} =`)
+    assert.ok(
+      byPath || byAssignment,
+      `settings.${f} is never merged — it would be device-local by accident. Add it to settingsPaths(), or to DEVICE_LOCAL_SETTINGS with a reason.`,
+    )
+  }
+  // Guard the guard: an entry here must name a field that actually exists, or the allowlist rots into
+  // a licence for any future name.
+  for (const f of DEVICE_LOCAL_SETTINGS) {
+    assert.ok(fields.includes(f), `DEVICE_LOCAL_SETTINGS names "${f}", which is not a ProgressSettings field`)
+  }
 })

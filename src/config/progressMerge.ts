@@ -141,6 +141,23 @@ function writeSetting(s: ProgressSettings, path: SettingsPath, value: unknown): 
   }
 }
 
+/**
+ * Settings that are DELIBERATELY device-local, and never propagate.
+ *
+ * The merge starts from `merged.settings = clone(local.settings)`, so any field that is neither in
+ * `settingsPaths()` nor handled explicitly (the `musicDefaultOn` OR below) silently keeps the LOCAL
+ * value — no error, no test, no way to notice. That is CORRECT for `smoothGraphics`: it is the
+ * rendering escape hatch for THIS device's GPU, so syncing "the old iPad needs the fallback" onto a
+ * fast phone would be exactly wrong. It is a trap for anything else — a new preference added without
+ * touching `settingsPaths` becomes device-local by accident and looks synced because it lives in a
+ * synced document.
+ *
+ * `progressSchema.test.ts` fails the build unless every `ProgressSettings` field is either merged or
+ * named here, so the next field is a DECISION rather than an oversight. (Found by a QA sweep of the
+ * adult surface, 2026-09-05.)
+ */
+export const DEVICE_LOCAL_SETTINGS: readonly string[] = ['smoothGraphics']
+
 function settingsPaths(local: PersistedProgress, remote: PersistedProgress): SettingsPath[] {
   const sections = new Set<string>([
     ...Object.keys(local.settings.difficulty.perSection ?? {}),
