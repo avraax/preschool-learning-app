@@ -70,3 +70,37 @@ test('the whole harness is DEV-only, so none of this ships', () => {
   assert.equal(DEV, false, 'the dev harness believes it is enabled outside Vite')
   assert.match(seeder(), /if \(!DEV\) return/, 'installDevRewards lost its DEV guard')
 })
+
+// ─── `?kidname=` — it renames the STAND-IN, and it must not be able to do anything else ────────────
+//
+// Added when Corner identity PRD-01 gave the corner a place to print the name. Shots 1-5 of both App
+// Store slots are captured under `?nogate=1` (seeding a book needs it — `?rewards=` refuses outside
+// it), so without an override every one of them would ship a store page showing a child called "Dev".
+
+test('?kidname= is DEV-only and sanitised before it reaches the DOM', () => {
+  const start = code.indexOf('export const devKidName')
+  assert.ok(start > 0, 'devKidName is gone — re-point this guard')
+  const fn = code.slice(start, start + 400)
+
+  assert.match(fn, /if \(!DEV\) return null/, 'devKidName lost its DEV guard — it would ship')
+  // It lands in the DOM, so it is filtered to letters/space/hyphen/apostrophe rather than trusted.
+  assert.match(fn, /replace\(/, 'devKidName no longer sanitises — a URL now writes raw text into the UI')
+  assert.match(fn, /slice\(0, *\d+\)/, 'devKidName lost its length cap')
+})
+
+test('?kidname= cannot widen the resetAll fence, because that fence keys on the ID', () => {
+  // The fence in progressStore matches `dev-local(-\d+)?` on `profileId`. If the stand-in's ID ever
+  // became derived from the name, a crafted `?kidname=` would be a way back to wiping a real child.
+  const store = readFileSync(path.join(HERE, '..', 'services', 'profileStore.ts'), 'utf8')
+    .replace(/\/\*[\s\S]*?\*\//g, ' ')
+    .replace(/(^|[^:])\/\/.*$/gm, '$1')
+  const start = store.indexOf('const devProfile')
+  assert.ok(start > 0, 'devProfile is gone — re-point this guard')
+  const fn = store.slice(start, start + 300)
+
+  assert.match(fn, /id: 'dev-local'/, "the stand-in's id is no longer the literal 'dev-local'")
+  assert.ok(
+    !/id:\s*`/.test(fn),
+    'the stand-in id became a template literal — it must never be derived from the name',
+  )
+})

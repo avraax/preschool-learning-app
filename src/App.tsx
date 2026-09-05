@@ -222,8 +222,10 @@ function App() {
 
         {/* "Indstillinger" — the gate + capture + the lazy AdultSettings surface (Barn / Læring /
             Lyd / Udseende / Konto + the support footer). It renders NOTHING until asked: the floating
-            gear is gone and the trigger is the child's own avatar in the header (`ProfileBadge`),
-            which reaches this through `adultSurfaceBus`. Owner, 2026-08-09. */}
+            gear is gone, and so is the avatar-as-door that briefly replaced it. The trigger is now the
+            "Indstillinger" ROW inside `WhoIsPlayingSheet`, which the `ProfileChip` name pill opens —
+            two taps, and the child's own face no longer raises a keypad (Corner identity PRD-01 §2.6).
+            It still reaches this through `adultSurfaceBus`. Owner, 2026-08-09 / 2026-09-05. */}
         <AdultSurface
           updateAvailable={updateStatus.updateAvailable || DEV_SHOW_UPDATE_BANNER}
           onApplyUpdate={updateStatus.applyUpdate}

@@ -233,3 +233,30 @@ export const devKidCount = (): number => {
   if (!Number.isFinite(n)) return 1
   return Math.max(1, Math.min(4, Math.floor(n)))
 }
+
+/**
+ * `?kidname=<navn>` — the stand-in child's DISPLAY NAME, and nothing else.
+ *
+ * It exists because the App Store screenshots grew a place to print it. Until Corner identity PRD-01 the
+ * bypass child showed as a portrait plus the initial `D`; the name pill prints the whole word, so every
+ * shot captured under `?nogate=1` — which is shots 1-5, both slots — would ship a store page with a
+ * child called **Dev** on it. Seeding a real-looking book still requires `?nogate=1` (`?rewards=`
+ * refuses outside it, and that fence is what stops a harness wiping a real child), so the name has to
+ * be overridable rather than the gate avoided.
+ *
+ * **It cannot reach a real child.** This only ever renames the `dev-local` stand-in in `profileStore`'s
+ * bypass roster; the roster is never written to the cache, and `resetAll`'s harness fence keys on the
+ * ID (`dev-local(-\d+)?`), not the name, so nothing here widens it.
+ *
+ * Sanitised because it lands in the DOM: letters (Danish included), spaces, hyphens and apostrophes
+ * only, collapsed and capped at 12 characters — a pill that ellipsises at `maxWidth` would defeat the
+ * point of setting it. An empty or fully-rejected value falls back to the default rather than rendering
+ * a nameless chip.
+ */
+export const devKidName = (): string | null => {
+  if (!DEV) return null
+  const raw = readParams().get('kidname')
+  if (!raw) return null
+  const clean = raw.replace(/[^\p{L} '-]/gu, '').replace(/\s+/g, ' ').trim().slice(0, 12)
+  return clean || null
+}

@@ -1,6 +1,6 @@
 ---
 name: debug-report
-description: Fetch and debug production, staging/TestFlight or local bug reports from the Børnelæring bug-report API. Use whenever the user gives a report code (e.g. "R7K3F"), says they just sent a report from the app/iPad, asks to check "the newest report", "recent bug reports" or "crash reports", or wants to debug a problem reported via the "Til de voksne" menu. Handles a single code, multiple codes, or no code at all (lists newest reports). Fetches the report JSON + screenshot, summarizes findings, then starts debugging.
+description: Fetch and debug production, staging/TestFlight or local bug reports from the Børnelæring bug-report API. Use whenever the user gives a report code (e.g. "R7K3F"), says they just sent a report from the app/iPad, asks to check "the newest report", "recent bug reports" or "crash reports", or wants to debug a problem reported via the "Indstillinger" menu. Handles a single code, multiple codes, or no code at all (lists newest reports). Fetches the report JSON + screenshot, summarizes findings, then starts debugging.
 ---
 
 # Debug a bug report

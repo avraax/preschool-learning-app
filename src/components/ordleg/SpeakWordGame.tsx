@@ -855,7 +855,11 @@ const SpeakWordGame: React.FC = () => {
               </Typography>
               <Typography sx={{ color: 'text.secondary', fontSize: { xs: '0.95rem', md: '1.1rem' }, maxWidth: 460 }}>
                 {speech.permission === 'denied'
-                  ? 'Til de voksne: giv appen adgang til mikrofonen (Indstillinger → Safari → Mikrofon), og tryk så her.'
+                  // "iOS-Indstillinger", not "Indstillinger": the app's OWN adult area took that name on
+                  // 2026-09-05, so a bare "Indstillinger → Safari" now points a parent at the wrong
+                  // screen — the one place in the app where the two meanings collide. Display-only
+                  // copy, never narrated, so it is outside the prebake protocol.
+                  ? 'Til de voksne: giv appen adgang til mikrofonen (iOS-Indstillinger → Safari → Mikrofon), og tryk så her.'
                   : 'Til de voksne: mikrofonen svarer ikke. Luk andre apps, der bruger den, og tryk så her.'}
               </Typography>
               <TactilePill accent={theme.accentColor} onClick={() => { void speech.prime() }}>

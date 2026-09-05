@@ -20,16 +20,19 @@ node .claude/skills/ui-screenshot/cdp.mjs --url http://127.0.0.1:5173/alphabet/q
 # does not exist: `[data-rail-item=…]` and the rail-footer "Rapportér et problem" are simply absent
 # and the click misses with no error. cdp.mjs defaults narrow, so OMITTING the size silently gives you
 # the compact layout on a run you thought was iPad-sized.
-# The trigger is the CHILD'S AVATAR now (the gear is deleted) — same `aria-label`, top-right.
+# The trigger is the NAME PILL in the title row (`[data-profile-chip]`) — the gear is deleted and so is
+# the avatar-as-door. The `aria-label` is NOT on the pill: it belongs to the row inside the sheet.
 node .claude/skills/ui-screenshot/cdp.mjs --url 'http://127.0.0.1:5173/alphabet/quiz' \
   --w 1024 --h 768 \
-  --click '[data-profile-chip]' --wait-for '[aria-label="Indstillinger"]' \n  --click '[aria-label="Indstillinger"]' --wait-for '.MuiDialog-paper' --settle 4500 \
+  --click '[data-profile-chip]' --wait-for '[aria-label="Indstillinger"]' \
+  --click '[aria-label="Indstillinger"]' --wait-for '.MuiDialog-paper' --settle 4500 \
   --click '[data-rail-item=lyd]' --settle 700 \
   --clip '.MuiDialog-paper' --out panel.png
 
 # PROVE no overflow/clipping (compare child rect.r to the container's inner right edge)
 node .claude/skills/ui-screenshot/cdp.mjs --url 'http://127.0.0.1:5173/alphabet/quiz' \
-  --click '[data-profile-chip]' --wait-for '[aria-label="Indstillinger"]' \n  --click '[aria-label="Indstillinger"]' --wait-for '.MuiDialog-paper' --settle 4500 \
+  --click '[data-profile-chip]' --wait-for '[aria-label="Indstillinger"]' \
+  --click '[aria-label="Indstillinger"]' --wait-for '.MuiDialog-paper' --settle 4500 \
   --measure '.MuiDialog-paper, .MuiDialog-paper button'
 
 # Check a different viewport (landscape) for responsive layout

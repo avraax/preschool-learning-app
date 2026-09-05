@@ -11,7 +11,7 @@ import { ACTIVE_PROFILE_KEY } from '../config/progressSchema.ts'
 import { apiUrl } from '../config/apiBase.ts'
 import { DEFAULT_AVATAR_ID, normalizeAvatarId, type AvatarId } from '../config/avatars.ts'
 import { guestModeActive } from '../utils/guestMode.ts'
-import { devKidCount } from '../utils/devHarness.ts'
+import { devKidCount, devKidName } from '../utils/devHarness.ts'
 import { authStore } from './authStore.ts'
 import { practiceLedger } from './practiceLedger.ts'
 import { progressStore } from './progressStore.ts'
@@ -60,7 +60,18 @@ const ROSTER_KEY = 'bornelaering-profiles'
  * (`bornelaering-progress:dev-local`) keeps harness state out of any real child's book.
  *
  */
-const DEV_PROFILE: ChildProfile = { id: 'dev-local', name: 'Dev', avatarId: DEFAULT_AVATAR_ID }
+const DEV_PROFILE_NAME = 'Dev'
+
+/**
+ * The name is a FUNCTION, not a frozen const, because `?kidname=` can override it — see
+ * `devKidName()`. The id never moves: `resetAll`'s harness fence and every per-child progress key
+ * match on `dev-local`, so renaming the stand-in cannot widen either.
+ */
+const devProfile = (): ChildProfile => ({
+  id: 'dev-local',
+  name: devKidName() ?? DEV_PROFILE_NAME,
+  avatarId: DEFAULT_AVATAR_ID,
+})
 
 /**
  * The bypass's roster: ONE child by default, `?devkids=<n>` for more (Børn picker PRD §6.1).
@@ -76,9 +87,12 @@ const DEV_PROFILE: ChildProfile = { id: 'dev-local', name: 'Dev', avatarId: DEFA
  */
 const devProfiles = (): ChildProfile[] => {
   const n = devKidCount()
-  if (n <= 1) return [DEV_PROFILE]
+  const first = devProfile()
+  if (n <= 1) return [first]
+  // The siblings follow the FIRST child's name, so `?devkids=2&kidname=Sofia` reads "Sofia" / "Sofia 2"
+  // rather than mixing an override with a hardcoded "Dev 2".
   return Array.from({ length: n }, (_, i) =>
-    i === 0 ? DEV_PROFILE : { id: `dev-local-${i + 1}`, name: `Dev ${i + 1}`, avatarId: DEFAULT_AVATAR_ID },
+    i === 0 ? first : { id: `dev-local-${i + 1}`, name: `${first.name} ${i + 1}`, avatarId: DEFAULT_AVATAR_ID },
   )
 }
 

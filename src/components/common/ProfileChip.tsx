@@ -41,7 +41,9 @@ import WhoIsPlayingSheet from '../auth/WhoIsPlayingSheet'
 // gate works just as well behind a labelled row. Apple 1.3 requires the parental gate for the adult
 // area; it does not require the door to be the child's face. So the tap now opens a sheet whose FIRST
 // element is the child themselves ("that's me!"), with the two adult routes as labelled rows below it.
-// `aria-label="Til de voksne"` — the selector the whole screenshot harness clicks — moved onto that row.
+// `aria-label="Indstillinger"` — the selector the whole screenshot harness clicks — moved onto that row.
+// (It read "Til de voksne" until the owner renamed the adult area on 2026-09-05; the harness now needs
+// TWO clicks, `[data-profile-chip]` then that row.)
 //
 // NOT rendered in game (§2.5): `GameShell` shows the book and stops. Nobody needs telling who they are
 // mid-round, that is the surface where real estate matters most, and it gives the tappable corner back
@@ -92,7 +94,7 @@ const ProfileChip: React.FC<ProfileChipProps> = ({ size = 32, sx = {} }) => {
         tabIndex={0}
         // The accessible name of a CONTROL is its action, so the question comes first; who is playing
         // rides along after it rather than replacing it. NB this is deliberately NOT
-        // `aria-label="Til de voksne"` — that selector belongs to the adult ROW inside the sheet now.
+        // `aria-label="Indstillinger"` — that selector belongs to the adult ROW inside the sheet now.
         aria-label={name ? `Hvem spiller? ${name} spiller` : 'Hvem spiller?'}
         onClick={() => setOpen(true)}
         // Enter/Space, since this is a div playing a button.
