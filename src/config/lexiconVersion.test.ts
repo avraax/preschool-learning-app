@@ -43,10 +43,20 @@ test('nothing hardcodes the lexicon filename any more', () => {
   }
 })
 
-test('vercel.json caches the lexicon under its VERSIONED path', () => {
+test('the lexicon is NOT served with a long max-age', () => {
+  // THE ACTUAL LEVER, established by control 2026-09-05. Five probe lexicons served with
+  // `no-cache` applied to Azure instantly; the identical IPA at a path carrying
+  // `public, max-age=86400` did not apply at all. Azure honours the header, so a long-lived cache
+  // means an edited lexicon is read stale — silently, because the SSML stays valid and synthesis
+  // succeeds with the old pronunciation.
+  //
+  // The versioned filename (above) is still worth keeping as a second line of defence, but it is NOT
+  // what makes an edit take effect. This assertion is.
   const v = JSON.parse(readFileSync('vercel.json', 'utf8'))
   const rule = (v.headers || []).find((h: { source: string }) => String(h.source).endsWith('.pls'))
   assert.ok(rule, 'no Cache-Control rule for the lexicon')
-  assert.equal(rule.source, `/${LEXICON_FILE}`,
-    'the cache header points at a different path than LEXICON_FILE — the long max-age would apply to nothing')
+  assert.equal(rule.source, `/${LEXICON_FILE}`, 'the cache header names a different path than LEXICON_FILE')
+  const cc = String((rule.headers || []).find((h: { key: string }) => h.key.toLowerCase() === 'cache-control')?.value || '')
+  const maxAge = Number((cc.match(/max-age=(\d+)/) || [])[1] || 0)
+  assert.ok(maxAge <= 300, `lexicon Cache-Control is "${cc}" — anything long-lived leaves Azure reading a stale lexicon`)
 })
