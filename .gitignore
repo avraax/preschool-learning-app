@@ -86,3 +86,6 @@ plans/session-performance/instructions-loaded.tsv
 # is leaking the ability to sign as this developer. Lives outside the repo; this is the backstop.
 *.pem
 *.key
+
+# Local pronunciation auditions (see scripts/audition-fire.mjs) — never committed
+.audition/
