@@ -39,7 +39,7 @@
     "schema:check": "node scripts/schema-check.mjs",
     "audition:homographs": "node --env-file=.env.local --import ./scripts/js-to-ts-resolve.mjs scripts/audition-homographs.mjs",
     "audition:fire": "node --env-file=.env.local scripts/audition-fire.mjs",
-    "lexicon:check": "node --env-file=.env.local scripts/lexicon-check.mjs"
+    "lexicon:check": "node --env-file=.env.local --import ./scripts/js-to-ts-resolve.mjs scripts/lexicon-check.mjs"
   },
   "dependencies": {
     "@better-auth/passkey": "^1.6.25",

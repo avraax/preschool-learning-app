@@ -147,19 +147,21 @@ sprite), re-encoded with `node scripts/transcode-sfx.mjs`, into `public/sounds/u
   signed off while the only surface that can PLAY one is a crash screen. `auditClips.test.ts` now
   fails the build on it; **adding a group to `shared-narration-clips.js` means adding it to
   `AuditGroup` + `GROUP_ORDER` + `GROUP_LABELS`.**
-- **NEVER SERVE THE LEXICON WITH A LONG `max-age` — Azure honours it and reads a stale file.** This is
-  the lever, established by control on 2026-09-05: five probe lexicons carrying the IDENTICAL IPA,
-  served with `no-cache`, applied to Azure instantly, while the same entry at a path carrying
-  `public, max-age=86400` did not apply at all. It fails **silently** — the SSML stays valid, synthesis
-  succeeds, and the old pronunciation simply comes back. Two wrong diagnoses were published before the
-  control settled it (per-node propagation; then a path-keyed cache that a rename would defeat) — the
-  filename IS versioned (`LEXICON_FILE` in `shared-tts-config.js`) and worth keeping as a second line
-  of defence, but a rename alone did not make the edit take effect. The header did.
-  `npm run lexicon:check` synthesizes each grapheme with and without the lexicon and reports APPLIED
-  only when the bytes differ (Azure TTS is byte-deterministic for identical input, verified); run it
-  before re-baking, because **re-baking too EARLY is as wrong as not re-baking at all** — it produced a
-  half-applied batch once, 16 of 125 clips with the new pronunciation and 109 with the old.
-  Guarded by `src/config/lexiconVersion.test.ts`.
+- **A LEXEME IS ONLY OBSERVABLE WHERE IT DISAGREES WITH THE VOICE'S DEFAULT — test it in a real
+  SENTENCE, never as a bare word.** This cost three wrong diagnoses on 2026-09-05 (per-node
+  propagation, a path-keyed cache, then the `Cache-Control` header), each with a fix pushed against
+  it, because a checker that synthesized the bare grapheme reported the working `fire` lexeme as
+  "not applied". Azure already says the isolated word "fire" correctly and only code-switches to
+  English inside a sentence, so with and without the lexicon were byte-identical — a false negative.
+  In context the lexeme is provably live: `"Hvad er fire plus to"` with the lexicon is byte-identical
+  to the same line with an inline `<phoneme>`. `npm run lexicon:check` now tests each grapheme in a
+  real line from `collectNarrationClips()` and reports **APPLIED** or **NO EFFECT**, where NO EFFECT
+  means "live but agreeing with the default, OR not live" and is not a failure.
+  It immediately surfaced that the `hund` entry has NO EFFECT on `"H som Hund"` — the case-sensitivity
+  trap below, visible at last rather than merely written down.
+- **Byte equality is a valid test because Azure TTS is deterministic** for identical input (verified:
+  the same request twice returns the same md5). That is what makes "did this lexeme change anything"
+  answerable without ears — but only when asked in a context where the answer can be non-zero.
 - **Editing the lexicon alone changes NOTHING you can hear.** The cache key records the lexicon
   as a boolean (`lex…` via `shared-tts-key.js`), not a content hash, and prebake reuses any existing
   file on disk — so a prebaked clip keeps its old pronunciation until you DELETE its mp3 + manifest
