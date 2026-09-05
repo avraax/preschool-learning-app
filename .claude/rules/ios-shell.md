@@ -80,6 +80,18 @@ all of which had been proposed first.
 **`betaTesters.state` is the field to read** before theorising about a tester who "sees nothing":
 `INVITED` = sent, never accepted. `INSTALLED` = it already worked.
 
+**The API WRITES the store listing too, not just reads it** — the ASC key is
+`C:/Users/<user>/Documents/AppleDeveloper/AuthKey_VR8MNH235U.p8` (contents never leave that file).
+`PATCH /v1/appStoreVersionLocalizations/<id>` sets `description`, `keywords`, `promotionalText`,
+`whatsNew`; name and subtitle live on `appInfoLocalizations` instead. So listing copy does not have to
+be hand-pasted, which matters because **hand-pasting silently truncates**: a read on 2026-09-05 found
+523 of the description's 1457 characters live, cut after the first section, with everything about ads,
+purchases, tracking and the parental gate simply missing. ASC accepts a short description without
+complaint and the length is only wrong against `docs/app-store/listing.md`. **Always read the field back
+and compare, never assume the write (or the paste) landed** — `attributes.description === sent` is the
+whole check. Keywords are frozen after submission and only change with a new version, so settle them
+before Add for Review, not after.
+
 **The age rating hangs off `appInfo`, NOT `appStoreVersion`, and the wrong parent 404s rather than
 erroring.** `/v1/appStoreVersions/<id>/ageRatingDeclaration` returns 404 even when the rating is set;
 `/v1/appInfos/<id>/ageRatingDeclaration` is the live one and carries `kidsAgeBand` +
