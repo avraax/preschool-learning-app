@@ -70,12 +70,15 @@ Ten of the twelve are one mechanical pass with `webkit.mjs`, using the shot list
 - **Playwright writes RGBA and App Store Connect wants RGB.** Check byte 25 of the PNG header is `2`
   after any capture, and convert with `ffmpeg -pix_fmt rgb24` if it is `6`.
 
-**The two "Til de voksne" shots cannot currently be automated — take them on the iPad.** The harness
-reaches the arithmetic parental gate reliably but crashes WebKit the moment the gate is *solved* and the
-adult surface mounts (four attempts, "Target crashed"). Your iPad Pro 12.9" captures natively at
-2732×2048, which is exactly what the required 13" slot accepts, and TestFlight already has the build — so
-that is the shorter path, not a workaround. The iPhone one has no such escape: an iPhone 13 is 6.1"
-(1170×2532) and the slot wants 6.9" (2868×1320), so it needs the harness fixed or left alone.
+**All twelve are automatable now, including the two "Til de voksne" ones.** That used to be false, and
+the reason it was false is worth keeping: solving the arithmetic parental gate crashes the *WebKit*
+target every time (four attempts, "Target crashed", at the moment the adult surface mounts), so the
+conclusion drawn was "capture those two on the iPad". It was a driver limit, not an app limit —
+**headless Chrome walks the same path with no trouble**, and the gate is arithmetic that the page states
+in its own prompt, so the harness can read it and answer it. You do not need a screen of any particular
+resolution: `--dpr` makes the image bigger than the layout, so a 1366×1024 iPad layout comes out at
+2732×2048. The recipe is in `.claude/skills/ui-screenshot/SKILL.md` and the exact commands in
+`docs/app-store/listing.md` §2.2.
 
 ## Which app am I looking at?
 

@@ -79,12 +79,26 @@ Then **view a saved PNG with the Read tool** (it renders images).
 - **`--eval` is NOT repeatable**, unlike `--click`/`--wait-for`/`--type`. Pass two and only one runs,
   silently — a multi-step interaction has to be ONE eval that schedules the rest with `setTimeout`, then
   a `--wait` long enough to cover it. Wrap it as `(()=>{ … })()`: a bare `return` is a syntax error.
-- **Solving the guest arithmetic gate crashes the WebKit target.** `--click '[aria-label="Til de
-  voksne"]'` reaches the gate reliably and `[data-guest-gate-prompt]` reads its own question, but the
-  moment the answer completes and the lazy adult surface mounts, the run dies with "Target crashed" or
-  "context has been closed" — four attempts, reproducible. Not the app: the same path is fine on a
-  device. So **the adult surface cannot currently be captured in real guest mode.** `?nogate=1` reaches
-  it (the badge then reads the dev child, not `Gæst`), or capture on the iPad.
+- **The adult surface IS reachable in real guest mode — but only in CHROME.** Solving the guest gate
+  crashes the WebKit target (four attempts, "Target crashed" / "context has been closed", at the moment
+  the lazy adult surface mounts), which is why this was recorded as impossible. It is a `webkit.mjs`
+  limit, not an app limit: `cdp.mjs` walks the whole path with no trouble. The gate is arithmetic and
+  **not a secret** — the prompt states its own question, so one eval reads it and answers it:
+
+  ```js
+  document.querySelector('[aria-label="Til de voksne"]').click()      // the avatar IS the door
+  // …poll for [data-guest-gate-prompt] → "Hvor meget er 4 × 8?"
+  const [, a, b] = prompt.textContent.match(/(\d+)\s*[×x*]\s*(\d+)/)
+  for (const d of String(a * b)) document.querySelector(`[data-guest-gate-key="${d}"]`).click()
+  ```
+
+  Two shape facts the layout decides: on a **tablet** it is two panes, so a rail item (`Læring`, `Lyd`,
+  `Privatliv`) is clickable straight away; on a **phone** it is a drill-down that opens on `Barn`, so
+  `[aria-label="Tilbage"]` has to be clicked before any other group is reachable. Prefer this over
+  `?nogate=1`, which attaches the dev child — the badge then reads that child instead of `Gæst`.
+- **`cdp.mjs --dpr <n>`** sets the device pixel ratio, so an App Store capture comes off the right CSS
+  layout: `--w 1366 --h 1024 --dpr 2` → 2732×2048, `--w 956 --h 440 --dpr 3` → 2868×1320. Passing
+  `--w 2732` instead renders a 2732-CSS-px-wide page, which is a different layout, not a bigger image.
 - **The dev build renders a backend pill** (`[data-backend-badge]`, `TEST · localhost:5173`). Remove it
   in the `--eval` before any capture that leaves this repo. Production renders none by construction, so
   deleting it is accurate rather than a cheat — `backendLabel()` returns null there.

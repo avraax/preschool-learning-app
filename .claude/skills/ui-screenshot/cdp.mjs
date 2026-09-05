@@ -80,6 +80,11 @@ const URL = opt('--url')
 if (!URL) { console.error('Missing --url'); process.exit(2) }
 const W = parseInt(opt('--w', '540'), 10)
 const H = parseInt(opt('--h', '940'), 10)
+// --dpr: device pixel ratio, so the OUTPUT size can be a multiple of the CSS viewport. Needed for App
+// Store captures, which want an iPad's 2732×2048 pixels from its 1366×1024 CSS layout — passing
+// `--w 2732` instead would render a 2732-CSS-px-wide page, i.e. a completely different layout.
+// `webkit.mjs`'s device presets carry this; here it was pinned at 1.
+const DPR = parseFloat(opt('--dpr', '1'))
 const TIMEOUT = parseInt(opt('--timeout', '10000'), 10)
 const SETTLE = parseInt(opt('--settle', '500'), 10)
 const FIXED_WAIT = parseInt(opt('--wait', '3000'), 10)
@@ -156,7 +161,7 @@ const waitForText = (txt) => waitFor(`[...document.querySelectorAll('*')].some(e
 const { result: tgt } = await send('Target.createTarget', { url: 'about:blank' }, null)
 sessionId = (await send('Target.attachToTarget', { targetId: tgt.targetId, flatten: true }, null)).result.sessionId
 await send('Page.enable'); await send('Runtime.enable'); await send('Network.enable')
-await send('Emulation.setDeviceMetricsOverride', { width: W, height: H, deviceScaleFactor: 1, mobile: false })
+await send('Emulation.setDeviceMetricsOverride', { width: W, height: H, deviceScaleFactor: DPR, mobile: false })
 
 // --ipad-ua: run the app's iOS branches in CHROME. This is the only place audio can be verified on an
 // iOS code path at all: Playwright's WebKit has no WebAudio/speechSynthesis, and Chrome does — so an

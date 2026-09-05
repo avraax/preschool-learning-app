@@ -292,6 +292,31 @@ node .claude/skills/ui-screenshot/webkit.mjs --device iphone-landscape --w 956 -
   --url "http://localhost:5173/?nogate=1" --out docs/app-store/shots/iphone-1-menu.png
 ```
 
+**Shot 6 is the exception and takes CHROME, not WebKit** — solving the parental gate crashes the WebKit
+target, which is why these two were once believed to need a real device. `cdp.mjs` does it, and `--dpr`
+gives the same output size from the same CSS layout:
+
+```bash
+# same two slots, and NO ?nogate=1 — the badge must read "Gæst", not the dev child
+node .claude/skills/ui-screenshot/cdp.mjs --w 1366 --h 1024 --dpr 2 --settle 4500 \
+  --url "http://127.0.0.1:5173/?rewards=12" --eval "<the gate-solving eval>" \
+  --out docs/app-store/shots/ipad-6-voksne.png
+node .claude/skills/ui-screenshot/cdp.mjs --w 956 --h 440 --dpr 3 --settle 4500 \
+  --url "http://127.0.0.1:5173/?rewards=12" --eval "<same, plus the Tilbage step>" \
+  --out docs/app-store/shots/iphone-6-voksne.png
+```
+
+The eval opens the avatar door, reads `[data-guest-gate-prompt]` ("Hvor meget er 4 × 8?"), multiplies,
+clicks `[data-guest-gate-key="<digit>"]`, then picks the pane — see `SKILL.md`. **Tablet is two panes**
+so `Læring` is one click; **phone is a drill-down** that opens on `Barn`, so click `[aria-label="Tilbage"]`
+first. The iPad shot uses the `Læring` pane (Sværhedsgrad Let/Normal/Svær); the phone one uses the group
+list, because the `Læring` pane alone is a mostly-empty white screen at that aspect.
+
+Two things the eval must strip, both dev-capture artifacts rather than edits to the product: the backend
+pill (`[data-backend-badge]`), absent on production by construction, and the **backend host the version
+chip appends** — on production that reads `boernelaering.dk`, so leaving `127.0.0.1:5173` in a store
+screenshot is simply wrong. Drop the segment; don't substitute a host the build never talked to.
+
 Verify the output pixel dimensions before uploading — ASC checks them and rejects mismatches. Strip any
 alpha channel the same way as the icon.
 
