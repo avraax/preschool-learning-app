@@ -54,8 +54,14 @@ const MemoryGame: React.FC = () => {
       }
     },
 
+    // `speakLetter`, NOT `speak` — it routes through `DANISH_LETTER_NAMES`, which is the text the
+    // prebake actually baked. The map is glyph-first but LOWERCASE (`A → 'a'`), with real respellings
+    // for the two that need them (`X → 'eks'`, `Z → 'zæt'`). A cache key is the exact string, so the
+    // raw uppercase glyph this used to pass matched NOTHING: 0 of 1886 clips. Every card tap therefore
+    // reached live Azure, which reads a lone capital as a CHARACTER — measured on the owner's iPad as
+    // "Stort bogstav X" — in whatever voice the fallback chain produced rather than prebaked Christel.
     speakItem: async (letter: string, audio: any) => {
-      return audio.speak(letter)
+      return audio.speakLetter(letter)
     },
 
     speakMatchedItem: async (letter: string, audio: any) => {
@@ -64,7 +70,10 @@ const MemoryGame: React.FC = () => {
         // Shared builder — carries the per-letter pronunciation fixes (Z → 'zet', I comma-isolated).
         return audio.speak(letterPhrase(letter, letterData.word))
       }
-      return audio.speak(letter)
+      // No word for this letter — Q/W/X/Å are glyph-only cards by design, so this fallback is the
+      // ONLY thing they ever speak. Same bug as `speakItem` above, and the one the owner actually
+      // heard: X has no entry here, so a matched X spoke the raw glyph.
+      return audio.speakLetter(letter)
     },
     
     title: 'Hukommelsesspil - Bogstaver',

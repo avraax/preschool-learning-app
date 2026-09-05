@@ -2,6 +2,7 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { MEMORY_LETTERS_INSTRUCTION, MEMORY_NUMBERS_INSTRUCTION } from './gamePhrases.ts'
+import { getDanishLetterName } from './danish-phrases.ts'
 import { PREBAKED_TTS } from './prebakedTts.ts'
 import { TTS_CONFIG } from './tts-config.ts'
 import { ttsCacheKey } from '../../shared-tts-key.js'
@@ -59,4 +60,41 @@ test('MemoryGame.tsx composes no spoken line inline', () => {
   // …and it does pass the constants, so the guard above is not passing because the field vanished.
   assert.match(code, /instructions:\s*MEMORY_LETTERS_INSTRUCTION/)
   assert.match(code, /instructions:\s*MEMORY_NUMBERS_INSTRUCTION/)
+})
+
+// The SECOND memory-narration defect, found on the owner's iPad 2026-09-05: tapping a card said
+// "Stort bogstav X" in a voice that wasn't Christel.
+//
+// `MemoryGame` spoke letters with `audio.speak(letter)` — the raw UPPERCASE glyph. `DANISH_LETTER_NAMES`
+// is glyph-first but LOWERCASE (`A → 'a'`), with real respellings for the two that need them
+// (`X → 'eks'`, `Z → 'zæt'`), and the prebake bakes THAT text. A cache key is the exact string, so an
+// uppercase glyph matched 0 of 1886 clips: every tap fell through to live Azure, which reads a lone
+// capital as a character name, in whatever voice the fallback chain produced.
+//
+// Guarded on both halves, because either alone passes while the game is broken: the letter NAMES must
+// be prebaked (the data), and the component must call `speakLetter` (the wiring — a data test cannot
+// see that the component ignores the map).
+test('every Danish letter name is prebaked, and none of them is the bare glyph', () => {
+  for (const letter of 'ABCDEFGHIJKLMNOPQRSTUVWXYZÆØÅ') {
+    const spoken = getDanishLetterName(letter)
+    assert.ok(PREBAKED_TTS[daKey(spoken)], `letter ${letter} ("${spoken}") is not prebaked`)
+    // The uppercase glyph is what the bug passed. Assert it is NOT bakeable, so the guard below is
+    // load-bearing rather than incidentally true.
+    assert.equal(PREBAKED_TTS[daKey(letter)], undefined, `uppercase "${letter}" should never be a prebake key`)
+  }
+  assert.equal(getDanishLetterName('X'), 'eks')
+  assert.equal(getDanishLetterName('Z'), 'zæt')
+  assert.equal(getDanishLetterName('A'), 'a')
+})
+
+test('MemoryGame speaks letters through speakLetter, never raw speak()', () => {
+  const src = readFileSync(new URL('../components/learning/MemoryGame.tsx', import.meta.url), 'utf8')
+  const code = src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$/gm, '$1')
+  // `speak(letter)` with the bare identifier is the defect's exact shape. `speak(letterPhrase(...))`
+  // is correct and must keep passing, so match the bare argument only.
+  const raw = code.match(/audio\.speak\(\s*letter\s*\)/g)
+  assert.equal(raw, null, 'MemoryGame passes a raw letter to audio.speak() — use audio.speakLetter()')
+  // …and it does call speakLetter, so the assertion above is not passing because the calls vanished.
+  assert.ok((code.match(/audio\.speakLetter\(\s*letter\s*\)/g) || []).length >= 2,
+    'expected both letter call sites (speakItem + the Q/W/X/Å fallback) to use speakLetter')
 })
