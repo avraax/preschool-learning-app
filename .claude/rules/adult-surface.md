@@ -40,16 +40,17 @@ carries the quiz board, not the settings.
 ## The two-pane IA is a contract
 
 A `maxWidth="md"` Dialog (MUI's default z-index 1300) with a persistent left rail of **five
-mutually-exclusive groups** — **Familie** · **Læring** (difficulty; `panes/LaeringPane.tsx` **EXPLAINS
+mutually-exclusive groups** — **Konto** · **Læring** (difficulty; `panes/LaeringPane.tsx` **EXPLAINS
 the selected level in Danish** and labels the setting as per-child) · **Lyd** (SFX/music + narration
 voice + tempo) · **Udseende** (skin) · **Privatliv** (mic + policy + support) — plus a **persistent rail
 footer** (bug report + tap-to-copy version) reachable from every pane. It replaced 13 flat rows in a
 scrolling `xs` dialog and six sibling sub-panels.
 
-**`Familie` is `Barn` + `Konto` + the old `Log ind` promo row, merged** (Familie IA PRD, owner
-2026-09-05): they are not two things to a parent, and a guest used to see *two* doors to one screen
-because `KontoPane` opened with `if (guest) return <the sign-in offer>`. The pane is ordered
-sub-sections, declared as DATA in `FAMILIE_BLOCK_ORDER` so a plain-Node test can assert the order:
+**`Konto` is `Barn` + the old `Konto` + the old `Log ind` promo row, merged** (Familie IA PRD, owner
+2026-09-05; it shipped that day as `Familie` and was renamed back to `Konto` the same day). They are
+not two things to a parent, and a guest used to see *two* doors to one screen because the old
+`KontoPane` opened with `if (guest) return <the sign-in offer>`. The pane is ordered sub-sections,
+declared as DATA in `KONTO_BLOCK_ORDER` so a plain-Node test can assert the order:
 identity (guest → the sign-in offer, the only place it now lives; signed in → the email) · `Børn`
 (active child, read-only "Sådan går det", roster/switch/rename/add) · `Sikkerhed` and `Synkronisering`
 (signed in only) · then **TWO separate danger containers, account LAST**.
@@ -62,7 +63,7 @@ identity (guest → the sign-in offer, the only place it now lives; signed in �
   `[data-danger-block=fareBarn|fareKonto]`.
 - **`Slet barnet` is in that block, not on the roster row** — it used to be a bin one control from the
   rename pencil. It acts on the ACTIVE child, so deleting another costs a switch first, deliberately.
-- **Item ids keep their `barn.` / `konto.` prefixes** under `familie`. They are stable across the whole
+- **Item ids keep their `barn.` / `konto.` prefixes.** They are stable across the whole
   surface and the PIN-downgrade assertions key off them; renaming risks that guard for nothing.
 
 The reset lives in `Farligt for {navn}` (it is per-child, so it sits next to the child) → "Nulstil
@@ -105,9 +106,9 @@ Signing in is offered only here, behind the parental gate — nothing adult-dire
   that iPad alone and a reset destroys it. Say the progress is **uncopied**, never *unsaved* — it is
   saved, and the distinction is the whole lever.
 - **The offer is progress-aware** (`rewardNumber()`, on the line directly above the sign-in buttons —
-  it lived on the deleted rail promo row until the Familie merge), which is the endowed-progress effect
+  it lived on the deleted rail promo row until the merge), which is the endowed-progress effect
   pulled in the one place the constraint allows. Never `globalLevel()`, never as a distance.
-- **It appears EXACTLY ONCE**, at the top of the `Familie` pane. `adultSettingsIa.test.ts` fails the
+- **It appears EXACTLY ONCE**, at the top of the `Konto` pane. `adultSettingsIa.test.ts` fails the
   build if `data-guest-signin-promo` reappears anywhere in `src/`.
 - **One trust line at the CTA** — free, no ads, no tracking, no mail. Cost and data handling are the
   dominant parental objection for a children's app, and all four clauses are load-bearing claims: if

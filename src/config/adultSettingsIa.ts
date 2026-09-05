@@ -16,15 +16,19 @@
 
 import type { PinReason } from './pinReasons.ts'
 
-export type AdultGroupId = 'familie' | 'laering' | 'lyd' | 'udseende' | 'privatliv'
+export type AdultGroupId = 'konto' | 'laering' | 'lyd' | 'udseende' | 'privatliv'
 
 /**
- * The ordered sub-sections of the `Familie` pane (Familie IA PRD §3).
+ * The ordered sub-sections of the `Konto` pane (Familie IA PRD §3).
  *
  * `Barn` and `Konto` used to be two rail groups, which is not how a parent models it: they are one
- * thing — the family — seen from two angles, and the argument for signing in ("Bogen er sikret") is a
- * statement about the CHILD that was filed under account. Merging them also returns the rail to the
- * five mutually-exclusive groups Settings PRD-01 specified.
+ * thing seen from two angles, and the argument for signing in ("Bogen er sikret") is a statement about
+ * the CHILD that was filed under account. Merging them also returns the rail to the five
+ * mutually-exclusive groups Settings PRD-01 specified.
+ *
+ * The merged group shipped as **`Familie`** and was renamed to **`Konto`** the same day (owner: the
+ * word read as odd). Only the name changed — the merge, the order and the two danger blocks are
+ * exactly as the PRD specified them, so read `tmp-prd-adult-familie-ia.md` as the record for all of it.
  *
  * ORDER IS LOAD-BEARING, and it is declared here rather than left to the pane so a plain-Node test can
  * assert it: identity first (the thing the rest hangs off), then the child, then the two signed-in
@@ -32,11 +36,11 @@ export type AdultGroupId = 'familie' | 'laering' | 'lyd' | 'udseende' | 'privatl
  * actions next to benign ones: the remedy is spatial separation plus a redundant visual signal, so
  * `fareKonto` being last puts "Slet kontoen helt" as far from "Omdøb barnet" as the pane allows.
  */
-export type FamilieBlock = 'konto' | 'boern' | 'sikkerhed' | 'synk' | 'fareBarn' | 'fareKonto'
+export type KontoBlock = 'identitet' | 'boern' | 'sikkerhed' | 'synk' | 'fareBarn' | 'fareKonto'
 
 /** Top to bottom in the pane. The two danger blocks are last, account last of all (§3.5). */
-export const FAMILIE_BLOCK_ORDER: FamilieBlock[] = [
-  'konto',
+export const KONTO_BLOCK_ORDER: KontoBlock[] = [
+  'identitet',
   'boern',
   'sikkerhed',
   'synk',
@@ -48,7 +52,7 @@ export const FAMILIE_BLOCK_ORDER: FamilieBlock[] = [
  * The two blocks that render as their own bordered container with its own heading — never one strip
  * with a divider inside it, which Gestalt proximity still reads as a single group.
  */
-export const FAMILIE_DANGER_BLOCKS: FamilieBlock[] = ['fareBarn', 'fareKonto']
+export const KONTO_DANGER_BLOCKS: KontoBlock[] = ['fareBarn', 'fareKonto']
 
 /**
  * How a destructive action proves the adult.
@@ -86,14 +90,14 @@ export interface AdultItem {
   /** Required on every destructive item. */
   verify?: AdultVerification
   /**
-   * Which sub-section of the `Familie` pane the item renders in (§3). Only that group declares it —
+   * Which sub-section of the `Konto` pane the item renders in (§3). Only that group declares it —
    * the other four panes are a single block each.
    *
    * It exists so "no child-scoped and account-scoped destructive item shares a block" is assertable as
    * DATA. Without it the separation lives only in JSX, where a later tidy-up could merge the two danger
    * strips back into one and nothing would fail.
    */
-  block?: FamilieBlock
+  block?: KontoBlock
   /**
    * A tool for the OWNER, not a setting for a parent — hidden in the production build (owner,
    * 2026-09-05). Six items qualify, and the reason is not tidiness in two of them:
@@ -146,8 +150,9 @@ export const AMBIGUOUS_LABELS = ['andet', 'diverse', 'øvrigt', 'øvrige', 'mere
  */
 export const ADULT_IA: AdultGroup[] = [
   {
-    // THE MERGE (Familie IA PRD, owner 2026-09-05). `Barn` + `Konto` + the standalone `Log ind` promo
-    // row were three doors to two rooms that are one room to a parent — and `KontoPane` opened with
+    // THE MERGE (Familie IA PRD, owner 2026-09-05; the group shipped as `Familie` and was renamed to
+    // `Konto` the same day). `Barn` + `Konto` + the standalone `Log ind` promo row were three doors to
+    // two rooms that are one room to a parent — and the old `KontoPane` opened with
     // `if (guest) return <the sign-in offer>`, so the promo row and the `Konto` rail entry led to the
     // same screen. One group, ordered sub-sections, `block` above.
     //
@@ -156,13 +161,13 @@ export const ADULT_IA: AdultGroup[] = [
     // load-bearing assertions in `adultSettingsIa.test.ts` key off them against the real
     // `pinVerifierFor` table. Renaming them buys nothing and risks the one guard that stops an
     // account-scoped destructive action being downgraded to the local unlock. A `barn.*` id under
-    // `familie` is odd; it is the cheaper half of that trade. Do not "fix" it.
-    id: 'familie',
-    label: 'Familie',
+    // `konto` is odd; it is the cheaper half of that trade. Do not "fix" it.
+    id: 'konto',
+    label: 'Konto',
     items: [
       // ---- §3.1 the identity row: the account, at the top, iOS's Apple-Account placement ----------
       // Guest: the sign-in offer, and this is now the ONLY place it appears.
-      { id: 'konto.email', label: 'Konto', block: 'konto' },
+      { id: 'konto.email', label: 'Konto', block: 'identitet' },
 
       // ---- §3.2 Børn ------------------------------------------------------------------------------
       { id: 'barn.active', label: 'Aktivt barn', block: 'boern' },
@@ -309,8 +314,8 @@ export const ADULT_IA: AdultGroup[] = [
   {
     // THE FIFTH GROUP, added deliberately at App Store PRD Phase A (§3.5 / §3.6) — it broke the
     // Settings PRD-01 five-group contract on purpose, with the owner's decision on record
-    // (2026-08-06), and the Familie merge has since restored the count without touching this one.
-    // DO NOT fold it into `Familie`. The reason it is its own group: a Kids Category
+    // (2026-08-06), and the Barn+Konto merge has since restored the count without touching this one.
+    // DO NOT fold it into `Konto`. The reason it is its own group: a Kids Category
     // reviewer looks for the parental gate, the microphone default and the privacy policy, and all
     // three are the SAME story. Scattering the mic switch under "Lyd" (which otherwise means playback
     // volume) and the policy into the rail footer would have made a reviewer hunt for the one thing
@@ -340,9 +345,9 @@ export const adultGroupLabel = (id: AdultGroupId): string =>
 export const adultItemsWithGroup = (): { group: AdultGroupId; item: AdultItem }[] =>
   ADULT_IA.flatMap((g) => g.items.map((item) => ({ group: g.id, item })))
 
-/** The `Familie` items in one sub-section, in declaration order. */
-export const familieBlockItems = (block: FamilieBlock): AdultItem[] =>
-  (ADULT_IA.find((g) => g.id === 'familie')?.items ?? []).filter((i) => i.block === block)
+/** The `Konto` items in one sub-section, in declaration order. */
+export const kontoBlockItems = (block: KontoBlock): AdultItem[] =>
+  (ADULT_IA.find((g) => g.id === 'konto')?.items ?? []).filter((i) => i.block === block)
 
 /**
  * One item by id. The panes use this to read `typeToConfirm`, so the word declared above is literally

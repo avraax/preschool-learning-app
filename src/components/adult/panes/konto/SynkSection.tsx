@@ -2,8 +2,8 @@
 //
 // Lifted out of the old `KontoPane` unchanged. `Synkronisér nu` stays a `devTool`, i.e. absent from
 // the production build: sync is automatic, so a manual trigger is only ever used while debugging one.
-// `adultSettingsIa.test.ts` reads THIS file for the `showDevTools()` gate — it used to name
-// `KontoPane.tsx`, which no longer exists.
+// `adultSettingsIa.test.ts` reads THIS file for the `showDevTools()` gate — it used to name the old
+// flat `KontoPane.tsx`, whose sync section this is.
 
 import React, { useCallback, useState } from 'react'
 import { Box, Button, Typography } from '@mui/material'

@@ -208,9 +208,9 @@ test('the ceremony tap is ARMED before it can dismiss (§4.3)', () => {
 })
 
 test('the adult pane shows the DISTANCE but never the level', () => {
-  // `BarnPane` became `familie/BoernSection.tsx` when Barn + Konto merged into one Familie pane
+  // `BarnPane` became `konto/BoernSection.tsx` when Barn + Konto merged into one pane
   // (Familie IA PRD, 2026-09-05). "Sådan går det" moved with it, unchanged.
-  const code = codeOf('components/adult/panes/familie/BoernSection.tsx')
+  const code = codeOf('components/adult/panes/konto/BoernSection.tsx')
   // The distance belongs here and only here — the parent is the literate party.
   assert.ok(code.includes('af ${REWARD_SLOTS}'), 'the adult pane lost its honest "n af 72"')
   assert.ok(code.includes('rewardNumber()'), 'the adult count must be rewards HANDED OVER')

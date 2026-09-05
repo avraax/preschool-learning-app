@@ -6,11 +6,11 @@ import {
   ADULT_IA,
   ADULT_GROUP_IDS,
   AMBIGUOUS_LABELS,
-  FAMILIE_BLOCK_ORDER,
-  FAMILIE_DANGER_BLOCKS,
+  KONTO_BLOCK_ORDER,
+  KONTO_DANGER_BLOCKS,
   adultItemsWithGroup,
   adultItem,
-  familieBlockItems,
+  kontoBlockItems,
   showsDevTools,
   devToolItemIds,
 } from './adultSettingsIa.ts'
@@ -32,14 +32,14 @@ test('every group id is unique', () => {
 
 test('the surface has exactly the five groups, in rail order', () => {
   // Settings PRD-01 shipped FIVE, "Privatliv" made it six at App Store PRD Phase A (owner,
-  // 2026-08-06), and the Familie merge (owner, 2026-09-05) put it back to five by folding `Barn` and
+  // 2026-08-06), and the Barn+Konto merge (owner, 2026-09-05) put it back to five by folding `Barn` and
   // `Konto` together — they are one thing to a parent. Pinned as an exact list (not a length) so a
   // sixth group is a deliberate act rather than a drift.
-  assert.deepEqual(ADULT_GROUP_IDS, ['familie', 'laering', 'lyd', 'udseende', 'privatliv'])
+  assert.deepEqual(ADULT_GROUP_IDS, ['konto', 'laering', 'lyd', 'udseende', 'privatliv'])
 })
 
 /** Every item that was in `barn` or `konto` before the merge. Literal, so nothing can be LOST. */
-const FAMILIE_ITEM_IDS = [
+const KONTO_ITEM_IDS = [
   'konto.email',
   'barn.active',
   'barn.summary',
@@ -58,36 +58,36 @@ const FAMILIE_ITEM_IDS = [
   'konto.deleteAccount',
 ]
 
-test('the merge lost nothing: familie holds every former barn.* and konto.* item, in §3 order', () => {
+test('the merge lost nothing: konto holds every former barn.* and konto.* item, in §3 order', () => {
   // Asserted against the literal id list rather than a count, because a count passes while the WRONG
   // sixteen are present — and the ids are deliberately NOT renamed (they are declared stable across
   // the whole surface, the panes read `typeToConfirm` through `adultItem(id)`, and the PIN-downgrade
   // assertions below key off them).
-  const familie = ADULT_IA.find((g) => g.id === 'familie')
-  assert.ok(familie, 'the Familie group has gone missing')
-  assert.deepEqual(familie!.items.map((i) => i.id), FAMILIE_ITEM_IDS)
+  const konto = ADULT_IA.find((g) => g.id === 'konto')
+  assert.ok(konto, 'the merged Konto group has gone missing')
+  assert.deepEqual(konto!.items.map((i) => i.id), KONTO_ITEM_IDS)
 })
 
-test('every familie item declares a block, and the blocks run in the declared order', () => {
-  const familie = ADULT_IA.find((g) => g.id === 'familie')!
-  for (const item of familie.items) {
+test('every konto item declares a block, and the blocks run in the declared order', () => {
+  const konto = ADULT_IA.find((g) => g.id === 'konto')!
+  for (const item of konto.items) {
     assert.ok(item.block, `${item.id} declares no block — the pane order would be JSX-only`)
     assert.ok(
-      FAMILIE_BLOCK_ORDER.includes(item.block!),
+      KONTO_BLOCK_ORDER.includes(item.block!),
       `${item.id} is in an unknown block "${item.block}"`,
     )
   }
-  // Items are declared in block order, so `familieBlockItems` reading the pane top-to-bottom is true.
-  const seen = familie.items.map((i) => FAMILIE_BLOCK_ORDER.indexOf(i.block!))
+  // Items are declared in block order, so `kontoBlockItems` reading the pane top-to-bottom is true.
+  const seen = konto.items.map((i) => KONTO_BLOCK_ORDER.indexOf(i.block!))
   for (let i = 1; i < seen.length; i++) {
     assert.ok(
       seen[i] >= seen[i - 1],
-      `${familie.items[i].id} is declared out of block order (${familie.items[i].block})`,
+      `${konto.items[i].id} is declared out of block order (${konto.items[i].block})`,
     )
   }
   // Guard the guard: an empty block list would make every assertion above vacuous.
-  for (const block of FAMILIE_BLOCK_ORDER) {
-    assert.ok(familieBlockItems(block).length > 0, `block "${block}" is empty`)
+  for (const block of KONTO_BLOCK_ORDER) {
+    assert.ok(kontoBlockItems(block).length > 0, `block "${block}" is empty`)
   }
 })
 
@@ -119,12 +119,12 @@ test('the ACCOUNT danger block is the last thing in the pane', () => {
   // §3.5 requirement 3: it puts "Slet kontoen helt" as far from "Omdøb barnet" as the pane allows.
   // Before the merge that distance was an accident of the two groups being separate; it has to be
   // replaced with a deliberate one.
-  assert.deepEqual(FAMILIE_DANGER_BLOCKS, ['fareBarn', 'fareKonto'])
-  assert.equal(FAMILIE_BLOCK_ORDER[FAMILIE_BLOCK_ORDER.length - 1], 'fareKonto')
-  const familie = ADULT_IA.find((g) => g.id === 'familie')!
-  assert.equal(familie.items[familie.items.length - 1].block, 'fareKonto')
+  assert.deepEqual(KONTO_DANGER_BLOCKS, ['fareBarn', 'fareKonto'])
+  assert.equal(KONTO_BLOCK_ORDER[KONTO_BLOCK_ORDER.length - 1], 'fareKonto')
+  const konto = ADULT_IA.find((g) => g.id === 'konto')!
+  assert.equal(konto.items[konto.items.length - 1].block, 'fareKonto')
   // …and the child block is immediately before it, with nothing benign in between.
-  const blocks = [...new Set(familie.items.map((i) => i.block))]
+  const blocks = [...new Set(konto.items.map((i) => i.block))]
   assert.deepEqual(blocks.slice(-2), ['fareBarn', 'fareKonto'])
 })
 
@@ -334,7 +334,7 @@ test('nothing a guideline depends on may ever be marked devTool', () => {
 
 test('the panes actually gate on showDevTools — the data flag alone renders nothing', () => {
   // A config test cannot see a component ignoring the config (games-catalog.md). Read the source.
-  for (const f of ['LydPane.tsx', 'UdseendePane.tsx', 'familie/SynkSection.tsx']) {
+  for (const f of ['LydPane.tsx', 'UdseendePane.tsx', 'konto/SynkSection.tsx']) {
     assert.match(paneOf(f), /showDevTools\(\)/, `${f} does not consult showDevTools()`)
   }
   // The stranded-override escape hatch: without it, an override already stored on a production
@@ -342,14 +342,14 @@ test('the panes actually gate on showDevTools — the data flag alone renders no
   assert.match(paneOf('LydPane.tsx'), /setVoiceOverride\(null\)/)
 })
 
-// ---- The Familie merge, in the RENDER (2026-09-05) --------------------------------------------
+// ---- The Barn+Konto merge, in the RENDER (2026-09-05) -----------------------------------------
 //
 // Everything above is the declaration. A config test cannot see whether the component uses the
 // config (`game-development.md`), and §3.5's separation is a rendering property: the data being right
 // proves nothing about two danger strips being merged back into one box.
 
-test('FamiliePane renders the two danger blocks as SEPARATE containers, account last', () => {
-  const pane = paneOf('FamiliePane.tsx')
+test('KontoPane renders the two danger blocks as SEPARATE containers, account last', () => {
+  const pane = paneOf('KontoPane.tsx')
   const barnAt = pane.indexOf('<BarnDanger')
   const kontoAt = pane.indexOf('<KontoDanger')
   assert.ok(barnAt > 0, 'the child danger block is not rendered')
@@ -364,7 +364,7 @@ test('FamiliePane renders the two danger blocks as SEPARATE containers, account 
   // Two containers, not one strip with a divider: each danger block is its own `DangerBlock`, and
   // each names its own blast radius. Gestalt proximity — a divider inside one box still reads as one
   // group, which is why the shared `DangerHeading` + `<Divider />` shape was deleted.
-  const blocks = paneOf('familie/DangerBlocks.tsx')
+  const blocks = paneOf('konto/DangerBlocks.tsx')
   const containers = blocks.match(/<DangerBlock\b/g) ?? []
   assert.equal(containers.length, 2, 'expected exactly two DangerBlock containers')
   assert.match(blocks, /id="fareBarn"/, 'the child danger block lost its block id')
@@ -397,6 +397,6 @@ test('the duplicate sign-in door is gone from the whole tree', () => {
   assert.deepEqual(offenders, [], 'the standalone Log ind promo row is back')
 
   // And the offer itself renders exactly once, in the one place §3.1 puts it.
-  assert.match(paneOf('FamiliePane.tsx'), /<SignInOffer\s*\/>/)
-  assert.match(paneOf('familie/SignInOffer.tsx'), /Bogen er sikret/, 'the offer copy has been rewritten')
+  assert.match(paneOf('KontoPane.tsx'), /<SignInOffer\s*\/>/)
+  assert.match(paneOf('konto/SignInOffer.tsx'), /Bogen er sikret/, 'the offer copy has been rewritten')
 })

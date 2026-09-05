@@ -1,4 +1,4 @@
-// The two danger blocks at the bottom of the Familie pane (Familie IA PRD §3.5).
+// The two danger blocks at the bottom of the Konto pane (Familie IA PRD §3.5).
 //
 // THEY ARE TWO CONTAINERS, NEVER ONE STRIP WITH A DIVIDER, and the account one is LAST. Merging Barn
 // and Konto put "Slet barnet" and "Slet kontoen helt" in the same pane for the first time, and NN/g is

@@ -1,14 +1,15 @@
 // "Til de voksne" — the whole settings surface (Settings PRD-01).
 //
 // WHAT REPLACED WHAT: 13 flat, undifferentiated rows in a scrolling `maxWidth="xs"` dialog became a
-// two-pane split — a persistent left rail of five mutually-exclusive groups (Familie / Læring / Lyd /
+// two-pane split — a persistent left rail of five mutually-exclusive groups (Konto / Læring / Lyd /
 // Udseende / Privatliv) plus a support footer that is reachable from every pane. On a phone the rail
 // IS the root list and a group pushes its pane.
 //
-// `Familie` is `Barn` + `Konto` merged (Familie IA PRD, owner 2026-09-05), and the standalone `Log
-// ind` promo row that used to sit above the rail went with it: a guest saw the promo row AND a
-// `Konto — Ikke logget ind` rail entry, and both opened the same sign-in offer. The offer now lives
-// once, at the top of the Familie pane. Do not re-add a second door.
+// `Konto` is `Barn` + `Konto` merged (Familie IA PRD, owner 2026-09-05 — it shipped that day as
+// `Familie` and was renamed back to `Konto` the same day), and the standalone `Log ind` promo row that
+// used to sit above the rail went with it: a guest saw the promo row AND a `Konto — Ikke logget ind`
+// rail entry, and both opened the same sign-in offer. The offer now lives once, at the top of the
+// Konto pane. Do not re-add a second door.
 //
 // THE NAVIGATION GRAMMAR (§6), which is the point of the rework:
 //   1. ONE "Luk", top-right, closes everything. No other control in the adult area uses that word.
@@ -54,7 +55,7 @@ import { useProfiles } from '../../hooks/useProfiles'
 import { useAuthContext } from '../../contexts/AuthContext'
 import { captureExcludeProps } from '../../services/captureExclude'
 import AdultBackHeader from './AdultBackHeader'
-import FamiliePane from './panes/FamiliePane'
+import KontoPane from './panes/KontoPane'
 import LaeringPane from './panes/LaeringPane'
 import LydPane from './panes/LydPane'
 import UdseendePane from './panes/UdseendePane'
@@ -68,7 +69,7 @@ const RAIL_W = 200
 const ICON = 19
 
 const RAIL_ICON: Record<AdultGroupId, React.ReactNode> = {
-  familie: <Users size={ICON} aria-hidden />,
+  konto: <Users size={ICON} aria-hidden />,
   laering: <GraduationCap size={ICON} aria-hidden />,
   lyd: <Volume2 size={ICON} aria-hidden />,
   udseende: <Palette size={ICON} aria-hidden />,
@@ -80,14 +81,14 @@ const FIRST_PANE: AdultGroupId = ADULT_GROUP_IDS[0]
 
 /**
  * The pane the adult was last on. MODULE-level on purpose — HIG: "people often adjust related
- * settings more than once", and re-opening onto Familie every time punishes exactly that. Deliberately
+ * settings more than once", and re-opening onto Konto every time punishes exactly that. Deliberately
  * NOT persisted to storage: it is a within-session convenience, not a preference.
  */
 let lastPane: AdultGroupId = FIRST_PANE
 
 /**
  * …and it is read back through this, because the rail's groups can change under it — `barn` and
- * `konto` were merged into `familie`, and a value that names no group would leave `group` undefined
+ * `konto` were merged into one `konto` group, and a value that names no group would leave `group` undefined
  * and the detail pane blank with no error.
  */
 const validPane = (id: AdultGroupId): AdultGroupId =>
@@ -195,7 +196,7 @@ const AdultSettings: React.FC<AdultSettingsProps> = ({
     ) : pane === 'privatliv' ? (
       <PrivatlivPane closeAll={onClose} />
     ) : (
-      <FamiliePane closeAll={onClose} />
+      <KontoPane closeAll={onClose} />
     )
 
   return (
@@ -288,7 +289,7 @@ const AdultSettings: React.FC<AdultSettingsProps> = ({
                   §3.1). It duplicated the `Konto` rail entry below it — both opened the same offer —
                   and a duplicate affordance is worse than a missing one, because it makes the surface
                   look like it has two different things in it. The offer, including its
-                  progress-aware sticker count, moved into the top of the Familie pane. */}
+                  progress-aware sticker count, moved into the top of the Konto pane. */}
 
               <List sx={{ flex: 1, minHeight: 0, overflowY: 'auto', py: 0.75, px: 0.75 }}>
                 {ADULT_IA.map((g) => (
@@ -311,7 +312,7 @@ const AdultSettings: React.FC<AdultSettingsProps> = ({
                       // to see whose settings they are about to change. This is a LABEL, not a
                       // second door — the offer itself is inside the pane.
                       secondary={
-                        g.id !== 'familie' ? undefined : guest ? 'Ikke logget ind' : activeChild
+                        g.id !== 'konto' ? undefined : guest ? 'Ikke logget ind' : activeChild
                       }
                       slotProps={{
                         primary: { sx: { fontSize: '0.95rem', fontWeight: 600 } },

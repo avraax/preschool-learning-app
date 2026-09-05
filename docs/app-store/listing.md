@@ -364,12 +364,12 @@ so `Læring` is one click; **phone is a drill-down** that opens on the last-view
 the phone one uses the group list, because the `Læring` pane alone is a mostly-empty white screen at
 that aspect.
 
-**`&hidetools=1` on any voksne capture.** Six items in Lyd / Udseende / Familie are owner tools hidden
+**`&hidetools=1` on any voksne capture.** Six items in Lyd / Udseende / Konto are owner tools hidden
 in the App Store build, but they are still present in a dev capture, so a shot taken without it would
 show controls the shipped app does not have.
 
 **`iphone-6-voksne.png` IS the rail, so an IA change invalidates it.** Re-shot 2026-09-05 for the
-Familie merge (`Barn` + `Konto` + the `Log ind` promo row → one `Familie` group): the rail is five rows
+merge (`Barn` + `Konto` + the `Log ind` promo row → one `Konto` group): the rail is five rows
 now and fits without a scrollbar. The iPad shot is the `Læring` pane and was unaffected. The eval that
 took it also strips the two dev-capture artifacts below.
 

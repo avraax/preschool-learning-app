@@ -1,4 +1,7 @@
-// "Familie" — the merged pane (Familie IA PRD, owner chose shape A on 2026-09-05).
+// "Konto" — the merged pane (Familie IA PRD, owner chose shape A on 2026-09-05).
+//
+// It shipped as `Familie` and was renamed to `Konto` the same day — the owner read the word as odd.
+// ONLY the name changed; the PRD is still the record for the merge, the order and the danger blocks.
 //
 // WHAT REPLACED WHAT: `BarnPane` + `KontoPane` + the standalone `Log ind` promo row above the rail.
 // A guest saw BOTH the promo row and a `Konto — Ikke logget ind` rail entry, and `KontoPane` opened
@@ -18,27 +21,27 @@
 //   5. Farligt for {navn}     — child-scoped, this device's copy
 //   6. Farligt for kontoen    — account-scoped, LAST
 //
-// The two danger blocks are separate CONTAINERS (see `familie/DangerBlocks.tsx`), not one strip with
-// a divider, and `FAMILIE_BLOCK_ORDER` in `adultSettingsIa.ts` declares this order as data so a
+// The two danger blocks are separate CONTAINERS (see `konto/DangerBlocks.tsx`), not one strip with
+// a divider, and `KONTO_BLOCK_ORDER` in `adultSettingsIa.ts` declares this order as data so a
 // plain-Node test can assert it. A guest sees 1 → 2 → 5 and that is correct: no dead rows, no
 // "requires an account" stubs beyond the one on "Tilføj et barn".
 
 import React, { useCallback, useRef } from 'react'
 import { Box, Stack, Typography } from '@mui/material'
 import { useAuthContext } from '../../../contexts/AuthContext'
-import BoernSection from './familie/BoernSection'
-import SignInOffer from './familie/SignInOffer'
-import SikkerhedSection from './familie/SikkerhedSection'
-import SynkSection from './familie/SynkSection'
-import { BarnDanger, KontoDanger } from './familie/DangerBlocks'
+import BoernSection from './konto/BoernSection'
+import SignInOffer from './konto/SignInOffer'
+import SikkerhedSection from './konto/SikkerhedSection'
+import SynkSection from './konto/SynkSection'
+import { BarnDanger, KontoDanger } from './konto/DangerBlocks'
 import { PaneSection } from './paneParts'
 
-export interface FamiliePaneProps {
+export interface KontoPaneProps {
   /** Close the whole settings surface — switching child re-attaches the store under the new profile. */
   closeAll: () => void
 }
 
-const FamiliePane: React.FC<FamiliePaneProps> = ({ closeAll }) => {
+const KontoPane: React.FC<KontoPaneProps> = ({ closeAll }) => {
   const auth = useAuthContext()
   /** Playing with no account at all — the state in which signing in is something to offer. */
   const guest = auth?.phase === 'guest'
@@ -82,4 +85,4 @@ const FamiliePane: React.FC<FamiliePaneProps> = ({ closeAll }) => {
   )
 }
 
-export default FamiliePane
+export default KontoPane

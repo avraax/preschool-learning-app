@@ -130,9 +130,9 @@ test('the lock screen cannot offer Face ID inside the shell', () => {
 test('the adult surface blames the BUILD, not the iPad', () => {
   // The same iPad does Face ID in Safari. "Denne enhed understøtter ikke Face ID" is therefore false in
   // the shell, and false in a way that produces an unreproducible bug report.
-  // `KontoPane` became `familie/SikkerhedSection.tsx` when Barn + Konto merged into one Familie pane
+  // The flat `KontoPane` became `konto/SikkerhedSection.tsx` when Barn + Konto merged into one pane
   // (Familie IA PRD, 2026-09-05). The Face ID block moved with it, branch order unchanged.
-  const code = codeOf('components/adult/panes/familie/SikkerhedSection.tsx')
+  const code = codeOf('components/adult/panes/konto/SikkerhedSection.tsx')
   assert.match(code, /!passkeysSupportedInThisBuild\(\)/, 'the Sikkerhed section has no shell branch')
   assert.match(code, /app-udgaven/, 'the shell message does not name the app edition')
   const shellBranchAt = code.indexOf('!passkeysSupportedInThisBuild()')
@@ -152,14 +152,14 @@ test('the WEB deployment keeps passkeys — this is a shell gate, not a removal'
   // …and it is still CALLED: the lock screen unlocks with it and the Sikkerhed section registers
   // with it. Anchored on the call, not the bare name — an `import` line alone satisfied
   // `/registerPasskey/` and `/startPasskeyUnlock/`, so both survived deleting the only invocation
-  // (found by /re-break, 2026-09-05, while repointing these two at the merged Familie pane).
+  // (found by /re-break, 2026-09-05, while repointing these two at the merged Konto pane).
   assert.match(
     codeOf('components/auth/LockScreen.tsx'),
     /startPasskeyUnlock\(passkeyOptions/,
     'LockScreen imports startPasskeyUnlock but never calls it',
   )
   assert.match(
-    codeOf('components/adult/panes/familie/SikkerhedSection.tsx'),
+    codeOf('components/adult/panes/konto/SikkerhedSection.tsx'),
     /registerPasskey\(registerOptions/,
     'the Sikkerhed section imports registerPasskey but never calls it',
   )

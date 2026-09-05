@@ -2,7 +2,7 @@
 //
 // It used to appear TWICE: a `Log ind` promo row pinned above the rail, and a `Konto` rail entry whose
 // pane opened with `if (guest) return <this>`. Two doors, one room. The promo row is deleted; this is
-// what is left, and it now sits at the TOP of the Familie pane where iOS puts the Apple Account row.
+// what is left, and it now sits at the TOP of the Konto pane where iOS puts the Apple Account row.
 //
 // EVERY WORD IS UNCHANGED, deliberately — `.claude/rules/adult-surface.md` §"The account offer" records
 // why each line is there and the PRD puts re-litigating it out of scope. The one thing that MOVED is
@@ -101,7 +101,7 @@ const SignInOffer: React.FC = () => {
   return (
     <Stack spacing={2.5}>
       {/* `caps={false}`: this is a sentence, and the small-caps eyebrow renders a sentence as
-          shouting. The pane header above it reads "Familie". */}
+          shouting. The pane header above it reads "Konto". */}
       <PaneSection title="I spiller uden konto" caps={false}>
         <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.6 }}>
           Barnets bog ligger kun her på iPad&apos;en. Der er ingen kopi andre steder.
