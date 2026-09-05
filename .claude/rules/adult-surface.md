@@ -40,15 +40,33 @@ carries the quiz board, not the settings.
 ## The two-pane IA is a contract
 
 A `maxWidth="md"` Dialog (MUI's default z-index 1300) with a persistent left rail of **five
-mutually-exclusive groups** — **Barn** (active child + read-only "Sådan går det" + roster/switch/rename/
-add/delete + reset strip) · **Læring** (difficulty; `panes/LaeringPane.tsx` **EXPLAINS the selected level in
-Danish** and labels the setting as per-child) · **Lyd** (SFX/music + narration voice + tempo) ·
-**Udseende** (skin) · **Konto** (email + sync + PIN + Face ID + log out / log out everywhere / delete
-account) — plus a **persistent rail footer** (bug report + tap-to-copy version) reachable from every pane.
-It replaced 13 flat rows in a scrolling `xs` dialog and six sibling sub-panels.
+mutually-exclusive groups** — **Familie** · **Læring** (difficulty; `panes/LaeringPane.tsx` **EXPLAINS
+the selected level in Danish** and labels the setting as per-child) · **Lyd** (SFX/music + narration
+voice + tempo) · **Udseende** (skin) · **Privatliv** (mic + policy + support) — plus a **persistent rail
+footer** (bug report + tap-to-copy version) reachable from every pane. It replaced 13 flat rows in a
+scrolling `xs` dialog and six sibling sub-panels.
 
-The reset lives in **Barn**, in that pane's destructive strip (it is per-child, so it sits next to the
-child) → "Nulstil fremgang for {navn}" → a confirmation that **names the active child** →
+**`Familie` is `Barn` + `Konto` + the old `Log ind` promo row, merged** (Familie IA PRD, owner
+2026-09-05): they are not two things to a parent, and a guest used to see *two* doors to one screen
+because `KontoPane` opened with `if (guest) return <the sign-in offer>`. The pane is ordered
+sub-sections, declared as DATA in `FAMILIE_BLOCK_ORDER` so a plain-Node test can assert the order:
+identity (guest → the sign-in offer, the only place it now lives; signed in → the email) · `Børn`
+(active child, read-only "Sådan går det", roster/switch/rename/add) · `Sikkerhed` and `Synkronisering`
+(signed in only) · then **TWO separate danger containers, account LAST**.
+
+- **The danger blocks are two BOXES, never one strip with a divider.** NN/g: *"Avoid placing highly
+  consequential actions … directly next to options that are benign"*, and Gestalt proximity means a
+  divider inside one group still reads as one group. `paneParts.DangerBlock` gives each its own border,
+  tinted ground and heading; `Farligt for {navn}` **names the child**, `Farligt for kontoen` is last, so
+  `Slet kontoen helt` is as far from `Omdøb barnet` as the pane allows. Probe handle:
+  `[data-danger-block=fareBarn|fareKonto]`.
+- **`Slet barnet` is in that block, not on the roster row** — it used to be a bin one control from the
+  rename pencil. It acts on the ACTIVE child, so deleting another costs a switch first, deliberately.
+- **Item ids keep their `barn.` / `konto.` prefixes** under `familie`. They are stable across the whole
+  surface and the PIN-downgrade assertions key off them; renaming risks that guard for nothing.
+
+The reset lives in `Farligt for {navn}` (it is per-child, so it sits next to the child) → "Nulstil
+fremgang for {navn}" → a confirmation that **names the active child** →
 `progressStore.resetAll()`, which clears that child's book and the XP behind it (bests and stars are
 gone app-wide — Endless Play PRD-01 — and the confirmation copy no longer names them), **preserves** sound/music/
 difficulty/theme (those are preferences, not progress) and bumps `sync.epoch` so the next pull can't
@@ -86,14 +104,18 @@ Signing in is offered only here, behind the parental gate — nothing adult-dire
 - **"Bogen er sikret" leads**, because it is the only line true for everyone: a guest book exists on
   that iPad alone and a reset destroys it. Say the progress is **uncopied**, never *unsaved* — it is
   saved, and the distinction is the whole lever.
-- **The offer is progress-aware** (`rewardNumber()` in the rail row), which is the endowed-progress
-  effect pulled in the one place the constraint allows. Never `globalLevel()`, never as a distance.
+- **The offer is progress-aware** (`rewardNumber()`, on the line directly above the sign-in buttons —
+  it lived on the deleted rail promo row until the Familie merge), which is the endowed-progress effect
+  pulled in the one place the constraint allows. Never `globalLevel()`, never as a distance.
+- **It appears EXACTLY ONCE**, at the top of the `Familie` pane. `adultSettingsIa.test.ts` fails the
+  build if `data-guest-signin-promo` reappears anywhere in `src/`.
 - **One trust line at the CTA** — free, no ads, no tracking, no mail. Cost and data handling are the
   dominant parental objection for a children's app, and all four clauses are load-bearing claims: if
   any stops being true, the line goes first.
 - **Say the price before the work.** "Tilføj et barn" used to let a guest pick an avatar and type a
-  name before `createProfile` refused; it now states "Kræver en konto" and routes to Konto. A pane asks
-  `AdultSettings` to switch via a `goToPane` prop — `select()` owns the compact push and `lastPane`.
+  name before `createProfile` refused; it now states "Kræver en konto" and leads to the offer — which
+  after the merge is the top of the SAME pane, so it scrolls there instead of switching rail groups
+  (the old cross-rail `goToPane` prop is gone).
 
 ## Bug reporting
 

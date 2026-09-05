@@ -55,7 +55,8 @@ than empty; the rest of the set has an empty gauge because a fresh Chrome profil
 **Adult settings, re-captured 2026-08-02 (Settings PRD-01).** The `overlays/` set no longer contains
 `adult-menu`, `profiles-panel`, `theme-panel`, `difficulty-panel` or `voice-panel` — that flat
 13-row scrolling dialog and its six sibling sub-panels were replaced by ONE two-pane surface with a
-persistent rail (Barn / Læring / Lyd / Udseende / Konto) and a support footer. `overlays/phone/` is
+persistent rail (**Familie** / Læring / Lyd / Udseende / Privatliv — `Barn` + `Konto` merged into
+`Familie` on 2026-09-05, so these captures predate that) and a support footer. `overlays/phone/` is
 new: the adult area had never been captured at a phone size at all. Recipe for these:
 `--click '[aria-label="Til de voksne"]' --wait-for '.MuiDialog-paper' --settle 4500`, then
 `--click '[data-rail-item=<group>]'` for a pane (on 844×390 the rail is only rendered at the root, so

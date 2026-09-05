@@ -1,6 +1,17 @@
 # PRD — "Familie": merge Barn + Konto + the sign-in row into one group
 
-**Status:** AUTHORED 2026-09-05, NOT IMPLEMENTED. Owner chose shape **A** after being shown three.
+**Status:** **IMPLEMENTED 2026-09-05** (commit `7ea3544`). Owner chose shape **A** after being shown three.
+Kept for its §2 research, §3.5's NN/g argument and §5's "must not change" list — the reasoning is what a
+future session needs, not the plan. Two things worth knowing about the build:
+
+- **§3.5 moved `Slet barnet` off the roster row.** §3.2 said "roster · switch · rename · add" and did not
+  list delete, and §3.5's table puts `Slet barnet` in the child danger block — so the per-row bin is
+  gone and the button acts on the ACTIVE child. Deleting another child now costs a switch first. That
+  is the deliberate half of the trade; the bin sat one control from the rename pencil.
+- **§6's rung-3 caveat turned out to be too pessimistic.** `?nogate=1` short-circuits
+  `authGateDecision` to `phase: 'authed'`, so the SIGNED-IN pane — `Sikkerhed`, `Synkronisering` and
+  `Farligt for kontoen` — is fully drivable at rungs 1 and 2 with no Neon session. Recorded in
+  `ui-screenshot/reference/gotchas.md`. Only the Danish, real touch and iPadOS 17.7 still need the iPad.
 **Scope:** the adult surface's information architecture only. No auth logic, no progress logic, no new
 spoken lines, no new server work.
 

@@ -359,15 +359,19 @@ node .claude/skills/ui-screenshot/cdp.mjs --w 956 --h 440 --dpr 3 --settle 4500 
 
 The eval opens the avatar door, reads `[data-guest-gate-prompt]` ("Hvor meget er 4 × 8?"), multiplies,
 clicks `[data-guest-gate-key="<digit>"]`, then picks the pane — see `SKILL.md`. **Tablet is two panes**
-so `Læring` is one click; **phone is a drill-down** that opens on `Barn`, so click `[aria-label="Tilbage"]`
-first. The iPad shot uses the `Læring` pane (Sværhedsgrad Let/Normal/Svær); the phone one uses the group
-list, because the `Læring` pane alone is a mostly-empty white screen at that aspect.
+so `Læring` is one click; **phone is a drill-down** that opens on the last-viewed pane, so click
+`[aria-label="Tilbage"]` first. The iPad shot uses the `Læring` pane (Sværhedsgrad Let/Normal/Svær);
+the phone one uses the group list, because the `Læring` pane alone is a mostly-empty white screen at
+that aspect.
 
-**Add `&hidetools=1` to any FUTURE voksne capture.** Six items in Lyd / Udseende / Konto are owner
-tools hidden in the App Store build, but they are still present in a dev capture, so a shot taken
-without it would show controls the shipped app does not have. The two current shots predate this and
-are unaffected — the iPad one is the Læring pane and the iPhone one is the group list, neither of which
-contains any of the six.
+**`&hidetools=1` on any voksne capture.** Six items in Lyd / Udseende / Familie are owner tools hidden
+in the App Store build, but they are still present in a dev capture, so a shot taken without it would
+show controls the shipped app does not have.
+
+**`iphone-6-voksne.png` IS the rail, so an IA change invalidates it.** Re-shot 2026-09-05 for the
+Familie merge (`Barn` + `Konto` + the `Log ind` promo row → one `Familie` group): the rail is five rows
+now and fits without a scrollbar. The iPad shot is the `Læring` pane and was unaffected. The eval that
+took it also strips the two dev-capture artifacts below.
 
 Two things the eval must strip, both dev-capture artifacts rather than edits to the product: the backend
 pill (`[data-backend-badge]`), absent on production by construction, and the **backend host the version

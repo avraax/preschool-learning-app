@@ -163,10 +163,17 @@ Back to `../SKILL.md`.
   workaround are gone; the label is on the child's AVATAR now), is rail-ready in ~530ms under
   `?nogate=1` — the old "~4.5s is REQUIRED" was the blocking screenshot capture, which is gone, so a
   generous settle is now headroom for the lazy chunk rather than a floor — and its five panes are
-  `[data-rail-item=barn|laering|lyd|udseende|konto]`. **On a phone-sized viewport the rail only exists
-  at the ROOT** — the surface opens onto the last-viewed pane, so click `[aria-label="Tilbage"]` first
-  or the rail selector is simply absent. MUI dialogs render under `.MuiDialog-paper`, popovers under
-  `.MuiPopover-paper`.
+  `[data-rail-item=familie|laering|lyd|udseende|privatliv]` (`barn` and `konto` merged into `familie`,
+  2026-09-05, and the `[data-guest-signin-promo]` row above the rail is deleted). The two danger blocks
+  in `familie` are `[data-danger-block=fareBarn|fareKonto]`. **On a phone-sized viewport the rail only
+  exists at the ROOT** — the surface opens onto the last-viewed pane, so click `[aria-label="Tilbage"]`
+  first or the rail selector is simply absent. MUI dialogs render under `.MuiDialog-paper`, popovers
+  under `.MuiPopover-paper`.
+- **`?nogate=1` renders the SIGNED-IN adult surface, not a guest one** — `authGateDecision` short-circuits
+  to `phase: 'authed'` on `devBypass` (`authGatePolicy.ts`), so `Sikkerhed`, `Synkronisering` and the
+  `fareKonto` danger block are all drivable headlessly WITHOUT minting a session in the production Neon
+  DB. Leaving `?nogate=1` off gives the guest shape behind the arithmetic gate. Both were verified this
+  way for the Familie merge; only real Danish, touch feel and iPadOS 17.7 still need the device.
 - **`?nogate=1` also disables `requirePin`** (`authStore.isDevBypass()` short-circuits it), so PIN pads
   raised via `requirePin` never appear headlessly and a "PIN-gated" path is really being driven
   un-gated. The only pad you can exercise is one a component raises DIRECTLY — e.g. the
