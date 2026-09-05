@@ -149,9 +149,20 @@ test('the WEB deployment keeps passkeys — this is a shell gate, not a removal'
   const code = codeOf('services/passkeyClient.ts')
   assert.match(code, /startAuthentication\(/, 'the passkey unlock implementation is gone')
   assert.match(code, /startRegistration\(/, 'the passkey registration implementation is gone')
-  // …and it is still reachable: the lock screen and the account pane both import it.
-  assert.match(codeOf('components/auth/LockScreen.tsx'), /startPasskeyUnlock/)
-  assert.match(codeOf('components/adult/panes/familie/SikkerhedSection.tsx'), /registerPasskey/)
+  // …and it is still CALLED: the lock screen unlocks with it and the Sikkerhed section registers
+  // with it. Anchored on the call, not the bare name — an `import` line alone satisfied
+  // `/registerPasskey/` and `/startPasskeyUnlock/`, so both survived deleting the only invocation
+  // (found by /re-break, 2026-09-05, while repointing these two at the merged Familie pane).
+  assert.match(
+    codeOf('components/auth/LockScreen.tsx'),
+    /startPasskeyUnlock\(passkeyOptions/,
+    'LockScreen imports startPasskeyUnlock but never calls it',
+  )
+  assert.match(
+    codeOf('components/adult/panes/familie/SikkerhedSection.tsx'),
+    /registerPasskey\(registerOptions/,
+    'the Sikkerhed section imports registerPasskey but never calls it',
+  )
 })
 
 test('the whole passkey probe stays inside its try/catch', () => {
