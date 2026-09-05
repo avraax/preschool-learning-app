@@ -109,7 +109,13 @@ the declaration (staging has `kidsAgeBand: null`) and agree on the flag, so the 
 pending setting. The reading that it only turns true once a version has actually SHIPPED with a band is
 **inference, UNKNOWN** — Apple's docs for the field would not render for WebFetch across three attempts
 (two 404s, one title-only), and a 404 is UNKNOWN, not a finding. **Verify Made for Kids in the ASC Age
-Rating page before submitting, not from this flag.**
+Rating page before submitting, not from this flag** — and it is **not visible on that page at rest**:
+it lives under **"Age Categories and Override", step 5 of the age-rating questionnaire dialog**, behind
+App Information → Age Ratings → Edit / Set Up Age Ratings
+(https://developer.apple.com/help/app-store-connect/manage-app-information/set-an-app-age-rating/, read
+2026-09-05). Two screenshots of the App Information page were spent before this was looked up. The same
+page states the one-way door verbatim: *"You can't change this selection once your app is approved by App
+Review. The app and all subsequent updates will need to follow the Kids category guidelines."*
 
 **A 404 from this API means "wrong parent" at least as often as "not set".** Before reporting anything
 absent, dump the parent's `relationships` keys and try the ones that exist — that is what distinguished
