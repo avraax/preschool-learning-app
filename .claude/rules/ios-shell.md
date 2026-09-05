@@ -100,6 +100,17 @@ setting that cannot be undone after review — while `appStoreAgeRating: FOUR_PL
 whole time. `appInfo.attributes.kidsAgeBand` is separately unreliable: it reads empty while the
 declaration holds `SIX_TO_EIGHT`. **Read the declaration on the appInfo; trust nothing else.**
 
+**`app.isOrEverWasMadeForKids` is a THIRD field and it is not the setting** — it sits on the `apps`
+resource, which has no version and no state, and it read `false` on 2026-09-05 while the pending
+declaration held `kidsAgeBand: SIX_TO_EIGHT` + `parentalControls: true`. Codemagic prints it in every
+distribution log (`Is or ever was made for kids: False`), which makes it look like a failed save right
+when you are about to submit. What the API *does* prove: the two apps in this account differ exactly in
+the declaration (staging has `kidsAgeBand: null`) and agree on the flag, so the flag is not tracking the
+pending setting. The reading that it only turns true once a version has actually SHIPPED with a band is
+**inference, UNKNOWN** — Apple's docs for the field would not render for WebFetch across three attempts
+(two 404s, one title-only), and a 404 is UNKNOWN, not a finding. **Verify Made for Kids in the ASC Age
+Rating page before submitting, not from this flag.**
+
 **A 404 from this API means "wrong parent" at least as often as "not set".** Before reporting anything
 absent, dump the parent's `relationships` keys and try the ones that exist — that is what distinguished
 a stale endpoint from a missing declaration here.
