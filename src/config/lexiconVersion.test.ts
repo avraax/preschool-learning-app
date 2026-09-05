@@ -45,7 +45,7 @@ test('nothing hardcodes the lexicon filename any more', () => {
 
 test('vercel.json caches the lexicon under its VERSIONED path', () => {
   const v = JSON.parse(readFileSync('vercel.json', 'utf8'))
-  const rule = (v.headers || []).find((h) => String(h.source).endsWith('.pls'))
+  const rule = (v.headers || []).find((h: { source: string }) => String(h.source).endsWith('.pls'))
   assert.ok(rule, 'no Cache-Control rule for the lexicon')
   assert.equal(rule.source, `/${LEXICON_FILE}`,
     'the cache header points at a different path than LEXICON_FILE — the long max-age would apply to nothing')

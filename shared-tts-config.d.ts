@@ -18,3 +18,7 @@ export declare const TTS_CONFIG: {
     english: AzureVoice;
   };
 };
+
+/** Versioned filename of the hosted PLS lexicon in public/. Bumped whenever the file changes —
+ *  Azure caches it per URL PATH behind a 24h max-age, so an edit in place is served stale and silent. */
+export const LEXICON_FILE: string;
