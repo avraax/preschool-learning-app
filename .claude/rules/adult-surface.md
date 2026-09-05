@@ -14,26 +14,54 @@ paths:
 
 # The adult surface & bug reports
 
-Settings PRD-01. **THE DOOR IS THE CHILD'S AVATAR — there is no gear** (owner, 2026-08-09). Tapping
-`ProfileBadge` (the header badge on home, the section menus, Min Bog and every game) opens the adult
-surface: a plain tap → `requirePin('adultMenu')`, or the guest arithmetic gate → the lazy
-`AdultSettings`. This is Khan Academy Kids' pattern, and it removes a permanent adult artifact from a
-child's screen. The old ~2s hold went earlier, once the 4-digit PIN became the real gate.
+Settings PRD-01. **IT IS CALLED `Indstillinger`** (owner, 2026-09-05 — it was "Til de voksne"; only the
+name changed, and `[aria-label="Indstillinger"]` is now THE selector the harness clicks).
+
+**THE DOOR IS A LABELLED ROW, not the child's face and not a gear.** The gear went 2026-08-09 and the
+avatar took its place; Corner identity PRD-01 §2.6 moved it again, because one control was doing two
+contradictory jobs — *who is playing* is a passive cue aimed at the child, *the adult door* is a control
+aimed at the owner — so a five-year-old who tapped their own portrait met a keypad. Tapping
+`ProfileChip` (the name pill on home, the section menus and Min Bog) now opens **`WhoIsPlayingSheet`**,
+whose first element is the child themselves, with two labelled rows beneath: **Skift barn** →
+`requirePin('switchProfile')` → the full-screen `ProfilePicker`, and **Indstillinger** →
+`adultSurfaceBus.open()` → `requirePin('adultMenu')` (or the guest arithmetic gate) → the lazy
+`AdultSettings`. Khan Academy Kids' pattern; Apple 1.3 wants the gate, not the disguise.
+
+- **BOTH GATES PASS `{ force: true }`, and that is the whole gate.** `requirePin` normally
+  short-circuits inside the ~5-minute adult unlock window — right for repeated actions INSIDE the
+  surface (HIG: "people often adjust related settings more than once"), and wrong for a door one tap
+  from the child's own name pill: the second open within five minutes let anyone straight through, PIN
+  and guest arithmetic alike (owner: *"it is gated first time but not consecutively"*). `force` drops
+  only that short-circuit; the verifier is unchanged, so both still work offline.
+- **The sheet raises the picker through a `<Portal>`**, and that is load-bearing: `ProfilePicker` is a
+  `position: fixed` box at `AUTH_Z.profilePicker` (10 000), which is correct where `ProfileGate` mounts
+  it and useless from inside the page's chrome — measured `z=10000` nested in `z=2`, so it resolved
+  against that subtree and rendered BEHIND the app, live and invisible (`elementFromPoint` at its
+  centre returned world art). A z-index that is high enough and still loses is the `authOverlayZ` trap
+  in a new shape; the fix is the portal, never a bigger number.
+- **There is NO adult door in game** (§2.5) — the in-game header holds the reward ring alone. A bug
+  report about a game must therefore be filed from the section menu one tap away, which keeps the
+  build, device and diagnostics rings and loses the SCREENSHOT of the broken board. Recorded in
+  `AdultSurface`'s header as a deliberate trade, not an oversight.
 
 `AdultSurface` (`src/components/adult/AdultSurface.tsx`, mounted globally in `App.tsx`, **renders
 nothing until asked**) owns the gate + the screenshot capture + the lazy mount; the trigger reaches it
 through `src/services/adultSurfaceBus.ts`. Three things that will bite:
 
-- **`aria-label` is EXACTLY `"Til de voksne"`, and it lives on the badge now.** Every `ui-screenshot`
-  recipe and `sweep.mjs` clicks `[aria-label="Til de voksne"]`. Reword it and the whole verification
-  harness stops finding the door — silently, on every recipe at once.
+- **`aria-label` is EXACTLY `"Indstillinger"`, and it lives on the sheet's ROW now.** Every
+  `ui-screenshot` recipe and `sweep.mjs` clicks `[aria-label="Indstillinger"]`, TWO clicks deep
+  (`[data-profile-chip]` first). Reword it and the whole verification harness stops finding the door —
+  silently, on every recipe at once. `profileChip.test.ts` asserts it appears exactly once as a
+  trigger; the settings Dialog and the guest gate carry it as their own accessible NAME, which is a
+  destination rather than a control and can never be on screen at the same time.
 - **The `authUiOpen` check stays on the SURFACE side of the bus**, not in the trigger, so a second
   trigger can never forget it. A PIN screen must never be capturable into a bug report (§8.1 layer a).
-- **No child attached ⇒ no badge ⇒ no door.** That window is the cold boot before the roster settles,
+- **No child attached ⇒ no chip ⇒ no door.** That window is the cold boot before the roster settles,
   where a blocking gate is up and the gear would have been inert anyway — but it is a real difference.
 
-The objection that had to be answered before the gear could go: a report captures `document.body` when
-the surface opens, so the door must be reachable **from the broken screen, mid-game included**, or no
+The objection that had to be answered before the gear could go — now partly OVERTAKEN, see the in-game
+bullet above: a report captures `document.body` when
+the surface opens, so the door must be reachable **from the broken screen**, or no
 report can ever show the game that broke. Verified end-to-end — a report filed from `/alphabet/quiz`
 carries the quiz board, not the settings.
 
@@ -68,10 +96,18 @@ identity (guest → the sign-in offer, the only place it now lives; signed in �
 
 The reset lives in `Farligt for {navn}` (it is per-child, so it sits next to the child) → "Nulstil
 fremgang for {navn}" → a confirmation that **names the active child** →
-`progressStore.resetAll()`, which clears that child's book and the XP behind it (bests and stars are
-gone app-wide — Endless Play PRD-01 — and the confirmation copy no longer names them), **preserves** sound/music/
-difficulty/theme (those are preferences, not progress) and bumps `sync.epoch` so the next pull can't
-resurrect it (`.claude/rules/auth.md`).
+`progressStore.resetAll('adult-confirmed')`, which clears that child's book and the XP behind it (bests
+and stars are gone app-wide — Endless Play PRD-01 — and the confirmation copy no longer names them),
+**preserves** sound/music/difficulty/theme (those are preferences, not progress) and bumps `sync.epoch`
+so the next pull can't resurrect it (`.claude/rules/auth.md`).
+
+**THIS IS THE ONLY PATH THAT MAY WIPE A REAL CHILD, and the reason argument is the fence** (2026-09-05).
+`?rewards=` destroyed a real book by calling `resetAll()` on a signed-in session — the epoch bump makes
+that unrecoverable from the server BY DESIGN, so there is no undo anywhere. The store now demands a
+`ResetReason` and refuses `'dev-harness'` on any profile that is not a DEV stand-in, and the param
+refuses to run outside the DEV auth bypass. Two fences, because the first one lived at a call site a
+future caller would simply not have. `SCHEMA_VERSION` is pinned as a LITERAL for the same class of
+reason: bumping it is a wipe of every child on update, and the old assertion compared it to itself.
 
 - **Group/item structure is DATA** in `src/config/adultSettingsIa.ts`, guarded by
   `adultSettingsIa.test.ts`, whose load-bearing assertions read the REAL `pinVerifierFor` table (pure, in

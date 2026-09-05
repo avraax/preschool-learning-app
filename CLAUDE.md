@@ -77,8 +77,8 @@ points to, loaded when you touch matching files.
   **in-game at the seam**, the moment the ring fills. gameIds are `<section>.<game>`.
   → `games-catalog.md`, `game-development.md`.
 - **In-game interaction**: one shared vocabulary, and **navigation always flows through the
-  transition system — no raw `navigate()` from inside a game.** The header holds the ring +
-  profile badge, **no score**. → `game-development.md`.
+  transition system — no raw `navigate()` from inside a game.** The header holds **the ring alone**. →
+  `game-development.md`.
 - **Animation mechanism**: a continuous, stateless animation is a **CSS keyframe animation**
   (`src/theme/idleMotion.ts`), never a framer `repeat: Infinity` loop — 25 of those spent ~40% of every
   second recalculating style while the app sat still. **`content-visibility` is Safari 18 → banned**; it
@@ -103,8 +103,9 @@ points to, loaded when you touch matching files.
   **inert until `profileStore.attach()`**) is the source of truth; everything else is derived in the pure
   `src/config/progression.ts`. `collectedFromLevel(level) = level - 1` is the mapping, never recomputed
   inline. `rewardNumber()` is the child-facing number: **never show `globalLevel()`**, and never as a
-  distance. Rewards are granted **only by the ceremony**, and the ring is the only door to Min Bog. XP is
-  never difficulty-dependent. → `rewards-and-progression.md`.
+  distance. Rewards are granted **only by the ceremony**; the ring is the only door to Min Bog and its
+  centre is **the child's book, never a silhouette**. XP never depends on difficulty. →
+  `rewards-and-progression.md`.
 - **Difficulty** (static, manual — **no adaptivity by design**): a global Let/Normal/Svær plus optional
   per-section overrides, defined once in the pure `src/config/difficulty.ts`. **Verifying that a game
   reads its table is not verifying that the level is playable** — audit a level by sampling the
@@ -114,10 +115,9 @@ points to, loaded when you touch matching files.
   **The compatibility floor is the child's iPad Pro 2nd gen on iPadOS 17.7.11.** Check any new
   web/media API against **Safari 17**, not "latest Safari".
   → `pwa-and-device.md`, `docs/device-testing.md`.
-- **Adult tools / bug reports**: tapping the child's avatar opens the lazy `AdultSettings`. Its
-  group/item structure is **data** (`src/config/adultSettingsIa.ts`, guarded), and **every irreversible
-  action is type-to-confirm** with a fixed Danish word — a PIN does not substitute. Debug with
-  `/debug-report`. → `adult-surface.md`.
+- **Adult tools / bug reports**: the adult area is **`Indstillinger`** — name pill → "Hvem spiller?" →
+  a labelled row. Child-facing gates pass **`{ force: true }`**, its IA is **data**,
+  **each irreversible action is type-to-confirm**, and **`resetAll` needs a reason**. → `adult-surface.md`.
 - **Accounts / auth**: one adult account (Google or Apple OIDC + passkey) with N child profiles and local-first
   progress sync. **Guest play needs no account** — `AuthGate` gates sync, not play. `/api/tts-azure` +
   `/api/stt` need a 15-minute access JWT; `?nogate=1` bypasses both gates in DEV. → `auth.md`.

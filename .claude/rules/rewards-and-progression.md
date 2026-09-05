@@ -135,8 +135,19 @@ spinner that reset, not a progress meter).
 
 **All read `progressStore.nextReward()`** so they can never disagree.
 
-- `RewardRing` (game header + home + section menus): centre = the next prize as a **silhouette**, the arc
-  fills around it, plus the flat count badge. **The ring fills, and that is all it does** — the
+- `RewardRing` (game header + home + section menus): centre = **THE CHILD'S OWN BOOK**, full colour,
+  always, the arc fills around it, plus the flat count badge — **which now shows at ZERO too**, so a
+  fresh corner reads "my book · nothing in it yet · this ring is filling" instead of a bare grey circle
+  (Corner identity PRD-01 §2.1/§2.3, reversing this file's *"an empty badge on a fresh profile teaches
+  nothing"* and `RewardRing`'s founding *"the ring's centre IS the next prize"*).
+  **THE NEXT-PRIZE SILHOUETTE IS DELETED, and its absence is the change** (§2.2): it was the last
+  survivor of the promise/payoff two-beat Endless Play D4 removed everywhere else, and 25px of art at
+  30% opacity under `brightness(0)` is not identifiable as an object anyway. The prize is still
+  previewed — in Min Bog, at a size a child can read. Don't restore it as a missing beat.
+  The centre art is `centreArtSize(size)`, DERIVED from the ring's inner clear diameter (not a flat
+  fraction of `size`: the stroke has a 4px floor, so the clear space is not proportional at the small
+  end) — and `rewardRingGeometry.test.ts` asserts the numeral never sits on the art's INK at any shipped
+  size. **The ring fills, and that is all it does** — the
   full-colour crossing flash (which this file used to call "the beat that teaches the whole system"),
   the bigger level-up pop and the soft crossing chime are all DELETED (Endless Play D4). The ceremony
   fires immediately now, so it is the entire announcement and the ring has nothing to promise; its
@@ -166,26 +177,25 @@ spinner that reset, not a progress meter).
   leaves the game on a stray tap, so it protected nothing and only made one control behave differently per
   screen. Don't re-mute it). What must never come back is a SECOND entrance on one screen (two objects
   meaning "your rewards" is the confusion this model exists to remove) — `rewardSurfaces.test.ts` asserts
-  exactly one `/album` route per surface, the ring's own tap. The in-game header holds the ring plus the
-  static `ProfileBadge` and **nothing that measures performance**: the `ScoreChip` pip row is deleted.
-- **`ProfileBadge`** (`src/components/common/ProfileBadge.tsx` — home, the section menus, Min Bog AND
-  every game): the active child's baked animal portrait with their first letter, at PARITY with the
-  ring's size, **OUTERMOST — past the ring, not before it** (owner reversed the original ordering,
-  2026-08-09). It renders as a bare cutout: **no plate, no ring, no border behind the portrait** — the
-  picker's tile backing shipped here by mistake and read as a dim grey circle on the painted world, and
-  the reward ring beside it has no backing either. Guarded by a fill COUNT (the letter's white disc is
-  the only one). Before it existed, the active child was visible only behind "Til de voksne", so a
-  two-child household could play a whole session as the wrong child.
-  **It is also THE DOOR to the adult surface** — see `.claude/rules/adult-surface.md`; there is no gear
-  any more. So the corner now holds two adjacent same-size discs going to two different places, which
-  is the accepted cost of both owner decisions together; hit-test them separately when you touch either.
-  It is **progress-blind**, and that is enforced rather than conventional — `profileBadge.test.ts` fails
-  the build if it imports `useProgress`/`progressStore`/`xpBus`, animates, renders the name as text,
-  routes to `/album`, loses the `aria-label="Til de voksne"` selector, or goes missing from any surface
-  that renders a ring. **That guard is why "the ring and nothing else" could be narrowed**: the old
-  rule's real subject was a second progress meter, and a portrait measures nothing. Switching children
-  still happens only inside the surface, behind `requirePin('switchProfile')`. An unnamed profile shows
-  the portrait with NO letter (`src/config/profileInitial.ts`); no placeholder glyph, no avatar fallback.
+  exactly one `/album` route per surface, the ring's own tap. **In game the header holds the ring
+  ALONE** (Corner identity PRD-01 §2.5) and **nothing that measures performance**: the `ScoreChip` pip
+  row is deleted, and so is the identity disc that shared the corner for a month — nobody needs telling
+  who they are mid-round, and it gives the far corner back to a tappable control.
+- **`ProfileChip`** (`src/components/common/ProfileChip.tsx` — home, the section menus and Min Bog;
+  **NOT in game**): the active child's baked portrait plus **their NAME AS TEXT**, in a pill, outermost
+  past the ring. It replaces `ProfileBadge`, a same-size disc 8-12px from the ring whose own header
+  called the collision "the accepted cost" — two identical discs going to two different places.
+  **The invariant is SHAPE, not distance** (owner, 2026-09-05, after seeing both): the ring is the only
+  circle in the chrome, so a pre-reader tells them apart by outline alone. Moving identity to the
+  opposite corner was tried first and reverted; a re-rounded chip goes red, a re-tuned gap does not.
+  It carries a HAZE, not a card — the ring paints no backing, so legibility lives in the name's
+  `textShadow` (the scene's own device) rather than in a plate that would make the pair mismatch again.
+  It is **progress-blind**, enforced rather than conventional: `profileChip.test.ts` fails the build if
+  it imports `useProgress`/`progressStore`/`xpBus`, animates, routes to `/album`, becomes a circle, or
+  loses the name. A whitespace-only name renders portrait-only; `profileInitial` is deleted with the
+  disc that needed it.
+  **It is NOT the adult door any more** — tapping it opens `WhoIsPlayingSheet` ("that's me!"), whose
+  labelled rows carry the gate. See `.claude/rules/adult-surface.md`.
 
 ## The ceremony
 

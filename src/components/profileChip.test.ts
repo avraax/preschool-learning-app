@@ -94,7 +94,11 @@ test('the chip and the ring can never read as the same object (§6.2 #1)', () =>
   assert.match(chip, /borderRadius: '999px'/, 'the chip lost its pill radius')
 
   // …and the name is what makes the pill wide. A portrait-only chip at a 999px radius IS a disc.
-  assert.match(chip, /\{name\}/, 'the chip renders no name — a portrait on a 999px radius is a disc')
+  // `(?<!\$)` is not fussiness: the chip's aria-label interpolates the name, so `${name}` CONTAINS the
+  // literal `{name}` and a naive pattern is satisfied by the label alone. Found by /re-break — deleting
+  // the rendered name left this green. `profileBadge.test.ts` carried the same lookbehind for the same
+  // reason; the shape survived the rewrite even though the rule it guards was reversed.
+  assert.match(chip, /(?<!\$)\{name\}/, 'the chip renders no name — a portrait on a 999px radius is a disc')
 })
 
 test('the badge that used to share the corner stays deleted (§6.2 #1)', () => {
@@ -186,7 +190,8 @@ test('the chip shows the NAME AS TEXT (reversing the badge rule)', () => {
   // was a 46px disc with no room for a word, and a name would have made its width depend on the name.
   // A pill has room. The `profileInitial` letter-in-a-disc is deleted with the badge that needed it.
   const code = codeOf(CHIP)
-  assert.match(code, /\{name\}/, 'the chip no longer renders the child’s name')
+  // See the lookbehind note above: `${name}` in the aria-label contains `{name}`.
+  assert.match(code, /(?<!\$)\{name\}/, 'the chip no longer renders the child’s name')
   assert.ok(!code.includes('profileInitial'), 'the letter-in-a-disc is back — the pill shows the name')
   assert.ok(
     !existsSync(path.join(SRC, 'config/profileInitial.ts')),
