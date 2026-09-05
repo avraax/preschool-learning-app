@@ -30,11 +30,12 @@ and passes vacuously — `AppErrorBoundary`'s "Prøv igen" and NotFound's "Hjem"
 
 | Command | What it actually proves | Baseline |
 |---|---|---|
-| `npm test` | The pure logic: progression algebra, CRDT merge, difficulty tables, guest gate, config guards | 742 pass |
+| `npm test` | The pure logic: progression algebra, CRDT merge, difficulty tables, guest gate, config guards | 755 pass |
 | `npm run lint` | 0 errors (the warnings are pre-existing) | 0 errors, 25 warnings |
 | `npm run context:check` | The guardrail byte budget still fits | under budget |
 | `npm run audit:check` | Every closed-set narration clip is signed off | clean, 1910 clips |
 | `npm run schema:check` | **Both deployments' databases match the code they run** — the check that was missing when sign-in died on production | staging + production IN SYNC |
+| `npm run lexicon:check` | Each PLS lexeme is live **and tested in a real sentence** — a bare word gives a false negative, which cost three wrong diagnoses | `fire` APPLIED |
 | `sweep --phase smoke` | Every route renders, shows **its own** Danish title, and throws no console error or page exception | 27 PASS · 0 FAIL · 1 N/A |
 | `sweep --phase layout` | The same across **8 viewports** — iPad landscape/portrait/split, small iPad, wide, phone both ways — plus **nothing clipped off-screen** | 216 PASS · 0 FAIL · 8 N/A |
 | `sweep --phase audio` | Narration **actually produced sound**, measured, rather than asking anyone to listen | 26 PASS · 0 FAIL · 2 N/A |
