@@ -364,6 +364,13 @@ so `Læring` is one click; **phone is a drill-down** that opens on the last-view
 the phone one uses the group list, because the `Læring` pane alone is a mostly-empty white screen at
 that aspect.
 
+**`&kidname=<navn>` on every `?nogate=1` capture — shots 1–5, both slots.** Corner identity PRD-01 put
+the child's NAME in the corner as text, and the bypass child is called **Dev**, so without this the
+store page ships a screenshot of a child called Dev. It cannot be avoided by dropping `?nogate=1`:
+`?rewards=` refuses to seed a book outside the bypass (the fence that stops a harness wiping a real
+child), and shot 5 is the Reward Book. Use an ordinary Danish given name — `&kidname=Sofia`. Sanitised
+and capped at 12 characters; the stand-in's *id* never changes, so nothing about the fence moves.
+
 **`&hidetools=1` on any voksne capture.** Six items in Lyd / Udseende / Konto are owner tools hidden
 in the App Store build, but they are still present in a dev capture, so a shot taken without it would
 show controls the shipped app does not have.
