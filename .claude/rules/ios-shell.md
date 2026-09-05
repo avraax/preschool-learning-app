@@ -110,8 +110,12 @@ pending setting. The reading that it only turns true once a version has actually
 **inference, UNKNOWN** — Apple's docs for the field would not render for WebFetch across three attempts
 (two 404s, one title-only), and a 404 is UNKNOWN, not a finding. **Verify Made for Kids in the ASC Age
 Rating page before submitting, not from this flag** — and it is **not visible on that page at rest**:
-it lives under **"Age Categories and Override", step 5 of the age-rating questionnaire dialog**, behind
-App Information → Age Ratings → Edit / Set Up Age Ratings
+it lives under **"Age Categories and Override"**, behind App Information → Age Ratings → Edit on the
+**App Age Ratings** row (NOT the "Operating Systems Earlier than Version 26" row, whose View Details
+shows only the resulting badges — that cost two screenshots). Apple's help page calls it step 5; the
+live dialog puts it in **Step 7: Additional Information**. Confirmed there 2026-09-05: *Made for Kids*
+selected, *Ages 6 - 8*, calculated rating 4+, and `Save` greyed out — a greyed Save is itself proof the
+visit changed nothing. Page reference:
 (https://developer.apple.com/help/app-store-connect/manage-app-information/set-an-app-age-rating/, read
 2026-09-05). Two screenshots of the App Information page were spent before this was looked up. The same
 page states the one-way door verbatim: *"You can't change this selection once your app is approved by App
