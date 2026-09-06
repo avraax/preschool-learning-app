@@ -64,6 +64,12 @@ const WhoIsPlayingSheet: React.FC<WhoIsPlayingSheetProps> = ({ open, onClose }) 
   const { profiles, activeProfileId } = useProfiles()
   const profile = profiles.find((p) => p.id === activeProfileId) ?? null
 
+  /**
+   * Is there anything to switch TO? Same `> 1` threshold as `profileGateSurface`'s boot picker, so a
+   * household that never meets "Hvem spiller?" on launch is never offered it mid-session either.
+   */
+  const canSwitchChild = profiles.length > 1
+
   /** The gate has been passed and the full-screen picker is up. */
   const [picking, setPicking] = useState(false)
   /** Re-entrancy guard: `requirePin` is async, so a second tap would raise a second pad. */
@@ -228,7 +234,17 @@ const WhoIsPlayingSheet: React.FC<WhoIsPlayingSheetProps> = ({ open, onClose }) 
               down, exactly as the old avatar door did — it is what keeps the capture off the dialog's
               enter transition. Pointer-down WARMS; only the click acts. */}
           <Stack spacing={1}>
-            <AdultRow label="Skift barn" hint="Vælg et andet barn" onActivate={() => void switchChild()} />
+            {/* "Skift barn" IS ABSENT AT ONE CHILD (owner, 2026-09-06). With a single profile the row
+                cost a parental gate and then raised a ONE-TILE picker whose only tile re-selected the
+                child already playing — a dead end dressed as a choice. Børn picker PRD-01 §4.3 already
+                ruled that shape out ("deleting down to ONE child must not leave a one-tile picker");
+                this sheet reintroduced it through a different door, which is why the ban is on the
+                SHAPE and not on `deleteProfile`. `> 1` is the same threshold `profileGateSurface` uses
+                to decide whether the boot picker appears at all, so the two agree by construction:
+                if booting would not ask who is playing, nothing mid-session offers to change it. */}
+            {canSwitchChild && (
+              <AdultRow label="Skift barn" hint="Vælg et andet barn" onActivate={() => void switchChild()} />
+            )}
             <AdultRow
               // Renamed from "Til de voksne" (owner, 2026-09-05: the adult area is called
               // **Indstillinger** everywhere now). THE SELECTOR MOVED WITH IT: every `ui-screenshot`

@@ -341,3 +341,39 @@ test('NO silhouette treatment survives in the corner (§6.2 #6)', () => {
     'the book acquired a dimension of its own — `size` is the ring’s ONE dimension (§4.1)',
   )
 })
+
+// ─── "Skift barn" must not offer a one-tile picker ────────────────────────────────────────────────
+//
+// With a single profile the row cost a parental gate and then raised a picker whose ONLY tile
+// re-selected the child already playing (owner, 2026-09-06; measured — `pickerTiles=1 [dev-local]`).
+// Børn picker PRD-01 §4.3 had already ruled that shape out for `deleteProfile`; the sheet reintroduced
+// it through a different door, so the guard is on the SHAPE, wherever the door is.
+test('the sheet hides "Skift barn" when there is nothing to switch to', () => {
+  const code = codeOf(SHEET)
+
+  // The threshold exists, and it is `> 1` — the same one `profileGateSurface` uses for the boot picker,
+  // so "never asked at launch" and "never offered mid-session" cannot drift apart.
+  assert.match(
+    code,
+    /profiles\.length\s*>\s*1/,
+    'the sheet lost its multi-child threshold — one child gets a one-tile picker again',
+  )
+
+  // …and the row is actually CONDITIONAL on it, not merely computed beside it.
+  const row = code.slice(code.indexOf('<Stack spacing={1}>'))
+  const skift = row.indexOf('label="Skift barn"')
+  assert.ok(skift > 0, 'the "Skift barn" row is gone — re-point this guard')
+  assert.match(
+    row.slice(0, skift),
+    /canSwitchChild\s*&&/,
+    '"Skift barn" renders unconditionally — it must be gated on there being another child',
+  )
+
+  // "Indstillinger" is NOT conditional: it is the adult door and must be reachable at one child too.
+  const indst = row.indexOf('label="Indstillinger"')
+  assert.ok(indst > skift, 'the row order changed — re-point this guard')
+  assert.ok(
+    !/canSwitchChild\s*&&/.test(row.slice(skift, indst).replace(/\/\*[\s\S]*?\*\//g, ' ')),
+    'the adult door got hidden behind the child count — it must always be reachable',
+  )
+})
