@@ -41,7 +41,9 @@
     "audition:fire": "node --env-file=.env.local scripts/audition-fire.mjs",
     "lexicon:check": "node --env-file=.env.local --import ./scripts/js-to-ts-resolve.mjs scripts/lexicon-check.mjs",
     "shots:check": "node scripts/asc-shots.mjs",
-    "shots:upload": "node scripts/asc-shots.mjs --upload"
+    "shots:upload": "node scripts/asc-shots.mjs --upload",
+    "desc:check": "node scripts/asc-desc.mjs",
+    "desc:sync": "node scripts/asc-desc.mjs --apply"
   },
   "dependencies": {
     "@better-auth/passkey": "^1.6.25",

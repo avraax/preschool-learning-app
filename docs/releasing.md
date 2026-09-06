@@ -86,7 +86,16 @@ found four screens whose narration never played.
 ```
 npm run shots:check      # compare; non-zero on any mismatch
 npm run shots:upload     # replace a set and pin the display order
+npm run desc:check       # the same question about the DESCRIPTION text
+npm run desc:sync        # write listing.md's canonical block to ASC
 ```
+
+**The description drifts the same way the screenshots do, and it did.** On 2026-09-05 the adult area was
+renamed "Til de voksne" → "Indstillinger" throughout the app, `listing.md` was updated in the same
+commit, and the live listing was not — so ASC spent a day showing a complete, valid, green description
+of a screen the app no longer had. That is a Guideline 2.3.1 accuracy problem, and nothing could see it
+because nothing looked. `listing.md` is the source of truth: `desc:check` extracts its canonical block
+and diffs it line by line, so editing the doc is what changes the store.
 
 **Re-shooting is not uploading, and nothing tells you the difference.** ASC will happily show a
 filename, the right pixel size and `COMPLETE` next to the wrong image. It happened three times in one
