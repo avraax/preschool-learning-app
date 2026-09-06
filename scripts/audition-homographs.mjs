@@ -20,8 +20,12 @@ const V = TTS_CONFIG.voices.primary
 const LEX = `https://boernelaering.dk/${LEXICON_FILE}`
 const da = collectNarrationClips().filter((c) => c.lang.startsWith('da'))
 
+// `fly` was MISSING from this list and shipped wrong — the owner caught it by ear in the sticker
+// ceremony ("Nyt klistermærke! Fly", read as English "fly away"). The list was built from words that
+// appear in QUIZ sentences, and sticker labels were never swept, so a whole surface was outside it.
+// Anything the app speaks that is also an English word belongs here, wherever the line comes from.
 const CANDIDATES = ['to','tre','fire','fem','ni','ti','en','is','kat','hund','bil','sol','ost','hat',
-  'bold','bus','ko','and','ting','kan','hold']
+  'bold','bus','ko','and','ting','kan','hold','fly','tog','ur','sok','ko','bi','hval','blad']
 
 const pick = (w) => {
   const re = new RegExp('(^|[^a-zæøå])' + w + '($|[^a-zæøå])', 'i')
