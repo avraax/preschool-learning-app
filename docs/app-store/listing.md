@@ -428,10 +428,22 @@ gate, which is another reason to render the text **in-app** rather than linking 
 | **Primary category** | **Education** |
 | Secondary category | **Games** (optional; harmless and adds a browse surface) |
 | **Age band (Kids Category)** | **6-8.** Bands are "5 and under, 6-8, 9-11"; a 5-7 audience straddles two and 6-8 is the closer fit. |
-| **"Made for Kids"** | **Yes — and this is PERMANENT after App Review approval.** Read PRD §3.7 before ticking it. |
+| **"Made for Kids"** | **Yes — SET, and PERMANENT after App Review approval.** Read PRD §3.7 before changing it. |
 | **Primary language** | **Danish** |
 | **Availability** | **Denmark only — SETTLED** (owner's decision, §1.5). Widen later if you want; narrowing after launch is the awkward direction. |
 | **Copyright** | `2026 Allan Brink Vraa` — year then name, no `©` symbol (ASC adds it) |
+
+**`isOrEverWasMadeForKids` IS NOT THE SETTING — don't read it as one.** It sits on the `apps` resource,
+it is **false here**, and it stays false until App Review *approves* a Made for Kids app: it records
+history, not intent. The setting is **`kidsAgeBand` on `appInfos/{id}/ageRatingDeclaration`**, which
+reads `SIX_TO_EIGHT`. Confusing the two produced a confident "the app is not in the Kids Category" and a
+question the owner did not need to answer (2026-09-06). The ASC *UI* is ambiguous in the same direction:
+the Age Ratings summary shows only `4+` with no Made-for-Kids badge, and in the Step 7 wizard the Save
+button is greyed out **because the value is already saved**, which reads exactly like an unsaved change.
+
+```
+node -e "…" # ageRatingDeclaration → kidsAgeBand   ← the authoritative check
+```
 | **Price** | Free, no in-app purchases |
 | **Version** | `1.0` |
 
