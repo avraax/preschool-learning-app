@@ -29,7 +29,26 @@ via `.claude/rules/scene-assets.md` and wires them.
 - **id `eye`:** A friendly cartoon child face gently pointing to one big round expressive eye, the eye clearly emphasized — soft-3D claymation / Pixar-lite, rounded matte clay surfaces, soft top-left key light + subtle rim light, soft ambient occlusion + soft contact shadow, warm and child-safe, slight 3/4 top-down, single centered subject with generous margin, no text or letters, isolated on a flat solid #00FF00 background edge-to-edge, 1:1 square, high detail.
 - **id `ear`:** A friendly cartoon child turning their head to show and point at one ear, the ear clearly emphasized — soft-3D claymation / Pixar-lite, rounded matte clay surfaces, soft top-left key light + subtle rim light, soft ambient occlusion + soft contact shadow, warm and child-safe, slight 3/4 top-down, single centered subject with generous margin, no text or letters, isolated on a flat solid #00FF00 background edge-to-edge, 1:1 square, high detail.
 - **id `nose`:** A friendly cartoon child pointing to their round nose, the nose clearly emphasized — soft-3D claymation / Pixar-lite, rounded matte clay surfaces, soft top-left key light + subtle rim light, soft ambient occlusion + soft contact shadow, warm and child-safe, slight 3/4 top-down, single centered subject with generous margin, no text or letters, isolated on a flat solid #00FF00 background edge-to-edge, 1:1 square, high detail.
-- **id `mouth`:** A friendly cartoon child with a big happy smiling mouth, the mouth clearly emphasized, no sharp teeth — soft-3D claymation / Pixar-lite, rounded matte clay surfaces, soft top-left key light + subtle rim light, soft ambient occlusion + soft contact shadow, warm and child-safe, slight 3/4 top-down, single centered subject with generous margin, no text or letters, isolated on a flat solid #00FF00 background edge-to-edge, 1:1 square, high detail.
+- **id `mouth`:** **[CORRECTED 2026-09-06 — the original prompt shipped a defect. See below.]** A friendly cartoon child pointing to their wide open happy smiling mouth, the mouth clearly emphasized and unmistakably the subject, no sharp teeth — soft-3D claymation / Pixar-lite, rounded matte clay surfaces, soft top-left key light + subtle rim light, soft ambient occlusion + soft contact shadow, warm and child-safe, slight 3/4 top-down, single centered subject with generous margin, no text or letters, isolated on a flat solid #00FF00 background edge-to-edge, 1:1 square, high detail.
+
+  > **Why this line was wrong, and it is the most useful thing on this page.** Every other body part in
+  > this batch asks for a GESTURE — "pointing to their round nose", "turning their head to show and
+  > point at one ear", "gently pointing to one big round expressive eye". The original `mouth` line
+  > asked only for *"a child WITH a big happy smiling mouth"*. Gemini did exactly as told and returned a
+  > child's face with no gesture — which at answer-tile size is a picture of **a child**, not of a mouth.
+  > `girl` is in the same shared pool, so in Lyt og Find the owner's five-year-old was asked "mouth",
+  > picked the girl, and was right to.
+  >
+  > The defect was one missing word, in the prompt, not in the model or the pipeline. **When a batch
+  > shares a convention, state the convention once and check every line against it** — a line that
+  > silently opts out looks complete and reads fine.
+  >
+  > Two more things measured while replacing it, both worth reusing: the family is uniformly **95% of
+  > the canvas on its longest side**, and a raw key of the new render landed at 75%, which would have
+  > drawn ~20% smaller than every sibling on the same tile (`scene-assets.md`'s "measure the INK, not
+  > the box"). And the re-render came back as **JPEG**, so the backdrop had drifted from `#00FF00` to
+  > ~`[37,241,20]` and varied corner to corner — key on `G - max(R,B)` with a feathered band and a
+  > despill, never on an exact colour match.
 - **id `tooth`:** A single cute smiling cartoon tooth character, rounded and friendly (not scary) — soft-3D claymation / Pixar-lite, rounded matte clay surfaces, soft top-left key light + subtle rim light, soft ambient occlusion + soft contact shadow, warm and child-safe, slight 3/4 top-down, single centered subject with generous margin, no text or letters, isolated on a flat solid #00FF00 background edge-to-edge, 1:1 square, high detail.
 - **id `hair`:** A friendly cartoon child happily showing off a full head of nice hair, the hair clearly emphasized — soft-3D claymation / Pixar-lite, rounded matte clay surfaces, soft top-left key light + subtle rim light, soft ambient occlusion + soft contact shadow, warm and child-safe, slight 3/4 top-down, single centered subject with generous margin, no text or letters, isolated on a flat solid #00FF00 background edge-to-edge, 1:1 square, high detail.
 

@@ -8,42 +8,66 @@ The owner's son answered **"mouth"** in Lyt og Find with the tile showing a girl
 The mapping is correct (`mouth` → `src/assets/games/shared/mouth.webp`); the **picture** is wrong for the
 job. Verified by rendering all 18 files in that folder as one labelled contact sheet:
 
-- **The convention that works is "a child POINTING at the part."** `ear`, `eye`, `nose`, `hair`, `arm` and
-  `hand` all do it, and all use the same recurring brown-haired child in a green top.
-- **`mouth.webp` breaks it twice**: there is no pointing gesture at all, and the face is a *different
-  character* — a blonde child. So it reads as a person, not a body part, and at answer-tile size it is
-  not distinguishable from `girl.webp`, which is in the same shared pool.
+- **The convention that works is "a child POINTING at the part."** `ear`, `eye`, `nose`, `hair`, `arm`
+  and `hand` all do it: an index finger on the feature, head-and-shoulders bust, soft-3D clay look.
+- **The children are DELIBERATELY DIFFERENT from each other.** `ear` and `eye` share one brown-haired
+  child in a green top; `nose` is a dark-curly-haired child with darker skin; `hair` is a third with big
+  curly brown hair in teal. An earlier draft of this doc claimed a single recurring character and asked
+  for `mouth` to match it — that was wrong, and following it would have made the set *less* diverse.
+  **Match the STYLE, not the child.**
+- **So `mouth.webp` has exactly one defect: nothing points at the mouth.** It is a blonde child's face
+  with an open smile and no gesture, which at answer-tile size is not distinguishable from `girl.webp`
+  in the same shared pool. The blonde hair was never the problem.
 - `tooth` is the clearest of the whole set, because the part is the entire subject.
 
 **Nothing existing can be re-pointed to** — there is no other mouth render in the repo. This needs one
 new image. `foot` and `leg` are weak by the same standard (a standing boy, no gesture indicating the
 part) and are included as optional, since Gemini returns four images per message anyway.
 
-## The batch — ONE message, 2×2 grid
+## Upload the style reference
 
-Paste this as a single prompt. Gemini returns four full-resolution images from one message; render as a
-2×2 grid on **one** green background and split into quadrants before keying (1024 ÷ 2 = 512 per subject,
-which clears the ≤40 KB square-WebP target comfortably).
+Attach **`STYLE-REFERENCE-existing-body-parts.png`** (next to this file) to the Gemini message. It is
+`ear` · `eye` · `nose` · `hair` side by side — the four that already work — so the model matches the
+lighting, the clay finish, the bust crop and the pointing gesture without a paragraph of adjectives.
 
-> A 2×2 grid of four separate soft-3D cartoon illustrations of **the same** friendly young child —
-> short brown hair, light skin, plain green t-shirt, warm and child-safe — each clearly indicating one
-> body part with a pointing finger, matte clay/vinyl toy look, gentle top-left key light with soft rim
-> light, soft contact shadow, slight 3/4 top-down angle, single centred subject per quadrant, cheerful
-> and calm expression, **no text or letters anywhere**, flat solid `#00FF00` background edge to edge
-> behind all four, square 1:1, highest resolution.
+**It is NOT a content reference** (Gemini knows what a mouth is) and it is flattened onto **white**, so
+the prompt has to override that explicitly or the render comes back on white instead of green.
+
+## The prompt — paste this, with the reference attached
+
+Only `mouth` is required, so render it **alone at full resolution** rather than as a grid quadrant —
+better detail, and there is nothing to split.
+
+> Using the attached image only as a STYLE reference, create one new illustration in exactly that
+> style: the same soft-3D matte clay/vinyl toy look, same gentle top-left key light with soft rim
+> light, same head-and-shoulders bust crop with the rounded cut-off at the shoulders, same friendly
+> calm expression.
 >
-> 1. **mouth** — head and shoulders, facing forward, mouth **open in a clear happy smile** so the mouth
->    is unmistakably the subject, one index finger pointing directly at their own open mouth. The mouth
->    must be the most salient thing in the frame. *Remember: flat solid `#00FF00` behind it.*
-> 2. **foot** — seated on the floor, one bare foot lifted toward the viewer, one index finger pointing
->    at that foot. The foot is the largest element in frame.
-> 3. **leg** — standing, one hand pointing at their own thigh/shin, that leg turned slightly toward the
->    viewer so it reads as the subject.
-> 4. **tooth-check (reference only, do not save)** — the same child smiling with teeth visible, so the
->    mouth render in quadrant 1 can be compared against it for consistency.
+> **Subject: a young child pointing at their own MOUTH.** Facing forward in a slight 3/4 view, mouth
+> **open in a clear happy smile** so the mouth is unmistakably the subject of the picture, one index
+> finger raised and touching the corner of their open mouth — the same gesture the reference uses for
+> the ear, the eye and the nose. The mouth must be the most salient feature in the frame.
+>
+> Give the child their own look rather than copying the reference child — the set is deliberately
+> diverse. Single centred subject, no other objects, no text or letters anywhere, warm and child-safe.
+>
+> **Background: flat solid `#00FF00` green, edge to edge, behind the whole image. Not white, not a
+> gradient, not a scene** — the reference is on white only because it has already been cut out.
+>
+> Square 1:1, highest resolution.
 
-**Only quadrant 1 is required.** Quadrants 2 and 3 are the optional improvements; quadrant 4 exists to
-give the model the same character twice so quadrant 1 stays on-style, and is thrown away.
+## Optional, same session: `foot` and `leg`
+
+Both show a standing boy with no gesture indicating the part, so they are weak by the same standard —
+though **unlike `mouth` neither has been reported as actually confusing anyone**, so this is polish.
+If you want them, run a second message with the same reference attached and the same style paragraph:
+
+> …**Subject: a young child pointing at their own FOOT** — seated on the floor, one bare foot lifted
+> toward the viewer, one index finger pointing at that foot, the foot the largest element in frame.
+> (and, as a separate image) **a young child pointing at their own LEG** — standing, one hand pointing
+> at their own thigh, that leg turned slightly toward the viewer.
+>
+> Same style, same diversity note, same flat solid `#00FF00` background edge to edge, square 1:1.
 
 ## Saving
 
