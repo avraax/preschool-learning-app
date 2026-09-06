@@ -69,4 +69,33 @@
        sweep. The list now includes the sticker labels that are also English words. -->
   <lexeme><grapheme>fly</grapheme><phoneme>flyʔ</phoneme></lexeme>
 
+  <!-- ============================================================================================
+       AZURE'S PLS GRAPHEME LOOKUP IS CASE-SENSITIVE. Measured 2026-09-06, three words, both cases,
+       with-lexicon vs without-lexicon compared byte-for-byte:
+
+         fly  lowercase   -> DIFFERENT (applied)      fly  "Fly"   -> IDENTICAL (NOT applied)
+         hund lowercase   -> DIFFERENT (applied)      hund "Hund"  -> IDENTICAL (NOT applied)
+         fire lowercase   -> DIFFERENT (applied)      fire "Fire"  -> IDENTICAL (NOT applied)
+
+       The third line is the control: `fire` is the entry we KNOW works, and it stops working the
+       moment the word is capitalised. So this is the lookup, not the entries.
+
+       WHAT THIS MEANT IN THE SHIPPED APP:
+         * `fly` — the sticker label is ALWAYS "Fly", so the lowercase entry above fixed nothing.
+         * `hund` — **it never worked at all.** The only line that says it is "H som Hund", and the
+           entry has been lowercase since it was added. `lexicon:check` reported it as NO EFFECT the
+           whole time, and NO EFFECT was read as "Azure already agrees" rather than "never matched" —
+           the checker's own footer says the state is ambiguous, and that ambiguity hid a real defect.
+         * `fire` — works only by luck: it appears lowercase in the math sentences. Any line that
+           capitalised it would have silently lost the fix.
+
+       So every grapheme gets BOTH cases. Separate lexemes rather than two <grapheme> children in one,
+       because single-grapheme lexemes are proven against this voice and a multi-grapheme lexeme is not
+       — this way the fix needed one deploy to verify instead of two. If you add a lexeme, add its
+       capitalised twin, and check the CASE the app actually speaks.
+       ============================================================================================ -->
+  <lexeme><grapheme>Fly</grapheme><phoneme>flyʔ</phoneme></lexeme>
+  <lexeme><grapheme>Hund</grapheme><phoneme>hunʔ</phoneme></lexeme>
+  <lexeme><grapheme>Fire</grapheme><phoneme>ˈfiːɐ</phoneme></lexeme>
+
 </lexicon>
