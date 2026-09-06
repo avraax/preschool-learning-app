@@ -48,4 +48,25 @@
        would alter the prompt for every addition/subtraction question rather than fixing one word. -->
   <lexeme><grapheme>fire</grapheme><phoneme>ˈfiːɐ</phoneme></lexeme>
 
+  <!-- "fly" (aeroplane) is the SAME code-switch class as "fire" above, caught the same way: the owner
+       heard the sticker ceremony say "Nyt klistermærke! Fly" with the English verb (2026-09-06).
+
+       MEASURED before the entry existed, with the calibrated control the `fire` incident bought:
+         * forcing a Danish IPA onto "fire" is byte-IDENTICAL to the live output — the lexeme above
+           already fixes it, which proves the method can tell "already right" from "wrong"
+         * forcing one onto "Fly" is DIFFERENT, in BOTH lines that say it ("Nyt klistermærke! Fly" and
+           the bare "Fly" tapped in Min Bog) — so Azure's default is not the Danish reading
+       Two clips, no more: `collectNarrationClips()` was grepped rather than guessed at.
+
+       THE VOWEL IS /y/, NOT /iː/. Danish `y` is the close front ROUNDED vowel, so "fly" rhymes with
+       ny/by — [flyʔ]. Written down because the first attempt at this entry used ˈfliːʔ ("flee"), which
+       is a plausible-looking transcription and simply wrong; it was caught only because the candidates
+       went past the owner's ear. Same U+0294 stød as `hund` above.
+
+       WHY IT WAS MISSED FOR SO LONG: `scripts/audition-homographs.mjs` exists to catch exactly this and
+       did not contain `fly`. Its candidate list had been built from words appearing in QUIZ sentences,
+       and sticker labels are narrated too (`rewardLine(label)`) — a whole spoken surface outside the
+       sweep. The list now includes the sticker labels that are also English words. -->
+  <lexeme><grapheme>fly</grapheme><phoneme>flyʔ</phoneme></lexeme>
+
 </lexicon>
