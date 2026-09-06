@@ -75,6 +75,17 @@ So: a single red in either phase is not a finding until it has been re-run in is
 (`--only <route> --concurrency 1`, nothing else going). A red that survives that is real. The other
 phases don't measure time and can be run wide.
 
+**`sweep.mjs | tail` HIDES A HANG, and the layout phase hangs at the default concurrency.** Two runs
+in a row on 2026-09-06 stalled with the last job never returning — the first was invisible for 50
+minutes because the command was `… | tail -30`, so nothing reached the output file at all and an empty
+log is indistinguishable from a slow start. Redirect to a log (`> layout.log 2>&1`) and watch the line
+count instead; `--concurrency 2` got 223 of 224 jobs through. **The tell that it is hung rather than
+slow is the process table, not the log**: `Get-CimInstance Win32_Process -Filter "Name='chrome.exe'"`
+and check the newest `StartTime` — if no new browser has spawned in minutes, the run is dead and the
+remaining Chromes are leaked. Kill only the harness's own (`CommandLine -like '*cdp-*'` or
+`'*--headless*'`), never all of them, and **never `node`** — a sibling session's Vite is in that list
+(`.claude/rules/working-in-this-tree.md`).
+
 **Why `--phase live` exists, and why the audio phase does not replace it.** The audio phase asks "did
 sound come out", and answers OK whether the clip was prebaked or synthesized live. On 2026-09-05 two
 screens were speaking through live Azure and both sounded fine in the harness — the owner caught them by
@@ -233,3 +244,4 @@ difference from the baseline — not the absence of one.
 | 2026-09-04 | `e4a7ceb` | First run. Six reds → §2.1. Four real, two probe artifacts. |
 | 2026-09-05 | `3fc22d2` | **Every phase at baseline.** 734 tests · lint 0 errors · audio 26/0/2 · smoke 27/0/1 · round 12/0/5 · difficulty 16/0/5 · ceremony 9/0 (`held=true` on all nine). Rungs 1–2 only; §5 still owed. |
 | 2026-09-06 | `9387956` | **Corner rework (`e210722`+`53d0720`), every phase at baseline.** 780 tests · lint 0 errors · tsc · build · context 47999/48000 · selftest · smoke 27/0/1 · layout 210/0/8 · ceremony 9/0 · live 20/0/1. One real finding, fixed: the name pill would have shipped a child called **Dev** in all ten store shots (`?kidname=`). Rungs 1–2 only; §5 still owed. |
+| 2026-09-06 | `a8bc650` | **Independent re-run of layout + ceremony by the implementing session.** layout 214/1/8 → the one red (`phone-land /farver/jagt`, one element 3px below the fold) **did NOT survive isolation**: `--only farver/jagt --concurrency 1` is 8/8, so it is the contention artifact §2.1 predicts. ceremony 8 PASS / 0 FAIL / 13 UNKNOWN, every crossing `beat=sticker, covers=true, held=true`. The 8-vs-9 gap against the row above is the DRIVER'S CLICK BUDGET on `/math/patterns`, not a regression — isolated twice, advancing 4 then 2 of the 8 it needs, UNKNOWN both times and never FAIL. Rungs 1–2 only; §5 still owed. |
