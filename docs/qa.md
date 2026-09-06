@@ -30,8 +30,8 @@ and passes vacuously — `AppErrorBoundary`'s "Prøv igen" and NotFound's "Hjem"
 
 | Command | What it actually proves | Baseline |
 |---|---|---|
-| `npm test` | The pure logic: progression algebra, CRDT merge, difficulty tables, guest gate, config guards | 755 pass |
-| `npm run lint` | 0 errors (the warnings are pre-existing) | 0 errors, 25 warnings |
+| `npm test` | The pure logic: progression algebra, CRDT merge, difficulty tables, guest gate, config guards | 781 pass |
+| `npm run lint` | 0 errors (the warnings are pre-existing) | 0 errors, 24 warnings |
 | `npm run context:check` | The guardrail byte budget still fits | under budget |
 | `npm run audit:check` | Every closed-set narration clip is signed off | clean, 1910 clips |
 | `npm run schema:check` | **Both deployments' databases match the code they run** — the check that was missing when sign-in died on production | staging + production IN SYNC |
