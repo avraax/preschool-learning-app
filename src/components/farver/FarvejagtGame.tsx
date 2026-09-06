@@ -25,6 +25,7 @@ import { isIOS } from '../../utils/deviceDetection'
 import { shuffle } from '../../utils/shuffle'
 import { useNeverFailHint } from '../../hooks/useNeverFailHint'
 import { useDragActive } from '../common/dnd/useDragActive'
+import { wasWobbledTap } from '../common/dnd/dragActivation'
 import { DANISH_OBJECTS, COLOR_TARGETS, COLOR_SWATCH, spokenColor } from '../../config/colorContent'
 import { colorObjectFactText } from '../../config/gamePhrases'
 import { FARVEJAGT_ROUND, colorTargetKey, farvejagtPromptPool } from '../../config/promptPools'
@@ -359,9 +360,16 @@ const FarvejagtGame: React.FC = () => {
 
   // Handle drag end
   const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event
+    const { active, over, delta } = event
     clearActive()
-    if (!over || over.id !== 'target-zone') return // dropped elsewhere → springs back automatically
+    // Two ways this gesture answers, ONE call — so the drop and the tap still share a single
+    // resolution path (`dragActivation.test.ts` counts these call sites for exactly that reason).
+    // Landed on the target, or was a TAP THAT WOBBLED (`wasWobbledTap`): past 8px dnd-kit had already
+    // claimed the gesture as a drag and sounded `pick-up`, so bailing out here dropped the child's tap
+    // and left him tapping again. A gesture that travelled FURTHER was aimed somewhere and missed, and
+    // still springs back silently — that distinction is what keeps a miss from scoring.
+    const landed = !!over && over.id === 'target-zone'
+    if (!landed && !wasWobbledTap(delta)) return
     resolveItem(String(active.id))
   }
 

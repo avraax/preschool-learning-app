@@ -33,6 +33,7 @@ import { shuffle } from '../../utils/shuffle'
 import { devFx } from '../../utils/devHarness'
 import { useNeverFailHint } from '../../hooks/useNeverFailHint'
 import { useDragActive } from '../common/dnd/useDragActive'
+import { wasWobbledTap } from '../common/dnd/dragActivation'
 import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 
 // Nuancer — order shades of one hue from LIGHT to DARK. The real discrimination stretch in the
@@ -249,11 +250,18 @@ const NuancerGame: React.FC = () => {
   }
 
   const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event
+    const { active, over, delta } = event
     clearActive()
-    if (!over) return // dropped on empty space → springs back
-    const m = /^slot-(\d+)$/.exec(String(over.id))
-    if (!m) return
+    const m = over ? /^slot-(\d+)$/.exec(String(over.id)) : null
+    if (!m) {
+      // A TAP THAT WOBBLED still places the shade (`wasWobbledTap`) — past 8px dnd-kit had claimed the
+      // gesture and sounded `pick-up`, so returning here swallowed the tap. It routes through
+      // `tapShade`, NOT `resolveShade`, because a tap has no slot of its own: the destination is the
+      // leftmost empty one, exactly as a deliberate tap on the shade would choose (see `tapShade`).
+      // A longer gesture was aimed at a slot and missed, and still springs back.
+      if (wasWobbledTap(delta)) tapShade(String(active.id))
+      return
+    }
     resolveShade(String(active.id), Number(m[1]))
   }
 

@@ -2,7 +2,7 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
-import { DRAG_ACTIVATION_DISTANCE } from './dragActivation.ts'
+import { DRAG_ACTIVATION_DISTANCE, TAP_SLOP_DISTANCE, wasWobbledTap } from './dragActivation.ts'
 
 // Every game that can answer by drag must ALSO answer by tap, and vice versa (owner, 2026-08-03: the
 // Farver games accepted a drag and ignored a tap, and a 5-year-old taps). These are source-read guards
@@ -61,7 +61,10 @@ const WIRING: Array<{ file: string; needs: string[] }> = [
   { file: '../../farver/FarveQuizGame.tsx', needs: ['onActivate={() => resolveColor(', 'resolveColor('] },
   { file: '../../farver/NuancerGame.tsx', needs: ['onActivate={() => tapShade(', 'resolveShade('] },
   { file: '../../ordleg/SpellingGame.tsx', needs: ['DndContext', 'DroppableZone', 'DraggableItem', 'handleTileClick(tile, true)'] },
-  { file: '../../math/MathOperationGame.tsx', needs: ['DndContext', 'DroppableZone', 'DraggableItem', "over.id !== 'answer-slot'"] },
+  // `over.id === 'answer-slot'` — the comparison flipped when the wobbled-tap rule landed (the branch
+  // became "landed OR was a tap" so both resolve through ONE call). Still pins the drop wiring: remove
+  // the drop check and this fails. Don't re-pin it to `!==`.
+  { file: '../../math/MathOperationGame.tsx', needs: ['DndContext', 'DroppableZone', 'DraggableItem', "over.id === 'answer-slot'"] },
   { file: '../../math/HvadManglerGame.tsx', needs: ['dragToPromptSlot: true', 'QUIZ_PROMPT_SLOT_ID'] },
 ]
 
@@ -108,4 +111,78 @@ test('the shared quiz engine mounts NO drag machinery unless a config opts in', 
     /enabled=\{config\.dragToPromptSlot === true\}/.test(src),
     'answer tiles are no longer conditionally draggable',
   )
+})
+
+// ─── The wobbled tap (owner, 2026-09-06) ──────────────────────────────────────────────────────────
+//
+// "Tapping an answer can give the tapping sound but not register the answer." Measured on
+// /math/addition against `data-tile-state`: a 0px tap resolves, a 12px and a 20px tap leave every tile
+// `idle` and the prompt unchanged. Past DRAG_ACTIVATION_DISTANCE dnd-kit claimed the gesture as a drag
+// and sounded `pick-up`; the `!over` branch then returned without scoring, and `useTapActivate`'s
+// capture guard ate the trailing click. Three correct pieces, one hole.
+
+test('the slop window sits ABOVE the drag threshold, or the rule is unreachable', () => {
+  // If the slop were <= the activation distance there would be no band where a drag has started AND
+  // the gesture still counts as a tap — the fix would compile, pass a source grep, and do nothing.
+  assert.ok(
+    TAP_SLOP_DISTANCE > DRAG_ACTIVATION_DISTANCE,
+    `slop ${TAP_SLOP_DISTANCE} must exceed the drag threshold ${DRAG_ACTIVATION_DISTANCE}`,
+  )
+})
+
+test('wasWobbledTap is a distance test with the boundary EXCLUSIVE', () => {
+  assert.equal(wasWobbledTap({ x: 0, y: 0 }), true, 'a dead-still gesture is a tap')
+  assert.equal(wasWobbledTap({ x: 12, y: 0 }), true, '12px was measured as a dropped tap')
+  assert.equal(wasWobbledTap({ x: 20, y: 0 }), true, '20px was measured as a dropped tap')
+  // Pythagorean case: neither axis exceeds the slop but the distance does. A per-axis test would pass
+  // this wrongly, so it pins that the check is the hypotenuse.
+  assert.equal(wasWobbledTap({ x: 18, y: 18 }), false, '25.5px diagonal is a drag, not a wobble')
+  assert.equal(wasWobbledTap({ x: TAP_SLOP_DISTANCE, y: 0 }), false, 'the boundary itself is a drag')
+  assert.equal(wasWobbledTap({ x: 60, y: 0 }), false, 'a real drag that missed must never score')
+  // dnd-kit can hand back no delta at all; that must not throw or silently answer.
+  assert.equal(wasWobbledTap(undefined), false, 'a missing delta must not resolve an answer')
+})
+
+test('every drag game applies the wobbled-tap rule, and NONE of them re-implements it', () => {
+  // The rule lives in one place. A game that inlines its own distance maths would drift from the
+  // constant the moment either number is tuned.
+  const games = [
+    '../UnifiedQuizGame.tsx',
+    '../../farver/FarvejagtGame.tsx',
+    '../../farver/RamFarvenGame.tsx',
+    '../../farver/NuancerGame.tsx',
+    '../../math/MathOperationGame.tsx',
+    '../../ordleg/SpellingGame.tsx',
+  ]
+  for (const g of games) {
+    const src = codeOf(g)
+    const name = g.split('/').pop()
+    assert.ok(src.includes('wasWobbledTap('), `${name} no longer applies the wobbled-tap rule`)
+    assert.ok(
+      /delta/.test(src),
+      `${name} does not read dnd-kit's delta — it cannot know how far the gesture travelled`,
+    )
+    // Forbid a distance computed FROM `delta` — that would be a second copy of the rule, free to
+    // drift from TAP_SLOP_DISTANCE. Deliberately NOT a blanket ban on Math.sqrt: Farvejagt uses it for
+    // scatter placement (keeping objects off the centre and apart from each other), which is ordinary
+    // board geometry and has nothing to do with gestures. The first version of this guard banned all
+    // of it and failed on exactly that.
+    assert.ok(
+      !/Math\.(hypot|sqrt)\([^)]*delta/.test(src),
+      `${name} computes its own gesture distance from delta — use wasWobbledTap so the constant stays in one place`,
+    )
+  }
+})
+
+// Hvilken Farve is DELIBERATELY excluded: its answer is the drop TARGET (a colour swatch), not the
+// dragged object, so an abortive drag of the prompt object carries no answer to resolve. Pinned so the
+// omission reads as a decision rather than a gap.
+test('Hvilken Farve is exempt, because there the TARGET carries the answer', () => {
+  const src = codeOf('../../farver/FarveQuizGame.tsx')
+  assert.ok(
+    !src.includes('wasWobbledTap('),
+    'FarveQuizGame gained the wobbled-tap rule — but a wobbled drag there has no answer to resolve; ' +
+      'if this is now wanted, the tap has to name a swatch, not the object',
+  )
+  assert.ok(src.includes('resolveColor('), 'FarveQuizGame lost its resolution path — re-point this guard')
 })

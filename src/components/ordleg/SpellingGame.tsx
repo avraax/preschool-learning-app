@@ -11,6 +11,7 @@ import { kidCollision } from '../common/dnd/kidCollision'
 import { DraggableItem } from '../common/dnd/DraggableItem'
 import { DroppableZone } from '../common/dnd/DroppableZone'
 import { useDragActive } from '../common/dnd/useDragActive'
+import { wasWobbledTap } from '../common/dnd/dragActivation'
 import { getCategoryTheme } from '../../config/categoryThemes'
 import { tileSurface } from '../../theme/tokens/helpers'
 import { softShadow } from '../../theme/depth'
@@ -306,9 +307,14 @@ const SpellingGame: React.FC = () => {
   // A drop anywhere on the word row = the same answer as tapping the tile. `kidCollision` returns
   // nothing when the pointer is over nothing, so an abortive drag springs back without scoring.
   const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event
+    const { active, over, delta } = event
     clearActive()
-    if (!over || over.id !== 'word-row') return
+    // Landed on the word row, or a TAP THAT WOBBLED — ONE call either way, so both gestures keep
+    // sharing `handleTileClick`. Past 8px dnd-kit had claimed the gesture and sounded `pick-up`, so
+    // bailing out here swallowed the tap; a longer gesture was aimed at the row and missed, and still
+    // springs back. See `wasWobbledTap`.
+    const landed = !!over && over.id === 'word-row'
+    if (!landed && !wasWobbledTap(delta)) return
     const tile = tiles.find((t) => t.id === String(active.id))
     if (tile) void handleTileClick(tile, true)
   }

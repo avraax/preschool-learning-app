@@ -7,6 +7,7 @@ import { useDragOnlySensors } from './dnd/useDragOnlySensors'
 import { kidCollision } from './dnd/kidCollision'
 import { DraggableItem } from './dnd/DraggableItem'
 import { useDragActive } from './dnd/useDragActive'
+import { wasWobbledTap } from './dnd/dragActivation'
 import { isIOS } from '../../utils/deviceDetection'
 import { CategoryTheme } from '../../config/categoryThemes'
 import GameShell from './GameShell'
@@ -454,9 +455,16 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
   // `kidCollision` returns nothing when the pointer is over nothing, so an abortive drag springs back
   // without scoring or breaking first-try.
   const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event
+    const { active, over, delta } = event
     clearActive()
-    if (!over || over.id !== QUIZ_PROMPT_SLOT_ID) return
+    // Landed on the prompt's gap, or a TAP THAT WOBBLED — ONE call either way, so both gestures keep
+    // sharing `handleItemClick` and with it the advance-lock, first-try and practice-ledger rules.
+    // Past 8px dnd-kit had already claimed the gesture as a drag and sounded `pick-up`, so bailing out
+    // here is what dropped the child's tap and left him tapping again; a gesture that travelled
+    // FURTHER was aimed somewhere and missed, and still springs back. `viaDrag: true` so it does not
+    // stack a second `tap` tick on the `pick-up` that already played. See `wasWobbledTap`.
+    const landed = !!over && over.id === QUIZ_PROMPT_SLOT_ID
+    if (!landed && !wasWobbledTap(delta)) return
     const item = showOptions.find((o) => dragIdFor(o) === String(active.id))
     if (item) void handleItemClick(item, true)
   }

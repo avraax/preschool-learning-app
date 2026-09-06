@@ -8,6 +8,7 @@ import { kidCollision } from '../common/dnd/kidCollision'
 import { DraggableItem } from '../common/dnd/DraggableItem'
 import { DroppableZone } from '../common/dnd/DroppableZone'
 import { useDragActive } from '../common/dnd/useDragActive'
+import { wasWobbledTap } from '../common/dnd/dragActivation'
 import { getCategoryTheme } from '../../config/categoryThemes'
 import { mathFactText } from '../../config/gamePhrases'
 import { optionCountFor } from '../../config/difficulty'
@@ -279,9 +280,15 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
   // nowhere to drag to. Both gestures end in `handleAnswerClick`, so the advance-lock, the first-try
   // flag, the hint counter and the reveal are all untouched.
   const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event
+    const { active, over, delta } = event
     clearActive()
-    if (!over || over.id !== 'answer-slot') return // released elsewhere → springs back, nothing scored
+    // Landed on the "?" slot, or a TAP THAT WOBBLED — ONE call either way, so both gestures keep
+    // sharing `handleAnswerClick` and with it the advance-lock and first-try rules. Past 8px dnd-kit
+    // had already claimed the gesture and sounded `pick-up`, so bailing out here dropped the child's
+    // tap — **this is the game the owner reported it on**. A gesture that travelled FURTHER was aimed
+    // at the slot and missed, and still springs back with nothing scored. See `wasWobbledTap`.
+    const landed = !!over && over.id === 'answer-slot'
+    if (!landed && !wasWobbledTap(delta)) return
     const value = Number(String(active.id).replace(/^opt-/, ''))
     if (!Number.isNaN(value)) void handleAnswerClick(value, true)
   }

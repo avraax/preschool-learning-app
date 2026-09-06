@@ -31,6 +31,7 @@ import { shuffle } from '../../utils/shuffle'
 import { devFx } from '../../utils/devHarness'
 import { useNeverFailHint } from '../../hooks/useNeverFailHint'
 import { useDragActive } from '../common/dnd/useDragActive'
+import { wasWobbledTap } from '../common/dnd/dragActivation'
 // Simplified audio system
 import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 
@@ -401,9 +402,14 @@ const RamFarvenGame: React.FC = () => {
   }
 
   const handleDragEnd = (event: DragEndEvent) => {
-    const { over, active } = event
+    const { over, active, delta } = event
     clearActive()
-    if (!over || over.id !== 'mixing-zone') return
+    // Landed in the pot, or a TAP THAT WOBBLED — ONE call either way, so the drop and the tap keep
+    // sharing a single resolution path. Past 8px dnd-kit had claimed the gesture and sounded
+    // `pick-up`, so bailing here swallowed the tap; a longer gesture aimed at the pot and missed, and
+    // still springs back. See `wasWobbledTap`.
+    const landed = !!over && over.id === 'mixing-zone'
+    if (!landed && !wasWobbledTap(delta)) return
     resolveDroplet(String(active.id))
   }
 

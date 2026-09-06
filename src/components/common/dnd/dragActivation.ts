@@ -13,6 +13,43 @@ import React, { useRef } from 'react'
 export const DRAG_ACTIVATION_DISTANCE = 8
 
 /**
+ * How far a gesture may travel and still count as a TAP THAT WOBBLED, when it ends over nothing.
+ *
+ * **The defect this closes** (owner, 2026-09-06: *"tapping an answer can give the tapping sound but not
+ * registering the answer"*). Measured on `/math/addition`, watching `data-tile-state` and the prompt:
+ * a 0px tap resolves (`correct`/`wrong`, prompt advances); a **12px** and a **20px** tap leave every
+ * tile `idle` and the prompt unchanged. Deterministic, every time.
+ *
+ * It was three correct pieces composing into a hole. Past `DRAG_ACTIVATION_DISTANCE` dnd-kit starts a
+ * drag, which sounds `pick-up`; the finger then lifts over nothing, so the `!over` branch returns
+ * without scoring; and `useTapActivate`'s capture guard suppresses the trailing click because the
+ * pointer moved. So the child hears a cue and nothing happens — and 8 CSS px is nothing for a
+ * five-year-old's finger, which is why he taps again.
+ *
+ * **Why a slop window and not a delay.** The textbook dnd-kit answer is a delay-based activation
+ * (`{ delay, tolerance }`), and it was rejected: it makes a tap wait for the timer to lapse before the
+ * click is safe, and it CANCELS a drag whose pointer moves past `tolerance` before the delay elapses —
+ * so a quick pull, which is exactly how a child drags, would stop dragging at all. This adds no timer
+ * anywhere. A tap still resolves on pointer-up, in the same tick it always did.
+ *
+ * **24px, not 8 and not 60.** Below `DRAG_ACTIVATION_DISTANCE` nothing changes — dnd-kit never starts
+ * and the ordinary click path runs. Between 8 and 24 the gesture is a tap the finger smeared, and it
+ * now resolves. Beyond 24 it is a real drag that missed its target, and it still springs back silently:
+ * that distinction is the whole point, because "aimed somewhere and missed" must not answer. 24px is
+ * ~4mm on the target iPad — wider than any measured tap wobble, far short of a deliberate drag.
+ */
+export const TAP_SLOP_DISTANCE = 24
+
+/**
+ * Did a drag that ended over NOTHING start life as a tap? Call it in the `!over` branch of a
+ * `onDragEnd`, passing dnd-kit's own `event.delta` (the translation, which equals pointer travel).
+ *
+ * Pure, so `dragActivation.test.ts` can pin the boundary without a browser.
+ */
+export const wasWobbledTap = (delta: { x: number; y: number } | undefined): boolean =>
+  !!delta && Math.sqrt(delta.x * delta.x + delta.y * delta.y) < TAP_SLOP_DISTANCE
+
+/**
  * Tap support for a draggable or a drop zone (owner, 2026-08-03: the Farver games accepted a drag but
  * ignored a plain tap, and a 5-year-old taps).
  *
