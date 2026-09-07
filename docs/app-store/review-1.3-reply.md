@@ -1,9 +1,19 @@
 # Reply to App Review — Guideline 1.3 (Kids Category) questionnaire
 
-Submission `aa69dd0f-9761-403c-abba-5fb5ef7f5c32`, App Version 1.0, received 2026-09-07.
-Apple asked four questions; the paste-ready answer is below. Every claim in it is sourced from this repo
-and cross-checked against `docs/app-store/policy-verification.md` (which is itself pinned by
-`src/config/legalContent.test.ts`). If the app changes, update both.
+Submission `aa69dd0f-9761-403c-abba-5fb5ef7f5c32`, App Version 1.0, received 2026-09-07. This is the
+routine automated Kids Category questionnaire, not a rejection.
+
+**THE FIELD IS CAPPED AT 4000 CHARACTERS.** App Store Connect's "Reply to App Review" box counts
+characters and refuses to submit over the cap (it shows the overage as a negative number). The first
+draft of this answer was ~7800 and could not be sent. **The block below is 3949 characters — measure
+before editing it**, and prefer cutting a whole claim to shaving words, which barely moves the count:
+
+```
+node -e "const s=require('fs').readFileSync('reply.txt','utf8').replace(/\r\n/g,'\n').trimEnd();console.log([...s].length)"
+```
+
+Every claim is sourced from this repo and cross-checked against `policy-verification.md`, which is
+itself pinned by `src/config/legalContent.test.ts`. If the app changes, update both.
 
 ---
 
@@ -11,114 +21,45 @@ and cross-checked against `docs/app-store/policy-verification.md` (which is itse
 
 Hello,
 
-Thank you for the questions. Answers below, in order. The app is a free Danish learning app for
-children aged 5–8, written by a single developer for his own son. There is no advertising, no tracking,
-no analytics and no in-app purchase. The full privacy policy is at https://boernelaering.dk/privatliv
-and is also rendered inside the app under "Indstillinger" → "Privatliv" (rendered in-app rather than
-linked out, per Guideline 1.3).
+Answers in order. Børnelæring is a free Danish learning app for children aged 5-8, with no advertising, no tracking, no analytics and no in-app purchase. Privacy policy: https://boernelaering.dk/privatliv, also shown inside the app under "Indstillinger" → "Privatliv" (in-app, not linked out, per Guideline 1.3).
 
-**1. Does the app include third-party analytics?**
+1. THIRD-PARTY ANALYTICS? No. No analytics, measurement, attribution or crash-reporting SDK, and no advertising identifier. The only third-party frameworks in the binary are Capacitor (core, app, browser) — the WebView shell and the sign-in page; they collect and transmit nothing.
 
-No. The app contains no analytics SDK of any kind — no third-party statistics, measurement, attribution
-or crash-reporting SDK, and no advertising identifier. The only third-party frameworks in the binary are
-Capacitor (`@capacitor/core`, `@capacitor/app`, `@capacitor/browser`), which provide the WebView shell
-and open the OAuth sign-in page; none of them collects or transmits data. There is a developer-only
-console-forwarding path in the source, and it is hard-gated to `localhost` builds, so it is inert in the
-shipped app.
+2. THIRD-PARTY ADVERTISING? No. No ad network, no ad SDK, no ads of any kind. Nothing is tracked, so there is no App Tracking Transparency prompt. No in-app purchases.
 
-**2. Does the app include third-party advertising?**
+3. SHARED WITH THIRD PARTIES? Data is never sold, never shared with data brokers, and never used for advertising or model training. Four providers act as data processors on our instruction, all configured to run in the EU, each contractually bound to give user data the same or equal protection our policy states and these Guidelines require:
+- Vercel (hosting, Frankfurt): serves the app's server functions; stores problem reports.
+- Neon (PostgreSQL, Frankfurt): only with an account — the adult's email, child profile names and chosen characters, the child's progress.
+- Microsoft Azure AI Speech (West Europe): text only, for a line not already pre-recorded in the app. No child audio goes here.
+- Google Cloud Speech-to-Text (EU region): the child's voice from one game, only if an adult switched the microphone on (see 4). Used to recognise one word; a transcript comes back and nothing is stored on our side. Google's audio data-logging is disabled on our project and unavailable for the API version we call.
 
-No. The app contains no ad network, no ad SDK and no ads of any kind. It never presents the App Tracking
-Transparency prompt because it does no tracking, and it has no in-app purchases.
+4. OTHER DATA COLLECTED, AND EVERY USE. By default — no account, microphone off — nothing about the child leaves the device: progress, rewards and settings live on the device, and the build is bundled, so the games run with no network. Our server sees only the standard IP address and user-agent of a request; linked to no child, used for nothing else.
+- Optional adult account (Sign in with Apple or Google; the app is fully playable without one): the adult's email and name from the provider, a child profile name the adult types (no real name required) with a chosen cartoon character, and the child's progress — points, level, rewards, difficulty. A passkey, if added, stores only its public key. Purpose: multiple child profiles, and progress that follows the child to another device. "Indstillinger" → "Konto" → "Slet kontoen helt" deletes the account, all profiles and all progress.
+- Microphone, one game ("Sig et Ord"): OFF on installation, and a child cannot enable it. An adult must pass a passcode gate and consent on a screen naming Google Cloud Speech-to-Text, stating the recording is not stored and can be switched off again. Audio is captured only while the child holds the button, and only to recognise that one word. Consent is withdrawable in one tap. Nothing retained.
+- Problem report, only when an adult taps "Rapportér et problem": a screenshot plus technical state (app version, route, device model and OS, viewport, language, timezone, audio status, local progress). No email, no name. Purpose: diagnosing that bug. Deleted on request.
+- Crash: a technical error description, no screenshot, same purpose.
+- Failed sign-in: a technical report plus a screenshot of the sign-in screen, sent automatically because these failures are otherwise unreproducible. Credential fields and the passcode are stripped from the image; it never contains the email or the passcode. Disclosed in the policy.
 
-**3. Will the data be shared with any third parties?**
-
-Data is never sold, never shared with data brokers, never used for advertising and never used to train
-any model. The app uses four service providers, all acting strictly as data processors on our
-instruction under contract, all configured to run in the EU:
-
-- **Vercel** (hosting, region `fra1`, Frankfurt) — serves the app's server functions and stores
-  user-initiated problem reports (EU Blob store, Frankfurt).
-- **Neon** (PostgreSQL, `eu-central-1`, Frankfurt) — only if the adult chooses to create an account:
-  the adult's email address, child profile names and chosen characters, and the child's learning
-  progress.
-- **Microsoft Azure AI Speech** (West Europe) — receives *text only*, in the rare case a spoken line is
-  not already pre-recorded inside the app. No audio from the child is ever sent here. All speech in the
-  app is synthetic (computer-generated), generated in advance and shipped inside the binary; this is
-  disclosed in the app and in the policy.
-- **Google Cloud Speech-to-Text** (Google's EU region, `eu`) — receives the child's voice audio from one
-  game ("Sig et Ord"), and *only* if an adult has explicitly switched the microphone on (see question 4).
-  The audio is used to recognise the single spoken word, a text transcript is returned, and nothing is
-  stored on our side. Google's audio data-logging program is an opt-in; it is disabled on our project,
-  and Google does not offer it at all for the V2 API that the app calls.
-
-Each of these providers is contractually bound to provide the same or equal protection of user data as
-our privacy policy describes and as the App Review Guidelines require, and none may use the data for
-their own purposes, for advertising, or for model training. All four are named in the privacy policy
-with a statement of exactly what each receives.
-
-Google, Microsoft and Vercel are US-headquartered, so access from the US cannot be entirely excluded
-(for example during support). Any such transfer relies on the European Commission's Standard
-Contractual Clauses and those companies' EU-US Data Privacy Framework certification. This is disclosed
-in the policy.
-
-**4. Is the app collecting any user or device data for purposes beyond third-party analytics or
-third-party advertising? If so, a complete and clear explanation of all planned uses.**
-
-Yes — a small amount, all of it for the app's own function, listed exhaustively:
-
-*By default (no account, microphone off), nothing about the child leaves the device.* All progress,
-rewards, difficulty settings and preferences are stored in device storage only. The app is a bundled
-build (no remote code loading, no live updates), so the games run with no network at all. Like any
-network request, our own server sees a standard IP address and user-agent when the app checks for a
-newer version; that is not linked to a child, not retained for any other purpose and not shared.
-
-- **Optional adult account** — a sign-in with Apple or Google, chosen by an adult, and only ever
-  optional; the whole app is playable without it. We receive the adult's email address and name from the
-  identity provider, plus a child profile display name (free text the adult types — no real name is
-  required) with a chosen cartoon character, and the child's learning progress (points, level, collected
-  rewards, difficulty settings). If the adult chooses to add a passkey, the passkey's public key is
-  stored with the account so they can sign in again on that device; no biometric data ever reaches us.
-  *Purpose:* the two things the account buys — more than one child
-  profile, and progress that follows the child to another device. *Legal basis:* performance of the
-  contract with the adult, GDPR Art. 6(1)(b). *Deletion:* one action inside the app, "Indstillinger" →
-  "Konto" → "Slet kontoen helt", which cascade-deletes the account, all child profiles and all progress
-  from the server.
-
-- **Microphone, one game only ("Sig et Ord")** — the child says a single Danish word and the game
-  checks it. The microphone is **OFF on installation** and a child cannot switch it on. An adult must
-  open the grown-ups area behind a passcode gate, read a consent screen that names Google Cloud
-  Speech-to-Text explicitly, states that the recording is not stored, and states that it can be turned
-  off again — and then actively consent. Audio is captured only while the child holds the microphone
-  button down. *Purpose:* recognising the one spoken word, nothing else. *Legal basis:* the adult's
-  explicit consent, Art. 6(1)(a), withdrawable in one tap in the same place. No recording is retained.
-
-- **Problem reports — only when an adult taps "Rapportér et problem"** in the grown-ups area. The report
-  contains a screenshot of the current screen plus technical state: app version and build, current
-  route, device model and OS version, screen and viewport size, language, timezone, the audio
-  subsystem's status, and the local progress values. It contains no email address and no name.
-  *Purpose:* diagnosing the bug the adult is reporting. *Legal basis:* legitimate interest in being able
-  to fix the app, Art. 6(1)(f). Reports are deleted on request to the address in the policy.
-
-- **Crash reports** — if the app crashes, a technical error description is sent. No screenshot. Same
-  purpose and basis as above.
-
-- **Failed sign-in diagnostic** — if an adult's sign-in fails, a technical report with a screenshot of
-  the sign-in screen is sent automatically, because these failures are otherwise impossible to
-  reproduce. The passcode and any credential fields are stripped from the image first, and the report
-  never contains the email address or the passcode. This automatic upload is disclosed in the privacy
-  policy in both Danish and English.
-
-For completeness, what the app never does: it never asks for date of birth, address, phone number or
-location; it uses neither camera nor contacts; it has no chat, no messaging, no user-generated content
-and no social features; nothing a child does is shared with anyone; there are no links out of the app
-except an email address behind the parental gate; and no data is sold or used for model training.
-
-The data controller is Allan Brink Vraa, allanvraa@gmail.com, and the policy states the rights of
-access, rectification, erasure, restriction and portability, the right to withdraw consent, and the
-right to complain to the Danish Data Protection Agency (Datatilsynet).
-
-Happy to answer anything further.
+The app never asks for date of birth, address, phone number or location, uses no camera and no contacts, has no chat or user-generated content, and no links out except an email address behind the parental gate.
 
 Best regards,
 Allan Brink Vraa
+
+---
+
+## What was cut to fit, and why it is safe to leave out
+
+All four questions are still answered in full; what went was material Apple did not ask for and that the
+linked policy already carries. **If a follow-up asks for any of it, the source is `policy-verification.md`.**
+
+- **The EU→US transfer paragraph** (SCCs + the providers' EU-US Data Privacy Framework certification).
+  A GDPR Art. 13(1)(f) item, not an App Review one, and it is in the policy. This was the single biggest
+  cut and the one that finally fit the reply under the cap.
+- **The synthetic-voice disclosure** on the Azure line. It is a Microsoft Code of Conduct duty
+  (`legalContent.ts`), discharged in the app and the listing — not something Apple asked here.
+- **The GDPR Art. 6 legal bases** per purpose. Replaced by plain "Purpose:" statements; the bases stay
+  in the policy.
+- **The controller line** (name + email). Apple already has the account holder, and the policy states it.
+- **The dev-only console-forwarding path**, which is hard-gated to `localhost` and inert in the shipped
+  binary. Mentioning an inert code path invites a question rather than answering one; the "no analytics
+  SDK" claim is true without the caveat.
