@@ -111,13 +111,21 @@ Google's own documentation (`docs.cloud.google.com/speech-to-text/docs/data-logg
 > program."
 
 So the policy's claim is the documented default, and enabling it is a deliberate opt-in tied to
-discounted pricing. **What I could not do is read your project's setting** — there is no API for it and
-the repo's own rules forbid probing your live services on a guess. If you never ticked that box, it is
-off. One look in the Cloud console closes it for good.
+discounted pricing.
+
+**CLOSED 2026-09-07 by the owner, and it is off twice over.** The console page (APIs & Services →
+Enabled APIs → Cloud Speech-to-Text API → **Data logging** tab, per-project, project
+`preschool-learning-app-466719`) reads: *"Data logging is **disabled** for this project for Google Cloud
+Speech API"*, and the only button offered is "Enable data logging". The same page carries a second,
+stronger fact: *"Note that the V2 version of the API does not yet support data logging and discount
+pricing will not apply to it."* `api/stt.ts` calls **V2** (recognizer `eu/chirp_3`), so data logging is
+not merely unticked — it is unavailable for the API the app actually uses. Re-check only if the app is
+ever moved back to V1.
 
 ## 5. What is still genuinely yours
 
-1. **Confirm the Google data-logging box is unticked** (§4). One glance.
+1. ~~**Confirm the Google data-logging box is unticked** (§4).~~ **Done 2026-09-07 — disabled, and V2
+   does not support it at all. See §4.**
 2. **Decide whether you are the controller and whether this is enough for you.** The document now
    describes the app accurately and contains every element Art. 13 lists — but "accurate and complete"
    is not the same as "legally sufficient for my situation", and I am not able to certify the second.
