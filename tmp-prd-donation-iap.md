@@ -233,9 +233,22 @@ parallel with v1.0's review, so none of it delays the store submission. Do not r
      rate is **zero** — leaving Part II blank would have meant **30% U.S. withholding** on everything
      Apple pays. (https://www.irs.gov/pub/irs-trty/denmark2.pdf)
    - Title, signing as an individual: **Owner**.
-   - **Open item:** the bank was registered with **bank currency EUR** against USD royalties. If that
-     is an ordinary DKK account, every payout pays the bank's conversion spread. Apple supports DKK.
-     Worth changing — ASC locks banking edits for ~24h after a change.
+   - **The payout currency, and the wrong turn that cost a month.** The bank went in with **bank
+     currency EUR** while the account is an ordinary Danish DKK one, which would convert every payout
+     twice. Two things were misread:
+     - The **`ROYALTY CURRENCY = USD`** column is **not** the payout currency. Apple: *"The displayed
+       currency defaults to USD, but it is not your earnings payment currency. It is not editable."*
+       It describes the worldwide paid agreement. Ignore it.
+     - **`···` → "Replace with new account" is the wrong door** — it rejects the same IBAN with *"This
+       bank already exists in your accounts"*, and **Apple cannot change banking on your behalf**
+       (*"Apple cannot manually enter or change your banking for you"* — Case-ID 21489301, 2026-09-10).
+       A support ticket here buys nothing but a month.
+
+     The real path is an in-place edit: **Business → Bank Accounts → click the account NAME** (not the
+     `···`) → **Bank Account Currency**, top right of the Edit Bank Account window → tick *"I have read
+     and agreed to the statement above"* → Save. Only the account number and routing code are
+     uneditable; currency is not. Changes apply from the next payment cycle, and ASC locks banking
+     edits for ~24h afterwards.
 3. **Enrol in the App Store Small Business Program** — **15%** instead of 30%; eligibility is under
    **$1M USD proceeds** in the prior calendar year and *"developers new to the App Store also qualify"*
    (https://developer.apple.com/app-store/small-business-program/, read 2026-08-07). It takes effect
