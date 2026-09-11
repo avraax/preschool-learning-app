@@ -233,7 +233,8 @@ parallel with v1.0's review, so none of it delays the store submission. Do not r
      rate is **zero** — leaving Part II blank would have meant **30% U.S. withholding** on everything
      Apple pays. (https://www.irs.gov/pub/irs-trty/denmark2.pdf)
    - Title, signing as an individual: **Owner**.
-   - **The payout currency, and the wrong turn that cost a month.** The bank went in with **bank
+   - **The payout currency — RESOLVED 2026-09-11, bank currency now reads DKK.** Kept for the wrong
+     turn, which cost a month. The bank went in with **bank
      currency EUR** while the account is an ordinary Danish DKK one, which would convert every payout
      twice. Two things were misread:
      - The **`ROYALTY CURRENCY = USD`** column is **not** the payout currency. Apple: *"The displayed
