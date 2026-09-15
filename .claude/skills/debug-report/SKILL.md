@@ -5,8 +5,12 @@ description: Fetch and debug production, staging/TestFlight or local bug reports
 
 # Debug a bug report
 
-Reports are created in-app ("Indstillinger" → "Rapportér et problem") or auto-uploaded
-on crashes. Each has a short id like `R7K3F`. Storage: each deployed tier = its OWN Vercel Blob store
+Reports are created in-app ("Indstillinger" → "Send feedback") or auto-uploaded
+on crashes. **The manual ones are now FEEDBACK, not bug reports** — one door, no kind picker, so a
+`type:"manual"` report may equally be praise or an idea. To read what people are SAYING use
+`/feedback`; this skill is for debugging a specific code or a crash.
+
+Each report has a short id like `R7K3F`. Storage: each deployed tier = its OWN Vercel Blob store
 via `api/bug-report.ts`; local dev = `.bug-reports/<date>/<id>/` on disk via `dev-server.js`.
 
 ## 1. Pick the base URL
@@ -64,7 +68,9 @@ curl -s -o /tmp/bug-R7K3F.jpg "<screenshotUrl>"  # then READ the jpg — actuall
 
 ## 4. Read the report in this order
 
-1. `report.note` — the human's words. (`report.category` is just `crash` for auto-reports, `andet` otherwise.)
+1. `report.note` — the human's words, and since 2026-09-15 it is **never empty on a manual report**
+   (Send is disabled until something is typed). (`report.category` is just `crash` for auto-reports,
+   `andet` otherwise — the door no longer asks for a category.)
 2. `report.app` — `route` (which game), then the **build**: `commitHash` + `buildTime` are the
    real key — the `version` string is rarely bumped, so it can NOT separate pre-fix from post-fix;
    `commitHash` can. Match code with `git show <commitHash>:<file>` if the deploy has moved on.

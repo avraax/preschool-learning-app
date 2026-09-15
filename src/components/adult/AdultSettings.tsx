@@ -19,7 +19,7 @@
 //   1. ONE "Luk", top-right, closes everything. No other control in the adult area uses that word.
 //   2. Regular width has NO back arrow — the rail is the way back.
 //   3. Compact width has exactly one back arrow per pushed pane, titled with the rail label.
-//   4. The only stacked modals are nested TASK dialogs (bug report, create profile, PIN setup, the
+//   4. The only stacked modals are nested TASK dialogs (feedback, create profile, PIN setup, the
 //      destructive confirms), each with two buttons: Annullér leading + the action trailing.
 //   5. Max depth 3: settings → one nested dialog → PIN pad. It used to be 5.
 //
@@ -42,15 +42,16 @@ import {
 } from '@mui/material'
 import {
   ArrowUp,
-  Bug,
   ChevronRight,
   GraduationCap,
+  MessageSquare,
   Palette,
   ShieldCheck,
   Users,
   Volume2,
 } from 'lucide-react'
 import { ADULT_IA, ADULT_GROUP_IDS, type AdultGroupId } from '../../config/adultSettingsIa'
+import { FEEDBACK_ENTRY_LABEL } from '../../config/feedbackForm'
 import { BUILD_INFO } from '../../config/version'
 import { backendHost } from '../../config/backendTarget'
 import { PHONE_ANY } from '../../theme/phoneMedia'
@@ -65,9 +66,9 @@ import LydPane from './panes/LydPane'
 import UdseendePane from './panes/UdseendePane'
 import PrivatlivPane from './panes/PrivatlivPane'
 
-// The bug reporter is the one nested dialog that is genuinely heavy (it pulls the whole reporter
+// The feedback dialog is the one nested dialog that is genuinely heavy (it pulls the whole reporter
 // service graph), so it stays lazy inside this already-lazy chunk.
-const BugReportDialog = React.lazy(() => import('./BugReportDialog'))
+const FeedbackDialog = React.lazy(() => import('./FeedbackDialog'))
 
 const RAIL_W = 200
 const ICON = 19
@@ -101,7 +102,7 @@ const validPane = (id: AdultGroupId): AdultGroupId =>
 export interface AdultSettingsProps {
   open: boolean
   onClose: () => void
-  /** JPEG data URL captured BEFORE this surface rendered — the bug report's picture of the moment. */
+  /** JPEG data URL captured BEFORE this surface rendered — the feedback message's picture of the moment. */
   screenshot: string | null
   updateAvailable?: boolean
   onApplyUpdate?: () => void
@@ -328,20 +329,21 @@ const AdultSettings: React.FC<AdultSettingsProps> = ({
                 ))}
               </List>
 
-              {/* ---- Support footer: reachable from EVERY pane, because support belongs at the
-                      moment something looks wrong, not one tap away (§3). ---- */}
+              {/* ---- Feedback footer: reachable from EVERY pane, because the urge to say something
+                      arrives at the moment something looks wrong, not one tap away (§3). The row was
+                      "Rapportér et problem" until 2026-09-15; a narrow label got only bug reports. ---- */}
               <Divider />
               <Box sx={{ flex: '0 0 auto', px: 0.75, py: 0.75 }}>
                 <ListItemButton
-                  aria-label="Rapportér et problem"
+                  aria-label={FEEDBACK_ENTRY_LABEL}
                   onClick={openReport}
                   sx={{ minHeight: 44, px: 1 }}
                 >
                   <ListItemIcon sx={{ minWidth: 26, color: 'inherit' }}>
-                    <Bug size={17} aria-hidden />
+                    <MessageSquare size={17} aria-hidden />
                   </ListItemIcon>
                   <ListItemText
-                    primary="Rapportér et problem"
+                    primary={FEEDBACK_ENTRY_LABEL}
                     slotProps={{ primary: { noWrap: true, sx: { fontSize: '0.82rem' } } }}
                   />
                 </ListItemButton>
@@ -396,7 +398,7 @@ const AdultSettings: React.FC<AdultSettingsProps> = ({
       {/* Nested TASK dialog — the only kind of stacked modal the adult area allows. */}
       <React.Suspense fallback={null}>
         {reportMounted && (
-          <BugReportDialog open={reporting} screenshot={screenshot} onClose={() => setReporting(false)} />
+          <FeedbackDialog open={reporting} screenshot={screenshot} onClose={() => setReporting(false)} />
         )}
       </React.Suspense>
     </AdultThemeProvider>

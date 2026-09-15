@@ -13,7 +13,9 @@
 // content is a data structure a plain-Node test can read. Same rule as every other guarded list here
 // (`.claude/rules/game-development.md`: if a test needs to read a list, it belongs in `src/config/`).
 //
-// PURE + Node-importable: no React, no DOM, explicit `.ts` on relative imports (there are none).
+// PURE + Node-importable: no React, no DOM, explicit `.ts` on relative imports.
+
+import { FEEDBACK_ENTRY_LABEL } from './feedbackForm.ts'
 //
 // This is a factual description of what the app does, written from the code. It is NOT legal advice,
 // and the owner is the data controller who has to stand behind it — see `docs/app-store/phase-a.md`.
@@ -100,8 +102,8 @@ export interface LegalSection {
 }
 
 /** Last substantive revision, shown on the page. Bump when the CONTENT changes, not on a typo fix. */
-export const PRIVACY_UPDATED_DA = '6. august 2026'
-export const PRIVACY_UPDATED_EN = '6 August 2026'
+export const PRIVACY_UPDATED_DA = '15. september 2026'
+export const PRIVACY_UPDATED_EN = '15 September 2026'
 
 export const PRIVACY_DA: { title: string; intro: string[]; sections: LegalSection[] } = {
   title: 'Privatlivspolitik',
@@ -126,7 +128,7 @@ export const PRIVACY_DA: { title: string; intro: string[]; sections: LegalSectio
         'Spiller I uden konto: appen behandler ingen personoplysninger om barnet, så der er intet at give samtykke til.',
         'Har du en konto: vi behandler din e-mailadresse, børneprofilerne og fremgangen for at kunne levere det, du har bedt om — synkronisering og flere profiler. Retsgrundlaget er aftalen mellem dig og os (databeskyttelsesforordningens artikel 6, stk. 1, litra b).',
         'Mikrofonen i "Sig et Ord": dit udtrykkelige samtykke (artikel 6, stk. 1, litra a), givet af en voksen bag talkoden. Du kan trække det tilbage når som helst ved at slå mikrofonen fra igen.',
-        'Fejl- og nedbrudsrapporter: vores legitime interesse i at kunne rette fejl i appen (artikel 6, stk. 1, litra f).',
+        'Beskeder du selv sender fra "' + FEEDBACK_ENTRY_LABEL + '", samt fejl- og nedbrudsrapporter: vores legitime interesse i at kunne forbedre og rette fejl i appen (artikel 6, stk. 1, litra f).',
         'Appen træffer ingen automatiske afgørelser om dit barn og laver ingen profilering.',
       ],
     },
@@ -149,7 +151,7 @@ export const PRIVACY_DA: { title: string; intro: string[]; sections: LegalSectio
         'Uden konto og med mikrofonen slået fra: intet. Appen spiller helt lokalt.',
         'Med konto: din e-mailadresse og dit navn fra Google-login, børneprofilernes navne og figurer, og barnets fremgang. Det gemmes for at kunne synkronisere mellem enheder.',
         'Med mikrofonen slået til: barnets stemmeoptagelse fra "Sig et Ord", når barnet holder mikrofonknappen nede. Optagelsen sendes til genkendelse og gemmes ikke.',
-        'Hvis du selv sender en fejlrapport fra "Indstillinger": et skærmbillede og teknisk information om enheden. Det sker kun, når du trykker på det.',
+        'Hvis du selv skriver til os fra "Indstillinger" → "' + FEEDBACK_ENTRY_LABEL + '": din besked, teknisk information om appen og enheden, og — hvis du lader fluebenet stå — et skærmbillede. Det sker kun, når du trykker på Send. Der følger hverken navn eller e-mailadresse med.',
         'Hvis appen går ned: en teknisk fejlbeskrivelse uden skærmbillede, så fejlen kan rettes.',
         'Hvis et login mislykkes: en teknisk rapport med et skærmbillede af login-skærmen, så fejlen kan findes. Den sendes automatisk, uden at du trykker på noget. Selve koden og adgangsnøgler fjernes fra billedet, før det sendes, og rapporten indeholder aldrig din e-mail eller din kode.',
       ],
@@ -191,7 +193,7 @@ export const PRIVACY_DA: { title: string; intro: string[]; sections: LegalSectio
         'Data på enheden bliver der, indtil du sletter dem. "Indstillinger" → Konto → "Nulstil fremgang" sletter et barns fremgang på enheden.',
         'Har du en konto, sletter "Indstillinger" → Konto → "Slet kontoen helt" kontoen, børneprofilerne og fremgangen på serveren. Det kan ikke fortrydes.',
         'Stemmeoptagelser gemmes ikke — de bruges til at genkende ordet og forsvinder derefter.',
-        'Fejlrapporter, du selv har sendt, gemmes indtil fejlen er undersøgt. Skriv til ' + CONTROLLER.email + ', hvis du vil have en slettet før det.',
+        'Beskeder og fejlrapporter, du selv har sendt, gemmes indtil de er læst og fejlen undersøgt. Skriv til ' + CONTROLLER.email + ' med koden fra beskeden, hvis du vil have en slettet før det.',
       ],
     },
     {
@@ -251,7 +253,7 @@ export const PRIVACY_EN: { title: string; intro: string[]; sections: LegalSectio
         'Without an account the app processes no personal data about the child, so there is nothing to consent to.',
         'With an account: your email address, the child profiles and the progress are processed to deliver what you asked for — sync and multiple profiles. The basis is the contract between you and us (GDPR Article 6(1)(b)).',
         'The microphone in "Sig et Ord": your explicit consent (Article 6(1)(a)), given by an adult behind the passcode and withdrawable at any time.',
-        'Error and crash reports: our legitimate interest in being able to fix the app (Article 6(1)(f)).',
+        'Messages you send yourself from "' + FEEDBACK_ENTRY_LABEL + '", and error and crash reports: our legitimate interest in being able to improve and fix the app (Article 6(1)(f)). A message carries no name and no email address.',
         'No automated decision-making and no profiling.',
         'All four services are configured to run in the EU (database in Frankfurt, speech recognition in Google’s EU region, speech synthesis in West Europe, server functions in Frankfurt). Google, Microsoft and Vercel are US companies, so access from the US cannot be excluded — for example during support. Any such transfer relies on the European Commission’s Standard Contractual Clauses and those companies’ EU-US Data Privacy Framework certification.',
       ],
@@ -286,7 +288,7 @@ export const PRIVACY_EN: { title: string; intro: string[]; sections: LegalSectio
         'Device data stays until you delete it. Grown-ups area → Barn → "Nulstil fremgang" clears a child’s progress on the device.',
         'With an account, Grown-ups area → Konto → "Slet kontoen helt" deletes the account, the child profiles and the progress on the server. This cannot be undone.',
         'Voice recordings are not retained — they are used to recognise the word and then discarded.',
-        `To have a problem report deleted sooner, write to ${CONTROLLER.email}.`,
+        `Messages and problem reports you sent yourself are kept until they have been read and the fault investigated. To have one deleted sooner, write to ${CONTROLLER.email} quoting the code shown when you sent it.`,
       ],
     },
     {
@@ -306,7 +308,12 @@ export const SUPPORT_DA: { title: string; intro: string[]; sections: LegalSectio
     'Børnelæring er lavet af én person, og du får svar fra ham. Skriv til ' +
       CONTROLLER.email +
       ' — helst på dansk eller engelsk.',
-    'Hvis noget er gået i stykker i appen, hjælper det meget at sende en fejlrapport først: "Indstillinger" → "Rapportér et problem". Så følger et skærmbillede og teknisk information med, og du får en kort kode. Skriv koden i din mail.',
+    'Du kan også skrive direkte fra appen: "Indstillinger" → "' +
+      FEEDBACK_ENTRY_LABEL +
+      '". Ros, idéer og fejl må gerne komme samme vej — det hele bliver læst. Du får en kort kode, når beskeden er sendt.',
+    'Er noget gået i stykker, så send beskeden fra appen først og lad skærmbilledet følge med. Vil du have svar, så skriv koden i en mail til ' +
+      CONTROLLER.email +
+      ' — beskeden fra appen indeholder hverken navn eller e-mail, så der er ellers ingen vej tilbage til dig.',
   ],
   sections: [
     {

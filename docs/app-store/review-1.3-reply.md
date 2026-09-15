@@ -5,7 +5,7 @@ routine automated Kids Category questionnaire, not a rejection.
 
 **THE FIELD IS CAPPED AT 4000 CHARACTERS.** App Store Connect's "Reply to App Review" box counts
 characters and refuses to submit over the cap (it shows the overage as a negative number). The first
-draft of this answer was ~7800 and could not be sent. **The block below is 3949 characters — measure
+draft of this answer was ~7800 and could not be sent. **The block below is 3990 characters — measure
 before editing it**, and prefer cutting a whole claim to shaving words, which barely moves the count:
 
 ```
@@ -36,7 +36,7 @@ Answers in order. Børnelæring is a free Danish learning app for children aged 
 4. OTHER DATA COLLECTED, AND EVERY USE. By default — no account, microphone off — nothing about the child leaves the device: progress, rewards and settings live on the device, and the build is bundled, so the games run with no network. Our server sees only the standard IP address and user-agent of a request; linked to no child, used for nothing else.
 - Optional adult account (Sign in with Apple or Google; the app is fully playable without one): the adult's email and name from the provider, a child profile name the adult types (no real name required) with a chosen cartoon character, and the child's progress — points, level, rewards, difficulty. A passkey, if added, stores only its public key. Purpose: multiple child profiles, and progress that follows the child to another device. "Indstillinger" → "Konto" → "Slet kontoen helt" deletes the account, all profiles and all progress.
 - Microphone, one game ("Sig et Ord"): OFF on installation, and a child cannot enable it. An adult must pass a passcode gate and consent on a screen naming Google Cloud Speech-to-Text, stating the recording is not stored and can be switched off again. Audio is captured only while the child holds the button, and only to recognise that one word. Consent is withdrawable in one tap. Nothing retained.
-- Problem report, only when an adult taps "Rapportér et problem": a screenshot plus technical state (app version, route, device model and OS, viewport, language, timezone, audio status, local progress). No email, no name. Purpose: diagnosing that bug. Deleted on request.
+- Message from "Send feedback", only when an adult writes one and presses Send: the text, technical state (app version, route, device and OS, viewport, language, timezone, audio status, local progress), and a screenshot unless the adult unticks it. No email, no name. Purpose: fixing the app. Deleted on request.
 - Crash: a technical error description, no screenshot, same purpose.
 - Failed sign-in: a technical report plus a screenshot of the sign-in screen, sent automatically because these failures are otherwise unreproducible. Credential fields and the passcode are stripped from the image; it never contains the email or the passcode. Disclosed in the policy.
 

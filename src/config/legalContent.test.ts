@@ -22,6 +22,7 @@ import {
   PROCESSORS,
   SUPPORT_DA,
 } from './legalContent.ts'
+import { FEEDBACK_ENTRY_LABEL } from './feedbackForm.ts'
 
 const SRC = path.join(import.meta.dirname, '..')
 
@@ -215,6 +216,35 @@ test('the support page is not an empty website', () => {
   const answers = SUPPORT_DA.sections.flatMap((s) => s.bullets ?? [])
   assert.ok(answers.length >= 5, `only ${answers.length} support answers — that reads as a placeholder`)
   assert.ok(text.length > 900, 'the support page is too thin to be a real support page')
+})
+
+test('both published pages name the feedback row by the label the app actually renders', () => {
+  // The support page and the policy both send a parent to go and find a row inside "Indstillinger".
+  // If that row is renamed and these strings are not, the instruction is a dead end and NOTHING fails —
+  // the copy is prose, the label is JSX, and neither knows about the other. So both read the constant,
+  // and this asserts the constant is what the two components render.
+  const da = textOf(SUPPORT_DA)
+  assert.ok(
+    da.includes(FEEDBACK_ENTRY_LABEL),
+    `the support page never names the feedback row ("${FEEDBACK_ENTRY_LABEL}")`,
+  )
+  assert.ok(
+    textOf(PRIVACY_DA).includes(FEEDBACK_ENTRY_LABEL),
+    'the policy describes what a self-sent message contains but never names the row that sends it',
+  )
+  // The IMPORT LINE IS STRIPPED FIRST, and that is the whole point of this assertion.
+  // `/re-break` pasted the old literal back into the row and this stayed green **twice**: a bare
+  // /FEEDBACK_ENTRY_LABEL/ matched the now-unused import, and so did `{ FEEDBACK_ENTRY_LABEL }` —
+  // an import's own braces look exactly like a JSX expression. A guard that greps source must strip
+  // what it is not asking about.
+  for (const rel of ['components/adult/AdultSettings.tsx', 'components/adult/FeedbackDialog.tsx']) {
+    const body = readFileSync(path.join(SRC, rel), 'utf8').replace(/^import\s[\s\S]*?$/gm, '')
+    assert.match(
+      body,
+      /FEEDBACK_ENTRY_LABEL/,
+      `${rel} hardcodes its label instead of reading the one the legal pages quote`,
+    )
+  }
 })
 
 test('neither page uses the work email or the work domain', () => {

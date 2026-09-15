@@ -17,7 +17,7 @@ node .claude/skills/ui-screenshot/cdp.mjs --url http://127.0.0.1:5173/alphabet/q
 # surface, and rail-ready measured ~530ms under ?nogate=1. Keep a generous value anyway — the surface is
 # a lazy chunk, and a short wait silently yields the un-opened page rather than an error.
 # PASS --w/--h. Below the `md` breakpoint the surface is fullScreen single-pane push-nav, so the rail
-# does not exist: `[data-rail-item=…]` and the rail-footer "Rapportér et problem" are simply absent
+# does not exist: `[data-rail-item=…]` and the rail-footer "Send feedback" are simply absent
 # and the click misses with no error. cdp.mjs defaults narrow, so OMITTING the size silently gives you
 # the compact layout on a run you thought was iPad-sized.
 # The trigger is the NAME PILL in the title row (`[data-profile-chip]`) — the gear is deleted and so is

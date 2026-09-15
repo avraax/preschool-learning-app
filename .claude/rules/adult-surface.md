@@ -4,6 +4,7 @@ paths:
   - "src/components/adult/panes/*.tsx"
   - "src/config/adultSettingsIa.ts"
   - "src/config/pinReasons.ts"
+  - "src/config/feedbackForm.ts"
   - "src/services/bugReporter.ts"
   - "src/services/diagnosticsBuffer.ts"
   - "src/services/screenshotService.ts"
@@ -12,7 +13,7 @@ paths:
   - "api/log-error.ts"
 ---
 
-# The adult surface & bug reports
+# The adult surface, feedback & bug reports
 
 Settings PRD-01. **IT IS CALLED `Indstillinger`** (owner, 2026-09-05 — it was "Til de voksne"; only the
 name changed, and `[aria-label="Indstillinger"]` is now THE selector the harness clicks).
@@ -71,7 +72,7 @@ A `maxWidth="md"` Dialog (MUI's default z-index 1300) with a persistent left rai
 mutually-exclusive groups** — **Konto** · **Læring** (difficulty; `panes/LaeringPane.tsx` **EXPLAINS
 the selected level in Danish** and labels the setting as per-child) · **Lyd** (SFX/music + narration
 voice + tempo) · **Udseende** (skin) · **Privatliv** (mic + policy + support) — plus a **persistent rail
-footer** (bug report + tap-to-copy version) reachable from every pane. It replaced 13 flat rows in a
+footer** ("Send feedback" + tap-to-copy version) reachable from every pane. It replaced 13 flat rows in a
 scrolling `xs` dialog and six sibling sub-panels.
 
 **`Konto` is `Barn` + the old `Konto` + the old `Log ind` promo row, merged** (Familie IA PRD, owner
@@ -158,6 +159,39 @@ Signing in is offered only here, behind the parental gate — nothing adult-dire
   was deleted with it. Adding a child is therefore a gated act by construction; do not re-add one to
   any un-gated surface. `profilePicker.test.ts` holds both halves.
 
+## The door is "Send feedback", and it is ONE door
+
+Renamed from **"Rapportér et problem"** on 2026-09-15 (owner). **Do not re-litigate any of this.**
+
+- **A narrow label gets you only what it names.** Praise and ideas had no home at all, so the only route
+  for them was the personal Gmail printed on `/support` — which is what comparable apps do (Sago
+  Mini/Toca Boca → `support@playpiknik.com` + a Contact Us page) and it is a dead end for a parent with
+  a sentence to say. Khan Academy Kids is the nearest app that does better; the mainstream convention is
+  one entry named for feedback, not for bugs (Google "Help & feedback", Apple "Send Feedback").
+- **There is deliberately NO kind picker** (ros / idé / fejl). One was designed and then cut: it existed
+  only to decide what rode along with the message, and once the screenshot got its own checkbox it had
+  no job left. The owner classifies by reading — this is one person's inbox, not a support queue that
+  needs sorting. **Don't add one back to "improve triage".**
+- **The technical payload always rides along; the screenshot is a ticked checkbox.** Version, device,
+  audio health, diagnostics rings and progress are small, non-visual and are what make a vague message
+  debuggable. The screenshot is the one attachment a parent can judge, so it is the one they control.
+- **The channel is ONE-WAY: no e-mail field, by decision.** Nothing new is collected, so the policy can
+  still say a message carries no name and no e-mail. The short code is therefore the parent's *only*
+  handle on their own message, which is why the success screen prints `CONTROLLER.email` beside it.
+- **Send is disabled until something is typed** (`canSubmitFeedback`, pure, in
+  `src/config/feedbackForm.ts`). An empty upload cost nothing when the payload *was* the report and
+  costs everything now that the door invites a sentence.
+- **No prompt, ever.** Nothing nudges a parent to write and there is no rating prompt: Kids Guideline
+  1.3 keeps everything adult-directed behind the gate, so **absence of feedback is not evidence of
+  health**. A rating prompt was considered and refused — it is a link out of the app.
+- **The LABEL is a constant, not a literal.** `FEEDBACK_ENTRY_LABEL` feeds the rail row, its
+  `aria-label` and the dialog title, *and* is quoted by `SUPPORT_DA` and `PRIVACY_DA`, which tell a
+  parent to go and find a row by that name. Rename it in JSX alone and the published pages silently
+  start lying. `legalContent.test.ts` + `feedbackForm.test.ts` hold the two together and fail on the
+  old string reappearing.
+- **Reading it is `/feedback`** (`type: 'manual'` only). `/debug-report` is unchanged and still owns a
+  specific code or a crash.
+
 ## Bug reporting
 
 `diagnosticsBuffer` (`src/services/diagnosticsBuffer.ts`, installed as the FIRST import in `main.tsx`)
@@ -190,7 +224,7 @@ existed:
 them; the pure decision rules are `screenshotFidelity.ts`. Never "optimise" an option back off without the
 A/B in the `ui-screenshot` skill.
 
-"Rapportér et problem" → `bugReporter.buildReportPayload()` (build info, device, audio health incl. the TTS
+"Send feedback" → `bugReporter.buildReportPayload()` (`type: 'manual'`) (build info, device, audio health incl. the TTS
 circuit-breaker + playback-failure count + permission snapshot, progress state, diagnostics rings) → POST
 `/api/bug-report` → **Vercel Blob** (`bug-reports/<date>/<ID>/report.json` + `screenshot.jpg`) → a short
 code (e.g. `R7K3F`) shown to the adult; offline/failure → "Gem som fil" downloads the same JSON.
