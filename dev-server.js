@@ -17,6 +17,7 @@ import { auth } from './lib/auth.ts';
 import { verifyAccessToken } from './lib/access-token.ts';
 import { devBypassEnabled } from './lib/env.ts';
 import { corsHeadersFor } from './lib/web-cors.ts';
+import { folderHasId, parseReportFolder, reportFolder } from './lib/report-paths.ts';
 import { normalizePersisted, progressInvariantViolations } from './src/config/progressSchema.ts';
 import { mergeProgress } from './src/config/progressMerge.ts';
 import {
@@ -338,17 +339,30 @@ const BUG_ID_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 const makeBugId = () =>
   Array.from({ length: 5 }, () => BUG_ID_ALPHABET[Math.floor(Math.random() * BUG_ID_ALPHABET.length)]).join('');
 
-/** All stored reports as { id, date, dir, uploadedAt }, newest first. */
+/**
+ * All stored reports as { id, origin, date, dir, uploadedAt }, newest first.
+ *
+ * The folder is `<origin>-<ID>` since 2026-09-16, and a bare `<ID>` before that — `parseReportFolder`
+ * reads both, so a local `.bug-reports/` from an older checkout keeps working.
+ */
 function listBugReports() {
   const out = [];
   if (!fs.existsSync(BUG_DIR)) return out;
   for (const date of fs.readdirSync(BUG_DIR)) {
     const dateDir = path.join(BUG_DIR, date);
     if (!fs.statSync(dateDir).isDirectory()) continue;
-    for (const id of fs.readdirSync(dateDir)) {
-      const reportPath = path.join(dateDir, id, 'report.json');
+    for (const folder of fs.readdirSync(dateDir)) {
+      const reportPath = path.join(dateDir, folder, 'report.json');
       if (fs.existsSync(reportPath)) {
-        out.push({ id, date, dir: path.join(dateDir, id), uploadedAt: fs.statSync(reportPath).mtime });
+        const { origin, id } = parseReportFolder(folder);
+        out.push({
+          id,
+          origin,
+          folder,
+          date,
+          dir: path.join(dateDir, folder),
+          uploadedAt: fs.statSync(reportPath).mtime,
+        });
       }
     }
   }
@@ -372,8 +386,8 @@ app.post('/api/bug-report', (req, res) => {
 
     const date = new Date().toISOString().slice(0, 10);
     let id = makeBugId();
-    while (fs.existsSync(path.join(BUG_DIR, date, id))) id = makeBugId();
-    const dir = path.join(BUG_DIR, date, id);
+    while (fs.existsSync(path.join(BUG_DIR, date, reportFolder(report.type, id)))) id = makeBugId();
+    const dir = path.join(BUG_DIR, date, reportFolder(report.type, id));
     fs.mkdirSync(dir, { recursive: true });
     fs.writeFileSync(
       path.join(dir, 'report.json'),
@@ -408,7 +422,7 @@ app.get('/api/bug-report', (req, res) => {
     const all = listBugReports();
     const id = req.query.id ? String(req.query.id).toUpperCase() : null;
     if (id) {
-      const hit = all.find((r) => r.id === id);
+      const hit = all.find((r) => folderHasId(r.folder, id));
       if (!hit) return res.status(404).json({ error: `No report ${id}` });
       const shotPath = path.join(hit.dir, 'screenshot.jpg');
       if (req.query.screenshot === '1') {
@@ -427,6 +441,7 @@ app.get('/api/bug-report', (req, res) => {
     const n = Math.min(Math.max(parseInt(req.query.list ?? '20', 10) || 20, 1), 100);
     const reports = all.slice(0, n).map((r) => ({
       id: r.id,
+      origin: r.origin,
       date: r.date,
       uploadedAt: r.uploadedAt,
       size: fs.statSync(path.join(r.dir, 'report.json')).size,

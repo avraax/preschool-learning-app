@@ -11,7 +11,12 @@ on crashes. **The manual ones are now FEEDBACK, not bug reports** — one door, 
 `/feedback`; this skill is for debugging a specific code or a crash.
 
 Each report has a short id like `R7K3F`. Storage: each deployed tier = its OWN Vercel Blob store
-via `api/bug-report.ts`; local dev = `.bug-reports/<date>/<id>/` on disk via `dev-server.js`.
+via `api/bug-report.ts`; local dev = `.bug-reports/<date>/<folder>/` on disk via `dev-server.js`.
+
+**The folder names the ORIGIN**: `bug-reports/<date>/<feedback|crash|auth|ukendt>-<ID>/report.json`,
+so a listing says where each entry came from without a fetch (the listing also returns `origin`).
+Folders stored before 2026-09-16 are a bare `<ID>` and give `origin: null` — meaning the path does not
+say, so read `type` from the JSON rather than assuming. Lookup by id works on both shapes.
 
 ## 1. Pick the base URL
 

@@ -189,6 +189,18 @@ Renamed from **"Rapportér et problem"** on 2026-09-15 (owner). **Do not re-liti
   parent to go and find a row by that name. Rename it in JSX alone and the published pages silently
   start lying. `legalContent.test.ts` + `feedbackForm.test.ts` hold the two together and fail on the
   old string reappearing.
+- **It renders in the DETAIL COLUMN, not a modal** (owner, 2026-09-16: *"the other menu items just
+  shows its content in the right column"*). It was a nested task dialog, on Settings PRD-01's reasoning
+  that a bug report is a task you start when something looks wrong — true of "Rapportér et problem",
+  false of a destination called "Send feedback". The row stays in the rail FOOTER and `'feedback'` is
+  deliberately **not** an `AdultGroupId`: the rail is contractually five mutually-exclusive settings
+  GROUPS and a message form is not a setting. Only the rendering moved. Selecting it does **not**
+  write `lastPane`, so re-opening the surface never lands on a half-composed message.
+- **The BUCKET says where an entry came from**: `bug-reports/<date>/<origin>-<ID>/`, origin one of
+  `feedback` / `crash` / `auth` / `ukendt` (`lib/report-paths.ts`, mirrored in `dev-server.js` and
+  guarded by `reportPaths.test.ts`, which fails if either writer builds a path by hand). Before
+  2026-09-16 every folder was a bare `<ID>`; those still resolve and report `origin: null`, which means
+  **the path does not say** — distinct from `ukendt`, which is a recorded verdict. Never collapse the two.
 - **Reading it is `/feedback`** (`type: 'manual'` only). `/debug-report` is unchanged and still owns a
   specific code or a crash.
 
@@ -226,7 +238,9 @@ A/B in the `ui-screenshot` skill.
 
 "Send feedback" → `bugReporter.buildReportPayload()` (`type: 'manual'`) (build info, device, audio health incl. the TTS
 circuit-breaker + playback-failure count + permission snapshot, progress state, diagnostics rings) → POST
-`/api/bug-report` → **Vercel Blob** (`bug-reports/<date>/<ID>/report.json` + `screenshot.jpg`) → a short
+`/api/bug-report` → **Vercel Blob** (`bug-reports/<date>/<origin>-<ID>/report.json` + `screenshot.jpg`,
+where origin is `feedback`/`crash`/`auth` — `lib/report-paths.ts`, so the BUCKET says where an entry
+came from without opening it; pre-2026-09-16 folders are a bare `<ID>` and still resolve) → a short
 code (e.g. `R7K3F`) shown to the adult; offline/failure → "Gem som fil" downloads the same JSON.
 **Crashes auto-upload** slim reports (no screenshot): window `error`/`unhandledrejection` hooks + the global
 `AppErrorBoundary` (kid-friendly "Ups!" + reload; `?crash-test=1` throws on purpose), deduped by signature,

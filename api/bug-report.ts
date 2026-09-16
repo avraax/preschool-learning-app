@@ -1,11 +1,15 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { put, list } from '@vercel/blob'
 import { applyCors, isAllowedOrigin, logServerError, rateLimit } from '../lib/server-utils.js'
+import { folderHasId, parseReportFolder, reportFolder } from '../lib/report-paths.js'
 
 // Bug report storage (Bug Report feature).
 //
 // POST  { report: <BugReportPayload>, screenshot?: <jpeg data URL> }
-//       → Vercel Blob: bug-reports/<YYYY-MM-DD>/<ID>/report.json (+ screenshot.jpg)
+//       → Vercel Blob: bug-reports/<YYYY-MM-DD>/<origin>-<ID>/report.json (+ screenshot.jpg)
+//         where <origin> is feedback | crash | auth — so the BUCKET says where an entry came from
+//         without opening it (owner, 2026-09-16). Folders stored before that are a bare <ID> and
+//         still resolve; see lib/report-paths.ts.
 //       → { ok, id, url, screenshotUrl }
 // GET   ?id=R7K3F            → { id, uploadedAt, url, screenshotUrl, report }
 // GET   ?list=10 (default 20) → { reports: [summaries, newest first], total }
@@ -90,12 +94,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // addRandomSuffix defaults to false, so put() throws if the pathname already exists —
     // that IS the collision check; retry with a fresh id.
+    // The origin comes from the payload's own `type`, normalised — an unrecognised value is filed as
+    // `ukendt` rather than guessed into one of the three.
+    const reportType = (report as { type?: unknown }).type
     let id = makeId()
     let stored: { url: string } | null = null
     for (let attempt = 0; attempt < 3 && !stored; attempt++) {
       try {
         stored = await put(
-          `${PREFIX}${date}/${id}/report.json`,
+          `${PREFIX}${date}/${reportFolder(reportType, id)}/report.json`,
           JSON.stringify({ id, receivedAt: new Date().toISOString(), ...report }),
           { access: 'public', contentType: 'application/json' },
         )
@@ -108,14 +115,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     let screenshotUrl: string | null = null
     if (typeof screenshot === 'string') {
       const jpeg = Buffer.from(screenshot.slice(screenshot.indexOf(',') + 1), 'base64')
-      const shot = await put(`${PREFIX}${date}/${id}/screenshot.jpg`, jpeg, {
+      const shot = await put(`${PREFIX}${date}/${reportFolder(reportType, id)}/screenshot.jpg`, jpeg, {
         access: 'public',
         contentType: 'image/jpeg',
       })
       screenshotUrl = shot.url
     }
 
-    console.log(`[BUG REPORT] stored ${id} (${date}), screenshot: ${screenshotUrl ? 'yes' : 'no'}`)
+    console.log(
+      `[BUG REPORT] stored ${reportFolder(reportType, id)} (${date}), screenshot: ${screenshotUrl ? 'yes' : 'no'}`,
+    )
     return res.status(200).json({ ok: true, id, url: stored!.url, screenshotUrl })
   } catch (error) {
     await logServerError(req, 'BugReport', error)
@@ -142,14 +151,22 @@ async function handleGet(req: VercelRequest, res: VercelResponse) {
 
     const id = queryParam(req.query.id)?.toUpperCase()
     if (id) {
-      const reportBlob = blobs.find((b) => b.pathname.endsWith(`/${id}/report.json`))
+      // NOT `endsWith('/' + id + '/report.json')` — that stopped matching the moment folders gained
+      // an origin prefix, and it would have failed silently on every new report.
+      const folderOf = (pathname: string) => pathname.split('/').at(-2) ?? ''
+      const reportBlob = blobs.find(
+        (b) => b.pathname.endsWith('/report.json') && folderHasId(folderOf(b.pathname), id),
+      )
       if (!reportBlob) {
         return res.status(404).json({ error: `No report ${id}` })
       }
-      const screenshotBlob = blobs.find((b) => b.pathname.endsWith(`/${id}/screenshot.jpg`))
+      const screenshotBlob = blobs.find(
+        (b) => b.pathname.endsWith('/screenshot.jpg') && folderHasId(folderOf(b.pathname), id),
+      )
       const report = await (await fetch(reportBlob.url)).json()
       return res.status(200).json({
         id,
+        origin: parseReportFolder(folderOf(reportBlob.pathname)).origin,
         uploadedAt: reportBlob.uploadedAt,
         url: reportBlob.url,
         screenshotUrl: screenshotBlob?.url ?? null,
@@ -160,6 +177,8 @@ async function handleGet(req: VercelRequest, res: VercelResponse) {
     const n = Math.min(Math.max(parseInt(queryParam(req.query.list) ?? '20', 10) || 20, 1), 100)
     interface ReportSummary {
       id: string
+      /** feedback | crash | auth | ukendt, or null for a folder stored before the scheme existed. */
+      origin: string | null
       date: string
       uploadedAt: Date
       size: number
@@ -180,8 +199,10 @@ async function handleGet(req: VercelRequest, res: VercelResponse) {
       .slice(0, n)
       .map((b) => {
         const match = b.pathname.match(/^bug-reports\/([^/]+)\/([^/]+)\/report\.json$/)
+        const parsed = parseReportFolder(match?.[2] ?? '')
         return {
-          id: match?.[2] ?? '?',
+          id: parsed.id || '?',
+          origin: parsed.origin,
           date: match?.[1] ?? '?',
           uploadedAt: b.uploadedAt,
           size: b.size,

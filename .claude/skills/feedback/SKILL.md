@@ -12,18 +12,24 @@ refused to make a parent choose a category before they could type (2026-09-15).
 **These are the only messages a human chose to write.** Everything else in the same store was uploaded
 by the app itself.
 
-## The one filter that matters
+## The origin is IN THE PATH — you can see it without opening anything
 
-Feedback and automatic reports share the Blob prefix `bug-reports/` and are separated by **`type`**:
+Since 2026-09-16 the folder carries it: `bug-reports/<date>/<origin>-<ID>/report.json`.
 
-| `type` | what it is | is it feedback? |
-| --- | --- | --- |
-| `manual` | an adult typed a message and pressed Send | **yes — this is the whole job** |
-| `crash` | the error boundary or a window hook auto-uploaded | no |
-| `auth` | a sign-in failed and auto-uploaded | no |
+| folder | `type` | what it is | is it feedback? |
+| --- | --- | --- | --- |
+| `feedback-M4QP2` | `manual` | an adult typed a message and pressed Send | **yes — this is the whole job** |
+| `crash-R7K3F` | `crash` | the error boundary or a window hook auto-uploaded | no |
+| `auth-T8W1K` | `auth` | a sign-in failed and auto-uploaded | no |
+| `ukendt-…` | something else | a payload whose `type` was not one of the three | treat as unknown |
+| `M4QP2` (bare) | read the JSON | **stored BEFORE the scheme existed** | unknown until you open it |
+
+The listing returns `origin` per report, so no fetch is needed to triage. **A bare-id folder gives
+`origin: null`, which means the path does not say — not that the origin is unknown.** For those, open
+the report and read `type`; never report a legacy entry as feedback because it isn't marked otherwise.
 
 A listing that is mostly `crash` and `auth` is **normal** and is not "lots of feedback". Say how many
-were `manual` and never fold the others into the count.
+were feedback and never fold the others into the count.
 
 ## 1. Check BOTH tiers — the listings do not overlap
 

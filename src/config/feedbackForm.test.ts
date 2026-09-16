@@ -46,10 +46,10 @@ test('the cap is enforced on the TRIMMED message', () => {
 })
 
 test('the dialog enforces the rule rather than re-implementing it', () => {
-  const dialog = codeOf('components/adult/FeedbackDialog.tsx')
-  assert.match(dialog, /canSubmitFeedback/, 'FeedbackDialog must gate Send on canSubmitFeedback()')
+  const pane = codeOf('components/adult/panes/FeedbackPane.tsx')
+  assert.match(pane, /canSubmitFeedback/, 'FeedbackPane must gate Send on canSubmitFeedback()')
   assert.doesNotMatch(
-    dialog,
+    pane,
     /disabled=\{[^}]*note\.trim\(\)/,
     'the emptiness rule was re-typed inline — it lives in feedbackForm.ts so the test can reach it',
   )
@@ -57,14 +57,14 @@ test('the dialog enforces the rule rather than re-implementing it', () => {
 
 test('the row, its aria-label and the dialog title all read from the one constant', () => {
   const settings = codeOf('components/adult/AdultSettings.tsx')
-  const dialog = codeOf('components/adult/FeedbackDialog.tsx')
 
+  // The DETAIL COLUMN's heading comes from `paneTitle`, in AdultSettings — the pane itself no longer
+  // renders a title, because a dialog has one and a pane does not (owner, 2026-09-16).
   assert.match(settings, /FEEDBACK_ENTRY_LABEL/, 'the rail-footer row must use the constant')
-  assert.match(dialog, /FEEDBACK_ENTRY_LABEL/, 'the dialog title must use the same constant')
 
   // The old narrow label is why this feature exists. If it comes back anywhere, the support page's
   // instructions and this module disagree again.
-  for (const file of ['components/adult/AdultSettings.tsx', 'components/adult/FeedbackDialog.tsx']) {
+  for (const file of ['components/adult/AdultSettings.tsx', 'components/adult/panes/FeedbackPane.tsx']) {
     assert.doesNotMatch(
       codeOf(file),
       /Rapportér et problem/,

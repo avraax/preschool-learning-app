@@ -237,14 +237,13 @@ test('both published pages name the feedback row by the label the app actually r
   // /FEEDBACK_ENTRY_LABEL/ matched the now-unused import, and so did `{ FEEDBACK_ENTRY_LABEL }` —
   // an import's own braces look exactly like a JSX expression. A guard that greps source must strip
   // what it is not asking about.
-  for (const rel of ['components/adult/AdultSettings.tsx', 'components/adult/FeedbackDialog.tsx']) {
-    const body = readFileSync(path.join(SRC, rel), 'utf8').replace(/^import\s[\s\S]*?$/gm, '')
-    assert.match(
-      body,
-      /FEEDBACK_ENTRY_LABEL/,
-      `${rel} hardcodes its label instead of reading the one the legal pages quote`,
-    )
-  }
+  const rel = 'components/adult/AdultSettings.tsx'
+  const body = readFileSync(path.join(SRC, rel), 'utf8').replace(/^import\s[\s\S]*?$/gm, '')
+  assert.match(
+    body,
+    /FEEDBACK_ENTRY_LABEL/,
+    `${rel} hardcodes the row label instead of reading the one the legal pages quote`,
+  )
 })
 
 test('neither page uses the work email or the work domain', () => {

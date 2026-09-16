@@ -66,9 +66,9 @@ import LydPane from './panes/LydPane'
 import UdseendePane from './panes/UdseendePane'
 import PrivatlivPane from './panes/PrivatlivPane'
 
-// The feedback dialog is the one nested dialog that is genuinely heavy (it pulls the whole reporter
-// service graph), so it stays lazy inside this already-lazy chunk.
-const FeedbackDialog = React.lazy(() => import('./FeedbackDialog'))
+// The feedback pane is the one pane that is genuinely heavy (it pulls the whole reporter service
+// graph), so it stays lazy inside this already-lazy chunk.
+const FeedbackPane = React.lazy(() => import('./panes/FeedbackPane'))
 
 const RAIL_W = 200
 const ICON = 19
@@ -99,6 +99,20 @@ let lastPane: AdultGroupId = FIRST_PANE
 const validPane = (id: AdultGroupId): AdultGroupId =>
   ADULT_GROUP_IDS.includes(id) ? id : FIRST_PANE
 
+/**
+ * What the detail column can show: one of the five rail groups, or the footer's feedback form.
+ *
+ * `'feedback'` is deliberately NOT an `AdultGroupId` and is not in `ADULT_IA`. The rail is
+ * contractually five mutually-exclusive settings GROUPS (`adultSettingsIa.test.ts` asserts exactly
+ * that), and a message form is not a setting — it just renders in the same place, which is all the
+ * owner asked for. Widening `AdultGroupId` would put it in the IA and break that guard for nothing.
+ */
+type PaneId = AdultGroupId | 'feedback'
+
+/** The detail column's heading, and on compact the pushed pane's title. */
+const paneTitle = (id: PaneId): string =>
+  id === 'feedback' ? FEEDBACK_ENTRY_LABEL : (ADULT_IA.find((g) => g.id === id)?.label ?? '')
+
 export interface AdultSettingsProps {
   open: boolean
   onClose: () => void
@@ -122,11 +136,9 @@ const AdultSettings: React.FC<AdultSettingsProps> = ({
   const narrow = useMediaQuery('(max-width: 767.95px)')
   const compact = phone || narrow
 
-  const [pane, setPane] = useState<AdultGroupId>(validPane(lastPane))
+  const [pane, setPane] = useState<PaneId>(validPane(lastPane))
   /** Compact only: is a pane pushed over the root list? */
   const [pushed, setPushed] = useState(false)
-  const [reporting, setReporting] = useState(false)
-  const [reportMounted, setReportMounted] = useState(false)
   const [copied, setCopied] = useState(false)
   const copyTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -157,9 +169,20 @@ const AdultSettings: React.FC<AdultSettingsProps> = ({
     [],
   )
 
-  const openReport = useCallback(() => {
-    setReportMounted(true)
-    setReporting(true)
+  /**
+   * The footer row. It deliberately does NOT write `lastPane`: re-opening the surface must land on a
+   * settings pane, never on a half-composed message or a stale receipt — feedback is a task you
+   * finish, and `lastPane` exists to resume the thing you were adjusting.
+   */
+  const openFeedback = useCallback(() => {
+    setPane('feedback')
+    setPushed(true)
+  }, [])
+
+  /** Leaving the form: back to the rail on compact, back to the last settings pane otherwise. */
+  const leaveFeedback = useCallback(() => {
+    setPane(validPane(lastPane))
+    setPushed(false)
   }, [])
 
   // The backend this build talks to (Staging PRD W3). It rides on BOTH forms, because this chip is how
@@ -187,12 +210,16 @@ const AdultSettings: React.FC<AdultSettingsProps> = ({
       .catch(() => {})
   }, [versionLine])
 
-  const group = ADULT_IA.find((g) => g.id === pane) ?? ADULT_IA[0]
+  const title = paneTitle(pane)
   const showRail = !compact || !pushed
   const showDetail = !compact || pushed
 
   const paneBody =
-    pane === 'laering' ? (
+    pane === 'feedback' ? (
+      <React.Suspense fallback={null}>
+        <FeedbackPane screenshot={screenshot} onDone={leaveFeedback} />
+      </React.Suspense>
+    ) : pane === 'laering' ? (
       <LaeringPane childName={activeChild} />
     ) : pane === 'lyd' ? (
       <LydPane />
@@ -238,7 +265,7 @@ const AdultSettings: React.FC<AdultSettingsProps> = ({
       >
         {/* ---- The ONE header: the single "Luk", plus a back arrow only when a pane is pushed ---- */}
         <AdultBackHeader
-          title={compact && pushed ? group.label : 'Indstillinger'}
+          title={compact && pushed ? title : 'Indstillinger'}
           onBack={compact && pushed ? () => setPushed(false) : undefined}
           action={
             <Button onClick={onClose} aria-label="Luk">
@@ -336,7 +363,10 @@ const AdultSettings: React.FC<AdultSettingsProps> = ({
               <Box sx={{ flex: '0 0 auto', px: 0.75, py: 0.75 }}>
                 <ListItemButton
                   aria-label={FEEDBACK_ENTRY_LABEL}
-                  onClick={openReport}
+                  data-rail-item="feedback"
+                  // Same persistent highlight as a rail row, because it now behaves like one.
+                  selected={!compact && pane === 'feedback'}
+                  onClick={openFeedback}
                   sx={{ minHeight: 44, px: 1 }}
                 >
                   <ListItemIcon sx={{ minWidth: 26, color: 'inherit' }}>
@@ -386,7 +416,7 @@ const AdultSettings: React.FC<AdultSettingsProps> = ({
                   the pushed pane's title must match the rail label that opened it, exactly. */}
               {!compact && (
                 <Typography component="h3" sx={{ fontWeight: 700, fontSize: '1.15rem', mb: 1.5 }}>
-                  {group.label}
+                  {title}
                 </Typography>
               )}
               {paneBody}
@@ -395,12 +425,6 @@ const AdultSettings: React.FC<AdultSettingsProps> = ({
         </Box>
       </Dialog>
 
-      {/* Nested TASK dialog — the only kind of stacked modal the adult area allows. */}
-      <React.Suspense fallback={null}>
-        {reportMounted && (
-          <FeedbackDialog open={reporting} screenshot={screenshot} onClose={() => setReporting(false)} />
-        )}
-      </React.Suspense>
     </AdultThemeProvider>
   )
 }

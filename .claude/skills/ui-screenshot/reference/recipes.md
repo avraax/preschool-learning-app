@@ -28,6 +28,21 @@ node .claude/skills/ui-screenshot/cdp.mjs --url 'http://127.0.0.1:5173/alphabet/
   --click '[aria-label="Indstillinger"]' --wait-for '.MuiDialog-paper' --settle 4500 \
   --click '[data-rail-item=lyd]' --settle 700 \
   --clip '.MuiDialog-paper' --out panel.png
+```
+
+**`[aria-label="Tilbage"]` IS AMBIGUOUS — always scope it to the dialog.** The page underneath keeps
+its own back button, and it is EARLIER in the DOM, so a bare selector clicks the control *behind* the
+modal: the click reports `ok`, nothing moves, and the next `--wait-for` times out on a surface that
+never navigated. Use `.MuiDialog-paper [aria-label="Tilbage"]`. (Measured 2026-09-16: two matches, at
+`x=24,y=32` outside the dialog and `x=9,y=4` inside it.)
+
+**"Send feedback" is `[data-rail-item=feedback]` in the rail FOOTER**, and since 2026-09-16 it fills the
+detail column like any other row instead of opening a nested dialog — so `--clip '.MuiDialog-paper'`
+captures the form, and there is no second `.MuiDialog-paper` to disambiguate any more. It is also the
+one pane that can show the report SCREENSHOT thumbnail in a headless run: it mounts late enough for
+`captureScreenshot()` to have resolved, which the old dialog did not.
+
+```bash
 
 # PROVE no overflow/clipping (compare child rect.r to the container's inner right edge)
 node .claude/skills/ui-screenshot/cdp.mjs --url 'http://127.0.0.1:5173/alphabet/quiz' \
