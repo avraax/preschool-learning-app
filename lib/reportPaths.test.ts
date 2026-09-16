@@ -74,8 +74,18 @@ test('both writers use the helper — the dev mirror cannot drift from productio
   // hazard with this endpoint (`.claude/rules/api-endpoints.md`). A path scheme is exactly the kind
   // of thing that gets changed in one and not the other.
   const root = path.join(import.meta.dirname, '..')
+  /**
+   * COMMENTS STRIPPED FIRST. The comment that documents a banned pattern contains that pattern, so
+   * the `doesNotMatch` assertions below failed against correct code the moment the fix was explained
+   * in prose next to it. CLAUDE.md states this rule; this is it biting in practice.
+   */
+  const codeOf = (rel: string) =>
+    readFileSync(path.join(root, rel), 'utf8')
+      .replace(/\/\*[\s\S]*?\*\//g, '')
+      .replace(/(^|[^:])\/\/.*$/gm, '$1')
+
   for (const rel of ['api/bug-report.ts', 'dev-server.js']) {
-    const src = readFileSync(path.join(root, rel), 'utf8')
+    const src = codeOf(rel)
     assert.match(src, /reportFolder\(/, `${rel} builds its own report path instead of using reportFolder()`)
     assert.match(src, /parseReportFolder\(|folderHasId\(/, `${rel} parses paths by hand`)
   }
@@ -85,16 +95,26 @@ test('both writers use the helper — the dev mirror cannot drift from productio
   // green, because `reportFolder(` was still present on the screenshot path and in a log line. Every
   // report would have been filed under an un-prefixed folder while the screenshot beside it got a
   // prefixed one — the two would not even have been in the same directory.
-  const prod = readFileSync(path.join(root, 'api/bug-report.ts'), 'utf8')
+  const prod = codeOf('api/bug-report.ts')
   assert.doesNotMatch(
     prod,
     /\$\{date\}\/\$\{id\}\//,
     'api/bug-report.ts writes a bare-id folder somewhere — the origin would be missing from that path',
   )
-  const dev = readFileSync(path.join(root, 'dev-server.js'), 'utf8')
+  const dev = codeOf('dev-server.js')
   assert.doesNotMatch(
     dev,
     /path\.join\(BUG_DIR,\s*date,\s*id\)/,
     'dev-server.js writes a bare-id folder — the dev mirror has drifted from production',
+  )
+  // READS COUNT TOO, and this one was a live bug rather than a hypothetical: `expand=1` rebuilt the
+  // path as `path.join(BUG_DIR, r.date, r.id, 'report.json')`, which resolves to nothing now that the
+  // folder is prefixed — and its `try/catch` swallowed the ENOENT, so every new report listed with an
+  // EMPTY summary and no error anywhere. Found by probing the running endpoint, NOT by this suite,
+  // which is why the pattern is pinned here now.
+  assert.doesNotMatch(
+    dev,
+    /path\.join\(BUG_DIR,\s*r\.date,\s*r\.id/,
+    'dev-server.js rebuilds a report path from the bare id — it must use the resolved `r.dir`',
   )
 })

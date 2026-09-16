@@ -431,6 +431,7 @@ app.get('/api/bug-report', (req, res) => {
       }
       return res.json({
         id,
+        origin: hit.origin,
         uploadedAt: hit.uploadedAt,
         url: `/api/bug-report?id=${id}`,
         screenshotUrl: fs.existsSync(shotPath) ? `/api/bug-report?id=${id}&screenshot=1` : null,
@@ -439,7 +440,10 @@ app.get('/api/bug-report', (req, res) => {
     }
 
     const n = Math.min(Math.max(parseInt(req.query.list ?? '20', 10) || 20, 1), 100);
-    const reports = all.slice(0, n).map((r) => ({
+    // Kept alongside the response rows, because `dir` is the only thing that can find a report on
+    // disk and it must NOT be in the response (it is an absolute local path).
+    const rows = all.slice(0, n);
+    const reports = rows.map((r) => ({
       id: r.id,
       origin: r.origin,
       date: r.date,
@@ -451,11 +455,16 @@ app.get('/api/bug-report', (req, res) => {
         : null,
     }));
     if (req.query.expand === '1') {
-      for (const r of reports.slice(0, 10)) {
+      for (let i = 0; i < Math.min(reports.length, 10); i++) {
+        const r = reports[i];
         try {
-          const full = JSON.parse(
-            fs.readFileSync(path.join(BUG_DIR, r.date, r.id, 'report.json'), 'utf-8'),
-          );
+          // READ FROM `rows[i].dir`, the folder resolved off disk. Two ways this went wrong in one
+          // session, both silent because the catch below swallows the ENOENT and the row simply comes
+          // back with no summary: first rebuilding it as path.join(BUG_DIR, r.date, r.id), which stops
+          // resolving once the folder is <origin>-<ID>; then reading `r.dir` off the RESPONSE row,
+          // which never had a `dir` (it is a local absolute path and must not be sent to a client).
+          // Production reads the blob's own URL and has neither shape.
+          const full = JSON.parse(fs.readFileSync(path.join(rows[i].dir, 'report.json'), 'utf-8'));
           r.summary = {
             type: full.type,
             category: full.category,
