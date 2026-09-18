@@ -91,18 +91,6 @@ export const sequenceStarts: SequenceSpec[] = allSequenceSpecs()
 export const sequenceNumbers = ({ start, step }: SequenceSpec): number[] =>
   Array.from({ length: SEQUENCE_LENGTH }, (_, i) => start + i * step)
 
-// --- Sig et Ord ----------------------------------------------------------------------------------
-// The mic game's three coaching lines. The retry line used to be composed INLINE in the component,
-// which meant it was never enumerated and therefore paid ~1.1s of live Azure at the one moment the
-// child is already stuck (audio-system.md, step 1). The other two exist because a 5-year-old cannot
-// read a hint: the ONLY way to coach a hold-to-talk gesture is to say it out loud.
-/** Nothing usable came back from the recognizer — stay on the same word, no failure feeling. */
-export const MIC_RETRY_LINE = 'Det hørte jeg ikke helt. Prøv igen!'
-/** The press was too short to record anything (the old silent reset — it read as a dead button). */
-export const MIC_HOLD_HINT = 'Hold knappen nede, mens du siger ordet.'
-/** The mic finished opening after the child had already let go (only ever the first press). */
-export const MIC_READY_LINE = 'Nu er mikrofonen klar. Prøv igen!'
-
 // --- Hukommelsesspil ----------------------------------------------------------------------------
 // The two board instructions, spoken by the "Hør igen" button and by the game welcome. They lived
 // inline in `MemoryGame.tsx` until 2026-09-04 and were, measurably, the ONLY two spoken lines in the

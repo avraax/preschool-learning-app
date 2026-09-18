@@ -320,7 +320,6 @@ export const SAMPLE_SEGMENTS: SampleSegment[] = [
         items: [
           'Læs ordet',
           'Stav ordet',
-          'Sig et ord',
           'Find bogstavet',
           'Find tallet',
           'Hvad er to plus tre?',

@@ -22,8 +22,7 @@ bands, and the star thresholds. A game reads its own table there and nothing re-
 Two durable rules that module enforces via `difficulty.test.ts`: **no non-exempt game may produce the
 same parameters at two levels** (a dead level is a bug — Bogstav Quiz's Svær shipped byte-identical to
 Normal), and every game that legitimately ignores the level is in `EXEMPT` **with a reason**
-(`alphabet.learn`, `math.learn`, `english.learn`, `colors.learn` — ungraded browses; `ordleg.mic` — no
-target word exists). Svær's star budget is deliberately looser (3★ ≤1 mistake): **choosing a harder level
+(`alphabet.learn`, `math.learn`, `english.learn`, `colors.learn` — ungraded browses). Svær's star budget is deliberately looser (3★ ≤1 mistake): **choosing a harder level
 must never cost rewards**, the same fairness rule that keeps XP difficulty-independent.
 
 **The practice ledger is NOT adaptivity, and it is worth knowing that before you delete it.**

@@ -10,7 +10,7 @@ paths:
 
 # Serverless API endpoints (`api/*.ts`)
 
-The Vercel functions in `api/` proxy paid services (Azure TTS, Google STT) and store bug reports.
+The Vercel functions in `api/` proxy a paid service (Azure TTS) and store bug reports.
 Treat them as a trust boundary. Shared helpers live in `lib/server-utils.ts`.
 
 ## Mandatory for every endpoint
@@ -64,7 +64,7 @@ through its router untouched); if it must inform, give it a plain link. Guarded 
 
 Vercel compiles each `api/**` + `lib/**` file to a **sibling `.js`** and copies the tree into the
 function. It does **not** bundle and it does **not** rewrite import specifiers. Two consequences, and
-the accounts release shipped straight into both — every auth/profiles/progress/tts/stt endpoint was a
+the accounts release shipped straight into both — every auth/profiles/progress/tts endpoint was a
 500 from the day it landed:
 
 - **Relative imports in the server-reachable graph must end in `.js`** (`'../lib/session.js'`), and
@@ -124,7 +124,7 @@ Each `api/*.ts` is mirrored in `dev-server.js` (Express, port 3001) for local de
 change both, or dev and prod drift. `dev-server.js` reads a bit looser (e.g. bug-report GET is open
 unless `BUG_REPORT_READ_KEY` is set locally; prod is fail-closed).
 
-The full mirror list is now: tts-azure, stt, log-error, bug-report, audit-save, version, **the whole
+The full mirror list is now: tts-azure, log-error, bug-report, audit-save, usage, version, **the whole
 better-auth handler** (`toNodeHandler`), **`/api/profiles`** and **`/api/progress`**. A missing mirror
 shows up as a 404 only in dev — that is exactly how profile creation silently failed once.
 
@@ -135,10 +135,6 @@ path-to-regexp "Missing parameter name". Name the wildcard: `app.all('/x/*splat'
 
 - `bug-report` GET is **fail-closed** on `BUG_REPORT_READ_KEY` (prod: 403 until the env is set,
   since reports contain child screenshots; then every GET needs `&key=`).
-- `stt` sets `features.profanityFilter` on the recognizer + caps the base64 audio size. **The filter is
-  requested but NOT sufficient**: measured, `chirp_3` masks English profanity and passes Danish through in
-  the clear, so the real protection is the blocklist in `normalizeSpokenWord` (the game spells aloud what
-  it hears). Model/region choice and the guard that pins them: `.claude/rules/audio-system.md`.
 
 ## Verify locally
 

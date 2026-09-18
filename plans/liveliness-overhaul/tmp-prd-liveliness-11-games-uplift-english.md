@@ -86,7 +86,7 @@ The Engelsk section is **3 games + 1 browse** off `/english`: **Lyt og Find** (`
 (`/english/learn`, `EnglishLearning` — a hand-rolled browse). Mechanically they're solid and the owner is happy with
 how they *teach* (listening comprehension, English reading, Danish→English bridging, free vocab browsing); the gap is
 purely **look & feel** vs the Structured-World shell (PRD-06 §1). **No UX rework is flagged for English** (unlike
-Ordleg's Sig et Ord) — this is a clean material + baked-art pass.
+Ordleg's hand-rolled games) — this is a clean material + baked-art pass.
 
 **Pre-reader guardrails specific to English (do not regress):**
 - **The English WORDS on the answer tiles are the lesson and stay TYPE** in Find det Engelske Ord + Dansk til Engelsk
@@ -261,7 +261,7 @@ Both are the same shape (picture prompt → English-word text answers); apply id
   glow `Typography`), and the Danish caption (keep, hidden on phone-landscape). This grounds the bloom in the calm
   world exactly like the quiz heroes and matches the shell. Drop the `PromptStage` import; add `PromptFocus` +
   `HeroArt`/`HeroEmoji` (already importable from `PromptStage.tsx`).
-  - **Note:** the browse bloom is **display-only** (not an interactive pointer target like Sig et Ord's mic), so
+  - **Note:** the browse bloom is **display-only** (not an interactive pointer target), so
     `PromptFocus`'s idle-float + charge-in are **fine here** (no gesture to disturb) — use `PromptFocus` directly.
 - **Word cards → clay, kill `#ECF1F8`.** Re-material the `Card` (`:172-229`): replace the
   `linear-gradient(…#ECF1F8)` + `3px` border + `0 6px 0` hard lip with the shell's tactile language — reuse

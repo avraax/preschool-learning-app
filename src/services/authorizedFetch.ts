@@ -30,7 +30,7 @@ export async function authorizedFetch(
   init?: RequestInit,
 ): Promise<Response> {
   // Resolved ONCE, here, so both the first attempt and the retry below hit the same URL — and so the
-  // four paid-endpoint call sites (ttsClient, useSpeechInput, VoiceLab, AuditHarness) need no change.
+  // three paid-endpoint call sites (ttsClient, VoiceLab, AuditHarness) need no change.
   // No-op on the web; absolute inside the shell, where a relative path would hit the app bundle.
   const url = apiUrl(input)
   const token = await authStore.getAccessToken()

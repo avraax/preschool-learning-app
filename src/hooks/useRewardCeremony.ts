@@ -37,7 +37,7 @@ export function useRewardCeremony(): RewardCeremony {
   const resumeTimers = useRef<ReturnType<typeof setTimeout>[]>([])
 
   // `true` HERE, not just as the initial value: StrictMode mounts → cleans up → remounts in dev, and a
-  // ref only takes its initial value once (the same trap that froze Sig et Ord — game-development.md).
+  // ref only takes its initial value once (the freeze trap in game-development.md).
   useEffect(() => {
     mountedRef.current = true
     return () => {

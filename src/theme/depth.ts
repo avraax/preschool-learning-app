@@ -34,7 +34,7 @@ export const softShadow = (elevation = 1): string => {
  * those 17, because the two mismatches have different causes. So `TactileTile`, Plus/Minus's equation
  * tile and Stav Ordet's slots deliberately KEEP `softShadow()`.
  *
- * Use this for a box whose fill is opaque: `TactilePill` (an accent fill under a sheen), Sig et Ord's
+ * Use this for a box whose fill is opaque: `TactilePill` (an accent fill under a sheen), a game's
  * clay orb. There the two are pixel-equivalent and the filter passes are pure cost.
  * `softShadow()` returns two CHAINED `drop-shadow()` filters, which means two input paths, channel
  * swizzling, a blur and a blend **per element** — and on mobile Safari chained `drop-shadow` is

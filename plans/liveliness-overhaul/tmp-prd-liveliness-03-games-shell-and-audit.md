@@ -52,7 +52,7 @@ any two games feels consistent.
 - Sections + routes (from `App.tsx`): alphabet (`/alphabet/learn`, `/alphabet/quiz`), math
   (`/math/counting|numbers|addition|subtraction|comparison|patterns`), farver
   (`/farver/laer|jagt|quiz|ram-farven|nuancer`), english (`/english/listen|word|translate|learn`), ordleg
-  (`/ordleg/read|spelling|mic`), memory (`/learning/memory/:type/:size`).
+  (`/ordleg/read|spelling`), memory (`/learning/memory/:type/:size`).
 
 ---
 
@@ -126,9 +126,8 @@ For each area, run the **audit checklist** against every game and fix drift. **N
 - **Farver** (`laer|jagt|quiz|ram-farven|nuancer`): drag games — **do not touch collision/spring-back**; only
   add shell/entry/back/celebration alignment. `laer` is a browse.
 - **English** (`listen|word|translate|learn`): shared-engine reuse; `learn` is a browse.
-- **Ordleg** (`read|spelling|mic`): honor the owner constraint — **Læs Ordet must not read the prompt word
-  aloud** (son can't spell yet); the mic game (`SpeakWordGame`) uses STT — verify the entry beat doesn't fight
-  the mic permission/timing.
+- **Ordleg** (`read|spelling`): honor the owner constraint — **Læs Ordet must not read the prompt word
+  aloud** (son can't spell yet).
 - **Memory** (`/learning/memory/:type/:size`): one board = one round; verify flip/match SFX + round result +
   entry beat.
 

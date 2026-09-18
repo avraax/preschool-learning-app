@@ -147,7 +147,7 @@ uneven. "A round is a round" is fairer *and* self-balancing:
 
 | Game(s) | tasks/round | XP per task | full round |
 |---|---|---|---|
-| the 13 eight-task rounds (`alphabet.quiz`, `math.counting`/`patterns`/`comparison`/add/sub, `english.listen`/`word`/`translate`, `ordleg.read`/`mic`/`spelling`, `colors.quiz`, `colors.ramfarven`, `colors.nuancer`) | 8 | 5 (+1) | 40–48 |
+| the 13 eight-task rounds (`alphabet.quiz`, `math.counting`/`patterns`/`comparison`/add/sub, `english.listen`/`word`/`translate`, `ordleg.read`/`spelling`, `colors.quiz`, `colors.ramfarven`, `colors.nuancer`) | 8 | 5 (+1) | 40–48 |
 | `colors.farvejagt` | 5 boards | 8 (+1) | 40–45 |
 | `memory.*.10` | 10 pairs | 4 | 40 |
 | `memory.*.20` | 20 pairs | 2 | 40 |
@@ -274,7 +274,7 @@ owed-two, chapter completion at 9/18, book completion at 45, gold pass at 46, an
   `HvadManglerGame.tsx:229`, `FarveQuizGame.tsx:199`, `FarvejagtGame.tsx:333`, `RamFarvenGame.tsx:306`,
   `NuancerGame.tsx:222`, `EnglishListenGame.tsx:85`, `EnglishWordGame.tsx:91`,
   `EnglishTranslateGame.tsx:92`, `LaesOrdetGame.tsx:143`, `SpellingGame.tsx:304`,
-  `SpeakWordGame.tsx:462`, `MemoryGame.tsx:45,89`, plus `UnifiedQuizGame.tsx:534`.
+  `MemoryGame.tsx:45,89`, plus `UnifiedQuizGame.tsx:534`.
 
 ### W3 — `RewardRing` (rename of `LevelRingMini`) — the in-game half of the model
 `src/components/common/LevelRingMini.tsx` → `RewardRing.tsx`. Ring geometry and motion stay exactly

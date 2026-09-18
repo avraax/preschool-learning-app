@@ -119,7 +119,7 @@ if (r.done) finishRound(...) else generateNewQuestion()
 
 `UnifiedQuizGame.tsx:585-613` · `MathOperationGame.tsx:349-368` · `ComparisonGame.tsx:320-336` ·
 `SpellingGame.tsx:444-459` · `FarvejagtGame.tsx:358-367` · `RamFarvenGame.tsx:373-382` ·
-`NuancerGame.tsx:248-257` · `FarveQuizGame.tsx:285-294` · `SpeakWordGame.tsx:718-728` (async, not a
+`NuancerGame.tsx:248-257` · `FarveQuizGame.tsx:285-294` (async, not a
 timer) · `UnifiedMemoryGame.tsx:420-431` (the final-pair branch).
 
 So the trigger is **one edit per game at a line that already exists**, and the input lock is the
@@ -178,7 +178,7 @@ await ceremony.celebrateIfOwed(section)   // resolves immediately when nothing i
 **`src/hooks/useRound.ts` → `src/hooks/useTaskRun.ts`.** It survives as a per-task XP + streak counter,
 not a round.
 - `RoundConfig{length, starThresholds?, gameId?}` → `TaskRunConfig{tasksInRound, gameId}`.
-  `starThresholds` is deleted here (its only forward was to `recordRoundResult`; `SpeakWordGame.tsx:426`
+  `starThresholds` is deleted here (its only forward was to `recordRoundResult`;
   is the one caller that passes it).
 - `RoundState` keeps **`index`** (four games use it as a `chargeKey`: `UnifiedQuizGame.tsx:774`,
   `NuancerGame.tsx:373`, `MathOperationGame.tsx:487`, `ComparisonGame.tsx:559`) and **`streak`** (the
@@ -219,14 +219,14 @@ game feeding both** is what stops the normaliser, the bag window and the pool fl
 **The eight other render sites**, identical shape each time (delete `roundOutcome` / `finishRound` /
 `handleReplay` / the import + render + the `roundOutcome ?` guards; rewrite the seam line):
 `UnifiedMemoryGame.tsx:612-618` (its seam is different — W6), `MathOperationGame.tsx:602-608`,
-`ComparisonGame.tsx:498-504`, `SpellingGame.tsx:516-522`, `SpeakWordGame.tsx:808-814`,
+`ComparisonGame.tsx:498-504`, `SpellingGame.tsx:516-522`,
 `FarvejagtGame.tsx:508-514`, `RamFarvenGame.tsx:509-515`, `NuancerGame.tsx:496-502`,
 `FarveQuizGame.tsx:359-360`.
 
 Two need care:
-- **`SpeakWordGame.tsx:699-733`** — `handleResult` is async with a live mic. The await sits between
+- **An async `handleResult`** — the await sits between
   `runSpellingSequence(word)` and `setPhase('idle')`; `speech.prime({silent:true})` and
-  `endingRef.current = false` must run **after** the ceremony resolves, or the mic re-opens under the
+  `endingRef.current = false` must run **after** the ceremony resolves, or input re-opens under the
   overlay. `handleReplay`'s `phase`/`coach` resets move into the resume path.
 - **`SpellingGame.tsx:435-460`** — the seam is two timers deep behind `mountedRef`. The hook's
   cancellation supersedes the inner check; leave the existing one in place rather than unpicking it here.
@@ -524,5 +524,5 @@ door to Min Bog. Reordering the reward path. Changing the ceremony's visual desi
    memory item repeats until the pool is exhausted, and a completed board re-deals itself.
 5. `ui-screenshot` rung 1 + rung 2 (WebKit, iPad UA) on one quiz, one dnd game, one memory board and one
    browse; `--audio-report` to confirm the ceremony still speaks exactly one line.
-6. Rung 3 (owner's iPad, iPadOS 17.7) for the tap-burst and the mic game. **That residue stays UNKNOWN
+6. Rung 3 (owner's iPad, iPadOS 17.7) for the tap-burst. **That residue stays UNKNOWN
    until he plays it.**

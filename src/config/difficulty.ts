@@ -499,7 +499,6 @@ export const EXEMPT: Record<string, string> = {
   'math.learn': 'ungraded browse — responds only via its visible range (MATH_LEARN)',
   'english.learn': 'ungraded browse — the whole vocabulary at every level',
   'colors.learn': 'ungraded browse — all 6 hues and their shades at every level',
-  'ordleg.mic': 'open-ended by design — there is no target word to grade',
 }
 
 /**

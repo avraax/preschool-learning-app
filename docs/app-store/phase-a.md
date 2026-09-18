@@ -18,10 +18,9 @@ The app opens playable with no account. Guideline 5.1.1(v).
   screen, now with **"Spil uden konto"** on it. The owner chose this split on 2026-08-06: auto-guest
   everywhere would drop a child into an empty book after an accidental sign-out, with no explanation.
 - `phase: 'guest'` ⇒ `canPlay: true`, **`canCallPaidApis: false`**. That is not caution — it is the same
-  control as `AUTH_ALLOWED_EMAILS`. `/api/tts-azure` bills per character and `/api/stt` per second, and
-  both need a server-minted JWT no account-less client can obtain. **A guest costs nothing, which is
-  what makes an open guest path safe to ship.** Every spoken line is prebaked, so the only thing a guest
-  loses is Sig et Ord.
+  control as `AUTH_ALLOWED_EMAILS`. `/api/tts-azure` bills per character and needs a server-minted JWT
+  no account-less client can obtain. **A guest costs nothing, which is what makes an open guest path
+  safe to ship.** Every spoken line is prebaked, so a guest loses nothing a child would notice.
 - `profileStore` attaches a fixed local child `local-guest` — a new caller of the existing
   inert-until-`attach()` machinery, not a second progress path. Its book is
   `bornelaering-progress:local-guest`, so guest and real children can never overwrite each other.
@@ -54,47 +53,29 @@ because Apple fetches both. Content is data in `src/config/legalContent.ts` so i
 
 Danish first, English second on the same page: the app stays Danish-only, but App Review reads English.
 
-The policy names **Google Cloud Speech-to-Text, Microsoft Azure AI Speech, Neon and Vercel**, carries the
-5.1.1(i) equal-protection confirmation, states what leaves the device and when, states retention and
-deletion (pointing at the two in-app paths that already exist), and says how to withdraw microphone
-consent.
+The policy names **Microsoft Azure AI Speech, Neon and Vercel** (Google Cloud Speech-to-Text was dropped
+with the microphone game on 2026-09-18), carries the 5.1.1(i) equal-protection confirmation, states what
+leaves the device and when, states retention and deletion (pointing at the two in-app paths that already
+exist), and says how to withdraw consent.
 
 > **OWNER, before submitting.** This is a factual description written from the code, not legal advice,
-> and you are the data controller named in it. Read it. Two things in particular: the policy asserts
-> Google STT does not retain the audio and does not train on it — **that depends on data logging being
-> OFF on the Google Cloud project, which is PRD §4.3 and still unverified** — and it names you and
-> `allanvraa@gmail.com` publicly.
+> and you are the data controller named in it. Read it — it names you and `allanvraa@gmail.com`
+> publicly.
 
-## A3 — Microphone consent gate (§3.6)
+## A3 — WITHDRAWN (the microphone game was removed)
 
-Sig et Ord is **off by default and unreachable** until an adult consents, in the new **Privatliv** group
-in "Indstillinger" (behind the parental gate). Consent is device-scoped localStorage, never synced: a new
-iPad has not been consented to, and inheriting a `yes` through progress sync would be consent the adult
-never gave there.
+Phase A3 built a parental consent gate for Ordleg's speech-input game, "Sig et Ord". **The game itself
+was removed in full on 2026-09-18** — component, hook, `/api/stt`, the consent switch, the iOS purpose
+string and every privacy disclosure that described it — so the gate has no subject and is gone with it.
+The app now requests no device permissions at all, which is what the listing and the privacy policy say.
 
-**Two halves, because removing the tile is not a gate** — every route here is deep-linkable by design.
-`OrdlegSelection` hides the tile, and `/ordleg/mic` refuses on its own. The route guard sits **outside**
-`SpeakWordGame`: that component warms the microphone in a mount effect, so a check inside it would open
-the mic before deciding it may not.
+### The adult IA is still SIX groups, not five
 
-Turning it **on** goes through a consent screen naming Google, saying the audio is not stored, and saying
-it can be switched off again. Turning it **off** goes through nothing at all — withdrawal must never be
-harder than consent, and the IA test pins that the row is not marked destructive so a confirm can never
-attach itself to the safe direction. Revoking while the child is inside the game leaves the route.
+Settings PRD-01's five-group shape was a contract, and A3 broke it on the owner's decision (2026-08-06)
+so a Kids Category reviewer would find the parental gate and the privacy policy together. **Privatliv
+survives the microphone's removal**: it still carries the policy, the support page and the AI-voice
+disclosure Microsoft's Code of Conduct requires, and those are exactly what a reviewer goes looking for.
 
-**In guest mode the switch is not offered**, and this is a real consequence rather than a limitation:
-`/api/stt` needs the access JWT, so consenting there would buy a game that dead-ends forever — the
-opposite of 5.1.1(iv). The pane says so and points at signing in.
-
-Graceful degradation on a denied mic already existed (`micBlocked` → a retry screen, never latched) and
-was left alone.
-
-### The adult IA is now SIX groups, not five
-
-Settings PRD-01's five-group shape was a contract. Breaking it was the owner's decision on 2026-08-06:
-a Kids Category reviewer looks for the microphone default, the parental gate and the privacy policy
-together, and scattering the switch under "Lyd" (which otherwise means playback volume) would have
-buried the one thing that decides Guideline 1.3.
 
 ## A4 — Offline-readiness audit (§3.10)
 
@@ -187,10 +168,11 @@ Developer Program membership (PRD C1). It belongs to Phase B and is sequenced af
 `npm test` **524 pass / 0 fail**, `tsc` clean on both the client and server projects, `npm run lint`
 0 errors.
 
-**All 19 new invariants were re-broken** (`/re-break`) and each flipped **its own** test — the mic route
-gate, the menu filter, the consent default, the revoke path, both Google-token guards, the guest phase and
-its paid-API refusal, the public-path list, the operand floor, the `requirePin` guest branch, all four
-offline-audit guards, the three privacy-policy clauses and the six-group IA.
+**All 19 new invariants were re-broken** (`/re-break`) and each flipped **its own** test — both
+Google-token guards, the guest phase and its paid-API refusal, the public-path list, the operand floor,
+the `requirePin` guest branch, all four offline-audit guards, the three privacy-policy clauses and the
+six-group IA. (Five of the nineteen guarded the microphone consent gate and went with it on
+2026-09-18.)
 
 The comment-stripping those source-reading guards depend on was proved in **both** directions: a prose
 comment naming the forbidden thing keeps the suite green with stripping on, and turns it red with
@@ -202,9 +184,8 @@ stripping off.
 which checked every factual claim against the code and every required element against Apple's guidelines
 and GDPR Art. 13. Read that file rather than the policy itself; what remains is short:
 
-1. **Confirm the Google Cloud data-logging box is unticked.** Google's own doc says the default is off
-   ("By default, Cloud Speech-to-Text does not log customer audio data or transcripts") and opting in is
-   deliberate — but the project's actual setting has no API and was not probed. One glance in the console.
+1. ~~**Confirm the Google Cloud data-logging box is unticked.**~~ **Moot since 2026-09-18** — the app
+   sends Google no audio at all.
 2. **Decide whether the policy is legally sufficient for you.** It now describes the app accurately and
    contains every Art. 13 element, and four wrong claims were found and fixed — but "accurate and
    complete" is not "legally sufficient", and that part is a determination, not a fact.

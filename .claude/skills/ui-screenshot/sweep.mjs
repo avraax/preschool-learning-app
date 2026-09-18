@@ -77,7 +77,7 @@ const EXEMPT_BY_GAMEID = parseMap('EXEMPT')
 const TILE_AXIS_EXEMPT = parseMap('TILE_AXIS_EXEMPT')
 const ROUTE_TO_GAMEID = {
   '/alphabet/learn': 'alphabet.learn', '/math/numbers': 'math.learn',
-  '/english/learn': 'english.learn', '/farver/laer': 'colors.learn', '/ordleg/mic': 'ordleg.mic',
+  '/english/learn': 'english.learn', '/farver/laer': 'colors.learn',
 }
 // The one axis a single board cannot show. Reason string comes from difficulty.ts, not from here.
 const DIFFICULTY_UNOBSERVABLE = {
@@ -151,9 +151,8 @@ const BOUNDS = `(()=>{const bad=[];const W=innerWidth,H=innerHeight;const t=(doc
   text:t.replace(/\\s+/g,' ').slice(0,800)})})()`
 
 // Which narration trigger each screen offers. Discovered, not assumed: quizzes carry RepeatButton
-// ("Hør igen"), browses narrate on tapping an item, and Sig et Ord is speech INPUT with nothing to
-// replay. A screen with no trigger must report N/A — counting it FAIL invents defects, counting it PASS
-// claims audio coverage we never exercised.
+// ("Hør igen") and browses narrate on tapping an item. A screen with no trigger must report N/A —
+// counting it FAIL invents defects, counting it PASS claims audio coverage we never exercised.
 const TRIGGERS = `(()=>{const q=s=>document.querySelectorAll(s).length;
  return JSON.stringify({repeat:q('[aria-label="Hør igen"]'),tiles:q('[data-answer-tile]'),
   drags:q('[aria-roledescription="draggable"]'),focus:q('[data-prompt-focus]'),
@@ -161,12 +160,12 @@ const TRIGGERS = `(()=>{const q=s=>document.querySelectorAll(s).length;
 
 // Ordered candidate triggers, discovered via --phase triggers. Clicked from --eval (which cdp.mjs runs
 // BEFORE printing the audio report), so the verdict reflects the tap. Screens with no candidate report
-// N/A — e.g. Sig et Ord is speech INPUT, and Læs Ordet deliberately has no replay because it must not
-// read the prompt word aloud (owner: he can't spell yet). Both are correct, not defects.
+// N/A — e.g. Læs Ordet deliberately has no replay because it must not read the prompt word aloud
+// (owner: he can't spell yet). That is correct, not a defect.
 const AUDIO_TRIGGER = `(async()=>{const sleep=ms=>new Promise(r=>setTimeout(r,ms));
  // NOTE: '[aria-label="Tryk på figuren"]' (the in-game mascot) is deliberately NOT here — its handler
- // is animation-only (Mascot.tsx handleTap), so using it as a trigger reported Læs Ordet and Sig et Ord
- // as silent when both are correct. A trigger candidate must actually be a narration control.
+ // is animation-only (Mascot.tsx handleTap), so using it as a trigger reported Læs Ordet as silent
+ // when it is correct. A trigger candidate must actually be a narration control.
  const cands=['[aria-label="Hør igen"]','[aria-label="Hør alfabetet"]','[aria-label="Hør tallene"]',
               '[aria-label="Snak med figuren"]'];
  let used=null;
@@ -257,40 +256,13 @@ function judge(job, r) {
   // DEAD = the run never produced its own telemetry. Never fold this into FAIL: it means "we learned
   // nothing", and a retry usually fixes it (port contention). Counting it as FAIL invents defects;
   // counting it as PASS hides holes.
-  // …with ONE structural exception, checked first because it can never produce telemetry. In the
-  // AUDIO phase `/ordleg/mic` redirects to `/ordleg` (the consent gate, below), the redirect drops
-  // `?nogate=1`, so the app reverts to its gated state and `AUDIO_TRIGGER`'s `first-content-button`
-  // fallback clicks a button on the SIGN-IN landing — which navigates and takes the eval context with
-  // it. That is the consent gate working, not a hole: this route's render and no-crash are already
-  // asserted by the smoke and layout phases, which reach it with their own (non-clicking) evals.
-  // Left as DEAD it was a permanent unexplained row, the exact thing the N/A rule below exists for.
-  if (PHASE === 'audio' && job.route.route === '/ordleg/mic' && (g === null || cerr === null)) {
-    return { status: 'N/A', why: 'speech INPUT screen behind the consent gate — the trigger clicks through the sign-in landing and the eval context goes with it (§3.6)' }
-  }
   if (g === null || cerr === null) return { status: 'DEAD', why: (r.err || r.out).split('\n').filter(Boolean).slice(-1)[0] || 'no output' }
   if (PHASE === 'triggers') return { status: 'PASS', why: JSON.stringify(g), guard: g }
-  // `/ordleg/mic` REFUSES by design until an adult gives consent (App Store PRD §3.6): App.tsx renders
-  // `micConsentGiven() ? <SpeakWordGame /> : <Navigate to="/ordleg" replace />`. So both title-asserting
-  // phases land on the Ordleg menu — where the tile is ALSO hidden — and can never see "Sig et Ord" in a
-  // fresh profile. It cost 1 FAIL in smoke and 8 in layout, one per viewport, all of them the consent
-  // gate WORKING. Reported as N/A with the reason: a permanent red is a check people learn to ignore.
-  // Still FAILs on a crash or an empty #root, so the route is not simply exempted.
-  // (The redirect also drops the query string, so `?nogate=1` is lost and the app reverts to its gated
-  // state — which is why probing this route by hand shows a lock screen and confuses the diagnosis.)
-  if ((PHASE === 'smoke' || PHASE === 'layout') && job.route.route === '/ordleg/mic'
-      && !g.crashed && !g.notFound && g.rootKids && !pexc) {
-    return { status: 'N/A', why: 'refuses without adult mic consent (§3.6) — redirects to /ordleg', guard: g }
-  }
   // Every line the app speaks is supposed to be PREBAKED (CLAUDE.md). A live `/api/tts-azure` call
   // means a line the enumerator never saw — which in the shipped app is not "slower" but a different
   // VOICE, because a guest has `canCallPaidApis: false` and falls through to Web Speech. Two of these
   // shipped and were caught by ear rather than by any test; this phase is the mechanical version.
   if (PHASE === 'live') {
-    // Sig et Ord reads back an arbitrary spoken word — genuinely unbounded, the ONE documented
-    // exception to the closed set. It can never be prebaked, so a live call there is correct.
-    if (job.route.route === '/ordleg/mic') {
-      return { status: 'N/A', why: 'reads back an arbitrary spoken word — the documented live-synth exception', guard: g }
-    }
     const w = []
     if (pexc) w.push(`${pexc} page exception(s)`)
     if (g.liveAzure && g.liveAzure.length) {
@@ -302,9 +274,6 @@ function judge(job, r) {
   // before the GUARD field checks below (they would read undefined and invent "#root empty").
   if (PHASE === 'audio') {
     const v = (r.out.match(/^audio verdict: (.*)$/m) || [])[1] || ''
-    // Screens with nothing to replay, by design. Sig et Ord is speech INPUT — it reads back a word the
-    // child speaks first, so there is no clip to trigger and its only button is the mic.
-    if (job.route.route === '/ordleg/mic') return { status: 'N/A', why: 'speech INPUT screen — reads back what the child says, nothing to replay', guard: g }
     if (!g.trigger) return { status: 'N/A', why: 'no narration trigger on this screen (by design)', guard: g }
     const w = []
     if (pexc) w.push(`${pexc} page exception(s)`)

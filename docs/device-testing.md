@@ -136,7 +136,7 @@ Four facts worth not re-deriving:
 - **`filter: drop-shadow` is load-bearing on a TRANSLUCENT surface** and cannot be swapped for
   `box-shadow` there. `tileSurface()` ends at `rgba(accent, 0.08)`, so the shadow shows through the
   tile's own face: converting lifted a tile face by 20 RGB with DOM rects byte-identical. Only opaque
-  boxes (TactilePill, the Sig et Ord orb) were converted.
+  boxes (e.g. TactilePill) were converted.
 
 ### Eager JavaScript at first paint (Performance PRD-01 W7, 2026-08-05)
 

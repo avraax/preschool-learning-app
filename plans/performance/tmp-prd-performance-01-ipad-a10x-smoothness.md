@@ -155,7 +155,7 @@ animation does for free:
 | `GameSelectionLayout.tsx:219` | the section-menu landmark's 5.5 s float |
 | `TactileTile.tsx:176` | the hint pulse, 1.1 s — **per tile**, so a 6-answer board runs 6 |
 | `ListenHero.tsx:63,102` | speaker pulse + equalizer bars |
-| `StickerAlbum.tsx:457`, `HvadManglerGame.tsx:233`, `SpeakWordGame.tsx:163`, `FarvejagtGame.tsx:599,613,763`, `FarveQuizGame.tsx:396,463,465`, `NuancerGame.tsx:397,542`, `RamFarvenGame.tsx:680,761,879`, `SimplifiedAudioPermission.tsx:159`, `TransitionOverlay.tsx:164,197,226` | per-game idle pulses, slot hints, the wipe's own decorations |
+| `StickerAlbum.tsx:457`, `HvadManglerGame.tsx:233`, `FarvejagtGame.tsx:599,613,763`, `FarveQuizGame.tsx:396,463,465`, `NuancerGame.tsx:397,542`, `RamFarvenGame.tsx:680,761,879`, `SimplifiedAudioPermission.tsx:159`, `TransitionOverlay.tsx:164,197,226` | per-game idle pulses, slot hints, the wipe's own decorations |
 
 **The codebase already solved this once.** `useLivingCard` returns a `breatheSx` — a CSS idle-breathe —
 and keeps framer only for the tap squash, on separate nested layers so the transforms don't fight

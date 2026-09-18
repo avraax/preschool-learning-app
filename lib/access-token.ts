@@ -1,6 +1,6 @@
-// The short-lived access JWT that gates the PAID endpoints (/api/tts-azure, /api/stt).
+// The short-lived access JWT that gates the PAID endpoint (/api/tts-azure).
 //
-// This is the ONLY auth code those two functions import, and that is deliberate: verifying a token
+// This is the ONLY auth code that function imports, and that is deliberate: verifying a token
 // must be a local constant-time check with no database round-trip and no JWKS fetch in the hot path.
 // (Which is also why we don't use better-auth's `jwt` plugin — it issues asymmetric tokens verified
 // against a JWKS endpoint, i.e. a network hop or a cache inside `tts-azure`.)

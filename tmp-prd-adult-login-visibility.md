@@ -47,10 +47,7 @@ and that cannot satisfy it. **Google or the numeric code only.** The Konto pane'
 already says so; new copy must not contradict it. What an account genuinely buys:
 
 1. progress synced across devices,
-2. more than one child profile,
-3. Sig et Ord's microphone game, which needs a server-minted access JWT a guest deliberately never
-   gets (`/api/stt`; see `PrivatlivPane.tsx:8-14` for why the guest case is a different truth, not a
-   degraded one).
+2. more than one child profile.
 
 **Guest play is cheap because it reuses existing machinery.** `progressStore` is inert until
 `profileStore.attach()`, and `profileStore` is the **only** caller of attach/detach. Guest is a new
@@ -105,18 +102,17 @@ PaneSection title="Konto"
 PaneSection title="Med en konto"
   [Tablet]  "Fremgangen følger med til jeres andre enheder."
   [Users]   "Flere børn, hver med sin egen bog."
-  [Mic]     "Mikrofonspillet \"Sig et Ord\" kan slås til."
 
   Button variant="contained"  "Log ind med Google"   (minHeight 44)
   caption — see W5
 ```
 
-The three rows reuse the `LinkRow` shape from `panes/PrivatlivPane.tsx:26-54` (icon box at
+The two rows reuse the `LinkRow` shape from `panes/PrivatlivPane.tsx:26-54` (icon box at
 `color: 'text.secondary'`, `mr: 1.5`, then title + hint) **with the chevron dropped and no `onClick`** —
 they are statements, not links. Extract a local presentational `BenefitRow` rather than copying
 `LinkRow` wholesale; it needs no `Button` wrapper, so it also stays out of the tab order.
 
-Icons are lucide: `Tablet`, `Users`, `Mic` (`Mic` is already imported in `PrivatlivPane`). Sizes 18-20,
+Icons are lucide: `Tablet`, `Users`. Sizes 18-20,
 `aria-hidden` — they are decorative, the text carries the meaning.
 
 **Fix while here:** the guest sign-in button at `:282` calls `void startGoogleSignIn()` and discards the
@@ -127,7 +123,6 @@ Copy constraints, restated because they are easy to violate while rewording:
 
 - do not promise Face ID or passkeys,
 - do not imply progress is currently unsaved — it *is* saved, just device-local,
-- keep straight quotes around `"Sig et Ord"` to match the rest of the file.
 
 Height: this is roughly the same as today's guest branch, and it lives in the scrollable detail pane, so
 there is no layout risk. The "must not claim the pane's height" requirement is about the **landing**,
@@ -146,7 +141,7 @@ Add a single row **inside the rail column, above the `List`** (which starts at `
 
 ```
 [LogIn]  Log ind
-         Flere børn, flere enheder, mikrofonspil
+         Flere børn, flere enheder
 ```
 
 - `onClick` calls the component's existing `select('konto')` (`:126-133`) — it already handles the

@@ -64,7 +64,7 @@ without stopping the game; when the round ends he gets the big ceremony and a ne
   fires **once per completed question** and already carries the first-try bit — used by **9 games**:
   UnifiedQuizGame's 7 configs (`alphabet.quiz`, `math.counting`, `math.patterns`, `ordleg.read`,
   `english.listen`, `english.word`, `english.translate`) + `ComparisonGame` + `MathOperationGame` +
-  `SpellingGame` + `SpeakWordGame` + all 4 Farver games. `UnifiedMemoryGame` matches per-pair at
+  `SpellingGame` + all 4 Farver games. `UnifiedMemoryGame` matches per-pair at
   `:362`/`:375` (no `useRound`; one board = one round). Browse screens grant in `maybeAwardExploration()`.
 - **Store:** `applyXp(draft, section, amount)` (`src/services/progressStore.ts:537`) feeds BOTH `globalXp`
   (→ derived level) and section `bloom` in one commit; `grantXp` (`:579`); selectors `globalLevel` (`:586`),
@@ -91,7 +91,7 @@ Add to `src/config/progression.ts` (pure, tunable, never difficulty-dependent):
 // Base XP per completed task + first-try bonus, keyed by gameId (fallback 'default').
 // Tuned so a few minutes of ANY game earns roughly comparable XP.
 export const TASK_XP: Record<string, { base: number; firstTry: number }> = {
-  default:            { base: 3, firstTry: 1 }, // quiz question, math op, comparison, laesordet, english, mic
+  default:            { base: 3, firstTry: 1 }, // quiz question, math op, comparison, laesordet, english
   'ordleg.spelling':  { base: 4, firstTry: 2 }, // per completed word
   memory:             { base: 2, firstTry: 0 }, // per matched pair (many per board; no first-try notion)
   'colors.farvejagt': { base: 6, firstTry: 2 }, // per completed board (big task)

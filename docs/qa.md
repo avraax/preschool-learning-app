@@ -106,8 +106,8 @@ screens were speaking through live Azure and both sounded fine in the harness �
 EAR on the iPad. A live call is not merely slow there: a guest has `canCallPaidApis: false`, so
 `/api/tts-azure` is refused and the line falls through to **Web Speech — a different voice**, or silence
 with no network. `?nogate=1` bypasses that gate, which is exactly why the harness could not hear it.
-So this phase judges the REQUEST, not the sound. `/ordleg/mic` is the one true exception (it reads back
-an arbitrary spoken word) and is N/A by name.
+So this phase judges the REQUEST, not the sound. Since the speech-input game was removed (2026-09-18)
+there is no exception left — every line the app speaks is prebaked.
 
 ## 2.1 What the first run found, and how it was resolved
 
@@ -166,19 +166,8 @@ running this before every submission — and the argument for reading a *passing
 
 ## 3. Results that are N/A, not gaps
 
-- **`/ordleg/mic` in the audio phase.** Same consent gate as below, one step further on: the redirect
-  drops `?nogate=1`, so the app reverts to its gated state and the audio phase's `first-content-button`
-  fallback clicks a button on the sign-in landing, which navigates and takes the eval context with it.
-  That reported as `DEAD` — a permanent unexplained row — until the judge learned it. The route's render
-  and no-crash are still asserted, by smoke and layout, whose evals don't click.
 - **`/farver/laer` in the audio phase.** Lær Farver narrates on tapping a colour, and has no replay
   control, so there is no trigger to fire. Counting it PASS would claim coverage never exercised.
-- **`/ordleg/mic` in smoke and layout.** The mic game refuses until an adult gives consent —
-  `App.tsx` renders `micConsentGiven() ? <SpeakWordGame /> : <Navigate to="/ordleg" replace />` — so the
-  sweep lands on the Ordleg menu, where the tile is hidden too. It reported 1 FAIL in smoke and 8 in
-  layout (one per viewport) until the judge learned this. It still **FAILs** on a crash or an empty
-  `#root`, so the route is not exempted, only its title assertion. The redirect also drops the query
-  string, so `?nogate=1` is lost — which is why probing it by hand shows a lock screen.
 
 ## 4. What the automation does NOT cover
 
@@ -188,12 +177,11 @@ Say UNKNOWN about these rather than implying the sweep covered them.
   unswept — the nearest thing is a manual `webkit.mjs --dark` / per-skin capture. This is the largest
   automated gap.
 - **The native shell.** Everything here runs the web build in a browser. The Capacitor paths — bundled
-  assets, `capacitor://localhost` origin, the system-browser sign-in handoff, native mic permission —
+  assets, `capacitor://localhost` origin, the system-browser sign-in handoff —
   are only exercised by a TestFlight build.
 - **Signed-in flows.** Guest is fully covered; a real session is not, because minting one writes into the
   owner's **production** Neon database (`.claude/rules/auth.md` — test rows have reached his play-test
   that way). So: sign-in, sync, multi-child profiles and account deletion are rung 3 only.
-- **The microphone game.** Needs consent, an account and a real microphone.
 - **Whether the Danish sounds right.** The audio phase proves sound *was produced*, never that the
   pronunciation is correct. Only the owner's ears settle that.
 - **Real touch.** Drag-and-drop is driven with synthetic pointer events. Whether a 5-year-old's finger
@@ -234,12 +222,6 @@ Install the production build from TestFlight, then work through this. Each line 
 - Face ID / passkey is correctly **absent** in the shell
 - Creating a first child offers to adopt the guest book; accepting carries the stickers over
 - Progress syncs to a second device
-
-**The microphone game**
-- Hidden until enabled in Privatliv; enabling shows the consent screen naming Google
-- iOS asks for microphone permission only when the game first runs, never at launch
-- Denying the permission degrades gracefully rather than dead-ending
-- Sig et Ord recognises a spoken Danish word
 
 **The things only a device can tell you**
 - Narration sounds right in Danish — letters, numbers, the odd word

@@ -1,6 +1,6 @@
 # Recipes
 
-Command recipes: screenshotting a route, sweeping the app, real WebKit, throttled performance, proving audio made a sound, speech input, driving a tap, dnd-kit drag, passkeys, and the A/B pixel test.
+Command recipes: screenshotting a route, sweeping the app, real WebKit, throttled performance, proving audio made a sound, driving a tap, dnd-kit drag, passkeys, and the A/B pixel test.
 
 Back to `../SKILL.md`.
 
@@ -86,7 +86,7 @@ probe's own.** Roughly ten probe bugs to two real ones. They were all the same m
 that isn't a failure into the failure bucket. Budget for this, and give every probe:
 
 - **N/A** — the feature legitimately doesn't exist here. Læs Ordet has no replay by design (the child
-  can't spell yet), Sig et Ord is speech INPUT, browses have no round, `EXEMPT` games ignore difficulty.
+  can't spell yet), browses have no round, `EXEMPT` games ignore difficulty.
 - **UNKNOWN** — the measurement didn't work. A dependency wasn't ready (`progressStore` is INERT until
   `profileStore.attach()`, so an early XP read is `null` — folding that into "XP didn't move" reported a
   game paying 53 XP as paying 0), or the probe can't drive the mechanic (colour-mixing needs the right
@@ -250,35 +250,6 @@ below for that), mix balance, or that a device's hardware route was audible. For
 (SFX) the ceiling is "decoded + source started" — there is no clock to read. Under `--audio-report`
 `webkit.mjs` also prints the app's own `[audio-unlock]`/`[tts]`/Howler **warnings**, which the drivers
 otherwise drop (they surface only console *errors*) and which are usually the most informative lines.
-
-### Speech INPUT end-to-end (`mic.mjs`) — a fake microphone fed real Danish
-
-Sig et Ord is the one game rungs 1–2 could never touch, because it needs a *voice*. `mic.mjs` supplies
-one: Chrome's `--use-fake-device-for-media-stream` + `--use-file-for-fake-audio-capture=<wav>` replace the
-microphone with an audio file (looped), and `--use-fake-ui-for-media-stream` auto-grants permission. It
-then drives the real hold gesture and reports one verdict per run.
-
-```bash
-node --env-file=.env.local --import ./scripts/js-to-ts-resolve.mjs \
-  .claude/skills/ui-screenshot/mic.mjs kat hund sol --viewport=all
-node … mic.mjs kat --child          # pitch +40% at the same speed, quieter, rushed
-node … mic.mjs stille               # SILENCE → must reach the friendly retry, never hang
-node … mic.mjs kat --hold=150       # below MIN_PRESS_MS → must SAY the "hold the button" coach
-```
-
-The source audio is the app's own prebaked Azure clips, so any word in `PREBAKED_TTS` works. Run it from
-the repo root with **both dev servers up**, and restart `dev-server.js` after touching `api/stt.ts` — it
-holds the recognizer config in memory (CLAUDE.md's dev-server note).
-
-- **Verdicts are four, not two**: `HEARD` (+ the word it spelled), `NOT_HEARD` (the game's own retry
-  line — a product state), `TOO_SHORT` (the coach state), `STUCK_IN_PROCESSING`, `UNKNOWN` (probe).
-- It prints the recorder event trail and the `/api/stt` request/response, so a hang is attributable:
-  `NEVER CALLED` (no usable audio — also means no billing), fired-and-hung, or answered.
-- **`--child` is a PROXY, not a child.** Pitch/level/tempo only. Whether a real 5-year-old is understood,
-  and whether the Danish read-back sounds right, is still rung 3.
-- **A moving level meter alone proves nothing** — the bars fall back to a synthetic wave when metering is
-  unavailable, which swings just as convincingly. The discriminator is the `stille` run: real metering
-  leaves the bars at the 0.35 idle scale, the fallback would swing to ~0.9.
 
 ### Driving a TAP (and why a bad probe reports a working tap as broken)
 Every drag game also answers on a tap and vice versa (`.claude/rules/drag-and-drop.md`), so a gesture

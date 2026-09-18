@@ -18,8 +18,7 @@ a Web Speech fallback. Permission/readiness is in `src/contexts/SimplifiedAudioC
 Howler HTML5) are separate channels; music ducks under TTS and is menu-only.
 
 The finite content set is large but **closed**: 26 letters, numbers 0–100, a fixed pool of prompts and
-welcomes, success/encouragement lines. Only Sig et Ord's read-back and a few composed sentences are
-truly dynamic.
+welcomes, success/encouragement lines. Only a few composed sentences are truly dynamic.
 
 ## Problems (with evidence)
 
@@ -72,8 +71,7 @@ nondeterministically).
 ducks incorrectly; iOS unlock/interruption/backgrounding handled; a graceful, visible state when audio
 truly can't play.
 
-**Non-goals:** replacing Azure as the provider; the STT/mic side (PRD-03); the SFX/music re-encode
-(PRD-07).
+**Non-goals:** replacing Azure as the provider; the SFX/music re-encode (PRD-07).
 
 ## Implementation plan
 

@@ -41,7 +41,7 @@ menu you just left.
 |---|---|---|
 | **Frameless clay object** (shell / PRD-05) | Home + section menus (`SceneObject`) | Cut-out soft-3D WebP **resting** on a soft *contact-shadow ellipse* + a grounding *light-pool*; **no frame/border**; baked art. Objects live *in* the world. |
 | **Lifted plastic button** | `AnswerTile`, Memory cards, `MathOperationGame`, `FarveQuiz` object tile | Gradient fill + `3px` accent border + a hard `0 8px 0` colored **bottom lip** + press-travel. Reads as a keyboard key. Already "3D" — but a *different, harder* 3D than the shell. |
-| **Flat candy / glossy** | `Farvejagt` tiles, `RamFarven` droplets, the `SpeakWord` mic orb, color swatches | Solid-color fills, single diagonal sheen, generic `boxShadow: 3` — **ungrounded** (no contact shadow, no lip). The flattest surfaces in the app. |
+| **Flat candy / glossy** | `Farvejagt` tiles, `RamFarven` droplets, color swatches | Solid-color fills, single diagonal sheen, generic `boxShadow: 3` — **ungrounded** (no contact shadow, no lip). The flattest surfaces in the app. |
 
 On top of the tile mismatch, four things read "standard app" the instant a game opens:
 1. **The big white frosted `PromptStage` card** (`backdrop-filter: blur(12px)`, translucent paper, diffuse
@@ -229,7 +229,7 @@ softShadow()`) + a **separate blurred contact-ellipse `Box` beneath** (`contactS
 **Migration approach (per-area, not here):** the Foundation ships `TactileTile` + swaps it into the **shared
 engines** (`UnifiedQuizGame` via `AnswerTile`, `LearningGrid`, `UnifiedMemoryGame`) so every game that rides those
 engines upgrades at once. Hand-rolled games (`MathOperationGame`, `ComparisonGame`, `SpellingGame`, the Farver
-dnd games, `SpeakWordGame`) adopt it in their **area PRDs**. `AnswerTile` is refactored to render a `TactileTile`
+dnd games) adopt it in their **area PRDs**. `AnswerTile` is refactored to render a `TactileTile`
 internally (keeping its public props stable) so no quiz config changes.
 
 > **Learning check:** the primitive must keep the tap target ≥44px and keep the pressable read obvious. If play-
@@ -306,8 +306,8 @@ Bring all in-game chrome into the tactile language; fix the legacy holdouts.
 - **Level ring (`LevelRingMini`) + back button (`BackButton variant="game"`):** already shell-consistent (PRD-04/
   -02) — verify they visually agree with the new "Hør igen"/score material; adjust only for coherence, no behavior
   change. The back button already reverses the wipe — untouched.
-- **Kill `#ECF1F8`:** replace the two hardcoded legacy tile gradients (`FarveQuizGame.tsx:353`,
-  `SpeakWordGame.tsx:224`) with `tileSurface(accent, dark)` — but this lands when those games adopt `TactileTile`
+- **Kill `#ECF1F8`:** replace the hardcoded legacy tile gradient (`FarveQuizGame.tsx:353`)
+  with `tileSurface(accent, dark)` — but this lands when those games adopt `TactileTile`
   in the Farver/Ordleg area PRDs; note it here as a tracked debt so it isn't forgotten.
 - Consider a shared `TactilePill` primitive if "Hør igen" + score + other pills share enough (implementer's call;
   keep it if ≥2 real consumers).
@@ -348,21 +348,21 @@ Each per-area PRD (`-07`…`-11`) is a focused implement session that:
 2. Adopts `TactileTile` (F1) + `PromptFocus` (F2) across that section's games (shared engines already upgraded;
    hand-rolled games adopt directly).
 3. Applies any **per-game UX/layout rework** that area needs to reach shell level (the owner's mandate: as much
-   rework as it takes; shared where possible). Known candidates flagged this session: **Sig et Ord** (sparse/dead
-   space → richer speaking moment), **Ram Farven** (faint target + busy station → clearer mixing bench),
-   **Farvejagt** (flat scattered stickers → findable objects resting in the scene) — but every area audits its own.
+   rework as it takes; shared where possible). Known candidates flagged this session: **Ram Farven** (faint target +
+   busy station → clearer mixing bench), **Farvejagt** (flat scattered stickers → findable objects resting in the
+   scene) — but every area audits its own.
 4. Wires its **baked-art manifest** (F5) once the owner returns the keyed batch; ships art-gated.
 5. Verifies with `ui-screenshot` across all 4 skins + reduced-motion + phone-portrait; build+lint clean; then the
    owner **play-tests with his son**, and that feeds the next area's PRD (authored just-in-time).
 
 **Order:** `-07` Alphabet (worked example, written now) → `-08` Math → `-09` Farver (dnd — extra care per the drag
-rules) → `-10` Ordleg (incl. the Sig et Ord rework) → `-11` English.
+rules) → `-10` Ordleg → `-11` English.
 
 ## 6. Danish copy
 
 **No new child-facing strings and no new narration.** Labels/prompts/echoes are reused verbatim from existing
 content (`categoryContent`, per-game content files). "Hør igen" and all spoken lines are unchanged. (If a per-area
-UX rework ever needs a new spoken line — e.g. a reworked Sig et Ord — that area PRD must route it through
+UX rework ever needs a new spoken line, that area PRD must route it through
 `npm run tts:prebake` + `/audit` per the audio rules and call it out; the Foundation adds none.)
 
 ## 7. Files to touch (Foundation only)

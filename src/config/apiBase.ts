@@ -5,7 +5,7 @@
 // resolves against `https://preschool-learning-app.vercel.app` and is correct. Inside the native
 // shell the page origin is `capacitor://localhost`, so the SAME call resolves against the app
 // BUNDLE — and Capacitor's local server answers it with the SPA's index.html rather than failing.
-// So there is no error, no 404 and no exception: sign-in, progress sync, "Sig et Ord" and bug
+// So there is no error, no 404 and no exception: sign-in, progress sync and bug
 // reports just quietly never reach a server, while every game keeps working perfectly because the
 // games are offline by design. A build like that looks completely healthy.
 //

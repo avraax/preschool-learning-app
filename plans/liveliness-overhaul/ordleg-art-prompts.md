@@ -1,7 +1,7 @@
 # PRD-10 Ordleg baked-art — Gemini generation prompts (29 word-pictures)
 
 Self-contained prompts for the Ordleg baked art — the shared **word-picture** set (PRD-10 §4), reused by **Læs Ordet**
-(answer pictures), **Stav Ordet** (prompt picture), and **Sig et Ord** (match-bloom). Generated in **Gemini 2.5 Flash
+(answer pictures) and **Stav Ordet** (prompt picture). Generated in **Gemini 2.5 Flash
 Image ("Nano Banana")**, keyed on the `#00FF00` green screen via `.claude/rules/scene-assets.md`, dropped into
 `src/assets/games/ordleg/`.
 
@@ -9,7 +9,7 @@ Image ("Nano Banana")**, keyed on the `#00FF00` green screen via `.claude/rules/
 car is just a chunky car, colour doesn't matter. One set, reused across all 4 skins, exactly like the alphabet/math art.
 
 **Words + letters are NOT generated as art.** The uppercase prompt word (Læs Ordet), the letter tiles + slots (Stav
-Ordet) and the spelled letters (Sig et Ord) stay Comic Sans type — recognising / reading / spelling the glyphs IS the
+Ordet) stay Comic Sans type — recognising / reading / spelling the glyphs IS the
 lesson. Only these 29 *depicted objects* are baked. The ~7 abstract Stav words (hej/arm/ben/fod/hul/mor/far) are
 deliberately **not** baked — they keep their emoji via the art-gated fallback.
 

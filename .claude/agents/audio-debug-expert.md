@@ -38,7 +38,7 @@ inside the first touch on iPad.
 - **Silence on the iPad specifically.** Check the container before the code — all shipped audio is MP3
   because Apple has no Ogg container before iPadOS 18.4, and Ogg silenced narration *and* SFX on the
   17.7 floor device while only the mp3 music bed survived.
-- **A line that reaches live Azure.** Every spoken line is prebaked except Sig et Ord's read-back, so a
+- **A line that reaches live Azure.** Every spoken line is prebaked — there is no exception left — so a
   network TTS call during normal play means a line was composed inline instead of through the shared
   builders.
 

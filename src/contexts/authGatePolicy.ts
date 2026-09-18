@@ -71,10 +71,10 @@ export function authGateDecision(s: AuthGateInputs): AuthGateDecision {
   // uden konto" would bounce them straight back to the lock screen they just left.
   //
   // `canCallPaidApis: false` is NOT conservatism, it is the same control as `AUTH_ALLOWED_EMAILS`:
-  // /api/tts-azure bills per character and /api/stt per second, and both require a server-minted
-  // access JWT that no account-less client can obtain. A guest costs nothing, which is what makes an
-  // open guest path safe to ship at all. Every line the app speaks is prebaked (see
-  // `.claude/rules/audio-system.md`), so the only thing a guest actually loses is Sig et Ord.
+  // /api/tts-azure bills per character and requires a server-minted access JWT that no account-less
+  // client can obtain. A guest costs nothing, which is what makes an open guest path safe to ship at
+  // all. Every line the app speaks is prebaked (see `.claude/rules/audio-system.md`), so a guest
+  // loses nothing a child would notice.
   if (s.guestMode && !s.hasStoredToken) {
     return { phase: 'guest', canPlay: true, canCallPaidApis: false }
   }

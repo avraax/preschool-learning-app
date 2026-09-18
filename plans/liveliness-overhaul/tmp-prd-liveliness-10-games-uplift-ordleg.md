@@ -22,15 +22,6 @@ the alphabet + math + farver implementation learnings (folded in §0).
 > built against the manifest first; every consumer keeps its **emoji fallback** until the art lands (auto-registers,
 > no code change) — exactly as alphabet/math/farver did.
 
-> **Audio/STT-gated (Sig et Ord only):** Sig et Ord captures speech (`useSpeechInput` → Google STT v2 → `/api/stt`)
-> and its rework must not touch the capture path (`.claude/rules/audio-system.md` "Speech INPUT"): the
-> generation-counter unmount guard, `speech.cancel()` on unmount, `audio.stopAll()` before capture, the
-> hold-to-talk `getUserMedia`-in-gesture rule, `extractFirstWord`'s profanity-mask drop, `MIN_PRESS_MS`/`MAX_PRESS_MS`.
-> The rework introduces **no new closed-set spoken line** (§5) so **no `tts:prebake`/`/audit` cycle is required** — but
-> IF the owner adds a spoken praise line to the richer moment, it MUST route through `npm run tts:prebake` + `/audit`
-> per the audio rules (this is the one game in the whole sub-program where a rework could add narration — hence the
-> explicit gate).
-
 ---
 
 ## 0. Learnings carried forward (fold-in from Alphabet `-07` + Math `-08` + Farver `-09`)
@@ -42,28 +33,27 @@ the alphabet + math + farver implementation learnings (folded in §0).
    Danish-only glyphs — `aeg`/`raev`/`baer`/`loeg`/`aal`/`soe` for æg/ræv/bær/løg/ål/sø — per scene-assets.md).
 2. **`PromptStage` (the frosted card) is retired per game, not globally.** The Foundation's engine-level swap only
    reached the shared engines. Hand-rolled games that render `PromptStage` **directly** still show the old frosted
-   card and must migrate to `PromptFocus` by hand. In Ordleg the only direct `PromptStage` caller is **Sig et Ord**
-   (`SpeakWordGame.tsx:13`/`497`); Stav Ordet renders its picture as a **bare emoji in the body** (no `PromptStage`)
-   and Læs Ordet rides the engine (already on `PromptFocus`). `PromptStage.tsx` **stays in-tree** after this area
+   card and must migrate to `PromptFocus` by hand. In Ordleg no game calls it directly: Stav Ordet renders its
+   picture as a **bare emoji in the body** (no `PromptStage`) and Læs Ordet rides the engine (already on
+   `PromptFocus`). `PromptStage.tsx` **stays in-tree** after this area
    (English `-11` still imports `HeroArt`/`HeroEmoji` from it, and `EnglishLearning`/`StickerAlbum` still carry the
    legacy `#ECF1F8` gradient) — do **not** delete it.
 3. **Consolidate/curate to ONE shared subject set.** Alphabet merged two divergent manifests; math baked one counting
    set; farver baked one curated colour-object set. Ordleg bakes **one shared word-picture set** (§4) keyed by word,
-   reused by Læs Ordet (answer pictures), Stav Ordet (prompt picture), and Sig et Ord (optional match-bloom).
+   reused by Læs Ordet (answer pictures) and Stav Ordet (prompt picture).
 4. **Picture-less / abstract things stay honest.** Numerals stayed glyphs; math's pattern dots + Nuancer's ☀️/🌙 chip
    stayed emoji (abstract tokens). **Ordleg's analogue: the WORDS and LETTERS are the lesson and stay TYPE.** The
-   uppercase prompt word (Læs Ordet), the letter tiles + slots (Stav Ordet), and the spelled-out letters (Sig et Ord)
+   uppercase prompt word (Læs Ordet) and the letter tiles + slots (Stav Ordet)
    are **Comic Sans `Typography`, never baked art** — recognising/reading/spelling the glyphs IS the exercise. Baked
    art is ONLY the *depicted picture* (the cow/car/cat). And **abstract words with no clean depiction** (hej/arm/ben/
    fod/hul/mor/far in Stav's pool) stay **emoji** via the art-gated fallback — never a forced awkward clay render.
 5. **Screenshot/verify gotcha:** auto-played game TTS doesn't fire headless — identify the showing subject via the
    baked `<img>` src (`[data-prompt-focus] img`, or the answer-tile `<img>` for Læs Ordet) and drive feedback with the
-   engine's `?fx=correct|wrong|hint` harness (Læs Ordet rides `UnifiedQuizGame`'s `devFx`). Stav/Sig are hand-rolled
-   with no `?fx=` harness — drive them by simulating taps / a scripted STT result (see §8).
+   engine's `?fx=correct|wrong|hint` harness (Læs Ordet rides `UnifiedQuizGame`'s `devFx`). Stav Ordet is hand-rolled
+   with no `?fx=` harness — drive it by simulating taps (see §8).
 6. **Frozen-world payoff (F3) is claimed by removing occluders.** Alphabet/math/farver got calmer by letting the
-   softened world show through. Ordleg's occluders are milder (no opaque framed boards), but Sig et Ord's frosted
-   `PromptStage` card is a hard occluder over the focal zone — retiring it (§3.5) is what makes that board read
-   "calm-present & grounded."
+   softened world show through. Ordleg's occluders are milder — no opaque framed boards — so this area claims the
+   payoff mostly through materials rather than by deleting a card.
 7. **The one remaining shared-engine gap.** Alphabet/Math/English put baked art in the **hero/prompt**
    (`questionVisual.art` → `HeroArt`); the answer tiles were always glyphs. **Læs Ordet is the inverse** — the prompt
    is the WORD (glyph) and the *answers are the pictures*. `UnifiedQuizGame` has **no baked-art path on answer tiles**
@@ -72,12 +62,10 @@ the alphabet + math + farver implementation learnings (folded in §0).
 
 ## 1. Context
 
-The Ordleg section is **3 games** off `/ordleg`: **Læs Ordet** (`/ordleg/read`, `LaesOrdetGame` — a thin
-`UnifiedQuizGame`), **Stav Ordet** (`/ordleg/spelling`, `SpellingGame` — hand-rolled), and **Sig et Ord**
-(`/ordleg/mic`, `SpeakWordGame` — hand-rolled, speech-input). Mechanically they're solid and the owner is happy with
-how they *teach* (silent word-decoding, letter-by-letter spelling, open-ended say-a-word→spell-it-back) — the gap is
-**look & feel** vs the Structured-World shell (PRD-06 §1), plus **one flagged UX rework** the owner wants folded in
-(Foundation F6 §3 + PRD-10 mandate): **Sig et Ord** (sparse/dead space → a richer speaking moment).
+The Ordleg section is **2 games** off `/ordleg`: **Læs Ordet** (`/ordleg/read`, `LaesOrdetGame` — a thin
+`UnifiedQuizGame`) and **Stav Ordet** (`/ordleg/spelling`, `SpellingGame` — hand-rolled). Mechanically they're solid
+and the owner is happy with how they *teach* (silent word-decoding, letter-by-letter spelling) — the gap is **look &
+feel** vs the Structured-World shell (PRD-06 §1).
 
 **Pre-reader guardrails specific to Ordleg (do not regress):**
 - **Læs Ordet NEVER reads the prompt word aloud** — silent decoding IS the exercise (`speakQuizPrompt`/`getRepeatAudio`
@@ -87,33 +75,26 @@ how they *teach* (silent word-decoding, letter-by-letter spelling, open-ended sa
   prompt to 2-letter words; Svær's only extra challenge is MORE distractor pictures (6 vs 4), never longer words.
   This PRD is **material + art only** — it changes no word pool, difficulty lever, or mechanic.
 
-**What's flat today (grounded this session — full read of all 3 components, branch `feat/games-uplift-alphabet`):**
+**What's flat today (grounded this session — full read of both components, branch `feat/games-uplift-alphabet`):**
 
 | Game | PromptStage? | What's flat / off-shell |
 |---|---|---|
 | **Læs Ordet** | rides engine (`PromptFocus` ✅) | The prompt word already rests in `PromptFocus` (engine swap). But the **answer tiles are flat 2D system emoji** (`🐄/🍦/🐱…` via `item.display`) — the last flat-emoji subjects in the section, and the engine has no art path for them (§0.7 / §3.1). Static-theme bug: uses `categoryThemes.ordleg` not `getCategoryTheme('ordleg')` (§3.6). |
 | **Stav Ordet** | no (bare-emoji prompt in body) | The prompt **picture is a flat 2D emoji** (`SpellingGame.tsx:466`), un-grounded, sitting in the body flow (not the focal zone). The scrambled **letter tiles are the "lifted plastic button"** vocabulary — `3px` border + hard `0 5px 0` teal lip + the legacy **`#ECF1F8` gradient** (`577-584`) — one of the section's two `#ECF1F8` holdouts. The letter **slots** are plain dashed boxes. Static-theme bug (`categoryThemes.ordleg`). |
-| **Sig et Ord** | **yes** (`PromptStage`, `13`/`497`) | The BIG mic + waveform live inside the **frosted `PromptStage` card** (the retired idiom) occluding the focal zone; the **mic orb is "flat candy"** (single `boxShadow: 0 8px 24px`, glossy fill, ungrounded — no contact shadow). The **spell-out banner letters use the legacy `#ECF1F8` gradient + hard lip** (`SpeakWordGame.tsx:224`/`229`) — the section's **second `#ECF1F8` holdout** and the Foundation F4-tracked one. The board reads **sparse** — a mic in a card over a big empty answer zone holding two lines of text (the owner's "dead space" flag). Static-theme bug. |
 
-**The core finding:** Ordleg has **four** kinds of off-shell, mapping cleanly to the fix:
-- **(a) Flat 2D emoji subjects** → baked soft-3D word-pictures (Læs Ordet answer tiles, Stav Ordet prompt, Sig et Ord
-  optional match-bloom). Requires the **new answer-tile art path** (§3.1).
-- **(b) Hard-lip / `#ECF1F8` tiles** → the `TactileTile` clay language; retires **both** remaining Ordleg `#ECF1F8`
-  holdouts (`SpellingGame:584`, `SpeakWordGame:224`).
-- **(c) The frosted `PromptStage` card** (Sig et Ord) → `PromptFocus` / in-world grounding.
-- **(d) The sparse Sig et Ord board** → the flagged rework: a grounded, alive mic + a rich, space-filling
-  recognized-word reveal (§3.5).
+**The core finding:** Ordleg has **two** kinds of off-shell, mapping cleanly to the fix:
+- **(a) Flat 2D emoji subjects** → baked soft-3D word-pictures (Læs Ordet answer tiles, Stav Ordet prompt). Requires
+  the **new answer-tile art path** (§3.1).
+- **(b) Hard-lip / `#ECF1F8` tiles** → the `TactileTile` clay language; retires the Ordleg `#ECF1F8` holdout
+  (`SpellingGame:584`).
 
-**Scope (owner-set, §6):** keep every word pool, difficulty lever, spoken line, STT path, hint, and reward flow
-exactly. Bake the word-pictures (§4). Fold in the Sig et Ord "richer speaking moment" rework. **Words + letters stay
-type; abstract words keep emoji** (§0.4).
+**Scope (owner-set, §6):** keep every word pool, difficulty lever, spoken line, hint, and reward flow exactly. Bake
+the word-pictures (§4). **Words + letters stay type; abstract words keep emoji** (§0.4).
 
 **Success:** entering any Ordleg game feels like the Regnbue/Havet/Rummet/Dino menu it launched from — in **Læs Ordet**
 the four pictures to choose from are tactile soft-3D objects resting on grounded tiles beneath the word you read; in
 **Stav Ordet** the word's picture rests in the focal zone on its light-pool and the letter tiles are pressable clay
-(no keyboard lip); in **Sig et Ord** the mic is a confident grounded thing in the calm world, listening feels alive,
-and saying a word blooms a rich, full reveal instead of two lines of text over dead space. The **words and letters
-read exactly as clear as today** — they are the lesson and stay type.
+(no keyboard lip). The **words and letters read exactly as clear as today** — they are the lesson and stay type.
 
 ## 2. Current state (verbatim anchors — branch `feat/games-uplift-alphabet`)
 
@@ -141,20 +122,6 @@ darken(accent)` lip + **`#ECF1F8` gradient** (584) + hint/shake states + `whileH
 parity already wired: `sfx.play('tap')` (325), `celebrateTier('streak')`+`mascotBus.emit('streak')` (398-399),
 `guideReaction` cheer/think. `speakWord`/`speakLetter` echoes — KEEP. No `PromptStage`.
 
-**Sig et Ord — `SpeakWordGame.tsx` (hand-rolled, 251-599):** speech-input, **open-ended** (no target word, no STT
-grading). `useRound(263, gameId:'ordleg.mic')`; phases `idle|recording|processing|spelling|retry` (29). **`MicHero`**
-(55-171): a `clamp(88px,24vh,168px)` circle with `Mic` icon, **flat glossy fill + `boxShadow: 0 8px 24px`** (118-128,
-recording → radial-red + `0 0 0 10px` halo + scale-pulse), plus a **live-waveform equalizer** row (137-168, hidden on
-phone-landscape). **`SpellBanner`** (185-249): the recognized word big + each letter in a `56–84px` box —
-**`#ECF1F8` gradient + `0 6px 0` lip when revealed** (224/229). Renders `MicHero` into GameShell's **`promptStage`
-slot wrapped in `<PromptStage accent=…>`** (495-510); body (519-593) shows either the `SpellBanner` (spelling phase)
-or **two lines of instruction text** over an otherwise **empty flex:1 zone** (the "dead space"). Mechanics to KEEP
-verbatim: hold-to-talk (`handlePressStart`/`handlePressEnd`, `getUserMedia`-in-gesture, `MIN_PRESS_MS`/`MAX_PRESS_MS`,
-`endingRef`), `runSpellingSequence` (speak word → per-letter reveal+`speakLetter` → celebrate → speak word again),
-`handleResult` (mishear → `firstTryRef=false`, stay on same question, `audio.speak('Det hørte jeg ikke helt. Prøv
-igen!')`, back to idle), `mascotBus.emit('hint')` "listening" cue (330), `speech.cancel()` on unmount, `audio.stopAll()`
-before capture, `extractFirstWord` profanity drop.
-
 ## 3. Technical design (per game — consumes the Foundation + the PRD-07/-08/-09 loader)
 
 **From the shipped tree (assume these exist, unchanged):** `TactileTile`, `AnswerTile`, `PromptFocus`,
@@ -165,13 +132,13 @@ before capture, `extractFirstWord` profanity drop.
 ### 3.0 The Ordleg re-material rule (READ FIRST — governs every surface below)
 
 Ordleg has two surface families:
-- **Picture surfaces** (Læs Ordet answer pictures, Stav Ordet's prompt picture, Sig et Ord's optional match-bloom):
+- **Picture surfaces** (Læs Ordet answer pictures, Stav Ordet's prompt picture):
   become **baked soft-3D word-pictures** — a `<img src={ordlegArt(id)}>` rendered with `softShadow` (a `HeroArt`-style
   cut-out object). On the answer tiles they sit inside the `TactileTile` clay surface (the tile is the grounded
   pressable; the picture is its content); as a prompt they rest in `PromptFocus`'s light-pool + contact shadow.
   **Fallback = today's emoji** while art is un-baked, or for abstract words that are never baked (§0.4).
-- **Glyph surfaces** (the Læs Ordet prompt WORD, Stav Ordet's letter tiles + slots + spelled letters, Sig et Ord's
-  spelled letters): **stay Comic Sans `Typography`** — recognising/reading/spelling the letterforms IS the lesson.
+- **Glyph surfaces** (the Læs Ordet prompt WORD, Stav Ordet's letter tiles + slots + spelled letters):
+  **stay Comic Sans `Typography`** — recognising/reading/spelling the letterforms IS the lesson.
   They get the tactile **grounding** re-material (contact shadow + soft shadow + press, via `TactileTile`) but the
   content is always type, **never** baked art.
 
@@ -254,49 +221,7 @@ additive, backward-compatible path:
   `celebrateTier('streak')`+`mascotBus.emit('streak')`, the word/letter echoes, the `ordleg.spelling` round.
 - **Skin fix** (§3.6). **`#ECF1F8` retired** (`SpellingGame:584`).
 
-### 3.5 Sig et Ord (`SpeakWordGame.tsx`) — the flagged rework: a grounded, alive mic + a rich reveal that fills the space
-
-The owner's flag: *sparse / dead space → richer speaking moment*. Concrete plan (mechanics-preserving):
-
-- **Retire the frosted `PromptStage`; ground the mic in-world.** Drop the `<PromptStage>` wrapper (497-508) and its
-  import. Give `MicHero` the `PromptFocus` **visual grounding** — a light-pool + `contactShadow` beneath — so the mic
-  reads as a confident thing resting in the calm frozen world (Decision-log "World presence"). **Do NOT route the
-  interactive mic through `PromptFocus`'s idle-float / charge-in wrapper:** the hold-to-talk gesture relies on
-  `onPointerLeave` = press-end, so a wrapper that gently *moves the mic under a still finger* would abort recording,
-  and a `chargeKey` that changes with `phase` would **remount `MicHero` mid-gesture** (losing the `getUserMedia`
-  pointer capture — the documented "never remounts mid-gesture" invariant, `SpeakWordGame.tsx:51-54`). Two safe
-  implementations (implementer's call): (a) render `MicHero` directly in the `promptStage` slot inside a small bespoke
-  grounding `Box` (light-pool + `contactShadow` via the depth helpers, **static**, no float); or (b) reuse `PromptFocus`
-  **only if** it gains an opt-out (`float={false}` / stable `chargeKey`) — but (a) is lower-risk. Either way: **the mic
-  never idle-floats and never remounts mid-gesture.**
-- **Re-material the mic orb to clay** (118-128): drop the flat glossy `boxShadow: 0 8px 24px` for the tactile depth
-  (`softShadow` + a grounded `contactShadow` ellipse), keep the white ring, the recording radial-red state, the halo,
-  and the scale-pulse (motion-gated). Make the mic the confident hero of the focal zone (it already sizes to
-  `clamp(88px,24vh,168px)` — keep, it fills the band well).
-- **Make listening feel alive** (fills the "dead" moment): keep the live-waveform equalizer but re-material it to the
-  clay/accent language and let it read as a real reaction to the voice (kept phone-landscape hide). The mascot's
-  `mascotBus.emit('hint')` "listening" cue stays.
-- **The rich, space-filling reveal** (the core of "richer speaking moment"): when a word is recognized, the body's
-  `flex:1` zone becomes a **full reveal** instead of two lines of text:
-  - **`SpellBanner` → tactile clay.** Re-material the revealed letter boxes to `TactileTile interactive={false}`
-    (display) with the glyph as content — **retires `#ECF1F8`** (`SpeakWordGame:224`) + the `0 6px 0` lip. Keep the
-    per-letter `POP` reveal (`revealCount`) synced to `runSpellingSequence`'s `speakLetter`, and the big word headline.
-  - **Optional match-bloom (owner decision §6).** When the recognized word (lowercased) matches a known Ordleg picture
-    (`ordlegArt(word)` resolves), **bloom that baked soft-3D object above the spelled letters** (a `HeroArt` on a
-    light-pool) — a delightful "you said CAT!" payoff that fills the space and rewards the child, art-gated (absent →
-    just the letters, as today). **No new spoken line** (the word + letters are already spoken by `runSpellingSequence`).
-  - This turns the recognized-word moment into the board's centerpiece rather than a small banner over emptiness.
-- **The idle state fills the space too:** the grounded mic hero centered in the focal zone + a **single** warm, clear
-  instruction ("Hold knappen og sig et ord!") in the body, with the mic as the obvious focus — no second dim line
-  needed once the mic is a confident grounded hero (keep the phase strings: idle/recording/processing/retry). **Keep
-  it open-ended — never suggest specific words** (biasing the child; the game is "say ANY word").
-- **KEEP every mechanic** (§2 list): hold-to-talk timing + `getUserMedia`-in-gesture, `endingRef`, the
-  generation-counter STT capture, `speech.cancel()` on unmount, `audio.stopAll()` before capture, `extractFirstWord`
-  profanity drop, the mishear→same-question→`firstTryRef=false`→retry-line flow, `runSpellingSequence`, the round (8) +
-  streak, `micFailed` graceful fallback. **No STT grading, no target word.**
-- **Skin fix** (§3.6). **`#ECF1F8` retired** (`SpeakWordGame:224`).
-
-### 3.6 Skin-awareness fix (all three — small correctness win while we're here)
+### 3.6 Skin-awareness fix (both games — small correctness win while we're here)
 
 All three Ordleg games read the section theme from the **static `categoryThemes.ordleg`**, which is bound to the
 default (kid) tokens and is **NOT skin-aware** — so on Havet/Rummet/Dino they render the kid-skin ordleg accent
@@ -310,9 +235,7 @@ the static map.
   mechanic/difficulty change.
 - **Stav Ordet** — prompt picture grounded in `PromptFocus`; letter tiles → `TactileTile` (clay, `#ECF1F8` killed);
   slots grounded; letters stay type; no mechanic change.
-- **Sig et Ord** — the flagged rework: retire `PromptStage`, ground + enliven the mic, a rich space-filling recognized-
-  word reveal (clay `SpellBanner`, `#ECF1F8` killed, optional match-bloom), open-ended preserved; STT path untouched.
-- All three: static → `getCategoryTheme('ordleg')`.
+- Both: static → `getCategoryTheme('ordleg')`.
 - If play-testing shows the lip-less clay reads as less pressable, apply the Foundation's subtle-edge fallback (a 2px
   accent under-line), NOT a return to the hard lip (F1 note).
 
@@ -376,16 +299,10 @@ gentle eel, not a snake).
 
 **No new child-facing strings and no new narration by default.** Læs Ordet: no spoken prompt/repeat (silent decode —
 unchanged); the tapped-picture echo is the existing `audio.speak(word)`. Stav Ordet: the word + per-letter echoes are
-existing. Sig et Ord: the recognized word + per-letter spelling are **dynamic** (STT output → live Azure, not a closed
-set — cannot/should not be prebaked), and the retry line **"Det hørte jeg ikke helt. Prøv igen!"** is reused **verbatim**
-(already in the shipped closed set). The optional match-bloom (§3.5) adds a *picture*, not a spoken line.
+existing.
 
-→ **The default rework needs NO `tts:prebake` and NO `/audit` cycle** (no new closed-set clip is introduced; art
-curation only adds pictures + may REMOVE emoji-only words if §6 drops `os`/`øl`, which orphans clips harmlessly).
-**BUT** Sig et Ord is the one game where a rework *could* add narration — so: **if the owner wants a spoken praise line
-for the richer moment** (e.g. "Du sagde …!"), it is a new closed-set clip and MUST go through `npm run tts:prebake`
-(commit the `.ogg` + `prebakedTts.ts`) **and** `/audit` (`npm run audit:check` → listen → sign off) per
-`.claude/rules/audio-system.md`, and be called out. Default: don't add one.
+→ **The rework needs NO `tts:prebake` and NO `/audit` cycle** (no new closed-set clip is introduced; art curation only
+adds pictures + may REMOVE emoji-only words if §6 drops `os`/`øl`, which orphans clips harmlessly).
 
 ## 6. Decisions for the owner (recommendations stand; decide at/ before implementation)
 
@@ -398,12 +315,7 @@ for the richer moment** (e.g. "Du sagde …!"), it is a new closed-set clip and 
      because we're touching the array anyway.
    - **`øl`🍺** (beer) — present only for **Ø** practice. [recommended] **replace/remove** — Ø is still practiced via
      `sø`/`løg`; a beer picture is off-brand for a 5-year-old's app. vs keep it emoji-only (never baked).
-3. **Sig et Ord match-bloom** (§3.5) — [recommended] **bloom the baked picture when the recognized word matches a known
-   Ordleg object** (delightful, fills the space, art-gated, no new spoken line). vs letters-only reveal (simpler). If
-   yes, it reuses the §4 set (no extra art).
-4. **Sig et Ord spoken praise line** (§5) — [recommended] **none** (avoid the prebake/audit cycle; the word + letters
-   already speak). vs add one new closed-set line → then it MUST be prebaked + audited.
-5. **Art reuse across sections** — [recommended] bake a **fresh Ordleg set keyed by word** (matches the per-section
+3. **Art reuse across sections** — [recommended] bake a **fresh Ordleg set keyed by word** (matches the per-section
    convention, one stylistically-consistent batch, no cross-section coupling), accepting minor subject overlap with
    alphabet (abe/bil/kat/mus/sol/tog) — exactly as Farver accepted car/sun/fox overlapping alphabet. vs import the ~6
    overlapping alphabet WebP (keyed by letter → needs a word→letter map; more coupling, saves ~6 renders).
@@ -423,14 +335,11 @@ for the richer moment** (e.g. "Du sagde …!"), it is a new closed-set clip and 
 - `src/components/ordleg/SpellingGame.tsx` — prompt picture → `PromptFocus` (baked/emoji); letter tiles → `TactileTile`
   (kill `#ECF1F8` + lip; drop the now-duplicated shake/hint motion); grounded slots; keep all mechanics;
   `getCategoryTheme('ordleg')` (§3.4/§3.6).
-- `src/components/ordleg/SpeakWordGame.tsx` — retire `PromptStage`; ground + enliven the mic (no float/no remount);
-  rich reveal (clay `SpellBanner`, kill `#ECF1F8`, optional match-bloom); keep the full STT/hold-to-talk path;
-  `getCategoryTheme('ordleg')` (§3.5/§3.6).
 **Reuse:** `TactileTile`/`AnswerTile`, `PromptFocus`, `HeroArt`/`HeroEmoji`, `ordlegArt`, `contactShadow`/`softShadow`/
 `idleFloat`, `getCategoryTheme('ordleg')`, `tileSurface`/`darken`/`hexToRgba`, `useNeverFailHint`, the scene-assets
 keying pipeline.
 **Do NOT:** delete `PromptStage.tsx`; bake the prompt WORD or the letter tiles/slots (glyphs stay type — §0.4); touch
-the STT capture path, hold-to-talk timing, Læs Ordet's silent-decode rule, or any word pool / difficulty lever.
+Læs Ordet's silent-decode rule, or any word pool / difficulty lever.
 
 ## 8. Verification
 - `npm run build` + `npm run lint` clean; `npm run dev` + `npm run dev:api` (**Windows PowerShell**, never WSL —
@@ -451,16 +360,9 @@ the STT capture path, hold-to-talk timing, Læs Ordet's silent-decode rule, or a
     an abstract word — drive both); the **letter tiles are tactile clay** (no `#ECF1F8`, no keyboard lip — grep the
     file → 0 `ECF1F8`); a wrong tile shakes + (after 2) the correct tile pulses (reduced-motion → static ring); a
     correct letter fills its slot; complete a word → advance; the picture→slots association still reads (flag if not).
-  - **Sig et Ord:** **no frosted `PromptStage`** (grep `PromptStage` in the file → 0 hits; `[data-prompt-focus]` or the
-    bespoke grounding present); the mic is a **grounded clay hero** that **does not drift/float** and **does not remount**
-    when phase changes (hold it → recording never aborts on its own); recording shows the alive waveform + red state;
-    a scripted recognized word → the **rich reveal fills the body** with **clay spelled letters** (no `#ECF1F8` — grep
-    → 0) and (if enabled) the **baked match-bloom** above them; a mishear → friendly retry, same question, no advance;
-    `micFailed`/unsupported → the graceful fallback text. Confirm hold-to-talk still starts capture (real mic, one
-    manual pass) and unmount cancels the mic.
   - **Reduced-motion** (`?reduce=1` + OS media): motion off; baked art, contact shadows, light-pools, feedback rings,
     letter reveals, and audio all intact.
-  - **Phone/portrait** (844×390, 667×375): no scroll, 44px targets hold (Stav tiles, Sig mic + waveform-hidden rule).
+  - **Phone/portrait** (844×390, 667×375): no scroll, 44px targets hold (Stav tiles).
 - **Skin fix:** confirm the ordleg accent tracks the active skin on all 4 (not the kid accent on ocean/space/dino).
 - Snapshot `localStorage['bornelaering-progress']` before/after a driven round in each game to confirm the reward flow
   (stars/bests/XP) is unchanged.
@@ -475,16 +377,14 @@ shipped anchors this PRD leans on:
 - `src/components/common/UnifiedQuizGame.tsx` — `QuizItem` (57-67), answer-tile render (`showOptions.map`, 700-735,
   the `<Typography>{item.display}</Typography>` to branch on `item.art`), hero render (`renderHero`, 525-573).
 - `src/components/common/PromptStage.tsx` — `HeroArt` (118-135) — mirror for the new tile-scaled `TileArt`.
-- `src/components/common/PromptFocus.tsx` — the in-world focal presentation (idle-floats its subject → **Sig et Ord
-  must NOT use the float for the interactive mic**; §3.5).
+- `src/components/common/PromptFocus.tsx` — the in-world focal presentation.
 - `src/components/common/TactileTile.tsx` — clay pressable (owns wrong-shake + hint-breathe + press; drop the games'
   duplicated motion when migrating).
-- Foundation-tracked `#ECF1F8` holdouts retired here: `SpellingGame.tsx:584`, `SpeakWordGame.tsx:224` (the two Ordleg
-  ones; `EnglishLearning.tsx:180` + `StickerAlbum.tsx:317` remain — English `-11` / not-a-game-board).
-- `.claude/rules/audio-system.md` "Speech INPUT" — the STT capture invariants Sig et Ord's rework must not touch.
+- Foundation-tracked `#ECF1F8` holdout retired here: `SpellingGame.tsx:584` (`EnglishLearning.tsx:180` +
+  `StickerAlbum.tsx:317` remain — English `-11` / not-a-game-board).
 
 ---
 *End of Ordleg PRD. Confirm §6 curation with the owner → produce `ordleg-art-prompts.md` → build against §4 (the
-answer-tile art path §3.1 first); ship art-gated; keep the STT path untouched; play-test, then author `-11` English JIT.*
+answer-tile art path §3.1 first); ship art-gated; play-test, then author `-11` English JIT.*
 </content>
 </invoke>

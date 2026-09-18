@@ -481,7 +481,6 @@ Last updated: 2026-09-05T09:02:42.703Z
 | ✅ | Ram Farven | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Rigtig godt! | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Sammenlign Tal | Bulk-approved (PRD-11 owner listen pass) |  |
-| ✅ | Sig et Ord | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Stav Ordet | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Super! | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Sådan! | Bulk-approved (PRD-11 owner listen pass) |  |

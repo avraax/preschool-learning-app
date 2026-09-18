@@ -55,7 +55,7 @@ Three things already exist and do most of the work:
    `shared-narration-clips.js`, prebaked to MP3 and approved in `docs/audit/`. Verified 2026-08-01: all 29
    present in the manifest, all 29 `verdict: ok`. **No new audio, no `tts:prebake` run, no `/audit` pass.**
 2. **The sequencer pattern already ships.** `runSpellingSequence` in
-   `src/components/ordleg/SpeakWordGame.tsx` (~line 519) is this exact loop: advance a visual counter,
+   Ordleg's spell-out sequence is this exact loop: advance a visual counter,
    `await audio.speakLetter(…)`, `await wait(gap)`, bail if unmounted. `SpellingGame` does the same per
    letter. Copy that shape; do not invent a new mechanism.
    **It is also the iOS feasibility proof** — those games already speak many letters in sequence from one

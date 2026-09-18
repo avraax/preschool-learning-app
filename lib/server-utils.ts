@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 
 /**
- * Decide whether a request's Origin is allowed to call our TTS/STT endpoints.
+ * Decide whether a request's Origin is allowed to call our TTS endpoint.
  *
  * A cross-origin caller must come from localhost (dev) or the request's own host (the browser
  * app / installed PWA POST from the same deployment — prod and each preview both satisfy this
@@ -20,7 +20,7 @@ export function isAllowedOrigin(req: VercelRequest): boolean {
     // `capacitor://localhost` (App Store PRD §3.1). It already passed the hostname test below purely
     // because that origin's hostname happens to parse as `localhost` — i.e. it worked BY ACCIDENT,
     // and any future tightening of the localhost rule (scheme check, dev-only guard) would have
-    // killed "Sig et Ord" and TTS in the shipped app with no local symptom. Say it on purpose.
+    // killed live TTS in the shipped app with no local symptom. Say it on purpose.
     if (SHELL_SCHEMES.includes(url.protocol)) return true
     const host = url.hostname
     if (host === 'localhost' || host === '127.0.0.1' || host === '[::1]') return true

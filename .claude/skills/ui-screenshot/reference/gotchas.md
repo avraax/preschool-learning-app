@@ -110,11 +110,10 @@ Back to `../SKILL.md`.
   that isn't a substring of other on-screen text, or `--click` with a CSS/`data-*` selector to hit
   one specific element (answer tiles carry `[data-answer-tile]`).
 - **Driving pointer gestures & SPA nav**: because `element.click()` fires no `pointerdown`, for an
-  `onPointerDown` handler (e.g. the Sig et Ord mic) dispatch a real event via `--eval`:
+  `onPointerDown` handler dispatch a real event via `--eval`:
   `el.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true}))`. To unmount a route so React
   cleanup runs, **soft-navigate** (`history.pushState({},'','/x');dispatchEvent(new PopStateEvent('popstate'))`)
-  — a hard `location` change skips cleanup. To inspect real mic tracks in a getUserMedia test, launch
-  Chrome with `--use-fake-device-for-media-stream` (needs a one-off custom launcher, not `cdp.mjs`).
+  — a hard `location` change skips cleanup.
 - **Can't stub `window.location.reload`** in an `--eval` — it's non-configurable, so a `defineProperty`
   throws and the *real* reload fires, navigating the page so your eval returns `undefined`. To test
   code that reloads/navigates (e.g. `lazyWithReload`'s chunk recovery), make the side effect

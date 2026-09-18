@@ -17,9 +17,9 @@
   privacy questionnaire — keep the two in step. All are App Functionality and linked to the user; none
   are used for tracking.
 
-  Audio Data is declared even though it is arguably NOT "collected" on Apple's own definition (nothing
-  retains it beyond servicing the request in real time). Over-disclosure has never been a rejection
-  reason; under-disclosure has. Note it is ALSO gated: the microphone is off until an adult turns it on.
+  There is deliberately NO NSPrivacyCollectedDataTypeAudioData entry: the app has no microphone feature
+  at all — no purpose string, no getUserMedia, no speech-recognition processor. Declaring audio the app
+  cannot capture would be a false disclosure, not harmless over-disclosure.
 -->
 <plist version="1.0">
 <dict>
@@ -70,20 +70,6 @@
 		<dict>
 			<key>NSPrivacyCollectedDataType</key>
 			<string>NSPrivacyCollectedDataTypeGameplayContent</string>
-			<key>NSPrivacyCollectedDataTypeLinked</key>
-			<true/>
-			<key>NSPrivacyCollectedDataTypeTracking</key>
-			<false/>
-			<key>NSPrivacyCollectedDataTypePurposes</key>
-			<array>
-				<string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
-			</array>
-		</dict>
-		<!-- The child's voice in "Sig et Ord" → Google Cloud Speech-to-Text. Off until an adult
-		     consents behind the parental gate; not retained by anyone. Declared anyway — see header. -->
-		<dict>
-			<key>NSPrivacyCollectedDataType</key>
-			<string>NSPrivacyCollectedDataTypeAudioData</string>
 			<key>NSPrivacyCollectedDataTypeLinked</key>
 			<true/>
 			<key>NSPrivacyCollectedDataTypeTracking</key>

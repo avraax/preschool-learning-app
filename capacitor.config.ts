@@ -30,11 +30,11 @@ const config: CapacitorConfig = {
   webDir: 'dist',
 
   server: {
-    // BOTH OF THESE ARE THE CAPACITOR DEFAULTS, and they are written out because one of them is
-    // load-bearing for a feature. Capacitor's docs: keeping the hostname as `localhost` "allows the use
-    // of Web APIs that would otherwise require a secure context such as navigator.geolocation and
-    // MediaDevices.getUserMedia" — which is the only reason "Sig et Ord" works in the shell without a
-    // native audio-capture rewrite (PRD §3.9 / B7). Changing either is a silent feature kill.
+    // BOTH OF THESE ARE THE CAPACITOR DEFAULTS, written out because one of them is load-bearing.
+    // `runtimeTarget.ts` decides "am I in the shell?" from the page protocol alone, so changing
+    // `iosScheme` silently reverts every shell-gated behaviour (update banner, lazyWithReload,
+    // swCleanup, passkeys, Google sign-in) to its web branch inside the binary. Pinned by
+    // `capacitorConfig.test.ts`.
     iosScheme: 'capacitor',
     hostname: 'localhost',
   },

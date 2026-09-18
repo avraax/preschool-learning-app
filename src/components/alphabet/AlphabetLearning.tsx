@@ -56,7 +56,7 @@ const AlphabetLearning: React.FC = () => {
   const hasInteractedRef = useRef(false)
 
   // "Hør alfabetet" autoplay (PRD alfabet-autoplay). The run is a plain await-loop modelled on
-  // SpeakWordGame's runSpellingSequence, but it needs TWO guards, not one: `mountedRef` for unmount
+  // a spell-out sequence, but it needs TWO guards, not one: `mountedRef` for unmount
   // and an incrementing `runIdRef` so a letter tap or a re-press aborts the loop. The audio
   // controller has no queue (new audio cancels current), so a tap already silences the in-flight
   // letter — the run token is what stops the LOOP from carrying on and talking over it.

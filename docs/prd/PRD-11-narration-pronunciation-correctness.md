@@ -335,5 +335,5 @@ checklist carries state between them.
 ## 9. Out of scope
 
 - **No pre-recorded / hand-recorded audio** — everything stays synthesized/prebaked (Azure).
-- Replacing Azure as the provider; the STT/mic side (PRD-03); the SFX/music channels.
+- Replacing Azure as the provider; the SFX/music channels.
 - A full Web Speech fallback rework beyond auditing/documenting its quality (PRD-06 territory).

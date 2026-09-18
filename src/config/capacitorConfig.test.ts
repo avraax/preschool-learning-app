@@ -47,10 +47,9 @@ test('no OTA / live-update service is installed', () => {
   }
 })
 
-test('the secure-context settings getUserMedia depends on are the defaults, written down', () => {
-  // Capacitor's docs: keeping the hostname as `localhost` "allows the use of Web APIs that would
-  // otherwise require a secure context such as … MediaDevices.getUserMedia". Changing either of these
-  // does not fail a build — it makes "Sig et Ord" stop working in the shell only, on a device.
+test('the scheme and hostname are the Capacitor defaults, written down', () => {
+  // Written out rather than left implicit: `iosScheme` is load-bearing for shell detection (next test),
+  // and changing either would not fail a build — it would change behaviour on a device only.
   const cfg = stripTs(read(CAP_CONFIG))
   assert.match(cfg, /iosScheme:\s*'capacitor'/)
   assert.match(cfg, /hostname:\s*'localhost'/)
@@ -94,41 +93,44 @@ test('the app is universal, and iPhone is locked to landscape', () => {
   assert.match(iphone[1], /LandscapeRight/)
 })
 
-test('NSMicrophoneUsageDescription exists and says WHERE the recording goes', () => {
-  // The failure mode for a missing string is not a prompt, it is: "your app exits." And Guideline
-  // 5.1.1(ii) requires the string to "clearly and completely describe your use of the data", so
-  // "we need the microphone" is a rejection — it must name the speech-recognition service.
+test('the app declares NO microphone or camera use anywhere in the native project', () => {
+  // The app has no speech input and no camera. A purpose string is not harmless boilerplate: iOS shows
+  // it to the adult, App Review reads it as a feature claim, and the privacy policy
+  // (`legalContent.ts`) states plainly that neither device is used. So the ABSENCE is the invariant —
+  // re-adding either key without re-opening that policy would make a published document false.
   const plist = stripXml(read(...INFO_PLIST))
-  const m = plist.match(/<key>NSMicrophoneUsageDescription<\/key>\s*<string>([\s\S]*?)<\/string>/)
-  assert.ok(m, 'no NSMicrophoneUsageDescription — the app will EXIT when it touches the microphone')
-  const purpose = m[1].trim()
-  assert.ok(purpose.length > 60, 'the purpose string is too thin to "completely describe" the use')
-  assert.match(purpose, /Speech-to-Text|speech recognition/i, 'it does not say where the audio goes')
+  for (const key of [
+    'NSMicrophoneUsageDescription',
+    'NSCameraUsageDescription',
+    'NSSpeechRecognitionUsageDescription',
+  ]) {
+    assert.ok(!plist.includes(key), `${key} is back in Info.plist but no feature uses it`)
+  }
+  // The privacy manifest must not declare audio the app cannot capture either. Comments stripped
+  // first: this file's own header explains WHY there is no audio entry, and a naive `includes` would
+  // be satisfied by that prose.
+  const manifest = read('ios', 'App', 'App', 'PrivacyInfo.xcprivacy').replace(/<!--[\s\S]*?-->/g, ' ')
+  assert.ok(
+    !manifest.includes('NSPrivacyCollectedDataTypeAudioData'),
+    'the privacy manifest declares audio collection the app cannot perform',
+  )
+  // …and no client code may reach for a capture device at all. Two shapes of self-match had to be
+  // excluded, and both made the guard fail against a correct tree: `getUserMedia` appears in the prose
+  // explaining WHY this guard exists (so the needle is `mediaDevices`), and this file is itself under
+  // `src/` (so `:(exclude)*.test.ts` keeps the needle from matching the line that carries it). `git
+  // grep` exits 1 on NO match, which is the passing case, so the throw is caught rather than fatal.
+  let hits: string
+  try {
+    hits = execFileSync('git', ['grep', '-l', 'mediaDevices', '--', 'src', 'api', 'lib', ':(exclude)*.test.ts'], {
+      cwd: ROOT,
+      encoding: 'utf8',
+    }).trim()
+  } catch {
+    hits = ''
+  }
+  assert.equal(hits, '', `media capture is back in: ${hits}`)
 })
 
-test('the Danish microphone string ships, and `da` is a known region', () => {
-  // Two halves, and only the second one is checkable by looking at the strings file. "If a localized
-  // version of a key does not exist, the routines return the value stored in the Info.plist file" — so
-  // a `.lproj` that is not in knownRegions is not built into the bundle, and the ENGLISH string quietly
-  // ships to Danish iPads with nothing failing.
-  const strings = read('ios', 'App', 'App', 'da.lproj', 'InfoPlist.strings')
-  assert.match(strings, /"NSMicrophoneUsageDescription"\s*=/)
-  assert.match(strings, /mikrofonen/, 'the Danish string is not Danish')
-  // The æøå survived whatever wrote the file — this repo has mojibaked Danish through a shell pipeline
-  // before, and a purpose string is shown to the adult by the OS.
-  assert.match(strings, /Børnelæring/, 'the Danish text is mojibaked')
-  assert.match(strings, /Speech-to-Text/, 'the Danish string does not say where the audio goes')
-
-  const pbx = read(...PBXPROJ)
-  const regions = pbx.match(/knownRegions = \(([\s\S]*?)\);/)
-  assert.ok(regions, 'no knownRegions in the Xcode project')
-  assert.match(regions[1], /\bda\b/, '`da` is not a known region — da.lproj will not be built in')
-  // …and the file has to be in the target's Resources phase, not merely on disk.
-  assert.match(pbx, /InfoPlist\.strings in Resources/, 'InfoPlist.strings is not in a build phase')
-  assert.match(pbx, /path = da\.lproj\/InfoPlist\.strings/)
-})
-
-// ---- §3.9: the privacy manifest (a FAILED UPLOAD, not a review note) ------------------------------
 
 test('PrivacyInfo.xcprivacy is present, at the bundle root, and in the Resources phase', () => {
   assert.ok(
@@ -153,9 +155,12 @@ test('the declared data types match the App Store Connect questionnaire (§3.7)'
   // These two lists are answered in two different places months apart. Keeping them in one test is the
   // only thing that makes a mismatch visible.
   const x = stripXml(read('ios', 'App', 'App', 'PrivacyInfo.xcprivacy'))
-  for (const type of ['EmailAddress', 'UserID', 'GameplayContent', 'AudioData', 'CrashData']) {
+  for (const type of ['EmailAddress', 'UserID', 'GameplayContent', 'ProductInteraction', 'CrashData']) {
     assert.match(x, new RegExp(`NSPrivacyCollectedDataType${type}`), `${type} is not declared`)
   }
+  // AudioData must NOT be here: the app captures no audio, and declaring a type it cannot collect is a
+  // false disclosure rather than harmless over-disclosure.
+  assert.ok(!x.includes('NSPrivacyCollectedDataTypeAudioData'), 'AudioData is declared but nothing can capture audio')
   // Nothing is collected for tracking, and nothing may claim an advertising purpose.
   assert.ok(!/Tracking<\/key>\s*<true\/>/.test(x), 'a data type is declared as used for tracking')
   assert.ok(!/Advertising/.test(x), 'an advertising purpose is declared in a Kids Category app')
@@ -193,46 +198,6 @@ test('the asset catalog escapes the blanket *.json gitignore', () => {
   }
   // The icon PNG itself, without which the catalog is an empty promise.
   assert.match(tracked, /AppIcon\.appiconset\/AppIcon-512@2x\.png/)
-})
-
-// ---- B7: the microphone spike, static half --------------------------------------------------------
-
-test('the Capacitor bridge still GRANTS WKWebView media-capture permission', () => {
-  // App Store PRD §4.3 / B7. "Sig et Ord" reaches the microphone through plain `getUserMedia` in a
-  // WKWebView, and a WKWebView only gets it if the host app implements the iOS 15+ WKUIDelegate method
-  // `webView:requestMediaCapturePermissionForOrigin:initiatedByFrame:type:decisionHandler:`. Without
-  // it a webview can prompt on EVERY call or refuse silently. The PRD carried this as UNKNOWN because
-  // community reports pointed both ways; it is resolved here by reading Capacitor's own source.
-  //
-  // Verified against the SHIPPED ARTIFACT too, not only this npm mirror: `capacitor-swift-pm` at 8.5.0
-  // is a `binaryTarget` whose `Capacitor.xcframework.zip` matches the checksum pinned in its
-  // Package.swift, and the selector is present in the `ios-arm64` Mach-O inside it. That download also
-  // settled §3.9's other UNKNOWN — the framework carries its own `PrivacyInfo.xcprivacy` per slice and
-  // is code-signed, which is what Apple requires of a listed SDK used as a binary dependency.
-  //
-  // This is a SUPPLY-CHAIN assertion on purpose: a Capacitor upgrade that changed this would break the
-  // microphone in the shell only, on a device, with the web app still perfect.
-  const bridge = readFileSync(
-    path.join(
-      ROOT,
-      'node_modules',
-      '@capacitor',
-      'ios',
-      'Capacitor',
-      'Capacitor',
-      'WebViewDelegationHandler.swift',
-    ),
-    'utf8',
-  )
-  const handler = bridge.match(
-    /requestMediaCapturePermissionFor[\s\S]{0,400}?decisionHandler:\s*@escaping[\s\S]{0,200}?\{([\s\S]{0,200}?)\n\s{4}\}/,
-  )
-  assert.ok(handler, 'the Capacitor bridge no longer implements requestMediaCapturePermissionFor')
-  assert.match(
-    handler[1],
-    /decisionHandler\(\.grant\)/,
-    'the bridge no longer grants media capture — getUserMedia will prompt or fail in the shell',
-  )
 })
 
 test('the app icon is the real one, 1024², and has NO alpha channel', () => {

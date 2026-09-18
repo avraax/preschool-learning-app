@@ -121,7 +121,7 @@ test('guest with no token ⇒ full play, and the gate does NOT block', () => {
 
 test('a guest may NOT call the paid endpoints', () => {
   // Not conservatism — the same control as AUTH_ALLOWED_EMAILS. /api/tts-azure bills per character and
-  // /api/stt per second, and both need a server-minted access JWT an account-less client cannot get. If
+  // needs a server-minted access JWT an account-less client cannot get. If
   // this ever returns true, an open guest path becomes an open invitation to spend the owner's credit.
   const d = authGateDecision(inputs({ guestMode: true, hasStoredToken: false }))
   assert.equal(d.canCallPaidApis, false)
@@ -176,7 +176,7 @@ test('a public path is recognised with or without a trailing slash', () => {
 })
 
 test('nothing else is public — least of all the app itself', () => {
-  for (const p of ['/', '/alphabet', '/ordleg/mic', '/album', '/privatlivspolitik', '/support/x']) {
+  for (const p of ['/', '/alphabet', '/ordleg/read', '/album', '/privatlivspolitik', '/support/x']) {
     assert.equal(isPublicPath(p), false, `${p} must not bypass the auth gate`)
   }
 })

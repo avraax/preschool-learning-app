@@ -56,10 +56,10 @@ table, and our five (`childProfile`, `profileProgress`, `familyPin`, `pinAttempt
 - **`AUTH_ALLOWED_EMAILS` is mandatory and fails CLOSED.** A hard gate without a closed signup list
   stops nobody from completing Google sign-in on the public URL and then *legitimately* burning Azure
   and Google credit. Enforced in `databaseHooks.user.create.before` — one hook, every sign-in method.
-- **The paid endpoints require the access JWT**, not a session. `/api/tts-azure` bills per character and
-  `/api/stt` per second of audio. `code: 'need_access_token'` on the 401 is what tells the client to
+- **The paid endpoint requires the access JWT**, not a session. `/api/tts-azure` bills per character.
+  `code: 'need_access_token'` on the 401 is what tells the client to
   mint-and-retry ONCE instead of signing the adult out. Prebaked narration under `/sounds/tts/` stays
-  public — only the live Azure fallback and STT are gated.
+  public — only the live Azure fallback is gated.
 - **Bearer token, never a cookie** (`bearer` plugin, token in localStorage). An installed iOS PWA has
   its own storage jar, and with bearer transport an OAuth *redirect* has no response body the SPA can
   read — so the `flowId` handoff is structurally required, not a hedge.
@@ -282,7 +282,7 @@ CALLER, not a second progress path, and `canSync()` already requires a session t
 was needed. Device-scoped flags in `utils/guestMode.ts`.
 
 - **`canCallPaidApis: false` is the same control as `AUTH_ALLOWED_EMAILS`, not caution.**
-  `/api/tts-azure` bills per character and `/api/stt` per second. A guest costing nothing is what makes
+  `/api/tts-azure` bills per character. A guest costing nothing is what makes
   an open guest path safe to ship at all.
 - **Auto-guest is decided in `authStore`'s CONSTRUCTOR, not `boot()`** — `boot()` runs from an effect,
   i.e. after first paint, so deciding there flashes the lock screen on a brand-new install.

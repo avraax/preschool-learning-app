@@ -76,7 +76,7 @@ The app already uses `lucide-react` (see `RepeatButton useLucideIcons`). These a
 - **Dead frosted-card component**: `PromptStage.tsx:1-96` (the `backdrop-filter: blur(12px)` card + `PromptStageProps`)
   is no longer rendered anywhere. Move the still-used helpers `HeroEmoji`/`HeroArt`/`TileArt` (`:100,118,145`) into
   `PromptFocus.tsx` (or a new `PromptArt.tsx`), update the 4 importers (`UnifiedQuizGame.tsx:9`, `SpellingGame.tsx:14`,
-  `SpeakWordGame.tsx:14`, `EnglishLearning.tsx:12`), then **delete `PromptStage.tsx`**. (Rename `HeroEmoji`→ keep only
+  `EnglishLearning.tsx:12`), then **delete `PromptStage.tsx`**. (Rename `HeroEmoji`→ keep only
   if still needed for a non-emoji glyph path; otherwise drop it with the emoji fallbacks.)
 - Dead config identity glyphs (`AlphabetGame.tsx:116 🎯`, `MathGame 🧮`, `HvadMangler 🧩`, `LaesOrdet 📖`, English
   `👂🔤🔁`) — `UnifiedQuizConfig.emoji` is never rendered (grep-confirmed); safe to blank/remove as tidy-up.
@@ -168,7 +168,7 @@ Body/family/greetings live-fallback: `englishVocab.ts` themes + `EnglishLearning
 blank `:40,52,186`. ScoreChip star: `ScoreChip.tsx:90`. Farver chrome: `FarvejagtGame.tsx:547`, `RamFarvenGame.tsx:522,634,740,797,930`,
 `FarveQuizGame.tsx:322`, `NuancerGame.tsx:348,418,427,482`. Sammenlign `👆`: `ComparisonGame.tsx:550`. Listen `🔊`:
 `UnifiedQuizGame.tsx:563`. Dead frosted card: `PromptStage.tsx:1-96`; Hero* helpers `:100,118,145`; importers
-`UnifiedQuizGame.tsx:9`, `SpellingGame.tsx:14`, `SpeakWordGame.tsx:14`, `EnglishLearning.tsx:12`. Dead fallbacks:
+`UnifiedQuizGame.tsx:9`, `SpellingGame.tsx:14`, `EnglishLearning.tsx:12`. Dead fallbacks:
 `MathGame.tsx:127`, `ComparisonGame.tsx:463,599`, `NumberLearning.tsx:69`, `countingObjects.ts:25-32`, `colorContent.ts:40-73`,
 `RamFarvenGame.tsx:48,75-79`.
 

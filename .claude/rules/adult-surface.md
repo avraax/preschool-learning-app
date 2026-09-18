@@ -71,7 +71,7 @@ carries the quiz board, not the settings.
 A `maxWidth="md"` Dialog (MUI's default z-index 1300) with a persistent left rail of **five
 mutually-exclusive groups** — **Konto** · **Læring** (difficulty; `panes/LaeringPane.tsx` **EXPLAINS
 the selected level in Danish** and labels the setting as per-child) · **Lyd** (SFX/music + narration
-voice + tempo) · **Udseende** (skin) · **Privatliv** (mic + policy + support) — plus a **persistent rail
+voice + tempo) · **Udseende** (skin) · **Privatliv** (AI-voice disclosure + policy + support) — plus a **persistent rail
 footer** ("Send feedback" + tap-to-copy version) reachable from every pane. It replaced 13 flat rows in a
 scrolling `xs` dialog and six sibling sub-panels.
 
@@ -135,7 +135,7 @@ reason: bumping it is a wipe of every child on update, and the old assertion com
 Signing in is offered only here, behind the parental gate — nothing adult-directed goes in front of it
 (Kids Guideline 1.3), so a Duolingo-style timed prompt during play is **not available to us**.
 
-- **Outcomes, not features.** Sync, multiple children and the microphone game are each conditional on
+- **Outcomes, not features.** Sync and multiple children are each conditional on
   something a new user may not have; one child on one iPad — the median install — matched none of the
   three, so the screen said nothing to the person reading it. Every row is title + hint, and the hint
   carries the outcome.

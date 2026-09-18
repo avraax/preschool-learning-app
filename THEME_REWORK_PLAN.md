@@ -119,7 +119,7 @@ File-by-file, swap hardcoded styling for `theme.*`. Priority order:
    `RestartButton`, `UnifiedQuizGame`, `UnifiedMemoryGame`, `LearningGrid`,
    `UpdateBanner`, `SimplifiedAudioPermission`, `balloon/*`, `dnd/*`.
 4. Games: `MathOperationGame`, `ComparisonGame`, `HvadManglerGame`, `NumberLearning`,
-   `AlphabetLearning`, `AlphabetGame`, `SpellingGame`, `SpeakWordGame`, `LaesOrdetGame`,
+   `AlphabetLearning`, `AlphabetGame`, `SpellingGame`, `LaesOrdetGame`,
    `English*`.
 5. `FarvejagtGame` / `RamFarvenGame`: replace ONLY non-content styling (shadows, borders,
    chrome). **Leave the color-object/mixing data untouched.**
@@ -136,11 +136,11 @@ theme" section to CLAUDE.md; optional runtime switcher. Final build + on-device 
 - **Hex colors** (180 total): App.tsx 9, **FarvejagtGame 41 = content**, categoryThemes 39,
   **RamFarvenGame 27 = content**, kidTheme 32, BalloonBase 14, UnifiedMemoryGame 5,
   SimplifiedAudioPermission 3, UpdateBanner 3, UnifiedQuizGame 3, ParticleEffects 2,
-  CelebrationEffect 1, SpeakWordGame 1.
+  CelebrationEffect 1.
 - **Gradients** (39): categoryThemes 24, App.tsx 11, SimplifiedAudioPermission 2,
-  SpeakWordGame 1, UnifiedMemoryGame 1.
+  UnifiedMemoryGame 1.
 - **rgba()/shadows** (114 across 24 files): App 18, AlphabetLearning 8,
-  SimplifiedAudioPermission 8, SpeakWordGame 7, EnglishLearning 6, MathOperationGame 4,
+  SimplifiedAudioPermission 8, EnglishLearning 6, MathOperationGame 4,
   ComparisonGame 5, GameSelectionLayout 5, RepeatButton 5, SpellingGame 5, … etc.
 
 ---

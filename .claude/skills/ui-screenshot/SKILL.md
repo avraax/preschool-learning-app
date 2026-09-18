@@ -12,7 +12,7 @@ run "verified on iPad") is worse than under-claiming.
 
 | rung | tool | proves | cannot prove |
 |---|---|---|---|
-| 1 | `cdp.mjs` (headless Chrome), `mic.mjs`, `perf.mjs`, `sweep.mjs` | layout, interaction, game logic, XP, that audio made a sound | anything Safari-specific — **including LAYOUT**; real touch feel |
+| 1 | `cdp.mjs` (headless Chrome), `perf.mjs`, `sweep.mjs` | layout, interaction, game logic, XP, that audio made a sound | anything Safari-specific — **including LAYOUT**; real touch feel |
 | 2 | `webkit.mjs` (real WebKit, iPad UA) | the Safari engine, the app's iOS branches, the codec table | **cannot play audio at all**; not true iPadOS 17.7 |
 | 3 | the owner's iPad | whether the Danish sounds RIGHT, real touch, true 17.7 behaviour | — |
 
@@ -38,12 +38,12 @@ Read the one you need — these are the skill's reference files, one level deep:
 | file | contents |
 |---|---|
 | `reference/rungs.md` | the full rung table, and the **four** outcomes every probe needs (pass / fail / N/A / UNKNOWN) |
-| `reference/recipes.md` | every command recipe: screenshot a route, `sweep.mjs`, rect traps, WebKit, throttled perf, `--audio-report`, `mic.mjs`, driving a tap, dnd-kit drag, passkeys, verifying spoken audio, the A/B pixel test |
+| `reference/recipes.md` | every command recipe: screenshot a route, `sweep.mjs`, rect traps, WebKit, throttled perf, `--audio-report`, driving a tap, dnd-kit drag, passkeys, verifying spoken audio, the A/B pixel test |
 | `reference/probes.md` | `perf.mjs` steady-state, the full option list, verifying XP/progress and difficulty, authoring a long `--eval` |
 | `reference/gotchas.md` | built-in behaviours to know before blaming the app, and verifying a bug-report capture |
 
 The `.mjs` probes in this directory are **executed, not read** — `cdp.mjs`, `webkit.mjs`, `perf.mjs`,
-`sweep.mjs`, `mic.mjs` and the `*.js` payloads cost nothing until you run them. Don't Read them to
+`sweep.mjs` and the `*.js` payloads cost nothing until you run them. Don't Read them to
 learn the flags; `reference/probes.md` has the list, and each takes `--help`.
 
 ## When to use (be proactive)

@@ -46,7 +46,7 @@ path are untouched; no new game mechanics.
   44px, phone variants), `games-catalog.md`'s per-game invariants.
 - **Preserve every existing invariant** even while its numbers move: Tal Quiz shows nothing of the answer
   (listen-only); no countable stand-in on any math board; Sammenlign shows numerals only, no equality; Q
-  is never the asked letter; Læs Ordet never reads the prompt word; Sig et Ord has no target word; the
+  is never the asked letter; Læs Ordet never reads the prompt word; the
   bespoke animations (`?`→answer POP, krokodille chomp) survive; educational colours stay data.
 - Token-driven and verified on all 4 skins + reduced motion + phone landscape.
 - **Every generator that produces a spoken line must stay inside the baked set** or go through the
@@ -121,7 +121,6 @@ group) — the clearest instance of a dead level. Q stays distractor-only at eve
 |---|---|---|---|
 | **Læs Ordet** `ordleg.read` | 2-letter words · 3 pictures · no shared initial | 2–3 letter · 4 pictures · no shared initial | 2–3 letter · **6** pictures · shared initials allowed |
 | **Stav Ordet** `ordleg.spelling` **(new lever)** | 2-letter words · 1 distractor letter | 2–3 letter · 3 distractors (today) | 3–4 letter words · 4 distractors |
-| **Sig et Ord** `ordleg.mic` | **exempt** — open-ended by design, no target word to grade | | |
 
 Læs Ordet is already spine-compliant (it keeps **6** rather than 5 at Svær because its tiles are
 pictures, not glyphs) — it only moves into the shared table. Word length stays gentle at every level
@@ -156,7 +155,7 @@ excluded at every level. The drag games map the tile axis onto board/tray size, 
 ### 4.6 The exempt list (must be explicit in code, with reasons)
 
 `alphabet.learn`, `math.learn` (Lær Tal responds only via its range), `english.learn`, `colors.learn` —
-ungraded browses. `ordleg.mic` — no target word exists. `math.comparison` — exempt from the **tile** axis
+ungraded browses. `math.comparison` — exempt from the **tile** axis
 only (2-number mechanic), fully calibrated on range + gap.
 
 ## 5. Where the calibration lives

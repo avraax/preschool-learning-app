@@ -129,7 +129,6 @@ Four segments selectable via a segmented control: **[Tal] [Bogstaver] [Sætninge
 3. **Sætninger** — exactly these 20 (includes **`Læs ordet`** + hard Danish sounds):
    1. Læs ordet
    2. Stav ordet
-   3. Sig et ord
    4. Find bogstavet
    5. Find tallet
    6. Hvad er to plus tre?

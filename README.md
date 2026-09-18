@@ -19,7 +19,7 @@ deliberate non-goal.
 | **Tal og Regning** | Lær Tal · Tal Quiz · Plus · Minus · Sammenlign Tal · Hvad Mangler? · Hukommelse 10 / 20 |
 | **Farver** | Lær Farver · Farvejagt · Hvilken Farve? · Ram Farven · Nuancer (all drag-and-drop) |
 | **Engelsk** | Lyt og Find · Find det Engelske Ord · Lær Engelsk |
-| **Ordleg** | Læs Ordet · Stav Ordet · Sig et Ord (the child speaks into the mic; the app spells the word back) |
+| **Ordleg** | Læs Ordet · Stav Ordet |
 
 Progress is one unified **reward book** (`/album`): a fixed path of collectible rewards in themed
 chapters, previewed as a silhouette in the ring so the child always sees what they're working toward.
@@ -61,7 +61,7 @@ npm run preview      # preview the production build
 
 React 19 + TypeScript, Vite 8, **Material-UI v9 (no Tailwind)**, Framer Motion, Howler.js for SFX.
 Narration is **Azure AI Speech** (single TTS provider, Danish `da-DK`), pre-baked to MP3 for the closed
-phrase set with Web Speech API as fallback; speech input is Google Cloud STT. React Router v7.
+phrase set with Web Speech API as fallback. React Router v7.
 **Every shipped audio file is MP3** — the compatibility floor is iOS/iPadOS 17, which cannot decode Ogg.
 
 ## Working on this codebase

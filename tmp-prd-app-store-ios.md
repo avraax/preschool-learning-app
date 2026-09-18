@@ -18,10 +18,9 @@ below are marked UNKNOWN for exactly that reason; they are collected in §6. Do 
 - The app is this repo: React 19 + Vite 8 + MUI, deployed on Vercel. Network-only PWA, hand-authored
   `public/manifest.json`, **deliberately no service worker**. Danish, five sections, 24 games.
 - Backend is Vercel serverless functions under `api/`: Azure AI Speech for TTS (most lines prebaked to
-  `public/sounds/tts/`, 31 MB; `public/sounds` total 54 MB) and Google Cloud STT for one speech-input game
-  (Sig et Ord), which needs the microphone. Both are third-party processors receiving audio.
+  `public/sounds/tts/`, 31 MB; `public/sounds` total 54 MB).
 - Auth is `better-auth`: one adult account via Google OIDC plus passkeys, N child profiles. The whole app
-  is hard-gated by `AuthGate`. `/api/tts-azure` and `/api/stt` require a 15-minute access JWT.
+  is hard-gated by `AuthGate`. `/api/tts-azure` requires a 15-minute access JWT.
 - Compatibility floor: the owner's son's **iPad Pro 2nd gen (12.9") on iPadOS 17.7.11**.
 - Owner's machine is **Windows 11. No macOS hardware at all.** Apple ID exists; no Developer Program
   membership. Prefer free tiers and one-off costs; recurring costs must be flagged.
@@ -30,8 +29,9 @@ below are marked UNKNOWN for exactly that reason; they are collected in §6. Do 
 
 ### Owner decisions already taken (do not re-litigate)
 
-1. **Sig et Ord ships in v1**, microphone off by default, enabled behind the parental gate with an explicit
-   consent screen naming Google. The alternative (ship v1 without the mic game) was offered and declined.
+1. ~~**Sig et Ord ships in v1**, microphone off by default.~~ **REVERSED 2026-09-18** — the speech-input
+   game was removed from the app entirely, along with `/api/stt` and every microphone permission. The app
+   now requests no device permissions at all, which deletes §3.6's whole risk surface.
 2. **Universal app — iPad *and* iPhone.** iPad-only was recommended and declined. The consequences are
    real and are carried through this document: a mandatory 6.9" iPhone screenshot set, and iPhone layouts
    that can never reach rung 3 because the owner has no iPhone. See §3.9 and §5.5.
@@ -300,10 +300,10 @@ bundle (`webDir`). It does **not** point `server.url` at the Vercel deployment. 
 - **Never add an OTA / live-update service** (Capawesome Live Updates, Appflow Live Updates, or similar).
   Remote-loaded JS that changes app functionality is exactly what 2.5.2's second clause forbids. Every
   change ships as a new build through review. State this in the repo rules.
-- What still needs the network: sign-in, progress sync, and Sig et Ord. Nothing else.
+- What still needs the network: sign-in and progress sync. Nothing else.
 
 **Also strengthen the "app-like" case with real native integrations**, since 4.2 asks for features that
-"elevate it beyond a repackaged website": native microphone capture, native audio-session category
+"elevate it beyond a repackaged website": native audio-session category
 management (which would also help the class of iOS `AudioContext.resume()` bug already in this repo's
 history), Sign in with Apple via native `ASAuthorization` rather than a webview round-trip, and native
 haptics. Each is a defensible answer to a 4.2 rejection.
@@ -467,12 +467,11 @@ user's data."
 > third-party AI, and obtain explicit permission before doing so.**
 
 **Work.** Author a Danish privacy policy (plus English, for reviewers) that:
-- names **Google Cloud Speech-to-Text**, **Azure AI Speech**, **Neon** (Postgres, EU region) and **Vercel**
+- names **Azure AI Speech**, **Neon** (Postgres, EU region) and **Vercel**
   as recipients/processors, with the equal-protection confirmation;
-- states what leaves the device and when: the child's recorded audio only while Sig et Ord is enabled; the
+- states what leaves the device and when: the
   text to be spoken; the adult's email from Google/Apple sign-in; child profile names; progress rows;
 - states retention and deletion, and points at the existing in-app account deletion;
-- explains how to withdraw consent (i.e. turn the microphone game back off).
 
 Host it as a route in the app **and** at a stable public URL for the App Store Connect metadata field.
 Note the tension with Guideline 1.3's ban on links out of the app: put any outbound link **inside the
@@ -504,23 +503,13 @@ third parties — **even in sections intended for adults** — unless the parent
 https://developer.apple.com/app-store/kids-apps/ and https://developer.apple.com/kids/ (read 2026-08-06).
 
 **Apple's published text nowhere carves out service providers, processors or sub-processors.** Sending a
-child's recorded voice to Google Cloud STT is, on the face of the rule, transmission to a third party.
-**Whether a data-processor relationship plus explicit parental consent satisfies a reviewer is UNKNOWN** —
-no page read addresses processors at all. Do not present this as settled to the owner.
+child's voice to a recogniser would, on the face of the rule, be transmission to a third party.
 
-**Design that gives the best chance, per the owner's decision to ship the game:**
-1. **Sig et Ord's microphone is OFF by default.** The game is not reachable until an adult enables it.
-2. Enabling it lives in **"Til de voksne" behind the existing PIN**, on a dedicated consent screen that
-   states plainly, in Danish, that the child's voice recording is sent to Google for recognition, is not
-   stored, and can be turned off again at any time. This is the "parent explicitly consents" path.
-3. **Verify Google Cloud STT data logging / model-improvement is OFF** on the project. Guideline 5.1.2(ii):
-   "Data collected for one purpose may not be repurposed without further consent." This is an owner action
-   in the Google Cloud console — see §4.3.
-4. **Ship no analytics SDK at all.** Confirmed 2026-08-06 that the repo currently has none (the apparent
-   matches for `amplitude` are the parallax `amplitude` token). Keep it that way; 1.3's analytics exception
-   is too narrow to be worth using.
-5. **Degrade gracefully when the microphone is denied** (5.1.1(iv): "Where possible, provide alternative
-   solutions for users who don't grant consent"). Sig et Ord must not dead-end.
+**RESOLVED 2026-09-18 by deletion.** The speech-input game was removed from the app, so no audio of any
+kind leaves the device and this risk no longer exists. What remains of the section's design:
+1. **Ship no analytics SDK at all.** Confirmed 2026-08-06 that the repo has none (the apparent matches for
+   `amplitude` are the parallax `amplitude` token). The first-party anonymous counter added later is not a
+   third-party SDK — see `docs/usage-analytics.md`.
 
 **Also from 5.1.4(a):** "Apps may ask for birthdate and parental contact information only for the purpose
 of complying with these statutes, but must include some useful functionality or entertainment value
@@ -573,12 +562,12 @@ Declare, all with purpose **App Functionality** and **Linked to the user**:
 | Adult email from Google/Apple sign-in | **Email Address** (Contact Info) | collected — it persists |
 | Account + child profile IDs | **User ID** (Identifiers) | collected |
 | Progress / XP / rewards synced to Neon | **Gameplay Content** (User Content) | collected — it persists |
-| Child's voice → Google STT | **Audio Data** (User Content) | **see below** |
 | Crash / error logs (`api/log-error.ts`) | **Crash Data** (Diagnostics) | check what it actually stores |
 
-**On Audio Data:** audio streamed to STT and retained by nobody beyond servicing the request in real time
+**On Audio Data:** the app captures no audio at all (the speech-input game was removed 2026-09-18), so
+nothing is declared. Historic note — audio streamed to a recogniser and retained by nobody in real time
 is, on Apple's own definition, arguably **not "collected."** That reading hinges entirely on Google Cloud's
-retention configuration being verified off (§3.6 item 3) and on `api/stt.ts` not persisting the audio.
+would still have been declared, since over-disclosure has never been a rejection reason.
 **It does not help with Guideline 1.3, which prohibits *sending*, not *storing*.** Given the uncertainty and
 that over-disclosure is never a rejection reason, **declare Audio Data.** Answer **no** to Device ID.
 
@@ -629,7 +618,7 @@ Three specific traps:
 
 Also: **write the review notes in English.** Apple's review correspondence is in English, and a Danish-only
 app needs the reviewer told what they are looking at, that no account is required, where the parental gate
-is, and that the microphone game is intentionally off by default.
+is.
 
 ### 3.9 Native project requirements
 
@@ -679,27 +668,12 @@ official Capacitor releases so their manifest and signature come along; if nativ
 is added, those are on the list too. **UNKNOWN:** whether the current Capacitor iOS pod ships its own
 `PrivacyInfo.xcprivacy` — verify in the generated `ios/` tree rather than assuming.
 
-**Microphone permission string.** `NSMicrophoneUsageDescription` is required, and the failure mode is
-severe: "**If your app attempts to access any of the device's microphones without a corresponding purpose
-string, your app exits.**" —
-https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CocoaKeys.html
-(read 2026-08-06); key reference at
-https://developer.apple.com/documentation/bundleresources/information-property-list/nsmicrophoneusagedescription
-(read 2026-08-06) — "This key is required if your app uses APIs that access the device's microphone."
-Behaviour of an **empty** string is **UNKNOWN from Apple docs**; treat it as equivalent to missing.
-Guideline 5.1.1(ii) also requires purpose strings to "clearly and completely describe your use of the
-data" — so the Danish string must say the recording is sent to a speech-recognition service, not merely
-"we need the microphone".
-
-**Danish localization of the permission string.** "Localized values are stored in a strings file named
-**`InfoPlist.strings`**… If a localized version of a key does not exist, the routines return the value
-stored in the `Info.plist` file." —
-https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/AboutInformationPropertyListFiles.html
-(read 2026-08-06). Create `da.lproj/InfoPlist.strings` with
-`"NSMicrophoneUsageDescription" = "…dansk tekst…";`, keep the `Info.plist` value as the English fallback,
-and **add `da` to the project's localizations** or the `.lproj` is silently not built into the bundle.
-These files contain `æøå` — **write them with the Edit/Write tool, never a shell pipeline**, per the
-standing rule in `.claude/rules/working-in-this-tree.md`.
+**Device permission strings — none are needed (since 2026-09-18).** The app touches no microphone, camera,
+location or contacts, so `Info.plist` carries no `NS*UsageDescription` key at all, and
+`capacitorConfig.test.ts` fails if one comes back. A purpose string is a feature claim App Review reads, and
+the privacy policy states plainly that none of those devices is used — so adding one is a policy change,
+not a plumbing detail. With no permission string there is also nothing to localize, which is why the
+project has no `da.lproj`.
 
 **Danish as App Store primary language.** Primary language is "The default language for the metadata that
 appears on App Store product pages… You can change the primary language at any time" —
@@ -711,8 +685,7 @@ reference page was not read.
 **Webview configuration.** Keep Capacitor's defaults: `iosScheme: 'capacitor'`, `hostname: 'localhost'`.
 Capacitor's docs say keeping the hostname as `localhost` "allows the use of Web APIs that would otherwise
 require a secure context such as `navigator.geolocation` and `MediaDevices.getUserMedia`" —
-https://capacitorjs.com/docs/config (read 2026-08-06). This is what makes `useSpeechInput`'s
-`getUserMedia` + `MediaRecorder` path viable at all without a native rewrite.
+https://capacitorjs.com/docs/config (read 2026-08-06).
 
 **Universal-app consequences (the owner chose universal).** Set `TARGETED_DEVICE_FAMILY = 1,2`. Recommend
 locking **iPhone to landscape** via `UISupportedInterfaceOrientations~iphone` to match the landscape-first
@@ -794,7 +767,7 @@ Two things worth knowing if this ever has to be redone:
 
 Note the tier change ends the free allowance: S0 bills per character. The one-off prebake is a trivial
 amount, and steady-state spend stays near zero because prebaked files mean the live API is only reached for
-Sig et Ord's read-back. Exact per-character rates were not verified — see UNKNOWN 28.
+every line. Exact per-character rates were not verified — see UNKNOWN 28.
 
 **THE WORK — an AI-voice disclosure for parents.** This is a real obligation, it is not in Phase A, and it
 survives prebaking, because the audio is still synthetic when it plays off local disk. The Code of Conduct
@@ -818,7 +791,7 @@ is not the audience for it and it would violate nothing to omit it there. Sugges
 
 > Talen i appen er kunstigt fremstillet (AI-genereret tale fra Microsoft Azure).
 
-Natural home is the **Privatliv** group in "Til de voksne" (created in Phase A3), beside the microphone
+Natural home is the **Privatliv** group in "Til de voksne" (created in Phase A3), beside the
 switch and the `/privatliv` text — a parent reading what the app sends where is exactly the parent this
 disclosure is for. It needs no Microsoft branding; it needs to be true about synthesis. **Add the sentence
 to `src/config/legalContent.ts` so the existing guard covers it**, rather than as JSX, for the same reason
@@ -868,7 +841,7 @@ from memory and not from this file. **ONE thing is missing: a build.**
 | Territories | **1 of 175 — DNK only**; `availableInNewTerritories: false` | OK |
 | Release type | **MANUAL** | OK |
 | Review contact | name, email, phone; `demoAccountRequired: false` | OK — guest play |
-| Review notes | 612 chars: the gate's arithmetic, the hidden mic game, synthetic speech | OK |
+| Review notes | 612 chars: the gate's arithmetic, synthetic speech | OK |
 | Screenshots | 6 iPad + 6 iPhone, **all 12 replaced 2026-09-05** | OK |
 | **Build** | **NONE attached** | **THE GAP** |
 | Submitted | `reviewSubmissions` empty — never submitted | — |
@@ -921,7 +894,7 @@ contractual obligation rather than an Apple one.
 | **Sign-in prominence + guest adoption** | **DONE 2026-08-07** (`b99afb6`), implementing `tmp-prd-adult-login-visibility.md`. A guest-only "Log ind" row in the adult rail, and the guest book copied onto a first child via a defaulted-on checkbox, only when `rosterCount === 0`. |
 | **The adult door** | **2026-08-09** (`ae4b9cd`): the floating gear is deleted, the child's avatar (`ProfileBadge`, `[aria-label="Til de voksne"]`) is the trigger. This is what made the two screenshots stale. |
 | ~~**OPEN DEFECT**~~ | **CLOSED 2026-08-07** (`4f52dbb`, live). `/api/auth/*` answered OPTIONS with a bare 404 — and, unrecorded until the fix, real responses carried no `Access-Control-Allow-Origin` either. Both verified fixed against the deployed build. **No longer blocks TestFlight.** §4.0.1. |
-| **Phase A** | **DONE** and merged. Guest play, `/privatliv` + `/support`, mic consent gate, offline-readiness audit, iPhone 6.9" pass, Google-token audit. |
+| **Phase A** | **DONE** and merged. Guest play, `/privatliv` + `/support`, offline-readiness audit, iPhone 6.9" pass, Google-token audit. (A3's mic consent gate went with the game on 2026-09-18.) |
 | **Phase B** | **DONE 2026-08-07** (B1–B9), commits `14d5a83` + `94bb491`, plus `78841cb` — see the API-origin note below, which was a genuine gap in B and is now closed. The `ios/` tree is committed; **nothing has been compiled** — no Mac has touched it. Deviations below. |
 | **C7** Codemagic | **`codemagic.yaml` DONE** (`7c1908e`). Remaining is **OWNER**: connect the repo, and add the C6 `.p8` under the integration name **`bornelaering-asc`** (or rename it in the yaml). |
 | **C0** Azure paid tier | **DONE 2026-08-07.** Was F0; now S0, all 1884 clips re-synthesized. §3.11. |
@@ -978,7 +951,7 @@ turned out to be is in **"How it was actually closed"** at the end.
 
 | Route | GET | OPTIONS |
 |---|---|---|
-| `/api/progress`, `/api/profiles`, `/api/tts-azure`, `/api/stt` | — | **200**, `Allow-Origin: capacitor://localhost`, `Allow-Headers: Content-Type, Authorization` ✅ |
+| `/api/progress`, `/api/profiles`, `/api/tts-azure` | — | **200**, `Allow-Origin: capacitor://localhost`, `Allow-Headers: Content-Type, Authorization` ✅ |
 | `/api/auth/ok` | 200 | **404, no CORS headers** ❌ |
 | `/api/auth/family/status` | 401 (route alive) | **404, no CORS headers** ❌ |
 
@@ -1062,18 +1035,11 @@ the server answers correctly. Rung 3 remains the only thing that can say the she
 not from community reports):
 
 - **The Capacitor bridge DOES implement** `webView:requestMediaCapturePermissionForOrigin:…` and calls
-  `decisionHandler(.grant)` unconditionally, so a WKWebView `getUserMedia` will not prompt per call or
-  refuse silently. Confirmed in 8.5.0's source **and** as a selector in the shipped `ios-arm64` Mach-O
-  inside the checksum-matched xcframework. Pinned by `capacitorConfig.test.ts`.
+  `decisionHandler(.grant)` unconditionally. Confirmed in 8.5.0's source **and** as a selector in the
+  shipped `ios-arm64` Mach-O inside the checksum-matched xcframework. (The app requests no media capture,
+  so nothing depends on this any more.)
 - **Capacitor's xcframework carries its own `PrivacyInfo.xcprivacy` per slice and is code-signed**, which
   is what Apple requires of a listed SDK used as a binary dependency.
-
-**Still UNKNOWN, and only the iPad can answer it (rung 3):** whether `getUserMedia` + `MediaRecorder`
-actually capture usable audio from `capacitor://localhost` on iPadOS 17.7 — the OS permission prompt, the
-`AVAudioSession` category interaction with Howler and the Web Audio graph, and the recorded codec. The JS
-path is unchanged from Safari (`MIME_CANDIDATES` already falls back to `audio/mp4`), so the *code* risk is
-low; the *device* risk is untested. Fallback if it fails is unchanged: capture in a native plugin and keep
-`useSpeechInput`'s API shape.
 
 **Decisions already taken — do not re-litigate:** the web build is **bundled**, never `server.url` (§3.1);
 deployment target **17.0** against the iOS 26 SDK (§3.9); **universal**, iPhone landscape-locked; passkeys
@@ -1085,8 +1051,8 @@ ever** (§3.1).
 | # | Work | Notes |
 |---|---|---|
 | A1 | **Guest / local-play path** — app opens playable with no account | §3.2. `src/contexts/authGatePolicy.ts`, `AuthGate.tsx`; reuse `progressStore`'s inert-until-`attach()` design |
-| A2 | **Privacy policy** — Danish + English, in-app route and public URL | §3.5. Names Google STT, Azure Speech, Neon, Vercel; retention, deletion, withdrawal |
-| A3 | **Microphone consent gate** — Sig et Ord off by default, enabled in "Til de voksne" behind the PIN | §3.6. Plus graceful degradation when the mic is denied |
+| A2 | **Privacy policy** — Danish + English, in-app route and public URL | §3.5. Names Azure Speech, Neon, Vercel; retention, deletion, withdrawal |
+| A3 | ~~**Microphone consent gate**~~ | **WITHDRAWN 2026-09-18** — the speech-input game was removed |
 | A4 | **Offline-readiness audit** — the four items in §3.10 | Behaviour changes only; no new features |
 | A5 | **iPhone 6.9" layout pass** | §4.2 below |
 | A6 | **Sign in with Apple** — better-auth Apple provider | §3.4. **Blocked until membership is paid** (App ID capability). Sequence it after C1 |
@@ -1130,20 +1096,18 @@ on Windows, wrong on the Mac, and invisible from here:
 | # | Work | Notes |
 |---|---|---|
 | B1 | Capacitor scaffold; `webDir` = `dist`; **bundle `public/sounds` into the binary**; commit the generated `ios/` tree | §3.1. Do NOT set `server.url` |
-| B2 | `Info.plist`: `NSMicrophoneUsageDescription`, deployment target **17.0**, `TARGETED_DEVICE_FAMILY = 1,2`, iPhone landscape lock | §3.9 |
-| B3 | `da.lproj/InfoPlist.strings` with the Danish mic string; add `da` to project localizations | §3.9. Edit tool only — `æøå` |
+| B2 | `Info.plist`: deployment target **17.0**, `TARGETED_DEVICE_FAMILY = 1,2`, iPhone landscape lock | §3.9 |
 | B4 | `PrivacyInfo.xcprivacy`: tracking false, `CA92.1`, collected data types; verify Capacitor's own manifest is present | §3.9 |
 | B5 | Google sign-in via `@capacitor/browser` + deep-link return | §3.3. Must not run in the app's webview |
 | B6 | Remove passkeys from the shell's sign-in options (web deployment keeps them) | §3.3 |
-| B7 | **Mic spike** — verify `getUserMedia` + `MediaRecorder` actually work from `capacitor://localhost` on iPadOS 17.7 | see below |
 | B8 | Disable the update banner in the shell | §3.10 |
 | B9 | **AI-voice disclosure** — one Danish line in the Privatliv group, via `legalContent.ts` so the guard covers it | §3.11. Microsoft Code of Conduct obligation, not an Apple one. Not native work; it is here only because Phase A had shipped before it was found |
 
 **B7 was a genuine spike, and its static half came back clean.** Capacitor's docs say `localhost` grants
-the secure context `getUserMedia` needs (§3.9), and `NSMicrophoneUsageDescription` covers the OS
+the secure context a webview needs (§3.9), and no permission string is required
 permission. What was **UNKNOWN from first-party sources** was whether Capacitor's bridge implements the
 iOS 15+ WKUIDelegate method `webView:requestMediaCapturePermissionForOrigin:initiatedByFrame:type:
-decisionHandler:`; without it, a WKWebView can prompt on every `getUserMedia` call or refuse silently.
+decisionHandler:`; without it, a WKWebView can prompt on every media-capture call or refuse silently.
 Community reports pointed both ways (Apple Developer Forums threads 734363 and 692421;
 ionic-team/capacitor issues 5071 and 6759 — read 2026-08-06), which is why it needed a spike rather than
 a search.
@@ -1151,7 +1115,6 @@ a search.
 **Resolved 2026-08-07: it implements it and grants unconditionally** — in 8.5.0's source and as a selector
 in the shipped `ios-arm64` binary (§4.0). **The device half stays UNKNOWN and is rung 3.** The fallback is
 unchanged if it fails on the iPad: capture audio in a native plugin and hand the buffer to the webview,
-keeping `useSpeechInput`'s API shape.
 
 The whole of Phase B can only be *compiled* on Codemagic, so expect the loop "push → CI build → read log"
 rather than local iteration — **nothing in Phase B has been compiled yet.** B1–B9 were kept small and
@@ -1195,7 +1158,7 @@ one to ten per display size, `.jpeg`/`.jpg`/`.png`, no alpha or transparency.
 
 Also in C10: age band **6-8**; **"Made for Kids"** (permanent — §3.7); the App Privacy questionnaire per
 §3.7; the privacy policy URL; the updated age-rating questionnaire; and **English review notes** naming the
-guest path, the parental gate, and the intentionally-off microphone (§3.8).
+guest path and the parental gate (§3.8).
 
 ### 4.5 Phase D — submission to listed
 
@@ -1218,14 +1181,15 @@ Little of this is engineering; it is included so the owner is not surprised.
 
 Honest, ranked. Nothing here is fully mitigable by writing code.
 
-1. **Guideline 1.3 — the child's voice going to Google STT.** Apple's text prohibits sending PII or device
+1. ~~**Guideline 1.3 — the child's voice going to a recogniser.**~~ **GONE 2026-09-18** (no capture ships).
+   Historic: Apple's text prohibits sending PII or device
    information to third parties with **no processor carve-out**, and no page read addresses processors at
    all. The mitigations in §3.6 (off by default, adult consent behind the PIN, no retention at Google, no
    analytics) are the strongest available and are still **UNKNOWN** against a reviewer's reading. If
-   rejected here, the fallback is to ship without Sig et Ord and re-add it after a conversation with
+   rejected there, the fallback was to ship without the game — which is what happened, for other reasons, in
    App Review — which is why §3.6's design keeps the game behind a switch that can be defaulted off.
 2. **Guideline 4.2 — "beyond a repackaged website."** Bundling, genuine offline play, and native
-   mic/auth/haptics make a strong case, but 4.2 is a judgement call and a webview shell always attracts it.
+   auth/haptics make a case, but 4.2 is a judgement call and a webview shell always attracts it.
    24 games with authored art and Danish narration is a good answer; be ready to make it in writing.
 3. **Guideline 5.1.1(v) — the login gate.** Mitigated by the guest path (§3.2). Residual risk if the guest
    path is partial — e.g. if some sections still demand an account.
@@ -1271,9 +1235,7 @@ documentation is silent — not because nobody looked.
 20. Whether the owner is a **trader** under the EU DSA — a legal question, and his to answer.
 
 **Native behaviour**
-21. Whether Capacitor's bridge implements **`requestMediaCapturePermissionForOrigin`**, i.e. whether `getUserMedia` behaves in the shell. This is spike B7.
 22. Whether the current **Capacitor iOS pod ships its own `PrivacyInfo.xcprivacy`.**
-23. iOS behaviour of an **empty** `NSMicrophoneUsageDescription` string (treat as equivalent to missing).
 24. Everything about **real iPhone** behaviour — permanently rung-2 at best (§4.2).
 25. Whether the **native `AVAudioSession` category reaches the webview at all.** WebKit bug 167788 is titled "WKWebView seems to ignore AVAudioSession category settings in iOS app", reports go both ways, and Apple's own category doc rendered as a JS shell. So "a native shell fixes the ringer-switch silencing narration" is **NOT established** — it is a lever whose connection to anything here is a **rung-3 device test** in TestFlight. Cheap to try in Phase B; do not design around it, and do not repeat the claim that it helps the `resume()` class of bug, for which there is no evidence either.
 
@@ -1308,7 +1270,6 @@ All read **2026-08-06**.
 [Adding a privacy manifest](https://developer.apple.com/documentation/bundleresources/adding-a-privacy-manifest-to-your-app-or-third-party-sdk) ·
 [Third-party SDK requirements](https://developer.apple.com/support/third-party-SDK-requirements/) ·
 [Privacy requirement starts May 1 (2024-04-26)](https://developer.apple.com/news/?id=pvszzano) ·
-[NSMicrophoneUsageDescription](https://developer.apple.com/documentation/bundleresources/information-property-list/nsmicrophoneusagedescription) ·
 [Cocoa Keys (archive)](https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CocoaKeys.html) ·
 [About Info.plist files (archive)](https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/AboutInformationPropertyListFiles.html)
 

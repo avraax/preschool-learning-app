@@ -521,7 +521,7 @@ export const familyPlugin = (): BetterAuthPlugin => ({
   schema: familySchema,
   endpoints: {
     /**
-     * Mint the short-lived access JWT that /api/tts-azure and /api/stt require.
+     * Mint the short-lived access JWT that /api/tts-azure requires.
      *
      * Held in memory only on the client — one extra mint per reload, one fewer secret at rest
      * (§4.4). `expiresIn` is RELATIVE seconds so the client never compares its own clock against

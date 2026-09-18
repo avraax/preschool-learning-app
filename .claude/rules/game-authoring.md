@@ -83,7 +83,7 @@ Most task-based quizzes are a thin **config** over `src/components/common/Unifie
   hint inside text the child is being asked to decode**, because the child cannot tell your emphasis
   from the letter's actual shape.
 
-Only hand-roll a full component for genuinely novel mechanics (e.g. SpellingGame, SpeakWordGame, and
+Only hand-roll a full component for genuinely novel mechanics (e.g. SpellingGame and
 the dnd-kit Farver games — see `.claude/rules/drag-and-drop.md`). **MathOperationGame (+/−) and
 ComparisonGame stay hand-rolled** despite ~cloning the engine's scaffold: they have bespoke
 *post-correct-tap* animations (the equation reveal; Sammenlign's `?`→`>`/`<` swap plus the losing tile
@@ -126,7 +126,7 @@ needs that hook added first (it would touch all 7 config quizzes, so verify care
   whose answers ARE its focal content has no prompt/answer split, so it should own its column directly
   rather than wrap it in `PromptFocus` (see Sammenlign Tal). **The same applies to the `promptStage` SLOT
   itself** — a fixed 40% band at the TOP with the body beneath, right for prompt-then-answer and wrong when
-  the focal element IS the interaction: Sig et Ord's mic sat in that band with an empty body under it, so
+  the focal element IS the interaction: a game whose control sat in that band left an empty body under it, so
   the board hugged the top with half the screen unused (owner, 2026-08-04). Pass no `promptStage` and
   GameShell centres the column. Dense no-scroll grids (Lær Tal at 1–100 = 10 rows) must pass `TactileTile`'s
   **`compact`** prop — otherwise its 44px min-height + padding overflow the short rows and tiles overlap

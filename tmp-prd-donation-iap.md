@@ -26,7 +26,7 @@ The owner wants a way to **cover running costs**. Not income. Decisions taken 20
 **The target number, so nobody plans against a fantasy.** The only recurring cost this app has is the
 **Apple Developer Program, 99 USD/yr (~700 kr)**. Vercel Hobby, Neon and Codemagic are free tiers; the
 Azure prebake is a one-off with a near-zero steady state (App Store PRD §1213); the one per-use cost is
-Google STT for Sig et Ord, and that is already gated behind an account. So the goal is **~700–800
+and live Azure TTS, already gated behind an account. So the goal is **~700–800
 kr/yr**, which a handful of donations covers. A free Danish-only app, available in Denmark only, for a
 cohort of ~60k children, will not do materially better than that — and it does not need to.
 

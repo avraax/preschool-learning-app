@@ -25,16 +25,13 @@ your attention.
 |---|---|---|
 | No ads, no tracking, no **third-party** analytics SDK | **TRUE** | No analytics/ads package in `package.json`. The apparent `amplitude` matches are the parallax token |
 | **First-party anonymous counter** (added 2026-09-18) | **DISCLOSED** | `api/usage.ts` + `src/services/usagePing.ts`. Counts per day per screen, no identifier of any kind, no third party — Guideline 1.3 restricts THIRD-PARTY analytics only. Declared in `PrivacyInfo.xcprivacy` as Product Interaction / not linked / not tracking / Analytics, and in the privacy policy. **The old absolute "no analytics" claim was retired in the policy, the listing and `review-1.3-reply.md` on the same day** — pinned by `legalContent.test.ts` |
-| Never asks for birthdate, address, phone, location; no camera, no contacts | **TRUE** | No `navigator.geolocation`, no contacts API, no `video` constraint anywhere in `src/` |
-| The recording is not stored | **TRUE** on our side | `api/stt.ts` performs no write of any kind — it forwards and returns a transcript |
-| Speech recognition runs in the EU | **TRUE** | `STT_LOCATION = 'eu'`, `eu-speech.googleapis.com` (`api/stt.ts`) |
+| Never asks for birthdate, address, phone, location; no microphone, no camera, no contacts | **TRUE** | No `navigator.geolocation`, no contacts API, no `getUserMedia` call anywhere in `src/` |
 | Database is in the EU | **TRUE** | Neon `eu-central-1` (Frankfurt) |
 | **Bug reports are in the EU** | **WAS FALSE → fixed** | Reports carry a screenshot of the child's screen. The Blob store defaulted to `iad1` (Virginia) and stayed there for 27 days, unnoticed **because this table had no row for it** — "database" did not cover it. Now Blob store `bornelaering-bug-reports-eu` in `fra1`; a store's region cannot be changed, so it was recreated and the 25 reports copied across |
 | Speech synthesis region | **TRUE** | Azure `westeurope` |
 | Server functions in Frankfurt | **TRUE** | `vercel.json` `"regions": ["fra1"]` |
 | Deleting the account deletes the server rows | **TRUE** | Every family table declares `onDelete: 'cascade'` against `user` (`lib/auth-family-plugin.ts`) |
-| Mic off by default and unreachable until consent | **TRUE** | `utils/micConsent.ts` + both gates, pinned by `micConsent.test.ts` |
-| Consent can be withdrawn in one tap | **TRUE** | `PrivatlivPane` revokes with no dialog; the IA test forbids marking the row destructive |
+| **The app uses no microphone at all** (since 2026-09-18) | **TRUE** | The speech-input game, `/api/stt` and `NSMicrophoneUsageDescription` were all removed; `capacitorConfig.test.ts` fails if a purpose string or a `getUserMedia` call returns |
 | **"Der sendes ingen personoplysninger nogen steder" (guest)** | **WAS FALSE → fixed** | The app still fetches itself from Vercel and polls `/api/version` every 10 min. A server seeing an IP address is processing personal data. Now says no data *about the child* is sent, and admits the IP |
 | **The list of what gets uploaded** | **WAS INCOMPLETE → fixed** | `services/authDiagnostics.ts` auto-uploads a report **with a screenshot** on a failed sign-in, with no user action. Disclosed nowhere. Now disclosed in both languages |
 | **"spillene virker uden internet"** | **NOT TRUE YET** | Prebaked audio is fetched from `/sounds/tts/` and there is no service worker, so a cold launch offline fails. Becomes true when Phase B1 bundles the assets into the binary. **Cut the line if B1 slips** |
@@ -69,7 +66,7 @@ Checked against the article text (https://gdpr-info.eu/art-13-gdpr/, read 2026-0
 | 5.1.1(i) — identify data collected, how, and all uses | met |
 | 5.1.1(i) — **equal-protection confirmation** for every third party | met, and pinned by a test |
 | 5.1.1(i) — retention/deletion and how to revoke consent | met |
-| 5.1.2(i) — disclose sharing with third parties incl. third-party AI, and obtain explicit permission | met: the consent screen names Google before the mic can be switched on |
+| 5.1.2(i) — disclose sharing with third parties incl. third-party AI, and obtain explicit permission | met: the policy names every processor, and no child data of any kind is shared without an account |
 | 1.3 — no links out of a Kids app except behind the parental gate | met: the text renders in-app; the only outbound thing is an email address, behind the gate |
 
 ## 3. The Azure question — answered, and it produced a listing change
@@ -103,25 +100,14 @@ within your app" and that you must not "redistribute or resell the audio outside
 consistent with shipping it inside the binary, but that is a **search-snippet-level source, not
 contractual language**. Treat as soft-confirmed.
 
-## 4. Google STT data logging — resolved from first-party docs
+## 4. Google speech-to-text — no longer applicable
 
-Google's own documentation (`docs.cloud.google.com/speech-to-text/docs/data-logging`, read 2026-08-06):
+The app used Google Cloud Speech-to-Text for one game, "Sig et Ord". That game and `/api/stt` were
+removed in full on 2026-09-18, so Google receives no audio and the data-logging question (closed
+2026-09-07 — disabled for the project, and unsupported by the V2 API the app called) no longer bears on
+anything. The section is kept as a marker so a future reader does not go looking for a processor the
+policy no longer names.
 
-> "**By default, Cloud Speech-to-Text does not log customer audio data or transcripts.**"
-> "However, to help Cloud Speech-to-Text better suit your needs, you can **opt into** the *data logging*
-> program."
-
-So the policy's claim is the documented default, and enabling it is a deliberate opt-in tied to
-discounted pricing.
-
-**CLOSED 2026-09-07 by the owner, and it is off twice over.** The console page (APIs & Services →
-Enabled APIs → Cloud Speech-to-Text API → **Data logging** tab, per-project, project
-`preschool-learning-app-466719`) reads: *"Data logging is **disabled** for this project for Google Cloud
-Speech API"*, and the only button offered is "Enable data logging". The same page carries a second,
-stronger fact: *"Note that the V2 version of the API does not yet support data logging and discount
-pricing will not apply to it."* `api/stt.ts` calls **V2** (recognizer `eu/chirp_3`), so data logging is
-not merely unticked — it is unavailable for the API the app actually uses. Re-check only if the app is
-ever moved back to V1.
 
 ## 5. What is still genuinely yours
 

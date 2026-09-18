@@ -3,7 +3,7 @@ paths:
   - "src/components/ordleg/*.tsx"
 ---
 
-# Games catalog — Ordleg — `ordleg.read/.spelling/.mic`
+# Games catalog — Ordleg — `ordleg.read/.spelling`
 
 One section of the games catalog. The cross-game invariants it relies on — the difficulty spine, the
 no-giveaway rule, pool-vs-bag, both-gestures — are in `.claude/rules/games-catalog.md`, which loads
@@ -17,9 +17,9 @@ alongside this file.
   picture-tap hint.
 - Stav Ordet (hand-rolled): after 2 wrong taps on a slot the correct tile pulses (never-fail
   next-letter hint; reduced-motion → static glow; using it costs a star).
-- Sig et Ord is **open-ended** — say any word → it's spelled back. **No target word, no STT grading**;
-  a recognized word counts, an STT mishear stays on the same question without counting. It stays
-  **hold-to-talk** (owner, 2026-08-04, offered tap-to-talk with auto-stop and chose the hold), and the mic
-  is opened once per visit rather than per press. It has **no `promptStage`**: the mic IS the board, so it
-  owns its column and GameShell centres it — the prompt band left half the screen empty at idle. The
-  capture rules (model, mic lifecycle, transcript normalisation) are in `.claude/rules/audio-system.md`.
+- **There is no speech-input game.** Ordleg had a third game, "Sig et Ord", which recorded the child
+  and sent the audio to a speech recogniser; it was removed in full on 2026-09-18 — game, `/api/stt`,
+  the mic consent switch, the iOS purpose string and every privacy disclosure that described it. **The
+  app now uses no microphone at all**, and `capacitorConfig.test.ts` fails if a purpose string or a
+  `getUserMedia` call comes back. Do not reintroduce one without reopening `src/config/legalContent.ts`,
+  which states plainly to parents that neither mic nor camera is used.

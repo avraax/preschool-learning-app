@@ -3,7 +3,7 @@
 // This is the guard for the worst failure mode Phase B had: a relative `/api/...` call inside the
 // shell resolves against `capacitor://localhost`, i.e. the app BUNDLE, and Capacitor's local server
 // answers it with the SPA's index.html. No 404, no exception, no console error — sign-in, progress
-// sync, "Sig et Ord" and bug reports simply never reach a server, while every game keeps working
+// sync and bug reports simply never reach a server, while every game keeps working
 // because the games are offline by design. The build looks completely healthy and is not.
 //
 // It cannot be caught by a type, a lint rule, a browser harness or a local build, because on the web
@@ -118,7 +118,7 @@ test('NO source file calls a relative /api path directly', () => {
 })
 
 test('the paid-endpoint wrapper resolves the URL once, and uses it for the retry too', () => {
-  // `authorizedFetch` covers ttsClient, useSpeechInput, VoiceLab and AuditHarness in one place. Its
+  // `authorizedFetch` covers ttsClient, VoiceLab and AuditHarness in one place. Its
   // 401 path fires a SECOND fetch; resolving per-call instead of once would leave that retry relative
   // — so the first request would work in the shell and only the token-expiry retry would fail, which
   // is a bug that shows up an hour into a play-test and nowhere else.

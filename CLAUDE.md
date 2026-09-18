@@ -24,8 +24,6 @@ version was three sentences.
 - Audio: `SimplifiedAudioController` → `ttsClient` → **Azure AI Speech** (sole TTS provider) → Web Speech
   (fallback) → Howler (SFX). Danish da-DK Christel; en-US Ava for Engelsk. Pronunciation via a
   hosted W3C PLS lexicon (`public/da-DK.pls`).
-- Speech input (Sig et Ord): Google Cloud STT v2 via `/api/stt` + `useSpeechInput`, recognizer
-  **`eu/chirp_3`** — `short` returns zero results for a single isolated Danish word (measured)
 - React Router DOM v7, routes lazy-loaded via `lazyWithReload`. One hand-authored PWA manifest
   (`public/manifest.json`); **no service worker** (network-only)
 
@@ -119,8 +117,8 @@ points to, loaded when you touch matching files.
   a labelled row. Child-facing gates pass **`{ force: true }`**, its IA is **data**,
   **each irreversible action is type-to-confirm**, and **`resetAll` needs a reason**. → `adult-surface.md`.
 - **Accounts / auth**: one adult account (Google or Apple OIDC + passkey) with N child profiles and local-first
-  progress sync. **Guest play needs no account** — `AuthGate` gates sync, not play. `/api/tts-azure` +
-  `/api/stt` need a 15-minute access JWT; `?nogate=1` bypasses both gates in DEV. → `auth.md`.
+  progress sync. **Guest play needs no account** — `AuthGate` gates sync, not play. `/api/tts-azure`
+  needs a 15-minute access JWT; `?nogate=1` bypasses the gate in DEV. → `auth.md`.
 - **API endpoints**: the `api/*.ts` Vercel functions are a trust boundary — scoped CORS + origin
   allow-list + per-IP rate limit + no error-detail leaks, via `lib/server-utils.ts` and **mirrored in
   `dev-server.js`**. → `api-endpoints.md`.

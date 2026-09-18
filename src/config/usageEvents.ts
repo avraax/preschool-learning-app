@@ -60,10 +60,6 @@ export const ROUTE_EVENTS: Readonly<Record<string, string>> = {
   '/ordleg': 'route:ordleg_menu',
   '/ordleg/read': 'route:ordleg_read',
   '/ordleg/spelling': 'route:ordleg_spelling',
-  // Being removed in a parallel session (2026-09-18). Harmless to leave here once the route is gone —
-  // `ROUTE_EVENTS` may hold keys no route maps to; the test only requires the reverse, that every
-  // route in App.tsx HAS a key. Delete it with the game.
-  '/ordleg/mic': 'route:ordleg_mic',
 
   '/learning/memory/letters': 'route:memory_letters',
   '/learning/memory/numbers': 'route:memory_numbers',

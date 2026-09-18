@@ -52,8 +52,7 @@ nothing tells anybody why.
 - **No adaptive difficulty.** Standing owner rule, untouched. W2 changes draw order only.
 - **No schema v5.** W2 stays out of the synced CRDT (see D2).
 - No new games, no new sections, no change to XP, `taskXp`, the reward curve, the book, or the ceremony.
-- No change to Sig et Ord (child ASR runs to ~35% WER at this age; its ungraded open-ended design is
-  the only honest one and the analysis explicitly said leave it).
+-   the only honest one and the analysis explicitly said leave it).
 - No change to Læs Ordet's silence (see W3's exception) or to the "a board must not restate its own
   answer" rule outside W4's degraded mode.
 
@@ -123,7 +122,6 @@ shape `difficulty.ts` uses. Expected exemptions, each for a real reason:
   both sides instead.
 - `UnifiedMemoryGame` / `MemoryGame.tsx:52,95` — a board is already `shuffle(pool).slice()`, i.e. a
   one-pass bag by construction.
-- `ordleg.mic` — no target word exists.
 - Distractor selection everywhere — distractors are already `shuffle`d and are not the thing that
   repeats; converting them is scope creep.
 

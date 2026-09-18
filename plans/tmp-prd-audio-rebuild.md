@@ -2,7 +2,7 @@
 
 > **Status:** Ready to implement in a fresh session.
 > **Type:** Internal rebuild of the audio subsystem. Behavior-preserving for the games; provider + engine change underneath.
-> **Owner decision (2026-06-14):** Do a **scoped rebuild**, NOT a from-scratch rewrite. Rebuild the playback engine, swap TTS provider to **Azure AI Speech**, add a **pronunciation lexicon**; refactor backend/cache/permission/logging; **keep** the `useSimplifiedAudio` hook API, the game components, and the speech-input (mic) flow unchanged.
+> **Owner decision (2026-06-14):** Do a **scoped rebuild**, NOT a from-scratch rewrite. Rebuild the playback engine, swap TTS provider to **Azure AI Speech**, add a **pronunciation lexicon**; refactor backend/cache/permission/logging; **keep** the `useSimplifiedAudio` hook API and the game components unchanged.
 >
 > **Confirmed scope decisions (2026-06-14):**
 > 1. **Remove Google TTS entirely** at cutover and **move the English section to an Azure `en-GB` voice** too → single TTS provider (Azure).
@@ -36,7 +36,7 @@ The audio/TTS system was built ~1 year ago and has thrown errors for the app's e
 
 ### 1.1 The two root-cause bugs ("why it's been broken for a year")
 
-1. **Server errors were never logged.** `api/tts.ts:111` and `api/stt.ts:96` call `fetch('/api/log-error', …)` with a **relative URL**. In a Vercel serverless function there is no origin, so `fetch` throws `TypeError: Failed to parse URL`, caught and reduced to a `console.warn`. Every server-side TTS/STT failure (Google credential errors, quota, timeouts) was silently dropped. This is why the `/api/log-error` store is always empty.
+1. **Server errors were never logged.** `api/tts.ts:111` calls `fetch('/api/log-error', …)` with a **relative URL**. In a Vercel serverless function there is no origin, so `fetch` throws `TypeError: Failed to parse URL`, caught and reduced to a `console.warn`. Every server-side TTS failure (credential errors, quota, timeouts) was silently dropped. This is why the `/api/log-error` store is always empty.
 
 2. **The playback engine reports success as failure and failure as success.** In `googleTTS.ts`, `playAudioFromData` (lines ~537–839) decides completion via a 4-way race: `ended` / `timeupdate` / `pause` / a flat timeout. A flat **5s iOS timeout `reject`s healthy audio** longer than 5s; the **`pause` path can resolve clips that were actually cancelled**. Plus: a 75-phrase preload burst at startup trips the **circuit breaker** (3 failures → all audio disabled for 30s on launch), and a `voiceschanged`-`once` listener with no timeout can **hang forever**.
 
@@ -45,11 +45,10 @@ The audio/TTS system was built ~1 year ago and has thrown errors for the app's e
 | Layer | Verdict | Evidence (file:line) |
 |---|---|---|
 | Playback engine — `googleTTS.ts` `playAudioFromData` + `synthesizeAndPlay` | **REBUILD** | ~300-line `new Promise(async …)` executor; 3-stage iOS retry ladder (716–817); overlapping double-Web-Speech (804 + 1033); completion race (555–661); `voiceschanged`-once hang (932) |
-| Backend — `api/tts.ts`, `api/stt.ts`, `dev-server.js` | **REFACTOR** | relative-URL log bug (tts.ts:111, stt.ts:96); dev/prod drift (no 5000-char guard, CORS, error-string mismatch in dev-server.js); open/unauthenticated endpoints; `as any` at the untrusted boundary (tts.ts:86) |
+| Backend — `api/tts.ts`, `dev-server.js` | **REFACTOR** | relative-URL log bug (tts.ts:111); dev/prod drift (no 5000-char guard, CORS, error-string mismatch in dev-server.js); open/unauthenticated endpoints; `as any` at the untrusted boundary (tts.ts:86) |
 | Caching — localStorage base64 in `googleTTS.ts` | **REFACTOR** | swallowed `QuotaExceededError` (311–312); double-computed cache key (424 + 287); item-count cap not byte cap (344–350); `cleanCache` defined but never called |
 | Permission/readiness — `SimplifiedAudioContext.tsx` | **REFACTOR** | latches `isWorking=true` on **unverified** synth unlock (122,130–137); no recovery if iOS context later suspends; no non-iOS prompt (155,200); fragile controller↔context mutable-global bridge (controller 13–18 ↔ context 223–229) |
 | Hook contract — `useSimplifiedAudio.ts` | **KEEP** | small, sane surface; ~20 components depend on it through 2 shared quiz components |
-| Speech input — `useSpeechInput.ts` | **KEEP** | cleanest module; correctly coordinated with playback (SpeakWordGame.tsx:94–95) |
 | Logging — `remoteConsole.ts` | **RETHINK** | on-by-default in prod; double-logs every audio issue (348–364); ephemeral per-instance store you can't read back |
 
 ### 1.3 Audit cleanup notes (dead/confusing code found — delete during rebuild)
@@ -74,7 +73,6 @@ The audio/TTS system was built ~1 year ago and has thrown errors for the app's e
 
 **Non-goals**
 - No redesign of the games or the hook's method names/signatures.
-- No change to the speech-input (mic/STT) capture flow beyond what's needed to keep it coordinated.
 - The `/voicelab` page and `VoiceOverridePanel` are throwaway tools (see §10) — extend for Azure auditioning, then remove after the voice is locked.
 
 **Decided (was previously open):**
@@ -91,14 +89,13 @@ src/
   services/googleTTS.ts                (1138 lines) playback engine: synthesize → /api/tts, cache, iOS playback, Web Speech fallback
   contexts/SimplifiedAudioContext.tsx  React permission/readiness provider (3 booleans: isWorking/needsUserAction/showPrompt)
   hooks/useSimplifiedAudio.ts          the component hook (API to PRESERVE — see §4)
-  hooks/useSpeechInput.ts              mic capture → /api/stt (KEEP as-is)
   components/common/SimplifiedAudioPermission.tsx   iOS permission modal
   config/tts-config.ts                 thin typed re-export of shared-tts-config.js
   config/danish-phrases.ts             DANISH_PHRASES, getDanishNumberText(), success/encouragement phrases
   config/voiceOverride.ts              THROWAWAY runtime override (voicelab tool)
   components/voicelab/                  THROWAWAY /voicelab page + VoiceOverridePanel + voicelabData
   utils/remoteConsole.ts               console interception → /api/log-error (RETHINK)
-api/tts.ts, api/stt.ts, api/log-error.ts   Vercel serverless (Node)
+api/tts.ts, api/log-error.ts   Vercel serverless (Node)
 dev-server.js                          local Express mirror of the api/* handlers
 shared-tts-config.js                   single source for voice + audioConfig (imported by client + servers)
 ```
@@ -151,7 +148,7 @@ interface SimplifiedAudioHook {
 
 (Full option-object shapes for `handleCompleteGameResult` / `handleGameCompletion` / `playCelebrationWithStandardTiming` are in the current `useSimplifiedAudio.ts` lines 50–86 — copy them verbatim.)
 
-**Real usage (from the coupling audit)** — the heavily-used members are: `speak` (~14 components), `updateUserInteraction` (~10), `isAudioReady` (8), `cancelCurrentAudio` (8), `playGameWelcome` (7), `announceGameResult`, `handleCompleteGameResult`/`handleGameCompletion`, `isPlaying` (read-only visual pulse), plus `stopAll`+`speakLetter` (SpeakWordGame only). ~20 components depend on the hook, but most route through `UnifiedQuizGame` and `UnifiedMemoryGame`. Keep all methods (even rarely-used ones) to guarantee zero call-site churn.
+**Real usage (from the coupling audit)** — the heavily-used members are: `speak` (~14 components), `updateUserInteraction` (~10), `isAudioReady` (8), `cancelCurrentAudio` (8), `playGameWelcome` (7), `announceGameResult`, `handleCompleteGameResult`/`handleGameCompletion`, `isPlaying` (read-only visual pulse), plus `stopAll`+`speakLetter`. ~20 components depend on the hook, but most route through `UnifiedQuizGame` and `UnifiedMemoryGame`. Keep all methods (even rarely-used ones) to guarantee zero call-site churn.
 
 `SimplifiedAudioController` keeps these methods as the facade; only their **internals** change to call the new engine. The number-as-words behavior (`getDanishNumberText`) and the `GAME_WELCOME_MESSAGES` map inside `playGameWelcome` must be preserved.
 
@@ -258,11 +255,11 @@ Skeleton:
 
 ## 9. Backend, permission, and logging refactors
 
-### 9.1 Backend (`/api/tts-azure`, shared core with STT)
+### 9.1 Backend (`/api/tts-azure`)
 - Add `api/tts-azure.ts` mirroring the structure of `api/tts.ts` but calling Azure (§6.3). Mirror it in `dev-server.js` **from a shared module** so dev/prod can't drift (extract a shared `synthesize()` used by both, or at minimum keep them byte-identical and tested).
-- **Fix the logging fan-out bug:** replace `fetch('/api/log-error')` with either an in-process call or an absolute URL built from the request host. Do this in `api/tts.ts`, `api/stt.ts`, and the new endpoint.
+- **Fix the logging fan-out bug:** replace `fetch('/api/log-error')` with either an in-process call or an absolute URL built from the request host. Do this in `api/tts.ts` and the new endpoint.
 - **Validate inputs** at the boundary (voice/audioConfig shape) instead of `as any`.
-- **Lock down abuse:** add an origin allowlist (the app's own domain) or a lightweight shared secret on `/api/tts*` and `/api/stt`; protect `DELETE /api/log-error`. These are open today (billing-abuse exposure).
+- **Lock down abuse:** add an origin allowlist (the app's own domain) or a lightweight shared secret on `/api/tts*`; protect `DELETE /api/log-error`. These are open today (billing-abuse exposure).
 - **Google is removed entirely at cutover** (owner decision). During the build, keep the Google `/api/tts` endpoint until Azure is validated end-to-end, then delete `api/tts.ts` + its `dev-server.js` mirror + the Google client/config. The **English section also moves to Azure `en-GB`** (no Google path remains). Web Speech stays as the sole runtime fallback.
 
 ### 9.2 Permission state machine (`SimplifiedAudioContext.tsx`)
@@ -338,4 +335,4 @@ Remaining:
 ---
 
 ## 15. Teardown of this effort's scaffolding
-After cutover: remove `/voicelab`, `VoiceOverridePanel`, `src/config/voiceOverride.ts`, `src/components/voicelab/`, the Google `/api/tts` endpoint (and its dev mirror) if fully replaced, and any override branches in the engine. Keep `api/tts-azure.ts`, the lexicon, the new engine, the refactored permission/cache/logging, the hook API, the games, and `useSpeechInput`.
+After cutover: remove `/voicelab`, `VoiceOverridePanel`, `src/config/voiceOverride.ts`, `src/components/voicelab/`, the Google `/api/tts` endpoint (and its dev mirror) if fully replaced, and any override branches in the engine. Keep `api/tts-azure.ts`, the lexicon, the new engine, the refactored permission/cache/logging, the hook API and the games.

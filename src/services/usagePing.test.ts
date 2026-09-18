@@ -116,8 +116,6 @@ test('the payload carries the event and the version, and nothing else', async ()
   __resetUsagePingForTests()
   const calls = await withFetch(
     () => Promise.resolve({ ok: true }),
-    // Deliberately NOT the microphone route: it is being removed in a parallel session, and a test
-    // fixture should not be a screen someone is deleting.
     () => reportRoute('/ordleg/read'),
   )
   assert.equal(calls.length, 1)

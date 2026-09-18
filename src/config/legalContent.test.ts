@@ -44,18 +44,18 @@ const textOf = (doc: { title: string; intro: string[]; sections: { heading: stri
     ...doc.sections.flatMap((s) => [s.heading, ...(s.body ?? []), ...(s.bullets ?? [])]),
   ].join('\n')
 
-test('the policy names all four processors, in BOTH languages', () => {
+test('the policy names all three processors, in BOTH languages', () => {
   // PRD §3.5 lists exactly these. Apple never sees the Danish page's contents in review notes, so the
   // English one has to carry the same disclosure — a reviewer reads English.
   const da = textOf(PRIVACY_DA)
   const en = textOf(PRIVACY_EN)
-  for (const needle of ['Google Cloud Speech-to-Text', 'Azure AI Speech', 'Neon', 'Vercel']) {
+  for (const needle of ['Azure AI Speech', 'Neon', 'Vercel']) {
     assert.ok(da.includes(needle), `the Danish policy never names ${needle}`)
     assert.ok(en.includes(needle), `the English policy never names ${needle}`)
   }
   // Guard the guard: the loop above passes vacuously if PROCESSORS is emptied and the names happen to
   // survive in some other paragraph.
-  assert.equal(PROCESSORS.length, 4)
+  assert.equal(PROCESSORS.length, 3)
 })
 
 test('every processor says what it actually receives', () => {
@@ -78,20 +78,24 @@ test('the policy explains retention, deletion AND how to withdraw consent', () =
   assert.ok(da.includes('slet'), 'no deletion path described')
   assert.ok(da.includes('nulstil fremgang'), 'the in-app per-child reset is not named')
   assert.ok(da.includes('slet kontoen helt'), 'the in-app account deletion is not named')
-  // 5.1.1(i) asks specifically for revoking consent, and here that IS turning the microphone back off.
+  // 5.1.1(i) asks specifically for revoking consent.
   assert.ok(
-    /trækker samtykket tilbage|slå mikrofonen fra/.test(da),
-    'the policy never says how to withdraw microphone consent',
+    /trække et samtykke tilbage|trække det tilbage/.test(da),
+    'the policy never says how to withdraw consent',
   )
 })
 
-test('the policy states the microphone is OFF by default and names Google as the recipient', () => {
-  // The single most consequential claim on the page: it is what makes §3.6's design legible to a
-  // reviewer. If the default ever changes, this test is the thing that should stop the change.
-  const da = textOf(PRIVACY_DA)
-  assert.match(da, /slået FRA|slået fra som standard/)
-  assert.match(da, /Google Cloud Speech-to-Text/)
-  assert.match(da, /gemmes ikke/)
+test('the policy states plainly that no microphone or camera is used', () => {
+  // The app has no speech input and no camera, and a Kids Category reviewer looks for that claim. If a
+  // feature ever reaches for either device again, this test is the thing that should stop the change:
+  // the claim below would become false the moment `getUserMedia` reappears.
+  for (const [lang, doc] of [['Danish', PRIVACY_DA], ['English', PRIVACY_EN]] as const) {
+    const t = textOf(doc)
+    assert.match(t, /mikrofon|microphone/, `${lang}: the policy never addresses the microphone`)
+    assert.match(t, /bruger ikke mikrofon|bruger hverken mikrofon|uses neither microphone/, `${lang}: the policy does not state the app uses no microphone`)
+  }
+  // …and no surface may claim the app RECEIVES audio from the child.
+  assert.ok(!/Speech-to-Text/.test(textOf(PRIVACY_DA) + textOf(PRIVACY_EN)), 'a speech-recognition processor is back in the policy')
 })
 
 test('the policy promises no ads, no tracking and no THIRD-PARTY analytics', () => {
@@ -197,8 +201,8 @@ test('the AI-voice disclosure reaches the ADULT SURFACE, not just the policy pag
   // App Store PRD §3.11 / B9. The policy page already says the voice is synthetic, but a privacy policy
   // is not where a parent looks — the obligation Microsoft's Code of Conduct writes is that parents can
   // "understand the role of synthetic media and make an informed decision", which means the sentence has
-  // to sit where the parent already is: the Privatliv group in "Indstillinger", beside the microphone
-  // switch. So this pins the CONTENT and the RENDER SITE, because either one alone passes vacuously.
+  // to sit where the parent already is: the Privatliv group in "Indstillinger", beside the two
+  // documents. So this pins the CONTENT and the RENDER SITE, because either one alone passes vacuously.
   assert.match(AI_VOICE_DISCLOSURE_DA.body, /kunstigt fremstillet|AI-genereret/)
   assert.ok(
     AI_VOICE_DISCLOSURE_DA.body.length > 40,

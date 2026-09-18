@@ -168,7 +168,6 @@ const SEAM_GAMES = [
   'components/math/MathOperationGame.tsx',
   'components/math/ComparisonGame.tsx',
   'components/ordleg/SpellingGame.tsx',
-  'components/ordleg/SpeakWordGame.tsx',
   'components/farver/FarvejagtGame.tsx',
   'components/farver/RamFarvenGame.tsx',
   'components/farver/NuancerGame.tsx',

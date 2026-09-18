@@ -1,4 +1,4 @@
-# PRD: Two New Sections — Engelsk (English) & Ordleg (Word Games + Speech)
+# PRD: Two New Sections — Engelsk (English) & Ordleg (Word Games)
 
 **Date:** 2026-06-13
 **Author context:** Planned interactively; to be implemented in a later session.
@@ -7,7 +7,7 @@
 
 This PRD defines **two new top-level sections**:
 1. **Engelsk** — beginner English learning (green theme).
-2. **Ordleg** — Danish word games (teal theme): the existing **Stav Ordet** game *moves here*, plus a brand-new **microphone "say a word"** game (the app's first speech-*input* feature).
+2. **Ordleg** — Danish word games (teal theme): the existing **Stav Ordet** game *moves here*.
 
 ---
 
@@ -34,15 +34,10 @@ Confirmed by reading the codebase:
 **Repo state when this PRD was written (2026-06-13):** The prior PRD's work (`tmp-prd-game-upgrades.md`) is **uncommitted on `master`** — difficulty upgrades, plus `SubtractionGame.tsx` and `SpellingGame.tsx` (the latter currently at route **`/alphabet/spelling`**, registered in `categoryThemes.alphabet.games`). Start from the current working tree, not a clean checkout. Stav Ordet will be **relocated** to `/ordleg/spelling` by this PRD (Part 2.1).
 
 **Google Cloud setup (REQUIRED for the speech game — do this first):**
-- The project already has **Text-to-Speech** enabled. **Speech-to-Text is a separate API** — enable the **Cloud Speech-to-Text API** in the same GCP project (`gcloud services enable speech.googleapis.com`, or via Console).
-- Ensure the existing service account (the one in `GOOGLE_CLOUD_*` env vars / `.env.local`) has a role permitting STT, e.g. **`roles/speech.client`** (or it already works under the broad role it uses for TTS — verify, don't assume).
-- No new credentials/env vars are needed beyond confirming the above; STT reuses `GOOGLE_CLOUD_PROJECT_ID` / `GOOGLE_CLOUD_CLIENT_EMAIL` / `GOOGLE_CLOUD_PRIVATE_KEY(_BASE64)`.
-- For privacy (children's app), opt out of STT data logging (note: may carry a price surcharge).
 
 **Local dev environment (Windows) — avoid a known time-sink:**
 - Run **both** servers from **Windows PowerShell**, in two terminals: `npm run dev:api` (Express API, port 3001) and `npm run dev` (Vite, port 5173, proxies `/api` → `127.0.0.1:3001`).
 - **Do NOT launch `npm run dev` from a WSL/Ubuntu shell.** If Vite runs in WSL while the API runs on Windows, they're in different network namespaces and every `/api/*` call returns **502** (Vite-in-WSL can't reach `127.0.0.1:3001` on Windows). Tell-tale: Vite prints a `10.255.255.254` Network URL (WSL) instead of the real LAN IP. Both terminals must be native Windows PowerShell.
-- **Mic testing requires a secure context.** `localhost` is secure (dev OK). To test the speech game on the **actual iPad**, you need HTTPS — use a Vercel preview deploy (preferred) or an HTTPS tunnel; plain `http://<LAN-IP>:5173` will have `navigator.mediaDevices` undefined on the iPad. And test in **installed-PWA standalone mode**, not just the Safari tab (see Part 3.4 risks).
 
 ---
 
@@ -138,13 +133,13 @@ async speakEnglish(text: string): Promise<string> {
 
 ---
 
-# PART 2 — Ordleg (Word Games + Speech Section)
+# PART 2 — Ordleg (Word Games Section)
 
 **Section id:** `ordleg`
 **Route base:** `/ordleg`
 **Danish section name:** `Ordleg`
 **Theme color:** **Teal** (suggested palette below).
-**Contents:** (1) **Stav Ordet** (moved here), (2) **new microphone game**.
+**Contents:** **Stav Ordet** (moved here).
 
 ### 2.1 Move Stav Ordet into Ordleg
 
@@ -159,97 +154,9 @@ Changes:
 
 > Note: this is a relocation, not a rewrite. Keep the game's behavior identical.
 
-### 2.2 NEW GAME — Microphone "Say a Word" (Danish speech input)
+# PART 3 — Routes, Navigation & Home Screen
 
-**Working Danish title:** `Sig et Ord` *(alternatives to consider: "Den Magiske Mikrofon", "Hvad Siger Du?")*
-**Route:** `/ordleg/mic` (or `/ordleg/sig-et-ord`)
-**Component:** `src/components/ordleg/SpeakWordGame.tsx`
-
-This is the app's **first speech-input feature**. It is **open-vocabulary**: the child says *any* Danish word; the app recognizes it, shows it, reads it back, and spells it.
-
-#### Gameplay flow
-1. **Idle "magic mic" screen:** big mic button + friendly character inviting him to speak. No prompt word (open vocabulary). Danish: e.g. "Sig et ord, så staver jeg det for dig!"
-2. **Hold to talk:** he **presses and holds** the mic button while speaking, **releases** to send. (Pointer events — works on iPad + desktop.)
-3. **Recognize:** audio → Google Cloud STT (Danish) → transcript.
-4. **If multiple words / a sentence:** use **only the first word**.
-5. **If nothing recognized** (silence/noise/unclear/low confidence): **friendly retry** — character says e.g. *"Det hørte jeg ikke helt – prøv igen!"* and re-enables the mic. No failure feeling.
-6. **On success:**
-   - **Show the recognized Danish word as text** (large, Comic Sans).
-   - **Read it back** via TTS (da-DK).
-   - **Spell it out:** each letter appears on screen **one-by-one** while the Danish **letter sound** plays (reuse the per-letter audio approach from Stav Ordet), then say the whole word again.
-   - Celebration effect.
-7. Return to idle for the next word.
-
-#### UX / behavior details
-- **Recording trigger:** hold-to-talk. Start capture on `pointerdown` (this *is* the user gesture iOS requires for `getUserMedia`), stop on `pointerup`/`pointercancel`/`pointerleave` (handle all three so a finger sliding off still stops). Call `e.preventDefault()` to suppress the iOS long-press callout menu.
-- **Max-duration safety cap:** auto-stop at **~5 s** (single words need 3–5 s; also caps cost at the 15-s billing floor and prevents a stuck button recording forever). **Min duration ~300–500 ms** to ignore accidental taps.
-- **Visual while recording:** clear "listening" state (pulsing mic / simple animation). No "Lytter…" full-screen takeover — keep UI present per game rules.
-- **Spelling visuals:** "Word text + letters" — show the full recognized word as text, then animate letters building up with per-letter audio.
-- **Release mic tracks** (`track.stop()`) after each utterance so the iOS mic indicator clears and audio output routing isn't held.
-
----
-
-# PART 3 — Speech-to-Text Technical Implementation (the new capability)
-
-> Engine decision: **Google Cloud Speech-to-Text**, reusing the existing Google Cloud project/service-account credentials (same env vars as TTS). Chosen because it gives **consistent Danish recognition on iPad Safari AND Chrome** — browser Web Speech API is unreliable for Danish on iOS Safari.
-
-### 3.1 Recognition API & model
-- **Use Speech-to-Text v2** with the **`@google-cloud/speech` v2 client** (`SpeechClient` from the `.v2` namespace). Add dependency `@google-cloud/speech`.
-- **Key enabler:** use **`autoDecodingConfig` (AutoDetectDecodingConfig)** — it auto-detects container/codec from the file header and supports **both `WEBM_OPUS` (Chrome) and `MP4_AAC` (Safari)**. → **One server pipeline, zero client transcoding.** Do NOT set `encoding`/`sampleRateHertz` when using auto-decode.
-- **Model:** `short` (v2's short-utterance model) — best fit for single "hold to talk" words. Optionally evaluate `chirp_2` later if children's-speech accuracy needs improvement.
-- **Language:** `languageCodes: ['da-DK']` (v2 uses an **array**, not `languageCode`).
-- **Region constraint (HARD):** Danish is **not served from `global`**. Use a **regional recognizer**:
-  - `short` model → location **`eu`**, client `apiEndpoint: 'eu-speech.googleapis.com'`.
-  - (`chirp_2` would be `europe-west4` if chosen instead.)
-  - Recognizer path: `projects/${PROJECT_ID}/locations/eu/recognizers/_` (trailing `_` = inline default recognizer; no need to pre-create one).
-- **Avoid** `latest_short` / `latest_long` — those are v1 names and are **not listed as supported for Danish**.
-
-Conceptual server request shape (reference, not final code):
-```ts
-import speech from '@google-cloud/speech';             // package: @google-cloud/speech
-const { SpeechClient } = speech.v2;                    // MUST use the .v2 namespace (not the default v1)
-const client = new SpeechClient({ apiEndpoint: 'eu-speech.googleapis.com', credentials: {...} });
-const [resp] = await client.recognize({
-  recognizer: `projects/${PROJECT_ID}/locations/eu/recognizers/_`,
-  config: { autoDecodingConfig: {}, languageCodes: ['da-DK'], model: 'short' },
-  content: audioBytes,            // Buffer from uploaded blob
-});
-const transcript   = resp.results?.[0]?.alternatives?.[0]?.transcript ?? '';
-const confidence   = resp.results?.[0]?.alternatives?.[0]?.confidence ?? 0;
-```
-
-### 3.2 New endpoint `/api/stt` — add to BOTH runtimes
-- **Vercel:** `api/stt.ts` mirroring `api/tts.ts` (same credential init from `GOOGLE_CLOUD_*` env vars, CORS, POST-only, error logging to `/api/log-error`). Set `export const config = { runtime: 'nodejs', maxDuration: 15 }`.
-- **Local dev:** add an `app.post('/api/stt', ...)` handler to `dev-server.js` (Express on 3001; Vite proxies `/api` → `127.0.0.1:3001`).
-- **Request:** the recorded audio blob + its `blob.type` (mime). Either multipart/form-data or base64 JSON (match the app's existing style — TTS uses JSON; base64 is simplest to keep consistent, but note 1MB `express.json` limit in `dev-server.js` — a 5 s Opus/AAC clip is tens of KB, well under, but **bump the limit if needed**).
-- **Response:** `{ transcript, confidence }`. On low confidence / empty transcript, the **client** decides "friendly retry" (or return a flag).
-- **Privacy:** for a children's app, **opt out of data logging** on the STT requests (note: this can carry a price surcharge). Document in the env/setup notes.
-
-### 3.3 Client capture pipeline
-1. On mic-button `pointerdown` (user gesture): `navigator.mediaDevices.getUserMedia({ audio: true })`.
-2. Pick mime via `MediaRecorder.isTypeSupported` in order `['audio/webm;codecs=opus', 'audio/mp4']` (Chrome → webm/opus, Safari → mp4/aac).
-3. Record; collect chunks; on `pointerup` stop, assemble `Blob`, `track.stop()`.
-4. POST blob + `blob.type` to `/api/stt`.
-5. Handle response → success flow or friendly retry.
-- **Per audio rules**, the *playback* side (read-back + spelling) goes through `AudioController`/`useAudio`. The *capture* side is new — encapsulate it in a dedicated hook/util (e.g. `useSpeechInput.ts` / `src/utils/SpeechRecorder.ts`). It does not play audio, so it sits beside (not inside) the AudioController, but must coordinate: **stop/await any AudioController playback before recording** to avoid the TTS feeding into the mic.
-
-### 3.4 Permissions & platform risks (must test on real iPad)
-- **Secure context required.** `localhost` counts as secure (dev OK without TLS); Vercel is HTTPS (prod OK).
-- **iOS Safari:** call `getUserMedia` **synchronously inside the pointerdown gesture handler**.
-- **PWA standalone risk (FLAG):** this app is an installed PWA. WebKit has long-standing bugs where `getUserMedia` misbehaves in **home-screen / standalone** mode (WebKit bugs 185448, 252465). **Must test mic specifically in installed-PWA mode on iPad**, not just the Safari tab. Have a graceful fallback message if `getUserMedia` rejects.
-- **Audio routing:** starting mic capture on iOS can force output to the built-in speaker; relevant because we play TTS right after. Releasing tracks after each utterance mitigates lingering effects.
-- **iOS version check:** verify the current shipping iOS doesn't carry a `getUserMedia` regression (one was reported in an iOS 26.1 beta: `No AVAudioSessionCaptureDevice`). Test on the actual device/OS.
-
-### 3.5 Cost
-- STT standard v2: ~**$0.016/min**, billed in 15-s increments → each short utterance ≈ **$0.004**. First **60 min/month free** (~240 utterances). For one child, effectively free. Data-logging opt-out may add ~40% to the per-minute rate.
-
-**Sources:** Google Cloud STT v2 [supported languages](https://docs.cloud.google.com/speech-to-text/docs/speech-to-text-supported-languages), [encoding/decoding](https://docs.cloud.google.com/speech-to-text/docs/encoding), [v2 RPC ref](https://docs.cloud.google.com/speech-to-text/docs/reference/rpc/google.cloud.speech.v2), [pricing](https://cloud.google.com/speech-to-text/pricing); [WebKit MediaRecorder](https://webkit.org/blog/11353/mediarecorder-api/); [MDN getUserMedia](https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getUserMedia); WebKit PWA mic bugs [185448](https://bugs.webkit.org/show_bug.cgi?id=185448), [252465](https://bugs.webkit.org/show_bug.cgi?id=252465). *(Verify the live da-DK/region price line and current iOS behavior at build time.)*
-
----
-
-# PART 4 — Routes, Navigation & Home Screen
-
-### 4.1 New routes (`src/App.tsx`)
+### 3.1 New routes (`src/App.tsx`)
 ```tsx
 // English
 <Route path="/english" element={<EnglishSelection />} />
@@ -261,11 +168,10 @@ const confidence   = resp.results?.[0]?.alternatives?.[0]?.confidence ?? 0;
 // Ordleg
 <Route path="/ordleg" element={<OrdlegSelection />} />
 <Route path="/ordleg/spelling" element={<SpellingGame />} />   {/* moved from /alphabet/spelling */}
-<Route path="/ordleg/mic" element={<SpeakWordGame />} />
 ```
 Remove the old `<Route path="/alphabet/spelling" .../>`.
 
-### 4.2 Selection wrappers (mirror `MathSelection.tsx`)
+### 3.2 Selection wrappers (mirror `MathSelection.tsx`)
 ```tsx
 // EnglishSelection.tsx
 <GameSelectionLayout categoryId="english" games={categoryThemes.english.games} />
@@ -273,11 +179,11 @@ Remove the old `<Route path="/alphabet/spelling" .../>`.
 <GameSelectionLayout categoryId="ordleg" games={categoryThemes.ordleg.games} />
 ```
 
-### 4.3 Home screen cards (`HomePage` in `src/App.tsx`)
+### 3.3 Home screen cards (`HomePage` in `src/App.tsx`)
 Add **two new hardcoded section card blocks** (copy an existing block, e.g. the colors one) for `english` and `ordleg`, each `onClick={() => navigate('/english')}` / `navigate('/ordleg')` and referencing `categoryThemes.english.*` / `categoryThemes.ordleg.*`.
 - **Layout:** home goes from 3 → 5 cards. **Verify the grid is responsive** in portrait + landscape on iPad and desktop (per responsive rules). Likely need to adjust the home grid column counts.
 
-### 4.4 `categoryThemes.ts` — add two sections + move spelling
+### 3.4 `categoryThemes.ts` — add two sections + move spelling
 ```ts
 english: {
   id: 'english', name: 'Engelsk',
@@ -300,13 +206,12 @@ ordleg: {
   description: 'Stav ord og sig ord højt med din stemme',
   games: [
     { id:'spelling', title:'Stav Ordet', emoji:'✏️',  route:'/ordleg/spelling', gradient:'linear-gradient(135deg, #26A69A 0%, #00897B 100%)' },
-    { id:'mic',      title:'Sig et Ord',  emoji:'🎤',  route:'/ordleg/mic',      gradient:'linear-gradient(135deg, #00897B 0%, #00695C 100%)' },
   ],
 },
 ```
 And **remove** the `spelling` entry from `alphabet.games`.
 
-### 4.5 `CLAUDE.md` route table
+### 3.5 `CLAUDE.md` route table
 Add:
 ```
 /english                 English section menu
@@ -316,13 +221,12 @@ Add:
 /english/learn           Explore English words
 /ordleg                  Ordleg section menu
 /ordleg/spelling         Stav Ordet (moved from /alphabet/spelling)
-/ordleg/mic              Sig et Ord (microphone game)
 ```
 Remove `/alphabet/spelling`.
 
 ---
 
-# PART 5 — Theming Summary
+# PART 4 — Theming Summary
 
 | Section | id | Danish name | Color | accentColor |
 |---|---|---|---|---|
@@ -336,37 +240,31 @@ Add matching `RepeatButton` variants: `EnglishRepeatButton` (green), `OrdlegRepe
 
 ---
 
-# PART 6 — Architecture Rules (mandatory)
+# PART 5 — Architecture Rules (mandatory)
 
-- **Audio:** centralized only. New playback (English en-GB, read-back, per-letter spelling) → methods on `AudioController`, exposed via `useAudio()`. See `.claude/rules/audio-system.md`. Speech *capture* is new — isolate in a hook/util, coordinate with AudioController (don't record while TTS plays).
-- **Games:** task-based games use `entryAudioManager.onComplete()`, show full UI immediately, use `RepeatButton`, disable until `entryAudioComplete`. The mic game is a new sub-pattern (speech input) — still no loading-screen takeovers. See `.claude/rules/game-development.md`.
+- **Audio:** centralized only. New playback (English en-GB, read-back, per-letter spelling) → methods on `AudioController`, exposed via `useAudio()`. See `.claude/rules/audio-system.md`.
+- **Games:** task-based games use `entryAudioManager.onComplete()`, show full UI immediately, use `RepeatButton`, disable until `entryAudioComplete`. No loading-screen takeovers. See `.claude/rules/game-development.md`.
 - **Layout:** full-viewport, no-scroll, CSS Grid, 44px+ touch targets, portrait + landscape. See `.claude/rules/responsive-design.md`.
 - **State:** local React state only. **Language:** all UI/instructions Danish. **Type:** TS strict. **Font:** Comic Sans MS.
 
 ---
 
-# PART 7 — Open Questions / Risks to resolve during implementation
+# PART 6 — Open Questions / Risks to resolve during implementation
 
-1. **iPad PWA mic** — biggest risk. Must test `getUserMedia` in installed standalone mode, not just Safari tab. Have a fallback.
 2. **TTS cache key** must include voice/language once English (en-GB) is added — otherwise English/Danish audio could collide. Verify in `googleTTS.ts`.
 3. **Open-vocabulary spelling of special characters** — recognized words with æ/ø/å must spell correctly with the existing per-letter Danish audio (Stav Ordet already handles æøå; reuse it).
-4. **First-word extraction** — define "first word" (split on whitespace; strip punctuation STT may add).
 5. **Confidence threshold** for "friendly retry" vs accept — tune on the device.
 6. **Home grid** must look good with 5 section cards (currently designed for 3).
 7. **en-GB voice selection** — pick the warmest child-friendly female voice; confirm it's available (Neural2/Wavenet/Studio tier) and not deprecated.
-8. **STT data-logging opt-out** for a children's app (privacy) + the price implication.
 
 ---
 
-# PART 8 — Suggested Execution Order
+# PART 7 — Suggested Execution Order
 
 1. **Scaffolding:** add `english` + `ordleg` to `categoryThemes.ts`; add green/teal `RepeatButton` variants; add the two home cards + verify 5-card grid.
 2. **Move Stav Ordet** → `ordleg` (file move, route `/ordleg/spelling`, re-theme teal). Verify it still works.
 3. **English audio path:** add `AudioController.speakEnglish()` + `useAudio` exposure + en-GB voice config + cache-key fix.
 4. **English games** (D Explore first as it's simplest, then A → B → C). Build vocab module `englishVocab.ts`.
-5. **STT backend:** `api/stt.ts` + `dev-server.js` `/api/stt`; add `@google-cloud/speech`; test with a hardcoded sample blob.
-6. **Speech capture util/hook** (`useSpeechInput`) — hold-to-talk, mime detection, POST to `/api/stt`. Test on Chrome, then **iPad Safari + installed PWA**.
-7. **Sig et Ord game** — wire capture → recognize → first-word → show text → read back → spell (reuse Stav Ordet per-letter audio) → celebrate; friendly-retry path.
 8. **Routes + CLAUDE.md + final responsive pass** on iPad and desktop.
 
 Steps 1–4 are mostly pattern-following (lower risk). Steps 5–7 are the genuinely new speech capability (higher risk — budget testing time on the iPad).

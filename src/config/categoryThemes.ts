@@ -183,7 +183,7 @@ const categoryContent: Record<CategoryId, CategoryContent> = {
   },
   ordleg: {
     name: 'Ordleg',
-    description: 'Stav ord og sig ord højt med din stemme',
+    description: 'Læs og stav danske ord',
     games: [
       {
         id: 'read',
@@ -196,12 +196,6 @@ const categoryContent: Record<CategoryId, CategoryContent> = {
         title: 'Stav Ordet',
         route: '/ordleg/spelling',
         gradient: 'linear-gradient(135deg, #26A69A 0%, #00897B 100%)'
-      },
-      {
-        id: 'mic',
-        title: 'Sig et Ord',
-        route: '/ordleg/mic',
-        gradient: 'linear-gradient(135deg, #00897B 0%, #00695C 100%)'
       }
     ]
   }

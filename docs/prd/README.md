@@ -19,7 +19,6 @@ session with no prior context and implemented independently. They are ordered by
 |-----|-------|----------|-------|
 | 01 | Drag-and-drop correctness (Farver) | **P0** | Small–Medium |
 | 02 | Quiz-engine input lock, timers & hook stability | **P0** | Medium |
-| 03 | Mic safety, STT content filter & API hardening | **P1** | Small–Medium |
 | 04 | Content & data quality (emoji, Danish, sizing) | **P1** | Medium (mostly data) |
 | 05 | Gameplay fairness & help (engine hint, difficulty, echo) | P2 | Medium |
 | 06 | Audio latency, caching & iOS robustness | P2 | Medium–Large |

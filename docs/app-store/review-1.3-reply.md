@@ -39,20 +39,18 @@ Answers in order. Børnelæring is a free Danish learning app for children aged 
 
 2. THIRD-PARTY ADVERTISING? No. No ad network, no ad SDK, no ads of any kind. Nothing is tracked, so there is no App Tracking Transparency prompt. No in-app purchases.
 
-3. SHARED WITH THIRD PARTIES? Data is never sold, never shared with data brokers, and never used for advertising or model training. Four providers act as data processors on our instruction, all configured to run in the EU, each contractually bound to give user data the same or equal protection our policy states and these Guidelines require:
+3. SHARED WITH THIRD PARTIES? Data is never sold, never shared with data brokers, and never used for advertising or model training. Three providers act as data processors on our instruction, all configured to run in the EU, each contractually bound to give user data the same or equal protection our policy states and these Guidelines require:
 - Vercel (hosting, Frankfurt): serves the app's server functions; stores problem reports.
 - Neon (PostgreSQL, Frankfurt): only with an account — the adult's email, child profile names and chosen characters, the child's progress.
 - Microsoft Azure AI Speech (West Europe): text only, for a line not already pre-recorded in the app. No child audio goes here.
-- Google Cloud Speech-to-Text (EU region): the child's voice from one game, only if an adult switched the microphone on (see 4). Used to recognise one word; a transcript comes back and nothing is stored on our side. Google's audio data-logging is disabled on our project and unavailable for the API version we call.
 
-4. OTHER DATA COLLECTED, AND EVERY USE. By default — no account, microphone off — nothing about the child leaves the device: progress, rewards and settings live on the device, and the build is bundled, so the games run with no network. Our server sees only the standard IP address and user-agent of a request; linked to no child, used for nothing else.
+4. OTHER DATA COLLECTED, AND EVERY USE. By default — no account — nothing about the child leaves the device: progress, rewards and settings live on the device, and the build is bundled, so the games run with no network. Our server sees only the standard IP address and user-agent of a request; linked to no child, used for nothing else.
 - Optional adult account (Sign in with Apple or Google; the app is fully playable without one): the adult's email and name from the provider, a child profile name the adult types (no real name required) with a chosen cartoon character, and the child's progress — points, level, rewards, difficulty. A passkey, if added, stores only its public key. Purpose: multiple child profiles, and progress that follows the child to another device. "Indstillinger" → "Konto" → "Slet kontoen helt" deletes the account, all profiles and all progress.
-- Microphone, one game ("Sig et Ord"): OFF on installation, and a child cannot enable it. An adult must pass a passcode gate and consent on a screen naming Google Cloud Speech-to-Text, stating the recording is not stored and can be switched off again. Audio is captured only while the child holds the button, and only to recognise that one word. Consent is withdrawable in one tap. Nothing retained.
 - Message from "Send feedback", only when an adult writes one and presses Send: the text, technical state (app version, route, device and OS, viewport, language, timezone, audio status, local progress), and a screenshot unless the adult unticks it. No email, no name. Purpose: fixing the app. Deleted on request.
 - Crash: a technical error description, no screenshot, same purpose.
 - Failed sign-in: a technical report plus a screenshot of the sign-in screen, sent automatically because these failures are otherwise unreproducible. Credential fields and the passcode are stripped from the image; it never contains the email or the passcode. Disclosed in the policy.
 
-The app never asks for date of birth, address, phone number or location, uses no camera and no contacts, has no chat or user-generated content, and no links out except an email address behind the parental gate.
+The app never asks for date of birth, address, phone number or location, requests no device permissions at all — no microphone, no camera, no contacts — has no chat or user-generated content, and no links out except an email address behind the parental gate.
 
 Best regards,
 Allan Brink Vraa

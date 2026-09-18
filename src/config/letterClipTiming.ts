@@ -3,7 +3,7 @@
 //
 // Why this exists: `speakLetter()` resolves when the AUDIO FILE ends, and Azure pads every clip with
 // ~0.22s of silence before the name and 0.4–0.7s after it. Awaiting each letter therefore waits out
-// half a second of silence per letter — Sig et Ord's spell-out ran ~1.5–1.9s per letter when the longest
+// half a second of silence per letter — a spell-out sequence ran ~1.5–1.9s per letter when the longest
 // name is 1.04s and the median is 0.75s (owner, 2026-08-04: "could be a little bit faster"). The rule is
 // in `.claude/rules/audio-system.md`: never await a prebaked clip to pace a sequence; step on a fixed
 // onset-to-onset interval and let the next clip cancel the previous dead tail.

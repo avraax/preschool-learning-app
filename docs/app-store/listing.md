@@ -140,7 +140,7 @@ LAVET TIL BØRN
 • Al tale er dansk, syntetisk og lavet på forhånd, så spillene virker uden internet
 
 FOR DE VOKSNE
-Under "Indstillinger" kan du vælge sværhedsgrad, oprette flere børneprofiler, læse hvad appen sender hvorhen, og slå mikrofonspillet til eller fra. Området er beskyttet af en opgave, et barn ikke kan løse. Mikrofonen er slået fra som standard, og mikrofonspillet kræver både en konto og internet. Synkronisering mellem enheder kræver også en konto.
+Under "Indstillinger" kan du vælge sværhedsgrad, oprette flere børneprofiler og læse hvad appen sender hvorhen. Området er beskyttet af en opgave, et barn ikke kan løse. Appen bruger hverken mikrofon eller kamera. Synkronisering mellem enheder kræver en konto.
 
 Appen er skrevet til en 5-årig dreng af hans far. Den passer til børn fra omkring 5 år, gennem børnehaveklassen og ind i 1. klasse.
 ```
@@ -184,10 +184,9 @@ MADE FOR CHILDREN
 • All speech is Danish, synthetic and generated in advance, so the games work without internet
 
 FOR GROWN-UPS
-In the grown-ups' area you can set the difficulty, add child profiles, read what the app sends where, and
-turn the microphone game on or off. The area is protected by a task a child cannot solve. The microphone is
-off by default, and the microphone game needs both an account and internet. Cross-device sync also needs an
-account.
+In the grown-ups' area you can set the difficulty, add child profiles and read what the app sends where.
+The area is protected by a task a child cannot solve. The app uses neither microphone nor camera.
+Cross-device sync needs an account.
 
 Written for a five-year-old boy by his father. Suited to children from around five, through the Danish børnehaveklasse and into 1. klasse.
 ```
@@ -286,9 +285,7 @@ sign-in screen, and shot 6 is captured in **real guest mode through the arithmet
    screen"; Hvilken Farve is a deliberately GREYED object beside four flat swatches (the no-giveaway
    rule), while Farvejagt is a dozen pieces of full-colour baked art.
 3. **Shot 6 is the Læring pane** (difficulty), with the six-group rail visible so Privatliv — where the
-   microphone switch lives — reads as a destination. The switch itself only renders for a signed-in
-   account: in guest mode `/api/stt` is unreachable, so that pane honestly says the mic game needs one.
-   A screenshot of a control a reviewer cannot reach would be the wrong kind of accurate.
+   privacy policy and the AI-voice disclosure live — reads as a destination.
 
 **Both sets are the harness, not a device.** The iPad shots are real WebKit at iPad geometry, *not* the
 son's iPad — capture from the device itself if you want rung 3. The iPhone shots are rung 2 permanently
@@ -321,7 +318,7 @@ seconds: what it is, the breadth, the reward, the adult control.
 3. **A math game mid-round** — the ten-frame or the counting objects, showing something countable.
 4. **A colour game** — carries the most visual appeal of any screen in the app.
 5. **The Reward Book** — collected stickers. This is the shot that explains the progression model.
-6. **"Indstillinger"** — the adult pane, showing difficulty and the microphone switch. Signals to a parent
+6. **"Indstillinger"** — the adult pane, showing difficulty and the Privatliv group. Signals to a parent
    that they are in control, and pre-empts a reviewer wondering where the parental gate is.
 
 **Capture commands.** Use the existing harness rather than anything new
@@ -475,8 +472,7 @@ node -e "…" # ageRatingDeclaration → kidsAgeBand   ← the authoritative che
   has no violence, no user-generated content, no chat, no ads, no gambling, no web browsing.
 - **App Review Information.** Contact details, plus **notes in English** stating: no account is required
   (just tap and play), the adult area is behind a passcode, the passcode for review is `<supply one>`, the
-  microphone game is intentionally off by default and how to enable it, and the app is Danish-only by
-  design.
+  app requests no device permissions at all, and it is Danish-only by design.
 
 ### 3.4 Two account details worth knowing before you enrol
 

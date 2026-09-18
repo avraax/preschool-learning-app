@@ -30,8 +30,8 @@ test('capacitor: and ionic: are the shell; everything else is web', () => {
 })
 
 test('http://localhost is NOT the shell — that is the dev server', () => {
-  // Capacitor's iOS hostname IS `localhost` (kept as the default because it grants the secure context
-  // getUserMedia needs), so it is tempting to treat localhost as native. Doing so would disable the
+  // Capacitor's iOS hostname IS `localhost` (the Capacitor default), so it is tempting to treat
+  // localhost as native. Doing so would disable the
   // update banner and the stale-chunk reload in the one environment where they are developed. Only the
   // SCHEME distinguishes them, and iOS is the only target in scope.
   assert.equal(runtimeTargetFor('http:'), 'web')

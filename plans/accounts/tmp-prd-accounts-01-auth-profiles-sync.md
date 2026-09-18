@@ -15,7 +15,7 @@ Authored 2026-07-31. Status: **authored, not implemented.**
 **Already done — do not redo:**
 
 - **9 env vars are set in Vercel** across production / preview / development, and mirrored into
-  `.env.local` (the pre-existing Azure + Google-STT + bug-report keys there were appended to, not replaced):
+  `.env.local` (the pre-existing Azure + bug-report keys there were appended to, not replaced):
   `BETTER_AUTH_SECRET`, `ACCESS_TOKEN_SECRET`, `PIN_PEPPER` (32 random bytes each, three distinct values),
   `BETTER_AUTH_URL`, `WEBAUTHN_RP_ID`, `WEBAUTHN_RP_NAME`, `AUTH_ALLOWED_EMAILS`, plus `AUTH_DEV_BYPASS=1` in
   `.env.local` only.
@@ -24,7 +24,7 @@ Authored 2026-07-31. Status: **authored, not implemented.**
   project** (§4.10).
 - CLI state: Vercel CLI 54.12.2 authenticated as `allanvraa-3250` (team `allan-brink-vraas-projects`), project
   linked. gcloud 572.0.0 authenticated as `allanvraa@gmail.com`, active project
-  **`preschool-learning-app-466719`** — the same project as the existing STT credentials, so the OAuth client
+  **`preschool-learning-app-466719`** — the same Google Cloud project already in use, so the OAuth client
   belongs there.
 
 - **Neon Postgres is provisioned and verified.** Free plan (`free_v3`), region **`eu-central-1` (Frankfurt)**,
@@ -70,8 +70,8 @@ database anywhere in the repo. What this fixes:
 
 - **Progress is trapped on one device.** The son's 45-slot reward book lives in one browser's localStorage. A new
   iPad, a cleared cache, or Safari storage eviction loses it, and it cannot follow him to a phone.
-- **The deployment is wide open.** `preschool-learning-app.vercel.app` is public and `/api/tts-azure` + `/api/stt`
-  are unauthenticated proxies to **paid** Azure Speech and Google STT. Anyone with the URL can spend real money.
+- **The deployment is wide open.** `preschool-learning-app.vercel.app` is public and `/api/tts-azure`
+  is an unauthenticated proxy to **paid** Azure Speech. Anyone with the URL can spend real money.
 - **One child only.** A sibling or visiting friend would overwrite the existing book.
 - **The adult area is only child-resistant.** `AdultGate` shows three Danish number-words (`fem · to · fire`); a wrong
   answer closes silently, there is no retry limit, and nothing remembers that an adult passed. It's a reading test.
@@ -96,7 +96,7 @@ Confirmed with the owner during the planning session. **Do not re-litigate these
 | **D2** | **Sign-in methods v1: Google OIDC (full-page redirect, authorization code + PKCE) and WebAuthn passkey (Face ID / Touch ID).** | Safari has **no FedCM and none planned**, so Google One Tap degrades to a popup that is unreliable in an installed PWA. Passkeys exist from iOS 16, so the 17.7 floor is fine. |
 | **D3** | **Email OTP is designed but NOT shipped in v1.** | Since Feb 2024 Gmail/Yahoo/Outlook require SPF+DKIM domain authentication and no provider will authenticate a free Gmail address (Brevo silently rewrites the From). Without a custom domain, codes land in spam. Leave schema + endpoint room behind a flag. |
 | **D4** | **4-digit PIN** which (a) **replaces** the Danish-number-word `AdultGate` for the adult corner menu, (b) re-unlocks a locked session, (c) guards switching child profile. `fem · to · fire` is **removed**, not kept. | One real secret instead of a reading test. Face ID is the fast path; PIN always works. |
-| **D5** | **Hard gate.** Nothing works before sign-in; `/api/tts-azure` + `/api/stt` require a valid session. | Serves "keep strangers out" and protects paid credits. |
+| **D5** | **Hard gate.** Nothing works before sign-in; `/api/tts-azure` requires a valid session. | Serves "keep strangers out" and protects paid credits. |
 | **D6** | **Local-first sync.** localStorage stays the gameplay source of truth; the server holds a merged mirror. The app stays fully playable offline. | No regression in current offline / no-service-worker behaviour. |
 | **D7** | **Multiple child profiles.** Per-child: reward book, XP/bloom, per-game bests, stars, difficulty, theme. Per-account: adult prefs, voice override, PIN, passkeys, profile list. Device-only: TTS cache, update-dismissed, chunk-reload guard, crash dedupe, session id. | Owner asked for "as much as possible" attached to profile/account; the device-only set is plumbing that would be wrong to sync. |
 | **D8** | **Domain stays `preschool-learning-app.vercel.app`.** WebAuthn **RP ID is an env-var config constant** with a documented migration path. | Owner's call. Passkeys are bound to the hostname, so this is an explicitly accepted, documented risk. |
@@ -108,8 +108,7 @@ Confirmed with the owner during the planning session. **Do not re-litigate these
 ## 3. Concepts
 
 **"Paid endpoints"** — used throughout this PRD to mean the two API routes that cost real money per call:
-`/api/tts-azure` (Azure AI Speech, billed per character synthesized) and `/api/stt` (Google Cloud Speech-to-Text,
-billed per second of audio, used by "Sig et Ord"). The other three — `/api/bug-report`, `/api/log-error`,
+`/api/tts-azure` (Azure AI Speech, billed per character synthesized). The other three — `/api/bug-report`, `/api/log-error`,
 `/api/version` — are free and are treated differently throughout. Today both metered routes are reachable by anyone
 with the URL, guarded only by a per-IP rate limiter that resets on every cold start.
 
@@ -200,7 +199,7 @@ start.
 | `POST /api/auth/family/pin/set` \| `/pin/verify` | bearer | PIN set / verify (§7.2) |
 | `/api/profiles` | bearer | Child-profile CRUD |
 | `/api/progress` | bearer | GET/PUT the canonical per-profile progress document (§6.4) |
-| `POST /api/tts-azure`, `/api/stt` | **access JWT** | unchanged bodies; 401 `{ code:'need_access_token' }` |
+| `POST /api/tts-azure` | **access JWT** | unchanged bodies; 401 `{ code:'need_access_token' }` |
 | `/api/bug-report`, `/api/log-error`, `/api/version` | unchanged | `bug-report` stays open **deliberately** — a crash *before* sign-in is the report you most need. |
 
 **Mounting on Vercel — use a Web-standard handler.** `@vercel/node@5.8.17` detects a `fetch` export and routes it
@@ -335,7 +334,7 @@ constant-time check and keeps the hot function's import graph at `jose` alone.
 `401 { error: 'Unauthorized', code: 'need_access_token' }` + `WWW-Authenticate: Bearer`. The distinct `code` is what
 tells the client to mint-and-retry-once rather than log the adult out. Honours the dev bypass.
 
-In `api/tts-azure.ts` and `api/stt.ts`, insert after `isAllowedOrigin`, before `rateLimit`:
+In `api/tts-azure.ts`, insert after `isAllowedOrigin`, before `rateLimit`:
 
 ```ts
 const access = await requirePaidAccess(req, res)
@@ -347,11 +346,11 @@ Adding an optional `subject` to `rateLimit` and keying on `sub` instead of IP is
 one CGNAT no longer share a bucket, and the limit finally means something per account. Mirror in `dev-server.js`.
 
 Note most narration is served from immutable static files under `/sounds/tts/`, which stay public and ungated; only
-the live Azure fallback and STT are gated.
+the live Azure fallback is gated.
 
 **Client side: do not monkey-patch `fetch`.** `diagnosticsBuffer` and `remoteConsole` already patch it and a third
 layer makes the ordering unauditable. Add an explicit `authorizedFetch` and convert the five call sites:
-`src/services/ttsClient.ts:269`, `src/hooks/useSpeechInput.ts:151`, `src/components/audit/AuditHarness.tsx:218`, and
+`src/services/ttsClient.ts:269`, `src/components/audit/AuditHarness.tsx:218`, and
 `src/components/voicelab/VoiceLab.tsx:99` and `:170`. `boot()` should pre-mint the access token in parallel with
 `validate()` so the token is warm before the child's first tap — otherwise the first narration eats an extra RTT.
 
@@ -374,7 +373,7 @@ Consequences for the policy:
   punishes the family. Strictness belongs on the token, not on playtime.
 - `serverVerdict: 'unreachable'` + within grace ⇒ `offlineGrace`: full play, `canCallPaidApis: false`. Live Azure TTS
   degrades along the path that already exists (prebaked `/sounds/tts/*.mp3` → Web Speech), so most narration is
-  unaffected; "Sig et Ord" shows `Kræver internet` (it already couldn't work offline).
+  unaffected.
 - `serverVerdict: 'invalid'` (401/403) ⇒ `signedOut` **immediately, ignoring grace.** That is the revocation path and
   it must not be softened. A fetch failure is `unreachable`, **never** `invalid`.
 - Recovery: both `online` and `visibilitychange:visible` trigger `validate()`, so the app self-heals the moment wi-fi
@@ -1001,7 +1000,7 @@ Invariants worth one test each: `invalid` ⇒ `signedOut` **immediately, ignorin
 | `signedOut` (first run) | `Velkommen til Børnelæring 👋` | `En voksen skal logge ind én gang på denne enhed.` | `Fortsæt med Google` · `Log ind med Face ID` (only when a passkey exists for this RP) |
 | `locked` | `Velkommen tilbage 👋` | `Bekræft at det er dig.` | Face ID (primary when available) · `Brug kode i stedet` → PIN pad · `Log ind med Google` |
 | `offlineExpired` | `Ingen forbindelse 📡` | `Børnelæring skal på nettet igen. Slut iPad'en til wi-fi og prøv igen.` | `Prøv igen` + the last-verified date |
-| `offlineGrace` | *(no overlay — plays normally)* | — | `Sig et Ord` shows `Kræver internet` |
+| `offlineGrace` | *(no overlay — plays normally)* | — | — |
 
 ### 7.2 The PIN pad
 

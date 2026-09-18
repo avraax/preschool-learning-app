@@ -325,7 +325,7 @@ PIN_PEPPER=              # fresh
 AUTH_DEV_BYPASS=1
 ```
 
-Everything else in `.env.local` (Azure, Google Cloud STT, `GOOGLE_CLIENT_*`, `AUTH_ALLOWED_EMAILS`)
+Everything else in `.env.local` (Azure, `GOOGLE_CLIENT_*`, `AUTH_ALLOWED_EMAILS`)
 stays as it is. `BETTER_AUTH_URL` is deliberately **localhost**, not the staging host: locally the app
 is served by Vite on 5173 and its OAuth callback has to come back there.
 
@@ -566,7 +566,7 @@ rather than by an ignored-build-step setting somebody can flip.
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | **shared** | One OAuth client with two more redirect URIs is simpler than a second client, and neither value is tier-sensitive |
 | `APPLE_CLIENT_ID`, `APPLE_TEAM_ID`, `APPLE_KEY_ID`, `APPLE_PRIVATE_KEY` | **shared** | One Services ID (`dk.boernelaering.web`) can carry both domains and both return URLs |
 | `APPLE_BUNDLE_ID` | **differs** — `com.vraa.earlylearning.staging` | It maps to better-auth's `appBundleIdentifier`; the staging binary's identifier is not production's |
-| `AZURE_SPEECH_*`, `GOOGLE_CLOUD_*` | **shared** | Same billing accounts. Stated plainly: staging TTS and STT bill the same Azure and Google credit. `AUTH_ALLOWED_EMAILS` keeps that bounded to the owner, and the prebaked narration — every line but Sig et Ord's read-back — is served as static files and costs nothing |
+| `AZURE_SPEECH_*` | **shared** | Same billing account. Stated plainly: staging TTS bills the same Azure credit. `AUTH_ALLOWED_EMAILS` keeps that bounded to the owner, and the prebaked narration — every line the app speaks — is served as static files and costs nothing |
 | `AUTH_ALLOWED_EMAILS` | **shared** | Fails closed if empty; the same one adult uses both tiers |
 | `BLOB_READ_WRITE_TOKEN`, `BUG_REPORT_READ_KEY` | staging gets its own, or neither | Bug reports from a staging build should not land in the production blob store next to real ones |
 | `BL_TIER` | `staging` | Production must be given `production` explicitly at the same time (§8 step 4) — the default only covers builds, not the deployed function environment |

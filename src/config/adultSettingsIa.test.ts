@@ -128,17 +128,6 @@ test('the ACCOUNT danger block is the last thing in the pane', () => {
   assert.deepEqual(blocks.slice(-2), ['fareBarn', 'fareKonto'])
 })
 
-test('the microphone consent item is NOT destructive, so withdrawal is never harder than consent', () => {
-  // App Store PRD §3.6: the risky direction is turning the mic ON, and that is guarded by the consent
-  // screen, not by this declaration. Marking the row destructive would put a confirm in front of
-  // switching it OFF — i.e. friction on withdrawing consent, which the privacy policy promises is one
-  // tap (`src/config/legalContent.ts`).
-  const mic = adultItemsWithGroup().find(({ item }) => item.id === 'privatliv.microphone')
-  assert.ok(mic, 'the microphone row has gone missing from the IA')
-  assert.equal(mic!.item.destructive, undefined)
-  assert.equal(mic!.item.typeToConfirm, undefined)
-})
-
 test('every item belongs to exactly one group', () => {
   const seen = new Map<string, string[]>()
   for (const { group, item } of adultItemsWithGroup()) {
@@ -320,9 +309,9 @@ test('exactly the six agreed items are devTool, named literally', () => {
 test('nothing a guideline depends on may ever be marked devTool', () => {
   // Each of these is load-bearing for App Review, not merely useful:
   //   konto.deleteAccount — 5.1.1(v) requires in-app account deletion to be FINDABLE
-  //   privatliv.microphone / .policy — the Kids Category story (App Store PRD §3.6); Privatliv was
-  //     made its own group precisely so a reviewer would not have to hunt for them
-  for (const id of ['konto.deleteAccount', 'privatliv.microphone', 'privatliv.policy']) {
+  //   privatliv.policy — the Kids Category story (App Store PRD §3.5); Privatliv was made its own
+  //     group precisely so a reviewer would not have to hunt for it
+  for (const id of ['konto.deleteAccount', 'privatliv.policy']) {
     assert.equal(adultItem(id).devTool, undefined, `${id} must never be hidden from a production build`)
   }
   // …and no destructive item may hide either: hiding a delete does not make it safer, it makes it

@@ -109,7 +109,7 @@ export const UNLOCK_VERIFY_TIMEOUT_MS = 800
 /**
  * How long `ensureAudioReady` waits for the whole unlock before playing anyway. The SECOND, independent
  * brake — deliberately outside `initializeAudio`, because the thing that can wedge is inside it (same
- * two-brakes shape as Sig et Ord's recognition watchdog).
+ * two-brakes shape as a network watchdog).
  */
 export const UNLOCK_TOTAL_TIMEOUT_MS = 2500
 

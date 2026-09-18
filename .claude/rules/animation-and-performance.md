@@ -91,7 +91,7 @@ so converting lifted a tile face by ~20 RGB with DOM rects byte-identical — a 
 failing. A compensating background wash closed only a fraction of it, because the face and the external
 shadow are two mismatches with different causes.
 
-- `boxSoftShadow()` (`src/theme/depth.ts`) is for **opaque fills only** — `TactilePill`, Sig et Ord's orb.
+- `boxSoftShadow()` (`src/theme/depth.ts`) is for **opaque fills only** — e.g. `TactilePill`.
 - `TactileTile`, Plus/Minus's equation tile and Stav Ordet's slots deliberately KEEP `softShadow()`.
 - Chained `drop-shadow` is still slow and buggy on mobile Safari, so this is a real trade, not a
   non-issue: the full conversion is worth a large layer drop on a dense browse. It needs owner sign-off,

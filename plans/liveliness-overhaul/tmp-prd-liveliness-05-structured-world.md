@@ -310,7 +310,6 @@ route/content — letters vs numbers):
 | english | learn | Lær Engelsk | /english/learn |
 | ordleg | read | Læs Ordet | /ordleg/read |
 | ordleg | spelling | Stav Ordet | /ordleg/spelling |
-| ordleg | mic | Sig et Ord | /ordleg/mic |
 
 ---
 
@@ -746,7 +745,7 @@ Append the style guide; each a single small soft-3D object, matching the B1 set'
   cat) with a soft spark, no text* · `english.translate`: *two speech bubbles with a soft swap arrow between* ·
   `english.learn`: *a book with a tiny globe resting on it*.
 - `ordleg.read`: *an open picture book with a soft spark* · `ordleg.spelling`: *a friendly pencil writing a soft
-  swirl (no letters)* · `ordleg.mic`: *a chunky cute microphone with a soft sound spark*.
+  swirl (no letters)*.
 
 ### B3 — World layers (×~3 per theme) → `src/assets/themes/<id>/`
 For each theme upload the existing `scene.webp` as reference: *"Keep this exact world, style, and palette. Split

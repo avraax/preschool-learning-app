@@ -1,7 +1,7 @@
 // Proves a screen speaks from the PREBAKED set, not from live Azure.
 //
 // WHY THIS EXISTS: the closed narration set is supposed to be complete — "every line the app speaks is
-// prebaked except Sig et Ord's read-back" (CLAUDE.md). Two violations shipped and were found by ear on
+// prebaked" (CLAUDE.md). Two violations shipped and were found by ear on
 // the owner's iPad on the same day (2026-09-05), both invisible to every other check:
 //   * Hukommelsesspil spoke the raw UPPERCASE glyph, but the bake holds the letter NAME ('a', 'eks').
 //   * Hvilken Farve? built its question inline in the .tsx, so the enumerator never saw it.

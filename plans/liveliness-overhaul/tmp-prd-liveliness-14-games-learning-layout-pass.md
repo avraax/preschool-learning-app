@@ -42,7 +42,7 @@ feedback kept); **no new spoken narration** except W3's Bogstav Quiz fact + Lær
 strings are prebaked/auditioned (run `npm run audit:check`; if a new closed-set string appears, `npm run tts:prebake`
 + `/audit` before shipping). Honor `.claude/rules/` (game-development advance-lock/first-try/timer hygiene;
 drag-and-drop kidCollision/spring-back for W6). **No adaptive difficulty.** Preserve every existing invariant
-(Læs Ordet never reads the prompt word; Sig et Ord untouched; Tal Quiz honest counting; kidCollision).
+(Læs Ordet never reads the prompt word; Tal Quiz honest counting; kidCollision).
 
 ## 3. Workstream design
 
@@ -58,7 +58,7 @@ sizing produce this.
 - In `PromptFocus` (Appendix §A2): cap the subject's vertical footprint / center it so the prompt sits closer to the
   answers.
 - Verify per game (they inherit): quizzes (alphabet/math/english/ordleg configs), hand-rolled that render `PromptFocus`
-  (MathOperation, Comparison, Nuancer, Spelling, SpeakWord), and Lær browses.
+  (MathOperation, Comparison, Nuancer, Spelling), and Lær browses.
 **No learning change** — purely composition. Preserve phone-landscape (30/70) behavior; re-verify 844×390.
 **Verify:** screenshot 5–6 representative boards on iPad + phone; the empty mid-band is gone, tiles no longer hug the
 bottom edge, nothing scrolls, 44px held.

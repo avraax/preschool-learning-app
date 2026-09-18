@@ -4,7 +4,7 @@
 **Why:** The Games Visual Uplift (PRD-06→-12) delivered the *material/visual* overhaul comprehensively (tactile
 clay, baked art, in-world focal zone, unified HUD, zero emoji). It did **not** deliver the second half of the
 owner's mandate — *reorganize elements + lift UX and the learning experience per game*. Only 3 games (Farvejagt,
-Ram Farven, Sig et Ord) got a real structural rework; the other ~21 were excellent re-skins with original layout,
+Ram Farven) got a real structural rework; the other ~21 were excellent re-skins with original layout,
 flow, and pedagogy intact. This audit looks at **every current board** and finds what to rework, **learning
 experience first, UI/UX second**.
 **Method:** all 21 boards captured on the live build (iPad 1180×820) + read against source by 5 section reviewers.
@@ -115,8 +115,6 @@ is an engine-level change.
   the **first letter** of the prompt as a silent decode cue; drop to 3 options at Let.
 - **Stav Ordet** *(MED — layout only)* — pedagogically the strongest game; just pull the slots+tiles block up to kill
   the dead mid-band. No learning change.
-- **Sig et Ord** *(LOW)* — the rework succeeded; only move the idle instruction line up next to the mic so button +
-  label read as one unit.
 
 ---
 
@@ -138,14 +136,14 @@ is an engine-level change.
    **Lyt og Find** — real playback indicator.
 
 **LOW (polish):**
-9. Stav Ordet layout; Sig et Ord instruction placement; Hvad Mangler distractors; Hvilken Farve spacing; Ram Farven
+9. Stav Ordet layout; Hvad Mangler distractors; Hvilken Farve spacing; Ram Farven
    pale-target backing + tray balance; faint drop-zones shared pass *(A6)*; Memory glyph↔picture variant.
 
 ---
 
 ## H. What's already good — do NOT touch
 Honest counting (Tal Quiz two-mode), spoken completed-fact reinforcement (Math/Sammenlign/Hvad Mangler), the
-reworked Sig et Ord mic, Ram Farven's goal→pot bench + recipe reveal, Hvilken Farve's single-object clarity, Lyt og
+Ram Farven's goal→pot bench + recipe reveal, Hvilken Farve's single-object clarity, Lyt og
 Find's answer-hiding audio-first model, Lær Engelsk's triple-encoded cards, every game's never-fail hint +
 non-punishing rounds, gender-correct spoken colour echoes, kidCollision spring-back. And the entire visual/material
 uplift (PRD-06→-12) — that layer is done and strong.

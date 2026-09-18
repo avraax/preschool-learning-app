@@ -4,9 +4,9 @@
 // `#00FF00` green screen and keyed with the `sharp` pipeline (`.claude/rules/scene-assets.md`).
 // Copied from src/assets/games/math/index.ts (the id-keyed variant).
 //
-// WORDS + LETTERS ARE NOT ART (§0.4): the uppercase prompt WORD (Læs Ordet), the letter tiles + slots
-// (Stav Ordet), and the spelled-out letters (Sig et Ord) stay Comic Sans Typography — recognising /
-// reading / spelling the glyphs IS the exercise. Only the *depicted picture* (the cow/car/cat) is
+// WORDS + LETTERS ARE NOT ART (§0.4): the uppercase prompt WORD (Læs Ordet) and the letter tiles +
+// slots (Stav Ordet) stay Comic Sans Typography — recognising / reading / spelling the glyphs IS the
+// exercise. Only the *depicted picture* (the cow/car/cat) is
 // baked. Abstract words with no clean depiction (hej/arm/ben/fod/hul/mor/far) have no art id → they
 // keep their emoji via the art-gated fallback.
 //
@@ -17,7 +17,7 @@
 //
 // ART-GATED (PRD-06/-10): this globs whatever WebP the owner has dropped into THIS directory. Until
 // the batch lands the manifest is empty and `ordlegArt()` returns `undefined`, so every consumer
-// (Læs Ordet answer pictures, Stav Ordet prompt picture, Sig et Ord match-bloom) keeps its emoji
+// (Læs Ordet answer pictures, Stav Ordet prompt picture) keeps its emoji
 // fallback. Drop the keyed files and they auto-register with no code change. One image per id;
 // ≤40 KB, square, transparent (per scene-assets rules).
 

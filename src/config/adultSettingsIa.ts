@@ -312,23 +312,19 @@ export const ADULT_IA: AdultGroup[] = [
     ],
   },
   {
-    // THE FIFTH GROUP, added deliberately at App Store PRD Phase A (§3.5 / §3.6) — it broke the
+    // THE FIFTH GROUP, added deliberately at App Store PRD Phase A (§3.5) — it broke the
     // Settings PRD-01 five-group contract on purpose, with the owner's decision on record
     // (2026-08-06), and the Barn+Konto merge has since restored the count without touching this one.
-    // DO NOT fold it into `Konto`. The reason it is its own group: a Kids Category
-    // reviewer looks for the parental gate, the microphone default and the privacy policy, and all
-    // three are the SAME story. Scattering the mic switch under "Lyd" (which otherwise means playback
-    // volume) and the policy into the rail footer would have made a reviewer hunt for the one thing
-    // that decides Guideline 1.3.
+    // DO NOT fold it into `Konto`. The reason it is its own group: a Kids Category reviewer looks for
+    // the parental gate and the privacy policy, and they are the SAME story. Letting the policy fall
+    // into the rail footer would have made a reviewer hunt for the one thing that decides
+    // Guideline 1.3.
     //
-    // Nothing here is `destructive`: turning the microphone OFF is the safe direction and revoking
-    // consent must never be harder than giving it. Turning it ON is guarded instead by an explicit
-    // consent screen (`panes/MicConsentDialog.tsx`) that names Google — a switch alone would not be
-    // "the parent explicitly consents".
+    // Nothing here is `destructive` — the group is two documents and a disclosure, and reading them
+    // changes nothing.
     id: 'privatliv',
     label: 'Privatliv',
     items: [
-      { id: 'privatliv.microphone', label: 'Mikrofon' },
       { id: 'privatliv.policy', label: 'Privatlivspolitik' },
       { id: 'privatliv.support', label: 'Support' },
     ],

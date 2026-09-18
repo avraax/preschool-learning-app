@@ -26,19 +26,17 @@ approves no swaps, PRD-18 is fully art-free.
 | **W1** | **Læs Ordet** (Ordleg) | **Silent first-letter cue** (tint/enlarge the prompt word's first letter) + **3 options at Let** | HIGH (in group) |
 | **W2** | **Bogstav Quiz** (Alphabet) | **Picture-manifest audit** — swap subjects whose everyday child-name ≠ the target word (art-gated per swap) | MED |
 | **W3** | **Stav Ordet** (Ordleg) | **Tighten the layout** — pull slots+tiles up, kill the residual dead mid-band | MED |
-| **W4** | **Sig et Ord** (Ordleg) | Move the idle **instruction line up next to the mic** | LOW |
 | **W5** | **Lær Alfabetet** (Alphabet) | Enlarge/center the **bloom** into the dead band above the grid | LOW |
 | **W6** | **Hukommelse Bogstaver** (Alphabet) | *(optional)* **glyph↔picture pairing** variant so memory also drills letter→word | LOW / owner-decision |
 
 Already handled by PRD-14 (do NOT redo): Bogstav Quiz fact + confusable distractors; Læs Ordet distractor uniqueness;
 Lær Alfabetet association audio; memory 10-pair default + face word-label removal; shared vertical rhythm. **Stav
-Ordet is pedagogically the strongest game — W3 is layout only, no learning change.** Sig et Ord's mechanic is untouched.
+Ordet is pedagogically the strongest game — W3 is layout only, no learning change.**
 
 ## 2. Guardrails
 iPad-first no-scroll; 44px; Danish; Comic Sans; token-driven (all 4 skins); reduced-motion (motion off, audio kept);
 no adaptivity; **Læs Ordet NEVER reads the prompt word** (W1's first-letter cue is **visual only** — no audio);
-**Ordleg stays at the easiest 2–3 letter words**; Sig et Ord's hold-to-talk + no-grading model untouched; no new
-narration. W2 swaps use the green-screen pipeline (`.claude/rules/scene-assets.md`); glyphs stay type.
+**Ordleg stays at the easiest 2–3 letter words**; no new narration. W2 swaps use the green-screen pipeline (`.claude/rules/scene-assets.md`); glyphs stay type.
 
 ## 3. Workstream design
 
@@ -81,13 +79,6 @@ asks word-association with the fact spoken on correct.
 residual dead band remains, fine-tune the `pt`/`gap` on that container (App. §A3). Layout only, no learning change.
 **Verify:** confirm no big empty band; tiles ≥44px off the bottom edge; spelling loop + hint intact.
 
-### W4 — Sig et Ord: instruction next to the mic (UX, LOW)
-**Problem (PRD-13 §F):** the idle instruction "Hold knappen og sig et ord!" floats low, disconnected from the mic
-(which sits high), with an empty band between — for a 5yo the call-to-action reads best adjacent to the control.
-**Change:** move the idle instruction **up, directly under the mic** (or the waveform) so button + label form one
-unit. Keep the whole reworked mic (static grounding, hold-to-talk, spell-back, match-bloom) untouched.
-**Verify:** the instruction sits under the mic as one unit; mic behavior unchanged.
-
 ### W5 — Lær Alfabetet: enlarge/center the bloom (UX, LOW)
 **Problem (PRD-13 §B):** the letter+picture bloom sits small and high with a large empty band before the grid (partly
 PRD-14 W1). **Change:** enlarge/vertically-center the bloom so the tapped letter + baked picture read as the clear
@@ -110,7 +101,6 @@ stars/flip unchanged.
 - `src/components/ordleg/LaesOrdetGame.tsx` (W1 — first-letter cue + Let option count)
 - `src/config/letterWords.ts` (W2 — swapped manifest entries) + `src/assets/games/alphabet/` (W2 — new WebP per swap)
 - `src/components/ordleg/SpellingGame.tsx` (W3 — layout tighten)
-- `src/components/ordleg/SpeakWordGame.tsx` (W4 — instruction placement)
 - `src/components/alphabet/AlphabetLearning.tsx` (W5 — bloom size/center)
 - *(optional W6)* `src/components/learning/MemoryGame.tsx` + `src/components/common/UnifiedMemoryGame.tsx`
 **Reuse:** `getCategoryTheme`, `letterArt`, tactile depth helpers, the scene-assets keying pipeline (W2 only).
@@ -127,7 +117,7 @@ stars/flip unchanged.
 - `npm run build` + `npm run lint` clean (+ `audit:check` only if W2 adds a swapped subject that changes narrated
   content — it shouldn't; words are reused).
 - `ui-screenshot`, iPad + phone, all 4 skins: W1 first-letter cue visible + 3 options at Let; W2 audited subjects
-  unambiguous; W3 compact spelling column; W4 instruction under mic; W5 bloom fills the band. Reduced-motion + 0
+  unambiguous; W3 compact spelling column; W5 bloom fills the band. Reduced-motion + 0
   console errors.
 - **W1 invariant check:** capture `/api/tts-azure` — the Læs Ordet prompt word is still NEVER spoken.
 - **Then play-test** — W1 (does the first-letter cue help him decode?) + W2 (do the pictures read right to him?).
@@ -166,12 +156,6 @@ column; art resolved by `letterArt(letter)` keyed by the glyph)**. `WORD_LETTERS
 md:2.5}` (:489, land `gap:1` :490) — PRD-14 W1 comment at :483–485.** Slots row :497–539 (slot box `{xs:56,sm:64,
 md:80}`); tiles tray :546–564 (`maxWidth:560`; tile `{xs:56,sm:64,md:76}`). **W3 = verify the band is gone (likely
 skip); if not, tune :488–490 only.**
-
-**§A4 — Sig et Ord (W4).** `SpeakWordGame.tsx`: mic in `promptStage` via `MicHero` (invoked **:581**; `MicHero`
-defined **:69–198** — `flexDirection:'column'` mic orb :116–157 then waveform :164–195). Idle instruction is a
-SEPARATE body `Typography` **:694–709** (`justifyContent:'center'` body Box :604–614), idle string
-`'Hold knappen og sig et ord!'` **:705**. **W4:** move the idle-phase string into the `MicHero` column (a caption slot
-under the orb/waveform) so button+label read as one unit; keep the phase strings (recording/processing/retry) logic.
 
 **§A5 — Lær Alfabetet (W5).** `AlphabetLearning.tsx`: bloom = `promptStage` IIFE **:182–262** (`PromptFocus`, subject =
 column of giant glyph + [picture + word]). Size levers: glyph `clamp(2.75rem, 15vh, 6.5rem)` **:218**, picture

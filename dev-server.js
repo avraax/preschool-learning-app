@@ -1,7 +1,6 @@
 import express from 'express';
 import fs from 'fs';
 import path from 'path';
-import { v2 as speechV2 } from '@google-cloud/speech';
 import { TTS_CONFIG } from './shared-tts-config.js';
 import {
   buildSsml,
@@ -52,7 +51,7 @@ app.use('/api/auth', (req, res, next) => {
 });
 app.all('/api/auth/*splat', toNodeHandler(auth));
 
-// 5mb to comfortably hold a short base64-encoded audio clip from the mic game.
+// 5mb to comfortably hold a base64-encoded screenshot from a bug report.
 // Deliberately mounted AFTER the auth handler — see trap 1 above.
 app.use(express.json({ limit: '5mb' }));
 
@@ -148,7 +147,6 @@ async function requirePaidAccess(req, res) {
 
 // --- Azure TTS endpoint (mirrors api/tts-azure.ts via the shared core) ---
 const VOICE_TYPES = new Set(['primary', 'backup', 'male', 'english']);
-const MAX_AUDIO_BASE64_CHARS = 1_500_000;
 
 app.post('/api/tts-azure', async (req, res) => {
   if (!isAllowedOrigin(req)) return res.status(403).json({ error: 'Forbidden origin' });
@@ -203,104 +201,6 @@ app.post('/api/tts-azure', async (req, res) => {
   } catch (error) {
     logDevError('TTS', error);
     res.status(500).json({ error: 'Text-to-speech synthesis failed' });
-  }
-});
-
-// --- Speech-to-Text (STT) client + endpoint ---
-const { SpeechClient } = speechV2;
-const STT_LOCATION = 'eu';
-const STT_API_ENDPOINT = 'eu-speech.googleapis.com';
-// Mirrors api/stt.ts — see the long comment there for WHY the model changed (`short` returns zero
-// results for a single isolated Danish word; `chirp_3` hears it). Keep the two in sync.
-const STT_MODEL = 'chirp_3';
-const STT_MODEL_FALLBACK = 'short';
-
-let sttClient = null;
-let sttProjectId = null;
-
-function initializeSttClient() {
-  if (sttClient) return { client: sttClient, projectId: sttProjectId };
-
-  const projectId = process.env.GOOGLE_CLOUD_PROJECT_ID;
-  const clientEmail = process.env.GOOGLE_CLOUD_CLIENT_EMAIL;
-  const privateKeyBase64 = process.env.GOOGLE_CLOUD_PRIVATE_KEY_BASE64;
-  let privateKey = process.env.GOOGLE_CLOUD_PRIVATE_KEY;
-
-  if (!projectId || !clientEmail || (!privateKey && !privateKeyBase64)) {
-    throw new Error(
-      'Missing Google Cloud env vars. Ensure .env.local has GOOGLE_CLOUD_PROJECT_ID, GOOGLE_CLOUD_CLIENT_EMAIL, and GOOGLE_CLOUD_PRIVATE_KEY_BASE64'
-    );
-  }
-
-  if (privateKeyBase64 && !privateKey) {
-    privateKey = Buffer.from(privateKeyBase64, 'base64').toString('utf-8');
-  } else if (privateKey) {
-    privateKey = privateKey.replace(/\\n/g, '\n');
-  }
-
-  sttClient = new SpeechClient({
-    apiEndpoint: STT_API_ENDPOINT,
-    projectId,
-    credentials: { client_email: clientEmail, private_key: privateKey },
-  });
-  sttProjectId = projectId;
-  console.log(`[dev-server] STT client initialized (project: ${projectId}, region: ${STT_LOCATION})`);
-  return { client: sttClient, projectId };
-}
-
-app.post('/api/stt', async (req, res) => {
-  if (!isAllowedOrigin(req)) return res.status(403).json({ error: 'Forbidden origin' });
-  const access = await requirePaidAccess(req, res);
-  if (!access) return;
-  if (!rateLimit(req, res, { scope: 'stt', limit: 40, windowMs: 60_000, subject: access.sub })) return;
-  try {
-    const { audioContent } = req.body;
-
-    if (!audioContent || typeof audioContent !== 'string') {
-      return res.status(400).json({ error: 'audioContent (base64) is required' });
-    }
-    if (audioContent.length > MAX_AUDIO_BASE64_CHARS) {
-      return res.status(413).json({ error: 'audioContent too large' });
-    }
-
-    const audioBytes = Buffer.from(audioContent, 'base64');
-    if (audioBytes.length === 0) {
-      return res.status(400).json({ error: 'audioContent is empty' });
-    }
-
-    const { client, projectId } = initializeSttClient();
-
-    const recognizeWith = (model) =>
-      client.recognize({
-        recognizer: `projects/${projectId}/locations/${STT_LOCATION}/recognizers/_`,
-        config: {
-          autoDecodingConfig: {},
-          languageCodes: ['da-DK'],
-          model,
-          // Child-safety: mask profanity (mirrors api/stt.ts). See that file for rationale.
-          features: { profanityFilter: true },
-        },
-        content: audioBytes,
-      });
-
-    let response;
-    try {
-      [response] = await recognizeWith(STT_MODEL);
-    } catch (modelError) {
-      const message = String(modelError?.message ?? '');
-      if (!/model/i.test(message) || !/does not exist|not supported|INVALID_ARGUMENT/i.test(message)) throw modelError;
-      logDevError('STT model fallback', modelError);
-      [response] = await recognizeWith(STT_MODEL_FALLBACK);
-    }
-
-    const alternative = response.results?.[0]?.alternatives?.[0];
-    const transcript = alternative?.transcript ?? '';
-    const confidence = alternative?.confidence ?? 0;
-
-    res.json({ transcript, confidence });
-  } catch (error) {
-    logDevError('STT', error);
-    res.status(500).json({ error: 'STT recognition failed' });
   }
 });
 
@@ -814,7 +714,6 @@ app.get('/api/schema-health', async (_req, res) => {
 app.listen(PORT, () => {
   console.log(`[dev-server] API server running at http://localhost:${PORT}`);
   console.log(`[dev-server] TTS (Azure): POST http://localhost:${PORT}/api/tts-azure`);
-  console.log(`[dev-server] STT:         POST http://localhost:${PORT}/api/stt`);
   console.log(`[dev-server] Logging:     POST/GET http://localhost:${PORT}/api/log-error`);
   console.log(`[dev-server] Bug reports: POST/GET http://localhost:${PORT}/api/bug-report  (→ .bug-reports/)`);
   console.log(`[dev-server] Audit:       POST/GET http://localhost:${PORT}/api/audit-save  (→ docs/audit/)`);

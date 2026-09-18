@@ -2209,14 +2209,6 @@
       "group": "phrases",
       "updatedAt": 1784110101652
     },
-    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Sig et Ord": {
-      "verdict": "ok",
-      "note": "Bulk-approved (PRD-11 owner listen pass)",
-      "candidateIpa": "",
-      "text": "Sig et Ord",
-      "group": "phrases",
-      "updatedAt": 1784110101652
-    },
     "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Læs Ordet": {
       "verdict": "ok",
       "note": "Bulk-approved (PRD-11 owner listen pass)",
@@ -15856,30 +15848,6 @@
       "text": "Luftballon",
       "group": "mixed",
       "updatedAt": 1785827804930
-    },
-    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Det hørte jeg ikke helt. Prøv igen!": {
-      "verdict": "ok",
-      "note": "Bulk-approved (PRD-11 owner listen pass)",
-      "candidateIpa": "",
-      "text": "Det hørte jeg ikke helt. Prøv igen!",
-      "group": "ordleg",
-      "updatedAt": 1785865833138
-    },
-    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Hold knappen nede, mens du siger ordet.": {
-      "verdict": "ok",
-      "note": "Bulk-approved (PRD-11 owner listen pass)",
-      "candidateIpa": "",
-      "text": "Hold knappen nede, mens du siger ordet.",
-      "group": "ordleg",
-      "updatedAt": 1785865833138
-    },
-    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Nu er mikrofonen klar. Prøv igen!": {
-      "verdict": "ok",
-      "note": "Bulk-approved (PRD-11 owner listen pass)",
-      "candidateIpa": "",
-      "text": "Nu er mikrofonen klar. Prøv igen!",
-      "group": "ordleg",
-      "updatedAt": 1785865833138
     },
     "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Raket starter med, R": {
       "verdict": "ok",

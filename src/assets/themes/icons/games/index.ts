@@ -25,7 +25,6 @@ import englishWord from './english.word.webp'
 import englishLearn from './english.learn.webp'
 import ordlegRead from './ordleg.read.webp'
 import ordlegSpelling from './ordleg.spelling.webp'
-import ordlegMic from './ordleg.mic.webp'
 
 // Keyed `<section>.<id>`; GameTileIcon builds the key and falls back to emoji for any missing key.
 export const gameIconImages: Record<string, string> = {
@@ -49,5 +48,4 @@ export const gameIconImages: Record<string, string> = {
   'english.learn': englishLearn,
   'ordleg.read': ordlegRead,
   'ordleg.spelling': ordlegSpelling,
-  'ordleg.mic': ordlegMic,
 }

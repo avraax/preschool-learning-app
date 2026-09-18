@@ -7,8 +7,8 @@
 // **NO CAPACITOR DEPENDENCY, and that is deliberate.** Nothing native exists in this repo yet (Phase B),
 // and importing `@capacitor/core` to ask "am I native?" would make a web build depend on a native SDK to
 // answer a question the ORIGIN already answers. Capacitor serves the bundled web build from
-// `capacitor://localhost` (`iosScheme: 'capacitor'`, kept as the default precisely because `localhost`
-// is what grants the secure context `getUserMedia` needs — PRD §3.9). So the protocol IS the signal, it
+// `capacitor://localhost` (`iosScheme: 'capacitor'`, kept as the Capacitor default). So the protocol IS
+// the signal, it
 // costs nothing, and it is testable as a pure function.
 //
 // ONE DELIBERATE INVERSION, recorded here because a later session will otherwise "fix" it back:

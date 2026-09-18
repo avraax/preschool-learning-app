@@ -36,8 +36,8 @@ Runs across multiple sessions (context limits); this file is the resumable track
 - Educational color data stays as data. Honor `.claude/rules` (audio/responsive/game-dev).
 
 > **Sweep complete (2026-06-16):** every route is ✅ done or ✅ at bar. Shared `LearningGrid`,
-> `EnglishLearning`, `SpellingGame`, and `SpeakWordGame` got lifted-3D tiles; the dense number grid
-> and the mic-game landscape overflow were fixed; all quiz configs + Memory + menus verified against
+> `EnglishLearning` and `SpellingGame` got lifted-3D tiles; the dense number grid
+> was fixed; all quiz configs + Memory + menus verified against
 > the bar in light + dark. Leave this file as the record / restart point if new screens are added.
 
 ## Tracker (status per route)
@@ -60,7 +60,6 @@ Runs across multiple sessions (context limits); this file is the resumable track
 | ✅ done | `/english/learn` | EnglishLearning | Lifted-3D word cards (green edge lip + active glow), dark-correct |
 | ✅ at bar | `/ordleg/read` | LaesOrdetGame | Shared engine — teal tiles, no prompt-word audio (correct), spot-checked |
 | ✅ done | `/ordleg/spelling` | SpellingGame | Lifted-3D letter tiles (hint glow / shake edge) + landscape balance |
-| ✅ done | `/ordleg/mic` | SpeakWordGame | Fixed landscape mic-off-screen + lifted tiles + dark-readable text |
 | ✅ at bar | `/learning/memory/:type/:size` | MemoryGame | Already lifted-3D (prior overhaul); verified sizing (10/20) + match glow + dark all hold |
 | ✅ at bar | menus | GameSelectionLayout + Home | Verified cohesion + dark theme (frosted accent cards) — no changes |
 
@@ -116,7 +115,7 @@ in `src/theme/themes.ts` (Rummet, the dark immersive scene), screenshot, then re
   in landscape the dense grid (esp. 100 numbers) gets tiny/sub-44px cells — check legibility/targets;
   consider giving the grid more room (e.g. smaller current-item card in landscape). Shared component →
   one fix helps both.
-- **`SpellingGame` / `SpeakWordGame`** (hand-rolled): check framing/balance + dark theme + all states
+- **`SpellingGame`** (hand-rolled): check framing/balance + dark theme + all states
   (idle, recording, result) against the bar.
 - **`MemoryGame`**: check card grid sizing in landscape (sub-44px on phones), flip/match states, dark theme.
 - **Menus** (`GameSelectionLayout`, Home in `App.tsx`): already fairly polished — verify cohesion + dark theme only.

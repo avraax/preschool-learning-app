@@ -173,7 +173,7 @@ round?: {
 - **Exact injection point:** `UnifiedQuizGame.tsx` lines **260–265** — the `setTimeout(... if (isCorrect) { stopCelebration(); generateNewQuestion() })` auto-advance. Replace the `generateNewQuestion()` call with: increment an answered-counter; if `counter >= round.length` → set a `roundDone` state that renders `RoundResultScreen` (as an overlay/replacement of the grid inside `GameShell`); else `generateNewQuestion()`.
 - **Counting semantics:** a "question" counts when the child advances (i.e. answers correctly — wrong answers already don't advance, line 261). **Streak** = correct **on first attempt**; track a per-question `firstAttempt` boolean (set false once any wrong tile is tapped for the current item) so a wrong-then-right does not extend the streak. Mistakes for the star rating = count of questions where `firstAttempt` was broken.
 - On replay, reset the counter + `roundDone` and call `generateNewQuestion()`; on round end, call `progressStore.recordRoundResult(gameId, {...})` and feed its `RoundOutcome` to the result screen.
-- This keeps all four UnifiedQuizGame-based games (English ×3, Læs Ordet) and the math/alphabet quizzes on one code path. Hand-rolled games (Stav Ordet, Sig et Ord, Farver, Memory) call `useRound` + the result screen directly.
+- This keeps all four UnifiedQuizGame-based games (English ×3, Læs Ordet) and the math/alphabet quizzes on one code path. Hand-rolled games (Stav Ordet, Farver, Memory) call `useRound` + the result screen directly.
 
 ### Result / reward screen
 **New component:** `src/components/common/RoundResultScreen.tsx`

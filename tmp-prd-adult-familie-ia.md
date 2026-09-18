@@ -171,9 +171,9 @@ it.**
 - **`data-guest-gate-prompt` / `data-guest-gate-key`** — the arithmetic gate the screenshot recipe
   solves (`listing.md` §2.2).
 - **The three guideline-critical items stay visible and un-`devTool`:** `konto.deleteAccount`
-  (Guideline 5.1.1(v) requires in-app deletion to be findable), `privatliv.microphone`,
+  (Guideline 5.1.1(v) requires in-app deletion to be findable),
   `privatliv.policy`. Guarded already; the guard must survive the re-parenting.
-- **`Privatliv` stays its own group.** It exists separately so a Kids Category reviewer finds the mic
+- **`Privatliv` stays its own group.** It exists separately so a Kids Category reviewer finds the
   default and the policy without hunting (App Store PRD §3.6). Do not fold it into `Familie`.
 - **One `Luk`, no back arrow at regular width, max modal depth 3**, and the phone's `fullScreen`
   push-nav (`adult-surface.md` navigation grammar). The merged pane is longer; on a phone that is a

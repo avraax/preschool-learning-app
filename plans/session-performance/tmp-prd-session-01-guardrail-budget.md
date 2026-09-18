@@ -357,7 +357,7 @@ W2 — an assumption in §2.1 is then wrong.
 
 **W2.1 — Split `audio-system.md` (36,782 B).** Narrow its `paths:` to the engine and config files it
 documents: `SimplifiedAudioController.ts`, `SimplifiedAudioContext.tsx`, `useSimplifiedAudio.ts`,
-`useSpeechInput.ts`, `ttsClient.ts`, `audioReadiness.ts`, `audioLiveness.ts`,
+`ttsClient.ts`, `audioReadiness.ts`, `audioLiveness.ts`,
 `AudioBlockedCue.tsx`, `sfxClient.ts`, `audioFormat.test.ts`. **Drop
 `src/components/**/*.tsx` from it.**
 

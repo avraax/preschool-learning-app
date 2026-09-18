@@ -56,7 +56,7 @@ Each item below = one focused future session: **deep-dive design discussion → 
 1. **Foundation** (`-01-`) — implement first. No game work lands well without it.
 2. **Math** (`-02-`) — 6 games, the richest learning surface and where the son is most actively progressing (counting, +/−). Highest payoff; also the best proving ground for the round/reward system.
 3. **Alphabet** (`-03-`) — 2 games. He knows all letters, so the lift here is phonics/word-association depth + reward, and turning free-exploration into something with a goal.
-4. **Ordleg** (`-04-`) — 3 games (Læs Ordet, Stav Ordet, Sig et Ord). His emergent-reading frontier; the mic game is the likely favorite and deserves real investment.
+4. **Ordleg** (`-04-`) — 2 games (Læs Ordet, Stav Ordet). His emergent-reading frontier and worth real investment.
 5. **English** (`-05-`) — 4 games. Strong shared-engine reuse; mostly benefits from the foundation + better distractors/scaffolding.
 6. **Farver** (`-06-`) — 2 drag games. Most bespoke; biggest juice opportunity (drag physics, snap, mixing animation). Save for when the SFX/juice system is mature.
 7. **Memory** (`-07-`) — 1 engine, 2 variants. Self-contained; slots in anywhere after foundation.
@@ -84,7 +84,6 @@ This captures what the inventory found so each future session starts warm. **Not
 ### Ordleg (`-04-`)
 - **Læs Ordet**: keep "no audio scaffold" rule (per owner: he can't spell yet, must not read prompt aloud); add hint ladder (picture/first-sound) *without* defeating the reading; more words; title-case vs ALL CAPS decision.
 - **Stav Ordet**: add backspace/undo, progress within word, bigger touch targets on tablet, hint for next letter; rounds.
-- **Sig et Ord** (mic/STT): the standout. Give it a **word goal** ("say the animal you see") so it teaches vocabulary instead of rewarding any word; better STT-fail feedback; lean into celebration. Possibly the model for new speech games.
 
 ### English (`-05-`)
 - All four: better distractors (minimal-pairs instead of random), "audio is playing" visual cue, bounded rounds + stickers, thematic grouping. **Lær Engelsk** browse → add exploration stickers + progress.

@@ -3,7 +3,6 @@ paths:
   - "src/utils/SimplifiedAudioController.ts"
   - "src/contexts/SimplifiedAudioContext.tsx"
   - "src/hooks/useSimplifiedAudio.ts"
-  - "src/hooks/useSpeechInput.ts"
   - "src/services/ttsClient.ts"
   - "src/config/audioReadiness.ts"
   - "src/utils/audioLiveness.ts"
@@ -51,9 +50,9 @@ voice/rate** into `public/sounds/tts/*.mp3` with a committed manifest (`src/conf
 serves only genuinely dynamic text or a non-default VoiceLab voice.
 
 **As of 2026-08-02 EVERY line the app speaks is prebaked**, including the composed sentences (math
-questions + facts, comparison facts, sequence read-backs, colour-mix lines, quiz questions). The one
-deliberate exception is Sig et Ord, which reads back whatever word the child said — genuinely
-unbounded. Treat "this line hits Azure at runtime" as a bug to be fixed, not a normal state.
+questions + facts, comparison facts, sequence read-backs, colour-mix lines, quiz questions). Since the
+speech-input game was removed (2026-09-18) there is **no exception left** — the closed set is the whole
+set. Treat "this line hits Azure at runtime" as a bug to be fixed, not a normal state.
 
 **The manifest is a DYNAMIC import, and the lookup MUST NOT await it** (Performance PRD-01 W7). It is
 166 KB of lookup table that nothing needs at mount, so it was the third-largest thing in the eager
@@ -184,7 +183,7 @@ sprite), re-encoded with `node scripts/transcode-sfx.mjs`, into `public/sounds/u
   `controller.prefetchLetters()` warm the files first; that trims the fetch, NOT the padding.
   **For a SPELL-OUT the step is per LETTER**, not one fixed value: `src/config/letterClipTiming.ts` holds
   each letter name's measured spoken length (422ms for A, 1044ms for W), so a word costs what its own
-  letters cost instead of the worst case — Sig et Ord's awaited version plodded at ~1.5–1.9s per letter.
+  letters cost instead of the worst case — the awaited version plodded at ~1.5–1.9s per letter.
   **The same rule governs a game's correct-answer beat** — never `await` the echo/fact before
   celebrating or advancing; see `.claude/rules/game-development.md` and the `DWELL_*` note in
   `src/theme/motion.ts`.
@@ -465,39 +464,11 @@ on the target iPad twice. So a board like that reads **`audio.narrationHealthy`*
   remember the focal band is already full — anything added there needs re-measuring at phone landscape
   (`.claude/rules/responsive-design.md`).
 
-## Speech INPUT (separate from playback)
+## There is NO speech input
 
-`Sig et Ord` captures audio via `src/hooks/useSpeechInput.ts` (MediaRecorder -> `/api/stt`, Google STT v2).
-This is the *capture* side and sits beside the controller. It must NOT record while TTS is playing — call
-`audio.stopAll()` before starting capture.
-
-- **THE MODEL IS THE GAME.** This screen sends ONE isolated word, and the `short` model returns **zero
-  results** for that — measured over 16 common Danish words × 4 child-like distortions: 0–1 of 16, while a
-  full SENTENCE from the same voice transcribed at 0.94. Not credentials, container, level or length; the
-  da-DK `short`/`long` models simply discard a lone monosyllable. `chirp_3` hears them, and lives ONLY in
-  the `eu` multi-region (`chirp`/`chirp_2` are not there, and chirp_2 via europe-west4 measured worse).
-  `api/stt.ts` carries the numbers; **`src/config/sttConfig.test.ts` pins the model, the `da-DK` language,
-  the EU region and the profanity flag in BOTH `api/stt.ts` and its `dev-server.js` mirror**, which is the
-  only thing stopping a "simplification" back to `short` from silently returning the game to
-  "det hørte jeg ikke helt" on every attempt.
-- **The mic is opened ONCE per visit and held** (`prime()`), so `startRecording()` is **synchronous**.
-  Opening it inside the press cost 100–500ms during which the board already said "Jeg lytter" — the first
-  syllable, often the whole word, was never captured. **Never let the UI claim to be listening before the
-  recorder is actually running**; the honest in-between is its own state.
-- **`prime()` owns the generation counter** (`genRef`), and `release()`/`cancel()` bump it: an in-flight
-  `getUserMedia` self-aborts and stops the granted tracks, so the OS mic never lingers after the child
-  navigates away. `stopAndRecognize()` deliberately does NOT bump it (it keeps the stream for the next
-  word). The hook releases on unmount itself, so a component can't leak the indicator by forgetting.
-- **Recognition must be bounded by a race, not an abort signal.** `authorizedFetch` awaits a token mint
-  BEFORE `fetch`, which no `AbortController` can cancel — that left the board on "Lad mig tænke…" forever.
-  The board carries a second, longer watchdog for the same reason: two independent brakes, because one of
-  them is inside the thing that could be wedged.
-- **`normalizeSpokenWord`** (`src/config/spokenWordInput.ts`, replaces the old `extractFirstWord`) is the
-  one place a transcript becomes a word: masked/blocked profanity → nothing, a leading one-letter token
-  dropped, a one-letter result rejected, digits → Danish number words, lowercased (the prebaked key AND the
-  case-sensitive PLS lexicon both need it), and a measured-only table repairing non-Danish spellings of
-  Danish homophones ("cat" → "kat"). **The Danish blocklist is load-bearing, not belt-and-braces**:
-  measured, `chirp_3` masks English profanity and passes Danish through in the clear — and this game
-  SPELLS ALOUD whatever it hears. Server side in `.claude/rules/api-endpoints.md`.
-- Verify it end-to-end without a voice: `.claude/skills/ui-screenshot/mic.mjs` (fake microphone fed real
-  Danish, plus silence and short-press runs). Rung 3 still owns "does it understand a real 5-year-old".
+Ordleg's "Sig et Ord" recorded the child and sent the audio to Google Cloud STT. It was removed in full
+on 2026-09-18 — game, hook, `/api/stt`, the mic consent switch, the iOS purpose string and every privacy
+disclosure that described it. **The app captures no audio at all now.** `capacitorConfig.test.ts` fails
+if `NSMicrophoneUsageDescription` or a `getUserMedia` call comes back, and `src/config/legalContent.ts`
+tells parents in both languages that neither microphone nor camera is used — so reinstating capture is a
+privacy-policy change, not just a feature.

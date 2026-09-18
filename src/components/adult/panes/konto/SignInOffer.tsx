@@ -11,7 +11,7 @@
 
 import React, { useCallback, useState } from 'react'
 import { Box, Button, Stack, Typography } from '@mui/material'
-import { Mic, ShieldCheck, TabletSmartphone, Users } from 'lucide-react'
+import { ShieldCheck, TabletSmartphone, Users } from 'lucide-react'
 import { startSocialSignIn, type SignInProvider } from '../../../../services/authSignIn'
 import { useSignUpProviders } from '../../../../services/signUpProviders'
 import { useProgress } from '../../../../hooks/useProgress'
@@ -113,9 +113,9 @@ const SignInOffer: React.FC = () => {
           `capacitor://localhost` origin can never satisfy the `boernelaering.dk` rpID, and the
           signed-in sections already say so. Google or the code, nothing else.
 
-          THE ORDER IS THE ARGUMENT. Sync, multiple children and the microphone game are all
-          conditional on something a new user may not have — one child on one iPad matches none of
-          them, and that is the median install (and the owner's own household). "Bogen er sikret" is
+          THE ORDER IS THE ARGUMENT. Sync and multiple children are both conditional on something a
+          new user may not have — one child on one iPad matches neither, and that is the median
+          install (and the owner's own household). "Bogen er sikret" is
           the only line true for EVERY family, so it leads. It is also the honest one: today a guest
           book dies with the iPad, silently.
 
@@ -139,11 +139,6 @@ const SignInOffer: React.FC = () => {
             icon={<Users size={19} aria-hidden />}
             title="Plads til flere børn"
             hint="Hvert barn får sin egen bog og sin egen sværhedsgrad."
-          />
-          <BenefitRow
-            icon={<Mic size={19} aria-hidden />}
-            title="Mikrofonspillet kan slås til"
-            hint={'"Sig et Ord" kræver en konto.'}
           />
         </Stack>
         {/* The moved `promoHint`. It sits AT the ask rather than in the argument above it, because the

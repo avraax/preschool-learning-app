@@ -13,16 +13,15 @@ top of it; `ComparisonGame.tsx` is the proven hand-rolled-round template this PR
 
 ## Context
 
-Ordleg is the son's (~5) **emergent-reading frontier** — three games, none yet on the bounded-round /
+Ordleg is the son's (~5) **emergent-reading frontier** — two games, neither yet on the bounded-round /
 reward system:
 
 - **Læs Ordet** — silent read → pick the matching picture. Standing rule (owner memory): the prompt
   word is **never read aloud** (he can't spell/read fluently yet — reading it for him defeats the
   exercise).
 - **Stav Ordet** — hear the word + see its picture → tap letters in order to spell it.
-- **Sig et Ord** — hold the mic, say a word, hear it spelled back (his likely favourite).
 
-All three currently loop endlessly, use the legacy `celebrate()` (or none), and never feed the
+Both currently loop endlessly, use the legacy `celebrate()` (or none), and never feed the
 sticker hub. **Success looks like:** each finishes in **rounds of 8**, ends on the shared
 `RoundResultScreen` (stars → "Ny rekord!" → streak → sticker reveal → replay/album/back), drips
 stickers into the album, and uses the celebration **tiers** + **SFX** — at or above today's
@@ -37,7 +36,6 @@ no word-list expansion. Tuning = editing named constants in a later session.
 |---|---|---|---|
 | Læs Ordet | `/ordleg/read` | `LaesOrdetGame.tsx` | `UnifiedQuizGame` config |
 | Stav Ordet | `/ordleg/spelling` | `SpellingGame.tsx` | hand-rolled |
-| Sig et Ord | `/ordleg/mic` | `SpeakWordGame.tsx` | hand-rolled (STT) |
 
 **Out of scope:** the Ordleg section has no Memory variant (Memory is `-07-`).
 
@@ -54,11 +52,6 @@ no word-list expansion. Tuning = editing named constants in a later session.
   :274-294`). Uses the **legacy** `useCelebration().celebrate()` (`:108`, `:279`). **Weaknesses:**
   wrong letter only shakes (`:266-271`) — **no `wrong` SFX**; **no first-try tracking**, **no
   round/reward**, and **no hint** when the child gets stuck on a slot.
-- **`SpeakWordGame.tsx`** — hand-rolled hold-to-talk STT (`useSpeechInput` → `/api/stt`). Recognizes
-  any first word and spells it back letter-by-letter (`runSpellingSequence :183-216`). Uses the
-  **legacy** `celebrate()` (`:37`, `:208`). Good STT-fail retry already exists (`handleResult
-  :155-181`, friendly "Det hørte jeg ikke helt" at `:158-169`). **Weaknesses:** **no round, no
-  score, no reward** — every word is a one-off with the same confetti.
 
 ## Target experience
 
@@ -130,58 +123,14 @@ The `UnifiedQuizGame` engine then does **everything** with zero further changes 
   only *points*; it never auto-places. (A wrong tap already broke first-try, so using the hint costs
   a star — fair, gentle, and the child can always finish.)
 
-### 3. Sig et Ord — `SpeakWordGame.tsx` (open-ended round, **no target word**)
-
-**Before:** legacy `celebrate()`, endless, no score/reward.
-**After — keep the open-ended magic ("say any word → I'll spell it back"), wrap in a round of 8:**
-
-- **A "question" = one recognized word.** The round is "say 8 words". There is **no target word** and
-  **no STT grading** (owner decision — keep it pressure-free).
-- **State to add:** `const round = useRound({ length: 8, starThresholds: { three: 0, two: 2 } })`,
-  `const firstTryRef = useRef(true)`, `const [roundOutcome, setRoundOutcome] = useState<RoundOutcome
-  | null>(null)`, and `useGameState()` (for the in-round count) — `const { score, incrementScore,
-  resetScore, isScoreNarrating, handleScoreClick } = useGameState()`.
-- **STT-fail path** (`handleResult :158-169`, no word extracted): keep the friendly "Det hørte jeg
-  ikke helt – prøv igen!" retry **as-is**, but set `firstTryRef.current = false` and **stay on the
-  same question** (do not advance, do not count). This is the only thing that breaks "first try".
-- **Recognized-word path** (`handleResult :171-180`): keep `runSpellingSequence` (read back → spell
-  letter-by-letter → celebrate → say again), but **swap `celebrate()` → `celebrateTier('micro')`**
-  (in `runSpellingSequence :208`) and `incrementScore()`. After the sequence completes, instead of
-  the plain `setPhase('idle')` (`:180`):
-  ```ts
-  const r = round.completeQuestion(firstTryRef.current)
-  if (!r.done && r.streak > 0 && r.streak % 3 === 0) celebrateTier('streak')
-  if (r.done) { finishRound(r.firstTryCorrect, r.longestStreak) }
-  else { firstTryRef.current = true; setPhase('idle') }   // fresh question
-  ```
-- **first-try** = produced a recognized word on this question **without** a preceding STT-fail retry.
-  `firstTryRef.current = true` when a fresh question begins; `false` on each STT-fail retry within the
-  same question.
-- `finishRound(firstTryCorrect, longestStreak)` → `progressStore.recordRoundResult('ordleg.mic',
-  { correct: firstTryCorrect, total: round.length, longestStreak }, { starThresholds: { three: 0,
-  two: 2 } })` → `setRoundOutcome(outcome)`.
-- `handleReplay()` → `stopCelebration(); setRoundOutcome(null); round.reset(); resetScore();
-  firstTryRef.current = true; setPhase('idle')`.
-- **In-round progress:** add `<OrdlegScoreChip score={score} disabled={isScoreNarrating}
-  onClick={handleScoreClick} />` to the `GameShell` `score` slot (currently none, `:222-229`) —
-  shows the words-said count this round. (`import { OrdlegScoreChip } from '../common/ScoreChip'`.)
-- **Render:** when `roundOutcome` is set, render `<RoundResultScreen … categoryId="ordleg"
-  backRoute="/ordleg" onReplay={handleReplay} />` in place of the mic UI, **inside** the `supported`
-  branch (so the `!supported` fallback at `:241-258` is unaffected).
-- **Keep untouched:** the `!supported` mic-fallback UI, hold-to-talk gesture (`handlePressStart`/
-  `handlePressEnd`), MIN/MAX press guards, `audio.stopAll()` before capture, and the magic mic
-  button visuals. Add `celebrateTier`/`celebrationDuration` to the `useCelebration()` destructure
-  (`:37`) and pass `duration: celebrationDuration` to the `GameShell` `celebration` prop (`:228`).
-
 ## Foundation hooks (how each game plugs in)
 
 | Game | gameId | round | star thresholds | sticker set | tiers fired | SFX |
 |---|---|---|---|---|---|---|
 | Læs Ordet | `ordleg.read` | length 8 | 3★=0, 2★≤2 | global pool | micro, streak + round/best/sticker/page in result (all engine) | correct, wrong + result cues (engine) |
 | Stav Ordet | `ordleg.spelling` | length 8 | 3★=0, 2★≤2 | global pool | micro (word done), streak, + result tiers | **wrong (added)** + result cues |
-| Sig et Ord | `ordleg.mic` | length 8 | 3★=0, 2★≤2 | global pool | micro (word recognized), streak, + result tiers | result cues |
 
-- **Sticker pool = global** for all three (no `stickerSetId`).
+- **Sticker pool = global** for both (no `stickerSetId`).
 - The engine / `recordRoundResult` already awards **1 round sticker + a best-bonus** and detects
   **page-complete** — nothing extra to add per game.
 - `celebrateTier` **already fires the tier's SFX** — do **not** also call `sfx.play` for those cues
@@ -195,18 +144,15 @@ The `UnifiedQuizGame` engine then does **everything** with zero further changes 
 - **Stav Ordet:** hear the word + see its picture → ordered spelling. The **next-letter hint**
   guarantees he can always finish (never-fail) while still **costing a star** (the wrong tap that
   triggered it broke first-try) — so the hint is gentle but not free.
-- **Sig et Ord:** open speech production + watching his own word get spelled — confidence and incidental
-  phonics exposure. Open-ended keeps it pressure-free; the round just adds a satisfying finish + sticker.
-  No STT grading means a mishear never feels like failure.
-- **All:** a wrong answer / STT-fail never punishes or ends the round; stars are always ≥1 (no failure
+- **All:** a wrong answer never punishes or ends the round; stars are always ≥1 (no failure
   state for a 5yo). Honors the static-difficulty constraint.
 
 ## Visual/asset spec
 
 - **No new raster art, no new SFX files, no new audio/welcome strings.** Welcome strings already
-  exist: `laesordet → 'Læs Ordet'`, `spelling → 'Stav Ordet'`, `micword → 'Sig et Ord'` in
+  exist: `laesordet → 'Læs Ordet'`, `spelling → 'Stav Ordet'` in
   `GAME_WELCOME_MESSAGES` (`SimplifiedAudioController.ts:351`, `:360`, `:361`). Reuse
-  `RoundResultScreen`, `StickerReveal`, `AnswerTile`, and the existing slot/tile/mic visuals.
+  `RoundResultScreen`, `StickerReveal`, `AnswerTile`, and the existing slot/tile visuals.
 - **Principle 0 (quality floor):** all styling via theme tokens (`categoryThemes.ordleg.*` /
   `useTheme()` / `getCategoryTheme('ordleg')`); correct in **all 6 skins** incl. dark immersive scenes;
   `clamp()` sizing; **no-scroll** full-viewport in portrait + landscape; **reduced-motion** aware.
@@ -220,7 +166,6 @@ The `UnifiedQuizGame` engine then does **everything** with zero further changes 
   bus🚌, ræv🦊, ged🐐, haj🦈, abe🐒, ski🎿.
 - **Stav Ordet:** keep `SPELLING_WORDS` (36, `SpellingGame.tsx:22-61`) + `DANISH_ALPHABET` distractor
   pool (`:63`) verbatim. No changes.
-- **Sig et Ord:** no word list (open-ended). No new data.
 - **Round length 8, thresholds 3★=0 / 2★≤2** for all three. Tunable constants.
 
 ## Files to touch
@@ -230,10 +175,8 @@ The `UnifiedQuizGame` engine then does **everything** with zero further changes 
 - `src/components/ordleg/SpellingGame.tsx` — round wiring (`useRound`/`firstAttemptRef`/`roundOutcome`/
   `finishRound`/`handleReplay`/`RoundResultScreen`), `celebrateTier('micro'/'streak')`, `sfx.play('wrong')`,
   first-try tracking, next-letter hint, `resetScore`.
-- `src/components/ordleg/SpeakWordGame.tsx` — open-ended round wiring, `celebrateTier`, `useGameState` +
-  `OrdlegScoreChip`, first-try tracking, `RoundResultScreen`.
 - `CLAUDE.md` — add an Ordleg line under the overhaul/progress section (rounds of 8; gameIds
-  `ordleg.read` / `ordleg.spelling` / `ordleg.mic`; Sig et Ord stays open-ended with no STT grading).
+  `ordleg.read` / `ordleg.spelling`).
 
 **No new files. No new SFX assets. No new audio/welcome strings.**
 
@@ -244,7 +187,7 @@ The `UnifiedQuizGame` engine then does **everything** with zero further changes 
 `useCelebration().celebrateTier`/`celebrationDuration` (`src/components/common/CelebrationEffect.tsx`),
 `sfx` (`src/services/sfxClient.ts`), `GameShell`, `AnswerTile`, `OrdlegScoreChip`/`OrdlegRepeatButton`,
 `useGameState`, `useReducedMotion`, `getCategoryTheme('ordleg')`/`categoryThemes.ordleg`.
-**`ComparisonGame.tsx` is the literal template** for the two hand-rolled conversions (Stav Ordet, Sig et Ord).
+**`ComparisonGame.tsx` is the literal template** for the hand-rolled conversion (Stav Ordet).
 
 ## Verification (end-to-end, iPad-sized viewport)
 
@@ -259,29 +202,23 @@ project memory). Then:
 3. **Stav Ordet:** **2 wrong taps** on the current slot → the correct tile **pulses** (static
    highlight under reduced-motion); each wrong tap fires `wrong` SFX; finishing a word fires `micro`;
    a 3-word first-try streak fires `streak`; replay resets cleanly.
-4. **Sig et Ord:** say any word → spelled back → counts as **1/8** (score chip "Ord: n"); an STT-fail
-   shows the retry message, stays on the same word, does **not** advance/count; round ends on the
-   result screen; `!supported` fallback still shows when the mic is blocked.
 5. **Persistence:** stickers/stars/bests survive reload; private window → in-memory, no crash. Mute
    (`progressStore.settings.sfxEnabled`) silences SFX but **not** TTS.
-6. **Quality floor:** all three surfaces render correctly + at-or-above current polish in **all 6
+6. **Quality floor:** both surfaces render correctly + at-or-above current polish in **all 6
    themes**, portrait + landscape, **no scroll**; reduced-motion degrades gracefully.
 7. `npm run build` and `npm run lint` clean. Use the `ui-screenshot` skill to confirm layouts + zero
    console errors.
 
 ## Open questions resolved this session
 
-- **Sig et Ord = open-ended + round** (say any word → spell it back; **no target word, no STT
-  grading**) — keep the pressure-free magic; the round just adds a finish + reward.
-- **Round length = 8** for all three; thresholds 3★=0 / 2★≤2.
+- **Round length = 8** for both; thresholds 3★=0 / 2★≤2.
 - **Læs Ordet = no hints** (silent read stays pure); only add round + reward.
 - **Stav Ordet = next-letter hint** after 2 wrong taps on a slot; **no undo**, **no bigger-tile /
   drop-snap juice**.
-- **Sticker pool = global** for all three; **word lists unchanged**.
+- **Sticker pool = global** for both; **word lists unchanged**.
 
 ## Deferred / not in this PRD
 
-A vocabulary-**goal** mic mode (show a picture → say *that* word) + STT pronunciation grading;
 word-list expansion / lowercase Læs Ordet display; Stav Ordet **undo/backspace** + drop-snap landing
 juice + bigger tablet tiles; a Læs Ordet first-sound hint ladder; persisting any session-local state.
 
@@ -393,21 +330,6 @@ celebrateTier('micro' | 'streak' | 'round' | 'best' | 'sticker' | 'page')  // se
   `useReducedMotion()`).
 - `GameShell` (`:311-325`) — add `duration: celebrationDuration` to the `celebration` prop; wrap the
   body in `roundOutcome ? <RoundResultScreen/> : (…)`.
-
-### Sig et Ord — current shape to extend (`src/components/ordleg/SpeakWordGame.tsx`)
-- `useCelebration()` (`:37`) — add `celebrateTier` + `celebrationDuration`.
-- Add `useGameState()` + `useRound(...)` + `firstTryRef` + `roundOutcome` state.
-- `handleResult` STT-fail branch (`:158-169`) — set `firstTryRef.current = false`, stay on the same
-  question (the existing `setPhase('idle')` is fine; do **not** advance the round).
-- `handleResult` recognized branch (`:171-180`) — `incrementScore()`; after `runSpellingSequence`,
-  replace `setPhase('idle')` (`:180`) with the `round.completeQuestion(...)` branch
-  (`finishRound` or fresh question).
-- `runSpellingSequence` (`:208`) — swap `celebrate()` → `celebrateTier('micro')`.
-- `GameShell` (`:222-229`) — add `score={<OrdlegScoreChip … />}` and `duration: celebrationDuration`
-  to the `celebration` prop; render `<RoundResultScreen/>` in place of the mic UI when `roundOutcome`
-  is set (inside the `supported` branch; leave the `!supported` fallback at `:241-258` alone).
-- Keep `useSpeechInput`, hold-to-talk gesture, MIN/MAX press guards, `audio.stopAll()` before capture,
-  and the magic-mic visuals untouched.
 
 ### Theme + welcome strings (no changes needed)
 - `categoryThemes.ordleg` content at `src/config/categoryThemes.ts:180-206` (3 games; **no title

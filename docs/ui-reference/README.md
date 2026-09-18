@@ -45,6 +45,11 @@ chapter tabs and the corner RewardRing are baked reward art; Min Bog's book/spar
 profiles show baked avatar portraits; and every adult dialog is on lucide icons.
 `overlays/profiles-panel.jpg` is NEW in this pass.
 
+**Ordleg, re-captured 2026-09-18 (mic game removed).** `ipad/ordleg-mic` and `phone/ordleg-mic` are
+**deleted, not stale** — "Sig et Ord" and its route no longer exist, so a reference picture of it would
+be a trap rather than a record (same reasoning as `overlays/audio-permission.jpg` above). The two
+`ordleg` menu shots were retaken because the section is now two tiles.
+
 **Hvilken Farve?, re-captured 2026-08-05 (Difficulty PRD-02).** `ipad/farver-quiz` and
 `phone/farver-quiz` were the last stragglers from before the object was greyed out at all — the old pair
 showed a **red car in full colour**, i.e. both the pixel-match giveaway and a non-canonical subject the
@@ -99,7 +104,6 @@ click `[aria-label="Tilbage"]` first).
 | `ordleg` | `/ordleg` | Ordleg menu |
 | `ordleg-read` | `/ordleg/read` | Læs Ordet (silent decoding) |
 | `ordleg-spelling` | `/ordleg/spelling` | Stav Ordet (letter slots + tiles) |
-| `ordleg-mic` | `/ordleg/mic` | Sig et Ord (mic button) |
 | `learning-memory-letters-10` | `/learning/memory/letters/10` | Memory 10-pair board |
 | `learning-memory-numbers-20` | `/learning/memory/numbers/20` | Memory 20-pair board |
 | `album` | `/album` | Min Bog (the Reward Book) — captured at `?rewards=12` so all three slot states show (collected / next silhouette / blank) |
