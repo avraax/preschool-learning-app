@@ -129,6 +129,7 @@ export const PRIVACY_DA: { title: string; intro: string[]; sections: LegalSectio
         'Har du en konto: vi behandler din e-mailadresse, børneprofilerne og fremgangen for at kunne levere det, du har bedt om — synkronisering og flere profiler. Retsgrundlaget er aftalen mellem dig og os (databeskyttelsesforordningens artikel 6, stk. 1, litra b).',
         'Mikrofonen i "Sig et Ord": dit udtrykkelige samtykke (artikel 6, stk. 1, litra a), givet af en voksen bag talkoden. Du kan trække det tilbage når som helst ved at slå mikrofonen fra igen.',
         'Beskeder du selv sender fra "' + FEEDBACK_ENTRY_LABEL + '", samt fejl- og nedbrudsrapporter: vores legitime interesse i at kunne forbedre og rette fejl i appen (artikel 6, stk. 1, litra f).',
+        'Den anonyme optælling af, hvor ofte spillene åbnes: tallene kan ikke føres tilbage til en enhed eller en person, så der er ikke tale om personoplysninger, og databeskyttelsesforordningen gælder ikke for dem (betragtning 26).',
         'Appen træffer ingen automatiske afgørelser om dit barn og laver ingen profilering.',
       ],
     },
@@ -148,7 +149,7 @@ export const PRIVACY_DA: { title: string; intro: string[]; sections: LegalSectio
         'Appen er lavet så næsten ingenting behøver sendes nogen steder. Al tale er indtalt på forhånd og ligger færdig i appen, så spillene kan læses højt uden internet.',
       ],
       bullets: [
-        'Uden konto og med mikrofonen slået fra: intet. Appen spiller helt lokalt.',
+        'Uden konto og med mikrofonen slået fra: intet om barnet. Appen sender ét anonymt tælleslag, når den åbnes, og når et spil åbnes. Vi gemmer kun et tal pr. dag pr. spil — aldrig noget om hvem, hvilken enhed eller hvornår på dagen. Alt andet spilles helt lokalt.',
         'Med konto: din e-mailadresse og dit navn fra Google-login, børneprofilernes navne og figurer, og barnets fremgang. Det gemmes for at kunne synkronisere mellem enheder.',
         'Med mikrofonen slået til: barnets stemmeoptagelse fra "Sig et Ord", når barnet holder mikrofonknappen nede. Optagelsen sendes til genkendelse og gemmes ikke.',
         'Hvis du selv skriver til os fra "Indstillinger" → "' + FEEDBACK_ENTRY_LABEL + '": din besked, teknisk information om appen og enheden, og — hvis du lader fluebenet stå — et skærmbillede. Det sker kun, når du trykker på Send. Der følger hverken navn eller e-mailadresse med.',
@@ -181,7 +182,7 @@ export const PRIVACY_DA: { title: string; intro: string[]; sections: LegalSectio
       bullets: [
         'Ingen reklamer og ingen reklame-id.',
         'Ingen sporing på tværs af apps eller websider, og ingen deling med databroggere.',
-        'Ingen analyseværktøjer og ingen tredjeparts-SDK til statistik.',
+        'Ingen tredjeparts-analyseværktøjer og ingen statistik-SDK. Appen tæller selv, anonymt, hvor ofte hvert spil åbnes — se "Hvad der sendes ud af enheden, og hvornår". Tallene deles ikke med nogen.',
         'Ingen chat, ingen beskeder og intet barnet skriver, der deles med andre.',
         'Appen spørger ikke om fødselsdato, adresse, telefonnummer eller placering, og bruger ikke kamera eller kontakter.',
         'Data sælges ikke og bruges ikke til at træne modeller.',
@@ -193,6 +194,7 @@ export const PRIVACY_DA: { title: string; intro: string[]; sections: LegalSectio
         'Data på enheden bliver der, indtil du sletter dem. "Indstillinger" → Konto → "Nulstil fremgang" sletter et barns fremgang på enheden.',
         'Har du en konto, sletter "Indstillinger" → Konto → "Slet kontoen helt" kontoen, børneprofilerne og fremgangen på serveren. Det kan ikke fortrydes.',
         'Stemmeoptagelser gemmes ikke — de bruges til at genkende ordet og forsvinder derefter.',
+        'De anonyme tal om, hvor ofte spillene åbnes, gemmes uden tidsbegrænsning. De indeholder ingen personoplysninger, så der er ikke noget at slette for et bestemt barn.',
         'Beskeder og fejlrapporter, du selv har sendt, gemmes indtil de er læst og fejlen undersøgt. Skriv til ' + CONTROLLER.email + ' med koden fra beskeden, hvis du vil have en slettet før det.',
       ],
     },
@@ -239,7 +241,7 @@ export const PRIVACY_EN: { title: string; intro: string[]; sections: LegalSectio
     {
       heading: 'What leaves the device, and when',
       bullets: [
-        'Without an account and with the microphone off: nothing. The app plays entirely locally.',
+        'Without an account and with the microphone off: nothing about the child. The app sends one anonymous tick when it opens and when a game opens. All we keep is a number per day per game — never anything about who, which device, or what time of day. Everything else plays entirely locally.',
         "With an account: the adult's email address and name from Google sign-in, child profile names and chosen characters, and the child's progress.",
         "With the microphone switched on: the child's voice recording from \"Sig et Ord\", while the child holds the microphone button. It is sent for recognition and is not stored.",
         'If you send a problem report yourself: a screenshot and technical device information. Only when you tap it.',
@@ -254,6 +256,7 @@ export const PRIVACY_EN: { title: string; intro: string[]; sections: LegalSectio
         'With an account: your email address, the child profiles and the progress are processed to deliver what you asked for — sync and multiple profiles. The basis is the contract between you and us (GDPR Article 6(1)(b)).',
         'The microphone in "Sig et Ord": your explicit consent (Article 6(1)(a)), given by an adult behind the passcode and withdrawable at any time.',
         'Messages you send yourself from "' + FEEDBACK_ENTRY_LABEL + '", and error and crash reports: our legitimate interest in being able to improve and fix the app (Article 6(1)(f)). A message carries no name and no email address.',
+        'The anonymous count of how often each game is opened: the numbers cannot be traced back to a device or a person, so they are not personal data and the GDPR does not apply to them (Recital 26).',
         'No automated decision-making and no profiling.',
         'All four services are configured to run in the EU (database in Frankfurt, speech recognition in Google’s EU region, speech synthesis in West Europe, server functions in Frankfurt). Google, Microsoft and Vercel are US companies, so access from the US cannot be excluded — for example during support. Any such transfer relies on the European Commission’s Standard Contractual Clauses and those companies’ EU-US Data Privacy Framework certification.',
       ],
@@ -276,7 +279,7 @@ export const PRIVACY_EN: { title: string; intro: string[]; sections: LegalSectio
       bullets: [
         'No advertising and no advertising identifier.',
         'No tracking across apps or websites, and no sharing with data brokers.',
-        'No analytics and no third-party statistics SDK.',
+        'No third-party analytics and no statistics SDK. The app counts, anonymously and by itself, how often each game is opened — see "What leaves the device, and when". The numbers are shared with no one.',
         'No chat, no messaging, and nothing the child writes is shared with anyone.',
         'The app never asks for date of birth, address, phone number or location, and uses neither camera nor contacts.',
         'Data is never sold and is never used to train models.',
@@ -288,6 +291,7 @@ export const PRIVACY_EN: { title: string; intro: string[]; sections: LegalSectio
         'Device data stays until you delete it. Grown-ups area → Barn → "Nulstil fremgang" clears a child’s progress on the device.',
         'With an account, Grown-ups area → Konto → "Slet kontoen helt" deletes the account, the child profiles and the progress on the server. This cannot be undone.',
         'Voice recordings are not retained — they are used to recognise the word and then discarded.',
+        'The anonymous counts of how often each game is opened are kept indefinitely. They contain no personal data, so there is nothing in them to delete for any particular child.',
         `Messages and problem reports you sent yourself are kept until they have been read and the fault investigated. To have one deleted sooner, write to ${CONTROLLER.email} quoting the code shown when you sent it.`,
       ],
     },

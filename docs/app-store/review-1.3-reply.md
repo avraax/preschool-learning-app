@@ -3,6 +3,18 @@
 Submission `aa69dd0f-9761-403c-abba-5fb5ef7f5c32`, App Version 1.0, received 2026-09-07. This is the
 routine automated Kids Category questionnaire, not a rejection.
 
+> **STALE AS OF 2026-09-18 — read this before reusing the block below.** The app now runs a
+> **first-party anonymous usage counter** (`api/usage.ts`, designed in `docs/usage-analytics.md`). The
+> sent answer to question 1 predates it. Guideline 1.3 restricts **third-party** analytics and forbids
+> sending device information to third parties, so the counter is permitted — but a reviewer watching
+> network traffic will see `POST /api/usage`, and an answer that says a flat "no analytics" would then
+> read as misleading. **Replace answer 1 with:**
+>
+> `1. THIRD-PARTY ANALYTICS? No. No third-party analytics, measurement, attribution or crash-reporting SDK, and no advertising identifier. The app counts its own usage anonymously: when it opens, and when a game screen opens, it POSTs one event name from a fixed list plus the app version to our own server (api/usage.ts, Vercel Frankfurt). The server keeps one COUNT per day per screen. It stores no identifier, no device or network information, no IP address, no account or child profile, and no time of day, so no row can be traced to a device or a person. Nothing is sent to any third party and nothing is shared. Declared in the privacy manifest as Product Interaction, not linked to the user, not used for tracking, purpose Analytics.`
+>
+> That paragraph is ~780 characters; the field cap is 4000 for the whole reply, so measure the total
+> again before sending (the command is below). Answers 2-4 are unchanged.
+
 **THE FIELD IS CAPPED AT 4000 CHARACTERS.** App Store Connect's "Reply to App Review" box counts
 characters and refuses to submit over the cap (it shows the overage as a negative number). The first
 draft of this answer was ~7800 and could not be sent. **The block below is 3990 characters — measure

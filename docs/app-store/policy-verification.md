@@ -23,7 +23,8 @@ your attention.
 
 | Claim | Verdict | Evidence |
 |---|---|---|
-| No ads, no tracking, no analytics SDK | **TRUE** | No analytics/ads package in `package.json`. The apparent `amplitude` matches are the parallax token |
+| No ads, no tracking, no **third-party** analytics SDK | **TRUE** | No analytics/ads package in `package.json`. The apparent `amplitude` matches are the parallax token |
+| **First-party anonymous counter** (added 2026-09-18) | **DISCLOSED** | `api/usage.ts` + `src/services/usagePing.ts`. Counts per day per screen, no identifier of any kind, no third party — Guideline 1.3 restricts THIRD-PARTY analytics only. Declared in `PrivacyInfo.xcprivacy` as Product Interaction / not linked / not tracking / Analytics, and in the privacy policy. **The old absolute "no analytics" claim was retired in the policy, the listing and `review-1.3-reply.md` on the same day** — pinned by `legalContent.test.ts` |
 | Never asks for birthdate, address, phone, location; no camera, no contacts | **TRUE** | No `navigator.geolocation`, no contacts API, no `video` constraint anywhere in `src/` |
 | The recording is not stored | **TRUE** on our side | `api/stt.ts` performs no write of any kind — it forwards and returns a transcript |
 | Speech recognition runs in the EU | **TRUE** | `STT_LOCATION = 'eu'`, `eu-speech.googleapis.com` (`api/stt.ts`) |

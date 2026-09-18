@@ -26,6 +26,8 @@ import {
   isAvatarId,
   normalizeAvatarId,
 } from './src/config/avatars.ts';
+import { isAppVersion, isUsageEvent } from './src/config/usageEvents.ts';
+import { query as dbQuery } from './lib/db.ts';
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3001;
@@ -300,6 +302,55 @@ app.post('/api/stt', async (req, res) => {
     logDevError('STT', error);
     res.status(500).json({ error: 'STT recognition failed' });
   }
+});
+
+// --- Anonymous usage counter (dev mirror of api/usage.ts) ------------------------------------
+// Writes to whatever DATABASE_URL `.env.local` points at, which is the STAGING Neon — the same tier
+// the dev app talks to. Local clicking therefore shows up in staging's counts, which is what staging
+// is for; production is a separate database and never sees it.
+let usageTableEnsured = false;
+
+app.post('/api/usage', async (req, res) => {
+  if (!isAllowedOrigin(req)) return res.status(403).json({ error: 'Forbidden origin' });
+  if (!rateLimit(req, res, { scope: 'usage', limit: 120, windowMs: 60 * 60 * 1000 })) return;
+
+  // Always 204 past this point — see the comment in api/usage.ts for why the rejections are silent.
+  try {
+    const body = req.body && typeof req.body === 'object' && !Array.isArray(req.body) ? req.body : null;
+    const keys = body ? Object.keys(body) : [];
+    if (body && keys.every((k) => k === 'event' || k === 'appVersion')) {
+      if (isUsageEvent(body.event) && isAppVersion(body.appVersion)) {
+        if (!usageTableEnsured) {
+          await dbQuery(`
+            CREATE TABLE IF NOT EXISTS usage_counter (
+              day         date   NOT NULL,
+              event       text   NOT NULL,
+              app_version text   NOT NULL,
+              n           bigint NOT NULL DEFAULT 0,
+              PRIMARY KEY (day, event, app_version)
+            )
+          `);
+          usageTableEnsured = true;
+        }
+        await dbQuery(
+          `INSERT INTO usage_counter (day, event, app_version, n)
+           VALUES (CURRENT_DATE, $1, $2, 1)
+           ON CONFLICT (day, event, app_version)
+           DO UPDATE SET n = usage_counter.n + 1`,
+          [body.event, body.appVersion],
+        );
+      }
+    }
+  } catch (error) {
+    usageTableEnsured = false;
+    logDevError('usage', error);
+  }
+  res.status(204).end();
+});
+
+app.all('/api/usage', (req, res) => {
+  if (req.method === 'OPTIONS') return res.status(204).end();
+  res.status(405).json({ error: 'Method not allowed' });
 });
 
 // --- Error logging endpoint (in-memory; dev mirror of api/log-error.ts) ---

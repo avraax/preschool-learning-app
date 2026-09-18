@@ -162,7 +162,16 @@ function interceptFetch(): void {
     }
     // Skip the logging endpoints themselves: remoteConsole POSTs one log-error per console
     // line in dev (would flood the ring), and recording our own bug-report upload is noise.
-    if (url.includes('/api/log-error') || url.includes('/api/bug-report')) {
+    //
+    // `/api/usage` joins them for the same reason and one more: the anonymous counter fires on every
+    // screen entry, so it would dominate the ring and push the entries that actually explain a bug
+    // out of it. It is also the one call whose failure must reach NOTHING — recording a non-ok
+    // response below would put a red line about a counter into a parent's bug report.
+    if (
+      url.includes('/api/log-error') ||
+      url.includes('/api/bug-report') ||
+      url.includes('/api/usage')
+    ) {
       return originalFetch.call(window, input, init)
     }
 

@@ -4,6 +4,7 @@ import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-
 import { micConsentGiven } from './utils/micConsent'
 import { logIOSIssue } from './utils/remoteConsole'
 import { deviceInfo } from './utils/deviceDetection'
+import { reportAppOpen, reportRoute } from './services/usagePing'
 import {
   Container,
   Button,
@@ -172,6 +173,17 @@ function App() {
 
   // DEV MODE: Set to true to preview the update announcement pill without waiting for a real update.
   const DEV_SHOW_UPDATE_BANNER = false // Change to true to test the banner
+
+  // Anonymous usage counter (`docs/usage-analytics.md` §6B). Keyed on `pathname` rather than hung off
+  // the transition system, so it also catches a cold start, a deep link and the back gesture — all of
+  // which enter a screen without going through `navigateWithTransition`. Unmapped paths report
+  // nothing; see `src/config/usageEvents.ts`.
+  useEffect(() => {
+    reportAppOpen()
+  }, [])
+  useEffect(() => {
+    reportRoute(location.pathname)
+  }, [location.pathname])
 
   useEffect(() => {
     // Initialize remote console and log device info

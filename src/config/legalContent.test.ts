@@ -94,13 +94,36 @@ test('the policy states the microphone is OFF by default and names Google as the
   assert.match(da, /gemmes ikke/)
 })
 
-test('the policy promises no ads, no tracking and no analytics', () => {
-  // These are Guideline 1.3 claims about a Kids Category app, and they are true today (the repo ships no
-  // analytics SDK — the `amplitude` matches are the parallax token). Keep them true.
+test('the policy promises no ads, no tracking and no THIRD-PARTY analytics', () => {
+  // These are Guideline 1.3 claims about a Kids Category app. Guideline 1.3 restricts THIRD-PARTY
+  // analytics; the app now runs a first-party anonymous counter (`docs/usage-analytics.md`), so the
+  // old absolute "no analytics" wording became false the day it shipped and had to change here, in
+  // the store listing, and in the 1.3 reply. Keep all three in step.
   const da = textOf(PRIVACY_DA).toLowerCase()
   for (const claim of ['reklame', 'sporing', 'analyse']) {
     assert.ok(da.includes(claim), `the policy does not address "${claim}"`)
   }
+  const en = textOf(PRIVACY_EN).toLowerCase()
+
+  // The claim must be qualified. An unqualified "no analytics" is the sentence that went stale.
+  assert.ok(
+    da.includes('ingen tredjeparts-analyseværktøjer'),
+    'the Danish policy must say no THIRD-PARTY analytics, not "no analytics"',
+  )
+  assert.ok(
+    en.includes('no third-party analytics'),
+    'the English policy must say no THIRD-PARTY analytics, not "no analytics"',
+  )
+  assert.ok(!/no analytics and no third-party/.test(en), 'the stale absolute analytics claim is back')
+
+  // …and the counter itself must be disclosed, or the qualification above is hiding it rather than
+  // explaining it. Art. 13 wants the purpose stated, not just the negative.
+  assert.ok(da.includes('anonym'), 'the Danish policy does not disclose the anonymous counter')
+  assert.ok(en.includes('anonymous'), 'the English policy does not disclose the anonymous counter')
+  assert.ok(
+    da.includes('betragtning 26') && en.includes('recital 26'),
+    'the policy states no basis for treating the counts as non-personal data',
+  )
 })
 
 // ---- GDPR Article 13, item by item ---------------------------------------------------------------
