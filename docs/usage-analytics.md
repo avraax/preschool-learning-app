@@ -215,6 +215,80 @@ transmitting to a third party.
 
 ---
 
+## 4A. Danish apps specifically — measured, 2026-09-18
+
+Method, so it can be repeated: Google Play **data-safety** pages and Apple **App Privacy** labels are both
+server-rendered and were fetched directly with `curl` and parsed (scripts were throwaway). These are
+**developer declarations to the store**, not measurements of the binary.
+
+**The binary-level check could not be run.** `reports.exodus-privacy.eu.org` (static APK tracker analysis)
+is unreachable from this machine — DNS resolves, TCP fails, control host fine. AppBrain returned a stub.
+So **no vendor/SDK name below is confirmed**; purposes are.
+
+**Calibration control:** our own app, which *is* in the Kids Category (age band 6-8), returns genres
+`['Education','Games']` from the iTunes API with no "Kids" genre. **The iTunes API cannot reveal Kids
+Category membership**, so nothing below claims another app is or isn't in it. Running the Apple parser
+against our own listing returned exactly our declared labels, which is how the parser was verified.
+
+### Apple App Privacy labels
+
+| App | Publisher | Country | Declared |
+|---|---|---|---|
+| DR Ramasjang LÆR / LEG / Øen | DR | DK | **Not Linked to You**: Identifiers, Usage Data, Diagnostics |
+| DR Minisjang | DR | DK | **Not Linked to You**: Usage Data, Diagnostics |
+| LEGO Builder | LEGO System A/S | DK | **Linked**: Contact Info, Identifiers · **Not Linked**: Usage Data |
+| LEGO Play | LEGO System A/S | DK | **Linked**: Contact Info, User Content, Identifiers · **Not Linked**: Usage Data |
+| Rasmus Klump | Tivoli A/S | DK | **Not Linked to You**: Usage Data, Diagnostics |
+| Cirkeline | Dansk Tegnefilm | DK | **Data Not Collected** |
+| Popsi og Krelle | POK ApS | DK | **Data Not Collected** |
+| LEGO DUPLO World | StoryToys Ltd | IE (LEGO licence) | **Not Linked**: Location, Usage Data, User Content |
+| Albert Junior | eEducation Albert AB | **SE, not DK** | **Linked to You**: Contact Info, Identifiers, Usage Data, Diagnostics |
+
+**Not one of them declares "Data Used to Track You"** — verified by grepping the fetched pages, 0
+occurrences across all six re-checked. So no ATT prompt, no cross-app tracking, anywhere in the Danish set.
+
+### Google Play data-safety declarations
+
+- **DR Ramasjang LÆR / KREA, Øen, Naturspillet** — *No data shared with third parties*; **App interactions,
+  marked Optional, purpose Analytics**; Device or other IDs for App functionality / Analytics / Account
+  management; encrypted in transit; deletion route; committed to Play Families Policy.
+- **DR Ramasjang LEG, DR Minisjang, DR Karla, DR Mus & Kran** — **"No data collected"** at all.
+- **LEGO Builder / LEGO Play** — no third-party sharing; **App interactions, Optional, Analytics**; name and
+  email for account management.
+- **eReolen** (Redia, DK) — no sharing; App interactions Optional→Personalization; crash logs and
+  diagnostics for Analytics; **no deletion route**.
+- **LEGO DUPLO World** (StoryToys) — no sharing, but **approximate Location collected for Analytics**, and
+  no deletion route. Weaker than LEGO's own apps.
+- **Albert Junior** (SE) — the outlier: **data *shared* with third parties**, including app interactions,
+  crash logs, purchase history, device IDs and email, for **Analytics and "Advertising or marketing"**.
+
+**Known inconsistency:** DR Ramasjang LEG declares "no data collected" on Play but "Identifiers, Usage
+Data, Diagnostics" on Apple. Same app, same week. Treat all store declarations as claims, not evidence.
+
+### How DR actually implements it — the one fully documented Danish model
+
+From `dr.dk/om-dr/dr-og-dine-data/boern-og-deres-data`:
+
+- Six apps (**Ramasjang LEG, LÆR, KREA, Minisjang, Øen, Naturspillet**) **require a parent to log in with a
+  DR login before the app can be used.**
+- *"Det samtykke, som forælderen har givet til statistikcookies på sit login, gælder også når man bruger
+  disse apps."* — the parent's statistics-cookie consent carries into the app.
+- *"Samtykket kan til enhver tid trækkes tilbage via profilsiden."*
+- *"Der anvendes ikke præferencecookies i disse apps."*
+- The three smallest (**Karla, Mus & Kran, Motormille**) use *"ikke cookies eller anden sporingsteknologi
+  […] udover de cookies, der er teknisk nødvendige"* — which matches their "no data collected" declaration.
+
+That "Optional" flag on Play is the same fact seen from the other side: the analytics is **consent-gated on
+a parent**, not consent-free.
+
+**No Danish publisher names its analytics vendor.** DR's privacy policy names only the market-measurement
+suppliers *Dansk Online Index* and *Nielsen* and says data stays in the EU/EEA; it names no analytics
+product for the apps. A search surfaced Gemius and Google Analytics in a cookie declaration — but that was
+**DR Koncerthuset's website**, a different entity and older documentation. **It says nothing about the
+children's apps and is not evidence about them.**
+
+---
+
 ## 5. The tool landscape, EU first
 
 ### 5.1 EU-owned and EU-hosted
