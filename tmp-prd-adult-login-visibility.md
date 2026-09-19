@@ -41,9 +41,8 @@ that file.** The promo in W2 is the same class of thing as the apply-update stri
 (`AdultSettings.tsx:218-241`) and the bug-report/version rail footer (`:286-321`): both are component
 chrome, neither is an IA item. Do not add a seventh group and do not invent a fake item.
 
-**What the benefits copy may and may not promise.** Passkeys and Face ID are deliberately absent from
-the iOS shell — the passkey RP ID is `boernelaering.dk`, the shell's origin is `capacitor://localhost`,
-and that cannot satisfy it. **Google or the numeric code only.** The Konto pane's signed-in branch
+**What the benefits copy may and may not promise.** Biometric sign-in is absent from the app entirely
+— it was removed on 2026-09-19. **Google or the numeric code only.** The Konto pane's signed-in branch
 already says so; new copy must not contradict it. What an account genuinely buys:
 
 1. progress synced across devices,
@@ -81,7 +80,7 @@ written to a progress document).
 
 ## 3. Out of scope
 
-The sign-in mechanics themselves — the Google flow, the shell's browser handoff, the PIN, passkeys —
+The sign-in mechanics themselves — the Google flow, the shell's browser handoff, the PIN —
 all work and are not being redesigned. No change in front of the parental gate. No change to the
 arithmetic gate's difficulty. Not Android.
 
@@ -121,7 +120,7 @@ on the button, and surface `result.message` in a `role="status"` line beneath it
 
 Copy constraints, restated because they are easy to violate while rewording:
 
-- do not promise Face ID or passkeys,
+- do not promise biometric sign-in,
 - do not imply progress is currently unsaved — it *is* saved, just device-local,
 
 Height: this is roughly the same as today's guest branch, and it lives in the scrollable detail pane, so

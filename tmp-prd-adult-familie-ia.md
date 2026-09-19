@@ -98,7 +98,7 @@ for free.
 
 ### 3.3 `Sikkerhed` — signed in only
 
-`Kode` (PIN) · `Tilføj Face ID` · `Fjern Face ID`. Verification unchanged (`removePasskey` keeps
+`Kode` (PIN). Verification unchanged (the destructive rows keep
 `requirePin('manageCredentials')`).
 
 ### 3.4 `Synkronisering` — signed in only

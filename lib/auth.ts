@@ -7,7 +7,6 @@
 
 import { betterAuth } from 'better-auth'
 import { bearer } from 'better-auth/plugins/bearer'
-import { passkey } from '@better-auth/passkey'
 import { APIError } from 'better-auth/api'
 import { getPool } from './db.js'
 import { familyPlugin } from './auth-family-plugin.js'
@@ -20,17 +19,10 @@ import {
   requireEnv,
   runtime,
   trustedOrigins,
-  webauthn,
 } from './env.js'
 import { appleClientSecret, appleUsable } from './apple-client-secret.js'
 import { FAKE_PROVIDER_SLOT, fakeSocialProvider } from './fake-oidc.js'
 import { ALLOWLIST_REFUSED_MESSAGE } from './oauth-signin-outcome.js'
-
-// `vercel.app` is on the Public Suffix List and a preview origin is not a registrable-domain suffix
-// of the production RP ID, so passkeys CANNOT work on a preview deployment (PRD §9). We leave the
-// plugin out entirely there rather than shipping a Face ID button that always fails; the client
-// learns this from /family/status's `webauthnEnabled`.
-const wa = webauthn()
 
 /**
  * Sign in with Apple's provider config, or `null` if it cannot be built.
@@ -86,7 +78,7 @@ export const auth = betterAuth({
   trustedOrigins: trustedOrigins(),
   telemetry: { enabled: false },
 
-  // No passwords, by decision (D2/D3): Google OIDC + passkey only.
+  // No passwords, by decision (D2/D3): OIDC only — Google, and Apple where it is configured.
   emailAndPassword: { enabled: false },
 
   // Present ONLY so `signInSocial({ idToken })` can verify a token we obtained through our own
@@ -140,8 +132,8 @@ export const auth = betterAuth({
   },
 
   advanced: {
-    // Safari refuses to store `Secure` cookies over http://localhost, which would break the passkey
-    // challenge cookie in dev.
+    // Safari refuses to store `Secure` cookies over http://localhost, which breaks better-auth's own
+    // short-lived challenge/state cookies in dev.
     useSecureCookies: runtime() !== 'dev',
     defaultCookieAttributes: { sameSite: 'lax' },
   },
@@ -175,28 +167,6 @@ export const auth = betterAuth({
     // Our own surface: /family/access-token, /family/status, the PIN routes and (from W7) the
     // cookie-free Google PKCE leg. Also declares our five tables so they migrate together.
     familyPlugin(),
-    ...(wa.enabled
-      ? [
-          passkey({
-            rpID: wa.rpID,
-            rpName: wa.rpName,
-            // An ARRAY on purpose, so adding a custom domain later is config, not code.
-            origin: wa.origins,
-            authenticatorSelection: {
-              // What makes username-less unlock possible at all — the credential is discoverable,
-              // so the lock screen needs no account hint.
-              residentKey: 'required',
-              requireResidentKey: true,
-              // Face ID / Touch ID. NOT device lock-in: iCloud Keychain still syncs a platform
-              // passkey across the family's Apple devices.
-              authenticatorAttachment: 'platform',
-              // Safe *because* attachment is platform — Apple always performs user verification.
-              // It would be the wrong choice with security keys allowed.
-              userVerification: 'required',
-            },
-          }),
-        ]
-      : []),
   ],
 })
 

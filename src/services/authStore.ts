@@ -32,7 +32,6 @@ import {
 } from '../utils/guestMode.ts'
 import { dropLocalVerifier, dropStaleVerifier } from './pinVerifier.ts'
 import { forgetSecret, registerSecret } from './redact.ts'
-import type { PasskeyRequestOptions } from './authSignIn.ts'
 
 export interface AccountUser {
   id: string
@@ -45,8 +44,6 @@ export interface AuthMethodInfo {
   methods: string[]
   hasPin: boolean
   pinUpdatedAt: number | null
-  passkeyCount: number
-  webauthnEnabled: boolean
 }
 
 /** What survives a reload (localStorage key `bornelaering-account`). */
@@ -123,8 +120,6 @@ function sameInfo(a: AuthMethodInfo | null, b: AuthMethodInfo | null): boolean {
   return (
     a.hasPin === b.hasPin &&
     a.pinUpdatedAt === b.pinUpdatedAt &&
-    a.passkeyCount === b.passkeyCount &&
-    a.webauthnEnabled === b.webauthnEnabled &&
     a.methods.length === b.methods.length &&
     a.methods.every((m, i) => m === b.methods[i])
   )
@@ -311,13 +306,13 @@ class AuthStore {
 
   // ----- session lifecycle -----------------------------------------------------------------------
 
-  /** Adopt a freshly obtained session token (Google claim, passkey unlock). */
+  /** Adopt a freshly obtained session token (a Google claim). */
   adoptSession(token: string, user: AccountUser | null): void {
     if (this.token && this.token !== token) forgetSecret(this.token)
     // A real session takes over from guest play, and the device records that an account has BEEN here
     // — which is what makes a later sign-out land on the lock screen instead of silently dropping the
-    // child into an empty guest book (`utils/guestMode.ts`). Both sign-in paths (the Google claim and
-    // a passkey unlock) funnel through here, so this is the one place it needs saying.
+    // child into an empty guest book (`utils/guestMode.ts`). Every sign-in funnels through here, so
+    // this is the one place it needs saying.
     exitGuestMode()
     noteSignedIn()
     this.token = token
@@ -484,8 +479,7 @@ class AuthStore {
   /**
    * /family/status: which methods exist, and the cross-device PIN-change signal.
    *
-   * Pass `force` after anything that CHANGES the answer (a PIN set, a passkey added or removed, a fresh
-   * session). Everything else — including the resume-triggered validate — takes the throttled path,
+   * Pass `force` after anything that CHANGES the answer (a PIN set, a fresh session). Everything else — including the resume-triggered validate — takes the throttled path,
    * because a credential set that changed on another device is not urgent to the millisecond.
    */
   async refreshStatus(force = false): Promise<AuthMethodInfo | null> {
@@ -514,8 +508,6 @@ class AuthStore {
         methods: Array.isArray(data.methods) ? data.methods : ['google'],
         hasPin: data.hasPin === true,
         pinUpdatedAt: typeof data.pinUpdatedAt === 'number' ? data.pinUpdatedAt : null,
-        passkeyCount: typeof data.passkeyCount === 'number' ? data.passkeyCount : 0,
-        webauthnEnabled: data.webauthnEnabled === true,
       }
       const changed = !sameInfo(this.info, next)
       this.info = next
@@ -622,28 +614,6 @@ class AuthStore {
       return { ok: false, message: body?.message ?? 'Kontoen kunne ikke slettes.', fatal: res.status >= 500 }
     } catch {
       return { ok: false, message: 'Ingen forbindelse. Prøv igen når du er på nettet.', fatal: true }
-    }
-  }
-
-  /**
-   * PRE-FETCH the WebAuthn request options.
-   *
-   * The lock screen calls this on mount and every ~4 minutes, NOT at tap time: iOS consumes the
-   * transient user activation across an `await`, so `navigator.credentials.get()` must run in the same
-   * task as the tap (§9). A stale challenge is a clean, retryable error, which is what makes
-   * pre-fetching safe. Returns null when passkeys aren't available here (e.g. a preview deployment).
-   */
-  async fetchPasskeyRequestOptions(): Promise<PasskeyRequestOptions | null> {
-    try {
-      const res = await fetch(apiUrl('/api/auth/passkey/generate-authenticate-options'), {
-        headers: this.token ? { Authorization: `Bearer ${this.token}` } : {},
-      })
-      if (!res.ok) return null
-      const options = (await res.json()) as PasskeyRequestOptions['options']
-      if (!options?.challenge) return null
-      return { fetchedAt: Date.now(), options }
-    } catch {
-      return null
     }
   }
 

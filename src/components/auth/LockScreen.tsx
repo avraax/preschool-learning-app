@@ -19,27 +19,15 @@ import React, { useCallback, useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Box, Button, Paper, Stack, Typography } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
-import { Fingerprint, Lock, WifiOff } from 'lucide-react'
+import { Lock, WifiOff } from 'lucide-react'
 import type { AuthPhase } from '../../contexts/authGatePolicy'
 import { useAuthContext } from '../../contexts/AuthContext'
 import { authStore } from '../../services/authStore'
 import { getLastAuthReportCode, subscribeAuthReportCode } from '../../services/authDiagnostics'
-import {
-  startPasskeyUnlock,
-  startSocialSignIn,
-  type PasskeyRequestOptions,
-  type SignInProvider,
-} from '../../services/authSignIn'
-import { passkeysSupportedInThisBuild } from '../../services/passkeyClient'
+import { startSocialSignIn, type SignInProvider } from '../../services/authSignIn'
 import { useSignUpProviders } from '../../services/signUpProviders'
 import { PHONE_ANY } from '../../theme/phoneMedia'
 import { AUTH_Z } from './authOverlayZ'
-
-/**
- * A stale WebAuthn challenge is a clean, retryable error — so we PRE-FETCH the options on mount and
- * refresh them every ~4 minutes. That is what lets the tap handler be synchronous (§9).
- */
-const PASSKEY_OPTIONS_REFRESH_MS = 4 * 60 * 1000
 
 interface Copy {
   headline: string
@@ -84,7 +72,6 @@ const LockScreen: React.FC = () => {
   const theme = useTheme()
   const auth = useAuthContext()
   const signUpProviders = useSignUpProviders()
-  const [passkeyOptions, setPasskeyOptions] = useState<PasskeyRequestOptions | null>(null)
   const [localBusy, setLocalBusy] = useState(false)
   // The short code of an auto-uploaded login-failure report (see `authDiagnostics`). Seeded from the
   // module so a report sent before this screen mounted — e.g. the OAuth return handler's give-up, which
@@ -93,35 +80,8 @@ const LockScreen: React.FC = () => {
   useEffect(() => subscribeAuthReportCode(setAuthReportCode), [])
 
   const phase = auth?.phase ?? 'booting'
-  // `passkeysSupportedInThisBuild()` is the NATIVE SHELL gate (App Store PRD §3.3 / B6): the shell's
-  // `capacitor://localhost` origin can never satisfy the production rpID, so offering the button would
-  // open a system sheet that fails and blames the adult's iPad. It comes first because the two server
-  // flags below say nothing about which build is asking.
-  const canOfferPasskey =
-    passkeysSupportedInThisBuild() &&
-    !!auth?.info?.webauthnEnabled &&
-    (auth?.info?.passkeyCount ?? 0) > 0
   /** Same reason as KontoPane: `signedOut` has no session, so `auth.info` is null on this screen. */
   const appleAvailable = signUpProviders.includes('apple')
-
-  // Pre-fetch (and keep fresh) the WebAuthn options so the Face ID tap handler never has to await.
-  useEffect(() => {
-    if (!canOfferPasskey) {
-      setPasskeyOptions(null)
-      return
-    }
-    let cancelled = false
-    const load = async () => {
-      const opts = await authStore.fetchPasskeyRequestOptions()
-      if (!cancelled) setPasskeyOptions(opts)
-    }
-    void load()
-    const id = setInterval(() => void load(), PASSKEY_OPTIONS_REFRESH_MS)
-    return () => {
-      cancelled = true
-      clearInterval(id)
-    }
-  }, [canOfferPasskey])
 
   // The gate is an auth surface: suppress the adult-surface trigger while it is up.
   useEffect(() => {
@@ -145,17 +105,6 @@ const LockScreen: React.FC = () => {
       setLocalBusy(false)
     }
   }, [])
-
-  // NOT async, and it does NOT await before reaching startPasskeyUnlock: iOS consumes the user
-  // activation across an await, so the WebAuthn call has to happen in this same task.
-  const onPasskey = useCallback(() => {
-    setLocalBusy(true)
-    startPasskeyUnlock(passkeyOptions)
-      .then((result) => {
-        if (!result.ok) authStore.setError(result.message ?? 'Face ID mislykkedes. Prøv igen.')
-      })
-      .finally(() => setLocalBusy(false))
-  }, [passkeyOptions])
 
   const onPinInstead = useCallback(async () => {
     if (!auth) return
@@ -312,20 +261,6 @@ const LockScreen: React.FC = () => {
                 </>
               ) : (
                 <>
-                  {/* Face ID is the FAST path when it exists, but never the primary story: a domain
-                      move would invalidate every passkey, so Google (and later OTP) stay first-class
-                      forever (§13). */}
-                  {canOfferPasskey && (
-                    <PrimaryButton
-                      label="Log ind med Face ID"
-                      ariaLabel="Log ind med Face ID eller Touch ID"
-                      onClick={onPasskey}
-                      disabled={busy || !passkeyOptions}
-                      accent={theme.decor.audioPermissionAccent}
-                      icon={<Fingerprint size={20} />}
-                    />
-                  )}
-
                   {phase === 'locked' && auth.info?.hasPin && (
                     <SecondaryButton
                       label="Brug kode i stedet"
@@ -335,27 +270,17 @@ const LockScreen: React.FC = () => {
                     />
                   )}
 
-                  {canOfferPasskey ? (
-                    <SecondaryButton
-                      label="Log ind med Google"
-                      ariaLabel="Log ind med Google"
-                      onClick={() => void onSocial('google')}
-                      disabled={busy}
-                    />
-                  ) : (
-                    <PrimaryButton
-                      label="Fortsæt med Google"
-                      ariaLabel="Fortsæt med Google"
-                      onClick={() => void onSocial('google')}
-                      disabled={busy}
-                      accent={theme.decor.audioPermissionAccent}
-                    />
-                  )}
+                  <PrimaryButton
+                    label="Fortsæt med Google"
+                    ariaLabel="Fortsæt med Google"
+                    onClick={() => void onSocial('google')}
+                    disabled={busy}
+                    accent={theme.decor.audioPermissionAccent}
+                  />
 
                   {/* Guideline 4.8's second option. Shown only when the server declares it, so a
                       deployment without the four APPLE_* vars never offers a button that would die at
-                      the token exchange. Deliberately SECONDARY: Google stays the primary story
-                      because a domain move invalidates passkeys but never a social login (§13). */}
+                      the token exchange. Deliberately SECONDARY: Google stays the primary story. */}
                   {appleAvailable && (
                     <SecondaryButton
                       label="Log ind med Apple"

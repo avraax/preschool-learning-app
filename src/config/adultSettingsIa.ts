@@ -187,17 +187,6 @@ export const ADULT_IA: AdultGroup[] = [
       // PinSetupDialog asks for the CURRENT code and `pin/set` verifies it server-side under the same
       // lockout — the secret never travels through a generic context callback. Not destructive.
       { id: 'konto.pin', label: 'Kode', block: 'sikkerhed' },
-      { id: 'konto.addPasskey', label: 'Tilføj Face ID på denne enhed', block: 'sikkerhed' },
-      {
-        id: 'konto.removePasskey',
-        label: 'Fjern Face ID',
-        destructive: true,
-        scope: 'account',
-        verify: { kind: 'requirePin', reason: 'manageCredentials' },
-        // NOT in a danger block: it is per-passkey, so it renders as the "Fjern" button on the row for
-        // the device it removes. A block would have to ask WHICH one, which is the row itself.
-        block: 'sikkerhed',
-      },
 
       // ---- §3.4 Synkronisering — signed in only ---------------------------------------------------
       { id: 'konto.sync', label: 'Synkronisering', block: 'synk' },

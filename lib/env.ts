@@ -12,7 +12,6 @@ export type Runtime = 'dev' | 'preview' | 'production'
 /**
  * `dev` = a local process (no VERCEL), `production` = the production deployment,
  * `preview` = every other Vercel deployment. Used for cookie security, the dev bypass gate and
- * whether passkeys can work at all (a preview origin can't satisfy the prod RP ID — PRD §9).
  */
 export function runtime(): Runtime {
   if (!process.env.VERCEL) return 'dev'
@@ -81,8 +80,7 @@ const isLocalOrigin = (url: string): boolean => {
  * PREVIEW DEPLOYMENTS ARE EXEMPT, deliberately. A preview's `baseURL()` is a per-deployment
  * `*.vercel.app` host that no fixed tuple can name, so the check could only ever produce false
  * failures there — and it would buy nothing anyway, since a preview inherits its own project's
- * `DATABASE_URL` and `BL_TIER` together and therefore cannot cross the tiers. It is also the same
- * environment `webauthn()` already stands down in, for a related reason.
+ * `DATABASE_URL` and `BL_TIER` together and therefore cannot cross the tiers.
  */
 export function tierMatchesBaseURL(
   t: Tier = tier(),
@@ -195,10 +193,8 @@ export interface AppleConfig {
 /**
  * Sign in with Apple — required by App Store Guideline 4.8, which wants a second login option
  * limiting collection to name + email and allowing the address to be kept private, whenever a
- * third-party service (here Google) sets up the primary account. Passkeys do NOT satisfy it: they
- * cannot create an account, and they are unavailable in the shell anyway (the rpID is
- * `boernelaering.dk`, the shell's origin is `capacitor://localhost`). So Google-only was our real
- * state, and it is also a dead end for any adult without a Google account.
+ * third-party service (here Google) sets up the primary account. Google-only is otherwise our real
+ * state, and it is a dead end for any adult without a Google account.
  *
  * ALL FOUR VALUES OR NOTHING. A half-configured Apple would render a button that fails at the token
  * exchange — the worst outcome, since the adult would blame their Apple ID. `enabled` therefore gates
@@ -217,40 +213,6 @@ export function apple(): AppleConfig {
     teamId,
     keyId,
     privateKey,
-  }
-}
-
-export interface WebAuthnConfig {
-  enabled: boolean
-  rpID: string
-  rpName: string
-  origins: string[]
-}
-
-/**
- * `vercel.app` is on the Public Suffix List and a preview origin is not a registrable-domain suffix
- * of the production RP ID, so **passkeys cannot work on preview deployments at all** (PRD §9). We
- * disable them there rather than shipping a Face ID button that always fails.
- *
- * `origins` stays an ARRAY so adding a custom domain later is a config change, not a code change.
- */
-/**
- * DEV GOTCHA, verified the hard way: with `WEBAUTHN_RP_ID=localhost` the browser must be on
- * `http://localhost:5173`, NOT `http://127.0.0.1:5173`. WebAuthn requires the RP ID to be a
- * registrable suffix of the page's effective domain, and `127.0.0.1` is not `localhost` — the
- * `navigator.credentials.create()` call fails with a SecurityError that looks exactly like "this
- * device doesn't support Face ID". Drive passkey tests from `localhost`.
- */
-export function webauthn(): WebAuthnConfig {
-  const rpID = optionalEnv('WEBAUTHN_RP_ID') ?? (runtime() === 'dev' ? 'localhost' : '')
-  const rpName = optionalEnv('WEBAUTHN_RP_NAME') ?? 'Børnelæring'
-  const base = baseURL()
-  const origins = runtime() === 'dev' ? [base, 'http://localhost:5173'] : [base]
-  return {
-    enabled: runtime() !== 'preview' && !!rpID,
-    rpID,
-    rpName,
-    origins: Array.from(new Set(origins)),
   }
 }
 

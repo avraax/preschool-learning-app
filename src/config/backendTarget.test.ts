@@ -32,7 +32,7 @@ const ROOT = path.join(SRC, '..')
 // `dev-server.js` holds `app.all('/api/auth/*splat', …)`, a STRING LITERAL containing a slash-star, and
 // a naive strip reads it as a comment opener and swallows 12 KB. The anchored `^\s*\/\*\*` form dodges
 // that — a JSDoc block only ever starts a line — and it is needed here, because the host is discussed
-// in prose in `passkeyClient.ts`'s and `apiBase.ts`'s doc comments and a bare `includes()` would flag
+// in prose in `apiBase.ts`'s doc comments and a bare `includes()` would flag
 // them as re-declarations. A guard that greps source must strip comments first or it measures prose.
 const stripComments = (s: string): string =>
   s

@@ -1,6 +1,6 @@
 # Recipes
 
-Command recipes: screenshotting a route, sweeping the app, real WebKit, throttled performance, proving audio made a sound, driving a tap, dnd-kit drag, passkeys, and the A/B pixel test.
+Command recipes: screenshotting a route, sweeping the app, real WebKit, throttled performance, proving audio made a sound, driving a tap, dnd-kit drag, and the A/B pixel test.
 
 Back to `../SKILL.md`.
 
@@ -311,18 +311,7 @@ JS
 )"
 ```
 
-### Driving passkeys / Face ID (`--webauthn`)
-`--webauthn` installs a CDP **virtual authenticator** (ctap2, internal transport, resident key + user
-verification, auto-presence) before the page loads, so passkey register + unlock can be exercised
-headlessly. It proves the real plumbing — options endpoint, `navigator.credentials.*`, verification,
-the `set-auth-token` handoff — but **not** the iOS gesture rule (activation consumed across an
-`await`); only the real iPad can.
-- **Use `http://localhost:5173`, never `127.0.0.1`.** With `WEBAUTHN_RP_ID=localhost` the RP ID must
-  be a registrable suffix of the page's domain, so `127.0.0.1` fails with a `SecurityError` that reads
-  exactly like "this device doesn't support Face ID".
-- The lock screen's Face ID button stays **disabled until the pre-fetched WebAuthn options land**
-  (~400ms) — that's by design, since the tap handler must not await. Poll for `!btn.disabled` before
-  clicking, or the click is a no-op.
+### Seeding a signed-in session
 - Seed a session in the same run with `window.__auth.adoptSession(token, user)` (DEV only); each run
   gets a fresh Chrome profile, so nothing persists between invocations. Mint a token with
   `node --env-file=.env.local scripts/auth-dev-session.mjs`.

@@ -21,7 +21,6 @@ const TABLES = [
   'familyPin',
   'pinAttempt',
   'oauthFlow',
-  'passkey',
   'session',
   'account',
   'verification',

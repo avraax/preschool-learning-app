@@ -13,7 +13,6 @@ import {
   runtime,
   tier,
   tierMatchesBaseURL,
-  webauthn,
 } from './env.ts'
 
 const KEYS = [
@@ -25,8 +24,6 @@ const KEYS = [
   'AUTH_DEV_BYPASS',
   'AUTH_FAKE_PROVIDER',
   'AUTH_ALLOWED_EMAILS',
-  'WEBAUTHN_RP_ID',
-  'WEBAUTHN_RP_NAME',
   'BL_TIER',
 ]
 
@@ -232,33 +229,11 @@ test('the allowlist is case- and whitespace-insensitive and comma-separated', ()
   assert.equal(isEmailAllowed('stranger@example.com'), false)
 })
 
-test('passkeys are DISABLED on preview: vercel.app is on the Public Suffix List (§9)', () => {
-  process.env.WEBAUTHN_RP_ID = 'preschool-learning-app.vercel.app'
-  process.env.VERCEL = '1'
-  process.env.VERCEL_ENV = 'preview'
-  process.env.VERCEL_URL = 'app-git-branch-team.vercel.app'
-  assert.equal(webauthn().enabled, false)
-
-  process.env.VERCEL_ENV = 'production'
-  process.env.VERCEL_PROJECT_PRODUCTION_URL = 'preschool-learning-app.vercel.app'
-  const prod = webauthn()
-  assert.equal(prod.enabled, true)
-  assert.equal(prod.rpID, 'preschool-learning-app.vercel.app')
-  // `origins` stays an ARRAY so a custom domain later is a config change, not a code change.
-  assert.ok(Array.isArray(prod.origins))
-  assert.deepEqual(prod.origins, ['https://preschool-learning-app.vercel.app'])
-})
-
-test('webauthn in dev defaults to localhost and accepts the Vite origin', () => {
-  const dev = webauthn()
-  assert.equal(dev.enabled, true)
-  assert.equal(dev.rpID, 'localhost')
-  assert.ok(dev.origins.includes('http://localhost:5173'))
-  assert.equal(dev.rpName, 'Børnelæring')
-})
-
-test('webauthn is disabled when no RP ID can be resolved on a deployment', () => {
-  process.env.VERCEL = '1'
-  process.env.VERCEL_ENV = 'production'
-  assert.equal(webauthn().enabled, false)
+test('no WebAuthn config survives — Face ID was removed app-wide (2026-09-19)', () => {
+  // `webauthn()` used to live here and decide the RP ID, the origins and whether the passkey plugin
+  // was registered at all. The three tests it had are replaced by this one rather than deleted: an
+  // env helper is the easiest place for a removed feature to grow back, and `WEBAUTHN_RP_ID` may
+  // still be sitting in Vercel. Reading it again must mean touching this line.
+  const src = readFileSync(new URL('./env.ts', import.meta.url), 'utf8')
+  assert.ok(!/WEBAUTHN|webauthn/.test(src), 'env.ts reads a WebAuthn variable again')
 })

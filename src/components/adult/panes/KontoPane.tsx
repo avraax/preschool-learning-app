@@ -16,7 +16,7 @@
 //   1. the identity row       — guest: the sign-in offer, the ONLY place it now appears
 //                               signed in: which account this device is
 //   2. Børn                   — active child, "Sådan går det", roster, switch, rename, add
-//   3. Sikkerhed              — signed in only: the code, Face ID
+//   3. Sikkerhed              — signed in only: the code
 //   4. Synkronisering         — signed in only
 //   5. Farligt for {navn}     — child-scoped, this device's copy
 //   6. Farligt for kontoen    — account-scoped, LAST

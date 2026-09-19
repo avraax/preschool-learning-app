@@ -19,7 +19,7 @@ below are marked UNKNOWN for exactly that reason; they are collected in §6. Do 
   `public/manifest.json`, **deliberately no service worker**. Danish, five sections, 24 games.
 - Backend is Vercel serverless functions under `api/`: Azure AI Speech for TTS (most lines prebaked to
   `public/sounds/tts/`, 31 MB; `public/sounds` total 54 MB).
-- Auth is `better-auth`: one adult account via Google OIDC plus passkeys, N child profiles. The whole app
+- Auth is `better-auth`: one adult account via Google OIDC, N child profiles. The whole app
   is hard-gated by `AuthGate`. `/api/tts-azure` requires a 15-minute access JWT.
 - Compatibility floor: the owner's son's **iPad Pro 2nd gen (12.9") on iPadOS 17.7.11**.
 - Owner's machine is **Windows 11. No macOS hardware at all.** Apple ID exists; no Developer Program
@@ -360,7 +360,7 @@ problem (§3.8) because the reviewer can simply play.
   design, which costs nothing: exchange the Google assertion at sign-in and **never persist Google refresh
   tokens server-side in Neon.** Audit `lib/auth.ts` and the better-auth account table for this.
 
-### 3.3 BLOCKER — Google sign-in and passkeys both break inside the shell
+### 3.3 BLOCKER — Google sign-in breaks inside the shell
 
 Neither of these was on the owner's suspect list, and both are certain, not speculative.
 
@@ -380,21 +380,12 @@ Vercel domain, or a custom scheme. `src/services/authStore.ts` already reasons a
 bearer transport, so this is a launch-and-return change, not an auth redesign. Do not attempt the Google
 flow inside the app's own webview; it will fail with a 403 the owner cannot work around.
 
-**Passkeys will fail origin validation in the shell.** Production `rpID` is
-**`preschool-learning-app.vercel.app`** with `origins: ['https://preschool-learning-app.vercel.app']`
-(`lib/env.ts`, asserted in `lib/env.test.ts`). The shell's webview origin is **`capacitor://localhost`**,
-which matches neither. Passkeys in a WKWebView additionally require the app to declare an **Associated
-Domains** entitlement (`webcredentials:<domain>`) with an `apple-app-site-association` file served from
-`/.well-known/` — the RP must be a verified domain linked to the app. (Sources here are community/vendor —
-passkeys.dev iOS reference, corbado.com — read 2026-08-06; **no first-party Apple page was fetched for the
-WKWebView-specific behaviour, so treat the mechanism as soft-confirmed, though the origin mismatch itself
-is a certainty from this repo's own config.**)
-
-→ **Decision for v1: drop passkeys inside the native shell.** Google (via system browser) plus Sign in
-with Apple (§3.4) plus the existing adult PIN fully covers adult authentication. Native passkeys via
-`ASAuthorizationPlatformPublicKeyCredential` plus Associated Domains are a real feature in their own right
-and belong in a later version, not in the submission that is trying to clear review. Passkeys continue to
-work on the web deployment, unchanged.
+**Passkeys — REMOVED ENTIRELY, 2026-09-19.** This section used to carry a second shell blocker: the
+production `rpID` could never match the shell's `capacitor://localhost` origin, so v1 dropped passkeys
+from the native build while keeping them on the web. That distinction is gone — the owner removed Face
+ID / Touch ID from the whole app ("way too early to have this in the app"), along with the
+`@better-auth/passkey` plugin, the `WEBAUTHN_RP_*` env and the `passkey` table. **Google (and Apple)
+are the only ways in, on every surface.** See `.claude/rules/auth.md`.
 
 ### 3.4 Sign in with Apple is required (Guideline 4.8)
 
@@ -431,9 +422,9 @@ content on 2026-08-06, so no Apple sentence is in hand. The conclusion follows f
 bullets onto SIWA's known feature set (name+email only, Hide My Email, no ad tracking) — low-risk
 inference, but flagged.
 
-An alternative reading — that the app's own passkey/account path *is* the compliant "another login
-service" — is plausible on the text but is an interpretation, not an Apple statement, and §3.3 drops
-passkeys from the shell anyway. **Add Sign in with Apple. It is cheap and certain.**
+An alternative reading — that the app's own account path *is* the compliant "another login service" —
+is plausible on the text but is an interpretation, not an Apple statement. **Add Sign in with Apple. It
+is cheap and certain.**
 
 **Work:** better-auth Apple provider, plus native `ASAuthorization` in the shell. **This step is gated on
 the owner having paid for membership**, because Sign in with Apple is a capability enabled on the App ID
@@ -890,7 +881,7 @@ contractual obligation rather than an Apple one.
 |---|---|
 | **MERGED + DEPLOYED** | **2026-08-07.** Phases A+B fast-forwarded to `master` and live as `3ffee23` on **`https://boernelaering.dk`**. `/privatliv` and `/support` both answer **200**. Ordering matters if this is ever redone: the shell's server-side half (`capacitor://localhost` in `trustedOrigins`, widened CORS) ships with the web app, so **deploy before building a shell**, or the build under test cannot reach the API. |
 | **First successful build** | **2026-08-07**, after five distinct failures wearing one symptom — see `.claude/rules/ios-shell.md`, which records all five so they are not re-derived. The IPA uploaded, was accepted (`usesNonExemptEncryption: false`, min OS 17.0) and installed via TestFlight on the owner's devices. |
-| **Custom domain** | **`boernelaering.dk`** live since 2026-08-07, `www` too. The switch was env-only (`BETTER_AUTH_URL` + `WEBAUTHN_RP_ID`) and **invalidated every existing passkey** — see `.claude/rules/auth.md`. |
+| **Custom domain** | **`boernelaering.dk`** live since 2026-08-07, `www` too. The switch was env-only (`BETTER_AUTH_URL`) — see `.claude/rules/auth.md`. |
 | **Sign-in prominence + guest adoption** | **DONE 2026-08-07** (`b99afb6`), implementing `tmp-prd-adult-login-visibility.md`. A guest-only "Log ind" row in the adult rail, and the guest book copied onto a first child via a defaulted-on checkbox, only when `rosterCount === 0`. |
 | **The adult door** | **2026-08-09** (`ae4b9cd`): the floating gear is deleted, the child's avatar (`ProfileBadge`, `[aria-label="Til de voksne"]`) is the trigger. This is what made the two screenshots stale. |
 | ~~**OPEN DEFECT**~~ | **CLOSED 2026-08-07** (`4f52dbb`, live). `/api/auth/*` answered OPTIONS with a bare 404 — and, unrecorded until the fix, real responses carried no `Access-Control-Allow-Origin` either. Both verified fixed against the deployed build. **No longer blocks TestFlight.** §4.0.1. |
@@ -966,7 +957,7 @@ means the auth surface was never reached by the fix.
 is not a CORS-safelisted request header, so each one is preflighted. A 404 preflight with no
 `Access-Control-Allow-Origin` is blocked by the webview. `CapacitorHttp` is **not** enabled (no plugins
 block in `capacitor.config.ts`), so there is no native proxy sidestepping CORS. Predicted symptom: the
-shell launches, all 24 games work offline, and sign-in, profiles, PIN, passkeys and sync are silently
+shell launches, all 24 games work offline, and sign-in, profiles, PIN and sync are silently
 dead — the exact failure class Phase B closed for the other endpoints.
 
 **Confidence: the server behaviour is measured; the browser consequence is NOT device-verified.** It
@@ -1042,8 +1033,7 @@ not from community reports):
   is what Apple requires of a listed SDK used as a binary dependency.
 
 **Decisions already taken — do not re-litigate:** the web build is **bundled**, never `server.url` (§3.1);
-deployment target **17.0** against the iOS 26 SDK (§3.9); **universal**, iPhone landscape-locked; passkeys
-**dropped from the shell** for v1 (§3.3); listing is **Danish-only, Denmark-only**; **no OTA live updates,
+deployment target **17.0** against the iOS 26 SDK (§3.9); **universal**, iPhone landscape-locked; listing is **Danish-only, Denmark-only**; **no OTA live updates,
 ever** (§3.1).
 
 ### 4.1 Phase A — web app changes (all doable and testable on Windows)
@@ -1099,7 +1089,7 @@ on Windows, wrong on the Mac, and invisible from here:
 | B2 | `Info.plist`: deployment target **17.0**, `TARGETED_DEVICE_FAMILY = 1,2`, iPhone landscape lock | §3.9 |
 | B4 | `PrivacyInfo.xcprivacy`: tracking false, `CA92.1`, collected data types; verify Capacitor's own manifest is present | §3.9 |
 | B5 | Google sign-in via `@capacitor/browser` + deep-link return | §3.3. Must not run in the app's webview |
-| B6 | Remove passkeys from the shell's sign-in options (web deployment keeps them) | §3.3 |
+| B6 | ~~Remove passkeys from the shell's sign-in options~~ | **SUPERSEDED 2026-09-19** — removed app-wide |
 | B8 | Disable the update banner in the shell | §3.10 |
 | B9 | **AI-voice disclosure** — one Danish line in the Privatliv group, via `legalContent.ts` so the guard covers it | §3.11. Microsoft Code of Conduct obligation, not an Apple one. Not native work; it is here only because Phase A had shipped before it was found |
 

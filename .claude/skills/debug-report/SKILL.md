@@ -44,7 +44,7 @@ check the other tier before you check the code. `report.app.commitHash` tells yo
   screenshot, and the lock screen prints the short code so the adult can read it out. Read
   `report.auth` first: `{stage, reason, status, code, errorName, trail}` — the trail is the step-by-step
   of the attempt, and `reason` is a stable slug (`poll-window-exhausted`, `returned-without-pending-flow`,
-  `claim-http-error`, `webauthn-error`, …). Deduped by `stage|reason`, max 3 per session, so a 3s poll
+  `claim-http-error`, …). Deduped by `stage|reason`, max 3 per session, so a 3s poll
   can't storm the endpoint — one report per distinct fault, not per attempt.
 - **The other handled failures still produce NOTHING**, so don't read their absence as health: only a
   CRASH auto-uploads otherwise, so a handled error (a Danish message on screen, a non-ok fetch) sends

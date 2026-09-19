@@ -109,9 +109,8 @@ const SignInOffer: React.FC = () => {
       </PaneSection>
 
       {/* Statements, not links — no chevron, no onClick, no Button wrapper, which also keeps them out
-          of the tab order. Face ID and passkeys are deliberately ABSENT: the shell's
-          `capacitor://localhost` origin can never satisfy the `boernelaering.dk` rpID, and the
-          signed-in sections already say so. Google or the code, nothing else.
+          of the tab order. Google or the code, nothing else — Face ID was removed app-wide on
+          2026-09-19 and must not come back here as a benefit line.
 
           THE ORDER IS THE ARGUMENT. Sync and multiple children are both conditional on something a
           new user may not have — one child on one iPad matches neither, and that is the median
@@ -157,8 +156,7 @@ const SignInOffer: React.FC = () => {
           {/* Apple appears only when the server says it is configured (`/family/status` methods).
               Required by App Store Guideline 4.8, which wants a second option collecting no more
               than name + email and allowing the address to be kept private, whenever a third-party
-              service sets up the primary account. Passkeys do NOT satisfy it — they can only unlock
-              an account that already exists. */}
+              service sets up the primary account. */}
           {appleAvailable && (
             <Button
               variant="outlined"

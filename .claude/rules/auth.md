@@ -12,7 +12,6 @@ paths:
   - "api/progress.ts"
   - "src/services/authStore.ts"
   - "src/services/authSignIn.ts"
-  - "src/services/passkeyClient.ts"
   - "src/services/googleSignIn.ts"
   - "src/services/pinVerifier.ts"
   - "src/services/profileStore.ts"
@@ -30,14 +29,14 @@ paths:
 ---
 # Accounts, PIN, Profiles & Progress Sync
 
-Identity for a household. One adult **account** (Google OIDC or passkey), N **child profiles** (played,
+Identity for a household. One adult **account** (Google or Apple OIDC), N **child profiles** (played,
 never logged into), and a **device** that is enrolled once and trusted. The child never sees an auth
 screen. Implemented from `plans/accounts/tmp-prd-accounts-01-auth-profiles-sync.md`.
 
 ## Shape
 
 ```
-lib/env.ts          runtime()/baseURL()/webauthn()/allowlist  — the ONE place "where am I?" is decided
+lib/env.ts          runtime()/baseURL()/allowlist  — the ONE place "where am I?" is decided
 lib/auth.ts         the single better-auth instance (api/ AND dev-server.js import THIS object)
 lib/auth-family-plugin.ts   our endpoints as a better-auth PLUGIN + our 5 tables' schema
 lib/access-token.ts + lib/paid-guard.ts     the 15-min HS256 JWT that gates the PAID endpoints
@@ -47,8 +46,12 @@ src/services/        authStore · profileStore · progressStore · progressSync 
 src/components/auth/ AuthGate → LockScreen | ProfileGate → ProfilePicker | PinPad/PinDialog
 ```
 
-`npm run auth:migrate` (dry run) / `-- --apply` owns the schema — better-auth's core tables, the passkey
-table, and our five (`childProfile`, `profileProgress`, `familyPin`, `pinAttempt`, `oauthFlow`).
+`npm run auth:migrate` (dry run) / `-- --apply` owns the schema — better-auth's core tables and our
+five (`childProfile`, `profileProgress`, `familyPin`, `pinAttempt`, `oauthFlow`). **Nothing runs it
+automatically** — no CI, and Vercel's build command is just `npm run build`, so each tier is migrated
+by hand. `npm run schema:check` asks both deployments whether their database matches the code they are
+running and exits non-zero on drift; that detector exists because four columns once shipped to
+production migrated only into staging, and sign-in was dead there for a day.
 `scripts/auth-dev-session.mjs` mints a real allowlisted session so the bearer surface is curl-testable.
 
 ## Rules that are load-bearing
@@ -68,23 +71,18 @@ table, and our five (`childProfile`, `profileProgress`, `familyPin`, `pinAttempt
   we distrust is load-bearing. The `flowId` is written into the app's OWN localStorage before
   navigating; the return URL carries only `#bl_auth=1` in the FRAGMENT. `location.assign`, never
   `window.open`.
-- **iOS eats user activation across an `await`.** `registerPasskey` / `unlockWithPasskey` /
-  `startPasskeyUnlock` are NON-async and take PRE-FETCHED options (refreshed ~4 min). Never use
-  better-auth's own passkey client helpers — they fetch options and *then* call
-  `navigator.credentials.*`. `useBrowserAutofill: false` for the same reason.
-- **DEV passkeys need `http://localhost:5173`, not `127.0.0.1`** — the RP ID must be a registrable
-  suffix of the page's domain, and the SecurityError reads exactly like "no Face ID on this device".
-- **Passkeys cannot work on preview deployments** (`vercel.app` is on the Public Suffix List), so the
-  plugin isn't registered there at all.
+- **THERE IS NO BIOMETRIC SIGN-IN, and that is a decision, not a gap.** Face ID / Touch ID shipped as
+  WebAuthn passkeys and was removed whole on 2026-09-19 (owner: "way too early to have this in the
+  app") — the `@better-auth/passkey` plugin, `@simplewebauthn/browser`, `passkeyClient.ts`, the lock
+  screen button, the Sikkerhed rows, `webauthn()` in `lib/env.ts`, the `WEBAUTHN_RP_*` vars and the
+  `passkey` table. `shellAuth.test.ts` greps `src/`, `lib/` and `api/` and fails if any of it returns,
+  so re-adding it is a deliberate act. **Google (and Apple where configured) are the only ways in.**
 - **Production is `boernelaering.dk` since 2026-08-07** (was `preschool-learning-app.vercel.app`, which
-  still serves as a fallback). The switch is env-only — `BETTER_AUTH_URL` + `WEBAUTHN_RP_ID` in Vercel
-  production — because `origins` is an array and `baseURL()` checks `BETTER_AUTH_URL` first.
-  **Changing `WEBAUTHN_RP_ID` INVALIDATES every registered passkey**: a credential is bound to the RP ID,
-  so existing ones must be deleted and re-registered on each device. Google sign-in is the way back in,
-  which is why it must keep working before the RP ID moves. A domain move therefore needs, in this order:
-  the new redirect URIs added in the Google console (BOTH paths — `/api/auth/family/oauth/callback` and
-  `/api/auth/callback/google`), then the env vars, then a **redeploy** (env never reaches a live
-  deployment), then re-registration. Never move the RP ID before the redirect URIs exist.
+  still serves as a fallback). The switch is env-only — `BETTER_AUTH_URL` in Vercel production —
+  because `baseURL()` checks `BETTER_AUTH_URL` first. A domain move needs, in this order: the new
+  redirect URIs added in the Google console (BOTH paths — `/api/auth/family/oauth/callback` and
+  `/api/auth/callback/google`), then the env var, then a **redeploy** (env never reaches a live
+  deployment).
 - **The PIN lockout is checked BEFORE the hash is compared**, so a CORRECT PIN inside a lock window is
   still refused. `pinAttempt` lives in Postgres precisely because `lib/server-utils.ts`'s `rateLimit()`
   is a per-instance in-memory Map. Don't "optimise" either away — for a 10 000-value keyspace the pepper
@@ -167,8 +165,8 @@ table, and our five (`childProfile`, `profileProgress`, `familyPin`, `pinAttempt
   that was the accounts release's first impression on any account whose children were made elsewhere.
 - **The resume path is throttled, and publishing is change-gated.** `visibilitychange:visible` fires on
   every iPad app switch. `validate()` dedupes in-flight callers and skips a verdict that is still fresh;
-  `refreshStatus()` is throttled independently and takes `force` (pass it after a PIN set, a passkey
-  change, or a new session — the mandatory PIN nag hangs off that answer); `persist()` throttles timestamp-only
+  `refreshStatus()` is throttled independently and takes `force` (pass it after a PIN set or a new
+  session — the mandatory PIN nag hangs off that answer); `persist()` throttles timestamp-only
   writes; and `publish()` drops a notify whose snapshot is materially unchanged, since `AuthProvider`
   sits above `<App />` and every publish re-renders the whole app.
 - **Logging out lives in the Konto pane's destructive strip, and the lock phase is UNREACHABLE.** The owner
@@ -239,8 +237,8 @@ table, and our five (`childProfile`, `profileProgress`, `familyPin`, `pinAttempt
 - **`set-auth-token` is the SIGNED cookie value** (`<rawToken>.<hmac>`), NOT `session.token`.
   `internalAdapter.findSession()` takes the RAW token, so the OAuth claim must split on `.` first —
   looking the signed value up returns null and bounces the adult back to the lock screen *after* a
-  successful Google sign-in. The bearer plugin accepts EITHER form on the way IN, which is why the
-  passkey path (same signed value handed straight to the client) always worked. Guarded by
+  successful Google sign-in. The bearer plugin accepts EITHER form on the way IN, which is why a token
+  handed straight to the client always worked. Guarded by
   `node --env-file=.env.local scripts/auth-probe-claim.mjs`, which parks the signed shape a real
   callback produces — seeding a RAW token is precisely how this hid behind a green test.
 
@@ -248,8 +246,7 @@ table, and our five (`childProfile`, `profileProgress`, `familyPin`, `pinAttempt
 
 **App Store Guideline 4.8** wants a second login option collecting no more than name + email and
 letting the address stay private, whenever a third-party service sets up the primary account.
-**Passkeys do not satisfy it** — they can only unlock an account that already exists — so Google-only
-was a submission risk *and* a dead end for an adult without a Google account. Apple rides the same
+Google-only was a submission risk *and* a dead end for an adult without a Google account. Apple rides the same
 cookie-free flow; only these differ:
 
 - **Apple POSTs.** `response_mode=form_post` is mandatory once any scope is requested, so it gets its
@@ -388,7 +385,7 @@ read model is derived from it and is **byte-identical to the pre-accounts shape*
 - `curl http://127.0.0.1:3001` per `.claude/rules/api-endpoints.md`. **Restart the dev-server after
   editing anything under `lib/`** — a stale instance 404s every auth route while its banner looks
   healthy. Emoji passed through curl on Git Bash arrive mangled; create profiles from the browser.
-- `ui-screenshot` with `--webauthn` for passkeys and `?nogate=1` (⇒ no-auth) for every other recipe.
+- `ui-screenshot` with `?nogate=1` (⇒ no-auth) for every recipe.
   `import()` inside `--eval` gets a DIFFERENT module instance than the app (Vite HMR URLs), so drive the
   real path or use the `window.__auth` / `__profiles` / `__progress` / `__sync` DEV handles.
 - **The real risks only show on the iPad**: the iOS gesture rule, the installed-PWA OAuth hop, and

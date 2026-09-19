@@ -58,7 +58,7 @@ test('the scheme and hostname are the Capacitor defaults, written down', () => {
 test("the shell's runtime detection matches the scheme the config actually sets", () => {
   // `runtimeTarget.ts` decides "am I in the shell?" from the page protocol, with no Capacitor import.
   // That is only correct while `iosScheme` really is `capacitor` — change the scheme and every
-  // shell-gated behaviour (update banner, lazyWithReload, swCleanup, passkeys, Google sign-in) silently
+  // shell-gated behaviour (update banner, lazyWithReload, swCleanup, Google sign-in) silently
   // reverts to its web branch inside the binary. Nothing else connects these two files.
   assert.match(stripTs(read(CAP_CONFIG)), /iosScheme:\s*'capacitor'/)
   assert.match(stripTs(read('src', 'config', 'runtimeTarget.ts')), /'capacitor:'/)

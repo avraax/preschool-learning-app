@@ -1,19 +1,8 @@
-// The two sign-in entry points the lock screen drives.
+// The sign-in entry points the lock screen drives.
 //
-// They live outside the component so the iOS user-activation rule can be enforced by SHAPE rather
-// than by discipline: `startPasskeyUnlock` is a NON-async function that takes PRE-FETCHED options,
-// because iOS consumes the transient user activation across an `await` and
-// `navigator.credentials.get()` after one silently fails (accounts PRD §9 / the same rule already
-// burned into .claude/rules/audio-system.md for audio unlock).
-//
-// This is why we do NOT use better-auth's own passkey client helpers: `authClient.passkey.addPasskey()`
-// and `signIn.passkey()` fetch the options and THEN call navigator.credentials.*, which is exactly the
-// pattern that fails.
+// They live outside the component so the implementations can be registered once (by `AuthGate`) and
+// the lock screen stays a pure view over `authStore`.
 
-// Type-only, so it costs nothing at runtime — but it means the pre-fetched options we carry around
-// are EXACTLY the shape @simplewebauthn/browser accepts, instead of a hand-written near-copy that
-// silently drifts (e.g. `transports: string[]` vs its narrower union).
-import type { PublicKeyCredentialRequestOptionsJSON } from '@simplewebauthn/browser'
 import { authStore, type AccountUser } from './authStore.ts'
 
 export interface SignInResult {
@@ -80,10 +69,7 @@ export async function startGoogleSignIn(): Promise<SignInResult> {
   return startSocialSignIn('google')
 }
 
-/**
- * The two providers that can CREATE an account. Passkeys are deliberately not here — they can only
- * unlock an existing one, which is also why they do not satisfy App Store Guideline 4.8.
- */
+/** The two providers that can CREATE an account, and the only two ways in. */
 export type SignInProvider = 'google' | 'apple'
 
 /**
@@ -121,32 +107,7 @@ export async function claimPendingFlow(flowId: string): Promise<SignInResult> {
   return claimImpl(flowId)
 }
 
-// ----- Passkey (implemented in W6) --------------------------------------------------------------
 
-/** Opaque pre-fetched WebAuthn request options, refreshed on a timer while the lock screen is up. */
-export interface PasskeyRequestOptions {
-  fetchedAt: number
-  options: PublicKeyCredentialRequestOptionsJSON
-}
-
-type PasskeyUnlockImpl = (opts: PasskeyRequestOptions) => Promise<SignInResult>
-let passkeyImpl: PasskeyUnlockImpl | null = null
-
-export function registerPasskeyUnlock(fn: PasskeyUnlockImpl | null): void {
-  passkeyImpl = fn
-}
-
-/**
- * NON-async by design. Takes options that were fetched EARLIER (on mount / on a refresh tick), so the
- * `navigator.credentials.get()` inside runs in the same task as the tap and iOS still considers the
- * gesture live. Returns a promise, but does not await anything before the WebAuthn call.
- */
-export function startPasskeyUnlock(opts: PasskeyRequestOptions | null): Promise<SignInResult> {
-  if (!opts || !passkeyImpl) {
-    return Promise.resolve({ ok: false, message: 'Face ID er ikke klar. Prøv igen.' })
-  }
-  return passkeyImpl(opts)
-}
 
 /** Shared by both methods once a session token is in hand. */
 export function adoptSignedInSession(token: string, user: AccountUser | null): void {

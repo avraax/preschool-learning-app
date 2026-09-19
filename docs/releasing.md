@@ -150,10 +150,8 @@ Three ways, in increasing effort:
 a staging build without opening Codemagic. It needs tag webhook events turned on for the repository
 (Codemagic → the app → Settings → Webhooks). Until then, start both workflows by hand.
 
-## Two things worth knowing before you are surprised by them
+## One thing worth knowing before you are surprised by it
 
-- **A passkey does not work across the two apps.** It is bound to the domain, so enrolling Face ID in
-  `BL Staging` does nothing for `Børnelæring`. Google sign-in works in both.
 - **The installed app keeps its loaded code until you swipe it away** in the app switcher. So right
   after installing a build, reopening the icon can still run the old one. Check the version chip before
   concluding a fix didn't work.

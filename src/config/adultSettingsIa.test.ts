@@ -47,8 +47,6 @@ const KONTO_ITEM_IDS = [
   'barn.rename',
   'barn.add',
   'konto.pin',
-  'konto.addPasskey',
-  'konto.removePasskey',
   'konto.sync',
   'konto.syncNow',
   'barn.reset',

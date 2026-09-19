@@ -56,7 +56,7 @@ const json = (body: unknown, status = 200) =>
     return json({ user: { id: 'adult-1', email: 'a@example.com' }, session: { id: 's1' } })
   }
   if (url.includes('/family/status')) {
-    return json({ hasPin: true, pinUpdatedAt: 1, methods: ['google'], passkeyCount: 0, webauthnEnabled: false })
+    return json({ hasPin: true, pinUpdatedAt: 1, methods: ['google'] })
   }
   if (url.includes('/family/access-token')) return json({ token: 'jwt', expiresIn: 900 })
   if (url.includes('/api/profiles')) {

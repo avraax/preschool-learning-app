@@ -33,7 +33,7 @@ const config: CapacitorConfig = {
     // BOTH OF THESE ARE THE CAPACITOR DEFAULTS, written out because one of them is load-bearing.
     // `runtimeTarget.ts` decides "am I in the shell?" from the page protocol alone, so changing
     // `iosScheme` silently reverts every shell-gated behaviour (update banner, lazyWithReload,
-    // swCleanup, passkeys, Google sign-in) to its web branch inside the binary. Pinned by
+    // swCleanup, Google sign-in) to its web branch inside the binary. Pinned by
     // `capacitorConfig.test.ts`.
     iosScheme: 'capacitor',
     hostname: 'localhost',

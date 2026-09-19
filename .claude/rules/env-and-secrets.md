@@ -60,7 +60,7 @@ construction rather than by a setting somebody can flip. Org `team_GacOLmNdUS9It
   instead; `vercel domains add <d> <project>` even REFUSES the two-argument form and would have added
   the staging subdomain to production. Never rewrite that file.
 - **`--prod` means "this PROJECT's production environment"**, so staging deploys with it. A *preview*
-  deployment sits behind the SSO wall (302 to `curl`), which is also why `lib/env.ts` disables passkeys
+  deployment sits behind the SSO wall (302 to `curl`), which is also why `lib/env.ts` stands features down
   on `runtime() === 'preview'`.
 - **`--archive=tgz` uploads no `.git`**, so `vite.config.ts`'s `git rev-parse` fails and every staging
   build reported `commitHash: "dev"`. `scripts/deploy-staging.mjs` resolves it locally and passes

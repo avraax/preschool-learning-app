@@ -116,7 +116,7 @@ points to, loaded when you touch matching files.
 - **Adult tools / bug reports**: the adult area is **`Indstillinger`** — name pill → "Hvem spiller?" →
   a labelled row. Child-facing gates pass **`{ force: true }`**, its IA is **data**,
   **each irreversible action is type-to-confirm**, and **`resetAll` needs a reason**. → `adult-surface.md`.
-- **Accounts / auth**: one adult account (Google or Apple OIDC + passkey) with N child profiles and local-first
+- **Accounts / auth**: one adult account (Google or Apple OIDC — **no biometrics, by decision**) with N child profiles and local-first
   progress sync. **Guest play needs no account** — `AuthGate` gates sync, not play. `/api/tts-azure`
   needs a 15-minute access JWT; `?nogate=1` bypasses the gate in DEV. → `auth.md`.
 - **API endpoints**: the `api/*.ts` Vercel functions are a trust boundary — scoped CORS + origin

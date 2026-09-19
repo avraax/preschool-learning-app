@@ -11,7 +11,7 @@ import { createAuthEndpoint, sessionMiddleware, APIError } from 'better-auth/api
 import type { BetterAuthPlugin } from 'better-auth'
 import * as z from 'zod'
 import { signAccessToken } from './access-token.js'
-import { apple, baseURL, fakeProviderEnabled, requireEnv, tier, webauthn } from './env.js'
+import { apple, baseURL, fakeProviderEnabled, requireEnv, tier } from './env.js'
 import { returnSchemeUrl } from './oauth-return-scheme.js'
 import { decodeFakeCode, FAKE_PROVIDER_SLOT, signFakeIdToken } from './fake-oidc.js'
 import { appleClientSecret, appleUsable } from './apple-client-secret.js'
@@ -235,7 +235,7 @@ const b64url = (n: number): string => randomBytes(n).toString('base64url')
 const APPLE_CALLBACK_PATH = '/api/auth/family/oauth/callback/apple'
 
 /**
- * The providers that can CREATE an account. Passkeys can only unlock an existing one.
+ * The providers that can CREATE an account, and the only two ways in.
  *
  * `fake` is the driven stand-in (PRD W7) and exists ONLY where `fakeProviderEnabled()` is true — three
  * independent conditions in `lib/env.ts`, none of which can hold on production. Every branch below that
@@ -544,7 +544,7 @@ export const familyPlugin = (): BetterAuthPlugin => ({
     /**
      * Which providers can CREATE an account here — and deliberately UNAUTHENTICATED.
      *
-     * `/family/status` below is session-gated, which is correct for it (passkey count, PIN state) and
+     * `/family/status` below is session-gated, which is correct for it (PIN state) and
      * useless for this question: the adult who needs to know which sign-up buttons exist is precisely
      * the one with no session. Keying the Apple button off `status.methods` hid it on the only two
      * surfaces that offer sign-up — the guest Konto pane and the lock screen.
@@ -576,20 +576,9 @@ export const familyPlugin = (): BetterAuthPlugin => ({
           where: [{ field: 'userId', value: userId }],
         })
 
-        // The passkey table only exists once the passkey plugin is registered; count defensively so
-        // a preview deployment (where passkeys are disabled outright) can still answer.
-        const passkeyCount = await adapter
-          .count({ model: 'passkey', where: [{ field: 'userId', value: userId }] })
-          .catch(() => 0)
-
-        const wa = webauthn()
         // `apple` appears only once all four APPLE_* env vars are set — a half-configured Apple would
         // render a button that dies at the token exchange, and the adult would blame their Apple ID.
-        const methods = [
-          'google',
-          ...(appleUsable() ? ['apple'] : []),
-          ...(wa.enabled ? ['passkey'] : []),
-        ]
+        const methods = ['google', ...(appleUsable() ? ['apple'] : [])]
 
         return ctx.json({
           hasPin: !!pin,
@@ -597,8 +586,6 @@ export const familyPlugin = (): BetterAuthPlugin => ({
           // older than this drops it and forces an online verify (§7.2).
           pinUpdatedAt: pin ? new Date(pin.updatedAt).getTime() : null,
           methods,
-          passkeyCount,
-          webauthnEnabled: wa.enabled,
         })
       },
     ),
@@ -745,7 +732,7 @@ export const familyPlugin = (): BetterAuthPlugin => ({
      * Delete the whole account, for real (§8.4: "deletion that actually deletes rows").
      *
      * ON DELETE CASCADE on every table that references `user` means one delete removes the sessions,
-     * the OAuth accounts, the passkeys, the PIN, the attempt counter, the child profiles and — through
+     * the OAuth accounts, the PIN, the attempt counter, the child profiles and — through
      * childProfile — every progress document. Requires the current PIN, because this is the most
      * destructive account-scoped mutation there is.
      */
@@ -1074,7 +1061,7 @@ export const familyPlugin = (): BetterAuthPlugin => ({
         // `<rawToken>.<hmacSignature>` — but `findSession()` takes the RAW token. Looking the signed
         // value up directly always returns null, which made every real Google sign-in throw GONE here
         // and bounce the adult back to the lock screen even though the session had been created.
-        // (The bearer plugin accepts either form on the way IN, which is why the passkey path — which
+        // (The bearer plugin accepts either form on the way IN, which is why the OAuth claim path — which
         // hands the same signed value straight to the client — worked.)
         const rawToken = row.sessionToken.split('.')[0]
         const session =

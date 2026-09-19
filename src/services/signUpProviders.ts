@@ -1,7 +1,7 @@
 // "Which buttons may the sign-in screens show?" — asked WITHOUT a session, on purpose.
 //
 // `/family/status` answers a similar question and is session-gated, which is right for what it carries
-// (passkey count, PIN state) and wrong for this one: the adult who needs to know whether Apple exists
+// (PIN state) and wrong for this one: the adult who needs to know whether Apple exists
 // is by definition the adult who has no account yet. Gating the Apple button on `auth.info.methods`
 // hid it on the only two surfaces that can create an account — the guest Konto pane and the lock
 // screen — which is the entire point of adding it (App Store Guideline 4.8).

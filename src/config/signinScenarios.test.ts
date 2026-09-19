@@ -16,7 +16,10 @@ const doc = readFileSync(MATRIX, 'utf8').replace(/\r\n/g, '\n')
 
 /** Every row id in PRD §6, restated here so a row removed from the doc fails instead of vanishing. */
 const ROWS = [
-  ...['A1', 'A2', 'A3', 'A4', 'A5', 'A6'],
+  // A5 was "passkey unlock (web / PWA only)". Face ID was removed from the whole app on 2026-09-19,
+  // so the scenario no longer exists and its id is retired rather than renumbered — renumbering would
+  // silently repoint every other reference to §6. This guard caught the deletion, which is its job.
+  ...['A1', 'A2', 'A3', 'A4', 'A6'],
   ...['B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8'],
   ...['C1', 'C2', 'C3', 'C4', 'C5', 'C6', 'C7', 'C8', 'C9', 'C10', 'C11', 'C12'],
   ...['D1', 'D2', 'D3', 'D4', 'D5', 'D6'],

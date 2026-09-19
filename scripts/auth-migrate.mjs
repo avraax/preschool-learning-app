@@ -1,5 +1,4 @@
-// Apply the better-auth schema (core tables + the passkey plugin + our own `family` plugin tables)
-// to Neon.
+// Apply the better-auth schema (core tables + our own `family` plugin tables) to Neon.
 //
 // This is the programmatic equivalent of `npx @better-auth/cli migrate`, kept in-repo so the schema
 // is reproducible from `npm run auth:migrate` and so our plugin-declared tables (child_profile,

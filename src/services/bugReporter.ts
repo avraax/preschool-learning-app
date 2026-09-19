@@ -44,7 +44,7 @@ export interface AuthFailureInfo {
   status?: number
   /** The API's own error `code`, when it sent one. */
   code?: string
-  /** DOMException / Error `name` — e.g. `NotAllowedError` for a cancelled or stale Face ID prompt. */
+  /** DOMException / Error `name` — e.g. `NotAllowedError` for a permission the browser refused. */
   errorName?: string
   /**
    * `google` | `apple`, when the failure belongs to one. The `google-*` STAGE names are historical —

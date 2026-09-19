@@ -16,7 +16,7 @@
 
 import React, { useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
-// Side-effect import: registers the real passkey / Google implementations into authSignIn.
+// Side-effect import: registers the real Google implementation into authSignIn.
 import '../../services/authSignInRegistry'
 import { gateBlocks, isPublicPath } from '../../contexts/authGatePolicy'
 import { AuthProvider, useAuthContext } from '../../contexts/AuthContext'

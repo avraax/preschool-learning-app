@@ -91,10 +91,11 @@ Capacitor 8 (SPM, **no CocoaPods — there is no Podfile**), `webDir: dist`, bun
   validates Origin) plus an `Allow-Methods` covering every verb, since the shell preflights everything.
   **`SHELL_API_ORIGIN` cannot be an env var** — it is compiled into a reviewed binary, so a domain move
   is asymmetric and the old host must answer until installs are replaced through review.
-- **Two auth behaviours are shell-gated and must stay so** (`.claude/rules/auth.md` for the mechanism):
+- **One auth behaviour is shell-gated and must stay so** (`.claude/rules/auth.md` for the mechanism):
   Google OAuth opens in the **system browser** (`@capacitor/browser`, dynamically imported) because
-  Google 403s WKWebView, and **passkeys are off** because `capacitor://localhost` can never match the
-  production `rpID`. The web deployment keeps both unchanged — this is a gate, never a removal.
+  Google 403s WKWebView. (A second gate used to sit beside it — passkeys were off in the shell because
+  `capacitor://localhost` can never match the production `rpID`. Moot since 2026-09-19: Face ID was
+  removed from the whole app, web included.)
 - **The app icon is a real render, flattened.** Capacitor scaffolds a valid placeholder PNG, and alpha in
   an icon is an upload rejection rather than a review note.
 - **`ITSAppUsesNonExemptEncryption = false`** is set so uploads don't stop for the export questionnaire.

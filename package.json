@@ -29,6 +29,7 @@
     "staging:init": "node --env-file=.env.local --import ./scripts/js-to-ts-resolve.mjs scripts/staging-init.mjs",
     "staging:seed": "node --env-file=.env.local --import ./scripts/js-to-ts-resolve.mjs scripts/staging-seed.mjs",
     "staging:wipe": "node --env-file=.env.local --import ./scripts/js-to-ts-resolve.mjs scripts/staging-wipe.mjs",
+    "db:drop-passkey": "node --env-file=.env.local scripts/drop-passkey-table.mjs",
     "probe": "node scripts/baseline-probe.mjs",
     "lint": "eslint .",
     "preview": "vite preview",
@@ -46,7 +47,6 @@
     "desc:sync": "node scripts/asc-desc.mjs --apply"
   },
   "dependencies": {
-    "@better-auth/passkey": "^1.6.25",
     "@capacitor/app": "^8.1.1",
     "@capacitor/browser": "^8.0.4",
     "@capacitor/core": "^8.5.0",
@@ -63,7 +63,6 @@
     "@mui/icons-material": "^9.1.1",
     "@mui/material": "^9.1.1",
     "@mui/system": "^9.1.1",
-    "@simplewebauthn/browser": "^13.3.0",
     "@vercel/blob": "^2.6.1",
     "@zumer/snapdom": "^2.23.1",
     "better-auth": "^1.6.25",

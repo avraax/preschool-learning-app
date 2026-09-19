@@ -93,7 +93,9 @@ test('the 9th failure closes the PIN path (requiresRecovery + 24h)', () => {
   assert.equal(s.failedCount, RECOVERY_AT_FAILURES)
   assert.equal(s.requiresRecovery, true)
   assert.equal(s.lockedUntil, NOW + 24 * 60 * MIN)
-  assert.match(lockoutMessage(s, NOW), /Google eller Face ID/)
+  assert.match(lockoutMessage(s, NOW), /Log ind med Google/)
+  // Face ID was removed app-wide (2026-09-19); the recovery copy must not offer it again.
+  assert.ok(!/Face ID/.test(lockoutMessage(s, NOW)), 'the lockout message offers Face ID again')
 })
 
 test('a successful verify clears the counter completely', () => {

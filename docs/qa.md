@@ -219,7 +219,6 @@ Install the production build from TestFlight, then work through this. Each line 
 **Sign-in**
 - Google sign-in completes in the system browser and returns to the app
 - Sign in with Apple completes
-- Face ID / passkey is correctly **absent** in the shell
 - Creating a first child offers to adopt the guest book; accepting carries the stickers over
 - Progress syncs to a second device
 

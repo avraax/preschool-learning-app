@@ -8,14 +8,13 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
+import { execFileSync } from 'node:child_process'
 import path from 'node:path'
-import { isNativeShell, runtimeTargetFor } from '../config/runtimeTarget.ts'
 
-// `passkeyClient.ts` is NOT imported here. Its transitive graph (authDiagnostics → redact → …) is
-// extensionless, i.e. browser-only, and converting a chain of unrelated files to make one predicate
-// importable would be churn for no coverage: the predicate is `!isNativeShell()`, and `isNativeShell`
-// is already exercised directly in `runtimeTarget.test.ts`. What actually breaks here is the WIRING —
-// which branch is reached first, and whether the button is still rendered — and that is read from source.
+// These are read from SOURCE rather than imported. The client graph is extensionless, i.e.
+// browser-only, and converting a chain of unrelated files to make one predicate importable would be
+// churn for no coverage. What actually breaks here is the WIRING — which branch is reached first, and
+// whether a button is still rendered — and that is only visible in the source.
 const SRC = path.join(import.meta.dirname, '..')
 
 /** Comments stripped: every assertion below would otherwise pass on the prose explaining the fix. */
@@ -86,91 +85,42 @@ test('@capacitor/browser is imported DYNAMICALLY, so the web build and the tests
   assert.ok(guardAt > 0 && guardAt < importAt, 'the native SDK is imported before the shell check')
 })
 
-// ---- B6: passkeys are gone inside the shell -------------------------------------------------------
+// ---- Face ID / Touch ID is GONE, app-wide (2026-09-19) -------------------------------------------
 
-test('the passkey gate is the shell check itself, not a copy of it', () => {
-  // One predicate over `isNativeShell()`, so the shell is defined in exactly one place. A hand-rolled
-  // second sniff (a UA test, a `window.Capacitor` probe) is what would drift out of step with
-  // `capacitor.config.ts`'s `iosScheme` — which is why this asserts the composition, not the value.
-  const code = codeOf('services/passkeyClient.ts')
-  assert.match(
-    code,
-    /export function passkeysSupportedInThisBuild\(\)[\s\S]{0,120}return\s+!isNativeShell\(\)/,
-    'passkeysSupportedInThisBuild does not derive from isNativeShell',
-  )
-  assert.ok(!/navigator\.userAgent/.test(code), 'passkeyClient sniffs the user agent for the shell')
-  // The one place the shell is defined still answers as expected on both sides.
-  assert.equal(runtimeTargetFor('capacitor:'), 'shell')
-  assert.equal(isNativeShell(), false)
+test('no WebAuthn / passkey code survives anywhere in the client', () => {
+  // The owner removed Face ID entirely on 2026-09-19 — "way too early to have this in the app" — so
+  // the invariant INVERTED. The test this replaces asserted the opposite ("the WEB deployment keeps
+  // passkeys \u2014 this is a shell gate, not a removal"), which is exactly why it is replaced rather than
+  // deleted: a future tidy-up that re-adds a Face ID button would otherwise meet no resistance, and
+  // the removal would quietly undo itself.
+  //
+  // Source-read, not import-read: the modules are gone, so there is nothing left to import. `git grep`
+  // exits 1 on NO match, which is the passing case, so the throw is caught rather than fatal.
+  let hits: string
+  try {
+    hits = execFileSync(
+      'git',
+      ['grep', '-lEi', 'passkey|webauthn|credentials\\.(create|get)', '--', 'src', 'lib', 'api', ':(exclude)*.test.ts'],
+      { cwd: path.join(SRC, '..'), encoding: 'utf8' },
+    ).trim()
+  } catch {
+    hits = ''
+  }
+  assert.equal(hits, '', `passkey/WebAuthn code is back in: ${hits}`)
 })
 
-test('passkeysUsableHere() consults the BUILD before probing the device', () => {
-  // A WKWebView on an iPad reports a platform authenticator as available — the hardware is right there
-  // — so the capability probe alone answers "yes" for a build whose origin can never validate. The
-  // ordering is the whole guard: ask which build first, then ask the device.
-  const code = codeOf('services/passkeyClient.ts')
-  const buildAt = code.indexOf('passkeysSupportedInThisBuild()', code.indexOf('passkeysUsableHere'))
-  const probeAt = code.indexOf('window.PublicKeyCredential')
-  assert.ok(buildAt > 0, 'passkeysUsableHere never asks which build it is in')
-  assert.ok(buildAt < probeAt, 'the device probe runs before the build check')
-})
-
-test('the lock screen cannot offer Face ID inside the shell', () => {
-  // `capacitor://localhost` matches neither the production rpID nor its origins list, so the sheet
-  // would open and fail with a SecurityError that `danishError` renders as "Tjek at iPad'en har en
-  // kode" — blaming the adult's device for our decision. The button must be ABSENT, not broken.
+test('the lock screen offers no Face ID button', () => {
+  // The button is the visible half, and it could come back without the client modules \u2014 e.g. wired
+  // straight to `navigator.credentials`. Assert on the SCREEN as well as on the tree above.
   const code = codeOf('components/auth/LockScreen.tsx')
-  assert.match(
-    code,
-    /canOfferPasskey\s*=\s*[\s\S]{0,80}passkeysSupportedInThisBuild\(\)/,
-    'canOfferPasskey does not consult the build',
-  )
+  assert.ok(!/Face ID/i.test(code), 'the lock screen mentions Face ID again')
+  assert.ok(!/Fingerprint/.test(code), 'the fingerprint icon is back on the lock screen')
+  // \u2026and the code path it replaced still works: Google is the primary button.
+  assert.match(code, /Forts\u00e6t med Google/, 'the lock screen no longer offers Google')
 })
 
-test('the adult surface blames the BUILD, not the iPad', () => {
-  // The same iPad does Face ID in Safari. "Denne enhed understøtter ikke Face ID" is therefore false in
-  // the shell, and false in a way that produces an unreproducible bug report.
-  // The flat `KontoPane` became `konto/SikkerhedSection.tsx` when Barn + Konto merged into one pane
-  // (Familie IA PRD, 2026-09-05). The Face ID block moved with it, branch order unchanged.
+test('the adult Sikkerhed section is the code alone', () => {
   const code = codeOf('components/adult/panes/konto/SikkerhedSection.tsx')
-  assert.match(code, /!passkeysSupportedInThisBuild\(\)/, 'the Sikkerhed section has no shell branch')
-  assert.match(code, /app-udgaven/, 'the shell message does not name the app edition')
-  const shellBranchAt = code.indexOf('!passkeysSupportedInThisBuild()')
-  const deviceBranchAt = code.indexOf('Denne enhed understøtter ikke Face ID')
-  assert.ok(
-    shellBranchAt > 0 && shellBranchAt < deviceBranchAt,
-    'the device-unsupported message is reached before the shell branch',
-  )
-})
-
-test('the WEB deployment keeps passkeys — this is a shell gate, not a removal', () => {
-  // A tidy-up that reads "passkeys are dropped for v1" and deletes the client is the failure this
-  // guards. They work unchanged in Safari, and the machinery has to stay for that.
-  const code = codeOf('services/passkeyClient.ts')
-  assert.match(code, /startAuthentication\(/, 'the passkey unlock implementation is gone')
-  assert.match(code, /startRegistration\(/, 'the passkey registration implementation is gone')
-  // …and it is still CALLED: the lock screen unlocks with it and the Sikkerhed section registers
-  // with it. Anchored on the call, not the bare name — an `import` line alone satisfied
-  // `/registerPasskey/` and `/startPasskeyUnlock/`, so both survived deleting the only invocation
-  // (found by /re-break, 2026-09-05, while repointing these two at the merged Konto pane).
-  assert.match(
-    codeOf('components/auth/LockScreen.tsx'),
-    /startPasskeyUnlock\(passkeyOptions/,
-    'LockScreen imports startPasskeyUnlock but never calls it',
-  )
-  assert.match(
-    codeOf('components/adult/panes/konto/SikkerhedSection.tsx'),
-    /registerPasskey\(registerOptions/,
-    'the Sikkerhed section imports registerPasskey but never calls it',
-  )
-})
-
-test('the whole passkey probe stays inside its try/catch', () => {
-  // `passkeysUsableHere` is awaited in a mount effect, so a throw there takes out the account pane.
-  // The build check was inserted at the top of that function and must be INSIDE the existing guard.
-  const code = codeOf('services/passkeyClient.ts')
-  const fn = code.slice(code.indexOf('export async function passkeysUsableHere'))
-  const tryAt = fn.indexOf('try {')
-  const buildAt = fn.indexOf('passkeysSupportedInThisBuild()')
-  assert.ok(tryAt > 0 && tryAt < buildAt, 'the build check sits outside the try/catch')
+  assert.ok(!/Face ID|Touch ID/i.test(code), 'Face ID is back in the Sikkerhed section')
+  assert.match(code, /PinSetupDialog/, 'the Sikkerhed section no longer offers the code')
 })

@@ -30,8 +30,6 @@ export type AuthStage =
   | 'google-start'
   | 'google-claim'
   | 'google-return'
-  | 'passkey-options'
-  | 'passkey-unlock'
   | 'access-token'
   | 'session-validate'
   | 'pin-verify'

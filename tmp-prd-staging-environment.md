@@ -22,7 +22,7 @@ app record and its auto-deploy from `master`.
 by local development *and* everyday TestFlight builds. `production` is what exists today, untouched.
 There is no per-developer environment and no "preview" tier: Vercel preview deployments sit behind the
 SSO wall, so `curl` gets a 302 and nothing about them can be verified (`.claude/rules/env-and-secrets.md`),
-and `lib/env.ts` already disables passkeys on `runtime() === 'preview'` for the same class of reason.
+and `lib/env.ts` already stands features down on `runtime() === 'preview'` for the same class of reason.
 
 **Two apps on the iPad, not one that switches.** Separate bundle IDs, separate App Store Connect
 records, separate TestFlight tracks, separate on-device containers. §6.1 states that trade-off once and
@@ -122,7 +122,6 @@ Everything about a build is decided by which row it is. There are exactly two ro
 | Deploy trigger | push to `master` (auto) | `npm run deploy:staging` (on demand) |
 | Neon resource | `neon-apricot-leaf` | `bl-staging` |
 | `BETTER_AUTH_URL` | `https://boernelaering.dk` | `https://staging.boernelaering.dk` |
-| `WEBAUTHN_RP_ID` | `boernelaering.dk` | `staging.boernelaering.dk` |
 | Bundle ID | `com.vraa.earlylearning` | `com.vraa.earlylearning.staging` |
 | Home-screen name | `Børnelæring` | `BL Test` |
 | Codemagic workflow | `ios-release` | `ios-staging` |
@@ -316,7 +315,6 @@ npm run dev:staging
 ```
 BL_TIER=staging
 BETTER_AUTH_URL=http://localhost:5173
-WEBAUTHN_RP_ID=localhost
 DATABASE_URL=            # staging Neon, pooled
 DATABASE_URL_UNPOOLED=   # staging Neon, direct
 BETTER_AUTH_SECRET=      # fresh, not production's
@@ -345,7 +343,7 @@ npm run staging:wipe
 ```
 
 **`staging:init`** — runs the better-auth migration (`scripts/auth-migrate.mjs --apply`, which is
-idempotent and creates the core tables, the passkey table, the `rateLimit` model and the five family
+idempotent and creates the core tables, the `rateLimit` model and the five family
 tables declared in `lib/auth-family-plugin.ts`), then creates a one-row table:
 
 ```sql
@@ -547,7 +545,7 @@ production.
 ### 6.3 Staging deploys to its project's **production** environment
 
 A Vercel *preview* deployment sits behind the SSO wall — `curl` gets a 302 and nothing can be verified,
-which is also why `lib/env.ts` disables passkeys on `runtime() === 'preview'`. So `npm run
+which is also why `lib/env.ts` stands features down on `runtime() === 'preview'`. So `npm run
 deploy:staging` runs `vercel deploy --prod --archive=tgz` against the staging project, with
 `VERCEL_ORG_ID` / `VERCEL_PROJECT_ID` set in the script rather than rewriting `.vercel/project.json`
 (which is single-valued, gitignored, and belongs to production). `--archive=tgz` is not optional: a
@@ -562,7 +560,7 @@ rather than by an ignored-build-step setting somebody can flip.
 | Variable | Staging | Why |
 |---|---|---|
 | `BETTER_AUTH_SECRET`, `ACCESS_TOKEN_SECRET`, `PIN_PEPPER` | **fresh** | This *is* the credential-crossing risk. A staging access JWT must not verify at production; `lib/access-token.ts` keys on `ACCESS_TOKEN_SECRET` with `aud: 'bl-paid'` and `iss: baseURL()`, and sharing the secret would make a staging token spend production's Azure and Google credit |
-| `BETTER_AUTH_URL`, `WEBAUTHN_RP_ID` | staging host / `staging.boernelaering.dk` | **Must be the subdomain, not the apex.** A WebAuthn RP ID may be any registrable-domain suffix of the origin, so `boernelaering.dk` would also validate on `staging.boernelaering.dk` — staging would accept production's passkeys. Note the standing rule: changing `WEBAUTHN_RP_ID` invalidates every passkey registered under the old one, so this must be right the first time |
+| `BETTER_AUTH_URL` | staging host / `staging.boernelaering.dk` | **Must be the subdomain, not the apex.** |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | **shared** | One OAuth client with two more redirect URIs is simpler than a second client, and neither value is tier-sensitive |
 | `APPLE_CLIENT_ID`, `APPLE_TEAM_ID`, `APPLE_KEY_ID`, `APPLE_PRIVATE_KEY` | **shared** | One Services ID (`dk.boernelaering.web`) can carry both domains and both return URLs |
 | `APPLE_BUNDLE_ID` | **differs** — `com.vraa.earlylearning.staging` | It maps to better-auth's `appBundleIdentifier`; the staging binary's identifier is not production's |
@@ -574,7 +572,7 @@ rather than by an ignored-build-step setting somebody can flip.
 ### 6.5 `staging.boernelaering.dk`, not a `.vercel.app` host
 
 One CNAME at the registrar buys a stable, human-readable host on a domain the owner controls — which
-matters for two things a `.vercel.app` host makes uncertain: the WebAuthn RP ID (a public-suffix host
+matters for the things a `.vercel.app` host makes uncertain (a public-suffix host
 is a worse place to hang one) and Apple's domain verification for the Sign in with Apple return URL,
 which is unproven on a shared Vercel domain.
 
@@ -611,14 +609,14 @@ Shipping:
    rather than submitting a build nobody has touched.
 7. Submit **that exact build** in App Store Connect. Never a build that has not been played.
 
-**What carries over: nothing.** Staging adults, child profiles, PINs, passkeys and progress live in a
+**What carries over: nothing.** Staging adults, child profiles, PINs and progress live in a
 different Neon database and a different app container, and there is no migration path between them by
 design. The child's production app on the iPad is untouched by every step above. Staging test data is
 disposed of with `npm run staging:wipe`, or simply left — it costs nothing and reaches nothing.
 
-**One thing that does carry over and is worth knowing:** a passkey registered on
-`staging.boernelaering.dk` is bound to that RP ID and will not unlock production, and vice versa. Two
-tiers means enrolling the iPad twice. Google sign-in is the way into either.
+**And nothing carries over in the other direction either:** an account on
+`staging.boernelaering.dk` is unknown to production, and vice versa. Google sign-in is the way into
+either.
 
 ---
 
@@ -657,8 +655,6 @@ depend on the one before. Irreversible steps are flagged.
    |---|---|
    | `BL_TIER` | `staging` |
    | `BETTER_AUTH_URL` | `https://staging.boernelaering.dk` |
-   | `WEBAUTHN_RP_ID` | `staging.boernelaering.dk` |
-   | `WEBAUTHN_RP_NAME` | `Børnelæring` |
    | `BETTER_AUTH_SECRET` | **newly generated**, e.g. `openssl rand -base64 32` |
    | `ACCESS_TOKEN_SECRET` | **newly generated** |
    | `PIN_PEPPER` | **newly generated** |
@@ -676,7 +672,7 @@ depend on the one before. Irreversible steps are flagged.
 5. **Point `.env.local` at staging.** Copy `.env.local` somewhere outside the repo first. Then change
    `DATABASE_URL`, `DATABASE_URL_UNPOOLED`, `BETTER_AUTH_SECRET`, `ACCESS_TOKEN_SECRET` and
    `PIN_PEPPER` to the staging values, set `BETTER_AUTH_URL=http://localhost:5173`,
-   `WEBAUTHN_RP_ID=localhost`, and add `BL_TIER=staging`. Afterwards assert every pre-existing key
+   and add `BL_TIER=staging`. Afterwards assert every pre-existing key
    survived (`grep -oE '^[A-Z0-9_]+=' .env.local` — with the `0-9`, or it misses `…_BASE64`).
    *From this moment local work cannot reach production, which is the whole point.*
 
@@ -773,7 +769,7 @@ position under `env(safe-area-inset-top)` and in Split View, where the corner bu
 - That `BL Test` and `Børnelæring` both install and coexist, with distinguishable icons and names.
 - That the staging binary's badge is legible at arm's length and that the child does not tap it.
 - That signing into staging on the iPad does not disturb the production app's session, and that a
-  passkey enrolled on one tier does not unlock the other.
+  account on one tier does not exist on the other.
 - That the production release binary shows **no** badge — the App Store-facing property, and the one
   worth checking by eye on the actual build that gets submitted.
 

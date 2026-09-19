@@ -123,12 +123,6 @@ test('every decisive sign-in failure reports', () => {
       'returned-without-pending-flow',
       'poll-window-exhausted', // the 3-minute give-up that used to be entirely silent
     ]],
-    ['src/services/passkeyClient.ts', [
-      'options-not-prefetched',
-      'verify-http-error',
-      'verified-but-no-session-token',
-      'webauthn-error',
-    ]],
   ]
   for (const [file, reasons] of expectations) {
     const code = src(file)
@@ -145,7 +139,7 @@ test('every decisive sign-in failure reports', () => {
 test('a successful sign-in clears the trail', () => {
   // Otherwise the next failure's report carries the previous attempt's steps and reads as a longer,
   // stranger failure than it was.
-  for (const file of ['src/services/googleSignIn.ts', 'src/services/passkeyClient.ts']) {
+  for (const file of ['src/services/googleSignIn.ts']) {
     assert.match(src(file), /resetAuthTrail\(\)/, `${file} never resets the trail on success`)
   }
 })

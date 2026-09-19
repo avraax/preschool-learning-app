@@ -20,7 +20,6 @@ folded into a pass.
 | A2 | The same with Apple | Identical server path — `completeOauthCallback` reads the provider off the ROW and only the token endpoint differs; the Apple form POST reaches the handler on the deployed host (no 415) | 1 (deployed) · **UNKNOWN (3)** for the real Apple sheet |
 | A3 | Second device with existing profiles → picker | `profileGatePolicy.test.ts` "two children and none chosen is the picker" | 1 |
 | A4 | Exactly one child → straight into the book | `profileGatePolicy.test.ts` "one child already attached shows nothing" | 1 |
-| A5 | Passkey unlock (web / PWA only) | `ui-screenshot` `--webauthn` recipe; `shellAuth.test.ts` for where it is offered | 1 |
 | A6 | Sign out → sign in again → same child, same book | `authSignOut.test.ts` (detach + roster drop), `progressMerge` algebra for the book surviving | 1 |
 
 ## B — Interruptions
@@ -71,7 +70,7 @@ folded into a pass.
 | E1 | Sign-out detaches progress and drops the cached roster | `authSignOut.test.ts` | 1 |
 | E2 | A 401 on a background validate signs out through the subscription | `authSignOut.test.ts` | 1 |
 | E3 | An abandoned first attempt leaves no orphan session or dangling flow row | Read directly from staging Neon after driving every failure branch: one `user` row (the owner's), and every `oauthFlow` row carrying `failedAt` — none in the "pending forever" shape that RC3 produced. Rows expire and the next `/oauth/start` sweeps them | 1 (deployed DB) |
-| E4 | The shell never offers a passkey button | `shellAuth.test.ts` — `passkeysSupportedInThisBuild()` derives from `isNativeShell()` | 1 |
+| E4 | **No** surface offers biometric sign-in — it was removed app-wide 2026-09-19 | `shellAuth.test.ts` greps `src/`, `lib/`, `api/` for passkey/WebAuthn code and for a Face ID button | 1 |
 | E5 | The backend badge shows the staging host, and is absent on production | `backendTarget.test.ts` | 1 |
 
 ## What no rung below 3 can settle

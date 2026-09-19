@@ -101,7 +101,6 @@ reloads, so an entire evening of attempts can yield three reports total.
 - No change to the cookie-free `flowId` design, bearer transport, or the allowlist policy.
 - No production deploy in this PRD's scope — staging only until the owner signs off.
 - No automatic retry that could double-spend a flow. Single-use stays single-use.
-- Passkeys stay off in the shell: `capacitor://localhost` can never match the production rpID.
 - No adaptivity, no new global state, no service worker.
 
 ## 5. Workstreams
@@ -225,7 +224,7 @@ is offered exactly once, default on, with its "attribution, not permission" copy
 
 **A — Happy paths.** A1 fresh install → guest auto-play → "Til de voksne" → Google → profile + avatar → playing.
 A2 the same with Apple. A3 re-sign-in on a second device with existing profiles → picker. A4 exactly one child →
-boots straight into the book, no picker. A5 passkey unlock (web/PWA only). A6 sign out → sign in again → same
+boots straight into the book, no picker. A6 sign out → sign in again → same
 child, same book, no lost XP.
 
 **B — Interruptions.** B1 cancel at the provider's consent screen. B2 sheet dismissed after the callback but
@@ -246,7 +245,7 @@ creation while offline.
 
 **E — State integrity.** E1 sign-out detaches progress and drops the cached roster. E2 a 401 on a background
 validate signs out through the subscription. E3 an abandoned first attempt leaves no orphan session or dangling
-flow row. E4 the shell never offers a passkey button. E5 the backend badge shows the staging host on every
+flow row. E5 the backend badge shows the staging host on every
 staging surface, and is absent on production.
 
 Rungs: **1** headless Chrome (`cdp.mjs`), **2** real WebKit + iPad UA (`webkit.mjs`), **3** the owner's iPad.

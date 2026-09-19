@@ -60,8 +60,6 @@ const json = (body: unknown, status = 200) =>
       hasPin: true,
       pinUpdatedAt: 1000,
       methods: ['google'],
-      passkeyCount: 0,
-      webauthnEnabled: false,
     })
   }
   if (url.includes('/family/access-token')) return json({ token: 'access-jwt', expiresIn: 900 })

@@ -28,8 +28,8 @@
 // cold-boot window before the roster settles there is no adult door at all. That window also has no
 // child playing, and the gear was inert over the gate anyway.
 //
-// It used to need a ~2s hold as the child-resistant gesture; the real gate is now the 4-digit PIN (or
-// Face ID), so the hold was pure friction for the adult.
+// It used to need a ~2s hold as the child-resistant gesture; the real gate is now the 4-digit PIN, so
+// the hold was pure friction for the adult.
 //
 // THAT IS A BUNDLE WIN, NOT A COST (PRD §10). This component is mounted globally, so its module-scope
 // imports are eager. It used to pull MUI List/Dialog/Switch, 17 lucide icons, `useProfiles`,
@@ -94,7 +94,7 @@ const AdultSurface: React.FC<AdultSurfaceProps> = ({ updateAvailable = false, on
       const shot = new Promise<string | null>((resolve) => {
         setTimeout(() => void captureScreenshot().then(resolve), CAPTURE_AFTER_GATE_MS)
       })
-      // Opening costs a PIN (or Face ID), which replaced the per-action Danish-number-word gate
+      // Opening costs a PIN, which replaced the per-action Danish-number-word gate
       // entirely. Verified LOCALLY, so it still works on a plane.
       // A guest has no PIN and meets the arithmetic gate instead (`config/guestAdultGate.ts`).
       //

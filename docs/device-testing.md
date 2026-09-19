@@ -38,7 +38,7 @@ whole reason for the second icon.
 | TestFlight track | its own | its own |
 | backend | `boernelaering.dk` | `staging.boernelaering.dk` |
 | corner badge | **none** | `TEST · staging.boernelaering.dk` |
-| progress, PIN, passkeys | the child's real ones | disposable |
+| progress, PIN | the child's real ones | disposable |
 
 **Three ways to tell them apart, in increasing effort**: the icon's name; the badge in the top-left
 corner (which prints the *origin the build actually calls*, so a mislabelled build is impossible); and
@@ -49,9 +49,8 @@ tier — that is how a production binary answers the question, since it has no b
 rung-3 residue no probe can close. If it does, the fix is a tinted variant of
 `art-src/logo/app-store-icon-1024.png`, flattened (alpha is an upload rejection).
 
-**A passkey does not cross tiers.** It is bound to the RP ID, so enrolling the iPad on one tier does
-nothing for the other — Google sign-in is the way into either. That is deliberate: sharing the RP ID
-would let staging accept production's passkeys.
+**Sign-in does not cross tiers.** Each tier has its own database, so an account on one is unknown to
+the other. Google sign-in is the way into either.
 
 ## Rung 3 owed: the audio-activation checks (Audio activation PRD-01 §5.3)
 
@@ -238,9 +237,8 @@ There is **no permanent free real-device tier** anywhere any more. "Free" means 
 
 ## Prerequisite if we ever buy rung 3
 
-The app is hard-gated behind Google OIDC + passkey, and a cloud device loading a Vercel preview hits that
-wall: passkeys are useless on a shared farm device, and Google routinely blocks sign-in from device-farm
-IPs. **This is solved for local work by `npm run build:harness` (above)** — but a farm would need that
+The app is hard-gated behind Google OIDC, and a cloud device loading a Vercel preview hits that wall:
+Google routinely blocks sign-in from device-farm IPs. **This is solved for local work by `npm run build:harness` (above)** — but a farm would need that
 bundle actually deployed somewhere reachable, which is the one thing a harness build must never be. So
 plan on a throwaway preview host, not the production project. Also relevant: no service worker + `no-store` on `/(.*)` means the farm device needs live
 network throughout (see CLAUDE.md's PWA bullet) — never design a farm test around offline behaviour.

@@ -66,7 +66,7 @@ export const exitGuestMode = (): void => write(GUEST_KEY, false)
 
 /**
  * Record that an account has existed here. Called from `adoptSession`, i.e. on every sign-in path
- * (Google claim and passkey unlock alike) — so a later sign-out lands on the lock screen, not in guest.
+ * — so a later sign-out lands on the lock screen, not in guest.
  * Deliberately NEVER cleared: "has an account ever been here" is history, not state.
  */
 export const noteSignedIn = (): void => write(EVER_SIGNED_IN_KEY, true)

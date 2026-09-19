@@ -173,25 +173,6 @@ if (has('--ipad-ua')) {
   console.log('ua override: iPad / iPadOS 17.7')
 }
 
-// --webauthn: install a CDP VIRTUAL AUTHENTICATOR before the page loads, so passkey register/unlock
-// can be exercised headlessly (accounts PRD §12). It proves the real plumbing — options endpoint,
-// navigator.credentials.*, verification, the set-auth-token handoff — but it does NOT prove the iOS
-// gesture rule (activation is consumed across an `await`); only the real iPad can.
-if (has('--webauthn')) {
-  await send('WebAuthn.enable', { enableUI: false })
-  const { result: auth } = await send('WebAuthn.addVirtualAuthenticator', {
-    options: {
-      protocol: 'ctap2',
-      transport: 'internal',
-      hasResidentKey: true,
-      hasUserVerification: true,
-      isUserVerified: true,
-      automaticPresenceSimulation: true,
-    },
-  })
-  console.log(`virtual authenticator: ${auth?.authenticatorId ?? 'FAILED'}`)
-}
-
 // The probe must be installed BEFORE app scripts run — it patches HTMLMediaElement.play and
 // decodeAudioData, and ttsClient's first clip can be in flight within a few hundred ms of mount.
 if (has('--audio-report')) {

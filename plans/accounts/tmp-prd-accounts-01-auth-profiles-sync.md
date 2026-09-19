@@ -1,8 +1,17 @@
 # PRD — Accounts, Login, Child Profiles & Progress Sync
 
+> **SUPERSEDED IN ONE RESPECT, 2026-09-19.** This PRD specified WebAuthn passkeys (Face ID / Touch
+> ID) as a first-class sign-in method — decisions D2, D4, D8 and the whole of W6. **They were removed
+> from the app entirely** on the owner's call ("way too early to have this in the app"): the
+> `@better-auth/passkey` plugin, `@simplewebauthn/browser`, `passkeyClient.ts`, the lock-screen
+> button, the Sikkerhed rows, `webauthn()` in `lib/env.ts`, the `WEBAUTHN_RP_*` env and the `passkey`
+> table. **Google (and Apple, added later for Guideline 4.8) are the only ways in.** The passkey
+> passages below are struck through or rewritten; everything else — the PIN, child profiles, the
+> cookie-free OAuth leg, progress sync — is unchanged and still describes the shipped app.
+
 > **Kickoff prompt for the implementation session**
 >
-> Implement `plans/accounts/tmp-prd-accounts-01-auth-profiles-sync.md` in full — accounts (Google OIDC + passkey), a
+> Implement `plans/accounts/tmp-prd-accounts-01-auth-profiles-sync.md` in full — accounts (Google OIDC), a
 > 4-digit PIN replacing AdultGate, child profiles, and local-first progress sync — following its work packages W0–W11
 > in order and committing at each boundary.
 > Do not bump `progressStore`'s `SCHEMA_VERSION` until the v3→v4 migration test is green, and verify the finished build
@@ -17,9 +26,9 @@ Authored 2026-07-31. Status: **authored, not implemented.**
 - **9 env vars are set in Vercel** across production / preview / development, and mirrored into
   `.env.local` (the pre-existing Azure + bug-report keys there were appended to, not replaced):
   `BETTER_AUTH_SECRET`, `ACCESS_TOKEN_SECRET`, `PIN_PEPPER` (32 random bytes each, three distinct values),
-  `BETTER_AUTH_URL`, `WEBAUTHN_RP_ID`, `WEBAUTHN_RP_NAME`, `AUTH_ALLOWED_EMAILS`, plus `AUTH_DEV_BYPASS=1` in
+  `BETTER_AUTH_URL`, `AUTH_ALLOWED_EMAILS`, plus `AUTH_DEV_BYPASS=1` in
   `.env.local` only.
-- `BETTER_AUTH_URL` and `WEBAUTHN_RP_ID` are **deliberately unset on preview** (§4.9).
+- `BETTER_AUTH_URL` is **deliberately unset on preview** (§4.9).
 - `AUTH_ALLOWED_EMAILS` = **`allanvraa@gmail.com`** only. **Never add the owner's work email/domain to this
   project** (§4.10).
 - CLI state: Vercel CLI 54.12.2 authenticated as `allanvraa-3250` (team `allan-brink-vraas-projects`), project
@@ -82,7 +91,7 @@ sessionStorage, localStorage etc."*
 
 **Intended outcome:** an adult signs in **once per device** and effectively never again; the child opens the app and
 plays immediately, never seeing an auth screen; his book, bests, difficulty and world follow him across devices; a
-4-digit PIN or Face ID guards the adult surfaces and profile switching.
+4-digit PIN guards the adult surfaces and profile switching.
 
 ---
 
@@ -93,13 +102,11 @@ Confirmed with the owner during the planning session. **Do not re-litigate these
 | # | Decision | Rationale |
 |---|---|---|
 | **D1** | **Self-hosted identity: `better-auth` + Neon Postgres in the EU (Frankfurt)**, provisioned via the Vercel Marketplace. No Clerk/Auth0/Descope. | Child-adjacent data stays in the EU (Clerk is US-only residency). No per-MAU cost. Matches the repo's "own your endpoints" pattern. |
-| **D2** | **Sign-in methods v1: Google OIDC (full-page redirect, authorization code + PKCE) and WebAuthn passkey (Face ID / Touch ID).** | Safari has **no FedCM and none planned**, so Google One Tap degrades to a popup that is unreliable in an installed PWA. Passkeys exist from iOS 16, so the 17.7 floor is fine. |
 | **D3** | **Email OTP is designed but NOT shipped in v1.** | Since Feb 2024 Gmail/Yahoo/Outlook require SPF+DKIM domain authentication and no provider will authenticate a free Gmail address (Brevo silently rewrites the From). Without a custom domain, codes land in spam. Leave schema + endpoint room behind a flag. |
-| **D4** | **4-digit PIN** which (a) **replaces** the Danish-number-word `AdultGate` for the adult corner menu, (b) re-unlocks a locked session, (c) guards switching child profile. `fem · to · fire` is **removed**, not kept. | One real secret instead of a reading test. Face ID is the fast path; PIN always works. |
+| **D4** | **4-digit PIN** which (a) **replaces** the Danish-number-word `AdultGate` for the adult corner menu, (b) re-unlocks a locked session, (c) guards switching child profile. `fem · to · fire` is **removed**, not kept. | One real secret instead of a reading test. The PIN is now the only fast path. |
 | **D5** | **Hard gate.** Nothing works before sign-in; `/api/tts-azure` requires a valid session. | Serves "keep strangers out" and protects paid credits. |
 | **D6** | **Local-first sync.** localStorage stays the gameplay source of truth; the server holds a merged mirror. The app stays fully playable offline. | No regression in current offline / no-service-worker behaviour. |
-| **D7** | **Multiple child profiles.** Per-child: reward book, XP/bloom, per-game bests, stars, difficulty, theme. Per-account: adult prefs, voice override, PIN, passkeys, profile list. Device-only: TTS cache, update-dismissed, chunk-reload guard, crash dedupe, session id. | Owner asked for "as much as possible" attached to profile/account; the device-only set is plumbing that would be wrong to sync. |
-| **D8** | **Domain stays `preschool-learning-app.vercel.app`.** WebAuthn **RP ID is an env-var config constant** with a documented migration path. | Owner's call. Passkeys are bound to the hostname, so this is an explicitly accepted, documented risk. |
+| **D7** | **Multiple child profiles.** Per-child: reward book, XP/bloom, per-game bests, stars, difficulty, theme. Per-account: adult prefs, voice override, PIN, profile list. Device-only: TTS cache, update-dismissed, chunk-reload guard, crash dedupe, session id. | Owner asked for "as much as possible" attached to profile/account; the device-only set is plumbing that would be wrong to sync. |
 | **D9** | **GDPR policy work deferred.** Ship the technical basis: EU-region DB, no child name required, no analytics, working deletion. Privacy page, export, consent capture, retention come later. | Household + friends only today. |
 | **D10** | **One PRD, one implementation session.** | Owner overrode a three-phase recommendation. Mitigated by ordered work packages — W0–W4 are independently shippable and the store surgery is gated behind a green migration test. |
 
@@ -114,7 +121,7 @@ with the URL, guarded only by a per-IP rate limiter that resets on every cold st
 
 Then three deliberately distinct nouns:
 
-- **Account** — an adult. Created by Google sign-in. Owns credentials (passkeys, PIN), the profile list, adult prefs.
+- **Account** — an adult. Created by Google sign-in. Owns credentials (the PIN), the profile list, adult prefs.
   **The only thing that authenticates.**
 - **Child profile** — a playable identity under an account: emoji avatar, optional first name, its own reward book,
   XP/bloom, bests, difficulty, theme. **Never authenticates.** Selected, not logged into.
@@ -130,16 +137,16 @@ active child profile.
 
 ### 4.1 New dependencies
 
-`better-auth` (with its in-package `passkey` and `bearer` plugins), `pg` (Neon pooled connection), and `jose` for the
+`better-auth` (with its in-package `bearer` plugin), `pg` (Neon pooled connection), and `jose` for the
 stateless access JWT. **`jose` must be installed explicitly** — it is currently in the lockfile only as a transitive
 dep of `@vercel/oidc`. `vite.config.ts` `manualChunks` gains an `auth-vendor` bucket; **do not** co-bundle it with
 `media-vendor`, which is deliberately howler-only because `sfxClient` loads it eagerly.
 
 ### 4.2 Database (Neon Postgres, `eu-central-1`)
 
-better-auth generates and migrates `user`, `session`, `account`, `verification`, plus `passkey` from the passkey
-plugin (`credentialID`, `publicKey`, `counter`, `deviceType`, `backedUp`, `transports`, `aaguid` — Apple reports an
-**all-zero AAGUID** by design, so never branch on it). We add:
+better-auth generates and migrates `user`, `session`, `account` and `verification`. (It also generated a
+`passkey` table; that plugin was removed on 2026-09-19 and the table dropped with
+`npm run db:drop-passkey`.) We add:
 
 | Table | Columns of note |
 |---|---|
@@ -170,7 +177,7 @@ auth call pays a transatlantic round trip.
 |---|---|---|
 | `session` | `expiresIn: 365d`, `updateAge: 7d`, `cookieCache: { enabled: false }` | A family tablet must not log out. Revocation is bounded by the 15-minute access JWT instead. |
 | `rateLimit` | `{ enabled: true, storage: 'database', modelName: 'rateLimit', window: 600, max: 60, customRules: {…} }` | **This is the answer to "`rateLimit()` is per-instance in-memory"** — DB-backed and shared across instances. |
-| `advanced` | `{ useSecureCookies: runtime() !== 'dev', defaultCookieAttributes: { sameSite: 'lax' } }` | Cookies still exist for the passkey challenge (§9). Safari won't store `Secure` cookies over `http://localhost`. |
+| `advanced` | `{ useSecureCookies: runtime() !== 'dev', defaultCookieAttributes: { sameSite: 'lax' } }` | Safari won't store `Secure` cookies over `http://localhost`. |
 | `emailAndPassword` | disabled | No passwords, by decision. |
 | `socialProviders.google` | `{ clientId, clientSecret }` | Present **only** so `signInSocial({ idToken })` can verify the token. **We never call `/sign-in/social` from the browser** (§4.5). |
 | `databaseHooks.user.create.before` | allowlist check → `throw new APIError('FORBIDDEN')` | §4.8 — mandatory. |
@@ -192,10 +199,9 @@ start.
 | `POST /api/auth/family/oauth/start` | none | `{ flowId }` → `{ authorizeUrl }` |
 | `GET /api/auth/family/oauth/callback` | none | `?code&state` → an HTML terminal page |
 | `POST /api/auth/family/oauth/claim` | none | `{ flowId }` → `{ token, user }` \| `{ status:'pending' }` \| 410 |
-| `POST /api/auth/passkey/generate-*-options`, `verify-*` | mixed | better-auth passkey plugin |
 | `GET /api/auth/get-session`, `POST /api/auth/sign-out` | bearer | — |
 | `POST /api/auth/family/access-token` | bearer | → `{ token, expiresIn: 900 }` |
-| `GET /api/auth/family/status` | bearer | → `{ hasPin, pinUpdatedAt, methods, passkeyCount }` |
+| `GET /api/auth/family/status` | bearer | → `{ hasPin, pinUpdatedAt, methods }` |
 | `POST /api/auth/family/pin/set` \| `/pin/verify` | bearer | PIN set / verify (§7.2) |
 | `/api/profiles` | bearer | Child-profile CRUD |
 | `/api/progress` | bearer | GET/PUT the canonical per-profile progress document (§6.4) |
@@ -397,7 +403,6 @@ once, now and in future. Without it, everything else in §8 is theatre.
 | `PIN_PEPPER` | `openssl rand -base64 32`. Server-side pepper — this, not the KDF, is what makes a DB dump useless against a 10⁴ keyspace. |
 | `BETTER_AUTH_URL` | Prod: `https://preschool-learning-app.vercel.app`. Dev: **`http://localhost:5173`**. Preview: **unset** (derived from `VERCEL_URL`). |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | See below. |
-| `WEBAUTHN_RP_ID` / `WEBAUTHN_RP_NAME` | `preschool-learning-app.vercel.app` in prod, `localhost` in dev (D8). Name: `Børnelæring`. |
 | `AUTH_ALLOWED_EMAILS` | **Mandatory** (§4.8). Comma-separated. |
 | `AUTH_DEV_BYPASS=1` | **`.env.local` ONLY — never add to Vercel.** Guarded by `runtime()==='dev' && !process.env.VERCEL`, and there must be a test asserting the bypass is impossible when `VERCEL` is set. |
 
@@ -426,9 +431,9 @@ avoids app verification entirely, and the usual 7-day refresh-token expiry does 
 
 **Preview-deployment gap — flag this to the owner.** Redirect URIs cannot be wildcarded, and a preview origin
 (`…-git-branch-user.vercel.app`) is not a registrable-domain suffix of the prod RP ID, so **on preview deployments
-neither Google sign-in nor passkeys work**, and with email OTP deferred (D3) that leaves *no* sign-in method. Mitigate
+Google sign-in does not work**, and with email OTP deferred (D3) that leaves *no* sign-in method. Mitigate
 by registering the **stable branch alias** for the implementation branch as an extra redirect URI (Vercel's
-`<project>-git-<branch>-<team>.vercel.app` is deterministic), and accept that passkeys are prod-and-localhost only.
+`<project>-git-<branch>-<team>.vercel.app` is deterministic).
 Otherwise previews are testable only via `AUTH_DEV_BYPASS`, which must never be set on Vercel.
 
 `.gitignore` blanket-ignores `*.json` with an allowlist of `!` exceptions — any new committed JSON config file needs an
@@ -997,8 +1002,8 @@ Invariants worth one test each: `invalid` ⇒ `signedOut` **immediately, ignorin
 
 | Phase | Headline | Body | Actions |
 |---|---|---|---|
-| `signedOut` (first run) | `Velkommen til Børnelæring 👋` | `En voksen skal logge ind én gang på denne enhed.` | `Fortsæt med Google` · `Log ind med Face ID` (only when a passkey exists for this RP) |
-| `locked` | `Velkommen tilbage 👋` | `Bekræft at det er dig.` | Face ID (primary when available) · `Brug kode i stedet` → PIN pad · `Log ind med Google` |
+| `signedOut` (first run) | `Velkommen til Børnelæring 👋` | `En voksen skal logge ind én gang på denne enhed.` | `Fortsæt med Google` |
+| `locked` | `Velkommen tilbage 👋` | `Bekræft at det er dig.` | `Brug kode i stedet` → PIN pad · `Log ind med Google` |
 | `offlineExpired` | `Ingen forbindelse 📡` | `Børnelæring skal på nettet igen. Slut iPad'en til wi-fi og prøv igen.` | `Prøv igen` + the last-verified date |
 | `offlineGrace` | *(no overlay — plays normally)* | — | — |
 
@@ -1055,10 +1060,10 @@ which is acceptable because the local gate guards only local UI. Server attempts
 Keep the hold-2 s ⚙️ gesture, the `AdultView` union state machine, the `?adult-tap=1` DEV hook, and the
 mount-once-then-keep-mounted lazy dialog pattern. Changes:
 
-- Opening the menu requires PIN or Face ID (replacing the per-action gate). Unlocked ~5 min.
+- Opening the menu requires the PIN (replacing the per-action gate). Unlocked ~5 min.
 - **Delete `src/components/common/AdultGate.tsx`**, `makeGateCode()` and `DANISH_DIGIT_WORDS`.
 - New items: `👤 Profiler` (add/rename/delete child, pick avatar emoji), `🔑 Login og sikkerhed` (set/change PIN,
-  add/remove Face ID on this device, sign out, sign out everywhere), `☁️ Synkronisering` (last-synced timestamp,
+  sign out, sign out everywhere), `☁️ Synkronisering` (last-synced timestamp,
   `Synkronisér nu`, plain-language error), `🔄 Skift barn` (→ `profileStore.clearSelection()`).
 - `♻️ Nulstil al fremgang` keeps its second confirmation, now **naming the active child** (§5.6).
 - The version/build footer stays. New dialogs are `React.lazy` like the existing four.
@@ -1115,7 +1120,7 @@ Then, in order:
    `@zumer/snapdom` typings); (c) `PinPad` renders **dots, never digits**, so even a bypassed capture shows nothing.
 4. **Report payload** — route `app.route` through `sanitizeUrl` (it currently ships
    `location.pathname + location.search`). Add exactly
-   `auth: { signedIn, phase, method: 'google'|'passkey'|null, userIdHash }` where `userIdHash` is the first 8 hex of
+   `auth: { signedIn, phase, method: 'google'|null, userIdHash }` where `userIdHash` is the first 8 hex of
    SHA-256 of the user id. **Never** the email, name, token or `flowId`. Ship `profileId` + `profileCount`, never the
    child's display name; add `syncStatus`, `epoch` and `rev` — exactly what's needed to debug a "his stickers
    disappeared" report. Finally, run the whole serialised body through `redactText()` as a last net before POSTing:
@@ -1138,7 +1143,7 @@ comments correctly call it a billing guard, not a wall. Two separate answers:
   across instances.
 - **For the PIN specifically:** `pin_attempt` in Postgres is authoritative. Curve: 4 free attempts, then
   5th → 1 min, 6th → 5 min, 7th → 15 min, 8th → 60 min, ≥9 → 24 h **and `requiresRecovery`** (the PIN path closes
-  entirely; only Google sign-in or a passkey reopens it). Success resets the counter. A correct PIN inside a lock
+  entirely; only Google sign-in reopens it). Success resets the counter. A correct PIN inside a lock
   window must **still** be refused — the lockout must not be bypassable by knowing the PIN.
 
 For a 4-digit PIN the KDF is nearly irrelevant; the real controls are the **server-side pepper** and the **persisted
@@ -1178,23 +1183,15 @@ silenced that iPad.
 
 | Trap | Mitigation |
 |---|---|
-| **iOS consumes user activation across an `await`** — already burned into `.claude/rules/audio-system.md` for audio unlock. `navigator.credentials.create()/get()` after an `await` fails. | **Pre-fetch the options on mount** (refresh every ~4 min; a stale challenge is a clean retryable error) and make the two WebAuthn entry points **non-`async` functions taking pre-fetched options**, so the type system enforces it. |
-| **better-auth's own passkey client helpers violate that rule** — `authClient.passkey.addPasskey()` and `signIn.passkey()` fetch options and *then* call `navigator.credentials.*`. | Don't use them. Call `/passkey/generate-*-options` ourselves. Also `@simplewebauthn/browser`'s `startAuthentication` is gesture-safe **only** with `useBrowserAutofill: false` — autofill mode awaits `browserSupportsWebAuthnAutofill()` before `get()`. |
 | Installed PWA storage is isolated from Safari; out-of-scope OAuth runs in an in-app browser view. | The cookie-free own-PKCE leg + app-context `flowId` + polling recovery + `WrongContextNotice` (§4.5). |
 | Safari has no FedCM, ever. | Redirect flow only — never Google One Tap. |
 | **`window.open` in standalone mode can escape to Safari and lose the return path.** | Always `window.location.assign(authorizeUrl)`. Popup-blocker-proof as a bonus. |
-| **`vercel.app` is on the Public Suffix List**, and a preview origin is not a registrable-domain suffix of the prod RP ID. | `preschool-learning-app.vercel.app` is a valid RP ID; `vercel.app` is not. **Passkeys cannot work on preview deployments at all** — set `webauthn().enabled = false` there and hide the Face ID button with a one-line explanation. Keep `origin` an **array** so a custom domain later is a config change. |
 | **`baseURL` in dev must be `http://localhost:5173`, not `:3001`.** | The Google `redirect_uri` must be a URL the *browser* can reach, and Vite proxies `/api`. Pointing it at `:3001` makes every callback appear to "work" while never reaching the app. |
-| The passkey challenge **is** stored in a cookie (`better-auth-passkey`), payload in `verification`. | Fine — the whole passkey flow is same-origin `fetch` in one context. But `useSecureCookies` must be **false in dev**: Safari won't store `Secure` cookies over `http://localhost`. |
 | **6 separate digit boxes break iOS one-time-code autofill.** | One input: `inputMode="numeric" autoComplete="one-time-code" maxLength={6}` with `letter-spacing` for the segmented look — the same trick `AdultGate`'s `TextField` already uses. |
-| Apple reports an **all-zero AAGUID**. | Never branch on it, never name the authenticator model. Label passkeys by a user-supplied *device* name at registration ("iPad i stuen"). |
-| The WebAuthn system sheet **fails outright if the iPad has no passcode/biometrics**. | Handle it with a Danish message, not a crash. |
 | Clock skew on an old iPad. | No `nbf`, never validate `iat`, `clockTolerance: 120`, and the client tracks expiry from the **relative** `expiresIn` (§4.6). |
 | **Timers are throttled in a backgrounded PWA**, so "refresh every 10 min" is unreliable. | Refresh on `visibilitychange:visible` and lazily before use, not only on an interval. Mirrors the existing audio-system handling. |
-| iOS cross-device passkey flows require re-scanning a QR every time (no persistent linking). | No cross-device passkey story; per-device enrolment + Google as the portable method. |
 | No service worker (network-only) and `swCleanup` deletes every Cache Storage entry on boot. | Never cache auth state in Cache Storage. And see §4.7 — this is why cold offline launch cannot work. |
 | The blanket `no-store` on `/(.*)` also covers `/api/auth/*`. | That is exactly what you want (no CDN or browser caching of session responses). Leave it; don't "optimise" `/api` caching later. |
-| `residentKey` / `userVerification` / `attachment` choices. | `residentKey: 'required'` (what makes username-less unlock possible), `authenticatorAttachment: 'platform'` (Face ID/Touch ID; iCloud Keychain still syncs it, so this is not device lock-in), `userVerification: 'required'` (safe *because* attachment is platform — Apple always performs UV; it would be wrong with security keys allowed), `attestation: 'none'` (Apple returns none anyway). |
 | Page roots set `userSelect: 'none'` / `WebkitTouchCallout: 'none'`; inheriting breaks iOS selection and paste. | Explicitly set `userSelect: 'text'` on any auth input. |
 | Landscape-first, `orientation: any`, `--vh`, safe-area insets. | Lock screen and PIN pad use `HomePage`'s root recipe; verify at 844×390 and 667×375 per `.claude/rules/responsive-design.md`. |
 
@@ -1277,7 +1274,6 @@ family out of their own app.
 | **W3** | **The paid-endpoint gate — ship this early.** `lib/access-token.ts`, `lib/paid-guard.ts`, `/family/access-token`, `authorizedFetch` + the 5 call-site conversions, dev bypass, `Allow-Headers`, `rateLimit` `subject`. | `curl` without a token → 401 `need_access_token`; forged token → 401; valid → 200. Bypass works with `AUTH_DEV_BYPASS=1` and is provably impossible when `VERCEL` is set. |
 | **W4** | `authStore` + `AuthContext` + `AuthGate` + `LockScreen` + `OfflineNotice`, mounted in `main.tsx`/`App.tsx` (audio permission **inside** the gate, so only one blocking overlay shows at a time). DEV bypass: `devNoAuth()` where **`?nogate=1` also implies no-auth**, so every existing `ui-screenshot` recipe keeps working unchanged. | App is hard-gated; `ui-screenshot` still drives every existing screen; two known recipes diff clean against `docs/ui-reference/`. |
 | **W5** | PIN: `PinPad`, `PinDialog`, `requirePin` routing table, server hash + `pin_attempt` lockout, local PBKDF2 verifier, mandatory onboarding setup. **Delete `AdultGate.tsx` + `makeGateCode()` + `DANISH_DIGIT_WORDS`** and rewire `AdultCorner` (incl. the `authUiOpen` screenshot suppression). | PIN gates the adult menu; lockout demonstrably works incl. correct-PIN-inside-lock-window; no reference to `AdultGate` remains. |
-| **W6** | Passkeys: gesture-safe register + unlock with **pre-fetched** options, RP-ID env plumbing, preview disable. | Face ID works on the 17.7 iPad in Safari **and** installed-PWA. CDP virtual-authenticator test green. |
 | **W7** | **Google sign-in:** the cookie-free PKCE pair, `flowId` claim, polling recovery, `WrongContextNotice`, and the `AUTH_ALLOWED_EMAILS` hook (§4.8). | Sign-in completes on the installed iPad PWA; a wrong `flowId` never yields a token; claiming twice → 410; a non-allowlisted email is refused. |
 | **W8** | `deviceId.ts`; the store surgery (inert default, `attach`/`detach`, key-safe writes, persisted-form mutators, `derive`, `structuredClone` replacing the whitelist); update `progressStore.test.ts`. **This is where `SCHEMA_VERSION` becomes 4 — only after W2 is green.** | All pre-existing economy tests pass unmodified in substance; **`StickerAlbum.tsx` untouched**. |
 | **W9** | `profileStore` + `useProfiles` + profile picker + PIN-gated switching + theme profile-scoping. (`legacyAdoption.ts` + `AdoptLegacyDialog` were built and then REMOVED — see the SUPERSEDED notes on §5.3/§5.5.) | Two profiles coexist with separate books; the detached DEV warn never fires. **On a copy of the owner's real blob:** the son's 45-reward book, level, gold-pass position, difficulty overrides and explored set survive byte-for-byte; adopting twice is a provable no-op; the legacy key is unmodified afterwards. |
@@ -1323,14 +1319,10 @@ the ledger — a trivial v4→v5 "existing totals → `ledger[thisDevice]`" migr
   every `/api` call 502). Lock screen, PIN pad, profile picker and the reworked adult menu across all 4 registered
   skins, plus phone (844×390, 667×375) and reduced-motion, using `?nogate=1` to reach existing screens. Also:
   - Assert the gate actually blocks: load `/alphabet/quiz`, wait for `Log ind`, assert the game board is absent.
-  - **Passkey register + unlock headlessly** via CDP's WebAuthn domain — `WebAuthn.enable` +
-    `WebAuthn.addVirtualAuthenticator({ options: { protocol:'ctap2', transport:'internal', hasResidentKey:true,
-    hasUserVerification:true, isUserVerified:true } })`. A small `cdp.mjs` addition that exercises the real plumbing.
-    **It does not prove the Safari gesture rule** — only the iPad can.
   - Assert `data-bl-redact` is present on the PIN surface and that the hold gesture is inert while it is open.
 - **Real-device — the only place the real risks live.** The owner's **iPadOS 17.7** iPad, installed to the home screen:
   Google sign-in end-to-end (watch whether the in-app browser hands back — the polling recovery is what you're really
-  testing), passkey register + unlock (the gesture rule), airplane mode with the app resident ⇒ still playable with
+  testing), airplane mode with the app resident ⇒ still playable with
   narration falling back to prebaked, and airplane mode + force-quit ⇒ **document what actually happens** (expected:
   the document fetch fails, per §4.7).
 - **Prod smoke after deploy** — `curl -I` the auth route to confirm it resolves to the function and not the SPA
@@ -1346,7 +1338,6 @@ the ledger — a trivial v4→v5 "existing totals → `ledger[thisDevice]`" migr
 
 | Risk | Handling |
 |---|---|
-| **Passkeys are bound to `*.vercel.app`** (D8). | RP ID is an env constant; migration documented; Google + PIN remain non-breaking fallbacks so a domain move can never lock anyone out. |
 | **Session token in localStorage** is more XSS-exposed than httpOnly (better-auth's docs flag this). | Accepted: no UGC, no third-party scripts, no analytics. CSP added in W11. Relying on a cookie surviving the installed-PWA OAuth hop is the larger risk. |
 | **Concurrent offline play** would lose rewards under a naive `max()` merge. | Per-device G-Counter ledger for xp/slots/bloom (§6.2b). Phase A leaves three cosmetic counters on `max`. |
 | **Schema v3's `normalize()` hard-resets on mismatch** — a naive bump wipes the son's book. | W5 before W6: the migration test must be green **before** `SCHEMA_VERSION` changes. Never write to the legacy key. |
@@ -1354,10 +1345,9 @@ the ledger — a trivial v4→v5 "existing totals → `ledger[thisDevice]`" migr
 | **`structuredCloneState()` silently drops unlisted fields.** | Replaced with native `structuredClone`. |
 | **Single long implementation session** (D10). | W0–W4 independently shippable; store surgery gated behind a green migration test; commit at every boundary. |
 | **Email OTP deferred** (D3) — Google is the only bootstrap method. | A friend without a Google account cannot be onboarded in v1. This is the trigger for buying a domain. |
-| **Preview deployments have no sign-in method** — passkeys can't work (RP ID / PSL), Google redirect URIs can't be wildcarded, OTP is deferred. | Register the deterministic branch alias as an extra redirect URI (§4.9), and accept that passkeys are prod-and-localhost only. `AUTH_DEV_BYPASS` must never be set on Vercel. |
+| **Preview deployments have no sign-in method** — Google redirect URIs can't be wildcarded, OTP is deferred. | Register the deterministic branch alias as an extra redirect URI (§4.9). `AUTH_DEV_BYPASS` must never be set on Vercel. |
 | **"Playable offline" is already false** for a cold launch (no service worker + `no-store` on `/(.*)`). | Documented honestly in §4.7 rather than implied away. A real offline story is a separate service-worker PRD. |
 | **Two external better-auth facts are load-bearing** — that `storeStateStrategy` sets a state cookie, and that `signInSocial({ idToken })` auto-creates users and returns `set-auth-token`. | Both are verified in **W1** with `curl` on a preview, before any UI is built on them. Fallback for the second: `internalAdapter.createUser` + `linkAccount` + `createSession` inside the plugin. |
-| **A future custom domain invalidates every passkey.** | Keep Google (and later OTP) first-class forever; never let the UI imply passkeys are the primary method. |
 | **`rateLimit()` is per-instance in-memory** and cannot protect a 4-digit PIN. | Attempt counters persist in `account_pin` with escalating lockout. |
 | **Per-child reset is a product change.** | Confirm copy must name the child, or a parent nukes the wrong book. |
 
@@ -1366,5 +1356,5 @@ the ledger — a trivial v4→v5 "existing totals → `ledger[thisDevice]`" migr
 ## 14. Deferred to a later phase
 
 Email OTP (needs a domain — see D3), Sign in with Apple (needs a paid Apple Developer membership), custom-domain
-migration and the associated passkey re-enrolment, the GDPR policy layer (privacy page, data export, consent capture,
+migration, the GDPR policy layer (privacy page, data export, consent capture,
 retention/purge), a device list with per-device revocation, family/invite sharing, and Phase B of the sync ledger.

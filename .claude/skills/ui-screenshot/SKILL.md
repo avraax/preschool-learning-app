@@ -38,7 +38,7 @@ Read the one you need — these are the skill's reference files, one level deep:
 | file | contents |
 |---|---|
 | `reference/rungs.md` | the full rung table, and the **four** outcomes every probe needs (pass / fail / N/A / UNKNOWN) |
-| `reference/recipes.md` | every command recipe: screenshot a route, `sweep.mjs`, rect traps, WebKit, throttled perf, `--audio-report`, driving a tap, dnd-kit drag, passkeys, verifying spoken audio, the A/B pixel test |
+| `reference/recipes.md` | every command recipe: screenshot a route, `sweep.mjs`, rect traps, WebKit, throttled perf, `--audio-report`, driving a tap, dnd-kit drag, verifying spoken audio, the A/B pixel test |
 | `reference/probes.md` | `perf.mjs` steady-state, the full option list, verifying XP/progress and difficulty, authoring a long `--eval` |
 | `reference/gotchas.md` | built-in behaviours to know before blaming the app, and verifying a bug-report capture |
 
@@ -65,8 +65,8 @@ the UI would make the answer more correct, use it. Skip it for pure logic/backen
    covers whatever you were capturing. DEV handles: `__auth`, `__profiles`, `__progress`, `__sync`.
    **Do NOT mint a session with `scripts/auth-dev-session.mjs` just to take a screenshot** — it writes a
    real user + session into the owner's PRODUCTION Neon database, and test rows have reached his
-   play-test that way before (`.claude/rules/auth.md`). Reserve it for passkey work that genuinely
-   needs a server session, and delete the `user` row afterwards (it cascades). For everything else,
+   play-test that way before (`.claude/rules/auth.md`). Reserve it for work that genuinely needs a
+   server session, and delete the `user` row afterwards (it cascades). For everything else,
    set the fields you need on `window.__auth` in the same `--eval` — no network, no database.
 3. Chrome defaults to `C:/Program Files/Google/Chrome/Application/chrome.exe` (override `CHROME_PATH`).
 4. For `webkit.mjs`: the `playwright` devDependency (installed) + `npx playwright install webkit`

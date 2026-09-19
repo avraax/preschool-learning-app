@@ -356,7 +356,7 @@ export const KontoDanger: React.FC<{ closeAll: () => void }> = ({ closeAll }) =>
         }}
       >
         {auth?.user?.email ? `${auth.user.email}: alt slettes` : 'Alt slettes'} — alle børn, alle
-        bøger, alle rekorder, koden og Face ID. Det kan ikke fortrydes.
+        bøger, alle rekorder og koden. Det kan ikke fortrydes.
       </DestructiveConfirmDialog>
 
       {/* Auth surfaces are NOT re-skinned (§5) — PinPad is shared with LockScreen and deliberately

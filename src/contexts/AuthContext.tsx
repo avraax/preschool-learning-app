@@ -1,7 +1,7 @@
 // The one place a component asks "may this happen, and how do I prove it?".
 //
 // Everything auth-shaped that a component can DO lives here: start Google sign-in, unlock with a
-// passkey, and — critically — `requirePin(reason)`, which routes a verification to the LOCAL verifier
+// and — critically — `requirePin(reason)`, which routes a verification to the LOCAL verifier
 // or to the SERVER according to a single table (accounts PRD §7.2). One table in one place is what
 // stops the rule from drifting per call site.
 //
@@ -44,7 +44,7 @@ export interface RequirePinOptions {
 }
 
 export interface AuthActions {
-  /** Ask the adult to prove the PIN (or Face ID) for `reason`. Resolves true when proven. */
+  /** Ask the adult to prove the PIN for `reason`. Resolves true when proven. */
   requirePin: (reason: PinReason, options?: RequirePinOptions) => Promise<boolean>
   /** True while the adult is inside the ~5-minute unlocked window. */
   adultUnlocked: boolean

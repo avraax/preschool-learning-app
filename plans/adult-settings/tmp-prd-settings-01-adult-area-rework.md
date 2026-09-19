@@ -89,7 +89,7 @@ ambiguous section names). Ordered by frequency of use; destructive last **within
 | 2 | **Læring** | "Sværhedsgrad for {navn}" · global Let/Normal/Svær · explanation for the **selected** level only · "Tilpas pr. sektion" disclosure holding the 5 section rows | Sværhedsgrad |
 | 3 | **Lyd** | Lydeffekter switch · Musik switch · Oplæsning: curated voice list + tempo slider + "Hør et eksempel" | Lydeffekter, Musik, Stemme-test |
 | 4 | **Udseende** | Theme thumbnail grid (4 registered skins), labelled as the child's skin | Tema |
-| 5 | **Konto** | Signed-in email · sync status + "Synkronisér nu" · Kode (PIN) · Face ID + passkey list · destructive strip: log out / log out everywhere / delete account | Synkronisering, Login og sikkerhed, Log ud |
+| 5 | **Konto** | Signed-in email · sync status + "Synkronisér nu" · Kode (PIN) · destructive strip: log out / log out everywhere / delete account | Synkronisering, Login og sikkerhed, Log ud |
 
 ### Rail footer — persistent, below the five group rows, visible from every pane
 
@@ -260,18 +260,15 @@ Re-check every one of these before declaring a work package done.
    `src/components/auth/authOverlayZ.ts` is unchanged and still guarded by
    `authOverlayZ.test.ts`.
 5. **No emoji.** lucide-react only; `src/config/noEmoji.test.ts` allowlist stays **empty**.
-6. Passkey calls stay **non-async with pre-fetched options** — iOS consumes user activation across
-   an `await` (`.claude/rules/auth.md`). Do not "tidy" `LoginSecurityPanel`'s odd-looking
-   pre-fetch + 4-minute refresh into an async call.
-7. `resetAll()` still preserves `settings`/`settingsMeta` and bumps `sync.epoch`
+6. `resetAll()` still preserves `settings`/`settingsMeta` and bumps `sync.epoch`
    (`progressStore.ts:765-782`).
-8. **iOS/iPadOS 17 floor.** Check every CSS/web API against Safari 17, not latest. Container-query
+7. **iOS/iPadOS 17 floor.** Check every CSS/web API against Safari 17, not latest. Container-query
    units are fine (Safari 16+); do not reach for anything newer.
-9. **No new spoken lines**, so no `tts:prebake` and no `/audit` sign-off is required by this work.
+8. **No new spoken lines**, so no `tts:prebake` and no `/audit` sign-off is required by this work.
    If that changes, follow the 8-step protocol in `.claude/rules/audio-system.md`.
-10. `lucide-react` is not named in `vite.config.ts` `manualChunks` and falls through to the default
+9. `lucide-react` is not named in `vite.config.ts` `manualChunks` and falls through to the default
     vendor chunk — don't add a large icon set casually.
-11. `.claude/rules/responsive-design.md`: don't spread `SxProps` into an object literal — use the
+10. `.claude/rules/responsive-design.md`: don't spread `SxProps` into an object literal — use the
     array form `sx={[a, b]}`.
 
 ---
@@ -286,7 +283,7 @@ Re-check every one of these before declaring a work package done.
 | **W3** | Læring pane | Yes |
 | **W4** | Lyd pane, incl. the slimmed voice setting | Yes |
 | **W5** | Udseende pane | Yes |
-| **W6** | Konto pane — sync + PIN + Face ID + destructive strip | Yes |
+| **W6** | Konto pane — sync + PIN + destructive strip | Yes |
 | **W7** | Slim `AdultCorner` to gear + screenshot + PIN + mounting `AdultSettings`; delete absorbed files | Yes |
 | **W8** | Responsive pass, hit-tests, re-capture `docs/ui-reference/overlays/` + add phone captures | Yes |
 

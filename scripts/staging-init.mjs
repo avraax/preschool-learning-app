@@ -36,7 +36,7 @@ try {
     }
   }
 
-  // 1. The better-auth schema: core tables, the passkey table, the rateLimit model and the five family
+  // 1. The better-auth schema: core tables, the rateLimit model and the five family
   //    tables declared in lib/auth-family-plugin.ts. Reuses the SAME path `npm run auth:migrate` takes,
   //    rather than a second copy of the DDL that could drift from the plugin's own declaration.
   const { getMigrations } = await import('better-auth/db/migration')

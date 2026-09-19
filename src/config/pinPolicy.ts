@@ -63,7 +63,7 @@ export const isPinShape = (pin: unknown): pin is string =>
   typeof pin === 'string' && /^\d{4}$/.test(pin)
 
 // ----- Lockout curve (accounts PRD §8.2) --------------------------------------------------------
-// 4 free attempts, then escalating. ≥9 closes the PIN path entirely until Google/passkey reopens it.
+// 4 free attempts, then escalating. ≥9 closes the PIN path entirely until a fresh sign-in reopens it.
 export const FREE_ATTEMPTS = 4
 export const RECOVERY_AT_FAILURES = 9
 
@@ -79,7 +79,7 @@ const RECOVERY_LOCK_MS = 24 * 60 * MIN
 export interface LockoutState {
   failedCount: number
   lockedUntil: number | null
-  /** The PIN path is closed; only Google sign-in or a passkey reopens it. */
+  /** The PIN path is closed; only Google sign-in reopens it. */
   requiresRecovery: boolean
 }
 
@@ -120,7 +120,7 @@ export const attemptsLeft = (s: LockoutState): number =>
 /** Danish countdown copy for the PIN pad. Whole minutes, rounded up; seconds under a minute. */
 export function lockoutMessage(s: LockoutState, now: number): string {
   if (s.requiresRecovery) {
-    return 'Kodelåsen er slået fra. Log ind med Google eller Face ID for at lave en ny kode.'
+    return 'Kodelåsen er slået fra. Log ind med Google for at lave en ny kode.'
   }
   if (!isLockedOut(s, now)) return ''
   const ms = (s.lockedUntil as number) - now
