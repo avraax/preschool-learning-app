@@ -17,7 +17,6 @@
 //                               signed in: which account this device is
 //   2. Børn                   — active child, "Sådan går det", roster, switch, rename, add
 //   3. Sikkerhed              — signed in only: the code
-//   4. Synkronisering         — signed in only
 //   5. Farligt for {navn}     — child-scoped, this device's copy
 //   6. Farligt for kontoen    — account-scoped, LAST
 //
@@ -32,7 +31,6 @@ import { useAuthContext } from '../../../contexts/AuthContext'
 import BoernSection from './konto/BoernSection'
 import SignInOffer from './konto/SignInOffer'
 import SikkerhedSection from './konto/SikkerhedSection'
-import SynkSection from './konto/SynkSection'
 import { BarnDanger, KontoDanger } from './konto/DangerBlocks'
 import { PaneSection } from './paneParts'
 
@@ -68,10 +66,13 @@ const KontoPane: React.FC<KontoPaneProps> = ({ closeAll }) => {
       {/* ---- 2. Børn (§3.2) ---- */}
       <BoernSection closeAll={closeAll} />
 
-      {/* ---- 3 + 4. Signed in only (§3.3, §3.4). A guest has no credentials to manage and no
-              sync state to report, so these do not render at all rather than render empty. ---- */}
+      {/* ---- 3. Signed in only (§3.3). A guest has no credentials to manage, so this does not render
+              at all rather than render empty.
+
+              THERE IS NO SYNKRONISERING SECTION. Sync runs, and the adult is never shown it — owner's
+              call, 2026-09-19: "this should be working under the hood and not be something the user
+              should see." `progressSync` is untouched; only its UI is gone. ---- */}
       {!guest && <SikkerhedSection />}
-      {!guest && <SynkSection />}
 
       {/* ---- 5. Child danger, then 6. account danger. Never merged, account always last (§3.5). ---- */}
       <BarnDanger closeAll={closeAll} />

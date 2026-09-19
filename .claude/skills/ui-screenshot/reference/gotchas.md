@@ -170,8 +170,8 @@ Back to `../SKILL.md`.
   first or the rail selector is simply absent. MUI dialogs render under `.MuiDialog-paper`, popovers
   under `.MuiPopover-paper`.
 - **`?nogate=1` renders the SIGNED-IN adult surface, not a guest one** — `authGateDecision` short-circuits
-  to `phase: 'authed'` on `devBypass` (`authGatePolicy.ts`), so `Sikkerhed`, `Synkronisering` and the
-  `fareKonto` danger block are all drivable headlessly WITHOUT minting a session in the production Neon
+  to `phase: 'authed'` on `devBypass` (`authGatePolicy.ts`), so `Sikkerhed` and the
+  `fareKonto` danger block are drivable headlessly WITHOUT minting a session in the production Neon
   DB. Leaving `?nogate=1` off gives the guest shape behind the arithmetic gate. Both were verified this
   way for the Barn+Konto merge; only real Danish, touch feel and iPadOS 17.7 still need the device.
 - **`?nogate=1` also disables `requirePin`** (`authStore.isDevBypass()` short-circuits it), so PIN pads

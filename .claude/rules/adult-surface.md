@@ -81,8 +81,15 @@ not two things to a parent, and a guest used to see *two* doors to one screen be
 `KontoPane` opened with `if (guest) return <the sign-in offer>`. The pane is ordered sub-sections,
 declared as DATA in `KONTO_BLOCK_ORDER` so a plain-Node test can assert the order:
 identity (guest → the sign-in offer, the only place it now lives; signed in → the email) · `Børn`
-(active child, read-only "Sådan går det", roster/switch/rename/add) · `Sikkerhed` and `Synkronisering`
-(signed in only) · then **TWO separate danger containers, account LAST**.
+(active child, read-only "Sådan går det", roster/switch/rename/add) · `Sikkerhed` (signed in only)
+· then **TWO separate danger containers, account LAST**.
+
+- **SYNC IS INVISIBLE, and that is deliberate** (owner, 2026-09-19). There is no `Synkronisering`
+  section, no status, no last-synced timestamp and no manual trigger — `progressSync` runs on every
+  change and the adult is never shown it. Do not add a row "just for debugging": the console and the
+  bug report already carry its state. The ONE surviving mention is the sign-out confirm, which still
+  warns when there is unsent progress — it names no mechanism, and it must keep firing, because it is
+  all that stands between a sign-out on a bad connection and losing the child's last session.
 
 - **The danger blocks are two BOXES, never one strip with a divider.** NN/g: *"Avoid placing highly
   consequential actions … directly next to options that are benign"*, and Gestalt proximity means a

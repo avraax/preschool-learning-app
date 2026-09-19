@@ -237,10 +237,15 @@ export const KontoDanger: React.FC<{ closeAll: () => void }> = ({ closeAll }) =>
    * before clearing the token, but an offline push cannot succeed, and signing out drops the session
    * the next push would need. So when there is unsent progress, say that instead of promising the
    * opposite. This is the honest replacement for what the PIN was silently buying.
+   *
+   * IT NAMES NO MECHANISM (2026-09-19). Sync is invisible to the adult now, so this cannot say
+   * "sendt til serveren" or "gå på nettet" — but it must still FIRE, because it is the only thing
+   * between a sign-out on a bad connection and losing the child's last session. Warn about the
+   * consequence, not the plumbing.
    */
   const unpushedWarning =
     status.dirty || status.phase === 'offline'
-      ? 'Der er fremgang, som ikke er sendt til serveren endnu. Gå på nettet først, hvis den skal med.'
+      ? 'Vent et øjeblik — der er fremgang, der ikke er gemt færdig endnu.'
       : null
 
   return (

@@ -36,14 +36,13 @@ export type AdultGroupId = 'konto' | 'laering' | 'lyd' | 'udseende' | 'privatliv
  * actions next to benign ones: the remedy is spatial separation plus a redundant visual signal, so
  * `fareKonto` being last puts "Slet kontoen helt" as far from "Omdøb barnet" as the pane allows.
  */
-export type KontoBlock = 'identitet' | 'boern' | 'sikkerhed' | 'synk' | 'fareBarn' | 'fareKonto'
+export type KontoBlock = 'identitet' | 'boern' | 'sikkerhed' | 'fareBarn' | 'fareKonto'
 
 /** Top to bottom in the pane. The two danger blocks are last, account last of all (§3.5). */
 export const KONTO_BLOCK_ORDER: KontoBlock[] = [
   'identitet',
   'boern',
   'sikkerhed',
-  'synk',
   'fareBarn',
   'fareKonto',
 ]
@@ -108,7 +107,7 @@ export interface AdultItem {
    *     (`canCallPaidApis: false`), so the whole app drops to Web Speech, or to silence offline. A
    *     parent nudging a tempo slider could not possibly know that. `/voicelab` remains the real tool.
    *   * `lyd.sample` only means anything beside those two.
-   *   * `lyd.everWorked`, `udseende.smoothGraphics` and `konto.syncNow` are diagnostics and manual
+   *   * `lyd.everWorked` and `udseende.smoothGraphics` are diagnostics and manual
    *     triggers for things that are automatic. `everWorked` is already in the bug report, so the row
    *     is duplicate rather than merely technical.
    *
@@ -188,9 +187,9 @@ export const ADULT_IA: AdultGroup[] = [
       // lockout — the secret never travels through a generic context callback. Not destructive.
       { id: 'konto.pin', label: 'Kode', block: 'sikkerhed' },
 
-      // ---- §3.4 Synkronisering — signed in only ---------------------------------------------------
-      { id: 'konto.sync', label: 'Synkronisering', block: 'synk' },
-      { id: 'konto.syncNow', label: 'Synkronisér nu', devTool: true, block: 'synk' },
+      // §3.4's Synkronisering rows are GONE (2026-09-19). Sync still runs on every change — the adult
+      // is simply never shown it, status, timestamps, manual trigger and all. Do not re-add a row here
+      // "just for debugging": `progressSync` logs to the console and the bug report carries its state.
 
       // ---- §3.5 the danger zone: TWO blocks, child first, account LAST ----------------------------
       // The merge puts "Slet barnet" and "Slet kontoen helt" in one pane for the first time. NN/g:

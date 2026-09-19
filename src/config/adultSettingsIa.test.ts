@@ -47,8 +47,6 @@ const KONTO_ITEM_IDS = [
   'barn.rename',
   'barn.add',
   'konto.pin',
-  'konto.sync',
-  'konto.syncNow',
   'barn.reset',
   'barn.delete',
   'konto.signOut',
@@ -297,10 +295,12 @@ test('showsDevTools is true on staging, in dev and in the harness — and false 
   assert.equal(showsDevTools('staging', true, true), true)
 })
 
-test('exactly the six agreed items are devTool, named literally', () => {
-  // Named rather than counted: a count passes while the WRONG six carry the flag.
+test('exactly the five agreed items are devTool, named literally', () => {
+  // Named rather than counted: a count passes while the WRONG five carry the flag.
+  // `konto.syncNow` was the sixth and is gone with the whole Synkronisering section (2026-09-19):
+  // sync is invisible to the adult now, and a devTool row is still a row.
   assert.deepEqual(devToolItemIds().sort(), [
-    'konto.syncNow', 'lyd.everWorked', 'lyd.rate', 'lyd.sample', 'lyd.voice', 'udseende.smoothGraphics',
+    'lyd.everWorked', 'lyd.rate', 'lyd.sample', 'lyd.voice', 'udseende.smoothGraphics',
   ])
 })
 
@@ -321,7 +321,7 @@ test('nothing a guideline depends on may ever be marked devTool', () => {
 
 test('the panes actually gate on showDevTools — the data flag alone renders nothing', () => {
   // A config test cannot see a component ignoring the config (games-catalog.md). Read the source.
-  for (const f of ['LydPane.tsx', 'UdseendePane.tsx', 'konto/SynkSection.tsx']) {
+  for (const f of ['LydPane.tsx', 'UdseendePane.tsx']) {
     assert.match(paneOf(f), /showDevTools\(\)/, `${f} does not consult showDevTools()`)
   }
   // The stranded-override escape hatch: without it, an override already stored on a production
@@ -344,7 +344,7 @@ test('KontoPane renders the two danger blocks as SEPARATE containers, account la
   assert.ok(kontoAt > barnAt, 'the ACCOUNT danger block must be the last thing in the pane')
   // Nothing benign may render after them — that is the spatial separation §3.5 buys.
   assert.ok(
-    !/<(SignInOffer|BoernSection|SikkerhedSection|SynkSection|PaneSection)\b/.test(pane.slice(barnAt)),
+    !/<(SignInOffer|BoernSection|SikkerhedSection|PaneSection)\b/.test(pane.slice(barnAt)),
     'something benign renders below the danger blocks',
   )
 
@@ -386,4 +386,59 @@ test('the duplicate sign-in door is gone from the whole tree', () => {
   // And the offer itself renders exactly once, in the one place §3.1 puts it.
   assert.match(paneOf('KontoPane.tsx'), /<SignInOffer\s*\/>/)
   assert.match(paneOf('konto/SignInOffer.tsx'), /Bogen er sikret/, 'the offer copy has been rewritten')
+})
+
+// ---- Sync is INVISIBLE, and still running (2026-09-19) -------------------------------------------
+//
+// Owner: "this should be working under the hood and not be something the user should see." Both
+// halves are the invariant, and only asserting the first would be worse than asserting neither — a
+// pane with no sync UI and no sync is exactly the bug this guards, and it looks identical from the
+// adult surface. So: no surface, AND the engine still started.
+
+test('no adult surface shows sync status, a timestamp or a manual trigger', () => {
+  for (const { item } of adultItemsWithGroup()) {
+    assert.ok(!/sync/i.test(item.id), `${item.id} puts sync back in the adult IA`)
+    assert.ok(!/synkronis/i.test(item.label), `"${item.label}" puts sync back in the adult IA`)
+  }
+  // The pane, not just the declaration: a component can render a section the IA never declared.
+  const pane = paneOf('KontoPane.tsx')
+  assert.ok(!/<SynkSection\b/.test(pane), 'the Synkronisering section is back in the Konto pane')
+  assert.ok(!/Synkronis/i.test(pane), 'the Konto pane names Synkronisering again')
+
+  // `useSyncStatus` may survive in exactly ONE place — the sign-out confirm, which needs to know
+  // whether there is unsent progress. Anywhere else is a status display.
+  const src = fileURLToPath(new URL('..', import.meta.url))
+  const users = readdirSync(src, { recursive: true, encoding: 'utf8' })
+    .filter((f) => /\.tsx?$/.test(f) && !f.includes('.test.'))
+    .filter((f) => /useSyncStatus\s*\(/.test(readFileSync(`${src}${f}`, 'utf8')))
+    .map((f) => f.split(String.fromCharCode(92)).join('/'))
+  assert.deepEqual(
+    users.sort(),
+    ['components/adult/panes/konto/DangerBlocks.tsx', 'hooks/useSyncStatus.ts'],
+    `sync status is read somewhere new: ${users.join(', ')}`,
+  )
+})
+
+test('the sign-out warning still fires, and still names no mechanism', () => {
+  // It is all that stands between a sign-out on a bad connection and losing the child's last
+  // session, so removing it is not "tidying the sync UI away".
+  const code = paneOf('konto/DangerBlocks.tsx')
+  assert.match(code, /unpushedWarning\s*=/, 'the unsent-progress warning is gone')
+  assert.match(code, /status\.dirty/, 'the warning no longer consults the real sync state')
+  assert.ok(!/serveren|på nettet/i.test(code.split('unpushedWarning =')[1]?.slice(0, 400) ?? ''),
+    'the warning names the sync mechanism again')
+})
+
+test('sync itself is still STARTED — the other half of the invariant', () => {
+  // `profileStore.attach()` is the one place that turns the engine on. If this ever stops matching,
+  // the adult surface looks exactly the same and nothing reaches the server.
+  //
+  // COMMENTS STRIPPED FIRST, and that is not boilerplate: commenting the call out left the exact
+  // string `progressSync.start()` in the file, so the un-stripped version of this assertion passed
+  // against a build where sync never runs. Found by /re-break.
+  const store = readFileSync(fileURLToPath(new URL('../services/profileStore.ts', import.meta.url)), 'utf8')
+    .replace(/\/\*[\s\S]*?\*\//g, ' ')
+    .replace(/(^|[^:])\/\/.*$/gm, '$1')
+  assert.match(store, /progressSync\.start\(\)/, 'progressSync is never started — sync is dead, silently')
+  assert.match(store, /progressSync\.syncNow\(/, 'nothing pulls on attach')
 })
