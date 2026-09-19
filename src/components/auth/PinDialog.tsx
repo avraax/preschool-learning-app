@@ -14,6 +14,7 @@ import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Typography }
 import { Lock } from 'lucide-react'
 import PinPad from './PinPad'
 import PinSetupDialog from './PinSetupDialog'
+import { startSocialSignIn } from '../../services/authSignIn'
 import {
   registerPinPrompt,
   useAuthContext,
@@ -96,6 +97,37 @@ const PinDialog: React.FC = () => {
    */
   const [resetting, setResetting] = useState(false)
   const canReset = auth?.info?.pinResettable === true
+
+  /**
+   * THE DOOR MUST NOT BE BEHIND THE LOCK IT OPENS.
+   *
+   * First cut of this offered recovery only when the session was already fresh, and told everyone else
+   * to "log ud og log ind igen". That is unreachable by the one person who needs it: EVERY
+   * `authStore.signOut()` call site lives in the Konto pane, behind `requirePin('adultMenu')` — the very
+   * gate a forgotten PIN has closed. So the advice was circular and the recovery only ever worked for
+   * an adult who happened to be inside 15 minutes of a sign-in.
+   *
+   * So the button re-authenticates IN PLACE instead. `startSocialSignIn` is the same call the lock
+   * screen makes; completing it mints a new session, which makes `pinResettable` true, and the adult
+   * comes back to a pad that now offers the reset. No sign-out required, and nothing about the gate is
+   * weakened — the IdP round trip is still the credential.
+   */
+  const onForgot = useCallback(async () => {
+    if (canReset) {
+      setResetting(true)
+      return
+    }
+    setBusy(true)
+    setHint('')
+    try {
+      const result = await startSocialSignIn('google')
+      if (!result.ok) setHint(result.message ?? 'Login mislykkedes. Prøv igen.')
+    } catch {
+      setHint('Login mislykkedes. Prøv igen.')
+    } finally {
+      setBusy(false)
+    }
+  }, [canReset])
 
   const finish = useCallback((ok: boolean) => {
     pendingRef.current?.resolve(ok)
@@ -196,21 +228,22 @@ const PinDialog: React.FC = () => {
           disabled={busy}
           hint={hint}
         />
-        {canReset ? (
-          <Button
-            onClick={() => setResetting(true)}
-            disabled={busy}
-            aria-label="Jeg har glemt koden"
-            sx={{ mt: 1, alignSelf: 'center' }}
-          >
-            Jeg har glemt koden
-          </Button>
-        ) : (
+        {/* ALWAYS offered — see `onForgot`. When the session is stale this re-runs Google sign-in
+            rather than sending the adult to a sign-out button they cannot reach. */}
+        <Button
+          onClick={() => void onForgot()}
+          disabled={busy}
+          aria-label="Jeg har glemt koden"
+          sx={{ mt: 1, alignSelf: 'center' }}
+        >
+          Jeg har glemt koden
+        </Button>
+        {!canReset && (
           <Typography
             variant="caption"
-            sx={{ mt: 1, textAlign: 'center', color: 'text.secondary', [PHONE_LANDSCAPE]: { display: 'none' } }}
+            sx={{ textAlign: 'center', color: 'text.secondary', [PHONE_LANDSCAPE]: { display: 'none' } }}
           >
-            Glemt koden? Log ud og log ind igen — så kan du lave en ny.
+            Du bliver bedt om at logge ind med Google først.
           </Typography>
         )}
       </DialogContent>

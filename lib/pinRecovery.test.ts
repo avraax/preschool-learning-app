@@ -85,3 +85,42 @@ test('the VERIFY path still refuses to be a recovery door', () => {
     'pin/verify consults the recovery predicate — the gate would open with no code at all',
   )
 })
+
+// ---- The door must not be behind the lock it opens ----------------------------------------------
+
+/** The client side of the same invariant. Source-read for the same reason as above. */
+const clientOf = (rel: string): string =>
+  readFileSync(new URL(`../src/${rel}`, import.meta.url), 'utf8')
+    .replace(/\/\*[\s\S]*?\*\//g, ' ')
+    .replace(/\{\/\*[\s\S]*?\*\/\}/g, ' ')
+    .replace(/(^|[^:])\/\/.*$/gm, '$1')
+
+test('the PIN pad offers recovery UNCONDITIONALLY, not only to a fresh session', () => {
+  // The first cut of this fix offered the button only when `pinResettable` was already true and told
+  // everyone else to sign out and back in. That advice is circular: every `authStore.signOut()` lives
+  // in the Konto pane behind `requirePin('adultMenu')`, so an adult who forgot the code cannot reach
+  // it. The recovery then worked only for someone within 15 minutes of a sign-in — i.e. almost never
+  // the person who needs it.
+  const pad = clientOf('components/auth/PinDialog.tsx')
+  assert.match(pad, /aria-label="Jeg har glemt koden"/, 'the recovery affordance is gone from the pad')
+  // It must NOT be rendered inside a `canReset ?` branch — that is exactly the regression.
+  assert.ok(
+    !/canReset\s*\?[\s\S]{0,300}?Jeg har glemt koden/.test(pad),
+    'the recovery button is conditional on an already-fresh session again',
+  )
+  // …and the stale branch must re-authenticate, not send the adult to an unreachable sign-out.
+  assert.match(pad, /startSocialSignIn\(/, 'the pad cannot re-authenticate in place any more')
+  assert.ok(
+    !/[Ll]og ud og log ind igen/.test(pad),
+    'the pad tells the adult to use a sign-out button that sits behind the gate they cannot open',
+  )
+})
+
+test('sign-out really is unreachable without the PIN — the premise of the test above', () => {
+  // If this ever fails, the test above is over-engineering and can be simplified. Until then it is
+  // the reason the recovery button has to re-authenticate by itself.
+  const danger = clientOf('components/adult/panes/konto/DangerBlocks.tsx')
+  assert.match(danger, /authStore\.signOut\(\)/, 'sign-out has moved out of the Konto pane')
+  const pad = clientOf('components/auth/PinDialog.tsx')
+  assert.ok(!/authStore\.signOut\(\)/.test(pad), 'the pad signs out instead of re-authenticating')
+})
