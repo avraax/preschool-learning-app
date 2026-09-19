@@ -83,6 +83,22 @@ production migrated only into staging, and sign-in was dead there for a day.
   redirect URIs added in the Google console (BOTH paths — `/api/auth/family/oauth/callback` and
   `/api/auth/callback/google`), then the env var, then a **redeploy** (env never reaches a live
   deployment).
+- **LOCAL DEV AND THE STAGING DEPLOYMENT SHARE A DATABASE BUT NOT `PIN_PEPPER`** — and the symptom is
+  "the code is suddenly wrong on the other device", with no error anywhere. `familyPin` is ONE row;
+  whichever side wrote it last is the only side that can verify it, because `verifyPin` catches every
+  throw and returns **false**, so a pepper mismatch is indistinguishable from a wrong PIN. Measured
+  2026-09-19 by brute-forcing the stored hash against `.env.local`'s pepper: the row set from
+  TestFlight matched no 4-digit code at all. Rotated to one shared value that day (both `.env.local`
+  and the staging project, then a redeploy — env never reaches a live deployment). **If it drifts
+  again, rotating is the only repair: a SENSITIVE Vercel variable reads back as an empty string, so
+  the deployed pepper can never be copied out.**
+- **A forgotten PIN is recoverable, and the door must not sit behind the lock.** `pin/set` accepts no
+  `currentPin` when the session is under 15 minutes old (`sessionAllowsPinReset`, checked BEFORE the
+  lockout so it can rescue someone already locked out). The pad's "Jeg har glemt koden" re-runs Google
+  sign-in **in place** — never "log ud og log ind igen", because every `signOut()` lives in the Konto
+  pane behind `requirePin('adultMenu')`, i.e. behind the gate the forgotten PIN just closed. Guarded
+  by `lib/pinRecovery.test.ts`. For most of the accounts release the copy promised this and nothing
+  implemented it; the test that matched the SENTENCE stayed green the whole time.
 - **The PIN lockout is checked BEFORE the hash is compared**, so a CORRECT PIN inside a lock window is
   still refused. `pinAttempt` lives in Postgres precisely because `lib/server-utils.ts`'s `rateLimit()`
   is a per-instance in-memory Map. Don't "optimise" either away — for a 10 000-value keyspace the pepper
