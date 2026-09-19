@@ -25,7 +25,9 @@ import { SECTION_MENU_PATHS } from '../utils/menuPaths'
 // Tracks are per-world (WORLD_MUSIC). Worlds without a track are '' → silent (no music).
 // Missing/broken files degrade to silence (onloaderror).
 
-const BASE_VOLUME = 0.045 // subtle background bed — sets the mood without pulling focus from the game
+// Subtle background bed — sets the mood without pulling focus from the game. Halved from 0.045
+// (2026-09-19): against the SFX channel (cues sit at 0.3–0.6) the music read too loud on the iPad.
+const BASE_VOLUME = 0.0225
 const DUCK_RATIO = 0.15 // duck hard under TTS (music nearly disappears so narration stays clear)
 const FADE_MS = 800
 const DUCK_FADE_MS = 250
