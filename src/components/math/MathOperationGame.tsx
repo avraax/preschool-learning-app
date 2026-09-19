@@ -411,7 +411,9 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
     userSelect: 'none' as const,
     textShadow: 'none',
     '@media (orientation: landscape)': { fontSize: { xs: '2.4rem', md: '3.4rem' } },
-    [PHONE_LANDSCAPE]: { fontSize: '1.3rem' },
+    // The focal band is 45% of the body on phone landscape now (GameShell), so the equation no
+    // longer has to shrink to a caption to clear the pill.
+    [PHONE_LANDSCAPE]: { fontSize: '2.2rem' },
   }
   // The `?`/answer SLOT. Sized for the revealed-answer chip (a bordered box around a 2.4rem numeral),
   // not for the glyph — so it stays as it was.
@@ -419,7 +421,7 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
     width: { xs: 56, md: 80 },
     height: { xs: 56, md: 80 },
     '@media (orientation: landscape)': { width: { xs: 44, md: 64 }, height: { xs: 44, md: 64 } },
-    [PHONE_LANDSCAPE]: { width: 26, height: 26 },
+    [PHONE_LANDSCAPE]: { width: 44, height: 44 },
   }
   // The operators (`+ − =`), roughly half the numerals' font-size. Separate from `symbolSx` because
   // `SymbolTile`'s box now IS the rendered glyph: it used to deliver only ~39% of its box (the `=`
@@ -429,7 +431,7 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
     width: { xs: 26, md: 36 },
     height: { xs: 26, md: 36 },
     '@media (orientation: landscape)': { width: { xs: 20, md: 28 }, height: { xs: 20, md: 28 } },
-    [PHONE_LANDSCAPE]: { width: 12, height: 12 },
+    [PHONE_LANDSCAPE]: { width: 20, height: 20 },
   }
 
   // Live difficulty: regenerate the current problem when the level changes in the adult menu

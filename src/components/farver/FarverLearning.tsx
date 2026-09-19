@@ -115,6 +115,9 @@ const FarverLearning: React.FC = () => {
       dense
       guide={false}
       celebration={{ show: showCelebration, intensity: celebrationIntensity, duration: celebrationDuration, onComplete: stopCelebration }}
+      // Browse: the body is a fixed grid whose row count can't shrink, so the focal band keeps the
+      // pre-existing 30% share on phone landscape (see GameShell's `phoneStageFlex`).
+      phoneStageFlex={30}
       promptStage={
         // Selected hue blooms with its name + shade trio + example objects, now RESTING in the
         // frozen world via PromptFocus (no frosted card). chargeKey gives the charge-in per hue.

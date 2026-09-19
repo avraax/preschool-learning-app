@@ -20,8 +20,13 @@ interface GridShape {
   landscape: number
   maxWidthPortrait: { xs: number; sm: number; md: number }
   maxWidthLandscape: { xs: number; sm: number; md: number }
-  /** Fixed tile height in phone landscape (≤480px tall) — aspect-driven tiles blow that budget. */
-  phoneTileHeight: number
+  /**
+   * Tile height in phone landscape (≤480px tall) — aspect-driven tiles blow that budget, so the
+   * height is set directly. It is a `clamp()` rather than one fixed number because the answer zone
+   * is a share of the viewport (55% of the body — see GameShell): a single 84px row left ~140px of
+   * the zone unused on every phone, while the same 84px is most of the zone on a 375-tall SE.
+   */
+  phoneTileHeight: string
 }
 
 const SHAPES: Record<number, GridShape> = {
@@ -30,30 +35,30 @@ const SHAPES: Record<number, GridShape> = {
     landscape: 3,
     maxWidthPortrait: { xs: 340, sm: 420, md: 500 },
     maxWidthLandscape: { xs: 480, sm: 560, md: 640 },
-    phoneTileHeight: 84,
+    phoneTileHeight: 'clamp(64px, 30vh, 118px)',
   },
   4: {
     portrait: 2,
     landscape: 4,
     maxWidthPortrait: { xs: 400, sm: 500, md: 600 },
     maxWidthLandscape: { xs: 600, sm: 700, md: 800 },
-    phoneTileHeight: 84,
+    phoneTileHeight: 'clamp(64px, 30vh, 118px)',
   },
   5: {
     portrait: 3,
     landscape: 5,
     maxWidthPortrait: { xs: 400, sm: 500, md: 600 },
     maxWidthLandscape: { xs: 720, sm: 840, md: 960 },
-    phoneTileHeight: 84,
+    phoneTileHeight: 'clamp(64px, 30vh, 118px)',
   },
   6: {
     portrait: 3,
     landscape: 3,
     maxWidthPortrait: { xs: 400, sm: 500, md: 600 },
     maxWidthLandscape: { xs: 600, sm: 700, md: 800 },
-    // Two rows on a ≤480px-tall phone → each tile has to give up ~20px (still well over the 44px
-    // touch minimum).
-    phoneTileHeight: 64,
+    // Two rows on a ≤480px-tall phone, so each row gets roughly half the zone (still well over the
+    // 44px touch minimum).
+    phoneTileHeight: 'clamp(52px, 19vh, 80px)',
   },
 }
 
@@ -101,9 +106,9 @@ export const answerGridSx = (count: number): SxProps<Theme> => {
       maxWidth: '680px',
       '& > *': {
         aspectRatio: 'auto',
-        height: `${s.phoneTileHeight}px`,
-        minHeight: `${s.phoneTileHeight}px`,
-        maxHeight: `${s.phoneTileHeight}px`,
+        height: s.phoneTileHeight,
+        minHeight: s.phoneTileHeight,
+        maxHeight: s.phoneTileHeight,
       },
     },
   }

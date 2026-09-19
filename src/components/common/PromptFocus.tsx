@@ -58,7 +58,13 @@ const PromptFocus: React.FC<PromptFocusProps> = ({ accent, chargeKey, subject, r
         ...(Array.isArray(sx) ? sx : [sx]),
       ]}
     >
-      {/* Subject zone — the subject rests IN the world (pool + contact shadow), not in a card. */}
+      {/* Subject zone — the subject rests IN the world (pool + contact shadow), not in a card.
+          `alignItems: stretch` (not `center`) is load-bearing: a centred row flex gives its children
+          AUTO height, so a subject passed as a bare <img> had nothing definite for its own
+          `maxHeight: 100%` to resolve against. Stretching makes the zone's height definite; the
+          subject is still optically centred by the inner float box's own flex centring. A subject
+          that is a WRAPPER (quiz hero = art + caption column) still sizes from its content, which is
+          what the phone-landscape band arithmetic in GameShell/PromptArt exists to fit. */}
       <Box
         sx={{
           position: 'relative',
@@ -66,7 +72,7 @@ const PromptFocus: React.FC<PromptFocusProps> = ({ accent, chargeKey, subject, r
           minHeight: 0,
           width: '100%',
           display: 'flex',
-          alignItems: 'center',
+          alignItems: 'stretch',
           justifyContent: 'center',
         }}
       >

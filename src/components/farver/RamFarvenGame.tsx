@@ -471,6 +471,9 @@ const RamFarvenGame: React.FC = () => {
       width: { xs: 120, sm: 140, md: 158, lg: 172 },
       height: { xs: 120, sm: 140, md: 158, lg: 172 },
     },
+    // Phone landscape took the `xs` 120 and left ~80px of the column unused under the bench. The
+    // budget here is the body (~305px) minus the repeat pill (48) and the label + Tøm reserve (~50).
+    [PHONE_LANDSCAPE]: { width: 148, height: 148 },
   }
 
   // Live difficulty: pick a fresh target from the new pool when the level changes in the adult menu
@@ -886,6 +889,7 @@ const RamFarvenGame: React.FC = () => {
                               width: { xs: '50px', sm: '58px', md: '66px', lg: '72px' },
                               height: { xs: '50px', sm: '58px', md: '66px', lg: '72px' }
                             },
+                            [PHONE_LANDSCAPE]: { width: '58px', height: '58px' },
                             borderRadius: '50% 50% 50% 0',
                             transform: 'rotate(135deg)',
                             backgroundColor: color.hex,

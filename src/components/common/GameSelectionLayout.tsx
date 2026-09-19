@@ -27,7 +27,7 @@ import { useReducedMotion } from '../../hooks/useReducedMotion'
 import { useTransitionNav } from '../../hooks/useTransitionNav'
 import { useTransitionContext } from './transition/TransitionProvider'
 import { useIdleAttract } from '../../hooks/useIdleAttract'
-import { PHONE_ANY, PHONE_LANDSCAPE } from '../../theme/phoneMedia'
+import { PHONE_ANY, PHONE_LANDSCAPE, PHONE_PORTRAIT } from '../../theme/phoneMedia'
 
 interface Game {
   id: string
@@ -122,7 +122,11 @@ const GameSelectionLayout: React.FC<GameSelectionLayoutProps> = ({
         <Toolbar sx={{ minHeight: '56px !important', gap: 2, [PHONE_LANDSCAPE]: { minHeight: '44px !important' } }}>
           {/* Shared animated back button — reverses the themed wipe (PRD-02 §8). */}
           <BackButton to="/" variant="menu" />
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, flex: '0 0 auto', minWidth: 0 }}>
+          {/* `0 1 auto`, not `0 0 auto`: on a 375px-wide phone in PORTRAIT the two rigid clusters
+              summed past the viewport and the right one (ring + name pill) hung 6-70px off the right
+              edge. Letting the WHERE cluster shrink — and the section name ellipsize — keeps the
+              identity pill on screen; on a tablet there is slack, so nothing shrinks and nothing moves. */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, flex: '0 1 auto', minWidth: 0 }}>
             {/* Soft-3D section icon (theme-constant) replaces the flat emoji. */}
             <Box
               component="img"
@@ -150,7 +154,11 @@ const GameSelectionLayout: React.FC<GameSelectionLayoutProps> = ({
                   : immersive
                     ? '0 1px 0 rgba(255,255,255,0.7), 0 0 14px rgba(255,255,255,0.5), 0 2px 6px rgba(0,30,50,0.3)'
                     : 'none',
-                letterSpacing: '0.01em'
+                letterSpacing: '0.01em',
+                minWidth: 0,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap'
               }}
             >
               {catTheme.name}
@@ -165,7 +173,7 @@ const GameSelectionLayout: React.FC<GameSelectionLayoutProps> = ({
           {/* 28px between the two, not 10 — see HomePage's header for why the gap is load-bearing.
               The eye groups by RELATIVE proximity, so the separator has to beat the widest gap inside
               either control or the pair reads as one compound thing. */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 3.5, flex: '0 0 auto', minWidth: 0, [PHONE_LANDSCAPE]: { gap: 2.5 } }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 3.5, flex: '0 0 auto', minWidth: 0, [PHONE_LANDSCAPE]: { gap: 2.5 }, [PHONE_PORTRAIT]: { gap: 1.75 } }}>
             <RewardRing
               size={44}
               onTap={() => navigateWithTransition('/album')}

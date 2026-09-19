@@ -373,7 +373,7 @@ const FarveQuizGame: React.FC = () => {
             alignItems: 'center',
             mb: { xs: 0.5, md: 1 },
             minHeight: { xs: 116, md: 148 },
-            [PHONE_LANDSCAPE]: { mb: 0.5, minHeight: 84 }
+            [PHONE_LANDSCAPE]: { mb: 0.5, minHeight: 112 }
           }}>
             {!displaySolvedColor && (
               <Box>
@@ -397,7 +397,10 @@ const FarveQuizGame: React.FC = () => {
                     <Box sx={{
                       width: { xs: 112, md: 140 },
                       height: { xs: 112, md: 140 },
-                      [PHONE_LANDSCAPE]: { width: 80, height: 80 },
+                      // The silhouette IS the question, so it must be the biggest thing on the board
+                      // HERE TOO: at 80 against 92px swatches the phone had the same inversion this
+                      // block's comment describes for the iPad. 108 over 76px swatches restores it.
+                      [PHONE_LANDSCAPE]: { width: 108, height: 108 },
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -469,6 +472,7 @@ const FarveQuizGame: React.FC = () => {
                     width: { xs: 100, sm: 110, md: 128 },
                     height: { xs: 100, sm: 110, md: 128 },
                     '@media (orientation: landscape)': { width: 92, height: 92 },
+                    [PHONE_LANDSCAPE]: { width: 76, height: 76 },
                     position: 'relative'
                   }}>
                     <DroppableZone

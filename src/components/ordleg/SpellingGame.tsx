@@ -560,6 +560,11 @@ const SpellingGame: React.FC = () => {
                     sx={{
                       width: { xs: 56, sm: 64, md: 80 },
                       height: { xs: 56, sm: 64, md: 80 },
+                      // An 844-wide phone in LANDSCAPE is past the `md` (768) breakpoint, so it was
+                      // taking the iPad's 80px slots and 80px tiles: 80 + gap + 80 overflowed the
+                      // answer zone and the tray fell 5px through the unscrollable fold. The width
+                      // breakpoints can't see the height, so the phone guard has to.
+                      [PHONE_LANDSCAPE]: { width: 56, height: 56 },
                       borderRadius: '18px',
                       border: '3px dashed',
                       borderColor: filled ? 'success.main' : theme.borderColor,
@@ -575,6 +580,11 @@ const SpellingGame: React.FC = () => {
                     <Typography
                       sx={{
                         fontSize: 'clamp(1.75rem, 6vw, 2.75rem)',
+                              // The tile boxes are sized, but the GLYPH is what actually drives
+                              // their height: nothing in the chain gives `height: 100%` a definite
+                              // parent, so a 44px letter at default line-height made an 80px tile
+                              // inside a 56px box and the tray fell through the fold at 844x390.
+                              [PHONE_LANDSCAPE]: { fontSize: '2rem', lineHeight: 1 },
                         fontWeight: 700,
                         color: filled ? 'white' : 'transparent',
                         userSelect: 'none'
@@ -609,7 +619,8 @@ const SpellingGame: React.FC = () => {
                   justifyContent: 'center',
                   alignItems: 'center',
                   gap: { xs: 1.5, md: 2 },
-                  maxWidth: 560
+                  maxWidth: 560,
+                  [PHONE_LANDSCAPE]: { gap: 1 }
                 }}
               >
                 {/* No layout/exit animation: a consumed tile just unmounts and flex reflows
@@ -632,6 +643,7 @@ const SpellingGame: React.FC = () => {
                         sx={{
                           width: { xs: 56, sm: 64, md: 76 },
                           height: { xs: 56, sm: 64, md: 76 },
+                          [PHONE_LANDSCAPE]: { width: 56, height: 56 },
                         }}
                       >
                         {/* Draggable wrapper, tap unchanged: the TactileTile keeps its own `onActivate`
@@ -655,6 +667,11 @@ const SpellingGame: React.FC = () => {
                           <Typography
                             sx={{
                               fontSize: 'clamp(1.75rem, 6vw, 2.75rem)',
+                              // The tile boxes are sized, but the GLYPH is what actually drives
+                              // their height: nothing in the chain gives `height: 100%` a definite
+                              // parent, so a 44px letter at default line-height made an 80px tile
+                              // inside a 56px box and the tray fell through the fold at 844x390.
+                              [PHONE_LANDSCAPE]: { fontSize: '2rem', lineHeight: 1 },
                               fontWeight: 700,
                               // Readable-on-white letter-tile glyph (onTileColor) — Ordleg's orange
                               // accent on Rummet/Dino was illegible on the white tile. See onTileColor.

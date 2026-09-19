@@ -331,7 +331,9 @@ const NuancerGame: React.FC = () => {
     // Bigger on the roomy iPad landscape surface now that the ramp/hint no longer share the stage —
     // easier grab targets for 5yo motor control and a fuller use of the freed space.
     '@media (orientation: landscape)': { width: 78, height: 78 },
-    [PHONE_LANDSCAPE]: { width: 44, height: 44 },
+    // 60, not the 44px touch floor: the phone-landscape focal band is 45% of the body now
+    // (GameShell), so the slot row and the tray both have room to be grabbable rather than minimal.
+    [PHONE_LANDSCAPE]: { width: 60, height: 60 },
     borderRadius: '18px'
   } as const
 
@@ -507,7 +509,8 @@ const NuancerGame: React.FC = () => {
               flexWrap: 'wrap',
               gap: { xs: 1.5, md: 2.5 },
               pt: { xs: 2, md: 4 },
-              minHeight: 0
+              minHeight: 0,
+              [PHONE_LANDSCAPE]: { pt: 1, gap: 1.25 }
             }}>
               {remaining.map((shade) => {
                 const isLifted = activeId === shade.name

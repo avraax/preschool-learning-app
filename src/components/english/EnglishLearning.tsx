@@ -84,6 +84,9 @@ const EnglishLearning: React.FC = () => {
       dense
       guide={false}
       celebration={{ show: showCelebration, intensity: celebrationIntensity, duration: celebrationDuration, onComplete: stopCelebration }}
+      // Browse: the body is a fixed grid whose row count can't shrink, so the focal band keeps the
+      // pre-existing 30% share on phone landscape (see GameShell's `phoneStageFlex`).
+      phoneStageFlex={30}
       promptStage={
         // Selected word blooms in the calm world via PromptFocus (§3.5) — the baked soft-3D object
         // (or emoji fallback) rests on its light-pool + contact shadow, with the English word + the

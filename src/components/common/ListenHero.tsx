@@ -67,9 +67,10 @@ const ListenHero: React.FC<ListenHeroProps> = ({ accent, speaking, reveal }) => 
             display: 'flex',
             color: accent,
             '& svg': { width: 'clamp(3.5rem, 14vh, 7rem)', height: 'auto' },
-            // Sized with headroom for the 1.09 idle pulse — the zone leaves only ~47px once the
-            // "Hør igen" pill takes its share, so the resting glyph has to stay well under that.
-            [PHONE_LANDSCAPE]: { '& svg': { width: 'clamp(1.3rem, 8vh, 1.7rem)' } },
+            // Sized with headroom for the 1.09 idle pulse. The phone-landscape focal band is 45% of
+            // the body now (GameShell), i.e. ~93px of subject zone once the "Hør igen" pill takes its
+            // share — where it used to be ~47px, which is why these numbers roughly doubled.
+            [PHONE_LANDSCAPE]: { '& svg': { width: 'clamp(2rem, 13vh, 3rem)' } },
           },
           speakerPulse.sx,
         ]}
@@ -90,7 +91,7 @@ const ListenHero: React.FC<ListenHeroProps> = ({ accent, speaking, reveal }) => 
           gap: '4px',
           height: 24,
           flex: '0 0 auto',
-          [PHONE_LANDSCAPE]: { height: 10, gap: '3px' },
+          [PHONE_LANDSCAPE]: { height: 18, gap: '3px' },
         }}
       >
         {[0, 1, 2, 3, 4].map((i) => {
@@ -138,7 +139,7 @@ const ListenHero: React.FC<ListenHeroProps> = ({ accent, speaking, reveal }) => 
             letterSpacing: '0.04em',
             userSelect: 'none',
             fontSize: 'clamp(1.6rem, 6vh, 3rem)',
-            [PHONE_LANDSCAPE]: { fontSize: '1.1rem' },
+            [PHONE_LANDSCAPE]: { fontSize: '1.4rem' },
           }}
         >
           {reveal}

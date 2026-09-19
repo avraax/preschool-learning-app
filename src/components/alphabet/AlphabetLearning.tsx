@@ -232,6 +232,9 @@ const AlphabetLearning: React.FC = () => {
       dense
       guide={false}
       celebration={{ show: showCelebration, intensity: celebrationIntensity, duration: celebrationDuration, onComplete: stopCelebration }}
+      // Browse: the body is a fixed grid whose row count can't shrink, so the focal band keeps the
+      // pre-existing 30% share on phone landscape (see GameShell's `phoneStageFlex`).
+      phoneStageFlex={30}
       promptStage={
         // Selected letter blooms large in the calm world (PRD-07): PromptFocus grounds it on a
         // light-pool + contact shadow (no frosted card). The giant glyph stays the lesson; the baked

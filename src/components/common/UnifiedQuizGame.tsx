@@ -703,7 +703,9 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
                 letterSpacing: hasPicture ? 'normal' : '0.06em',
                 textTransform: hasPicture ? 'none' : 'uppercase',
                 fontSize: hasPicture ? 'clamp(1.4rem, 5vw, 2.4rem)' : 'clamp(2.4rem, 10vw, 4.5rem)',
-                [PHONE_LANDSCAPE]: { fontSize: hasPicture ? '1.2rem' : '2rem' },
+                // The word-only prompt (Læs Ordet) is the whole question, and the focal band is
+                // 45% of the body on phone landscape now — 2rem left it floating in its own space.
+                [PHONE_LANDSCAPE]: { fontSize: hasPicture ? '1.3rem' : '3rem' },
               }}
             >
               {qv.word}

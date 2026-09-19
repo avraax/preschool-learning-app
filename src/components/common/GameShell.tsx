@@ -45,6 +45,13 @@ interface GameShellProps {
   celebration?: { show: boolean; intensity?: 'low' | 'medium' | 'high'; duration?: number; onComplete?: () => void }
   // Framed focal zone (PromptStage). When set, the body uses the anti-void 3-zone layout.
   promptStage?: React.ReactNode
+  // Phone-landscape share of the body given to the focal band (the rest goes to the play area).
+  // 45 suits a PROMPT-then-ANSWER board: the band has to hold a real subject plus the 48px "Hør igen"
+  // pill inside ~320px of body, and the answer row is one row of tiles that grows to fit.
+  // A BROWSE passes 30 — its body is a fixed grid (29 letters, 100 numbers, 10 word cards) whose row
+  // count cannot shrink, so the band takes only what the grid can spare. Measured: at 45 the second
+  // row of Lær Engelsk's cards fell 6px below an unscrollable fold at 667x375.
+  phoneStageFlex?: number
   // Hide the corner companion on screens whose play area fills the viewport (learning/memory/
   // color grids), where a bottom-corner mascot would overlap interactive content.
   guide?: boolean
@@ -61,6 +68,7 @@ const GameShell: React.FC<GameShellProps> = ({
   guideReaction = null,
   celebration,
   promptStage,
+  phoneStageFlex = 45,
   guide = true,
   dense = false,
   children,
@@ -220,7 +228,13 @@ const GameShell: React.FC<GameShellProps> = ({
           <Box data-game-body sx={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
             <Box
               sx={{
-                flex: phoneLandscape ? '30 1 0' : '40 1 0',
+                // Phone landscape defaults to 45, not the old 30. The body is only ~320px tall there,
+                // so a 30% band left ~95px for the whole focal zone — 48px of it the "Hør igen" pill —
+                // and the prompt art (a clamp-sized <img>, which never shrinks) painted UP into the
+                // header and DOWN across the pill, while the answer zone kept 223px to seat one 84px
+                // row of tiles. The answer-tile heights in `answerGrid.ts` grow with the rest of it.
+                // Browses pass 30 (see `phoneStageFlex`). Measured at 844×390, 932×430 and 667×375.
+                flex: phoneLandscape ? `${phoneStageFlex} 1 0` : '40 1 0',
                 minHeight: 0,
                 display: 'flex',
                 mb: { xs: 1, md: 1.5 },
@@ -229,7 +243,7 @@ const GameShell: React.FC<GameShellProps> = ({
             >
               {promptStage}
             </Box>
-            <Box sx={{ flex: phoneLandscape ? '70 1 0' : '60 1 0', minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+            <Box sx={{ flex: phoneLandscape ? `${100 - phoneStageFlex} 1 0` : '60 1 0', minHeight: 0, display: 'flex', flexDirection: 'column' }}>
               {children}
             </Box>
           </Box>

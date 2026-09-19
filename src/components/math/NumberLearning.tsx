@@ -210,6 +210,9 @@ const NumberLearning: React.FC = () => {
       dense
       guide={false}
       celebration={{ show: showCelebration, intensity: celebrationIntensity, duration: celebrationDuration, onComplete: stopCelebration }}
+      // Browse: the body is a fixed grid whose row count can't shrink, so the focal band keeps the
+      // pre-existing 30% share on phone landscape (see GameShell's `phoneStageFlex`).
+      phoneStageFlex={30}
       promptStage={
         // Selected number blooms large + its counted objects (§6B). Games Visual Uplift (PRD-08
         // §3.7): the frosted PromptStage card is retired — the bloom now rests in PromptFocus's

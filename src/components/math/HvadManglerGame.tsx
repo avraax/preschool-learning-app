@@ -44,7 +44,7 @@ const isPatternToken = (t: string): t is PatternToken => (PATTERN_TOKENS as read
 const ClayPip: React.FC<{ token: string; variant: 'hero' | 'tile' }> = ({ token, variant }) => {
   const color = isPatternToken(token) ? PIP_COLOR[token] : '#94A3B8'
   const dim = variant === 'hero' ? { xs: '2.4rem', md: '3.2rem' } : { xs: '3rem', md: '3.9rem' }
-  const phoneDim = variant === 'hero' ? '1.5rem' : '2rem'
+  const phoneDim = variant === 'hero' ? '2.4rem' : '2.4rem'
   const sizeSx = { width: dim, height: dim, [PHONE_LANDSCAPE]: { width: phoneDim, height: phoneDim } }
 
   if (token === 'star' || token === 'heart') {
@@ -249,12 +249,12 @@ const HvadManglerGame: React.FC = () => {
                     textShadow: `0 0 16px ${hexToRgba(category.accentColor, 0.6)}`,
                     px: 0.5,
                   }),
-                  // Phone landscape's PromptStage slot is short and shares its space with a
-                  // (not phone-compact-aware) large RepeatButton, so the hero shrinks further here
-                  // than the vh-clamp alone would give it, keeping the sequence clear of the frame.
+                  // Phone landscape's focal band shares its space with the "Hør igen" pill, so the
+                  // hero still shrinks past what the vh-clamp alone would give it — just not as far
+                  // as when that band was 30% of the body (see GameShell's `phoneStageFlex`).
                   [PHONE_LANDSCAPE]: {
-                    fontSize: '1.05rem',
-                    minWidth: '1.2rem',
+                    fontSize: '1.8rem',
+                    minWidth: '1.6rem',
                     ...(isBlank && {
                       border: `2px dashed ${hexToRgba(category.accentColor, muiTheme.scene.dark ? 0.7 : 0.55)}`,
                       px: 0.25,

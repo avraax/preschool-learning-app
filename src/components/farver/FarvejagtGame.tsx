@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { Box, Typography } from '@mui/material'
+import { Box, Typography, useMediaQuery } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { motion } from 'framer-motion'
 import { DndContext, DragEndEvent, DragStartEvent } from '@dnd-kit/core'
@@ -65,18 +65,36 @@ interface GameItem {
 // Educational color content (objects + hunt targets) lives in src/config/colorContent.ts so all
 // color games share one source of truth. NOT themeable.
 
-// Position on the ring (px, relative to the centred CIRCLE wrapper) for a given slot.
-const ringSlotPx = (slot: number, total: number, radius: number) => {
+// Position on the ring (px, relative to the centred well wrapper) for a given slot. `circle` is the
+// well's LIVE diameter, not the constant — phone landscape shrinks the whole well (see PHONE_WELL).
+const ringSlotPx = (slot: number, total: number, radius: number, circle: number) => {
   const ang = ((-90 + slot * (360 / Math.max(1, total))) * Math.PI) / 180
   return {
-    left: CIRCLE / 2 + radius * Math.cos(ang),
-    top: CIRCLE / 2 + radius * Math.sin(ang)
+    left: circle / 2 + radius * Math.cos(ang),
+    top: circle / 2 + radius * Math.sin(ang)
   }
 }
+
+// Phone landscape gets a smaller well, ring and object — the board there is only ~600x230 CSS px, so
+// the iPad's 180px well plus 80px objects left the scatter nowhere to go and the objects landed ON
+// the well (the keep-out below is per-axis for the same reason).
+const PHONE_WELL = { circle: 124, ringRadius: 34, collected: 32, object: 58 }
+const DESK_WELL = { circle: CIRCLE, ringRadius: RING_RADIUS, collected: COLLECTED_SIZE, object: 80 }
 
 const FarvejagtGame: React.FC = () => {
   const muiTheme = useTheme()
   const reduce = useReducedMotion()
+  // Phone landscape runs the compact well/object set. One media query, one source of truth — the
+  // scatter keep-out below is computed FROM these numbers, so the two can never disagree.
+  const phoneLandscape = useMediaQuery(PHONE_LANDSCAPE.replace('@media ', ''))
+  const metrics = phoneLandscape ? PHONE_WELL : DESK_WELL
+  // The board's live pixel box. The scatter is in PERCENT, so a keep-out expressed as one percentage
+  // radius is an ELLIPSE in pixels — on a short, wide phone board 25% of the height is only ~58px
+  // against a 90px well, which is exactly how objects ended up sitting on top of it. Measured, the
+  // keep-out can be a true circle in px again.
+  const boardRef = useRef<HTMLDivElement | null>(null)
+  const boardSizeRef = useRef({ w: 900, h: 460 })
+  const [boardSize, setBoardSize] = useState({ w: 900, h: 460 })
   // Always-on ambient halo behind the collection well (PRD-01 W1: CSS, not a framer loop).
   const wellGlow = idleGlow(reduce, { from: 0.35, to: 0.6, durationS: 2.6 })
   const sensors = useDragOnlySensors()
@@ -155,10 +173,29 @@ const FarvejagtGame: React.FC = () => {
   // for 5yo motor control. Position-only — the collision/snap/spring-back logic is untouched.
   const generateRandomPositions = (itemCount: number) => {
     const positions: Array<{x: number, y: number}> = []
-    const centerX = 50, centerY = 50, centerRadius = 25
-    const minDistance = itemCount > 12 ? 9 : 12
+    const { w, h } = boardSizeRef.current
+    const obj = metrics.object
+    // Keep-out around the well, as a percentage PER AXIS, so it is the same number of pixels in both
+    // directions on any board shape. Half the well + half an object + a little air.
+    const keepPx = metrics.circle / 2 + obj * 0.45 + 8
+    const rx = (keepPx / w) * 100
+    const ry = (keepPx / h) * 100
+    // Edge margin so an object (drawn centred on its point) can never be half off the board. On a
+    // roomy board this stays inside the old 18–82% reachable band; on a phone it is what replaces it.
+    // PRD-16 W2 pulled the roomy-board scatter into an 18-82% reachable band so no drag is a long
+    // diagonal for 5yo motor control. A phone board is already short enough that the band would leave
+    // nowhere to stand, so there the floor is just "fully on the board".
+    const reachFloor = phoneLandscape ? 0 : 18
+    const mx = Math.max(reachFloor, ((obj / 2 + 6) / w) * 100)
+    const my = Math.max(reachFloor, ((obj / 2 + 6) / h) * 100)
+    const spanX = Math.max(8, 100 - 2 * mx)
+    const spanY = Math.max(8, 100 - 2 * my)
+    // Separation in PIXELS, for the same reason the keep-out is per-axis: one percentage figure is
+    // ~100px apart horizontally and ~27px apart vertically on a phone board, which reads as a pile.
+    const minPx = obj * (itemCount > 12 ? 0.8 : 1)
     // Bottom-left keep-out for the corner mascot (board coords ≈ screen coords in that corner).
-    const inMascotCorner = (p: {x: number, y: number}) => p.x < 30 && p.y > 68
+    // Phone landscape hides the corner companion, so there is nothing to dodge there.
+    const inMascotCorner = (p: {x: number, y: number}) => !phoneLandscape && p.x < 30 && p.y > 68
 
     for (let i = 0; i < itemCount; i++) {
       let attempts = 0
@@ -166,16 +203,16 @@ const FarvejagtGame: React.FC = () => {
 
       do {
         position = {
-          x: Math.random() * 64 + 18, // 18–82% reachable band (was 10–90)
-          y: Math.random() * 64 + 18  // 18–82% reachable band (was 10–90)
+          x: Math.random() * spanX + mx,
+          y: Math.random() * spanY + my
         }
         attempts++
       } while (
-        attempts < 80 && (
-          Math.sqrt((position.x - centerX) ** 2 + (position.y - centerY) ** 2) < centerRadius ||
+        attempts < 120 && (
+          ((position.x - 50) / rx) ** 2 + ((position.y - 50) / ry) ** 2 < 1 ||
           inMascotCorner(position) ||
           positions.some(pos =>
-            Math.sqrt((position.x - pos.x) ** 2 + (position.y - pos.y) ** 2) < minDistance
+            Math.hypot(((position.x - pos.x) / 100) * w, ((position.y - pos.y) / 100) * h) < minPx
           )
         )
       )
@@ -473,8 +510,39 @@ const FarvejagtGame: React.FC = () => {
   const targetHex = getTargetColorHex()
   const displayHintItemId = forcedFx === 'hint' ? (hintItemId ?? targetItems.find(i => !i.collected)?.id ?? null) : hintItemId
   // Position of the in-flight splash burst (§6C: "collected items pour into the ring with a splash").
-  const burstPos = burstAt ? ringSlotPx(burstAt.slot, totalTarget, RING_RADIUS) : null
+  const burstPos = burstAt ? ringSlotPx(burstAt.slot, totalTarget, metrics.ringRadius, metrics.circle) : null
   const isOverWell = overId === 'target-zone'
+
+  // Measure the board box (first layout, rotation, Split View). The scatter is in percent, so its
+  // keep-out can only be a true circle in pixels if it knows the box.
+  useEffect(() => {
+    const el = boardRef.current
+    if (!el) return
+    const read = () => {
+      const r = el.getBoundingClientRect()
+      if (r.width < 2 || r.height < 2) return
+      const prev = boardSizeRef.current
+      boardSizeRef.current = { w: r.width, h: r.height }
+      if (Math.abs(prev.w - r.width) > 24 || Math.abs(prev.h - r.height) > 24) {
+        setBoardSize({ w: r.width, h: r.height })
+      }
+    }
+    read()
+    const ro = new ResizeObserver(read)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [gameReady])
+
+  // Re-scatter the CURRENT board when its box changed shape. Without this the FIRST board keeps the
+  // positions it was given before any layout existed, i.e. against the default box — which on a
+  // phone is exactly the case that put objects on the well.
+  useEffect(() => {
+    setGameItems(prev => {
+      if (prev.length === 0) return prev
+      const pos = generateRandomPositions(prev.length)
+      return prev.map((it, i) => (it.collected ? it : { ...it, x: pos[i].x, y: pos[i].y }))
+    })
+  }, [boardSize.w, boardSize.h]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Live difficulty: rebuild the current board when the level changes in the adult menu (no
   // refresh). Skips the initial mount.
@@ -552,6 +620,7 @@ const FarvejagtGame: React.FC = () => {
           {/* Game area — PRD-09: NO framed board. The objects rest directly on the calm frozen
               world (F3); the container is transparent and just anchors the absolute scatter. */}
           <Box
+            ref={boardRef}
             sx={{
               flex: 1,
               position: 'relative',
@@ -574,8 +643,8 @@ const FarvejagtGame: React.FC = () => {
                   left: '50%',
                   top: '50%',
                   transform: 'translate(-50%, -50%)',
-                  width: CIRCLE,
-                  height: CIRCLE,
+                  width: metrics.circle,
+                  height: metrics.circle,
                   zIndex: 0,
                 }}
               >
@@ -652,7 +721,7 @@ const FarvejagtGame: React.FC = () => {
                 {/* Progress pips around the circle perimeter — one per target item. */}
                 {targetItems.map((_, slot) => {
                   const lit = slot < collectedCount
-                  const { left, top } = ringSlotPx(slot, totalTarget, CIRCLE / 2)
+                  const { left, top } = ringSlotPx(slot, totalTarget, metrics.circle / 2, metrics.circle)
                   return (
                     <motion.div
                       key={`pip-${slot}`}
@@ -687,7 +756,7 @@ const FarvejagtGame: React.FC = () => {
                 >
                   {targetItems.map((item, slot) => {
                     if (!item.collected) return null
-                    const { left, top } = ringSlotPx(slot, totalTarget, RING_RADIUS)
+                    const { left, top } = ringSlotPx(slot, totalTarget, metrics.ringRadius, metrics.circle)
                     return (
                       <motion.div
                         key={`collected-${item.id}`}
@@ -698,17 +767,17 @@ const FarvejagtGame: React.FC = () => {
                           position: 'absolute',
                           left,
                           top,
-                          width: COLLECTED_SIZE,
-                          height: COLLECTED_SIZE,
-                          marginLeft: -COLLECTED_SIZE / 2,
-                          marginTop: -COLLECTED_SIZE / 2,
+                          width: metrics.collected,
+                          height: metrics.collected,
+                          marginLeft: -metrics.collected / 2,
+                          marginTop: -metrics.collected / 2,
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
                         }}
                       >
                         {/* Collected: the baked object rests in its ring slot (no hex tile). */}
-                        <ObjectArt art={item.art} size={COLLECTED_SIZE} elevation={1} alt={item.objectName} />
+                        <ObjectArt art={item.art} size={metrics.collected} elevation={1} alt={item.objectName} />
                       </motion.div>
                     )
                   })}
@@ -724,10 +793,10 @@ const FarvejagtGame: React.FC = () => {
                         position: 'absolute',
                         left: burstPos.left,
                         top: burstPos.top,
-                        width: COLLECTED_SIZE,
-                        height: COLLECTED_SIZE,
-                        marginLeft: -COLLECTED_SIZE / 2,
-                        marginTop: -COLLECTED_SIZE / 2,
+                        width: metrics.collected,
+                        height: metrics.collected,
+                        marginLeft: -metrics.collected / 2,
+                        marginTop: -metrics.collected / 2,
                         borderRadius: '50%',
                         backgroundColor: burstAt.hex,
                         pointerEvents: 'none',
@@ -766,15 +835,15 @@ const FarvejagtGame: React.FC = () => {
                       initial={reduce ? false : { scale: 0, opacity: 0 }}
                       animate={tileAnimate}
                       transition={tileTransition}
-                      style={{ width: 80, height: 80, transformOrigin: '0 0' }}
+                      style={{ width: metrics.object, height: metrics.object, transformOrigin: '0 0' }}
                     >
                       {/* PRD-09: a baked object RESTING in the world — no hex tile, no border, no
                           keyboard lip. Depth comes from ObjectArt's softShadow; the hint adds an
                           accent glow, the lift raises the shadow. */}
                       <Box
                         sx={{
-                          width: 80,
-                          height: 80,
+                          width: metrics.object,
+                          height: metrics.object,
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
@@ -787,7 +856,7 @@ const FarvejagtGame: React.FC = () => {
                           }
                         }}
                       >
-                        <ObjectArt art={item.art} size={80} elevation={isLifted ? 3 : 1} alt={item.objectName} />
+                        <ObjectArt art={item.art} size={metrics.object} elevation={isLifted ? 3 : 1} alt={item.objectName} />
                       </Box>
                     </motion.div>
                   </DraggableItem>

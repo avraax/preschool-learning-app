@@ -19,7 +19,7 @@ export const HeroEmoji: React.FC<{ children: React.ReactNode }> = ({ children })
       fontSize: 'clamp(3.5rem, 14vh, 7rem)',
       lineHeight: 1,
       userSelect: 'none',
-      [PHONE_LANDSCAPE]: { fontSize: 'clamp(2.2rem, 18vh, 3.2rem)' },
+      [PHONE_LANDSCAPE]: { fontSize: 'clamp(2.2rem, 20vh, 4.4rem)' },
     }}
   >
     {children}
@@ -46,7 +46,10 @@ export const HeroArt: React.FC<{ src: string; alt?: string }> = ({ src, alt = ''
       userSelect: 'none',
       pointerEvents: 'none',
       filter: softShadow(1.4),
-      [PHONE_LANDSCAPE]: { height: 'clamp(3rem, 26vh, 5rem)' },
+      // The phone-landscape focal band is 45% of a ~320px body minus the 48px pill (see
+      // GameShell), i.e. ~98px at 844x390 and ~92px at 667x375 — so 22vh with a 6rem cap fills it
+      // without reaching the pill. An <img> sized by clamp cannot shrink, so this number IS the fit.
+      [PHONE_LANDSCAPE]: { height: 'clamp(3rem, 22vh, 6rem)' },
     }}
   />
 )
@@ -73,7 +76,7 @@ export const TileArt: React.FC<{ src: string; alt?: string }> = ({ src, alt = ''
       userSelect: 'none',
       pointerEvents: 'none',
       filter: softShadow(1),
-      [PHONE_LANDSCAPE]: { height: 'clamp(2rem, 20vh, 3.2rem)' },
+      [PHONE_LANDSCAPE]: { height: 'clamp(2rem, 24vh, 4.8rem)' },
     }}
   />
 )
