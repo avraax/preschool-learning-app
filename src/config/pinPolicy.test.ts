@@ -11,6 +11,8 @@ import {
   DENYLISTED_PINS,
   FREE_ATTEMPTS,
   RECOVERY_AT_FAILURES,
+  PIN_RESET_WINDOW_MS,
+  sessionAllowsPinReset,
 } from './pinPolicy.ts'
 
 const NOW = 1_800_000_000_000
@@ -93,9 +95,52 @@ test('the 9th failure closes the PIN path (requiresRecovery + 24h)', () => {
   assert.equal(s.failedCount, RECOVERY_AT_FAILURES)
   assert.equal(s.requiresRecovery, true)
   assert.equal(s.lockedUntil, NOW + 24 * 60 * MIN)
-  assert.match(lockoutMessage(s, NOW), /Log ind med Google/)
   // Face ID was removed app-wide (2026-09-19); the recovery copy must not offer it again.
   assert.ok(!/Face ID/.test(lockoutMessage(s, NOW)), 'the lockout message offers Face ID again')
+})
+
+// ---- The recovery door, and the promise it has to keep -------------------------------------------
+
+test('the recovery message describes a mechanism that ACTUALLY EXISTS', () => {
+  // THIS TEST IS THE POINT OF THE WHOLE CHANGE. From the accounts release until 2026-09-19 the copy
+  // read "Log ind med Google for at lave en ny kode" and nothing implemented it: `pin/set` demanded
+  // the current PIN whenever a row existed, so a forgotten code locked the adult out of
+  // "Indstillinger" permanently. The old assertion here matched the SENTENCE and was perfectly green
+  // the whole time — a guard on the copy alone cannot see that the copy is a lie.
+  //
+  // So this pins the two together: the message names signing out and back in, and
+  // `sessionAllowsPinReset` — the predicate `pin/set` actually branches on — says yes to exactly that.
+  let s = clearAttempts()
+  for (let i = 0; i < RECOVERY_AT_FAILURES; i++) s = registerFailure(s, NOW)
+  const msg = lockoutMessage(s, NOW)
+  assert.match(msg, /[Ll]og ud og log ind igen/, 'the recovery copy no longer names the real route')
+  assert.equal(
+    sessionAllowsPinReset(NOW, NOW),
+    true,
+    'the copy promises a fresh sign-in works, but the predicate refuses it',
+  )
+})
+
+test('a fresh session may reset the PIN; an old one may not', () => {
+  assert.equal(sessionAllowsPinReset(NOW, NOW), true, 'a just-created session cannot reset')
+  assert.equal(sessionAllowsPinReset(NOW - PIN_RESET_WINDOW_MS + 1000, NOW), true)
+  // One millisecond past the window is refused — the boundary is the control.
+  assert.equal(sessionAllowsPinReset(NOW - PIN_RESET_WINDOW_MS - 1, NOW), false)
+})
+
+test('a YEAR-old session cannot reset the PIN — freshness is the whole control', () => {
+  // Sessions here live a year, so "is signed in" would mean the PIN could be reset at any moment by
+  // whoever is holding the unlocked iPad. That is the child, which is the one person the PIN exists
+  // to stop. If this ever passes, the adult gate has quietly become decorative.
+  assert.equal(sessionAllowsPinReset(NOW - 365 * 24 * 60 * MIN, NOW), false)
+})
+
+test('a session timestamp in the FUTURE is refused, not treated as very fresh', () => {
+  // A skewed clock on an old iPad must not read as "created moments ago". Negative age is nonsense,
+  // not evidence.
+  assert.equal(sessionAllowsPinReset(NOW + 60_000, NOW), false)
+  assert.equal(sessionAllowsPinReset(null, NOW), false)
+  assert.equal(sessionAllowsPinReset(Number.NaN, NOW), false)
 })
 
 test('a successful verify clears the counter completely', () => {

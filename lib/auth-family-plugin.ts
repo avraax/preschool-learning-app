@@ -27,6 +27,7 @@ import {
   isLockedOut,
   isPinShape,
   registerFailure,
+  sessionAllowsPinReset,
   validateNewPin,
   type LockoutState,
 } from '../src/config/pinPolicy.js'
@@ -580,8 +581,15 @@ export const familyPlugin = (): BetterAuthPlugin => ({
         // render a button that dies at the token exchange, and the adult would blame their Apple ID.
         const methods = ['google', ...(appleUsable() ? ['apple'] : [])]
 
+        // Whether the adult could set a new PIN right now WITHOUT the old one. The client needs the
+        // same answer the server will give, or it offers an affordance that then fails (or hides one
+        // that would have worked) — so both sides call the same pure predicate.
+        const pinResettable =
+          !!pin && sessionAllowsPinReset(new Date(session.session.createdAt).getTime(), Date.now())
+
         return ctx.json({
           hasPin: !!pin,
+          pinResettable,
           // Drives the cross-device PIN-change detection: a client whose cached local verifier is
           // older than this drops it and forces an online verify (§7.2).
           pinUpdatedAt: pin ? new Date(pin.updatedAt).getTime() : null,
@@ -625,7 +633,19 @@ export const familyPlugin = (): BetterAuthPlugin => ({
         // used to be read twice on the success path, i.e. an extra round trip per PIN change.
         const lockout = await readLockout(adapter, userId)
 
-        if (existing) {
+        // THE RECOVERY DOOR (2026-09-19). A session created in the last 15 minutes is proof the adult
+        // just completed the IdP round trip, which a child cannot do — so it may set a new PIN without
+        // the old one. Until this existed, the lockout copy promised a recovery that did not exist and
+        // a forgotten PIN locked the adult out of "Indstillinger" forever. See `pinPolicy.ts`.
+        //
+        // It is checked BEFORE the lockout, and that is deliberate rather than sloppy: the whole point
+        // of recovery is to be reachable by an adult who has already failed enough times to be locked
+        // out. The lockout protects the PIN's 10⁴ keyspace from guessing; it must not also imprison the
+        // person who owns the account and has just proved it.
+        const sessionCreatedAt = new Date(session.session.createdAt).getTime()
+        const recovering = existing != null && sessionAllowsPinReset(sessionCreatedAt, now)
+
+        if (existing && !recovering) {
           const { row, state } = lockout
           if (isLockedOut(state, now)) {
             throw new APIError('LOCKED', {

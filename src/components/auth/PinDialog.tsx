@@ -13,6 +13,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Typography } from '@mui/material'
 import { Lock } from 'lucide-react'
 import PinPad from './PinPad'
+import PinSetupDialog from './PinSetupDialog'
 import {
   registerPinPrompt,
   useAuthContext,
@@ -84,6 +85,17 @@ const PinDialog: React.FC = () => {
     })
     return () => registerPinPrompt(null)
   }, [])
+
+  /**
+   * THE FORGOTTEN-PIN DOOR. Offered only when the SERVER says this session is fresh enough
+   * (`/family/status` → `pinResettable`, the same pure predicate `pin/set` will apply), so the button
+   * can never appear and then fail.
+   *
+   * When the session is NOT fresh the hint tells the adult what to do instead, and that sentence is
+   * now true — before 2026-09-19 the lockout copy promised a Google recovery that did not exist.
+   */
+  const [resetting, setResetting] = useState(false)
+  const canReset = auth?.info?.pinResettable === true
 
   const finish = useCallback((ok: boolean) => {
     pendingRef.current?.resolve(ok)
@@ -184,12 +196,45 @@ const PinDialog: React.FC = () => {
           disabled={busy}
           hint={hint}
         />
+        {canReset ? (
+          <Button
+            onClick={() => setResetting(true)}
+            disabled={busy}
+            aria-label="Jeg har glemt koden"
+            sx={{ mt: 1, alignSelf: 'center' }}
+          >
+            Jeg har glemt koden
+          </Button>
+        ) : (
+          <Typography
+            variant="caption"
+            sx={{ mt: 1, textAlign: 'center', color: 'text.secondary', [PHONE_LANDSCAPE]: { display: 'none' } }}
+          >
+            Glemt koden? Log ud og log ind igen — så kan du lave en ny.
+          </Typography>
+        )}
       </DialogContent>
       <DialogActions sx={{ flex: '0 0 auto', [PHONE_LANDSCAPE]: { py: 0.5 } }}>
         <Button onClick={() => finish(false)} aria-label="Annullér">
           Annullér
         </Button>
       </DialogActions>
+
+      {/* The recovery flow. `requireCurrent={false}` is the whole point — the fresh session IS the
+          credential, and `pin/set` applies the same predicate server-side, so this cannot be forced
+          open by a client that lies about it. Setting a code also satisfies whatever the adult was
+          being challenged for, so the pending request resolves TRUE. */}
+      <PinSetupDialog
+        open={resetting}
+        dismissible
+        requireCurrent={false}
+        onDone={() => {
+          setResetting(false)
+          void authStore.refreshStatus(true)
+          finish(true)
+        }}
+        onCancel={() => setResetting(false)}
+      />
     </Dialog>
   )
 }

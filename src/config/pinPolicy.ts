@@ -76,6 +76,39 @@ const LOCK_MS: Record<number, number> = {
 }
 const RECOVERY_LOCK_MS = 24 * 60 * MIN
 
+/**
+ * HOW A FORGOTTEN PIN IS RECOVERED, and why it is a time window rather than a flag.
+ *
+ * The lockout copy has promised "log ind med Google for at lave en ny kode" since the accounts
+ * release, and **nothing implemented it**: `pin/set` demanded the current PIN whenever a row existed,
+ * signing in again cleared nothing, and an adult who forgot the code was locked out of "Indstillinger"
+ * permanently. Found 2026-09-19 while debugging exactly that on staging.
+ *
+ * The threat model is what makes this safe. The PIN exists to keep the CHILD out of the adult surface
+ * — a five-year-old cannot complete a Google sign-in. So proving control of the ACCOUNT is a strictly
+ * stronger claim than knowing the PIN, and it is the right key to the recovery door.
+ *
+ * A window, not a flag, because "signed in" is not "just signed in": a session here lives a YEAR, so
+ * `hasSession` would mean the PIN could be reset at any moment by anyone holding an unlocked iPad —
+ * which is the child. Freshness is the whole control: the adult must have completed the IdP round trip
+ * within the last 15 minutes, which the child cannot do.
+ */
+export const PIN_RESET_WINDOW_MS = 15 * MIN
+
+/**
+ * May this session set a new PIN WITHOUT knowing the current one?
+ *
+ * Pure, and exported so the server (`/family/pin/set`) and the client (which decides whether to offer
+ * the affordance) cannot drift — the same failure mode `pinVerifierFor` exists to prevent.
+ */
+export function sessionAllowsPinReset(sessionCreatedAt: number | null, now: number): boolean {
+  if (sessionCreatedAt == null || !Number.isFinite(sessionCreatedAt)) return false
+  const age = now - sessionCreatedAt
+  // A clock that says the session starts in the future is not evidence of anything; refuse it rather
+  // than treating a negative age as "very fresh".
+  return age >= 0 && age <= PIN_RESET_WINDOW_MS
+}
+
 export interface LockoutState {
   failedCount: number
   lockedUntil: number | null
@@ -120,7 +153,9 @@ export const attemptsLeft = (s: LockoutState): number =>
 /** Danish countdown copy for the PIN pad. Whole minutes, rounded up; seconds under a minute. */
 export function lockoutMessage(s: LockoutState, now: number): string {
   if (s.requiresRecovery) {
-    return 'Kodelåsen er slået fra. Log ind med Google for at lave en ny kode.'
+    // TRUE since 2026-09-19, and it was not before — see PIN_RESET_WINDOW_MS. Signing in again opens
+    // a 15-minute window in which a new code can be set without the old one.
+    return 'Kodelåsen er slået fra. Log ud og log ind igen for at lave en ny kode.'
   }
   if (!isLockedOut(s, now)) return ''
   const ms = (s.lockedUntil as number) - now

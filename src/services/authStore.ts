@@ -43,6 +43,8 @@ export interface AccountUser {
 export interface AuthMethodInfo {
   methods: string[]
   hasPin: boolean
+  /** The session is fresh enough to set a new PIN without the old one (`pinPolicy.ts`). */
+  pinResettable: boolean
   pinUpdatedAt: number | null
 }
 
@@ -119,6 +121,7 @@ function sameInfo(a: AuthMethodInfo | null, b: AuthMethodInfo | null): boolean {
   if (!a || !b) return false
   return (
     a.hasPin === b.hasPin &&
+    a.pinResettable === b.pinResettable &&
     a.pinUpdatedAt === b.pinUpdatedAt &&
     a.methods.length === b.methods.length &&
     a.methods.every((m, i) => m === b.methods[i])
@@ -507,6 +510,7 @@ class AuthStore {
       const next: AuthMethodInfo = {
         methods: Array.isArray(data.methods) ? data.methods : ['google'],
         hasPin: data.hasPin === true,
+        pinResettable: data.pinResettable === true,
         pinUpdatedAt: typeof data.pinUpdatedAt === 'number' ? data.pinUpdatedAt : null,
       }
       const changed = !sameInfo(this.info, next)
