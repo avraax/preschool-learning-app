@@ -120,7 +120,7 @@ the paste landed** — the API round-trip is in `.claude/rules/ios-shell.md`. Re
 verified byte-identical on read-back, all four sections present.
 
 ```
-Børnelæring er en rolig, dansk læringsapp til børn i førskolealderen og i 0. og 1. klasse. Fem verdener, 24 spil og en tydelig dansk stemme, der læser alt højt — så barnet kan spille selv, også før det kan læse.
+Børnelæring er en rolig, dansk læringsapp til børn i førskolealderen og i 0. og 1. klasse. Fem verdener, 20 spil og en tydelig dansk stemme, der læser alt højt — så barnet kan spille selv, også før det kan læse.
 
 FEM OMRÅDER
 • Alfabetet — find bogstaver, hør deres lyd og stav korte ord
