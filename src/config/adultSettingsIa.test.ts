@@ -275,15 +275,17 @@ test('child-scoped destructive actions stay LOCAL, so they work on a plane', () 
 
 // ---- Owner-only tools (2026-09-05) -----------------------------------------------------------
 //
-// Six items are tools for the owner rather than settings for a parent, and are hidden in the
+// A couple of items are tools for the owner rather than settings for a parent, and are hidden in the
 // production build. This is NOT a permission: the app has no roles, and a role tier would today
 // separate the owner from his wife, who is on the same `AUTH_ALLOWED_EMAILS` list. The axis is the
 // BUILD — `BL_TIER === 'staging'`, dev, or the harness.
 //
-// Two of the six are a functional trap rather than clutter: `lyd.voice`/`lyd.rate` write a
-// `voiceOverride` that `ttsClient.resolveRequest` folds into the TTS cache key, so a non-default
-// choice misses EVERY prebaked clip and sends all narration to live Azure — which a guest cannot
-// call, dropping the whole app to Web Speech or to silence offline.
+// The interesting members used to be `lyd.voice`/`lyd.rate`/`lyd.sample`, which wrote a
+// `voiceOverride` that `ttsClient.resolveRequest` folded into the TTS cache key, so a non-default
+// choice missed EVERY prebaked clip and sent all narration to live Azure — which a guest cannot
+// call, dropping the whole app to Web Speech or to silence offline. They are DELETED, not hidden
+// (owner, 2026-09-20), along with the override mechanism itself, so there is no setting left
+// anywhere that can take the app off its prebaked path.
 
 test('showsDevTools is true on staging, in dev and in the harness — and false in a plain production build', () => {
   // The whole truth table, because the rule is three ORed booleans and the ONE that matters is the
@@ -295,13 +297,31 @@ test('showsDevTools is true on staging, in dev and in the harness — and false 
   assert.equal(showsDevTools('staging', true, true), true)
 })
 
-test('exactly the five agreed items are devTool, named literally', () => {
-  // Named rather than counted: a count passes while the WRONG five carry the flag.
-  // `konto.syncNow` was the sixth and is gone with the whole Synkronisering section (2026-09-19):
-  // sync is invisible to the adult now, and a devTool row is still a row.
-  assert.deepEqual(devToolItemIds().sort(), [
-    'lyd.everWorked', 'lyd.rate', 'lyd.sample', 'lyd.voice', 'udseende.smoothGraphics',
-  ])
+test('exactly the two agreed items are devTool, named literally', () => {
+  // Named rather than counted: a count passes while the WRONG ones carry the flag.
+  // `konto.syncNow` went with the whole Synkronisering section (2026-09-19): sync is invisible to the
+  // adult now, and a devTool row is still a row. `lyd.voice`/`lyd.rate`/`lyd.sample` went on
+  // 2026-09-20 — deleted outright rather than hidden, see the note above.
+  assert.deepEqual(devToolItemIds().sort(), ['lyd.everWorked', 'udseende.smoothGraphics'])
+})
+
+test('no speaker setting comes back — not as an item, not as a control', () => {
+  // The owner removed the possibility of adjusting the narration voice (2026-09-20). The IA is the
+  // declaration and the pane is the render, so both are asserted: a row nothing renders would be
+  // invisible, and a control nothing declares would dodge every guard in this file.
+  const ids = adultItemsWithGroup().map(({ item }) => item.id)
+  for (const id of ['lyd.voice', 'lyd.rate', 'lyd.sample']) {
+    assert.equal(ids.includes(id), false, `${id} is back in the IA — the speaker setting was removed deliberately`)
+  }
+  const pane = paneOf('LydPane.tsx')
+  assert.doesNotMatch(pane, /setVoiceOverride|getVoiceOverride/, 'LydPane can set a voice override again')
+  assert.doesNotMatch(pane, /<Slider/, 'LydPane has a slider again — the tempo control was removed')
+  // And the mechanism itself is gone from the client, which is what keeps every line on its prebaked
+  // file: an override changed the cache key, so a guest (who cannot call Azure) lost all narration.
+  const tts = readFileSync(new URL('../services/ttsClient.ts', import.meta.url), 'utf8')
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/(^|[^:])\/\/.*$/gm, '$1')
+  assert.doesNotMatch(tts, /voiceOverride/i, 'ttsClient carries a voice override again')
 })
 
 test('nothing a guideline depends on may ever be marked devTool', () => {
@@ -324,9 +344,6 @@ test('the panes actually gate on showDevTools — the data flag alone renders no
   for (const f of ['LydPane.tsx', 'UdseendePane.tsx']) {
     assert.match(paneOf(f), /showDevTools\(\)/, `${f} does not consult showDevTools()`)
   }
-  // The stranded-override escape hatch: without it, an override already stored on a production
-  // install can never be cleared, because the controls that set it are gone.
-  assert.match(paneOf('LydPane.tsx'), /setVoiceOverride\(null\)/)
 })
 
 // ---- The Barn+Konto merge, in the RENDER (2026-09-05) -----------------------------------------

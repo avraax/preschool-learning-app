@@ -99,14 +99,18 @@ export interface AdultItem {
   block?: KontoBlock
   /**
    * A tool for the OWNER, not a setting for a parent — hidden in the production build (owner,
-   * 2026-09-05). Six items qualify, and the reason is not tidiness in two of them:
+   * 2026-09-05).
    *
-   *   * `lyd.voice` / `lyd.rate` write a `voiceOverride`, which `ttsClient.resolveRequest` folds into
-   *     the TTS cache key (name + lang + rate). A non-default choice therefore misses EVERY prebaked
-   *     clip and sends **all** narration to live Azure — which a guest cannot call
-   *     (`canCallPaidApis: false`), so the whole app drops to Web Speech, or to silence offline. A
-   *     parent nudging a tempo slider could not possibly know that. `/voicelab` remains the real tool.
-   *   * `lyd.sample` only means anything beside those two.
+   * The narration VOICE and TEMPO used to be the interesting members of this set — `lyd.voice`,
+   * `lyd.rate` and their `lyd.sample` — because they wrote a `voiceOverride` that `ttsClient` folded
+   * into the TTS cache key, so a non-default choice missed EVERY prebaked clip and sent all narration
+   * to live Azure (which a guest cannot call, dropping the app to Web Speech). They are **deleted**,
+   * not hidden (owner, 2026-09-20: remove the possibility of adjusting the speaker and everything
+   * related to it); the override mechanism is gone from `ttsClient` too, so there is no longer a
+   * setting that can take the app off its prebaked path. `/voicelab` remains the off-menu tool.
+   *
+   * What is left:
+   *
    *   * `lyd.everWorked` and `udseende.smoothGraphics` are diagnostics and manual
    *     triggers for things that are automatic. `everWorked` is already in the bug report, so the row
    *     is duplicate rather than merely technical.
@@ -277,9 +281,6 @@ export const ADULT_IA: AdultGroup[] = [
     items: [
       { id: 'lyd.sfx', label: 'Lydeffekter' },
       { id: 'lyd.music', label: 'Musik' },
-      { id: 'lyd.voice', label: 'Stemme', devTool: true },
-      { id: 'lyd.rate', label: 'Tempo', devTool: true },
-      { id: 'lyd.sample', label: 'Hør et eksempel', devTool: true },
       // Read-only status (Audio activation PRD-01 §4.5): the ONE thing the adult cannot otherwise tell
       // apart — "sound has never worked on this iPad" vs "it worked and then stopped". Device-scoped
       // (`bl-audio-ever-worked`), not per-child, and it gates nothing. Listed HERE because the

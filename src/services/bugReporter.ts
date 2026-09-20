@@ -20,7 +20,6 @@ import {
   type CrashEvent,
   type DiagnosticsSnapshot,
 } from './diagnosticsBuffer'
-import type { VoiceOverride } from '../config/voiceOverride'
 
 export type BugCategory = 'lyd' | 'udseende' | 'spil' | 'andet' | 'crash' | 'login'
 
@@ -100,7 +99,6 @@ export interface BugReportPayload {
     controller: ReturnType<typeof simplifiedAudioController.getTTSStatus> | null
     permission: ReturnType<typeof simplifiedAudioController.getPermissionSnapshot> | null
     ttsHealth: ReturnType<typeof ttsClient.getHealth> | null
-    voiceOverride: VoiceOverride | null
     sfxEnabled: boolean | null
     music: ReturnType<typeof musicClient.getHealth> | null
   }
@@ -157,7 +155,6 @@ export function buildReportPayload(input: {
       controller: safe(() => simplifiedAudioController.getTTSStatus(), null),
       permission: safe(() => simplifiedAudioController.getPermissionSnapshot(), null),
       ttsHealth: safe(() => ttsClient.getHealth(), null),
-      voiceOverride: safe(() => ttsClient.getVoiceOverride(), null),
       sfxEnabled: safe(() => progressStore.get().settings.sfxEnabled, null),
       music: safe(() => musicClient.getHealth(), null),
     },

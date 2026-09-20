@@ -7,7 +7,6 @@
 
 import { TTS_CONFIG } from '../config/tts-config'
 import { logAudioIssue } from '../utils/remoteConsole'
-import { loadVoiceOverride, saveVoiceOverride, type VoiceOverride } from '../config/voiceOverride'
 import { ttsCacheKey } from '../../shared-tts-key.js'
 import { classifyPrimeFailure } from '../utils/audioLiveness'
 // The prebaked NARRATION MANIFEST is loaded lazily (Performance PRD-01 W7.1). It is 166 KB of lookup
@@ -114,23 +113,12 @@ export class TtsClient {
   /** DEV/harness only — `?mute-tts=1` pins the counter so the degraded UI is capturable. */
   private forcedPlaybackFailures: number | null = null
 
-  /** App-wide Danish voice override for the VoiceLab panel (throwaway tool). */
-  private voiceOverride: VoiceOverride | null = loadVoiceOverride()
 
   /** Called when playback is blocked by a missing user gesture (NotAllowedError). */
   public onNeedsUserAction: (() => void) | null = null
 
   constructor() {
     this.loadCacheFromStorage()
-  }
-
-  // ===== voice override (VoiceLab) =====
-  setVoiceOverride(override: VoiceOverride | null): void {
-    this.voiceOverride = override
-    saveVoiceOverride(override)
-  }
-  getVoiceOverride(): VoiceOverride | null {
-    return this.voiceOverride
   }
 
   // ===== shared audio element =====
@@ -324,26 +312,19 @@ export class TtsClient {
   // ===== synthesis =====
   private resolveRequest(text: string, voiceType: VoiceType, speed?: number) {
     const base = TTS_CONFIG.voices[voiceType] ?? TTS_CONFIG.voices.primary
-    const baseDanish = base.lang.startsWith('da')
-    // The override applies to the Danish narration voiceTypes only (the bulk of the app); the
-    // English section keeps its own voice. The override carries its own locale.
-    const override = baseDanish ? this.voiceOverride : null
-    const name = override?.name ?? base.name
-    const lang = override?.lang ?? base.lang
-    const effectiveSpeed = override?.speakingRate ?? speed ?? TTS_CONFIG.speakingRate
-    // Lexicon is da-DK only — gate on the EFFECTIVE locale so an en-* override doesn't ship a
-    // mismatched lexicon.
+    // There is ONE voice per voiceType and no runtime override any more (2026-09-20, owner: remove
+    // the speaker setting from Indstillinger). That is what keeps every line on its prebaked file:
+    // an override changed the cache key, so every clip missed the prebake and went to live Azure —
+    // which a GUEST cannot call at all, dropping the whole app to Web Speech.
+    const name = base.name
+    const lang = base.lang
+    const effectiveSpeed = speed ?? TTS_CONFIG.speakingRate
+    // Lexicon is da-DK only.
     const useLexicon = lang.startsWith('da')
     // Built via the shared key so the prebake manifest and this client can't drift (PRD-06).
     const cacheKey = ttsCacheKey({ name, lang, rate: effectiveSpeed, useLexicon, text })
 
-    const body: Record<string, unknown> = { text, speed: effectiveSpeed, useLexicon }
-    if (override) {
-      body.voiceName = name
-      body.lang = lang
-    } else {
-      body.voiceType = voiceType
-    }
+    const body: Record<string, unknown> = { text, speed: effectiveSpeed, useLexicon, voiceType }
     return { cacheKey, body }
   }
 
@@ -363,7 +344,7 @@ export class TtsClient {
       // it here would warm a DIFFERENT file than the one the run plays.
       const { cacheKey } = this.resolveRequest(text, voiceType, speed)
       const file = prebakedFor(cacheKey)
-      if (!file) continue // dynamic text, or a VoiceLab override is active → nothing static to warm
+      if (!file) continue // dynamic text → nothing static to warm
       // The body must be READ for the response to land in the HTTP cache.
       void fetch(prebakedUrl(file), { cache: 'force-cache' })
         .then((r) => r.arrayBuffer())
@@ -445,7 +426,7 @@ export class TtsClient {
     const { cacheKey } = this.resolveRequest(text, voiceType, opts?.speakingRate)
 
     // 1. Prebaked static file (the closed content set, default voice only) — no fetch, no Azure,
-    //    no first-tap latency. A VoiceLab override changes the cacheKey so it misses here on purpose.
+    //    no first-tap latency.
     const prebakedFile = prebakedFor(cacheKey)
     if (prebakedFile) {
       try {
