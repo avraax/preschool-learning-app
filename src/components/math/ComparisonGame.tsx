@@ -406,6 +406,11 @@ const ComparisonGame: React.FC = () => {
           // its card and that is correct, because letting tile size track the value would encode the
           // answer in the geometry (games-catalog.md: "don't let tile SIZE encode the values either").
           maxWidth: { xs: 220, md: 240 },
+          // An 844-wide phone in LANDSCAPE is past the `md` (768) breakpoint, so it was taking the
+          // iPad's 240 — see the arena's phone cap. 185 against the 170 cap keeps aspect ~1.09, the
+          // shape three owner passes settled on, and the numeral follows automatically (it is 52% of
+          // the tile's shorter side, so it comes out ~88px here instead of the iPad's 114px).
+          [PHONE_LANDSCAPE]: { maxWidth: 185 },
           containerType: 'size',
         }}
       >
@@ -519,7 +524,7 @@ const ComparisonGame: React.FC = () => {
               color: muiTheme.scene.dark ? '#FFFFFF' : category.onTileColor,
               textShadow: muiTheme.scene.dark ? '0 2px 8px rgba(0,0,0,0.5)' : 'none',
               textAlign: 'center',
-              [PHONE_LANDSCAPE]: { fontSize: '0.85rem' },
+              [PHONE_LANDSCAPE]: { fontSize: '0.95rem' },
             }}
           >
             Tryk på det største tal
@@ -546,13 +551,19 @@ const ComparisonGame: React.FC = () => {
               // the void this rework exists to close, back in a milder form.
               maxHeight: 300,
               '@media (orientation: landscape)': { maxHeight: 220 },
+              // PHONE landscape needs its own cap, because 220 is a share of the body and the body is
+              // not the same size: ~39% of an iPad's 568px column, but **68%** of a phone's 322px one.
+              // Measured on an iPhone 12 Pro (844x390) the pair rendered at the iPad's full 240x220,
+              // which is what reads as "way too large compared to the other elements" — the tiles were
+              // right and everything around them was small. 170 keeps the settled ~1.09 card shape and
+              // lands the pair at ~53% of the column, the same proportion the iPad has.
               width: '100%',
               maxWidth: 1000,
               display: 'flex',
               alignItems: 'stretch',
               justifyContent: 'center',
               gap: { xs: 1, md: 2.5 },
-              [PHONE_LANDSCAPE]: { gap: 0.75 },
+              [PHONE_LANDSCAPE]: { gap: 0.75, maxHeight: 170 },
               // Deliberately NO extra cap for phone portrait, where two side-by-side tiles can only be
               // ~137px wide and the pair therefore comes out ~1:2.8. A width-tied cap was tried and
               // reverted: the numeral is bound by `cqw` at that width, so shrinking the height buys a

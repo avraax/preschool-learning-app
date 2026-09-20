@@ -78,7 +78,7 @@ const ringSlotPx = (slot: number, total: number, radius: number, circle: number)
 // Phone landscape gets a smaller well, ring and object — the board there is only ~600x230 CSS px, so
 // the iPad's 180px well plus 80px objects left the scatter nowhere to go and the objects landed ON
 // the well (the keep-out below is per-axis for the same reason).
-const PHONE_WELL = { circle: 124, ringRadius: 34, collected: 32, object: 58 }
+const PHONE_WELL = { circle: 146, ringRadius: 40, collected: 36, object: 62 }
 const DESK_WELL = { circle: CIRCLE, ringRadius: RING_RADIUS, collected: COLLECTED_SIZE, object: 80 }
 
 const FarvejagtGame: React.FC = () => {
@@ -185,7 +185,7 @@ const FarvejagtGame: React.FC = () => {
     // PRD-16 W2 pulled the roomy-board scatter into an 18-82% reachable band so no drag is a long
     // diagonal for 5yo motor control. A phone board is already short enough that the band would leave
     // nowhere to stand, so there the floor is just "fully on the board".
-    const reachFloor = phoneLandscape ? 0 : 18
+    const reachFloor = phoneLandscape ? 6 : 18
     const mx = Math.max(reachFloor, ((obj / 2 + 6) / w) * 100)
     const my = Math.max(reachFloor, ((obj / 2 + 6) / h) * 100)
     const spanX = Math.max(8, 100 - 2 * mx)

@@ -11,6 +11,8 @@ import { mathPromptText, colorMixTargetText } from '../config/gamePhrases'
 import { sfx } from '../services/sfxClient'
 import { settleWithin, UNLOCK_TOTAL_TIMEOUT_MS, userActivationSupported } from './audioLiveness'
 import { audioEverWorked } from './audioEverWorked'
+// Entry pacing for the arrival narration (the lead-in + settle silences) — see entryPacing.ts.
+import { EntryClaim, WELCOME_LEAD_IN_MS, WELCOME_SETTLE_MS } from './entryPacing'
 // Remote console logging removed for production
 
 /** One synchronous, honest reading of an AudioContext for the bug report — see getPermissionSnapshot. */
@@ -44,6 +46,9 @@ export class SimplifiedAudioController {
   private ttsClient: TtsClient
   private isCurrentlyPlaying: boolean = false
   private currentAudioId: string | null = null
+  // Claim-check for the entry pacing (entryPacing.ts). Anything that stops the channel releases it,
+  // so a pending welcome silence knows it was superseded and simply doesn't speak.
+  private entry = new EntryClaim()
 
   // Simplified event listeners
   private playingStateListeners: (() => void)[] = []
@@ -143,6 +148,9 @@ export class SimplifiedAudioController {
   }
 
   private stopCurrentAudio(_reason: string = 'new_audio_requested'): void {
+    // Any new claim on the channel abandons a pending entry silence (see entryPacing.ts).
+    this.entry.release()
+
     // The engine owns the single shared <audio> element + one speechSynthesis.cancel().
     // No page-wide <audio> teardown, no repeated cancel() spam (PRD §5.1 / §1.3).
     this.ttsClient.stopCurrentAudio()
@@ -401,8 +409,18 @@ export class SimplifiedAudioController {
     }
     
     try {
+      // Lead-in: let the wipe finish and the board settle before the title is spoken. Abandoned if
+      // the child taps in the meantime — their own audio has the channel and this must not cut it off.
+      const leadToken = this.entry.claim()
+      if (!(await this.entry.pause(WELCOME_LEAD_IN_MS, leadToken))) return ''
+
       const result = await this.speak(welcomeMessage, voiceType, true)
-      // Game welcome completed successfully
+
+      // Settle: a breath before the caller voices the first prompt. `speak` took the channel (and so
+      // bumped the token), so the tail re-claims it; callers all re-check their own interaction guard
+      // after awaiting this, which is what suppresses the prompt if the child started playing.
+      const tailToken = this.entry.claim()
+      await this.entry.pause(WELCOME_SETTLE_MS, tailToken)
       return result
     } catch (error) {
       // For iOS, resolve gracefully instead of throwing
