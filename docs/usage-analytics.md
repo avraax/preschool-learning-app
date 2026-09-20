@@ -368,6 +368,44 @@ tredjeparts-SDK til statistik" still is. The policy bullet, the listing bullet a
 anonymously how often each game is opened, with nothing that identifies a device or a child."* That is a
 better sentence than the current one anyway — it is specific and it is checkable.
 
+**How it batches, and why not on the server** (added 2026-09-20, after the first version shipped
+un-batched). `app_open` is sent immediately and alone; route events buffer **in the browser** and flush
+every 30s, on `visibilitychange`→hidden and `pagehide`, and when the buffer hits
+`MAX_EVENTS_PER_REQUEST`. Roughly a 20× reduction in requests.
+
+- **Server-side batching is not possible here, and this is not a preference.** A Vercel function only
+  runs while handling a request — after it responds the instance freezes, so a `setInterval` simply
+  stops executing and there is no "flush every minute" to schedule. There is no shared memory between
+  instances, and no shutdown hook, so a partial batch dies silently and unpredictably. The same
+  constraint is already written into `lib/server-utils.ts` for the rate limiter, where approximate is
+  fine; for a counter it is fatal. Doing it properly server-side would need Redis/Vercel KV — **a new
+  third-party processor**, which reopens the Kids Category and privacy-policy questions this design
+  closed.
+- **The buffer must stay in memory.** Persisting it (localStorage, sessionStorage, IndexedDB) is
+  "storing information on terminal equipment" for a non-essential purpose → ePrivacy Art. 5(3),
+  consent required, and the consent-free basis above is gone. Guarded by `lib/usageEndpoint.test.ts`.
+- **`app_open` is deliberately not batched.** A child who plays for twenty seconds would otherwise
+  report nothing whenever the hide event fails to fire — which on iOS Safari and in a backgrounded
+  Capacitor shell it regularly does. Undercounting opens is the one error the data cannot reveal about
+  itself.
+- **The request carries event NAMES, never counts.** The server tallies them, so the three dimensions
+  of a poisoned request are each bounded: the allow-list caps which rows can exist, the batch cap
+  caps how much one request adds, the rate limit caps how many arrive. A `{event, count}` shape would
+  have handed the middle one to the caller.
+
+**Sizing the rate limit — the trap.** The first limit was 120/hour per IP, set equal to the worst case
+it was derived from ("a screen every 30 seconds for an hour"), i.e. with zero headroom. It fired during
+ordinary local play. Two children in one household share an address; CGNAT puts several families in one
+bucket; dev's StrictMode doubles every route event. **Batching does not fix this by itself** — a 30
+second flush sets a FLOOR of ~120 requests/hour per actively-playing child, exactly the old ceiling. It
+is 600 now. The limiter is a cost guard only: the allow-list already caps table growth.
+
+**Counting anything in dev is unreliable while another session is running.** The dev server on 3001 and
+the staging database are shared, so another browser tab or a parallel session writes into the same
+table. A verification run that asserts exact counts must use its own API and Vite ports — an earlier
+run read `n=4` for a single page load purely from contamination, and looked like a bug in the counter.
+`React.StrictMode` separately doubles route events in dev; the production bundle is 1×, measured.
+
 **What it will not tell you:** how many distinct children, or whether anyone came back. Accept that or go
 to C.
 

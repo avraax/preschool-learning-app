@@ -25,7 +25,7 @@ import {
   isAvatarId,
   normalizeAvatarId,
 } from './src/config/avatars.ts';
-import { isAppVersion, isUsageEvent } from './src/config/usageEvents.ts';
+import { MAX_EVENTS_PER_REQUEST, isAppVersion, isUsageEvent } from './src/config/usageEvents.ts';
 import { query as dbQuery } from './lib/db.ts';
 
 const app = express();
@@ -212,14 +212,23 @@ let usageTableEnsured = false;
 
 app.post('/api/usage', async (req, res) => {
   if (!isAllowedOrigin(req)) return res.status(403).json({ error: 'Forbidden origin' });
-  if (!rateLimit(req, res, { scope: 'usage', limit: 120, windowMs: 60 * 60 * 1000 })) return;
+  // 600, matching api/usage.ts — see the RATE comment there for why 120 was too tight. StrictMode
+  // doubles every route event in dev, so local play burns this budget about twice as fast as production.
+  if (!rateLimit(req, res, { scope: 'usage', limit: 600, windowMs: 60 * 60 * 1000 })) return;
 
   // Always 204 past this point — see the comment in api/usage.ts for why the rejections are silent.
   try {
     const body = req.body && typeof req.body === 'object' && !Array.isArray(req.body) ? req.body : null;
     const keys = body ? Object.keys(body) : [];
-    if (body && keys.every((k) => k === 'event' || k === 'appVersion')) {
-      if (isUsageEvent(body.event) && isAppVersion(body.appVersion)) {
+    const known = (k) => k === 'event' || k === 'events' || k === 'appVersion';
+    if (body && keys.every(known) && isAppVersion(body.appVersion)) {
+      // Count the validated names ourselves; the request never carries a number.
+      const raw = Array.isArray(body.events) ? body.events.slice(0, MAX_EVENTS_PER_REQUEST) : [body.event];
+      const counts = new Map();
+      for (const e of raw) {
+        if (isUsageEvent(e)) counts.set(e, (counts.get(e) ?? 0) + 1);
+      }
+      if (counts.size) {
         if (!usageTableEnsured) {
           await dbQuery(`
             CREATE TABLE IF NOT EXISTS usage_counter (
@@ -234,10 +243,11 @@ app.post('/api/usage', async (req, res) => {
         }
         await dbQuery(
           `INSERT INTO usage_counter (day, event, app_version, n)
-           VALUES (CURRENT_DATE, $1, $2, 1)
+           SELECT CURRENT_DATE, t.event, $1, t.n
+           FROM unnest($2::text[], $3::bigint[]) AS t(event, n)
            ON CONFLICT (day, event, app_version)
-           DO UPDATE SET n = usage_counter.n + 1`,
-          [body.event, body.appVersion],
+           DO UPDATE SET n = usage_counter.n + EXCLUDED.n`,
+          [body.appVersion, [...counts.keys()], [...counts.values()]],
         );
       }
     }

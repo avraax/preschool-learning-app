@@ -12,28 +12,45 @@
 // is why adding any per-user or per-session column here would quietly move the whole feature into a
 // different legal regime (see §6C of the doc before anyone tries).
 //
+// THE CLIENT STILL CANNOT SUPPLY A NUMBER. Requests now carry a BATCH, but as a list of event NAMES,
+// not as counts: the server counts occurrences itself. So the three dimensions of a poisoned request
+// are each bounded — the allow-list caps WHICH rows can exist, `MAX_EVENTS_PER_REQUEST` caps how much
+// one request can add, and the rate limit caps how many requests arrive. A `{event, count}` shape
+// would have handed the middle one to the caller.
+//
 // WHAT IS HONESTLY NOT SOLVED: an open counter is poisonable. Anyone who reads the shipped bundle can
-// post valid events and inflate a number. The controls here BOUND that — cardinality is capped by the
-// allow-list, rate is capped per caller, the increment is always exactly one, and with no read
-// endpoint there is no feedback loop — but they do not prevent it. A secret baked into a distributed
-// binary would be obfuscation, not security, so there isn't one.
+// post valid events and inflate a number. The controls here BOUND that but do not prevent it. A
+// secret baked into a distributed binary would be obfuscation, not security, so there isn't one.
 
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 // `.js`, NOT `.ts` — Vercel compiles each file to a sibling `.js` and rewrites no specifiers, so a
 // `.ts` specifier here is a production-only ERR_MODULE_NOT_FOUND. Pinned by `lib/serverImports.test.ts`.
 import { applyCors, isAllowedOrigin, rateLimit } from '../lib/server-utils.js'
 import { query } from '../lib/db.js'
-import { isAppVersion, isUsageEvent } from '../src/config/usageEvents.js'
+import { MAX_EVENTS_PER_REQUEST, isAppVersion, isUsageEvent } from '../src/config/usageEvents.js'
 
 /**
- * Generous enough that a long sitting never hits it (a child entering a new screen every 30 seconds
- * for an hour sends ~120), tight enough to bound a flood. A whole family behind one address shares
- * the bucket, which is acceptable: losing counts is the designed failure mode.
+ * Sized against the CLIENT'S FLUSH INTERVAL, not against a guess about screens.
+ *
+ * The first version was 120/hour, chosen as "a child entering a screen every 30 seconds for an hour" —
+ * i.e. exactly the worst case, with zero headroom. Two children in one household share an address and
+ * hit it in half an hour; CGNAT puts several families in one bucket; and dev's StrictMode doubles
+ * every route event. It fired during ordinary local play.
+ *
+ * Batching does NOT fix that on its own: a 30-second flush sets a FLOOR of ~120 requests/hour per
+ * actively-playing child, which is the old ceiling exactly. 600 gives four children continuous play
+ * with room to spare, and still bounds a flood to 600 invocations/hour/IP, which costs nothing. The
+ * allow-list already caps table growth, so this limiter is a cost guard, not a correctness one.
  */
-const RATE = { scope: 'usage', limit: 120, windowMs: 60 * 60 * 1000 } as const
+const RATE = { scope: 'usage', limit: 600, windowMs: 60 * 60 * 1000 } as const
 
-/** Two keys, exactly. Anything else and the body is discarded unread. */
-const ALLOWED_KEYS = ['event', 'appVersion']
+/**
+ * `events` is the batch shape. `event` is the ORIGINAL single-event shape, still accepted because a
+ * TestFlight build may already be in the field carrying it — the shell is bundled with no OTA path
+ * (`capacitor.config.ts`), so a binary that shipped with the old shape can never be updated to the
+ * new one and would otherwise just stop counting, silently.
+ */
+const ALLOWED_KEYS = ['event', 'events', 'appVersion']
 
 /**
  * DDL on demand rather than a migration script, guarded so it costs one statement per cold start.
@@ -64,8 +81,8 @@ async function ensureTable(): Promise<void> {
 /** Vercel hands back a parsed object; `dev-server.js` (express.json) does too, but be defensive. */
 function readBody(raw: unknown): Record<string, unknown> | null {
   if (typeof raw === 'string') {
-    // A body this large is not one of ours — two short fields never approach it.
-    if (raw.length > 1024) return null
+    // A body this large is not one of ours — 50 short event names never approach it.
+    if (raw.length > 4096) return null
     try {
       const parsed: unknown = JSON.parse(raw)
       return parsed && typeof parsed === 'object' ? (parsed as Record<string, unknown>) : null
@@ -75,6 +92,24 @@ function readBody(raw: unknown): Record<string, unknown> | null {
   }
   if (raw && typeof raw === 'object' && !Array.isArray(raw)) return raw as Record<string, unknown>
   return null
+}
+
+/**
+ * The validated events in a body, as name → count.
+ *
+ * Unknown names are DROPPED individually rather than rejecting the batch: one stale event key from an
+ * older build must not throw away the twenty valid ones beside it.
+ */
+function tally(body: Record<string, unknown>): Map<string, number> {
+  const counts = new Map<string, number>()
+  const raw = Array.isArray(body.events)
+    ? body.events.slice(0, MAX_EVENTS_PER_REQUEST)
+    : [body.event]
+  for (const e of raw) {
+    if (!isUsageEvent(e)) continue
+    counts.set(e, (counts.get(e) ?? 0) + 1)
+  }
+  return counts
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
@@ -92,20 +127,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
   // database fault to a child's device. Every rejection below is silent on purpose.
   try {
     const body = readBody(req.body)
-    if (body && Object.keys(body).every((k) => ALLOWED_KEYS.includes(k))) {
-      const { event, appVersion } = body
-      // The two gates that cap cardinality. Both are shared with the client so the two agree on
-      // exactly one definition of a valid event.
-      if (isUsageEvent(event) && isAppVersion(appVersion)) {
+    if (body && Object.keys(body).every((k) => ALLOWED_KEYS.includes(k)) && isAppVersion(body.appVersion)) {
+      const counts = tally(body)
+      if (counts.size) {
         await ensureTable()
-        // Parameterised, and the increment is a server-side literal — the caller can never supply a
-        // number, only cause a +1. `CURRENT_DATE` means the row is dated by us, to the day.
+        // One statement for the whole batch. `unnest` pairs the two arrays into rows; the counts come
+        // from OUR tally of validated names, never from the request.
         await query(
           `INSERT INTO usage_counter (day, event, app_version, n)
-           VALUES (CURRENT_DATE, $1, $2, 1)
+           SELECT CURRENT_DATE, t.event, $1, t.n
+           FROM unnest($2::text[], $3::bigint[]) AS t(event, n)
            ON CONFLICT (day, event, app_version)
-           DO UPDATE SET n = usage_counter.n + 1`,
-          [event, appVersion],
+           DO UPDATE SET n = usage_counter.n + EXCLUDED.n`,
+          [body.appVersion, [...counts.keys()], [...counts.values()]],
         )
       }
     }

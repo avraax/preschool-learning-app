@@ -68,14 +68,27 @@ test('the endpoint never touches an identifier', () => {
   }
 })
 
-test('the client sends only the event and the version', () => {
+test('the client sends only the events and the version', () => {
   const body = /JSON\.stringify\(\{([^}]*)\}\)/.exec(serviceCode)
   assert.ok(body, 'could not find the request body in usagePing.ts')
   const keys = body![1]
     .split(',')
     .map((k) => k.split(':')[0].trim())
     .filter(Boolean)
-  assert.deepEqual(keys.sort(), ['appVersion', 'event'], `body carries unexpected keys: ${keys}`)
+  assert.deepEqual(keys.sort(), ['appVersion', 'events'], `body carries unexpected keys: ${keys}`)
+})
+
+test('the client never persists the batch — it would re-trigger ePrivacy 5(3)', () => {
+  // The buffer is the one part of this feature that COULD legally have been written to the device,
+  // and doing so would be "storing information on terminal equipment" for a non-essential purpose:
+  // consent required, and the consent-free basis in docs/usage-analytics.md gone. Losing a buffer on
+  // a hard kill is the accepted price, which is also why `app_open` is not in it.
+  for (const store of ['localStorage', 'sessionStorage', 'indexedDB', 'document\\.cookie']) {
+    assert.ok(
+      !new RegExp(store).test(serviceCode),
+      `usagePing.ts persists the batch via ${store.replace('\\', '')}`,
+    )
+  }
 })
 
 test('the client never inspects the response', () => {
@@ -98,11 +111,25 @@ test('the client addresses the API through apiUrl()', () => {
   assert.ok(!/fetch\(\s*['"`]\//.test(serviceCode), 'usagePing fetches a bare absolute path')
 })
 
-test('the increment is a server-side literal, never caller-supplied', () => {
-  assert.match(endpointCode, /DO UPDATE SET n = usage_counter\.n \+ 1/)
-  // The body destructure must not pull a count out of the request.
-  assert.ok(!/\bn\s*[,}]/.test(/const \{([^}]*)\}\s*=\s*body/.exec(endpointCode)?.[1] ?? ''),
-    'the endpoint destructures a count from the body')
+test('the increment is counted by the SERVER, never taken from the request', () => {
+  // Batching made this the sharpest guard in the file. The request carries event NAMES; the server
+  // tallies them. A `{event, count}` shape would hand the caller the increment directly, so a single
+  // poisoned request could add 999999 instead of at most MAX_EVENTS_PER_REQUEST.
+  assert.match(endpointCode, /DO UPDATE SET n = usage_counter\.n \+ EXCLUDED\.n/)
+  // The counts passed to the query must come from our own Map, not from the body.
+  assert.match(endpointCode, /counts\.set\([^)]*\(counts\.get\([^)]*\)\s*\?\?\s*0\)\s*\+\s*1\)/,
+    'the endpoint does not tally the events itself')
+  assert.match(endpointCode, /\[\.\.\.counts\.values\(\)\]/, 'the query does not use the server tally')
+  // And nothing anywhere reads a count off the request.
+  assert.ok(!/body\.(count|n)\b/.test(endpointCode), 'the endpoint reads a count from the body')
+})
+
+test('the batch is bounded by the shared cap', () => {
+  // The third dimension of a poisoned request: the allow-list caps WHICH rows exist, the rate limit
+  // caps how many requests arrive, and this caps how much one request can add.
+  assert.match(endpointCode, /slice\(0,\s*MAX_EVENTS_PER_REQUEST\)/, 'the event array is unbounded')
+  const shared = readFileSync(new URL('../src/config/usageEvents.ts', import.meta.url), 'utf8')
+  assert.match(shared, /export const MAX_EVENTS_PER_REQUEST\s*=\s*\d+/, 'the cap is not shared')
 })
 
 test('the INSERT is parameterised', () => {

@@ -77,6 +77,16 @@ export const ROUTE_EVENTS: Readonly<Record<string, string>> = {
 // is cheap — a key here plus a call at the point it opens — but it is a scope decision to take
 // deliberately rather than by accident, because each one is a new row family forever.
 
+/**
+ * How many events one request may carry.
+ *
+ * Shared by the client (which flushes early rather than exceed it) and the endpoint (which discards
+ * the overflow), so the two can never disagree about what a legal batch is. It is also the bound on
+ * how much a single poisoned request can inflate a count — with the closed allow-list capping WHICH
+ * rows exist and the rate limit capping how many requests arrive, this caps the third dimension.
+ */
+export const MAX_EVENTS_PER_REQUEST = 50
+
 /** Every value the endpoint will accept. Anything else is dropped without a write. */
 export const USAGE_EVENTS: readonly string[] = [
   APP_OPEN_EVENT,
