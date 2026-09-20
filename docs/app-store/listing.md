@@ -145,6 +145,32 @@ Under "Indstillinger" kan du vælge sværhedsgrad, oprette flere børneprofiler 
 Appen er skrevet til en 5-årig dreng af hans far. Den passer til børn fra omkring 5 år, gennem børnehaveklassen og ind i 1. klasse.
 ```
 
+### 1.4b "Nyheder" (What's New) — 1.1
+
+**Required for every update, and it is `null` on a fresh version record**, so it is the field most easily
+forgotten: nothing fails, and the release notes simply read as blank on the product page.
+
+Two deliberate choices, recorded so they are not re-litigated as oversights:
+
+- **The removal is the first line.** A parent whose child used "Sig et Ord" will notice it is gone, and
+  discovering an empty space is worse than being told. In a Kids Category app it also reads as a gain:
+  no microphone, no camera.
+- **The anonymous counter is disclosed here too**, even though the privacy policy already covers it
+  properly. This listing leans hard on *"ingen sporing"*, so a parent who opens the policy will meet a
+  new entry; better they meet it here first.
+
+```
+Denne opdatering rydder op og retter det, der drillede.
+
+• Mikrofonspillet "Sig et Ord" er fjernet. Appen bruger nu hverken mikrofon eller kamera.
+• Glemt kode til de voksnes område kan nu nulstilles. Før lå knappen bag den lås, den skulle åbne.
+• Log ind er blevet enklere: Google eller Apple, og ikke andet.
+• Spillene fylder skærmen bedre på telefon, når den ligger ned.
+• Musikken er skruet ned, så lydene i spillene kan høres.
+• "Rapportér et problem" hedder nu "Send feedback" — skriv gerne, også hvis det bare er en idé.
+• Appen tæller nu anonymt, hvor ofte hvert spil åbnes. Ét tal pr. dag pr. spil, aldrig noget om hvem eller hvilken enhed. Det står i privatlivspolitikken.
+```
+
 **Two lines were promises the app could not keep. Both are TRUE now** — re-checked 2026-09-05, because a
 description that overstates the app is a Guideline 2.3.1 rejection and the easiest one to avoid:
 
