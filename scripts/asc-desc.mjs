@@ -47,7 +47,15 @@ const end = md.indexOf('\n```', start)
 if (end < 0) { console.error('unterminated fence after the description'); process.exit(1) }
 const want = md.slice(start, end).replace(/\r\n/g, '\n').trim()
 
-const app = (await api('apps?limit=10')).data[0]
+// PIN THE APP BY BUNDLE ID. This was `.data[0]`, and on 2026-09-20 it silently started comparing
+// against **Børnelæring STAGING** — a second app record (`com.vraa.earlylearning.staging`) created for
+// the staging TestFlight track, which the API happens to return first. The check then reported DRIFT on
+// every line against an empty staging listing, which is the same shape as a real finding and would have
+// been "fixed" by uploading the production copy onto the staging app. A check that can point at the
+// wrong subject is worse than no check.
+const PROD_BUNDLE_ID = 'com.vraa.earlylearning'
+const app = (await api('apps?limit=50')).data.find((a) => a.attributes.bundleId === PROD_BUNDLE_ID)
+if (!app) { console.error(`no app with bundleId ${PROD_BUNDLE_ID} — refusing to guess`); process.exit(1) }
 const vers = (await api(`apps/${app.id}/appStoreVersions?limit=5`)).data
 const v = vers.find((x) => x.attributes.appStoreState === 'PREPARE_FOR_SUBMISSION') || vers[0]
 const locs = (await api(`appStoreVersions/${v.id}/appStoreVersionLocalizations`)).data
