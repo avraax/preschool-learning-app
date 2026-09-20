@@ -23,12 +23,18 @@ const ISSUER = process.env.ASC_ISSUER_ID || '62ee49e8-4d0f-4dd1-bb76-84a364d0990
 const KEY_PATH = process.env.ASC_KEY_PATH ||
   'C:/Users/AllanBrinkVraa/Documents/AppleDeveloper/AuthKey_VR8MNH235U.p8'
 
-const SETS = [
-  { name: 'APP_IPAD_PRO_3GEN_129', id: 'f1ebc587-9f9b-4aed-8599-7da4dc150df5',
-    files: ['ipad-1-menu.png','ipad-2-alfabet.png','ipad-3-tal.png','ipad-4-farver.png','ipad-5-bog.png','ipad-6-voksne.png'] },
-  { name: 'APP_IPHONE_67', id: 'ebf20760-fafe-4af4-835b-07463fe62a61',
-    files: ['iphone-1-menu.png','iphone-2-alfabet.png','iphone-3-tal.png','iphone-4-farver.png','iphone-5-bog.png','iphone-6-voksne.png'] },
-]
+// The FILES are ours; the SET IDS are Apple's and are RESOLVED, never hardcoded.
+//
+// They used to be literals, and that was a release-shaped time bomb: screenshot sets belong to a
+// VERSION localization, so creating 1.1 minted a fresh pair and the literals kept pointing at 1.0's.
+// The check would then have gone on reporting "all 12 match" — green, truthful about 1.0, and blind to
+// the version actually being edited. Same failure as `asc-desc.mjs` picking `apps[0]` and silently
+// comparing against the STAGING app: a check that can address the wrong subject is worse than none.
+const PROD_BUNDLE_ID = 'com.vraa.earlylearning'
+const SET_FILES = {
+  APP_IPAD_PRO_3GEN_129: ['ipad-1-menu.png','ipad-2-alfabet.png','ipad-3-tal.png','ipad-4-farver.png','ipad-5-bog.png','ipad-6-voksne.png'],
+  APP_IPHONE_67: ['iphone-1-menu.png','iphone-2-alfabet.png','iphone-3-tal.png','iphone-4-farver.png','iphone-5-bog.png','iphone-6-voksne.png'],
+}
 const DIR = 'docs/app-store/shots/'
 
 const pem = readFileSync(KEY_PATH, 'utf8')
@@ -57,6 +63,29 @@ const md5 = (f) => createHash('md5').update(readFileSync(DIR + f)).digest('hex')
 
 const upload = process.argv.includes('--upload')
 let bad = 0
+
+// Resolve the sets for the version we are EDITING — the one in PREPARE_FOR_SUBMISSION. Falling back to
+// a live version would mean uploading into a record Apple has already published, so if there is no
+// editable version this stops rather than guessing.
+const apps = await api('/v1/apps?limit=50')
+const app = (apps.data || []).find((a) => a.attributes.bundleId === PROD_BUNDLE_ID)
+if (!app) { console.error(`no app with bundleId ${PROD_BUNDLE_ID} — refusing to guess`); process.exit(1) }
+const vers = await api(`/v1/apps/${app.id}/appStoreVersions?limit=10`)
+const ver = (vers.data || []).find((v) => v.attributes.appStoreState === 'PREPARE_FOR_SUBMISSION')
+if (!ver) {
+  console.error('no version in PREPARE_FOR_SUBMISSION — create the next version before touching screenshots')
+  process.exit(1)
+}
+const locs = await api(`/v1/appStoreVersions/${ver.id}/appStoreVersionLocalizations`)
+const da = (locs.data || []).find((l) => l.attributes.locale === 'da')
+if (!da) { console.error('no da localization on that version'); process.exit(1) }
+const remoteSets = await api(`/v1/appStoreVersionLocalizations/${da.id}/appScreenshotSets`)
+const SETS = Object.entries(SET_FILES).map(([name, files]) => {
+  const s = (remoteSets.data || []).find((x) => x.attributes.screenshotDisplayType === name)
+  if (!s) { console.error(`version ${ver.attributes.versionString} has no ${name} screenshot set`); process.exit(1) }
+  return { name, id: s.id, files }
+})
+console.log(`${app.attributes.name} — version ${ver.attributes.versionString} (${ver.attributes.appStoreState})\n`)
 
 for (const set of SETS) {
   const shots = await api(`/v1/appScreenshotSets/${set.id}/appScreenshots`)
