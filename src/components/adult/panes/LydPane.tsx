@@ -1,4 +1,4 @@
-// "Lyd" — sound effects and music. Two switches, nothing else.
+// "Lyd" — sound effects and music. Two switches, and nothing else.
 //
 // THE NARRATION VOICE IS NOT A SETTING (owner, 2026-09-20: remove the possibility of adjusting the
 // speaker, and everything related to it). What used to live here was a voice picker plus a tempo
@@ -8,21 +8,24 @@
 // later couldn't find it. The override mechanism is gone from the client entirely (`ttsClient` has one
 // voice per voiceType now), so an already-persisted `voicelab_voice_override_v3` key is simply inert.
 //
-// Don't re-add a voice control here. `/voicelab` remains the off-menu tool for auditioning voices.
+// NOR IS "Lyd på denne enhed" (owner, 2026-09-20: "don't know what it's for" — which is the verdict on
+// a row, not a request for better wording). It printed whether audio had EVER worked on this device,
+// which is a debugging fact rather than something an adult can act on: it gated nothing and offered no
+// control. **The signal itself is untouched** — `noteAudioWorked` still records it and
+// `getPermissionSnapshot().everWorked` still carries it into every bug report, which is where it was
+// always actually read from. Only the row is gone.
+//
+// Don't re-add a voice control or a diagnostic readout here. `/voicelab` remains the off-menu tool for
+// auditioning voices, and the bug report is where device audio facts belong.
 
-import React, { useState } from 'react'
-import { Stack, Typography } from '@mui/material'
+import React from 'react'
+import { Stack } from '@mui/material'
 import { Music, Volume2, VolumeX } from 'lucide-react'
 import { useProgress } from '../../../hooks/useProgress'
-import { audioEverWorked } from '../../../utils/audioEverWorked'
-import { PaneSection, ToggleRow } from './paneParts'
-import { showDevTools } from '../../../utils/adultDevTools'
+import { ToggleRow } from './paneParts'
 
 const LydPane: React.FC = () => {
   const progress = useProgress()
-  const devTools = showDevTools()
-  // Read once per open — it only ever flips false->true, and the pane is a modal snapshot.
-  const [everWorked] = useState(() => audioEverWorked())
 
   return (
     <Stack spacing={2.5}>
@@ -41,18 +44,6 @@ const LydPane: React.FC = () => {
           onChange={(v) => progress.setSetting('musicEnabled', v)}
         />
       </Stack>
-
-      {/* Read-only. The ONE audio fact the adult cannot get anywhere else: whether sound has EVER
-          worked on this device, which separates "it has never worked here" from "it worked and then
-          stopped". Device-scoped (`bl-audio-ever-worked`), never per-child, and it gates nothing —
-          a device where audio worked yesterday can be blocked today (Audio activation PRD-01 §4.5). */}
-      {devTools && (
-        <PaneSection title="Lyd på denne enhed">
-          <Typography sx={{ fontSize: '0.9rem', opacity: 0.85 }}>
-            {everWorked ? 'Lyd har virket på denne enhed.' : 'Lyd har endnu ikke virket på denne enhed.'}
-          </Typography>
-        </PaneSection>
-      )}
     </Stack>
   )
 }

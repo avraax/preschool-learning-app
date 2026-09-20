@@ -297,12 +297,13 @@ test('showsDevTools is true on staging, in dev and in the harness — and false 
   assert.equal(showsDevTools('staging', true, true), true)
 })
 
-test('exactly the two agreed items are devTool, named literally', () => {
-  // Named rather than counted: a count passes while the WRONG ones carry the flag.
+test('exactly the one agreed item is devTool, named literally', () => {
+  // Named rather than counted: a count passes while the WRONG one carries the flag.
   // `konto.syncNow` went with the whole Synkronisering section (2026-09-19): sync is invisible to the
   // adult now, and a devTool row is still a row. `lyd.voice`/`lyd.rate`/`lyd.sample` went on
-  // 2026-09-20 — deleted outright rather than hidden, see the note above.
-  assert.deepEqual(devToolItemIds().sort(), ['lyd.everWorked', 'udseende.smoothGraphics'])
+  // 2026-09-20 — deleted outright rather than hidden — and `lyd.everWorked` went the same day, so
+  // "Lyd" now carries no owner tools at all. See the note above.
+  assert.deepEqual(devToolItemIds().sort(), ['udseende.smoothGraphics'])
 })
 
 test('no speaker setting comes back — not as an item, not as a control', () => {
@@ -341,9 +342,22 @@ test('nothing a guideline depends on may ever be marked devTool', () => {
 
 test('the panes actually gate on showDevTools — the data flag alone renders nothing', () => {
   // A config test cannot see a component ignoring the config (games-catalog.md). Read the source.
-  for (const f of ['LydPane.tsx', 'UdseendePane.tsx']) {
+  // DERIVED from the IA rather than hand-listed: a pane that stops carrying owner tools (as `LydPane`
+  // did on 2026-09-20) must drop off this list, and a pane that GAINS one must join it — a hand-list
+  // silently stops covering the second case.
+  const panesWithDevTools = new Set(
+    adultItemsWithGroup()
+      .filter(({ item }) => item.devTool)
+      // `group` is the group ID ('udseende'); the pane file is that id, capitalised.
+      .map(({ group }) => `${group[0].toUpperCase()}${group.slice(1)}Pane.tsx`),
+  )
+  assert.ok(panesWithDevTools.size > 0, 'no pane declares an owner tool — is this list still derived?')
+  for (const f of panesWithDevTools) {
     assert.match(paneOf(f), /showDevTools\(\)/, `${f} does not consult showDevTools()`)
   }
+  // …and a pane with NO owner tools must not be gating anything on the flag, or a production build
+  // hides a row that is not a tool.
+  assert.doesNotMatch(paneOf('LydPane.tsx'), /showDevTools/, 'LydPane gates on showDevTools with no owner tool left')
 })
 
 // ---- The Barn+Konto merge, in the RENDER (2026-09-05) -----------------------------------------

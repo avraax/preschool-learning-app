@@ -109,11 +109,16 @@ export interface AdultItem {
    * related to it); the override mechanism is gone from `ttsClient` too, so there is no longer a
    * setting that can take the app off its prebaked path. `/voicelab` remains the off-menu tool.
    *
+   * `lyd.everWorked` — a read-only line saying whether audio had ever worked on this device — is
+   * deleted for a different reason, the same day: the owner's verdict on it was "don't know what it's
+   * for", which is a verdict on the ROW, not a request for better wording. It gated nothing and
+   * offered no control, and the signal was already in every bug report
+   * (`getPermissionSnapshot().everWorked`), which is where it was actually read from. The recording
+   * is untouched; only the row is gone. So "Lyd" now carries no owner tools at all.
+   *
    * What is left:
    *
-   *   * `lyd.everWorked` and `udseende.smoothGraphics` are diagnostics and manual
-   *     triggers for things that are automatic. `everWorked` is already in the bug report, so the row
-   *     is duplicate rather than merely technical.
+   *   * `udseende.smoothGraphics` is a manual trigger for something that is automatic.
    *
    * NOT a permission — the app has no roles, and a role tier would today separate the owner from his
    * wife, who is on the same allow-list. The axis is the BUILD: `BL_TIER === 'staging'` (or dev/the
@@ -281,11 +286,6 @@ export const ADULT_IA: AdultGroup[] = [
     items: [
       { id: 'lyd.sfx', label: 'Lydeffekter' },
       { id: 'lyd.music', label: 'Musik' },
-      // Read-only status (Audio activation PRD-01 §4.5): the ONE thing the adult cannot otherwise tell
-      // apart — "sound has never worked on this iPad" vs "it worked and then stopped". Device-scoped
-      // (`bl-audio-ever-worked`), not per-child, and it gates nothing. Listed HERE because the
-      // group/item structure is DATA and guarded; adding it in the pane alone would fail that guard.
-      { id: 'lyd.everWorked', label: 'Lyd på denne enhed', devTool: true },
     ],
   },
   {
