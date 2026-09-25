@@ -207,20 +207,23 @@ Install the production build from TestFlight, then work through this. Each line 
 - Turn WiFi **off**: every game still plays and still speaks
 - The reward ring fills and the sticker ceremony fires in-game at the crossing
 - Min Bog shows earned stickers and a silhouette for the next one
-- Avatar → arithmetic gate → adult area opens; a wrong answer refuses
+- Name pill → "Hvem spiller?" → **Indstillinger** → arithmetic gate → adult area opens; a wrong answer
+  refuses, and the gate asks again on every open (`{ force: true }`)
 
 **Adult settings that change the games**
 - Sværhedsgrad Let / Normal / Svær each visibly change a game (answer count, number range)
 - A per-section override applies to that section only
 - Udseende: each of the four skins renders correctly, and dark mode
-- Lyd: muting silences narration and SFX
+- Lyd: **Lydeffekter** off silences SFX, **Musik** off silences the menu music; narration keeps playing
+  (there is no narration switch and no voice control, by decision 2026-09-20)
 - Privatliv: the AI-voice disclosure is present and readable
 
 **Sign-in**
 - Google sign-in completes in the system browser and returns to the app
 - Sign in with Apple completes
 - Creating a first child offers to adopt the guest book; accepting carries the stickers over
-- Progress syncs to a second device
+- Progress syncs to a second device — sync has **no UI** since 2026-09-19, so judge it by the stickers
+  appearing there, not by any status row
 
 **The things only a device can tell you**
 - Narration sounds right in Danish — letters, numbers, the odd word
