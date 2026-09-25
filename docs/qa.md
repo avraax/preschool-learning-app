@@ -30,20 +30,26 @@ and passes vacuously — `AppErrorBoundary`'s "Prøv igen" and NotFound's "Hjem"
 
 | Command | What it actually proves | Baseline |
 |---|---|---|
-| `npm test` | The pure logic: progression algebra, CRDT merge, difficulty tables, guest gate, config guards | 781 pass |
+| `npm test` | The pure logic: progression algebra, CRDT merge, difficulty tables, guest gate, config guards | 830 pass |
 | `npm run lint` | 0 errors (the warnings are pre-existing) | 0 errors, 24 warnings |
 | `npm run context:check` | The guardrail byte budget still fits | under budget |
-| `npm run audit:check` | Every closed-set narration clip is signed off | clean, 1910 clips |
+| `npm run audit:check` | Every closed-set narration clip is signed off | clean, 1906 clips |
 | `npm run schema:check` | **Both deployments' databases match the code they run** — the check that was missing when sign-in died on production | staging + production IN SYNC |
 | `npm run shots:check` | **App Store Connect holds the same screenshots as the repo** — re-shooting is not uploading, and ASC shows the right filename beside the wrong image | all 12 match |
 | `npm run lexicon:check` | Each PLS lexeme is live **and tested in a real sentence** — a bare word gives a false negative, which cost three wrong diagnoses | `fire` APPLIED |
-| `sweep --phase smoke` | Every route renders, shows **its own** Danish title, and throws no console error or page exception | 27 PASS · 0 FAIL · 1 N/A |
-| `sweep --phase layout` | The same across **8 viewports** — iPad landscape/portrait/split, small iPad, wide, phone both ways — plus **nothing clipped off-screen** | 216 PASS · 0 FAIL · 8 N/A |
-| `sweep --phase audio` | Narration **actually produced sound**, measured, rather than asking anyone to listen | 26 PASS · 0 FAIL · 2 N/A |
-| `sweep --phase difficulty` | Let/Normal/Svær change what the generators produce — not merely that a game reads the table | 16 PASS · 0 FAIL · 5 N/A |
-| `sweep --phase round` | Eight tasks can be driven in a row; play never "ends" | 12 PASS · 0 FAIL · 5 N/A |
-| `sweep --phase ceremony` | Seeds `?rewards=8` and plays to the crossing, so the sticker is paid where it was earned | 9 PASS · 0 FAIL |
-| `sweep --phase live` | **No screen speaks through live Azure** — i.e. every line really is in the prebaked set | 20 PASS · 0 FAIL · 1 N/A |
+| `sweep --phase smoke` | Every route renders, shows **its own** Danish title, and throws no console error or page exception | 27 PASS · 0 FAIL · 0 N/A |
+| `sweep --phase layout` | The same across **8 viewports** — iPad landscape/portrait/split, small iPad, wide, phone both ways — plus **nothing clipped off-screen** | 216 PASS · 0 FAIL · 0 N/A |
+| `sweep --phase audio` | Narration **actually produced sound**, measured, rather than asking anyone to listen | 26 PASS · 0 FAIL · 1 N/A |
+| `sweep --phase difficulty` | Let/Normal/Svær change what the generators produce — not merely that a game reads the table | 16 PASS · 0 FAIL · 4 N/A |
+| `sweep --phase round` | Eight tasks can be driven in a row; play never "ends" | 12 PASS · 0 FAIL · 4 N/A |
+| `sweep --phase ceremony` | Seeds `?rewards=8` and plays to the crossing, so the sticker is paid where it was earned | 8–9 PASS · 0 FAIL |
+| `sweep --phase live` | **No screen speaks through live Azure** — i.e. every line really is in the prebaked set | 20 PASS · 0 FAIL · 0 N/A |
+
+**These baselines moved on 2026-09-20 and the old ones are NOT a finding.** Every N/A that disappeared
+was `/ordleg/mic`, removed with the microphone game (`8e70c54`) — smoke, layout and live now reach zero.
+Difficulty and round each lost one for the same reason. Ceremony is written `8–9` because the ninth is
+`/math/patterns` reaching a crossing inside the driver's click budget, which it does inconsistently; see
+§2.1. A run that matches the OLD numbers now is the thing to look at.
 
 All sweep commands take `--engine chrome|webkit|both`, `--only <substr>` and `--concurrency <n>`.
 **The layout phase is 224 jobs and takes 10–15 minutes** — run it in the background and read the summary.
