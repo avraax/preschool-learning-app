@@ -21,6 +21,8 @@
 //   --concurrency <n>  parallel jobs (default 3; each Chrome job gets its own CDP port)
 //   --only <substr>    restrict to routes containing substr
 //   --json <file>      write the full result set
+//   --vp <a,b>         layout phase only: restrict to named viewports (see VIEWPORTS)
+//   --theme <id>       run under a skin (kid|ocean|space|dino) — every phase otherwise sees only the default
 //
 // Dev servers must be running (Windows PowerShell, not WSL).
 
@@ -40,6 +42,12 @@ const PHASE = opt('--phase', 'smoke')
 const ENGINE = opt('--engine', 'chrome')
 const CONC = parseInt(opt('--concurrency', '3'), 10)
 const ONLY = opt('--only')
+// An unknown id SILENTLY half-works (default tokens, art-less world — gotchas.md), so refuse it here.
+const THEME = opt('--theme')
+if (THEME && !['kid', 'ocean', 'space', 'dino'].includes(THEME)) {
+  console.error(`--theme: unknown skin "${THEME}" (kid|ocean|space|dino)`)
+  process.exit(2)
+}
 
 // ---- route inventory, DERIVED from source (never hand-copied: a stale list is a silent coverage hole)
 function inventory() {
@@ -189,6 +197,17 @@ const VIEWPORTS = [
   { name: 'phone-port', w: 390, h: 844, device: 'iphone' },
 ]
 
+// `--vp iPadPro-land,phone-land` narrows the LAYOUT phase to named viewports. An unknown name is refused,
+// because a typo would otherwise plan zero jobs and print a green-looking summary.
+const VP_ONLY = opt('--vp')?.split(',')
+if (VP_ONLY) {
+  const bad = VP_ONLY.filter((n) => !VIEWPORTS.some((v) => v.name === n))
+  if (bad.length) {
+    console.error(`--vp: unknown viewport(s) ${bad.join(', ')} (${VIEWPORTS.map((v) => v.name).join(', ')})`)
+    process.exit(2)
+  }
+}
+
 function run(cmd) {
   return new Promise((res) => {
     const p = spawn(process.execPath, cmd, { cwd: repo })
@@ -217,7 +236,7 @@ function jobsFor() {
   for (const eng of engines) {
     for (const r of routes) {
       if (PHASE === 'layout') {
-        for (const v of VIEWPORTS) jobs.push({ eng, route: r, vp: v })
+        for (const v of VIEWPORTS) if (!VP_ONLY || VP_ONLY.includes(v.name)) jobs.push({ eng, route: r, vp: v })
       } else {
         jobs.push({ eng, route: r, vp: VIEWPORTS[0] })
       }
@@ -230,7 +249,7 @@ function cmdFor(job, port) {
   // `?rewards=8` seeds the book one slot short of the chapter-1 boundary, so a handful of taps crosses
   // it and the ceremony probe doesn't have to play 200 questions to reach one.
   const seed = PHASE === 'ceremony' ? '&rewards=8' : ''
-  const url = `${BASE}${job.route.route.replace(':type', 'letters')}?nogate=1${seed}`
+  const url = `${BASE}${job.route.route.replace(':type', 'letters')}?nogate=1${seed}${THEME ? `&theme=${THEME}` : ''}`
   const settle = PHASE === 'audio' ? '2500' : '4000' // math boards need time to generate
   const evalJs = PHASE === 'layout' ? BOUNDS : PHASE === 'triggers' ? TRIGGERS
     : PHASE === 'audio' ? AUDIO_TRIGGER

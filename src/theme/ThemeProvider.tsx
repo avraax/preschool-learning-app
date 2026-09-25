@@ -100,6 +100,10 @@ export const AppThemeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         bumpPerfProfile((n) => n + 1)
       }
       if (!progressStore.isAttached()) return
+      // A forced DEV skin outranks the profile. `?nogate=1` attaches a stand-in child with no themeId, so
+      // without this the "absence means default" rule below stamps the forced skin back to Regnbue one
+      // frame after first paint — every `?theme=` capture silently rendered the default skin.
+      if (devThemeId()) return
       const stored = progressStore.get().settings.themeId ?? defaultThemeId
       if (stored !== themeIdRef.current) {
         themeIdRef.current = stored
