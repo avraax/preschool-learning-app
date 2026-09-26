@@ -13,9 +13,9 @@
 // so the desktop and the iPad hear the same thing. TO MAKE THE MUSIC LOUDER OR QUIETER, change
 // MUSIC_TARGET_LUFS and re-run the bake — changing a runtime volume only moves the desktop.
 //
-// Narration (the prebaked Azure clips) measures about -19 LUFS; the target sits ~13 LU under it,
-// the usual place for a bed under speech.
-export const MUSIC_TARGET_LUFS = -32
+// Narration (the prebaked Azure clips) measures about -19 LUFS. Baked at -32 first (~13 LU under
+// it); the owner heard that on a phone build and halved it (2026-09-26) → -38 (−6 dB = 50% volume).
+export const MUSIC_TARGET_LUFS = -38
 
 // Duck under TTS. Works where element volume is settable (desktop/Android); a no-op on iOS, where
 // the bed is already quiet enough in the file to sit under narration.
