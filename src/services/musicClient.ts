@@ -27,7 +27,8 @@ import { SECTION_MENU_PATHS } from '../utils/menuPaths'
 
 // Subtle background bed — sets the mood without pulling focus from the game. Halved from 0.045
 // (2026-09-19): against the SFX channel (cues sit at 0.3–0.6) the music read too loud on the iPad.
-const BASE_VOLUME = 0.0225
+// Halved again to 0.01125 (2026-09-26, before the 1.1 App Store release) — still too loud.
+const BASE_VOLUME = 0.01125
 const DUCK_RATIO = 0.15 // duck hard under TTS (music nearly disappears so narration stays clear)
 const FADE_MS = 800
 const DUCK_FADE_MS = 250
