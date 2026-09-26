@@ -409,6 +409,43 @@ run read `n=4` for a single page load purely from contamination, and looked like
 **What it will not tell you:** how many distinct children, or whether anyone came back. Accept that or go
 to C.
 
+#### Load test 2026-09-26 — the risk is Neon's COMPUTE HOURS, not throughput
+
+Run against **staging** Neon through the real `api/usage.ts` handler. The load rows were tagged
+`app_version = '0.0.1'` and deleted afterwards. The client side was 8 headless-Chrome children playing
+the production-shaped bundle for 20 min, with backgrounding and relaunches. The server side was
+synthetic households replaying that shape.
+
+- **Throughput is a non-issue.** 200 concurrent children for 8 min (3,392 requests) and a burst of 2,000
+  app opens in 30 s: 100% 204, **zero lost writes** (counted back from the table, since the handler
+  answers 204 even when the DB fails), p95 52 ms. The table stays ~64 kB whatever the traffic, because
+  it holds one row per day × event × version.
+- **Real play costs ≈ 51 requests per child per hour, at 2.2 events each**, well under the 120/h floor
+  the 30 s flush implies, because the buffer is often empty.
+- **The binding constraint is the free tier: 100 CU-h/month at 0.25 CU = 400 awake hours.** Past that,
+  Neon suspends compute until the next month, so sign-in, profiles and sync all die, not just counting.
+  Every write wakes a compute that would otherwise sleep after 5 idle minutes. A Monte Carlo over a
+  Danish child's day (`.loadtest/model.mjs` at the time, since deleted) puts the counter alone at
+  **~85 CU-h at 50 daily children and over 100 at ~100**. **Flush frequency barely moves this** (5-min
+  flush: the same hours), because the DB is awake whenever *anyone* played in the last 5 minutes. Only
+  one send per session (~1,000 DAU), server-side aggregation (15-min flush ≈ 42 CU-h at any scale) or a
+  separate database change the curve.
+- **Hence two env switches, both off by default** (`api/usage.ts`, mirrored in `dev-server.js`):
+  `USAGE_DATABASE_URL` puts the counter in its own Neon project, so exhausting that project stops only
+  counting; it was verified writing through its own tagged pool. `USAGE_COUNTER=off` accepts and drops
+  everything; it was verified to leave the table untouched. It is the only brake on binaries in the
+  field, since there is no OTA path.
+- **The pool's 10 s idle timeout cost a TLS handshake per write**: 262 ms vs 32 ms median at the client's
+  30 s cadence. `lib/db.ts` now keeps connections 60 s.
+- **The rate limit behaves.** 8 siblings behind one IP playing flat out lose ~37% of counts past 600/h
+  (from real-play rates, that starts at ~11 players per address). A single-IP flood of 270k requests/min
+  reached the DB 600 times; each refusal cost ~4 ms. **But every refusal is still a Vercel invocation**:
+  such a flood would empty Hobby's 1M/month in minutes. Only an edge rule (Vercel Firewall) stops that
+  before the function runs.
+- **The load test found a worse offender than the counter:** `remoteConsole` was ON in every App Store
+  build (`capacitor://localhost` parses as hostname `localhost`) and looped at ~3,600 requests/s when
+  offline. Fixed in `d10bd8b`.
+
 ### C. Consented, parent-gated statistics (the DR model)
 
 A toggle in **Indstillinger** behind the existing parental gate, default **off**, that enables a persistent

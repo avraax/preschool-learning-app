@@ -26,7 +26,8 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 // `.js`, NOT `.ts` — Vercel compiles each file to a sibling `.js` and rewrites no specifiers, so a
 // `.ts` specifier here is a production-only ERR_MODULE_NOT_FOUND. Pinned by `lib/serverImports.test.ts`.
 import { applyCors, isAllowedOrigin, rateLimit } from '../lib/server-utils.js'
-import { query } from '../lib/db.js'
+import { createPool, query as mainQuery } from '../lib/db.js'
+import { optionalEnv } from '../lib/env.js'
 import { MAX_EVENTS_PER_REQUEST, isAppVersion, isUsageEvent } from '../src/config/usageEvents.js'
 
 /**
@@ -63,6 +64,26 @@ const ALLOWED_KEYS = ['event', 'events', 'appVersion']
  * between the two tiers structurally impossible.
  */
 let ensured = false
+
+/**
+ * THE COUNTER MUST NEVER BE WHAT SUSPENDS THE APP'S DATABASE. Neon Free suspends compute for the rest
+ * of the month once 100 CU-hours are spent, and every write here wakes a compute that would otherwise
+ * sleep after 5 idle minutes — so at ~100 daily children the counter alone keeps it awake past the
+ * allowance (docs/usage-analytics.md, "Load test 2026-09-26"), taking sign-in and sync down with it.
+ * Two env switches, both OFF by default so behaviour is unchanged until someone sets them:
+ *
+ * - `USAGE_DATABASE_URL` — write the counter to its OWN Neon project (own allowance). If that one
+ *   runs dry, only counting stops. Provision it as a marketplace resource with `--prefix USAGE_`.
+ * - `USAGE_COUNTER=off` — accept and drop everything (still 204). The field has no OTA path, so this
+ *   is the only way to stop shipped binaries from writing, and it needs just an env change + redeploy.
+ */
+let usagePool: ReturnType<typeof createPool> | null = null
+async function query(text: string, params?: unknown[]): Promise<unknown> {
+  const separate = optionalEnv('USAGE_DATABASE_URL')
+  if (!separate) return mainQuery(text, params)
+  usagePool ??= createPool(separate)
+  return (await usagePool.query(text, params as never[])).rows
+}
 
 async function ensureTable(): Promise<void> {
   if (ensured) return
@@ -125,6 +146,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
   // FROM HERE THE ANSWER IS ALWAYS 204, whatever the body was and whatever the database did. A
   // counter must not tell a prober which of its inputs was the invalid one, and it must not report a
   // database fault to a child's device. Every rejection below is silent on purpose.
+  if (optionalEnv('USAGE_COUNTER') === 'off') return void res.status(204).end()
+
   try {
     const body = readBody(req.body)
     if (body && Object.keys(body).every((k) => ALLOWED_KEYS.includes(k)) && isAppVersion(body.appVersion)) {

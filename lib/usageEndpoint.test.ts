@@ -162,3 +162,34 @@ test('the dev server mirrors the endpoint', () => {
   assert.match(dev, /app\.post\('\/api\/usage'/, 'dev-server.js has no /api/usage mirror')
   assert.match(dev, /ON CONFLICT \(day, event, app_version\)/, 'the dev mirror does not increment')
 })
+
+// `code()` is wrong for dev-server.js: its Express globs ('/x/*splat') open a false /* block and swallow
+// real code. Line comments are the only prose that could hold these exact strings, so strip just those.
+const devSource = () =>
+  readFileSync(new URL('../dev-server.js', import.meta.url), 'utf8')
+    .split('\n')
+    .map((l) => l.replace(/^\s*\/\/.*$/, ''))
+    .join('\n')
+
+test('the kill switch drops a write BEFORE any database call, in both copies', () => {
+  // Neon Free suspends the app's database for the month once its compute allowance is spent, and the
+  // shell has no OTA path — an env switch is the only brake on binaries already in the field.
+  const devCode = devSource()
+  for (const [name, src, sw] of [
+    ['api/usage.ts', endpointCode, "optionalEnv('USAGE_COUNTER') === 'off'"],
+    ['dev-server.js', devCode.slice(devCode.indexOf("app.post('/api/usage'")), "process.env.USAGE_COUNTER?.trim() === 'off'"],
+  ] as const) {
+    const at = src.indexOf(sw)
+    assert.ok(at >= 0, `${name} has no USAGE_COUNTER=off switch`)
+    assert.ok(at < src.indexOf('INSERT INTO usage_counter'), `${name} checks the switch after the write`)
+  }
+})
+
+test('USAGE_DATABASE_URL routes every counter statement away from the main pool', () => {
+  assert.match(endpointCode, /optionalEnv\('USAGE_DATABASE_URL'\)/, 'api/usage.ts ignores USAGE_DATABASE_URL')
+  assert.ok(!/from '\.\.\/lib\/db\.js'[^\n]*\bquery\b(?! as)/.test(endpointCode), 'the bare main-pool query is still imported')
+  const devCode = devSource()
+  const block = devCode.slice(devCode.indexOf("app.post('/api/usage'"), devCode.indexOf("app.all('/api/usage'"))
+  assert.ok(!block.includes('dbQuery('), 'the dev mirror still writes through the main pool')
+  assert.ok(devCode.includes("process.env.USAGE_DATABASE_URL"), 'dev-server.js ignores USAGE_DATABASE_URL')
+})

@@ -13,28 +13,36 @@ import { requireEnv } from './env.js'
  * explicitly so a future dependency bump can't silently downgrade our TLS verification
  * (accounts PRD §0 gotcha for W1).
  */
-function connectionString(): string {
-  const url = new URL(requireEnv('DATABASE_URL'))
+function connectionString(raw: string): string {
+  const url = new URL(raw)
   const mode = url.searchParams.get('sslmode')
   if (!mode || mode === 'require') url.searchParams.set('sslmode', 'verify-full')
   return url.toString()
 }
 
+/** A pool for any Neon URL, with the same TLS pinning and idle-error guard as the main one. */
+export function createPool(rawUrl: string): pg.Pool {
+  const p = new pg.Pool({
+    connectionString: connectionString(rawUrl),
+    // Small: we're behind Neon's own pooler (`-pooler` host) and a family-scale app never needs
+    // more than a couple of concurrent statements per instance.
+    max: 4,
+    // Longer than the usage counter's 30 s client flush, so a warm instance REUSES its connection.
+    // Measured against staging Neon, one write every 30 s: 10 s idle → 262 ms median (a fresh TLS
+    // handshake every time), 120 s → 32 ms. Kept well under Neon's 5-minute suspend so an idle
+    // connection cannot meaningfully extend how long the compute stays awake.
+    idleTimeoutMillis: 60_000,
+    connectionTimeoutMillis: 10_000,
+  })
+  // An idle-client error must never take the process down (Neon closes idle connections).
+  p.on('error', (err) => console.error('[db] idle client error', err.message))
+  return p
+}
+
 let pool: pg.Pool | null = null
 
 export function getPool(): pg.Pool {
-  if (!pool) {
-    pool = new pg.Pool({
-      connectionString: connectionString(),
-      // Small: we're behind Neon's own pooler (`-pooler` host) and a family-scale app never needs
-      // more than a couple of concurrent statements per instance.
-      max: 4,
-      idleTimeoutMillis: 10_000,
-      connectionTimeoutMillis: 10_000,
-    })
-    // An idle-client error must never take the process down (Neon closes idle connections).
-    pool.on('error', (err) => console.error('[db] idle client error', err.message))
-  }
+  if (!pool) pool = createPool(requireEnv('DATABASE_URL'))
   return pool
 }
 
