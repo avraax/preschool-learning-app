@@ -2,6 +2,7 @@
 
 import { deviceInfo } from './deviceDetection'
 import { apiUrl } from '../config/apiBase'
+import { remoteConsoleEnabled } from '../config/remoteConsolePolicy'
 import { 
   EnhancedErrorLog, 
   parseStackTrace, 
@@ -21,20 +22,20 @@ interface LogEntry {
 
 class RemoteConsole {
   private isEnabled = true
-  
+  // The UN-patched console.error, for this module's own failure reports. Reporting a failed POST
+  // through the patched one POSTs again, and a device with no network then loops forever.
+  private rawError: (...args: unknown[]) => void = console.error.bind(console)
+
   constructor() {
-    const disableConsole = window.location.search.includes('disable-console=true')
-
-    // DECISION (PRD §9.3): remote logging is DEV-ONLY and OFF in production. End users no longer
-    // POST console output to /api/log-error (durable storage isn't wanted). It runs on localhost/dev
-    // so the relative-URL log-bug fix can be exercised; force on elsewhere with ?enable-console=true.
-    const isLocalDev =
-      window.location.hostname === 'localhost' ||
-      window.location.hostname === '127.0.0.1' ||
-      window.location.hostname === '[::1]'
-    const forceEnable = window.location.search.includes('enable-console=true')
-
-    this.isEnabled = !disableConsole && (isLocalDev || forceEnable)
+    // DECISION (PRD §9.3): remote logging is DEV-ONLY and OFF in production — and "production"
+    // includes the native shell, whose `capacitor://localhost` origin the old hostname test mistook
+    // for the dev server. The whole rule lives in `remoteConsolePolicy.ts`.
+    this.isEnabled = remoteConsoleEnabled({
+      dev: import.meta.env?.DEV ?? false,
+      protocol: window.location.protocol,
+      hostname: window.location.hostname,
+      search: window.location.search,
+    })
 
     if (this.isEnabled) {      
       this.interceptConsole()
@@ -247,7 +248,7 @@ class RemoteConsole {
     }).catch(async (error) => {
       // Enhanced error logging for debugging - but only if console exists
       try {
-        const originalConsole = window.console?.error || (() => {})
+        const originalConsole = this.rawError
         
         // Try to get more info about the fetch error
         if (error && typeof error === 'object') {
@@ -293,7 +294,7 @@ class RemoteConsole {
       })
     }).catch(async (error) => {
       try {
-        const originalConsole = window.console?.error || (() => {})
+        const originalConsole = this.rawError
         originalConsole('❌ Enhanced error logging failed:', {
           error: error.message,
           enhancedErrorId: enhancedError.id,

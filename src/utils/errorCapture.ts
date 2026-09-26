@@ -325,6 +325,11 @@ class UserActionTracker {
 
 export const userActionTracker = new UserActionTracker()
 
+/** True for the remote console's own endpoint, which the interceptor must never report on. */
+export function isLogEndpoint(url: unknown): boolean {
+  return String(url ?? '').includes('/api/log-error')
+}
+
 // Network interceptor
 export function setupNetworkInterceptor(onError: (error: EnhancedErrorLog) => void) {
   // Intercept fetch
@@ -332,7 +337,10 @@ export function setupNetworkInterceptor(onError: (error: EnhancedErrorLog) => vo
   window.fetch = async function(...args) {
     const startTime = Date.now()
     const requestInfo = extractRequestInfo(args)
-    
+    // The reporter's OWN endpoint is never reported on: a failed `/api/log-error` POST would call
+    // `onError`, which POSTs to `/api/log-error` again — a self-feeding loop on any offline device.
+    if (isLogEndpoint(requestInfo.url)) return originalFetch.apply(this, args)
+
     try {
       const response = await originalFetch.apply(this, args)
       
