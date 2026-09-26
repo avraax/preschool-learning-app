@@ -79,6 +79,10 @@ auth/profile gate has opened**; entering a game/browse screen fades it out so na
 It is a **separate channel** from TTS and SFX — never routed through `SimplifiedAudioController` — and it
 honours the Musik switch in "Indstillinger" → Lyd (`progressStore.settings.musicEnabled`).
 
+**Its level is baked into the files, never a runtime volume:** iOS ignores `<audio>.volume`, so two
+"halve the music" commits were heard on the desktop and changed nothing in the App Store build. Change
+`MUSIC_TARGET_LUFS` (`src/config/musicLevel.ts`) and run `npm run music:bake` (masters in `art-src/music/`).
+
 **The gate half cannot be inferred from the route, and it is not a special case.** `AppThemeProvider` starts
 the bed and sits ABOVE `AuthGate` in `main.tsx`, and the lock screen lives at `/`, which IS a menu path — so
 the bed played over the login screen and through the whole Google round trip while being *correct* about the

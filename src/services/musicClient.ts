@@ -3,6 +3,7 @@ import { progressStore } from './progressStore'
 import { simplifiedAudioController } from '../utils/SimplifiedAudioController'
 import { devMusicOn } from '../utils/devHarness'
 import { SECTION_MENU_PATHS } from '../utils/menuPaths'
+import { musicVolume } from '../config/musicLevel'
 
 // Per-world ambient music (UI/UX Overhaul PRD §5.6).
 //
@@ -25,11 +26,11 @@ import { SECTION_MENU_PATHS } from '../utils/menuPaths'
 // Tracks are per-world (WORLD_MUSIC). Worlds without a track are '' → silent (no music).
 // Missing/broken files degrade to silence (onloaderror).
 
-// Subtle background bed — sets the mood without pulling focus from the game. Halved from 0.045
-// (2026-09-19): against the SFX channel (cues sit at 0.3–0.6) the music read too loud on the iPad.
-// Halved again to 0.01125 (2026-09-26, before the 1.1 App Store release) — still too loud.
-const BASE_VOLUME = 0.01125
-const DUCK_RATIO = 0.15 // duck hard under TTS (music nearly disappears so narration stays clear)
+// THE LEVEL IS BAKED INTO THE FILES, not set here — iOS ignores <audio>.volume, so a runtime
+// BASE_VOLUME only ever reached the desktop (two "halve the music" commits did nothing on the iPad).
+// To change it: MUSIC_TARGET_LUFS in src/config/musicLevel.ts, then `npm run music:bake`.
+// The fades and the TTS duck below still work where element volume is settable; on iOS they are
+// no-ops and the bed plays at the baked level.
 const FADE_MS = 800
 const DUCK_FADE_MS = 250
 
@@ -41,11 +42,6 @@ const WORLD_MUSIC: Record<string, string> = {
   ocean: '/sounds/music/ocean.mp3',
   space: '/sounds/music/space.mp3',
   dino: '/sounds/music/dino.mp3',
-}
-
-// Per-world volume multiplier — loudness-matches hot masters to the calm ones (default 1).
-const WORLD_GAIN: Record<string, number> = {
-  space: 0.3, // "Galaxy/Universe" master is ~11 dB hotter than the others → pull it down to match
 }
 
 // Optional per-world loop trim (seconds). When a track has an intro/outro fade or dead air, we loop
@@ -78,7 +74,6 @@ interface Track {
   world: string
   howl: Howl
   id: number
-  gain: number // per-world volume multiplier (loudness match)
 }
 
 class MusicClient {
@@ -189,13 +184,8 @@ class MusicClient {
     }
   }
 
-  private volumeFor(gain: number): number {
-    const base = BASE_VOLUME * gain
-    return this.ttsActive ? base * DUCK_RATIO : base
-  }
-
   private targetVolume(): number {
-    return this.volumeFor(this.current?.gain ?? 1)
+    return musicVolume(this.ttsActive)
   }
 
   private applyVolume(): void {
@@ -247,7 +237,6 @@ class MusicClient {
     }
     const trim = WORLD_LOOP[world] || {}
     const loopStart = trim.loopStart ?? 0
-    const gain = WORLD_GAIN[world] ?? 1
     // A trimmed body needs a looping sprite; otherwise fall back to a plain full-file native loop.
     const hasBody = typeof trim.loopEnd === 'number' && trim.loopEnd > loopStart
 
@@ -288,13 +277,13 @@ class MusicClient {
       // Group-level fade (no id): each Howl holds exactly one looping sound, so group volume ==
       // the sound's volume — and applyVolume()/stop()/the health getter all read the group, so
       // driving everything through the group keeps ducking + reporting consistent.
-      howl.fade(0, this.volumeFor(gain), FADE_MS)
+      howl.fade(0, this.targetVolume(), FADE_MS)
     } catch {
       /* ignore */
     }
 
     const old = this.current
-    this.current = { world, howl, id, gain }
+    this.current = { world, howl, id }
     this.hiddenPaused = false
     this.log(`play ${world} html5${hasBody ? ' body-loop' : ' full-loop'}`)
 

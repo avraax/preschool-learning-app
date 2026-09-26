@@ -9,7 +9,8 @@
   "scripts": {
     "dev": "vite",
     "dev:api": "node --env-file=.env.local --import ./scripts/js-to-ts-resolve.mjs dev-server.js",
-    "test": "node --import ./scripts/js-to-ts-resolve.mjs --test \"src/**/*.test.ts\" \"lib/**/*.test.ts\"",
+    "music:bake": "node scripts/bake-music.mjs",
+    "test":"node --import ./scripts/js-to-ts-resolve.mjs --test \"src/**/*.test.ts\" \"lib/**/*.test.ts\"",
     "tts:eval": "node --env-file=.env.local --import ./scripts/js-to-ts-resolve.mjs tts-voice-eval.mjs",
     "tts:prebake": "node --env-file=.env.local --import ./scripts/js-to-ts-resolve.mjs prebake-tts.mjs",
     "audit:check": "node --import ./scripts/js-to-ts-resolve.mjs scripts/narration-audit.mjs",
