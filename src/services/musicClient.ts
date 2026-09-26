@@ -3,7 +3,7 @@ import { progressStore } from './progressStore'
 import { simplifiedAudioController } from '../utils/SimplifiedAudioController'
 import { devMusicOn } from '../utils/devHarness'
 import { SECTION_MENU_PATHS } from '../utils/menuPaths'
-import { musicVolume } from '../config/musicLevel'
+import { MUSIC_FADE_OUT_MS, musicVolume } from '../config/musicLevel'
 
 // Per-world ambient music (UI/UX Overhaul PRD §5.6).
 //
@@ -76,6 +76,22 @@ interface Track {
   id: number
 }
 
+interface GainFade {
+  source: MediaElementAudioSourceNode
+  gain: GainNode
+  el: HTMLMediaElement
+}
+
+// The last fade-out, for bug reports and the fade probe. `gain` is only set on the WebAudio path.
+interface FadeRecord {
+  world: string
+  mode: 'gain' | 'element'
+  ms: number
+  startedAt: number
+  doneAt: number | null
+  gain: GainNode | null
+}
+
 class MusicClient {
   private enabled = false
   private ttsActive = false
@@ -85,6 +101,7 @@ class MusicClient {
   private hiddenPaused = false // paused because the app was backgrounded (not user-disabled)
   private inGame = false // suppressed because the current route is a game/content screen (not a menu)
   private lastError: string | null = null
+  private lastFade: FadeRecord | null = null
 
   // Gate suppression — the bed must stay silent until the app is actually ON SCREEN. This is not
   // route-based and cannot be: `AppThemeProvider` (which calls setWorld) sits ABOVE the auth gate in
@@ -289,18 +306,7 @@ class MusicClient {
 
     if (old) {
       this.log(`switch ${old.world}→${world}`)
-      try {
-        old.howl.fade(old.howl.volume(), 0, FADE_MS)
-      } catch {
-        /* ignore */
-      }
-      window.setTimeout(() => {
-        try {
-          old.howl.unload()
-        } catch {
-          /* ignore */
-        }
-      }, FADE_MS + 80)
+      this.fadeOutAndUnload(old, FADE_MS)
     }
   }
 
@@ -326,18 +332,89 @@ class MusicClient {
     this.current = null
     this.hiddenPaused = false
     if (!t) return
-    try {
-      t.howl.fade(t.howl.volume(), 0, FADE_MS)
-    } catch {
-      /* ignore */
+    this.fadeOutAndUnload(t, MUSIC_FADE_OUT_MS)
+  }
+
+  // The child is about to leave for `to` (called on the TAP, by the transition wipe). Leaving for a
+  // screen with no music starts the fade NOW, so it runs under the wipe instead of after it; the
+  // route change that follows finds the bed already going and is a no-op.
+  leavingFor(to: string): void {
+    this.setInGame(!routeAllowsMusic(to))
+  }
+
+  // Fade a track out over `ms`, then unload it.
+  //
+  // iOS ignores <audio>.volume, so Howler's html5 fade is a no-op there and the bed used to play at
+  // full level until unload() cut it dead. So, when Howler's WebAudio context is running, the element
+  // is routed through a GainNode for its LAST `ms` only and the gain is ramped — that works on every
+  // platform, and normal playback never depends on WebAudio (the iOS session-interrupt crash that
+  // moved music off WebAudio in the first place). If anything here fails, the old path runs: the
+  // html5 fade (desktop) and the unload on time (iOS — abrupt, exactly as before).
+  private fadeOutAndUnload(t: Track, ms: number): void {
+    const graph = this.gainFade(t, ms)
+    if (!graph) {
+      try {
+        t.howl.fade(t.howl.volume(), 0, ms)
+      } catch {
+        /* ignore */
+      }
     }
+    this.log(`fade-out ${t.world} ${ms}ms ${graph ? 'gain' : 'element'}`)
+    const fade: FadeRecord = {
+      world: t.world,
+      mode: graph ? 'gain' : 'element',
+      ms,
+      startedAt: Date.now(),
+      doneAt: null,
+      gain: graph?.gain ?? null,
+    }
+    this.lastFade = fade
     window.setTimeout(() => {
       try {
         t.howl.unload()
       } catch {
         /* ignore */
       }
-    }, FADE_MS + 80)
+      if (graph) {
+        try {
+          const pool = (Howler as unknown as { _html5AudioPool?: unknown[] })._html5AudioPool
+          const i = Array.isArray(pool) ? pool.indexOf(graph.el) : -1
+          if (i >= 0) pool!.splice(i, 1)
+          graph.source.disconnect()
+          graph.gain.disconnect()
+        } catch {
+          /* ignore */
+        }
+      }
+      if (fade === this.lastFade) fade.doneAt = Date.now()
+    }, ms + 80)
+  }
+
+  private gainFade(t: Track, ms: number): GainFade | null {
+    try {
+      const ctx = Howler.ctx as AudioContext | undefined
+      if (!ctx || ctx.state !== 'running' || typeof ctx.createMediaElementSource !== 'function') return null
+      // Howler keeps the <audio> element on the sound (`_node`); private, but stable across 2.2.x.
+      const sound = (t.howl as unknown as { _soundById(id: number): { _node?: unknown } | null })._soundById(t.id)
+      const el = sound?._node
+      if (!(el instanceof HTMLMediaElement) || el.paused) return null
+      // An element can be bound to a MediaElementSource only once, and it then plays ONLY through
+      // that graph. Howler returns unloaded html5 elements to a shared pool for reuse, so pull this
+      // one out first — a later Howl reusing it would be routed into our disconnected graph: silent.
+      // (The strip runs right after unload(), which is where Howler puts it back — see fadeOutAndUnload.)
+      const source = ctx.createMediaElementSource(el)
+      const gain = ctx.createGain()
+      source.connect(gain)
+      gain.connect(ctx.destination)
+      // Ease-out cosine (equal-power) — a linear ramp to zero sounds like a cut at the tail.
+      const curve = new Float32Array(32).map((_, i) => Math.cos((i / 31) * (Math.PI / 2)))
+      curve[31] = 0
+      gain.gain.setValueCurveAtTime(curve, ctx.currentTime, ms / 1000)
+      return { source, gain, el }
+    } catch (e) {
+      this.lastError = `gainfade:${String(e)}`
+      return null
+    }
   }
 
   // App backgrounded/closed: pause the element so audio doesn't linger behind the PWA on iOS.
@@ -403,6 +480,7 @@ class MusicClient {
     gateBlocking: boolean
     ctxState: string | null
     lastError: string | null
+    lastFade: { world: string; mode: 'gain' | 'element'; ms: number; ageMs: number; done: boolean } | null
   } {
     let playing = false
     let ctxState: string | null = null
@@ -429,6 +507,15 @@ class MusicClient {
       gateBlocking: this.gateBlocking(),
       ctxState,
       lastError: this.lastError,
+      lastFade: this.lastFade
+        ? {
+            world: this.lastFade.world,
+            mode: this.lastFade.mode,
+            ms: this.lastFade.ms,
+            ageMs: Date.now() - this.lastFade.startedAt,
+            done: this.lastFade.doneAt != null,
+          }
+        : null,
     }
   }
 }

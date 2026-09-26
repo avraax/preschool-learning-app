@@ -8,6 +8,7 @@ import { useReducedMotion } from '../../../hooks/useReducedMotion'
 import { directionFor, routeDepth, type TravelDirection } from '../../../config/routeDepth'
 import { routeKind } from '../scene/routeKind'
 import { sfx } from '../../../services/sfxClient'
+import { musicClient } from '../../../services/musicClient'
 import { mascotBus } from '../../../services/mascotBus'
 
 // Route-transition orchestrator (Liveliness PRD-02 §1). A tiny state machine that drives a
@@ -81,6 +82,8 @@ export const TransitionProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       const dir = forcedDir ?? directionFor(pathnameRef.current, to)
       // Travel cue at cover start (per-skin forward whoosh, or the softer reverse on back).
       sfx.play(dir === 'back' ? 'back' : descriptor.sfx)
+      // Leaving for a game → the music bed starts fading on the tap, under the wipe.
+      musicClient.leavingFor(to)
       // Reduced motion, `none` fallback → plain navigate, no overlay at all.
       if (reduce && descriptor.reduced === 'none') {
         navigate(to, opts?.replace ? { replace: true } : undefined)

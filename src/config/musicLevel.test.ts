@@ -29,6 +29,24 @@ test('musicClient sets no level of its own (it would reach the desktop only)', (
   assert.doesNotMatch(src, /BASE_VOLUME|WORLD_GAIN|volume:\s*0\.\d/)
 })
 
+const stripComments = (s: string) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '')
+
+test('the fade-out into a game has ONE knob and starts on the tap', () => {
+  const client = stripComments(readFileSync(path.join(ROOT, 'src', 'services', 'musicClient.ts'), 'utf8'))
+  // stop() — the path every "leave for a game" takes — fades over MUSIC_FADE_OUT_MS, nothing local.
+  const stop = client.slice(client.indexOf('stop(): void {'), client.indexOf('leavingFor('))
+  assert.match(stop, /fadeOutAndUnload\(t, MUSIC_FADE_OUT_MS\)/)
+  // …through the WebAudio gain ramp, because <audio>.volume does nothing on iOS.
+  assert.match(client, /setValueCurveAtTime\(/)
+  // The wipe tells the bed on the tap, before the cover runs — not after the route has swapped.
+  const provider = stripComments(
+    readFileSync(path.join(ROOT, 'src', 'components', 'common', 'transition', 'TransitionProvider.tsx'), 'utf8'),
+  )
+  const start = provider.slice(provider.indexOf('const start = useCallback'), provider.indexOf('const navigateWithTransition'))
+  assert.ok(start.indexOf('musicClient.leavingFor(to)') >= 0, 'start() must call musicClient.leavingFor(to)')
+  assert.ok(start.indexOf('musicClient.leavingFor(to)') < start.indexOf("setPhase('covering')"))
+})
+
 test('the shipped files were baked at the current MUSIC_TARGET_LUFS', () => {
   assert.equal(
     MUSIC_BAKED_TARGET_LUFS,

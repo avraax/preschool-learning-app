@@ -82,6 +82,9 @@ honours the Musik switch in "Indstillinger" → Lyd (`progressStore.settings.mus
 **Its level is baked into the files, never a runtime volume:** iOS ignores `<audio>.volume`, so two
 "halve the music" commits were heard on the desktop and changed nothing in the App Store build. Change
 `MUSIC_TARGET_LUFS` (`src/config/musicLevel.ts`) and run `npm run music:bake` (masters in `art-src/music/`).
+For the same reason the fade-out into a game is a **WebAudio gain ramp on the element's last
+`MUSIC_FADE_OUT_MS`** (the one knob, same file), started on the tap by the wipe. Probe it with
+`.claude/skills/ui-screenshot/music-fade.mjs`.
 
 **The gate half cannot be inferred from the route, and it is not a special case.** `AppThemeProvider` starts
 the bed and sits ABOVE `AuthGate` in `main.tsx`, and the lock screen lives at `/`, which IS a menu path — so

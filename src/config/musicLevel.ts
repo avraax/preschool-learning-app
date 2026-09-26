@@ -14,8 +14,15 @@
 // MUSIC_TARGET_LUFS and re-run the bake — changing a runtime volume only moves the desktop.
 //
 // Narration (the prebaked Azure clips) measures about -19 LUFS. Baked at -32 first (~13 LU under
-// it); the owner heard that on a phone build and halved it (2026-09-26) → -38 (−6 dB = 50% volume).
-export const MUSIC_TARGET_LUFS = -38
+// it); the owner heard that on a phone build and halved it twice (2026-09-26) → -38 → -44
+// (each −6 dB = 50% volume).
+export const MUSIC_TARGET_LUFS = -44
+
+// How long the bed takes to fade out when the child leaves a menu for a game (or any other
+// non-music screen). THE one knob for that fade: it starts on the tap, so it runs under the wipe
+// (coverMs 180–260 per skin) and is gone by the time the game appears. Works on iOS too — the fade
+// is a WebAudio gain ramp, not <audio>.volume (see musicClient.fadeOutAndUnload).
+export const MUSIC_FADE_OUT_MS = 500
 
 // Duck under TTS. Works where element volume is settable (desktop/Android); a no-op on iOS, where
 // the bed is already quiet enough in the file to sit under narration.
