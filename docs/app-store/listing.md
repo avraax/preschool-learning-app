@@ -162,11 +162,12 @@ Two deliberate choices, recorded so they are not re-litigated as oversights:
 ```
 Denne opdatering rydder op og retter det, der drillede.
 
+• Appen bruger nu langt mindre strøm og data. Især uden internet, hvor den før arbejdede i tomgang.
+• Musikken er dæmpet, og den toner ud, når et spil åbnes, så stemmen kan høres.
 • Mikrofonspillet "Sig et Ord" er fjernet. Appen bruger nu hverken mikrofon eller kamera.
 • Glemt kode til de voksnes område kan nu nulstilles. Før lå knappen bag den lås, den skulle åbne.
 • Log ind er blevet enklere: Google eller Apple, og ikke andet.
 • Spillene fylder skærmen bedre på telefon, når den ligger ned.
-• Musikken er skruet ned, så lydene i spillene kan høres.
 • "Rapportér et problem" hedder nu "Send feedback" — skriv gerne, også hvis det bare er en idé.
 • Appen tæller nu anonymt, hvor ofte hvert spil åbnes. Ét tal pr. dag pr. spil, aldrig noget om hvem eller hvilken enhed. Det står i privatlivspolitikken.
 ```
