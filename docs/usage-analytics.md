@@ -406,6 +406,27 @@ table. A verification run that asserts exact counts must use its own API and Vit
 run read `n=4` for a single page load purely from contamination, and looked like a bug in the counter.
 `React.StrictMode` separately doubles route events in dev; the production bundle is 1×, measured.
 
+**READING THE TABLE: format the date on the SERVER, or you will report the wrong day.** `node-postgres`
+parses a `date` column into a JS `Date` at LOCAL midnight, so `row.day.toISOString().slice(0,10)` then
+subtracts the machine's UTC offset and rolls the date back a day on any positive offset (CEST is +2).
+This produced a whole day-by-day series that was uniformly one day early, and a report that release day
+had no traffic when it was in fact the busiest day in the table. Use
+`to_char(day,'YYYY-MM-DD')` and let Postgres return a string. The same trap hits `now() at time zone
+'UTC'`, which returns a *timestamp without time zone* and is shifted the same way — select plain `now()`
+instead.
+
+**No time of day, and that is the design.** The table is a counter, not a log: there is no row per event
+to timestamp, only a total per screen per day. A timestamp is also one of the attributes that makes a
+row re-identifiable — at these volumes "opened Ordleg at 14:02, left at 14:04" is one child, which is
+exactly the line that keeps this data outside GDPR.
+
+**An `hour` column is DEFERRED, not rejected** (owner, 2026-09-29). It would stay aggregate, with no
+device or session identifier and no way to link two hours to the same child, so it is defensible — but
+not yet, for two reasons. At current volume most hour buckets would be `n=1`, which reads as one child's
+routine rather than a statistic. And it needs a REAL migration on both tiers: the self-healing
+`CREATE TABLE IF NOT EXISTS` only ever creates, so it cannot add a column, which reintroduces the manual
+per-tier step this design removed. Revisit when an hour bucket is a crowd.
+
 **What it will not tell you:** how many distinct children, or whether anyone came back. Accept that or go
 to C.
 
