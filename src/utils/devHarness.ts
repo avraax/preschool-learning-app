@@ -260,3 +260,23 @@ export const devKidName = (): string | null => {
   const clean = raw.replace(/[^\p{L} '-]/gu, '').replace(/\s+/g, ' ').trim().slice(0, 12)
   return clean || null
 }
+
+/**
+ * `?sessiongap=<ms>` — shrink the usage counter's 30-minute session gap so a probe can drive a
+ * backgrounded-and-resumed session without waiting half an hour.
+ *
+ * Exists because the bug it verifies was invisible to every other rung: `app_open` only fired on a
+ * page LOAD, so in the shell a child returning after hours was never counted, and production read 3
+ * opens against 205 events. The fix hangs on a real `visibilitychange`, and nothing but a real engine
+ * proves that the event reaches the listener.
+ *
+ * DEV/harness only, like everything else here — a plain `vite build` folds the guard to a constant and
+ * drops it, so the shipped binary always uses the real 30 minutes.
+ */
+export const devSessionGapMs = (): number | null => {
+  if (!DEV) return null
+  const raw = readParams().get('sessiongap')
+  if (raw == null) return null
+  const ms = Number(raw)
+  return Number.isFinite(ms) && ms >= 0 ? ms : null
+}

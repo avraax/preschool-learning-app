@@ -38,6 +38,7 @@
 import { BUILD_INFO } from '../config/version.ts'
 import { apiUrl } from '../config/apiBase.ts'
 import { APP_OPEN_EVENT, MAX_EVENTS_PER_REQUEST, eventForPath } from '../config/usageEvents.ts'
+import { devSessionGapMs } from '../utils/devHarness.ts'
 
 /**
  * `apiUrl()` IS LOAD-BEARING, not a nicety. In the native shell the page origin is
@@ -49,6 +50,24 @@ const USAGE_PATH = '/api/usage'
 
 /** Long enough to collapse a burst of navigation, short enough that a normal sitting loses nothing. */
 const FLUSH_INTERVAL_MS = 30_000
+
+/**
+ * How long the app must have been away before coming back counts as a NEW session.
+ *
+ * WHY THIS EXISTS (owner, 2026-10-03). `app_open` used to fire once per page LOAD, and in the native
+ * shell the WebView survives backgrounding — so a child who returns to the app an hour later resumed
+ * without a reload and was never counted. Production showed 3 opens against 205 events in one day,
+ * which is not three sittings. The number was wrong in the one direction the data cannot reveal about
+ * itself, which is why it was worth fixing rather than explaining.
+ *
+ * 30 minutes is the ordinary session-gap convention. It is deliberately long: a child who puts the
+ * iPad down for a minute, or whose screen locks mid-game, is still in the same sitting, and counting
+ * that as a new open would inflate the number in the opposite direction.
+ *
+ * `app_open` therefore means "a session started" from v1.2 on, not "the app cold-started". Nothing
+ * else changes — same event name, same allow-list, same privacy answers.
+ */
+let sessionGapMs = 30 * 60 * 1000
 
 /**
  * Idle if the browser offers it, a macrotask otherwise. `requestIdleCallback` reached Safari 16.4, so
@@ -126,19 +145,69 @@ function arm(): void {
   ;(timer as unknown as { unref?: () => void }).unref?.()
 }
 
+// ---- session tracking ---------------------------------------------------------------------------
+
+/** When the app was last backgrounded. Null while it is in the foreground, or after a counted resume. */
+let lastHiddenAt: number | null = null
+/** When anything was last reported. Seeds the idle path below when no hide event ever arrives. */
+let lastActivityAt = Date.now()
+
+/**
+ * Has the app been away long enough that coming back is a NEW session?
+ *
+ * Pure, so the rule can be tested without a clock or a DOM. Takes whichever signal is more recent is
+ * NOT what it does — it takes the explicit hide if there was one, and falls back to "nothing has
+ * happened at all" otherwise. The fallback is the important half: if `visibilitychange` never fires
+ * (unproven on a backgrounded Capacitor WKWebView, and the failure is silent), a child returning and
+ * tapping still produces a route event after a long quiet gap, and that counts.
+ */
+export function isNewSession(
+  hiddenAt: number | null,
+  activityAt: number,
+  now: number,
+  gapMs: number,
+): boolean {
+  return now - (hiddenAt ?? activityAt) >= gapMs
+}
+
+/** Count a resumed session, at most once per return. */
+function maybeCountResume(now: number): void {
+  if (!isNewSession(lastHiddenAt, lastActivityAt, now, sessionGapMs)) return
+  // Clear BOTH signals, or the route event that follows a visibility resume counts a second time.
+  lastHiddenAt = null
+  lastActivityAt = now
+  post([APP_OPEN_EVENT], true)
+}
+
 let listenersInstalled = false
 
 /**
- * Flush when the app goes away. BOTH events on purpose: `visibilitychange` is the one iOS actually
- * fires when an app is backgrounded or a tab is switched, and `pagehide` covers a real unload. Either
- * may fail, and a duplicate flush is free because the buffer empties on the first.
+ * Flush when the app goes away, and count a session when it comes back.
+ *
+ * BOTH hide events on purpose: `visibilitychange` is the one iOS fires when an app is backgrounded or
+ * a tab is switched, and `pagehide` covers a real unload. Either may fail, and a duplicate flush is
+ * free because the buffer empties on the first.
  */
 function installHideListeners(): void {
   if (listenersInstalled || typeof document === 'undefined') return
   listenersInstalled = true
+  // DEV/harness only — `?sessiongap=<ms>` so a probe need not wait 30 minutes. Absent from any
+  // deployed build; see devHarness.ts.
+  const devGap = devSessionGapMs()
+  if (devGap !== null) sessionGapMs = devGap
   try {
     document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'hidden') flush(true)
+      if (document.visibilityState === 'hidden') {
+        lastHiddenAt = Date.now()
+        flush(true)
+      } else if (document.visibilityState === 'visible' && lastHiddenAt !== null) {
+        // ONLY after a real hide. A `visible` event with no preceding `hidden` is not a return, and
+        // counting it on elapsed time alone over-counts: a WebKit probe that pinned `visibilityState`
+        // produced a third session from one page load, because every later engine-fired event then
+        // read as "visible" and the idle clock had moved on. The genuinely-idle case is covered by
+        // `reportRoute` below, which needs an actual tap and so cannot fire on its own.
+        maybeCountResume(Date.now())
+      }
     })
     window.addEventListener('pagehide', () => flush(true))
   } catch {
@@ -158,6 +227,7 @@ export function reportAppOpen(): void {
   try {
     if (openReported) return
     openReported = true
+    lastActivityAt = Date.now()
     installHideListeners()
     post([APP_OPEN_EVENT], false)
   } catch {
@@ -174,6 +244,11 @@ export function reportRoute(pathname: string): void {
     const event = eventForPath(pathname)
     if (!event) return
     installHideListeners()
+    // BEFORE buffering: a screen entered after a long quiet gap is the start of a new sitting, and
+    // this is the only path that still works if the shell never fires `visibilitychange`.
+    const now = Date.now()
+    maybeCountResume(now)
+    lastActivityAt = now
     buffer.push(event)
     // Never let the buffer exceed what one request may carry — flush instead of dropping.
     if (buffer.length >= MAX_EVENTS_PER_REQUEST) flush()
@@ -183,12 +258,20 @@ export function reportRoute(pathname: string): void {
   }
 }
 
-/** Test seam only — resets the once-per-start latch, the buffer and the timer. */
+/** Test seam only — resets the once-per-start latch, the buffer, the timer and the session clock. */
 export function __resetUsagePingForTests(): void {
   openReported = false
   buffer = []
   if (timer) clearTimeout(timer)
   timer = null
+  lastHiddenAt = null
+  lastActivityAt = Date.now()
+  sessionGapMs = 30 * 60 * 1000
+}
+
+/** Test seam only — shrink the 30-minute session gap so a test need not wait for it. */
+export function __setSessionGapForTests(ms: number): void {
+  sessionGapMs = ms
 }
 
 /** Test seam only — force the pending batch out now. */

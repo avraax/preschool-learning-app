@@ -104,3 +104,26 @@ test('?kidname= cannot widen the resetAll fence, because that fence keys on the 
     'the stand-in id became a template literal — it must never be derived from the name',
   )
 })
+
+// ─── `?sessiongap=` — shrinks the usage counter's session gap, and must be DEV-only ────────────────
+//
+// Added 2026-10-03 so a probe can drive a backgrounded-and-resumed session without waiting 30 minutes.
+// If it ever reached a shipped build, anyone could set `?sessiongap=0` and turn every screen change
+// into a counted session, quietly destroying the one number the counter exists to produce.
+
+test('?sessiongap= is DEV-only and refuses nonsense', () => {
+  const start = code.indexOf('export const devSessionGapMs')
+  assert.ok(start > 0, 'devSessionGapMs() has been renamed — re-point this guard')
+  // Slice to the next top-level declaration. Deliberately NOT a regex literal: writing one through a
+  // shell heredoc turned `\n` into a real line break and produced an unterminated regexp.
+  const rest = code.slice(start)
+  const next = rest.indexOf('\nexport ', 1)
+  const fn = next < 0 ? rest : rest.slice(0, next)
+  // The DEV fence must come BEFORE the param is read, like every other reader in this module.
+  const gateAt = fn.indexOf('if (!DEV) return null')
+  const readAt = fn.indexOf("get('sessiongap')")
+  assert.ok(gateAt > -1, '?sessiongap= no longer checks DEV — it would ship')
+  assert.ok(readAt > gateAt, 'the param is read before the DEV fence')
+  // A negative or non-numeric gap would make every event a new session.
+  assert.match(fn, /Number\.isFinite\(ms\)\s*&&\s*ms\s*>=\s*0/, 'the gap is not validated')
+})

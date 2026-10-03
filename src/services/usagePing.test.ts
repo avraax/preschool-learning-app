@@ -4,6 +4,8 @@ import { MAX_EVENTS_PER_REQUEST } from '../config/usageEvents.ts'
 import {
   __flushUsagePingForTests,
   __resetUsagePingForTests,
+  __setSessionGapForTests,
+  isNewSession,
   reportAppOpen,
   reportRoute,
 } from './usagePing.ts'
@@ -263,5 +265,199 @@ test('a 500 is as uneventful as a 204', async () => {
     assert.equal(f.calls.length, 1)
   } finally {
     f.restore()
+  }
+})
+
+// ---- sessions: app_open must count a RESUME, not just a cold start -------------------------------
+//
+// Owner, 2026-10-03. Production showed 3 opens against 205 events in a day. In the native shell the
+// WebView survives backgrounding, so a child returning hours later resumed WITHOUT a page load and was
+// never counted — the number was wrong in the one direction the data cannot reveal about itself.
+//
+// Node has no `document`, so these install a fake one. Plain assignment is safe here (unlike
+// `navigator`, which Node ≥21 defines and which needs defineProperty — see CLAUDE.md).
+
+const domListeners: Record<string, Array<() => void>> = {}
+const fakeDoc = {
+  visibilityState: 'visible' as 'visible' | 'hidden',
+  addEventListener: (t: string, fn: () => void) => { (domListeners[t] ||= []).push(fn) },
+}
+;(globalThis as any).document = fakeDoc
+;(globalThis as any).window = {
+  addEventListener: (t: string, fn: () => void) => { (domListeners[t] ||= []).push(fn) },
+}
+
+/** Drive the real listeners the module registered. */
+function visibility(state: 'visible' | 'hidden'): void {
+  fakeDoc.visibilityState = state
+  ;(domListeners['visibilitychange'] || []).forEach((f) => f())
+}
+
+const opens = (calls: FetchCall[]) =>
+  calls.flatMap((c) => (JSON.parse(String(c.init.body)) as { events: string[] }).events)
+    .filter((e) => e === 'app_open').length
+
+test('isNewSession: the rule itself', () => {
+  const GAP = 1000
+  // An explicit hide is the signal when there was one.
+  assert.equal(isNewSession(0, 0, GAP, GAP), true, 'away exactly the gap counts')
+  assert.equal(isNewSession(0, 0, GAP - 1, GAP), false, 'away less than the gap does not')
+  // The hide wins over activity, even when activity is more recent.
+  assert.equal(isNewSession(0, 900, GAP, GAP), true, 'a long hide counts despite recent activity')
+  // With no hide at all, a long quiet gap is the fallback signal.
+  assert.equal(isNewSession(null, 0, GAP, GAP), true, 'idle for the gap counts')
+  assert.equal(isNewSession(null, 500, GAP, GAP), false, 'idle for less than the gap does not')
+})
+
+test('backgrounding and returning AFTER the gap counts a new session', async () => {
+  __resetUsagePingForTests()
+  __setSessionGapForTests(40)
+  const f = installFetch(ok)
+  try {
+    reportAppOpen()
+    await settle()
+    assert.equal(opens(f.calls), 1, 'the cold start should count once')
+
+    visibility('hidden')
+    await new Promise((r) => setTimeout(r, 60)) // longer than the gap
+    visibility('visible')
+    await settle()
+    assert.equal(opens(f.calls), 2, 'the resume was not counted — this is the bug being fixed')
+  } finally {
+    f.restore()
+    __resetUsagePingForTests()
+  }
+})
+
+test('a BRIEF interruption is the same sitting, not a new one', async () => {
+  __resetUsagePingForTests()
+  __setSessionGapForTests(10_000) // a real 30-min-style gap: nothing here should reach it
+  const f = installFetch(ok)
+  try {
+    reportAppOpen()
+    await settle()
+    visibility('hidden')
+    await new Promise((r) => setTimeout(r, 20))
+    visibility('visible')
+    await settle()
+    assert.equal(opens(f.calls), 1, 'a 20ms glance away must not inflate the count')
+  } finally {
+    f.restore()
+    __resetUsagePingForTests()
+  }
+})
+
+test('the resume is counted ONCE, not again by the route that follows it', async () => {
+  __resetUsagePingForTests()
+  __setSessionGapForTests(40)
+  const f = installFetch(ok)
+  try {
+    reportAppOpen()
+    await settle()
+    visibility('hidden')
+    await new Promise((r) => setTimeout(r, 60))
+    visibility('visible')
+    reportRoute('/alphabet/quiz')      // the child taps straight back in
+    __flushUsagePingForTests()
+    await settle()
+    assert.equal(opens(f.calls), 2, 'the return was double-counted')
+  } finally {
+    f.restore()
+    __resetUsagePingForTests()
+  }
+})
+
+test('FALLBACK: a tap after a long quiet gap counts, even if visibilitychange never fires', async () => {
+  // This is the path that matters on a backgrounded Capacitor WKWebView, where whether
+  // `visibilitychange` fires at all is unverified — and fails silently if it does not.
+  __resetUsagePingForTests()
+  __setSessionGapForTests(40)
+  const f = installFetch(ok)
+  try {
+    reportAppOpen()
+    await settle()
+    await new Promise((r) => setTimeout(r, 60)) // no hide event at all, just quiet
+    reportRoute('/album')
+    __flushUsagePingForTests()
+    await settle()
+    assert.equal(opens(f.calls), 2, 'an idle return produced no session')
+  } finally {
+    f.restore()
+    __resetUsagePingForTests()
+  }
+})
+
+test('continuous play never counts a second session', async () => {
+  __resetUsagePingForTests()
+  __setSessionGapForTests(10_000)
+  const f = installFetch(ok)
+  try {
+    reportAppOpen()
+    for (const p of ['/math', '/math/addition', '/math', '/farver', '/album', '/']) reportRoute(p)
+    __flushUsagePingForTests()
+    await settle()
+    assert.equal(opens(f.calls), 1, 'navigating around inflated the session count')
+  } finally {
+    f.restore()
+    __resetUsagePingForTests()
+  }
+})
+
+test('a resumed session is sent IMMEDIATELY, never left in the batch', async () => {
+  // Same reason the cold start is unbatched: a short visit whose flush never fires must still report.
+  __resetUsagePingForTests()
+  __setSessionGapForTests(40)
+  const f = installFetch(ok)
+  try {
+    reportAppOpen()
+    await settle()
+    const before = f.calls.length
+    visibility('hidden')
+    await new Promise((r) => setTimeout(r, 60))
+    visibility('visible')
+    await settle()
+    const body = JSON.parse(String(f.calls[before].init.body)) as { events: string[] }
+    assert.deepEqual(body.events, ['app_open'], 'the resume did not go out on its own')
+  } finally {
+    f.restore()
+    __resetUsagePingForTests()
+  }
+})
+
+test('a visibility event never throws into the app', async () => {
+  __resetUsagePingForTests()
+  __setSessionGapForTests(40)
+  const f = installFetch(() => { throw new Error('offline') })
+  try {
+    reportAppOpen()
+    visibility('hidden')
+    await new Promise((r) => setTimeout(r, 60))
+    visibility('visible')   // must not throw
+    await settle()
+  } finally {
+    f.restore()
+    __resetUsagePingForTests()
+  }
+})
+
+test('a "visible" event with NO preceding hide never counts', async () => {
+  // Found by a WebKit probe: it produced THREE sessions from one page load, because the probe pinned
+  // `visibilityState` to 'visible' and every later engine-fired event then looked like a return once
+  // the idle clock had moved on. A return requires an actual hide; idle-then-tap is handled by
+  // reportRoute, which cannot fire without a child doing something.
+  __resetUsagePingForTests()
+  __setSessionGapForTests(40)
+  const f = installFetch(ok)
+  try {
+    reportAppOpen()
+    await settle()
+    await new Promise((r) => setTimeout(r, 60)) // long enough that the gap would otherwise be met
+    visibility('visible')                        // …but we were never hidden
+    visibility('visible')
+    await settle()
+    assert.equal(opens(f.calls), 1, 'a bare "visible" event inflated the session count')
+  } finally {
+    f.restore()
+    __resetUsagePingForTests()
   }
 })
