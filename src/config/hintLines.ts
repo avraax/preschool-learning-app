@@ -108,7 +108,12 @@ export const HINT_LINES: Record<string, HintSpec> = {
   'math.patterns': {
     voice: 'da',
     reason: "reuses its existing speakCorrectFact — the finished sequence read back, already baked",
-    lines: () => sequenceStarts.map((s) => sequenceFactText(sequenceNumbers(s))),
+    // Both directions: Normal/Svær also count backwards (Game Depth PRD-01 §3.10).
+    lines: () =>
+      sequenceStarts.flatMap((s) => [
+        sequenceFactText(sequenceNumbers(s)),
+        sequenceFactText([...sequenceNumbers(s)].reverse()),
+      ]),
   },
   'english.listen': {
     voice: 'en',

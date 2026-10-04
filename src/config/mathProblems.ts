@@ -320,8 +320,10 @@ export const numberDistractors = (
 export interface NumberSequenceQuestion {
   kind: 'numbers'
   spec: SequenceSpec
-  /** The complete sequence — `sequenceNumbers(spec)`. */
+  /** The complete sequence as SHOWN — `sequenceNumbers(spec)`, reversed when `descending`. */
   numbers: number[]
+  /** True when the sequence counts backwards (Normal/Svær only — `MATH_SEQUENCE[level].descending`). */
+  descending: boolean
   /** Index of the blanked element. Never 0 (the first slot gives no context to read from). */
   missingIndex: number
   missing: number
@@ -370,10 +372,16 @@ export const makeSequenceQuestion = (
 
   const specs = sequenceSpecsForLevel(level).filter((s) => s.step === step)
   const spec = pickOne(rnd, specs)
-  const numbers = Array.from({ length: SEQUENCE_LENGTH }, (_, i) => spec.start + i * spec.step)
+  const ascending = Array.from({ length: SEQUENCE_LENGTH }, (_, i) => spec.start + i * spec.step)
+  // Counting BACKWARDS (Game Depth PRD-01 §3.10): a share of numeric questions read right-to-left —
+  // the same level's spec, reversed, so every number stays inside the range. The roll only happens
+  // where the level has a share, so Let's sequences are byte-identical to before.
+  const share = MATH_SEQUENCE[level].descending
+  const descending = share > 0 && rnd() < share
+  const numbers = descending ? [...ascending].reverse() : ascending
   // Prefer blanking the LAST or a middle slot; never the first, which gives no context.
   const missingIndex = rnd() < 0.5 ? SEQUENCE_LENGTH - 1 : randInt(rnd, 1, SEQUENCE_LENGTH - 1)
-  return { kind: 'numbers', spec, numbers, missingIndex, missing: numbers[missingIndex] }
+  return { kind: 'numbers', spec, numbers, missingIndex, missing: numbers[missingIndex], descending }
 }
 
 /**

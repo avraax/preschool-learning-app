@@ -138,6 +138,8 @@ export function collectNarrationClips() {
   // Hvad Mangler? — the fixed prompt plus every completed sequence it can read back.
   da('math', HVAD_MANGLER_PROMPT)
   for (const spec of sequenceStarts) da('math', sequenceFactText(sequenceNumbers(spec)))
+  // …and every one read BACKWARDS (Game Depth PRD-01 §3.10) — a superset of what Normal/Svær reverse.
+  for (const spec of sequenceStarts) da('math', sequenceFactText([...sequenceNumbers(spec)].reverse()))
 
   // Farver spoken lines that aren't already in the colours block below: Nuancer's instruction, Ram
   // Farven's target instruction (one per mixable goal) and its recipe reveal (one per rule, and both

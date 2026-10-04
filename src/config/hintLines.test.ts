@@ -69,7 +69,7 @@ test('EVERY hint line is already prebaked — a hint never reaches live Azure', 
   // non-canonical objects are askable at no level and can never be the answer a hint names.
   // Game Depth PRD-01 W1: 18 → 19 (`ost` joins as the one canonical reused object).
   // Game Depth PRD-01 W7: Bogstav Quiz's 28 → 59 (every picture a letter can show has its own hint).
-  assert.equal(checked, 59 + 100 + 109 + 74 + 74 + 19 + 22, `checked ${checked} hint lines`)
+  assert.equal(checked, 59 + 100 + 218 + 74 + 74 + 19 + 22, `checked ${checked} hint lines`)
 })
 
 test('the lines are the SAME builders the app speaks, not lookalikes', () => {

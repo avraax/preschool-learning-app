@@ -191,6 +191,11 @@ export interface SequenceTuning {
   weights: [number, number, number, number]
   /** Highest sequence START. Every element still has to land ≤ NUMBER_MAX. */
   maxStart: number
+  /**
+   * Share (0–1) of NUMERIC questions that count backwards, `10 9 8 _ 6` (Game Depth PRD-01 §3.10) —
+   * the level's own specs reversed, so no new numbers. Never at Let.
+   */
+  descending: number
 }
 
 /**
@@ -199,9 +204,9 @@ export interface SequenceTuning {
  * at Svær was 30% of all questions, and no range moved with the level at all.
  */
 export const MATH_SEQUENCE: Record<DifficultyLevel, SequenceTuning> = {
-  let: { options: 3, weights: [0.55, 0.15, 0.05, 0.05], maxStart: 10 },
-  normal: { options: 4, weights: [0.25, 0.2, 0.15, 0.12], maxStart: 40 },
-  svaer: { options: 5, weights: [0.1, 0.15, 0.3, 0.3], maxStart: 60 },
+  let: { options: 3, weights: [0.55, 0.15, 0.05, 0.05], maxStart: 10, descending: 0 },
+  normal: { options: 4, weights: [0.25, 0.2, 0.15, 0.12], maxStart: 40, descending: 0.15 },
+  svaer: { options: 5, weights: [0.1, 0.15, 0.3, 0.3], maxStart: 60, descending: 0.3 },
 }
 
 /** The four skip-counting steps Hvad Mangler? can ask, in the order the weights list them. */

@@ -107,9 +107,9 @@ test('the §4 per-game tables are exactly these values', () => {
     svaer: { max: 20, gapMin: 1, gapMax: 2, askSmaller: { alt: 1, of: 3 } },
   })
   assert.deepEqual(MATH_SEQUENCE, {
-    let: { options: 3, weights: [0.55, 0.15, 0.05, 0.05], maxStart: 10 },
-    normal: { options: 4, weights: [0.25, 0.2, 0.15, 0.12], maxStart: 40 },
-    svaer: { options: 5, weights: [0.1, 0.15, 0.3, 0.3], maxStart: 60 },
+    let: { options: 3, weights: [0.55, 0.15, 0.05, 0.05], maxStart: 10, descending: 0 },
+    normal: { options: 4, weights: [0.25, 0.2, 0.15, 0.12], maxStart: 40, descending: 0.15 },
+    svaer: { options: 5, weights: [0.1, 0.15, 0.3, 0.3], maxStart: 60, descending: 0.3 },
   })
   assert.deepEqual(MEMORY_BOARD, {
     let: { pairs: 6, numberMax: 10 },

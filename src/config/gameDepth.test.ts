@@ -8,8 +8,8 @@ import assert from 'node:assert/strict'
 import { existsSync, readFileSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { COMPARE_SMALLER_PROMPT, colorMixQuestionText, comparisonPairs, comparisonSmallerFactText, mathFactText, mathMissingPromptText, missingPairs } from './gamePhrases.ts'
-import { makeMissingProblem, missingDistractors } from './mathProblems.ts'
+import { COMPARE_SMALLER_PROMPT, sequenceFactText, colorMixQuestionText, comparisonPairs, comparisonSmallerFactText, mathFactText, mathMissingPromptText, missingPairs } from './gamePhrases.ts'
+import { makeMissingProblem, makeSequenceQuestion, missingDistractors } from './mathProblems.ts'
 import {
   possibleTargets,
   recipeNamesFor,
@@ -18,7 +18,7 @@ import {
   mixingRules,
   TARGET_PRIORITY,
 } from './colorMixing.ts'
-import { COLORS_RAMFARVEN, LEVELS, MATH_ADDITION, MATH_COMPARISON, MATH_SUBTRACTION, MEMORY_BOARD, MEMORY_CLUSTER_MAX, ORDLEG_SPELL, memoryNumbersFor } from './difficulty.ts'
+import { COLORS_RAMFARVEN, LEVELS, MATH_ADDITION, MATH_COMPARISON, MATH_SEQUENCE, MATH_SUBTRACTION, MEMORY_BOARD, MEMORY_CLUSTER_MAX, ORDLEG_SPELL, memoryNumbersFor } from './difficulty.ts'
 import { getDanishNumberText } from './danish-phrases.ts'
 import { READING_MAX_LEN, READING_ROUND_LENGTH, READING_WORDS, SPELLING_ALPHABET, makeMissingLetterTask, spellingWordsFor } from './ordlegWords.ts'
 import { readingPromptPool } from './promptPools.ts'
@@ -334,4 +334,34 @@ test('Sammenlign targets the asked side everywhere and asks the matching questio
   assert.doesNotMatch(code, /biggerSide/)
   // No visual cue for the question (owner): the only new markup is a data attribute.
   assert.doesNotMatch(code, /mindste/i)
+})
+
+// ---- Hvad Mangler — counting backwards (§3.10) ------------------------------------------------------
+
+test('Hvad Mangler counts backwards at Normal/Svær only, inside the range, every read-back baked', () => {
+  assert.equal(MATH_SEQUENCE.let.descending, 0)
+  const all = enumerated()
+  for (const level of LEVELS) {
+    const rnd = seeded(777 + level.length)
+    let numeric = 0
+    let back = 0
+    for (let i = 0; i < 6000; i++) {
+      const q = makeSequenceQuestion(level, rnd)
+      if (q.kind !== 'numbers') continue
+      numeric++
+      const asc = [...q.numbers].sort((a, b) => a - b)
+      if (q.descending) {
+        back++
+        assert.deepEqual(q.numbers, [...asc].reverse())
+      } else {
+        assert.deepEqual(q.numbers, asc)
+      }
+      assert.ok(q.missingIndex > 0, 'never blank the first slot')
+      assert.ok(Math.max(...q.numbers) <= 100 && Math.min(...q.numbers) >= 0)
+      assert.ok(all.has(sequenceFactText(q.numbers)), `missing read-back ${q.numbers}`)
+    }
+    const share = back / numeric
+    const want = MATH_SEQUENCE[level].descending
+    assert.ok(Math.abs(share - want) < 0.03, `${level}: ${share.toFixed(3)} backwards, want ${want}`)
+  }
 })

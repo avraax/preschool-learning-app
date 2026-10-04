@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-04T18:29:08.709Z",
+  "updatedAt": "2026-10-04T18:32:17.826Z",
   "clips": {
     "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|b": {
       "verdict": "ok",
@@ -20328,6 +20328,878 @@
       "text": "nitten er mindre end tyve",
       "group": "math",
       "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fem, fire, tre, to, en": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fem, fire, tre, to, en",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|seks, fem, fire, tre, to": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "seks, fem, fire, tre, to",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|syv, seks, fem, fire, tre": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "syv, seks, fem, fire, tre",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|otte, syv, seks, fem, fire": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "otte, syv, seks, fem, fire",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|ni, otte, syv, seks, fem": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "ni, otte, syv, seks, fem",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|ti, ni, otte, syv, seks": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "ti, ni, otte, syv, seks",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|elleve, ti, ni, otte, syv": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "elleve, ti, ni, otte, syv",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tolv, elleve, ti, ni, otte": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tolv, elleve, ti, ni, otte",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tretten, tolv, elleve, ti, ni": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tretten, tolv, elleve, ti, ni",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fjorten, tretten, tolv, elleve, ti": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fjorten, tretten, tolv, elleve, ti",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|otte, seks, fire, to, nul": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "otte, seks, fire, to, nul",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|ti, otte, seks, fire, to": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "ti, otte, seks, fire, to",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tolv, ti, otte, seks, fire": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tolv, ti, otte, seks, fire",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fjorten, tolv, ti, otte, seks": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fjorten, tolv, ti, otte, seks",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|seksten, fjorten, tolv, ti, otte": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "seksten, fjorten, tolv, ti, otte",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|atten, seksten, fjorten, tolv, ti": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "atten, seksten, fjorten, tolv, ti",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|femogtyve, tyve, femten, ti, fem": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "femogtyve, tyve, femten, ti, fem",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tredive, femogtyve, tyve, femten, ti": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tredive, femogtyve, tyve, femten, ti",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|halvtreds, fyrre, tredive, tyve, ti": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "halvtreds, fyrre, tredive, tyve, ti",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|femten, fjorten, tretten, tolv, elleve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "femten, fjorten, tretten, tolv, elleve",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|seksten, femten, fjorten, tretten, tolv": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "seksten, femten, fjorten, tretten, tolv",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|sytten, seksten, femten, fjorten, tretten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "sytten, seksten, femten, fjorten, tretten",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|atten, sytten, seksten, femten, fjorten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "atten, sytten, seksten, femten, fjorten",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|nitten, atten, sytten, seksten, femten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "nitten, atten, sytten, seksten, femten",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tyve, nitten, atten, sytten, seksten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tyve, nitten, atten, sytten, seksten",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|enogtyve, tyve, nitten, atten, sytten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "enogtyve, tyve, nitten, atten, sytten",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|toogtyve, enogtyve, tyve, nitten, atten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "toogtyve, enogtyve, tyve, nitten, atten",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|treogtyve, toogtyve, enogtyve, tyve, nitten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "treogtyve, toogtyve, enogtyve, tyve, nitten",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fireogtyve, treogtyve, toogtyve, enogtyve, tyve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fireogtyve, treogtyve, toogtyve, enogtyve, tyve",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|femogtyve, fireogtyve, treogtyve, toogtyve, enogtyve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "femogtyve, fireogtyve, treogtyve, toogtyve, enogtyve",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|seksogtyve, femogtyve, fireogtyve, treogtyve, toogtyve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "seksogtyve, femogtyve, fireogtyve, treogtyve, toogtyve",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|syvogtyve, seksogtyve, femogtyve, fireogtyve, treogtyve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "syvogtyve, seksogtyve, femogtyve, fireogtyve, treogtyve",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|otteogtyve, syvogtyve, seksogtyve, femogtyve, fireogtyve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "otteogtyve, syvogtyve, seksogtyve, femogtyve, fireogtyve",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|niogtyve, otteogtyve, syvogtyve, seksogtyve, femogtyve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "niogtyve, otteogtyve, syvogtyve, seksogtyve, femogtyve",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tredive, niogtyve, otteogtyve, syvogtyve, seksogtyve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tredive, niogtyve, otteogtyve, syvogtyve, seksogtyve",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|enogtredive, tredive, niogtyve, otteogtyve, syvogtyve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "enogtredive, tredive, niogtyve, otteogtyve, syvogtyve",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|toogtredive, enogtredive, tredive, niogtyve, otteogtyve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "toogtredive, enogtredive, tredive, niogtyve, otteogtyve",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|treogtredive, toogtredive, enogtredive, tredive, niogtyve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "treogtredive, toogtredive, enogtredive, tredive, niogtyve",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fireogtredive, treogtredive, toogtredive, enogtredive, tredive": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fireogtredive, treogtredive, toogtredive, enogtredive, tredive",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|femogtredive, fireogtredive, treogtredive, toogtredive, enogtredive": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "femogtredive, fireogtredive, treogtredive, toogtredive, enogtredive",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|seksogtredive, femogtredive, fireogtredive, treogtredive, toogtredive": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "seksogtredive, femogtredive, fireogtredive, treogtredive, toogtredive",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|syvogtredive, seksogtredive, femogtredive, fireogtredive, treogtredive": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "syvogtredive, seksogtredive, femogtredive, fireogtredive, treogtredive",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|otteogtredive, syvogtredive, seksogtredive, femogtredive, fireogtredive": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "otteogtredive, syvogtredive, seksogtredive, femogtredive, fireogtredive",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|niogtredive, otteogtredive, syvogtredive, seksogtredive, femogtredive": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "niogtredive, otteogtredive, syvogtredive, seksogtredive, femogtredive",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fyrre, niogtredive, otteogtredive, syvogtredive, seksogtredive": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fyrre, niogtredive, otteogtredive, syvogtredive, seksogtredive",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|enogfyrre, fyrre, niogtredive, otteogtredive, syvogtredive": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "enogfyrre, fyrre, niogtredive, otteogtredive, syvogtredive",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|toogfyrre, enogfyrre, fyrre, niogtredive, otteogtredive": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "toogfyrre, enogfyrre, fyrre, niogtredive, otteogtredive",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|treogfyrre, toogfyrre, enogfyrre, fyrre, niogtredive": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "treogfyrre, toogfyrre, enogfyrre, fyrre, niogtredive",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fireogfyrre, treogfyrre, toogfyrre, enogfyrre, fyrre": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fireogfyrre, treogfyrre, toogfyrre, enogfyrre, fyrre",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tyve, atten, seksten, fjorten, tolv": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tyve, atten, seksten, fjorten, tolv",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|toogtyve, tyve, atten, seksten, fjorten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "toogtyve, tyve, atten, seksten, fjorten",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fireogtyve, toogtyve, tyve, atten, seksten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fireogtyve, toogtyve, tyve, atten, seksten",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|seksogtyve, fireogtyve, toogtyve, tyve, atten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "seksogtyve, fireogtyve, toogtyve, tyve, atten",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|otteogtyve, seksogtyve, fireogtyve, toogtyve, tyve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "otteogtyve, seksogtyve, fireogtyve, toogtyve, tyve",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tredive, otteogtyve, seksogtyve, fireogtyve, toogtyve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tredive, otteogtyve, seksogtyve, fireogtyve, toogtyve",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|toogtredive, tredive, otteogtyve, seksogtyve, fireogtyve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "toogtredive, tredive, otteogtyve, seksogtyve, fireogtyve",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fireogtredive, toogtredive, tredive, otteogtyve, seksogtyve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fireogtredive, toogtredive, tredive, otteogtyve, seksogtyve",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|seksogtredive, fireogtredive, toogtredive, tredive, otteogtyve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "seksogtredive, fireogtredive, toogtredive, tredive, otteogtyve",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|otteogtredive, seksogtredive, fireogtredive, toogtredive, tredive": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "otteogtredive, seksogtredive, fireogtredive, toogtredive, tredive",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fyrre, otteogtredive, seksogtredive, fireogtredive, toogtredive": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fyrre, otteogtredive, seksogtredive, fireogtredive, toogtredive",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|toogfyrre, fyrre, otteogtredive, seksogtredive, fireogtredive": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "toogfyrre, fyrre, otteogtredive, seksogtredive, fireogtredive",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fireogfyrre, toogfyrre, fyrre, otteogtredive, seksogtredive": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fireogfyrre, toogfyrre, fyrre, otteogtredive, seksogtredive",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|seksogfyrre, fireogfyrre, toogfyrre, fyrre, otteogtredive": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "seksogfyrre, fireogfyrre, toogfyrre, fyrre, otteogtredive",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|otteogfyrre, seksogfyrre, fireogfyrre, toogfyrre, fyrre": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "otteogfyrre, seksogfyrre, fireogfyrre, toogfyrre, fyrre",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|femogtredive, tredive, femogtyve, tyve, femten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "femogtredive, tredive, femogtyve, tyve, femten",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fyrre, femogtredive, tredive, femogtyve, tyve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fyrre, femogtredive, tredive, femogtyve, tyve",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|femogfyrre, fyrre, femogtredive, tredive, femogtyve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "femogfyrre, fyrre, femogtredive, tredive, femogtyve",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|halvtreds, femogfyrre, fyrre, femogtredive, tredive": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "halvtreds, femogfyrre, fyrre, femogtredive, tredive",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|femoghalvtreds, halvtreds, femogfyrre, fyrre, femogtredive": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "femoghalvtreds, halvtreds, femogfyrre, fyrre, femogtredive",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tres, femoghalvtreds, halvtreds, femogfyrre, fyrre": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tres, femoghalvtreds, halvtreds, femogfyrre, fyrre",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tres, halvtreds, fyrre, tredive, tyve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tres, halvtreds, fyrre, tredive, tyve",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|halvfjerds, tres, halvtreds, fyrre, tredive": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "halvfjerds, tres, halvtreds, fyrre, tredive",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|firs, halvfjerds, tres, halvtreds, fyrre": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "firs, halvfjerds, tres, halvtreds, fyrre",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|femogfyrre, fireogfyrre, treogfyrre, toogfyrre, enogfyrre": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "femogfyrre, fireogfyrre, treogfyrre, toogfyrre, enogfyrre",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|seksogfyrre, femogfyrre, fireogfyrre, treogfyrre, toogfyrre": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "seksogfyrre, femogfyrre, fireogfyrre, treogfyrre, toogfyrre",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|syvogfyrre, seksogfyrre, femogfyrre, fireogfyrre, treogfyrre": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "syvogfyrre, seksogfyrre, femogfyrre, fireogfyrre, treogfyrre",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|otteogfyrre, syvogfyrre, seksogfyrre, femogfyrre, fireogfyrre": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "otteogfyrre, syvogfyrre, seksogfyrre, femogfyrre, fireogfyrre",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|niogfyrre, otteogfyrre, syvogfyrre, seksogfyrre, femogfyrre": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "niogfyrre, otteogfyrre, syvogfyrre, seksogfyrre, femogfyrre",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|halvtreds, niogfyrre, otteogfyrre, syvogfyrre, seksogfyrre": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "halvtreds, niogfyrre, otteogfyrre, syvogfyrre, seksogfyrre",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|enoghalvtreds, halvtreds, niogfyrre, otteogfyrre, syvogfyrre": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "enoghalvtreds, halvtreds, niogfyrre, otteogfyrre, syvogfyrre",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tooghalvtreds, enoghalvtreds, halvtreds, niogfyrre, otteogfyrre": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tooghalvtreds, enoghalvtreds, halvtreds, niogfyrre, otteogfyrre",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|treoghalvtreds, tooghalvtreds, enoghalvtreds, halvtreds, niogfyrre": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "treoghalvtreds, tooghalvtreds, enoghalvtreds, halvtreds, niogfyrre",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fireoghalvtreds, treoghalvtreds, tooghalvtreds, enoghalvtreds, halvtreds": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fireoghalvtreds, treoghalvtreds, tooghalvtreds, enoghalvtreds, halvtreds",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|femoghalvtreds, fireoghalvtreds, treoghalvtreds, tooghalvtreds, enoghalvtreds": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "femoghalvtreds, fireoghalvtreds, treoghalvtreds, tooghalvtreds, enoghalvtreds",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|seksoghalvtreds, femoghalvtreds, fireoghalvtreds, treoghalvtreds, tooghalvtreds": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "seksoghalvtreds, femoghalvtreds, fireoghalvtreds, treoghalvtreds, tooghalvtreds",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|syvoghalvtreds, seksoghalvtreds, femoghalvtreds, fireoghalvtreds, treoghalvtreds": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "syvoghalvtreds, seksoghalvtreds, femoghalvtreds, fireoghalvtreds, treoghalvtreds",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|otteoghalvtreds, syvoghalvtreds, seksoghalvtreds, femoghalvtreds, fireoghalvtreds": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "otteoghalvtreds, syvoghalvtreds, seksoghalvtreds, femoghalvtreds, fireoghalvtreds",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|nioghalvtreds, otteoghalvtreds, syvoghalvtreds, seksoghalvtreds, femoghalvtreds": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "nioghalvtreds, otteoghalvtreds, syvoghalvtreds, seksoghalvtreds, femoghalvtreds",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tres, nioghalvtreds, otteoghalvtreds, syvoghalvtreds, seksoghalvtreds": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tres, nioghalvtreds, otteoghalvtreds, syvoghalvtreds, seksoghalvtreds",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|enogtres, tres, nioghalvtreds, otteoghalvtreds, syvoghalvtreds": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "enogtres, tres, nioghalvtreds, otteoghalvtreds, syvoghalvtreds",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|toogtres, enogtres, tres, nioghalvtreds, otteoghalvtreds": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "toogtres, enogtres, tres, nioghalvtreds, otteoghalvtreds",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|treogtres, toogtres, enogtres, tres, nioghalvtreds": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "treogtres, toogtres, enogtres, tres, nioghalvtreds",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fireogtres, treogtres, toogtres, enogtres, tres": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fireogtres, treogtres, toogtres, enogtres, tres",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|halvtreds, otteogfyrre, seksogfyrre, fireogfyrre, toogfyrre": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "halvtreds, otteogfyrre, seksogfyrre, fireogfyrre, toogfyrre",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tooghalvtreds, halvtreds, otteogfyrre, seksogfyrre, fireogfyrre": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tooghalvtreds, halvtreds, otteogfyrre, seksogfyrre, fireogfyrre",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fireoghalvtreds, tooghalvtreds, halvtreds, otteogfyrre, seksogfyrre": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fireoghalvtreds, tooghalvtreds, halvtreds, otteogfyrre, seksogfyrre",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|seksoghalvtreds, fireoghalvtreds, tooghalvtreds, halvtreds, otteogfyrre": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "seksoghalvtreds, fireoghalvtreds, tooghalvtreds, halvtreds, otteogfyrre",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|otteoghalvtreds, seksoghalvtreds, fireoghalvtreds, tooghalvtreds, halvtreds": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "otteoghalvtreds, seksoghalvtreds, fireoghalvtreds, tooghalvtreds, halvtreds",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tres, otteoghalvtreds, seksoghalvtreds, fireoghalvtreds, tooghalvtreds": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tres, otteoghalvtreds, seksoghalvtreds, fireoghalvtreds, tooghalvtreds",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|toogtres, tres, otteoghalvtreds, seksoghalvtreds, fireoghalvtreds": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "toogtres, tres, otteoghalvtreds, seksoghalvtreds, fireoghalvtreds",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fireogtres, toogtres, tres, otteoghalvtreds, seksoghalvtreds": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fireogtres, toogtres, tres, otteoghalvtreds, seksoghalvtreds",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|seksogtres, fireogtres, toogtres, tres, otteoghalvtreds": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "seksogtres, fireogtres, toogtres, tres, otteoghalvtreds",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|otteogtres, seksogtres, fireogtres, toogtres, tres": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "otteogtres, seksogtres, fireogtres, toogtres, tres",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|femogtres, tres, femoghalvtreds, halvtreds, femogfyrre": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "femogtres, tres, femoghalvtreds, halvtreds, femogfyrre",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|halvfjerds, femogtres, tres, femoghalvtreds, halvtreds": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "halvfjerds, femogtres, tres, femoghalvtreds, halvtreds",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|femoghalvfjerds, halvfjerds, femogtres, tres, femoghalvtreds": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "femoghalvfjerds, halvfjerds, femogtres, tres, femoghalvtreds",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|firs, femoghalvfjerds, halvfjerds, femogtres, tres": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "firs, femoghalvfjerds, halvfjerds, femogtres, tres",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|halvfems, firs, halvfjerds, tres, halvtreds": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "halvfems, firs, halvfjerds, tres, halvtreds",
+      "group": "math",
+      "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|et hundrede, halvfems, firs, halvfjerds, tres": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "et hundrede, halvfems, firs, halvfjerds, tres",
+      "group": "math",
+      "updatedAt": 1791138737826
     }
   }
 }
