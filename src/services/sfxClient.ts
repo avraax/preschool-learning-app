@@ -91,8 +91,11 @@ const CUE_VOLUME: Partial<Record<SfxCue, number>> = {
   'nav-whoosh': 0.35,
   'nav-wave': 0.35,
   'nav-warp': 0.4,
-  'nav-stomp': 0.4,
-  back: 0.3,
+  // Forward stomp vs back were ~14 dB apart (drop-snap is a hot -20.5 LUFS file, flip a quiet -31.9),
+  // so on Dinosaurer going back was barely audible. Owner 2026-10-04: forward down, back up →
+  // stomp ≈ -34.5, back ≈ -37.9 LUFS effective; forward stays a touch louder as the bigger move.
+  'nav-stomp': 0.2,
+  back: 0.5,
 }
 
 interface PlayOptions {
