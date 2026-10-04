@@ -37,7 +37,13 @@
 // Node's test runner, where an extensionless specifier is ERR_MODULE_NOT_FOUND (CLAUDE.md).
 import { BUILD_INFO } from '../config/version.ts'
 import { apiUrl } from '../config/apiBase.ts'
-import { APP_OPEN_EVENT, MAX_EVENTS_PER_REQUEST, eventForPath } from '../config/usageEvents.ts'
+import {
+  APP_OPEN_EVENT,
+  MAX_EVENTS_PER_REQUEST,
+  REWARD_STICKER_EVENT,
+  SESSION_MARKS,
+  eventForPath,
+} from '../config/usageEvents.ts'
 import { devSessionGapMs } from '../utils/devHarness.ts'
 
 /**
@@ -170,6 +176,62 @@ export function isNewSession(
   return now - (hiddenAt ?? activityAt) >= gapMs
 }
 
+// ---- the session-depth ladder --------------------------------------------------------------------
+
+/**
+ * How often active time is accumulated. Coarse on purpose: the marks are 1/5/15 minutes, so 15-second
+ * granularity is ample and the work per tick is one subtraction and a comparison.
+ */
+const TICK_MS = 15_000
+
+let activeMs = 0
+let lastTickAt = Date.now()
+let marksSent = 0
+let ticker: ReturnType<typeof setInterval> | null = null
+
+/**
+ * Accumulate ACTIVE time and emit any mark just passed.
+ *
+ * THE CAP IS THE POINT. `delta` is clamped to twice the tick, so a device that suspended our timers
+ * for an hour — iOS throttles hard in the background, and we cannot rely on `visibilitychange` to tell
+ * us it happened — adds one tick, not an hour. Without it a backgrounded iPad would silently award
+ * itself `session:15min` for sitting in a pocket.
+ */
+function tickSession(now: number): void {
+  const delta = Math.min(now - lastTickAt, TICK_MS * 2)
+  lastTickAt = now
+  if (delta <= 0) return
+  activeMs += delta
+  while (marksSent < SESSION_MARKS.length && activeMs >= SESSION_MARKS[marksSent].afterMs) {
+    // Its own request rather than the batch: three per sitting at most, and losing one to a flush
+    // that never fires would cost exactly the number this ladder exists to produce.
+    post([SESSION_MARKS[marksSent].event], false)
+    marksSent++
+  }
+}
+
+function startTicker(): void {
+  if (ticker || typeof setInterval !== 'function') return
+  lastTickAt = Date.now()
+  ticker = setInterval(() => tickSession(Date.now()), TICK_MS)
+  // Node's timer would hold a test process open; a no-op in the browser.
+  ;(ticker as unknown as { unref?: () => void }).unref?.()
+}
+
+function stopTicker(): void {
+  if (!ticker) return
+  clearInterval(ticker)
+  ticker = null
+}
+
+/** A new sitting begins: the ladder restarts from zero. */
+function beginSession(now: number): void {
+  activeMs = 0
+  marksSent = 0
+  lastTickAt = now
+  startTicker()
+}
+
 /** Count a resumed session, at most once per return. */
 function maybeCountResume(now: number): void {
   if (!isNewSession(lastHiddenAt, lastActivityAt, now, sessionGapMs)) return
@@ -177,6 +239,7 @@ function maybeCountResume(now: number): void {
   lastHiddenAt = null
   lastActivityAt = now
   post([APP_OPEN_EVENT], true)
+  beginSession(now)
 }
 
 let listenersInstalled = false
@@ -198,9 +261,17 @@ function installHideListeners(): void {
   try {
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'hidden') {
-        lastHiddenAt = Date.now()
+        const now = Date.now()
+        // Bank the time up to this moment, then stop counting: time in the background is not play.
+        tickSession(now)
+        stopTicker()
+        lastHiddenAt = now
         flush(true)
       } else if (document.visibilityState === 'visible' && lastHiddenAt !== null) {
+        // Resume the clock from NOW, so the gap away is never counted as play. `maybeCountResume`
+        // may restart the whole ladder below if this turned out to be a new sitting.
+        lastTickAt = Date.now()
+        startTicker()
         // ONLY after a real hide. A `visible` event with no preceding `hidden` is not a return, and
         // counting it on elapsed time alone over-counts: a WebKit probe that pinned `visibilityState`
         // produced a third session from one page load, because every later engine-fired event then
@@ -227,9 +298,11 @@ export function reportAppOpen(): void {
   try {
     if (openReported) return
     openReported = true
-    lastActivityAt = Date.now()
+    const now = Date.now()
+    lastActivityAt = now
     installHideListeners()
     post([APP_OPEN_EVENT], false)
+    beginSession(now)
   } catch {
     /* unreachable today, and still contained — this is called from a useEffect */
   }
@@ -267,6 +340,10 @@ export function __resetUsagePingForTests(): void {
   lastHiddenAt = null
   lastActivityAt = Date.now()
   sessionGapMs = 30 * 60 * 1000
+  activeMs = 0
+  marksSent = 0
+  lastTickAt = Date.now()
+  stopTicker()
 }
 
 /** Test seam only — shrink the 30-minute session gap so a test need not wait for it. */
@@ -277,4 +354,37 @@ export function __setSessionGapForTests(ms: number): void {
 /** Test seam only — force the pending batch out now. */
 export function __flushUsagePingForTests(): void {
   flush(true)
+}
+
+/**
+ * Stickers actually earned at a ceremony. Called by `RewardOverlay` — the one place that grants —
+ * never by `progressStore`, so the DEV seeder cannot manufacture them.
+ *
+ * `count` is the number handed over in that ceremony, which can be more than one after an offline
+ * merge. It is clamped: the caller is our own code, but this is the only place a NUMBER reaches the
+ * event stream, and an unclamped loop here would be a way to inflate a count from inside the app.
+ */
+export function reportStickersEarned(count: number): void {
+  try {
+    if (!Number.isFinite(count) || count < 1) return
+    const n = Math.min(Math.floor(count), 10)
+    post(new Array(n).fill(REWARD_STICKER_EVENT), false)
+  } catch {
+    /* a counter may never break a ceremony */
+  }
+}
+
+/**
+ * Test seam only — fire one tick as if `ms` had elapsed since the last.
+ *
+ * Deliberately NOT clamped here: the clamp lives inside `tickSession` and is the thing a test needs
+ * to be able to exercise, by handing it an hour and asserting only one tick was banked.
+ */
+export function __tickSessionForTests(ms: number): void {
+  tickSession(lastTickAt + ms)
+}
+
+/** Test seam only — how much ACTIVE time the ladder has banked, and how many marks it has sent. */
+export function __sessionStateForTests(): { activeMs: number; marksSent: number } {
+  return { activeMs, marksSent }
 }

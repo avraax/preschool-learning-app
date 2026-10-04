@@ -17,8 +17,36 @@
 // `src/services/usagePing.ts`, and `api/usage.ts` via `'../src/config/usageEvents.js'` (the `.js` is
 // mandatory — see `lib/serverImports.test.ts`).
 
-/** Fired once per cold start, from `src/services/usagePing.ts`. */
+/** Fired once per session — a cold start, or a return after the session gap. */
 export const APP_OPEN_EVENT = 'app_open'
+
+/**
+ * THE SESSION-DEPTH LADDER. One event the first time a sitting passes each mark, so
+ * `app_open → 1min → 5min → 15min` reads as a funnel.
+ *
+ * WHY IT IS THE MOST USEFUL THING HERE. Counts alone cannot tell "twenty children opened it once and
+ * left" from "two children played for an hour", and that is the only question worth asking of an app
+ * nobody in the household is playing. The ratio of `session:1min` to `app_open` is a bounce rate.
+ *
+ * Measured against ACTIVE time, not wall time, and emitted DURING the sitting rather than at its end —
+ * so a mark cannot be lost to a hide event that never fires, which on a backgrounded Capacitor
+ * WKWebView is still unverified.
+ */
+export const SESSION_MARKS: ReadonlyArray<{ afterMs: number; event: string }> = [
+  { afterMs: 60_000, event: 'session:1min' },
+  { afterMs: 5 * 60_000, event: 'session:5min' },
+  { afterMs: 15 * 60_000, event: 'session:15min' },
+]
+
+/**
+ * One per sticker actually earned at a ceremony.
+ *
+ * `route:album` is already climbing hard (3 → 22 in a week), but that is children LOOKING at the book.
+ * This is the only signal that says the reward loop closes — that someone plays far enough to earn
+ * one. Counted at the ceremony, never from the store, so the DEV seeder in `devHarness.ts` (which
+ * grants through the same store method) cannot manufacture them.
+ */
+export const REWARD_STICKER_EVENT = 'reward:sticker'
 
 /**
  * Pathname → event key. EXACT matches only.
@@ -90,6 +118,8 @@ export const MAX_EVENTS_PER_REQUEST = 50
 /** Every value the endpoint will accept. Anything else is dropped without a write. */
 export const USAGE_EVENTS: readonly string[] = [
   APP_OPEN_EVENT,
+  REWARD_STICKER_EVENT,
+  ...SESSION_MARKS.map((m) => m.event),
   ...Object.values(ROUTE_EVENTS),
 ]
 

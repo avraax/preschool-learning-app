@@ -4,8 +4,11 @@ import { MAX_EVENTS_PER_REQUEST } from '../config/usageEvents.ts'
 import {
   __flushUsagePingForTests,
   __resetUsagePingForTests,
+  __sessionStateForTests,
   __setSessionGapForTests,
+  __tickSessionForTests,
   isNewSession,
+  reportStickersEarned,
   reportAppOpen,
   reportRoute,
 } from './usagePing.ts'
@@ -456,6 +459,142 @@ test('a "visible" event with NO preceding hide never counts', async () => {
     visibility('visible')
     await settle()
     assert.equal(opens(f.calls), 1, 'a bare "visible" event inflated the session count')
+  } finally {
+    f.restore()
+    __resetUsagePingForTests()
+  }
+})
+
+// ---- the session-depth ladder --------------------------------------------------------------------
+//
+// The number this exists to produce: `app_open → 1min → 5min → 15min` as a funnel, because counts
+// alone cannot tell "twenty children opened it once and left" from "two played for an hour".
+
+const marks = (calls: FetchCall[]) =>
+  calls.flatMap((c) => (JSON.parse(String(c.init.body)) as { events: string[] }).events)
+    .filter((e) => e.startsWith('session:'))
+
+test('the ladder emits each mark once, in order, as active time accrues', async () => {
+  __resetUsagePingForTests()
+  const f = installFetch(ok)
+  try {
+    reportAppOpen()
+    await settle()
+    assert.deepEqual(marks(f.calls), [], 'a mark fired before any time had passed')
+
+    for (let i = 0; i < 4; i++) __tickSessionForTests(15_000)   // 1 minute
+    await settle()
+    assert.deepEqual(marks(f.calls), ['session:1min'])
+
+    for (let i = 0; i < 16; i++) __tickSessionForTests(15_000)  // 5 minutes total
+    await settle()
+    assert.deepEqual(marks(f.calls), ['session:1min', 'session:5min'])
+
+    for (let i = 0; i < 40; i++) __tickSessionForTests(15_000)  // 15 minutes total
+    await settle()
+    assert.deepEqual(marks(f.calls), ['session:1min', 'session:5min', 'session:15min'])
+
+    for (let i = 0; i < 40; i++) __tickSessionForTests(15_000)  // keep playing
+    await settle()
+    assert.equal(marks(f.calls).length, 3, 'a mark repeated — the ladder is not once-per-session')
+  } finally {
+    f.restore()
+    __resetUsagePingForTests()
+  }
+})
+
+test('BACKGROUND TIME IS NOT PLAY: one suspended tick banks one tick, not an hour', async () => {
+  // iOS throttles timers hard in the background, and `visibilitychange` may never tell us. Without
+  // the clamp an iPad in a pocket would award itself session:15min.
+  __resetUsagePingForTests()
+  const f = installFetch(ok)
+  try {
+    reportAppOpen()
+    await settle()
+    __tickSessionForTests(60 * 60_000)   // the device was asleep for an hour
+    await settle()
+    assert.deepEqual(marks(f.calls), [], 'an hour in the background counted as play')
+    assert.ok(
+      __sessionStateForTests().activeMs <= 30_000,
+      `banked ${__sessionStateForTests().activeMs}ms from one suspended tick`,
+    )
+  } finally {
+    f.restore()
+    __resetUsagePingForTests()
+  }
+})
+
+test('a new session restarts the ladder from zero', async () => {
+  __resetUsagePingForTests()
+  __setSessionGapForTests(40)
+  const f = installFetch(ok)
+  try {
+    reportAppOpen()
+    for (let i = 0; i < 4; i++) __tickSessionForTests(15_000)
+    await settle()
+    assert.deepEqual(marks(f.calls), ['session:1min'])
+
+    visibility('hidden')
+    await new Promise((r) => setTimeout(r, 60))
+    visibility('visible')                       // a new sitting
+    await settle()
+    assert.equal(__sessionStateForTests().activeMs, 0, 'the ladder kept the old session time')
+    assert.equal(__sessionStateForTests().marksSent, 0, 'the ladder did not reset its marks')
+
+    for (let i = 0; i < 4; i++) __tickSessionForTests(15_000)
+    await settle()
+    assert.deepEqual(marks(f.calls), ['session:1min', 'session:1min'], 'the second sitting never reached a minute')
+  } finally {
+    f.restore()
+    __resetUsagePingForTests()
+  }
+})
+
+// ---- stickers actually earned ---------------------------------------------------------------------
+
+const stickers = (calls: FetchCall[]) =>
+  calls.flatMap((c) => (JSON.parse(String(c.init.body)) as { events: string[] }).events)
+    .filter((e) => e === 'reward:sticker').length
+
+test('a ceremony reports one event per sticker handed over', async () => {
+  __resetUsagePingForTests()
+  const f = installFetch(ok)
+  try {
+    reportStickersEarned(1)
+    await settle()
+    assert.equal(stickers(f.calls), 1)
+    reportStickersEarned(3)                     // an offline merge can owe several at once
+    await settle()
+    assert.equal(stickers(f.calls), 4)
+  } finally {
+    f.restore()
+    __resetUsagePingForTests()
+  }
+})
+
+test('a nonsense sticker count reports nothing, and a huge one is clamped', async () => {
+  // The caller is our own code, but this is the only place a NUMBER reaches the event stream.
+  __resetUsagePingForTests()
+  const f = installFetch(ok)
+  try {
+    for (const bad of [0, -1, NaN, Infinity, -Infinity]) reportStickersEarned(bad as number)
+    await settle()
+    assert.equal(stickers(f.calls), 0, `a nonsense count produced ${stickers(f.calls)} sticker(s)`)
+    reportStickersEarned(99999)
+    await settle()
+    assert.equal(stickers(f.calls), 10, 'the clamp did not hold')
+  } finally {
+    f.restore()
+    __resetUsagePingForTests()
+  }
+})
+
+test('reporting a sticker never throws into the ceremony', async () => {
+  __resetUsagePingForTests()
+  const f = installFetch(() => { throw new Error('offline') })
+  try {
+    reportStickersEarned(2)   // must not throw
+    await settle()
   } finally {
     f.restore()
     __resetUsagePingForTests()

@@ -6,6 +6,7 @@ import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
 import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 import { progressStore, type RewardGrant } from '../../services/progressStore'
+import { reportStickersEarned } from '../../services/usagePing'
 import { progressSync } from '../../services/progressSync'
 import { rewardBus, type RewardEvent } from '../../services/rewardBus'
 import { mascotBus } from '../../services/mascotBus'
@@ -228,6 +229,10 @@ const RewardOverlay: React.FC = () => {
       grantedRef.current = true
       owed = progressStore.grantPendingRewards()
       setGrants(owed)
+      // Anonymous usage counter: the ONE place a sticker is really earned. Deliberately here and not
+      // in `progressStore`, so the DEV seeder in `devHarness.ts` — which grants through the same
+      // store method — cannot manufacture them. Fire-and-forget; it cannot throw (usagePing.ts).
+      if (owed.length > 0) reportStickersEarned(owed.length)
     }
     // THE EMPTY-CEREMONY GUARD (accounts PRD §6.3, guard 2). With nothing owed there is no reward to
     // reveal, yet everything below would still fire: `sfx.play('level-up')`, `mascotBus.emit('round')`,
