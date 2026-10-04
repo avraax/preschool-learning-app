@@ -5,7 +5,7 @@
 // enumerated for prebake (a missed clip is SILENCE for a guest), and (3) as source wiring.
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { colorMixQuestionText } from './gamePhrases.ts'
@@ -18,7 +18,8 @@ import {
   TARGET_PRIORITY,
 } from './colorMixing.ts'
 import { COLORS_RAMFARVEN, LEVELS, ORDLEG_SPELL } from './difficulty.ts'
-import { SPELLING_ALPHABET, makeMissingLetterTask, spellingWordsFor } from './ordlegWords.ts'
+import { READING_MAX_LEN, READING_ROUND_LENGTH, READING_WORDS, SPELLING_ALPHABET, makeMissingLetterTask, spellingWordsFor } from './ordlegWords.ts'
+import { readingPromptPool } from './promptPools.ts'
 import { confusablePoolFor } from './letterConfusables.ts'
 import { collectNarrationClips } from '../../shared-narration-clips.js'
 
@@ -134,4 +135,31 @@ test('Stav Ordet wires the missing-letter task at Let and keeps full spelling ab
   assert.match(code, /const expectedLetter = blankIndex !== null \? targetLetters\[blankIndex\] : targetLetters\[filledCount\]/)
   // The one correct letter completes the word on the gap task.
   assert.match(code, /const newFilled = blankIndex !== null \? targetLetters\.length : filledCount \+ 1/)
+})
+
+// ---- Læs Ordet — a wider Let, a bigger pool (§3.5) --------------------------------------------------
+
+test('Læs Ordet: Let asks the easy tier, Normal/Svær the whole pool, nothing longer than 3 letters', () => {
+  assert.equal(READING_MAX_LEN, 3)
+  for (const w of READING_WORDS) assert.ok(w.word.length <= READING_MAX_LEN, `"${w.word}" is too long`)
+  // The easy tier by name — it is a judgement about Danish spelling, so it may not move silently.
+  assert.deepEqual(
+    readingPromptPool('let').map((w) => w.word).sort(),
+    ['bi', 'bil', 'bus', 'hat', 'hus', 'is', 'kat', 'ko', 'mus', 'ost', 'ski', 'sko', 'so', 'sol', 'sø', 'te', 'ur', 'æg', 'ål'].sort(),
+  )
+  assert.equal(readingPromptPool('normal').length, 35)
+  assert.deepEqual(readingPromptPool('svaer'), readingPromptPool('normal'))
+  for (const level of LEVELS) assert.ok(readingPromptPool(level).length >= READING_ROUND_LENGTH)
+  // The excluded ones stay excluded (abstract / a whole-child picture).
+  for (const banned of ['hej', 'fod', 'ben', 'arm', 'kop']) assert.ok(!READING_WORDS.some((w) => w.word === banned))
+})
+
+test('every Læs Ordet word resolves to a baked picture, and its spoken name is enumerated', () => {
+  // ordlegArt falls back ordleg → shared → english; mirror that on disk (Node can't run the glob).
+  const dirs = ['ordleg', 'shared', 'english'].map((d) => path.join(SRC, 'assets/games', d))
+  const all = enumerated()
+  for (const w of READING_WORDS) {
+    assert.ok(dirs.some((d) => existsSync(path.join(d, `${w.art}.webp`))), `${w.word}: no art "${w.art}"`)
+    assert.ok(all.has(w.word), `${w.word}: its spoken name is not enumerated`)
+  }
 })

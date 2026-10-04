@@ -302,6 +302,12 @@ export const ALPHABET_QUIZ: Record<DifficultyLevel, LetterQuizTuning> = {
 
 export interface ReadTuning {
   options: number
+  /**
+   * Which words the level asks: `easy` = the tier marked in ordlegWords.ts (2-letter + phonetic
+   * 3-letter words), `all` = the whole pool (Game Depth PRD-01 §3.5). Let used to be 2-letter words
+   * only — 9 words, on a loop.
+   */
+  pool: 'easy' | 'all'
   /** Longest PROMPT word. Never grows past 3 (standing owner rule: he can't spell yet). */
   wordMaxLen: number
   /** Whether distractor pictures may share the correct word's initial letter. */
@@ -314,9 +320,9 @@ export interface ReadTuning {
  * prompt word.
  */
 export const ORDLEG_READ: Record<DifficultyLevel, ReadTuning> = {
-  let: { options: 3, wordMaxLen: 2, sharedInitials: false },
-  normal: { options: 4, wordMaxLen: 3, sharedInitials: false },
-  svaer: { options: 6, wordMaxLen: 3, sharedInitials: true },
+  let: { options: 3, pool: 'easy', wordMaxLen: 3, sharedInitials: false },
+  normal: { options: 4, pool: 'all', wordMaxLen: 3, sharedInitials: false },
+  svaer: { options: 6, pool: 'all', wordMaxLen: 3, sharedInitials: true },
 }
 
 export interface SpellTuning {

@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-04T17:48:13.685Z",
+  "updatedAt": "2026-10-04T18:04:14.128Z",
   "clips": {
     "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|b": {
       "verdict": "ok",
@@ -13518,7 +13518,7 @@
       "note": "Bulk-approved (PRD-11 owner listen pass)",
       "candidateIpa": "",
       "text": "kop",
-      "group": "english-da",
+      "group": "ordleg",
       "updatedAt": 1785654833982
     },
     "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|sko": {
@@ -13542,7 +13542,7 @@
       "note": "Bulk-approved (PRD-11 owner listen pass)",
       "candidateIpa": "",
       "text": "dør",
-      "group": "english-da",
+      "group": "ordleg",
       "updatedAt": 1785654833982
     },
     "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|nøgle": {
@@ -13734,7 +13734,7 @@
       "note": "Bulk-approved (PRD-11 owner listen pass)",
       "candidateIpa": "",
       "text": "træ",
-      "group": "english-da",
+      "group": "ordleg",
       "updatedAt": 1785654833982
     },
     "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|blomst": {
@@ -13766,7 +13766,7 @@
       "note": "Bulk-approved (PRD-11 owner listen pass)",
       "candidateIpa": "",
       "text": "sky",
-      "group": "english-da",
+      "group": "ordleg",
       "updatedAt": 1785654833982
     },
     "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|hej": {

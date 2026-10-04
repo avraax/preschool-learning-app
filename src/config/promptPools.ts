@@ -55,9 +55,13 @@ export const alphabetPromptPool = (): readonly string[] => WORD_LETTERS
  */
 export const englishPromptPool = (): readonly EnglishWord[] => quizEnglishWords
 
-/** Læs Ordet: 2-letter words at Let, the whole 2–3-letter pool above it (`wordMaxLen`). */
-export const readingPromptPool = (level: DifficultyLevel): readonly OrdlegWord[] =>
-  READING_WORDS.filter((w) => w.word.length <= ORDLEG_READ[level].wordMaxLen)
+/** Læs Ordet: the `easy` tier at Let, the whole 2–3-letter pool above it (`pool` + `wordMaxLen`). */
+export const readingPromptPool = (level: DifficultyLevel): readonly OrdlegWord[] => {
+  const { pool, wordMaxLen } = ORDLEG_READ[level]
+  return READING_WORDS.filter(
+    (w) => w.word.length <= wordMaxLen && (pool === 'all' || w.tier === 'easy'),
+  )
+}
 
 /** Stav Ordet: Let 2 letters, Normal 2–3, Svær 3–4 (`spellingWordsFor` owns the band). */
 export const spellingPromptPool = (level: DifficultyLevel): readonly OrdlegWord[] =>

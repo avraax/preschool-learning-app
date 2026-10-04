@@ -18,7 +18,15 @@ import { ORDLEG_SPELL, type DifficultyLevel } from './difficulty.ts'
 export interface OrdlegWord {
   word: string
   art: string
+  /**
+   * Læs Ordet only: `easy` marks the words Let asks (Game Depth PRD-01 §3.5) — every 2-letter word plus
+   * the 3-letter words spelled exactly as they sound. Unset = Normal/Svær only.
+   */
+  tier?: 'easy'
 }
+
+/** The longest Læs Ordet prompt word at ANY level — standing owner rule: he can't spell yet. */
+export const READING_MAX_LEN = 3
 
 /**
  * Questions in a Læs Ordet round. Exported so the POOL can be guarded against it — a level whose word
@@ -32,40 +40,55 @@ export const READING_ROUND_LENGTH = 8
  * can't spell yet) — Svær's extra challenge is more distractor PICTURES, never a longer prompt word.
  */
 export const READING_WORDS: OrdlegWord[] = [
-  // ---- 2 letters: the whole pool at Let (ORDLEG_READ.let.wordMaxLen) ----------------------------
+  // ---- 2 letters: all in Let's `easy` tier ------------------------------------------------------
   // There were only FIVE of these, so a Let round of 8 questions had to show most words twice
   // (owner, 2026-08-03 — the same "reads as stuck rather than easy" complaint that grew Ram Farven's
   // Let target pool). `bi`/`sø`/`ål`/`te` were already shipping in SPELLING_WORDS with baked art and
   // prebaked narration, so they cost nothing — and they bring Ø and Å into the reading pool, which
-  // previously practised only Æ (via `æg`). Keep this list ≥ the round length; `ordlegWords.test.ts`
-  // fails the build otherwise.
-  { word: 'ko', art: 'ko' },
-  { word: 'is', art: 'is' },
-  { word: 'æg', art: 'aeg' },
-  { word: 'ur', art: 'ur' },
-  { word: 'so', art: 'so' },
-  { word: 'bi', art: 'bi' },
-  { word: 'sø', art: 'soe' },
-  { word: 'ål', art: 'aal' },
-  { word: 'te', art: 'te' },
-  // ---- 3 letters: added at Normal and above ----------------------------------------------------
-  { word: 'kat', art: 'kat' },
-  { word: 'sol', art: 'sol' },
-  { word: 'hus', art: 'hus' },
-  { word: 'bil', art: 'bil' },
+  // previously practised only Æ (via `æg`). Barely any more depictable 2-letter nouns exist, which is
+  // why Game Depth PRD-01 widened Let with easy 3-letter words instead (owner 2026-10-04).
+  { word: 'ko', art: 'ko', tier: 'easy' },
+  { word: 'is', art: 'is', tier: 'easy' },
+  { word: 'æg', art: 'aeg', tier: 'easy' },
+  { word: 'ur', art: 'ur', tier: 'easy' },
+  { word: 'so', art: 'so', tier: 'easy' },
+  { word: 'bi', art: 'bi', tier: 'easy' },
+  { word: 'sø', art: 'soe', tier: 'easy' },
+  { word: 'ål', art: 'aal', tier: 'easy' },
+  { word: 'te', art: 'te', tier: 'easy' },
+  // ---- 3 letters ---------------------------------------------------------------------------------
+  // `easy` = spelled exactly as it sounds (no silent d, no soft g, no å-sounding o), so decoding the
+  // letters one by one really lands on the word. The rest (tog, bog, and, ræv, ged …) are Normal+.
+  { word: 'kat', art: 'kat', tier: 'easy' },
+  { word: 'sol', art: 'sol', tier: 'easy' },
+  { word: 'hus', art: 'hus', tier: 'easy' },
+  { word: 'bil', art: 'bil', tier: 'easy' },
   { word: 'bog', art: 'bog' },
-  { word: 'mus', art: 'mus' },
+  { word: 'mus', art: 'mus', tier: 'easy' },
   { word: 'and', art: 'and' },
-  { word: 'sko', art: 'sko' },
-  { word: 'hat', art: 'hat' },
-  { word: 'ost', art: 'ost' },
+  { word: 'sko', art: 'sko', tier: 'easy' },
+  { word: 'hat', art: 'hat', tier: 'easy' },
+  { word: 'ost', art: 'ost', tier: 'easy' },
   { word: 'tog', art: 'tog' },
-  { word: 'bus', art: 'bus' },
+  { word: 'bus', art: 'bus', tier: 'easy' },
   { word: 'ræv', art: 'raev' },
   { word: 'ged', art: 'ged' },
   { word: 'haj', art: 'haj' },
   { word: 'abe', art: 'abe' },
-  { word: 'ski', art: 'ski' },
+  { word: 'ski', art: 'ski', tier: 'easy' },
+  // Game Depth PRD-01 §3.5 — art-ready words: the first six already ship in Stav Ordet (art + clips);
+  // the last three resolve through `ordlegArt`'s english fallback (cloud/door/tree).
+  // Deliberately NOT added: `hej` (abstract); `fod`, `ben` and `arm` (the picture is a whole child,
+  // which reads "dreng"); `kop` (a mug beside `te`'s cup of tea on one board is two cups).
+  { word: 'hul', art: 'hul' },
+  { word: 'ulv', art: 'ulv' },
+  { word: 'mor', art: 'mom' },
+  { word: 'far', art: 'dad' },
+  { word: 'bær', art: 'baer' },
+  { word: 'løg', art: 'loeg' },
+  { word: 'sky', art: 'cloud' },
+  { word: 'dør', art: 'door' },
+  { word: 'træ', art: 'tree' },
 ]
 
 /**

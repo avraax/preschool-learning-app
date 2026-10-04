@@ -209,9 +209,9 @@ const EXPECTED: Record<string, Record<DifficultyLevel, Pinned>> = {
   // distinct words in eight questions. This is the number the PRD asked to measure rather than trust —
   // it guessed the recent-3 window already bounded it, and a window bounds adjacency, not frequency.
   'ordleg.read': {
-    let: { pool: 9, round: 8, before: 0.98, beforeWorst: 3, after: 0, distinct: 8 },
-    normal: { pool: 26, round: 8, before: 0.68, beforeWorst: 4, after: 0, distinct: 8 },
-    svaer: { pool: 26, round: 8, before: 0.68, beforeWorst: 4, after: 0, distinct: 8 },
+    let: { pool: 19, round: 8, before: 0.8, beforeWorst: 4, after: 0, distinct: 8 },
+    normal: { pool: 35, round: 8, before: 0.55, beforeWorst: 5, after: 0, distinct: 8 },
+    svaer: { pool: 35, round: 8, before: 0.55, beforeWorst: 5, after: 0, distinct: 8 },
   },
   // Let's pool WAS exactly the round length (8 two-letter words); Game Depth PRD-01 made Let the
   // missing-letter task over the whole 2–3-letter pool (35).

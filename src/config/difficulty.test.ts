@@ -50,6 +50,7 @@ import { confusablePoolFor } from './letterConfusables.ts'
 import { WORD_LETTERS } from './letterWords.ts'
 import { ALL_SPELLING_WORDS, READING_ROUND_LENGTH, READING_WORDS, spellingWordsFor, spokenOrdlegWords } from './ordlegWords.ts'
 import { collectNarrationClips } from '../../shared-narration-clips.js'
+import { readingPromptPool } from './promptPools.ts'
 
 // Difficulty PRD-01 §7. Three independent kinds of guard, because each one alone passes vacuously:
 //
@@ -118,10 +119,10 @@ test('the §4 per-game tables are exactly these values', () => {
     svaer: { options: 5, confusables: 'only' },
   })
   assert.deepEqual(ORDLEG_READ, {
-    let: { options: 3, wordMaxLen: 2, sharedInitials: false },
-    normal: { options: 4, wordMaxLen: 3, sharedInitials: false },
+    let: { options: 3, pool: 'easy', wordMaxLen: 3, sharedInitials: false },
+    normal: { options: 4, pool: 'all', wordMaxLen: 3, sharedInitials: false },
     // 6, not 5: Læs Ordet's tiles are PICTURES, so a 3×2 grid still reads.
-    svaer: { options: 6, wordMaxLen: 3, sharedInitials: true },
+    svaer: { options: 6, pool: 'all', wordMaxLen: 3, sharedInitials: true },
   })
   assert.deepEqual(ORDLEG_SPELL, {
     let: { mode: 'missing', wordMinLen: 2, wordMaxLen: 3, distractors: 2 },
@@ -565,8 +566,7 @@ test('Læs Ordet never grows past 3-letter prompt words at any level', () => {
 // to READING_ROUND_LENGTH is what makes the rule real: raise the round and this fails first.
 test('every level has at least a full round of distinct Læs Ordet words', () => {
   for (const level of LEVELS) {
-    const { wordMaxLen } = ORDLEG_READ[level]
-    const pool = READING_WORDS.filter((w) => w.word.length <= wordMaxLen)
+    const pool = readingPromptPool(level)
     assert.ok(
       pool.length >= READING_ROUND_LENGTH,
       `Læs Ordet at ${level} draws from ${pool.length} words for a ${READING_ROUND_LENGTH}-question round`,
