@@ -4,7 +4,7 @@ export const MUSIC_BAKED_TARGET_LUFS = -44
 
 export const MUSIC_BAKED: Record<string, { sha256: string; lufs: number }> = {
   dino: { sha256: 'fd5c2f0c6f8890b0d2808dd98146d46a8afccc005a4d85775286b82bcd97d3b1', lufs: -44.4 },
-  kid: { sha256: '3d41ae74b41009b6eff4e505cfd54ed8fb1f39297360f531ddecbc21e7751266', lufs: -44.4 },
+  kid: { sha256: '0c47c3c812a7054153d603c69d9a873a0cb91cae1b4c33d26a01dcf3b773b4fa', lufs: -52.4 },
   ocean: { sha256: '40b6bff68b4c270a8691e891d815ddec2b40072ad4c89b7910297eb9cbe1e004', lufs: -44.4 },
-  space: { sha256: '06de527ea9039617bd85e129a3e9c20c640c2a0569c4a1fc815a09c0868cc8aa', lufs: -44.4 },
+  space: { sha256: '7e2e28401539fbb115eb48d1b60d5a414ff2c7245d30525ecc68ac42a72bcbfe', lufs: -44.5 },
 }

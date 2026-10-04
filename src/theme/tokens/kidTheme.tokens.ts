@@ -136,7 +136,7 @@ export const kidThemeTokens: ThemeTokens = {
       lines: ['Hej! Skal vi lege?', 'Godt klaret!', 'Vi ses!'],
     },
     selectorThumb: '',
-    music: '/sounds/music/kid.mp3', // Regnbue loop ("Rainbow Adventures"); body-trimmed loop in musicClient
+    music: '/sounds/music/kid.mp3', // Regnbue bed (soft synth pad, seamless loop); source + licence in art-src/music/SOURCES.md
     // Structured World (PRD-05 W3): the 5 section objects rest along a gentle rainbow-arc smile
     // in the open sky under the rainbow (up in the middle), clear of the bottom cloud bank +
     // corner mascot. Refine onto real cloud puffs once B3/B5 near-layer art lands.

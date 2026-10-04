@@ -18,6 +18,16 @@
 // (each −6 dB = 50% volume).
 export const MUSIC_TARGET_LUFS = -44
 
+// Per-world trim ON TOP of MUSIC_TARGET_LUFS, in LU (negative = quieter). Equal LUFS is not equal
+// perceived presence: Regnbue's bed is a mid-range synth pad with nothing below 150 Hz, so at -44 it
+// sat in front of the others — the owner turned it down twice by ear (2026-10-04) to -52.
+export const MUSIC_WORLD_TRIM_LU: Record<string, number> = { kid: -8 }
+
+/** The level a world's shipped file is baked to. Read by `scripts/bake-music.mjs` and the guard test. */
+export function musicTargetLufs(world: string): number {
+  return MUSIC_TARGET_LUFS + (MUSIC_WORLD_TRIM_LU[world] ?? 0)
+}
+
 // How long the bed takes to fade out when the child leaves a menu for a game (or any other
 // non-music screen). THE one knob for that fade: it starts on the tap, so it runs under the wipe
 // (coverMs 180–260 per skin) and is gone by the time the game appears. Works on iOS too — the fade

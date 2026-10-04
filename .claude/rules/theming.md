@@ -36,7 +36,8 @@ The active skin is chosen at runtime in "Indstillinger" → **Udseende** (`panes
 **Educational colours are NOT themeable** — Farvejagt/RamFarven colour content stays as data in
 `src/config/colorContent.ts`.
 
-Ships **4 registered themes**: Regnbue (default), Havet, Rummet, Dinosaurer (`src/theme/themes.ts`). Two
+Ships **4 registered themes**: Regnbue, Havet, Rummet, Dinosaurer (**default** since 2026-10-04 —
+`defaultThemeId` in `src/theme/themes.ts`; a stored choice still wins). Two
 more token files — `jungle.tokens.ts` (Junglen) + `candy.tokens.ts` (Slikland) — exist but are
 **deliberately not registered** (add them to the `themes` array to ship).
 

@@ -72,7 +72,7 @@ export const spaceThemeTokens: ThemeTokens = {
       lines: ['Klar til opsendelse?', '3-2-1!', 'Til stjernerne!'],
     },
     selectorThumb: '',
-    music: '/sounds/music/space.mp3', // Rummet loop ("Galaxy/Universe"); body-trimmed in musicClient, level baked (musicLevel.ts)
+    music: '/sounds/music/space.mp3', // Rummet bed ("Deep Calm Texture", seamless loop); source + licence in art-src/music/SOURCES.md
     // Structured World (PRD-05 W3): objects FLOAT among the stars along an arc across the
     // upper-middle nebula band — deliberately clear of the ringed planet (lower-left) and rocket
     // (lower-right) already painted into the backdrop. Dark world → float shadow (see SceneObjectField).

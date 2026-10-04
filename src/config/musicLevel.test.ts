@@ -5,7 +5,7 @@ import { createHash } from 'node:crypto'
 import { spawnSync } from 'node:child_process'
 import { createRequire } from 'node:module'
 import path from 'node:path'
-import { MUSIC_TARGET_LUFS, musicVolume } from './musicLevel.ts'
+import { MUSIC_TARGET_LUFS, musicTargetLufs, musicVolume } from './musicLevel.ts'
 import { MUSIC_BAKED, MUSIC_BAKED_TARGET_LUFS } from './musicBaked.ts'
 
 // The music level must live in the FILES, because iOS ignores <audio>.volume (musicLevel.ts). Two
@@ -54,7 +54,10 @@ test('the shipped files were baked at the current MUSIC_TARGET_LUFS', () => {
     'MUSIC_TARGET_LUFS changed without `npm run music:bake`',
   )
   for (const [world, rec] of Object.entries(MUSIC_BAKED)) {
-    assert.ok(Math.abs(rec.lufs - MUSIC_TARGET_LUFS) <= 1, `${world} baked at ${rec.lufs} LUFS`)
+    assert.ok(
+      Math.abs(rec.lufs - musicTargetLufs(world)) <= 1,
+      `${world} baked at ${rec.lufs} LUFS, target ${musicTargetLufs(world)} — run npm run music:bake`,
+    )
   }
 })
 
@@ -87,6 +90,7 @@ test('each shipped track measures at the target loudness', { skip: ffmpeg ? fals
     const hit = r.stderr.match(/I:\s+(-?\d+(?:\.\d+)?) LUFS/)
     assert.ok(hit, `no loudness reading for ${f}`)
     const lufs = Number(hit[1])
-    assert.ok(Math.abs(lufs - MUSIC_TARGET_LUFS) <= 1, `${f} measures ${lufs} LUFS, target ${MUSIC_TARGET_LUFS}`)
+    const target = musicTargetLufs(f.replace(/\.mp3$/, ''))
+    assert.ok(Math.abs(lufs - target) <= 1, `${f} measures ${lufs} LUFS, target ${target}`)
   }
 })

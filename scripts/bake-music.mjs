@@ -2,7 +2,8 @@
 // iOS ignores HTMLMediaElement.volume, so a runtime volume never reaches the iPad).
 //
 // For each master in art-src/music/*.mp3: measure its integrated loudness (EBU R128), apply the
-// gain that lands it on MUSIC_TARGET_LUFS, encode MP3 into public/sounds/music/, re-measure, and
+// gain that lands it on musicTargetLufs(world) (MUSIC_TARGET_LUFS + any per-world trim), encode MP3
+// into public/sounds/music/, re-measure, and
 // record hash + measured LUFS in src/config/musicBaked.ts (the guard test reads that file).
 //
 // Usage:  npm run music:bake
@@ -22,13 +23,7 @@ const SRC_DIR = path.join(ROOT, 'art-src', 'music')
 const OUT_DIR = path.join(ROOT, 'public', 'sounds', 'music')
 const BAKED_TS = path.join(ROOT, 'src', 'config', 'musicBaked.ts')
 
-const levelSrc = await readFile(path.join(ROOT, 'src', 'config', 'musicLevel.ts'), 'utf8')
-const m = levelSrc.match(/export const MUSIC_TARGET_LUFS = (-?\d+(?:\.\d+)?)/)
-if (!m) {
-  console.error('MUSIC_TARGET_LUFS not found in src/config/musicLevel.ts')
-  process.exit(1)
-}
-const TARGET = Number(m[1])
+const { MUSIC_TARGET_LUFS: TARGET, musicTargetLufs } = await import('../src/config/musicLevel.ts')
 
 async function measureLufs(file) {
   // ebur128 prints its summary on stderr; execFile resolves with it.
@@ -55,7 +50,7 @@ for (const file of masters) {
   const src = path.join(SRC_DIR, file)
   const out = path.join(OUT_DIR, file)
   const before = await measureLufs(src)
-  const gain = TARGET - before
+  const gain = musicTargetLufs(world) - before
   // 128 kbps is ample for a bed sitting ~13 LU under the narration (masters are 256).
   await run(ffmpegPath, [
     '-y', '-loglevel', 'error', '-i', src,

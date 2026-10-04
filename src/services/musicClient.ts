@@ -47,14 +47,11 @@ const WORLD_MUSIC: Record<string, string> = {
 // Optional per-world loop trim (seconds). When a track has an intro/outro fade or dead air, we loop
 // only the full-energy body [loopStart, loopEnd] so the loop join never touches a fade. Omit for
 // tracks that are already even end-to-end (→ a plain full-file native loop).
+// kid and space are absent on purpose: their masters are cut as seamless loops at the source (end
+// crossfaded into the start, see art-src/music/SOURCES.md), so the whole file loops.
 const WORLD_LOOP: Record<string, { loopStart?: number; loopEnd?: number }> = {
-  // "Rainbow Adventures" fades out from ~78s (85s total) → loop the body before the fade.
-  kid: { loopEnd: 77.5 },
   // "Aquatic Downtime" fades out from ~255s (262s total) → loop the long body before the fade.
   ocean: { loopEnd: 254 },
-  // "Galaxy/Universe" has a quieter ~15s intro then a loud body, fading out ~121s (125s total) →
-  // loop only the consistent body (skip the intro dip and the tail fade).
-  space: { loopStart: 17, loopEnd: 121 },
   // "Fantasy theme" is even end-to-end (no real fade); trim the last ~0.7s.
   dino: { loopEnd: 153.5 },
 }

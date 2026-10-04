@@ -15,10 +15,12 @@ export const themes: ThemeTokens[] = [
   dinoThemeTokens,
 ]
 
-export const defaultThemeId = kidThemeTokens.id
+// Dinosaurer is the first-launch skin (owner, 2026-10-04). A device or profile that already chose a
+// skin keeps it — this is only what a fresh install, a new child or an unknown id lands on.
+export const defaultThemeId = dinoThemeTokens.id
 
 export const getThemeTokens = (id: string | null | undefined): ThemeTokens =>
-  themes.find((t) => t.id === id) ?? kidThemeTokens
+  themes.find((t) => t.id === id) ?? dinoThemeTokens
 
 // Lightweight metadata for the selector (no need to ship full token objects to the UI).
 // The picture comes from the skin's baked `selectorThumb` (loaded lazily via `loadSceneAssets`),
