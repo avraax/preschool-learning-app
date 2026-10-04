@@ -190,6 +190,89 @@ export const SHADES: Record<string, ColorShade[]> = {
   ]
 }
 
+// ---- Nuancer's 5-step ramps (Game Depth PRD-01 §3.2) -------------------------------------------------
+//
+// `SHADES` above stays the three NAMED steps (Lær Farver shows them, the enumerator bakes their names).
+// Nuancer orders from a finer ramp: indices 0, 2, 4 ARE the three named shades (same name + hex, read
+// from `SHADES` so they can't drift) and 1, 3 are unnamed midpoints — each the 50/50 OKLab mix of its
+// two named neighbours, computed once and committed as literals. An unnamed shade is never spoken
+// (owner 2026-10-04): a correct drop of one plays the snap SFX only.
+export interface RampShade {
+  /** Stable id — the drag id and the slot match key (a name can't be: midpoints have none). */
+  id: string
+  hex: string
+  /** Only the three named steps have one. */
+  name?: string
+}
+
+const RAMP_MIDPOINTS: Record<string, [string, string]> = {
+  rød: ['#F77976', '#C3302F'],
+  blå: ['#7EB0FC', '#2C5DBF'],
+  grøn: ['#5DDA86', '#1D9449'],
+  gul: ['#FEE86C', '#E4B42B'],
+  lilla: ['#C899FD', '#893BCF'],
+  orange: ['#FEA76C', '#DD5A11'],
+}
+
+export const SHADE_RAMPS: Record<string, RampShade[]> = Object.fromEntries(
+  Object.entries(SHADES).map(([hue, [light, mid, dark]]) => {
+    const [m1, m3] = RAMP_MIDPOINTS[hue]
+    return [
+      hue,
+      [
+        { id: `${hue}-0`, hex: light.hex, name: light.name },
+        { id: `${hue}-1`, hex: m1 },
+        { id: `${hue}-2`, hex: mid.hex, name: mid.name },
+        { id: `${hue}-3`, hex: m3 },
+        { id: `${hue}-4`, hex: dark.hex, name: dark.name },
+      ],
+    ]
+  }),
+)
+
+/** OKLab perceptual lightness (0–1) of a `#RRGGBB` hex — what "lighter / darker" means to the eye. */
+export const oklabL = (hex: string): number => {
+  const lin = (i: number) => {
+    const c = parseInt(hex.slice(i, i + 2), 16) / 255
+    return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4
+  }
+  const [r, g, b] = [lin(1), lin(3), lin(5)]
+  const l = Math.cbrt(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b)
+  const m = Math.cbrt(0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b)
+  const s = Math.cbrt(0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b)
+  return 0.2104542553 * l + 0.793617785 * m - 0.0040720468 * s
+}
+
+/**
+ * The smallest lightness step a dealt pair may have. 0.035 is just under the tightest pair the game
+ * ALREADY shows (lysegul → gul, ΔL 0.040), so nothing that shipped is excluded — but the yellow
+ * midpoint (ΔL 0.020 either side of lysegul/gul) is never dealt next to them: those read as one colour.
+ */
+export const MIN_SHADE_STEP = 0.035
+
+/**
+ * Every ordering Nuancer may deal for a hue: `slots` indices into the 5-step ramp, ascending (= the
+ * light→dark answer), whose span (last − first) is at least `minSpan`, and whose every neighbouring pair
+ * is at least `MIN_SHADE_STEP` apart in lightness.
+ */
+export const nuancerCombos = (hue: string, slots: number, minSpan: number): number[][] => {
+  const ramp = SHADE_RAMPS[hue] ?? []
+  const out: number[][] = []
+  const walk = (start: number, picked: number[]) => {
+    if (picked.length === slots) {
+      if (picked[picked.length - 1] - picked[0] < minSpan) return
+      for (let i = 1; i < picked.length; i++) {
+        if (oklabL(ramp[picked[i - 1]].hex) - oklabL(ramp[picked[i]].hex) < MIN_SHADE_STEP) return
+      }
+      out.push(picked)
+      return
+    }
+    for (let i = start; i < ramp.length; i++) walk(i + 1, [...picked, i])
+  }
+  walk(0, [])
+  return out
+}
+
 // Stable hue order for browse grids / round rotation.
 export const HUE_ORDER = ['rød', 'blå', 'grøn', 'gul', 'lilla', 'orange'] as const
 

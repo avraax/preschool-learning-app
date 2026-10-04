@@ -450,15 +450,24 @@ export const COLORS_RAMFARVEN: Record<DifficultyLevel, RamFarvenTuning> = {
 export interface NuancerTuning {
   /** Slots to fill, light→dark. */
   slots: number
+  /**
+   * Smallest span (last − first index) of the dealt shades inside the hue's 5-step ramp (Game Depth
+   * PRD-01 §3.2): 3 keeps the run spread out, 2 lets Svær deal three NEIGHBOURING steps. The dealable
+   * set is `nuancerCombos(hue, slots, minSpan)` in colorContent.ts.
+   */
+  minSpan: number
   /** Whether the tray carries one shade from a DIFFERENT hue with no slot of its own. */
   decoy: boolean
 }
 
-/** Nuancer (`colors.nuancer`) — the tile axis maps onto the tray. */
+/**
+ * Nuancer (`colors.nuancer`) — the tile axis maps onto the tray. Svær stays at THREE slots on purpose:
+ * 4 × 78 px plus the sun/moon overflows a 375 px phone in portrait, and no level may gain an element.
+ */
 export const COLORS_NUANCER: Record<DifficultyLevel, NuancerTuning> = {
-  let: { slots: 2, decoy: false },
-  normal: { slots: 3, decoy: false },
-  svaer: { slots: 3, decoy: true },
+  let: { slots: 2, minSpan: 3, decoy: false },
+  normal: { slots: 3, minSpan: 3, decoy: false },
+  svaer: { slots: 3, minSpan: 2, decoy: true },
 }
 
 // ================================================================================================

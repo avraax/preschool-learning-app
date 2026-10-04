@@ -10,7 +10,8 @@ import { DraggableItem } from '../common/dnd/DraggableItem'
 import { DroppableZone } from '../common/dnd/DroppableZone'
 import { getCategoryTheme } from '../../config/categoryThemes'
 import { NUANCER_INSTRUCTION } from '../../config/gamePhrases'
-import { SHADES, HUE_ORDER, type ColorShade } from '../../config/colorContent'
+import { SHADE_RAMPS, HUE_ORDER, nuancerCombos, type RampShade } from '../../config/colorContent'
+import { makePromptBag, type PromptBag } from '../../config/promptBag'
 import { hexToRgba } from '../../theme/tokens/helpers'
 import { SNAP } from '../../theme/motion'
 import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
@@ -66,14 +67,14 @@ const NuancerGame: React.FC = () => {
   // height goes entirely to the slot row.
   const phoneLandscape = useMediaQuery(PHONE_LANDSCAPE.replace('@media ', ''))
 
-  // Current question: a hue's shades (correct light→dark order) + a scrambled tray. Difficulty
-  // (progressStore.difficultyFor('colors')) tunes the shade count: Let orders just 2 (lightest +
-  // darkest); Normal (today, unchanged) orders all 3; Svær keeps all 3 but folds in 1 decoy shade
-  // from a different hue with no slot of its own — a genuine "does this belong?" distractor,
-  // assembled purely from the existing exported SHADES data (colorContent.ts stays untouched).
-  const [order, setOrder] = useState<ColorShade[]>([])     // correct order (light→dark); slot i wants order[i]
-  const [tray, setTray] = useState<ColorShade[]>([])       // scrambled display order (may include a decoy)
-  const [slots, setSlots] = useState<(string | null)[]>([]) // placed shade name per slot index, or null
+  // Current question: some shades of one hue (correct light→dark order) + a scrambled tray. Game Depth
+  // PRD-01 §3.2: each hue has a 5-step ramp (`SHADE_RAMPS`) and the level picks WHICH steps are dealt —
+  // Let 2 spread far apart, Normal 3 with a span ≥ 3, Svær any 3 (neighbouring steps too) plus a decoy
+  // shade from another hue with no slot of its own. Everything is keyed by the shade's `id`, never its
+  // name: the two midpoint steps have no name.
+  const [order, setOrder] = useState<RampShade[]>([])     // correct order (light→dark); slot i wants order[i]
+  const [tray, setTray] = useState<RampShade[]>([])       // scrambled display order (may include a decoy)
+  const [slots, setSlots] = useState<(string | null)[]>([]) // placed shade id per slot index, or null
   const [shakeName, setShakeName] = useState<string | null>(null)
   // Never-fail hint: after WRONG_BEFORE_HINT wrong drops, the correct tile for the next empty slot
   // pulses. `hintName` holds that shade name (or null). Reset per question AND per correct drop.
@@ -102,6 +103,9 @@ const NuancerGame: React.FC = () => {
   const hasInteractedRef = useRef(false)
   // The prompt HUE comes from a bag (W1); the old `previousHue` ref is deleted, not kept beside it.
   const hueBag = usePromptBag<string>({ window: NUANCER_ROUND })
+  // …and per hue, WHICH of its ramp steps are dealt cycles through a bag of its own, so a hue shows every
+  // ordering its level allows before any comes back. `reset()` re-pools it when the level changes.
+  const comboBags = useRef(new Map<string, PromptBag<number[]>>())
   const isAdvancing = useRef(false)
 
   const logError = (message: string, data?: any) => {
@@ -126,28 +130,34 @@ const NuancerGame: React.FC = () => {
     // shows all 6 before anything comes back, and the seam rule keeps the refill off the last hue.
     const hue = hueBag.draw(nuancerPromptPool())
 
-    const fullShades = SHADES[hue]
-    // Table-driven (Difficulty PRD-01 §4.5): Let orders just the lightest + darkest (2 slots — a
-    // simpler binary task); Normal all 3; Svær all 3 plus a decoy tile (below).
-    const { slots: slotCount, decoy: wantDecoy } = COLORS_NUANCER[progressStore.difficultyFor('colors')]
-    const correct =
-      slotCount >= fullShades.length ? fullShades : [fullShades[0], fullShades[fullShades.length - 1]]
+    const ramp = SHADE_RAMPS[hue]
+    // Table-driven (Game Depth PRD-01 §3.2): the level's slot count + minimum span pick the dealable
+    // orderings (`nuancerCombos`, which also refuses any pair too close in lightness to read apart).
+    const { slots: slotCount, minSpan, decoy: wantDecoy } = COLORS_NUANCER[progressStore.difficultyFor('colors')]
+    const combos = nuancerCombos(hue, slotCount, minSpan)
+    let comboBag = comboBags.current.get(hue)
+    if (!comboBag) {
+      comboBag = makePromptBag(combos, { key: (c) => c.join('-'), window: 2 })
+      comboBags.current.set(hue, comboBag)
+    } else {
+      comboBag.reset(combos)
+    }
+    const correct = comboBag.next().map((i) => ramp[i])
     setOrder(correct)
 
     // Re-shuffle until the scrambled order isn't already sorted, so it's always a real task.
     let scrambled = shuffle(correct)
     let guard = 0
-    while (guard++ < 8 && scrambled.every((s, i) => s.name === correct[i].name)) {
+    while (guard++ < 8 && scrambled.every((s, i) => s.id === correct[i].id)) {
       scrambled = shuffle(correct)
     }
 
     // Svær: fold in one decoy shade from a different hue — it has no slot, so the child must
-    // recognise it doesn't belong to this hue's light→dark run (Appendix A: "more distractors"),
-    // built purely from the existing exported SHADES data (colorContent.ts stays untouched).
+    // recognise it doesn't belong to this hue's light→dark run (Appendix A: "more distractors").
     if (wantDecoy) {
       const otherHues = HUE_ORDER.filter((h) => h !== hue)
       const decoyHue = otherHues[Math.floor(Math.random() * otherHues.length)]
-      const decoyShades = SHADES[decoyHue]
+      const decoyShades = SHADE_RAMPS[decoyHue]
       const decoy = decoyShades[Math.floor(Math.random() * decoyShades.length)]
       scrambled = shuffle([...scrambled, decoy])
     }
@@ -272,46 +282,48 @@ const NuancerGame: React.FC = () => {
   // owner's 5-year-old read the ignored first tap as a broken game. So the tap commits, and the slot it
   // commits to is the one the instruction already asks for next ("lightest first", filling left to
   // right). Nothing about scoring changes — placing the wrong shade in that slot is wrong either way.
-  const tapShade = (shadeName: string) => {
+  const tapShade = (shadeId: string) => {
     const firstEmpty = slots.findIndex((s) => !s)
     if (firstEmpty < 0) return
-    resolveShade(shadeName, firstEmpty, true)
+    resolveShade(shadeId, firstEmpty, true)
   }
 
-  // ONE resolution path for both gestures.
-  const resolveShade = (shadeName: string, i: number, viaTap = false) => {
+  // ONE resolution path for both gestures. Keyed by the shade's `id` (Game Depth PRD-01 §4 trap 8).
+  const resolveShade = (shadeId: string, i: number, viaTap = false) => {
     if (!gameReady || isAdvancing.current) return
-    if (slots.includes(shadeName)) return // already placed
+    if (slots.includes(shadeId)) return // already placed
     hasInteractedRef.current = true
     audio.updateUserInteraction()
     if (slots[i]) return // slot already filled → springs back
     // "Every tap is felt": the drag path already ticked on pick-up, so only the tap owes the press.
     if (viaTap) sfx.play('tap')
 
-    if (order[i] && shadeName === order[i].name) {
+    if (order[i] && shadeId === order[i].id) {
       // Correct slot → lock it in with a SNAP + a localized burst.
       const next = [...slots]
-      next[i] = shadeName
+      next[i] = shadeId
       setSlots(next)
       resetHint()
       sfx.play('drop-snap')
       setBurstSlot(i)
       if (burstTimer.current) clearTimeout(burstTimer.current)
       burstTimer.current = setTimeout(() => setBurstSlot(null), 500)
-      // Identify the placed shade (educational echo). No win/lose narration.
+      // Identify the placed shade (educational echo) — ONLY a named step. The two midpoint steps have
+      // no Danish name (owner 2026-10-04), so their drop is the snap SFX alone. No win/lose narration.
       audio.cancelCurrentAudio()
-      audio.speak(shadeName).catch(() => {})
+      const placedName = order[i].name
+      if (placedName) audio.speak(placedName).catch(() => {})
       if (next.every((s) => s !== null)) completeQuestion()
     } else {
       // Wrong slot → springs back (automatic) + gentle SFX + shake, break first-try.
       firstAttemptRef.current = false
       sfx.play('spring-back')
-      setShakeName(shadeName)
+      setShakeName(shadeId)
       reactGuide('think')
       setTimeout(() => setShakeName(null), 450)
       if (registerHintWrong(() => {
         const firstEmpty = slots.findIndex((s) => !s)
-        return firstEmpty >= 0 && order[firstEmpty] ? order[firstEmpty].name : null
+        return firstEmpty >= 0 && order[firstEmpty] ? order[firstEmpty].id : null
       })) mascotBus.emit('hint')
     }
   }
@@ -351,11 +363,11 @@ const NuancerGame: React.FC = () => {
   // Forced ?fx= states (DEV screenshot harness) — pure render-time overrides layered on the real
   // state, never mutating it. 'correct' fills every slot from the real answer (shows SNAP + the
   // completed-row shimmer); 'wrong'/'hint' target the first tray tile / first empty slot.
-  const displaySlots = forcedFx === 'correct' && order.length > 0 ? order.map((s) => s.name) : slots
-  const displayHintName = forcedFx === 'hint' ? (hintName ?? order[0]?.name ?? null) : hintName
-  const displayShakeName = forcedFx === 'wrong' ? (shakeName ?? tray[0]?.name ?? null) : shakeName
+  const displaySlots = forcedFx === 'correct' && order.length > 0 ? order.map((s) => s.id) : slots
+  const displayHintName = forcedFx === 'hint' ? (hintName ?? order[0]?.id ?? null) : hintName
+  const displayShakeName = forcedFx === 'wrong' ? (shakeName ?? tray[0]?.id ?? null) : shakeName
 
-  const remaining = tray.filter((s) => !displaySlots.includes(s.name))
+  const remaining = tray.filter((s) => !displaySlots.includes(s.id))
   const allPlaced = displaySlots.length > 0 && displaySlots.every((s) => s !== null)
 
   // The slot row IS the prompt (§6C: "raise the light→dark slot row into PromptStage height" —
@@ -379,7 +391,7 @@ const NuancerGame: React.FC = () => {
             {/* Slot row (drop targets): left = lightest (by the sun), right = darkest (by the moon). */}
             <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: { xs: 1, md: 1.5 }, [PHONE_LANDSCAPE]: { gap: 0.5 } }}>
             {displaySlots.map((placedName, index) => {
-              const placedShade = placedName ? order.find((s) => s.name === placedName) : undefined
+              const placedShade = placedName ? order.find((s) => s.id === placedName) : undefined
               const isOverThis = overId === `slot-${index}`
               const slotAnimate = allPlaced && !reduce
                 ? { scale: [1, 1.12, 1] }
@@ -513,9 +525,9 @@ const NuancerGame: React.FC = () => {
               [PHONE_LANDSCAPE]: { pt: 1, gap: 1.25 }
             }}>
               {remaining.map((shade) => {
-                const isLifted = activeId === shade.name
-                const isHint = displayHintName === shade.name
-                const isShaking = displayShakeName === shade.name
+                const isLifted = activeId === shade.id
+                const isHint = displayHintName === shade.id
+                const isShaking = displayShakeName === shade.id
                 const animate = isLifted && !reduce
                   ? { scale: 1.08, rotate: 6, x: 0 }
                   : isShaking
@@ -531,14 +543,14 @@ const NuancerGame: React.FC = () => {
                       ? { duration: 1.1, repeat: Infinity, ease: 'easeInOut' as const }
                       : { duration: 0.25 }
                 return (
-                  <Box key={shade.name}>
+                  <Box key={shade.id}>
                     <DraggableItem
-                      id={shade.name}
+                      id={shade.id}
                       inline
                       disabled={!gameReady}
                       data={shade}
                       // Tap = place this shade in the next empty slot (see tapShade).
-                      onActivate={() => tapShade(shade.name)}
+                      onActivate={() => tapShade(shade.id)}
                     >
                       <motion.div animate={animate} transition={transition}>
                         <Box sx={{

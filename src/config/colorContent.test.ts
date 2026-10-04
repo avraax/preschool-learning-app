@@ -7,10 +7,15 @@ import {
   COLORS_QUIZ_ROUND,
   DANISH_OBJECTS,
   HUE_ORDER,
+  MIN_SHADE_STEP,
+  SHADES,
+  SHADE_RAMPS,
   TARGETS_PER_BOARD,
+  nuancerCombos,
+  oklabL,
   quizObjectPool,
 } from './colorContent.ts'
-import { COLORS_QUIZ, LEVELS } from './difficulty.ts'
+import { COLORS_NUANCER, COLORS_QUIZ, LEVELS } from './difficulty.ts'
 import { colorQuizPromptPool } from './promptPools.ts'
 
 const SRC = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
@@ -198,4 +203,63 @@ test('Farvejagt deals a FIXED count of targets from a per-hue bag keyed by art',
   assert.match(code, /Math\.min\(TARGETS_PER_BOARD, targetObjects\.length\)/)
   // The old "take the whole hue" deal must be gone.
   assert.doesNotMatch(code, /shuffle\(targetObjects\)/)
+})
+
+// ---- Game Depth PRD-01 §3.2 — Nuancer's 5-step ramps --------------------------------------------------
+
+test('each ramp keeps the three NAMED shades byte-identical at 0/2/4, midpoints unnamed', () => {
+  for (const hue of HUE_ORDER) {
+    const ramp = SHADE_RAMPS[hue]
+    assert.equal(ramp.length, 5, `${hue} ramp`)
+    assert.deepEqual(
+      [ramp[0], ramp[2], ramp[4]].map((s) => [s.name, s.hex]),
+      SHADES[hue].map((s) => [s.name, s.hex]),
+      `${hue}: the named steps drifted from SHADES`,
+    )
+    assert.equal(ramp[1].name, undefined)
+    assert.equal(ramp[3].name, undefined)
+    assert.equal(new Set(ramp.map((s) => s.id)).size, 5, `${hue}: ids must be unique`)
+  }
+  // The pinned literal for one hue, so the midpoint maths can't be silently recomputed differently.
+  assert.deepEqual(SHADE_RAMPS.rød.map((s) => s.hex), ['#FCA5A5', '#F77976', '#EF4444', '#C3302F', '#991B1B'])
+})
+
+test('every ramp gets strictly darker, and nothing dealt is too close to read apart', () => {
+  for (const hue of HUE_ORDER) {
+    const L = SHADE_RAMPS[hue].map((s) => oklabL(s.hex))
+    for (let i = 1; i < L.length; i++) assert.ok(L[i] < L[i - 1], `${hue}: step ${i} is not darker`)
+    for (const level of LEVELS) {
+      const { slots, minSpan } = COLORS_NUANCER[level]
+      for (const combo of nuancerCombos(hue, slots, minSpan)) {
+        for (let i = 1; i < combo.length; i++) {
+          assert.ok(L[combo[i - 1]] - L[combo[i]] >= MIN_SHADE_STEP, `${hue} ${level} ${combo}: too close`)
+        }
+      }
+    }
+  }
+  // The yellow midpoint sits 0.02 from both lysegul and gul — it must never be dealt beside them.
+  assert.ok(!nuancerCombos('gul', 3, 2).some((c) => c.join('').includes('01') || c.join('').includes('12')))
+})
+
+test('Nuancer deals real variety at every level, and the levels stay distinct', () => {
+  const count = (level: (typeof LEVELS)[number]) =>
+    Object.fromEntries(
+      HUE_ORDER.map((h) => [h, nuancerCombos(h, COLORS_NUANCER[level].slots, COLORS_NUANCER[level].minSpan).length]),
+    )
+  assert.deepEqual(count('let'), { rød: 3, blå: 3, grøn: 3, gul: 3, lilla: 3, orange: 3 })
+  assert.deepEqual(count('normal'), { rød: 7, blå: 7, grøn: 7, gul: 4, lilla: 7, orange: 7 })
+  assert.deepEqual(count('svaer'), { rød: 10, blå: 10, grøn: 10, gul: 5, lilla: 10, orange: 10 })
+  // Let is spread far apart — never a span under 3.
+  for (const h of HUE_ORDER) for (const c of nuancerCombos(h, 2, 3)) assert.ok(c[1] - c[0] >= 3)
+  // Svær stays at 3 slots (phone portrait) — no level gains an element.
+  assert.equal(COLORS_NUANCER.svaer.slots, 3)
+})
+
+test('Nuancer is keyed by shade id and speaks only a NAMED shade', () => {
+  const code = codeOf('components/farver/NuancerGame.tsx')
+  assert.match(code, /nuancerCombos\(hue, slotCount, minSpan\)/)
+  assert.match(code, /shadeId === order\[i\]\.id/)
+  assert.match(code, /if \(placedName\) audio\.speak\(placedName\)/)
+  assert.doesNotMatch(code, /audio\.speak\(shadeId\)/)
+  assert.doesNotMatch(code, /\bSHADES\b/)
 })

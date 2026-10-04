@@ -157,9 +157,9 @@ test('the §4 per-game tables are exactly these values', () => {
     svaer: { targets: 10, sources: 5 },
   })
   assert.deepEqual(COLORS_NUANCER, {
-    let: { slots: 2, decoy: false },
-    normal: { slots: 3, decoy: false },
-    svaer: { slots: 3, decoy: true },
+    let: { slots: 2, minSpan: 3, decoy: false },
+    normal: { slots: 3, minSpan: 3, decoy: false },
+    svaer: { slots: 3, minSpan: 2, decoy: true },
   })
 })
 
