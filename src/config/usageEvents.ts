@@ -49,6 +49,32 @@ export const SESSION_MARKS: ReadonlyArray<{ afterMs: number; event: string }> = 
 export const REWARD_STICKER_EVENT = 'reward:sticker'
 
 /**
+ * THE ADULT-DOOR FUNNEL. The adult area is a `Dialog`, not a route, so `location.pathname` never moves
+ * for it and none of it was visible (owner's 2026-09-18 decision to count routes only).
+ *
+ * Read together these say WHERE an adult gives up, which is the thing the owner cannot see:
+ *   • `chip` alone        → they find the pill but the sheet does not read as "adult things are here"
+ *   • `door` without `ok` → the parental gate is turning them away
+ *   • `gate_fail`         → they are trying and failing, rather than simply not trying
+ *
+ * `gate_ok` fires when the surface actually opens, gate or no gate — the question is "did anyone get
+ * in", not "did a PIN get typed". Expect single digits: adults do this rarely, so do not over-read a
+ * change of one.
+ */
+export const ADULT_EVENTS = {
+  /** The identity pill in the title row — `[data-profile-chip]`, opens "Hvem spiller?". */
+  chip: 'adult:chip',
+  /** The labelled "Indstillinger" row inside that sheet, i.e. the gate is about to appear. */
+  door: 'adult:door',
+  /** The adult surface actually opened. */
+  gateOk: 'adult:gate_ok',
+  /** The gate refused or was cancelled. */
+  gateFail: 'adult:gate_fail',
+} as const
+
+export type AdultStep = keyof typeof ADULT_EVENTS
+
+/**
  * Pathname → event key. EXACT matches only.
  *
  * `/learning/memory/:type` is listed by its two real types rather than by its pattern: `:type` is a URL
@@ -119,6 +145,7 @@ export const MAX_EVENTS_PER_REQUEST = 50
 export const USAGE_EVENTS: readonly string[] = [
   APP_OPEN_EVENT,
   REWARD_STICKER_EVENT,
+  ...Object.values(ADULT_EVENTS),
   ...SESSION_MARKS.map((m) => m.event),
   ...Object.values(ROUTE_EVENTS),
 ]

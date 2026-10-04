@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { MAX_EVENTS_PER_REQUEST } from '../config/usageEvents.ts'
+import { ADULT_EVENTS, MAX_EVENTS_PER_REQUEST, isUsageEvent } from '../config/usageEvents.ts'
 import {
   __flushUsagePingForTests,
   __resetUsagePingForTests,
@@ -8,6 +8,7 @@ import {
   __setSessionGapForTests,
   __tickSessionForTests,
   isNewSession,
+  reportAdultStep,
   reportStickersEarned,
   reportAppOpen,
   reportRoute,
@@ -594,6 +595,66 @@ test('reporting a sticker never throws into the ceremony', async () => {
   const f = installFetch(() => { throw new Error('offline') })
   try {
     reportStickersEarned(2)   // must not throw
+    await settle()
+  } finally {
+    f.restore()
+    __resetUsagePingForTests()
+  }
+})
+
+// ---- the adult-door funnel -----------------------------------------------------------------------
+//
+// The adult area is a Dialog, not a route, so none of it was visible. These four counters say WHERE an
+// adult gives up: found the pill, found the row, got in, or was turned away at the gate.
+
+const adult = (calls: FetchCall[]) =>
+  calls.flatMap((c) => (JSON.parse(String(c.init.body)) as { events: string[] }).events)
+    .filter((e) => e.startsWith('adult:'))
+
+test('each adult step reports its own event, as its own request', async () => {
+  __resetUsagePingForTests()
+  const f = installFetch(ok)
+  try {
+    reportAdultStep('chip')
+    reportAdultStep('door')
+    reportAdultStep('gateOk')
+    await settle()
+    assert.deepEqual(adult(f.calls), ['adult:chip', 'adult:door', 'adult:gate_ok'])
+    // Never batched: the gate is where a sitting is most likely to end, which is exactly when a
+    // pending batch is least likely to flush.
+    assert.equal(f.calls.length, 3, 'the adult steps were batched together')
+  } finally {
+    f.restore()
+    __resetUsagePingForTests()
+  }
+})
+
+test('a refused gate is distinguishable from never trying', async () => {
+  __resetUsagePingForTests()
+  const f = installFetch(ok)
+  try {
+    reportAdultStep('door')
+    reportAdultStep('gateFail')
+    await settle()
+    assert.deepEqual(adult(f.calls), ['adult:door', 'adult:gate_fail'])
+  } finally {
+    f.restore()
+    __resetUsagePingForTests()
+  }
+})
+
+test('every adult step is in the closed allow-list', () => {
+  for (const event of Object.values(ADULT_EVENTS)) {
+    assert.ok(isUsageEvent(event), `${event} would be dropped by the endpoint`)
+  }
+})
+
+test('reporting an adult step never throws into the surface', async () => {
+  __resetUsagePingForTests()
+  const f = installFetch(() => { throw new Error('offline') })
+  try {
+    reportAdultStep('chip')      // must not throw
+    reportAdultStep('gateOk')
     await settle()
   } finally {
     f.restore()

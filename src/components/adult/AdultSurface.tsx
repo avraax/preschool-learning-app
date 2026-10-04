@@ -60,6 +60,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import { captureScreenshot } from '../../services/screenshotService'
 import { adultSurfaceBus } from '../../services/adultSurfaceBus'
 import { useAuthContext } from '../../contexts/AuthContext'
+import { reportAdultStep } from '../../services/usagePing'
 
 const AdultSettings = React.lazy(() => import('./AdultSettings'))
 
@@ -109,10 +110,17 @@ const AdultSurface: React.FC<AdultSurfaceProps> = ({ updateAvailable = false, on
       if (auth) {
         const ok = await auth.requirePin('adultMenu', { force: true })
         // Cancelled: the capture is still in flight and is simply thrown away.
-        if (!ok) return
+        if (!ok) {
+          // Third step of the adult-door funnel: the gate turned them away, or they gave up at it.
+          reportAdultStep('gateFail')
+          return
+        }
       }
       setMounted(true)
       setOpen(true)
+      // They are IN. Reported here rather than beside `requirePin`, because the question is "did
+      // anyone get past that point", not "did a PIN get typed" — a guest with no gate still counts.
+      reportAdultStep('gateOk')
       void shot.then(setScreenshot)
     } finally {
       opening.current = false

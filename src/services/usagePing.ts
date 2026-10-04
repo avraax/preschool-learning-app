@@ -38,11 +38,13 @@
 import { BUILD_INFO } from '../config/version.ts'
 import { apiUrl } from '../config/apiBase.ts'
 import {
+  ADULT_EVENTS,
   APP_OPEN_EVENT,
   MAX_EVENTS_PER_REQUEST,
   REWARD_STICKER_EVENT,
   SESSION_MARKS,
   eventForPath,
+  type AdultStep,
 } from '../config/usageEvents.ts'
 import { devSessionGapMs } from '../utils/devHarness.ts'
 
@@ -387,4 +389,25 @@ export function __tickSessionForTests(ms: number): void {
 /** Test seam only — how much ACTIVE time the ladder has banked, and how many marks it has sent. */
 export function __sessionStateForTests(): { activeMs: number; marksSent: number } {
   return { activeMs, marksSent }
+}
+
+/**
+ * One step of the adult-door funnel — see `ADULT_EVENTS`.
+ *
+ * TYPED, not a free string: every other reporter here takes a fixed constant, and a `reportUsage(x)`
+ * that accepted any string would be a hole straight through the closed allow-list that bounds this
+ * table's cardinality.
+ *
+ * Its own request rather than the batch. These are a handful per session at most, and the one that
+ * matters — the adult giving up at the gate — is the moment a sitting is most likely to end, which is
+ * exactly when a pending batch is least likely to flush.
+ */
+export function reportAdultStep(step: AdultStep): void {
+  try {
+    const event = ADULT_EVENTS[step]
+    if (!event) return
+    post([event], false)
+  } catch {
+    /* a counter may never break the adult surface */
+  }
 }

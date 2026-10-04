@@ -6,6 +6,7 @@ import { avatarArt } from '../../assets/avatars'
 import { normalizeAvatarId } from '../../config/avatars'
 import { onTileColor } from '../../theme/tokens/helpers'
 import WhoIsPlayingSheet from '../auth/WhoIsPlayingSheet'
+import { reportAdultStep } from '../../services/usagePing'
 
 // WHO IS PLAYING — a pill in the title row, top-LEFT (Corner identity PRD-01 §2.4).
 //
@@ -85,6 +86,13 @@ const ProfileChip: React.FC<ProfileChipProps> = ({ size = 32, sx = {} }) => {
   const ink = onTileColor(accent)
   const dark = theme.scene?.dark
 
+  // Both the tap and the keyboard path go through here, so the counter cannot drift from the sheet
+  // actually opening. First step of the adult-door funnel — see `ADULT_EVENTS`.
+  const openSheet = () => {
+    reportAdultStep('chip')
+    setOpen(true)
+  }
+
   return (
     <>
       <Box
@@ -96,12 +104,12 @@ const ProfileChip: React.FC<ProfileChipProps> = ({ size = 32, sx = {} }) => {
         // rides along after it rather than replacing it. NB this is deliberately NOT
         // `aria-label="Indstillinger"` — that selector belongs to the adult ROW inside the sheet now.
         aria-label={name ? `Hvem spiller? ${name} spiller` : 'Hvem spiller?'}
-        onClick={() => setOpen(true)}
+        onClick={() => openSheet()}
         // Enter/Space, since this is a div playing a button.
         onKeyDown={(e: React.KeyboardEvent) => {
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault()
-            setOpen(true)
+            openSheet()
           }
         }}
         sx={[

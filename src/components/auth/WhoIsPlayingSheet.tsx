@@ -13,6 +13,7 @@ import { captureExcludeProps } from '../../services/captureExclude'
 import { PHONE_ANY } from '../../theme/phoneMedia'
 import { AUTH_Z } from './authOverlayZ'
 import ProfilePicker from './ProfilePicker'
+import { reportAdultStep } from '../../services/usagePing'
 
 // "Hvem spiller?", reopened mid-session from the profile chip (Corner identity PRD-01 §2.6).
 //
@@ -112,6 +113,8 @@ const WhoIsPlayingSheet: React.FC<WhoIsPlayingSheetProps> = ({ open, onClose }) 
 
   /** Close first, hand off after — see `handingOff`. */
   const openSettings = useCallback(() => {
+    // Second step of the adult-door funnel: they found the row and tapped it, so the gate is next.
+    reportAdultStep('door')
     setHandingOff(true)
     onClose()
   }, [onClose])

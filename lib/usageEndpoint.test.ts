@@ -193,3 +193,27 @@ test('USAGE_DATABASE_URL routes every counter statement away from the main pool'
   assert.ok(!block.includes('dbQuery('), 'the dev mirror still writes through the main pool')
   assert.ok(devCode.includes("process.env.USAGE_DATABASE_URL"), 'dev-server.js ignores USAGE_DATABASE_URL')
 })
+
+test('the adult-door funnel is actually wired to its three surfaces', () => {
+  // The counter goes quiet silently if a refactor drops a call — there is no error, just a number that
+  // stops moving, which is indistinguishable from "no adult ever tried". Pin the call sites.
+  const read = (rel: string) => code(readFileSync(new URL(rel, import.meta.url), 'utf8'))
+
+  const chip = read('../src/components/common/ProfileChip.tsx')
+  assert.match(chip, /reportAdultStep\('chip'\)/, 'the identity pill no longer reports')
+  // Both the tap and the keyboard path must go through one helper, or the count drifts from reality.
+  assert.equal((chip.match(/setOpen\(true\)/g) ?? []).length, 1,
+    'ProfileChip opens the sheet from more than one place — route them through openSheet()')
+
+  const sheet = read('../src/components/auth/WhoIsPlayingSheet.tsx')
+  assert.match(sheet, /reportAdultStep\('door'\)/, 'the Indstillinger row no longer reports')
+
+  const surface = read('../src/components/adult/AdultSurface.tsx')
+  assert.match(surface, /reportAdultStep\('gateOk'\)/, 'opening the adult surface no longer reports')
+  assert.match(surface, /reportAdultStep\('gateFail'\)/, 'a refused gate no longer reports')
+  // gateOk must follow the gate, not precede it — otherwise a cancelled PIN counts as getting in.
+  assert.ok(
+    surface.indexOf("reportAdultStep('gateOk')") > surface.indexOf("requirePin('adultMenu'"),
+    'gateOk is reported before the gate resolves',
+  )
+})
