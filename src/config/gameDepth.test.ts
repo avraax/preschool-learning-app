@@ -17,7 +17,8 @@ import {
   mixingRules,
   TARGET_PRIORITY,
 } from './colorMixing.ts'
-import { COLORS_RAMFARVEN, LEVELS, ORDLEG_SPELL } from './difficulty.ts'
+import { COLORS_RAMFARVEN, LEVELS, MEMORY_BOARD, MEMORY_CLUSTER_MAX, ORDLEG_SPELL, memoryNumbersFor } from './difficulty.ts'
+import { getDanishNumberText } from './danish-phrases.ts'
 import { READING_MAX_LEN, READING_ROUND_LENGTH, READING_WORDS, SPELLING_ALPHABET, makeMissingLetterTask, spellingWordsFor } from './ordlegWords.ts'
 import { readingPromptPool } from './promptPools.ts'
 import { confusablePoolFor } from './letterConfusables.ts'
@@ -224,4 +225,27 @@ test('Å shows the eel everywhere the alphabet art is used', () => {
   const a = readFileSync(path.join(SRC, 'assets/games/alphabet/AA.webp'))
   const b = readFileSync(path.join(SRC, 'assets/games/ordleg/aal.webp'))
   assert.ok(a.equals(b), 'alphabet/AA.webp is not the eel picture')
+})
+
+// ---- Hukommelse – Tal — range by level (§3.7) -------------------------------------------------------
+
+test('Hukommelse numbers follow the level: 1–10 / 1–20 / 1–30, always at least a board of pairs', () => {
+  assert.deepEqual(memoryNumbersFor('let'), Array.from({ length: 10 }, (_, i) => String(i + 1)))
+  assert.equal(memoryNumbersFor('normal').length, 20)
+  assert.deepEqual(memoryNumbersFor('svaer').slice(-1), ['30'])
+  for (const level of LEVELS) assert.ok(memoryNumbersFor(level).length >= MEMORY_BOARD[level].pairs)
+  assert.equal(MEMORY_CLUSTER_MAX, 20)
+  // Every number a card can show is a baked clip (numbers 0–100 are enumerated).
+  const all = enumerated()
+  for (const n of memoryNumbersFor('svaer')) assert.ok(all.has(getDanishNumberText(Number(n))))
+})
+
+test('the memory board bag rebuilds when the POOL changes, and big numbers drop the cluster', () => {
+  const engine = codeOf('components/common/UnifiedMemoryGame.tsx')
+  assert.match(engine, /const poolKey = `\$\{config\.gameType\}:\$\{pool\.join\('\|'\)\}`/)
+  assert.match(engine, /bagRef\.current\.key !== poolKey/)
+  const game = codeOf('components/learning/MemoryGame.tsx')
+  assert.match(game, /useMemo\(\(\) => memoryNumbersFor\(level\), \[level\]\)/)
+  assert.match(game, /if \(n > MEMORY_CLUSTER_MAX\) return \{ primary: number \}/)
+  assert.doesNotMatch(game, /length: 20/)
 })

@@ -111,7 +111,11 @@ test('the §4 per-game tables are exactly these values', () => {
     normal: { options: 4, weights: [0.25, 0.2, 0.15, 0.12], maxStart: 40 },
     svaer: { options: 5, weights: [0.1, 0.15, 0.3, 0.3], maxStart: 60 },
   })
-  assert.deepEqual(MEMORY_BOARD, { let: { pairs: 6 }, normal: { pairs: 10 }, svaer: { pairs: 15 } })
+  assert.deepEqual(MEMORY_BOARD, {
+    let: { pairs: 6, numberMax: 10 },
+    normal: { pairs: 10, numberMax: 20 },
+    svaer: { pairs: 15, numberMax: 30 },
+  })
   assert.deepEqual(MATH_LEARN, { let: { max: 60 }, normal: { max: 100 }, svaer: { max: 100 } })
   assert.deepEqual(ALPHABET_QUIZ, {
     let: { options: 3, confusables: 'exclude' },

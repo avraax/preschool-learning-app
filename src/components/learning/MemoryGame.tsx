@@ -1,10 +1,10 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import { useParams } from 'react-router-dom'
 import UnifiedMemoryGame, { UnifiedMemoryConfig, MemoryItemDisplay } from '../common/UnifiedMemoryGame'
 import { categoryThemes } from '../../config/categoryThemes'
 import { AlphabetRestartButton, MathRestartButton } from '../common/RestartButton'
 import { AlphabetRepeatButton, MathRepeatButton } from '../common/RepeatButton'
-import { MEMORY_BOARD } from '../../config/difficulty'
+import { MEMORY_BOARD, MEMORY_CLUSTER_MAX, memoryNumbersFor } from '../../config/difficulty'
 import { useDifficulty } from '../../hooks/useDifficulty'
 import { LETTER_WORDS, letterPhrase } from '../../config/letterWords'
 import { letterArt } from '../../assets/games/alphabet'
@@ -13,9 +13,6 @@ import { MEMORY_LETTERS_INSTRUCTION, MEMORY_NUMBERS_INSTRUCTION } from '../../co
 
 // Danish alphabet (29 letters)
 const DANISH_ALPHABET = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'Æ', 'Ø', 'Å']
-
-// Numbers 1-20
-const NUMBERS = Array.from({ length: 20 }, (_, i) => (i + 1).toString())
 
 // Letter → word/subject is the SHARED canonical manifest (`LETTER_WORDS`, src/config/letterWords.ts)
 // — the same table Bogstav Quiz + Lær Alfabetet use — so a letter shows the same object and speaks
@@ -34,6 +31,9 @@ const MemoryGame: React.FC = () => {
   // the same reason XP is difficulty-independent.
   const level = useDifficulty(gameType === 'letters' ? 'alphabet' : 'math')
   const boardPairs = MEMORY_BOARD[level].pairs
+  // Memoised on the level so the pool's IDENTITY only changes when the range does — the engine
+  // rebuilds its board bag on a new pool identity (and must not on every render).
+  const numbersPool = useMemo(() => memoryNumbersFor(level), [level])
 
   // Configuration for letters memory game
   const lettersConfig: UnifiedMemoryConfig = {
@@ -92,7 +92,8 @@ const MemoryGame: React.FC = () => {
     boardPairs,
 
     // The POOL — see the letters config above; the engine's `boardBag` owns the shuffle and the cycle.
-    generateItems: () => NUMBERS,
+    // The level owns the RANGE too (Game Depth PRD-01 §3.7): Let 1–10 · Normal 1–20 · Svær 1–30.
+    generateItems: () => numbersPool,
 
     getDisplayData: (number: string): MemoryItemDisplay => {
       // Count cluster (PRD-08 §3.6, owner-locked): the matched front reinforces count ↔ numeral with
@@ -101,6 +102,8 @@ const MemoryGame: React.FC = () => {
       // suppressed and the card stays numeral-only (today's look). The numeral stays the primary read.
       const n = parseInt(number, 10)
       const obj = countingObjectForNumber(n)
+      // 21–30 (Svær) show the numeral alone — a cluster that big is unreadable on a phone card.
+      if (n > MEMORY_CLUSTER_MAX) return { primary: number }
       return {
         primary: number,
         iconArt: artForObject(obj),

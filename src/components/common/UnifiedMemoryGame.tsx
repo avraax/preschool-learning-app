@@ -140,9 +140,11 @@ const UnifiedMemoryGame: React.FC<UnifiedMemoryGameProps> = ({ config }) => {
   // key could flip a stale card back over + skip the deal-in stagger. (card.id itself is left as-is
   // — the match logic keys off it; only the React key is namespaced.)
   const boardSeq = useRef(0)
-  // The full-pool bag every board is dealt from (D7). Keyed on `gameType`, NOT `boardPairs` — the pool
-  // is the same at every level, so a level change must not restart the cycle.
-  const bagRef = useRef<{ type: string; bag: BoardBag<string> } | null>(null)
+  // The full-pool bag every board is dealt from (D7). Keyed on the POOL itself (type + contents), NOT
+  // `boardPairs`: a level change that leaves the pool alone (Bogstaver) must not restart the cycle, but
+  // one that moves it (Tal's 1–10 / 1–20 / 1–30, Game Depth PRD-01 §3.7) must — otherwise Let keeps
+  // dealing numbers its range no longer contains.
+  const bagRef = useRef<{ key: string; bag: BoardBag<string> } | null>(null)
   // Fires the sticker ceremony IN GAME at the seam and resolves when it closes.
   const ceremony = useRewardCeremony()
   const section = sectionForGameId(config.gameId)
@@ -256,8 +258,10 @@ const UnifiedMemoryGame: React.FC<UnifiedMemoryGameProps> = ({ config }) => {
     // Deal from the BAG, not a fresh `shuffle().slice()` (Endless Play PRD-01 W6 / D7): every item in
     // the pool is shown once before any of them comes back, and no board holds a duplicate. At 15
     // pairs from 29 letters that makes the boards 15 / 14+1 / …, which is exactly one full cycle.
-    if (!bagRef.current || bagRef.current.type !== config.gameType) {
-      bagRef.current = { type: config.gameType, bag: makeBoardBag(config.generateItems()) }
+    const pool = config.generateItems()
+    const poolKey = `${config.gameType}:${pool.join('|')}`
+    if (!bagRef.current || bagRef.current.key !== poolKey) {
+      bagRef.current = { key: poolKey, bag: makeBoardBag(pool) }
     }
     const selectedItems = bagRef.current.bag.deal(config.boardPairs)
 

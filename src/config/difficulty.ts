@@ -244,6 +244,11 @@ export const allSequenceSpecs = (): SequenceSpec[] => {
 export interface MemoryTuning {
   /** Pairs on the board (one board = one round). */
   pairs: number
+  /**
+   * Hukommelse – Tal's number range, 1..numberMax (Game Depth PRD-01 §3.7) — it was 1–20 at every
+   * level. Always ≥ `pairs`, so a board never needs a duplicate. Bogstaver ignore it (29 letters).
+   */
+  numberMax: number
 }
 
 /**
@@ -252,10 +257,18 @@ export interface MemoryTuning {
  * section (the only place a difficulty was ever named in the child UI).
  */
 export const MEMORY_BOARD: Record<DifficultyLevel, MemoryTuning> = {
-  let: { pairs: 6 },
-  normal: { pairs: 10 },
-  svaer: { pairs: 15 },
+  let: { pairs: 6, numberMax: 10 },
+  normal: { pairs: 10, numberMax: 20 },
+  svaer: { pairs: 15, numberMax: 30 },
 }
+
+/** The memory numbers pool at a level, as strings ("1".."numberMax"). */
+export const memoryNumbersFor = (level: DifficultyLevel): string[] =>
+  Array.from({ length: MEMORY_BOARD[level].numberMax }, (_, i) => String(i + 1))
+
+/** The largest number whose matched face still shows a count cluster — a 30-object cluster on a 48 px
+ *  phone card is unreadable, so 21–30 show the numeral alone. */
+export const MEMORY_CLUSTER_MAX = 20
 
 // (`memoryStarThresholds` is DELETED with the stars it scaled — Endless Play PRD-01 W3.)
 
