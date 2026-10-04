@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-04T18:04:14.128Z",
+  "updatedAt": "2026-10-04T18:09:30.555Z",
   "clips": {
     "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|b": {
       "verdict": "ok",
@@ -16280,6 +16280,502 @@
       "text": "sort og hvid, hvad bliver det?",
       "group": "colours",
       "updatedAt": 1791136093685
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Appelsin starter med A": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Appelsin starter med A",
+      "group": "letters",
+      "updatedAt": 1791137370554
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Hvad starter Appelsin med?": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Hvad starter Appelsin med?",
+      "group": "letters",
+      "updatedAt": 1791137370554
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Agurk starter med A": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Agurk starter med A",
+      "group": "letters",
+      "updatedAt": 1791137370554
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Hvad starter Agurk med?": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Hvad starter Agurk med?",
+      "group": "letters",
+      "updatedAt": 1791137370554
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Bus starter med B": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Bus starter med B",
+      "group": "letters",
+      "updatedAt": 1791137370554
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Hvad starter Bus med?": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Hvad starter Bus med?",
+      "group": "letters",
+      "updatedAt": 1791137370554
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Banan starter med B": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Banan starter med B",
+      "group": "letters",
+      "updatedAt": 1791137370554
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Hvad starter Banan med?": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Hvad starter Banan med?",
+      "group": "letters",
+      "updatedAt": 1791137370554
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Ballon starter med B": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Ballon starter med B",
+      "group": "letters",
+      "updatedAt": 1791137370554
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Hvad starter Ballon med?": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Hvad starter Ballon med?",
+      "group": "letters",
+      "updatedAt": 1791137370554
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Bog starter med B": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Bog starter med B",
+      "group": "letters",
+      "updatedAt": 1791137370554
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Hvad starter Bog med?": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Hvad starter Bog med?",
+      "group": "letters",
+      "updatedAt": 1791137370554
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Dør starter med D": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Dør starter med D",
+      "group": "letters",
+      "updatedAt": 1791137370554
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Hvad starter Dør med?": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Hvad starter Dør med?",
+      "group": "letters",
+      "updatedAt": 1791137370554
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fugl starter med F": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fugl starter med F",
+      "group": "letters",
+      "updatedAt": 1791137370554
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Hvad starter Fugl med?": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Hvad starter Fugl med?",
+      "group": "letters",
+      "updatedAt": 1791137370554
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Gris starter med G": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Gris starter med G",
+      "group": "letters",
+      "updatedAt": 1791137370554
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Hvad starter Gris med?": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Hvad starter Gris med?",
+      "group": "letters",
+      "updatedAt": 1791137370554
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Ged starter med G": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Ged starter med G",
+      "group": "letters",
+      "updatedAt": 1791137370554
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Hvad starter Ged med?": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Hvad starter Ged med?",
+      "group": "letters",
+      "updatedAt": 1791137370554
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Gulerod starter med G": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Gulerod starter med G",
+      "group": "letters",
+      "updatedAt": 1791137370554
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Hvad starter Gulerod med?": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Hvad starter Gulerod med?",
+      "group": "letters",
+      "updatedAt": 1791137370554
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Græskar starter med G": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Græskar starter med G",
+      "group": "letters",
+      "updatedAt": 1791137370554
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Hvad starter Græskar med?": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Hvad starter Græskar med?",
+      "group": "letters",
+      "updatedAt": 1791137370554
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Hest starter med H": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Hest starter med H",
+      "group": "letters",
+      "updatedAt": 1791137370554
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Hvad starter Hest med?": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Hvad starter Hest med?",
+      "group": "letters",
+      "updatedAt": 1791137370554
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Hus starter med H": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Hus starter med H",
+      "group": "letters",
+      "updatedAt": 1791137370554
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Hvad starter Hus med?": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Hvad starter Hus med?",
+      "group": "letters",
+      "updatedAt": 1791137370554
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Hat starter med H": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Hat starter med H",
+      "group": "letters",
+      "updatedAt": 1791137370554
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Hvad starter Hat med?": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Hvad starter Hat med?",
+      "group": "letters",
+      "updatedAt": 1791137370554
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Haj starter med H": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Haj starter med H",
+      "group": "letters",
+      "updatedAt": 1791137370554
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Hvad starter Haj med?": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Hvad starter Haj med?",
+      "group": "letters",
+      "updatedAt": 1791137370554
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Jordbær starter med J": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Jordbær starter med J",
+      "group": "letters",
+      "updatedAt": 1791137370554
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Hvad starter Jordbær med?": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Hvad starter Jordbær med?",
+      "group": "letters",
+      "updatedAt": 1791137370554
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Ko starter med K": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Ko starter med K",
+      "group": "letters",
+      "updatedAt": 1791137370554
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Hvad starter Ko med?": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Hvad starter Ko med?",
+      "group": "letters",
+      "updatedAt": 1791137370554
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Kage starter med K": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Kage starter med K",
+      "group": "letters",
+      "updatedAt": 1791137370554
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Hvad starter Kage med?": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Hvad starter Kage med?",
+      "group": "letters",
+      "updatedAt": 1791137370554
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Kop starter med K": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Kop starter med K",
+      "group": "letters",
+      "updatedAt": 1791137370554
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Hvad starter Kop med?": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Hvad starter Kop med?",
+      "group": "letters",
+      "updatedAt": 1791137370554
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Løg starter med L": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Løg starter med L",
+      "group": "letters",
+      "updatedAt": 1791137370554
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Hvad starter Løg med?": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Hvad starter Løg med?",
+      "group": "letters",
+      "updatedAt": 1791137370554
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Måne starter med M": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Måne starter med M",
+      "group": "letters",
+      "updatedAt": 1791137370554
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Hvad starter Måne med?": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Hvad starter Måne med?",
+      "group": "letters",
+      "updatedAt": 1791137370554
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Majs starter med M": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Majs starter med M",
+      "group": "letters",
+      "updatedAt": 1791137370554
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Hvad starter Majs med?": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Hvad starter Majs med?",
+      "group": "letters",
+      "updatedAt": 1791137370554
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Ost starter med O": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Ost starter med O",
+      "group": "letters",
+      "updatedAt": 1791137370554
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Hvad starter Ost med?": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Hvad starter Ost med?",
+      "group": "letters",
+      "updatedAt": 1791137370554
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Ræv starter med, R": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Ræv starter med, R",
+      "group": "letters",
+      "updatedAt": 1791137370554
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Hvad starter Ræv med?": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Hvad starter Ræv med?",
+      "group": "letters",
+      "updatedAt": 1791137370554
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Sko starter med S": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Sko starter med S",
+      "group": "letters",
+      "updatedAt": 1791137370554
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Hvad starter Sko med?": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Hvad starter Sko med?",
+      "group": "letters",
+      "updatedAt": 1791137370554
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Stol starter med S": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Stol starter med S",
+      "group": "letters",
+      "updatedAt": 1791137370554
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Hvad starter Stol med?": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Hvad starter Stol med?",
+      "group": "letters",
+      "updatedAt": 1791137370554
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Seng starter med S": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Seng starter med S",
+      "group": "letters",
+      "updatedAt": 1791137370554
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Hvad starter Seng med?": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Hvad starter Seng med?",
+      "group": "letters",
+      "updatedAt": 1791137370554
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Stjerne starter med S": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Stjerne starter med S",
+      "group": "letters",
+      "updatedAt": 1791137370554
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Hvad starter Stjerne med?": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Hvad starter Stjerne med?",
+      "group": "letters",
+      "updatedAt": 1791137370554
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Træ starter med T": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Træ starter med T",
+      "group": "letters",
+      "updatedAt": 1791137370554
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Hvad starter Træ med?": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Hvad starter Træ med?",
+      "group": "letters",
+      "updatedAt": 1791137370554
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Æg starter med Æ": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Æg starter med Æ",
+      "group": "letters",
+      "updatedAt": 1791137370554
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Hvad starter Æg med?": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Hvad starter Æg med?",
+      "group": "letters",
+      "updatedAt": 1791137370554
     }
   }
 }

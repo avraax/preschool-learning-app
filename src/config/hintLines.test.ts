@@ -68,7 +68,8 @@ test('EVERY hint line is already prebaked — a hint never reaches live Azure', 
   // Hvilken Farve? went 24 → 18 with Difficulty PRD-02: its `reveal` axis is gone, so the six
   // non-canonical objects are askable at no level and can never be the answer a hint names.
   // Game Depth PRD-01 W1: 18 → 19 (`ost` joins as the one canonical reused object).
-  assert.equal(checked, 28 + 100 + 109 + 74 + 74 + 19 + 22, `checked ${checked} hint lines`)
+  // Game Depth PRD-01 W7: Bogstav Quiz's 28 → 59 (every picture a letter can show has its own hint).
+  assert.equal(checked, 59 + 100 + 109 + 74 + 74 + 19 + 22, `checked ${checked} hint lines`)
 })
 
 test('the lines are the SAME builders the app speaks, not lookalikes', () => {
@@ -79,8 +80,9 @@ test('the lines are the SAME builders the app speaks, not lookalikes', () => {
   // Stav Ordet says the letter NAME (see the builder's doc comment for why not "K som Kat").
   assert.equal(spellingHintLine('K'), 'k')
   assert.equal(spellingHintLine('X'), 'eks')
-  // The alphabet table covers every askable letter, not a sample.
-  assert.equal(HINT_LINES['alphabet.quiz'].lines().length, WORD_LETTERS.length)
+  // The alphabet table covers every picture every askable letter can show, not a sample.
+  assert.equal(HINT_LINES['alphabet.quiz'].lines().length, 59)
+  assert.ok(HINT_LINES['alphabet.quiz'].lines().length > WORD_LETTERS.length)
 })
 
 test('every game with a never-fail hint has a decision in the table', () => {

@@ -21,7 +21,7 @@
 // PURE + Node-importable → relative imports need an explicit `.ts` extension.
 import { DANISH_PHRASES, getDanishLetterName } from './danish-phrases.ts'
 import { colorObjectFactText, sequenceFactText, sequenceNumbers, sequenceStarts } from './gamePhrases.ts'
-import { LETTER_WORDS, WORD_LETTERS, startsWithPhrase } from './letterWords.ts'
+import { LETTER_QUIZ_WORDS, LETTER_WORDS, WORD_LETTERS, startsWithPhrase } from './letterWords.ts'
 import { quizEnglishWords } from './englishVocab.ts'
 import { spellingWordsFor } from './ordlegWords.ts'
 import { quizObjectPool, spokenColor, type QuizObject } from './colorContent.ts'
@@ -44,8 +44,10 @@ export interface HintSpec {
 // through the same builder the rest of the app uses.
 
 /** Bogstav Quiz: "Wienerbrød starter med W" — already built, baked and audited for the correct tap. */
-export const alphabetHintLine = (letter: string): string =>
-  startsWithPhrase(letter, LETTER_WORDS[letter]?.word ?? letter)
+export const alphabetHintLine = (letter: string, word?: string): string =>
+  // `word` is the picture ON SCREEN (Game Depth PRD-01: a letter now has several) — without it the hint
+  // would say "Giraf starter med G" over a picture of a pig. Defaults to the canonical word.
+  startsWithPhrase(letter, word ?? LETTER_WORDS[letter]?.word ?? letter)
 
 /** Tal Quiz: re-speak the prompt, "Find tallet 37". The fact IS the prompt for a listen-only board. */
 export const numberHintLine = (n: number): string => DANISH_PHRASES.gamePrompts.findNumber(n)
@@ -95,7 +97,8 @@ const spellingLetters = (): string[] => {
 export const HINT_LINES: Record<string, HintSpec> = {
   'alphabet.quiz': {
     voice: 'da',
-    lines: () => WORD_LETTERS.map(alphabetHintLine),
+    lines: () =>
+      WORD_LETTERS.flatMap((l) => (LETTER_QUIZ_WORDS[l] ?? []).map((q) => alphabetHintLine(l, q.word))),
   },
   'math.counting': {
     voice: 'da',

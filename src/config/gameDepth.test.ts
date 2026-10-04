@@ -21,6 +21,8 @@ import { COLORS_RAMFARVEN, LEVELS, ORDLEG_SPELL } from './difficulty.ts'
 import { READING_MAX_LEN, READING_ROUND_LENGTH, READING_WORDS, SPELLING_ALPHABET, makeMissingLetterTask, spellingWordsFor } from './ordlegWords.ts'
 import { readingPromptPool } from './promptPools.ts'
 import { confusablePoolFor } from './letterConfusables.ts'
+import { LETTER_QUIZ_WORDS, LETTER_WORDS, WORD_LETTERS, startsWithPhrase, startsWithQuestion } from './letterWords.ts'
+import { alphabetHintLine } from './hintLines.ts'
 import { collectNarrationClips } from '../../shared-narration-clips.js'
 
 const SRC = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
@@ -162,4 +164,64 @@ test('every Læs Ordet word resolves to a baked picture, and its spoken name is 
     assert.ok(dirs.some((d) => existsSync(path.join(d, `${w.art}.webp`))), `${w.word}: no art "${w.art}"`)
     assert.ok(all.has(w.word), `${w.word}: its spoken name is not enumerated`)
   }
+})
+
+// ---- Bogstav Quiz — several pictures per letter (§3.6) ----------------------------------------------
+
+const artFileFor = (ref: string): string => {
+  const [dir, id] = ref.split('/')
+  const stem = dir === 'alphabet' ? ({ Æ: 'AE', Ø: 'OE', Å: 'AA' } as Record<string, string>)[id] ?? id : id
+  return path.join(SRC, 'assets/games', dir, `${stem}.webp`)
+}
+
+test('every quiz word starts with its letter, entry 0 is the canonical word, and its picture exists', () => {
+  let total = 0
+  for (const letter of WORD_LETTERS) {
+    const words = LETTER_QUIZ_WORDS[letter]
+    assert.ok(words && words.length >= 1, `${letter} has no quiz words`)
+    assert.equal(words[0].word, LETTER_WORDS[letter].word, `${letter}: entry 0 must be the canonical word`)
+    assert.equal(words[0].art, `alphabet/${letter}`)
+    assert.equal(new Set(words.map((w) => w.word)).size, words.length, `${letter}: duplicate word`)
+    for (const q of words) {
+      assert.equal(q.word[0].toUpperCase(), letter, `${q.word} does not start with ${letter}`)
+      // Silent H (hj-/hv-) would teach the wrong first sound.
+      assert.ok(!/^h[jv]/i.test(q.word), `${q.word}: silent H`)
+      assert.ok(existsSync(artFileFor(q.art)), `${q.word}: no picture at ${q.art}`)
+      total++
+    }
+  }
+  // Pinned so a list that silently empties fails: 28 canonical + 31 extra.
+  assert.equal(total, 59)
+  // No picture is shown for two different letters (that would teach one picture two first sounds).
+  const arts = WORD_LETTERS.flatMap((l) => LETTER_QUIZ_WORDS[l].map((q) => q.art))
+  assert.equal(new Set(arts).size, arts.length)
+})
+
+test('every quiz word speaks a baked question, fact and hint — never live Azure', () => {
+  const all = enumerated()
+  for (const letter of WORD_LETTERS) {
+    for (const q of LETTER_QUIZ_WORDS[letter]) {
+      for (const line of [startsWithQuestion(q.word), startsWithPhrase(letter, q.word), alphabetHintLine(letter, q.word)]) {
+        assert.ok(all.has(line), `missing prebake clip: "${line}"`)
+      }
+    }
+  }
+  // The hint names the picture ON SCREEN, not the letter's canonical word.
+  assert.equal(alphabetHintLine('G', 'Gris'), 'Gris starter med G')
+})
+
+test('Bogstav Quiz shows the rotated word and speaks THAT word in its fact and hint', () => {
+  const code = codeOf('components/alphabet/AlphabetGame.tsx')
+  assert.match(code, /const \{ word, art \} = nextWordFor\(letter\)/)
+  assert.match(code, /questionVisual: \{ art: wordArt\(art\) \}/)
+  assert.match(code, /alphabetHintLine\(item\.value as string, item\.repeatWord\)/)
+  assert.match(code, /startsWithPhrase\(item\.value as string, String\(item\.repeatWord\)\)/)
+  assert.doesNotMatch(code, /LETTER_WORDS\[/)
+})
+
+test('Å shows the eel everywhere the alphabet art is used', () => {
+  assert.equal(LETTER_WORDS['Å'].word, 'Ål')
+  const a = readFileSync(path.join(SRC, 'assets/games/alphabet/AA.webp'))
+  const b = readFileSync(path.join(SRC, 'assets/games/ordleg/aal.webp'))
+  assert.ok(a.equals(b), 'alphabet/AA.webp is not the eel picture')
 })

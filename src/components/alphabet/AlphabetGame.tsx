@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useRef } from 'react'
 import UnifiedQuizGame, { UnifiedQuizConfig, QuizItem } from '../common/UnifiedQuizGame'
 import { DANISH_PHRASES } from '../../config/danish-phrases'
 import { categoryThemes } from '../../config/categoryThemes'
@@ -7,11 +7,12 @@ import { progressStore } from '../../services/progressStore'
 import { ALPHABET_QUIZ } from '../../config/difficulty'
 import { confusablePoolFor, confusablesFor, shapeMatesFor } from '../../config/letterConfusables'
 import { shuffle } from '../../utils/shuffle'
-import { LETTER_WORDS, startsWithPhrase, startsWithQuestion } from '../../config/letterWords'
+import { LETTER_QUIZ_WORDS, startsWithPhrase, startsWithQuestion, type QuizWord } from '../../config/letterWords'
 import { ALPHABET_ROUND, alphabetPromptPool } from '../../config/promptPools'
 import { alphabetHintLine } from '../../config/hintLines'
+import { makePromptBag, type PromptBag } from '../../config/promptBag'
 import { usePromptBag } from '../../hooks/usePromptBag'
-import { letterArt } from '../../assets/games/alphabet'
+import { wordArt } from '../../assets/games/wordArt'
 
 // Full Danish alphabet including special characters
 const DANISH_ALPHABET = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'Æ', 'Ø', 'Å']
@@ -35,6 +36,19 @@ const AlphabetGame: React.FC = () => {
   // `gameId` also wires W2: a missed letter is re-asked ~3 questions later, and the letters he misses
   // most lead each new pass. Order only — never the level (see config/practiceWeights.ts).
   const letterBag = usePromptBag<string>({ window: ALPHABET_ROUND, gameId: 'alphabet.quiz' })
+  // WHICH picture a drawn letter shows cycles through that letter's words (Game Depth PRD-01 §3.6), one
+  // small bag per letter, so B is a car, then a bus, then a banana … before any comes back. The LETTER
+  // bag above is unchanged (pool 28, practice ledger keyed by letter).
+  const wordBags = useRef(new Map<string, PromptBag<QuizWord>>())
+  const nextWordFor = (letter: string): QuizWord => {
+    const words = LETTER_QUIZ_WORDS[letter]
+    let bag = wordBags.current.get(letter)
+    if (!bag) {
+      bag = makePromptBag(words, { key: (q) => q.word, window: 2 })
+      wordBags.current.set(letter, bag)
+    }
+    return bag.next()
+  }
 
   // Configuration for alphabet quiz
   const alphabetConfig: UnifiedQuizConfig = {
@@ -46,16 +60,17 @@ const AlphabetGame: React.FC = () => {
     // ~50% "hear the letter" recognition mode was retired (he knows every letter already).
     generateQuizItem: () => {
       const letter = letterBag.draw(alphabetPromptPool())
-      const { word } = LETTER_WORDS[letter]
+      const { word, art } = nextWordFor(letter)
       return {
         value: letter,
         display: letter,
         audioPrompt: startsWithQuestion(word),
+        // The SHOWN word travels on the item: the correct-answer fact and the hint both read it, so
+        // neither can name a different picture than the one on screen.
         repeatWord: word,
         // Show only the picture — NOT the word — so the child must recognise the starting letter from
-        // the image, not just read it off the label. The subject is the baked soft-3D object (PRD-07;
-        // the whole 29-letter set is baked and shipping).
-        questionVisual: { art: letterArt(letter) }
+        // the image, not just read it off the label. Baked soft-3D art from whichever section owns it.
+        questionVisual: { art: wordArt(art) }
       }
     },
     
@@ -129,7 +144,7 @@ const AlphabetGame: React.FC = () => {
     // Until now that sentence was only ever heard by the child who didn't need it.
     hintAfterNWrong: 2,
     speakHint: async (item: QuizItem, audio: any) =>
-      audio.speak(alphabetHintLine(item.value as string)),
+      audio.speak(alphabetHintLine(item.value as string, item.repeatWord)),
 
     // Audio methods
     speakQuizPrompt: async (item: QuizItem, audio: any) => {
@@ -146,12 +161,10 @@ const AlphabetGame: React.FC = () => {
     // (WORD_LETTERS) has a LETTER_WORDS entry; guard anyway and fall back to the letter name. New
     // closed-set phrase → prebaked + auditioned (see docs/audit).
     speakCorrectFact: async (item: QuizItem, audio: any) => {
-      const data = LETTER_WORDS[item.value as string]
-      // Shared builder — carries the sentence-context respellings (Z → 'zet'). NOTE: I is still
-      // known-wrong in this sentence-FINAL position; the comma fix that works for "I, som Is" doesn't
-      // transfer here (see startsWithPhrase).
-      return data
-        ? audio.speak(startsWithPhrase(item.value as string, data.word))
+      // Shared builder — carries the per-letter fixes (Z → 'zet'; I and R override the frame). The word
+      // is the one ON SCREEN (`repeatWord`), not the letter's canonical word.
+      return item.repeatWord
+        ? audio.speak(startsWithPhrase(item.value as string, String(item.repeatWord)))
         : audio.speakLetter(item.value)
     },
 

@@ -43,9 +43,8 @@ export const LETTER_WORDS: Record<string, { word: string }> = {
   X: { word: 'Xylofon' },
   // PRD-18 W2 manifest audit: was 'Å' (a stream — a Danish child reads that picture as "vand"/"bæk",
   // which fights the audio). Swapped to 'Ål' (eel), an unambiguous child-known noun that genuinely
-  // starts with Å. Needs a re-baked Å-keyed picture (an eel, not a stream) — art is gated on the owner
-  // dropping the new AA.webp; until then the OLD stream picture shows under the word "Ål" (mismatch).
-  // The two changed spoken lines ("Å som Ål" / "Ål starter med Å") need a tts:prebake + /audit pass.
+  // starts with Å. Game Depth PRD-01 (owner 2026-10-04) closed the picture gap: `alphabet/AA.webp` is
+  // now a copy of the eel that already shipped as `ordleg/aal.webp`.
   Å: { word: 'Ål' },
 }
 
@@ -151,3 +150,75 @@ export const WORD_LETTERS = [
   'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O',
   'P', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'Æ', 'Ø', 'Å',
 ]
+
+// ---- Bogstav Quiz — several pictures per letter (Game Depth PRD-01 §3.6) ------------------------------
+
+/** A picture from ANY section's baked art, section-qualified because stems collide across sections
+ *  (`car` is red in farver, blue in english). Resolved by `src/assets/games/wordArt.ts`. */
+export type ArtRef = `${'alphabet' | 'ordleg' | 'english' | 'farver' | 'math' | 'shared'}/${string}`
+
+export interface QuizWord {
+  word: string
+  art: ArtRef
+}
+
+/**
+ * Words a Bogstav Quiz picture can show for each askable letter. **Entry 0 is always the canonical
+ * `LETTER_WORDS` word + its alphabet picture**; the rest reuse art that already ships elsewhere, so the
+ * quiz stops being "giraf = G" recall after two passes (owner 2026-10-04). Lær Alfabetet and Hukommelse
+ * keep reading `LETTER_WORDS` only.
+ *
+ * Every extra word was chosen so a Danish 5-year-old names the PICTURE with this first letter. Left out
+ * on purpose: and + kylling (two yellow birds), hval + hjerte (silent H), druer ("vindruer"), rose
+ * ("blomst"), ur ("armbåndsur"), lastbil ("bil"), te ("kop"), ulv ("hund"), kiks ("småkage"), so
+ * ("gris"), any child/body-part picture, any glass (vand, mælk).
+ */
+export const LETTER_QUIZ_WORDS: Record<string, QuizWord[]> = (() => {
+  const extra: Record<string, QuizWord[]> = {
+    A: [{ word: 'Appelsin', art: 'farver/orange_fruit' }, { word: 'Agurk', art: 'farver/cucumber' }],
+    B: [
+      { word: 'Bus', art: 'ordleg/bus' },
+      { word: 'Banan', art: 'english/banana' },
+      { word: 'Ballon', art: 'math/balloon' },
+      { word: 'Bog', art: 'ordleg/bog' },
+    ],
+    D: [{ word: 'Dør', art: 'english/door' }],
+    F: [{ word: 'Fugl', art: 'english/bird' }],
+    G: [
+      { word: 'Gris', art: 'english/pig' },
+      { word: 'Ged', art: 'ordleg/ged' },
+      { word: 'Gulerod', art: 'farver/carrot' },
+      { word: 'Græskar', art: 'farver/pumpkin' },
+    ],
+    H: [
+      { word: 'Hest', art: 'english/horse' },
+      { word: 'Hus', art: 'ordleg/hus' },
+      { word: 'Hat', art: 'ordleg/hat' },
+      { word: 'Haj', art: 'ordleg/haj' },
+    ],
+    J: [{ word: 'Jordbær', art: 'farver/strawberry' }],
+    K: [
+      { word: 'Ko', art: 'ordleg/ko' },
+      { word: 'Kage', art: 'english/cake' },
+      { word: 'Kop', art: 'english/cup' },
+    ],
+    L: [{ word: 'Løg', art: 'ordleg/loeg' }],
+    M: [{ word: 'Måne', art: 'english/moon' }, { word: 'Majs', art: 'farver/corn' }],
+    O: [{ word: 'Ost', art: 'ordleg/ost' }],
+    R: [{ word: 'Ræv', art: 'ordleg/raev' }],
+    S: [
+      { word: 'Sko', art: 'ordleg/sko' },
+      { word: 'Stol', art: 'english/chair' },
+      { word: 'Seng', art: 'english/bed' },
+      { word: 'Stjerne', art: 'math/star' },
+    ],
+    T: [{ word: 'Træ', art: 'english/tree' }],
+    Æ: [{ word: 'Æg', art: 'ordleg/aeg' }],
+  }
+  return Object.fromEntries(
+    WORD_LETTERS.map((letter) => [
+      letter,
+      [{ word: LETTER_WORDS[letter].word, art: `alphabet/${letter}` as ArtRef }, ...(extra[letter] ?? [])],
+    ]),
+  )
+})()

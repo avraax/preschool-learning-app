@@ -25,7 +25,7 @@ import {
 import { allEnglishWords } from './src/config/englishVocab.ts'
 import { HUE_ORDER, SHADES, DANISH_OBJECTS, spokenColor, COLOR_TARGETS } from './src/config/colorContent.ts'
 import { REWARD_CHAPTERS } from './src/config/stickers.ts'
-import { LETTER_WORDS, WORD_LETTERS, letterPhrase, startsWithPhrase, startsWithQuestion } from './src/config/letterWords.ts'
+import { LETTER_QUIZ_WORDS, LETTER_WORDS, WORD_LETTERS, letterPhrase, startsWithPhrase, startsWithQuestion } from './src/config/letterWords.ts'
 // Composed game lines — the app builds every one of these through the SAME builders (see the
 // protocol in .claude/rules/audio-system.md), so what gets baked is exactly what gets spoken.
 import {
@@ -88,6 +88,14 @@ export function collectNarrationClips() {
   for (const letter of WORD_LETTERS) {
     const data = LETTER_WORDS[letter]
     if (data) da('letters', startsWithPhrase(letter, data.word))
+  }
+  // Bogstav Quiz's extra pictures (Game Depth PRD-01 §3.6): the fact AND the question for every word a
+  // letter can show. Entry 0 is the canonical word, so this is a superset of the loops above/below.
+  for (const letter of WORD_LETTERS) {
+    for (const q of LETTER_QUIZ_WORDS[letter] ?? []) {
+      da('letters', startsWithPhrase(letter, q.word))
+      da('letters', startsWithQuestion(q.word))
+    }
   }
 
   // Numbers 0–100 — quiz/echo rate (default) AND Lær Tal browse rate (1.2).
