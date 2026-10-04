@@ -57,3 +57,4 @@ alongside this file.
   skill. Don't re-add them as a "counting aid", and don't let tile SIZE encode the values either.
 - The equation/comparison symbols `+ − = ? > <` are **baked soft-3D `SymbolTile` art**
   (`src/assets/symbols`), not emoji/glyphs — don't re-bake or emoji them. Numerals stay Typography.
+- **Mixed task shapes at Normal/Svær only** (Game Depth PRD-01): Plus/Minus `a+?=c`, Sammenlign "mindste" (Svær, no cue), Hvad Mangler backwards — guards in `gameDepth.test.ts`.

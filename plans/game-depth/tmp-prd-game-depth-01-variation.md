@@ -1,7 +1,20 @@
 # Game Depth PRD-01 — more variation in eight games, nothing more on screen
 
-**Authored:** 2026-10-04 · **Status: NOT implemented** · **Art sibling:** `farver-depth-art-prompts.md` (12 renders,
-plus the reference PNGs in this folder)
+**Authored:** 2026-10-04 · **Status: IMPLEMENTED 2026-10-04 except W2** (the 12 new Farver renders — owner
+will generate them later; everything else ships without them) · **Art sibling:** `farver-depth-art-prompts.md`
+(12 renders, plus the reference PNGs in this folder)
+
+**Deviations from this document, made while implementing (each verified on screen):**
+- §3.2: `SHADES` stays the 3 named steps (Lær Farver + the enumerator read it); the 5-step ramp is a NEW
+  `SHADE_RAMPS` built from it. Combos are also filtered by `MIN_SHADE_STEP` (OKLab ΔL ≥ 0.035): the yellow
+  midpoint is only 0.02 from lysegul/gul, so gul deals 3/4/5 orderings instead of 3/7/10.
+- §3.3: the reverse task draws the two droplets in the LEFT (goal) circle and keeps the pot as the drop
+  target, rather than putting them in the pot — so "drag the answer into the pot" still reads.
+- §3.5: `arm` (whole-child picture) and `kop` (a mug beside `te`'s cup of tea) were dropped after seeing them
+  on the board; Normal/Svær pool is 35, not 37.
+- Found and fixed in the sweep (pre-existing, not caused by this PRD): Farvejagt piled Svær's objects onto
+  the well on portrait phones; Ram Farven's bench ran off a 375 px portrait screen and its tray sat under the
+  corner mascot.
 
 **Supersedes, by name:**
 - `difficulty.ts` → `ORDLEG_READ.let.wordMaxLen: 2` (Difficulty PRD-01 W5): Let's Læs Ordet pool is no longer

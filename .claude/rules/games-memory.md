@@ -30,3 +30,5 @@ alongside this file.
   worth the same one reward.
 - Juice: `flip` on reveal, `match` + a light pop on a pair (deliberately NOT a full `celebrateTier`),
   `celebrateTier('streak')` every 3rd consecutive match, gentle `wrong` on a mismatch.
+- Tal's RANGE follows the level (`MEMORY_BOARD.numberMax` 10/20/30, Game Depth PRD-01), so the board
+  bag is keyed on the POOL, not the type; numbers > 20 drop the count cluster.

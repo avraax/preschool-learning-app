@@ -28,3 +28,6 @@ alongside this file.
   spoken name plus playback startup. **Earns no XP** (browse XP stays tap-only; one press would otherwise mint the whole
   section's allowance). An incrementing run token aborts the loop on a letter tap, a re-press or
   unmount — `mountedRef` alone is not enough.
+- **Several pictures per letter** (Game Depth PRD-01): `LETTER_QUIZ_WORDS` (entry 0 = `LETTER_WORDS`,
+  quiz only) via section-qualified `wordArt()` — never copy a word picture into `alphabet/` (its loader
+  keys stems as LETTERS). The fact and hint speak the word ON SCREEN (`repeatWord`).

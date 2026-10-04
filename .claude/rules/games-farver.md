@@ -72,3 +72,9 @@ All drag-based except the calm Lær Farver browse; hand-rolled dnd-kit — see `
   so the adjective agrees in gender ("æblet er rødt", "havet er blåt" — not "rød"/"blå"); every
   `ColorObject` carries a `neuter` flag, and objects whose emoji contradict their color (⚽/👒/☁️/🌸)
   carry `quizSafe:false` so Hvilken Farve never scores the child on a misleading picture.
+- **Game Depth PRD-01** (guards: `colorContent.test.ts`, `gameDepth.test.ts`): `DANISH_OBJECTS` is
+  APPEND-only (Lær Farver shows `slice(0,4)`); an object lands only with its WebP; Farvejagt deals
+  `TARGETS_PER_BOARD` from a per-hue bag keyed by `art` (two hues share nouns). Nuancer deals from
+  `SHADE_RAMPS` (5 steps; only 0/2/4 have names, the midpoints are never spoken; `MIN_SHADE_STEP`
+  keeps look-alike pairs apart). Ram Farven's reverse task (Normal/Svær 1-in-3) must never show the
+  goal colour — swatch, tint halo, pale ring and Mål chip all hide.

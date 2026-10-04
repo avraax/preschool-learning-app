@@ -23,3 +23,6 @@ alongside this file.
   app now uses no microphone at all**, and `capacitorConfig.test.ts` fails if a purpose string or a
   `getUserMedia` call comes back. Do not reintroduce one without reopening `src/config/legalContent.ts`,
   which states plainly to parents that neither mic nor camera is used.
+- **Game Depth PRD-01:** Stav Ordet Let is ONE missing letter (`makeMissingLetterTask`) over the 2–3
+  pool; given letters print without a tile. Læs Ordet Let asks the `easy` tier. Never add a word whose
+  picture is a whole child (arm/fod/ben) or a second cup (kop beside te).
