@@ -62,8 +62,8 @@ const INFINITE_LOOP_ALLOWLIST: Record<string, { count: number; why: string }> = 
     why: 'never-fail hint pulse on the correct shade + the slot breathe under a hovering drag',
   },
   'components/farver/RamFarvenGame.tsx': {
-    count: 2,
-    why: 'never-fail hint pulse on the 2 correct droplets + the pot breathe under a hovering drag',
+    count: 3,
+    why: 'never-fail hint pulse on the 2 correct droplets, the same hint on the reverse task’s correct swatch (Game Depth PRD-01), + the pot breathe under a hovering drag',
   },
 }
 

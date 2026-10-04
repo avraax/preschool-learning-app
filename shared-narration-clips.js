@@ -34,10 +34,10 @@ import {
   COMPARE_PROMPT, comparisonFactText,
   HVAD_MANGLER_PROMPT, sequenceFactText, sequenceStarts, sequenceNumbers,
   MEMORY_LETTERS_INSTRUCTION, MEMORY_NUMBERS_INSTRUCTION,
-  NUANCER_INSTRUCTION, colorMixTargetText, colorMixResultText, colorObjectFactText,
+  NUANCER_INSTRUCTION, colorMixTargetText, colorMixResultText, colorMixQuestionText, colorObjectFactText,
   colorQuizPromptText,
 } from './src/config/gamePhrases.ts'
-import { primaryColors, possibleTargets, mixingRules } from './src/config/colorMixing.ts'
+import { primaryColors, possibleTargets, mixingRules, recipeNamesFor } from './src/config/colorMixing.ts'
 import { spokenOrdlegWords } from './src/config/ordlegWords.ts'
 import { NUMBER_BROWSE_RATE as NUMBER_RATE } from './src/config/numberAutoplay.ts'
 
@@ -136,6 +136,11 @@ export function collectNarrationClips() {
 
   da('colours', NUANCER_INSTRUCTION)
   for (const tgt of possibleTargets) da('colours', colorMixTargetText(tgt.name))
+  // Ram Farven's reverse task (Game Depth PRD-01 §3.3): one question per goal, in recipe order.
+  for (const tgt of possibleTargets) {
+    const pair = recipeNamesFor(tgt.name)
+    if (pair) da('colours', colorMixQuestionText(pair[0], pair[1]))
+  }
   // Ram Farven speaks BARE colour names in three places: the dropped droplet's name, the goal swatch
   // on tap, and (since 2026-08-03) a wrong-but-valid mix's result. Most come free from the hue/SHADES
   // loops below, but `grå` belongs to no hue family and `hvid`/`sort` are not hues at all — those three

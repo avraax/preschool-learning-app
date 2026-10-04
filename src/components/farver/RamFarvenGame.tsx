@@ -11,10 +11,12 @@ import { DroppableZone } from '../common/dnd/DroppableZone'
 import type { GuideReaction } from '../common/ThemeMascot'
 import { useCelebration } from '../common/CelebrationEffect'
 import { ColorRepeatButton } from '../common/RepeatButton'
-import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
+import { PHONE_LANDSCAPE, PHONE_PORTRAIT } from '../../theme/phoneMedia'
+import { MASCOT_CORNER_PHONE_PORTRAIT } from '../common/mascotCorner'
 import { getCategoryTheme } from '../../config/categoryThemes'
-import { primaryColors, possibleTargets, mixingRules, makeTargetBag, TARGET_PRIORITY, type ColorDroplet, type TargetColor } from '../../config/colorMixing'
-import { colorMixResultText } from '../../config/gamePhrases'
+import { primaryColors, possibleTargets, mixingRules, makeTargetBag, TARGET_PRIORITY, REVERSE_CHOICES, recipeNamesFor, reverseChoicesFor, type ColorDroplet, type TargetColor } from '../../config/colorMixing'
+import { colorMixQuestionText, colorMixResultText } from '../../config/gamePhrases'
+import { makeFormatBag, type FormatBag } from '../../config/formatBag'
 import { hexToRgba } from '../../theme/tokens/helpers'
 import { SNAP, BOUNCE } from '../../theme/motion'
 import { idleFloat } from '../../theme/idleMotion'
@@ -79,6 +81,9 @@ const PALE_TARGET_HEXES = new Set(['#FFB3BA', '#BFDBFE', '#FEF9C3', '#9CA3AF'])
 // wider and darker than the old 9% plate so pale hues genuinely read.
 const GOAL_RING_PX = 16
 
+// Drag-id prefix for a reverse task's result swatches, so one DndContext can tell them from droplets.
+const SWATCH_PREFIX = 'swatch-'
+
 // Static-difficulty target pools (progressStore.difficultyFor — no adaptivity). The SIZE comes from
 // `COLORS_RAMFARVEN[level]` (Difficulty PRD-01 §4.5) and the ORDER from `TARGET_PRIORITY`, which lives
 // in colorMixing.ts beside the recipes so the test can prove every level's goals are actually mixable
@@ -92,16 +97,13 @@ const sourcesFor = (level: DifficultyLevel): ColorDroplet[] =>
   primaryColors.slice(0, COLORS_RAMFARVEN[level].sources)
 
 // The 2 source colors that mix to a target (for the recipe reveal + hint).
+// Same order as the spoken reverse question (`recipeNamesFor` — one source for both).
 const recipeFor = (targetName: string): [ColorDroplet, ColorDroplet] | null => {
-  for (const key of Object.keys(mixingRules)) {
-    if (mixingRules[key].name === targetName) {
-      const [n1, n2] = key.split('+')
-      const d1 = primaryColors.find(c => c.colorName === n1)
-      const d2 = primaryColors.find(c => c.colorName === n2)
-      if (d1 && d2) return [d1, d2]
-    }
-  }
-  return null
+  const pair = recipeNamesFor(targetName)
+  if (!pair) return null
+  const d1 = primaryColors.find(c => c.colorName === pair[0])
+  const d2 = primaryColors.find(c => c.colorName === pair[1])
+  return d1 && d2 ? [d1, d2] : null
 }
 
 const RamFarvenGame: React.FC = () => {
@@ -119,6 +121,11 @@ const RamFarvenGame: React.FC = () => {
   const [committing, setCommitting] = useState(false)     // locks drops during blend/reveal/fizz
   const [blendResult, setBlendResult] = useState<BlendResult | null>(null)
   const [recipe, setRecipe] = useState<RecipeReveal | null>(null)
+  // Task shape (Game Depth PRD-01 §3.3): `mix` is the classic "make THIS colour"; `reverse` shows the
+  // goal's two droplets, asks "hvad bliver det?" and offers REVERSE_CHOICES result swatches instead of
+  // the droplet tray. The goal swatch is NOT shown on a reverse task — it IS the answer.
+  const [mode, setMode] = useState<'mix' | 'reverse'>('mix')
+  const [choices, setChoices] = useState<TargetColor[]>([])
   // Never-fail hint: after WRONG_MIXES_BEFORE_HINT wrong mixes on the current target, the 2 correct
   // droplets pulse. Reset per target (see setupTarget).
   const { hint: hintActive, registerWrong: registerHintWrong, reset: resetHint } = useNeverFailHint<boolean>(WRONG_MIXES_BEFORE_HINT)
@@ -154,6 +161,10 @@ const RamFarvenGame: React.FC = () => {
   // the initial 'lilla' state and permanently excluded lilla from the first mix of every session (P5).
   const bagRef = useRef<string[]>([])
   const bagPoolRef = useRef<string>('')
+  // Which task shape comes next — an exact 1-in-3 share at Normal/Svær, never at Let. Rebuilt with the
+  // goal bag when the level changes. `modeRef` mirrors `mode` for the welcome/timer closures.
+  const formatBagRef = useRef<FormatBag | null>(null)
+  const modeRef = useRef<'mix' | 'reverse'>('mix')
 
   const logError = (message: string, data?: any) => {
     if (message.includes('Error') || message.includes('error')) {
@@ -176,10 +187,11 @@ const RamFarvenGame: React.FC = () => {
 
     // Bag draw, not a random pick — see `makeTargetBag`. Rebuild whenever the level's pool changes,
     // otherwise a mid-round difficulty switch would keep dealing the old level's goals.
-    const poolKey = allowedNames.join('|')
+    const poolKey = `${level}|${allowedNames.join('|')}`
     if (poolKey !== bagPoolRef.current) {
       bagPoolRef.current = poolKey
       bagRef.current = []
+      formatBagRef.current = makeFormatBag(COLORS_RAMFARVEN[level].reverse)
     }
     if (bagRef.current.length === 0) {
       bagRef.current = makeTargetBag(allowedNames, Math.random, prevName ?? targetNameRef.current)
@@ -187,6 +199,19 @@ const RamFarvenGame: React.FC = () => {
     const nextName = bagRef.current.shift()!
     const next = possibleTargets.find(target => target.name === nextName) ?? possibleTargets[0]
     targetNameRef.current = next.name
+
+    // A reverse task needs a recipe to show; every goal has one, but never trust that at runtime.
+    const nextMode: 'mix' | 'reverse' =
+      formatBagRef.current?.next() === 'alt' && recipeNamesFor(next.name) ? 'reverse' : 'mix'
+    modeRef.current = nextMode
+    setMode(nextMode)
+    setChoices(
+      nextMode === 'reverse'
+        ? reverseChoicesFor(next.name, allowedNames).map(
+            (n) => possibleTargets.find((p) => p.name === n) ?? next,
+          )
+        : [],
+    )
 
     setTargetColor(next)
     setAvailableColors(shuffle(sourcesFor(level)))
@@ -199,14 +224,26 @@ const RamFarvenGame: React.FC = () => {
 
     if (voice) {
       const delay = isIOS() ? 100 : 300
-      setTimeout(async () => {
-        try {
-          audio.updateUserInteraction()
-          await audio.speakColorMixingInstructions(next.name)
-        } catch (error) {
-          logError('Error speaking color mixing instructions', { targetColor: next.name, error: error?.toString() })
-        }
+      setTimeout(() => {
+        audio.updateUserInteraction()
+        void speakInstruction(next.name, nextMode)
       }, delay)
+    }
+  }
+
+  // The current task's spoken instruction — "Lav lilla farve …" for a mix, "rød og blå, hvad bliver
+  // det?" for a reverse task. ONE helper for the first voicing, the welcome tail and "Hør igen", so the
+  // repeat can never ask the other task's question.
+  const speakInstruction = async (name: string, taskMode: 'mix' | 'reverse') => {
+    try {
+      if (taskMode === 'reverse') {
+        const pair = recipeNamesFor(name)
+        if (pair) await audio.speak(colorMixQuestionText(pair[0], pair[1]))
+      } else {
+        await audio.speakColorMixingInstructions(name)
+      }
+    } catch (error) {
+      logError('Error speaking color mixing instructions', { targetColor: name, error: error?.toString() })
     }
   }
 
@@ -226,12 +263,8 @@ const RamFarvenGame: React.FC = () => {
       logError('Error playing welcome', { error: error?.toString() })
     }
     if (targetNameRef.current && !hasInteractedRef.current) {
-      try {
-        audio.updateUserInteraction()
-        await audio.speakColorMixingInstructions(targetNameRef.current)
-      } catch (error) {
-        logError('Error speaking color mixing instructions', { error: error?.toString() })
-      }
+      audio.updateUserInteraction()
+      await speakInstruction(targetNameRef.current, modeRef.current)
     }
   }
 
@@ -271,20 +304,22 @@ const RamFarvenGame: React.FC = () => {
   const repeatInstructions = async () => {
     audio.updateUserInteraction()
     if (!gameReady || !targetColor) return
-    try {
-      await audio.speakColorMixingInstructions(targetColor.name)
-    } catch (error) {
-      logError('Error repeating color mixing instructions', { targetColor: targetColor.name, error: error?.toString() })
-    }
+    await speakInstruction(targetColor.name, mode)
   }
 
   // Tapping the goal swatch speaks just the target color name ("lilla") — distinct from the
-  // "Hør igen" button which replays the full "Ram farven: X" instruction.
+  // "Hør igen" button which replays the full "Ram farven: X" instruction. On a REVERSE task the left
+  // circle holds the two droplets instead, and naming the goal there would speak the answer, so it
+  // repeats the question.
   const speakTargetColor = () => {
     hasInteractedRef.current = true
     audio.updateUserInteraction()
     audio.cancelCurrentAudio()
     if (!gameReady || !targetColor) return
+    if (mode === 'reverse') {
+      void speakInstruction(targetColor.name, 'reverse')
+      return
+    }
     audio.speak(targetColor.name).catch(() => {})
   }
 
@@ -410,7 +445,41 @@ const RamFarvenGame: React.FC = () => {
     // still springs back. See `wasWobbledTap`.
     const landed = !!over && over.id === 'mixing-zone'
     if (!landed && !wasWobbledTap(delta)) return
-    resolveDroplet(String(active.id))
+    const id = String(active.id)
+    if (id.startsWith(SWATCH_PREFIX)) resolveSwatch(id.slice(SWATCH_PREFIX.length))
+    else resolveDroplet(id)
+  }
+
+  // ONE path for both gestures on a REVERSE task: a tap on a result swatch, or a drag of it into the
+  // pot (Game Depth PRD-01 §3.3). Correct → the pot fills with the result and the existing recipe reveal
+  // + "rød og blå bliver lilla" play, exactly as a correct mix. Wrong → the pot shows the chosen colour
+  // and fizzes; no narration (a wrong swatch is not a mix, so there is nothing true to name).
+  const resolveSwatch = (name: string, viaTap = false) => {
+    hasInteractedRef.current = true
+    if (mode !== 'reverse' || committing) return
+    const choice = choices.find((c) => c.name === name)
+    if (!choice) return
+    audio.updateUserInteraction()
+    if (viaTap) sfx.play('tap')
+    setCommitting(true)
+    const isCorrect = choice.name === targetColor.name
+    setBlendResult({ hex: choice.hex, name: choice.name, isCorrect })
+    if (commitTimer.current) clearTimeout(commitTimer.current)
+    if (isCorrect) {
+      const pair = recipeFor(targetColor.name)
+      commitTimer.current = setTimeout(() => {
+        if (pair) handleCorrectMix(pair[0], pair[1], targetColor)
+      }, reduce ? 150 : BLEND_MS / 2)
+      return
+    }
+    firstAttemptRef.current = false
+    sfx.play('spring-back')
+    reactGuide('think')
+    if (registerHintWrong()) mascotBus.emit('hint')
+    commitTimer.current = setTimeout(() => {
+      setBlendResult(null)
+      setCommitting(false)
+    }, reduce ? 500 : FIZZ_MS)
   }
 
   // ONE path into the pot for both gestures: a drop on the pot, and a plain TAP on the droplet
@@ -420,7 +489,7 @@ const RamFarvenGame: React.FC = () => {
     hasInteractedRef.current = true
 
     const draggedColor = availableColors.find(color => color.id === colorId)
-    if (draggedColor && !draggedColor.isUsed && !committing && mixingZone.length < 2) {
+    if (mode === 'mix' && draggedColor && !draggedColor.isUsed && !committing && mixingZone.length < 2) {
       // "Every tap is felt": the drag path already ticked on pick-up, so only the tap owes the press.
       if (viaTap) sfx.play('tap')
       addToMixingZone(draggedColor)
@@ -459,7 +528,13 @@ const RamFarvenGame: React.FC = () => {
   const isOverPot = overId === 'mixing-zone'
   const comicFont = '"Comic Sans MS", "Comic Neue", sans-serif'
   // W3: pale tints need a neutral backing plate so they read against the light world (see set above).
-  const isPaleTarget = PALE_TARGET_HEXES.has(targetColor.hex.toUpperCase())
+  const isPaleTarget = mode === 'mix' && PALE_TARGET_HEXES.has(targetColor.hex.toUpperCase())
+  // Reverse task (§3.3): the two droplets drawn in the left circle, the neutral halo tint, and the
+  // swatch the never-fail hint pulses.
+  const reversePair = mode === 'reverse' ? recipeFor(targetColor.name) : null
+  const goalTint = mode === 'reverse' ? '#94A3B8' : targetColor.hex
+  const hintSwatchName = displayHintActive && mode === 'reverse' ? targetColor.name : null
+  const trayCount = mode === 'reverse' ? REVERSE_CHOICES : availableColors.length
   // Goal swatch + pot share ONE size so the two circles read as a balanced pair and line up on the
   // same centre line (smaller in landscape so the goal→pot row AND the droplet tray fit with no
   // scroll). The "below-circle reserve" (label + Tøm slot) is mirrored on both columns so their
@@ -474,6 +549,10 @@ const RamFarvenGame: React.FC = () => {
     // Phone landscape took the `xs` 120 and left ~80px of the column unused under the bench. The
     // budget here is the body (~305px) minus the repeat pill (48) and the label + Tøm reserve (~50).
     [PHONE_LANDSCAPE]: { width: 148, height: 148 },
+    // Phone PORTRAIT took `xs` 144: goal (+ its 16 px ring) + arrow + pot + gaps + padding measured
+    // ~434 px, so on a 375–390 px phone the pot ran off the right edge (found 2026-10-04, Game Depth
+    // PRD-01 verification). 112 brings the row to ~356 px.
+    [PHONE_PORTRAIT]: { width: 112, height: 112 },
   }
 
   // Live difficulty: pick a fresh target from the new pool when the level changes in the adult menu
@@ -562,7 +641,9 @@ const RamFarvenGame: React.FC = () => {
                       <Box aria-hidden sx={{
                         position: 'absolute', left: '50%', top: '52%', transform: 'translate(-50%, -50%)',
                         width: '156%', height: '156%', borderRadius: '50%',
-                        background: `radial-gradient(circle, ${hexToRgba('#FFFFFF', muiTheme.scene.dark ? 0.3 : 0.55)} 0%, ${hexToRgba(targetColor.hex, 0.24)} 44%, ${hexToRgba(targetColor.hex, 0)} 70%)`,
+                        // The halo is tinted by the goal — on a reverse task that tint would BE the answer,
+                        // so it goes neutral there.
+                        background: `radial-gradient(circle, ${hexToRgba('#FFFFFF', muiTheme.scene.dark ? 0.3 : 0.55)} 0%, ${hexToRgba(goalTint, 0.24)} 44%, ${hexToRgba(goalTint, 0)} 70%)`,
                         filter: 'blur(12px)', pointerEvents: 'none', zIndex: 0,
                       }} />
                       {/* W3 neutral RING — a real padded box, not a `118%` absolute disc, so it
@@ -592,6 +673,42 @@ const RamFarvenGame: React.FC = () => {
                           transition: 'background-color 0.3s ease',
                         }}
                       >
+                        {mode === 'reverse' && reversePair ? (
+                          // REVERSE task: the left circle holds the goal's two droplets, side by side and
+                          // UNMIXED — never the goal colour, which is the answer (PRD §4 trap 7).
+                          <Box
+                            onClick={speakTargetColor}
+                            data-reverse-sources=""
+                            sx={{
+                              ...circleSizeSx,
+                              position: 'relative',
+                              borderRadius: '50%',
+                              backgroundColor: muiTheme.scene.dark ? 'rgba(255,255,255,0.14)' : 'rgba(255,255,255,0.9)',
+                              border: `4px solid ${muiTheme.scene.dark ? 'rgba(255,255,255,0.5)' : 'white'}`,
+                              cursor: 'pointer',
+                              boxShadow: '0 12px 28px rgba(0,0,0,0.16), 0 4px 10px rgba(0,0,0,0.12)'
+                            }}
+                          >
+                            {reversePair.map((d, i) => (
+                              <Box
+                                key={d.id}
+                                aria-hidden
+                                sx={{
+                                  position: 'absolute',
+                                  left: i === 0 ? '32%' : '68%',
+                                  top: '50%',
+                                  transform: 'translate(-50%, -50%) rotate(135deg)',
+                                  width: '34%',
+                                  height: '34%',
+                                  borderRadius: '50% 50% 50% 0',
+                                  backgroundColor: d.hex,
+                                  border: `2px solid ${d.id === 'white' ? '#94A3B8' : 'rgba(255,255,255,0.9)'}`,
+                                  boxShadow: `0 4px 12px ${d.hex}66, inset 0 2px 0 rgba(255,255,255,0.45)`
+                                }}
+                              />
+                            ))}
+                          </Box>
+                        ) : (
                         <Box
                           onClick={speakTargetColor}
                           sx={{
@@ -604,13 +721,17 @@ const RamFarvenGame: React.FC = () => {
                             boxShadow: `0 12px 28px ${hexToRgba(targetColor.hex, 0.42)}, 0 4px 10px rgba(0,0,0,0.18)`
                           }}
                         />
+                        )}
                       </Box>
                     </Box>
                   </motion.div>
-                  <Box sx={{
+                  {/* The "Mål" chip labels the goal swatch, which a reverse task doesn't show — hidden,
+                      not removed, so the bench geometry stays identical between the two task shapes. */}
+                  <Box data-goal-chip="" sx={{
                     px: 1.25, py: 0.25, borderRadius: 999,
                     bgcolor: muiTheme.scene.dark ? 'rgba(255,255,255,0.16)' : 'rgba(255,255,255,0.9)',
-                    boxShadow: muiTheme.customShadows?.card ?? 1
+                    boxShadow: muiTheme.customShadows?.card ?? 1,
+                    visibility: mode === 'reverse' ? 'hidden' : 'visible'
                   }}>
                     <Typography sx={{
                       fontFamily: comicFont,
@@ -632,13 +753,14 @@ const RamFarvenGame: React.FC = () => {
                   width: { xs: 58, sm: 66, md: 76 },
                   height: { xs: 58, sm: 66, md: 76 },
                   '@media (orientation: landscape)': { width: 54, height: 54 },
+                  [PHONE_PORTRAIT]: { width: 44, height: 44 },
                   borderRadius: '50%',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   bgcolor: muiTheme.scene.dark ? 'rgba(255,255,255,0.16)' : 'rgba(255,255,255,0.92)',
                   border: `3px solid ${t.borderColor}`,
                   boxShadow: muiTheme.customShadows?.card ?? 2
                 }}>
-                  <Box aria-hidden sx={{ display: 'flex', color: t.accentColor, '& svg': { width: { xs: 34, sm: 40, md: 46 }, height: 'auto' }, '@media (orientation: landscape)': { '& svg': { width: 32 } } }}>
+                  <Box aria-hidden sx={{ display: 'flex', color: t.accentColor, '& svg': { width: { xs: 34, sm: 40, md: 46 }, height: 'auto' }, '@media (orientation: landscape)': { '& svg': { width: 32 } }, [PHONE_PORTRAIT]: { '& svg': { width: 26 } } }}>
                     <ArrowRight strokeWidth={2.75} />
                   </Box>
                 </Box>
@@ -820,7 +942,7 @@ const RamFarvenGame: React.FC = () => {
                 display: 'grid',
                 // Follows the LEVEL's droplet count (Let offers 4 — no black), never a hardcoded 5:
                 // the same reason `answerGrid.ts` exists, so a level can't leave an orphan column.
-                gridTemplateColumns: `repeat(${availableColors.length || 5}, 1fr)`,
+                gridTemplateColumns: `repeat(${trayCount || 5}, 1fr)`,
                 gap: { xs: 1.5, sm: 1.75, md: 2.25 },
                 maxWidth: { xs: '380px', sm: '460px', md: '540px' },
                 mx: 'auto',
@@ -832,7 +954,7 @@ const RamFarvenGame: React.FC = () => {
                 // so it sits at natural width; the whole bench+tray group stays centred. This targets
                 // the iPad landscape surface (the primary one) where the row + bench co-fit.
                 '@media (orientation: landscape)': {
-                  gridTemplateColumns: `repeat(${availableColors.length || 5}, 1fr)`,
+                  gridTemplateColumns: `repeat(${trayCount || 5}, 1fr)`,
                   gap: { xs: 1, sm: 1.5, md: 2 },
                   maxWidth: 'none',
                   mx: 0,
@@ -844,14 +966,76 @@ const RamFarvenGame: React.FC = () => {
                 // Phone landscape is far too narrow for a 5-wide row alongside the bench (it clipped
                 // the goal + last droplet), so keep the compact 2-column block there — the orphan the
                 // single row fixes is an iPad concern; this rare surface stays a tidy 2×2+1 grid.
+                // Phone portrait: the tray sits on the bottom edge, exactly where the tappable corner
+                // mascot is — a 5-droplet row put the first droplet under it. Lift the tray clear.
+                [PHONE_PORTRAIT]: { pb: `${MASCOT_CORNER_PHONE_PORTRAIT + 6}px` },
+                // A reverse task's 3 swatches stack in ONE column there instead (3 × 58 px fits the
+                // ~305 px body; a 2-column grid would orphan the third).
                 [PHONE_LANDSCAPE]: {
-                  gridTemplateColumns: 'repeat(2, 1fr)',
+                  gridTemplateColumns: mode === 'reverse' ? '1fr' : 'repeat(2, 1fr)',
                   gap: 1.25,
                   px: 1,
                   pr: 1.5
                 }
               }}>
-                {availableColors.map((color) => {
+                {mode === 'reverse' && choices.map((choice) => {
+                  const isHint = hintSwatchName === choice.name
+                  const isLifted = activeId === `${SWATCH_PREFIX}${choice.name}`
+                  const pale = PALE_TARGET_HEXES.has(choice.hex.toUpperCase())
+                  return (
+                    <motion.div
+                      key={`${targetColor.name}-${choice.name}`}
+                      initial={reduce ? false : { scale: 0, y: 40 }}
+                      animate={
+                        isLifted && !reduce
+                          ? { scale: 1.15, y: -4 }
+                          : isHint && !reduce
+                            ? { scale: [1, 1.15, 1], y: 0 }
+                            : { scale: 1, y: 0 }
+                      }
+                      transition={
+                        isLifted && !reduce
+                          ? SNAP
+                          : isHint && !reduce
+                            ? { duration: 1.1, repeat: Infinity, ease: 'easeInOut' as const }
+                            : { duration: 0.3 }
+                      }
+                    >
+                      <DraggableItem
+                        id={`${SWATCH_PREFIX}${choice.name}`}
+                        inline
+                        disabled={!gameReady || committing}
+                        data={choice}
+                        onActivate={() => resolveSwatch(choice.name, true)}
+                      >
+                        <Box
+                          data-reverse-choice={choice.name}
+                          sx={{
+                            width: { xs: '58px', sm: '64px', md: '72px', lg: '78px' },
+                            height: { xs: '58px', sm: '64px', md: '72px', lg: '78px' },
+                            '@media (orientation: landscape)': {
+                              width: { xs: '54px', sm: '62px', md: '70px', lg: '76px' },
+                              height: { xs: '54px', sm: '62px', md: '70px', lg: '76px' }
+                            },
+                            [PHONE_LANDSCAPE]: { width: '58px', height: '58px' },
+                            borderRadius: '50%',
+                            backgroundColor: choice.hex,
+                            backgroundImage: 'linear-gradient(160deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 45%)',
+                            // Pale tints get a neutral rim so they read against the pale world (the same
+                            // reason the goal swatch has its ring).
+                            border: pale ? '3px solid #7C8595' : '3px solid white',
+                            boxShadow: isHint
+                              ? `0 0 0 5px ${t.accentColor}88, 0 6px 14px ${choice.hex}66`
+                              : `0 6px 14px ${hexToRgba(choice.hex, 0.45)}, 0 2px 6px rgba(0,0,0,0.12)`,
+                            cursor: 'grab',
+                            '&:active': { cursor: 'grabbing' }
+                          }}
+                        />
+                      </DraggableItem>
+                    </motion.div>
+                  )
+                })}
+                {mode === 'mix' && availableColors.map((color) => {
                   const isHint = recipeNames.includes(color.colorName) && !color.isUsed
                   const isLifted = activeId === color.id
                   const animate = isLifted && !reduce

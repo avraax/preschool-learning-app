@@ -3,9 +3,9 @@
 > AUTO-GENERATED (by the `/audit` harness via the dev-server, or `npm run audit:approve-all`).
 > Do not hand-edit — source of truth is `narration-audit.json`.
 
-Last updated: 2026-10-04T17:20:42.620Z
+Last updated: 2026-10-04T17:48:13.685Z
 
-**2024 OK · 1 wrong · 0 unaudited** (of 2025 clips)
+**2034 OK · 1 wrong · 0 unaudited** (of 2035 clips)
 
 ## Bogstaver
 
@@ -503,9 +503,12 @@ Last updated: 2026-10-04T17:20:42.620Z
 | ✅ | blomsten er orange | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | blå | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | blå og gul bliver grøn | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | blå og gul, hvad bliver det? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | blå og hvid bliver lyseblå | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | blå og hvid, hvad bliver det? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | blå og rød bliver lilla | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | blå og sort bliver mørkeblå | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | blå og sort, hvad bliver det? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | blåbærret er blåt | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | bolden er rød | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | druerne er lilla | Bulk-approved (PRD-11 owner listen pass) |  |
@@ -525,8 +528,10 @@ Last updated: 2026-10-04T17:20:42.620Z
 | ✅ | gul | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | gul og blå bliver grøn | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | gul og hvid bliver lysegul | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | gul og hvid, hvad bliver det? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | gul og rød bliver orange | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | gul og sort bliver mørkegul | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | gul og sort, hvad bliver det? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | guleroden er orange | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | hatten er rød | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | havet er blåt | Bulk-approved (PRD-11 owner listen pass) |  |
@@ -608,9 +613,13 @@ Last updated: 2026-10-04T17:20:42.620Z
 | ✅ | ræven er orange | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | rød | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | rød og blå bliver lilla | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | rød og blå, hvad bliver det? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | rød og gul bliver orange | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | rød og gul, hvad bliver det? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | rød og hvid bliver lyserød | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | rød og hvid, hvad bliver det? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | rød og sort bliver mørkerød | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | rød og sort, hvad bliver det? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | salaten er grøn | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | skildpadden er grøn | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | skjorten er blå | Bulk-approved (PRD-11 owner listen pass) |  |
@@ -621,6 +630,7 @@ Last updated: 2026-10-04T17:20:42.620Z
 | ✅ | sort og blå bliver mørkeblå | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | sort og gul bliver mørkegul | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | sort og hvid bliver grå | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | sort og hvid, hvad bliver det? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | sort og rød bliver mørkerød | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | stjernen er gul | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Sæt farverne fra lys til mørk | Bulk-approved (PRD-11 owner listen pass) |  |

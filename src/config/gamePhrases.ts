@@ -110,6 +110,11 @@ export const colorMixTargetText = (targetName: string): string =>
 export const colorMixResultText = (a: string, b: string, result: string): string =>
   `${a} og ${b} bliver ${result}`
 /**
+ * Ram Farven's REVERSE task question (Game Depth PRD-01 §3.3): "rød og blå, hvad bliver det?". The
+ * source order is `recipeNamesFor(goal)`'s, so there is one clip per goal.
+ */
+export const colorMixQuestionText = (a: string, b: string): string => `${a} og ${b}, hvad bliver det?`
+/**
  * The colour-identification line: "æblet er rødt" — Farvejagt's correct-drop echo, Hvilken Farve's
  * correct-drop echo, and (Practice Loop PRD-01 W3) Hvilken Farve's never-fail hint.
  *

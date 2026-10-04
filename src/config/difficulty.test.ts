@@ -152,9 +152,9 @@ test('the §4 per-game tables are exactly these values', () => {
   // axis — Let's tray omits black (nothing at Let uses it), so no droplet on its board is outside
   // every answer; Svær opens all 10 goals, which is every pair the 5 sources can make.
   assert.deepEqual(COLORS_RAMFARVEN, {
-    let: { targets: 4, sources: 4 },
-    normal: { targets: 6, sources: 5 },
-    svaer: { targets: 10, sources: 5 },
+    let: { targets: 4, sources: 4, reverse: 0 },
+    normal: { targets: 6, sources: 5, reverse: { alt: 1, of: 3 } },
+    svaer: { targets: 10, sources: 5, reverse: { alt: 1, of: 3 } },
   })
   assert.deepEqual(COLORS_NUANCER, {
     let: { slots: 2, minSpan: 3, decoy: false },

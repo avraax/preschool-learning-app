@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-04T17:20:42.620Z",
+  "updatedAt": "2026-10-04T17:48:13.685Z",
   "clips": {
     "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|b": {
       "verdict": "ok",
@@ -16200,6 +16200,86 @@
       "text": "Hvilken farve er blomsten?",
       "group": "colours",
       "updatedAt": 1791134442619
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|rød og blå, hvad bliver det?": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "rød og blå, hvad bliver det?",
+      "group": "colours",
+      "updatedAt": 1791136093685
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|rød og gul, hvad bliver det?": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "rød og gul, hvad bliver det?",
+      "group": "colours",
+      "updatedAt": 1791136093685
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|blå og gul, hvad bliver det?": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "blå og gul, hvad bliver det?",
+      "group": "colours",
+      "updatedAt": 1791136093685
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|rød og hvid, hvad bliver det?": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "rød og hvid, hvad bliver det?",
+      "group": "colours",
+      "updatedAt": 1791136093685
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|blå og hvid, hvad bliver det?": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "blå og hvid, hvad bliver det?",
+      "group": "colours",
+      "updatedAt": 1791136093685
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|gul og hvid, hvad bliver det?": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "gul og hvid, hvad bliver det?",
+      "group": "colours",
+      "updatedAt": 1791136093685
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|rød og sort, hvad bliver det?": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "rød og sort, hvad bliver det?",
+      "group": "colours",
+      "updatedAt": 1791136093685
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|blå og sort, hvad bliver det?": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "blå og sort, hvad bliver det?",
+      "group": "colours",
+      "updatedAt": 1791136093685
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|gul og sort, hvad bliver det?": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "gul og sort, hvad bliver det?",
+      "group": "colours",
+      "updatedAt": 1791136093685
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|sort og hvid, hvad bliver det?": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "sort og hvid, hvad bliver det?",
+      "group": "colours",
+      "updatedAt": 1791136093685
     }
   }
 }

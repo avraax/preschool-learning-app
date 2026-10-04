@@ -137,3 +137,35 @@ export const makeTargetBag = (
   }
   return bag
 }
+
+/**
+ * The two source names that make `targetName`, in the order the FIRST matching rule lists them
+ * ("rød", "blå" for lilla) — one canonical order, so the reverse task's spoken question
+ * ("rød og blå, hvad bliver det?") is a single baked clip per goal. `null` for a name no rule makes.
+ */
+export const recipeNamesFor = (targetName: string): [string, string] | null => {
+  for (const key of Object.keys(mixingRules)) {
+    if (mixingRules[key].name === targetName) {
+      const [a, b] = key.split('+')
+      return [a, b]
+    }
+  }
+  return null
+}
+
+/** Colours offered as answers in Ram Farven's reverse task — the goal plus 2 others, shuffled. */
+export const REVERSE_CHOICES = 3
+
+/**
+ * The reverse task's answer swatches (Game Depth PRD-01 §3.3): the goal and `REVERSE_CHOICES - 1`
+ * OTHER goals from the level's own pool, shuffled. Drawn from the pool rather than every possible
+ * target so a level never offers a colour it doesn't otherwise teach. PURE + seedable.
+ */
+export const reverseChoicesFor = (
+  goal: string,
+  pool: readonly string[],
+  rnd: () => number = Math.random,
+): string[] => {
+  const others = shuffle(pool.filter((n) => n !== goal), rnd).slice(0, REVERSE_CHOICES - 1)
+  return shuffle([goal, ...others], rnd)
+}

@@ -16,6 +16,7 @@
 // extensionless imports even though Vite/tsc accept them — see `.claude/rules/audio-system.md`).
 import type { DifficultyLevel } from './progressSchema.ts'
 import type { ColorPool } from './colorContent.ts'
+import type { FormatShare } from './formatBag.ts'
 
 export type { DifficultyLevel }
 
@@ -421,6 +422,11 @@ export interface RamFarvenTuning {
   targets: number
   /** Droplets the tray offers, taken from the HEAD of `primaryColors` — so 4 = no black. */
   sources: number
+  /**
+   * Share of REVERSE tasks — two droplets shown, "hvad bliver det?", tap the result from 3 swatches
+   * (Game Depth PRD-01 §3.3). Dealt by `makeFormatBag`; Let stays pure mixing (exploration).
+   */
+  reverse: FormatShare
 }
 
 /**
@@ -442,9 +448,9 @@ export interface RamFarvenTuning {
  * clustering that rule exists to prevent. Don't "fix" it by padding Let with black-based goals.
  */
 export const COLORS_RAMFARVEN: Record<DifficultyLevel, RamFarvenTuning> = {
-  let: { targets: 4, sources: 4 },
-  normal: { targets: 6, sources: 5 },
-  svaer: { targets: 10, sources: 5 },
+  let: { targets: 4, sources: 4, reverse: 0 },
+  normal: { targets: 6, sources: 5, reverse: { alt: 1, of: 3 } },
+  svaer: { targets: 10, sources: 5, reverse: { alt: 1, of: 3 } },
 }
 
 export interface NuancerTuning {
