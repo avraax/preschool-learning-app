@@ -10,7 +10,8 @@ import { DroppableZone } from '../common/dnd/DroppableZone'
 import type { GuideReaction } from '../common/ThemeMascot'
 import { useCelebration } from '../common/CelebrationEffect'
 import { ColorRepeatButton } from '../common/RepeatButton'
-import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
+import { PHONE_ANY, PHONE_LANDSCAPE } from '../../theme/phoneMedia'
+import { MASCOT_CORNER_PHONE_PORTRAIT } from '../common/mascotCorner'
 import { useTaskRun } from '../../hooks/useTaskRun'
 import { progressStore } from '../../services/progressStore'
 import { COLORS_FARVEJAGT } from '../../config/difficulty'
@@ -85,10 +86,15 @@ const DESK_WELL = { circle: CIRCLE, ringRadius: RING_RADIUS, collected: COLLECTE
 const FarvejagtGame: React.FC = () => {
   const muiTheme = useTheme()
   const reduce = useReducedMotion()
-  // Phone landscape runs the compact well/object set. One media query, one source of truth — the
-  // scatter keep-out below is computed FROM these numbers, so the two can never disagree.
+  // EVERY phone runs the compact well/object set — portrait too. One media query, one source of truth —
+  // the scatter keep-out below is computed FROM these numbers, so the two can never disagree.
+  // Portrait was left on the iPad set until 2026-10-04 (Game Depth PRD-01 verification): on a 375 px
+  // board the 180 px well's keep-out covered the WHOLE reachable x-band (13–87% against 18–82%), so no
+  // position could satisfy it, every object fell through to its last random try, and Svær's 14 objects
+  // piled onto the well.
   const phoneLandscape = useMediaQuery(PHONE_LANDSCAPE.replace('@media ', ''))
-  const metrics = phoneLandscape ? PHONE_WELL : DESK_WELL
+  const phone = useMediaQuery(PHONE_ANY.replace('@media ', ''))
+  const metrics = phone ? PHONE_WELL : DESK_WELL
   // The board's live pixel box. The scatter is in PERCENT, so a keep-out expressed as one percentage
   // radius is an ELLIPSE in pixels — on a short, wide phone board 25% of the height is only ~58px
   // against a 90px well, which is exactly how objects ended up sitting on top of it. Measured, the
@@ -188,7 +194,7 @@ const FarvejagtGame: React.FC = () => {
     // PRD-16 W2 pulled the roomy-board scatter into an 18-82% reachable band so no drag is a long
     // diagonal for 5yo motor control. A phone board is already short enough that the band would leave
     // nowhere to stand, so there the floor is just "fully on the board".
-    const reachFloor = phoneLandscape ? 6 : 18
+    const reachFloor = phone ? 6 : 18
     const mx = Math.max(reachFloor, ((obj / 2 + 6) / w) * 100)
     const my = Math.max(reachFloor, ((obj / 2 + 6) / h) * 100)
     const spanX = Math.max(8, 100 - 2 * mx)
@@ -197,30 +203,42 @@ const FarvejagtGame: React.FC = () => {
     // ~100px apart horizontally and ~27px apart vertically on a phone board, which reads as a pile.
     const minPx = obj * (itemCount > 12 ? 0.8 : 1)
     // Bottom-left keep-out for the corner mascot (board coords ≈ screen coords in that corner).
-    // Phone landscape hides the corner companion, so there is nothing to dodge there.
-    const inMascotCorner = (p: {x: number, y: number}) => !phoneLandscape && p.x < 30 && p.y > 68
-
-    for (let i = 0; i < itemCount; i++) {
-      let attempts = 0
-      let position: {x: number, y: number}
-
-      do {
-        position = {
-          x: Math.random() * spanX + mx,
-          y: Math.random() * spanY + my
-        }
-        attempts++
-      } while (
-        attempts < 120 && (
-          ((position.x - 50) / rx) ** 2 + ((position.y - 50) / ry) ** 2 < 1 ||
-          inMascotCorner(position) ||
-          positions.some(pos =>
-            Math.hypot(((position.x - pos.x) / 100) * w, ((position.y - pos.y) / 100) * h) < minPx
-          )
-        )
+    // Phone landscape hides the corner companion, so there is nothing to dodge there. Phone portrait
+    // seats a SMALL one (MASCOT_CORNER_PHONE_PORTRAIT), so its keep-out is that box in pixels — the
+    // tablet's 30% × 32% would wall off a third of a 375 px board.
+    const inMascotCorner = (p: {x: number, y: number}) => {
+      if (phoneLandscape) return false
+      if (phone) {
+        const reach = MASCOT_CORNER_PHONE_PORTRAIT + obj * 0.5
+        return (p.x / 100) * w < reach && ((100 - p.y) / 100) * h < reach
+      }
+      return p.x < 30 && p.y > 68
+    }
+    const onWell = (p: {x: number, y: number}) => ((p.x - 50) / rx) ** 2 + ((p.y - 50) / ry) ** 2 < 1
+    const nearest = (p: {x: number, y: number}) =>
+      positions.reduce(
+        (m, pos) => Math.min(m, Math.hypot(((p.x - pos.x) / 100) * w, ((p.y - pos.y) / 100) * h)),
+        Infinity,
       )
 
-      positions.push(position)
+    for (let i = 0; i < itemCount; i++) {
+      let position: {x: number, y: number} | null = null
+      // When the board is too crowded for the full separation, fall back to the best candidate that
+      // is still OFF the well and OFF the mascot (the most room to its nearest neighbour) — never the
+      // last random try, which is how objects used to land on the well.
+      let best: {x: number, y: number} | null = null
+      let bestRoom = -1
+      let last: {x: number, y: number} = { x: 50, y: 50 }
+      for (let attempts = 0; attempts < 160; attempts++) {
+        const p = { x: Math.random() * spanX + mx, y: Math.random() * spanY + my }
+        last = p
+        if (onWell(p) || inMascotCorner(p)) continue
+        const room = nearest(p)
+        if (room >= minPx) { position = p; break }
+        if (room > bestRoom) { bestRoom = room; best = p }
+      }
+
+      positions.push(position ?? best ?? last)
     }
     return positions
   }

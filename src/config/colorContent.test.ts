@@ -203,6 +203,12 @@ test('Farvejagt deals a FIXED count of targets from a per-hue bag keyed by art',
   assert.match(code, /Math\.min\(TARGETS_PER_BOARD, targetObjects\.length\)/)
   // The old "take the whole hue" deal must be gone.
   assert.doesNotMatch(code, /shuffle\(targetObjects\)/)
+  // EVERY phone (portrait too) runs the compact well: on a 375 px portrait board the iPad well's
+  // keep-out covered the whole reachable x-band and Svær piled 14 objects onto it (2026-10-04).
+  assert.match(code, /const metrics = phone \? PHONE_WELL : DESK_WELL/)
+  assert.match(code, /useMediaQuery\(PHONE_ANY/)
+  // …and a crowded board falls back to the best OFF-well candidate, never the last random try.
+  assert.match(code, /if \(onWell\(p\) \|\| inMascotCorner\(p\)\) continue/)
 })
 
 // ---- Game Depth PRD-01 §3.2 — Nuancer's 5-step ramps --------------------------------------------------
