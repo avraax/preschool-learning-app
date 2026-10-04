@@ -158,6 +158,50 @@ export const operationDistractors = (
 }
 
 // ================================================================================================
+// Plus / Minus — the MISSING-NUMBER form (Game Depth PRD-01 §3.8)
+// ================================================================================================
+
+/**
+ * A missing-number problem: `a op ? = answer`, where the hidden number is always the SECOND operand
+ * (one gap position keeps the sentence readable for a 5-year-old). The fields are the ordinary problem
+ * — `b` is what the child taps, `answer` is printed on the board.
+ *
+ * Plus at Normal is held to sums ≤ 10 with no crossing: "8 + ? = 15" is counting on across the ten
+ * backwards, harder than Normal's comfort target. Minus at Normal keeps its no-borrow band, and Svær
+ * uses each operation's own Svær band. Let never asks this form (`missing: 0`).
+ */
+export const makeMissingProblem = (
+  op: 'addition' | 'subtraction',
+  level: DifficultyLevel,
+  rnd: Rnd = Math.random,
+): OperationProblem => {
+  if (op === 'subtraction') return makeSubtractionProblem(level, rnd)
+  if (level === 'svaer') return makeAdditionProblem(level, rnd)
+  const a = randInt(rnd, 2, 8)
+  const b = randInt(rnd, 2, 10 - a)
+  return { a, b, answer: a + b }
+}
+
+/**
+ * Wrong tiles for a missing-number problem — the confusions this form actually invites: off-by-one /
+ * two around the hidden number, the TOTAL (answering what is already printed after "="), and the first
+ * operand (copying the number that is there). Clamped to 1..20, distinct, never the hidden number.
+ */
+export const missingDistractors = (
+  problem: OperationProblem,
+  count: number,
+  rnd: Rnd = Math.random,
+): number[] => {
+  const { a, b, answer } = problem
+  const valid = (c: number) => c >= 1 && c <= 20 && c !== b
+  const confusables = [b - 1, b + 1, b - 2, b + 2, answer, a].filter(valid)
+  return fillDistinct(shuffle(confusables, rnd), count, () => {
+    const r = randInt(rnd, 1, 12)
+    return r === b ? r + 1 : r
+  })
+}
+
+// ================================================================================================
 // Sammenlign Tal
 // ================================================================================================
 

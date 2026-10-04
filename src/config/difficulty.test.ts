@@ -92,14 +92,14 @@ test('the §4 per-game tables are exactly these values', () => {
     svaer: { options: 5, max: 100, distractors: 'confusable' },
   })
   assert.deepEqual(MATH_ADDITION, {
-    let: { options: 3, sumMax: 10, addendMin: 1, crossTen: 'never' },
-    normal: { options: 4, sumMax: 20, addendMin: 2, crossTen: 'allowed' },
-    svaer: { options: 5, sumMax: 18, addendMin: 2, crossTen: 'always' },
+    let: { options: 3, sumMax: 10, addendMin: 1, crossTen: 'never', missing: 0 },
+    normal: { options: 4, sumMax: 20, addendMin: 2, crossTen: 'allowed', missing: { alt: 1, of: 3 } },
+    svaer: { options: 5, sumMax: 18, addendMin: 2, crossTen: 'always', missing: { alt: 1, of: 3 } },
   })
   assert.deepEqual(MATH_SUBTRACTION, {
-    let: { options: 3, minuendMax: 10, borrow: 'never', singleDigitShare: 1 },
-    normal: { options: 4, minuendMax: 20, borrow: 'never', singleDigitShare: 0.4 },
-    svaer: { options: 5, minuendMax: 20, borrow: 'always', singleDigitShare: 0 },
+    let: { options: 3, minuendMax: 10, borrow: 'never', singleDigitShare: 1, missing: 0 },
+    normal: { options: 4, minuendMax: 20, borrow: 'never', singleDigitShare: 0.4, missing: { alt: 1, of: 3 } },
+    svaer: { options: 5, minuendMax: 20, borrow: 'always', singleDigitShare: 0, missing: { alt: 1, of: 3 } },
   })
   assert.deepEqual(MATH_COMPARISON, {
     let: { max: 10, gapMin: 5, gapMax: 9 },

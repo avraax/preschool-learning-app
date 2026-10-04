@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-04T18:09:30.555Z",
+  "updatedAt": "2026-10-04T18:20:01.161Z",
   "clips": {
     "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|b": {
       "verdict": "ok",
@@ -16776,6 +16776,2030 @@
       "text": "Hvad starter Æg med?",
       "group": "letters",
       "updatedAt": 1791137370554
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|to plus hvad giver fire": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "to plus hvad giver fire",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|to plus hvad giver fem": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "to plus hvad giver fem",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|to plus hvad giver seks": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "to plus hvad giver seks",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|to plus hvad giver syv": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "to plus hvad giver syv",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|to plus hvad giver otte": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "to plus hvad giver otte",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|to plus hvad giver ni": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "to plus hvad giver ni",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|to plus hvad giver ti": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "to plus hvad giver ti",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|to plus hvad giver elleve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "to plus hvad giver elleve",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tre plus hvad giver fem": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tre plus hvad giver fem",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tre plus hvad giver seks": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tre plus hvad giver seks",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tre plus hvad giver syv": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tre plus hvad giver syv",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tre plus hvad giver otte": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tre plus hvad giver otte",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tre plus hvad giver ni": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tre plus hvad giver ni",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tre plus hvad giver ti": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tre plus hvad giver ti",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tre plus hvad giver elleve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tre plus hvad giver elleve",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tre plus hvad giver tolv": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tre plus hvad giver tolv",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fire plus hvad giver seks": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fire plus hvad giver seks",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fire plus hvad giver syv": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fire plus hvad giver syv",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fire plus hvad giver otte": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fire plus hvad giver otte",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fire plus hvad giver ni": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fire plus hvad giver ni",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fire plus hvad giver ti": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fire plus hvad giver ti",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fire plus hvad giver elleve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fire plus hvad giver elleve",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fire plus hvad giver tolv": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fire plus hvad giver tolv",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fire plus hvad giver tretten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fire plus hvad giver tretten",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fem plus hvad giver syv": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fem plus hvad giver syv",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fem plus hvad giver otte": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fem plus hvad giver otte",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fem plus hvad giver ni": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fem plus hvad giver ni",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fem plus hvad giver ti": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fem plus hvad giver ti",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fem plus hvad giver elleve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fem plus hvad giver elleve",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fem plus hvad giver tolv": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fem plus hvad giver tolv",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fem plus hvad giver tretten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fem plus hvad giver tretten",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fem plus hvad giver fjorten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fem plus hvad giver fjorten",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|seks plus hvad giver otte": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "seks plus hvad giver otte",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|seks plus hvad giver ni": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "seks plus hvad giver ni",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|seks plus hvad giver ti": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "seks plus hvad giver ti",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|seks plus hvad giver elleve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "seks plus hvad giver elleve",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|seks plus hvad giver tolv": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "seks plus hvad giver tolv",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|seks plus hvad giver tretten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "seks plus hvad giver tretten",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|seks plus hvad giver fjorten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "seks plus hvad giver fjorten",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|seks plus hvad giver femten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "seks plus hvad giver femten",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|syv plus hvad giver ni": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "syv plus hvad giver ni",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|syv plus hvad giver ti": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "syv plus hvad giver ti",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|syv plus hvad giver elleve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "syv plus hvad giver elleve",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|syv plus hvad giver tolv": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "syv plus hvad giver tolv",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|syv plus hvad giver tretten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "syv plus hvad giver tretten",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|syv plus hvad giver fjorten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "syv plus hvad giver fjorten",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|syv plus hvad giver femten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "syv plus hvad giver femten",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|syv plus hvad giver seksten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "syv plus hvad giver seksten",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|otte plus hvad giver ti": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "otte plus hvad giver ti",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|otte plus hvad giver elleve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "otte plus hvad giver elleve",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|otte plus hvad giver tolv": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "otte plus hvad giver tolv",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|otte plus hvad giver tretten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "otte plus hvad giver tretten",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|otte plus hvad giver fjorten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "otte plus hvad giver fjorten",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|otte plus hvad giver femten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "otte plus hvad giver femten",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|otte plus hvad giver seksten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "otte plus hvad giver seksten",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|otte plus hvad giver sytten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "otte plus hvad giver sytten",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|ni plus hvad giver elleve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "ni plus hvad giver elleve",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|ni plus hvad giver tolv": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "ni plus hvad giver tolv",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|ni plus hvad giver tretten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "ni plus hvad giver tretten",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|ni plus hvad giver fjorten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "ni plus hvad giver fjorten",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|ni plus hvad giver femten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "ni plus hvad giver femten",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|ni plus hvad giver seksten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "ni plus hvad giver seksten",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|ni plus hvad giver sytten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "ni plus hvad giver sytten",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|ni plus hvad giver atten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "ni plus hvad giver atten",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tre minus hvad giver to": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tre minus hvad giver to",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tre minus hvad giver en": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tre minus hvad giver en",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fire minus hvad giver tre": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fire minus hvad giver tre",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fire minus hvad giver to": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fire minus hvad giver to",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fire minus hvad giver en": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fire minus hvad giver en",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fem minus hvad giver fire": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fem minus hvad giver fire",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fem minus hvad giver tre": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fem minus hvad giver tre",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fem minus hvad giver to": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fem minus hvad giver to",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fem minus hvad giver en": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fem minus hvad giver en",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|seks minus hvad giver fem": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "seks minus hvad giver fem",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|seks minus hvad giver fire": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "seks minus hvad giver fire",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|seks minus hvad giver tre": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "seks minus hvad giver tre",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|seks minus hvad giver to": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "seks minus hvad giver to",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|seks minus hvad giver en": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "seks minus hvad giver en",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|syv minus hvad giver seks": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "syv minus hvad giver seks",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|syv minus hvad giver fem": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "syv minus hvad giver fem",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|syv minus hvad giver fire": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "syv minus hvad giver fire",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|syv minus hvad giver tre": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "syv minus hvad giver tre",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|syv minus hvad giver to": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "syv minus hvad giver to",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|syv minus hvad giver en": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "syv minus hvad giver en",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|otte minus hvad giver syv": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "otte minus hvad giver syv",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|otte minus hvad giver seks": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "otte minus hvad giver seks",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|otte minus hvad giver fem": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "otte minus hvad giver fem",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|otte minus hvad giver fire": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "otte minus hvad giver fire",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|otte minus hvad giver tre": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "otte minus hvad giver tre",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|otte minus hvad giver to": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "otte minus hvad giver to",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|otte minus hvad giver en": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "otte minus hvad giver en",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|ni minus hvad giver otte": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "ni minus hvad giver otte",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|ni minus hvad giver syv": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "ni minus hvad giver syv",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|ni minus hvad giver seks": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "ni minus hvad giver seks",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|ni minus hvad giver fem": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "ni minus hvad giver fem",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|ni minus hvad giver fire": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "ni minus hvad giver fire",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|ni minus hvad giver tre": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "ni minus hvad giver tre",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|ni minus hvad giver to": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "ni minus hvad giver to",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|ni minus hvad giver en": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "ni minus hvad giver en",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|ti minus hvad giver ni": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "ti minus hvad giver ni",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|ti minus hvad giver otte": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "ti minus hvad giver otte",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|ti minus hvad giver syv": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "ti minus hvad giver syv",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|ti minus hvad giver seks": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "ti minus hvad giver seks",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|ti minus hvad giver fem": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "ti minus hvad giver fem",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|ti minus hvad giver fire": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "ti minus hvad giver fire",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|ti minus hvad giver tre": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "ti minus hvad giver tre",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|ti minus hvad giver to": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "ti minus hvad giver to",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|ti minus hvad giver en": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "ti minus hvad giver en",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|elleve minus hvad giver ti": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "elleve minus hvad giver ti",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|elleve minus hvad giver ni": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "elleve minus hvad giver ni",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|elleve minus hvad giver otte": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "elleve minus hvad giver otte",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|elleve minus hvad giver syv": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "elleve minus hvad giver syv",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|elleve minus hvad giver seks": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "elleve minus hvad giver seks",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|elleve minus hvad giver fem": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "elleve minus hvad giver fem",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|elleve minus hvad giver fire": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "elleve minus hvad giver fire",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|elleve minus hvad giver tre": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "elleve minus hvad giver tre",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|elleve minus hvad giver to": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "elleve minus hvad giver to",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|elleve minus hvad giver en": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "elleve minus hvad giver en",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tolv minus hvad giver elleve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tolv minus hvad giver elleve",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tolv minus hvad giver ti": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tolv minus hvad giver ti",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tolv minus hvad giver ni": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tolv minus hvad giver ni",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tolv minus hvad giver otte": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tolv minus hvad giver otte",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tolv minus hvad giver syv": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tolv minus hvad giver syv",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tolv minus hvad giver seks": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tolv minus hvad giver seks",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tolv minus hvad giver fem": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tolv minus hvad giver fem",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tolv minus hvad giver fire": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tolv minus hvad giver fire",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tolv minus hvad giver tre": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tolv minus hvad giver tre",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tolv minus hvad giver to": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tolv minus hvad giver to",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tolv minus hvad giver en": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tolv minus hvad giver en",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tretten minus hvad giver tolv": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tretten minus hvad giver tolv",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tretten minus hvad giver elleve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tretten minus hvad giver elleve",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tretten minus hvad giver ti": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tretten minus hvad giver ti",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tretten minus hvad giver ni": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tretten minus hvad giver ni",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tretten minus hvad giver otte": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tretten minus hvad giver otte",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tretten minus hvad giver syv": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tretten minus hvad giver syv",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tretten minus hvad giver seks": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tretten minus hvad giver seks",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tretten minus hvad giver fem": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tretten minus hvad giver fem",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tretten minus hvad giver fire": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tretten minus hvad giver fire",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tretten minus hvad giver tre": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tretten minus hvad giver tre",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tretten minus hvad giver to": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tretten minus hvad giver to",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tretten minus hvad giver en": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tretten minus hvad giver en",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fjorten minus hvad giver tretten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fjorten minus hvad giver tretten",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fjorten minus hvad giver tolv": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fjorten minus hvad giver tolv",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fjorten minus hvad giver elleve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fjorten minus hvad giver elleve",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fjorten minus hvad giver ti": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fjorten minus hvad giver ti",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fjorten minus hvad giver ni": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fjorten minus hvad giver ni",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fjorten minus hvad giver otte": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fjorten minus hvad giver otte",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fjorten minus hvad giver syv": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fjorten minus hvad giver syv",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fjorten minus hvad giver seks": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fjorten minus hvad giver seks",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fjorten minus hvad giver fem": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fjorten minus hvad giver fem",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fjorten minus hvad giver fire": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fjorten minus hvad giver fire",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fjorten minus hvad giver tre": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fjorten minus hvad giver tre",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fjorten minus hvad giver to": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fjorten minus hvad giver to",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fjorten minus hvad giver en": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fjorten minus hvad giver en",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|femten minus hvad giver fjorten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "femten minus hvad giver fjorten",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|femten minus hvad giver tretten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "femten minus hvad giver tretten",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|femten minus hvad giver tolv": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "femten minus hvad giver tolv",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|femten minus hvad giver elleve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "femten minus hvad giver elleve",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|femten minus hvad giver ti": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "femten minus hvad giver ti",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|femten minus hvad giver ni": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "femten minus hvad giver ni",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|femten minus hvad giver otte": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "femten minus hvad giver otte",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|femten minus hvad giver syv": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "femten minus hvad giver syv",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|femten minus hvad giver seks": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "femten minus hvad giver seks",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|femten minus hvad giver fem": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "femten minus hvad giver fem",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|femten minus hvad giver fire": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "femten minus hvad giver fire",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|femten minus hvad giver tre": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "femten minus hvad giver tre",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|femten minus hvad giver to": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "femten minus hvad giver to",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|femten minus hvad giver en": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "femten minus hvad giver en",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|seksten minus hvad giver femten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "seksten minus hvad giver femten",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|seksten minus hvad giver fjorten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "seksten minus hvad giver fjorten",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|seksten minus hvad giver tretten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "seksten minus hvad giver tretten",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|seksten minus hvad giver tolv": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "seksten minus hvad giver tolv",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|seksten minus hvad giver elleve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "seksten minus hvad giver elleve",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|seksten minus hvad giver ti": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "seksten minus hvad giver ti",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|seksten minus hvad giver ni": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "seksten minus hvad giver ni",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|seksten minus hvad giver otte": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "seksten minus hvad giver otte",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|seksten minus hvad giver syv": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "seksten minus hvad giver syv",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|seksten minus hvad giver seks": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "seksten minus hvad giver seks",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|seksten minus hvad giver fem": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "seksten minus hvad giver fem",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|seksten minus hvad giver fire": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "seksten minus hvad giver fire",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|seksten minus hvad giver tre": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "seksten minus hvad giver tre",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|seksten minus hvad giver to": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "seksten minus hvad giver to",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|seksten minus hvad giver en": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "seksten minus hvad giver en",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|sytten minus hvad giver seksten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "sytten minus hvad giver seksten",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|sytten minus hvad giver femten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "sytten minus hvad giver femten",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|sytten minus hvad giver fjorten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "sytten minus hvad giver fjorten",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|sytten minus hvad giver tretten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "sytten minus hvad giver tretten",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|sytten minus hvad giver tolv": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "sytten minus hvad giver tolv",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|sytten minus hvad giver elleve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "sytten minus hvad giver elleve",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|sytten minus hvad giver ti": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "sytten minus hvad giver ti",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|sytten minus hvad giver ni": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "sytten minus hvad giver ni",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|sytten minus hvad giver otte": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "sytten minus hvad giver otte",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|sytten minus hvad giver syv": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "sytten minus hvad giver syv",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|sytten minus hvad giver seks": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "sytten minus hvad giver seks",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|sytten minus hvad giver fem": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "sytten minus hvad giver fem",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|sytten minus hvad giver fire": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "sytten minus hvad giver fire",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|sytten minus hvad giver tre": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "sytten minus hvad giver tre",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|sytten minus hvad giver to": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "sytten minus hvad giver to",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|sytten minus hvad giver en": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "sytten minus hvad giver en",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|atten minus hvad giver sytten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "atten minus hvad giver sytten",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|atten minus hvad giver seksten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "atten minus hvad giver seksten",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|atten minus hvad giver femten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "atten minus hvad giver femten",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|atten minus hvad giver fjorten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "atten minus hvad giver fjorten",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|atten minus hvad giver tretten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "atten minus hvad giver tretten",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|atten minus hvad giver tolv": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "atten minus hvad giver tolv",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|atten minus hvad giver elleve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "atten minus hvad giver elleve",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|atten minus hvad giver ti": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "atten minus hvad giver ti",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|atten minus hvad giver ni": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "atten minus hvad giver ni",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|atten minus hvad giver otte": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "atten minus hvad giver otte",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|atten minus hvad giver syv": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "atten minus hvad giver syv",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|atten minus hvad giver seks": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "atten minus hvad giver seks",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|atten minus hvad giver fem": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "atten minus hvad giver fem",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|atten minus hvad giver fire": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "atten minus hvad giver fire",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|atten minus hvad giver tre": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "atten minus hvad giver tre",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|atten minus hvad giver to": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "atten minus hvad giver to",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|atten minus hvad giver en": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "atten minus hvad giver en",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|nitten minus hvad giver atten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "nitten minus hvad giver atten",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|nitten minus hvad giver sytten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "nitten minus hvad giver sytten",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|nitten minus hvad giver seksten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "nitten minus hvad giver seksten",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|nitten minus hvad giver femten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "nitten minus hvad giver femten",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|nitten minus hvad giver fjorten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "nitten minus hvad giver fjorten",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|nitten minus hvad giver tretten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "nitten minus hvad giver tretten",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|nitten minus hvad giver tolv": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "nitten minus hvad giver tolv",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|nitten minus hvad giver elleve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "nitten minus hvad giver elleve",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|nitten minus hvad giver ti": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "nitten minus hvad giver ti",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|nitten minus hvad giver ni": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "nitten minus hvad giver ni",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|nitten minus hvad giver otte": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "nitten minus hvad giver otte",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|nitten minus hvad giver syv": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "nitten minus hvad giver syv",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|nitten minus hvad giver seks": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "nitten minus hvad giver seks",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|nitten minus hvad giver fem": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "nitten minus hvad giver fem",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|nitten minus hvad giver fire": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "nitten minus hvad giver fire",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|nitten minus hvad giver tre": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "nitten minus hvad giver tre",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|nitten minus hvad giver to": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "nitten minus hvad giver to",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|nitten minus hvad giver en": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "nitten minus hvad giver en",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tyve minus hvad giver nitten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tyve minus hvad giver nitten",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tyve minus hvad giver atten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tyve minus hvad giver atten",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tyve minus hvad giver sytten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tyve minus hvad giver sytten",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tyve minus hvad giver seksten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tyve minus hvad giver seksten",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tyve minus hvad giver femten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tyve minus hvad giver femten",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tyve minus hvad giver fjorten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tyve minus hvad giver fjorten",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tyve minus hvad giver tretten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tyve minus hvad giver tretten",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tyve minus hvad giver tolv": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tyve minus hvad giver tolv",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tyve minus hvad giver elleve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tyve minus hvad giver elleve",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tyve minus hvad giver ti": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tyve minus hvad giver ti",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tyve minus hvad giver ni": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tyve minus hvad giver ni",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tyve minus hvad giver otte": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tyve minus hvad giver otte",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tyve minus hvad giver syv": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tyve minus hvad giver syv",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tyve minus hvad giver seks": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tyve minus hvad giver seks",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tyve minus hvad giver fem": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tyve minus hvad giver fem",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tyve minus hvad giver fire": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tyve minus hvad giver fire",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tyve minus hvad giver tre": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tyve minus hvad giver tre",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tyve minus hvad giver to": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tyve minus hvad giver to",
+      "group": "math",
+      "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tyve minus hvad giver en": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tyve minus hvad giver en",
+      "group": "math",
+      "updatedAt": 1791138001161
     }
   }
 }

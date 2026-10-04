@@ -115,6 +115,8 @@ export interface AdditionTuning {
   addendMin: number
   /** Whether a problem may / must cross the ten (units digits summing ≥10). */
   crossTen: 'never' | 'allowed' | 'always'
+  /** Share of MISSING-NUMBER tasks, `a + ? = c` (Game Depth PRD-01 §3.8). Never at Let. */
+  missing: FormatShare
 }
 
 /**
@@ -123,9 +125,9 @@ export interface AdditionTuning {
  * can't exceed 18 (19 = 9+10 and 20 = 10+10 don't cross), which is why the Svær sum band is 11–18.
  */
 export const MATH_ADDITION: Record<DifficultyLevel, AdditionTuning> = {
-  let: { options: 3, sumMax: 10, addendMin: 1, crossTen: 'never' },
-  normal: { options: 4, sumMax: 20, addendMin: 2, crossTen: 'allowed' },
-  svaer: { options: 5, sumMax: 18, addendMin: 2, crossTen: 'always' },
+  let: { options: 3, sumMax: 10, addendMin: 1, crossTen: 'never', missing: 0 },
+  normal: { options: 4, sumMax: 20, addendMin: 2, crossTen: 'allowed', missing: { alt: 1, of: 3 } },
+  svaer: { options: 5, sumMax: 18, addendMin: 2, crossTen: 'always', missing: { alt: 1, of: 3 } },
 }
 
 export interface SubtractionTuning {
@@ -136,6 +138,8 @@ export interface SubtractionTuning {
   borrow: 'never' | 'always'
   /** Share of problems kept single-digit for variety (0–1). */
   singleDigitShare: number
+  /** Share of MISSING-NUMBER tasks, `a − ? = c` (Game Depth PRD-01 §3.8). Never at Let. */
+  missing: FormatShare
 }
 
 /**
@@ -146,9 +150,9 @@ export interface SubtractionTuning {
  * Counting BACK across the ten is the skill he doesn't have yet, so it is Svær-only.
  */
 export const MATH_SUBTRACTION: Record<DifficultyLevel, SubtractionTuning> = {
-  let: { options: 3, minuendMax: 10, borrow: 'never', singleDigitShare: 1 },
-  normal: { options: 4, minuendMax: MINUEND_MAX, borrow: 'never', singleDigitShare: 0.4 },
-  svaer: { options: 5, minuendMax: MINUEND_MAX, borrow: 'always', singleDigitShare: 0 },
+  let: { options: 3, minuendMax: 10, borrow: 'never', singleDigitShare: 1, missing: 0 },
+  normal: { options: 4, minuendMax: MINUEND_MAX, borrow: 'never', singleDigitShare: 0.4, missing: { alt: 1, of: 3 } },
+  svaer: { options: 5, minuendMax: MINUEND_MAX, borrow: 'always', singleDigitShare: 0, missing: { alt: 1, of: 3 } },
 }
 
 export interface ComparisonTuning {

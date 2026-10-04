@@ -8,7 +8,8 @@ import assert from 'node:assert/strict'
 import { existsSync, readFileSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { colorMixQuestionText } from './gamePhrases.ts'
+import { colorMixQuestionText, mathFactText, mathMissingPromptText, missingPairs } from './gamePhrases.ts'
+import { makeMissingProblem, missingDistractors } from './mathProblems.ts'
 import {
   possibleTargets,
   recipeNamesFor,
@@ -17,7 +18,7 @@ import {
   mixingRules,
   TARGET_PRIORITY,
 } from './colorMixing.ts'
-import { COLORS_RAMFARVEN, LEVELS, MEMORY_BOARD, MEMORY_CLUSTER_MAX, ORDLEG_SPELL, memoryNumbersFor } from './difficulty.ts'
+import { COLORS_RAMFARVEN, LEVELS, MATH_ADDITION, MATH_SUBTRACTION, MEMORY_BOARD, MEMORY_CLUSTER_MAX, ORDLEG_SPELL, memoryNumbersFor } from './difficulty.ts'
 import { getDanishNumberText } from './danish-phrases.ts'
 import { READING_MAX_LEN, READING_ROUND_LENGTH, READING_WORDS, SPELLING_ALPHABET, makeMissingLetterTask, spellingWordsFor } from './ordlegWords.ts'
 import { readingPromptPool } from './promptPools.ts'
@@ -248,4 +249,63 @@ test('the memory board bag rebuilds when the POOL changes, and big numbers drop 
   assert.match(game, /useMemo\(\(\) => memoryNumbersFor\(level\), \[level\]\)/)
   assert.match(game, /if \(n > MEMORY_CLUSTER_MAX\) return \{ primary: number \}/)
   assert.doesNotMatch(game, /length: 20/)
+})
+
+// ---- Plus / Minus — the missing-number form (§3.8) --------------------------------------------------
+
+test('missing-number questions are exactly this, and every one the game can ask is baked', () => {
+  assert.equal(mathMissingPromptText('addition', 3, 7), 'tre plus hvad giver syv')
+  assert.equal(mathMissingPromptText('subtraction', 7, 3), 'syv minus hvad giver tre')
+  const all = enumerated()
+  for (const op of ['addition', 'subtraction'] as const) {
+    const pairs = new Set(missingPairs(op).map(([a, b]) => `${a},${b}`))
+    for (const level of ['normal', 'svaer'] as const) {
+      const rnd = seeded(op.length * 1000 + level.length)
+      for (let i = 0; i < 4000; i++) {
+        const p = makeMissingProblem(op, level, rnd)
+        assert.ok(pairs.has(`${p.a},${p.b}`), `${op} ${level}: ${p.a},${p.b} outside missingPairs`)
+        const q = mathMissingPromptText(op, p.a, p.answer)
+        assert.ok(all.has(q), `missing prebake clip: "${q}"`)
+        assert.ok(all.has(mathFactText(op, p.a, p.b, p.answer)))
+      }
+    }
+  }
+})
+
+test('missing-number problems keep each level honest', () => {
+  const rnd = seeded(4242)
+  for (let i = 0; i < 4000; i++) {
+    const n = makeMissingProblem('addition', 'normal', rnd)
+    assert.ok(n.answer <= 10 && n.a >= 2 && n.b >= 2, `Normal plus ${n.a}+${n.b}`)
+    const s = makeMissingProblem('addition', 'svaer', rnd)
+    assert.ok(s.answer > 10, `Svær plus must cross: ${s.a}+${s.b}`)
+    const m = makeMissingProblem('subtraction', 'normal', rnd)
+    assert.ok(m.a < 10 || m.b <= m.a % 10, `Normal minus must not borrow: ${m.a}-${m.b}`)
+    assert.ok(m.answer >= 1 && m.b >= 1)
+    const ms = makeMissingProblem('subtraction', 'svaer', rnd)
+    assert.ok(ms.b > ms.a % 10, `Svær minus must borrow: ${ms.a}-${ms.b}`)
+    for (const p of [n, s, m, ms]) {
+      const d = missingDistractors(p, 4, rnd)
+      assert.equal(d.length, 4)
+      assert.equal(new Set(d).size, 4)
+      assert.ok(!d.includes(p.b), 'a distractor equals the answer')
+      assert.ok(d.every((x) => x >= 1 && x <= 20))
+    }
+  }
+  // Never at Let; exactly 1 in 3 above it.
+  for (const t of [MATH_ADDITION, MATH_SUBTRACTION]) {
+    assert.equal(t.let.missing, 0)
+    assert.deepEqual(t.normal.missing, { alt: 1, of: 3 })
+    assert.deepEqual(t.svaer.missing, { alt: 1, of: 3 })
+  }
+})
+
+test('Plus/Minus moves the ? to the gap and asks the matching question', () => {
+  const code = codeOf('components/math/MathOperationGame.tsx')
+  assert.match(code, /\{missing \? answerSlot : \(/)
+  assert.match(code, /\{missing \? \(\s*<Typography[^>]*>\{total\}<\/Typography>\s*\) : answerSlot\}/)
+  assert.match(code, /if \(missingRef\.current\) \{\s*await audio\.speak\(mathMissingPromptText\(/)
+  // The correct tap speaks the ordinary fact with the TOTAL, never the hidden number as a total.
+  assert.match(code, /factText\(num1, num2, total\)/)
+  assert.doesNotMatch(code, /factText\(num1, num2, correctAnswer\)/)
 })

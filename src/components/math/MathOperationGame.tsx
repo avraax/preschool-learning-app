@@ -10,9 +10,10 @@ import { DroppableZone } from '../common/dnd/DroppableZone'
 import { useDragActive } from '../common/dnd/useDragActive'
 import { wasWobbledTap } from '../common/dnd/dragActivation'
 import { getCategoryTheme } from '../../config/categoryThemes'
-import { mathFactText } from '../../config/gamePhrases'
-import { optionCountFor } from '../../config/difficulty'
-import { makeAdditionProblem, makeSubtractionProblem, operationDistractors } from '../../config/mathProblems'
+import { mathFactText, mathMissingPromptText } from '../../config/gamePhrases'
+import { MATH_ADDITION, MATH_SUBTRACTION, optionCountFor, type DifficultyLevel } from '../../config/difficulty'
+import { makeAdditionProblem, makeMissingProblem, makeSubtractionProblem, missingDistractors, operationDistractors } from '../../config/mathProblems'
+import { makeFormatBag, type FormatBag } from '../../config/formatBag'
 import { answerGridSx } from '../common/answerGrid'
 import GameShell from '../common/GameShell'
 import AnswerTile, { type AnswerTileState } from '../common/AnswerTile'
@@ -77,6 +78,13 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
   const [num1, setNum1] = useState<number | null>(null)
   const [num2, setNum2] = useState<number | null>(null)
   const [correctAnswer, setCorrectAnswer] = useState<number | null>(null)
+  // `a op b = total` always holds. On the MISSING-NUMBER form (Game Depth PRD-01 §3.8, Normal/Svær
+  // ~1 in 3) the board prints `a op ? = total` and the answer is `b`; otherwise `a op b = ?` and the
+  // answer is `total`. The correct-tap fact is the same sentence either way.
+  const [total, setTotal] = useState<number | null>(null)
+  const [missing, setMissing] = useState(false)
+  const missingRef = useRef(false)
+  const formatBagRef = useRef<{ level: DifficultyLevel; bag: FormatBag } | null>(null)
   const [options, setOptions] = useState<number[]>([])
   // Feedback for the most-recently tapped answer + the corner guide reaction.
   const [feedback, setFeedback] = useState<{ value: number; correct: boolean } | null>(null)
@@ -219,13 +227,27 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
     // 2026-08-02). Plus at Normal keeps crossing the ten on purpose — counting ON to 20 on fingers is a
     // skill he has; counting BACK across it is not. Equal effort, not equal arithmetic structure.
     const level = progressStore.difficultyFor('math')
-    const { a: firstNum, b: secondNum, answer } = isAddition
-      ? makeAdditionProblem(level)
-      : makeSubtractionProblem(level)
+    // Task shape from a format bag — an exact 1-in-3 share of missing-number tasks at Normal/Svær, never
+    // at Let. Rebuilt when the level changes.
+    if (!formatBagRef.current || formatBagRef.current.level !== level) {
+      const share = (isAddition ? MATH_ADDITION : MATH_SUBTRACTION)[level].missing
+      formatBagRef.current = { level, bag: makeFormatBag(share) }
+    }
+    const isMissing = formatBagRef.current.bag.next() === 'alt'
+    const problem = isMissing
+      ? makeMissingProblem(operation, level)
+      : isAddition
+        ? makeAdditionProblem(level)
+        : makeSubtractionProblem(level)
+    const { a: firstNum, b: secondNum, answer } = problem
+    const target = isMissing ? secondNum : answer
 
+    missingRef.current = isMissing
+    setMissing(isMissing)
     setNum1(firstNum)
     setNum2(secondNum)
-    setCorrectAnswer(answer)
+    setTotal(answer)
+    setCorrectAnswer(target)
     problemRef.current = { a: firstNum, b: secondNum }
 
     // Warm this problem's fact line while the child is still working the problem out, so nothing is
@@ -236,11 +258,14 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
     // Near-answer distractors (off-by-one/two + the operands) clamped to the valid result range, so
     // wrong options are plausible confusions rather than random noise. The COUNT is the shared tile
     // axis now (3 / 4 / 5 — Difficulty PRD-01 W3), resolved from the same table the config quizzes use.
+    // The missing form has its own confusions (the printed total, the copied first operand).
     const optionCount = optionCountFor(gameId, level)
-    const picks = operationDistractors(operation, { a: firstNum, b: secondNum, answer }, level, optionCount - 1)
+    const picks = isMissing
+      ? missingDistractors(problem, optionCount - 1)
+      : operationDistractors(operation, problem, level, optionCount - 1)
 
     optionSeq.current += 1 // fresh key namespace for this problem's option tiles
-    setOptions(shuffle([answer, ...picks]))
+    setOptions(shuffle([target, ...picks]))
 
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current)
@@ -258,7 +283,11 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
   const speakProblem = async (a: number, b: number) => {
     try {
       audio.updateUserInteraction()
-      if (isAddition) {
+      // The missing form asks "tre plus hvad giver syv" — the same helper serves the first voicing,
+      // the welcome tail and "Hør igen", so the repeat can never ask the other form's question.
+      if (missingRef.current) {
+        await audio.speak(mathMissingPromptText(operation, a, isAddition ? a + b : a - b))
+      } else if (isAddition) {
         await audio.speakAdditionProblem(a, b, 'primary')
       } else {
         await audio.speakSubtractionProblem(a, b, 'primary')
@@ -343,8 +372,8 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
     // tap speaks the completed FACT ("tre plus fire er syv") — the reinforcement moment (PRD-05 P2);
     // a wrong tap echoes the tapped number (identification). Single audio channel, so the fact
     // REPLACES the echo, never stacks. The win/lose narration stays removed.
-    if (isCorrect && correctAnswer !== null && num1 !== null && num2 !== null) {
-      void audio.speak(factText(num1, num2, correctAnswer)).catch(() => {})
+    if (isCorrect && total !== null && num1 !== null && num2 !== null) {
+      void audio.speak(factText(num1, num2, total)).catch(() => {})
     } else {
       void audio.speakNumber(selectedAnswer).catch(() => {})
     }
@@ -434,6 +463,80 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
     [PHONE_LANDSCAPE]: { width: 20, height: 20 },
   }
 
+  // The `?` slot — the DROP TARGET and the `?`→answer POP. It sits where the hidden number is: after
+  // `=` normally, between the operator and `=` on the missing-number form (Game Depth PRD-01 §3.8).
+  // The "?" flips to the revealed answer with a motion.POP once correct (reduced motion: instant swap —
+  // the colour/glow + SFX still land). It is also the DROP TARGET for an answer tile: the slot the
+  // answer belongs in is the only honest place to drop one. `overColor` transparent — the cue is the
+  // accent ring below, since a white wash inside the clay tile just looks like a paint bug.
+  const answerSlot = (
+    <DroppableZone
+      id="answer-slot"
+      overColor="transparent"
+      style={{
+        borderRadius: '16px',
+        outline: overId === 'answer-slot' ? `4px solid ${category.accentColor}` : '4px solid transparent',
+        outlineOffset: '4px',
+        transition: 'outline-color 0.2s ease',
+      }}
+    >
+    <Box sx={{ ...symbolSx, position: 'relative' }}>
+      <AnimatePresence mode="wait" initial={false}>
+        {effectiveRevealAnswer && correctAnswer !== null ? (
+          <motion.div
+            key="answer"
+            initial={reduce ? false : { scale: 0.4, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ opacity: 0, transition: EXIT_FAST }}
+            transition={motionOr(POP, reduce)}
+            style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          >
+            <Box
+              sx={{
+                width: '100%',
+                height: '100%',
+                borderRadius: '14px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                bgcolor: hexToRgba(muiTheme.palette.success.main, 0.2),
+                border: `3px solid ${muiTheme.palette.success.main}`,
+                boxShadow: muiTheme.customShadows.pop,
+              }}
+            >
+              <Typography
+                sx={{
+                  fontWeight: 800,
+                  lineHeight: 1,
+                  color: darken(muiTheme.palette.success.main, 0.2),
+                  fontSize: { xs: '1.7rem', md: '2.4rem' },
+                  [PHONE_LANDSCAPE]: { fontSize: '0.85rem' },
+                }}
+              >
+                {correctAnswer}
+              </Typography>
+            </Box>
+          </motion.div>
+        ) : (
+          <motion.div
+            key="question"
+            initial={reduce ? false : { scale: 0.7, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ opacity: 0, transition: EXIT_FAST }}
+            transition={motionOr(POP, reduce)}
+            style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          >
+            {/* 80% of the slot: the slot is sized for the answer chip, and the `?` glyph
+                now fills whatever box it's given, so 100% would make it taller than the
+                numerals beside it. */}
+            <SymbolTile op="?" sx={{ width: '80%', height: '80%' }} />
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </Box>
+    </DroppableZone>
+  )
+
   // Live difficulty: regenerate the current problem when the level changes in the adult menu
   // (no refresh). Skips the initial mount.
   const difficultyLevel = useDifficulty('math')
@@ -483,6 +586,7 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
               // definition, a grounded softShadow() drop-shadow, and an inner-light top highlight,
               // matching the TactileTile chip material. The SymbolTile operators + big numerals stay.
               <Box
+                data-math-form={missing ? 'missing' : 'result'}
                 sx={{
                   // One row: the number sentence alone on the clay tile (the ten-frame beneath it was
                   // removed — see the note above the component).
@@ -504,79 +608,14 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
                 {/* num1 op num2 = ?→answer POP */}
                 <Typography variant="h1" component="span" sx={numberSx}>{num1}</Typography>
                 <SymbolTile op={operator} sx={operatorSx} />
-                <Typography variant="h1" component="span" sx={numberSx}>{num2}</Typography>
+                {missing ? answerSlot : (
+                  <Typography variant="h1" component="span" sx={numberSx}>{num2}</Typography>
+                )}
                 <SymbolTile op="=" sx={operatorSx} />
 
-                {/* The "?" flips to the revealed answer with a motion.POP once correct (reduced
-                    motion: instant swap — the colour/glow + SFX still land). It is also the DROP
-                    TARGET for an answer tile: the slot the answer belongs in is the only honest place
-                    to drop one. `overColor` transparent — the cue is the accent ring below, since a
-                    white wash inside the clay tile just looks like a paint bug. */}
-                <DroppableZone
-                  id="answer-slot"
-                  overColor="transparent"
-                  style={{
-                    borderRadius: '16px',
-                    outline: overId === 'answer-slot' ? `4px solid ${category.accentColor}` : '4px solid transparent',
-                    outlineOffset: '4px',
-                    transition: 'outline-color 0.2s ease',
-                  }}
-                >
-                <Box sx={{ ...symbolSx, position: 'relative' }}>
-                  <AnimatePresence mode="wait" initial={false}>
-                    {effectiveRevealAnswer && correctAnswer !== null ? (
-                      <motion.div
-                        key="answer"
-                        initial={reduce ? false : { scale: 0.4, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        exit={{ opacity: 0, transition: EXIT_FAST }}
-                        transition={motionOr(POP, reduce)}
-                        style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                      >
-                        <Box
-                          sx={{
-                            width: '100%',
-                            height: '100%',
-                            borderRadius: '14px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            bgcolor: hexToRgba(muiTheme.palette.success.main, 0.2),
-                            border: `3px solid ${muiTheme.palette.success.main}`,
-                            boxShadow: muiTheme.customShadows.pop,
-                          }}
-                        >
-                          <Typography
-                            sx={{
-                              fontWeight: 800,
-                              lineHeight: 1,
-                              color: darken(muiTheme.palette.success.main, 0.2),
-                              fontSize: { xs: '1.7rem', md: '2.4rem' },
-                              [PHONE_LANDSCAPE]: { fontSize: '0.85rem' },
-                            }}
-                          >
-                            {correctAnswer}
-                          </Typography>
-                        </Box>
-                      </motion.div>
-                    ) : (
-                      <motion.div
-                        key="question"
-                        initial={reduce ? false : { scale: 0.7, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        exit={{ opacity: 0, transition: EXIT_FAST }}
-                        transition={motionOr(POP, reduce)}
-                        style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                      >
-                        {/* 80% of the slot: the slot is sized for the answer chip, and the `?` glyph
-                            now fills whatever box it's given, so 100% would make it taller than the
-                            numerals beside it. */}
-                        <SymbolTile op="?" sx={{ width: '80%', height: '80%' }} />
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </Box>
-                </DroppableZone>
+                {missing ? (
+                  <Typography variant="h1" component="span" sx={numberSx}>{total}</Typography>
+                ) : answerSlot}
               </Box>
               ) : null
             }

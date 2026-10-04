@@ -69,6 +69,32 @@ export const mathFactText = (op: MathOp, a: number, b: number, answer: number): 
   } ${getDanishNumberText(b)} er ${getDanishNumberText(answer)}`
 
 // --- Sammenlign Tal ------------------------------------------------------------------------------
+/**
+ * Plus/Minus's MISSING-NUMBER question (Game Depth PRD-01 §3.8): "tre plus hvad giver syv" — the
+ * printed total is spoken, the gap is "hvad". The correct tap still speaks the ordinary fact
+ * (`mathFactText`: "tre plus fire er syv"), which is already baked for every pair.
+ */
+export const mathMissingPromptText = (op: MathOp, a: number, total: number): string =>
+  `${getDanishNumberText(a)} ${
+    op === 'addition' ? DANISH_PHRASES.math.plus : DANISH_PHRASES.math.minus
+  } hvad giver ${getDanishNumberText(total)}`
+
+/**
+ * Every `[a, b]` the missing-number form can generate (Normal + Svær, `makeMissingProblem`). Plus:
+ * both addends 2..9 — a superset of Normal's sums ≤ 10 and Svær's crossing pairs. Minus: every pair
+ * with a result ≥ 1 from minuend 3 up — a superset of both bands. A SUPERSET of what the game asks is
+ * safe (an unplayed clip costs disk); sampling in gameDepth.test.ts proves the game stays inside it.
+ */
+export const missingPairs = (op: MathOp): Array<[number, number]> => {
+  const out: Array<[number, number]> = []
+  if (op === 'addition') {
+    for (let a = 2; a <= 9; a++) for (let b = 2; b <= 9; b++) out.push([a, b])
+    return out
+  }
+  for (const [a, b] of subtractionPairs()) if (b >= 1 && a - b >= 1 && a >= 3) out.push([a, b])
+  return out
+}
+
 export const COMPARE_PROMPT = 'Tryk på det største tal.'
 /** "sytten er større end ni" — always bigger-first, so one clip serves either card order. */
 export const comparisonFactText = (bigger: number, smaller: number): string =>

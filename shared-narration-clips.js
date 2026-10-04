@@ -30,7 +30,7 @@ import { LETTER_QUIZ_WORDS, LETTER_WORDS, WORD_LETTERS, letterPhrase, startsWith
 // protocol in .claude/rules/audio-system.md), so what gets baked is exactly what gets spoken.
 import {
   additionPairs, subtractionPairs, comparisonPairs,
-  mathPromptText, mathFactText,
+  mathPromptText, mathFactText, mathMissingPromptText, missingPairs,
   COMPARE_PROMPT, comparisonFactText,
   HVAD_MANGLER_PROMPT, sequenceFactText, sequenceStarts, sequenceNumbers,
   MEMORY_LETTERS_INSTRUCTION, MEMORY_NUMBERS_INSTRUCTION,
@@ -120,6 +120,9 @@ export function collectNarrationClips() {
     da('math', mathPromptText('subtraction', a, b))
     da('math', mathFactText('subtraction', a, b, a - b))
   }
+  // Plus/Minus missing-number questions (Game Depth PRD-01 §3.8); the facts are the ones above.
+  for (const [a, b] of missingPairs('addition')) da('math', mathMissingPromptText('addition', a, a + b))
+  for (const [a, b] of missingPairs('subtraction')) da('math', mathMissingPromptText('subtraction', a, a - b))
   da('math', COMPARE_PROMPT)
   for (const [bigger, smaller] of comparisonPairs()) da('math', comparisonFactText(bigger, smaller))
 
