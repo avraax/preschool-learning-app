@@ -427,6 +427,16 @@ routine rather than a statistic. And it needs a REAL migration on both tiers: th
 `CREATE TABLE IF NOT EXISTS` only ever creates, so it cannot add a column, which reintroduces the manual
 per-tier step this design removed. Revisit when an hour bucket is a crowd.
 
+**THE SHELL PATH IS PROVEN ON HARDWARE (2026-10-04).** This was the open unknown, and it fails
+silently by construction — a bare `/api/usage` is answered by the app bundle with index.html, 200 and
+no error. Production holds **983 ticks across 180 rows labelled 1.1.0** between 2026-09-26 and
+2026-10-04, from installed App Store builds. The `capacitor://localhost` → `apiUrl()` path works. The
+version bump earned its keep too: three stray `1.0.45` rows from 21-24 September separate cleanly.
+
+What is still unproven is narrower than it was: whether the NEW event shape (batched `events` array,
+session marks, `reward:sticker`) leaves the shell, and whether `visibilitychange` fires when a
+backgrounded iPad drops a pending batch. Both wait on a 1.2 build; both fail silently.
+
 **What it will not tell you:** how many distinct children, or whether anyone came back. Accept that or go
 to C.
 
