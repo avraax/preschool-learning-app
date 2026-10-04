@@ -112,16 +112,15 @@ export const TransitionProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     setPhase('revealing')
   }, [navigate])
 
-  // Reveal finished → back to idle. Fire the arrive cue: a soft chime onto a menu, or the in-game
-  // mascot's welcome onto a game (menu-open/welcome fire AFTER NavigationAudioCleanup's stopAll, so
-  // they survive — the travel cue at cover start mostly finishes during cover).
+  // Reveal finished → back to idle. Onto a game, the in-game mascot's welcome (fires AFTER
+  // NavigationAudioCleanup's stopAll, so it survives). Onto a menu, nothing: the arrive chime
+  // ('menu-open', star.mp3) was removed 2026-10-04 — the owner heard it as a gong after every hop.
   const onRevealComplete = useCallback(() => {
     setPhase('idle')
     setWithUsher(false)
     setReducedFade(false)
     pendingRef.current = null
-    if (routeKind(pathnameRef.current) === 'menu') sfx.play('menu-open')
-    else mascotBus.emit('welcome')
+    if (routeKind(pathnameRef.current) !== 'menu') mascotBus.emit('welcome')
   }, [])
 
   const value: TransitionContextValue = {

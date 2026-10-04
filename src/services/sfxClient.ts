@@ -37,13 +37,13 @@ export type SfxCue =
   | 'page-complete'
   | 'level-up'
   // Navigation cues (Liveliness PRD-02): a subtle pop on tapping a card, a per-skin travel whoosh
-  // fired at cover start, a soft arrive chime when a menu reveals, and a softer reverse whoosh on back.
+  // fired at cover start, and a softer reverse whoosh on back. The arrive chime on a menu reveal
+  // (`menu-open`) is DELETED (2026-10-04, owner: a gong after every hop).
   | 'card-pop'
   | 'nav-whoosh'
   | 'nav-wave'
   | 'nav-warp'
   | 'nav-stomp'
-  | 'menu-open'
   | 'back'
 
 // New drag/game cues (pick-up/spring-back/chomp/match) reuse curated files for now (real sound,
@@ -64,13 +64,12 @@ const CUE_FILES: Record<SfxCue, string> = {
   // ships (missing files degrade to silence anyway); the biggest celebratory moment in the app.
   'level-up': '/sounds/ui/page-complete.mp3',
   // Navigation cues (Liveliness PRD-02). Reuse existing curated files until dedicated
-  // /sounds/ui/{card-pop,nav-*,menu-open,back}.mp3 ship; missing files degrade to silence.
+  // /sounds/ui/{card-pop,nav-*,back}.mp3 ship; missing files degrade to silence.
   'card-pop': '/sounds/ui/tap.mp3',
   'nav-whoosh': '/sounds/ui/flip.mp3',
   'nav-wave': '/sounds/ui/flip.mp3',
   'nav-warp': '/sounds/ui/flip.mp3',
   'nav-stomp': '/sounds/ui/drop-snap.mp3',
-  'menu-open': '/sounds/ui/star.mp3',
   back: '/sounds/ui/flip.mp3',
 }
 
@@ -93,7 +92,6 @@ const CUE_VOLUME: Partial<Record<SfxCue, number>> = {
   'nav-wave': 0.35,
   'nav-warp': 0.4,
   'nav-stomp': 0.4,
-  'menu-open': 0.3,
   back: 0.3,
 }
 
