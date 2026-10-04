@@ -102,9 +102,9 @@ test('the §4 per-game tables are exactly these values', () => {
     svaer: { options: 5, minuendMax: 20, borrow: 'always', singleDigitShare: 0, missing: { alt: 1, of: 3 } },
   })
   assert.deepEqual(MATH_COMPARISON, {
-    let: { max: 10, gapMin: 5, gapMax: 9 },
-    normal: { max: 20, gapMin: 3, gapMax: 19 },
-    svaer: { max: 20, gapMin: 1, gapMax: 2 },
+    let: { max: 10, gapMin: 5, gapMax: 9, askSmaller: 0 },
+    normal: { max: 20, gapMin: 3, gapMax: 19, askSmaller: 0 },
+    svaer: { max: 20, gapMin: 1, gapMax: 2, askSmaller: { alt: 1, of: 3 } },
   })
   assert.deepEqual(MATH_SEQUENCE, {
     let: { options: 3, weights: [0.55, 0.15, 0.05, 0.05], maxStart: 10 },

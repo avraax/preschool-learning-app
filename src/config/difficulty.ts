@@ -161,6 +161,11 @@ export interface ComparisonTuning {
   /** Smallest / largest allowed |left − right|. */
   gapMin: number
   gapMax: number
+  /**
+   * Share of "tryk på det MINDSTE tal" tasks (Game Depth PRD-01 §3.9) — Svær only, listening only:
+   * nothing on the board says which question it is, "Hør igen" repeats it.
+   */
+  askSmaller: FormatShare
 }
 
 /**
@@ -175,9 +180,9 @@ export interface ComparisonTuning {
  * correct — Let is Normal's easy end, restricted to 1–10).
  */
 export const MATH_COMPARISON: Record<DifficultyLevel, ComparisonTuning> = {
-  let: { max: 10, gapMin: 5, gapMax: 9 },
-  normal: { max: COMPARE_MAX, gapMin: 3, gapMax: COMPARE_MAX - 1 },
-  svaer: { max: COMPARE_MAX, gapMin: 1, gapMax: 2 },
+  let: { max: 10, gapMin: 5, gapMax: 9, askSmaller: 0 },
+  normal: { max: COMPARE_MAX, gapMin: 3, gapMax: COMPARE_MAX - 1, askSmaller: 0 },
+  svaer: { max: COMPARE_MAX, gapMin: 1, gapMax: 2, askSmaller: { alt: 1, of: 3 } },
 }
 
 export interface SequenceTuning {

@@ -8,7 +8,9 @@ import SymbolTile from '../common/SymbolTile'
 import type { GuideReaction } from '../common/ThemeMascot'
 import { useCelebration } from '../common/CelebrationEffect'
 import { getCategoryTheme } from '../../config/categoryThemes'
-import { COMPARE_PROMPT, comparisonFactText } from '../../config/gamePhrases'
+import { COMPARE_PROMPT, COMPARE_SMALLER_PROMPT, comparisonFactText, comparisonSmallerFactText } from '../../config/gamePhrases'
+import { MATH_COMPARISON, type DifficultyLevel } from '../../config/difficulty'
+import { makeFormatBag, type FormatBag } from '../../config/formatBag'
 import { makeComparisonPair } from '../../config/mathProblems'
 import { MathRepeatButton } from '../common/RepeatButton'
 import { useTaskRun } from '../../hooks/useTaskRun'
@@ -83,13 +85,27 @@ const SLOT_LAYER: React.CSSProperties = {
 const SLOT_GLYPH = { width: '100%', height: 'auto', aspectRatio: '1' } as const
 // The prompt + the correct-answer fact come from the shared builders (src/config/gamePhrases.ts),
 // which the prebake enumerator also calls — so the played text and the baked clip can't drift.
-const comparisonFact = comparisonFactText
+// The fact for the CURRENT question: "sytten er større end ni", or on a "mindste" task (Svær, Game
+// Depth PRD-01 §3.9) "ni er mindre end sytten" — the number the child tapped comes first either way.
+const factFor = (left: number, right: number, smallerTask: boolean): string => {
+  const bigger = Math.max(left, right)
+  const smaller = Math.min(left, right)
+  return smallerTask ? comparisonSmallerFactText(smaller, bigger) : comparisonFactText(bigger, smaller)
+}
+/** Which side the question wants: the bigger number, or the smaller one on a "mindste" task. */
+const targetSideOf = (p: { leftNumber: number; rightNumber: number }, smallerTask: boolean): 'left' | 'right' =>
+  (p.leftNumber > p.rightNumber) !== smallerTask ? 'left' : 'right'
 
 const ComparisonGame: React.FC = () => {
   const reduce = useReducedMotion()
   const muiTheme = useTheme()
   const category = getCategoryTheme('math')
   const [currentProblem, setCurrentProblem] = useState<ComparisonProblem | null>(null)
+  // Svær only, ~1 in 3 (Game Depth PRD-01 §3.9): "tryk på det MINDSTE tal". Listening only — nothing on
+  // the board marks which question it is (owner 2026-10-04). The ref mirrors it for the voice closures.
+  const [askSmaller, setAskSmaller] = useState(false)
+  const askSmallerRef = useRef(false)
+  const formatBagRef = useRef<{ level: DifficultyLevel; bag: FormatBag } | null>(null)
   // Most-recently tapped side + whether it was correct (drives the side AnswerTile glow/shake).
   const [chosen, setChosen] = useState<{ side: Side; correct: boolean } | null>(null)
   // True while a correct answer is being processed/advancing (taps disabled). Wrong taps stay
@@ -211,13 +227,19 @@ const ComparisonGame: React.FC = () => {
     // gap 1–2. Never equal — one clear rule: tap the bigger.
     const level = progressStore.difficultyFor('math')
     const { left: leftNum, right: rightNum } = makeComparisonPair(level)
+    if (!formatBagRef.current || formatBagRef.current.level !== level) {
+      formatBagRef.current = { level, bag: makeFormatBag(MATH_COMPARISON[level].askSmaller) }
+    }
+    const smallerTask = formatBagRef.current.bag.next() === 'alt'
+    askSmallerRef.current = smallerTask
+    setAskSmaller(smallerTask)
 
     setCurrentProblem({ leftNumber: leftNum, rightNumber: rightNum })
     // Warm this problem's fact line NOW, while the child is still comparing. Every comparison fact IS
     // prebaked (`comparisonPairs()` enumerates all 190), so this resolves to prefetching the static
     // mp3 rather than a synth — cheap, and it keeps working if the range ever outruns the baked set.
     // Plays nothing, cancels nothing.
-    audio.warmSpeech(comparisonFact(Math.max(leftNum, rightNum), Math.min(leftNum, rightNum)))
+    audio.warmSpeech(factFor(leftNum, rightNum, smallerTask))
     setChosen(null)
     setLocked(false)
     setRevealSymbol(false)
@@ -242,7 +264,9 @@ const ComparisonGame: React.FC = () => {
   const speakProblem = async () => {
     try {
       audio.updateUserInteraction()
-      await audio.speak(COMPARE_PROMPT)
+      // The welcome tail, the per-problem voicing and "Hør igen" all come through here, so each asks
+      // the CURRENT task's question.
+      await audio.speak(askSmallerRef.current ? COMPARE_SMALLER_PROMPT : COMPARE_PROMPT)
     } catch (error) {
       logError('Error speaking problem', { error: error?.toString() })
     }
@@ -262,9 +286,8 @@ const ComparisonGame: React.FC = () => {
     // matching UnifiedQuizGame so the interaction language is consistent app-wide.
     sfx.play('tap')
 
-    const biggerSide: Side =
-      currentProblem.leftNumber > currentProblem.rightNumber ? 'left' : 'right'
-    const isCorrect = side === biggerSide
+    const targetSide = targetSideOf(currentProblem, askSmaller)
+    const isCorrect = side === targetSide
     const tappedNumber = side === 'left' ? currentProblem.leftNumber : currentProblem.rightNumber
 
     // Engage the advance-lock + disable tiles SYNCHRONOUSLY on a correct tap so a second tap in the
@@ -283,9 +306,7 @@ const ComparisonGame: React.FC = () => {
     // tap speaks the completed FACT ("sytten er større end ni") — the reinforcement moment (PRD-05 P2);
     // a wrong tap echoes the tapped number. Single audio channel, so the fact REPLACES the echo.
     if (isCorrect) {
-      const bigger = Math.max(currentProblem.leftNumber, currentProblem.rightNumber)
-      const smaller = Math.min(currentProblem.leftNumber, currentProblem.rightNumber)
-      void audio.speak(comparisonFact(bigger, smaller)).catch(() => {})
+      void audio.speak(factFor(currentProblem.leftNumber, currentProblem.rightNumber, askSmaller)).catch(() => {})
     } else {
       void audio.speakNumber(tappedNumber).catch(() => {})
     }
@@ -344,14 +365,14 @@ const ComparisonGame: React.FC = () => {
   // setState-in-effect) so it's persistent and capturable — mirrors UnifiedQuizGame's
   // `tileStateFor`. No-op in production.
   const forcedFx = devFx()
-  const biggerSide: Side | null = currentProblem
-    ? (currentProblem.leftNumber > currentProblem.rightNumber ? 'left' : 'right')
-    : null
+  // The side the CURRENT question wants — the bigger, or on a "mindste" task the smaller. It drives the
+  // win/recede styling and the hint; the `<`/`>` symbol itself always stays mathematically true.
+  const targetSide: Side | null = currentProblem ? targetSideOf(currentProblem, askSmaller) : null
   const effectiveChosen: { side: Side; correct: boolean } | null =
-    forcedFx === 'correct' && biggerSide
-      ? { side: biggerSide, correct: true }
-      : forcedFx === 'wrong' && biggerSide
-        ? { side: (biggerSide === 'left' ? 'right' : 'left') as Side, correct: false }
+    forcedFx === 'correct' && targetSide
+      ? { side: targetSide, correct: true }
+      : forcedFx === 'wrong' && targetSide
+        ? { side: (targetSide === 'left' ? 'right' : 'left') as Side, correct: false }
         : chosen
   const effectiveReveal = revealSymbol || (forcedFx === 'correct' && !!currentProblem)
   const effectiveHint = hintActive || forcedFx === 'hint'
@@ -367,7 +388,7 @@ const ComparisonGame: React.FC = () => {
   // The tile that LOST recedes once the sentence is complete, so the eye lands on the bigger number.
   // Opacity only under reduced motion (the verdict still reads — colour + ring do the work).
   const recede = (side: Side) =>
-    effectiveReveal && biggerSide !== null && side !== biggerSide
+    effectiveReveal && targetSide !== null && side !== targetSide
       ? reduce ? { opacity: 0.5 } : { opacity: 0.5, scale: 0.94 }
       : { opacity: 1, scale: 1 }
 
@@ -418,7 +439,7 @@ const ComparisonGame: React.FC = () => {
           onClick={() => handleSideClick(side)}
           accent={category.accentColor}
           state={sideState(side)}
-          hint={effectiveHint && side === biggerSide}
+          hint={effectiveHint && side === targetSide}
           disabled={locked}
         >
           {/* The NUMERAL is the whole tile (2026-08-01, owner). The object pile that used to sit above
@@ -534,6 +555,7 @@ const ComparisonGame: React.FC = () => {
               supply, re-applied here on the same shared constants. */}
           <Box
             component={motion.div}
+            data-compare-ask={askSmaller ? 'smaller' : 'bigger'}
             key={`${currentProblem.leftNumber}-${currentProblem.rightNumber}-${run.state.index}`}
             initial={reduce ? false : { opacity: 0, scale: CHARGE_IN_SCALE[0] }}
             animate={reduce ? {} : { opacity: [...CHARGE_IN_OPACITY], scale: [...CHARGE_IN_SCALE] }}

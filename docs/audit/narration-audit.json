@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-04T18:20:01.161Z",
+  "updatedAt": "2026-10-04T18:29:08.709Z",
   "clips": {
     "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|b": {
       "verdict": "ok",
@@ -18800,6 +18800,1534 @@
       "text": "tyve minus hvad giver en",
       "group": "math",
       "updatedAt": 1791138001161
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tryk på det mindste tal.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tryk på det mindste tal.",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|en er mindre end to": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "en er mindre end to",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|en er mindre end tre": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "en er mindre end tre",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|to er mindre end tre": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "to er mindre end tre",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|en er mindre end fire": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "en er mindre end fire",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|to er mindre end fire": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "to er mindre end fire",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tre er mindre end fire": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tre er mindre end fire",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|en er mindre end fem": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "en er mindre end fem",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|to er mindre end fem": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "to er mindre end fem",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tre er mindre end fem": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tre er mindre end fem",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fire er mindre end fem": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fire er mindre end fem",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|en er mindre end seks": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "en er mindre end seks",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|to er mindre end seks": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "to er mindre end seks",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tre er mindre end seks": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tre er mindre end seks",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fire er mindre end seks": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fire er mindre end seks",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fem er mindre end seks": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fem er mindre end seks",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|en er mindre end syv": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "en er mindre end syv",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|to er mindre end syv": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "to er mindre end syv",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tre er mindre end syv": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tre er mindre end syv",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fire er mindre end syv": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fire er mindre end syv",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fem er mindre end syv": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fem er mindre end syv",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|seks er mindre end syv": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "seks er mindre end syv",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|en er mindre end otte": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "en er mindre end otte",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|to er mindre end otte": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "to er mindre end otte",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tre er mindre end otte": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tre er mindre end otte",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fire er mindre end otte": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fire er mindre end otte",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fem er mindre end otte": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fem er mindre end otte",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|seks er mindre end otte": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "seks er mindre end otte",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|syv er mindre end otte": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "syv er mindre end otte",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|en er mindre end ni": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "en er mindre end ni",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|to er mindre end ni": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "to er mindre end ni",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tre er mindre end ni": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tre er mindre end ni",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fire er mindre end ni": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fire er mindre end ni",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fem er mindre end ni": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fem er mindre end ni",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|seks er mindre end ni": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "seks er mindre end ni",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|syv er mindre end ni": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "syv er mindre end ni",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|otte er mindre end ni": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "otte er mindre end ni",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|en er mindre end ti": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "en er mindre end ti",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|to er mindre end ti": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "to er mindre end ti",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tre er mindre end ti": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tre er mindre end ti",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fire er mindre end ti": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fire er mindre end ti",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fem er mindre end ti": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fem er mindre end ti",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|seks er mindre end ti": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "seks er mindre end ti",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|syv er mindre end ti": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "syv er mindre end ti",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|otte er mindre end ti": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "otte er mindre end ti",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|ni er mindre end ti": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "ni er mindre end ti",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|en er mindre end elleve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "en er mindre end elleve",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|to er mindre end elleve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "to er mindre end elleve",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tre er mindre end elleve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tre er mindre end elleve",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fire er mindre end elleve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fire er mindre end elleve",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fem er mindre end elleve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fem er mindre end elleve",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|seks er mindre end elleve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "seks er mindre end elleve",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|syv er mindre end elleve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "syv er mindre end elleve",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|otte er mindre end elleve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "otte er mindre end elleve",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|ni er mindre end elleve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "ni er mindre end elleve",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|ti er mindre end elleve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "ti er mindre end elleve",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|en er mindre end tolv": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "en er mindre end tolv",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|to er mindre end tolv": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "to er mindre end tolv",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tre er mindre end tolv": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tre er mindre end tolv",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fire er mindre end tolv": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fire er mindre end tolv",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fem er mindre end tolv": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fem er mindre end tolv",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|seks er mindre end tolv": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "seks er mindre end tolv",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|syv er mindre end tolv": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "syv er mindre end tolv",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|otte er mindre end tolv": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "otte er mindre end tolv",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|ni er mindre end tolv": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "ni er mindre end tolv",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|ti er mindre end tolv": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "ti er mindre end tolv",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|elleve er mindre end tolv": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "elleve er mindre end tolv",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|en er mindre end tretten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "en er mindre end tretten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|to er mindre end tretten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "to er mindre end tretten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tre er mindre end tretten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tre er mindre end tretten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fire er mindre end tretten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fire er mindre end tretten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fem er mindre end tretten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fem er mindre end tretten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|seks er mindre end tretten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "seks er mindre end tretten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|syv er mindre end tretten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "syv er mindre end tretten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|otte er mindre end tretten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "otte er mindre end tretten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|ni er mindre end tretten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "ni er mindre end tretten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|ti er mindre end tretten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "ti er mindre end tretten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|elleve er mindre end tretten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "elleve er mindre end tretten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tolv er mindre end tretten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tolv er mindre end tretten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|en er mindre end fjorten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "en er mindre end fjorten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|to er mindre end fjorten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "to er mindre end fjorten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tre er mindre end fjorten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tre er mindre end fjorten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fire er mindre end fjorten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fire er mindre end fjorten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fem er mindre end fjorten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fem er mindre end fjorten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|seks er mindre end fjorten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "seks er mindre end fjorten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|syv er mindre end fjorten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "syv er mindre end fjorten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|otte er mindre end fjorten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "otte er mindre end fjorten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|ni er mindre end fjorten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "ni er mindre end fjorten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|ti er mindre end fjorten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "ti er mindre end fjorten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|elleve er mindre end fjorten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "elleve er mindre end fjorten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tolv er mindre end fjorten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tolv er mindre end fjorten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tretten er mindre end fjorten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tretten er mindre end fjorten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|en er mindre end femten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "en er mindre end femten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|to er mindre end femten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "to er mindre end femten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tre er mindre end femten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tre er mindre end femten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fire er mindre end femten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fire er mindre end femten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fem er mindre end femten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fem er mindre end femten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|seks er mindre end femten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "seks er mindre end femten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|syv er mindre end femten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "syv er mindre end femten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|otte er mindre end femten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "otte er mindre end femten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|ni er mindre end femten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "ni er mindre end femten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|ti er mindre end femten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "ti er mindre end femten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|elleve er mindre end femten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "elleve er mindre end femten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tolv er mindre end femten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tolv er mindre end femten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tretten er mindre end femten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tretten er mindre end femten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fjorten er mindre end femten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fjorten er mindre end femten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|en er mindre end seksten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "en er mindre end seksten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|to er mindre end seksten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "to er mindre end seksten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tre er mindre end seksten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tre er mindre end seksten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fire er mindre end seksten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fire er mindre end seksten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fem er mindre end seksten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fem er mindre end seksten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|seks er mindre end seksten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "seks er mindre end seksten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|syv er mindre end seksten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "syv er mindre end seksten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|otte er mindre end seksten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "otte er mindre end seksten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|ni er mindre end seksten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "ni er mindre end seksten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|ti er mindre end seksten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "ti er mindre end seksten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|elleve er mindre end seksten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "elleve er mindre end seksten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tolv er mindre end seksten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tolv er mindre end seksten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tretten er mindre end seksten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tretten er mindre end seksten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fjorten er mindre end seksten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fjorten er mindre end seksten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|femten er mindre end seksten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "femten er mindre end seksten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|en er mindre end sytten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "en er mindre end sytten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|to er mindre end sytten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "to er mindre end sytten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tre er mindre end sytten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tre er mindre end sytten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fire er mindre end sytten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fire er mindre end sytten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fem er mindre end sytten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fem er mindre end sytten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|seks er mindre end sytten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "seks er mindre end sytten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|syv er mindre end sytten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "syv er mindre end sytten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|otte er mindre end sytten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "otte er mindre end sytten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|ni er mindre end sytten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "ni er mindre end sytten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|ti er mindre end sytten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "ti er mindre end sytten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|elleve er mindre end sytten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "elleve er mindre end sytten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tolv er mindre end sytten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tolv er mindre end sytten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tretten er mindre end sytten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tretten er mindre end sytten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fjorten er mindre end sytten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fjorten er mindre end sytten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|femten er mindre end sytten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "femten er mindre end sytten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|seksten er mindre end sytten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "seksten er mindre end sytten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|en er mindre end atten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "en er mindre end atten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|to er mindre end atten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "to er mindre end atten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tre er mindre end atten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tre er mindre end atten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fire er mindre end atten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fire er mindre end atten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fem er mindre end atten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fem er mindre end atten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|seks er mindre end atten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "seks er mindre end atten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|syv er mindre end atten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "syv er mindre end atten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|otte er mindre end atten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "otte er mindre end atten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|ni er mindre end atten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "ni er mindre end atten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|ti er mindre end atten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "ti er mindre end atten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|elleve er mindre end atten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "elleve er mindre end atten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tolv er mindre end atten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tolv er mindre end atten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tretten er mindre end atten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tretten er mindre end atten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fjorten er mindre end atten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fjorten er mindre end atten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|femten er mindre end atten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "femten er mindre end atten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|seksten er mindre end atten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "seksten er mindre end atten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|sytten er mindre end atten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "sytten er mindre end atten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|en er mindre end nitten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "en er mindre end nitten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|to er mindre end nitten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "to er mindre end nitten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tre er mindre end nitten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tre er mindre end nitten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fire er mindre end nitten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fire er mindre end nitten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fem er mindre end nitten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fem er mindre end nitten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|seks er mindre end nitten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "seks er mindre end nitten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|syv er mindre end nitten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "syv er mindre end nitten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|otte er mindre end nitten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "otte er mindre end nitten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|ni er mindre end nitten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "ni er mindre end nitten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|ti er mindre end nitten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "ti er mindre end nitten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|elleve er mindre end nitten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "elleve er mindre end nitten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tolv er mindre end nitten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tolv er mindre end nitten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tretten er mindre end nitten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tretten er mindre end nitten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fjorten er mindre end nitten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fjorten er mindre end nitten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|femten er mindre end nitten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "femten er mindre end nitten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|seksten er mindre end nitten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "seksten er mindre end nitten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|sytten er mindre end nitten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "sytten er mindre end nitten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|atten er mindre end nitten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "atten er mindre end nitten",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|en er mindre end tyve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "en er mindre end tyve",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|to er mindre end tyve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "to er mindre end tyve",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tre er mindre end tyve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tre er mindre end tyve",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fire er mindre end tyve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fire er mindre end tyve",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fem er mindre end tyve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fem er mindre end tyve",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|seks er mindre end tyve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "seks er mindre end tyve",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|syv er mindre end tyve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "syv er mindre end tyve",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|otte er mindre end tyve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "otte er mindre end tyve",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|ni er mindre end tyve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "ni er mindre end tyve",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|ti er mindre end tyve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "ti er mindre end tyve",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|elleve er mindre end tyve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "elleve er mindre end tyve",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tolv er mindre end tyve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tolv er mindre end tyve",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tretten er mindre end tyve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tretten er mindre end tyve",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fjorten er mindre end tyve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fjorten er mindre end tyve",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|femten er mindre end tyve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "femten er mindre end tyve",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|seksten er mindre end tyve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "seksten er mindre end tyve",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|sytten er mindre end tyve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "sytten er mindre end tyve",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|atten er mindre end tyve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "atten er mindre end tyve",
+      "group": "math",
+      "updatedAt": 1791138548708
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|nitten er mindre end tyve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "nitten er mindre end tyve",
+      "group": "math",
+      "updatedAt": 1791138548708
     }
   }
 }

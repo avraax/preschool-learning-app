@@ -31,7 +31,7 @@ import { LETTER_QUIZ_WORDS, LETTER_WORDS, WORD_LETTERS, letterPhrase, startsWith
 import {
   additionPairs, subtractionPairs, comparisonPairs,
   mathPromptText, mathFactText, mathMissingPromptText, missingPairs,
-  COMPARE_PROMPT, comparisonFactText,
+  COMPARE_PROMPT, comparisonFactText, COMPARE_SMALLER_PROMPT, comparisonSmallerFactText,
   HVAD_MANGLER_PROMPT, sequenceFactText, sequenceStarts, sequenceNumbers,
   MEMORY_LETTERS_INSTRUCTION, MEMORY_NUMBERS_INSTRUCTION,
   NUANCER_INSTRUCTION, colorMixTargetText, colorMixResultText, colorMixQuestionText, colorObjectFactText,
@@ -125,6 +125,9 @@ export function collectNarrationClips() {
   for (const [a, b] of missingPairs('subtraction')) da('math', mathMissingPromptText('subtraction', a, a - b))
   da('math', COMPARE_PROMPT)
   for (const [bigger, smaller] of comparisonPairs()) da('math', comparisonFactText(bigger, smaller))
+  // Sammenlign's "mindste" task at Svær (Game Depth PRD-01 §3.9) — every pair, a superset of Svær's.
+  da('math', COMPARE_SMALLER_PROMPT)
+  for (const [bigger, smaller] of comparisonPairs()) da('math', comparisonSmallerFactText(smaller, bigger))
 
   // Bogstav Quiz's spoken question, "Hvad starter {Ord} med?" — one per askable letter's word.
   for (const letter of WORD_LETTERS) {

@@ -96,6 +96,11 @@ export const missingPairs = (op: MathOp): Array<[number, number]> => {
 }
 
 export const COMPARE_PROMPT = 'Tryk på det største tal.'
+/** Sammenlign at Svær, ~1 in 3 (Game Depth PRD-01 §3.9) — listening only, no visual cue (owner). */
+export const COMPARE_SMALLER_PROMPT = 'Tryk på det mindste tal.'
+/** "ni er mindre end ti" — the fact for a "mindste" task, always smaller-first (one clip per pair). */
+export const comparisonSmallerFactText = (smaller: number, bigger: number): string =>
+  `${getDanishNumberText(smaller)} er mindre end ${getDanishNumberText(bigger)}`
 /** "sytten er større end ni" — always bigger-first, so one clip serves either card order. */
 export const comparisonFactText = (bigger: number, smaller: number): string =>
   `${getDanishNumberText(bigger)} er større end ${getDanishNumberText(smaller)}`

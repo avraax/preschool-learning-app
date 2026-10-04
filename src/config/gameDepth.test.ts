@@ -8,7 +8,7 @@ import assert from 'node:assert/strict'
 import { existsSync, readFileSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { colorMixQuestionText, mathFactText, mathMissingPromptText, missingPairs } from './gamePhrases.ts'
+import { COMPARE_SMALLER_PROMPT, colorMixQuestionText, comparisonPairs, comparisonSmallerFactText, mathFactText, mathMissingPromptText, missingPairs } from './gamePhrases.ts'
 import { makeMissingProblem, missingDistractors } from './mathProblems.ts'
 import {
   possibleTargets,
@@ -18,7 +18,7 @@ import {
   mixingRules,
   TARGET_PRIORITY,
 } from './colorMixing.ts'
-import { COLORS_RAMFARVEN, LEVELS, MATH_ADDITION, MATH_SUBTRACTION, MEMORY_BOARD, MEMORY_CLUSTER_MAX, ORDLEG_SPELL, memoryNumbersFor } from './difficulty.ts'
+import { COLORS_RAMFARVEN, LEVELS, MATH_ADDITION, MATH_COMPARISON, MATH_SUBTRACTION, MEMORY_BOARD, MEMORY_CLUSTER_MAX, ORDLEG_SPELL, memoryNumbersFor } from './difficulty.ts'
 import { getDanishNumberText } from './danish-phrases.ts'
 import { READING_MAX_LEN, READING_ROUND_LENGTH, READING_WORDS, SPELLING_ALPHABET, makeMissingLetterTask, spellingWordsFor } from './ordlegWords.ts'
 import { readingPromptPool } from './promptPools.ts'
@@ -308,4 +308,30 @@ test('Plus/Minus moves the ? to the gap and asks the matching question', () => {
   // The correct tap speaks the ordinary fact with the TOTAL, never the hidden number as a total.
   assert.match(code, /factText\(num1, num2, total\)/)
   assert.doesNotMatch(code, /factText\(num1, num2, correctAnswer\)/)
+})
+
+// ---- Sammenlign — "tryk på det mindste tal" (§3.9) --------------------------------------------------
+
+test('Sammenlign "mindste": exact strings, Svær only, every fact baked', () => {
+  assert.equal(COMPARE_SMALLER_PROMPT, 'Tryk på det mindste tal.')
+  assert.equal(comparisonSmallerFactText(9, 10), 'ni er mindre end ti')
+  assert.equal(MATH_COMPARISON.let.askSmaller, 0)
+  assert.equal(MATH_COMPARISON.normal.askSmaller, 0)
+  assert.deepEqual(MATH_COMPARISON.svaer.askSmaller, { alt: 1, of: 3 })
+  const all = enumerated()
+  assert.ok(all.has(COMPARE_SMALLER_PROMPT))
+  for (const [bigger, smaller] of comparisonPairs()) {
+    assert.ok(all.has(comparisonSmallerFactText(smaller, bigger)), `missing ${smaller} < ${bigger}`)
+  }
+})
+
+test('Sammenlign targets the asked side everywhere and asks the matching question', () => {
+  const code = codeOf('components/math/ComparisonGame.tsx')
+  assert.match(code, /\(p\.leftNumber > p\.rightNumber\) !== smallerTask \? 'left' : 'right'/)
+  assert.match(code, /const isCorrect = side === targetSide/)
+  assert.match(code, /hint=\{effectiveHint && side === targetSide\}/)
+  assert.match(code, /askSmallerRef\.current \? COMPARE_SMALLER_PROMPT : COMPARE_PROMPT/)
+  assert.doesNotMatch(code, /biggerSide/)
+  // No visual cue for the question (owner): the only new markup is a data attribute.
+  assert.doesNotMatch(code, /mindste/i)
 })
