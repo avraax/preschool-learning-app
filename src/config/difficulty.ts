@@ -320,6 +320,12 @@ export const ORDLEG_READ: Record<DifficultyLevel, ReadTuning> = {
 }
 
 export interface SpellTuning {
+  /**
+   * `full` — spell the whole word from the tray. `missing` — the word is shown with ONE blank and the
+   * child fills that one letter (Game Depth PRD-01 §3.4): Let's 2-letter full spelling was 8 words on
+   * a loop; the gap task opens the whole 2–3-letter pool without making Let harder.
+   */
+  mode: 'full' | 'missing'
   /** Prompt-word length band. */
   wordMinLen: number
   wordMaxLen: number
@@ -333,9 +339,9 @@ export interface SpellTuning {
  * reachable through `ordlegArt`'s fallback chain; see `src/config/ordlegWords.ts`.
  */
 export const ORDLEG_SPELL: Record<DifficultyLevel, SpellTuning> = {
-  let: { wordMinLen: 2, wordMaxLen: 2, distractors: 1 },
-  normal: { wordMinLen: 2, wordMaxLen: 3, distractors: 3 },
-  svaer: { wordMinLen: 3, wordMaxLen: 4, distractors: 4 },
+  let: { mode: 'missing', wordMinLen: 2, wordMaxLen: 3, distractors: 2 },
+  normal: { mode: 'full', wordMinLen: 2, wordMaxLen: 3, distractors: 3 },
+  svaer: { mode: 'full', wordMinLen: 3, wordMaxLen: 4, distractors: 4 },
 }
 
 // ---- English -----------------------------------------------------------------------------------

@@ -30,7 +30,8 @@ import { shuffle } from '../../utils/shuffle'
 import { progressStore } from '../../services/progressStore'
 import { practiceLedger } from '../../services/practiceLedger'
 import { ORDLEG_SPELL } from '../../config/difficulty'
-import { type OrdlegWord } from '../../config/ordlegWords'
+import { SPELLING_ALPHABET, makeMissingLetterTask, type OrdlegWord } from '../../config/ordlegWords'
+import { confusablePoolFor } from '../../config/letterConfusables'
 import { SPELLING_ROUND, ordlegWordKey, spellingPromptPool } from '../../config/promptPools'
 import { spellingHintLine } from '../../config/hintLines'
 import { usePromptBag } from '../../hooks/usePromptBag'
@@ -56,8 +57,6 @@ import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 // `src/config/ordlegWords.ts` because this game SPEAKS the word — a list stranded in a `.tsx` can't be
 // enumerated for prebake, which is why most of these words were on live Azure until now.
 
-const DANISH_ALPHABET = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'R', 'S', 'T', 'U', 'V', 'Y', 'Z', 'Æ', 'Ø', 'Å']
-
 interface LetterTile {
   id: string
   letter: string
@@ -79,6 +78,9 @@ const SpellingGame: React.FC = () => {
   const [current, setCurrent] = useState<{ word: string; emoji?: string; art?: string } | null>(null)
   const [targetLetters, setTargetLetters] = useState<string[]>([])
   const [filledCount, setFilledCount] = useState(0)
+  // Let's MISSING-LETTER task (Game Depth PRD-01 §3.4): the one slot the child fills, every other slot
+  // shown pre-filled. `null` = full spelling (Normal/Svær), where slots fill left to right.
+  const [blankIndex, setBlankIndex] = useState<number | null>(null)
   const [tiles, setTiles] = useState<LetterTile[]>([])
   const [usedTileIds, setUsedTileIds] = useState<Set<string>>(new Set())
   const [shakeTileId, setShakeTileId] = useState<string | null>(null)
@@ -239,7 +241,7 @@ const SpellingGame: React.FC = () => {
   // second axis — Let 1, Normal 3, Svær 4).
   const buildTiles = (letters: string[], distractorCount: number): LetterTile[] => {
     const wordLetterSet = new Set(letters)
-    const distractorPool = DANISH_ALPHABET.filter(l => !wordLetterSet.has(l))
+    const distractorPool = SPELLING_ALPHABET.filter(l => !wordLetterSet.has(l))
     const distractors: string[] = []
     const shuffledPool = shuffle(distractorPool)
     for (let i = 0; i < distractorCount && i < shuffledPool.length; i++) {
@@ -264,14 +266,24 @@ const SpellingGame: React.FC = () => {
     const next = wordBag.draw(spellingPromptPool(level))
     wordRef.current = next.word
 
-    const letters = next.word.toUpperCase().split('')
-
+    const { mode, distractors } = ORDLEG_SPELL[level]
     setCurrent(next)
-    setTargetLetters(letters)
     setFilledCount(0)
     setUsedTileIds(new Set())
     setShakeTileId(null)
-    setTiles(buildTiles(letters, ORDLEG_SPELL[level].distractors))
+    if (mode === 'missing') {
+      const task = makeMissingLetterTask(next.word, distractors, confusablePoolFor)
+      setTargetLetters(task.letters)
+      setBlankIndex(task.blankIndex)
+      setTiles(
+        task.tiles.map((letter, index) => ({ id: `tile-${wordSeq.current}-${index}-${letter}`, letter })),
+      )
+    } else {
+      const letters = next.word.toUpperCase().split('')
+      setTargetLetters(letters)
+      setBlankIndex(null)
+      setTiles(buildTiles(letters, distractors))
+    }
     // Fresh word → fresh first-try flag + hint state.
     firstAttemptRef.current = true
     resetHint()
@@ -333,11 +345,13 @@ const SpellingGame: React.FC = () => {
     // sounded its press on pick-up, so it skips the tick rather than stacking a third cue.
     if (!viaDrag) sfx.play('tap')
 
-    const expectedLetter = targetLetters[filledCount]
+    // Full spelling fills left to right; the missing-letter task (Let) has exactly ONE slot to fill, so
+    // its one correct letter completes the word.
+    const expectedLetter = blankIndex !== null ? targetLetters[blankIndex] : targetLetters[filledCount]
 
     if (tile.letter === expectedLetter) {
       // Correct letter: place it in the next slot. The next slot starts fresh (no hint yet).
-      const newFilled = filledCount + 1
+      const newFilled = blankIndex !== null ? targetLetters.length : filledCount + 1
       setUsedTileIds(prev => new Set(prev).add(tile.id))
       setFilledCount(newFilled)
       resetHint()
@@ -391,10 +405,10 @@ const SpellingGame: React.FC = () => {
       // asserts the word STARTS with the letter, which is false for a letter mid-word ("O som ko").
       if (
         registerHintWrong(
-          () => tiles.find(t => !usedTileIds.has(t.id) && t.letter === targetLetters[filledCount])?.id ?? null,
+          () => tiles.find(t => !usedTileIds.has(t.id) && t.letter === expectedLetter)?.id ?? null,
         )
       ) {
-        const nextLetter = targetLetters[filledCount]
+        const nextLetter = expectedLetter
         if (nextLetter) void audio.speak(spellingHintLine(nextLetter)).catch(() => {})
       }
     }
@@ -553,6 +567,10 @@ const SpellingGame: React.FC = () => {
               }}
             >
               {targetLetters.map((letter, index) => {
+                // A slot the child placed turns green. On the missing-letter task every OTHER slot is
+                // given — shown with its letter on the plain clay tile, so only the gap reads as "fill me"
+                // and only the child's own letter earns the green.
+                const given = blankIndex !== null && index !== blankIndex && filledCount === 0
                 const filled = index < filledCount
                 return (
                   <Box
@@ -566,11 +584,13 @@ const SpellingGame: React.FC = () => {
                       // breakpoints can't see the height, so the phone guard has to.
                       [PHONE_LANDSCAPE]: { width: 56, height: 56 },
                       borderRadius: '18px',
+                      // A GIVEN letter is printed straight on the scene — no tile, no border — so it can't
+                      // be mistaken for a tray tile; only the dashed gap and the tray read as touchable.
                       border: '3px dashed',
-                      borderColor: filled ? 'success.main' : theme.borderColor,
-                      background: filled ? undefined : tileSurface(theme.accentColor, dark),
+                      borderColor: filled ? 'success.main' : given ? 'transparent' : theme.borderColor,
+                      background: filled || given ? undefined : tileSurface(theme.accentColor, dark),
                       bgcolor: filled ? 'success.light' : undefined,
-                      filter: filled ? undefined : softShadow(dark ? 1 : 0.7),
+                      filter: filled || given ? undefined : softShadow(dark ? 1 : 0.7),
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -585,12 +605,13 @@ const SpellingGame: React.FC = () => {
                               // parent, so a 44px letter at default line-height made an 80px tile
                               // inside a 56px box and the tray fell through the fold at 844x390.
                               [PHONE_LANDSCAPE]: { fontSize: '2rem', lineHeight: 1 },
-                        fontWeight: 700,
-                        color: filled ? 'white' : 'transparent',
+                        // A given letter has no tile around it, so it carries its own weight.
+                        ...(given ? { fontSize: 'clamp(2.1rem, 8vw, 3rem)', lineHeight: 1, fontWeight: 800 } : { fontWeight: 700 }),
+                        color: filled ? 'white' : given ? (dark ? 'common.white' : 'text.primary') : 'transparent',
                         userSelect: 'none'
                       }}
                     >
-                      {filled ? letter : ''}
+                      {filled || given ? letter : ''}
                     </Typography>
                   </Box>
                 )

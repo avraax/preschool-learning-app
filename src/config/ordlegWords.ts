@@ -143,7 +143,8 @@ export const SPELLING_WORDS_LONG: OrdlegWord[] = [
 export const ALL_SPELLING_WORDS: OrdlegWord[] = [...SPELLING_WORDS, ...SPELLING_WORDS_LONG]
 
 /**
- * Stav Ordet's pool at a level: Let 2 letters · Normal 2–3 · Svær 3–4. The 4-letter tier is what makes
+ * Stav Ordet's pool at a level: Let 2–3 (one missing letter, Game Depth PRD-01) · Normal 2–3 · Svær 3–4.
+ * The 4-letter tier is what makes
  * Svær a real level here — the game ignored the difficulty setting entirely before this PRD.
  */
 export const spellingWordsFor = (level: DifficultyLevel): OrdlegWord[] => {
@@ -163,3 +164,55 @@ export const spellingWordsFor = (level: DifficultyLevel): OrdlegWord[] => {
 export const spokenOrdlegWords = (): string[] => [
   ...new Set([...READING_WORDS, ...ALL_SPELLING_WORDS].map((w) => w.word)),
 ]
+
+// ---- Stav Ordet Let — the missing-letter task (Game Depth PRD-01 §3.4) --------------------------------
+
+/**
+ * Stav Ordet's letter-tile alphabet. Q/W/X are left out (no word here uses them, and they only add
+ * noise as distractors). Moved here from the component so the pure task builder below can use it.
+ */
+export const SPELLING_ALPHABET: readonly string[] = [
+  'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'R', 'S', 'T',
+  'U', 'V', 'Y', 'Z', 'Æ', 'Ø', 'Å',
+]
+
+export interface MissingLetterTask {
+  /** The word's letters, uppercase. */
+  letters: string[]
+  /** The one slot the child fills. */
+  blankIndex: number
+  /** The tray: the missing letter + `distractors` others, shuffled. */
+  tiles: string[]
+}
+
+/**
+ * One missing-letter task: the word with ONE blank (any position) and a tray of the missing letter plus
+ * `distractors` letters that are neither in the word (so a distractor can never ALSO be right) nor in
+ * the missing letter's confusable pool (Let means maximally dissimilar — the same policy as Bogstav
+ * Quiz Let). `confusablePool` is injected so this module keeps importing nothing but the difficulty
+ * table. PURE + seedable.
+ */
+export const makeMissingLetterTask = (
+  word: string,
+  distractors: number,
+  confusablePool: (letter: string) => readonly string[],
+  rnd: () => number = Math.random,
+): MissingLetterTask => {
+  const letters = word.toUpperCase().split('')
+  const blankIndex = Math.floor(rnd() * letters.length)
+  const answer = letters[blankIndex]
+  const avoid = new Set([...letters, ...confusablePool(answer)])
+  const pool = SPELLING_ALPHABET.filter((l) => !avoid.has(l))
+  // Fisher-Yates over a copy (no shared-module import: this file stays dependency-free).
+  const shuffled = [...pool]
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(rnd() * (i + 1))
+    ;[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+  }
+  const tiles = [answer, ...shuffled.slice(0, distractors)]
+  for (let i = tiles.length - 1; i > 0; i--) {
+    const j = Math.floor(rnd() * (i + 1))
+    ;[tiles[i], tiles[j]] = [tiles[j], tiles[i]]
+  }
+  return { letters, blankIndex, tiles }
+}

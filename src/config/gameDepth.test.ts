@@ -17,7 +17,9 @@ import {
   mixingRules,
   TARGET_PRIORITY,
 } from './colorMixing.ts'
-import { COLORS_RAMFARVEN, LEVELS } from './difficulty.ts'
+import { COLORS_RAMFARVEN, LEVELS, ORDLEG_SPELL } from './difficulty.ts'
+import { SPELLING_ALPHABET, makeMissingLetterTask, spellingWordsFor } from './ordlegWords.ts'
+import { confusablePoolFor } from './letterConfusables.ts'
 import { collectNarrationClips } from '../../shared-narration-clips.js'
 
 const SRC = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
@@ -97,4 +99,39 @@ test('Ram Farven fits a 375 px portrait phone and keeps its tray clear of the co
   const code = codeOf('components/farver/RamFarvenGame.tsx')
   assert.match(code, /\[PHONE_PORTRAIT\]: \{ width: 112, height: 112 \}/)
   assert.match(code, /\[PHONE_PORTRAIT\]: \{ pb: `\$\{MASCOT_CORNER_PHONE_PORTRAIT \+ 6\}px` \}/)
+})
+
+// ---- Stav Ordet Let — one missing letter (§3.4) -----------------------------------------------------
+
+test('a missing-letter task has one blank, its answer in a 3-tile tray, and no distractor that could also fit', () => {
+  for (const w of spellingWordsFor('let')) {
+    for (let s = 1; s < 25; s++) {
+      const t = makeMissingLetterTask(w.word, ORDLEG_SPELL.let.distractors, confusablePoolFor, seeded(s * 97 + w.word.length))
+      assert.deepEqual(t.letters, w.word.toUpperCase().split(''))
+      assert.ok(t.blankIndex >= 0 && t.blankIndex < t.letters.length)
+      const answer = t.letters[t.blankIndex]
+      assert.equal(t.tiles.length, 3, `${w.word}: tray ${t.tiles}`)
+      assert.equal(t.tiles.filter((x) => x === answer).length, 1, `${w.word}: answer missing or doubled`)
+      for (const d of t.tiles.filter((x) => x !== answer)) {
+        assert.ok(!t.letters.includes(d), `${w.word}: distractor ${d} is in the word`)
+        assert.ok(!confusablePoolFor(answer).includes(d), `${w.word}: ${d} is confusable with ${answer}`)
+        assert.ok(SPELLING_ALPHABET.includes(d))
+      }
+    }
+  }
+  // The blank moves around (not always the first letter).
+  const positions = new Set<number>()
+  for (let s = 1; s < 40; s++) positions.add(makeMissingLetterTask('sol', 2, confusablePoolFor, seeded(s)).blankIndex)
+  assert.equal(positions.size, 3)
+})
+
+test('Stav Ordet wires the missing-letter task at Let and keeps full spelling above it', () => {
+  assert.equal(ORDLEG_SPELL.let.mode, 'missing')
+  assert.equal(ORDLEG_SPELL.normal.mode, 'full')
+  assert.equal(ORDLEG_SPELL.svaer.mode, 'full')
+  const code = codeOf('components/ordleg/SpellingGame.tsx')
+  assert.match(code, /if \(mode === 'missing'\) \{\s*const task = makeMissingLetterTask\(/)
+  assert.match(code, /const expectedLetter = blankIndex !== null \? targetLetters\[blankIndex\] : targetLetters\[filledCount\]/)
+  // The one correct letter completes the word on the gap task.
+  assert.match(code, /const newFilled = blankIndex !== null \? targetLetters\.length : filledCount \+ 1/)
 })

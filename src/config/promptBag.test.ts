@@ -213,9 +213,10 @@ const EXPECTED: Record<string, Record<DifficultyLevel, Pinned>> = {
     normal: { pool: 26, round: 8, before: 0.68, beforeWorst: 4, after: 0, distinct: 8 },
     svaer: { pool: 26, round: 8, before: 0.68, beforeWorst: 4, after: 0, distinct: 8 },
   },
-  // Let's pool is EXACTLY the round length, so with replacement essentially every round repeated.
+  // Let's pool WAS exactly the round length (8 two-letter words); Game Depth PRD-01 made Let the
+  // missing-letter task over the whole 2–3-letter pool (35).
   'ordleg.spelling': {
-    let: { pool: 8, round: 8, before: 1, beforeWorst: 3, after: 0, distinct: 8 },
+    let: { pool: 35, round: 8, before: 0.52, beforeWorst: 5, after: 0, distinct: 8 },
     normal: { pool: 35, round: 8, before: 0.52, beforeWorst: 5, after: 0, distinct: 8 },
     svaer: { pool: 42, round: 8, before: 0.51, beforeWorst: 5, after: 0, distinct: 8 },
   },

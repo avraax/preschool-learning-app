@@ -124,9 +124,9 @@ test('the §4 per-game tables are exactly these values', () => {
     svaer: { options: 6, wordMaxLen: 3, sharedInitials: true },
   })
   assert.deepEqual(ORDLEG_SPELL, {
-    let: { wordMinLen: 2, wordMaxLen: 2, distractors: 1 },
-    normal: { wordMinLen: 2, wordMaxLen: 3, distractors: 3 },
-    svaer: { wordMinLen: 3, wordMaxLen: 4, distractors: 4 },
+    let: { mode: 'missing', wordMinLen: 2, wordMaxLen: 3, distractors: 2 },
+    normal: { mode: 'full', wordMinLen: 2, wordMaxLen: 3, distractors: 3 },
+    svaer: { mode: 'full', wordMinLen: 3, wordMaxLen: 4, distractors: 4 },
   })
   assert.deepEqual(ENGLISH_QUIZ, {
     let: { options: 3, theme: 'different' },
@@ -535,7 +535,11 @@ test('Stav Ordet has a real pool at every level, and Svær genuinely reaches 4 l
   }
   // The art gate: Svær ships the 4-letter tier, so it must actually contain 4-letter words.
   assert.ok(spellingWordsFor('svaer').some((w) => w.word.length === 4), 'Svær has no 4-letter word')
-  assert.ok(spellingWordsFor('let').every((w) => w.word.length === 2))
+  // Let is the missing-letter task over the whole 2–3-letter pool (Game Depth PRD-01 §3.4): it used to
+  // be exactly 8 two-letter words, i.e. its own bag window, on a loop.
+  assert.equal(ORDLEG_SPELL.let.mode, 'missing')
+  assert.equal(spellingWordsFor('let').length, 35)
+  assert.ok(spellingWordsFor('let').every((w) => w.word.length <= 3))
 })
 
 test('Stav Ordet words are spellable from the tile alphabet (no Q/W/X)', () => {
