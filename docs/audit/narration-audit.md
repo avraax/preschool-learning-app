@@ -3,9 +3,9 @@
 > AUTO-GENERATED (by the `/audit` harness via the dev-server, or `npm run audit:approve-all`).
 > Do not hand-edit — source of truth is `narration-audit.json`.
 
-Last updated: 2026-09-05T09:02:42.703Z
+Last updated: 2026-10-04T17:20:42.620Z
 
-**2011 OK · 1 wrong · 0 unaudited** (of 2012 clips)
+**2024 OK · 1 wrong · 0 unaudited** (of 2025 clips)
 
 ## Bogstaver
 
@@ -494,10 +494,13 @@ Last updated: 2026-09-05T09:02:42.703Z
 | ✅ | agurken er grøn | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | appelsinen er orange | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | auberginen er lilla | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | ballonen er rød | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | bananen er gul | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | bilen er blå | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | bilen er rød | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | bladet er grønt | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | blomsten er lilla | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | blomsten er orange | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | blå | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | blå og gul bliver grøn | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | blå og hvid bliver lyseblå | Bulk-approved (PRD-11 owner listen pass) |  |
@@ -513,6 +516,9 @@ Last updated: 2026-09-05T09:02:42.703Z
 | ✅ | Find alle lilla ting | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Find alle orange ting | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Find alle røde ting | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | fisken er orange | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | fisken er rød | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | fuglen er blå | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | græskarret er orange | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | grøn | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | grå | Bulk-approved (PRD-11 owner listen pass) |  |
@@ -537,29 +543,38 @@ Last updated: 2026-09-05T09:02:42.703Z
 | ✅ | Hvilken farve er agurken? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvilken farve er appelsinen? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvilken farve er auberginen? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvilken farve er ballonen? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvilken farve er bananen? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvilken farve er bilen? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvilken farve er blomsten? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvilken farve er blåbærret? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvilken farve er druerne? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvilken farve er fisken? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvilken farve er fuglen? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvilken farve er græskarret? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvilken farve er guleroden? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvilken farve er hjertet? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvilken farve er hvalen? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvilken farve er jordbærret? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvilken farve er kløveren? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvilken farve er koppen? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvilken farve er krystallet? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvilken farve er kyllingen? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvilken farve er lastbilen? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvilken farve er majsen? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvilken farve er osten? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvilken farve er rosen? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvilken farve er ræven? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvilken farve er skildpadden? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvilken farve er skjorten? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvilken farve er skoen? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvilken farve er solen? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvilken farve er stjernen? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvilken farve er træet? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvilken farve er æblet? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | jordbærret er rødt | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | kløveren er grøn | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | koppen er gul | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | krystallet er lilla | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | kyllingen er gul | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | lastbilen er blå | Bulk-approved (PRD-11 owner listen pass) |  |
@@ -588,6 +603,7 @@ Last updated: 2026-09-05T09:02:42.703Z
 | ✅ | mørkegul | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | mørkerød | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | orange | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | osten er gul | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | rosen er rød | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | ræven er orange | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | rød | Bulk-approved (PRD-11 owner listen pass) |  |
@@ -598,6 +614,7 @@ Last updated: 2026-09-05T09:02:42.703Z
 | ✅ | salaten er grøn | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | skildpadden er grøn | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | skjorten er blå | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | skoen er blå | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | smørret er gult | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | solen er gul | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | sort | Bulk-approved (PRD-11 owner listen pass) |  |

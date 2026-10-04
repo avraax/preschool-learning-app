@@ -43,7 +43,8 @@ export const spokenColor = (hue: string, neuter: boolean): string =>
   neuter ? (NEUTER_COLOR[hue] ?? hue) : hue
 
 // Real-world objects grouped by their color — the curated shared set (PRD-09 §4, owner-locked §6.1):
-// exactly 4 per hue = 24, each with a baked soft-3D `art` id (src/assets/games/farver/<art>.webp)
+// originally exactly 4 per hue = 24; Game Depth PRD-01 appends more per hue (reused art now, new
+// renders for grøn/lilla later — an object joins only in the same commit as its WebP), each with a baked soft-3D `art` id (src/assets/games/farver/<art>.webp)
 // rendered in the hue's TRUE colour so it reads correct with no coloured backing tile. Trimmed from
 // the old ~36 by dropping the `quizSafe:false` items (emoji that contradict their colour) and
 // near-duplicate roles. Reused by Farvejagt (hunt + distractors), Hvilken Farve? (dragged object),
@@ -68,14 +69,22 @@ export const DANISH_OBJECTS: Record<string, ColorObject[]> = {
     { objectName: 'æble', objectNameDefinite: 'æblet', art: 'apple', hex: '#dc2626', neuter: true },
     { objectName: 'bil', objectNameDefinite: 'bilen', art: 'car', hex: '#ef4444', neuter: false, canonical: false },
     { objectName: 'rose', objectNameDefinite: 'rosen', art: 'rose', hex: '#f87171', neuter: false, canonical: false },
-    { objectName: 'jordbær', objectNameDefinite: 'jordbærret', art: 'strawberry', hex: '#991b1b', neuter: true }
+    { objectName: 'jordbær', objectNameDefinite: 'jordbærret', art: 'strawberry', hex: '#991b1b', neuter: true },
+    // ---- Game Depth PRD-01 — APPENDED, never inserted: Lær Farver shows `slice(0, 4)` of each hue, so
+    // the first four are load-bearing. Reused art copied under hue-specific ids (a red AND a blue `bil`
+    // exist now — on a red hunt the blue car is a distractor, so the object stops predicting the colour).
+    { objectName: 'ballon', objectNameDefinite: 'ballonen', art: 'balloon_red', hex: '#ef4444', neuter: false, canonical: false },
+    { objectName: 'fisk', objectNameDefinite: 'fisken', art: 'fish_red', hex: '#ef4444', neuter: false, canonical: false }
   ],
   blå: [
     // A whale reads blue-GREY as often as blue — real, but not what Let should hinge on.
     { objectName: 'hval', objectNameDefinite: 'hvalen', art: 'whale', hex: '#1d4ed8', neuter: false, obvious: false },
     { objectName: 'blåbær', objectNameDefinite: 'blåbærret', art: 'blueberry', hex: '#3730a3', neuter: true },
     { objectName: 'lastbil', objectNameDefinite: 'lastbilen', art: 'truck', hex: '#2563eb', neuter: false, canonical: false },
-    { objectName: 'skjorte', objectNameDefinite: 'skjorten', art: 'shirt', hex: '#1e40af', neuter: false, canonical: false }
+    { objectName: 'skjorte', objectNameDefinite: 'skjorten', art: 'shirt', hex: '#1e40af', neuter: false, canonical: false },
+    { objectName: 'bil', objectNameDefinite: 'bilen', art: 'car_blue', hex: '#3b82f6', neuter: false, canonical: false },
+    { objectName: 'sko', objectNameDefinite: 'skoen', art: 'shoe_blue', hex: '#3b82f6', neuter: false, canonical: false },
+    { objectName: 'fugl', objectNameDefinite: 'fuglen', art: 'bird_blue', hex: '#3b82f6', neuter: false, canonical: false }
   ],
   grøn: [
     { objectName: 'agurk', objectNameDefinite: 'agurken', art: 'cucumber', hex: '#16a34a', neuter: false },
@@ -89,7 +98,11 @@ export const DANISH_OBJECTS: Record<string, ColorObject[]> = {
     { objectName: 'banan', objectNameDefinite: 'bananen', art: 'banana', hex: '#facc15', neuter: false },
     // A cob reads yellow-AND-green (husk + kernels), so it is not a clean gul question.
     { objectName: 'majs', objectNameDefinite: 'majsen', art: 'corn', hex: '#fde047', neuter: false, obvious: false },
-    { objectName: 'kylling', objectNameDefinite: 'kyllingen', art: 'chick', hex: '#facc15', neuter: false }
+    { objectName: 'kylling', objectNameDefinite: 'kyllingen', art: 'chick', hex: '#facc15', neuter: false },
+    { objectName: 'kop', objectNameDefinite: 'koppen', art: 'cup_yellow', hex: '#eab308', neuter: false, canonical: false },
+    // Cheese is the one reused object whose colour IS world knowledge, so it joins Hvilken Farve?.
+    { objectName: 'ost', objectNameDefinite: 'osten', art: 'cheese', hex: '#facc15', neuter: false },
+    { objectName: 'stjerne', objectNameDefinite: 'stjernen', art: 'star_yellow', hex: '#facc15', neuter: false, canonical: false }
   ],
   lilla: [
     { objectName: 'druer', objectNameDefinite: 'druerne', art: 'grapes', hex: '#a855f7', neuter: false },
@@ -103,11 +116,20 @@ export const DANISH_OBJECTS: Record<string, ColorObject[]> = {
     // Pumpkins also come white and green, so orange is a likely answer rather than a certain one.
     { objectName: 'græskar', objectNameDefinite: 'græskarret', art: 'pumpkin', hex: '#ea580c', neuter: true, obvious: false },
     { objectName: 'ræv', objectNameDefinite: 'ræven', art: 'fox', hex: '#ea580c', neuter: false },
-    { objectName: 'gulerod', objectNameDefinite: 'guleroden', art: 'carrot', hex: '#f97316', neuter: false }
+    { objectName: 'gulerod', objectNameDefinite: 'guleroden', art: 'carrot', hex: '#f97316', neuter: false },
+    { objectName: 'fisk', objectNameDefinite: 'fisken', art: 'fish_orange', hex: '#f97316', neuter: false, canonical: false },
+    { objectName: 'blomst', objectNameDefinite: 'blomsten', art: 'flower_orange', hex: '#f97316', neuter: false, canonical: false }
   ]
 }
 
 // Hunt-target options (Farvejagt) — the 6 vivid colors with their spoken prompts.
+/**
+ * Targets on one Farvejagt board — FIXED at every level (Game Depth PRD-01 §3.0: no level gains an
+ * element; phone landscape gives the hunt a ~600×230 px board). A hue now holds 6–8 objects, so each
+ * board deals 4 of them from a per-hue bag instead of showing the whole hue.
+ */
+export const TARGETS_PER_BOARD = 4
+
 export const COLOR_TARGETS = [
   { color: 'rød', phrase: 'Find alle røde ting' },
   { color: 'blå', phrase: 'Find alle blå ting' },

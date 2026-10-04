@@ -1,12 +1,13 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import {
   COLORS_QUIZ_ROUND,
   DANISH_OBJECTS,
   HUE_ORDER,
+  TARGETS_PER_BOARD,
   quizObjectPool,
 } from './colorContent.ts'
 import { COLORS_QUIZ, LEVELS } from './difficulty.ts'
@@ -36,9 +37,9 @@ test('the two pools hold exactly the objects they should', () => {
 
   // Pinned as literals, not as "everything.length - 6": the arithmetic moves with the content and
   // would pass just as happily against an empty pool.
-  assert.equal(everything.length, 24)
-  assert.equal(all.length, 18)
-  assert.equal(obvious.length, 12)
+  assert.equal(everything.length, 34)
+  assert.equal(all.length, 19)
+  assert.equal(obvious.length, 13)
 
   // Let's pool is a strict subset — it may only ever REMOVE risk, never introduce an object the
   // higher levels refuse.
@@ -51,7 +52,10 @@ test('the two pools hold exactly the objects they should', () => {
   // deliberate, visible edit.
   const askableNames = new Set(all.map((o) => o.objectName))
   const neverAskable = everything.map((o) => o.objectName).filter((n) => !askableNames.has(n))
-  assert.deepEqual(neverAskable.sort(), ['bil', 'hjerte', 'krystal', 'lastbil', 'rose', 'skjorte'])
+  assert.deepEqual(neverAskable.sort(), [
+    'ballon', 'bil', 'bil', 'blomst', 'fisk', 'fisk', 'fugl', 'hjerte', 'kop', 'krystal', 'lastbil',
+    'rose', 'skjorte', 'sko', 'stjerne',
+  ])
 
   // …and the six held back from Let by name, for the same reason. This list is the owner-approved
   // judgement call about a Danish 5-year-old (PRD-02 §W2) and the first lever to adjust after a
@@ -82,8 +86,8 @@ test('every hue stays askable in BOTH pools, at or above one full round', () => 
   // at a floor of 1 in `obvious` — any further trim there is a bug, and new canonical art is the fix.
   const perHue = (pool: typeof all) =>
     Object.fromEntries(HUE_ORDER.map((hue) => [hue, pool.filter((o) => o.color === hue).length]))
-  assert.deepEqual(perHue(all), { rød: 2, blå: 2, grøn: 4, gul: 4, lilla: 2, orange: 4 })
-  assert.deepEqual(perHue(obvious), { rød: 2, blå: 1, grøn: 2, gul: 3, lilla: 1, orange: 3 })
+  assert.deepEqual(perHue(all), { rød: 2, blå: 2, grøn: 4, gul: 5, lilla: 2, orange: 4 })
+  assert.deepEqual(perHue(obvious), { rød: 2, blå: 1, grøn: 2, gul: 4, lilla: 1, orange: 3 })
 })
 
 test('NO level may show the object in its true colour', () => {
@@ -119,9 +123,9 @@ test('the game actually greys the object it asks about — and only that one', (
   }
   // …and the sizes pinned outright, so the two sides can't agree their way past a change (both call
   // the same function, so agreement alone is vacuous — CLAUDE.md's "pin the value itself").
-  assert.equal(colorQuizPromptPool('let').length, 12)
-  assert.equal(colorQuizPromptPool('normal').length, 18)
-  assert.equal(colorQuizPromptPool('svaer').length, 18)
+  assert.equal(colorQuizPromptPool('let').length, 13)
+  assert.equal(colorQuizPromptPool('normal').length, 19)
+  assert.equal(colorQuizPromptPool('svaer').length, 19)
 
   // EXACTLY ONE desaturate site. Zero = the wiring is gone; two = the copy that lands in the swatch
   // is greyed too, which kills the colour-returns reveal that carries the lesson. And it must be the
@@ -150,4 +154,48 @@ test('a canonical flag only ever narrows a quiz-safe object', () => {
       )
     }
   }
+})
+
+// ---- Game Depth PRD-01 §3.1 -------------------------------------------------------------------------
+
+test('every object art id exists as a WebP on disk — data must never outrun the art', () => {
+  // colorContent.ts is Node-pure and cannot see Vite's glob, so an entry whose file hasn't landed would
+  // render an EMPTY object on the board while its fact line still bakes (PRD §4 trap 9).
+  const dir = path.join(SRC, 'assets/games/farver')
+  for (const [hue, objects] of Object.entries(DANISH_OBJECTS)) {
+    for (const o of objects) {
+      assert.ok(existsSync(path.join(dir, `${o.art}.webp`)), `${hue}/${o.objectName}: ${o.art}.webp missing`)
+    }
+  }
+  const arts = Object.values(DANISH_OBJECTS).flat().map((o) => o.art)
+  assert.equal(new Set(arts).size, arts.length, 'art ids must be unique — the Farvejagt bag keys on them')
+})
+
+test('Lær Farver keeps its first four examples per hue (the arrays are APPEND-only)', () => {
+  // FarverLearning shows DANISH_OBJECTS[hue].slice(0, 4), so inserting before them silently changes
+  // the browse. Pinned by art id.
+  const firstFour = Object.fromEntries(
+    HUE_ORDER.map((h) => [h, DANISH_OBJECTS[h].slice(0, 4).map((o) => o.art).join(',')]),
+  )
+  assert.deepEqual(firstFour, {
+    rød: 'apple,car,rose,strawberry',
+    blå: 'whale,blueberry,truck,shirt',
+    grøn: 'cucumber,turtle,clover,tree',
+    gul: 'sun,banana,corn,chick',
+    lilla: 'grapes,eggplant,crystal,heart',
+    orange: 'orange_fruit,pumpkin,fox,carrot',
+  })
+  assert.match(codeOf('components/farver/FarverLearning.tsx'), /DANISH_OBJECTS\[currentHue\][^\n]*slice\(0, 4\)/)
+})
+
+test('Farvejagt deals a FIXED count of targets from a per-hue bag keyed by art', () => {
+  assert.equal(TARGETS_PER_BOARD, 4)
+  for (const hue of HUE_ORDER) {
+    assert.ok(DANISH_OBJECTS[hue].length >= TARGETS_PER_BOARD, `${hue} cannot fill a board`)
+  }
+  const code = codeOf('components/farver/FarvejagtGame.tsx')
+  assert.match(code, /makePromptBag\(targetObjects, \{ key: \(o\) => o\.art/)
+  assert.match(code, /Math\.min\(TARGETS_PER_BOARD, targetObjects\.length\)/)
+  // The old "take the whole hue" deal must be gone.
+  assert.doesNotMatch(code, /shuffle\(targetObjects\)/)
 })

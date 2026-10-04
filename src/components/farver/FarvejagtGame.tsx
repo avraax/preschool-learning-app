@@ -26,7 +26,8 @@ import { shuffle } from '../../utils/shuffle'
 import { useNeverFailHint } from '../../hooks/useNeverFailHint'
 import { useDragActive } from '../common/dnd/useDragActive'
 import { wasWobbledTap } from '../common/dnd/dragActivation'
-import { DANISH_OBJECTS, COLOR_TARGETS, COLOR_SWATCH, spokenColor } from '../../config/colorContent'
+import { DANISH_OBJECTS, COLOR_TARGETS, COLOR_SWATCH, TARGETS_PER_BOARD, spokenColor, type ColorObject } from '../../config/colorContent'
+import { makePromptBag, type PromptBag } from '../../config/promptBag'
 import { colorObjectFactText } from '../../config/gamePhrases'
 import { FARVEJAGT_ROUND, colorTargetKey, farvejagtPromptPool } from '../../config/promptPools'
 import { usePromptBag } from '../../hooks/usePromptBag'
@@ -140,6 +141,8 @@ const FarvejagtGame: React.FC = () => {
     key: colorTargetKey,
     window: FARVEJAGT_ROUND,
   })
+  // One object bag per hunted hue (Game Depth PRD-01 §3.1), held for the life of the screen.
+  const objectBags = useRef(new Map<string, PromptBag<ColorObject>>())
   const startedRef = useRef(false)
   const isAdvancing = useRef(false)  // locks drops during the board-complete flourish (P3)
   const welcomeTriggered = useRef(false)
@@ -229,9 +232,21 @@ const FarvejagtGame: React.FC = () => {
   const generateGameItems = () => {
     const target = selectRandomTarget()
 
+    // A FIXED number of targets per board (TARGETS_PER_BOARD — Game Depth PRD-01: no level gains an
+    // element), dealt from a per-hue BAG keyed by art id, so successive red hunts show different reds.
+    // Keyed by `art`, not `objectName`: the same noun now exists in two hues (a red and a blue `bil`).
     const targetObjects = DANISH_OBJECTS[target.color as keyof typeof DANISH_OBJECTS]
-    const selectedTargets = shuffle(targetObjects)
-      .slice(0, Math.min(6, targetObjects.length))
+    let hueBag = objectBags.current.get(target.color)
+    if (!hueBag) {
+      hueBag = makePromptBag(targetObjects, { key: (o) => o.art, window: TARGETS_PER_BOARD })
+      objectBags.current.set(target.color, hueBag)
+    }
+    const wanted = Math.min(TARGETS_PER_BOARD, targetObjects.length)
+    const selectedTargets: typeof targetObjects = []
+    while (selectedTargets.length < wanted) {
+      const o = hueBag.next()
+      if (!selectedTargets.some((s) => s.art === o.art)) selectedTargets.push(o)
+    }
 
     const distractorObjects: any[] = []
     const allOtherColors = Object.keys(DANISH_OBJECTS).filter(color => color !== target.color)

@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-09-05T09:02:42.703Z",
+  "updatedAt": "2026-10-04T17:20:42.620Z",
   "clips": {
     "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|b": {
       "verdict": "ok",
@@ -16064,6 +16064,142 @@
       "text": "Hvilken farve er guleroden?",
       "group": "colours",
       "updatedAt": 1788598962703
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|ballonen er rød": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "ballonen er rød",
+      "group": "colours",
+      "updatedAt": 1791134442619
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Hvilken farve er ballonen?": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Hvilken farve er ballonen?",
+      "group": "colours",
+      "updatedAt": 1791134442619
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fisken er rød": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fisken er rød",
+      "group": "colours",
+      "updatedAt": 1791134442619
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Hvilken farve er fisken?": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Hvilken farve er fisken?",
+      "group": "colours",
+      "updatedAt": 1791134442619
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|bilen er blå": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "bilen er blå",
+      "group": "colours",
+      "updatedAt": 1791134442619
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|skoen er blå": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "skoen er blå",
+      "group": "colours",
+      "updatedAt": 1791134442619
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Hvilken farve er skoen?": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Hvilken farve er skoen?",
+      "group": "colours",
+      "updatedAt": 1791134442619
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fuglen er blå": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fuglen er blå",
+      "group": "colours",
+      "updatedAt": 1791134442619
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Hvilken farve er fuglen?": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Hvilken farve er fuglen?",
+      "group": "colours",
+      "updatedAt": 1791134442619
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|koppen er gul": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "koppen er gul",
+      "group": "colours",
+      "updatedAt": 1791134442619
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Hvilken farve er koppen?": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Hvilken farve er koppen?",
+      "group": "colours",
+      "updatedAt": 1791134442619
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|osten er gul": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "osten er gul",
+      "group": "colours",
+      "updatedAt": 1791134442619
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Hvilken farve er osten?": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Hvilken farve er osten?",
+      "group": "colours",
+      "updatedAt": 1791134442619
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Hvilken farve er stjernen?": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Hvilken farve er stjernen?",
+      "group": "colours",
+      "updatedAt": 1791134442619
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fisken er orange": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fisken er orange",
+      "group": "colours",
+      "updatedAt": 1791134442619
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|blomsten er orange": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "blomsten er orange",
+      "group": "colours",
+      "updatedAt": 1791134442619
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Hvilken farve er blomsten?": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Hvilken farve er blomsten?",
+      "group": "colours",
+      "updatedAt": 1791134442619
     }
   }
 }

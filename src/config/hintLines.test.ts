@@ -67,7 +67,8 @@ test('EVERY hint line is already prebaked — a hint never reaches live Azure', 
   // Pinned as a literal so a table that silently stops enumerating (a `lines()` returning []) fails.
   // Hvilken Farve? went 24 → 18 with Difficulty PRD-02: its `reveal` axis is gone, so the six
   // non-canonical objects are askable at no level and can never be the answer a hint names.
-  assert.equal(checked, 28 + 100 + 109 + 74 + 74 + 18 + 22, `checked ${checked} hint lines`)
+  // Game Depth PRD-01 W1: 18 → 19 (`ost` joins as the one canonical reused object).
+  assert.equal(checked, 28 + 100 + 109 + 74 + 74 + 19 + 22, `checked ${checked} hint lines`)
 })
 
 test('the lines are the SAME builders the app speaks, not lookalikes', () => {

@@ -220,12 +220,12 @@ const EXPECTED: Record<string, Record<DifficultyLevel, Pinned>> = {
     svaer: { pool: 42, round: 8, before: 0.51, beforeWorst: 5, after: 0, distinct: 8 },
   },
   // Difficulty PRD-02 moved this game's pools: the object is desaturated at every level now, so the six
-  // non-canonical colours are askable nowhere (18, not 24) and LET asks only the 12 unambiguous
-  // subjects. Let is therefore the SMALLEST pool here and the one the old draw served worst.
+  // non-canonical colours are askable nowhere and LET asks only the unambiguous subjects. Game Depth
+  // PRD-01 W1 added `ost` (19 / 13); the new canonical renders will grow both again.
   'colors.quiz': {
-    let: { pool: 12, round: 8, before: 0.97, beforeWorst: 4, after: 0, distinct: 8 },
-    normal: { pool: 18, round: 8, before: 0.8, beforeWorst: 4, after: 0, distinct: 8 },
-    svaer: { pool: 18, round: 8, before: 0.8, beforeWorst: 4, after: 0, distinct: 8 },
+    let: { pool: 13, round: 8, before: 0.97, beforeWorst: 3, after: 0, distinct: 8 },
+    normal: { pool: 19, round: 8, before: 0.8, beforeWorst: 4, after: 0, distinct: 8 },
+    svaer: { pool: 19, round: 8, before: 0.8, beforeWorst: 4, after: 0, distinct: 8 },
   },
   // Nuancer asks 8 orderings over 6 hues, so a repeat inside 8 draws is arithmetic — `after` stays 1.
   // The old draw's worst run showed 3 distinct hues; the bag's shows 5.
