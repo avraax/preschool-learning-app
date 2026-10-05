@@ -528,15 +528,17 @@ const NuancerGame: React.FC = () => {
                 const isLifted = activeId === shade.id
                 const isHint = displayHintName === shade.id
                 const isShaking = displayShakeName === shade.id
-                const animate = isLifted && !reduce
-                  ? { scale: 1.08, rotate: 6, x: 0 }
+                // Held: neutral here — the lift is DraggableItem's `lift` (draggableStyle.ts), so the
+                // drag has one owner of its geometry.
+                const animate = isLifted
+                  ? { scale: 1, rotate: 0, x: 0 }
                   : isShaking
                     ? { x: [0, -10, 10, -10, 10, 0], scale: 1, rotate: 0 }
                     : isHint && !reduce
                       ? { scale: [1, 1.14, 1], x: 0, rotate: 0 }
                       : { scale: 1, x: 0, rotate: 0 }
-                const transition = isLifted && !reduce
-                  ? SNAP
+                const transition = isLifted
+                  ? { duration: 0 }
                   : isShaking
                     ? { duration: 0.45 }
                     : isHint && !reduce
@@ -549,6 +551,7 @@ const NuancerGame: React.FC = () => {
                       inline
                       disabled={!gameReady}
                       data={shade}
+                      lift={{ scale: 1.08, rotate: 6 }}
                       // Tap = place this shade in the next empty slot (see tapShade).
                       onActivate={() => tapShade(shade.id)}
                     >

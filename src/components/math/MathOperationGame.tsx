@@ -65,7 +65,7 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
   const phoneLandscape = useMediaQuery(PHONE_LANDSCAPE.replace('@media ', ''))
   // Answer by TAP or by DRAG onto the "?" (see handleDragEnd).
   const sensors = useDragOnlySensors()
-  const { activeId, overId, setActiveId, onDragOver, clearActive } = useDragActive()
+  const { overId, setActiveId, onDragOver, clearActive } = useDragActive()
   const isAddition = operation === 'addition'
   const title = isAddition ? 'Plus Opgaver' : 'Minus Opgaver'
   const operator = isAddition ? '+' : '-'
@@ -645,8 +645,9 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
             <motion.div
               key={`o${optionSeq.current}-${option}-${index}`}
               initial={{ opacity: 0, scale: 0.8 }}
-              // Grabbed tile LIFTS, matching the Farver games' shared drag juice (§6C).
-              animate={{ opacity: 1, scale: activeId === `opt-${option}` && !reduce ? 1.08 : 1 }}
+              // The grab lift is DraggableItem's `lift`, never a scale here: this wrapper is an ANCESTOR
+              // of the dragged tile, so its scale multiplied the drag offset (draggableStyle.ts).
+              animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: index * 0.08 }}
               style={{ height: '100%' }}
             >
@@ -660,6 +661,7 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
                 fill
                 disabled={isAdvancingRef.current}
                 data={{ option }}
+                lift={{ scale: 1.08 }}
               >
               <AnswerTile
                 onClick={() => handleAnswerClick(option)}

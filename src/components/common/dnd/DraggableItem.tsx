@@ -1,7 +1,8 @@
 import React from 'react'
 import { useDraggable } from '@dnd-kit/core'
-import { CSS } from '@dnd-kit/utilities'
 import { useTapActivate } from './dragActivation'
+import { draggableStyle, type DragLift } from './draggableStyle'
+import { useReducedMotion } from '../../../hooks/useReducedMotion'
 
 interface DraggableItemProps {
   id: string
@@ -17,6 +18,10 @@ interface DraggableItemProps {
   // AnswerTile inside one collapses to its content. Only meaningful with `inline`.
   fill?: boolean
   data?: any
+  // The grab "lift" (scale/tilt while held). It MUST live here, never as a framer scale on a wrapper
+  // around the DraggableItem: an ancestor's scale multiplies the drag offset, so the item drifts off
+  // the finger. See draggableStyle.ts.
+  lift?: DragLift
   // Tap = the other half of the interaction (owner, 2026-08-03). Fires only for a press-release that
   // stayed inside `DRAG_ACTIVATION_DISTANCE`, i.e. exactly the gestures dnd-kit refuses to drag with,
   // so a tap and a drop can never both resolve one gesture. Wire it to the SAME resolve function the
@@ -32,8 +37,10 @@ export const DraggableItem: React.FC<DraggableItemProps> = ({
   inline = false,
   fill = false,
   data,
+  lift,
   onActivate
 }) => {
+  const reduce = useReducedMotion()
   const {
     attributes,
     listeners,
@@ -56,18 +63,7 @@ export const DraggableItem: React.FC<DraggableItemProps> = ({
     tap.onPointerDown(e)
   }
 
-  const style = {
-    // Absolute + left/top% for scattered boards (Farvejagt); relative/in-flow for tray layouts.
-    ...(inline
-      ? { position: 'relative' as const }
-      : { position: 'absolute' as const, left: `${position.x}%`, top: `${position.y}%` }),
-    ...(fill ? { width: '100%', height: '100%' } : null),
-    transform: CSS.Translate.toString(transform),
-    opacity: isDragging ? 0.8 : 1, // Slightly transparent while dragging
-    cursor: disabled ? 'default' : 'grab',
-    touchAction: 'none',
-    zIndex: isDragging ? 1000 : 'auto'
-  }
+  const style = draggableStyle({ transform, isDragging, disabled, inline, fill, position, lift, reduce }) as React.CSSProperties
 
   return (
     <div

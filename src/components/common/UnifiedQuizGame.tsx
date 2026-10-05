@@ -226,7 +226,7 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
   // Drag-to-the-gap support (opt-in via config.dragToPromptSlot — inert otherwise; the hooks are cheap
   // and unconditional so the hook order never depends on config).
   const sensors = useDragOnlySensors()
-  const { activeId, overId, setActiveId, onDragOver, clearActive } = useDragActive()
+  const { overId, setActiveId, onDragOver, clearActive } = useDragActive()
   // Scene darkness — the focal-zone prompt word rides the light-pool: light accent on a DARK scene,
   // but the darkened readable-on-white accent on a LIGHT scene (see the qv.word hero below).
   const muiTheme = useTheme()
@@ -805,15 +805,10 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
                 <motion.div
                   key={`q${questionSeq.current}-${item.value}-${index}`}
                   initial={reduce ? false : { opacity: 0, scale: 0.8 }}
-                  animate={
-                    reduce
-                      ? { opacity: 1 }
-                      : activeId === dragIdFor(item)
-                        // Grabbed tile LIFTS (the Farver games' shared drag juice). A plain number, not
-                        // the entrance keyframes — a keyframe array would restart the pop mid-drag.
-                        ? { opacity: 1, scale: 1.08 }
-                        : { opacity: 1, scale: [0.8, 1.04, 1] }
-                  }
+                  // The grab lift is DragWrap's (DraggableItem `lift`), never a scale here: this wrapper
+                  // is an ANCESTOR of the dragged tile, so its scale multiplied the drag offset
+                  // (draggableStyle.ts). Constant, so a drag never restarts the entrance pop either.
+                  animate={reduce ? { opacity: 1 } : { opacity: 1, scale: [0.8, 1.04, 1] }}
                   transition={reduce ? { duration: 0 } : { delay: index * 0.08, duration: 0.25, ease: 'easeOut' }}
                   style={{ height: '100%' }}
                 >
@@ -914,7 +909,7 @@ const DragWrap: React.FC<{ enabled: boolean; id: string; disabled: boolean; chil
 }) => {
   if (!enabled) return <>{children}</>
   return (
-    <DraggableItem id={id} inline fill disabled={disabled}>
+    <DraggableItem id={id} inline fill disabled={disabled} lift={{ scale: 1.08 }}>
       {children}
     </DraggableItem>
   )

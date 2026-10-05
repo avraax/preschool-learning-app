@@ -72,7 +72,7 @@ const SpellingGame: React.FC = () => {
   // slot out of order a new kind of wrong). Both gestures land on `handleTileClick`, so scoring, the
   // hint counter and the advance-lock are untouched.
   const sensors = useDragOnlySensors()
-  const { activeId, overId, setActiveId, onDragOver, clearActive } = useDragActive()
+  const { overId, setActiveId, onDragOver, clearActive } = useDragActive()
 
   // Current word and its uppercase letters
   const [current, setCurrent] = useState<{ word: string; emoji?: string; art?: string } | null>(null)
@@ -651,13 +651,14 @@ const SpellingGame: React.FC = () => {
                 {availableTiles.map((tile) => {
                     const isHint = tile.id === hintTileId
                     const isShaking = shakeTileId === tile.id
-                    // Grabbed tile LIFTS, matching the Farver games' shared drag juice (§6C).
-                    const isLifted = activeId === tile.id && !reduce
+                    // The grab lift is DraggableItem's `lift`, never a scale on this wrapper: it is an
+                    // ANCESTOR of the dragged tile, so its scale multiplied the drag offset
+                    // (draggableStyle.ts).
                     return (
                     <motion.div
                       key={tile.id}
                       initial={reduce ? false : { opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: isLifted ? 1.12 : 1 }}
+                      animate={{ opacity: 1, scale: 1 }}
                       transition={{ duration: 0.2 }}
                     >
                       <Box
@@ -676,6 +677,7 @@ const SpellingGame: React.FC = () => {
                           inline
                           disabled={!gameReady || usedTileIds.has(tile.id) || isAdvancing.current}
                           data={tile}
+                          lift={{ scale: 1.12 }}
                         >
                         <TactileTile
                           onActivate={() => handleTileClick(tile)}

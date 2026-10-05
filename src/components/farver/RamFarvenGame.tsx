@@ -18,7 +18,7 @@ import { primaryColors, possibleTargets, mixingRules, makeTargetBag, TARGET_PRIO
 import { colorMixQuestionText, colorMixResultText } from '../../config/gamePhrases'
 import { makeFormatBag, type FormatBag } from '../../config/formatBag'
 import { hexToRgba } from '../../theme/tokens/helpers'
-import { SNAP, BOUNCE } from '../../theme/motion'
+import { BOUNCE } from '../../theme/motion'
 import { idleFloat } from '../../theme/idleMotion'
 import { useTaskRun } from '../../hooks/useTaskRun'
 import { progressStore } from '../../services/progressStore'
@@ -986,16 +986,17 @@ const RamFarvenGame: React.FC = () => {
                     <motion.div
                       key={`${targetColor.name}-${choice.name}`}
                       initial={reduce ? false : { scale: 0, y: 40 }}
+                      // The lift is DraggableItem's `lift`, not a scale here: this wrapper is an
+                      // ancestor of the dragged swatch, so any scale on it multiplies the drag offset
+                      // (draggableStyle.ts). Held, it goes neutral at once.
                       animate={
-                        isLifted && !reduce
-                          ? { scale: 1.15, y: -4 }
-                          : isHint && !reduce
-                            ? { scale: [1, 1.15, 1], y: 0 }
-                            : { scale: 1, y: 0 }
+                        isHint && !reduce && !isLifted
+                          ? { scale: [1, 1.15, 1], y: 0 }
+                          : { scale: 1, y: 0 }
                       }
                       transition={
-                        isLifted && !reduce
-                          ? SNAP
+                        isLifted
+                          ? { duration: 0 }
                           : isHint && !reduce
                             ? { duration: 1.1, repeat: Infinity, ease: 'easeInOut' as const }
                             : { duration: 0.3 }
@@ -1006,6 +1007,7 @@ const RamFarvenGame: React.FC = () => {
                         inline
                         disabled={!gameReady || committing}
                         data={choice}
+                        lift={{ scale: 1.15 }}
                         onActivate={() => resolveSwatch(choice.name, true)}
                       >
                         <Box
@@ -1038,13 +1040,15 @@ const RamFarvenGame: React.FC = () => {
                 {mode === 'mix' && availableColors.map((color) => {
                   const isHint = recipeNames.includes(color.colorName) && !color.isUsed
                   const isLifted = activeId === color.id
-                  const animate = isLifted && !reduce
-                    ? { scale: 1.2, y: -4, rotate: 8 }
-                    : isHint && !reduce
-                      ? { scale: [1, 1.15, 1], y: 0, rotate: 0 }
-                      : { scale: color.isUsed ? 0.7 : 1, y: 0, rotate: 0 }
-                  const transition = isLifted && !reduce
-                    ? SNAP
+                  // The lift is DraggableItem's `lift`, never a scale on this wrapper: it is an ANCESTOR of
+                  // the dragged droplet, so its scale/rotate multiplied the drag offset and the droplet
+                  // ran off the finger (draggableStyle.ts). For the same reason no whileTap/whileHover —
+                  // a held press kept whileTap's 0.95 on for the whole drag.
+                  const animate = isHint && !reduce && !isLifted
+                    ? { scale: [1, 1.15, 1], y: 0, rotate: 0 }
+                    : { scale: color.isUsed ? 0.7 : 1, y: 0, rotate: 0 }
+                  const transition = isLifted
+                    ? { duration: 0 }
                     : isHint && !reduce
                       ? { duration: 1.1, repeat: Infinity, ease: 'easeInOut' as const }
                       : { duration: 0.3 }
@@ -1054,8 +1058,6 @@ const RamFarvenGame: React.FC = () => {
                       initial={{ scale: 0, y: 50 }}
                       animate={animate}
                       transition={transition}
-                      whileHover={{ scale: color.isUsed ? 0.7 : 1.1 }}
-                      whileTap={{ scale: 0.95 }}
                     >
                       <Box component="div">
                         <DraggableItem
@@ -1063,6 +1065,7 @@ const RamFarvenGame: React.FC = () => {
                           inline
                           disabled={!gameReady || color.isUsed || committing}
                           data={color}
+                          lift={{ scale: 1.2, rotate: 8 }}
                           // Tap = "put this droplet in the pot", the same resolution a drop gets.
                           onActivate={() => resolveDroplet(color.id, true)}
                         >
@@ -1114,9 +1117,9 @@ const RamFarvenGame: React.FC = () => {
                     alignItems: 'center',
                     justifyContent: 'center',
                     zIndex: 6,
-                    // PRD-09: no backdrop-filter (retired frosted idiom + flicker rule) — a plain
-                    // opaque-enough wash instead so the reveal still pops.
-                    background: muiTheme.scene.dark ? 'rgba(8,11,26,0.62)' : 'rgba(255,255,255,0.72)'
+                    // No wash behind the card (owner, 2026-10-05: the board-sized white dimmed
+                    // rectangle "seems misplaced"). The card is opaque and carries its own shadow; the
+                    // transparent layer still swallows taps during the reveal, as the wash did.
                   }}
                 >
                   <motion.div

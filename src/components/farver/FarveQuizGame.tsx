@@ -377,18 +377,12 @@ const FarveQuizGame: React.FC = () => {
           }}>
             {!displaySolvedColor && (
               <Box>
-                <DraggableItem id="object" inline disabled={!gameReady} data={current}>
-                  {/* The prompt object's resting float ran the whole time the board was up, as a
-                      framer `repeat: Infinity` loop; it is now a CSS keyframe animation (same 6px /
-                      1.6s) on the SAME element — safe here because the two states are mutually
-                      exclusive (`isLiftedObject`), and a running CSS animation outranks framer's
-                      inline transform in the cascade, so an overlap would swallow the lift. PRD-01 W1. */}
-                  <Box
-                    component={motion.div}
-                    animate={isLiftedObject && !reduce ? { scale: 1.12, rotate: 5, y: 0 } : { scale: 1, rotate: 0, y: 0 }}
-                    transition={isLiftedObject && !reduce ? SNAP : { duration: 0.2 }}
-                    sx={[objectFloat(isLiftedObject).sx]}
-                  >
+                <DraggableItem id="object" inline disabled={!gameReady} data={current} lift={{ scale: 1.12, rotate: 5 }}>
+                  {/* The prompt object's resting float is a CSS keyframe animation (6px / 1.6s,
+                      PRD-01 W1), stood down while held. The grab lift is DraggableItem's `lift`
+                      (draggableStyle.ts) — on the dragged element itself, so it never scales the
+                      drag offset. */}
+                  <Box sx={[objectFloat(isLiftedObject).sx]}>
                     {/* PRD-09: the object is a baked soft-3D thing resting in the world (no #ECF1F8
                         holder, no border, no lip). It is GREYED at EVERY level (PRD-02 — a BARE
                         `desaturate` prop, deliberately not an expression), so the child has to know
