@@ -69,6 +69,13 @@ treat `!over` as a spring-back** (return without scoring or breaking the first-t
 
 ## Non-obvious gotchas (each one bit us once)
 
+- **The dragged item must track the finger 1:1 — so nothing may ease or scale its offset** (owner
+  2026-10-05, "sticky, falls behind"). Three causes, all fixed in `dnd/draggableStyle.ts`: dnd-kit's
+  `role="button"` picked up `index.css`'s `[role=button]` transform transition; a framer lift `scale` on
+  an ANCESTOR multiplied the offset; and (WebKit only) a lift on the tracked node itself made dnd-kit
+  drift by half the bounding-box growth. **Pass `lift={{ scale, rotate }}` to `DraggableItem`, never
+  animate a wrapper on `activeId`.** Guarded by `draggableStyle.test.ts`; measure with `drag-track.js`.
+
 - **Guard the advance window.** Tiles stay draggable during the correct-answer flourish; a late drop
   can fail a perfect question. Set a ref synchronously on complete, check it at the top of
   `handleDragEnd`, clear it in per-question setup.

@@ -283,6 +283,12 @@ inside `[data-prompt-focus]` (its "solved" signal is an `<img>` appearing inside
 and a correct answer ADVANCES the question, so allow >2s before re-reading state.
 
 ### Driving dnd-kit drag-and-drop (the drag games)
+**Start with `drag-track.js`** (`--eval "$(cat .claude/skills/ui-screenshot/drag-track.js)"`): it
+measures whether the dragged item stays under the finger (lag per frame, final offset) and then runs the
+control / abort / positive-control trio below against `[data-droppable-id]`. Measured against the
+pre-fix build it read 15px lag in every game and 45px in Ram Farven; correct is 0. Run it on BOTH rungs —
+the third cause of that defect only showed in WebKit. The hand-rolled recipe below stays for a custom path.
+
 `--click` uses `element.click()`, which fires **no** `pointerdown` — so it cannot exercise a
 `@dnd-kit` drag. `--eval` runs with `awaitPromise:true`, so pass an async IIFE that dispatches a
 synthetic PointerEvent sequence: `pointerdown` on the draggable, a few `pointermove`s on `document`
