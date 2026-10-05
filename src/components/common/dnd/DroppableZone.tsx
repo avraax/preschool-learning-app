@@ -38,6 +38,8 @@ export const DroppableZone: React.FC<DroppableZoneProps> = ({
   return (
     <div
       ref={setNodeRef}
+      // For probes (ui-screenshot drag-track.js): dnd-kit tags draggables but not droppables.
+      data-droppable-id={id}
       style={{
         ...style,
         backgroundColor: isOver ? overColor : style?.backgroundColor,

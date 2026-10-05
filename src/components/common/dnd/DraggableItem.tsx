@@ -1,7 +1,7 @@
 import React from 'react'
 import { useDraggable } from '@dnd-kit/core'
 import { useTapActivate } from './dragActivation'
-import { draggableStyle, type DragLift } from './draggableStyle'
+import { draggableStyle, liftStyle, type DragLift } from './draggableStyle'
 import { useReducedMotion } from '../../../hooks/useReducedMotion'
 
 interface DraggableItemProps {
@@ -18,9 +18,9 @@ interface DraggableItemProps {
   // AnswerTile inside one collapses to its content. Only meaningful with `inline`.
   fill?: boolean
   data?: any
-  // The grab "lift" (scale/tilt while held). It MUST live here, never as a framer scale on a wrapper
-  // around the DraggableItem: an ancestor's scale multiplies the drag offset, so the item drifts off
-  // the finger. See draggableStyle.ts.
+  // The grab "lift" (scale/tilt while held), rendered on an inner wrapper. It MUST live here, never as a
+  // framer scale on a wrapper around the DraggableItem: an ancestor's scale multiplies the drag offset,
+  // so the item drifts off the finger. See draggableStyle.ts.
   lift?: DragLift
   // Tap = the other half of the interaction (owner, 2026-08-03). Fires only for a press-release that
   // stayed inside `DRAG_ACTIVATION_DISTANCE`, i.e. exactly the gestures dnd-kit refuses to drag with,
@@ -63,7 +63,7 @@ export const DraggableItem: React.FC<DraggableItemProps> = ({
     tap.onPointerDown(e)
   }
 
-  const style = draggableStyle({ transform, isDragging, disabled, inline, fill, position, lift, reduce }) as React.CSSProperties
+  const style = draggableStyle({ transform, isDragging, disabled, inline, fill, position, reduce }) as React.CSSProperties
 
   return (
     <div
@@ -77,7 +77,11 @@ export const DraggableItem: React.FC<DraggableItemProps> = ({
       onClickCapture={tap.onClickCapture}
       onClick={onActivate ? tap.onClick : undefined}
     >
-      {children}
+      {lift ? (
+        <div style={liftStyle({ lift, isDragging, fill, reduce }) as React.CSSProperties}>{children}</div>
+      ) : (
+        children
+      )}
     </div>
   )
 }

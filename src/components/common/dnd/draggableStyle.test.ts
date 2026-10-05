@@ -2,7 +2,7 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
-import { draggableStyle } from './draggableStyle.ts'
+import { draggableStyle, liftStyle } from './draggableStyle.ts'
 
 // Owner, 2026-10-05: drag "falls behind the finger". Two causes, both pinned here — see draggableStyle.ts
 // for the measurements. Source reads strip comments first, because every rule below is also explained in
@@ -20,37 +20,43 @@ const base = {
 }
 
 test('while dragging, the item sits exactly on the pointer delta and that motion never transitions', () => {
-  const s = draggableStyle({ ...base, transform: { x: 37, y: -112 }, isDragging: true, lift: { scale: 1.2, rotate: 8 } })
+  const s = draggableStyle({ ...base, transform: { x: 37, y: -112 }, isDragging: true })
   assert.equal(s.translate, '37px -112px')
-  // The finger-follow must be on a property with NO transition — an eased translate is the lag itself.
-  const transition = String(s.transition)
-  assert.ok(!/\btranslate\b/.test(transition), `the drag offset transitions while dragging: ${transition}`)
-  assert.ok(!/\btransform\b|\ball\b/.test(transition), `a transform/all transition can reach the drag: ${transition}`)
-  // And the drag is not on `transform` at all: index.css transitions `transform` on every [role=button],
-  // which is what dnd-kit makes each draggable.
+  // The finger-follow must have NO transition at all — an eased translate is the lag itself.
+  assert.equal(s.transition, 'none')
+  // And the drag is not on `transform`: index.css transitions `transform` on every [role=button], which
+  // is what dnd-kit makes each draggable.
   assert.equal(s.transform, undefined)
+  // Released, it eases home.
+  assert.match(String(draggableStyle({ ...base, transform: null, isDragging: false }).transition), /translate/)
 })
 
-test('the lift lives on the dragged element (scale/rotate), composed AFTER the translate', () => {
-  const s = draggableStyle({ ...base, transform: { x: 10, y: 10 }, isDragging: true, lift: { scale: 1.2, rotate: 8 } })
-  assert.equal(s.scale, '1.2')
-  assert.equal(s.rotate, '8deg')
-  const resting = draggableStyle({ ...base, transform: null, isDragging: false, lift: { scale: 1.2, rotate: 8 } })
+test('the tracked node never changes size: no scale/rotate on it, the lift is the inner wrapper', () => {
+  // WebKit: a lift on the node dnd-kit measures drifted its translate by half the bounding-box growth.
+  const s = draggableStyle({ ...base, transform: { x: 10, y: 10 }, isDragging: true })
+  assert.equal(s.scale, undefined)
+  assert.equal(s.rotate, undefined)
+  const held = liftStyle({ lift: { scale: 1.2, rotate: 8 }, isDragging: true, fill: false })
+  assert.equal(held.scale, '1.2')
+  assert.equal(held.rotate, '8deg')
+  const resting = liftStyle({ lift: { scale: 1.2, rotate: 8 }, isDragging: false, fill: false })
   assert.equal(resting.scale, '1')
   assert.equal(resting.rotate, '0deg')
-  assert.equal(resting.translate, '0px 0px')
 })
 
 test('reduced motion: no lift and no eased spring-back', () => {
-  const s = draggableStyle({ ...base, transform: { x: 5, y: 5 }, isDragging: true, lift: { scale: 1.2 }, reduce: true })
-  assert.equal(s.scale, '1')
-  assert.equal(s.transition, 'none')
+  assert.equal(liftStyle({ lift: { scale: 1.2 }, isDragging: true, fill: false, reduce: true }).scale, '1')
+  assert.equal(draggableStyle({ ...base, transform: null, isDragging: false, reduce: true }).transition, 'none')
 })
 
-test('DraggableItem takes its style from draggableStyle and sets no transform of its own', () => {
+test('DraggableItem takes its style from draggableStyle, wraps children in liftStyle, sets no transform', () => {
   const src = codeOf('./DraggableItem.tsx')
-  assert.ok(/draggableStyle\(\{[^}]*\blift\b/.test(src), 'DraggableItem no longer routes its style (with lift) through draggableStyle')
-  assert.ok(!/\btransform\s*:/.test(src), 'DraggableItem sets a `transform` again — the global [role=button] transition eases it')
+  assert.ok(/style=\{style\}/.test(src) && /const style = draggableStyle\(/.test(src), 'the tracked node no longer uses draggableStyle')
+  assert.ok(/<div style=\{liftStyle\(\{ lift,/.test(src), 'the lift is no longer an inner wrapper')
+  assert.ok(
+    !/\btransform\s*:|\.transform\s*=|CSS\.(Translate|Transform)\b/.test(src),
+    'DraggableItem sets a `transform` again — the global [role=button] transition eases it',
+  )
 })
 
 // The games whose lift used to be a framer scale on an ANCESTOR of the DraggableItem. An ancestor's scale
