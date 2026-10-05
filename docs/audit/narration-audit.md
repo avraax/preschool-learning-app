@@ -3,9 +3,9 @@
 > AUTO-GENERATED (by the `/audit` harness via the dev-server, or `npm run audit:approve-all`).
 > Do not hand-edit — source of truth is `narration-audit.json`.
 
-Last updated: 2026-10-04T18:32:17.826Z
+Last updated: 2026-10-05T03:58:47.369Z
 
-**2649 OK · 1 wrong · 0 unaudited** (of 2650 clips)
+**2672 OK · 1 wrong · 0 unaudited** (of 2673 clips)
 
 ## Bogstaver
 
@@ -561,6 +561,7 @@ Last updated: 2026-10-04T18:32:17.826Z
 | ✅ | bilen er blå | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | bilen er rød | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | bladet er grønt | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | blommen er lilla | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | blomsten er lilla | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | blomsten er orange | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | blå | Bulk-approved (PRD-11 owner listen pass) |  |
@@ -573,6 +574,8 @@ Last updated: 2026-10-04T18:32:17.826Z
 | ✅ | blå og sort, hvad bliver det? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | blåbærret er blåt | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | bolden er rød | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | broccolien er grøn | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | citronen er gul | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | druerne er lilla | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | ferskenen er orange | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Find alle blå ting | Bulk-approved (PRD-11 owner listen pass) |  |
@@ -583,6 +586,7 @@ Last updated: 2026-10-04T18:32:17.826Z
 | ✅ | Find alle røde ting | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | fisken er orange | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | fisken er rød | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | frøen er grøn | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | fuglen er blå | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | græskarret er orange | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | grøn | Bulk-approved (PRD-11 owner listen pass) |  |
@@ -613,10 +617,15 @@ Last updated: 2026-10-04T18:32:17.826Z
 | ✅ | Hvilken farve er ballonen? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvilken farve er bananen? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvilken farve er bilen? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvilken farve er bladet? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvilken farve er blommen? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvilken farve er blomsten? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvilken farve er blåbærret? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvilken farve er broccolien? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvilken farve er citronen? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvilken farve er druerne? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvilken farve er fisken? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvilken farve er frøen? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvilken farve er fuglen? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvilken farve er græskarret? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvilken farve er guleroden? | Bulk-approved (PRD-11 owner listen pass) |  |
@@ -628,17 +637,24 @@ Last updated: 2026-10-04T18:32:17.826Z
 | ✅ | Hvilken farve er krystallet? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvilken farve er kyllingen? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvilken farve er lastbilen? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvilken farve er lavendlen? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvilken farve er majsen? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvilken farve er mariehønen? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvilken farve er osten? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvilken farve er paraplyen? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvilken farve er rosen? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvilken farve er ræven? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvilken farve er skildpadden? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvilken farve er skjorten? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvilken farve er skoen? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvilken farve er solen? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvilken farve er sommerfuglen? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvilken farve er stjernen? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvilken farve er tomaten? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvilken farve er træet? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvilken farve er vanddråben? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvilken farve er æblet? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvilken farve er ærtebælgen? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | jordbærret er rødt | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | kløveren er grøn | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | koppen er gul | Bulk-approved (PRD-11 owner listen pass) |  |
@@ -655,6 +671,7 @@ Last updated: 2026-10-04T18:32:17.826Z
 | ✅ | Lav mørkegul farve ved at blande farverne | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Lav mørkerød farve ved at blande farverne | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Lav orange farve ved at blande farverne | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | lavendlen er lilla | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | lilla | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | lys lilla | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | lys orange | Bulk-approved (PRD-11 owner listen pass) |  |
@@ -663,6 +680,7 @@ Last updated: 2026-10-04T18:32:17.826Z
 | ✅ | lysegul | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | lyserød | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | majsen er gul | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | mariehønen er rød | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | mørk lilla | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | mørk orange | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | mørkeblå | Bulk-approved (PRD-11 owner listen pass) |  |
@@ -671,6 +689,7 @@ Last updated: 2026-10-04T18:32:17.826Z
 | ✅ | mørkerød | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | orange | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | osten er gul | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | paraplyen er lilla | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | rosen er rød | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | ræven er orange | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | rød | Bulk-approved (PRD-11 owner listen pass) |  |
@@ -688,6 +707,7 @@ Last updated: 2026-10-04T18:32:17.826Z
 | ✅ | skoen er blå | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | smørret er gult | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | solen er gul | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | sommerfuglen er lilla | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | sort | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | sort og blå bliver mørkeblå | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | sort og gul bliver mørkegul | Bulk-approved (PRD-11 owner listen pass) |  |
@@ -696,8 +716,11 @@ Last updated: 2026-10-04T18:32:17.826Z
 | ✅ | sort og rød bliver mørkerød | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | stjernen er gul | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Sæt farverne fra lys til mørk | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | tomaten er rød | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | træet er grønt | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | vanddråben er blå | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | æblet er rødt | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | ærtebælgen er grøn | Bulk-approved (PRD-11 owner listen pass) |  |
 
 ## Blandet
 

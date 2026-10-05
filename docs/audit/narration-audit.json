@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-04T18:32:17.826Z",
+  "updatedAt": "2026-10-05T03:58:47.369Z",
   "clips": {
     "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|b": {
       "verdict": "ok",
@@ -21200,6 +21200,190 @@
       "text": "et hundrede, halvfems, firs, halvfjerds, tres",
       "group": "math",
       "updatedAt": 1791138737826
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tomaten er rød": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tomaten er rød",
+      "group": "colours",
+      "updatedAt": 1791172727369
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Hvilken farve er tomaten?": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Hvilken farve er tomaten?",
+      "group": "colours",
+      "updatedAt": 1791172727369
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|mariehønen er rød": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "mariehønen er rød",
+      "group": "colours",
+      "updatedAt": 1791172727369
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Hvilken farve er mariehønen?": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Hvilken farve er mariehønen?",
+      "group": "colours",
+      "updatedAt": 1791172727369
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|vanddråben er blå": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "vanddråben er blå",
+      "group": "colours",
+      "updatedAt": 1791172727369
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Hvilken farve er vanddråben?": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Hvilken farve er vanddråben?",
+      "group": "colours",
+      "updatedAt": 1791172727369
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|frøen er grøn": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "frøen er grøn",
+      "group": "colours",
+      "updatedAt": 1791172727369
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Hvilken farve er frøen?": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Hvilken farve er frøen?",
+      "group": "colours",
+      "updatedAt": 1791172727369
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|broccolien er grøn": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "broccolien er grøn",
+      "group": "colours",
+      "updatedAt": 1791172727369
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Hvilken farve er broccolien?": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Hvilken farve er broccolien?",
+      "group": "colours",
+      "updatedAt": 1791172727369
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Hvilken farve er bladet?": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Hvilken farve er bladet?",
+      "group": "colours",
+      "updatedAt": 1791172727369
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|ærtebælgen er grøn": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "ærtebælgen er grøn",
+      "group": "colours",
+      "updatedAt": 1791172727369
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Hvilken farve er ærtebælgen?": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Hvilken farve er ærtebælgen?",
+      "group": "colours",
+      "updatedAt": 1791172727369
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|citronen er gul": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "citronen er gul",
+      "group": "colours",
+      "updatedAt": 1791172727369
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Hvilken farve er citronen?": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Hvilken farve er citronen?",
+      "group": "colours",
+      "updatedAt": 1791172727369
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|blommen er lilla": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "blommen er lilla",
+      "group": "colours",
+      "updatedAt": 1791172727369
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Hvilken farve er blommen?": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Hvilken farve er blommen?",
+      "group": "colours",
+      "updatedAt": 1791172727369
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|lavendlen er lilla": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "lavendlen er lilla",
+      "group": "colours",
+      "updatedAt": 1791172727369
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Hvilken farve er lavendlen?": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Hvilken farve er lavendlen?",
+      "group": "colours",
+      "updatedAt": 1791172727369
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|paraplyen er lilla": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "paraplyen er lilla",
+      "group": "colours",
+      "updatedAt": 1791172727369
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Hvilken farve er paraplyen?": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Hvilken farve er paraplyen?",
+      "group": "colours",
+      "updatedAt": 1791172727369
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|sommerfuglen er lilla": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "sommerfuglen er lilla",
+      "group": "colours",
+      "updatedAt": 1791172727369
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Hvilken farve er sommerfuglen?": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Hvilken farve er sommerfuglen?",
+      "group": "colours",
+      "updatedAt": 1791172727369
     }
   }
 }

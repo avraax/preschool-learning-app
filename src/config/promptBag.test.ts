@@ -224,9 +224,9 @@ const EXPECTED: Record<string, Record<DifficultyLevel, Pinned>> = {
   // non-canonical colours are askable nowhere and LET asks only the unambiguous subjects. Game Depth
   // PRD-01 W1 added `ost` (19 / 13); the new canonical renders will grow both again.
   'colors.quiz': {
-    let: { pool: 13, round: 8, before: 0.97, beforeWorst: 3, after: 0, distinct: 8 },
-    normal: { pool: 19, round: 8, before: 0.8, beforeWorst: 4, after: 0, distinct: 8 },
-    svaer: { pool: 19, round: 8, before: 0.8, beforeWorst: 4, after: 0, distinct: 8 },
+    let: { pool: 19, round: 8, before: 0.81, beforeWorst: 4, after: 0, distinct: 8 },
+    normal: { pool: 29, round: 8, before: 0.6, beforeWorst: 5, after: 0, distinct: 8 },
+    svaer: { pool: 29, round: 8, before: 0.6, beforeWorst: 5, after: 0, distinct: 8 },
   },
   // Nuancer asks 8 orderings over 6 hues, so a repeat inside 8 draws is arithmetic — `after` stays 1.
   // The old draw's worst run showed 3 distinct hues; the bag's shows 5.

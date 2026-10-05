@@ -42,9 +42,9 @@ test('the two pools hold exactly the objects they should', () => {
 
   // Pinned as literals, not as "everything.length - 6": the arithmetic moves with the content and
   // would pass just as happily against an empty pool.
-  assert.equal(everything.length, 34)
-  assert.equal(all.length, 19)
-  assert.equal(obvious.length, 13)
+  assert.equal(everything.length, 46)
+  assert.equal(all.length, 29)
+  assert.equal(obvious.length, 19)
 
   // Let's pool is a strict subset — it may only ever REMOVE risk, never introduce an object the
   // higher levels refuse.
@@ -59,7 +59,7 @@ test('the two pools hold exactly the objects they should', () => {
   const neverAskable = everything.map((o) => o.objectName).filter((n) => !askableNames.has(n))
   assert.deepEqual(neverAskable.sort(), [
     'ballon', 'bil', 'bil', 'blomst', 'fisk', 'fisk', 'fugl', 'hjerte', 'kop', 'krystal', 'lastbil',
-    'rose', 'skjorte', 'sko', 'stjerne',
+    'paraply', 'rose', 'skjorte', 'sko', 'sommerfugl', 'stjerne',
   ])
 
   // …and the six held back from Let by name, for the same reason. This list is the owner-approved
@@ -68,7 +68,8 @@ test('the two pools hold exactly the objects they should', () => {
   const obviousNames = new Set(obvious.map((o) => o.objectName))
   const heldBackFromLet = all.map((o) => o.objectName).filter((n) => !obviousNames.has(n))
   assert.deepEqual(heldBackFromLet.sort(), [
-    'aubergine', 'græskar', 'hval', 'kløver', 'majs', 'skildpadde',
+    'aubergine', 'blomme', 'græskar', 'hval', 'kløver', 'lavendel', 'majs', 'skildpadde', 'vanddråbe',
+    'ærtebælg',
   ])
 })
 
@@ -91,8 +92,8 @@ test('every hue stays askable in BOTH pools, at or above one full round', () => 
   // at a floor of 1 in `obvious` — any further trim there is a bug, and new canonical art is the fix.
   const perHue = (pool: typeof all) =>
     Object.fromEntries(HUE_ORDER.map((hue) => [hue, pool.filter((o) => o.color === hue).length]))
-  assert.deepEqual(perHue(all), { rød: 2, blå: 2, grøn: 4, gul: 5, lilla: 2, orange: 4 })
-  assert.deepEqual(perHue(obvious), { rød: 2, blå: 1, grøn: 2, gul: 4, lilla: 1, orange: 3 })
+  assert.deepEqual(perHue(all), { rød: 4, blå: 3, grøn: 8, gul: 6, lilla: 4, orange: 4 })
+  assert.deepEqual(perHue(obvious), { rød: 4, blå: 1, grøn: 5, gul: 5, lilla: 1, orange: 3 })
 })
 
 test('NO level may show the object in its true colour', () => {
@@ -128,9 +129,9 @@ test('the game actually greys the object it asks about — and only that one', (
   }
   // …and the sizes pinned outright, so the two sides can't agree their way past a change (both call
   // the same function, so agreement alone is vacuous — CLAUDE.md's "pin the value itself").
-  assert.equal(colorQuizPromptPool('let').length, 13)
-  assert.equal(colorQuizPromptPool('normal').length, 19)
-  assert.equal(colorQuizPromptPool('svaer').length, 19)
+  assert.equal(colorQuizPromptPool('let').length, 19)
+  assert.equal(colorQuizPromptPool('normal').length, 29)
+  assert.equal(colorQuizPromptPool('svaer').length, 29)
 
   // EXACTLY ONE desaturate site. Zero = the wiring is gone; two = the copy that lands in the swatch
   // is greyed too, which kills the colour-returns reveal that carries the lesson. And it must be the

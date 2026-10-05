@@ -74,7 +74,10 @@ export const DANISH_OBJECTS: Record<string, ColorObject[]> = {
     // the first four are load-bearing. Reused art copied under hue-specific ids (a red AND a blue `bil`
     // exist now — on a red hunt the blue car is a distractor, so the object stops predicting the colour).
     { objectName: 'ballon', objectNameDefinite: 'ballonen', art: 'balloon_red', hex: '#ef4444', neuter: false, canonical: false },
-    { objectName: 'fisk', objectNameDefinite: 'fisken', art: 'fish_red', hex: '#ef4444', neuter: false, canonical: false }
+    { objectName: 'fisk', objectNameDefinite: 'fisken', art: 'fish_red', hex: '#ef4444', neuter: false, canonical: false },
+    // Game Depth PRD-01 W2 renders (2026-10-05) — canonical reds, unambiguous at 5.
+    { objectName: 'tomat', objectNameDefinite: 'tomaten', art: 'tomato', hex: '#dc2626', neuter: false },
+    { objectName: 'mariehøne', objectNameDefinite: 'mariehønen', art: 'ladybug', hex: '#dc2626', neuter: false }
   ],
   blå: [
     // A whale reads blue-GREY as often as blue — real, but not what Let should hinge on.
@@ -84,14 +87,21 @@ export const DANISH_OBJECTS: Record<string, ColorObject[]> = {
     { objectName: 'skjorte', objectNameDefinite: 'skjorten', art: 'shirt', hex: '#1e40af', neuter: false, canonical: false },
     { objectName: 'bil', objectNameDefinite: 'bilen', art: 'car_blue', hex: '#3b82f6', neuter: false, canonical: false },
     { objectName: 'sko', objectNameDefinite: 'skoen', art: 'shoe_blue', hex: '#3b82f6', neuter: false, canonical: false },
-    { objectName: 'fugl', objectNameDefinite: 'fuglen', art: 'bird_blue', hex: '#3b82f6', neuter: false, canonical: false }
+    { objectName: 'fugl', objectNameDefinite: 'fuglen', art: 'bird_blue', hex: '#3b82f6', neuter: false, canonical: false },
+    // Water is drawn blue but IS see-through — a real blue, not one Let should hinge on.
+    { objectName: 'vanddråbe', objectNameDefinite: 'vanddråben', art: 'water_drop', hex: '#3b82f6', neuter: false, obvious: false }
   ],
   grøn: [
     { objectName: 'agurk', objectNameDefinite: 'agurken', art: 'cucumber', hex: '#16a34a', neuter: false },
     // Turtles read brown to a child, and kløver is an unfamiliar subject at 5 — both Normal-and-up.
     { objectName: 'skildpadde', objectNameDefinite: 'skildpadden', art: 'turtle', hex: '#15803d', neuter: false, obvious: false },
     { objectName: 'kløver', objectNameDefinite: 'kløveren', art: 'clover', hex: '#166534', neuter: false, obvious: false },
-    { objectName: 'træ', objectNameDefinite: 'træet', art: 'tree', hex: '#14532d', neuter: true }
+    { objectName: 'træ', objectNameDefinite: 'træet', art: 'tree', hex: '#14532d', neuter: true },
+    { objectName: 'frø', objectNameDefinite: 'frøen', art: 'frog', hex: '#15803d', neuter: false },
+    { objectName: 'broccoli', objectNameDefinite: 'broccolien', art: 'broccoli', hex: '#166534', neuter: false },
+    { objectName: 'blad', objectNameDefinite: 'bladet', art: 'leaf', hex: '#15803d', neuter: true },
+    // A pea pod is a less familiar subject at 5 — Normal-and-up, like kløver.
+    { objectName: 'ærtebælg', objectNameDefinite: 'ærtebælgen', art: 'pea_pod', hex: '#166534', neuter: false, obvious: false }
   ],
   gul: [
     { objectName: 'sol', objectNameDefinite: 'solen', art: 'sun', hex: '#eab308', neuter: false },
@@ -102,14 +112,20 @@ export const DANISH_OBJECTS: Record<string, ColorObject[]> = {
     { objectName: 'kop', objectNameDefinite: 'koppen', art: 'cup_yellow', hex: '#eab308', neuter: false, canonical: false },
     // Cheese is the one reused object whose colour IS world knowledge, so it joins Hvilken Farve?.
     { objectName: 'ost', objectNameDefinite: 'osten', art: 'cheese', hex: '#facc15', neuter: false },
-    { objectName: 'stjerne', objectNameDefinite: 'stjernen', art: 'star_yellow', hex: '#facc15', neuter: false, canonical: false }
+    { objectName: 'stjerne', objectNameDefinite: 'stjernen', art: 'star_yellow', hex: '#facc15', neuter: false, canonical: false },
+    { objectName: 'citron', objectNameDefinite: 'citronen', art: 'lemon', hex: '#facc15', neuter: false }
   ],
   lilla: [
     { objectName: 'druer', objectNameDefinite: 'druerne', art: 'grapes', hex: '#a855f7', neuter: false },
     // Aubergine's colour is not world knowledge at 5 (and the subject itself often isn't either).
     { objectName: 'aubergine', objectNameDefinite: 'auberginen', art: 'eggplant', hex: '#9333ea', neuter: false, obvious: false },
     { objectName: 'krystal', objectNameDefinite: 'krystallet', art: 'crystal', hex: '#7c3aed', neuter: true, canonical: false },
-    { objectName: 'hjerte', objectNameDefinite: 'hjertet', art: 'heart', hex: '#8b5cf6', neuter: true, canonical: false }
+    { objectName: 'hjerte', objectNameDefinite: 'hjertet', art: 'heart', hex: '#8b5cf6', neuter: true, canonical: false },
+    // Plum and lavender ARE lilla, but neither is a colour a 5-year-old holds for certain — Normal-and-up.
+    { objectName: 'blomme', objectNameDefinite: 'blommen', art: 'plum', hex: '#7e22ce', neuter: false, obvious: false },
+    { objectName: 'lavendel', objectNameDefinite: 'lavendlen', art: 'lavender', hex: '#a78bfa', neuter: false, obvious: false },
+    { objectName: 'paraply', objectNameDefinite: 'paraplyen', art: 'umbrella_purple', hex: '#7c3aed', neuter: false, canonical: false },
+    { objectName: 'sommerfugl', objectNameDefinite: 'sommerfuglen', art: 'butterfly_purple', hex: '#8b5cf6', neuter: false, canonical: false }
   ],
   orange: [
     { objectName: 'appelsin', objectNameDefinite: 'appelsinen', art: 'orange_fruit', hex: '#f97316', neuter: false },

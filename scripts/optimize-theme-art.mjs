@@ -82,8 +82,23 @@ const FARVER_OUT = join(ROOT, 'src', 'assets', 'games', 'farver')
 const FARVER_SIZE = 640
 const FARVER_FILL = 0.8
 const FARVER_KEY_OVERRIDES = {
-  // Stalk ~0..40 excess, baked shadow ~80..180, screen 200+ (measured 2026-10-05).
+  // Measured 2026-10-05 (green-excess histograms): screen 200+, baked contact shadow ~80..180.
+  // Small green PART (stalk / leaf / stems) at ~0..40:
   tomato: { vivid: 150, faint: 70, despill: 60 },
+  lemon: { vivid: 150, faint: 70, despill: 60 },
+  plum: { vivid: 150, faint: 70, despill: 60 },
+  lavender: { vivid: 150, faint: 70, despill: 60 },
+  // Green SUBJECTS at ~20..60 (frog's belly reaches ~70): grow and despill stay above them, and
+  // `darkScreenMax` takes the darkened-screen contact shadow whose excess overlaps the subject's.
+  leaf: { vivid: 150, faint: 62, despill: 80, darkScreenMax: 9 },
+  pea_pod: { vivid: 150, faint: 62, despill: 80, darkScreenMax: 9 },
+  broccoli: { vivid: 150, faint: 62, despill: 80, darkScreenMax: 9 },
+  frog: { vivid: 150, faint: 72, despill: 80, darkScreenMax: 4 },
+  // No green anywhere in the subject — the UI defaults are right (explicit so nothing is unreviewed).
+  water_drop: {},
+  ladybug: {},
+  umbrella_purple: {},
+  butterfly_purple: {},
 }
 
 const REWARD_KEY_OVERRIDES = {
@@ -265,7 +280,11 @@ async function optimizeSymbols() {
 // The renders arrive as JPEG, so edges carry more chroma noise than a PNG would — hence the low despill
 // threshold. Always verify a new batch composited over MAGENTA before wiring it.
 async function greenKeySprite(srcPath, outPath, opts) {
-  const { size, fill, vivid = UI_VIVID, faint = UI_FAINT, despill = UI_DESPILL, quality = 90 } = opts
+  // `darkScreenMax` (opt-in): the baked contact shadow under a GREEN subject is the screen green
+  // darkened — red and blue stay near 0 (measured under the frog: 0,28,2 / 4,37,1) — while the subject's
+  // own darkest green keeps some red/blue (12,48,6). Its green-excess overlaps the subject's, so no
+  // `faint` separates them; this lets the border flood also take pixels with max(r,b) ≤ darkScreenMax.
+  const { size, fill, vivid = UI_VIVID, faint = UI_FAINT, despill = UI_DESPILL, quality = 90, darkScreenMax = -1 } = opts
   const { data, info } = await sharp(srcPath).ensureAlpha().raw().toBuffer({ resolveWithObject: true })
   const { width: w, height: h, channels: c } = info
   const px = Buffer.from(data)
@@ -278,8 +297,10 @@ async function greenKeySprite(srcPath, outPath, opts) {
   // Hysteresis flood-fill from the border: seed through VIVID screen, grow through FAINT green.
   const clear = new Uint8Array(w * h)
   const stack = []
+  const darkScreen = (q) =>
+    darkScreenMax >= 0 && excess[q] > 10 && Math.max(px[q * c], px[q * c + 2]) <= darkScreenMax
   const push = (q) => {
-    if (!clear[q] && excess[q] > faint) {
+    if (!clear[q] && (excess[q] > faint || darkScreen(q))) {
       clear[q] = 1
       stack.push(q)
     }

@@ -1,8 +1,9 @@
 # Game Depth PRD-01 — more variation in eight games, nothing more on screen
 
-**Authored:** 2026-10-04 · **Status: IMPLEMENTED 2026-10-04 except W2** (the 12 new Farver renders — owner
-will generate them later; everything else ships without them) · **Art sibling:** `farver-depth-art-prompts.md`
-(12 renders, plus the reference PNGs in this folder)
+**Authored:** 2026-10-04 · **Status: FULLY IMPLEMENTED** — W0–W11 on 2026-10-04, W2 (the 12 Farver renders)
+on 2026-10-05. Sources in `art-src/farver/`, keyed by `node scripts/optimize-theme-art.mjs farver` with a
+per-file `FARVER_KEY_OVERRIDES` entry (the four green subjects also need `darkScreenMax`, which removes the
+baked shadow whose green overlaps the subject's) · **Art sibling:** `farver-depth-art-prompts.md`
 
 **Deviations from this document, made while implementing (each verified on screen):**
 - §3.2: `SHADES` stays the 3 named steps (Lær Farver + the enumerator read it); the 5-step ramp is a NEW
