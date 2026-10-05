@@ -74,6 +74,18 @@ const REWARD_FILL = 0.88
 //
 // `natur-regnbue` carries a green band too, but its arc keys and colours correctly on the defaults, so
 // it deliberately has no entry — verified, not assumed.
+// Farver objects (Game Depth PRD-01 W2) — art-src/farver/<art id>.{jpg,png} → src/assets/games/farver/.
+// Size/fill match the shipped set (long side ≈ 512 px on a ~640 canvas). Every subject here has a
+// green PART at least (stalks, leaves) or is green outright, so the UI defaults (faint 18 / despill 8)
+// would eat the stalk or grey it — measure each file's green-excess histogram and set an override.
+const FARVER_OUT = join(ROOT, 'src', 'assets', 'games', 'farver')
+const FARVER_SIZE = 640
+const FARVER_FILL = 0.8
+const FARVER_KEY_OVERRIDES = {
+  // Stalk ~0..40 excess, baked shadow ~80..180, screen 200+ (measured 2026-10-05).
+  tomato: { vivid: 150, faint: 70, despill: 60 },
+}
+
 const REWARD_KEY_OVERRIDES = {
   'natur-blad': { vivid: 150, faint: 110, despill: 90 },
   // Reward Horizon chapters 6-8: the puzzle has a genuinely GREEN piece. Measured interior
@@ -387,6 +399,26 @@ async function optimizeGreenBatch(dir, outDir, opts) {
 // game art, so they never pass through here).
 const optimizeUi = () => optimizeGreenBatch('ui', UI_OUT, { size: UI_SIZE, fill: UI_FILL })
 
+// Farver objects — one override per file (see FARVER_KEY_OVERRIDES). A file with no override is keyed
+// on the UI defaults and LOGGED, so a green part can't be eaten silently.
+async function optimizeFarver() {
+  const srcDir = join(SRC_ROOT, 'farver')
+  if (!existsSync(srcDir)) {
+    console.error('! no art-src/farver — skipping')
+    return
+  }
+  const files = (await readdir(srcDir)).filter((f) => /\.(png|jpe?g|webp)$/i.test(f))
+  console.log('\n=== farver ===')
+  for (const file of files) {
+    const name = basename(file, extname(file)).toLowerCase()
+    const override = FARVER_KEY_OVERRIDES[name]
+    if (!override) console.warn(`  ! ${name}: no FARVER_KEY_OVERRIDES entry — keyed on defaults, check its green parts`)
+    const outPath = join(FARVER_OUT, `${name}.webp`)
+    await greenKeySprite(join(srcDir, file), outPath, { size: FARVER_SIZE, fill: FARVER_FILL, ...override })
+    console.log(`  ${name.padEnd(18)} → ${name}.webp  ${String(kb((await stat(outPath)).size)).padStart(4)} KB`)
+  }
+}
+
 // The 12 child-profile avatar portraits.
 const optimizeAvatars = () => optimizeGreenBatch('avatars', AVATAR_OUT, { size: AVATAR_SIZE, fill: AVATAR_FILL })
 
@@ -475,6 +507,10 @@ for (const id of themes) {
   }
   if (id === 'rewards') {
     await optimizeRewards()
+    continue
+  }
+  if (id === 'farver') {
+    await optimizeFarver()
     continue
   }
   if (!(await stat(join(SRC_ROOT, id)).then((s) => s.isDirectory()).catch(() => false))) continue
