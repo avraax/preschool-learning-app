@@ -4,6 +4,7 @@ import { Routes, Route, useNavigate, useLocation } from 'react-router-dom'
 import { logIOSIssue } from './utils/remoteConsole'
 import { deviceInfo } from './utils/deviceDetection'
 import { reportAppOpen, reportRoute } from './services/usagePing'
+import { reminders } from './services/reminders'
 import {
   Container,
   Button,
@@ -167,6 +168,9 @@ function App() {
   // nothing; see `src/config/usageEvents.ts`.
   useEffect(() => {
     reportAppOpen()
+    // Weekly reminders (Re-engagement PRD-01): shell only — a no-op on the web build. Registers the
+    // tap listener and re-anchors the "7 days after the last open" schedule on every start.
+    void reminders.start()
   }, [])
   useEffect(() => {
     reportRoute(location.pathname)

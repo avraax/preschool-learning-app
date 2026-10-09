@@ -75,6 +75,29 @@ export const ADULT_EVENTS = {
 export type AdultStep = keyof typeof ADULT_EVENTS
 
 /**
+ * THE WEEKLY-REMINDER FUNNEL (Re-engagement PRD-01 §2.12). Aggregate daily counts like everything else
+ * here — no install id, so it answers "how many said yes" and "how many sittings did a reminder start",
+ * never "did THIS family come back". That is the price of staying anonymous, and it was paid on purpose.
+ *
+ *   • `offered` → `yes` / `not_now`     how the adult answers OUR card
+ *   • `granted` / `denied`               how they then answer iOS's one-shot dialog
+ *   • `tap_open`                         a sitting a reminder actually started — the number that matters
+ *   • `toggle_on` / `toggle_off`         the switch in Indstillinger → Påmindelser
+ */
+export const NOTIFY_EVENTS = {
+  offered: 'notify:offered',
+  yes: 'notify:yes',
+  notNow: 'notify:not_now',
+  granted: 'notify:granted',
+  denied: 'notify:denied',
+  tapOpen: 'notify:tap_open',
+  toggleOn: 'notify:toggle_on',
+  toggleOff: 'notify:toggle_off',
+} as const
+
+export type NotifyStep = keyof typeof NOTIFY_EVENTS
+
+/**
  * Pathname → event key. EXACT matches only.
  *
  * `/learning/memory/:type` is listed by its two real types rather than by its pattern: `:type` is a URL
@@ -146,6 +169,7 @@ export const USAGE_EVENTS: readonly string[] = [
   APP_OPEN_EVENT,
   REWARD_STICKER_EVENT,
   ...Object.values(ADULT_EVENTS),
+  ...Object.values(NOTIFY_EVENTS),
   ...SESSION_MARKS.map((m) => m.event),
   ...Object.values(ROUTE_EVENTS),
 ]

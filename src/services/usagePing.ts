@@ -41,10 +41,12 @@ import {
   ADULT_EVENTS,
   APP_OPEN_EVENT,
   MAX_EVENTS_PER_REQUEST,
+  NOTIFY_EVENTS,
   REWARD_STICKER_EVENT,
   SESSION_MARKS,
   eventForPath,
   type AdultStep,
+  type NotifyStep,
 } from '../config/usageEvents.ts'
 import { devSessionGapMs } from '../utils/devHarness.ts'
 
@@ -409,5 +411,20 @@ export function reportAdultStep(step: AdultStep): void {
     post([event], false)
   } catch {
     /* a counter may never break the adult surface */
+  }
+}
+
+/**
+ * One step of the weekly-reminder funnel — see `NOTIFY_EVENTS`. Typed and unbatched for the same
+ * reasons as `reportAdultStep`: a fixed constant only, and `tap_open` is sent at a cold start that may
+ * well be the shortest sitting of the week.
+ */
+export function reportNotifyStep(step: NotifyStep): void {
+  try {
+    const event = NOTIFY_EVENTS[step]
+    if (!event) return
+    post([event], false)
+  } catch {
+    /* a counter may never break a reminder flow */
   }
 }
