@@ -68,10 +68,11 @@ carries the quiz board, not the settings.
 
 ## The two-pane IA is a contract
 
-A `maxWidth="md"` Dialog (MUI's default z-index 1300) with a persistent left rail of **five
-mutually-exclusive groups** — **Konto** · **Læring** (difficulty; `panes/LaeringPane.tsx` **EXPLAINS
+A `maxWidth="md"` Dialog (MUI's default z-index 1300) with a persistent left rail of **six
+mutually-exclusive groups** (five on the web) — **Konto** · **Læring** (difficulty; `panes/LaeringPane.tsx` **EXPLAINS
 the selected level in Danish** and labels the setting as per-child) · **Lyd** (SFX/music + narration
-voice + tempo) · **Udseende** (skin) · **Privatliv** (AI-voice disclosure + policy + support) — plus a **persistent rail
+voice + tempo) · **Påmindelser** (the weekly reminder switch — **shell-only**, hidden on the web by
+`railGroups()`; `?fakenotify=granted` shows it in DEV Chrome) · **Udseende** (skin) · **Privatliv** (AI-voice disclosure + policy + support) — plus a **persistent rail
 footer** ("Send feedback" + tap-to-copy version) reachable from every pane. It replaced 13 flat rows in a
 scrolling `xs` dialog and six sibling sub-panels.
 
