@@ -16,7 +16,7 @@
 
 import type { PinReason } from './pinReasons.ts'
 
-export type AdultGroupId = 'konto' | 'laering' | 'lyd' | 'udseende' | 'privatliv'
+export type AdultGroupId = 'konto' | 'laering' | 'lyd' | 'paamindelser' | 'udseende' | 'privatliv'
 
 /**
  * The ordered sub-sections of the `Konto` pane (Familie IA PRD §3).
@@ -147,6 +147,12 @@ export interface AdultGroup {
   /** A single-word Danish noun. Material bans ambiguous section names — see AMBIGUOUS_LABELS. */
   label: string
   items: AdultItem[]
+  /**
+   * Exists only where the feature exists: the iPad app (or the DEV `?fakenotify=` seam). The web build
+   * has no way to send a notification (no service worker, by design), so a switch there would be a
+   * control that does nothing. See `railGroups`.
+   */
+  shellOnly?: true
 }
 
 /** Group names a settings surface may never use (Material: no "Other"/"Misc"). */
@@ -289,6 +295,20 @@ export const ADULT_IA: AdultGroup[] = [
     ],
   },
   {
+    // THE SIXTH GROUP (Re-engagement PRD-01 §2.8, owner 2026-10-09). Its own row rather than a switch
+    // tucked into Lyd or Privatliv: it is the in-app opt-out Guideline 4.5.4 requires, and a reviewer —
+    // or a parent who wants the reminders gone — should find it by its name. Shell-only.
+    id: 'paamindelser',
+    label: 'Påmindelser',
+    shellOnly: true,
+    items: [
+      { id: 'paamindelser.weekly', label: 'Ugentlig påmindelse' },
+      // Owner tool: one reminder in a minute, so the banner can be judged on the iPad without waiting
+      // a week. Staging/dev only, like every devTool.
+      { id: 'paamindelser.test', label: 'Send en testpåmindelse', devTool: true },
+    ],
+  },
+  {
     id: 'udseende',
     label: 'Udseende',
     items: [
@@ -322,6 +342,13 @@ export const ADULT_IA: AdultGroup[] = [
 
 /** Rail order, for the shell. */
 export const ADULT_GROUP_IDS: AdultGroupId[] = ADULT_IA.map((g) => g.id)
+
+/**
+ * The groups the rail actually shows. PURE over its one input so it can be truth-tabled; the caller binds
+ * `remindersAvailable` from `reminders.getSnapshot().available`.
+ */
+export const railGroups = (remindersAvailable: boolean): AdultGroup[] =>
+  ADULT_IA.filter((g) => !g.shellOnly || remindersAvailable)
 
 export const adultGroupLabel = (id: AdultGroupId): string =>
   ADULT_IA.find((g) => g.id === id)?.label ?? ''

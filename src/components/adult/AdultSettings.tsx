@@ -42,6 +42,7 @@ import {
 } from '@mui/material'
 import {
   ArrowUp,
+  BellRing,
   ChevronRight,
   GraduationCap,
   MessageSquare,
@@ -50,7 +51,8 @@ import {
   Users,
   Volume2,
 } from 'lucide-react'
-import { ADULT_IA, ADULT_GROUP_IDS, type AdultGroupId } from '../../config/adultSettingsIa'
+import { ADULT_IA, railGroups, type AdultGroupId } from '../../config/adultSettingsIa'
+import { reminders } from '../../services/reminders'
 import { FEEDBACK_ENTRY_LABEL } from '../../config/feedbackForm'
 import { BUILD_INFO } from '../../config/version'
 import { backendHost } from '../../config/backendTarget'
@@ -63,6 +65,7 @@ import AdultBackHeader from './AdultBackHeader'
 import KontoPane from './panes/KontoPane'
 import LaeringPane from './panes/LaeringPane'
 import LydPane from './panes/LydPane'
+import PaamindelserPane from './panes/PaamindelserPane'
 import UdseendePane from './panes/UdseendePane'
 import PrivatlivPane from './panes/PrivatlivPane'
 
@@ -77,12 +80,20 @@ const RAIL_ICON: Record<AdultGroupId, React.ReactNode> = {
   konto: <Users size={ICON} aria-hidden />,
   laering: <GraduationCap size={ICON} aria-hidden />,
   lyd: <Volume2 size={ICON} aria-hidden />,
+  paamindelser: <BellRing size={ICON} aria-hidden />,
   udseende: <Palette size={ICON} aria-hidden />,
   privatliv: <ShieldCheck size={ICON} aria-hidden />,
 }
 
+/**
+ * The groups this build shows. `Påmindelser` exists only where reminders can be sent (the iPad app, or
+ * the DEV `?fakenotify=` seam) — availability is fixed for the life of the page, so it is read once.
+ */
+const RAIL = railGroups(reminders.getSnapshot().available)
+const RAIL_IDS: AdultGroupId[] = RAIL.map((g) => g.id)
+
 /** The rail's first entry, and the fallback whenever `lastPane` no longer names a real group. */
-const FIRST_PANE: AdultGroupId = ADULT_GROUP_IDS[0]
+const FIRST_PANE: AdultGroupId = RAIL_IDS[0]
 
 /**
  * The pane the adult was last on. MODULE-level on purpose — HIG: "people often adjust related
@@ -97,7 +108,7 @@ let lastPane: AdultGroupId = FIRST_PANE
  * and the detail pane blank with no error.
  */
 const validPane = (id: AdultGroupId): AdultGroupId =>
-  ADULT_GROUP_IDS.includes(id) ? id : FIRST_PANE
+  RAIL_IDS.includes(id) ? id : FIRST_PANE
 
 /**
  * What the detail column can show: one of the five rail groups, or the footer's feedback form.
@@ -223,6 +234,8 @@ const AdultSettings: React.FC<AdultSettingsProps> = ({
       <LaeringPane childName={activeChild} />
     ) : pane === 'lyd' ? (
       <LydPane />
+    ) : pane === 'paamindelser' ? (
+      <PaamindelserPane />
     ) : pane === 'udseende' ? (
       <UdseendePane childName={activeChild} />
     ) : pane === 'privatliv' ? (
@@ -324,7 +337,7 @@ const AdultSettings: React.FC<AdultSettingsProps> = ({
                   progress-aware sticker count, moved into the top of the Konto pane. */}
 
               <List sx={{ flex: 1, minHeight: 0, overflowY: 'auto', py: 0.75, px: 0.75 }}>
-                {ADULT_IA.map((g) => (
+                {RAIL.map((g) => (
                   <ListItemButton
                     key={g.id}
                     aria-label={g.label}

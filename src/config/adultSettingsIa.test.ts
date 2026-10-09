@@ -11,6 +11,7 @@ import {
   adultItemsWithGroup,
   adultItem,
   kontoBlockItems,
+  railGroups,
   showsDevTools,
   devToolItemIds,
 } from './adultSettingsIa.ts'
@@ -30,12 +31,31 @@ test('every group id is unique', () => {
   assert.equal(new Set(ADULT_GROUP_IDS).size, ADULT_GROUP_IDS.length)
 })
 
-test('the surface has exactly the five groups, in rail order', () => {
+test('the surface has exactly these groups, in rail order', () => {
   // Settings PRD-01 shipped FIVE, "Privatliv" made it six at App Store PRD Phase A (owner,
   // 2026-08-06), and the Barn+Konto merge (owner, 2026-09-05) put it back to five by folding `Barn` and
-  // `Konto` together — they are one thing to a parent. Pinned as an exact list (not a length) so a
-  // sixth group is a deliberate act rather than a drift.
-  assert.deepEqual(ADULT_GROUP_IDS, ['konto', 'laering', 'lyd', 'udseende', 'privatliv'])
+  // `Konto` together — they are one thing to a parent. `Påmindelser` (Re-engagement PRD-01 §2.8, owner
+  // 2026-10-09) is the deliberate sixth: the 4.5.4 opt-out, shell-only. Pinned as an exact list (not a
+  // length) so a seventh group is a deliberate act rather than a drift.
+  assert.deepEqual(ADULT_GROUP_IDS, ['konto', 'laering', 'lyd', 'paamindelser', 'udseende', 'privatliv'])
+})
+
+test('Påmindelser shows only where reminders can be sent — never on the web build', () => {
+  assert.deepEqual(railGroups(false).map((g) => g.id), ['konto', 'laering', 'lyd', 'udseende', 'privatliv'])
+  assert.deepEqual(railGroups(true).map((g) => g.id), ADULT_GROUP_IDS)
+  // Only that group is conditional: a shellOnly flag creeping onto another group would hide a real
+  // setting from every web user with no error.
+  assert.deepEqual(ADULT_IA.filter((g) => g.shellOnly).map((g) => g.id), ['paamindelser'])
+  // Its test row is an owner tool, absent from the App Store build.
+  assert.ok(devToolItemIds().includes('paamindelser.test'))
+  assert.ok(!devToolItemIds().includes('paamindelser.weekly'))
+})
+
+test('the Påmindelser pane renders the owner tool only behind showDevTools()', () => {
+  const pane = paneOf('PaamindelserPane.tsx')
+  const at = pane.indexOf('data-paamindelser-test')
+  assert.ok(at > 0, 'the test button is gone')
+  assert.ok(pane.lastIndexOf('showDevTools()', at) > 0, 'the test button is not gated on showDevTools()')
 })
 
 /** Every item that was in `barn` or `konto` before the merge. Literal, so nothing can be LOST. */
@@ -297,13 +317,14 @@ test('showsDevTools is true on staging, in dev and in the harness — and false 
   assert.equal(showsDevTools('staging', true, true), true)
 })
 
-test('exactly the one agreed item is devTool, named literally', () => {
+test('exactly the agreed items are devTool, named literally', () => {
   // Named rather than counted: a count passes while the WRONG one carries the flag.
   // `konto.syncNow` went with the whole Synkronisering section (2026-09-19): sync is invisible to the
   // adult now, and a devTool row is still a row. `lyd.voice`/`lyd.rate`/`lyd.sample` went on
   // 2026-09-20 — deleted outright rather than hidden — and `lyd.everWorked` went the same day, so
-  // "Lyd" now carries no owner tools at all. See the note above.
-  assert.deepEqual(devToolItemIds().sort(), ['udseende.smoothGraphics'])
+  // "Lyd" now carries no owner tools at all. See the note above. `paamindelser.test` (Re-engagement
+  // PRD-01 W3) sends one reminder in a minute so the banner can be judged without waiting a week.
+  assert.deepEqual(devToolItemIds().sort(), ['paamindelser.test', 'udseende.smoothGraphics'])
 })
 
 test('no speaker setting comes back — not as an item, not as a control', () => {
