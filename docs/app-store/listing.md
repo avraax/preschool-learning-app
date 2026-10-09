@@ -190,9 +190,15 @@ monetisation better than any feature bullet, and reviewers read descriptions.
 ### 1.4c "Nyheder" (What's New) — 1.2
 
 **The description (§1.4) does not change for 1.2.** Nothing in this release adds a game, removes one, or
-changes what the app collects — "20 spil" is still right, and the privacy paragraph is untouched. Only
-this field is new. Check it is not `null` on the 1.2 version record before submitting; it does not carry
-over from 1.1.
+changes what the app collects — "20 spil" is still right, and the description's privacy paragraph is
+untouched. **The privacy POLICY did change** (`73a06d5`: a reminders section in both languages, dated
+9 Oct 2026) — that is the page the policy URL serves, not listing copy, so nothing here needs editing for
+it; but don't read "untouched" as covering the policy. Only this field is new. Check it is not `null` on
+the 1.2 version record before submitting; it does not carry over from 1.1.
+
+**1.2 also asks for the app's FIRST device permission** — notifications, for the opt-in weekly reminders
+(Re-engagement PRD-01). That changes the App Review note (§3.3) and nothing in App Privacy: the reminders
+are local, nothing is sent, and the `notify:*` funnel rides the existing anonymous counter.
 
 Three choices worth recording, so they are not re-litigated:
 
@@ -216,6 +222,7 @@ Denne opdatering giver spillene mere variation — og en roligere lyd.
 • Bogstav Quiz viser flere forskellige billeder til hvert bogstav. Å er blevet en ål.
 • Læs Ordet og Stav Ordet har fået mange flere ord, og er blevet lettere på Let.
 • Nuancer og Hukommelse følger nu sværhedsgraden bedre.
+• Hvis I vil, kan appen nu sende en venlig påmindelse, når den ikke har været åbnet i en uge — højst tre i træk. Slå det til eller fra under Indstillinger → Påmindelser.
 • Musikken i Regnbue og Rummet er skiftet ud med noget roligere, og lyden, når en menu åbner, er fjernet.
 • Når man trækker en brik, følger den nu fingeren præcist.
 • "Tog" bliver nu udtalt som toget, ikke som "to".
@@ -557,8 +564,11 @@ node -e "…" # ageRatingDeclaration → kidsAgeBand   ← the authoritative che
   capabilities, medical/wellness, violent themes). Everything here answers to the mildest option; the app
   has no violence, no user-generated content, no chat, no ads, no gambling, no web browsing.
 - **App Review Information.** Contact details, plus **notes in English** stating: no account is required
-  (just tap and play), the adult area is behind a passcode, the passcode for review is `<supply one>`, the
-  app requests no device permissions at all, and it is Danish-only by design.
+  (just tap and play), the adult area is behind a passcode, the passcode for review is `<supply one>`, and
+  it is Danish-only by design. **Until 1.1 the note also said "the app requests no device permissions at
+  all" — FALSE from 1.2**, which asks for notifications. Replace that clause with the reminders note:
+  *"Optional weekly reminders are local notifications scheduled on the device. The adult is asked once on
+  first launch; they can be turned off under Indstillinger → Påmindelser. No server, no data sent."*
 
 ### 3.4 Two account details worth knowing before you enrol
 
