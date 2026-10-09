@@ -141,6 +141,83 @@ test('every reschedule REPLACES ours — never accumulates — and keeps the tes
   assert.deepEqual(pendingIds(h.fake.log), [...REMINDER_IDS, TEST_REMINDER_ID].sort())
 })
 
+// ---- time travel: the "7 days after the LAST open", "three, then nothing" rules over weeks ----------
+
+/** A family's iPad over several weeks: one storage, one iOS (the fake), a clock we move by hand. */
+function timeline(start: Date) {
+  const fake = createFakePlugin('granted')
+  const storage = memoryStorage({ [PREFS_KEY]: JSON.stringify({ prompt: 'yes', enabled: true }) })
+  let now = start
+  /** iOS delivering what is due: a delivered request is no longer pending. */
+  const advanceTo = (d: Date) => {
+    now = d
+    const delivered = fake.log.pending.filter((p) => p.at.getTime() <= now.getTime())
+    fake.log.pending = fake.log.pending.filter((p) => p.at.getTime() > now.getTime())
+    return delivered
+  }
+  /** A cold start of the app at the current moment — a fresh service, the same iPad. */
+  const open = async () => {
+    const svc = new ReminderService({
+      available: () => true,
+      loadPlugin: async () => ({ plugin: fake.plugin }),
+      loadLauncher: async () => null,
+      storage: () => storage,
+      now: () => now,
+      context: () => ({ name: 'Emil', isGuest: false, near: false }),
+      report: () => {},
+    })
+    await svc.start()
+    return svc
+  }
+  const pendingAt = () => fake.log.pending.map((p) => `${p.id} ${local(p.at)}`).sort()
+  return { fake, advanceTo, open, pendingAt }
+}
+
+const local = (d: Date) =>
+  `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`
+
+test('time travel: ignored → exactly three reminders a week apart, then NOTHING, until the app is opened', async () => {
+  const t = timeline(new Date(2026, 9, 9, 12, 0)) // Fri 9 Oct, played at noon
+  await t.open()
+  assert.deepEqual(t.pendingAt(), ['7101 2026-10-16 16:30', '7102 2026-10-23 16:30', '7103 2026-10-30 16:30'])
+
+  // Nobody opens the app. Each week iOS delivers one — and nothing new is ever added.
+  assert.deepEqual(t.advanceTo(new Date(2026, 9, 17, 9, 0)).map((p) => p.id), [7101])
+  assert.deepEqual(t.advanceTo(new Date(2026, 9, 24, 9, 0)).map((p) => p.id), [7102])
+  assert.deepEqual(t.advanceTo(new Date(2026, 9, 31, 9, 0)).map((p) => p.id), [7103])
+
+  // Months of silence: nothing left to fire, ever, until someone opens the app.
+  assert.deepEqual(t.advanceTo(new Date(2027, 2, 1, 9, 0)), [])
+  assert.deepEqual(t.pendingAt(), [])
+
+  // The family comes back on Mon 1 Mar 2027 → the cycle restarts from THAT day.
+  await t.open()
+  assert.deepEqual(t.pendingAt(), ['7101 2027-3-8 16:30', '7102 2027-3-15 16:30', '7103 2027-3-22 16:30'])
+})
+
+test('time travel: opening the app after reminder #1 fired re-anchors all three from the new open', async () => {
+  const t = timeline(new Date(2026, 9, 9, 12, 0))
+  await t.open()
+  // Reminder #1 fires Fri 16 Oct; the family opens the app on Mon 19 Oct.
+  assert.deepEqual(t.advanceTo(new Date(2026, 9, 19, 17, 0)).map((p) => p.id), [7101])
+  await t.open()
+  // #2 and #3 from the OLD cycle are gone — no 23 Oct, no 30 Oct — and three new ones follow Monday.
+  assert.deepEqual(t.pendingAt(), ['7101 2026-10-26 16:30', '7102 2026-11-2 16:30', '7103 2026-11-9 16:30'])
+})
+
+test('time travel: a family that plays every few days NEVER receives a reminder', async () => {
+  const t = timeline(new Date(2026, 9, 9, 12, 0))
+  await t.open()
+  const delivered: number[] = []
+  // Plays every 5 days for ten weeks; each open pushes day 7 further out before it is ever reached.
+  for (let day = 5; day <= 70; day += 5) {
+    delivered.push(...t.advanceTo(new Date(2026, 9, 9 + day, 12, 0)).map((p) => p.id))
+    await t.open()
+  }
+  assert.deepEqual(delivered, [], 'an active family was sent a reminder')
+  assert.equal(t.fake.log.pending.length, 3, 'reopening accumulated reminders instead of replacing them')
+})
+
 test('switch off → nothing of ours pending; switch on again → three', async () => {
   const h = harness('granted', { prompt: 'yes', enabled: true })
   await h.svc.start()
