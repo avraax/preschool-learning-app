@@ -55,6 +55,7 @@ const DevScene = lazy(() => import('./components/dev/DevRoutes').then((m) => ({ 
 const AuditHarness = lazy(() => import('./components/audit/AuditHarness'))
 import UpdateBanner from './components/common/UpdateBanner'
 import AdultSurface from './components/adult/AdultSurface'
+import ReminderPrompt from './components/reminders/ReminderPrompt'
 import PersistentWorld from './components/common/scene/PersistentWorld'
 import RewardOverlay from './components/common/RewardOverlay'
 import RewardWatcher from './components/common/RewardWatcher'
@@ -233,6 +234,10 @@ function App() {
           updateAvailable={updateStatus.updateAvailable || DEV_SHOW_UPDATE_BANNER}
           onApplyUpdate={updateStatus.applyUpdate}
         />
+
+        {/* "Må vi minde jer om Børnelæring?" — once, on home, before iOS's one-shot permission dialog
+            (Re-engagement PRD-01). Renders nothing off the shell. */}
+        <ReminderPrompt />
 
         {/* The backend badge is NOT here. It is mounted in main.tsx, ABOVE AuthGate, because the gate
             renders the lock screen INSTEAD of <App /> — so a badge here is invisible on exactly the

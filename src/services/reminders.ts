@@ -116,6 +116,38 @@ export function reconcilePrefs(prefs: ReminderPrefs, perm: PermState | null): Re
   return prefs
 }
 
+/** How long home must have been on screen, uninterrupted, before the card may appear. */
+export const PROMPT_DELAY_MS = 4000
+
+export interface PromptGateInput {
+  canOffer: boolean
+  pathname: string
+  /** A child is attached — home is the child's page, never the cold-boot window before the roster. */
+  profileAttached: boolean
+  /** The app's one notion of "an auth surface is up" (PIN, picker, lock screen, create-child). */
+  authUiOpen: boolean
+  /** Any other modal on screen: the sticker ceremony, "Hvem spiller?", Indstillinger, a confirm. */
+  otherOverlay: boolean
+  /** Continuous time home has been visible this session. */
+  homeVisibleMs: number
+}
+
+/**
+ * May OUR card appear right now? Home only, never over another overlay, never mid-game (the controller
+ * resets `homeVisibleMs` on every route change, so a child who taps into a game first is not
+ * interrupted — the card waits for the next time home settles, or the next launch).
+ */
+export function promptMayShow(s: PromptGateInput): boolean {
+  return (
+    s.canOffer &&
+    s.pathname === '/' &&
+    s.profileAttached &&
+    !s.authUiOpen &&
+    !s.otherOverlay &&
+    s.homeVisibleMs >= PROMPT_DELAY_MS
+  )
+}
+
 // ---- environment (swappable for tests and the DEV fake) ------------------------------------------
 
 export interface ReminderEnv {
@@ -539,3 +571,13 @@ function toPluginRequest(r: ReminderRequest) {
 }
 
 export const reminders = new ReminderService(defaultEnv())
+
+// DEV handle for the ui-screenshot probes, like `__auth`/`__progress`. A probe that `import()`s this module
+// itself can get a SECOND instance (Vite appends `?t=` after an HMR edit), which reads as "never started".
+try {
+  if (import.meta.env?.DEV && typeof window !== 'undefined') {
+    ;(window as unknown as { __reminders?: ReminderService }).__reminders = reminders
+  }
+} catch {
+  /* Node */
+}
