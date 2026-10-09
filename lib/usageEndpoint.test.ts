@@ -217,3 +217,22 @@ test('the adult-door funnel is actually wired to its three surfaces', () => {
     'gateOk is reported before the gate resolves',
   )
 })
+
+test('the weekly-reminder funnel is wired to every step it counts', () => {
+  // Re-engagement PRD-01 W4. Same failure shape as the adult funnel above: drop a call and the number
+  // simply stops moving, which reads exactly like "nobody opted in". Every NOTIFY_EVENTS key must be
+  // reported somewhere, and through the service's one reporter rather than an ad-hoc string.
+  const read = (rel: string) => code(readFileSync(new URL(rel, import.meta.url), 'utf8'))
+  const svc = read('../src/services/reminders.ts')
+  for (const step of ['offered', 'yes', 'notNow', 'granted', 'denied', 'tapOpen', 'toggleOn', 'toggleOff']) {
+    // Inside a report( … ) call, so a mention in a type or a prefs literal cannot satisfy it.
+    assert.ok(new RegExp(`report\\([^)]*'${step}'`).test(svc), `reminders.ts never reports ${step}`)
+  }
+  assert.match(svc, /report: reportNotifyStep/, 'the live env does not report through reportNotifyStep')
+  // `yes` is counted BEFORE the iOS dialog — a never-answered dialog must still show up as a yes.
+  assert.ok(svc.indexOf("this.env.report('yes')") < svc.indexOf('return this.requestAndApply()'), 'yes is counted after the dialog')
+  const prompt = read('../src/components/reminders/ReminderPrompt.tsx')
+  assert.match(prompt, /reminders\.noteOffered\(\)/, 'the card no longer counts being shown')
+  const app = read('../src/App.tsx')
+  assert.match(app, /reminders\.start\(\)/, 'App no longer starts the reminder service — no tap is ever counted')
+})

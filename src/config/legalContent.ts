@@ -16,6 +16,7 @@
 // PURE + Node-importable: no React, no DOM, explicit `.ts` on relative imports.
 
 import { FEEDBACK_ENTRY_LABEL } from './feedbackForm.ts'
+import { adultGroupLabel } from './adultSettingsIa.ts'
 //
 // This is a factual description of what the app does, written from the code. It is NOT legal advice,
 // and the owner is the data controller who has to stand behind it — see `docs/app-store/phase-a.md`.
@@ -96,8 +97,8 @@ export interface LegalSection {
 }
 
 /** Last substantive revision, shown on the page. Bump when the CONTENT changes, not on a typo fix. */
-export const PRIVACY_UPDATED_DA = '15. september 2026'
-export const PRIVACY_UPDATED_EN = '15 September 2026'
+export const PRIVACY_UPDATED_DA = '9. oktober 2026'
+export const PRIVACY_UPDATED_EN = '9 October 2026'
 
 export const PRIVACY_DA: { title: string; intro: string[]; sections: LegalSection[] } = {
   title: 'Privatlivspolitik',
@@ -154,6 +155,14 @@ export const PRIVACY_DA: { title: string; intro: string[]; sections: LegalSectio
       heading: 'Appen bruger ikke mikrofon eller kamera',
       body: [
         'Appen beder aldrig om adgang til mikrofonen eller kameraet, og den optager hverken lyd eller billeder af barnet. Der er ingen funktion i appen, der kan gøre det.',
+      ],
+    },
+    {
+      heading: 'Påmindelser i iPad-appen',
+      body: [
+        'iPad-appen spørger én gang, om den må sende en venlig påmindelse, hvis den ikke har været åbnet i en uge. Den spørger den voksne, ikke barnet, og der sendes kun påmindelser, hvis du siger ja — både i appen og til iPad’ens egen forespørgsel.',
+        'Der kommer højst én påmindelse om ugen og aldrig mere end tre i træk. Påmindelserne laves og planlægges på iPad’en selv. Der sendes ingen data nogen steder for at lave dem, og der er ingen server, der sender dem.',
+        'Du kan slå dem fra under "Indstillinger" → "' + adultGroupLabel('paamindelser') + '" eller i iPad’ens indstillinger. Appen tæller anonymt, hvor mange der siger ja eller nej, og hvor ofte en påmindelse åbner appen — på samme måde som den tæller, hvor ofte spillene åbnes.',
       ],
     },
     {
@@ -254,6 +263,14 @@ export const PRIVACY_EN: { title: string; intro: string[]; sections: LegalSectio
       heading: 'The app uses neither microphone nor camera',
       body: [
         'The app never asks for microphone or camera access and records neither audio nor images of the child. No feature in the app is able to.',
+      ],
+    },
+    {
+      heading: 'Reminders in the iPad app',
+      body: [
+        'The iPad app asks once whether it may send a friendly reminder when it has not been opened for a week. It asks the adult, not the child, and reminders are sent only if you say yes — both in the app and to the iPad’s own permission request.',
+        'There is at most one reminder a week and never more than three in a row. Reminders are created and scheduled on the iPad itself. No data is sent anywhere to make them, and no server sends them.',
+        'You can turn them off under "Indstillinger" → "' + adultGroupLabel('paamindelser') + '" or in the iPad’s Settings. The app counts, anonymously, how many say yes or no and how often a reminder opens the app — the same way it counts how often each game is opened.',
       ],
     },
     {

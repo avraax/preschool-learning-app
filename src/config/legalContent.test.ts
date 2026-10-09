@@ -23,6 +23,7 @@ import {
   SUPPORT_DA,
 } from './legalContent.ts'
 import { FEEDBACK_ENTRY_LABEL } from './feedbackForm.ts'
+import { adultGroupLabel } from './adultSettingsIa.ts'
 
 const SRC = path.join(import.meta.dirname, '..')
 
@@ -83,6 +84,20 @@ test('the policy explains retention, deletion AND how to withdraw consent', () =
     /trække et samtykke tilbage|trække det tilbage/.test(da),
     'the policy never says how to withdraw consent',
   )
+})
+
+test('the weekly reminders are disclosed in both languages, with the opt-out row the app renders', () => {
+  // Re-engagement PRD-01 W4. Guideline 4.5.4 wants the opt-in and the opt-out stated, and the policy is
+  // where a reviewer reads both. Headings checked as headings (see `headingsOf`) and the opt-out row by
+  // the IA's own label, so renaming the rail group cannot leave the published page pointing at nothing.
+  assert.ok(headingsOf(PRIVACY_DA).includes('Påmindelser i iPad-appen'), 'Danish: no reminders section')
+  assert.ok(headingsOf(PRIVACY_EN).includes('Reminders in the iPad app'), 'English: no reminders section')
+  for (const [lang, doc] of [['Danish', PRIVACY_DA], ['English', PRIVACY_EN]] as const) {
+    const t = textOf(doc)
+    assert.ok(t.includes(`"Indstillinger" → "${adultGroupLabel('paamindelser')}"`), `${lang}: the opt-out row is not named`)
+    assert.match(t, /højst én påmindelse om ugen|at most one reminder a week/, `${lang}: the frequency cap is not stated`)
+    assert.match(t, /ingen data|No data is sent/, `${lang}: the policy does not say no data leaves the device for a reminder`)
+  }
 })
 
 test('the policy states plainly that no microphone or camera is used', () => {
