@@ -320,7 +320,13 @@ test('the shell registers the plugin it needs to be returned to', () => {
   // end-anchoring trap that once let `com.vraa.earlylearning2` past a bundle-id guard. Found by
   // re-breaking this assertion, which stayed green against a renamed package.
   const swift = read('ios', 'App', 'CapApp-SPM', 'Package.swift')
-  for (const name of ['CapacitorApp', 'CapacitorBrowser']) {
+  // Re-engagement PRD-01: the weekly reminders schedule through local-notifications, and the "notifications
+  // are off in iOS" row opens iPad Settings through app-launcher. Both are dynamic-imported, so a binary
+  // without them builds fine and the feature simply never works — the same silent shape as above.
+  for (const dep of ['@capacitor/local-notifications', '@capacitor/app-launcher']) {
+    assert.ok(pkg.dependencies[dep], `${dep} is not a dependency`)
+  }
+  for (const name of ['CapacitorApp', 'CapacitorBrowser', 'CapacitorLocalNotifications', 'CapacitorAppLauncher']) {
     assert.ok(
       swift.includes(`.package(name: "${name}"`),
       `${name} is missing from Package.swift — run npm run cap:sync`,
