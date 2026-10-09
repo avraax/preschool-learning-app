@@ -31,6 +31,16 @@ Generalises: **a promise that never settles is invisible to every error path the
 the second one here after the J62KA `AudioContext.resume()` hang. When a UI is stuck with no error,
 suspect an unsettled await before suspecting a thrown one.
 
+## Local notifications: `schedule()` asks for permission by itself
+
+`@capacitor/local-notifications` ≥ 8.3 requests authorization inside `schedule()` when iOS has never
+asked. iOS asks once, ever, so a reschedule on an unasked iPad would fire the one-shot dialog in front of
+the child with no card before it. `src/services/reminders.ts` schedules **only on `granted`**, and
+`reminders.test.ts`'s fake mirrors the behaviour. Two more plugin facts it relies on: omitting `sound`
+means **silent** on iOS (we pass `'default'`), and `localNotificationActionPerformed` is
+`retainUntilConsumed`, so a tap on a killed app still reaches a listener registered at boot.
+Design record: `plans/re-engagement/tmp-prd-re-engagement-01-weekly-reminders.md`.
+
 ## `app-store-connect` runs on WINDOWS — its own docs say otherwise, and they are wrong
 
 `codemagic-cli-tools` is pip-installable and its `app-store-connect` command is a plain HTTPS client for
