@@ -1,12 +1,69 @@
-# PRD — "Støt appen": a voluntary donation, shipped as 1.1
+# PRD — "Støt appen": a voluntary donation
 
-Authored 2026-08-07. **NOT implemented.** Self-contained: a fresh session should be able to build this
-without re-reading the App Store PRD, and without re-researching Apple's rules — every rule below is
-quoted with its source and read date.
+Authored 2026-08-07. **DORMANT as of 2026-10-09 — do not implement. §0 is the only part that is
+current.** Everything below §0 is the 2026-08-07 design, kept because the Apple rules in §2 cost real
+research and have not changed; the *plan* in §3 has, and §0 says where.
 
 Companion to `tmp-prd-app-store-ios.md` (the route to the store) and `docs/app-store/listing.md` (the
-copy). **This PRD may not be implemented until v1.0 is approved and live.** §7 explains why that is a
-hard ordering and not a preference.
+copy).
+
+---
+
+## 0. Why this is dormant, and what would wake it
+
+Re-examined 2026-10-09, after v1.0 and v1.1 shipped. **The design still works; the arithmetic does
+not.**
+
+### 0.1 The measurement that decided it
+
+Production `usage_counter`, read 2026-10-09 (recipe in `docs/database-access.md`):
+
+| | |
+|---|---|
+| `app_open`, 2026-09-20 → 2026-10-08 | **107** |
+| Per day | **~7**, peak 16 |
+| Versions seen | 1.1.0 (105), 1.0.45 (2) |
+
+That is the **whole user base, the owner's own son included**. At the ordinary donation rate for a free
+children's app (well under 1%) the expected return is zero. The fantasy ceiling — every family that has
+ever opened the app gives 25 kr once — is ~250 kr gross, **~170 kr net** after 25% Danish VAT and
+Apple's 15%. The Apple Developer Program costs ~700 kr/yr. **The tip jar cannot reach its own goal by
+an order of magnitude.**
+
+### 0.2 What it would cost, which went UP since §1 was written
+
+- **"Ingen køb inde i appen" now lives in FIVE places, not the four in §3.5** — the fifth is
+  `src/components/adult/panes/konto/SignInOffer.tsx`, whose own comment says *"EVERY CLAUSE MUST STAY
+  TRUE … If any of them ever stops being true, this line goes first."*
+- **It is also a formal answer to App Review.** `docs/app-store/review-1.3-reply.md`, sent 2026-09-07
+  under the owner's name, states "no in-app purchase" twice in a Guideline 1.3 questionnaire.
+- The product page gains a permanent **"Køb i appen"** badge on a Kids Category app whose entire pitch
+  is that it has none. In a Danish market where every competitor is a subscription, that claim is worth
+  more than 170 kr.
+
+### 0.3 What would actually reopen it
+
+Both, measured — not a hunch:
+
+1. **≥500 `app_open` per month** on production, i.e. ~70× the current base, and
+2. **Real adult-door traffic.** The funnel (`adult:chip`, `adult:door`, `adult:gate_ok`,
+   `adult:gate_fail` in `src/services/usagePing.ts`) is written and ships with **1.2**; it has **no
+   production rows yet**. A tip jar inside Indstillinger is invisible by construction if adults never
+   open Indstillinger, and after 1.2 has run a month that stops being a guess.
+
+A parent actually asking how to support the app also counts — read with `/feedback`.
+
+### 0.4 What is stale below, if it is ever revived
+
+- **§3.3 is wrong.** The adult IA is **five** groups, not six: `['konto','laering','lyd','udseende',
+  'privatliv']`, after the Barn+Konto merge (owner, 2026-09-05), and items now carry a `block`.
+  `adultSettingsIa.test.ts` pins the exact list. A tip jar is better as one row at the bottom of
+  `privatliv` than as a sixth group.
+- **§1's cost model is wrong.** "Sig et Ord" was deleted 2026-09-18, so there is no Google STT cost at
+  all. The recurring cost is the Apple fee plus the domain — and a new risk the PRD never knew about:
+  the **Neon Free 100 CU-h/month ceiling**, which can suspend the main database. That is a cost worth
+  watching, but a tip jar at this scale does not answer it either.
+- **§4 and §7 are DONE and historical** — all the paperwork is complete (see §4), and v1.0 shipped.
 
 ---
 
