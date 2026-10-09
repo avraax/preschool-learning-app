@@ -449,6 +449,22 @@ screenshot is simply wrong. Drop the segment; don't substitute a host the build 
 Verify the output pixel dimensions before uploading — ASC checks them and rejects mismatches. Strip any
 alpha channel the same way as the icon.
 
+**The 1.2 re-shoot (2026-10-09) — what the routes are, and three things that cost a retake.** Shots
+2–4 are `/alphabet/quiz`, `/math/addition` and `/farver/jagt`; 1 is `/`, 5 is `/album`; all ten carry
+`?nogate=1&kidname=Sofia&rewards=12`. No `?theme=` — the shots show the **default** skin on purpose,
+because that is what a new install sees (Dinosaurer since 1.2).
+
+- **A fixed `--wait` photographs a half-built board.** Farvejagt came out with no objects and its title
+  still fading in. Gate each game shot on its content instead — `--wait-for '[data-answer-tile]'`
+  (Bogstav Quiz, Plus) or `'[aria-roledescription="draggable"]'` (Farvejagt) — plus `--settle 3000`.
+- **Shot 6's eval must POLL for every element**, and live in a file passed as `--eval "$(cat f.js)"`.
+  `cdp.mjs` runs `--eval` last with `awaitPromise`, so an async IIFE can drive the whole path; but the
+  first attempts looked for `[data-profile-chip]` before the guest pill had mounted, and photographed
+  the home screen twice with `console errors: 0`. The eval should RETURN a log (`chip=… door=… gate=…
+  settings=…`) so a skipped step is visible in the output rather than only in the picture.
+- **There is no ffmpeg on this machine.** `webkit.mjs` writes RGBA (colour type 6); `sharp` is already in
+  `node_modules`, and `sharp(f).removeAlpha().png()` gives colour type 2. Check byte 25 afterwards.
+
 Two harness cautions that matter here. `?nogate=1` only exists in a **dev or `build:harness`** tree, never
 in a deploy build — so screenshots come from the dev server, not from the shipped bundle. And this driver
 **cannot play audio at all**, so ignore any "Tryk for lyd" state in a capture; it is the harness, not the
