@@ -187,6 +187,41 @@ description that overstates the app is a Guideline 2.3.1 rejection and the easie
 The last line is deliberate. "Skrevet til en 5-årig dreng af hans far" is true, it explains the absence of
 monetisation better than any feature bullet, and reviewers read descriptions.
 
+### 1.4c "Nyheder" (What's New) — 1.2
+
+**The description (§1.4) does not change for 1.2.** Nothing in this release adds a game, removes one, or
+changes what the app collects — "20 spil" is still right, and the privacy paragraph is untouched. Only
+this field is new. Check it is not `null` on the 1.2 version record before submitting; it does not carry
+over from 1.1.
+
+Three choices worth recording, so they are not re-litigated:
+
+- **The default skin gets its own bullet, and it names the exception in the same breath.** A parent whose
+  child already plays in Regnbue would otherwise read "appen åbner nu i Dinosaur-verdenen" as a change
+  being done *to* them. A stored skin still wins (`defaultThemeId`, `224f554`), so the honest line says
+  both halves — and a child who has never chosen one genuinely does land somewhere new.
+- **The variation bullets name the games, not the mechanism.** "Opgaverne varierer mere" is true of
+  everything and tells a parent nothing; "Plus og minus spørger også 4 + ? = 6" is what they will
+  actually see over a shoulder. The format bag, the prompt pools and the per-level tables are
+  implementation and stay out.
+- **The pronunciation fix is listed.** It is one word, but it is the kind of thing a Danish parent
+  notices and silently marks the app down for, and naming it says someone is listening.
+
+```
+Denne opdatering giver spillene mere variation — og en roligere lyd.
+
+• Otte spil stiller nu opgaven på flere måder. Plus og minus spørger også "4 + ? = 6", Sammenlign beder om det mindste tal, og Hvad Mangler tæller baglæns.
+• Farvejagt har fået 12 nye ting at finde, så den samme farve ikke viser de samme billeder hver gang.
+• Ram Farven spørger nu også den anden vej: "rød og blå — hvad bliver det?"
+• Bogstav Quiz viser flere forskellige billeder til hvert bogstav. Å er blevet en ål.
+• Læs Ordet og Stav Ordet har fået mange flere ord, og er blevet lettere på Let.
+• Nuancer og Hukommelse følger nu sværhedsgraden bedre.
+• Musikken i Regnbue og Rummet er skiftet ud med noget roligere, og lyden, når en menu åbner, er fjernet.
+• Når man trækker en brik, følger den nu fingeren præcist.
+• "Tog" bliver nu udtalt som toget, ikke som "to".
+• Nye installationer åbner i Dinosaur-verdenen. Har barnet allerede valgt en verden, bliver det i den.
+```
+
 ### 1.5 Description — English (en-US locale, and useful context for the reviewer)
 
 ```
@@ -253,7 +288,9 @@ for news — "Nu med engelsk", "Nye klistermærker" — rather than leaving perm
 
 ### 1.7 What's New
 
-Not needed for v1 — the field only appears for updates.
+The field only appears for updates, and it is **`null` on every fresh version record** — nothing fails if
+it is left blank, the product page simply shows no release notes. Each release's copy lives with that
+release: **1.1 → §1.4b, 1.2 → §1.4c.**
 
 ---
 
