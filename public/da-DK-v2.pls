@@ -69,6 +69,12 @@
        sweep. The list now includes the sticker labels that are also English words. -->
   <lexeme><grapheme>fly</grapheme><phoneme>flyʔ</phoneme></lexeme>
 
+  <!-- "tog" (train) is a Danish HOMOGRAPH, not a code-switch: Azure picks the past tense of "tage"
+       ("took", read "to'"), so the bare Læs Ordet tile said "to" (owner, 2026-10-09). The noun has a
+       w-glide + stød. Auditioned with inline <phoneme> (scripts/audition-tog.mjs), owner's ear:
+       tɒwʔ chosen; tʌwʔ and tɔwʔ rejected. -->
+  <lexeme><grapheme>tog</grapheme><phoneme>tɒwʔ</phoneme></lexeme>
+
   <!-- ============================================================================================
        AZURE'S PLS GRAPHEME LOOKUP IS CASE-SENSITIVE. Measured 2026-09-06, three words, both cases,
        with-lexicon vs without-lexicon compared byte-for-byte:
@@ -97,5 +103,6 @@
   <lexeme><grapheme>Fly</grapheme><phoneme>flyʔ</phoneme></lexeme>
   <lexeme><grapheme>Hund</grapheme><phoneme>hunʔ</phoneme></lexeme>
   <lexeme><grapheme>Fire</grapheme><phoneme>ˈfiːɐ</phoneme></lexeme>
+  <lexeme><grapheme>Tog</grapheme><phoneme>tɒwʔ</phoneme></lexeme>
 
 </lexicon>
