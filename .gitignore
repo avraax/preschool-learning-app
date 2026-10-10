@@ -89,3 +89,6 @@ plans/session-performance/instructions-loaded.tsv
 
 # Local pronunciation auditions (see scripts/audition-fire.mjs) — never committed
 .audition/
+
+# App Store header crop previews from `npm run header:build` — look, never commit
+docs/app-store/header/*.preview.png

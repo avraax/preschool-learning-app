@@ -45,7 +45,10 @@
     "shots:check": "node scripts/asc-shots.mjs",
     "shots:upload": "node scripts/asc-shots.mjs --upload",
     "desc:check": "node scripts/asc-desc.mjs",
-    "desc:sync": "node scripts/asc-desc.mjs --apply"
+    "desc:sync": "node scripts/asc-desc.mjs --apply",
+    "header:build": "node scripts/app-store-header.mjs --crops",
+    "header:check": "node scripts/asc-header.mjs",
+    "header:upload": "node scripts/asc-header.mjs --upload"
   },
   "dependencies": {
     "@capacitor/app": "^8.1.1",

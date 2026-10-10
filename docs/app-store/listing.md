@@ -486,6 +486,34 @@ the price of submitting a universal app (see the PRD §4.2 and §5.5).
 Optional. Skip for v1 — they must be captured on-device and are more work than they are worth for a first
 submission.
 
+### 2.4 "Header and Search Results" image — FIRST USED 1.2 (2026-10-10)
+
+Apple added this tab to the version page in October 2026: an optional image (or looping muted video) at
+the top of the product page and on the search-results card, shown on **iOS/iPadOS 27+ only** — older
+devices keep showing screenshots. Without one, the App Store falls back to screenshots. The owner chose to
+fill it ("i insist", 2026-10-10), and to keep it filled on every release.
+
+**One universal image fills both placements:** 16:9, **5244×2950, PNG, no alpha** (Apple rejects
+transparency). Apple crops it two ways, so the subject lives in the intersection — the header takes the
+middle 21:9 (≈352 px lost top and bottom), search results the middle 3:2 (≈410 px lost each side).
+
+- **`npm run header:build`** composes `docs/app-store/header/header-universal.png` from shipped art only:
+  the default skin's world (Dinosaurer), the waving mascot, and the five section icons in an arc. It also
+  writes two `*.preview.png` crops (git-ignored) — look at both before uploading. **No text in the image**:
+  Apple overlays the icon, name and Get button, and copy in a picture can't be localised or edited.
+- **`npm run header:upload`** uploads it to the app's **asset library** and places it on the
+  `PREPARE_FOR_SUBMISSION` version's `da` localization as both `PRODUCT_PAGE_HEADER_ASSET` and
+  `APP_STORE_SEARCH_RESULTS_ASSET`, then reads the placements back. Apple reviews it with the version.
+- **`npm run header:check`** compares by file name + byte size (the library API has no checksum).
+
+**Every release:** after creating the version record, run `header:check` — **placements are per version**,
+so a new version starts with none, exactly like screenshots. Re-run `header:build` first when the default
+skin, a section, its icon or the mascot changes. An image changed between releases can also go through
+asset-library review on its own, without a build.
+
+Two API facts that cost time: never send `specId` on create (Apple derives the slot from the pixel size),
+and wait for post-processing before placing (`STATE_ERROR.ASSET_IN_POST_PROCESSING`) — the script polls.
+
 ---
 
 ## 3. Everything else App Store Connect will ask for
