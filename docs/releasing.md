@@ -97,6 +97,10 @@ of a screen the app no longer had. That is a Guideline 2.3.1 accuracy problem, a
 because nothing looked. `listing.md` is the source of truth: `desc:check` extracts its canonical block
 and diffs it line by line, so editing the doc is what changes the store.
 
+**1.3 only, once: add the English (U.K.) locale** — a second keyword pool for the Danish storefront.
+Name, subtitle, keywords and the how are in `docs/app-store/listing.md` §1.3b. `desc:check` reads the
+`da` locale only, so read the en-GB fields back by hand.
+
 **Re-shooting is not uploading, and nothing tells you the difference.** ASC will happily show a
 filename, the right pixel size and `COMPLETE` next to the wrong image. It happened three times in one
 day: once the whole set was a month stale, and twice the rail shot was re-taken locally after an

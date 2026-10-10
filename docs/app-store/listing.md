@@ -106,7 +106,57 @@ and which do not. Treat the ranking of the terms as an opinion and the gaps as f
 after. Alternatives considered and rejected by the owner (2026-09-05): swapping `spil` for `tælle`, and
 keeping `farver` at the cost of `børnehaveklasse`.
 
-### 1.4 Description — Danish (primary), 1457 characters
+### 1.3b A second keyword pool: the English (U.K.) locale — FOR 1.3, NOT YET IN ASC
+
+**Why.** After the first month (2026-09-10 → 10-09: 276 impressions, 81 page views, 58 downloads) the
+listing converts fine and is barely seen — ~10 impressions a day. The da pool above is full. Third-party
+ASO tools report that the **Danish storefront also indexes English (U.K.) metadata, at full weight**
+(AppFollow's storefront table: *Denmark | Danish | English (U.K.)*). **Apple does not document this —
+treat it as likely, not settled.** If it holds, an en-GB locale buys a second name + subtitle + 100
+keyword characters, all searchable in Denmark. Owner decision 2026-10-10: ship it in 1.3.
+
+**Two indexing rules it relies on** (same sources): a token used in one locale is wasted if repeated in
+the other, and tokens from different locales never combine into one query — so a phrase that matters
+("learn danish") must live inside ONE locale.
+
+**Who SEES it.** Only a Danish-storefront user whose device language is English (Denmark is the only
+territory, §3.2). That is mostly expat families whose children attend a Danish børnehaveklasse — a real
+audience, and the one "Learn Danish ABC" is written for. The §1.5 objection to an English listing (it
+invites English speakers to download a Danish-only app) does not apply to them, and the description
+below says outright that all speech is Danish. **The keyword field is never displayed**, which is why it
+can carry Danish words.
+
+| Field | Value | Chars |
+|---|---|---|
+| **Name** | `Børnelæring: Learn Danish ABC` | 29 / 30 |
+| **Subtitle** | `Letters, numbers & colours` | 26 / 30 |
+| **Keywords** | see below | 100 / 100 |
+
+```
+læring,læringsspil,farver,tælle,læsning,stave,lær,ord,dansk,skole,huskespil,plus,minus,kids,alphabet
+```
+
+**Measured, not estimated:** no keyword repeats a da token (name, subtitle or keywords) or an en-GB
+name/subtitle token. The name's `børnelæring`/`abc` overlap the da name — unavoidable, the brand stays.
+`farver`, `tælle`, `plus`, `minus`, `dansk` are the five words §1.3 had to drop for room; `læring` matters
+because `Børnelæring` is ONE token, so "læring for børn" never matched it. Dropped for room here:
+`phonics`, `maths`, `år`.
+
+**Description / promotional text** for this locale: the §1.5 English text (corrected for 1.3 — 20 games,
+no microphone game). Screenshots: none needed; a locale without its own falls back to the primary's.
+
+**How, when the 1.3 version record exists** (a version WAITING_FOR_REVIEW locks both the version and the
+app info, verified 2026-10-10): ASC → App Information → add language *English (U.K.)* → name + subtitle;
+then the 1.3 version page → English (U.K.) → description, keywords, promotional text. **Read every field
+back** — a paste truncated the da description once (§1.4). Afterwards, watch Impressions in App Analytics
+for 2–3 weeks; if nothing moves, the indexing claim was wrong for Denmark and the locale costs nothing to
+leave in place.
+
+### 1.4 Description — Danish (primary), 1384 characters
+
+**1.3: the Ordleg bullet is corrected in the repo and NOT yet live** — ASC 1.2 still says "stav, læs og
+sig ord højt", a microphone game deleted 2026-09-18. `desc:check` reports exactly that one line;
+`desc:sync` it onto the 1.3 version record.
 
 The bullet character is `•` (U+2022), not an emoji, so it is consistent with the app's no-emoji rule.
 
@@ -127,7 +177,7 @@ FEM OMRÅDER
 • Tal og regning — tæl, sammenlign, plus og minus med ting, man kan tælle
 • Farver — kend farverne, bland dem og find dem ude i verden
 • Engelsk — de første engelske ord, læst op af en engelsk stemme
-• Ordleg — stav, læs og sig ord højt
+• Ordleg — stav og læs korte ord
 
 EN BOG FULD AF BELØNNINGER
 Barnet samler klistermærker i sin egen bog. Der er én vej og én belønning ad gangen, så det er let at se, hvad der kommer næst. Ingen point, der forsvinder, og ingen konkurrence mod andre.
@@ -232,14 +282,14 @@ Denne opdatering giver spillene mere variation — og en roligere lyd.
 ### 1.5 Description — English (en-US locale, and useful context for the reviewer)
 
 ```
-Børnelæring is a calm Danish learning app for children in preschool and the first two years of Danish primary school (børnehaveklasse and 1. klasse). Five worlds, 24 games, and a clear Danish voice that reads everything aloud — so a child can play alone, even before learning to read.
+Børnelæring is a calm Danish learning app for children in preschool and the first two years of Danish primary school (børnehaveklasse and 1. klasse). Five worlds, 20 games, and a clear Danish voice that reads everything aloud — so a child can play alone, even before learning to read.
 
 FIVE AREAS
 • The alphabet — find letters, hear their sounds, spell short words
 • Numbers and arithmetic — count, compare, add and subtract with countable things
 • Colours — learn them, mix them, find them in the world
 • English — first English words, read by an English voice
-• Word play — spell, read, and say words out loud
+• Word play — spell and read short words
 
 A BOOK FULL OF REWARDS
 Children collect stickers in their own book. One path, one reward at a time, so it is always clear what
