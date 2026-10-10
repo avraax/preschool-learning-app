@@ -210,8 +210,9 @@ Three choices worth recording, so they are not re-litigated:
   everything and tells a parent nothing; "Plus og minus spørger også 4 + ? = 6" is what they will
   actually see over a shoulder. The format bag, the prompt pools and the per-level tables are
   implementation and stay out.
-- **The pronunciation fix is listed.** It is one word, but it is the kind of thing a Danish parent
-  notices and silently marks the app down for, and naming it says someone is listening.
+- **Small fixes go under one "fejlrettelser" line, not their own bullets** (owner, 2026-10-10). The
+  drag-follows-the-finger fix and the "tog" pronunciation were drafted as bullets and cut: the list is
+  for what a parent will notice, and the fixes are better felt than announced.
 
 ```
 Denne opdatering giver spillene mere variation — og en roligere lyd.
@@ -224,9 +225,8 @@ Denne opdatering giver spillene mere variation — og en roligere lyd.
 • Nuancer og Hukommelse følger nu sværhedsgraden bedre.
 • Hvis I vil, kan appen nu sende en venlig påmindelse, når den ikke har været åbnet i en uge — højst tre i træk. Slå det til eller fra under Indstillinger → Påmindelser.
 • Musikken i Regnbue og Rummet er skiftet ud med noget roligere, og lyden, når en menu åbner, er fjernet.
-• Når man trækker en brik, følger den nu fingeren præcist.
-• "Tog" bliver nu udtalt som toget, ikke som "to".
 • Nye installationer åbner i Dinosaur-verdenen. Har barnet allerede valgt en verden, bliver det i den.
+• Diverse fejlrettelser og små forbedringer.
 ```
 
 ### 1.5 Description — English (en-US locale, and useful context for the reviewer)
