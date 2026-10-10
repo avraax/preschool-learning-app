@@ -267,6 +267,12 @@ is Danish and renaming it in English would misrepresent it.
 en-US locale, so there is no English name, subtitle or promotional text to write. An English listing would
 invite English speakers to download a Danish-only app, which earns one-star reviews.
 
+**Re-confirmed 2026-10-10 (1.2): still Denmark only** (ASC: 1 of 175 territories, new territories off).
+Norway, Sweden, Germany, the UK and the US — where Danish families abroad live — were weighed and
+deferred, "might add later". When that comes up: NO/SE/DE sit under the GDPR the policy already follows;
+the **UK Children's Code and US COPPA are unchecked** against `/privatliv` and should be checked first.
+Territories change in ASC (Pricing and Availability) with no build and no review.
+
 **The English copy above therefore exists for one purpose: App Review.** Apple's reviewers work in English,
 and a Danish-only product page tells them nothing about what they are looking at. Paste it into the App
 Review notes field (§3.3), not into a store locale. Do not add an en-US locale later without re-reading
