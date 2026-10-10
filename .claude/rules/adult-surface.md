@@ -73,7 +73,7 @@ mutually-exclusive groups** (five on the web) — **Konto** · **Læring** (diff
 the selected level in Danish** and labels the setting as per-child) · **Lyd** (SFX/music + narration
 voice + tempo) · **Påmindelser** (the weekly reminder switch — **shell-only**, hidden on the web by
 `railGroups()`; `?fakenotify=granted` shows it in DEV Chrome) · **Udseende** (skin) · **Privatliv** (AI-voice disclosure + policy + support) — plus a **persistent rail
-footer** ("Send feedback" + tap-to-copy version) reachable from every pane. It replaced 13 flat rows in a
+footer** ("Send feedback" + shell-only "Bedøm appen" + tap-to-copy version) reachable from every pane. It replaced 13 flat rows in a
 scrolling `xs` dialog and six sibling sub-panels.
 
 **`Konto` is `Barn` + the old `Konto` + the old `Log ind` promo row, merged** (Familie IA PRD, owner
@@ -189,9 +189,12 @@ Renamed from **"Rapportér et problem"** on 2026-09-15 (owner). **Do not re-liti
 - **Send is disabled until something is typed** (`canSubmitFeedback`, pure, in
   `src/config/feedbackForm.ts`). An empty upload cost nothing when the payload *was* the report and
   costs everything now that the door invites a sentence.
-- **No prompt, ever.** Nothing nudges a parent to write and there is no rating prompt: Kids Guideline
-  1.3 keeps everything adult-directed behind the gate, so **absence of feedback is not evidence of
-  health**. A rating prompt was considered and refused — it is a link out of the app.
+- **No prompt, ever.** Nothing nudges a parent to write or rate: Kids Guideline 1.3 keeps everything
+  adult-directed behind the gate, so **absence of feedback is not evidence of health**. A timed rating
+  PROMPT stays refused. What exists since 1.3 (owner, 2026-10-10, to lift App Store ranking) is a
+  **"Bedøm appen" ROW** under "Send feedback" — behind the gate, so 1.3 allows its link out. It opens
+  the `action=write-review` URL (`src/config/storeReview.ts`), not `requestReview()`, which iOS
+  rate-limits into silently doing nothing. **Shell + DEV only**; counted as `adult:rate`.
 - **The LABEL is a constant, not a literal.** `FEEDBACK_ENTRY_LABEL` feeds the rail row, its
   `aria-label` and the dialog title, *and* is quoted by `SUPPORT_DA` and `PRIVACY_DA`, which tell a
   parent to go and find a row by that name. Rename it in JSX alone and the published pages silently

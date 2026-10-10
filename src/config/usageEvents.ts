@@ -70,6 +70,8 @@ export const ADULT_EVENTS = {
   gateOk: 'adult:gate_ok',
   /** The gate refused or was cancelled. */
   gateFail: 'adult:gate_fail',
+  /** "Bedøm appen" tapped — the App Store was asked to open. Not proof a review was written. */
+  rate: 'adult:rate',
 } as const
 
 export type AdultStep = keyof typeof ADULT_EVENTS

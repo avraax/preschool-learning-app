@@ -48,12 +48,16 @@ import {
   MessageSquare,
   Palette,
   ShieldCheck,
+  Star,
   Users,
   Volume2,
 } from 'lucide-react'
 import { ADULT_IA, railGroups, type AdultGroupId } from '../../config/adultSettingsIa'
 import { reminders } from '../../services/reminders'
 import { FEEDBACK_ENTRY_LABEL } from '../../config/feedbackForm'
+import { RATE_ENTRY_LABEL } from '../../config/storeReview'
+import { openStoreReview, storeReviewAvailable } from '../../services/storeReview'
+import { reportAdultStep } from '../../services/usagePing'
 import { BUILD_INFO } from '../../config/version'
 import { backendHost } from '../../config/backendTarget'
 import { PHONE_ANY } from '../../theme/phoneMedia'
@@ -390,6 +394,27 @@ const AdultSettings: React.FC<AdultSettingsProps> = ({
                     slotProps={{ primary: { noWrap: true, sx: { fontSize: '0.82rem' } } }}
                   />
                 </ListItemButton>
+                {/* Rating: a row, never a prompt — Kids 1.3 keeps the adult-directed behind the gate,
+                    and this is behind it. Shell-only (plus DEV); see `src/config/storeReview.ts`. */}
+                {storeReviewAvailable() && (
+                  <ListItemButton
+                    aria-label={RATE_ENTRY_LABEL}
+                    data-rail-item="rate"
+                    onClick={() => {
+                      reportAdultStep('rate')
+                      void openStoreReview()
+                    }}
+                    sx={{ minHeight: 44, px: 1 }}
+                  >
+                    <ListItemIcon sx={{ minWidth: 26, color: 'inherit' }}>
+                      <Star size={17} aria-hidden />
+                    </ListItemIcon>
+                    <ListItemText
+                      primary={RATE_ENTRY_LABEL}
+                      slotProps={{ primary: { noWrap: true, sx: { fontSize: '0.82rem' } } }}
+                    />
+                  </ListItemButton>
+                )}
                 <ButtonBase
                   onClick={copyVersion}
                   aria-label="Kopiér version og bygge-id"
