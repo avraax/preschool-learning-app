@@ -7,6 +7,10 @@ baseline is the finding.
 **Every claim names the rung it came from** (CLAUDE.md): (1) headless Chrome, (2) real WebKit with an iPad
 UA, (3) the owner's iPad. Rungs 1–2 are below and I can run them. Rung 3 is §5 and only the owner can.
 
+**Store record, before pressing Submit:** "What's New" is null on every fresh version and must be written
+for **every locale — `da`, and `en-GB` from 1.3** (listing §1.3b, §1.7); then `shots:check`,
+`desc:check`, `header:check` all green, and the review note re-read against what the release changes.
+
 ## 0. Prerequisites
 
 Both dev servers, **in Windows PowerShell, not WSL** (WSL gives 502 on every `/api` call):
@@ -36,7 +40,7 @@ and passes vacuously — `AppErrorBoundary`'s "Prøv igen" and NotFound's "Hjem"
 | `npm run audit:check` | Every closed-set narration clip is signed off | clean, 2576 clips |
 | `npm run schema:check` | **Both deployments' databases match the code they run** — the check that was missing when sign-in died on production | staging + production IN SYNC |
 | `npm run shots:check` | **App Store Connect holds the same screenshots as the repo** — re-shooting is not uploading, and ASC shows the right filename beside the wrong image | all 12 match |
-| `npm run header:check` | **The version being edited carries the header/search-results image** — placements are per version, so a new version starts with none (listing §2.4) | both placements OK |
+| `npm run header:check` | **The version being edited carries the header/search-results image on every locale** — a new locale starts with none (listing §2.4) | both placements OK on `da` + `en-GB` |
 | `npm run lexicon:check` | Each PLS lexeme is live **and tested in a real sentence** — a bare word gives a false negative, which cost three wrong diagnoses | all 8 APPLIED |
 | `sweep --phase smoke` | Every route renders, shows **its own** Danish title, and throws no console error or page exception | 27 PASS · 0 FAIL · 0 N/A |
 | `sweep --phase layout` | The same across **8 viewports** — iPad landscape/portrait/split, small iPad, wide, phone both ways — plus **nothing clipped off-screen** | 216 PASS · 0 FAIL · 0 N/A |

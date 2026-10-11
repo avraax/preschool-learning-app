@@ -54,30 +54,69 @@ if (!app) { console.error(`no app with bundleId ${PROD_BUNDLE_ID} — refusing t
 const vers = await api(`/v1/apps/${app.id}/appStoreVersions?limit=10`)
 const ver = (vers.data || []).find((v) => v.attributes.appStoreState === 'PREPARE_FOR_SUBMISSION')
 if (!ver) { console.error('no version in PREPARE_FOR_SUBMISSION — create the next version first'); process.exit(1) }
-const locs = await api(`/v1/appStoreVersions/${ver.id}/appStoreVersionLocalizations`)
-const da = (locs.data || []).find((l) => l.attributes.locale === 'da')
-if (!da) { console.error('no da localization on that version'); process.exit(1) }
+// EVERY localization of the version, not just `da`: placements are per locale, and since 1.3 the listing
+// has an en-GB locale too (listing §1.3b). Whether a locale without its own placement falls back to
+// the primary's is undocumented — so place it everywhere rather than find out on the store.
+const locs = (await api(`/v1/appStoreVersions/${ver.id}/appStoreVersionLocalizations`)).data || []
+if (!locs.length) { console.error('no localizations on that version'); process.exit(1) }
 console.log(`${app.attributes.name} — version ${ver.attributes.versionString} (${ver.attributes.appStoreState})\n`)
 
-const readPlacements = async () => {
-  const r = await api(`/v1/appStoreVersionLocalizations/${da.id}/placements?include=image&limit=50`)
+const readPlacements = async (loc) => {
+  const r = await api(`/v1/appStoreVersionLocalizations/${loc.id}/placements?include=image&limit=50`)
   const imgs = new Map((r.included || []).filter((x) => x.type === 'appAssetLibraryImages').map((x) => [x.id, x]))
   return (r.data || []).map((p) => ({ p, img: imgs.get(p.relationships?.image?.data?.id) }))
 }
 const matches = ({ img }) => img?.attributes?.fileName === fileName && img?.attributes?.fileSize === fileSize
 
-let current = await readPlacements()
-const stale = PLACEMENTS.filter((t) => force || !current.some((c) => c.p.attributes.placementType === t && matches(c)))
-for (const t of PLACEMENTS) {
-  const c = current.find((x) => x.p.attributes.placementType === t)
-  const what = c ? `${c.img?.attributes?.fileName ?? '?'} (${c.img?.attributes?.fileSize ?? '?'} B, ${c.p.attributes.state ?? '?'})` : 'none'
-  console.log(`${t.padEnd(32)} ${stale.includes(t) ? 'STALE' : 'OK   '} ${what}`)
+const work = [] // { loc, current, stale }
+for (const loc of locs) {
+  const current = await readPlacements(loc)
+  const stale = PLACEMENTS.filter((t) => force || !current.some((c) => c.p.attributes.placementType === t && matches(c)))
+  for (const t of PLACEMENTS) {
+    const c = current.find((x) => x.p.attributes.placementType === t)
+    const what = c ? `${c.img?.attributes?.fileName ?? '?'} (${c.img?.attributes?.fileSize ?? '?'} B, ${c.p.attributes.state ?? '?'})` : 'none'
+    console.log(`${loc.attributes.locale.padEnd(6)} ${t.padEnd(32)} ${stale.includes(t) ? 'STALE' : 'OK   '} ${what}`)
+  }
+  if (stale.length) work.push({ loc, current, stale })
 }
-if (!stale.length) { console.log('\nApp Store Connect matches the repo.'); process.exit(0) }
-if (!upload) { console.log(`\n${stale.length} placement(s) differ — run: npm run header:upload`); process.exit(1) }
+const nStale = work.reduce((n, w) => n + w.stale.length, 0)
+if (!nStale) { console.log('\nApp Store Connect matches the repo.'); process.exit(0) }
+if (!upload) { console.log(`\n${nStale} placement(s) differ — run: npm run header:upload`); process.exit(1) }
 
-// 1. Reserve, upload and commit the image in the app's asset library. No specId: Apple derives the
-//    allowed placements from the pixel size (5244x2950 = universal, both placements).
+// 1. Reuse the library image if the same file is already there (it survives across versions and may
+//    already be APPROVED); otherwise reserve, upload and commit it. No specId on create: Apple derives
+//    the allowed placements from the pixel size (5244x2950 = universal, both placements).
+const lib = await api(`/v1/appAssetLibraries/${app.id}/images?limit=200`).catch(() => ({ data: [] }))
+const existing = !force && (lib.data || []).find((i) => matches({ img: i }) && !/FAILED|ERROR/.test(i.attributes.state ?? ''))
+let imageId = existing?.id
+if (existing) console.log(`\n    reusing library image ${imageId} (${existing.attributes.state})`)
+else imageId = await uploadImage()
+
+// 3. Swap the placements on each stale locale: drop the old ones for these types, attach the image.
+for (const { loc, current, stale } of work) {
+  for (const c of current.filter((x) => stale.includes(x.p.attributes.placementType))) {
+    await api(`/v1/appAssetLibraryPlacements/${c.p.id}`, { method: 'DELETE' })
+  }
+  for (const t of stale) {
+    await api('/v1/appAssetLibraryPlacements', { method: 'POST', body: JSON.stringify({ data: {
+      type: 'appAssetLibraryPlacements', attributes: { placementType: t },
+      relationships: {
+        image: { data: { type: 'appAssetLibraryImages', id: imageId } },
+        appStoreVersionLocalization: { data: { type: 'appStoreVersionLocalizations', id: loc.id } },
+      } } }) })
+    console.log(`    ${loc.attributes.locale}: placed as ${t}`)
+  }
+}
+
+let ok = true
+for (const loc of locs) {
+  const current = await readPlacements(loc)
+  ok &&= PLACEMENTS.every((t) => current.some((c) => c.p.attributes.placementType === t && matches(c)))
+}
+console.log(ok ? '\nPlaced and read back. Apple reviews it with the version.' : '\nRead-back MISMATCH — run header:check')
+process.exit(ok ? 0 : 1)
+
+async function uploadImage() {
 const buf = readFileSync(FILE)
 const res = await api('/v1/appAssetLibraryImages', { method: 'POST', body: JSON.stringify({ data: {
   type: 'appAssetLibraryImages',
@@ -104,22 +143,5 @@ for (let i = 0; i < 60; i++) {
   await sleep(5000)
 }
 console.log(`    processed (${state})`)
-
-// 3. Swap the placements on this version: drop the old ones for these types, attach the new image.
-for (const c of current.filter((x) => stale.includes(x.p.attributes.placementType))) {
-  await api(`/v1/appAssetLibraryPlacements/${c.p.id}`, { method: 'DELETE' })
+return imageId
 }
-for (const t of stale) {
-  await api('/v1/appAssetLibraryPlacements', { method: 'POST', body: JSON.stringify({ data: {
-    type: 'appAssetLibraryPlacements', attributes: { placementType: t },
-    relationships: {
-      image: { data: { type: 'appAssetLibraryImages', id: imageId } },
-      appStoreVersionLocalization: { data: { type: 'appStoreVersionLocalizations', id: da.id } },
-    } } }) })
-  console.log(`    placed as ${t}`)
-}
-
-current = await readPlacements()
-const ok = PLACEMENTS.every((t) => current.some((c) => c.p.attributes.placementType === t && matches(c)))
-console.log(ok ? '\nPlaced and read back. Apple reviews it with the version.' : '\nRead-back MISMATCH — run header:check')
-process.exit(ok ? 0 : 1)

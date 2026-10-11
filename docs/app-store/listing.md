@@ -106,7 +106,14 @@ and which do not. Treat the ranking of the terms as an opinion and the gaps as f
 after. Alternatives considered and rejected by the owner (2026-09-05): swapping `spil` for `tælle`, and
 keeping `farver` at the cost of `børnehaveklasse`.
 
-### 1.3b A second keyword pool: the English (U.K.) locale — FOR 1.3, NOT YET IN ASC
+### 1.3b A second keyword pool: the English (U.K.) locale — WRITTEN TO ASC 2026-10-11, SHIPS WITH 1.3
+
+**State 2026-10-11:** the 1.3 version record was created early (no build, `PREPARE_FOR_SUBMISSION`) the
+day 1.2 went live, and every en-GB field below was written via the API and **read back identical** —
+name, subtitle, privacy URL, description, keywords, promotional text, support URL, and the header image
+(`header:upload` places it on every locale). It goes live only when a 1.3 build is attached and approved.
+**Still owed at 1.3 submission: an en-GB "What's New"** (and the da one) — it is null on a fresh record.
+If the next release is not "1.3", rename the version string rather than creating another record.
 
 **Why.** After the first month (2026-09-10 → 10-09: 276 impressions, 81 page views, 58 downloads) the
 listing converts fine and is barely seen — ~10 impressions a day. The da pool above is full. Third-party
@@ -142,13 +149,20 @@ name/subtitle token. The name's `børnelæring`/`abc` overlap the da name — un
 because `Børnelæring` is ONE token, so "læring for børn" never matched it. Dropped for room here:
 `phonics`, `maths`, `år`.
 
-**Description / promotional text** for this locale: the §1.5 English text (corrected for 1.3 — 20 games,
-no microphone game). Screenshots: none needed; a locale without its own falls back to the primary's.
+**Description** for this locale: the §1.5 English text (corrected for 1.3 — 20 games, no microphone game).
+Screenshots: none needed; a locale without its own falls back to the primary's.
 
-**How, when the 1.3 version record exists** (a version WAITING_FOR_REVIEW locks both the version and the
-app info, verified 2026-10-10): ASC → App Information → add language *English (U.K.)* → name + subtitle;
-then the 1.3 version page → English (U.K.) → description, keywords, promotional text. **Read every field
-back** — a paste truncated the da description once (§1.4). Afterwards, watch Impressions in App Analytics
+**Promotional text (en-GB), 153 / 170** — written 2026-10-11, addressed to the expat parent:
+
+```
+Learn Danish letters, numbers and colours, with every word read aloud by a clear Danish voice. For ages 5–7. No ads, no in-app purchases and no tracking.
+```
+
+**How it was done** (a version WAITING_FOR_REVIEW locks both the version and the app info, verified
+2026-10-10, so it had to wait for 1.2 to clear review): `appInfoLocalizations` POST `en-GB` on the
+editable appInfo (name, subtitle, privacyPolicyUrl copied from `da`), then `appStoreVersionLocalizations`
+POST `en-GB` on the 1.3 record (description, keywords, promotionalText, supportUrl). **Read every field
+back** — a paste truncated the da description once (§1.4). After 1.3 is live, watch Impressions in App Analytics
 for 2–3 weeks; if nothing moves, the indexing claim was wrong for Denmark and the locale costs nothing to
 leave in place.
 
@@ -557,13 +571,15 @@ middle 21:9 (≈352 px lost top and bottom), search results the middle 3:2 (≈4
   the default skin's world (Dinosaurer), the waving mascot, and the five section icons in an arc. It also
   writes two `*.preview.png` crops (git-ignored) — look at both before uploading. **No text in the image**:
   Apple overlays the icon, name and Get button, and copy in a picture can't be localised or edited.
-- **`npm run header:upload`** uploads it to the app's **asset library** and places it on the
-  `PREPARE_FOR_SUBMISSION` version's `da` localization as both `PRODUCT_PAGE_HEADER_ASSET` and
-  `APP_STORE_SEARCH_RESULTS_ASSET`, then reads the placements back. Apple reviews it with the version.
+- **`npm run header:upload`** places it on **every localization** of the `PREPARE_FOR_SUBMISSION`
+  version (`da`, and `en-GB` from 1.3) as both `PRODUCT_PAGE_HEADER_ASSET` and
+  `APP_STORE_SEARCH_RESULTS_ASSET`, reusing the library image when the same file is already there
+  (otherwise it uploads a new one), then reads the placements back. Apple reviews it with the version.
 - **`npm run header:check`** compares by file name + byte size (the library API has no checksum).
 
-**Every release:** after creating the version record, run `header:check` — **placements are per version**,
-so a new version starts with none, exactly like screenshots. Re-run `header:build` first when the default
+**Every release:** after creating the version record, run `header:check`. **Measured 2026-10-11:** a new
+version record COPIES the previous version's placements (1.3's `da` arrived already placed) — but a newly
+added locale arrives with none, which is what the check catches. Re-run `header:build` first when the default
 skin, a section, its icon or the mascot changes. An image changed between releases can also go through
 asset-library review on its own, without a build.
 
