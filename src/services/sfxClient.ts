@@ -78,8 +78,9 @@ const CUE_FILES: Record<SfxCue, string> = {
   'nav-warp': '/sounds/ui/flip.mp3',
   'nav-stomp': '/sounds/ui/drop-snap.mp3',
   back: '/sounds/ui/flip.mp3',
-  'crate-thud': '/sounds/ui/drop-snap.mp3',
-  'pallet-clunk': '/sounds/ui/drop-snap.mp3',
+  // Kenney "Impact Sounds" (CC0): impactWood_medium_002 / impactWood_heavy_001.
+  'crate-thud': '/sounds/ui/crate-thud.mp3',
+  'pallet-clunk': '/sounds/ui/pallet-clunk.mp3',
   bundle: '/sounds/ui/streak-up.mp3',
   horn: '/sounds/ui/page-complete.mp3',
   splash: '/sounds/ui/flip.mp3',
