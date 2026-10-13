@@ -75,8 +75,12 @@
       var a = {
         n: attempts.length + 1,
         at: now(),
-        src: shortSrc(el.currentSrc || el.src || el.getAttribute('src')),
-        rawSrc: String(el.currentSrc || el.src || el.getAttribute('src') || '').slice(0, 40),
+        // `src` FIRST, never `currentSrc`: ttsClient reuses ONE <audio> element and sets `src` + `load()`
+        // right before `play()`, and `currentSrc` only updates after the async resource selection — so
+        // it still names the PREVIOUS clip. Reading it first labelled every clip one step late and made
+        // the last clip of a run look as if it never played (Fyld Båden, 2026-10-13).
+        src: shortSrc(el.src || el.currentSrc || el.getAttribute('src')),
+        rawSrc: String(el.src || el.currentSrc || el.getAttribute('src') || '').slice(0, 40),
         muted: !!el.muted,
         volume: typeof el.volume === 'number' ? el.volume : 1,
         maxVolume: typeof el.volume === 'number' ? el.volume : 1,

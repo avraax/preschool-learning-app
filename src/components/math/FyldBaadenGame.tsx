@@ -19,7 +19,7 @@ import { progressStore } from '../../services/progressStore'
 import { sfx } from '../../services/sfxClient'
 import { mascotBus } from '../../services/mascotBus'
 import { fillBoatPrompt } from '../../config/gamePhrases'
-import { pickBoatNumber } from '../../config/mathProblems'
+import { BOAT_RECENT_WINDOW, pickBoatNumber } from '../../config/mathProblems'
 import { DWELL_CORRECT } from '../../theme/motion'
 import { idleRock } from '../../theme/idleMotion'
 import { DEV } from '../../utils/devHarness'
@@ -75,17 +75,21 @@ const FyldBaadenGame: React.FC = () => {
   const [bundle, setBundle] = useState<BundleFx | null>(null)
   const [bundling, setBundling] = useState(false)
   const [shakeKey, setShakeKey] = useState(0)
+  // Bumped per successful load of a kind — remounts that pile's top unit (see Quay's `refill`).
+  const [refills, setRefills] = useState<Record<CargoKind, number>>({ pallet: 0, crate: 0 })
   const [guideReaction, setGuideReaction] = useState<GuideReaction>(null)
 
   // Refs mirror what a same-tick second gesture must see (a double tap reads stale state otherwise).
   const deckRef = useRef<DeckState>(EMPTY_DECK)
   const targetRef = useRef(0)
+  const recentRef = useRef<number[]>([])
   const phaseRef = useRef<Phase>('arriving')
   const isAdvancing = useRef(false)
   const bundlingRef = useRef(false)
   const firstAttemptRef = useRef(true)
   const welcomeDoneRef = useRef(false)
   const welcomeTriggered = useRef(false)
+  const hasInteractedRef = useRef(false)
   const arrivedRef = useRef(false)
   const hasInitialized = useRef(false)
   const timers = useRef<Record<string, ReturnType<typeof setTimeout> | null>>({})
@@ -126,13 +130,15 @@ const FyldBaadenGame: React.FC = () => {
   const speakPrompt = () => {
     if (!targetRef.current) return
     audio.updateUserInteraction()
-    void audio.speak(fillBoatPrompt(targetRef.current)).catch(() => {})
+    console.error('DBG speakPrompt', targetRef.current)
+    void audio.speak(fillBoatPrompt(targetRef.current)).then((r) => console.error('DBG speak resolved', r)).catch((e) => console.error('DBG speak err', String(e)))
   }
 
   // A new boat chugs in from behind the quay with an empty deck and a new number.
   const newBoat = () => {
     const level = progressStore.difficultyFor('math')
-    const n = pickBoatNumber(level, targetRef.current || undefined)
+    const n = pickBoatNumber(level, recentRef.current)
+    recentRef.current = [...recentRef.current, n].slice(-BOAT_RECENT_WINDOW)
     targetRef.current = n
     setTarget(n)
     setDeckBoth(EMPTY_DECK)
@@ -147,6 +153,7 @@ const FyldBaadenGame: React.FC = () => {
   }
 
   const onArrived = () => {
+    console.error('DBG onArrived', targetRef.current, welcomeDoneRef.current, hasInteractedRef.current)
     arrivedRef.current = true
     isAdvancing.current = false
     setPhaseBoth('loading')
@@ -162,8 +169,19 @@ const FyldBaadenGame: React.FC = () => {
       /* the prompt below still plays */
     }
     welcomeDoneRef.current = true
-    // The first prompt waits for whichever finishes last: the welcome or the boat's arrival.
-    if (arrivedRef.current && phaseRef.current === 'loading') speakPrompt()
+    // The first prompt waits for whichever finishes last: the welcome or the boat's arrival — unless
+    // the child is already playing, in which case it would talk over them.
+    if (!hasInteractedRef.current && arrivedRef.current && phaseRef.current === 'loading') speakPrompt()
+  }
+
+  // The first gesture IN the game ends the welcome's chance to play. Audio only becomes ready on a
+  // gesture, so on a cold deep link the welcome would otherwise fire on the child's first crate and
+  // re-speak the prompt over whatever they just did (audio-report probe, 2026-10-13). It also lets
+  // every later boat speak its prompt on arrival even if the welcome never ran.
+  const markInteracted = () => {
+    hasInteractedRef.current = true
+    welcomeTriggered.current = true
+    welcomeDoneRef.current = true
   }
 
   useEffect(() => {
@@ -180,19 +198,23 @@ const FyldBaadenGame: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [audio.isAudioReady])
 
-  // Live difficulty: a level change re-asks the current boat at the new level (no new boat needed).
+  // Live difficulty: a level change re-asks the current boat at the new level (no new boat needed). It
+  // applies while the boat is still ARRIVING too — the prompt hasn't been spoken yet, so nothing is
+  // contradicted (a probe set Let mid-arrival and got asked for 38).
   const difficultyLevel = useDifficulty('math')
   const prevDifficultyRef = useRef(difficultyLevel)
   useEffect(() => {
     if (prevDifficultyRef.current === difficultyLevel) return
     prevDifficultyRef.current = difficultyLevel
-    if (phaseRef.current !== 'loading') return
-    const n = pickBoatNumber(difficultyLevel, targetRef.current)
+    const p = phaseRef.current
+    if (p !== 'loading' && p !== 'arriving') return
+    const n = pickBoatNumber(difficultyLevel, recentRef.current)
+    recentRef.current = [...recentRef.current.slice(0, -1), n]
     targetRef.current = n
     setTarget(n)
     setDeckBoth(EMPTY_DECK)
     resetHint()
-    speakPrompt()
+    if (p === 'loading') speakPrompt()
   }, [difficultyLevel]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const canAct = () => gameReady && phaseRef.current === 'loading' && !isAdvancing.current && !bundlingRef.current
@@ -200,6 +222,7 @@ const FyldBaadenGame: React.FC = () => {
   // ── THE resolve path, both gestures ───────────────────────────────────────────────────────────
   const load = (kind: CargoKind, viaTap = false) => {
     if (!canAct()) return
+    markInteracted()
     audio.updateUserInteraction()
     cancel('reask') // the child is already fixing it
     if (viaTap) sfx.play('tap')
@@ -209,6 +232,7 @@ const FyldBaadenGame: React.FC = () => {
       return
     }
     setDeckBoth(r.deck)
+    setRefills((f) => ({ ...f, [kind]: f[kind] + 1 }))
     if (r.outcome === 'bundled') {
       // Ten single crates become ONE pallet — the place-value moment, given its own beat.
       sfx.play('bundle')
@@ -226,6 +250,7 @@ const FyldBaadenGame: React.FC = () => {
 
   const unload = (kind: CargoKind, viaTap = false) => {
     if (!canAct()) return
+    markInteracted()
     audio.updateUserInteraction()
     cancel('reask')
     if (viaTap) sfx.play('tap')
@@ -237,6 +262,7 @@ const FyldBaadenGame: React.FC = () => {
 
   const sendBoat = () => {
     if (!canAct() || isDeckEmpty(deckRef.current)) return
+    markInteracted()
     audio.cancelCurrentAudio()
     audio.updateUserInteraction()
     cancel('reask')
@@ -288,6 +314,7 @@ const FyldBaadenGame: React.FC = () => {
 
   // ── Drag ──────────────────────────────────────────────────────────────────────────────────────
   const handleDragStart = (event: DragStartEvent) => {
+    markInteracted()
     audio.cancelCurrentAudio()
     cancel('reask')
     setActiveId(String(event.active.id))
@@ -386,7 +413,9 @@ const FyldBaadenGame: React.FC = () => {
                 interactive={interactive}
                 overQuay={overQuay}
                 onLoad={(kind) => load(kind, true)}
-                repeat={<MathRepeatButton onClick={speakPrompt} disabled={!gameReady} />}
+                refills={refills}
+                reduce={reduce}
+                repeat={<MathRepeatButton onClick={() => { markInteracted(); speakPrompt() }} disabled={!gameReady} />}
               />
             </Box>
             <Box sx={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', '@media (orientation: portrait)': { flex: '0 0 auto' } }}>

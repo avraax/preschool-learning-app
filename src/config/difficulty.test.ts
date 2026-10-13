@@ -44,6 +44,7 @@ import {
   operationDistractors,
   pickQuizNumber,
   pickBoatNumber,
+  BOAT_RECENT_WINDOW,
   farMinGap,
   sequenceDistractors,
   swapDigits,
@@ -373,17 +374,18 @@ test('Sammenlign: Normal does not serve Svær-tight pairs', () => {
 // The lean IS the skill (owner, 2026-10-13: 3 of 4 boats from 21+ on Normal/Svær). The share is
 // measured over the samples, so a lean that silently became uniform (≈40% at Svær, ≈60% at Normal)
 // fails instead of passing on range alone.
-test('Fyld Båden: every boat is in range, never repeats, and Normal/Svær lean to the inverted words', () => {
+test('Fyld Båden: every boat is in range, no repeat inside 5 boats, and Normal/Svær lean to the inverted words', () => {
   const ceiling = { let: 20, normal: 50, svaer: 100 } as const
+  assert.equal(BOAT_RECENT_WINDOW, 4)
   for (const level of LEVELS) {
     let inverted = 0
-    let prev: number | undefined
+    const recent: number[] = []
     for (let i = 0; i < SAMPLES; i++) {
-      const n = pickBoatNumber(level, prev)
+      const n = pickBoatNumber(level, recent)
       assert.ok(Number.isInteger(n) && n >= 1 && n <= ceiling[level], `${level} asked for ${n}`)
-      assert.notEqual(n, prev, `${level} asked for ${n} twice in a row`)
+      assert.ok(!recent.slice(-4).includes(n), `${level} asked for ${n} again within 5 boats`)
       if (n >= 21) inverted++
-      prev = n
+      recent.push(n)
     }
     const share = inverted / SAMPLES
     if (level === 'let') assert.equal(inverted, 0)

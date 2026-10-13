@@ -28,7 +28,9 @@ export type LoadOutcome = 'loaded' | 'bundled' | 'full'
 export type UnloadOutcome = 'unloaded' | 'empty'
 
 export function loadDeck(deck: DeckState, kind: CargoKind): { deck: DeckState; outcome: LoadOutcome } {
-  if (deck.pallets >= BAY_SLOTS) return { deck, outcome: 'full' }
+  // The cap is on the VALUE, not the pallet count: 10 pallets beside 5 crates would be 105, a number no
+  // boat can ask for (found by the WebKit gesture probe, 2026-10-13).
+  if (deckValue(deck) + (kind === 'pallet' ? 10 : 1) > DECK_MAX) return { deck, outcome: 'full' }
   if (kind === 'pallet') return { deck: { ...deck, pallets: deck.pallets + 1 }, outcome: 'loaded' }
   if (deck.crates + 1 === BAY_SLOTS) return { deck: { pallets: deck.pallets + 1, crates: 0 }, outcome: 'bundled' }
   return { deck: { ...deck, crates: deck.crates + 1 }, outcome: 'loaded' }

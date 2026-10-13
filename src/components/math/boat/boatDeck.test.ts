@@ -38,6 +38,19 @@ test('the deck caps at 100: a 10-pallet deck refuses both kinds, and 99 + 1 crat
   assert.equal(deckValue(r.deck), 100)
 })
 
+test('the deck can never hold more than 100, in any load order', () => {
+  const mixed = loadN(loadN(EMPTY_DECK, 'crate', 5), 'pallet', 12)
+  assert.deepEqual(mixed, { pallets: 9, crates: 5 })
+  assert.equal(deckValue(mixed), 95)
+  assert.equal(loadDeck(mixed, 'pallet').outcome, 'full')
+  // Every interleaving of 300 random loads stays ≤ 100.
+  let deck = EMPTY_DECK
+  for (let i = 0; i < 300; i++) {
+    deck = loadDeck(deck, (i * 7) % 3 === 0 ? 'pallet' : 'crate').deck
+    assert.ok(deckValue(deck) <= DECK_MAX, `reached ${deckValue(deck)}`)
+  }
+})
+
 test('unloading a pallet returns it whole — no un-bundling', () => {
   const deck = { pallets: 3, crates: 7 }
   const r = unloadDeck(deck, 'pallet')

@@ -1,4 +1,5 @@
 import React from 'react'
+import { motion } from 'framer-motion'
 import { Box } from '@mui/material'
 import { DraggableItem } from '../../common/dnd/DraggableItem'
 import { DroppableZone } from '../../common/dnd/DroppableZone'
@@ -13,7 +14,13 @@ const PLANK = '#B07A45'
 const PLANK_DARK = '#7E5228'
 const POST = '#6B4522'
 
-const Pile: React.FC<{ kind: CargoKind; interactive: boolean; onLoad: (kind: CargoKind) => void }> = ({ kind, interactive, onLoad }) => {
+const Pile: React.FC<{ kind: CargoKind; interactive: boolean; onLoad: (kind: CargoKind) => void; refill: number; reduce: boolean }> = ({
+  kind,
+  interactive,
+  onLoad,
+  refill,
+  reduce,
+}) => {
   const pallet = kind === 'pallet'
   const Unit = pallet ? PalletView : CrateView
   // A pallet's ink is its lower ~55% (2×5 crates + base), so a pallet pile STACKS straight up; a crate
@@ -41,6 +48,12 @@ const Pile: React.FC<{ kind: CargoKind; interactive: boolean; onLoad: (kind: Car
       )}
       {/* The top unit — the thing the child picks up. */}
       <Box sx={{ position: 'absolute', bottom: pallet ? 'calc(var(--s) * 0.84)' : 'calc(var(--s) * 1.02)', left: '50%', transform: 'translateX(-50%)', zIndex: 1 }}>
+        {/* A successful load REMOUNTS the top unit (`refill` is the key): the one the child dropped stays
+            on the deck, and a fresh one pops onto the pile — instead of the dropped unit gliding back
+            across the board, which read as "it didn't take". (WebKit gesture probe, 2026-10-13.) */}
+        {/* OPACITY only: a scale/translate on an ancestor of a draggable multiplies its drag offset
+            (drag-and-drop.md, "track the finger 1:1"), and a child may grab it mid-fade. */}
+        <motion.div key={refill} initial={reduce || refill === 0 ? false : { opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.22 }}>
         <DraggableItem
           id={`src-${kind}`}
           inline
@@ -63,6 +76,7 @@ const Pile: React.FC<{ kind: CargoKind; interactive: boolean; onLoad: (kind: Car
             <Unit size={unit} />
           </Box>
         </DraggableItem>
+        </motion.div>
       </Box>
     </Box>
   )
@@ -73,7 +87,9 @@ const Quay: React.FC<{
   overQuay: boolean
   onLoad: (kind: CargoKind) => void
   repeat: React.ReactNode
-}> = ({ interactive, overQuay, onLoad, repeat }) => (
+  refills: Record<CargoKind, number>
+  reduce: boolean
+}> = ({ interactive, overQuay, onLoad, repeat, refills, reduce }) => (
   <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'space-between', minHeight: 0 }}>
     <Box sx={{ pt: 1 }}>{repeat}</Box>
     <Box sx={{ width: '100%', position: 'relative' }}>
@@ -91,8 +107,8 @@ const Quay: React.FC<{
           transition: 'box-shadow 0.2s ease',
         }}
       >
-        <Pile kind="pallet" interactive={interactive} onLoad={onLoad} />
-        <Pile kind="crate" interactive={interactive} onLoad={onLoad} />
+        <Pile kind="pallet" interactive={interactive} onLoad={onLoad} refill={refills.pallet} reduce={reduce} />
+        <Pile kind="crate" interactive={interactive} onLoad={onLoad} refill={refills.crate} reduce={reduce} />
       </DroppableZone>
       {/* Planks + posts down into the water (the front wave band covers their feet). */}
       <Box aria-hidden sx={{ height: 'calc(var(--s) * 0.45)', background: `linear-gradient(180deg, ${PLANK}, ${PLANK_DARK})`, borderRadius: '6px', boxShadow: '0 4px 0 rgba(0,0,0,0.15)' }} />

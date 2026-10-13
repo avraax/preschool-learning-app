@@ -256,14 +256,19 @@ export const pickQuizNumber = (level: DifficultyLevel, rnd: Rnd = Math.random): 
 
 /**
  * Fyld Båden's next boat (Harbour PRD-01 §2.1.9): `invertedShare` of draws come from the inverted
- * words (21..max), the rest from the whole 1..max. Never the same number twice in a row — a second
- * identical boat reads as "the game didn't take my answer".
+ * words (21..max), the rest from the whole 1..max. None of the last `BOAT_RECENT_WINDOW` boats comes
+ * back — a second identical boat reads as "the game didn't take my answer", and a play-through probe
+ * drew 2, x, 2, x, 2 at Let under a plain no-immediate-repeat rule.
  */
-export function pickBoatNumber(level: DifficultyLevel, previous?: number, rnd: Rnd = Math.random): number {
+export const BOAT_RECENT_WINDOW = 4
+
+export function pickBoatNumber(level: DifficultyLevel, recent: readonly number[] = [], rnd: Rnd = Math.random): number {
   const { max, invertedShare } = MATH_BOAT[level]
-  for (;;) {
+  const avoid = new Set(recent.slice(-BOAT_RECENT_WINDOW))
+  for (let tries = 0; ; tries++) {
     const n = invertedShare > 0 && rnd() < invertedShare ? randInt(rnd, INVERTED_FROM, max) : randInt(rnd, 1, max)
-    if (n !== previous) return n
+    // Every level's range is far wider than the window, so this always terminates; the guard is a backstop.
+    if (!avoid.has(n) || tries > 200) return n
   }
 }
 
