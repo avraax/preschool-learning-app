@@ -367,6 +367,8 @@ const FyldBaadenGame: React.FC = () => {
               '@media (orientation: portrait)': {
                 '--s': 'min(calc(100cqw / 14), calc(100cqh / 14.5), 72px)',
                 flexDirection: 'column',
+                // The pier sits right above the moored boat, not stranded at the top of the sea.
+                justifyContent: 'flex-end',
               },
             }}
           >
@@ -387,7 +389,7 @@ const FyldBaadenGame: React.FC = () => {
                 repeat={<MathRepeatButton onClick={speakPrompt} disabled={!gameReady} />}
               />
             </Box>
-            <Box sx={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+            <Box sx={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', '@media (orientation: portrait)': { flex: '0 0 auto' } }}>
               {gameReady && target > 0 && (
                 <motion.div
                   key={boatNo}
