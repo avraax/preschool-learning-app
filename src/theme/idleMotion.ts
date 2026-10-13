@@ -136,6 +136,44 @@ export const idleFloat = (
   )
 }
 
+// --- drift ------------------------------------------------------------------------------------
+/**
+ * Slow horizontal sway — `{ x: [0, -distance, 0] }`. Fyld Båden's water bands (Harbour PRD-01): a
+ * ping-pong drift rather than an endless scroll, so a wave strip only needs to be `distance` px wider
+ * than its box and never has to tile seamlessly.
+ */
+export const idleDrift = (
+  reduce: boolean,
+  { distance = 24, durationS = 7, delayS = 0 }: { distance?: number; durationS?: number; delayS?: number } = {},
+): IdleMotionBundle => {
+  if (reduce) return IDLE_NONE
+  const name = `blIdleDrift_${tag(distance)}`
+  return bundle(
+    name,
+    { '0%, 100%': { transform: 'translateX(0)' }, '50%': { transform: `translateX(${-distance}px)` } },
+    `${name} ${durationS}s ease-in-out ${delayS}s infinite`,
+    { animate: { x: [0, -distance, 0] }, durationS, delayS },
+  )
+}
+
+/** A gentle rock about the bottom edge — `{ rotate: [-deg, deg, -deg] }`. Fyld Båden's moored boat. */
+export const idleRock = (
+  reduce: boolean,
+  { degrees = 1.5, durationS = 3.6, delayS = 0 }: { degrees?: number; durationS?: number; delayS?: number } = {},
+): IdleMotionBundle => {
+  if (reduce) return IDLE_NONE
+  const name = `blIdleRock_${tag(degrees)}`
+  return bundle(
+    name,
+    {
+      '0%, 100%': { transform: `rotate(${-degrees}deg) translateY(0)` },
+      '50%': { transform: `rotate(${degrees}deg) translateY(-3px)` },
+    },
+    `${name} ${durationS}s ease-in-out ${delayS}s infinite`,
+    { animate: { rotate: [-degrees, degrees, -degrees], y: [0, -3, 0] }, durationS, delayS },
+  )
+}
+
 // --- pulse ------------------------------------------------------------------------------------
 /**
  * Scale pulse — the framer `{ scale: [1, peak, 1] }` idle loop. The app's single most-repeated one:
@@ -294,6 +332,8 @@ export default {
   idleGlow,
   equalizerBar,
   idleWobble,
+  idleDrift,
+  idleRock,
   wipeRocket,
   wipeLeaf,
   wipeSparkle,

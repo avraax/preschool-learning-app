@@ -1,6 +1,7 @@
 import React, { useEffect, Suspense } from 'react'
 import { lazyWithReload as lazy } from './utils/lazyWithReload'
-import { Routes, Route, useNavigate, useLocation } from 'react-router-dom'
+import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom'
+import { boatGameShown } from './utils/boatGame'
 import { logIOSIssue } from './utils/remoteConsole'
 import { deviceInfo } from './utils/deviceDetection'
 import { reportAppOpen, reportRoute } from './services/usagePing'
@@ -27,6 +28,7 @@ const NumberLearning = lazy(() => import('./components/math/NumberLearning'))
 const MathOperationGame = lazy(() => import('./components/math/MathOperationGame'))
 const ComparisonGame = lazy(() => import('./components/math/ComparisonGame'))
 const HvadManglerGame = lazy(() => import('./components/math/HvadManglerGame'))
+const FyldBaadenGame = lazy(() => import('./components/math/FyldBaadenGame'))
 const FarverSelection = lazy(() => import('./components/farver/FarverSelection'))
 const FarvejagtGame = lazy(() => import('./components/farver/FarvejagtGame'))
 const RamFarvenGame = lazy(() => import('./components/farver/RamFarvenGame'))
@@ -288,6 +290,8 @@ function App() {
         <Route path="/math/subtraction" element={<MathOperationGame operation="subtraction" />} />
         <Route path="/math/comparison" element={<ComparisonGame />} />
         <Route path="/math/patterns" element={<HvadManglerGame />} />
+        {/* Staging-only until the owner signs it off (Harbour PRD-01): production redirects to the menu. */}
+        <Route path="/math/boat" element={boatGameShown() ? <FyldBaadenGame /> : <Navigate to="/math" replace />} />
 
         {/* Farver Routes */}
         <Route path="/farver" element={<FarverSelection />} />

@@ -107,6 +107,27 @@ export const MATH_COUNTING: Record<DifficultyLevel, CountingTuning> = {
   svaer: { options: 5, max: NUMBER_MAX, distractors: 'confusable' },
 }
 
+export interface BoatTuning {
+  /** Highest number a boat can ask for (the child loads it as pallets of ten + single crates). */
+  max: number
+  /** Share of boats drawn from `INVERTED_FROM..max` — the inverted words are the skill. 0 = uniform. */
+  invertedShare: number
+}
+
+/** First Danish number word that inverts ("enogtyve" = one-and-twenty). */
+export const INVERTED_FROM = 21
+
+/**
+ * Fyld Båden (`math.boat`, Harbour PRD-01 §2.1.9): Tal Quiz's ranges, but on Normal/Svær 3 of 4 boats
+ * come from 21+ (owner, 2026-10-13). Let has nothing inverted to lean to. No option axis — the child
+ * BUILDS the answer, so the range and the lean are the whole calibration.
+ */
+export const MATH_BOAT: Record<DifficultyLevel, BoatTuning> = {
+  let: { max: 20, invertedShare: 0 },
+  normal: { max: 50, invertedShare: 0.75 },
+  svaer: { max: NUMBER_MAX, invertedShare: 0.75 },
+}
+
 export interface AdditionTuning {
   options: number
   /** Largest sum. */
@@ -526,6 +547,7 @@ export const COLORS_NUANCER: Record<DifficultyLevel, NuancerTuning> = {
  */
 export const TUNING: Record<string, Record<DifficultyLevel, object>> = {
   'math.counting': MATH_COUNTING,
+  'math.boat': MATH_BOAT,
   'math.addition': MATH_ADDITION,
   'math.subtraction': MATH_SUBTRACTION,
   'math.comparison': MATH_COMPARISON,
@@ -562,6 +584,7 @@ export const EXEMPT: Record<string, string> = {
  */
 export const TILE_AXIS_EXEMPT: Record<string, string> = {
   'math.comparison': 'two-number mechanic — the gap is its axis, not a tile count',
+  'math.boat': 'the child builds the answer — the axis is range + the inverted-number lean',
   'ordleg.spelling': 'letter tray, not answer tiles — the distractor COUNT is its axis',
   'colors.farvejagt': 'drag board — the axis is item count',
   'colors.ramfarven': 'drag bench — the axis is the target pool',

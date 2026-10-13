@@ -1,0 +1,427 @@
+import React, { useEffect, useRef, useState } from 'react'
+import { motion } from 'framer-motion'
+import { Box } from '@mui/material'
+import { DndContext, DragEndEvent, DragStartEvent, MeasuringStrategy } from '@dnd-kit/core'
+import { useDragOnlySensors } from '../common/dnd/useDragOnlySensors'
+import { kidCollision } from '../common/dnd/kidCollision'
+import { useDragActive } from '../common/dnd/useDragActive'
+import { wasWobbledTap } from '../common/dnd/dragActivation'
+import GameShell from '../common/GameShell'
+import type { GuideReaction } from '../common/ThemeMascot'
+import { useCelebration } from '../common/CelebrationEffect'
+import { MathRepeatButton } from '../common/RepeatButton'
+import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
+import { useTaskRun } from '../../hooks/useTaskRun'
+import { useNeverFailHint } from '../../hooks/useNeverFailHint'
+import { useDifficulty } from '../../hooks/useDifficulty'
+import { useReducedMotion } from '../../hooks/useReducedMotion'
+import { progressStore } from '../../services/progressStore'
+import { sfx } from '../../services/sfxClient'
+import { mascotBus } from '../../services/mascotBus'
+import { fillBoatPrompt } from '../../config/gamePhrases'
+import { pickBoatNumber } from '../../config/mathProblems'
+import { DWELL_CORRECT } from '../../theme/motion'
+import { idleRock } from '../../theme/idleMotion'
+import { DEV } from '../../utils/devHarness'
+import {
+  EMPTY_DECK,
+  deckValue,
+  ghostFor,
+  isDeckEmpty,
+  loadDeck,
+  unloadDeck,
+  type CargoKind,
+  type DeckState,
+} from './boat/boatDeck'
+import Boat, { type BundleFx } from './boat/Boat'
+import { BOAT_LOOKS } from './boat/boatLooks'
+import Quay from './boat/Quay'
+import { HarbourBackdrop, HarbourFrontWater } from './boat/HarbourScene'
+
+// Fyld Båden (`math.boat`, Harbour PRD-01) — hear a Danish number, BUILD it on a boat from pallets of
+// ten and single crates, and blow the horn. The learning act IS the game action: "syvogtredive" needs
+// three pallets and seven crates, so the inverted word has to be decoded to load the boat at all, and
+// the numeral appears on the sail only AFTER a correct send — word → quantity → symbol.
+//
+// Endless, live per-task XP (one task = one correct send), the ceremony at the seam after the boat sails
+// out. A wrong send only breaks first-try: the narrator names what IS loaded, then re-asks the target;
+// after two wrong sends the exact target load appears as ghost outlines (never-fail hint).
+//
+// Both gestures run ONE resolve path: `load(kind)` for a tap on a quay pile or a drag onto the deck,
+// `unload(kind)` for a tap on a loaded item or a drag back to the quay (drag-and-drop.md).
+
+type Phase = 'arriving' | 'loading' | 'sending' | 'sailing'
+
+/** Beat between naming a wrong load and re-asking the target — a fixed step, never an awaited clip. */
+const REASK_MS = 1700
+/** How long the bundling show holds input (the crates gather, the pallet pops in). */
+const BUNDLE_MS = 800
+
+const FyldBaadenGame: React.FC = () => {
+  const reduce = useReducedMotion()
+  const sensors = useDragOnlySensors()
+  const audio = useSimplifiedAudioHook({ componentId: 'FyldBaadenGame', autoInitialize: false })
+  const run = useTaskRun({ tasksInRound: 8, gameId: 'math.boat' })
+  const { showCelebration, celebrationIntensity, celebrationDuration, celebrateTier, stopCelebration } = useCelebration()
+  const { activeId, overId, setActiveId, onDragOver, clearActive } = useDragActive()
+  const { hint, registerWrong: registerHintWrong, reset: resetHint } = useNeverFailHint<number>(2)
+
+  const [gameReady, setGameReady] = useState(false)
+  const [target, setTarget] = useState(0)
+  const [deck, setDeck] = useState<DeckState>(EMPTY_DECK)
+  const [phase, setPhase] = useState<Phase>('arriving')
+  const [boatNo, setBoatNo] = useState(0)
+  const [revealed, setRevealed] = useState(false)
+  const [bundle, setBundle] = useState<BundleFx | null>(null)
+  const [bundling, setBundling] = useState(false)
+  const [shakeKey, setShakeKey] = useState(0)
+  const [guideReaction, setGuideReaction] = useState<GuideReaction>(null)
+
+  // Refs mirror what a same-tick second gesture must see (a double tap reads stale state otherwise).
+  const deckRef = useRef<DeckState>(EMPTY_DECK)
+  const targetRef = useRef(0)
+  const phaseRef = useRef<Phase>('arriving')
+  const isAdvancing = useRef(false)
+  const bundlingRef = useRef(false)
+  const firstAttemptRef = useRef(true)
+  const welcomeDoneRef = useRef(false)
+  const welcomeTriggered = useRef(false)
+  const arrivedRef = useRef(false)
+  const hasInitialized = useRef(false)
+  const timers = useRef<Record<string, ReturnType<typeof setTimeout> | null>>({})
+
+  const later = (name: string, ms: number, fn: () => void) => {
+    const t = timers.current[name]
+    if (t) clearTimeout(t)
+    timers.current[name] = setTimeout(() => {
+      timers.current[name] = null
+      fn()
+    }, ms)
+  }
+  const cancel = (name: string) => {
+    const t = timers.current[name]
+    if (t) clearTimeout(t)
+    timers.current[name] = null
+  }
+
+  // Unmount hygiene: every timer, in its own empty-dep effect (game-development.md).
+  useEffect(() => () => {
+    for (const t of Object.values(timers.current)) if (t) clearTimeout(t)
+  }, [])
+
+  const reactGuide = (reaction: GuideReaction) => {
+    setGuideReaction(reaction)
+    later('guide', 1100, () => setGuideReaction(null))
+  }
+
+  const setDeckBoth = (d: DeckState) => {
+    deckRef.current = d
+    setDeck(d)
+  }
+  const setPhaseBoth = (p: Phase) => {
+    phaseRef.current = p
+    setPhase(p)
+  }
+
+  const speakPrompt = () => {
+    if (!targetRef.current) return
+    audio.updateUserInteraction()
+    void audio.speak(fillBoatPrompt(targetRef.current)).catch(() => {})
+  }
+
+  // A new boat chugs in from behind the quay with an empty deck and a new number.
+  const newBoat = () => {
+    const level = progressStore.difficultyFor('math')
+    const n = pickBoatNumber(level, targetRef.current || undefined)
+    targetRef.current = n
+    setTarget(n)
+    setDeckBoth(EMPTY_DECK)
+    setRevealed(false)
+    setBundle(null)
+    resetHint()
+    firstAttemptRef.current = true
+    arrivedRef.current = false
+    setBoatNo((b) => b + 1)
+    setPhaseBoth('arriving')
+    sfx.play('boat-arrive')
+  }
+
+  const onArrived = () => {
+    arrivedRef.current = true
+    isAdvancing.current = false
+    setPhaseBoth('loading')
+    if (welcomeDoneRef.current) speakPrompt()
+  }
+
+  const playWelcome = async () => {
+    if (welcomeTriggered.current) return
+    welcomeTriggered.current = true
+    try {
+      await audio.playGameWelcome('boat')
+    } catch {
+      /* the prompt below still plays */
+    }
+    welcomeDoneRef.current = true
+    // The first prompt waits for whichever finishes last: the welcome or the boat's arrival.
+    if (arrivedRef.current && phaseRef.current === 'loading') speakPrompt()
+  }
+
+  useEffect(() => {
+    if (hasInitialized.current) return
+    hasInitialized.current = true
+    setGameReady(true)
+    newBoat()
+    if (audio.isAudioReady) void playWelcome()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  useEffect(() => {
+    if (audio.isAudioReady && !welcomeTriggered.current) void playWelcome()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [audio.isAudioReady])
+
+  // Live difficulty: a level change re-asks the current boat at the new level (no new boat needed).
+  const difficultyLevel = useDifficulty('math')
+  const prevDifficultyRef = useRef(difficultyLevel)
+  useEffect(() => {
+    if (prevDifficultyRef.current === difficultyLevel) return
+    prevDifficultyRef.current = difficultyLevel
+    if (phaseRef.current !== 'loading') return
+    const n = pickBoatNumber(difficultyLevel, targetRef.current)
+    targetRef.current = n
+    setTarget(n)
+    setDeckBoth(EMPTY_DECK)
+    resetHint()
+    speakPrompt()
+  }, [difficultyLevel]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const canAct = () => gameReady && phaseRef.current === 'loading' && !isAdvancing.current && !bundlingRef.current
+
+  // ── THE resolve path, both gestures ───────────────────────────────────────────────────────────
+  const load = (kind: CargoKind, viaTap = false) => {
+    if (!canAct()) return
+    audio.updateUserInteraction()
+    cancel('reask') // the child is already fixing it
+    if (viaTap) sfx.play('tap')
+    const r = loadDeck(deckRef.current, kind)
+    if (r.outcome === 'full') {
+      sfx.play('spring-back')
+      return
+    }
+    setDeckBoth(r.deck)
+    if (r.outcome === 'bundled') {
+      // Ten single crates become ONE pallet — the place-value moment, given its own beat.
+      sfx.play('bundle')
+      bundlingRef.current = true
+      setBundling(true)
+      setBundle({ key: Date.now(), pallet: r.deck.pallets - 1 })
+      later('bundle', BUNDLE_MS, () => {
+        bundlingRef.current = false
+        setBundling(false)
+      })
+    } else {
+      sfx.play(kind === 'pallet' ? 'pallet-clunk' : 'crate-thud')
+    }
+  }
+
+  const unload = (kind: CargoKind, viaTap = false) => {
+    if (!canAct()) return
+    audio.updateUserInteraction()
+    cancel('reask')
+    if (viaTap) sfx.play('tap')
+    const r = unloadDeck(deckRef.current, kind)
+    if (r.outcome === 'empty') return
+    setDeckBoth(r.deck)
+    sfx.play('pick-up')
+  }
+
+  const sendBoat = () => {
+    if (!canAct() || isDeckEmpty(deckRef.current)) return
+    audio.cancelCurrentAudio()
+    audio.updateUserInteraction()
+    cancel('reask')
+    sfx.play('tap')
+    const loaded = deckValue(deckRef.current)
+    const n = targetRef.current
+    if (loaded === n) {
+      // Correct: lock, paint the numeral on the sail, say the number, then sail out on a FIXED dwell.
+      isAdvancing.current = true
+      setPhaseBoth('sending')
+      setRevealed(true)
+      resetHint()
+      sfx.play('horn')
+      celebrateTier('micro')
+      reactGuide('cheer')
+      void audio.speakNumber(n).catch(() => {})
+      later('sail', DWELL_CORRECT(), () => {
+        sfx.play('splash')
+        setPhaseBoth('sailing')
+      })
+      return
+    }
+    // Wrong: the boat bobs back, the narrator names what IS loaded, then re-asks the target.
+    firstAttemptRef.current = false
+    sfx.play('spring-back')
+    setShakeKey((k) => k + 1)
+    reactGuide('think')
+    void audio.speakNumber(loaded).catch(() => {})
+    later('reask', REASK_MS, speakPrompt)
+    if (registerHintWrong(() => n)) mascotBus.emit('hint')
+  }
+
+  // THE SEAM (Endless Play PRD-01 §4.1): the boat has left; bank the task, play any ceremony, and only
+  // then does the next boat arrive.
+  const onSailedOut = () => {
+    stopCelebration()
+    const r = run.completeTask(firstAttemptRef.current)
+    if (r.streak > 0 && r.streak % 3 === 0 && !r.crossedLevel) {
+      celebrateTier('streak')
+      mascotBus.emit('streak')
+    }
+    run.thenContinue(newBoat)
+  }
+
+  const onBoatAnimationComplete = () => {
+    if (phaseRef.current === 'arriving') onArrived()
+    else if (phaseRef.current === 'sailing') onSailedOut()
+  }
+
+  // ── Drag ──────────────────────────────────────────────────────────────────────────────────────
+  const handleDragStart = (event: DragStartEvent) => {
+    audio.cancelCurrentAudio()
+    cancel('reask')
+    setActiveId(String(event.active.id))
+    sfx.play('pick-up')
+  }
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over, delta } = event
+    clearActive()
+    const data = active.data.current as { kind: CargoKind; from: 'quay' | 'deck' } | undefined
+    if (!data) return
+    const overKey = over ? String(over.id) : null
+    if (data.from === 'quay') {
+      if (overKey === 'deck') load(data.kind)
+      else if (!overKey && wasWobbledTap(delta)) load(data.kind, true)
+    } else {
+      if (overKey === 'quay') unload(data.kind)
+      else if (!overKey && wasWobbledTap(delta)) unload(data.kind, true)
+    }
+  }
+
+  const interactive = gameReady && phase === 'loading' && !bundling
+  // No-sound degraded mode (narrationHealth.ts): the board is unanswerable in silence, so the number
+  // shows on the sail from the start. It reverts by itself the moment a clip sounds.
+  const degradedReveal = audio.narrationHealthy ? undefined : target
+  const sailNumber = revealed ? target : (degradedReveal ?? null)
+  const ghost = hint !== null ? ghostFor(hint) : null
+  const overDeck = overId === 'deck' && !!activeId?.startsWith('src-')
+  const overQuay = overId === 'quay' && !!activeId?.startsWith('deck-')
+  const rock = idleRock(reduce || phase === 'sailing' || phase === 'arriving')
+
+  const boatAnimate =
+    phase === 'sailing' ? (reduce ? { opacity: 0 } : { x: '120vw' }) : reduce ? { opacity: 1 } : { x: 0 }
+  const boatTransition =
+    phase === 'sailing'
+      ? { duration: reduce ? 0.3 : 1.8, ease: 'easeIn' as const }
+      : { duration: reduce ? 0.3 : 1.5, ease: 'easeOut' as const }
+
+  return (
+    <DndContext
+      sensors={sensors}
+      onDragStart={handleDragStart}
+      onDragOver={onDragOver}
+      onDragEnd={handleDragEnd}
+      onDragCancel={clearActive}
+      collisionDetection={kidCollision}
+      // The deck MOVES (the moored boat rocks), so droppable rects are re-measured continuously.
+      measuring={{ droppable: { strategy: MeasuringStrategy.Always } }}
+    >
+      <GameShell
+        categoryId="math"
+        title="Fyld Båden"
+        backRoute="/math"
+        dense
+        guideReaction={guideReaction}
+        celebration={{ show: showCelebration, intensity: celebrationIntensity, duration: celebrationDuration, onComplete: stopCelebration }}
+      >
+        <HarbourBackdrop reduce={reduce} />
+        {/* The stage is a size container, so ONE slot unit (--s) scales the quay and the boat together. */}
+        {/* `data-boat-target`/`-loaded` exist for the DEV harness only — absent from a deploy build. */}
+        <Box
+          data-boat-stage
+          data-boat-target={DEV ? target : undefined}
+          data-boat-loaded={DEV ? deckValue(deck) : undefined}
+          data-boat-phase={DEV ? phase : undefined}
+          sx={{ flex: 1, minHeight: 0, containerType: 'size', position: 'relative' }}>
+          <Box
+            sx={{
+              // Landscape: quay (5.2) | boat (13 + the horn's overhang) side by side. Portrait: the quay
+              // is a pier ABOVE the moored boat, so the boat gets the full width instead of half a screen
+              // of empty sky.
+              '--s': 'min(calc(100cqw / 18.9), calc(100cqh / 8.1), 72px)',
+              height: '100%',
+              display: 'flex',
+              flexDirection: 'row',
+              alignItems: 'stretch',
+              '@media (orientation: portrait)': {
+                '--s': 'min(calc(100cqw / 14), calc(100cqh / 14.5), 72px)',
+                flexDirection: 'column',
+              },
+            }}
+          >
+            {/* Quay first in z-order terms: the next boat arrives from BEHIND it. */}
+            <Box
+              sx={{
+                flex: '0 0 calc(var(--s) * 5.2)',
+                position: 'relative',
+                zIndex: 1,
+                minHeight: 0,
+                '@media (orientation: portrait)': { flex: '0 0 auto', width: 'calc(var(--s) * 5.6)' },
+              }}
+            >
+              <Quay
+                interactive={interactive}
+                overQuay={overQuay}
+                onLoad={(kind) => load(kind, true)}
+                repeat={<MathRepeatButton onClick={speakPrompt} disabled={!gameReady} />}
+              />
+            </Box>
+            <Box sx={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+              {gameReady && target > 0 && (
+                <motion.div
+                  key={boatNo}
+                  initial={reduce ? { opacity: 0 } : { x: '-115vw' }}
+                  animate={boatAnimate}
+                  transition={boatTransition}
+                  onAnimationComplete={onBoatAnimationComplete}
+                >
+                  {/* Idle rock is its own CSS layer, nested inside the framer travel (animation rule §2). */}
+                  <Box {...rock.props} sx={[{ transformOrigin: '50% 100%' }, rock.sx]}>
+                    <Boat
+                      look={(boatNo - 1) % BOAT_LOOKS.length}
+                      deck={deck}
+                      ghost={ghost}
+                      sailNumber={sailNumber}
+                      bundle={bundle}
+                      interactive={interactive}
+                      reduce={reduce}
+                      overDeck={overDeck}
+                      onUnload={(kind) => unload(kind, true)}
+                      hornEnabled={interactive && !isDeckEmpty(deck)}
+                      onHorn={sendBoat}
+                      shakeKey={shakeKey}
+                    />
+                  </Box>
+                </motion.div>
+              )}
+            </Box>
+          </Box>
+        </Box>
+        <HarbourFrontWater reduce={reduce} />
+      </GameShell>
+    </DndContext>
+  )
+}
+
+export default FyldBaadenGame

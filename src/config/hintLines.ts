@@ -20,7 +20,7 @@
 //
 // PURE + Node-importable → relative imports need an explicit `.ts` extension.
 import { DANISH_PHRASES, getDanishLetterName } from './danish-phrases.ts'
-import { colorObjectFactText, sequenceFactText, sequenceNumbers, sequenceStarts } from './gamePhrases.ts'
+import { BOAT_PROMPT_MAX, colorObjectFactText, fillBoatPrompt, sequenceFactText, sequenceNumbers, sequenceStarts } from './gamePhrases.ts'
 import { LETTER_QUIZ_WORDS, LETTER_WORDS, WORD_LETTERS, startsWithPhrase } from './letterWords.ts'
 import { quizEnglishWords } from './englishVocab.ts'
 import { spellingWordsFor } from './ordlegWords.ts'
@@ -104,6 +104,13 @@ export const HINT_LINES: Record<string, HintSpec> = {
     voice: 'da',
     reason: 'the board shows nothing but a speaker by design, so re-speaking the prompt IS the fact',
     lines: () => countingRange().map(numberHintLine),
+  },
+  'math.boat': {
+    voice: 'da',
+    reason:
+      'the ghost outlines on the deck carry the hint (Harbour PRD-01 §2.1.7); the voice re-asks the ' +
+      'target, "Fyld båden med {tal}", the same baked clip the boat arrived with',
+    lines: () => Array.from({ length: BOAT_PROMPT_MAX }, (_, i) => fillBoatPrompt(i + 1)),
   },
   'math.patterns': {
     voice: 'da',

@@ -88,6 +88,14 @@ const categoryContent: Record<CategoryId, CategoryContent> = {
         route: '/math/counting',
         gradient: 'linear-gradient(135deg, #AB47BC 0%, #9C27B0 100%)'
       },
+      // Fyld Båden (Harbour PRD-01) — beside Tal Quiz, which it may replace later. Staging-only: the
+      // menu filters this tile through `boatGameShown()` until the owner signs it off.
+      {
+        id: 'boat',
+        title: 'Fyld Båden',
+        route: '/math/boat',
+        gradient: 'linear-gradient(135deg, #A855F7 0%, #9333EA 100%)'
+      },
       {
         id: 'addition',
         title: 'Plus Opgaver',

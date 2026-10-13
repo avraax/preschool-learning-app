@@ -3,9 +3,9 @@
 > AUTO-GENERATED (by the `/audit` harness via the dev-server, or `npm run audit:approve-all`).
 > Do not hand-edit — source of truth is `narration-audit.json`.
 
-Last updated: 2026-10-05T03:58:47.369Z
+Last updated: 2026-10-13T19:01:00.054Z
 
-**2672 OK · 1 wrong · 0 unaudited** (of 2673 clips)
+**2773 OK · 1 wrong · 0 unaudited** (of 2774 clips)
 
 ## Bogstaver
 
@@ -359,6 +359,106 @@ Last updated: 2026-10-05T03:58:47.369Z
 | ✅ | firs | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | fjorten | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | fjorten | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med atten | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med elleve | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med en | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med enogfirs | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med enogfyrre | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med enoghalvfems | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med enoghalvfjerds | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med enoghalvtreds | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med enogtredive | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med enogtres | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med enogtyve | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med et hundrede | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med fem | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med femogfirs | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med femogfyrre | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med femoghalvfems | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med femoghalvfjerds | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med femoghalvtreds | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med femogtredive | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med femogtres | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med femogtyve | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med femten | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med fire | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med fireogfirs | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med fireogfyrre | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med fireoghalvfems | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med fireoghalvfjerds | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med fireoghalvtreds | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med fireogtredive | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med fireogtres | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med fireogtyve | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med firs | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med fjorten | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med fyrre | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med halvfems | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med halvfjerds | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med halvtreds | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med ni | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med niogfirs | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med niogfyrre | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med nioghalvfems | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med nioghalvfjerds | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med nioghalvtreds | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med niogtredive | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med niogtres | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med niogtyve | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med nitten | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med otte | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med otteogfirs | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med otteogfyrre | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med otteoghalvfems | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med otteoghalvfjerds | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med otteoghalvtreds | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med otteogtredive | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med otteogtres | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med otteogtyve | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med seks | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med seksogfirs | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med seksogfyrre | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med seksoghalvfems | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med seksoghalvfjerds | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med seksoghalvtreds | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med seksogtredive | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med seksogtres | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med seksogtyve | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med seksten | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med sytten | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med syv | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med syvogfirs | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med syvogfyrre | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med syvoghalvfems | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med syvoghalvfjerds | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med syvoghalvtreds | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med syvogtredive | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med syvogtres | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med syvogtyve | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med ti | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med to | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med tolv | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med toogfirs | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med toogfyrre | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med tooghalvfems | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med tooghalvfjerds | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med tooghalvtreds | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med toogtredive | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med toogtres | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med toogtyve | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med tre | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med tredive | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med treogfirs | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med treogfyrre | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med treoghalvfems | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med treoghalvfjerds | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med treoghalvtreds | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med treogtredive | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med treogtres | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med treogtyve | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med tres | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med tretten | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld båden med tyve | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | fyrre | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | fyrre | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | halvfems | Bulk-approved (PRD-11 owner listen pass) |  |
@@ -519,6 +619,7 @@ Last updated: 2026-10-05T03:58:47.369Z
 | ✅ | Find det Engelske Ord | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Flot! | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Fremragende! | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fyld Båden | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Godt forsøg! | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Godt forsøg! Du kan det! | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Godt! | Bulk-approved (PRD-11 owner listen pass) |  |

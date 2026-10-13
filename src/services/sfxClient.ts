@@ -45,6 +45,13 @@ export type SfxCue =
   | 'nav-warp'
   | 'nav-stomp'
   | 'back'
+  // Fyld Båden (Harbour PRD-01): alias curated files until the harbour pack lands in /sounds/ui/.
+  | 'crate-thud'
+  | 'pallet-clunk'
+  | 'bundle'
+  | 'horn'
+  | 'splash'
+  | 'boat-arrive'
 
 // New drag/game cues (pick-up/spring-back/chomp/match) reuse curated files for now (real sound,
 // distinct cue names); swap to dedicated files when available — missing files degrade to silence.
@@ -71,6 +78,12 @@ const CUE_FILES: Record<SfxCue, string> = {
   'nav-warp': '/sounds/ui/flip.mp3',
   'nav-stomp': '/sounds/ui/drop-snap.mp3',
   back: '/sounds/ui/flip.mp3',
+  'crate-thud': '/sounds/ui/drop-snap.mp3',
+  'pallet-clunk': '/sounds/ui/drop-snap.mp3',
+  bundle: '/sounds/ui/streak-up.mp3',
+  horn: '/sounds/ui/page-complete.mp3',
+  splash: '/sounds/ui/flip.mp3',
+  'boat-arrive': '/sounds/ui/flip.mp3',
 }
 
 // Per-cue base volume — keep cues subtle so they don't fight narration.
@@ -96,6 +109,12 @@ const CUE_VOLUME: Partial<Record<SfxCue, number>> = {
   // stomp ≈ -34.5, back ≈ -37.9 LUFS effective; forward stays a touch louder as the bigger move.
   'nav-stomp': 0.2,
   back: 0.5,
+  'crate-thud': 0.45,
+  'pallet-clunk': 0.55,
+  bundle: 0.5,
+  horn: 0.5,
+  splash: 0.4,
+  'boat-arrive': 0.3,
 }
 
 interface PlayOptions {

@@ -12,7 +12,9 @@
 // audio behaviour and just call these. Explicit `.ts` extensions: this module is in the enumerator's
 // import graph (see `.claude/rules/audio-system.md`).
 import {
+  INVERTED_FROM,
   MATH_ADDITION,
+  MATH_BOAT,
   MATH_COMPARISON,
   MATH_COUNTING,
   MATH_SEQUENCE,
@@ -251,6 +253,19 @@ export const swapDigits = (n: number): number | null => {
 /** The number Tal Quiz asks for, inside the level's range. */
 export const pickQuizNumber = (level: DifficultyLevel, rnd: Rnd = Math.random): number =>
   randInt(rnd, 1, MATH_COUNTING[level].max)
+
+/**
+ * Fyld Båden's next boat (Harbour PRD-01 §2.1.9): `invertedShare` of draws come from the inverted
+ * words (21..max), the rest from the whole 1..max. Never the same number twice in a row — a second
+ * identical boat reads as "the game didn't take my answer".
+ */
+export function pickBoatNumber(level: DifficultyLevel, previous?: number, rnd: Rnd = Math.random): number {
+  const { max, invertedShare } = MATH_BOAT[level]
+  for (;;) {
+    const n = invertedShare > 0 && rnd() < invertedShare ? randInt(rnd, INVERTED_FROM, max) : randInt(rnd, 1, max)
+    if (n !== previous) return n
+  }
+}
 
 /**
  * The minimum distance a `far` (Let) distractor must keep from the answer, DERIVED from the level's

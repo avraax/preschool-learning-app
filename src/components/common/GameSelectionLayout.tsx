@@ -28,6 +28,8 @@ import { useTransitionNav } from '../../hooks/useTransitionNav'
 import { useTransitionContext } from './transition/TransitionProvider'
 import { useIdleAttract } from '../../hooks/useIdleAttract'
 import { PHONE_ANY, PHONE_LANDSCAPE, PHONE_PORTRAIT } from '../../theme/phoneMedia'
+import { BOAT_TILE_ID } from '../../config/boatGate'
+import { boatGameShown } from '../../utils/boatGame'
 
 interface Game {
   id: string
@@ -43,8 +45,11 @@ interface GameSelectionLayoutProps {
 
 const GameSelectionLayout: React.FC<GameSelectionLayoutProps> = ({
   categoryId,
-  games
+  games: allGames
 }) => {
+  // Fyld Båden is staging-only until the owner signs it off (Harbour PRD-01 §2.3.19) — its route is
+  // gated too, in App.tsx.
+  const games = allGames.filter((g) => g.id !== BOAT_TILE_ID || boatGameShown())
   const { navigateWithTransition } = useTransitionNav()
   const transitionPhase = useTransitionContext()?.phase ?? 'idle'
   const frozen = transitionPhase !== 'idle'

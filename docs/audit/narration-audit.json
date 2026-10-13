@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-05T03:58:47.369Z",
+  "updatedAt": "2026-10-13T19:01:00.054Z",
   "clips": {
     "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|b": {
       "verdict": "ok",
@@ -21384,6 +21384,814 @@
       "text": "Hvilken farve er sommerfuglen?",
       "group": "colours",
       "updatedAt": 1791172727369
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med en": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med en",
+      "group": "numbers",
+      "updatedAt": 1791918060052
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med to": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med to",
+      "group": "numbers",
+      "updatedAt": 1791918060052
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med tre": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med tre",
+      "group": "numbers",
+      "updatedAt": 1791918060052
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med fire": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med fire",
+      "group": "numbers",
+      "updatedAt": 1791918060052
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med fem": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med fem",
+      "group": "numbers",
+      "updatedAt": 1791918060052
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med seks": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med seks",
+      "group": "numbers",
+      "updatedAt": 1791918060052
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med syv": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med syv",
+      "group": "numbers",
+      "updatedAt": 1791918060052
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med otte": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med otte",
+      "group": "numbers",
+      "updatedAt": 1791918060052
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med ni": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med ni",
+      "group": "numbers",
+      "updatedAt": 1791918060052
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med ti": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med ti",
+      "group": "numbers",
+      "updatedAt": 1791918060052
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med elleve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med elleve",
+      "group": "numbers",
+      "updatedAt": 1791918060052
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med tolv": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med tolv",
+      "group": "numbers",
+      "updatedAt": 1791918060052
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med tretten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med tretten",
+      "group": "numbers",
+      "updatedAt": 1791918060052
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med fjorten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med fjorten",
+      "group": "numbers",
+      "updatedAt": 1791918060052
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med femten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med femten",
+      "group": "numbers",
+      "updatedAt": 1791918060052
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med seksten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med seksten",
+      "group": "numbers",
+      "updatedAt": 1791918060052
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med sytten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med sytten",
+      "group": "numbers",
+      "updatedAt": 1791918060052
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med atten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med atten",
+      "group": "numbers",
+      "updatedAt": 1791918060052
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med nitten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med nitten",
+      "group": "numbers",
+      "updatedAt": 1791918060052
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med tyve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med tyve",
+      "group": "numbers",
+      "updatedAt": 1791918060052
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med enogtyve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med enogtyve",
+      "group": "numbers",
+      "updatedAt": 1791918060052
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med toogtyve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med toogtyve",
+      "group": "numbers",
+      "updatedAt": 1791918060052
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med treogtyve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med treogtyve",
+      "group": "numbers",
+      "updatedAt": 1791918060052
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med fireogtyve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med fireogtyve",
+      "group": "numbers",
+      "updatedAt": 1791918060052
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med femogtyve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med femogtyve",
+      "group": "numbers",
+      "updatedAt": 1791918060052
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med seksogtyve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med seksogtyve",
+      "group": "numbers",
+      "updatedAt": 1791918060052
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med syvogtyve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med syvogtyve",
+      "group": "numbers",
+      "updatedAt": 1791918060052
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med otteogtyve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med otteogtyve",
+      "group": "numbers",
+      "updatedAt": 1791918060052
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med niogtyve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med niogtyve",
+      "group": "numbers",
+      "updatedAt": 1791918060052
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med tredive": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med tredive",
+      "group": "numbers",
+      "updatedAt": 1791918060052
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med enogtredive": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med enogtredive",
+      "group": "numbers",
+      "updatedAt": 1791918060052
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med toogtredive": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med toogtredive",
+      "group": "numbers",
+      "updatedAt": 1791918060052
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med treogtredive": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med treogtredive",
+      "group": "numbers",
+      "updatedAt": 1791918060052
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med fireogtredive": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med fireogtredive",
+      "group": "numbers",
+      "updatedAt": 1791918060052
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med femogtredive": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med femogtredive",
+      "group": "numbers",
+      "updatedAt": 1791918060052
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med seksogtredive": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med seksogtredive",
+      "group": "numbers",
+      "updatedAt": 1791918060052
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med syvogtredive": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med syvogtredive",
+      "group": "numbers",
+      "updatedAt": 1791918060052
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med otteogtredive": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med otteogtredive",
+      "group": "numbers",
+      "updatedAt": 1791918060052
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med niogtredive": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med niogtredive",
+      "group": "numbers",
+      "updatedAt": 1791918060052
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med fyrre": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med fyrre",
+      "group": "numbers",
+      "updatedAt": 1791918060052
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med enogfyrre": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med enogfyrre",
+      "group": "numbers",
+      "updatedAt": 1791918060052
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med toogfyrre": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med toogfyrre",
+      "group": "numbers",
+      "updatedAt": 1791918060052
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med treogfyrre": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med treogfyrre",
+      "group": "numbers",
+      "updatedAt": 1791918060052
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med fireogfyrre": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med fireogfyrre",
+      "group": "numbers",
+      "updatedAt": 1791918060052
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med femogfyrre": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med femogfyrre",
+      "group": "numbers",
+      "updatedAt": 1791918060052
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med seksogfyrre": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med seksogfyrre",
+      "group": "numbers",
+      "updatedAt": 1791918060052
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med syvogfyrre": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med syvogfyrre",
+      "group": "numbers",
+      "updatedAt": 1791918060052
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med otteogfyrre": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med otteogfyrre",
+      "group": "numbers",
+      "updatedAt": 1791918060052
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med niogfyrre": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med niogfyrre",
+      "group": "numbers",
+      "updatedAt": 1791918060052
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med halvtreds": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med halvtreds",
+      "group": "numbers",
+      "updatedAt": 1791918060052
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med enoghalvtreds": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med enoghalvtreds",
+      "group": "numbers",
+      "updatedAt": 1791918060052
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med tooghalvtreds": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med tooghalvtreds",
+      "group": "numbers",
+      "updatedAt": 1791918060052
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med treoghalvtreds": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med treoghalvtreds",
+      "group": "numbers",
+      "updatedAt": 1791918060052
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med fireoghalvtreds": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med fireoghalvtreds",
+      "group": "numbers",
+      "updatedAt": 1791918060052
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med femoghalvtreds": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med femoghalvtreds",
+      "group": "numbers",
+      "updatedAt": 1791918060052
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med seksoghalvtreds": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med seksoghalvtreds",
+      "group": "numbers",
+      "updatedAt": 1791918060052
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med syvoghalvtreds": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med syvoghalvtreds",
+      "group": "numbers",
+      "updatedAt": 1791918060052
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med otteoghalvtreds": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med otteoghalvtreds",
+      "group": "numbers",
+      "updatedAt": 1791918060052
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med nioghalvtreds": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med nioghalvtreds",
+      "group": "numbers",
+      "updatedAt": 1791918060052
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med tres": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med tres",
+      "group": "numbers",
+      "updatedAt": 1791918060053
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med enogtres": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med enogtres",
+      "group": "numbers",
+      "updatedAt": 1791918060053
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med toogtres": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med toogtres",
+      "group": "numbers",
+      "updatedAt": 1791918060053
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med treogtres": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med treogtres",
+      "group": "numbers",
+      "updatedAt": 1791918060053
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med fireogtres": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med fireogtres",
+      "group": "numbers",
+      "updatedAt": 1791918060053
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med femogtres": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med femogtres",
+      "group": "numbers",
+      "updatedAt": 1791918060053
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med seksogtres": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med seksogtres",
+      "group": "numbers",
+      "updatedAt": 1791918060053
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med syvogtres": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med syvogtres",
+      "group": "numbers",
+      "updatedAt": 1791918060053
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med otteogtres": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med otteogtres",
+      "group": "numbers",
+      "updatedAt": 1791918060053
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med niogtres": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med niogtres",
+      "group": "numbers",
+      "updatedAt": 1791918060053
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med halvfjerds": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med halvfjerds",
+      "group": "numbers",
+      "updatedAt": 1791918060053
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med enoghalvfjerds": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med enoghalvfjerds",
+      "group": "numbers",
+      "updatedAt": 1791918060053
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med tooghalvfjerds": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med tooghalvfjerds",
+      "group": "numbers",
+      "updatedAt": 1791918060053
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med treoghalvfjerds": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med treoghalvfjerds",
+      "group": "numbers",
+      "updatedAt": 1791918060053
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med fireoghalvfjerds": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med fireoghalvfjerds",
+      "group": "numbers",
+      "updatedAt": 1791918060053
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med femoghalvfjerds": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med femoghalvfjerds",
+      "group": "numbers",
+      "updatedAt": 1791918060053
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med seksoghalvfjerds": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med seksoghalvfjerds",
+      "group": "numbers",
+      "updatedAt": 1791918060053
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med syvoghalvfjerds": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med syvoghalvfjerds",
+      "group": "numbers",
+      "updatedAt": 1791918060053
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med otteoghalvfjerds": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med otteoghalvfjerds",
+      "group": "numbers",
+      "updatedAt": 1791918060053
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med nioghalvfjerds": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med nioghalvfjerds",
+      "group": "numbers",
+      "updatedAt": 1791918060053
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med firs": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med firs",
+      "group": "numbers",
+      "updatedAt": 1791918060053
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med enogfirs": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med enogfirs",
+      "group": "numbers",
+      "updatedAt": 1791918060053
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med toogfirs": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med toogfirs",
+      "group": "numbers",
+      "updatedAt": 1791918060053
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med treogfirs": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med treogfirs",
+      "group": "numbers",
+      "updatedAt": 1791918060053
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med fireogfirs": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med fireogfirs",
+      "group": "numbers",
+      "updatedAt": 1791918060053
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med femogfirs": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med femogfirs",
+      "group": "numbers",
+      "updatedAt": 1791918060053
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med seksogfirs": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med seksogfirs",
+      "group": "numbers",
+      "updatedAt": 1791918060053
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med syvogfirs": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med syvogfirs",
+      "group": "numbers",
+      "updatedAt": 1791918060053
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med otteogfirs": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med otteogfirs",
+      "group": "numbers",
+      "updatedAt": 1791918060053
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med niogfirs": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med niogfirs",
+      "group": "numbers",
+      "updatedAt": 1791918060053
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med halvfems": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med halvfems",
+      "group": "numbers",
+      "updatedAt": 1791918060053
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med enoghalvfems": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med enoghalvfems",
+      "group": "numbers",
+      "updatedAt": 1791918060053
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med tooghalvfems": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med tooghalvfems",
+      "group": "numbers",
+      "updatedAt": 1791918060053
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med treoghalvfems": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med treoghalvfems",
+      "group": "numbers",
+      "updatedAt": 1791918060053
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med fireoghalvfems": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med fireoghalvfems",
+      "group": "numbers",
+      "updatedAt": 1791918060053
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med femoghalvfems": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med femoghalvfems",
+      "group": "numbers",
+      "updatedAt": 1791918060053
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med seksoghalvfems": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med seksoghalvfems",
+      "group": "numbers",
+      "updatedAt": 1791918060053
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med syvoghalvfems": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med syvoghalvfems",
+      "group": "numbers",
+      "updatedAt": 1791918060053
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med otteoghalvfems": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med otteoghalvfems",
+      "group": "numbers",
+      "updatedAt": 1791918060053
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med nioghalvfems": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med nioghalvfems",
+      "group": "numbers",
+      "updatedAt": 1791918060053
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med et hundrede": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med et hundrede",
+      "group": "numbers",
+      "updatedAt": 1791918060053
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld Båden": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld Båden",
+      "group": "phrases",
+      "updatedAt": 1791918060054
     }
   }
 }

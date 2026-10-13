@@ -134,6 +134,13 @@ export const MEMORY_NUMBERS_INSTRUCTION = 'Find ens tal ved at klikke på korten
 
 // --- Farver -------------------------------------------------------------------------------------
 export const NUANCER_INSTRUCTION = 'Sæt farverne fra lys til mørk'
+
+/**
+ * Fyld Båden's per-boat prompt (Harbour PRD-01 §2.1.3). Built from the number WORD, not `${n}`, so it
+ * says exactly what the bare clip says — including the owner's 1 → "en". Every boat 1–100 is baked.
+ */
+export const BOAT_PROMPT_MAX = 100
+export const fillBoatPrompt = (n: number): string => `Fyld båden med ${getDanishNumberText(n)}`
 /** Ram Farven's target instruction: "Lav lilla farve ved at blande farverne". */
 export const colorMixTargetText = (targetName: string): string =>
   `Lav ${targetName} farve ved at blande farverne`

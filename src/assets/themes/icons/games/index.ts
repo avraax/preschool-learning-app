@@ -10,6 +10,8 @@ import alphabetQuiz from './alphabet.quiz.webp'
 import alphabetMemory from './alphabet.memory.webp'
 import mathNumbers from './math.numbers.webp'
 import mathCounting from './math.counting.webp'
+// Placeholder: a copy of Tal Quiz's icon until the owner's Gemini render lands (Harbour PRD-01 W3).
+import mathBoat from './math.boat.webp'
 import mathAddition from './math.addition.webp'
 import mathSubtraction from './math.subtraction.webp'
 import mathComparison from './math.comparison.webp'
@@ -33,6 +35,7 @@ export const gameIconImages: Record<string, string> = {
   'alphabet.memory': alphabetMemory,
   'math.numbers': mathNumbers,
   'math.counting': mathCounting,
+  'math.boat': mathBoat,
   'math.addition': mathAddition,
   'math.subtraction': mathSubtraction,
   'math.comparison': mathComparison,

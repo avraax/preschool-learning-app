@@ -84,7 +84,7 @@ test('the health signal is REACTIVE — the board recovers mid-round', () => {
 
 // The wiring pin, UNCHANGED: Tal Quiz prints the numeral, Lyt og Find prints the English word, and
 // each reads `narrationHealthy` — never `isAudioReady`, the mistake the whole module exists to prevent.
-test('both audio-only boards reveal their answer, and ONLY those two', () => {
+test('the three audio-only boards reveal their answer, and ONLY those three', () => {
   const math = codeOf('components/math/MathGame.tsx')
   assert.match(math, /reveal=\{ctx\.narrationHealthy \? undefined : String\(item\.value\)\}/)
   assert.ok(!/isAudioReady/.test(math), 'Tal Quiz must not gate its reveal on isAudioReady')
@@ -92,11 +92,16 @@ test('both audio-only boards reveal their answer, and ONLY those two', () => {
   const engine = codeOf('components/common/UnifiedQuizGame.tsx')
   assert.match(engine, /<ListenHero[\s\S]{0,200}reveal=\{audio\.narrationHealthy \? undefined : String\(item\.value\)\}/)
 
+  // Fyld Båden (Harbour PRD-01): the number lives only in speech, so in silence it is painted on the sail.
+  const boat = codeOf('components/math/FyldBaadenGame.tsx')
+  assert.match(boat, /const degradedReveal = audio\.narrationHealthy \? undefined : target/)
+  assert.ok(!/isAudioReady[^\n]*degraded|degraded[^\n]*isAudioReady/.test(boat), 'Fyld Båden must not gate its reveal on isAudioReady')
+
   // The `audioOnly` CONFIG FLAG is deleted (Endless Play PRD-01 W3): it only ever fed the personal-best
   // suppression, which went with personal bests. So "no other game may claim audioOnly" is re-pointed
-  // at what is actually load-bearing now — the REVEAL itself. Exactly two components may contain one,
-  // and they are these two. A third would be a board handing out its own answer with nothing to stop it.
-  const REVEALERS = ['components/math/MathGame.tsx', 'components/common/UnifiedQuizGame.tsx']
+  // at what is actually load-bearing now — the REVEAL itself. Exactly three components may contain one,
+  // and they are these. A fourth would be a board handing out its own answer with nothing to stop it.
+  const REVEALERS = ['components/math/MathGame.tsx', 'components/common/UnifiedQuizGame.tsx', 'components/math/FyldBaadenGame.tsx']
   const offenders: string[] = []
   const walk = (dir: string): void => {
     for (const entry of readdirSync(dir, { withFileTypes: true })) {

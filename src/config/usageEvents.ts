@@ -118,6 +118,7 @@ export const ROUTE_EVENTS: Readonly<Record<string, string>> = {
 
   '/math': 'route:math_menu',
   '/math/counting': 'route:math_counting',
+  '/math/boat': 'route:math_boat',
   '/math/numbers': 'route:math_numbers',
   '/math/addition': 'route:math_addition',
   '/math/subtraction': 'route:math_subtraction',

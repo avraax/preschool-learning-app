@@ -3,7 +3,7 @@ paths:
   - "src/components/math/*.tsx"
 ---
 
-# Games catalog — Math — `math.counting/.addition/.subtraction/.comparison/.patterns`
+# Games catalog — Math — `math.counting/.boat/.addition/.subtraction/.comparison/.patterns`
 
 One section of the games catalog. The cross-game invariants it relies on — the difficulty spine, the
 no-giveaway rule, pool-vs-bag, both-gestures — are in `.claude/rules/games-catalog.md`, which loads
@@ -20,11 +20,11 @@ alongside this file.
   structure — that pairing IS the calibration, and PRD-15 removing the countable ten-frame is what made a
   borrowing Normal unwinnable. Svær is the reverse of both: always crosses / always borrows.
 - Distractors are **near-number** (digit-swap, off-by-one/ten), not random.
-- **NOTHING on a math board restates a number that's already on it.** Every countable stand-in has now
-  been removed by the owner: Lær Tal's star/dot cluster and Sammenlign Tal's piles (2026-08-01), Tal
-  Quiz's object row and Plus/Minus's ten-frame under the number sentence (2026-08-02). Each one let the
-  child reach the answer by counting blobs instead of reading the numerals, which is the skill. Don't
-  re-add a countable layer to a board whose numbers are visible — the reading IS the task.
+- **NOTHING on a math board restates a number that's already on it.** The owner removed every countable
+  stand-in (Lær Tal's dots, Sammenlign's piles, Tal Quiz's object row, Plus/Minus's ten-frame,
+  2026-08-01/02): each let the child count blobs instead of reading the numerals, which is the skill.
+  Don't re-add one to a board whose numbers are visible. **Fyld Båden is the one exception** (owner
+  2026-10-13): its number is only spoken until a correct send, and the crates ARE the answer.
 - **Tal Quiz is LISTEN-then-recognise, and shows NOTHING of the answer** (owner 2026-08-01): the
   number lives only in the spoken "Find tallet N" (+ Hør igen) and the focal zone is the shared
   `ListenHero` (speaker + audio-driven equalizer, also used by Lyt og Find). Both earlier visuals were

@@ -70,7 +70,8 @@ test('EVERY hint line is already prebaked — a hint never reaches live Azure', 
   // Game Depth PRD-01 W1: 18 → 19 (`ost` joins as the one canonical reused object).
   // Game Depth PRD-01 W7: Bogstav Quiz's 28 → 59 (every picture a letter can show has its own hint).
   // Game Depth W2: Hvilken Farve? 19 → 29 (the ten canonical new renders).
-  assert.equal(checked, 59 + 100 + 218 + 74 + 74 + 29 + 22, `checked ${checked} hint lines`)
+  // Harbour PRD-01: + 100 for Fyld Båden ("Fyld båden med {tal}", 1–100).
+  assert.equal(checked, 59 + 100 + 100 + 218 + 74 + 74 + 29 + 22, `checked ${checked} hint lines`)
 })
 
 test('the lines are the SAME builders the app speaks, not lookalikes', () => {

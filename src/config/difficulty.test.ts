@@ -10,8 +10,10 @@ import {
   COMPARE_MAX,
   ENGLISH_QUIZ,
   EXEMPT,
+  INVERTED_FROM,
   LEVELS,
   MATH_ADDITION,
+  MATH_BOAT,
   MATH_COMPARISON,
   MATH_COUNTING,
   MATH_LEARN,
@@ -41,6 +43,7 @@ import {
   numberDistractors,
   operationDistractors,
   pickQuizNumber,
+  pickBoatNumber,
   farMinGap,
   sequenceDistractors,
   swapDigits,
@@ -91,6 +94,12 @@ test('the §4 per-game tables are exactly these values', () => {
     normal: { options: 4, max: 50, distractors: 'near' },
     svaer: { options: 5, max: 100, distractors: 'confusable' },
   })
+  assert.deepEqual(MATH_BOAT, {
+    let: { max: 20, invertedShare: 0 },
+    normal: { max: 50, invertedShare: 0.75 },
+    svaer: { max: 100, invertedShare: 0.75 },
+  })
+  assert.equal(INVERTED_FROM, 21)
   assert.deepEqual(MATH_ADDITION, {
     let: { options: 3, sumMax: 10, addendMin: 1, crossTen: 'never', missing: 0 },
     normal: { options: 4, sumMax: 20, addendMin: 2, crossTen: 'allowed', missing: { alt: 1, of: 3 } },
@@ -354,6 +363,32 @@ test('Sammenlign: Normal does not serve Svær-tight pairs', () => {
       Math.abs(left - right) > svaer.gapMax,
       `Normal produced ${left} vs ${right}, a gap of ${Math.abs(left - right)} — that's a Svær pair`,
     )
+  }
+})
+
+// ------------------------------------------------------------------------------------------------
+// Sampled behaviour — Fyld Båden
+// ------------------------------------------------------------------------------------------------
+
+// The lean IS the skill (owner, 2026-10-13: 3 of 4 boats from 21+ on Normal/Svær). The share is
+// measured over the samples, so a lean that silently became uniform (≈40% at Svær, ≈60% at Normal)
+// fails instead of passing on range alone.
+test('Fyld Båden: every boat is in range, never repeats, and Normal/Svær lean to the inverted words', () => {
+  const ceiling = { let: 20, normal: 50, svaer: 100 } as const
+  for (const level of LEVELS) {
+    let inverted = 0
+    let prev: number | undefined
+    for (let i = 0; i < SAMPLES; i++) {
+      const n = pickBoatNumber(level, prev)
+      assert.ok(Number.isInteger(n) && n >= 1 && n <= ceiling[level], `${level} asked for ${n}`)
+      assert.notEqual(n, prev, `${level} asked for ${n} twice in a row`)
+      if (n >= 21) inverted++
+      prev = n
+    }
+    const share = inverted / SAMPLES
+    if (level === 'let') assert.equal(inverted, 0)
+    // 0.75 lean + the uniform quarter's own 21+ part: Normal 0.75+0.25·30/50 = 0.90, Svær 0.75+0.25·80/100 = 0.95.
+    else assert.ok(share > 0.85, `${level} drew only ${(share * 100).toFixed(0)}% from 21+`)
   }
 })
 
