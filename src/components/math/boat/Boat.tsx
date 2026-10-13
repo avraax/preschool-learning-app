@@ -4,7 +4,12 @@ import { Box, Typography } from '@mui/material'
 import { DraggableItem } from '../../common/dnd/DraggableItem'
 import { DroppableZone } from '../../common/dnd/DroppableZone'
 import { hintPulse } from '../../../theme/idleMotion'
-import { SNAP, POP } from '../../../theme/motion'
+/**
+ * A landing overshoot as a cubic-bezier (the same curve `draggableStyle` uses for its lift). Springs
+ * compile to `linear()` easing, which Safari 17 refuses to run on the compositor (WebKit 7618
+ * `KeyframeEffect::canBeAccelerated`); a bezier keeps every one-shot here on the GPU.
+ */
+const LAND_EASE = [0.34, 1.56, 0.64, 1] as const
 import { BAY_SLOTS, type CargoKind, type DeckState } from './boatDeck'
 import { CrateView, PalletView } from './Cargo'
 import { BOAT_LOOKS } from './boatLooks'
@@ -95,9 +100,13 @@ const Bay: React.FC<{
               // The slot's item mounts once per fill; `initial` is read only at mount, so clearing the
               // bundle afterwards never replays the drop.
               <motion.div
-                initial={reduce ? false : isNewPallet ? { scale: 0, opacity: 0 } : { y: -18, scale: 0.7, opacity: 0 }}
-                animate={{ y: 0, scale: 1, opacity: 1 }}
-                transition={isNewPallet ? { ...POP, delay: 0.38 } : SNAP}
+                // Both ends carry the SAME function list. Motion interpolates toward `'none'` by zeroing
+                // every function, so `scale(0.7) → none` landed on scale(0) and every crate vanished.
+                initial={reduce ? false : { transform: isNewPallet ? 'translateY(0px) scale(0)' : 'translateY(-18px) scale(0.7)', opacity: 0 }}
+                animate={{ transform: 'translateY(0px) scale(1)', opacity: 1 }}
+                // An overshooting cubic-bezier, not a spring: Motion compiles springs to `linear()`,
+                // which Safari 17 will not run on the compositor.
+                transition={{ duration: isNewPallet ? 0.34 : 0.24, ease: LAND_EASE, delay: isNewPallet ? 0.38 : 0 }}
               >
                 <Box {...(extra ? pulse.props : {})} sx={extra ? [pulse.sx] : undefined}>
                   <DraggableItem
@@ -124,8 +133,11 @@ const Bay: React.FC<{
           {Array.from({ length: BAY_SLOTS }, (_, i) => (
             <Box key={i} sx={{ ...slotSx }}>
               <motion.div
-                initial={{ scale: 1, opacity: 1, x: 0, y: 0 }}
-                animate={{ scale: [1, 1.12, 0.2], opacity: [1, 1, 0], x: [0, 0, -40 - (i % 5) * 18], y: [0, -8, -30] }}
+                initial={{ transform: 'translate(0px, 0px) scale(1)', opacity: 1 }}
+                animate={{
+                  transform: ['translate(0px, 0px) scale(1)', 'translate(0px, -8px) scale(1.12)', `translate(${-40 - (i % 5) * 18}px, -30px) scale(0.2)`],
+                  opacity: [1, 1, 0],
+                }}
                 transition={{ duration: 0.6, delay: i * 0.025, ease: 'easeIn', times: [0, 0.35, 1] }}
               >
                 <CrateView />
@@ -156,8 +168,14 @@ const Boat: React.FC<BoatProps> = ({
   return (
     <motion.div
       key={shakeKey}
-      animate={shakeKey > 0 && !reduce ? { x: [0, -14, 10, -6, 0] } : { x: 0 }}
-      transition={{ duration: 0.5 }}
+      // Transform strings + tween, ending on an explicit identity (never `'none'`): GPU-composited in
+      // Safari 17, where framer's `x` shorthand would run on the main thread.
+      animate={
+        shakeKey > 0 && !reduce
+          ? { transform: ['translateX(0px)', 'translateX(-14px)', 'translateX(10px)', 'translateX(-6px)', 'translateX(0px)'] }
+          : { transform: 'translateX(0px)' }
+      }
+      transition={{ duration: 0.5, ease: 'easeInOut' }}
       style={{ position: 'relative', width: 'calc(var(--s) * 13)', height: 'calc(var(--s) * 7.6)' }}
     >
       {/* Mast + pennant. */}
@@ -180,7 +198,11 @@ const Boat: React.FC<BoatProps> = ({
         }}
       >
         {sailNumber !== null && (
-          <motion.div initial={reduce ? false : { scale: 0.3, opacity: 0, rotate: -12 }} animate={{ scale: 1, opacity: 1, rotate: 0 }} transition={POP}>
+          <motion.div
+            initial={reduce ? false : { transform: 'scale(0.3) rotate(-12deg)', opacity: 0 }}
+            animate={{ transform: 'scale(1) rotate(0deg)', opacity: 1 }}
+            transition={{ duration: 0.4, ease: LAND_EASE }}
+          >
             <Typography
               component="span"
               sx={{ fontFamily: '"Comic Sans MS", "Comic Neue", cursive', fontWeight: 800, fontSize: 'calc(var(--s) * 1.55)', lineHeight: 1, color: L.trim, pl: 'calc(var(--s) * 0.35)', pt: 'calc(var(--s) * 0.4)' }}

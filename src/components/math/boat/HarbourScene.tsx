@@ -9,7 +9,8 @@ import { idleDrift } from '../../../theme/idleMotion'
 //   - `HarbourBackdrop` (z -1, behind everything): sky, the distant town, the open water.
 //   - `HarbourFrontWater` (above the boat, pointer-events none): a low wave band that covers the hull's
 //     waterline and the quay's posts.
-// Both are `position: fixed` children of GameShell's isolated root, the same trick `GameMotif` uses.
+// Both are `position: absolute` against GameShell's full-viewport, isolated root (the same trick
+// `GameMotif` uses) — NOT `fixed`: Chrome blanks fixed layers during touch pans (PersistentWorld's note).
 //
 // Continuous motion is CSS keyframes only (`idleDrift`), transform-only, and nothing moves under reduced
 // motion. The CSS drawing is the art-free stand-in; the owner's backdrop + wave renders replace it (W3).
@@ -46,7 +47,7 @@ export const HarbourBackdrop: React.FC<{ reduce: boolean }> = ({ reduce }) => {
         // and must stand in the water rather than in the sky.
         '--horizon': '52%',
         '@media (orientation: portrait)': { '--horizon': '24%' },
-        position: 'fixed',
+        position: 'absolute',
         inset: 0,
         zIndex: -1,
         overflow: 'hidden',
@@ -83,7 +84,7 @@ export const HarbourFrontWater: React.FC<{ reduce: boolean }> = ({ reduce }) => 
   const back = idleDrift(reduce, { distance: 40, durationS: 6.5 })
   const front = idleDrift(reduce, { distance: 56, durationS: 5, delayS: -2 })
   return (
-    <Box aria-hidden sx={{ position: 'fixed', left: 0, right: 0, bottom: 0, height: '9dvh', zIndex: 2, pointerEvents: 'none', overflow: 'hidden' }}>
+    <Box aria-hidden sx={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: '9dvh', zIndex: 2, pointerEvents: 'none', overflow: 'hidden' }}>
       <Box sx={{ position: 'absolute', left: 0, right: '-60px', top: 0, height: '60%' }}>
         <Box {...back.props} sx={[{ width: '100%', height: '100%', backgroundImage: waveSvg(SEA_NEAR, '#9FDCEA'), backgroundSize: '160px 100%', backgroundRepeat: 'repeat-x', opacity: 0.9 }, back.sx]} />
       </Box>

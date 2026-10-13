@@ -103,6 +103,10 @@ const PersistentWorld: React.FC = () => {
           // device-pixel ratios — e.g. Chrome's iPad emulation — 100dvh rounds to a sub-pixel and
           // would leave a 1px seam of the transparent base (a flickering white line) at the bottom.
           inset: '-4px',
+          // A game that paints its OWN opaque full-bleed scene (Fyld Båden) occludes the world entirely;
+          // it sets this flag while mounted so the world stops costing compositor layers + GPU memory
+          // underneath it (measured 30 → 13 layers, ~27 → ~11 MB, Harbour PRD-01). See `worldOcclusion.ts`.
+          'html[data-world-occluded] &': { display: 'none' },
           zIndex: 0, // behind the foreground wrapper (z-index:1)
           overflow: 'hidden',
           pointerEvents: 'none',

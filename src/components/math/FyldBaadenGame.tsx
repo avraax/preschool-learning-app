@@ -23,6 +23,7 @@ import { BOAT_RECENT_WINDOW, pickBoatNumber } from '../../config/mathProblems'
 import { DWELL_CORRECT } from '../../theme/motion'
 import { idleRock } from '../../theme/idleMotion'
 import { DEV } from '../../utils/devHarness'
+import { useOccludeWorld } from '../common/scene/worldOcclusion'
 import {
   EMPTY_DECK,
   deckValue,
@@ -59,6 +60,7 @@ const BUNDLE_MS = 800
 
 const FyldBaadenGame: React.FC = () => {
   const reduce = useReducedMotion()
+  useOccludeWorld() // the harbour covers the whole world — stop drawing it underneath
   const sensors = useDragOnlySensors()
   const audio = useSimplifiedAudioHook({ componentId: 'FyldBaadenGame', autoInitialize: false })
   const run = useTaskRun({ tasksInRound: 8, gameId: 'math.boat' })
@@ -130,8 +132,7 @@ const FyldBaadenGame: React.FC = () => {
   const speakPrompt = () => {
     if (!targetRef.current) return
     audio.updateUserInteraction()
-    console.error('DBG speakPrompt', targetRef.current)
-    void audio.speak(fillBoatPrompt(targetRef.current)).then((r) => console.error('DBG speak resolved', r)).catch((e) => console.error('DBG speak err', String(e)))
+    void audio.speak(fillBoatPrompt(targetRef.current)).catch(() => {})
   }
 
   // A new boat chugs in from behind the quay with an empty deck and a new number.
@@ -153,7 +154,6 @@ const FyldBaadenGame: React.FC = () => {
   }
 
   const onArrived = () => {
-    console.error('DBG onArrived', targetRef.current, welcomeDoneRef.current, hasInteractedRef.current)
     arrivedRef.current = true
     isAdvancing.current = false
     setPhaseBoth('loading')
@@ -346,8 +346,13 @@ const FyldBaadenGame: React.FC = () => {
   const overQuay = overId === 'quay' && !!activeId?.startsWith('deck-')
   const rock = idleRock(reduce || phase === 'sailing' || phase === 'arriving')
 
+  // A full `transform` STRING with tween easing, never framer's `x` shorthand: Motion hands `transform`
+  // to WAAPI, which Safari 17 runs on the GPU compositor, while `x`/`y`/`scale` tick on the main thread
+  // every frame (motion.dev/docs/performance; WebKit KeyframeEffect gates — Harbour PRD-01 §10).
   const boatAnimate =
-    phase === 'sailing' ? (reduce ? { opacity: 0 } : { x: '120vw' }) : reduce ? { opacity: 1 } : { x: 0 }
+    phase === 'sailing'
+      ? reduce ? { opacity: 0 } : { transform: 'translateX(120vw)' }
+      : reduce ? { opacity: 1 } : { transform: 'translateX(0vw)' }
   const boatTransition =
     phase === 'sailing'
       ? { duration: reduce ? 0.3 : 1.8, ease: 'easeIn' as const }
@@ -406,7 +411,8 @@ const FyldBaadenGame: React.FC = () => {
                 position: 'relative',
                 zIndex: 1,
                 minHeight: 0,
-                '@media (orientation: portrait)': { flex: '0 0 auto', width: 'calc(var(--s) * 5.6)' },
+                // min-content keeps "Hør igen" on one line where the slot unit is small (phone portrait).
+                '@media (orientation: portrait)': { flex: '0 0 auto', width: 'calc(var(--s) * 5.6)', minWidth: 'max-content' },
               }}
             >
               <Quay
@@ -418,11 +424,24 @@ const FyldBaadenGame: React.FC = () => {
                 repeat={<MathRepeatButton onClick={() => { markInteracted(); speakPrompt() }} disabled={!gameReady} />}
               />
             </Box>
-            <Box sx={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', '@media (orientation: portrait)': { flex: '0 0 auto' } }}>
+            <Box
+              sx={{
+                flex: 1,
+                minWidth: 0,
+                display: 'flex',
+                alignItems: 'flex-end',
+                justifyContent: 'center',
+                // Lift the boat so the front wave band (HarbourFrontWater, 9dvh) covers only the lower half
+                // of the hull — on a phone the band is taller than the whole hull and hid the bottom row
+                // of deck slots (WebKit phone-portrait probe, 2026-10-13).
+                pb: 'max(0px, calc(9dvh - var(--s) * 0.8 - 10px))',
+                '@media (orientation: portrait)': { flex: '0 0 auto' },
+              }}
+            >
               {gameReady && target > 0 && (
                 <motion.div
                   key={boatNo}
-                  initial={reduce ? { opacity: 0 } : { x: '-115vw' }}
+                  initial={reduce ? { opacity: 0 } : { transform: 'translateX(-115vw)' }}
                   animate={boatAnimate}
                   transition={boatTransition}
                   onAnimationComplete={onBoatAnimationComplete}
