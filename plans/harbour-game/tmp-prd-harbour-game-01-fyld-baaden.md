@@ -338,6 +338,23 @@ bfbde0c; not pushed). Playable on DEV/staging at `/math/boat` with CSS stand-in 
 - **New idle helpers** `idleDrift` (water bands) and `idleRock` (moored boat) in `idleMotion.ts`.
 - DEV-only `data-boat-target/-loaded/-phase` on `[data-boat-stage]` drive the probes.
 
+**2026-10-13 (later) — full verification pass** (commits 4eea056, c3fc423). Driven end to end with real
+pointer events on rung 1 AND rung 2: tap/drag/abort/wiggle/unload/bundle/caps (14/14 both engines),
+10-boat XP (6 first-try, 5 after a wrong send) + the ceremony at the seam, all three levels in range,
+level change mid-arrival and mid-loading, audio order (welcome → prompt → number → next prompt; wrong
+send: prompt → loaded number → re-ask), reduced motion (2 boats, 0 CSS animations), no-sound reveal,
+4 devices with no scroll and the deck above the waves, pixel-visibility of every item and the sail
+numeral. Bugs found and fixed: deck could reach 105; dropped crate glided back over the board; level
+change during arrival ignored; late welcome cut the child's own prompt; repeats too close; phone
+portrait hid the bottom deck row; Motion's `transform: 'none'` target shrank items to 0×0.
+**Motion rules for this game** (guarded by `gpuMotion.test.ts`): animate full `transform` strings +
+opacity with cubic-bezier easing; no framer `x/y/scale/rotate` shorthands (main thread), no springs
+(→ `linear()`, not composited in Safari 17), no `'none'` as a motion target. While mounted the game
+occludes the world (`useOccludeWorld`): 30 → 13 layers, ~27 → 12 MB. Idle cost on par with Nuancer.
+Open: menu wraps 6+2 with the 8th tile (staging only); phone-portrait deck slots 26px; idle script
+time slightly above other games with no JS animation loop found (cause UNKNOWN, small).
+The audio probe mislabelled clips (read `currentSrc` on a reused element) — fixed in `audio-probe.js`.
+
 **Next:** W3 (owner's Gemini batches → key/trim → contact sheet → sign-off (a)), swap the CSS stand-ins
 for the art, then horn/splash/arrive SFX + the ambience loop (§4.3 traps), then sign-off (b) on the iPad.
 Phone portrait is cramped (slot ≈ 25px) — W5.
