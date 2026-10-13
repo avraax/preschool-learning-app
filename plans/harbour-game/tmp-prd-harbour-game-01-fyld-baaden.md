@@ -1,7 +1,7 @@
 # PRD — Fyld Båden: one game built to the highest bar
 
-Status: authored 2026-10-13, **NOT implemented**. Owner decision session; every question in §2 was
-answered by the owner before this was written.
+Status: authored 2026-10-13. **Implementation in progress** — see §10 for what is done. Owner decision
+session; every question in §2 was answered by the owner before this was written.
 
 Supersedes nothing. **Tal Quiz (`math.counting`, `MathGame.tsx`) is NOT touched** — Fyld Båden ships as
 a **new, separate tile next to it** in Tal og Regning, and is meant to replace it *later*, by a separate
@@ -315,6 +315,32 @@ this rung.
 - A captain character, tappable harbour toys, an extra streak flourish, per-skin harbours.
 - Remaking any other game; the letter-sound game (needs its own Azure-phoneme listening test first).
 - Practice ledger / prompt pool for math; any adaptivity.
+
+## 10. Progress log (read before continuing)
+
+**2026-10-13 — W0, W1, W2 and the art-free core of W4 done** (commits 5e9f4bb, b1315f2, e63c955,
+bfbde0c; not pushed). Playable on DEV/staging at `/math/boat` with CSS stand-in art.
+
+- Done: pure deck model + tests, `pickBoatNumber`/`MATH_BOAT`, 101 prebaked clips (approved-but-unheard),
+  hint lines, welcome title + a new welcome-title ⊆ `WELCOME_TITLES` guard, staging gate (tile + route),
+  menu tile/icon (icon = copy of Tal Quiz's until the Gemini render), usage event, full loop (load/unload
+  by tap and drag, bundle show, wrong send names the load then re-asks, ghost hint after 2, correct send →
+  sail numeral → sail out → seam → next boat, 4 rotating boat looks), degraded no-sound reveal (added to
+  `narrationHealth.test.ts`'s REVEALERS), games-math exception at net-zero bytes, real wood-impact SFX
+  for crate/pallet (Kenney CC0, `art-src/sfx/SOURCES.md`).
+- Guards re-broken (all went red, restored green): bundle/caps (`boatDeck.test.ts`), the ≥21 lean
+  sampling, the gate wiring, the welcome-title guard, the degraded-reveal pin.
+- Verified: rung 1 (4 viewports, scripted play-through of a full boat) and rung 2 (WebKit iPad UA,
+  landscape + portrait). Headless WebKit runs framer slowly, so animation TIMING there is UNKNOWN.
+- **Deviation from §4.5 (implementer's call):** the boats are drawn WHOLE with the deck as a code overlay
+  at a per-boat rect, not layered around one shared deck sprite — the art doc (W0) asks Gemini for whole
+  boats with a large empty flat deck, which is far more reliable than four renders sharing geometry.
+- **New idle helpers** `idleDrift` (water bands) and `idleRock` (moored boat) in `idleMotion.ts`.
+- DEV-only `data-boat-target/-loaded/-phase` on `[data-boat-stage]` drive the probes.
+
+**Next:** W3 (owner's Gemini batches → key/trim → contact sheet → sign-off (a)), swap the CSS stand-ins
+for the art, then horn/splash/arrive SFX + the ambience loop (§4.3 traps), then sign-off (b) on the iPad.
+Phone portrait is cramped (slot ≈ 25px) — W5.
 
 ## 9. Kickoff prompt for a fresh session
 
