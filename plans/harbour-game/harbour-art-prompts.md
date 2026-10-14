@@ -136,6 +136,47 @@ Remember: four separate image files — not one picture containing four.
 
 ---
 
+## Batch G — straight side-view boats and boxes (REPLACES the boats from B and the box from A)
+
+Why (2026-10-14, after the first integration): the B boats are drawn turned at an angle, with the deck
+receding diagonally, so cargo placed in straight rows looked tilted, small and pasted on, and the side-on
+fish didn't match the deck's angle. These renders use ONE camera for everything: straight from the side,
+slightly from above, with the deck edge perfectly horizontal and a long, low, wide-open deck.
+
+**Attach these 3 files:**
+- `C:\Source\preschool-learning-app\src\assets\games\math\fish.webp`
+- `C:\Source\preschool-learning-app\src\assets\games\boat\boat-red.webp`
+- `C:\Source\preschool-learning-app\src\assets\themes\icons\games\math.counting.webp`
+
+```
+I need FOUR SEPARATE IMAGES — four individual image files, one per subject below. Do NOT combine them into one picture. Do NOT make a grid, collage, panel or contact sheet. Each image shows ONLY its own single boat on its own full green background.
+
+Style for every image: soft-3D claymation style, Pixar-lite, rounded matte clay, soft top-left key light, gentle rim light, soft contact shadow, warm and child-safe, no text or letters, flat solid #00FF00 green background edge to edge, WIDE 2:1 landscape image, highest resolution. Match the clay style, materials and colours of the attached boat, but NOT its camera angle.
+
+CAMERA (most important): the boat is seen STRAIGHT FROM THE SIDE, perfectly level, with the camera only slightly above deck height (about 20 degrees down) — like a side-scrolling game. The boat is NOT turned or angled toward the viewer: the top edge of the deck and the waterline are perfectly HORIZONTAL straight lines, parallel to the bottom of the image. Bow (front) on the RIGHT, stern on the LEFT.
+
+THE BOAT: the same friendly little Danish clay fishing boat, but LONG and LOW — about three times as long as it is tall. A small wheelhouse at the far LEFT end only. Right next to the wheelhouse one short mast with ONE BLANK plain cream-white sail (no markings). Everything else — from the mast to the bow, more than two-thirds of the boat's length — is ONE LONG, FLAT, EMPTY, OPEN WOODEN DECK seen slightly from above, with nothing on it: no fish, no boxes, no rope, no people. The waterline is flat at the bottom. There is NO water: the boat floats on flat solid #00FF00 green, NOT on a sea.
+
+Image 1: RED hull with a white stripe.
+Image 2: SUNNY YELLOW hull with a blue stripe.
+Image 3: NAVY-BLUE hull with an orange stripe.
+Image 4: PALE-BLUE hull with a white stripe.
+
+Remember: straight side view, deck edge perfectly horizontal, flat solid #00FF00 green behind and below every boat (NOT a sea) — and four separate image files, not one picture containing four.
+```
+
+**Then, in the same chat, paste this for the box at the same camera:**
+
+```
+I need TWO SEPARATE IMAGES — two individual image files, two takes of the same subject. Do NOT combine them into one picture, grid or collage.
+
+Same style and the SAME CAMERA as the boats: seen STRAIGHT FROM THE FRONT-SIDE, perfectly level, camera only slightly above (about 20 degrees down), the box's front edge a perfectly HORIZONTAL straight line. Flat solid #00FF00 green background edge to edge, square 1:1, highest resolution, no text or letters.
+
+Subject: ONE open shallow wooden fish box in warm honey-brown wood, wider than it is tall, holding EXACTLY TEN of the attached red clay fish: FIVE fish in the back row and FIVE fish in the front row — ten in total, no more, no fewer. Every fish is EXACTLY the attached red fish (same shape, red, orange fins, eye), all facing RIGHT, lying side by side, clearly separate, alive and happy with open eyes, the fish poking up above the box rim so all ten are visible. No ice, no nets, no labels.
+```
+
+---
+
 ## For the build session (not for pasting)
 
 - First try (2026-10-14): a batched message returned one 2×2 collage with white gutters, and its boxes
