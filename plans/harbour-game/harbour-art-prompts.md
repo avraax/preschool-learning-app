@@ -177,6 +177,25 @@ Subject: ONE open shallow wooden fish box in warm honey-brown wood, wider than i
 
 ---
 
+## Batch H — a sharper harbour backdrop (REPLACES the E backdrop)
+
+Why (2026-10-14): the first backdrop is only 1024 × 572, stretched to fill the iPad, so the town and
+lighthouse look soft. This asks for the same picture at the highest resolution Gemini gives.
+
+**Attach these 2 files:**
+- `C:\Source\preschool-learning-app\art-src\harbour\backdrop.jpg`
+- `C:\Source\preschool-learning-app\art-src\kid\scene.png`
+
+```
+Generate ONE single image (not a collage, not a grid) — a WIDE landscape picture in 16:9, at the HIGHEST resolution you can produce (at least 2048 pixels wide).
+
+Recreate the first attached harbour scene as faithfully as possible — the same composition, the same colours, the same soft claymation style — but sharper and more detailed, with crisp clean edges on the houses, roofs, windows, the church spire, the stone breakwater and the red-and-white lighthouse. Match the softness and colours of the second attached reference image.
+
+The scene: a calm, cosy Danish harbour seen from the water. A soft pale-blue sky with a few rounded clay clouds across the top third. Along the horizon a small colourful harbour town of gabled houses in yellow, red, ochre and white with a little church spire on the left, and a short stone breakwater with a small red-and-white lighthouse on the far right (no light beam). The whole lower half of the picture is calm, open, smooth teal-blue water, completely empty — no boats, no quay, no people, no birds, no fish, no text, no letters. Keep the town small and low so the open water and the sky dominate.
+```
+
+---
+
 ## For the build session (not for pasting)
 
 - First try (2026-10-14): a batched message returned one 2×2 collage with white gutters, and its boxes
