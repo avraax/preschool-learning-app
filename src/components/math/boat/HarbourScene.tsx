@@ -9,13 +9,13 @@ import waveNearArt from '../../../assets/games/boat/wave-near.webp'
 //
 // Two pieces, because the boat must sit IN the water rather than on top of it:
 //   - `HarbourBackdrop` (z -1, behind everything): the painted harbour — sky, town, lighthouse, open sea.
-//   - `HarbourFrontWater` (above the boat, pointer-events none): two clay wave bands drifting across the
+//   - `HarbourFrontWater` (above the boat, pointer-events none): one clay wave band drifting across the
 //     bottom, covering the hull's waterline and the quay's feet.
 // Both are `position: absolute` against GameShell's full-viewport, isolated root (the same trick
 // `GameMotif` uses) — NOT `fixed`: Chrome blanks fixed layers during touch pans (PersistentWorld's note).
 //
 // Continuous motion is CSS keyframes only (`idleDrift`), transform-only, nothing moves under reduced
-// motion. The wave bands are background-repeated and drift less than one tile, so no seam ever shows.
+// motion. The wave band is background-repeated and drifts less than one tile, so no seam ever shows.
 
 /** Height of the near-water zone the boat's waterline sits in (kept for layout callers). */
 export const NEAR_WATER_DVH = 30
@@ -45,8 +45,8 @@ export const HarbourBackdrop: React.FC<{ reduce: boolean }> = () => (
   />
 )
 
-// The wave renders are made SEAMLESS in the art pipeline (`makeSeamlessX`: their ends are cross-faded),
-// so each band repeats at its NATURAL proportions. Stretching one render across the screen squashed it
+// The wave render is made PERIODIC in the art pipeline (`makePeriodicX`: cut at whole crest periods and
+// blended one period over), so the band repeats at its NATURAL proportions. Stretching one render across the screen squashed it
 // to a third of its height (owner: "stretched and distorted"); repeating the raw render showed seams.
 const band = (src: string) => ({
   backgroundImage: `url(${src})`,
