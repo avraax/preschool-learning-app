@@ -423,17 +423,68 @@ const HARBOUR_SPECS = {
   horn: { size: 320, keepAspect: true },
   'gull-stand': { size: 256, keepAspect: true },
   'gull-fly': { size: 320, keepAspect: true },
-  // `seamless`: the renders don't tile (repeating them showed a seam every tile), and stretching ONE
-  // across the screen squashed it to a third of its height (owner: "stretched and distorted"). So the
-  // ends are cross-faded into a seamless tile that repeats at its natural proportions.
-  'wave-near': { size: 1024, keepAspect: true, seamless: 0.22 },
-  'wave-far': { size: 1024, keepAspect: true, seamless: 0.22 },
+  // `periodic`: the renders don't tile as delivered (a seam every tile), and stretching ONE across the
+  // screen squashed it to a third of its height (owner: "stretched and distorted"). So each is cut at a
+  // whole number of its own wave periods and repeated at its natural proportions.
+  'wave-near': { size: 1024, keepAspect: true, periodic: true },
+  'wave-far': { size: 1024, keepAspect: true, periodic: true },
   splash: { size: 420, keepAspect: true },
   puff: { size: 256, keepAspect: true },
 }
-// Turn a keyed horizontal strip into a seamless horizontal tile: drop the last `frac` of the width and
-// cross-fade it over the first `frac`, so column W-1 of the tile flows straight into column 0. Alpha is
-// blended too, so a crest that ends at one edge fades into the crest at the other.
+// Turn a keyed wave strip into a seamless tile by cutting it at a WHOLE NUMBER of its own wave periods:
+// the period is found from the crest silhouette (each column's first opaque row), and the tile is the
+// longest run of whole periods. No blending at all — the cross-fade below left a faint second crest every
+// tile, which the owner saw as "double vision" (2026-10-14).
+async function makePeriodicX(path) {
+  const { data, info } = await sharp(await readFile(path)).ensureAlpha().raw().toBuffer({ resolveWithObject: true })
+  const { width: w, height: h, channels: c } = info
+  const prof = new Float64Array(w)
+  for (let x = 0; x < w; x++) {
+    let y = 0
+    while (y < h && data[(y * w + x) * c + 3] < 128) y++
+    prof[x] = y
+  }
+  let bestP = 0
+  let bestErr = Infinity
+  for (let p = Math.round(w * 0.08); p <= Math.round(w * 0.5); p++) {
+    let err = 0
+    for (let x = 0; x + p < w; x++) err += Math.abs(prof[x] - prof[x + p])
+    err /= w - p
+    if (err < bestErr) {
+      bestErr = err
+      bestP = p
+    }
+  }
+  // The render is lit unevenly across its width, so a bare cut at k periods still showed a brightness
+  // STEP at every join. Cut at k periods, then blend the first q columns with the q columns that follow
+  // the cut — those are the SAME wave shapes one tile later, so only the lighting is evened out and no
+  // ghost crest can appear (shape-aligned, unlike the old fixed-fraction cross-fade).
+  const q = Math.round(bestP * 0.6)
+  const k = Math.floor((w - q) / bestP)
+  const tw = k * bestP
+  const out = Buffer.alloc(tw * h * c)
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < tw; x++) {
+      const o = (y * tw + x) * c
+      const a = (y * w + x) * c
+      if (x >= q) {
+        data.copy(out, o, a, a + c)
+        continue
+      }
+      const b = (y * w + (tw + x)) * c
+      const t = x / q
+      const wa = (data[a + 3] / 255) * t
+      const wb = (data[b + 3] / 255) * (1 - t)
+      const sum = wa + wb
+      for (let ch = 0; ch < 3; ch++) out[o + ch] = sum > 0 ? Math.round((data[a + ch] * wa + data[b + ch] * wb) / sum) : 0
+      out[o + 3] = Math.round(data[b + 3] * (1 - t) + data[a + 3] * t)
+    }
+  }
+  await writeFile(path, await sharp(out, { raw: { width: tw, height: h, channels: c } }).webp({ quality: 90, effort: 6 }).toBuffer())
+  return { period: bestP, periods: k, err: bestErr.toFixed(2) }
+}
+
+// (kept for reference — superseded by makePeriodicX) Cross-fade a strip's ends into a seamless tile.
 async function makeSeamlessX(path, frac) {
   // Read through a buffer: on Windows sharp keeps a handle on a path it read, and writing back to the
   // same path then fails ("unable to open for write").
@@ -482,7 +533,7 @@ async function optimizeHarbour() {
     }
     const outPath = join(HARBOUR_OUT, `${id}.webp`)
     await greenKeySprite(join(srcDir, src), outPath, { fill: 1, ...spec })
-    if (spec.seamless) await makeSeamlessX(outPath, spec.seamless)
+    if (spec.periodic) console.log(`    periodic tile:`, await makePeriodicX(outPath))
     const kbs = kb((await stat(outPath)).size)
     total += kbs
     console.log(`  ${id.padEnd(14)} → ${id}.webp  ${String(kbs).padStart(4)} KB`)

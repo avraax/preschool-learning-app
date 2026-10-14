@@ -3,7 +3,6 @@ import { Box } from '@mui/material'
 import { idleDrift } from '../../../theme/idleMotion'
 import backdropArt from '../../../assets/games/boat/backdrop.webp'
 import waveNearArt from '../../../assets/games/boat/wave-near.webp'
-import waveFarArt from '../../../assets/games/boat/wave-far.webp'
 
 // Fyld Båden's own full-bleed harbour (Harbour PRD-01 §2.2.11) — the first game to paint its own scene
 // instead of the blurred world. ONE harbour on every skin, like all game art. Owner's Gemini renders.
@@ -56,15 +55,14 @@ const band = (src: string) => ({
   backgroundPosition: 'left bottom',
 })
 
+// ONE wave band. There used to be a pale far band behind it; it showed through between the near crests
+// and, with the blend ghosting of the time, read as "double vision" (owner, 2026-10-14). The open water
+// of the backdrop already does the far sea's job.
 export const HarbourFrontWater: React.FC<{ reduce: boolean }> = ({ reduce }) => {
-  const back = idleDrift(reduce, { distance: 40, durationS: 6.5 })
-  const front = idleDrift(reduce, { distance: 56, durationS: 5, delayS: -2 })
+  const front = idleDrift(reduce, { distance: 56, durationS: 5.5 })
   return (
-    <Box aria-hidden sx={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: '10dvh', zIndex: 2, pointerEvents: 'none', overflow: 'hidden' }}>
-      <Box sx={{ position: 'absolute', left: 0, right: '-80px', bottom: '28%', height: '72%' }}>
-        <Box {...back.props} sx={[{ width: '100%', height: '100%', opacity: 0.95, ...band(waveFarArt) }, back.sx]} />
-      </Box>
-      <Box sx={{ position: 'absolute', left: '-40px', right: '-80px', bottom: 0, height: '62%' }}>
+    <Box aria-hidden sx={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: '7dvh', zIndex: 2, pointerEvents: 'none', overflow: 'hidden' }}>
+      <Box sx={{ position: 'absolute', left: '-40px', right: '-80px', bottom: 0, height: '100%' }}>
         <Box {...front.props} sx={[{ width: '100%', height: '100%', ...band(waveNearArt) }, front.sx]} />
       </Box>
     </Box>

@@ -52,6 +52,8 @@ interface BoatProps {
   shakeKey: number
   /** The boat is setting off — a bow splash plays once. */
   departing: boolean
+  /** Something is being dragged — the deck shows where the slots are. */
+  dragging: boolean
 }
 
 // ── Slot geometry (fractions of the boat box) ────────────────────────────────────────────────────────
@@ -90,7 +92,7 @@ const Slot: React.FC<{
 // keeps its slot so the 5 + 5 stays countable.
 const Cargo: React.FC<{ kind: CargoKind }> = ({ kind }) =>
   kind === 'box' ? (
-    <Box sx={{ width: '106%', ml: '-3%', flex: '0 0 auto' }}>
+    <Box sx={{ width: '112%', ml: '-6%', flex: '0 0 auto' }}>
       <FishBoxView />
     </Box>
   ) : (
@@ -105,7 +107,8 @@ const Row: React.FC<{
   interactive: boolean
   reduce: boolean
   onUnload: (kind: CargoKind) => void
-}> = ({ kind, count, ghostCount, bundle, interactive, reduce, onUnload }) => {
+  showSlots: boolean
+}> = ({ kind, count, ghostCount, bundle, interactive, reduce, onUnload, showSlots }) => {
   const pulse = hintPulse(reduce)
   return (
     <>
@@ -117,7 +120,11 @@ const Row: React.FC<{
         return (
           <Slot key={i} kind={kind} i={i}>
             {/* A soft mark on the deck where this slot is — the 5 + 5 structure is visible even empty. */}
-            <Box aria-hidden sx={{ position: 'absolute', left: '8%', right: '8%', bottom: '-6%', height: '22%', borderRadius: '50%', background: 'rgba(90,55,25,0.22)' }} />
+            {/* Where this slot is — shown only while something is being dragged (as resting marks they read
+                as stains on the deck, owner 2026-10-14). The 5 + 5 gap carries the structure the rest of the time. */}
+            {showSlots && (
+              <Box aria-hidden sx={{ position: 'absolute', left: '8%', right: '8%', bottom: '-6%', height: '22%', borderRadius: '50%', background: 'rgba(255,255,255,0.4)', boxShadow: '0 0 6px rgba(255,255,255,0.6)' }} />
+            )}
             {ghosted && (
               // The hint: a faint silhouette of exactly what goes here, breathing.
               <Box {...pulse.props} sx={[{ position: 'absolute', inset: 0, opacity: 0.45, filter: 'grayscale(0.4) brightness(1.4)', display: 'flex', alignItems: 'center' }, pulse.sx]}>
@@ -212,6 +219,7 @@ const Boat: React.FC<BoatProps> = ({
   onHorn,
   shakeKey,
   departing,
+  dragging,
 }) => {
   const L = BOAT_LOOKS[look % BOAT_LOOKS.length]
   return (
@@ -259,8 +267,8 @@ const Boat: React.FC<BoatProps> = ({
           }}
         />
       </Box>
-      <Row kind="box" count={deck.boxes} ghostCount={ghost ? ghost.boxes : null} bundle={bundle} interactive={interactive} reduce={reduce} onUnload={onUnload} />
-      <Row kind="fish" count={deck.fish} ghostCount={ghost ? ghost.fish : null} bundle={bundle} interactive={interactive} reduce={reduce} onUnload={onUnload} />
+      <Row kind="box" count={deck.boxes} ghostCount={ghost ? ghost.boxes : null} bundle={bundle} interactive={interactive} reduce={reduce} onUnload={onUnload} showSlots={dragging} />
+      <Row kind="fish" count={deck.fish} ghostCount={ghost ? ghost.fish : null} bundle={bundle} interactive={interactive} reduce={reduce} onUnload={onUnload} showSlots={dragging} />
       {bundle && !reduce && <PackingShow bundle={bundle} />}
 
       {/* The send-off: a wake splash at the STERN as the boat sets off (a delight AFTER the answer, never

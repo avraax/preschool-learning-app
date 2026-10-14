@@ -10,6 +10,8 @@ import boxStackArt from '../../../assets/games/boat/box-stack.webp'
 import gullStandArt from '../../../assets/games/boat/gull-stand.webp'
 import gullFlyArt from '../../../assets/games/boat/gull-fly.webp'
 import { idleFloat } from '../../../theme/idleMotion'
+import { PHONE_LANDSCAPE, PHONE_PORTRAIT } from '../../../theme/phoneMedia'
+import Mascot from '../../common/Mascot'
 
 // The quay (owner's Gemini render): two endless supply piles standing on its planks — a stack of fish
 // boxes and a little heap of fish — and a seagull on the bollard. A pile is the child's SOURCE: tap it to
@@ -41,9 +43,9 @@ const Pile: React.FC<{
       {isBox ? (
         <Box component="img" src={boxStackArt} alt="" draggable={false} sx={{ ...imgSx, width: '100%', height: 'auto' }} />
       ) : (
-        <Box sx={{ position: 'relative', display: 'flex', justifyContent: 'center', pt: '30%' }}>
-          <Box sx={{ width: '50%', mr: '-6%' }}><FishView /></Box>
-          <Box sx={{ width: '50%', ml: '-6%' }}><FishView /></Box>
+        <Box sx={{ position: 'relative', display: 'flex', justifyContent: 'center', pt: '24%' }}>
+          <Box sx={{ width: '47%', mr: '-3%' }}><FishView /></Box>
+          <Box sx={{ width: '47%', ml: '-3%' }}><FishView /></Box>
         </Box>
       )}
       {/* The WHOLE PILE is the grab area (owner, 2026-10-14: pressing the lower fish did nothing). The
@@ -64,9 +66,10 @@ const Pile: React.FC<{
             onActivate={() => onLoad(kind)}
           >
             <Box data-boat-source={kind} sx={{ position: 'relative', width: '100%', height: '100%', cursor: interactive ? 'grab' : 'default' }}>
-              {/* The top unit: a box resting on the stack / a fish on top of the heap (+10px: this box is
-                  padded 10px past the pile). */}
-              <Box sx={{ position: 'absolute', left: '50%', top: '10px', width: isBox ? '78%' : '52%', transform: isBox ? 'translate(-50%, -38%)' : 'translate(-50%, 0%)' }}>
+              {/* The top unit: a box resting on the stack / a fish on top of the heap. This box is padded
+                  10px past the pile on every side, so sizes are taken from the PILE's width (100% − 20px) —
+                  the same size as the units below it, which match the cargo on the deck. */}
+              <Box sx={{ position: 'absolute', left: '50%', top: '10px', width: isBox ? 'calc((100% - 20px) * 0.92)' : 'calc((100% - 20px) * 0.47)', transform: isBox ? 'translate(-50%, -34%)' : 'translate(-50%, 0%)' }}>
                 {isBox ? <FishBoxView /> : <FishView />}
               </Box>
             </Box>
@@ -108,7 +111,7 @@ const Quay: React.FC<{
             <Box component="img" src={quayArt} alt="" draggable={false} sx={{ ...imgSx, position: 'absolute', inset: 0, width: '100%', height: '100%' }} />
             {/* A seagull resting on the bollard — calm decor, it never asks for anything. On a correct
                 send it takes off and flies away (the send-off); it is back on the next boat. */}
-            <Box aria-hidden sx={{ position: 'absolute', left: '74%', width: '17%', bottom: '74%' }}>
+            <Box aria-hidden sx={{ position: 'absolute', left: '77%', width: '15%', bottom: '74%' }}>
               {gullAway && !reduce ? (
                 <motion.div
                   initial={{ transform: 'translate(0%, 0%) scale(1)', opacity: 1 }}
@@ -126,8 +129,26 @@ const Quay: React.FC<{
                 </motion.div>
               ) : null}
             </Box>
-            <Pile kind="box" left="0%" width="42%" interactive={interactive} onLoad={onLoad} refill={refills.box} reduce={reduce} />
-            <Pile kind="fish" left="40%" width="36%" interactive={interactive} onLoad={onLoad} refill={refills.fish} reduce={reduce} />
+            {/* The mascot stands on the planks at the left end, beside the cargo — GameShell's corner
+                companion would stand in the sea here (owner, 2026-10-14), so the game turns it off and
+                seats its own. mascotBus reactions still reach it. */}
+            <Mascot
+              sx={{
+                position: 'absolute',
+                left: '-4%',
+                bottom: PLANK_TOP_FROM_BOTTOM,
+                width: '26%',
+                height: 'auto',
+                aspectRatio: '1',
+                zIndex: 1,
+                [PHONE_LANDSCAPE]: { display: 'block' },
+                [PHONE_PORTRAIT]: { width: '26%', height: 'auto' },
+              }}
+            />
+            {/* Piles at DECK scale: a box on the stack and a fish in the heap are the size of the cargo
+                they become on the boat, so the child sees the same thing move rather than a shrink. */}
+            <Pile kind="box" left="22%" width="22%" interactive={interactive} onLoad={onLoad} refill={refills.box} reduce={reduce} />
+            <Pile kind="fish" left="45%" width="34%" interactive={interactive} onLoad={onLoad} refill={refills.fish} reduce={reduce} />
           </Box>
         </DroppableZone>
       </Box>

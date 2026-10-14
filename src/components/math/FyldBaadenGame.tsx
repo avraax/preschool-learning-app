@@ -381,6 +381,9 @@ const FyldBaadenGame: React.FC = () => {
         title="Fyld Båden"
         backRoute="/math"
         dense
+        // The corner companion would stand IN THE SEA here (owner, 2026-10-14) — the quay renders the same
+        // mascot on its planks instead. `guideReaction` still reaches it through mascotBus.
+        guide={false}
         guideReaction={guideReaction}
         celebration={{ show: showCelebration, intensity: celebrationIntensity, duration: celebrationDuration, onComplete: stopCelebration }}
       >
@@ -442,10 +445,10 @@ const FyldBaadenGame: React.FC = () => {
                 display: 'flex',
                 alignItems: 'flex-end',
                 justifyContent: 'center',
-                // Lift the boat so the front wave band (HarbourFrontWater, 10dvh) covers only the bottom of
+                // Lift the boat so the front wave band (HarbourFrontWater, 7dvh) covers only the bottom of
                 // the hull — on a phone the band is taller than the whole hull and hid the bottom row of
-                // deck slots (WebKit phone-portrait probe, 2026-10-13). 0.09·bw ≈ the lowest 12% of the art.
-                pb: 'max(0px, calc(10dvh - var(--bw) * 0.09 - 10px))',
+                // deck slots (WebKit phone-portrait probe, 2026-10-13). 0.06·bw ≈ the lowest 10% of the art.
+                pb: 'max(0px, calc(7dvh - var(--bw) * 0.06 - 10px))',
                 '@media (orientation: portrait)': { flex: '0 0 auto' },
               }}
             >
@@ -473,6 +476,7 @@ const FyldBaadenGame: React.FC = () => {
                       onHorn={sendBoat}
                       shakeKey={shakeKey}
                       departing={phase === 'sailing'}
+                      dragging={activeId !== null}
                     />
                   </Box>
                 </motion.div>
