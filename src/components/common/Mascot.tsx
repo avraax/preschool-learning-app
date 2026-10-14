@@ -77,9 +77,12 @@ interface MascotProps {
   sx?: SxProps<Theme>
   // DEV/screenshot harness: force an initial reaction pose (e.g. /dev/mascot?event=correct).
   forceEvent?: MascotEvent
+  /** Standing ON something in a scene (Fyld Båden's boat): no idle hover and a contact shadow at its
+   *  feet instead of the floating drop-shadow — the corner companion's hover read as levitating there. */
+  grounded?: boolean
 }
 
-const Mascot: React.FC<MascotProps> = ({ sx, forceEvent }) => {
+const Mascot: React.FC<MascotProps> = ({ sx, forceEvent, grounded = false }) => {
   const theme = useTheme()
   const { themeId } = useThemeSwitch()
   const reduce = useReducedMotion()
@@ -146,7 +149,7 @@ const Mascot: React.FC<MascotProps> = ({ sx, forceEvent }) => {
   // The idle bob, as CSS, on the SPRITE — one layer below the framer feedback on the button, so the
   // two transforms compose instead of overwriting each other. Stood down while a reaction pose or a
   // tap animation owns the motion, exactly as the old framer loop was.
-  const bob = idleFloat(reduce || pose !== 'idle' || !!tapAnim, { distance: 6, durationS: 3.2, as: 'img' })
+  const bob = idleFloat(reduce || grounded || pose !== 'idle' || !!tapAnim, { distance: 6, durationS: 3.2, as: 'img' })
 
   // The corner footprint comes from `mascotCorner.ts` — full-bleed play surfaces RESERVE that same
   // value, so resizing the companion here can't leave a game overlapping it.
@@ -210,6 +213,10 @@ const Mascot: React.FC<MascotProps> = ({ sx, forceEvent }) => {
         </Box>
       )}
 
+      {/* Outside the button, so a reaction jump leaves the shadow on the ground. */}
+      {grounded && (
+        <Box aria-hidden sx={{ position: 'absolute', left: '18%', right: '18%', bottom: '2%', height: '12%', borderRadius: '50%', background: 'radial-gradient(ellipse at center, rgba(70,35,10,0.45), rgba(70,35,10,0) 70%)', pointerEvents: 'none' }} />
+      )}
       <Box
         component={motion.button}
         type="button"
@@ -243,7 +250,7 @@ const Mascot: React.FC<MascotProps> = ({ sx, forceEvent }) => {
                 width: '100%',
                 height: '100%',
                 objectFit: 'contain',
-                filter: 'drop-shadow(0 6px 12px rgba(0,0,0,0.28))',
+                filter: grounded ? 'none' : 'drop-shadow(0 6px 12px rgba(0,0,0,0.28))',
                 userSelect: 'none',
               },
               bob.sx,

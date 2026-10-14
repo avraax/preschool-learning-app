@@ -506,10 +506,11 @@ const FyldBaadenGame: React.FC = () => {
                       dragging={activeId !== null}
                       boxCols={boxCols}
                     />
-                    {/* The captain: the theme mascot stands on the free deck between the wheelhouse and the
-                        mast and sails off with every delivery. GameShell's corner companion would stand in
+                    {/* The captain: the theme mascot stands against the wheelhouse, as if just stepped out, and
+                        sails off with every delivery. Grounded: no idle hover, a contact shadow at its feet. GameShell's corner companion would stand in
                         the sea here (guide={false} above); mascotBus reactions still reach this one. */}
                     <Mascot
+                      grounded
                       sx={{
                         position: 'absolute',
                         left: `${BOAT_GEOMETRY.captain.left * 100}%`,
