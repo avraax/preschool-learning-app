@@ -30,36 +30,40 @@ const Pile: React.FC<{ kind: CargoKind; interactive: boolean; onLoad: (kind: Car
       {/* The pile behind — static, it never runs out. */}
       <Box aria-hidden sx={{ position: 'absolute', bottom: 0, left: 0 }}><Unit size={unit} /></Box>
       <Box aria-hidden sx={{ position: 'absolute', bottom: 0, right: 0 }}><Unit size={unit} /></Box>
-      {/* The top unit — the thing the child picks up. */}
-      <Box sx={{ position: 'absolute', bottom: isBox ? 'calc(var(--s) * 0.95)' : 'calc(var(--s) * 0.7)', left: '50%', transform: 'translateX(-50%)', zIndex: 1 }}>
+      {/* The WHOLE PILE is the grab area, not just the top unit (owner, 2026-10-14: pressing the fish
+          underneath did nothing). The draggable is a transparent box over the entire pile, padded a
+          little past it; only the top unit is drawn inside it, so a drag carries that one unit away
+          while the rest of the pile stays put. */}
+      <Box sx={{ position: 'absolute', inset: '-10px', zIndex: 1 }}>
         {/* A successful load REMOUNTS the top unit (`refill` is the key): the one the child dropped stays
-            on the deck, and a fresh one pops onto the pile — instead of the dropped unit gliding back
-            across the board, which read as "it didn't take". (WebKit gesture probe, 2026-10-13.) */}
-        {/* OPACITY only: a scale/translate on an ancestor of a draggable multiplies its drag offset
+            on the deck, and a fresh one appears on the pile — instead of the dropped unit gliding back
+            across the board, which read as "it didn't take". (WebKit gesture probe, 2026-10-13.)
+            OPACITY only: a scale/translate on an ancestor of a draggable multiplies its drag offset
             (drag-and-drop.md, "track the finger 1:1"), and a child may grab it mid-fade. */}
-        <motion.div key={refill} initial={reduce || refill === 0 ? false : { opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.22 }}>
-        <DraggableItem
-          id={`src-${kind}`}
-          inline
-          disabled={!interactive}
-          data={{ kind, from: 'quay' }}
-          lift={{ scale: 1.12, rotate: -5 }}
-          onActivate={() => onLoad(kind)}
-        >
-          <Box
-            data-boat-source={kind}
-            sx={{
-              // A generous hit area around the art (≥ 44px everywhere), cancelled by a negative margin so
-              // nothing on the quay moves (layout-contract.md, touch targets).
-              p: '14px',
-              m: '-14px',
-              cursor: interactive ? 'grab' : 'default',
-              display: 'flex',
-            }}
+        <motion.div key={refill} initial={reduce || refill === 0 ? false : { opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.22 }} style={{ width: '100%', height: '100%' }}>
+          <DraggableItem
+            id={`src-${kind}`}
+            inline
+            fill
+            disabled={!interactive}
+            data={{ kind, from: 'quay' }}
+            lift={{ scale: 1.05, rotate: -3 }}
+            onActivate={() => onLoad(kind)}
           >
-            <Unit size={unit} />
-          </Box>
-        </DraggableItem>
+            <Box data-boat-source={kind} sx={{ position: 'relative', width: '100%', height: '100%', cursor: interactive ? 'grab' : 'default' }}>
+              <Box
+                sx={{
+                  position: 'absolute',
+                  // +10px: this box is padded 10px past the pile on every side.
+                  bottom: isBox ? 'calc(var(--s) * 0.95 + 10px)' : 'calc(var(--s) * 0.7 + 10px)',
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                }}
+              >
+                <Unit size={unit} />
+              </Box>
+            </Box>
+          </DraggableItem>
         </motion.div>
       </Box>
     </Box>

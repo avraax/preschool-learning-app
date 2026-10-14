@@ -348,7 +348,9 @@ const FyldBaadenGame: React.FC = () => {
   const ghost = hint !== null ? ghostFor(hint) : null
   const overDeck = overId === 'deck' && !!activeId?.startsWith('src-')
   const overQuay = overId === 'quay' && !!activeId?.startsWith('deck-')
-  const rock = idleRock(reduce || phase === 'sailing' || phase === 'arriving')
+  // The moored boat stops rocking while ANYTHING is dragged: a rotating ancestor bends the drag offset,
+  // and a fish dragged off the deck drifted ~12px from the pointer (real-mouse probe, 2026-10-14).
+  const rock = idleRock(reduce || phase === 'sailing' || phase === 'arriving' || activeId !== null)
 
   // A full `transform` STRING with tween easing, never framer's `x` shorthand: Motion hands `transform`
   // to WAAPI, which Safari 17 runs on the GPU compositor, while `x`/`y`/`scale` tick on the main thread

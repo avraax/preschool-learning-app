@@ -16,31 +16,10 @@ import fishArt from '../../../assets/games/math/fish.webp'
 // Both are sized by the `--s` slot unit their bay sets, so one value scales the whole deck. This SVG is
 // the art-free stand-in; the owner's Gemini renders replace it in W3 under the same three rules.
 
-// The single fish IS the app's existing clay fish (the counting games' `fish.webp`) — house style by
-// construction, and the content reference for the owner's box/basket renders. The SVG below is only the
-// stand-in for the fish INSIDE a box until those renders land, coloured to match it.
-const FISH = '#E2463C'
-const FISH_DARK = '#B8322A'
+// The fish — single AND inside every box — IS the app's existing clay fish (the counting games'
+// `fish.webp`): house style by construction, and the content reference for the owner's box renders.
 const WOOD = '#C98B4B'
 const WOOD_DARK = '#8A5527'
-
-/** One fish, facing right. Drawn as a single path so it stays one clean shape at 20px. */
-const FishSvg: React.FC<{ eye?: boolean }> = ({ eye = true }) => (
-  <svg viewBox="0 0 40 24" width="100%" height="100%" aria-hidden style={{ display: 'block', overflow: 'visible' }}>
-    {/* The tail is a V opening AWAY from the body (base outward), so the fish reads as facing right
-        like the clay fish — a point-outward triangle read as a head facing left. */}
-    <path d="M12 12 L2 3.5 L2 20.5 Z" fill={FISH_DARK} />
-    <ellipse cx="23" cy="12" rx="15" ry="9.5" fill={FISH} />
-    <ellipse cx="23" cy="14.5" rx="11" ry="5" fill="#FFB07F" opacity="0.55" />
-    {eye && (
-      <>
-        <circle cx="31" cy="9.5" r="2.6" fill="#FFFFFF" />
-        <circle cx="31.6" cy="9.6" r="1.4" fill="#2B1B10" />
-        <path d="M33 14.5 Q35 15.8 37 14.3" stroke={FISH_DARK} strokeWidth="1.3" fill="none" strokeLinecap="round" />
-      </>
-    )}
-  </svg>
-)
 
 export const FishView: React.FC<{ size?: string }> = ({ size = 'calc(var(--s) * 0.92)' }) => (
   <Box
