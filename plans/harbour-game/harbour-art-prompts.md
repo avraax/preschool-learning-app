@@ -6,8 +6,21 @@ best on the contact sheet rather than accepting a first render.
 
 ## How to run it
 
-- **One chat thread per batch** so lighting carries. Attach 2–3 existing game icons as STYLE references
-  on every message (e.g. `art-src/icons/*.png` or `src/assets/themes/icons/games/math.*.webp`).
+- **One chat thread per batch** so lighting carries.
+- **ATTACH REFERENCE IMAGES ON EVERY MESSAGE — this is what keeps the new art in the app's style.**
+  Without them each batch drifts (clay texture, lighting, proportions). Add this line under the opener:
+  *"Match the exact clay style, lighting and colours of the attached reference images."*
+
+  | batch | attach (all in this repo) | why |
+  |---|---|---|
+  | 1 — fish & boxes | `src/assets/games/math/fish.webp` **(content + style)**, `src/assets/themes/icons/games/math.counting.webp` | every fish must BE the app's existing fish |
+  | 2 — boats | `src/assets/themes/icons/games/math.counting.webp`, `…/colors.ram-farven.webp`, `src/assets/games/math/fish.webp` | style; the fish so the boat belongs to the same world |
+  | 3 — quay & props | same three as batch 2 | style |
+  | 4 — water & effects | same three as batch 2 | style |
+  | 5 — backdrop | `art-src/kid/scene.png` (painting style of an existing world); NOT `art-src/ocean/scene.png` (it is underwater) | style of a wide scene |
+  | 6 — menu icon | `src/assets/themes/icons/games/math.counting.webp`, `…/math.addition.webp`, `src/assets/games/math/fish.webp` | must sit beside the other Tal og Regning icons |
+
+- Once the first good render of a batch exists, attach it too as a consistency anchor for re-rolls.
 - **Save with right-click → "Save image as…"**, never the download button on the image (it stamps the ✦
   watermark and can add stray elements). Check each render full-size, not the chat thumbnail.
 - Drop everything into one folder (e.g. `art-src/harbour/`) and give me the path. Filenames don't
@@ -20,28 +33,32 @@ best on the contact sheet rather than accepting a first render.
 
 ## Batch 1 — the learning objects (most important; re-roll until perfect)
 
+**The single fish is NOT generated — the app already has it**: the red clay fish from the counting
+games (`src/assets/games/math/fish.webp`, keyed, 576²). It is already simple, one colour, faces right
+and has a friendly eye, and it is in the house style by construction. So this batch only makes things
+that CONTAIN that fish. Attach it on every message.
+
+Three rules from the 2026-10-14 research, already written into each line: the fish are SIMPLE and
+IDENTICAL (exactly the attached fish, no scales or patterns — detail gets counted instead of the fish),
+they all FACE THE SAME WAY, and they look LIVELY (open eye) — never caught: no hooks, nets, ice or limp
+fish.
+
 > Generate 4 SEPARATE images, one per subject below — not a collage.
 > Each: single centered subject, soft-3D claymation style, Pixar-lite, rounded matte clay, soft
 > top-left key light, gentle rim light, soft contact shadow, warm and child-safe, slight 3/4 top-down
 > angle, no text or letters, flat solid #00FF00 background edge to edge, square 1:1, highest resolution.
+> Match the exact clay style, lighting and colours of the attached reference images. Every fish below
+> is EXACTLY the attached red fish — same shape, colour, eye and fins — just smaller.
 >
-Three rules from the 2026-10-14 research, already written into each line: the fish are SIMPLE and
-IDENTICAL (one warm orange colour, one pose, no scales or patterns — detail gets counted instead of the
-fish), they all FACE THE SAME WAY, and they look LIVELY (open eye, small smile) — never caught: no
-hooks, no nets, no ice, nothing limp.
-
-> 1. ONE simple cute cartoon fish seen from the side, facing RIGHT, a smooth rounded body in ONE warm
->    orange colour with a slightly lighter belly, a small triangular tail, one big friendly open eye and
->    a tiny smile. NO scales, NO stripes, NO patterns, no fins beyond the tail. Lively and happy, not
->    caught. It must read clearly as a fish even when shown very small.
-> 2. ONE open shallow wooden fish box seen from slightly above, holding EXACTLY TEN of that same simple
->    orange fish lying flat side by side in 2 columns of 5, ALL facing the same way, every fish clearly
->    separate with a visible gap between neighbours, so a child can see ten without counting. Same fish
->    design as subject 1. No ice, no nets, no labels.
-> 3. A small friendly basket of about six of the same simple orange fish (lively, open eyes), like a
->    supply pile on a harbour quay.
-> 4. A neat stack of three of the same wooden fish boxes, each holding ten fish in 2 columns of 5,
->    stacked on top of each other, like a supply pile on a harbour quay.
+> 1. ONE open shallow wooden fish box seen from slightly above, holding EXACTLY TEN of the attached red
+>    fish lying flat side by side in 2 columns of 5, ALL facing the same way, every fish clearly
+>    separate with a visible gap between neighbours, so a child can see ten without counting. No ice, no
+>    nets, no labels.
+> 2. The same box as subject 1 again (a second take to choose from), ten fish in 2 columns of 5.
+> 3. A small friendly wooden basket with about six of the attached red fish peeking out, lively, open
+>    eyes, like a supply pile on a harbour quay.
+> 4. A neat stack of three of the same wooden fish boxes, each holding ten of the attached fish in 2
+>    columns of 5, stacked on top of each other, like a supply pile on a harbour quay.
 
 ## Batch 2 — the boats (all four share the same pose and scale)
 
