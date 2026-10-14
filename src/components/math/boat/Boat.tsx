@@ -49,8 +49,11 @@ interface BoatProps {
   shakeKey: number
 }
 
+/** Width of a box slot on the deck (a fish slot is `var(--s)`). */
+const BOX_SLOT_W = 'calc(var(--s) * 1.5)'
+
 const slotSx = {
-  width: 'var(--s)',
+  width: 'var(--cell-w, var(--s))',
   height: 'var(--s)',
   borderRadius: 'calc(var(--s) * 0.18)',
   display: 'flex',
@@ -69,11 +72,15 @@ const Bay: React.FC<{
   onUnload: (kind: CargoKind) => void
 }> = ({ kind, count, ghostCount, bundle, interactive, reduce, onUnload }) => {
   const pulse = hintPulse(reduce)
+  // A box slot is WIDER than a fish slot (owner, 2026-10-14): a box of ten squeezed into a one-fish slot
+  // drew ten 8px fish and looked SMALLER than a single fish — the opposite of the lesson.
+  const cellW = kind === 'box' ? BOX_SLOT_W : 'var(--s)'
   return (
     <Box
       sx={{
+        '--cell-w': cellW,
         display: 'grid',
-        gridTemplateColumns: 'repeat(5, var(--s))',
+        gridTemplateColumns: 'repeat(5, var(--cell-w))',
         gridTemplateRows: 'repeat(2, var(--s))',
         gap: 'calc(var(--s) * 0.14)',
         position: 'relative',
@@ -118,7 +125,7 @@ const Bay: React.FC<{
                     onActivate={() => onUnload(kind)}
                   >
                     <Box sx={{ cursor: interactive ? 'grab' : 'default', display: 'flex' }}>
-                      {kind === 'box' ? <FishBoxView /> : <FishView />}
+                      {kind === 'box' ? <FishBoxView size="calc(var(--s) * 1.42)" /> : <FishView />}
                     </Box>
                   </DraggableItem>
                 </Box>
@@ -176,16 +183,17 @@ const Boat: React.FC<BoatProps> = ({
           : { transform: 'translateX(0px)' }
       }
       transition={{ duration: 0.5, ease: 'easeInOut' }}
-      style={{ position: 'relative', width: 'calc(var(--s) * 13)', height: 'calc(var(--s) * 7.6)' }}
+      // 15.6 slots wide: the deck carries a 5-wide BOX bay at 1.5 slots per box plus a 5-wide fish bay.
+      style={{ position: 'relative', width: 'calc(var(--s) * 15.6)', height: 'calc(var(--s) * 7.6)' }}
     >
       {/* Mast + pennant. */}
-      <Box sx={{ position: 'absolute', left: 'calc(var(--s) * 6.4)', top: 0, width: 'calc(var(--s) * 0.18)', height: 'calc(var(--s) * 4.4)', background: '#7A5230', borderRadius: 4 }} />
-      <Box sx={{ position: 'absolute', left: 'calc(var(--s) * 6.55)', top: 'calc(var(--s) * 0.05)', width: 'calc(var(--s) * 0.9)', height: 'calc(var(--s) * 0.45)', background: L.stripe === '#FFFFFF' ? L.hull : L.stripe, clipPath: 'polygon(0 0, 100% 50%, 0 100%)' }} />
+      <Box sx={{ position: 'absolute', left: 'calc(var(--s) * 7.7)', top: 0, width: 'calc(var(--s) * 0.18)', height: 'calc(var(--s) * 4.4)', background: '#7A5230', borderRadius: 4 }} />
+      <Box sx={{ position: 'absolute', left: 'calc(var(--s) * 7.85)', top: 'calc(var(--s) * 0.05)', width: 'calc(var(--s) * 0.9)', height: 'calc(var(--s) * 0.45)', background: L.stripe === '#FFFFFF' ? L.hull : L.stripe, clipPath: 'polygon(0 0, 100% 50%, 0 100%)' }} />
       {/* Sail — blank until a correct send paints the number on it (the reveal IS the lesson). */}
       <Box
         sx={{
           position: 'absolute',
-          left: 'calc(var(--s) * 3.4)',
+          left: 'calc(var(--s) * 4.7)',
           top: 'calc(var(--s) * 0.5)',
           width: 'calc(var(--s) * 2.95)',
           height: 'calc(var(--s) * 3.2)',
@@ -214,7 +222,7 @@ const Boat: React.FC<BoatProps> = ({
       </Box>
 
       {/* Deck — ONE drop target for both bays. */}
-      <Box sx={{ position: 'absolute', left: 'calc(var(--s) * 0.5)', top: 'calc(var(--s) * 3.7)', width: 'calc(var(--s) * 12)', height: 'calc(var(--s) * 2.6)' }}>
+      <Box sx={{ position: 'absolute', left: 'calc(var(--s) * 0.5)', top: 'calc(var(--s) * 3.7)', width: 'calc(var(--s) * 14.6)', height: 'calc(var(--s) * 2.6)' }}>
         <DroppableZone
           id="deck"
           style={{

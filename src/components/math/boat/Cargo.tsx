@@ -53,39 +53,45 @@ export const FishView: React.FC<{ size?: string }> = ({ size = 'calc(var(--s) * 
   />
 )
 
-export const FishBoxView: React.FC<{ size?: string }> = ({ size = 'var(--s)' }) => (
+/** `size` is the box's WIDTH; it is landscape (2 rows × 5), so its height follows from that. */
+export const FishBoxView: React.FC<{ size?: string }> = ({ size = 'calc(var(--s) * 1.42)' }) => (
   <Box
     aria-hidden
     sx={{
       width: size,
-      height: size,
       display: 'flex',
       alignItems: 'center',
       filter: 'drop-shadow(0 2px 3px rgba(60,30,10,0.35))',
     }}
   >
-    {/* An open wooden box; the ten fish inside lie FLAT, 2 columns × 5 rows (a ten-frame on its side),
-        all facing the same way. Turned on end they shrank to orange dashes and ten stopped being SEEN. */}
+    {/* An open wooden box holding the app's OWN clay fish ×10, 2 rows × 5 (a ten-frame), all facing the
+        same way. The box is landscape so the round clay fish get as much size as the slot allows. */}
     <Box
       sx={{
         width: '100%',
-        aspectRatio: '1 / 1',
-        borderRadius: '12%',
+        aspectRatio: '1 / 0.66',
+        borderRadius: '14%',
         background: `linear-gradient(180deg, #D9A066, ${WOOD})`,
-        boxShadow: `inset 0 0 0 calc(${size} * 0.055) ${WOOD_DARK}`,
-        p: `calc(${size} * 0.08) calc(${size} * 0.07)`,
+        boxShadow: `inset 0 0 0 calc(${size} * 0.05) ${WOOD_DARK}`,
+        p: `calc(${size} * 0.06) calc(${size} * 0.05)`,
         display: 'grid',
-        gridTemplateColumns: 'repeat(2, 1fr)',
-        gridTemplateRows: 'repeat(5, 1fr)',
-        columnGap: '6%',
-        rowGap: '2%',
+        gridTemplateColumns: 'repeat(5, 1fr)',
+        gridTemplateRows: 'repeat(2, 1fr)',
+        gap: '2%',
         alignItems: 'center',
+        justifyItems: 'center',
       }}
     >
       {Array.from({ length: 10 }, (_, i) => (
-        <Box key={i} sx={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center' }}>
-          <FishSvg eye={false} />
-        </Box>
+        <Box
+          key={i}
+          component="img"
+          src={fishArt}
+          alt=""
+          draggable={false}
+          // Slightly larger than its cell: the clay render has transparent margin around the ink.
+          sx={{ width: '125%', maxWidth: 'none', height: 'auto', display: 'block', userSelect: 'none', pointerEvents: 'none' }}
+        />
       ))}
     </Box>
   </Box>
