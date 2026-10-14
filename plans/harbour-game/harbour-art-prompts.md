@@ -25,16 +25,23 @@ best on the contact sheet rather than accepting a first render.
 > top-left key light, gentle rim light, soft contact shadow, warm and child-safe, slight 3/4 top-down
 > angle, no text or letters, flat solid #00FF00 background edge to edge, square 1:1, highest resolution.
 >
-> 1. ONE small wooden cargo crate, chunky and rounded, warm honey-brown wood with darker slats and a
->    simple cross brace, front-facing so it reads instantly even when shown tiny. Nothing on it.
-> 2. ONE wooden pallet carrying EXACTLY TEN identical small wooden crates arranged in 2 rows of 5,
->    every single crate clearly separate with a visible gap or dark seam between neighbours, so a child
->    can see there are ten without counting. Same crate design as a single crate. Seen from slightly
->    above so all ten tops are visible.
-> 3. A tidy pile of about six single wooden crates (same crate design) stacked loosely in a pyramid on
->    the ground, friendly and inviting, like a supply pile on a dock.
-> 4. A stack of three wooden pallets, each loaded with ten small crates in 2 rows of 5 (same design),
->    stacked on top of each other, like a supply pile on a dock.
+Three rules from the 2026-10-14 research, already written into each line: the fish are SIMPLE and
+IDENTICAL (one warm orange colour, one pose, no scales or patterns — detail gets counted instead of the
+fish), they all FACE THE SAME WAY, and they look LIVELY (open eye, small smile) — never caught: no
+hooks, no nets, no ice, nothing limp.
+
+> 1. ONE simple cute cartoon fish seen from the side, facing RIGHT, a smooth rounded body in ONE warm
+>    orange colour with a slightly lighter belly, a small triangular tail, one big friendly open eye and
+>    a tiny smile. NO scales, NO stripes, NO patterns, no fins beyond the tail. Lively and happy, not
+>    caught. It must read clearly as a fish even when shown very small.
+> 2. ONE open shallow wooden fish box seen from slightly above, holding EXACTLY TEN of that same simple
+>    orange fish lying flat side by side in 2 columns of 5, ALL facing the same way, every fish clearly
+>    separate with a visible gap between neighbours, so a child can see ten without counting. Same fish
+>    design as subject 1. No ice, no nets, no labels.
+> 3. A small friendly basket of about six of the same simple orange fish (lively, open eyes), like a
+>    supply pile on a harbour quay.
+> 4. A neat stack of three of the same wooden fish boxes, each holding ten fish in 2 columns of 5,
+>    stacked on top of each other, like a supply pile on a harbour quay.
 
 ## Batch 2 — the boats (all four share the same pose and scale)
 
@@ -47,14 +54,16 @@ best on the contact sheet rather than accepting a first render.
 > the deck), and a mast with ONE BLANK plain cream-white sail or banner board (no markings). Waterline
 > flat at the bottom. No water — the boat floats on flat solid #00FF00, NOT on a sea.
 >
-> 1. A small red-and-white Danish fishing boat (kutter) with a little wheelhouse at the back.
->    Remember: flat solid #00FF00 behind and below it, NOT a sea.
-> 2. A small friendly yellow ferry with a short cabin at the back. Remember: flat solid #00FF00 behind
->    and below it, NOT a sea.
-> 3. A chunky little tugboat in navy blue and orange with a round funnel at the back. Remember: flat
->    solid #00FF00 behind and below it, NOT a sea.
-> 4. A small cargo ship with a pale blue hull and white bridge at the back. Remember: flat solid #00FF00
->    behind and below it, NOT a sea.
+> All four are friendly little Danish FISHING BOATS (kutter) of the same shape — only the colours differ.
+>
+> 1. A red-and-white fishing boat with a little white wheelhouse at the back. Remember: flat solid
+>    #00FF00 behind and below it, NOT a sea.
+> 2. A sunny yellow-and-blue fishing boat with a little wheelhouse at the back. Remember: flat solid
+>    #00FF00 behind and below it, NOT a sea.
+> 3. A navy-blue-and-orange fishing boat with a little wheelhouse at the back. Remember: flat solid
+>    #00FF00 behind and below it, NOT a sea.
+> 4. A pale-blue-and-white fishing boat with a little wheelhouse at the back. Remember: flat solid
+>    #00FF00 behind and below it, NOT a sea.
 
 Keying note for me: no green hulls on purpose (a green hull needs a per-file key override).
 
@@ -66,7 +75,7 @@ Keying note for me: no green hulls on purpose (a green hull needs a per-file key
 > angle, no text or letters, flat solid #00FF00 background edge to edge, square 1:1, highest resolution.
 >
 > 1. A sturdy wooden harbour quay section seen from the side: a wide flat plank top surface with room
->    for two piles of crates, thick wooden posts going down at the front, one rounded iron bollard at the
+>    for two piles of fish boxes, thick wooden posts going down at the front, one rounded iron bollard at the
 >    right edge. Nothing standing on it. Remember: flat solid #00FF00 around it, NOT water.
 > 2. A big chunky brass ship's horn on a round red push-button base, friendly and toy-like, clearly
 >    something to press.
@@ -111,14 +120,16 @@ Paste this alone, ask for 2–4 variants and pick one:
 > top-left key light, gentle rim light, soft contact shadow, warm and child-safe, slight 3/4 top-down
 > angle, no text or letters, flat solid #00FF00 background edge to edge, square 1:1, highest resolution.
 >
-> 1–4. Four variants of: a small red-and-white cargo boat loaded with a few wooden crates and one
-> pallet of crates, a blank cream sail, cheerful and chunky, filling the frame like an app icon.
+> 1–4. Four variants of: a small red-and-white fishing boat carrying one wooden box of simple orange
+> fish and a few happy loose fish, a blank cream sail, cheerful and chunky, filling the frame like an
+> app icon. Fish lively with open eyes, no nets or hooks.
 > Remember: flat solid #00FF00 behind and below it, NOT a sea.
 
 ---
 
 ## Sounds (not Gemini — I source these, free, licence logged per file)
 
-horn · bow splash · crate thud (wood on wood) · pallet clunk (heavier) · bundle (rope creak + puff) ·
+horn · bow splash · fish lands (soft, done: Kenney impactSoft) · box lands (wood, done: Kenney
+impactWood) · packing (ten fish into a box: a soft whoosh + wooden clunk) ·
 boat arrive (small engine chug) · harbour ambience loop (soft waves, distant gulls, no voices or music).
 Sources: Kenney (CC0), Sonniss GDC bundle (royalty-free; no AI training, no resale). MP3 only.

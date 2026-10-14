@@ -4,9 +4,9 @@ import { Box } from '@mui/material'
 import { DraggableItem } from '../../common/dnd/DraggableItem'
 import { DroppableZone } from '../../common/dnd/DroppableZone'
 import type { CargoKind } from './boatDeck'
-import { CrateView, PalletView } from './Cargo'
+import { FishBoxView, FishView } from './Cargo'
 
-// The quay: two endless supply piles — pallets of ten and single crates. A pile is the child's SOURCE:
+// The quay: two endless supply piles — boxes of ten fish and single fish. A pile is the child's SOURCE:
 // tap it to load one onto the next free slot, or drag its top unit onto the deck. Both call the game's
 // one `load(kind)` (Harbour PRD-01 §4.4). The quay is also where a dragged-back item is unloaded.
 
@@ -21,33 +21,17 @@ const Pile: React.FC<{ kind: CargoKind; interactive: boolean; onLoad: (kind: Car
   refill,
   reduce,
 }) => {
-  const pallet = kind === 'pallet'
-  const Unit = pallet ? PalletView : CrateView
-  // A pallet's ink is its lower ~55% (2×5 crates + base), so a pallet pile STACKS straight up; a crate
-  // pile is two side by side with the third on top.
-  const unit = pallet ? 'calc(var(--s) * 1.75)' : 'calc(var(--s) * 1.2)'
+  const isBox = kind === 'box'
+  const Unit = isBox ? FishBoxView : FishView
+  // Both piles are two side by side with the top unit resting on them.
+  const unit = isBox ? 'calc(var(--s) * 1.3)' : 'calc(var(--s) * 1.2)'
   return (
-    <Box
-      sx={{
-        position: 'relative',
-        width: pallet ? 'calc(var(--s) * 1.95)' : 'calc(var(--s) * 2.5)',
-        height: pallet ? 'calc(var(--s) * 2.6)' : 'calc(var(--s) * 2.3)',
-      }}
-    >
+    <Box sx={{ position: 'relative', width: 'calc(var(--s) * 2.6)', height: 'calc(var(--s) * 2.3)' }}>
       {/* The pile behind — static, it never runs out. */}
-      {pallet ? (
-        <>
-          <Box aria-hidden sx={{ position: 'absolute', bottom: 0, left: '50%', transform: 'translateX(-50%)' }}><Unit size={unit} /></Box>
-          <Box aria-hidden sx={{ position: 'absolute', bottom: 'calc(var(--s) * 0.42)', left: '50%', transform: 'translateX(-50%)' }}><Unit size={unit} /></Box>
-        </>
-      ) : (
-        <>
-          <Box aria-hidden sx={{ position: 'absolute', bottom: 0, left: 0 }}><Unit size={unit} /></Box>
-          <Box aria-hidden sx={{ position: 'absolute', bottom: 0, right: 0 }}><Unit size={unit} /></Box>
-        </>
-      )}
+      <Box aria-hidden sx={{ position: 'absolute', bottom: 0, left: 0 }}><Unit size={unit} /></Box>
+      <Box aria-hidden sx={{ position: 'absolute', bottom: 0, right: 0 }}><Unit size={unit} /></Box>
       {/* The top unit — the thing the child picks up. */}
-      <Box sx={{ position: 'absolute', bottom: pallet ? 'calc(var(--s) * 0.84)' : 'calc(var(--s) * 1.02)', left: '50%', transform: 'translateX(-50%)', zIndex: 1 }}>
+      <Box sx={{ position: 'absolute', bottom: isBox ? 'calc(var(--s) * 0.95)' : 'calc(var(--s) * 0.7)', left: '50%', transform: 'translateX(-50%)', zIndex: 1 }}>
         {/* A successful load REMOUNTS the top unit (`refill` is the key): the one the child dropped stays
             on the deck, and a fresh one pops onto the pile — instead of the dropped unit gliding back
             across the board, which read as "it didn't take". (WebKit gesture probe, 2026-10-13.) */}
@@ -107,8 +91,8 @@ const Quay: React.FC<{
           transition: 'box-shadow 0.2s ease',
         }}
       >
-        <Pile kind="pallet" interactive={interactive} onLoad={onLoad} refill={refills.pallet} reduce={reduce} />
-        <Pile kind="crate" interactive={interactive} onLoad={onLoad} refill={refills.crate} reduce={reduce} />
+        <Pile kind="box" interactive={interactive} onLoad={onLoad} refill={refills.box} reduce={reduce} />
+        <Pile kind="fish" interactive={interactive} onLoad={onLoad} refill={refills.fish} reduce={reduce} />
       </DroppableZone>
       {/* Planks + posts down into the water (the front wave band covers their feet). */}
       <Box aria-hidden sx={{ height: 'calc(var(--s) * 0.45)', background: `linear-gradient(180deg, ${PLANK}, ${PLANK_DARK})`, borderRadius: '6px', boxShadow: '0 4px 0 rgba(0,0,0,0.15)' }} />

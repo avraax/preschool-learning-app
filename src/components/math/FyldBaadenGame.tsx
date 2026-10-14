@@ -18,7 +18,7 @@ import { useReducedMotion } from '../../hooks/useReducedMotion'
 import { progressStore } from '../../services/progressStore'
 import { sfx } from '../../services/sfxClient'
 import { mascotBus } from '../../services/mascotBus'
-import { fillBoatPrompt } from '../../config/gamePhrases'
+import { boatLoadedText, fillBoatPrompt } from '../../config/gamePhrases'
 import { BOAT_RECENT_WINDOW, pickBoatNumber } from '../../config/mathProblems'
 import { DWELL_CORRECT } from '../../theme/motion'
 import { idleRock } from '../../theme/idleMotion'
@@ -39,9 +39,9 @@ import { BOAT_LOOKS } from './boat/boatLooks'
 import Quay from './boat/Quay'
 import { HarbourBackdrop, HarbourFrontWater } from './boat/HarbourScene'
 
-// Fyld Båden (`math.boat`, Harbour PRD-01) — hear a Danish number, BUILD it on a boat from pallets of
-// ten and single crates, and blow the horn. The learning act IS the game action: "syvogtredive" needs
-// three pallets and seven crates, so the inverted word has to be decoded to load the boat at all, and
+// Fyld Båden (`math.boat`, Harbour PRD-01) — hear "Fyld båden med {tal} fisk", BUILD it on a boat from
+// boxes of ten fish and single fish, and blow the horn. The learning act IS the game action:
+// "syvogtredive" needs three boxes and seven fish, so the inverted word has to be decoded to load at all, and
 // the numeral appears on the sail only AFTER a correct send — word → quantity → symbol.
 //
 // Endless, live per-task XP (one task = one correct send), the ceremony at the seam after the boat sails
@@ -53,9 +53,13 @@ import { HarbourBackdrop, HarbourFrontWater } from './boat/HarbourScene'
 
 type Phase = 'arriving' | 'loading' | 'sending' | 'sailing'
 
-/** Beat between naming a wrong load and re-asking the target — a fixed step, never an awaited clip. */
-const REASK_MS = 1700
-/** How long the bundling show holds input (the crates gather, the pallet pops in). */
+/**
+ * Beat between naming a wrong load and re-asking the target — a fixed step, never an awaited clip.
+ * Measured (ffmpeg silencedetect): the longest "Der er … fisk" ends speaking at 1.53s, plus ~0.25s for
+ * the <audio> element to start; 2.3s leaves a short pause before "Fyld båden med …".
+ */
+const REASK_MS = 2300
+/** How long the packing show holds input (the ten fish gather, the box pops in). */
 const BUNDLE_MS = 800
 
 const FyldBaadenGame: React.FC = () => {
@@ -78,7 +82,7 @@ const FyldBaadenGame: React.FC = () => {
   const [bundling, setBundling] = useState(false)
   const [shakeKey, setShakeKey] = useState(0)
   // Bumped per successful load of a kind — remounts that pile's top unit (see Quay's `refill`).
-  const [refills, setRefills] = useState<Record<CargoKind, number>>({ pallet: 0, crate: 0 })
+  const [refills, setRefills] = useState<Record<CargoKind, number>>({ box: 0, fish: 0 })
   const [guideReaction, setGuideReaction] = useState<GuideReaction>(null)
 
   // Refs mirror what a same-tick second gesture must see (a double tap reads stale state otherwise).
@@ -175,7 +179,7 @@ const FyldBaadenGame: React.FC = () => {
   }
 
   // The first gesture IN the game ends the welcome's chance to play. Audio only becomes ready on a
-  // gesture, so on a cold deep link the welcome would otherwise fire on the child's first crate and
+  // gesture, so on a cold deep link the welcome would otherwise fire on the child's first fish and
   // re-speak the prompt over whatever they just did (audio-report probe, 2026-10-13). It also lets
   // every later boat speak its prompt on arrival even if the welcome never ran.
   const markInteracted = () => {
@@ -234,17 +238,17 @@ const FyldBaadenGame: React.FC = () => {
     setDeckBoth(r.deck)
     setRefills((f) => ({ ...f, [kind]: f[kind] + 1 }))
     if (r.outcome === 'bundled') {
-      // Ten single crates become ONE pallet — the place-value moment, given its own beat.
+      // Ten single fish are packed into ONE box — the place-value moment, given its own beat.
       sfx.play('bundle')
       bundlingRef.current = true
       setBundling(true)
-      setBundle({ key: Date.now(), pallet: r.deck.pallets - 1 })
+      setBundle({ key: Date.now(), box: r.deck.boxes - 1 })
       later('bundle', BUNDLE_MS, () => {
         bundlingRef.current = false
         setBundling(false)
       })
     } else {
-      sfx.play(kind === 'pallet' ? 'pallet-clunk' : 'crate-thud')
+      sfx.play(kind === 'box' ? 'box-land' : 'fish-land')
     }
   }
 
@@ -290,7 +294,7 @@ const FyldBaadenGame: React.FC = () => {
     sfx.play('spring-back')
     setShakeKey((k) => k + 1)
     reactGuide('think')
-    void audio.speakNumber(loaded).catch(() => {})
+    void audio.speak(boatLoadedText(loaded)).catch(() => {})
     later('reask', REASK_MS, speakPrompt)
     if (registerHintWrong(() => n)) mascotBus.emit('hint')
   }

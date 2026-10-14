@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-13T19:01:00.054Z",
+  "updatedAt": "2026-10-14T18:42:04.899Z",
   "clips": {
     "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|b": {
       "verdict": "ok",
@@ -22192,6 +22192,1606 @@
       "text": "Fyld Båden",
       "group": "phrases",
       "updatedAt": 1791918060054
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med en fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med en fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er en fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er en fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med to fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med to fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er to fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er to fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med tre fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med tre fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er tre fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er tre fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med fire fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med fire fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er fire fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er fire fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med fem fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med fem fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er fem fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er fem fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med seks fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med seks fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er seks fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er seks fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med syv fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med syv fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er syv fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er syv fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med otte fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med otte fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er otte fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er otte fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med ni fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med ni fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er ni fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er ni fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med ti fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med ti fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er ti fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er ti fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med elleve fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med elleve fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er elleve fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er elleve fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med tolv fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med tolv fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er tolv fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er tolv fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med tretten fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med tretten fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er tretten fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er tretten fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med fjorten fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med fjorten fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er fjorten fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er fjorten fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med femten fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med femten fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er femten fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er femten fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med seksten fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med seksten fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er seksten fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er seksten fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med sytten fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med sytten fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er sytten fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er sytten fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med atten fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med atten fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er atten fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er atten fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med nitten fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med nitten fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er nitten fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er nitten fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med tyve fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med tyve fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er tyve fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er tyve fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med enogtyve fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med enogtyve fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er enogtyve fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er enogtyve fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med toogtyve fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med toogtyve fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er toogtyve fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er toogtyve fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med treogtyve fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med treogtyve fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er treogtyve fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er treogtyve fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med fireogtyve fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med fireogtyve fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er fireogtyve fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er fireogtyve fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med femogtyve fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med femogtyve fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er femogtyve fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er femogtyve fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med seksogtyve fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med seksogtyve fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er seksogtyve fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er seksogtyve fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med syvogtyve fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med syvogtyve fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er syvogtyve fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er syvogtyve fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med otteogtyve fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med otteogtyve fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er otteogtyve fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er otteogtyve fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med niogtyve fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med niogtyve fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er niogtyve fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er niogtyve fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med tredive fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med tredive fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er tredive fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er tredive fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med enogtredive fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med enogtredive fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er enogtredive fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er enogtredive fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med toogtredive fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med toogtredive fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er toogtredive fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er toogtredive fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med treogtredive fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med treogtredive fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er treogtredive fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er treogtredive fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med fireogtredive fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med fireogtredive fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er fireogtredive fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er fireogtredive fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med femogtredive fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med femogtredive fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er femogtredive fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er femogtredive fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med seksogtredive fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med seksogtredive fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er seksogtredive fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er seksogtredive fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med syvogtredive fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med syvogtredive fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er syvogtredive fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er syvogtredive fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med otteogtredive fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med otteogtredive fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er otteogtredive fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er otteogtredive fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med niogtredive fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med niogtredive fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er niogtredive fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er niogtredive fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med fyrre fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med fyrre fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er fyrre fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er fyrre fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med enogfyrre fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med enogfyrre fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er enogfyrre fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er enogfyrre fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med toogfyrre fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med toogfyrre fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er toogfyrre fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er toogfyrre fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med treogfyrre fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med treogfyrre fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er treogfyrre fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er treogfyrre fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med fireogfyrre fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med fireogfyrre fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er fireogfyrre fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er fireogfyrre fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med femogfyrre fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med femogfyrre fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er femogfyrre fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er femogfyrre fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med seksogfyrre fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med seksogfyrre fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er seksogfyrre fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er seksogfyrre fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med syvogfyrre fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med syvogfyrre fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er syvogfyrre fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er syvogfyrre fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med otteogfyrre fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med otteogfyrre fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er otteogfyrre fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er otteogfyrre fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med niogfyrre fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med niogfyrre fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er niogfyrre fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er niogfyrre fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med halvtreds fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med halvtreds fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er halvtreds fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er halvtreds fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med enoghalvtreds fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med enoghalvtreds fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er enoghalvtreds fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er enoghalvtreds fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med tooghalvtreds fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med tooghalvtreds fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er tooghalvtreds fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er tooghalvtreds fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med treoghalvtreds fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med treoghalvtreds fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er treoghalvtreds fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er treoghalvtreds fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med fireoghalvtreds fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med fireoghalvtreds fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er fireoghalvtreds fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er fireoghalvtreds fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med femoghalvtreds fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med femoghalvtreds fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er femoghalvtreds fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er femoghalvtreds fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med seksoghalvtreds fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med seksoghalvtreds fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er seksoghalvtreds fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er seksoghalvtreds fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med syvoghalvtreds fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med syvoghalvtreds fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er syvoghalvtreds fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er syvoghalvtreds fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med otteoghalvtreds fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med otteoghalvtreds fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er otteoghalvtreds fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er otteoghalvtreds fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med nioghalvtreds fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med nioghalvtreds fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er nioghalvtreds fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er nioghalvtreds fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med tres fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med tres fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er tres fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er tres fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med enogtres fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med enogtres fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er enogtres fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er enogtres fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med toogtres fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med toogtres fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er toogtres fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er toogtres fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med treogtres fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med treogtres fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er treogtres fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er treogtres fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med fireogtres fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med fireogtres fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er fireogtres fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er fireogtres fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med femogtres fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med femogtres fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er femogtres fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er femogtres fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med seksogtres fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med seksogtres fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er seksogtres fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er seksogtres fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med syvogtres fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med syvogtres fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er syvogtres fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er syvogtres fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med otteogtres fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med otteogtres fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er otteogtres fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er otteogtres fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med niogtres fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med niogtres fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er niogtres fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er niogtres fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med halvfjerds fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med halvfjerds fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er halvfjerds fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er halvfjerds fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med enoghalvfjerds fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med enoghalvfjerds fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er enoghalvfjerds fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er enoghalvfjerds fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med tooghalvfjerds fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med tooghalvfjerds fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er tooghalvfjerds fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er tooghalvfjerds fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med treoghalvfjerds fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med treoghalvfjerds fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er treoghalvfjerds fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er treoghalvfjerds fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med fireoghalvfjerds fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med fireoghalvfjerds fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er fireoghalvfjerds fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er fireoghalvfjerds fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med femoghalvfjerds fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med femoghalvfjerds fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er femoghalvfjerds fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er femoghalvfjerds fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med seksoghalvfjerds fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med seksoghalvfjerds fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er seksoghalvfjerds fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er seksoghalvfjerds fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med syvoghalvfjerds fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med syvoghalvfjerds fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er syvoghalvfjerds fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er syvoghalvfjerds fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med otteoghalvfjerds fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med otteoghalvfjerds fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er otteoghalvfjerds fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er otteoghalvfjerds fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med nioghalvfjerds fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med nioghalvfjerds fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er nioghalvfjerds fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er nioghalvfjerds fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med firs fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med firs fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er firs fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er firs fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med enogfirs fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med enogfirs fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er enogfirs fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er enogfirs fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med toogfirs fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med toogfirs fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er toogfirs fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er toogfirs fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med treogfirs fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med treogfirs fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er treogfirs fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er treogfirs fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med fireogfirs fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med fireogfirs fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er fireogfirs fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er fireogfirs fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med femogfirs fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med femogfirs fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er femogfirs fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er femogfirs fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med seksogfirs fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med seksogfirs fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er seksogfirs fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er seksogfirs fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med syvogfirs fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med syvogfirs fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er syvogfirs fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er syvogfirs fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med otteogfirs fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med otteogfirs fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er otteogfirs fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er otteogfirs fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med niogfirs fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med niogfirs fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er niogfirs fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er niogfirs fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med halvfems fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med halvfems fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er halvfems fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er halvfems fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med enoghalvfems fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med enoghalvfems fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324898
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er enoghalvfems fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er enoghalvfems fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324899
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med tooghalvfems fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med tooghalvfems fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324899
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er tooghalvfems fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er tooghalvfems fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324899
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med treoghalvfems fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med treoghalvfems fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324899
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er treoghalvfems fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er treoghalvfems fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324899
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med fireoghalvfems fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med fireoghalvfems fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324899
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er fireoghalvfems fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er fireoghalvfems fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324899
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med femoghalvfems fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med femoghalvfems fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324899
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er femoghalvfems fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er femoghalvfems fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324899
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med seksoghalvfems fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med seksoghalvfems fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324899
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er seksoghalvfems fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er seksoghalvfems fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324899
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med syvoghalvfems fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med syvoghalvfems fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324899
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er syvoghalvfems fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er syvoghalvfems fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324899
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med otteoghalvfems fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med otteoghalvfems fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324899
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er otteoghalvfems fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er otteoghalvfems fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324899
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med nioghalvfems fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med nioghalvfems fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324899
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er nioghalvfems fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er nioghalvfems fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324899
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fyld båden med et hundrede fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fyld båden med et hundrede fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324899
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Der er et hundrede fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Der er et hundrede fisk",
+      "group": "numbers",
+      "updatedAt": 1792003324899
     }
   }
 }

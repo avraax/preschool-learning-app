@@ -33,7 +33,7 @@ import {
   mathPromptText, mathFactText, mathMissingPromptText, missingPairs,
   COMPARE_PROMPT, comparisonFactText, COMPARE_SMALLER_PROMPT, comparisonSmallerFactText,
   HVAD_MANGLER_PROMPT, sequenceFactText, sequenceStarts, sequenceNumbers,
-  MEMORY_LETTERS_INSTRUCTION, MEMORY_NUMBERS_INSTRUCTION, BOAT_PROMPT_MAX, fillBoatPrompt,
+  MEMORY_LETTERS_INSTRUCTION, MEMORY_NUMBERS_INSTRUCTION, BOAT_PROMPT_MAX, fillBoatPrompt, boatLoadedText,
   NUANCER_INSTRUCTION, colorMixTargetText, colorMixResultText, colorMixQuestionText, colorObjectFactText,
   colorQuizPromptText,
 } from './src/config/gamePhrases.ts'
@@ -109,9 +109,12 @@ export function collectNarrationClips() {
   // (2026-08-01), so it must be a prebaked clip and not a live Azure round-trip per question.
   for (let n = 1; n <= 100; n++) da('numbers', DANISH_PHRASES.gamePrompts.findNumber(n))
 
-  // Fyld Båden — "Fyld båden med {tal}", every boat 1–100. Its correct/wrong-send lines are the bare
-  // number clips (`speakNumber`), already baked below for Lær Tal.
-  for (let n = 1; n <= BOAT_PROMPT_MAX; n++) da('numbers', fillBoatPrompt(n))
+  // Fyld Båden — "Fyld båden med {tal} fisk" (the prompt) and "Der er {tal} fisk" (a wrong send names
+  // the load), every number 1–100. The correct-send line is the bare number clip, baked below for Lær Tal.
+  for (let n = 1; n <= BOAT_PROMPT_MAX; n++) {
+    da('numbers', fillBoatPrompt(n))
+    da('numbers', boatLoadedText(n))
+  }
 
   // Plus/Minus/Sammenlign — the spoken QUESTION and the correct-answer FACT for every problem each
   // game can generate (2026-08-02). All four sets come from the same builders + bounds the games use

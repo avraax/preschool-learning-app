@@ -19,6 +19,7 @@ import {
   NUANCER_INSTRUCTION,
   BOAT_PROMPT_MAX,
   fillBoatPrompt,
+  boatLoadedText,
   colorMixTargetText,
   colorMixResultText,
 } from './gamePhrases.ts'
@@ -50,9 +51,11 @@ test('spoken math/comparison/sequence/colour lines are exactly these strings', (
   assert.equal(colorMixTargetText('lilla'), 'Lav lilla farve ved at blande farverne')
   assert.equal(colorMixResultText('rød', 'blå', 'lilla'), 'rød og blå bliver lilla')
   assert.equal(startsWithQuestion('Æble'), 'Hvad starter Æble med?')
-  assert.equal(fillBoatPrompt(37), 'Fyld båden med syvogtredive')
-  assert.equal(fillBoatPrompt(1), 'Fyld båden med en')
-  assert.equal(fillBoatPrompt(100), 'Fyld båden med et hundrede')
+  assert.equal(fillBoatPrompt(37), 'Fyld båden med syvogtredive fisk')
+  assert.equal(fillBoatPrompt(1), 'Fyld båden med en fisk')
+  assert.equal(fillBoatPrompt(100), 'Fyld båden med et hundrede fisk')
+  assert.equal(boatLoadedText(73), 'Der er treoghalvfjerds fisk')
+  assert.equal(boatLoadedText(1), 'Der er en fisk')
   assert.equal(BOAT_PROMPT_MAX, 100)
 })
 
@@ -115,7 +118,10 @@ test('every composed game line is enumerated for prebake', () => {
   want(HVAD_MANGLER_PROMPT)
   for (const spec of sequenceStarts) want(sequenceFactText(sequenceNumbers(spec)))
   want(NUANCER_INSTRUCTION)
-  for (let n = 1; n <= BOAT_PROMPT_MAX; n++) want(fillBoatPrompt(n))
+  for (let n = 1; n <= BOAT_PROMPT_MAX; n++) {
+    want(fillBoatPrompt(n))
+    want(boatLoadedText(n))
+  }
   for (const tgt of possibleTargets) want(colorMixTargetText(tgt.name))
   for (const key of Object.keys(mixingRules)) {
     const [c1, c2] = key.split('+')

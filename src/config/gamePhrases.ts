@@ -138,9 +138,16 @@ export const NUANCER_INSTRUCTION = 'Sæt farverne fra lys til mørk'
 /**
  * Fyld Båden's per-boat prompt (Harbour PRD-01 §2.1.3). Built from the number WORD, not `${n}`, so it
  * says exactly what the bare clip says — including the owner's 1 → "en". Every boat 1–100 is baked.
+ *
+ * It names WHAT is loaded (owner, 2026-10-14: "Fyld båden med 36" sounded cut off — 36 of what?).
+ * "fisk" is one of the few Danish nouns with the same singular and plural, so one template is
+ * grammatical from "en fisk" to "et hundrede fisk".
  */
 export const BOAT_PROMPT_MAX = 100
-export const fillBoatPrompt = (n: number): string => `Fyld båden med ${getDanishNumberText(n)}`
+export const fillBoatPrompt = (n: number): string => `Fyld båden med ${getDanishNumberText(n)} fisk`
+
+/** A wrong send names what IS on the deck, as a sentence rather than a bare number (same reason). */
+export const boatLoadedText = (n: number): string => `Der er ${getDanishNumberText(n)} fisk`
 /** Ram Farven's target instruction: "Lav lilla farve ved at blande farverne". */
 export const colorMixTargetText = (targetName: string): string =>
   `Lav ${targetName} farve ved at blande farverne`

@@ -11,11 +11,11 @@ import { hintPulse } from '../../../theme/idleMotion'
  */
 const LAND_EASE = [0.34, 1.56, 0.64, 1] as const
 import { BAY_SLOTS, type CargoKind, type DeckState } from './boatDeck'
-import { CrateView, PalletView } from './Cargo'
+import { FishBoxView, FishView } from './Cargo'
 import { BOAT_LOOKS } from './boatLooks'
 
 // The boat: a sail (the numeral is painted on it only after a correct send), a deck with TWO 2×5 bays —
-// pallets of ten on the left, single crates on the right — and the hull. Everything is sized from the
+// boxes of ten fish on the left, single fish on the right — and the hull. Everything is sized from the
 // `--s` slot unit the stage sets, so the deck scales as one piece (Harbour PRD-01 §4.4/§4.5).
 //
 // The deck is ONE droppable (`deck`); each loaded item is a draggable whose tap UNLOADS it, and the
@@ -27,8 +27,8 @@ const DECK_DARK = '#B88A52'
 
 export interface BundleFx {
   key: number
-  /** The pallet slot the ten crates became. */
-  pallet: number
+  /** The box slot the ten fish were packed into. */
+  box: number
 }
 
 interface BoatProps {
@@ -83,7 +83,7 @@ const Bay: React.FC<{
         const filled = i < count
         const ghosted = ghostCount !== null && i < ghostCount && !filled
         const extra = ghostCount !== null && filled && i >= ghostCount
-        const isNewPallet = kind === 'pallet' && bundle !== null && bundle.pallet === i
+        const isNewBox = kind === 'box' && bundle !== null && bundle.box === i
         return (
           <Box
             key={i}
@@ -101,12 +101,12 @@ const Bay: React.FC<{
               // bundle afterwards never replays the drop.
               <motion.div
                 // Both ends carry the SAME function list. Motion interpolates toward `'none'` by zeroing
-                // every function, so `scale(0.7) → none` landed on scale(0) and every crate vanished.
-                initial={reduce ? false : { transform: isNewPallet ? 'translateY(0px) scale(0)' : 'translateY(-18px) scale(0.7)', opacity: 0 }}
+                // every function, so `scale(0.7) → none` landed on scale(0) and every item vanished.
+                initial={reduce ? false : { transform: isNewBox ? 'translateY(0px) scale(0)' : 'translateY(-18px) scale(0.7)', opacity: 0 }}
                 animate={{ transform: 'translateY(0px) scale(1)', opacity: 1 }}
                 // An overshooting cubic-bezier, not a spring: Motion compiles springs to `linear()`,
                 // which Safari 17 will not run on the compositor.
-                transition={{ duration: isNewPallet ? 0.34 : 0.24, ease: LAND_EASE, delay: isNewPallet ? 0.38 : 0 }}
+                transition={{ duration: isNewBox ? 0.34 : 0.24, ease: LAND_EASE, delay: isNewBox ? 0.38 : 0 }}
               >
                 <Box {...(extra ? pulse.props : {})} sx={extra ? [pulse.sx] : undefined}>
                   <DraggableItem
@@ -118,7 +118,7 @@ const Bay: React.FC<{
                     onActivate={() => onUnload(kind)}
                   >
                     <Box sx={{ cursor: interactive ? 'grab' : 'default', display: 'flex' }}>
-                      {kind === 'pallet' ? <PalletView /> : <CrateView />}
+                      {kind === 'box' ? <FishBoxView /> : <FishView />}
                     </Box>
                   </DraggableItem>
                 </Box>
@@ -127,8 +127,8 @@ const Bay: React.FC<{
           </Box>
         )
       })}
-      {/* The bundling show: ten crates gather and lift off to become the pallet on the left bay. */}
-      {kind === 'crate' && bundle && !reduce && (
+      {/* The packing show: ten fish gather and swim off to the left bay, where they pop up as one box. */}
+      {kind === 'fish' && bundle && !reduce && (
         <Box key={bundle.key} sx={{ position: 'absolute', inset: 0, display: 'grid', gridTemplateColumns: 'repeat(5, var(--s))', gridTemplateRows: 'repeat(2, var(--s))', gap: 'calc(var(--s) * 0.14)', pointerEvents: 'none' }}>
           {Array.from({ length: BAY_SLOTS }, (_, i) => (
             <Box key={i} sx={{ ...slotSx }}>
@@ -140,7 +140,7 @@ const Bay: React.FC<{
                 }}
                 transition={{ duration: 0.6, delay: i * 0.025, ease: 'easeIn', times: [0, 0.35, 1] }}
               >
-                <CrateView />
+                <FishView />
               </motion.div>
             </Box>
           ))}
@@ -229,8 +229,8 @@ const Boat: React.FC<BoatProps> = ({
             justifyContent: 'space-evenly',
           }}
         >
-          <Bay kind="pallet" count={deck.pallets} ghostCount={ghost ? ghost.pallets : null} bundle={bundle} interactive={interactive} reduce={reduce} onUnload={onUnload} />
-          <Bay kind="crate" count={deck.crates} ghostCount={ghost ? ghost.crates : null} bundle={bundle} interactive={interactive} reduce={reduce} onUnload={onUnload} />
+          <Bay kind="box" count={deck.boxes} ghostCount={ghost ? ghost.boxes : null} bundle={bundle} interactive={interactive} reduce={reduce} onUnload={onUnload} />
+          <Bay kind="fish" count={deck.fish} ghostCount={ghost ? ghost.fish : null} bundle={bundle} interactive={interactive} reduce={reduce} onUnload={onUnload} />
         </DroppableZone>
       </Box>
 

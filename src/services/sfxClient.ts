@@ -46,8 +46,8 @@ export type SfxCue =
   | 'nav-stomp'
   | 'back'
   // Fyld Båden (Harbour PRD-01): alias curated files until the harbour pack lands in /sounds/ui/.
-  | 'crate-thud'
-  | 'pallet-clunk'
+  | 'fish-land'
+  | 'box-land'
   | 'bundle'
   | 'horn'
   | 'splash'
@@ -78,9 +78,9 @@ const CUE_FILES: Record<SfxCue, string> = {
   'nav-warp': '/sounds/ui/flip.mp3',
   'nav-stomp': '/sounds/ui/drop-snap.mp3',
   back: '/sounds/ui/flip.mp3',
-  // Kenney "Impact Sounds" (CC0): impactWood_medium_002 / impactWood_heavy_001.
-  'crate-thud': '/sounds/ui/crate-thud.mp3',
-  'pallet-clunk': '/sounds/ui/pallet-clunk.mp3',
+  // Kenney "Impact Sounds" (CC0): impactSoft_medium_002 (a fish lands) / impactWood_heavy_001 (a box).
+  'fish-land': '/sounds/ui/fish-land.mp3',
+  'box-land': '/sounds/ui/box-land.mp3',
   bundle: '/sounds/ui/streak-up.mp3',
   horn: '/sounds/ui/page-complete.mp3',
   splash: '/sounds/ui/flip.mp3',
@@ -110,8 +110,8 @@ const CUE_VOLUME: Partial<Record<SfxCue, number>> = {
   // stomp ≈ -34.5, back ≈ -37.9 LUFS effective; forward stays a touch louder as the bigger move.
   'nav-stomp': 0.2,
   back: 0.5,
-  'crate-thud': 0.45,
-  'pallet-clunk': 0.55,
+  'fish-land': 0.5,
+  'box-land': 0.55,
   bundle: 0.5,
   horn: 0.5,
   splash: 0.4,

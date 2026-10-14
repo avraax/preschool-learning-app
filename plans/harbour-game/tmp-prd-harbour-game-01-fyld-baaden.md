@@ -64,6 +64,22 @@ remains the first test of every choice (memory: education first).
    on Normal and Svær **3 of 4 boats draw from 21+** (the rest from the full range). Static; no
    adaptivity (house rule).
 
+> **REVISED 2026-10-14 by the owner — read items 2–8 through this.** Pallets and crates are replaced by
+> **FISH (ones) and a FISH BOX of ten (tens)** on a **fishing boat**. Owner: *"Fyld båden med 36" — 36
+> of what? It doesn't sound natural*, and *is a pallet something kids identify? be honest* — it is not;
+> it's a warehouse word. A focused research pass (2026-10-14) backed fish: what teaches is seeing ten as
+> ten units and watching them bundle (Montessori/base-ten blocks), the theme matters less than LOW
+> DETAIL (Kaminski & Sloutsky 2013 — detailed objects get counted by their details), animals appeal to
+> both boys and girls (~95% / ~86%) while vehicles skew boys, the harbour is a familiar happy Danish
+> place (crabbing from piers), and "fisk" has the same singular/plural so one sentence works 1–100.
+> Runner-up: eggs in a tray of ten (didn't fit a boat).
+> - Prompt: **"Fyld båden med {tal} fisk"**. Wrong send: **"Der er {tal} fisk"** (a sentence, not a bare
+>   number — same reason), then the re-ask after a measured 2.3s. Correct send: still the bare number.
+> - Packing: the 10th fish is **packed into one box**; unloading a box returns it whole.
+> - Art rules (in `harbour-art-prompts.md` and `Cargo.tsx`): fish **simple and identical** (one colour,
+>   no scales/patterns), **all facing the same way**, box shows ten in 2×5, fish **lively, never caught**
+>   (no hooks, nets, ice or limp fish — we LOAD fish). All four boat looks are fishing boats.
+
 ### 2.2 Look and sound
 10. **Art: Gemini, same soft-3D clay style as every other game — with a raised bar:** far more assets,
     built in layers for animation (§ art doc). No commissioned art now.
