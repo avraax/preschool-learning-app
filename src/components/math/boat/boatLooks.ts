@@ -27,16 +27,51 @@ export const BOAT_ASPECT = 849 / 519
 export const BOAT_GEOMETRY = {
   /** The deck drop zone (generous, so a drop anywhere over the deck lands). */
   deck: { left: 0.26, top: 0.4, width: 0.72, height: 0.42 },
-  /** Back row (boxes) and front row (fish): centre lines and horizontal span, from wheelhouse to bow. */
+  /**
+   * The cargo stands BETWEEN THE MAST AND THE BOW (mast measured at x 0.405–0.445; owner 2026-10-14: an
+   * item in front of the mast looked pasted on). The fish are a 2 × 5 ten-frame (back row fills first,
+   * like a ten-frame's top row); the boxes stand behind them in columns and STACK, as crates do — see
+   * `boxColumns`. Fractions of the boat image's box.
+   */
   rows: {
-    left: 0.29,
-    right: 0.93,
-    // 0.575 / 0.675 stood the boxes on the far rim (screenshot, 2026-10-14) — both rows sit mid-deck.
-    boxes: 0.615,
-    fish: 0.705,
+    // Clear of the mast with air to spare (owner 2026-10-14: "too close to the pole").
+    fishLeft: 0.53,
+    fishRight: 0.88,
+    fishBack: 0.645,
+    fishFront: 0.712,
+    boxLeft: 0.5,
+    // The horn stands from x 0.83 — a box past ~0.85 sits on it.
+    boxRight: 0.845,
+    /** Where a ground-tier box's bottom edge rests — just behind the fish. */
+    boxBase: 0.615,
   },
+  /** The captain (the theme mascot) stands on the free deck between the wheelhouse and the mast. */
+  captain: { left: 0.245, width: 0.19, bottom: 0.27 },
   /** The sail, for the numeral. */
   sail: { left: 0.43, top: 0.03, width: 0.11, height: 0.42 },
   /** The horn stands on the bow deck. */
   horn: { left: 0.83, top: 0.36, width: 0.12 },
 } as const
+
+/**
+ * Box columns for a level. A box holds five fish ACROSS, so a fish inside one is only ~16% of the box's
+ * width — drawn at true single-fish size, one box would be five fish wide and two would fill the deck.
+ * So the boxes are drawn as big as the level allows (owner 2026-10-14: "mainly the boxes are small"):
+ * three wide when the level asks for at most six boxes (Let 2, Normal 5), five wide on Svær (up to 10).
+ */
+export const boxColumns = (maxValue: number): number => (Math.ceil(maxValue / 10) <= 6 ? 3 : 5)
+
+/** A box is drawn this much wider than its slot, so neighbours nest edge to edge. */
+export const BOX_DRAW = 1.04
+
+/** Drawn width of one deck item, as a fraction of the boat's width. */
+export const deckItemWidth = (kind: 'box' | 'fish', cols: number): number =>
+  kind === 'fish'
+    ? (BOAT_GEOMETRY.rows.fishRight - BOAT_GEOMETRY.rows.fishLeft) / 5
+    : ((BOAT_GEOMETRY.rows.boxRight - BOAT_GEOMETRY.rows.boxLeft) / cols) * BOX_DRAW
+
+/**
+ * Boat width ÷ quay width in landscape (FyldBaadenGame: `--bw` 13.5 slot units, the quay 5.2), so a quay
+ * pile can draw its top unit at the size the same unit has on the deck.
+ */
+export const BOAT_PER_QUAY = 13.5 / 5.2

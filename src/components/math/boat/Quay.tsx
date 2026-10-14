@@ -10,8 +10,7 @@ import boxStackArt from '../../../assets/games/boat/box-stack.webp'
 import gullStandArt from '../../../assets/games/boat/gull-stand.webp'
 import gullFlyArt from '../../../assets/games/boat/gull-fly.webp'
 import { idleFloat } from '../../../theme/idleMotion'
-import { PHONE_LANDSCAPE, PHONE_PORTRAIT } from '../../../theme/phoneMedia'
-import Mascot from '../../common/Mascot'
+import { BOAT_PER_QUAY, deckItemWidth } from './boatLooks'
 
 // The quay (owner's Gemini render): two endless supply piles standing on its planks — a stack of fish
 // boxes and a little heap of fish — and a seagull on the bollard. A pile is the child's SOURCE: tap it to
@@ -39,6 +38,8 @@ const Pile: React.FC<{
   const isBox = kind === 'box'
   return (
     <Box sx={{ position: 'absolute', left, width, bottom: PLANK_TOP_FROM_BOTTOM }}>
+      {/* Contact shadow on the planks — the same grounding the deck cargo gets. */}
+      <Box aria-hidden sx={{ position: 'absolute', left: '4%', right: '4%', bottom: 0, aspectRatio: '6', transform: 'translateY(45%)', borderRadius: '50%', background: 'radial-gradient(ellipse at center, rgba(50,25,10,0.4), rgba(50,25,10,0) 70%)', pointerEvents: 'none' }} />
       {/* The pile itself — static, it never runs out. */}
       {isBox ? (
         <Box component="img" src={boxStackArt} alt="" draggable={false} sx={{ ...imgSx, width: '100%', height: 'auto' }} />
@@ -89,7 +90,13 @@ const Quay: React.FC<{
   reduce: boolean
   /** True from a correct send until the next boat — the gull has flown off. */
   gullAway: boolean
-}> = ({ interactive, overQuay, onLoad, repeat, refills, reduce, gullAway }) => {
+  /** The level's box columns, so the top box matches a deck box. */
+  boxCols: number
+}> = ({ interactive, overQuay, onLoad, repeat, refills, reduce, gullAway, boxCols }) => {
+  // Pile widths (fractions of the quay) at which the top unit is drawn at its DECK size: the top box is
+  // 92% of its pile, the top fish 47%.
+  const boxPile = (deckItemWidth('box', boxCols) * BOAT_PER_QUAY) / 0.92
+  const fishPile = (deckItemWidth('fish', boxCols) * BOAT_PER_QUAY) / 0.47
   const gullBob = idleFloat(reduce, { distance: 3, durationS: 2.8 })
   return (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'space-between', minHeight: 0 }}>
@@ -129,26 +136,10 @@ const Quay: React.FC<{
                 </motion.div>
               ) : null}
             </Box>
-            {/* The mascot stands on the planks at the left end, beside the cargo — GameShell's corner
-                companion would stand in the sea here (owner, 2026-10-14), so the game turns it off and
-                seats its own. mascotBus reactions still reach it. */}
-            <Mascot
-              sx={{
-                position: 'absolute',
-                left: '-4%',
-                bottom: PLANK_TOP_FROM_BOTTOM,
-                width: '26%',
-                height: 'auto',
-                aspectRatio: '1',
-                zIndex: 1,
-                [PHONE_LANDSCAPE]: { display: 'block' },
-                [PHONE_PORTRAIT]: { width: '26%', height: 'auto' },
-              }}
-            />
             {/* Piles at DECK scale: a box on the stack and a fish in the heap are the size of the cargo
                 they become on the boat, so the child sees the same thing move rather than a shrink. */}
-            <Pile kind="box" left="22%" width="22%" interactive={interactive} onLoad={onLoad} refill={refills.box} reduce={reduce} />
-            <Pile kind="fish" left="45%" width="34%" interactive={interactive} onLoad={onLoad} refill={refills.fish} reduce={reduce} />
+            <Pile kind="box" left="0%" width={`${(boxPile * 100).toFixed(1)}%`} interactive={interactive} onLoad={onLoad} refill={refills.box} reduce={reduce} />
+            <Pile kind="fish" left={`${((boxPile - 0.01) * 100).toFixed(1)}%`} width={`${(fishPile * 100).toFixed(1)}%`} interactive={interactive} onLoad={onLoad} refill={refills.fish} reduce={reduce} />
           </Box>
         </DroppableZone>
       </Box>

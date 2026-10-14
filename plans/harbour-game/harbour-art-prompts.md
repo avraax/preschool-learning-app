@@ -196,6 +196,33 @@ The scene: a calm, cosy Danish harbour seen from the water. A soft pale-blue sky
 
 ---
 
+## Batch I — a long jetty (REPLACES the C quay)
+
+Why (2026-10-14): the C quay is a small square platform on four legs, so in the game it reads as a stool
+standing in the sea with no way to reach it. This is a long, low wooden jetty seen from the SAME camera as
+the batch-G boats. The game lets its left end run off the edge of the screen, so it reads as a jetty
+coming out from the shore.
+
+**Attach these 2 files:**
+- `C:\Source\preschool-learning-app\src\assets\games\boat\boat-red.webp`
+- `C:\Source\preschool-learning-app\src\assets\games\boat\quay.webp`
+
+```
+I need TWO SEPARATE IMAGES — two individual image files, two takes of the same subject. Do NOT combine them into one picture, grid or collage.
+
+Style: soft-3D claymation style, Pixar-lite, rounded matte clay, soft top-left key light, gentle rim light, warm and child-safe, no text or letters, flat solid #00FF00 green background edge to edge, WIDE landscape image about 2.5 times as wide as it is tall, highest resolution. Match the clay style, wood colours and chunky toy proportions of the attached quay, and the camera of the attached boat.
+
+CAMERA (most important): seen STRAIGHT FROM THE SIDE, NOT turned or angled toward the viewer, with the camera raised about 35 to 40 degrees ABOVE, looking down, so the top of the jetty is clearly visible as a WIDE flat plank surface. The front edge of the jetty is a perfectly HORIZONTAL straight line, parallel to the bottom of the image.
+
+Subject: ONE long, low, sturdy wooden jetty made of chunky rounded warm-brown clay planks laid ACROSS the jetty, running the FULL WIDTH of the image from the left edge to the right edge — the left end is cut off by the left edge of the picture, as if the jetty continues to the shore off-picture. The jetty is about as deep (front to back) as one third of its visible length. It stands on a row of thick round grey-brown wooden posts along the front edge, evenly spaced, and the posts go straight down and are cut off flat by the BOTTOM edge of the image. At the RIGHT end, on the planks, one chunky dark-grey iron mooring bollard exactly like the attached one. The plank surface is completely EMPTY: no boxes, no fish, no rope, no people, no birds, no lamps, no railing.
+
+There is NO water and NO sea: the posts stand on flat solid #00FF00 green, NOT in water, and there is no sky — flat solid #00FF00 green behind and below the whole jetty.
+
+Remember: straight side view from 35–40 degrees above, front edge perfectly horizontal, jetty running off the LEFT edge, posts cut off by the BOTTOM edge, empty planks, bollard at the right end, flat solid #00FF00 green everywhere else (NOT water, NOT sky) — and two separate image files, not one picture.
+```
+
+---
+
 ## For the build session (not for pasting)
 
 - First try (2026-10-14): a batched message returned one 2×2 collage with white gutters, and its boxes

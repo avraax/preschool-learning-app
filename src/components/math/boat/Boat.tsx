@@ -6,14 +6,14 @@ import { DroppableZone } from '../../common/dnd/DroppableZone'
 import { hintPulse } from '../../../theme/idleMotion'
 import { BAY_SLOTS, type CargoKind, type DeckState } from './boatDeck'
 import { BOX_ASPECT, FishBoxView, FishView } from './Cargo'
-import { BOAT_ASPECT, BOAT_GEOMETRY as G, BOAT_LOOKS } from './boatLooks'
+import { BOAT_ASPECT, BOAT_GEOMETRY as G, BOAT_LOOKS, BOX_DRAW } from './boatLooks'
 import hornArt from '../../../assets/games/boat/horn.webp'
 import puffArt from '../../../assets/games/boat/puff.webp'
 import splashArt from '../../../assets/games/boat/splash.webp'
 
-// The boat (Harbour PRD-01): the owner's fishing-boat render with the cargo standing ON its deck — boxes
-// of ten in the back row, single fish in the front row, each row a 5 + 5 line with a gap in the middle so
-// five is seen at a glance. The numeral is painted on the blank sail only after a correct send.
+// The boat (Harbour PRD-01): the owner's fishing-boat render with the cargo standing ON its deck between
+// the mast and the bow — single fish as a 2 × 5 ten-frame in front, boxes of ten in a row of five behind
+// (stacked two high past five). The numeral is painted on the blank sail only after a correct send.
 //
 // Every position is a fraction of the boat image's box (`BOAT_GEOMETRY`, measured on the art), so the
 // cargo stays on the deck at every size. The deck is ONE droppable; each loaded item is a draggable whose
@@ -54,31 +54,41 @@ interface BoatProps {
   departing: boolean
   /** Something is being dragged — the deck shows where the slots are. */
   dragging: boolean
+  /** Box columns for the level (`boxColumns`). */
+  boxCols: number
 }
 
 // ── Slot geometry (fractions of the boat box) ────────────────────────────────────────────────────────
-const SPAN = G.rows.right - G.rows.left
-/** Half a slot of air between the two fives. */
-const SLOT_W = SPAN / (BAY_SLOTS + 0.5)
-const GAP_W = SLOT_W * 0.5
-const slotLeft = (i: number): number => G.rows.left + i * SLOT_W + (i >= 5 ? GAP_W : 0)
+// Fish: a 2 × 5 ten-frame. Boxes: `cols` columns, stacking up a tier per `cols` boxes.
+const FISH_COLS = 5
+const slotW = (kind: CargoKind, cols: number): number =>
+  kind === 'fish' ? (G.rows.fishRight - G.rows.fishLeft) / FISH_COLS : (G.rows.boxRight - G.rows.boxLeft) / cols
+const slotLeft = (kind: CargoKind, i: number, cols: number): number =>
+  kind === 'fish' ? G.rows.fishLeft + (i % FISH_COLS) * slotW('fish', cols) : G.rows.boxLeft + (i % cols) * slotW('box', cols)
 /** A slot's height as a fraction of the boat box's height (items are drawn by width). */
-const slotH = (kind: CargoKind): number => (kind === 'box' ? SLOT_W / BOX_ASPECT : SLOT_W) * BOAT_ASPECT
-const rowY = (kind: CargoKind): number => (kind === 'box' ? G.rows.boxes : G.rows.fish)
+const slotH = (kind: CargoKind, cols: number): number =>
+  (kind === 'box' ? (slotW('box', cols) * BOX_DRAW) / BOX_ASPECT : slotW('fish', cols)) * BOAT_ASPECT
+/** Slot centre line: fish 0–4 back row, 5–9 front row; a box tier sits 80% of a box higher. */
+const slotY = (kind: CargoKind, i: number, cols: number): number => {
+  if (kind === 'fish') return i < FISH_COLS ? G.rows.fishBack : G.rows.fishFront
+  const h = slotH('box', cols)
+  return G.rows.boxBase - h / 2 - Math.floor(i / cols) * h * 0.8
+}
 const pct = (f: number): string => `${(f * 100).toFixed(3)}%`
 
 const Slot: React.FC<{
   kind: CargoKind
   i: number
+  cols: number
   children?: React.ReactNode
-}> = ({ kind, i, children }) => (
+}> = ({ kind, i, cols, children }) => (
   <Box
     sx={{
       position: 'absolute',
-      left: pct(slotLeft(i)),
-      top: pct(rowY(kind) - slotH(kind) / 2),
-      width: pct(SLOT_W),
-      height: pct(slotH(kind)),
+      left: pct(slotLeft(kind, i, cols)),
+      top: pct(slotY(kind, i, cols) - slotH(kind, cols) / 2),
+      width: pct(slotW(kind, cols)),
+      height: pct(slotH(kind, cols)),
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
@@ -89,10 +99,10 @@ const Slot: React.FC<{
 )
 
 // A box is drawn a little wider than its slot (boxes nest edge to edge like a real deck load); a fish
-// keeps its slot so the 5 + 5 stays countable.
+// keeps its slot so the ten-frame stays countable.
 const Cargo: React.FC<{ kind: CargoKind }> = ({ kind }) =>
   kind === 'box' ? (
-    <Box sx={{ width: '112%', ml: '-6%', flex: '0 0 auto' }}>
+    <Box sx={{ width: `${BOX_DRAW * 100}%`, ml: `${(BOX_DRAW - 1) * -50}%`, flex: '0 0 auto' }}>
       <FishBoxView />
     </Box>
   ) : (
@@ -108,7 +118,8 @@ const Row: React.FC<{
   reduce: boolean
   onUnload: (kind: CargoKind) => void
   showSlots: boolean
-}> = ({ kind, count, ghostCount, bundle, interactive, reduce, onUnload, showSlots }) => {
+  cols: number
+}> = ({ kind, count, ghostCount, bundle, interactive, reduce, onUnload, showSlots, cols }) => {
   const pulse = hintPulse(reduce)
   return (
     <>
@@ -118,10 +129,9 @@ const Row: React.FC<{
         const extra = ghostCount !== null && filled && i >= ghostCount
         const isNewBox = kind === 'box' && bundle !== null && bundle.box === i
         return (
-          <Slot key={i} kind={kind} i={i}>
-            {/* A soft mark on the deck where this slot is — the 5 + 5 structure is visible even empty. */}
+          <Slot key={i} kind={kind} i={i} cols={cols}>
             {/* Where this slot is — shown only while something is being dragged (as resting marks they read
-                as stains on the deck, owner 2026-10-14). The 5 + 5 gap carries the structure the rest of the time. */}
+                as stains on the deck, owner 2026-10-14). The ten-frame's two rows of five carry the structure the rest of the time. */}
             {showSlots && (
               <Box aria-hidden sx={{ position: 'absolute', left: '8%', right: '8%', bottom: '-6%', height: '22%', borderRadius: '50%', background: 'rgba(255,255,255,0.4)', boxShadow: '0 0 6px rgba(255,255,255,0.6)' }} />
             )}
@@ -141,6 +151,11 @@ const Row: React.FC<{
                 transition={{ duration: isNewBox ? 0.34 : 0.24, ease: LAND_EASE, delay: isNewBox ? 0.38 : 0 }}
                 style={{ position: 'absolute', inset: 0 }}
               >
+                {/* A soft contact shadow on the deck, so the item STANDS there instead of floating (owner,
+                    2026-10-14). Static paint, outside the draggable: a lifted item leaves its shadow behind
+                    only for the drag, and nothing animates it. Seated at the ink's bottom edge (fish ink ends
+                    at 88% of its square canvas; a box fills its slot's height). */}
+                <Box aria-hidden sx={{ position: 'absolute', left: kind === 'box' ? '-2%' : '12%', right: kind === 'box' ? '-2%' : '12%', bottom: kind === 'box' ? '-9%' : '4%', height: kind === 'box' ? '20%' : '16%', borderRadius: '50%', background: 'radial-gradient(ellipse at center, rgba(70,35,10,0.5), rgba(70,35,10,0) 70%)', pointerEvents: 'none' }} />
                 <Box {...(extra ? pulse.props : {})} sx={[{ width: '100%', height: '100%' }, extra ? pulse.sx : {}]}>
                   <DraggableItem
                     id={`deck-${kind}-${i}`}
@@ -167,16 +182,19 @@ const Row: React.FC<{
 }
 
 /** The packing show: the ten fish fly up into the new box's slot and vanish as it pops in with a puff. */
-const PackingShow: React.FC<{ bundle: BundleFx }> = ({ bundle }) => {
-  const toX = slotLeft(bundle.box)
-  // translate() percentages are relative to the fish's own box (SLOT_W wide, ~square).
-  const dyPct = ((rowY('box') - rowY('fish')) / (SLOT_W * BOAT_ASPECT)) * 100
+const PackingShow: React.FC<{ bundle: BundleFx; cols: number }> = ({ bundle, cols }) => {
+  // Centre to centre: the slots of the two kinds now differ in width.
+  const fw = slotW('fish', cols)
+  const toX = slotLeft('box', bundle.box, cols) + slotW('box', cols) / 2 - fw / 2
+  const toY = slotY('box', bundle.box, cols)
   return (
     <>
       {Array.from({ length: BAY_SLOTS }, (_, i) => {
-        const dxPct = ((toX - slotLeft(i)) / SLOT_W) * 100
+        // translate() percentages are relative to the fish's own box (one fish slot wide, square).
+        const dxPct = ((toX - slotLeft('fish', i, cols)) / fw) * 100
+        const dyPct = ((toY - slotY('fish', i, cols)) / (fw * BOAT_ASPECT)) * 100
         return (
-          <Slot key={`${bundle.key}-${i}`} kind="fish" i={i}>
+          <Slot key={`${bundle.key}-${i}`} kind="fish" i={i} cols={cols}>
             <motion.div
               initial={{ transform: 'translate(0%, 0%) scale(1)', opacity: 1 }}
               animate={{
@@ -191,7 +209,7 @@ const PackingShow: React.FC<{ bundle: BundleFx }> = ({ bundle }) => {
           </Slot>
         )
       })}
-      <Slot key={`puff-${bundle.key}`} kind="box" i={bundle.box}>
+      <Slot key={`puff-${bundle.key}`} kind="box" i={bundle.box} cols={cols}>
         <motion.div
           initial={{ transform: 'scale(0.4)', opacity: 0 }}
           animate={{ transform: ['scale(0.4)', 'scale(1.6)', 'scale(2)'], opacity: [0, 0.95, 0] }}
@@ -220,6 +238,7 @@ const Boat: React.FC<BoatProps> = ({
   shakeKey,
   departing,
   dragging,
+  boxCols,
 }) => {
   const L = BOAT_LOOKS[look % BOAT_LOOKS.length]
   return (
@@ -267,9 +286,9 @@ const Boat: React.FC<BoatProps> = ({
           }}
         />
       </Box>
-      <Row kind="box" count={deck.boxes} ghostCount={ghost ? ghost.boxes : null} bundle={bundle} interactive={interactive} reduce={reduce} onUnload={onUnload} showSlots={dragging} />
-      <Row kind="fish" count={deck.fish} ghostCount={ghost ? ghost.fish : null} bundle={bundle} interactive={interactive} reduce={reduce} onUnload={onUnload} showSlots={dragging} />
-      {bundle && !reduce && <PackingShow bundle={bundle} />}
+      <Row kind="box" count={deck.boxes} ghostCount={ghost ? ghost.boxes : null} bundle={bundle} interactive={interactive} reduce={reduce} onUnload={onUnload} showSlots={dragging} cols={boxCols} />
+      <Row kind="fish" count={deck.fish} ghostCount={ghost ? ghost.fish : null} bundle={bundle} interactive={interactive} reduce={reduce} onUnload={onUnload} showSlots={dragging} cols={boxCols} />
+      {bundle && !reduce && <PackingShow bundle={bundle} cols={boxCols} />}
 
       {/* The send-off: a wake splash at the STERN as the boat sets off (a delight AFTER the answer, never
           during it). At the bow it was already off-screen — the boat leaves to the right. */}

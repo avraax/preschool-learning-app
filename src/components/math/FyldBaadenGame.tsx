@@ -20,6 +20,7 @@ import { sfx } from '../../services/sfxClient'
 import { mascotBus } from '../../services/mascotBus'
 import { boatLoadedText, fillBoatPrompt } from '../../config/gamePhrases'
 import { BOAT_RECENT_WINDOW, pickBoatNumber } from '../../config/mathProblems'
+import { MATH_BOAT } from '../../config/difficulty'
 import { DWELL_CORRECT } from '../../theme/motion'
 import { idleFloat } from '../../theme/idleMotion'
 import { DEV } from '../../utils/devHarness'
@@ -35,8 +36,10 @@ import {
   type DeckState,
 } from './boat/boatDeck'
 import Boat, { type BundleFx } from './boat/Boat'
-import { BOAT_LOOKS } from './boat/boatLooks'
+import { BOAT_GEOMETRY, BOAT_LOOKS, boxColumns } from './boat/boatLooks'
 import Quay from './boat/Quay'
+import Mascot from '../common/Mascot'
+import { PHONE_LANDSCAPE, PHONE_PORTRAIT } from '../../theme/phoneMedia'
 import { HarbourBackdrop, HarbourFrontWater } from './boat/HarbourScene'
 
 // Fyld Båden (`math.boat`, Harbour PRD-01) — hear "Fyld båden med {tal} fisk", BUILD it on a boat from
@@ -207,6 +210,8 @@ const FyldBaadenGame: React.FC = () => {
   // contradicted (a probe set Let mid-arrival and got asked for 38).
   const difficultyLevel = useDifficulty('math')
   const prevDifficultyRef = useRef(difficultyLevel)
+  // Boxes are drawn as big as the level's most boxes allow (boatLooks `boxColumns`); deck and quay agree.
+  const boxCols = boxColumns(MATH_BOAT[difficultyLevel].max)
   useEffect(() => {
     if (prevDifficultyRef.current === difficultyLevel) return
     prevDifficultyRef.current = difficultyLevel
@@ -222,6 +227,24 @@ const FyldBaadenGame: React.FC = () => {
   }, [difficultyLevel]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const canAct = () => gameReady && phaseRef.current === 'loading' && !isAdvancing.current && !bundlingRef.current
+
+  // The boat settles under what was loaded: a box of ten dips it visibly more than one fish, so the
+  // weight difference backs up "ten vs one" without a word. WAAPI transform only (GPU), tiny amplitude.
+  const bumpRef = useRef<HTMLDivElement>(null)
+  const bump = (kind: CargoKind, delayMs = 0) => {
+    const el = bumpRef.current
+    if (reduce || !el || typeof el.animate !== 'function') return
+    const [d, a] = kind === 'box' ? [5, 0.9] : [2, 0.35]
+    el.animate(
+      [
+        { transform: 'translateY(0px) rotate(0deg)' },
+        { transform: `translateY(${d}px) rotate(${a}deg)` },
+        { transform: `translateY(${-d * 0.2}px) rotate(${-a * 0.3}deg)` },
+        { transform: 'translateY(0px) rotate(0deg)' },
+      ],
+      { duration: kind === 'box' ? 700 : 500, delay: delayMs, easing: 'cubic-bezier(0.37, 0, 0.63, 1)' },
+    )
+  }
 
   // ── THE resolve path, both gestures ───────────────────────────────────────────────────────────
   const load = (kind: CargoKind, viaTap = false) => {
@@ -240,6 +263,7 @@ const FyldBaadenGame: React.FC = () => {
     if (r.outcome === 'bundled') {
       // Ten single fish are packed into ONE box — the place-value moment, given its own beat.
       sfx.play('bundle')
+      bump('box', 380)
       bundlingRef.current = true
       setBundling(true)
       setBundle({ key: Date.now(), box: r.deck.boxes - 1 })
@@ -249,6 +273,7 @@ const FyldBaadenGame: React.FC = () => {
       })
     } else {
       sfx.play(kind === 'box' ? 'box-land' : 'fish-land')
+      bump(kind)
     }
   }
 
@@ -381,8 +406,8 @@ const FyldBaadenGame: React.FC = () => {
         title="Fyld Båden"
         backRoute="/math"
         dense
-        // The corner companion would stand IN THE SEA here (owner, 2026-10-14) — the quay renders the same
-        // mascot on its planks instead. `guideReaction` still reaches it through mascotBus.
+        // The corner companion would stand IN THE SEA here (owner, 2026-10-14) — the same mascot rides the
+        // boat as its captain instead. `guideReaction` still reaches it through mascotBus.
         guide={false}
         guideReaction={guideReaction}
         celebration={{ show: showCelebration, intensity: celebrationIntensity, duration: celebrationDuration, onComplete: stopCelebration }}
@@ -435,6 +460,7 @@ const FyldBaadenGame: React.FC = () => {
                 refills={refills}
                 reduce={reduce}
                 gullAway={phase === 'sending' || phase === 'sailing'}
+                boxCols={boxCols}
                 repeat={<MathRepeatButton onClick={() => { markInteracted(); speakPrompt() }} disabled={!gameReady} />}
               />
             </Box>
@@ -462,6 +488,7 @@ const FyldBaadenGame: React.FC = () => {
                 >
                   {/* Idle rock is its own CSS layer, nested inside the framer travel (animation rule §2). */}
                   <Box {...rock.props} sx={[{ transformOrigin: '50% 100%' }, rock.sx]}>
+                    <Box ref={bumpRef} sx={{ position: 'relative', transformOrigin: '50% 90%' }}>
                     <Boat
                       look={(boatNo - 1) % BOAT_LOOKS.length}
                       deck={deck}
@@ -477,7 +504,25 @@ const FyldBaadenGame: React.FC = () => {
                       shakeKey={shakeKey}
                       departing={phase === 'sailing'}
                       dragging={activeId !== null}
+                      boxCols={boxCols}
                     />
+                    {/* The captain: the theme mascot stands on the free deck between the wheelhouse and the
+                        mast and sails off with every delivery. GameShell's corner companion would stand in
+                        the sea here (guide={false} above); mascotBus reactions still reach this one. */}
+                    <Mascot
+                      sx={{
+                        position: 'absolute',
+                        left: `${BOAT_GEOMETRY.captain.left * 100}%`,
+                        bottom: `${BOAT_GEOMETRY.captain.bottom * 100}%`,
+                        width: `${BOAT_GEOMETRY.captain.width * 100}%`,
+                        height: 'auto',
+                        aspectRatio: '1',
+                        zIndex: 1,
+                        [PHONE_LANDSCAPE]: { display: 'block' },
+                        [PHONE_PORTRAIT]: { width: `${BOAT_GEOMETRY.captain.width * 100}%`, height: 'auto' },
+                      }}
+                    />
+                    </Box>
                   </Box>
                 </motion.div>
               )}
