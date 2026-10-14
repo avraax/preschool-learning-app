@@ -46,12 +46,14 @@ export const HarbourBackdrop: React.FC<{ reduce: boolean }> = () => (
   />
 )
 
-// The wave renders are not tileable (repeating them showed a seam every ~290px), so each band is ONE
-// render stretched across a strip a little wider than the screen; the drift stays inside that margin.
+// The wave renders are made SEAMLESS in the art pipeline (`makeSeamlessX`: their ends are cross-faded),
+// so each band repeats at its NATURAL proportions. Stretching one render across the screen squashed it
+// to a third of its height (owner: "stretched and distorted"); repeating the raw render showed seams.
 const band = (src: string) => ({
   backgroundImage: `url(${src})`,
-  backgroundRepeat: 'no-repeat',
-  backgroundSize: '100% 100%',
+  backgroundRepeat: 'repeat-x',
+  backgroundSize: 'auto 100%',
+  backgroundPosition: 'left bottom',
 })
 
 export const HarbourFrontWater: React.FC<{ reduce: boolean }> = ({ reduce }) => {

@@ -22,6 +22,9 @@ import splashArt from '../../../assets/games/boat/splash.webp'
 // Motion: transform/opacity strings with cubic-bezier easing only (gpuMotion.test.ts) — GPU-composited in
 // Safari 17, where framer shorthands run on the main thread and springs become uncomposited `linear()`.
 
+/** Static counter-rotation that levels the batch-G boat renders (see the image below). */
+const BOAT_LEVEL_DEG = -1.8
+
 /** Landing overshoot as a cubic-bezier (the curve `draggableStyle` uses for its lift). */
 const LAND_EASE = [0.34, 1.56, 0.64, 1] as const
 
@@ -223,7 +226,10 @@ const Boat: React.FC<BoatProps> = ({
       // `--bw` is the boat's width; every size inside derives from it.
       style={{ position: 'relative', width: 'var(--bw)', aspectRatio: String(BOAT_ASPECT) }}
     >
-      <Box component="img" src={L.art} alt="" draggable={false} sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%', display: 'block', userSelect: 'none', pointerEvents: 'none' }} />
+      {/* The render leans ~2° nose-down (keel measured 0.971 → 0.996 of its height from x 0.3 → 0.7), which
+          with a tall wheelhouse read as "about to tip over" (owner). Only the IMAGE is counter-rotated —
+          rotating the container would bend every drag offset of the cargo inside it. */}
+      <Box component="img" src={L.art} alt="" draggable={false} sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%', display: 'block', userSelect: 'none', pointerEvents: 'none', transform: `rotate(${BOAT_LEVEL_DEG}deg)`, transformOrigin: '50% 80%' }} />
 
       {/* The sail — blank until a correct send paints the number on it (the reveal IS the lesson). */}
       <Box sx={{ position: 'absolute', left: pct(G.sail.left), top: pct(G.sail.top), width: pct(G.sail.width), height: pct(G.sail.height), display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>

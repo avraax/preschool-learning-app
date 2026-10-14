@@ -13,7 +13,7 @@
 // backdrops are opaque and need no keying.
 
 import sharp from 'sharp'
-import { readdir, mkdir, stat } from 'node:fs/promises'
+import { readdir, mkdir, stat, readFile, writeFile } from 'node:fs/promises'
 import { existsSync } from 'node:fs'
 import { join, dirname, basename, extname } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -423,11 +423,48 @@ const HARBOUR_SPECS = {
   horn: { size: 320, keepAspect: true },
   'gull-stand': { size: 256, keepAspect: true },
   'gull-fly': { size: 320, keepAspect: true },
-  'wave-near': { size: 1024, keepAspect: true },
-  'wave-far': { size: 1024, keepAspect: true },
+  // `seamless`: the renders don't tile (repeating them showed a seam every tile), and stretching ONE
+  // across the screen squashed it to a third of its height (owner: "stretched and distorted"). So the
+  // ends are cross-faded into a seamless tile that repeats at its natural proportions.
+  'wave-near': { size: 1024, keepAspect: true, seamless: 0.22 },
+  'wave-far': { size: 1024, keepAspect: true, seamless: 0.22 },
   splash: { size: 420, keepAspect: true },
   puff: { size: 256, keepAspect: true },
 }
+// Turn a keyed horizontal strip into a seamless horizontal tile: drop the last `frac` of the width and
+// cross-fade it over the first `frac`, so column W-1 of the tile flows straight into column 0. Alpha is
+// blended too, so a crest that ends at one edge fades into the crest at the other.
+async function makeSeamlessX(path, frac) {
+  // Read through a buffer: on Windows sharp keeps a handle on a path it read, and writing back to the
+  // same path then fails ("unable to open for write").
+  const { data, info } = await sharp(await readFile(path)).ensureAlpha().raw().toBuffer({ resolveWithObject: true })
+  const { width: w, height: h, channels: c } = info
+  const ov = Math.round(w * frac)
+  const tw = w - ov
+  const out = Buffer.alloc(tw * h * c)
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < tw; x++) {
+      const o = (y * tw + x) * c
+      const a = (y * w + x) * c
+      if (x >= ov) {
+        data.copy(out, o, a, a + c)
+        continue
+      }
+      const b = (y * w + (tw + x)) * c // the dropped tail, laid over the head
+      const t = x / ov
+      // Colour is weighted by ALPHA: a transparent pixel still carries the keyed screen's green RGB, and
+      // a plain lerp let that green ghost into the blend (seen on wave-far).
+      const wa = (data[a + 3] / 255) * t
+      const wb = (data[b + 3] / 255) * (1 - t)
+      const sum = wa + wb
+      for (let k = 0; k < 3; k++) out[o + k] = sum > 0 ? Math.round((data[a + k] * wa + data[b + k] * wb) / sum) : 0
+      out[o + 3] = Math.round(data[b + 3] * (1 - t) + data[a + 3] * t)
+    }
+  }
+  const buf = await sharp(out, { raw: { width: tw, height: h, channels: c } }).webp({ quality: 90, effort: 6 }).toBuffer()
+  await writeFile(path, buf)
+}
+
 async function optimizeHarbour() {
   const srcDir = join(SRC_ROOT, 'harbour')
   if (!existsSync(srcDir)) {
@@ -445,6 +482,7 @@ async function optimizeHarbour() {
     }
     const outPath = join(HARBOUR_OUT, `${id}.webp`)
     await greenKeySprite(join(srcDir, src), outPath, { fill: 1, ...spec })
+    if (spec.seamless) await makeSeamlessX(outPath, spec.seamless)
     const kbs = kb((await stat(outPath)).size)
     total += kbs
     console.log(`  ${id.padEnd(14)} → ${id}.webp  ${String(kbs).padStart(4)} KB`)

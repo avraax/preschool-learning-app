@@ -21,7 +21,7 @@ import { mascotBus } from '../../services/mascotBus'
 import { boatLoadedText, fillBoatPrompt } from '../../config/gamePhrases'
 import { BOAT_RECENT_WINDOW, pickBoatNumber } from '../../config/mathProblems'
 import { DWELL_CORRECT } from '../../theme/motion'
-import { idleRock } from '../../theme/idleMotion'
+import { idleFloat } from '../../theme/idleMotion'
 import { DEV } from '../../utils/devHarness'
 import { useOccludeWorld } from '../common/scene/worldOcclusion'
 import {
@@ -348,9 +348,10 @@ const FyldBaadenGame: React.FC = () => {
   const ghost = hint !== null ? ghostFor(hint) : null
   const overDeck = overId === 'deck' && !!activeId?.startsWith('src-')
   const overQuay = overId === 'quay' && !!activeId?.startsWith('deck-')
-  // The moored boat stops rocking while ANYTHING is dragged: a rotating ancestor bends the drag offset,
-  // and a fish dragged off the deck drifted ~12px from the pointer (real-mouse probe, 2026-10-14).
-  const rock = idleRock(reduce || phase === 'sailing' || phase === 'arriving' || activeId !== null)
+  // The moored boat BOBS (vertical only) — it used to rock ±1.5°, which on a long boat with a tall
+  // wheelhouse read as "about to tip over" (owner, 2026-10-14). It holds still while anything is dragged:
+  // a moving ancestor bends the drag offset (a deck fish drifted ~12px, real-mouse probe).
+  const rock = idleFloat(reduce || phase === 'sailing' || phase === 'arriving' || activeId !== null, { distance: 3, durationS: 3.4 })
 
   // A full `transform` STRING with tween easing, never framer's `x` shorthand: Motion hands `transform`
   // to WAAPI, which Safari 17 runs on the GPU compositor, while `x`/`y`/`scale` tick on the main thread
