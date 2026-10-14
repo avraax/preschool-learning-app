@@ -394,18 +394,18 @@ const FyldBaadenGame: React.FC = () => {
           sx={{ flex: 1, minHeight: 0, containerType: 'size', position: 'relative' }}>
           <Box
             sx={{
-              // Landscape: quay (5.2) | boat art (13.5, ≈10.2 tall at its 846:637 aspect) side by side.
+              // Landscape: quay (5.2) | boat art (13.5, ≈8.3 tall at its 849:519 aspect) side by side.
               // Portrait: the quay is a pier ABOVE the moored boat (15 wide), so the boat gets the full
               // width instead of half a screen of empty sky. `--bw` is the boat's width — the Boat sizes
               // everything inside from it.
-              '--s': 'min(calc(100cqw / 19.2), calc(100cqh / 10.6), 80px)',
+              '--s': 'min(calc(100cqw / 19.2), calc(100cqh / 9), 80px)',
               '--bw': 'calc(var(--s) * 13.5)',
               height: '100%',
               display: 'flex',
               flexDirection: 'row',
               alignItems: 'stretch',
               '@media (orientation: portrait)': {
-                '--s': 'min(calc(100cqw / 15.6), calc(100cqh / 18.6), 80px)',
+                '--s': 'min(calc(100cqw / 15.6), calc(100cqh / 17), 80px)',
                 '--bw': 'calc(var(--s) * 15)',
                 flexDirection: 'column',
                 // The pier sits right above the moored boat, not stranded at the top of the sea.

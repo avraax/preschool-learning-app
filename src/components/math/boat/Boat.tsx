@@ -87,7 +87,7 @@ const Slot: React.FC<{
 // keeps its slot so the 5 + 5 stays countable.
 const Cargo: React.FC<{ kind: CargoKind }> = ({ kind }) =>
   kind === 'box' ? (
-    <Box sx={{ width: '118%', ml: '-9%', flex: '0 0 auto' }}>
+    <Box sx={{ width: '106%', ml: '-3%', flex: '0 0 auto' }}>
       <FishBoxView />
     </Box>
   ) : (
@@ -233,7 +233,7 @@ const Boat: React.FC<BoatProps> = ({
             animate={{ transform: 'scale(1) rotate(0deg)', opacity: 1 }}
             transition={{ duration: 0.4, ease: LAND_EASE }}
           >
-            <Typography component="span" sx={{ fontFamily: '"Comic Sans MS", "Comic Neue", cursive', fontWeight: 800, fontSize: 'calc(var(--bw) * 0.1)', lineHeight: 1, color: L.ink, textShadow: '0 2px 0 rgba(255,255,255,0.6)' }}>
+            <Typography component="span" sx={{ fontFamily: '"Comic Sans MS", "Comic Neue", cursive', fontWeight: 800, fontSize: 'calc(var(--bw) * 0.062)', lineHeight: 1, whiteSpace: 'nowrap', color: L.ink, textShadow: '0 2px 0 rgba(255,255,255,0.6)' }}>
               {sailNumber}
             </Typography>
           </motion.div>
@@ -260,7 +260,7 @@ const Boat: React.FC<BoatProps> = ({
       {/* The send-off: a wake splash at the STERN as the boat sets off (a delight AFTER the answer, never
           during it). At the bow it was already off-screen — the boat leaves to the right. */}
       {departing && !reduce && (
-        <Box sx={{ position: 'absolute', left: '-12%', top: '60%', width: '28%', pointerEvents: 'none' }}>
+        <Box sx={{ position: 'absolute', left: '-12%', top: '52%', width: '28%', pointerEvents: 'none' }}>
           <motion.div
             initial={{ transform: 'translateY(20%) scale(0.3)', opacity: 0 }}
             animate={{ transform: ['translateY(20%) scale(0.3)', 'translateY(0%) scale(1.05)', 'translateY(-10%) scale(1.2)'], opacity: [0, 1, 0] }}
