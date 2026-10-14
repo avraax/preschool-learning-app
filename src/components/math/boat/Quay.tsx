@@ -5,41 +5,54 @@ import { DraggableItem } from '../../common/dnd/DraggableItem'
 import { DroppableZone } from '../../common/dnd/DroppableZone'
 import type { CargoKind } from './boatDeck'
 import { FishBoxView, FishView } from './Cargo'
+import quayArt from '../../../assets/games/boat/quay.webp'
+import boxStackArt from '../../../assets/games/boat/box-stack.webp'
+import gullStandArt from '../../../assets/games/boat/gull-stand.webp'
+import gullFlyArt from '../../../assets/games/boat/gull-fly.webp'
+import { idleFloat } from '../../../theme/idleMotion'
 
-// The quay: two endless supply piles — boxes of ten fish and single fish. A pile is the child's SOURCE:
-// tap it to load one onto the next free slot, or drag its top unit onto the deck. Both call the game's
-// one `load(kind)` (Harbour PRD-01 §4.4). The quay is also where a dragged-back item is unloaded.
+// The quay (owner's Gemini render): two endless supply piles standing on its planks — a stack of fish
+// boxes and a little heap of fish — and a seagull on the bollard. A pile is the child's SOURCE: tap it to
+// load one onto the next free slot, or drag its top unit onto the deck. Both call the game's one
+// `load(kind)` (Harbour PRD-01 §4.4). The quay is also where a dragged-back item is unloaded.
+//
+// Placement is a fraction of the quay image's box (measured on quay.webp, 850 × 527): the plank top runs
+// at ~38% from the top, the bollard sits at the right end.
 
-const PLANK = '#B07A45'
-const PLANK_DARK = '#7E5228'
-const POST = '#6B4522'
+const QUAY_ASPECT = 850 / 527
+/** Piles stand on the plank top: their bottom edge sits this far up from the image's bottom. */
+const PLANK_TOP_FROM_BOTTOM = '60%'
 
-const Pile: React.FC<{ kind: CargoKind; interactive: boolean; onLoad: (kind: CargoKind) => void; refill: number; reduce: boolean }> = ({
-  kind,
-  interactive,
-  onLoad,
-  refill,
-  reduce,
-}) => {
+const imgSx = { display: 'block', userSelect: 'none', pointerEvents: 'none' } as const
+
+const Pile: React.FC<{
+  kind: CargoKind
+  left: string
+  width: string
+  interactive: boolean
+  onLoad: (kind: CargoKind) => void
+  refill: number
+  reduce: boolean
+}> = ({ kind, left, width, interactive, onLoad, refill, reduce }) => {
   const isBox = kind === 'box'
-  const Unit = isBox ? FishBoxView : FishView
-  // Both piles are two side by side with the top unit resting on them.
-  const unit = isBox ? 'calc(var(--s) * 1.3)' : 'calc(var(--s) * 1.2)'
   return (
-    <Box sx={{ position: 'relative', width: 'calc(var(--s) * 2.6)', height: 'calc(var(--s) * 2.3)' }}>
-      {/* The pile behind — static, it never runs out. */}
-      <Box aria-hidden sx={{ position: 'absolute', bottom: 0, left: 0 }}><Unit size={unit} /></Box>
-      <Box aria-hidden sx={{ position: 'absolute', bottom: 0, right: 0 }}><Unit size={unit} /></Box>
-      {/* The WHOLE PILE is the grab area, not just the top unit (owner, 2026-10-14: pressing the fish
-          underneath did nothing). The draggable is a transparent box over the entire pile, padded a
-          little past it; only the top unit is drawn inside it, so a drag carries that one unit away
-          while the rest of the pile stays put. */}
+    <Box sx={{ position: 'absolute', left, width, bottom: PLANK_TOP_FROM_BOTTOM }}>
+      {/* The pile itself — static, it never runs out. */}
+      {isBox ? (
+        <Box component="img" src={boxStackArt} alt="" draggable={false} sx={{ ...imgSx, width: '100%', height: 'auto' }} />
+      ) : (
+        <Box sx={{ position: 'relative', display: 'flex', justifyContent: 'center', pt: '30%' }}>
+          <Box sx={{ width: '50%', mr: '-6%' }}><FishView /></Box>
+          <Box sx={{ width: '50%', ml: '-6%' }}><FishView /></Box>
+        </Box>
+      )}
+      {/* The WHOLE PILE is the grab area (owner, 2026-10-14: pressing the lower fish did nothing). The
+          draggable is a transparent box over the entire pile, padded past it; only the top unit is drawn
+          inside it, so a drag carries that one unit away while the pile stays put. */}
       <Box sx={{ position: 'absolute', inset: '-10px', zIndex: 1 }}>
-        {/* A successful load REMOUNTS the top unit (`refill` is the key): the one the child dropped stays
-            on the deck, and a fresh one appears on the pile — instead of the dropped unit gliding back
-            across the board, which read as "it didn't take". (WebKit gesture probe, 2026-10-13.)
-            OPACITY only: a scale/translate on an ancestor of a draggable multiplies its drag offset
-            (drag-and-drop.md, "track the finger 1:1"), and a child may grab it mid-fade. */}
+        {/* A successful load REMOUNTS the top unit (`refill` is the key) so the dropped unit stays on the
+            deck and a fresh one appears — instead of gliding back. OPACITY only: a scale/translate on an
+            ancestor of a draggable multiplies its drag offset (drag-and-drop.md). */}
         <motion.div key={refill} initial={reduce || refill === 0 ? false : { opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.22 }} style={{ width: '100%', height: '100%' }}>
           <DraggableItem
             id={`src-${kind}`}
@@ -47,20 +60,14 @@ const Pile: React.FC<{ kind: CargoKind; interactive: boolean; onLoad: (kind: Car
             fill
             disabled={!interactive}
             data={{ kind, from: 'quay' }}
-            lift={{ scale: 1.05, rotate: -3 }}
+            lift={{ scale: 1.06, rotate: -3 }}
             onActivate={() => onLoad(kind)}
           >
             <Box data-boat-source={kind} sx={{ position: 'relative', width: '100%', height: '100%', cursor: interactive ? 'grab' : 'default' }}>
-              <Box
-                sx={{
-                  position: 'absolute',
-                  // +10px: this box is padded 10px past the pile on every side.
-                  bottom: isBox ? 'calc(var(--s) * 0.95 + 10px)' : 'calc(var(--s) * 0.7 + 10px)',
-                  left: '50%',
-                  transform: 'translateX(-50%)',
-                }}
-              >
-                <Unit size={unit} />
+              {/* The top unit: a box resting on the stack / a fish on top of the heap (+10px: this box is
+                  padded 10px past the pile). */}
+              <Box sx={{ position: 'absolute', left: '50%', top: '10px', width: isBox ? '78%' : '52%', transform: isBox ? 'translate(-50%, -38%)' : 'translate(-50%, 0%)' }}>
+                {isBox ? <FishBoxView /> : <FishView />}
               </Box>
             </Box>
           </DraggableItem>
@@ -77,36 +84,55 @@ const Quay: React.FC<{
   repeat: React.ReactNode
   refills: Record<CargoKind, number>
   reduce: boolean
-}> = ({ interactive, overQuay, onLoad, repeat, refills, reduce }) => (
-  <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'space-between', minHeight: 0 }}>
-    <Box sx={{ pt: 1 }}>{repeat}</Box>
-    <Box sx={{ width: '100%', position: 'relative' }}>
-      <DroppableZone
-        id="quay"
-        style={{
-          width: '100%',
-          display: 'flex',
-          alignItems: 'flex-end',
-          justifyContent: 'center',
-          gap: 'calc(var(--s) * 0.2)',
-          paddingBottom: 'calc(var(--s) * 0.1)',
-          borderRadius: 16,
-          boxShadow: overQuay ? '0 0 0 4px rgba(255,255,255,0.8)' : 'none',
-          transition: 'box-shadow 0.2s ease',
-        }}
-      >
-        <Pile kind="box" interactive={interactive} onLoad={onLoad} refill={refills.box} reduce={reduce} />
-        <Pile kind="fish" interactive={interactive} onLoad={onLoad} refill={refills.fish} reduce={reduce} />
-      </DroppableZone>
-      {/* Planks + posts down into the water (the front wave band covers their feet). */}
-      <Box aria-hidden sx={{ height: 'calc(var(--s) * 0.45)', background: `linear-gradient(180deg, ${PLANK}, ${PLANK_DARK})`, borderRadius: '6px', boxShadow: '0 4px 0 rgba(0,0,0,0.15)' }} />
-      <Box aria-hidden sx={{ display: 'flex', justifyContent: 'space-around', px: '8%' }}>
-        {[0, 1, 2].map((i) => (
-          <Box key={i} sx={{ width: 'calc(var(--s) * 0.42)', height: 'calc(var(--s) * 1.7)', background: `linear-gradient(90deg, ${POST}, ${PLANK_DARK})`, borderRadius: '0 0 6px 6px' }} />
-        ))}
+  /** True from a correct send until the next boat — the gull has flown off. */
+  gullAway: boolean
+}> = ({ interactive, overQuay, onLoad, repeat, refills, reduce, gullAway }) => {
+  const gullBob = idleFloat(reduce, { distance: 3, durationS: 2.8 })
+  return (
+    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'space-between', minHeight: 0 }}>
+      <Box sx={{ pt: 1 }}>{repeat}</Box>
+      <Box sx={{ width: '100%' }}>
+        <DroppableZone
+          id="quay"
+          style={{
+            position: 'relative',
+            width: '100%',
+            // Extends the drop area up over the piles, which stand above the quay image.
+            paddingTop: '46%',
+            borderRadius: 24,
+            background: overQuay ? 'radial-gradient(ellipse at center 60%, rgba(255,255,255,0.4), rgba(255,255,255,0) 70%)' : 'transparent',
+            transition: 'background 0.2s ease',
+          }}
+        >
+          <Box sx={{ position: 'relative', width: '100%', aspectRatio: String(QUAY_ASPECT) }}>
+            <Box component="img" src={quayArt} alt="" draggable={false} sx={{ ...imgSx, position: 'absolute', inset: 0, width: '100%', height: '100%' }} />
+            {/* A seagull resting on the bollard — calm decor, it never asks for anything. On a correct
+                send it takes off and flies away (the send-off); it is back on the next boat. */}
+            <Box aria-hidden sx={{ position: 'absolute', left: '74%', width: '17%', bottom: '74%' }}>
+              {gullAway && !reduce ? (
+                <motion.div
+                  initial={{ transform: 'translate(0%, 0%) scale(1)', opacity: 1 }}
+                  animate={{ transform: ['translate(0%, 0%) scale(1)', 'translate(60%, -120%) scale(1.1)', 'translate(260%, -420%) scale(0.8)'], opacity: [1, 1, 0] }}
+                  transition={{ duration: 1.7, ease: 'easeIn', times: [0, 0.3, 1] }}
+                  style={{ width: '130%' }}
+                >
+                  <Box component="img" src={gullFlyArt} alt="" draggable={false} sx={{ ...imgSx, width: '100%', height: 'auto' }} />
+                </motion.div>
+              ) : !gullAway ? (
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
+                  <Box {...gullBob.props} sx={[{ width: '100%' }, gullBob.sx]}>
+                    <Box component="img" src={gullStandArt} alt="" draggable={false} sx={{ ...imgSx, width: '100%', height: 'auto' }} />
+                  </Box>
+                </motion.div>
+              ) : null}
+            </Box>
+            <Pile kind="box" left="0%" width="42%" interactive={interactive} onLoad={onLoad} refill={refills.box} reduce={reduce} />
+            <Pile kind="fish" left="40%" width="36%" interactive={interactive} onLoad={onLoad} refill={refills.fish} reduce={reduce} />
+          </Box>
+        </DroppableZone>
       </Box>
     </Box>
-  </Box>
-)
+  )
+}
 
 export default Quay

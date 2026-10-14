@@ -394,16 +394,19 @@ const FyldBaadenGame: React.FC = () => {
           sx={{ flex: 1, minHeight: 0, containerType: 'size', position: 'relative' }}>
           <Box
             sx={{
-              // Landscape: quay (5.2) | boat (15.6 + the horn's overhang) side by side. Portrait: the quay
-              // is a pier ABOVE the moored boat, so the boat gets the full width instead of half a screen
-              // of empty sky.
-              '--s': 'min(calc(100cqw / 21.5), calc(100cqh / 8.1), 72px)',
+              // Landscape: quay (5.2) | boat art (13.5, ≈10.2 tall at its 846:637 aspect) side by side.
+              // Portrait: the quay is a pier ABOVE the moored boat (15 wide), so the boat gets the full
+              // width instead of half a screen of empty sky. `--bw` is the boat's width — the Boat sizes
+              // everything inside from it.
+              '--s': 'min(calc(100cqw / 19.2), calc(100cqh / 10.6), 80px)',
+              '--bw': 'calc(var(--s) * 13.5)',
               height: '100%',
               display: 'flex',
               flexDirection: 'row',
               alignItems: 'stretch',
               '@media (orientation: portrait)': {
-                '--s': 'min(calc(100cqw / 16.6), calc(100cqh / 14.5), 72px)',
+                '--s': 'min(calc(100cqw / 15.6), calc(100cqh / 18.6), 80px)',
+                '--bw': 'calc(var(--s) * 15)',
                 flexDirection: 'column',
                 // The pier sits right above the moored boat, not stranded at the top of the sea.
                 justifyContent: 'flex-end',
@@ -418,7 +421,7 @@ const FyldBaadenGame: React.FC = () => {
                 zIndex: 1,
                 minHeight: 0,
                 // min-content keeps "Hør igen" on one line where the slot unit is small (phone portrait).
-                '@media (orientation: portrait)': { flex: '0 0 auto', width: 'calc(var(--s) * 5.6)', minWidth: 'max-content' },
+                '@media (orientation: portrait)': { flex: '0 0 auto', width: 'calc(var(--s) * 6.4)', minWidth: 'max-content' },
               }}
             >
               <Quay
@@ -427,6 +430,7 @@ const FyldBaadenGame: React.FC = () => {
                 onLoad={(kind) => load(kind, true)}
                 refills={refills}
                 reduce={reduce}
+                gullAway={phase === 'sending' || phase === 'sailing'}
                 repeat={<MathRepeatButton onClick={() => { markInteracted(); speakPrompt() }} disabled={!gameReady} />}
               />
             </Box>
@@ -437,10 +441,10 @@ const FyldBaadenGame: React.FC = () => {
                 display: 'flex',
                 alignItems: 'flex-end',
                 justifyContent: 'center',
-                // Lift the boat so the front wave band (HarbourFrontWater, 9dvh) covers only the lower half
-                // of the hull — on a phone the band is taller than the whole hull and hid the bottom row
-                // of deck slots (WebKit phone-portrait probe, 2026-10-13).
-                pb: 'max(0px, calc(9dvh - var(--s) * 0.8 - 10px))',
+                // Lift the boat so the front wave band (HarbourFrontWater, 10dvh) covers only the bottom of
+                // the hull — on a phone the band is taller than the whole hull and hid the bottom row of
+                // deck slots (WebKit phone-portrait probe, 2026-10-13). 0.09·bw ≈ the lowest 12% of the art.
+                pb: 'max(0px, calc(10dvh - var(--bw) * 0.09 - 10px))',
                 '@media (orientation: portrait)': { flex: '0 0 auto' },
               }}
             >
@@ -467,6 +471,7 @@ const FyldBaadenGame: React.FC = () => {
                       hornEnabled={interactive && !isDeckEmpty(deck)}
                       onHorn={sendBoat}
                       shakeKey={shakeKey}
+                      departing={phase === 'sailing'}
                     />
                   </Box>
                 </motion.div>

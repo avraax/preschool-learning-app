@@ -284,7 +284,10 @@ async function greenKeySprite(srcPath, outPath, opts) {
   // darkened — red and blue stay near 0 (measured under the frog: 0,28,2 / 4,37,1) — while the subject's
   // own darkest green keeps some red/blue (12,48,6). Its green-excess overlaps the subject's, so no
   // `faint` separates them; this lets the border flood also take pixels with max(r,b) ≤ darkScreenMax.
-  const { size, fill, vivid = UI_VIVID, faint = UI_FAINT, despill = UI_DESPILL, quality = 90, darkScreenMax = -1 } = opts
+  // `keepAspect` (opt-in): output the trimmed subject at `size` px WIDE in its own aspect, instead of
+  // contained in a transparent square — for wide strips (Fyld Båden's wave bands) and scene props whose
+  // placement is measured against their real box.
+  const { size, fill, vivid = UI_VIVID, faint = UI_FAINT, despill = UI_DESPILL, quality = 90, darkScreenMax = -1, keepAspect = false } = opts
   const { data, info } = await sharp(srcPath).ensureAlpha().raw().toBuffer({ resolveWithObject: true })
   const { width: w, height: h, channels: c } = info
   const px = Buffer.from(data)
@@ -382,6 +385,14 @@ async function greenKeySprite(srcPath, outPath, opts) {
     if (x > maxX) maxX = x
     if (y > maxY) maxY = y
   }
+  if (keepAspect) {
+    await sharp(px, { raw: { width: w, height: h, channels: c } })
+      .extract({ left: minX, top: minY, width: maxX - minX + 1, height: maxY - minY + 1 })
+      .resize({ width: Math.min(size, maxX - minX + 1) })
+      .webp({ quality, effort: 6 })
+      .toFile(outPath)
+    return
+  }
   const inner = Math.round(size * fill)
   const subject = await sharp(px, { raw: { width: w, height: h, channels: c } })
     .extract({ left: minX, top: minY, width: maxX - minX + 1, height: maxY - minY + 1 })
@@ -392,6 +403,67 @@ async function greenKeySprite(srcPath, outPath, opts) {
     .composite([{ input: subject, gravity: 'center' }])
     .webp({ quality, effort: 6 })
     .toFile(outPath)
+}
+
+// Fyld Båden (Harbour PRD-01) — art-src/harbour/<id>.jpg → src/assets/games/boat/<id>.webp, one spec per
+// file (size = output px; props keep their own aspect so placement can be measured against the real box).
+// The backdrop is OPAQUE (a full picture, not green screen): resized + WebP only, never keyed. The menu
+// icon lands beside the other game icons at their 512² / 0.81 fill.
+const HARBOUR_OUT = join(ROOT, 'src', 'assets', 'games', 'boat')
+const HARBOUR_SPECS = {
+  box: { size: 512, keepAspect: true },
+  'box-stack': { size: 512, keepAspect: true },
+  'boat-red': { size: 1400, keepAspect: true },
+  // The yellow hull's shaded underside picks up green bounce light from the screen, and the default
+  // `faint` grow ran straight through it — the whole yellow hull vanished on the defaults (measured).
+  'boat-yellow': { size: 1400, keepAspect: true, faint: 60, vivid: 110, despill: 40 },
+  'boat-navy': { size: 1400, keepAspect: true },
+  'boat-paleblue': { size: 1400, keepAspect: true },
+  quay: { size: 900, keepAspect: true },
+  horn: { size: 320, keepAspect: true },
+  'gull-stand': { size: 256, keepAspect: true },
+  'gull-fly': { size: 320, keepAspect: true },
+  'wave-near': { size: 1024, keepAspect: true },
+  'wave-far': { size: 1024, keepAspect: true },
+  splash: { size: 420, keepAspect: true },
+  puff: { size: 256, keepAspect: true },
+}
+async function optimizeHarbour() {
+  const srcDir = join(SRC_ROOT, 'harbour')
+  if (!existsSync(srcDir)) {
+    console.error('! no art-src/harbour — skipping')
+    return
+  }
+  await mkdir(HARBOUR_OUT, { recursive: true })
+  console.log('\n=== harbour ===')
+  let total = 0
+  for (const [id, spec] of Object.entries(HARBOUR_SPECS)) {
+    const src = (await readdir(srcDir)).find((f) => basename(f, extname(f)) === id)
+    if (!src) {
+      console.warn(`  ! ${id}: no source in art-src/harbour`)
+      continue
+    }
+    const outPath = join(HARBOUR_OUT, `${id}.webp`)
+    await greenKeySprite(join(srcDir, src), outPath, { fill: 1, ...spec })
+    const kbs = kb((await stat(outPath)).size)
+    total += kbs
+    console.log(`  ${id.padEnd(14)} → ${id}.webp  ${String(kbs).padStart(4)} KB`)
+  }
+  const bd = (await readdir(srcDir)).find((f) => basename(f, extname(f)) === 'backdrop')
+  if (bd) {
+    const outPath = join(HARBOUR_OUT, 'backdrop.webp')
+    await sharp(join(srcDir, bd)).webp({ quality: 86, effort: 6 }).toFile(outPath)
+    const kbs = kb((await stat(outPath)).size)
+    total += kbs
+    console.log(`  ${'backdrop'.padEnd(14)} → backdrop.webp  ${String(kbs).padStart(4)} KB [opaque, not keyed]`)
+  }
+  const icon = (await readdir(srcDir)).find((f) => basename(f, extname(f)) === 'icon')
+  if (icon) {
+    const outPath = join(ROOT, 'src', 'assets', 'themes', 'icons', 'games', 'math.boat.webp')
+    await greenKeySprite(join(srcDir, icon), outPath, { size: 512, fill: UI_FILL })
+    console.log(`  ${'icon'.padEnd(14)} → icons/games/math.boat.webp  ${String(kb((await stat(outPath)).size)).padStart(4)} KB`)
+  }
+  console.log(`  ${'TOTAL'.padEnd(14)}   ${total} KB`)
 }
 
 // Run one green-screen batch: art-src/<dir>/<name>.{png,jpg} → <outDir>/<name>.webp.
@@ -532,6 +604,10 @@ for (const id of themes) {
   }
   if (id === 'farver') {
     await optimizeFarver()
+    continue
+  }
+  if (id === 'harbour') {
+    await optimizeHarbour()
     continue
   }
   if (!(await stat(join(SRC_ROOT, id)).then((s) => s.isDirectory()).catch(() => false))) continue
