@@ -151,18 +151,18 @@ slightly from above, with the deck edge perfectly horizontal and a long, low, wi
 ```
 I need FOUR SEPARATE IMAGES — four individual image files, one per subject below. Do NOT combine them into one picture. Do NOT make a grid, collage, panel or contact sheet. Each image shows ONLY its own single boat on its own full green background.
 
-Style for every image: soft-3D claymation style, Pixar-lite, rounded matte clay, soft top-left key light, gentle rim light, soft contact shadow, warm and child-safe, no text or letters, flat solid #00FF00 green background edge to edge, WIDE 2:1 landscape image, highest resolution. Match the clay style, materials and colours of the attached boat, but NOT its camera angle.
+Style for every image: soft-3D claymation style, Pixar-lite, rounded matte clay, soft top-left key light, gentle rim light, soft contact shadow, warm and child-safe, no text or letters, flat solid #00FF00 green background edge to edge, landscape 4:3 image, highest resolution. Match the clay style, chunky toy proportions, materials and colours of the attached boat, but NOT its turned camera angle.
 
-CAMERA (most important): the boat is seen STRAIGHT FROM THE SIDE, perfectly level, with the camera only slightly above deck height (about 20 degrees down) — like a side-scrolling game. The boat is NOT turned or angled toward the viewer: the top edge of the deck and the waterline are perfectly HORIZONTAL straight lines, parallel to the bottom of the image. Bow (front) on the RIGHT, stern on the LEFT.
+CAMERA (most important): the boat is seen STRAIGHT FROM THE SIDE — NOT turned or angled toward the viewer — with the camera raised about 35 to 40 degrees ABOVE the boat, looking down, so the open deck is clearly visible as a WIDE flat surface (like looking down into a toy boat on a table). The front edge of the deck and the waterline are perfectly HORIZONTAL straight lines, parallel to the bottom of the image. Bow (front) on the RIGHT, stern on the LEFT.
 
-THE BOAT: the same friendly little Danish clay fishing boat, but LONG and LOW — about three times as long as it is tall. A small wheelhouse at the far LEFT end only. Right next to the wheelhouse one short mast with ONE BLANK plain cream-white sail (no markings). Everything else — from the mast to the bow, more than two-thirds of the boat's length — is ONE LONG, FLAT, EMPTY, OPEN WOODEN DECK seen slightly from above, with nothing on it: no fish, no boxes, no rope, no people. The waterline is flat at the bottom. There is NO water: the boat floats on flat solid #00FF00 green, NOT on a sea.
+THE BOAT: the same chunky, friendly, rounded little Danish clay fishing boat as the attached boat — a cute toy boat, NOT a canoe or barge. It is about TWICE as long as it is tall (not longer), with a deep rounded hull. A small wheelhouse at the far LEFT end. Right next to the wheelhouse one mast with ONE BIG BLANK plain cream-white sail (no markings) — the sail is large, about as tall as the boat is long. From the mast to the bow — at least half of the boat's length — is ONE wide, flat, EMPTY, OPEN WOODEN DECK clearly seen from above, with nothing on it: no fish, no boxes, no rope, no people. The waterline is flat at the bottom. There is NO water: the boat floats on flat solid #00FF00 green, NOT on a sea. All four boats are identical in shape, size and camera — only the colours differ.
 
 Image 1: RED hull with a white stripe.
 Image 2: SUNNY YELLOW hull with a blue stripe.
 Image 3: NAVY-BLUE hull with an orange stripe.
 Image 4: PALE-BLUE hull with a white stripe.
 
-Remember: straight side view, deck edge perfectly horizontal, flat solid #00FF00 green behind and below every boat (NOT a sea) — and four separate image files, not one picture containing four.
+Remember: straight side view seen from 35–40 degrees above so the deck is a wide visible surface, deck edge perfectly horizontal, chunky toy boat about twice as long as tall, big blank sail, flat solid #00FF00 green behind and below every boat (NOT a sea) — and four separate image files, not one picture containing four.
 ```
 
 **Then, in the same chat, paste this for the box at the same camera:**
@@ -170,7 +170,7 @@ Remember: straight side view, deck edge perfectly horizontal, flat solid #00FF00
 ```
 I need TWO SEPARATE IMAGES — two individual image files, two takes of the same subject. Do NOT combine them into one picture, grid or collage.
 
-Same style and the SAME CAMERA as the boats: seen STRAIGHT FROM THE FRONT-SIDE, perfectly level, camera only slightly above (about 20 degrees down), the box's front edge a perfectly HORIZONTAL straight line. Flat solid #00FF00 green background edge to edge, square 1:1, highest resolution, no text or letters.
+Same style and the SAME CAMERA as the boats: seen STRAIGHT FROM THE FRONT, not turned, camera raised about 35 to 40 degrees above looking down, the box's front edge a perfectly HORIZONTAL straight line. Flat solid #00FF00 green background edge to edge, square 1:1, highest resolution, no text or letters.
 
 Subject: ONE open shallow wooden fish box in warm honey-brown wood, wider than it is tall, holding EXACTLY TEN of the attached red clay fish: FIVE fish in the back row and FIVE fish in the front row — ten in total, no more, no fewer. Every fish is EXACTLY the attached red fish (same shape, red, orange fins, eye), all facing RIGHT, lying side by side, clearly separate, alive and happy with open eyes, the fish poking up above the box rim so all ten are visible. No ice, no nets, no labels.
 ```
