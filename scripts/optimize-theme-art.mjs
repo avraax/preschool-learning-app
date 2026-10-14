@@ -419,7 +419,7 @@ const HARBOUR_SPECS = {
   'boat-yellow': { size: 1400, keepAspect: true, faint: 60, vivid: 110, despill: 40 },
   'boat-navy': { size: 1400, keepAspect: true },
   'boat-paleblue': { size: 1400, keepAspect: true },
-  quay: { size: 900, keepAspect: true },
+  jetty: { size: 1024, keepAspect: true },
   horn: { size: 320, keepAspect: true },
   'gull-stand': { size: 256, keepAspect: true },
   'gull-fly': { size: 320, keepAspect: true },

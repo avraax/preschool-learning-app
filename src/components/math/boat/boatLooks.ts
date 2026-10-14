@@ -45,9 +45,6 @@ export const BOAT_GEOMETRY = {
     /** Where a ground-tier box's bottom edge rests — just behind the fish. */
     boxBase: 0.615,
   },
-  /** The captain (the theme mascot) stands against the wheelhouse's front wall (it ends at x ~0.27) —
-   *  mid-way to the mast it read as a stray passenger (owner 2026-10-14). */
-  captain: { left: 0.19, width: 0.19, bottom: 0.25 },
   /** The sail, for the numeral. */
   sail: { left: 0.43, top: 0.03, width: 0.11, height: 0.42 },
   /** The horn stands on the bow deck. */

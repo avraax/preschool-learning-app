@@ -36,10 +36,8 @@ import {
   type DeckState,
 } from './boat/boatDeck'
 import Boat, { type BundleFx } from './boat/Boat'
-import { BOAT_GEOMETRY, BOAT_LOOKS, boxColumns } from './boat/boatLooks'
+import { BOAT_LOOKS, boxColumns } from './boat/boatLooks'
 import Quay from './boat/Quay'
-import Mascot from '../common/Mascot'
-import { PHONE_LANDSCAPE, PHONE_PORTRAIT } from '../../theme/phoneMedia'
 import { HarbourBackdrop, HarbourFrontWater } from './boat/HarbourScene'
 
 // Fyld Båden (`math.boat`, Harbour PRD-01) — hear "Fyld båden med {tal} fisk", BUILD it on a boat from
@@ -406,8 +404,8 @@ const FyldBaadenGame: React.FC = () => {
         title="Fyld Båden"
         backRoute="/math"
         dense
-        // The corner companion would stand IN THE SEA here (owner, 2026-10-14) — the same mascot rides the
-        // boat as its captain instead. `guideReaction` still reaches it through mascotBus.
+        // The corner companion would stand IN THE SEA here (owner, 2026-10-14) — the same mascot stands on
+        // the jetty as harbour master instead. `guideReaction` still reaches it through mascotBus.
         guide={false}
         guideReaction={guideReaction}
         celebration={{ show: showCelebration, intensity: celebrationIntensity, duration: celebrationDuration, onComplete: stopCelebration }}
@@ -505,23 +503,6 @@ const FyldBaadenGame: React.FC = () => {
                       departing={phase === 'sailing'}
                       dragging={activeId !== null}
                       boxCols={boxCols}
-                    />
-                    {/* The captain: the theme mascot stands against the wheelhouse, as if just stepped out, and
-                        sails off with every delivery. Grounded: no idle hover, a contact shadow at its feet. GameShell's corner companion would stand in
-                        the sea here (guide={false} above); mascotBus reactions still reach this one. */}
-                    <Mascot
-                      grounded
-                      sx={{
-                        position: 'absolute',
-                        left: `${BOAT_GEOMETRY.captain.left * 100}%`,
-                        bottom: `${BOAT_GEOMETRY.captain.bottom * 100}%`,
-                        width: `${BOAT_GEOMETRY.captain.width * 100}%`,
-                        height: 'auto',
-                        aspectRatio: '1',
-                        zIndex: 1,
-                        [PHONE_LANDSCAPE]: { display: 'block' },
-                        [PHONE_PORTRAIT]: { width: `${BOAT_GEOMETRY.captain.width * 100}%`, height: 'auto' },
-                      }}
                     />
                     </Box>
                   </Box>
