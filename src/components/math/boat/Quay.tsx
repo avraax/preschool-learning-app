@@ -43,7 +43,11 @@ const JETTY_POSTS = [
   { x: 0.725, y: 0.84, w: 0.075 },
   { x: 0.94, y: 0.7, w: 0.06 },
 ]
-const POST_FADE = 'linear-gradient(to bottom, #000 0%, #000 78%, transparent 92%)'
+// The fade starts AT the waterline, so below the ring the post is under water.
+const POST_FADE = 'linear-gradient(to bottom, #000 0%, #000 84%, transparent 93%)'
+const RING_COLOUR = 'rgba(255,255,255,0.5)'
+const RING_SX = (p: { x: number; y: number; w: number }) =>
+  ({ position: 'absolute', left: `${p.x * 100}%`, top: `${p.y * 100}%`, width: `${p.w * 100}%`, aspectRatio: '4', transform: 'translate(-50%, -50%)', borderRadius: '50%', border: '2px solid transparent', pointerEvents: 'none' }) as const
 /** The piles' right edges, measured from the jetty's right end: clear of the bollard (x 0.90+). */
 const PILE_RIGHT = 0.12
 
@@ -143,14 +147,13 @@ const Quay: React.FC<{
   interactive: boolean
   overQuay: boolean
   onLoad: (kind: CargoKind) => void
-  repeat: React.ReactNode
   refills: Record<CargoKind, number>
   reduce: boolean
   /** True from a correct send until the next boat — the gull has flown off. */
   gullAway: boolean
   /** The level's box columns, so the top box matches a deck box. */
   boxCols: number
-}> = ({ interactive, overQuay, onLoad, repeat, refills, reduce, gullAway, boxCols }) => {
+}> = ({ interactive, overQuay, onLoad, refills, reduce, gullAway, boxCols }) => {
   // Right to left from the bollard: fish heap, box stack, then the harbour master behind them.
   const fishW = pileWidth('fish', boxCols)
   const boxW = pileWidth('box', boxCols)
@@ -159,8 +162,7 @@ const Quay: React.FC<{
   const masterW = 'calc(var(--s) * 1.9)'
   const masterRight = `calc(${PILE_RIGHT * 100}% + ${fishW} + ${boxW} + var(--s) * 0.35)`
   return (
-    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'space-between', minHeight: 0 }}>
-      <Box sx={{ pt: 1 }}>{repeat}</Box>
+    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', minHeight: 0 }}>
       <Box sx={{ width: '100%' }}>
         <DroppableZone
           id="quay"
@@ -180,9 +182,14 @@ const Quay: React.FC<{
             {/* The posts must GO INTO the water, not hover over it (owner, 2026-10-15): their lower ends
                 fade out (a mask — the sea behind shows through, as if submerged) and a soft ripple rings
                 each one at the waterline. Works over open water in portrait, where no wave band is near. */}
+            {/* Each waterline ring is TWO arcs: the far half BEHIND the post, the near half in front — a
+                flat ring drawn over the post read as a hoop floating in front of it (owner, 2026-10-15). */}
+            {JETTY_POSTS.map((p) => (
+              <Box key={`far-${p.x}`} aria-hidden sx={[RING_SX(p), { borderTopColor: RING_COLOUR }]} />
+            ))}
             <Box component="img" src={jettyArt} alt="" draggable={false} sx={{ ...imgSx, position: 'absolute', inset: 0, width: '100%', height: '100%', transform: `rotate(${JETTY_LEVEL_DEG}deg)`, WebkitMaskImage: POST_FADE, maskImage: POST_FADE }} />
             {JETTY_POSTS.map((p) => (
-              <Box key={p.x} aria-hidden sx={{ position: 'absolute', left: `${p.x * 100}%`, top: `${p.y * 100}%`, width: `${p.w * 100}%`, aspectRatio: '4', transform: 'translate(-50%, -50%)', borderRadius: '50%', border: '2px solid rgba(255,255,255,0.45)', background: 'radial-gradient(ellipse at center, rgba(255,255,255,0.18), rgba(255,255,255,0) 70%)', pointerEvents: 'none' }} />
+              <Box key={`near-${p.x}`} aria-hidden sx={[RING_SX(p), { borderBottomColor: RING_COLOUR }]} />
             ))}
             {/* The harbour master: the theme mascot stands at the back of the planks, grounded (no idle
                 hover), and greets each boat. GameShell's corner companion is off here (FyldBaadenGame);

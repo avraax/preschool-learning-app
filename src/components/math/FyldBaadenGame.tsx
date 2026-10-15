@@ -419,6 +419,11 @@ const FyldBaadenGame: React.FC = () => {
           data-boat-loaded={DEV ? deckValue(deck) : undefined}
           data-boat-phase={DEV ? phase : undefined}
           sx={{ flex: 1, minHeight: 0, containerType: 'size', position: 'relative' }}>
+          {/* "Hør igen" sits centred right under the title (owner, 2026-10-15), over the empty sky — not
+              inside the jetty column, where it competed with the cargo. */}
+          <Box sx={{ position: 'absolute', top: 0, left: 0, right: 0, display: 'flex', justifyContent: 'center', zIndex: 3, pointerEvents: 'none', '& > *': { pointerEvents: 'auto' } }}>
+            <MathRepeatButton onClick={() => { markInteracted(); speakPrompt() }} disabled={!gameReady} />
+          </Box>
           <Box
             sx={{
               // Landscape: quay (5.8) | boat art (12.9, ≈7.9 tall at its 849:519 aspect) side by side.
@@ -426,10 +431,10 @@ const FyldBaadenGame: React.FC = () => {
               // width instead of half a screen of empty sky. `--bw` is the boat's width — the Boat sizes
               // everything inside from it.
               // The jetty got more of the width (owner, 2026-10-15: room for the harbour master and both
-              // piles) — 5.8 + 12.9 — and its bollard end reaches 0.8 further, alongside the boat's stern.
+              // piles) — 5.8 + 12.9 — and its bollard end reaches 0.4 further, toward the boat's stern.
               '--s': 'min(calc(100cqw / 19.2), calc(100cqh / 9), 80px)',
               '--bw': 'calc(var(--s) * 12.9)',
-              '--jetty-reach': 'calc(var(--s) * 0.8)',
+              '--jetty-reach': 'calc(var(--s) * 0.4)',
               height: '100%',
               display: 'flex',
               flexDirection: 'row',
@@ -451,8 +456,7 @@ const FyldBaadenGame: React.FC = () => {
                 position: 'relative',
                 zIndex: 1,
                 minHeight: 0,
-                // min-content keeps "Hør igen" on one line where the slot unit is small (phone portrait).
-                '@media (orientation: portrait)': { flex: '0 0 auto', width: 'calc(var(--s) * 9)', minWidth: 'max-content' },
+                '@media (orientation: portrait)': { flex: '0 0 auto', width: 'calc(var(--s) * 9)' },
               }}
             >
               <Quay
@@ -463,7 +467,6 @@ const FyldBaadenGame: React.FC = () => {
                 reduce={reduce}
                 gullAway={phase === 'sending' || phase === 'sailing'}
                 boxCols={boxCols}
-                repeat={<MathRepeatButton onClick={() => { markInteracted(); speakPrompt() }} disabled={!gameReady} />}
               />
             </Box>
             <Box
@@ -477,7 +480,10 @@ const FyldBaadenGame: React.FC = () => {
                 // the hull — on a phone the band is taller than the whole hull and hid the bottom row of
                 // deck slots (WebKit phone-portrait probe, 2026-10-13). 0.06·bw ≈ the lowest 10% of the art.
                 pb: 'max(0px, calc(7dvh - var(--bw) * 0.06 - 10px))',
-                '@media (orientation: portrait)': { flex: '0 0 auto' },
+                // Landscape: the boat stops a little right of centre, clear of the jetty's end, with only
+                // the very tip of the bow past the screen edge (owner, 2026-10-15).
+                pl: 'calc(var(--s) * 0.9)',
+                '@media (orientation: portrait)': { flex: '0 0 auto', pl: 0 },
               }}
             >
               {gameReady && target > 0 && (
