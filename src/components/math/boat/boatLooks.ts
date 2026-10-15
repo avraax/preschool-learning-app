@@ -67,9 +67,3 @@ export const deckItemWidth = (kind: 'box' | 'fish', cols: number): number =>
   kind === 'fish'
     ? (BOAT_GEOMETRY.rows.fishRight - BOAT_GEOMETRY.rows.fishLeft) / 5
     : ((BOAT_GEOMETRY.rows.boxRight - BOAT_GEOMETRY.rows.boxLeft) / cols) * BOX_DRAW
-
-/**
- * Boat width ÷ quay width in landscape (FyldBaadenGame: `--bw` 13.5 slot units, the quay 5.2), so a quay
- * pile can draw its top unit at the size the same unit has on the deck.
- */
-export const BOAT_PER_QUAY = 13.5 / 5.2

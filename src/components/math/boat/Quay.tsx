@@ -9,8 +9,7 @@ import jettyArt from '../../../assets/games/boat/jetty.webp'
 import boxStackArt from '../../../assets/games/boat/box-stack.webp'
 import gullStandArt from '../../../assets/games/boat/gull-stand.webp'
 import gullFlyArt from '../../../assets/games/boat/gull-fly.webp'
-import { idleFloat } from '../../../theme/idleMotion'
-import { BOAT_PER_QUAY, deckItemWidth } from './boatLooks'
+import { deckItemWidth } from './boatLooks'
 import Mascot from '../../common/Mascot'
 import { PHONE_LANDSCAPE, PHONE_PORTRAIT } from '../../../theme/phoneMedia'
 
@@ -21,37 +20,84 @@ import { PHONE_LANDSCAPE, PHONE_PORTRAIT } from '../../../theme/phoneMedia'
 // deck. Both call the game's one `load(kind)` (Harbour PRD-01 §4.4). The jetty is also where a
 // dragged-back item is unloaded.
 //
-// The render is wider than the quay column and bleeds off the left edge (`JETTY_SPAN`). Placement is a
-// fraction of the jetty image's box (measured on jetty.webp, 966 × 298, after levelling it by
-// `JETTY_LEVEL_DEG`): the plank surface runs ~y 0.2–0.45, the bollard stands at x ~0.87–0.95.
+// The render is wider than the quay column and bleeds off the left edge. Everything on it is sized from
+// the stage's slot unit (`--s`) and the boat's width (`--bw`), so a pile's top unit is the size of the
+// same unit on the deck in BOTH orientations. Vertical placement is a fraction of the jetty image's box,
+// measured on jetty.webp (966 × 298) after levelling it by `JETTY_LEVEL_DEG`: the planks run from y ~0.20
+// (back edge) to ~0.45 (front edge), the bollard cap tops out at x ~0.93, y ~0.13, the posts end ~0.95.
 
 const JETTY_ASPECT = 966 / 298
-/** The jetty image is this many quay-columns wide; most of the extra runs off the left edge of the screen. */
-const JETTY_SPAN = 2
-/** …and its bollard end reaches this far (in quay-columns) past the column, alongside the moored boat's
- *  stern — the quay column alone is too narrow for the harbour master and both piles. */
-const JETTY_OVERHANG = 0.23
+/** The jetty's width in slot units; most of what exceeds the column runs off the left edge. */
+const JETTY_W = 11
 /** The render rises ~3° to the right; the image is counter-rotated so the planks read level. */
 const JETTY_LEVEL_DEG = 3
-/** Piles stand on the planks: their bottom edge sits this far up from the image's bottom. */
-const PLANK_TOP_FROM_BOTTOM = '60%'
+/** Where things stand, as `bottom` (fraction of the jetty box from its bottom edge): the harbour master
+ *  at the back of the planks, the piles mid-plank — well clear of the front edge (owner, 2026-10-15: the
+ *  fish looked about to fall into the water). */
+const STAND = { master: '73%', box: '65%', fish: '67%' }
+/** Where each post meets the water (centre x, waterline y, ripple width) — measured on the levelled
+ *  jetty: the three front posts end ~0.9, the back-right one ~0.72. The mask fades everything below. */
+const JETTY_POSTS = [
+  { x: 0.115, y: 0.84, w: 0.075 },
+  { x: 0.43, y: 0.84, w: 0.075 },
+  { x: 0.725, y: 0.84, w: 0.075 },
+  { x: 0.94, y: 0.7, w: 0.06 },
+]
+const POST_FADE = 'linear-gradient(to bottom, #000 0%, #000 78%, transparent 92%)'
+/** The piles' right edges, measured from the jetty's right end: clear of the bollard (x 0.90+). */
+const PILE_RIGHT = 0.12
+
+/** A pile's width such that its top unit is drawn at deck size (top box 92% of its pile, top fish 47%). */
+const pileWidth = (kind: CargoKind, cols: number): string =>
+  `calc(var(--bw) * ${(deckItemWidth(kind, cols) / (kind === 'box' ? 0.92 : 0.47)).toFixed(4)})`
 
 const imgSx = { display: 'block', userSelect: 'none', pointerEvents: 'none' } as const
 
+/** The price-tag colours — the harbour's own art palette (warm paper, the boxes' honey wood), one on every skin. */
+const TAG = { paper: '#FFF6E2', edge: '#B7843F', ink: '#5B3A1A' } as const
+
 const Pile: React.FC<{
   kind: CargoKind
-  left: string
+  right: string
   width: string
   interactive: boolean
   onLoad: (kind: CargoKind) => void
   refill: number
   reduce: boolean
-}> = ({ kind, left, width, interactive, onLoad, refill, reduce }) => {
+}> = ({ kind, right, width, interactive, onLoad, refill, reduce }) => {
   const isBox = kind === 'box'
   return (
-    <Box sx={{ position: 'absolute', left, width, bottom: PLANK_TOP_FROM_BOTTOM }}>
+    <Box sx={{ position: 'absolute', right, width, bottom: STAND[kind] }}>
       {/* Contact shadow on the planks — the same grounding the deck cargo gets. */}
-      <Box aria-hidden sx={{ position: 'absolute', left: '4%', right: '4%', bottom: 0, aspectRatio: '6', transform: 'translateY(45%)', borderRadius: '50%', background: 'radial-gradient(ellipse at center, rgba(50,25,10,0.4), rgba(50,25,10,0) 70%)', pointerEvents: 'none' }} />
+      <Box aria-hidden sx={{ position: 'absolute', left: '0%', right: '0%', bottom: 0, aspectRatio: '5', transform: 'translateY(40%)', borderRadius: '50%', background: 'radial-gradient(ellipse at center, rgba(50,25,10,0.75), rgba(50,25,10,0) 70%)', pointerEvents: 'none' }} />
+      {/* The pile's VALUE, as a little market price tag leaning on it: a box is worth 10, a fish 1 (owner,
+          2026-10-15: "10 fish in a box" wasn't obvious). It names the unit, never the boat's number. */}
+      <Box
+        aria-hidden
+        sx={{
+          position: 'absolute',
+          left: isBox ? '-10%' : '-6%',
+          bottom: '-6%',
+          zIndex: 2,
+          minWidth: 'calc(var(--s) * 0.8)',
+          px: 'calc(var(--s) * 0.12)',
+          py: 'calc(var(--s) * 0.04)',
+          borderRadius: 'calc(var(--s) * 0.16)',
+          background: TAG.paper,
+          border: `calc(var(--s) * 0.05) solid ${TAG.edge}`,
+          boxShadow: '0 2px 4px rgba(50,25,10,0.35)',
+          transform: `rotate(${isBox ? -7 : 6}deg)`,
+          fontFamily: '"Comic Sans MS", "Comic Neue", cursive',
+          fontWeight: 800,
+          fontSize: 'calc(var(--s) * 0.5)',
+          lineHeight: 1.1,
+          textAlign: 'center',
+          color: TAG.ink,
+          pointerEvents: 'none',
+        }}
+      >
+        {isBox ? 10 : 1}
+      </Box>
       {/* The pile itself — static, it never runs out. */}
       {isBox ? (
         <Box component="img" src={boxStackArt} alt="" draggable={false} sx={{ ...imgSx, width: '100%', height: 'auto' }} />
@@ -105,16 +151,13 @@ const Quay: React.FC<{
   /** The level's box columns, so the top box matches a deck box. */
   boxCols: number
 }> = ({ interactive, overQuay, onLoad, repeat, refills, reduce, gullAway, boxCols }) => {
-  // Pile widths (fractions of the jetty image) at which the top unit is drawn at its DECK size: the top
-  // box is 92% of its pile, the top fish 47%.
-  const boxPile = (deckItemWidth('box', boxCols) * BOAT_PER_QUAY) / JETTY_SPAN / 0.92
-  const fishPile = (deckItemWidth('fish', boxCols) * BOAT_PER_QUAY) / JETTY_SPAN / 0.47
-  const pc = (f: number) => `${(f * 100).toFixed(1)}%`
-  // Right to left from the bollard: fish heap, box stack, then the harbour master on the visible end.
-  const fishLeft = 0.86 - fishPile
-  const boxLeft = fishLeft - boxPile + 0.01
-  const masterW = 0.2
-  const gullBob = idleFloat(reduce, { distance: 3, durationS: 2.8 })
+  // Right to left from the bollard: fish heap, box stack, then the harbour master behind them.
+  const fishW = pileWidth('fish', boxCols)
+  const boxW = pileWidth('box', boxCols)
+  const fishRight = `${PILE_RIGHT * 100}%`
+  const boxRight = `calc(${PILE_RIGHT * 100}% + ${fishW} + var(--s) * 0.25)`
+  const masterW = 'calc(var(--s) * 1.9)'
+  const masterRight = `calc(${PILE_RIGHT * 100}% + ${fishW} + ${boxW} + var(--s) * 0.35)`
   return (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'space-between', minHeight: 0 }}>
       <Box sx={{ pt: 1 }}>{repeat}</Box>
@@ -131,8 +174,16 @@ const Quay: React.FC<{
             transition: 'background 0.2s ease',
           }}
         >
-          <Box sx={{ position: 'relative', width: `${JETTY_SPAN * 100}%`, ml: `${(1 + JETTY_OVERHANG - JETTY_SPAN) * 100}%`, aspectRatio: String(JETTY_ASPECT) }}>
-            <Box component="img" src={jettyArt} alt="" draggable={false} sx={{ ...imgSx, position: 'absolute', inset: 0, width: '100%', height: '100%', transform: `rotate(${JETTY_LEVEL_DEG}deg)` }} />
+          {/* `--jetty-reach`: how far the bollard end reaches past the column (set by the game per
+              orientation — alongside the boat's stern in landscape). */}
+          <Box sx={{ position: 'relative', width: `calc(var(--s) * ${JETTY_W})`, ml: `calc(100% + var(--jetty-reach, 0px) - var(--s) * ${JETTY_W})`, aspectRatio: String(JETTY_ASPECT) }}>
+            {/* The posts must GO INTO the water, not hover over it (owner, 2026-10-15): their lower ends
+                fade out (a mask — the sea behind shows through, as if submerged) and a soft ripple rings
+                each one at the waterline. Works over open water in portrait, where no wave band is near. */}
+            <Box component="img" src={jettyArt} alt="" draggable={false} sx={{ ...imgSx, position: 'absolute', inset: 0, width: '100%', height: '100%', transform: `rotate(${JETTY_LEVEL_DEG}deg)`, WebkitMaskImage: POST_FADE, maskImage: POST_FADE }} />
+            {JETTY_POSTS.map((p) => (
+              <Box key={p.x} aria-hidden sx={{ position: 'absolute', left: `${p.x * 100}%`, top: `${p.y * 100}%`, width: `${p.w * 100}%`, aspectRatio: '4', transform: 'translate(-50%, -50%)', borderRadius: '50%', border: '2px solid rgba(255,255,255,0.45)', background: 'radial-gradient(ellipse at center, rgba(255,255,255,0.18), rgba(255,255,255,0) 70%)', pointerEvents: 'none' }} />
+            ))}
             {/* The harbour master: the theme mascot stands at the back of the planks, grounded (no idle
                 hover), and greets each boat. GameShell's corner companion is off here (FyldBaadenGame);
                 mascotBus reactions still reach this one. */}
@@ -140,19 +191,21 @@ const Quay: React.FC<{
               grounded
               sx={{
                 position: 'absolute',
-                left: pc(boxLeft - masterW + 0.05),
-                bottom: '64%',
-                width: pc(masterW),
+                left: 'auto',
+                right: masterRight,
+                bottom: STAND.master,
+                width: masterW,
                 height: 'auto',
                 aspectRatio: '1',
                 zIndex: 0,
                 [PHONE_LANDSCAPE]: { display: 'block' },
-                [PHONE_PORTRAIT]: { width: pc(masterW), height: 'auto' },
+                [PHONE_PORTRAIT]: { width: masterW, height: 'auto' },
               }}
             />
-            {/* A seagull resting on the bollard — calm decor, it never asks for anything. On a correct
-                send it takes off and flies away (the send-off); it is back on the next boat. */}
-            <Box aria-hidden sx={{ position: 'absolute', left: '85.5%', width: '9%', bottom: '86%' }}>
+            {/* A seagull standing still on the bollard cap (x ~0.93, top y ~0.13) — calm decor, it never
+                asks for anything. On a correct send it takes off and flies away (the send-off); it is back
+                on the next boat. */}
+            <Box aria-hidden sx={{ position: 'absolute', left: '93%', width: 'calc(var(--s) * 0.95)', bottom: '86%', transform: 'translateX(-50%)' }}>
               {gullAway && !reduce ? (
                 <motion.div
                   initial={{ transform: 'translate(0%, 0%) scale(1)', opacity: 1 }}
@@ -164,16 +217,14 @@ const Quay: React.FC<{
                 </motion.div>
               ) : !gullAway ? (
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
-                  <Box {...gullBob.props} sx={[{ width: '100%' }, gullBob.sx]}>
-                    <Box component="img" src={gullStandArt} alt="" draggable={false} sx={{ ...imgSx, width: '100%', height: 'auto' }} />
-                  </Box>
+                  <Box component="img" src={gullStandArt} alt="" draggable={false} sx={{ ...imgSx, width: '100%', height: 'auto' }} />
                 </motion.div>
               ) : null}
             </Box>
             {/* Piles at DECK scale: a box on the stack and a fish in the heap are the size of the cargo
                 they become on the boat, so the child sees the same thing move rather than a shrink. */}
-            <Pile kind="box" left={pc(boxLeft)} width={pc(boxPile)} interactive={interactive} onLoad={onLoad} refill={refills.box} reduce={reduce} />
-            <Pile kind="fish" left={pc(fishLeft)} width={pc(fishPile)} interactive={interactive} onLoad={onLoad} refill={refills.fish} reduce={reduce} />
+            <Pile kind="box" right={boxRight} width={boxW} interactive={interactive} onLoad={onLoad} refill={refills.box} reduce={reduce} />
+            <Pile kind="fish" right={fishRight} width={fishW} interactive={interactive} onLoad={onLoad} refill={refills.fish} reduce={reduce} />
           </Box>
         </DroppableZone>
       </Box>

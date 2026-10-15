@@ -421,12 +421,15 @@ const FyldBaadenGame: React.FC = () => {
           sx={{ flex: 1, minHeight: 0, containerType: 'size', position: 'relative' }}>
           <Box
             sx={{
-              // Landscape: quay (5.2) | boat art (13.5, ≈8.3 tall at its 849:519 aspect) side by side.
+              // Landscape: quay (5.8) | boat art (12.9, ≈7.9 tall at its 849:519 aspect) side by side.
               // Portrait: the quay is a pier ABOVE the moored boat (15 wide), so the boat gets the full
               // width instead of half a screen of empty sky. `--bw` is the boat's width — the Boat sizes
               // everything inside from it.
+              // The jetty got more of the width (owner, 2026-10-15: room for the harbour master and both
+              // piles) — 5.8 + 12.9 — and its bollard end reaches 0.8 further, alongside the boat's stern.
               '--s': 'min(calc(100cqw / 19.2), calc(100cqh / 9), 80px)',
-              '--bw': 'calc(var(--s) * 13.5)',
+              '--bw': 'calc(var(--s) * 12.9)',
+              '--jetty-reach': 'calc(var(--s) * 0.8)',
               height: '100%',
               display: 'flex',
               flexDirection: 'row',
@@ -434,6 +437,7 @@ const FyldBaadenGame: React.FC = () => {
               '@media (orientation: portrait)': {
                 '--s': 'min(calc(100cqw / 15.6), calc(100cqh / 17), 80px)',
                 '--bw': 'calc(var(--s) * 15)',
+                '--jetty-reach': '0px',
                 flexDirection: 'column',
                 // The pier sits right above the moored boat, not stranded at the top of the sea.
                 justifyContent: 'flex-end',
@@ -443,12 +447,12 @@ const FyldBaadenGame: React.FC = () => {
             {/* Quay first in z-order terms: the next boat arrives from BEHIND it. */}
             <Box
               sx={{
-                flex: '0 0 calc(var(--s) * 5.2)',
+                flex: '0 0 calc(var(--s) * 5.8)',
                 position: 'relative',
                 zIndex: 1,
                 minHeight: 0,
                 // min-content keeps "Hør igen" on one line where the slot unit is small (phone portrait).
-                '@media (orientation: portrait)': { flex: '0 0 auto', width: 'calc(var(--s) * 6.4)', minWidth: 'max-content' },
+                '@media (orientation: portrait)': { flex: '0 0 auto', width: 'calc(var(--s) * 9)', minWidth: 'max-content' },
               }}
             >
               <Quay
