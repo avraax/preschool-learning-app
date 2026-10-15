@@ -96,9 +96,9 @@ test('the §4 per-game tables are exactly these values', () => {
     svaer: { options: 5, max: 100, distractors: 'confusable' },
   })
   assert.deepEqual(MATH_BOAT, {
-    let: { max: 20, invertedShare: 0 },
-    normal: { max: 50, invertedShare: 0.75 },
-    svaer: { max: 100, invertedShare: 0.75 },
+    let: { max: 15, highFrom: 11, highShare: 1 / 3 },
+    normal: { max: 50, highFrom: 21, highShare: 0.6 },
+    svaer: { max: 100, highFrom: 21, highShare: 0.95 },
   })
   assert.equal(INVERTED_FROM, 21)
   assert.deepEqual(MATH_ADDITION, {
@@ -371,11 +371,11 @@ test('Sammenlign: Normal does not serve Svær-tight pairs', () => {
 // Sampled behaviour — Fyld Båden
 // ------------------------------------------------------------------------------------------------
 
-// The lean IS the skill (owner, 2026-10-13: 3 of 4 boats from 21+ on Normal/Svær). The share is
-// measured over the samples, so a lean that silently became uniform (≈40% at Svær, ≈60% at Normal)
-// fails instead of passing on range alone.
-test('Fyld Båden: every boat is in range, no repeat inside 5 boats, and Normal/Svær lean to the inverted words', () => {
-  const ceiling = { let: 20, normal: 50, svaer: 100 } as const
+// The band mix IS the calibration (owner, 2026-10-15). Measured over the samples with LITERAL bands, so
+// a mix that drifts — the old "75%" lean really drew ~90% at Normal — fails instead of passing on range.
+test('Fyld Båden: every boat is in range, no repeat inside 5 boats, and each level draws its band mix', () => {
+  const ceiling = { let: 15, normal: 50, svaer: 100 } as const
+  const band = { let: [11, 0.28, 0.39], normal: [21, 0.55, 0.65], svaer: [21, 0.92, 0.98] } as const
   assert.equal(BOAT_RECENT_WINDOW, 4)
   for (const level of LEVELS) {
     let inverted = 0
@@ -384,13 +384,11 @@ test('Fyld Båden: every boat is in range, no repeat inside 5 boats, and Normal/
       const n = pickBoatNumber(level, recent)
       assert.ok(Number.isInteger(n) && n >= 1 && n <= ceiling[level], `${level} asked for ${n}`)
       assert.ok(!recent.slice(-4).includes(n), `${level} asked for ${n} again within 5 boats`)
-      if (n >= 21) inverted++
+      if (n >= band[level][0]) inverted++
       recent.push(n)
     }
     const share = inverted / SAMPLES
-    if (level === 'let') assert.equal(inverted, 0)
-    // 0.75 lean + the uniform quarter's own 21+ part: Normal 0.75+0.25·30/50 = 0.90, Svær 0.75+0.25·80/100 = 0.95.
-    else assert.ok(share > 0.85, `${level} drew only ${(share * 100).toFixed(0)}% from 21+`)
+    assert.ok(share >= band[level][1] && share <= band[level][2], `${level} drew ${(share * 100).toFixed(0)}% from ${band[level][0]}+`)
   }
 })
 

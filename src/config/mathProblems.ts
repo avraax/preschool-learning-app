@@ -12,7 +12,6 @@
 // audio behaviour and just call these. Explicit `.ts` extensions: this module is in the enumerator's
 // import graph (see `.claude/rules/audio-system.md`).
 import {
-  INVERTED_FROM,
   MATH_ADDITION,
   MATH_BOAT,
   MATH_COMPARISON,
@@ -255,18 +254,19 @@ export const pickQuizNumber = (level: DifficultyLevel, rnd: Rnd = Math.random): 
   randInt(rnd, 1, MATH_COUNTING[level].max)
 
 /**
- * Fyld Båden's next boat (Harbour PRD-01 §2.1.9): `invertedShare` of draws come from the inverted
- * words (21..max), the rest from the whole 1..max. None of the last `BOAT_RECENT_WINDOW` boats comes
+ * Fyld Båden's next boat (Harbour PRD-01 §2.1.9): `highShare` of draws come from `highFrom..max`, the
+ * rest from `1..highFrom-1` — two disjoint bands, so the share is exactly what the table says. None of
+ * the last `BOAT_RECENT_WINDOW` boats comes
  * back — a second identical boat reads as "the game didn't take my answer", and a play-through probe
  * drew 2, x, 2, x, 2 at Let under a plain no-immediate-repeat rule.
  */
 export const BOAT_RECENT_WINDOW = 4
 
 export function pickBoatNumber(level: DifficultyLevel, recent: readonly number[] = [], rnd: Rnd = Math.random): number {
-  const { max, invertedShare } = MATH_BOAT[level]
+  const { max, highFrom, highShare } = MATH_BOAT[level]
   const avoid = new Set(recent.slice(-BOAT_RECENT_WINDOW))
   for (let tries = 0; ; tries++) {
-    const n = invertedShare > 0 && rnd() < invertedShare ? randInt(rnd, INVERTED_FROM, max) : randInt(rnd, 1, max)
+    const n = rnd() < highShare ? randInt(rnd, highFrom, max) : randInt(rnd, 1, highFrom - 1)
     // Every level's range is far wider than the window, so this always terminates; the guard is a backstop.
     if (!avoid.has(n) || tries > 200) return n
   }

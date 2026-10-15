@@ -108,24 +108,32 @@ export const MATH_COUNTING: Record<DifficultyLevel, CountingTuning> = {
 }
 
 export interface BoatTuning {
-  /** Highest number a boat can ask for (the child loads it as pallets of ten + single crates). */
+  /** Highest number a boat can ask for (the child loads it as boxes of ten + single fish). */
   max: number
-  /** Share of boats drawn from `INVERTED_FROM..max` — the inverted words are the skill. 0 = uniform. */
-  invertedShare: number
+  /** Two DISJOINT bands: `highShare` of boats come from `highFrom..max`, the rest from `1..highFrom-1`. */
+  highFrom: number
+  highShare: number
 }
 
 /** First Danish number word that inverts ("enogtyve" = one-and-twenty). */
 export const INVERTED_FROM = 21
 
 /**
- * Fyld Båden (`math.boat`, Harbour PRD-01 §2.1.9): Tal Quiz's ranges, but on Normal/Svær 3 of 4 boats
- * come from 21+ (owner, 2026-10-13). Let has nothing inverted to lean to. No option axis — the child
- * BUILDS the answer, so the range and the lean are the whole calibration.
+ * Fyld Båden (`math.boat`, Harbour PRD-01 §2.1.9). No option axis — the child BUILDS the answer, so the
+ * range and the band mix are the whole calibration. Recalibrated by the owner, 2026-10-15:
+ *
+ *   Let    1–15   2 of 3 boats 1–10 (single fish only, the count voice carries it), 1 of 3 boats 11–15
+ *                 (one box meets him gently — tretten/fjorten/femten at least sound like 3/4/5).
+ *                 It was 1–20 uniform: every second boat needed the box idea from the first boat on,
+ *                 and BUILDING 17 is harder than Tal Quiz's Let, which only PICKS 17 among 3 far options.
+ *   Normal 1–50   60% from 21–50 — exactly Tal Quiz's natural share over the same range. (The old
+ *                 "75% lean" stacked on a uniform draw that ALSO hit 21+, so it really drew ~90%.)
+ *   Svær   1–100  95% from 21–100 — what the old lean really drew; unchanged on purpose.
  */
 export const MATH_BOAT: Record<DifficultyLevel, BoatTuning> = {
-  let: { max: 20, invertedShare: 0 },
-  normal: { max: 50, invertedShare: 0.75 },
-  svaer: { max: NUMBER_MAX, invertedShare: 0.75 },
+  let: { max: 15, highFrom: 11, highShare: 1 / 3 },
+  normal: { max: 50, highFrom: INVERTED_FROM, highShare: 0.6 },
+  svaer: { max: NUMBER_MAX, highFrom: INVERTED_FROM, highShare: 0.95 },
 }
 
 export interface AdditionTuning {
