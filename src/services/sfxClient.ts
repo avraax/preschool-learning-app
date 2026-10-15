@@ -51,7 +51,10 @@ export type SfxCue =
   | 'bundle'
   | 'horn'
   | 'splash'
-  | 'boat-arrive'
+  // Fyld Båden's two long sounds (owner's downloads, baked by scripts/bake-harbour-sounds.mjs): a quiet
+  // looping harbour bed, and the diesel motor swelled in and out around each arrival and departure.
+  | 'harbour-ambience'
+  | 'boat-motor'
 
 // New drag/game cues (pick-up/spring-back/chomp/match) reuse curated files for now (real sound,
 // distinct cue names); swap to dedicated files when available — missing files degrade to silence.
@@ -84,8 +87,13 @@ const CUE_FILES: Record<SfxCue, string> = {
   bundle: '/sounds/ui/streak-up.mp3',
   horn: '/sounds/ui/page-complete.mp3',
   splash: '/sounds/ui/flip.mp3',
-  'boat-arrive': '/sounds/ui/flip.mp3',
+  'harbour-ambience': '/sounds/ui/harbour-ambience.mp3',
+  'boat-motor': '/sounds/ui/boat-motor.mp3',
 }
+
+// Not part of the first-gesture preload: a 40 s bed is ~320 KB and ~5 MB decoded, and only Fyld Båden
+// plays these — they load when that game first asks for them.
+const LAZY_CUES: ReadonlySet<SfxCue> = new Set<SfxCue>(['harbour-ambience', 'boat-motor'])
 
 // Per-cue base volume — keep cues subtle so they don't fight narration.
 const CUE_VOLUME: Partial<Record<SfxCue, number>> = {
@@ -115,7 +123,10 @@ const CUE_VOLUME: Partial<Record<SfxCue, number>> = {
   bundle: 0.5,
   horn: 0.5,
   splash: 0.4,
-  'boat-arrive': 0.3,
+  // Baked at -32 / -26 LUFS → ~-42 LUFS effective for the bed (well under narration and every cue: it
+  // is atmosphere, never something to listen to) and ~-34 for the motor at its peak.
+  'harbour-ambience': 0.32,
+  'boat-motor': 0.4,
 }
 
 interface PlayOptions {
@@ -128,6 +139,8 @@ class SfxClient {
   private preloaded = false
   private loggedCtxState = false
   private howls = new Map<SfxCue, Howl>()
+  /** The playing sound id of each running loop (one per cue). */
+  private loops = new Map<SfxCue, number>()
 
   constructor() {
     try {
@@ -139,6 +152,8 @@ class SfxClient {
     try {
       progressStore.subscribe(() => {
         this.enabled = progressStore.get().settings.sfxEnabled
+        // Sounds switched off mid-loop: the bed stops too, rather than playing on until the screen ends.
+        if (!this.enabled) for (const cue of [...this.loops.keys()]) this.stopLoop(cue, 0)
       })
     } catch {
       /* ignore */
@@ -183,7 +198,7 @@ class SfxClient {
   preload(): void {
     if (this.preloaded) return
     this.preloaded = true
-    ;(Object.keys(CUE_FILES) as SfxCue[]).forEach((cue) => this.getHowl(cue))
+    ;(Object.keys(CUE_FILES) as SfxCue[]).filter((cue) => !LAZY_CUES.has(cue)).forEach((cue) => this.getHowl(cue))
   }
 
   play(cue: SfxCue, opts: PlayOptions = {}): void {
@@ -216,6 +231,88 @@ class SfxClient {
     }
   }
 
+  /**
+   * Start a looping bed, fading in from silence. Idempotent: a cue that is already looping keeps going.
+   * WebAudio gain, so the fade (and the level) are real on iOS, unlike an <audio> element's volume.
+   */
+  startLoop(cue: SfxCue, fadeInMs = 1500): void {
+    this.logCue(cue)
+    if (!this.enabled || this.loops.has(cue)) return
+    const howl = this.getHowl(cue)
+    if (!howl) return
+    try {
+      const id = howl.play()
+      howl.loop(true, id)
+      howl.fade(0, CUE_VOLUME[cue] ?? 0.5, fadeInMs, id)
+      this.loops.set(cue, id)
+    } catch {
+      /* never let an SFX failure surface */
+    }
+  }
+
+  /** Fade a running loop out and stop it. */
+  stopLoop(cue: SfxCue, fadeOutMs = 800): void {
+    const id = this.loops.get(cue)
+    const howl = this.howls.get(cue)
+    this.loops.delete(cue)
+    if (id == null || !howl) return
+    try {
+      if (fadeOutMs <= 0) {
+        howl.stop(id)
+        return
+      }
+      howl.fade(howl.volume(id) as number, 0, fadeOutMs, id)
+      setTimeout(() => {
+        try {
+          howl.stop(id)
+        } catch {
+          /* ignore */
+        }
+      }, fadeOutMs + 50)
+    } catch {
+      /* ignore */
+    }
+  }
+
+  /** One swell: fade in, hold, fade out, stop — the motor as a boat comes in or leaves. */
+  swell(cue: SfxCue, { fadeInMs, holdMs, fadeOutMs }: { fadeInMs: number; holdMs: number; fadeOutMs: number }): void {
+    this.logCue(cue)
+    if (!this.enabled) return
+    const howl = this.getHowl(cue)
+    if (!howl) return
+    try {
+      const id = howl.play()
+      const peak = CUE_VOLUME[cue] ?? 0.5
+      howl.fade(0, peak, fadeInMs, id)
+      setTimeout(() => {
+        try {
+          howl.fade(howl.volume(id) as number, 0, fadeOutMs, id)
+        } catch {
+          /* ignore */
+        }
+      }, fadeInMs + holdMs)
+      setTimeout(() => {
+        try {
+          howl.stop(id)
+        } catch {
+          /* ignore */
+        }
+      }, fadeInMs + holdMs + fadeOutMs + 50)
+    } catch {
+      /* never let an SFX failure surface */
+    }
+  }
+
+  // DEV screenshot harness: the same cue log `play` keeps.
+  private logCue(cue: SfxCue): void {
+    if (import.meta.env.DEV && typeof window !== 'undefined') {
+      const w = window as unknown as { __sfxLog?: Array<{ cue: string; rate: number }> }
+      if (!w.__sfxLog) w.__sfxLog = []
+      w.__sfxLog.push({ cue, rate: 1 })
+      if (w.__sfxLog.length > 80) w.__sfxLog.shift()
+    }
+  }
+
   setEnabled(enabled: boolean): void {
     this.enabled = enabled
     try {
@@ -245,6 +342,7 @@ class SfxClient {
   }
 
   stopAll(): void {
+    this.loops.clear()
     this.howls.forEach((howl) => {
       try {
         howl.stop()

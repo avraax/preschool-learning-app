@@ -125,6 +125,13 @@ const FyldBaadenGame: React.FC = () => {
     timers.current[name] = null
   }
 
+  // The harbour's sound bed (owner, 2026-10-15): gulls and water, very low, for as long as the game is
+  // on screen — the menu music has already faded out on entry. It fades out on leaving.
+  useEffect(() => {
+    sfx.startLoop('harbour-ambience', 2000)
+    return () => sfx.stopLoop('harbour-ambience', 600)
+  }, [])
+
   // Unmount hygiene: every timer, in its own empty-dep effect (game-development.md).
   useEffect(() => () => {
     for (const t of Object.values(timers.current)) if (t) clearTimeout(t)
@@ -166,7 +173,8 @@ const FyldBaadenGame: React.FC = () => {
     arrivedRef.current = false
     setBoatNo((b) => b + 1)
     setPhaseBoth('arriving')
-    sfx.play('boat-arrive')
+    // The motor swells in as the boat comes round the jetty and dies away as it stops (arrival 1.5 s).
+    sfx.swell('boat-motor', { fadeInMs: 400, holdMs: 700, fadeOutMs: 1000 })
   }
 
   const onArrived = () => {
@@ -332,6 +340,8 @@ const FyldBaadenGame: React.FC = () => {
       void audio.speakNumber(n).catch(() => {})
       later('sail', DWELL_CORRECT(), () => {
         sfx.play('splash')
+        // …and opens up again as it leaves (departure 1.8 s), fading as it goes off-screen.
+        sfx.swell('boat-motor', { fadeInMs: 300, holdMs: 500, fadeOutMs: 1400 })
         setPhaseBoth('sailing')
       })
       return
