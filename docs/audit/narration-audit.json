@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-15T20:10:32.551Z",
+  "updatedAt": "2026-10-15T20:36:55.491Z",
   "clips": {
     "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|b": {
       "verdict": "ok",
@@ -24592,6 +24592,14 @@
       "text": "et hundrede fisk",
       "group": "numbers",
       "updatedAt": 1792095032550
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tryk på den grønne knap, når båden er klar": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tryk på den grønne knap, når båden er klar",
+      "group": "numbers",
+      "updatedAt": 1792096615489
     }
   }
 }

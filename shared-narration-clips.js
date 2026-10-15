@@ -33,7 +33,7 @@ import {
   mathPromptText, mathFactText, mathMissingPromptText, missingPairs,
   COMPARE_PROMPT, comparisonFactText, COMPARE_SMALLER_PROMPT, comparisonSmallerFactText,
   HVAD_MANGLER_PROMPT, sequenceFactText, sequenceStarts, sequenceNumbers,
-  MEMORY_LETTERS_INSTRUCTION, MEMORY_NUMBERS_INSTRUCTION, BOAT_PROMPT_MAX, fillBoatPrompt, boatLoadedText, boatCountText,
+  MEMORY_LETTERS_INSTRUCTION, MEMORY_NUMBERS_INSTRUCTION, BOAT_PROMPT_MAX, fillBoatPrompt, boatLoadedText, boatCountText, BOAT_SEND_HINT,
   NUANCER_INSTRUCTION, colorMixTargetText, colorMixResultText, colorMixQuestionText, colorObjectFactText,
   colorQuizPromptText,
 } from './src/config/gamePhrases.ts'
@@ -116,6 +116,7 @@ export function collectNarrationClips() {
     da('numbers', boatLoadedText(n))
     da('numbers', boatCountText(n))
   }
+  da('numbers', BOAT_SEND_HINT)
 
   // Plus/Minus/Sammenlign — the spoken QUESTION and the correct-answer FACT for every problem each
   // game can generate (2026-08-02). All four sets come from the same builders + bounds the games use

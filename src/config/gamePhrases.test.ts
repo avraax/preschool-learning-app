@@ -21,6 +21,7 @@ import {
   fillBoatPrompt,
   boatLoadedText,
   boatCountText,
+  BOAT_SEND_HINT,
   colorMixTargetText,
   colorMixResultText,
 } from './gamePhrases.ts'
@@ -59,6 +60,7 @@ test('spoken math/comparison/sequence/colour lines are exactly these strings', (
   assert.equal(boatLoadedText(1), 'Der er en fisk')
   assert.equal(boatCountText(12), 'tolv fisk')
   assert.equal(boatCountText(1), 'en fisk')
+  assert.equal(BOAT_SEND_HINT, 'Tryk på den grønne knap, når båden er klar')
   assert.equal(BOAT_PROMPT_MAX, 100)
 })
 
@@ -126,6 +128,7 @@ test('every composed game line is enumerated for prebake', () => {
     want(boatLoadedText(n))
     want(boatCountText(n))
   }
+  want(BOAT_SEND_HINT)
   for (const tgt of possibleTargets) want(colorMixTargetText(tgt.name))
   for (const key of Object.keys(mixingRules)) {
     const [c1, c2] = key.split('+')

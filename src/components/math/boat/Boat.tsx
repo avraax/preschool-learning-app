@@ -46,8 +46,6 @@ interface BoatProps {
   reduce: boolean
   overDeck: boolean
   onUnload: (kind: CargoKind) => void
-  hornEnabled: boolean
-  onHorn: () => void
   /** Wrong-send nudge: increments to replay a short shake. */
   shakeKey: number
   /** The boat is setting off — a bow splash plays once. */
@@ -233,8 +231,6 @@ const Boat: React.FC<BoatProps> = ({
   reduce,
   overDeck,
   onUnload,
-  hornEnabled,
-  onHorn,
   shakeKey,
   departing,
   dragging,
@@ -304,31 +300,18 @@ const Boat: React.FC<BoatProps> = ({
         </Box>
       )}
 
-      {/* The horn — tap-only: it CONFIRMS, it doesn't answer (§4.4). */}
-      <Box
-        component="button"
-        type="button"
-        aria-label="Send båden"
-        disabled={!hornEnabled}
-        onClick={onHorn}
-        sx={{
-          position: 'absolute',
-          left: pct(G.horn.left),
-          top: pct(G.horn.top),
-          width: `max(64px, calc(var(--bw) * ${G.horn.width}))`,
-          aspectRatio: '1',
-          border: 0,
-          background: 'transparent',
-          p: 0,
-          cursor: hornEnabled ? 'pointer' : 'default',
-          transition: 'transform 0.12s ease, opacity 0.2s ease, filter 0.2s ease',
-          opacity: hornEnabled ? 1 : 0.55,
-          filter: hornEnabled ? 'none' : 'grayscale(0.85)',
-          '&:active': hornEnabled ? { transform: 'scale(0.9)' } : {},
-          WebkitTapHighlightColor: 'transparent',
-        }}
-      >
-        <Box component="img" src={hornArt} alt="" draggable={false} sx={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block', pointerEvents: 'none' }} />
+      {/* The horn is DECORATION now: it toots as the boat sets off. Sending moved to a big green ✓ (owner,
+          2026-10-15: a horn as the "I'm done" button was not intuitive) — see SendButton. */}
+      <Box aria-hidden sx={{ position: 'absolute', left: pct(G.horn.left), top: pct(G.horn.top), width: `calc(var(--bw) * ${G.horn.width})`, aspectRatio: '1', pointerEvents: 'none' }}>
+        <motion.div
+          key={departing ? 'toot' : 'still'}
+          initial={false}
+          animate={departing && !reduce ? { transform: ['scale(1) rotate(0deg)', 'scale(1.18) rotate(-8deg)', 'scale(1) rotate(0deg)'] } : { transform: 'scale(1) rotate(0deg)' }}
+          transition={{ duration: 0.5, ease: 'easeOut', times: [0, 0.4, 1] }}
+          style={{ width: '100%', height: '100%', transformOrigin: '30% 80%' }}
+        >
+          <Box component="img" src={hornArt} alt="" draggable={false} sx={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }} />
+        </motion.div>
       </Box>
     </motion.div>
   )

@@ -18,7 +18,7 @@ import { useReducedMotion } from '../../hooks/useReducedMotion'
 import { progressStore } from '../../services/progressStore'
 import { sfx } from '../../services/sfxClient'
 import { mascotBus } from '../../services/mascotBus'
-import { boatCountText, boatLoadedText, fillBoatPrompt } from '../../config/gamePhrases'
+import { BOAT_SEND_HINT, boatCountText, boatLoadedText, fillBoatPrompt } from '../../config/gamePhrases'
 import { BOAT_RECENT_WINDOW, pickBoatNumber } from '../../config/mathProblems'
 import { MATH_BOAT } from '../../config/difficulty'
 import { DWELL_CORRECT } from '../../theme/motion'
@@ -39,6 +39,7 @@ import {
 import Boat, { type BundleFx } from './boat/Boat'
 import { BOAT_LOOKS, boxColumns } from './boat/boatLooks'
 import Quay from './boat/Quay'
+import SendButton from './boat/SendButton'
 import { HarbourBackdrop, HarbourFrontWater } from './boat/HarbourScene'
 
 // Fyld Båden (`math.boat`, Harbour PRD-01) — hear "Fyld båden med {tal} fisk", BUILD it on a boat from
@@ -63,6 +64,8 @@ type Phase = 'arriving' | 'loading' | 'sending' | 'sailing'
 const REASK_MS = 2300
 /** How long the packing show holds input (the ten fish gather, the box pops in). */
 const BUNDLE_MS = 800
+/** Cargo on deck and nothing for this long → the one-time "press the green button" line. */
+const SEND_HINT_IDLE_MS = 5000
 
 const FyldBaadenGame: React.FC = () => {
   const reduce = useReducedMotion()
@@ -250,6 +253,20 @@ const FyldBaadenGame: React.FC = () => {
   // the next load cancels it (one audio at a time), so a fast child hears only the latest total.
   const speakCount = (n: number) => {
     if (n > 0) void audio.speak(boatCountText(n)).catch(() => {})
+    armSendHint(n)
+  }
+
+  // Once per visit: cargo on deck, then nothing for a while → the voice points at the ✓ ("Tryk på den
+  // grønne knap, når båden er klar"). Re-armed by every load/unload, cancelled by a send.
+  const sendHintGiven = useRef(false)
+  const armSendHint = (n: number) => {
+    cancel('sendHint')
+    if (n === 0 || sendHintGiven.current) return
+    later('sendHint', SEND_HINT_IDLE_MS, () => {
+      if (phaseRef.current !== 'loading' || isDeckEmpty(deckRef.current)) return
+      sendHintGiven.current = true
+      void audio.speak(BOAT_SEND_HINT).catch(() => {})
+    })
   }
 
   const canAct = () => gameReady && phaseRef.current === 'loading' && !isAdvancing.current && !bundlingRef.current
@@ -321,6 +338,7 @@ const FyldBaadenGame: React.FC = () => {
 
   const sendBoat = () => {
     if (!canAct() || isDeckEmpty(deckRef.current)) return
+    cancel('sendHint')
     markInteracted()
     audio.cancelCurrentAudio()
     audio.updateUserInteraction()
@@ -541,8 +559,6 @@ const FyldBaadenGame: React.FC = () => {
                       reduce={reduce}
                       overDeck={overDeck}
                       onUnload={(kind) => unload(kind, true)}
-                      hornEnabled={interactive && !isDeckEmpty(deck)}
-                      onHorn={sendBoat}
                       shakeKey={shakeKey}
                       departing={phase === 'sailing'}
                       dragging={activeId !== null}
@@ -552,6 +568,12 @@ const FyldBaadenGame: React.FC = () => {
                   </Box>
                 </motion.div>
               )}
+            </Box>
+            {/* The ✓: ONE fixed place, right above the bow's horn (horn top ≈ 0.36 of the boat's height = 0.22·bw; the boat
+                stands ~7dvh up) — clear of the sail, the jetty and the front
+                water. Inside the stage so it sizes from the same slot unit as everything else. */}
+            <Box sx={{ position: 'absolute', zIndex: 3, right: 'calc(var(--bw) * 0.05)', bottom: 'calc(7dvh + var(--bw) * 0.34)' }}>
+              <SendButton enabled={interactive && !isDeckEmpty(deck)} reduce={reduce} onSend={sendBoat} />
             </Box>
           </Box>
         </Box>

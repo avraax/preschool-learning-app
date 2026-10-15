@@ -3,9 +3,9 @@
 > AUTO-GENERATED (by the `/audit` harness via the dev-server, or `npm run audit:approve-all`).
 > Do not hand-edit — source of truth is `narration-audit.json`.
 
-Last updated: 2026-10-15T20:10:32.551Z
+Last updated: 2026-10-15T20:36:55.491Z
 
-**3073 OK · 1 wrong · 0 unaudited** (of 3074 clips)
+**3074 OK · 1 wrong · 0 unaudited** (of 3075 clips)
 
 ## Bogstaver
 
@@ -892,6 +892,7 @@ Last updated: 2026-10-15T20:10:32.551Z
 | ✅ | tretten | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | tretten | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | tretten fisk | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Tryk på den grønne knap, når båden er klar | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | tyve | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | tyve | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | tyve fisk | Bulk-approved (PRD-11 owner listen pass) |  |
