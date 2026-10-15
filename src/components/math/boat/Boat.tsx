@@ -52,6 +52,8 @@ interface BoatProps {
   departing: boolean
   /** A correct send: the horn blows (the sound plays in the game) — it swells and sends out rings. */
   tooting: boolean
+  /** The green ✓, seated centred right above the horn (owner, 2026-10-15). */
+  sendSlot?: React.ReactNode
   /** Something is being dragged — the deck shows where the slots are. */
   dragging: boolean
   /** Box columns for the level (`boxColumns`). */
@@ -236,6 +238,7 @@ const Boat: React.FC<BoatProps> = ({
   shakeKey,
   departing,
   tooting,
+  sendSlot,
   dragging,
   boxCols,
 }) => {
@@ -300,6 +303,14 @@ const Boat: React.FC<BoatProps> = ({
           >
             <Box component="img" src={splashArt} alt="" sx={{ width: '100%', display: 'block' }} />
           </motion.div>
+        </Box>
+      )}
+
+      {/* The ✓ sits centred over the horn, measured from the horn's own box — so it is above the horn at
+          every size, rather than tuned against the stage. */}
+      {sendSlot && (
+        <Box sx={{ position: 'absolute', zIndex: 3, left: pct(G.horn.left + G.horn.width / 2), bottom: pct(1 - G.horn.top + 0.02), transform: 'translateX(-50%)' }}>
+          {sendSlot}
         </Box>
       )}
 

@@ -565,6 +565,7 @@ const FyldBaadenGame: React.FC = () => {
                       shakeKey={shakeKey}
                       departing={phase === 'sailing'}
                       tooting={phase === 'sending'}
+                      sendSlot={<SendButton enabled={interactive && !isDeckEmpty(deck)} present={phase === 'loading'} reduce={reduce} onSend={sendBoat} />}
                       dragging={activeId !== null}
                       boxCols={boxCols}
                     />
@@ -572,12 +573,6 @@ const FyldBaadenGame: React.FC = () => {
                   </Box>
                 </motion.div>
               )}
-            </Box>
-            {/* The ✓: ONE fixed place, right above the bow's horn (horn top ≈ 0.36 of the boat's height = 0.22·bw; the boat
-                stands ~7dvh up) — clear of the sail, the jetty and the front
-                water. Inside the stage so it sizes from the same slot unit as everything else. */}
-            <Box sx={{ position: 'absolute', zIndex: 3, right: 'calc(var(--bw) * 0.05)', bottom: 'calc(7dvh + var(--bw) * 0.34)' }}>
-              <SendButton enabled={interactive && !isDeckEmpty(deck)} present={gameReady && target > 0 && phase === 'loading'} reduce={reduce} onSend={sendBoat} />
             </Box>
           </Box>
         </Box>
