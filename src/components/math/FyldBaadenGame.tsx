@@ -573,7 +573,7 @@ const FyldBaadenGame: React.FC = () => {
                 stands ~7dvh up) — clear of the sail, the jetty and the front
                 water. Inside the stage so it sizes from the same slot unit as everything else. */}
             <Box sx={{ position: 'absolute', zIndex: 3, right: 'calc(var(--bw) * 0.05)', bottom: 'calc(7dvh + var(--bw) * 0.34)' }}>
-              <SendButton enabled={interactive && !isDeckEmpty(deck)} reduce={reduce} onSend={sendBoat} />
+              <SendButton enabled={interactive && !isDeckEmpty(deck)} present={gameReady && target > 0 && (phase === 'loading' || phase === 'sending')} reduce={reduce} onSend={sendBoat} />
             </Box>
           </Box>
         </Box>

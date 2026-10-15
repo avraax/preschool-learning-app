@@ -9,12 +9,32 @@ import { hintPulse } from '../../../theme/idleMotion'
 // deck is empty, full colour and gently breathing once it can be pressed. Tap only — it confirms, it
 // never answers (Harbour PRD-01 §4.4).
 
-const SendButton: React.FC<{ enabled: boolean; reduce: boolean; onSend: () => void }> = ({ enabled, reduce, onSend }) => {
+const SendButton: React.FC<{
+  enabled: boolean
+  /** A boat is moored. Between boats the ✓ is gone — a dim button over empty water reads as broken. */
+  present: boolean
+  reduce: boolean
+  onSend: () => void
+}> = ({ enabled, present, reduce, onSend }) => {
   const theme = useTheme()
   const main = theme.palette.success.main
   const dark = theme.palette.success.dark
-  const pulse = hintPulse(reduce || !enabled)
+  const pulse = hintPulse(reduce || !enabled || !present)
   return (
+    // Arrives with the boat and leaves with it: opacity + scale only (GPU), no layout change.
+    <Box
+      sx={{
+        display: 'inline-block',
+        opacity: present ? 1 : 0,
+        transform: present ? 'scale(1)' : 'scale(0.6)',
+        visibility: present ? 'visible' : 'hidden',
+        transition: reduce
+          ? 'none'
+          : present
+            ? 'opacity 0.3s ease-out, transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), visibility 0s'
+            : 'opacity 0.25s ease-in, transform 0.25s ease-in, visibility 0s linear 0.25s',
+      }}
+    >
     <Box {...pulse.props} sx={[{ display: 'inline-block' }, pulse.sx]}>
       <Box
         component="button"
@@ -45,6 +65,7 @@ const SendButton: React.FC<{ enabled: boolean; reduce: boolean; onSend: () => vo
       >
         <Check strokeWidth={4} style={{ width: '58%', height: '58%' }} />
       </Box>
+    </Box>
     </Box>
   )
 }
