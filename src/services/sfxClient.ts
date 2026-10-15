@@ -85,7 +85,8 @@ const CUE_FILES: Record<SfxCue, string> = {
   'fish-land': '/sounds/ui/fish-land.mp3',
   'box-land': '/sounds/ui/box-land.mp3',
   bundle: '/sounds/ui/streak-up.mp3',
-  horn: '/sounds/ui/page-complete.mp3',
+  // The owner's ship's horn (dragon-studio, baked by scripts/bake-harbour-sounds.mjs): a correct send.
+  horn: '/sounds/ui/boat-horn.mp3',
   splash: '/sounds/ui/flip.mp3',
   'harbour-ambience': '/sounds/ui/harbour-ambience.mp3',
   'boat-motor': '/sounds/ui/boat-motor.mp3',
@@ -121,7 +122,8 @@ const CUE_VOLUME: Partial<Record<SfxCue, number>> = {
   'fish-land': 0.5,
   'box-land': 0.55,
   bundle: 0.5,
-  horn: 0.5,
+  // Baked at -24 LUFS → ~-28 effective: the loudest cue in the game, on purpose — it IS the reward beat.
+  horn: 0.6,
   splash: 0.4,
   // Baked at -32 / -26 LUFS → ~-38 LUFS effective for the bed (under narration and every cue: it is
   // atmosphere; owner 2026-10-15 asked for "a bit louder" than the first ~-42) and ~-34 for the motor.

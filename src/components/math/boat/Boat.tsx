@@ -50,6 +50,8 @@ interface BoatProps {
   shakeKey: number
   /** The boat is setting off — a bow splash plays once. */
   departing: boolean
+  /** A correct send: the horn blows (the sound plays in the game) — it swells and sends out rings. */
+  tooting: boolean
   /** Something is being dragged — the deck shows where the slots are. */
   dragging: boolean
   /** Box columns for the level (`boxColumns`). */
@@ -233,6 +235,7 @@ const Boat: React.FC<BoatProps> = ({
   onUnload,
   shakeKey,
   departing,
+  tooting,
   dragging,
   boxCols,
 }) => {
@@ -300,15 +303,32 @@ const Boat: React.FC<BoatProps> = ({
         </Box>
       )}
 
-      {/* The horn is DECORATION now: it toots as the boat sets off. Sending moved to a big green ✓ (owner,
-          2026-10-15: a horn as the "I'm done" button was not intuitive) — see SendButton. */}
+      {/* The horn is not a button (sending is the big green ✓ — owner, 2026-10-15). On a correct send IT is
+          what blows: it swells twice with the blast and sound rings roll out of its bell, so the child
+          sees where the sound comes from (owner: "emphasize the horn being the one making the sound"). */}
       <Box aria-hidden sx={{ position: 'absolute', left: pct(G.horn.left), top: pct(G.horn.top), width: `calc(var(--bw) * ${G.horn.width})`, aspectRatio: '1', pointerEvents: 'none' }}>
+        {tooting && !reduce &&
+          [0, 1, 2].map((i) => (
+            // The bell opens up and to the right (x ~0.78, y ~0.3 of the horn art).
+            <Box key={i} sx={{ position: 'absolute', left: '78%', top: '30%', width: '90%', aspectRatio: '1', transform: 'translate(-50%, -50%)' }}>
+              <motion.div
+                initial={{ transform: 'scale(0.3)', opacity: 0 }}
+                animate={{ transform: ['scale(0.3)', 'scale(1.1)', 'scale(1.9)'], opacity: [0, 0.9, 0] }}
+                transition={{ duration: 0.9, delay: i * 0.22, ease: 'easeOut', times: [0, 0.3, 1] }}
+                style={{ width: '100%', height: '100%', borderRadius: '50%', border: '4px solid rgba(255,255,255,0.95)', boxShadow: '0 0 8px rgba(255,255,255,0.6)', clipPath: 'polygon(50% 50%, 100% 0%, 100% 100%)' }}
+              />
+            </Box>
+          ))}
         <motion.div
-          key={departing ? 'toot' : 'still'}
+          key={tooting ? 'toot' : 'still'}
           initial={false}
-          animate={departing && !reduce ? { transform: ['scale(1) rotate(0deg)', 'scale(1.18) rotate(-8deg)', 'scale(1) rotate(0deg)'] } : { transform: 'scale(1) rotate(0deg)' }}
-          transition={{ duration: 0.5, ease: 'easeOut', times: [0, 0.4, 1] }}
-          style={{ width: '100%', height: '100%', transformOrigin: '30% 80%' }}
+          animate={
+            tooting && !reduce
+              ? { transform: ['scale(1) rotate(0deg)', 'scale(1.3) rotate(-6deg)', 'scale(1.15) rotate(-3deg)', 'scale(1.3) rotate(-6deg)', 'scale(1) rotate(0deg)'] }
+              : { transform: 'scale(1) rotate(0deg)' }
+          }
+          transition={{ duration: 1.1, ease: 'easeInOut', times: [0, 0.15, 0.5, 0.75, 1] }}
+          style={{ width: '100%', height: '100%', transformOrigin: '50% 90%' }}
         >
           <Box component="img" src={hornArt} alt="" draggable={false} sx={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }} />
         </motion.div>

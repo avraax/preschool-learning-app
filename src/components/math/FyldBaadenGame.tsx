@@ -64,6 +64,8 @@ type Phase = 'arriving' | 'loading' | 'sending' | 'sailing'
 const REASK_MS = 2300
 /** How long the packing show holds input (the ten fish gather, the box pops in). */
 const BUNDLE_MS = 800
+/** The ship's horn blast (boat-horn.mp3 is 1.12 s); the number is spoken once it has died away. */
+const HORN_MS = 1000
 /** Cargo on deck and nothing for this long → the one-time "press the green button" line. */
 const SEND_HINT_IDLE_MS = 5000
 
@@ -352,11 +354,12 @@ const FyldBaadenGame: React.FC = () => {
       setPhaseBoth('sending')
       setRevealed(true)
       resetHint()
+      // The horn blows first (1.1 s), THEN the number is said — on top of each other the word was lost.
       sfx.play('horn')
       celebrateTier('micro')
       reactGuide('cheer')
-      void audio.speakNumber(n).catch(() => {})
-      later('sail', DWELL_CORRECT(), () => {
+      later('number', HORN_MS, () => void audio.speakNumber(n).catch(() => {}))
+      later('sail', HORN_MS + DWELL_CORRECT(), () => {
         sfx.play('splash')
         // …and opens up again as it leaves (departure 1.8 s), fading as it goes off-screen.
         sfx.swell('boat-motor', { fadeInMs: 300, holdMs: 500, fadeOutMs: 1400 })
@@ -561,6 +564,7 @@ const FyldBaadenGame: React.FC = () => {
                       onUnload={(kind) => unload(kind, true)}
                       shakeKey={shakeKey}
                       departing={phase === 'sailing'}
+                      tooting={phase === 'sending'}
                       dragging={activeId !== null}
                       boxCols={boxCols}
                     />
@@ -573,7 +577,7 @@ const FyldBaadenGame: React.FC = () => {
                 stands ~7dvh up) — clear of the sail, the jetty and the front
                 water. Inside the stage so it sizes from the same slot unit as everything else. */}
             <Box sx={{ position: 'absolute', zIndex: 3, right: 'calc(var(--bw) * 0.05)', bottom: 'calc(7dvh + var(--bw) * 0.34)' }}>
-              <SendButton enabled={interactive && !isDeckEmpty(deck)} present={gameReady && target > 0 && (phase === 'loading' || phase === 'sending')} reduce={reduce} onSend={sendBoat} />
+              <SendButton enabled={interactive && !isDeckEmpty(deck)} present={gameReady && target > 0 && phase === 'loading'} reduce={reduce} onSend={sendBoat} />
             </Box>
           </Box>
         </Box>

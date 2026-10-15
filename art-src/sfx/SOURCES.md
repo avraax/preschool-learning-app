@@ -12,5 +12,6 @@ One line per shipped cue that came from outside the repo (Harbour PRD-01: licenc
 Both are cut and levelled by `node scripts/bake-harbour-sounds.mjs` (seamless 40 s ambience loop at
 -32 LUFS; a steady 6 s motor cut at -26 LUFS; mono MP3).
 
-Still aliased to existing cues (no external file yet): `bundle`, `horn`, `splash`. (`boat-arrive`
+Still aliased to existing cues (no external file yet): `bundle`, `splash`. (`boat-arrive`
 is gone — the motor swell replaced it.)
+| `public/sounds/ui/boat-horn.mp3` | owner's download (Pixabay, uploader "dragon-studio") — source kept as `art-src/sfx/boat-horn-src.mp3` | `dragon-studio-boat-horn-386178.mp3` | Pixabay Content License (owner to confirm on the download page) |

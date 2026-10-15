@@ -4,6 +4,7 @@
 //
 // - harbour-ambience.mp3: a SEAMLESS 40 s loop (the last 2 s cross-faded into the first 2 s, so the
 //   loop point has no seam), mono, levelled to AMBIENCE_LUFS. It plays as a quiet bed under the game.
+// - boat-horn.mp3: the ship's horn a correct send blows, trimmed and levelled to HORN_LUFS.
 // - boat-motor.mp3: a steady 6 s cut of the diesel motor (the source is flat from 3 s on), mono,
 //   levelled to MOTOR_LUFS. The game fades it in and out around each arrival and departure.
 //
@@ -24,6 +25,7 @@ const OUT = path.join(ROOT, 'public', 'sounds', 'ui')
 
 const AMBIENCE_LUFS = -32
 const MOTOR_LUFS = -26
+const HORN_LUFS = -22
 const LOOP_S = 40
 const XFADE_S = 2
 
@@ -57,4 +59,6 @@ await bake(
   AMBIENCE_LUFS,
 )
 await bake('boat-motor.mp3', 'diesel-motor-fishing-boat-src.mp3', '[0:a]atrim=10:16,asetpts=PTS-STARTPTS', MOTOR_LUFS)
+// The ship's horn on a correct send: the 1.09 s blast, its trailing silence trimmed.
+await bake('boat-horn.mp3', 'boat-horn-src.mp3', '[0:a]atrim=0:1.12,afade=t=out:st=1.0:d=0.12,asetpts=PTS-STARTPTS', HORN_LUFS)
 console.log('Done.')
