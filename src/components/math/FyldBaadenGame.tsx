@@ -18,7 +18,7 @@ import { useReducedMotion } from '../../hooks/useReducedMotion'
 import { progressStore } from '../../services/progressStore'
 import { sfx } from '../../services/sfxClient'
 import { mascotBus } from '../../services/mascotBus'
-import { boatLoadedText, fillBoatPrompt } from '../../config/gamePhrases'
+import { boatCountText, boatLoadedText, fillBoatPrompt } from '../../config/gamePhrases'
 import { BOAT_RECENT_WINDOW, pickBoatNumber } from '../../config/mathProblems'
 import { MATH_BOAT } from '../../config/difficulty'
 import { DWELL_CORRECT } from '../../theme/motion'
@@ -26,6 +26,7 @@ import { idleFloat } from '../../theme/idleMotion'
 import { DEV } from '../../utils/devHarness'
 import { useOccludeWorld } from '../common/scene/worldOcclusion'
 import {
+  BAY_SLOTS,
   EMPTY_DECK,
   deckValue,
   ghostFor,
@@ -84,6 +85,15 @@ const FyldBaadenGame: React.FC = () => {
   const [shakeKey, setShakeKey] = useState(0)
   // Bumped per successful load of a kind — remounts that pile's top unit (see Quay's `refill`).
   const [refills, setRefills] = useState<Record<CargoKind, number>>({ box: 0, fish: 0 })
+  // Boxes taken off the jetty and not put back. The jetty's piles RUN DOWN as cargo is loaded (owner,
+  // 2026-10-15): the box stack holds what the level can ever ask for, the fish heap ten — and a box
+  // PACKED on deck from ten fish never came off the stack, so it is not counted here.
+  const [boxesOut, setBoxesOut] = useState(0)
+  const boxesOutRef = useRef(0)
+  const setBoxesOutBoth = (n: number) => {
+    boxesOutRef.current = n
+    setBoxesOut(n)
+  }
   const [guideReaction, setGuideReaction] = useState<GuideReaction>(null)
 
   // Refs mirror what a same-tick second gesture must see (a double tap reads stale state otherwise).
@@ -148,6 +158,7 @@ const FyldBaadenGame: React.FC = () => {
     targetRef.current = n
     setTarget(n)
     setDeckBoth(EMPTY_DECK)
+    setBoxesOutBoth(0)
     setRevealed(false)
     setBundle(null)
     resetHint()
@@ -210,6 +221,8 @@ const FyldBaadenGame: React.FC = () => {
   const prevDifficultyRef = useRef(difficultyLevel)
   // Boxes are drawn as big as the level's most boxes allow (boatLooks `boxColumns`); deck and quay agree.
   const boxCols = boxColumns(MATH_BOAT[difficultyLevel].max)
+  /** The jetty's box stack: as many as this level's biggest number needs (Let 2, Normal 5, Svær 10). */
+  const boxStock = Math.ceil(MATH_BOAT[difficultyLevel].max / 10)
   useEffect(() => {
     if (prevDifficultyRef.current === difficultyLevel) return
     prevDifficultyRef.current = difficultyLevel
@@ -220,9 +233,16 @@ const FyldBaadenGame: React.FC = () => {
     targetRef.current = n
     setTarget(n)
     setDeckBoth(EMPTY_DECK)
+    setBoxesOutBoth(0)
     resetHint()
     if (p === 'loading') speakPrompt()
   }, [difficultyLevel]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // The running count after every load or unload — "tolv fisk" (owner, 2026-10-15). Fire and forget:
+  // the next load cancels it (one audio at a time), so a fast child hears only the latest total.
+  const speakCount = (n: number) => {
+    if (n > 0) void audio.speak(boatCountText(n)).catch(() => {})
+  }
 
   const canAct = () => gameReady && phaseRef.current === 'loading' && !isAdvancing.current && !bundlingRef.current
 
@@ -252,12 +272,14 @@ const FyldBaadenGame: React.FC = () => {
     cancel('reask') // the child is already fixing it
     if (viaTap) sfx.play('tap')
     const r = loadDeck(deckRef.current, kind)
-    if (r.outcome === 'full') {
+    if (r.outcome === 'full' || (kind === 'box' && boxesOutRef.current >= boxStock)) {
       sfx.play('spring-back')
       return
     }
     setDeckBoth(r.deck)
+    if (kind === 'box') setBoxesOutBoth(boxesOutRef.current + 1)
     setRefills((f) => ({ ...f, [kind]: f[kind] + 1 }))
+    speakCount(deckValue(r.deck))
     if (r.outcome === 'bundled') {
       // Ten single fish are packed into ONE box — the place-value moment, given its own beat.
       sfx.play('bundle')
@@ -284,7 +306,9 @@ const FyldBaadenGame: React.FC = () => {
     const r = unloadDeck(deckRef.current, kind)
     if (r.outcome === 'empty') return
     setDeckBoth(r.deck)
+    if (kind === 'box') setBoxesOutBoth(Math.max(0, boxesOutRef.current - 1))
     sfx.play('pick-up')
+    speakCount(deckValue(r.deck))
   }
 
   const sendBoat = () => {
@@ -464,8 +488,8 @@ const FyldBaadenGame: React.FC = () => {
                 overQuay={overQuay}
                 onLoad={(kind) => load(kind, true)}
                 refills={refills}
-                reduce={reduce}
-                gullAway={phase === 'sending' || phase === 'sailing'}
+                counts={{ box: Math.max(0, boxStock - boxesOut), fish: BAY_SLOTS - deck.fish }}
+                stock={{ box: boxStock, fish: BAY_SLOTS }}
                 boxCols={boxCols}
               />
             </Box>

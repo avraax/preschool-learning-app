@@ -412,7 +412,6 @@ async function greenKeySprite(srcPath, outPath, opts) {
 const HARBOUR_OUT = join(ROOT, 'src', 'assets', 'games', 'boat')
 const HARBOUR_SPECS = {
   box: { size: 512, keepAspect: true },
-  'box-stack': { size: 512, keepAspect: true },
   'boat-red': { size: 1400, keepAspect: true },
   // The yellow hull's shaded underside picks up green bounce light from the screen, and the default
   // `faint` grow ran straight through it — the whole yellow hull vanished on the defaults (measured).
@@ -421,8 +420,6 @@ const HARBOUR_SPECS = {
   'boat-paleblue': { size: 1400, keepAspect: true },
   jetty: { size: 1024, keepAspect: true },
   horn: { size: 320, keepAspect: true },
-  'gull-stand': { size: 256, keepAspect: true },
-  'gull-fly': { size: 320, keepAspect: true },
   // `periodic`: the renders don't tile as delivered (a seam every tile), and stretching ONE across the
   // screen squashed it to a third of its height (owner: "stretched and distorted"). So each is cut at a
   // whole number of its own wave periods and repeated at its natural proportions.

@@ -4,19 +4,15 @@ import { Box } from '@mui/material'
 import { DraggableItem } from '../../common/dnd/DraggableItem'
 import { DroppableZone } from '../../common/dnd/DroppableZone'
 import type { CargoKind } from './boatDeck'
-import { FishBoxView, FishView } from './Cargo'
+import { BOX_ASPECT, FishBoxView, FishView } from './Cargo'
 import jettyArt from '../../../assets/games/boat/jetty.webp'
-import boxStackArt from '../../../assets/games/boat/box-stack.webp'
-import gullStandArt from '../../../assets/games/boat/gull-stand.webp'
-import gullFlyArt from '../../../assets/games/boat/gull-fly.webp'
 import { deckItemWidth } from './boatLooks'
-import Mascot from '../../common/Mascot'
-import { PHONE_LANDSCAPE, PHONE_PORTRAIT } from '../../../theme/phoneMedia'
 
 // The jetty (owner's Gemini render, batch I): a long wooden jetty coming in from the left edge of the
-// screen — from the shore, off-picture — with the mascot as harbour master, two endless supply piles on
-// its planks (a stack of fish boxes and a little heap of fish) and a seagull on the bollard at its end.
-// A pile is the child's SOURCE: tap it to load one onto the next free slot, or drag its top unit onto the
+// screen — from the shore, off-picture — with two supply piles on its planks: a stack of fish boxes and a
+// heap of single fish. NOTHING else stands on it (owner, 2026-10-15: the focus is the fish and the boxes —
+// the mascot and the seagull were removed). Each pile RUNS DOWN as it is loaded and fills back up as cargo
+// comes off the boat. A pile is the child's SOURCE: tap it to load one onto the next free slot, or drag its top unit onto the
 // deck. Both call the game's one `load(kind)` (Harbour PRD-01 §4.4). The jetty is also where a
 // dragged-back item is unloaded.
 //
@@ -31,10 +27,9 @@ const JETTY_ASPECT = 966 / 298
 const JETTY_W = 11
 /** The render rises ~3° to the right; the image is counter-rotated so the planks read level. */
 const JETTY_LEVEL_DEG = 3
-/** Where things stand, as `bottom` (fraction of the jetty box from its bottom edge): the harbour master
- *  at the back of the planks, the piles mid-plank — well clear of the front edge (owner, 2026-10-15: the
- *  fish looked about to fall into the water). */
-const STAND = { master: '73%', box: '65%', fish: '67%' }
+/** Where the piles stand, as `bottom` (fraction of the jetty box from its bottom edge): mid-plank, well
+ *  clear of the front edge (owner, 2026-10-15: the fish looked about to fall into the water). */
+const STAND = { box: '65%', fish: '67%' }
 /** Where each post meets the water (centre x, waterline y, ripple width) — measured on the levelled
  *  jetty: the three front posts end ~0.9, the back-right one ~0.72. The mask fades everything below. */
 const JETTY_POSTS = [
@@ -49,38 +44,93 @@ const RING_COLOUR = 'rgba(255,255,255,0.5)'
 const RING_SX = (p: { x: number; y: number; w: number }) =>
   ({ position: 'absolute', left: `${p.x * 100}%`, top: `${p.y * 100}%`, width: `${p.w * 100}%`, aspectRatio: '4', transform: 'translate(-50%, -50%)', borderRadius: '50%', border: '2px solid transparent', pointerEvents: 'none' }) as const
 /** The piles' right edges, measured from the jetty's right end: clear of the bollard (x 0.90+). */
-const PILE_RIGHT = 0.12
-
-/** A pile's width such that its top unit is drawn at deck size (top box 92% of its pile, top fish 47%). */
-const pileWidth = (kind: CargoKind, cols: number): string =>
-  `calc(var(--bw) * ${(deckItemWidth(kind, cols) / (kind === 'box' ? 0.92 : 0.47)).toFixed(4)})`
+const PILE_RIGHT = 0.08
 
 const imgSx = { display: 'block', userSelect: 'none', pointerEvents: 'none' } as const
 
 /** The price-tag colours — the harbour's own art palette (warm paper, the boxes' honey wood), one on every skin. */
 const TAG = { paper: '#FFF6E2', edge: '#B7843F', ink: '#5B3A1A' } as const
 
+/** Boxes stand in columns of up to five, each a half-box higher than the one below — crates stacked. */
+const BOXES_PER_COLUMN = 5
+const BOX_COLUMN_STEP = 1.04
+const BOX_TIER_STEP = 0.5
+/** The fish heap is a 4-3-2-1 pyramid — exactly ten, the most the jetty ever holds. */
+const FISH_ROWS = [4, 3, 2, 1]
+const FISH_STEP_X = 0.82
+const FISH_STEP_Y = 0.4
+
+/**
+ * Where each unit of a pile sits, in fractions of the pile's box (all units share one width). Item 0 is
+ * the bottom-left; the LAST shown item is the one the child takes, so the pile visibly runs down (owner,
+ * 2026-10-15: "it keeps restacking"). The pile's box is sized for the level's full stock, so it never
+ * jumps as it empties.
+ */
+const pileLayout = (kind: CargoKind, stock: number) => {
+  if (kind === 'box') {
+    const cols = Math.max(1, Math.ceil(stock / BOXES_PER_COLUMN))
+    const rows = Math.min(Math.max(stock, 1), BOXES_PER_COLUMN)
+    const h = 1 / BOX_ASPECT
+    const W = (cols - 1) * BOX_COLUMN_STEP + 1
+    const H = h + (rows - 1) * BOX_TIER_STEP * h
+    return {
+      W,
+      H,
+      at: (i: number) => ({
+        left: (Math.floor(i / BOXES_PER_COLUMN) * BOX_COLUMN_STEP) / W,
+        bottom: ((i % BOXES_PER_COLUMN) * BOX_TIER_STEP * h) / H,
+      }),
+    }
+  }
+  const W = (FISH_ROWS[0] - 1) * FISH_STEP_X + 1
+  const H = 1 + (FISH_ROWS.length - 1) * FISH_STEP_Y
+  const slots: { left: number; bottom: number }[] = []
+  FISH_ROWS.forEach((n, r) => {
+    for (let k = 0; k < n; k++) slots.push({ left: (r * FISH_STEP_X * 0.5 + k * FISH_STEP_X) / W, bottom: (r * FISH_STEP_Y) / H })
+  })
+  return { W, H, at: (i: number) => slots[i] }
+}
+
 const Pile: React.FC<{
   kind: CargoKind
   right: string
-  width: string
+  /** How many are on the jetty now, and the most it holds for this level. */
+  count: number
+  stock: number
+  boxCols: number
   interactive: boolean
   onLoad: (kind: CargoKind) => void
   refill: number
-  reduce: boolean
-}> = ({ kind, right, width, interactive, onLoad, refill, reduce }) => {
+}> = ({ kind, right, count, stock, boxCols, interactive, onLoad, refill }) => {
   const isBox = kind === 'box'
+  const L = pileLayout(kind, stock)
+  const unitW = 1 / L.W
+  const shown = Math.min(count, stock)
+  const top = shown > 0 ? L.at(shown - 1) : null
+  const pct = (f: number) => `${(f * 100).toFixed(3)}%`
+  const Unit = isBox ? FishBoxView : FishView
   return (
-    <Box sx={{ position: 'absolute', right, width, bottom: STAND[kind] }}>
+    // One unit is drawn at its DECK size (`deckItemWidth` × the boat's width), so the box the child picks
+    // up is the box that lands on the boat.
+    <Box sx={{ position: 'absolute', right, bottom: STAND[kind], width: `calc(var(--bw) * ${(deckItemWidth(kind, boxCols) * L.W).toFixed(4)})`, aspectRatio: String(L.W / L.H) }}>
       {/* Contact shadow on the planks — the same grounding the deck cargo gets. */}
-      <Box aria-hidden sx={{ position: 'absolute', left: '0%', right: '0%', bottom: 0, aspectRatio: '5', transform: 'translateY(40%)', borderRadius: '50%', background: 'radial-gradient(ellipse at center, rgba(50,25,10,0.75), rgba(50,25,10,0) 70%)', pointerEvents: 'none' }} />
+      <Box aria-hidden sx={{ position: 'absolute', left: '0%', right: '0%', bottom: 0, height: 'calc(var(--s) * 0.5)', transform: 'translateY(45%)', borderRadius: '50%', background: 'radial-gradient(ellipse at center, rgba(50,25,10,0.75), rgba(50,25,10,0) 70%)', pointerEvents: 'none' }} />
+      {/* What is left on the jetty, minus the top unit (drawn by the draggable below). */}
+      {Array.from({ length: Math.max(0, shown - 1) }, (_, i) => {
+        const p = L.at(i)
+        return (
+          <Box key={i} aria-hidden sx={{ position: 'absolute', left: pct(p.left), bottom: pct(p.bottom), width: pct(unitW), pointerEvents: 'none' }}>
+            <Unit />
+          </Box>
+        )
+      })}
       {/* The pile's VALUE, as a little market price tag leaning on it: a box is worth 10, a fish 1 (owner,
           2026-10-15: "10 fish in a box" wasn't obvious). It names the unit, never the boat's number. */}
       <Box
         aria-hidden
         sx={{
           position: 'absolute',
-          left: isBox ? '-10%' : '-6%',
+          left: isBox ? '-14%' : '-8%',
           bottom: '-6%',
           zIndex: 2,
           minWidth: 'calc(var(--s) * 0.8)',
@@ -102,39 +152,28 @@ const Pile: React.FC<{
       >
         {isBox ? 10 : 1}
       </Box>
-      {/* The pile itself — static, it never runs out. */}
-      {isBox ? (
-        <Box component="img" src={boxStackArt} alt="" draggable={false} sx={{ ...imgSx, width: '100%', height: 'auto' }} />
-      ) : (
-        <Box sx={{ position: 'relative', display: 'flex', justifyContent: 'center', pt: '24%' }}>
-          <Box sx={{ width: '47%', mr: '-3%' }}><FishView /></Box>
-          <Box sx={{ width: '47%', ml: '-3%' }}><FishView /></Box>
-        </Box>
-      )}
       {/* The WHOLE PILE is the grab area (owner, 2026-10-14: pressing the lower fish did nothing). The
-          draggable is a transparent box over the entire pile, padded past it; only the top unit is drawn
-          inside it, so a drag carries that one unit away while the pile stays put. */}
+          draggable is a transparent box over the entire pile, padded 10px past it; only the top unit is
+          drawn inside it, so a drag carries that one unit away. An empty pile has nothing to take. */}
       <Box sx={{ position: 'absolute', inset: '-10px', zIndex: 1 }}>
         {/* A successful load REMOUNTS the top unit (`refill` is the key) so the dropped unit stays on the
-            deck and a fresh one appears — instead of gliding back. OPACITY only: a scale/translate on an
-            ancestor of a draggable multiplies its drag offset (drag-and-drop.md). */}
-        <motion.div key={refill} initial={reduce || refill === 0 ? false : { opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.22 }} style={{ width: '100%', height: '100%' }}>
+            deck instead of gliding back. No fade: the next unit was already on view as part of the pile. */}
+        <motion.div key={refill} initial={false} style={{ width: '100%', height: '100%' }}>
           <DraggableItem
             id={`src-${kind}`}
             inline
             fill
-            disabled={!interactive}
+            disabled={!interactive || !top}
             data={{ kind, from: 'quay' }}
             lift={{ scale: 1.06, rotate: -3 }}
             onActivate={() => onLoad(kind)}
           >
-            <Box data-boat-source={kind} sx={{ position: 'relative', width: '100%', height: '100%', cursor: interactive ? 'grab' : 'default' }}>
-              {/* The top unit: a box resting on the stack / a fish on top of the heap. This box is padded
-                  10px past the pile on every side, so sizes are taken from the PILE's width (100% − 20px) —
-                  the same size as the units below it, which match the cargo on the deck. */}
-              <Box sx={{ position: 'absolute', left: '50%', top: '10px', width: isBox ? 'calc((100% - 20px) * 0.92)' : 'calc((100% - 20px) * 0.47)', transform: isBox ? 'translate(-50%, -34%)' : 'translate(-50%, 0%)' }}>
-                {isBox ? <FishBoxView /> : <FishView />}
-              </Box>
+            <Box data-boat-source={kind} sx={{ position: 'relative', width: '100%', height: '100%', cursor: interactive && top ? 'grab' : 'default' }}>
+              {top && (
+                <Box sx={{ position: 'absolute', left: `calc(10px + (100% - 20px) * ${top.left.toFixed(4)})`, bottom: `calc(10px + (100% - 20px) * ${top.bottom.toFixed(4)})`, width: `calc((100% - 20px) * ${unitW.toFixed(4)})` }}>
+                  <Unit />
+                </Box>
+              )}
             </Box>
           </DraggableItem>
         </motion.div>
@@ -148,19 +187,17 @@ const Quay: React.FC<{
   overQuay: boolean
   onLoad: (kind: CargoKind) => void
   refills: Record<CargoKind, number>
-  reduce: boolean
-  /** True from a correct send until the next boat — the gull has flown off. */
-  gullAway: boolean
-  /** The level's box columns, so the top box matches a deck box. */
+  /** On the jetty now, and the most each pile holds for this level. */
+  counts: Record<CargoKind, number>
+  stock: Record<CargoKind, number>
+  /** The level's box columns on the deck, so a jetty box is the size of a deck box. */
   boxCols: number
-}> = ({ interactive, overQuay, onLoad, refills, reduce, gullAway, boxCols }) => {
-  // Right to left from the bollard: fish heap, box stack, then the harbour master behind them.
-  const fishW = pileWidth('fish', boxCols)
-  const boxW = pileWidth('box', boxCols)
+}> = ({ interactive, overQuay, onLoad, refills, counts, stock, boxCols }) => {
+  // Right to left from the bollard: the fish heap, then the box stack.
+  const fishL = pileLayout('fish', stock.fish)
+  const fishW = `calc(var(--bw) * ${(deckItemWidth('fish', boxCols) * fishL.W).toFixed(4)})`
   const fishRight = `${PILE_RIGHT * 100}%`
-  const boxRight = `calc(${PILE_RIGHT * 100}% + ${fishW} + var(--s) * 0.25)`
-  const masterW = 'calc(var(--s) * 1.9)'
-  const masterRight = `calc(${PILE_RIGHT * 100}% + ${fishW} + ${boxW} + var(--s) * 0.35)`
+  const boxRight = `calc(${PILE_RIGHT * 100}% + ${fishW} + var(--s) * 0.45)`
   return (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', minHeight: 0 }}>
       <Box sx={{ width: '100%' }}>
@@ -177,7 +214,7 @@ const Quay: React.FC<{
           }}
         >
           {/* `--jetty-reach`: how far the bollard end reaches past the column (set by the game per
-              orientation — alongside the boat's stern in landscape). */}
+              orientation — toward the boat's stern in landscape). */}
           <Box sx={{ position: 'relative', width: `calc(var(--s) * ${JETTY_W})`, ml: `calc(100% + var(--jetty-reach, 0px) - var(--s) * ${JETTY_W})`, aspectRatio: String(JETTY_ASPECT) }}>
             {/* The posts must GO INTO the water, not hover over it (owner, 2026-10-15): their lower ends
                 fade out (a mask — the sea behind shows through, as if submerged) and a soft ripple rings
@@ -191,47 +228,8 @@ const Quay: React.FC<{
             {JETTY_POSTS.map((p) => (
               <Box key={`near-${p.x}`} aria-hidden sx={[RING_SX(p), { borderBottomColor: RING_COLOUR }]} />
             ))}
-            {/* The harbour master: the theme mascot stands at the back of the planks, grounded (no idle
-                hover), and greets each boat. GameShell's corner companion is off here (FyldBaadenGame);
-                mascotBus reactions still reach this one. */}
-            <Mascot
-              grounded
-              sx={{
-                position: 'absolute',
-                left: 'auto',
-                right: masterRight,
-                bottom: STAND.master,
-                width: masterW,
-                height: 'auto',
-                aspectRatio: '1',
-                zIndex: 0,
-                [PHONE_LANDSCAPE]: { display: 'block' },
-                [PHONE_PORTRAIT]: { width: masterW, height: 'auto' },
-              }}
-            />
-            {/* A seagull standing still on the bollard cap (x ~0.93, top y ~0.13) — calm decor, it never
-                asks for anything. On a correct send it takes off and flies away (the send-off); it is back
-                on the next boat. */}
-            <Box aria-hidden sx={{ position: 'absolute', left: '93%', width: 'calc(var(--s) * 0.95)', bottom: '86%', transform: 'translateX(-50%)' }}>
-              {gullAway && !reduce ? (
-                <motion.div
-                  initial={{ transform: 'translate(0%, 0%) scale(1)', opacity: 1 }}
-                  animate={{ transform: ['translate(0%, 0%) scale(1)', 'translate(60%, -120%) scale(1.1)', 'translate(260%, -420%) scale(0.8)'], opacity: [1, 1, 0] }}
-                  transition={{ duration: 1.7, ease: 'easeIn', times: [0, 0.3, 1] }}
-                  style={{ width: '130%' }}
-                >
-                  <Box component="img" src={gullFlyArt} alt="" draggable={false} sx={{ ...imgSx, width: '100%', height: 'auto' }} />
-                </motion.div>
-              ) : !gullAway ? (
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
-                  <Box component="img" src={gullStandArt} alt="" draggable={false} sx={{ ...imgSx, width: '100%', height: 'auto' }} />
-                </motion.div>
-              ) : null}
-            </Box>
-            {/* Piles at DECK scale: a box on the stack and a fish in the heap are the size of the cargo
-                they become on the boat, so the child sees the same thing move rather than a shrink. */}
-            <Pile kind="box" right={boxRight} width={boxW} interactive={interactive} onLoad={onLoad} refill={refills.box} reduce={reduce} />
-            <Pile kind="fish" right={fishRight} width={fishW} interactive={interactive} onLoad={onLoad} refill={refills.fish} reduce={reduce} />
+            <Pile kind="box" right={boxRight} count={counts.box} stock={stock.box} boxCols={boxCols} interactive={interactive} onLoad={onLoad} refill={refills.box} />
+            <Pile kind="fish" right={fishRight} count={counts.fish} stock={stock.fish} boxCols={boxCols} interactive={interactive} onLoad={onLoad} refill={refills.fish} />
           </Box>
         </DroppableZone>
       </Box>

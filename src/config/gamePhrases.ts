@@ -148,6 +148,9 @@ export const fillBoatPrompt = (n: number): string => `Fyld båden med ${getDanis
 
 /** A wrong send names what IS on the deck, as a sentence rather than a bare number (same reason). */
 export const boatLoadedText = (n: number): string => `Der er ${getDanishNumberText(n)} fisk`
+
+/** The running count after every load or unload: "tolv fisk" (owner, 2026-10-15). */
+export const boatCountText = (n: number): string => `${getDanishNumberText(n)} fisk`
 /** Ram Farven's target instruction: "Lav lilla farve ved at blande farverne". */
 export const colorMixTargetText = (targetName: string): string =>
   `Lav ${targetName} farve ved at blande farverne`

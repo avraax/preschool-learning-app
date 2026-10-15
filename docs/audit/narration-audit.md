@@ -3,9 +3,9 @@
 > AUTO-GENERATED (by the `/audit` harness via the dev-server, or `npm run audit:approve-all`).
 > Do not hand-edit — source of truth is `narration-audit.json`.
 
-Last updated: 2026-10-14T18:42:04.899Z
+Last updated: 2026-10-15T20:10:32.551Z
 
-**2973 OK · 1 wrong · 0 unaudited** (of 2974 clips)
+**3073 OK · 1 wrong · 0 unaudited** (of 3074 clips)
 
 ## Bogstaver
 
@@ -195,6 +195,7 @@ Last updated: 2026-10-14T18:42:04.899Z
 |---|---|---|---|
 | ✅ | atten | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | atten | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | atten fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Der er atten fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Der er elleve fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Der er en fisk | Bulk-approved (PRD-11 owner listen pass) |  |
@@ -297,46 +298,67 @@ Last updated: 2026-10-14T18:42:04.899Z
 | ✅ | Der er tyve fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | elleve | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | elleve | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | elleve fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | en | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | en | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | en fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | enogfirs | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | enogfirs | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | enogfirs fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | enogfyrre | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | enogfyrre | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | enogfyrre fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | enoghalvfems | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | enoghalvfems | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | enoghalvfems fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | enoghalvfjerds | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | enoghalvfjerds | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | enoghalvfjerds fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | enoghalvtreds | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | enoghalvtreds | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | enoghalvtreds fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | enogtredive | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | enogtredive | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | enogtredive fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | enogtres | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | enogtres | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | enogtres fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | enogtyve | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | enogtyve | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | enogtyve fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | et hundrede | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | et hundrede | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | et hundrede fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | fem | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | fem | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | fem fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | femogfirs | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | femogfirs | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | femogfirs fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | femogfyrre | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | femogfyrre | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | femogfyrre fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | femoghalvfems | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | femoghalvfems | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | femoghalvfems fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | femoghalvfjerds | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | femoghalvfjerds | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | femoghalvfjerds fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | femoghalvtreds | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | femoghalvtreds | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | femoghalvtreds fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | femogtredive | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | femogtredive | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | femogtredive fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | femogtres | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | femogtres | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | femogtres fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | femogtyve | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | femogtyve | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | femogtyve fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | femten | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | femten | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | femten fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Find tallet 1 | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Find tallet 10 | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Find tallet 100 | Bulk-approved (PRD-11 owner listen pass) |  |
@@ -439,26 +461,37 @@ Last updated: 2026-10-14T18:42:04.899Z
 | ✅ | Find tallet 99 | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | fire | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | fire | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | fire fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | fireogfirs | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | fireogfirs | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | fireogfirs fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | fireogfyrre | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | fireogfyrre | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | fireogfyrre fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | fireoghalvfems | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | fireoghalvfems | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | fireoghalvfems fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | fireoghalvfjerds | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | fireoghalvfjerds | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | fireoghalvfjerds fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | fireoghalvtreds | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | fireoghalvtreds | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | fireoghalvtreds fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | fireogtredive | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | fireogtredive | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | fireogtredive fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | fireogtres | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | fireogtres | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | fireogtres fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | fireogtyve | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | fireogtyve | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | fireogtyve fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | firs | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | firs | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | firs fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | fjorten | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | fjorten | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | fjorten fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Fyld båden med atten | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Fyld båden med atten fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Fyld båden med elleve | Bulk-approved (PRD-11 owner listen pass) |  |
@@ -661,140 +694,207 @@ Last updated: 2026-10-14T18:42:04.899Z
 | ✅ | Fyld båden med tyve fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | fyrre | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | fyrre | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | fyrre fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | halvfems | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | halvfems | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | halvfems fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | halvfjerds | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | halvfjerds | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | halvfjerds fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | halvtreds | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | halvtreds | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | halvtreds fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | ni | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | ni | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | ni fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | niogfirs | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | niogfirs | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | niogfirs fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | niogfyrre | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | niogfyrre | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | niogfyrre fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | nioghalvfems | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | nioghalvfems | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | nioghalvfems fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | nioghalvfjerds | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | nioghalvfjerds | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | nioghalvfjerds fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | nioghalvtreds | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | nioghalvtreds | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | nioghalvtreds fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | niogtredive | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | niogtredive | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | niogtredive fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | niogtres | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | niogtres | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | niogtres fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | niogtyve | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | niogtyve | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | niogtyve fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | nitten | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | nitten | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | nitten fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | nul | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | nul | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | otte | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | otte | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | otte fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | otteogfirs | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | otteogfirs | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | otteogfirs fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | otteogfyrre | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | otteogfyrre | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | otteogfyrre fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | otteoghalvfems | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | otteoghalvfems | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | otteoghalvfems fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | otteoghalvfjerds | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | otteoghalvfjerds | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | otteoghalvfjerds fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | otteoghalvtreds | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | otteoghalvtreds | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | otteoghalvtreds fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | otteogtredive | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | otteogtredive | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | otteogtredive fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | otteogtres | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | otteogtres | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | otteogtres fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | otteogtyve | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | otteogtyve | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | otteogtyve fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | seks | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | seks | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | seks fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | seksogfirs | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | seksogfirs | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | seksogfirs fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | seksogfyrre | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | seksogfyrre | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | seksogfyrre fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | seksoghalvfems | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | seksoghalvfems | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | seksoghalvfems fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | seksoghalvfjerds | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | seksoghalvfjerds | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | seksoghalvfjerds fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | seksoghalvtreds | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | seksoghalvtreds | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | seksoghalvtreds fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | seksogtredive | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | seksogtredive | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | seksogtredive fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | seksogtres | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | seksogtres | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | seksogtres fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | seksogtyve | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | seksogtyve | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | seksogtyve fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | seksten | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | seksten | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | seksten fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | sytten | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | sytten | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | sytten fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | syv | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | syv | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | syv fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | syvogfirs | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | syvogfirs | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | syvogfirs fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | syvogfyrre | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | syvogfyrre | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | syvogfyrre fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | syvoghalvfems | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | syvoghalvfems | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | syvoghalvfems fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | syvoghalvfjerds | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | syvoghalvfjerds | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | syvoghalvfjerds fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | syvoghalvtreds | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | syvoghalvtreds | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | syvoghalvtreds fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | syvogtredive | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | syvogtredive | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | syvogtredive fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | syvogtres | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | syvogtres | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | syvogtres fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | syvogtyve | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | syvogtyve | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | syvogtyve fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | ti | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | ti | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | ti fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | to | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | to | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | to fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | tolv | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | tolv | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | tolv fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | toogfirs | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | toogfirs | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | toogfirs fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | toogfyrre | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | toogfyrre | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | toogfyrre fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | tooghalvfems | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | tooghalvfems | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | tooghalvfems fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | tooghalvfjerds | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | tooghalvfjerds | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | tooghalvfjerds fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | tooghalvtreds | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | tooghalvtreds | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | tooghalvtreds fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | toogtredive | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | toogtredive | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | toogtredive fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | toogtres | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | toogtres | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | toogtres fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | toogtyve | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | toogtyve | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | toogtyve fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | tre | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | tre | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | tre fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | tredive | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | tredive | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | tredive fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | treogfirs | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | treogfirs | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | treogfirs fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | treogfyrre | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | treogfyrre | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | treogfyrre fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | treoghalvfems | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | treoghalvfems | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | treoghalvfems fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | treoghalvfjerds | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | treoghalvfjerds | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | treoghalvfjerds fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | treoghalvtreds | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | treoghalvtreds | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | treoghalvtreds fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | treogtredive | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | treogtredive | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | treogtredive fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | treogtres | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | treogtres | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | treogtres fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | treogtyve | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | treogtyve | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | treogtyve fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | tres | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | tres | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | tres fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | tretten | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | tretten | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | tretten fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | tyve | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | tyve | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | tyve fisk | Bulk-approved (PRD-11 owner listen pass) |  |
 
 ## Sætninger
 

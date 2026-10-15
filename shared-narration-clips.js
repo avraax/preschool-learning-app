@@ -33,7 +33,7 @@ import {
   mathPromptText, mathFactText, mathMissingPromptText, missingPairs,
   COMPARE_PROMPT, comparisonFactText, COMPARE_SMALLER_PROMPT, comparisonSmallerFactText,
   HVAD_MANGLER_PROMPT, sequenceFactText, sequenceStarts, sequenceNumbers,
-  MEMORY_LETTERS_INSTRUCTION, MEMORY_NUMBERS_INSTRUCTION, BOAT_PROMPT_MAX, fillBoatPrompt, boatLoadedText,
+  MEMORY_LETTERS_INSTRUCTION, MEMORY_NUMBERS_INSTRUCTION, BOAT_PROMPT_MAX, fillBoatPrompt, boatLoadedText, boatCountText,
   NUANCER_INSTRUCTION, colorMixTargetText, colorMixResultText, colorMixQuestionText, colorObjectFactText,
   colorQuizPromptText,
 } from './src/config/gamePhrases.ts'
@@ -114,6 +114,7 @@ export function collectNarrationClips() {
   for (let n = 1; n <= BOAT_PROMPT_MAX; n++) {
     da('numbers', fillBoatPrompt(n))
     da('numbers', boatLoadedText(n))
+    da('numbers', boatCountText(n))
   }
 
   // Plus/Minus/Sammenlign — the spoken QUESTION and the correct-answer FACT for every problem each

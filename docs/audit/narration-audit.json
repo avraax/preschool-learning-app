@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-14T18:42:04.899Z",
+  "updatedAt": "2026-10-15T20:10:32.551Z",
   "clips": {
     "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|b": {
       "verdict": "ok",
@@ -23792,6 +23792,806 @@
       "text": "Der er et hundrede fisk",
       "group": "numbers",
       "updatedAt": 1792003324899
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|en fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "en fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032549
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|to fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "to fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032549
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tre fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tre fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032549
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fire fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fire fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032549
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fem fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fem fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032549
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|seks fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "seks fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032549
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|syv fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "syv fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032549
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|otte fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "otte fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032549
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|ni fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "ni fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032549
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|ti fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "ti fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032549
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|elleve fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "elleve fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032550
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tolv fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tolv fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032550
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tretten fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tretten fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032550
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fjorten fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fjorten fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032550
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|femten fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "femten fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032550
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|seksten fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "seksten fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032550
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|sytten fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "sytten fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032550
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|atten fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "atten fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032550
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|nitten fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "nitten fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032550
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tyve fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tyve fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032550
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|enogtyve fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "enogtyve fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032550
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|toogtyve fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "toogtyve fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032550
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|treogtyve fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "treogtyve fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032550
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fireogtyve fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fireogtyve fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032550
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|femogtyve fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "femogtyve fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032550
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|seksogtyve fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "seksogtyve fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032550
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|syvogtyve fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "syvogtyve fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032550
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|otteogtyve fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "otteogtyve fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032550
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|niogtyve fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "niogtyve fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032550
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tredive fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tredive fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032550
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|enogtredive fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "enogtredive fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032550
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|toogtredive fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "toogtredive fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032550
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|treogtredive fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "treogtredive fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032550
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fireogtredive fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fireogtredive fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032550
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|femogtredive fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "femogtredive fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032550
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|seksogtredive fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "seksogtredive fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032550
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|syvogtredive fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "syvogtredive fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032550
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|otteogtredive fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "otteogtredive fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032550
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|niogtredive fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "niogtredive fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032550
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fyrre fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fyrre fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032550
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|enogfyrre fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "enogfyrre fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032550
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|toogfyrre fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "toogfyrre fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032550
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|treogfyrre fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "treogfyrre fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032550
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fireogfyrre fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fireogfyrre fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032550
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|femogfyrre fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "femogfyrre fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032550
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|seksogfyrre fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "seksogfyrre fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032550
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|syvogfyrre fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "syvogfyrre fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032550
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|otteogfyrre fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "otteogfyrre fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032550
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|niogfyrre fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "niogfyrre fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032550
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|halvtreds fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "halvtreds fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032550
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|enoghalvtreds fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "enoghalvtreds fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032550
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tooghalvtreds fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tooghalvtreds fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032550
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|treoghalvtreds fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "treoghalvtreds fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032550
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fireoghalvtreds fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fireoghalvtreds fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032550
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|femoghalvtreds fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "femoghalvtreds fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032550
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|seksoghalvtreds fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "seksoghalvtreds fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032550
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|syvoghalvtreds fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "syvoghalvtreds fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032550
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|otteoghalvtreds fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "otteoghalvtreds fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032550
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|nioghalvtreds fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "nioghalvtreds fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032550
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tres fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tres fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032550
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|enogtres fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "enogtres fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032550
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|toogtres fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "toogtres fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032550
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|treogtres fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "treogtres fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032550
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fireogtres fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fireogtres fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032550
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|femogtres fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "femogtres fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032550
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|seksogtres fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "seksogtres fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032550
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|syvogtres fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "syvogtres fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032550
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|otteogtres fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "otteogtres fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032550
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|niogtres fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "niogtres fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032550
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|halvfjerds fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "halvfjerds fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032550
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|enoghalvfjerds fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "enoghalvfjerds fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032550
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tooghalvfjerds fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tooghalvfjerds fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032550
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|treoghalvfjerds fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "treoghalvfjerds fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032550
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fireoghalvfjerds fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fireoghalvfjerds fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032550
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|femoghalvfjerds fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "femoghalvfjerds fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032550
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|seksoghalvfjerds fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "seksoghalvfjerds fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032550
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|syvoghalvfjerds fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "syvoghalvfjerds fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032550
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|otteoghalvfjerds fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "otteoghalvfjerds fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032550
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|nioghalvfjerds fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "nioghalvfjerds fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032550
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|firs fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "firs fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032550
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|enogfirs fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "enogfirs fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032550
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|toogfirs fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "toogfirs fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032550
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|treogfirs fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "treogfirs fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032550
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fireogfirs fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fireogfirs fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032550
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|femogfirs fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "femogfirs fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032550
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|seksogfirs fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "seksogfirs fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032550
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|syvogfirs fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "syvogfirs fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032550
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|otteogfirs fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "otteogfirs fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032550
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|niogfirs fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "niogfirs fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032550
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|halvfems fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "halvfems fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032550
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|enoghalvfems fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "enoghalvfems fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032550
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tooghalvfems fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tooghalvfems fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032550
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|treoghalvfems fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "treoghalvfems fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032550
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|fireoghalvfems fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "fireoghalvfems fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032550
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|femoghalvfems fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "femoghalvfems fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032550
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|seksoghalvfems fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "seksoghalvfems fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032550
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|syvoghalvfems fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "syvoghalvfems fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032550
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|otteoghalvfems fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "otteoghalvfems fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032550
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|nioghalvfems fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "nioghalvfems fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032550
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|et hundrede fisk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "et hundrede fisk",
+      "group": "numbers",
+      "updatedAt": 1792095032550
     }
   }
 }
