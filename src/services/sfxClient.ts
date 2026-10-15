@@ -123,9 +123,9 @@ const CUE_VOLUME: Partial<Record<SfxCue, number>> = {
   bundle: 0.5,
   horn: 0.5,
   splash: 0.4,
-  // Baked at -32 / -26 LUFS → ~-42 LUFS effective for the bed (well under narration and every cue: it
-  // is atmosphere, never something to listen to) and ~-34 for the motor at its peak.
-  'harbour-ambience': 0.32,
+  // Baked at -32 / -26 LUFS → ~-38 LUFS effective for the bed (under narration and every cue: it is
+  // atmosphere; owner 2026-10-15 asked for "a bit louder" than the first ~-42) and ~-34 for the motor.
+  'harbour-ambience': 0.5,
   'boat-motor': 0.4,
 }
 
