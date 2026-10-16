@@ -264,6 +264,167 @@ plastic. No extra art is needed.
 
 ---
 
+# RE-RENDERS — validation of the first pass (2026-10-16)
+
+All 47 files in `C:\Users\AllanBrinkVraa\Downloads\art-krea` were measured and looked at full size.
+**24 are accepted**, **18 need a re-render** (below), and **1 picture was never asked for and is
+needed** (Batch J, the demo pencil). Put the new files in the same folder; the old ones can stay — the
+accepted list below names exactly which files are used.
+
+Why each one goes back, in one line each:
+- **Crayons 5–12 (all of Batches C and D).** The two batches came back as three different crayon
+  shapes. Green, light green and purple have a dark brown HALO around them (Gemini over-did the "soft
+  dark outline" the first prompt asked for — the outline turned out not to be needed: the greens
+  measure keyable without it). Brown has a BLUE end cap. Black and white have no paper wrapper, so
+  they read as markers. In the app all twelve lie side by side in one row, so the row must look like
+  ONE box of crayons. Re-rendered against the accepted red crayon as an exact shape reference.
+- **Rainbow crayon.** A third, stubbier shape, and a dark vignetted background (it keys worse).
+- **Undo arrow.** It came back as a pile of clay pebbles with a tiny arrow on one.
+- **Owl page.** A PHOTO of a colouring book on a table: grey surround and paper shadow — the region
+  script rejects grey, and the page is not square-on.
+- **Train page.** The train is a thin strip across the middle third: wheels and windows end up ~20 px
+  on the iPad, too small for a five-year-old to hit.
+- **Sailboat page.** The sea and the sky are ONE region (the wave stops before the edge, so a tap on the
+  sky fills the sea too).
+- **Ice cream page.** The waffle grid on the cone is dozens of tiny diamonds; the region script merges
+  them into the lines and the cone can't be coloured at all.
+- **Dragon & castle page.** Thin lines (half the weight of the others), brick detail, and the ground
+  line stops short, so the ground and the sky are one region.
+- **Bead-heart tile icon (PRD-02).** The board stands on a grey table filling the bottom half — not
+  keyable.
+- **Pegboard (PRD-02).** Clear plastic on a green screen IS green: 93% of the board measures as screen
+  colour, so the key would delete it. It must be milky/opaque.
+- **Tweezers (PRD-02).** A blue U-shape with no tips; it reads as a magnet, not tweezers.
+
+**Optional:** the beach page is usable (big sky/sea/sand regions) but its lines are thin and it has
+footprints and a shell too small to colour. Re-render only if you are in the line-art chat anyway.
+
+## R1 — crayons 5–8, re-render (one chat for R1 + R2 + R3)
+
+**Attach these 3 files:**
+- `C:\Users\AllanBrinkVraa\Downloads\art-krea\1ac5cf90-10fc-4583-9312-66ee2429e009.jpg` — **the shape
+  to copy exactly** (the accepted red crayon)
+- `C:\Source\preschool-learning-app\src\assets\themes\icons\games\math.counting.webp`
+- `C:\Source\preschool-learning-app\src\assets\themes\icons\games\colors.ram-farven.webp`
+
+```
+I need FOUR SEPARATE IMAGES — four individual image files, one per subject below. Do NOT combine them into one picture. Do NOT make a grid, collage, panel or contact sheet. Each image shows ONLY its own single crayon on its own full green background.
+
+Copy the attached RED CRAYON EXACTLY: the same shape, the same thickness, the same rounded end, the same pointed tip, the same cream paper wrapper band around the middle, the same diagonal pose, the same size in the frame, the same camera, the same soft contact shadow and the same lighting. ONLY the colour of the wax changes. No outline, no halo and no border around the crayon. The other two attached images are for the clay style only.
+
+Background for every image: flat solid #00FF00 green, edge to edge, no vignette, no gradient. Square 1:1. No text or letters.
+
+Image 1: the crayon in a DEEP FOREST GREEN (clearly darker than the background).
+Image 2: the crayon in a PALE YELLOW-GREEN (soft lime).
+Image 3: the crayon in PURPLE.
+Image 4: the crayon in soft BUBBLE-GUM PINK.
+
+Remember: the exact shape of the attached red crayon, no outline — and four separate image files, not one picture containing four.
+```
+
+## R2 — crayons 9–12, re-render (same chat)
+
+```
+FOUR SEPARATE IMAGES again — the SAME crayon as the attached red one, copied exactly: same shape, thickness, rounded end, pointed tip, cream paper wrapper band, pose, size, camera, shadow and light. Only the wax colour changes. No outline, no halo. Flat solid #00FF00 green background edge to edge, no vignette. Not one picture containing four.
+
+Image 1: the crayon in LIGHT SKY BLUE.
+Image 2: the crayon in CHOCOLATE BROWN — the WHOLE wax body brown, both ends brown, nothing blue.
+Image 3: the crayon in soft clay BLACK, still with a gentle highlight, WITH the same cream paper wrapper band.
+Image 4: the crayon in clay WHITE with soft grey shading so it reads on a light background, WITH the same cream paper wrapper band.
+```
+
+## R3 — the rainbow crayon, re-render (same chat)
+
+```
+Generate exactly ONE image: the SAME crayon as the attached red one, copied exactly (shape, thickness, rounded end, pointed tip, cream paper wrapper band, pose, size, camera, shadow, light), but its wax is striped in RAINBOW bands running around the crayon — red, orange, yellow, DARK green, blue, purple — on the parts not covered by the wrapper. The tip is red. Flat solid #00FF00 green background edge to edge, no vignette, no gradient. One image only.
+```
+
+## R4 — the undo arrow, re-render (new chat)
+
+**Attach these 2 files:**
+- `C:\Users\AllanBrinkVraa\Downloads\art-krea\7aa67d00-961a-415d-9fc0-173545fdca0f.jpg` — the accepted
+  orange "next" button, for style and size
+- `C:\Source\preschool-learning-app\src\assets\themes\icons\games\math.counting.webp`
+
+```
+Generate exactly ONE image: a single chunky curved ARROW made of warm-blue clay, like an "undo" sign — a thick rounded arc that curls over from right to left and ends in a big rounded arrow head pointing to the LEFT. Nothing else: no pebbles, no balls, no stones, no button under it, no base. Soft-3D claymation style matching the attached orange button (same clay, same lighting, same soft contact shadow). One centered subject filling most of the square, flat solid #00FF00 green background edge to edge, square 1:1, no text. One image only.
+```
+
+## R5 — colour-in pages, re-render (new chat, NOTHING attached)
+
+```
+I need FOUR SEPARATE IMAGES — four individual image files, one per subject below. Do NOT combine them into one picture. Do NOT make a grid, collage, panel or contact sheet.
+
+Style for every image: a children's colouring-book page for a 5-year-old, drawn DIGITALLY — not a photo of a book, no paper, no table, no shadow. THICK, smooth, solid BLACK outlines, all of the SAME heavy weight, on a pure WHITE background. Every shape is a CLOSED outline with no gaps, so each area can be filled with colour. Any horizon, ground or water line runs ALL THE WAY from the left edge to the right edge of the picture. Large simple areas, at most about 15 areas in the whole picture, NO tiny details, no patterns, no hatching, no texture, NO grey, NO shading, NO colour, no text, no letters. The subject FILLS most of the square. Square 1:1, seen straight on.
+
+Image 1: a round owl sitting on a branch, big eyes, a few big feathers — no small leaves.
+Image 2: a little steam train with ONE engine and TWO wagons, seen from the side, BIG — the train fills the whole width of the picture and half its height; big round wheels.
+Image 3: a sailing boat with a big triangular sail on the sea: a horizon line from the left edge to the right edge separates the sky from the sea; one big wave; no birds.
+Image 4: an ice cream cone with three big round scoops; the cone is PLAIN, with at most two simple lines on it — NO waffle grid.
+
+Remember: digital line art, thick equal black closed outlines on pure white, lines that cross the whole picture from edge to edge, NO grey — and four separate image files, not one picture containing four.
+```
+
+Same chat, one more:
+
+```
+Generate exactly ONE more image in exactly the same colouring-book style (thick equal black closed outlines on pure white, no grey, no tiny details, at most about 15 areas): a friendly round dragon standing in FRONT of a small castle with two towers. The ground line runs from the left edge to the right edge. The castle walls are PLAIN — no bricks. The dragon and the castle together fill most of the square. One image only.
+```
+
+## R6 — Perleplade props, re-render (PRD-02 — not needed until Perleplade is built)
+
+**Attach these 2 files:**
+- `C:\Users\AllanBrinkVraa\Downloads\art-krea\dd8e498b-b886-4c89-94e8-a783b4bf0e1f.jpg` — the accepted
+  bowl, for style
+- `C:\Source\preschool-learning-app\src\assets\themes\icons\games\math.counting.webp`
+
+```
+I need THREE SEPARATE IMAGES — three individual image files, one per subject below. Do NOT combine them into one picture. Each image shows ONLY its own single object on its own full flat solid #00FF00 green background, edge to edge — NOT on a table, NOT on a floor.
+
+Style for every image: soft-3D claymation style matching the attached bowl (same clay, same lighting, same soft contact shadow), square 1:1, no text.
+
+Image 1: a square children's pegboard for ironing beads, seen STRAIGHT from above, made of OPAQUE MILKY-WHITE plastic (NOT clear, NOT transparent — no green may show through it), with a grid of small round pegs and a clearly visible rounded edge.
+Image 2: a pair of chunky children's plastic TWEEZERS in bright blue: two straight arms joined at the top, the two tips close together at the bottom, clearly a pair of tweezers. Seen from the side, tips pointing down-left.
+Image 3: the same milky-white square pegboard seen from slightly above, with a HEART made of shiny red round ironing beads sitting on its pegs. It floats on flat solid #00FF00 — no table under it.
+
+Remember: flat solid #00FF00 behind every object, nothing under them — and three separate image files.
+```
+
+## Batch J — the demo pencil (NEW: never asked for, needed by Tegn med Mig)
+
+At Let, each guided step first shows a pencil tracing the dotted guide once (PRD-01 §4.3). It needs one
+pencil sprite, drawn pointing down-left so its TIP is the point that follows the line.
+
+**Attach these 2 files:**
+- `C:\Users\AllanBrinkVraa\Downloads\art-krea\04ac73e3-f609-4e0d-9677-f6ab0ea2288e.jpg` — the accepted
+  "Tegn med Mig" icon; copy ITS pencil
+- `C:\Source\preschool-learning-app\src\assets\themes\icons\games\math.counting.webp`
+
+```
+Generate exactly ONE image: a single chunky children's pencil, exactly like the pencil in the attached "cat drawing" image (same clay style, colours and lighting), alone — no paper, no cat, no drawing. It lies diagonally with its sharpened TIP pointing DOWN-LEFT, the pink eraser end at the upper right. One centered subject filling most of the square, soft contact shadow, flat solid #00FF00 green background edge to edge, square 1:1, no text. One image only.
+```
+
+---
+
+## Accepted files (first pass) — what the build session uses
+
+| use | file in `Downloads\art-krea` |
+|---|---|
+| studio backdrop (A) | `597b7fb8-…` (take 2, `80942e6d-…`, is near-identical) |
+| crayon red / orange / yellow / blue | `1ac5cf90-…` / `d0610af6-…` / `6752ea9e-…` / `efb86c8e-…` (the deeper of the two blues — the other, `495ee1d5-…`, is too close to light blue) |
+| glitter shaker · stamp · eraser | `8f546711-…` · `7bb39f38-…` · `9f380477-…` |
+| fresh paper · done ✓ · next → | `ae41cf2f-…` · `4dc6d607-…` · `7aa67d00-…` |
+| section icon (easel, magenta) | `8e6213d2-…` |
+| tiles: Fri Tegning · Tegn med Mig · Farvelæg | `04192dab-…` · `04ac73e3-…` · `564d50c3-…` |
+| pages: dog · frog · beach · forest · town · unicorn · rocket | `6fb9d0a8-…` · `4756bf1b-…` · `6a45d0c3-…` · `3fbb3a6d-…` · `b235d605-…` · `f506f5f6-…` · `ff723c54-…` |
+| bead bowl · picture-card frame (PRD-02) | `dd8e498b-…` · `51d60b8d-…` |
+| duplicates, unused | `1465e666-…`, `d9d21f28-…`, `953d2854-…` (second red/orange/yellow), `495ee1d5-…` |
+| re-render (above) | `dca03ae1` `1d9ae1c7` `297b7241` `18c978e2` `9ce102e2` `4de2c828` `250a38ff` `73500dde` `47201622` `ff1dc260` `a558d2b0` `54b7a0d0` `80a7f85a` `49ad1f20` `0e4d283a` `0207aa7c` `62ca5990` `caa582a0` |
+
+No new art is needed for: the picker cards (they render the child's own work), "keep my drawing" in
+the confirm (reuses the Fri Tegning tile), the crayon tool button (reuses the red crayon), beads/pegs
+and guide lines (code).
+
 ## For the build session (not for pasting)
 
 - Validate before keying: screen-green share of the frame (~75–95% is a good render; far less means
