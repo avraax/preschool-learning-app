@@ -281,20 +281,41 @@ const Boat: React.FC<BoatProps> = ({
           rotating the container would bend every drag offset of the cargo inside it. */}
       <Box component="img" src={L.art} alt="" draggable={false} sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%', display: 'block', userSelect: 'none', pointerEvents: 'none', transform: `rotate(${BOAT_LEVEL_DEG}deg)`, transformOrigin: '50% 80%' }} />
 
-      {/* The sail — blank until a correct send paints the number on it (the reveal IS the lesson). */}
-      <Box sx={{ position: 'absolute', left: pct(G.sail.left), top: pct(G.sail.top), width: pct(G.sail.width), height: pct(G.sail.height), display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
-        {sailNumber !== null && (
-          <motion.div
-            initial={reduce ? false : { transform: 'scale(0.3) rotate(-12deg)', opacity: 0 }}
-            animate={{ transform: 'scale(1) rotate(0deg)', opacity: 1 }}
-            transition={{ duration: 0.4, ease: LAND_EASE }}
-          >
-            <Typography component="span" sx={{ fontFamily: '"Comic Sans MS", "Comic Neue", cursive', fontWeight: 800, fontSize: 'calc(var(--bw) * 0.062)', lineHeight: 1, whiteSpace: 'nowrap', color: L.ink, textShadow: '0 2px 0 rgba(255,255,255,0.6)' }}>
-              {sailNumber}
-            </Typography>
-          </motion.div>
-        )}
-      </Box>
+      {/* The sail — blank until a correct send PAINTS the number on it (the reveal IS the lesson). It is
+          paint, not a sticker (owner, 2026-10-16: the floating numeral looked pasted on): masked to the
+          sail's lit cloth so no ink leaves the sail, leaning with the cloth, and MULTIPLIED onto it so the
+          cloth's own shading shows through the ink. The wrapper carries the image's levelling rotation so
+          the mask lines up with the sail it was cut from. */}
+      {sailNumber !== null && (
+        <Box
+          aria-hidden
+          sx={{
+            position: 'absolute',
+            inset: 0,
+            pointerEvents: 'none',
+            transform: `rotate(${BOAT_LEVEL_DEG}deg)`,
+            transformOrigin: '50% 80%',
+            mixBlendMode: 'multiply',
+            WebkitMaskImage: `url(${L.sail})`,
+            maskImage: `url(${L.sail})`,
+            WebkitMaskSize: '100% 100%',
+            maskSize: '100% 100%',
+          }}
+        >
+          <Box sx={{ position: 'absolute', left: pct(G.sail.x), top: pct(G.sail.y), transform: `translate(-50%, -50%) rotate(${G.sail.tiltDeg}deg)` }}>
+            <motion.div
+              // Brushed on: it fades and grows a little into place, no spin.
+              initial={reduce ? false : { transform: 'scale(0.7)', opacity: 0 }}
+              animate={{ transform: 'scale(1)', opacity: 0.92 }}
+              transition={{ duration: 0.45, ease: 'easeOut' }}
+            >
+              <Typography component="span" sx={{ display: 'block', fontFamily: '"Comic Sans MS", "Comic Neue", cursive', fontWeight: 800, fontSize: `calc(var(--bw) * ${sailNumber >= 100 ? 0.042 : 0.056})`, lineHeight: 1, whiteSpace: 'nowrap', color: L.ink, letterSpacing: '-0.02em' }}>
+                {sailNumber}
+              </Typography>
+            </motion.div>
+          </Box>
+        </Box>
+      )}
 
       {/* The deck — ONE drop target, with the two cargo rows standing on it. */}
       <Box sx={{ position: 'absolute', left: pct(G.deck.left), top: pct(G.deck.top), width: pct(G.deck.width), height: pct(G.deck.height) }}>

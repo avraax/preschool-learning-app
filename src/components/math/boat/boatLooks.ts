@@ -2,6 +2,10 @@ import boatRed from '../../../assets/games/boat/boat-red.webp'
 import boatYellow from '../../../assets/games/boat/boat-yellow.webp'
 import boatNavy from '../../../assets/games/boat/boat-navy.webp'
 import boatPaleblue from '../../../assets/games/boat/boat-paleblue.webp'
+import sailRed from '../../../assets/games/boat/sail-mask-red.webp'
+import sailYellow from '../../../assets/games/boat/sail-mask-yellow.webp'
+import sailNavy from '../../../assets/games/boat/sail-mask-navy.webp'
+import sailPaleblue from '../../../assets/games/boat/sail-mask-paleblue.webp'
 
 /**
  * The four fishing boats rotate per boat — pure visual variety, nothing to collect (Harbour PRD-01
@@ -9,10 +13,10 @@ import boatPaleblue from '../../../assets/games/boat/boat-paleblue.webp'
  * colours the numeral painted on the sail.
  */
 export const BOAT_LOOKS = [
-  { name: 'red', art: boatRed, ink: '#B3261E' },
-  { name: 'yellow', art: boatYellow, ink: '#1F5FA8' },
-  { name: 'navy', art: boatNavy, ink: '#1E2F5C' },
-  { name: 'paleblue', art: boatPaleblue, ink: '#2B6CA3' },
+  { name: 'red', art: boatRed, sail: sailRed, ink: '#B3261E' },
+  { name: 'yellow', art: boatYellow, sail: sailYellow, ink: '#1F5FA8' },
+  { name: 'navy', art: boatNavy, sail: sailNavy, ink: '#1E2F5C' },
+  { name: 'paleblue', art: boatPaleblue, sail: sailPaleblue, ink: '#2B6CA3' },
 ] as const
 
 /** All four renders share one shape and camera; this is boat-red.webp's box (849 × 519). */
@@ -34,21 +38,26 @@ export const BOAT_GEOMETRY = {
    * `boxColumns`. Fractions of the boat image's box.
    */
   rows: {
-    // Clear of the mast with air to spare (owner 2026-10-14: "too close to the pole").
-    fishLeft: 0.53,
-    fishRight: 0.88,
+    // The sail's lower curl reaches x 0.535 and the mast stands at 0.40–0.45 (measured on the levelled
+    // render): cargo starts right of both (owner 2026-10-16: a stacked box touched the sail). It ends
+    // short of the horn on the bow tip (x 0.888).
+    fishLeft: 0.555,
+    fishRight: 0.885,
     fishBack: 0.645,
     fishFront: 0.712,
-    boxLeft: 0.5,
-    // The horn stands from x 0.83 — a box past ~0.85 sits on it.
-    boxRight: 0.845,
+    boxLeft: 0.565,
+    boxRight: 0.875,
     /** Where a ground-tier box's bottom edge rests — just behind the fish. */
     boxBase: 0.615,
   },
-  /** The sail, for the numeral. */
-  sail: { left: 0.43, top: 0.03, width: 0.11, height: 0.42 },
-  /** The horn stands on the bow deck. */
-  horn: { left: 0.83, top: 0.36, width: 0.12 },
+  /**
+   * Where the numeral is PAINTED on the sail: the centre of the sail's lit face (measured on the cloth
+   * masks, scripts/make-sail-masks.mjs — widest at y 0.14–0.22, x ~0.44–0.53) and the face's lean (its
+   * axis runs from x 0.475 at the top to 0.51 at y 0.45, ~8° off vertical).
+   */
+  sail: { x: 0.487, y: 0.18, tiltDeg: -8 },
+  /** The horn stands on the bow's very tip, on the rim (rim top y ~0.57 at x 0.93) — clear of the cargo. */
+  horn: { left: 0.888, top: 0.445, width: 0.092 },
 } as const
 
 /**
