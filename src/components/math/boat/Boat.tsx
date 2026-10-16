@@ -319,10 +319,11 @@ const Boat: React.FC<BoatProps> = ({
         </Box>
       )}
 
-      {/* The ✓ sits centred over the horn, measured from the horn's own box — so it is above the horn at
+      {/* The ✓ sits centred over the horn, measured from the horn's own box (10% of the boat's height of air
+          above it — at 2% it crowded the horn, and the horn swells into it when blown) — so it is above it at
           every size, rather than tuned against the stage. */}
       {sendSlot && (
-        <Box sx={{ position: 'absolute', zIndex: 3, left: pct(G.horn.left + G.horn.width / 2), bottom: pct(1 - G.horn.top + 0.02), transform: 'translateX(-50%)' }}>
+        <Box sx={{ position: 'absolute', zIndex: 3, left: pct(G.horn.left + G.horn.width / 2), bottom: pct(1 - G.horn.top + 0.1), transform: 'translateX(-50%)' }}>
           {sendSlot}
         </Box>
       )}
