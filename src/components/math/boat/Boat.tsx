@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Box, Typography } from '@mui/material'
 import { DraggableItem } from '../../common/dnd/DraggableItem'
@@ -54,6 +54,8 @@ interface BoatProps {
   tooting: boolean
   /** The green ✓, seated centred right above the horn (owner, 2026-10-15). */
   sendSlot?: React.ReactNode
+  /** The horn was tapped: play its sound. */
+  onHorn: () => void
   /** Something is being dragged — the deck shows where the slots are. */
   dragging: boolean
   /** Box columns for the level (`boxColumns`). */
@@ -241,8 +243,19 @@ const Boat: React.FC<BoatProps> = ({
   sendSlot,
   dragging,
   boxCols,
+  onHorn,
 }) => {
   const L = BOAT_LOOKS[look % BOAT_LOOKS.length]
+  // Every blast — a tap, or the correct send (`tooting` turning on) — bumps one counter, and the counter
+  // keys the animation, so each blast plays once (React's adjust-state-on-prop-change pattern).
+  const [blows, setBlows] = useState(0)
+  const [wasTooting, setWasTooting] = useState(tooting)
+  if (tooting !== wasTooting) {
+    setWasTooting(tooting)
+    if (tooting) setBlows((b) => b + 1)
+  }
+  const blowing = blows > 0
+  const blowKey = blows
   return (
     <motion.div
       key={shakeKey}
@@ -314,32 +327,45 @@ const Boat: React.FC<BoatProps> = ({
         </Box>
       )}
 
-      {/* The horn is not a button (sending is the big green ✓ — owner, 2026-10-15). On a correct send IT is
-          what blows: it swells twice with the blast and sound rings roll out of its bell, so the child
-          sees where the sound comes from (owner: "emphasize the horn being the one making the sound"). */}
-      <Box aria-hidden sx={{ position: 'absolute', left: pct(G.horn.left), top: pct(G.horn.top), width: `calc(var(--bw) * ${G.horn.width})`, aspectRatio: '1', pointerEvents: 'none' }}>
-        {tooting && !reduce &&
-          [0, 1, 2].map((i) => (
-            // The bell opens up and to the right (x ~0.78, y ~0.3 of the horn art).
-            <Box key={i} sx={{ position: 'absolute', left: '78%', top: '30%', width: '90%', aspectRatio: '1', transform: 'translate(-50%, -50%)' }}>
-              <motion.div
-                initial={{ transform: 'scale(0.3)', opacity: 0 }}
-                animate={{ transform: ['scale(0.3)', 'scale(1.1)', 'scale(1.9)'], opacity: [0, 0.9, 0] }}
-                transition={{ duration: 0.9, delay: i * 0.22, ease: 'easeOut', times: [0, 0.3, 1] }}
-                style={{ width: '100%', height: '100%', borderRadius: '50%', border: '4px solid rgba(255,255,255,0.95)', boxShadow: '0 0 8px rgba(255,255,255,0.6)', clipPath: 'polygon(50% 50%, 100% 0%, 100% 100%)' }}
-              />
-            </Box>
-          ))}
+      {/* The horn: sending is the big green ✓ (owner, 2026-10-15), so the horn is a TOY — tap it any time and
+          it blows (owner, 2026-10-16). On a correct send it blows by itself. Either way it swells twice
+          with the blast and sound rings roll out of its bell, so the child sees where the sound comes
+          from. The sound itself is the game's (`onHorn`); this only draws the blast. */}
+      <Box
+        component="button"
+        type="button"
+        aria-label="Tut med hornet"
+        onClick={() => {
+          setBlows((b) => b + 1)
+          onHorn()
+        }}
+        sx={{ position: 'absolute', left: pct(G.horn.left), top: pct(G.horn.top), width: `calc(var(--bw) * ${G.horn.width})`, aspectRatio: '1', p: 0, border: 0, background: 'transparent', cursor: 'pointer', WebkitTapHighlightColor: 'transparent' }}
+      >
+        {blowing && !reduce && (
+          <React.Fragment key={`rings-${blowKey}`}>
+            {[0, 1, 2].map((i) => (
+              // The bell opens up and to the right (x ~0.78, y ~0.3 of the horn art).
+              <Box key={i} sx={{ position: 'absolute', left: '78%', top: '30%', width: '90%', aspectRatio: '1', transform: 'translate(-50%, -50%)', pointerEvents: 'none' }}>
+                <motion.div
+                  initial={{ transform: 'scale(0.3)', opacity: 0 }}
+                  animate={{ transform: ['scale(0.3)', 'scale(1.1)', 'scale(1.9)'], opacity: [0, 0.9, 0] }}
+                  transition={{ duration: 0.9, delay: i * 0.22, ease: 'easeOut', times: [0, 0.3, 1] }}
+                  style={{ width: '100%', height: '100%', borderRadius: '50%', border: '4px solid rgba(255,255,255,0.95)', boxShadow: '0 0 8px rgba(255,255,255,0.6)', clipPath: 'polygon(50% 50%, 100% 0%, 100% 100%)' }}
+                />
+              </Box>
+            ))}
+          </React.Fragment>
+        )}
         <motion.div
-          key={tooting ? 'toot' : 'still'}
+          key={blowKey}
           initial={false}
           animate={
-            tooting && !reduce
+            blowing && !reduce
               ? { transform: ['scale(1) rotate(0deg)', 'scale(1.3) rotate(-6deg)', 'scale(1.15) rotate(-3deg)', 'scale(1.3) rotate(-6deg)', 'scale(1) rotate(0deg)'] }
               : { transform: 'scale(1) rotate(0deg)' }
           }
           transition={{ duration: 1.1, ease: 'easeInOut', times: [0, 0.15, 0.5, 0.75, 1] }}
-          style={{ width: '100%', height: '100%', transformOrigin: '50% 90%' }}
+          style={{ width: '100%', height: '100%', transformOrigin: '50% 90%', pointerEvents: 'none' }}
         >
           <Box component="img" src={hornArt} alt="" draggable={false} sx={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }} />
         </motion.div>

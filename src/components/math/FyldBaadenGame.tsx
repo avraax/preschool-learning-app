@@ -565,6 +565,7 @@ const FyldBaadenGame: React.FC = () => {
                       shakeKey={shakeKey}
                       departing={phase === 'sailing'}
                       tooting={phase === 'sending'}
+                      onHorn={() => { markInteracted(); sfx.play('horn') }}
                       sendSlot={<SendButton enabled={interactive && !isDeckEmpty(deck)} present={phase === 'loading'} reduce={reduce} onSend={sendBoat} />}
                       dragging={activeId !== null}
                       boxCols={boxCols}
