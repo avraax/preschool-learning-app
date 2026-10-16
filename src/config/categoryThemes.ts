@@ -76,6 +76,14 @@ const categoryContent: Record<CategoryId, CategoryContent> = {
     name: 'Tal og Regning',
     description: 'Lær tal, optælling og grundlæggende matematik på en sjov måde',
     games: [
+      // Fyld Båden (Harbour PRD-01) — FIRST in the menu (owner 2026-10-16); may replace Tal Quiz later.
+      // Staging-only: the menu filters this tile through `boatGameShown()` until the owner signs it off.
+      {
+        id: 'boat',
+        title: 'Fyld Båden',
+        route: '/math/boat',
+        gradient: 'linear-gradient(135deg, #A855F7 0%, #9333EA 100%)'
+      },
       {
         id: 'numbers',
         title: 'Lær Tal',
@@ -87,14 +95,6 @@ const categoryContent: Record<CategoryId, CategoryContent> = {
         title: 'Tal Quiz',
         route: '/math/counting',
         gradient: 'linear-gradient(135deg, #AB47BC 0%, #9C27B0 100%)'
-      },
-      // Fyld Båden (Harbour PRD-01) — beside Tal Quiz, which it may replace later. Staging-only: the
-      // menu filters this tile through `boatGameShown()` until the owner signs it off.
-      {
-        id: 'boat',
-        title: 'Fyld Båden',
-        route: '/math/boat',
-        gradient: 'linear-gradient(135deg, #A855F7 0%, #9333EA 100%)'
       },
       {
         id: 'addition',
