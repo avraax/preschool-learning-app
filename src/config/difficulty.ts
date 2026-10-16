@@ -579,6 +579,25 @@ export const KREA_GUIDE: Record<DifficultyLevel, KreaGuideTuning> = {
   svaer: { palette: 12, tolerancePx: 28, demo: false },
 }
 
+/**
+ * Perleplade (`krea.beads`, Krea PRD-02 §2.5) — the axis is BOARD SIZE: pegs per side (the boards are
+ * square; shaped free boards are masks over that square), how big a bead sits on its peg (Maxi at Let,
+ * Midi above) and the palette. Every pattern is authored per level as its own grid (`kreaBeads.ts`), so a
+ * harder level is finer detail, never a lost reward: XP is the same at every level. The sizes are bound
+ * by the 40 px minimum peg pitch on the iPad (`kreaBeads.test.ts`) — fix this table, never the pitch.
+ */
+export interface KreaBeadsTuning {
+  board: number
+  /** Bead diameter as a fraction of the peg pitch. */
+  bead: number
+  palette: 8 | 12
+}
+export const KREA_BEADS: Record<DifficultyLevel, KreaBeadsTuning> = {
+  let: { board: 7, bead: 0.92, palette: 8 },
+  normal: { board: 10, bead: 0.84, palette: 12 },
+  svaer: { board: 13, bead: 0.84, palette: 12 },
+}
+
 // ================================================================================================
 // 4. The registry + the exempt list
 // ================================================================================================
@@ -610,6 +629,7 @@ export const TUNING: Record<string, Record<DifficultyLevel, object>> = {
   'krea.draw': KREA_PALETTE,
   'krea.guide': KREA_GUIDE,
   'krea.color': KREA_PALETTE,
+  'krea.beads': KREA_BEADS,
 }
 
 /**
@@ -637,6 +657,7 @@ export const TILE_AXIS_EXEMPT: Record<string, string> = {
   'colors.farvejagt': 'drag board — the axis is item count',
   'colors.ramfarven': 'drag bench — the axis is the target pool',
   'colors.nuancer': 'drag tray — the axis is slots + a decoy',
+  'krea.beads': 'pegboard — the axis is board size',
   'memory.letters': 'card board — the axis is pairs',
   'memory.numbers': 'card board — the axis is pairs',
 }
