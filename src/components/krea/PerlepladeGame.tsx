@@ -33,7 +33,7 @@ import {
 } from './beads/beadBoard'
 import { BoardArt, geometryOf, Pegboard, pegBox, PlacedBeads } from './beads/Pegboard'
 import { BeadBowls } from './beads/BeadBowls'
-import { DragGhost } from './beads/Tweezers'
+import { DragGhost } from './beads/HeldBead'
 import { StudioBackdrop } from './studio/StudioScene'
 import { PlusBadge, StudioButton } from './studio/StudioControls'
 import NewPaperConfirm from './studio/NewPaperConfirm'
@@ -43,17 +43,18 @@ import { KreaPicker } from './studio/KreaPicker'
 // Perleplade (`krea.beads`, Krea PRD-02) — Hama beads, one at a time, onto a pegboard.
 //
 // ONE RESOLVER, TWO GESTURES (house rule, drag-and-drop.md): drag a bead out of a bowl onto a peg, or tap
-// a bowl (one bead lifts into the tweezers) and then tap a peg. Both end in `resolve()`, the only caller
+// a bowl (one bead lifts out of it, in hand) and then tap a peg. Both end in `resolve()`, the only caller
 // of `placeBead` here — `kreaBeads`/`kreaPhrases` tests fail the build if a second path appears. A placed
-// bead comes off the same two ways: drag it back to the bowls, or tap it with empty tweezers (it lifts
-// into them; tap its bowl or the tweezers to put it away, or another peg to move it).
+// bead comes off the same two ways: drag it back to the bowls, or tap it with nothing in hand (it lifts
+// off; tap a bowl to put it away, or another peg to move it). All by hand — no tweezers (owner,
+// 2026-10-16: it should feel like picking up a real bead and pressing it onto the plate).
 //
 // This slice (W2) is the FREE BOARD: five shaped boards, anything goes anywhere. Like Fri Tegning it
 // EARNS NOTHING and HAS NO FINISH (owner, 2026-10-16, applied to the free board the same day): no
 // `useTaskRun`, no ✓, no pop-off — "Ny plade" + the spoken confirm is the way on. Copy-a-pattern (W3)
 // is the mode that finishes and earns.
 //
-// Session-only resume per board (`kreaSession`). The tweezers never hold a bead across a resume.
+// Session-only resume per board (`kreaSession`). Nothing is ever held across a resume.
 
 const GAME_ID = 'krea.beads'
 const SAVE_DEBOUNCE_MS = 500
@@ -221,7 +222,7 @@ const PerlepladeGame: React.FC = () => {
     const peg = pegAt(g, x, y)
     if (held) {
       const r = resolve(b, held, peg)
-      // A tap that missed the board keeps the bead in the tweezers; anything else used it up.
+      // A tap that missed the board keeps the bead in hand; anything else used it up.
       if (r !== 'outside') setHeld(null)
       return
     }
@@ -290,7 +291,7 @@ const PerlepladeGame: React.FC = () => {
     const id = String(e.active.id)
     let next: Grab = null
     if (id.startsWith('bowl:')) {
-      // One bead at a time: a bead already in the tweezers goes home first.
+      // One bead at a time: a bead already in hand goes home first.
       if (held) setHeld(null)
       next = { from: 'bowl', colour: id.slice(5) as BeadColor }
       pickColour(next.colour)
@@ -413,11 +414,10 @@ const PerlepladeGame: React.FC = () => {
     '--bead-bowl': `${BEAD_LAYOUT.bowlPx}px`,
     '--bead-bowl-gap': `${BEAD_LAYOUT.bowlGapPx}px`,
     '--bead-side': `${BEAD_LAYOUT.sidePx}px`,
-    '--bead-tweezers': '112px',
     // A phone is not the target device: the board simply takes what is left (measured 2026-10-16, WebKit:
     // pitch 42/30/24 px at Let/Normal/Svær on an 844×390 landscape phone — under the iPad's 40 px floor
     // above Let). No panning: a pannable board under a drag gesture would fight the drag.
-    [PHONE_ANY]: { '--bead-bowl': '46px', '--bead-bowl-gap': '4px', '--bead-side': '104px', '--bead-tweezers': '60px' },
+    [PHONE_ANY]: { '--bead-bowl': '46px', '--bead-bowl-gap': '4px', '--bead-side': '104px' },
     // 12 bowls in two rows + the side row are wider than a portrait phone (two bowls hung off): 4 rows of 3.
     [PHONE_PORTRAIT]: { '--bead-bowl-rows': 4 },
   }
@@ -490,7 +490,7 @@ const PerlepladeGame: React.FC = () => {
               // Reserved space (layout-contract.md): the bowls and the side column take their fixed share
               // (`BEAD_LAYOUT`, the same numbers the pitch test reads) and the board is the remainder.
               // Portrait: the board takes the full width, so the row under it only has to fit the bowls
-              // and the side controls side by side (measured: a 168 px side squeezed the tweezers to a sliver).
+              // and the side controls side by side (measured: a 168 px side squeezed its controls to a sliver).
               gridTemplateColumns: 'auto auto',
               justifyContent: 'center',
               gridTemplateRows: 'minmax(0, 1fr) auto',

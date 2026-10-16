@@ -592,7 +592,8 @@ const KREA_KEY_OVERRIDES = {
 const KREA_TILES = { 'icon-draw': 'krea.draw', 'icon-guide': 'krea.guide', 'icon-color': 'krea.color', 'icon-beads': 'krea.beads' }
 // Perleplade's props (PRD-02 W0): art-src/krea/beads/<id>.jpg → src/assets/games/krea/beads/<id>.webp.
 // The pegboard render is NOT shipped: its baked pegs (~19 a side) can't line up with a 7/10/13 board, so
-// the board is drawn in code like the beads (PRD-02 §2.1). The tweezers already lie tip DOWN-LEFT.
+// the board is drawn in code like the beads (PRD-02 §2.1). The tweezers render is not used either: beads
+// are picked up by hand (owner, 2026-10-16).
 const KREA_BEAD_SPECS = {
   // The cream clay picks up the screen's bounce light underneath, so on the defaults its bottom edge
   // keyed away ragged — and the leaf thresholds kept the whole contact shadow. Measured green-excess:
@@ -600,7 +601,6 @@ const KREA_BEAD_SPECS = {
   // bounce-light tint (a green-bellied bowl on the wood table), so despill flattens it from 10 — the
   // bowl has no green of its own to lose.
   bowl: { size: 256, fill: 0.92, vivid: 140, faint: 65, despill: 10, darkScreenMax: 40 },
-  tweezers: { size: 256, fill: 0.92 },
   'card-frame': { size: 512, fill: 0.96 },
 }
 

@@ -513,7 +513,7 @@ export const BEAD_LAYOUT = {
   /** A bowl cell; the bowls stand in 2 columns beside the board (landscape) or 2 rows under it (portrait). */
   bowlPx: 64,
   bowlGapPx: 8,
-  /** The side column: the tweezers and the way on (and the pattern card, W3). */
+  /** The side column: the way on (and the pattern card, W3). */
   sidePx: 168,
   gapPx: 16,
   /** The board's plastic rim, in pitches (half a pitch round the outer pegs). */

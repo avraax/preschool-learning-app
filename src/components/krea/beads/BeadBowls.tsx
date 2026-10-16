@@ -4,12 +4,12 @@ import { DraggableItem } from '../../common/dnd/DraggableItem'
 import { KREA_COLOR_NAME } from '../../../config/kreaPhrases'
 import { BEAD_ART } from '../../../assets/games/krea/beads'
 import { Bead } from './Bead'
-import { BowlTweezers } from './Tweezers'
+import { LiftedBead } from './HeldBead'
 import type { BeadColor } from './beadBoard'
 
 // The colour bowls (Krea PRD-02 §2.2): a clay bowl heaped with beads per crayon colour. Each bowl is a
 // shared `DraggableItem` — DRAG one bead out of it onto a peg, or TAP it to lift one bead into the
-// tweezers (`onActivate`). Both end in the game's one resolver. The bowl itself never moves: the
+// hand (`onActivate`). Both end in the game's one resolver. The bowl itself never moves: the
 // draggable is a transparent hit box over it, and the game draws the bead in the finger.
 //
 // The tray is ONE droppable ("bowls"): a bead dragged off the board and dropped here goes home.
@@ -28,7 +28,7 @@ const HEAP = [
 
 export const BeadBowls: React.FC<{
   colours: readonly BeadColor[]
-  /** The colour in the tweezers (its bowl lifts a little). */
+  /** The colour in hand after a tap (its bowl lifts a little and one bead floats above it). */
   held: BeadColor | null
   /** The never-fail hint (W3): this bowl glows. */
   glow?: BeadColor | null
@@ -83,13 +83,13 @@ export const BeadBowls: React.FC<{
                   top: `${p.y}%`,
                   width: '22%',
                   height: '22%',
-                  // The top bead of the heap is the one that leaves: hidden while it is in the finger or the tweezers.
+                  // The top bead of the heap is the one that leaves: hidden while it is in the finger or in hand.
                   visibility: i === 2 && (dragging === c || held === c) ? 'hidden' : 'visible',
                 }}
               />
             ))}
           </div>
-          {held === c ? <BowlTweezers colour={c} /> : null}
+          {held === c ? <LiftedBead colour={c} /> : null}
           <DraggableItem id={`bowl:${c}`} inline fill disabled={disabled} data={{ colour: c }} onActivate={() => onTap(c)}>
             <div aria-label={KREA_COLOR_NAME[c]} style={{ width: '100%', height: '100%' }} />
           </DraggableItem>

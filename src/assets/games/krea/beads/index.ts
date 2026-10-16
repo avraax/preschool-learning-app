@@ -3,7 +3,6 @@
 // drawn in code (PRD-02 §2.1); these are the clay things around them. Static imports, so a missing
 // render is a build error.
 import bowl from './bowl.webp'
-import tweezers from './tweezers.webp'
 import cardFrame from './card-frame.webp'
 
-export const BEAD_ART = { bowl, tweezers, cardFrame }
+export const BEAD_ART = { bowl, cardFrame }

@@ -206,8 +206,7 @@ Playable on DEV/staging at `/krea/perler` (free boards only).
 - **Drag mechanics:** bowls are `DraggableItem`s (transparent hit box, the bead in the finger is a
   separate ghost); the board is ONE droppable + ONE draggable (`board-bead`, which bead = where the press
   landed). The ghost and the landing peg read the real pointer, not dnd-kit's delta. Removing a bead:
-  drag it onto the bowls, or tap it with empty tweezers (it lifts; tapping its bowl or the tweezers puts it
-  away). §2.6's "then confirm" was read as belonging to "Nyt papir", not to taking one bead off.
+  drag it onto the bowls, or tap it with nothing in hand (it lifts; tapping a bowl puts it away). §2.6's "then confirm" was read as belonging to "Nyt papir", not to taking one bead off.
 - **WebKit trap found:** an identity `transform` on a DraggableItem's ancestor drifted the drag — the bowl
   look sits on a sibling layer (guarded; noted in `drag-and-drop.md`).
 - **Art:** bowl, tweezers, card frame keyed (`optimize-theme-art.mjs krea`, bowl has a measured override);
@@ -215,6 +214,10 @@ Playable on DEV/staging at `/krea/perler` (free boards only).
 - Verified rung 2 (gesture probe, 7 cases, both orientations; fit at 5 viewports × 3 levels) and rung 1
   (same probe, audio, session/confirm, perf at rest on a full Normal board: 0 recalcs). UNKNOWN: Svær perf
   on the harness build (couldn't seed the level there), rung 3. 21 guards re-broken, none vacuous.
+- **Owner review on staging (same day), do not re-litigate:** NO TWEEZERS anywhere — beads are picked up
+  and placed by hand (§2.2/§4.2's tweezers are superseded; the render is unused). A tapped bowl shows one
+  bead lifted above it. The bead under a finger sits 0.45 pitch above the touch point (a full pitch felt
+  detached), 0 under a mouse. The picker button is a mini grid of finished bead pictures, 120 px.
 - **W3 must:** narrow `perleplade.test.ts`'s "earns nothing" guard to the free-board path; add `pop-off`.
 
 ## 9. Kickoff prompt for a fresh session

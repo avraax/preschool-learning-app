@@ -1,5 +1,5 @@
 // The pegboard as a pure model (Krea PRD-02 §3, §4.1) — `placeBead` is THE resolver: a drag dropped on
-// the board and a tap on a peg with a bead in the tweezers both end here, so the two gestures can never
+// the board and a tap on a peg with a bead in hand both end here, so the two gestures can never
 // judge a bead differently (house rule, drag-and-drop.md). No React, no DOM; `beadBoard.test.ts` pins it.
 //
 // Two modes:
@@ -79,7 +79,7 @@ export function placeBead(b: BeadBoard, colour: BeadColor, peg: number): { board
   return { board: b, result, hint: null }
 }
 
-/** Take the bead off `peg` (back to its bowl, or into the tweezers). Returns its colour, or null. */
+/** Take the bead off `peg` (back to its bowl, or into the hand). Returns its colour, or null. */
 export function removeBead(b: BeadBoard, peg: number): { board: BeadBoard; colour: BeadColor | null } {
   const colour = b.beads[peg] ?? null
   if (!colour) return { board: b, colour: null }
