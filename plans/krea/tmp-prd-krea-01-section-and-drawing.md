@@ -464,6 +464,31 @@ iPad, not merely work.
 - More than 3 subjects per family (later, as data only).
 - Removing the release gate (an owner decision after play-testing).
 
+## 10. Progress log (read before continuing)
+
+**2026-10-16 — W0, W1, W2, W3 done** (cd573d4, 2678c76, 5911ecf, 405f6d7; not pushed). Stopped for the
+owner's iPad look-and-feel sign-off on Fri Tegning. Playable on DEV/staging at `/krea/tegn`.
+
+- **W0:** art doc checked. The section icon was a clay palette — Farver's home icon already — so it is an
+  easel now; green-on-green subjects (done button, rainbow stripe) darkened; batch G is paste blocks.
+  **No art has been rendered yet**: every Krea picture is a placeholder (copied icons) or an SVG/CSS
+  stand-in drawn in code (studio, crayons, tool buttons).
+- **W1:** 6th section behind `kreaGate.ts`. Home: a SEPARATE 6-object arc per skin (`homeAnchorsKrea`,
+  `homeAnchorsFor`), so the production 5-arc is byte-identical; in **portrait** six objects do not fit one
+  arc (neighbours overlap at 768 wide) so they take the centred flow braked to 3+3. Læring row gated too.
+- **W2 deviation from §4.6:** the session keeps the FULL stroke list and replays it, no checkpoint PNG.
+  Deterministic brushes make the replay exact and it removes the quota risk; ~1 KB for a few strokes.
+- **W3:** as §2.2; plus a 0-colour done line ("Se, din tegning danser!") for a picture of only rainbow,
+  glitter or stamps, where "Du har brugt nul farver" would be wrong. `GameShell lightScene` — on Rummet the
+  dark-world white title vanished on the cream wall. Tool SFX are SYNTHESISED (`scripts/bake-krea-sounds.mjs`),
+  a first pass the owner judges on the iPad. Stamps are 8 existing game renders (`studio/stamps.ts`).
+- Verified rung 1 + 2: see the W3 commit body. Rung 1 only: audio, reduced motion, idle cost.
+- Known, not chased: an intermittent Howler HTML5-fallback `removeEventListener` error in headless WebKit
+  only (no WebAudio there); the ring's grey track is faint on the cream wall on light skins.
+
+**Next:** owner sign-off (a) on the iPad — finger feel, crayon texture, the synthesised sounds, Pencil +
+palm guard, Scribble, sessionStorage after killing the PWA — and (b) the Gemini batches A–G. Then W4.
+
 ## 9. Kickoff prompt for a fresh session
 
 > Implement `plans/krea/tmp-prd-krea-01-section-and-drawing.md` (new Krea section + Fri Tegning, Tegn
