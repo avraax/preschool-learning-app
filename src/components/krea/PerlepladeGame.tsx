@@ -57,8 +57,13 @@ import { KreaPicker } from './studio/KreaPicker'
 
 const GAME_ID = 'krea.beads'
 const SAVE_DEBOUNCE_MS = 500
-/** The bead in the finger floats this many pitches above it (§4.2): the finger never hides the peg. */
-const LIFT_PITCHES = 1
+/**
+ * How far the bead in the finger sits above the touch point, in pitches (§4.2). A full pitch kept the
+ * peg visible but felt detached — not like picking a bead up (owner, 2026-10-16). Half a pitch lets the
+ * bead peek out just above the fingertip, which is where a pinched bead is. A mouse hides nothing, so
+ * there it sits right under the pointer.
+ */
+const TOUCH_LIFT_PITCHES = 0.45
 /** Free boards' picker/deep-link ids are prefixed, so they never collide with a pattern's (hjerte…). */
 const FREE_PREFIX = 'fri-'
 
@@ -118,6 +123,7 @@ const PerlepladeGame: React.FC = () => {
   // notes) — the bead in the finger and its landing peg must follow the finger, so they read this.
   const livePt = useRef<{ x: number; y: number }>({ x: 0, y: 0 })
   const unlisten = useRef<(() => void) | null>(null)
+  const liftPitches = useRef(TOUCH_LIFT_PITCHES)
   const [beadPx, setBeadPx] = useState(48)
 
   const welcomeTriggered = useRef(false)
@@ -244,14 +250,14 @@ const PerlepladeGame: React.FC = () => {
     const b = boardRef.current
     const g = b && geometryOf(hitRef.current, b.n)
     if (!b || !g) return -1
-    const peg = pegAt(g, x, y - LIFT_PITCHES * g.pitch)
+    const peg = pegAt(g, x, y - liftPitches.current * g.pitch)
     return peg >= 0 && b.mask[peg] ? peg : -1
   }
 
   const moveGhost = (x: number, y: number) => {
     const b = boardRef.current
     const g = b && geometryOf(hitRef.current, b.n)
-    const lift = (g?.pitch ?? beadPx) * LIFT_PITCHES
+    const lift = (g?.pitch ?? beadPx) * liftPitches.current
     if (ghostRef.current) ghostRef.current.style.transform = `translate(${x}px, ${y - lift}px)`
     const ring = ringRef.current
     if (!ring || !b) return
@@ -269,6 +275,7 @@ const PerlepladeGame: React.FC = () => {
     markInteracted()
     audio.updateUserInteraction()
     const p = pointOf(e.activatorEvent)
+    liftPitches.current = (e.activatorEvent as PointerEvent | null)?.pointerType === 'mouse' ? 0 : TOUCH_LIFT_PITCHES
     startPt.current = p
     livePt.current = p
     unlisten.current?.()
