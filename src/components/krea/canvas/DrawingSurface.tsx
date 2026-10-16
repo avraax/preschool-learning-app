@@ -1,13 +1,12 @@
 import React, { useCallback, useEffect, useLayoutEffect, useRef } from 'react'
 import { Box } from '@mui/material'
-import { drawStroke, makeCrayonTile, type BrushEnv } from './brushes'
+import { createPainter, drawStroke, makeCrayonTile, type BrushEnv, type StrokePainter } from './brushes'
 import {
   PAPER_H,
   PAPER_W,
   STAMP_SIZE,
   quantise,
   seedFor,
-  type BrushTool,
   type CrayonColor,
   type Drawing,
   type Stroke,
@@ -86,7 +85,7 @@ const DrawingSurface: React.FC<DrawingSurfaceProps> = ({
   mirrorRef.current = mirrorX
 
   // The stroke in progress.
-  const active = useRef<{ id: number; tool: BrushTool; color: CrayonColor; points: number[] } | null>(null)
+  const active = useRef<{ id: number; stroke: Stroke; points: number[]; painter: StrokePainter } | null>(null)
   const raf = useRef<number | null>(null)
 
   const envFor = useCallback((ctx: CanvasRenderingContext2D): BrushEnv => {
@@ -244,33 +243,29 @@ const DrawingSurface: React.FC<DrawingSurfaceProps> = ({
     }
   }, [])
 
+  // The paper's box is read ONCE per stroke (at pointerdown), never per move: a getBoundingClientRect
+  // inside pointermove forces a layout on every event of a 60–240 Hz stream.
+  const rectRef = useRef<DOMRect | null>(null)
   const toPaper = (e: { clientX: number; clientY: number }): [number, number] => {
-    const r = hostRef.current!.getBoundingClientRect()
+    const r = rectRef.current ?? hostRef.current!.getBoundingClientRect()
     return [
       quantise(((e.clientX - r.left) / r.width) * PAPER_W, PAPER_W),
       quantise(((e.clientY - r.top) / r.height) * PAPER_H, PAPER_H),
     ]
   }
 
+  // Paint ONLY what is new since the last frame (`createPainter`), never the whole stroke again — that
+  // made each frame cost O(stroke length) and a long scribble stuttered more the longer it ran.
   const paintLive = () => {
     raf.current = null
     const a = active.current
     const live = liveRef.current
     const ink = inkRef.current
     if (!a || !live || !ink) return
-    const s: Stroke =
-      a.tool === 'crayon'
-        ? { tool: 'crayon', color: a.color, points: a.points, seed: seedFor(drawingRef.current.strokes.length) }
-        : { tool: a.tool, points: a.points, seed: seedFor(drawingRef.current.strokes.length) }
-    if (a.tool === 'eraser') {
-      // `destination-out` on the live layer would erase nothing visible, so the eraser works straight
-      // on the ink. Re-drawing the whole stroke each frame is idempotent at full alpha.
-      drawStroke(envFor(ink.getContext('2d')!), s)
-      return
-    }
-    const ctx = live.getContext('2d')!
-    ctx.clearRect(0, 0, live.width, live.height)
-    drawStroke(envFor(ctx), s)
+    // `destination-out` on the live layer would erase nothing visible, so the eraser works straight on
+    // the ink; the commit repaints the same marks, which is idempotent at full alpha.
+    const ctx = (a.stroke.tool === 'eraser' ? ink : live).getContext('2d')!
+    a.painter.paint(envFor(ctx), false)
   }
 
   const schedule = () => {
@@ -287,12 +282,14 @@ const DrawingSurface: React.FC<DrawingSurfaceProps> = ({
   const onPointerDown = (e: React.PointerEvent) => {
     if (active.current || !allowed(e)) return
     if (e.pointerType === 'mouse' && e.button !== 0) return
+    rectRef.current = hostRef.current!.getBoundingClientRect()
     const [x, y] = toPaper(e)
     if (tool === 'stamp') {
       if (!stamp) return
       onStrokeStart?.('stamp')
       onCommit({ tool: 'stamp', stamp, x, y, size: STAMP_SIZE, seed: seedFor(drawingRef.current.strokes.length) })
       onStrokeEnd?.('stamp')
+      rectRef.current = null
       return
     }
     try {
@@ -300,7 +297,11 @@ const DrawingSurface: React.FC<DrawingSurfaceProps> = ({
     } catch {
       /* a synthetic pointer may not be capturable */
     }
-    active.current = { id: e.pointerId, tool, color, points: [x, y] }
+    // The live stroke and its painter share ONE points array: moves push into it, frames paint the tail.
+    const seed = seedFor(drawingRef.current.strokes.length)
+    const points = [x, y]
+    const stroke: Stroke = tool === 'crayon' ? { tool, color, points, seed } : { tool, points, seed }
+    active.current = { id: e.pointerId, stroke, points, painter: createPainter(stroke) }
     onStrokeStart?.(tool)
     schedule()
   }
@@ -333,9 +334,11 @@ const DrawingSurface: React.FC<DrawingSurfaceProps> = ({
     } catch {
       /* ignore */
     }
-    onStrokeEnd?.(a.tool)
-    const seed = seedFor(drawingRef.current.strokes.length)
-    onCommit(a.tool === 'crayon' ? { tool: 'crayon', color: a.color, points: a.points, seed } : { tool: a.tool, points: a.points, seed })
+    rectRef.current = null
+    onStrokeEnd?.(a.stroke.tool)
+    // The committed stroke is repainted whole on the ink layer by a fresh painter; the live layer is
+    // cleared when the drawing re-renders.
+    onCommit(a.stroke)
   }
 
   return (

@@ -71,3 +71,26 @@ test('no unseeded randomness in the renderers', () => {
     .replace(/\/\/.*$/gm, '')
   assert.doesNotMatch(code, /Math\.random|Date\.now|performance\.now|crypto\./)
 })
+
+// The live layer paints a stroke a few points at a time; the committed stroke is painted whole. Both
+// must lay down exactly the same marks, or the line visibly changes the moment the finger lifts.
+test('painting a stroke incrementally makes exactly the marks of painting it whole', async () => {
+  const { createPainter } = await import('./brushes.ts')
+  const GEOM = /^(moveTo|quadraticCurveTo|lineTo|stroke|fill|closePath|strokeStyle=|fillStyle=)/
+  for (const s of STROKES.filter((x) => x.tool !== 'stamp') as Array<Stroke & { points: number[] }>) {
+    const whole = recorder()
+    const env = (ctx: CanvasRenderingContext2D): BrushEnv => ({ ctx, scale: 1.5, crayonPaint: (c) => `paint:${c}`, stampImage: () => null })
+    createPainter(s).paint(env(whole.ctx), true)
+    const live = recorder()
+    const growing = { ...s, points: s.points.slice(0, 2) }
+    const painter = createPainter(growing)
+    for (let i = 2; i < s.points.length; i += 2) {
+      growing.points.push(s.points[i], s.points[i + 1])
+      painter.paint(env(live.ctx), false)
+    }
+    painter.paint(env(live.ctx), true)
+    // Style is re-set on every frame; what matters is the same geometry in the same order.
+    const geom = (log: string[]) => log.filter((l) => GEOM.test(l)).filter((l, i, a) => !(l.endsWith('=') || (/=/.test(l) && a[i - 1] === l)))
+    assert.deepEqual(geom(live.log).filter((l) => !/Style=/.test(l)), geom(whole.log).filter((l) => !/Style=/.test(l)), s.tool)
+  }
+})

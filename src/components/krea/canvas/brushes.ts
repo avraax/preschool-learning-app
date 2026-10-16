@@ -53,141 +53,164 @@ export interface BrushEnv {
 
 const GLITTER_COLORS = ['#FFD54F', '#FFF59D', '#FFFFFF', '#F8BBD0', '#B3E5FC', '#FFE082']
 
-/** Smooth path through the points: quadratic curves through midpoints, so fast strokes aren't polygons. */
-function smoothPath(ctx: CanvasRenderingContext2D, pts: number[], k: number): void {
-  ctx.beginPath()
-  const n = pts.length / 2
-  ctx.moveTo(pts[0] * k, pts[1] * k)
-  if (n === 1) {
-    ctx.lineTo(pts[0] * k + 0.01, pts[1] * k)
-    return
-  }
-  for (let i = 1; i < n - 1; i++) {
-    const x = pts[i * 2], y = pts[i * 2 + 1]
-    const mx = (x + pts[i * 2 + 2]) / 2, my = (y + pts[i * 2 + 3]) / 2
-    ctx.quadraticCurveTo(x * k, y * k, mx * k, my * k)
-  }
-  ctx.lineTo(pts[(n - 1) * 2] * k, pts[(n - 1) * 2 + 1] * k)
+// ----- the painter: one stroke, painted INCREMENTALLY -----------------------------------------------
+//
+// A stroke is painted as a run of short smoothed SEGMENTS (quadratic curves through the midpoints, so a
+// fast stroke isn't a polygon). The live layer paints only the segments that are new since the last
+// frame — never the whole stroke again, which made every frame cost O(stroke length): measured at 4×
+// CPU throttle, a long scribble's last second ran at 330–550 ms a frame. The committed stroke is
+// painted by a fresh painter through the SAME segment loop, so live and committed are the same marks.
+// That only holds because every brush paints OPAQUE (the crayon grain is opaque flecks, not holes):
+// where two segments' round caps overlap, an opaque mark painted twice is still the same pixel.
+
+interface PainterState {
+  sx: number
+  sy: number
+  /** Rainbow: distance travelled so far, which drives the hue. */
+  dist: number
+  /** The next point to walk to (1-based edge end), and whether the pointer-up stretch is painted. */
+  edge: number
+  done: boolean
+  /** Glitter: the leftover distance to the next star, and the seeded generator. */
+  carry: number
+  r: () => number
+  stamped: boolean
 }
 
-const mirrored = (pts: number[], axis: number): number[] => pts.map((v, i) => (i % 2 === 0 ? 2 * axis - v : v))
-
-function drawOnce(env: BrushEnv, s: Stroke, pts: number[] | null): void {
-  const { ctx, scale: k } = env
-  ctx.save()
-  if (s.tool === 'stamp') {
-    const img = env.stampImage(s.stamp)
-    if (img) {
-      const r = rng(s.seed)
-      const tilt = (r() - 0.5) * 0.24
-      const size = s.size * k
-      const x = pts ? pts[0] : s.x
-      ctx.translate(x * k, s.y * k)
-      ctx.rotate(tilt)
-      ctx.drawImage(img, -size / 2, -size / 2, size, size)
-    }
-    ctx.restore()
-    return
-  }
-  const p = pts ?? s.points
-  const w = BRUSH_WIDTH[s.tool] * k
-  ctx.lineCap = 'round'
-  ctx.lineJoin = 'round'
-  if (s.tool === 'crayon' && s.color) {
-    ctx.globalCompositeOperation = 'source-over'
-    ctx.strokeStyle = env.crayonPaint(s.color)
-    ctx.lineWidth = w
-    smoothPath(ctx, p, k)
-    ctx.stroke()
-  } else if (s.tool === 'eraser') {
-    ctx.globalCompositeOperation = 'destination-out'
-    ctx.strokeStyle = '#000'
-    ctx.lineWidth = w
-    smoothPath(ctx, p, k)
-    ctx.stroke()
-  } else if (s.tool === 'rainbow') {
-    // The hue follows the distance drawn, so a long stroke runs through the whole rainbow.
-    ctx.globalCompositeOperation = 'source-over'
-    ctx.lineWidth = w
-    const n = p.length / 2
-    if (n === 1) {
-      ctx.fillStyle = 'hsl(0, 85%, 55%)'
-      ctx.beginPath()
-      ctx.arc(p[0] * k, p[1] * k, w / 2, 0, Math.PI * 2)
-      ctx.fill()
-    }
-    let dist = 0
-    let sx = p[0], sy = p[1]
-    for (let i = 1; i < n; i++) {
-      const x = p[i * 2], y = p[i * 2 + 1]
-      const nx = i < n - 1 ? (x + p[i * 2 + 2]) / 2 : x
-      const ny = i < n - 1 ? (y + p[i * 2 + 3]) / 2 : y
-      dist += Math.hypot(x - sx, y - sy)
-      ctx.strokeStyle = `hsl(${Math.round(dist * 0.9) % 360}, 85%, 55%)`
-      ctx.beginPath()
-      ctx.moveTo(sx * k, sy * k)
-      ctx.quadraticCurveTo(x * k, y * k, nx * k, ny * k)
-      ctx.stroke()
-      sx = nx
-      sy = ny
-    }
-  } else if (s.tool === 'glitter') {
-    ctx.globalCompositeOperation = 'source-over'
-    // A soft gold trail, then stars strewn along it.
-    ctx.globalAlpha = 0.75
-    ctx.strokeStyle = '#F2C94C'
-    ctx.lineWidth = w * 0.5
-    smoothPath(ctx, p, k)
-    ctx.stroke()
-    ctx.globalAlpha = 1
-    const r = rng(s.seed)
-    const STEP = 12
-    let carry = STEP
-    const n = p.length / 2
-    const star = (cx: number, cy: number) => {
-      const size = (9 + r() * 12) * k
-      const rot = r() * Math.PI
-      const jx = (r() - 0.5) * BRUSH_WIDTH.glitter * k
-      const jy = (r() - 0.5) * BRUSH_WIDTH.glitter * k
-      ctx.fillStyle = GLITTER_COLORS[Math.floor(r() * GLITTER_COLORS.length)]
-      ctx.beginPath()
-      for (let j = 0; j < 8; j++) {
-        const rad = j % 2 === 0 ? size : size * 0.38
-        const a = rot + (j * Math.PI) / 4
-        const px = cx * k + jx + Math.cos(a) * rad
-        const py = cy * k + jy + Math.sin(a) * rad
-        if (j === 0) ctx.moveTo(px, py)
-        else ctx.lineTo(px, py)
-      }
-      ctx.closePath()
-      ctx.fill()
-    }
-    if (n === 1) star(p[0], p[1])
-    for (let i = 1; i < n; i++) {
-      const x0 = p[i * 2 - 2], y0 = p[i * 2 - 1], x1 = p[i * 2], y1 = p[i * 2 + 1]
-      const len = Math.hypot(x1 - x0, y1 - y0)
-      let t = carry
-      while (t <= len) {
-        star(x0 + ((x1 - x0) * t) / len, y0 + ((y1 - y0) * t) / len)
-        t += STEP
-      }
-      carry = t - len
-    }
-  }
-  ctx.restore()
+export interface StrokePainter {
+  /** Paint whatever is new. `final` also paints the last segment to the last point (pointer is up). */
+  paint(env: BrushEnv, final: boolean): void
 }
 
-/** Draw one stroke (and its mirror image, when the env has a mirror axis). */
+const STAR_STEP = 12
+
+/** A soft gold, OPAQUE — a translucent trail would darken where its segments overlap. */
+const GLITTER_TRAIL = '#F6DC8F'
+
+export function createPainter(s: Stroke): StrokePainter {
+  const st: PainterState = { sx: 0, sy: 0, dist: 0, edge: 1, done: false, carry: STAR_STEP, r: rng(s.seed), stamped: false }
+  if (s.tool !== 'stamp') {
+    st.sx = s.points[0]
+    st.sy = s.points[1]
+  }
+  return {
+    paint(env, final) {
+      const { ctx, scale: k } = env
+      const mx = env.mirrorX
+      const xs = (x: number): number[] => (mx === undefined ? [x] : [x, 2 * mx - x])
+      ctx.save()
+      if (s.tool === 'stamp') {
+        const img = env.stampImage(s.stamp)
+        if (img && !st.stamped) {
+          st.stamped = true
+          const tilt = (rng(s.seed)() - 0.5) * 0.24
+          const size = s.size * k
+          for (const x of xs(s.x)) {
+            ctx.save()
+            ctx.translate(x * k, s.y * k)
+            ctx.rotate(tilt)
+            ctx.drawImage(img, -size / 2, -size / 2, size, size)
+            ctx.restore()
+          }
+        }
+        ctx.restore()
+        return
+      }
+      const p = s.points
+      const n = p.length / 2
+      const w = BRUSH_WIDTH[s.tool] * k
+      ctx.lineCap = 'round'
+      ctx.lineJoin = 'round'
+      ctx.globalCompositeOperation = s.tool === 'eraser' ? 'destination-out' : 'source-over'
+      if (s.tool === 'crayon' && s.color) ctx.strokeStyle = env.crayonPaint(s.color)
+      else if (s.tool === 'eraser') ctx.strokeStyle = '#000'
+      else if (s.tool === 'glitter') ctx.strokeStyle = GLITTER_TRAIL
+      ctx.lineWidth = s.tool === 'glitter' ? w * 0.5 : w
+
+      // One curve from the current start to (ex, ey) via control (cx, cy) — and its mirror image.
+      const curve = (cx: number, cy: number, ex: number, ey: number) => {
+        if (s.tool === 'rainbow') {
+          st.dist += Math.hypot(cx - st.sx, cy - st.sy)
+          ctx.strokeStyle = `hsl(${Math.round(st.dist * 0.9) % 360}, 85%, 55%)`
+        }
+        const sxs = xs(st.sx), cxs = xs(cx), exs = xs(ex)
+        for (let m = 0; m < sxs.length; m++) {
+          ctx.beginPath()
+          ctx.moveTo(sxs[m] * k, st.sy * k)
+          ctx.quadraticCurveTo(cxs[m] * k, cy * k, exs[m] * k, ey * k)
+          ctx.stroke()
+        }
+        st.sx = ex
+        st.sy = ey
+      }
+
+      const r = st.r
+      const star = (cx: number, cy: number) => {
+        const size = (9 + r() * 12) * k
+        const rot = r() * Math.PI
+        const jx = (r() - 0.5) * BRUSH_WIDTH.glitter
+        const jy = (r() - 0.5) * BRUSH_WIDTH.glitter
+        ctx.fillStyle = GLITTER_COLORS[Math.floor(r() * GLITTER_COLORS.length)]
+        for (const x of xs(cx + jx)) {
+          ctx.beginPath()
+          for (let j = 0; j < 8; j++) {
+            const rad = j % 2 === 0 ? size : size * 0.38
+            const a = rot + (j * Math.PI) / 4
+            const px = x * k + Math.cos(a) * rad
+            const py = (cy + jy) * k + Math.sin(a) * rad
+            if (j === 0) ctx.moveTo(px, py)
+            else ctx.lineTo(px, py)
+          }
+          ctx.closePath()
+          ctx.fill()
+        }
+      }
+      const glitter = s.tool === 'glitter'
+
+      // ONE walk over the points, in the same order whether this call paints a whole stroke or the
+      // last few points of a live one: at point j, the curve segment that point j completes, then the
+      // glitter stars along the raw edge ending at j. A whole paint and a frame-by-frame paint
+      // therefore stack every mark in the same order (the trail can't end up over a star on lift).
+      for (; st.edge < n; st.edge++) {
+        const j = st.edge
+        if (j >= 2) {
+          const i = j - 1
+          curve(p[i * 2], p[i * 2 + 1], (p[i * 2] + p[j * 2]) / 2, (p[i * 2 + 1] + p[j * 2 + 1]) / 2)
+        }
+        if (glitter) {
+          const x0 = p[j * 2 - 2], y0 = p[j * 2 - 1], x1 = p[j * 2], y1 = p[j * 2 + 1]
+          const len = Math.hypot(x1 - x0, y1 - y0)
+          let t = st.carry
+          while (t <= len) {
+            star(x0 + ((x1 - x0) * t) / len, y0 + ((y1 - y0) * t) / len)
+            t += STAR_STEP
+          }
+          st.carry = t - len
+        }
+      }
+      // Pointer up: the last stretch to the very last point (or, for a tap, one dot).
+      if (final && !st.done) {
+        st.done = true
+        if (n === 1) {
+          curve(p[0] + 0.01, p[1], p[0] + 0.02, p[1])
+          if (glitter) star(p[0], p[1])
+        } else {
+          const lx = p[(n - 1) * 2], ly = p[(n - 1) * 2 + 1]
+          curve((st.sx + lx) / 2, (st.sy + ly) / 2, lx, ly)
+        }
+      }
+      ctx.restore()
+    },
+  }
+}
+
+/** Draw one whole stroke (and its mirror image, when the env has a mirror axis). */
 export function drawStroke(env: BrushEnv, s: Stroke): void {
-  drawOnce(env, s, null)
-  if (env.mirrorX !== undefined) {
-    if (s.tool === 'stamp') drawOnce(env, s, [2 * env.mirrorX - s.x])
-    else drawOnce(env, s, mirrored(s.points, env.mirrorX))
-  }
+  createPainter(s).paint(env, true)
 }
 
 /**
- * The crayon grain tile for one colour: the colour with a seeded scatter of lighter pinholes and a few
+ * The crayon grain tile for one colour: the colour with a seeded scatter of paper-coloured flecks and a few
  * waxy streaks, so a stroke reads as wax on paper rather than a flat marker line. BROWSER ONLY — the
  * caller caches one per colour (`DrawingSurface`).
  */
@@ -199,18 +222,15 @@ export function makeCrayonTile(color: CrayonColor, px = 64): HTMLCanvasElement {
   g.fillStyle = CRAYON_HEX[color]
   g.fillRect(0, 0, px, px)
   const r = rng(0x5eed)
-  // White crayon on white paper: the grain must darken a little instead, or the stroke is invisible.
-  const hole = color === 'hvid' ? 'rgba(170,160,150,0.55)' : 'rgba(0,0,0,1)'
-  g.globalCompositeOperation = color === 'hvid' ? 'source-over' : 'destination-out'
+  // OPAQUE grain: flecks of paper-white mixed INTO the colour, not holes punched out of it, so the tile
+  // has no transparency and overlapping segments repaint the same pixel (see the painter). On white
+  // paper it looks like the pinholes did. White crayon darkens instead, or it is invisible on paper.
+  const fleck = color === 'hvid' ? '170,160,150' : '255,253,248'
   for (let i = 0; i < px * 5; i++) {
-    g.globalAlpha = 0.12 + r() * 0.5
-    g.fillStyle = hole
+    g.fillStyle = `rgba(${fleck},${(0.12 + r() * 0.5).toFixed(3)})`
     g.fillRect(Math.floor(r() * px), Math.floor(r() * px), 1 + Math.floor(r() * 2), 1)
   }
-  g.globalAlpha = 0.18
-  for (let i = 0; i < 6; i++) {
-    const y = r() * px
-    g.fillRect(0, y, px, 1)
-  }
+  g.fillStyle = `rgba(${fleck},0.18)`
+  for (let i = 0; i < 6; i++) g.fillRect(0, r() * px, px, 1)
   return c
 }
