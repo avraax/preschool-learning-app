@@ -406,6 +406,98 @@ Generate exactly ONE image: a single chunky children's pencil, exactly like the 
 
 ---
 
+# SECOND PASS — validation of the re-renders + how the art looks IN the game (2026-10-16)
+
+All 19 re-renders (`Downloads\art-krea\re-render`) arrived, and **17 are accepted and already wired
+into the app**. The crayons are one consistent box now, the undo arrow, the five pages, the three
+Perleplade props and the pencil are right. What looking at it IN the studio showed:
+
+- **Green and light green are the wrong colours (must redo).** Measured on the wax: green came out a
+  dull dark green (`#3b5b40`) — almost the same darkness as the black crayon (`#454440`), so a child
+  confuses the two — and far darker than the green it DRAWS (`#2E9D44`): you pick up a dark crayon and a
+  bright line comes out. Light green came out pale yellow (`#c7cc78`), next to the yellow crayon
+  (`#dccc50`). → **N1**.
+- **The studio backdrop works, but it is the weakest piece (recommended redo).** The wall's two big
+  colour-blob paintings compete with the child's own paper right beside it (and "Nyt papir" sits on top
+  of one), and a 1024 px image stretched over an iPad is visibly soft. The bigger issue is the CAMERA: a
+  wall seen straight on has a table only along the bottom, so every tool has to sit in rows under the
+  paper to look like it lies on something — which costs the paper ~35% of its size in landscape. A
+  table seen FROM ABOVE would let the tools lie beside the paper and give it that size back. → **N2**
+  (the code switches layout when it lands).
+- **The rainbow crayon is fine but reads weakly (optional).** With the shared wrapper, only its two ends
+  are rainbow, so at button size it is "a crayon with stripy ends". → **N3**.
+- **The easel is fine (optional).** Matched to the other five on home it is the right size, but an easel
+  is a thin shape and reads lighter than the globe or the books beside it. → **N4**.
+
+## N1 — green + light green crayons (MUST, one chat)
+
+**Attach these 3 files:**
+- `C:\Users\AllanBrinkVraa\Downloads\art-krea\1ac5cf90-10fc-4583-9312-66ee2429e009.jpg` — the red crayon:
+  **copy its shape AND its brightness**
+- `C:\Users\AllanBrinkVraa\Downloads\art-krea\6752ea9e-c031-4988-ba98-2529b6979e9b.jpg` — the yellow
+  crayon, so light green is visibly NOT yellow
+- `C:\Source\preschool-learning-app\src\assets\themes\icons\games\math.counting.webp`
+
+```
+I need TWO SEPARATE IMAGES — two individual image files. Do NOT combine them into one picture.
+
+Copy the attached RED CRAYON EXACTLY: the same shape, thickness, rounded end, pointed tip, cream paper wrapper band, diagonal pose, size in the frame, camera, soft contact shadow and lighting. Only the wax colour changes. No outline, no halo. The wax must be as BRIGHT and SATURATED as the red crayon's — a fresh toy colour, not a dark or dusty one. Flat solid #00FF00 green background edge to edge, no vignette. Square 1:1, no text.
+
+Image 1: the crayon in bright GRASS GREEN — the green of a fresh spring leaf in sunshine, clearly lighter and brighter than a dark forest green, and clearly different from the #00FF00 background (a deeper, slightly bluer green than the background).
+Image 2: the crayon in LIGHT MINT GREEN — a soft pale green that is clearly GREEN, NOT yellow (compare the attached yellow crayon: it must not look like that one).
+
+Remember: the exact shape of the red crayon, bright clean colours — and two separate image files.
+```
+
+## N2 — the studio backdrop seen from above (RECOMMENDED, new chat)
+
+**Attach these 2 files:**
+- `C:\Users\AllanBrinkVraa\Downloads\art-krea\1ac5cf90-10fc-4583-9312-66ee2429e009.jpg` — a crayon
+  that will lie on this table: match its light and its 3/4-from-above angle
+- `C:\Users\AllanBrinkVraa\Downloads\art-krea\597b7fb8-10dc-448b-936a-35616e4eefa4.jpg` — the current
+  studio: keep its warm honey wood and soft daylight, but NOT its camera
+
+```
+Generate exactly ONE image: a wide landscape picture, 16:9. Soft-3D claymation style, Pixar-lite, warm and child-safe.
+
+A children's craft table seen FROM ABOVE: the camera looks down at the table top at a gentle angle, like a child sitting at it, so the honey-wood table top fills the WHOLE picture edge to edge. Light, warm honey wood with a soft, even grain — calm and low in detail, no knots, no scratches, no stains. Soft daylight falls from the upper left, so the upper-left corner is a little brighter.
+
+The table is EMPTY across its whole middle — nothing on it — because a sheet of paper, crayons and tools will be placed on it later. Only at the very edges, small and partly cut off by the frame: the rim of a clay pot with a green plant in the top-right corner, and nothing else. No people, no hands, no paper, no crayons, no text, no letters, no numbers.
+
+Match the warm wood colour and soft daylight of the attached studio picture, but NOT its camera — this one looks DOWN at the table, not at a wall.
+```
+
+If the plant in the corner keeps coming back big or in the middle, drop it: *"…the table is completely
+empty, edge to edge, nothing on it at all."*
+
+## N3 — the rainbow crayon, stronger (OPTIONAL, same chat as N1)
+
+```
+Generate exactly ONE image: the SAME crayon as the attached red one, same shape, pose, size, camera and light, but with only a NARROW cream paper wrapper band (about a third as wide as the red crayon's), so most of the crayon shows its wax. The wax is striped in RAINBOW bands running along the crayon — red, orange, yellow, DARK green, blue, purple — and the tip is red. Bright, clean colours. Flat solid #00FF00 green background edge to edge, no vignette. One image only.
+```
+
+## N4 — a chunkier easel for the home screen (OPTIONAL, new chat)
+
+**Attach these 3 files:**
+- `C:\Users\AllanBrinkVraa\Downloads\art-krea\8e6213d2-b124-4c3e-b867-de27ee959ade.jpg` — the current
+  easel: keep its style and its rainbow canvas
+- `C:\Source\preschool-learning-app\src\assets\themes\icons\english.webp` — the globe beside it on home:
+  match how SOLID and full it is
+- `C:\Source\preschool-learning-app\src\assets\themes\icons\math.webp`
+
+```
+Generate exactly ONE image: the same wooden children's art easel as the attached one, with its rainbow scribble canvas and the little cup of crayons, but CHUNKIER: a BIG canvas that is almost as wide as the whole easel, short thick rounded clay legs, the cup of crayons bigger and right in front. The whole object should look as solid and full as the attached globe and abacus — a compact, chunky toy, not a tall thin stand. Soft-3D claymation, same lighting as the attached images, slight 3/4 top-down angle, flat solid #FF00FF magenta background edge to edge, square 1:1, no text. One image only.
+```
+
+## Accepted files (second pass) — already in `art-src/krea/`
+
+The build session has copied every accepted file into the repo under readable names
+(`art-src/krea/crayon-*.jpg`, `undo.jpg`, `pencil.jpg`, `pages/*.jpg`, `beads/*.jpg`, …), so the
+GUID file names no longer matter. Drop N1–N4 into `Downloads\art-krea\pass-3` and the build session maps
+them in.
+
+---
+
 ## Accepted files (first pass) — what the build session uses
 
 | use | file in `Downloads\art-krea` |
