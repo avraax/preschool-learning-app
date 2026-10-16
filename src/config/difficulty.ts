@@ -544,6 +544,23 @@ export const COLORS_NUANCER: Record<DifficultyLevel, NuancerTuning> = {
   svaer: { slots: 3, minSpan: 2, decoy: true },
 }
 
+/**
+ * Krea's free tools (Krea PRD-01 §2.2.5–6, §4.7). A creative tool has nothing to grade, so the ONLY
+ * thing the level touches is how many crayons are on the table: 8 at Let, all 12 above. Normal and
+ * Svær are therefore identical by design — the games are on `EXEMPT` with that reason, and this table
+ * is NOT a fake third axis invented to satisfy the distinctness guard. The tools themselves (crayon,
+ * rainbow, glitter, stamps, eraser, undo) are the same at every level: hiding the fun ones at Let
+ * would take the best part away from the youngest.
+ */
+export interface KreaPaletteTuning {
+  palette: 8 | 12
+}
+export const KREA_PALETTE: Record<DifficultyLevel, KreaPaletteTuning> = {
+  let: { palette: 8 },
+  normal: { palette: 12 },
+  svaer: { palette: 12 },
+}
+
 // ================================================================================================
 // 4. The registry + the exempt list
 // ================================================================================================
@@ -572,6 +589,7 @@ export const TUNING: Record<string, Record<DifficultyLevel, object>> = {
   'colors.farvejagt': COLORS_FARVEJAGT,
   'colors.ramfarven': COLORS_RAMFARVEN,
   'colors.nuancer': COLORS_NUANCER,
+  'krea.draw': KREA_PALETTE,
 }
 
 /**
@@ -583,6 +601,7 @@ export const EXEMPT: Record<string, string> = {
   'math.learn': 'ungraded browse — responds only via its visible range (MATH_LEARN)',
   'english.learn': 'ungraded browse — the whole vocabulary at every level',
   'colors.learn': 'ungraded browse — all 6 hues and their shades at every level',
+  'krea.draw': 'creative tool — only the palette widens, 8 crayons at Let, 12 above; nothing to grade',
 }
 
 /**

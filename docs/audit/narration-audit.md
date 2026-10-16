@@ -3,9 +3,9 @@
 > AUTO-GENERATED (by the `/audit` harness via the dev-server, or `npm run audit:approve-all`).
 > Do not hand-edit — source of truth is `narration-audit.json`.
 
-Last updated: 2026-10-15T20:36:55.491Z
+Last updated: 2026-10-16T14:16:36.234Z
 
-**3074 OK · 1 wrong · 0 unaudited** (of 3075 clips)
+**3091 OK · 1 wrong · 0 unaudited** (of 3092 clips)
 
 ## Bogstaver
 
@@ -916,10 +916,12 @@ Last updated: 2026-10-15T20:36:55.491Z
 | ✅ | Fantastisk arbejde! | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Fantastisk! | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Farvejagt | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Farvelæg | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Farver | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Find det Engelske Ord | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Flot! | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Fremragende! | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Fri Tegning | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Fyld Båden | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Godt forsøg! | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Godt forsøg! Du kan det! | Bulk-approved (PRD-11 owner listen pass) |  |
@@ -949,6 +951,7 @@ Last updated: 2026-10-15T20:36:55.491Z
 | ✅ | Super! | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Sådan! | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Tal Quiz | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Tegn med Mig | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Vildt godt! | Bulk-approved (PRD-11 owner listen pass) |  |
 
 ## Farver

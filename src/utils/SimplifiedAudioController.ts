@@ -399,7 +399,10 @@ export class SimplifiedAudioController {
       englishword: 'Find det Engelske Ord',
       laesordet: 'Læs Ordet',
       patterns: 'Hvad Mangler?',
-      boat: 'Fyld Båden'
+      boat: 'Fyld Båden',
+      kreadraw: 'Fri Tegning',
+      kreaguide: 'Tegn med Mig',
+      kreacolor: 'Farvelæg'
     }
     
     const welcomeMessage = GAME_WELCOME_MESSAGES[gameType as keyof typeof GAME_WELCOME_MESSAGES]

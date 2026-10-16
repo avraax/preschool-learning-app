@@ -134,18 +134,18 @@ function drawOnce(env: BrushEnv, s: Stroke, pts: number[] | null): void {
   } else if (s.tool === 'glitter') {
     ctx.globalCompositeOperation = 'source-over'
     // A soft gold trail, then stars strewn along it.
-    ctx.globalAlpha = 0.55
+    ctx.globalAlpha = 0.75
     ctx.strokeStyle = '#F2C94C'
-    ctx.lineWidth = w * 0.4
+    ctx.lineWidth = w * 0.5
     smoothPath(ctx, p, k)
     ctx.stroke()
     ctx.globalAlpha = 1
     const r = rng(s.seed)
-    const STEP = 16
+    const STEP = 12
     let carry = STEP
     const n = p.length / 2
     const star = (cx: number, cy: number) => {
-      const size = (6 + r() * 9) * k
+      const size = (9 + r() * 12) * k
       const rot = r() * Math.PI
       const jx = (r() - 0.5) * BRUSH_WIDTH.glitter * k
       const jy = (r() - 0.5) * BRUSH_WIDTH.glitter * k

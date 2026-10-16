@@ -20,14 +20,8 @@ export const UNDO_DEPTH = 30
 export type BrushTool = 'crayon' | 'rainbow' | 'glitter' | 'eraser'
 export type Tool = BrushTool | 'stamp'
 
-/** The 12 crayons (§2.2.6). Ids are stable data — the spoken name and the swatch derive from them. */
-export const PALETTE_12 = [
-  'roed', 'orange', 'gul', 'lysegroen', 'groen', 'lyseblaa', 'blaa', 'lilla', 'lyseroed', 'brun', 'sort', 'hvid',
-] as const
-export type CrayonColor = (typeof PALETTE_12)[number]
-
-/** Let's 8: the same crayons minus the four "light" ones. */
-export const PALETTE_8: readonly CrayonColor[] = ['roed', 'orange', 'gul', 'groen', 'blaa', 'lilla', 'brun', 'sort']
+import { PALETTE_12, type CrayonColor } from '../../../config/kreaPalette.ts'
+export { PALETTE_12, PALETTE_8, type CrayonColor } from '../../../config/kreaPalette.ts'
 
 export interface BrushStroke {
   tool: BrushTool

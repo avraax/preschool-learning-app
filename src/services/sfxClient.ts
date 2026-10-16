@@ -55,6 +55,16 @@ export type SfxCue =
   // looping harbour bed, and the diesel motor swelled in and out around each arrival and departure.
   | 'harbour-ambience'
   | 'boat-motor'
+  // Krea's studio (Krea PRD-01 §2.3.14), synthesised by scripts/bake-krea-sounds.mjs. No ambience: it is
+  // quiet while creating, only the tools make sound. `krea-crayon` is a LOOP held while a brush moves.
+  | 'krea-crayon'
+  | 'krea-shimmer'
+  | 'krea-twinkle'
+  | 'krea-stamp'
+  | 'krea-undo'
+  | 'krea-paper'
+  | 'krea-pick'
+  | 'krea-tada'
 
 // New drag/game cues (pick-up/spring-back/chomp/match) reuse curated files for now (real sound,
 // distinct cue names); swap to dedicated files when available — missing files degrade to silence.
@@ -90,6 +100,14 @@ const CUE_FILES: Record<SfxCue, string> = {
   splash: '/sounds/ui/flip.mp3',
   'harbour-ambience': '/sounds/ui/harbour-ambience.mp3',
   'boat-motor': '/sounds/ui/boat-motor.mp3',
+  'krea-crayon': '/sounds/ui/krea-crayon.mp3',
+  'krea-shimmer': '/sounds/ui/krea-shimmer.mp3',
+  'krea-twinkle': '/sounds/ui/krea-twinkle.mp3',
+  'krea-stamp': '/sounds/ui/krea-stamp.mp3',
+  'krea-undo': '/sounds/ui/krea-undo.mp3',
+  'krea-paper': '/sounds/ui/krea-paper.mp3',
+  'krea-pick': '/sounds/ui/krea-pick.mp3',
+  'krea-tada': '/sounds/ui/krea-tada.mp3',
 }
 
 // Not part of the first-gesture preload: a 40 s bed is ~320 KB and ~5 MB decoded, and only Fyld Båden
@@ -129,6 +147,15 @@ const CUE_VOLUME: Partial<Record<SfxCue, number>> = {
   // atmosphere; owner 2026-10-15 asked for "a bit louder" than the first ~-42) and ~-34 for the motor.
   'harbour-ambience': 0.5,
   'boat-motor': 0.4,
+  // Baked -30 LUFS loop → ~-36 effective: it runs under every stroke, so it stays the quietest tool.
+  'krea-crayon': 0.5,
+  'krea-shimmer': 0.45,
+  'krea-twinkle': 0.45,
+  'krea-stamp': 0.6,
+  'krea-undo': 0.5,
+  'krea-paper': 0.5,
+  'krea-pick': 0.4,
+  'krea-tada': 0.6,
 }
 
 interface PlayOptions {

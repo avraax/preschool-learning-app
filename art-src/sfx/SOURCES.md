@@ -15,3 +15,7 @@ All three are cut and levelled by `node scripts/bake-harbour-sounds.mjs` (seamle
 
 Still aliased to existing cues (no external file yet): `bundle`, `splash`. (`boat-arrive`
 is gone — the motor swell replaced it.)
+
+**Krea's studio cues** (`public/sounds/ui/krea-*.mp3`) have no external source: they are synthesised
+by `node scripts/bake-krea-sounds.mjs` (ffmpeg noise + sines), so there is nothing to license. A
+recorded replacement gets a row in the table above.

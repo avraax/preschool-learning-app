@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-15T20:36:55.491Z",
+  "updatedAt": "2026-10-16T14:16:36.234Z",
   "clips": {
     "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|b": {
       "verdict": "ok",
@@ -13574,7 +13574,7 @@
       "note": "Bulk-approved (PRD-11 owner listen pass)",
       "candidateIpa": "",
       "text": "brun",
-      "group": "english-da",
+      "group": "krea",
       "updatedAt": 1785654833982
     },
     "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|hånd": {
@@ -24600,6 +24600,142 @@
       "text": "Tryk på den grønne knap, når båden er klar",
       "group": "numbers",
       "updatedAt": 1792096615489
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Fri Tegning": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Fri Tegning",
+      "group": "phrases",
+      "updatedAt": 1792160196233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn med Mig": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn med Mig",
+      "group": "phrases",
+      "updatedAt": 1792160196233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Farvelæg": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Farvelæg",
+      "group": "phrases",
+      "updatedAt": 1792160196233
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Vil du have et nyt papir? Din tegning forsvinder.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Vil du have et nyt papir? Din tegning forsvinder.",
+      "group": "krea",
+      "updatedAt": 1792160196234
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Se, din tegning danser!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Se, din tegning danser!",
+      "group": "krea",
+      "updatedAt": 1792160196234
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Du har brugt én farve!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Du har brugt én farve!",
+      "group": "krea",
+      "updatedAt": 1792160196234
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Du har brugt to farver!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Du har brugt to farver!",
+      "group": "krea",
+      "updatedAt": 1792160196234
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Du har brugt tre farver!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Du har brugt tre farver!",
+      "group": "krea",
+      "updatedAt": 1792160196234
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Du har brugt fire farver!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Du har brugt fire farver!",
+      "group": "krea",
+      "updatedAt": 1792160196234
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Du har brugt fem farver!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Du har brugt fem farver!",
+      "group": "krea",
+      "updatedAt": 1792160196234
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Du har brugt seks farver!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Du har brugt seks farver!",
+      "group": "krea",
+      "updatedAt": 1792160196234
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Du har brugt syv farver!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Du har brugt syv farver!",
+      "group": "krea",
+      "updatedAt": 1792160196234
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Du har brugt otte farver!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Du har brugt otte farver!",
+      "group": "krea",
+      "updatedAt": 1792160196234
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Du har brugt ni farver!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Du har brugt ni farver!",
+      "group": "krea",
+      "updatedAt": 1792160196234
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Du har brugt ti farver!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Du har brugt ti farver!",
+      "group": "krea",
+      "updatedAt": 1792160196234
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Du har brugt elleve farver!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Du har brugt elleve farver!",
+      "group": "krea",
+      "updatedAt": 1792160196234
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Du har brugt tolv farver!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Du har brugt tolv farver!",
+      "group": "krea",
+      "updatedAt": 1792160196234
     }
   }
 }

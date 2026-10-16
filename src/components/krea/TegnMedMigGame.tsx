@@ -8,7 +8,7 @@ import { StudioBackdrop, Paper } from './studio/StudioScene'
 const TegnMedMigGame: React.FC = () => {
   useOccludeWorld()
   return (
-    <GameShell categoryId="krea" title="Tegn med Mig" backRoute="/krea" dense guide={false}>
+    <GameShell categoryId="krea" title="Tegn med Mig" backRoute="/krea" dense guide={false} lightScene>
       <StudioBackdrop />
       <Paper />
     </GameShell>

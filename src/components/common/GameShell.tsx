@@ -57,6 +57,9 @@ interface GameShellProps {
   guide?: boolean
   // Tighter title + paddings for vertically dense games (learning grids, memory, etc.).
   dense?: boolean
+  // The game paints its OWN light full-bleed scene (Krea's studio), so the skin's dark-world title
+  // treatment (white text) would sit on a cream wall and vanish — measured on Rummet. Light-scene text.
+  lightScene?: boolean
   children: React.ReactNode
 }
 
@@ -71,11 +74,12 @@ const GameShell: React.FC<GameShellProps> = ({
   phoneStageFlex = 45,
   guide = true,
   dense = false,
+  lightScene = false,
   children,
 }) => {
   const theme = useTheme()
   const category = getCategoryTheme(categoryId)
-  const dark = theme.scene.dark
+  const dark = theme.scene.dark && !lightScene
   const immersive = theme.scene.layers.length > 0
   // Phone landscape: play-surface first — the title moves INTO the header row (between back
   // and the ring) so its own row's height goes to the game body instead.

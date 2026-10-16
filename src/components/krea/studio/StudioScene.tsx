@@ -76,9 +76,17 @@ export const StudioBackdrop: React.FC = () => (
  * The sheet of paper on the table. Sized by the RESERVED space it is given (a flex remainder), never
  * a tuned percentage: the parent decides the box, the paper fills it with a fixed aspect.
  */
-export const Paper: React.FC<{ children?: React.ReactNode; aspect?: number }> = ({ children, aspect = 4 / 3 }) => (
+export const Paper: React.FC<{
+  children?: React.ReactNode
+  aspect?: number
+  /** The sheet itself — the "comes alive" motion runs on this element (`alive.ts`). */
+  paperRef?: React.Ref<HTMLDivElement>
+}> = ({ children, aspect = 4 / 3, paperRef }) => (
   <Box
     sx={{
+      gridArea: 'paper',
+      width: '100%',
+      height: '100%',
       flex: '1 1 auto',
       minWidth: 0,
       minHeight: 0,
@@ -89,6 +97,7 @@ export const Paper: React.FC<{ children?: React.ReactNode; aspect?: number }> = 
     }}
   >
     <Box
+      ref={paperRef}
       data-krea-paper
       sx={{
         position: 'relative',

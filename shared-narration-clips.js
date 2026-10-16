@@ -40,6 +40,7 @@ import {
 import { primaryColors, possibleTargets, mixingRules, recipeNamesFor } from './src/config/colorMixing.ts'
 import { spokenOrdlegWords } from './src/config/ordlegWords.ts'
 import { NUMBER_BROWSE_RATE as NUMBER_RATE } from './src/config/numberAutoplay.ts'
+import { allKreaLines } from './src/config/kreaPhrases.ts'
 
 // Danish narration + English section voices, straight from the single source of voice truth.
 const DA = TTS_CONFIG.voices.primary // da-DK-ChristelNeural / da-DK
@@ -57,7 +58,7 @@ export const WELCOME_TITLES = [
   'Bogstav Quiz', 'Lær Alfabetet', 'Tal Quiz', 'Lær Tal', 'Plus Opgaver', 'Minus Opgaver',
   'Stav Ordet', 'Sammenlign Tal', 'Hukommelsesspil', 'Farver', 'Farvejagt', 'Ram Farven',
   'Lær Farver', 'Hvilken Farve?', 'Nuancer', 'Lyt og Find', 'Find det Engelske Ord',
-  'Læs Ordet', 'Hvad Mangler?', 'Fyld Båden',
+  'Læs Ordet', 'Hvad Mangler?', 'Fyld Båden', 'Fri Tegning', 'Tegn med Mig', 'Farvelæg',
 ]
 
 /**
@@ -237,6 +238,10 @@ export function collectNarrationClips() {
   da('levelup', CHAPTER_DONE_LINE)
   da('levelup', BOOK_DONE_LINE)
   for (let n = 1; n <= COUNT_LINE_MAX; n++) da('levelup', collectedCountLine(n))
+
+  // Krea (Krea PRD-01 §2.3.15): the colour name on every crayon pick, the done line, the "Nyt papir?"
+  // confirm and the welcome titles — every one built by `kreaPhrases.ts`, the module the games call.
+  for (const t of allKreaLines()) da('krea', t)
 
   // English words — spoken via the en-US voice, no lexicon.
   for (const w of allEnglishWords) en('english', w.en)
