@@ -4,6 +4,7 @@ import { DraggableItem } from '../../common/dnd/DraggableItem'
 import { KREA_COLOR_NAME } from '../../../config/kreaPhrases'
 import { BEAD_ART } from '../../../assets/games/krea/beads'
 import { Bead } from './Bead'
+import { BowlTweezers } from './Tweezers'
 import type { BeadColor } from './beadBoard'
 
 // The colour bowls (Krea PRD-02 §2.2): a clay bowl heaped with beads per crayon colour. Each bowl is a
@@ -15,12 +16,14 @@ import type { BeadColor } from './beadBoard'
 
 // The heap in the bowl's mouth: fixed spots (% of the bowl box), so every bowl looks the same and
 // nothing is random.
+// Centred in the mouth (x 50%, y ~33% of the keyed render): two at the back, three in front, each 22%
+// wide, so these are left/top = centre − 11. Index 2 (front middle) is the one that leaves.
 const HEAP = [
-  { x: 26, y: 26 },
-  { x: 46, y: 20 },
-  { x: 62, y: 28 },
-  { x: 36, y: 38 },
-  { x: 54, y: 40 },
+  { x: 29, y: 14 },
+  { x: 49, y: 14 },
+  { x: 39, y: 25 },
+  { x: 19, y: 25 },
+  { x: 59, y: 25 },
 ]
 
 export const BeadBowls: React.FC<{
@@ -40,6 +43,7 @@ export const BeadBowls: React.FC<{
     <div
       ref={drop.setNodeRef}
       data-krea-bowls
+      data-krea-held={held ?? ''}
       style={{
         display: 'grid',
         gap: 'var(--bead-bowl-gap)',
@@ -85,6 +89,7 @@ export const BeadBowls: React.FC<{
               />
             ))}
           </div>
+          {held === c ? <BowlTweezers colour={c} /> : null}
           <DraggableItem id={`bowl:${c}`} inline fill disabled={disabled} data={{ colour: c }} onActivate={() => onTap(c)}>
             <div aria-label={KREA_COLOR_NAME[c]} style={{ width: '100%', height: '100%' }} />
           </DraggableItem>

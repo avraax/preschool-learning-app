@@ -36,6 +36,11 @@ export function freeBoard(n: number, mask: readonly boolean[]): BeadBoard {
   return { mode: 'free', n, mask, target: null, beads: Array(n * n).fill(null), misses: Array(n * n).fill(0) }
 }
 
+/** A pattern with every bead in place — a picture of it (the picker button), never a playable board. */
+export function finishedPattern(n: number, target: readonly (BeadColor | null)[]): BeadBoard {
+  return { ...patternBoard(n, target), beads: target.slice() }
+}
+
 export function patternBoard(n: number, target: readonly (BeadColor | null)[]): BeadBoard {
   return { mode: 'pattern', n, mask: Array(n * n).fill(true), target, beads: Array(n * n).fill(null), misses: Array(n * n).fill(0) }
 }

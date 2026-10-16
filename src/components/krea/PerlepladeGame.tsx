@@ -13,12 +13,13 @@ import { useReducedMotion } from '../../hooks/useReducedMotion'
 import { sfx } from '../../services/sfxClient'
 import { kreaSession } from '../../services/kreaSession'
 import { KREA_BEADS } from '../../config/difficulty'
-import { BEAD_BOARDS, BEAD_LAYOUT, beadPalette, boardMask, type BeadBoardDef } from '../../config/kreaBeads'
+import { BEAD_BOARDS, BEAD_LAYOUT, beadPalette, boardMask, patternById, patternCells, type BeadBoardDef } from '../../config/kreaBeads'
 import { PALETTE_12 } from '../../config/kreaPalette'
 import { KREA_COLOR_NAME, NEW_BOARD_LINE, NEW_BOARD_TITLE } from '../../config/kreaPhrases'
 import { PHONE_ANY, PHONE_PORTRAIT } from '../../theme/phoneMedia'
 import {
   beadCount,
+  finishedPattern,
   freeBoard,
   landed,
   pegAt,
@@ -32,13 +33,12 @@ import {
 } from './beads/beadBoard'
 import { BoardArt, geometryOf, Pegboard, pegBox, PlacedBeads } from './beads/Pegboard'
 import { BeadBowls } from './beads/BeadBowls'
-import { DragGhost, TweezersHolder } from './beads/Tweezers'
+import { DragGhost } from './beads/Tweezers'
 import { StudioBackdrop } from './studio/StudioScene'
 import { PlusBadge, StudioButton } from './studio/StudioControls'
 import NewPaperConfirm from './studio/NewPaperConfirm'
 import { swapPaper } from './studio/alive'
 import { KreaPicker } from './studio/KreaPicker'
-import { PickerButton } from './studio/PieceStudio'
 
 // Perleplade (`krea.beads`, Krea PRD-02) — Hama beads, one at a time, onto a pegboard.
 //
@@ -203,12 +203,6 @@ const PerlepladeGame: React.FC = () => {
     }
     setHeld(c)
     pickColour(c)
-  }
-
-  const putBackHeld = () => {
-    if (!held) return
-    sfx.play('bead-back')
-    setHeld(null)
   }
 
   const tapAt = (x: number, y: number) => {
@@ -447,6 +441,22 @@ const PerlepladeGame: React.FC = () => {
   }
 
   const orientation = landscape ? 'landscape' : 'portrait'
+  // "Choose another board" is a small copy of the grid it opens: four white cards, each a finished
+  // bead picture. A lone tile icon, and then a pile of empty cream boards, read as decoration rather
+  // than a door (owner, 2026-10-16 — the same lesson as Fri Tegning's "Nyt papir"). Colour is what
+  // makes it legible at this size; the empty boards had none.
+  const pickerPicture = (
+    <Box sx={{ width: '100%', height: '100%', p: '6%', boxSizing: 'border-box', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8%' }}>
+      {(['hjerte', 'stjerne', 'fisk', 'blomst'] as const).map((id, i) => (
+        <Box key={id} sx={{ position: 'relative', background: '#FFFEFB', borderRadius: '14%', boxShadow: '0 2px 4px rgba(80,50,20,0.3)', transform: `rotate(${[-4, 3, 2, -3][i]}deg)` }}>
+          <Box sx={{ position: 'absolute', inset: '6%' }}>
+            <PlacedBeads board={finishedPattern(7, patternCells(patternById(id)!, 'let'))} size={0.96} />
+          </Box>
+        </Box>
+      ))}
+    </Box>
+  )
+  const big = phone ? '64px' : '120px'
   const newBoardPicture = (
     <Box sx={{ position: 'relative', width: '100%', height: '100%' }}>
       <Box sx={{ position: 'absolute', inset: '12%' }}>
@@ -519,10 +529,11 @@ const PerlepladeGame: React.FC = () => {
               minWidth: 0,
             }}
           >
-            <PickerButton gameId={GAME_ID} disabled={confirmOpen || swapping} onPress={toPicker} />
-            <TweezersHolder held={held} disabled={!enabled} onPress={putBackHeld} />
+            <StudioButton dataId="to-picker" label="Vælg en anden plade" size={big} disabled={confirmOpen || swapping} onPress={toPicker}>
+              {pickerPicture}
+            </StudioButton>
             <Box sx={{ visibility: beadCount(board) ? 'visible' : 'hidden' }}>
-              <StudioButton dataId="new-board" label="Ny plade" size={phone ? '48px' : '84px'} disabled={!enabled || !beadCount(board)} onPress={askNewBoard}>
+              <StudioButton dataId="new-board" label="Ny plade" size={big} disabled={!enabled || !beadCount(board)} onPress={askNewBoard}>
                 {newBoardPicture}
               </StudioButton>
             </Box>

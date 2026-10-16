@@ -1,7 +1,5 @@
 import React from 'react'
-import { ButtonBase } from '@mui/material'
 import { BEAD_ART } from '../../../assets/games/krea/beads'
-import { pressHandlers } from '../studio/StudioControls'
 import { Bead } from './Bead'
 import type { BeadColor } from './beadBoard'
 
@@ -11,35 +9,26 @@ import type { BeadColor } from './beadBoard'
 const TIP = { x: 0.2, y: 0.78 }
 
 /**
- * In the side column: the tweezers, holding the tapped bead if there is one. Tapping them while they
- * hold a bead puts it back in its bowl (the same as tapping that bowl again).
+ * A tapped bowl: the tweezers stand in it holding one bead, so the child sees the bead is "in hand"
+ * right where they tapped — a separate tweezers object in the side column read as a mystery control
+ * (owner, 2026-10-16). Tapping the bowl again puts the bead back. Pure decoration: no pointer events.
  */
-export const TweezersHolder: React.FC<{ held: BeadColor | null; disabled: boolean; onPress: () => void }> = ({ held, disabled, onPress }) => (
-  <ButtonBase
-    data-krea-control="tweezers"
-    data-krea-held={held ?? ''}
-    aria-label={held ? 'Læg perlen tilbage' : 'Pincet'}
-    disabled={disabled || !held}
-    {...pressHandlers(onPress)}
-    sx={{
-      position: 'relative',
-      width: 'var(--bead-tweezers)',
-      height: 'var(--bead-tweezers)',
-      flex: '0 0 auto',
-      borderRadius: '24px',
-      touchAction: 'manipulation',
-      WebkitTapHighlightColor: 'transparent',
-      filter: 'drop-shadow(0 4px 4px rgba(70,40,15,0.32))',
-      transform: held ? 'translateY(-4px) rotate(-6deg)' : 'translateY(0px) rotate(0deg)',
-      transition: 'transform 160ms cubic-bezier(0.3,0.7,0.4,1)',
-    }}
-  >
-    <img src={BEAD_ART.tweezers} alt="" draggable={false} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', pointerEvents: 'none' }} />
-    {held ? (
-      <Bead colour={held} style={{ position: 'absolute', width: '30%', height: '30%', left: `${TIP.x * 100 - 15}%`, top: `${TIP.y * 100 - 15}%` }} />
-    ) : null}
-  </ButtonBase>
-)
+export const BowlTweezers: React.FC<{ colour: BeadColor }> = ({ colour }) => {
+  const w = 0.72
+  // The bead lifted just above the heap; the tweezers' tips on it.
+  const bead = { x: 0.5, y: 0.08 }
+  return (
+    <div data-krea-bowl-tweezers={colour} aria-hidden style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 2 }}>
+      <img
+        src={BEAD_ART.tweezers}
+        alt=""
+        draggable={false}
+        style={{ position: 'absolute', width: `${w * 100}%`, height: `${w * 100}%`, left: `${(bead.x - TIP.x * w) * 100}%`, top: `${(bead.y - TIP.y * w) * 100}%`, filter: 'drop-shadow(0 4px 4px rgba(70,40,15,0.3))' }}
+      />
+      <Bead colour={colour} style={{ position: 'absolute', width: '34%', height: '34%', left: `${(bead.x - 0.17) * 100}%`, top: `${(bead.y - 0.17) * 100}%`, boxShadow: '0 4px 5px rgba(60,40,20,0.35)' }} />
+    </div>
+  )
+}
 
 /**
  * The bead in the finger while dragging: the bead with the tweezers' tips on it, floating about one
