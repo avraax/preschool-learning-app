@@ -5,4 +5,4 @@
 // Each consumer may EXTEND this list: the music bed additionally plays on `/album` (a reward hub),
 // while the scene deliberately treats `/album` as a dimmed content screen. Only the shared section
 // list lives here — the `/album` difference is intentional, not drift.
-export const SECTION_MENU_PATHS = ['/', '/alphabet', '/math', '/farver', '/english', '/ordleg'] as const
+export const SECTION_MENU_PATHS = ['/', '/alphabet', '/math', '/farver', '/english', '/ordleg', '/krea'] as const

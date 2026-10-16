@@ -206,6 +206,31 @@ const categoryContent: Record<CategoryId, CategoryContent> = {
         gradient: 'linear-gradient(135deg, #26A69A 0%, #00897B 100%)'
       }
     ]
+  },
+  // Krea PRD-01 — gated (`kreaGate.ts`). Perleplade (`beads`, PRD-02) joins this list when it is built.
+  krea: {
+    name: 'Krea',
+    description: 'Tegn, farvelæg og skab',
+    games: [
+      {
+        id: 'draw',
+        title: 'Fri Tegning',
+        route: '/krea/tegn',
+        gradient: 'linear-gradient(135deg, #F06292 0%, #D81B60 100%)'
+      },
+      {
+        id: 'guide',
+        title: 'Tegn med Mig',
+        route: '/krea/tegnmedmig',
+        gradient: 'linear-gradient(135deg, #BA68C8 0%, #8E24AA 100%)'
+      },
+      {
+        id: 'color',
+        title: 'Farvelæg',
+        route: '/krea/farvelaeg',
+        gradient: 'linear-gradient(135deg, #FFB74D 0%, #F57C00 100%)'
+      }
+    ]
   }
 }
 

@@ -188,7 +188,7 @@ export const noMaterials = (): MaterialTokens => ({
 // arrangement so the home objects + section framing work. Each theme is expected to OVERRIDE
 // these with anchors that sit on its own near-layer features (clouds/shore/asteroids/ridges).
 
-export const SCENE_SECTION_ORDER: SceneSectionId[] = ['alphabet', 'math', 'colors', 'english', 'ordleg']
+export const SCENE_SECTION_ORDER: SceneSectionId[] = ['alphabet', 'math', 'colors', 'english', 'ordleg', 'krea']
 
 // 5 objects on a gentle rainbow arc across the lower-middle of the scene (predictable, uncluttered).
 export const defaultHomeAnchors = (): HomeAnchor[] => [
@@ -199,6 +199,28 @@ export const defaultHomeAnchors = (): HomeAnchor[] => [
   { section: 'english', xPct: 84, yPct: 54, scale: 1, depth: 0.3 },
 ]
 
+// The same arc with Krea seated LAST, on the right (Krea PRD-01 §4.1) — the five keep their order.
+export const defaultHomeAnchorsKrea = (): HomeAnchor[] => [
+  { section: 'alphabet', xPct: 13, yPct: 54, scale: 0.92, depth: 0.3 },
+  { section: 'math', xPct: 28, yPct: 48, scale: 0.92, depth: 0.32 },
+  { section: 'colors', xPct: 43, yPct: 45, scale: 0.96, depth: 0.34 },
+  { section: 'ordleg', xPct: 57, yPct: 45, scale: 0.96, depth: 0.34 },
+  { section: 'english', xPct: 72, yPct: 48, scale: 0.92, depth: 0.32 },
+  { section: 'krea', xPct: 87, yPct: 54, scale: 0.92, depth: 0.3 },
+]
+
+/**
+ * The home arc to seat: the authored 5-object one while Krea is gated off (production, until the
+ * owner releases it — that arc must stay exactly as it was), the 6-object one once it is shown.
+ */
+export const homeAnchorsFor = (
+  scene: { homeAnchors?: HomeAnchor[]; homeAnchorsKrea?: HomeAnchor[] },
+  kreaShown: boolean,
+): HomeAnchor[] =>
+  kreaShown
+    ? (scene.homeAnchorsKrea ?? defaultHomeAnchorsKrea())
+    : (scene.homeAnchors ?? defaultHomeAnchors())
+
 // A neutral centred focus per section (no zoom-in) — themes override to frame their own locale.
 export const defaultSectionFocus = (): Record<SceneSectionId, SceneFocus> => {
   const centred: SceneFocus = { xPct: 50, yPct: 50, zoom: 1.15 }
@@ -208,5 +230,6 @@ export const defaultSectionFocus = (): Record<SceneSectionId, SceneFocus> => {
     colors: { ...centred },
     english: { ...centred },
     ordleg: { ...centred },
+    krea: { ...centred },
   }
 }

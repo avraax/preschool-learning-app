@@ -9,4 +9,5 @@ export const SECTION_LABELS: Record<SectionId, string> = {
   colors: 'Farver',
   english: 'Engelsk',
   ordleg: 'Ordleg',
+  krea: 'Krea',
 }

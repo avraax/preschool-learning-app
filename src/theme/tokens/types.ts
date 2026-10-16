@@ -53,6 +53,7 @@ export interface CategoryTokens {
   colors: CategoryPalette
   english: CategoryPalette
   ordleg: CategoryPalette
+  krea: CategoryPalette
 }
 
 // Decorative styling currently hardcoded across components.
@@ -100,7 +101,7 @@ export interface AmbientSpriteSpec {
   size: [number, number] // min/max px
 }
 
-// The 5 learning sections (matches CategoryTokens' keys / progressStore SectionId). Kept as a
+// The 6 learning sections (matches CategoryTokens' keys / progressStore SectionId). Kept as a
 // local alias so this schema file has no runtime dependency on the store.
 export type SceneSectionId = keyof CategoryTokens
 
@@ -147,6 +148,9 @@ export interface SceneTokens {
   progressionCompanion?: { stages: string[]; ringColor: string }
   // ---- Structured World (Liveliness PRD-05) — all optional, defaulted in buildTheme ----
   homeAnchors?: HomeAnchor[]                          // per-theme seating of the 5 section objects (W3)
+  // The 6-object arc once Krea is shown (Krea PRD-01 §4.1). A SEPARATE list so the 5-object arc that
+  // production shows until release stays byte-identical; pick between them with `homeAnchorsFor`.
+  homeAnchorsKrea?: HomeAnchor[]
   sectionFocus?: Partial<Record<SceneSectionId, SceneFocus>> // per-section camera focus (W2/W4/W5)
   // NB there is deliberately no `bloomScenery` here any more. Stage-gated sprites seated in the world
   // by hand-authored xPct/yPct were removed 2026-08-03 (owner: they read as misplaced). Progress shows

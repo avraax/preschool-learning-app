@@ -23,7 +23,7 @@ import type { GuideReaction } from './ThemeMascot'
 // `promptStage` and keep the centred, grid-filling behaviour.
 
 interface GameShellProps {
-  categoryId: string                 // 'alphabet' | 'math' | 'colors' | 'english' | 'ordleg'
+  categoryId: string                 // 'alphabet' | 'math' | 'colors' | 'english' | 'ordleg' | 'krea'
   title: string
   backRoute: string
   // Live cross-game XP indicator (Liveliness PRD-04): the reward ring, on EVERY game. Set false for a

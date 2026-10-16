@@ -57,7 +57,7 @@ function inventory() {
   let m
   while ((m = re.exec(src))) games.push({ route: m[2], expect: m[1], kind: 'game' })
   const sectionNames = [...src.matchAll(/^\s{4}name:\s*'([^']+)'/gm)].map((x) => x[1])
-  const sectionRoutes = ['/alphabet', '/math', '/farver', '/english', '/ordleg']
+  const sectionRoutes = ['/alphabet', '/math', '/farver', '/english', '/ordleg', '/krea']
   const menus = sectionRoutes.map((r, i) => ({ route: r, expect: sectionNames[i], kind: 'menu' }))
   return [
     { route: '/', expect: 'Børnelæring', kind: 'menu' },

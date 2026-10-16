@@ -157,7 +157,7 @@ const REWARD_REUSE = {
 }
 
 // Section icons (theme-constant, used app-wide). Magenta-keyed cutouts.
-const ICON_ROLES = ['alphabet', 'math', 'colors', 'english', 'ordleg']
+const ICON_ROLES = ['alphabet', 'math', 'colors', 'english', 'ordleg', 'krea']
 
 // Max output width per role (px). Full scenes are sized for iPad; cutouts are smaller.
 const ROLE_WIDTH = {

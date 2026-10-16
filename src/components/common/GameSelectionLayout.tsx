@@ -39,7 +39,7 @@ interface Game {
 }
 
 interface GameSelectionLayoutProps {
-  categoryId: 'alphabet' | 'math' | 'colors' | 'english' | 'ordleg'
+  categoryId: 'alphabet' | 'math' | 'colors' | 'english' | 'ordleg' | 'krea'
   games: Game[]
 }
 

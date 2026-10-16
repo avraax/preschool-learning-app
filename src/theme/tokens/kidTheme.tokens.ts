@@ -80,6 +80,16 @@ export const kidThemeTokens: ThemeTokens = {
       cardSurface: 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(224, 242, 241, 0.9) 100%)',
       cardBlur: 'blur(15px)',
     },
+    krea: {
+      gradient: 'linear-gradient(135deg, #FCE4EC 0%, #F8BBD0 50%, #F48FB1 100%)',
+      accent: '#D81B60',
+      onCard: onCardColor('#D81B60'),
+      tileSurface: tileSurface('#D81B60'),
+      border: '#F06292',
+      hoverBorder: '#D81B60',
+      cardSurface: 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(252, 228, 236, 0.9) 100%)',
+      cardBlur: 'blur(15px)',
+    },
   },
 
   decor: {
@@ -147,6 +157,15 @@ export const kidThemeTokens: ThemeTokens = {
       { section: 'ordleg', xPct: 67, yPct: 61, scale: 1.02, rotate: -2, depth: 0.32 },
       { section: 'english', xPct: 85, yPct: 65, scale: 0.94, rotate: 3, depth: 0.3 },
     ],
+    // The same smile with Krea seated last (Krea PRD-01 §4.1); the 5-object arc above is untouched.
+    homeAnchorsKrea: [
+      { section: 'alphabet', xPct: 15, yPct: 65, scale: 0.9, rotate: -3, depth: 0.3 },
+      { section: 'math', xPct: 29, yPct: 61, scale: 0.96, rotate: 2, depth: 0.32 },
+      { section: 'colors', xPct: 43, yPct: 59, scale: 1, rotate: 0, depth: 0.34 },
+      { section: 'ordleg', xPct: 57, yPct: 59, scale: 1, rotate: -2, depth: 0.34 },
+      { section: 'english', xPct: 71, yPct: 61, scale: 0.96, rotate: 2, depth: 0.32 },
+      { section: 'krea', xPct: 85, yPct: 65, scale: 0.9, rotate: 3, depth: 0.3 },
+    ],
     // Section framing (PRD-05 W4/W5): each section pushes into the region where its object sat,
     // so /alphabet feels like a different corner of the sky than /math (continuity with the push-in).
     sectionFocus: {
@@ -159,6 +178,7 @@ export const kidThemeTokens: ThemeTokens = {
       // where its object sat" note above. Don't "fix" it back.
       english: { xPct: 64, yPct: 46, zoom: 1.34 },
       ordleg: { xPct: 78, yPct: 52, zoom: 1.32 },
+      krea: { xPct: 84, yPct: 56, zoom: 1.3 },
     },
   },
 

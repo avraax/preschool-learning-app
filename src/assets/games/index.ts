@@ -11,7 +11,7 @@
 // to `null` (never throws). ART-GATED: the Foundation ships ZERO art — the registry is empty and
 // every load resolves to `null` until an area PRD lands its keyed WebP batch and registers it here.
 
-export type GameSection = 'alphabet' | 'math' | 'colors' | 'english' | 'ordleg'
+export type GameSection = 'alphabet' | 'math' | 'colors' | 'english' | 'ordleg' | 'krea'
 
 // content id (e.g. a letter, a colour-object id, an English word) → ready-to-render WebP URL.
 export type GameArtManifest = Record<string, string>

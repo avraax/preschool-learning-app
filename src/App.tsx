@@ -2,6 +2,7 @@ import React, { useEffect, Suspense } from 'react'
 import { lazyWithReload as lazy } from './utils/lazyWithReload'
 import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom'
 import { boatGameShown } from './utils/boatGame'
+import { kreaShown } from './utils/kreaShown'
 import { logIOSIssue } from './utils/remoteConsole'
 import { deviceInfo } from './utils/deviceDetection'
 import { reportAppOpen, reportRoute } from './services/usagePing'
@@ -42,6 +43,10 @@ const EnglishLearning = lazy(() => import('./components/english/EnglishLearning'
 const OrdlegSelection = lazy(() => import('./components/ordleg/OrdlegSelection'))
 const LaesOrdetGame = lazy(() => import('./components/ordleg/LaesOrdetGame'))
 const SpellingGame = lazy(() => import('./components/ordleg/SpellingGame'))
+const KreaSelection = lazy(() => import('./components/krea/KreaSelection'))
+const FriTegningGame = lazy(() => import('./components/krea/FriTegningGame'))
+const TegnMedMigGame = lazy(() => import('./components/krea/TegnMedMigGame'))
+const FarvelaegGame = lazy(() => import('./components/krea/FarvelaegGame'))
 const MemoryGame = lazy(() => import('./components/learning/MemoryGame'))
 const StickerAlbum = lazy(() => import('./components/hub/StickerAlbum'))
 // The two public text pages (App Store PRD §3.5 / A2). Also mounted OUTSIDE the gate by AuthGate, so
@@ -311,6 +316,13 @@ function App() {
         <Route path="/ordleg" element={<OrdlegSelection />} />
         <Route path="/ordleg/read" element={<LaesOrdetGame />} />
         <Route path="/ordleg/spelling" element={<SpellingGame />} />
+
+        {/* Krea Routes — staging-only until the owner releases it (Krea PRD-01 §2.5): every route is
+            gated, so a deep link on production lands on home, never on a half-built studio. */}
+        <Route path="/krea" element={kreaShown() ? <KreaSelection /> : <Navigate to="/" replace />} />
+        <Route path="/krea/tegn" element={kreaShown() ? <FriTegningGame /> : <Navigate to="/" replace />} />
+        <Route path="/krea/tegnmedmig" element={kreaShown() ? <TegnMedMigGame /> : <Navigate to="/" replace />} />
+        <Route path="/krea/farvelaeg" element={kreaShown() ? <FarvelaegGame /> : <Navigate to="/" replace />} />
 
         {/* Learning Routes */}
         {/* One route per memory TYPE — the board size is the difficulty level now, not the URL

@@ -30,6 +30,8 @@ export const sectionForPath = (pathname: string): SectionId | null => {
       return 'english'
     case 'ordleg':
       return 'ordleg'
+    case 'krea':
+      return 'krea'
     default:
       return null
   }

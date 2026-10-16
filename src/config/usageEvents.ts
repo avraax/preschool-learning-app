@@ -140,6 +140,10 @@ export const ROUTE_EVENTS: Readonly<Record<string, string>> = {
   '/ordleg': 'route:ordleg_menu',
   '/ordleg/read': 'route:ordleg_read',
   '/ordleg/spelling': 'route:ordleg_spelling',
+  '/krea': 'route:krea_menu',
+  '/krea/tegn': 'route:krea_draw',
+  '/krea/tegnmedmig': 'route:krea_guide',
+  '/krea/farvelaeg': 'route:krea_color',
 
   '/learning/memory/letters': 'route:memory_letters',
   '/learning/memory/numbers': 'route:memory_numbers',

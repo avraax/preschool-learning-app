@@ -6,8 +6,10 @@ import math from './math.webp'
 import colors from './colors.webp'
 import english from './english.webp'
 import ordleg from './ordleg.webp'
+// Placeholder: a copy of Farver's palette until the owner's Gemini render lands (Krea PRD-01 W0).
+import krea from './krea.webp'
 
-export type SectionIconId = 'alphabet' | 'math' | 'colors' | 'english' | 'ordleg'
+export type SectionIconId = 'alphabet' | 'math' | 'colors' | 'english' | 'ordleg' | 'krea'
 
 export const sectionIconImages: Record<SectionIconId, string> = {
   alphabet,
@@ -15,4 +17,5 @@ export const sectionIconImages: Record<SectionIconId, string> = {
   colors,
   english,
   ordleg,
+  krea,
 }

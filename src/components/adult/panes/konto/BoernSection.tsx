@@ -50,7 +50,7 @@ import { AppSkin } from '../../../../theme/adultTheme'
 import CreateProfileDialog from '../../../auth/CreateProfileDialog'
 import { PaneSection } from '../paneParts'
 
-const SECTION_IDS: SectionId[] = ['alphabet', 'math', 'colors', 'english', 'ordleg']
+const SECTION_IDS: SectionId[] = ['alphabet', 'math', 'colors', 'english', 'ordleg', 'krea']
 
 export interface BoernSectionProps {
   /** Close the whole settings surface — switching child re-attaches the store under the new profile. */

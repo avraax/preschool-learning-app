@@ -27,6 +27,7 @@ export const oceanThemeTokens: ThemeTokens = {
     colors: category(['#FBE9E7', '#FFCCBC', '#FFAB91'], '#E64A19', '#FF8A65', '#BF360C', '#FBE9E7'),
     english: category(['#FFFDE7', '#FFF9C4', '#FFF59D'], '#F9A825', '#FFD54F', '#F57F17', '#FFFDE7'),
     ordleg: category(['#EDE7F6', '#D1C4E9', '#B39DDB'], '#5E35B1', '#9575CD', '#4527A0', '#EDE7F6'),
+    krea: category(['#FCE4EC', '#F8BBD0', '#F48FB1'], '#D81B60', '#F06292', '#AD1457', '#FCE4EC'),
   },
 
   decor: {
@@ -92,6 +93,14 @@ export const oceanThemeTokens: ThemeTokens = {
       { section: 'ordleg', xPct: 67, yPct: 58, scale: 1.04, rotate: -2, depth: 0.32 },
       { section: 'english', xPct: 85, yPct: 61, scale: 0.96, rotate: 3, depth: 0.3 },
     ],
+    homeAnchorsKrea: [
+      { section: 'alphabet', xPct: 15, yPct: 62, scale: 0.92, rotate: -3, depth: 0.3 },
+      { section: 'math', xPct: 29, yPct: 58, scale: 0.98, rotate: 2, depth: 0.32 },
+      { section: 'colors', xPct: 43, yPct: 56, scale: 1, rotate: 0, depth: 0.34 },
+      { section: 'ordleg', xPct: 57, yPct: 56, scale: 1, rotate: -2, depth: 0.34 },
+      { section: 'english', xPct: 71, yPct: 58, scale: 0.98, rotate: 2, depth: 0.32 },
+      { section: 'krea', xPct: 85, yPct: 62, scale: 0.92, rotate: 3, depth: 0.3 },
+    ],
     sectionFocus: {
       alphabet: { xPct: 22, yPct: 55, zoom: 1.32 },
       math: { xPct: 36, yPct: 48, zoom: 1.34 },
@@ -99,6 +108,7 @@ export const oceanThemeTokens: ThemeTokens = {
       // Section framing is deliberately NOT swapped with the home seats — see kidTheme.tokens.ts.
       english: { xPct: 64, yPct: 48, zoom: 1.34 },
       ordleg: { xPct: 78, yPct: 55, zoom: 1.32 },
+      krea: { xPct: 84, yPct: 52, zoom: 1.3 },
     },
   },
 

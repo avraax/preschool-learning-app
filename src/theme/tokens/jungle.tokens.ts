@@ -28,6 +28,7 @@ export const jungleThemeTokens: ThemeTokens = {
     colors: category(['#FFF3E0', '#FFE0B2', '#FFCC80'], '#EF6C00', '#FFA726', '#E65100', '#FFF3E0'),
     english: category(['#E3F2FD', '#BBDEFB', '#90CAF9'], '#1565C0', '#42A5F5', '#0D47A1', '#E3F2FD'),
     ordleg: category(['#FCE4EC', '#F8BBD0', '#F48FB1'], '#C2185B', '#EC407A', '#880E4F', '#FCE4EC'),
+    krea: category(['#F3E5F5', '#E1BEE7', '#CE93D8'], '#7B1FA2', '#BA68C8', '#4A148C', '#F3E5F5'),
   },
 
   decor: {

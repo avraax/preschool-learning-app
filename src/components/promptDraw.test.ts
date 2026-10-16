@@ -17,7 +17,7 @@ import { NON_POOL_RANDOM_EXEMPT, PROMPT_DRAW_EXEMPT } from '../config/promptBag.
 import { PROMPT_POOLS } from '../config/promptPools.ts'
 
 const COMPONENTS = path.resolve(path.dirname(fileURLToPath(import.meta.url)))
-const SECTIONS = ['alphabet', 'math', 'farver', 'english', 'ordleg']
+const SECTIONS = ['alphabet', 'math', 'farver', 'english', 'ordleg', 'krea']
 
 /** File contents with block and line comments removed, so prose can never satisfy an assertion. */
 const codeOf = (rel: string): string =>

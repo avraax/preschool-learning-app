@@ -19,7 +19,7 @@ interface RepeatButtonProps {
   /** Size of the button */
   size?: 'small' | 'medium' | 'large'
   /** Category theme to use for styling (keys must match categoryThemes) */
-  category?: 'alphabet' | 'math' | 'colors' | 'english' | 'ordleg'
+  category?: 'alphabet' | 'math' | 'colors' | 'english' | 'ordleg' | 'krea'
   /** Use Lucide React icons instead of MUI icons */
   useLucideIcons?: boolean
 }

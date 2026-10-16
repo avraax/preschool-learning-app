@@ -12,7 +12,7 @@ import { routeKind, isHomeRoute } from './routeKind'
 import ThemeScene from './ThemeScene'
 import { perfProfile } from '../../../config/perfProfile'
 
-const BLOOM_SECTIONS: SectionId[] = ['alphabet', 'math', 'colors', 'english', 'ordleg']
+const BLOOM_SECTIONS: SectionId[] = ['alphabet', 'math', 'colors', 'english', 'ordleg', 'krea']
 
 // The ONE persistent SCENE for the whole app (App-wide UI Uplift / Theme Worlds). Rendered once
 // in App, behind the router, so the parallax scene + drifting ambient NEVER unmount on

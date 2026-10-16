@@ -486,3 +486,26 @@ test('rev advances only when something changed, and the report describes the del
   assert.equal(merged.sync.syncedRev, a.sync.syncedRev)
   assert.equal(merged.sync.originDevice, a.sync.originDevice)
 })
+
+// ----- a 6th section without a schema bump (Krea PRD-01 §4.1) -------------------------------------
+
+// An iPad left open on the previous release (no service worker, a long-lived tab) knows five
+// sections. Its normaliser drops every `krea` key from the doc it pulls, so what it PUSHES back has
+// none — the server's merge must keep the stored Krea bloom and explored list, not zero them.
+test('an old client that has never heard of krea does not erase the server\'s krea progress', () => {
+  const stored = doc(3, 'device-NEW')
+  stored.ledger['device-NEW'].bloom.krea = 40
+  stored.progression.explored.krea = ['krea.guide:kat']
+
+  const oldPush = JSON.parse(JSON.stringify(stored)) as Record<string, any>
+  delete oldPush.ledger['device-NEW'].bloom.krea
+  delete oldPush.progression.explored.krea
+  oldPush.ledger['device-OLD'] = { xp: 10, slots: 0, bloom: { math: 10 } }
+  const incoming = normalizePersisted(oldPush)!
+
+  const { merged } = mergeProgress(stored, incoming, { now: NOW, deviceId: 'server' })
+  assert.equal(merged.ledger['device-NEW'].bloom.krea, 40, 'the krea bloom was zeroed by an old push')
+  assert.equal(bloomXpFor(merged, 'krea'), 40)
+  assert.deepEqual(merged.progression.explored.krea, ['krea.guide:kat'], 'krea explored list was erased')
+  assert.equal(merged.ledger['device-OLD'].bloom.math, 10, 'the old device\'s own XP still lands')
+})

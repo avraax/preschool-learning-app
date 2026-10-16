@@ -11,7 +11,7 @@ const BASE = 'http://127.0.0.1:5173'
 const THEME = process.argv[2] || 'kid'
 const ONLY = process.argv[3] || null
 const src = readFileSync('C:/Source/preschool-learning-app/src/config/categoryThemes.ts', 'utf8')
-const MENU = { alphabet: '/alphabet', math: '/math', colors: '/farver', english: '/english', ordleg: '/ordleg' }
+const MENU = { alphabet: '/alphabet', math: '/math', colors: '/farver', english: '/english', ordleg: '/ordleg', krea: '/krea' }
 // Parse "<category>: { ... games: [ {title, route} ... ] }"
 const games = []
 for (const [cat, menu] of Object.entries(MENU)) {

@@ -9,7 +9,8 @@ import { useTransitionContext } from '../common/transition/TransitionProvider'
 import { useIdleAttract } from '../../hooks/useIdleAttract'
 import { PHONE_ANY, PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 import { sectionIconImages } from '../../assets/themes/icons'
-import { defaultHomeAnchors, SCENE_SECTION_ORDER } from '../../theme/tokens/helpers'
+import { homeAnchorsFor } from '../../theme/tokens/helpers'
+import { kreaShown } from '../../utils/kreaShown'
 import type { SceneSectionId } from '../../theme/tokens/types'
 import RewardRing from '../common/RewardRing'
 import ProfileChip from '../common/ProfileChip'
@@ -27,7 +28,7 @@ import appLogo from '../../assets/logo.webp'
 // ONE door to the book: two objects at opposite ends of the same screen, both meaning "your rewards",
 // is the confusion the whole PRD exists to remove — and home gets the space back for the world. Do not
 // re-add a second entrance; `rewardSurfaces.test.ts` fails the build if one appears.
-type HomeCardId = 'alphabet' | 'math' | 'colors' | 'english' | 'ordleg'
+type HomeCardId = 'alphabet' | 'math' | 'colors' | 'english' | 'ordleg' | 'krea'
 
 // Section → its menu route (the SectionId `colors` lives at `/farver`).
 const SECTION_ROUTES: Record<SceneSectionId, string> = {
@@ -36,9 +37,10 @@ const SECTION_ROUTES: Record<SceneSectionId, string> = {
   colors: '/farver',
   english: '/english',
   ordleg: '/ordleg',
+  krea: '/krea',
 }
 
-const homeCards: Array<{
+const allHomeCards: Array<{
   id: HomeCardId
   route: string
   initial: { opacity: number; x?: number; y?: number }
@@ -49,7 +51,12 @@ const homeCards: Array<{
   { id: 'colors', route: '/farver', initial: { opacity: 0, x: 30 }, delay: 0.2 },
   { id: 'ordleg', route: '/ordleg', initial: { opacity: 0, y: 30 }, delay: 0.3 },
   { id: 'english', route: '/english', initial: { opacity: 0, x: 30 }, delay: 0.4 },
+  { id: 'krea', route: '/krea', initial: { opacity: 0, x: 30 }, delay: 0.5 },
 ]
+
+// Krea is gated (Krea PRD-01 §2.5): production keeps exactly the five it had, on both layouts.
+const SHOW_KREA = kreaShown()
+const homeCards = allHomeCards.filter((c) => c.id !== 'krea' || SHOW_KREA)
 
 const HomePage: React.FC = () => {
   const theme = useTheme()
@@ -64,13 +71,17 @@ const HomePage: React.FC = () => {
   const burstMotion = theme.scene.ambient.motion
   // The reward ring BRANCHES on phone landscape rather than restyling — see its call site below.
   const phoneLandscape = useMediaQuery(PHONE_LANDSCAPE)
+  // SIX objects do not fit one arc across a PORTRAIT iPad (measured: neighbours overlap at 768 wide), so
+  // there the six take the centred flow, braked to 3+3 — never 5+1. Five keep their arc (Krea PRD-01 §4.1).
+  const portrait = useMediaQuery('(orientation: portrait)')
+  const seatSix = homeCards.length < 6 || !portrait
   const { rewardNumber } = useProgress()
   // THE number — rewards handed over, the same one the ring badge and the book header show.
   const rewardsOwned = rewardNumber()
 
   // The 5 section objects, built FROM the theme's home anchors so item ↔ anchor stay index-aligned
   // regardless of the authored order. Each is a tappable soft-3D object that lives in the world.
-  const anchors = theme.scene.homeAnchors ?? defaultHomeAnchors()
+  const anchors = homeAnchorsFor(theme.scene, SHOW_KREA)
   const sceneItems: SceneFieldItem[] = anchors.map((a) => {
     const cat = getCategoryTheme(a.section)
     return {
@@ -99,7 +110,7 @@ const HomePage: React.FC = () => {
   }, [])
   useIdleAttract({ onAttract })
   useEffect(() => () => { if (attractTimer.current) clearTimeout(attractTimer.current) }, [])
-  const attractKey = attractOn ? (SCENE_SECTION_ORDER[attractIndex] ?? null) : null
+  const attractKey = attractOn ? (homeCards[attractIndex]?.id ?? null) : null
 
   return (
     <Box
@@ -158,14 +169,18 @@ const HomePage: React.FC = () => {
             py: { xs: 'clamp(72px, 16vh, 120px)', md: 0 },
           }}
         >
+          <Box sx={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
+          <Box sx={{ width: '100%', ...(homeCards.length === 6 ? { '@media (orientation: portrait)': { maxWidth: 520 } } : {}) }}>
           <SceneObjectField
             items={sceneItems}
-            anchors={anchors}
+            anchors={seatSix ? anchors : undefined}
             frozen={frozen}
             burstMotion={burstMotion}
             attractKey={attractKey}
             float={darkScene}
           />
+          </Box>
+          </Box>
         </Box>
       )}
 
@@ -283,7 +298,8 @@ const HomePage: React.FC = () => {
                 justifyContent: 'center',
                 alignItems: 'center',
                 '@media (orientation: landscape)': { gridTemplateColumns: 'repeat(3, minmax(0, 270px))' },
-                [PHONE_LANDSCAPE]: { gap: '10px', gridTemplateColumns: 'repeat(5, minmax(0, 150px))', mb: 1 },
+                // 6 objects wrap 3+3 on a phone in landscape, never 5+1 (Krea PRD-01 §4.1).
+                [PHONE_LANDSCAPE]: { gap: '10px', gridTemplateColumns: `repeat(${homeCards.length === 6 ? 3 : 5}, minmax(0, 150px))`, mb: 1 },
               }}
             >
               {homeCards.map((card, index) => {

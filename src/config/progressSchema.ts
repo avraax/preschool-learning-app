@@ -42,10 +42,12 @@ export type ResetReason = 'adult-confirmed' | 'dev-harness'
 // ----- The read model (unchanged shape — moved here so both halves share one definition) ---------
 
 export type DifficultyLevel = 'let' | 'normal' | 'svaer'
-export type SectionId = 'alphabet' | 'math' | 'colors' | 'english' | 'ordleg'
+export type SectionId = 'alphabet' | 'math' | 'colors' | 'english' | 'ordleg' | 'krea'
 
 /** Canonical section list (note: colors is `colors`, the route is `/farver`). */
-export const SECTION_IDS: SectionId[] = ['alphabet', 'math', 'colors', 'english', 'ordleg']
+// `krea` (Krea PRD-01) joined WITHOUT a schema bump — an unknown section key is simply dropped by an
+// older client's normaliser and kept by the server's per-device max merge (`progressMerge.test.ts`).
+export const SECTION_IDS: SectionId[] = ['alphabet', 'math', 'colors', 'english', 'ordleg', 'krea']
 
 export interface DifficultySetting {
   global: DifficultyLevel

@@ -18,6 +18,7 @@ import { SECTION_LABELS } from '../../../config/adultSectionLabels'
 import type { DifficultyLevel, SectionId } from '../../../services/progressStore'
 import { PHONE_ANY } from '../../../theme/phoneMedia'
 import { PaneSection } from './paneParts'
+import { kreaShown } from '../../../utils/kreaShown'
 
 const LEVELS: { v: DifficultyLevel; label: string }[] = [
   { v: 'let', label: 'Let' },
@@ -41,7 +42,9 @@ const LEVEL_HELP: Record<DifficultyLevel, string> = {
     'Næste års niveau. 5 svarmuligheder, kun svar der ligner hinanden — og minus hen over tierne.',
 }
 
-const SECTIONS: SectionId[] = ['alphabet', 'math', 'colors', 'english', 'ordleg']
+// Krea's row follows the section's release gate (Krea PRD-01 §2.5) — no setting for a hidden section.
+const SECTIONS: SectionId[] = (['alphabet', 'math', 'colors', 'english', 'ordleg', 'krea'] as SectionId[])
+  .filter((s) => s !== 'krea' || kreaShown())
 
 export interface LaeringPaneProps {
   /** The active child's name, so the pane can say WHOSE difficulty this is. */
