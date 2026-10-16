@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-16T19:47:35.691Z",
+  "updatedAt": "2026-10-16T20:53:59.723Z",
   "clips": {
     "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|b": {
       "verdict": "ok",
@@ -25416,6 +25416,22 @@
       "text": "Se, dragen hopper!",
       "group": "krea",
       "updatedAt": 1792180055691
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Perleplade": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Perleplade",
+      "group": "phrases",
+      "updatedAt": 1792184039723
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Vil du have en ny plade? Dine perler forsvinder.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Vil du have en ny plade? Dine perler forsvinder.",
+      "group": "krea",
+      "updatedAt": 1792184039723
     }
   }
 }

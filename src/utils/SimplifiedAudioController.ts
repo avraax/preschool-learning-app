@@ -402,7 +402,8 @@ export class SimplifiedAudioController {
       boat: 'Fyld Båden',
       kreadraw: 'Fri Tegning',
       kreaguide: 'Tegn med Mig',
-      kreacolor: 'Farvelæg'
+      kreacolor: 'Farvelæg',
+      kreabeads: 'Perleplade'
     }
     
     const welcomeMessage = GAME_WELCOME_MESSAGES[gameType as keyof typeof GAME_WELCOME_MESSAGES]

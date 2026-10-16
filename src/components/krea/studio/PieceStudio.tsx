@@ -63,7 +63,7 @@ export const PieceStudio: React.FC<{
 )
 
 /** Back to the picture grid: the game's own tile picture ("the drawings"), so it needs no words. */
-export const PickerButton: React.FC<{ gameId: 'krea.guide' | 'krea.color'; disabled?: boolean; onPress: () => void }> = ({ gameId, disabled, onPress }) => (
+export const PickerButton: React.FC<{ gameId: 'krea.guide' | 'krea.color' | 'krea.beads'; disabled?: boolean; onPress: () => void }> = ({ gameId, disabled, onPress }) => (
   <StudioButton dataId="to-picker" label="Vælg en anden tegning" disabled={disabled} onPress={onPress}>
     <Box component="img" src={gameIconImages[gameId]} alt="" draggable={false} sx={{ width: '100%', height: '100%', objectFit: 'contain', pointerEvents: 'none' }} />
   </StudioButton>

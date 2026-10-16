@@ -144,6 +144,7 @@ export const ROUTE_EVENTS: Readonly<Record<string, string>> = {
   '/krea/tegn': 'route:krea_draw',
   '/krea/tegnmedmig': 'route:krea_guide',
   '/krea/farvelaeg': 'route:krea_color',
+  '/krea/perler': 'route:krea_beads',
 
   '/learning/memory/letters': 'route:memory_letters',
   '/learning/memory/numbers': 'route:memory_numbers',

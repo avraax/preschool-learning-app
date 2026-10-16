@@ -9,4 +9,4 @@ export const showsKrea = (tier: 'staging' | 'production', isDev: boolean, isHarn
   tier === 'staging' || isDev || isHarness
 
 /** Every Krea route, menu first. A deep link to any of them on production redirects home. */
-export const KREA_ROUTES = ['/krea', '/krea/tegn', '/krea/tegnmedmig', '/krea/farvelaeg'] as const
+export const KREA_ROUTES = ['/krea', '/krea/tegn', '/krea/tegnmedmig', '/krea/farvelaeg', '/krea/perler'] as const

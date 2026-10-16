@@ -37,15 +37,19 @@ export const KREA_COLORS = PALETTE_12
 export const KREA_RAINBOW_NAME = 'regnbue'
 
 /** The welcome titles = the tile titles (`categoryThemes.ts`). */
-export const KREA_WELCOME_TITLES = ['Fri Tegning', 'Tegn med Mig', 'Farvelæg'] as const
+export const KREA_WELCOME_TITLES = ['Fri Tegning', 'Tegn med Mig', 'Farvelæg', 'Perleplade'] as const
 
 /** The discard confirm, spoken because a 5-year-old can't read "Er du sikker?" (§2.1.4). */
 export const NEW_PAPER_TITLE = 'Nyt papir?'
 export const NEW_PAPER_LINE = 'Vil du have et nyt papir? Din tegning forsvinder.'
 
+/** Perleplade's version of the same confirm (PRD-02 §2.6): a fresh board, the beads go. */
+export const NEW_BOARD_TITLE = 'Ny plade?'
+export const NEW_BOARD_LINE = 'Vil du have en ny plade? Dine perler forsvinder.'
+
 /** Every Krea line the app can speak — the enumerator walks this, and the guards read it too. */
 export function allKreaLines(): string[] {
-  const lines: string[] = [...KREA_WELCOME_TITLES, NEW_PAPER_LINE, KREA_RAINBOW_NAME]
+  const lines: string[] = [...KREA_WELCOME_TITLES, NEW_PAPER_LINE, NEW_BOARD_LINE, KREA_RAINBOW_NAME]
   for (const c of KREA_COLORS) lines.push(KREA_COLOR_NAME[c])
   lines.push(...allSubjectLines(), ...allPageLines())
   return lines

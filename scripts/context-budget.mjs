@@ -63,6 +63,7 @@ const GLOB_CEILING_OVERRIDES = {
   'layout-contract.md': { max: 150, reason: 'owns the component glob by design; held under 6 KB' },
   'scene-assets.md': { max: 500, reason: 'owns every art directory; those globs are asset trees, not code' },
   'auth.md': { max: 60, reason: 'src/components/auth/** IS the subject; the gate refactor split it into more, smaller files' },
+  'games-krea.md': { max: 60, reason: 'src/components/krea/** IS the subject; Perleplade (PRD-02) took it to 41 files' },
   'env-and-secrets.md': { max: 60, reason: 'lib/** + api/** IS the subject — every serverless function reads env; it sat exactly on 40 and the usage-counter endpoint pushed it over' },
 }
 

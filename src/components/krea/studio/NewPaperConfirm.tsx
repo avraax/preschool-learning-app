@@ -17,10 +17,14 @@ export interface NewPaperConfirmProps {
   onFresh: () => void
   onKeep: () => void
   /** "Keep my picture" shows the game's own tile picture. */
-  keepPicture?: 'krea.draw' | 'krea.guide' | 'krea.color'
+  keepPicture?: 'krea.draw' | 'krea.guide' | 'krea.color' | 'krea.beads'
+  /** Perleplade asks "Ny plade?" (PRD-02 §2.6); the drawing games keep the default. */
+  title?: string
+  /** The "fresh" button's picture (Perleplade: an empty board); default the new sheet. */
+  freshPicture?: React.ReactNode
 }
 
-const NewPaperConfirm: React.FC<NewPaperConfirmProps> = ({ open, onFresh, onKeep, keepPicture = 'krea.draw' }) => {
+const NewPaperConfirm: React.FC<NewPaperConfirmProps> = ({ open, onFresh, onKeep, keepPicture = 'krea.draw', title = NEW_PAPER_TITLE, freshPicture }) => {
   const theme = useTheme()
   if (!open) return null
   const big = 'clamp(88px, 18vmin, 150px)'
@@ -28,7 +32,7 @@ const NewPaperConfirm: React.FC<NewPaperConfirmProps> = ({ open, onFresh, onKeep
     <Box
       data-krea-confirm
       role="dialog"
-      aria-label={NEW_PAPER_TITLE}
+      aria-label={title}
       sx={{
         position: 'absolute',
         inset: 0,
@@ -45,11 +49,11 @@ const NewPaperConfirm: React.FC<NewPaperConfirmProps> = ({ open, onFresh, onKeep
       }}
     >
       <Typography sx={{ fontFamily: theme.titleFontFamily, fontWeight: 700, fontSize: 'clamp(1.6rem, 5vmin, 2.6rem)', color: '#FFFFFF', textShadow: '0 2px 8px rgba(0,0,0,0.45)' }}>
-        {NEW_PAPER_TITLE}
+        {title}
       </Typography>
       <Box sx={{ display: 'flex', gap: 'clamp(24px, 6vmin, 64px)' }}>
         <StudioButton dataId="confirm-fresh" label="Ja, nyt papir" size={big} activateOn="click" onPress={onFresh}>
-          <PICTURES.NewPaper />
+          {freshPicture ?? <PICTURES.NewPaper />}
         </StudioButton>
         <StudioButton dataId="confirm-keep" label="Nej, behold min tegning" size={big} activateOn="click" onPress={onKeep}>
           <Box component="img" src={gameIconImages[keepPicture]} alt="" draggable={false} sx={{ width: '100%', height: '100%', objectFit: 'contain', pointerEvents: 'none' }} />

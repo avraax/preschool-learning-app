@@ -589,7 +589,20 @@ const KREA_KEY_OVERRIDES = {
   'crayon-rainbow': { ...GREEN_SUBJECT, darkScreenMax: 30 },
   done: GREEN_SUBJECT,
 }
-const KREA_TILES = { 'icon-draw': 'krea.draw', 'icon-guide': 'krea.guide', 'icon-color': 'krea.color' }
+const KREA_TILES = { 'icon-draw': 'krea.draw', 'icon-guide': 'krea.guide', 'icon-color': 'krea.color', 'icon-beads': 'krea.beads' }
+// Perleplade's props (PRD-02 W0): art-src/krea/beads/<id>.jpg → src/assets/games/krea/beads/<id>.webp.
+// The pegboard render is NOT shipped: its baked pegs (~19 a side) can't line up with a 7/10/13 board, so
+// the board is drawn in code like the beads (PRD-02 §2.1). The tweezers already lie tip DOWN-LEFT.
+const KREA_BEAD_SPECS = {
+  // The cream clay picks up the screen's bounce light underneath, so on the defaults its bottom edge
+  // keyed away ragged — and the leaf thresholds kept the whole contact shadow. Measured green-excess:
+  // clay body ≤ ~50, shadow 80–100, screen 160+; so the grow stops at 65. The body's own 10–50 IS the
+  // bounce-light tint (a green-bellied bowl on the wood table), so despill flattens it from 10 — the
+  // bowl has no green of its own to lose.
+  bowl: { size: 256, fill: 0.92, vivid: 140, faint: 65, despill: 10, darkScreenMax: 40 },
+  tweezers: { size: 256, fill: 0.92 },
+  'card-frame': { size: 512, fill: 0.96 },
+}
 
 async function optimizeKrea() {
   const srcDir = join(SRC_ROOT, 'krea')
@@ -633,6 +646,22 @@ async function optimizeKrea() {
     const outPath = join(ROOT, 'src', 'assets', 'themes', 'icons', 'games', `${key}.webp`)
     await greenKeySprite(join(srcDir, src), outPath, { size: 512, fill: UI_FILL, ...KREA_KEY_OVERRIDES[id] })
     console.log(`  ${id.padEnd(16)} → icons/games/${key}.webp  ${String(kb((await stat(outPath)).size)).padStart(4)} KB`)
+  }
+  const beadDir = join(srcDir, 'beads')
+  if (existsSync(beadDir)) {
+    const beadOut = join(KREA_OUT, 'beads')
+    await mkdir(beadOut, { recursive: true })
+    const beadFiles = await readdir(beadDir)
+    for (const [id, spec] of Object.entries(KREA_BEAD_SPECS)) {
+      const src = beadFiles.find((f) => basename(f, extname(f)) === id)
+      if (!src) {
+        console.warn(`  ! beads/${id}: no source`)
+        continue
+      }
+      const outPath = join(beadOut, `${id}.webp`)
+      await greenKeySprite(join(beadDir, src), outPath, spec)
+      console.log(`  ${('beads/' + id).padEnd(16)} → beads/${id}.webp  ${String(kb((await stat(outPath)).size)).padStart(4)} KB`)
+    }
   }
   const sec = find('section-icon')
   if (sec) {

@@ -44,9 +44,8 @@ const Art: React.FC<{ src: string }> = ({ src }) => (
  * nothing in particular — small, white, and silent about what it does (owner, 2026-10-16). The badge is
  * drawn in code (two rounded bars on a disc), not a glyph.
  */
-const NewPaper: React.FC = () => (
-  <Box sx={{ position: 'relative', width: '100%', height: '100%' }}>
-    <Art src={KREA_ART.paper} />
+/** The green + badge on a "new" control's corner — shared with Perleplade's "Ny plade". */
+export const PlusBadge: React.FC = () => (
     <Box
       aria-hidden
       sx={{
@@ -72,6 +71,12 @@ const NewPaper: React.FC = () => (
         '&::after': { transform: 'translate(-50%, -50%) rotate(90deg)' },
       }}
     />
+)
+
+const NewPaper: React.FC = () => (
+  <Box sx={{ position: 'relative', width: '100%', height: '100%' }}>
+    <Art src={KREA_ART.paper} />
+    <PlusBadge />
   </Box>
 )
 

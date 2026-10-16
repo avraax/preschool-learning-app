@@ -31,6 +31,7 @@ import ordlegSpelling from './ordleg.spelling.webp'
 import kreaDraw from './krea.draw.webp'
 import kreaGuide from './krea.guide.webp'
 import kreaColor from './krea.color.webp'
+import kreaBeads from './krea.beads.webp'
 
 // Keyed `<section>.<id>`; GameTileIcon builds the key and falls back to emoji for any missing key.
 export const gameIconImages: Record<string, string> = {
@@ -58,4 +59,5 @@ export const gameIconImages: Record<string, string> = {
   'krea.draw': kreaDraw,
   'krea.guide': kreaGuide,
   'krea.color': kreaColor,
+  'krea.beads': kreaBeads,
 }

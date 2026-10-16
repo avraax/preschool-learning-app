@@ -207,7 +207,7 @@ const categoryContent: Record<CategoryId, CategoryContent> = {
       }
     ]
   },
-  // Krea PRD-01 — gated (`kreaGate.ts`). Perleplade (`beads`, PRD-02) joins this list when it is built.
+  // Krea PRD-01 + PRD-02 (Perleplade) — gated (`kreaGate.ts`).
   krea: {
     name: 'Krea',
     description: 'Tegn, farvelæg og skab',
@@ -229,6 +229,12 @@ const categoryContent: Record<CategoryId, CategoryContent> = {
         title: 'Farvelæg',
         route: '/krea/farvelaeg',
         gradient: 'linear-gradient(135deg, #FFB74D 0%, #F57C00 100%)'
+      },
+      {
+        id: 'beads',
+        title: 'Perleplade',
+        route: '/krea/perler',
+        gradient: 'linear-gradient(135deg, #4FC3F7 0%, #0288D1 100%)'
       }
     ]
   }

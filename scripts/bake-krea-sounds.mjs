@@ -66,6 +66,22 @@ const CUES = {
     lufs: -24,
     graph: `aevalsrc='0.8*exp(-13*t)*sin(2*PI*(240*t+900*t*t))+0.25*exp(-20*t)*sin(2*PI*(480*t+1800*t*t))':s=${SR}:d=0.32`,
   },
+  // Perleplade (PRD-02): a bead lifted from the bowl — a bright glassy click.
+  'bead-pick': {
+    lufs: -26,
+    graph: `aevalsrc='${ping(0.6, 2350, 0, 70)}+${ping(0.35, 3520, 0.004, 90)}':s=${SR}:d=0.12`,
+  },
+  // A bead pressed onto its peg: a soft, short plastic tick (lower, duller than the pick).
+  'bead-place': {
+    lufs: -25,
+    graph: `aevalsrc='${ping(0.8, 820, 0, 85)}+0.3*exp(-160*t)*sin(2*PI*1900*t)':s=${SR}:d=0.1`,
+  },
+  // A bead going back to its bowl: a gentle little roll — three soft ticks falling in pitch. Never a
+  // "wrong" sound: it is what a bead does when it rolls home (PRD-02 §2.4).
+  'bead-back': {
+    lufs: -28,
+    graph: `aevalsrc='${[ping(0.5, 1250, 0, 60), ping(0.42, 1050, 0.07, 60), ping(0.34, 880, 0.15, 60)].join('+')}':s=${SR}:d=0.3`,
+  },
   // Done: a warm "ta-da" — a major chord, then the octave.
   'krea-tada': {
     lufs: -21,

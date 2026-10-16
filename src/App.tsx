@@ -47,6 +47,7 @@ const KreaSelection = lazy(() => import('./components/krea/KreaSelection'))
 const FriTegningGame = lazy(() => import('./components/krea/FriTegningGame'))
 const TegnMedMigGame = lazy(() => import('./components/krea/TegnMedMigGame'))
 const FarvelaegGame = lazy(() => import('./components/krea/FarvelaegGame'))
+const PerlepladeGame = lazy(() => import('./components/krea/PerlepladeGame'))
 const MemoryGame = lazy(() => import('./components/learning/MemoryGame'))
 const StickerAlbum = lazy(() => import('./components/hub/StickerAlbum'))
 // The two public text pages (App Store PRD §3.5 / A2). Also mounted OUTSIDE the gate by AuthGate, so
@@ -323,6 +324,7 @@ function App() {
         <Route path="/krea/tegn" element={kreaShown() ? <FriTegningGame /> : <Navigate to="/" replace />} />
         <Route path="/krea/tegnmedmig" element={kreaShown() ? <TegnMedMigGame /> : <Navigate to="/" replace />} />
         <Route path="/krea/farvelaeg" element={kreaShown() ? <FarvelaegGame /> : <Navigate to="/" replace />} />
+        <Route path="/krea/perler" element={kreaShown() ? <PerlepladeGame /> : <Navigate to="/" replace />} />
 
         {/* Learning Routes */}
         {/* One route per memory TYPE — the board size is the difficulty level now, not the URL

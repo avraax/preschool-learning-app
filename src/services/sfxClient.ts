@@ -66,6 +66,10 @@ export type SfxCue =
   | 'krea-pick'
   | 'krea-fill'
   | 'krea-tada'
+  // Perleplade (Krea PRD-02): a bead lifted, pressed onto a peg, rolling home. Synthesised too.
+  | 'bead-pick'
+  | 'bead-place'
+  | 'bead-back'
 
 // New drag/game cues (pick-up/spring-back/chomp/match) reuse curated files for now (real sound,
 // distinct cue names); swap to dedicated files when available — missing files degrade to silence.
@@ -110,6 +114,9 @@ const CUE_FILES: Record<SfxCue, string> = {
   'krea-pick': '/sounds/ui/krea-pick.mp3',
   'krea-fill': '/sounds/ui/krea-fill.mp3',
   'krea-tada': '/sounds/ui/krea-tada.mp3',
+  'bead-pick': '/sounds/ui/bead-pick.mp3',
+  'bead-place': '/sounds/ui/bead-place.mp3',
+  'bead-back': '/sounds/ui/bead-back.mp3',
 }
 
 // Not part of the first-gesture preload: a 40 s bed is ~320 KB and ~5 MB decoded, and only Fyld Båden
@@ -159,6 +166,9 @@ const CUE_VOLUME: Partial<Record<SfxCue, number>> = {
   'krea-pick': 0.4,
   'krea-fill': 0.5,
   'krea-tada': 0.6,
+  'bead-pick': 0.4,
+  'bead-place': 0.45,
+  'bead-back': 0.4,
 }
 
 interface PlayOptions {
