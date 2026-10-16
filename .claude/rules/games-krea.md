@@ -5,10 +5,10 @@ paths:
   - "scripts/krea-regions.mjs"
 ---
 
-# Krea — `krea.draw` (Fri Tegning) · `krea.guide` (Tegn med Mig) · `krea.color` (Farvelæg)
+# Krea — `krea.draw` (Fri Tegning) · `krea.guide` (Tegn med Mig) · `krea.color` (Farvelæg) · `krea.beads` (Perleplade)
 
 The 6th section, behind `kreaGate.ts` until the owner releases it. PRD + progress log:
-`plans/krea/tmp-prd-krea-01-section-and-drawing.md` §10 (Perleplade is PRD-02). Task-game rules
+`plans/krea/tmp-prd-krea-01-section-and-drawing.md` §10; Perleplade `tmp-prd-krea-02-perleplade.md` §10. Task-game rules
 (seam, timers, never-await) are in `game-development.md`; they apply here though its globs don't load.
 
 ## Rewards — the reason this section is shaped the way it is
@@ -49,6 +49,16 @@ The 6th section, behind `kreaGate.ts` until the owner releases it. PRD + progres
   an unchanged `width` prop (Farvelæg's fill canvas went 0×0 exactly so).
 - Alive presets are WAAPI one-shots on the PICTURE layer, transform/opacity, explicit identity end;
   reduced motion → `glow`.
+
+## Perleplade (`beads/`, `kreaBeads.ts`)
+- **One resolver**: drag and tap both land through the game's `resolve()`, the only `placeBead` call.
+  ONE droppable board + arithmetic pegs, never a droppable per peg. By hand: no tweezers (owner).
+- The dragged bead and its landing read the REAL pointer (0.45 pitch up on touch, 0 for a mouse), not
+  dnd-kit's delta; **no transform on a bowl's DraggableItem ancestor** (WebKit drift).
+- A wrong bead leaves the board unchanged and flies home; the 2nd miss on a peg glows the bowl. Free
+  board: no XP, no finish (like Fri Tegning). Patterns: one task on the done press, `popOff`, the seam.
+- Grids are per-level strings (10/13/16): derived legend counts ≤ 100, symmetric ones tested, no level
+  its predecessor resized. Pitch floor 40 px on the iPad, 35 at Svær (owner).
 
 ## Persistence & controls
 - **Session only** (`kreaSession`, sessionStorage per child × game × item; cleared on detach/reset). No

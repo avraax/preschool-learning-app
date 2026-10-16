@@ -8,6 +8,8 @@ folder always reflects the shipped UI.
   Nothing here predates it, so the per-build notes this file used to carry are gone.
 - **Krea** (`krea*.jpg`, added 2026-10-16) is gated by `kreaGate.ts` — visible on dev/staging only, so
   production users can't see what these show yet. `-guide-step`/`-color-page` deep-link with `?motiv=`.
+  Perleplade (`krea-beads*.jpg`, 2026-10-17, at Normal = 13×13): the grid, `-pattern` (`?motiv=hjerte`)
+  and `-free` (`?motiv=fri-hjerte`); `krea.jpg` re-shot with its 4th tile.
 - **Theme**: Regnbue (default — forced via `?theme=kid`). Other skins (Havet, Rummet, Junglen,
   Slikland, Dinosaurer) share the same layout; only tokens differ.
 - **Capture tool**: `.claude/skills/ui-screenshot/cdp.mjs` (headless Chrome). JPEG q85. The route
