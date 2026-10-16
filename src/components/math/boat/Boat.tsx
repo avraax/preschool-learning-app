@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { Box, Typography } from '@mui/material'
 import { DraggableItem } from '../../common/dnd/DraggableItem'
@@ -254,7 +254,15 @@ const Boat: React.FC<BoatProps> = ({
     setWasTooting(tooting)
     if (tooting) setBlows((b) => b + 1)
   }
-  const blowing = blows > 0
+  // A blast is an EVENT, not a state: it clears after the animation. Left set, the wrong-send shake
+  // (which remounts this subtree via `key={shakeKey}`) replayed the last blast on every wrong answer.
+  const [blowing, setBlowing] = useState(false)
+  useEffect(() => {
+    if (blows === 0) return
+    setBlowing(true)
+    const t = setTimeout(() => setBlowing(false), 1200)
+    return () => clearTimeout(t)
+  }, [blows])
   const blowKey = blows
   return (
     <motion.div
