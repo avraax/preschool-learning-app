@@ -14,6 +14,7 @@ import { guestModeActive } from '../utils/guestMode.ts'
 import { devKidCount, devKidName } from '../utils/devHarness.ts'
 import { authStore } from './authStore.ts'
 import { practiceLedger } from './practiceLedger.ts'
+import { kreaSession } from './kreaSession.ts'
 import { progressStore } from './progressStore.ts'
 import { progressSync } from './progressSync.ts'
 
@@ -360,6 +361,8 @@ class ProfileStore {
     // The practice ledger (Practice Loop PRD-01 W2) is per-child and device-local, so it follows the
     // same attach/detach lifecycle — this store is the only caller for it too.
     practiceLedger.attach(id)
+    // Krea's session-only drawings (Krea PRD-01 §4.6) follow the same lifecycle.
+    kreaSession.attach(id)
     this.publish({ status: 'ready', accountId, activeProfileId: id, error: null })
     // Reconcile with the server in the background — NEVER awaited, because gameplay already runs off
     // the local state that attach() just hydrated.
@@ -371,6 +374,7 @@ class ProfileStore {
   clearSelection(): void {
     progressStore.detach()
     practiceLedger.detach()
+    kreaSession.detach()
     writePointer(null)
     this.publish({ status: 'choosing', activeProfileId: null })
   }
@@ -472,6 +476,7 @@ class ProfileStore {
       // …and the child's practice ledger (Practice Loop PRD-01 W2). A deleted child must not leave a
       // record of what they got wrong on the device — it is per-child data like the book.
       practiceLedger.clear(id)
+      kreaSession.clear(id)
       return true
     } catch {
       return false
@@ -488,6 +493,7 @@ class ProfileStore {
   signOut(): void {
     progressStore.detach()
     practiceLedger.detach()
+    kreaSession.detach()
     writePointer(null)
     try {
       localStorage.removeItem(ROSTER_KEY)
