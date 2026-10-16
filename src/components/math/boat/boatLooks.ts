@@ -39,14 +39,14 @@ export const BOAT_GEOMETRY = {
    */
   rows: {
     // The sail's lower curl reaches x 0.535 and the mast stands at 0.40–0.45 (measured on the levelled
-    // render): cargo starts right of both (owner 2026-10-16: a stacked box touched the sail). It ends
+    // render): cargo starts right of both (owner 2026-10-16: a stacked box touched the sail; then "a tiny bit to the left"). It ends
     // short of the horn on the bow tip (x 0.888).
-    fishLeft: 0.555,
-    fishRight: 0.885,
+    fishLeft: 0.54,
+    fishRight: 0.87,
     fishBack: 0.645,
     fishFront: 0.712,
-    boxLeft: 0.565,
-    boxRight: 0.875,
+    boxLeft: 0.55,
+    boxRight: 0.86,
     /** Where a ground-tier box's bottom edge rests — just behind the fish. */
     boxBase: 0.615,
   },
