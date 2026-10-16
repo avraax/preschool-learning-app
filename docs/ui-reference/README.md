@@ -6,6 +6,8 @@ folder always reflects the shipped UI.
 
 - **Captured**: 2026-08-01, v1.0.45 — **the entire set, in one pass, after the de-emoji PRD completed.**
   Nothing here predates it, so the per-build notes this file used to carry are gone.
+- **Krea** (`krea*.jpg`, added 2026-10-16) is gated by `kreaGate.ts` — visible on dev/staging only, so
+  production users can't see what these show yet. `-guide-step`/`-color-page` deep-link with `?motiv=`.
 - **Theme**: Regnbue (default — forced via `?theme=kid`). Other skins (Havet, Rummet, Junglen,
   Slikland, Dinosaurer) share the same layout; only tokens differ.
 - **Capture tool**: `.claude/skills/ui-screenshot/cdp.mjs` (headless Chrome). JPEG q85. The route

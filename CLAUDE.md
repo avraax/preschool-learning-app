@@ -55,7 +55,7 @@ protocol in `audio-system.md`.**
 
 ## Routes
 
-5 sections, each a menu + its games, plus `/album`, the memory routes and the off-menu `/voicelab` and
+6 sections (Krea gated), each a menu + its games, plus `/album`, the memory routes and the off-menu `/voicelab` and
 `/audit` — **enumerated in `App.tsx`**, the source of truth. Features use bookmarkable,
 deep-linkable URLs (`src/utils/urlParams.ts`).
 

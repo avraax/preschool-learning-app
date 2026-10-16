@@ -507,8 +507,28 @@ owner's iPad look-and-feel sign-off on Fri Tegning. Playable on DEV/staging at `
 - **Undo is unlimited** (it stopped at 30); the checkpoint follows and is reused inside the live window.
 - Performance: strokes paint incrementally (`createPainter`); opaque brushes make live == committed.
 
-**Next:** W4 (Tegn med Mig) and W5 (Farvelæg), then W6. Rung 3 still owed on Fri Tegning: finger feel,
-crayon texture, the synthesised sounds, Pencil + palm guard, Scribble, sessionStorage after killing the PWA.
+**2026-10-16 (evening) — W4, W5, W6 done** (2355102 + the re-break fix + the W6 commit; not pushed).
+
+- **W4 + W5 are ONE commit** — they share `studio/PieceStudio.tsx` (layout + the one way-on control:
+  Nyt papir → ✓ → next), `studio/KreaPicker.tsx` and the phrase builder.
+- **Deviation from §4.5's order:** XP is granted ON the ✓ press, not after the dance — leaving mid-dance
+  must not lose the piece's reward. The ceremony still waits for the seam after the alive moment.
+- **Guides are shapes** (`kreaShapes.ts`), not SVG paths; the mirror axis is stored per stroke.
+- **Subjects swapped within §2.4:** the dragon is a long-necked profile with back spikes (a wing +
+  round head read as "a pig in a party hat") and its line is "Se, dragen danser!".
+- **Regions:** min area 0.35% (not 1.5% — that merged eyes and wheels a child can hit); every page's
+  `outside` is `drop` (the largest border-touching area), so open scenes keep their sky only when the
+  sky is enclosed. Counts 4–27; tog (27) is the busiest. Grey share measured 0.00% on all 12.
+- Farvelæg has no rainbow crayon (a region takes one colour); the eraser is a tap-to-clear tool.
+- New `krea-fill` cue (synthesised, `bake-krea-sounds.mjs krea-fill` bakes one cue).
+- Context budget: the component-glob ceilings went 120 → 150 (Krea took the tree to 124 files).
+- Verified rung 1 (Playwright, real mouse) and rung 2 (WebKit iPad UA, 5 viewports) — see the commit
+  bodies. 23 guards re-broken; 2 were vacuous and fixed.
+
+**Next:** the owner's iPad (rung 3) for all three games: finger feel and smoothness on the A10X, whether a
+5-year-old passes Let's steps unaided, the step lines sounding right (84 clips approved-but-unheard), the
+crayon texture, the synthesised sounds, Pencil + palm guard, Scribble, sessionStorage after killing the
+PWA. Then PRD-02 (Perleplade), then the owner's release decision (delete the gate).
 
 ## 9. Kickoff prompt for a fresh session
 

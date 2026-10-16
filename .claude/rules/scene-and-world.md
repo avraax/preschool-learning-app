@@ -74,7 +74,7 @@ exported as `MASCOT_CORNER_SIZE` so a layout reserves it rather than re-measurin
 ## The music bed
 
 `musicClient` (`src/services/musicClient.ts`, **HTML5 Audio** — moved off WebAudio for iOS-PWA stability)
-plays a per-world bed on **menu surfaces only** (home + the 5 section menus + `/album`) **and only once the
+plays a per-world bed on **menu surfaces only** (home + the 6 section menus + `/album`) **and only once the
 auth/profile gate has opened**; entering a game/browse screen fades it out so narration + SFX own the mix.
 It is a **separate channel** from TTS and SFX — never routed through `SimplifiedAudioController` — and it
 honours the Musik switch in "Indstillinger" → Lyd (`progressStore.settings.musicEnabled`).
