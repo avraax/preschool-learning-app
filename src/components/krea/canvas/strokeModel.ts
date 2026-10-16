@@ -13,8 +13,8 @@
 // checkpoint follows (an undo below it rebuilds it from the list). It used to be one — undo silently
 // stopped working after 30 steps, which a child hammering the button reads as it breaking.
 
-export const PAPER_W = 1200
-export const PAPER_H = 900
+import { PAPER_H, PAPER_W } from '../../../config/kreaPaper.ts'
+export { PAPER_H, PAPER_W } from '../../../config/kreaPaper.ts'
 
 /** How many of the most recent strokes stay undoable; older ones are baked into the checkpoint. */
 export const UNDO_DEPTH = 30
@@ -32,6 +32,11 @@ export interface BrushStroke {
   /** Flat [x0, y0, x1, y1, …] in paper units, integers. A tap is a single point. */
   points: number[]
   seed: number
+  /**
+   * Tegn med Mig's mirror steps (§4.3): the vertical axis, in paper units, this stroke is ALSO drawn
+   * reflected across. Per stroke, not per surface, so a replay mirrors exactly the strokes that were.
+   */
+  mirror?: number
 }
 
 export interface StampStroke {
@@ -130,11 +135,12 @@ export function deserialise(raw: string | null | undefined, stampIds?: ReadonlyS
     if (pts.length < 2 || pts.length % 2 !== 0 || !pts.every((n) => Number.isFinite(n))) continue
     const points = (pts as number[]).map((n, i) => quantise(n, i % 2 === 0 ? PAPER_W : PAPER_H))
     const tool = r.tool as BrushTool
+    const mirror = Number.isFinite(r.mirror) ? { mirror: quantise(r.mirror as number, PAPER_W) } : {}
     if (tool === 'crayon') {
       if (!COLORS.has(String(r.color))) continue
-      strokes.push({ tool, color: r.color as CrayonColor, points, seed })
+      strokes.push({ tool, color: r.color as CrayonColor, points, seed, ...mirror })
     } else {
-      strokes.push({ tool, points, seed })
+      strokes.push({ tool, points, seed, ...mirror })
     }
   }
   if (!strokes.length) return null

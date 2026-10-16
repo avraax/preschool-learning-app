@@ -33,6 +33,37 @@ test('every Krea line is in the prebake enumeration', async () => {
   assert.deepEqual(missing, [])
 })
 
+// The step and done lines are whole sentences, one clip each — pinned as literals for a sample, and the
+// enumerated set must hold every step of every subject and every page's done line.
+test('Tegn med Mig and Farvelæg speak exactly these lines', async () => {
+  const { KREA_SUBJECTS } = await import('./kreaSubjects.ts')
+  const { KREA_PAGES } = await import('./kreaPages.ts')
+  const kat = KREA_SUBJECTS.find((s) => s.id === 'kat')!
+  assert.equal(kat.steps[0].line, 'Tegn en stor cirkel til kattens hoved.')
+  assert.equal(kat.doneLine, 'Se, katten hopper!')
+  assert.equal(KREA_SUBJECTS.find((s) => s.id === 'sommerfugl')!.steps[1].line, 'Tegn en stor vinge. Den anden vinge kommer af sig selv.')
+  assert.equal(KREA_PAGES.find((p) => p.id === 'tog')!.doneLine, 'Se, toget kører!')
+  const all = new Set(allKreaLines())
+  for (const s of KREA_SUBJECTS) for (const l of [...s.steps.map((x) => x.line), s.doneLine]) assert.ok(all.has(l), l)
+  for (const p of KREA_PAGES) assert.ok(all.has(p.doneLine), p.doneLine)
+})
+
+// The finished pieces DO earn: one task per piece, through the seam, and the game actually judges steps
+// / fills regions with the pure modules (a data test can't see whether the component uses them).
+test('Tegn med Mig and Farvelæg grant one task per finished piece and use the pure engines', () => {
+  const strip = (f: string) =>
+    readFileSync(new URL(`../components/krea/${f}`, import.meta.url), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '')
+  for (const [file, id] of [['TegnMedMigGame.tsx', 'krea.guide'], ['FarvelaegGame.tsx', 'krea.color']]) {
+    const c = strip(file)
+    assert.match(c, new RegExp(`GAME_ID = '${id.replace('.', '\\.')}'`), file)
+    assert.match(c, /useTaskRun\(\{ tasksInRound: KREA_TASKS_IN_ROUND, gameId: GAME_ID \}\)/, file)
+    assert.equal((c.match(/run\.completeTask\(true\)/g) ?? []).length, 1, `${file}: one task per finished piece`)
+  }
+  assert.match(strip('TegnMedMigGame.tsx'), /judgeStep\(step, ink, toleranceInPaper\(tuning\.tolerancePx/)
+  assert.match(strip('canvas/FillSurface.tsx'), /regionAt\(labels\.current/)
+  assert.match(strip('canvas/FillSurface.tsx'), /paintRegion\(img\.data, lab/)
+})
+
 // Fri Tegning never earns XP (PRD §2.1.2, Lepper 1973): free drawing must not become a task.
 test('Fri Tegning has no task run — it earns nothing', () => {
   const code = readFileSync(new URL('../components/krea/FriTegningGame.tsx', import.meta.url), 'utf8')

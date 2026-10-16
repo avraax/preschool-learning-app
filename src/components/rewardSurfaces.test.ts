@@ -173,6 +173,8 @@ const SEAM_GAMES = [
   'components/farver/NuancerGame.tsx',
   'components/farver/FarveQuizGame.tsx',
   'components/common/UnifiedMemoryGame.tsx',
+  'components/krea/TegnMedMigGame.tsx',
+  'components/krea/FarvelaegGame.tsx',
 ]
 
 test('every game continues through the ceremony seam, exactly once (§W7.5)', () => {

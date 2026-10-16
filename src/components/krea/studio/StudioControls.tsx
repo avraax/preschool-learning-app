@@ -173,7 +173,8 @@ export interface CrayonPaletteProps {
   /** Which crayon is in hand: a colour (`crayon`), the rainbow, or neither (another tool). */
   inHand: 'crayon' | 'rainbow' | null
   onPick: (c: CrayonColor) => void
-  onPickRainbow: () => void
+  /** Absent = no rainbow crayon (Farvelæg fills a region with ONE colour). */
+  onPickRainbow?: () => void
   disabled?: boolean
 }
 
@@ -185,7 +186,7 @@ export interface CrayonPaletteProps {
 export const CrayonPalette: React.FC<CrayonPaletteProps> = ({ colors, color, inHand, onPick, onPickRainbow, disabled }) => {
   const items: Array<{ id: CrayonColor | 'rainbow'; label: string; src: string; on: boolean; pick: () => void }> = [
     ...colors.map((c) => ({ id: c, label: KREA_COLOR_NAME[c], src: CRAYON_ART[c], on: inHand === 'crayon' && c === color, pick: () => onPick(c) })),
-    { id: 'rainbow' as const, label: KREA_RAINBOW_NAME, src: KREA_ART.crayonRainbow, on: inHand === 'rainbow', pick: onPickRainbow },
+    ...(onPickRainbow ? [{ id: 'rainbow' as const, label: KREA_RAINBOW_NAME, src: KREA_ART.crayonRainbow, on: inHand === 'rainbow', pick: onPickRainbow }] : []),
   ]
   const n = items.length
   // One row on a tablet: 13 must fit 768 wide in portrait INSIDE the shell's side padding (measured: at

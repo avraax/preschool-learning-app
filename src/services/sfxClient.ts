@@ -64,6 +64,7 @@ export type SfxCue =
   | 'krea-undo'
   | 'krea-paper'
   | 'krea-pick'
+  | 'krea-fill'
   | 'krea-tada'
 
 // New drag/game cues (pick-up/spring-back/chomp/match) reuse curated files for now (real sound,
@@ -107,6 +108,7 @@ const CUE_FILES: Record<SfxCue, string> = {
   'krea-undo': '/sounds/ui/krea-undo.mp3',
   'krea-paper': '/sounds/ui/krea-paper.mp3',
   'krea-pick': '/sounds/ui/krea-pick.mp3',
+  'krea-fill': '/sounds/ui/krea-fill.mp3',
   'krea-tada': '/sounds/ui/krea-tada.mp3',
 }
 
@@ -155,6 +157,7 @@ const CUE_VOLUME: Partial<Record<SfxCue, number>> = {
   'krea-undo': 0.5,
   'krea-paper': 0.5,
   'krea-pick': 0.4,
+  'krea-fill': 0.5,
   'krea-tada': 0.6,
 }
 

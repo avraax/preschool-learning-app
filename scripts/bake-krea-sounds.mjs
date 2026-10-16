@@ -61,6 +61,11 @@ const CUES = {
     lufs: -26,
     graph: `aevalsrc='${ping(0.7, 660, 0, 45)}+${ping(0.35, 1320, 0, 60)}':s=${SR}:d=0.18`,
   },
+  // Farvelæg's fill: a round "bloop" — a soft sine sliding up as it fades, like paint landing.
+  'krea-fill': {
+    lufs: -24,
+    graph: `aevalsrc='0.8*exp(-13*t)*sin(2*PI*(240*t+900*t*t))+0.25*exp(-20*t)*sin(2*PI*(480*t+1800*t*t))':s=${SR}:d=0.32`,
+  },
   // Done: a warm "ta-da" — a major chord, then the octave.
   'krea-tada': {
     lufs: -21,
@@ -85,7 +90,9 @@ async function peak(graph) {
   return Number(m[1])
 }
 
-for (const [name, { graph, lufs }] of Object.entries(CUES)) {
+// `node scripts/bake-krea-sounds.mjs krea-fill` bakes just the named cues.
+const only = process.argv.slice(2)
+for (const [name, { graph, lufs }] of Object.entries(CUES).filter(([n]) => !only.length || only.includes(n))) {
   const integrated = await measure(graph)
   const gain = (integrated <= -69 ? SHORT_PEAK_DB - (await peak(graph)) : lufs - integrated).toFixed(2)
   const out = path.join(OUT, `${name}.mp3`)

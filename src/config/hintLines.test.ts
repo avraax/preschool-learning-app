@@ -28,7 +28,7 @@ const codeOf = (rel: string): string =>
     .replace(/\/\*[\s\S]*?\*\//g, ' ')
     .replace(/(^|[^:])\/\/.*$/gm, '$1')
 
-const SECTIONS = ['alphabet', 'math', 'farver', 'english', 'ordleg']
+const SECTIONS = ['alphabet', 'math', 'farver', 'english', 'ordleg', 'krea']
 const sectionFiles = (): string[] =>
   SECTIONS.flatMap((dir) =>
     readdirSync(path.join(SRC, 'components', dir))

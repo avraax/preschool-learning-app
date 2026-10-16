@@ -98,7 +98,7 @@ export function createPainter(s: Stroke): StrokePainter {
   return {
     paint(env, final) {
       const { ctx, scale: k } = env
-      const mx = env.mirrorX
+      const mx = s.tool !== 'stamp' && s.mirror !== undefined ? s.mirror : env.mirrorX
       const xs = (x: number): number[] => (mx === undefined ? [x] : [x, 2 * mx - x])
       ctx.save()
       if (s.tool === 'stamp') {

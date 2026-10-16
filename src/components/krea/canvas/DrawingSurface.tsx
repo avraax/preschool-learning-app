@@ -43,7 +43,10 @@ export interface DrawingSurfaceProps {
   /** id → image URL for every stamp the tray offers (and any already on the paper). */
   stampUrls: Record<string, string>
   disabled?: boolean
-  /** Tegn med Mig mirror steps: reflect every stroke across this vertical axis (paper units). */
+  /**
+   * Tegn med Mig mirror steps: every NEW stroke carries this vertical axis (paper units) and is drawn
+   * reflected across it, live. Strokes drawn without it stay unmirrored on replay.
+   */
   mirrorX?: number
   onCommit: (s: Stroke) => void
   /** The finger went down / came up on the paper with a brush — the crayon scratch loop hangs off this. */
@@ -98,7 +101,6 @@ const DrawingSurface: React.FC<DrawingSurfaceProps> = ({
     return {
       ctx,
       scale: scaleRef.current,
-      mirrorX: mirrorRef.current,
       crayonPaint: (col) => {
         let p = c.get(col)
         if (!p) {
@@ -311,7 +313,8 @@ const DrawingSurface: React.FC<DrawingSurfaceProps> = ({
     // The live stroke and its painter share ONE points array: moves push into it, frames paint the tail.
     const seed = seedFor(drawingRef.current.strokes.length)
     const points = [x, y]
-    const stroke: Stroke = tool === 'crayon' ? { tool, color, points, seed } : { tool, points, seed }
+    const mirror = mirrorRef.current !== undefined && tool !== 'eraser' ? { mirror: mirrorRef.current } : {}
+    const stroke: Stroke = tool === 'crayon' ? { tool, color, points, seed, ...mirror } : { tool, points, seed, ...mirror }
     active.current = { id: e.pointerId, stroke, points, painter: createPainter(stroke) }
     onStrokeStart?.(tool)
     schedule()

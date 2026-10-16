@@ -561,6 +561,24 @@ export const KREA_PALETTE: Record<DifficultyLevel, KreaPaletteTuning> = {
   svaer: { palette: 12 },
 }
 
+/**
+ * Tegn med Mig (`krea.guide`, Krea PRD-01 §4.3, §4.7) — the guided drawing DOES have a level axis: how
+ * near the guide a line must run to count (the tolerance band, CSS px at paper scale), on top of the
+ * palette, and at Let a pencil first traces each step once. Every band is forgiving and the step can
+ * never fail (accepted after 3 strokes), so a harder level asks for a steadier line, never costs a
+ * reward. XP is the same at every level.
+ */
+export interface KreaGuideTuning {
+  palette: 8 | 12
+  tolerancePx: number
+  demo: boolean
+}
+export const KREA_GUIDE: Record<DifficultyLevel, KreaGuideTuning> = {
+  let: { palette: 8, tolerancePx: 48, demo: true },
+  normal: { palette: 12, tolerancePx: 36, demo: false },
+  svaer: { palette: 12, tolerancePx: 28, demo: false },
+}
+
 // ================================================================================================
 // 4. The registry + the exempt list
 // ================================================================================================
@@ -590,6 +608,8 @@ export const TUNING: Record<string, Record<DifficultyLevel, object>> = {
   'colors.ramfarven': COLORS_RAMFARVEN,
   'colors.nuancer': COLORS_NUANCER,
   'krea.draw': KREA_PALETTE,
+  'krea.guide': KREA_GUIDE,
+  'krea.color': KREA_PALETTE,
 }
 
 /**
@@ -602,6 +622,7 @@ export const EXEMPT: Record<string, string> = {
   'english.learn': 'ungraded browse — the whole vocabulary at every level',
   'colors.learn': 'ungraded browse — all 6 hues and their shades at every level',
   'krea.draw': 'creative tool — only the palette widens, 8 crayons at Let, 12 above; nothing to grade',
+  'krea.color': 'colour-in — any colour counts and a tap fills a whole region; only the palette widens, 8 at Let, 12 above',
 }
 
 /**

@@ -16,9 +16,11 @@ export interface NewPaperConfirmProps {
   open: boolean
   onFresh: () => void
   onKeep: () => void
+  /** "Keep my picture" shows the game's own tile picture. */
+  keepPicture?: 'krea.draw' | 'krea.guide' | 'krea.color'
 }
 
-const NewPaperConfirm: React.FC<NewPaperConfirmProps> = ({ open, onFresh, onKeep }) => {
+const NewPaperConfirm: React.FC<NewPaperConfirmProps> = ({ open, onFresh, onKeep, keepPicture = 'krea.draw' }) => {
   const theme = useTheme()
   if (!open) return null
   const big = 'clamp(88px, 18vmin, 150px)'
@@ -50,7 +52,7 @@ const NewPaperConfirm: React.FC<NewPaperConfirmProps> = ({ open, onFresh, onKeep
           <PICTURES.NewPaper />
         </StudioButton>
         <StudioButton dataId="confirm-keep" label="Nej, behold min tegning" size={big} activateOn="click" onPress={onKeep}>
-          <Box component="img" src={gameIconImages['krea.draw']} alt="" draggable={false} sx={{ width: '100%', height: '100%', objectFit: 'contain', pointerEvents: 'none' }} />
+          <Box component="img" src={gameIconImages[keepPicture]} alt="" draggable={false} sx={{ width: '100%', height: '100%', objectFit: 'contain', pointerEvents: 'none' }} />
         </StudioButton>
       </Box>
     </Box>
