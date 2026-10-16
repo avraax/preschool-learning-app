@@ -560,7 +560,7 @@ async function optimizeHarbour() {
 const KREA_OUT = join(ROOT, 'src', 'assets', 'games', 'krea')
 const KREA_CRAYONS = ['roed', 'orange', 'gul', 'lysegroen', 'groen', 'lyseblaa', 'blaa', 'lilla', 'lyseroed', 'brun', 'sort', 'hvid', 'rainbow']
 const KREA_SPECS = {
-  ...Object.fromEntries(KREA_CRAYONS.map((c) => [`crayon-${c}`, { size: 320, fill: 0.92 }])),
+  ...Object.fromEntries(KREA_CRAYONS.map((c) => [`crayon-${c}`, { size: 320, fill: 0.92, pointDownLeft: true }])),
   glitter: { size: 256, fill: 0.88 },
   stamp: { size: 256, fill: 0.88 },
   eraser: { size: 256, fill: 0.88 },
@@ -579,9 +579,14 @@ const GREEN_SUBJECT = { vivid: 150, faint: 110, despill: 90 }
 const KREA_KEY_OVERRIDES = {
   // The bright grass-green re-render (pass 3): its wax measures green-excess 60–100, the screen 160–190,
   // so every threshold has to sit ABOVE the wax — the shared leaf values would despill it grey.
-  'crayon-groen': { vivid: 155, faint: 130, despill: 125 },
-  'crayon-lysegroen': GREEN_SUBJECT,
-  'crayon-rainbow': GREEN_SUBJECT,
+  // `faint` 105, not 130: at 130 the screen-tinted contact shadow at both ends survived as two little
+  // green hooks, invisible on magenta and plain on the wood table.
+  'crayon-groen': { vivid: 155, faint: 105, despill: 110, darkScreenMax: 40 },
+  // `darkScreenMax`: the baked contact shadow under a green-screened crayon is the screen darkened
+  // (red and blue near 0), and it survived as a dark smudge under the ends of the three greenish
+  // crayons — plain on the wood table. The waxes keep red/blue well above 40, so they are untouched.
+  'crayon-lysegroen': { ...GREEN_SUBJECT, darkScreenMax: 40 },
+  'crayon-rainbow': { ...GREEN_SUBJECT, darkScreenMax: 30 },
   done: GREEN_SUBJECT,
 }
 const KREA_TILES = { 'icon-draw': 'krea.draw', 'icon-guide': 'krea.guide', 'icon-color': 'krea.color' }
@@ -604,6 +609,16 @@ async function optimizeKrea() {
     }
     const outPath = join(KREA_OUT, `${id}.webp`)
     await greenKeySprite(join(srcDir, src), outPath, { ...spec, ...KREA_KEY_OVERRIDES[id] })
+    if (spec.pointDownLeft) {
+      // House rule (owner, 2026-10-16): what the child HOLDS lies on the right and points DOWN-LEFT,
+      // like a crayon in a right hand — the same way as the pencil and the crayon on the two drawing
+      // tiles. The crayon renders point up-right, so they are turned half a turn here; at button size
+      // the light coming from below instead of above does not read (checked on the wood backdrop).
+      // Read into memory first: on Windows sharp keeps the file open, and writing back to the same path
+      // fails with `open UNKNOWN`.
+      const turned = await sharp(await readFile(outPath)).rotate(180).webp({ quality: 90, effort: 6 }).toBuffer()
+      await writeFile(outPath, turned)
+    }
     console.log(`  ${id.padEnd(16)} → ${id}.webp  ${String(kb((await stat(outPath)).size)).padStart(4)} KB${KREA_KEY_OVERRIDES[id] ? ' [override]' : ''}`)
   }
   const bd = find('backdrop')
