@@ -32,9 +32,9 @@ import { StudioBackdrop, Paper } from './studio/StudioScene'
 import { BTN, CrayonPalette, PICTURES, StampTray, StudioButton, ToolRow } from './studio/StudioControls'
 import NewPaperConfirm from './studio/NewPaperConfirm'
 import { STAMPS, STAMP_IDS, STAMP_URLS } from './studio/stamps'
-import { ALIVE_MS, playAlive } from './studio/alive'
+import { ALIVE_MS, playAlive, swapPaper } from './studio/alive'
 
-// Fri Tegning (`krea.draw`, Krea PRD-01 §2.2) — a free canvas: crayon, rainbow, glitter, stamps, eraser,
+// Fri Tegning (`krea.draw`, Krea PRD-01 §2.2) — a free canvas: crayon, rainbow, stamps (a star among them), eraser,
 // undo, and a fresh sheet. The vertical slice that sets the bar for Tegn med Mig and Farvelæg.
 //
 // IT EARNS NOTHING (§2.1.2). Lepper, Greene & Nisbett 1973 ran this exact setup on preschoolers with
@@ -71,6 +71,8 @@ const FriTegningGame: React.FC = () => {
   const [stamp, setStamp] = useState<string>(STAMPS[0].id)
   const [phase, setPhase] = useState<Phase>('drawing')
   const [confirmOpen, setConfirmOpen] = useState(false)
+  // A fresh sheet is sliding in (`swapPaper`): input waits for it.
+  const [swapping, setSwapping] = useState(false)
 
   const paperRef = useRef<HTMLDivElement>(null)
   const glowRef = useRef<HTMLDivElement>(null)
@@ -123,7 +125,7 @@ const FriTegningGame: React.FC = () => {
   }, [drawing])
 
   // ----- drawing -----------------------------------------------------------------------------------
-  const drawingEnabled = phase === 'drawing' && !confirmOpen
+  const drawingEnabled = phase === 'drawing' && !confirmOpen && !swapping
 
   const onCommit = useCallback((s: Stroke) => setDrawing((d) => addStroke(d, s)), [])
 
@@ -168,9 +170,12 @@ const FriTegningGame: React.FC = () => {
   const freshPaper = () => {
     sfx.play('krea-paper')
     kreaSession.clearItem(GAME_ID, ITEM_ID)
-    setDrawing(emptyDrawing())
-    setTool('crayon')
-    setPhase('drawing')
+    setSwapping(true)
+    void swapPaper(paperRef.current, reduce, () => {
+      setDrawing(emptyDrawing())
+      setTool('crayon')
+      setPhase('drawing')
+    }).then(() => setSwapping(false))
   }
 
   // ----- "Nyt papir?" (unfinished work only) -------------------------------------------------------
@@ -230,8 +235,8 @@ const FriTegningGame: React.FC = () => {
       }}
     >
       <Box sx={{ visibility: phase === 'drawing' && ink ? 'visible' : 'hidden' }}>
-        <StudioButton dataId="new-paper" label="Nyt papir" disabled={!drawingEnabled || !ink} onPress={askNewPaper}>
-          <PICTURES.Paper />
+        <StudioButton dataId="new-paper" label="Nyt papir" size={`calc(${BTN} * 1.4)`} disabled={!drawingEnabled || !ink} onPress={askNewPaper}>
+          <PICTURES.NewPaper />
         </StudioButton>
       </Box>
       {phase === 'admire' ? (
@@ -307,12 +312,17 @@ const FriTegningGame: React.FC = () => {
           />
         </Paper>
         {side}
-        <Box sx={{ gridArea: 'pal', display: 'flex', justifyContent: 'center', alignItems: 'flex-end', minHeight: `calc(${BTN} * 1.25)` }}>
-          {tool === 'stamp' ? (
-            <StampTray stamps={STAMPS} stamp={stamp} disabled={!drawingEnabled} onPick={(id) => { markInteracted(); sfx.play('tap'); setStamp(id) }} />
-          ) : (
-            <CrayonPalette colors={palette} color={color} active={tool === 'crayon'} disabled={!drawingEnabled} onPick={pickColor} />
-          )}
+        {/* The VARIANT row: the crayons for the crayon, the stamps for the stamp tool, and NOTHING for a
+            tool with no variants (rainbow, eraser) — a row of crayons that does nothing for the eraser
+            read as "pick one" (owner, 2026-10-16). Both trays are stacked in ONE grid cell and only
+            hidden, never removed, so the row keeps its height and the paper never jumps size. */}
+        <Box data-krea-variants={tool === 'crayon' ? 'crayons' : tool === 'stamp' ? 'stamps' : 'none'} sx={{ gridArea: 'pal', display: 'grid', justifyItems: 'center', alignItems: 'end', '& > *': { gridArea: '1 / 1' } }}>
+          <Box aria-hidden={tool !== 'crayon'} sx={{ visibility: tool === 'crayon' ? 'visible' : 'hidden' }}>
+            <CrayonPalette colors={palette} color={color} active={tool === 'crayon'} disabled={!drawingEnabled || tool !== 'crayon'} onPick={pickColor} />
+          </Box>
+          <Box aria-hidden={tool !== 'stamp'} sx={{ visibility: tool === 'stamp' ? 'visible' : 'hidden' }}>
+            <StampTray stamps={STAMPS} stamp={stamp} disabled={!drawingEnabled || tool !== 'stamp'} onPick={(id) => { markInteracted(); sfx.play('tap'); setStamp(id) }} />
+          </Box>
         </Box>
       </Box>
       <NewPaperConfirm open={confirmOpen} onFresh={confirmFresh} onKeep={confirmKeep} />

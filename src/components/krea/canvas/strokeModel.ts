@@ -9,7 +9,9 @@
 //     (`brushes.ts`) — otherwise an undo would visibly re-roll every star on the page.
 //
 // `baked` is a render-side hint only: strokes below it have been drawn into the ink layer's one
-// checkpoint canvas and are no longer undoable (the last `UNDO_DEPTH` stay live).
+// checkpoint canvas. It is NOT an undo limit: undo goes all the way back to a blank paper and the
+// checkpoint follows (an undo below it rebuilds it from the list). It used to be one — undo silently
+// stopped working after 30 steps, which a child hammering the button reads as it breaking.
 
 export const PAPER_W = 1200
 export const PAPER_H = 900
@@ -62,11 +64,12 @@ export function addStroke(d: Drawing, s: Stroke): Drawing {
   return { strokes, baked: Math.max(d.baked, strokes.length - UNDO_DEPTH) }
 }
 
-export const canUndo = (d: Drawing): boolean => d.strokes.length > d.baked
+export const canUndo = (d: Drawing): boolean => d.strokes.length > 0
 
 export function undo(d: Drawing): Drawing {
   if (!canUndo(d)) return d
-  return { strokes: d.strokes.slice(0, -1), baked: d.baked }
+  const strokes = d.strokes.slice(0, -1)
+  return { strokes, baked: Math.min(d.baked, Math.max(0, strokes.length - UNDO_DEPTH)) }
 }
 
 /** Anything on the paper except eraser marks — what makes Fri Tegning's done button appear. */

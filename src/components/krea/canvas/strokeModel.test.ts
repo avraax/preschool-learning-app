@@ -27,14 +27,22 @@ test('ink: an eraser mark alone is not ink; anything else is', () => {
   assert.equal(hasInk(addStroke(emptyDrawing(), brush('glitter'))), true)
 })
 
-test('undo drops the last stroke, and only the last UNDO_DEPTH strokes stay undoable', () => {
+// Undo used to stop dead after UNDO_DEPTH steps (the checkpoint was a wall), and a child hammering the
+// button read that as it breaking. It goes all the way back now; the checkpoint just follows.
+test('undo drops the last stroke, all the way back to a blank paper', () => {
   let d = emptyDrawing()
-  for (let i = 0; i < UNDO_DEPTH + 5; i++) d = addStroke(d, crayon('roed', i))
-  assert.equal(d.baked, 5)
-  for (let i = 0; i < UNDO_DEPTH; i++) d = undo(d)
-  assert.equal(d.strokes.length, 5)
+  for (let i = 0; i < UNDO_DEPTH + 15; i++) d = addStroke(d, crayon('roed', i))
+  assert.equal(d.baked, 15)
+  for (let i = 0; i < UNDO_DEPTH + 15; i++) {
+    assert.ok(canUndo(d), `undo refused at ${d.strokes.length} strokes`)
+    const before = d.strokes
+    d = undo(d)
+    assert.deepEqual(d.strokes, before.slice(0, -1))
+    assert.ok(d.baked <= d.strokes.length, 'the checkpoint can never hold more than the list')
+  }
+  assert.equal(d.strokes.length, 0)
   assert.equal(canUndo(d), false)
-  assert.equal(undo(d), d, 'undo past the checkpoint must be a no-op')
+  assert.equal(undo(d), d, 'undo on a blank paper is a no-op')
 })
 
 test('serialise round-trips exactly, and resume never throws on junk', () => {

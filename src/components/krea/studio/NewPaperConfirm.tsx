@@ -36,7 +36,9 @@ const NewPaperConfirm: React.FC<NewPaperConfirmProps> = ({ open, onFresh, onKeep
         alignItems: 'center',
         justifyContent: 'center',
         gap: 'clamp(12px, 3vmin, 28px)',
-        background: 'rgba(60,40,20,0.45)',
+        // Dark enough that the question owns the screen: at 0.45 a bright crayon line on the paper read
+        // straight through it and crossed the title.
+        background: 'rgba(50,32,15,0.68)',
         touchAction: 'none',
       }}
     >
@@ -44,10 +46,10 @@ const NewPaperConfirm: React.FC<NewPaperConfirmProps> = ({ open, onFresh, onKeep
         {NEW_PAPER_TITLE}
       </Typography>
       <Box sx={{ display: 'flex', gap: 'clamp(24px, 6vmin, 64px)' }}>
-        <StudioButton dataId="confirm-fresh" label="Ja, nyt papir" size={big} onPress={onFresh}>
-          <PICTURES.Paper />
+        <StudioButton dataId="confirm-fresh" label="Ja, nyt papir" size={big} activateOn="click" onPress={onFresh}>
+          <PICTURES.NewPaper />
         </StudioButton>
-        <StudioButton dataId="confirm-keep" label="Nej, behold min tegning" size={big} onPress={onKeep}>
+        <StudioButton dataId="confirm-keep" label="Nej, behold min tegning" size={big} activateOn="click" onPress={onKeep}>
           <Box component="img" src={gameIconImages['krea.draw']} alt="" draggable={false} sx={{ width: '100%', height: '100%', objectFit: 'contain', pointerEvents: 'none' }} />
         </StudioButton>
       </Box>

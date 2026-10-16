@@ -18,11 +18,65 @@ export const BTN = 'clamp(44px, 7.6vmin, 68px)'
 const REST_SHADOW = 'drop-shadow(0 3px 3px rgba(70,40,15,0.35))'
 const LIFT_SHADOW = 'drop-shadow(0 0 7px rgba(255,214,90,0.95)) drop-shadow(0 9px 7px rgba(70,40,15,0.35))'
 
+/**
+ * Act on the PRESS, not on `click`. A child hammering Undo produces taps closer together than the
+ * browser's double-tap window, and `click` then fires for only some of them — measured with real touch
+ * input: 20 fast taps undid ONE stroke. `pointerdown` fires for every tap. A keyboard (Enter/Space)
+ * still arrives as a `click` with `detail === 0`, so that path is kept; a pointer's own `click`
+ * (`detail >= 1`) is ignored so a tap never counts twice.
+ */
+export const pressHandlers = (fn: () => void) => ({
+  onPointerDown: (e: React.PointerEvent) => {
+    if (e.pointerType === 'mouse' && e.button !== 0) return
+    fn()
+  },
+  onClick: (e: React.MouseEvent) => {
+    if (e.detail === 0) fn()
+  },
+})
+
 const Art: React.FC<{ src: string }> = ({ src }) => (
   <Box component="img" src={src} alt="" draggable={false} sx={{ width: '100%', height: '100%', objectFit: 'contain', pointerEvents: 'none', userSelect: 'none' }} />
 )
 
+/**
+ * "A NEW sheet": the clay sheet with a big green + on its corner. The bare sheet alone was read as
+ * nothing in particular — small, white, and silent about what it does (owner, 2026-10-16). The badge is
+ * drawn in code (two rounded bars on a disc), not a glyph.
+ */
+const NewPaper: React.FC = () => (
+  <Box sx={{ position: 'relative', width: '100%', height: '100%' }}>
+    <Art src={KREA_ART.paper} />
+    <Box
+      aria-hidden
+      sx={{
+        position: 'absolute',
+        right: '-2%',
+        top: '-2%',
+        width: '46%',
+        height: '46%',
+        borderRadius: '50%',
+        background: 'radial-gradient(circle at 35% 30%, #6CCB5A 0%, #2E9D44 70%)',
+        boxShadow: '0 0 0 3px #FFFDF6, 0 3px 6px rgba(40,70,20,0.45)',
+        '&::before, &::after': {
+          content: '""',
+          position: 'absolute',
+          left: '50%',
+          top: '50%',
+          width: '58%',
+          height: '18%',
+          borderRadius: '99px',
+          background: '#FFFFFF',
+          transform: 'translate(-50%, -50%)',
+        },
+        '&::after': { transform: 'translate(-50%, -50%) rotate(90deg)' },
+      }}
+    />
+  </Box>
+)
+
 export const PICTURES = {
+  NewPaper,
   Paper: () => <Art src={KREA_ART.paper} />,
   Done: () => <Art src={KREA_ART.done} />,
   Next: () => <Art src={KREA_ART.next} />,
@@ -36,16 +90,21 @@ export interface StudioButtonProps {
   size?: string
   children: React.ReactNode
   dataId?: string
+  /**
+   * `click` for a button INSIDE a blocking overlay (the "Nyt papir?" confirm): it must close on the
+   * click, never on the press, or the rest of the same tap lands on the paper underneath.
+   */
+  activateOn?: 'press' | 'click'
 }
 
 /** One clay object you can tap. `aria-label` carries the Danish name for assistive tech and probes. */
-export const StudioButton: React.FC<StudioButtonProps> = ({ label, onPress, selected, disabled, size = BTN, children, dataId }) => (
+export const StudioButton: React.FC<StudioButtonProps> = ({ label, onPress, selected, disabled, size = BTN, children, dataId, activateOn = 'press' }) => (
   <ButtonBase
     aria-label={label}
     aria-pressed={selected}
     data-krea-control={dataId}
     disabled={disabled}
-    onClick={onPress}
+    {...(activateOn === 'press' ? pressHandlers(onPress) : { onClick: onPress })}
     sx={{
       width: size,
       height: size,
@@ -76,12 +135,16 @@ export interface ToolRowProps {
   direction: 'row' | 'column'
 }
 
-/** The six tools, the same at every level — only the palette changes with level (§2.2.5). */
+/**
+ * The tools, the same at every level — only the palette changes with level (§2.2.5). The glitter brush is
+ * GONE from the row (owner, 2026-10-16: tap-and-hold strewing stars behaved unlike everything else);
+ * stars are a stamp now, one per tap like every other stamp. Old glitter strokes in a resumed session
+ * still render — the brush stays in `brushes.ts` for that.
+ */
 export const ToolRow: React.FC<ToolRowProps> = ({ tool, color, onTool, onUndo, canUndo, disabled, direction }) => {
   const tools: Array<{ id: Tool; label: string; src: string }> = [
     { id: 'crayon', label: 'Farvekridt', src: CRAYON_ART[color] },
     { id: 'rainbow', label: 'Regnbue', src: KREA_ART.crayonRainbow },
-    { id: 'glitter', label: 'Glimmer', src: KREA_ART.glitter },
     { id: 'stamp', label: 'Stempler', src: KREA_ART.stamp },
     { id: 'eraser', label: 'Viskelæder', src: KREA_ART.eraser },
   ]
@@ -137,7 +200,7 @@ export const CrayonPalette: React.FC<CrayonPaletteProps> = ({ colors, color, act
           aria-pressed={on}
           data-krea-crayon={c}
           disabled={disabled}
-          onClick={() => onPick(c)}
+          {...pressHandlers(() => onPick(c))}
           sx={{
             // Twelve must fit ONE row on an iPad in portrait (768 wide): at the full size the row was
             // 744 px in a 736 px track and the white crayon wrapped alone onto a second line.

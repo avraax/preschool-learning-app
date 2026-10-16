@@ -489,6 +489,24 @@ Generate exactly ONE image: the SAME crayon as the attached red one, same shape,
 Generate exactly ONE image: the same wooden children's art easel as the attached one, with its rainbow scribble canvas and the little cup of crayons, but CHUNKIER: a BIG canvas that is almost as wide as the whole easel, short thick rounded clay legs, the cup of crayons bigger and right in front. The whole object should look as solid and full as the attached globe and abacus — a compact, chunky toy, not a tall thin stand. Soft-3D claymation, same lighting as the attached images, slight 3/4 top-down angle, flat solid #FF00FF magenta background edge to edge, square 1:1, no text. One image only.
 ```
 
+## N5 — the Fri Tegning tile icon: crayon on the RIGHT, pointing down-left (MUST, owner 2026-10-16)
+
+The two drawing tiles sit side by side in the Krea menu, and Tegn med Mig's pencil lies on the RIGHT of
+its paper with the tip pointing DOWN-LEFT. Fri Tegning's crayon lies at the lower LEFT pointing up — the
+pair reads as two different hands. Mirroring the render does not fix it (the crayon then points
+up-right), so it is a re-render.
+
+**Attach these 3 files:**
+- `C:\Users\AllanBrinkVraa\Downloads\art-krea\04ac73e3-f609-4e0d-9677-f6ab0ea2288e.jpg` — the Tegn med
+  Mig tile: **copy where and how its pencil lies**
+- `C:\Users\AllanBrinkVraa\Downloads\art-krea\04192dab-175b-4340-8870-897066e07503.jpg` — the current
+  Fri Tegning tile: keep its paper and rainbow scribble
+- `C:\Users\AllanBrinkVraa\Downloads\art-krea\1ac5cf90-10fc-4583-9312-66ee2429e009.jpg` — the red crayon
+
+```
+Generate exactly ONE image: the same clay sheet of paper with the bright rainbow scribble as in the attached Fri Tegning picture, with a chunky RED crayon (exactly like the attached red crayon) lying on the RIGHT side of the paper, its sharpened TIP pointing DOWN-LEFT toward the scribble — placed exactly like the pencil lies in the attached cat-drawing picture. Same paper size, angle and lighting as the cat-drawing picture so the two look like a pair. Soft-3D claymation, soft contact shadow, flat solid #00FF00 green background edge to edge, square 1:1, no text. One image only.
+```
+
 ## Accepted files (second pass) — already in `art-src/krea/`
 
 The build session has copied every accepted file into the repo under readable names

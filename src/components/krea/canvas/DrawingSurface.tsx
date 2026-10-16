@@ -120,7 +120,10 @@ const DrawingSurface: React.FC<DrawingSurfaceProps> = ({
   }, [])
 
   /** Rebuild everything from the list: checkpoint ← strokes below `baked`, ink ← checkpoint + the rest. */
-  const fullRedraw = useCallback(() => {
+  // The strokes the checkpoint currently holds, by identity — so an undo inside the live window reuses
+  // it instead of re-baking every older stroke on each tap (that made fast undo taps lag behind).
+  const checkpointHolds = useRef<Stroke[]>([])
+  const fullRedraw = useCallback((force = false) => {
     const ink = inkRef.current
     if (!ink || !ink.width) return
     const d = drawingRef.current
@@ -129,14 +132,20 @@ const DrawingSurface: React.FC<DrawingSurfaceProps> = ({
       cp = document.createElement('canvas')
       checkpointRef.current = cp
     }
+    let stale = force || checkpointHolds.current.length !== d.baked
     if (cp.width !== ink.width || cp.height !== ink.height) {
       cp.width = ink.width
       cp.height = ink.height
+      stale = true
     }
-    const cctx = cp.getContext('2d')!
-    cctx.clearRect(0, 0, cp.width, cp.height)
-    const cenv = envFor(cctx)
-    for (let i = 0; i < d.baked; i++) drawStroke(cenv, d.strokes[i])
+    for (let i = 0; !stale && i < d.baked; i++) if (checkpointHolds.current[i] !== d.strokes[i]) stale = true
+    if (stale) {
+      const cctx = cp.getContext('2d')!
+      cctx.clearRect(0, 0, cp.width, cp.height)
+      const cenv = envFor(cctx)
+      for (let i = 0; i < d.baked; i++) drawStroke(cenv, d.strokes[i])
+      checkpointHolds.current = d.strokes.slice(0, d.baked)
+    }
     checkpointCount.current = d.baked
     const ctx = ink.getContext('2d')!
     ctx.clearRect(0, 0, ink.width, ink.height)
@@ -165,6 +174,7 @@ const DrawingSurface: React.FC<DrawingSurfaceProps> = ({
         const cenv = envFor(cctx)
         for (let i = checkpointCount.current; i < drawing.baked; i++) drawStroke(cenv, next[i])
         checkpointCount.current = drawing.baked
+        checkpointHolds.current = next.slice(0, drawing.baked)
       }
     } else if (prev !== next) {
       fullRedraw()
@@ -191,7 +201,7 @@ const DrawingSurface: React.FC<DrawingSurfaceProps> = ({
       }
       scaleRef.current = w / PAPER_W
       patterns.current = new WeakMap()
-      fullRedraw()
+      fullRedraw(true)
     }
     fit()
     const ro = new ResizeObserver(fit)
@@ -205,7 +215,8 @@ const DrawingSurface: React.FC<DrawingSurfaceProps> = ({
       if (images.current.has(id)) continue
       const img = new Image()
       img.decoding = 'async'
-      img.onload = () => fullRedraw()
+      // A late stamp image may belong to a stroke already baked in: re-bake, don't reuse.
+      img.onload = () => fullRedraw(true)
       img.src = url
       images.current.set(id, img)
     }

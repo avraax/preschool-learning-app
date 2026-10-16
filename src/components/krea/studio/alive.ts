@@ -29,6 +29,28 @@ const KEYFRAMES: Record<AlivePreset, Keyframe[]> = {
 
 export const ALIVE_MS: Record<AlivePreset, number> = { sway: 2400, glow: 2000 }
 
+/**
+ * A fresh sheet, SHOWN: the old paper slides off to the left, the drawing is cleared under cover, and a
+ * clean sheet slides in from the right — so "Nyt papir" and "next" visibly do what they say. Reduced
+ * motion: a quick fade instead. Transform/opacity only, explicit identity end state.
+ */
+export async function swapPaper(el: HTMLElement | null, reduce: boolean, clear: () => void): Promise<void> {
+  if (!el || typeof el.animate !== 'function') {
+    clear()
+    return
+  }
+  const out: Keyframe[] = reduce
+    ? [{ opacity: 1 }, { opacity: 0 }]
+    : [{ transform: REST, opacity: 1 }, { transform: 'translateX(-60vw) translateY(0px) rotate(-8deg) scale(1)', opacity: 0 }]
+  const into: Keyframe[] = reduce
+    ? [{ opacity: 0 }, { opacity: 1 }]
+    : [{ transform: 'translateX(60vw) translateY(0px) rotate(6deg) scale(1)', opacity: 0 }, { transform: REST, opacity: 1 }]
+  await el.animate(out, { duration: reduce ? 120 : 260, easing: 'cubic-bezier(0.5, 0, 0.75, 0)', fill: 'forwards' }).finished.catch(() => undefined)
+  clear()
+  await el.animate(into, { duration: reduce ? 160 : 320, easing: 'cubic-bezier(0.25, 1, 0.5, 1)', fill: 'none' }).finished.catch(() => undefined)
+  for (const a of el.getAnimations()) a.cancel()
+}
+
 /** Play a preset once. Resolves when it has finished (or immediately if WAAPI is missing). */
 export function playAlive(el: HTMLElement | null, preset: AlivePreset): Promise<void> {
   if (!el || typeof el.animate !== 'function') return Promise.resolve()
