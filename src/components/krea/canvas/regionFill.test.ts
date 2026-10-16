@@ -39,7 +39,8 @@ test('a one-pixel diagonal gap in a line does NOT join two regions (4-connected)
 test('grey shading is REJECTED, clean anti-aliased line art is not', () => {
   const { lum, w, h } = page()
   // Anti-aliasing: mid-grey right beside the lines is normal and must not count.
-  for (let i = 5; i <= 34; i++) lum[i * w + 21] = 150
+  // (Both sides of the divider: 60 px = 3.75% of this page, so the exemption is what keeps it under 2%.)
+  for (let i = 5; i <= 34; i++) { lum[i * w + 19] = 150; lum[i * w + 21] = 150 }
   assert.ok(greyShare(lum, w, h) <= GREY_REJECT)
   // Shading: a mid-grey wash across the right box, away from any line.
   for (let y = 8; y <= 31; y++) for (let x = 24; x <= 31; x++) lum[y * w + x] = 140
@@ -72,7 +73,10 @@ test('a fill touches ONLY its own region’s pixels', () => {
 test('a tap on a line resolves to the nearest region; on paper you cannot colour, to nothing', () => {
   const { lum, w, h } = page()
   const m = labelRegions(lum, w, h, { minArea: 10, outside: 'drop' })
-  assert.equal(regionAt(m.labels, w, h, 21, 20, 3), m.labels[20 * w + 22], 'just right of the divider')
+  assert.equal(m.labels[20 * w + 20], 0, 'the probe point is ON the divider line')
+  const sides = [m.labels[20 * w + 19], m.labels[20 * w + 21]]
+  assert.ok(sides.includes(regionAt(m.labels, w, h, 20, 20, 3)), 'a tap on the line fills a neighbouring region')
+  assert.equal(regionAt(m.labels, w, h, 20, 20, 0), 0, 'beyond the slop, a line tap fills nothing')
   assert.equal(regionAt(m.labels, w, h, 1, 1, 3), 0, 'outside')
   assert.equal(regionAt(m.labels, w, h, 9.5, 9.5, 3), 0, 'the speck')
 })
