@@ -577,7 +577,9 @@ const KREA_SPECS = {
 // screen ~200, so the leaf's thresholds (vivid 150 / faint 110 / despill 90) separate them cleanly.
 const GREEN_SUBJECT = { vivid: 150, faint: 110, despill: 90 }
 const KREA_KEY_OVERRIDES = {
-  'crayon-groen': GREEN_SUBJECT,
+  // The bright grass-green re-render (pass 3): its wax measures green-excess 60–100, the screen 160–190,
+  // so every threshold has to sit ABOVE the wax — the shared leaf values would despill it grey.
+  'crayon-groen': { vivid: 155, faint: 130, despill: 125 },
   'crayon-lysegroen': GREEN_SUBJECT,
   'crayon-rainbow': GREEN_SUBJECT,
   done: GREEN_SUBJECT,

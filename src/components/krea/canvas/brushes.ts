@@ -13,8 +13,10 @@ export const CRAYON_HEX: Record<CrayonColor, string> = {
   roed: '#E53935',
   orange: '#FB8C00',
   gul: '#FDD835',
-  lysegroen: '#9CCC65',
-  groen: '#2E9D44',
+  // Matched to the crayons as rendered (pass 3): light green is a soft MINT, green a bright grass
+  // green — a crayon must draw the colour the child sees on it.
+  lysegroen: '#8ED6A6',
+  groen: '#47AD2E',
   lyseblaa: '#4FC3F7',
   blaa: '#1E63D6',
   lilla: '#8E44AD',

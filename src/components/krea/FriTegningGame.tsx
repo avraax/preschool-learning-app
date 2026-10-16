@@ -12,7 +12,7 @@ import { paletteFor } from '../../config/kreaPalette'
 import { KREA_COLOR_NAME, NEW_PAPER_LINE, colorsUsedLine } from '../../config/kreaPhrases'
 import { hintPulse } from '../../theme/idleMotion'
 import { DEV } from '../../utils/devHarness'
-import { PHONE_LANDSCAPE, PHONE_PORTRAIT } from '../../theme/phoneMedia'
+import { PHONE_PORTRAIT } from '../../theme/phoneMedia'
 import DrawingSurface from './canvas/DrawingSurface'
 import {
   addStroke,
@@ -57,9 +57,10 @@ type Phase = 'drawing' | 'alive' | 'admire'
 const FriTegningGame: React.FC = () => {
   useOccludeWorld()
   const reduce = useReducedMotion()
-  // A phone on its side is the one place the paper must win over "everything lies on the table": with
-  // two rows under it the paper was 252×189 at 844×390, so there the tools stand in columns beside it.
-  const phoneLandscape = useMediaQuery(PHONE_LANDSCAPE)
+  // The studio is a table seen from above, so the tools lie on it wherever they go. On a wide screen they
+  // stand in a column beside the paper and the paper gets the height (a row under it cost ~35% of its
+  // area in landscape); on a tall screen they lie in rows under it.
+  const landscape = useMediaQuery('(orientation: landscape)')
   const audio = useSimplifiedAudioHook({ componentId: 'FriTegningGame', autoInitialize: false })
   const level = useDifficulty('krea')
   const palette = paletteFor(KREA_PALETTE[level].palette)
@@ -219,7 +220,7 @@ const FriTegningGame: React.FC = () => {
       sx={{
         gridArea: 'side',
         display: 'flex',
-        flexDirection: phoneLandscape ? 'column' : 'row',
+        flexDirection: landscape ? 'column' : 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
         gap: 'clamp(8px, 2vmin, 16px)',
@@ -263,19 +264,18 @@ const FriTegningGame: React.FC = () => {
           gap: 'clamp(8px, 2vmin, 18px)',
           // Reserved space, never a tuned percentage: the tools and the side column take what they
           // need and the paper is the remainder (layout-contract.md).
-          // Every tool LIES ON THE TABLE, in both orientations: paper above, then the tools and the
-          // crayons in rows across the table top. A tool column beside the paper floated over the wall
-          // and the window in landscape (owner review of the integrated art, 2026-10-16).
+          // Reserved space, never a tuned percentage: the tools and the side pair take what they need and
+          // the paper is the remainder (layout-contract.md).
           gridTemplateColumns: 'minmax(0, 1fr) auto',
           gridTemplateRows: 'minmax(0, 1fr) auto auto',
           gridTemplateAreas: '"paper paper" "tools side" "pal pal"',
-          // A phone in portrait can't fit six tools AND the side pair on one 343 px row (measured: the
-          // row hung 20 px off the left edge), so "Nyt papir" and done get their own row.
-          [PHONE_LANDSCAPE]: {
+          '@media (orientation: landscape)': {
             gridTemplateColumns: 'auto minmax(0, 1fr) auto',
             gridTemplateRows: 'minmax(0, 1fr) auto',
             gridTemplateAreas: '"tools paper side" "pal pal pal"',
           },
+          // A phone in portrait can't fit six tools AND the side pair on one 343 px row (measured: the
+          // row hung 20 px off the left edge), so "Nyt papir" and done get their own row.
           [PHONE_PORTRAIT]: {
             gridTemplateColumns: 'minmax(0, 1fr)',
             gridTemplateRows: 'minmax(0, 1fr) auto auto auto',
@@ -285,7 +285,7 @@ const FriTegningGame: React.FC = () => {
         }}
       >
         <Box sx={{ gridArea: 'tools', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 0 }}>
-          <ToolRow tool={tool} color={color} onTool={pickTool} onUndo={doUndo} canUndo={canUndo(drawing)} disabled={!drawingEnabled} direction={phoneLandscape ? 'column' : 'row'} />
+          <ToolRow tool={tool} color={color} onTool={pickTool} onUndo={doUndo} canUndo={canUndo(drawing)} disabled={!drawingEnabled} direction={landscape ? 'column' : 'row'} />
         </Box>
         <Paper paperRef={paperRef}>
           <DrawingSurface

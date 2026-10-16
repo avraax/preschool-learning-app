@@ -4,8 +4,9 @@ import { KREA_ART } from '../../../assets/games/krea'
 
 // Krea's own full-bleed art studio (Krea PRD-01 §2.3.13) — like Fyld Båden's harbour it paints the
 // WHOLE screen and the persistent world is occluded underneath (`useOccludeWorld` in each game).
-// ONE studio on every skin, like all game art: the owner's render (batch A), a cream wall with a
-// daylight window on the left and a honey-wood table across the lower part.
+// ONE studio on every skin, like all game art: the owner's render (pass 3, N2), a honey-wood craft
+// table seen FROM ABOVE filling the screen, so the paper, the crayons and every tool lie ON it in any
+// layout. (The first studio was a wall seen straight on; it is kept as art-src/krea/backdrop-wall.jpg.)
 //
 // `position: absolute` against GameShell's isolated root (z -1), never `fixed` (PersistentWorld's note:
 // Chrome blanks fixed layers during touch pans). Static — nothing moves, so nothing to pause.
@@ -20,13 +21,12 @@ export const StudioBackdrop: React.FC = () => (
       zIndex: -1,
       overflow: 'hidden',
       pointerEvents: 'none',
-      // The wall's own colour, so a slow first paint is a calm cream rather than a flash of white.
-      backgroundColor: '#F1E4CF',
+      // The wood's own colour, so a slow first paint is warm wood rather than a flash of white.
+      backgroundColor: '#E9C68E',
       backgroundImage: `url(${KREA_ART.backdrop})`,
       backgroundRepeat: 'no-repeat',
       backgroundSize: 'cover',
-      // Keep the window (left) in frame on a narrow screen, and the table's front edge at the bottom.
-      backgroundPosition: '20% 100%',
+      backgroundPosition: '50% 60%',
     }}
   />
 )
