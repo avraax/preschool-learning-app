@@ -51,11 +51,14 @@ export const BOAT_GEOMETRY = {
     boxBase: 0.615,
   },
   /**
-   * Where the numeral is PAINTED on the sail: the centre of the sail's lit face (measured on the cloth
-   * masks, scripts/make-sail-masks.mjs — widest at y 0.14–0.22, x ~0.44–0.53) and the face's lean (its
-   * axis runs from x 0.475 at the top to 0.51 at y 0.45, ~8° off vertical).
+   * Where the numeral is PAINTED on the sail: the middle of the sail's lit face (measured on the cloth
+   * masks, scripts/make-sail-masks.mjs — widest at y 0.14–0.22, x ~0.44–0.53), and a warp that lays the
+   * digits ON the cloth: the sail hangs from the masthead and slopes down to the right, so the writing
+   * line rotates with it and a skew follows the billow. Chosen from four variants on screen (owner,
+   * 2026-10-16: "-8° upright" still looked pasted on; −16° leaned against the cloth; an italic shear read
+   * as handwriting; a squeeze looked crushed).
    */
-  sail: { x: 0.487, y: 0.18, tiltDeg: -8 },
+  sail: { x: 0.49, y: 0.2, warp: 'rotate(10deg) skewY(8deg)' },
   /** The horn stands on the bow's very tip, on the rim (rim top y ~0.57 at x 0.93) — clear of the cargo. */
   horn: { left: 0.888, top: 0.445, width: 0.092 },
 } as const

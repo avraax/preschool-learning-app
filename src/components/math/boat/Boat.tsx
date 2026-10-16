@@ -302,14 +302,14 @@ const Boat: React.FC<BoatProps> = ({
             maskSize: '100% 100%',
           }}
         >
-          <Box sx={{ position: 'absolute', left: pct(G.sail.x), top: pct(G.sail.y), transform: `translate(-50%, -50%) rotate(${G.sail.tiltDeg}deg)` }}>
+          <Box sx={{ position: 'absolute', left: pct(G.sail.x), top: pct(G.sail.y), transform: `translate(-50%, -50%) ${G.sail.warp}` }}>
             <motion.div
               // Brushed on: it fades and grows a little into place, no spin.
               initial={reduce ? false : { transform: 'scale(0.7)', opacity: 0 }}
               animate={{ transform: 'scale(1)', opacity: 0.92 }}
               transition={{ duration: 0.45, ease: 'easeOut' }}
             >
-              <Typography component="span" sx={{ display: 'block', fontFamily: '"Comic Sans MS", "Comic Neue", cursive', fontWeight: 800, fontSize: `calc(var(--bw) * ${sailNumber >= 100 ? 0.042 : 0.056})`, lineHeight: 1, whiteSpace: 'nowrap', color: L.ink, letterSpacing: '-0.02em' }}>
+              <Typography component="span" sx={{ display: 'block', fontFamily: '"Comic Sans MS", "Comic Neue", cursive', fontWeight: 800, fontSize: `calc(var(--bw) * ${sailNumber >= 100 ? 0.042 : 0.056})`, lineHeight: 1, whiteSpace: 'nowrap', color: L.ink, letterSpacing: '-0.02em', textShadow: '1px 2px 2px rgba(60, 30, 10, 0.35)' }}>
                 {sailNumber}
               </Typography>
             </motion.div>
