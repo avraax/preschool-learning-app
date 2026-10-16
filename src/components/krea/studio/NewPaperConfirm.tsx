@@ -2,6 +2,7 @@ import React from 'react'
 import { Box, Typography } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { PICTURES, StudioButton } from './StudioControls'
+import { gameIconImages } from '../../../assets/themes/icons/games'
 import { NEW_PAPER_TITLE } from '../../../config/kreaPhrases'
 
 // "Nyt papir?" (Krea PRD-01 §2.1.4) — discarding UNFINISHED work asks first, as spoken words plus
@@ -44,10 +45,10 @@ const NewPaperConfirm: React.FC<NewPaperConfirmProps> = ({ open, onFresh, onKeep
       </Typography>
       <Box sx={{ display: 'flex', gap: 'clamp(24px, 6vmin, 64px)' }}>
         <StudioButton dataId="confirm-fresh" label="Ja, nyt papir" size={big} onPress={onFresh}>
-          <PICTURES.PaperPic />
+          <PICTURES.Paper />
         </StudioButton>
         <StudioButton dataId="confirm-keep" label="Nej, behold min tegning" size={big} onPress={onKeep}>
-          <PICTURES.MyPicture />
+          <Box component="img" src={gameIconImages['krea.draw']} alt="" draggable={false} sx={{ width: '100%', height: '100%', objectFit: 'contain', pointerEvents: 'none' }} />
         </StudioButton>
       </Box>
     </Box>

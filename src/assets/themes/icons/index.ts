@@ -6,7 +6,7 @@ import math from './math.webp'
 import colors from './colors.webp'
 import english from './english.webp'
 import ordleg from './ordleg.webp'
-// Placeholder: a copy of Farver's palette until the owner's Gemini render lands (Krea PRD-01 W0).
+// The owner's easel (Krea PRD-01 batch G) — deliberately NOT a palette, which is Farver's icon.
 import krea from './krea.webp'
 
 export type SectionIconId = 'alphabet' | 'math' | 'colors' | 'english' | 'ordleg' | 'krea'

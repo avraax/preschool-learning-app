@@ -552,6 +552,85 @@ async function optimizeHarbour() {
   console.log(`  ${'TOTAL'.padEnd(14)}   ${total} KB`)
 }
 
+// Krea (Krea PRD-01) — art-src/krea/<id>.jpg → src/assets/games/krea/<id>.webp. Squares trimmed onto
+// the standard transparent canvas (`fill`), except the backdrop (OPAQUE passthrough, never keyed). The
+// section icon is on the legacy MAGENTA screen like the other five; the tile icons land beside the
+// other game icons at their 512² / 0.81 fill. `art-src/krea/pages/` (line art, W5) and `beads/` (PRD-02)
+// are NOT processed here — they have their own pipelines.
+const KREA_OUT = join(ROOT, 'src', 'assets', 'games', 'krea')
+const KREA_CRAYONS = ['roed', 'orange', 'gul', 'lysegroen', 'groen', 'lyseblaa', 'blaa', 'lilla', 'lyseroed', 'brun', 'sort', 'hvid', 'rainbow']
+const KREA_SPECS = {
+  ...Object.fromEntries(KREA_CRAYONS.map((c) => [`crayon-${c}`, { size: 320, fill: 0.92 }])),
+  glitter: { size: 256, fill: 0.88 },
+  stamp: { size: 256, fill: 0.88 },
+  eraser: { size: 256, fill: 0.88 },
+  paper: { size: 256, fill: 0.88 },
+  undo: { size: 256, fill: 0.84 },
+  done: { size: 320, fill: 0.96 },
+  next: { size: 320, fill: 0.96 },
+  pencil: { size: 256, fill: 0.92 },
+}
+// Green-on-green subjects, thresholds from each file's own green-excess histogram (scene-assets.md:
+// measure, never eyeball). On the defaults (2026-10-16): the green crayon's WHOLE wax body was keyed
+// away and only its paper wrapper survived (the largest component); the rainbow crayon lost both its
+// striped ends; the done button's dark-green rim came out ragged. Subject green-excess sits ≤ ~80, the
+// screen ~200, so the leaf's thresholds (vivid 150 / faint 110 / despill 90) separate them cleanly.
+const GREEN_SUBJECT = { vivid: 150, faint: 110, despill: 90 }
+const KREA_KEY_OVERRIDES = {
+  'crayon-groen': GREEN_SUBJECT,
+  'crayon-lysegroen': GREEN_SUBJECT,
+  'crayon-rainbow': GREEN_SUBJECT,
+  done: GREEN_SUBJECT,
+}
+const KREA_TILES = { 'icon-draw': 'krea.draw', 'icon-guide': 'krea.guide', 'icon-color': 'krea.color' }
+
+async function optimizeKrea() {
+  const srcDir = join(SRC_ROOT, 'krea')
+  if (!existsSync(srcDir)) {
+    console.error('! no art-src/krea — skipping')
+    return
+  }
+  await mkdir(KREA_OUT, { recursive: true })
+  const files = await readdir(srcDir)
+  const find = (id) => files.find((f) => basename(f, extname(f)) === id)
+  console.log('\n=== krea ===')
+  for (const [id, spec] of Object.entries(KREA_SPECS)) {
+    const src = find(id)
+    if (!src) {
+      console.warn(`  ! ${id}: no source in art-src/krea`)
+      continue
+    }
+    const outPath = join(KREA_OUT, `${id}.webp`)
+    await greenKeySprite(join(srcDir, src), outPath, { ...spec, ...KREA_KEY_OVERRIDES[id] })
+    console.log(`  ${id.padEnd(16)} → ${id}.webp  ${String(kb((await stat(outPath)).size)).padStart(4)} KB${KREA_KEY_OVERRIDES[id] ? ' [override]' : ''}`)
+  }
+  const bd = find('backdrop')
+  if (bd) {
+    const outPath = join(KREA_OUT, 'backdrop.webp')
+    await sharp(join(srcDir, bd)).webp({ quality: 86, effort: 6 }).toFile(outPath)
+    console.log(`  ${'backdrop'.padEnd(16)} → backdrop.webp  ${String(kb((await stat(outPath)).size)).padStart(4)} KB [opaque, not keyed]`)
+  }
+  for (const [id, key] of Object.entries(KREA_TILES)) {
+    const src = find(id)
+    if (!src) continue
+    const outPath = join(ROOT, 'src', 'assets', 'themes', 'icons', 'games', `${key}.webp`)
+    await greenKeySprite(join(srcDir, src), outPath, { size: 512, fill: UI_FILL, ...KREA_KEY_OVERRIDES[id] })
+    console.log(`  ${id.padEnd(16)} → icons/games/${key}.webp  ${String(kb((await stat(outPath)).size)).padStart(4)} KB`)
+  }
+  const sec = find('section-icon')
+  if (sec) {
+    // Matched to the five shipped section icons, which are 512² with their ink at 0.81 of the frame:
+    // keyed straight to 224² the easel drew visibly SMALLER than the other objects on home (its ink is
+    // a tall narrow easel inside a lot of empty magenta). So key, then trim onto the same square.
+    const outPath = join(OUT_ROOT, 'icons', 'krea.webp')
+    const tmp = join(KREA_OUT, '.section-icon.keyed.png')
+    await (await chromaKeyMagenta(join(srcDir, sec))).png().toFile(tmp)
+    await retrimSprite(tmp, outPath, { size: 512, fill: UI_FILL, quality: ROLE_QUALITY.krea })
+    await (await import('node:fs/promises')).unlink(tmp)
+    console.log(`  ${'section-icon'.padEnd(16)} → icons/krea.webp  ${String(kb((await stat(outPath)).size)).padStart(4)} KB [magenta keyed]`)
+  }
+}
+
 // Run one green-screen batch: art-src/<dir>/<name>.{png,jpg} → <outDir>/<name>.webp.
 async function optimizeGreenBatch(dir, outDir, opts) {
   const srcDir = join(SRC_ROOT, dir)
@@ -694,6 +773,10 @@ for (const id of themes) {
   }
   if (id === 'harbour') {
     await optimizeHarbour()
+    continue
+  }
+  if (id === 'krea') {
+    await optimizeKrea()
     continue
   }
   if (!(await stat(join(SRC_ROOT, id)).then((s) => s.isDirectory()).catch(() => false))) continue

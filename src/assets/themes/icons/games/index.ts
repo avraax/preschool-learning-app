@@ -27,7 +27,7 @@ import englishWord from './english.word.webp'
 import englishLearn from './english.learn.webp'
 import ordlegRead from './ordleg.read.webp'
 import ordlegSpelling from './ordleg.spelling.webp'
-// Placeholders: copies of existing tiles until the owner's Gemini renders land (Krea PRD-01 W0).
+// Krea's tiles: the owner's renders (Krea PRD-01 batch G), keyed by `optimize-theme-art.mjs krea`.
 import kreaDraw from './krea.draw.webp'
 import kreaGuide from './krea.guide.webp'
 import kreaColor from './krea.color.webp'

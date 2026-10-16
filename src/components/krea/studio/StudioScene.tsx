@@ -1,17 +1,14 @@
 import React from 'react'
 import { Box } from '@mui/material'
+import { KREA_ART } from '../../../assets/games/krea'
 
 // Krea's own full-bleed art studio (Krea PRD-01 §2.3.13) — like Fyld Båden's harbour it paints the
 // WHOLE screen and the persistent world is occluded underneath (`useOccludeWorld` in each game).
-// ONE studio on every skin, like all game art.
+// ONE studio on every skin, like all game art: the owner's render (batch A), a cream wall with a
+// daylight window on the left and a honey-wood table across the lower part.
 //
-// Until the owner's Batch A render lands this is a CSS stand-in with the same composition the prompt
-// asks for: a warm cream wall, one daylight window upper left, and a honey-wood table filling the lower
-// third. `position: absolute` against GameShell's isolated root (z -1), never `fixed` (PersistentWorld's
-// note: Chrome blanks fixed layers during touch pans). Static — no motion at all, so nothing to pause.
-
-/** Where the table top starts, as a share of the screen height — the paper sits on it. */
-export const TABLE_TOP_PCT = 62
+// `position: absolute` against GameShell's isolated root (z -1), never `fixed` (PersistentWorld's note:
+// Chrome blanks fixed layers during touch pans). Static — nothing moves, so nothing to pause.
 
 export const StudioBackdrop: React.FC = () => (
   <Box
@@ -23,53 +20,15 @@ export const StudioBackdrop: React.FC = () => (
       zIndex: -1,
       overflow: 'hidden',
       pointerEvents: 'none',
-      backgroundColor: '#F4E9D8',
-      backgroundImage: [
-        // the table: honey wood with a lighter front edge and a few soft grain bands
-        `linear-gradient(180deg, #D9A866 0%, #E2B57A ${100 - TABLE_TOP_PCT}%, #C48E4E 100%)`,
-      ].join(','),
-      backgroundSize: `100% ${100 - TABLE_TOP_PCT}%`,
-      backgroundPosition: 'left bottom',
+      // The wall's own colour, so a slow first paint is a calm cream rather than a flash of white.
+      backgroundColor: '#F1E4CF',
+      backgroundImage: `url(${KREA_ART.backdrop})`,
       backgroundRepeat: 'no-repeat',
+      backgroundSize: 'cover',
+      // Keep the window (left) in frame on a narrow screen, and the table's front edge at the bottom.
+      backgroundPosition: '20% 100%',
     }}
-  >
-    {/* the wall's soft daylight falloff from the window side */}
-    <Box
-      sx={{
-        position: 'absolute',
-        left: 0,
-        right: 0,
-        top: 0,
-        height: `${TABLE_TOP_PCT}%`,
-        background: 'radial-gradient(ellipse at 18% 20%, rgba(255,252,240,0.9) 0%, rgba(255,250,235,0) 60%)',
-      }}
-    />
-    {/* the window, upper left */}
-    <Box
-      sx={{
-        position: 'absolute',
-        left: '6%',
-        top: '8%',
-        width: '22%',
-        height: '34%',
-        borderRadius: '18px',
-        border: '10px solid #FFFDF7',
-        boxShadow: '0 6px 18px rgba(90,60,30,0.18), inset 0 0 0 4px rgba(160,130,90,0.15)',
-        background: 'linear-gradient(180deg, #CFEAFB 0%, #EAF6FD 70%, #F7FBF2 100%)',
-      }}
-    />
-    {/* the table's front edge */}
-    <Box
-      sx={{
-        position: 'absolute',
-        left: 0,
-        right: 0,
-        top: `${TABLE_TOP_PCT}%`,
-        height: '10px',
-        background: 'linear-gradient(180deg, rgba(255,235,200,0.9), rgba(150,100,50,0.35))',
-      }}
-    />
-  </Box>
+  />
 )
 
 /**
