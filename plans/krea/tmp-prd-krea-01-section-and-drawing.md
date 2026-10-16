@@ -486,8 +486,29 @@ owner's iPad look-and-feel sign-off on Fri Tegning. Playable on DEV/staging at `
 - Known, not chased: an intermittent Howler HTML5-fallback `removeEventListener` error in headless WebKit
   only (no WebAudio there); the ring's grey track is faint on the cream wall on light skins.
 
-**Next:** owner sign-off (a) on the iPad — finger feel, crayon texture, the synthesised sounds, Pencil +
-palm guard, Scribble, sessionStorage after killing the PWA — and (b) the Gemini batches A–G. Then W4.
+**2026-10-16 (later) — art integrated + owner review of Fri Tegning** (5e4627a … this commit; pushed up to
+64fb208). Supersedes parts of §2.2 for Fri Tegning — **do not re-litigate**:
+
+- **ALL ART IS IN** `art-src/krea/` under readable names, keyed by `optimize-theme-art.mjs krea` (measured
+  overrides for the green subjects; `pointDownLeft` turns the crayons). Line-art pages are in
+  `art-src/krea/pages/*.jpg` (12, W5 input), Perleplade props in `art-src/krea/beads/`, the demo pencil is
+  `src/assets/games/krea/pencil.webp` (W4). Validation history + prompts: `krea-art-prompts.md`.
+- **Studio = a honey-wood table seen FROM ABOVE**; tools in a column beside the paper on a wide screen,
+  rows under it on a tall one. Controls are clay objects on the table that act on the PRESS
+  (`pressHandlers` — `click` lost fast taps); a blocking overlay's buttons act on the click.
+- **House art rule:** what is held in the hand lies on the RIGHT, tip pointing DOWN-LEFT.
+- **Fri Tegning has NO finish:** no ✓, no "comes alive", no ta-da, no "Du har brugt {n} farver", no
+  "next". "Nyt papir" (with a + badge, done-sized) + the spoken confirm is the only way on, and the old
+  sheet visibly slides away (`swapPaper`). **Tegn med Mig / Farvelæg still finish** (§2.2.9 applies to
+  them; `alive.ts`, `done.webp`, `next.webp` and the `krea-tada` cue are kept for W4/W5).
+- **Tools:** crayon (shows the crayon in hand), pictures (shows the chosen stamp — a rubber stamp was a
+  poor identifier), eraser, undo. **No glitter brush** (a star is a stamp, one per tap); **rainbow is a
+  crayon variant**, last in the crayon row, spoken "regnbue". The variant row is empty for the eraser.
+- **Undo is unlimited** (it stopped at 30); the checkpoint follows and is reused inside the live window.
+- Performance: strokes paint incrementally (`createPainter`); opaque brushes make live == committed.
+
+**Next:** W4 (Tegn med Mig) and W5 (Farvelæg), then W6. Rung 3 still owed on Fri Tegning: finger feel,
+crayon texture, the synthesised sounds, Pencil + palm guard, Scribble, sessionStorage after killing the PWA.
 
 ## 9. Kickoff prompt for a fresh session
 

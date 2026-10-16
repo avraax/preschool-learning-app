@@ -1,16 +1,13 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync, readdirSync } from 'node:fs'
-import { allKreaLines, colorsUsedLine, KREA_COLOR_NAME, NEW_PAPER_LINE, DRAW_ALIVE_LINE } from './kreaPhrases.ts'
+import { allKreaLines, KREA_COLOR_NAME, KREA_RAINBOW_NAME, NEW_PAPER_LINE } from './kreaPhrases.ts'
 import { PALETTE_12 } from './kreaPalette.ts'
 
 // Pinned as LITERALS: the app and the enumerator call the same builder, so "they agree" would pass
 // vacuously if the builder itself drifted (audio-system.md protocol, step 4).
 test('the Krea lines say exactly this', () => {
-  assert.equal(colorsUsedLine(1), 'Du har brugt én farve!')
-  assert.equal(colorsUsedLine(4), 'Du har brugt fire farver!')
-  assert.equal(colorsUsedLine(12), 'Du har brugt tolv farver!')
-  assert.equal(colorsUsedLine(0), DRAW_ALIVE_LINE, 'rainbow/glitter/stamps only must not say "nul farver"')
+  assert.equal(KREA_RAINBOW_NAME, 'regnbue')
   assert.equal(NEW_PAPER_LINE, 'Vil du have et nyt papir? Din tegning forsvinder.')
   assert.deepEqual(PALETTE_12.map((c) => KREA_COLOR_NAME[c]), [
     'rød', 'orange', 'gul', 'lysegrøn', 'grøn', 'lyseblå', 'blå', 'lilla', 'lyserød', 'brun', 'sort', 'hvid',
