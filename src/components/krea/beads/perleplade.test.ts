@@ -40,10 +40,18 @@ test('placeBead is the single resolver: one call, and both gestures reach it thr
   assert.doesNotMatch(game, /\.beads\.slice\(/, 'a copy of the beads edited in the component')
 })
 
-test('the free board earns nothing and has no finish (owner, 2026-10-16)', () => {
-  // W3 adds copy-a-pattern, which DOES earn; this guard must then narrow to the free-board path.
-  assert.doesNotMatch(game, /useTaskRun|completeTask|grantTaskXp|useBrowseXp/)
-  assert.doesNotMatch(game, /playAlive|krea-tada|PieceWayOn/, 'a finish (alive, ta-da, done button) on the free board')
+// A finished PATTERN earns one task; the FREE BOARD earns nothing and has no finish (owner, 2026-10-16;
+// Lepper 1973). One completeTask, inside onDone, behind the pattern-only gate — so no free-board path can
+// reach it — and the done button only renders for the 'finished' stage, which a free board never reaches.
+test('only a finished pattern earns, once; the free board earns nothing and has no finish', () => {
+  assert.match(game, /useTaskRun\(\{ tasksInRound: KREA_TASKS_IN_ROUND, gameId: GAME_ID \}\)/)
+  assert.equal((game.match(/completeTask\(/g) ?? []).length, 1, 'one task per finished piece')
+  const done = body(game, 'onDone')
+  assert.match(done, /if \(item\?\.kind !== 'pattern' \|\| stage !== 'finished'\) return/)
+  assert.match(done, /run\.completeTask\(true\)/)
+  assert.doesNotMatch(game, /grantTaskXp|useBrowseXp/)
+  // A free board can never be `finished`: isComplete is false for it by construction (beadBoard.test).
+  assert.match(game, /const stage: Stage = !complete \? 'building'/)
 })
 
 test('the drag games’ shared primitives: kidCollision, drag-only sensors, one droppable board', () => {

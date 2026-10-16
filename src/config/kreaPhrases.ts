@@ -14,6 +14,7 @@
 import { PALETTE_12, type CrayonColor } from './kreaPalette.ts'
 import { allSubjectLines } from './kreaSubjects.ts'
 import { allPageLines } from './kreaPages.ts'
+import { allBeadLines } from './kreaBeads.ts'
 
 /** The crayon's spoken Danish name — said on every pick, so each choice is a tiny Farver lesson. */
 export const KREA_COLOR_NAME: Record<CrayonColor, string> = {
@@ -51,6 +52,6 @@ export const NEW_BOARD_LINE = 'Vil du have en ny plade? Dine perler forsvinder.'
 export function allKreaLines(): string[] {
   const lines: string[] = [...KREA_WELCOME_TITLES, NEW_PAPER_LINE, NEW_BOARD_LINE, KREA_RAINBOW_NAME]
   for (const c of KREA_COLORS) lines.push(KREA_COLOR_NAME[c])
-  lines.push(...allSubjectLines(), ...allPageLines())
+  lines.push(...allSubjectLines(), ...allPageLines(), ...allBeadLines())
   return lines
 }

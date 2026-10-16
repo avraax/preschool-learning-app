@@ -82,6 +82,11 @@ const CUES = {
     lufs: -28,
     graph: `aevalsrc='${[ping(0.5, 1250, 0, 60), ping(0.42, 1050, 0.07, 60), ping(0.34, 880, 0.15, 60)].join('+')}':s=${SR}:d=0.3`,
   },
+  // A finished pattern popping off its pegs: a soft plastic pop, then a bouncy rising boing.
+  'bead-popoff': {
+    lufs: -23,
+    graph: `aevalsrc='0.6*exp(-60*t)*sin(2*PI*520*t)+0.5*gte(t,0.06)*exp(-5*(t-0.06))*sin(2*PI*(260*(t-0.06)+700*(t-0.06)*(t-0.06)))*(1+0.4*sin(2*PI*9*t))':s=${SR}:d=0.75`,
+  },
   // Done: a warm "ta-da" — a major chord, then the octave.
   'krea-tada': {
     lufs: -21,

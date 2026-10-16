@@ -59,7 +59,7 @@ test('every pattern fits inside its level’s board mask', () => {
   }
 })
 
-test('every pattern uses only its level’s palette (Let has 8 crayons)', () => {
+test('every pattern uses only its level’s palette', () => {
   for (const level of LEVELS) {
     const pal = new Set(beadPalette(level))
     for (const p of BEAD_PATTERNS) {
@@ -78,10 +78,21 @@ test('every legend count is between 1 and 100 — the prebaked bare-number range
   }
 })
 
+test('each pattern says exactly its describing line, and every line is enumerated for prebake', async () => {
+  assert.deepEqual(BEAD_PATTERNS.map((p) => p.doneLine), [
+    'Se, hjertet hopper!', 'Se, sommerfuglen flagrer!', 'Se, fisken svømmer!', 'Se, blomsten danser!',
+    'Se, stjernen funkler!', 'Se, huset vipper!', 'Se, katten hopper!', 'Se, regnbuen skinner!',
+  ])
+  for (const p of BEAD_PATTERNS) assert.doesNotMatch(p.doneLine.toLowerCase(), /flot|smuk|dygtig/)
+  const { allKreaLines } = await import('./kreaPhrases.ts')
+  const all = new Set(allKreaLines())
+  for (const p of BEAD_PATTERNS) assert.ok(all.has(p.doneLine), p.doneLine)
+})
+
 test('legend counts are derived from the grid, in palette order', () => {
   const heart = BEAD_PATTERNS.find((p) => p.id === 'hjerte')!
-  assert.deepEqual(legendCounts(patternCells(heart, 'let')), [['roed', 34]])
-  assert.deepEqual(legendCounts(patternCells(heart, 'normal')), [['roed', 50], ['lyseroed', 16]])
+  assert.deepEqual(legendCounts(patternCells(heart, 'let')), [['roed', 50], ['lyseroed', 16]])
+  assert.deepEqual(legendCounts(patternCells(heart, 'svaer')), [['roed', 68], ['lyseroed', 80], ['hvid', 8]])
 })
 
 const mirrorRow = (row: string) => [...row].reverse().join('')
@@ -104,11 +115,12 @@ test('the symmetric patterns are mirror-symmetric, colours included', () => {
 const resize = (g: readonly string[], n: number): string[] =>
   Array.from({ length: n }, (_, r) => Array.from({ length: n }, (_, c) => g[Math.floor((r * g.length) / n)][Math.floor((c * g.length) / n)]).join(''))
 
-test('each Svær pattern is its own design, not Let resized', () => {
-  const n = boardSize('svaer')
+test('each harder level is its own design, not the level below resized', () => {
+  for (const [lo, hi] of [['let', 'svaer'], ['normal', 'svaer'], ['let', 'normal']] as const) {
+  const n = boardSize(hi)
   for (const p of BEAD_PATTERNS) {
-    const up = resize(p.grids.let, n)
-    const real = p.grids.svaer
+    const up = resize(p.grids[lo], n)
+    const real = p.grids[hi]
     let beads = 0
     let differ = 0
     for (let r = 0; r < n; r++)
@@ -117,25 +129,28 @@ test('each Svær pattern is its own design, not Let resized', () => {
         beads++
         if (real[r][c] !== up[r][c]) differ++
       }
-    assert.ok(differ / beads >= 0.15, `${p.id}: Svær differs from Let-resized in only ${differ}/${beads}`)
+    assert.ok(differ / beads >= 0.15, `${p.id}: ${hi} differs from ${lo}-resized in only ${differ}/${beads}`)
     const colours = (lvl: BeadLevel) => legendCounts(patternCells(p, lvl)).length
-    assert.ok(colours('svaer') >= colours('let'), `${p.id}: Svær has fewer colours than Let`)
+    assert.ok(colours(hi) >= colours(lo), `${p.id}: ${hi} has fewer colours than ${lo}`)
+  }
   }
 })
 
 // §4.2: the minimum peg pitch is 40 CSS px on the iPad. If a level's board doesn't fit, the TABLE is
-// wrong — fix `KREA_BEADS`, never the pitch. Both orientations of the floor device.
-test('every level’s board keeps a peg pitch ≥ 40 px on the iPad, both orientations', () => {
+// wrong — fix `KREA_BEADS`, never the pitch. Both orientations of the floor device. The one owner-accepted
+// exception is Svær's 16×16 at ~35 px (2026-10-16), with its own floor so it can't slide further.
+test('every level’s board keeps its minimum peg pitch on the iPad, both orientations', () => {
   for (const level of LEVELS) {
     for (const o of ['landscape', 'portrait'] as const) {
       const pitch = boardPitch(KREA_BEADS[level].board, BEAD_LAYOUT.ipadStage[o], o)
-      assert.ok(pitch >= BEAD_LAYOUT.minPitchPx, `${level} ${o}: ${pitch.toFixed(1)} px`)
+      const floor = level === 'svaer' ? BEAD_LAYOUT.svaerMinPitchPx : BEAD_LAYOUT.minPitchPx
+      assert.ok(pitch >= floor, `${level} ${o}: ${pitch.toFixed(1)} px, floor ${floor}`)
     }
   }
 })
 
 test('board size and bead size step with the level; XP does not live here', () => {
   assert.ok(KREA_BEADS.let.board < KREA_BEADS.normal.board && KREA_BEADS.normal.board < KREA_BEADS.svaer.board)
-  assert.ok(KREA_BEADS.let.bead > KREA_BEADS.normal.bead, 'Let is Maxi')
-  assert.equal(KREA_BEADS.let.palette, 8)
+  assert.ok(KREA_BEADS.let.bead > KREA_BEADS.normal.bead, 'Let has the biggest beads')
+  assert.equal(KREA_BEADS.svaer.board, 16, 'the owner chose 16×16 at Svær (2026-10-16)')
 })

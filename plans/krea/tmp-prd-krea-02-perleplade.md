@@ -218,7 +218,28 @@ Playable on DEV/staging at `/krea/perler` (free boards only).
   and placed by hand (§2.2/§4.2's tweezers are superseded; the render is unused). A tapped bowl shows one
   bead lifted above it. The bead under a finger sits 0.45 pitch above the touch point (a full pitch felt
   detached), 0 under a mouse. The picker button is a mini grid of finished bead pictures, 120 px.
-- **W3 must:** narrow `perleplade.test.ts`'s "earns nothing" guard to the free-board path; add `pop-off`.
+
+**2026-10-17 — W3 done** (copy a pattern; not pushed to production, deployed to staging).
+
+- **Levels moved up one, owner decision, do not re-litigate:** Let = 10×10 (the old Normal grids),
+  Normal = 13×13 (the old Svær), Svær = NEW 16×16 grids + masks. 12 colours at every level (§2.1's "8 at
+  Let" is superseded). Svær pegs are ~35 px on the iPad — the owner chose that over 14×14 at 40 px;
+  `kreaBeads.test.ts` holds 40 px for Let/Normal and `svaerMinPitchPx` 35 for Svær. Portrait bowls stand in
+  3 rows so the card fits beside them (`BEAD_LAYOUT.portraitBowlRows`).
+- **Pattern card:** a white card in code (the baked card frame is landscape and the card is a tall column,
+  so it is unused), the finished picture + a legend of numerals (Typography). A chip speaks its number
+  (`speakNumber`, prebaked 0–100) and one overlay of rings makes that colour's placed beads glow.
+- **Bounce:** a wrong colour or a peg outside the pattern → the beads are unchanged, `bead-back` + the bead
+  flies home to its bowl (`flyHome`). 2nd miss on one peg → that bowl glows (`data-krea-hint`).
+- **Finish:** complete → the pulsing ✓ → XP on the press → `popOff` (the beads layer lifts and wobbles,
+  one WAAPI one-shot) + `bead-popoff` + the describing line → the seam → "next" → picker, session cleared.
+- **Pins** are drawn as raised cylinders (contact shadow down-right, lit gradient top, highlight) — owner:
+  they did not read as pins.
+- Verified rung 1 (Chrome): the whole flow incl. +21 XP once, `--audio-report` OK for a legend number and
+  the done line. Rung 2 (WebKit iPad UA, both orientations): the same flow by tap; drag right/wrong colour;
+  pitch 55/43/35 landscape, 59/46/38 portrait, no overlap. Phone: Svær is ~20 px pegs and, in landscape, two
+  bowls clip — a phone is not the target; UNKNOWN on the iPad (rung 3): whether copying from the card is
+  doable for a 5-year-old without a guide on the board, and whether 35 px pegs at Svær are hittable.
 
 ## 9. Kickoff prompt for a fresh session
 

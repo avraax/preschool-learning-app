@@ -48,7 +48,9 @@ export const BoardArt: React.FC<{ n: number; mask: readonly boolean[] }> = ({ n,
   const side = (n + RIM) * S
   const o = (RIM / 2) * S
   const cells: React.ReactNode[] = []
+  const shadows: React.ReactNode[] = []
   const pegs: React.ReactNode[] = []
+  const shines: React.ReactNode[] = []
   mask.forEach((on, i) => {
     if (!on) return
     const x = o + (i % n) * S
@@ -58,17 +60,31 @@ export const BoardArt: React.FC<{ n: number; mask: readonly boolean[] }> = ({ n,
     // their seam, so the joins are filled flat and only the OUTER corners round.
     if ((i % n) + 1 < n && mask[i + 1]) cells.push(<rect key={`h${i}`} x={x + S / 2} y={y - 22} width={S} height={S + 44} />)
     if (i + n < mask.length && mask[i + n]) cells.push(<rect key={`v${i}`} x={x - 22} y={y + S / 2} width={S + 44} height={S} />)
-    pegs.push(<circle key={i} cx={x + S / 2} cy={y + S / 2} r={15} />)
+    const cx = x + S / 2
+    const cy = y + S / 2
+    shadows.push(<ellipse key={i} cx={cx + 5} cy={cy + 7} rx={16} ry={14} />)
+    pegs.push(<circle key={i} cx={cx} cy={cy} r={14} />)
+    shines.push(<circle key={i} cx={cx - 4.5} cy={cy - 5} r={4} />)
   })
   return (
     <svg viewBox={`0 0 ${side} ${side}`} width="100%" height="100%" style={{ position: 'absolute', inset: 0, overflow: 'visible' }} aria-hidden>
       <defs>
+        {/* A peg is a little cylinder standing up: lit from the top-left like every clay render here, so a
+            shadow falls down-right on the plastic and its top shades from light to dark. One shared
+            gradient, plain circles — static, so a 16×16 board costs nothing at rest. */}
+        <radialGradient id="kreaPegTop" cx="38%" cy="32%" r="72%">
+          <stop offset="0" stopColor="#FFFDF8" />
+          <stop offset="0.55" stopColor="#ECE3D2" />
+          <stop offset="1" stopColor="#C8B99F" />
+        </radialGradient>
         <filter id="kreaBoardShadow" x="-10%" y="-10%" width="120%" height="125%">
           <feDropShadow dx="0" dy={side * 0.012} stdDeviation={side * 0.012} floodColor="#4E3214" floodOpacity="0.32" />
         </filter>
       </defs>
       <g fill={BOARD_PLASTIC} filter="url(#kreaBoardShadow)">{cells}</g>
-      <g fill="#DDD3C1" stroke="#FFFFFF" strokeOpacity="0.55" strokeWidth={4}>{pegs}</g>
+      <g fill="#6B4A26" fillOpacity="0.2">{shadows}</g>
+      <g fill="url(#kreaPegTop)" stroke="#BCAE94" strokeWidth={1.5}>{pegs}</g>
+      <g fill="#FFFFFF" fillOpacity="0.8">{shines}</g>
     </svg>
   )
 }
@@ -100,9 +116,16 @@ export interface PegboardProps {
   boardRef?: React.Ref<HTMLDivElement>
   /** A tap on the board at a client point (not a drag). */
   onTapAt: (x: number, y: number) => void
+  /** The placed beads as ONE layer — the finished pattern's pop-off animates it (§4.3). */
+  piecesRef?: React.Ref<HTMLDivElement>
+  /**
+   * A legend chip was tapped (W3): the beads of that colour glow once. ONE overlay of rings, faded as a
+   * whole — never 30 beads animating each on their own (§4.3). `n` changes per tap.
+   */
+  glow?: { colour: BeadColor; n: number } | null
 }
 
-export const Pegboard: React.FC<PegboardProps> = ({ board, beadSize, disabled, liftedPeg, lastPlaced, reduce, hitRef, ringRef, boardRef, onTapAt }) => {
+export const Pegboard: React.FC<PegboardProps> = ({ board, beadSize, disabled, liftedPeg, lastPlaced, reduce, hitRef, ringRef, boardRef, onTapAt, piecesRef, glow }) => {
   const drop = useDroppable({ id: 'board' })
   const drag = useDraggable({ id: 'board-bead', disabled })
   const downAt = useRef<{ x: number; y: number } | null>(null)
@@ -130,11 +153,28 @@ export const Pegboard: React.FC<PegboardProps> = ({ board, beadSize, disabled, l
     )
   }, [lastPlaced, reduce])
 
+  const glowEl = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!glow) return
+    glowEl.current?.animate([{ opacity: 0 }, { opacity: 1 }, { opacity: 0.35 }, { opacity: 1 }, { opacity: 0 }], { duration: reduce ? 900 : 1400, easing: 'cubic-bezier(0.37, 0, 0.63, 1)' })
+  }, [glow, reduce])
+
   return (
     <div ref={boardRef} data-krea-board data-krea-board-n={board.n} data-krea-beads={board.beads.filter(Boolean).length} style={{ position: 'relative', width: '100%', height: '100%' }}>
       <BoardArt n={board.n} mask={board.mask} />
-      <div ref={layer} style={{ position: 'absolute', inset: 0 }}>
-        <PlacedBeads board={board} size={beadSize} hide={liftedPeg} />
+      <div ref={piecesRef} data-krea-pieces style={{ position: 'absolute', inset: 0 }}>
+        <div ref={layer} style={{ position: 'absolute', inset: 0 }}>
+          <PlacedBeads board={board} size={beadSize} hide={liftedPeg} />
+        </div>
+      </div>
+      <div ref={glowEl} data-krea-legend-glow={glow?.colour ?? ''} aria-hidden style={{ position: 'absolute', inset: 0, pointerEvents: 'none', opacity: 0 }}>
+        {glow
+          ? board.beads.map((c, i) =>
+              c === glow.colour ? (
+                <div key={i} style={{ position: 'absolute', ...pegBox(board.n, i, beadSize * 1.25), borderRadius: '50%', boxShadow: '0 0 0 3px #FFFFFF, 0 0 10px 4px rgba(255,200,40,0.95)' }} />
+              ) : null,
+            )
+          : null}
       </div>
       <div
         ref={ringRef}

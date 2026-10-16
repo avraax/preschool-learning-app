@@ -13,7 +13,7 @@
 import { KREA_BEADS, type DifficultyLevel } from './difficulty.ts'
 import { paletteFor, PALETTE_12, type CrayonColor } from './kreaPalette.ts'
 
-/** The grid letters. Upper case = Let's 8 crayons; lower case + W = the four light ones (Normal and up). */
+/** The grid letters. Upper case = the 8 strong crayons; lower case + W = the four light ones. */
 export const BEAD_LEGEND: Record<string, CrayonColor> = {
   R: 'roed',
   O: 'orange',
@@ -37,6 +37,8 @@ export interface BeadPatternDef {
   name: string
   /** Mirror-symmetric about the vertical axis, colours included — tested, so a typo in a row shows. */
   symmetric: boolean
+  /** Said when the finished piece pops off the board — it DESCRIBES, never grades (PRD-01 §5). */
+  doneLine: string
   grids: Record<BeadLevel, readonly string[]>
 }
 
@@ -48,16 +50,16 @@ export interface BeadBoardDef {
 
 const full = (n: number): string[] => Array.from({ length: n }, () => '#'.repeat(n))
 
-// ----- the 8 patterns (§2.9), Let 7×7 · Normal 10×10 · Svær 13×13 ---------------------------------
+// ----- the 8 patterns (§2.9), Let 10×10 · Normal 13×13 · Svær 16×16 ---------------------------------
 
 export const BEAD_PATTERNS: readonly BeadPatternDef[] = [
   {
     id: 'hjerte',
     name: 'Hjerte',
     symmetric: true,
+    doneLine: 'Se, hjertet hopper!',
     grids: {
-      let: ['.RR.RR.', 'RRRRRRR', 'RRRRRRR', 'RRRRRRR', '.RRRRR.', '..RRR..', '...R...'],
-      normal: [
+      let: [
         '..........',
         '.RRR..RRR.',
         'RRRRRRRRRR',
@@ -69,7 +71,7 @@ export const BEAD_PATTERNS: readonly BeadPatternDef[] = [
         '...RRRR...',
         '....RR....',
       ],
-      svaer: [
+      normal: [
         '.............',
         '..RRR...RRR..',
         '.RRRRR.RRRRR.',
@@ -84,15 +86,33 @@ export const BEAD_PATTERNS: readonly BeadPatternDef[] = [
         '.....RRR.....',
         '......R......',
       ],
+      svaer: [
+        '................',
+        '..RRRR....RRRR..',
+        '.RppppR..RppppR.',
+        'RpWWpppRRpppWWpR',
+        'RpWppppppppppWpR',
+        'RpWppRRppRRppWpR',
+        'RpppRRRRRRRRpppR',
+        'RpppRRRRRRRRpppR',
+        '.RpppRRRRRRpppR.',
+        '..RpppRRRRpppR..',
+        '...RppppppppR...',
+        '....RppppppR....',
+        '.....RppppR.....',
+        '......RppR......',
+        '.......RR.......',
+        '................',
+      ],
     },
   },
   {
     id: 'sommerfugl',
     name: 'Sommerfugl',
     symmetric: true,
+    doneLine: 'Se, sommerfuglen flagrer!',
     grids: {
-      let: ['LL...LL', 'LYLNLYL', 'LLLNLLL', '.LLNLL.', 'OOLNLOO', 'OYO.OYO', '.O...O.'],
-      normal: [
+      let: [
         'LL......LL',
         'LLL.NN.LLL',
         'LYLLNNLLYL',
@@ -104,7 +124,7 @@ export const BEAD_PATTERNS: readonly BeadPatternDef[] = [
         'OOOO..OOOO',
         '.OO....OO.',
       ],
-      svaer: [
+      normal: [
         '....S...S....',
         '.....S.S.....',
         'LLL...N...LLL',
@@ -119,15 +139,33 @@ export const BEAD_PATTERNS: readonly BeadPatternDef[] = [
         'OOOOO.N.OOOOO',
         '.OOO.....OOO.',
       ],
+      svaer: [
+        '...S........S...',
+        '....S......S....',
+        '.....S.NN.S.....',
+        'LLL...SNNS...LLL',
+        'LbbLL..NN..LLbbL',
+        'LbBbLL.NN.LLbBbL',
+        'LbbbLLLNNLLLbbbL',
+        'LLLLLLLNNLLLLLLL',
+        '.LLLLLLNNLLLLLL.',
+        '..LLLLLNNLLLLL..',
+        '..ppppLNNLpppp..',
+        '.ppOOppNNppOOpp.',
+        'ppOYOppNNppOYOpp',
+        'pppOppp..pppOppp',
+        '.ppppp....ppppp.',
+        '..ppp......ppp..',
+      ],
     },
   },
   {
     id: 'fisk',
     name: 'Fisk',
     symmetric: false,
+    doneLine: 'Se, fisken svømmer!',
     grids: {
-      let: ['.......', '.BBB..O', 'BSBBBOO', 'BBBBBBO', 'BBBBBOO', '.BBB..O', '.......'],
-      normal: [
+      let: [
         '..........',
         '...BBBB...',
         '..BBBBBB.O',
@@ -139,7 +177,7 @@ export const BEAD_PATTERNS: readonly BeadPatternDef[] = [
         '...BBBB...',
         '..........',
       ],
-      svaer: [
+      normal: [
         '.............',
         '....OOO......',
         '...BBBBBB...O',
@@ -154,15 +192,33 @@ export const BEAD_PATTERNS: readonly BeadPatternDef[] = [
         '.............',
         '.............',
       ],
+      svaer: [
+        '................',
+        '......OOO.......',
+        '.....OOOO.......',
+        '....BBBBBBB.....',
+        '..BBBbBbBBBB..OO',
+        '.BWSBbBbBbBBBOOO',
+        'BBSSBbBbBbBBBBOO',
+        'BBBBBbBbBbBBBBBO',
+        'BRRBBbBbBbBBBBBO',
+        'BBBBBbBbBbBBBBOO',
+        '.BBBBbBbBbBBBOOO',
+        '..BBBbBbBBBB..OO',
+        '....BBBBBBB.....',
+        '......OO........',
+        '.b..............',
+        'b.b.............',
+      ],
     },
   },
   {
     id: 'blomst',
     name: 'Blomst',
     symmetric: true,
+    doneLine: 'Se, blomsten danser!',
     grids: {
-      let: ['..RRR..', '.RRYRR.', '.RYYYR.', '.RRYRR.', '..RRR..', 'GG.G.GG', '...G...'],
-      normal: [
+      let: [
         '...RRRR...',
         '..RRppRR..',
         '.RRpYYpRR.',
@@ -174,7 +230,7 @@ export const BEAD_PATTERNS: readonly BeadPatternDef[] = [
         '.GG.GG.GG.',
         '..GGGGGG..',
       ],
-      svaer: [
+      normal: [
         '.....LLL.....',
         '..LL.LLL.LL..',
         '.LLLLLLLLLLL.',
@@ -189,15 +245,33 @@ export const BEAD_PATTERNS: readonly BeadPatternDef[] = [
         '....GGGGG....',
         '.....GGG.....',
       ],
+      svaer: [
+        '.....pppppp.....',
+        '...pppLLLLppp...',
+        '..ppLLLLLLLLpp..',
+        '..pLLpLLLLpLLp..',
+        '.ppLpppLLpppLpp.',
+        '.pLLppOYYOppLLp.',
+        '.pLLpOYYYYOpLLp.',
+        '..pLLpOYYOpLLp..',
+        '...ppLLLLLLpp...',
+        '.....pLLLLp.....',
+        '.......GG.......',
+        '..gg...GG...gg..',
+        '.gGGg..GG..gGGg.',
+        '..gGGg.GG.gGGg..',
+        '....gGGGGGGg....',
+        '......GGGG......',
+      ],
     },
   },
   {
     id: 'stjerne',
     name: 'Stjerne',
     symmetric: true,
+    doneLine: 'Se, stjernen funkler!',
     grids: {
-      let: ['...Y...', '...Y...', 'YYYYYYY', '.YYYYY.', '..YYY..', '.YY.YY.', '.Y...Y.'],
-      normal: [
+      let: [
         '....YY....',
         '....YY....',
         '...YYYY...',
@@ -209,7 +283,7 @@ export const BEAD_PATTERNS: readonly BeadPatternDef[] = [
         '.YYY..YYY.',
         'YY......YY',
       ],
-      svaer: [
+      normal: [
         '......Y......',
         '.....YYY.....',
         '.....YYY.....',
@@ -224,15 +298,33 @@ export const BEAD_PATTERNS: readonly BeadPatternDef[] = [
         '.YYY.....YYY.',
         '.YY.......YY.',
       ],
+      svaer: [
+        '.......YY.......',
+        '.......YY.......',
+        '......YYYY......',
+        '......YOOY......',
+        '.....YYOOYY.....',
+        'YYYYYYOOOOYYYYYY',
+        '.YYYYOOOOOOYYYY.',
+        '..YYYYOOOOYYYY..',
+        '...YYYYOOYYYY...',
+        '....YYYYYYYY....',
+        '....YYYYYYYY....',
+        '...YYYY..YYYY...',
+        '...YYY....YYY...',
+        '..YYY......YYY..',
+        '..YY........YY..',
+        '.Y............Y.',
+      ],
     },
   },
   {
     id: 'hus',
     name: 'Hus',
     symmetric: false,
+    doneLine: 'Se, huset vipper!',
     grids: {
-      let: ['...R...', '..RRR..', '.RRRRR.', '.YYYYY.', '.YBYBY.', '.YYNYY.', 'GGGGGGG'],
-      normal: [
+      let: [
         '....RR..N.',
         '...RRRR.N.',
         '..RRRRRRN.',
@@ -244,7 +336,7 @@ export const BEAD_PATTERNS: readonly BeadPatternDef[] = [
         '.YYYNNYYY.',
         'GGGGGGGGGG',
       ],
-      svaer: [
+      normal: [
         'YY....R......',
         'YY...RRR.....',
         '....RRRRR....',
@@ -259,15 +351,33 @@ export const BEAD_PATTERNS: readonly BeadPatternDef[] = [
         '..OOONNNOOO..',
         'GpGGGGGGGGGpG',
       ],
+      svaer: [
+        'YYY.........NN..',
+        'YYY.....R...NN..',
+        'YYY....RRR..NN..',
+        '......RRRRR.NN..',
+        '.....RRRRRRRNN..',
+        '....RRRRRRRRRR..',
+        '...RRRRRRRRRRRR.',
+        '..RRRRRRRRRRRRRR',
+        '...OOOOOOOOOOOO.',
+        '...ObbbOOOObbbO.',
+        '...ObWbOOOObWbO.',
+        '...ObbbOOOObbbO.',
+        '...OOOOONNOOOOO.',
+        '...OOOOONNOOOOO.',
+        '...OOOOONYOOOOO.',
+        'GGpGGGGGNNGGGpGG',
+      ],
     },
   },
   {
     id: 'kat',
     name: 'Kat',
     symmetric: false,
+    doneLine: 'Se, katten hopper!',
     grids: {
-      let: ['O.....O', 'OO...OO', 'OOOOOOO', 'OGOOOGO', 'OOOSOOO', '.OOOOO.', '..OOO..'],
-      normal: [
+      let: [
         '.O......O.',
         '.OO....OO.',
         '.OpO..OpO.',
@@ -279,7 +389,7 @@ export const BEAD_PATTERNS: readonly BeadPatternDef[] = [
         '..OOOOOO..',
         '...OOOO...',
       ],
-      svaer: [
+      normal: [
         '.O.........O.',
         '.OO.......OO.',
         '.OpO.....OpO.',
@@ -294,15 +404,33 @@ export const BEAD_PATTERNS: readonly BeadPatternDef[] = [
         '.OOOOOOOOOOO.',
         '.............',
       ],
+      svaer: [
+        '.O............O.',
+        '.ON..........NO.',
+        '.OpO........OpO.',
+        '.OppONNNNNNOppO.',
+        '.ONOOOONNOOOONO.',
+        'ONOOONONNONOOONO',
+        'OOgggOOOOOOgggOO',
+        'OgSSgOOOOOOgSSgO',
+        'OOgggOOWWOOgggOO',
+        'NNOOOOWppWOOOONN',
+        'SSOOOWWppWWOOOSS',
+        'OOSSOWWWWWWOSSOO',
+        'SSNOOWWWWWWOONSS',
+        '.NNOOOWWWWOOONN.',
+        '..NNOOOOOOOONN..',
+        '....NNOOOONN....',
+      ],
     },
   },
   {
     id: 'regnbue',
     name: 'Regnbue',
     symmetric: true,
+    doneLine: 'Se, regnbuen skinner!',
     grids: {
-      let: ['.RRRRR.', 'RROOORR', 'ROOYOOR', 'ROYYYOR', 'ROYGYOR', 'ROYGYOR', 'ROYGYOR'],
-      normal: [
+      let: [
         '..RRRRRR..',
         '.RROOOORR.',
         'RROOYYOORR',
@@ -314,7 +442,7 @@ export const BEAD_PATTERNS: readonly BeadPatternDef[] = [
         'ROYG..GYOR',
         'ROYG..GYOR',
       ],
-      svaer: [
+      normal: [
         '....RRRRR....',
         '..RROOOOORR..',
         '.ROOYYYYYOOR.',
@@ -329,6 +457,24 @@ export const BEAD_PATTERNS: readonly BeadPatternDef[] = [
         'WWWWW...WWWWW',
         '.WWW.....WWW.',
       ],
+      svaer: [
+        '....RRRRRRRR....',
+        '..RROOOOOOOORR..',
+        '.ROOYYYYYYYYOOR.',
+        '.ROYYggggggYYOR.',
+        'ROYggGGGGGGggYOR',
+        'ROYgGBBBBBBGgYOR',
+        'ROYgGBbbbbBGgYOR',
+        'ROYgGBbLLbBGgYOR',
+        'ROYgGBb..bBGgYOR',
+        'ROYgGBb..bBGgYOR',
+        'ROYgGBb..bBGgYOR',
+        'ROYgGBb..bBGgYOR',
+        'WWWgGBb..bBGgWWW',
+        'WWWWWBb..bBWWWWW',
+        'WWWWWW....WWWWWW',
+        '.WWWW......WWWW.',
+      ],
     },
   },
 ]
@@ -336,13 +482,12 @@ export const BEAD_PATTERNS: readonly BeadPatternDef[] = [
 // ----- the 5 free boards (§2.9) — shaped pegboards, anything goes anywhere ------------------------
 
 export const BEAD_BOARDS: readonly BeadBoardDef[] = [
-  { id: 'firkant', name: 'Firkant', masks: { let: full(7), normal: full(10), svaer: full(13) } },
+  { id: 'firkant', name: 'Firkant', masks: { let: full(10), normal: full(13), svaer: full(16) } },
   {
     id: 'cirkel',
     name: 'Cirkel',
     masks: {
-      let: ['..###..', '.#####.', '#######', '#######', '#######', '.#####.', '..###..'],
-      normal: [
+      let: [
         '...####...',
         '.########.',
         '.########.',
@@ -354,20 +499,38 @@ export const BEAD_BOARDS: readonly BeadBoardDef[] = [
         '.########.',
         '...####...',
       ],
+      normal: [
+        '....#####....',
+        '..#########..',
+        '.###########.',
+        '.###########.',
+        '#############',
+        '#############',
+        '#############',
+        '#############',
+        '#############',
+        '.###########.',
+        '.###########.',
+        '..#########..',
+        '....#####....',
+      ],
       svaer: [
-        '....#####....',
-        '..#########..',
-        '.###########.',
-        '.###########.',
-        '#############',
-        '#############',
-        '#############',
-        '#############',
-        '#############',
-        '.###########.',
-        '.###########.',
-        '..#########..',
-        '....#####....',
+        '.....######.....',
+        '...##########...',
+        '..############..',
+        '.##############.',
+        '.##############.',
+        '################',
+        '################',
+        '################',
+        '################',
+        '################',
+        '################',
+        '.##############.',
+        '.##############.',
+        '..############..',
+        '...##########...',
+        '.....######.....',
       ],
     },
   },
@@ -375,8 +538,7 @@ export const BEAD_BOARDS: readonly BeadBoardDef[] = [
     id: 'hjerte',
     name: 'Hjerte',
     masks: {
-      let: ['.##.##.', '#######', '#######', '#######', '.#####.', '..###..', '...#...'],
-      normal: [
+      let: [
         '.###..###.',
         '##########',
         '##########',
@@ -388,7 +550,7 @@ export const BEAD_BOARDS: readonly BeadBoardDef[] = [
         '....##....',
         '..........',
       ],
-      svaer: [
+      normal: [
         '..###...###..',
         '.#####.#####.',
         '#############',
@@ -403,14 +565,31 @@ export const BEAD_BOARDS: readonly BeadBoardDef[] = [
         '......#......',
         '.............',
       ],
+      svaer: [
+        '................',
+        '..####....####..',
+        '.######..######.',
+        '################',
+        '################',
+        '################',
+        '################',
+        '################',
+        '.##############.',
+        '..############..',
+        '...##########...',
+        '....########....',
+        '.....######.....',
+        '......####......',
+        '.......##.......',
+        '................',
+      ],
     },
   },
   {
     id: 'stjerne',
     name: 'Stjerne',
     masks: {
-      let: ['...#...', '..###..', '#######', '.#####.', '..###..', '.##.##.', '.#...#.'],
-      normal: [
+      let: [
         '....##....',
         '....##....',
         '...####...',
@@ -422,7 +601,7 @@ export const BEAD_BOARDS: readonly BeadBoardDef[] = [
         '.##....##.',
         '##......##',
       ],
-      svaer: [
+      normal: [
         '......#......',
         '.....###.....',
         '.....###.....',
@@ -437,14 +616,31 @@ export const BEAD_BOARDS: readonly BeadBoardDef[] = [
         '.###.....###.',
         '.##.......##.',
       ],
+      svaer: [
+        '.......##.......',
+        '......####......',
+        '......####......',
+        '.....######.....',
+        '.....######.....',
+        '################',
+        '.##############.',
+        '..############..',
+        '...##########...',
+        '....########....',
+        '....########....',
+        '...##########...',
+        '...####..####...',
+        '..####....####..',
+        '..###......###..',
+        '.##..........##.',
+      ],
     },
   },
   {
     id: 'fisk',
     name: 'Fisk',
     masks: {
-      let: ['.......', '.###..#', '#######', '#######', '#######', '.###..#', '.......'],
-      normal: [
+      let: [
         '..........',
         '..####...#',
         '.######.##',
@@ -456,7 +652,7 @@ export const BEAD_BOARDS: readonly BeadBoardDef[] = [
         '..........',
         '..........',
       ],
-      svaer: [
+      normal: [
         '.............',
         '....####.....',
         '...######...#',
@@ -471,11 +667,32 @@ export const BEAD_BOARDS: readonly BeadBoardDef[] = [
         '....###......',
         '.............',
       ],
+      svaer: [
+        '................',
+        '......###.......',
+        '.....####.......',
+        '....#######.....',
+        '..##########..##',
+        '.###############',
+        '################',
+        '################',
+        '################',
+        '################',
+        '.###############',
+        '..##########..##',
+        '....#######.....',
+        '......##........',
+        '................',
+        '................',
+      ],
     },
   },
 ]
 
 // ----- derived, never hand-typed --------------------------------------------------------------------
+
+/** Every line Perleplade's patterns speak (the prebake enumerator walks `allKreaLines`, which calls this). */
+export const allBeadLines = (): string[] => BEAD_PATTERNS.map((p) => p.doneLine)
 
 export const boardSize = (level: BeadLevel): number => KREA_BEADS[level].board
 export const beadPalette = (level: BeadLevel): readonly CrayonColor[] => paletteFor(KREA_BEADS[level].palette)
@@ -510,10 +727,16 @@ export function legendCounts(cells: readonly (CrayonColor | null)[]): Array<[Cra
  */
 export const BEAD_LAYOUT = {
   minPitchPx: 40,
-  /** A bowl cell; the bowls stand in 2 columns beside the board (landscape) or 2 rows under it (portrait). */
+  /** Svær's 16 a side can't reach 40 px in the iPad's 584 px; the owner accepted ~35 (2026-10-16). */
+  svaerMinPitchPx: 35,
+  /**
+   * A bowl cell. The bowls stand in 2 columns beside the board (landscape), or in 3 ROWS under it
+   * (portrait) — 3, not 2, so the pattern card and the way on fit beside them in that row (W3).
+   */
   bowlPx: 64,
   bowlGapPx: 8,
-  /** The side column: the way on (and the pattern card, W3). */
+  portraitBowlRows: 3,
+  /** The side column (landscape): the picker door, the pattern card, the way on. */
   sidePx: 168,
   gapPx: 16,
   /** The board's plastic rim, in pitches (half a pitch round the outer pegs). */
@@ -528,6 +751,6 @@ export function boardPitch(n: number, stage: { w: number; h: number }, orientati
   const box =
     orientation === 'landscape'
       ? Math.min(stage.w - bowlsAcross - L.sidePx - 2 * L.gapPx, stage.h)
-      : Math.min(stage.w, stage.h - bowlsAcross - L.gapPx)
+      : Math.min(stage.w, stage.h - (L.portraitBowlRows * L.bowlPx + (L.portraitBowlRows - 1) * L.bowlGapPx) - L.gapPx)
   return box / (n + L.rimPitches)
 }

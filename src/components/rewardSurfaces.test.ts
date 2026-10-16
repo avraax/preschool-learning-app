@@ -175,6 +175,7 @@ const SEAM_GAMES = [
   'components/common/UnifiedMemoryGame.tsx',
   'components/krea/TegnMedMigGame.tsx',
   'components/krea/FarvelaegGame.tsx',
+  'components/krea/PerlepladeGame.tsx',
 ]
 
 test('every game continues through the ceremony seam, exactly once (§W7.5)', () => {

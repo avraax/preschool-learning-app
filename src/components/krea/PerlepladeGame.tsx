@@ -10,19 +10,36 @@ import { wasWobbledTap } from '../common/dnd/dragActivation'
 import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 import { useDifficulty } from '../../hooks/useDifficulty'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
+import { useTaskRun } from '../../hooks/useTaskRun'
 import { sfx } from '../../services/sfxClient'
 import { kreaSession } from '../../services/kreaSession'
 import { KREA_BEADS } from '../../config/difficulty'
-import { BEAD_BOARDS, BEAD_LAYOUT, beadPalette, boardMask, patternById, patternCells, type BeadBoardDef } from '../../config/kreaBeads'
+import {
+  BEAD_BOARDS,
+  BEAD_LAYOUT,
+  BEAD_PATTERNS,
+  beadPalette,
+  boardMask,
+  legendCounts,
+  patternById,
+  patternCells,
+  type BeadBoardDef,
+  type BeadPatternDef,
+} from '../../config/kreaBeads'
+import { KREA_TASKS_IN_ROUND } from '../../config/kreaSubjects'
 import { PALETTE_12 } from '../../config/kreaPalette'
 import { KREA_COLOR_NAME, NEW_BOARD_LINE, NEW_BOARD_TITLE } from '../../config/kreaPhrases'
-import { PHONE_ANY, PHONE_PORTRAIT } from '../../theme/phoneMedia'
+import { PHONE_ANY, PHONE_LANDSCAPE, PHONE_PORTRAIT } from '../../theme/phoneMedia'
+import { idlePulse } from '../../theme/idleMotion'
 import {
   beadCount,
   finishedPattern,
   freeBoard,
+  isComplete,
   landed,
+  patternBoard,
   pegAt,
+  pegCentre,
   placeBead,
   removeBead,
   restoreBeads,
@@ -34,8 +51,10 @@ import {
 import { BoardArt, geometryOf, Pegboard, pegBox, PlacedBeads } from './beads/Pegboard'
 import { BeadBowls } from './beads/BeadBowls'
 import { DragGhost } from './beads/HeldBead'
+import { PatternCard } from './beads/PatternCard'
+import { flyHome, popOff } from './beads/beadMotion'
 import { StudioBackdrop } from './studio/StudioScene'
-import { PlusBadge, StudioButton } from './studio/StudioControls'
+import { PICTURES, PlusBadge, StudioButton } from './studio/StudioControls'
 import NewPaperConfirm from './studio/NewPaperConfirm'
 import { swapPaper } from './studio/alive'
 import { KreaPicker } from './studio/KreaPicker'
@@ -44,17 +63,19 @@ import { KreaPicker } from './studio/KreaPicker'
 //
 // ONE RESOLVER, TWO GESTURES (house rule, drag-and-drop.md): drag a bead out of a bowl onto a peg, or tap
 // a bowl (one bead lifts out of it, in hand) and then tap a peg. Both end in `resolve()`, the only caller
-// of `placeBead` here — `kreaBeads`/`kreaPhrases` tests fail the build if a second path appears. A placed
-// bead comes off the same two ways: drag it back to the bowls, or tap it with nothing in hand (it lifts
-// off; tap a bowl to put it away, or another peg to move it). All by hand — no tweezers (owner,
-// 2026-10-16: it should feel like picking up a real bead and pressing it onto the plate).
+// of `placeBead` here — `perleplade.test.ts` fails the build if a second path appears. A placed bead comes
+// off the same two ways: drag it back to the bowls, or tap it with nothing in hand (it lifts off; tap a
+// bowl to put it away, or another peg to move it). All by hand — no tweezers (owner, 2026-10-16).
 //
-// This slice (W2) is the FREE BOARD: five shaped boards, anything goes anywhere. Like Fri Tegning it
-// EARNS NOTHING and HAS NO FINISH (owner, 2026-10-16, applied to the free board the same day): no
-// `useTaskRun`, no ✓, no pop-off — "Ny plade" + the spoken confirm is the way on. Copy-a-pattern (W3)
-// is the mode that finishes and earns.
+// Two kinds of item on the picture grid:
+//   - COPY A PATTERN (§2.3): a card beside the board. A peg takes only its pattern colour; anything else
+//     rolls home to its bowl — no buzzer, no red, no "forkert". After 2 misses on one peg the right bowl
+//     glows. Complete → the ✓ → the piece pops off and wobbles + its describing line → one task of XP (on
+//     the press) → the ceremony at the seam → "next" back to the grid.
+//   - FREE BOARD: five shaped boards, anything goes anywhere. Like Fri Tegning it EARNS NOTHING and HAS NO
+//     FINISH (owner, 2026-10-16): "Ny plade" + the spoken confirm is the way on.
 //
-// Session-only resume per board (`kreaSession`). Nothing is ever held across a resume.
+// Session-only resume per item (`kreaSession`). Nothing is ever held across a resume.
 
 const GAME_ID = 'krea.beads'
 const SAVE_DEBOUNCE_MS = 500
@@ -68,14 +89,19 @@ const TOUCH_LIFT_PITCHES = 0.45
 /** Free boards' picker/deep-link ids are prefixed, so they never collide with a pattern's (hjerte…). */
 const FREE_PREFIX = 'fri-'
 
-type Item = { kind: 'free'; def: BeadBoardDef }
+type Item = { kind: 'free'; def: BeadBoardDef } | { kind: 'pattern'; def: BeadPatternDef }
 const itemById = (id: string | null): Item | null => {
-  if (!id?.startsWith(FREE_PREFIX)) return null
-  const def = BEAD_BOARDS.find((b) => b.id === id.slice(FREE_PREFIX.length))
-  return def ? { kind: 'free', def } : null
+  if (!id) return null
+  if (id.startsWith(FREE_PREFIX)) {
+    const def = BEAD_BOARDS.find((b) => b.id === id.slice(FREE_PREFIX.length))
+    return def ? { kind: 'free', def } : null
+  }
+  const def = patternById(id)
+  return def ? { kind: 'pattern', def } : null
 }
 
 type Grab = { from: 'bowl'; colour: BeadColor } | { from: 'peg'; peg: number; colour: BeadColor } | null
+type Stage = 'building' | 'finished' | 'alive' | 'shown'
 
 const PerlepladeGame: React.FC = () => {
   useOccludeWorld()
@@ -86,12 +112,17 @@ const PerlepladeGame: React.FC = () => {
   const level = useDifficulty('krea')
   const tuning = KREA_BEADS[level]
   const palette = beadPalette(level)
+  // XP for a finished PATTERN only — one task per piece. The free board never calls it (Lepper 1973).
+  const run = useTaskRun({ tasksInRound: KREA_TASKS_IN_ROUND, gameId: GAME_ID })
 
   const [params, setParams] = useSearchParams()
   const [itemId, setItemId] = useState<string | null>(() => (itemById(params.get('motiv')) ? params.get('motiv') : null))
   const item = itemById(itemId)
 
-  const freshBoard = useCallback((it: Item): BeadBoard => freeBoard(tuning.board, boardMask(it.def, level)), [tuning.board, level])
+  const freshBoard = useCallback(
+    (it: Item): BeadBoard => (it.kind === 'free' ? freeBoard(tuning.board, boardMask(it.def, level)) : patternBoard(tuning.board, patternCells(it.def, level))),
+    [tuning.board, level],
+  )
   const loadBoard = useCallback(
     (id: string): BeadBoard | null => {
       const it = itemById(id)
@@ -111,6 +142,10 @@ const PerlepladeGame: React.FC = () => {
   const [held, setHeld] = useState<BeadColor | null>(null)
   const [grab, setGrab] = useState<Grab>(null)
   const [lastPlaced, setLastPlaced] = useState<{ peg: number; n: number } | null>(null)
+  const [hint, setHint] = useState<BeadColor | null>(null)
+  const [legendGlow, setLegendGlow] = useState<{ colour: BeadColor; n: number } | null>(null)
+  const [done, setDone] = useState(false)
+  const [shown, setShown] = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [swapping, setSwapping] = useState(false)
 
@@ -118,6 +153,7 @@ const PerlepladeGame: React.FC = () => {
   const ringRef = useRef<HTMLDivElement>(null)
   const ghostRef = useRef<HTMLDivElement>(null)
   const boardEl = useRef<HTMLDivElement>(null)
+  const piecesEl = useRef<HTMLDivElement>(null)
   const startPt = useRef<{ x: number; y: number }>({ x: 0, y: 0 })
   // The finger's REAL position during a drag, read from the pointer events themselves. dnd-kit's own
   // delta is measured off the dragged node, and in WebKit that drifted from the finger (Pegboard/BeadBowls
@@ -148,13 +184,17 @@ const PerlepladeGame: React.FC = () => {
     }
   }, [])
 
-  // A level change re-shapes every board (7 / 10 / 13): reload the open one at the new size.
+  // A level change re-shapes every board (10 / 13 / 16) and every pattern: reload the open one.
   useEffect(() => {
     if (!itemId) return
     setBoard(loadBoard(itemId))
     setHeld(null)
+    setHint(null)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [level])
+
+  const complete = !!board && isComplete(board)
+  const stage: Stage = !complete ? 'building' : !done ? 'finished' : shown ? 'shown' : 'alive'
 
   // ----- the welcome -------------------------------------------------------------------------------
   const markInteracted = () => {
@@ -182,9 +222,14 @@ const PerlepladeGame: React.FC = () => {
     if (landed(r.result)) {
       sfx.play('bead-place')
       setLastPlaced((p) => ({ peg, n: (p?.n ?? 0) + 1 }))
+      setHint(null)
     } else if (r.result !== 'outside') {
-      // A bounce (W3's wrong colour) rolls the bead home — a soft sound, never a buzzer (§5).
+      // A bounce rolls the bead home to its bowl — a soft sound, never a buzzer (§5). The 2nd miss on one
+      // peg makes the right bowl glow (the never-fail hint).
       sfx.play('bead-back')
+      const g = geometryOf(hitRef.current, r.board.n)
+      if (g) flyHome(colour, pegCentre(g, peg), g.pitch * tuning.bead, reduce)
+      if (r.hint) setHint(r.hint)
     }
     return r.result
   }
@@ -197,7 +242,7 @@ const PerlepladeGame: React.FC = () => {
   }
 
   // ----- tap ---------------------------------------------------------------------------------------
-  const enabled = !!board && !confirmOpen && !swapping
+  const enabled = !!board && !confirmOpen && !swapping && !done
 
   const tapBowl = (c: BeadColor) => {
     if (!enabled) return
@@ -236,6 +281,15 @@ const PerlepladeGame: React.FC = () => {
     sfx.play('tap')
   }
 
+  // A legend chip: say the number, and make the board's beads of that colour glow — counting as play.
+  const tapChip = (c: BeadColor, count: number) => {
+    markInteracted()
+    audio.updateUserInteraction()
+    audio.cancelCurrentAudio()
+    void audio.speakNumber(count).catch(() => {})
+    setLegendGlow((p) => ({ colour: c, n: (p?.n ?? 0) + 1 }))
+  }
+
   // ----- drag --------------------------------------------------------------------------------------
   const sensors = useDragOnlySensors()
 
@@ -246,7 +300,7 @@ const PerlepladeGame: React.FC = () => {
     return t ? { x: t.clientX, y: t.clientY } : { x: 0, y: 0 }
   }
 
-  /** Where a dragged bead would land: under the floating bead, a pitch above the finger. */
+  /** Where a dragged bead would land: under the floating bead, just above the finger. */
   const landingPeg = (x: number, y: number): number => {
     const b = boardRef.current
     const g = b && geometryOf(hitRef.current, b.n)
@@ -329,13 +383,16 @@ const PerlepladeGame: React.FC = () => {
     const b = boardRef.current
     if (!g || !b || !enabled) return
     const overBowls = e.over?.id === 'bowls'
-    // The landing is judged where the floating BEAD is, not by `over`: the bead hovers a pitch above the
-    // finger, so a drop onto the top row can have the finger below the board. Over nothing and off every
-    // peg (`!over` / -1) springs back with nothing changed.
+    // The landing is judged where the floating BEAD is, not by `over`: the bead hovers above the finger,
+    // so a drop onto the top row can have the finger below the board. Off every peg → it rolls home.
     const peg = overBowls ? -1 : landingPeg(x, y)
+    const lift = (geometryOf(hitRef.current, b.n)?.pitch ?? beadPx) * liftPitches.current
     if (g.from === 'bowl') {
       if (peg >= 0) resolve(b, g.colour, peg)
-      else sfx.play('bead-back')
+      else {
+        sfx.play('bead-back')
+        flyHome(g.colour, { x, y: y - lift }, beadPx, reduce)
+      }
       return
     }
     if (overBowls) {
@@ -361,6 +418,9 @@ const PerlepladeGame: React.FC = () => {
     sfx.play('krea-paper')
     setBoard(loadBoard(id))
     setHeld(null)
+    setHint(null)
+    setDone(false)
+    setShown(false)
     setItemId(id)
     setParams((prev) => {
       const n = new URLSearchParams(prev)
@@ -374,6 +434,7 @@ const PerlepladeGame: React.FC = () => {
     sfx.play('tap')
     audio.cancelCurrentAudio()
     setHeld(null)
+    setHint(null)
     setItemId(null)
     setBoard(null)
     setConfirmOpen(false)
@@ -398,6 +459,7 @@ const PerlepladeGame: React.FC = () => {
     if (!item || !itemId) return
     sfx.play('krea-paper')
     kreaSession.clearItem(GAME_ID, itemId)
+    setHint(null)
     setSwapping(true)
     void swapPaper(boardEl.current, reduce, () => setBoard(freshBoard(item))).then(() => {
       if (mounted.current) setSwapping(false)
@@ -409,61 +471,112 @@ const PerlepladeGame: React.FC = () => {
     setConfirmOpen(false)
   }
 
+  // A finished PATTERN: XP on the press (leaving mid-wobble must not lose it); the piece pops off its
+  // pegs and wobbles with its describing line; the ceremony waits for the seam, then "next".
+  const onDone = () => {
+    if (item?.kind !== 'pattern' || stage !== 'finished') return
+    markInteracted()
+    audio.updateUserInteraction()
+    sfx.play('bead-popoff')
+    run.completeTask(true)
+    setDone(true)
+    setShown(false)
+    setHeld(null)
+    audio.cancelCurrentAudio()
+    void audio.speak(item.def.doneLine).catch(() => {})
+    void popOff(piecesEl.current, reduce).then(() => {
+      if (!mounted.current) return
+      run.thenContinue(() => {
+        if (mounted.current) setShown(true)
+      })
+    })
+  }
+  const onNext = () => {
+    if (itemId) kreaSession.clearItem(GAME_ID, itemId)
+    setDone(false)
+    setShown(false)
+    toPicker()
+  }
+
   // ----- render ------------------------------------------------------------------------------------
   const cssVars = {
     '--bead-bowl': `${BEAD_LAYOUT.bowlPx}px`,
     '--bead-bowl-gap': `${BEAD_LAYOUT.bowlGapPx}px`,
+    '--bead-bowl-rows': BEAD_LAYOUT.portraitBowlRows,
     '--bead-side': `${BEAD_LAYOUT.sidePx}px`,
-    // A phone is not the target device: the board simply takes what is left (measured 2026-10-16, WebKit:
-    // pitch 42/30/24 px at Let/Normal/Svær on an 844×390 landscape phone — under the iPad's 40 px floor
-    // above Let). No panning: a pannable board under a drag gesture would fight the drag.
-    [PHONE_ANY]: { '--bead-bowl': '46px', '--bead-bowl-gap': '4px', '--bead-side': '104px' },
-    // 12 bowls in two rows + the side row are wider than a portrait phone (two bowls hung off): 4 rows of 3.
+    '--bead-card-pic': '120px',
+    '--bead-chip': '22px',
+    '--bead-chip-font': '1.25rem',
+    // A phone is not the target device: the board simply takes what is left (measured 2026-10-16, WebKit).
+    // No panning: a pannable board under a drag gesture would fight the drag.
+    [PHONE_ANY]: { '--bead-bowl': '46px', '--bead-bowl-gap': '4px', '--bead-side': '104px', '--bead-card-pic': '64px', '--bead-chip': '14px', '--bead-chip-font': '0.85rem' },
+    // 12 bowls in 2 columns are 6 rows — taller than a landscape phone: 3 columns.
+    [PHONE_LANDSCAPE]: { '--bead-bowl-cols': 3 },
+    // 12 bowls in a few rows + the side are wider than a portrait phone: 4 rows of 3.
     [PHONE_PORTRAIT]: { '--bead-bowl-rows': 4 },
   }
 
   if (!item || !board) {
+    const cards = [
+      ...BEAD_PATTERNS.map((def) => {
+        const b = loadBoard(def.id)!
+        return {
+          id: def.id,
+          label: def.name,
+          // The picture to copy, faint, with the child's own beads on it if the piece is in progress.
+          picture: (
+            <Box sx={{ position: 'absolute', inset: '7%' }}>
+              <Box sx={{ position: 'absolute', inset: 0, opacity: beadCount(b) ? 0.3 : 1 }}>
+                <PlacedBeads board={finishedPattern(b.n, patternCells(def, level))} size={tuning.bead} />
+              </Box>
+              <PlacedBeads board={b} size={tuning.bead} />
+            </Box>
+          ),
+        }
+      }),
+      ...BEAD_BOARDS.map((def) => {
+        const id = `${FREE_PREFIX}${def.id}`
+        const b = loadBoard(id)!
+        return {
+          id,
+          label: def.name,
+          picture: (
+            <Box sx={{ position: 'absolute', inset: '7%' }}>
+              <BoardArt n={b.n} mask={b.mask} />
+              <PlacedBeads board={b} size={tuning.bead} />
+            </Box>
+          ),
+        }
+      }),
+    ]
     return (
       <GameShell categoryId="krea" title="Perleplade" backRoute="/krea" dense guide={false} lightScene>
         <StudioBackdrop />
-        <KreaPicker
-          items={BEAD_BOARDS.map((def) => {
-            const id = `${FREE_PREFIX}${def.id}`
-            const b = loadBoard(id)!
-            return {
-              id,
-              label: def.name,
-              picture: (
-                <Box sx={{ position: 'absolute', inset: '7%' }}>
-                  <BoardArt n={b.n} mask={b.mask} />
-                  <PlacedBeads board={b} size={tuning.bead} />
-                </Box>
-              ),
-            }
-          })}
-          onPick={openItem}
-        />
+        <KreaPicker items={cards} onPick={openItem} />
       </GameShell>
     )
   }
 
   const orientation = landscape ? 'landscape' : 'portrait'
+  const isPattern = item.kind === 'pattern'
   // "Choose another board" is a small copy of the grid it opens: four white cards, each a finished
   // bead picture. A lone tile icon, and then a pile of empty cream boards, read as decoration rather
-  // than a door (owner, 2026-10-16 — the same lesson as Fri Tegning's "Nyt papir"). Colour is what
-  // makes it legible at this size; the empty boards had none.
+  // than a door (owner, 2026-10-16 — the same lesson as Fri Tegning's "Nyt papir").
   const pickerPicture = (
     <Box sx={{ width: '100%', height: '100%', p: '6%', boxSizing: 'border-box', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8%' }}>
       {(['hjerte', 'stjerne', 'fisk', 'blomst'] as const).map((id, i) => (
         <Box key={id} sx={{ position: 'relative', background: '#FFFEFB', borderRadius: '14%', boxShadow: '0 2px 4px rgba(80,50,20,0.3)', transform: `rotate(${[-4, 3, 2, -3][i]}deg)` }}>
           <Box sx={{ position: 'absolute', inset: '6%' }}>
-            <PlacedBeads board={finishedPattern(7, patternCells(patternById(id)!, 'let'))} size={0.96} />
+            <PlacedBeads board={finishedPattern(10, patternCells(patternById(id)!, 'let'))} size={0.96} />
           </Box>
         </Box>
       ))}
     </Box>
   )
-  const big = phone ? '64px' : '120px'
+  // Landscape with the pattern card in the side column: the two controls give it room. Portrait: the two
+  // stand stacked beside the bowls, so together they must not be taller than the bowls' 3 rows (208 px) —
+  // at 120 + 120 they were, and the board lost 40 px (measured, WebKit 768×1024).
+  const big = phone ? '56px' : landscape && !isPattern ? '120px' : '96px'
   const newBoardPicture = (
     <Box sx={{ position: 'relative', width: '100%', height: '100%' }}>
       <Box sx={{ position: 'absolute', inset: '12%' }}>
@@ -472,6 +585,36 @@ const PerlepladeGame: React.FC = () => {
       <PlusBadge />
     </Box>
   )
+  const pulse = idlePulse(reduce, { peak: 1.07, durationS: 1.4 })
+  const wayOn =
+    stage === 'finished' ? (
+      <Box {...pulse.props} sx={[{ display: 'flex' }, pulse.sx]}>
+        <StudioButton dataId="done" label="Færdig" size={big} onPress={onDone}>
+          <PICTURES.Done />
+        </StudioButton>
+      </Box>
+    ) : stage === 'shown' ? (
+      <StudioButton dataId="next" label="Næste" size={big} onPress={onNext}>
+        <PICTURES.Next />
+      </StudioButton>
+    ) : (
+      <Box sx={{ visibility: stage === 'building' && beadCount(board) ? 'visible' : 'hidden' }}>
+        <StudioButton dataId="new-board" label="Ny plade" size={big} disabled={!enabled || !beadCount(board)} onPress={askNewBoard}>
+          {newBoardPicture}
+        </StudioButton>
+      </Box>
+    )
+  const card = isPattern ? (
+    <PatternCard
+      id={item.def.id}
+      n={board.n}
+      target={board.target ?? []}
+      legend={legendCounts(board.target ?? [])}
+      direction={landscape || phone ? 'column' : 'row'}
+      disabled={confirmOpen || swapping}
+      onChip={tapChip}
+    />
+  ) : null
 
   return (
     <GameShell categoryId="krea" title="Perleplade" backRoute="/krea" dense guide={false} lightScene>
@@ -480,6 +623,7 @@ const PerlepladeGame: React.FC = () => {
         <Box
           data-krea-stage
           data-krea-item={itemId}
+          data-krea-piece={stage}
           sx={[
             cssVars,
             {
@@ -487,14 +631,15 @@ const PerlepladeGame: React.FC = () => {
               minHeight: 0,
               display: 'grid',
               gap: `${BEAD_LAYOUT.gapPx}px`,
-              // Reserved space (layout-contract.md): the bowls and the side column take their fixed share
-              // (`BEAD_LAYOUT`, the same numbers the pitch test reads) and the board is the remainder.
-              // Portrait: the board takes the full width, so the row under it only has to fit the bowls
-              // and the side controls side by side (measured: a 168 px side squeezed its controls to a sliver).
-              gridTemplateColumns: 'auto auto',
+              // Reserved space (layout-contract.md): the bowls, the card and the side take their fixed
+              // share (`BEAD_LAYOUT`, the same numbers the pitch test reads) and the board is the remainder.
+              // Portrait: the board takes the full width; the row under it holds the bowls (3 rows), the
+              // card and the two controls side by side.
+              gridTemplateColumns: 'auto auto auto',
               justifyContent: 'center',
+              alignItems: 'center',
               gridTemplateRows: 'minmax(0, 1fr) auto',
-              gridTemplateAreas: '"board board" "bowls side"',
+              gridTemplateAreas: '"board board board" "bowls card side"',
               '@media (orientation: landscape)': {
                 gridTemplateColumns: 'auto minmax(0, 1fr) var(--bead-side)',
                 justifyContent: 'stretch',
@@ -506,9 +651,9 @@ const PerlepladeGame: React.FC = () => {
           ]}
         >
           <Box sx={{ gridArea: 'bowls', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 0 }}>
-            <BeadBowls colours={palette} held={held} dragging={grab?.from === 'bowl' ? grab.colour : null} disabled={!enabled} orientation={orientation} onTap={tapBowl} />
+            <BeadBowls colours={palette} held={held} glow={hint} dragging={grab?.from === 'bowl' ? grab.colour : null} disabled={!enabled} orientation={orientation} onTap={tapBowl} />
           </Box>
-          <Box sx={{ gridArea: 'board', minWidth: 0, minHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', containerType: 'size' }}>
+          <Box sx={{ gridArea: 'board', minWidth: 0, minHeight: 0, height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', containerType: 'size' }}>
             <Box sx={{ width: 'min(100cqw, 100cqh)', height: 'min(100cqw, 100cqh)' }}>
               <Pegboard
                 board={board}
@@ -520,30 +665,31 @@ const PerlepladeGame: React.FC = () => {
                 hitRef={hitRef}
                 ringRef={ringRef}
                 boardRef={boardEl}
+                piecesRef={piecesEl}
+                glow={legendGlow}
                 onTapAt={tapAt}
               />
             </Box>
           </Box>
+          {!landscape && card ? <Box sx={{ gridArea: 'card', display: 'flex', minWidth: 0 }}>{card}</Box> : null}
           <Box
             sx={{
               gridArea: 'side',
               display: 'flex',
-              flexDirection: landscape ? 'column' : 'row',
+              flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'space-around',
               gap: 1,
               minHeight: 0,
               minWidth: 0,
+              height: landscape ? '100%' : 'auto',
             }}
           >
-            <StudioButton dataId="to-picker" label="Vælg en anden plade" size={big} disabled={confirmOpen || swapping} onPress={toPicker}>
+            <StudioButton dataId="to-picker" label="Vælg en anden plade" size={big} disabled={confirmOpen || swapping || stage === 'alive'} onPress={toPicker}>
               {pickerPicture}
             </StudioButton>
-            <Box sx={{ visibility: beadCount(board) ? 'visible' : 'hidden' }}>
-              <StudioButton dataId="new-board" label="Ny plade" size={big} disabled={!enabled || !beadCount(board)} onPress={askNewBoard}>
-                {newBoardPicture}
-              </StudioButton>
-            </Box>
+            {landscape ? card : null}
+            {wayOn}
           </Box>
         </Box>
         <DragGhost ghostRef={ghostRef} colour={grab?.colour ?? null} beadPx={beadPx} />

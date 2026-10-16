@@ -44,11 +44,12 @@ export const BeadBowls: React.FC<{
       ref={drop.setNodeRef}
       data-krea-bowls
       data-krea-held={held ?? ''}
+      data-krea-hint={glow ?? ''}
       style={{
         display: 'grid',
         gap: 'var(--bead-bowl-gap)',
         ...(orientation === 'landscape'
-          ? { gridTemplateColumns: 'repeat(2, var(--bead-bowl))', gridAutoRows: 'var(--bead-bowl)' }
+          ? { gridTemplateColumns: 'repeat(var(--bead-bowl-cols, 2), var(--bead-bowl))', gridAutoRows: 'var(--bead-bowl)' }
           : { gridTemplateRows: 'repeat(var(--bead-bowl-rows, 2), var(--bead-bowl))', gridAutoColumns: 'var(--bead-bowl)', gridAutoFlow: 'column' }),
         alignContent: 'center',
         justifyContent: 'center',

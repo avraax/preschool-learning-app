@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-16T20:53:59.723Z",
+  "updatedAt": "2026-10-16T21:57:37.816Z",
   "clips": {
     "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|b": {
       "verdict": "ok",
@@ -25432,6 +25432,54 @@
       "text": "Vil du have en ny plade? Dine perler forsvinder.",
       "group": "krea",
       "updatedAt": 1792184039723
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Se, hjertet hopper!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Se, hjertet hopper!",
+      "group": "krea",
+      "updatedAt": 1792187857816
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Se, sommerfuglen flagrer!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Se, sommerfuglen flagrer!",
+      "group": "krea",
+      "updatedAt": 1792187857816
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Se, blomsten danser!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Se, blomsten danser!",
+      "group": "krea",
+      "updatedAt": 1792187857816
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Se, stjernen funkler!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Se, stjernen funkler!",
+      "group": "krea",
+      "updatedAt": 1792187857816
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Se, huset vipper!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Se, huset vipper!",
+      "group": "krea",
+      "updatedAt": 1792187857816
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Se, regnbuen skinner!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Se, regnbuen skinner!",
+      "group": "krea",
+      "updatedAt": 1792187857816
     }
   }
 }

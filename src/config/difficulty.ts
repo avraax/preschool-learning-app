@@ -581,10 +581,14 @@ export const KREA_GUIDE: Record<DifficultyLevel, KreaGuideTuning> = {
 
 /**
  * Perleplade (`krea.beads`, Krea PRD-02 §2.5) — the axis is BOARD SIZE: pegs per side (the boards are
- * square; shaped free boards are masks over that square), how big a bead sits on its peg (Maxi at Let,
- * Midi above) and the palette. Every pattern is authored per level as its own grid (`kreaBeads.ts`), so a
- * harder level is finer detail, never a lost reward: XP is the same at every level. The sizes are bound
- * by the 40 px minimum peg pitch on the iPad (`kreaBeads.test.ts`) — fix this table, never the pitch.
+ * square; shaped free boards are masks over that square) and how big a bead sits on its peg. Every pattern
+ * is authored per level as its own grid (`kreaBeads.ts`), so a harder level is finer detail, never a lost
+ * reward: XP is the same at every level.
+ *
+ * Owner, 2026-10-16, after play: the first table (7 / 10 / 13, 8 crayons at Let) was too easy — every level
+ * moved up one: Let = the old Normal, Normal = the old Svær, and Svær is a 16×16 board with all 12 colours.
+ * Pegs stay ≥ 40 px on the iPad at Let and Normal; at Svær the owner accepted ~35 px (16 a side cannot fit
+ * 40 px in 584 px of height) — `kreaBeads.test.ts` holds both floors.
  */
 export interface KreaBeadsTuning {
   board: number
@@ -593,9 +597,9 @@ export interface KreaBeadsTuning {
   palette: 8 | 12
 }
 export const KREA_BEADS: Record<DifficultyLevel, KreaBeadsTuning> = {
-  let: { board: 7, bead: 0.92, palette: 8 },
-  normal: { board: 10, bead: 0.84, palette: 12 },
-  svaer: { board: 13, bead: 0.84, palette: 12 },
+  let: { board: 10, bead: 0.88, palette: 12 },
+  normal: { board: 13, bead: 0.84, palette: 12 },
+  svaer: { board: 16, bead: 0.84, palette: 12 },
 }
 
 // ================================================================================================
