@@ -79,7 +79,7 @@ Image 4: WHITE crayon (clay white with soft grey shading so it reads on a light 
 Same opener as Batch B (four separate images, claymation, #00FF00, 1:1), with:
 
 ```
-Image 1: a RAINBOW crayon — the same chunky crayon shape, but its body is striped in rainbow bands (red, orange, yellow, green, blue, purple) running along its length.
+Image 1: a RAINBOW crayon — the same chunky crayon shape, but its body is striped in rainbow bands (red, orange, yellow, DARK green, blue, purple) running along its length.
 Image 2: a small glitter shaker tube with a star-shaped cap, sparkly gold glitter visible inside, a few tiny gold stars floating out of the top.
 Image 3: a chunky children's rubber stamp with a round wooden handle on top and a red rubber base, seen from a 3/4 angle.
 Image 4: a soft pink rubber eraser, chunky and rounded, slightly worn at one corner.
@@ -92,22 +92,40 @@ Same opener as Batch B, with:
 ```
 Image 1: a fresh, clean, slightly curled sheet of white paper, seen from above at a slight angle, completely blank.
 Image 2: a small curved clay arrow pointing back to the left, like an "undo" arrow, in warm blue.
-Image 3: a big round friendly clay button in fresh green with a chunky white tick mark on it (a check mark, no letters).
+Image 3: a big round friendly clay button in a DEEP emerald green (clearly darker than the #00FF00 background, with a soft dark outline) with a chunky white tick mark on it (a check mark, no letters).
 Image 4: a big round friendly clay button in warm orange with a chunky white arrow pointing right on it.
 ```
 
-## Batch G — the section and tile icons
+## Batch G — the section and tile icons (two messages)
 
-**The section icon is on legacy MAGENTA**, not green (`scene-assets.md`). Use its opener with
-`#FF00FF`. The four tile icons use the green opener.
+Checked 2026-10-16 (W0): the first draft had the section icon as a clay paint PALETTE — that is
+**Farver's home icon already**, so the two would be twins side by side on the home arc. It is an easel
+now. **The section icon is on legacy MAGENTA** (`scene-assets.md`), the tiles on green.
 
-- Section icon `krea.webp` (magenta): *an artist's palette in clay with blobs of red, yellow and blue
-  paint and a chunky crayon resting across it.*
-- `krea.draw`: a sheet of paper with a bright rainbow scribble and a crayon lying on it.
-- `krea.guide`: a sheet of paper with a cat's head drawn in thick friendly lines (circle head, triangle
-  ears), with a pencil beside it.
-- `krea.color`: a half-coloured simple flower picture with a paint pot beside it.
-- `krea.beads`: a small square pegboard with a red bead heart on it.
+Message 1 — attach the two style references, paste:
+
+```
+I need ONE image.
+
+Style: one centered subject, soft-3D claymation style, Pixar-lite, rounded matte clay, soft top-left key light, gentle rim light, soft contact shadow, warm and child-safe, slight 3/4 top-down angle, no text or letters, flat solid #FF00FF magenta background edge to edge, square 1:1, highest resolution. Match the exact clay style and lighting of the attached reference images.
+
+The subject: a small wooden children's art easel holding a canvas with a bright rainbow scribble painted on it, and a little cup of chunky crayons standing at the easel's foot. Keep it clearly an EASEL — not a paint palette.
+```
+
+Message 2 — same thread, paste:
+
+```
+I need FOUR SEPARATE IMAGES — four individual image files, one per subject below. Do NOT combine them into one picture. Do NOT make a grid, collage, panel or contact sheet.
+
+Style for every image: one centered subject, soft-3D claymation style, Pixar-lite, rounded matte clay, soft top-left key light, gentle rim light, soft contact shadow, warm and child-safe, slight 3/4 top-down angle, no text or letters, flat solid #00FF00 green background edge to edge, square 1:1, highest resolution. Match the exact clay style and lighting of the attached reference images.
+
+Image 1: a sheet of white paper with a bright rainbow scribble on it and a chunky red crayon lying on it.
+Image 2: a sheet of white paper with a cat's head drawn in thick friendly black lines (a circle head, two triangle ears, dot eyes), with a pencil beside it.
+Image 3: a simple flower picture on white paper, half coloured in (the petals pink, the rest still white), with a small open paint pot beside it. The stem stays white/uncoloured — no green.
+Image 4: a small square clear pegboard with a heart made of red ironing beads on it, seen from above at a slight angle.
+
+Remember: four separate image files, one subject each.
+```
 
 ## Batch H — colour-in pages (PRD-01 Farvelæg), 12 pages in 3 messages
 
