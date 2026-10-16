@@ -75,6 +75,8 @@ treat `!over` as a spring-back** (return without scoring or breaking the first-t
   an ANCESTOR multiplied the offset; and (WebKit only) a lift on the tracked node itself made dnd-kit
   drift by half the bounding-box growth. **Pass `lift={{ scale, rotate }}` to `DraggableItem`, never
   animate a wrapper on `activeId`.** Guarded by `draggableStyle.test.ts`; measure with `drag-track.js`.
+  **Even a static identity `transform` on an ancestor drifts it in WebKit** (Perleplade's bowls, 2026-10-16:
+  98→49→147 px for a 98→196→294 px pull) — put a look's transform on a SIBLING layer.
 
 - **Guard the advance window.** Tiles stay draggable during the correct-answer flourish; a late drop
   can fail a perfect question. Set a ref synchronously on complete, check it at the top of

@@ -190,6 +190,33 @@ Everything in PRD-01 §5:
 - Saving or printing a pattern.
 - Bucket fill or row-paint shortcuts (the owner chose one bead at a time).
 
+## 10. Progress log (read before continuing)
+
+**2026-10-16 — W1 + W2 done** (8f242a2, e09232a; not pushed). Stopped for the owner's iPad feel check.
+Playable on DEV/staging at `/krea/perler` (free boards only).
+
+- **Owner decision this session, do not re-litigate:** the FREE BOARD follows Fri Tegning — no ✓, no
+  pop-off, no "next", no XP. "Ny plade?" + the spoken confirm is the only way on. §2.6's done/pop-off
+  applies to copy-a-pattern only (W3).
+- **Boards 7 / 10 / 13** (`KREA_BEADS`), bead 0.92 / 0.84 of the pitch. iPad pitch measured in WebKit
+  = `boardPitch` to 0.1 px: 77/55/43 landscape, 92/66/51 portrait. Phone (no pan, by decision — a pannable
+  board fights the drag): 42/30/24 px landscape; portrait bowls go 4 rows of 3.
+- **Pattern ids vs free boards:** free boards are `fri-<id>` in `?motiv=` and the session (hjerte, stjerne
+  and fisk are both). `kreaBeads.ts` holds all 24 pattern grids already; W3 wires them.
+- **Drag mechanics:** bowls are `DraggableItem`s (transparent hit box, the bead in the finger is a
+  separate ghost); the board is ONE droppable + ONE draggable (`board-bead`, which bead = where the press
+  landed). The ghost and the landing peg read the real pointer, not dnd-kit's delta. Removing a bead:
+  drag it onto the bowls, or tap it with empty tweezers (it lifts; tapping its bowl or the tweezers puts it
+  away). §2.6's "then confirm" was read as belonging to "Nyt papir", not to taking one bead off.
+- **WebKit trap found:** an identity `transform` on a DraggableItem's ancestor drifted the drag — the bowl
+  look sits on a sibling layer (guarded; noted in `drag-and-drop.md`).
+- **Art:** bowl, tweezers, card frame keyed (`optimize-theme-art.mjs krea`, bowl has a measured override);
+  the pegboard render is NOT used (its baked pegs can't align) — the board is an SVG drawn per mask.
+- Verified rung 2 (gesture probe, 7 cases, both orientations; fit at 5 viewports × 3 levels) and rung 1
+  (same probe, audio, session/confirm, perf at rest on a full Normal board: 0 recalcs). UNKNOWN: Svær perf
+  on the harness build (couldn't seed the level there), rung 3. 21 guards re-broken, none vacuous.
+- **W3 must:** narrow `perleplade.test.ts`'s "earns nothing" guard to the free-board path; add `pop-off`.
+
 ## 9. Kickoff prompt for a fresh session
 
 > Implement `plans/krea/tmp-prd-krea-02-perleplade.md` (Perleplade, the 4th Krea tile). PRD-01 must
